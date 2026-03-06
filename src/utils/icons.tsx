@@ -1,0 +1,240 @@
+/**
+ * Font Awesome Sharp Duotone Solid Icons
+ * Mapping centralisé de toutes les icônes de l'application
+ */
+
+import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
+import { IconDefinition } from '@fortawesome/fontawesome-svg-core';
+import {
+  // Navigation & Layout
+  faGridHorizontal as faLayoutDashboard,
+  faFolderOpen,
+  faBuilding as faBuilding2,
+  faUsers,
+  faHandshake,
+  faTriangleExclamation as faAlertTriangle,
+  faGear as faSettings,
+  faBars as faMenu,
+  faChevronDown,
+  faChevronRight,
+  faChevronLeft,
+  faChevronUp,
+  faArrowLeft,
+  faArrowRight,
+  
+  // Actions
+  faPlus,
+  faMagnifyingGlass as faSearch,
+  faXmark as faX,
+  faCheck,
+  faDownload,
+  faPaperPlane as faSend,
+  faUpload,
+  faCopy,
+  faPen as faEdit2,
+  faFloppyDisk as faSave,
+  faEye,
+  faEyeSlash,
+  faTrash,
+  faEllipsisVertical as faMoreVertical,
+  
+  // Status & Indicators
+  faBell,
+  faCircleInfo as faInfo,
+  faCircleExclamation as faAlertCircle,
+  faCircleCheck as faCheckCircle2,
+  faCircleXmark as faXCircle,
+  faClock,
+  faClockRotateLeft as faHistory,
+  faStar,
+  faSparkles,
+  
+  // Business & Finance
+  faBriefcase,
+  faDollarSign,
+  faWallet,
+  faArrowDownToLine as faArrowDownCircle,
+  faArrowTrendDown as faTrendingDown,
+  faArrowTrendUp as faTrendingUp,
+  faCartShopping as faShoppingCart,
+  faRotate as faRepeat,
+  faStore,
+  faPercent,
+  
+  // Documents & Files
+  faFile as faFileText,
+  faFileSignature,
+  faFileCheck,
+  faFileSpreadsheet,
+  faFileChartColumn as faFileBarChart,
+  faFolder,
+  faFolderClosed as faFolderLock,
+  faBoxOpen as faPackageOpen,
+  faBoxArchive as faArchive,
+  faBoxes as faPackage,
+  
+  // Communication
+  faEnvelope as faMail,
+  faCommentDots as faMessageSquare,
+  faPhone,
+  faComments as faMessageCircle,
+  
+  // Users & Contacts
+  faUser,
+  faUserCircle,
+  faUsersRectangle as faUsersRound,
+  faUserPlus,
+  faUserCheck,
+  faUserXmark as faUserX,
+  
+  // Data & Analytics
+  faChartLine as faActivity,
+  faChartBar as faBarChart3,
+  faChartColumn as faBarChart,
+  faDatabase,
+  faListCheck as faList,
+  
+  // Calendar & Time
+  faCalendar,
+  faCalendarDays as faCalendarIcon,
+  
+  // Location & Navigation
+  faEarthAmericas as faGlobe,
+  faLocationDot as faMapPin,
+  faArrowUpRightFromSquare as faExternalLink,
+  faLink as faLink2,
+  
+  // Tools & Settings
+  faWrench,
+  faSliders as faFilter,
+  faShield,
+  faLock,
+  faBan,
+  faLifeRing as faLifeBuoy,
+  faBullseye as faTarget,
+  faTag,
+  faLanguage as faLanguages,
+  faLightbulb,
+  
+  // Misc
+  faDroplet,
+  faBolt as faZap,
+  faMinus as faMinimize2,
+  faMaximize,
+  faCompress,
+  faExpand,
+} from '@fortawesome/pro-duotone-svg-icons';
+
+// Export des icônes avec les noms Lucide pour compatibilité
+export {
+  faLayoutDashboard as LayoutDashboard,
+  faFolderOpen as FolderOpen,
+  faBuilding2 as Building2,
+  faUsers as Users,
+  faHandshake as Handshake,
+  faAlertTriangle as AlertTriangle,
+  faSettings as Settings,
+  faMenu as Menu,
+  faChevronDown as ChevronDown,
+  faChevronRight as ChevronRight,
+  faChevronLeft as ChevronLeft,
+  faChevronUp as ChevronUp,
+  faArrowLeft as ArrowLeft,
+  faArrowRight as ArrowRight,
+  faPlus as Plus,
+  faSearch as Search,
+  faX as X,
+  faCheck as Check,
+  faDownload as Download,
+  faSend as Send,
+  faUpload as Upload,
+  faCopy as Copy,
+  faEdit2 as Edit2,
+  faSave as Save,
+  faEye as Eye,
+  faEyeSlash as EyeOff,
+  faTrash as Trash,
+  faMoreVertical as MoreVertical,
+  faBell as Bell,
+  faInfo as Info,
+  faAlertCircle as AlertCircle,
+  faCheckCircle2 as CheckCircle2,
+  faXCircle as XCircle,
+  faClock as Clock,
+  faHistory as History,
+  faStar as Star,
+  faSparkles as Sparkles,
+  faBriefcase as Briefcase,
+  faDollarSign as DollarSign,
+  faWallet as Wallet,
+  faArrowDownCircle as ArrowDownCircle,
+  faTrendingDown as TrendingDown,
+  faTrendingUp as TrendingUp,
+  faShoppingCart as ShoppingCart,
+  faRepeat as Repeat,
+  faStore as Store,
+  faPercent as Percent,
+  faFileText as FileText,
+  faFileSignature as FileSignature,
+  faFileCheck as FileCheck,
+  faFileSpreadsheet as FileSpreadsheet,
+  faFileBarChart as FileBarChart,
+  faFolder as Folder,
+  faFolderLock as FolderLock,
+  faPackageOpen as PackageOpen,
+  faArchive as Archive,
+  faPackage as Package,
+  faMail as Mail,
+  faMessageSquare as MessageSquare,
+  faPhone as Phone,
+  faMessageCircle as MessageCircle,
+  faUser as User,
+  faUserCircle as UserCircle,
+  faUsersRound as UsersRound,
+  faUserPlus as UserPlus,
+  faUserCheck as UserCheck,
+  faUserX as UserX,
+  faActivity as Activity,
+  faBarChart3 as BarChart3,
+  faBarChart as BarChart,
+  faDatabase as Database,
+  faList as List,
+  faCalendar as Calendar,
+  faCalendarIcon as CalendarIcon,
+  faGlobe as Globe,
+  faMapPin as MapPin,
+  faExternalLink as ExternalLink,
+  faLink2 as Link2,
+  faWrench as Wrench,
+  faFilter as Filter,
+  faShield as Shield,
+  faLock as Lock,
+  faBan as Ban,
+  faLifeBuoy as LifeBuoy,
+  faTarget as Target,
+  faTag as Tag,
+  faLanguages as Languages,
+  faLightbulb as Lightbulb,
+  faDroplet as Droplet,
+};
+
+// Export des autres icônes manquantes
+export {
+  faArrowUp as ArrowUp,
+  faArrowDown as ArrowDown,
+  faArrowsUpDown as ArrowUpDown,
+  faArchive as ArchiveX,
+  faBriefcase as Briefcase2,
+  faEnvelopeOpen as MailOpen,
+  faCircleUser as UserRound,
+  faAward as Award,
+  faChevronDoubleUp as ChevronsUpDown,
+  faMessageDots as MessageDots,
+} from '@fortawesome/pro-duotone-svg-icons';
+
+// Helper component pour wrapper les icônes Font Awesome
+export const Icon = ({ icon, className = '', size = '1x', ...props }: { icon: IconDefinition; className?: string; size?: string; [key: string]: any }) => {
+  return <FontAwesomeIcon icon={icon} className={className} {...props} />;
+};
+
+export default FontAwesomeIcon;
