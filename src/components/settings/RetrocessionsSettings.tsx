@@ -268,17 +268,53 @@ export function RetrocessionsSettings() {
   };
 
   const notifyRetrocessions = (ids: string[]) => {
+    if (ids.length === 0) {
+      alert('Sélectionnez au moins une rétrocession à notifier.');
+      return;
+    }
+
+    const eligibleIds = retrocessions
+      .filter(item => ids.includes(item.id) && item.statut === 'En attente')
+      .map(item => item.id);
+
+    if (eligibleIds.length === 0) {
+      alert('Seules les rétrocessions au statut "En attente" peuvent être notifiées.');
+      return;
+    }
+
+    if (!window.confirm(`Notifier ${eligibleIds.length} rétrocession${eligibleIds.length > 1 ? 's' : ''} ?`)) {
+      return;
+    }
+
     const today = new Date().toLocaleDateString('fr-FR');
     setRetrocessions(prev => prev.map(r => (
-      ids.includes(r.id) ? { ...r, dateNotification: today } : r
+      eligibleIds.includes(r.id) ? { ...r, dateNotification: today } : r
     )));
     setSelectedIds([]);
   };
 
   const markAsPaidRetrocessions = (ids: string[]) => {
+    if (ids.length === 0) {
+      alert('Sélectionnez au moins une rétrocession à marquer comme payée.');
+      return;
+    }
+
+    const eligibleIds = retrocessions
+      .filter(item => ids.includes(item.id) && item.statut === 'Facturé - A payer')
+      .map(item => item.id);
+
+    if (eligibleIds.length === 0) {
+      alert('Seules les rétrocessions au statut "Facturé - A payer" peuvent être marquées comme payées.');
+      return;
+    }
+
+    if (!window.confirm(`Marquer ${eligibleIds.length} rétrocession${eligibleIds.length > 1 ? 's' : ''} comme payée${eligibleIds.length > 1 ? 's' : ''} ?`)) {
+      return;
+    }
+
     const today = new Date().toLocaleDateString('fr-FR');
     setRetrocessions(prev => prev.map(r => (
-      ids.includes(r.id) ? { ...r, statut: 'Facturé - Payé', datePaiement: today } : r
+      eligibleIds.includes(r.id) ? { ...r, statut: 'Facturé - Payé', datePaiement: today } : r
     )));
     setSelectedIds([]);
   };
@@ -500,7 +536,7 @@ export function RetrocessionsSettings() {
                                 <motion.button
                                   whileHover={{ scale: 1.08 }}
                                   whileTap={{ scale: 0.95 }}
-                                  className="p-1.5 rounded-lg opacity-0 group-hover:opacity-100 hover:bg-gray-100 transition-all"
+                                  className="p-1.5 rounded-lg hover:bg-gray-100 transition-all"
                                 >
                                   <MoreVertical className="w-4 h-4 text-gray-600" />
                                 </motion.button>
