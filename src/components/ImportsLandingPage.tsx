@@ -153,6 +153,7 @@ export function ImportsLandingPage({ onEnableModule }: ImportsLandingPageProps) 
                     style={{
                       top: '50%',
                       left: '50%',
+                      transformOrigin: '0 -100px',
                     }}
                     animate={{
                       rotate: 360,
@@ -170,9 +171,6 @@ export function ImportsLandingPage({ onEnableModule }: ImportsLandingPageProps) 
                         repeat: Infinity,
                         ease: "easeInOut",
                       }
-                    }}
-                    style={{
-                      transformOrigin: '0 -100px',
                     }}
                   />
                 ))}
