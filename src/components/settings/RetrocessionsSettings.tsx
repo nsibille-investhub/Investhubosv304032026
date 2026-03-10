@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Plus, Download, Bell, HelpCircle, Search, AlertTriangle, Euro } from 'lucide-react';
+import { Plus, Download, Bell, HelpCircle, Search, AlertTriangle, Euro, MoreVertical } from 'lucide-react';
 import { Button } from '../ui/button';
 import { Badge } from '../ui/badge';
 import { DataPagination } from '../ui/data-pagination';
@@ -10,6 +10,12 @@ import { RetrocessionFilterBar } from '../RetrocessionFilterBar';
 import { PartenaireCard } from '../PartenaireCard';
 import { HighlightText } from '../HighlightText';
 import { RetrocessionsStatusTabs, RetrocessionStatusView } from '../RetrocessionsStatusTabs';
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from '../ui/dropdown-menu';
 
 interface Retrocession {
   id: string;
@@ -249,14 +255,6 @@ export function RetrocessionsSettings() {
   const startIndex = (currentPage - 1) * itemsPerPage;
   const paginatedRetrocessions = filteredRetrocessions.slice(startIndex, startIndex + itemsPerPage);
 
-  const statusCounts = {
-    Tous: retrocessions.length,
-    'En attente': retrocessions.filter(r => r.statut === 'En attente').length,
-    'À facturer': retrocessions.filter(r => r.statut === 'À facturer').length,
-    'Facturé - A payer': retrocessions.filter(r => r.statut === 'Facturé - A payer').length,
-    'Facturé - Payé': retrocessions.filter(r => r.statut === 'Facturé - Payé').length,
-  };
-
   const canSelectRows = activeStatusView === 'En attente' || activeStatusView === 'Facturé - A payer';
 
   const selectedRetrocessions = paginatedRetrocessions.filter(r => selectedIds.includes(r.id));
@@ -357,8 +355,8 @@ export function RetrocessionsSettings() {
           />
 
           <RetrocessionsStatusTabs
+            data={retrocessions.map(item => ({ statut: item.statut, montantTotal: item.montantTotal }))}
             activeStatus={activeStatusView}
-            counts={statusCounts}
             onStatusChange={(status) => {
               setActiveStatusView(status);
               setCurrentPage(1);
@@ -448,7 +446,7 @@ export function RetrocessionsSettings() {
                     </tr>
                   ) : (
                     paginatedRetrocessions.map((retrocession) => (
-                      <tr key={retrocession.id} className="border-b border-gray-100 hover:bg-gray-50 transition-colors">
+                      <tr key={retrocession.id} className="group border-b border-gray-100 hover:bg-gray-50 transition-colors">
                         {canSelectRows && (
                           <td className="px-4 py-3">
                             <Checkbox
@@ -496,23 +494,36 @@ export function RetrocessionsSettings() {
                           </div>
                         </td>
                         <td className="px-4 py-3">
-                          <div className="flex items-center justify-end gap-2">
-                            <Button variant="outline" size="sm" className="h-8">
-                              <Download className="w-4 h-4 mr-2" />
-                              Télécharger le décompte
-                            </Button>
-                            {activeStatusView === 'En attente' && (
-                              <Button variant="outline" size="sm" className="h-8" onClick={() => notifyRetrocessions([retrocession.id])}>
-                                <Bell className="w-4 h-4 mr-2" />
-                                Notifier
-                              </Button>
-                            )}
-                            {activeStatusView === 'Facturé - A payer' && (
-                              <Button variant="outline" size="sm" className="h-8" onClick={() => markAsPaidRetrocessions([retrocession.id])}>
-                                <Euro className="w-4 h-4 mr-2" />
-                                Marquer payé
-                              </Button>
-                            )}
+                          <div className="flex items-center justify-end">
+                            <DropdownMenu>
+                              <DropdownMenuTrigger asChild>
+                                <motion.button
+                                  whileHover={{ scale: 1.08 }}
+                                  whileTap={{ scale: 0.95 }}
+                                  className="p-1.5 rounded-lg opacity-0 group-hover:opacity-100 hover:bg-gray-100 transition-all"
+                                >
+                                  <MoreVertical className="w-4 h-4 text-gray-600" />
+                                </motion.button>
+                              </DropdownMenuTrigger>
+                              <DropdownMenuContent align="end">
+                                <DropdownMenuItem>
+                                  <Download className="w-4 h-4 mr-2" />
+                                  Télécharger le décompte
+                                </DropdownMenuItem>
+                                {activeStatusView === 'En attente' && (
+                                  <DropdownMenuItem onClick={() => notifyRetrocessions([retrocession.id])}>
+                                    <Bell className="w-4 h-4 mr-2" />
+                                    Notifier
+                                  </DropdownMenuItem>
+                                )}
+                                {activeStatusView === 'Facturé - A payer' && (
+                                  <DropdownMenuItem onClick={() => markAsPaidRetrocessions([retrocession.id])}>
+                                    <Euro className="w-4 h-4 mr-2" />
+                                    Marquer payé
+                                  </DropdownMenuItem>
+                                )}
+                              </DropdownMenuContent>
+                            </DropdownMenu>
                           </div>
                         </td>
                       </tr>
