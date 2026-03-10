@@ -3,13 +3,13 @@ import { Plus, Download, Bell, HelpCircle, Search, AlertTriangle, Euro } from 'l
 import { Button } from '../ui/button';
 import { Badge } from '../ui/badge';
 import { DataPagination } from '../ui/data-pagination';
-import { cn } from '../ui/utils';
 import { motion } from 'motion/react';
 import { InfoBanner } from '../InfoBanner';
 import { Checkbox } from '../ui/checkbox';
 import { RetrocessionFilterBar } from '../RetrocessionFilterBar';
 import { PartenaireCard } from '../PartenaireCard';
 import { HighlightText } from '../HighlightText';
+import { RetrocessionsStatusTabs, RetrocessionStatusView } from '../RetrocessionsStatusTabs';
 
 interface Retrocession {
   id: string;
@@ -227,7 +227,7 @@ export function RetrocessionsSettings() {
   const [helpMode, setHelpMode] = useState(false);
   const [currentPage, setCurrentPage] = useState(1);
   const [itemsPerPage, setItemsPerPage] = useState(10);
-  const [activeStatusView, setActiveStatusView] = useState<Retrocession['statut'] | 'Tous'>('Tous');
+  const [activeStatusView, setActiveStatusView] = useState<RetrocessionStatusView>('Tous');
   const [selectedIds, setSelectedIds] = useState<string[]>([]);
 
   const filteredRetrocessions = retrocessions.filter(ret => {
@@ -315,13 +315,7 @@ export function RetrocessionsSettings() {
     }
   };
 
-  const statusCards: Array<{ key: Retrocession['statut'] | 'Tous'; label: string; color: string }> = [
-    { key: 'Tous', label: 'Toutes', color: 'from-[#0066FF] to-[#00C2FF]' },
-    { key: 'En attente', label: 'En attente', color: 'from-gray-500 to-gray-600' },
-    { key: 'À facturer', label: 'À facturer', color: 'from-blue-500 to-blue-600' },
-    { key: 'Facturé - A payer', label: 'Facturé - A payer', color: 'from-purple-500 to-purple-600' },
-    { key: 'Facturé - Payé', label: 'Facturé - Payé', color: 'from-green-500 to-green-600' },
-  ];
+
 
   return (
     <div className="relative flex h-full">
@@ -362,31 +356,15 @@ export function RetrocessionsSettings() {
             helpUrl="https://investhub.zohodesk.eu/portal/fr/kb/articles/retrocessions"
           />
 
-          <div className="grid grid-cols-5 gap-3 mb-4">
-            {statusCards.map((card) => {
-              const isActive = activeStatusView === card.key;
-              return (
-                <motion.button
-                  key={card.key}
-                  whileHover={{ y: -2 }}
-                  whileTap={{ scale: 0.98 }}
-                  onClick={() => {
-                    setActiveStatusView(card.key);
-                    setCurrentPage(1);
-                    setSelectedIds([]);
-                  }}
-                  className={cn(
-                    'rounded-xl border p-3 text-left transition-all',
-                    isActive ? 'border-gray-900 shadow-md bg-white' : 'border-gray-200 bg-white hover:border-gray-300'
-                  )}
-                >
-                  <div className={cn('h-1 w-full rounded-full bg-gradient-to-r mb-3', card.color)} />
-                  <p className="text-xs text-gray-500">{card.label}</p>
-                  <p className="text-xl font-semibold text-gray-900">{statusCounts[card.key]}</p>
-                </motion.button>
-              );
-            })}
-          </div>
+          <RetrocessionsStatusTabs
+            activeStatus={activeStatusView}
+            counts={statusCounts}
+            onStatusChange={(status) => {
+              setActiveStatusView(status);
+              setCurrentPage(1);
+              setSelectedIds([]);
+            }}
+          />
 
           <RetrocessionFilterBar
             onFilterChange={setFilters}
@@ -519,6 +497,10 @@ export function RetrocessionsSettings() {
                         </td>
                         <td className="px-4 py-3">
                           <div className="flex items-center justify-end gap-2">
+                            <Button variant="outline" size="sm" className="h-8">
+                              <Download className="w-4 h-4 mr-2" />
+                              Télécharger le décompte
+                            </Button>
                             {activeStatusView === 'En attente' && (
                               <Button variant="outline" size="sm" className="h-8" onClick={() => notifyRetrocessions([retrocession.id])}>
                                 <Bell className="w-4 h-4 mr-2" />
