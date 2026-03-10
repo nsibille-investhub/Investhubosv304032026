@@ -22,6 +22,7 @@
         'figma:asset/2115896087cf66bcb781a8f9d0f680a46ffd65c4.png': path.resolve(__dirname, './src/assets/2115896087cf66bcb781a8f9d0f680a46ffd65c4.png'),
         'embla-carousel-react@8.6.0': 'embla-carousel-react',
         'date-fns@4.1.0': 'date-fns',
+        'date-fns@3.6.0': 'date-fns',
         'cmdk@1.1.1': 'cmdk',
         'class-variance-authority@0.7.1': 'class-variance-authority',
         '@radix-ui/react-tooltip@1.1.8': '@radix-ui/react-tooltip',
