@@ -211,7 +211,7 @@ export function generateAuditTrail(entityStatus: string): AuditEvent[] {
         }
       ];
 
-    case 'Clear':
+    case 'Clear (Multi-alert)':
       return [
         {
           id: 'evt-1',
