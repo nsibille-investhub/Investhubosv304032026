@@ -72,7 +72,6 @@ import {
 import { Badge } from './ui/badge';
 import { Progress } from './ui/progress';
 import { toast } from 'sonner';
-import { mockDocuments, Document } from '../utils/documentMockData';
 import { availableInvestors, fundLabelMap } from '../utils/investorsMockData';
 
 interface MassUploadWizardProps {
@@ -122,27 +121,7 @@ interface FolderItem {
   name: string;
   path: string;
   level: number;
-  parentId?: string;
 }
-
-// Fonction pour extraire tous les dossiers de l'arborescence avec leur niveau
-const extractAllFolders = (documents: Document[], level: number = 0, folders: FolderItem[] = []): FolderItem[] => {
-  documents.forEach(doc => {
-    if (doc.type === 'folder') {
-      folders.push({
-        id: doc.id,
-        name: doc.name,
-        path: doc.path,
-        level: level,
-        parentId: doc.parentId,
-      });
-      if (doc.children && doc.children.length > 0) {
-        extractAllFolders(doc.children, level + 1, folders);
-      }
-    }
-  });
-  return folders;
-};
 
 // Mock languages
 const availableLanguages = [
@@ -226,8 +205,28 @@ export function MassUploadWizard({ isOpen, onClose, existingFolders, inline = fa
   const [currentReviewingDocIndex, setCurrentReviewingDocIndex] = useState(0);
   const [documentZoom, setDocumentZoom] = useState(100);
 
-  // Extraire tous les dossiers disponibles
-  const availableFolders = extractAllFolders(mockDocuments);
+  const availableFolders = useMemo<FolderItem[]>(() => {
+    if (existingFolders.length === 0) {
+      return [];
+    }
+
+    const uniquePaths = Array.from(new Set(existingFolders))
+      .filter(Boolean)
+      .sort((a, b) => a.localeCompare(b, 'fr'));
+
+    return uniquePaths.map((path, index) => {
+      const segments = path.split('/').filter(Boolean);
+      const name = segments[segments.length - 1] || path;
+      return {
+        id: `folder-${index}-${path}`,
+        name,
+        path,
+        level: Math.max(0, segments.length - 1),
+      };
+    });
+  }, [existingFolders]);
+
+  const defaultFolderPath = availableFolders[0]?.path || '/';
 
   // Fonction pour obtenir la taille du fichier formatée
   const getFileSize = (bytes: number): string => {
@@ -307,7 +306,7 @@ export function MassUploadWizard({ isOpen, onClose, existingFolders, inline = fa
     return {
       name: fileName,
       description: `Document automatiquement analysé : ${fileName}. Ce document contient des informations importantes relatives aux activités de l'entreprise.`,
-      folder: '/PERE 1', // Dossier par défaut
+      folder: defaultFolderPath,
       language: 'fr',
       restrictToLanguage: false,
       targetType: fileName.toLowerCase().includes('investor') ? 'investor' : 
@@ -354,7 +353,7 @@ export function MassUploadWizard({ isOpen, onClose, existingFolders, inline = fa
         // Valeurs par défaut temporaires (seront remplies par l'IA)
         name: file.name.replace(/\.[^/.]+$/, ''),
         description: '',
-        folder: '/PERE 1',
+        folder: defaultFolderPath,
         language: 'fr',
         restrictToLanguage: false,
         targetType: 'all',
