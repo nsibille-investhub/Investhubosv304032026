@@ -365,6 +365,24 @@ export function DocumentsPage({ selectedSpace }: DocumentsPageProps) {
     }, 0),
   };
 
+  if (wizardOpen) {
+    return (
+      <div className="flex-1 flex min-w-0">
+        <div className="flex-1 flex flex-col min-h-0">
+          <div className="px-2 pb-3">
+            <p className="text-sm text-gray-500">InvestHub OS / Data Room / Documents / <span className="text-gray-900 font-medium">Import</span></p>
+          </div>
+          <MassUploadWizard
+            isOpen={wizardOpen}
+            onClose={() => setWizardOpen(false)}
+            existingFolders={getAllFolderNames(spaceDocuments)}
+            embedded
+          />
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="flex-1 flex gap-4 min-w-0">
       <motion.div
@@ -571,12 +589,6 @@ export function DocumentsPage({ selectedSpace }: DocumentsPageProps) {
         )}
       </AnimatePresence>
 
-      {/* Mass Upload Wizard */}
-      <MassUploadWizard
-        isOpen={wizardOpen}
-        onClose={() => setWizardOpen(false)}
-        existingFolders={getAllFolderNames(spaceDocuments)}
-      />
     </div>
   );
 }
