@@ -9,6 +9,7 @@ interface DataRoomSpacesViewProps {
   spaces: DataRoomSpace[];
   onSpaceSelect: (space: DataRoomSpace) => void;
   onAddSpace: () => void;
+  onMassUpload: () => void;
   onConfigureSpace: (space: DataRoomSpace) => void;
   onOpenBirdView?: () => void;
 }
@@ -17,6 +18,7 @@ export function DataRoomSpacesView({
   spaces,
   onSpaceSelect,
   onAddSpace,
+  onMassUpload,
   onConfigureSpace,
   onOpenBirdView
 }: DataRoomSpacesViewProps) {
@@ -72,6 +74,13 @@ export function DataRoomSpacesView({
                 Bird View
               </Button>
             )}
+            <Button
+              onClick={onMassUpload}
+              className="bg-gradient-to-r from-[#0066FF] to-[#0052CC] text-white hover:shadow-lg transition-all duration-300 gap-2"
+            >
+              <Plus className="w-4 h-4" />
+              Import Massif
+            </Button>
             <Button
               onClick={onAddSpace}
               className="bg-gradient-to-br from-blue-500 to-blue-600 text-white hover:from-blue-600 hover:to-blue-700 gap-2"
