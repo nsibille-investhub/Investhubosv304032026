@@ -5,9 +5,7 @@ import {
   Grid3x3,
   List,
   Download,
-  Eye,
   FileText,
-  Folder,
   ChevronDown,
   PackageOpen,
   Search
@@ -29,9 +27,6 @@ import { DocumentTreeSidebar } from './DocumentTreeSidebar';
 import { DocumentListView } from './DocumentListView';
 import { Document, mockDocuments } from '../utils/documentMockData';
 import { toast } from 'sonner';
-import { ViewAsSelector } from './ViewAsSelector';
-import { ViewAsInfoBanner } from './ViewAsInfoBanner';
-import { Viewer, canViewFolder } from '../utils/viewersMockData';
 import { MassUploadWizard } from './MassUploadWizard';
 import { DataRoomSpace } from '../utils/dataRoomSpacesData';
 import { getTreeForSpace, TreeNode } from '../utils/dataRoomTreeData';
@@ -52,7 +47,6 @@ export function DocumentsPage({ selectedSpace }: DocumentsPageProps) {
   const [selectedCount, setSelectedCount] = useState(0);
   const [selectedItems, setSelectedItems] = useState<any[]>([]);
   const [wizardOpen, setWizardOpen] = useState(false);
-  const [selectedViewer, setSelectedViewer] = useState<Viewer | null>(null);
   
   // Navigation state
   const [currentFolderId, setCurrentFolderId] = useState<string | null>(null);
@@ -176,48 +170,9 @@ export function DocumentsPage({ selectedSpace }: DocumentsPageProps) {
     setActiveFilters(filters);
   };
 
-  // Filter documents based on selected viewer
   const filteredDocuments = useMemo(() => {
-    if (!selectedViewer) {
-      return spaceDocuments;
-    }
-
-    // Function to filter documents recursively
-    const filterDocumentsRecursive = (docs: Document[]): Document[] => {
-      return docs
-        .map(doc => {
-          // If it's a folder
-          if (doc.type === 'folder') {
-            // Check if viewer can access this folder
-            const canAccess = doc.isRoot || canViewFolder(selectedViewer, doc.id);
-            
-            // Filter children recursively
-            const filteredChildren = doc.children 
-              ? filterDocumentsRecursive(doc.children)
-              : [];
-            
-            // Only include folder if:
-            // 1. Viewer can access it directly, OR
-            // 2. It has visible children (and it's not root)
-            if (canAccess || (filteredChildren.length > 0 && !doc.isRoot)) {
-              return {
-                ...doc,
-                children: filteredChildren
-              };
-            }
-            
-            return null;
-          }
-          
-          // For documents, include if parent folder is accessible
-          // We'll handle this at the folder level
-          return doc;
-        })
-        .filter(doc => doc !== null) as Document[];
-    };
-
-    return filterDocumentsRecursive(spaceDocuments);
-  }, [selectedViewer, spaceDocuments]);
+    return spaceDocuments;
+  }, [spaceDocuments]);
 
   // Find current folder object
   const findFolderById = (docs: Document[], folderId: string | null): Document | null => {
@@ -247,124 +202,6 @@ export function DocumentsPage({ selectedSpace }: DocumentsPageProps) {
     setCurrentFolderPath(folderPath);
   };
 
-  // Calculate viewer stats
-  const viewerStats = useMemo(() => {
-    if (!selectedViewer) {
-      return { visibleFolders: 0, hiddenFolders: 0, visibleDocs: 0 };
-    }
-
-    let totalFolders = 0;
-    let visibleFolders = 0;
-    let visibleDocs = 0;
-
-    const countItems = (docs: Document[], filtered: Document[]) => {
-      docs.forEach(doc => {
-        if (doc.type === 'folder' && !doc.isRoot) {
-          totalFolders++;
-          
-          // Check if this folder is in filtered results
-          const isVisible = filtered.some(fd => {
-            if (fd.id === doc.id) return true;
-            if (fd.children) {
-              return checkInChildren(fd.children, doc.id);
-            }
-            return false;
-          });
-
-          if (isVisible) {
-            visibleFolders++;
-          }
-        } else if (doc.type !== 'folder') {
-          // Count visible documents
-          const isVisible = checkDocInFiltered(filtered, doc.id);
-          if (isVisible) {
-            visibleDocs++;
-          }
-        }
-
-        if (doc.children) {
-          countItems(doc.children, filtered);
-        }
-      });
-    };
-
-    const checkInChildren = (children: Document[], id: string): boolean => {
-      return children.some(child => {
-        if (child.id === id) return true;
-        if (child.children) return checkInChildren(child.children, id);
-        return false;
-      });
-    };
-
-    const checkDocInFiltered = (docs: Document[], docId: string): boolean => {
-      return docs.some(doc => {
-        if (doc.id === docId) return true;
-        if (doc.children) return checkDocInFiltered(doc.children, docId);
-        return false;
-      });
-    };
-
-    countItems(spaceDocuments, filteredDocuments);
-
-    return {
-      visibleFolders,
-      hiddenFolders: totalFolders - visibleFolders,
-      visibleDocs
-    };
-  }, [selectedViewer, filteredDocuments, spaceDocuments]);
-
-  // Calculate stats from documents (excluding root)
-  const stats = {
-    totalDocuments: spaceDocuments.reduce((acc, doc) => {
-      const countDocs = (d: Document): number => {
-        let count = d.type !== 'folder' ? 1 : 0;
-        if (d.children) {
-          count += d.children.reduce((sum, child) => sum + countDocs(child), 0);
-        }
-        return count;
-      };
-      // Skip root folder in count
-      if (doc.isRoot && doc.children) {
-        return acc + doc.children.reduce((sum, child) => sum + countDocs(child), 0);
-      }
-      return acc + countDocs(doc);
-    }, 0),
-    totalFolders: spaceDocuments.reduce((acc, doc) => {
-      const countFolders = (d: Document, skipRoot: boolean = false): number => {
-        let count = d.type === 'folder' && !skipRoot ? 1 : 0;
-        if (d.children) {
-          count += d.children.reduce((sum, child) => sum + countFolders(child, false), 0);
-        }
-        return count;
-      };
-      // Skip root folder in count
-      if (doc.isRoot && doc.children) {
-        return acc + doc.children.reduce((sum, child) => sum + countFolders(child, false), 0);
-      }
-      return acc + countFolders(doc);
-    }, 0),
-    totalViews: spaceDocuments.reduce((acc, doc) => {
-      const sumViews = (d: Document): number => {
-        let sum = d.isRoot ? 0 : d.views;
-        if (d.children) {
-          sum += d.children.reduce((total, child) => total + sumViews(child), 0);
-        }
-        return sum;
-      };
-      return acc + sumViews(doc);
-    }, 0),
-    totalDownloads: spaceDocuments.reduce((acc, doc) => {
-      const sumDownloads = (d: Document): number => {
-        let sum = d.isRoot ? 0 : d.downloads;
-        if (d.children) {
-          sum += d.children.reduce((total, child) => total + sumDownloads(child), 0);
-        }
-        return sum;
-      };
-      return acc + sumDownloads(doc);
-    }, 0),
-  };
-
   return (
     <div className="flex-1 flex gap-4 min-w-0">
       <motion.div
@@ -377,9 +214,9 @@ export function DocumentsPage({ selectedSpace }: DocumentsPageProps) {
         transition={{ type: 'spring', stiffness: 200, damping: 25 }}
         className="bg-white rounded-2xl shadow-sm border border-gray-200 overflow-hidden flex flex-col min-w-0"
       >
-        {/* Header with Stats */}
+        {/* Header */}
         <div className="px-6 py-5 border-b border-gray-200 bg-gradient-to-r from-white to-gray-50/50">
-          <div className="flex items-center justify-between mb-4">
+          <div className="flex items-center justify-between">
             <div>
               <h2 className="text-xl font-semibold text-gray-900">Documents</h2>
               <p className="text-sm text-gray-600 mt-1">
@@ -388,21 +225,6 @@ export function DocumentsPage({ selectedSpace }: DocumentsPageProps) {
             </div>
             
             <div className="flex items-center gap-3">
-              {/* View As Selector */}
-              <ViewAsSelector
-                selectedViewer={selectedViewer}
-                onViewerChange={(viewer) => {
-                  setSelectedViewer(viewer);
-                  if (viewer) {
-                    toast.success('Mode vue investisseur activé', {
-                      description: `Visualisation comme ${viewer.name}`
-                    });
-                  } else {
-                    toast.info('Mode vue investisseur désactivé');
-                  }
-                }}
-              />
-
               {/* Selection Count - Always visible */}
               <div className="text-sm text-gray-600">
                 <span className="font-medium text-gray-900">{selectedCount}</span> sélectionné{selectedCount > 1 ? 's' : ''}
@@ -442,66 +264,7 @@ export function DocumentsPage({ selectedSpace }: DocumentsPageProps) {
               </Button>
             </div>
           </div>
-
-          {/* Stats Row */}
-          <div className="grid grid-cols-4 gap-4">
-            <motion.div
-              whileHover={{ scale: 1.02, y: -2 }}
-              className="p-3 bg-gradient-to-br from-blue-50 to-blue-100/30 rounded-xl border border-blue-200"
-            >
-              <div className="flex items-center gap-2 text-blue-700 mb-1">
-                <FileText className="w-4 h-4" />
-                <span className="text-xs font-medium">Documents</span>
-              </div>
-              <p className="text-xl font-semibold text-blue-900">{stats.totalDocuments}</p>
-            </motion.div>
-
-            <motion.div
-              whileHover={{ scale: 1.02, y: -2 }}
-              className="p-3 bg-gradient-to-br from-amber-50 to-amber-100/30 rounded-xl border border-amber-200"
-            >
-              <div className="flex items-center gap-2 text-amber-700 mb-1">
-                <Folder className="w-4 h-4" />
-                <span className="text-xs font-medium">Dossiers</span>
-              </div>
-              <p className="text-xl font-semibold text-amber-900">{stats.totalFolders}</p>
-            </motion.div>
-
-            <motion.div
-              whileHover={{ scale: 1.02, y: -2 }}
-              className="p-3 bg-gradient-to-br from-purple-50 to-purple-100/30 rounded-xl border border-purple-200"
-            >
-              <div className="flex items-center gap-2 text-purple-700 mb-1">
-                <Eye className="w-4 h-4" />
-                <span className="text-xs font-medium">Vues totales</span>
-              </div>
-              <p className="text-xl font-semibold text-purple-900">{stats.totalViews.toLocaleString()}</p>
-            </motion.div>
-
-            <motion.div
-              whileHover={{ scale: 1.02, y: -2 }}
-              className="p-3 bg-gradient-to-br from-emerald-50 to-emerald-100/30 rounded-xl border border-emerald-200"
-            >
-              <div className="flex items-center gap-2 text-emerald-700 mb-1">
-                <Download className="w-4 h-4" />
-                <span className="text-xs font-medium">Téléchargements</span>
-              </div>
-              <p className="text-xl font-semibold text-emerald-900">{stats.totalDownloads.toLocaleString()}</p>
-            </motion.div>
-          </div>
         </div>
-
-        {/* View As Info Banner */}
-        <AnimatePresence>
-          {selectedViewer && (
-            <ViewAsInfoBanner
-              viewer={selectedViewer}
-              visibleFoldersCount={viewerStats.visibleFolders}
-              hiddenFoldersCount={viewerStats.hiddenFolders}
-              visibleDocsCount={viewerStats.visibleDocs}
-            />
-          )}
-        </AnimatePresence>
 
         {/* Search Bar */}
         <div className="px-6 py-3 border-b border-gray-200">
