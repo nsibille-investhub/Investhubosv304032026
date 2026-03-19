@@ -11,6 +11,14 @@ import { PartenaireCard } from '../PartenaireCard';
 import { HighlightText } from '../HighlightText';
 import { RetrocessionsStatusTabs, RetrocessionStatusView } from '../RetrocessionsStatusTabs';
 import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from '../ui/dialog';
+import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
@@ -32,6 +40,22 @@ interface Retrocession {
   statut: 'En attente' | 'À facturer' | 'Facturé - A payer' | 'Facturé - Payé';
   hasAlert?: boolean;
   alertMessage?: string;
+}
+
+type RetrocessionActionType = 'notify' | 'markAsPaid';
+
+interface ActionReviewItem {
+  id: string;
+  numero: string;
+  partenaire: string;
+  statut: Retrocession['statut'];
+}
+
+interface PendingActionReview {
+  action: RetrocessionActionType;
+  selectedIds: string[];
+  eligibleItems: ActionReviewItem[];
+  ineligibleItems: ActionReviewItem[];
 }
 
 const mockRetrocessions: Retrocession[] = [
@@ -235,6 +259,7 @@ export function RetrocessionsSettings() {
   const [itemsPerPage, setItemsPerPage] = useState(10);
   const [activeStatusView, setActiveStatusView] = useState<RetrocessionStatusView>('Tous');
   const [selectedIds, setSelectedIds] = useState<string[]>([]);
+  const [pendingActionReview, setPendingActionReview] = useState<PendingActionReview | null>(null);
 
   const filteredRetrocessions = retrocessions.filter(ret => {
     const matchesSearch = !searchQuery || 
@@ -255,9 +280,7 @@ export function RetrocessionsSettings() {
   const startIndex = (currentPage - 1) * itemsPerPage;
   const paginatedRetrocessions = filteredRetrocessions.slice(startIndex, startIndex + itemsPerPage);
 
-  const canSelectRows = activeStatusView === 'En attente' || activeStatusView === 'Facturé - A payer';
-
-  const selectedRetrocessions = paginatedRetrocessions.filter(r => selectedIds.includes(r.id));
+  const selectedRetrocessions = retrocessions.filter(r => selectedIds.includes(r.id));
 
   const handleExport = () => {
     alert('Export des rétrocessions');
@@ -267,56 +290,96 @@ export function RetrocessionsSettings() {
     alert('Génération des décomptes');
   };
 
-  const notifyRetrocessions = (ids: string[]) => {
-    if (ids.length === 0) {
-      alert('Sélectionnez au moins une rétrocession à notifier.');
-      return;
+  const getActionConfig = (action: RetrocessionActionType) => {
+    if (action === 'notify') {
+      return {
+        label: 'Notifier',
+        pastParticiple: 'notifiées',
+        emptySelectionMessage: 'Sélectionnez au moins une rétrocession à notifier.',
+        noEligibleMessage: 'Aucune rétrocession sélectionnée ne peut être notifiée.',
+        requiredStatus: 'En attente' as const,
+      };
     }
 
-    const eligibleIds = retrocessions
-      .filter(item => ids.includes(item.id) && item.statut === 'En attente')
-      .map(item => item.id);
-
-    if (eligibleIds.length === 0) {
-      alert('Seules les rétrocessions au statut "En attente" peuvent être notifiées.');
-      return;
-    }
-
-    if (!window.confirm(`Notifier ${eligibleIds.length} rétrocession${eligibleIds.length > 1 ? 's' : ''} ?`)) {
-      return;
-    }
-
-    const today = new Date().toLocaleDateString('fr-FR');
-    setRetrocessions(prev => prev.map(r => (
-      eligibleIds.includes(r.id) ? { ...r, dateNotification: today } : r
-    )));
-    setSelectedIds([]);
+    return {
+      label: 'Marquer comme payé',
+      pastParticiple: 'marquées comme payées',
+      emptySelectionMessage: 'Sélectionnez au moins une rétrocession à marquer comme payée.',
+      noEligibleMessage: 'Aucune rétrocession sélectionnée ne peut être marquée comme payée.',
+      requiredStatus: 'Facturé - A payer' as const,
+    };
   };
 
-  const markAsPaidRetrocessions = (ids: string[]) => {
+  const getIneligibleReason = (action: RetrocessionActionType, statut: Retrocession['statut']) => {
+    if (action === 'notify') {
+      return `Statut actuel : ${statut}. Seules les rétrocessions "En attente" peuvent être notifiées.`;
+    }
+
+    return `Statut actuel : ${statut}. Seules les rétrocessions "Facturé - A payer" peuvent être marquées comme payées.`;
+  };
+
+  const prepareActionReview = (action: RetrocessionActionType, ids: string[]) => {
+    const actionConfig = getActionConfig(action);
+
     if (ids.length === 0) {
-      alert('Sélectionnez au moins une rétrocession à marquer comme payée.');
+      alert(actionConfig.emptySelectionMessage);
       return;
     }
 
-    const eligibleIds = retrocessions
-      .filter(item => ids.includes(item.id) && item.statut === 'Facturé - A payer')
-      .map(item => item.id);
+    const selectedItems = retrocessions.filter(item => ids.includes(item.id));
+    const eligibleItems = selectedItems
+      .filter(item => item.statut === actionConfig.requiredStatus)
+      .map(item => ({
+        id: item.id,
+        numero: item.numero,
+        partenaire: item.partenaire,
+        statut: item.statut,
+      }));
+    const ineligibleItems = selectedItems
+      .filter(item => item.statut !== actionConfig.requiredStatus)
+      .map(item => ({
+        id: item.id,
+        numero: item.numero,
+        partenaire: item.partenaire,
+        statut: item.statut,
+      }));
+
+    setPendingActionReview({
+      action,
+      selectedIds: ids,
+      eligibleItems,
+      ineligibleItems,
+    });
+  };
+
+  const applyPendingAction = () => {
+    if (!pendingActionReview) {
+      return;
+    }
+
+    const { action, eligibleItems, selectedIds: pendingIds } = pendingActionReview;
+    const eligibleIds = eligibleItems.map(item => item.id);
 
     if (eligibleIds.length === 0) {
-      alert('Seules les rétrocessions au statut "Facturé - A payer" peuvent être marquées comme payées.');
-      return;
-    }
-
-    if (!window.confirm(`Marquer ${eligibleIds.length} rétrocession${eligibleIds.length > 1 ? 's' : ''} comme payée${eligibleIds.length > 1 ? 's' : ''} ?`)) {
+      alert(getActionConfig(action).noEligibleMessage);
+      setPendingActionReview(null);
       return;
     }
 
     const today = new Date().toLocaleDateString('fr-FR');
-    setRetrocessions(prev => prev.map(r => (
-      eligibleIds.includes(r.id) ? { ...r, statut: 'Facturé - Payé', datePaiement: today } : r
-    )));
-    setSelectedIds([]);
+
+    if (action === 'notify') {
+      setRetrocessions(prev => prev.map(r => (
+        eligibleIds.includes(r.id) ? { ...r, dateNotification: today } : r
+      )));
+    } else {
+      setRetrocessions(prev => prev.map(r => (
+        eligibleIds.includes(r.id) ? { ...r, statut: 'Facturé - Payé', datePaiement: today } : r
+      )));
+    }
+
+    setSelectedIds(prev => prev.filter(id => !pendingIds.includes(id)));
+    setPendingActionReview(null);
   };
 
   const toggleItemSelection = (itemId: string) => {
@@ -328,10 +391,10 @@ export function RetrocessionsSettings() {
 
   const toggleSelectAllVisible = (checked: boolean) => {
     if (checked) {
-      setSelectedIds(paginatedRetrocessions.map(r => r.id));
+      setSelectedIds(prev => Array.from(new Set([...prev, ...paginatedRetrocessions.map(r => r.id)])));
       return;
     }
-    setSelectedIds([]);
+    setSelectedIds(prev => prev.filter(id => !paginatedRetrocessions.some(item => item.id === id)));
   };
 
   const getStatutBadge = (statut: Retrocession['statut']) => {
@@ -416,30 +479,26 @@ export function RetrocessionsSettings() {
                 <Download className="w-4 h-4 mr-2" />
                 Exporter
               </Button>
-              {activeStatusView === 'En attente' && (
-                <Button
-                  variant="outline"
-                  size="sm"
-                  className="h-8"
-                  onClick={() => notifyRetrocessions(selectedRetrocessions.map(item => item.id))}
+              <Button
+                variant="outline"
+                size="sm"
+                className="h-8"
+                onClick={() => prepareActionReview('notify', selectedRetrocessions.map(item => item.id))}
+                disabled={selectedRetrocessions.length === 0}
+              >
+                <Bell className="w-4 h-4 mr-2" />
+                Notifier ({selectedRetrocessions.length})
+              </Button>
+              <Button
+                variant="outline"
+                size="sm"
+                className="h-8"
+                onClick={() => prepareActionReview('markAsPaid', selectedRetrocessions.map(item => item.id))}
                   disabled={selectedRetrocessions.length === 0}
-                >
-                  <Bell className="w-4 h-4 mr-2" />
-                  Notifier ({selectedRetrocessions.length})
-                </Button>
-              )}
-              {activeStatusView === 'Facturé - A payer' && (
-                <Button
-                  variant="outline"
-                  size="sm"
-                  className="h-8"
-                  onClick={() => markAsPaidRetrocessions(selectedRetrocessions.map(item => item.id))}
-                  disabled={selectedRetrocessions.length === 0}
-                >
-                  <Euro className="w-4 h-4 mr-2" />
-                  Marquer comme payé ({selectedRetrocessions.length})
-                </Button>
-              )}
+              >
+                <Euro className="w-4 h-4 mr-2" />
+                Marquer comme payé ({selectedRetrocessions.length})
+              </Button>
             </div>
           </div>
 
@@ -448,14 +507,12 @@ export function RetrocessionsSettings() {
               <table className="w-full">
                 <thead>
                   <tr className="border-b border-gray-200 bg-gray-50">
-                    {canSelectRows && (
-                      <th className="text-left px-4 py-3 text-xs text-gray-500 w-12">
-                        <Checkbox
-                          checked={paginatedRetrocessions.length > 0 && selectedIds.length === paginatedRetrocessions.length}
-                          onCheckedChange={(checked) => toggleSelectAllVisible(!!checked)}
-                        />
-                      </th>
-                    )}
+                    <th className="text-left px-4 py-3 text-xs text-gray-500 w-12">
+                      <Checkbox
+                        checked={paginatedRetrocessions.length > 0 && paginatedRetrocessions.every(item => selectedIds.includes(item.id))}
+                        onCheckedChange={(checked) => toggleSelectAllVisible(!!checked)}
+                      />
+                    </th>
                     <th className="text-left px-4 py-3 text-xs text-gray-500 w-20">#</th>
                     <th className="text-left px-4 py-3 text-xs text-gray-500 w-36">Type</th>
                     <th className="text-left px-4 py-3 text-xs text-gray-500 w-28">Date</th>
@@ -473,7 +530,7 @@ export function RetrocessionsSettings() {
                 <tbody>
                   {paginatedRetrocessions.length === 0 ? (
                     <tr>
-                      <td colSpan={canSelectRows ? 13 : 12} className="p-8 text-center text-gray-500">
+                      <td colSpan={13} className="p-8 text-center text-gray-500">
                         <div className="flex flex-col items-center gap-2">
                           <Search className="w-8 h-8 text-gray-300" />
                           <p className="text-sm">Aucune rétrocession trouvée</p>
@@ -483,14 +540,12 @@ export function RetrocessionsSettings() {
                   ) : (
                     paginatedRetrocessions.map((retrocession) => (
                       <tr key={retrocession.id} className="group border-b border-gray-100 hover:bg-gray-50 transition-colors">
-                        {canSelectRows && (
-                          <td className="px-4 py-3">
-                            <Checkbox
-                              checked={selectedIds.includes(retrocession.id)}
-                              onCheckedChange={() => toggleItemSelection(retrocession.id)}
-                            />
-                          </td>
-                        )}
+                        <td className="px-4 py-3">
+                          <Checkbox
+                            checked={selectedIds.includes(retrocession.id)}
+                            onCheckedChange={() => toggleItemSelection(retrocession.id)}
+                          />
+                        </td>
                         <td className="px-4 py-3 text-sm text-gray-600">{retrocession.numero}</td>
                         <td className="px-4 py-3 text-sm text-gray-600">{retrocession.type}</td>
                         <td className="px-4 py-3 text-sm text-gray-600">{retrocession.date}</td>
@@ -546,18 +601,14 @@ export function RetrocessionsSettings() {
                                   <Download className="w-4 h-4 mr-2" />
                                   Télécharger le décompte
                                 </DropdownMenuItem>
-                                {activeStatusView === 'En attente' && (
-                                  <DropdownMenuItem onClick={() => notifyRetrocessions([retrocession.id])}>
-                                    <Bell className="w-4 h-4 mr-2" />
-                                    Notifier
-                                  </DropdownMenuItem>
-                                )}
-                                {activeStatusView === 'Facturé - A payer' && (
-                                  <DropdownMenuItem onClick={() => markAsPaidRetrocessions([retrocession.id])}>
-                                    <Euro className="w-4 h-4 mr-2" />
-                                    Marquer payé
-                                  </DropdownMenuItem>
-                                )}
+                                <DropdownMenuItem onClick={() => prepareActionReview('notify', [retrocession.id])}>
+                                  <Bell className="w-4 h-4 mr-2" />
+                                  Notifier
+                                </DropdownMenuItem>
+                                <DropdownMenuItem onClick={() => prepareActionReview('markAsPaid', [retrocession.id])}>
+                                  <Euro className="w-4 h-4 mr-2" />
+                                  Marquer payé
+                                </DropdownMenuItem>
                               </DropdownMenuContent>
                             </DropdownMenu>
                           </div>
@@ -585,6 +636,78 @@ export function RetrocessionsSettings() {
           </div>
         </div>
       </motion.div>
+
+      <Dialog open={!!pendingActionReview} onOpenChange={(open) => !open && setPendingActionReview(null)}>
+        <DialogContent className="max-w-2xl max-h-[85vh] overflow-y-auto">
+          {pendingActionReview && (
+            <>
+              <DialogHeader>
+                <DialogTitle>{getActionConfig(pendingActionReview.action).label}</DialogTitle>
+                <DialogDescription>
+                  {pendingActionReview.eligibleItems.length} rétrocession{pendingActionReview.eligibleItems.length > 1 ? 's seront' : ' sera'} {getActionConfig(pendingActionReview.action).pastParticiple}
+                  {pendingActionReview.ineligibleItems.length > 0 ? ` et ${pendingActionReview.ineligibleItems.length} ne seront pas impactée${pendingActionReview.ineligibleItems.length > 1 ? 's' : ''}.` : '.'}
+                </DialogDescription>
+              </DialogHeader>
+
+              <div className="space-y-6">
+                <div className="rounded-lg border border-green-200 bg-green-50 p-4">
+                  <div className="flex items-center justify-between gap-4">
+                    <h3 className="font-medium text-green-900">Lignes impactées</h3>
+                    <Badge className="bg-green-100 text-green-800 border-green-200">
+                      {pendingActionReview.eligibleItems.length}
+                    </Badge>
+                  </div>
+                  <div className="mt-3 space-y-2">
+                    {pendingActionReview.eligibleItems.length === 0 ? (
+                      <p className="text-sm text-green-900/80">Aucune ligne éligible pour cette action.</p>
+                    ) : (
+                      pendingActionReview.eligibleItems.map(item => (
+                        <div key={item.id} className="rounded-md border border-green-200 bg-white px-3 py-2 text-sm text-gray-700">
+                          <div className="font-medium text-gray-900">#{item.numero} — {item.partenaire}</div>
+                          <div className="text-xs text-gray-500">Statut actuel : {item.statut}</div>
+                        </div>
+                      ))
+                    )}
+                  </div>
+                </div>
+
+                <div className="rounded-lg border border-amber-200 bg-amber-50 p-4">
+                  <div className="flex items-center justify-between gap-4">
+                    <h3 className="font-medium text-amber-900">Lignes non impactées</h3>
+                    <Badge className="bg-amber-100 text-amber-800 border-amber-200">
+                      {pendingActionReview.ineligibleItems.length}
+                    </Badge>
+                  </div>
+                  <div className="mt-3 space-y-2">
+                    {pendingActionReview.ineligibleItems.length === 0 ? (
+                      <p className="text-sm text-amber-900/80">Toutes les lignes sélectionnées sont éligibles.</p>
+                    ) : (
+                      pendingActionReview.ineligibleItems.map(item => (
+                        <div key={item.id} className="rounded-md border border-amber-200 bg-white px-3 py-2 text-sm text-gray-700">
+                          <div className="font-medium text-gray-900">#{item.numero} — {item.partenaire}</div>
+                          <div className="text-xs text-gray-500">{getIneligibleReason(pendingActionReview.action, item.statut)}</div>
+                        </div>
+                      ))
+                    )}
+                  </div>
+                </div>
+              </div>
+
+              <DialogFooter className="mt-6">
+                <Button variant="outline" onClick={() => setPendingActionReview(null)}>
+                  Annuler
+                </Button>
+                <Button
+                  onClick={applyPendingAction}
+                  disabled={pendingActionReview.eligibleItems.length === 0}
+                >
+                  Confirmer
+                </Button>
+              </DialogFooter>
+            </>
+          )}
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
