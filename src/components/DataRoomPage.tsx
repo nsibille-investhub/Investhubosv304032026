@@ -8,6 +8,7 @@ import { BirdViewPage } from './BirdViewPage';
 import { toast } from 'sonner';
 import { ArrowLeft } from 'lucide-react';
 import { Button } from './ui/button';
+import { MassUploadWizard } from './MassUploadWizard';
 
 interface DataRoomPageProps {
   onSpaceChange?: (space: DataRoomSpace | null) => void;
@@ -19,6 +20,7 @@ export function DataRoomPage({ onSpaceChange }: DataRoomPageProps) {
   const [spaceConfigDialogOpen, setSpaceConfigDialogOpen] = useState(false);
   const [editingSpace, setEditingSpace] = useState<DataRoomSpace | null>(null);
   const [showBirdView, setShowBirdView] = useState(false);
+  const [showMassUploadWizard, setShowMassUploadWizard] = useState(false);
 
   const handleSpaceSelect = (space: DataRoomSpace) => {
     setSelectedSpace(space);
@@ -45,6 +47,10 @@ export function DataRoomPage({ onSpaceChange }: DataRoomPageProps) {
   const handleConfigureSpace = (space: DataRoomSpace) => {
     setEditingSpace(space);
     setSpaceConfigDialogOpen(true);
+  };
+
+  const handleOpenMassUpload = () => {
+    setShowMassUploadWizard(true);
   };
 
   const handleSaveSpace = (spaceData: Partial<DataRoomSpace>) => {
@@ -103,6 +109,7 @@ export function DataRoomPage({ onSpaceChange }: DataRoomPageProps) {
               spaces={dataRoomSpaces}
               onSpaceSelect={handleSpaceSelect}
               onAddSpace={handleAddSpace}
+              onMassUpload={handleOpenMassUpload}
               onConfigureSpace={handleConfigureSpace}
               onOpenBirdView={() => setShowBirdView(true)}
             />
@@ -157,6 +164,12 @@ export function DataRoomPage({ onSpaceChange }: DataRoomPageProps) {
         space={editingSpace}
         onSave={handleSaveSpace}
         onDelete={handleDeleteSpace}
+      />
+
+      <MassUploadWizard
+        isOpen={showMassUploadWizard}
+        onClose={() => setShowMassUploadWizard(false)}
+        existingFolders={[]}
       />
     </div>
   );
