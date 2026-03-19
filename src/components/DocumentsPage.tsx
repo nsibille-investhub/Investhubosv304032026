@@ -202,6 +202,19 @@ export function DocumentsPage({ selectedSpace }: DocumentsPageProps) {
     setCurrentFolderPath(folderPath);
   };
 
+  if (wizardOpen) {
+    return (
+      <div className="flex-1 min-h-0">
+        <MassUploadWizard
+          isOpen={wizardOpen}
+          onClose={() => setWizardOpen(false)}
+          existingFolders={getAllFolderNames(spaceDocuments)}
+          inline
+        />
+      </div>
+    );
+  }
+
   return (
     <div className="flex-1 flex gap-4 min-w-0">
       <motion.div
@@ -334,12 +347,6 @@ export function DocumentsPage({ selectedSpace }: DocumentsPageProps) {
         )}
       </AnimatePresence>
 
-      {/* Mass Upload Wizard */}
-      <MassUploadWizard
-        isOpen={wizardOpen}
-        onClose={() => setWizardOpen(false)}
-        existingFolders={getAllFolderNames(spaceDocuments)}
-      />
     </div>
   );
 }

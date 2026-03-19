@@ -79,6 +79,7 @@ interface MassUploadWizardProps {
   isOpen: boolean;
   onClose: () => void;
   existingFolders: string[];
+  inline?: boolean;
 }
 
 interface UploadedFile {
@@ -210,7 +211,7 @@ const availableEmailTemplates = [
   { value: 'newsletter', label: 'Newsletter', icon: '📰' },
 ];
 
-export function MassUploadWizard({ isOpen, onClose, existingFolders }: MassUploadWizardProps) {
+export function MassUploadWizard({ isOpen, onClose, existingFolders, inline = false }: MassUploadWizardProps) {
   const [currentStep, setCurrentStep] = useState(1);
   const [uploadedFiles, setUploadedFiles] = useState<UploadedFile[]>([]);
   const [dragActive, setDragActive] = useState(false);
@@ -728,8 +729,8 @@ export function MassUploadWizard({ isOpen, onClose, existingFolders }: MassUploa
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
         exit={{ opacity: 0 }}
-        className="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center p-4"
-        onClick={onClose}
+        className={inline ? 'h-full flex flex-col' : 'fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center p-4'}
+        onClick={inline ? undefined : onClose}
       >
         <motion.div
           initial={{ scale: 0.95, opacity: 0, y: 20 }}
@@ -737,7 +738,9 @@ export function MassUploadWizard({ isOpen, onClose, existingFolders }: MassUploa
           exit={{ scale: 0.95, opacity: 0, y: 20 }}
           transition={{ type: 'spring', damping: 25, stiffness: 300 }}
           onClick={(e) => e.stopPropagation()}
-          className="bg-white rounded-2xl shadow-2xl w-full max-w-7xl max-h-[90vh] overflow-hidden flex flex-col"
+          className={inline
+            ? 'bg-white border border-gray-200 rounded-2xl overflow-hidden flex flex-col h-full'
+            : 'bg-white rounded-2xl shadow-2xl w-full max-w-7xl max-h-[90vh] overflow-hidden flex flex-col'}
         >
           {/* Header */}
           <div className="px-6 py-5 border-b border-gray-200 bg-gradient-to-r from-white to-gray-50 flex items-center justify-between">
@@ -755,14 +758,16 @@ export function MassUploadWizard({ isOpen, onClose, existingFolders }: MassUploa
                 </p>
               </div>
             </div>
-            <motion.button
-              whileHover={{ scale: 1.1, rotate: 90 }}
-              whileTap={{ scale: 0.9 }}
-              onClick={onClose}
-              className="p-2 hover:bg-gray-100 rounded-lg transition-colors"
-            >
-              <X className="w-5 h-5 text-gray-500" />
-            </motion.button>
+            {!inline && (
+              <motion.button
+                whileHover={{ scale: 1.1, rotate: 90 }}
+                whileTap={{ scale: 0.9 }}
+                onClick={onClose}
+                className="p-2 hover:bg-gray-100 rounded-lg transition-colors"
+              >
+                <X className="w-5 h-5 text-gray-500" />
+              </motion.button>
+            )}
           </div>
 
           {/* Progress Stepper */}
@@ -2664,12 +2669,22 @@ export function MassUploadWizard({ isOpen, onClose, existingFolders }: MassUploa
           {/* Footer with Navigation */}
           <div className="px-6 py-4 border-t border-gray-200 bg-gray-50/50 flex items-center justify-between">
             <div className="text-sm">
-              {isReviewStep && (
-                <Badge variant="outline" className="bg-blue-50 text-blue-700 border-blue-300">
-                  <Eye className="w-3 h-3 mr-1" />
-                  Revue approfondie: {currentReviewingDocIndex + 1}/{uploadedFiles.length}
-                </Badge>
-              )}
+              <div className="flex items-center gap-2">
+                <Button
+                  variant="outline"
+                  onClick={onClose}
+                  className="gap-2"
+                >
+                  <ChevronLeft className="w-4 h-4" />
+                  Annuler
+                </Button>
+                {isReviewStep && (
+                  <Badge variant="outline" className="bg-blue-50 text-blue-700 border-blue-300">
+                    <Eye className="w-3 h-3 mr-1" />
+                    Revue approfondie: {currentReviewingDocIndex + 1}/{uploadedFiles.length}
+                  </Badge>
+                )}
+              </div>
             </div>
             
             {/* Navigation buttons */}
