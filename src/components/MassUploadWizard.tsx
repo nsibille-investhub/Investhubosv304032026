@@ -79,6 +79,7 @@ interface MassUploadWizardProps {
   isOpen: boolean;
   onClose: () => void;
   existingFolders: string[];
+  embedded?: boolean;
 }
 
 interface UploadedFile {
@@ -210,7 +211,7 @@ const availableEmailTemplates = [
   { value: 'newsletter', label: 'Newsletter', icon: '📰' },
 ];
 
-export function MassUploadWizard({ isOpen, onClose, existingFolders }: MassUploadWizardProps) {
+export function MassUploadWizard({ isOpen, onClose, existingFolders, embedded = false }: MassUploadWizardProps) {
   const [currentStep, setCurrentStep] = useState(1);
   const [uploadedFiles, setUploadedFiles] = useState<UploadedFile[]>([]);
   const [dragActive, setDragActive] = useState(false);
@@ -722,22 +723,26 @@ export function MassUploadWizard({ isOpen, onClose, existingFolders }: MassUploa
 
   if (!isOpen) return null;
 
+  const containerClassName = embedded
+    ? 'bg-white rounded-2xl shadow-sm border border-gray-200 w-full h-full overflow-hidden flex flex-col'
+    : 'bg-white rounded-2xl shadow-2xl w-full max-w-7xl max-h-[90vh] overflow-hidden flex flex-col';
+
   return (
     <AnimatePresence>
       <motion.div
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
         exit={{ opacity: 0 }}
-        className="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center p-4"
-        onClick={onClose}
+        className={embedded ? 'flex-1 min-h-0 flex' : 'fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center p-4'}
+        onClick={embedded ? undefined : onClose}
       >
         <motion.div
-          initial={{ scale: 0.95, opacity: 0, y: 20 }}
+          initial={{ scale: embedded ? 1 : 0.95, opacity: 0, y: embedded ? 0 : 20 }}
           animate={{ scale: 1, opacity: 1, y: 0 }}
-          exit={{ scale: 0.95, opacity: 0, y: 20 }}
+          exit={{ scale: embedded ? 1 : 0.95, opacity: 0, y: embedded ? 0 : 20 }}
           transition={{ type: 'spring', damping: 25, stiffness: 300 }}
-          onClick={(e) => e.stopPropagation()}
-          className="bg-white rounded-2xl shadow-2xl w-full max-w-7xl max-h-[90vh] overflow-hidden flex flex-col"
+          onClick={(e) => !embedded && e.stopPropagation()}
+          className={containerClassName}
         >
           {/* Header */}
           <div className="px-6 py-5 border-b border-gray-200 bg-gradient-to-r from-white to-gray-50 flex items-center justify-between">
@@ -755,14 +760,16 @@ export function MassUploadWizard({ isOpen, onClose, existingFolders }: MassUploa
                 </p>
               </div>
             </div>
-            <motion.button
-              whileHover={{ scale: 1.1, rotate: 90 }}
-              whileTap={{ scale: 0.9 }}
-              onClick={onClose}
-              className="p-2 hover:bg-gray-100 rounded-lg transition-colors"
-            >
-              <X className="w-5 h-5 text-gray-500" />
-            </motion.button>
+            {!embedded && (
+              <motion.button
+                whileHover={{ scale: 1.1, rotate: 90 }}
+                whileTap={{ scale: 0.9 }}
+                onClick={onClose}
+                className="p-2 hover:bg-gray-100 rounded-lg transition-colors"
+              >
+                <X className="w-5 h-5 text-gray-500" />
+              </motion.button>
+            )}
           </div>
 
           {/* Progress Stepper */}
