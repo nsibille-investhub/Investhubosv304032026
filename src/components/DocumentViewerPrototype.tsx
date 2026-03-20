@@ -47,6 +47,15 @@ export function DocumentViewerPrototype({ document: viewerDocument, onClose }: D
   const zoomIn = () => setZoomLevel((zoom) => Math.min(200, zoom + 10));
   const zoomOut = () => setZoomLevel((zoom) => Math.max(50, zoom - 10));
 
+  const access = viewerDocument.access ?? {
+    level: 'view',
+    watermark: false,
+    downloadable: false,
+    printable: false,
+  };
+
+  const activities = viewerDocument.activities ?? [];
+
   useEffect(() => {
     const element = window.document.createElement('div');
     element.setAttribute('data-document-viewer-portal', 'true');
@@ -304,13 +313,13 @@ export function DocumentViewerPrototype({ document: viewerDocument, onClose }: D
                   <div className="rounded-3xl border border-slate-200 bg-slate-50 px-4 py-4">
                     <p className="text-xs text-slate-500">Activité récente</p>
                     <div className="mt-3 space-y-3">
-                      {(viewerDocument.activities || []).slice(0, 3).map((activity) => (
+                      {activities.slice(0, 3).map((activity) => (
                         <div key={activity.id} className="rounded-2xl border border-slate-200 bg-white px-3 py-3">
                           <p className="text-xs uppercase tracking-[0.2em] text-slate-500">{activity.type}</p>
                           <p className="mt-1 text-sm text-slate-900">{activity.user}</p>
                         </div>
                       ))}
-                      {(!viewerDocument.activities || viewerDocument.activities.length === 0) && (
+                      {activities.length === 0 && (
                         <p className="text-sm text-slate-500">Aucune activité mockée disponible.</p>
                       )}
                     </div>
