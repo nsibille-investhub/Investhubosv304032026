@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useMemo, useState } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
 import { DataRoomSpacesView, GlobalSearchHit } from './DataRoomSpacesView';
 import { DataRoomSpaceConfigDialog } from './DataRoomSpaceConfigDialog';
@@ -9,6 +9,7 @@ import { toast } from 'sonner';
 import { ArrowLeft } from 'lucide-react';
 import { Button } from './ui/button';
 import { MassUploadWizard } from './MassUploadWizard';
+import { getTreeForSpace, TreeNode } from '../utils/dataRoomTreeData';
 
 interface DataRoomPageProps {
   onSpaceChange?: (space: DataRoomSpace | null) => void;
@@ -108,6 +109,27 @@ export function DataRoomPage({ onSpaceChange }: DataRoomPageProps) {
     }
   };
 
+  const allFolderNames = useMemo(() => {
+    const folders = new Set<string>();
+
+    const collectFolderNames = (nodes: TreeNode[]) => {
+      nodes.forEach((node) => {
+        if (node.type === 'folder') {
+          folders.add(node.name);
+          if (node.children?.length) {
+            collectFolderNames(node.children);
+          }
+        }
+      });
+    };
+
+    dataRoomSpaces.forEach((space) => {
+      collectFolderNames(getTreeForSpace(space.id));
+    });
+
+    return Array.from(folders);
+  }, [dataRoomSpaces]);
+
   return (
     <div className="flex flex-col h-full">
       <AnimatePresence mode="wait">
@@ -122,6 +144,46 @@ export function DataRoomPage({ onSpaceChange }: DataRoomPageProps) {
             className="flex-1 flex flex-col overflow-hidden"
           >
             <BirdViewPage onBack={() => setShowBirdView(false)} />
+          </motion.div>
+        ) : showMassUploadWizard ? (
+          /* Multi-space Mass Upload View */
+          <motion.div
+            key="mass-upload-multi-space-view"
+            initial={{ opacity: 0, x: -20 }}
+            animate={{ opacity: 1, x: 0 }}
+            exit={{ opacity: 0, x: -20 }}
+            transition={{ duration: 0.3 }}
+            className="flex-1 flex flex-col overflow-hidden"
+          >
+            <div className="px-6 py-4 border-b border-gray-200 bg-white">
+              <div className="flex items-center gap-3">
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => setShowMassUploadWizard(false)}
+                  className="gap-2"
+                >
+                  <ArrowLeft className="w-4 h-4" />
+                  Retour aux espaces
+                </Button>
+                <div className="h-4 w-px bg-gray-300" />
+                <div>
+                  <h2 className="font-semibold text-gray-900">Import massif multi-espace</h2>
+                  <p className="text-xs text-gray-500">
+                    Ajoutez des documents depuis la vue espaces
+                  </p>
+                </div>
+              </div>
+            </div>
+
+            <div className="flex-1 overflow-hidden px-6 pb-6">
+              <MassUploadWizard
+                isOpen={showMassUploadWizard}
+                onClose={() => setShowMassUploadWizard(false)}
+                existingFolders={allFolderNames}
+                inline
+              />
+            </div>
           </motion.div>
         ) : !selectedSpace ? (
           /* Spaces View */
@@ -197,12 +259,6 @@ export function DataRoomPage({ onSpaceChange }: DataRoomPageProps) {
         space={editingSpace}
         onSave={handleSaveSpace}
         onDelete={handleDeleteSpace}
-      />
-
-      <MassUploadWizard
-        isOpen={showMassUploadWizard}
-        onClose={() => setShowMassUploadWizard(false)}
-        existingFolders={[]}
       />
     </div>
   );
