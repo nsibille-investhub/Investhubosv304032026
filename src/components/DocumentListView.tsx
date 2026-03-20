@@ -13,6 +13,7 @@ import {
 } from 'lucide-react';
 import { Document } from '../utils/documentMockData';
 import { Badge } from './ui/badge';
+import { Button } from './ui/button';
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -32,6 +33,9 @@ interface DocumentListViewProps {
   searchResults?: Array<{ item: Document; path: string[] }>;
   focusedItemId?: string | null;
   onAddDocumentFromFolder?: (folder: Document) => void;
+  onAddDocument?: () => void;
+  onOpenWizard?: () => void;
+  onDownloadAll?: () => void;
 }
 
 export function DocumentListView({ 
@@ -44,7 +48,10 @@ export function DocumentListView({
   onSearchTermChange,
   searchResults = [],
   focusedItemId = null,
-  onAddDocumentFromFolder
+  onAddDocumentFromFolder,
+  onAddDocument,
+  onOpenWizard,
+  onDownloadAll,
 }: DocumentListViewProps) {
   const [hoveredId, setHoveredId] = useState<string | null>(null);
   const itemRefs = useRef<Record<string, HTMLDivElement | null>>({});
@@ -131,25 +138,39 @@ export function DocumentListView({
       )}
 
       {/* Search below breadcrumb */}
-      <div className="px-6 py-3 border-b border-gray-200 bg-white">
-        <div className="relative">
-          <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
-          <Input
-            type="text"
-            placeholder="Rechercher un document ou un dossier"
-            value={searchTerm}
-            onChange={(e) => onSearchTermChange(e.target.value)}
-            className="pl-10 h-10"
-          />
-          {searchTerm && (
-            <button
-              onClick={() => onSearchTermChange('')}
-              className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600"
-              aria-label="Effacer la recherche"
-            >
-              <X className="w-4 h-4" />
-            </button>
-          )}
+      <div className="px-6 py-3 border-b border-gray-200 bg-white space-y-3">
+        <div className="flex items-center gap-3">
+          <div className="relative flex-1">
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
+            <Input
+              type="text"
+              placeholder="Rechercher un document ou un dossier"
+              value={searchTerm}
+              onChange={(e) => onSearchTermChange(e.target.value)}
+              className="pl-10 h-10"
+            />
+            {searchTerm && (
+              <button
+                onClick={() => onSearchTermChange('')}
+                className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600"
+                aria-label="Effacer la recherche"
+              >
+                <X className="w-4 h-4" />
+              </button>
+            )}
+          </div>
+          <Button variant="outline" size="sm" onClick={onDownloadAll}>
+            <Download className="w-4 h-4 mr-2" />
+            Télécharger
+          </Button>
+          <Button size="sm" onClick={onOpenWizard} className="bg-gradient-to-r from-[#0066FF] to-[#0052CC]">
+            <Plus className="w-4 h-4 mr-2" />
+            Import Massif
+          </Button>
+          <Button variant="outline" size="sm" onClick={onAddDocument}>
+            <Plus className="w-4 h-4 mr-2" />
+            Ajouter un document
+          </Button>
         </div>
         {searchTerm.trim() && (
           <p className="mt-2 text-xs text-gray-500">
