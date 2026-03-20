@@ -51,7 +51,7 @@ export function DocumentViewerPrototype({ document, onClose }: DocumentViewerPro
       animate={{ opacity: 1, y: 0 }}
       exit={{ opacity: 0, y: 16 }}
       transition={{ duration: 0.2 }}
-      className="fixed inset-0 z-50 bg-slate-950/70 backdrop-blur-sm"
+      className="fixed inset-0 z-50 bg-slate-950"
     >
       <div className="flex h-full flex-col p-4 sm:p-6">
         <motion.div
@@ -59,10 +59,10 @@ export function DocumentViewerPrototype({ document, onClose }: DocumentViewerPro
           animate={{ scale: 1, opacity: 1 }}
           exit={{ scale: 0.98, opacity: 0 }}
           transition={{ duration: 0.2 }}
-          className="flex min-h-0 flex-1 overflow-hidden rounded-[28px] border border-white/10 bg-slate-900 shadow-2xl"
+          className="flex min-h-0 flex-1 overflow-hidden rounded-[28px] border border-slate-700 bg-slate-900 shadow-[0_30px_80px_rgba(2,6,23,0.8)]"
         >
           {showThumbnails && (
-            <aside className="hidden w-24 border-r border-slate-800 bg-slate-950/80 px-3 py-4 lg:block">
+            <aside className="hidden w-24 border-r border-slate-800 bg-slate-950 px-3 py-4 lg:block">
               <div className="mb-4 flex items-center gap-2 px-1 text-xs font-medium uppercase tracking-[0.2em] text-slate-400">
                 <PanelLeft className="h-3.5 w-3.5" />
                 Pages
@@ -94,7 +94,7 @@ export function DocumentViewerPrototype({ document, onClose }: DocumentViewerPro
           )}
 
           <section className="flex min-w-0 flex-1 flex-col bg-slate-900">
-            <header className="border-b border-slate-800 bg-slate-950/80 px-4 py-3 backdrop-blur-sm sm:px-6">
+            <header className="border-b border-slate-800 bg-slate-950 px-4 py-3 sm:px-6">
               <div className="flex flex-col gap-3 xl:flex-row xl:items-center xl:justify-between">
                 <div className="min-w-0">
                   <div className="flex items-center gap-3">
@@ -135,7 +135,7 @@ export function DocumentViewerPrototype({ document, onClose }: DocumentViewerPro
 
             <div className="flex min-h-0 flex-1">
               <div className="flex min-w-0 flex-1 flex-col">
-                <div className="flex items-center justify-between border-b border-slate-800 bg-slate-900/95 px-4 py-3 sm:px-6">
+                <div className="flex items-center justify-between border-b border-slate-800 bg-slate-900 px-4 py-3 sm:px-6">
                   <div className="flex items-center gap-2">
                     <Button variant="outline" size="icon" className="border-slate-700 bg-slate-900 text-slate-200 hover:bg-slate-800" onClick={previousPage}>
                       <ChevronLeft className="h-4 w-4" />
@@ -255,7 +255,7 @@ export function DocumentViewerPrototype({ document, onClose }: DocumentViewerPro
                 </div>
               </div>
 
-              <aside className="hidden w-[320px] flex-shrink-0 border-l border-slate-800 bg-slate-950/80 xl:block">
+              <aside className="hidden w-[320px] flex-shrink-0 border-l border-slate-800 bg-slate-950 xl:block">
                 <div className="border-b border-slate-800 px-5 py-4">
                   <p className="text-xs uppercase tracking-[0.25em] text-slate-500">Document panel</p>
                   <h3 className="mt-2 text-sm font-semibold text-white">Détails rapides</h3>
