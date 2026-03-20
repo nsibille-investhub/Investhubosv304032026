@@ -14,10 +14,11 @@ import {
   ZoomIn,
   ZoomOut,
 } from 'lucide-react';
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { Document } from '../utils/documentMockData';
 import { Badge } from './ui/badge';
 import { Button } from './ui/button';
+import { createPortal } from 'react-dom';
 
 interface DocumentViewerPrototypeProps {
   document: Document;
@@ -25,6 +26,7 @@ interface DocumentViewerPrototypeProps {
 }
 
 export function DocumentViewerPrototype({ document, onClose }: DocumentViewerPrototypeProps) {
+  const [isMounted, setIsMounted] = useState(false);
   const [currentPage, setCurrentPage] = useState(1);
   const [zoomLevel, setZoomLevel] = useState(100);
   const [showThumbnails, setShowThumbnails] = useState(true);
@@ -45,13 +47,22 @@ export function DocumentViewerPrototype({ document, onClose }: DocumentViewerPro
   const zoomIn = () => setZoomLevel((zoom) => Math.min(200, zoom + 10));
   const zoomOut = () => setZoomLevel((zoom) => Math.max(50, zoom - 10));
 
-  return (
+  useEffect(() => {
+    setIsMounted(true);
+    return () => setIsMounted(false);
+  }, []);
+
+  if (!isMounted) {
+    return null;
+  }
+
+  return createPortal((
     <motion.div
       initial={{ opacity: 0, y: 16 }}
       animate={{ opacity: 1, y: 0 }}
       exit={{ opacity: 0, y: 16 }}
       transition={{ duration: 0.2 }}
-      className="absolute inset-0 z-50 bg-[#F8FAFC]"
+      className="fixed inset-0 z-[100] bg-[#F8FAFC]"
     >
       <div className="flex h-full flex-col p-0">
         <motion.div
@@ -305,5 +316,5 @@ export function DocumentViewerPrototype({ document, onClose }: DocumentViewerPro
         </motion.div>
       </div>
     </motion.div>
-  );
+  ), document.body);
 }
