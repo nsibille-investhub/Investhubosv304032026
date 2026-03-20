@@ -59,11 +59,11 @@ export function DocumentViewerPrototype({ document, onClose }: DocumentViewerPro
           animate={{ scale: 1, opacity: 1 }}
           exit={{ scale: 0.98, opacity: 0 }}
           transition={{ duration: 0.2 }}
-          className="flex min-h-0 flex-1 overflow-hidden bg-slate-900 shadow-[0_24px_60px_rgba(15,23,42,0.22)]"
+          className="flex min-h-0 flex-1 overflow-hidden bg-white"
         >
           {showThumbnails && (
-            <aside className="hidden w-24 border-r border-slate-800 bg-slate-950 px-3 py-4 lg:block">
-              <div className="mb-4 flex items-center gap-2 px-1 text-xs font-medium uppercase tracking-[0.2em] text-slate-400">
+            <aside className="hidden w-24 border-r border-slate-200 bg-white px-3 py-4 lg:block">
+              <div className="mb-4 flex items-center gap-2 px-1 text-xs font-medium uppercase tracking-[0.2em] text-slate-500">
                 <PanelLeft className="h-3.5 w-3.5" />
                 Pages
               </div>
@@ -76,14 +76,14 @@ export function DocumentViewerPrototype({ document, onClose }: DocumentViewerPro
                       onClick={() => setCurrentPage(page)}
                       className={`group w-full rounded-2xl border p-2 text-left transition ${
                         active
-                          ? 'border-blue-400 bg-blue-500/10 shadow-lg shadow-blue-500/10'
-                          : 'border-slate-800 bg-slate-900 hover:border-slate-700 hover:bg-slate-800/80'
+                          ? 'border-blue-400 bg-blue-50 shadow-sm'
+                          : 'border-slate-200 bg-white hover:border-slate-300 hover:bg-slate-50'
                       }`}
                     >
-                      <div className="flex aspect-[3/4] items-center justify-center rounded-xl border border-dashed border-slate-700 bg-gradient-to-b from-slate-100 to-slate-300 text-slate-500">
+                      <div className="flex aspect-[3/4] items-center justify-center rounded-xl border border-dashed border-slate-300 bg-gradient-to-b from-white to-slate-100 text-slate-500">
                         <FileText className="h-5 w-5" />
                       </div>
-                      <div className="mt-2 text-center text-[11px] font-medium text-slate-300 group-hover:text-white">
+                      <div className="mt-2 text-center text-[11px] font-medium text-slate-600 group-hover:text-slate-900">
                         Page {page}
                       </div>
                     </button>
@@ -93,17 +93,17 @@ export function DocumentViewerPrototype({ document, onClose }: DocumentViewerPro
             </aside>
           )}
 
-          <section className="flex min-w-0 flex-1 flex-col bg-slate-900">
-            <header className="border-b border-slate-800 bg-slate-950 px-4 py-3 sm:px-6">
+          <section className="flex min-w-0 flex-1 flex-col bg-white">
+            <header className="border-b border-slate-200 bg-white px-4 py-3 sm:px-6">
               <div className="flex flex-col gap-3 xl:flex-row xl:items-center xl:justify-between">
                 <div className="min-w-0">
                   <div className="flex items-center gap-3">
-                    <div className="flex h-11 w-11 items-center justify-center rounded-2xl bg-blue-500/15 text-blue-300">
+                    <div className="flex h-11 w-11 items-center justify-center rounded-2xl bg-blue-50 text-blue-600">
                       <Eye className="h-5 w-5" />
                     </div>
                     <div className="min-w-0">
-                      <p className="truncate text-sm font-semibold text-white">{document.name}</p>
-                      <div className="mt-1 flex flex-wrap items-center gap-2 text-xs text-slate-400">
+                      <p className="truncate text-sm font-semibold text-slate-900">{document.name}</p>
+                      <div className="mt-1 flex flex-wrap items-center gap-2 text-xs text-slate-500">
                         <span>{document.format || 'Document'}</span>
                         <span>•</span>
                         <span>{document.size || '—'}</span>
@@ -115,18 +115,18 @@ export function DocumentViewerPrototype({ document, onClose }: DocumentViewerPro
                 </div>
 
                 <div className="flex flex-wrap items-center gap-2">
-                  <Button variant="outline" size="sm" className="border-slate-700 bg-slate-900 text-slate-200 hover:bg-slate-800" onClick={() => setShowThumbnails((value) => !value)}>
+                  <Button variant="outline" size="sm" className="border-slate-200 bg-white text-slate-700 hover:bg-slate-50" onClick={() => setShowThumbnails((value) => !value)}>
                     <PanelLeft className="mr-2 h-4 w-4" />
                     Miniatures
                   </Button>
-                  <Button variant="outline" size="sm" className="border-slate-700 bg-slate-900 text-slate-200 hover:bg-slate-800">
+                  <Button variant="outline" size="sm" className="border-slate-200 bg-white text-slate-700 hover:bg-slate-50">
                     <Share2 className="mr-2 h-4 w-4" />
                     Partager
                   </Button>
-                  <Button variant="outline" size="icon" className="border-slate-700 bg-slate-900 text-slate-200 hover:bg-slate-800">
+                  <Button variant="outline" size="icon" className="border-slate-200 bg-white text-slate-700 hover:bg-slate-50">
                     <Download className="h-4 w-4" />
                   </Button>
-                  <Button variant="outline" size="icon" className="border-slate-700 bg-slate-900 text-slate-200 hover:bg-slate-800" onClick={onClose}>
+                  <Button variant="outline" size="icon" className="border-slate-200 bg-white text-slate-700 hover:bg-slate-50" onClick={onClose}>
                     <X className="h-4 w-4" />
                   </Button>
                 </div>
@@ -135,39 +135,39 @@ export function DocumentViewerPrototype({ document, onClose }: DocumentViewerPro
 
             <div className="flex min-h-0 flex-1">
               <div className="flex min-w-0 flex-1 flex-col">
-                <div className="flex items-center justify-between border-b border-slate-800 bg-slate-900 px-4 py-3 sm:px-6">
+                <div className="flex items-center justify-between border-b border-slate-200 bg-white px-4 py-3 sm:px-6">
                   <div className="flex items-center gap-2">
-                    <Button variant="outline" size="icon" className="border-slate-700 bg-slate-900 text-slate-200 hover:bg-slate-800" onClick={previousPage}>
+                    <Button variant="outline" size="icon" className="border-slate-200 bg-white text-slate-700 hover:bg-slate-50" onClick={previousPage}>
                       <ChevronLeft className="h-4 w-4" />
                     </Button>
-                    <div className="rounded-full border border-slate-700 px-3 py-1 text-sm text-slate-200">
+                    <div className="rounded-full border border-slate-200 px-3 py-1 text-sm text-slate-700">
                       Page {currentPage} / {totalPages}
                     </div>
-                    <Button variant="outline" size="icon" className="border-slate-700 bg-slate-900 text-slate-200 hover:bg-slate-800" onClick={nextPage}>
+                    <Button variant="outline" size="icon" className="border-slate-200 bg-white text-slate-700 hover:bg-slate-50" onClick={nextPage}>
                       <ChevronRight className="h-4 w-4" />
                     </Button>
                   </div>
 
                   <div className="flex items-center gap-2">
-                    <Button variant="outline" size="icon" className="border-slate-700 bg-slate-900 text-slate-200 hover:bg-slate-800" onClick={zoomOut}>
+                    <Button variant="outline" size="icon" className="border-slate-200 bg-white text-slate-700 hover:bg-slate-50" onClick={zoomOut}>
                       <ZoomOut className="h-4 w-4" />
                     </Button>
-                    <div className="rounded-full border border-slate-700 px-3 py-1 text-sm text-slate-200 min-w-[76px] text-center">
+                    <div className="rounded-full border border-slate-200 px-3 py-1 text-sm text-slate-700 min-w-[76px] text-center">
                       {zoomLevel}%
                     </div>
-                    <Button variant="outline" size="icon" className="border-slate-700 bg-slate-900 text-slate-200 hover:bg-slate-800" onClick={zoomIn}>
+                    <Button variant="outline" size="icon" className="border-slate-200 bg-white text-slate-700 hover:bg-slate-50" onClick={zoomIn}>
                       <ZoomIn className="h-4 w-4" />
                     </Button>
-                    <Button variant="outline" size="icon" className="border-slate-700 bg-slate-900 text-slate-200 hover:bg-slate-800" onClick={() => setIsFullWidth((value) => !value)}>
+                    <Button variant="outline" size="icon" className="border-slate-200 bg-white text-slate-700 hover:bg-slate-50" onClick={() => setIsFullWidth((value) => !value)}>
                       {isFullWidth ? <Minimize2 className="h-4 w-4" /> : <Maximize2 className="h-4 w-4" />}
                     </Button>
                   </div>
                 </div>
 
-                <div className="flex-1 overflow-auto bg-[#1E293B] p-4 sm:p-8">
+                <div className="flex-1 overflow-auto bg-slate-200 p-4 sm:p-8">
                   <div className={`mx-auto flex min-h-full ${isFullWidth ? 'max-w-7xl' : 'max-w-4xl'} items-start justify-center`}>
                     <div
-                      className="w-full rounded-[28px] border border-slate-300/60 bg-white shadow-[0_30px_100px_rgba(15,23,42,0.45)]"
+                      className="w-full rounded-[28px] border border-slate-300 bg-white shadow-[0_20px_60px_rgba(15,23,42,0.18)]"
                       style={{ transform: `scale(${zoomLevel / 100})`, transformOrigin: 'top center' }}
                     >
                       <div className="border-b border-slate-200 px-8 py-5">
@@ -255,27 +255,27 @@ export function DocumentViewerPrototype({ document, onClose }: DocumentViewerPro
                 </div>
               </div>
 
-              <aside className="hidden w-[320px] flex-shrink-0 border-l border-slate-800 bg-slate-950 xl:block">
+              <aside className="hidden w-[320px] flex-shrink-0 border-l border-slate-200 bg-white xl:block">
                 <div className="border-b border-slate-800 px-5 py-4">
-                  <p className="text-xs uppercase tracking-[0.25em] text-slate-500">Document panel</p>
-                  <h3 className="mt-2 text-sm font-semibold text-white">Détails rapides</h3>
+                  <p className="text-xs uppercase tracking-[0.25em] text-slate-400">Document panel</p>
+                  <h3 className="mt-2 text-sm font-semibold text-slate-900">Détails rapides</h3>
                 </div>
-                <div className="space-y-5 px-5 py-5 text-sm text-slate-300">
+                <div className="space-y-5 px-5 py-5 text-sm text-slate-600">
                   <div>
                     <p className="text-xs text-slate-500">Nom</p>
-                    <p className="mt-1 font-medium text-white">{document.name}</p>
+                    <p className="mt-1 font-medium text-slate-900">{document.name}</p>
                   </div>
                   <div className="grid grid-cols-2 gap-3">
-                    <div className="rounded-2xl border border-slate-800 bg-slate-900 px-4 py-3">
+                    <div className="rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3">
                       <p className="text-xs text-slate-500">Format</p>
-                      <p className="mt-1 text-white">{document.format || 'Document'}</p>
+                      <p className="mt-1 text-slate-900">{document.format || 'Document'}</p>
                     </div>
-                    <div className="rounded-2xl border border-slate-800 bg-slate-900 px-4 py-3">
+                    <div className="rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3">
                       <p className="text-xs text-slate-500">Taille</p>
-                      <p className="mt-1 text-white">{document.size || '—'}</p>
+                      <p className="mt-1 text-slate-900">{document.size || '—'}</p>
                     </div>
                   </div>
-                  <div className="rounded-3xl border border-slate-800 bg-slate-900 px-4 py-4">
+                  <div className="rounded-3xl border border-slate-200 bg-slate-50 px-4 py-4">
                     <p className="text-xs text-slate-500">Permissions</p>
                     <div className="mt-3 flex flex-wrap gap-2">
                       <Badge className="bg-emerald-500/15 text-emerald-300">Lecture</Badge>
@@ -284,17 +284,17 @@ export function DocumentViewerPrototype({ document, onClose }: DocumentViewerPro
                       {document.access.watermark && <Badge className="bg-amber-500/15 text-amber-300">Watermark</Badge>}
                     </div>
                   </div>
-                  <div className="rounded-3xl border border-slate-800 bg-slate-900 px-4 py-4">
+                  <div className="rounded-3xl border border-slate-200 bg-slate-50 px-4 py-4">
                     <p className="text-xs text-slate-500">Activité récente</p>
                     <div className="mt-3 space-y-3">
                       {(document.activities || []).slice(0, 3).map((activity) => (
-                        <div key={activity.id} className="rounded-2xl border border-slate-800 bg-slate-950 px-3 py-3">
+                        <div key={activity.id} className="rounded-2xl border border-slate-200 bg-white px-3 py-3">
                           <p className="text-xs uppercase tracking-[0.2em] text-slate-500">{activity.type}</p>
-                          <p className="mt-1 text-sm text-white">{activity.user}</p>
+                          <p className="mt-1 text-sm text-slate-900">{activity.user}</p>
                         </div>
                       ))}
                       {(!document.activities || document.activities.length === 0) && (
-                        <p className="text-sm text-slate-400">Aucune activité mockée disponible.</p>
+                        <p className="text-sm text-slate-500">Aucune activité mockée disponible.</p>
                       )}
                     </div>
                   </div>
