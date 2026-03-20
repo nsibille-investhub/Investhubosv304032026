@@ -26,7 +26,7 @@ interface DocumentViewerPrototypeProps {
 }
 
 export function DocumentViewerPrototype({ document, onClose }: DocumentViewerPrototypeProps) {
-  const [isMounted, setIsMounted] = useState(false);
+  const [portalElement, setPortalElement] = useState<HTMLDivElement | null>(null);
   const [currentPage, setCurrentPage] = useState(1);
   const [zoomLevel, setZoomLevel] = useState(100);
   const [showThumbnails, setShowThumbnails] = useState(true);
@@ -48,11 +48,17 @@ export function DocumentViewerPrototype({ document, onClose }: DocumentViewerPro
   const zoomOut = () => setZoomLevel((zoom) => Math.max(50, zoom - 10));
 
   useEffect(() => {
-    setIsMounted(true);
-    return () => setIsMounted(false);
+    const element = document.createElement('div');
+    element.setAttribute('data-document-viewer-portal', 'true');
+    document.body.appendChild(element);
+    setPortalElement(element);
+
+    return () => {
+      document.body.removeChild(element);
+    };
   }, []);
 
-  if (!isMounted) {
+  if (!portalElement) {
     return null;
   }
 
@@ -316,5 +322,5 @@ export function DocumentViewerPrototype({ document, onClose }: DocumentViewerPro
         </motion.div>
       </div>
     </motion.div>
-  ), document.body);
+  ), portalElement);
 }
