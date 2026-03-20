@@ -21,6 +21,7 @@ import { FolderDetailPanel } from './FolderDetailPanel';
 import { DocumentFilterBar } from './DocumentFilterBar';
 import { DocumentTreeSidebar } from './DocumentTreeSidebar';
 import { DocumentListView } from './DocumentListView';
+import { DocumentViewerPrototype } from './DocumentViewerPrototype';
 import { Document, mockDocuments } from '../utils/documentMockData';
 import { toast } from 'sonner';
 import { MassUploadWizard } from './MassUploadWizard';
@@ -49,6 +50,7 @@ export function DocumentsPage({ selectedSpace, navigationTarget, onNavigationHan
   const [viewMode, setViewMode] = useState<ViewMode>('list');
   const [selectedDocument, setSelectedDocument] = useState<Document | null>(null);
   const [selectedFolder, setSelectedFolder] = useState<Document | null>(null);
+  const [viewerDocument, setViewerDocument] = useState<Document | null>(null);
   const [detailsTab, setDetailsTab] = useState<string>('details');
   const [activeFilters, setActiveFilters] = useState<any[]>([]);
   const [selectedCount, setSelectedCount] = useState(0);
@@ -146,6 +148,17 @@ export function DocumentsPage({ selectedSpace, navigationTarget, onNavigationHan
 
   const handleOpenWizard = () => {
     setWizardOpen(true);
+  };
+
+  const handlePreviewDocument = (doc: Document) => {
+    if (doc.type === 'folder') {
+      return;
+    }
+
+    setViewerDocument(doc);
+    toast.success('Visionneuse ouverte', {
+      description: doc.name
+    });
   };
 
   // Get existing folder names for the wizard
@@ -390,6 +403,7 @@ export function DocumentsPage({ selectedSpace, navigationTarget, onNavigationHan
               documents={filteredDocuments}
               currentFolder={currentFolder}
               onDocumentClick={handleDocumentClick}
+              onPreviewDocument={handlePreviewDocument}
               onFolderNavigate={handleFolderNavigate}
               currentPath={currentFolderPath}
               searchTerm={searchTerm}
@@ -400,6 +414,16 @@ export function DocumentsPage({ selectedSpace, navigationTarget, onNavigationHan
           </div>
         </div>
       </motion.div>
+
+      <AnimatePresence>
+        {viewerDocument && (
+          <DocumentViewerPrototype
+            key={`viewer-${viewerDocument.id}`}
+            document={viewerDocument}
+            onClose={() => setViewerDocument(null)}
+          />
+        )}
+      </AnimatePresence>
 
       {/* Document Detail Panel */}
       <AnimatePresence>
