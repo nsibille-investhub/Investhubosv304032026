@@ -51,7 +51,7 @@ export function DocumentViewerPrototype({ document, onClose }: DocumentViewerPro
       animate={{ opacity: 1, y: 0 }}
       exit={{ opacity: 0, y: 16 }}
       transition={{ duration: 0.2 }}
-      className="fixed inset-0 z-50 bg-slate-950"
+      className="fixed inset-0 z-50 bg-slate-950/82 backdrop-blur-[2px]"
     >
       <div className="flex h-full flex-col p-4 sm:p-6">
         <motion.div
