@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetDescription } from './ui/sheet';
 import { Button } from './ui/button';
 import { Input } from './ui/input';
@@ -15,7 +15,7 @@ import {
   DropdownMenuTrigger,
 } from './ui/dropdown-menu';
 import { toast } from 'sonner';
-import { ChevronDown, Sparkles } from 'lucide-react';
+import { ChevronDown, Sparkles, UploadCloud, FileCheck2, Download, Users2, UserRound, Mail } from 'lucide-react';
 
 interface FolderOption {
   id: string;
@@ -26,6 +26,7 @@ interface DocumentVersion {
   language: 'fr' | 'en';
   name: string;
   fileName: string;
+  previewUrl?: string;
 }
 
 interface ValidationTeam {
@@ -39,12 +40,15 @@ interface InvestorProfile {
   name: string;
   segment: string;
   fund: string;
-  contacts: number;
   subscriptions: string[];
   structures: Array<{
     id: string;
     name: string;
     subscriptions: string[];
+  }>;
+  contacts: Array<{
+    name: string;
+    role: string;
   }>;
 }
 
@@ -77,11 +81,14 @@ const INVESTORS: InvestorProfile[] = [
     name: 'Jean Dupont',
     segment: 'Institutionnels',
     fund: 'PERE 1',
-    contacts: 2,
     subscriptions: ['SUB-001', 'SUB-001-B'],
     structures: [
       { id: 'st-1', name: 'Holding Dupont', subscriptions: ['SUB-001'] },
       { id: 'st-2', name: 'SPV Dupont', subscriptions: ['SUB-001-B'] },
+    ],
+    contacts: [
+      { name: 'Maître Leblanc', role: 'Conseil Juridique' },
+      { name: 'Antoine Mercier', role: 'Expert Comptable' },
     ],
   },
   {
@@ -89,27 +96,34 @@ const INVESTORS: InvestorProfile[] = [
     name: 'Marie Martin',
     segment: 'Family Office',
     fund: 'PERE 1',
-    contacts: 3,
     subscriptions: ['SUB-002'],
     structures: [{ id: 'st-3', name: 'SCI Martin', subscriptions: ['SUB-002'] }],
+    contacts: [
+      { name: 'Claire Dubois', role: 'Family Office' },
+      { name: 'Jean Rousseau', role: 'Conseil Fiscal' },
+      { name: 'Marc Vincent', role: 'Gestionnaire Patrimoine' },
+    ],
   },
   {
     id: 'i3',
     name: 'Thomas Petit',
     segment: 'Retail',
     fund: 'Growth Tech',
-    contacts: 1,
     subscriptions: ['SUB-003', 'SUB-003-C'],
     structures: [{ id: 'st-4', name: 'Patrimoine Petit', subscriptions: ['SUB-003-C'] }],
+    contacts: [{ name: 'Émilie Moreau', role: 'Gestionnaire Patrimoine' }],
   },
   {
     id: 'i4',
     name: 'Sophie Bernard',
     segment: 'Corporate',
     fund: 'PERE 2',
-    contacts: 2,
     subscriptions: ['SUB-004'],
     structures: [{ id: 'st-5', name: 'SAS Bernard Invest', subscriptions: ['SUB-004'] }],
+    contacts: [
+      { name: 'Paul Girard', role: 'Partenaire Bancaire' },
+      { name: 'Lucie Fontaine', role: 'Compliance' },
+    ],
   },
 ];
 
@@ -135,6 +149,7 @@ export function DocumentAddModal({ isOpen, onClose, folderOptions, defaultFolder
   const [reminderDelay, setReminderDelay] = useState(REMINDER_DELAYS[1]);
   const [reminderTemplate, setReminderTemplate] = useState(MAIL_TEMPLATES[0]);
   const [validationTeams, setValidationTeams] = useState<string[]>([]);
+  const fileInputRefs = useRef<Record<'fr' | 'en', HTMLInputElement | null>>({ fr: null, en: null });
 
   useEffect(() => {
     if (!isOpen) return;
@@ -157,7 +172,7 @@ export function DocumentAddModal({ isOpen, onClose, folderOptions, defaultFolder
 
   const shareClassOptions = selectedFund !== 'all' ? SHARE_CLASSES_BY_FUND[selectedFund] || [] : [];
 
-  const audience = useMemo(() => {
+  const targetedInvestors = useMemo(() => {
     if (audienceMode === 'general') {
       let candidates = INVESTORS;
       if (!selectedSegments.includes('all')) {
@@ -166,29 +181,28 @@ export function DocumentAddModal({ isOpen, onClose, folderOptions, defaultFolder
       if (selectedFund !== 'all') {
         candidates = candidates.filter((inv) => inv.fund === selectedFund);
       }
-      const contacts = candidates.reduce((sum, inv) => sum + inv.contacts, 0);
-      return { investors: candidates.length, contacts };
+      return candidates;
     }
 
     const investor = selectedInvestorProfile;
     if (!investor) {
-      return { investors: 0, contacts: 0 };
+      return [] as InvestorProfile[];
     }
     if (selectedStructureId && !investor.structures.some((st) => st.id === selectedStructureId)) {
-      return { investors: 0, contacts: 0 };
+      return [] as InvestorProfile[];
     }
     if (selectedSubscription) {
       const authorizedSubscriptions = selectedStructure
         ? selectedStructure.subscriptions
         : investor.subscriptions;
       if (!authorizedSubscriptions.includes(selectedSubscription)) {
-        return { investors: 0, contacts: 0 };
+        return [] as InvestorProfile[];
       }
     }
     if (!selectedInvestor) {
-      return { investors: 0, contacts: 0 };
+      return [] as InvestorProfile[];
     }
-    return { investors: 1, contacts: investor.contacts };
+    return [investor];
   }, [
     audienceMode,
     selectedSegments,
@@ -199,6 +213,13 @@ export function DocumentAddModal({ isOpen, onClose, folderOptions, defaultFolder
     selectedStructureId,
     selectedStructure,
   ]);
+
+  const audience = useMemo(() => {
+    return {
+      investors: targetedInvestors.length,
+      contacts: targetedInvestors.reduce((sum, investor) => sum + investor.contacts.length, 0),
+    };
+  }, [targetedInvestors]);
 
   const selectedValidators = useMemo(() => {
     return TEAMS.filter((team) => validationTeams.includes(team.id)).flatMap((team) =>
@@ -232,6 +253,31 @@ export function DocumentAddModal({ isOpen, onClose, folderOptions, defaultFolder
     onClose();
   };
 
+  const handleVersionFile = (language: 'fr' | 'en', file?: File | null) => {
+    if (!file) return;
+    const previewUrl = file.type.startsWith('image/') ? URL.createObjectURL(file) : undefined;
+    updateVersion(language, { fileName: file.name, previewUrl });
+  };
+
+  const handleExportScope = () => {
+    if (targetedInvestors.length === 0) {
+      toast.error('Aucun investisseur ciblé à exporter.');
+      return;
+    }
+    const rows = ['Investisseur,Fonds,Segment,Contact,Rôle'];
+    targetedInvestors.forEach((investor) => {
+      investor.contacts.forEach((contact) => {
+        rows.push(`"${investor.name}","${investor.fund}","${investor.segment}","${contact.name}","${contact.role}"`);
+      });
+    });
+    const blob = new Blob([rows.join('\n')], { type: 'text/csv;charset=utf-8;' });
+    const link = document.createElement('a');
+    link.href = URL.createObjectURL(blob);
+    link.download = `scope-ciblage-${new Date().toISOString().slice(0, 10)}.csv`;
+    link.click();
+    URL.revokeObjectURL(link.href);
+  };
+
   return (
     <Sheet open={isOpen} onOpenChange={(open) => !open && onClose()}>
       <SheetContent side="right" className="h-full p-0 gap-0">
@@ -257,7 +303,7 @@ export function DocumentAddModal({ isOpen, onClose, folderOptions, defaultFolder
                   const version = versions.find((item) => item.language === language)!;
                   return (
                     <TabsContent key={language} value={language} className="mt-4">
-                      <div className="grid grid-cols-1 xl:grid-cols-2 gap-4">
+                      <div className="grid grid-cols-1 gap-4">
                         <div className="space-y-2">
                           <Label>Nom du document ({language.toUpperCase()})</Label>
                           <Input
@@ -269,15 +315,43 @@ export function DocumentAddModal({ isOpen, onClose, folderOptions, defaultFolder
                         </div>
                         <div className="space-y-2">
                           <Label>Ajouter un document</Label>
-                          <Input
+                          <input
+                            ref={(el) => { fileInputRefs.current[language] = el; }}
                             type="file"
-                            className="h-11"
-                            onChange={(event) => {
-                              const fileName = event.target.files?.[0]?.name || '';
-                              updateVersion(language, { fileName });
-                            }}
+                            className="hidden"
+                            onChange={(event) => handleVersionFile(language, event.target.files?.[0])}
                           />
-                          {version.fileName && <p className="text-xs text-slate-500 truncate">{version.fileName}</p>}
+                          <div
+                            onClick={() => fileInputRefs.current[language]?.click()}
+                            onDragOver={(event) => event.preventDefault()}
+                            onDrop={(event) => {
+                              event.preventDefault();
+                              handleVersionFile(language, event.dataTransfer.files?.[0]);
+                            }}
+                            className="rounded-xl border-2 border-dashed border-slate-300 bg-white/80 hover:border-blue-400 transition-colors cursor-pointer p-5"
+                          >
+                            {!version.fileName ? (
+                              <div className="flex flex-col items-center justify-center text-center gap-2 text-slate-600">
+                                <UploadCloud className="w-8 h-8 text-slate-500" />
+                                <p className="font-medium">Glissez-déposez ou cliquez pour choisir un fichier</p>
+                                <p className="text-xs text-slate-500">PDF, DOCX, XLSX, PNG... max 10MB</p>
+                              </div>
+                            ) : (
+                              <div className="flex items-center gap-3">
+                                {version.previewUrl ? (
+                                  <img src={version.previewUrl} alt={version.fileName} className="w-14 h-14 rounded-lg object-cover border" />
+                                ) : (
+                                  <div className="w-14 h-14 rounded-lg bg-blue-50 border border-blue-200 flex items-center justify-center">
+                                    <FileCheck2 className="w-6 h-6 text-blue-600" />
+                                  </div>
+                                )}
+                                <div>
+                                  <p className="font-medium text-slate-900">{version.fileName}</p>
+                                  <p className="text-xs text-slate-500">Fichier prêt à être envoyé</p>
+                                </div>
+                              </div>
+                            )}
+                          </div>
                         </div>
                       </div>
                     </TabsContent>
@@ -452,10 +526,58 @@ export function DocumentAddModal({ isOpen, onClose, folderOptions, defaultFolder
               </div>
             )}
 
+            <div className="rounded-2xl border-2 border-blue-200 bg-gradient-to-br from-blue-50 to-indigo-50 p-4 space-y-4">
+              <div className="flex items-center justify-between gap-3">
+                <div>
+                  <p className="font-semibold text-slate-900 flex items-center gap-2"><Users2 className="w-5 h-5 text-blue-600" /> Scope de Ciblage</p>
+                  <p className="text-sm text-slate-600">Ce document sera visible par les investisseurs suivants</p>
+                </div>
+                <Button variant="outline" className="border-blue-300 text-blue-700" onClick={handleExportScope}>
+                  <Download className="w-4 h-4 mr-2" />
+                  Export CSV
+                </Button>
+              </div>
+              <div className="grid grid-cols-2 gap-3">
+                <div className="rounded-xl border border-blue-200 bg-white p-3">
+                  <p className="text-blue-700 text-sm font-medium">Investisseurs</p>
+                  <p className="text-3xl font-bold text-blue-800">{audience.investors}</p>
+                </div>
+                <div className="rounded-xl border border-indigo-200 bg-white p-3">
+                  <p className="text-indigo-700 text-sm font-medium">Contacts</p>
+                  <p className="text-3xl font-bold text-indigo-800">{audience.contacts}</p>
+                </div>
+              </div>
+            </div>
+
+            {audienceMode === 'nominative' && selectedInvestorProfile && (
+              <div className="rounded-2xl border bg-white p-4 space-y-3">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <p className="text-xl font-semibold text-slate-900">{selectedInvestorProfile.name}</p>
+                    <p className="text-slate-500 text-sm">{selectedInvestorProfile.segment} • {selectedInvestorProfile.fund}</p>
+                  </div>
+                  <span className="px-3 py-1 rounded-full bg-amber-100 text-amber-800 text-sm">{selectedInvestorProfile.fund}</span>
+                </div>
+                <div className="border-t pt-3 space-y-2">
+                  <p className="text-xs uppercase tracking-wide text-slate-500 font-semibold">{selectedInvestorProfile.contacts.length} contacts</p>
+                  {selectedInvestorProfile.contacts.map((contact) => (
+                    <div key={contact.name} className="rounded-xl border bg-slate-50 p-3 flex items-center gap-3">
+                      <div className="w-9 h-9 rounded-full bg-blue-100 text-blue-700 flex items-center justify-center">
+                        <UserRound className="w-4 h-4" />
+                      </div>
+                      <div>
+                        <p className="font-medium text-slate-900">{contact.name}</p>
+                        <p className="text-sm text-slate-500 flex items-center gap-1"><Mail className="w-3 h-3" /> {contact.role}</p>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+
             <div className="rounded-xl border bg-white p-3.5 text-sm flex items-center gap-2">
               <Sparkles className="w-4 h-4 text-blue-600" />
-              Audience: <span className="font-semibold">{audience.investors}</span> investisseur(s) •{' '}
-              <span className="font-semibold">{audience.contacts}</span> contact(s)
+              Audience: <span className="font-semibold">{audience.investors}</span> investisseur(s) • <span className="font-semibold">{audience.contacts}</span> contact(s)
             </div>
           </section>
 
