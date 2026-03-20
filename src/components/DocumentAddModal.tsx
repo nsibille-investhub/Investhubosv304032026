@@ -593,28 +593,30 @@ export function DocumentAddModal({ isOpen, onClose, folderOptions, defaultFolder
               </div>
             )}
 
-            <div className="rounded-2xl border-2 border-blue-200 bg-gradient-to-br from-blue-50 to-indigo-50 p-4 space-y-4">
-              <div className="flex items-center justify-between gap-3">
-                <div>
-                  <p className="font-semibold text-slate-900 flex items-center gap-2"><Users2 className="w-5 h-5 text-blue-600" /> Scope de Ciblage</p>
-                  <p className="text-sm text-slate-600">Ce document sera visible par les investisseurs suivants</p>
+            {audienceMode === 'general' && (
+              <div className="rounded-2xl border-2 border-blue-200 bg-gradient-to-br from-blue-50 to-indigo-50 p-4 space-y-4">
+                <div className="flex items-center justify-between gap-3">
+                  <div>
+                    <p className="font-semibold text-slate-900 flex items-center gap-2"><Users2 className="w-5 h-5 text-blue-600" /> Scope de Ciblage</p>
+                    <p className="text-sm text-slate-600">Ce document sera visible par les investisseurs suivants</p>
+                  </div>
+                  <Button variant="outline" className="border-blue-300 text-blue-700" onClick={handleExportScope}>
+                    <Download className="w-4 h-4 mr-2" />
+                    Export CSV
+                  </Button>
                 </div>
-                <Button variant="outline" className="border-blue-300 text-blue-700" onClick={handleExportScope}>
-                  <Download className="w-4 h-4 mr-2" />
-                  Export CSV
-                </Button>
+                <div className="grid grid-cols-2 gap-3">
+                  <div className="rounded-xl border border-blue-200 bg-white p-3">
+                    <p className="text-blue-700 text-sm font-medium">Investisseurs</p>
+                    <p className="text-3xl font-bold text-blue-800">{audience.investors}</p>
+                  </div>
+                  <div className="rounded-xl border border-indigo-200 bg-white p-3">
+                    <p className="text-indigo-700 text-sm font-medium">Contacts</p>
+                    <p className="text-3xl font-bold text-indigo-800">{audience.contacts}</p>
+                  </div>
+                </div>
               </div>
-              <div className="grid grid-cols-2 gap-3">
-                <div className="rounded-xl border border-blue-200 bg-white p-3">
-                  <p className="text-blue-700 text-sm font-medium">Investisseurs</p>
-                  <p className="text-3xl font-bold text-blue-800">{audience.investors}</p>
-                </div>
-                <div className="rounded-xl border border-indigo-200 bg-white p-3">
-                  <p className="text-indigo-700 text-sm font-medium">Contacts</p>
-                  <p className="text-3xl font-bold text-indigo-800">{audience.contacts}</p>
-                </div>
-              </div>
-            </div>
+            )}
 
             {audienceMode === 'nominative' && selectedInvestorProfile && (
               <div className="rounded-2xl border bg-white p-4 space-y-3">
