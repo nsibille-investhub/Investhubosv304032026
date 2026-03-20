@@ -24,6 +24,7 @@ interface DocumentListViewProps {
   documents: Document[];
   currentFolder: Document | null;
   onDocumentClick: (doc: Document) => void;
+  onPreviewDocument: (doc: Document) => void;
   onFolderNavigate: (folderId: string | null, folderPath: string[]) => void;
   currentPath: string[];
   searchTerm: string;
@@ -36,6 +37,7 @@ export function DocumentListView({
   documents, 
   currentFolder, 
   onDocumentClick,
+  onPreviewDocument,
   onFolderNavigate,
   currentPath,
   searchTerm,
@@ -241,7 +243,7 @@ export function DocumentListView({
                           </button>
                         </DropdownMenuTrigger>
                         <DropdownMenuContent align="end">
-                          <DropdownMenuItem>
+                          <DropdownMenuItem onClick={() => onDocumentClick(folder)}>
                             <Eye className="w-4 h-4 mr-2" />
                             Voir les détails
                           </DropdownMenuItem>
@@ -304,7 +306,7 @@ export function DocumentListView({
                         whileTap={{ scale: 0.95 }}
                         onClick={(e) => {
                           e.stopPropagation();
-                          onDocumentClick(file);
+                          onPreviewDocument(file);
                         }}
                         className="p-2 hover:bg-gray-100 rounded-lg transition-colors"
                       >
@@ -332,9 +334,9 @@ export function DocumentListView({
                           </button>
                         </DropdownMenuTrigger>
                         <DropdownMenuContent align="end">
-                          <DropdownMenuItem>
+                          <DropdownMenuItem onClick={() => onPreviewDocument(file)}>
                             <Eye className="w-4 h-4 mr-2" />
-                            Voir les détails
+                            Ouvrir le viewer
                           </DropdownMenuItem>
                           <DropdownMenuItem>
                             <Download className="w-4 h-4 mr-2" />
