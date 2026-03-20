@@ -79,6 +79,16 @@ const TEAMS: ValidationTeam[] = [
   { id: 'compliance', name: 'Compliance', validators: ['P. Mercier', 'C. Bernard'] },
 ];
 
+const documentLifecycleMock: Record<string, {
+  notification?: { sentAt: string; template: string };
+  reminder?: { dueInDays?: number; sentAt?: string; template: string };
+  validation: { status: 'pending' | 'approved'; team?: string; validator?: string; validatedAt?: string };
+}> = {
+  'doc-1': { notification: { sentAt: '2026-03-18 09:42', template: 'Nouveau document' }, reminder: { dueInDays: 2, template: 'Relance standard' }, validation: { status: 'pending' } },
+  'doc-2': { notification: { sentAt: '2026-03-15 14:20', template: 'Rapport trimestriel' }, reminder: { sentAt: '2026-03-19 10:00', template: 'Relance premium' }, validation: { status: 'approved', team: 'Compliance', validator: 'Patricia Mercier', validatedAt: '2026-03-16 11:05' } },
+  'doc-3': { validation: { status: 'approved', team: 'Middle Office', validator: 'S. Roussel', validatedAt: '2026-03-10 16:32' } },
+};
+
 const INVESTORS: InvestorProfile[] = [
   {
     id: 'i1',
@@ -137,6 +147,7 @@ const defaultVersions: DocumentVersion[] = [
 ];
 
 export function DocumentAddModal({ isOpen, onClose, folderOptions, defaultFolderId, document }: DocumentAddModalProps) {
+  const isDetailMode = !!document;
   const [versions, setVersions] = useState<DocumentVersion[]>(defaultVersions);
   const [addDate, setAddDate] = useState(new Date().toISOString().slice(0, 10));
   const [parentFolderId, setParentFolderId] = useState(defaultFolderId);
@@ -156,6 +167,7 @@ export function DocumentAddModal({ isOpen, onClose, folderOptions, defaultFolder
   const fileInputRefs = useRef<Record<'fr' | 'en', HTMLInputElement | null>>({ fr: null, en: null });
   const [folderPickerOpen, setFolderPickerOpen] = useState(false);
   const [selectedContactAccess, setSelectedContactAccess] = useState<Record<string, string[]>>({});
+  const detailState = document ? (documentLifecycleMock[document.id] || { validation: { status: 'pending' as const } }) : null;
 
   useEffect(() => {
     if (!isOpen) return;
@@ -344,6 +356,7 @@ export function DocumentAddModal({ isOpen, onClose, folderOptions, defaultFolder
                             onChange={(event) => updateVersion(language, { name: event.target.value })}
                             placeholder={`Nom ${language.toUpperCase()}`}
                             className="h-11"
+                            disabled={isDetailMode}
                           />
                         </div>
                         <div className="space-y-2">
@@ -357,13 +370,19 @@ export function DocumentAddModal({ isOpen, onClose, folderOptions, defaultFolder
                             onChange={(event) => handleVersionFile(language, event.target.files?.[0])}
                           />
                           <div
-                            onClick={() => fileInputRefs.current[language]?.click()}
+                            onClick={() => {
+                              const canUpload = !isDetailMode || (language === 'en' && !version.fileName);
+                              if (canUpload) fileInputRefs.current[language]?.click();
+                            }}
                             onDragOver={(event) => event.preventDefault()}
                             onDrop={(event) => {
                               event.preventDefault();
-                              handleVersionFile(language, event.dataTransfer.files?.[0]);
+                              const canUpload = !isDetailMode || (language === 'en' && !version.fileName);
+                              if (canUpload) handleVersionFile(language, event.dataTransfer.files?.[0]);
                             }}
-                            className="rounded-xl border-2 border-dashed border-slate-300 bg-white/80 hover:border-blue-400 transition-colors cursor-pointer p-5"
+                            className={`rounded-xl border-2 border-dashed border-slate-300 bg-white/80 transition-colors p-5 ${
+                              !isDetailMode || (language === 'en' && !version.fileName) ? 'hover:border-blue-400 cursor-pointer' : 'opacity-80'
+                            }`}
                           >
                             {!version.fileName ? (
                               <div className="flex flex-col items-center justify-center text-center gap-2 text-slate-600">
@@ -399,23 +418,31 @@ export function DocumentAddModal({ isOpen, onClose, folderOptions, defaultFolder
                                     <Eye className="w-3.5 h-3.5 mr-1.5" />
                                     Aperçu
                                   </Button>
-                                  <Button
-                                    type="button"
-                                    variant="ghost"
-                                    size="sm"
-                                    className="text-red-600 hover:text-red-700"
-                                    onClick={(event) => {
-                                      event.stopPropagation();
-                                      handleRemoveVersionFile(language);
-                                    }}
-                                  >
-                                    <Trash2 className="w-3.5 h-3.5 mr-1.5" />
-                                    Supprimer
-                                  </Button>
+                                  {!isDetailMode && (
+                                    <Button
+                                      type="button"
+                                      variant="ghost"
+                                      size="sm"
+                                      className="text-red-600 hover:text-red-700"
+                                      onClick={(event) => {
+                                        event.stopPropagation();
+                                        handleRemoveVersionFile(language);
+                                      }}
+                                    >
+                                      <Trash2 className="w-3.5 h-3.5 mr-1.5" />
+                                      Supprimer
+                                    </Button>
+                                  )}
                                 </div>
                               </div>
                             )}
                           </div>
+                          {isDetailMode && language === 'fr' && (
+                            <p className="text-xs text-slate-500">La version FR existante ne peut pas être remplacée.</p>
+                          )}
+                          {isDetailMode && language === 'en' && !version.fileName && (
+                            <p className="text-xs text-slate-500">Vous pouvez uniquement ajouter la version anglaise.</p>
+                          )}
                         </div>
                       </div>
                     </TabsContent>
@@ -426,13 +453,13 @@ export function DocumentAddModal({ isOpen, onClose, folderOptions, defaultFolder
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 pt-2">
               <div className="space-y-2">
                 <Label>Date d'ajout</Label>
-                <Input type="date" className="h-11" value={addDate} onChange={(event) => setAddDate(event.target.value)} />
+                <Input type="date" className="h-11" value={addDate} onChange={(event) => setAddDate(event.target.value)} disabled={isDetailMode} />
               </div>
               <div className="space-y-2">
                 <Label>Dossier parent (dans l'espace courant)</Label>
                 <Popover open={folderPickerOpen} onOpenChange={setFolderPickerOpen}>
                   <PopoverTrigger asChild>
-                    <Button variant="outline" className="h-11 w-full justify-between font-normal">
+                    <Button variant="outline" className="h-11 w-full justify-between font-normal" disabled={isDetailMode}>
                       <span className="truncate">
                         {folderOptions.find((folder) => folder.id === parentFolderId)?.label || 'Choisir un dossier'}
                       </span>
@@ -477,8 +504,8 @@ export function DocumentAddModal({ isOpen, onClose, folderOptions, defaultFolder
               <p className="text-sm text-slate-600">Configuration des critères de ciblage.</p>
             </div>
             <div className="flex gap-2 p-1 rounded-xl bg-slate-100 w-fit">
-              <Button variant={audienceMode === 'general' ? 'default' : 'outline'} onClick={() => setAudienceMode('general')}>Document général</Button>
-              <Button variant={audienceMode === 'nominative' ? 'default' : 'outline'} onClick={() => setAudienceMode('nominative')}>Document nominatif</Button>
+              <Button variant={audienceMode === 'general' ? 'default' : 'outline'} onClick={() => setAudienceMode('general')} disabled={isDetailMode}>Document général</Button>
+              <Button variant={audienceMode === 'nominative' ? 'default' : 'outline'} onClick={() => setAudienceMode('nominative')} disabled={isDetailMode}>Document nominatif</Button>
             </div>
 
             {audienceMode === 'general' ? (
@@ -487,7 +514,7 @@ export function DocumentAddModal({ isOpen, onClose, folderOptions, defaultFolder
                   <Label>Segments investisseurs</Label>
                   <DropdownMenu>
                     <DropdownMenuTrigger asChild>
-                      <Button variant="outline" className="w-full justify-between h-11 font-normal">
+                      <Button variant="outline" className="w-full justify-between h-11 font-normal" disabled={isDetailMode}>
                         {selectedSegments.includes('all')
                           ? 'Tous les segments'
                           : `${selectedSegments.length} segment(s) sélectionné(s)`}
@@ -507,6 +534,7 @@ export function DocumentAddModal({ isOpen, onClose, folderOptions, defaultFolder
                           checked={selectedSegments.includes(segment)}
                           onCheckedChange={(checked) => {
                             let next = selectedSegments.filter((item) => item !== 'all');
+                            if (isDetailMode) return;
                             next = checked ? [...next, segment] : next.filter((item) => item !== segment);
                             if (next.length === 0) next = ['all'];
                             setSelectedSegments(next);
@@ -524,9 +552,11 @@ export function DocumentAddModal({ isOpen, onClose, folderOptions, defaultFolder
                     <Select
                       value={selectedFund}
                       onValueChange={(value) => {
+                        if (isDetailMode) return;
                         setSelectedFund(value);
                         setSelectedShareClass('');
                       }}
+                      disabled={isDetailMode}
                     >
                       <SelectTrigger className="h-11"><SelectValue /></SelectTrigger>
                       <SelectContent>
@@ -544,6 +574,7 @@ export function DocumentAddModal({ isOpen, onClose, folderOptions, defaultFolder
                       <Select
                         value={selectedShareClass || 'all'}
                         onValueChange={(value) => setSelectedShareClass(value === 'all' ? '' : value)}
+                        disabled={isDetailMode}
                       >
                         <SelectTrigger className="h-11"><SelectValue /></SelectTrigger>
                         <SelectContent>
@@ -565,13 +596,14 @@ export function DocumentAddModal({ isOpen, onClose, folderOptions, defaultFolder
                     <Select
                       value={selectedInvestor || 'none'}
                       onValueChange={(value) => {
+                        if (isDetailMode) return;
                         const nextInvestor = value === 'none' ? '' : value;
                         setSelectedInvestor(nextInvestor);
                         setSelectedStructureId('');
                         setSelectedSubscription('');
                       }}
                     >
-                      <SelectTrigger className="h-11"><SelectValue /></SelectTrigger>
+                      <SelectTrigger className="h-11" disabled={isDetailMode}><SelectValue /></SelectTrigger>
                       <SelectContent>
                         <SelectItem value="none">Sélectionner</SelectItem>
                         {INVESTORS.map((investor) => <SelectItem key={investor.id} value={investor.id}>{investor.name}</SelectItem>)}
@@ -583,10 +615,11 @@ export function DocumentAddModal({ isOpen, onClose, folderOptions, defaultFolder
                     <Select
                       value={selectedStructureId || 'none'}
                       onValueChange={(value) => {
+                        if (isDetailMode) return;
                         setSelectedStructureId(value === 'none' ? '' : value);
                         setSelectedSubscription('');
                       }}
-                      disabled={!selectedInvestor}
+                      disabled={!selectedInvestor || isDetailMode}
                     >
                       <SelectTrigger className="h-11"><SelectValue /></SelectTrigger>
                       <SelectContent>
@@ -602,7 +635,7 @@ export function DocumentAddModal({ isOpen, onClose, folderOptions, defaultFolder
                     <Select
                       value={selectedSubscription || 'none'}
                       onValueChange={(value) => setSelectedSubscription(value === 'none' ? '' : value)}
-                      disabled={!selectedInvestor}
+                      disabled={!selectedInvestor || isDetailMode}
                     >
                       <SelectTrigger className="h-11"><SelectValue /></SelectTrigger>
                       <SelectContent>
@@ -655,7 +688,9 @@ export function DocumentAddModal({ isOpen, onClose, folderOptions, defaultFolder
                             <label key={contact.name} className="rounded-xl border bg-slate-50 p-3 flex items-center gap-3 cursor-pointer">
                               <Checkbox
                                 checked={selected}
+                                disabled={isDetailMode}
                                 onCheckedChange={(checked) => {
+                                  if (isDetailMode) return;
                                   const current = selectedContactAccess[selectedInvestorProfile.id] || [];
                                   const next = checked
                                     ? Array.from(new Set([...current, contact.name]))
@@ -688,35 +723,60 @@ export function DocumentAddModal({ isOpen, onClose, folderOptions, defaultFolder
               <p className="font-semibold text-slate-900 flex items-center gap-2"><Bell className="w-5 h-5 text-blue-600" /> Notification</p>
               <p className="text-sm text-slate-600">Notifications immédiates et relances automatiques.</p>
             </div>
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
-            <div className="space-y-3 border rounded-xl p-4">
-              <div className="flex items-center justify-between">
-                <Label>Notification document</Label>
-                <Switch checked={notify} onCheckedChange={setNotify} />
+            {isDetailMode ? (
+              <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+                <div className="space-y-2 border rounded-xl p-4 bg-white">
+                  <Label>Notification document</Label>
+                  {detailState?.notification ? (
+                    <p className="text-sm text-slate-700">
+                      Notification envoyée le <span className="font-medium">{detailState.notification.sentAt}</span> via le gabarit <span className="font-medium">{detailState.notification.template}</span>.
+                    </p>
+                  ) : (
+                    <p className="text-sm text-slate-500">Aucune notification envoyée pour ce document.</p>
+                  )}
+                </div>
+                <div className="space-y-2 border rounded-xl p-4 bg-white">
+                  <Label>Relance auto si non consulté</Label>
+                  {detailState?.reminder?.dueInDays !== undefined ? (
+                    <p className="text-sm text-slate-700">Relance prévue dans <span className="font-medium">{detailState.reminder.dueInDays} jour(s)</span> avec le gabarit <span className="font-medium">{detailState.reminder.template}</span>.</p>
+                  ) : detailState?.reminder?.sentAt ? (
+                    <p className="text-sm text-slate-700">Relance envoyée le <span className="font-medium">{detailState.reminder.sentAt}</span> avec le gabarit <span className="font-medium">{detailState.reminder.template}</span>.</p>
+                  ) : (
+                    <p className="text-sm text-slate-500">Aucune relance automatique configurée.</p>
+                  )}
+                </div>
               </div>
-              <Select value={notifyTemplate} onValueChange={setNotifyTemplate} disabled={!notify}>
-                <SelectTrigger><SelectValue /></SelectTrigger>
-                <SelectContent>{MAIL_TEMPLATES.map((template) => <SelectItem key={template} value={template}>{template}</SelectItem>)}</SelectContent>
-              </Select>
-            </div>
+            ) : (
+              <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+                <div className="space-y-3 border rounded-xl p-4">
+                  <div className="flex items-center justify-between">
+                    <Label>Notification document</Label>
+                    <Switch checked={notify} onCheckedChange={setNotify} />
+                  </div>
+                  <Select value={notifyTemplate} onValueChange={setNotifyTemplate} disabled={!notify}>
+                    <SelectTrigger><SelectValue /></SelectTrigger>
+                    <SelectContent>{MAIL_TEMPLATES.map((template) => <SelectItem key={template} value={template}>{template}</SelectItem>)}</SelectContent>
+                  </Select>
+                </div>
 
-            <div className="space-y-3 border rounded-xl p-4">
-              <div className="flex items-center justify-between">
-                <Label>Relance auto si non consulté</Label>
-                <Switch checked={reminder} onCheckedChange={setReminder} />
+                <div className="space-y-3 border rounded-xl p-4">
+                  <div className="flex items-center justify-between">
+                    <Label>Relance auto si non consulté</Label>
+                    <Switch checked={reminder} onCheckedChange={setReminder} />
+                  </div>
+                  <div className="grid grid-cols-2 gap-2">
+                    <Select value={reminderDelay} onValueChange={setReminderDelay} disabled={!reminder}>
+                      <SelectTrigger><SelectValue /></SelectTrigger>
+                      <SelectContent>{REMINDER_DELAYS.map((delay) => <SelectItem key={delay} value={delay}>{delay}</SelectItem>)}</SelectContent>
+                    </Select>
+                    <Select value={reminderTemplate} onValueChange={setReminderTemplate} disabled={!reminder}>
+                      <SelectTrigger><SelectValue /></SelectTrigger>
+                      <SelectContent>{MAIL_TEMPLATES.map((template) => <SelectItem key={template} value={template}>{template}</SelectItem>)}</SelectContent>
+                    </Select>
+                  </div>
+                </div>
               </div>
-              <div className="grid grid-cols-2 gap-2">
-                <Select value={reminderDelay} onValueChange={setReminderDelay} disabled={!reminder}>
-                  <SelectTrigger><SelectValue /></SelectTrigger>
-                  <SelectContent>{REMINDER_DELAYS.map((delay) => <SelectItem key={delay} value={delay}>{delay}</SelectItem>)}</SelectContent>
-                </Select>
-                <Select value={reminderTemplate} onValueChange={setReminderTemplate} disabled={!reminder}>
-                  <SelectTrigger><SelectValue /></SelectTrigger>
-                  <SelectContent>{MAIL_TEMPLATES.map((template) => <SelectItem key={template} value={template}>{template}</SelectItem>)}</SelectContent>
-                </Select>
-              </div>
-            </div>
-            </div>
+            )}
           </section>
 
           <section className="space-y-3 pb-2 rounded-2xl border-2 border-blue-200 bg-gradient-to-br from-blue-50 to-indigo-50 p-4">
@@ -724,25 +784,42 @@ export function DocumentAddModal({ isOpen, onClose, folderOptions, defaultFolder
               <p className="font-semibold text-slate-900 flex items-center gap-2"><Check className="w-5 h-5 text-blue-600" /> Validation</p>
               <p className="text-sm text-slate-600">Équipes de validation et validateurs associés.</p>
             </div>
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-2">
-              {TEAMS.map((team) => (
-                <label key={team.id} className="flex items-center gap-2 text-sm border rounded-md p-2">
-                  <Checkbox
-                    checked={validationTeams.includes(team.id)}
-                    onCheckedChange={() => toggleArrayValue(validationTeams, team.id, setValidationTeams)}
-                  />
-                  {team.name}
-                </label>
-              ))}
-            </div>
-            <div className="border rounded-xl p-3 text-sm space-y-1">
-              <p className="font-medium">Détail des validateurs</p>
-              {selectedValidators.length === 0 ? (
-                <p className="text-gray-500">Aucune équipe sélectionnée.</p>
+            {isDetailMode ? (
+              detailState?.validation.status === 'approved' ? (
+                <div className="rounded-xl border border-emerald-200 bg-emerald-50 p-4">
+                  <p className="font-semibold text-emerald-800">✅ Document validé</p>
+                  <p className="text-sm text-emerald-700 mt-1">Équipe: {detailState.validation.team} • Validé par {detailState.validation.validator}</p>
+                  <p className="text-sm text-emerald-700">Le {detailState.validation.validatedAt}</p>
+                </div>
               ) : (
-                selectedValidators.map((item) => <p key={`${item.team}-${item.validator}`}>• {item.validator} ({item.team})</p>)
-              )}
-            </div>
+                <div className="rounded-xl border border-amber-200 bg-amber-50 p-4">
+                  <p className="font-semibold text-amber-800">⏳ En attente de validation</p>
+                  <p className="text-sm text-amber-700 mt-1">Ce document est en cours de revue par les équipes de validation.</p>
+                </div>
+              )
+            ) : (
+              <>
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-2">
+                  {TEAMS.map((team) => (
+                    <label key={team.id} className="flex items-center gap-2 text-sm border rounded-md p-2">
+                      <Checkbox
+                        checked={validationTeams.includes(team.id)}
+                        onCheckedChange={() => toggleArrayValue(validationTeams, team.id, setValidationTeams)}
+                      />
+                      {team.name}
+                    </label>
+                  ))}
+                </div>
+                <div className="border rounded-xl p-3 text-sm space-y-1">
+                  <p className="font-medium">Détail des validateurs</p>
+                  {selectedValidators.length === 0 ? (
+                    <p className="text-gray-500">Aucune équipe sélectionnée.</p>
+                  ) : (
+                    selectedValidators.map((item) => <p key={`${item.team}-${item.validator}`}>• {item.validator} ({item.team})</p>)
+                  )}
+                </div>
+              </>
+            )}
           </section>
 
         </div>
