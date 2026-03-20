@@ -8,7 +8,8 @@ import {
   MoreVertical,
   ChevronRight,
   Search,
-  X
+  X,
+  Plus
 } from 'lucide-react';
 import { Document } from '../utils/documentMockData';
 import { Badge } from './ui/badge';
@@ -30,6 +31,7 @@ interface DocumentListViewProps {
   onSearchTermChange: (value: string) => void;
   searchResults?: Array<{ item: Document; path: string[] }>;
   focusedItemId?: string | null;
+  onAddDocumentFromFolder?: (folder: Document) => void;
 }
 
 export function DocumentListView({ 
@@ -41,7 +43,8 @@ export function DocumentListView({
   searchTerm,
   onSearchTermChange,
   searchResults = [],
-  focusedItemId = null
+  focusedItemId = null,
+  onAddDocumentFromFolder
 }: DocumentListViewProps) {
   const [hoveredId, setHoveredId] = useState<string | null>(null);
   const itemRefs = useRef<Record<string, HTMLDivElement | null>>({});
@@ -241,6 +244,15 @@ export function DocumentListView({
                           </button>
                         </DropdownMenuTrigger>
                         <DropdownMenuContent align="end">
+                          <DropdownMenuItem
+                            onClick={(event) => {
+                              event.stopPropagation();
+                              onAddDocumentFromFolder?.(folder);
+                            }}
+                          >
+                            <Plus className="w-4 h-4 mr-2" />
+                            Ajouter un document
+                          </DropdownMenuItem>
                           <DropdownMenuItem>
                             <Eye className="w-4 h-4 mr-2" />
                             Voir les détails

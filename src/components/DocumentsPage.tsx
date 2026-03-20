@@ -21,6 +21,7 @@ import { FolderDetailPanel } from './FolderDetailPanel';
 import { DocumentFilterBar } from './DocumentFilterBar';
 import { DocumentTreeSidebar } from './DocumentTreeSidebar';
 import { DocumentListView } from './DocumentListView';
+import { DocumentAddModal } from './DocumentAddModal';
 import { Document, mockDocuments } from '../utils/documentMockData';
 import { toast } from 'sonner';
 import { MassUploadWizard } from './MassUploadWizard';
@@ -60,6 +61,8 @@ export function DocumentsPage({ selectedSpace, navigationTarget, onNavigationHan
   const [currentFolderPath, setCurrentFolderPath] = useState<string[]>([]);
   const [searchTerm, setSearchTerm] = useState('');
   const [focusedItemId, setFocusedItemId] = useState<string | null>(null);
+  const [addDocumentModalOpen, setAddDocumentModalOpen] = useState(false);
+  const [addDocumentDefaultFolderId, setAddDocumentDefaultFolderId] = useState<string>('root');
 
   // Convert TreeNode to Document format
   const convertTreeToDocuments = (treeNodes: TreeNode[]): Document[] => {
@@ -146,6 +149,11 @@ export function DocumentsPage({ selectedSpace, navigationTarget, onNavigationHan
 
   const handleOpenWizard = () => {
     setWizardOpen(true);
+  };
+
+  const openAddDocumentModal = (folderId?: string | null) => {
+    setAddDocumentDefaultFolderId(folderId || currentFolder?.id || 'root');
+    setAddDocumentModalOpen(true);
   };
 
   // Get existing folder names for the wizard
@@ -295,6 +303,27 @@ export function DocumentsPage({ selectedSpace, navigationTarget, onNavigationHan
     setCurrentFolderPath(folderPath);
   };
 
+  const buildFolderOptions = (docs: Document[], path: string[] = []): Array<{ id: string; label: string }> => {
+    const options: Array<{ id: string; label: string }> = [];
+    docs.forEach((doc) => {
+      if (doc.type !== 'folder') return;
+      const nextPath = [...path, doc.name];
+      options.push({
+        id: doc.id,
+        label: nextPath.join(' / '),
+      });
+      if (doc.children?.length) {
+        options.push(...buildFolderOptions(doc.children, nextPath));
+      }
+    });
+    return options;
+  };
+
+  const folderOptions = useMemo(
+    () => [{ id: 'root', label: 'Racine / Documents' }, ...buildFolderOptions(filteredDocuments)],
+    [filteredDocuments]
+  );
+
   if (wizardOpen) {
     return (
       <div className="flex-1 min-h-0">
@@ -368,6 +397,10 @@ export function DocumentsPage({ selectedSpace, navigationTarget, onNavigationHan
                 <Plus className="w-4 h-4 mr-2" />
                 Import Massif
               </Button>
+              <Button onClick={() => openAddDocumentModal()} size="sm" variant="outline">
+                <Plus className="w-4 h-4 mr-2" />
+                Ajouter un document
+              </Button>
             </div>
           </div>
         </div>
@@ -396,6 +429,7 @@ export function DocumentsPage({ selectedSpace, navigationTarget, onNavigationHan
               onSearchTermChange={setSearchTerm}
               searchResults={scopedSearchResults}
               focusedItemId={focusedItemId}
+              onAddDocumentFromFolder={(folder) => openAddDocumentModal(folder.id)}
             />
           </div>
         </div>
@@ -430,6 +464,13 @@ export function DocumentsPage({ selectedSpace, navigationTarget, onNavigationHan
           />
         )}
       </AnimatePresence>
+
+      <DocumentAddModal
+        isOpen={addDocumentModalOpen}
+        onClose={() => setAddDocumentModalOpen(false)}
+        folderOptions={folderOptions}
+        defaultFolderId={addDocumentDefaultFolderId}
+      />
 
     </div>
   );
