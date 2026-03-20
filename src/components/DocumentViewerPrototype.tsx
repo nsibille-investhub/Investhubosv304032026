@@ -305,9 +305,9 @@ export function DocumentViewerPrototype({ document: viewerDocument, onClose }: D
                     <p className="text-xs text-slate-500">Permissions</p>
                     <div className="mt-3 flex flex-wrap gap-2">
                       <Badge className="bg-emerald-500/15 text-emerald-300">Lecture</Badge>
-                      {document.access.downloadable && <Badge className="bg-blue-500/15 text-blue-300">Téléchargement</Badge>}
-                      {document.access.printable && <Badge className="bg-purple-500/15 text-purple-300">Impression</Badge>}
-                      {document.access.watermark && <Badge className="bg-amber-500/15 text-amber-300">Watermark</Badge>}
+                      {access.downloadable && <Badge className="bg-blue-500/15 text-blue-300">Téléchargement</Badge>}
+                      {access.printable && <Badge className="bg-purple-500/15 text-purple-300">Impression</Badge>}
+                      {access.watermark && <Badge className="bg-amber-500/15 text-amber-300">Watermark</Badge>}
                     </div>
                   </div>
                   <div className="rounded-3xl border border-slate-200 bg-slate-50 px-4 py-4">
