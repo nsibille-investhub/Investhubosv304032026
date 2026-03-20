@@ -402,52 +402,51 @@ export function DocumentAddModal({ isOpen, onClose, folderOptions, defaultFolder
                 })}
               </Tabs>
             </div>
-          </section>
-
-          <section className="grid grid-cols-1 lg:grid-cols-2 gap-4">
-            <div className="space-y-2">
-              <Label>Date d'ajout</Label>
-              <Input type="date" className="h-11" value={addDate} onChange={(event) => setAddDate(event.target.value)} />
-            </div>
-            <div className="space-y-2">
-              <Label>Dossier parent (dans l'espace courant)</Label>
-              <Popover open={folderPickerOpen} onOpenChange={setFolderPickerOpen}>
-                <PopoverTrigger asChild>
-                  <Button variant="outline" className="h-11 w-full justify-between font-normal">
-                    <span className="truncate">
-                      {folderOptions.find((folder) => folder.id === parentFolderId)?.label || 'Choisir un dossier'}
-                    </span>
-                    <ChevronDown className="w-4 h-4" />
-                  </Button>
-                </PopoverTrigger>
-                <PopoverContent className="w-[var(--radix-popover-trigger-width)] p-0" align="start">
-                  <Command>
-                    <CommandInput placeholder="Rechercher un dossier..." />
-                    <CommandList>
-                      <CommandEmpty>Aucun dossier trouvé.</CommandEmpty>
-                      <CommandGroup>
-                        {folderOptions.map((folder) => (
-                          <CommandItem
-                            key={folder.id}
-                            value={folder.label}
-                            onSelect={() => {
-                              setParentFolderId(folder.id);
-                              setFolderPickerOpen(false);
-                            }}
-                            className="flex items-center justify-between"
-                          >
-                            <span className="flex items-center gap-2 truncate">
-                              <Folder className="w-4 h-4 text-amber-600 shrink-0" />
-                              {folder.label}
-                            </span>
-                            {parentFolderId === folder.id && <Check className="w-4 h-4 text-blue-600" />}
-                          </CommandItem>
-                        ))}
-                      </CommandGroup>
-                    </CommandList>
-                  </Command>
-                </PopoverContent>
-              </Popover>
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 pt-2">
+              <div className="space-y-2">
+                <Label>Date d'ajout</Label>
+                <Input type="date" className="h-11" value={addDate} onChange={(event) => setAddDate(event.target.value)} />
+              </div>
+              <div className="space-y-2">
+                <Label>Dossier parent (dans l'espace courant)</Label>
+                <Popover open={folderPickerOpen} onOpenChange={setFolderPickerOpen}>
+                  <PopoverTrigger asChild>
+                    <Button variant="outline" className="h-11 w-full justify-between font-normal">
+                      <span className="truncate">
+                        {folderOptions.find((folder) => folder.id === parentFolderId)?.label || 'Choisir un dossier'}
+                      </span>
+                      <ChevronDown className="w-4 h-4" />
+                    </Button>
+                  </PopoverTrigger>
+                  <PopoverContent className="w-[var(--radix-popover-trigger-width)] p-0" align="start">
+                    <Command>
+                      <CommandInput placeholder="Rechercher un dossier..." />
+                      <CommandList>
+                        <CommandEmpty>Aucun dossier trouvé.</CommandEmpty>
+                        <CommandGroup>
+                          {folderOptions.map((folder) => (
+                            <CommandItem
+                              key={folder.id}
+                              value={folder.label}
+                              onSelect={() => {
+                                setParentFolderId(folder.id);
+                                setFolderPickerOpen(false);
+                              }}
+                              className="flex items-center justify-between"
+                            >
+                              <span className="flex items-center gap-2 truncate">
+                                <Folder className="w-4 h-4 text-amber-600 shrink-0" />
+                                {folder.label}
+                              </span>
+                              {parentFolderId === folder.id && <Check className="w-4 h-4 text-blue-600" />}
+                            </CommandItem>
+                          ))}
+                        </CommandGroup>
+                      </CommandList>
+                    </Command>
+                  </PopoverContent>
+                </Popover>
+              </div>
             </div>
           </section>
 
