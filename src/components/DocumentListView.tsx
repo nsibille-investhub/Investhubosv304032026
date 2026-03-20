@@ -36,6 +36,8 @@ interface DocumentListViewProps {
   onAddDocument?: () => void;
   onOpenWizard?: () => void;
   onDownloadAll?: () => void;
+  onAddFolder?: () => void;
+  onAddFolderFromFolder?: (folder: Document) => void;
 }
 
 export function DocumentListView({ 
@@ -52,6 +54,8 @@ export function DocumentListView({
   onAddDocument,
   onOpenWizard,
   onDownloadAll,
+  onAddFolder,
+  onAddFolderFromFolder,
 }: DocumentListViewProps) {
   const [hoveredId, setHoveredId] = useState<string | null>(null);
   const itemRefs = useRef<Record<string, HTMLDivElement | null>>({});
@@ -171,6 +175,10 @@ export function DocumentListView({
             <Plus className="w-4 h-4 mr-2" />
             Ajouter un document
           </Button>
+          <Button variant="outline" size="sm" onClick={onAddFolder}>
+            <Folder className="w-4 h-4 mr-2" />
+            Ajouter un dossier
+          </Button>
         </div>
         {searchTerm.trim() && (
           <p className="mt-2 text-xs text-gray-500">
@@ -273,6 +281,15 @@ export function DocumentListView({
                           >
                             <Plus className="w-4 h-4 mr-2" />
                             Ajouter un document
+                          </DropdownMenuItem>
+                          <DropdownMenuItem
+                            onClick={(event) => {
+                              event.stopPropagation();
+                              onAddFolderFromFolder?.(folder);
+                            }}
+                          >
+                            <Folder className="w-4 h-4 mr-2" />
+                            Ajouter un dossier
                           </DropdownMenuItem>
                           <DropdownMenuItem>
                             <Eye className="w-4 h-4 mr-2" />

@@ -6,6 +6,7 @@ import { DocumentFilterBar } from './DocumentFilterBar';
 import { DocumentTreeSidebar } from './DocumentTreeSidebar';
 import { DocumentListView } from './DocumentListView';
 import { DocumentAddModal } from './DocumentAddModal';
+import { AddFolderPopup } from './AddFolderPopup';
 import { Document, mockDocuments } from '../utils/documentMockData';
 import { toast } from 'sonner';
 import { MassUploadWizard } from './MassUploadWizard';
@@ -47,6 +48,8 @@ export function DocumentsPage({ selectedSpace, navigationTarget, onNavigationHan
   const [focusedItemId, setFocusedItemId] = useState<string | null>(null);
   const [addDocumentModalOpen, setAddDocumentModalOpen] = useState(false);
   const [addDocumentDefaultFolderId, setAddDocumentDefaultFolderId] = useState<string>('root');
+  const [addFolderPopupOpen, setAddFolderPopupOpen] = useState(false);
+  const [addFolderDefaultParentId, setAddFolderDefaultParentId] = useState<string>('root');
 
   // Convert TreeNode to Document format
   const convertTreeToDocuments = (treeNodes: TreeNode[]): Document[] => {
@@ -138,6 +141,11 @@ export function DocumentsPage({ selectedSpace, navigationTarget, onNavigationHan
   const openAddDocumentModal = (folderId?: string | null) => {
     setAddDocumentDefaultFolderId(folderId || currentFolder?.id || 'root');
     setAddDocumentModalOpen(true);
+  };
+
+  const openAddFolderPopup = (folderId?: string | null) => {
+    setAddFolderDefaultParentId(folderId || currentFolder?.id || 'root');
+    setAddFolderPopupOpen(true);
   };
 
   // Get existing folder names for the wizard
@@ -377,6 +385,8 @@ export function DocumentsPage({ selectedSpace, navigationTarget, onNavigationHan
               onAddDocument={() => openAddDocumentModal()}
               onOpenWizard={handleOpenWizard}
               onDownloadAll={handleDownloadAll}
+              onAddFolder={() => openAddFolderPopup()}
+              onAddFolderFromFolder={(folder) => openAddFolderPopup(folder.id)}
             />
           </div>
         </div>
@@ -407,6 +417,12 @@ export function DocumentsPage({ selectedSpace, navigationTarget, onNavigationHan
         folderOptions={folderOptions}
         defaultFolderId={addDocumentDefaultFolderId}
         document={selectedDocument}
+      />
+      <AddFolderPopup
+        isOpen={addFolderPopupOpen}
+        onClose={() => setAddFolderPopupOpen(false)}
+        folderOptions={folderOptions}
+        defaultParentId={addFolderDefaultParentId}
       />
 
     </div>
