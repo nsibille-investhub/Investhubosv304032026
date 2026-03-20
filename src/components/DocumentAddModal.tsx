@@ -17,7 +17,7 @@ import {
   DropdownMenuTrigger,
 } from './ui/dropdown-menu';
 import { toast } from 'sonner';
-import { ChevronDown, UploadCloud, FileCheck2, Download, Users2, UserRound, Mail, Eye, Trash2, Check, Folder } from 'lucide-react';
+import { ChevronDown, UploadCloud, FileCheck2, Download, Users2, UserRound, Mail, Eye, Trash2, Check, Folder, FileText, Bell, ShieldCheck } from 'lucide-react';
 
 interface FolderOption {
   id: string;
@@ -302,8 +302,11 @@ export function DocumentAddModal({ isOpen, onClose, folderOptions, defaultFolder
         </SheetHeader>
 
         <div className="flex-1 overflow-y-auto px-6 py-5 space-y-5">
-          <section className="space-y-3">
-            <h3 className="text-sm font-semibold">Versions documentaires</h3>
+          <section className="space-y-3 rounded-2xl border-2 border-blue-200 bg-gradient-to-br from-blue-50 to-indigo-50 p-4">
+            <div>
+              <p className="font-semibold text-slate-900 flex items-center gap-2"><FileText className="w-5 h-5 text-blue-600" /> Document</p>
+              <p className="text-sm text-slate-600">Versions, fichiers et emplacement du document.</p>
+            </div>
             <div className="rounded-2xl border bg-gradient-to-b from-white to-slate-50 p-4 md:p-5">
               <Tabs defaultValue="fr" className="w-full">
                 <TabsList className="grid w-full grid-cols-2 h-11">
@@ -450,8 +453,11 @@ export function DocumentAddModal({ isOpen, onClose, folderOptions, defaultFolder
 
           <Separator className="my-1" />
 
-          <section className="space-y-4">
-            <h3 className="text-sm font-semibold">Audience du document</h3>
+          <section className="space-y-4 rounded-2xl border-2 border-blue-200 bg-gradient-to-br from-blue-50 to-indigo-50 p-4">
+            <div>
+              <p className="font-semibold text-slate-900 flex items-center gap-2"><Users2 className="w-5 h-5 text-blue-600" /> Audience</p>
+              <p className="text-sm text-slate-600">Configuration des critères de ciblage.</p>
+            </div>
             <div className="flex gap-2 p-1 rounded-xl bg-slate-100 w-fit">
               <Button variant={audienceMode === 'general' ? 'default' : 'outline'} onClick={() => setAudienceMode('general')}>Document général</Button>
               <Button variant={audienceMode === 'nominative' ? 'default' : 'outline'} onClick={() => setAudienceMode('nominative')}>Document nominatif</Button>
@@ -593,18 +599,20 @@ export function DocumentAddModal({ isOpen, onClose, folderOptions, defaultFolder
               </div>
             )}
 
-            {audienceMode === 'general' && (
-              <div className="rounded-2xl border-2 border-blue-200 bg-gradient-to-br from-blue-50 to-indigo-50 p-4 space-y-4">
+            <div className="rounded-2xl border-2 border-blue-200 bg-gradient-to-br from-blue-50 to-indigo-50 p-4 space-y-4">
                 <div className="flex items-center justify-between gap-3">
                   <div>
-                    <p className="font-semibold text-slate-900 flex items-center gap-2"><Users2 className="w-5 h-5 text-blue-600" /> Scope de Ciblage</p>
-                    <p className="text-sm text-slate-600">Ce document sera visible par les investisseurs suivants</p>
+                    <p className="font-semibold text-slate-900 flex items-center gap-2"><ShieldCheck className="w-5 h-5 text-blue-600" /> Droits d'accès</p>
+                    <p className="text-sm text-slate-600">Ce document sera visible selon le ciblage défini.</p>
                   </div>
+                  {audienceMode === 'general' && (
                   <Button variant="outline" className="border-blue-300 text-blue-700" onClick={handleExportScope}>
                     <Download className="w-4 h-4 mr-2" />
                     Export CSV
                   </Button>
+                  )}
                 </div>
+                {audienceMode === 'general' ? (
                 <div className="grid grid-cols-2 gap-3">
                   <div className="rounded-xl border border-blue-200 bg-white p-3">
                     <p className="text-blue-700 text-sm font-medium">Investisseurs</p>
@@ -615,8 +623,10 @@ export function DocumentAddModal({ isOpen, onClose, folderOptions, defaultFolder
                     <p className="text-3xl font-bold text-indigo-800">{audience.contacts}</p>
                   </div>
                 </div>
+                ) : (
+                  <p className="text-sm text-slate-600">Le document est nominatif et limité à l'investisseur sélectionné.</p>
+                )}
               </div>
-            )}
 
             {audienceMode === 'nominative' && selectedInvestorProfile && (
               <div className="rounded-2xl border bg-white p-4 space-y-3">
@@ -648,7 +658,12 @@ export function DocumentAddModal({ isOpen, onClose, folderOptions, defaultFolder
 
           <Separator className="my-1" />
 
-          <section className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+          <section className="space-y-4 rounded-2xl border-2 border-blue-200 bg-gradient-to-br from-blue-50 to-indigo-50 p-4">
+            <div>
+              <p className="font-semibold text-slate-900 flex items-center gap-2"><Bell className="w-5 h-5 text-blue-600" /> Notification</p>
+              <p className="text-sm text-slate-600">Notifications immédiates et relances automatiques.</p>
+            </div>
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
             <div className="space-y-3 border rounded-xl p-4">
               <div className="flex items-center justify-between">
                 <Label>Notification document</Label>
@@ -676,12 +691,16 @@ export function DocumentAddModal({ isOpen, onClose, folderOptions, defaultFolder
                 </Select>
               </div>
             </div>
+            </div>
           </section>
 
           <Separator className="my-1" />
 
-          <section className="space-y-3 pb-2">
-            <h3 className="text-sm font-semibold">Validation</h3>
+          <section className="space-y-3 pb-2 rounded-2xl border-2 border-blue-200 bg-gradient-to-br from-blue-50 to-indigo-50 p-4">
+            <div>
+              <p className="font-semibold text-slate-900 flex items-center gap-2"><Check className="w-5 h-5 text-blue-600" /> Validation</p>
+              <p className="text-sm text-slate-600">Équipes de validation et validateurs associés.</p>
+            </div>
             <div className="grid grid-cols-1 md:grid-cols-3 gap-2">
               {TEAMS.map((team) => (
                 <label key={team.id} className="flex items-center gap-2 text-sm border rounded-md p-2">
