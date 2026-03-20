@@ -7,7 +7,8 @@ import {
   Download, 
   MoreVertical,
   ChevronRight,
-  File
+  Search,
+  X
 } from 'lucide-react';
 import { Document } from '../utils/documentMockData';
 import { Badge } from './ui/badge';
@@ -17,6 +18,7 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from './ui/dropdown-menu';
+import { Input } from './ui/input';
 
 interface DocumentListViewProps {
   documents: Document[];
@@ -24,8 +26,8 @@ interface DocumentListViewProps {
   onDocumentClick: (doc: Document) => void;
   onFolderNavigate: (folderId: string | null, folderPath: string[]) => void;
   currentPath: string[];
-  searchTerm?: string;
-  searchScope?: 'current-folder' | 'all-folders';
+  searchTerm: string;
+  onSearchTermChange: (value: string) => void;
   searchResults?: Array<{ item: Document; path: string[] }>;
   focusedItemId?: string | null;
 }
@@ -36,8 +38,8 @@ export function DocumentListView({
   onDocumentClick,
   onFolderNavigate,
   currentPath,
-  searchTerm = '',
-  searchScope = 'all-folders',
+  searchTerm,
+  onSearchTermChange,
   searchResults = [],
   focusedItemId = null
 }: DocumentListViewProps) {
@@ -125,13 +127,36 @@ export function DocumentListView({
         </div>
       )}
 
+      {/* Search below breadcrumb */}
+      <div className="px-6 py-3 border-b border-gray-200 bg-white">
+        <div className="relative">
+          <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
+          <Input
+            type="text"
+            placeholder="Rechercher un document ou un dossier"
+            value={searchTerm}
+            onChange={(e) => onSearchTermChange(e.target.value)}
+            className="pl-10 h-10"
+          />
+          {searchTerm && (
+            <button
+              onClick={() => onSearchTermChange('')}
+              className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600"
+              aria-label="Effacer la recherche"
+            >
+              <X className="w-4 h-4" />
+            </button>
+          )}
+        </div>
+        {searchTerm.trim() && (
+          <p className="mt-2 text-xs text-gray-500">
+            {itemsToRender.length} résultat{itemsToRender.length > 1 ? 's' : ''} dans {currentPath.length > 0 ? currentPath.join(' / ') : 'Documents'}
+          </p>
+        )}
+      </div>
+
       {/* Table Header */}
       <div className="px-6 py-3 border-b border-gray-200 bg-gray-50/30">
-        {hasActiveSearch && (
-          <div className="mb-2 text-xs text-gray-500">
-            Résultats pour « {searchTerm} » · portée : {searchScope === 'all-folders' ? "toute l'arborescence" : 'dossier courant'}
-          </div>
-        )}
         <div className="grid grid-cols-12 gap-4 text-xs font-medium text-gray-500 uppercase tracking-wide">
           <div className="col-span-6">Nom</div>
           <div className="col-span-2">Ajouté le</div>
