@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from 'react';
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from './ui/dialog';
+import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetDescription } from './ui/sheet';
 import { Button } from './ui/button';
 import { Input } from './ui/input';
 import { Label } from './ui/label';
@@ -233,16 +233,16 @@ export function DocumentAddModal({ isOpen, onClose, folderOptions, defaultFolder
   };
 
   return (
-    <Dialog open={isOpen} onOpenChange={(open) => !open && onClose()}>
-      <DialogContent className="w-[min(92vw,1200px)] max-w-none sm:max-w-none h-[88vh] p-0 overflow-hidden flex flex-col">
-        <DialogHeader className="px-6 py-5 border-b bg-white">
+    <Sheet open={isOpen} onOpenChange={(open) => !open && onClose()}>
+      <SheetContent side="right" className="h-full p-0 gap-0">
+        <SheetHeader className="px-6 py-5 border-b bg-white">
           <div>
-            <DialogTitle className="text-[26px] leading-8">Ajouter un document</DialogTitle>
-          <DialogDescription className="mt-1 text-[15px]">
+            <SheetTitle className="text-[26px] leading-8">Ajouter un document</SheetTitle>
+          <SheetDescription className="mt-1 text-[15px]">
             Créez des versions FR/EN, configurez l'audience et le workflow de validation.
-          </DialogDescription>
+          </SheetDescription>
           </div>
-        </DialogHeader>
+        </SheetHeader>
 
         <div className="flex-1 overflow-y-auto px-6 py-5 space-y-5">
           <section className="space-y-3">
@@ -250,8 +250,8 @@ export function DocumentAddModal({ isOpen, onClose, folderOptions, defaultFolder
             <div className="rounded-2xl border bg-gradient-to-b from-white to-slate-50 p-4 md:p-5">
               <Tabs defaultValue="fr" className="w-full">
                 <TabsList className="grid w-full grid-cols-2 h-11">
-                  <TabsTrigger value="fr">FR</TabsTrigger>
-                  <TabsTrigger value="en">EN</TabsTrigger>
+                  <TabsTrigger value="fr">🇫🇷 FR</TabsTrigger>
+                  <TabsTrigger value="en">🇬🇧 EN</TabsTrigger>
                 </TabsList>
                 {(['fr', 'en'] as const).map((language) => {
                   const version = versions.find((item) => item.language === language)!;
@@ -521,7 +521,7 @@ export function DocumentAddModal({ isOpen, onClose, folderOptions, defaultFolder
           <Button variant="outline" onClick={onClose}>Annuler</Button>
           <Button onClick={handleSubmit}>Valider</Button>
         </div>
-      </DialogContent>
-    </Dialog>
+      </SheetContent>
+    </Sheet>
   );
 }
