@@ -1,17 +1,13 @@
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useEffect } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
 import {
   Plus,
-  Grid3x3,
-  List,
   Download,
   FileText,
   ChevronDown,
-  PackageOpen,
-  Search
+  PackageOpen
 } from 'lucide-react';
 import { Button } from './ui/button';
-import { Badge } from './ui/badge';
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -30,15 +26,26 @@ import { toast } from 'sonner';
 import { MassUploadWizard } from './MassUploadWizard';
 import { DataRoomSpace } from '../utils/dataRoomSpacesData';
 import { getTreeForSpace, TreeNode } from '../utils/dataRoomTreeData';
-import { Input } from './ui/input';
 
 type ViewMode = 'list' | 'grid';
 
-interface DocumentsPageProps {
-  selectedSpace: DataRoomSpace;
+interface SearchResultItem {
+  item: Document;
+  path: string[];
 }
 
-export function DocumentsPage({ selectedSpace }: DocumentsPageProps) {
+interface DocumentsPageProps {
+  selectedSpace: DataRoomSpace;
+  navigationTarget?: {
+    itemId: string;
+    itemType: 'folder' | 'file';
+    itemName: string;
+    pathSegments: string[];
+  } | null;
+  onNavigationHandled?: () => void;
+}
+
+export function DocumentsPage({ selectedSpace, navigationTarget, onNavigationHandled }: DocumentsPageProps) {
   const [viewMode, setViewMode] = useState<ViewMode>('list');
   const [selectedDocument, setSelectedDocument] = useState<Document | null>(null);
   const [selectedFolder, setSelectedFolder] = useState<Document | null>(null);
@@ -52,6 +59,7 @@ export function DocumentsPage({ selectedSpace }: DocumentsPageProps) {
   const [currentFolderId, setCurrentFolderId] = useState<string | null>(null);
   const [currentFolderPath, setCurrentFolderPath] = useState<string[]>([]);
   const [searchTerm, setSearchTerm] = useState('');
+  const [focusedItemId, setFocusedItemId] = useState<string | null>(null);
 
   // Convert TreeNode to Document format
   const convertTreeToDocuments = (treeNodes: TreeNode[]): Document[] => {
@@ -170,9 +178,7 @@ export function DocumentsPage({ selectedSpace }: DocumentsPageProps) {
     setActiveFilters(filters);
   };
 
-  const filteredDocuments = useMemo(() => {
-    return spaceDocuments;
-  }, [spaceDocuments]);
+  const filteredDocuments = useMemo(() => spaceDocuments, [spaceDocuments]);
 
   // Find current folder object
   const findFolderById = (docs: Document[], folderId: string | null): Document | null => {
@@ -189,6 +195,93 @@ export function DocumentsPage({ selectedSpace }: DocumentsPageProps) {
   };
 
   const currentFolder = currentFolderId ? findFolderById(filteredDocuments, currentFolderId) : null;
+
+  const findById = (docs: Document[], id: string): Document | null => {
+    for (const doc of docs) {
+      if (doc.id === id) return doc;
+      if (doc.children) {
+        const found = findById(doc.children, id);
+        if (found) return found;
+      }
+    }
+    return null;
+  };
+
+  const findFolderByPath = (docs: Document[], pathSegments: string[]): Document | null => {
+    let currentDocs = docs;
+    let currentFolderNode: Document | null = null;
+
+    for (const segment of pathSegments) {
+      const nextFolder = currentDocs.find((doc) => doc.type === 'folder' && doc.name === segment) || null;
+      if (!nextFolder) return null;
+      currentFolderNode = nextFolder;
+      currentDocs = nextFolder.children || [];
+    }
+
+    return currentFolderNode;
+  };
+
+  useEffect(() => {
+    if (!navigationTarget) return;
+
+    const targetItem = findById(filteredDocuments, navigationTarget.itemId);
+    if (!targetItem) {
+      onNavigationHandled?.();
+      return;
+    }
+
+    const parentPath = navigationTarget.pathSegments.slice(0, -1);
+    const parentFolder = findFolderByPath(filteredDocuments, parentPath);
+
+    setCurrentFolderId(parentFolder?.id || null);
+    setCurrentFolderPath(parentPath);
+    setFocusedItemId(targetItem.id);
+    setSearchTerm('');
+
+    if (navigationTarget.itemType === 'folder') {
+      setSelectedFolder(targetItem);
+      setSelectedDocument(null);
+    } else {
+      setSelectedDocument(targetItem);
+      setSelectedFolder(null);
+    }
+
+    toast.success('Positionné sur le résultat', {
+      description: navigationTarget.itemName,
+    });
+
+    onNavigationHandled?.();
+  }, [navigationTarget, filteredDocuments, onNavigationHandled]);
+
+  const collectSearchResults = (items: Document[], parentPath: string[] = []): SearchResultItem[] => {
+    const results: SearchResultItem[] = [];
+    for (const item of items) {
+      const nextPath = [...parentPath, item.name];
+      results.push({ item, path: nextPath });
+      if (item.children?.length) {
+        results.push(...collectSearchResults(item.children, nextPath));
+      }
+    }
+    return results;
+  };
+
+  const normalizedSearchTerm = searchTerm.trim().toLowerCase();
+  const allSearchResults = useMemo(() => collectSearchResults(filteredDocuments), [filteredDocuments]);
+
+  const scopedSearchResults = useMemo(() => {
+    if (!normalizedSearchTerm) {
+      return [];
+    }
+
+    const baseCollection = currentFolder
+      ? collectSearchResults(currentFolder.children || [], currentFolderPath)
+      : allSearchResults;
+
+    return baseCollection.filter(({ item, path }) => {
+      const haystack = `${item.name} ${path.join(' ')}`.toLowerCase();
+      return haystack.includes(normalizedSearchTerm);
+    });
+  }, [normalizedSearchTerm, currentFolder, currentFolderPath, allSearchResults]);
 
   // Handle folder navigation from tree
   const handleFolderSelect = (folderId: string | null, folderPath: string[]) => {
@@ -279,20 +372,6 @@ export function DocumentsPage({ selectedSpace }: DocumentsPageProps) {
           </div>
         </div>
 
-        {/* Search Bar */}
-        <div className="px-6 py-3 border-b border-gray-200">
-          <div className="relative">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
-            <Input
-              type="text"
-              placeholder="Rechercher un document"
-              value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
-              className="pl-10 h-10"
-            />
-          </div>
-        </div>
-
         {/* Double Navigation Layout */}
         <div className="flex-1 flex min-h-0">
           {/* Left: Tree Navigation */}
@@ -301,6 +380,7 @@ export function DocumentsPage({ selectedSpace }: DocumentsPageProps) {
               documents={filteredDocuments}
               currentFolderId={currentFolderId}
               onFolderSelect={handleFolderSelect}
+              searchTerm={searchTerm}
             />
           </div>
 
@@ -312,6 +392,10 @@ export function DocumentsPage({ selectedSpace }: DocumentsPageProps) {
               onDocumentClick={handleDocumentClick}
               onFolderNavigate={handleFolderNavigate}
               currentPath={currentFolderPath}
+              searchTerm={searchTerm}
+              onSearchTermChange={setSearchTerm}
+              searchResults={scopedSearchResults}
+              focusedItemId={focusedItemId}
             />
           </div>
         </div>

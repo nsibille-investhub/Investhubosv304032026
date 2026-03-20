@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { motion } from 'motion/react';
 import { 
   FileText, 
@@ -7,7 +7,8 @@ import {
   Download, 
   MoreVertical,
   ChevronRight,
-  File
+  Search,
+  X
 } from 'lucide-react';
 import { Document } from '../utils/documentMockData';
 import { Badge } from './ui/badge';
@@ -17,13 +18,18 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from './ui/dropdown-menu';
+import { Input } from './ui/input';
 
 interface DocumentListViewProps {
   documents: Document[];
   currentFolder: Document | null;
   onDocumentClick: (doc: Document) => void;
-  onFolderNavigate: (folderId: string, folderPath: string[]) => void;
+  onFolderNavigate: (folderId: string | null, folderPath: string[]) => void;
   currentPath: string[];
+  searchTerm: string;
+  onSearchTermChange: (value: string) => void;
+  searchResults?: Array<{ item: Document; path: string[] }>;
+  focusedItemId?: string | null;
 }
 
 export function DocumentListView({ 
@@ -31,9 +37,14 @@ export function DocumentListView({
   currentFolder, 
   onDocumentClick,
   onFolderNavigate,
-  currentPath
+  currentPath,
+  searchTerm,
+  onSearchTermChange,
+  searchResults = [],
+  focusedItemId = null
 }: DocumentListViewProps) {
   const [hoveredId, setHoveredId] = useState<string | null>(null);
+  const itemRefs = useRef<Record<string, HTMLDivElement | null>>({});
 
   // Get current level items
   const currentItems = currentFolder?.children || documents;
@@ -63,6 +74,22 @@ export function DocumentListView({
     }
   };
 
+  const hasActiveSearch = searchTerm.trim().length > 0;
+  const itemsToRender = hasActiveSearch
+    ? searchResults.map((result) => ({ ...result.item, __path: result.path } as Document & { __path: string[] }))
+    : currentItems;
+
+  const searchFolders = itemsToRender.filter(item => item.type === 'folder');
+  const searchFiles = itemsToRender.filter(item => item.type !== 'folder');
+
+  useEffect(() => {
+    if (!focusedItemId) return;
+    const target = itemRefs.current[focusedItemId];
+    if (target) {
+      target.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    }
+  }, [focusedItemId, itemsToRender.length]);
+
   return (
     <div className="flex flex-col h-full">
       {/* Breadcrumb */}
@@ -70,7 +97,7 @@ export function DocumentListView({
         <div className="px-6 py-3 border-b border-gray-200 bg-gray-50/50">
           <div className="flex items-center gap-2 text-sm">
             <button
-              onClick={() => onFolderNavigate(null as any, [])}
+              onClick={() => onFolderNavigate(null, [])}
               className="text-gray-600 hover:text-gray-900 transition-colors"
             >
               Documents
@@ -100,6 +127,34 @@ export function DocumentListView({
         </div>
       )}
 
+      {/* Search below breadcrumb */}
+      <div className="px-6 py-3 border-b border-gray-200 bg-white">
+        <div className="relative">
+          <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
+          <Input
+            type="text"
+            placeholder="Rechercher un document ou un dossier"
+            value={searchTerm}
+            onChange={(e) => onSearchTermChange(e.target.value)}
+            className="pl-10 h-10"
+          />
+          {searchTerm && (
+            <button
+              onClick={() => onSearchTermChange('')}
+              className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600"
+              aria-label="Effacer la recherche"
+            >
+              <X className="w-4 h-4" />
+            </button>
+          )}
+        </div>
+        {searchTerm.trim() && (
+          <p className="mt-2 text-xs text-gray-500">
+            {itemsToRender.length} résultat{itemsToRender.length > 1 ? 's' : ''} dans {currentPath.length > 0 ? currentPath.join(' / ') : 'Documents'}
+          </p>
+        )}
+      </div>
+
       {/* Table Header */}
       <div className="px-6 py-3 border-b border-gray-200 bg-gray-50/30">
         <div className="grid grid-cols-12 gap-4 text-xs font-medium text-gray-500 uppercase tracking-wide">
@@ -112,26 +167,27 @@ export function DocumentListView({
 
       {/* Items List */}
       <div className="flex-1 overflow-y-auto">
-        {currentItems.length === 0 ? (
+        {itemsToRender.length === 0 ? (
           <div className="flex flex-col items-center justify-center py-12 text-center">
             <Folder className="w-12 h-12 text-gray-300 mb-3" />
-            <p className="text-gray-500">Ce dossier est vide</p>
+            <p className="text-gray-500">{hasActiveSearch ? 'Aucun résultat trouvé' : 'Ce dossier est vide'}</p>
           </div>
         ) : (
           <>
             {/* Folders first */}
-            {folders.map((folder) => {
+            {(hasActiveSearch ? searchFolders : folders).map((folder) => {
               const Icon = getFileIcon(folder.type);
               const isHovered = hoveredId === folder.id;
               
               return (
                 <motion.div
                   key={folder.id}
+                  ref={(el) => { itemRefs.current[folder.id] = el; }}
                   onMouseEnter={() => setHoveredId(folder.id)}
                   onMouseLeave={() => setHoveredId(null)}
                   whileHover={{ backgroundColor: 'rgba(0, 0, 0, 0.02)' }}
                   onClick={() => handleRowClick(folder)}
-                  className="px-6 py-3 border-b border-gray-100 cursor-pointer transition-colors"
+                  className={`px-6 py-3 border-b border-gray-100 cursor-pointer transition-colors ${focusedItemId === folder.id ? 'bg-blue-50 ring-1 ring-inset ring-blue-300' : ''}`}
                 >
                   <div className="grid grid-cols-12 gap-4 items-center">
                     <div className="col-span-6 flex items-center gap-3">
@@ -142,6 +198,9 @@ export function DocumentListView({
                         <p className="text-sm font-medium text-gray-900 truncate">
                           {folder.name}
                         </p>
+                        {hasActiveSearch && (folder as any).__path && (
+                          <p className="text-xs text-gray-400 truncate">{(folder as any).__path.slice(0, -1).join(' / ') || 'Racine'}</p>
+                        )}
                         <p className="text-xs text-gray-500">
                           {folder.children?.length || 0} élément{(folder.children?.length || 0) > 1 ? 's' : ''}
                         </p>
@@ -199,18 +258,19 @@ export function DocumentListView({
             })}
 
             {/* Then files */}
-            {files.map((file) => {
+            {(hasActiveSearch ? searchFiles : files).map((file) => {
               const Icon = getFileIcon(file.type);
               const isHovered = hoveredId === file.id;
               
               return (
                 <motion.div
                   key={file.id}
+                  ref={(el) => { itemRefs.current[file.id] = el; }}
                   onMouseEnter={() => setHoveredId(file.id)}
                   onMouseLeave={() => setHoveredId(null)}
                   whileHover={{ backgroundColor: 'rgba(0, 0, 0, 0.02)' }}
                   onClick={() => handleRowClick(file)}
-                  className="px-6 py-3 border-b border-gray-100 cursor-pointer transition-colors"
+                  className={`px-6 py-3 border-b border-gray-100 cursor-pointer transition-colors ${focusedItemId === file.id ? 'bg-blue-50 ring-1 ring-inset ring-blue-300' : ''}`}
                 >
                   <div className="grid grid-cols-12 gap-4 items-center">
                     <div className="col-span-6 flex items-center gap-3">
@@ -221,6 +281,9 @@ export function DocumentListView({
                         <p className="text-sm font-medium text-gray-900 truncate">
                           {file.name}
                         </p>
+                        {hasActiveSearch && (file as any).__path && (
+                          <p className="text-xs text-gray-400 truncate">{(file as any).__path.slice(0, -1).join(' / ') || 'Racine'}</p>
+                        )}
                       </div>
                       <Badge variant="outline" className="bg-blue-50 text-blue-700 border-blue-200 text-xs">
                         {file.type === 'pdf' ? 'PDF' : 'Document'}
@@ -292,7 +355,7 @@ export function DocumentListView({
       <div className="px-6 py-3 border-t border-gray-200 bg-gray-50/30">
         <div className="flex items-center justify-between text-xs text-gray-500">
           <span>
-            {folders.length} dossier{folders.length > 1 ? 's' : ''} · {files.length} document{files.length > 1 ? 's' : ''}
+            {(hasActiveSearch ? searchFolders.length : folders.length)} dossier{(hasActiveSearch ? searchFolders.length : folders.length) > 1 ? 's' : ''} · {(hasActiveSearch ? searchFiles.length : files.length)} document{(hasActiveSearch ? searchFiles.length : files.length) > 1 ? 's' : ''}
           </span>
         </div>
       </div>

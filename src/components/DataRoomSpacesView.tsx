@@ -1,9 +1,21 @@
+import { useMemo, useState } from 'react';
 import { motion } from 'motion/react';
-import { Plus, Folder, Settings, Users, Building2, Briefcase, Target, ArrowRight, Eye } from 'lucide-react';
+import { Plus, Folder, Settings, Users, Building2, Briefcase, Target, ArrowRight, Eye, Search, FileText, FolderOpen } from 'lucide-react';
 import { Button } from './ui/button';
 import { Badge } from './ui/badge';
-import { cn } from './ui/utils';
 import { DataRoomSpace } from '../utils/dataRoomSpacesData';
+import { getTreeForSpace, TreeNode } from '../utils/dataRoomTreeData';
+import { Input } from './ui/input';
+
+export interface GlobalSearchHit {
+  id: string;
+  name: string;
+  type: 'folder' | 'file';
+  pathSegments: string[];
+  path: string;
+  spaceId: string;
+  spaceName: string;
+}
 
 interface DataRoomSpacesViewProps {
   spaces: DataRoomSpace[];
@@ -12,6 +24,7 @@ interface DataRoomSpacesViewProps {
   onMassUpload: () => void;
   onConfigureSpace: (space: DataRoomSpace) => void;
   onOpenBirdView?: () => void;
+  onSearchResultSelect?: (result: GlobalSearchHit) => void;
 }
 
 export function DataRoomSpacesView({
@@ -20,8 +33,10 @@ export function DataRoomSpacesView({
   onAddSpace,
   onMassUpload,
   onConfigureSpace,
-  onOpenBirdView
+  onOpenBirdView,
+  onSearchResultSelect
 }: DataRoomSpacesViewProps) {
+  const [globalSearch, setGlobalSearch] = useState('');
 
   const getTargetIcon = (userTypes: string[]) => {
     if (userTypes.includes('Investisseur')) return Users;
@@ -47,6 +62,52 @@ export function DataRoomSpacesView({
     
     return parts.length > 0 ? parts.join(' • ') : 'Aucun ciblage défini';
   };
+
+  const flattenTree = (nodes: TreeNode[], space: DataRoomSpace, parentPath: string[] = []): GlobalSearchHit[] => {
+    return nodes.flatMap((node) => {
+      const pathParts = [...parentPath, node.name];
+      const current: GlobalSearchHit = {
+        id: node.id,
+        name: node.name,
+        type: node.type === 'folder' ? 'folder' : 'file',
+        pathSegments: pathParts,
+        path: pathParts.join(' / '),
+        spaceId: space.id,
+        spaceName: space.name,
+      };
+
+      const children = node.children ? flattenTree(node.children, space, pathParts) : [];
+      return [current, ...children];
+    });
+  };
+
+  const indexedContent = useMemo(() => {
+    return spaces.flatMap((space) => {
+      const tree = getTreeForSpace(space.id);
+      return flattenTree(tree, space);
+    });
+  }, [spaces]);
+
+  const normalizedQuery = globalSearch.trim().toLowerCase();
+  const globalResults = useMemo(() => {
+    if (!normalizedQuery) return [];
+
+    return indexedContent
+      .filter((item) => {
+        const haystack = `${item.name} ${item.path} ${item.spaceName}`.toLowerCase();
+        return haystack.includes(normalizedQuery);
+      })
+      .slice(0, 30);
+  }, [indexedContent, normalizedQuery]);
+
+  const matchedSpaceIds = useMemo(() => {
+    if (!normalizedQuery) return new Set<string>();
+    return new Set(globalResults.map((item) => item.spaceId));
+  }, [globalResults, normalizedQuery]);
+
+  const visibleSpaces = normalizedQuery
+    ? spaces.filter((space) => matchedSpaceIds.has(space.id) || space.name.toLowerCase().includes(normalizedQuery))
+    : spaces;
 
   return (
     <div className="flex-1 flex flex-col px-6 pb-6">
@@ -92,9 +153,70 @@ export function DataRoomSpacesView({
         </div>
       </motion.div>
 
+      {/* Global Search Across Spaces */}
+      <motion.div
+        initial={{ opacity: 0, y: 8 }}
+        animate={{ opacity: 1, y: 0 }}
+        className="mb-6 rounded-2xl border border-gray-200 bg-white p-4"
+      >
+        <div className="relative">
+          <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-400" />
+          <Input
+            value={globalSearch}
+            onChange={(e) => setGlobalSearch(e.target.value)}
+            placeholder="Recherche globale dans tous les espaces (documents et dossiers)"
+            className="pl-10"
+          />
+        </div>
+
+        {normalizedQuery && (
+          <div className="mt-3">
+            <p className="text-xs text-gray-500">
+              {globalResults.length} résultat{globalResults.length > 1 ? 's' : ''} trouvé{globalResults.length > 1 ? 's' : ''} dans {matchedSpaceIds.size} espace{matchedSpaceIds.size > 1 ? 's' : ''}
+            </p>
+
+            <div className="mt-2 max-h-64 overflow-y-auto rounded-xl border border-gray-100">
+              {globalResults.length === 0 ? (
+                <div className="px-4 py-6 text-center text-sm text-gray-500">
+                  Aucun document ou dossier trouvé pour « {globalSearch} ».
+                </div>
+              ) : (
+                globalResults.map((result) => (
+                  <button
+                    key={`${result.spaceId}-${result.id}`}
+                    onClick={() => {
+                      if (onSearchResultSelect) {
+                        onSearchResultSelect(result);
+                      } else {
+                        const space = spaces.find((s) => s.id === result.spaceId);
+                        if (space) {
+                          onSpaceSelect(space);
+                        }
+                      }
+                    }}
+                    className="flex w-full items-center gap-3 border-b border-gray-100 px-4 py-3 text-left hover:bg-blue-50/60"
+                  >
+                    <div className="rounded-lg bg-gray-100 p-2 text-gray-600">
+                      {result.type === 'folder' ? <FolderOpen className="h-4 w-4" /> : <FileText className="h-4 w-4" />}
+                    </div>
+                    <div className="min-w-0 flex-1">
+                      <p className="truncate text-sm font-medium text-gray-900">{result.name}</p>
+                      <p className="truncate text-xs text-gray-500">{result.spaceName} · {result.path}</p>
+                    </div>
+                    <Badge variant="outline" className="text-[10px] uppercase">
+                      {result.type === 'folder' ? 'Dossier' : 'Document'}
+                    </Badge>
+                  </button>
+                ))
+              )}
+            </div>
+          </div>
+        )}
+      </motion.div>
+
       {/* Spaces Grid */}
       <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-4 gap-6">
-        {spaces.map((space, index) => {
+        {visibleSpaces.map((space, index) => {
           const TargetIcon = getTargetIcon(space.targeting.userTypes);
           
           return (
@@ -168,7 +290,7 @@ export function DataRoomSpacesView({
       </div>
 
       {/* Empty State */}
-      {spaces.length === 0 && (
+      {visibleSpaces.length === 0 && (
         <motion.div
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
@@ -177,9 +299,13 @@ export function DataRoomSpacesView({
           <div className="w-20 h-20 rounded-full bg-gray-100 flex items-center justify-center mb-4">
             <Folder className="w-10 h-10 text-gray-400" />
           </div>
-          <h3 className="text-lg font-medium text-gray-900 mb-2">Aucun espace créé</h3>
+          <h3 className="text-lg font-medium text-gray-900 mb-2">
+            {normalizedQuery ? 'Aucun espace ne correspond à la recherche' : 'Aucun espace créé'}
+          </h3>
           <p className="text-gray-500 mb-6 max-w-md">
-            Créez votre premier espace pour organiser vos documents et contrôler l'accès
+            {normalizedQuery
+              ? `Ajustez votre recherche globale « ${globalSearch} » ou videz le champ pour revoir tous les espaces.`
+              : 'Créez votre premier espace pour organiser vos documents et contrôler l\'accès'}
           </p>
           <Button
             onClick={onAddSpace}
