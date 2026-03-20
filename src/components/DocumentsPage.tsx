@@ -148,18 +148,19 @@ export function DocumentsPage({ selectedSpace, navigationTarget, onNavigationHan
     setWizardOpen(true);
   };
 
-  // Get existing folder names for the wizard
-  const getAllFolderNames = (docs: Document[]): string[] => {
-    const names: string[] = [];
+  // Get existing folder paths for the wizard (scoped to the selected space only)
+  const getAllFolderPaths = (docs: Document[], parentPath: string = ''): string[] => {
+    const paths: string[] = [];
     docs.forEach(doc => {
       if (doc.type === 'folder' && !doc.isRoot) {
-        names.push(doc.name);
+        const currentPath = `${parentPath}/${doc.name}`;
+        paths.push(currentPath);
         if (doc.children) {
-          names.push(...getAllFolderNames(doc.children));
+          paths.push(...getAllFolderPaths(doc.children, currentPath));
         }
       }
     });
-    return names;
+    return paths;
   };
 
   const handleDownloadAll = () => {
@@ -301,7 +302,7 @@ export function DocumentsPage({ selectedSpace, navigationTarget, onNavigationHan
         <MassUploadWizard
           isOpen={wizardOpen}
           onClose={() => setWizardOpen(false)}
-          existingFolders={getAllFolderNames(spaceDocuments)}
+          existingFolders={getAllFolderPaths(spaceDocuments)}
           inline
         />
       </div>

@@ -9,6 +9,7 @@ import { toast } from 'sonner';
 import { ArrowLeft } from 'lucide-react';
 import { Button } from './ui/button';
 import { MassUploadWizard } from './MassUploadWizard';
+import { getTreeForSpace, TreeNode } from '../utils/dataRoomTreeData';
 
 interface DataRoomPageProps {
   onSpaceChange?: (space: DataRoomSpace | null) => void;
@@ -81,6 +82,31 @@ export function DataRoomPage({ onSpaceChange }: DataRoomPageProps) {
     setShowMassUploadWizard(true);
   };
 
+  const extractFolderPaths = (nodes: TreeNode[], parentPath: string = ''): string[] => {
+    const paths: string[] = [];
+    nodes.forEach((node) => {
+      if (node.type === 'folder') {
+        const currentPath = `${parentPath}/${node.name}`;
+        paths.push(currentPath);
+        if (node.children && node.children.length > 0) {
+          paths.push(...extractFolderPaths(node.children, currentPath));
+        }
+      }
+    });
+    return paths;
+  };
+
+  const globalFolderPaths = Array.from(
+    new Set(
+      dataRoomSpaces.flatMap((space) => {
+        const tree = getTreeForSpace(space.id);
+        const scopedRoot = `/${space.name}`;
+        const scopedFolders = extractFolderPaths(tree, scopedRoot);
+        return [scopedRoot, ...scopedFolders];
+      })
+    )
+  );
+
   const handleSaveSpace = (spaceData: Partial<DataRoomSpace>) => {
     if (spaceData.id) {
       // Edit existing space
@@ -122,6 +148,35 @@ export function DataRoomPage({ onSpaceChange }: DataRoomPageProps) {
             className="flex-1 flex flex-col overflow-hidden"
           >
             <BirdViewPage onBack={() => setShowBirdView(false)} />
+          </motion.div>
+        ) : showMassUploadWizard ? (
+          <motion.div
+            key="spaces-mass-upload-view"
+            initial={{ opacity: 0, x: 20 }}
+            animate={{ opacity: 1, x: 0 }}
+            exit={{ opacity: 0, x: 20 }}
+            transition={{ duration: 0.3 }}
+            className="flex-1 flex flex-col overflow-hidden px-6 pb-6"
+          >
+            <div className="px-0 py-4 border-b border-gray-200 bg-white">
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => setShowMassUploadWizard(false)}
+                className="gap-2"
+              >
+                <ArrowLeft className="w-4 h-4" />
+                Retour aux espaces
+              </Button>
+            </div>
+            <div className="flex-1 overflow-hidden pt-4">
+              <MassUploadWizard
+                isOpen
+                onClose={() => setShowMassUploadWizard(false)}
+                existingFolders={globalFolderPaths}
+                inline
+              />
+            </div>
           </motion.div>
         ) : !selectedSpace ? (
           /* Spaces View */
@@ -199,11 +254,6 @@ export function DataRoomPage({ onSpaceChange }: DataRoomPageProps) {
         onDelete={handleDeleteSpace}
       />
 
-      <MassUploadWizard
-        isOpen={showMassUploadWizard}
-        onClose={() => setShowMassUploadWizard(false)}
-        existingFolders={[]}
-      />
     </div>
   );
 }
