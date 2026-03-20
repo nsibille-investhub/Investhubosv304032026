@@ -234,20 +234,20 @@ export function DocumentAddModal({ isOpen, onClose, folderOptions, defaultFolder
 
   return (
     <Dialog open={isOpen} onOpenChange={(open) => !open && onClose()}>
-      <DialogContent className="max-w-6xl max-h-[92vh] overflow-y-auto p-0">
-        <DialogHeader>
-          <div className="px-8 pt-7">
-            <DialogTitle className="text-2xl">Ajouter un document</DialogTitle>
-          <DialogDescription className="mt-1.5">
+      <DialogContent className="w-[min(92vw,1200px)] max-w-none h-[88vh] p-0 overflow-hidden flex flex-col">
+        <DialogHeader className="px-6 py-5 border-b bg-white">
+          <div>
+            <DialogTitle className="text-[26px] leading-8">Ajouter un document</DialogTitle>
+          <DialogDescription className="mt-1 text-[15px]">
             Créez des versions FR/EN, configurez l'audience et le workflow de validation.
           </DialogDescription>
           </div>
         </DialogHeader>
 
-        <div className="space-y-7 px-8 pb-8">
+        <div className="flex-1 overflow-y-auto px-6 py-5 space-y-5">
           <section className="space-y-3">
             <h3 className="text-sm font-semibold">Versions documentaires</h3>
-            <div className="rounded-2xl border bg-gradient-to-b from-white to-slate-50 p-4">
+            <div className="rounded-2xl border bg-gradient-to-b from-white to-slate-50 p-4 md:p-5">
               <Tabs defaultValue="fr" className="w-full">
                 <TabsList className="grid w-full grid-cols-2 h-11">
                   <TabsTrigger value="fr">FR</TabsTrigger>
@@ -287,15 +287,15 @@ export function DocumentAddModal({ isOpen, onClose, folderOptions, defaultFolder
             </div>
           </section>
 
-          <section className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <section className="grid grid-cols-1 lg:grid-cols-2 gap-4">
             <div className="space-y-2">
               <Label>Date d'ajout</Label>
-              <Input type="date" value={addDate} onChange={(event) => setAddDate(event.target.value)} />
+              <Input type="date" className="h-11" value={addDate} onChange={(event) => setAddDate(event.target.value)} />
             </div>
             <div className="space-y-2">
               <Label>Dossier parent (dans l'espace courant)</Label>
               <Select value={parentFolderId} onValueChange={setParentFolderId}>
-                <SelectTrigger>
+                <SelectTrigger className="h-11">
                   <SelectValue placeholder="Choisir un dossier" />
                 </SelectTrigger>
                 <SelectContent>
@@ -307,7 +307,7 @@ export function DocumentAddModal({ isOpen, onClose, folderOptions, defaultFolder
             </div>
           </section>
 
-          <Separator />
+          <Separator className="my-1" />
 
           <section className="space-y-4">
             <h3 className="text-sm font-semibold">Audience du document</h3>
@@ -317,7 +317,7 @@ export function DocumentAddModal({ isOpen, onClose, folderOptions, defaultFolder
             </div>
 
             {audienceMode === 'general' ? (
-              <div className="space-y-4 border rounded-2xl p-5 bg-gradient-to-br from-white to-blue-50/40">
+              <div className="space-y-4 border rounded-2xl p-5 bg-gradient-to-br from-white to-blue-50/40 shadow-sm">
                 <div className="space-y-2">
                   <Label>Segments investisseurs</Label>
                   <DropdownMenu>
@@ -393,7 +393,7 @@ export function DocumentAddModal({ isOpen, onClose, folderOptions, defaultFolder
                 </div>
               </div>
             ) : (
-              <div className="space-y-4 border rounded-2xl p-5 bg-gradient-to-br from-white to-indigo-50/40">
+              <div className="space-y-4 border rounded-2xl p-5 bg-gradient-to-br from-white to-indigo-50/40 shadow-sm">
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
                   <div className="space-y-2">
                     <Label>Investisseur (unique)</Label>
@@ -452,17 +452,17 @@ export function DocumentAddModal({ isOpen, onClose, folderOptions, defaultFolder
               </div>
             )}
 
-            <div className="rounded-xl border bg-white p-3 text-sm flex items-center gap-2">
+            <div className="rounded-xl border bg-white p-3.5 text-sm flex items-center gap-2">
               <Sparkles className="w-4 h-4 text-blue-600" />
               Audience: <span className="font-semibold">{audience.investors}</span> investisseur(s) •{' '}
               <span className="font-semibold">{audience.contacts}</span> contact(s)
             </div>
           </section>
 
-          <Separator />
+          <Separator className="my-1" />
 
-          <section className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <div className="space-y-3 border rounded-lg p-4">
+          <section className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+            <div className="space-y-3 border rounded-xl p-4">
               <div className="flex items-center justify-between">
                 <Label>Notification document</Label>
                 <Switch checked={notify} onCheckedChange={setNotify} />
@@ -473,7 +473,7 @@ export function DocumentAddModal({ isOpen, onClose, folderOptions, defaultFolder
               </Select>
             </div>
 
-            <div className="space-y-3 border rounded-lg p-4">
+            <div className="space-y-3 border rounded-xl p-4">
               <div className="flex items-center justify-between">
                 <Label>Relance auto si non consulté</Label>
                 <Switch checked={reminder} onCheckedChange={setReminder} />
@@ -491,9 +491,9 @@ export function DocumentAddModal({ isOpen, onClose, folderOptions, defaultFolder
             </div>
           </section>
 
-          <Separator />
+          <Separator className="my-1" />
 
-          <section className="space-y-3">
+          <section className="space-y-3 pb-2">
             <h3 className="text-sm font-semibold">Validation</h3>
             <div className="grid grid-cols-1 md:grid-cols-3 gap-2">
               {TEAMS.map((team) => (
@@ -506,7 +506,7 @@ export function DocumentAddModal({ isOpen, onClose, folderOptions, defaultFolder
                 </label>
               ))}
             </div>
-            <div className="border rounded-lg p-3 text-sm space-y-1">
+            <div className="border rounded-xl p-3 text-sm space-y-1">
               <p className="font-medium">Détail des validateurs</p>
               {selectedValidators.length === 0 ? (
                 <p className="text-gray-500">Aucune équipe sélectionnée.</p>
@@ -516,10 +516,10 @@ export function DocumentAddModal({ isOpen, onClose, folderOptions, defaultFolder
             </div>
           </section>
 
-          <div className="flex justify-end gap-2">
-            <Button variant="outline" onClick={onClose}>Annuler</Button>
-            <Button onClick={handleSubmit}>Valider</Button>
-          </div>
+        </div>
+        <div className="border-t bg-white px-6 py-4 flex justify-end gap-2">
+          <Button variant="outline" onClick={onClose}>Annuler</Button>
+          <Button onClick={handleSubmit}>Valider</Button>
         </div>
       </DialogContent>
     </Dialog>
