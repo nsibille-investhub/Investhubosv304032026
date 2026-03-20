@@ -51,15 +51,15 @@ export function DocumentViewerPrototype({ document, onClose }: DocumentViewerPro
       animate={{ opacity: 1, y: 0 }}
       exit={{ opacity: 0, y: 16 }}
       transition={{ duration: 0.2 }}
-      className="fixed inset-0 z-50 bg-slate-950/82 backdrop-blur-[2px]"
+      className="absolute inset-0 z-50 bg-[#F8FAFC]"
     >
-      <div className="flex h-full flex-col p-4 sm:p-6">
+      <div className="flex h-full flex-col p-0">
         <motion.div
           initial={{ scale: 0.98, opacity: 0 }}
           animate={{ scale: 1, opacity: 1 }}
           exit={{ scale: 0.98, opacity: 0 }}
           transition={{ duration: 0.2 }}
-          className="flex min-h-0 flex-1 overflow-hidden rounded-[28px] border border-slate-700 bg-slate-900 shadow-[0_30px_80px_rgba(2,6,23,0.8)]"
+          className="flex min-h-0 flex-1 overflow-hidden bg-slate-900 shadow-[0_24px_60px_rgba(15,23,42,0.22)]"
         >
           {showThumbnails && (
             <aside className="hidden w-24 border-r border-slate-800 bg-slate-950 px-3 py-4 lg:block">

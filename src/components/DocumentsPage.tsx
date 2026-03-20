@@ -322,7 +322,7 @@ export function DocumentsPage({ selectedSpace, navigationTarget, onNavigationHan
   }
 
   return (
-    <div className="flex-1 flex gap-4 min-w-0">
+    <div className="relative flex-1 flex gap-4 min-w-0">
       <motion.div
         initial={{ opacity: 0, y: 20 }}
         animate={{ 
