@@ -25,7 +25,7 @@ interface DocumentViewerPrototypeProps {
   onClose: () => void;
 }
 
-export function DocumentViewerPrototype({ document, onClose }: DocumentViewerPrototypeProps) {
+export function DocumentViewerPrototype({ document: viewerDocument, onClose }: DocumentViewerPrototypeProps) {
   const [portalElement, setPortalElement] = useState<HTMLDivElement | null>(null);
   const [currentPage, setCurrentPage] = useState(1);
   const [zoomLevel, setZoomLevel] = useState(100);
@@ -33,9 +33,9 @@ export function DocumentViewerPrototype({ document, onClose }: DocumentViewerPro
   const [isFullWidth, setIsFullWidth] = useState(false);
 
   const totalPages = useMemo(() => {
-    const seed = document.name.length + document.version + document.views;
+    const seed = viewerDocument.name.length + viewerDocument.version + viewerDocument.views;
     return Math.max(6, Math.min(18, (seed % 12) + 6));
-  }, [document.name, document.version, document.views]);
+  }, [viewerDocument.name, viewerDocument.version, viewerDocument.views]);
 
   const pagePreviews = useMemo(
     () => Array.from({ length: Math.min(totalPages, 8) }, (_, index) => index + 1),
@@ -48,13 +48,13 @@ export function DocumentViewerPrototype({ document, onClose }: DocumentViewerPro
   const zoomOut = () => setZoomLevel((zoom) => Math.max(50, zoom - 10));
 
   useEffect(() => {
-    const element = document.createElement('div');
+    const element = window.document.createElement('div');
     element.setAttribute('data-document-viewer-portal', 'true');
-    document.body.appendChild(element);
+    window.document.body.appendChild(element);
     setPortalElement(element);
 
     return () => {
-      document.body.removeChild(element);
+      window.document.body.removeChild(element);
     };
   }, []);
 
@@ -119,13 +119,13 @@ export function DocumentViewerPrototype({ document, onClose }: DocumentViewerPro
                       <Eye className="h-5 w-5" />
                     </div>
                     <div className="min-w-0">
-                      <p className="truncate text-sm font-semibold text-slate-900">{document.name}</p>
+                      <p className="truncate text-sm font-semibold text-slate-900">{viewerDocument.name}</p>
                       <div className="mt-1 flex flex-wrap items-center gap-2 text-xs text-slate-500">
-                        <span>{document.format || 'Document'}</span>
+                        <span>{viewerDocument.format || 'Document'}</span>
                         <span>•</span>
-                        <span>{document.size || '—'}</span>
+                        <span>{viewerDocument.size || '—'}</span>
                         <span>•</span>
-                        <span>v{document.version}</span>
+                        <span>v{viewerDocument.version}</span>
                       </div>
                     </div>
                   </div>
@@ -191,7 +191,7 @@ export function DocumentViewerPrototype({ document, onClose }: DocumentViewerPro
                         <div className="flex items-center justify-between">
                           <div>
                             <p className="text-xs uppercase tracking-[0.3em] text-slate-400">Viewer prototype</p>
-                            <h2 className="mt-2 text-2xl font-semibold text-slate-900">{document.name}</h2>
+                            <h2 className="mt-2 text-2xl font-semibold text-slate-900">{viewerDocument.name}</h2>
                           </div>
                           <Badge className="border-blue-200 bg-blue-50 text-blue-700">Apryse-style</Badge>
                         </div>
@@ -214,7 +214,7 @@ export function DocumentViewerPrototype({ document, onClose }: DocumentViewerPro
                                   navigation par pages, zone de lecture immersive et panneau d’informations.
                                 </p>
                                 <p>
-                                  Le document <span className="font-medium text-slate-900">{document.name}</span> est affiché ici comme une maquette haute fidélité, prête à être remplacée plus tard par le SDK Apryse réel.
+                                  Le document <span className="font-medium text-slate-900">{viewerDocument.name}</span> est affiché ici comme une maquette haute fidélité, prête à être remplacée plus tard par le SDK Apryse réel.
                                 </p>
                               </div>
                             </div>
@@ -256,8 +256,8 @@ export function DocumentViewerPrototype({ document, onClose }: DocumentViewerPro
                           <div className="grid gap-4 sm:grid-cols-3">
                             {[
                               ['Ajouté par', document.uploadedBy],
-                              ['Dernière mise à jour', new Date(document.updatedAt).toLocaleDateString('fr-FR')],
-                              ['Téléchargements', `${document.downloads}`],
+                              ['Dernière mise à jour', new Date(viewerDocument.updatedAt).toLocaleDateString('fr-FR')],
+                              ['Téléchargements', `${viewerDocument.downloads}`],
                             ].map(([label, value]) => (
                               <div key={label} className="rounded-2xl bg-slate-50 px-4 py-3">
                                 <p className="text-xs text-slate-400">{label}</p>
@@ -280,16 +280,16 @@ export function DocumentViewerPrototype({ document, onClose }: DocumentViewerPro
                 <div className="space-y-5 px-5 py-5 text-sm text-slate-600">
                   <div>
                     <p className="text-xs text-slate-500">Nom</p>
-                    <p className="mt-1 font-medium text-slate-900">{document.name}</p>
+                    <p className="mt-1 font-medium text-slate-900">{viewerDocument.name}</p>
                   </div>
                   <div className="grid grid-cols-2 gap-3">
                     <div className="rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3">
                       <p className="text-xs text-slate-500">Format</p>
-                      <p className="mt-1 text-slate-900">{document.format || 'Document'}</p>
+                      <p className="mt-1 text-slate-900">{viewerDocument.format || 'Document'}</p>
                     </div>
                     <div className="rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3">
                       <p className="text-xs text-slate-500">Taille</p>
-                      <p className="mt-1 text-slate-900">{document.size || '—'}</p>
+                      <p className="mt-1 text-slate-900">{viewerDocument.size || '—'}</p>
                     </div>
                   </div>
                   <div className="rounded-3xl border border-slate-200 bg-slate-50 px-4 py-4">
@@ -304,13 +304,13 @@ export function DocumentViewerPrototype({ document, onClose }: DocumentViewerPro
                   <div className="rounded-3xl border border-slate-200 bg-slate-50 px-4 py-4">
                     <p className="text-xs text-slate-500">Activité récente</p>
                     <div className="mt-3 space-y-3">
-                      {(document.activities || []).slice(0, 3).map((activity) => (
+                      {(viewerDocument.activities || []).slice(0, 3).map((activity) => (
                         <div key={activity.id} className="rounded-2xl border border-slate-200 bg-white px-3 py-3">
                           <p className="text-xs uppercase tracking-[0.2em] text-slate-500">{activity.type}</p>
                           <p className="mt-1 text-sm text-slate-900">{activity.user}</p>
                         </div>
                       ))}
-                      {(!document.activities || document.activities.length === 0) && (
+                      {(!viewerDocument.activities || viewerDocument.activities.length === 0) && (
                         <p className="text-sm text-slate-500">Aucune activité mockée disponible.</p>
                       )}
                     </div>
