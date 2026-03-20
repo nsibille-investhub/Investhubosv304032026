@@ -8,6 +8,8 @@ import { Checkbox } from './ui/checkbox';
 import { Switch } from './ui/switch';
 import { Separator } from './ui/separator';
 import { Tabs, TabsList, TabsTrigger, TabsContent } from './ui/tabs';
+import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from './ui/command';
+import { Popover, PopoverContent, PopoverTrigger } from './ui/popover';
 import {
   DropdownMenu,
   DropdownMenuCheckboxItem,
@@ -15,7 +17,7 @@ import {
   DropdownMenuTrigger,
 } from './ui/dropdown-menu';
 import { toast } from 'sonner';
-import { ChevronDown, Sparkles, UploadCloud, FileCheck2, Download, Users2, UserRound, Mail } from 'lucide-react';
+import { ChevronDown, UploadCloud, FileCheck2, Download, Users2, UserRound, Mail, Eye, Trash2, Check, Folder } from 'lucide-react';
 
 interface FolderOption {
   id: string;
@@ -27,6 +29,7 @@ interface DocumentVersion {
   name: string;
   fileName: string;
   previewUrl?: string;
+  fileUrl?: string;
 }
 
 interface ValidationTeam {
@@ -150,6 +153,7 @@ export function DocumentAddModal({ isOpen, onClose, folderOptions, defaultFolder
   const [reminderTemplate, setReminderTemplate] = useState(MAIL_TEMPLATES[0]);
   const [validationTeams, setValidationTeams] = useState<string[]>([]);
   const fileInputRefs = useRef<Record<'fr' | 'en', HTMLInputElement | null>>({ fr: null, en: null });
+  const [folderPickerOpen, setFolderPickerOpen] = useState(false);
 
   useEffect(() => {
     if (!isOpen) return;
@@ -255,8 +259,15 @@ export function DocumentAddModal({ isOpen, onClose, folderOptions, defaultFolder
 
   const handleVersionFile = (language: 'fr' | 'en', file?: File | null) => {
     if (!file) return;
-    const previewUrl = file.type.startsWith('image/') ? URL.createObjectURL(file) : undefined;
-    updateVersion(language, { fileName: file.name, previewUrl });
+    const objectUrl = URL.createObjectURL(file);
+    const previewUrl = file.type.startsWith('image/') ? objectUrl : undefined;
+    updateVersion(language, { fileName: file.name, previewUrl, fileUrl: objectUrl });
+  };
+
+  const handleRemoveVersionFile = (language: 'fr' | 'en') => {
+    const current = versions.find((version) => version.language === language);
+    if (current?.fileUrl) URL.revokeObjectURL(current.fileUrl);
+    updateVersion(language, { fileName: '', previewUrl: undefined, fileUrl: undefined });
   };
 
   const handleExportScope = () => {
@@ -337,7 +348,8 @@ export function DocumentAddModal({ isOpen, onClose, folderOptions, defaultFolder
                                 <p className="text-xs text-slate-500">PDF, DOCX, XLSX, PNG... max 10MB</p>
                               </div>
                             ) : (
-                              <div className="flex items-center gap-3">
+                              <div className="flex items-center justify-between gap-3">
+                                <div className="flex items-center gap-3">
                                 {version.previewUrl ? (
                                   <img src={version.previewUrl} alt={version.fileName} className="w-14 h-14 rounded-lg object-cover border" />
                                 ) : (
@@ -348,6 +360,34 @@ export function DocumentAddModal({ isOpen, onClose, folderOptions, defaultFolder
                                 <div>
                                   <p className="font-medium text-slate-900">{version.fileName}</p>
                                   <p className="text-xs text-slate-500">Fichier prêt à être envoyé</p>
+                                </div>
+                                </div>
+                                <div className="flex items-center gap-2">
+                                  <Button
+                                    type="button"
+                                    variant="outline"
+                                    size="sm"
+                                    onClick={(event) => {
+                                      event.stopPropagation();
+                                      if (version.fileUrl) window.open(version.fileUrl, '_blank', 'noopener,noreferrer');
+                                    }}
+                                  >
+                                    <Eye className="w-3.5 h-3.5 mr-1.5" />
+                                    Aperçu
+                                  </Button>
+                                  <Button
+                                    type="button"
+                                    variant="ghost"
+                                    size="sm"
+                                    className="text-red-600 hover:text-red-700"
+                                    onClick={(event) => {
+                                      event.stopPropagation();
+                                      handleRemoveVersionFile(language);
+                                    }}
+                                  >
+                                    <Trash2 className="w-3.5 h-3.5 mr-1.5" />
+                                    Supprimer
+                                  </Button>
                                 </div>
                               </div>
                             )}
@@ -368,16 +408,43 @@ export function DocumentAddModal({ isOpen, onClose, folderOptions, defaultFolder
             </div>
             <div className="space-y-2">
               <Label>Dossier parent (dans l'espace courant)</Label>
-              <Select value={parentFolderId} onValueChange={setParentFolderId}>
-                <SelectTrigger className="h-11">
-                  <SelectValue placeholder="Choisir un dossier" />
-                </SelectTrigger>
-                <SelectContent>
-                  {folderOptions.map((folder) => (
-                    <SelectItem key={folder.id} value={folder.id}>{folder.label}</SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
+              <Popover open={folderPickerOpen} onOpenChange={setFolderPickerOpen}>
+                <PopoverTrigger asChild>
+                  <Button variant="outline" className="h-11 w-full justify-between font-normal">
+                    <span className="truncate">
+                      {folderOptions.find((folder) => folder.id === parentFolderId)?.label || 'Choisir un dossier'}
+                    </span>
+                    <ChevronDown className="w-4 h-4" />
+                  </Button>
+                </PopoverTrigger>
+                <PopoverContent className="w-[var(--radix-popover-trigger-width)] p-0" align="start">
+                  <Command>
+                    <CommandInput placeholder="Rechercher un dossier..." />
+                    <CommandList>
+                      <CommandEmpty>Aucun dossier trouvé.</CommandEmpty>
+                      <CommandGroup>
+                        {folderOptions.map((folder) => (
+                          <CommandItem
+                            key={folder.id}
+                            value={folder.label}
+                            onSelect={() => {
+                              setParentFolderId(folder.id);
+                              setFolderPickerOpen(false);
+                            }}
+                            className="flex items-center justify-between"
+                          >
+                            <span className="flex items-center gap-2 truncate">
+                              <Folder className="w-4 h-4 text-amber-600 shrink-0" />
+                              {folder.label}
+                            </span>
+                            {parentFolderId === folder.id && <Check className="w-4 h-4 text-blue-600" />}
+                          </CommandItem>
+                        ))}
+                      </CommandGroup>
+                    </CommandList>
+                  </Command>
+                </PopoverContent>
+              </Popover>
             </div>
           </section>
 
@@ -575,10 +642,6 @@ export function DocumentAddModal({ isOpen, onClose, folderOptions, defaultFolder
               </div>
             )}
 
-            <div className="rounded-xl border bg-white p-3.5 text-sm flex items-center gap-2">
-              <Sparkles className="w-4 h-4 text-blue-600" />
-              Audience: <span className="font-semibold">{audience.investors}</span> investisseur(s) • <span className="font-semibold">{audience.contacts}</span> contact(s)
-            </div>
           </section>
 
           <Separator className="my-1" />
