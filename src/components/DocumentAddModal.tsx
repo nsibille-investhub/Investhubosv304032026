@@ -234,7 +234,7 @@ export function DocumentAddModal({ isOpen, onClose, folderOptions, defaultFolder
 
   return (
     <Dialog open={isOpen} onOpenChange={(open) => !open && onClose()}>
-      <DialogContent className="w-[min(92vw,1200px)] max-w-none h-[88vh] p-0 overflow-hidden flex flex-col">
+      <DialogContent className="w-[min(92vw,1200px)] max-w-none sm:max-w-none h-[88vh] p-0 overflow-hidden flex flex-col">
         <DialogHeader className="px-6 py-5 border-b bg-white">
           <div>
             <DialogTitle className="text-[26px] leading-8">Ajouter un document</DialogTitle>
