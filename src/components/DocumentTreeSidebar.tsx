@@ -1,12 +1,13 @@
 import { useState } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
-import { ChevronRight, ChevronDown, Folder, FolderOpen } from 'lucide-react';
+import { ChevronRight, Folder, FolderOpen } from 'lucide-react';
 import { Document } from '../utils/documentMockData';
 
 interface DocumentTreeSidebarProps {
   documents: Document[];
   currentFolderId: string | null;
   onFolderSelect: (folderId: string | null, folderPath: string[]) => void;
+  searchTerm?: string;
 }
 
 interface TreeItemProps {
@@ -15,15 +16,31 @@ interface TreeItemProps {
   currentFolderId: string | null;
   onFolderSelect: (folderId: string | null, folderPath: string[]) => void;
   parentPath: string[];
+  searchTerm: string;
 }
 
-function TreeItem({ document, level, currentFolderId, onFolderSelect, parentPath }: TreeItemProps) {
+function TreeItem({ document, level, currentFolderId, onFolderSelect, parentPath, searchTerm }: TreeItemProps) {
   const [isExpanded, setIsExpanded] = useState(level === 0); // Auto-expand first level
   const isActive = currentFolderId === document.id;
   const hasChildren = document.children && document.children.length > 0;
   const folderChildren = document.children?.filter(child => child.type === 'folder') || [];
 
   const currentPath = [...parentPath, document.name];
+  const normalizedSearch = searchTerm.trim().toLowerCase();
+
+  const hasSearchMatchInTree = (node: Document): boolean => {
+    if (node.name.toLowerCase().includes(normalizedSearch)) return true;
+    const children = node.children?.filter((child) => child.type === 'folder') || [];
+    return children.some((child) => hasSearchMatchInTree(child));
+  };
+
+  const filteredChildren = normalizedSearch
+    ? folderChildren.filter((child) => hasSearchMatchInTree(child))
+    : folderChildren;
+
+  const shouldShowItem = !normalizedSearch || document.name.toLowerCase().includes(normalizedSearch) || filteredChildren.length > 0;
+
+  if (!shouldShowItem) return null;
 
   const handleClick = () => {
     if (document.type === 'folder') {
@@ -48,7 +65,7 @@ function TreeItem({ document, level, currentFolderId, onFolderSelect, parentPath
         `}
         style={{ paddingLeft: `${level * 16 + 12}px` }}
       >
-        {hasChildren && folderChildren.length > 0 ? (
+        {hasChildren && filteredChildren.length > 0 ? (
           <motion.div
             animate={{ rotate: isExpanded ? 90 : 0 }}
             transition={{ duration: 0.2 }}
@@ -75,7 +92,7 @@ function TreeItem({ document, level, currentFolderId, onFolderSelect, parentPath
       </motion.div>
 
       <AnimatePresence>
-        {isExpanded && folderChildren.length > 0 && (
+        {isExpanded && filteredChildren.length > 0 && (
           <motion.div
             initial={{ height: 0, opacity: 0 }}
             animate={{ height: 'auto', opacity: 1 }}
@@ -83,7 +100,7 @@ function TreeItem({ document, level, currentFolderId, onFolderSelect, parentPath
             transition={{ duration: 0.2 }}
             className="overflow-hidden"
           >
-            {folderChildren.map((child) => (
+            {filteredChildren.map((child) => (
               <TreeItem
                 key={child.id}
                 document={child}
@@ -91,6 +108,7 @@ function TreeItem({ document, level, currentFolderId, onFolderSelect, parentPath
                 currentFolderId={currentFolderId}
                 onFolderSelect={onFolderSelect}
                 parentPath={currentPath}
+                searchTerm={searchTerm}
               />
             ))}
           </motion.div>
@@ -100,7 +118,7 @@ function TreeItem({ document, level, currentFolderId, onFolderSelect, parentPath
   );
 }
 
-export function DocumentTreeSidebar({ documents, currentFolderId, onFolderSelect }: DocumentTreeSidebarProps) {
+export function DocumentTreeSidebar({ documents, currentFolderId, onFolderSelect, searchTerm = '' }: DocumentTreeSidebarProps) {
   return (
     <div className="h-full flex flex-col bg-white border-r border-gray-200">
       {/* Header */}
@@ -136,6 +154,7 @@ export function DocumentTreeSidebar({ documents, currentFolderId, onFolderSelect
               currentFolderId={currentFolderId}
               onFolderSelect={onFolderSelect}
               parentPath={[]}
+              searchTerm={searchTerm}
             />
           ))}
         </div>

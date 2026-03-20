@@ -2,16 +2,16 @@ import { useState, useMemo } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
 import {
   Plus,
-  Grid3x3,
-  List,
   Download,
   FileText,
   ChevronDown,
   PackageOpen,
-  Search
+  Search,
+  FolderSearch,
+  Compass,
+  X
 } from 'lucide-react';
 import { Button } from './ui/button';
-import { Badge } from './ui/badge';
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -31,8 +31,15 @@ import { MassUploadWizard } from './MassUploadWizard';
 import { DataRoomSpace } from '../utils/dataRoomSpacesData';
 import { getTreeForSpace, TreeNode } from '../utils/dataRoomTreeData';
 import { Input } from './ui/input';
+import { cn } from './ui/utils';
 
 type ViewMode = 'list' | 'grid';
+type SearchScope = 'current-folder' | 'all-folders';
+
+interface SearchResultItem {
+  item: Document;
+  path: string[];
+}
 
 interface DocumentsPageProps {
   selectedSpace: DataRoomSpace;
@@ -52,6 +59,7 @@ export function DocumentsPage({ selectedSpace }: DocumentsPageProps) {
   const [currentFolderId, setCurrentFolderId] = useState<string | null>(null);
   const [currentFolderPath, setCurrentFolderPath] = useState<string[]>([]);
   const [searchTerm, setSearchTerm] = useState('');
+  const [searchScope, setSearchScope] = useState<SearchScope>('all-folders');
 
   // Convert TreeNode to Document format
   const convertTreeToDocuments = (treeNodes: TreeNode[]): Document[] => {
@@ -170,9 +178,7 @@ export function DocumentsPage({ selectedSpace }: DocumentsPageProps) {
     setActiveFilters(filters);
   };
 
-  const filteredDocuments = useMemo(() => {
-    return spaceDocuments;
-  }, [spaceDocuments]);
+  const filteredDocuments = useMemo(() => spaceDocuments, [spaceDocuments]);
 
   // Find current folder object
   const findFolderById = (docs: Document[], folderId: string | null): Document | null => {
@@ -189,6 +195,39 @@ export function DocumentsPage({ selectedSpace }: DocumentsPageProps) {
   };
 
   const currentFolder = currentFolderId ? findFolderById(filteredDocuments, currentFolderId) : null;
+
+  const collectSearchResults = (items: Document[], parentPath: string[] = []): SearchResultItem[] => {
+    const results: SearchResultItem[] = [];
+    for (const item of items) {
+      const nextPath = [...parentPath, item.name];
+      results.push({ item, path: nextPath });
+      if (item.children?.length) {
+        results.push(...collectSearchResults(item.children, nextPath));
+      }
+    }
+    return results;
+  };
+
+  const normalizedSearchTerm = searchTerm.trim().toLowerCase();
+  const allSearchResults = useMemo(() => collectSearchResults(filteredDocuments), [filteredDocuments]);
+
+  const scopedSearchResults = useMemo(() => {
+    if (!normalizedSearchTerm) {
+      return [];
+    }
+
+    const baseCollection = searchScope === 'current-folder' && currentFolder
+      ? collectSearchResults(currentFolder.children || [], currentFolderPath)
+      : allSearchResults;
+
+    return baseCollection.filter(({ item, path }) => {
+      const haystack = `${item.name} ${path.join(' ')}`.toLowerCase();
+      return haystack.includes(normalizedSearchTerm);
+    });
+  }, [normalizedSearchTerm, searchScope, currentFolder, currentFolderPath, allSearchResults]);
+
+  const folderResults = scopedSearchResults.filter(({ item }) => item.type === 'folder');
+  const fileResults = scopedSearchResults.filter(({ item }) => item.type !== 'folder');
 
   // Handle folder navigation from tree
   const handleFolderSelect = (folderId: string | null, folderPath: string[]) => {
@@ -285,11 +324,53 @@ export function DocumentsPage({ selectedSpace }: DocumentsPageProps) {
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
             <Input
               type="text"
-              placeholder="Rechercher un document"
+              placeholder="Rechercher un document ou un dossier"
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
               className="pl-10 h-10"
             />
+            {searchTerm && (
+              <button
+                onClick={() => setSearchTerm('')}
+                className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600"
+                aria-label="Effacer la recherche"
+              >
+                <X className="w-4 h-4" />
+              </button>
+            )}
+          </div>
+
+          <div className="mt-3 flex flex-wrap items-center gap-2">
+            <button
+              onClick={() => setSearchScope('all-folders')}
+              className={cn(
+                'inline-flex items-center gap-1.5 rounded-full border px-3 py-1.5 text-xs font-medium transition-colors',
+                searchScope === 'all-folders'
+                  ? 'border-blue-200 bg-blue-50 text-blue-700'
+                  : 'border-gray-200 bg-white text-gray-600 hover:bg-gray-50'
+              )}
+            >
+              <Compass className="h-3.5 w-3.5" />
+              Toute l'arborescence
+            </button>
+            <button
+              onClick={() => setSearchScope('current-folder')}
+              className={cn(
+                'inline-flex items-center gap-1.5 rounded-full border px-3 py-1.5 text-xs font-medium transition-colors',
+                searchScope === 'current-folder'
+                  ? 'border-blue-200 bg-blue-50 text-blue-700'
+                  : 'border-gray-200 bg-white text-gray-600 hover:bg-gray-50'
+              )}
+            >
+              <FolderSearch className="h-3.5 w-3.5" />
+              Dossier courant
+            </button>
+
+            {normalizedSearchTerm && (
+              <span className="text-xs text-gray-500">
+                {scopedSearchResults.length} résultat{scopedSearchResults.length > 1 ? 's' : ''} · {folderResults.length} dossier{folderResults.length > 1 ? 's' : ''} · {fileResults.length} document{fileResults.length > 1 ? 's' : ''}
+              </span>
+            )}
           </div>
         </div>
 
@@ -301,6 +382,7 @@ export function DocumentsPage({ selectedSpace }: DocumentsPageProps) {
               documents={filteredDocuments}
               currentFolderId={currentFolderId}
               onFolderSelect={handleFolderSelect}
+              searchTerm={searchTerm}
             />
           </div>
 
@@ -312,6 +394,9 @@ export function DocumentsPage({ selectedSpace }: DocumentsPageProps) {
               onDocumentClick={handleDocumentClick}
               onFolderNavigate={handleFolderNavigate}
               currentPath={currentFolderPath}
+              searchTerm={searchTerm}
+              searchScope={searchScope}
+              searchResults={scopedSearchResults}
             />
           </div>
         </div>
