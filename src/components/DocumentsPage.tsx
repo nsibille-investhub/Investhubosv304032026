@@ -1,4 +1,4 @@
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useEffect } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
 import {
   Plus,
@@ -43,9 +43,16 @@ interface SearchResultItem {
 
 interface DocumentsPageProps {
   selectedSpace: DataRoomSpace;
+  navigationTarget?: {
+    itemId: string;
+    itemType: 'folder' | 'file';
+    itemName: string;
+    pathSegments: string[];
+  } | null;
+  onNavigationHandled?: () => void;
 }
 
-export function DocumentsPage({ selectedSpace }: DocumentsPageProps) {
+export function DocumentsPage({ selectedSpace, navigationTarget, onNavigationHandled }: DocumentsPageProps) {
   const [viewMode, setViewMode] = useState<ViewMode>('list');
   const [selectedDocument, setSelectedDocument] = useState<Document | null>(null);
   const [selectedFolder, setSelectedFolder] = useState<Document | null>(null);
@@ -60,6 +67,7 @@ export function DocumentsPage({ selectedSpace }: DocumentsPageProps) {
   const [currentFolderPath, setCurrentFolderPath] = useState<string[]>([]);
   const [searchTerm, setSearchTerm] = useState('');
   const [searchScope, setSearchScope] = useState<SearchScope>('all-folders');
+  const [focusedItemId, setFocusedItemId] = useState<string | null>(null);
 
   // Convert TreeNode to Document format
   const convertTreeToDocuments = (treeNodes: TreeNode[]): Document[] => {
@@ -195,6 +203,63 @@ export function DocumentsPage({ selectedSpace }: DocumentsPageProps) {
   };
 
   const currentFolder = currentFolderId ? findFolderById(filteredDocuments, currentFolderId) : null;
+
+  const findById = (docs: Document[], id: string): Document | null => {
+    for (const doc of docs) {
+      if (doc.id === id) return doc;
+      if (doc.children) {
+        const found = findById(doc.children, id);
+        if (found) return found;
+      }
+    }
+    return null;
+  };
+
+  const findFolderByPath = (docs: Document[], pathSegments: string[]): Document | null => {
+    let currentDocs = docs;
+    let currentFolderNode: Document | null = null;
+
+    for (const segment of pathSegments) {
+      const nextFolder = currentDocs.find((doc) => doc.type === 'folder' && doc.name === segment) || null;
+      if (!nextFolder) return null;
+      currentFolderNode = nextFolder;
+      currentDocs = nextFolder.children || [];
+    }
+
+    return currentFolderNode;
+  };
+
+  useEffect(() => {
+    if (!navigationTarget) return;
+
+    const targetItem = findById(filteredDocuments, navigationTarget.itemId);
+    if (!targetItem) {
+      onNavigationHandled?.();
+      return;
+    }
+
+    const parentPath = navigationTarget.pathSegments.slice(0, -1);
+    const parentFolder = findFolderByPath(filteredDocuments, parentPath);
+
+    setCurrentFolderId(parentFolder?.id || null);
+    setCurrentFolderPath(parentPath);
+    setFocusedItemId(targetItem.id);
+    setSearchTerm('');
+
+    if (navigationTarget.itemType === 'folder') {
+      setSelectedFolder(targetItem);
+      setSelectedDocument(null);
+    } else {
+      setSelectedDocument(targetItem);
+      setSelectedFolder(null);
+    }
+
+    toast.success('Positionné sur le résultat', {
+      description: navigationTarget.itemName,
+    });
+
+    onNavigationHandled?.();
+  }, [navigationTarget, filteredDocuments, onNavigationHandled]);
 
   const collectSearchResults = (items: Document[], parentPath: string[] = []): SearchResultItem[] => {
     const results: SearchResultItem[] = [];
@@ -397,6 +462,7 @@ export function DocumentsPage({ selectedSpace }: DocumentsPageProps) {
               searchTerm={searchTerm}
               searchScope={searchScope}
               searchResults={scopedSearchResults}
+              focusedItemId={focusedItemId}
             />
           </div>
         </div>

@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { motion } from 'motion/react';
 import { 
   FileText, 
@@ -27,6 +27,7 @@ interface DocumentListViewProps {
   searchTerm?: string;
   searchScope?: 'current-folder' | 'all-folders';
   searchResults?: Array<{ item: Document; path: string[] }>;
+  focusedItemId?: string | null;
 }
 
 export function DocumentListView({ 
@@ -37,9 +38,11 @@ export function DocumentListView({
   currentPath,
   searchTerm = '',
   searchScope = 'all-folders',
-  searchResults = []
+  searchResults = [],
+  focusedItemId = null
 }: DocumentListViewProps) {
   const [hoveredId, setHoveredId] = useState<string | null>(null);
+  const itemRefs = useRef<Record<string, HTMLDivElement | null>>({});
 
   // Get current level items
   const currentItems = currentFolder?.children || documents;
@@ -76,6 +79,14 @@ export function DocumentListView({
 
   const searchFolders = itemsToRender.filter(item => item.type === 'folder');
   const searchFiles = itemsToRender.filter(item => item.type !== 'folder');
+
+  useEffect(() => {
+    if (!focusedItemId) return;
+    const target = itemRefs.current[focusedItemId];
+    if (target) {
+      target.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    }
+  }, [focusedItemId, itemsToRender.length]);
 
   return (
     <div className="flex flex-col h-full">
@@ -146,11 +157,12 @@ export function DocumentListView({
               return (
                 <motion.div
                   key={folder.id}
+                  ref={(el) => { itemRefs.current[folder.id] = el; }}
                   onMouseEnter={() => setHoveredId(folder.id)}
                   onMouseLeave={() => setHoveredId(null)}
                   whileHover={{ backgroundColor: 'rgba(0, 0, 0, 0.02)' }}
                   onClick={() => handleRowClick(folder)}
-                  className="px-6 py-3 border-b border-gray-100 cursor-pointer transition-colors"
+                  className={`px-6 py-3 border-b border-gray-100 cursor-pointer transition-colors ${focusedItemId === folder.id ? 'bg-blue-50 ring-1 ring-inset ring-blue-300' : ''}`}
                 >
                   <div className="grid grid-cols-12 gap-4 items-center">
                     <div className="col-span-6 flex items-center gap-3">
@@ -228,11 +240,12 @@ export function DocumentListView({
               return (
                 <motion.div
                   key={file.id}
+                  ref={(el) => { itemRefs.current[file.id] = el; }}
                   onMouseEnter={() => setHoveredId(file.id)}
                   onMouseLeave={() => setHoveredId(null)}
                   whileHover={{ backgroundColor: 'rgba(0, 0, 0, 0.02)' }}
                   onClick={() => handleRowClick(file)}
-                  className="px-6 py-3 border-b border-gray-100 cursor-pointer transition-colors"
+                  className={`px-6 py-3 border-b border-gray-100 cursor-pointer transition-colors ${focusedItemId === file.id ? 'bg-blue-50 ring-1 ring-inset ring-blue-300' : ''}`}
                 >
                   <div className="grid grid-cols-12 gap-4 items-center">
                     <div className="col-span-6 flex items-center gap-3">

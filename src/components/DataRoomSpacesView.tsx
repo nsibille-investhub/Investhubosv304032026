@@ -7,10 +7,11 @@ import { DataRoomSpace } from '../utils/dataRoomSpacesData';
 import { getTreeForSpace, TreeNode } from '../utils/dataRoomTreeData';
 import { Input } from './ui/input';
 
-interface GlobalSearchHit {
+export interface GlobalSearchHit {
   id: string;
   name: string;
   type: 'folder' | 'file';
+  pathSegments: string[];
   path: string;
   spaceId: string;
   spaceName: string;
@@ -23,6 +24,7 @@ interface DataRoomSpacesViewProps {
   onMassUpload: () => void;
   onConfigureSpace: (space: DataRoomSpace) => void;
   onOpenBirdView?: () => void;
+  onSearchResultSelect?: (result: GlobalSearchHit) => void;
 }
 
 export function DataRoomSpacesView({
@@ -31,7 +33,8 @@ export function DataRoomSpacesView({
   onAddSpace,
   onMassUpload,
   onConfigureSpace,
-  onOpenBirdView
+  onOpenBirdView,
+  onSearchResultSelect
 }: DataRoomSpacesViewProps) {
   const [globalSearch, setGlobalSearch] = useState('');
 
@@ -67,6 +70,7 @@ export function DataRoomSpacesView({
         id: node.id,
         name: node.name,
         type: node.type === 'folder' ? 'folder' : 'file',
+        pathSegments: pathParts,
         path: pathParts.join(' / '),
         spaceId: space.id,
         spaceName: space.name,
@@ -181,9 +185,13 @@ export function DataRoomSpacesView({
                   <button
                     key={`${result.spaceId}-${result.id}`}
                     onClick={() => {
-                      const space = spaces.find((s) => s.id === result.spaceId);
-                      if (space) {
-                        onSpaceSelect(space);
+                      if (onSearchResultSelect) {
+                        onSearchResultSelect(result);
+                      } else {
+                        const space = spaces.find((s) => s.id === result.spaceId);
+                        if (space) {
+                          onSpaceSelect(space);
+                        }
                       }
                     }}
                     className="flex w-full items-center gap-3 border-b border-gray-100 px-4 py-3 text-left hover:bg-blue-50/60"

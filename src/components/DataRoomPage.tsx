@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
-import { DataRoomSpacesView } from './DataRoomSpacesView';
+import { DataRoomSpacesView, GlobalSearchHit } from './DataRoomSpacesView';
 import { DataRoomSpaceConfigDialog } from './DataRoomSpaceConfigDialog';
 import { DataRoomSpace, mockDataRoomSpaces } from '../utils/dataRoomSpacesData';
 import { DocumentsPage } from './DocumentsPage';
@@ -21,14 +21,42 @@ export function DataRoomPage({ onSpaceChange }: DataRoomPageProps) {
   const [editingSpace, setEditingSpace] = useState<DataRoomSpace | null>(null);
   const [showBirdView, setShowBirdView] = useState(false);
   const [showMassUploadWizard, setShowMassUploadWizard] = useState(false);
+  const [pendingNavigationTarget, setPendingNavigationTarget] = useState<{
+    itemId: string;
+    itemType: 'folder' | 'file';
+    itemName: string;
+    pathSegments: string[];
+  } | null>(null);
 
   const handleSpaceSelect = (space: DataRoomSpace) => {
     setSelectedSpace(space);
+    setPendingNavigationTarget(null);
     if (onSpaceChange) {
       onSpaceChange(space);
     }
     toast.success('Espace ouvert', {
       description: space.name
+    });
+  };
+
+  const handleGlobalResultSelect = (result: GlobalSearchHit) => {
+    const targetSpace = dataRoomSpaces.find((space) => space.id === result.spaceId);
+    if (!targetSpace) return;
+
+    setSelectedSpace(targetSpace);
+    setPendingNavigationTarget({
+      itemId: result.id,
+      itemType: result.type,
+      itemName: result.name,
+      pathSegments: result.pathSegments,
+    });
+
+    if (onSpaceChange) {
+      onSpaceChange(targetSpace);
+    }
+
+    toast.success('Résultat ouvert', {
+      description: `${result.name} · ${result.spaceName}`,
     });
   };
 
@@ -108,6 +136,7 @@ export function DataRoomPage({ onSpaceChange }: DataRoomPageProps) {
             <DataRoomSpacesView
               spaces={dataRoomSpaces}
               onSpaceSelect={handleSpaceSelect}
+              onSearchResultSelect={handleGlobalResultSelect}
               onAddSpace={handleAddSpace}
               onMassUpload={handleOpenMassUpload}
               onConfigureSpace={handleConfigureSpace}
@@ -148,7 +177,11 @@ export function DataRoomPage({ onSpaceChange }: DataRoomPageProps) {
 
             {/* Documents Page */}
             <div className="flex-1 overflow-hidden px-6 pb-6">
-              <DocumentsPage selectedSpace={selectedSpace} />
+              <DocumentsPage
+                selectedSpace={selectedSpace}
+                navigationTarget={pendingNavigationTarget}
+                onNavigationHandled={() => setPendingNavigationTarget(null)}
+              />
             </div>
           </motion.div>
         )}
