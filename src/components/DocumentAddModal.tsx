@@ -7,7 +7,15 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '.
 import { Checkbox } from './ui/checkbox';
 import { Switch } from './ui/switch';
 import { Separator } from './ui/separator';
+import { Tabs, TabsList, TabsTrigger, TabsContent } from './ui/tabs';
+import {
+  DropdownMenu,
+  DropdownMenuCheckboxItem,
+  DropdownMenuContent,
+  DropdownMenuTrigger,
+} from './ui/dropdown-menu';
 import { toast } from 'sonner';
+import { ChevronDown, Sparkles } from 'lucide-react';
 
 interface FolderOption {
   id: string;
@@ -31,10 +39,13 @@ interface InvestorProfile {
   name: string;
   segment: string;
   fund: string;
-  shareClass: string;
-  structure: string;
   contacts: number;
   subscriptions: string[];
+  structures: Array<{
+    id: string;
+    name: string;
+    subscriptions: string[];
+  }>;
 }
 
 interface DocumentAddModalProps {
@@ -45,8 +56,12 @@ interface DocumentAddModalProps {
 }
 
 const SEGMENTS = ['Institutionnels', 'Family Office', 'Retail', 'Corporate'];
-const FUNDS = ['PERE 1', 'PERE 2', 'Growth Tech'];
-const SHARE_CLASSES = ['A', 'I', 'P'];
+const FUNDS = ['all', 'PERE 1', 'PERE 2', 'Growth Tech'];
+const SHARE_CLASSES_BY_FUND: Record<string, string[]> = {
+  'PERE 1': ['A', 'I'],
+  'PERE 2': ['I', 'P'],
+  'Growth Tech': ['Seed', 'Growth'],
+};
 const MAIL_TEMPLATES = ['Nouveau document', 'Rapport trimestriel', 'Appel de fonds'];
 const REMINDER_DELAYS = ['3 jours', '7 jours', '14 jours'];
 
@@ -57,10 +72,45 @@ const TEAMS: ValidationTeam[] = [
 ];
 
 const INVESTORS: InvestorProfile[] = [
-  { id: 'i1', name: 'Jean Dupont', segment: 'Institutionnels', fund: 'PERE 1', shareClass: 'I', structure: 'Holding', contacts: 2, subscriptions: ['SUB-001'] },
-  { id: 'i2', name: 'Marie Martin', segment: 'Family Office', fund: 'PERE 1', shareClass: 'A', structure: 'SCI', contacts: 3, subscriptions: ['SUB-002'] },
-  { id: 'i3', name: 'Thomas Petit', segment: 'Retail', fund: 'Growth Tech', shareClass: 'P', structure: 'PP', contacts: 1, subscriptions: ['SUB-003'] },
-  { id: 'i4', name: 'Sophie Bernard', segment: 'Corporate', fund: 'PERE 2', shareClass: 'I', structure: 'SAS', contacts: 2, subscriptions: ['SUB-004'] },
+  {
+    id: 'i1',
+    name: 'Jean Dupont',
+    segment: 'Institutionnels',
+    fund: 'PERE 1',
+    contacts: 2,
+    subscriptions: ['SUB-001', 'SUB-001-B'],
+    structures: [
+      { id: 'st-1', name: 'Holding Dupont', subscriptions: ['SUB-001'] },
+      { id: 'st-2', name: 'SPV Dupont', subscriptions: ['SUB-001-B'] },
+    ],
+  },
+  {
+    id: 'i2',
+    name: 'Marie Martin',
+    segment: 'Family Office',
+    fund: 'PERE 1',
+    contacts: 3,
+    subscriptions: ['SUB-002'],
+    structures: [{ id: 'st-3', name: 'SCI Martin', subscriptions: ['SUB-002'] }],
+  },
+  {
+    id: 'i3',
+    name: 'Thomas Petit',
+    segment: 'Retail',
+    fund: 'Growth Tech',
+    contacts: 1,
+    subscriptions: ['SUB-003', 'SUB-003-C'],
+    structures: [{ id: 'st-4', name: 'Patrimoine Petit', subscriptions: ['SUB-003-C'] }],
+  },
+  {
+    id: 'i4',
+    name: 'Sophie Bernard',
+    segment: 'Corporate',
+    fund: 'PERE 2',
+    contacts: 2,
+    subscriptions: ['SUB-004'],
+    structures: [{ id: 'st-5', name: 'SAS Bernard Invest', subscriptions: ['SUB-004'] }],
+  },
 ];
 
 const defaultVersions: DocumentVersion[] = [
@@ -73,13 +123,12 @@ export function DocumentAddModal({ isOpen, onClose, folderOptions, defaultFolder
   const [addDate, setAddDate] = useState(new Date().toISOString().slice(0, 10));
   const [parentFolderId, setParentFolderId] = useState(defaultFolderId);
   const [audienceMode, setAudienceMode] = useState<'general' | 'nominative'>('general');
-  const [selectedSegments, setSelectedSegments] = useState<string[]>([]);
-  const [fundMode, setFundMode] = useState<'all' | 'single'>('all');
-  const [selectedFund, setSelectedFund] = useState('PERE 1');
+  const [selectedSegments, setSelectedSegments] = useState<string[]>(['all']);
+  const [selectedFund, setSelectedFund] = useState('all');
   const [selectedShareClass, setSelectedShareClass] = useState<string>('');
   const [selectedInvestor, setSelectedInvestor] = useState<string>('');
   const [selectedSubscription, setSelectedSubscription] = useState<string>('');
-  const [selectedStructure, setSelectedStructure] = useState<string>('');
+  const [selectedStructureId, setSelectedStructureId] = useState<string>('');
   const [notify, setNotify] = useState(false);
   const [notifyTemplate, setNotifyTemplate] = useState(MAIL_TEMPLATES[0]);
   const [reminder, setReminder] = useState(false);
@@ -93,41 +142,61 @@ export function DocumentAddModal({ isOpen, onClose, folderOptions, defaultFolder
     setAddDate(new Date().toISOString().slice(0, 10));
   }, [defaultFolderId, isOpen]);
 
+  const selectedInvestorProfile = useMemo(
+    () => INVESTORS.find((inv) => inv.id === selectedInvestor),
+    [selectedInvestor]
+  );
+
+  const structureOptions = selectedInvestorProfile?.structures || [];
+  const selectedStructure = structureOptions.find((st) => st.id === selectedStructureId);
+  const subscriptionOptions = useMemo(() => {
+    if (!selectedInvestorProfile) return [];
+    if (selectedStructure) return selectedStructure.subscriptions;
+    return selectedInvestorProfile.subscriptions;
+  }, [selectedInvestorProfile, selectedStructure]);
+
+  const shareClassOptions = selectedFund !== 'all' ? SHARE_CLASSES_BY_FUND[selectedFund] || [] : [];
+
   const audience = useMemo(() => {
     if (audienceMode === 'general') {
       let candidates = INVESTORS;
-      if (selectedSegments.length > 0) {
+      if (!selectedSegments.includes('all')) {
         candidates = candidates.filter((inv) => selectedSegments.includes(inv.segment));
       }
-      if (fundMode === 'single') {
+      if (selectedFund !== 'all') {
         candidates = candidates.filter((inv) => inv.fund === selectedFund);
-        if (selectedShareClass) {
-          candidates = candidates.filter((inv) => inv.shareClass === selectedShareClass);
-        }
       }
       const contacts = candidates.reduce((sum, inv) => sum + inv.contacts, 0);
       return { investors: candidates.length, contacts };
     }
 
-    const investor = INVESTORS.find((inv) => inv.id === selectedInvestor);
+    const investor = selectedInvestorProfile;
     if (!investor) {
       return { investors: 0, contacts: 0 };
     }
-    if (selectedSubscription && !investor.subscriptions.includes(selectedSubscription)) {
+    if (selectedStructureId && !investor.structures.some((st) => st.id === selectedStructureId)) {
       return { investors: 0, contacts: 0 };
     }
-    if (selectedStructure && investor.structure !== selectedStructure) {
+    if (selectedSubscription) {
+      const authorizedSubscriptions = selectedStructure
+        ? selectedStructure.subscriptions
+        : investor.subscriptions;
+      if (!authorizedSubscriptions.includes(selectedSubscription)) {
+        return { investors: 0, contacts: 0 };
+      }
+    }
+    if (!selectedInvestor) {
       return { investors: 0, contacts: 0 };
     }
     return { investors: 1, contacts: investor.contacts };
   }, [
     audienceMode,
     selectedSegments,
-    fundMode,
     selectedFund,
-    selectedShareClass,
     selectedInvestor,
+    selectedInvestorProfile,
     selectedSubscription,
+    selectedStructureId,
     selectedStructure,
   ]);
 
@@ -165,44 +234,57 @@ export function DocumentAddModal({ isOpen, onClose, folderOptions, defaultFolder
 
   return (
     <Dialog open={isOpen} onOpenChange={(open) => !open && onClose()}>
-      <DialogContent className="max-w-4xl max-h-[92vh] overflow-y-auto">
+      <DialogContent className="max-w-6xl max-h-[92vh] overflow-y-auto p-0">
         <DialogHeader>
-          <DialogTitle>Ajouter un document</DialogTitle>
-          <DialogDescription>
+          <div className="px-8 pt-7">
+            <DialogTitle className="text-2xl">Ajouter un document</DialogTitle>
+          <DialogDescription className="mt-1.5">
             Créez des versions FR/EN, configurez l'audience et le workflow de validation.
           </DialogDescription>
+          </div>
         </DialogHeader>
 
-        <div className="space-y-6">
+        <div className="space-y-7 px-8 pb-8">
           <section className="space-y-3">
             <h3 className="text-sm font-semibold">Versions documentaires</h3>
-            {versions.map((version) => (
-              <div key={version.language} className="grid grid-cols-1 md:grid-cols-3 gap-3 border rounded-lg p-3">
-                <div className="space-y-2">
-                  <Label>Langue</Label>
-                  <Input value={version.language.toUpperCase()} disabled />
-                </div>
-                <div className="space-y-2">
-                  <Label>Nom du document ({version.language.toUpperCase()})</Label>
-                  <Input
-                    value={version.name}
-                    onChange={(event) => updateVersion(version.language, { name: event.target.value })}
-                    placeholder={`Nom ${version.language.toUpperCase()}`}
-                  />
-                </div>
-                <div className="space-y-2">
-                  <Label>Ajouter un document</Label>
-                  <Input
-                    type="file"
-                    onChange={(event) => {
-                      const fileName = event.target.files?.[0]?.name || '';
-                      updateVersion(version.language, { fileName });
-                    }}
-                  />
-                  {version.fileName && <p className="text-xs text-gray-500 truncate">{version.fileName}</p>}
-                </div>
-              </div>
-            ))}
+            <div className="rounded-2xl border bg-gradient-to-b from-white to-slate-50 p-4">
+              <Tabs defaultValue="fr" className="w-full">
+                <TabsList className="grid w-full grid-cols-2 h-11">
+                  <TabsTrigger value="fr">FR</TabsTrigger>
+                  <TabsTrigger value="en">EN</TabsTrigger>
+                </TabsList>
+                {(['fr', 'en'] as const).map((language) => {
+                  const version = versions.find((item) => item.language === language)!;
+                  return (
+                    <TabsContent key={language} value={language} className="mt-4">
+                      <div className="grid grid-cols-1 xl:grid-cols-2 gap-4">
+                        <div className="space-y-2">
+                          <Label>Nom du document ({language.toUpperCase()})</Label>
+                          <Input
+                            value={version.name}
+                            onChange={(event) => updateVersion(language, { name: event.target.value })}
+                            placeholder={`Nom ${language.toUpperCase()}`}
+                            className="h-11"
+                          />
+                        </div>
+                        <div className="space-y-2">
+                          <Label>Ajouter un document</Label>
+                          <Input
+                            type="file"
+                            className="h-11"
+                            onChange={(event) => {
+                              const fileName = event.target.files?.[0]?.name || '';
+                              updateVersion(language, { fileName });
+                            }}
+                          />
+                          {version.fileName && <p className="text-xs text-slate-500 truncate">{version.fileName}</p>}
+                        </div>
+                      </div>
+                    </TabsContent>
+                  );
+                })}
+              </Tabs>
+            </div>
           </section>
 
           <section className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -229,64 +311,102 @@ export function DocumentAddModal({ isOpen, onClose, folderOptions, defaultFolder
 
           <section className="space-y-4">
             <h3 className="text-sm font-semibold">Audience du document</h3>
-            <div className="flex gap-2">
+            <div className="flex gap-2 p-1 rounded-xl bg-slate-100 w-fit">
               <Button variant={audienceMode === 'general' ? 'default' : 'outline'} onClick={() => setAudienceMode('general')}>Document général</Button>
               <Button variant={audienceMode === 'nominative' ? 'default' : 'outline'} onClick={() => setAudienceMode('nominative')}>Document nominatif</Button>
             </div>
 
             {audienceMode === 'general' ? (
-              <div className="space-y-4 border rounded-lg p-4">
+              <div className="space-y-4 border rounded-2xl p-5 bg-gradient-to-br from-white to-blue-50/40">
                 <div className="space-y-2">
                   <Label>Segments investisseurs</Label>
-                  <div className="grid grid-cols-2 gap-2">
-                    {SEGMENTS.map((segment) => (
-                      <label key={segment} className="flex items-center gap-2 text-sm">
-                        <Checkbox
+                  <DropdownMenu>
+                    <DropdownMenuTrigger asChild>
+                      <Button variant="outline" className="w-full justify-between h-11 font-normal">
+                        {selectedSegments.includes('all')
+                          ? 'Tous les segments'
+                          : `${selectedSegments.length} segment(s) sélectionné(s)`}
+                        <ChevronDown className="w-4 h-4" />
+                      </Button>
+                    </DropdownMenuTrigger>
+                    <DropdownMenuContent className="w-[320px]">
+                      <DropdownMenuCheckboxItem
+                        checked={selectedSegments.includes('all')}
+                        onCheckedChange={(checked) => setSelectedSegments(checked ? ['all'] : [])}
+                      >
+                        Tous les segments
+                      </DropdownMenuCheckboxItem>
+                      {SEGMENTS.map((segment) => (
+                        <DropdownMenuCheckboxItem
+                          key={segment}
                           checked={selectedSegments.includes(segment)}
-                          onCheckedChange={() => toggleArrayValue(selectedSegments, segment, setSelectedSegments)}
-                        />
-                        {segment}
-                      </label>
-                    ))}
-                  </div>
+                          onCheckedChange={(checked) => {
+                            let next = selectedSegments.filter((item) => item !== 'all');
+                            next = checked ? [...next, segment] : next.filter((item) => item !== segment);
+                            if (next.length === 0) next = ['all'];
+                            setSelectedSegments(next);
+                          }}
+                        >
+                          {segment}
+                        </DropdownMenuCheckboxItem>
+                      ))}
+                    </DropdownMenuContent>
+                  </DropdownMenu>
                 </div>
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
                   <div className="space-y-2">
                     <Label>Fonds</Label>
-                    <Select value={fundMode} onValueChange={(value: 'all' | 'single') => setFundMode(value)}>
-                      <SelectTrigger><SelectValue /></SelectTrigger>
+                    <Select
+                      value={selectedFund}
+                      onValueChange={(value) => {
+                        setSelectedFund(value);
+                        setSelectedShareClass('');
+                      }}
+                    >
+                      <SelectTrigger className="h-11"><SelectValue /></SelectTrigger>
                       <SelectContent>
-                        <SelectItem value="all">Tous les fonds</SelectItem>
-                        <SelectItem value="single">Un fonds spécifique</SelectItem>
+                        {FUNDS.map((fund) => (
+                          <SelectItem key={fund} value={fund}>
+                            {fund === 'all' ? 'Tous les fonds' : fund}
+                          </SelectItem>
+                        ))}
                       </SelectContent>
                     </Select>
                   </div>
-                  <div className="space-y-2">
-                    <Label>Fonds ciblé</Label>
-                    <Select value={selectedFund} onValueChange={setSelectedFund} disabled={fundMode === 'all'}>
-                      <SelectTrigger><SelectValue /></SelectTrigger>
-                      <SelectContent>{FUNDS.map((fund) => <SelectItem key={fund} value={fund}>{fund}</SelectItem>)}</SelectContent>
-                    </Select>
-                  </div>
-                  <div className="space-y-2">
-                    <Label>Part du fonds (optionnelle)</Label>
-                    <Select value={selectedShareClass || 'none'} onValueChange={(value) => setSelectedShareClass(value === 'none' ? '' : value)} disabled={fundMode === 'all'}>
-                      <SelectTrigger><SelectValue /></SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="none">Toutes les parts</SelectItem>
-                        {SHARE_CLASSES.map((shareClass) => <SelectItem key={shareClass} value={shareClass}>{shareClass}</SelectItem>)}
-                      </SelectContent>
-                    </Select>
-                  </div>
+                  {selectedFund !== 'all' && (
+                    <div className="space-y-2">
+                      <Label>Part du fonds</Label>
+                      <Select
+                        value={selectedShareClass || 'all'}
+                        onValueChange={(value) => setSelectedShareClass(value === 'all' ? '' : value)}
+                      >
+                        <SelectTrigger className="h-11"><SelectValue /></SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="all">Toutes les parts</SelectItem>
+                          {shareClassOptions.map((shareClass) => (
+                            <SelectItem key={shareClass} value={shareClass}>{shareClass}</SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                    </div>
+                  )}
                 </div>
               </div>
             ) : (
-              <div className="space-y-4 border rounded-lg p-4">
+              <div className="space-y-4 border rounded-2xl p-5 bg-gradient-to-br from-white to-indigo-50/40">
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
                   <div className="space-y-2">
                     <Label>Investisseur (unique)</Label>
-                    <Select value={selectedInvestor || 'none'} onValueChange={(value) => setSelectedInvestor(value === 'none' ? '' : value)}>
-                      <SelectTrigger><SelectValue /></SelectTrigger>
+                    <Select
+                      value={selectedInvestor || 'none'}
+                      onValueChange={(value) => {
+                        const nextInvestor = value === 'none' ? '' : value;
+                        setSelectedInvestor(nextInvestor);
+                        setSelectedStructureId('');
+                        setSelectedSubscription('');
+                      }}
+                    >
+                      <SelectTrigger className="h-11"><SelectValue /></SelectTrigger>
                       <SelectContent>
                         <SelectItem value="none">Sélectionner</SelectItem>
                         {INVESTORS.map((investor) => <SelectItem key={investor.id} value={investor.id}>{investor.name}</SelectItem>)}
@@ -294,19 +414,47 @@ export function DocumentAddModal({ isOpen, onClose, folderOptions, defaultFolder
                     </Select>
                   </div>
                   <div className="space-y-2">
-                    <Label>Souscription (optionnelle)</Label>
-                    <Input value={selectedSubscription} onChange={(event) => setSelectedSubscription(event.target.value)} placeholder="ex: SUB-001" />
+                    <Label>Structure (optionnelle)</Label>
+                    <Select
+                      value={selectedStructureId || 'none'}
+                      onValueChange={(value) => {
+                        setSelectedStructureId(value === 'none' ? '' : value);
+                        setSelectedSubscription('');
+                      }}
+                      disabled={!selectedInvestor}
+                    >
+                      <SelectTrigger className="h-11"><SelectValue /></SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="none">Toutes les structures</SelectItem>
+                        {structureOptions.map((structure) => (
+                          <SelectItem key={structure.id} value={structure.id}>{structure.name}</SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
                   </div>
                   <div className="space-y-2">
-                    <Label>Structure investisseur</Label>
-                    <Input value={selectedStructure} onChange={(event) => setSelectedStructure(event.target.value)} placeholder="Holding / SCI / ..." />
+                    <Label>Souscription (optionnelle)</Label>
+                    <Select
+                      value={selectedSubscription || 'none'}
+                      onValueChange={(value) => setSelectedSubscription(value === 'none' ? '' : value)}
+                      disabled={!selectedInvestor}
+                    >
+                      <SelectTrigger className="h-11"><SelectValue /></SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="none">Toutes les souscriptions</SelectItem>
+                        {subscriptionOptions.map((subscription) => (
+                          <SelectItem key={subscription} value={subscription}>{subscription}</SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
                   </div>
                 </div>
               </div>
             )}
 
-            <div className="rounded-lg border bg-muted/30 p-3 text-sm">
-              Audience estimée en temps réel: <span className="font-semibold">{audience.investors}</span> investisseur(s) •{' '}
+            <div className="rounded-xl border bg-white p-3 text-sm flex items-center gap-2">
+              <Sparkles className="w-4 h-4 text-blue-600" />
+              Audience: <span className="font-semibold">{audience.investors}</span> investisseur(s) •{' '}
               <span className="font-semibold">{audience.contacts}</span> contact(s)
             </div>
           </section>
