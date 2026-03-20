@@ -17,6 +17,7 @@ import {
 } from './ui/dropdown-menu';
 import { toast } from 'sonner';
 import { ChevronDown, UploadCloud, FileCheck2, Download, Users2, UserRound, Mail, Eye, Trash2, Check, Folder, FileText, Bell, ShieldCheck } from 'lucide-react';
+import { Document } from '../utils/documentMockData';
 
 interface FolderOption {
   id: string;
@@ -59,6 +60,7 @@ interface DocumentAddModalProps {
   onClose: () => void;
   folderOptions: FolderOption[];
   defaultFolderId: string;
+  document?: Document | null;
 }
 
 const SEGMENTS = ['Institutionnels', 'Family Office', 'Retail', 'Corporate'];
@@ -134,7 +136,7 @@ const defaultVersions: DocumentVersion[] = [
   { language: 'en', name: '', fileName: '' },
 ];
 
-export function DocumentAddModal({ isOpen, onClose, folderOptions, defaultFolderId }: DocumentAddModalProps) {
+export function DocumentAddModal({ isOpen, onClose, folderOptions, defaultFolderId, document }: DocumentAddModalProps) {
   const [versions, setVersions] = useState<DocumentVersion[]>(defaultVersions);
   const [addDate, setAddDate] = useState(new Date().toISOString().slice(0, 10));
   const [parentFolderId, setParentFolderId] = useState(defaultFolderId);
@@ -159,6 +161,15 @@ export function DocumentAddModal({ isOpen, onClose, folderOptions, defaultFolder
     if (!isOpen) return;
     setParentFolderId(defaultFolderId);
     setAddDate(new Date().toISOString().slice(0, 10));
+    if (document) {
+      setVersions([
+        { language: 'fr', name: document.name, fileName: document.name },
+        { language: 'en', name: document.name, fileName: '' },
+      ]);
+      setSelectedFund(document.metadata?.fund || 'all');
+      setAudienceMode(document.target?.type === 'investor' ? 'nominative' : 'general');
+      setSelectedInvestor(document.target?.investors?.[0] || '');
+    }
   }, [defaultFolderId, isOpen]);
 
   const selectedInvestorProfile = useMemo(
@@ -302,7 +313,7 @@ export function DocumentAddModal({ isOpen, onClose, folderOptions, defaultFolder
       <SheetContent side="right" className="h-full p-0 gap-0">
         <SheetHeader className="px-6 py-5 border-b bg-white">
           <div>
-            <SheetTitle className="text-[26px] leading-8">Ajouter un document</SheetTitle>
+            <SheetTitle className="text-[26px] leading-8">{document ? 'Détail du document' : 'Ajouter un document'}</SheetTitle>
           <SheetDescription className="mt-1 text-[15px]">
             Créez des versions FR/EN, configurez l'audience et le workflow de validation.
           </SheetDescription>
@@ -737,7 +748,7 @@ export function DocumentAddModal({ isOpen, onClose, folderOptions, defaultFolder
         </div>
         <div className="border-t bg-white px-6 py-4 flex justify-end gap-2">
           <Button variant="outline" onClick={onClose}>Annuler</Button>
-          <Button onClick={handleSubmit}>Valider</Button>
+          <Button onClick={handleSubmit}>{document ? 'Enregistrer' : 'Valider'}</Button>
         </div>
       </SheetContent>
     </Sheet>

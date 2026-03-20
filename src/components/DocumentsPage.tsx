@@ -16,7 +16,6 @@ import {
   DropdownMenuSeparator,
 } from './ui/dropdown-menu';
 import { DocumentExplorer } from './DocumentExplorer';
-import { DocumentDetailPanel } from './DocumentDetailPanel';
 import { FolderDetailPanel } from './FolderDetailPanel';
 import { DocumentFilterBar } from './DocumentFilterBar';
 import { DocumentTreeSidebar } from './DocumentTreeSidebar';
@@ -435,21 +434,6 @@ export function DocumentsPage({ selectedSpace, navigationTarget, onNavigationHan
         </div>
       </motion.div>
 
-      {/* Document Detail Panel */}
-      <AnimatePresence>
-        {selectedDocument && (
-          <DocumentDetailPanel
-            key={selectedDocument.id}
-            document={selectedDocument}
-            onClose={() => {
-              setSelectedDocument(null);
-              setDetailsTab('details');
-            }}
-            defaultTab={detailsTab}
-          />
-        )}
-      </AnimatePresence>
-
       {/* Folder Detail Panel */}
       <AnimatePresence>
         {selectedFolder && (
@@ -466,10 +450,15 @@ export function DocumentsPage({ selectedSpace, navigationTarget, onNavigationHan
       </AnimatePresence>
 
       <DocumentAddModal
-        isOpen={addDocumentModalOpen}
-        onClose={() => setAddDocumentModalOpen(false)}
+        isOpen={addDocumentModalOpen || !!selectedDocument}
+        onClose={() => {
+          setAddDocumentModalOpen(false);
+          setSelectedDocument(null);
+          setDetailsTab('details');
+        }}
         folderOptions={folderOptions}
         defaultFolderId={addDocumentDefaultFolderId}
+        document={selectedDocument}
       />
 
     </div>
