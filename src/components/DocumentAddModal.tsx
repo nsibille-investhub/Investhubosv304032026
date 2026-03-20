@@ -153,6 +153,7 @@ export function DocumentAddModal({ isOpen, onClose, folderOptions, defaultFolder
   const [validationTeams, setValidationTeams] = useState<string[]>([]);
   const fileInputRefs = useRef<Record<'fr' | 'en', HTMLInputElement | null>>({ fr: null, en: null });
   const [folderPickerOpen, setFolderPickerOpen] = useState(false);
+  const [selectedContactAccess, setSelectedContactAccess] = useState<Record<string, string[]>>({});
 
   useEffect(() => {
     if (!isOpen) return;
@@ -174,6 +175,14 @@ export function DocumentAddModal({ isOpen, onClose, folderOptions, defaultFolder
   }, [selectedInvestorProfile, selectedStructure]);
 
   const shareClassOptions = selectedFund !== 'all' ? SHARE_CLASSES_BY_FUND[selectedFund] || [] : [];
+
+  useEffect(() => {
+    if (!selectedInvestorProfile) return;
+    setSelectedContactAccess((prev) => ({
+      ...prev,
+      [selectedInvestorProfile.id]: prev[selectedInvestorProfile.id] || selectedInvestorProfile.contacts.map((contact) => contact.name),
+    }));
+  }, [selectedInvestorProfile]);
 
   const targetedInvestors = useMemo(() => {
     if (audienceMode === 'general') {
@@ -327,7 +336,9 @@ export function DocumentAddModal({ isOpen, onClose, folderOptions, defaultFolder
                           />
                         </div>
                         <div className="space-y-2">
-                          <Label>Ajouter un document</Label>
+                          <Label>
+                            {language === 'fr' ? 'Ajouter un document (FR)' : 'Ajouter un document (EN) optionnel'}
+                          </Label>
                           <input
                             ref={(el) => { fileInputRefs.current[language] = el; }}
                             type="file"
@@ -620,35 +631,44 @@ export function DocumentAddModal({ isOpen, onClose, folderOptions, defaultFolder
                   </div>
                 </div>
                 ) : (
-                  <p className="text-sm text-slate-600">Le document est nominatif et limité à l'investisseur sélectionné.</p>
-                )}
-              </div>
-
-            {audienceMode === 'nominative' && selectedInvestorProfile && (
-              <div className="rounded-2xl border bg-white p-4 space-y-3">
-                <div className="flex items-center justify-between">
-                  <div>
-                    <p className="text-xl font-semibold text-slate-900">{selectedInvestorProfile.name}</p>
-                    <p className="text-slate-500 text-sm">{selectedInvestorProfile.segment} • {selectedInvestorProfile.fund}</p>
-                  </div>
-                  <span className="px-3 py-1 rounded-full bg-amber-100 text-amber-800 text-sm">{selectedInvestorProfile.fund}</span>
-                </div>
-                <div className="border-t pt-3 space-y-2">
-                  <p className="text-xs uppercase tracking-wide text-slate-500 font-semibold">{selectedInvestorProfile.contacts.length} contacts</p>
-                  {selectedInvestorProfile.contacts.map((contact) => (
-                    <div key={contact.name} className="rounded-xl border bg-slate-50 p-3 flex items-center gap-3">
-                      <div className="w-9 h-9 rounded-full bg-blue-100 text-blue-700 flex items-center justify-center">
-                        <UserRound className="w-4 h-4" />
-                      </div>
+                  selectedInvestorProfile ? (
+                    <div className="rounded-2xl border bg-white p-4 space-y-3">
                       <div>
-                        <p className="font-medium text-slate-900">{contact.name}</p>
-                        <p className="text-sm text-slate-500 flex items-center gap-1"><Mail className="w-3 h-3" /> {contact.role}</p>
+                        <p className="text-xl font-semibold text-slate-900">{selectedInvestorProfile.name}</p>
+                      </div>
+                      <div className="border-t pt-3 space-y-2">
+                        <p className="text-xs uppercase tracking-wide text-slate-500 font-semibold">Contacts autorisés</p>
+                        {selectedInvestorProfile.contacts.map((contact) => {
+                          const selected = (selectedContactAccess[selectedInvestorProfile.id] || []).includes(contact.name);
+                          return (
+                            <label key={contact.name} className="rounded-xl border bg-slate-50 p-3 flex items-center gap-3 cursor-pointer">
+                              <Checkbox
+                                checked={selected}
+                                onCheckedChange={(checked) => {
+                                  const current = selectedContactAccess[selectedInvestorProfile.id] || [];
+                                  const next = checked
+                                    ? Array.from(new Set([...current, contact.name]))
+                                    : current.filter((name) => name !== contact.name);
+                                  setSelectedContactAccess((prev) => ({ ...prev, [selectedInvestorProfile.id]: next }));
+                                }}
+                              />
+                              <div className="w-9 h-9 rounded-full bg-blue-100 text-blue-700 flex items-center justify-center">
+                                <UserRound className="w-4 h-4" />
+                              </div>
+                              <div>
+                                <p className="font-medium text-slate-900">{contact.name}</p>
+                                <p className="text-sm text-slate-500 flex items-center gap-1"><Mail className="w-3 h-3" /> {contact.role}</p>
+                              </div>
+                            </label>
+                          );
+                        })}
                       </div>
                     </div>
-                  ))}
-                </div>
+                  ) : (
+                    <p className="text-sm text-slate-600">Sélectionnez un investisseur pour définir les accès contacts.</p>
+                  )
+                )}
               </div>
-            )}
 
           </section>
 
