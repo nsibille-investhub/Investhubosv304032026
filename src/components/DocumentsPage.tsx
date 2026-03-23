@@ -423,6 +423,7 @@ export function DocumentsPage({ selectedSpace, navigationTarget, onNavigationHan
         onClose={() => setAddFolderPopupOpen(false)}
         folderOptions={folderOptions}
         defaultParentId={addFolderDefaultParentId}
+        inheritedTargeting={selectedSpace.targeting}
       />
 
     </div>
