@@ -1,26 +1,12 @@
 import { useState, useMemo, useEffect } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
-import {
-  Plus,
-  Download,
-  FileText,
-  ChevronDown,
-  PackageOpen
-} from 'lucide-react';
-import { Button } from './ui/button';
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuTrigger,
-  DropdownMenuSeparator,
-} from './ui/dropdown-menu';
 import { DocumentExplorer } from './DocumentExplorer';
-import { DocumentDetailPanel } from './DocumentDetailPanel';
 import { FolderDetailPanel } from './FolderDetailPanel';
 import { DocumentFilterBar } from './DocumentFilterBar';
 import { DocumentTreeSidebar } from './DocumentTreeSidebar';
 import { DocumentListView } from './DocumentListView';
+import { DocumentAddModal } from './DocumentAddModal';
+import { AddFolderPopup } from './AddFolderPopup';
 import { Document, mockDocuments } from '../utils/documentMockData';
 import { toast } from 'sonner';
 import { MassUploadWizard } from './MassUploadWizard';
@@ -60,6 +46,10 @@ export function DocumentsPage({ selectedSpace, navigationTarget, onNavigationHan
   const [currentFolderPath, setCurrentFolderPath] = useState<string[]>([]);
   const [searchTerm, setSearchTerm] = useState('');
   const [focusedItemId, setFocusedItemId] = useState<string | null>(null);
+  const [addDocumentModalOpen, setAddDocumentModalOpen] = useState(false);
+  const [addDocumentDefaultFolderId, setAddDocumentDefaultFolderId] = useState<string>('root');
+  const [addFolderPopupOpen, setAddFolderPopupOpen] = useState(false);
+  const [addFolderDefaultParentId, setAddFolderDefaultParentId] = useState<string>('root');
 
   // Convert TreeNode to Document format
   const convertTreeToDocuments = (treeNodes: TreeNode[]): Document[] => {
@@ -146,6 +136,16 @@ export function DocumentsPage({ selectedSpace, navigationTarget, onNavigationHan
 
   const handleOpenWizard = () => {
     setWizardOpen(true);
+  };
+
+  const openAddDocumentModal = (folderId?: string | null) => {
+    setAddDocumentDefaultFolderId(folderId || currentFolder?.id || 'root');
+    setAddDocumentModalOpen(true);
+  };
+
+  const openAddFolderPopup = (folderId?: string | null) => {
+    setAddFolderDefaultParentId(folderId || currentFolder?.id || 'root');
+    setAddFolderPopupOpen(true);
   };
 
   // Get existing folder names for the wizard
@@ -295,6 +295,27 @@ export function DocumentsPage({ selectedSpace, navigationTarget, onNavigationHan
     setCurrentFolderPath(folderPath);
   };
 
+  const buildFolderOptions = (docs: Document[], path: string[] = []): Array<{ id: string; label: string }> => {
+    const options: Array<{ id: string; label: string }> = [];
+    docs.forEach((doc) => {
+      if (doc.type !== 'folder') return;
+      const nextPath = [...path, doc.name];
+      options.push({
+        id: doc.id,
+        label: nextPath.join(' / '),
+      });
+      if (doc.children?.length) {
+        options.push(...buildFolderOptions(doc.children, nextPath));
+      }
+    });
+    return options;
+  };
+
+  const folderOptions = useMemo(
+    () => [{ id: 'root', label: 'Racine / Documents' }, ...buildFolderOptions(filteredDocuments)],
+    [filteredDocuments]
+  );
+
   if (wizardOpen) {
     return (
       <div className="flex-1 min-h-0">
@@ -315,7 +336,7 @@ export function DocumentsPage({ selectedSpace, navigationTarget, onNavigationHan
         animate={{ 
           opacity: 1, 
           y: 0,
-          flex: (selectedDocument || selectedFolder) ? '0 0 60%' : '1 1 100%'
+          flex: selectedFolder ? '0 0 60%' : '1 1 100%'
         }}
         transition={{ type: 'spring', stiffness: 200, damping: 25 }}
         className="bg-white rounded-2xl shadow-sm border border-gray-200 overflow-hidden flex flex-col min-w-0"
@@ -331,43 +352,7 @@ export function DocumentsPage({ selectedSpace, navigationTarget, onNavigationHan
             </div>
             
             <div className="flex items-center gap-3">
-              {/* Selection Count - Always visible */}
-              <div className="text-sm text-gray-600">
-                <span className="font-medium text-gray-900">{selectedCount}</span> sélectionné{selectedCount > 1 ? 's' : ''}
-              </div>
-
               <div className="flex-1" />
-
-              {/* Export Dropdown */}
-              <DropdownMenu>
-                <DropdownMenuTrigger asChild>
-                  <Button variant="outline" size="sm">
-                    <Download className="w-4 h-4 mr-2" />
-                    Télécharger
-                    <ChevronDown className="w-3.5 h-3.5 ml-1" />
-                  </Button>
-                </DropdownMenuTrigger>
-                <DropdownMenuContent align="end" className="w-56">
-                  <DropdownMenuItem onClick={handleDownloadAll}>
-                    <PackageOpen className="w-4 h-4 mr-2" />
-                    Tout télécharger (.zip)
-                  </DropdownMenuItem>
-                  <DropdownMenuItem onClick={handleExportList}>
-                    <FileText className="w-4 h-4 mr-2" />
-                    Exporter la liste (.csv)
-                  </DropdownMenuItem>
-                </DropdownMenuContent>
-              </DropdownMenu>
-              
-              {/* Import Wizard Button */}
-              <Button 
-                onClick={handleOpenWizard} 
-                size="sm" 
-                className="bg-gradient-to-r from-[#0066FF] to-[#0052CC] hover:shadow-lg transition-all duration-300"
-              >
-                <Plus className="w-4 h-4 mr-2" />
-                Import Massif
-              </Button>
             </div>
           </div>
         </div>
@@ -396,25 +381,16 @@ export function DocumentsPage({ selectedSpace, navigationTarget, onNavigationHan
               onSearchTermChange={setSearchTerm}
               searchResults={scopedSearchResults}
               focusedItemId={focusedItemId}
+              onAddDocumentFromFolder={(folder) => openAddDocumentModal(folder.id)}
+              onAddDocument={() => openAddDocumentModal()}
+              onOpenWizard={handleOpenWizard}
+              onDownloadAll={handleDownloadAll}
+              onAddFolder={() => openAddFolderPopup()}
+              onAddFolderFromFolder={(folder) => openAddFolderPopup(folder.id)}
             />
           </div>
         </div>
       </motion.div>
-
-      {/* Document Detail Panel */}
-      <AnimatePresence>
-        {selectedDocument && (
-          <DocumentDetailPanel
-            key={selectedDocument.id}
-            document={selectedDocument}
-            onClose={() => {
-              setSelectedDocument(null);
-              setDetailsTab('details');
-            }}
-            defaultTab={detailsTab}
-          />
-        )}
-      </AnimatePresence>
 
       {/* Folder Detail Panel */}
       <AnimatePresence>
@@ -430,6 +406,24 @@ export function DocumentsPage({ selectedSpace, navigationTarget, onNavigationHan
           />
         )}
       </AnimatePresence>
+
+      <DocumentAddModal
+        isOpen={addDocumentModalOpen || !!selectedDocument}
+        onClose={() => {
+          setAddDocumentModalOpen(false);
+          setSelectedDocument(null);
+          setDetailsTab('details');
+        }}
+        folderOptions={folderOptions}
+        defaultFolderId={addDocumentDefaultFolderId}
+        document={selectedDocument}
+      />
+      <AddFolderPopup
+        isOpen={addFolderPopupOpen}
+        onClose={() => setAddFolderPopupOpen(false)}
+        folderOptions={folderOptions}
+        defaultParentId={addFolderDefaultParentId}
+      />
 
     </div>
   );
