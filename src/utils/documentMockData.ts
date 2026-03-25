@@ -74,6 +74,17 @@ export interface Document {
     disclaimer?: string;
     segments?: string[];
   };
+
+  // Navigator helper metadata (Data Room list)
+  navigatorTargeting?: {
+    mode: 'generic' | 'nominative';
+    fund?: string;
+    shareClass?: string;
+    segment?: string;
+    investor?: string;
+    structure?: string;
+    subscription?: string;
+  };
 }
 
 export const mockDocuments: Document[] = [

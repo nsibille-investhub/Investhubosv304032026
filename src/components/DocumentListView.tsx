@@ -80,6 +80,25 @@ export function DocumentListView({
     return FileText;
   };
 
+  const getNavigatorTargetingLabel = (item: Document) => {
+    const targeting = item.navigatorTargeting;
+    if (!targeting) return null;
+
+    if (targeting.mode === 'generic') {
+      return {
+        title: 'Générique',
+        details: `Fonds: ${targeting.fund || 'Tous fonds'} · Parts: ${targeting.shareClass || 'Toutes'} · Segment: ${targeting.segment || 'Tous segments'}`,
+        className: 'bg-indigo-50 text-indigo-700 border-indigo-200',
+      };
+    }
+
+    return {
+      title: 'Nominatif',
+      details: `Investisseur: ${targeting.investor || '-'} · Structure: ${targeting.structure || '-'} · Souscription: ${targeting.subscription || '-'}`,
+      className: 'bg-emerald-50 text-emerald-700 border-emerald-200',
+    };
+  };
+
   const handleRowClick = (item: Document) => {
     if (item.type === 'folder') {
       onFolderNavigate(item.id, [...currentPath, item.name]);
@@ -190,9 +209,10 @@ export function DocumentListView({
       {/* Table Header */}
       <div className="px-6 py-3 border-b border-gray-200 bg-gray-50/30">
         <div className="grid grid-cols-12 gap-4 text-xs font-medium text-gray-500 uppercase tracking-wide">
-          <div className="col-span-6">Nom</div>
-          <div className="col-span-2">Ajouté le</div>
-          <div className="col-span-2">Taille</div>
+          <div className="col-span-5">Nom</div>
+          <div className="col-span-3">Ciblage doc</div>
+          <div className="col-span-1">Ajouté le</div>
+          <div className="col-span-1">Taille</div>
           <div className="col-span-2 text-right">Actions</div>
         </div>
       </div>
@@ -222,7 +242,7 @@ export function DocumentListView({
                   className={`px-6 py-3 border-b border-gray-100 cursor-pointer transition-colors ${focusedItemId === folder.id ? 'bg-blue-50 ring-1 ring-inset ring-blue-300' : ''}`}
                 >
                   <div className="grid grid-cols-12 gap-4 items-center">
-                    <div className="col-span-6 flex items-center gap-3">
+                    <div className="col-span-5 flex items-center gap-3">
                       <div className="w-8 h-8 rounded-lg bg-amber-50 flex items-center justify-center flex-shrink-0">
                         <Icon className="w-4 h-4 text-amber-600" />
                       </div>
@@ -241,12 +261,16 @@ export function DocumentListView({
                         Dossier
                       </Badge>
                     </div>
+
+                    <div className="col-span-3">
+                      <p className="text-xs text-gray-400">—</p>
+                    </div>
                     
-                    <div className="col-span-2">
+                    <div className="col-span-1">
                       <p className="text-sm text-gray-600">{formatDate(folder.date)}</p>
                     </div>
                     
-                    <div className="col-span-2">
+                    <div className="col-span-1">
                       <p className="text-sm text-gray-600">—</p>
                     </div>
                     
@@ -323,7 +347,7 @@ export function DocumentListView({
                   className={`px-6 py-3 border-b border-gray-100 cursor-pointer transition-colors ${focusedItemId === file.id ? 'bg-blue-50 ring-1 ring-inset ring-blue-300' : ''}`}
                 >
                   <div className="grid grid-cols-12 gap-4 items-center">
-                    <div className="col-span-6 flex items-center gap-3">
+                    <div className="col-span-5 flex items-center gap-3">
                       <div className="w-8 h-8 rounded-lg bg-blue-50 flex items-center justify-center flex-shrink-0">
                         <Icon className="w-4 h-4 text-blue-600" />
                       </div>
@@ -339,12 +363,29 @@ export function DocumentListView({
                         {file.type === 'pdf' ? 'PDF' : 'Document'}
                       </Badge>
                     </div>
+
+                    <div className="col-span-3 min-w-0">
+                      {(() => {
+                        const targetingLabel = getNavigatorTargetingLabel(file);
+                        if (!targetingLabel) {
+                          return <p className="text-xs text-gray-400">—</p>;
+                        }
+                        return (
+                          <div className="min-w-0">
+                            <Badge variant="outline" className={`text-[11px] ${targetingLabel.className}`}>
+                              {targetingLabel.title}
+                            </Badge>
+                            <p className="mt-1 truncate text-xs text-gray-500">{targetingLabel.details}</p>
+                          </div>
+                        );
+                      })()}
+                    </div>
                     
-                    <div className="col-span-2">
+                    <div className="col-span-1">
                       <p className="text-sm text-gray-600">{formatDate(file.date)}</p>
                     </div>
                     
-                    <div className="col-span-2">
+                    <div className="col-span-1">
                       <p className="text-sm text-gray-600">{formatFileSize(file.size)}</p>
                     </div>
                     
