@@ -51,8 +51,15 @@ export function DocumentsPage({ selectedSpace, navigationTarget, onNavigationHan
   const [addFolderPopupOpen, setAddFolderPopupOpen] = useState(false);
   const [addFolderDefaultParentId, setAddFolderDefaultParentId] = useState<string>('root');
 
+  const formatScopeValue = (values: string[], fallback: string) => (
+    values.length > 0 ? values.join(', ') : fallback
+  );
+
   // Convert TreeNode to Document format
   const convertTreeToDocuments = (treeNodes: TreeNode[]): Document[] => {
+    const primaryFund = selectedSpace.targeting.funds[0] || 'Tous fonds';
+    const primarySegment = selectedSpace.targeting.segments[0] || 'Tous segments';
+
     return treeNodes.map((node, index) => {
       // Parse the french date format (DD/MM/YYYY) to create a proper Date object
       let uploadedAt = new Date();
@@ -90,7 +97,22 @@ export function DocumentsPage({ selectedSpace, navigationTarget, onNavigationHan
         version: 1,
         uploadedAt: uploadedAt.toISOString(),
         uploadedBy: node.owner || 'Système',
-        updatedAt: uploadedAt.toISOString()
+        updatedAt: uploadedAt.toISOString(),
+        navigatorTargeting: node.type === 'folder' ? undefined : (
+          index % 2 === 0
+            ? {
+                mode: 'generic',
+                fund: primaryFund,
+                shareClass: 'Parts A',
+                segment: primarySegment,
+              }
+            : {
+                mode: 'nominative',
+                investor: 'Investisseur nommé',
+                structure: selectedSpace.name,
+                subscription: `Souscription #${node.id}`,
+              }
+        )
       };
       return doc;
     });
@@ -100,7 +122,7 @@ export function DocumentsPage({ selectedSpace, navigationTarget, onNavigationHan
   const spaceDocuments: Document[] = useMemo(() => {
     const treeData = getTreeForSpace(selectedSpace.id);
     return convertTreeToDocuments(treeData);
-  }, [selectedSpace.id]);
+  }, [selectedSpace]);
 
   const handleDocumentClick = (doc: Document, openTab: string = 'details') => {
     if (doc.type === 'folder') {
@@ -346,10 +368,27 @@ export function DocumentsPage({ selectedSpace, navigationTarget, onNavigationHan
           <div className="flex items-center justify-between">
             <div>
               <h2 className="text-xl font-semibold text-gray-900">Documents</h2>
-              <p className="text-sm text-gray-600 mt-1">
-                Gérez et partagez vos documents de Data Room
-              </p>
-            </div>
+                <p className="text-sm text-gray-600 mt-1">
+                  Gérez et partagez vos documents de Data Room
+                </p>
+                <div className="mt-3 rounded-lg border border-blue-100 bg-blue-50/70 px-3 py-2">
+                  <p className="text-xs font-semibold text-blue-900">Contexte de l'espace</p>
+                  <div className="mt-1 grid gap-1 text-xs text-blue-800 md:grid-cols-3">
+                    <p>
+                      <span className="font-medium">Utilisateurs :</span>{' '}
+                      {formatScopeValue(selectedSpace.targeting.userTypes, 'Investisseur (90% des cas)')}
+                    </p>
+                    <p>
+                      <span className="font-medium">Ciblage fonds :</span>{' '}
+                      {formatScopeValue(selectedSpace.targeting.funds, 'Tous fonds')}
+                    </p>
+                    <p>
+                      <span className="font-medium">Ciblage segment :</span>{' '}
+                      {formatScopeValue(selectedSpace.targeting.segments, 'Tous segments')}
+                    </p>
+                  </div>
+                </div>
+              </div>
             
             <div className="flex items-center gap-3">
               <div className="flex-1" />
