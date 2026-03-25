@@ -16,7 +16,7 @@ import {
   DropdownMenuTrigger,
 } from './ui/dropdown-menu';
 import { toast } from 'sonner';
-import { ChevronDown, UploadCloud, FileCheck2, Download, Users2, UserRound, Mail, Eye, Trash2, Check, Folder, FileText, Bell, ShieldCheck } from 'lucide-react';
+import { ChevronDown, UploadCloud, FileCheck2, Download, Users2, UserRound, Mail, Eye, Trash2, Check, Folder, FileText, Bell, ShieldCheck, Clock3, CheckCircle2 } from 'lucide-react';
 import { Document } from '../utils/documentMockData';
 
 interface FolderOption {
@@ -785,18 +785,31 @@ export function DocumentAddModal({ isOpen, onClose, folderOptions, defaultFolder
               <p className="text-sm text-slate-600">Équipes de validation et validateurs associés.</p>
             </div>
             {isDetailMode ? (
-              detailState?.validation.status === 'approved' ? (
-                <div className="rounded-xl border border-emerald-200 bg-emerald-50 p-4">
-                  <p className="font-semibold text-emerald-800">✅ Document validé</p>
-                  <p className="text-sm text-emerald-700 mt-1">Équipe: {detailState.validation.team} • Validé par {detailState.validation.validator}</p>
-                  <p className="text-sm text-emerald-700">Le {detailState.validation.validatedAt}</p>
+              <>
+                {detailState?.validation.status === 'approved' ? (
+                  <div className="rounded-xl border border-emerald-200 bg-emerald-50 p-4">
+                    <p className="font-semibold text-emerald-800 flex items-center gap-2"><CheckCircle2 className="h-4 w-4" /> Document validé</p>
+                    <p className="text-sm text-emerald-700 mt-1">Équipe: {detailState.validation.team} • Validé par {detailState.validation.validator}</p>
+                    <p className="text-sm text-emerald-700">Le {detailState.validation.validatedAt}</p>
+                  </div>
+                ) : (
+                  <div className="rounded-xl border border-amber-200 bg-amber-50 p-4">
+                    <p className="font-semibold text-amber-800 flex items-center gap-2"><Clock3 className="h-4 w-4" /> En attente de validation</p>
+                    <p className="text-sm text-amber-700 mt-1">Ce document est en cours de revue par les équipes de validation.</p>
+                  </div>
+                )}
+                <div className="rounded-xl border border-slate-200 bg-white p-4 space-y-3">
+                  <p className="font-medium text-slate-900">Équipes de validation et personnes associées</p>
+                  <div className="space-y-2">
+                    {TEAMS.map((team) => (
+                      <div key={team.id} className="rounded-lg border border-slate-200 p-3">
+                        <p className="font-medium text-slate-800">{team.name}</p>
+                        <p className="text-sm text-slate-600 mt-1">Personnes: {team.validators.join(', ')}</p>
+                      </div>
+                    ))}
+                  </div>
                 </div>
-              ) : (
-                <div className="rounded-xl border border-amber-200 bg-amber-50 p-4">
-                  <p className="font-semibold text-amber-800">⏳ En attente de validation</p>
-                  <p className="text-sm text-amber-700 mt-1">Ce document est en cours de revue par les équipes de validation.</p>
-                </div>
-              )
+              </>
             ) : (
               <>
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-2">
