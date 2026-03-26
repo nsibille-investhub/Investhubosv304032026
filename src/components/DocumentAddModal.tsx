@@ -16,7 +16,7 @@ import {
   DropdownMenuTrigger,
 } from './ui/dropdown-menu';
 import { toast } from 'sonner';
-import { ChevronDown, UploadCloud, FileCheck2, Download, Users2, UserRound, Mail, Eye, Trash2, Check, Folder, FileText, Bell, ShieldCheck, Clock3, CheckCircle2 } from 'lucide-react';
+import { ChevronDown, UploadCloud, FileCheck2, Download, Users2, UserRound, Mail, Eye, Trash2, Check, Folder, FileText, Bell, ShieldCheck, Clock3, CheckCircle2, Star } from 'lucide-react';
 import { Document } from '../utils/documentMockData';
 import { DocumentTargetingMarker } from './DocumentTargetingMarker';
 
@@ -703,15 +703,29 @@ export function DocumentAddModal({ isOpen, onClose, folderOptions, defaultFolder
                       </div>
                       <div className="border-t pt-3 space-y-2">
                         <p className="text-xs uppercase tracking-wide text-slate-500 font-semibold">Contacts autorisés</p>
+                        <div className="rounded-xl border bg-blue-50/60 p-3 flex items-center gap-3">
+                          <Checkbox checked disabled />
+                          <div className="w-9 h-9 rounded-full bg-blue-100 text-blue-700 flex items-center justify-center">
+                            <UserRound className="w-4 h-4" />
+                          </div>
+                          <div className="flex-1">
+                            <p className="font-medium text-slate-900 flex items-center gap-2">
+                              {selectedInvestorProfile.name}
+                              <span className="inline-flex items-center gap-1 rounded-full border border-blue-300 bg-blue-100 px-2 py-0.5 text-[11px] font-medium text-blue-700">
+                                <Star className="w-3 h-3 fill-current" />
+                                Principal
+                              </span>
+                            </p>
+                            <p className="text-sm text-slate-500 flex items-center gap-1"><Mail className="w-3 h-3" /> Investisseur principal (obligatoire)</p>
+                          </div>
+                        </div>
                         {selectedInvestorProfile.contacts.map((contact) => {
                           const selected = (selectedContactAccess[selectedInvestorProfile.id] || []).includes(contact.name);
                           return (
                             <label key={contact.name} className="rounded-xl border bg-slate-50 p-3 flex items-center gap-3 cursor-pointer">
                               <Checkbox
                                 checked={selected}
-                                disabled={isDetailMode}
                                 onCheckedChange={(checked) => {
-                                  if (isDetailMode) return;
                                   const current = selectedContactAccess[selectedInvestorProfile.id] || [];
                                   const next = checked
                                     ? Array.from(new Set([...current, contact.name]))

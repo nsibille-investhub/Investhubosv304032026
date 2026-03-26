@@ -50,6 +50,7 @@ export function DocumentsPage({ selectedSpace, navigationTarget, onNavigationHan
   const [addDocumentDefaultFolderId, setAddDocumentDefaultFolderId] = useState<string>('root');
   const [addFolderPopupOpen, setAddFolderPopupOpen] = useState(false);
   const [addFolderDefaultParentId, setAddFolderDefaultParentId] = useState<string>('root');
+  const [folderBeingEdited, setFolderBeingEdited] = useState<Document | null>(null);
 
   const formatScopeValue = (values: string[], fallback: string) => (
     values.length > 0 ? values.join(', ') : fallback
@@ -221,7 +222,14 @@ export function DocumentsPage({ selectedSpace, navigationTarget, onNavigationHan
   };
 
   const openAddFolderPopup = (folderId?: string | null) => {
+    setFolderBeingEdited(null);
     setAddFolderDefaultParentId(folderId || currentFolder?.id || 'root');
+    setAddFolderPopupOpen(true);
+  };
+
+  const openEditFolderPopup = (folder: Document) => {
+    setFolderBeingEdited(folder);
+    setAddFolderDefaultParentId(folder.parentId || 'root');
     setAddFolderPopupOpen(true);
   };
 
@@ -481,6 +489,8 @@ export function DocumentsPage({ selectedSpace, navigationTarget, onNavigationHan
               onDownloadAll={handleDownloadAll}
               onAddFolder={() => openAddFolderPopup()}
               onAddFolderFromFolder={(folder) => openAddFolderPopup(folder.id)}
+              onEditFolder={openEditFolderPopup}
+              onDeleteFolder={openEditFolderPopup}
             />
           </div>
         </div>
@@ -514,10 +524,21 @@ export function DocumentsPage({ selectedSpace, navigationTarget, onNavigationHan
       />
       <AddFolderPopup
         isOpen={addFolderPopupOpen}
-        onClose={() => setAddFolderPopupOpen(false)}
+        onClose={() => {
+          setAddFolderPopupOpen(false);
+          setFolderBeingEdited(null);
+        }}
         folderOptions={folderOptions}
         defaultParentId={addFolderDefaultParentId}
         inheritedTargeting={selectedSpace.targeting}
+        mode={folderBeingEdited ? 'edit' : 'create'}
+        folderToEdit={folderBeingEdited ? { id: folderBeingEdited.id, name: folderBeingEdited.name } : null}
+        onDeleteFolder={(folderId, migrateToFolderId) => {
+          const migrationTarget = folderOptions.find((folder) => folder.id === migrateToFolderId)?.label || 'dossier cible';
+          toast.success('Suppression simulée', {
+            description: `Le dossier ${folderId} est migré vers ${migrationTarget}`,
+          });
+        }}
       />
 
     </div>

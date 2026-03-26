@@ -39,6 +39,8 @@ interface DocumentListViewProps {
   onDownloadAll?: () => void;
   onAddFolder?: () => void;
   onAddFolderFromFolder?: (folder: Document) => void;
+  onEditFolder?: (folder: Document) => void;
+  onDeleteFolder?: (folder: Document) => void;
 }
 
 export function DocumentListView({ 
@@ -57,6 +59,8 @@ export function DocumentListView({
   onDownloadAll,
   onAddFolder,
   onAddFolderFromFolder,
+  onEditFolder,
+  onDeleteFolder,
 }: DocumentListViewProps) {
   const [hoveredId, setHoveredId] = useState<string | null>(null);
   const itemRefs = useRef<Record<string, HTMLDivElement | null>>({});
@@ -257,18 +261,6 @@ export function DocumentListView({
                     </div>
                     
                     <div className="col-span-2 flex items-center justify-end gap-2">
-                      <motion.button
-                        whileHover={{ scale: 1.1 }}
-                        whileTap={{ scale: 0.95 }}
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          onDocumentClick(folder);
-                        }}
-                        className="p-2 hover:bg-gray-100 rounded-lg transition-colors"
-                      >
-                        <Eye className="w-4 h-4 text-gray-600" />
-                      </motion.button>
-                      
                       <DropdownMenu>
                         <DropdownMenuTrigger asChild>
                           <button
@@ -297,13 +289,27 @@ export function DocumentListView({
                             <Folder className="w-4 h-4 mr-2" />
                             Ajouter un dossier
                           </DropdownMenuItem>
-                          <DropdownMenuItem>
+                          <DropdownMenuItem
+                            onClick={(event) => {
+                              event.stopPropagation();
+                              onEditFolder?.(folder);
+                            }}
+                          >
                             <Eye className="w-4 h-4 mr-2" />
                             Voir les détails
                           </DropdownMenuItem>
                           <DropdownMenuItem>
                             <Download className="w-4 h-4 mr-2" />
                             Télécharger le dossier
+                          </DropdownMenuItem>
+                          <DropdownMenuItem
+                            className="text-red-600 focus:text-red-600"
+                            onClick={(event) => {
+                              event.stopPropagation();
+                              onDeleteFolder?.(folder);
+                            }}
+                          >
+                            Supprimer le dossier
                           </DropdownMenuItem>
                         </DropdownMenuContent>
                       </DropdownMenu>
@@ -356,29 +362,6 @@ export function DocumentListView({
                     </div>
                     
                     <div className="col-span-2 flex items-center justify-end gap-2">
-                      <motion.button
-                        whileHover={{ scale: 1.1 }}
-                        whileTap={{ scale: 0.95 }}
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          onDocumentClick(file);
-                        }}
-                        className="p-2 hover:bg-gray-100 rounded-lg transition-colors"
-                      >
-                        <Eye className="w-4 h-4 text-gray-600" />
-                      </motion.button>
-                      
-                      <motion.button
-                        whileHover={{ scale: 1.1 }}
-                        whileTap={{ scale: 0.95 }}
-                        onClick={(e) => {
-                          e.stopPropagation();
-                        }}
-                        className="p-2 hover:bg-gray-100 rounded-lg transition-colors"
-                      >
-                        <Download className="w-4 h-4 text-gray-600" />
-                      </motion.button>
-                      
                       <DropdownMenu>
                         <DropdownMenuTrigger asChild>
                           <button
@@ -396,6 +379,9 @@ export function DocumentListView({
                           <DropdownMenuItem>
                             <Download className="w-4 h-4 mr-2" />
                             Télécharger
+                          </DropdownMenuItem>
+                          <DropdownMenuItem className="text-red-600 focus:text-red-600">
+                            Archiver document
                           </DropdownMenuItem>
                         </DropdownMenuContent>
                       </DropdownMenu>
