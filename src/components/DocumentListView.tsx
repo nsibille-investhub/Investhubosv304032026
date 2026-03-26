@@ -81,25 +81,6 @@ export function DocumentListView({
     return FileText;
   };
 
-  const getDocumentBadge = (item: Document) => {
-    const mode = item.navigatorTargeting?.mode;
-    const modeLabel = mode === 'nominative' ? 'Nominatif' : mode === 'generic' ? 'Générique' : null;
-
-    if (!modeLabel) {
-      return {
-        label: item.type === 'pdf' ? 'PDF' : 'Document',
-        className: 'bg-blue-50 text-blue-700 border-blue-200',
-      };
-    }
-
-    return {
-      label: `Document · ${modeLabel}`,
-      className: mode === 'nominative'
-        ? 'bg-emerald-50 text-emerald-700 border-emerald-200'
-        : 'bg-indigo-50 text-indigo-700 border-indigo-200',
-    };
-  };
-
   const handleRowClick = (item: Document) => {
     if (item.type === 'folder') {
       onFolderNavigate(item.id, [...currentPath, item.name]);
@@ -336,7 +317,6 @@ export function DocumentListView({
             {(hasActiveSearch ? searchFiles : files).map((file) => {
               const Icon = getFileIcon(file.type);
               const isHovered = hoveredId === file.id;
-              const documentBadge = getDocumentBadge(file);
               
               return (
                 <motion.div
@@ -361,9 +341,6 @@ export function DocumentListView({
                           <p className="text-xs text-gray-400 truncate">{(file as any).__path.slice(0, -1).join(' / ') || 'Racine'}</p>
                         )}
                       </div>
-                      <Badge variant="outline" className={`${documentBadge.className} text-xs`}>
-                        {documentBadge.label}
-                      </Badge>
                     </div>
 
                     <div className="col-span-3 min-w-0">
