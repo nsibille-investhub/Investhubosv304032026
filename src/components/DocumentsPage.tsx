@@ -413,11 +413,6 @@ export function DocumentsPage({ selectedSpace, navigationTarget, onNavigationHan
             <DocumentListView
               documents={filteredDocuments}
               currentFolder={currentFolder}
-              spaceUsageSummary={{
-                userTypes: formatScopeValue(selectedSpace.targeting.userTypes, 'Investisseur (90% des cas), Partenaire, Participation'),
-                funds: formatScopeValue(selectedSpace.targeting.funds, 'Tous fonds'),
-                segments: formatScopeValue(selectedSpace.targeting.segments, 'Tous segments'),
-              }}
               onDocumentClick={handleDocumentClick}
               onFolderNavigate={handleFolderNavigate}
               currentPath={currentFolderPath}
