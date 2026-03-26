@@ -25,6 +25,11 @@ import { Input } from './ui/input';
 interface DocumentListViewProps {
   documents: Document[];
   currentFolder: Document | null;
+  spaceUsageSummary?: {
+    userTypes: string;
+    funds: string;
+    segments: string;
+  };
   onDocumentClick: (doc: Document) => void;
   onFolderNavigate: (folderId: string | null, folderPath: string[]) => void;
   currentPath: string[];
@@ -43,6 +48,7 @@ interface DocumentListViewProps {
 export function DocumentListView({ 
   documents, 
   currentFolder, 
+  spaceUsageSummary,
   onDocumentClick,
   onFolderNavigate,
   currentPath,
@@ -199,6 +205,18 @@ export function DocumentListView({
             Ajouter un dossier
           </Button>
         </div>
+        {spaceUsageSummary && (
+          <div className="rounded-lg border border-blue-100 bg-blue-50/80 px-3 py-2">
+            <p className="text-[11px] font-semibold uppercase tracking-wide text-blue-900">
+              Rappel du contexte de l&apos;espace
+            </p>
+            <div className="mt-1 grid gap-1 text-xs text-blue-800 md:grid-cols-3">
+              <p><span className="font-medium">Type d&apos;utilisateur :</span> {spaceUsageSummary.userTypes}</p>
+              <p><span className="font-medium">Ciblage fonds :</span> {spaceUsageSummary.funds}</p>
+              <p><span className="font-medium">Ciblage segment :</span> {spaceUsageSummary.segments}</p>
+            </div>
+          </div>
+        )}
         {searchTerm.trim() && (
           <p className="mt-2 text-xs text-gray-500">
             {itemsToRender.length} résultat{itemsToRender.length > 1 ? 's' : ''} dans {currentPath.length > 0 ? currentPath.join(' / ') : 'Documents'}
@@ -375,7 +393,7 @@ export function DocumentListView({
                             <Badge variant="outline" className={`text-[11px] ${targetingLabel.className}`}>
                               {targetingLabel.title}
                             </Badge>
-                            <p className="mt-1 truncate text-xs text-gray-500">{targetingLabel.details}</p>
+                            <p className="mt-1 text-xs leading-snug text-gray-500">{targetingLabel.details}</p>
                           </div>
                         );
                       })()}
