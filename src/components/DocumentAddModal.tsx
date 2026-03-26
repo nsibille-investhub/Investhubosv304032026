@@ -18,6 +18,7 @@ import {
 import { toast } from 'sonner';
 import { ChevronDown, UploadCloud, FileCheck2, Download, Users2, UserRound, Mail, Eye, Trash2, Check, Folder, FileText, Bell, ShieldCheck, Clock3, CheckCircle2 } from 'lucide-react';
 import { Document } from '../utils/documentMockData';
+import { DocumentTargetingMarker } from './DocumentTargetingMarker';
 
 interface FolderOption {
   id: string;
@@ -181,6 +182,8 @@ export function DocumentAddModal({ isOpen, onClose, folderOptions, defaultFolder
       setSelectedFund(document.metadata?.fund || 'all');
       setAudienceMode(document.target?.type === 'investor' ? 'nominative' : 'general');
       setSelectedInvestor(document.target?.investors?.[0] || '');
+      setSelectedSubscription(document.target?.subscriptions?.[0] || '');
+      setSelectedSegments(document.target?.segments?.length ? document.target.segments : ['all']);
     }
   }, [defaultFolderId, isOpen]);
 
@@ -206,6 +209,18 @@ export function DocumentAddModal({ isOpen, onClose, folderOptions, defaultFolder
       [selectedInvestorProfile.id]: prev[selectedInvestorProfile.id] || selectedInvestorProfile.contacts.map((contact) => contact.name),
     }));
   }, [selectedInvestorProfile]);
+
+  useEffect(() => {
+    if (!document || !selectedInvestorProfile) return;
+    const structureName = document.navigatorTargeting?.mode === 'nominative'
+      ? document.navigatorTargeting.structure
+      : undefined;
+    if (!structureName) return;
+    const matchedStructure = selectedInvestorProfile.structures.find((structure) => structure.name === structureName);
+    if (matchedStructure) {
+      setSelectedStructureId(matchedStructure.id);
+    }
+  }, [document, selectedInvestorProfile]);
 
   const targetedInvestors = useMemo(() => {
     if (audienceMode === 'general') {
@@ -503,6 +518,12 @@ export function DocumentAddModal({ isOpen, onClose, folderOptions, defaultFolder
               <p className="font-semibold text-slate-900 flex items-center gap-2"><Users2 className="w-5 h-5 text-blue-600" /> Audience</p>
               <p className="text-sm text-slate-600">Configuration des critères de ciblage.</p>
             </div>
+            {isDetailMode && document && (
+              <div className="rounded-xl border border-slate-200 bg-white p-3">
+                <p className="mb-2 text-xs font-semibold uppercase tracking-wide text-slate-500">Ciblage harmonisé</p>
+                <DocumentTargetingMarker document={document} />
+              </div>
+            )}
             <div className="flex gap-2 p-1 rounded-xl bg-slate-100 w-fit">
               <Button variant={audienceMode === 'general' ? 'default' : 'outline'} onClick={() => setAudienceMode('general')} disabled={isDetailMode}>Document général</Button>
               <Button variant={audienceMode === 'nominative' ? 'default' : 'outline'} onClick={() => setAudienceMode('nominative')} disabled={isDetailMode}>Document nominatif</Button>
