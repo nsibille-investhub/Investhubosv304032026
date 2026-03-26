@@ -23,6 +23,8 @@ import {
 } from 'lucide-react';
 import { Badge } from './ui/badge';
 import { Button } from './ui/button';
+import { StatusBadge } from './StatusBadge';
+import { Tag } from './Tag';
 import { Investor } from '../utils/investorGenerator';
 import { formatCurrency, formatDate } from '../utils/formatters';
 import { ContactsCard } from './ContactsCard';
@@ -45,15 +47,6 @@ import {
 import { toast } from 'sonner@2.0.3';
 import { AuditLogDialog } from './AuditLogDialog';
 import { copyToClipboard } from '../utils/clipboard';
-
-// Définition des couleurs de segments - PROFESSIONNEL
-const SEGMENT_COLORS: Record<string, { color: string; bgColor: string }> = {
-  'HNWI': { color: '#3B82F6', bgColor: '#EFF6FF' },
-  'UHNWI': { color: '#F97316', bgColor: '#FFF7ED' },
-  'Retail': { color: '#EC4899', bgColor: '#FDF2F8' },
-  'Professional': { color: '#6B7280', bgColor: '#F3F4F6' },
-  'Institutional': { color: '#6B7280', bgColor: '#F9FAFB' },
-};
 
 interface InvestorDataTableProps {
   data: Investor[];
@@ -339,7 +332,7 @@ export function InvestorDataTable({
                     <div className="flex flex-col gap-1 max-w-[300px]">
                       <motion.span
                         whileHover={{ x: 2 }}
-                        className="text-sm text-blue-600 hover:text-blue-700 font-medium cursor-pointer hover:underline transition-all truncate"
+                        className="interactive-link text-sm cursor-pointer transition-all truncate"
                       >
                         <HighlightText 
                           text={row.name} 
@@ -385,36 +378,15 @@ export function InvestorDataTable({
 
                   {/* Type */}
                   <td className="px-6 py-4">
-                    <div className={cn(
-                      "inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md border text-xs font-medium transition-colors",
-                      row.type === 'Individual' 
-                        ? 'bg-blue-50 text-blue-700 border-blue-200' 
-                        : 'bg-indigo-50 text-indigo-700 border-indigo-200'
-                    )}>
-                      {row.type === 'Individual' ? (
-                        <User className="w-3.5 h-3.5" />
-                      ) : (
-                        <Building2 className="w-3.5 h-3.5" />
-                      )}
-                      <span>{row.type}</span>
-                    </div>
+                    <Tag icon={row.type === 'Individual' ? User : Building2} label={row.type} />
                   </td>
 
                   {/* Status */}
                   <td className="px-6 py-4">
-                    <div className={cn(
-                      "inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md border text-xs font-medium transition-colors",
-                      row.status === 'Prospect' ? 'bg-blue-50 text-blue-700 border-blue-200' :
-                      row.status === 'En discussion' ? 'bg-purple-50 text-purple-700 border-purple-200' :
-                      row.status === 'En relation' ? 'bg-emerald-50 text-emerald-700 border-emerald-200' :
-                      'bg-gray-50 text-gray-700 border-gray-200'
-                    )}>
-                      {row.status === 'Prospect' && <UserPlus className="w-3.5 h-3.5" />}
-                      {row.status === 'En discussion' && <MessageCircle className="w-3.5 h-3.5" />}
-                      {row.status === 'En relation' && <UserCheck className="w-3.5 h-3.5" />}
-                      {row.status === 'Archivé' && <Archive className="w-3.5 h-3.5" />}
-                      <span>{row.status}</span>
-                    </div>
+                    <StatusBadge
+                      label={row.status}
+                      variant={row.status === 'En relation' ? 'success' : row.status === 'En discussion' ? 'warning' : row.status === 'Archivé' ? 'danger' : 'neutral'}
+                    />
                   </td>
 
                   {/* Registration Date */}
@@ -439,28 +411,19 @@ export function InvestorDataTable({
                         e.stopPropagation();
                         onRowClick(row, 'souscriptions');
                       }}
-                      className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-blue-50 hover:bg-blue-100 border border-blue-200 transition-colors cursor-pointer group"
+                      className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-[var(--neutral-soft)] hover:bg-muted border border-border transition-colors cursor-pointer group"
                     >
-                      <FileText className="w-3.5 h-3.5 text-blue-600 group-hover:text-blue-700" />
-                      <span className="text-sm font-medium text-blue-700 group-hover:text-blue-800">
+                      <FileText className="w-3.5 h-3.5 text-[var(--primary)]" />
+                      <span className="text-sm font-medium text-[var(--primary)]">
                         {row.subscriptionsCount}
                       </span>
                     </button>
                   </td>
 
-                  {/* CRM Segment - Badge coloré professionnel */}
+                  {/* CRM Segment */}
                   <td className="px-6 py-4">
                     {row.crmSegment ? (
-                      <Badge 
-                        variant="outline" 
-                        style={{
-                          backgroundColor: SEGMENT_COLORS[row.crmSegment]?.bgColor || '#F3F4F6',
-                          color: SEGMENT_COLORS[row.crmSegment]?.color || '#6B7280',
-                          borderColor: SEGMENT_COLORS[row.crmSegment]?.color || '#6B7280',
-                        }}
-                      >
-                        {row.crmSegment}
-                      </Badge>
+                      <Tag label={row.crmSegment} />
                     ) : (
                       <span className="text-gray-400 dark:text-gray-600 text-sm">—</span>
                     )}
