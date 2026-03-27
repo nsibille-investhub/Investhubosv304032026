@@ -202,8 +202,8 @@ export function DataRoomSpacesView({
               className="group relative bg-white rounded-2xl border-2 border-gray-200 hover:border-blue-300 shadow-sm hover:shadow-lg transition-all cursor-pointer overflow-hidden"
             >
               {/* Header with gradient */}
-              <div className="h-24 bg-white transition-all relative overflow-hidden">
-                <div className="absolute inset-0 bg-gradient-to-br from-transparent to-black/[0.03]" />
+              <div className="h-24 bg-[#E7E4D6] transition-all relative overflow-hidden">
+                <div className="absolute inset-0 bg-gradient-to-br from-transparent to-black/[0.02]" />
                 
                 {/* Settings button */}
                 <button
@@ -220,8 +220,8 @@ export function DataRoomSpacesView({
               {/* Content */}
               <div className="p-6 -mt-10 relative">
                 {/* Icon */}
-                <div className="w-16 h-16 rounded-xl bg-[#060D19] flex items-center justify-center shadow-lg mb-4">
-                  <Folder className="w-8 h-8 text-[#DCFDBC]" />
+                <div className="w-16 h-16 rounded-xl bg-[#F5EEDB] flex items-center justify-center shadow-md mb-4 border border-[#E6D8B4]">
+                  <Folder className="w-8 h-8 text-[#C46A00]" />
                 </div>
 
                 {/* Title */}
@@ -258,7 +258,7 @@ export function DataRoomSpacesView({
                     <span>{space.documentCount} documents</span>
                   </div>
                   <div className="flex items-center gap-1.5">
-                    <div className="w-1.5 h-1.5 rounded-full bg-purple-500" />
+                    <div className="w-1.5 h-1.5 rounded-full bg-amber-600" />
                     <span>{space.folderCount} dossiers</span>
                   </div>
                 </div>
@@ -266,7 +266,7 @@ export function DataRoomSpacesView({
                 {/* Open Button */}
                 <button
                   onClick={() => onSpaceSelect(space)}
-                  className="w-full flex items-center justify-center gap-2 py-2.5 px-4 rounded-lg bg-gray-900 text-white hover:bg-gradient-to-br hover:from-blue-500 hover:to-blue-600 transition-all group/btn"
+                  className="w-full flex items-center justify-center gap-2 py-2.5 px-4 rounded-lg bg-[#060D19] text-white hover:bg-[#060D19] transition-all group/btn"
                 >
                   <span className="font-medium">Ouvrir l'espace</span>
                   <ArrowRight className="w-4 h-4 group-hover/btn:translate-x-1 transition-transform" />
