@@ -431,13 +431,13 @@ export function InvestorDataTable({
                         e.stopPropagation();
                         onRowClick(row, 'souscriptions');
                       }}
-                      className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-muted border border-border transition-all cursor-pointer group hover:bg-primary hover:text-primary-foreground hover:border-primary hover:shadow-sm"
+                      className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-muted border border-border transition-all duration-200 cursor-pointer group hover:scale-[1.03] hover:shadow-md hover:border-border/80 hover:bg-white"
                     >
-                      <FileText className="w-3.5 h-3.5 text-muted-foreground group-hover:text-primary-foreground" />
-                      <span className="text-sm font-medium text-muted-foreground group-hover:text-primary-foreground">
+                      <FileText className="w-3.5 h-3.5 text-muted-foreground group-hover:text-foreground" />
+                      <span className="text-sm font-medium text-muted-foreground group-hover:text-foreground">
                         {row.subscriptionsCount}
                       </span>
-                      <ChevronRight className="w-3.5 h-3.5 text-muted-foreground group-hover:text-primary-foreground transition-transform group-hover:translate-x-0.5" />
+                      <ChevronRight className="w-3.5 h-3.5 text-muted-foreground group-hover:text-foreground transition-transform group-hover:translate-x-0.5" />
                     </button>
                   </td>
 
