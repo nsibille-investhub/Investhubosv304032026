@@ -1,14 +1,14 @@
 import { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
-import { 
-  ArrowUpDown, 
-  ArrowUp, 
-  ArrowDown, 
-  Copy, 
-  Check, 
-  Eye, 
-  ChevronDown, 
-  History, 
+import {
+  ArrowUpDown,
+  ArrowUp,
+  ArrowDown,
+  Copy,
+  Check,
+  Eye,
+  ChevronDown,
+  History,
   X,
   User,
   Building2,
@@ -63,13 +63,13 @@ interface InvestorDataTableProps {
   searchTerm?: string;
 }
 
-export function InvestorDataTable({ 
-  data, 
-  hoveredRow, 
-  setHoveredRow, 
-  onRowClick, 
-  sortConfig, 
-  onSort, 
+export function InvestorDataTable({
+  data,
+  hoveredRow,
+  setHoveredRow,
+  onRowClick,
+  sortConfig,
+  onSort,
   compactMode,
   onMonitoringChange,
   onAnalystChange,
@@ -81,9 +81,9 @@ export function InvestorDataTable({
   const [copiedId, setCopiedId] = useState<number | null>(null);
   const [selectedIds, setSelectedIds] = useState<Set<number>>(new Set());
   const [selectAll, setSelectAll] = useState(false);
-  
+
   const totalFilteredData = allFilteredData || data;
-  
+
   useEffect(() => {
     const allIds = totalFilteredData.map(item => item.id);
     const isAllSelected = allIds.length > 0 && allIds.every(id => selectedIds.has(id));
@@ -199,16 +199,19 @@ export function InvestorDataTable({
     if (!sortConfig || sortConfig.key !== columnKey) {
       return <ArrowUpDown className="w-3.5 h-3.5 opacity-0 group-hover:opacity-50 transition-opacity" />;
     }
-    return sortConfig.direction === 'asc' 
+    return sortConfig.direction === 'asc'
       ? <ArrowUp className="w-3.5 h-3.5 text-gray-900" />
       : <ArrowDown className="w-3.5 h-3.5 text-gray-900" />;
   };
 
-  const SortableHeader = ({ label, sortKey }: { label: string; sortKey: string }) => (
-    <motion.th 
+  const SortableHeader = ({ label, sortKey, className }: { label: string; sortKey: string; className?: string }) => (
+    <motion.th
       whileHover={{ backgroundColor: 'rgba(0,0,0,0.02)' }}
       onClick={() => onSort(sortKey)}
-      className="px-6 py-4 text-left text-xs font-medium text-gray-600 dark:text-gray-400 uppercase tracking-wider cursor-pointer group"
+      className={cn(
+        "px-6 py-4 text-left text-xs font-medium text-gray-600 dark:text-gray-400 uppercase tracking-wider cursor-pointer group",
+        className
+      )}
     >
       <div className="flex items-center gap-2">
         {label}
@@ -234,7 +237,7 @@ export function InvestorDataTable({
                   {selectedIds.size} {selectedIds.size === 1 ? 'investisseur sélectionné' : 'investisseurs sélectionnés'}
                 </Badge>
                 <span className="text-sm text-muted-foreground font-medium">
-                  {selectedIds.size === totalFilteredData.length 
+                  {selectedIds.size === totalFilteredData.length
                     ? '(Toutes les pages sont sélectionnées)'
                     : '(Sélection partielle sur toutes les pages)'}
                 </span>
@@ -262,7 +265,7 @@ export function InvestorDataTable({
               <th className="px-6 py-4 text-left sticky left-0 z-20 bg-gray-50/95 dark:bg-gray-800/95">
                 <Tooltip>
                   <TooltipTrigger asChild>
-                    <input 
+                    <input
                       type="checkbox"
                       checked={selectAll}
                       onChange={handleSelectAll}
@@ -270,13 +273,17 @@ export function InvestorDataTable({
                     />
                   </TooltipTrigger>
                   <TooltipContent>
-                    {selectAll 
-                      ? `Désélectionner tous les ${totalFilteredData.length} investisseurs (toutes pages)` 
+                    {selectAll
+                      ? `Désélectionner tous les ${totalFilteredData.length} investisseurs (toutes pages)`
                       : `Sélectionner tous les ${totalFilteredData.length} investisseurs (toutes pages)`}
                   </TooltipContent>
                 </Tooltip>
               </th>
-              <SortableHeader label="Nom" sortKey="name" />
+              <SortableHeader
+                label="Nom"
+                sortKey="name"
+                className="sticky left-[64px] z-20 bg-gray-50/95 dark:bg-gray-800/95"
+              />
               <th className="px-6 py-4 text-left text-xs font-medium text-gray-600 dark:text-gray-400 uppercase tracking-wider">
                 Contacts
               </th>
@@ -329,15 +336,15 @@ export function InvestorDataTable({
                   </td>
 
                   {/* Name + ID */}
-                  <td className="px-6 py-4">
+                  <td className="px-6 py-4 sticky left-[64px] z-10 bg-white">
                     <div className="flex flex-col gap-1 max-w-[300px]">
                       <motion.div
                         whileHover={{ x: 2 }}
                         className="text-sm font-medium cursor-pointer transition-all truncate"
                       >
                         <ClickableText>
-                          <HighlightText 
-                            text={row.name} 
+                          <HighlightText
+                            text={row.name}
                             searchTerm={searchTerm}
                           />
                         </ClickableText>
@@ -362,8 +369,8 @@ export function InvestorDataTable({
 
                   {/* Contacts */}
                   <td className="px-6 py-4">
-                    <ContactsCard 
-                      contacts={row.contacts || []} 
+                    <ContactsCard
+                      contacts={row.contacts || []}
                       investorName={row.name}
                       investorEmail={row.email}
                       investorPhone={row.phone}
@@ -373,8 +380,8 @@ export function InvestorDataTable({
 
                   {/* Structure */}
                   <td className="px-6 py-4">
-                    <StructuresCell 
-                      structures={row.structures || []} 
+                    <StructuresCell
+                      structures={row.structures || []}
                       searchTerm={searchTerm}
                     />
                   </td>
@@ -450,8 +457,8 @@ export function InvestorDataTable({
 
                   {/* Partner */}
                   <td className="px-6 py-4" onClick={(e) => e.stopPropagation()}>
-                    <PartnerCard 
-                      partnerName={row.partner} 
+                    <PartnerCard
+                      partnerName={row.partner}
                       searchTerm={searchTerm}
                     />
                   </td>
