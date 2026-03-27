@@ -89,6 +89,9 @@ export function DataRoomSpacesView({
     ? spaces.filter((space) => matchedSpaceIds.has(space.id) || space.name.toLowerCase().includes(normalizedQuery))
     : spaces;
 
+  const investorSpaces = visibleSpaces.filter((space) => space.targeting.userTypes[0] === 'Investisseur');
+  const partnerSpaces = visibleSpaces.filter((space) => space.targeting.userTypes[0] !== 'Investisseur');
+
   return (
     <div className="flex-1 flex flex-col px-6 pb-6 bg-white">
       {/* Header */}
@@ -186,96 +189,101 @@ export function DataRoomSpacesView({
         )}
       </motion.div>
 
-      {/* Spaces Grid */}
-      <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-4 gap-6">
-        {visibleSpaces.map((space, index) => {
-          const TargetIcon = getTargetIcon(space.targeting.userTypes);
-          
-          return (
-            <motion.div
-              key={space.id}
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: index * 0.05 }}
-              whileHover={{ scale: 1.02, y: -4 }}
-              whileTap={{ scale: 0.98 }}
-              className="group relative bg-white rounded-2xl border-2 border-gray-200 hover:border-blue-300 shadow-sm hover:shadow-lg transition-all cursor-pointer overflow-hidden"
-            >
-              {/* Header with gradient */}
-              <div className="h-24 bg-[#E7E4D6] transition-all relative overflow-hidden">
-                <div className="absolute inset-0 bg-gradient-to-br from-transparent to-black/[0.02]" />
-                
-                {/* Settings button */}
-                <button
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    onConfigureSpace(space);
-                  }}
-                  className="absolute top-3 right-3 p-2 rounded-lg bg-white/80 hover:bg-white shadow-sm opacity-0 group-hover:opacity-100 transition-all"
-                >
-                  <Settings className="w-4 h-4 text-gray-600" />
-                </button>
+      {/* Spaces by zone */}
+      {[
+        { title: 'Espaces investisseurs', spaces: investorSpaces },
+        { title: 'Espaces partenaires', spaces: partnerSpaces },
+      ].map((section) => (
+        <div key={section.title} className="mb-8 last:mb-0">
+          {section.spaces.length > 0 && (
+            <>
+              <div className="mb-4">
+                <h3 className="text-sm font-semibold uppercase tracking-wide text-gray-600">{section.title}</h3>
               </div>
+              <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-4 gap-6">
+                {section.spaces.map((space, index) => {
+                  const TargetIcon = getTargetIcon(space.targeting.userTypes);
 
-              {/* Content */}
-              <div className="p-6 -mt-10 relative">
-                {/* Icon */}
-                <div className="w-16 h-16 rounded-xl bg-[#F5EEDB] flex items-center justify-center shadow-md mb-4 border border-[#E6D8B4]">
-                  <Folder className="w-8 h-8 text-[#C46A00]" />
-                </div>
+                  return (
+                    <motion.div
+                      key={space.id}
+                      initial={{ opacity: 0, y: 20 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      transition={{ delay: index * 0.05 }}
+                      whileHover={{ scale: 1.02, y: -4 }}
+                      whileTap={{ scale: 0.98 }}
+                      className="group relative bg-white rounded-2xl border-2 border-gray-200 hover:border-blue-300 shadow-sm hover:shadow-lg transition-all cursor-pointer overflow-hidden"
+                    >
+                      <div className="h-24 bg-[#E7E4D6] transition-all relative overflow-hidden">
+                        <div className="absolute inset-0 bg-gradient-to-br from-transparent to-black/[0.02]" />
+                        <button
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            onConfigureSpace(space);
+                          }}
+                          className="absolute top-3 right-3 p-2 rounded-lg bg-white/80 hover:bg-white shadow-sm opacity-0 group-hover:opacity-100 transition-all"
+                        >
+                          <Settings className="w-4 h-4 text-gray-600" />
+                        </button>
+                      </div>
 
-                {/* Title */}
-                <h3 className="font-semibold text-lg text-gray-900 mb-2 line-clamp-1">
-                  {space.name}
-                </h3>
+                      <div className="p-6 -mt-10 relative">
+                        <div className="w-16 h-16 rounded-xl bg-[#F5EEDB] flex items-center justify-center shadow-md mb-4 border border-[#E6D8B4]">
+                          <Folder className="w-8 h-8 text-[#C46A00]" />
+                        </div>
 
-                {/* Targeting: audience + segment/fund split */}
-                <div className="flex items-center gap-2 text-sm text-gray-600 mb-4">
-                  <TargetIcon className="w-4 h-4 flex-shrink-0" />
-                  <span className="line-clamp-2 text-xs">{space.targeting.userTypes[0] || 'Aucun type utilisateur'}</span>
-                </div>
-                <div className="space-y-1.5 mb-4">
-                  {space.targeting.segments.length > 0 && (
-                    <div className="flex items-start gap-2 text-xs text-gray-600">
-                      <Layers className="w-3.5 h-3.5 mt-0.5 text-indigo-500 flex-shrink-0" />
-                      <span className="line-clamp-1" title={space.targeting.segments.join(', ')}>
-                        <span className="font-medium text-gray-700">Segments :</span> {space.targeting.segments.join(', ')}
-                      </span>
-                    </div>
-                  )}
-                  <div className="flex items-start gap-2 text-xs text-gray-600">
-                    <Landmark className="w-3.5 h-3.5 mt-0.5 text-emerald-600 flex-shrink-0" />
-                    <span className="line-clamp-1" title={space.targeting.funds.join(', ') || 'Tous fonds'}>
-                      <span className="font-medium text-gray-700">Fonds :</span> {space.targeting.funds.join(', ') || 'Tous fonds'}
-                    </span>
-                  </div>
-                </div>
+                        <h3 className="font-semibold text-lg text-gray-900 mb-2 line-clamp-1">
+                          {space.name}
+                        </h3>
 
-                {/* Stats */}
-                <div className="flex items-center gap-4 text-sm text-gray-500 mb-4 pb-4 border-b border-gray-200">
-                  <div className="flex items-center gap-1.5">
-                    <div className="w-1.5 h-1.5 rounded-full bg-blue-500" />
-                    <span>{space.documentCount} documents</span>
-                  </div>
-                  <div className="flex items-center gap-1.5">
-                    <div className="w-1.5 h-1.5 rounded-full bg-amber-600" />
-                    <span>{space.folderCount} dossiers</span>
-                  </div>
-                </div>
+                        <div className="flex items-center gap-2 text-sm text-gray-600 mb-4">
+                          <TargetIcon className="w-4 h-4 flex-shrink-0" />
+                          <span className="line-clamp-2 text-xs">{space.targeting.userTypes[0] || 'Aucun type utilisateur'}</span>
+                        </div>
+                        <div className="space-y-1.5 mb-4">
+                          {space.targeting.segments.length > 0 && (
+                            <div className="flex items-start gap-2 text-xs text-gray-600">
+                              <Layers className="w-3.5 h-3.5 mt-0.5 text-indigo-500 flex-shrink-0" />
+                              <span className="line-clamp-1" title={space.targeting.segments.join(', ')}>
+                                <span className="font-medium text-gray-700">Segments :</span> {space.targeting.segments.join(', ')}
+                              </span>
+                            </div>
+                          )}
+                          <div className="flex items-start gap-2 text-xs text-gray-600">
+                            <Landmark className="w-3.5 h-3.5 mt-0.5 text-emerald-600 flex-shrink-0" />
+                            <span className="line-clamp-1" title={space.targeting.funds.join(', ') || 'Tous fonds'}>
+                              <span className="font-medium text-gray-700">Fonds :</span> {space.targeting.funds.join(', ') || 'Tous fonds'}
+                            </span>
+                          </div>
+                        </div>
 
-                {/* Open Button */}
-                <button
-                  onClick={() => onSpaceSelect(space)}
-                  className="w-full flex items-center justify-center gap-2 py-2.5 px-4 rounded-lg bg-[#060D19] text-white hover:bg-[#060D19] transition-all group/btn"
-                >
-                  <span className="font-medium">Ouvrir l'espace</span>
-                  <ArrowRight className="w-4 h-4 group-hover/btn:translate-x-1 transition-transform" />
-                </button>
+                        <div className="flex items-center gap-4 text-sm text-gray-500 mb-4 pb-4 border-b border-gray-200">
+                          <div className="flex items-center gap-1.5">
+                            <div className="w-1.5 h-1.5 rounded-full bg-blue-500" />
+                            <span>{space.documentCount} documents</span>
+                          </div>
+                          <div className="flex items-center gap-1.5">
+                            <div className="w-1.5 h-1.5 rounded-full bg-amber-600" />
+                            <span>{space.folderCount} dossiers</span>
+                          </div>
+                        </div>
+
+                        <button
+                          onClick={() => onSpaceSelect(space)}
+                          className="w-full flex items-center justify-center gap-2 py-2.5 px-4 rounded-lg bg-[#060D19] text-white hover:bg-[#060D19] transition-all group/btn"
+                        >
+                          <span className="font-medium">Ouvrir l'espace</span>
+                          <ArrowRight className="w-4 h-4 group-hover/btn:translate-x-1 transition-transform" />
+                        </button>
+                      </div>
+                    </motion.div>
+                  );
+                })}
               </div>
-            </motion.div>
-          );
-        })}
-      </div>
+            </>
+          )}
+        </div>
+      ))}
 
       {/* Empty State */}
       {visibleSpaces.length === 0 && (
