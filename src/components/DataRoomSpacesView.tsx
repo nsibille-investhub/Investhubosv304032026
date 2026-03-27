@@ -214,7 +214,7 @@ export function DataRoomSpacesView({
                       whileTap={{ scale: 0.98 }}
                       className="group relative bg-white rounded-2xl border-2 border-gray-200 hover:border-blue-300 shadow-sm hover:shadow-lg transition-all cursor-pointer overflow-hidden"
                     >
-                      <div className="h-24 bg-[#E7E4D6] transition-all relative overflow-hidden">
+                      <div className="h-24 bg-gray-100 transition-all relative overflow-hidden">
                         <div className="absolute inset-0 bg-gradient-to-br from-transparent to-black/[0.02]" />
                         <button
                           onClick={(e) => {
@@ -228,8 +228,8 @@ export function DataRoomSpacesView({
                       </div>
 
                       <div className="p-6 -mt-10 relative">
-                        <div className="w-16 h-16 rounded-xl bg-[#F5EEDB] flex items-center justify-center shadow-md mb-4 border border-[#E6D8B4]">
-                          <Folder className="w-8 h-8 text-[#C46A00]" />
+                        <div className="w-16 h-16 rounded-xl bg-gradient-to-br from-blue-500 to-blue-600 flex items-center justify-center shadow-lg mb-4">
+                          <Folder className="w-8 h-8 text-white" />
                         </div>
 
                         <h3 className="font-semibold text-lg text-gray-900 mb-2 line-clamp-1">
@@ -263,14 +263,14 @@ export function DataRoomSpacesView({
                             <span>{space.documentCount} documents</span>
                           </div>
                           <div className="flex items-center gap-1.5">
-                            <div className="w-1.5 h-1.5 rounded-full bg-amber-600" />
+                            <div className="w-1.5 h-1.5 rounded-full bg-purple-500" />
                             <span>{space.folderCount} dossiers</span>
                           </div>
                         </div>
 
                         <button
                           onClick={() => onSpaceSelect(space)}
-                          className="w-full flex items-center justify-center gap-2 py-2.5 px-4 rounded-lg bg-[#060D19] text-white hover:bg-[#060D19] transition-all group/btn"
+                          className="w-full flex items-center justify-center gap-2 py-2.5 px-4 rounded-lg bg-[#053B47] text-white hover:bg-[#053B47] transition-all group/btn"
                         >
                           <span className="font-medium">Ouvrir l'espace</span>
                           <ArrowRight className="w-4 h-4 group-hover/btn:translate-x-1 transition-transform" />
