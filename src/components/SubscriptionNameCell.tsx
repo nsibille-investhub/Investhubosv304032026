@@ -4,6 +4,7 @@ import { Copy, Check } from 'lucide-react';
 import { toast } from 'sonner@2.0.3';
 import { HighlightText } from './HighlightText';
 import { copyToClipboard } from '../utils/clipboard';
+import { LinkText } from './ui/link-text';
 
 interface SubscriptionNameCellProps {
   name: string;
@@ -31,12 +32,11 @@ export function SubscriptionNameCell({ name, id, searchTerm = '' }: Subscription
   return (
     <div className="flex flex-col gap-1 max-w-[350px]">
       {/* Nom de la souscription */}
-      <motion.span
-        whileHover={{ x: 2 }}
-        className="text-sm text-blue-600 dark:text-blue-400 hover:text-blue-700 dark:hover:text-blue-300 font-medium cursor-pointer hover:underline transition-all truncate"
-      >
-        <HighlightText text={name} searchTerm={searchTerm} />
-      </motion.span>
+      <motion.div whileHover={{ x: 2 }} className="truncate">
+        <LinkText className="text-sm truncate block">
+          <HighlightText text={name} searchTerm={searchTerm} />
+        </LinkText>
+      </motion.div>
 
       {/* ID avec bouton de copie */}
       <div className="flex items-center gap-1.5 group">
@@ -50,7 +50,7 @@ export function SubscriptionNameCell({ name, id, searchTerm = '' }: Subscription
           className="opacity-0 group-hover:opacity-100 transition-opacity p-0.5 hover:bg-gray-100 dark:hover:bg-gray-800 rounded"
         >
           {copied ? (
-            <Check className="w-3 h-3 text-green-600 dark:text-green-400" />
+            <Check className="w-3 h-3 text-[color:var(--status-success-fg)]" />
           ) : (
             <Copy className="w-3 h-3 text-gray-400 dark:text-gray-600 hover:text-gray-600 dark:hover:text-gray-400" />
           )}

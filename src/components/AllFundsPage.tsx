@@ -20,6 +20,9 @@ import { EmptyState } from './EmptyState';
 import { formatCurrency, formatDate } from '../utils/formatters';
 import { HighlightText } from './HighlightText';
 import { cn } from './ui/utils';
+import { StatusBadge } from './ui/status-badge';
+import { Tag } from './ui/tag';
+import { LinkText } from './ui/link-text';
 import { copyToClipboard } from '../utils/clipboard';
 import { LastActivityCard } from './LastActivityCard';
 import { FundFilterBar } from './FundFilterBar';
@@ -102,26 +105,9 @@ export function AllFundsPage({ data, isLoading, allData, setAllData, onFundClick
     return configs[status] || configs['Actif'];
   };
 
-  const getTypeConfig = (type: string) => {
-    const configs: Record<string, { bg: string; text: string; border: string }> = {
-      'FCPR': { bg: 'bg-purple-50 dark:bg-purple-950/30', text: 'text-purple-700 dark:text-purple-400', border: 'border-purple-200 dark:border-purple-800' },
-      'FPCI': { bg: 'bg-indigo-50 dark:bg-indigo-950/30', text: 'text-indigo-700 dark:text-indigo-400', border: 'border-indigo-200 dark:border-indigo-800' },
-      'SLP': { bg: 'bg-blue-50 dark:bg-blue-950/30', text: 'text-blue-700 dark:text-blue-400', border: 'border-blue-200 dark:border-blue-800' },
-      'SICAV': { bg: 'bg-cyan-50 dark:bg-cyan-950/30', text: 'text-cyan-700 dark:text-cyan-400', border: 'border-cyan-200 dark:border-cyan-800' },
-    };
-    return configs[type] || configs['FCPR'];
-  };
+  const getTypeConfig = (_type: string) => ({ className: 'neutral' });
 
-  const getStrategyConfig = (strategy: string) => {
-    const configs: Record<string, { bg: string; text: string; border: string }> = {
-      'Venture Capital': { bg: 'bg-pink-50 dark:bg-pink-950/30', text: 'text-pink-700 dark:text-pink-400', border: 'border-pink-200 dark:border-pink-800' },
-      'Private Equity': { bg: 'bg-violet-50 dark:bg-violet-950/30', text: 'text-violet-700 dark:text-violet-400', border: 'border-violet-200 dark:border-violet-800' },
-      'Growth': { bg: 'bg-emerald-50 dark:bg-emerald-950/30', text: 'text-emerald-700 dark:text-emerald-400', border: 'border-emerald-200 dark:border-emerald-800' },
-      'Buyout': { bg: 'bg-amber-50 dark:bg-amber-950/30', text: 'text-amber-700 dark:text-amber-400', border: 'border-amber-200 dark:border-amber-800' },
-      'Real Estate': { bg: 'bg-orange-50 dark:bg-orange-950/30', text: 'text-orange-700 dark:text-orange-400', border: 'border-orange-200 dark:border-orange-800' },
-    };
-    return configs[strategy] || configs['Private Equity'];
-  };
+  const getStrategyConfig = (_strategy: string) => ({ className: 'neutral' });
 
   // Configuration des colonnes pour les fonds
   const fundColumns: ColumnConfig<Fund>[] = [
@@ -131,9 +117,9 @@ export function AllFundsPage({ data, isLoading, allData, setAllData, onFundClick
       sortable: true,
       render: (fund, searchTerm) => (
         <div className="flex flex-col gap-1.5">
-          <span className="text-sm font-medium text-blue-600 dark:text-blue-400 hover:underline cursor-pointer transition-colors hover:text-blue-700 dark:hover:text-blue-300">
+          <LinkText className="text-sm">
             <HighlightText text={fund.name} searchTerm={searchTerm} />
-          </span>
+          </LinkText>
           <div className="flex flex-col gap-1.5">
             {fund.lei && (
               <div className="flex items-center gap-1.5 group">
@@ -165,9 +151,7 @@ export function AllFundsPage({ data, isLoading, allData, setAllData, onFundClick
               {fund.shareClasses.map((shareClass, idx) => (
                 <Tooltip key={idx}>
                   <TooltipTrigger asChild>
-                    <div className="inline-flex items-center gap-1 px-2 py-0.5 bg-indigo-50 dark:bg-indigo-950/30 rounded-md text-xs font-medium text-indigo-700 dark:text-indigo-400 border border-indigo-200 dark:border-indigo-800 hover:bg-indigo-100 dark:hover:bg-indigo-900/50 hover:border-indigo-300 dark:hover:border-indigo-700 hover:shadow-sm transition-all duration-200 cursor-pointer hover:scale-105">
-                      <span>Part {shareClass.name}</span>
-                    </div>
+                    <Tag className="hover:shadow-sm transition-all duration-200 cursor-pointer">Part {shareClass.name}</Tag>
                   </TooltipTrigger>
                   <TooltipContent side="top" className="bg-gradient-to-br from-indigo-600 to-indigo-700 border-indigo-500">
                     <div className="flex flex-col gap-1.5 p-1">
@@ -197,16 +181,7 @@ export function AllFundsPage({ data, isLoading, allData, setAllData, onFundClick
       sortable: true,
       render: (fund) => {
         const config = getTypeConfig(fund.type);
-        return (
-          <span className={cn(
-            'inline-flex px-2.5 py-1 rounded-md text-xs font-medium border transition-all duration-200 hover:shadow-sm hover:scale-105',
-            config.bg,
-            config.text,
-            config.border
-          )}>
-            {fund.type}
-          </span>
-        );
+        return <Tag>{fund.type}</Tag>;
       },
     },
     {
@@ -217,15 +192,10 @@ export function AllFundsPage({ data, isLoading, allData, setAllData, onFundClick
         const config = getStatusConfig(fund.status);
         const StatusIcon = config.icon;
         return (
-          <span className={cn(
-            'inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md text-xs font-medium border transition-all duration-200 hover:shadow-sm hover:scale-105 whitespace-nowrap',
-            config.bg,
-            config.text,
-            config.border
-          )}>
+          <StatusBadge variant={fund.status === 'Actif' ? 'success' : fund.status === 'Suspendu' ? 'warning' : fund.status === 'Clôturé' ? 'danger' : 'neutral'}>
             <StatusIcon className="w-3.5 h-3.5 flex-shrink-0" />
             {fund.status}
-          </span>
+          </StatusBadge>
         );
       },
     },

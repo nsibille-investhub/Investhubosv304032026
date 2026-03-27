@@ -18,6 +18,8 @@ import {
 import { toast } from 'sonner@2.0.3';
 import { cn } from './ui/utils';
 import { Badge } from './ui/badge';
+import { Tag } from './ui/tag';
+import { LinkText } from './ui/link-text';
 import { Button } from './ui/button';
 import {
   DropdownMenu,
@@ -211,12 +213,9 @@ export function SubscriptionDynamicTable({
           <div className="flex flex-col gap-1 max-w-[300px]">
             <motion.span
               whileHover={{ x: 2 }}
-              className="text-sm text-blue-600 dark:text-blue-400 hover:text-blue-700 dark:hover:text-blue-300 font-medium cursor-pointer hover:underline transition-all truncate"
+              className="text-sm truncate"
             >
-              <HighlightText 
-                text={row.contrepartie.name} 
-                searchTerm={searchTerm}
-              />
+              <LinkText className="text-sm"><HighlightText text={row.contrepartie.name} searchTerm={searchTerm} /></LinkText>
             </motion.span>
             <OriginStructureCell 
               contrepartie={row.contrepartie}
@@ -250,12 +249,12 @@ export function SubscriptionDynamicTable({
 
       case 'fund':
         return (
-          <Badge className="bg-blue-50 dark:bg-blue-950/50 text-blue-700 dark:text-blue-300 border-blue-200 dark:border-blue-800">
+          <Tag>
             <HighlightText 
               text={row.fund.name} 
               searchTerm={searchTerm}
             />
-          </Badge>
+          </Tag>
         );
 
       case 'compartment':
