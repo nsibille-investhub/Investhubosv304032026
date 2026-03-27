@@ -259,7 +259,7 @@ export function InvestorDataTable({
         <table className="w-full">
           <thead>
             <tr className="border-b border-gray-200 dark:border-gray-700 bg-gray-50/95 dark:bg-gray-800/95 backdrop-blur-sm">
-              <th className="px-6 py-4 text-left">
+              <th className="px-6 py-4 text-left sticky left-0 z-20 bg-gray-50/95 dark:bg-gray-800/95">
                 <Tooltip>
                   <TooltipTrigger asChild>
                     <input 
@@ -297,7 +297,7 @@ export function InvestorDataTable({
               <th className="px-6 py-4 text-left text-xs font-medium text-gray-600 dark:text-gray-400 uppercase tracking-wider">
                 Partenaire
               </th>
-              <th className="px-6 py-4"></th>
+              <th className="px-6 py-4 sticky right-0 z-20 bg-gray-50/95 dark:bg-gray-800/95"></th>
             </tr>
           </thead>
           <tbody>
@@ -316,7 +316,7 @@ export function InvestorDataTable({
                   }`}
                 >
                   {/* Checkbox */}
-                  <td className="px-6 py-4">
+                  <td className="px-6 py-4 sticky left-0 z-10 bg-white">
                     <motion.input
                       whileHover={{ scale: 1.1 }}
                       whileTap={{ scale: 0.9 }}
@@ -424,7 +424,7 @@ export function InvestorDataTable({
                         e.stopPropagation();
                         onRowClick(row, 'souscriptions');
                       }}
-                      className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-muted border border-border transition-colors cursor-pointer group hover:bg-primary/10 hover:text-primary hover:border-primary/40"
+                      className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-muted border border-border transition-all cursor-pointer group hover:bg-primary/10 hover:text-primary hover:border-primary/40 hover:shadow-sm"
                     >
                       <FileText className="w-3.5 h-3.5 text-muted-foreground group-hover:text-primary" />
                       <span className="text-sm font-medium text-muted-foreground group-hover:text-primary">
@@ -457,7 +457,7 @@ export function InvestorDataTable({
                   </td>
 
                   {/* Actions */}
-                  <td className="px-6 py-4">
+                  <td className="px-6 py-4 sticky right-0 z-10 bg-white">
                     <DropdownMenu>
                       <DropdownMenuTrigger asChild>
                         <motion.button

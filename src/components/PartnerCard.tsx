@@ -16,10 +16,10 @@ interface PartnerCardProps {
 export function PartnerCard({ partnerName, searchTerm = '' }: PartnerCardProps) {
   if (!partnerName) {
     return (
-      <Badge variant="outline" className="border-border bg-muted/50 text-muted-foreground gap-1.5 font-normal">
+      <span className="inline-flex items-center gap-1.5 text-sm text-muted-foreground/80 font-normal">
         <Users className="w-3 h-3" />
         Direct
-      </Badge>
+      </span>
     );
   }
 

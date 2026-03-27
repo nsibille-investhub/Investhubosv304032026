@@ -240,7 +240,7 @@ export function SubscriptionDataTable({
         <table className="w-full">
           <thead>
             <tr className="border-b border-gray-200 bg-gray-50/50">
-              <th className="px-6 py-4 text-left">
+              <th className="px-6 py-4 text-left sticky left-0 z-20 bg-gray-50/50">
                 <Tooltip>
                   <TooltipTrigger asChild>
                     <input 
@@ -278,7 +278,7 @@ export function SubscriptionDataTable({
               <th className="px-6 py-4 text-left text-xs font-medium text-gray-600 uppercase tracking-wider">
                 Partenaire
               </th>
-              <th className="px-6 py-4"></th>
+              <th className="px-6 py-4 sticky right-0 z-20 bg-gray-50/50"></th>
             </tr>
           </thead>
           <tbody>
@@ -297,7 +297,7 @@ export function SubscriptionDataTable({
                   }`}
                 >
                   {/* Checkbox */}
-                  <td className="px-6 py-4">
+                  <td className="px-6 py-4 sticky left-0 z-10 bg-white">
                     <motion.input
                       whileHover={{ scale: 1.1 }}
                       whileTap={{ scale: 0.9 }}
@@ -386,7 +386,7 @@ export function SubscriptionDataTable({
                             whileHover={{ scale: 1.05, y: -2 }}
                             className="inline-block"
                           >
-                            <Tag className="cursor-pointer transition-all shadow-sm hover:shadow" label={row.fund.name} />
+                            <Tag className="cursor-pointer transition-all shadow-sm hover:shadow hover:bg-primary/10 hover:text-primary hover:border-primary/40" label={row.fund.name} />
                           </motion.div>
                         </TooltipTrigger>
                         <TooltipContent>
@@ -488,7 +488,7 @@ export function SubscriptionDataTable({
                   </td>
 
                   {/* Actions Menu */}
-                  <td className="px-6 py-4">
+                  <td className="px-6 py-4 sticky right-0 z-10 bg-white">
                     <DropdownMenu>
                       <DropdownMenuTrigger asChild onClick={(e) => e.stopPropagation()}>
                         <motion.button
