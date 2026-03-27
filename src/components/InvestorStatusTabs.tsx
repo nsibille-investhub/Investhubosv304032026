@@ -97,7 +97,7 @@ export function InvestorStatusTabs({ data, activeStatus, onStatusChange }: Inves
         className={`relative w-full p-2.5 rounded-lg border transition-all duration-200 text-left group overflow-hidden ${
           isActive
             ? `border-primary/40 bg-white shadow-sm`
-            : `border-border/70 bg-white/90 hover:bg-white hover:border-primary/20`
+            : `border-border/70 bg-white hover:bg-white hover:border-primary/20`
         }`}
       >
         {/* Ripple effect on click */}
@@ -246,7 +246,7 @@ export function InvestorStatusTabs({ data, activeStatus, onStatusChange }: Inves
       initial={{ opacity: 0, y: -20 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.3 }}
-      className="bg-primary/5 pb-2 rounded-lg border border-primary/10"
+      className="bg-primary/5 pb-2 rounded-lg"
     >
       {/* Workflow Header */}
       <div className="mb-3 flex items-center justify-between">
