@@ -1223,7 +1223,7 @@ export default function App() {
               </motion.div>
 
               {/* Subscriptions Table Section */}
-              <div className="flex-1 px-6 pt-4 pb-6">
+              <div className="flex-1 px-6 pt-2 pb-6">
                 <SubscriptionsPage 
                   data={contextFilteredSubscriptions.filter(s => {
                     // Filtrer par mode actif/inactif
@@ -1336,7 +1336,7 @@ export default function App() {
               </motion.div>
 
               {/* Investors Table Section */}
-              <div className="flex-1 px-6 pt-4 pb-6">
+              <div className="flex-1 px-6 pt-2 pb-6">
                 <InvestorsPage 
                   data={contextFilteredInvestors.filter(i => {
                     // Filtrer par mode actif/inactif

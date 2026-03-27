@@ -246,7 +246,7 @@ export function InvestorStatusTabs({ data, activeStatus, onStatusChange }: Inves
       initial={{ opacity: 0, y: -20 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.3 }}
-      className="bg-muted/30 pb-4 rounded-lg"
+      className="bg-muted/30 pb-2 rounded-lg"
     >
       {/* Workflow Header */}
       <div className="mb-3 flex items-center justify-between">
