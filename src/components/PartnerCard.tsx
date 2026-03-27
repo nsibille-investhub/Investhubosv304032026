@@ -16,8 +16,8 @@ interface PartnerCardProps {
 export function PartnerCard({ partnerName, searchTerm = '' }: PartnerCardProps) {
   if (!partnerName) {
     return (
-      <span className="inline-flex items-center gap-1.5 text-sm text-muted-foreground/80 font-normal">
-        <Users className="w-3 h-3" />
+      <span className="inline-flex items-center gap-1.5 text-xs text-muted-foreground font-normal">
+        <Users className="w-3 h-3 text-gray-400" />
         Direct
       </span>
     );
