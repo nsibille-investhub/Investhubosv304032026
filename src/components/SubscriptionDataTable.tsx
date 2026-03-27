@@ -2,6 +2,9 @@ import { HighlightText } from './HighlightText';
 import { ContrepartieCard } from './ContrepartieCard';
 import { SignatureStatusCell } from './SignatureStatusCell';
 import { getColumnsForStatus, SubscriptionWorkflowStatus } from '../utils/subscriptionColumns';
+import { StatusBadge } from './StatusBadge';
+import { Tag } from './Tag';
+import { ClickableText } from './ClickableText';
 
 interface SubscriptionDataTableProps {
   data: any[];
@@ -205,14 +208,14 @@ export function SubscriptionDataTable({
               initial={{ height: 0, opacity: 0 }}
               animate={{ height: 'auto', opacity: 1 }}
               exit={{ height: 0, opacity: 0 }}
-              className="bg-gradient-to-r from-blue-50 to-indigo-50 border-b border-blue-200 overflow-hidden"
+              className="bg-muted/50 border-b border-border overflow-hidden"
             >
               <div className="px-6 py-3 flex items-center justify-between">
                 <div className="flex items-center gap-3">
-                  <Badge className="bg-blue-600 text-white px-3 py-1 shadow-md">
+                  <Badge className="bg-primary text-primary-foreground px-3 py-1 shadow-sm">
                     {selectedIds.size} {selectedIds.size === 1 ? 'souscription sélectionnée' : 'souscriptions sélectionnées'}
                   </Badge>
-                  <span className="text-sm text-blue-700 font-medium">
+                  <span className="text-sm text-muted-foreground font-medium">
                     {selectedIds.size === totalFilteredData.length 
                       ? '(Toutes les pages sont sélectionnées)'
                       : '(Sélection partielle sur toutes les pages)'}
@@ -223,7 +226,7 @@ export function SubscriptionDataTable({
                     variant="ghost"
                     size="sm"
                     onClick={handleClearSelection}
-                    className="text-blue-700 hover:text-blue-900 hover:bg-blue-100"
+                    className="text-muted-foreground hover:text-foreground hover:bg-muted"
                   >
                     <X className="w-4 h-4 mr-1" />
                     Annuler la sélection
@@ -289,8 +292,8 @@ export function SubscriptionDataTable({
                   onHoverStart={() => setHoveredRow(row.id)}
                   onHoverEnd={() => setHoveredRow(null)}
                   onClick={() => onRowClick(row)}
-                  className={`border-b border-gray-100 transition-all duration-200 cursor-pointer ${
-                    hoveredRow === row.id ? 'bg-blue-50/50' : 'hover:bg-gray-50/50'
+                  className={`border-b border-border/70 transition-all duration-200 cursor-pointer ${
+                    hoveredRow === row.id ? 'bg-muted/70' : 'hover:bg-muted/50'
                   }`}
                 >
                   {/* Checkbox */}
@@ -311,16 +314,18 @@ export function SubscriptionDataTable({
                     <div className="flex flex-col gap-1 max-w-[300px]">
                       <Tooltip>
                         <TooltipTrigger asChild>
-                          <motion.span
+                          <motion.div
                             whileHover={{ x: 2 }}
-                            className="text-sm text-blue-600 hover:text-blue-700 font-medium cursor-pointer hover:underline transition-all truncate"
+                            className="text-sm font-medium cursor-pointer transition-all truncate"
                             onClick={() => console.log('Nom cliqué')}
                           >
-                            <HighlightText 
-                              text={row.name} 
-                              searchTerm={searchTerm}
-                            />
-                          </motion.span>
+                            <ClickableText>
+                              <HighlightText 
+                                text={row.name} 
+                                searchTerm={searchTerm}
+                              />
+                            </ClickableText>
+                          </motion.div>
                         </TooltipTrigger>
                         <TooltipContent>
                           <p className="max-w-xs">{row.name}</p>
@@ -381,24 +386,14 @@ export function SubscriptionDataTable({
                             whileHover={{ scale: 1.05, y: -2 }}
                             className="inline-block"
                           >
-                            <Badge className="bg-gradient-to-r from-blue-50 to-indigo-50 text-blue-700 border border-blue-200 hover:border-blue-300 cursor-pointer transition-all shadow-sm hover:shadow">
-                              <HighlightText 
-                                text={row.fund.name} 
-                                searchTerm={searchTerm}
-                              />
-                            </Badge>
+                            <Tag className="cursor-pointer transition-all shadow-sm hover:shadow" label={row.fund.name} />
                           </motion.div>
                         </TooltipTrigger>
                         <TooltipContent>
                           Click to view fund details
                         </TooltipContent>
                       </Tooltip>
-                      <Badge className="bg-gray-100 text-gray-700 border border-gray-200">
-                        Part <HighlightText 
-                          text={row.fund.shareClass} 
-                          searchTerm={searchTerm}
-                        />
-                      </Badge>
+                      <Tag label={`Part ${row.fund.shareClass}`} />
                     </div>
                   </td>
 
@@ -411,15 +406,16 @@ export function SubscriptionDataTable({
                           whileTap={{ scale: 0.95 }}
                           className="inline-block"
                         >
-                          <Badge 
-                            className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-lg border transition-all duration-200 cursor-pointer shadow-sm hover:shadow ${getStatusColor(row.status)}`}
-                          >
-                            {getStatusIcon(row.status)}
-                            <HighlightText 
-                              text={row.status} 
-                              searchTerm={searchTerm}
-                            />
-                          </Badge>
+                          <StatusBadge
+                            label={row.status}
+                            variant={
+                              ['Active', 'Exécuté', 'Investisseur signé'].includes(row.status)
+                                ? 'success'
+                                : ['Rejected', 'Cancelled', 'Expired'].includes(row.status)
+                                  ? 'danger'
+                                  : 'warning'
+                            }
+                          />
                         </motion.div>
                       </TooltipTrigger>
                       <TooltipContent>

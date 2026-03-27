@@ -45,15 +45,9 @@ import {
 import { toast } from 'sonner@2.0.3';
 import { AuditLogDialog } from './AuditLogDialog';
 import { copyToClipboard } from '../utils/clipboard';
-
-// Définition des couleurs de segments - PROFESSIONNEL
-const SEGMENT_COLORS: Record<string, { color: string; bgColor: string }> = {
-  'HNWI': { color: '#3B82F6', bgColor: '#EFF6FF' },
-  'UHNWI': { color: '#F97316', bgColor: '#FFF7ED' },
-  'Retail': { color: '#EC4899', bgColor: '#FDF2F8' },
-  'Professional': { color: '#6B7280', bgColor: '#F3F4F6' },
-  'Institutional': { color: '#6B7280', bgColor: '#F9FAFB' },
-};
+import { StatusBadge } from './StatusBadge';
+import { Tag } from './Tag';
+import { ClickableText } from './ClickableText';
 
 interface InvestorDataTableProps {
   data: Investor[];
@@ -232,14 +226,14 @@ export function InvestorDataTable({
             initial={{ height: 0, opacity: 0 }}
             animate={{ height: 'auto', opacity: 1 }}
             exit={{ height: 0, opacity: 0 }}
-            className="bg-gradient-to-r from-blue-50 to-indigo-50 border-b border-blue-200 overflow-hidden"
+            className="bg-muted/50 border-b border-border overflow-hidden"
           >
             <div className="px-6 py-3 flex items-center justify-between">
               <div className="flex items-center gap-3">
-                <Badge className="bg-blue-600 text-white px-3 py-1 shadow-md">
+                <Badge className="bg-primary text-primary-foreground px-3 py-1 shadow-sm">
                   {selectedIds.size} {selectedIds.size === 1 ? 'investisseur sélectionné' : 'investisseurs sélectionnés'}
                 </Badge>
-                <span className="text-sm text-blue-700 font-medium">
+                <span className="text-sm text-muted-foreground font-medium">
                   {selectedIds.size === totalFilteredData.length 
                     ? '(Toutes les pages sont sélectionnées)'
                     : '(Sélection partielle sur toutes les pages)'}
@@ -250,7 +244,7 @@ export function InvestorDataTable({
                   variant="ghost"
                   size="sm"
                   onClick={handleClearSelection}
-                  className="text-blue-700 hover:text-blue-900 hover:bg-blue-100"
+                  className="text-muted-foreground hover:text-foreground hover:bg-muted"
                 >
                   <X className="w-4 h-4 mr-1" />
                   Annuler la sélection
@@ -317,8 +311,8 @@ export function InvestorDataTable({
                   onHoverStart={() => setHoveredRow(row.id)}
                   onHoverEnd={() => setHoveredRow(null)}
                   onClick={() => onRowClick(row, 'profil')}
-                  className={`border-b border-gray-100 transition-all duration-200 cursor-pointer ${
-                    hoveredRow === row.id ? 'bg-blue-50/50' : 'hover:bg-gray-50/50'
+                  className={`border-b border-border/70 transition-all duration-200 cursor-pointer ${
+                    hoveredRow === row.id ? 'bg-muted/70' : 'hover:bg-muted/50'
                   }`}
                 >
                   {/* Checkbox */}
@@ -337,15 +331,17 @@ export function InvestorDataTable({
                   {/* Name + ID */}
                   <td className="px-6 py-4">
                     <div className="flex flex-col gap-1 max-w-[300px]">
-                      <motion.span
+                      <motion.div
                         whileHover={{ x: 2 }}
-                        className="text-sm text-blue-600 hover:text-blue-700 font-medium cursor-pointer hover:underline transition-all truncate"
+                        className="text-sm font-medium cursor-pointer transition-all truncate"
                       >
-                        <HighlightText 
-                          text={row.name} 
-                          searchTerm={searchTerm}
-                        />
-                      </motion.span>
+                        <ClickableText>
+                          <HighlightText 
+                            text={row.name} 
+                            searchTerm={searchTerm}
+                          />
+                        </ClickableText>
+                      </motion.div>
                       <div className="flex items-center gap-1.5">
                         <span className="text-xs text-gray-500">ID: {row.id}</span>
                         <motion.button
@@ -385,12 +381,7 @@ export function InvestorDataTable({
 
                   {/* Type */}
                   <td className="px-6 py-4">
-                    <div className={cn(
-                      "inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md border text-xs font-medium transition-colors",
-                      row.type === 'Individual' 
-                        ? 'bg-blue-50 text-blue-700 border-blue-200' 
-                        : 'bg-indigo-50 text-indigo-700 border-indigo-200'
-                    )}>
+                    <div className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full border text-xs font-medium transition-colors bg-muted text-muted-foreground border-border">
                       {row.type === 'Individual' ? (
                         <User className="w-3.5 h-3.5" />
                       ) : (
@@ -402,19 +393,16 @@ export function InvestorDataTable({
 
                   {/* Status */}
                   <td className="px-6 py-4">
-                    <div className={cn(
-                      "inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md border text-xs font-medium transition-colors",
-                      row.status === 'Prospect' ? 'bg-blue-50 text-blue-700 border-blue-200' :
-                      row.status === 'En discussion' ? 'bg-purple-50 text-purple-700 border-purple-200' :
-                      row.status === 'En relation' ? 'bg-emerald-50 text-emerald-700 border-emerald-200' :
-                      'bg-gray-50 text-gray-700 border-gray-200'
-                    )}>
-                      {row.status === 'Prospect' && <UserPlus className="w-3.5 h-3.5" />}
-                      {row.status === 'En discussion' && <MessageCircle className="w-3.5 h-3.5" />}
-                      {row.status === 'En relation' && <UserCheck className="w-3.5 h-3.5" />}
-                      {row.status === 'Archivé' && <Archive className="w-3.5 h-3.5" />}
-                      <span>{row.status}</span>
-                    </div>
+                    <StatusBadge
+                      label={row.status}
+                      variant={
+                        row.status === 'En relation'
+                          ? 'success'
+                          : row.status === 'Archivé'
+                            ? 'neutral'
+                            : 'warning'
+                      }
+                    />
                   </td>
 
                   {/* Registration Date */}
@@ -439,10 +427,10 @@ export function InvestorDataTable({
                         e.stopPropagation();
                         onRowClick(row, 'souscriptions');
                       }}
-                      className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-blue-50 hover:bg-blue-100 border border-blue-200 transition-colors cursor-pointer group"
+                      className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-muted hover:bg-muted/80 border border-border transition-colors cursor-pointer group"
                     >
-                      <FileText className="w-3.5 h-3.5 text-blue-600 group-hover:text-blue-700" />
-                      <span className="text-sm font-medium text-blue-700 group-hover:text-blue-800">
+                      <FileText className="w-3.5 h-3.5 text-muted-foreground group-hover:text-foreground" />
+                      <span className="text-sm font-medium text-muted-foreground group-hover:text-foreground">
                         {row.subscriptionsCount}
                       </span>
                     </button>
@@ -451,16 +439,7 @@ export function InvestorDataTable({
                   {/* CRM Segment - Badge coloré professionnel */}
                   <td className="px-6 py-4">
                     {row.crmSegment ? (
-                      <Badge 
-                        variant="outline" 
-                        style={{
-                          backgroundColor: SEGMENT_COLORS[row.crmSegment]?.bgColor || '#F3F4F6',
-                          color: SEGMENT_COLORS[row.crmSegment]?.color || '#6B7280',
-                          borderColor: SEGMENT_COLORS[row.crmSegment]?.color || '#6B7280',
-                        }}
-                      >
-                        {row.crmSegment}
-                      </Badge>
+                      <Tag label={row.crmSegment} />
                     ) : (
                       <span className="text-gray-400 dark:text-gray-600 text-sm">—</span>
                     )}
