@@ -96,8 +96,8 @@ export function InvestorStatusTabs({ data, activeStatus, onStatusChange }: Inves
         whileTap={{ scale: 0.98 }}
         className={`relative w-full p-2.5 rounded-lg border transition-all duration-200 text-left group overflow-hidden ${
           isActive
-            ? `border-primary/30 bg-card shadow-sm`
-            : `border-border bg-muted/35 hover:bg-card hover:border-border`
+            ? `border-primary/40 bg-white shadow-sm`
+            : `border-border/70 bg-white/90 hover:bg-white hover:border-primary/20`
         }`}
       >
         {/* Ripple effect on click */}
@@ -246,14 +246,14 @@ export function InvestorStatusTabs({ data, activeStatus, onStatusChange }: Inves
       initial={{ opacity: 0, y: -20 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.3 }}
-      className="bg-muted/30 pb-2 rounded-lg"
+      className="bg-primary/5 pb-2 rounded-lg border border-primary/10"
     >
       {/* Workflow Header */}
       <div className="mb-3 flex items-center justify-between">
         <div className="flex items-center gap-2">
           <div className="w-1 h-6 bg-primary rounded-full" />
           <h3 className="font-semibold text-gray-900">Pipeline Investisseurs</h3>
-          <Badge variant="outline" className="text-xs">
+          <Badge variant="outline" className="text-xs bg-primary/10 text-primary border-primary/25">
             4 statuts
           </Badge>
         </div>
