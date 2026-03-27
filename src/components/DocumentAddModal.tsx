@@ -16,8 +16,9 @@ import {
   DropdownMenuTrigger,
 } from './ui/dropdown-menu';
 import { toast } from 'sonner';
-import { ChevronDown, UploadCloud, FileCheck2, Download, Users2, UserRound, Mail, Eye, Trash2, Check, Folder, FileText, Bell, ShieldCheck, Clock3, CheckCircle2 } from 'lucide-react';
+import { ChevronDown, UploadCloud, FileCheck2, Download, Users2, UserRound, Mail, Eye, Trash2, Check, Folder, FileText, Bell, ShieldCheck, Clock3, CheckCircle2, Star } from 'lucide-react';
 import { Document } from '../utils/documentMockData';
+import { DocumentTargetingMarker } from './DocumentTargetingMarker';
 
 interface FolderOption {
   id: string;
@@ -181,6 +182,8 @@ export function DocumentAddModal({ isOpen, onClose, folderOptions, defaultFolder
       setSelectedFund(document.metadata?.fund || 'all');
       setAudienceMode(document.target?.type === 'investor' ? 'nominative' : 'general');
       setSelectedInvestor(document.target?.investors?.[0] || '');
+      setSelectedSubscription(document.target?.subscriptions?.[0] || '');
+      setSelectedSegments(document.target?.segments?.length ? document.target.segments : ['all']);
     }
   }, [defaultFolderId, isOpen]);
 
@@ -206,6 +209,18 @@ export function DocumentAddModal({ isOpen, onClose, folderOptions, defaultFolder
       [selectedInvestorProfile.id]: prev[selectedInvestorProfile.id] || selectedInvestorProfile.contacts.map((contact) => contact.name),
     }));
   }, [selectedInvestorProfile]);
+
+  useEffect(() => {
+    if (!document || !selectedInvestorProfile) return;
+    const structureName = document.navigatorTargeting?.mode === 'nominative'
+      ? document.navigatorTargeting.structure
+      : undefined;
+    if (!structureName) return;
+    const matchedStructure = selectedInvestorProfile.structures.find((structure) => structure.name === structureName);
+    if (matchedStructure) {
+      setSelectedStructureId(matchedStructure.id);
+    }
+  }, [document, selectedInvestorProfile]);
 
   const targetedInvestors = useMemo(() => {
     if (audienceMode === 'general') {
@@ -503,6 +518,12 @@ export function DocumentAddModal({ isOpen, onClose, folderOptions, defaultFolder
               <p className="font-semibold text-slate-900 flex items-center gap-2"><Users2 className="w-5 h-5 text-blue-600" /> Audience</p>
               <p className="text-sm text-slate-600">Configuration des critères de ciblage.</p>
             </div>
+            {isDetailMode && document && (
+              <div className="rounded-xl border border-slate-200 bg-white p-3">
+                <p className="mb-2 text-xs font-semibold uppercase tracking-wide text-slate-500">Ciblage harmonisé</p>
+                <DocumentTargetingMarker document={document} />
+              </div>
+            )}
             <div className="flex gap-2 p-1 rounded-xl bg-slate-100 w-fit">
               <Button variant={audienceMode === 'general' ? 'default' : 'outline'} onClick={() => setAudienceMode('general')} disabled={isDetailMode}>Document général</Button>
               <Button variant={audienceMode === 'nominative' ? 'default' : 'outline'} onClick={() => setAudienceMode('nominative')} disabled={isDetailMode}>Document nominatif</Button>
@@ -682,15 +703,29 @@ export function DocumentAddModal({ isOpen, onClose, folderOptions, defaultFolder
                       </div>
                       <div className="border-t pt-3 space-y-2">
                         <p className="text-xs uppercase tracking-wide text-slate-500 font-semibold">Contacts autorisés</p>
+                        <div className="rounded-xl border bg-blue-50/60 p-3 flex items-center gap-3">
+                          <Checkbox checked disabled />
+                          <div className="w-9 h-9 rounded-full bg-blue-100 text-blue-700 flex items-center justify-center">
+                            <UserRound className="w-4 h-4" />
+                          </div>
+                          <div className="flex-1">
+                            <p className="font-medium text-slate-900 flex items-center gap-2">
+                              {selectedInvestorProfile.name}
+                              <span className="inline-flex items-center gap-1 rounded-full border border-blue-300 bg-blue-100 px-2 py-0.5 text-[11px] font-medium text-blue-700">
+                                <Star className="w-3 h-3 fill-current" />
+                                Principal
+                              </span>
+                            </p>
+                            <p className="text-sm text-slate-500 flex items-center gap-1"><Mail className="w-3 h-3" /> Investisseur principal (obligatoire)</p>
+                          </div>
+                        </div>
                         {selectedInvestorProfile.contacts.map((contact) => {
                           const selected = (selectedContactAccess[selectedInvestorProfile.id] || []).includes(contact.name);
                           return (
                             <label key={contact.name} className="rounded-xl border bg-slate-50 p-3 flex items-center gap-3 cursor-pointer">
                               <Checkbox
                                 checked={selected}
-                                disabled={isDetailMode}
                                 onCheckedChange={(checked) => {
-                                  if (isDetailMode) return;
                                   const current = selectedContactAccess[selectedInvestorProfile.id] || [];
                                   const next = checked
                                     ? Array.from(new Set([...current, contact.name]))

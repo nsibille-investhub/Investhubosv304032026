@@ -14,6 +14,7 @@ import {
 import { Document } from '../utils/documentMockData';
 import { Badge } from './ui/badge';
 import { Button } from './ui/button';
+import { DocumentTargetingMarker } from './DocumentTargetingMarker';
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -38,6 +39,8 @@ interface DocumentListViewProps {
   onDownloadAll?: () => void;
   onAddFolder?: () => void;
   onAddFolderFromFolder?: (folder: Document) => void;
+  onEditFolder?: (folder: Document) => void;
+  onDeleteFolder?: (folder: Document) => void;
 }
 
 export function DocumentListView({ 
@@ -56,6 +59,8 @@ export function DocumentListView({
   onDownloadAll,
   onAddFolder,
   onAddFolderFromFolder,
+  onEditFolder,
+  onDeleteFolder,
 }: DocumentListViewProps) {
   const [hoveredId, setHoveredId] = useState<string | null>(null);
   const itemRefs = useRef<Record<string, HTMLDivElement | null>>({});
@@ -78,25 +83,6 @@ export function DocumentListView({
   const getFileIcon = (type: string) => {
     if (type === 'folder') return Folder;
     return FileText;
-  };
-
-  const getNavigatorTargetingLabel = (item: Document) => {
-    const targeting = item.navigatorTargeting;
-    if (!targeting) return null;
-
-    if (targeting.mode === 'generic') {
-      return {
-        title: 'Générique',
-        details: `Fonds: ${targeting.fund || 'Tous fonds'} · Parts: ${targeting.shareClass || 'Toutes'} · Segment: ${targeting.segment || 'Tous segments'}`,
-        className: 'bg-indigo-50 text-indigo-700 border-indigo-200',
-      };
-    }
-
-    return {
-      title: 'Nominatif',
-      details: `Investisseur: ${targeting.investor || '-'} · Structure: ${targeting.structure || '-'} · Souscription: ${targeting.subscription || '-'}`,
-      className: 'bg-emerald-50 text-emerald-700 border-emerald-200',
-    };
   };
 
   const handleRowClick = (item: Document) => {
@@ -275,18 +261,6 @@ export function DocumentListView({
                     </div>
                     
                     <div className="col-span-2 flex items-center justify-end gap-2">
-                      <motion.button
-                        whileHover={{ scale: 1.1 }}
-                        whileTap={{ scale: 0.95 }}
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          onDocumentClick(folder);
-                        }}
-                        className="p-2 hover:bg-gray-100 rounded-lg transition-colors"
-                      >
-                        <Eye className="w-4 h-4 text-gray-600" />
-                      </motion.button>
-                      
                       <DropdownMenu>
                         <DropdownMenuTrigger asChild>
                           <button
@@ -315,13 +289,27 @@ export function DocumentListView({
                             <Folder className="w-4 h-4 mr-2" />
                             Ajouter un dossier
                           </DropdownMenuItem>
-                          <DropdownMenuItem>
+                          <DropdownMenuItem
+                            onClick={(event) => {
+                              event.stopPropagation();
+                              onEditFolder?.(folder);
+                            }}
+                          >
                             <Eye className="w-4 h-4 mr-2" />
                             Voir les détails
                           </DropdownMenuItem>
                           <DropdownMenuItem>
                             <Download className="w-4 h-4 mr-2" />
                             Télécharger le dossier
+                          </DropdownMenuItem>
+                          <DropdownMenuItem
+                            className="text-red-600 focus:text-red-600"
+                            onClick={(event) => {
+                              event.stopPropagation();
+                              onDeleteFolder?.(folder);
+                            }}
+                          >
+                            Supprimer le dossier
                           </DropdownMenuItem>
                         </DropdownMenuContent>
                       </DropdownMenu>
@@ -359,26 +347,10 @@ export function DocumentListView({
                           <p className="text-xs text-gray-400 truncate">{(file as any).__path.slice(0, -1).join(' / ') || 'Racine'}</p>
                         )}
                       </div>
-                      <Badge variant="outline" className="bg-blue-50 text-blue-700 border-blue-200 text-xs">
-                        {file.type === 'pdf' ? 'PDF' : 'Document'}
-                      </Badge>
                     </div>
 
                     <div className="col-span-3 min-w-0">
-                      {(() => {
-                        const targetingLabel = getNavigatorTargetingLabel(file);
-                        if (!targetingLabel) {
-                          return <p className="text-xs text-gray-400">—</p>;
-                        }
-                        return (
-                          <div className="min-w-0">
-                            <Badge variant="outline" className={`text-[11px] ${targetingLabel.className}`}>
-                              {targetingLabel.title}
-                            </Badge>
-                            <p className="mt-1 truncate text-xs text-gray-500">{targetingLabel.details}</p>
-                          </div>
-                        );
-                      })()}
+                      <DocumentTargetingMarker document={file} />
                     </div>
                     
                     <div className="col-span-1">
@@ -390,29 +362,6 @@ export function DocumentListView({
                     </div>
                     
                     <div className="col-span-2 flex items-center justify-end gap-2">
-                      <motion.button
-                        whileHover={{ scale: 1.1 }}
-                        whileTap={{ scale: 0.95 }}
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          onDocumentClick(file);
-                        }}
-                        className="p-2 hover:bg-gray-100 rounded-lg transition-colors"
-                      >
-                        <Eye className="w-4 h-4 text-gray-600" />
-                      </motion.button>
-                      
-                      <motion.button
-                        whileHover={{ scale: 1.1 }}
-                        whileTap={{ scale: 0.95 }}
-                        onClick={(e) => {
-                          e.stopPropagation();
-                        }}
-                        className="p-2 hover:bg-gray-100 rounded-lg transition-colors"
-                      >
-                        <Download className="w-4 h-4 text-gray-600" />
-                      </motion.button>
-                      
                       <DropdownMenu>
                         <DropdownMenuTrigger asChild>
                           <button
@@ -430,6 +379,9 @@ export function DocumentListView({
                           <DropdownMenuItem>
                             <Download className="w-4 h-4 mr-2" />
                             Télécharger
+                          </DropdownMenuItem>
+                          <DropdownMenuItem className="text-red-600 focus:text-red-600">
+                            Archiver document
                           </DropdownMenuItem>
                         </DropdownMenuContent>
                       </DropdownMenu>

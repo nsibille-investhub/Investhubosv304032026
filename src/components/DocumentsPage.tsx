@@ -50,23 +50,67 @@ export function DocumentsPage({ selectedSpace, navigationTarget, onNavigationHan
   const [addDocumentDefaultFolderId, setAddDocumentDefaultFolderId] = useState<string>('root');
   const [addFolderPopupOpen, setAddFolderPopupOpen] = useState(false);
   const [addFolderDefaultParentId, setAddFolderDefaultParentId] = useState<string>('root');
+  const [folderBeingEdited, setFolderBeingEdited] = useState<Document | null>(null);
 
   const formatScopeValue = (values: string[], fallback: string) => (
     values.length > 0 ? values.join(', ') : fallback
   );
 
+  const investorProfiles = [
+    {
+      id: 'i1',
+      name: 'Jean Dupont',
+      structure: 'Holding Dupont',
+      subscription: 'SUB-001',
+    },
+    {
+      id: 'i2',
+      name: 'Marie Martin',
+      structure: 'SCI Martin',
+      subscription: 'SUB-002',
+    },
+    {
+      id: 'i3',
+      name: 'Thomas Petit',
+      structure: 'Patrimoine Petit',
+      subscription: 'SUB-003-C',
+    },
+    {
+      id: 'i4',
+      name: 'Sophie Bernard',
+      structure: 'SAS Bernard Invest',
+      subscription: 'SUB-004',
+    },
+  ];
+
+  const shareClasses = ['Parts A', 'Parts I', 'Parts P'];
+
+  const getSeedFromNode = (value: string) => (
+    value.split('').reduce((acc, char) => acc + char.charCodeAt(0), 0)
+  );
+
   // Convert TreeNode to Document format
-  const convertTreeToDocuments = (treeNodes: TreeNode[]): Document[] => {
+  const convertTreeToDocuments = (treeNodes: TreeNode[], parentPath: string[] = []): Document[] => {
     const primaryFund = selectedSpace.targeting.funds[0] || 'Tous fonds';
     const primarySegment = selectedSpace.targeting.segments[0] || 'Tous segments';
 
-    return treeNodes.map((node, index) => {
+    return treeNodes.map((node) => {
       // Parse the french date format (DD/MM/YYYY) to create a proper Date object
       let uploadedAt = new Date();
       if (node.date) {
         const [day, month, year] = node.date.split('/');
         uploadedAt = new Date(parseInt(year), parseInt(month) - 1, parseInt(day));
       }
+
+      const nextPath = [...parentPath, node.name];
+      const seed = getSeedFromNode(node.id);
+      const isNominative = node.type !== 'folder' && seed % 2 === 1;
+      const profile = investorProfiles[seed % investorProfiles.length];
+      const selectedShareClass = shareClasses[seed % shareClasses.length];
+      const selectedSegment = selectedSpace.targeting.segments.length > 0
+        ? selectedSpace.targeting.segments[seed % selectedSpace.targeting.segments.length]
+        : primarySegment;
+      const genericTargetType = selectedSegment && selectedSegment !== 'Tous segments' ? 'segment' : 'all';
       
       const doc: Document = {
         id: node.id,
@@ -78,13 +122,21 @@ export function DocumentsPage({ selectedSpace, navigationTarget, onNavigationHan
         views: Math.floor(Math.random() * 100),
         downloads: Math.floor(Math.random() * 50),
         status: 'published' as const,
-        children: node.children ? convertTreeToDocuments(node.children) : undefined,
+        children: node.children ? convertTreeToDocuments(node.children, nextPath) : undefined,
         isRoot: false,
         target: {
-          type: 'all',
-          segments: [],
-          investors: [],
-          subscriptions: [],
+          type: node.type === 'folder'
+            ? 'all'
+            : (isNominative ? 'investor' : genericTargetType),
+          segments: node.type === 'folder'
+            ? []
+            : (isNominative ? [selectedSegment] : (genericTargetType === 'segment' ? [selectedSegment] : [])),
+          investors: node.type === 'folder'
+            ? []
+            : (isNominative ? [profile.id] : []),
+          subscriptions: node.type === 'folder'
+            ? []
+            : (isNominative ? [profile.subscription] : []),
           participations: []
         },
         access: {
@@ -93,24 +145,28 @@ export function DocumentsPage({ selectedSpace, navigationTarget, onNavigationHan
           downloadable: true,
           printable: true
         },
-        path: '/',
+        path: `/${nextPath.join('/')}`,
         version: 1,
         uploadedAt: uploadedAt.toISOString(),
         uploadedBy: node.owner || 'Système',
         updatedAt: uploadedAt.toISOString(),
+        metadata: {
+          fund: primaryFund,
+          segments: selectedSegment !== 'Tous segments' ? [selectedSegment] : [],
+        },
         navigatorTargeting: node.type === 'folder' ? undefined : (
-          index % 2 === 0
+          !isNominative
             ? {
                 mode: 'generic',
                 fund: primaryFund,
-                shareClass: 'Parts A',
-                segment: primarySegment,
+                shareClass: selectedShareClass,
+                segment: selectedSegment,
               }
             : {
                 mode: 'nominative',
-                investor: 'Investisseur nommé',
-                structure: selectedSpace.name,
-                subscription: `Souscription #${node.id}`,
+                investor: profile.name,
+                structure: profile.structure,
+                subscription: profile.subscription,
               }
         )
       };
@@ -166,7 +222,14 @@ export function DocumentsPage({ selectedSpace, navigationTarget, onNavigationHan
   };
 
   const openAddFolderPopup = (folderId?: string | null) => {
+    setFolderBeingEdited(null);
     setAddFolderDefaultParentId(folderId || currentFolder?.id || 'root');
+    setAddFolderPopupOpen(true);
+  };
+
+  const openEditFolderPopup = (folder: Document) => {
+    setFolderBeingEdited(folder);
+    setAddFolderDefaultParentId(folder.parentId || 'root');
     setAddFolderPopupOpen(true);
   };
 
@@ -426,6 +489,8 @@ export function DocumentsPage({ selectedSpace, navigationTarget, onNavigationHan
               onDownloadAll={handleDownloadAll}
               onAddFolder={() => openAddFolderPopup()}
               onAddFolderFromFolder={(folder) => openAddFolderPopup(folder.id)}
+              onEditFolder={openEditFolderPopup}
+              onDeleteFolder={openEditFolderPopup}
             />
           </div>
         </div>
@@ -459,10 +524,21 @@ export function DocumentsPage({ selectedSpace, navigationTarget, onNavigationHan
       />
       <AddFolderPopup
         isOpen={addFolderPopupOpen}
-        onClose={() => setAddFolderPopupOpen(false)}
+        onClose={() => {
+          setAddFolderPopupOpen(false);
+          setFolderBeingEdited(null);
+        }}
         folderOptions={folderOptions}
         defaultParentId={addFolderDefaultParentId}
         inheritedTargeting={selectedSpace.targeting}
+        mode={folderBeingEdited ? 'edit' : 'create'}
+        folderToEdit={folderBeingEdited ? { id: folderBeingEdited.id, name: folderBeingEdited.name } : null}
+        onDeleteFolder={(folderId, migrateToFolderId) => {
+          const migrationTarget = folderOptions.find((folder) => folder.id === migrateToFolderId)?.label || 'dossier cible';
+          toast.success('Suppression simulée', {
+            description: `Le dossier ${folderId} est migré vers ${migrationTarget}`,
+          });
+        }}
       />
 
     </div>

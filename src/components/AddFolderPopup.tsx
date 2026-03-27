@@ -5,6 +5,7 @@ import { Button } from './ui/button';
 import { Input } from './ui/input';
 import { Label } from './ui/label';
 import { Badge } from './ui/badge';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from './ui/select';
 import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from './ui/command';
 import { Popover, PopoverContent, PopoverTrigger } from './ui/popover';
 import { toast } from 'sonner';
@@ -21,6 +22,9 @@ interface AddFolderPopupProps {
   folderOptions: FolderOption[];
   defaultParentId: string;
   inheritedTargeting: SpaceTargeting;
+  mode?: 'create' | 'edit';
+  folderToEdit?: { id: string; name: string } | null;
+  onDeleteFolder?: (folderId: string, migrateToFolderId: string) => void;
 }
 
 const USER_TYPES = ['Investisseur', 'Participation', 'Partenaire'];
@@ -31,15 +35,23 @@ export function AddFolderPopup({
   folderOptions,
   defaultParentId,
   inheritedTargeting,
+  mode = 'create',
+  folderToEdit = null,
+  onDeleteFolder,
 }: AddFolderPopupProps) {
   const [name, setName] = useState('');
   const [parentId, setParentId] = useState(defaultParentId);
   const [parentOpen, setParentOpen] = useState(false);
+  const [deleteMode, setDeleteMode] = useState(false);
+  const [migrationTargetId, setMigrationTargetId] = useState<string>('');
 
   useEffect(() => {
     if (!isOpen) return;
     setParentId(defaultParentId);
-  }, [defaultParentId, isOpen]);
+    setDeleteMode(false);
+    setMigrationTargetId('');
+    setName(mode === 'edit' ? folderToEdit?.name || '' : '');
+  }, [defaultParentId, folderToEdit?.name, isOpen, mode]);
 
   const selectedParentLabel = useMemo(
     () => folderOptions.find((folder) => folder.id === parentId)?.label || 'Racine / Documents',
@@ -62,9 +74,25 @@ export function AddFolderPopup({
       return;
     }
 
-    toast.success('Dossier créé', { description: `${name.trim()} dans ${selectedParentLabel}` });
+    toast.success(mode === 'edit' ? 'Dossier mis à jour' : 'Dossier créé', { description: `${name.trim()} dans ${selectedParentLabel}` });
     onClose();
-    setName('');
+    if (mode === 'create') {
+      setName('');
+    }
+  };
+
+  const handleDeleteFolder = () => {
+    if (!folderToEdit) return;
+    if (!migrationTargetId) {
+      toast.error('Veuillez sélectionner un dossier de migration.');
+      return;
+    }
+
+    onDeleteFolder?.(folderToEdit.id, migrationTargetId);
+    toast.success('Dossier supprimé', {
+      description: 'Tous les documents et sous-dossiers ont été migrés.',
+    });
+    onClose();
   };
 
   if (!isOpen) return null;
@@ -92,7 +120,7 @@ export function AddFolderPopup({
                 <FolderOpen className="w-5 h-5 text-white" />
               </div>
               <div>
-                <h2 className="text-lg font-semibold text-gray-900">Nouveau dossier</h2>
+                <h2 className="text-lg font-semibold text-gray-900">{mode === 'edit' ? 'Modifier le dossier' : 'Nouveau dossier'}</h2>
                 <p className="text-sm text-gray-500">Définissez le nom et le ciblage de l&apos;espace</p>
               </div>
             </div>
@@ -105,6 +133,53 @@ export function AddFolderPopup({
           </div>
 
           <div className="flex-1 overflow-y-auto p-6 space-y-6">
+            {mode === 'edit' && folderToEdit && (
+              <div className="rounded-xl border border-red-200 bg-red-50 p-4 space-y-3">
+                <div>
+                  <p className="text-sm font-semibold text-red-700">Suppression du dossier</p>
+                  <p className="text-xs text-red-600 mt-1">
+                    La migration vers un autre dossier est obligatoire avant suppression.
+                  </p>
+                </div>
+                {deleteMode ? (
+                  <div className="space-y-3">
+                    <div className="space-y-2">
+                      <Label>Dossier de migration (obligatoire)</Label>
+                      <Select value={migrationTargetId} onValueChange={setMigrationTargetId}>
+                        <SelectTrigger className="h-10 bg-white">
+                          <SelectValue placeholder="Sélectionner un dossier de destination" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          {folderOptions
+                            .filter((option) => option.id !== folderToEdit.id)
+                            .map((option) => (
+                              <SelectItem key={option.id} value={option.id}>
+                                {option.label}
+                              </SelectItem>
+                            ))}
+                        </SelectContent>
+                      </Select>
+                    </div>
+                    <div className="flex items-center justify-end gap-2">
+                      <Button variant="outline" onClick={() => setDeleteMode(false)}>
+                        Annuler
+                      </Button>
+                      <Button
+                        className="bg-red-600 hover:bg-red-700 text-white"
+                        onClick={handleDeleteFolder}
+                        disabled={!migrationTargetId}
+                      >
+                        Confirmer la suppression
+                      </Button>
+                    </div>
+                  </div>
+                ) : (
+                  <Button variant="outline" className="border-red-300 text-red-700" onClick={() => setDeleteMode(true)}>
+                    Supprimer ce dossier
+                  </Button>
+                )}
+              </div>
+            )}
             <div className="space-y-2">
               <Label htmlFor="folder-name">Nom du dossier *</Label>
               <Input
@@ -229,7 +304,7 @@ export function AddFolderPopup({
               onClick={handleSubmit}
               className="bg-gradient-to-br from-blue-500 to-blue-600 text-white hover:from-blue-600 hover:to-blue-700"
             >
-              Créer le dossier
+              {mode === 'edit' ? 'Enregistrer' : 'Créer le dossier'}
             </Button>
           </div>
         </motion.div>
