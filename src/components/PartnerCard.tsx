@@ -86,9 +86,9 @@ export function PartnerCard({ partnerName, searchTerm = '' }: PartnerCardProps) 
           whileHover={{ x: 2 }}
           whileTap={{ scale: 0.98 }}
           onClick={(e) => e.stopPropagation()}
-          className="inline-flex items-center gap-1.5 text-xs text-gray-600 hover:text-blue-600 transition-colors group"
+          className="inline-flex items-center gap-1.5 text-xs text-muted-foreground group-hover:text-primary transition-colors group"
         >
-          <span className="text-gray-400 group-hover:text-blue-500 transition-colors">
+          <span className="text-gray-400 group-hover:text-primary transition-colors">
             <Building2 className="w-3 h-3" />
           </span>
           <span className="max-w-[150px] truncate group-hover:underline">

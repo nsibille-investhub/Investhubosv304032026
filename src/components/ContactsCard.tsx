@@ -84,8 +84,8 @@ export function ContactsCard({
           className="inline-flex flex-col items-start gap-1 text-xs group w-full"
           onClick={(e) => e.stopPropagation()}
         >
-          <div className="flex items-center gap-1.5 text-gray-600 hover:text-blue-600 transition-colors w-full">
-            <span className="text-gray-400 group-hover:text-blue-500 transition-colors flex-shrink-0">
+          <div className="flex items-center gap-1.5 text-muted-foreground group-hover:text-primary transition-colors w-full">
+            <span className="text-gray-400 group-hover:text-primary transition-colors flex-shrink-0">
               <User className="w-3 h-3" />
             </span>
             <span className="truncate max-w-[120px] group-hover:underline">
@@ -95,7 +95,7 @@ export function ContactsCard({
           {remainingCount > 0 && (
             <motion.div
               whileHover={{ scale: 1.05 }}
-              className="flex items-center gap-1 text-blue-600 hover:text-blue-700 transition-colors ml-[18px]"
+              className="flex items-center gap-1 text-primary transition-colors ml-[18px]"
             >
               <span className="font-medium">+{remainingCount} more</span>
               <ChevronDown className="w-3 h-3" />
