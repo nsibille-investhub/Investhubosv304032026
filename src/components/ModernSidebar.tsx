@@ -31,7 +31,7 @@ export function ModernSidebar({ expanded, onToggle, currentPage = 'entities', on
     partenaires: currentPage === 'partners' || currentPage === 'settings-conventions' || currentPage === 'retrocessions',
     participations: false,
     fundlife: false,
-    dataroom: currentPage === 'documents' || currentPage === 'tracking',
+    dataroom: currentPage === 'documents' || currentPage === 'tracking' || currentPage === 'birdview',
     portails: currentPage === 'events' || currentPage === 'news',
     communications: false,
     settings: currentPage?.startsWith('settings-') || false,
@@ -68,7 +68,7 @@ export function ModernSidebar({ expanded, onToggle, currentPage = 'entities', on
       partenaires: currentPage === 'partners' || currentPage === 'settings-conventions' || currentPage === 'retrocessions',
       participations: false,
       fundlife: false,
-      dataroom: currentPage === 'documents' || currentPage === 'tracking',
+      dataroom: currentPage === 'documents' || currentPage === 'tracking' || currentPage === 'birdview',
       portails: currentPage === 'events' || currentPage === 'news',
       communications: false,
       settings: currentPage?.startsWith('settings-') || false,
@@ -327,6 +327,13 @@ export function ModernSidebar({ expanded, onToggle, currentPage = 'entities', on
                 badgeColor="blue"
                 isActive={currentPage === 'tracking'}
                 onClick={() => onPageChange?.('tracking')}
+              />
+              <SubMenuItem
+                icon={icons.Eye}
+                label="Bird View"
+                expanded={expanded}
+                isActive={currentPage === 'birdview'}
+                onClick={() => onPageChange?.('birdview')}
               />
             </MenuItem>
 
