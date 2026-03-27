@@ -340,6 +340,7 @@ export function InvestorDataTable({
                     <div className="flex flex-col gap-1 max-w-[300px]">
                       <motion.div
                         whileHover={{ x: 2 }}
+                        title={row.name}
                         className="text-sm font-medium cursor-pointer transition-all truncate"
                       >
                         <ClickableText>

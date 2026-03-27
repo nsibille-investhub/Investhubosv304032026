@@ -63,7 +63,7 @@ export function StructuresCell({ structures, searchTerm = '' }: StructuresCellPr
             <span className="text-gray-400 group-hover:text-primary transition-colors flex-shrink-0">
               <Building2 className="w-3 h-3" />
             </span>
-            <span className="truncate max-w-[120px] group-hover:underline">
+            <span className="truncate max-w-[120px] group-hover:underline" title={firstStructure.name}>
               {firstStructure.name}
             </span>
             <ChevronRight className="w-3 h-3 opacity-50 group-hover:opacity-100 transition-all flex-shrink-0" />
@@ -126,7 +126,7 @@ export function StructuresCell({ structures, searchTerm = '' }: StructuresCellPr
                   </div>
                   <div className="flex-1 min-w-0">
                     <div className="flex items-start justify-between gap-2 mb-1.5">
-                      <div className="font-medium text-gray-900 text-sm truncate">
+                      <div className="font-medium text-gray-900 text-sm truncate" title={structure.name}>
                         <HighlightText 
                           text={structure.name} 
                           searchTerm={searchTerm}

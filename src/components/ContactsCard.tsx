@@ -88,7 +88,7 @@ export function ContactsCard({
             <span className="text-gray-400 group-hover:text-primary transition-colors flex-shrink-0">
               <User className="w-3 h-3" />
             </span>
-            <span className="truncate max-w-[120px] group-hover:underline">
+            <span className="truncate max-w-[120px] group-hover:underline" title={`${firstContact.firstName} ${firstContact.lastName}`}>
               {firstContact.firstName} {firstContact.lastName}
             </span>
             <ChevronRight className="w-3 h-3 opacity-50 group-hover:opacity-100 transition-all flex-shrink-0" />
@@ -175,7 +175,7 @@ export function ContactsCard({
                   <div className="flex items-center justify-between gap-2">
                     <div className="flex items-center gap-2 flex-1 min-w-0">
                       <Mail className="w-3.5 h-3.5 text-gray-400 flex-shrink-0" />
-                      <span className="text-xs text-gray-700 truncate">{contact.email}</span>
+                      <span className="text-xs text-gray-700 truncate" title={contact.email}>{contact.email}</span>
                     </div>
                     <CopyButton text={contact.email} field={`${contact.id}-email`} />
                   </div>
@@ -208,7 +208,7 @@ export function ContactsCard({
                       }`}
                     >
                       <UserCheck className="w-3.5 h-3.5" />
-                      <span className="truncate">
+                      <span className="truncate" title={contact.hasPortalAccess ? `Ouvrir le portail en tant que ${contact.firstName}` : 'Portail investisseur (accès non activé)'}>
                         {contact.hasPortalAccess 
                           ? `Ouvrir le portail en tant que ${contact.firstName}`
                           : 'Portail investisseur (accès non activé)'

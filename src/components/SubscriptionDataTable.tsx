@@ -316,6 +316,7 @@ export function SubscriptionDataTable({
                         <TooltipTrigger asChild>
                           <motion.div
                             whileHover={{ x: 2 }}
+                            title={row.name}
                             className="text-sm font-medium cursor-pointer transition-all truncate"
                             onClick={() => console.log('Nom cliqué')}
                           >

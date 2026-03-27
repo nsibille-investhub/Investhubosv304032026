@@ -213,6 +213,7 @@ export function SubscriptionDynamicTable({
           <div className="flex flex-col gap-1 max-w-[300px]">
             <motion.span
               whileHover={{ x: 2 }}
+              title={row.contrepartie.name}
               className="text-sm font-medium cursor-pointer transition-all truncate"
             >
               <ClickableText>
@@ -342,7 +343,7 @@ export function SubscriptionDynamicTable({
         return row.blockageReason ? (
           <div className="flex items-center gap-2 text-sm text-red-600 dark:text-red-400">
             <AlertTriangle className="w-4 h-4" />
-            <span className="truncate max-w-[180px]">{row.blockageReason}</span>
+            <span className="truncate max-w-[180px]" title={row.blockageReason}>{row.blockageReason}</span>
           </div>
         ) : (
           <span className="text-sm text-gray-400 dark:text-gray-600">-</span>

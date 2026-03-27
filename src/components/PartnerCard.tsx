@@ -91,7 +91,7 @@ export function PartnerCard({ partnerName, searchTerm = '' }: PartnerCardProps) 
           <span className="text-gray-400 group-hover:text-primary transition-colors">
             <Building2 className="w-3 h-3" />
           </span>
-          <span className="max-w-[150px] truncate group-hover:underline">
+          <span className="max-w-[150px] truncate group-hover:underline" title={partnerName}>
             <HighlightText text={partnerName} searchTerm={searchTerm} />
           </span>
           <ChevronRight className="w-3 h-3 opacity-50 group-hover:opacity-100 transition-all group-hover:translate-x-0.5" />
@@ -118,7 +118,7 @@ export function PartnerCard({ partnerName, searchTerm = '' }: PartnerCardProps) 
                 <Building2 className="w-5 h-5" />
               </motion.div>
               <div className="flex-1 min-w-0">
-                <h3 className="font-semibold text-gray-900 mb-1 truncate">
+                <h3 className="font-semibold text-gray-900 mb-1 truncate" title={partnerData.name}>
                   {partnerData.name}
                 </h3>
                 <div className="flex items-center gap-2 mb-2 flex-wrap">
