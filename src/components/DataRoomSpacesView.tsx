@@ -270,7 +270,7 @@ export function DataRoomSpacesView({
 
                         <button
                           onClick={() => onSpaceSelect(space)}
-                          className="mt-auto w-full flex items-center justify-center gap-2 py-2.5 px-4 rounded-lg bg-[#053B47] text-white hover:bg-[#053B47] transition-all group/btn"
+                          className="mt-auto w-full flex items-center justify-center gap-2 py-2.5 px-4 rounded-lg bg-blue-600 text-white hover:bg-blue-600 transition-all group/btn"
                         >
                           <span className="font-medium">Ouvrir l'espace</span>
                           <ArrowRight className="w-4 h-4 group-hover/btn:translate-x-1 transition-transform" />
