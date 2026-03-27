@@ -110,7 +110,7 @@ export function DataRoomSpacesView({
     : spaces;
 
   return (
-    <div className="flex-1 flex flex-col px-6 pb-6">
+    <div className="flex-1 flex flex-col px-6 pb-6 bg-white">
       {/* Header */}
       <motion.div
         initial={{ opacity: 0, y: -20 }}
@@ -230,8 +230,8 @@ export function DataRoomSpacesView({
               className="group relative bg-white rounded-2xl border-2 border-gray-200 hover:border-blue-300 shadow-sm hover:shadow-lg transition-all cursor-pointer overflow-hidden"
             >
               {/* Header with gradient */}
-              <div className="h-24 bg-gradient-to-br from-gray-50 to-gray-100 group-hover:from-blue-50 group-hover:to-blue-100 transition-all relative overflow-hidden">
-                <div className="absolute inset-0 bg-gradient-to-br from-transparent to-black/5" />
+              <div className="h-24 bg-white transition-all relative overflow-hidden">
+                <div className="absolute inset-0 bg-gradient-to-br from-transparent to-black/[0.03]" />
                 
                 {/* Settings button */}
                 <button

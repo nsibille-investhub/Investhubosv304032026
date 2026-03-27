@@ -27,7 +27,7 @@ export function Sidebar({ expanded, onToggle, currentPage = 'entities', onPageCh
     partenaires: currentPage === 'partners',
     participations: false,
     fundlife: false,
-    dataroom: currentPage === 'documents' || currentPage === 'tracking',
+    dataroom: currentPage === 'documents' || currentPage === 'tracking' || currentPage === 'birdview',
     portails: currentPage === 'events' || currentPage === 'news',
     communications: false,
     settings: currentPage?.startsWith('settings-') || false,
@@ -69,7 +69,7 @@ export function Sidebar({ expanded, onToggle, currentPage = 'entities', onPageCh
       partenaires: currentPage === 'partners',
       participations: false,
       fundlife: false,
-      dataroom: currentPage === 'documents' || currentPage === 'tracking',
+      dataroom: currentPage === 'documents' || currentPage === 'tracking' || currentPage === 'birdview',
       portails: currentPage === 'events' || currentPage === 'news',
       communications: false,
       settings: currentPage?.startsWith('settings-') || false,
@@ -373,6 +373,13 @@ export function Sidebar({ expanded, onToggle, currentPage = 'entities', onPageCh
             badgeColor="blue"
             isActive={currentPage === 'tracking'}
             onClick={() => onPageChange?.('tracking')}
+          />
+          <SubMenuItem
+            icon={icons.Eye}
+            label="Bird View"
+            expanded={expanded}
+            isActive={currentPage === 'birdview'}
+            onClick={() => onPageChange?.('birdview')}
           />
         </MenuItem>
 
