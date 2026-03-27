@@ -212,7 +212,7 @@ export function DataRoomSpacesView({
                       transition={{ delay: index * 0.05 }}
                       whileHover={{ scale: 1.02, y: -4 }}
                       whileTap={{ scale: 0.98 }}
-                      className="group relative bg-white rounded-2xl border-2 border-gray-200 hover:border-blue-300 shadow-sm hover:shadow-lg transition-all cursor-pointer overflow-hidden"
+                      className="group relative bg-white rounded-2xl border-2 border-gray-200 hover:border-blue-300 shadow-sm hover:shadow-lg transition-all cursor-pointer overflow-hidden flex flex-col"
                     >
                       <div className="h-24 bg-gray-100 transition-all relative overflow-hidden">
                         <div className="absolute inset-0 bg-gradient-to-br from-transparent to-black/[0.02]" />
@@ -227,7 +227,7 @@ export function DataRoomSpacesView({
                         </button>
                       </div>
 
-                      <div className="p-6 -mt-10 relative">
+                      <div className="p-6 -mt-10 relative flex-1 flex flex-col">
                         <div className="w-16 h-16 rounded-xl bg-gradient-to-br from-blue-500 to-blue-600 flex items-center justify-center shadow-lg mb-4">
                           <Folder className="w-8 h-8 text-white" />
                         </div>
@@ -270,7 +270,7 @@ export function DataRoomSpacesView({
 
                         <button
                           onClick={() => onSpaceSelect(space)}
-                          className="w-full flex items-center justify-center gap-2 py-2.5 px-4 rounded-lg bg-[#053B47] text-white hover:bg-[#053B47] transition-all group/btn"
+                          className="mt-auto w-full flex items-center justify-center gap-2 py-2.5 px-4 rounded-lg bg-[#053B47] text-white hover:bg-[#053B47] transition-all group/btn"
                         >
                           <span className="font-medium">Ouvrir l'espace</span>
                           <ArrowRight className="w-4 h-4 group-hover/btn:translate-x-1 transition-transform" />
