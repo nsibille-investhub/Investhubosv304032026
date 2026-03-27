@@ -16,10 +16,10 @@ import {
   MessageCircle,
   UserCheck,
   Archive,
-  TrendingUp,
   FileText,
   MoreVertical,
-  LogIn
+  LogIn,
+  ChevronRight
 } from 'lucide-react';
 import { Badge } from './ui/badge';
 import { Button } from './ui/button';
@@ -412,12 +412,9 @@ export function InvestorDataTable({
 
                   {/* Total Invested */}
                   <td className="px-6 py-4">
-                    <div className="flex items-center gap-1.5">
-                      <TrendingUp className="w-3.5 h-3.5 text-emerald-600" />
-                      <span className="text-sm font-semibold text-gray-900">
-                        {formatCurrency(row.totalInvested)}
-                      </span>
-                    </div>
+                    <span className="text-sm font-semibold text-gray-900">
+                      {formatCurrency(row.totalInvested)}
+                    </span>
                   </td>
 
                   {/* Subscriptions Count - Clickable Badge */}
@@ -427,12 +424,13 @@ export function InvestorDataTable({
                         e.stopPropagation();
                         onRowClick(row, 'souscriptions');
                       }}
-                      className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-muted hover:bg-muted/80 border border-border transition-colors cursor-pointer group"
+                      className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-muted border border-border transition-colors cursor-pointer group hover:bg-primary/10 hover:text-primary hover:border-primary/40"
                     >
-                      <FileText className="w-3.5 h-3.5 text-muted-foreground group-hover:text-foreground" />
-                      <span className="text-sm font-medium text-muted-foreground group-hover:text-foreground">
+                      <FileText className="w-3.5 h-3.5 text-muted-foreground group-hover:text-primary" />
+                      <span className="text-sm font-medium text-muted-foreground group-hover:text-primary">
                         {row.subscriptionsCount}
                       </span>
+                      <ChevronRight className="w-3.5 h-3.5 text-muted-foreground group-hover:text-primary transition-transform group-hover:translate-x-0.5" />
                     </button>
                   </td>
 
