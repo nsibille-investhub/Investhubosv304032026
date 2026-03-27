@@ -313,7 +313,7 @@ export function SubscriptionDataTable({
                         <TooltipTrigger asChild>
                           <motion.span
                             whileHover={{ x: 2 }}
-                            className="text-sm text-blue-600 hover:text-blue-700 font-medium cursor-pointer hover:underline transition-all truncate"
+                            className="interactive-link text-sm cursor-pointer transition-all truncate"
                             onClick={() => console.log('Nom cliqué')}
                           >
                             <HighlightText 

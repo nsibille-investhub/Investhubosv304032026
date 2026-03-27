@@ -123,14 +123,14 @@ export function DataTable<T extends { id: number }>({
             initial={{ height: 0, opacity: 0 }}
             animate={{ height: 'auto', opacity: 1 }}
             exit={{ height: 0, opacity: 0 }}
-            className="bg-gradient-to-r from-blue-50 to-indigo-50 dark:from-blue-950/30 dark:to-indigo-950/30 border-b border-blue-200 dark:border-blue-800 overflow-hidden"
+            className="bg-[var(--neutral-soft)] border-b border-border overflow-hidden"
           >
             <div className="px-6 py-3 flex items-center justify-between">
               <div className="flex items-center gap-3">
-                <Badge className="bg-blue-600 text-white px-3 py-1 shadow-md">
+                <Badge className="bg-primary text-primary-foreground px-3 py-1 shadow-sm">
                   {selectedIds.size} {selectedIds.size === 1 ? `${entityName} sélectionné` : `${entityName}s sélectionnés`}
                 </Badge>
-                <span className="text-sm text-blue-700 dark:text-blue-300 font-medium">
+                <span className="text-sm text-muted-foreground font-medium">
                   {selectedIds.size === totalFilteredData.length 
                     ? '(Toutes les pages sont sélectionnées)'
                     : '(Sélection partielle sur toutes les pages)'}
@@ -141,7 +141,7 @@ export function DataTable<T extends { id: number }>({
                   variant="ghost"
                   size="sm"
                   onClick={handleClearSelection}
-                  className="text-blue-700 dark:text-blue-300 hover:text-blue-900 dark:hover:text-blue-100 hover:bg-blue-100 dark:hover:bg-blue-900/30"
+                  className="text-foreground hover:bg-muted"
                 >
                   <X className="w-4 h-4 mr-1" />
                   Annuler la sélection
@@ -220,9 +220,9 @@ export function DataTable<T extends { id: number }>({
                   className={cn(
                     'border-b border-gray-100 dark:border-gray-800 transition-all duration-200 cursor-pointer',
                     hoveredRow === row.id 
-                      ? 'bg-blue-50/50 dark:bg-blue-950/20' 
-                      : 'hover:bg-gray-50/50 dark:hover:bg-gray-900/50',
-                    selectedIds.has(row.id) && 'bg-blue-50/30 dark:bg-blue-950/10'
+                      ? 'bg-[var(--neutral-soft)]'
+                      : 'hover:bg-[var(--neutral-soft)]/70',
+                    selectedIds.has(row.id) && 'bg-[var(--neutral-soft)]'
                   )}
                 >
                   {/* Checkbox */}
