@@ -265,12 +265,12 @@ export function SubscriptionStatusTabs({ data, activeStatus, onStatusChange }: S
       initial={{ opacity: 0, y: -20 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.3 }}
-      className="bg-gradient-to-br from-gray-50 to-white border-b border-gray-200 pb-4"
+      className="bg-muted/30 pb-4 rounded-lg"
     >
       {/* Workflow Header */}
       <div className="mb-3 flex items-center justify-between">
         <div className="flex items-center gap-2">
-          <div className="w-1 h-6 bg-gradient-to-b from-[#0066FF] to-[#00C2FF] rounded-full" />
+          <div className="w-1 h-6 bg-primary rounded-full" />
           <h3 className="font-semibold text-gray-900">Workflow de Souscription</h3>
           <Badge variant="outline" className="text-xs">
             6 étapes
