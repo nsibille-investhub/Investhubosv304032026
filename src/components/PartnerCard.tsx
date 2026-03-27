@@ -94,7 +94,7 @@ export function PartnerCard({ partnerName, searchTerm = '' }: PartnerCardProps) 
           <span className="max-w-[150px] truncate group-hover:underline">
             <HighlightText text={partnerName} searchTerm={searchTerm} />
           </span>
-          <ChevronRight className="w-3 h-3 opacity-0 group-hover:opacity-100 transition-opacity" />
+          <ChevronRight className="w-3 h-3 opacity-50 group-hover:opacity-100 transition-all group-hover:translate-x-0.5" />
         </motion.button>
       </PopoverTrigger>
       <PopoverContent 

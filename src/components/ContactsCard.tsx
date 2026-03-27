@@ -1,5 +1,5 @@
 import { motion } from 'motion/react';
-import { User, ChevronDown, Mail, Phone, Copy, Check, Briefcase, Star, ExternalLink, UserCheck } from 'lucide-react';
+import { User, ChevronDown, ChevronRight, Mail, Phone, Copy, Check, Briefcase, Star, ExternalLink, UserCheck } from 'lucide-react';
 import { Badge } from './ui/badge';
 import {
   Popover,
@@ -91,6 +91,7 @@ export function ContactsCard({
             <span className="truncate max-w-[120px] group-hover:underline">
               {firstContact.firstName} {firstContact.lastName}
             </span>
+            <ChevronRight className="w-3 h-3 opacity-50 group-hover:opacity-100 transition-all flex-shrink-0" />
           </div>
           {remainingCount > 0 && (
             <motion.div

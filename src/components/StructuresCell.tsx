@@ -1,5 +1,5 @@
 import { motion } from 'motion/react';
-import { Building2, ChevronDown, FileCheck, Building, Users, FileText, ShieldCheck, AlertTriangle, TrendingUp, UserCircle } from 'lucide-react';
+import { Building2, ChevronDown, ChevronRight, FileCheck, Building, Users, FileText, ShieldCheck, AlertTriangle, TrendingUp, UserCircle } from 'lucide-react';
 import { Badge } from './ui/badge';
 import {
   Popover,
@@ -66,6 +66,7 @@ export function StructuresCell({ structures, searchTerm = '' }: StructuresCellPr
             <span className="truncate max-w-[120px] group-hover:underline">
               {firstStructure.name}
             </span>
+            <ChevronRight className="w-3 h-3 opacity-50 group-hover:opacity-100 transition-all flex-shrink-0" />
           </div>
           {remainingCount > 0 && (
             <motion.div
