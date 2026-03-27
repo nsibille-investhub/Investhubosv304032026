@@ -94,7 +94,7 @@ export function InvestorStatusTabs({ data, activeStatus, onStatusChange }: Inves
         onClick={handleClick}
         whileHover={{ scale: 1.01, y: -1 }}
         whileTap={{ scale: 0.98 }}
-        className={`relative w-full p-3 rounded-xl border transition-all duration-300 text-left group overflow-hidden ${
+        className={`relative w-full p-2.5 rounded-lg border transition-all duration-200 text-left group overflow-hidden ${
           isActive
             ? `border-primary/30 bg-card shadow-sm`
             : `border-border bg-muted/35 hover:bg-card hover:border-border`
@@ -202,31 +202,31 @@ export function InvestorStatusTabs({ data, activeStatus, onStatusChange }: Inves
         )}
 
         {/* Header with icon and count */}
-        <div className="flex items-center justify-between mb-2">
-          <div className={`p-1.5 rounded-lg ${isActive ? 'bg-primary/10' : 'bg-muted group-hover:bg-muted/80'} transition-colors`}>
-            <Icon className={`w-4 h-4 ${isActive ? 'text-primary' : 'text-muted-foreground'}`} />
+        <div className="flex items-center justify-between mb-1.5">
+          <div className={`p-1 rounded-md ${isActive ? 'bg-primary/10' : 'bg-muted group-hover:bg-muted/80'} transition-colors`}>
+            <Icon className={`w-3.5 h-3.5 ${isActive ? 'text-primary' : 'text-muted-foreground'}`} />
           </div>
           <motion.div
             initial={{ scale: 0 }}
             animate={{ scale: 1 }}
-            className={`px-2 py-0.5 rounded-lg text-xs ${isActive ? 'bg-primary text-primary-foreground' : 'bg-muted text-muted-foreground'} font-semibold`}
+            className={`px-1.5 py-0.5 rounded-md text-[11px] ${isActive ? 'bg-primary text-primary-foreground' : 'bg-muted text-muted-foreground'} font-semibold`}
           >
             {kpis.total}
           </motion.div>
         </div>
 
         {/* Label */}
-        <div className="mb-2">
+        <div className="mb-1.5">
           <span className={`text-xs font-semibold ${isActive ? 'text-foreground' : 'text-muted-foreground group-hover:text-foreground'} block leading-tight`}>
             {label}
           </span>
         </div>
 
         {/* KPIs */}
-        <div className="space-y-1">
+        <div className="space-y-0.5">
           <div className="flex items-baseline justify-between">
             <span className="text-[9px] text-gray-500 uppercase tracking-wide">Total investi</span>
-            <span className={`text-sm font-bold ${isActive ? 'text-primary' : 'text-foreground'}`}>
+            <span className={`text-[13px] font-bold ${isActive ? 'text-primary' : 'text-foreground'}`}>
               €{formatAmount(kpis.totalInvested)}
             </span>
           </div>
@@ -263,9 +263,9 @@ export function InvestorStatusTabs({ data, activeStatus, onStatusChange }: Inves
       </div>
 
       {/* Workflow Timeline - Responsive Grid */}
-      <div className="grid grid-cols-4 gap-2 items-center">
+      <div className="grid grid-cols-4 gap-1.5 items-center">
         {/* Step 1: Prospect */}
-        <div className="relative">
+        <div>
           <StatusCard
             status="prospect"
             label="Prospect"
@@ -276,18 +276,10 @@ export function InvestorStatusTabs({ data, activeStatus, onStatusChange }: Inves
             borderColor="border-blue-300"
             hoverBg="bg-blue-50"
           />
-          {/* Arrow overlay */}
-          <motion.div 
-            className="absolute -right-3 top-1/2 -translate-y-1/2 z-10"
-            animate={{ x: [0, 3, 0] }}
-            transition={{ duration: 2, repeat: Infinity, ease: "easeInOut" }}
-          >
-            <div className="w-0 h-0 border-l-[8px] border-l-purple-400 border-t-[6px] border-t-transparent border-b-[6px] border-b-transparent drop-shadow-sm" />
-          </motion.div>
         </div>
         
         {/* Step 2: En discussion */}
-        <div className="relative">
+        <div>
           <StatusCard
             status="en_discussion"
             label="En discussion"
@@ -298,14 +290,6 @@ export function InvestorStatusTabs({ data, activeStatus, onStatusChange }: Inves
             borderColor="border-purple-300"
             hoverBg="bg-purple-50"
           />
-          {/* Arrow overlay */}
-          <motion.div 
-            className="absolute -right-3 top-1/2 -translate-y-1/2 z-10"
-            animate={{ x: [0, 3, 0] }}
-            transition={{ duration: 2, repeat: Infinity, ease: "easeInOut", delay: 0.2 }}
-          >
-            <div className="w-0 h-0 border-l-[8px] border-l-emerald-400 border-t-[6px] border-t-transparent border-b-[6px] border-b-transparent drop-shadow-sm" />
-          </motion.div>
         </div>
         
         {/* Step 3: En relation */}

@@ -202,7 +202,7 @@ export function ContactsCard({
                       }}
                       className={`flex items-center gap-1.5 text-xs transition-colors w-full justify-center py-1.5 px-2 rounded-md ${
                         contact.hasPortalAccess 
-                          ? 'text-purple-600 hover:text-purple-700 hover:bg-purple-50' 
+                          ? 'text-[#2563EB] hover:text-[#1D4ED8] hover:bg-[#EFF6FF]' 
                           : 'text-gray-400 hover:text-gray-500 hover:bg-gray-100'
                       }`}
                     >

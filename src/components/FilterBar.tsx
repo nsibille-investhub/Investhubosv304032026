@@ -88,17 +88,17 @@ export function FilterBar({
               whileHover={{ scale: 1.02 }}
               whileTap={{ scale: 0.98 }}
               onClick={() => setShowAdvanced(!showAdvanced)}
-              className={cn(
-                'px-4 py-2.5 rounded-lg border transition-all flex items-center gap-2 text-sm font-medium',
+                className={cn(
+                  'px-4 py-2.5 rounded-lg border transition-all flex items-center gap-2 text-sm font-medium',
                 showAdvanced || activeFiltersCount > 0
-                  ? 'bg-blue-50 dark:bg-blue-950/30 border-blue-300 dark:border-blue-700 text-blue-700 dark:text-blue-300'
+                  ? 'bg-[#E8EFF6] border-[#AFC2D9] text-[#060D19]'
                   : 'bg-white dark:bg-gray-900 border-gray-300 dark:border-gray-700 text-gray-700 dark:text-gray-300 hover:border-gray-400 dark:hover:border-gray-600'
               )}
             >
               <SlidersHorizontal className="w-4 h-4" />
               <span>Filtres</span>
               {activeFiltersCount > 0 && (
-                <span className="px-1.5 py-0.5 rounded-full bg-blue-600 dark:bg-blue-500 text-white text-xs font-bold min-w-[20px] text-center">
+                <span className="px-1.5 py-0.5 rounded-full bg-[#060D19] text-white text-xs font-bold min-w-[20px] text-center">
                   {activeFiltersCount}
                 </span>
               )}
@@ -142,7 +142,7 @@ export function FilterBar({
                             e.stopPropagation();
                             onClearAll();
                           }}
-                          className="text-xs text-blue-600 dark:text-blue-400 hover:text-blue-700 dark:hover:text-blue-300 font-medium transition-colors"
+                          className="text-xs text-[#060D19] hover:text-[#0B3C49] font-medium transition-colors"
                         >
                           Tout effacer
                         </button>
@@ -217,19 +217,19 @@ export function FilterBar({
                   initial={{ opacity: 0, scale: 0.8 }}
                   animate={{ opacity: 1, scale: 1 }}
                   exit={{ opacity: 0, scale: 0.8 }}
-                  className="px-2.5 py-1 rounded-md bg-blue-100 dark:bg-blue-950/50 border border-blue-200 dark:border-blue-800 flex items-center gap-1.5 group"
+                  className="px-2.5 py-1 rounded-md bg-[#E8EFF6] border border-[#AFC2D9] flex items-center gap-1.5 group"
                 >
-                  <span className="text-xs font-medium text-blue-700 dark:text-blue-300">
+                  <span className="text-xs font-medium text-[#060D19]">
                     {filter.label}:
                   </span>
-                  <span className="text-xs text-blue-600 dark:text-blue-400">
+                  <span className="text-xs text-[#0B3C49]">
                     {displayValue}
                   </span>
                   <button
                     onClick={() => onFilterChange?.(filterId, null)}
-                    className="ml-0.5 p-0.5 rounded hover:bg-blue-200 dark:hover:bg-blue-900 transition-colors"
+                    className="ml-0.5 p-0.5 rounded hover:bg-[#D8E4F0] transition-colors"
                   >
-                    <X className="w-3 h-3 text-blue-600 dark:text-blue-400" />
+                    <X className="w-3 h-3 text-[#0B3C49]" />
                   </button>
                 </motion.div>
               );
@@ -272,9 +272,9 @@ function FilterSelect({
           onChange(newValue === '' ? null : newValue);
         }}
         className={cn(
-          'w-full px-3 py-2.5 pr-8 bg-white dark:bg-gray-900 border rounded-lg text-sm font-medium appearance-none cursor-pointer transition-all focus:outline-none focus:ring-2 focus:ring-blue-500 dark:focus:ring-blue-400',
+          'w-full px-3 py-2.5 pr-8 bg-white dark:bg-gray-900 border rounded-lg text-sm font-medium appearance-none cursor-pointer transition-all focus:outline-none focus:ring-2 focus:ring-[#0B3C49]',
           hasValue
-            ? 'border-blue-300 dark:border-blue-700 text-blue-700 dark:text-blue-300 bg-blue-50 dark:bg-blue-950/30'
+            ? 'border-[#AFC2D9] text-[#060D19] bg-[#E8EFF6]'
             : 'border-gray-300 dark:border-gray-700 text-gray-700 dark:text-gray-300 hover:border-gray-400 dark:hover:border-gray-600'
         )}
       >
