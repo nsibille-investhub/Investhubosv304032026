@@ -202,7 +202,6 @@ export function DataRoomPage({ onSpaceChange }: DataRoomPageProps) {
               onAddSpace={handleAddSpace}
               onMassUpload={handleOpenMassUpload}
               onConfigureSpace={handleConfigureSpace}
-              onOpenBirdView={() => setShowBirdView(true)}
             />
           </motion.div>
         ) : (

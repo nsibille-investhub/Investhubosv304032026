@@ -1,6 +1,6 @@
 import { useMemo, useState } from 'react';
 import { motion } from 'motion/react';
-import { Plus, Folder, Settings, Users, Building2, Briefcase, Target, ArrowRight, Eye, Search, FileText, FolderOpen, Layers, Landmark } from 'lucide-react';
+import { Plus, Folder, Settings, Users, Handshake, TrendingUp, Target, ArrowRight, Search, FileText, FolderOpen, Layers, Landmark } from 'lucide-react';
 import { Button } from './ui/button';
 import { Badge } from './ui/badge';
 import { DataRoomSpace } from '../utils/dataRoomSpacesData';
@@ -23,7 +23,6 @@ interface DataRoomSpacesViewProps {
   onAddSpace: () => void;
   onMassUpload: () => void;
   onConfigureSpace: (space: DataRoomSpace) => void;
-  onOpenBirdView?: () => void;
   onSearchResultSelect?: (result: GlobalSearchHit) => void;
 }
 
@@ -33,15 +32,14 @@ export function DataRoomSpacesView({
   onAddSpace,
   onMassUpload,
   onConfigureSpace,
-  onOpenBirdView,
   onSearchResultSelect
 }: DataRoomSpacesViewProps) {
   const [globalSearch, setGlobalSearch] = useState('');
 
   const getTargetIcon = (userTypes: string[]) => {
     if (userTypes.includes('Investisseur')) return Users;
-    if (userTypes.includes('Participation')) return Building2;
-    if (userTypes.includes('Partenaire')) return Briefcase;
+    if (userTypes.includes('Partenaire')) return Handshake;
+    if (userTypes.includes('Participation')) return TrendingUp;
     return Target;
   };
 
@@ -107,22 +105,13 @@ export function DataRoomSpacesView({
             </p>
           </div>
           <div className="flex items-center gap-3">
-            {onOpenBirdView && (
-              <Button
-                onClick={onOpenBirdView}
-                variant="outline"
-                className="gap-2 border-blue-200 text-blue-700 hover:bg-blue-50 hover:border-blue-300"
-              >
-                <Eye className="w-4 h-4" />
-                Bird View
-              </Button>
-            )}
             <Button
               onClick={onMassUpload}
-              className="bg-gradient-to-r from-[#0066FF] to-[#0052CC] text-white hover:shadow-lg transition-all duration-300 gap-2"
+              variant="secondary"
+              className="gap-2"
             >
               <Plus className="w-4 h-4" />
-              Import Massif
+              Import
             </Button>
             <Button
               onClick={onAddSpace}
@@ -232,7 +221,7 @@ export function DataRoomSpacesView({
               <div className="p-6 -mt-10 relative">
                 {/* Icon */}
                 <div className="w-16 h-16 rounded-xl bg-[#060D19] flex items-center justify-center shadow-lg mb-4">
-                  <Folder className="w-8 h-8 text-white" />
+                  <Folder className="w-8 h-8 text-[#DCFDBC]" />
                 </div>
 
                 {/* Title */}
@@ -243,15 +232,17 @@ export function DataRoomSpacesView({
                 {/* Targeting: audience + segment/fund split */}
                 <div className="flex items-center gap-2 text-sm text-gray-600 mb-4">
                   <TargetIcon className="w-4 h-4 flex-shrink-0" />
-                  <span className="line-clamp-2 text-xs">{space.targeting.userTypes.join(', ') || 'Aucun type utilisateur'}</span>
+                  <span className="line-clamp-2 text-xs">{space.targeting.userTypes[0] || 'Aucun type utilisateur'}</span>
                 </div>
                 <div className="space-y-1.5 mb-4">
-                  <div className="flex items-start gap-2 text-xs text-gray-600">
-                    <Layers className="w-3.5 h-3.5 mt-0.5 text-indigo-500 flex-shrink-0" />
-                    <span className="line-clamp-1" title={space.targeting.segments.join(', ') || 'Tous segments'}>
-                      <span className="font-medium text-gray-700">Segments :</span> {space.targeting.segments.join(', ') || 'Tous segments'}
-                    </span>
-                  </div>
+                  {space.targeting.segments.length > 0 && (
+                    <div className="flex items-start gap-2 text-xs text-gray-600">
+                      <Layers className="w-3.5 h-3.5 mt-0.5 text-indigo-500 flex-shrink-0" />
+                      <span className="line-clamp-1" title={space.targeting.segments.join(', ')}>
+                        <span className="font-medium text-gray-700">Segments :</span> {space.targeting.segments.join(', ')}
+                      </span>
+                    </div>
+                  )}
                   <div className="flex items-start gap-2 text-xs text-gray-600">
                     <Landmark className="w-3.5 h-3.5 mt-0.5 text-emerald-600 flex-shrink-0" />
                     <span className="line-clamp-1" title={space.targeting.funds.join(', ') || 'Tous fonds'}>
