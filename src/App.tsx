@@ -665,8 +665,6 @@ export default function App() {
                 </>
               ) : currentPage === 'investors' ? (
                 <>
-                  <span className="text-gray-400 dark:text-gray-500">Investisseurs</span>
-                  <span className="text-gray-300 dark:text-gray-700">/</span>
                   <span className="text-gray-900 dark:text-gray-100 font-medium">Investisseurs</span>
                 </>
               ) : currentPage === 'partners' ? (
