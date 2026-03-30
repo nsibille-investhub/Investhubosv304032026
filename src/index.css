@@ -10909,3 +10909,11 @@ html {
     height: 0;
   }
 }
+
+.bg-financial-blue {
+  background-color: #060D19 !important;
+}
+
+.border-financial-blue {
+  border-color: #060D19 !important;
+}
