@@ -22,7 +22,6 @@ import {
   DropdownMenuTrigger,
 } from './ui/dropdown-menu';
 import { Input } from './ui/input';
-import { Carousel, CarouselApi, CarouselContent, CarouselItem, CarouselNext, CarouselPrevious } from './ui/carousel';
 
 interface DocumentListViewProps {
   documents: Document[];
@@ -65,8 +64,7 @@ export function DocumentListView({
 }: DocumentListViewProps) {
   const [hoveredId, setHoveredId] = useState<string | null>(null);
   const [viewerOpen, setViewerOpen] = useState(false);
-  const [viewerDocumentId, setViewerDocumentId] = useState<string | null>(null);
-  const [carouselApi, setCarouselApi] = useState<CarouselApi>();
+  const [viewerDocument, setViewerDocument] = useState<Document | null>(null);
   const itemRefs = useRef<Record<string, HTMLDivElement | null>>({});
 
   // Get current level items
@@ -135,11 +133,8 @@ export function DocumentListView({
     };
   }, [fileViewerSources]);
 
-  const viewerFiles = hasActiveSearch ? searchFiles : files;
-  const viewerIndex = viewerFiles.findIndex((file) => file.id === viewerDocumentId);
-
   const openViewer = (file: Document) => {
-    setViewerDocumentId(file.id);
+    setViewerDocument(file);
     setViewerOpen(true);
   };
 
@@ -150,11 +145,6 @@ export function DocumentListView({
       target.scrollIntoView({ behavior: 'smooth', block: 'center' });
     }
   }, [focusedItemId, itemsToRender.length]);
-
-  useEffect(() => {
-    if (!carouselApi || !viewerOpen || viewerIndex < 0) return;
-    carouselApi.scrollTo(viewerIndex, true);
-  }, [carouselApi, viewerOpen, viewerIndex]);
 
   return (
     <div className="flex flex-col h-full">
@@ -494,34 +484,24 @@ export function DocumentListView({
                 </button>
               </div>
               <div className="px-5 py-2 border-b border-gray-100 text-xs text-gray-500">
-                Mode slide type Notion — navigation gauche/droite.
+                Visionneuse navigateur par défaut (iframe).
               </div>
               <div className="flex-1 p-5 overflow-hidden">
-                {viewerFiles.length === 0 ? (
+                {!viewerDocument ? (
                   <div className="h-full flex items-center justify-center text-sm text-gray-500">
                     Aucun document à afficher.
                   </div>
                 ) : (
-                  <Carousel setApi={setCarouselApi} opts={{ align: 'start' }} className="h-full">
-                    <CarouselContent className="h-full -ml-0">
-                      {viewerFiles.map((file) => (
-                        <CarouselItem key={file.id} className="h-full pl-0">
-                          <div className="h-full border border-gray-200 rounded-lg overflow-hidden bg-white">
-                            <div className="px-3 py-2 border-b border-gray-100 text-xs text-gray-500 truncate">
-                              {file.name}
-                            </div>
-                            <iframe
-                              title={`Visionneuse ${file.name}`}
-                              src={fileViewerSources[file.id]}
-                              className="w-full h-[calc(100%-36px)]"
-                            />
-                          </div>
-                        </CarouselItem>
-                      ))}
-                    </CarouselContent>
-                    <CarouselPrevious className="left-3 top-1/2" />
-                    <CarouselNext className="right-3 top-1/2" />
-                  </Carousel>
+                  <div className="h-full border border-gray-200 rounded-lg overflow-hidden bg-white">
+                    <div className="px-3 py-2 border-b border-gray-100 text-xs text-gray-500 truncate">
+                      {viewerDocument.name}
+                    </div>
+                    <iframe
+                      title={`Visionneuse ${viewerDocument.name}`}
+                      src={fileViewerSources[viewerDocument.id]}
+                      className="w-full h-[calc(100%-36px)]"
+                    />
+                  </div>
                 )}
               </div>
             </motion.div>
