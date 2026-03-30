@@ -52,6 +52,7 @@ import {
   BadgeCheck,
   type LucideIcon,
 } from 'lucide-react';
+import logoInvestHub from 'figma:asset/2a84b4397fac896d4ed7e7f4faff09c957de9a6b.png';
 
 type ComponentMeta = {
   name: string;
@@ -75,6 +76,18 @@ const colorTokens = [
   { name: 'Vert lumière', hex: '#B6E68A', textClass: 'text-[#213547]' },
   { name: 'Beige clair', hex: '#B4AEA4', textClass: 'text-[#213547]' },
   { name: 'Blanc pur', hex: '#FFFFFF', textClass: 'text-[#213547]' },
+];
+
+const primaryBrandColors = [
+  { name: 'Bleu solide', hex: '#000E2B', textClass: 'text-white' },
+  { name: 'Bleu financier', hex: '#0A3D4A', textClass: 'text-white' },
+  { name: 'Vert croissance', hex: '#25563F', textClass: 'text-white' },
+  { name: 'Écru papier', hex: '#D9D8CB', textClass: 'text-[#153943]' },
+];
+
+const functionalColors = [
+  { name: 'Rouge interdiction', usage: 'Erreurs / suppression / blocage', hex: '#DC2626', tailwind: 'red-600', bg: 'bg-red-600' },
+  { name: 'Orange warning', usage: 'Avertissement / attention', hex: '#F97316', tailwind: 'orange-500', bg: 'bg-orange-500' },
 ];
 
 const metierIcons: Array<{ label: string; className: string; icon: LucideIcon }> = [
@@ -246,6 +259,51 @@ export function DesignSystemPage() {
         <p className="mt-2 text-sm text-[#4F6166] dark:text-[#9DB2AE] max-w-4xl">
           Bibliothèque complète des composants. On commence par la couche tableaux (data-intensive), puis les composants coeur.
         </p>
+      </section>
+
+      <section className="rounded-2xl border border-[#D7E0DD] dark:border-[#1F2D2A] bg-white dark:bg-[#101615] p-6">
+        <h2 className="text-lg font-semibold text-[#1F3137] dark:text-[#E8F0EE] mb-2">Identité de marque</h2>
+        <p className="text-sm text-[#4F6166] dark:text-[#9DB2AE] mb-4">
+          Le logo InvestHub doit être présent sur les zones d’identité (sidebar, login, exports) avec un contraste fort et un espace de respiration suffisant.
+        </p>
+        <div className="rounded-xl border border-[#D7E0DD] dark:border-[#1F2D2A] p-4 bg-[#F8FAFA] dark:bg-[#0F1716]">
+          <img src={logoInvestHub} alt="Logo InvestHub" className="h-16 w-auto" />
+        </div>
+      </section>
+
+      <section className="rounded-2xl border border-[#D7E0DD] dark:border-[#1F2D2A] bg-white dark:bg-[#101615] p-6">
+        <h2 className="text-lg font-semibold text-[#1F3137] dark:text-[#E8F0EE] mb-4">4 couleurs principales (branding)</h2>
+        <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-4">
+          {primaryBrandColors.map((color) => (
+            <article key={color.name} className="rounded-xl overflow-hidden border border-[#D4DCDA] dark:border-[#1F2D2A]">
+              <div className={`h-28 p-4 ${color.textClass}`} style={{ backgroundColor: color.hex }}>
+                <p className="text-base font-semibold">{color.name}</p>
+              </div>
+              <div className="p-3 bg-white dark:bg-[#0F1514] text-sm">
+                <code className="text-[#456B6C] dark:text-[#9BD1C5]">{color.hex}</code>
+              </div>
+            </article>
+          ))}
+        </div>
+      </section>
+
+      <section className="rounded-2xl border border-[#D7E0DD] dark:border-[#1F2D2A] bg-white dark:bg-[#101615] p-6">
+        <h2 className="text-lg font-semibold text-[#1F3137] dark:text-[#E8F0EE] mb-4">Couleurs fonctionnelles (hors charte branding)</h2>
+        <div className="grid md:grid-cols-2 gap-4">
+          {functionalColors.map((color) => (
+            <article key={color.name} className="rounded-xl border border-[#D4DCDA] dark:border-[#1F2D2A] p-4">
+              <div className="flex items-center gap-3 mb-3">
+                <span className={`w-5 h-5 rounded-full ${color.bg}`} />
+                <p className="font-semibold text-[#1F3137] dark:text-[#E8F0EE]">{color.name}</p>
+              </div>
+              <p className="text-sm text-[#4F6166] dark:text-[#9DB2AE]">{color.usage}</p>
+              <div className="mt-3 text-xs flex items-center gap-3">
+                <code className="text-[#456B6C] dark:text-[#9BD1C5]">{color.hex}</code>
+                <span className="text-[#6A8084] dark:text-[#93AAA6]">({color.tailwind})</span>
+              </div>
+            </article>
+          ))}
+        </div>
       </section>
 
       <section className="rounded-2xl border border-[#D7E0DD] dark:border-[#1F2D2A] bg-white dark:bg-[#101615] p-6">
