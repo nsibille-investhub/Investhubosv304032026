@@ -32,7 +32,7 @@ export function ModernSidebar({ expanded, onToggle, currentPage = 'entities', on
     participations: false,
     fundlife: false,
     dataroom: currentPage === 'documents' || currentPage === 'tracking' || currentPage === 'birdview',
-    portails: currentPage === 'events' || currentPage === 'news' || currentPage === 'design-system',
+    portails: currentPage === 'events' || currentPage === 'news',
     communications: false,
     settings: currentPage?.startsWith('settings-') || false,
   });
@@ -69,7 +69,7 @@ export function ModernSidebar({ expanded, onToggle, currentPage = 'entities', on
       participations: false,
       fundlife: false,
       dataroom: currentPage === 'documents' || currentPage === 'tracking' || currentPage === 'birdview',
-      portails: currentPage === 'events' || currentPage === 'news' || currentPage === 'design-system',
+      portails: currentPage === 'events' || currentPage === 'news',
       communications: false,
       settings: currentPage?.startsWith('settings-') || false,
     });
@@ -364,13 +364,6 @@ export function ModernSidebar({ expanded, onToggle, currentPage = 'entities', on
                 expanded={expanded}
                 isActive={currentPage === 'events'}
                 onClick={() => onPageChange?.('events')}
-              />
-              <SubMenuItem 
-                icon={icons.Lightbulb}
-                label="Design System" 
-                expanded={expanded}
-                isActive={currentPage === 'design-system'}
-                onClick={() => onPageChange?.('design-system')}
               />
               <SubMenuItem icon={icons.LifeBuoy} label="FAQ" expanded={expanded} />
               <SubMenuItem icon={icons.Users} label="Contacts" expanded={expanded} />

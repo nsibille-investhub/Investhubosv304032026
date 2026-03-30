@@ -2,7 +2,7 @@ import { useState, useEffect, useMemo } from 'react';
 import { AppStoreProvider } from './utils/appStoreContext';
 import { ThemeProvider } from './utils/themeContext';
 import { ThemeToggle } from './components/ThemeToggle';
-import { Search, Bell, Settings, Menu, ChevronDown, Plus, Info, MoreVertical, ArrowLeft, ChevronLeft, ChevronRight, Download, FileSpreadsheet, History, ArchiveX, Users } from 'lucide-react';
+import { Search, Bell, Settings, Menu, ChevronDown, Plus, Info, MoreVertical, ArrowLeft, ChevronLeft, ChevronRight, Download, FileSpreadsheet, History, ArchiveX, Users, Palette } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 import { Badge } from './components/ui/badge';
 import { Switch } from './components/ui/switch';
@@ -589,6 +589,15 @@ export default function App() {
             </div>
             
             <div className="flex items-center gap-3">
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => navigateToPage('design-system')}
+                className="hidden md:inline-flex items-center gap-2 border-[#D2DDD9] text-[#2F4D51] hover:text-[#1F3137]"
+              >
+                <Palette className="w-4 h-4" />
+                Design System
+              </Button>
               <ThemeToggle />
               
               <Tooltip>
