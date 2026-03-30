@@ -440,7 +440,8 @@ export function DocumentListView({
               animate={{ x: 0 }}
               exit={{ x: '100%' }}
               transition={{ type: 'spring', damping: 28, stiffness: 260 }}
-              className="fixed top-0 right-0 bottom-0 z-50 w-[66vw] min-w-[66vw] bg-white shadow-2xl border-l border-gray-200 flex flex-col"
+              style={{ width: '70vw', minWidth: '70vw' }}
+              className="fixed top-0 right-0 bottom-0 z-50 bg-white shadow-2xl border-l border-gray-200 flex flex-col"
             >
               <div className="px-5 py-3 border-b border-gray-200 flex items-center justify-between">
                 <h2 className="text-base font-semibold text-gray-900">
