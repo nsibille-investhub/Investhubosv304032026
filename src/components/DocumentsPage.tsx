@@ -52,10 +52,6 @@ export function DocumentsPage({ selectedSpace, navigationTarget, onNavigationHan
   const [addFolderDefaultParentId, setAddFolderDefaultParentId] = useState<string>('root');
   const [folderBeingEdited, setFolderBeingEdited] = useState<Document | null>(null);
 
-  const formatScopeValue = (values: string[], fallback: string) => (
-    values.length > 0 ? values.join(', ') : fallback
-  );
-
   const investorProfiles = [
     {
       id: 'i1',
@@ -426,38 +422,6 @@ export function DocumentsPage({ selectedSpace, navigationTarget, onNavigationHan
         transition={{ type: 'spring', stiffness: 200, damping: 25 }}
         className="bg-white rounded-2xl shadow-sm border border-gray-200 overflow-hidden flex flex-col min-w-0"
       >
-        {/* Header */}
-        <div className="px-6 py-5 border-b border-gray-200 bg-white">
-          <div className="flex items-center justify-between">
-            <div>
-              <h2 className="text-xl font-semibold text-gray-900">{selectedSpace.name}</h2>
-              <p className="text-sm text-gray-600 mt-1">
-                {selectedSpace.documentCount} documents • {selectedSpace.folderCount} dossiers
-              </p>
-              <div className="mt-3 flex flex-wrap gap-4 text-xs text-gray-600">
-                <p>
-                  <span className="font-medium text-gray-700">Type :</span>{' '}
-                  {selectedSpace.targeting.userTypes[0] || 'Investisseur'}
-                </p>
-                {selectedSpace.targeting.segments.length > 0 && (
-                  <p>
-                    <span className="font-medium text-gray-700">Segments :</span>{' '}
-                    {selectedSpace.targeting.segments.join(', ')}
-                  </p>
-                )}
-                <p>
-                  <span className="font-medium text-gray-700">Fonds :</span>{' '}
-                  {formatScopeValue(selectedSpace.targeting.funds, 'Tous fonds')}
-                </p>
-              </div>
-            </div>
-            
-            <div className="flex items-center gap-3">
-              <div className="flex-1" />
-            </div>
-          </div>
-        </div>
-
         {/* Double Navigation Layout */}
         <div className="flex-1 flex min-h-0">
           {/* Left: Tree Navigation */}
