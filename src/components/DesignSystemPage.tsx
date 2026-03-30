@@ -84,6 +84,11 @@ import {
   TableRow,
 } from './ui/table';
 import { ClickableText } from './ClickableText';
+import { StatusBadge } from './StatusBadge';
+import { Tag } from './Tag';
+import { ContactsCard } from './ContactsCard';
+import { StructuresCell } from './StructuresCell';
+import type { Contact, LegalStructure } from '../utils/investorGenerator';
 
 type DoctrineItem = {
   title: string;
@@ -321,6 +326,77 @@ const investorListingColumnSpecs = [
   },
 ];
 
+const previewContacts: Contact[] = [
+  {
+    id: '1',
+    firstName: 'Valérie',
+    lastName: 'Dupont',
+    function: 'Directrice',
+    email: 'valerie.dupont@vertex.com',
+    phone: '+33 6 12 34 56 78',
+    isPrimary: true,
+    hasPortalAccess: true,
+  },
+  {
+    id: '2',
+    firstName: 'Paul',
+    lastName: 'Martin',
+    function: 'CFO',
+    email: 'paul.martin@vertex.com',
+    phone: '+33 6 98 76 54 32',
+    isPrimary: false,
+    hasPortalAccess: false,
+  },
+];
+
+const previewStructures: LegalStructure[] = [
+  {
+    id: '1',
+    name: 'Vertex Capital SA',
+    type: 'SA',
+    contactsCount: 2,
+    subscriptionsCount: 3,
+    totalInvested: 1657494,
+  },
+];
+
+function renderInvestorColumnPreview(column: string) {
+  switch (column) {
+    case 'NOM':
+      return (
+        <div className="flex flex-col gap-1 max-w-[220px]">
+          <motion.div whileHover={{ x: 2 }} className="text-sm font-medium cursor-pointer truncate">
+            <ClickableText>NextGen Ventures</ClickableText>
+          </motion.div>
+          <div className="flex items-center gap-1.5">
+            <span className="text-xs text-gray-500">ID: 1</span>
+            <button className="p-0.5 hover:bg-gray-100 rounded transition-colors">
+              <Copy className="w-3 h-3 text-gray-400" />
+            </button>
+          </div>
+        </div>
+      );
+    case 'CONTACTS':
+      return <ContactsCard contacts={previewContacts} investorName="Vertex Capital SA" />;
+    case 'STRUCTURE':
+      return <StructuresCell structures={previewStructures} />;
+    case 'TYPE':
+      return <Badge variant="outline">Individual</Badge>;
+    case 'STATUT':
+      return <StatusBadge label="En discussion" variant="warning" />;
+    case 'DATE D’INSCRIPTION':
+      return <span>10/05/2022</span>;
+    case 'CAPITAL INVESTI':
+      return <span className="font-semibold">1 657 494 €</span>;
+    case 'SOUSCRIPTIONS':
+      return <Badge variant="outline">2</Badge>;
+    case 'SEGMENT':
+      return <Tag label="HNWI" />;
+    default:
+      return null;
+  }
+}
+
 export function DesignSystemPage() {
   const [switchOn, setSwitchOn] = React.useState(true);
 
@@ -553,6 +629,7 @@ export function DesignSystemPage() {
           <UITable>
             <TableHeader>
               <TableRow>
+                <TableHead>Aperçu</TableHead>
                 <TableHead>Colonne</TableHead>
                 <TableHead>Composant</TableHead>
                 <TableHead>Description fonctionnelle</TableHead>
@@ -563,6 +640,7 @@ export function DesignSystemPage() {
             <TableBody>
               {investorListingColumnSpecs.map((spec) => (
                 <TableRow key={spec.column}>
+                  <TableCell>{renderInvestorColumnPreview(spec.column)}</TableCell>
                   <TableCell className="font-semibold">{spec.column}</TableCell>
                   <TableCell>{spec.component}</TableCell>
                   <TableCell className="whitespace-normal">{spec.functional}</TableCell>
