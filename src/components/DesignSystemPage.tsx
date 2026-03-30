@@ -109,51 +109,97 @@ const functionalColors = [
   { name: 'Orange warning', usage: 'Avertissement / attention', hex: '#F97316', tailwind: 'orange-500', bg: 'bg-orange-500' },
 ];
 
-const metierIcons: Array<{ label: string; className: string; icon: LucideIcon }> = [
-  { label: 'Tous les investisseurs', className: 'fa-users', icon: Users },
-  { label: 'Profil Investisseur', className: 'fa-user', icon: User },
-  { label: 'Souscriptions', className: 'fa-file-signature', icon: FileSignature },
-  { label: 'Segments', className: 'fa-layer-group', icon: Layers },
-  { label: 'Statistiques', className: 'fa-chart-line', icon: ChartLine },
-  { label: 'Campagnes KYC', className: 'fa-shield', icon: Shield },
-  { label: 'Partenaires', className: 'fa-handshake', icon: Handshake },
-  { label: 'Conseillers', className: 'fa-user-tie', icon: UserRoundCog },
-  { label: 'Participations', className: 'fa-chart-pie', icon: PieChart },
-  { label: 'Documents', className: 'fa-file', icon: File },
-  { label: 'Fonds', className: 'fa-building-columns', icon: Landmark },
-  { label: 'Paramètres', className: 'fa-gear', icon: Settings },
-  { label: 'Appels', className: 'fa-phone', icon: Phone },
-  { label: 'Capital accounts', className: 'fa-wallet', icon: Wallet },
-  { label: 'Distributions', className: 'fa-money-bill', icon: Banknote },
-  { label: 'Rachats', className: 'fa-arrow-rotate-left', icon: RotateCcw },
-  { label: 'Contrats', className: 'fa-file-contract', icon: FileText },
-  { label: 'Transferts', className: 'fa-right-left', icon: ArrowLeftRight },
-  { label: 'Évènements', className: 'fa-calendar', icon: Calendar },
-  { label: 'Screening', className: 'fa-magnifying-glass', icon: Search },
-  { label: 'Alertes / Risque', className: 'fa-triangle-exclamation', icon: TriangleAlert },
-  { label: 'Factures', className: 'fa-file-invoice', icon: Receipt },
-  { label: 'Comptes bancaires', className: 'fa-building', icon: Building2 },
-  { label: 'Opérations', className: 'fa-arrows-rotate', icon: RefreshCw },
-  { label: 'Formulaires / Sondages', className: 'fa-clipboard', icon: Clipboard },
-  { label: 'Onboarding', className: 'fa-user-plus', icon: UserPlus },
-  { label: 'Questions', className: 'fa-circle-question', icon: CircleHelp },
-  { label: 'Dealflow', className: 'fa-briefcase', icon: Briefcase },
-  { label: 'Portail', className: 'fa-globe', icon: Globe },
-  { label: 'Branding', className: 'fa-palette', icon: Palette },
-  { label: 'Navigation', className: 'fa-compass', icon: Compass },
-  { label: 'Éditeur', className: 'fa-pen-to-square', icon: SquarePen },
-  { label: 'Actualités', className: 'fa-newspaper', icon: Newspaper },
-  { label: 'Traductions', className: 'fa-language', icon: Languages },
-  { label: 'Reporting', className: 'fa-chart-column', icon: BarChart3 },
-  { label: 'Excel', className: 'fa-file-excel', icon: FileSpreadsheet },
-  { label: 'Communication', className: 'fa-envelope', icon: Mail },
-  { label: 'Campagnes', className: 'fa-clapperboard', icon: Clapperboard },
-  { label: 'Équipe', className: 'fa-people-group', icon: UsersRound },
-  { label: 'Logs', className: 'fa-file-lines', icon: FileClock },
-  { label: 'Imports', className: 'fa-file-import', icon: FileInput },
-  { label: 'Fournisseurs', className: 'fa-truck', icon: Truck },
-  { label: 'Plan comptable', className: 'fa-book', icon: BookOpen },
-  { label: 'Requêtes', className: 'fa-database', icon: Database },
+const iconFamilies: Array<{
+  family: string;
+  items: Array<{ name: string; code: string; icon: LucideIcon }>;
+}> = [
+  {
+    family: 'accounting',
+    items: [
+      { name: 'Gestion > Factures en attente', code: 'accounting-pending', icon: Receipt },
+      { name: 'Gestion > Toutes les pièces', code: 'accounting-all', icon: FileText },
+      { name: 'Gestion > Exports', code: 'accounting-exports', icon: FileSpreadsheet },
+      { name: 'Paramètres > Fournisseurs', code: 'settings-suppliers', icon: Truck },
+      { name: 'Paramètres > Comptes bancaires', code: 'settings-accounts', icon: Landmark },
+      { name: 'Paramètres > Plan comptable', code: 'settings-accounting', icon: BookOpen },
+    ],
+  },
+  {
+    family: 'administration',
+    items: [
+      { name: 'Paramètres > Utilisateurs', code: 'settings-users', icon: Users },
+      { name: 'Paramètres > Outils', code: 'settings-tools', icon: Settings },
+      { name: 'Paramètres > Champs personnalisés', code: 'settings-fields', icon: Clipboard },
+      { name: 'Onboardings', code: 'onboardings', icon: UserPlus },
+      { name: 'Paramètres > Droits', code: 'settings-rights', icon: Shield },
+      { name: 'Paramètres > Requêtes', code: 'settings-queries', icon: Database },
+    ],
+  },
+  {
+    family: 'communication',
+    items: [
+      { name: 'Outils > Communication', code: 'tools-comm', icon: Mail },
+      { name: 'Outils > Sondages', code: 'tools-surveys', icon: Clipboard },
+      { name: 'Paramètres > Historique mails', code: 'settings-history', icon: FileClock },
+      { name: 'Paramètres > Historique SMS', code: 'settings-smshistory', icon: FileText },
+      { name: 'Paramètres > Gabarits mails', code: 'settings-templates', icon: FileText },
+    ],
+  },
+  {
+    family: 'compliance',
+    items: [
+      { name: 'Campagnes > Validation', code: 'campaigns-validation', icon: Shield },
+      { name: 'Investisseurs > Campagnes KYC', code: 'investors-kycs', icon: UserRoundCog },
+      { name: 'Screening > Worldcheck', code: 'worldchecks', icon: Search },
+      { name: 'Screening > Alertes', code: 'worldchecks-alerts', icon: TriangleAlert },
+      { name: 'Screening > Orias checks', code: 'oriaschecks', icon: Search },
+      { name: 'Screening > Alertes Orias', code: 'oriaschecks-alerts', icon: TriangleAlert },
+    ],
+  },
+  {
+    family: 'funds',
+    items: [
+      { name: 'Fonds', code: 'funds', icon: Landmark },
+      { name: 'Fonds > Rachats', code: 'funds-rebuy', icon: RotateCcw },
+      { name: 'Campagnes > Participations', code: 'campaigns-portfolio', icon: PieChart },
+      { name: 'Campagnes > Contrats', code: 'campaigns-contracts', icon: FileSignature },
+      { name: 'Campagnes > Transferts', code: 'campaigns-transfers', icon: ArrowLeftRight },
+      { name: 'Campagnes > Prévisions de flux', code: 'campaigns-futureflows', icon: ChartLine },
+    ],
+  },
+  {
+    family: 'investors',
+    items: [
+      { name: 'Investisseurs', code: 'investors', icon: Users },
+      { name: 'Investisseurs > Liste', code: 'investors-list', icon: User },
+      { name: 'Contacts', code: 'contacts', icon: UserRoundCog },
+      { name: 'Investisseurs > Alertes', code: 'investors-alerts', icon: TriangleAlert },
+      { name: 'Accès tous investisseurs', code: 'all-investors', icon: UsersRound },
+      { name: 'Paramètres > Statuts investisseurs', code: 'settings-investorstatuses', icon: Settings },
+    ],
+  },
+  {
+    family: 'network',
+    items: [
+      { name: 'Distribution > Partenaires', code: 'distribution-partners', icon: Handshake },
+      { name: 'Distribution > Commissions', code: 'distribution-commissions', icon: Banknote },
+      { name: 'Distribution > Contrats', code: 'distribution-contracts', icon: FileSignature },
+      { name: 'Partenaires', code: 'partners', icon: UsersRound },
+      { name: 'Partenaires > Documents', code: 'partner-documents', icon: File },
+      { name: 'Partenaires > Connexion tiers', code: 'distribution-impersonate', icon: Globe },
+    ],
+  },
+  {
+    family: 'portal / reporting / subscriptions',
+    items: [
+      { name: 'Contenu', code: 'content', icon: SquarePen },
+      { name: 'FAQ', code: 'faq', icon: CircleHelp },
+      { name: 'Actualités', code: 'news', icon: Newspaper },
+      { name: 'Reporting', code: 'reporting', icon: BarChart3 },
+      { name: 'Souscriptions', code: 'subscriptions', icon: FileSignature },
+      { name: 'Souscriptions > Validation', code: 'subscriptions-validation', icon: Shield },
+    ],
+  },
 ];
 
 
@@ -296,23 +342,30 @@ export function DesignSystemPage() {
       </section>
 
       <section className="rounded-2xl border border-[#D7E0DD] dark:border-[#1F2D2A] bg-white dark:bg-[#101615] p-6">
-        <h2 className="text-lg font-semibold text-[#1F3137] dark:text-[#E8F0EE] mb-4">Icônes métier (style line)</h2>
-        <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-3">
-          {metierIcons.map((item) => {
-            const Icon = item.icon;
-            return (
-              <div
-                key={item.label}
-                className="rounded-lg border border-[#D7E0DD] dark:border-[#1F2D2A] px-3 py-2.5 flex items-center justify-between gap-2 bg-[#FCFDFC] dark:bg-[#101716]"
-              >
-                <div className="flex items-center gap-2 min-w-0">
-                  <Icon className="w-4 h-4 text-[#3F7358] flex-shrink-0" />
-                  <span className="text-xs text-[#2A4148] dark:text-[#D7E6E2] truncate">{item.label}</span>
-                </div>
-                <code className="text-[11px] text-[#5A7376] dark:text-[#9DB2AE]">{item.className}</code>
+        <h2 className="text-lg font-semibold text-[#1F3137] dark:text-[#E8F0EE] mb-4">Icônes métier (organisées par famille)</h2>
+        <div className="space-y-4">
+          {iconFamilies.map((family) => (
+            <div key={family.family} className="rounded-xl border border-[#D7E0DD] dark:border-[#1F2D2A] p-4 bg-[#FCFDFC] dark:bg-[#101716]">
+              <p className="text-xs uppercase tracking-widest text-[#5A7376] dark:text-[#9DB2AE] mb-3">{family.family}</p>
+              <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-2.5">
+                {family.items.map((item) => {
+                  const Icon = item.icon;
+                  return (
+                    <div
+                      key={item.code}
+                      className="rounded-lg border border-[#D7E0DD] dark:border-[#1F2D2A] px-3 py-2.5 flex items-center justify-between gap-2 bg-white dark:bg-[#0E1514]"
+                    >
+                      <div className="flex items-center gap-2 min-w-0">
+                        <Icon className="w-4 h-4 text-[#3F7358] flex-shrink-0" />
+                        <span className="text-xs text-[#2A4148] dark:text-[#D7E6E2] truncate">{item.name}</span>
+                      </div>
+                      <code className="text-[11px] text-[#5A7376] dark:text-[#9DB2AE]">{item.code}</code>
+                    </div>
+                  );
+                })}
               </div>
-            );
-          })}
+            </div>
+          ))}
         </div>
       </section>
 
