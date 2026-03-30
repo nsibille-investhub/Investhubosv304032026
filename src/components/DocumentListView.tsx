@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { AnimatePresence, motion } from 'motion/react';
 import { 
   FileText, 
@@ -103,35 +103,7 @@ export function DocumentListView({
   const searchFolders = itemsToRender.filter(item => item.type === 'folder');
   const searchFiles = itemsToRender.filter(item => item.type !== 'folder');
 
-  const browserPdfBlob = useMemo(() => {
-    const tinyPdfBase64 = 'JVBERi0xLjQKMSAwIG9iago8PAovVHlwZSAvQ2F0YWxvZwovUGFnZXMgMiAwIFIKPj4KZW5kb2JqCjIgMCBvYmoKPDwKL1R5cGUgL1BhZ2VzCi9LaWRzIFszIDAgUl0KL0NvdW50IDEKPj4KZW5kb2JqCjMgMCBvYmoKPDwKL1R5cGUgL1BhZ2UKL1BhcmVudCAyIDAgUgovTWVkaWFCb3ggWzAgMCA2MTIgNzkyXQovQ29udGVudHMgNCAwIFIKL1Jlc291cmNlcyA8PAovRm9udCA8PAovRjEgNSAwIFIKPj4KPj4KPj4KZW5kb2JqCjQgMCBvYmoKPDwKL0xlbmd0aCA2NQo+PgpzdHJlYW0KQlQgL0YxIDI0IFRmIDEwMCA3MDAgVGQgKEludmVzdGh1YiBEYXRhcm9vbSkgVGogMTAwIDY2MCBUZCAoUHLDqXZpc3VhbGlzYXRpb24gZHUgZG9jdW1lbnQuKSBUaiBFVAplbmRzdHJlYW0KZW5kb2JqCjUgMCBvYmoKPDwKL1R5cGUgL0ZvbnQKL1N1YnR5cGUgL1R5cGUxCi9CYXNlRm9udCAvSGVsdmV0aWNhCj4+CmVuZG9iagp4cmVmCjAgNgowMDAwMDAwMDAwIDY1NTM1IGYgCjAwMDAwMDAwMDkgMDAwMDAgbiAKMDAwMDAwMDA1OCAwMDAwMCBuIAowMDAwMDAwMTE1IDAwMDAwIG4gCjAwMDAwMDAyNDEgMDAwMDAgbiAKMDAwMDAwMDM1NiAwMDAwMCBuIAp0cmFpbGVyCjw8Ci9Sb290IDEgMCBSCi9TaXplIDYKPj4Kc3RhcnR4cmVmCjQyNQolJUVPRg==';
-    const raw = atob(tinyPdfBase64);
-    const bytes = new Uint8Array(raw.length);
-    for (let i = 0; i < raw.length; i += 1) {
-      bytes[i] = raw.charCodeAt(i);
-    }
-    return new Blob([bytes], { type: 'application/pdf' });
-  }, []);
-
-  const fileViewerSources = useMemo(() => {
-    const map: Record<string, string> = {};
-    files.forEach((file) => {
-      const extension = file.name.split('.').pop()?.toLowerCase();
-      const blob = extension === 'pdf'
-        ? browserPdfBlob
-        : new Blob([
-            `Prévisualisation navigateur\n\nDocument: ${file.name}\nPropriétaire: ${file.uploadedBy}\nDate: ${file.date}`,
-          ], { type: 'text/plain' });
-      map[file.id] = URL.createObjectURL(blob);
-    });
-    return map;
-  }, [files, browserPdfBlob]);
-
-  useEffect(() => {
-    return () => {
-      Object.values(fileViewerSources).forEach((source) => URL.revokeObjectURL(source));
-    };
-  }, [fileViewerSources]);
+  const defaultPreviewUrl = 'https://www.osureunion.fr/wp-content/uploads/2022/03/pdf-exemple.pdf';
 
   const openViewer = (file: Document) => {
     setViewerDocument(file);
@@ -468,11 +440,11 @@ export function DocumentListView({
               animate={{ x: 0 }}
               exit={{ x: '100%' }}
               transition={{ type: 'spring', damping: 28, stiffness: 260 }}
-              className="fixed top-0 right-0 bottom-0 z-50 w-[92vw] bg-white shadow-2xl border-l border-gray-200 flex flex-col"
+              className="fixed top-0 right-0 bottom-0 z-50 w-[50vw] min-w-[720px] bg-white shadow-2xl border-l border-gray-200 flex flex-col"
             >
               <div className="px-5 py-3 border-b border-gray-200 flex items-center justify-between">
                 <h2 className="text-base font-semibold text-gray-900">
-                  Visionneuse document
+                  {viewerDocument?.name || 'Document'}
                 </h2>
                 <button
                   type="button"
@@ -483,23 +455,17 @@ export function DocumentListView({
                   <X className="w-4 h-4" />
                 </button>
               </div>
-              <div className="px-5 py-2 border-b border-gray-100 text-xs text-gray-500">
-                Visionneuse navigateur par défaut (iframe).
-              </div>
-              <div className="flex-1 p-5 overflow-hidden">
+              <div className="flex-1 overflow-hidden">
                 {!viewerDocument ? (
                   <div className="h-full flex items-center justify-center text-sm text-gray-500">
                     Aucun document à afficher.
                   </div>
                 ) : (
-                  <div className="h-full border border-gray-200 rounded-lg overflow-hidden bg-white">
-                    <div className="px-3 py-2 border-b border-gray-100 text-xs text-gray-500 truncate">
-                      {viewerDocument.name}
-                    </div>
+                  <div className="h-full w-full bg-white">
                     <iframe
                       title={`Visionneuse ${viewerDocument.name}`}
-                      src={fileViewerSources[viewerDocument.id]}
-                      className="w-full h-[calc(100%-36px)]"
+                      src={defaultPreviewUrl}
+                      className="w-full h-full"
                     />
                   </div>
                 )}
