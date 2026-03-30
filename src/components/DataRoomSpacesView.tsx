@@ -228,7 +228,10 @@ export function DataRoomSpacesView({
                       </div>
 
                       <div className="p-6 -mt-10 relative flex-1 flex flex-col">
-                        <div className="w-16 h-16 rounded-xl bg-[#060D19] flex items-center justify-center shadow-lg mb-4">
+                        <div
+                          className="w-16 h-16 rounded-xl flex items-center justify-center shadow-lg mb-4"
+                          style={{ backgroundColor: '#060D19' }}
+                        >
                           <Folder className="w-8 h-8 text-white" />
                         </div>
 
@@ -270,7 +273,8 @@ export function DataRoomSpacesView({
 
                         <button
                           onClick={() => onSpaceSelect(space)}
-                          className="mt-auto w-full flex items-center justify-center gap-2 py-2.5 px-4 rounded-lg bg-[#060D19] text-white hover:bg-[#060D19] transition-all group/btn"
+                          className="mt-auto w-full flex items-center justify-center gap-2 py-2.5 px-4 rounded-lg text-white transition-all group/btn"
+                          style={{ backgroundColor: '#060D19' }}
                         >
                           <span className="font-medium">Ouvrir l'espace</span>
                           <ArrowRight className="w-4 h-4 group-hover/btn:translate-x-1 transition-transform" />
