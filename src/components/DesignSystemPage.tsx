@@ -266,6 +266,85 @@ export function DesignSystemPage() {
       </section>
 
       <section className="rounded-2xl border border-[#D7E0DD] dark:border-[#1F2D2A] bg-white dark:bg-[#101615] p-6">
+        <h2 className="text-lg font-semibold text-[#1F3137] dark:text-[#E8F0EE] mb-1">Storybook intégré (Foundations)</h2>
+        <p className="text-sm text-[#4F6166] dark:text-[#9DB2AE] mb-4">
+          Les composants sont affichés ici directement (pas de page Storybook séparée).
+        </p>
+        <div className="grid lg:grid-cols-2 gap-4">
+          <Card>
+            <CardHeader><CardTitle>Navigation</CardTitle></CardHeader>
+            <CardContent className="space-y-3">
+              <Tabs defaultValue="breadcrumb">
+                <TabsList>
+                  <TabsTrigger value="breadcrumb">Breadcrumb</TabsTrigger>
+                  <TabsTrigger value="tabs">Tabs</TabsTrigger>
+                </TabsList>
+                <TabsContent value="breadcrumb">
+                  <div className="flex items-center gap-2 text-[#8B96A8]"><span>InvestHub OS</span><span>/</span><span className="font-semibold text-[#1F2937]">Investisseurs</span></div>
+                </TabsContent>
+                <TabsContent value="tabs">
+                  <Tabs defaultValue="foundation">
+                    <TabsList>
+                      <TabsTrigger value="foundation">Foundation</TabsTrigger>
+                      <TabsTrigger value="inputs">Inputs</TabsTrigger>
+                    </TabsList>
+                    <TabsContent value="foundation">Tokens, couleurs, typo.</TabsContent>
+                    <TabsContent value="inputs">Boutons, champs, filtres.</TabsContent>
+                  </Tabs>
+                </TabsContent>
+              </Tabs>
+            </CardContent>
+          </Card>
+
+          <Card>
+            <CardHeader><CardTitle>Inputs & Actions</CardTitle></CardHeader>
+            <CardContent className="space-y-3">
+              <Input placeholder="Rechercher un investisseur..." />
+              <div className="grid grid-cols-3 gap-2">
+                <Select defaultValue="structure"><SelectTrigger><SelectValue /></SelectTrigger><SelectContent><SelectItem value="structure">Structure</SelectItem></SelectContent></Select>
+                <Select defaultValue="segment"><SelectTrigger><SelectValue /></SelectTrigger><SelectContent><SelectItem value="segment">Segment</SelectItem></SelectContent></Select>
+                <Button variant="secondary">Filtres</Button>
+              </div>
+              <div className="flex gap-2 flex-wrap">
+                <Button className="bg-gradient-to-r from-black to-[#0D4A5A] text-white"><Plus className="w-4 h-4" />Nouvel Investisseur</Button>
+                <Button variant="secondary" className="w-10 h-10 p-0"><MoreVertical className="w-4 h-4" /></Button>
+                <Checkbox defaultChecked />
+                <Switch checked={switchOn} onCheckedChange={setSwitchOn} />
+              </div>
+            </CardContent>
+          </Card>
+
+          <Card className="lg:col-span-2">
+            <CardHeader><CardTitle>Data Display</CardTitle></CardHeader>
+            <CardContent>
+              <UITable>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead>NOM</TableHead>
+                    <TableHead>STATUT</TableHead>
+                    <TableHead>DATE</TableHead>
+                    <TableHead>CAPITAL</TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  <TableRow>
+                    <TableCell className="font-medium text-[#114154]">Vertex Capital SA</TableCell>
+                    <TableCell><Badge className="bg-emerald-50 text-emerald-800 border-emerald-200">En relation</Badge></TableCell>
+                    <TableCell>27/12/2023</TableCell>
+                    <TableCell className="font-semibold">1 141 699 €</TableCell>
+                  </TableRow>
+                </TableBody>
+              </UITable>
+              <Alert className="mt-3">
+                <AlertTitle>Aucun investisseur trouvé</AlertTitle>
+                <AlertDescription>Les filtres appliqués ne correspondent à aucun investisseur.</AlertDescription>
+              </Alert>
+            </CardContent>
+          </Card>
+        </div>
+      </section>
+
+      <section className="rounded-2xl border border-[#D7E0DD] dark:border-[#1F2D2A] bg-white dark:bg-[#101615] p-6">
         <h2 className="text-lg font-semibold text-[#1F3137] dark:text-[#E8F0EE] mb-4">Composants dictés (v1)</h2>
         <div className="grid lg:grid-cols-2 gap-4 text-sm">
           <Card>
