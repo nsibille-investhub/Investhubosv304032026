@@ -569,6 +569,26 @@ export function DesignSystemPage() {
       </section>
 
       <section className="rounded-2xl border border-[#D7E0DD] dark:border-[#1F2D2A] bg-white dark:bg-[#101615] p-6">
+        <h2 className="text-lg font-semibold text-[#1F3137] dark:text-[#E8F0EE] mb-2">Composant GED — folder-selection-treeview-dropdown</h2>
+        <p className="text-sm text-[#4F6166] dark:text-[#9DB2AE] mb-4">
+          Sélecteur hiérarchique de dossiers avec recherche, arbre repliable et valeur enrichie (dossier cible → racine).
+        </p>
+        <div className="rounded-xl border border-[#D7E0DD] dark:border-[#1F2D2A] p-4 bg-[#FCFDFC] dark:bg-[#0F1716]">
+          <div className="rounded-lg border border-[#D7E0DD] dark:border-[#1F2D2A] bg-white dark:bg-[#0E1514] px-3 py-2.5 text-sm">
+            <p className="text-xs uppercase tracking-wider text-[#6A8084] dark:text-[#93AAA6] mb-1">Valeur sélectionnée</p>
+            <p className="font-medium text-[#1F3137] dark:text-[#E8F0EE] truncate" title="Q4 2023 / 2023 / FIEE2">
+              ... / Q4 2023 / 2023 / FIEE2
+            </p>
+          </div>
+          <ul className="mt-3 text-sm text-[#4F6166] dark:text-[#9DB2AE] list-disc pl-5 space-y-1">
+            <li>Contenu scrollable dans le panneau de sélection.</li>
+            <li>Chemin auto-déplié sur la valeur sélectionnée à l’ouverture.</li>
+            <li>Hover natif sur la valeur pour afficher le chemin complet.</li>
+          </ul>
+        </div>
+      </section>
+
+      <section className="rounded-2xl border border-[#D7E0DD] dark:border-[#1F2D2A] bg-white dark:bg-[#101615] p-6">
         <h2 className="text-lg font-semibold text-[#1F3137] dark:text-[#E8F0EE] mb-2">Référentiel colonnes — Listing investisseurs</h2>
         <p className="text-sm text-[#4F6166] dark:text-[#9DB2AE] mb-4">
           Tableau de référence des composants utilisés par colonne, avec description fonctionnelle, guidelines UI et variants.

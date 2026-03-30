@@ -255,20 +255,32 @@ export function DocumentAddModal({ isOpen, onClose, folderOptions, defaultFolder
       return path.filter((id) => id !== rootNode.id);
     };
 
-    const getSelectedContextLabel = (nodeId: string) => {
+    const getSelectedBreadcrumbDisplay = (nodeId: string) => {
       const node = folderMap.get(nodeId);
       if (!node) return 'Choisir un dossier';
       if (node.id === rootNode.id) return rootNode.name;
-      const parts = node.fullLabel.split(' / ');
-      const parentOrSpace = parts.length > 1 ? parts[parts.length - 2] : rootNode.name;
-      return `${parentOrSpace} / ${node.name}`;
+      const partsFromRoot = node.fullLabel.split(' / ').filter(Boolean);
+      const fromTargetToRoot = [...partsFromRoot].reverse();
+      const displayValue = fromTargetToRoot.length > 2
+        ? `... / ${fromTargetToRoot.join(' / ')}`
+        : fromTargetToRoot.join(' / ');
+      return displayValue;
+    };
+
+    const getSelectedBreadcrumbHover = (nodeId: string) => {
+      const node = folderMap.get(nodeId);
+      if (!node) return 'Choisir un dossier';
+      if (node.id === rootNode.id) return rootNode.name;
+      const partsFromRoot = node.fullLabel.split(' / ').filter(Boolean);
+      return [...partsFromRoot].reverse().join(' / ');
     };
 
     return {
       rootNode,
       folderMap,
       getPathToRoot: buildPathToRoot,
-      getSelectedContextLabel,
+      getSelectedBreadcrumbDisplay,
+      getSelectedBreadcrumbHover,
     };
   }, [folderOptions]);
 
@@ -595,14 +607,22 @@ export function DocumentAddModal({ isOpen, onClose, folderOptions, defaultFolder
                 <Label>Dossier parent (dans l'espace courant)</Label>
                 <Popover open={folderPickerOpen} onOpenChange={setFolderPickerOpen}>
                   <PopoverTrigger asChild>
-                    <Button variant="outline" className="h-11 w-full justify-between font-normal" disabled={isDetailMode}>
-                      <span className="truncate text-left">
-                        {folderTreeData.getSelectedContextLabel(parentFolderId)}
+                    <Button
+                      variant="outline"
+                      className="h-11 w-full justify-between font-normal"
+                      disabled={isDetailMode}
+                      data-component="folder-selection-treeview-dropdown"
+                    >
+                      <span
+                        className="truncate text-left"
+                        title={folderTreeData.getSelectedBreadcrumbHover(parentFolderId)}
+                      >
+                        {folderTreeData.getSelectedBreadcrumbDisplay(parentFolderId)}
                       </span>
                       <ChevronDown className="w-4 h-4" />
                     </Button>
                   </PopoverTrigger>
-                  <PopoverContent className="w-[var(--radix-popover-trigger-width)] p-0" align="start">
+                  <PopoverContent className="w-[var(--radix-popover-trigger-width)] p-0 max-h-[420px] overflow-hidden" align="start">
                     <div className="border-b border-gray-100 p-2.5">
                       <Input
                         value={folderSearch}
@@ -611,7 +631,7 @@ export function DocumentAddModal({ isOpen, onClose, folderOptions, defaultFolder
                         className="h-9"
                       />
                     </div>
-                    <div className="max-h-[320px] overflow-y-auto p-2">
+                    <div className="max-h-[340px] overflow-y-auto p-2">
                       {(() => {
                         const query = folderSearch.trim().toLowerCase();
 

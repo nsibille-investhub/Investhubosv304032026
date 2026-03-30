@@ -19,7 +19,7 @@ const folderOptions = [
 ];
 
 const meta = {
-  title: 'Inputs/Folder Selector (GED)',
+  title: 'Inputs/folder-selection-treeview-dropdown',
   component: DocumentAddModal,
   tags: ['autodocs'],
   parameters: {
