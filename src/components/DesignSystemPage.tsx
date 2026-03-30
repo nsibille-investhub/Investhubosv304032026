@@ -52,9 +52,11 @@ import {
   BadgeCheck,
   Plus,
   MoreVertical,
+  Copy,
   type LucideIcon,
 } from 'lucide-react';
 import * as React from 'react';
+import { motion } from 'motion/react';
 import logoInvestHub from 'figma:asset/2a84b4397fac896d4ed7e7f4faff09c957de9a6b.png';
 import { Button } from './ui/button';
 import { Input } from './ui/input';
@@ -81,6 +83,7 @@ import {
   TableHeader,
   TableRow,
 } from './ui/table';
+import { ClickableText } from './ClickableText';
 
 type DoctrineItem = {
   title: string;
@@ -328,7 +331,23 @@ export function DesignSystemPage() {
                 </TableHeader>
                 <TableBody>
                   <TableRow>
-                    <TableCell className="font-medium text-[#114154]">Vertex Capital SA</TableCell>
+                    <TableCell>
+                      <div className="flex flex-col gap-1 max-w-[300px]">
+                        <motion.div
+                          whileHover={{ x: 2 }}
+                          title="NextGen Ventures"
+                          className="text-sm font-medium cursor-pointer transition-all truncate"
+                        >
+                          <ClickableText>NextGen Ventures</ClickableText>
+                        </motion.div>
+                        <div className="flex items-center gap-1.5">
+                          <span className="text-xs text-gray-500">ID: 1</span>
+                          <button className="p-0.5 hover:bg-gray-100 rounded transition-colors">
+                            <Copy className="w-3 h-3 text-gray-400" />
+                          </button>
+                        </div>
+                      </div>
+                    </TableCell>
                     <TableCell><Badge className="bg-emerald-50 text-emerald-800 border-emerald-200">En relation</Badge></TableCell>
                     <TableCell>27/12/2023</TableCell>
                     <TableCell className="font-semibold">1 141 699 €</TableCell>
@@ -429,7 +448,23 @@ export function DesignSystemPage() {
             </TableHeader>
             <TableBody>
               <TableRow>
-                <TableCell className="font-medium text-[#114154]">Horizon Partners SAS</TableCell>
+                <TableCell>
+                  <div className="flex flex-col gap-1 max-w-[300px]">
+                    <motion.div
+                      whileHover={{ x: 2 }}
+                      title="NextGen Ventures"
+                      className="text-sm font-medium cursor-pointer transition-all truncate"
+                    >
+                      <ClickableText>NextGen Ventures</ClickableText>
+                    </motion.div>
+                    <div className="flex items-center gap-1.5">
+                      <span className="text-xs text-gray-500">ID: 1</span>
+                      <button className="p-0.5 hover:bg-gray-100 rounded transition-colors">
+                        <Copy className="w-3 h-3 text-gray-400" />
+                      </button>
+                    </div>
+                  </div>
+                </TableCell>
                 <TableCell>Nathalie Blanc <span className="text-[#114154] font-medium">+3 more</span></TableCell>
                 <TableCell>4 contacts disponibles</TableCell>
                 <TableCell><Badge className="bg-emerald-50 text-emerald-800 border-emerald-200">En relation</Badge></TableCell>
