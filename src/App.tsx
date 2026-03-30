@@ -593,7 +593,7 @@ export default function App() {
                 variant="outline"
                 size="sm"
                 onClick={() => navigateToPage('design-system')}
-                className="hidden md:inline-flex items-center gap-2 border-[#D2DDD9] text-[#2F4D51] hover:text-[#1F3137]"
+                className="inline-flex items-center gap-2 border-[#D2DDD9] text-[#2F4D51] hover:text-[#1F3137] bg-white"
               >
                 <Palette className="w-4 h-4" />
                 Design System
