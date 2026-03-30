@@ -1,5 +1,5 @@
 import { motion } from 'motion/react';
-import { User, ChevronDown, Mail, Phone, Copy, Check, Briefcase, Star, ExternalLink, UserCheck } from 'lucide-react';
+import { User, ChevronDown, ChevronRight, Mail, Phone, Copy, Check, Briefcase, Star, ExternalLink, UserCheck } from 'lucide-react';
 import { Badge } from './ui/badge';
 import {
   Popover,
@@ -84,18 +84,19 @@ export function ContactsCard({
           className="inline-flex flex-col items-start gap-1 text-xs group w-full"
           onClick={(e) => e.stopPropagation()}
         >
-          <div className="flex items-center gap-1.5 text-gray-600 hover:text-blue-600 transition-colors w-full">
-            <span className="text-gray-400 group-hover:text-blue-500 transition-colors flex-shrink-0">
+          <div className="flex items-center gap-1.5 text-muted-foreground group-hover:text-primary transition-colors w-full">
+            <span className="text-gray-400 group-hover:text-primary transition-colors flex-shrink-0">
               <User className="w-3 h-3" />
             </span>
-            <span className="truncate max-w-[120px] group-hover:underline">
+            <span className="truncate max-w-[120px] group-hover:underline" title={`${firstContact.firstName} ${firstContact.lastName}`}>
               {firstContact.firstName} {firstContact.lastName}
             </span>
+            <ChevronRight className="w-3 h-3 opacity-50 group-hover:opacity-100 transition-all flex-shrink-0" />
           </div>
           {remainingCount > 0 && (
             <motion.div
               whileHover={{ scale: 1.05 }}
-              className="flex items-center gap-1 text-blue-600 hover:text-blue-700 transition-colors ml-[18px]"
+              className="flex items-center gap-1 text-primary transition-colors ml-[18px]"
             >
               <span className="font-medium">+{remainingCount} more</span>
               <ChevronDown className="w-3 h-3" />
@@ -174,7 +175,7 @@ export function ContactsCard({
                   <div className="flex items-center justify-between gap-2">
                     <div className="flex items-center gap-2 flex-1 min-w-0">
                       <Mail className="w-3.5 h-3.5 text-gray-400 flex-shrink-0" />
-                      <span className="text-xs text-gray-700 truncate">{contact.email}</span>
+                      <span className="text-xs text-gray-700 truncate" title={contact.email}>{contact.email}</span>
                     </div>
                     <CopyButton text={contact.email} field={`${contact.id}-email`} />
                   </div>
@@ -202,12 +203,12 @@ export function ContactsCard({
                       }}
                       className={`flex items-center gap-1.5 text-xs transition-colors w-full justify-center py-1.5 px-2 rounded-md ${
                         contact.hasPortalAccess 
-                          ? 'text-purple-600 hover:text-purple-700 hover:bg-purple-50' 
+                          ? 'text-[#2563EB] hover:text-[#1D4ED8] hover:bg-[#EFF6FF]' 
                           : 'text-gray-400 hover:text-gray-500 hover:bg-gray-100'
                       }`}
                     >
                       <UserCheck className="w-3.5 h-3.5" />
-                      <span className="truncate">
+                      <span className="truncate" title={contact.hasPortalAccess ? `Ouvrir le portail en tant que ${contact.firstName}` : 'Portail investisseur (accès non activé)'}>
                         {contact.hasPortalAccess 
                           ? `Ouvrir le portail en tant que ${contact.firstName}`
                           : 'Portail investisseur (accès non activé)'

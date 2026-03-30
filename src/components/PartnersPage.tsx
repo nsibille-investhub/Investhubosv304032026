@@ -696,7 +696,7 @@ export function PartnersPage({ data, isLoading, allData, setAllData, onPartnerCl
                   onClick={() => typeof page === 'number' && handlePageChange(page)}
                   className={`min-w-[36px] h-9 px-3 rounded-lg transition-all duration-300 ${
                     page === paginationPage
-                      ? 'bg-gradient-to-br from-[#0066FF] to-[#0052CC] text-white shadow-md'
+                      ? 'bg-primary text-primary-foreground shadow-md'
                       : page === '...'
                       ? 'text-gray-400 dark:text-gray-600 cursor-default'
                       : 'hover:bg-white dark:hover:bg-gray-800 text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-100 border border-transparent hover:border-gray-200 dark:hover:border-gray-700 hover:shadow-sm'

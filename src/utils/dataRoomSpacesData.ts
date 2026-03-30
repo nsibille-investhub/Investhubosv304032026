@@ -18,7 +18,7 @@ export const mockDataRoomSpaces: DataRoomSpace[] = [
     name: 'Investisseurs LP',
     targeting: {
       userTypes: ['Investisseur'],
-      segments: ['HNWI', 'UHNWI', 'Institutional'],
+      segments: [],
       funds: []
     },
     documentCount: 127,
@@ -40,7 +40,7 @@ export const mockDataRoomSpaces: DataRoomSpace[] = [
     name: 'VENTECH II - Rapports Trimestriels',
     targeting: {
       userTypes: ['Investisseur'],
-      segments: ['HNWI', 'UHNWI'],
+      segments: ['HNWI'],
       funds: ['VENTECH II']
     },
     documentCount: 38,
@@ -50,8 +50,8 @@ export const mockDataRoomSpaces: DataRoomSpace[] = [
     id: 'space-4',
     name: 'KORELYA I - Due Diligence',
     targeting: {
-      userTypes: ['Investisseur', 'Partenaire'],
-      segments: ['UHNWI', 'Institutional'],
+      userTypes: ['Partenaire'],
+      segments: [],
       funds: ['KORELYA I']
     },
     documentCount: 92,
@@ -63,7 +63,7 @@ export const mockDataRoomSpaces: DataRoomSpace[] = [
     targeting: {
       userTypes: ['Participation'],
       segments: [],
-      funds: ['VENTECH I', 'VENTECH II', 'KORELYA I']
+      funds: ['VENTECH I']
     },
     documentCount: 134,
     folderCount: 22
@@ -84,7 +84,7 @@ export const mockDataRoomSpaces: DataRoomSpace[] = [
     name: 'Partenaires Services',
     targeting: {
       userTypes: ['Partenaire'],
-      segments: ['Professional'],
+      segments: [],
       funds: []
     },
     documentCount: 54,
@@ -96,7 +96,7 @@ export const mockDataRoomSpaces: DataRoomSpace[] = [
     targeting: {
       userTypes: ['Investisseur'],
       segments: ['HNWI', 'UHNWI'],
-      funds: ['VENTECH I', 'VENTECH II', 'KORELYA I', 'ARDIAN GROWTH']
+      funds: ['VENTECH II']
     },
     documentCount: 156,
     folderCount: 24

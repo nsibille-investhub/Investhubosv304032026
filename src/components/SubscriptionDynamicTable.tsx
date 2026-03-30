@@ -45,6 +45,8 @@ import { SignatureProgressCell } from './SignatureProgressCell';
 import { SubscriptionNameCell } from './SubscriptionNameCell';
 import { DateTimeCell } from './DateTimeCell';
 import { CalledAmountCell } from './CalledAmountCell';
+import { ClickableText } from './ClickableText';
+import { Tag } from './Tag';
 
 // Helper function to get global status
 const getGlobalStatus = (status: string) => {
@@ -166,7 +168,7 @@ export function SubscriptionDynamicTable({
       whileHover={{ backgroundColor: 'rgba(0,0,0,0.02)' }}
       onClick={() => onSort(sortKey)}
       className={cn(
-        "px-6 py-4 text-xs font-medium text-gray-600 dark:text-gray-400 uppercase tracking-wider cursor-pointer group",
+        "px-6 py-4 text-xs font-medium text-muted-foreground uppercase tracking-wider cursor-pointer group",
         align === 'center' && "text-center",
         align === 'right' && "text-right",
         align === 'left' && "text-left"
@@ -185,7 +187,7 @@ export function SubscriptionDynamicTable({
 
   const NonSortableHeader = ({ label, align = 'left' }: { label: string; align?: 'left' | 'center' | 'right' }) => (
     <th className={cn(
-      "px-6 py-4 text-xs font-medium text-gray-600 dark:text-gray-400 uppercase tracking-wider",
+      "px-6 py-4 text-xs font-medium text-muted-foreground uppercase tracking-wider",
       align === 'center' && "text-center",
       align === 'right' && "text-right",
       align === 'left' && "text-left"
@@ -211,12 +213,15 @@ export function SubscriptionDynamicTable({
           <div className="flex flex-col gap-1 max-w-[300px]">
             <motion.span
               whileHover={{ x: 2 }}
-              className="text-sm text-blue-600 dark:text-blue-400 hover:text-blue-700 dark:hover:text-blue-300 font-medium cursor-pointer hover:underline transition-all truncate"
+              title={row.contrepartie.name}
+              className="text-sm font-medium cursor-pointer transition-all truncate"
             >
-              <HighlightText 
-                text={row.contrepartie.name} 
-                searchTerm={searchTerm}
-              />
+              <ClickableText>
+                <HighlightText 
+                  text={row.contrepartie.name} 
+                  searchTerm={searchTerm}
+                />
+              </ClickableText>
             </motion.span>
             <OriginStructureCell 
               contrepartie={row.contrepartie}
@@ -250,12 +255,10 @@ export function SubscriptionDynamicTable({
 
       case 'fund':
         return (
-          <Badge className="bg-blue-50 dark:bg-blue-950/50 text-blue-700 dark:text-blue-300 border-blue-200 dark:border-blue-800">
-            <HighlightText 
-              text={row.fund.name} 
-              searchTerm={searchTerm}
-            />
-          </Badge>
+          <Tag
+            className="cursor-pointer transition-all hover:bg-primary/10 hover:text-primary hover:border-primary/40"
+            label={row.fund.name}
+          />
         );
 
       case 'compartment':
@@ -340,7 +343,7 @@ export function SubscriptionDynamicTable({
         return row.blockageReason ? (
           <div className="flex items-center gap-2 text-sm text-red-600 dark:text-red-400">
             <AlertTriangle className="w-4 h-4" />
-            <span className="truncate max-w-[180px]">{row.blockageReason}</span>
+            <span className="truncate max-w-[180px]" title={row.blockageReason}>{row.blockageReason}</span>
           </div>
         ) : (
           <span className="text-sm text-gray-400 dark:text-gray-600">-</span>
@@ -611,14 +614,14 @@ export function SubscriptionDynamicTable({
             initial={{ height: 0, opacity: 0 }}
             animate={{ height: 'auto', opacity: 1 }}
             exit={{ height: 0, opacity: 0 }}
-            className="bg-gradient-to-r from-blue-50 to-indigo-50 dark:from-blue-950/30 dark:to-indigo-950/30 border-b border-blue-200 dark:border-blue-800 overflow-hidden"
+            className="bg-muted/50 border-b border-border overflow-hidden"
           >
             <div className="px-6 py-3 flex items-center justify-between">
               <div className="flex items-center gap-3">
-                <Badge className="bg-blue-600 text-white px-3 py-1 shadow-md">
+                <Badge className="bg-primary text-primary-foreground px-3 py-1 shadow-sm">
                   {selectedIds.size} {selectedIds.size === 1 ? 'souscription sélectionnée' : 'souscriptions sélectionnées'}
                 </Badge>
-                <span className="text-sm text-blue-700 dark:text-blue-300 font-medium">
+                <span className="text-sm text-muted-foreground font-medium">
                   {selectedIds.size === totalFilteredData.length 
                     ? '(Toutes les pages sont sélectionnées)'
                     : '(Sélection partielle sur toutes les pages)'}
@@ -629,7 +632,7 @@ export function SubscriptionDynamicTable({
                   variant="ghost"
                   size="sm"
                   onClick={handleClearSelection}
-                  className="text-blue-700 dark:text-blue-300 hover:text-blue-900 dark:hover:text-blue-100 hover:bg-blue-100 dark:hover:bg-blue-900/30"
+                  className="text-muted-foreground hover:text-foreground hover:bg-muted"
                 >
                   <X className="w-4 h-4 mr-1" />
                   Annuler la sélection
@@ -643,15 +646,15 @@ export function SubscriptionDynamicTable({
       <div className="overflow-x-auto relative">
         <table className="w-full">
           <thead>
-            <tr className="border-b border-gray-200 dark:border-gray-700 bg-gray-50/95 dark:bg-gray-800/95 backdrop-blur-sm">
-              <th className="px-6 py-4 text-left">
+            <tr className="border-b border-border bg-muted/40 backdrop-blur-sm">
+              <th className="px-6 py-4 text-left sticky left-0 z-20 bg-muted/40">
                 <Tooltip>
                   <TooltipTrigger asChild>
                     <input 
                       type="checkbox"
                       checked={selectAll}
                       onChange={handleSelectAll}
-                      className="w-4 h-4 rounded border-gray-300 dark:border-gray-600 text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-gray-900 dark:focus:ring-gray-100 focus:ring-offset-2 transition-all cursor-pointer hover:scale-110"
+                      className="w-4 h-4 rounded border-border text-primary focus:ring-2 focus:ring-primary focus:ring-offset-2 transition-all cursor-pointer hover:scale-110"
                     />
                   </TooltipTrigger>
                   <TooltipContent>
@@ -677,7 +680,7 @@ export function SubscriptionDynamicTable({
                   />
                 )
               ))}
-              <th className="px-6 py-4"></th>
+              <th className="px-6 py-4 sticky right-0 z-20 bg-muted/40"></th>
             </tr>
           </thead>
           <tbody>
@@ -692,14 +695,14 @@ export function SubscriptionDynamicTable({
                   onHoverEnd={() => setHoveredRow(null)}
                   onClick={() => onRowClick(row)}
                   className={cn(
-                    "border-b border-gray-100 dark:border-gray-800 transition-all duration-200 cursor-pointer",
+                    "border-b border-border/70 transition-all duration-200 cursor-pointer",
                     hoveredRow === row.id 
-                      ? "bg-blue-50/50 dark:bg-blue-950/20" 
-                      : "hover:bg-gray-50/50 dark:hover:bg-gray-900/50"
+                      ? "bg-muted/70" 
+                      : "hover:bg-muted/50"
                   )}
                 >
                   {/* Checkbox */}
-                  <td className="px-6 py-4">
+                  <td className="px-6 py-4 sticky left-0 z-10 bg-white">
                     <motion.input
                       whileHover={{ scale: 1.1 }}
                       whileTap={{ scale: 0.9 }}
@@ -707,7 +710,7 @@ export function SubscriptionDynamicTable({
                       checked={selectedIds.has(row.id)}
                       onChange={() => handleSelectRow(row.id)}
                       onClick={(e) => e.stopPropagation()}
-                      className="w-4 h-4 rounded border-gray-300 dark:border-gray-600 text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-gray-900 dark:focus:ring-gray-100 focus:ring-offset-2 transition-all cursor-pointer"
+                      className="w-4 h-4 rounded border-border text-primary focus:ring-2 focus:ring-primary focus:ring-offset-2 transition-all cursor-pointer"
                     />
                   </td>
 
@@ -726,7 +729,7 @@ export function SubscriptionDynamicTable({
                   ))}
 
                   {/* Actions menu */}
-                  <td className="px-6 py-4">
+                  <td className="px-6 py-4 sticky right-0 z-10 bg-white">
                     <DropdownMenu>
                       <DropdownMenuTrigger asChild>
                         <Button

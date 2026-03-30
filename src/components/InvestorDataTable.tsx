@@ -1,14 +1,14 @@
 import { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
-import { 
-  ArrowUpDown, 
-  ArrowUp, 
-  ArrowDown, 
-  Copy, 
-  Check, 
-  Eye, 
-  ChevronDown, 
-  History, 
+import {
+  ArrowUpDown,
+  ArrowUp,
+  ArrowDown,
+  Copy,
+  Check,
+  Eye,
+  ChevronDown,
+  History,
   X,
   User,
   Building2,
@@ -16,10 +16,10 @@ import {
   MessageCircle,
   UserCheck,
   Archive,
-  TrendingUp,
   FileText,
   MoreVertical,
-  LogIn
+  LogIn,
+  ChevronRight
 } from 'lucide-react';
 import { Badge } from './ui/badge';
 import { Button } from './ui/button';
@@ -45,15 +45,9 @@ import {
 import { toast } from 'sonner@2.0.3';
 import { AuditLogDialog } from './AuditLogDialog';
 import { copyToClipboard } from '../utils/clipboard';
-
-// Définition des couleurs de segments - PROFESSIONNEL
-const SEGMENT_COLORS: Record<string, { color: string; bgColor: string }> = {
-  'HNWI': { color: '#3B82F6', bgColor: '#EFF6FF' },
-  'UHNWI': { color: '#F97316', bgColor: '#FFF7ED' },
-  'Retail': { color: '#EC4899', bgColor: '#FDF2F8' },
-  'Professional': { color: '#6B7280', bgColor: '#F3F4F6' },
-  'Institutional': { color: '#6B7280', bgColor: '#F9FAFB' },
-};
+import { StatusBadge } from './StatusBadge';
+import { Tag } from './Tag';
+import { ClickableText } from './ClickableText';
 
 interface InvestorDataTableProps {
   data: Investor[];
@@ -69,13 +63,13 @@ interface InvestorDataTableProps {
   searchTerm?: string;
 }
 
-export function InvestorDataTable({ 
-  data, 
-  hoveredRow, 
-  setHoveredRow, 
-  onRowClick, 
-  sortConfig, 
-  onSort, 
+export function InvestorDataTable({
+  data,
+  hoveredRow,
+  setHoveredRow,
+  onRowClick,
+  sortConfig,
+  onSort,
   compactMode,
   onMonitoringChange,
   onAnalystChange,
@@ -87,9 +81,9 @@ export function InvestorDataTable({
   const [copiedId, setCopiedId] = useState<number | null>(null);
   const [selectedIds, setSelectedIds] = useState<Set<number>>(new Set());
   const [selectAll, setSelectAll] = useState(false);
-  
+
   const totalFilteredData = allFilteredData || data;
-  
+
   useEffect(() => {
     const allIds = totalFilteredData.map(item => item.id);
     const isAllSelected = allIds.length > 0 && allIds.every(id => selectedIds.has(id));
@@ -205,16 +199,19 @@ export function InvestorDataTable({
     if (!sortConfig || sortConfig.key !== columnKey) {
       return <ArrowUpDown className="w-3.5 h-3.5 opacity-0 group-hover:opacity-50 transition-opacity" />;
     }
-    return sortConfig.direction === 'asc' 
+    return sortConfig.direction === 'asc'
       ? <ArrowUp className="w-3.5 h-3.5 text-gray-900" />
       : <ArrowDown className="w-3.5 h-3.5 text-gray-900" />;
   };
 
-  const SortableHeader = ({ label, sortKey }: { label: string; sortKey: string }) => (
-    <motion.th 
+  const SortableHeader = ({ label, sortKey, className }: { label: string; sortKey: string; className?: string }) => (
+    <motion.th
       whileHover={{ backgroundColor: 'rgba(0,0,0,0.02)' }}
       onClick={() => onSort(sortKey)}
-      className="px-6 py-4 text-left text-xs font-medium text-gray-600 dark:text-gray-400 uppercase tracking-wider cursor-pointer group"
+      className={cn(
+        "px-6 py-4 text-left text-xs font-medium text-gray-600 dark:text-gray-400 uppercase tracking-wider cursor-pointer group",
+        className
+      )}
     >
       <div className="flex items-center gap-2">
         {label}
@@ -232,15 +229,15 @@ export function InvestorDataTable({
             initial={{ height: 0, opacity: 0 }}
             animate={{ height: 'auto', opacity: 1 }}
             exit={{ height: 0, opacity: 0 }}
-            className="bg-gradient-to-r from-blue-50 to-indigo-50 border-b border-blue-200 overflow-hidden"
+            className="bg-muted/50 border-b border-border overflow-hidden"
           >
             <div className="px-6 py-3 flex items-center justify-between">
               <div className="flex items-center gap-3">
-                <Badge className="bg-blue-600 text-white px-3 py-1 shadow-md">
+                <Badge className="bg-primary text-primary-foreground px-3 py-1 shadow-sm">
                   {selectedIds.size} {selectedIds.size === 1 ? 'investisseur sélectionné' : 'investisseurs sélectionnés'}
                 </Badge>
-                <span className="text-sm text-blue-700 font-medium">
-                  {selectedIds.size === totalFilteredData.length 
+                <span className="text-sm text-muted-foreground font-medium">
+                  {selectedIds.size === totalFilteredData.length
                     ? '(Toutes les pages sont sélectionnées)'
                     : '(Sélection partielle sur toutes les pages)'}
                 </span>
@@ -250,7 +247,7 @@ export function InvestorDataTable({
                   variant="ghost"
                   size="sm"
                   onClick={handleClearSelection}
-                  className="text-blue-700 hover:text-blue-900 hover:bg-blue-100"
+                  className="text-muted-foreground hover:text-foreground hover:bg-muted"
                 >
                   <X className="w-4 h-4 mr-1" />
                   Annuler la sélection
@@ -265,10 +262,10 @@ export function InvestorDataTable({
         <table className="w-full">
           <thead>
             <tr className="border-b border-gray-200 dark:border-gray-700 bg-gray-50/95 dark:bg-gray-800/95 backdrop-blur-sm">
-              <th className="px-6 py-4 text-left">
+              <th className="px-6 py-4 text-left sticky left-0 z-20 bg-gray-50/95 dark:bg-gray-800/95">
                 <Tooltip>
                   <TooltipTrigger asChild>
-                    <input 
+                    <input
                       type="checkbox"
                       checked={selectAll}
                       onChange={handleSelectAll}
@@ -276,13 +273,17 @@ export function InvestorDataTable({
                     />
                   </TooltipTrigger>
                   <TooltipContent>
-                    {selectAll 
-                      ? `Désélectionner tous les ${totalFilteredData.length} investisseurs (toutes pages)` 
+                    {selectAll
+                      ? `Désélectionner tous les ${totalFilteredData.length} investisseurs (toutes pages)`
                       : `Sélectionner tous les ${totalFilteredData.length} investisseurs (toutes pages)`}
                   </TooltipContent>
                 </Tooltip>
               </th>
-              <SortableHeader label="Nom" sortKey="name" />
+              <SortableHeader
+                label="Nom"
+                sortKey="name"
+                className="sticky left-[64px] z-20 bg-gray-50/95 dark:bg-gray-800/95"
+              />
               <th className="px-6 py-4 text-left text-xs font-medium text-gray-600 dark:text-gray-400 uppercase tracking-wider">
                 Contacts
               </th>
@@ -303,7 +304,7 @@ export function InvestorDataTable({
               <th className="px-6 py-4 text-left text-xs font-medium text-gray-600 dark:text-gray-400 uppercase tracking-wider">
                 Partenaire
               </th>
-              <th className="px-6 py-4"></th>
+              <th className="px-6 py-4 sticky right-0 z-20 bg-gray-50/95 dark:bg-gray-800/95"></th>
             </tr>
           </thead>
           <tbody>
@@ -317,12 +318,12 @@ export function InvestorDataTable({
                   onHoverStart={() => setHoveredRow(row.id)}
                   onHoverEnd={() => setHoveredRow(null)}
                   onClick={() => onRowClick(row, 'profil')}
-                  className={`border-b border-gray-100 transition-all duration-200 cursor-pointer ${
-                    hoveredRow === row.id ? 'bg-blue-50/50' : 'hover:bg-gray-50/50'
+                  className={`border-b border-border/70 transition-all duration-200 cursor-pointer ${
+                    hoveredRow === row.id ? 'bg-muted/70' : 'hover:bg-muted/50'
                   }`}
                 >
                   {/* Checkbox */}
-                  <td className="px-6 py-4">
+                  <td className="px-6 py-4 sticky left-0 z-10 bg-white">
                     <motion.input
                       whileHover={{ scale: 1.1 }}
                       whileTap={{ scale: 0.9 }}
@@ -335,17 +336,20 @@ export function InvestorDataTable({
                   </td>
 
                   {/* Name + ID */}
-                  <td className="px-6 py-4">
+                  <td className="px-6 py-4 sticky left-[64px] z-10 bg-white">
                     <div className="flex flex-col gap-1 max-w-[300px]">
-                      <motion.span
+                      <motion.div
                         whileHover={{ x: 2 }}
-                        className="text-sm text-blue-600 hover:text-blue-700 font-medium cursor-pointer hover:underline transition-all truncate"
+                        title={row.name}
+                        className="text-sm font-medium cursor-pointer transition-all truncate"
                       >
-                        <HighlightText 
-                          text={row.name} 
-                          searchTerm={searchTerm}
-                        />
-                      </motion.span>
+                        <ClickableText>
+                          <HighlightText
+                            text={row.name}
+                            searchTerm={searchTerm}
+                          />
+                        </ClickableText>
+                      </motion.div>
                       <div className="flex items-center gap-1.5">
                         <span className="text-xs text-gray-500">ID: {row.id}</span>
                         <motion.button
@@ -366,8 +370,8 @@ export function InvestorDataTable({
 
                   {/* Contacts */}
                   <td className="px-6 py-4">
-                    <ContactsCard 
-                      contacts={row.contacts || []} 
+                    <ContactsCard
+                      contacts={row.contacts || []}
                       investorName={row.name}
                       investorEmail={row.email}
                       investorPhone={row.phone}
@@ -377,20 +381,15 @@ export function InvestorDataTable({
 
                   {/* Structure */}
                   <td className="px-6 py-4">
-                    <StructuresCell 
-                      structures={row.structures || []} 
+                    <StructuresCell
+                      structures={row.structures || []}
                       searchTerm={searchTerm}
                     />
                   </td>
 
                   {/* Type */}
                   <td className="px-6 py-4">
-                    <div className={cn(
-                      "inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md border text-xs font-medium transition-colors",
-                      row.type === 'Individual' 
-                        ? 'bg-blue-50 text-blue-700 border-blue-200' 
-                        : 'bg-indigo-50 text-indigo-700 border-indigo-200'
-                    )}>
+                    <div className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full border text-xs font-medium transition-colors bg-muted text-muted-foreground border-border">
                       {row.type === 'Individual' ? (
                         <User className="w-3.5 h-3.5" />
                       ) : (
@@ -402,19 +401,16 @@ export function InvestorDataTable({
 
                   {/* Status */}
                   <td className="px-6 py-4">
-                    <div className={cn(
-                      "inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md border text-xs font-medium transition-colors",
-                      row.status === 'Prospect' ? 'bg-blue-50 text-blue-700 border-blue-200' :
-                      row.status === 'En discussion' ? 'bg-purple-50 text-purple-700 border-purple-200' :
-                      row.status === 'En relation' ? 'bg-emerald-50 text-emerald-700 border-emerald-200' :
-                      'bg-gray-50 text-gray-700 border-gray-200'
-                    )}>
-                      {row.status === 'Prospect' && <UserPlus className="w-3.5 h-3.5" />}
-                      {row.status === 'En discussion' && <MessageCircle className="w-3.5 h-3.5" />}
-                      {row.status === 'En relation' && <UserCheck className="w-3.5 h-3.5" />}
-                      {row.status === 'Archivé' && <Archive className="w-3.5 h-3.5" />}
-                      <span>{row.status}</span>
-                    </div>
+                    <StatusBadge
+                      label={row.status}
+                      variant={
+                        row.status === 'En relation'
+                          ? 'success'
+                          : row.status === 'Archivé'
+                            ? 'neutral'
+                            : 'warning'
+                      }
+                    />
                   </td>
 
                   {/* Registration Date */}
@@ -424,12 +420,9 @@ export function InvestorDataTable({
 
                   {/* Total Invested */}
                   <td className="px-6 py-4">
-                    <div className="flex items-center gap-1.5">
-                      <TrendingUp className="w-3.5 h-3.5 text-emerald-600" />
-                      <span className="text-sm font-semibold text-gray-900">
-                        {formatCurrency(row.totalInvested)}
-                      </span>
-                    </div>
+                    <span className="text-sm font-semibold text-gray-900">
+                      {formatCurrency(row.totalInvested)}
+                    </span>
                   </td>
 
                   {/* Subscriptions Count - Clickable Badge */}
@@ -439,28 +432,20 @@ export function InvestorDataTable({
                         e.stopPropagation();
                         onRowClick(row, 'souscriptions');
                       }}
-                      className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-blue-50 hover:bg-blue-100 border border-blue-200 transition-colors cursor-pointer group"
+                      className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-muted border border-border transition-all duration-200 cursor-pointer group hover:scale-[1.03] hover:shadow-md hover:border-border/80 hover:bg-white"
                     >
-                      <FileText className="w-3.5 h-3.5 text-blue-600 group-hover:text-blue-700" />
-                      <span className="text-sm font-medium text-blue-700 group-hover:text-blue-800">
+                      <FileText className="w-3.5 h-3.5 text-muted-foreground group-hover:text-foreground" />
+                      <span className="text-sm font-medium text-muted-foreground group-hover:text-foreground">
                         {row.subscriptionsCount}
                       </span>
+                      <ChevronRight className="w-3.5 h-3.5 text-muted-foreground group-hover:text-foreground transition-transform group-hover:translate-x-0.5" />
                     </button>
                   </td>
 
                   {/* CRM Segment - Badge coloré professionnel */}
                   <td className="px-6 py-4">
                     {row.crmSegment ? (
-                      <Badge 
-                        variant="outline" 
-                        style={{
-                          backgroundColor: SEGMENT_COLORS[row.crmSegment]?.bgColor || '#F3F4F6',
-                          color: SEGMENT_COLORS[row.crmSegment]?.color || '#6B7280',
-                          borderColor: SEGMENT_COLORS[row.crmSegment]?.color || '#6B7280',
-                        }}
-                      >
-                        {row.crmSegment}
-                      </Badge>
+                      <Tag label={row.crmSegment} />
                     ) : (
                       <span className="text-gray-400 dark:text-gray-600 text-sm">—</span>
                     )}
@@ -473,14 +458,14 @@ export function InvestorDataTable({
 
                   {/* Partner */}
                   <td className="px-6 py-4" onClick={(e) => e.stopPropagation()}>
-                    <PartnerCard 
-                      partnerName={row.partner} 
+                    <PartnerCard
+                      partnerName={row.partner}
                       searchTerm={searchTerm}
                     />
                   </td>
 
                   {/* Actions */}
-                  <td className="px-6 py-4">
+                  <td className="px-6 py-4 sticky right-0 z-10 bg-white">
                     <DropdownMenu>
                       <DropdownMenuTrigger asChild>
                         <motion.button

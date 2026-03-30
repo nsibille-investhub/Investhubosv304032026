@@ -16,10 +16,10 @@ interface PartnerCardProps {
 export function PartnerCard({ partnerName, searchTerm = '' }: PartnerCardProps) {
   if (!partnerName) {
     return (
-      <Badge variant="outline" className="border-blue-200 bg-blue-50 text-blue-700 gap-1.5">
-        <Users className="w-3 h-3" />
+      <span className="inline-flex items-center gap-1.5 text-xs text-muted-foreground font-normal">
+        <Users className="w-3 h-3 text-gray-400" />
         Direct
-      </Badge>
+      </span>
     );
   }
 
@@ -86,15 +86,15 @@ export function PartnerCard({ partnerName, searchTerm = '' }: PartnerCardProps) 
           whileHover={{ x: 2 }}
           whileTap={{ scale: 0.98 }}
           onClick={(e) => e.stopPropagation()}
-          className="inline-flex items-center gap-1.5 text-xs text-gray-600 hover:text-blue-600 transition-colors group"
+          className="inline-flex items-center gap-1.5 text-xs text-muted-foreground group-hover:text-primary transition-colors group"
         >
-          <span className="text-gray-400 group-hover:text-blue-500 transition-colors">
+          <span className="text-gray-400 group-hover:text-primary transition-colors">
             <Building2 className="w-3 h-3" />
           </span>
-          <span className="max-w-[150px] truncate group-hover:underline">
+          <span className="max-w-[150px] truncate group-hover:underline" title={partnerName}>
             <HighlightText text={partnerName} searchTerm={searchTerm} />
           </span>
-          <ChevronRight className="w-3 h-3 opacity-0 group-hover:opacity-100 transition-opacity" />
+          <ChevronRight className="w-3 h-3 opacity-50 group-hover:opacity-100 transition-all group-hover:translate-x-0.5" />
         </motion.button>
       </PopoverTrigger>
       <PopoverContent 
@@ -118,7 +118,7 @@ export function PartnerCard({ partnerName, searchTerm = '' }: PartnerCardProps) 
                 <Building2 className="w-5 h-5" />
               </motion.div>
               <div className="flex-1 min-w-0">
-                <h3 className="font-semibold text-gray-900 mb-1 truncate">
+                <h3 className="font-semibold text-gray-900 mb-1 truncate" title={partnerData.name}>
                   {partnerData.name}
                 </h3>
                 <div className="flex items-center gap-2 mb-2 flex-wrap">

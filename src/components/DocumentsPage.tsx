@@ -52,10 +52,6 @@ export function DocumentsPage({ selectedSpace, navigationTarget, onNavigationHan
   const [addFolderDefaultParentId, setAddFolderDefaultParentId] = useState<string>('root');
   const [folderBeingEdited, setFolderBeingEdited] = useState<Document | null>(null);
 
-  const formatScopeValue = (values: string[], fallback: string) => (
-    values.length > 0 ? values.join(', ') : fallback
-  );
-
   const investorProfiles = [
     {
       id: 'i1',
@@ -426,39 +422,6 @@ export function DocumentsPage({ selectedSpace, navigationTarget, onNavigationHan
         transition={{ type: 'spring', stiffness: 200, damping: 25 }}
         className="bg-white rounded-2xl shadow-sm border border-gray-200 overflow-hidden flex flex-col min-w-0"
       >
-        {/* Header */}
-        <div className="px-6 py-5 border-b border-gray-200 bg-gradient-to-r from-white to-gray-50/50">
-          <div className="flex items-center justify-between">
-            <div>
-              <h2 className="text-xl font-semibold text-gray-900">Documents</h2>
-                <p className="text-sm text-gray-600 mt-1">
-                  Gérez et partagez vos documents de Data Room
-                </p>
-                <div className="mt-3 rounded-lg border border-blue-100 bg-blue-50/70 px-3 py-2">
-                  <p className="text-xs font-semibold text-blue-900">Contexte de l'espace</p>
-                  <div className="mt-1 grid gap-1 text-xs text-blue-800 md:grid-cols-3">
-                    <p>
-                      <span className="font-medium">Utilisateurs :</span>{' '}
-                      {formatScopeValue(selectedSpace.targeting.userTypes, 'Investisseur (90% des cas)')}
-                    </p>
-                    <p>
-                      <span className="font-medium">Ciblage fonds :</span>{' '}
-                      {formatScopeValue(selectedSpace.targeting.funds, 'Tous fonds')}
-                    </p>
-                    <p>
-                      <span className="font-medium">Ciblage segment :</span>{' '}
-                      {formatScopeValue(selectedSpace.targeting.segments, 'Tous segments')}
-                    </p>
-                  </div>
-                </div>
-              </div>
-            
-            <div className="flex items-center gap-3">
-              <div className="flex-1" />
-            </div>
-          </div>
-        </div>
-
         {/* Double Navigation Layout */}
         <div className="flex-1 flex min-h-0">
           {/* Left: Tree Navigation */}

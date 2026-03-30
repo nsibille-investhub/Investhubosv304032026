@@ -121,14 +121,8 @@ function TreeItem({ document, level, currentFolderId, onFolderSelect, parentPath
 export function DocumentTreeSidebar({ documents, currentFolderId, onFolderSelect, searchTerm = '' }: DocumentTreeSidebarProps) {
   return (
     <div className="h-full flex flex-col bg-white border-r border-gray-200">
-      {/* Header */}
-      <div className="px-4 py-3 border-b border-gray-200 bg-gray-50/50">
-        <h3 className="text-sm font-semibold text-gray-900">Arborescence</h3>
-        <p className="text-xs text-gray-500 mt-0.5">Navigation des dossiers</p>
-      </div>
-
       {/* Tree */}
-      <div className="flex-1 overflow-y-auto py-2">
+      <div className="flex-1 overflow-y-auto py-3">
         {/* Root level */}
         <motion.div
           onClick={() => onFolderSelect(null, [])}

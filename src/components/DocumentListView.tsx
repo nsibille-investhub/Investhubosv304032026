@@ -196,7 +196,7 @@ export function DocumentListView({
       <div className="px-6 py-3 border-b border-gray-200 bg-gray-50/30">
         <div className="grid grid-cols-12 gap-4 text-xs font-medium text-gray-500 uppercase tracking-wide">
           <div className="col-span-5">Nom</div>
-          <div className="col-span-3">Ciblage doc</div>
+          <div className="col-span-3">Ciblage</div>
           <div className="col-span-1">Ajouté le</div>
           <div className="col-span-1">Taille</div>
           <div className="col-span-2 text-right">Actions</div>

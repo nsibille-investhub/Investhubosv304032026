@@ -123,14 +123,14 @@ export function DataTable<T extends { id: number }>({
             initial={{ height: 0, opacity: 0 }}
             animate={{ height: 'auto', opacity: 1 }}
             exit={{ height: 0, opacity: 0 }}
-            className="bg-gradient-to-r from-blue-50 to-indigo-50 dark:from-blue-950/30 dark:to-indigo-950/30 border-b border-blue-200 dark:border-blue-800 overflow-hidden"
+            className="bg-muted/50 border-b border-border overflow-hidden"
           >
             <div className="px-6 py-3 flex items-center justify-between">
               <div className="flex items-center gap-3">
-                <Badge className="bg-blue-600 text-white px-3 py-1 shadow-md">
+                <Badge className="bg-primary text-primary-foreground px-3 py-1 shadow-sm">
                   {selectedIds.size} {selectedIds.size === 1 ? `${entityName} sélectionné` : `${entityName}s sélectionnés`}
                 </Badge>
-                <span className="text-sm text-blue-700 dark:text-blue-300 font-medium">
+                <span className="text-sm text-muted-foreground font-medium">
                   {selectedIds.size === totalFilteredData.length 
                     ? '(Toutes les pages sont sélectionnées)'
                     : '(Sélection partielle sur toutes les pages)'}
@@ -141,7 +141,7 @@ export function DataTable<T extends { id: number }>({
                   variant="ghost"
                   size="sm"
                   onClick={handleClearSelection}
-                  className="text-blue-700 dark:text-blue-300 hover:text-blue-900 dark:hover:text-blue-100 hover:bg-blue-100 dark:hover:bg-blue-900/30"
+                  className="text-muted-foreground hover:text-foreground hover:bg-muted"
                 >
                   <X className="w-4 h-4 mr-1" />
                   Annuler la sélection
@@ -155,7 +155,7 @@ export function DataTable<T extends { id: number }>({
       <div className="overflow-x-auto relative">
         <table className="w-full">
           <thead>
-            <tr className="border-b border-gray-200 dark:border-gray-700 bg-gray-50/95 dark:bg-gray-800/95 backdrop-blur-sm">
+            <tr className="border-b border-border bg-muted/40 backdrop-blur-sm">
               {/* Checkbox column */}
               <th className="px-6 py-4 text-left">
                 <Tooltip>
@@ -164,7 +164,7 @@ export function DataTable<T extends { id: number }>({
                       type="checkbox"
                       checked={selectAll}
                       onChange={handleSelectAll}
-                      className="w-4 h-4 rounded border-gray-300 dark:border-gray-600 text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-gray-900 dark:focus:ring-gray-100 focus:ring-offset-2 transition-all cursor-pointer hover:scale-110"
+                      className="w-4 h-4 rounded border-border text-primary focus:ring-2 focus:ring-primary focus:ring-offset-2 transition-all cursor-pointer hover:scale-110"
                     />
                   </TooltipTrigger>
                   <TooltipContent>
@@ -183,7 +183,7 @@ export function DataTable<T extends { id: number }>({
                     whileHover={{ backgroundColor: 'rgba(0,0,0,0.02)' }}
                     onClick={() => onSort(column.key)}
                     className={cn(
-                      "px-6 py-4 text-left text-xs font-medium text-gray-600 dark:text-gray-400 uppercase tracking-wider cursor-pointer group",
+                      "px-6 py-4 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider cursor-pointer group",
                       column.className
                     )}
                   >
@@ -196,7 +196,7 @@ export function DataTable<T extends { id: number }>({
                   <th 
                     key={column.key}
                     className={cn(
-                      "px-6 py-4 text-left text-xs font-medium text-gray-600 dark:text-gray-400 uppercase tracking-wider",
+                      "px-6 py-4 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider",
                       column.className
                     )}
                   >
@@ -218,11 +218,11 @@ export function DataTable<T extends { id: number }>({
                   onHoverEnd={() => setHoveredRow(null)}
                   onClick={() => onRowClick(row)}
                   className={cn(
-                    'border-b border-gray-100 dark:border-gray-800 transition-all duration-200 cursor-pointer',
+                    'border-b border-border/70 transition-all duration-200 cursor-pointer',
                     hoveredRow === row.id 
-                      ? 'bg-blue-50/50 dark:bg-blue-950/20' 
-                      : 'hover:bg-gray-50/50 dark:hover:bg-gray-900/50',
-                    selectedIds.has(row.id) && 'bg-blue-50/30 dark:bg-blue-950/10'
+                      ? 'bg-muted/70' 
+                      : 'hover:bg-muted/50',
+                    selectedIds.has(row.id) && 'bg-muted'
                   )}
                 >
                   {/* Checkbox */}
@@ -234,7 +234,7 @@ export function DataTable<T extends { id: number }>({
                       checked={selectedIds.has(row.id)}
                       onChange={() => handleSelectRow(row.id)}
                       onClick={(e) => e.stopPropagation()}
-                      className="w-4 h-4 rounded border-gray-300 dark:border-gray-600 text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-gray-900 dark:focus:ring-gray-100 focus:ring-offset-2 transition-all cursor-pointer"
+                      className="w-4 h-4 rounded border-border text-primary focus:ring-2 focus:ring-primary focus:ring-offset-2 transition-all cursor-pointer"
                     />
                   </td>
 

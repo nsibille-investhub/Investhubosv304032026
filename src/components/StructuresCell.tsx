@@ -1,5 +1,5 @@
 import { motion } from 'motion/react';
-import { Building2, ChevronDown, FileCheck, Building, Users, FileText, ShieldCheck, AlertTriangle, TrendingUp, UserCircle } from 'lucide-react';
+import { Building2, ChevronDown, ChevronRight, FileCheck, Building, Users, FileText, ShieldCheck, AlertTriangle, TrendingUp, UserCircle } from 'lucide-react';
 import { Badge } from './ui/badge';
 import {
   Popover,
@@ -59,18 +59,19 @@ export function StructuresCell({ structures, searchTerm = '' }: StructuresCellPr
           className="inline-flex flex-col items-start gap-1 text-xs group w-full"
           onClick={(e) => e.stopPropagation()}
         >
-          <div className="flex items-center gap-1.5 text-gray-600 hover:text-blue-600 transition-colors w-full">
-            <span className="text-gray-400 group-hover:text-blue-500 transition-colors flex-shrink-0">
+          <div className="flex items-center gap-1.5 text-muted-foreground group-hover:text-primary transition-colors w-full">
+            <span className="text-gray-400 group-hover:text-primary transition-colors flex-shrink-0">
               <Building2 className="w-3 h-3" />
             </span>
-            <span className="truncate max-w-[120px] group-hover:underline">
+            <span className="truncate max-w-[120px] group-hover:underline" title={firstStructure.name}>
               {firstStructure.name}
             </span>
+            <ChevronRight className="w-3 h-3 opacity-50 group-hover:opacity-100 transition-all flex-shrink-0" />
           </div>
           {remainingCount > 0 && (
             <motion.div
               whileHover={{ scale: 1.05 }}
-              className="flex items-center gap-1 text-blue-600 hover:text-blue-700 transition-colors ml-[18px]"
+              className="flex items-center gap-1 text-primary transition-colors ml-[18px]"
             >
               <span className="font-medium">+{remainingCount} more</span>
               <ChevronDown className="w-3 h-3" />
@@ -125,7 +126,7 @@ export function StructuresCell({ structures, searchTerm = '' }: StructuresCellPr
                   </div>
                   <div className="flex-1 min-w-0">
                     <div className="flex items-start justify-between gap-2 mb-1.5">
-                      <div className="font-medium text-gray-900 text-sm truncate">
+                      <div className="font-medium text-gray-900 text-sm truncate" title={structure.name}>
                         <HighlightText 
                           text={structure.name} 
                           searchTerm={searchTerm}

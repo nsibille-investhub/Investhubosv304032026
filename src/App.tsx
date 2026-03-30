@@ -32,6 +32,7 @@ import { StatusTabs } from './components/StatusTabs';
 import { SubscriptionStatusTabs } from './components/SubscriptionStatusTabs';
 import { InactiveSubscriptionTabs } from './components/InactiveSubscriptionTabs';
 import { DataRoomPage } from './components/DataRoomPage';
+import { BirdViewPage } from './components/BirdViewPage';
 import { CompliancePlusPage } from './components/CompliancePlusPage';
 import { SubscriptionsPage } from './components/SubscriptionsPage';
 import { SubscriptionDetailPage } from './components/SubscriptionDetailPage';
@@ -665,8 +666,6 @@ export default function App() {
                 </>
               ) : currentPage === 'investors' ? (
                 <>
-                  <span className="text-gray-400 dark:text-gray-500">Investisseurs</span>
-                  <span className="text-gray-300 dark:text-gray-700">/</span>
                   <span className="text-gray-900 dark:text-gray-100 font-medium">Investisseurs</span>
                 </>
               ) : currentPage === 'partners' ? (
@@ -726,6 +725,12 @@ export default function App() {
                   <span className="text-gray-400 dark:text-gray-500">Data Room</span>
                   <span className="text-gray-300 dark:text-gray-700">/</span>
                   <span className="text-gray-900 dark:text-gray-100 font-medium">Tracking</span>
+                </>
+              ) : currentPage === 'birdview' ? (
+                <>
+                  <span className="text-gray-400 dark:text-gray-500">Data Room</span>
+                  <span className="text-gray-300 dark:text-gray-700">/</span>
+                  <span className="text-gray-900 dark:text-gray-100 font-medium">Bird View</span>
                 </>
               ) : currentPage === 'events' ? (
                 <>
@@ -1223,7 +1228,7 @@ export default function App() {
               </motion.div>
 
               {/* Subscriptions Table Section */}
-              <div className="flex-1 px-6 pt-4 pb-6">
+              <div className="flex-1 px-6 pt-2 pb-6">
                 <SubscriptionsPage 
                   data={contextFilteredSubscriptions.filter(s => {
                     // Filtrer par mode actif/inactif
@@ -1336,7 +1341,7 @@ export default function App() {
               </motion.div>
 
               {/* Investors Table Section */}
-              <div className="flex-1 px-6 pt-4 pb-6">
+              <div className="flex-1 px-6 pt-2 pb-6">
                 <InvestorsPage 
                   data={contextFilteredInvestors.filter(i => {
                     // Filtrer par mode actif/inactif
@@ -1756,6 +1761,12 @@ export default function App() {
                 });
               }}
             />
+          )}
+
+          {currentPage === 'birdview' && (
+            <div className="flex-1 flex flex-col overflow-hidden">
+              <BirdViewPage onBack={() => setCurrentPage('documents')} />
+            </div>
           )}
           
           {currentPage === 'events' && (

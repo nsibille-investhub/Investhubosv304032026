@@ -6,7 +6,7 @@ import { DataRoomSpace, mockDataRoomSpaces } from '../utils/dataRoomSpacesData';
 import { DocumentsPage } from './DocumentsPage';
 import { BirdViewPage } from './BirdViewPage';
 import { toast } from 'sonner';
-import { ArrowLeft } from 'lucide-react';
+import { ArrowLeft, Folder } from 'lucide-react';
 import { Button } from './ui/button';
 import { MassUploadWizard } from './MassUploadWizard';
 import { getTreeForSpace, TreeNode } from '../utils/dataRoomTreeData';
@@ -202,7 +202,6 @@ export function DataRoomPage({ onSpaceChange }: DataRoomPageProps) {
               onAddSpace={handleAddSpace}
               onMassUpload={handleOpenMassUpload}
               onConfigureSpace={handleConfigureSpace}
-              onOpenBirdView={() => setShowBirdView(true)}
             />
           </motion.div>
         ) : (
@@ -215,22 +214,25 @@ export function DataRoomPage({ onSpaceChange }: DataRoomPageProps) {
             transition={{ duration: 0.3 }}
             className="flex-1 flex flex-col overflow-hidden"
           >
-            {/* Back button header */}
-            <div className="px-6 py-4 border-b border-gray-200 bg-white">
-              <div className="flex items-center gap-3">
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={handleBackToSpaces}
-                  className="gap-2"
-                >
-                  <ArrowLeft className="w-4 h-4" />
-                  Retour aux espaces
-                </Button>
-                <div className="h-4 w-px bg-gray-300" />
+            {/* Space header */}
+            <div className="px-6 py-5 border-b border-gray-200 bg-white">
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={handleBackToSpaces}
+                className="gap-2 mb-4"
+              >
+                <ArrowLeft className="w-4 h-4" />
+                Retour aux espaces
+              </Button>
+
+              <div className="flex items-center gap-4">
+                <div className="w-16 h-16 rounded-2xl bg-[#060D19] flex items-center justify-center shadow-sm">
+                  <Folder className="w-8 h-8 text-white" />
+                </div>
                 <div>
-                  <h2 className="font-semibold text-gray-900">{selectedSpace.name}</h2>
-                  <p className="text-xs text-gray-500">
+                  <h2 className="text-5xl leading-none font-semibold text-gray-900">{selectedSpace.name}</h2>
+                  <p className="text-base text-gray-500 mt-2">
                     {selectedSpace.documentCount} documents • {selectedSpace.folderCount} dossiers
                   </p>
                 </div>

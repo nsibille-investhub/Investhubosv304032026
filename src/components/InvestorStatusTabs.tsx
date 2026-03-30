@@ -92,12 +92,12 @@ export function InvestorStatusTabs({ data, activeStatus, onStatusChange }: Inves
     return (
       <motion.button
         onClick={handleClick}
-        whileHover={{ scale: 1.02, y: -2 }}
+        whileHover={{ scale: 1.01, y: -1 }}
         whileTap={{ scale: 0.98 }}
-        className={`relative w-full p-3 rounded-xl border-2 transition-all duration-300 text-left group overflow-hidden ${
+        className={`relative w-full p-2.5 rounded-lg border transition-all duration-200 text-left group overflow-hidden ${
           isActive
-            ? `${borderColor} bg-white shadow-lg`
-            : `border-gray-200 bg-white/60 hover:bg-white hover:border-gray-300 hover:shadow-md`
+            ? `border-primary/40 bg-white shadow-sm`
+            : `border-border/70 bg-white hover:bg-white hover:border-primary/20`
         }`}
       >
         {/* Ripple effect on click */}
@@ -125,7 +125,7 @@ export function InvestorStatusTabs({ data, activeStatus, onStatusChange }: Inves
         {/* Hover indicator - subtle top border preview */}
         {!isActive && (
           <motion.div
-            className={`absolute top-0 left-0 right-0 h-0.5 ${gradient} opacity-0 group-hover:opacity-100 rounded-t-xl`}
+            className="absolute top-0 left-0 right-0 h-0.5 bg-primary opacity-0 group-hover:opacity-100 rounded-t-xl"
             initial={{ scaleX: 0 }}
             whileHover={{ scaleX: 1 }}
             transition={{ duration: 0.3, ease: 'easeOut' }}
@@ -148,7 +148,7 @@ export function InvestorStatusTabs({ data, activeStatus, onStatusChange }: Inves
           >
             {/* Main gradient bar with pulse */}
             <motion.div 
-              className={`absolute inset-0 ${gradient}`}
+              className="absolute inset-0 bg-primary"
               animate={{ 
                 opacity: [1, 0.9, 1]
               }}
@@ -161,7 +161,7 @@ export function InvestorStatusTabs({ data, activeStatus, onStatusChange }: Inves
             
             {/* Glow effect underneath */}
             <motion.div 
-              className={`absolute inset-0 ${gradient} blur-sm opacity-60`}
+              className="absolute inset-0 bg-primary blur-sm opacity-35"
               animate={{ 
                 opacity: [0.6, 0.4, 0.6]
               }}
@@ -187,7 +187,7 @@ export function InvestorStatusTabs({ data, activeStatus, onStatusChange }: Inves
             
             {/* Bottom glow with pulse */}
             <motion.div 
-              className={`absolute -bottom-1 left-0 right-0 h-3 ${gradient} blur-lg opacity-40`}
+              className="absolute -bottom-1 left-0 right-0 h-3 bg-primary blur-lg opacity-25"
               animate={{ 
                 opacity: [0.4, 0.2, 0.4],
                 height: ['12px', '16px', '12px']
@@ -202,31 +202,31 @@ export function InvestorStatusTabs({ data, activeStatus, onStatusChange }: Inves
         )}
 
         {/* Header with icon and count */}
-        <div className="flex items-center justify-between mb-2">
-          <div className={`p-1.5 rounded-lg ${isActive ? hoverBg : 'bg-gray-100 group-hover:bg-gray-200'} transition-colors`}>
-            <Icon className={`w-4 h-4 ${isActive ? textColor : 'text-gray-600'}`} />
+        <div className="flex items-center justify-between mb-1.5">
+          <div className={`p-1 rounded-md ${isActive ? 'bg-primary/10' : 'bg-muted group-hover:bg-muted/80'} transition-colors`}>
+            <Icon className={`w-3.5 h-3.5 ${isActive ? 'text-primary' : 'text-muted-foreground'}`} />
           </div>
           <motion.div
             initial={{ scale: 0 }}
             animate={{ scale: 1 }}
-            className={`px-2 py-0.5 rounded-lg text-xs ${isActive ? gradient : 'bg-gray-100'} ${isActive ? 'text-white' : 'text-gray-700'} font-semibold`}
+            className={`px-1.5 py-0.5 rounded-md text-[11px] ${isActive ? 'bg-primary text-primary-foreground' : 'bg-muted text-muted-foreground'} font-semibold`}
           >
             {kpis.total}
           </motion.div>
         </div>
 
         {/* Label */}
-        <div className="mb-2">
-          <span className={`text-xs font-semibold ${isActive ? 'text-gray-900' : 'text-gray-600 group-hover:text-gray-900'} block leading-tight`}>
+        <div className="mb-1.5">
+          <span className={`text-xs font-semibold ${isActive ? 'text-foreground' : 'text-muted-foreground group-hover:text-foreground'} block leading-tight`}>
             {label}
           </span>
         </div>
 
         {/* KPIs */}
-        <div className="space-y-1">
+        <div className="space-y-0.5">
           <div className="flex items-baseline justify-between">
             <span className="text-[9px] text-gray-500 uppercase tracking-wide">Total investi</span>
-            <span className={`text-sm font-bold ${isActive ? textColor : 'text-gray-900'}`}>
+            <span className={`text-[13px] font-bold ${isActive ? 'text-primary' : 'text-foreground'}`}>
               €{formatAmount(kpis.totalInvested)}
             </span>
           </div>
@@ -246,14 +246,14 @@ export function InvestorStatusTabs({ data, activeStatus, onStatusChange }: Inves
       initial={{ opacity: 0, y: -20 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.3 }}
-      className="bg-gradient-to-br from-gray-50 to-white border-b border-gray-200 pb-4"
+      className="bg-primary/5 pb-2 rounded-lg"
     >
       {/* Workflow Header */}
       <div className="mb-3 flex items-center justify-between">
         <div className="flex items-center gap-2">
-          <div className="w-1 h-6 bg-gradient-to-b from-[#0066FF] to-[#00C2FF] rounded-full" />
+          <div className="w-1 h-6 bg-primary rounded-full" />
           <h3 className="font-semibold text-gray-900">Pipeline Investisseurs</h3>
-          <Badge variant="outline" className="text-xs">
+          <Badge variant="outline" className="text-xs bg-primary/10 text-primary border-primary/25">
             4 statuts
           </Badge>
         </div>
@@ -263,9 +263,9 @@ export function InvestorStatusTabs({ data, activeStatus, onStatusChange }: Inves
       </div>
 
       {/* Workflow Timeline - Responsive Grid */}
-      <div className="grid grid-cols-4 gap-2 items-center">
+      <div className="grid grid-cols-4 gap-1.5 items-center">
         {/* Step 1: Prospect */}
-        <div className="relative">
+        <div>
           <StatusCard
             status="prospect"
             label="Prospect"
@@ -276,18 +276,10 @@ export function InvestorStatusTabs({ data, activeStatus, onStatusChange }: Inves
             borderColor="border-blue-300"
             hoverBg="bg-blue-50"
           />
-          {/* Arrow overlay */}
-          <motion.div 
-            className="absolute -right-3 top-1/2 -translate-y-1/2 z-10"
-            animate={{ x: [0, 3, 0] }}
-            transition={{ duration: 2, repeat: Infinity, ease: "easeInOut" }}
-          >
-            <div className="w-0 h-0 border-l-[8px] border-l-purple-400 border-t-[6px] border-t-transparent border-b-[6px] border-b-transparent drop-shadow-sm" />
-          </motion.div>
         </div>
         
         {/* Step 2: En discussion */}
-        <div className="relative">
+        <div>
           <StatusCard
             status="en_discussion"
             label="En discussion"
@@ -298,14 +290,6 @@ export function InvestorStatusTabs({ data, activeStatus, onStatusChange }: Inves
             borderColor="border-purple-300"
             hoverBg="bg-purple-50"
           />
-          {/* Arrow overlay */}
-          <motion.div 
-            className="absolute -right-3 top-1/2 -translate-y-1/2 z-10"
-            animate={{ x: [0, 3, 0] }}
-            transition={{ duration: 2, repeat: Infinity, ease: "easeInOut", delay: 0.2 }}
-          >
-            <div className="w-0 h-0 border-l-[8px] border-l-emerald-400 border-t-[6px] border-t-transparent border-b-[6px] border-b-transparent drop-shadow-sm" />
-          </motion.div>
         </div>
         
         {/* Step 3: En relation */}
