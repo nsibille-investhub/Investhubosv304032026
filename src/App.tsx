@@ -57,6 +57,7 @@ import { InvestorDetailPage } from './components/InvestorDetailPage';
 import { EventsPage } from './components/EventsPage';
 import { NewsPage } from './components/NewsPage';
 import EcosystemPage from './components/EcosystemPage';
+import { DesignSystemPage } from './components/DesignSystemPage';
 import { generateFunds, Fund } from './utils/fundGenerator';
 import { AllFundsPage } from './components/AllFundsPage';
 import { FundStatusTabs } from './components/FundStatusTabs';
@@ -743,6 +744,12 @@ export default function App() {
                   <span className="text-gray-400 dark:text-gray-500">Portails et Contenu</span>
                   <span className="text-gray-300 dark:text-gray-700">/</span>
                   <span className="text-gray-900 dark:text-gray-100 font-medium">Actualités</span>
+                </>
+              ) : currentPage === 'design-system' ? (
+                <>
+                  <span className="text-gray-400 dark:text-gray-500">Portails et Contenu</span>
+                  <span className="text-gray-300 dark:text-gray-700">/</span>
+                  <span className="text-gray-900 dark:text-gray-100 font-medium">Design System</span>
                 </>
               ) : currentPage?.startsWith('settings-') ? (
                 <>
@@ -1779,6 +1786,10 @@ export default function App() {
             <div className="flex-1 px-6 pb-6">
               <NewsPage />
             </div>
+          )}
+
+          {currentPage === 'design-system' && (
+            <DesignSystemPage />
           )}
           
           {/* Settings Pages */}

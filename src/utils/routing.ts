@@ -14,6 +14,7 @@ export type Page =
   | 'allfunds'
   | 'events'
   | 'news' 
+  | 'design-system'
   | 'settings-app-store' 
   | 'settings-users' 
   | 'settings-teams' 
@@ -65,6 +66,7 @@ const PAGE_TO_PATH: Record<Page, string> = {
   'allfunds': '/allfunds',
   'events': '/events',
   'news': '/news',
+  'design-system': '/design-system',
   'settings-app-store': '/settings/app-store',
   'settings-users': '/settings/users',
   'settings-teams': '/settings/teams',
