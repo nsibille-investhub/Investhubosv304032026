@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from 'react';
-import { motion } from 'motion/react';
+import { AnimatePresence, motion } from 'motion/react';
 import { 
   FileText, 
   Folder, 
@@ -63,6 +63,8 @@ export function DocumentListView({
   onDeleteFolder,
 }: DocumentListViewProps) {
   const [hoveredId, setHoveredId] = useState<string | null>(null);
+  const [viewerOpen, setViewerOpen] = useState(false);
+  const [viewerDocument, setViewerDocument] = useState<Document | null>(null);
   const itemRefs = useRef<Record<string, HTMLDivElement | null>>({});
 
   // Get current level items
@@ -100,6 +102,13 @@ export function DocumentListView({
 
   const searchFolders = itemsToRender.filter(item => item.type === 'folder');
   const searchFiles = itemsToRender.filter(item => item.type !== 'folder');
+
+  const defaultPreviewUrl = 'https://www.osureunion.fr/wp-content/uploads/2022/03/pdf-exemple.pdf#zoom=page-width';
+
+  const openViewer = (file: Document) => {
+    setViewerDocument(file);
+    setViewerOpen(true);
+  };
 
   useEffect(() => {
     if (!focusedItemId) return;
@@ -362,6 +371,17 @@ export function DocumentListView({
                     </div>
                     
                     <div className="col-span-2 flex items-center justify-end gap-2">
+                      <button
+                        type="button"
+                        onClick={(event) => {
+                          event.stopPropagation();
+                          openViewer(file);
+                        }}
+                        className={`p-2 rounded-lg transition-colors ${isHovered ? 'bg-blue-50 text-blue-600' : 'text-gray-500 hover:bg-gray-100'}`}
+                        aria-label={`Ouvrir la visionneuse pour ${file.name}`}
+                      >
+                        <Eye className="w-4 h-4" />
+                      </button>
                       <DropdownMenu>
                         <DropdownMenuTrigger asChild>
                           <button
@@ -402,6 +422,59 @@ export function DocumentListView({
           </span>
         </div>
       </div>
+
+      <AnimatePresence>
+        {viewerOpen && (
+          <>
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              transition={{ duration: 0.2 }}
+              className="fixed inset-0 bg-black/45 z-40"
+              onClick={() => setViewerOpen(false)}
+            />
+
+            <motion.div
+              initial={{ x: '100%' }}
+              animate={{ x: 0 }}
+              exit={{ x: '100%' }}
+              transition={{ type: 'spring', damping: 28, stiffness: 260 }}
+              style={{ width: '70vw', minWidth: '70vw' }}
+              className="fixed top-0 right-0 bottom-0 z-50 bg-white shadow-2xl border-l border-gray-200 flex flex-col"
+            >
+              <div className="px-5 py-3 border-b border-gray-200 flex items-center justify-between">
+                <h2 className="text-base font-semibold text-gray-900">
+                  {viewerDocument?.name || 'Document'}
+                </h2>
+                <button
+                  type="button"
+                  onClick={() => setViewerOpen(false)}
+                  className="p-2 rounded-lg text-gray-500 hover:bg-gray-100 hover:text-gray-700 transition-colors"
+                  aria-label="Fermer la visionneuse"
+                >
+                  <X className="w-4 h-4" />
+                </button>
+              </div>
+              <div className="flex-1 overflow-hidden">
+                {!viewerDocument ? (
+                  <div className="h-full flex items-center justify-center text-sm text-gray-500">
+                    Aucun document à afficher.
+                  </div>
+                ) : (
+                  <div className="h-full w-full bg-white">
+                    <iframe
+                      title={`Visionneuse ${viewerDocument.name}`}
+                      src={defaultPreviewUrl}
+                      className="w-full h-full"
+                    />
+                  </div>
+                )}
+              </div>
+            </motion.div>
+          </>
+        )}
+      </AnimatePresence>
     </div>
   );
 }
