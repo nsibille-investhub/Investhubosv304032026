@@ -9,7 +9,7 @@ Source of truth: `src/components/ui/*`.
 - Inputs
   - `Button`, `Input`, `Select`, `Checkbox`, `Switch`
 - Data Display
-  - `Badge`, `Card`, `Avatar`, `Table`, `InvestorDataTable` (name field exact usage)
+  - `Badge`, `Card`, `Avatar`, `Table`, `InvestorDataTable` (name field exact usage), `OneToManyPersonsCell` (contacts one-to-many)
 - Feedback
   - `Alert`, `Skeleton`
 - Navigation

@@ -88,6 +88,7 @@ import { StatusBadge } from './StatusBadge';
 import { Tag } from './Tag';
 import { ContactsCard } from './ContactsCard';
 import { StructuresCell } from './StructuresCell';
+import { OneToManyPersonsCell } from './OneToManyPersonsCell';
 import type { Contact, LegalStructure } from '../utils/investorGenerator';
 
 type DoctrineItem = {
@@ -358,6 +359,12 @@ const previewStructures: LegalStructure[] = [
     subscriptionsCount: 3,
     totalInvested: 1657494,
   },
+];
+
+const previewPhysicalPersons = [
+  { id: 'pp-1', fullName: 'Christine Fournier', role: 'Bénéficiaire effectif' },
+  { id: 'pp-2', fullName: 'Isabelle Girard', role: 'Contact principal' },
+  { id: 'pp-3', fullName: 'Claire Petit', role: 'Directrice générale' },
 ];
 
 function renderInvestorColumnPreview(column: string) {
@@ -670,7 +677,9 @@ export function DesignSystemPage() {
                     </div>
                   </div>
                 </TableCell>
-                <TableCell>Nathalie Blanc <span className="text-[#114154] font-medium">+3 more</span></TableCell>
+                <TableCell>
+                  <OneToManyPersonsCell persons={previewPhysicalPersons} label="Contacts personnes physiques" />
+                </TableCell>
                 <TableCell>4 contacts disponibles</TableCell>
                 <TableCell><Badge className="bg-emerald-50 text-emerald-800 border-emerald-200">En relation</Badge></TableCell>
                 <TableCell>27/12/2023</TableCell>
