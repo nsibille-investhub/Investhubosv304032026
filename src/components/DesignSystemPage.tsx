@@ -50,6 +50,8 @@ import {
   Eye,
   Download,
   BadgeCheck,
+  Plus,
+  MoreVertical,
   type LucideIcon,
 } from 'lucide-react';
 import * as React from 'react';
@@ -269,15 +271,26 @@ export function DesignSystemPage() {
           <Card>
             <CardHeader><CardTitle>Breadcrumb + Header classic</CardTitle></CardHeader>
             <CardContent className="space-y-4">
-              <div className="flex items-center gap-2 text-[#6B7789]"><span>InvestHub OS</span><span>/</span><span className="font-semibold text-[#1F2937]">Investisseurs</span></div>
-              <div className="flex items-start justify-between">
-                <div>
-                  <h3 className="text-2xl font-semibold">Investisseurs</h3>
-                  <p className="text-muted-foreground">Gérer et suivre tous les investisseurs</p>
-                </div>
-                <div className="flex gap-2">
-                  <Button className="bg-gradient-to-r from-black to-[#1F4C59] text-white"><span>＋</span>Nouvel Investisseur</Button>
-                  <Button variant="secondary">⋮</Button>
+              <div className="flex items-center gap-2 text-[#8B96A8]">
+                <span>InvestHub OS</span>
+                <span>/</span>
+                <span className="font-semibold text-[#1F2937]">Investisseurs</span>
+              </div>
+              <div className="rounded-xl border border-[#E7EBF0] bg-white px-4 py-4">
+                <div className="flex items-start justify-between">
+                  <div>
+                    <h3 className="text-[44px] leading-[1.05] font-semibold tracking-tight text-[#182132]">Investisseurs</h3>
+                    <p className="text-[18px] text-[#4B596D] mt-1">Gérer et suivre tous les investisseurs</p>
+                  </div>
+                  <div className="flex gap-2">
+                    <Button className="h-11 rounded-xl bg-gradient-to-r from-black to-[#0D4A5A] text-white px-5 shadow-lg">
+                      <Plus className="w-4 h-4" />
+                      Nouvel Investisseur
+                    </Button>
+                    <Button variant="secondary" className="h-11 w-11 rounded-xl border border-[#D3D9E3] p-0">
+                      <MoreVertical className="w-4 h-4" />
+                    </Button>
+                  </div>
                 </div>
               </div>
             </CardContent>
