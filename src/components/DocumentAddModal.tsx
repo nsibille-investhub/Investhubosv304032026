@@ -7,7 +7,6 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '.
 import { Checkbox } from './ui/checkbox';
 import { Switch } from './ui/switch';
 import { Tabs, TabsList, TabsTrigger, TabsContent } from './ui/tabs';
-import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from './ui/command';
 import { Popover, PopoverContent, PopoverTrigger } from './ui/popover';
 import {
   DropdownMenu,
@@ -16,7 +15,7 @@ import {
   DropdownMenuTrigger,
 } from './ui/dropdown-menu';
 import { toast } from 'sonner';
-import { ChevronDown, UploadCloud, FileCheck2, Download, Users2, UserRound, Mail, Eye, Trash2, Check, Folder, FileText, Bell, ShieldCheck, Clock3, CheckCircle2, Star } from 'lucide-react';
+import { ChevronDown, ChevronRight, UploadCloud, FileCheck2, Download, Users2, UserRound, Mail, Eye, Trash2, Check, Folder, FileText, Bell, ShieldCheck, Clock3, CheckCircle2, Star } from 'lucide-react';
 import { Document } from '../utils/documentMockData';
 import { DocumentTargetingMarker } from './DocumentTargetingMarker';
 
@@ -62,6 +61,15 @@ interface DocumentAddModalProps {
   folderOptions: FolderOption[];
   defaultFolderId: string;
   document?: Document | null;
+  initialFolderPickerOpen?: boolean;
+}
+
+interface FolderTreeNode {
+  id: string;
+  name: string;
+  fullLabel: string;
+  parentId: string | null;
+  children: FolderTreeNode[];
 }
 
 const SEGMENTS = ['Institutionnels', 'Family Office', 'Retail', 'Corporate'];
@@ -147,7 +155,7 @@ const defaultVersions: DocumentVersion[] = [
   { language: 'en', name: '', fileName: '' },
 ];
 
-export function DocumentAddModal({ isOpen, onClose, folderOptions, defaultFolderId, document }: DocumentAddModalProps) {
+export function DocumentAddModal({ isOpen, onClose, folderOptions, defaultFolderId, document, initialFolderPickerOpen = false }: DocumentAddModalProps) {
   const isDetailMode = !!document;
   const [versions, setVersions] = useState<DocumentVersion[]>(defaultVersions);
   const [addDate, setAddDate] = useState(new Date().toISOString().slice(0, 10));
@@ -166,13 +174,19 @@ export function DocumentAddModal({ isOpen, onClose, folderOptions, defaultFolder
   const [reminderTemplate, setReminderTemplate] = useState(MAIL_TEMPLATES[0]);
   const [validationTeams, setValidationTeams] = useState<string[]>([]);
   const fileInputRefs = useRef<Record<'fr' | 'en', HTMLInputElement | null>>({ fr: null, en: null });
-  const [folderPickerOpen, setFolderPickerOpen] = useState(false);
+  const [folderPickerOpen, setFolderPickerOpen] = useState(initialFolderPickerOpen);
+  const [folderSearch, setFolderSearch] = useState('');
+  const [expandedFolderIds, setExpandedFolderIds] = useState<Set<string>>(new Set());
+  const folderItemRefs = useRef<Record<string, HTMLButtonElement | null>>({});
   const [selectedContactAccess, setSelectedContactAccess] = useState<Record<string, string[]>>({});
   const detailState = document ? (documentLifecycleMock[document.id] || { validation: { status: 'pending' as const } }) : null;
 
   useEffect(() => {
     if (!isOpen) return;
     setParentFolderId(defaultFolderId);
+    setFolderPickerOpen(initialFolderPickerOpen);
+    setFolderSearch('');
+    setExpandedFolderIds(new Set());
     setAddDate(new Date().toISOString().slice(0, 10));
     if (document) {
       setVersions([
@@ -186,6 +200,113 @@ export function DocumentAddModal({ isOpen, onClose, folderOptions, defaultFolder
       setSelectedSegments(document.target?.segments?.length ? document.target.segments : ['all']);
     }
   }, [defaultFolderId, isOpen]);
+
+  const folderTreeData = useMemo(() => {
+    const rootOption = folderOptions.find((folder) => folder.id === 'root') || { id: 'root', label: 'Racine / Documents' };
+    const rootNode: FolderTreeNode = {
+      id: rootOption.id,
+      name: rootOption.label,
+      fullLabel: rootOption.label,
+      parentId: null,
+      children: [],
+    };
+
+    const folderMap = new Map<string, FolderTreeNode>([[rootNode.id, rootNode]]);
+
+    folderOptions
+      .filter((folder) => folder.id !== 'root')
+      .forEach((folder) => {
+        const parts = folder.label.split(' / ').filter(Boolean);
+        const name = parts[parts.length - 1] || folder.label;
+        const parentLabel = parts.slice(0, -1).join(' / ');
+        const parentOption = folderOptions.find((candidate) => candidate.label === parentLabel) || rootOption;
+        const parentId = parentOption?.id || rootNode.id;
+
+        const node: FolderTreeNode = {
+          id: folder.id,
+          name,
+          fullLabel: folder.label,
+          parentId,
+          children: [],
+        };
+        folderMap.set(folder.id, node);
+      });
+
+    folderMap.forEach((node) => {
+      if (node.id === rootNode.id) return;
+      const parentId = node.parentId || rootNode.id;
+      const parent = folderMap.get(parentId) || rootNode;
+      parent.children.push(node);
+    });
+
+    const sortTree = (node: FolderTreeNode) => {
+      node.children.sort((a, b) => a.name.localeCompare(b.name, 'fr'));
+      node.children.forEach(sortTree);
+    };
+    sortTree(rootNode);
+
+    const buildPathToRoot = (nodeId: string): string[] => {
+      const path: string[] = [];
+      let current = folderMap.get(nodeId);
+      while (current?.parentId) {
+        path.unshift(current.parentId);
+        current = folderMap.get(current.parentId);
+      }
+      return path.filter((id) => id !== rootNode.id);
+    };
+
+    const getSelectedContextLabel = (nodeId: string) => {
+      const node = folderMap.get(nodeId);
+      if (!node) return 'Choisir un dossier';
+      if (node.id === rootNode.id) return rootNode.name;
+      const parts = node.fullLabel.split(' / ');
+      const parentOrSpace = parts.length > 1 ? parts[parts.length - 2] : rootNode.name;
+      return `${parentOrSpace} / ${node.name}`;
+    };
+
+    return {
+      rootNode,
+      folderMap,
+      getPathToRoot: buildPathToRoot,
+      getSelectedContextLabel,
+    };
+  }, [folderOptions]);
+
+  useEffect(() => {
+    if (!folderPickerOpen) return;
+    const selectedId = parentFolderId || 'root';
+    const pathToOpen = folderTreeData.getPathToRoot(selectedId);
+    setExpandedFolderIds(new Set(pathToOpen));
+
+    requestAnimationFrame(() => {
+      const selectedNode = folderItemRefs.current[selectedId];
+      if (selectedNode) {
+        selectedNode.focus();
+        selectedNode.scrollIntoView({ block: 'nearest' });
+      }
+    });
+  }, [folderPickerOpen, parentFolderId, folderTreeData]);
+
+  const toggleFolderExpansion = (folderId: string) => {
+    setExpandedFolderIds((prev) => {
+      const next = new Set(prev);
+      if (next.has(folderId)) {
+        next.delete(folderId);
+      } else {
+        next.add(folderId);
+      }
+      return next;
+    });
+  };
+
+  const folderMatchesSearch = (node: FolderTreeNode): boolean => {
+    if (!folderSearch.trim()) return true;
+    const query = folderSearch.toLowerCase();
+    if (node.name.toLowerCase().includes(query) || node.fullLabel.toLowerCase().includes(query)) {
+      return true;
+    }
+    return node.children.some(folderMatchesSearch);
+  };
 
   const selectedInvestorProfile = useMemo(
     () => INVESTORS.find((inv) => inv.id === selectedInvestor),
@@ -475,38 +596,82 @@ export function DocumentAddModal({ isOpen, onClose, folderOptions, defaultFolder
                 <Popover open={folderPickerOpen} onOpenChange={setFolderPickerOpen}>
                   <PopoverTrigger asChild>
                     <Button variant="outline" className="h-11 w-full justify-between font-normal" disabled={isDetailMode}>
-                      <span className="truncate">
-                        {folderOptions.find((folder) => folder.id === parentFolderId)?.label || 'Choisir un dossier'}
+                      <span className="truncate text-left">
+                        {folderTreeData.getSelectedContextLabel(parentFolderId)}
                       </span>
                       <ChevronDown className="w-4 h-4" />
                     </Button>
                   </PopoverTrigger>
                   <PopoverContent className="w-[var(--radix-popover-trigger-width)] p-0" align="start">
-                    <Command>
-                      <CommandInput placeholder="Rechercher un dossier..." />
-                      <CommandList>
-                        <CommandEmpty>Aucun dossier trouvé.</CommandEmpty>
-                        <CommandGroup>
-                          {folderOptions.map((folder) => (
-                            <CommandItem
-                              key={folder.id}
-                              value={folder.label}
-                              onSelect={() => {
-                                setParentFolderId(folder.id);
-                                setFolderPickerOpen(false);
-                              }}
-                              className="flex items-center justify-between"
-                            >
-                              <span className="flex items-center gap-2 truncate">
-                                <Folder className="w-4 h-4 text-amber-600 shrink-0" />
-                                {folder.label}
-                              </span>
-                              {parentFolderId === folder.id && <Check className="w-4 h-4 text-blue-600" />}
-                            </CommandItem>
-                          ))}
-                        </CommandGroup>
-                      </CommandList>
-                    </Command>
+                    <div className="border-b border-gray-100 p-2.5">
+                      <Input
+                        value={folderSearch}
+                        onChange={(event) => setFolderSearch(event.target.value)}
+                        placeholder="Rechercher un dossier..."
+                        className="h-9"
+                      />
+                    </div>
+                    <div className="max-h-[320px] overflow-y-auto p-2">
+                      {(() => {
+                        const query = folderSearch.trim().toLowerCase();
+
+                        const renderTreeNode = (node: FolderTreeNode, depth: number): JSX.Element | null => {
+                          const hasChildren = node.children.length > 0;
+                          const isExpanded = expandedFolderIds.has(node.id);
+                          const isSelected = parentFolderId === node.id;
+                          const selfMatches = node.name.toLowerCase().includes(query) || node.fullLabel.toLowerCase().includes(query);
+                          const childMatches = node.children.some(folderMatchesSearch);
+                          const visible = !query || selfMatches || childMatches || node.id === 'root';
+
+                          if (!visible) return null;
+
+                          return (
+                            <div key={node.id}>
+                              {node.id !== 'root' && (
+                                <div className="flex items-center gap-1">
+                                  <button
+                                    type="button"
+                                    onClick={() => hasChildren && toggleFolderExpansion(node.id)}
+                                    className="h-7 w-6 flex items-center justify-center text-gray-500 hover:text-gray-700 disabled:opacity-0"
+                                    disabled={!hasChildren}
+                                    aria-label={hasChildren ? `Déplier ${node.name}` : undefined}
+                                  >
+                                    {hasChildren ? (
+                                      <ChevronRight className={`w-4 h-4 transition-transform ${isExpanded ? 'rotate-90' : ''}`} />
+                                    ) : (
+                                      <span className="w-4 h-4" />
+                                    )}
+                                  </button>
+                                  <button
+                                    type="button"
+                                    ref={(element) => {
+                                      folderItemRefs.current[node.id] = element;
+                                    }}
+                                    onClick={() => {
+                                      setParentFolderId(node.id);
+                                      setFolderPickerOpen(false);
+                                    }}
+                                    className={`flex-1 h-8 px-2 rounded-md flex items-center gap-2 text-left text-sm ${
+                                      isSelected ? 'bg-blue-50 text-blue-700' : 'hover:bg-gray-50 text-gray-700'
+                                    }`}
+                                    style={{ marginLeft: `${depth * 14}px` }}
+                                  >
+                                    <Folder className={`w-3.5 h-3.5 ${isSelected ? 'text-blue-600' : 'text-amber-600'}`} />
+                                    <span className="truncate">{node.name}</span>
+                                    {isSelected && <Check className="w-4 h-4 ml-auto text-blue-600" />}
+                                  </button>
+                                </div>
+                              )}
+                              {(node.id === 'root' || isExpanded || !!query) &&
+                                node.children.map((child) => renderTreeNode(child, node.id === 'root' ? 0 : depth + 1))}
+                            </div>
+                          );
+                        };
+
+                        const renderedTree = renderTreeNode(folderTreeData.rootNode, 0);
+                        return renderedTree ?? <p className="text-sm text-gray-500 py-6 text-center">Aucun dossier trouvé.</p>;
+                      })()}
+                    </div>
                   </PopoverContent>
                 </Popover>
               </div>
