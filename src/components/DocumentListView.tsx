@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
-import { motion } from 'motion/react';
+import { AnimatePresence, motion } from 'motion/react';
 import { 
   FileText, 
   Folder, 
@@ -22,7 +22,6 @@ import {
   DropdownMenuTrigger,
 } from './ui/dropdown-menu';
 import { Input } from './ui/input';
-import { Dialog, DialogContent, DialogTitle } from './ui/dialog';
 import { Carousel, CarouselApi, CarouselContent, CarouselItem, CarouselNext, CarouselPrevious } from './ui/carousel';
 
 interface DocumentListViewProps {
@@ -462,45 +461,73 @@ export function DocumentListView({
         </div>
       </div>
 
-      <Dialog open={viewerOpen} onOpenChange={setViewerOpen}>
-        <DialogContent className="w-[95vw] max-w-6xl h-[85vh] p-0 overflow-hidden">
-          <div className="h-full flex flex-col">
-            <div className="px-5 py-3 border-b border-gray-200">
-              <DialogTitle className="text-base">
-                Visionneuse document
-              </DialogTitle>
-            </div>
-            <div className="flex-1 p-5 overflow-hidden">
-              {viewerFiles.length === 0 ? (
-                <div className="h-full flex items-center justify-center text-sm text-gray-500">
-                  Aucun document à afficher.
-                </div>
-              ) : (
-                <Carousel setApi={setCarouselApi} opts={{ align: 'start' }} className="h-full">
-                  <CarouselContent className="h-full -ml-0">
-                    {viewerFiles.map((file) => (
-                      <CarouselItem key={file.id} className="h-full pl-0">
-                        <div className="h-full border border-gray-200 rounded-lg overflow-hidden bg-white">
-                          <div className="px-3 py-2 border-b border-gray-100 text-xs text-gray-500 truncate">
-                            {file.name}
+      <AnimatePresence>
+        {viewerOpen && (
+          <>
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              transition={{ duration: 0.2 }}
+              className="fixed inset-0 bg-black/45 z-40"
+              onClick={() => setViewerOpen(false)}
+            />
+
+            <motion.div
+              initial={{ x: '100%' }}
+              animate={{ x: 0 }}
+              exit={{ x: '100%' }}
+              transition={{ type: 'spring', damping: 28, stiffness: 260 }}
+              className="fixed top-0 right-0 bottom-0 z-50 w-[92vw] bg-white shadow-2xl border-l border-gray-200 flex flex-col"
+            >
+              <div className="px-5 py-3 border-b border-gray-200 flex items-center justify-between">
+                <h2 className="text-base font-semibold text-gray-900">
+                  Visionneuse document
+                </h2>
+                <button
+                  type="button"
+                  onClick={() => setViewerOpen(false)}
+                  className="p-2 rounded-lg text-gray-500 hover:bg-gray-100 hover:text-gray-700 transition-colors"
+                  aria-label="Fermer la visionneuse"
+                >
+                  <X className="w-4 h-4" />
+                </button>
+              </div>
+              <div className="px-5 py-2 border-b border-gray-100 text-xs text-gray-500">
+                Mode slide type Notion — navigation gauche/droite.
+              </div>
+              <div className="flex-1 p-5 overflow-hidden">
+                {viewerFiles.length === 0 ? (
+                  <div className="h-full flex items-center justify-center text-sm text-gray-500">
+                    Aucun document à afficher.
+                  </div>
+                ) : (
+                  <Carousel setApi={setCarouselApi} opts={{ align: 'start' }} className="h-full">
+                    <CarouselContent className="h-full -ml-0">
+                      {viewerFiles.map((file) => (
+                        <CarouselItem key={file.id} className="h-full pl-0">
+                          <div className="h-full border border-gray-200 rounded-lg overflow-hidden bg-white">
+                            <div className="px-3 py-2 border-b border-gray-100 text-xs text-gray-500 truncate">
+                              {file.name}
+                            </div>
+                            <iframe
+                              title={`Visionneuse ${file.name}`}
+                              src={fileViewerSources[file.id]}
+                              className="w-full h-[calc(100%-36px)]"
+                            />
                           </div>
-                          <iframe
-                            title={`Visionneuse ${file.name}`}
-                            src={fileViewerSources[file.id]}
-                            className="w-full h-[calc(100%-36px)]"
-                          />
-                        </div>
-                      </CarouselItem>
-                    ))}
-                  </CarouselContent>
-                  <CarouselPrevious className="left-3 top-1/2" />
-                  <CarouselNext className="right-3 top-1/2" />
-                </Carousel>
-              )}
-            </div>
-          </div>
-        </DialogContent>
-      </Dialog>
+                        </CarouselItem>
+                      ))}
+                    </CarouselContent>
+                    <CarouselPrevious className="left-3 top-1/2" />
+                    <CarouselNext className="right-3 top-1/2" />
+                  </Carousel>
+                )}
+              </div>
+            </motion.div>
+          </>
+        )}
+      </AnimatePresence>
     </div>
   );
 }
