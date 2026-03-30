@@ -255,6 +255,72 @@ const v3Checklist = [
   'Chaque nouveauté doit être instrumentée (usage + erreurs) pour prioriser les itérations.',
 ];
 
+const investorListingColumnSpecs = [
+  {
+    column: 'NOM',
+    component: 'ClickableText + ID row + copy icon',
+    functional: 'Identifier rapidement l’investisseur et copier son identifiant.',
+    guidelines: 'Nom: text-sm/font-medium, couleur primaire lien; ID: text-xs gray-500; icône copy 12px.',
+    variants: 'Personne physique / Personne morale, nom long tronqué, état copié (check vert).',
+  },
+  {
+    column: 'CONTACTS',
+    component: 'ContactsCard (listing compact + “+n more”)',
+    functional: 'Afficher contact principal et accès au détail one-to-many.',
+    guidelines: 'Ligne principale text-sm, secondaire action text-[#114154] font-medium.',
+    variants: '0 contact, 1 contact, plusieurs contacts (+n more).',
+  },
+  {
+    column: 'STRUCTURE',
+    component: 'StructuresCell',
+    functional: 'Visualiser la structure juridique liée à l’investisseur.',
+    guidelines: 'Texte principal text-sm, sous-ligne de profondeur “+n more”.',
+    variants: 'Structure unique, structure multiple, donnée absente.',
+  },
+  {
+    column: 'TYPE',
+    component: 'Badge outline (company/individual)',
+    functional: 'Qualifier la nature de l’investisseur.',
+    guidelines: 'Badge arrondi, text-sm, border neutre, icône contextuelle.',
+    variants: 'Company / Individual.',
+  },
+  {
+    column: 'STATUT',
+    component: 'StatusBadge',
+    functional: 'Montrer le statut business courant de façon scannable.',
+    guidelines: 'Badge pill contrasté; couleur sémantique (vert/orange/…); text-sm.',
+    variants: 'Prospect, En discussion, En relation, Archivé…',
+  },
+  {
+    column: 'DATE D’INSCRIPTION',
+    component: 'formatDate cell',
+    functional: 'Afficher la date d’entrée au format FR.',
+    guidelines: 'Texte de cellule en style corps (table body), lisible et neutre (gris foncé).',
+    variants: 'Date valide, valeur vide/indisponible.',
+  },
+  {
+    column: 'CAPITAL INVESTI',
+    component: 'formatCurrency cell',
+    functional: 'Afficher le montant investi en euros.',
+    guidelines: 'Valeur forte: font-semibold, alignement visuel à droite recommandé.',
+    variants: '0 €, montant élevé, décimales nulles.',
+  },
+  {
+    column: 'SOUSCRIPTIONS',
+    component: 'Subscription count badge/button',
+    functional: 'Montrer le volume de souscriptions et ouvrir le détail.',
+    guidelines: 'Pill neutre avec icône fichier + count, interaction hover claire.',
+    variants: '0, 1, n souscriptions.',
+  },
+  {
+    column: 'SEGMENT',
+    component: 'Tag',
+    functional: 'Classifier l’investisseur pour filtres et reporting.',
+    guidelines: 'Tag outline léger, text-sm, espacement compact.',
+    variants: 'HNWI / Retail / Professional / UHNWI…',
+  },
+];
+
 export function DesignSystemPage() {
   const [switchOn, setSwitchOn] = React.useState(true);
 
@@ -473,6 +539,37 @@ export function DesignSystemPage() {
                 <TableCell><Badge variant="outline">11</Badge></TableCell>
                 <TableCell><Badge variant="outline">Il y a plus d'un an</Badge></TableCell>
               </TableRow>
+            </TableBody>
+          </UITable>
+        </div>
+      </section>
+
+      <section className="rounded-2xl border border-[#D7E0DD] dark:border-[#1F2D2A] bg-white dark:bg-[#101615] p-6">
+        <h2 className="text-lg font-semibold text-[#1F3137] dark:text-[#E8F0EE] mb-2">Référentiel colonnes — Listing investisseurs</h2>
+        <p className="text-sm text-[#4F6166] dark:text-[#9DB2AE] mb-4">
+          Tableau de référence des composants utilisés par colonne, avec description fonctionnelle, guidelines UI et variants.
+        </p>
+        <div className="overflow-x-auto rounded-xl border border-[#D7E0DD] dark:border-[#1F2D2A]">
+          <UITable>
+            <TableHeader>
+              <TableRow>
+                <TableHead>Colonne</TableHead>
+                <TableHead>Composant</TableHead>
+                <TableHead>Description fonctionnelle</TableHead>
+                <TableHead>Guidelines (police / taille / couleur)</TableHead>
+                <TableHead>Variants</TableHead>
+              </TableRow>
+            </TableHeader>
+            <TableBody>
+              {investorListingColumnSpecs.map((spec) => (
+                <TableRow key={spec.column}>
+                  <TableCell className="font-semibold">{spec.column}</TableCell>
+                  <TableCell>{spec.component}</TableCell>
+                  <TableCell className="whitespace-normal">{spec.functional}</TableCell>
+                  <TableCell className="whitespace-normal">{spec.guidelines}</TableCell>
+                  <TableCell className="whitespace-normal">{spec.variants}</TableCell>
+                </TableRow>
+              ))}
             </TableBody>
           </UITable>
         </div>
