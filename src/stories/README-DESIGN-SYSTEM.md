@@ -1,20 +1,18 @@
-# Design System Storybook Map (v3)
+# Design System Storybook Map (strict mapping)
 
-## Coverage
-- Foundations: Colors, Typography
-- Inputs: Button, Input, Select, Checkbox & Switch
-- Data Display: Badge, Card, Avatar, Table
-- Feedback: Alert, Skeleton
-- Navigation: Tabs, Breadcrumb
+Source of truth: `src/components/ui/*`.
 
-## Refactoring suggestions
-1. **Button variants**: keep `primary|secondary|ghost|danger|link` and deprecate aliases (`default|outline|destructive`) progressively.
-2. **Tables**: standardize around `ui/table.tsx` and keep business wrappers thin.
-3. **Status colors**: unify warning/error tokens from one source of truth.
-4. **Micro-interactions**: enforce loading/disabled state for all submit actions.
+## Stories mapped to existing components only
+- Foundations
+  - `Separator` (`Foundations/Colors.stories.tsx`)
+  - `Label` (`Foundations/Typography.stories.tsx`)
+- Inputs
+  - `Button`, `Input`, `Select`, `Checkbox`, `Switch`
+- Data Display
+  - `Badge`, `Card`, `Avatar`, `Table`
+- Feedback
+  - `Alert`, `Skeleton`
+- Navigation
+  - `Tabs`, `Breadcrumb`
 
-## Missing core components (recommended)
-- Empty state primitive
-- Inline form validation helpers
-- Toast story with async action examples
-- Data grid with sortable headers primitive
+No generated components, no renamed components, no merged components.

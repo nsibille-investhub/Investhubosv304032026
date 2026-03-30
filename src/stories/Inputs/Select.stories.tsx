@@ -1,8 +1,17 @@
 import type { Meta, StoryObj } from '@storybook/react';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../../components/ui/select';
 
-function SelectDemo() {
-  return (
+const meta = {
+  title: 'Inputs/Select',
+  component: Select,
+  tags: ['autodocs'],
+} satisfies Meta<typeof Select>;
+
+export default meta;
+type Story = StoryObj<typeof meta>;
+
+export const Default: Story = {
+  render: () => (
     <div className="w-72">
       <Select defaultValue="stable">
         <SelectTrigger>
@@ -15,16 +24,5 @@ function SelectDemo() {
         </SelectContent>
       </Select>
     </div>
-  );
-}
-
-const meta = {
-  title: 'Inputs/Select',
-  component: SelectDemo,
-  tags: ['autodocs'],
-} satisfies Meta<typeof SelectDemo>;
-
-export default meta;
-type Story = StoryObj<typeof meta>;
-
-export const Default: Story = {};
+  ),
+};
