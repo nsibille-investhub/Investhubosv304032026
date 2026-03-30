@@ -52,14 +52,33 @@ import {
   BadgeCheck,
   type LucideIcon,
 } from 'lucide-react';
+import * as React from 'react';
 import logoInvestHub from 'figma:asset/2a84b4397fac896d4ed7e7f4faff09c957de9a6b.png';
-
-type ComponentMeta = {
-  name: string;
-  file: string;
-  role: string;
-  status: 'stable' | 'beta';
-};
+import { Button } from './ui/button';
+import { Input } from './ui/input';
+import { Checkbox } from './ui/checkbox';
+import { Switch } from './ui/switch';
+import { Badge } from './ui/badge';
+import { Avatar, AvatarFallback } from './ui/avatar';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from './ui/card';
+import { Alert, AlertDescription, AlertTitle } from './ui/alert';
+import { Skeleton } from './ui/skeleton';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from './ui/tabs';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from './ui/select';
+import {
+  Table as UITable,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from './ui/table';
 
 type DoctrineItem = {
   title: string;
@@ -137,33 +156,6 @@ const metierIcons: Array<{ label: string; className: string; icon: LucideIcon }>
   { label: 'Requêtes', className: 'fa-database', icon: Database },
 ];
 
-const tableComponents: ComponentMeta[] = [
-  { name: 'DataTable', file: 'src/components/DataTable.tsx', role: 'Table générique tri/filtre', status: 'stable' },
-  { name: 'InvestorDataTable', file: 'src/components/InvestorDataTable.tsx', role: 'Table investisseurs', status: 'stable' },
-  { name: 'SubscriptionDataTable', file: 'src/components/SubscriptionDataTable.tsx', role: 'Table souscriptions', status: 'stable' },
-  { name: 'SubscriptionDynamicTable', file: 'src/components/SubscriptionDynamicTable.tsx', role: 'Table dynamique colonnes', status: 'beta' },
-  { name: 'AlertDataTable', file: 'src/components/AlertDataTable.tsx', role: 'Table alertes conformité', status: 'stable' },
-  { name: 'TableSkeleton', file: 'src/components/TableSkeleton.tsx', role: 'État de chargement tableau', status: 'stable' },
-  { name: 'StatusBadge', file: 'src/components/StatusBadge.tsx', role: 'Statut visuel en cellule', status: 'stable' },
-  { name: 'DateTimeCell', file: 'src/components/DateTimeCell.tsx', role: 'Format date/heure', status: 'stable' },
-  { name: 'SubscriptionNameCell', file: 'src/components/SubscriptionNameCell.tsx', role: 'Cellule métier souscription', status: 'stable' },
-  { name: 'SignatureProgressCell', file: 'src/components/SignatureProgressCell.tsx', role: 'Progression signature', status: 'stable' },
-  { name: 'FundShareCell', file: 'src/components/FundShareCell.tsx', role: 'Valeurs de part de fonds', status: 'stable' },
-  { name: 'CalledAmountCell', file: 'src/components/CalledAmountCell.tsx', role: 'Montant appelé', status: 'stable' },
-];
-
-const coreComponents: ComponentMeta[] = [
-  { name: 'Button', file: 'src/components/ui/button.tsx', role: 'Actions principales', status: 'stable' },
-  { name: 'Input', file: 'src/components/ui/input.tsx', role: 'Saisie texte', status: 'stable' },
-  { name: 'Select', file: 'src/components/ui/select.tsx', role: 'Choix unique', status: 'stable' },
-  { name: 'Dialog', file: 'src/components/ui/dialog.tsx', role: 'Modales', status: 'stable' },
-  { name: 'DropdownMenu', file: 'src/components/ui/dropdown-menu.tsx', role: 'Menus contextuels', status: 'stable' },
-  { name: 'Tabs', file: 'src/components/ui/tabs.tsx', role: 'Navigation secondaire', status: 'stable' },
-  { name: 'Tooltip', file: 'src/components/ui/tooltip.tsx', role: 'Aide contextuelle', status: 'stable' },
-  { name: 'Pagination', file: 'src/components/ui/pagination.tsx', role: 'Pagination standard', status: 'stable' },
-  { name: 'Badge', file: 'src/components/ui/badge.tsx', role: 'Indicateurs compacts', status: 'stable' },
-  { name: 'Card', file: 'src/components/ui/card.tsx', role: 'Conteneur contenu', status: 'stable' },
-];
 
 const doctrinePillars: DoctrineItem[] = [
   {
@@ -212,45 +204,9 @@ const v3Checklist = [
   'Chaque nouveauté doit être instrumentée (usage + erreurs) pour prioriser les itérations.',
 ];
 
-function ComponentLibraryTable({ title, items, icon: Icon }: { title: string; items: ComponentMeta[]; icon: LucideIcon }) {
-  return (
-    <section className="rounded-2xl border border-[#D7E0DD] dark:border-[#1F2D2A] bg-white dark:bg-[#101615] p-6">
-      <div className="flex items-center gap-2 mb-4">
-        <Icon className="w-4 h-4 text-[#3F7358]" />
-        <h2 className="text-lg font-semibold text-[#1F3137] dark:text-[#E8F0EE]">{title}</h2>
-      </div>
-      <div className="overflow-x-auto">
-        <table className="w-full text-sm">
-          <thead>
-            <tr className="text-left border-b border-[#E2E8E6] dark:border-[#1F2D2A]">
-              <th className="py-2 pr-4">Composant</th>
-              <th className="py-2 pr-4">Rôle</th>
-              <th className="py-2 pr-4">Fichier</th>
-              <th className="py-2">État</th>
-            </tr>
-          </thead>
-          <tbody>
-            {items.map((item) => (
-              <tr key={item.name} className="border-b border-[#EEF3F1] dark:border-[#15201D] align-top">
-                <td className="py-2 pr-4 font-medium text-[#1F3137] dark:text-[#E8F0EE]">{item.name}</td>
-                <td className="py-2 pr-4 text-[#4F6166] dark:text-[#9DB2AE]">{item.role}</td>
-                <td className="py-2 pr-4"><code className="text-xs text-[#456B6C] dark:text-[#9BD1C5]">{item.file}</code></td>
-                <td className="py-2">
-                  <span className={`inline-flex items-center gap-1 text-xs px-2 py-0.5 rounded-full ${item.status === 'stable' ? 'bg-[#E9F6EF] text-[#2E6B4E]' : 'bg-[#FFF6E5] text-[#966500]'}`}>
-                    <BadgeCheck className="w-3 h-3" />
-                    {item.status}
-                  </span>
-                </td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
-      </div>
-    </section>
-  );
-}
-
 export function DesignSystemPage() {
+  const [switchOn, setSwitchOn] = React.useState(true);
+
   return (
     <div className="flex-1 overflow-auto px-6 py-6 space-y-6 bg-[#F8FAFA] dark:bg-[#0B0D0D]">
       <section className="rounded-2xl border border-[#D7E0DD] dark:border-[#1F2D2A] bg-white dark:bg-[#101615] p-6">
@@ -360,16 +316,104 @@ export function DesignSystemPage() {
         </div>
       </section>
 
-      <ComponentLibraryTable title="01 — Composants Tableaux" items={tableComponents} icon={Table} />
-      <ComponentLibraryTable title="02 — Filtres / Colonnes / Data UX" items={[
-        { name: 'FilterBar', file: 'src/components/FilterBar.tsx', role: 'Barre filtres globale', status: 'stable' },
-        { name: 'DocumentFilterBar', file: 'src/components/DocumentFilterBar.tsx', role: 'Filtres documents', status: 'stable' },
-        { name: 'InvestorFilterBar', file: 'src/components/InvestorFilterBar.tsx', role: 'Filtres investisseurs', status: 'stable' },
-        { name: 'PartnerFilterBar', file: 'src/components/PartnerFilterBar.tsx', role: 'Filtres partenaires', status: 'stable' },
-        { name: 'StatusTabs', file: 'src/components/StatusTabs.tsx', role: 'Segments de statut', status: 'stable' },
-        { name: 'SubscriptionStatusTabs', file: 'src/components/SubscriptionStatusTabs.tsx', role: 'Tabs statut souscriptions', status: 'stable' },
-      ]} icon={Filter} />
-      <ComponentLibraryTable title="03 — Composants Core UI" items={coreComponents} icon={Columns3} />
+      <section className="rounded-2xl border border-[#D7E0DD] dark:border-[#1F2D2A] bg-white dark:bg-[#101615] p-6">
+        <div className="flex items-center gap-2 mb-4">
+          <Table className="w-4 h-4 text-[#3F7358]" />
+          <h2 className="text-lg font-semibold text-[#1F3137] dark:text-[#E8F0EE]">Composants affichés — Data & Table</h2>
+        </div>
+        <Card className="mb-4">
+          <CardHeader>
+            <CardTitle>Table UI</CardTitle>
+            <CardDescription>Exemple direct d’un composant tableau réutilisable.</CardDescription>
+          </CardHeader>
+          <CardContent>
+            <UITable>
+              <TableHeader>
+                <TableRow>
+                  <TableHead>Composant</TableHead>
+                  <TableHead>Catégorie</TableHead>
+                  <TableHead>État</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                <TableRow>
+                  <TableCell>DataTable</TableCell>
+                  <TableCell>Data Display</TableCell>
+                  <TableCell><Badge>Stable</Badge></TableCell>
+                </TableRow>
+                <TableRow>
+                  <TableCell>TableSkeleton</TableCell>
+                  <TableCell>Feedback</TableCell>
+                  <TableCell><Badge variant="secondary">Loading</Badge></TableCell>
+                </TableRow>
+              </TableBody>
+            </UITable>
+          </CardContent>
+        </Card>
+      </section>
+
+      <section className="rounded-2xl border border-[#D7E0DD] dark:border-[#1F2D2A] bg-white dark:bg-[#101615] p-6">
+        <div className="flex items-center gap-2 mb-4">
+          <Columns3 className="w-4 h-4 text-[#3F7358]" />
+          <h2 className="text-lg font-semibold text-[#1F3137] dark:text-[#E8F0EE]">Composants affichés — Inputs & Navigation</h2>
+        </div>
+        <div className="grid lg:grid-cols-2 gap-4">
+          <Card>
+            <CardHeader>
+              <CardTitle>Inputs</CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-3">
+              <Input placeholder="Nom du composant" />
+              <Select defaultValue="stable">
+                <SelectTrigger>
+                  <SelectValue placeholder="Choisir un état" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="stable">Stable</SelectItem>
+                  <SelectItem value="beta">Beta</SelectItem>
+                  <SelectItem value="deprecated">Deprecated</SelectItem>
+                </SelectContent>
+              </Select>
+              <div className="flex items-center gap-3">
+                <Checkbox defaultChecked />
+                <Switch checked={switchOn} onCheckedChange={setSwitchOn} />
+              </div>
+              <div className="flex gap-2 flex-wrap">
+                <Button variant="primary">Primary</Button>
+                <Button variant="secondary">Secondary</Button>
+                <Button variant="ghost">Ghost</Button>
+                <Button variant="danger">Danger</Button>
+              </div>
+            </CardContent>
+          </Card>
+
+          <Card>
+            <CardHeader>
+              <CardTitle>Navigation & feedback</CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-3">
+              <Tabs defaultValue="foundation">
+                <TabsList>
+                  <TabsTrigger value="foundation">Foundation</TabsTrigger>
+                  <TabsTrigger value="inputs">Inputs</TabsTrigger>
+                </TabsList>
+                <TabsContent value="foundation" className="text-sm text-muted-foreground">Tokens, couleurs, typo.</TabsContent>
+                <TabsContent value="inputs" className="text-sm text-muted-foreground">Boutons, champs, sélection.</TabsContent>
+              </Tabs>
+              <Alert>
+                <AlertTitle>Documentation active</AlertTitle>
+                <AlertDescription>Chaque composant est affiché directement dans cette page.</AlertDescription>
+              </Alert>
+              <div className="flex items-center gap-2">
+                <Avatar><AvatarFallback>IH</AvatarFallback></Avatar>
+                <Badge variant="outline">Avatar</Badge>
+                <Badge variant="destructive">Error</Badge>
+              </div>
+              <Skeleton className="h-8 w-full" />
+            </CardContent>
+          </Card>
+        </div>
+      </section>
 
       <section className="rounded-2xl border border-[#D7E0DD] dark:border-[#1F2D2A] bg-white dark:bg-[#101615] p-6">
         <h2 className="text-lg font-semibold text-[#1F3137] dark:text-[#E8F0EE] mb-4">Guidelines d’usage</h2>
