@@ -6,6 +6,7 @@ import { DataPagination } from '../ui/data-pagination';
 import { motion } from 'motion/react';
 import { InfoBanner } from '../InfoBanner';
 import { Checkbox } from '../ui/checkbox';
+import { DatePicker } from '../ui/date-picker';
 import { RetrocessionFilterBar } from '../RetrocessionFilterBar';
 import { PartenaireCard } from '../PartenaireCard';
 import { HighlightText } from '../HighlightText';
@@ -261,6 +262,18 @@ export function RetrocessionsSettings() {
   const [selectedIds, setSelectedIds] = useState<string[]>([]);
   const [pendingActionReview, setPendingActionReview] = useState<PendingActionReview | null>(null);
 
+  const parseFrenchDate = (value?: string): Date | undefined => {
+    if (!value) return undefined;
+    const [day, month, year] = value.split('/');
+    if (!day || !month || !year) return undefined;
+    const parsedDate = new Date(Number(year), Number(month) - 1, Number(day));
+    return Number.isNaN(parsedDate.getTime()) ? undefined : parsedDate;
+  };
+
+  const formatFrenchDate = (date: Date): string => {
+    return date.toLocaleDateString('fr-FR');
+  };
+
   const filteredRetrocessions = retrocessions.filter(ret => {
     const matchesSearch = !searchQuery || 
       ret.partenaire.toLowerCase().includes(searchQuery.toLowerCase()) ||
@@ -380,6 +393,24 @@ export function RetrocessionsSettings() {
 
     setSelectedIds(prev => prev.filter(id => !pendingIds.includes(id)));
     setPendingActionReview(null);
+  };
+
+  const handleInlinePaymentDateChange = (retrocessionId: string, selectedDate: Date | undefined) => {
+    if (!selectedDate) {
+      return;
+    }
+
+    setRetrocessions(prev => prev.map(item => {
+      if (item.id !== retrocessionId || item.statut !== 'Facturé - A payer') {
+        return item;
+      }
+
+      return {
+        ...item,
+        statut: 'Facturé - Payé',
+        datePaiement: formatFrenchDate(selectedDate),
+      };
+    }));
   };
 
   const toggleItemSelection = (itemId: string) => {
@@ -550,7 +581,19 @@ export function RetrocessionsSettings() {
                         <td className="px-4 py-3 text-sm text-gray-600">{retrocession.type}</td>
                         <td className="px-4 py-3 text-sm text-gray-600">{retrocession.date}</td>
                         <td className="px-4 py-3 text-sm text-gray-600">{retrocession.dateNotification || '-'}</td>
-                        <td className="px-4 py-3 text-sm text-gray-600">{retrocession.datePaiement || '-'}</td>
+                        <td className="px-4 py-3 text-sm text-gray-600">
+                          {retrocession.statut === 'Facturé - A payer' ? (
+                            <DatePicker
+                              date={parseFrenchDate(retrocession.datePaiement)}
+                              onDateChange={(date) => handleInlinePaymentDateChange(retrocession.id, date)}
+                              placeholder="Renseigner"
+                              maxDate={new Date()}
+                              className="h-8 text-xs min-w-[140px]"
+                            />
+                          ) : (
+                            retrocession.datePaiement || '-'
+                          )}
+                        </td>
                         <td className="px-4 py-3">
                           <PartenaireCard
                             partenaire={{
