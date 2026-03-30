@@ -88,7 +88,6 @@ import { StatusBadge } from './StatusBadge';
 import { Tag } from './Tag';
 import { ContactsCard } from './ContactsCard';
 import { StructuresCell } from './StructuresCell';
-import { OneToManyPersonsCell } from './OneToManyPersonsCell';
 import type { Contact, LegalStructure } from '../utils/investorGenerator';
 
 type DoctrineItem = {
@@ -361,12 +360,6 @@ const previewStructures: LegalStructure[] = [
   },
 ];
 
-const previewPhysicalPersons = [
-  { id: 'pp-1', fullName: 'Christine Fournier', role: 'Bénéficiaire effectif' },
-  { id: 'pp-2', fullName: 'Isabelle Girard', role: 'Contact principal' },
-  { id: 'pp-3', fullName: 'Claire Petit', role: 'Directrice générale' },
-];
-
 function renderInvestorColumnPreview(column: string) {
   switch (column) {
     case 'NOM':
@@ -572,123 +565,6 @@ export function DesignSystemPage() {
               <Skeleton className="h-8 w-full" />
             </CardContent>
           </Card>
-        </div>
-      </section>
-
-      <section className="rounded-2xl border border-[#D7E0DD] dark:border-[#1F2D2A] bg-white dark:bg-[#101615] p-6">
-        <h2 className="text-lg font-semibold text-[#1F3137] dark:text-[#E8F0EE] mb-4">Composants dictés (v1)</h2>
-        <div className="grid lg:grid-cols-2 gap-4 text-sm">
-          <Card>
-            <CardHeader><CardTitle>Breadcrumb + Header classic</CardTitle></CardHeader>
-            <CardContent className="space-y-4">
-              <div className="flex items-center gap-2 text-[#8B96A8]">
-                <span>InvestHub OS</span>
-                <span>/</span>
-                <span className="font-semibold text-[#1F2937]">Investisseurs</span>
-              </div>
-              <div className="rounded-xl border border-[#E7EBF0] bg-white px-4 py-4">
-                <div className="flex items-start justify-between">
-                  <div>
-                    <h3 className="text-[44px] leading-[1.05] font-semibold tracking-tight text-[#182132]">Investisseurs</h3>
-                    <p className="text-[18px] text-[#4B596D] mt-1">Gérer et suivre tous les investisseurs</p>
-                  </div>
-                  <div className="flex gap-2">
-                    <Button className="h-11 rounded-xl bg-gradient-to-r from-black to-[#0D4A5A] text-white px-5 shadow-lg">
-                      <Plus className="w-4 h-4" />
-                      Nouvel Investisseur
-                    </Button>
-                    <Button variant="secondary" className="h-11 w-11 rounded-xl border border-[#D3D9E3] p-0">
-                      <MoreVertical className="w-4 h-4" />
-                    </Button>
-                  </div>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-
-          <Card>
-            <CardHeader><CardTitle>Filter cards / Active card</CardTitle></CardHeader>
-            <CardContent className="grid grid-cols-2 gap-2">
-              <div className="rounded-xl border p-3"><p className="text-xs text-muted-foreground">Prospect</p><p className="text-xl font-semibold">34</p></div>
-              <div className="rounded-xl border p-3"><p className="text-xs text-muted-foreground">En discussion</p><p className="text-xl font-semibold">37</p></div>
-              <div className="rounded-xl border p-3"><p className="text-xs text-muted-foreground">En relation</p><p className="text-xl font-semibold">42</p></div>
-              <div className="rounded-xl border-2 border-[#0F4A56] p-3 shadow-sm"><p className="text-xs text-muted-foreground">Tous</p><p className="text-xl font-semibold text-[#0F4A56]">113</p></div>
-            </CardContent>
-          </Card>
-
-          <Card>
-            <CardHeader><CardTitle>Table search & filters + Active filters</CardTitle></CardHeader>
-            <CardContent className="space-y-3">
-              <div className="grid grid-cols-4 gap-2">
-                <Input className="col-span-2" placeholder="Rechercher un investisseur..." />
-                <Select defaultValue="structure"><SelectTrigger><SelectValue /></SelectTrigger><SelectContent><SelectItem value="structure">Structure</SelectItem></SelectContent></Select>
-                <Button variant="secondary">Filtres</Button>
-              </div>
-              <div className="flex items-center gap-2 flex-wrap">
-                <span className="text-muted-foreground">Filtres actifs :</span>
-                <Badge variant="outline">Segment: UHNWI ✕</Badge>
-                <Badge variant="outline">Structure: Alpha SARL ✕</Badge>
-              </div>
-            </CardContent>
-          </Card>
-
-          <Card>
-            <CardHeader><CardTitle>Empty state</CardTitle></CardHeader>
-            <CardContent>
-              <Alert>
-                <AlertTitle>Aucun investisseur trouvé</AlertTitle>
-                <AlertDescription>Les filtres appliqués ne correspondent à aucun investisseur.</AlertDescription>
-              </Alert>
-              <Button variant="secondary" className="mt-3">Réinitialiser les filtres</Button>
-            </CardContent>
-          </Card>
-        </div>
-
-        <div className="mt-4 rounded-xl border border-[#D7E0DD] dark:border-[#1F2D2A] overflow-hidden">
-          <UITable>
-            <TableHeader>
-              <TableRow>
-                <TableHead>Item Name</TableHead>
-                <TableHead>One-To-Many in listing</TableHead>
-                <TableHead>One-To-Many details</TableHead>
-                <TableHead>Badges status</TableHead>
-                <TableHead>Simple date</TableHead>
-                <TableHead>Amount</TableHead>
-                <TableHead>One To Many Count</TableHead>
-                <TableHead>Durée</TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              <TableRow>
-                <TableCell>
-                  <div className="flex flex-col gap-1 max-w-[300px]">
-                    <motion.div
-                      whileHover={{ x: 2 }}
-                      title="NextGen Ventures"
-                      className="text-sm font-medium cursor-pointer transition-all truncate"
-                    >
-                      <ClickableText>NextGen Ventures</ClickableText>
-                    </motion.div>
-                    <div className="flex items-center gap-1.5">
-                      <span className="text-xs text-gray-500">ID: 1</span>
-                      <button className="p-0.5 hover:bg-gray-100 rounded transition-colors">
-                        <Copy className="w-3 h-3 text-gray-400" />
-                      </button>
-                    </div>
-                  </div>
-                </TableCell>
-                <TableCell>
-                  <OneToManyPersonsCell persons={previewPhysicalPersons} label="Contacts personnes physiques" />
-                </TableCell>
-                <TableCell>4 contacts disponibles</TableCell>
-                <TableCell><Badge className="bg-emerald-50 text-emerald-800 border-emerald-200">En relation</Badge></TableCell>
-                <TableCell>27/12/2023</TableCell>
-                <TableCell className="font-semibold">1 141 699 €</TableCell>
-                <TableCell><Badge variant="outline">11</Badge></TableCell>
-                <TableCell><Badge variant="outline">Il y a plus d'un an</Badge></TableCell>
-              </TableRow>
-            </TableBody>
-          </UITable>
         </div>
       </section>
 
