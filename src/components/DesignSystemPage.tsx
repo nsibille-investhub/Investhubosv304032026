@@ -88,6 +88,7 @@ import { StatusBadge } from './StatusBadge';
 import { Tag } from './Tag';
 import { ContactsCard } from './ContactsCard';
 import { StructuresCell } from './StructuresCell';
+import { DocumentAddModal } from './DocumentAddModal';
 import type { Contact, LegalStructure } from '../utils/investorGenerator';
 
 type DoctrineItem = {
@@ -117,6 +118,14 @@ const primaryBrandColors = [
 const functionalColors = [
   { name: 'Rouge interdiction', usage: 'Erreurs / suppression / blocage', hex: '#DC2626', tailwind: 'red-600', bg: 'bg-red-600' },
   { name: 'Orange warning', usage: 'Avertissement / attention', hex: '#F97316', tailwind: 'orange-500', bg: 'bg-orange-500' },
+];
+
+const folderSelectorDemoOptions = [
+  { id: 'root', label: 'Racine / Documents' },
+  { id: 'fy-2023', label: 'Racine / Documents / 2023' },
+  { id: 'q4-2023', label: 'Racine / Documents / 2023 / Q4 2023' },
+  { id: 'fiee2', label: 'Racine / Documents / 2023 / Q4 2023 / FIEE2' },
+  { id: 'fiee2-kbis', label: 'Racine / Documents / 2023 / Q4 2023 / FIEE2 / KBIS' },
 ];
 
 const iconFamilies: Array<{
@@ -399,6 +408,7 @@ function renderInvestorColumnPreview(column: string) {
 
 export function DesignSystemPage() {
   const [switchOn, setSwitchOn] = React.useState(true);
+  const [folderSelectorModalOpen, setFolderSelectorModalOpen] = React.useState(false);
 
   return (
     <div className="flex-1 overflow-auto px-6 py-6 space-y-6 bg-[#F8FAFA] dark:bg-[#0B0D0D]">
@@ -571,21 +581,23 @@ export function DesignSystemPage() {
       <section className="rounded-2xl border border-[#D7E0DD] dark:border-[#1F2D2A] bg-white dark:bg-[#101615] p-6">
         <h2 className="text-lg font-semibold text-[#1F3137] dark:text-[#E8F0EE] mb-2">Composant GED — folder-selection-treeview-dropdown</h2>
         <p className="text-sm text-[#4F6166] dark:text-[#9DB2AE] mb-4">
-          Sélecteur hiérarchique de dossiers avec recherche, arbre repliable et valeur enrichie (dossier cible → racine).
+          Référence directe du composant GED existant (DocumentAddModal) avec le sélecteur de dossier réel.
         </p>
-        <div className="rounded-xl border border-[#D7E0DD] dark:border-[#1F2D2A] p-4 bg-[#FCFDFC] dark:bg-[#0F1716]">
-          <div className="rounded-lg border border-[#D7E0DD] dark:border-[#1F2D2A] bg-white dark:bg-[#0E1514] px-3 py-2.5 text-sm">
-            <p className="text-xs uppercase tracking-wider text-[#6A8084] dark:text-[#93AAA6] mb-1">Valeur sélectionnée</p>
-            <p className="font-medium text-[#1F3137] dark:text-[#E8F0EE] truncate" title="Q4 2023 / 2023 / FIEE2">
-              ... / Q4 2023 / 2023 / FIEE2
-            </p>
-          </div>
-          <ul className="mt-3 text-sm text-[#4F6166] dark:text-[#9DB2AE] list-disc pl-5 space-y-1">
-            <li>Contenu scrollable dans le panneau de sélection.</li>
-            <li>Chemin auto-déplié sur la valeur sélectionnée à l’ouverture.</li>
-            <li>Hover natif sur la valeur pour afficher le chemin complet.</li>
-          </ul>
+        <div className="rounded-xl border border-[#D7E0DD] dark:border-[#1F2D2A] p-4 bg-[#FCFDFC] dark:bg-[#0F1716] space-y-3">
+          <Button onClick={() => setFolderSelectorModalOpen(true)} className="w-full sm:w-auto">
+            Ouvrir le composant GED réel
+          </Button>
+          <p className="text-sm text-[#4F6166] dark:text-[#9DB2AE]">
+            Le bouton ouvre le panneau GED natif avec <code>folder-selection-treeview-dropdown</code> pré-ouvert.
+          </p>
         </div>
+        <DocumentAddModal
+          isOpen={folderSelectorModalOpen}
+          onClose={() => setFolderSelectorModalOpen(false)}
+          folderOptions={folderSelectorDemoOptions}
+          defaultFolderId="fiee2"
+          initialFolderPickerOpen
+        />
       </section>
 
       <section className="rounded-2xl border border-[#D7E0DD] dark:border-[#1F2D2A] bg-white dark:bg-[#101615] p-6">
