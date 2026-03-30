@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { motion } from 'motion/react';
 import { 
   FileText, 
@@ -22,6 +22,8 @@ import {
   DropdownMenuTrigger,
 } from './ui/dropdown-menu';
 import { Input } from './ui/input';
+import { Dialog, DialogContent, DialogTitle } from './ui/dialog';
+import { Carousel, CarouselApi, CarouselContent, CarouselItem, CarouselNext, CarouselPrevious } from './ui/carousel';
 
 interface DocumentListViewProps {
   documents: Document[];
@@ -63,6 +65,9 @@ export function DocumentListView({
   onDeleteFolder,
 }: DocumentListViewProps) {
   const [hoveredId, setHoveredId] = useState<string | null>(null);
+  const [viewerOpen, setViewerOpen] = useState(false);
+  const [viewerDocumentId, setViewerDocumentId] = useState<string | null>(null);
+  const [carouselApi, setCarouselApi] = useState<CarouselApi>();
   const itemRefs = useRef<Record<string, HTMLDivElement | null>>({});
 
   // Get current level items
@@ -101,6 +106,44 @@ export function DocumentListView({
   const searchFolders = itemsToRender.filter(item => item.type === 'folder');
   const searchFiles = itemsToRender.filter(item => item.type !== 'folder');
 
+  const browserPdfBlob = useMemo(() => {
+    const tinyPdfBase64 = 'JVBERi0xLjQKMSAwIG9iago8PAovVHlwZSAvQ2F0YWxvZwovUGFnZXMgMiAwIFIKPj4KZW5kb2JqCjIgMCBvYmoKPDwKL1R5cGUgL1BhZ2VzCi9LaWRzIFszIDAgUl0KL0NvdW50IDEKPj4KZW5kb2JqCjMgMCBvYmoKPDwKL1R5cGUgL1BhZ2UKL1BhcmVudCAyIDAgUgovTWVkaWFCb3ggWzAgMCA2MTIgNzkyXQovQ29udGVudHMgNCAwIFIKL1Jlc291cmNlcyA8PAovRm9udCA8PAovRjEgNSAwIFIKPj4KPj4KPj4KZW5kb2JqCjQgMCBvYmoKPDwKL0xlbmd0aCA2NQo+PgpzdHJlYW0KQlQgL0YxIDI0IFRmIDEwMCA3MDAgVGQgKEludmVzdGh1YiBEYXRhcm9vbSkgVGogMTAwIDY2MCBUZCAoUHLDqXZpc3VhbGlzYXRpb24gZHUgZG9jdW1lbnQuKSBUaiBFVAplbmRzdHJlYW0KZW5kb2JqCjUgMCBvYmoKPDwKL1R5cGUgL0ZvbnQKL1N1YnR5cGUgL1R5cGUxCi9CYXNlRm9udCAvSGVsdmV0aWNhCj4+CmVuZG9iagp4cmVmCjAgNgowMDAwMDAwMDAwIDY1NTM1IGYgCjAwMDAwMDAwMDkgMDAwMDAgbiAKMDAwMDAwMDA1OCAwMDAwMCBuIAowMDAwMDAwMTE1IDAwMDAwIG4gCjAwMDAwMDAyNDEgMDAwMDAgbiAKMDAwMDAwMDM1NiAwMDAwMCBuIAp0cmFpbGVyCjw8Ci9Sb290IDEgMCBSCi9TaXplIDYKPj4Kc3RhcnR4cmVmCjQyNQolJUVPRg==';
+    const raw = atob(tinyPdfBase64);
+    const bytes = new Uint8Array(raw.length);
+    for (let i = 0; i < raw.length; i += 1) {
+      bytes[i] = raw.charCodeAt(i);
+    }
+    return new Blob([bytes], { type: 'application/pdf' });
+  }, []);
+
+  const fileViewerSources = useMemo(() => {
+    const map: Record<string, string> = {};
+    files.forEach((file) => {
+      const extension = file.name.split('.').pop()?.toLowerCase();
+      const blob = extension === 'pdf'
+        ? browserPdfBlob
+        : new Blob([
+            `Prévisualisation navigateur\n\nDocument: ${file.name}\nPropriétaire: ${file.uploadedBy}\nDate: ${file.date}`,
+          ], { type: 'text/plain' });
+      map[file.id] = URL.createObjectURL(blob);
+    });
+    return map;
+  }, [files, browserPdfBlob]);
+
+  useEffect(() => {
+    return () => {
+      Object.values(fileViewerSources).forEach((source) => URL.revokeObjectURL(source));
+    };
+  }, [fileViewerSources]);
+
+  const viewerFiles = hasActiveSearch ? searchFiles : files;
+  const viewerIndex = viewerFiles.findIndex((file) => file.id === viewerDocumentId);
+
+  const openViewer = (file: Document) => {
+    setViewerDocumentId(file.id);
+    setViewerOpen(true);
+  };
+
   useEffect(() => {
     if (!focusedItemId) return;
     const target = itemRefs.current[focusedItemId];
@@ -108,6 +151,11 @@ export function DocumentListView({
       target.scrollIntoView({ behavior: 'smooth', block: 'center' });
     }
   }, [focusedItemId, itemsToRender.length]);
+
+  useEffect(() => {
+    if (!carouselApi || !viewerOpen || viewerIndex < 0) return;
+    carouselApi.scrollTo(viewerIndex, true);
+  }, [carouselApi, viewerOpen, viewerIndex]);
 
   return (
     <div className="flex flex-col h-full">
@@ -362,6 +410,17 @@ export function DocumentListView({
                     </div>
                     
                     <div className="col-span-2 flex items-center justify-end gap-2">
+                      <button
+                        type="button"
+                        onClick={(event) => {
+                          event.stopPropagation();
+                          openViewer(file);
+                        }}
+                        className={`p-2 rounded-lg transition-colors ${isHovered ? 'bg-blue-50 text-blue-600' : 'text-gray-500 hover:bg-gray-100'}`}
+                        aria-label={`Ouvrir la visionneuse pour ${file.name}`}
+                      >
+                        <Eye className="w-4 h-4" />
+                      </button>
                       <DropdownMenu>
                         <DropdownMenuTrigger asChild>
                           <button
@@ -402,6 +461,46 @@ export function DocumentListView({
           </span>
         </div>
       </div>
+
+      <Dialog open={viewerOpen} onOpenChange={setViewerOpen}>
+        <DialogContent className="w-[95vw] max-w-6xl h-[85vh] p-0 overflow-hidden">
+          <div className="h-full flex flex-col">
+            <div className="px-5 py-3 border-b border-gray-200">
+              <DialogTitle className="text-base">
+                Visionneuse document
+              </DialogTitle>
+            </div>
+            <div className="flex-1 p-5 overflow-hidden">
+              {viewerFiles.length === 0 ? (
+                <div className="h-full flex items-center justify-center text-sm text-gray-500">
+                  Aucun document à afficher.
+                </div>
+              ) : (
+                <Carousel setApi={setCarouselApi} opts={{ align: 'start' }} className="h-full">
+                  <CarouselContent className="h-full -ml-0">
+                    {viewerFiles.map((file) => (
+                      <CarouselItem key={file.id} className="h-full pl-0">
+                        <div className="h-full border border-gray-200 rounded-lg overflow-hidden bg-white">
+                          <div className="px-3 py-2 border-b border-gray-100 text-xs text-gray-500 truncate">
+                            {file.name}
+                          </div>
+                          <iframe
+                            title={`Visionneuse ${file.name}`}
+                            src={fileViewerSources[file.id]}
+                            className="w-full h-[calc(100%-36px)]"
+                          />
+                        </div>
+                      </CarouselItem>
+                    ))}
+                  </CarouselContent>
+                  <CarouselPrevious className="left-3 top-1/2" />
+                  <CarouselNext className="right-3 top-1/2" />
+                </Carousel>
+              )}
+            </div>
+          </div>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
