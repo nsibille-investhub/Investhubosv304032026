@@ -506,6 +506,69 @@ export function DesignSystemPage() {
       </section>
 
       <section className="rounded-2xl border border-[#D7E0DD] dark:border-[#1F2D2A] bg-white dark:bg-[#101615] p-6">
+        <div className="flex items-center gap-2 mb-4">
+          <Columns3 className="w-4 h-4 text-[#3F7358]" />
+          <h2 className="text-lg font-semibold text-[#1F3137] dark:text-[#E8F0EE]">Composants affichés — Inputs & Navigation</h2>
+        </div>
+        <div className="grid lg:grid-cols-2 gap-4">
+          <Card>
+            <CardHeader>
+              <CardTitle>Inputs</CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-3">
+              <Input placeholder="Nom du composant" />
+              <Select defaultValue="stable">
+                <SelectTrigger>
+                  <SelectValue placeholder="Choisir un état" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="stable">Stable</SelectItem>
+                  <SelectItem value="beta">Beta</SelectItem>
+                  <SelectItem value="deprecated">Deprecated</SelectItem>
+                </SelectContent>
+              </Select>
+              <div className="flex items-center gap-3">
+                <Checkbox defaultChecked />
+                <Switch checked={switchOn} onCheckedChange={setSwitchOn} />
+              </div>
+              <div className="flex gap-2 flex-wrap">
+                <Button variant="primary">Primary</Button>
+                <Button variant="secondary">Secondary</Button>
+                <Button variant="ghost">Ghost</Button>
+                <Button variant="danger">Danger</Button>
+              </div>
+            </CardContent>
+          </Card>
+
+          <Card>
+            <CardHeader>
+              <CardTitle>Navigation & feedback</CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-3">
+              <Tabs defaultValue="foundation">
+                <TabsList>
+                  <TabsTrigger value="foundation">Foundation</TabsTrigger>
+                  <TabsTrigger value="inputs">Inputs</TabsTrigger>
+                </TabsList>
+                <TabsContent value="foundation" className="text-sm text-muted-foreground">Tokens, couleurs, typo.</TabsContent>
+                <TabsContent value="inputs" className="text-sm text-muted-foreground">Boutons, champs, sélection.</TabsContent>
+              </Tabs>
+              <Alert>
+                <AlertTitle>Documentation active</AlertTitle>
+                <AlertDescription>Chaque composant est affiché directement dans cette page.</AlertDescription>
+              </Alert>
+              <div className="flex items-center gap-2">
+                <Avatar><AvatarFallback>IH</AvatarFallback></Avatar>
+                <Badge variant="outline">Avatar</Badge>
+                <Badge variant="destructive">Error</Badge>
+              </div>
+              <Skeleton className="h-8 w-full" />
+            </CardContent>
+          </Card>
+        </div>
+      </section>
+
+      <section className="rounded-2xl border border-[#D7E0DD] dark:border-[#1F2D2A] bg-white dark:bg-[#101615] p-6">
         <h2 className="text-lg font-semibold text-[#1F3137] dark:text-[#E8F0EE] mb-4">Composants dictés (v1)</h2>
         <div className="grid lg:grid-cols-2 gap-4 text-sm">
           <Card>
@@ -793,69 +856,6 @@ export function DesignSystemPage() {
             </UITable>
           </CardContent>
         </Card>
-      </section>
-
-      <section className="rounded-2xl border border-[#D7E0DD] dark:border-[#1F2D2A] bg-white dark:bg-[#101615] p-6">
-        <div className="flex items-center gap-2 mb-4">
-          <Columns3 className="w-4 h-4 text-[#3F7358]" />
-          <h2 className="text-lg font-semibold text-[#1F3137] dark:text-[#E8F0EE]">Composants affichés — Inputs & Navigation</h2>
-        </div>
-        <div className="grid lg:grid-cols-2 gap-4">
-          <Card>
-            <CardHeader>
-              <CardTitle>Inputs</CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-3">
-              <Input placeholder="Nom du composant" />
-              <Select defaultValue="stable">
-                <SelectTrigger>
-                  <SelectValue placeholder="Choisir un état" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="stable">Stable</SelectItem>
-                  <SelectItem value="beta">Beta</SelectItem>
-                  <SelectItem value="deprecated">Deprecated</SelectItem>
-                </SelectContent>
-              </Select>
-              <div className="flex items-center gap-3">
-                <Checkbox defaultChecked />
-                <Switch checked={switchOn} onCheckedChange={setSwitchOn} />
-              </div>
-              <div className="flex gap-2 flex-wrap">
-                <Button variant="primary">Primary</Button>
-                <Button variant="secondary">Secondary</Button>
-                <Button variant="ghost">Ghost</Button>
-                <Button variant="danger">Danger</Button>
-              </div>
-            </CardContent>
-          </Card>
-
-          <Card>
-            <CardHeader>
-              <CardTitle>Navigation & feedback</CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-3">
-              <Tabs defaultValue="foundation">
-                <TabsList>
-                  <TabsTrigger value="foundation">Foundation</TabsTrigger>
-                  <TabsTrigger value="inputs">Inputs</TabsTrigger>
-                </TabsList>
-                <TabsContent value="foundation" className="text-sm text-muted-foreground">Tokens, couleurs, typo.</TabsContent>
-                <TabsContent value="inputs" className="text-sm text-muted-foreground">Boutons, champs, sélection.</TabsContent>
-              </Tabs>
-              <Alert>
-                <AlertTitle>Documentation active</AlertTitle>
-                <AlertDescription>Chaque composant est affiché directement dans cette page.</AlertDescription>
-              </Alert>
-              <div className="flex items-center gap-2">
-                <Avatar><AvatarFallback>IH</AvatarFallback></Avatar>
-                <Badge variant="outline">Avatar</Badge>
-                <Badge variant="destructive">Error</Badge>
-              </div>
-              <Skeleton className="h-8 w-full" />
-            </CardContent>
-          </Card>
-        </div>
       </section>
 
       <section className="rounded-2xl border border-[#D7E0DD] dark:border-[#1F2D2A] bg-white dark:bg-[#101615] p-6">
