@@ -60,6 +60,12 @@ type ComponentMeta = {
   status: 'stable' | 'beta';
 };
 
+type DoctrineItem = {
+  title: string;
+  goal: string;
+  implications: string[];
+};
+
 const colorTokens = [
   { name: 'Noir brut', hex: '#000000', textClass: 'text-white' },
   { name: 'Marron', hex: '#2E211C', textClass: 'text-white' },
@@ -146,6 +152,53 @@ const coreComponents: ComponentMeta[] = [
   { name: 'Card', file: 'src/components/ui/card.tsx', role: 'Conteneur contenu', status: 'stable' },
 ];
 
+const doctrinePillars: DoctrineItem[] = [
+  {
+    title: '1) Accélération business & valeur client',
+    goal: 'Livrer plus vite de la valeur utile, activable immédiatement.',
+    implications: [
+      'Time-to-market > perfection technique.',
+      'Découpage en lots courts (≤ 1 mois) + validation interne puis client.',
+      'Priorisation pilotée par usage réel, criticité et pain points.',
+    ],
+  },
+  {
+    title: '2) Simplicité & expérience utilisateur',
+    goal: 'Réduire l’effort de compréhension dès la première utilisation.',
+    implications: [
+      'Explicabilité systémique : labels, feedbacks, droits et erreurs clairs.',
+      'Micro-interactions systématiques : une action = une réaction visible.',
+      'Suppression des options peu utilisées ou à faible valeur.',
+    ],
+  },
+  {
+    title: '3) Qualité, robustesse & observabilité',
+    goal: 'Stabilité et détection proactive avant remontée client.',
+    implications: [
+      'Aucune migration de module sans tests automatiques.',
+      'Comportements d’erreur standardisés + logs exploitables.',
+      'Monitoring et tracking d’usage pour prioriser avec de la donnée.',
+    ],
+  },
+  {
+    title: '4) Scalabilité produit & excellence technique',
+    goal: 'Homogénéité, modularité et progression sans régression.',
+    implications: [
+      'Design System obligatoire + conventions partagées.',
+      'Migration brique par brique, modules isolables/remplaçables.',
+      'Coexistence v1/v3, rollback possible et migration transparente.',
+    ],
+  },
+];
+
+const v3Checklist = [
+  'Chaque composant doit expliciter ses états : default / loading / empty / error / success.',
+  'Chaque action utilisateur doit afficher un feedback immédiat (loader, toast, état disabled).',
+  'Chaque composant data-first doit supporter skeleton et pagination.',
+  'Chaque écran doit distinguer clairement les usages client vs besoins Ops/support.',
+  'Chaque nouveauté doit être instrumentée (usage + erreurs) pour prioriser les itérations.',
+];
+
 function ComponentLibraryTable({ title, items, icon: Icon }: { title: string; items: ComponentMeta[]; icon: LucideIcon }) {
   return (
     <section className="rounded-2xl border border-[#D7E0DD] dark:border-[#1F2D2A] bg-white dark:bg-[#101615] p-6">
@@ -193,6 +246,23 @@ export function DesignSystemPage() {
         <p className="mt-2 text-sm text-[#4F6166] dark:text-[#9DB2AE] max-w-4xl">
           Bibliothèque complète des composants. On commence par la couche tableaux (data-intensive), puis les composants coeur.
         </p>
+      </section>
+
+      <section className="rounded-2xl border border-[#D7E0DD] dark:border-[#1F2D2A] bg-white dark:bg-[#101615] p-6">
+        <h2 className="text-lg font-semibold text-[#1F3137] dark:text-[#E8F0EE] mb-4">Doctrine V3 — Piliers fondateurs</h2>
+        <div className="grid lg:grid-cols-2 gap-4">
+          {doctrinePillars.map((pillar) => (
+            <article key={pillar.title} className="rounded-xl border border-[#DDE8E4] dark:border-[#1B2B27] p-4">
+              <h3 className="font-semibold text-[#1F3137] dark:text-[#E8F0EE]">{pillar.title}</h3>
+              <p className="text-sm text-[#4F6166] dark:text-[#9DB2AE] mt-1">{pillar.goal}</p>
+              <ul className="mt-3 space-y-1.5 text-sm text-[#3E575C] dark:text-[#B7CCC7] list-disc pl-5">
+                {pillar.implications.map((item) => (
+                  <li key={item}>{item}</li>
+                ))}
+              </ul>
+            </article>
+          ))}
+        </div>
       </section>
 
       <section className="rounded-2xl border border-[#D7E0DD] dark:border-[#1F2D2A] bg-white dark:bg-[#101615] p-6">
@@ -254,6 +324,18 @@ export function DesignSystemPage() {
           <Download className="w-4 h-4" />
           Prochaine étape : enrichir la bibliothèque avec exemples interactifs composant par composant.
         </div>
+      </section>
+
+      <section className="rounded-2xl border border-[#D7E0DD] dark:border-[#1F2D2A] bg-white dark:bg-[#101615] p-6">
+        <h2 className="text-lg font-semibold text-[#1F3137] dark:text-[#E8F0EE] mb-3">Checklist d’alignement Doctrine V3</h2>
+        <ul className="space-y-2 text-sm text-[#415C61] dark:text-[#A9C1BB]">
+          {v3Checklist.map((rule) => (
+            <li key={rule} className="flex items-start gap-2">
+              <BadgeCheck className="w-4 h-4 mt-0.5 text-[#3F7358]" />
+              <span>{rule}</span>
+            </li>
+          ))}
+        </ul>
       </section>
     </div>
   );
