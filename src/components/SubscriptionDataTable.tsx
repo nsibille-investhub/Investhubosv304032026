@@ -5,6 +5,7 @@ import { StatusBadge } from './StatusBadge';
 import { Tag } from './Tag';
 import { ClickableText } from './ClickableText';
 import { OriginStructureCell } from './OriginStructureCell';
+import { PartnerOriginCell } from './PartnerOriginCell';
 
 interface SubscriptionDataTableProps {
   data: any[];
@@ -398,19 +399,7 @@ export function SubscriptionDataTable({
                   {/* Fund & Share */}
                   <td className="px-6 py-4" onClick={(e) => e.stopPropagation()}>
                     <div className="flex items-center gap-2">
-                      <Tooltip>
-                        <TooltipTrigger asChild>
-                          <motion.div
-                            whileHover={{ scale: 1.05, y: -2 }}
-                            className="inline-block"
-                          >
-                            <Tag className="cursor-pointer transition-all shadow-sm hover:shadow hover:bg-primary/10 hover:text-primary hover:border-primary/40" label={row.fund.name} />
-                          </motion.div>
-                        </TooltipTrigger>
-                        <TooltipContent>
-                          Click to view fund details
-                        </TooltipContent>
-                      </Tooltip>
+                      <Tag label={row.fund.name} />
                       <Tag label={`Part ${row.fund.shareClass}`} />
                     </div>
                   </td>
@@ -502,7 +491,7 @@ export function SubscriptionDataTable({
 
                   {/* Partenaire */}
                   <td className="px-6 py-4" onClick={(e) => e.stopPropagation()}>
-                    <PartenaireCard partenaire={row.partenaire} searchTerm={searchTerm} />
+                    <PartnerOriginCell partenaire={row.partenaire} searchTerm={searchTerm} />
                   </td>
 
                   {/* Actions Menu */}
