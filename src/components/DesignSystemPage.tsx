@@ -53,6 +53,7 @@ import {
   Plus,
   MoreVertical,
   Copy,
+  ChevronRight,
   type LucideIcon,
 } from 'lucide-react';
 import * as React from 'react';
@@ -88,6 +89,7 @@ import { StatusBadge } from './StatusBadge';
 import { Tag } from './Tag';
 import { ContactsCard } from './ContactsCard';
 import { StructuresCell } from './StructuresCell';
+import { LastActivityCard } from './LastActivityCard';
 import { FolderSelectionTreeviewDropdown } from './DocumentAddModal';
 import type { Contact, LegalStructure } from '../utils/investorGenerator';
 
@@ -285,6 +287,13 @@ const investorListingColumnSpecs = [
     variants: 'Personne physique / Personne morale, nom long tronqué, état copié (check vert).',
   },
   {
+    column: 'INVESTOR',
+    component: 'Investor',
+    functional: 'Afficher le nom investisseur et son type (Company/Individual) dans une cellule compacte.',
+    guidelines: 'Nom cliquable text-sm font-medium couleur #114154; sous-ligne text-sm gris avec icône building 14px.',
+    variants: 'Company, Individual, nom long tronqué, entité morale avec raison sociale complète.',
+  },
+  {
     column: 'CONTACTS',
     component: 'ContactsCard (listing compact + “+n more”)',
     functional: 'Afficher contact principal et accès au détail one-to-many.',
@@ -340,6 +349,20 @@ const investorListingColumnSpecs = [
     guidelines: 'Tag outline léger, text-sm, espacement compact.',
     variants: 'HNWI / Retail / Professional / UHNWI…',
   },
+  {
+    column: 'CLICKABLE TAG',
+    component: 'clickableTag',
+    functional: 'Afficher une donnée comptée (ex: souscriptions) et ouvrir le détail au clic.',
+    guidelines: 'Pill cliquable arrondie, icône document 14px + count text-sm, chevron de navigation à droite.',
+    variants: '0 / 1 / n éléments, état hover (élévation légère), état disabled.',
+  },
+  {
+    column: 'DERNIÈRE ACTIVITÉ',
+    component: 'Duration (LastActivityCard)',
+    functional: 'Afficher le temps écoulé depuis la dernière interaction investisseur.',
+    guidelines: 'Carte compacte inline-flex, libellé text-xs semibold + date text-[11px], icône calendrier 14px.',
+    variants: 'Il y a 2 mois / Il y a 3 mois / Il y a 1 sem, tonalité neutre ou contextualisée selon fraîcheur.',
+  },
 ];
 
 const previewContacts: Contact[] = [
@@ -392,6 +415,16 @@ function renderInvestorColumnPreview(column: string) {
           </div>
         </div>
       );
+    case 'INVESTOR':
+      return (
+        <div className="flex flex-col gap-1 min-w-[190px]">
+          <ClickableText className="text-[#114154] text-sm font-medium">Anne Rousseau</ClickableText>
+          <div className="inline-flex items-center gap-1.5 text-sm text-[#6C7A89]">
+            <Building2 className="w-3.5 h-3.5" />
+            <span>Company</span>
+          </div>
+        </div>
+      );
     case 'CONTACTS':
       return <ContactsCard contacts={previewContacts} investorName="Vertex Capital SA" />;
     case 'STRUCTURE':
@@ -408,6 +441,26 @@ function renderInvestorColumnPreview(column: string) {
       return <Badge variant="outline">2</Badge>;
     case 'SEGMENT':
       return <Tag label="HNWI" />;
+    case 'CLICKABLE TAG':
+      return (
+        <button
+          type="button"
+          className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-muted border border-border transition-all duration-200 group hover:scale-[1.03] hover:shadow-md hover:border-border/80 hover:bg-white"
+        >
+          <FileText className="w-3.5 h-3.5 text-muted-foreground group-hover:text-foreground" />
+          <span className="text-sm font-medium text-muted-foreground group-hover:text-foreground">0</span>
+          <ChevronRight className="w-3.5 h-3.5 text-muted-foreground group-hover:text-foreground transition-transform group-hover:translate-x-0.5" />
+        </button>
+      );
+    case 'DERNIÈRE ACTIVITÉ':
+      return (
+        <LastActivityCard
+          date={new Date('2026-01-17T07:33:00')}
+          relativeTime="Il y a 2 mois"
+          fullDate="17 janv. 2026, 07:33"
+          variant="neutral"
+        />
+      );
     default:
       return null;
   }
