@@ -46,6 +46,7 @@ import { ClickableText } from './ClickableText';
 import { Tag } from './Tag';
 import { CheckIndicator } from './CheckIndicator';
 import { StatusBadge } from './StatusBadge';
+import { InternalResponsibleSelector } from './InternalResponsibleSelector';
 
 // Helper function to get global status
 const getGlobalStatus = (status: string) => {
@@ -92,6 +93,7 @@ interface SubscriptionDynamicTableProps {
   data: any[];
   activeStatus: SubscriptionWorkflowStatus;
   onRowClick: (row: any) => void;
+  onAnalystChange?: (subscriptionId: number, newAnalyst: string) => void;
   sortConfig: { key: string; direction: 'asc' | 'desc' } | null;
   onSort: (key: string) => void;
   searchTerm?: string;
@@ -102,6 +104,7 @@ export function SubscriptionDynamicTable({
   data,
   activeStatus = 'all',
   onRowClick,
+  onAnalystChange,
   sortConfig,
   onSort,
   searchTerm = '',
@@ -331,7 +334,13 @@ export function SubscriptionDynamicTable({
         );
 
       case 'analyst':
-        return <span className="text-sm text-gray-700 dark:text-gray-300">{row.analyst || '-'}</span>;
+        return (
+          <InternalResponsibleSelector
+            value={row.analyst}
+            onChange={(nextAnalyst) => onAnalystChange?.(row.id, nextAnalyst)}
+            className="max-w-[280px]"
+          />
+        );
 
       case 'onboardingStatus':
         return <StatusBadge label={row.onboardingStatus || 'Non démarré'} variant={getOnboardingStatusVariant(row.onboardingStatus || 'Non démarré')} />;
