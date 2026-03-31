@@ -56,6 +56,7 @@ import { getStatusColor } from '../utils/subscriptionGenerator';
 import { SubscriptionInfoPopover } from './SubscriptionInfoPopover';
 import { QuestionActions, QuestionStatus } from './QuestionActions';
 import { QuestionCommentThread } from './QuestionCommentThread';
+import { IntegrationsTab } from './IntegrationsTab';
 import {
   Collapsible,
   CollapsibleContent,
@@ -1116,6 +1117,16 @@ export function SubscriptionDetailPage({ subscription, onBack }: SubscriptionDet
               Documents
               <Badge className="ml-2 bg-gray-50 text-gray-700 border-gray-200 text-xs">
                 {mockDocuments.length}
+              </Badge>
+            </TabsTrigger>
+            <TabsTrigger 
+              value="integrations" 
+              className="data-[state=active]:bg-transparent data-[state=active]:shadow-none data-[state=active]:border-b-2 data-[state=active]:border-blue-600 data-[state=active]:text-blue-600 rounded-none pb-3 pt-4 px-0 text-gray-600 font-medium"
+            >
+              <Database className="w-4 h-4 mr-2" />
+              Integrations
+              <Badge className="ml-2 bg-cyan-50 text-cyan-700 border-cyan-200 text-xs">
+                5
               </Badge>
             </TabsTrigger>
             <TabsTrigger 
@@ -3372,6 +3383,10 @@ export function SubscriptionDetailPage({ subscription, onBack }: SubscriptionDet
                 </div>
               </div>
             </div>
+          </TabsContent>
+
+          <TabsContent value="integrations" className="mt-0">
+            <IntegrationsTab />
           </TabsContent>
 
           {/* Notes Tab Content */}
