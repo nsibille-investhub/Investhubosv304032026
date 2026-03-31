@@ -12,9 +12,9 @@ import {
   Plus
 } from 'lucide-react';
 import { Document } from '../utils/documentMockData';
-import { Badge } from './ui/badge';
 import { Button } from './ui/button';
 import { DocumentTargetingMarker } from './DocumentTargetingMarker';
+import { Tag } from './Tag';
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -272,17 +272,19 @@ export function DocumentListView({
                           {folder.children?.length || 0} élément{(folder.children?.length || 0) > 1 ? 's' : ''}
                         </p>
                       </div>
-                      <Badge variant="outline" className="bg-amber-50 text-amber-700 border-amber-200 text-xs">
-                        Dossier
-                      </Badge>
+                      <Tag label="Dossier" />
                     </div>
 
                     <div className="col-span-2">
-                      <p className="text-xs text-gray-400">—</p>
+                      <Tag label="Dossier" />
                     </div>
 
                     <div className="col-span-3">
-                      <p className="text-xs text-gray-400">—</p>
+                      {folder.navigatorTargeting ? (
+                        <DocumentTargetingMarker document={folder} mode="full" />
+                      ) : (
+                        <p className="text-xs text-gray-400">—</p>
+                      )}
                     </div>
                     
                     <div className="col-span-1">
