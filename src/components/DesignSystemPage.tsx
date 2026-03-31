@@ -21,7 +21,6 @@ import {
   Search,
   TriangleAlert,
   Receipt,
-  Building2,
   RefreshCw,
   Clipboard,
   UserPlus,
@@ -91,6 +90,7 @@ import { ContactsCard } from './ContactsCard';
 import { StructuresCell } from './StructuresCell';
 import { LastActivityCard } from './LastActivityCard';
 import { OriginStructureCell } from './OriginStructureCell';
+import { CheckIndicator } from './CheckIndicator';
 import { FolderSelectionTreeviewDropdown } from './DocumentAddModal';
 import type { Contact, LegalStructure } from '../utils/investorGenerator';
 
@@ -288,13 +288,6 @@ const investorListingColumnSpecs = [
     variants: 'Personne physique / Personne morale, nom long tronqué, état copié (check vert).',
   },
   {
-    column: 'INVESTOR',
-    component: 'Investor',
-    functional: 'Afficher le nom investisseur et son type (Company/Individual) dans une cellule compacte.',
-    guidelines: 'Nom cliquable text-sm font-medium couleur #114154; sous-ligne text-sm gris avec icône building 14px.',
-    variants: 'Company, Individual, nom long tronqué, entité morale avec raison sociale complète.',
-  },
-  {
     column: 'CONTACTS',
     component: 'ContactsCard',
     functional: 'Afficher contact principal et accès au détail one-to-many.',
@@ -335,6 +328,13 @@ const investorListingColumnSpecs = [
     functional: 'Afficher le montant investi en euros.',
     guidelines: 'Valeur forte: font-semibold, alignement visuel à droite recommandé.',
     variants: '0 €, montant élevé, décimales nulles.',
+  },
+  {
+    column: 'QUANTITY',
+    component: 'Quantity',
+    functional: 'Afficher le nombre de parts / unités souscrites.',
+    guidelines: 'Valeur numérique compacte, text-sm font-medium et chiffres tabulaires.',
+    variants: 'Valeur entière, valeur absente (—), grand volume.',
   },
   {
     column: 'SOUSCRIPTIONS',
@@ -384,6 +384,13 @@ const investorListingColumnSpecs = [
     functional: 'Prévisualiser le rendu souscription pour une société en direct.',
     guidelines: 'Nom cliquable text-sm + sous-ligne Company avec icône neutre.',
     variants: 'Raison sociale longue tronquée, Company direct sans structure.',
+  },
+  {
+    column: 'CHECK',
+    component: 'CheckIndicator',
+    functional: 'Afficher un statut booléen compact en listing (ex: SEPA activé).',
+    guidelines: 'Icône cercle 20px, vert si actif, gris si inactif; tooltip explicite au survol.',
+    variants: 'Actif (check), inactif (cross).',
   },
 ];
 
@@ -448,16 +455,6 @@ function renderInvestorColumnPreview(column: string) {
           </div>
         </div>
       );
-    case 'INVESTOR':
-      return (
-        <div className="flex flex-col gap-1 min-w-[190px]">
-          <ClickableText className="text-[#114154] text-sm font-medium">Anne Rousseau</ClickableText>
-          <div className="inline-flex items-center gap-1.5 text-sm text-[#6C7A89]">
-            <Building2 className="w-3.5 h-3.5" />
-            <span>Company</span>
-          </div>
-        </div>
-      );
     case 'CONTACTS':
       return <ContactsCard contacts={previewContacts} investorName="Vertex Capital SA" />;
     case 'STRUCTURE':
@@ -470,6 +467,8 @@ function renderInvestorColumnPreview(column: string) {
       return <span>10/05/2022</span>;
     case 'CAPITAL INVESTI':
       return <span className="font-semibold">1 657 494 €</span>;
+    case 'QUANTITY':
+      return <span className="text-sm font-medium tabular-nums">42</span>;
     case 'SOUSCRIPTIONS':
       return <Badge variant="outline">2</Badge>;
     case 'SEGMENT':
@@ -510,6 +509,13 @@ function renderInvestorColumnPreview(column: string) {
         name: 'Epsilon Fund',
         type: 'corporate',
       });
+    case 'CHECK':
+      return (
+        <div className="flex items-center gap-3">
+          <CheckIndicator checked checkedLabel="Prélèvement SEPA activé" uncheckedLabel="Prélèvement SEPA désactivé" />
+          <CheckIndicator checked={false} checkedLabel="Prélèvement SEPA activé" uncheckedLabel="Prélèvement SEPA désactivé" />
+        </div>
+      );
     default:
       return null;
   }
