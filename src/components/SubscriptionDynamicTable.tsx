@@ -36,7 +36,6 @@ import { getColumnsForStatus } from '../utils/subscriptionColumns';
 import { formatCurrency, formatDate } from '../utils/formatters';
 import { copyToClipboard } from '../utils/clipboard';
 import { SubscriptionWorkflowStatus } from '../utils/subscriptionStatuses';
-import { ShareClassBadge } from './ShareClassBadge';
 import { OriginStructureCell } from './OriginStructureCell';
 import { PartnerOriginCell } from './PartnerOriginCell';
 import { SubscriptionStatusBadge } from './SubscriptionStatusBadge';
@@ -263,10 +262,7 @@ export function SubscriptionDynamicTable({
 
       case 'compartment':
         return (
-          <ShareClassBadge 
-            shareClassName={row.fund.shareClass} 
-            searchTerm={searchTerm}
-          />
+          <Tag label={row.fund.shareClass || '—'} />
         );
 
       case 'fundShare':
@@ -309,16 +305,8 @@ export function SubscriptionDynamicTable({
         return <DateTimeCell date={row.createdAt} />;
 
       case 'source':
-        const sourceColors = {
-          campagne: 'bg-green-100 dark:bg-green-950/50 text-green-700 dark:text-green-300 border-green-200 dark:border-green-800',
-          manuel: 'bg-blue-100 dark:bg-blue-950/50 text-blue-700 dark:text-blue-300 border-blue-200 dark:border-blue-800',
-          import: 'bg-purple-100 dark:bg-purple-950/50 text-purple-700 dark:text-purple-300 border-purple-200 dark:border-purple-800',
-          api: 'bg-cyan-100 dark:bg-cyan-950/50 text-cyan-700 dark:text-cyan-300 border-cyan-200 dark:border-cyan-800'
-        };
         return (
-          <Badge className={sourceColors[row.source as keyof typeof sourceColors]}>
-            {row.source === 'api' ? 'API' : row.source.charAt(0).toUpperCase() + row.source.slice(1)}
-          </Badge>
+          <Tag label={row.source === 'api' ? 'API' : row.source.charAt(0).toUpperCase() + row.source.slice(1)} />
         );
 
       case 'analyst':
@@ -410,11 +398,7 @@ export function SubscriptionDynamicTable({
 
       case 'signatureChannel':
         return (
-          <Badge className={row.signatureChannel === 'e-signature' 
-            ? 'bg-blue-100 dark:bg-blue-950/50 text-blue-700 dark:text-blue-300 border-blue-200 dark:border-blue-800' 
-            : 'bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-300 border-gray-200 dark:border-gray-700'}>
-            {row.signatureChannel === 'e-signature' ? 'E-signature' : 'Papier'}
-          </Badge>
+          <Tag label={row.signatureChannel === 'e-signature' ? 'E-signature' : 'Papier'} />
         );
 
       case 'counterSignatureStatus':
