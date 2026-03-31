@@ -1,6 +1,6 @@
 import { useState, useMemo, useEffect } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
-import { ChevronLeft, ChevronRight, ChevronDown, Search, Sparkles, Filter, X } from 'lucide-react';
+import { ChevronLeft, ChevronRight, ChevronDown } from 'lucide-react';
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -12,6 +12,7 @@ import { toast } from 'sonner';
 import { SubscriptionDynamicTable } from './SubscriptionDynamicTable';
 import { TableSkeleton } from './TableSkeleton';
 import { DecisionPanel } from './DecisionPanel';
+import { FilterBar, FilterConfig } from './FilterBar';
 import { useTableSearch } from '../utils/useTableSearch';
 import { SUBSCRIPTION_SEARCH_FIELDS } from '../utils/searchConfig';
 import { AskAIDialog } from './AskAIDialog';
@@ -34,16 +35,10 @@ export function SubscriptionsPage({ data, isLoading, allData, setAllData, onSubs
   const [sortConfig, setSortConfig] = useState<{ key: string; direction: 'asc' | 'desc' } | null>(null);
   const [hoveredRow, setHoveredRow] = useState<number | null>(null);
   const [selectedSubscription, setSelectedSubscription] = useState<any | null>(null);
-  const [activeFilters, setActiveFilters] = useState<any[]>([]);
+  const [activeFilters, setActiveFilters] = useState<Record<string, string | string[]>>({});
   const [showAIDialog, setShowAIDialog] = useState(false);
   const [aiAnalysis, setAiAnalysis] = useState<AIAnalysis | null>(null);
   const [aiFilteredData, setAiFilteredData] = useState<Subscription[] | null>(null);
-  
-  // Filtres Partenaire et Statuts
-  const [selectedPartners, setSelectedPartners] = useState<string[]>([]);
-  const [selectedStatuses, setSelectedStatuses] = useState<string[]>([]);
-  const [showPartnersDropdown, setShowPartnersDropdown] = useState(false);
-  const [showStatusesDropdown, setShowStatusesDropdown] = useState(false);
 
   const normalizedData = useMemo(
     () =>
@@ -66,8 +61,17 @@ export function SubscriptionsPage({ data, isLoading, allData, setAllData, onSubs
     hasActiveSearch,
   } = useTableSearch(normalizedData, SUBSCRIPTION_SEARCH_FIELDS);
 
-  const handleFilterChange = (filters: any[]) => {
-    setActiveFilters(filters);
+  const handleFilterChange = (filterId: string, value: string | string[] | null) => {
+    setActiveFilters((prev) => {
+      const newFilters = { ...prev };
+      if (value === null || value === '' || (Array.isArray(value) && value.length === 0)) {
+        delete newFilters[filterId];
+      } else {
+        newFilters[filterId] = value;
+      }
+      return newFilters;
+    });
+    setPaginationPage(1);
   };
 
   const handleSearchChange = (value: string) => {
@@ -85,66 +89,110 @@ export function SubscriptionsPage({ data, isLoading, allData, setAllData, onSubs
     }
   }, [searchTerm, searchFilteredData, normalizedData.length, hasActiveSearch]);
 
-  // Fermer les dropdowns quand on clique en dehors
-  useEffect(() => {
-    const handleClickOutside = (event: MouseEvent) => {
-      const target = event.target as HTMLElement;
-      if (!target.closest('.filter-dropdown-container')) {
-        setShowPartnersDropdown(false);
-        setShowStatusesDropdown(false);
-      }
-    };
+  const filterConfigs: FilterConfig[] = useMemo(() => [
+    {
+      id: 'status',
+      label: 'Statut',
+      type: 'select',
+      isPrimary: true,
+      options: Array.from(new Set(normalizedData.map((sub) => sub.status)))
+        .filter(Boolean)
+        .sort()
+        .map((status) => ({ value: status, label: status })),
+    },
+    {
+      id: 'partner',
+      label: 'Partenaire',
+      type: 'select',
+      isPrimary: true,
+      options: [
+        { value: 'Sans partenaire', label: 'Sans partenaire' },
+        ...Array.from(new Set(normalizedData.map((sub) => sub.partenaire?.name).filter(Boolean) as string[]))
+          .sort()
+          .map((partner) => ({ value: partner, label: partner })),
+      ],
+    },
+    {
+      id: 'fund',
+      label: 'Fonds',
+      type: 'select',
+      isPrimary: false,
+      options: Array.from(new Set(normalizedData.map((sub) => sub.fund?.name).filter(Boolean) as string[]))
+        .sort()
+        .map((fund) => ({ value: fund, label: fund })),
+    },
+    {
+      id: 'shareClass',
+      label: 'Classe de part',
+      type: 'select',
+      isPrimary: false,
+      options: Array.from(new Set(normalizedData.map((sub) => sub.fund?.shareClass).filter(Boolean) as string[]))
+        .sort()
+        .map((shareClass) => ({ value: shareClass, label: shareClass })),
+    },
+    {
+      id: 'type',
+      label: 'Type',
+      type: 'select',
+      isPrimary: false,
+      options: Array.from(new Set(normalizedData.map((sub) => sub.type)))
+        .filter(Boolean)
+        .sort()
+        .map((type) => ({ value: type, label: type })),
+    },
+    {
+      id: 'gestionnaire',
+      label: 'Gestionnaire',
+      type: 'select',
+      isPrimary: false,
+      options: Array.from(new Set(normalizedData.map((sub) => sub.analyst)))
+        .filter(Boolean)
+        .sort()
+        .map((analyst) => ({ value: analyst, label: analyst })),
+    },
+  ], [normalizedData]);
 
-    if (showPartnersDropdown || showStatusesDropdown) {
-      document.addEventListener('click', handleClickOutside);
-      return () => document.removeEventListener('click', handleClickOutside);
+  const handleClearAllFilters = () => {
+    setActiveFilters({});
+    setSearchTerm('');
+    setAiFilteredData(null);
+    setPaginationPage(1);
+    toast.success('Filtres réinitialisés');
+  };
+
+  const filteredData = useMemo(() => {
+    let baseData = hasActiveSearch ? searchFilteredData : normalizedData;
+
+    if (aiFilteredData) {
+      baseData = aiFilteredData;
     }
-  }, [showPartnersDropdown, showStatusesDropdown]);
 
-  // Extraire les valeurs uniques de partenaires et statuts
-  const uniquePartners = useMemo(() => {
-    const partners = new Set<string>();
-    normalizedData.forEach(sub => {
-      if (sub.partenaire?.name) {
-        partners.add(sub.partenaire.name);
+    if (Object.keys(activeFilters).length === 0) return baseData;
+
+    return baseData.filter((subscription) => {
+      if (activeFilters.status && subscription.status !== activeFilters.status) return false;
+
+      if (activeFilters.partner) {
+        const partnerFilter = activeFilters.partner as string;
+        if (partnerFilter === 'Sans partenaire') {
+          if (subscription.partenaire?.name) return false;
+        } else if (subscription.partenaire?.name !== partnerFilter) {
+          return false;
+        }
       }
+
+      if (activeFilters.fund && subscription.fund?.name !== activeFilters.fund) return false;
+      if (activeFilters.shareClass && subscription.fund?.shareClass !== activeFilters.shareClass) return false;
+      if (activeFilters.type && subscription.type !== activeFilters.type) return false;
+      if (activeFilters.gestionnaire && subscription.analyst !== activeFilters.gestionnaire) return false;
+
+      return true;
     });
-    return Array.from(partners).sort();
-  }, [normalizedData]);
-
-  const uniqueStatuses = useMemo(() => {
-    const statuses = new Set<string>();
-    normalizedData.forEach(sub => {
-      if (sub.status) {
-        statuses.add(sub.status);
-      }
-    });
-    return Array.from(statuses).sort();
-  }, [normalizedData]);
-
-  // Appliquer les filtres Partenaire et Statuts
-  const filteredByPartnersAndStatuses = useMemo(() => {
-    let filtered = hasActiveSearch ? searchFilteredData : normalizedData;
-    
-    // Filtrer par partenaires
-    if (selectedPartners.length > 0) {
-      filtered = filtered.filter(sub => {
-        if (!sub.partenaire?.name) return selectedPartners.includes('Sans partenaire');
-        return selectedPartners.includes(sub.partenaire.name);
-      });
-    }
-    
-    // Filtrer par statuts
-    if (selectedStatuses.length > 0) {
-      filtered = filtered.filter(sub => selectedStatuses.includes(sub.status));
-    }
-    
-    return filtered;
-  }, [normalizedData, searchFilteredData, hasActiveSearch, selectedPartners, selectedStatuses]);
+  }, [normalizedData, searchFilteredData, hasActiveSearch, aiFilteredData, activeFilters]);
 
   // Tri des données (appliqué après la recherche, les filtres et le filtre AI)
   const sortedData = useMemo(() => {
-    let dataToSort = filteredByPartnersAndStatuses;
+    let dataToSort = filteredData;
     
     // Si un filtre AI est actif, l'appliquer en priorité
     if (aiFilteredData) {
@@ -177,7 +225,7 @@ export function SubscriptionsPage({ data, isLoading, allData, setAllData, onSubs
       }
       return 0;
     });
-  }, [filteredByPartnersAndStatuses, aiFilteredData, sortConfig]);
+  }, [filteredData, aiFilteredData, sortConfig]);
 
   // Pagination
   const totalItems = sortedData.length;
@@ -364,169 +412,18 @@ export function SubscriptionsPage({ data, isLoading, allData, setAllData, onSubs
         className="bg-white dark:bg-gray-950 rounded-2xl shadow-sm border border-gray-200 dark:border-gray-800 hover:shadow-lg dark:hover:shadow-gray-900 transition-shadow duration-500 flex flex-col"
       >
         {/* Filter Bar */}
-        <div className="px-6 py-4 border-b border-gray-100 dark:border-gray-800">
-          <div className="flex items-center gap-3">
-            {/* Recherche */}
-            <div className="relative flex-1 max-w-md">
-              <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
-              <input
-                type="text"
-                value={searchTerm}
-                onChange={(e) => handleSearchChange(e.target.value)}
-                placeholder="Rechercher une souscription..."
-                className="w-full pl-10 pr-4 py-2.5 bg-white dark:bg-gray-900 border border-gray-300 dark:border-gray-700 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 transition-all"
-              />
-            </div>
-
-            {/* Filter Partenaire */}
-            <div className="relative filter-dropdown-container">
-              <button
-                onClick={() => setShowPartnersDropdown(!showPartnersDropdown)}
-                className={`px-4 py-2.5 rounded-lg border transition-all flex items-center gap-2 text-sm font-medium ${
-                  selectedPartners.length > 0
-                    ? 'border-blue-300 bg-blue-50 text-blue-700'
-                    : 'border-gray-300 bg-white text-gray-700 hover:bg-gray-50'
-                }`}
-              >
-                <Filter className="w-4 h-4" />
-                <span>Partenaire</span>
-                {selectedPartners.length > 0 && (
-                  <span className="ml-1 px-1.5 py-0.5 bg-blue-100 text-blue-700 rounded text-xs">
-                    {selectedPartners.length}
-                  </span>
-                )}
-                <ChevronDown className="w-4 h-4" />
-              </button>
-              
-              {showPartnersDropdown && (
-                <div className="absolute top-full left-0 mt-2 w-72 bg-white border border-gray-200 rounded-lg shadow-lg z-50 max-h-96 overflow-y-auto">
-                  <div className="p-3 border-b border-gray-100 flex items-center justify-between">
-                    <span className="text-sm font-medium text-gray-900">Filtrer par partenaire</span>
-                    {selectedPartners.length > 0 && (
-                      <button
-                        onClick={() => {
-                          setSelectedPartners([]);
-                          setPaginationPage(1);
-                        }}
-                        className="text-xs text-blue-600 hover:text-blue-700"
-                      >
-                        Réinitialiser
-                      </button>
-                    )}
-                  </div>
-                  <div className="p-2">
-                    <div className="mb-2">
-                      <label className="flex items-center gap-2 px-3 py-2 hover:bg-gray-50 rounded cursor-pointer">
-                        <input
-                          type="checkbox"
-                          checked={selectedPartners.includes('Sans partenaire')}
-                          onChange={(e) => {
-                            if (e.target.checked) {
-                              setSelectedPartners([...selectedPartners, 'Sans partenaire']);
-                            } else {
-                              setSelectedPartners(selectedPartners.filter(p => p !== 'Sans partenaire'));
-                            }
-                            setPaginationPage(1);
-                          }}
-                          className="w-4 h-4 rounded border-gray-300 text-blue-600 focus:ring-blue-500"
-                        />
-                        <span className="text-sm text-gray-700">Sans partenaire</span>
-                      </label>
-                    </div>
-                    {uniquePartners.map(partner => (
-                      <label key={partner} className="flex items-center gap-2 px-3 py-2 hover:bg-gray-50 rounded cursor-pointer">
-                        <input
-                          type="checkbox"
-                          checked={selectedPartners.includes(partner)}
-                          onChange={(e) => {
-                            if (e.target.checked) {
-                              setSelectedPartners([...selectedPartners, partner]);
-                            } else {
-                              setSelectedPartners(selectedPartners.filter(p => p !== partner));
-                            }
-                            setPaginationPage(1);
-                          }}
-                          className="w-4 h-4 rounded border-gray-300 text-blue-600 focus:ring-blue-500"
-                        />
-                        <span className="text-sm text-gray-700">{partner}</span>
-                      </label>
-                    ))}
-                  </div>
-                </div>
-              )}
-            </div>
-
-            {/* Filter Statuts */}
-            <div className="relative filter-dropdown-container">
-              <button
-                onClick={() => setShowStatusesDropdown(!showStatusesDropdown)}
-                className={`px-4 py-2.5 rounded-lg border transition-all flex items-center gap-2 text-sm font-medium ${
-                  selectedStatuses.length > 0
-                    ? 'border-purple-300 bg-purple-50 text-purple-700'
-                    : 'border-gray-300 bg-white text-gray-700 hover:bg-gray-50'
-                }`}
-              >
-                <Filter className="w-4 h-4" />
-                <span>Statuts</span>
-                {selectedStatuses.length > 0 && (
-                  <span className="ml-1 px-1.5 py-0.5 bg-purple-100 text-purple-700 rounded text-xs">
-                    {selectedStatuses.length}
-                  </span>
-                )}
-                <ChevronDown className="w-4 h-4" />
-              </button>
-              
-              {showStatusesDropdown && (
-                <div className="absolute top-full left-0 mt-2 w-72 bg-white border border-gray-200 rounded-lg shadow-lg z-50 max-h-96 overflow-y-auto">
-                  <div className="p-3 border-b border-gray-100 flex items-center justify-between">
-                    <span className="text-sm font-medium text-gray-900">Filtrer par statut</span>
-                    {selectedStatuses.length > 0 && (
-                      <button
-                        onClick={() => {
-                          setSelectedStatuses([]);
-                          setPaginationPage(1);
-                        }}
-                        className="text-xs text-purple-600 hover:text-purple-700"
-                      >
-                        Réinitialiser
-                      </button>
-                    )}
-                  </div>
-                  <div className="p-2">
-                    {uniqueStatuses.map(status => (
-                      <label key={status} className="flex items-center gap-2 px-3 py-2 hover:bg-gray-50 rounded cursor-pointer">
-                        <input
-                          type="checkbox"
-                          checked={selectedStatuses.includes(status)}
-                          onChange={(e) => {
-                            if (e.target.checked) {
-                              setSelectedStatuses([...selectedStatuses, status]);
-                            } else {
-                              setSelectedStatuses(selectedStatuses.filter(s => s !== status));
-                            }
-                            setPaginationPage(1);
-                          }}
-                          className="w-4 h-4 rounded border-gray-300 text-purple-600 focus:ring-purple-500"
-                        />
-                        <span className="text-sm text-gray-700">{status}</span>
-                      </label>
-                    ))}
-                  </div>
-                </div>
-              )}
-            </div>
-
-            {/* Ask AI Button */}
-            <motion.button
-              whileHover={{ scale: 1.02 }}
-              whileTap={{ scale: 0.98 }}
-              onClick={handleAskAI}
-              className="px-4 py-2.5 rounded-lg border border-purple-300 bg-gradient-to-r from-purple-50 to-blue-50 text-purple-700 hover:from-purple-100 hover:to-blue-100 transition-all flex items-center gap-2 text-sm font-medium"
-            >
-              <Sparkles className="w-4 h-4" />
-              <span>Ask AI</span>
-            </motion.button>
-          </div>
+        <div className="relative z-10 p-4 border-b border-gray-100 dark:border-gray-800">
+          <FilterBar
+            searchValue={searchTerm}
+            onSearchChange={handleSearchChange}
+            searchPlaceholder="Rechercher une souscription..."
+            filters={filterConfigs}
+            activeFilters={activeFilters}
+            onFilterChange={handleFilterChange}
+            onClearAll={handleClearAllFilters}
+            onAskAI={handleAskAI}
+            onAskAIDirect={handleAskAIDirect}
+          />
         </div>
         
         {/* AI Insight Banner */}
@@ -563,7 +460,7 @@ export function SubscriptionsPage({ data, isLoading, allData, setAllData, onSubs
           >
             <div className="text-sm text-gray-600 dark:text-gray-400">
               {startIndex + 1}-{endIndex} of {totalItems} items
-              {hasActiveSearch && (
+              {(hasActiveSearch || Object.keys(activeFilters).length > 0) && (
                 <span className="ml-2 text-blue-600 dark:text-blue-400">
                   (filtré{totalItems !== data.length && ` de ${data.length}`})
                 </span>

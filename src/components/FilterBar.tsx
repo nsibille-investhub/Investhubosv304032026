@@ -81,7 +81,7 @@ export function FilterBar({
           />
         ))}
 
-        {/* Bouton "Plus de filtres" */}
+        {/* Bouton "Filtres supplémentaires" */}
         {secondaryFilters.length > 0 && (
           <div className="relative">
             <motion.button
@@ -96,7 +96,7 @@ export function FilterBar({
               )}
             >
               <SlidersHorizontal className="w-4 h-4" />
-              <span>Filtres</span>
+              <span>Filtres supplémentaires</span>
               {activeFiltersCount > 0 && (
                 <span className="px-1.5 py-0.5 rounded-full bg-[#060D19] text-white text-xs font-bold min-w-[20px] text-center">
                   {activeFiltersCount}
@@ -110,7 +110,7 @@ export function FilterBar({
               />
             </motion.button>
 
-            {/* Dropdown filtres avancés */}
+            {/* Dropdown filtres supplémentaires */}
             <AnimatePresence>
               {showAdvanced && (
                 <>
@@ -133,7 +133,7 @@ export function FilterBar({
                       <div className="flex items-center gap-2">
                         <SlidersHorizontal className="w-4 h-4 text-gray-600 dark:text-gray-400" />
                         <span className="text-sm font-semibold text-gray-900 dark:text-gray-100">
-                          Filtres avancés
+                          Filtres supplémentaires
                         </span>
                       </div>
                       {hasActiveFilters && onClearAll && (
