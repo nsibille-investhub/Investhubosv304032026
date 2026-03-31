@@ -90,6 +90,7 @@ import { Tag } from './Tag';
 import { ContactsCard } from './ContactsCard';
 import { StructuresCell } from './StructuresCell';
 import { LastActivityCard } from './LastActivityCard';
+import { OriginStructureCell } from './OriginStructureCell';
 import { FolderSelectionTreeviewDropdown } from './DocumentAddModal';
 import type { Contact, LegalStructure } from '../utils/investorGenerator';
 
@@ -363,6 +364,27 @@ const investorListingColumnSpecs = [
     guidelines: 'Carte compacte inline-flex, libellé text-xs semibold + date text-[11px], icône calendrier 14px.',
     variants: 'Il y a 2 mois / Il y a 3 mois / Il y a 1 sem, tonalité neutre ou contextualisée selon fraîcheur.',
   },
+  {
+    column: 'Investor-structure',
+    component: 'OriginStructureCell (structure)',
+    functional: 'Prévisualiser le rendu souscription quand l’investisseur passe via une structure.',
+    guidelines: 'Nom cliquable text-sm + ligne secondaire gérée par OriginStructureCell (structure cliquable).',
+    variants: 'Structure longue tronquée + hover, nom investisseur standard.',
+  },
+  {
+    column: 'Investor-individual',
+    component: 'OriginStructureCell (individual)',
+    functional: 'Prévisualiser le rendu souscription pour une personne physique en direct.',
+    guidelines: 'Nom cliquable text-sm + sous-ligne Individual avec icône neutre.',
+    variants: 'Nom long tronqué, Individual direct sans structure.',
+  },
+  {
+    column: 'Investor-company',
+    component: 'OriginStructureCell (company)',
+    functional: 'Prévisualiser le rendu souscription pour une société en direct.',
+    guidelines: 'Nom cliquable text-sm + sous-ligne Company avec icône neutre.',
+    variants: 'Raison sociale longue tronquée, Company direct sans structure.',
+  },
 ];
 
 const previewContacts: Contact[] = [
@@ -398,6 +420,17 @@ const previewStructures: LegalStructure[] = [
     totalInvested: 1657494,
   },
 ];
+
+function renderSubscriptionInvestorPreview(contrepartie: { name: string; type: 'individual' | 'corporate'; structure?: string; investor?: string; investorType?: string; }) {
+  return (
+    <div className="flex flex-col gap-1 min-w-[220px] max-w-[280px]">
+      <motion.span whileHover={{ x: 2 }} className="truncate text-sm font-medium text-[#114154]">
+        <ClickableText>{contrepartie.name}</ClickableText>
+      </motion.span>
+      <OriginStructureCell contrepartie={contrepartie} />
+    </div>
+  );
+}
 
 function renderInvestorColumnPreview(column: string) {
   switch (column) {
@@ -461,6 +494,22 @@ function renderInvestorColumnPreview(column: string) {
           variant="neutral"
         />
       );
+    case 'Investor-structure':
+      return renderSubscriptionInvestorPreview({
+        name: 'Sophie Martin',
+        type: 'individual',
+        structure: 'SCI Rousseau Patrimoine',
+      });
+    case 'Investor-individual':
+      return renderSubscriptionInvestorPreview({
+        name: 'Jean Dubois',
+        type: 'individual',
+      });
+    case 'Investor-company':
+      return renderSubscriptionInvestorPreview({
+        name: 'Epsilon Fund',
+        type: 'corporate',
+      });
     default:
       return null;
   }

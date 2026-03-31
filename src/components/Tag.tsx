@@ -13,16 +13,26 @@ interface TagProps {
   className?: string;
 }
 
+const TAG_MAX_LENGTH = 30;
+
+function truncateTagLabel(label: string): string {
+  if (label.length <= TAG_MAX_LENGTH) return label;
+  return `${label.slice(0, TAG_MAX_LENGTH - 3)}...`;
+}
+
 export function Tag({ icon: Icon, label, className }: TagProps) {
+  const truncatedLabel = truncateTagLabel(label);
+
   return (
-    <span 
+    <span
+      title={label}
       className={cn(
-        'inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium border transition-colors bg-muted text-muted-foreground border-border',
+        'inline-flex max-w-full min-w-0 shrink items-center gap-1.5 whitespace-nowrap rounded-full border border-border bg-muted px-2.5 py-1 text-xs font-medium text-muted-foreground transition-colors',
         className
       )}
     >
-      {Icon && <Icon className="w-3.5 h-3.5" />}
-      {label}
+      {Icon && <Icon className="h-3.5 w-3.5 shrink-0" />}
+      <span className="block max-w-[30ch] min-w-0 truncate">{truncatedLabel}</span>
     </span>
   );
 }
