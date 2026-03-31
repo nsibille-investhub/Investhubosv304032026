@@ -77,3 +77,25 @@ export function GenericAudienceCard({
     </article>
   );
 }
+
+type GenericAudienceInlineProps = {
+  fundLabel?: string;
+  shareClassLabel?: string;
+  segmentLabel?: string;
+  className?: string;
+};
+
+export function GenericAudienceInline({
+  fundLabel,
+  shareClassLabel,
+  segmentLabel,
+  className = 'text-xs leading-snug text-gray-500',
+}: GenericAudienceInlineProps) {
+  const details = [
+    `Fonds: ${fundLabel || 'Tous fonds'}`,
+    `Parts: ${shareClassLabel || 'Toutes parts'}`,
+    `Segment: ${segmentLabel || 'Tous segments'}`,
+  ];
+
+  return <p className={className}>{details.join(' · ')}</p>;
+}

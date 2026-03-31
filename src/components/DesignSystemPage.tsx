@@ -95,6 +95,7 @@ import { FilterCard } from './FilterCard';
 import { FilterBar, type FilterConfig } from './FilterBar';
 import { FolderSelectionTreeviewDropdown } from './DocumentAddModal';
 import { GenericAudienceCard } from './GenericAudienceCard';
+import { SpecificAudience } from './SpecificAudience';
 import type { Contact, LegalStructure } from '../utils/investorGenerator';
 
 type DoctrineItem = {
@@ -866,6 +867,26 @@ export function DesignSystemPage() {
             segmentLabel="LP Institutionnels"
             documentsCount={127}
             foldersCount={18}
+          />
+        </div>
+      </section>
+
+      <section className="rounded-2xl border border-[#D7E0DD] dark:border-[#1F2D2A] bg-white dark:bg-[#101615] p-6">
+        <h2 className="text-lg font-semibold text-[#1F3137] dark:text-[#E8F0EE] mb-2">Composant GED — specific-audience</h2>
+        <p className="text-sm text-[#4F6166] dark:text-[#9DB2AE] mb-4">
+          Variante nominative (dérivée) utilisée pour un ciblage spécifique. Investisseur requis, structure et souscription optionnelles.
+        </p>
+        <div className="space-y-2 rounded-xl border border-[#D7E0DD] dark:border-[#1F2D2A] p-4 bg-[#F8FAFA] dark:bg-[#0F1716]">
+          <SpecificAudience
+            investor="Sophie Bernard"
+            structure="SAS Bernard Invest"
+            subscription="SUB-004"
+            className="text-sm text-[#4F6166] dark:text-[#B7CCC7]"
+          />
+          <SpecificAudience
+            investor="Marie Martin"
+            subscription="SUB-002"
+            className="text-sm text-[#4F6166] dark:text-[#B7CCC7]"
           />
         </div>
       </section>
