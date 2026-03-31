@@ -287,6 +287,13 @@ const investorListingColumnSpecs = [
     variants: 'Personne physique / Personne morale, nom long tronqué, état copié (check vert).',
   },
   {
+    column: 'INVESTOR',
+    component: 'Investor',
+    functional: 'Afficher le nom investisseur et son type (Company/Individual) dans une cellule compacte.',
+    guidelines: 'Nom cliquable text-sm font-medium couleur #114154; sous-ligne text-sm gris avec icône building 14px.',
+    variants: 'Company, Individual, nom long tronqué, entité morale avec raison sociale complète.',
+  },
+  {
     column: 'CONTACTS',
     component: 'ContactsCard (listing compact + “+n more”)',
     functional: 'Afficher contact principal et accès au détail one-to-many.',
@@ -405,6 +412,16 @@ function renderInvestorColumnPreview(column: string) {
             <button className="p-0.5 hover:bg-gray-100 rounded transition-colors">
               <Copy className="w-3 h-3 text-gray-400" />
             </button>
+          </div>
+        </div>
+      );
+    case 'INVESTOR':
+      return (
+        <div className="flex flex-col gap-1 min-w-[190px]">
+          <ClickableText className="text-[#114154] text-sm font-medium">Anne Rousseau</ClickableText>
+          <div className="inline-flex items-center gap-1.5 text-sm text-[#6C7A89]">
+            <Building2 className="w-3.5 h-3.5" />
+            <span>Company</span>
           </div>
         </div>
       );
