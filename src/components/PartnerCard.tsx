@@ -9,12 +9,25 @@ import {
 } from "./ui/popover";
 
 interface PartnerCardProps {
-  partnerName: string | null;
+  partnerName?: string | null;
+  partenaire?: {
+    name: string;
+    id: string;
+    type: 'corporate';
+  } | null;
   searchTerm?: string;
+  onPartnerClick?: (partnerId: string, partnerName: string) => void;
 }
 
-export function PartnerCard({ partnerName, searchTerm = '' }: PartnerCardProps) {
-  if (!partnerName) {
+export function PartnerCard({
+  partnerName,
+  partenaire,
+  searchTerm = '',
+  onPartnerClick
+}: PartnerCardProps) {
+  const resolvedPartnerName = partenaire?.name ?? partnerName ?? null;
+
+  if (!resolvedPartnerName) {
     return (
       <span className="inline-flex items-center gap-1.5 text-xs text-muted-foreground font-normal">
         <Users className="w-3 h-3 text-gray-400" />
@@ -25,15 +38,15 @@ export function PartnerCard({ partnerName, searchTerm = '' }: PartnerCardProps) 
 
   // Données mockées pour le partenaire
   const partnerData = {
-    name: partnerName,
-    id: `DIST${Math.floor(Math.random() * 9000) + 1000}`,
+    name: resolvedPartnerName,
+    id: partenaire?.id ?? `DIST${Math.floor(Math.random() * 9000) + 1000}`,
     type: 'Distributeur Agréé',
     status: 'Actif',
     category: ['CGPI', 'Family Office', 'Banque Privée'][Math.floor(Math.random() * 3)],
     country: ['France', 'Luxembourg', 'Suisse', 'Belgique'][Math.floor(Math.random() * 4)],
     city: ['Paris', 'Lyon', 'Luxembourg', 'Genève', 'Bruxelles'][Math.floor(Math.random() * 5)],
     contactName: ['Marie Dubois', 'Pierre Martin', 'Sophie Bernard', 'Luc Petit'][Math.floor(Math.random() * 4)],
-    email: `contact@${partnerName.toLowerCase().replace(/\s+/g, '')}.com`,
+    email: `contact@${resolvedPartnerName.toLowerCase().replace(/\s+/g, '')}.com`,
     phone: `+33 1 ${String(Math.floor(Math.random() * 90000000) + 10000000).match(/.{1,2}/g)?.join(' ')}`,
     clientsCount: Math.floor(Math.random() * 150) + 20,
     totalAUM: Math.floor(Math.random() * 50000000) + 5000000,
@@ -91,8 +104,8 @@ export function PartnerCard({ partnerName, searchTerm = '' }: PartnerCardProps) 
           <span className="text-gray-400 group-hover:text-primary transition-colors">
             <Building2 className="w-3 h-3" />
           </span>
-          <span className="max-w-[150px] truncate group-hover:underline" title={partnerName}>
-            <HighlightText text={partnerName} searchTerm={searchTerm} />
+          <span className="max-w-[150px] truncate group-hover:underline" title={resolvedPartnerName}>
+            <HighlightText text={resolvedPartnerName} searchTerm={searchTerm} />
           </span>
           <ChevronRight className="w-3 h-3 opacity-50 group-hover:opacity-100 transition-all group-hover:translate-x-0.5" />
         </motion.button>
@@ -227,6 +240,10 @@ export function PartnerCard({ partnerName, searchTerm = '' }: PartnerCardProps) 
               whileHover={{ x: 2 }}
               whileTap={{ scale: 0.98 }}
               onClick={() => {
+                if (onPartnerClick) {
+                  onPartnerClick(partnerData.id, partnerData.name);
+                  return;
+                }
                 // Navigation vers la fiche distributeur
                 console.log('Navigation vers fiche distributeur:', partnerData.id);
               }}
