@@ -33,7 +33,7 @@ import {
 import { AuditLogDialog } from './AuditLogDialog';
 import { HighlightText } from './HighlightText';
 import { getColumnsForStatus } from '../utils/subscriptionColumns';
-import { formatCurrency, formatDate } from '../utils/formatters';
+import { formatCurrency, formatDate, formatNumber } from '../utils/formatters';
 import { copyToClipboard } from '../utils/clipboard';
 import { SubscriptionWorkflowStatus } from '../utils/subscriptionStatuses';
 import { OriginStructureCell } from './OriginStructureCell';
@@ -248,7 +248,7 @@ export function SubscriptionDynamicTable({
       case 'quantity':
         return (
           <span className="text-sm font-semibold text-gray-900 dark:text-gray-100">
-            {Math.max(1, Math.trunc(row.quantity))}
+            {formatNumber(row.quantity, 0)}
           </span>
         );
 

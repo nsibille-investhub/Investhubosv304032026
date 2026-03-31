@@ -45,6 +45,18 @@ export function SubscriptionsPage({ data, isLoading, allData, setAllData, onSubs
   const [showPartnersDropdown, setShowPartnersDropdown] = useState(false);
   const [showStatusesDropdown, setShowStatusesDropdown] = useState(false);
 
+  const normalizedData = useMemo(
+    () =>
+      data.map((subscription) => ({
+        ...subscription,
+        quantity:
+          Number.isFinite(subscription.quantity) && subscription.quantity > 0
+            ? Math.trunc(subscription.quantity)
+            : 1,
+      })),
+    [data]
+  );
+
   // Hook de recherche multi-champs avec configuration centralisée
   const {
     searchTerm,
@@ -52,7 +64,7 @@ export function SubscriptionsPage({ data, isLoading, allData, setAllData, onSubs
     filteredData: searchFilteredData,
     searchMatches,
     hasActiveSearch,
-  } = useTableSearch(data, SUBSCRIPTION_SEARCH_FIELDS);
+  } = useTableSearch(normalizedData, SUBSCRIPTION_SEARCH_FIELDS);
 
   const handleFilterChange = (filters: any[]) => {
     setActiveFilters(filters);
@@ -68,10 +80,10 @@ export function SubscriptionsPage({ data, isLoading, allData, setAllData, onSubs
     if (hasActiveSearch) {
       console.log('🔍 Search term:', searchTerm);
       console.log('📊 Filtered data count:', searchFilteredData.length);
-      console.log('📊 Total data count:', data.length);
+      console.log('📊 Total data count:', normalizedData.length);
       console.log('📋 Sample filtered item:', searchFilteredData[0]);
     }
-  }, [searchTerm, searchFilteredData, data.length, hasActiveSearch]);
+  }, [searchTerm, searchFilteredData, normalizedData.length, hasActiveSearch]);
 
   // Fermer les dropdowns quand on clique en dehors
   useEffect(() => {
@@ -92,27 +104,27 @@ export function SubscriptionsPage({ data, isLoading, allData, setAllData, onSubs
   // Extraire les valeurs uniques de partenaires et statuts
   const uniquePartners = useMemo(() => {
     const partners = new Set<string>();
-    data.forEach(sub => {
+    normalizedData.forEach(sub => {
       if (sub.partenaire?.name) {
         partners.add(sub.partenaire.name);
       }
     });
     return Array.from(partners).sort();
-  }, [data]);
+  }, [normalizedData]);
 
   const uniqueStatuses = useMemo(() => {
     const statuses = new Set<string>();
-    data.forEach(sub => {
+    normalizedData.forEach(sub => {
       if (sub.status) {
         statuses.add(sub.status);
       }
     });
     return Array.from(statuses).sort();
-  }, [data]);
+  }, [normalizedData]);
 
   // Appliquer les filtres Partenaire et Statuts
   const filteredByPartnersAndStatuses = useMemo(() => {
-    let filtered = hasActiveSearch ? searchFilteredData : data;
+    let filtered = hasActiveSearch ? searchFilteredData : normalizedData;
     
     // Filtrer par partenaires
     if (selectedPartners.length > 0) {
@@ -128,7 +140,7 @@ export function SubscriptionsPage({ data, isLoading, allData, setAllData, onSubs
     }
     
     return filtered;
-  }, [data, searchFilteredData, hasActiveSearch, selectedPartners, selectedStatuses]);
+  }, [normalizedData, searchFilteredData, hasActiveSearch, selectedPartners, selectedStatuses]);
 
   // Tri des données (appliqué après la recherche, les filtres et le filtre AI)
   const sortedData = useMemo(() => {
@@ -245,7 +257,7 @@ export function SubscriptionsPage({ data, isLoading, allData, setAllData, onSubs
 
   const handleAskAIDirect = (query: string) => {
     // Analyser directement la requête
-    const analysis = analyzeSubscriptions(query, data);
+    const analysis = analyzeSubscriptions(query, normalizedData);
     setAiAnalysis(analysis);
     
     // Collecter tous les items des insights pour filtrer le tableau
