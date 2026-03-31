@@ -5,7 +5,7 @@ import { StatusBadge } from './StatusBadge';
 import { Tag } from './Tag';
 import { ClickableText } from './ClickableText';
 import { OriginStructureCell } from './OriginStructureCell';
-import { PartnerOriginCell } from './PartnerOriginCell';
+import { PartnerCard } from './PartnerCard';
 
 interface SubscriptionDataTableProps {
   data: any[];
@@ -491,7 +491,7 @@ export function SubscriptionDataTable({
 
                   {/* Partenaire */}
                   <td className="px-6 py-4" onClick={(e) => e.stopPropagation()}>
-                    <PartnerOriginCell partenaire={row.partenaire} searchTerm={searchTerm} />
+                    <PartnerCard partnerName={row.partenaire?.name || null} searchTerm={searchTerm} />
                   </td>
 
                   {/* Actions Menu */}
