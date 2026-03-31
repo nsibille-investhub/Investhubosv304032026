@@ -91,6 +91,8 @@ import { ContactsCard } from './ContactsCard';
 import { StructuresCell } from './StructuresCell';
 import { LastActivityCard } from './LastActivityCard';
 import { OriginStructureCell } from './OriginStructureCell';
+import { PartnerOriginCell } from './PartnerOriginCell';
+import { CheckIndicator } from './CheckIndicator';
 import { FilterCard } from './FilterCard';
 import { FilterBar, type FilterConfig } from './FilterBar';
 import { FolderSelectionTreeviewDropdown } from './DocumentAddModal';
