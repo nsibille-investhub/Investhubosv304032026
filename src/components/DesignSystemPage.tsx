@@ -91,6 +91,7 @@ import { ContactsCard } from './ContactsCard';
 import { StructuresCell } from './StructuresCell';
 import { LastActivityCard } from './LastActivityCard';
 import { OriginStructureCell } from './OriginStructureCell';
+import { CheckIndicator } from './CheckIndicator';
 import { FolderSelectionTreeviewDropdown } from './DocumentAddModal';
 import type { Contact, LegalStructure } from '../utils/investorGenerator';
 
@@ -385,6 +386,13 @@ const investorListingColumnSpecs = [
     guidelines: 'Nom cliquable text-sm + sous-ligne Company avec icône neutre.',
     variants: 'Raison sociale longue tronquée, Company direct sans structure.',
   },
+  {
+    column: 'CHECK',
+    component: 'CheckIndicator',
+    functional: 'Afficher un statut booléen compact en listing (ex: SEPA activé).',
+    guidelines: 'Icône cercle 20px, vert si actif, gris si inactif; tooltip explicite au survol.',
+    variants: 'Actif (check), inactif (cross).',
+  },
 ];
 
 const previewContacts: Contact[] = [
@@ -510,6 +518,13 @@ function renderInvestorColumnPreview(column: string) {
         name: 'Epsilon Fund',
         type: 'corporate',
       });
+    case 'CHECK':
+      return (
+        <div className="flex items-center gap-3">
+          <CheckIndicator checked checkedLabel="Prélèvement SEPA activé" uncheckedLabel="Prélèvement SEPA désactivé" />
+          <CheckIndicator checked={false} checkedLabel="Prélèvement SEPA activé" uncheckedLabel="Prélèvement SEPA désactivé" />
+        </div>
+      );
     default:
       return null;
   }

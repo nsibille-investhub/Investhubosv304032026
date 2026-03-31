@@ -10,8 +10,6 @@ import {
   History, 
   X,
   AlertTriangle,
-  CheckCircle2,
-  XCircle,
   Eye,
   Trash2
 } from 'lucide-react';
@@ -46,6 +44,7 @@ import { DateTimeCell } from './DateTimeCell';
 import { CalledAmountCell } from './CalledAmountCell';
 import { ClickableText } from './ClickableText';
 import { Tag } from './Tag';
+import { CheckIndicator } from './CheckIndicator';
 
 // Helper function to get global status
 const getGlobalStatus = (status: string) => {
@@ -451,11 +450,11 @@ export function SubscriptionDynamicTable({
       case 'depositary':
         return (
           <div className="flex justify-center">
-            {row.hasDepositary ? (
-              <CheckCircle2 className="w-5 h-5 text-green-600 dark:text-green-400" />
-            ) : (
-              <XCircle className="w-5 h-5 text-gray-400 dark:text-gray-600" />
-            )}
+            <CheckIndicator
+              checked={Boolean(row.hasDepositary)}
+              checkedLabel="Dépositaire renseigné"
+              uncheckedLabel="Aucun dépositaire"
+            />
           </div>
         );
 
@@ -536,21 +535,11 @@ export function SubscriptionDynamicTable({
       case 'sepaEnabled':
         return (
           <div className="flex justify-center">
-            {row.sepaEnabled ? (
-              <Tooltip>
-                <TooltipTrigger>
-                  <CheckCircle2 className="w-5 h-5 text-green-600 dark:text-green-400" />
-                </TooltipTrigger>
-                <TooltipContent>Prélèvement SEPA activé</TooltipContent>
-              </Tooltip>
-            ) : (
-              <Tooltip>
-                <TooltipTrigger>
-                  <XCircle className="w-5 h-5 text-gray-400 dark:text-gray-600" />
-                </TooltipTrigger>
-                <TooltipContent>Prélèvement SEPA désactivé</TooltipContent>
-              </Tooltip>
-            )}
+            <CheckIndicator
+              checked={Boolean(row.sepaEnabled)}
+              checkedLabel="Prélèvement SEPA activé"
+              uncheckedLabel="Prélèvement SEPA désactivé"
+            />
           </div>
         );
 
