@@ -527,6 +527,8 @@ function renderInvestorColumnPreview(column: string) {
               type: 'corporate',
             }}
           />
+        </div>
+      );
     case 'CHECK':
       return (
         <div className="flex items-center gap-3">
