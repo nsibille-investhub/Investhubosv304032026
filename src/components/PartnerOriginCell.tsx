@@ -1,5 +1,5 @@
 import { motion } from 'motion/react';
-import { Building, ArrowRight } from 'lucide-react';
+import { Building2, ChevronRight, UserRound } from 'lucide-react';
 import { HighlightText } from './HighlightText';
 
 /**
@@ -34,9 +34,9 @@ export function PartnerOriginCell({
   // CAS 1: Souscription DIRECTE (sans partenaire)
   if (!partenaire) {
     return (
-      <div className="flex items-center gap-2">
-        <ArrowRight className="w-3.5 h-3.5 text-emerald-500 dark:text-emerald-400 flex-shrink-0" />
-        <span className="text-xs text-gray-500 dark:text-gray-400">Direct</span>
+      <div className="flex items-center gap-2 text-muted-foreground">
+        <UserRound className="w-3.5 h-3.5 flex-shrink-0" />
+        <span className="text-sm">Direct</span>
       </div>
     );
   }
@@ -52,15 +52,16 @@ export function PartnerOriginCell({
           onPartnerClick(partenaire.id, partenaire.name);
         }
       }}
-      className="flex items-center gap-1.5 text-xs text-gray-600 dark:text-gray-400 hover:text-blue-600 dark:hover:text-blue-400 transition-colors group max-w-[200px]"
+      className="flex items-center gap-1.5 text-sm text-muted-foreground hover:text-foreground transition-colors group max-w-[240px]"
     >
-      <Building className="w-3.5 h-3.5 text-gray-400 dark:text-gray-600 group-hover:text-blue-500 dark:group-hover:text-blue-400 transition-colors flex-shrink-0" />
-      <span className="truncate group-hover:underline">
+      <Building2 className="w-3.5 h-3.5 text-muted-foreground/80 group-hover:text-foreground/80 transition-colors flex-shrink-0" />
+      <span className="truncate group-hover:underline text-left">
         <HighlightText 
           text={partenaire.name} 
           searchTerm={searchTerm}
         />
       </span>
+      <ChevronRight className="w-3.5 h-3.5 text-muted-foreground/60 group-hover:text-foreground/80 transition-colors flex-shrink-0" />
     </motion.button>
   );
 }
