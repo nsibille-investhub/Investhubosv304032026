@@ -98,6 +98,7 @@ import { FilterBar, type FilterConfig } from './FilterBar';
 import { FolderSelectionTreeviewDropdown } from './DocumentAddModal';
 import { GenericAudienceCard } from './GenericAudienceCard';
 import { SpecificAudience } from './SpecificAudience';
+import { ItemSelector } from './InternalResponsibleSelector';
 import type { Contact, LegalStructure } from '../utils/investorGenerator';
 
 type DoctrineItem = {
@@ -397,6 +398,15 @@ const investorListingColumnSpecs = [
     functional: 'Afficher l’origine de distribution d’une souscription (Direct ou via partenaire).',
     guidelines: 'Icône + libellé compact en text-xs, nom partenaire tronqué et cliquable.',
     variants: 'Direct (sans partenaire), partenaire CGP/distributeur.',
+  },
+  {
+    column: 'RESPONSABLE',
+    component: 'itemSelector',
+    functional: 'Assigner un responsable interne depuis un menu compact avec autocomplete.',
+    guidelines: 'Trigger compact (avatar + nom + email) et dropdown searchable; largeur conseillée ~220px.',
+    variants: 'Valeur préremplie, recherche sans résultat, sélection d’un autre responsable.',
+  },
+  {
     column: 'CHECK',
     component: 'CheckIndicator',
     functional: 'Afficher un statut booléen compact en listing (ex: SEPA activé).',
@@ -540,9 +550,23 @@ function renderInvestorColumnPreview(column: string) {
           <CheckIndicator checked={false} checkedLabel="Prélèvement SEPA activé" uncheckedLabel="Prélèvement SEPA désactivé" />
         </div>
       );
+    case 'RESPONSABLE':
+      return <ItemSelectorPreview />;
     default:
       return null;
   }
+}
+
+function ItemSelectorPreview() {
+  const [responsible, setResponsible] = React.useState('Jean Dault');
+
+  return (
+    <ItemSelector
+      value={responsible}
+      onChange={setResponsible}
+      className="max-w-[220px]"
+    />
+  );
 }
 
 export function DesignSystemPage() {

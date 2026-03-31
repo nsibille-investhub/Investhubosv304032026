@@ -1,3 +1,6 @@
+import { Building2, FileText, UserRound } from 'lucide-react';
+import { Tag } from './Tag';
+
 type SpecificAudienceProps = {
   investor: string;
   structure?: string;
@@ -11,15 +14,11 @@ export function SpecificAudience({
   subscription,
   className = 'text-xs leading-snug text-gray-500',
 }: SpecificAudienceProps) {
-  const details = [`Investisseur: ${investor}`];
-
-  if (structure) {
-    details.push(`Structure: ${structure}`);
-  }
-
-  if (subscription) {
-    details.push(`Souscription: ${subscription}`);
-  }
-
-  return <p className={className}>{details.join(' · ')}</p>;
+  return (
+    <div className={`flex flex-wrap items-center gap-1.5 ${className}`}>
+      <Tag icon={UserRound} label={`Investisseur: ${investor}`} />
+      {structure ? <Tag icon={Building2} label={`Structure: ${structure}`} /> : null}
+      {subscription ? <Tag icon={FileText} label={`Souscription: ${subscription}`} /> : null}
+    </div>
+  );
 }

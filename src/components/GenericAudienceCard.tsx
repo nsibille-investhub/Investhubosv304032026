@@ -1,5 +1,6 @@
-import { Folder, Landmark, Settings, Users, ArrowRight } from 'lucide-react';
+import { Folder, Landmark, Settings, Users, ArrowRight, Layers3 } from 'lucide-react';
 import { Button } from './ui/button';
+import { Tag } from './Tag';
 
 type GenericAudienceCardProps = {
   title: string;
@@ -91,11 +92,16 @@ export function GenericAudienceInline({
   segmentLabel,
   className = 'text-xs leading-snug text-gray-500',
 }: GenericAudienceInlineProps) {
-  const details = [
-    `Fonds: ${fundLabel || 'Tous fonds'}`,
-    `Parts: ${shareClassLabel || 'Toutes parts'}`,
-    `Segment: ${segmentLabel || 'Tous segments'}`,
-  ];
+  const hasSpecificFund = fundLabel && !['Tous fonds', 'Tous les fonds'].includes(fundLabel);
+  const hasSpecificShareClass = shareClassLabel && !['Toutes parts', 'Toutes les parts'].includes(shareClassLabel);
+  const hasSpecificSegment = segmentLabel && !['Tous segments', 'Tous les segments'].includes(segmentLabel);
 
-  return <p className={className}>{details.join(' · ')}</p>;
+  return (
+    <div className={`flex flex-wrap items-center gap-1.5 ${className}`}>
+      {hasSpecificFund ? <Tag icon={Landmark} label={`Fonds: ${fundLabel}`} /> : null}
+      {hasSpecificShareClass ? <Tag icon={Layers3} label={`Parts: ${shareClassLabel}`} /> : null}
+      {hasSpecificSegment ? <Tag icon={Users} label={`Segment: ${segmentLabel}`} /> : null}
+      {!hasSpecificFund && !hasSpecificShareClass && !hasSpecificSegment ? <span className="text-gray-400">—</span> : null}
+    </div>
+  );
 }
