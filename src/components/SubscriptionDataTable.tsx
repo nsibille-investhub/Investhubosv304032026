@@ -1,10 +1,10 @@
 import { HighlightText } from './HighlightText';
-import { ContrepartieCard } from './ContrepartieCard';
 import { SignatureStatusCell } from './SignatureStatusCell';
 import { getColumnsForStatus, SubscriptionWorkflowStatus } from '../utils/subscriptionColumns';
 import { StatusBadge } from './StatusBadge';
 import { Tag } from './Tag';
 import { ClickableText } from './ClickableText';
+import { OriginStructureCell } from './OriginStructureCell';
 
 interface SubscriptionDataTableProps {
   data: any[];
@@ -355,7 +355,24 @@ export function SubscriptionDataTable({
 
                   {/* Contrepartie */}
                   <td className="px-6 py-4" onClick={(e) => e.stopPropagation()}>
-                    <ContrepartieCard contrepartie={row.contrepartie} searchTerm={searchTerm} />
+                    <div className="flex flex-col gap-1 max-w-[300px]">
+                      <motion.span
+                        whileHover={{ x: 2 }}
+                        title={row.contrepartie.name}
+                        className="text-sm font-medium cursor-pointer transition-all truncate"
+                      >
+                        <ClickableText>
+                          <HighlightText
+                            text={row.contrepartie.name}
+                            searchTerm={searchTerm}
+                          />
+                        </ClickableText>
+                      </motion.span>
+                      <OriginStructureCell
+                        contrepartie={row.contrepartie}
+                        searchTerm={searchTerm}
+                      />
+                    </div>
                   </td>
 
                   {/* Type */}
