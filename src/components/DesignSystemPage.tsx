@@ -595,7 +595,6 @@ export function DesignSystemPage() {
             value={designSystemFolderId}
             onChange={setDesignSystemFolderId}
             folderOptions={folderSelectorDemoOptions}
-            initialOpen
           />
         </div>
       </section>
