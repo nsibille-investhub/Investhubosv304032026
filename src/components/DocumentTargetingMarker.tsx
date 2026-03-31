@@ -1,7 +1,8 @@
 import { Document } from '../utils/documentMockData';
-import { Badge } from './ui/badge';
+import { Globe, UserRound } from 'lucide-react';
 import { GenericAudienceInline } from './GenericAudienceCard';
 import { SpecificAudience } from './SpecificAudience';
+import { Tag } from './Tag';
 
 interface DocumentTargetingMarkerProps {
   document: Document;
@@ -17,13 +18,12 @@ export function DocumentTargetingMarker({ document, mode = 'full' }: DocumentTar
 
   const isGeneric = targeting.mode === 'generic';
   const title = isGeneric ? 'Générique' : 'Nominatif';
-  const badge = (
-    <Badge
-      variant="outline"
+  const natureTag = (
+    <Tag
+      icon={isGeneric ? Globe : UserRound}
+      label={title}
       className={`text-[11px] ${isGeneric ? 'bg-indigo-50 text-indigo-700 border-indigo-200' : 'bg-emerald-50 text-emerald-700 border-emerald-200'}`}
-    >
-      {title}
-    </Badge>
+    />
   );
 
   const details = isGeneric ? (
@@ -41,7 +41,7 @@ export function DocumentTargetingMarker({ document, mode = 'full' }: DocumentTar
   );
 
   if (mode === 'tag') {
-    return badge;
+    return natureTag;
   }
 
   if (mode === 'details') {
@@ -50,7 +50,7 @@ export function DocumentTargetingMarker({ document, mode = 'full' }: DocumentTar
 
   return (
     <div className="min-w-0">
-      {badge}
+      {natureTag}
       <div className="mt-1">{details}</div>
     </div>
   );

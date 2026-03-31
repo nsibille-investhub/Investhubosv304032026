@@ -165,3 +165,9 @@ export function InternalResponsibleSelector({ value, onChange, className }: Inte
     </div>
   );
 }
+
+export type ItemSelectorProps = InternalResponsibleSelectorProps;
+
+export function ItemSelector(props: ItemSelectorProps) {
+  return <InternalResponsibleSelector {...props} />;
+}
