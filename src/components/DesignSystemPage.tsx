@@ -25,6 +25,7 @@ import {
   RefreshCw,
   Clipboard,
   UserPlus,
+  MessageCircle,
   CircleHelp,
   Briefcase,
   Globe,
@@ -91,6 +92,7 @@ import { ContactsCard } from './ContactsCard';
 import { StructuresCell } from './StructuresCell';
 import { LastActivityCard } from './LastActivityCard';
 import { OriginStructureCell } from './OriginStructureCell';
+import { FilterCard } from './FilterCard';
 import { FolderSelectionTreeviewDropdown } from './DocumentAddModal';
 import type { Contact, LegalStructure } from '../utils/investorGenerator';
 
@@ -518,6 +520,7 @@ function renderInvestorColumnPreview(column: string) {
 export function DesignSystemPage() {
   const [switchOn, setSwitchOn] = React.useState(true);
   const [designSystemFolderId, setDesignSystemFolderId] = React.useState('branch-7-level-5');
+  const [activeFilterCard, setActiveFilterCard] = React.useState('all');
 
   return (
     <div className="flex-1 overflow-auto px-6 py-6 space-y-6 bg-[#F8FAFA] dark:bg-[#0B0D0D]">
@@ -619,6 +622,58 @@ export function DesignSystemPage() {
                 <AlertTitle>Aucun investisseur trouvé</AlertTitle>
                 <AlertDescription>Les filtres appliqués ne correspondent à aucun investisseur.</AlertDescription>
               </Alert>
+            </CardContent>
+          </Card>
+
+          <Card className="lg:col-span-2">
+            <CardHeader><CardTitle>Filter Card</CardTitle></CardHeader>
+            <CardContent>
+              <div className="grid grid-cols-2 lg:grid-cols-4 gap-2">
+                <FilterCard
+                  status="prospect"
+                  activeStatus={activeFilterCard}
+                  onStatusChange={setActiveFilterCard}
+                  label="Prospect"
+                  icon={UserPlus}
+                  total={32}
+                  metricLabel="Total investi"
+                  metricValue="€83.7M"
+                  averageValue="€2.1M"
+                />
+                <FilterCard
+                  status="discussion"
+                  activeStatus={activeFilterCard}
+                  onStatusChange={setActiveFilterCard}
+                  label="En discussion"
+                  icon={MessageCircle}
+                  total={39}
+                  metricLabel="Total investi"
+                  metricValue="€97.7M"
+                  averageValue="€2.4M"
+                />
+                <FilterCard
+                  status="relation"
+                  activeStatus={activeFilterCard}
+                  onStatusChange={setActiveFilterCard}
+                  label="En relation"
+                  icon={Users}
+                  total={40}
+                  metricLabel="Total investi"
+                  metricValue="€181.4M"
+                  averageValue="€1.6M"
+                />
+                <FilterCard
+                  status="all"
+                  activeStatus={activeFilterCard}
+                  onStatusChange={setActiveFilterCard}
+                  label="Tous"
+                  icon={Filter}
+                  total={111}
+                  metricLabel="Total investi"
+                  metricValue="€181.4M"
+                  averageValue="€1.6M"
+                />
+              </div>
             </CardContent>
           </Card>
         </div>
