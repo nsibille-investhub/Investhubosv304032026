@@ -45,6 +45,7 @@ import { CalledAmountCell } from './CalledAmountCell';
 import { ClickableText } from './ClickableText';
 import { Tag } from './Tag';
 import { CheckIndicator } from './CheckIndicator';
+import { StatusBadge } from './StatusBadge';
 
 // Helper function to get global status
 const getGlobalStatus = (status: string) => {
@@ -64,6 +65,27 @@ const getGlobalStatus = (status: string) => {
     'Archived': 'Inactive',
   };
   return statusMap[status] || status;
+};
+
+const getGlobalStatusVariant = (status: string): 'success' | 'warning' | 'danger' | 'neutral' => {
+  if (['Active', 'Exécuté'].includes(status)) return 'success';
+  if (['Onboarding', 'Signature', 'En attente'].includes(status)) return 'warning';
+  if (['Inactive', 'Rejected', 'Cancelled', 'Expired', 'Archived'].includes(status)) return 'danger';
+  return 'neutral';
+};
+
+const getOnboardingStatusVariant = (status: string): 'success' | 'warning' | 'danger' | 'neutral' => {
+  if (status === 'Complété') return 'success';
+  if (status === 'Bloqué') return 'danger';
+  if (['En cours avancé', 'En cours', 'Démarré'].includes(status)) return 'warning';
+  return 'neutral';
+};
+
+const getCounterSignatureVariant = (status: string): 'success' | 'warning' | 'danger' | 'neutral' => {
+  if (status === 'Complétée') return 'success';
+  if (status === 'Refusée') return 'danger';
+  if (['En cours', 'En attente'].includes(status)) return 'warning';
+  return 'neutral';
 };
 
 interface SubscriptionDynamicTableProps {
@@ -312,19 +334,7 @@ export function SubscriptionDynamicTable({
         return <span className="text-sm text-gray-700 dark:text-gray-300">{row.analyst || '-'}</span>;
 
       case 'onboardingStatus':
-        const onboardingColors: Record<string, string> = {
-          'Complété': 'bg-green-100 dark:bg-green-950/50 text-green-700 dark:text-green-300 border-green-200 dark:border-green-800',
-          'En cours avancé': 'bg-blue-100 dark:bg-blue-950/50 text-blue-700 dark:text-blue-300 border-blue-200 dark:border-blue-800',
-          'En cours': 'bg-yellow-100 dark:bg-yellow-950/50 text-yellow-700 dark:text-yellow-300 border-yellow-200 dark:border-yellow-800',
-          'Démarré': 'bg-orange-100 dark:bg-orange-950/50 text-orange-700 dark:text-orange-300 border-orange-200 dark:border-orange-800',
-          'Bloqué': 'bg-red-100 dark:bg-red-950/50 text-red-700 dark:text-red-300 border-red-200 dark:border-red-800',
-          'Non démarré': 'bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-300 border-gray-200 dark:border-gray-700'
-        };
-        return (
-          <Badge className={onboardingColors[row.onboardingStatus || 'Non démarré']}>
-            {row.onboardingStatus || 'Non démarré'}
-          </Badge>
-        );
+        return <StatusBadge label={row.onboardingStatus || 'Non démarré'} variant={getOnboardingStatusVariant(row.onboardingStatus || 'Non démarré')} />;
 
       case 'blockageReason':
         return row.blockageReason ? (
@@ -401,11 +411,7 @@ export function SubscriptionDynamicTable({
         );
 
       case 'counterSignatureStatus':
-        return (
-          <Badge className="bg-cyan-100 dark:bg-cyan-950/50 text-cyan-700 dark:text-cyan-300 border-cyan-200 dark:border-cyan-800">
-            {row.counterSignatureStatus || 'Non requis'}
-          </Badge>
-        );
+        return <StatusBadge label={row.counterSignatureStatus || 'Non requis'} variant={getCounterSignatureVariant(row.counterSignatureStatus || 'Non requis')} />;
 
       case 'counterSignatureOwner':
         return <span className="text-sm text-gray-700 dark:text-gray-300">{row.counterSignatureOwner || '-'}</span>;
@@ -466,11 +472,7 @@ export function SubscriptionDynamicTable({
         );
 
       case 'globalStatus':
-        return (
-          <Badge className="bg-blue-100 dark:bg-blue-950/50 text-blue-700 dark:text-blue-300 border-blue-200 dark:border-blue-800">
-            {getGlobalStatus(row.status)}
-          </Badge>
-        );
+        return <StatusBadge label={getGlobalStatus(row.status)} variant={getGlobalStatusVariant(getGlobalStatus(row.status))} />;
 
       case 'updatedAt':
         return <DateTimeCell date={row.updatedAt} />;
