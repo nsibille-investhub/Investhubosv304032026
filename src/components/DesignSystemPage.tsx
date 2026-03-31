@@ -94,6 +94,7 @@ import { OriginStructureCell } from './OriginStructureCell';
 import { FilterCard } from './FilterCard';
 import { FilterBar, type FilterConfig } from './FilterBar';
 import { FolderSelectionTreeviewDropdown } from './DocumentAddModal';
+import { GenericAudienceCard } from './GenericAudienceCard';
 import type { Contact, LegalStructure } from '../utils/investorGenerator';
 
 type DoctrineItem = {
@@ -527,6 +528,8 @@ function renderInvestorColumnPreview(column: string) {
               type: 'corporate',
             }}
           />
+        </div>
+      );
     case 'CHECK':
       return (
         <div className="flex items-center gap-3">
@@ -846,6 +849,23 @@ export function DesignSystemPage() {
             value={designSystemFolderId}
             onChange={setDesignSystemFolderId}
             folderOptions={folderSelectorDemoOptions}
+          />
+        </div>
+      </section>
+
+      <section className="rounded-2xl border border-[#D7E0DD] dark:border-[#1F2D2A] bg-white dark:bg-[#101615] p-6">
+        <h2 className="text-lg font-semibold text-[#1F3137] dark:text-[#E8F0EE] mb-2">Composant GED — generic-audience</h2>
+        <p className="text-sm text-[#4F6166] dark:text-[#9DB2AE] mb-4">
+          Carte d&apos;espace GED avec type d&apos;audience, fonds, segment et compteurs documents / dossiers.
+        </p>
+        <div className="max-w-md">
+          <GenericAudienceCard
+            title="Investisseurs LP"
+            audienceType="Investisseur"
+            fundLabel="Tous fonds"
+            segmentLabel="LP Institutionnels"
+            documentsCount={127}
+            foldersCount={18}
           />
         </div>
       </section>

@@ -1,0 +1,79 @@
+import { Folder, Landmark, Settings, Users, ArrowRight } from 'lucide-react';
+import { Button } from './ui/button';
+
+type GenericAudienceCardProps = {
+  title: string;
+  audienceType: string;
+  fundLabel: string;
+  segmentLabel?: string;
+  documentsCount: number;
+  foldersCount: number;
+  onOpen?: () => void;
+  onSettings?: () => void;
+};
+
+export function GenericAudienceCard({
+  title,
+  audienceType,
+  fundLabel,
+  segmentLabel,
+  documentsCount,
+  foldersCount,
+  onOpen,
+  onSettings,
+}: GenericAudienceCardProps) {
+  return (
+    <article className="rounded-2xl border border-[#D7DEE6] bg-[#F4F6FA] p-4 shadow-[0_2px_10px_rgba(15,23,42,0.06)]">
+      <div className="mb-5 flex items-start justify-between">
+        <div className="h-14 w-14 rounded-2xl bg-[#020F2B] text-white flex items-center justify-center shadow-[0_6px_16px_rgba(2,15,43,0.28)]">
+          <Folder className="h-7 w-7" />
+        </div>
+        <button
+          type="button"
+          onClick={onSettings}
+          className="h-10 w-10 rounded-xl border border-[#D8DEE7] bg-white text-[#4D5D75] flex items-center justify-center hover:bg-[#F8FAFD] transition-colors"
+          aria-label={`Configurer l'espace ${title}`}
+        >
+          <Settings className="h-5 w-5" />
+        </button>
+      </div>
+
+      <div className="space-y-3 rounded-xl bg-white p-4">
+        <h3 className="text-[30px] leading-tight font-semibold text-[#1B2A41]">{title}</h3>
+
+        <div className="space-y-2 text-[19px] text-[#4D5D75]">
+          <p className="flex items-center gap-2">
+            <Users className="h-4 w-4 text-[#617491]" />
+            <span>{audienceType}</span>
+          </p>
+          <p className="flex items-center gap-2">
+            <Landmark className="h-4 w-4 text-[#1BAE70]" />
+            <span><span className="font-medium text-[#2C3E55]">Fonds :</span> {fundLabel}</span>
+          </p>
+          {segmentLabel ? (
+            <p className="pl-6">
+              <span className="font-medium text-[#2C3E55]">Segment :</span> {segmentLabel}
+            </p>
+          ) : null}
+        </div>
+
+        <div className="flex items-center gap-2 text-[18px] text-[#6B7B92] pt-1">
+          <span>{documentsCount} documents</span>
+          <span className="h-1.5 w-1.5 rounded-full bg-[#915BFF]" />
+          <span>{foldersCount} dossiers</span>
+        </div>
+
+        <div className="pt-2">
+          <Button
+            type="button"
+            onClick={onOpen}
+            className="w-full h-12 rounded-xl bg-[#020F2B] hover:bg-[#051A42] text-white text-[22px] font-medium"
+          >
+            Ouvrir l'espace
+            <ArrowRight className="h-5 w-5" />
+          </Button>
+        </div>
+      </div>
+    </article>
+  );
+}
