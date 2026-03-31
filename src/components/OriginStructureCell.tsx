@@ -1,5 +1,5 @@
 import { motion } from 'motion/react';
-import { Building2 } from 'lucide-react';
+import { Building2, User } from 'lucide-react';
 import { HighlightText } from './HighlightText';
 
 /**
@@ -8,7 +8,7 @@ import { HighlightText } from './HighlightText';
  * CAS D'USAGE :
  * 
  * 1. INDIVIDU (PP) INVESTIT EN DIRECT
- *    - Affiche : "Individual" + même icône/couleur que "Company"
+ *    - Affiche : "Individual" + icône User
  *    - Exemple : Sophie Martin investit directement
  * 
  * 2. INDIVIDU (PP) INVESTIT VIA SA STRUCTURE
@@ -16,7 +16,7 @@ import { HighlightText } from './HighlightText';
  *    - Exemple : Sophie Martin investit via "SCI Patrimoine Martin"
  * 
  * 3. ENTREPRISE (PM) INVESTIT EN DIRECT
- *    - Affiche : "Company" + même icône/couleur que "Individual"
+ *    - Affiche : "Company" + icône Building2
  *    - Exemple : Alpha Group investit directement
  * 
  * 4. ENTREPRISE (PM) INVESTIT VIA UNE STRUCTURE
@@ -70,8 +70,8 @@ export function OriginStructureCell({
   if (contrepartie.type === 'individual') {
     return (
       <div className="flex items-center gap-2">
-        <Building2 className="w-3.5 h-3.5 text-gray-400 dark:text-gray-600 flex-shrink-0" />
-        <span className="text-xs text-gray-500 dark:text-gray-400">Individual</span>
+        <User className="w-3.5 h-3.5 text-blue-500 dark:text-blue-400 flex-shrink-0" />
+        <span className="text-xs text-gray-500 dark:text-gray-400">Individidual</span>
       </div>
     );
   }
