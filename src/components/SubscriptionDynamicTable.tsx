@@ -248,7 +248,7 @@ export function SubscriptionDynamicTable({
       case 'quantity':
         return (
           <span className="text-sm font-semibold text-gray-900 dark:text-gray-100">
-            {row.quantity || '—'}
+            {Math.max(1, Math.trunc(row.quantity))}
           </span>
         );
 
