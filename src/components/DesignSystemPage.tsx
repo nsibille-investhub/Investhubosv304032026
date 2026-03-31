@@ -340,6 +340,13 @@ const investorListingColumnSpecs = [
     guidelines: 'Tag outline léger, text-sm, espacement compact.',
     variants: 'HNWI / Retail / Professional / UHNWI…',
   },
+  {
+    column: 'DERNIÈRE ACTIVITÉ',
+    component: 'Duration (LastActivityCard)',
+    functional: 'Afficher le temps écoulé depuis la dernière interaction investisseur.',
+    guidelines: 'Carte compacte inline-flex, libellé text-xs semibold + date text-[11px], icône calendrier 14px.',
+    variants: 'Il y a 2 mois / Il y a 3 mois / Il y a 1 sem, tonalité neutre ou contextualisée selon fraîcheur.',
+  },
 ];
 
 const previewContacts: Contact[] = [
@@ -408,6 +415,15 @@ function renderInvestorColumnPreview(column: string) {
       return <Badge variant="outline">2</Badge>;
     case 'SEGMENT':
       return <Tag label="HNWI" />;
+    case 'DERNIÈRE ACTIVITÉ':
+      return (
+        <LastActivityCard
+          date={new Date('2026-01-17T07:33:00')}
+          relativeTime="Il y a 2 mois"
+          fullDate="17 janv. 2026, 07:33"
+          variant="neutral"
+        />
+      );
     default:
       return null;
   }
