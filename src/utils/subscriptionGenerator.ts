@@ -202,7 +202,7 @@ export interface Subscription {
     shareClass: string;
   };
   amount: number;
-  quantity?: number;
+  quantity: number;
   completionOnboarding: number;
   createdAt: Date;
   updatedAt: Date;
@@ -571,7 +571,7 @@ export function generateSubscriptions(count: number): Subscription[] {
         shareClass
       },
       amount,
-      quantity: Math.random() > 0.5 ? randomNumber(1, 10) : undefined,
+      quantity: randomNumber(1, 10),
       completionOnboarding,
       createdAt: createdDate,
       updatedAt: updatedDate,
