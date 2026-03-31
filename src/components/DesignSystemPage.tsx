@@ -91,7 +91,7 @@ import { ContactsCard } from './ContactsCard';
 import { StructuresCell } from './StructuresCell';
 import { LastActivityCard } from './LastActivityCard';
 import { OriginStructureCell } from './OriginStructureCell';
-import { PartnerOriginCell } from './PartnerOriginCell';
+import { PartnerCard } from './PartnerCard';
 import { CheckIndicator } from './CheckIndicator';
 import { FilterCard } from './FilterCard';
 import { FilterBar, type FilterConfig } from './FilterBar';
@@ -533,8 +533,8 @@ function renderInvestorColumnPreview(column: string) {
     case 'DISTRIBUTION PARTNER':
       return (
         <div className="flex flex-col gap-2">
-          <PartnerOriginCell partenaire={null} />
-          <PartnerOriginCell
+          <PartnerCard partnerName={null} />
+          <PartnerCard
             partenaire={{
               id: 'partner-42',
               name: 'Masséna Wealth Management',

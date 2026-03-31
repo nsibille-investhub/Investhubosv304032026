@@ -12,9 +12,9 @@ import {
   Plus
 } from 'lucide-react';
 import { Document } from '../utils/documentMockData';
-import { Badge } from './ui/badge';
 import { Button } from './ui/button';
 import { DocumentTargetingMarker } from './DocumentTargetingMarker';
+import { Tag } from './Tag';
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -96,6 +96,26 @@ export function DocumentListView({
     }
   };
 
+  const findFolderIdByPath = (path: string[]): string | null => {
+    if (path.length === 0) return null;
+
+    let currentLevel = documents;
+    let currentFolder: Document | null = null;
+
+    for (const segment of path) {
+      const matchedFolder = currentLevel.find(
+        (entry) => entry.type === 'folder' && entry.name === segment
+      );
+
+      if (!matchedFolder) return null;
+
+      currentFolder = matchedFolder;
+      currentLevel = matchedFolder.children || [];
+    }
+
+    return currentFolder?.id || null;
+  };
+
   const hasActiveSearch = searchTerm.trim().length > 0;
   const itemsToRender = hasActiveSearch
     ? searchResults.map((result) => ({ ...result.item, __path: result.path } as Document & { __path: string[] }))
@@ -136,11 +156,9 @@ export function DocumentListView({
                 <ChevronRight className="w-4 h-4 text-gray-400" />
                 <button
                   onClick={() => {
-                    // Navigate to this level
                     const newPath = currentPath.slice(0, index + 1);
-                    // Find the folder ID for this path
-                    // For now, just show the current folder
-                    onFolderNavigate(currentFolder?.id || null, newPath);
+                    const targetFolderId = findFolderIdByPath(newPath);
+                    onFolderNavigate(targetFolderId, newPath);
                   }}
                   className={`${
                     index === currentPath.length - 1
@@ -260,28 +278,29 @@ export function DocumentListView({
                           {folder.children?.length || 0} élément{(folder.children?.length || 0) > 1 ? 's' : ''}
                         </p>
                       </div>
-                      <Badge variant="outline" className="bg-amber-50 text-amber-700 border-amber-200 text-xs">
-                        Dossier
-                      </Badge>
                     </div>
 
-                    <div>
-                      <p className="text-xs text-gray-400">—</p>
+                    <div className="col-span-2">
+                      <Tag label="Dossier" />
                     </div>
 
-                    <div>
-                      <p className="text-xs text-gray-400">—</p>
+                    <div className="col-span-3">
+                      {folder.navigatorTargeting ? (
+                        <DocumentTargetingMarker document={folder} mode="details" />
+                      ) : (
+                        <p className="text-xs text-gray-400">—</p>
+                      )}
                     </div>
                     
-                    <div>
+                    <div className="col-span-1">
                       <p className="text-sm text-gray-600">{formatDate(folder.date)}</p>
                     </div>
                     
-                    <div>
+                    <div className="col-span-1">
                       <p className="text-sm text-gray-600">—</p>
                     </div>
                     
-                    <div className="flex items-center justify-end gap-2">
+                    <div className="col-span-1 flex items-center justify-end gap-2">
                       <DropdownMenu>
                         <DropdownMenuTrigger asChild>
                           <button
@@ -373,23 +392,23 @@ export function DocumentListView({
                       </div>
                     </div>
 
-                    <div className="min-w-0">
+                    <div className="col-span-2 min-w-0">
                       <DocumentTargetingMarker document={file} mode="tag" />
                     </div>
 
-                    <div className="min-w-0">
+                    <div className="col-span-3 min-w-0">
                       <DocumentTargetingMarker document={file} mode="details" />
                     </div>
                     
-                    <div>
+                    <div className="col-span-1">
                       <p className="text-sm text-gray-600">{formatDate(file.date)}</p>
                     </div>
                     
-                    <div>
+                    <div className="col-span-1">
                       <p className="text-sm text-gray-600">{formatFileSize(file.size)}</p>
                     </div>
                     
-                    <div className="flex items-center justify-end gap-2">
+                    <div className="col-span-1 flex items-center justify-end gap-2">
                       <button
                         type="button"
                         onClick={(event) => {

@@ -35,7 +35,7 @@ import { formatCurrency, formatDate, formatNumber } from '../utils/formatters';
 import { copyToClipboard } from '../utils/clipboard';
 import { SubscriptionWorkflowStatus } from '../utils/subscriptionStatuses';
 import { OriginStructureCell } from './OriginStructureCell';
-import { PartnerOriginCell } from './PartnerOriginCell';
+import { PartnerCard } from './PartnerCard';
 import { SubscriptionStatusBadge } from './SubscriptionStatusBadge';
 import { FundShareCell } from './FundShareCell';
 import { SignatureProgressCell } from './SignatureProgressCell';
@@ -313,7 +313,7 @@ export function SubscriptionDynamicTable({
 
       case 'partner':
         return (
-          <PartnerOriginCell 
+          <PartnerCard 
             partenaire={row.partenaire}
             searchTerm={searchTerm}
             onPartnerClick={(partnerId, partnerName) => {
