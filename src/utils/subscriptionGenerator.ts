@@ -264,10 +264,173 @@ export interface Subscription {
   onboardingReopened?: number; // Nombre de réouvertures de l'onboarding
 }
 
+function createDetailedAnonymizedSubscription(): Subscription {
+  const createdDate = new Date('2023-12-14T09:30:00');
+  const updatedDate = new Date('2026-03-02T10:00:00');
+
+  return {
+    id: 1,
+    name: 'Gérard M. - €500K - Private Assets Convictions 2024 Part UFF-FR001400KIZ8',
+    status: 'Active',
+    type: 'Corporate',
+    contrepartie: {
+      name: 'GVC 2',
+      id: 'INV-1024',
+      type: 'corporate',
+      structure: 'GVC 2',
+      investor: 'Gérard M.',
+      investorType: 'individual',
+      mainContact: 'Gérard M.',
+      country: 'France',
+      riskLevel: 'Medium',
+      kycStatus: 'validated',
+      crmSegments: ['Professional', 'VIP']
+    },
+    exposure: 'None',
+    riskLevel: 'Medium',
+    monitoring: false,
+    hits: 3,
+    decisions: 3,
+    analyst: 'Sophie Martin',
+    fund: {
+      name: 'Private Assets Convictions 2024',
+      shareClass: 'UFF-FR001400KIZ8'
+    },
+    amount: 500000,
+    quantity: 500000,
+    completionOnboarding: 100,
+    createdAt: createdDate,
+    updatedAt: updatedDate,
+    partenaire: {
+      name: 'UFF',
+      id: 'PART-201',
+      type: 'corporate'
+    },
+    signatures: {
+      required: 1,
+      completed: 1,
+      signatories: [
+        {
+          name: 'Gérard M.',
+          role: 'Signataire principal',
+          status: 'signed',
+          signedAt: new Date('2024-07-18T09:00:00')
+        }
+      ]
+    },
+    lastUpdate: {
+      relativeTime: '02/03/2026',
+      timestamp: updatedDate.getTime()
+    },
+    details: {
+      sourceCase: 'Capture anonymisée de référence',
+      valueDate: '14/12/2023',
+      liquidationValueDate: '14/12/2023',
+      capitalCalls: [
+        { date: '17/12/2025', label: 'Appel de fonds 4', amount: 35000, premium: 0, entryFees: 0, status: 'Payé' },
+        { date: '18/06/2025', label: 'Appel de fonds 3', amount: 30000, premium: 0, entryFees: 0, status: 'Payé' },
+        { date: '21/06/2024', label: 'Appel de fonds 2', amount: 50000, premium: 0, entryFees: 0, status: 'Payé' },
+        { date: '18/01/2024', label: '1er closing', amount: 125000, premium: 1260.4, entryFees: 10000, status: 'Payé' }
+      ],
+      distributions: [
+        { date: '15/04/2026', label: 'Distribution 1', amount: 11875, blockedAmount: 11875, lockExpiry: '', status: 'Créé' }
+      ],
+      emails: [
+        { date: '27/03/2026 16:30', subject: 'FPCI Private Assets Convictions 2024 - 1ère distribution', to: 'gerard@example.fr' },
+        { date: '10/12/2025 12:18', subject: 'Rappel - Prélèvement le 17 décembre 2025', to: 'gerard@example.fr' },
+        { date: '21/05/2025 15:44', subject: '3ème appel de capital', to: 'gerard@example.fr' }
+      ],
+      subscriptionDocuments: [
+        { date: '02/03/2026', name: 'Relevé semestriel', language: 'FR', type: 'Document contractuel', file: 'document' },
+        { date: '29/10/2025', name: 'Relevé semestriel', language: 'FR', type: 'Document contractuel', file: 'document' },
+        { date: '27/05/2025', name: 'Relevé semestriel', language: 'FR', type: 'Document contractuel', file: 'document' },
+        { date: '18/07/2024', name: 'Bulletin de souscription', language: 'FR', type: 'Document spécifique', file: 'document' }
+      ],
+      progression: [
+        'Début de la souscription - 14/12/2023',
+        'Onboarding - 80%',
+        'Onboarding > 80% - 28/05/2024',
+        'À valider - 18/07/2024',
+        'Demander une signature',
+        'Signature client en attente',
+        'Demander un versement - 18/07/2024',
+        'Vérifier le versement - 14/12/2023'
+      ],
+      subscriptionInfo: {
+        language: 'fr',
+        externalId: '',
+        part: 'UFF - FR001400KIZ8',
+        amount: 500000,
+        partAmount: 1,
+        partNumber: 500000,
+        entryFeesAmount: 10000,
+        premiumAmount: 1260.4,
+        custodyOption: false,
+        subscriptionType: 'Non-professionnel',
+        sepaEnabled: true
+      },
+      subscriber: {
+        type: 'Société',
+        structure: '',
+        subscriptionName: 'GVC 2',
+        companyName: 'GVC 2',
+        lastName: 'M.',
+        firstName: 'Gérard',
+        email: 'gerard@example.fr',
+        phone: '',
+        address: '15 Rue du Repos - 25000 Besançon, France'
+      },
+      partner: {
+        name: 'UFF',
+        advisor: 'Mikaël M.',
+        commissionRate: 0,
+        excludeRetrocession: false
+      },
+      customFields: {
+        bankName: '',
+        bic: ''
+      }
+    },
+    product: 'Private Assets Convictions 2024',
+    shareClass: 'UFF-FR001400KIZ8',
+    structure: 'GVC 2',
+    createdDate: createdDate,
+    partner: 'UFF',
+    source: 'manuel',
+    onboardingStatus: 'Complété',
+    blockageReason: null,
+    lastActionDate: updatedDate,
+    signatureStatus: 'Complétée',
+    missingSigners: 0,
+    sentToSignatureAt: new Date('2024-07-18T08:00:00'),
+    lastReminderAt: new Date('2025-12-10T12:18:00'),
+    signatureChannel: 'e-signature',
+    counterSignatureStatus: 'Complétée',
+    counterSignatureOwner: 'Sophie Martin',
+    investorSignedAt: new Date('2024-07-18T09:00:00'),
+    daysSinceSignature: Math.floor((Date.now() - new Date('2024-07-18T09:00:00').getTime()) / (1000 * 60 * 60 * 24)),
+    calledAmount: 240000,
+    pendingCallAmount: 0,
+    remainingAmount: 260000,
+    distributedAmount: 11875,
+    hasDepositary: false,
+    activatedAt: new Date('2024-07-18T11:00:00'),
+    notes: 'Souscription de référence enrichie avec détails anonymisés.',
+    entryFees: 2,
+    language: 'fr',
+    sepaEnabled: true,
+    pendingCalls: false,
+    onboardingReopened: 0
+  };
+}
+
 export function generateSubscriptions(count: number): Subscription[] {
   const subscriptions: Subscription[] = [];
+  if (count <= 0) return subscriptions;
+
+  subscriptions.push(createDetailedAnonymizedSubscription());
   
-  for (let i = 0; i < count; i++) {
+  for (let i = 1; i < count; i++) {
     const createdDate = randomDate(60);
     const updatedDate = randomDate(30);
     
