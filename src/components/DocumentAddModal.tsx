@@ -308,7 +308,7 @@ export function FolderSelectionTreeviewDropdown({
         </Button>
       </PopoverTrigger>
       <PopoverContent
-        className="w-[420px] min-w-[var(--radix-popover-trigger-width)] p-0 max-h-[460px] overflow-hidden rounded-xl border border-gray-200 shadow-xl"
+        className="w-[420px] min-w-[var(--radix-popover-trigger-width)] p-0 max-h-[min(460px,calc(100vh-32px))] overflow-hidden rounded-xl border border-gray-200 shadow-xl flex flex-col"
         align="start"
       >
         <div className="border-b border-gray-100 p-2.5">
@@ -319,10 +319,7 @@ export function FolderSelectionTreeviewDropdown({
             className="h-9 border-0 bg-transparent shadow-none focus-visible:ring-0"
           />
         </div>
-        <div
-          className="h-[390px] overflow-y-scroll overscroll-contain p-2 pr-1.5"
-          style={{ scrollbarGutter: 'stable' }}
-        >
+        <div className="max-h-[min(390px,calc(100vh-220px))] overflow-y-auto overscroll-contain p-2 pr-1.5">
           {(() => {
             const query = folderSearch.trim().toLowerCase();
             const renderTreeNode = (node: FolderTreeNode, depth: number): JSX.Element | null => {
