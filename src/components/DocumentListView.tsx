@@ -203,12 +203,13 @@ export function DocumentListView({
 
       {/* Table Header */}
       <div className="px-6 py-3 border-b border-gray-200 bg-gray-50/30">
-        <div className="grid grid-cols-12 gap-4 text-xs font-medium text-gray-500 uppercase tracking-wide">
-          <div className="col-span-5">Nom</div>
-          <div className="col-span-3">Ciblage</div>
-          <div className="col-span-1">Ajouté le</div>
-          <div className="col-span-1">Taille</div>
-          <div className="col-span-2 text-right">Actions</div>
+        <div className="grid grid-cols-[minmax(0,3fr)_minmax(0,1.2fr)_minmax(0,2.8fr)_minmax(0,1fr)_minmax(0,1fr)_minmax(0,1.4fr)] gap-4 text-xs font-medium text-gray-500 uppercase tracking-wide">
+          <div>Nom</div>
+          <div>Nature</div>
+          <div>Audience</div>
+          <div>Ajouté le</div>
+          <div>Taille</div>
+          <div className="text-right">Actions</div>
         </div>
       </div>
 
@@ -236,8 +237,8 @@ export function DocumentListView({
                   onClick={() => handleRowClick(folder)}
                   className={`px-6 py-3 border-b border-gray-100 cursor-pointer transition-colors ${focusedItemId === folder.id ? 'bg-blue-50 ring-1 ring-inset ring-blue-300' : ''}`}
                 >
-                  <div className="grid grid-cols-12 gap-4 items-center">
-                    <div className="col-span-5 flex items-center gap-3">
+                  <div className="grid grid-cols-[minmax(0,3fr)_minmax(0,1.2fr)_minmax(0,2.8fr)_minmax(0,1fr)_minmax(0,1fr)_minmax(0,1.4fr)] gap-4 items-center">
+                    <div className="flex items-center gap-3">
                       <div className="w-8 h-8 rounded-lg bg-amber-50 flex items-center justify-center flex-shrink-0">
                         <Icon className="w-4 h-4 text-amber-600" />
                       </div>
@@ -257,19 +258,23 @@ export function DocumentListView({
                       </Badge>
                     </div>
 
-                    <div className="col-span-3">
+                    <div>
+                      <p className="text-xs text-gray-400">—</p>
+                    </div>
+
+                    <div>
                       <p className="text-xs text-gray-400">—</p>
                     </div>
                     
-                    <div className="col-span-1">
+                    <div>
                       <p className="text-sm text-gray-600">{formatDate(folder.date)}</p>
                     </div>
                     
-                    <div className="col-span-1">
+                    <div>
                       <p className="text-sm text-gray-600">—</p>
                     </div>
                     
-                    <div className="col-span-2 flex items-center justify-end gap-2">
+                    <div className="flex items-center justify-end gap-2">
                       <DropdownMenu>
                         <DropdownMenuTrigger asChild>
                           <button
@@ -343,8 +348,8 @@ export function DocumentListView({
                   onClick={() => handleRowClick(file)}
                   className={`px-6 py-3 border-b border-gray-100 cursor-pointer transition-colors ${focusedItemId === file.id ? 'bg-blue-50 ring-1 ring-inset ring-blue-300' : ''}`}
                 >
-                  <div className="grid grid-cols-12 gap-4 items-center">
-                    <div className="col-span-5 flex items-center gap-3">
+                  <div className="grid grid-cols-[minmax(0,3fr)_minmax(0,1.2fr)_minmax(0,2.8fr)_minmax(0,1fr)_minmax(0,1fr)_minmax(0,1.4fr)] gap-4 items-center">
+                    <div className="flex items-center gap-3">
                       <div className="w-8 h-8 rounded-lg bg-blue-50 flex items-center justify-center flex-shrink-0">
                         <Icon className="w-4 h-4 text-blue-600" />
                       </div>
@@ -358,19 +363,23 @@ export function DocumentListView({
                       </div>
                     </div>
 
-                    <div className="col-span-3 min-w-0">
-                      <DocumentTargetingMarker document={file} />
+                    <div className="min-w-0">
+                      <DocumentTargetingMarker document={file} mode="tag" />
+                    </div>
+
+                    <div className="min-w-0">
+                      <DocumentTargetingMarker document={file} mode="details" />
                     </div>
                     
-                    <div className="col-span-1">
+                    <div>
                       <p className="text-sm text-gray-600">{formatDate(file.date)}</p>
                     </div>
                     
-                    <div className="col-span-1">
+                    <div>
                       <p className="text-sm text-gray-600">{formatFileSize(file.size)}</p>
                     </div>
                     
-                    <div className="col-span-2 flex items-center justify-end gap-2">
+                    <div className="flex items-center justify-end gap-2">
                       <button
                         type="button"
                         onClick={(event) => {
