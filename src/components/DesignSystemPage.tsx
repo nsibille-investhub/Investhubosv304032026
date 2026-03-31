@@ -120,13 +120,20 @@ const functionalColors = [
   { name: 'Orange warning', usage: 'Avertissement / attention', hex: '#F97316', tailwind: 'orange-500', bg: 'bg-orange-500' },
 ];
 
-const folderSelectorDemoOptions = [
-  { id: 'root', label: 'Racine / Documents' },
-  { id: 'fy-2023', label: 'Racine / Documents / 2023' },
-  { id: 'q4-2023', label: 'Racine / Documents / 2023 / Q4 2023' },
-  { id: 'fiee2', label: 'Racine / Documents / 2023 / Q4 2023 / FIEE2' },
-  { id: 'fiee2-kbis', label: 'Racine / Documents / 2023 / Q4 2023 / FIEE2 / KBIS' },
-];
+const folderSelectorDemoOptions = (() => {
+  const options = [{ id: 'root', label: 'Racine / Documents' }];
+  for (let branch = 1; branch <= 12; branch += 1) {
+    let currentPath = 'Racine / Documents';
+    for (let level = 1; level <= 5; level += 1) {
+      currentPath = `${currentPath} / Dossier ${branch}.${level}`;
+      options.push({
+        id: `branch-${branch}-level-${level}`,
+        label: currentPath,
+      });
+    }
+  }
+  return options;
+})();
 
 const iconFamilies: Array<{
   family: string;
@@ -408,7 +415,7 @@ function renderInvestorColumnPreview(column: string) {
 
 export function DesignSystemPage() {
   const [switchOn, setSwitchOn] = React.useState(true);
-  const [designSystemFolderId, setDesignSystemFolderId] = React.useState('fiee2');
+  const [designSystemFolderId, setDesignSystemFolderId] = React.useState('branch-7-level-5');
 
   return (
     <div className="flex-1 overflow-auto px-6 py-6 space-y-6 bg-[#F8FAFA] dark:bg-[#0B0D0D]">
@@ -583,12 +590,14 @@ export function DesignSystemPage() {
         <p className="text-sm text-[#4F6166] dark:text-[#9DB2AE] mb-4">
           Sélecteur GED affiché directement dans le Design System (sans drawer), avec hover sur la valeur et hiérarchie occidentale.
         </p>
-        <FolderSelectionTreeviewDropdown
-          value={designSystemFolderId}
-          onChange={setDesignSystemFolderId}
-          folderOptions={folderSelectorDemoOptions}
-          initialOpen
-        />
+        <div className="max-w-[300px]">
+          <FolderSelectionTreeviewDropdown
+            value={designSystemFolderId}
+            onChange={setDesignSystemFolderId}
+            folderOptions={folderSelectorDemoOptions}
+            initialOpen
+          />
+        </div>
       </section>
 
       <section className="rounded-2xl border border-[#D7E0DD] dark:border-[#1F2D2A] bg-white dark:bg-[#101615] p-6">
