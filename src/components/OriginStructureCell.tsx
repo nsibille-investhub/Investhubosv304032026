@@ -8,7 +8,7 @@ import { HighlightText } from './HighlightText';
  * CAS D'USAGE :
  * 
  * 1. INDIVIDU (PP) INVESTIT EN DIRECT
- *    - Affiche : "Individual" + icône User (bleu)
+ *    - Affiche : "Individual" + icône User
  *    - Exemple : Sophie Martin investit directement
  * 
  * 2. INDIVIDU (PP) INVESTIT VIA SA STRUCTURE
@@ -16,7 +16,7 @@ import { HighlightText } from './HighlightText';
  *    - Exemple : Sophie Martin investit via "SCI Patrimoine Martin"
  * 
  * 3. ENTREPRISE (PM) INVESTIT EN DIRECT
- *    - Affiche : "Company" + icône Building2 (violet)
+ *    - Affiche : "Company" + icône Building2
  *    - Exemple : Alpha Group investit directement
  * 
  * 4. ENTREPRISE (PM) INVESTIT VIA UNE STRUCTURE
@@ -71,7 +71,7 @@ export function OriginStructureCell({
     return (
       <div className="flex items-center gap-2">
         <User className="w-3.5 h-3.5 text-blue-500 dark:text-blue-400 flex-shrink-0" />
-        <span className="text-xs text-gray-500 dark:text-gray-400">Individual</span>
+        <span className="text-xs text-gray-500 dark:text-gray-400">Individidual</span>
       </div>
     );
   }
@@ -79,7 +79,7 @@ export function OriginStructureCell({
   // CAS 3: Entreprise (PM) investit EN DIRECT (sans structure)
   return (
     <div className="flex items-center gap-2">
-      <Building2 className="w-3.5 h-3.5 text-purple-500 dark:text-purple-400 flex-shrink-0" />
+      <Building2 className="w-3.5 h-3.5 text-gray-400 dark:text-gray-600 flex-shrink-0" />
       <span className="text-xs text-gray-500 dark:text-gray-400">Company</span>
     </div>
   );
