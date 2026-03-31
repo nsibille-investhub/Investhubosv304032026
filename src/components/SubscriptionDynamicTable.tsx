@@ -442,10 +442,10 @@ export function SubscriptionDynamicTable({
         );
 
       case 'remainingAmount':
-        return <span className="text-sm font-medium text-blue-600 dark:text-blue-400">{formatCurrency(row.remainingAmount || row.amount)}</span>;
+        return <span className="text-sm font-medium text-foreground">{formatCurrency(row.remainingAmount || row.amount)}</span>;
 
       case 'distributedAmount':
-        return <span className="text-sm font-medium text-green-600 dark:text-green-400">{formatCurrency(row.distributedAmount || 0)}</span>;
+        return <span className="text-sm font-medium text-foreground">{formatCurrency(row.distributedAmount || 0)}</span>;
 
       case 'depositary':
         return (
