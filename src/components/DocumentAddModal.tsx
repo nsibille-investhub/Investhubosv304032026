@@ -319,7 +319,10 @@ export function FolderSelectionTreeviewDropdown({
             className="h-9 border-0 bg-transparent shadow-none focus-visible:ring-0"
           />
         </div>
-        <div className="max-h-[390px] overflow-y-auto p-2 pr-1.5">
+        <div
+          className="h-[390px] overflow-y-scroll overscroll-contain p-2 pr-1.5"
+          style={{ scrollbarGutter: 'stable' }}
+        >
           {(() => {
             const query = folderSearch.trim().toLowerCase();
             const renderTreeNode = (node: FolderTreeNode, depth: number): JSX.Element | null => {
