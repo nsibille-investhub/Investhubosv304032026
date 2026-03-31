@@ -44,7 +44,8 @@ import {
   Trash2,
   FolderOpen,
   MessageSquare,
-  PenTool
+  PenTool,
+  MoreHorizontal
 } from 'lucide-react';
 import { Badge } from './ui/badge';
 import { Button } from './ui/button';
@@ -67,6 +68,21 @@ import {
   TabsList,
   TabsTrigger,
 } from './ui/tabs';
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from './ui/dropdown-menu';
+import {
+  Sheet,
+  SheetContent,
+  SheetDescription,
+  SheetHeader,
+  SheetTitle,
+} from './ui/sheet';
 
 interface SubscriptionDetailPageProps {
   subscription: any;
@@ -613,6 +629,18 @@ const mockCapitalCalls = [
   }
 ];
 
+const mockDistributions = [
+  {
+    id: 1,
+    date: '15/04/2026',
+    distribution: 'Distribution 1',
+    amount: 11875.00,
+    blockedAmount: 11875.00,
+    unlockDate: '',
+    status: 'Créé'
+  }
+];
+
 export function SubscriptionDetailPage({ subscription, onBack }: SubscriptionDetailPageProps) {
   console.log('SubscriptionDetailPage - Rendering with subscription:', subscription);
   
@@ -633,6 +661,41 @@ export function SubscriptionDetailPage({ subscription, onBack }: SubscriptionDet
   const [riskValidated, setRiskValidated] = useState(false);
   const [riskValidationDate, setRiskValidationDate] = useState<string | null>(null);
   const [riskValidatedBy, setRiskValidatedBy] = useState<string | null>(null);
+  const [selectedAuditTrack, setSelectedAuditTrack] = useState<'onboarding' | 'compliance' | 'communications'>('onboarding');
+  const [isAuditSheetOpen, setIsAuditSheetOpen] = useState(false);
+
+  const distributionRows = subscription?.details?.distributions ?? mockDistributions;
+  const auditTracks = {
+    onboarding: {
+      label: 'Piste Onboarding',
+      description: 'Trace les validations, blocages et réouvertures du parcours souscripteur.',
+      events: [
+        { date: '14/12/2023 09:18', actor: 'Système', action: 'Création de la souscription', details: 'Ouverture du dossier onboarding.' },
+        { date: '28/05/2024 10:25', actor: 'Opérations', action: 'Onboarding > 80%', details: 'Vérifications documentaires complétées.' },
+        { date: '18/07/2024 09:01', actor: 'Back-office', action: 'Demande de signature', details: 'Passage au statut signature client.' }
+      ]
+    },
+    compliance: {
+      label: 'Piste Compliance',
+      description: 'Historise les points KYC/AML, contrôles risque et décisions de validation.',
+      events: [
+        { date: '18/07/2024 11:40', actor: 'Compliance', action: 'KYC validé', details: 'Vérification identité et source de fonds terminée.' },
+        { date: '10/12/2025 12:19', actor: 'Système', action: 'Rappel automatique', details: 'Relance de prélèvement programmée.' },
+        { date: '02/03/2026 10:00', actor: 'Analyste', action: 'Revue périodique', details: 'Aucun risque additionnel détecté.' }
+      ]
+    },
+    communications: {
+      label: 'Piste Communications',
+      description: 'Regroupe les emails et notifications envoyés autour de la souscription.',
+      events: [
+        { date: '21/05/2025 15:44', actor: 'Système', action: 'Envoi appel de fonds', details: 'Objet: 3ème appel de capital.' },
+        { date: '10/12/2025 12:18', actor: 'Système', action: 'Relance prélèvement', details: 'Objet: prélèvement du 17/12/2025.' },
+        { date: '27/03/2026 16:30', actor: 'Système', action: 'Notification distribution', details: 'Objet: 1ère distribution.' }
+      ]
+    }
+  } as const;
+
+  const activeAuditTrack = auditTracks[selectedAuditTrack];
 
   const handleValidateRisk = () => {
     setRiskValidated(true);
@@ -981,14 +1044,37 @@ export function SubscriptionDetailPage({ subscription, onBack }: SubscriptionDet
 
             {/* Right column - Risk analysis + Export button */}
             <div className="flex flex-col items-end justify-end gap-3">
-              <Button
-                style={{ background: 'linear-gradient(62.32deg, #000000 10.53%, #0F323D 88.82%)' }}
-                className="gap-2 text-white hover:opacity-90"
-                onClick={() => toast.success('Fonctionnalité à venir')}
-              >
-                <Download className="w-4 h-4" />
-                Exporter les données
-              </Button>
+              <div className="flex items-center gap-2">
+                <DropdownMenu>
+                  <DropdownMenuTrigger asChild>
+                    <Button variant="outline" size="icon" className="h-10 w-10">
+                      <MoreHorizontal className="w-4 h-4" />
+                    </Button>
+                  </DropdownMenuTrigger>
+                  <DropdownMenuContent align="end" className="w-64">
+                    <DropdownMenuLabel>Pistes d'audit</DropdownMenuLabel>
+                    <DropdownMenuSeparator />
+                    <DropdownMenuItem onClick={() => { setSelectedAuditTrack('onboarding'); setIsAuditSheetOpen(true); }}>
+                      Ouvrir piste Onboarding
+                    </DropdownMenuItem>
+                    <DropdownMenuItem onClick={() => { setSelectedAuditTrack('compliance'); setIsAuditSheetOpen(true); }}>
+                      Ouvrir piste Compliance
+                    </DropdownMenuItem>
+                    <DropdownMenuItem onClick={() => { setSelectedAuditTrack('communications'); setIsAuditSheetOpen(true); }}>
+                      Ouvrir piste Communications
+                    </DropdownMenuItem>
+                  </DropdownMenuContent>
+                </DropdownMenu>
+
+                <Button
+                  style={{ background: 'linear-gradient(62.32deg, #000000 10.53%, #0F323D 88.82%)' }}
+                  className="gap-2 text-white hover:opacity-90"
+                  onClick={() => toast.success('Fonctionnalité à venir')}
+                >
+                  <Download className="w-4 h-4" />
+                  Exporter les données
+                </Button>
+              </div>
 
               {/* Analyse de risque compacte */}
               <div className="bg-white rounded-xl border border-gray-200 p-4 shadow-sm">
@@ -1067,6 +1153,43 @@ export function SubscriptionDetailPage({ subscription, onBack }: SubscriptionDet
         </div>
       </motion.div>
 
+      <Sheet open={isAuditSheetOpen} onOpenChange={setIsAuditSheetOpen}>
+        <SheetContent side="right" className="sm:w-[60vw] lg:w-[45vw] overflow-y-auto">
+          <SheetHeader>
+            <SheetTitle>{activeAuditTrack.label}</SheetTitle>
+            <SheetDescription>{activeAuditTrack.description}</SheetDescription>
+          </SheetHeader>
+
+          <div className="px-4 pb-4">
+            <div className="flex justify-end mb-4">
+              <Button
+                variant="outline"
+                className="gap-2"
+                onClick={() => toast.success(`Export ${activeAuditTrack.label} lancé`)}
+              >
+                <Download className="w-4 h-4" />
+                Exporter la piste
+              </Button>
+            </div>
+
+            <div className="space-y-3">
+              {activeAuditTrack.events.map((event, index) => (
+                <div key={`${event.date}-${index}`} className="rounded-lg border border-gray-200 p-3 bg-white">
+                  <div className="flex items-center justify-between mb-1">
+                    <span className="text-xs text-gray-500">{event.date}</span>
+                    <Badge className="bg-slate-50 text-slate-700 border-slate-200 text-[10px]">
+                      {event.actor}
+                    </Badge>
+                  </div>
+                  <p className="text-sm font-semibold text-gray-900">{event.action}</p>
+                  <p className="text-xs text-gray-600 mt-1">{event.details}</p>
+                </div>
+              ))}
+            </div>
+          </div>
+        </SheetContent>
+      </Sheet>
+
       {/* Tabs - Same structure as InvestorDetailPage */}
       <div className="px-8 -mt-px bg-white border-b border-gray-200">
         <Tabs defaultValue="detail" className="w-full">
@@ -1096,6 +1219,16 @@ export function SubscriptionDetailPage({ subscription, onBack }: SubscriptionDet
               Appels de fonds
               <Badge className="ml-2 bg-emerald-50 text-emerald-700 border-emerald-200 text-xs">
                 {mockCapitalCalls.length}
+              </Badge>
+            </TabsTrigger>
+            <TabsTrigger 
+              value="distributions" 
+              className="data-[state=active]:bg-transparent data-[state=active]:shadow-none data-[state=active]:border-b-2 data-[state=active]:border-blue-600 data-[state=active]:text-blue-600 rounded-none pb-3 pt-4 px-0 text-gray-600 font-medium"
+            >
+              <TrendingDown className="w-4 h-4 mr-2" />
+              Distributions
+              <Badge className="ml-2 bg-purple-50 text-purple-700 border-purple-200 text-xs">
+                {distributionRows.length}
               </Badge>
             </TabsTrigger>
             <TabsTrigger 
@@ -2487,6 +2620,52 @@ export function SubscriptionDetailPage({ subscription, onBack }: SubscriptionDet
                       ))}
                     </tbody>
                   </table>
+              </div>
+            </div>
+          </TabsContent>
+
+          <TabsContent value="distributions" className="mt-0">
+            <div className="px-8 py-6">
+              <div className="bg-white rounded-xl border border-gray-200 shadow-sm overflow-hidden">
+                <div className="px-6 py-4 border-b border-gray-100 flex items-center justify-between">
+                  <h2 className="font-semibold text-gray-900">Distributions de la souscription</h2>
+                  <Badge className="bg-purple-50 text-purple-700 border-purple-200">
+                    {distributionRows.length} distribution{distributionRows.length > 1 ? 's' : ''}
+                  </Badge>
+                </div>
+
+                <div className="overflow-x-auto">
+                  <table className="w-full">
+                    <thead className="bg-gray-50 border-b border-gray-100">
+                      <tr>
+                        <th className="text-left px-6 py-3 text-xs font-semibold text-gray-600 uppercase tracking-wider">Date</th>
+                        <th className="text-left px-6 py-3 text-xs font-semibold text-gray-600 uppercase tracking-wider">Distribution</th>
+                        <th className="text-right px-6 py-3 text-xs font-semibold text-gray-600 uppercase tracking-wider">Montant</th>
+                        <th className="text-right px-6 py-3 text-xs font-semibold text-gray-600 uppercase tracking-wider">Montant bloqué</th>
+                        <th className="text-left px-6 py-3 text-xs font-semibold text-gray-600 uppercase tracking-wider">Expiration du blocage</th>
+                        <th className="text-left px-6 py-3 text-xs font-semibold text-gray-600 uppercase tracking-wider">Statut</th>
+                      </tr>
+                    </thead>
+                    <tbody className="divide-y divide-gray-100">
+                      {distributionRows.map((distribution: any, index: number) => (
+                        <tr key={`${distribution.date}-${index}`} className="hover:bg-gray-50">
+                          <td className="px-6 py-3 text-sm text-gray-900">{distribution.date}</td>
+                          <td className="px-6 py-3 text-sm text-gray-900">{distribution.distribution || distribution.label || `Distribution ${index + 1}`}</td>
+                          <td className="px-6 py-3 text-sm text-gray-900 text-right">
+                            {(distribution.amount || 0).toLocaleString('fr-FR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} €
+                          </td>
+                          <td className="px-6 py-3 text-sm text-gray-900 text-right">
+                            {(distribution.blockedAmount || 0).toLocaleString('fr-FR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} €
+                          </td>
+                          <td className="px-6 py-3 text-sm text-gray-600">{distribution.unlockDate || distribution.lockExpiry || '-'}</td>
+                          <td className="px-6 py-3">
+                            <Badge className="bg-gray-50 text-gray-700 border-gray-200">{distribution.status || 'Créé'}</Badge>
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
               </div>
             </div>
           </TabsContent>
