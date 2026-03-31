@@ -15,7 +15,7 @@ import {
   DropdownMenuTrigger,
 } from './ui/dropdown-menu';
 import { toast } from 'sonner';
-import { ChevronDown, ChevronRight, UploadCloud, FileCheck2, Download, Users2, UserRound, Mail, Eye, Trash2, Check, Folder, FileText, Bell, ShieldCheck, Clock3, CheckCircle2, Star } from 'lucide-react';
+import { ChevronDown, ChevronRight, UploadCloud, FileCheck2, Download, Users2, UserRound, Mail, Eye, Trash2, Check, Folder, FileText, Bell, ShieldCheck, Clock3, CheckCircle2, Star, Search } from 'lucide-react';
 import { Document } from '../utils/documentMockData';
 import { DocumentTargetingMarker } from './DocumentTargetingMarker';
 
@@ -297,27 +297,44 @@ export function FolderSelectionTreeviewDropdown({
       <PopoverTrigger asChild>
         <Button
           variant="outline"
-          className="h-11 w-full justify-between font-normal"
+          className="group h-12 w-full justify-between rounded-xl border-[#8AA2A8] bg-white px-3 font-normal text-[#1F3137] shadow-sm transition-all hover:border-[#63818A] hover:bg-[#F7FAFA] hover:shadow focus-visible:ring-2 focus-visible:ring-[#8AA2A8]/50"
           disabled={disabled}
           data-component="folder-selection-treeview-dropdown"
         >
-          <span className="truncate text-left" title={folderTreeData.getSelectedBreadcrumbHover(value)}>
-            {folderTreeData.getSelectedBreadcrumbDisplay(value)}
+          <span className="flex min-w-0 items-center gap-2.5 text-left" title={folderTreeData.getSelectedBreadcrumbHover(value)}>
+            <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-lg bg-[#E9F1F3] text-[#3A5A63]">
+              <Folder className="h-3.5 w-3.5" />
+            </span>
+            <span className="min-w-0">
+              <span className="mb-0.5 block text-[11px] leading-none text-[#607981]">Dossier de destination</span>
+              <span className="block truncate text-sm">
+                {folderTreeData.getSelectedBreadcrumbDisplay(value)}
+              </span>
+            </span>
           </span>
-          <ChevronDown className="w-4 h-4" />
+          <ChevronDown className="h-4 w-4 shrink-0 text-[#4E6A72] transition-transform group-data-[state=open]:rotate-180" />
         </Button>
       </PopoverTrigger>
       <PopoverContent
-        className="w-[420px] min-w-[var(--radix-popover-trigger-width)] p-0 max-h-[min(460px,calc(100vh-32px))] overflow-hidden rounded-xl border border-gray-200 shadow-xl flex flex-col"
+        className="w-[440px] min-w-[var(--radix-popover-trigger-width)] max-h-[min(480px,calc(100vh-32px))] overflow-hidden rounded-2xl border border-[#D5E1E4] bg-white p-0 shadow-2xl flex flex-col"
         align="start"
       >
-        <div className="border-b border-gray-100 p-2.5">
+        <div className="border-b border-[#E5EDF0] bg-[#F8FBFC] px-3 py-2.5">
+          <p className="text-xs font-semibold uppercase tracking-wide text-[#607981]">Arborescence GED</p>
+          <p className="mt-0.5 truncate text-xs text-[#3F5A62]" title={folderTreeData.getSelectedBreadcrumbHover(value)}>
+            {folderTreeData.getSelectedBreadcrumbHover(value)}
+          </p>
+        </div>
+        <div className="border-b border-[#E5EDF0] p-2.5">
+          <div className="flex items-center gap-2 rounded-lg border border-[#D6E2E5] bg-white px-2.5">
+            <Search className="h-3.5 w-3.5 text-[#6D8790]" />
           <Input
             value={folderSearch}
             onChange={(event) => setFolderSearch(event.target.value)}
             placeholder="Rechercher un dossier..."
-            className="h-9 border-0 bg-transparent shadow-none focus-visible:ring-0"
+              className="h-9 border-0 bg-transparent px-0 text-sm shadow-none focus-visible:ring-0"
           />
+          </div>
         </div>
         <div className="max-h-[min(390px,calc(100vh-220px))] overflow-y-auto overscroll-contain p-2 pr-1.5">
           {(() => {
@@ -339,7 +356,7 @@ export function FolderSelectionTreeviewDropdown({
                       <button
                         type="button"
                         onClick={() => hasChildren && toggleFolderExpansion(node.id)}
-                        className="h-7 w-5 flex items-center justify-center text-gray-500 hover:text-gray-700 disabled:opacity-0"
+                        className="h-8 w-6 flex items-center justify-center rounded-md text-[#5E7680] hover:bg-[#EEF4F6] hover:text-[#2F4A52] disabled:opacity-0"
                         disabled={!hasChildren}
                         aria-label={hasChildren ? `Déplier ${node.name}` : undefined}
                         style={{ marginLeft: `${depth * 14}px` }}
@@ -359,13 +376,15 @@ export function FolderSelectionTreeviewDropdown({
                           onChange(node.id);
                           setOpen(false);
                         }}
-                        className={`flex-1 h-8 px-2 rounded-md flex items-center gap-2 text-left text-sm ${
-                          isSelected ? 'bg-blue-50 text-blue-700' : 'hover:bg-gray-50 text-gray-700'
+                        className={`flex-1 h-9 px-2.5 rounded-lg flex items-center gap-2 text-left text-sm transition-colors ${
+                          isSelected
+                            ? 'bg-[#E6F2F8] text-[#0E5A81] shadow-[inset_0_0_0_1px_#B9DAEA]'
+                            : 'text-[#304A52] hover:bg-[#F2F7F9]'
                         }`}
                       >
-                        <Folder className={`w-3.5 h-3.5 stroke-[1.75] ${isSelected ? 'text-blue-600' : 'text-amber-500'}`} />
+                        <Folder className={`w-3.5 h-3.5 stroke-[1.75] ${isSelected ? 'text-[#0E5A81]' : 'text-[#CC8A33]'}`} />
                         <span className="truncate">{node.name}</span>
-                        {isSelected && <Check className="w-4 h-4 ml-auto text-blue-600" />}
+                        {isSelected && <Check className="w-4 h-4 ml-auto text-[#0E5A81]" />}
                       </button>
                     </div>
                   )}
