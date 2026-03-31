@@ -1,3 +1,36 @@
+## Design System — Subscription Integrations
+
+### Integrations tab layout
+- Use a card-based layout (`grid` on large screens, stacked on small screens).
+- Keep cards inside the standard page container with existing spacing (`p-4` / `gap-4`) to align with Subscription detail tabs.
+
+### Integration card anatomy
+- Header: integration name + workflow trigger helper text.
+- Metadata badges:
+  - Direction: Incoming / Outgoing / Bidirectional.
+  - Status: Success / Pending / In Progress / Failed / Not triggered.
+- Body: last sync timestamp + short summary message.
+- Footer actions: View details, View logs, Retry sync, Force sync.
+
+### Badge colors
+- Success → green (`bg-green-100 text-green-800`).
+- Pending → orange (`bg-orange-100 text-orange-800`).
+- In progress → blue (`bg-blue-100 text-blue-800`).
+- Failed → red (`bg-red-100 text-red-800`).
+- Not triggered → grey (`bg-gray-100 text-gray-700`).
+
+### Details drawer
+- Open from “View details” and “View logs”.
+- Include 3 sections:
+  1. Technical details (endpoint, payload JSON, response, status code, execution time).
+  2. Timeline/history (timestamp + status + message).
+  3. Error explanation + suggested resolution.
+
+### Sync behavior
+- Retry sync: replays last payload, creates a new log entry.
+- Force sync: manually triggers a new sync and writes an execution log.
+- Logs must remain accessible in UI history for each integration.
+
 **Add your own guidelines here**
 <!--
 
