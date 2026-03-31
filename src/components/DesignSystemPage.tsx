@@ -281,7 +281,7 @@ const v3Checklist = [
 const investorListingColumnSpecs = [
   {
     column: 'NOM',
-    component: 'ClickableText + ID row + copy icon',
+    component: 'ClickableText',
     functional: 'Identifier rapidement l’investisseur et copier son identifiant.',
     guidelines: 'Nom: text-sm/font-medium, couleur primaire lien; ID: text-xs gray-500; icône copy 12px.',
     variants: 'Personne physique / Personne morale, nom long tronqué, état copié (check vert).',
@@ -295,7 +295,7 @@ const investorListingColumnSpecs = [
   },
   {
     column: 'CONTACTS',
-    component: 'ContactsCard (listing compact + “+n more”)',
+    component: 'ContactsCard',
     functional: 'Afficher contact principal et accès au détail one-to-many.',
     guidelines: 'Ligne principale text-sm, secondaire action text-[#114154] font-medium.',
     variants: '0 contact, 1 contact, plusieurs contacts (+n more).',
@@ -309,7 +309,7 @@ const investorListingColumnSpecs = [
   },
   {
     column: 'TYPE',
-    component: 'Badge outline (company/individual)',
+    component: 'Badge (variant="outline")',
     functional: 'Qualifier la nature de l’investisseur.',
     guidelines: 'Badge arrondi, text-sm, border neutre, icône contextuelle.',
     variants: 'Company / Individual.',
@@ -323,21 +323,21 @@ const investorListingColumnSpecs = [
   },
   {
     column: 'DATE D’INSCRIPTION',
-    component: 'formatDate cell',
+    component: 'formatDate()',
     functional: 'Afficher la date d’entrée au format FR.',
     guidelines: 'Texte de cellule en style corps (table body), lisible et neutre (gris foncé).',
     variants: 'Date valide, valeur vide/indisponible.',
   },
   {
     column: 'CAPITAL INVESTI',
-    component: 'formatCurrency cell',
+    component: 'formatCurrency()',
     functional: 'Afficher le montant investi en euros.',
     guidelines: 'Valeur forte: font-semibold, alignement visuel à droite recommandé.',
     variants: '0 €, montant élevé, décimales nulles.',
   },
   {
     column: 'SOUSCRIPTIONS',
-    component: 'Subscription count badge/button',
+    component: 'Badge + Button (subscription count)',
     functional: 'Montrer le volume de souscriptions et ouvrir le détail.',
     guidelines: 'Pill neutre avec icône fichier + count, interaction hover claire.',
     variants: '0, 1, n souscriptions.',
@@ -653,7 +653,7 @@ export function DesignSystemPage() {
       </section>
 
       <section className="rounded-2xl border border-[#D7E0DD] dark:border-[#1F2D2A] bg-white dark:bg-[#101615] p-6">
-        <h2 className="text-lg font-semibold text-[#1F3137] dark:text-[#E8F0EE] mb-2">Référentiel colonnes — Listing investisseurs</h2>
+        <h2 className="text-lg font-semibold text-[#1F3137] dark:text-[#E8F0EE] mb-2">Référentiel colonnes</h2>
         <p className="text-sm text-[#4F6166] dark:text-[#9DB2AE] mb-4">
           Tableau de référence des composants utilisés par colonne, avec description fonctionnelle, guidelines UI et variants.
         </p>
@@ -662,7 +662,6 @@ export function DesignSystemPage() {
             <TableHeader>
               <TableRow>
                 <TableHead>Aperçu</TableHead>
-                <TableHead>Colonne</TableHead>
                 <TableHead>Composant</TableHead>
                 <TableHead>Description fonctionnelle</TableHead>
                 <TableHead>Guidelines (police / taille / couleur)</TableHead>
@@ -673,7 +672,6 @@ export function DesignSystemPage() {
               {investorListingColumnSpecs.map((spec) => (
                 <TableRow key={spec.column}>
                   <TableCell>{renderInvestorColumnPreview(spec.column)}</TableCell>
-                  <TableCell className="font-semibold">{spec.column}</TableCell>
                   <TableCell>{spec.component}</TableCell>
                   <TableCell className="whitespace-normal">{spec.functional}</TableCell>
                   <TableCell className="whitespace-normal">{spec.guidelines}</TableCell>

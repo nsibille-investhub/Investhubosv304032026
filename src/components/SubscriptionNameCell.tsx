@@ -4,6 +4,7 @@ import { Copy, Check } from 'lucide-react';
 import { toast } from 'sonner@2.0.3';
 import { HighlightText } from './HighlightText';
 import { copyToClipboard } from '../utils/clipboard';
+import { ClickableName } from './ClickableName';
 
 interface SubscriptionNameCellProps {
   name: string;
@@ -33,9 +34,11 @@ export function SubscriptionNameCell({ name, id, searchTerm = '' }: Subscription
       {/* Nom de la souscription */}
       <motion.span
         whileHover={{ x: 2 }}
-        className="text-sm text-blue-600 dark:text-blue-400 hover:text-blue-700 dark:hover:text-blue-300 font-medium cursor-pointer hover:underline transition-all truncate"
+        className="truncate"
       >
-        <HighlightText text={name} searchTerm={searchTerm} />
+        <ClickableName>
+          <HighlightText text={name} searchTerm={searchTerm} />
+        </ClickableName>
       </motion.span>
 
       {/* ID avec bouton de copie */}
