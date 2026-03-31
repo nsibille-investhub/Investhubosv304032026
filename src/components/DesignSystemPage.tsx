@@ -90,6 +90,7 @@ import { ContactsCard } from './ContactsCard';
 import { StructuresCell } from './StructuresCell';
 import { LastActivityCard } from './LastActivityCard';
 import { OriginStructureCell } from './OriginStructureCell';
+import { PartnerOriginCell } from './PartnerOriginCell';
 import { CheckIndicator } from './CheckIndicator';
 import { FolderSelectionTreeviewDropdown } from './DocumentAddModal';
 import type { Contact, LegalStructure } from '../utils/investorGenerator';
@@ -386,6 +387,11 @@ const investorListingColumnSpecs = [
     variants: 'Raison sociale longue tronquée, Company direct sans structure.',
   },
   {
+    column: 'DISTRIBUTION PARTNER',
+    component: 'distribution-partner',
+    functional: 'Afficher l’origine de distribution d’une souscription (Direct ou via partenaire).',
+    guidelines: 'Icône + libellé compact en text-xs, nom partenaire tronqué et cliquable.',
+    variants: 'Direct (sans partenaire), partenaire CGP/distributeur.',
     column: 'CHECK',
     component: 'CheckIndicator',
     functional: 'Afficher un statut booléen compact en listing (ex: SEPA activé).',
@@ -509,6 +515,17 @@ function renderInvestorColumnPreview(column: string) {
         name: 'Epsilon Fund',
         type: 'corporate',
       });
+    case 'DISTRIBUTION PARTNER':
+      return (
+        <div className="flex flex-col gap-2">
+          <PartnerOriginCell partenaire={null} />
+          <PartnerOriginCell
+            partenaire={{
+              id: 'partner-42',
+              name: 'Masséna Wealth Management',
+              type: 'corporate',
+            }}
+          />
     case 'CHECK':
       return (
         <div className="flex items-center gap-3">
