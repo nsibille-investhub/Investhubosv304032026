@@ -272,7 +272,6 @@ export function DocumentListView({
                           {folder.children?.length || 0} élément{(folder.children?.length || 0) > 1 ? 's' : ''}
                         </p>
                       </div>
-                      <Tag label="Dossier" />
                     </div>
 
                     <div className="col-span-2">
@@ -281,7 +280,7 @@ export function DocumentListView({
 
                     <div className="col-span-3">
                       {folder.navigatorTargeting ? (
-                        <DocumentTargetingMarker document={folder} mode="full" />
+                        <DocumentTargetingMarker document={folder} mode="details" />
                       ) : (
                         <p className="text-xs text-gray-400">—</p>
                       )}

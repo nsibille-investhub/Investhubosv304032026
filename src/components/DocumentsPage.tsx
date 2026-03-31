@@ -93,9 +93,6 @@ export function DocumentsPage({ selectedSpace, navigationTarget, onNavigationHan
   ): Document[] => {
     const primaryFund = selectedSpace.targeting.funds[0] || 'Tous fonds';
     const primarySegment = selectedSpace.targeting.segments[0] || 'Tous segments';
-    const spaceHasGenericTargeting =
-      selectedSpace.targeting.funds.some((fund) => fund !== 'Tous fonds') ||
-      selectedSpace.targeting.segments.some((segment) => segment !== 'Tous segments');
 
     return treeNodes.map((node) => {
       // Parse the french date format (DD/MM/YYYY) to create a proper Date object
@@ -114,11 +111,7 @@ export function DocumentsPage({ selectedSpace, navigationTarget, onNavigationHan
         ? selectedSpace.targeting.segments[seed % selectedSpace.targeting.segments.length]
         : primarySegment;
       const genericTargetType = selectedSegment && selectedSegment !== 'Tous segments' ? 'segment' : 'all';
-      const folderGetsGenericTargeting = node.type === 'folder' && (
-        inheritedGenericTargeting ||
-        spaceHasGenericTargeting ||
-        seed % 3 === 0
-      );
+      const folderGetsGenericTargeting = node.type === 'folder';
       
       const doc: Document = {
         id: node.id,
