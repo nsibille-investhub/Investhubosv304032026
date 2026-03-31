@@ -307,16 +307,19 @@ export function FolderSelectionTreeviewDropdown({
           <ChevronDown className="w-4 h-4" />
         </Button>
       </PopoverTrigger>
-      <PopoverContent className="w-[var(--radix-popover-trigger-width)] p-0 max-h-[420px] overflow-hidden" align="start">
+      <PopoverContent
+        className="w-[420px] min-w-[var(--radix-popover-trigger-width)] p-0 max-h-[460px] overflow-hidden rounded-xl border border-gray-200 shadow-xl"
+        align="start"
+      >
         <div className="border-b border-gray-100 p-2.5">
           <Input
             value={folderSearch}
             onChange={(event) => setFolderSearch(event.target.value)}
             placeholder="Rechercher un dossier..."
-            className="h-9"
+            className="h-9 border-0 bg-transparent shadow-none focus-visible:ring-0"
           />
         </div>
-        <div className="max-h-[340px] overflow-y-auto p-2">
+        <div className="max-h-[390px] overflow-y-auto p-2 pr-1.5">
           {(() => {
             const query = folderSearch.trim().toLowerCase();
             const renderTreeNode = (node: FolderTreeNode, depth: number): JSX.Element | null => {
@@ -332,16 +335,17 @@ export function FolderSelectionTreeviewDropdown({
               return (
                 <div key={node.id}>
                   {node.id !== 'root' && (
-                    <div className="flex items-center gap-1">
+                    <div className="flex items-center">
                       <button
                         type="button"
                         onClick={() => hasChildren && toggleFolderExpansion(node.id)}
-                        className="h-7 w-6 flex items-center justify-center text-gray-500 hover:text-gray-700 disabled:opacity-0"
+                        className="h-7 w-5 flex items-center justify-center text-gray-500 hover:text-gray-700 disabled:opacity-0"
                         disabled={!hasChildren}
                         aria-label={hasChildren ? `Déplier ${node.name}` : undefined}
+                        style={{ marginLeft: `${depth * 14}px` }}
                       >
                         {hasChildren ? (
-                          <ChevronRight className={`w-4 h-4 transition-transform ${isExpanded ? 'rotate-90' : ''}`} />
+                          <ChevronRight className={`w-3.5 h-3.5 transition-transform ${isExpanded ? 'rotate-90' : ''}`} />
                         ) : (
                           <span className="w-4 h-4" />
                         )}
@@ -358,9 +362,8 @@ export function FolderSelectionTreeviewDropdown({
                         className={`flex-1 h-8 px-2 rounded-md flex items-center gap-2 text-left text-sm ${
                           isSelected ? 'bg-blue-50 text-blue-700' : 'hover:bg-gray-50 text-gray-700'
                         }`}
-                        style={{ marginLeft: `${depth * 14}px` }}
                       >
-                        <Folder className={`w-3.5 h-3.5 ${isSelected ? 'text-blue-600' : 'text-amber-600'}`} />
+                        <Folder className={`w-3.5 h-3.5 stroke-[1.75] ${isSelected ? 'text-blue-600' : 'text-amber-500'}`} />
                         <span className="truncate">{node.name}</span>
                         {isSelected && <Check className="w-4 h-4 ml-auto text-blue-600" />}
                       </button>
