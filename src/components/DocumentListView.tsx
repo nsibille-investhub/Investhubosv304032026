@@ -95,6 +95,26 @@ export function DocumentListView({
     }
   };
 
+  const findFolderIdByPath = (path: string[]): string | null => {
+    if (path.length === 0) return null;
+
+    let currentLevel = documents;
+    let currentFolder: Document | null = null;
+
+    for (const segment of path) {
+      const matchedFolder = currentLevel.find(
+        (entry) => entry.type === 'folder' && entry.name === segment
+      );
+
+      if (!matchedFolder) return null;
+
+      currentFolder = matchedFolder;
+      currentLevel = matchedFolder.children || [];
+    }
+
+    return currentFolder?.id || null;
+  };
+
   const hasActiveSearch = searchTerm.trim().length > 0;
   const itemsToRender = hasActiveSearch
     ? searchResults.map((result) => ({ ...result.item, __path: result.path } as Document & { __path: string[] }))
@@ -135,11 +155,9 @@ export function DocumentListView({
                 <ChevronRight className="w-4 h-4 text-gray-400" />
                 <button
                   onClick={() => {
-                    // Navigate to this level
                     const newPath = currentPath.slice(0, index + 1);
-                    // Find the folder ID for this path
-                    // For now, just show the current folder
-                    onFolderNavigate(currentFolder?.id || null, newPath);
+                    const targetFolderId = findFolderIdByPath(newPath);
+                    onFolderNavigate(targetFolderId, newPath);
                   }}
                   className={`${
                     index === currentPath.length - 1
