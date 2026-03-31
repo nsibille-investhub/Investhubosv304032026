@@ -88,7 +88,7 @@ import { StatusBadge } from './StatusBadge';
 import { Tag } from './Tag';
 import { ContactsCard } from './ContactsCard';
 import { StructuresCell } from './StructuresCell';
-import { DocumentAddModal } from './DocumentAddModal';
+import { FolderSelectionTreeviewDropdown } from './DocumentAddModal';
 import type { Contact, LegalStructure } from '../utils/investorGenerator';
 
 type DoctrineItem = {
@@ -408,6 +408,7 @@ function renderInvestorColumnPreview(column: string) {
 
 export function DesignSystemPage() {
   const [switchOn, setSwitchOn] = React.useState(true);
+  const [designSystemFolderId, setDesignSystemFolderId] = React.useState('fiee2');
 
   return (
     <div className="flex-1 overflow-auto px-6 py-6 space-y-6 bg-[#F8FAFA] dark:bg-[#0B0D0D]">
@@ -580,14 +581,13 @@ export function DesignSystemPage() {
       <section className="rounded-2xl border border-[#D7E0DD] dark:border-[#1F2D2A] bg-white dark:bg-[#101615] p-6">
         <h2 className="text-lg font-semibold text-[#1F3137] dark:text-[#E8F0EE] mb-2">Composant GED — folder-selection-treeview-dropdown</h2>
         <p className="text-sm text-[#4F6166] dark:text-[#9DB2AE] mb-4">
-          Référence directe du composant GED existant (DocumentAddModal) avec accès immédiat au sélecteur de dossier réel.
+          Sélecteur GED affiché directement dans le Design System (sans drawer), avec hover sur la valeur et hiérarchie occidentale.
         </p>
-        <DocumentAddModal
-          isOpen
-          onClose={() => {}}
+        <FolderSelectionTreeviewDropdown
+          value={designSystemFolderId}
+          onChange={setDesignSystemFolderId}
           folderOptions={folderSelectorDemoOptions}
-          defaultFolderId="fiee2"
-          initialFolderPickerOpen
+          initialOpen
         />
       </section>
 
