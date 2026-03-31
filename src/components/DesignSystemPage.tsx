@@ -408,7 +408,6 @@ function renderInvestorColumnPreview(column: string) {
 
 export function DesignSystemPage() {
   const [switchOn, setSwitchOn] = React.useState(true);
-  const [folderSelectorModalOpen, setFolderSelectorModalOpen] = React.useState(false);
 
   return (
     <div className="flex-1 overflow-auto px-6 py-6 space-y-6 bg-[#F8FAFA] dark:bg-[#0B0D0D]">
@@ -581,19 +580,11 @@ export function DesignSystemPage() {
       <section className="rounded-2xl border border-[#D7E0DD] dark:border-[#1F2D2A] bg-white dark:bg-[#101615] p-6">
         <h2 className="text-lg font-semibold text-[#1F3137] dark:text-[#E8F0EE] mb-2">Composant GED — folder-selection-treeview-dropdown</h2>
         <p className="text-sm text-[#4F6166] dark:text-[#9DB2AE] mb-4">
-          Référence directe du composant GED existant (DocumentAddModal) avec le sélecteur de dossier réel.
+          Référence directe du composant GED existant (DocumentAddModal) avec accès immédiat au sélecteur de dossier réel.
         </p>
-        <div className="rounded-xl border border-[#D7E0DD] dark:border-[#1F2D2A] p-4 bg-[#FCFDFC] dark:bg-[#0F1716] space-y-3">
-          <Button onClick={() => setFolderSelectorModalOpen(true)} className="w-full sm:w-auto">
-            Ouvrir le composant GED réel
-          </Button>
-          <p className="text-sm text-[#4F6166] dark:text-[#9DB2AE]">
-            Le bouton ouvre le panneau GED natif avec <code>folder-selection-treeview-dropdown</code> pré-ouvert.
-          </p>
-        </div>
         <DocumentAddModal
-          isOpen={folderSelectorModalOpen}
-          onClose={() => setFolderSelectorModalOpen(false)}
+          isOpen
+          onClose={() => {}}
           folderOptions={folderSelectorDemoOptions}
           defaultFolderId="fiee2"
           initialFolderPickerOpen

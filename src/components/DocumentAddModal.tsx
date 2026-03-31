@@ -260,11 +260,10 @@ export function DocumentAddModal({ isOpen, onClose, folderOptions, defaultFolder
       if (!node) return 'Choisir un dossier';
       if (node.id === rootNode.id) return rootNode.name;
       const partsFromRoot = node.fullLabel.split(' / ').filter(Boolean);
-      const fromTargetToRoot = [...partsFromRoot].reverse();
-      const displayValue = fromTargetToRoot.length > 2
-        ? `... / ${fromTargetToRoot.join(' / ')}`
-        : fromTargetToRoot.join(' / ');
-      return displayValue;
+      if (partsFromRoot.length <= 3) {
+        return partsFromRoot.join(' / ');
+      }
+      return `... / ${partsFromRoot.slice(-3).join(' / ')}`;
     };
 
     const getSelectedBreadcrumbHover = (nodeId: string) => {
@@ -272,7 +271,7 @@ export function DocumentAddModal({ isOpen, onClose, folderOptions, defaultFolder
       if (!node) return 'Choisir un dossier';
       if (node.id === rootNode.id) return rootNode.name;
       const partsFromRoot = node.fullLabel.split(' / ').filter(Boolean);
-      return [...partsFromRoot].reverse().join(' / ');
+      return partsFromRoot.join(' / ');
     };
 
     return {
