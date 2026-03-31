@@ -53,6 +53,7 @@ import {
   Plus,
   MoreVertical,
   Copy,
+  ChevronRight,
   type LucideIcon,
 } from 'lucide-react';
 import * as React from 'react';
@@ -88,6 +89,7 @@ import { StatusBadge } from './StatusBadge';
 import { Tag } from './Tag';
 import { ContactsCard } from './ContactsCard';
 import { StructuresCell } from './StructuresCell';
+import { LastActivityCard } from './LastActivityCard';
 import { FolderSelectionTreeviewDropdown } from './DocumentAddModal';
 import type { Contact, LegalStructure } from '../utils/investorGenerator';
 
@@ -341,6 +343,13 @@ const investorListingColumnSpecs = [
     variants: 'HNWI / Retail / Professional / UHNWI…',
   },
   {
+    column: 'CLICKABLE TAG',
+    component: 'clickableTag',
+    functional: 'Afficher une donnée comptée (ex: souscriptions) et ouvrir le détail au clic.',
+    guidelines: 'Pill cliquable arrondie, icône document 14px + count text-sm, chevron de navigation à droite.',
+    variants: '0 / 1 / n éléments, état hover (élévation légère), état disabled.',
+  },
+  {
     column: 'DERNIÈRE ACTIVITÉ',
     component: 'Duration (LastActivityCard)',
     functional: 'Afficher le temps écoulé depuis la dernière interaction investisseur.',
@@ -415,6 +424,17 @@ function renderInvestorColumnPreview(column: string) {
       return <Badge variant="outline">2</Badge>;
     case 'SEGMENT':
       return <Tag label="HNWI" />;
+    case 'CLICKABLE TAG':
+      return (
+        <button
+          type="button"
+          className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-muted border border-border transition-all duration-200 group hover:scale-[1.03] hover:shadow-md hover:border-border/80 hover:bg-white"
+        >
+          <FileText className="w-3.5 h-3.5 text-muted-foreground group-hover:text-foreground" />
+          <span className="text-sm font-medium text-muted-foreground group-hover:text-foreground">0</span>
+          <ChevronRight className="w-3.5 h-3.5 text-muted-foreground group-hover:text-foreground transition-transform group-hover:translate-x-0.5" />
+        </button>
+      );
     case 'DERNIÈRE ACTIVITÉ':
       return (
         <LastActivityCard
