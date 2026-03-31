@@ -86,7 +86,11 @@ export function DocumentsPage({ selectedSpace, navigationTarget, onNavigationHan
   );
 
   // Convert TreeNode to Document format
-  const convertTreeToDocuments = (treeNodes: TreeNode[], parentPath: string[] = []): Document[] => {
+  const convertTreeToDocuments = (
+    treeNodes: TreeNode[],
+    parentPath: string[] = [],
+    inheritedGenericTargeting: boolean = false
+  ): Document[] => {
     const primaryFund = selectedSpace.targeting.funds[0] || 'Tous fonds';
     const primarySegment = selectedSpace.targeting.segments[0] || 'Tous segments';
 
@@ -107,6 +111,7 @@ export function DocumentsPage({ selectedSpace, navigationTarget, onNavigationHan
         ? selectedSpace.targeting.segments[seed % selectedSpace.targeting.segments.length]
         : primarySegment;
       const genericTargetType = selectedSegment && selectedSegment !== 'Tous segments' ? 'segment' : 'all';
+      const folderGetsGenericTargeting = node.type === 'folder';
       
       const doc: Document = {
         id: node.id,
@@ -118,14 +123,16 @@ export function DocumentsPage({ selectedSpace, navigationTarget, onNavigationHan
         views: Math.floor(Math.random() * 100),
         downloads: Math.floor(Math.random() * 50),
         status: 'published' as const,
-        children: node.children ? convertTreeToDocuments(node.children, nextPath) : undefined,
+        children: node.children
+          ? convertTreeToDocuments(node.children, nextPath, inheritedGenericTargeting || folderGetsGenericTargeting)
+          : undefined,
         isRoot: false,
         target: {
           type: node.type === 'folder'
-            ? 'all'
+            ? (folderGetsGenericTargeting ? 'segment' : 'all')
             : (isNominative ? 'investor' : genericTargetType),
           segments: node.type === 'folder'
-            ? []
+            ? (folderGetsGenericTargeting && selectedSegment !== 'Tous segments' ? [selectedSegment] : [])
             : (isNominative ? [selectedSegment] : (genericTargetType === 'segment' ? [selectedSegment] : [])),
           investors: node.type === 'folder'
             ? []
@@ -150,8 +157,19 @@ export function DocumentsPage({ selectedSpace, navigationTarget, onNavigationHan
           fund: primaryFund,
           segments: selectedSegment !== 'Tous segments' ? [selectedSegment] : [],
         },
-        navigatorTargeting: node.type === 'folder' ? undefined : (
-          !isNominative
+        navigatorTargeting: node.type === 'folder'
+          ? (
+              folderGetsGenericTargeting
+                ? {
+                    mode: 'generic',
+                    fund: primaryFund,
+                    shareClass: selectedShareClass,
+                    segment: selectedSegment,
+                  }
+                : undefined
+            )
+          : (
+            !isNominative
             ? {
                 mode: 'generic',
                 fund: primaryFund,
@@ -164,7 +182,7 @@ export function DocumentsPage({ selectedSpace, navigationTarget, onNavigationHan
                 structure: profile.structure,
                 subscription: profile.subscription,
               }
-        )
+          )
       };
       return doc;
     });

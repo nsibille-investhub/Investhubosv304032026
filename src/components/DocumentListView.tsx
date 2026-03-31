@@ -12,9 +12,9 @@ import {
   Plus
 } from 'lucide-react';
 import { Document } from '../utils/documentMockData';
-import { Badge } from './ui/badge';
 import { Button } from './ui/button';
 import { DocumentTargetingMarker } from './DocumentTargetingMarker';
+import { Tag } from './Tag';
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -62,6 +62,7 @@ export function DocumentListView({
   onEditFolder,
   onDeleteFolder,
 }: DocumentListViewProps) {
+  const tableGridClass = 'grid grid-cols-12 gap-4';
   const [hoveredId, setHoveredId] = useState<string | null>(null);
   const [viewerOpen, setViewerOpen] = useState(false);
   const [viewerDocument, setViewerDocument] = useState<Document | null>(null);
@@ -93,6 +94,26 @@ export function DocumentListView({
     } else {
       onDocumentClick(item);
     }
+  };
+
+  const findFolderIdByPath = (path: string[]): string | null => {
+    if (path.length === 0) return null;
+
+    let currentLevel = documents;
+    let currentFolder: Document | null = null;
+
+    for (const segment of path) {
+      const matchedFolder = currentLevel.find(
+        (entry) => entry.type === 'folder' && entry.name === segment
+      );
+
+      if (!matchedFolder) return null;
+
+      currentFolder = matchedFolder;
+      currentLevel = matchedFolder.children || [];
+    }
+
+    return currentFolder?.id || null;
   };
 
   const hasActiveSearch = searchTerm.trim().length > 0;
@@ -135,11 +156,9 @@ export function DocumentListView({
                 <ChevronRight className="w-4 h-4 text-gray-400" />
                 <button
                   onClick={() => {
-                    // Navigate to this level
                     const newPath = currentPath.slice(0, index + 1);
-                    // Find the folder ID for this path
-                    // For now, just show the current folder
-                    onFolderNavigate(currentFolder?.id || null, newPath);
+                    const targetFolderId = findFolderIdByPath(newPath);
+                    onFolderNavigate(targetFolderId, newPath);
                   }}
                   className={`${
                     index === currentPath.length - 1
@@ -203,13 +222,13 @@ export function DocumentListView({
 
       {/* Table Header */}
       <div className="px-6 py-3 border-b border-gray-200 bg-gray-50/30">
-        <div className="grid grid-cols-[minmax(0,3fr)_minmax(0,1.2fr)_minmax(0,2.8fr)_minmax(0,1fr)_minmax(0,1fr)_minmax(0,1.4fr)] gap-4 text-xs font-medium text-gray-500 uppercase tracking-wide">
-          <div>Nom</div>
-          <div>Nature</div>
-          <div>Audience</div>
-          <div>Ajouté le</div>
-          <div>Taille</div>
-          <div className="text-right">Actions</div>
+        <div className={`${tableGridClass} text-xs font-medium text-gray-500 uppercase tracking-wide`}>
+          <div className="col-span-4">Nom</div>
+          <div className="col-span-2">Nature</div>
+          <div className="col-span-3">Audience</div>
+          <div className="col-span-1">Ajouté le</div>
+          <div className="col-span-1">Taille</div>
+          <div className="col-span-1 text-right">Actions</div>
         </div>
       </div>
 
@@ -237,8 +256,8 @@ export function DocumentListView({
                   onClick={() => handleRowClick(folder)}
                   className={`px-6 py-3 border-b border-gray-100 cursor-pointer transition-colors ${focusedItemId === folder.id ? 'bg-blue-50 ring-1 ring-inset ring-blue-300' : ''}`}
                 >
-                  <div className="grid grid-cols-[minmax(0,3fr)_minmax(0,1.2fr)_minmax(0,2.8fr)_minmax(0,1fr)_minmax(0,1fr)_minmax(0,1.4fr)] gap-4 items-center">
-                    <div className="flex items-center gap-3">
+                  <div className={`${tableGridClass} items-center`}>
+                    <div className="col-span-4 flex items-center gap-3">
                       <div className="w-8 h-8 rounded-lg bg-amber-50 flex items-center justify-center flex-shrink-0">
                         <Icon className="w-4 h-4 text-amber-600" />
                       </div>
@@ -253,28 +272,29 @@ export function DocumentListView({
                           {folder.children?.length || 0} élément{(folder.children?.length || 0) > 1 ? 's' : ''}
                         </p>
                       </div>
-                      <Badge variant="outline" className="bg-amber-50 text-amber-700 border-amber-200 text-xs">
-                        Dossier
-                      </Badge>
                     </div>
 
-                    <div>
-                      <p className="text-xs text-gray-400">—</p>
+                    <div className="col-span-2">
+                      <Tag label="Dossier" />
                     </div>
 
-                    <div>
-                      <p className="text-xs text-gray-400">—</p>
+                    <div className="col-span-3">
+                      {folder.navigatorTargeting ? (
+                        <DocumentTargetingMarker document={folder} mode="details" />
+                      ) : (
+                        <p className="text-xs text-gray-400">—</p>
+                      )}
                     </div>
                     
-                    <div>
+                    <div className="col-span-1">
                       <p className="text-sm text-gray-600">{formatDate(folder.date)}</p>
                     </div>
                     
-                    <div>
+                    <div className="col-span-1">
                       <p className="text-sm text-gray-600">—</p>
                     </div>
                     
-                    <div className="flex items-center justify-end gap-2">
+                    <div className="col-span-1 flex items-center justify-end gap-2">
                       <DropdownMenu>
                         <DropdownMenuTrigger asChild>
                           <button
@@ -348,8 +368,8 @@ export function DocumentListView({
                   onClick={() => handleRowClick(file)}
                   className={`px-6 py-3 border-b border-gray-100 cursor-pointer transition-colors ${focusedItemId === file.id ? 'bg-blue-50 ring-1 ring-inset ring-blue-300' : ''}`}
                 >
-                  <div className="grid grid-cols-[minmax(0,3fr)_minmax(0,1.2fr)_minmax(0,2.8fr)_minmax(0,1fr)_minmax(0,1fr)_minmax(0,1.4fr)] gap-4 items-center">
-                    <div className="flex items-center gap-3">
+                  <div className={`${tableGridClass} items-center`}>
+                    <div className="col-span-4 flex items-center gap-3">
                       <div className="w-8 h-8 rounded-lg bg-blue-50 flex items-center justify-center flex-shrink-0">
                         <Icon className="w-4 h-4 text-blue-600" />
                       </div>
@@ -363,23 +383,23 @@ export function DocumentListView({
                       </div>
                     </div>
 
-                    <div className="min-w-0">
+                    <div className="col-span-2 min-w-0">
                       <DocumentTargetingMarker document={file} mode="tag" />
                     </div>
 
-                    <div className="min-w-0">
+                    <div className="col-span-3 min-w-0">
                       <DocumentTargetingMarker document={file} mode="details" />
                     </div>
                     
-                    <div>
+                    <div className="col-span-1">
                       <p className="text-sm text-gray-600">{formatDate(file.date)}</p>
                     </div>
                     
-                    <div>
+                    <div className="col-span-1">
                       <p className="text-sm text-gray-600">{formatFileSize(file.size)}</p>
                     </div>
                     
-                    <div className="flex items-center justify-end gap-2">
+                    <div className="col-span-1 flex items-center justify-end gap-2">
                       <button
                         type="button"
                         onClick={(event) => {
