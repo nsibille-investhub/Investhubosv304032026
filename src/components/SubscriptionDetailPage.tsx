@@ -858,13 +858,13 @@ export function SubscriptionDetailPage({ subscription, onBack }: SubscriptionDet
             </div>
 
             {/* Middle Row - Actors */}
-            <div className="flex items-center gap-8 mb-6">
+            <div className="flex items-stretch gap-3 mb-5 flex-nowrap overflow-x-auto pb-1">
             {/* Investisseur */}
-            <div className="flex items-center gap-2">
-              <div className="w-7 h-7 rounded-lg bg-blue-50 border border-blue-100 flex items-center justify-center flex-shrink-0">
+            <div className="flex items-center gap-2 rounded-xl border border-slate-200 bg-slate-50/80 px-3 py-2.5 min-w-fit">
+              <div className="w-7 h-7 rounded-lg bg-blue-50 border border-blue-100 flex items-center justify-center flex-shrink-0 shadow-sm">
                 <User className="w-3.5 h-3.5 text-blue-600" />
               </div>
-              <div>
+              <div className="whitespace-nowrap">
                 <div className="text-xs text-gray-500 leading-none mb-0.5">Investisseur</div>
                 <Button
                   variant="link"
@@ -878,11 +878,11 @@ export function SubscriptionDetailPage({ subscription, onBack }: SubscriptionDet
 
             {/* Structure */}
             {subscription.type !== 'Personne Physique' && (
-              <div className="flex items-center gap-2">
-                <div className="w-7 h-7 rounded-lg bg-purple-50 border border-purple-100 flex items-center justify-center flex-shrink-0">
+              <div className="flex items-center gap-2 rounded-xl border border-slate-200 bg-slate-50/80 px-3 py-2.5 min-w-fit">
+                <div className="w-7 h-7 rounded-lg bg-purple-50 border border-purple-100 flex items-center justify-center flex-shrink-0 shadow-sm">
                   <Building2 className="w-3.5 h-3.5 text-purple-600" />
                 </div>
-                <div>
+                <div className="whitespace-nowrap">
                   <div className="text-xs text-gray-500 leading-none mb-0.5">Structure</div>
                   <Button
                     variant="link"
@@ -896,11 +896,11 @@ export function SubscriptionDetailPage({ subscription, onBack }: SubscriptionDet
             )}
 
             {/* Partenaire */}
-            <div className="flex items-center gap-2">
-              <div className="w-7 h-7 rounded-lg bg-emerald-50 border border-emerald-100 flex items-center justify-center flex-shrink-0">
+            <div className="flex items-center gap-2 rounded-xl border border-slate-200 bg-slate-50/80 px-3 py-2.5 min-w-fit">
+              <div className="w-7 h-7 rounded-lg bg-emerald-50 border border-emerald-100 flex items-center justify-center flex-shrink-0 shadow-sm">
                 <Users className="w-3.5 h-3.5 text-emerald-600" />
               </div>
-              <div>
+              <div className="whitespace-nowrap">
                 <div className="text-xs text-gray-500 leading-none mb-0.5">Partenaire</div>
                 <div className="text-sm font-medium text-gray-900 leading-tight">UFF</div>
                 <div className="text-xs text-gray-500 leading-tight">Conseiller: Eric MAZEAU</div>
@@ -908,11 +908,11 @@ export function SubscriptionDetailPage({ subscription, onBack }: SubscriptionDet
             </div>
 
             {/* Frais */}
-            <div className="flex items-center gap-2">
-              <div className="w-7 h-7 rounded-lg bg-amber-50 border border-amber-100 flex items-center justify-center flex-shrink-0">
+            <div className="flex items-center gap-2 rounded-xl border border-slate-200 bg-slate-50/80 px-3 py-2.5 min-w-fit">
+              <div className="w-7 h-7 rounded-lg bg-amber-50 border border-amber-100 flex items-center justify-center flex-shrink-0 shadow-sm">
                 <DollarSign className="w-3.5 h-3.5 text-amber-600" />
               </div>
-              <div>
+              <div className="whitespace-nowrap">
                 <div className="text-xs text-gray-500 leading-none mb-0.5">Frais</div>
                 <div className="text-xs text-gray-700 leading-tight">Frais d'entrée: 3 750,00 €</div>
                 <div className="text-xs text-gray-700 leading-tight">Prime de souscription: 84,48 €</div>
@@ -921,13 +921,13 @@ export function SubscriptionDetailPage({ subscription, onBack }: SubscriptionDet
             </div>
 
             {/* Financial KPIs Row */}
-            <div className="flex items-center gap-8 mb-4">
+            <div className="flex items-center gap-3 mb-4 flex-nowrap overflow-x-auto pb-1">
               {/* Montant Souscrit */}
-              <div className="flex items-center gap-2">
+              <div className="flex items-center gap-2 rounded-xl border border-slate-200 bg-white px-3 py-2 min-w-fit">
                 <div className="w-5 h-5 rounded bg-blue-50 flex items-center justify-center flex-shrink-0">
                   <DollarSign className="w-3 h-3 text-blue-600" />
                 </div>
-                <div>
+                <div className="whitespace-nowrap">
                   <div className="text-xs text-gray-500 leading-tight">Montant Souscrit</div>
                   <div className="flex items-baseline gap-1.5">
                     <span className="font-bold text-gray-900">500 000 €</span>
@@ -937,11 +937,11 @@ export function SubscriptionDetailPage({ subscription, onBack }: SubscriptionDet
               </div>
 
               {/* Montant Appelé */}
-              <div className="flex items-center gap-2">
+              <div className="flex items-center gap-2 rounded-xl border border-slate-200 bg-white px-3 py-2 min-w-fit">
                 <div className="w-5 h-5 rounded bg-emerald-50 flex items-center justify-center flex-shrink-0">
                   <TrendingUp className="w-3 h-3 text-emerald-600" />
                 </div>
-                <div>
+                <div className="whitespace-nowrap">
                   <div className="text-xs text-gray-500 leading-tight">Montant Appelé</div>
                   <div className="flex items-baseline gap-1.5">
                     <span className="font-bold text-gray-900">275 000 €</span>
@@ -951,11 +951,11 @@ export function SubscriptionDetailPage({ subscription, onBack }: SubscriptionDet
               </div>
 
               {/* Montant Distribué */}
-              <div className="flex items-center gap-2">
+              <div className="flex items-center gap-2 rounded-xl border border-slate-200 bg-white px-3 py-2 min-w-fit">
                 <div className="w-5 h-5 rounded bg-purple-50 flex items-center justify-center flex-shrink-0">
                   <ArrowDownCircle className="w-3 h-3 text-purple-600" />
                 </div>
-                <div>
+                <div className="whitespace-nowrap">
                   <div className="text-xs text-gray-500 leading-tight">Montant Distribué</div>
                   <div className="flex items-baseline gap-1.5">
                     <span className="font-bold text-gray-900">42 500 €</span>
@@ -965,11 +965,11 @@ export function SubscriptionDetailPage({ subscription, onBack }: SubscriptionDet
               </div>
 
               {/* Solde Restant */}
-              <div className="flex items-center gap-2">
+              <div className="flex items-center gap-2 rounded-xl border border-slate-200 bg-white px-3 py-2 min-w-fit">
                 <div className="w-5 h-5 rounded bg-orange-50 flex items-center justify-center flex-shrink-0">
                   <Wallet className="w-3 h-3 text-orange-600" />
                 </div>
-                <div>
+                <div className="whitespace-nowrap">
                   <div className="text-xs text-gray-500 leading-tight">Solde Restant</div>
                   <div className="flex items-baseline gap-1.5">
                     <span className="font-bold text-gray-900">225 000 €</span>
