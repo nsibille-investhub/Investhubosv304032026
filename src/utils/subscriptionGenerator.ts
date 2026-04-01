@@ -257,6 +257,7 @@ export interface Subscription {
   hasDepositary?: boolean; // Dépositaire oui/non
   activatedAt?: Date | null; // Date d'activation
   notes?: string | null; // Notes supplémentaires
+  notesList?: Array<{ content: string; author: string; date: Date }>;
   entryFees?: number; // Frais d'entrée en %
   language?: 'fr' | 'en' | 'de' | 'it' | 'es'; // Langue de la souscription
   sepaEnabled?: boolean; // Prélèvement SEPA activé
@@ -536,6 +537,14 @@ export function generateSubscriptions(count: number): Subscription[] {
       null
     ];
     const notes = Math.random() > 0.7 ? randomElement(possibleNotes) : null;
+    const notesCount = notes ? randomNumber(1, 4) : 0;
+    const notesList = notes
+      ? Array.from({ length: notesCount }, (_, idx) => ({
+          content: idx === 0 ? notes : randomElement(possibleNotes.filter(Boolean)) as string,
+          author: randomElement(['Claire Martin', 'Louis Bernard', 'Sofia Dubois', 'Antoine Mercier']),
+          date: randomDate(45),
+        })).sort((a, b) => b.date.getTime() - a.date.getTime())
+      : [];
     
     // Frais d'entrée (0%, 2%, 3%, 5%)
     const entryFeesOptions = [0, 2, 3, 5];
@@ -615,6 +624,7 @@ export function generateSubscriptions(count: number): Subscription[] {
       hasDepositary,
       activatedAt,
       notes,
+      notesList,
       entryFees,
       language,
       sepaEnabled,

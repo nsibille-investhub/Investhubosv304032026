@@ -2,7 +2,7 @@ import { Calendar as CalendarIcon } from 'lucide-react';
 
 interface DateTimeCellProps {
   date: Date | string;
-  variant?: 'default' | 'neutral';
+  variant?: 'default' | 'neutral' | 'ecru';
 }
 
 export function DateTimeCell({ date, variant = 'neutral' }: DateTimeCellProps) {
@@ -45,6 +45,16 @@ export function DateTimeCell({ date, variant = 'neutral' }: DateTimeCellProps) {
 
   // Déterminer le style en fonction du temps écoulé
   const getStyle = (relativeTime: string) => {
+    if (variant === 'ecru') {
+      return {
+        bg: 'bg-[#F8F7F1]',
+        border: 'border-[#D9D8CB]',
+        iconColor: 'text-[#0A3D4A]',
+        textColor: 'text-[#000E2B]',
+        subTextColor: 'text-[#456B6C]'
+      };
+    }
+
     // Si variant est "neutral", toujours retourner le style gris neutre
     if (variant === 'neutral') {
       return {

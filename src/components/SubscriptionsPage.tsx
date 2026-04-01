@@ -216,6 +216,10 @@ export function SubscriptionsPage({ data, isLoading, allData, setAllData, onSubs
         aValue = a.amount;
         bValue = b.amount;
       }
+      if (sortConfig.key === 'called-amounts') {
+        aValue = a.calledAmount || 0;
+        bValue = b.calledAmount || 0;
+      }
       
       if (aValue < bValue) {
         return sortConfig.direction === 'asc' ? -1 : 1;

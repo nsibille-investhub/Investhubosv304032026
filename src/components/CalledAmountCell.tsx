@@ -29,21 +29,21 @@ export function CalledAmountCell({
     <div className="flex flex-col gap-2 min-w-[180px]">
       {/* Montant principal */}
       <div className="flex items-center gap-2">
-        <TrendingUp className="w-4 h-4 text-gray-500 dark:text-gray-400" />
-        <span className="text-sm font-semibold text-gray-900 dark:text-gray-100">
+        <TrendingUp className="w-4 h-4 text-[#456B6C]" />
+        <span className="text-sm font-semibold text-[#000E2B]">
           {formatCurrency(calledAmount)}
         </span>
       </div>
 
       {/* Barre de progression */}
-      <div className="w-full h-1.5 bg-gray-200 dark:bg-gray-700 rounded-full overflow-hidden flex">
+      <div className="w-full h-1.5 bg-[#D9D8CB] rounded-full overflow-hidden flex">
         <Tooltip>
           <TooltipTrigger asChild>
             <motion.div
               initial={{ width: 0 }}
               animate={{ width: `${calledPercentage}%` }}
               transition={{ duration: 0.5, delay: 0.1 }}
-              className="h-full bg-green-500 dark:bg-green-400"
+              className="h-full bg-[#25563F]"
             />
           </TooltipTrigger>
           <TooltipContent>
@@ -60,7 +60,7 @@ export function CalledAmountCell({
               initial={{ width: 0 }}
               animate={{ width: `${pendingPercentage}%` }}
               transition={{ duration: 0.5, delay: 0.2 }}
-              className="h-full bg-orange-500 dark:bg-orange-400"
+              className="h-full bg-orange-500"
             />
           </TooltipTrigger>
           <TooltipContent>
@@ -77,7 +77,7 @@ export function CalledAmountCell({
               initial={{ width: 0 }}
               animate={{ width: `${remainingPercentage}%` }}
               transition={{ duration: 0.5, delay: 0.3 }}
-              className="h-full bg-blue-500 dark:bg-blue-400"
+              className="h-full bg-[#0A3D4A]"
             />
           </TooltipTrigger>
           <TooltipContent>
@@ -94,7 +94,7 @@ export function CalledAmountCell({
         {pendingCallAmount > 0 && (
           <Tooltip>
             <TooltipTrigger asChild>
-              <div className="flex items-center gap-1 text-orange-600 dark:text-orange-400 cursor-help">
+              <div className="flex items-center gap-1 text-orange-600 cursor-help">
                 <Clock className="w-3 h-3" />
                 <span className="font-medium">{formatCurrency(pendingCallAmount)}</span>
               </div>
@@ -111,7 +111,7 @@ export function CalledAmountCell({
         {remainingAmount > 0 && (
           <Tooltip>
             <TooltipTrigger asChild>
-              <div className="flex items-center gap-1 text-blue-600 dark:text-blue-400 cursor-help">
+              <div className="flex items-center gap-1 text-[#0A3D4A] cursor-help">
                 <ArrowRight className="w-3 h-3" />
                 <span className="font-medium">{formatCurrency(remainingAmount)}</span>
               </div>
