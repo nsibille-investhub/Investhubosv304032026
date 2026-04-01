@@ -42,11 +42,13 @@ import { SignatureProgressCell } from './SignatureProgressCell';
 import { SubscriptionNameCell } from './SubscriptionNameCell';
 import { DateTimeCell } from './DateTimeCell';
 import { CalledAmountCell } from './CalledAmountCell';
+import { DurationCell } from './DurationCell';
 import { ClickableText } from './ClickableText';
 import { Tag } from './Tag';
 import { CheckIndicator } from './CheckIndicator';
 import { StatusBadge } from './StatusBadge';
 import { InternalResponsibleSelector } from './InternalResponsibleSelector';
+import { NotesCell } from './NotesCell';
 
 // Helper function to get global status
 const getGlobalStatus = (status: string) => {
@@ -326,7 +328,7 @@ export function SubscriptionDynamicTable({
         );
 
       case 'createdAt':
-        return <DateTimeCell date={row.createdAt} />;
+        return <DateTimeCell date={row.createdAt} variant="ecru" />;
 
       case 'source':
         return (
@@ -378,7 +380,7 @@ export function SubscriptionDynamicTable({
         );
 
       case 'lastAction':
-        return <DateTimeCell date={row.lastActionDate || row.updatedAt} />;
+        return <DurationCell date={row.lastActionDate || row.updatedAt} />;
 
       case 'signatureStatus':
         return (
@@ -402,14 +404,14 @@ export function SubscriptionDynamicTable({
 
       case 'sentAt':
         return row.sentToSignatureAt ? (
-          <DateTimeCell date={row.sentToSignatureAt} />
+          <DateTimeCell date={row.sentToSignatureAt} variant="ecru" />
         ) : (
           <span className="text-sm text-gray-400 dark:text-gray-600">-</span>
         );
 
       case 'lastReminder':
         return row.lastReminderAt ? (
-          <DateTimeCell date={row.lastReminderAt} />
+          <DateTimeCell date={row.lastReminderAt} variant="ecru" />
         ) : (
           <span className="text-sm text-gray-400 dark:text-gray-600">-</span>
         );
@@ -447,6 +449,7 @@ export function SubscriptionDynamicTable({
         );
 
       case 'calledAmount':
+      case 'called-amounts':
         return (
           <CalledAmountCell 
             calledAmount={row.calledAmount || 0}
@@ -475,7 +478,7 @@ export function SubscriptionDynamicTable({
 
       case 'activatedAt':
         return row.activatedAt ? (
-          <DateTimeCell date={row.activatedAt} />
+          <DateTimeCell date={row.activatedAt} variant="ecru" />
         ) : (
           <span className="text-sm text-gray-400 dark:text-gray-600">-</span>
         );
@@ -484,23 +487,10 @@ export function SubscriptionDynamicTable({
         return <StatusBadge label={getGlobalStatus(row.status)} variant={getGlobalStatusVariant(getGlobalStatus(row.status))} />;
 
       case 'updatedAt':
-        return <DateTimeCell date={row.updatedAt} />;
+        return <DateTimeCell date={row.updatedAt} variant="ecru" />;
 
       case 'notes':
-        return row.notes ? (
-          <Tooltip>
-            <TooltipTrigger asChild>
-              <div className="text-sm text-gray-600 dark:text-gray-400 truncate max-w-[180px] cursor-help">
-                {row.notes}
-              </div>
-            </TooltipTrigger>
-            <TooltipContent>
-              <p className="max-w-xs">{row.notes}</p>
-            </TooltipContent>
-          </Tooltip>
-        ) : (
-          <span className="text-sm text-gray-400 dark:text-gray-600">-</span>
-        );
+        return <NotesCell notes={row.notesList || (row.notes ? [{ content: row.notes, author: 'N/A', date: row.updatedAt }] : [])} />;
 
       case 'entryFees':
         return row.entryFees ? (
@@ -568,19 +558,11 @@ export function SubscriptionDynamicTable({
         );
 
       case 'onboardingReopened':
-        return row.onboardingReopened > 0 ? (
+        return (
           <div className="flex justify-center">
-            <Badge className={cn(
-              row.onboardingReopened > 2 
-                ? "bg-red-100 dark:bg-red-950/50 text-red-700 dark:text-red-300 border-red-200 dark:border-red-800"
-                : "bg-yellow-100 dark:bg-yellow-950/50 text-yellow-700 dark:text-yellow-300 border-yellow-200 dark:border-yellow-800"
-            )}>
-              {row.onboardingReopened}
+            <Badge className="border-[#D9D8CB] bg-[#F8F7F1] text-[#0A3D4A]">
+              {row.onboardingReopened || 0}
             </Badge>
-          </div>
-        ) : (
-          <div className="flex justify-center">
-            <span className="text-sm text-gray-400 dark:text-gray-600">0</span>
           </div>
         );
 

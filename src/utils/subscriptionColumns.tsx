@@ -76,7 +76,7 @@ const ACTIVE_COLUMNS: ColumnConfig[] = [
   { id: 'amount', label: 'Montant engagé', width: '150px', sortable: true, align: 'right' },
   { id: 'quantity', label: 'Quantité', width: '120px', sortable: true, align: 'right' },
   { id: 'language', label: 'Langue', width: '100px', sortable: true, align: 'center' },
-  { id: 'calledAmount', label: 'Montant appelé', width: '150px', sortable: true, align: 'right' },
+  { id: 'called-amounts', label: 'Montant appelé', width: '150px', sortable: true, align: 'right' },
   { id: 'remainingAmount', label: 'Restant à appeler', width: '150px', sortable: true, align: 'right' },
   { id: 'distributedAmount', label: 'Montant distribué', width: '150px', sortable: true, align: 'right' },
   { id: 'entryFees', label: 'Frais d\'entrée (%)', width: '140px', sortable: true, align: 'right' },
@@ -94,7 +94,7 @@ const ALL_COLUMNS: ColumnConfig[] = [
   // Montants et produits
   { id: 'amount', label: 'Montant engagé', width: '150px', sortable: true, align: 'right' },
   { id: 'quantity', label: 'Quantité', width: '120px', sortable: true, align: 'right' },
-  { id: 'calledAmount', label: 'Montant appelé', width: '150px', sortable: true, align: 'right' },
+  { id: 'called-amounts', label: 'Montant appelé', width: '150px', sortable: true, align: 'right' },
   { id: 'remainingAmount', label: 'Restant à appeler', width: '150px', sortable: true, align: 'right' },
   { id: 'distributedAmount', label: 'Montant distribué', width: '150px', sortable: true, align: 'right' },
   { id: 'entryFees', label: 'Frais d\'entrée (%)', width: '140px', sortable: true, align: 'right' },
