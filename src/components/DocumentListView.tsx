@@ -43,7 +43,7 @@ interface DocumentListViewProps {
   onDeleteFolder?: (folder: Document) => void;
 }
 
-export function DocumentListView({ 
+export function DocumentListView({
   documents, 
   currentFolder, 
   onDocumentClick,
@@ -62,6 +62,7 @@ export function DocumentListView({
   onEditFolder,
   onDeleteFolder,
 }: DocumentListViewProps) {
+  const tableGridClassName = 'document-list-grid';
   const [hoveredId, setHoveredId] = useState<string | null>(null);
   const [viewerOpen, setViewerOpen] = useState(false);
   const [viewerDocument, setViewerDocument] = useState<Document | null>(null);
@@ -203,7 +204,7 @@ export function DocumentListView({
 
       {/* Table Header */}
       <div className="px-6 py-3 border-b border-gray-200 bg-gray-50/30">
-        <div className="grid grid-cols-[minmax(0,3fr)_minmax(0,1.2fr)_minmax(0,2.8fr)_minmax(0,1fr)_minmax(0,1fr)_minmax(0,1.4fr)] gap-4 text-xs font-medium text-gray-500 uppercase tracking-wide">
+        <div className={`grid ${tableGridClassName} gap-4 text-xs font-medium text-gray-500 uppercase tracking-wide`}>
           <div>Nom</div>
           <div>Nature</div>
           <div>Audience</div>
@@ -237,7 +238,7 @@ export function DocumentListView({
                   onClick={() => handleRowClick(folder)}
                   className={`px-6 py-3 border-b border-gray-100 cursor-pointer transition-colors ${focusedItemId === folder.id ? 'bg-blue-50 ring-1 ring-inset ring-blue-300' : ''}`}
                 >
-                  <div className="grid grid-cols-[minmax(0,3fr)_minmax(0,1.2fr)_minmax(0,2.8fr)_minmax(0,1fr)_minmax(0,1fr)_minmax(0,1.4fr)] gap-4 items-center">
+                  <div className={`grid ${tableGridClassName} gap-4 items-center`}>
                     <div className="flex items-center gap-3">
                       <div className="w-8 h-8 rounded-lg bg-amber-50 flex items-center justify-center flex-shrink-0">
                         <Icon className="w-4 h-4 text-amber-600" />
@@ -348,7 +349,7 @@ export function DocumentListView({
                   onClick={() => handleRowClick(file)}
                   className={`px-6 py-3 border-b border-gray-100 cursor-pointer transition-colors ${focusedItemId === file.id ? 'bg-blue-50 ring-1 ring-inset ring-blue-300' : ''}`}
                 >
-                  <div className="grid grid-cols-[minmax(0,3fr)_minmax(0,1.2fr)_minmax(0,2.8fr)_minmax(0,1fr)_minmax(0,1fr)_minmax(0,1.4fr)] gap-4 items-center">
+                  <div className={`grid ${tableGridClassName} gap-4 items-center`}>
                     <div className="flex items-center gap-3">
                       <div className="w-8 h-8 rounded-lg bg-blue-50 flex items-center justify-center flex-shrink-0">
                         <Icon className="w-4 h-4 text-blue-600" />

@@ -442,6 +442,7 @@ export function SubscriptionsPage({ data, isLoading, allData, setAllData, onSubs
               data={tableData}
               activeStatus={activeStatus}
               onRowClick={handleRowClick}
+              onAnalystChange={handleAnalystChange}
               sortConfig={sortConfig}
               onSort={handleSort}
               searchTerm={searchTerm}
