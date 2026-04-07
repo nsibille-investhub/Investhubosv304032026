@@ -4,7 +4,6 @@ import {
   FileText, 
   Folder, 
   Eye, 
-  Download, 
   MoreVertical,
   ChevronRight,
   Search,
@@ -56,7 +55,6 @@ export function DocumentListView({
   onAddDocumentFromFolder,
   onAddDocument,
   onOpenWizard,
-  onDownloadAll,
   onAddFolder,
   onAddFolderFromFolder,
   onEditFolder,
@@ -196,21 +194,17 @@ export function DocumentListView({
               </button>
             )}
           </div>
-          <Button variant="outline" size="sm" onClick={onDownloadAll}>
-            <Download className="w-4 h-4 mr-2" />
-            Télécharger
-          </Button>
-          <Button size="sm" onClick={onOpenWizard} className="bg-gradient-to-r from-[#0066FF] to-[#0052CC]">
+          <Button variant="secondary" size="sm" onClick={onOpenWizard}>
             <Plus className="w-4 h-4 mr-2" />
-            Import Massif
+            Import
           </Button>
-          <Button variant="outline" size="sm" onClick={onAddDocument}>
-            <Plus className="w-4 h-4 mr-2" />
-            Ajouter un document
-          </Button>
-          <Button variant="outline" size="sm" onClick={onAddFolder}>
+          <Button variant="secondary" size="sm" onClick={onAddFolder}>
             <Folder className="w-4 h-4 mr-2" />
             Ajouter un dossier
+          </Button>
+          <Button size="sm" onClick={onAddDocument} className="ml-auto">
+            <Plus className="w-4 h-4 mr-2" />
+            Ajouter un document
           </Button>
         </div>
         {searchTerm.trim() && (
