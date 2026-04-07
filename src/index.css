@@ -10917,3 +10917,7 @@ html {
 .border-financial-blue {
   border-color: #060D19 !important;
 }
+
+.document-list-grid {
+  grid-template-columns: minmax(0, 3fr) minmax(0, 1.2fr) minmax(0, 2.8fr) minmax(0, 1fr) minmax(0, 1fr) minmax(0, 1.4fr);
+}
