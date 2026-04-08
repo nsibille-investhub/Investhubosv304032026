@@ -4,6 +4,7 @@ import {
   FileText, 
   Folder, 
   Eye, 
+  Download,
   MoreVertical,
   ChevronRight,
   Search,
