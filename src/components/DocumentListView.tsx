@@ -4,7 +4,7 @@ import {
   FileText, 
   Folder, 
   Eye, 
-  Download, 
+  Download,
   MoreVertical,
   ChevronRight,
   Search,
@@ -56,7 +56,6 @@ export function DocumentListView({
   onAddDocumentFromFolder,
   onAddDocument,
   onOpenWizard,
-  onDownloadAll,
   onAddFolder,
   onAddFolderFromFolder,
   onEditFolder,
@@ -196,21 +195,17 @@ export function DocumentListView({
               </button>
             )}
           </div>
-          <Button variant="outline" size="sm" onClick={onDownloadAll}>
-            <Download className="w-4 h-4 mr-2" />
-            Télécharger
-          </Button>
-          <Button size="sm" onClick={onOpenWizard} className="bg-gradient-to-r from-[#0066FF] to-[#0052CC]">
+          <Button variant="secondary" size="sm" onClick={onOpenWizard}>
             <Plus className="w-4 h-4 mr-2" />
-            Import Massif
+            Import
           </Button>
-          <Button variant="outline" size="sm" onClick={onAddDocument}>
-            <Plus className="w-4 h-4 mr-2" />
-            Ajouter un document
-          </Button>
-          <Button variant="outline" size="sm" onClick={onAddFolder}>
+          <Button variant="secondary" size="sm" onClick={onAddFolder}>
             <Folder className="w-4 h-4 mr-2" />
             Ajouter un dossier
+          </Button>
+          <Button size="sm" onClick={onAddDocument} className="ml-auto">
+            <Plus className="w-4 h-4 mr-2" />
+            Ajouter un document
           </Button>
         </div>
         {searchTerm.trim() && (
@@ -274,11 +269,11 @@ export function DocumentListView({
                       </div>
                     </div>
 
-                    <div className="col-span-2">
+                    <div>
                       <Tag label="Dossier" />
                     </div>
 
-                    <div className="col-span-3">
+                    <div>
                       {folder.navigatorTargeting ? (
                         <DocumentTargetingMarker document={folder} mode="details" />
                       ) : (
@@ -286,15 +281,15 @@ export function DocumentListView({
                       )}
                     </div>
                     
-                    <div className="col-span-1">
+                    <div>
                       <p className="text-sm text-gray-600">{formatDate(folder.date)}</p>
                     </div>
                     
-                    <div className="col-span-1">
+                    <div>
                       <p className="text-sm text-gray-600">—</p>
                     </div>
                     
-                    <div className="col-span-1 flex items-center justify-end gap-2">
+                    <div className="flex items-center justify-end gap-2">
                       <DropdownMenu>
                         <DropdownMenuTrigger asChild>
                           <button
@@ -383,23 +378,23 @@ export function DocumentListView({
                       </div>
                     </div>
 
-                    <div className="col-span-2 min-w-0">
+                    <div className="min-w-0">
                       <DocumentTargetingMarker document={file} mode="tag" />
                     </div>
 
-                    <div className="col-span-3 min-w-0">
+                    <div className="min-w-0">
                       <DocumentTargetingMarker document={file} mode="details" />
                     </div>
                     
-                    <div className="col-span-1">
+                    <div>
                       <p className="text-sm text-gray-600">{formatDate(file.date)}</p>
                     </div>
                     
-                    <div className="col-span-1">
+                    <div>
                       <p className="text-sm text-gray-600">{formatFileSize(file.size)}</p>
                     </div>
                     
-                    <div className="col-span-1 flex items-center justify-end gap-2">
+                    <div className="flex items-center justify-end gap-2">
                       <button
                         type="button"
                         onClick={(event) => {
