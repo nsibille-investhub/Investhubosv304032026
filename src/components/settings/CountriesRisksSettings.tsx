@@ -818,7 +818,7 @@ function CountriesRisksSettingsContent() {
   const canDelete = !deletingCountryList || deletingCountryList.usedByProfiles === 0 || (deletingCountryList.usedByProfiles > 0 && substituteMatrixId);
 
   return (
-    <div className="flex h-full bg-gray-50 dark:bg-black">
+    <div className="flex h-full bg-white dark:bg-black">
       {/* Delete Confirmation Dialog */}
       <AlertDialog open={isDeleteDialogOpen} onOpenChange={(open) => {
         setIsDeleteDialogOpen(open);

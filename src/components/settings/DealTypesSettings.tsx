@@ -49,7 +49,7 @@ export function DealTypesSettings() {
   );
 
   return (
-    <div className="flex h-full bg-gray-50">
+    <div className="flex h-full bg-white">
       <div className="flex-1 p-6">
         <div className="max-w-4xl">
           <div className="mb-6">
