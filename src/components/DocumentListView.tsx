@@ -269,11 +269,11 @@ export function DocumentListView({
                       </div>
                     </div>
 
-                    <div className="col-span-2">
+                    <div>
                       <Tag label="Dossier" />
                     </div>
 
-                    <div className="col-span-3">
+                    <div>
                       {folder.navigatorTargeting ? (
                         <DocumentTargetingMarker document={folder} mode="details" />
                       ) : (
@@ -281,15 +281,15 @@ export function DocumentListView({
                       )}
                     </div>
                     
-                    <div className="col-span-1">
+                    <div>
                       <p className="text-sm text-gray-600">{formatDate(folder.date)}</p>
                     </div>
                     
-                    <div className="col-span-1">
+                    <div>
                       <p className="text-sm text-gray-600">—</p>
                     </div>
                     
-                    <div className="col-span-1 flex items-center justify-end gap-2">
+                    <div className="flex items-center justify-end gap-2">
                       <DropdownMenu>
                         <DropdownMenuTrigger asChild>
                           <button
@@ -378,23 +378,23 @@ export function DocumentListView({
                       </div>
                     </div>
 
-                    <div className="col-span-2 min-w-0">
+                    <div className="min-w-0">
                       <DocumentTargetingMarker document={file} mode="tag" />
                     </div>
 
-                    <div className="col-span-3 min-w-0">
+                    <div className="min-w-0">
                       <DocumentTargetingMarker document={file} mode="details" />
                     </div>
                     
-                    <div className="col-span-1">
+                    <div>
                       <p className="text-sm text-gray-600">{formatDate(file.date)}</p>
                     </div>
                     
-                    <div className="col-span-1">
+                    <div>
                       <p className="text-sm text-gray-600">{formatFileSize(file.size)}</p>
                     </div>
                     
-                    <div className="col-span-1 flex items-center justify-end gap-2">
+                    <div className="flex items-center justify-end gap-2">
                       <button
                         type="button"
                         onClick={(event) => {
