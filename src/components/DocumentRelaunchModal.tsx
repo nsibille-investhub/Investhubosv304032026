@@ -14,6 +14,7 @@ import { Button } from './ui/button';
 import { Badge } from './ui/badge';
 import { Checkbox } from './ui/checkbox';
 import { cn } from './ui/utils';
+import { Tag } from './Tag';
 import {
   AlertDialog,
   AlertDialogContent,
@@ -193,6 +194,23 @@ export function DocumentRelaunchModal({
     }
 
     return <MinusCircle className="w-4 h-4 text-gray-300 dark:text-gray-600 mx-auto" />;
+  };
+
+  const renderConsultationCell = (recipient: Recipient) => {
+    if (!recipient.inTarget || recipient.consultationStatus === 'not-targeted') {
+      if (recipient.name === 'Pierre Dupont') {
+        return (
+          <div className="flex items-center justify-center gap-2">
+            <MinusCircle className="w-4 h-4 text-gray-300 dark:text-gray-600" />
+            <span className="text-xs text-gray-500">Non habilité au document</span>
+          </div>
+        );
+      }
+
+      return <MinusCircle className="w-4 h-4 text-gray-300 dark:text-gray-600 mx-auto" />;
+    }
+
+    return renderDateOrIcon(recipient.consultationStatus, recipient.consultationDate);
   };
 
   const renderLastNotification = (recipient: Recipient) => {
@@ -396,7 +414,6 @@ export function DocumentRelaunchModal({
                       />
                     </th>
                     <th className="px-4 py-3 text-left text-xs font-medium text-gray-600 dark:text-gray-400">Nom</th>
-                    <th className="px-4 py-3 text-left text-xs font-medium text-gray-600 dark:text-gray-400">Groupe</th>
                     <th className="px-4 py-3 text-left text-xs font-medium text-gray-600 dark:text-gray-400">Type</th>
                     <th className="px-4 py-3 text-center text-xs font-medium text-gray-600 dark:text-gray-400">Dernière notification</th>
                     <th className="px-4 py-3 text-center text-xs font-medium text-gray-600 dark:text-gray-400">Réception</th>
@@ -420,14 +437,20 @@ export function DocumentRelaunchModal({
                         />
                       </td>
                       <td className="px-4 py-3">
-                        <span className="font-medium text-gray-900 dark:text-gray-100">{recipient.name}</span>
+                        <div className="flex flex-col gap-1">
+                          <span className="font-medium text-gray-900 dark:text-gray-100">{recipient.name}</span>
+                          {recipient.name === 'Pierre Dupont' && (
+                            <span className="text-xs text-gray-500">Accès refusé : non habilité au document</span>
+                          )}
+                        </div>
                       </td>
-                      <td className="px-4 py-3 text-gray-600 dark:text-gray-400">{recipient.role || '—'}</td>
-                      <td className="px-4 py-3 text-gray-600 dark:text-gray-400">{recipient.type}</td>
+                      <td className="px-4 py-3">
+                        <Tag label={recipient.type} />
+                      </td>
                       <td className="px-4 py-3 text-center">{renderLastNotification(recipient)}</td>
                       <td className="px-4 py-3 text-center">{renderDateOrIcon(recipient.receptionStatus, recipient.receptionDate)}</td>
                       <td className="px-4 py-3 text-center">{renderDateOrIcon(recipient.openingStatus, recipient.openingDate)}</td>
-                      <td className="px-4 py-3 text-center">{renderDateOrIcon(recipient.consultationStatus, recipient.consultationDate)}</td>
+                      <td className="px-4 py-3 text-center">{renderConsultationCell(recipient)}</td>
                     </tr>
                   ))}
                 </tbody>
