@@ -416,9 +416,9 @@ export function DocumentRelaunchModal({
                     <th className="px-4 py-3 text-left text-xs font-medium text-gray-600 dark:text-gray-400">Nom</th>
                     <th className="px-4 py-3 text-left text-xs font-medium text-gray-600 dark:text-gray-400">Type</th>
                     <th className="px-4 py-3 text-center text-xs font-medium text-gray-600 dark:text-gray-400">Dernière notification</th>
-                    <th className="px-4 py-3 text-center text-xs font-medium text-gray-600 dark:text-gray-400">Réception</th>
-                    <th className="px-4 py-3 text-center text-xs font-medium text-gray-600 dark:text-gray-400">Ouverture</th>
-                    <th className="px-4 py-3 text-center text-xs font-medium text-gray-600 dark:text-gray-400">Consultation document</th>
+                    <th className="px-4 py-3 text-center text-xs font-medium text-gray-600 dark:text-gray-400">Dernière Réception</th>
+                    <th className="px-4 py-3 text-center text-xs font-medium text-gray-600 dark:text-gray-400">Dernière Ouverture</th>
+                    <th className="px-4 py-3 text-center text-xs font-medium text-gray-600 dark:text-gray-400">Dernière Consultation document</th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-gray-200 dark:divide-gray-800">
