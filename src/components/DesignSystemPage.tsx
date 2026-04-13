@@ -93,6 +93,7 @@ import { LastActivityCard } from './LastActivityCard';
 import { OriginStructureCell } from './OriginStructureCell';
 import { PartnerCard } from './PartnerCard';
 import { CheckIndicator } from './CheckIndicator';
+import { CalledAmountCell } from './CalledAmountCell';
 import { FilterCard } from './FilterCard';
 import { FilterBar, type FilterConfig } from './FilterBar';
 import { FolderSelectionTreeviewDropdown } from './DocumentAddModal';
@@ -413,6 +414,13 @@ const investorListingColumnSpecs = [
     guidelines: 'Icône cercle 20px, vert si actif, gris si inactif; tooltip explicite au survol.',
     variants: 'Actif (check), inactif (cross).',
   },
+  {
+    column: 'MONTANT APPELÉ',
+    component: 'CalledAmountCell',
+    functional: 'Visualiser la répartition d’un engagement de souscription entre montant appelé, en attente et restant à appeler.',
+    guidelines: 'Montant principal en text-sm font-semibold; barre de progression 1.5px (vert appelé, orange en attente, bleu solide #000E2B restant); détails secondaires text-xs avec icône Clock (orange) et ArrowRight (bleu solide); tooltips explicites sur chaque segment.',
+    variants: 'Engagement non appelé (100% bleu solide), partiellement appelé avec attente, totalement appelé.',
+  },
 ];
 
 const previewContacts: Contact[] = [
@@ -548,6 +556,23 @@ function renderInvestorColumnPreview(column: string) {
         <div className="flex items-center gap-3">
           <CheckIndicator checked checkedLabel="Prélèvement SEPA activé" uncheckedLabel="Prélèvement SEPA désactivé" />
           <CheckIndicator checked={false} checkedLabel="Prélèvement SEPA activé" uncheckedLabel="Prélèvement SEPA désactivé" />
+        </div>
+      );
+    case 'MONTANT APPELÉ':
+      return (
+        <div className="flex flex-col gap-4">
+          <CalledAmountCell
+            calledAmount={0}
+            pendingCallAmount={0}
+            remainingAmount={500000}
+            totalAmount={500000}
+          />
+          <CalledAmountCell
+            calledAmount={290000}
+            pendingCallAmount={85000}
+            remainingAmount={125000}
+            totalAmount={500000}
+          />
         </div>
       );
     case 'RESPONSABLE':
