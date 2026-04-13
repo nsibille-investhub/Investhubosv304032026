@@ -211,7 +211,7 @@ export function SettingsPage() {
   };
 
   return (
-    <div className="flex h-screen bg-gray-50">
+    <div className="flex h-screen bg-white">
       {/* Settings Sidebar */}
       <motion.aside
         initial={{ x: -20, opacity: 0 }}

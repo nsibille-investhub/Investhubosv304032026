@@ -1,13 +1,12 @@
 import { useState, useMemo } from 'react';
-import { 
-  X, 
-  Send, 
-  Users, 
-  Mail, 
-  Eye, 
-  CheckCircle, 
+import {
+  X,
+  Send,
+  Users,
+  Mail,
+  Eye,
   XCircle,
-  AlertCircle,
+  MinusCircle,
   Download,
   ChevronDown
 } from 'lucide-react';
@@ -15,6 +14,7 @@ import { Button } from './ui/button';
 import { Badge } from './ui/badge';
 import { Checkbox } from './ui/checkbox';
 import { cn } from './ui/utils';
+import { Tag } from './Tag';
 import {
   AlertDialog,
   AlertDialogContent,
@@ -30,12 +30,18 @@ import {
 
 interface Recipient {
   id: string;
+  investorId: string;
   name: string;
-  role: string | null; // Groupe de diffusion pour les contacts ('Avocat', 'Comptable', 'Dirigeant'), null pour investisseur
+  role: string | null;
   type: 'Investisseur' | 'Contact';
-  emailOpened: boolean;
-  docConsulted: boolean;
-  emailDelivered: boolean; // Si false, on affiche le point d'exclamation rouge
+  inTarget: boolean;
+  lastNotificationDate: string | null;
+  receptionStatus: 'done' | 'pending' | 'not-targeted';
+  receptionDate?: string;
+  openingStatus: 'done' | 'pending' | 'not-targeted';
+  openingDate?: string;
+  consultationStatus: 'done' | 'pending' | 'not-accessible' | 'not-targeted';
+  consultationDate?: string;
 }
 
 interface DocumentRelaunchModalProps {
@@ -45,61 +51,59 @@ interface DocumentRelaunchModalProps {
   documentId: string;
 }
 
-// Mock data
 const mockRecipients: Recipient[] = [
   {
     id: '1',
+    investorId: 'inv-1',
     name: 'Jean Dupont',
     role: null,
     type: 'Investisseur',
-    emailOpened: true,
-    docConsulted: true,
-    emailDelivered: true,
+    inTarget: true,
+    lastNotificationDate: '09/04/2026 09:12',
+    receptionStatus: 'done',
+    receptionDate: '09/04/2026 09:13',
+    openingStatus: 'done',
+    openingDate: '09/04/2026 09:35',
+    consultationStatus: 'done',
+    consultationDate: '09/04/2026 10:02',
   },
   {
     id: '2',
+    investorId: 'inv-1',
     name: 'Marie Dupont',
     role: 'Avocat',
     type: 'Contact',
-    emailOpened: true,
-    docConsulted: true,
-    emailDelivered: true,
+    inTarget: true,
+    lastNotificationDate: '09/04/2026 09:12',
+    receptionStatus: 'done',
+    receptionDate: '09/04/2026 09:14',
+    openingStatus: 'done',
+    openingDate: '09/04/2026 11:08',
+    consultationStatus: 'pending',
   },
   {
     id: '3',
+    investorId: 'inv-1',
     name: 'Pierre Dupont',
     role: 'Comptable',
     type: 'Contact',
-    emailOpened: false,
-    docConsulted: false,
-    emailDelivered: false, // Non reçu
+    inTarget: false,
+    lastNotificationDate: null,
+    receptionStatus: 'not-targeted',
+    openingStatus: 'not-targeted',
+    consultationStatus: 'not-targeted',
   },
   {
     id: '4',
-    name: 'Sophie Martin',
-    role: null,
-    type: 'Investisseur',
-    emailOpened: true,
-    docConsulted: true,
-    emailDelivered: true,
-  },
-  {
-    id: '5',
+    investorId: 'inv-1',
     name: 'Luc Martin',
     role: 'Dirigeant',
     type: 'Contact',
-    emailOpened: true,
-    docConsulted: true,
-    emailDelivered: true,
-  },
-  {
-    id: '6',
-    name: 'Thomas Bernard',
-    role: null,
-    type: 'Investisseur',
-    emailOpened: true,
-    docConsulted: true,
-    emailDelivered: true,
+    inTarget: true,
+    lastNotificationDate: '09/04/2026 09:12',
+    receptionStatus: 'pending',
+    openingStatus: 'pending',
+    consultationStatus: 'not-accessible',
   },
 ];
 
@@ -123,30 +127,33 @@ export function DocumentRelaunchModal({
   const [selectedRecipients, setSelectedRecipients] = useState<Set<string>>(new Set());
   const [model, setModel] = useState('Relance Standard');
 
-  // Filtrer les destinataires selon le critère
+  const investorRecipients = useMemo(
+    () => mockRecipients.filter((recipient) => recipient.investorId === 'inv-1'),
+    []
+  );
+
   const filteredRecipients = useMemo(() => {
     switch (selectedCriteria) {
       case 'not-opened':
-        return mockRecipients.filter(r => !r.emailOpened);
+        return investorRecipients.filter((r) => r.inTarget && r.openingStatus !== 'done');
       case 'not-consulted':
-        return mockRecipients.filter(r => !r.docConsulted);
+        return investorRecipients.filter((r) => r.inTarget && r.consultationStatus !== 'done');
       case 'all':
       default:
-        return mockRecipients;
+        return investorRecipients;
     }
-  }, [selectedCriteria]);
+  }, [investorRecipients, selectedCriteria]);
 
-  // Sélection globale
   const toggleSelectAll = () => {
     if (selectedRecipients.size === filteredRecipients.length) {
       setSelectedRecipients(new Set());
     } else {
-      setSelectedRecipients(new Set(filteredRecipients.map(r => r.id)));
+      setSelectedRecipients(new Set(filteredRecipients.map((r) => r.id)));
     }
   };
 
   const toggleRecipient = (id: string) => {
-    setSelectedRecipients(prev => {
+    setSelectedRecipients((prev) => {
       const next = new Set(prev);
       if (next.has(id)) {
         next.delete(id);
@@ -158,15 +165,14 @@ export function DocumentRelaunchModal({
   };
 
   const handleSend = () => {
-    console.log('Sending notifications to:', Array.from(selectedRecipients));
+    console.log('Sending notifications to:', Array.from(selectedRecipients), 'for document', documentId);
     onClose();
   };
 
   const handleExportCSV = () => {
-    console.log('Exporting CSV...');
+    console.log('Exporting CSV for document:', documentId);
   };
 
-  // Réinitialiser les sélections quand on change de critère
   const handleCriteriaChange = (criteria: FilterCriteria) => {
     setSelectedCriteria(criteria);
     setSelectedRecipients(new Set());
@@ -175,11 +181,50 @@ export function DocumentRelaunchModal({
   const allSelected = selectedRecipients.size === filteredRecipients.length && filteredRecipients.length > 0;
   const someSelected = selectedRecipients.size > 0 && selectedRecipients.size < filteredRecipients.length;
 
+  const renderDateOrIcon = (
+    status: 'done' | 'pending' | 'not-targeted' | 'not-accessible',
+    date?: string,
+  ) => {
+    if (status === 'done' && date) {
+      return <span className="text-xs text-gray-700 dark:text-gray-300">{date}</span>;
+    }
+
+    if (status === 'pending') {
+      return <XCircle className="w-4 h-4 text-red-500 mx-auto" />;
+    }
+
+    return <MinusCircle className="w-4 h-4 text-gray-300 dark:text-gray-600 mx-auto" />;
+  };
+
+  const renderConsultationCell = (recipient: Recipient) => {
+    if (!recipient.inTarget || recipient.consultationStatus === 'not-targeted') {
+      if (recipient.name === 'Pierre Dupont') {
+        return (
+          <div className="flex items-center justify-center gap-2">
+            <MinusCircle className="w-4 h-4 text-gray-300 dark:text-gray-600" />
+            <span className="text-xs text-gray-500">Non habilité au document</span>
+          </div>
+        );
+      }
+
+      return <MinusCircle className="w-4 h-4 text-gray-300 dark:text-gray-600 mx-auto" />;
+    }
+
+    return renderDateOrIcon(recipient.consultationStatus, recipient.consultationDate);
+  };
+
+  const renderLastNotification = (recipient: Recipient) => {
+    if (!recipient.inTarget || !recipient.lastNotificationDate) {
+      return <MinusCircle className="w-4 h-4 text-gray-300 dark:text-gray-600 mx-auto" />;
+    }
+
+    return <span className="text-xs text-gray-700 dark:text-gray-300">{recipient.lastNotificationDate}</span>;
+  };
+
   return (
     <AlertDialog open={isOpen} onOpenChange={onClose}>
-      <AlertDialogContent className="w-[90vw] max-w-[90vw] max-h-[90vh] overflow-hidden flex flex-col p-0">
-        {/* Header */}
-        <AlertDialogHeader className="px-6 py-5 border-b border-gray-200 dark:border-gray-800">
+      <AlertDialogContent className="w-[90vw] max-w-[90vw] max-h-[90vh] overflow-hidden flex flex-col p-0 bg-white dark:bg-black">
+        <AlertDialogHeader className="px-6 py-5 border-b border-gray-200 dark:border-gray-800 bg-white dark:bg-black">
           <div className="flex items-start gap-3">
             <div className="w-10 h-10 rounded-lg bg-blue-500 flex items-center justify-center flex-shrink-0">
               <Send className="w-5 h-5 text-white" />
@@ -201,9 +246,7 @@ export function DocumentRelaunchModal({
           </div>
         </AlertDialogHeader>
 
-        {/* Content */}
-        <div className="flex-1 overflow-y-auto px-6 py-5 space-y-5">
-          {/* Document */}
+        <div className="flex-1 overflow-y-auto px-6 py-5 space-y-5 bg-white dark:bg-black">
           <div className="flex items-center gap-2 px-3 py-2 bg-gray-50 dark:bg-gray-900 rounded-lg">
             <svg className="w-4 h-4 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
@@ -213,7 +256,6 @@ export function DocumentRelaunchModal({
             </span>
           </div>
 
-          {/* Récapitulatif de l'envoi */}
           <div className="space-y-3">
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-2">
@@ -272,19 +314,13 @@ export function DocumentRelaunchModal({
             </div>
           </div>
 
-          {/* Critères */}
           <div className="space-y-3">
             <div className="flex items-center justify-between">
-              <span className="text-sm font-medium text-gray-700 dark:text-gray-300">
-                Critère
-              </span>
-              <Badge className="bg-blue-500 text-white">
-                Destinataires : {filteredRecipients.length}
-              </Badge>
+              <span className="text-sm font-medium text-gray-700 dark:text-gray-300">Critère</span>
+              <Badge className="bg-blue-500 text-white">Destinataires : {filteredRecipients.length}</Badge>
             </div>
 
             <div className="grid grid-cols-3 gap-3">
-              {/* Tous les destinataires */}
               <button
                 onClick={() => handleCriteriaChange('all')}
                 className={cn(
@@ -306,7 +342,6 @@ export function DocumentRelaunchModal({
                 </span>
               </button>
 
-              {/* N'ont pas ouvert l'email */}
               <button
                 onClick={() => handleCriteriaChange('not-opened')}
                 className={cn(
@@ -328,7 +363,6 @@ export function DocumentRelaunchModal({
                 </span>
               </button>
 
-              {/* N'ont pas consulté le document */}
               <button
                 onClick={() => handleCriteriaChange('not-consulted')}
                 className={cn(
@@ -352,7 +386,6 @@ export function DocumentRelaunchModal({
             </div>
           </div>
 
-          {/* Liste des destinataires */}
           <div className="space-y-3">
             <div className="flex items-center justify-between">
               <span className="text-sm font-medium text-gray-700 dark:text-gray-300">
@@ -367,7 +400,6 @@ export function DocumentRelaunchModal({
               </button>
             </div>
 
-            {/* Tableau */}
             <div className="border border-gray-200 dark:border-gray-800 rounded-lg overflow-hidden">
               <table className="w-full text-sm">
                 <thead className="bg-gray-50 dark:bg-gray-900 border-b border-gray-200 dark:border-gray-800">
@@ -381,24 +413,12 @@ export function DocumentRelaunchModal({
                         )}
                       />
                     </th>
-                    <th className="px-4 py-3 text-left text-xs font-medium text-gray-600 dark:text-gray-400">
-                      Nom
-                    </th>
-                    <th className="px-4 py-3 text-left text-xs font-medium text-gray-600 dark:text-gray-400">
-                      Groupe
-                    </th>
-                    <th className="px-4 py-3 text-left text-xs font-medium text-gray-600 dark:text-gray-400">
-                      Type
-                    </th>
-                    <th className="px-4 py-3 text-center text-xs font-medium text-gray-600 dark:text-gray-400">
-                      Email reçu
-                    </th>
-                    <th className="px-4 py-3 text-center text-xs font-medium text-gray-600 dark:text-gray-400">
-                      Email ouvert
-                    </th>
-                    <th className="px-4 py-3 text-center text-xs font-medium text-gray-600 dark:text-gray-400">
-                      Doc consulté
-                    </th>
+                    <th className="px-4 py-3 text-left text-xs font-medium text-gray-600 dark:text-gray-400">Nom</th>
+                    <th className="px-4 py-3 text-left text-xs font-medium text-gray-600 dark:text-gray-400">Type</th>
+                    <th className="px-4 py-3 text-center text-xs font-medium text-gray-600 dark:text-gray-400">Dernière notification</th>
+                    <th className="px-4 py-3 text-center text-xs font-medium text-gray-600 dark:text-gray-400">Dernière Réception</th>
+                    <th className="px-4 py-3 text-center text-xs font-medium text-gray-600 dark:text-gray-400">Dernière Ouverture</th>
+                    <th className="px-4 py-3 text-center text-xs font-medium text-gray-600 dark:text-gray-400">Dernière Consultation document</th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-gray-200 dark:divide-gray-800">
@@ -417,37 +437,20 @@ export function DocumentRelaunchModal({
                         />
                       </td>
                       <td className="px-4 py-3">
-                        <span className="font-medium text-gray-900 dark:text-gray-100">
-                          {recipient.name}
-                        </span>
+                        <div className="flex flex-col gap-1">
+                          <span className="font-medium text-gray-900 dark:text-gray-100">{recipient.name}</span>
+                          {recipient.name === 'Pierre Dupont' && (
+                            <span className="text-xs text-gray-500">Accès refusé : non habilité au document</span>
+                          )}
+                        </div>
                       </td>
-                      <td className="px-4 py-3 text-gray-600 dark:text-gray-400">
-                        {recipient.role || '—'}
+                      <td className="px-4 py-3">
+                        <Tag label={recipient.type} />
                       </td>
-                      <td className="px-4 py-3 text-gray-600 dark:text-gray-400">
-                        {recipient.type}
-                      </td>
-                      <td className="px-4 py-3 text-center">
-                        {recipient.emailDelivered ? (
-                          <CheckCircle className="w-4 h-4 text-green-500 mx-auto" />
-                        ) : (
-                          <XCircle className="w-4 h-4 text-red-500 mx-auto" />
-                        )}
-                      </td>
-                      <td className="px-4 py-3 text-center">
-                        {recipient.emailOpened ? (
-                          <CheckCircle className="w-4 h-4 text-green-500 mx-auto" />
-                        ) : (
-                          <XCircle className="w-4 h-4 text-red-500 mx-auto" />
-                        )}
-                      </td>
-                      <td className="px-4 py-3 text-center">
-                        {recipient.docConsulted ? (
-                          <CheckCircle className="w-4 h-4 text-green-500 mx-auto" />
-                        ) : (
-                          <XCircle className="w-4 h-4 text-red-500 mx-auto" />
-                        )}
-                      </td>
+                      <td className="px-4 py-3 text-center">{renderLastNotification(recipient)}</td>
+                      <td className="px-4 py-3 text-center">{renderDateOrIcon(recipient.receptionStatus, recipient.receptionDate)}</td>
+                      <td className="px-4 py-3 text-center">{renderDateOrIcon(recipient.openingStatus, recipient.openingDate)}</td>
+                      <td className="px-4 py-3 text-center">{renderConsultationCell(recipient)}</td>
                     </tr>
                   ))}
                 </tbody>
@@ -456,12 +459,8 @@ export function DocumentRelaunchModal({
           </div>
         </div>
 
-        {/* Footer */}
-        <div className="px-6 py-4 border-t border-gray-200 dark:border-gray-800 flex items-center justify-between">
-          <Button
-            variant="outline"
-            onClick={onClose}
-          >
+        <div className="px-6 py-4 border-t border-gray-200 dark:border-gray-800 flex items-center justify-between bg-white dark:bg-black">
+          <Button variant="outline" onClick={onClose}>
             Retour
           </Button>
           <Button
@@ -469,8 +468,8 @@ export function DocumentRelaunchModal({
             disabled={selectedRecipients.size === 0}
             className="gap-2"
             style={{
-              background: selectedRecipients.size > 0 
-                ? 'linear-gradient(135deg, #3B82F6 0%, #1D4ED8 100%)' 
+              background: selectedRecipients.size > 0
+                ? 'linear-gradient(135deg, #3B82F6 0%, #1D4ED8 100%)'
                 : undefined,
               color: selectedRecipients.size > 0 ? 'white' : undefined
             }}

@@ -307,7 +307,7 @@ function ChartOfAccountsSettingsContent() {
   };
 
   return (
-    <div className="flex h-full bg-gray-50">
+    <div className="flex h-full bg-white">
       {/* Delete Confirmation Dialog */}
       <AlertDialog open={isDeleteDialogOpen} onOpenChange={(open) => {
         setIsDeleteDialogOpen(open);

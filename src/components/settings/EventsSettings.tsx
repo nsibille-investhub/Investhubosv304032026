@@ -991,7 +991,7 @@ function EventsSettingsContent() {
 
   return (
     <DndProvider backend={HTML5Backend}>
-      <div className="flex h-screen bg-gray-50">
+      <div className="flex h-screen bg-white">
         {/* Main Content */}
         <div className={cn(
           "flex-1 flex flex-col transition-all duration-300",
