@@ -910,7 +910,6 @@ export function DocumentAddModal({ isOpen, onClose, folderOptions, defaultFolder
                       <div className="border-t pt-3 space-y-2">
                         <p className="text-xs uppercase tracking-wide text-slate-500 font-semibold">Contacts autorisés</p>
                         <div className="rounded-xl border bg-blue-50/60 p-3 flex items-center gap-3">
-                          <Checkbox checked disabled />
                           <div className="w-9 h-9 rounded-full bg-blue-100 text-blue-700 flex items-center justify-center">
                             <UserRound className="w-4 h-4" />
                           </div>
@@ -925,30 +924,17 @@ export function DocumentAddModal({ isOpen, onClose, folderOptions, defaultFolder
                             <p className="text-sm text-slate-500 flex items-center gap-1"><Mail className="w-3 h-3" /> Investisseur principal (obligatoire)</p>
                           </div>
                         </div>
-                        {selectedInvestorProfile.contacts.map((contact) => {
-                          const selected = (selectedContactAccess[selectedInvestorProfile.id] || []).includes(contact.name);
-                          return (
-                            <label key={contact.name} className="rounded-xl border bg-slate-50 p-3 flex items-center gap-3 cursor-pointer">
-                              <Checkbox
-                                checked={selected}
-                                onCheckedChange={(checked) => {
-                                  const current = selectedContactAccess[selectedInvestorProfile.id] || [];
-                                  const next = checked
-                                    ? Array.from(new Set([...current, contact.name]))
-                                    : current.filter((name) => name !== contact.name);
-                                  setSelectedContactAccess((prev) => ({ ...prev, [selectedInvestorProfile.id]: next }));
-                                }}
-                              />
-                              <div className="w-9 h-9 rounded-full bg-blue-100 text-blue-700 flex items-center justify-center">
-                                <UserRound className="w-4 h-4" />
-                              </div>
-                              <div>
-                                <p className="font-medium text-slate-900">{contact.name}</p>
-                                <p className="text-sm text-slate-500 flex items-center gap-1"><Mail className="w-3 h-3" /> {contact.role}</p>
-                              </div>
-                            </label>
-                          );
-                        })}
+                        {selectedInvestorProfile.contacts.map((contact) => (
+                          <div key={contact.name} className="rounded-xl border bg-slate-50 p-3 flex items-center gap-3">
+                            <div className="w-9 h-9 rounded-full bg-blue-100 text-blue-700 flex items-center justify-center">
+                              <UserRound className="w-4 h-4" />
+                            </div>
+                            <div>
+                              <p className="font-medium text-slate-900">{contact.name}</p>
+                              <p className="text-sm text-slate-500 flex items-center gap-1"><Mail className="w-3 h-3" /> {contact.role}</p>
+                            </div>
+                          </div>
+                        ))}
                       </div>
                     </div>
                   ) : (
