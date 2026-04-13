@@ -1,5 +1,5 @@
 import { motion } from 'motion/react';
-import { TrendingUp, Clock, ArrowRight } from 'lucide-react';
+import { Clock, ArrowRight } from 'lucide-react';
 import {
   Tooltip,
   TooltipContent,
@@ -29,7 +29,6 @@ export function CalledAmountCell({
     <div className="flex flex-col gap-2 min-w-[180px]">
       {/* Montant principal */}
       <div className="flex items-center gap-2">
-        <TrendingUp className="w-4 h-4 text-gray-500 dark:text-gray-400" />
         <span className="text-sm font-semibold text-gray-900 dark:text-gray-100">
           {formatCurrency(calledAmount)}
         </span>
@@ -77,7 +76,7 @@ export function CalledAmountCell({
               initial={{ width: 0 }}
               animate={{ width: `${remainingPercentage}%` }}
               transition={{ duration: 0.5, delay: 0.3 }}
-              className="h-full bg-blue-500 dark:bg-blue-400"
+              className="h-full bg-[#000E2B]"
             />
           </TooltipTrigger>
           <TooltipContent>
@@ -111,7 +110,7 @@ export function CalledAmountCell({
         {remainingAmount > 0 && (
           <Tooltip>
             <TooltipTrigger asChild>
-              <div className="flex items-center gap-1 text-blue-600 dark:text-blue-400 cursor-help">
+              <div className="flex items-center gap-1 text-[#000E2B] cursor-help">
                 <ArrowRight className="w-3 h-3" />
                 <span className="font-medium">{formatCurrency(remainingAmount)}</span>
               </div>
