@@ -515,12 +515,20 @@ export function BirdViewPage({ onBack }: BirdViewPageProps) {
         {node.type === 'document' && (
           <div
             className={cn(
-              'flex items-center gap-3 py-2 px-3 rounded transition-colors group border',
+              'flex items-center gap-3 py-2 px-3 rounded transition-colors group border border-gray-200/70 dark:border-gray-800',
               node.isNominatif
-                ? 'bg-amber-50/40 dark:bg-amber-950/10 border-amber-100 dark:border-amber-900/40 hover:bg-amber-50/70 dark:hover:bg-amber-950/20'
-                : 'bg-indigo-50/40 dark:bg-indigo-950/10 border-indigo-100 dark:border-indigo-900/40 hover:bg-indigo-50/70 dark:hover:bg-indigo-950/20'
+                ? 'bg-white dark:bg-gray-950 hover:bg-gray-50 dark:hover:bg-gray-900/70'
+                : 'bg-gray-50/70 dark:bg-gray-900/40 hover:bg-gray-100/70 dark:hover:bg-gray-900/70'
             )}
           >
+            {/* Marqueur latéral discret sans barres horizontales */}
+            <div
+              className={cn(
+                'w-1.5 h-6 rounded-full flex-shrink-0',
+                node.isNominatif ? 'bg-amber-400/80 dark:bg-amber-500/70' : 'bg-indigo-400/80 dark:bg-indigo-500/70'
+              )}
+            />
+
             {/* Icon */}
             <div className="w-4 h-4 flex items-center justify-center flex-shrink-0">
               <FileText className="w-4 h-4 text-gray-400" />
