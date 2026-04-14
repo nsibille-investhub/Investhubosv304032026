@@ -1,5 +1,5 @@
 import { useState, useEffect, useMemo } from 'react';
-import { motion, AnimatePresence } from 'motion/react';
+import { motion } from 'motion/react';
 import {
   Eye,
   EyeOff,
@@ -10,7 +10,6 @@ import {
   FolderOpen,
   User,
   X,
-  Filter,
   CheckCircle2,
   Search,
   Building2,
@@ -53,6 +52,7 @@ interface DocumentNode {
   size?: string;
   date?: string;
   format?: string;
+  isNominatif?: boolean;
   stats?: {
     sent: number;
     opened: number;
@@ -63,10 +63,6 @@ interface DocumentNode {
   engagement?: {
     viewedBy: number;
     totalViewers: number;
-  };
-  folderEngagement?: {
-    complete: number;
-    incomplete: number;
   };
   segments?: string[];
   fundRestriction?: string;
@@ -121,6 +117,7 @@ export function BirdViewPage({ onBack }: BirdViewPageProps) {
           size: item.size,
           date: item.date,
           format: item.format,
+          isNominatif: item.isNominatif,
           stats: item.stats,
           engagement: item.engagement,
           fundRestriction: item.fundRestriction,
@@ -130,34 +127,12 @@ export function BirdViewPage({ onBack }: BirdViewPageProps) {
       } else {
         // C'est un dossier
         const children = item.children.map(convertToDocumentNode);
-        
-        // Calculer l'engagement du dossier
-        const calculateFolderEngagement = (nodes: DocumentNode[]): { complete: number; incomplete: number } => {
-          let complete = 0;
-          let incomplete = 0;
-          
-          nodes.forEach(node => {
-            if (node.type === 'document' && node.engagement) {
-              if (node.engagement.viewedBy === node.engagement.totalViewers) {
-                complete++;
-              } else {
-                incomplete++;
-              }
-            } else if (node.type === 'folder' && node.folderEngagement) {
-              complete += node.folderEngagement.complete;
-              incomplete += node.folderEngagement.incomplete;
-            }
-          });
-          
-          return { complete, incomplete };
-        };
-        
+
         return {
           id: item.id,
           name: item.name,
           type: 'folder',
           children,
-          folderEngagement: calculateFolderEngagement(children),
           fundRestriction: item.fundRestriction,
           segmentRestrictions: item.segmentRestrictions,
         };
@@ -166,29 +141,13 @@ export function BirdViewPage({ onBack }: BirdViewPageProps) {
 
     return realSpaces.map(space => {
       const children = space.folders.map(convertToDocumentNode);
-      
-      // Calculer l'engagement de l'espace
-      const calculateSpaceEngagement = (nodes: DocumentNode[]): { complete: number; incomplete: number } => {
-        let complete = 0;
-        let incomplete = 0;
-        
-        nodes.forEach(node => {
-          if (node.folderEngagement) {
-            complete += node.folderEngagement.complete;
-            incomplete += node.folderEngagement.incomplete;
-          }
-        });
-        
-        return { complete, incomplete };
-      };
-      
+
       return {
         id: space.id,
         name: space.name,
         type: 'space' as const,
         children,
         segments: space.segments,
-        folderEngagement: calculateSpaceEngagement(children),
       };
     });
   }, []);
@@ -312,27 +271,26 @@ export function BirdViewPage({ onBack }: BirdViewPageProps) {
   const filteredStats = useMemo(() => {
     const treToUse = displayedTree;
     const totalSpaces = treToUse.length;
-    
+
     const countFoldersAndDocs = (node: DocumentNode): { folders: number; docs: number } => {
       if (node.type === 'document') {
         return { folders: 0, docs: 1 };
       }
-      
+
       let folders = node.type === 'folder' ? 1 : 0;
       let docs = 0;
-      
+
       node.children?.forEach(child => {
         const counts = countFoldersAndDocs(child);
         folders += counts.folders;
         docs += counts.docs;
       });
-      
+
       return { folders, docs };
     };
 
     let totalFolders = 0;
     let totalDocuments = 0;
-    let viewedDocs = 0;
 
     treToUse.forEach(space => {
       const counts = countFoldersAndDocs(space);
@@ -340,31 +298,41 @@ export function BirdViewPage({ onBack }: BirdViewPageProps) {
       totalDocuments += counts.docs;
     });
 
-    // Compter les documents vus (stats.viewed > 0)
-    const countViewedDocs = (node: DocumentNode): number => {
-      if (node.type === 'document' && node.stats && (node.stats.viewed > 0 || node.stats.downloaded > 0)) {
-        return 1;
+    // Compter les documents nominatifs et ceux consultés
+    const countNominatifDocs = (node: DocumentNode): { total: number; viewed: number } => {
+      if (node.type === 'document' && node.isNominatif) {
+        const isViewed = node.engagement && node.engagement.viewedBy === node.engagement.totalViewers;
+        return { total: 1, viewed: isViewed ? 1 : 0 };
       }
-      
+
+      let total = 0;
       let viewed = 0;
       node.children?.forEach(child => {
-        viewed += countViewedDocs(child);
+        const counts = countNominatifDocs(child);
+        total += counts.total;
+        viewed += counts.viewed;
       });
-      
-      return viewed;
+
+      return { total, viewed };
     };
 
+    let totalNominatifDocs = 0;
+    let viewedNominatifDocs = 0;
+
     treToUse.forEach(space => {
-      viewedDocs += countViewedDocs(space);
+      const counts = countNominatifDocs(space);
+      totalNominatifDocs += counts.total;
+      viewedNominatifDocs += counts.viewed;
     });
 
-    const engagementRate = totalDocuments > 0 ? Math.round((viewedDocs / totalDocuments) * 100) : 0;
+    const engagementRate = totalNominatifDocs > 0 ? Math.round((viewedNominatifDocs / totalNominatifDocs) * 100) : 0;
 
     return {
       totalSpaces,
       totalFolders,
       totalDocuments,
-      viewedDocs,
+      totalNominatifDocs,
+      viewedNominatifDocs,
       engagementRate,
     };
   }, [displayedTree]);
@@ -467,32 +435,6 @@ export function BirdViewPage({ onBack }: BirdViewPageProps) {
               </Badge>
             </div>
 
-            {/* Space Engagement */}
-            {node.folderEngagement && (
-              <div className="flex items-center gap-2 ml-4">
-                {node.folderEngagement.incomplete === 0 ? (
-                  <div className="flex items-center gap-1.5">
-                    <CheckCircle2 className="w-4 h-4 text-green-500" />
-                    <span className="text-xs font-medium text-green-600">Consulté</span>
-                  </div>
-                ) : (
-                  <div className="flex items-center gap-1.5">
-                    <EngagementCircle 
-                      percentage={Math.round((node.folderEngagement.complete / (node.folderEngagement.complete + node.folderEngagement.incomplete)) * 100)} 
-                      size={16}
-                    />
-                    <span 
-                      className={cn(
-                        'text-xs font-medium',
-                        node.folderEngagement.complete / (node.folderEngagement.complete + node.folderEngagement.incomplete) >= 0.7 ? 'text-orange-600' : 'text-red-600'
-                      )}
-                    >
-                      {node.folderEngagement.complete}/{node.folderEngagement.complete + node.folderEngagement.incomplete}
-                    </span>
-                  </div>
-                )}
-              </div>
-            )}
 
             {/* Count */}
             <span className="ml-auto text-xs text-gray-500">
@@ -554,32 +496,6 @@ export function BirdViewPage({ onBack }: BirdViewPageProps) {
               </div>
             )}
 
-            {/* Folder Engagement */}
-            {node.folderEngagement && (
-              <div className="flex items-center gap-2 ml-4">
-                {node.folderEngagement.incomplete === 0 ? (
-                  <div className="flex items-center gap-1.5">
-                    <CheckCircle2 className="w-4 h-4 text-green-500" />
-                    <span className="text-xs font-medium text-green-600">Consulté</span>
-                  </div>
-                ) : (
-                  <div className="flex items-center gap-1.5">
-                    <EngagementCircle 
-                      percentage={Math.round((node.folderEngagement.complete / (node.folderEngagement.complete + node.folderEngagement.incomplete)) * 100)} 
-                      size={16}
-                    />
-                    <span 
-                      className={cn(
-                        'text-xs font-medium',
-                        node.folderEngagement.complete / (node.folderEngagement.complete + node.folderEngagement.incomplete) >= 0.7 ? 'text-orange-600' : 'text-red-600'
-                      )}
-                    >
-                      {node.folderEngagement.complete}/{node.folderEngagement.complete + node.folderEngagement.incomplete}
-                    </span>
-                  </div>
-                )}
-              </div>
-            )}
 
             {/* Count */}
             <span className="ml-auto text-xs text-gray-500">
@@ -601,7 +517,6 @@ export function BirdViewPage({ onBack }: BirdViewPageProps) {
 
             {/* Metadata */}
             <div className="flex items-center gap-3 text-xs text-gray-500">
-              <span>{node.size}</span>
               <span>{node.date}</span>
               <span className="uppercase font-medium">{node.format}</span>
             </div>
@@ -646,29 +561,19 @@ export function BirdViewPage({ onBack }: BirdViewPageProps) {
               </Badge>
             )}
 
-            {/* Engagement Indicator */}
-            {node.engagement && (
-              <div className="flex items-center gap-2 ml-4">
+            {/* Statut Consulté / Non Consulté - uniquement pour les documents nominatifs */}
+            {node.isNominatif && node.engagement && (
+              <div className="flex items-center gap-1.5 ml-4">
                 {node.engagement.viewedBy === node.engagement.totalViewers ? (
-                  <div className="flex items-center gap-1.5">
+                  <>
                     <CheckCircle2 className="w-4 h-4 text-green-500" />
                     <span className="text-xs font-medium text-green-600">Consulté</span>
-                  </div>
+                  </>
                 ) : (
-                  <div className="flex items-center gap-1.5">
-                    <EngagementCircle 
-                      percentage={Math.round((node.engagement.viewedBy / node.engagement.totalViewers) * 100)} 
-                      size={16}
-                    />
-                    <span 
-                      className={cn(
-                        'text-xs font-medium',
-                        node.engagement.viewedBy / node.engagement.totalViewers >= 0.7 ? 'text-orange-600' : 'text-red-600'
-                      )}
-                    >
-                      {node.engagement.viewedBy}/{node.engagement.totalViewers}
-                    </span>
-                  </div>
+                  <>
+                    <EyeOff className="w-4 h-4 text-red-400" />
+                    <span className="text-xs font-medium text-red-500">Non Consulté</span>
+                  </>
                 )}
               </div>
             )}
@@ -794,7 +699,7 @@ export function BirdViewPage({ onBack }: BirdViewPageProps) {
           </div>
           <div className="flex items-center justify-between mt-2">
             <div className="text-xs text-green-700 dark:text-green-300">
-              {filteredStats.viewedDocs} sur {filteredStats.totalDocuments} documents vus ou téléchargés
+              {filteredStats.viewedNominatifDocs} sur {filteredStats.totalNominatifDocs} documents nominatifs vus ou téléchargés
               {selectedInvestorData && (
                 <span className="ml-2">
                   • par <span className="font-semibold">{selectedInvestorData.name}</span> et ses contacts
@@ -811,7 +716,7 @@ export function BirdViewPage({ onBack }: BirdViewPageProps) {
               onClick={() => setShowOnlyIncomplete(!showOnlyIncomplete)}
             >
               <EyeOff className="w-4 h-4" />
-              {showOnlyIncomplete ? "Afficher tous" : "Documents non vus"}
+              {showOnlyIncomplete ? "Afficher tous" : "Documents nominatifs non vus"}
             </Button>
           </div>
         </div>
@@ -1130,43 +1035,3 @@ export function BirdViewPage({ onBack }: BirdViewPageProps) {
   );
 }
 
-// Composant de cercle de progression (camembert)
-function EngagementCircle({ percentage, size = 16 }: { percentage: number; size?: number }) {
-  const getColor = () => {
-    if (percentage === 100) return 'text-green-500';
-    if (percentage >= 70) return 'text-orange-500';
-    return 'text-red-500';
-  };
-
-  const radius = (size - 4) / 2;
-  const circumference = 2 * Math.PI * radius;
-  const offset = circumference - (percentage / 100) * circumference;
-
-  return (
-    <svg width={size} height={size} className="transform -rotate-90">
-      {/* Background circle */}
-      <circle
-        cx={size / 2}
-        cy={size / 2}
-        r={radius}
-        fill="none"
-        stroke="currentColor"
-        strokeWidth="2"
-        className="text-gray-200 dark:text-gray-700"
-      />
-      {/* Progress circle */}
-      <circle
-        cx={size / 2}
-        cy={size / 2}
-        r={radius}
-        fill="none"
-        stroke="currentColor"
-        strokeWidth="2"
-        strokeDasharray={circumference}
-        strokeDashoffset={offset}
-        strokeLinecap="round"
-        className={getColor()}
-      />
-    </svg>
-  );
-}

@@ -6,6 +6,7 @@ export interface DataRoomDocument {
   format: 'pdf' | 'docx' | 'xlsx' | 'pptx';
   size: string;
   date: string;
+  isNominatif: boolean; // Document rattaché à un investisseur ou une souscription
   stats: {
     sent: number;
     opened: number;
@@ -104,12 +105,15 @@ const randomGroupRestriction = (): string | undefined => {
 
 const createDocument = (name: string, format: 'pdf' | 'docx' | 'xlsx' | 'pptx' = 'pdf'): DataRoomDocument => {
   docCounter++;
+  // 60% de chance d'être nominatif (rattaché à un investisseur ou souscription)
+  const isNominatif = Math.random() < 0.6;
   return {
     id: `doc-${docCounter}`,
     name,
     format,
     size: randomSize(),
     date: randomDate(new Date(2023, 0, 1), new Date()).toLocaleDateString('fr-FR'),
+    isNominatif,
     stats: randomStats(),
     engagement: randomEngagement(),
     fundRestriction: randomFundRestriction(),
