@@ -12,9 +12,10 @@ import {
   X,
   CheckCircle2,
   Search,
-  Building2,
-  Users as UsersIcon,
-  Tag
+  Landmark,
+  Layers3,
+  UserRound,
+  Tag as TagIcon
 } from 'lucide-react';
 import { toast } from 'sonner@2.0.3';
 import {
@@ -31,7 +32,7 @@ import {
 } from '../utils/birdviewDataRoomGenerator';
 import { filterTreeForIncomplete } from '../utils/birdviewFilters';
 import { Button } from './ui/button';
-import { Badge } from './ui/badge';
+import { Tag } from './Tag';
 import { cn } from './ui/utils';
 import {
   Popover,
@@ -56,7 +57,6 @@ interface DocumentNode {
   stats?: {
     sent: number;
     opened: number;
-    acknowledged: number;
     viewed: number;
     downloaded: number;
   };
@@ -64,10 +64,12 @@ interface DocumentNode {
     viewedBy: number;
     totalViewers: number;
   };
-  segments?: string[];
+  // Restrictions
   fundRestriction?: string;
+  shareClassRestriction?: string;
   segmentRestrictions?: string[];
-  groupRestriction?: string;
+  investorRestriction?: string;
+  subscriptionRestriction?: string;
 }
 
 export function BirdViewPage({ onBack }: BirdViewPageProps) {
@@ -88,7 +90,6 @@ export function BirdViewPage({ onBack }: BirdViewPageProps) {
   const [documentNameFilter, setDocumentNameFilter] = useState('');
   const [selectedFunds, setSelectedFunds] = useState<string[]>([]);
   const [selectedSegments, setSelectedSegments] = useState<string[]>([]);
-  const [selectedGroups, setSelectedGroups] = useState<string[]>([]);
 
   // Charger les données
   useEffect(() => {
@@ -122,7 +123,8 @@ export function BirdViewPage({ onBack }: BirdViewPageProps) {
           engagement: item.engagement,
           fundRestriction: item.fundRestriction,
           segmentRestrictions: item.segmentRestrictions,
-          groupRestriction: item.groupRestriction,
+          investorRestriction: item.investorRestriction,
+          subscriptionRestriction: item.subscriptionRestriction,
         };
       } else {
         // C'est un dossier
@@ -134,6 +136,7 @@ export function BirdViewPage({ onBack }: BirdViewPageProps) {
           type: 'folder',
           children,
           fundRestriction: item.fundRestriction,
+          shareClassRestriction: item.shareClassRestriction,
           segmentRestrictions: item.segmentRestrictions,
         };
       }
@@ -147,7 +150,8 @@ export function BirdViewPage({ onBack }: BirdViewPageProps) {
         name: space.name,
         type: 'space' as const,
         children,
-        segments: space.segments,
+        fundRestriction: space.fundRestriction,
+        segmentRestrictions: space.segmentRestrictions,
       };
     });
   }, []);
@@ -205,13 +209,6 @@ export function BirdViewPage({ onBack }: BirdViewPageProps) {
               }
             }
 
-            // Filtre groupe
-            if (selectedGroups.length > 0 && node.groupRestriction) {
-              if (!selectedGroups.includes(node.groupRestriction)) {
-                matches = false;
-              }
-            }
-
             return matches ? node : null;
           }
 
@@ -253,7 +250,7 @@ export function BirdViewPage({ onBack }: BirdViewPageProps) {
     };
 
     // Appliquer les filtres avancés si au moins un est actif
-    const hasActiveFilters = documentNameFilter || selectedFunds.length > 0 || selectedSegments.length > 0 || selectedGroups.length > 0;
+    const hasActiveFilters = documentNameFilter || selectedFunds.length > 0 || selectedSegments.length > 0;
     
     if (hasActiveFilters) {
       tree = filterTree(tree);
@@ -265,7 +262,7 @@ export function BirdViewPage({ onBack }: BirdViewPageProps) {
     }
 
     return tree;
-  }, [documentTree, showOnlyIncomplete, documentNameFilter, selectedFunds, selectedSegments, selectedGroups]);
+  }, [documentTree, showOnlyIncomplete, documentNameFilter, selectedFunds, selectedSegments]);
 
   // Statistiques filtrées basées sur displayedTree
   const filteredStats = useMemo(() => {
@@ -380,21 +377,6 @@ export function BirdViewPage({ onBack }: BirdViewPageProps) {
     setExpandedNodes(new Set());
   };
 
-  // Badge de segment
-  const getSegmentBadge = (type: string) => {
-    const colors = {
-      HNWI: 'bg-blue-100 text-blue-700 border-blue-200',
-      UHNWI: 'bg-orange-100 text-orange-700 border-orange-200',
-      Institutional: 'bg-gray-100 text-gray-700 border-gray-200',
-      Professional: 'bg-gray-100 text-gray-700 border-gray-200',
-    };
-    return (
-      <Badge variant="outline" className={cn('text-xs font-semibold', colors[type as keyof typeof colors])}>
-        {type}
-      </Badge>
-    );
-  };
-
   const renderNode = (node: DocumentNode, level: number = 0) => {
     const isExpanded = expandedNodes.has(node.id);
     const hasChildren = node.children && node.children.length > 0;
@@ -422,19 +404,15 @@ export function BirdViewPage({ onBack }: BirdViewPageProps) {
             {/* Name */}
             <span className="text-sm font-medium text-gray-900 dark:text-gray-100">{node.name}</span>
 
-            {/* Badges */}
-            <div className="flex items-center gap-2">
-              <Badge variant="outline" className="text-xs bg-blue-50 text-blue-700 border-blue-200">
-                HNWI
-              </Badge>
-              <Badge variant="outline" className="text-xs bg-orange-50 text-orange-700 border-orange-200">
-                UHNWI
-              </Badge>
-              <Badge variant="outline" className="text-xs bg-gray-50 text-gray-700 border-gray-200">
-                Institutional
-              </Badge>
+            {/* Restrictions */}
+            <div className="flex items-center gap-1.5">
+              {node.fundRestriction && (
+                <Tag icon={Landmark} label={node.fundRestriction} />
+              )}
+              {node.segmentRestrictions && node.segmentRestrictions.map(seg => (
+                <Tag key={seg} label={seg} />
+              ))}
             </div>
-
 
             {/* Count */}
             <span className="ml-auto text-xs text-gray-500">
@@ -464,38 +442,18 @@ export function BirdViewPage({ onBack }: BirdViewPageProps) {
             {/* Name */}
             <span className="text-sm text-gray-900 dark:text-gray-100">{node.name}</span>
 
-            {/* Restrictions - Fonds */}
-            {node.fundRestriction && (
-              <Badge variant="outline" className="text-xs bg-purple-50 text-purple-700 border-purple-200 dark:bg-purple-950 dark:text-purple-300 dark:border-purple-800">
-                <Building2 className="w-3 h-3 mr-1" />
-                {node.fundRestriction}
-              </Badge>
-            )}
-
-            {/* Restrictions - Segments */}
-            {node.segmentRestrictions && node.segmentRestrictions.length > 0 && (
-              <div className="flex items-center gap-1">
-                {node.segmentRestrictions.map((segment) => {
-                  const segmentColors = {
-                    HNWI: 'bg-blue-100 text-blue-700 border-blue-200',
-                    UHNWI: 'bg-orange-100 text-orange-700 border-orange-200',
-                    Retail: 'bg-pink-100 text-pink-700 border-pink-200',
-                    Professional: 'bg-gray-100 text-gray-700 border-gray-200',
-                    Institutional: 'bg-gray-100 text-gray-700 border-gray-200',
-                  };
-                  return (
-                    <Badge 
-                      key={segment} 
-                      variant="outline" 
-                      className={cn('text-xs font-semibold', segmentColors[segment as keyof typeof segmentColors])}
-                    >
-                      {segment}
-                    </Badge>
-                  );
-                })}
-              </div>
-            )}
-
+            {/* Restrictions */}
+            <div className="flex items-center gap-1.5">
+              {node.fundRestriction && (
+                <Tag icon={Landmark} label={node.fundRestriction} />
+              )}
+              {node.shareClassRestriction && (
+                <Tag icon={Layers3} label={node.shareClassRestriction} />
+              )}
+              {node.segmentRestrictions && node.segmentRestrictions.map(seg => (
+                <Tag key={seg} label={seg} />
+              ))}
+            </div>
 
             {/* Count */}
             <span className="ml-auto text-xs text-gray-500">
@@ -521,45 +479,21 @@ export function BirdViewPage({ onBack }: BirdViewPageProps) {
               <span className="uppercase font-medium">{node.format}</span>
             </div>
 
-            {/* Restrictions - Fonds */}
-            {node.fundRestriction && (
-              <Badge variant="outline" className="text-xs bg-purple-50 text-purple-700 border-purple-200 dark:bg-purple-950 dark:text-purple-300 dark:border-purple-800 flex items-center gap-1">
-                <Building2 className="w-3 h-3" />
-                {node.fundRestriction}
-              </Badge>
-            )}
-
-            {/* Restrictions - Segments */}
-            {node.segmentRestrictions && node.segmentRestrictions.length > 0 && (
-              <div className="flex items-center gap-1">
-                {node.segmentRestrictions.map((segment) => {
-                  const segmentColors = {
-                    HNWI: 'bg-blue-100 text-blue-700 border-blue-200',
-                    UHNWI: 'bg-orange-100 text-orange-700 border-orange-200',
-                    Retail: 'bg-pink-100 text-pink-700 border-pink-200',
-                    Professional: 'bg-gray-100 text-gray-700 border-gray-200',
-                    Institutional: 'bg-gray-100 text-gray-700 border-gray-200',
-                  };
-                  return (
-                    <Badge 
-                      key={segment} 
-                      variant="outline" 
-                      className={cn('text-xs font-semibold', segmentColors[segment as keyof typeof segmentColors])}
-                    >
-                      {segment}
-                    </Badge>
-                  );
-                })}
-              </div>
-            )}
-
-            {/* Restrictions - Groupe (avec un affichage différent) */}
-            {node.groupRestriction && (
-              <Badge variant="outline" className="text-xs bg-teal-50 text-teal-700 border-teal-200 dark:bg-teal-950 dark:text-teal-300 dark:border-teal-800 flex items-center gap-1">
-                <UsersIcon className="w-3 h-3" />
-                {node.groupRestriction}
-              </Badge>
-            )}
+            {/* Restrictions du document */}
+            <div className="flex items-center gap-1.5">
+              {node.investorRestriction && (
+                <Tag icon={UserRound} label={node.investorRestriction} />
+              )}
+              {node.subscriptionRestriction && (
+                <Tag icon={FileText} label={node.subscriptionRestriction} />
+              )}
+              {node.fundRestriction && (
+                <Tag icon={Landmark} label={node.fundRestriction} />
+              )}
+              {node.segmentRestrictions && node.segmentRestrictions.map(seg => (
+                <Tag key={seg} label={seg} />
+              ))}
+            </div>
 
             {/* Statut Consulté / Non Consulté - uniquement pour les documents nominatifs */}
             {node.isNominatif && node.engagement && (
@@ -733,7 +667,7 @@ export function BirdViewPage({ onBack }: BirdViewPageProps) {
                   <>
                     <User className="w-4 h-4 text-purple-600" />
                     <span className="flex-1 text-left">{selectedInvestorData.name}</span>
-                    {getSegmentBadge(selectedInvestorData.type)}
+                    <Tag label={selectedInvestorData.type} />
                   </>
                 ) : (
                   <>
@@ -779,7 +713,7 @@ export function BirdViewPage({ onBack }: BirdViewPageProps) {
                   >
                     <User className="w-4 h-4 text-purple-600 dark:text-purple-400" />
                     <span className="flex-1 text-left font-medium">{investor.name}</span>
-                    {getSegmentBadge(investor.type)}
+                    <Tag label={investor.type} />
                   </button>
                 ))}
               </div>
@@ -879,7 +813,7 @@ export function BirdViewPage({ onBack }: BirdViewPageProps) {
           <Popover>
             <PopoverTrigger asChild>
               <button className="h-10 px-4 py-2 bg-white dark:bg-gray-950 border border-gray-300 dark:border-gray-700 rounded-lg text-sm hover:bg-gray-50 dark:hover:bg-gray-900 transition-all flex items-center gap-2 min-w-[150px]">
-                <Building2 className="w-4 h-4 text-gray-500" />
+                <Landmark className="w-4 h-4 text-gray-500" />
                 <span className="flex-1 text-left text-gray-700 dark:text-gray-300">
                   {selectedFunds.length > 0 ? `Fonds (${selectedFunds.length})` : 'Fonds'}
                 </span>
@@ -916,7 +850,7 @@ export function BirdViewPage({ onBack }: BirdViewPageProps) {
           <Popover>
             <PopoverTrigger asChild>
               <button className="h-10 px-4 py-2 bg-white dark:bg-gray-950 border border-gray-300 dark:border-gray-700 rounded-lg text-sm hover:bg-gray-50 dark:hover:bg-gray-900 transition-all flex items-center gap-2 min-w-[150px]">
-                <Tag className="w-4 h-4 text-gray-500" />
+                <TagIcon className="w-4 h-4 text-gray-500" />
                 <span className="flex-1 text-left text-gray-700 dark:text-gray-300">
                   {selectedSegments.length > 0 ? `Segment (${selectedSegments.length})` : 'Segment'}
                 </span>
@@ -949,51 +883,13 @@ export function BirdViewPage({ onBack }: BirdViewPageProps) {
             </PopoverContent>
           </Popover>
 
-          {/* Filtre Groupe (Contact) */}
-          <Popover>
-            <PopoverTrigger asChild>
-              <button className="h-10 px-4 py-2 bg-white dark:bg-gray-950 border border-gray-300 dark:border-gray-700 rounded-lg text-sm hover:bg-gray-50 dark:hover:bg-gray-900 transition-all flex items-center gap-2 min-w-[150px]">
-                <UsersIcon className="w-4 h-4 text-gray-500" />
-                <span className="flex-1 text-left text-gray-700 dark:text-gray-300">
-                  {selectedGroups.length > 0 ? `Groupe (${selectedGroups.length})` : 'Groupe'}
-                </span>
-                <ChevronDown className="w-4 h-4 text-gray-400" />
-              </button>
-            </PopoverTrigger>
-            <PopoverContent className="w-[280px] p-3" align="start">
-              <div className="space-y-2">
-                <div className="text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wide mb-2">
-                  Sélectionner des groupes
-                </div>
-                {['Avocat', 'Comptable', 'Dirigeant', 'Conseil Patrimonial', 'Family Office'].map((group) => (
-                  <label key={group} className="flex items-center gap-2 p-2 hover:bg-gray-50 dark:hover:bg-gray-900 rounded cursor-pointer">
-                    <input
-                      type="checkbox"
-                      checked={selectedGroups.includes(group)}
-                      onChange={(e) => {
-                        if (e.target.checked) {
-                          setSelectedGroups([...selectedGroups, group]);
-                        } else {
-                          setSelectedGroups(selectedGroups.filter(g => g !== group));
-                        }
-                      }}
-                      className="w-4 h-4"
-                    />
-                    <span className="text-sm text-gray-700 dark:text-gray-300">{group}</span>
-                  </label>
-                ))}
-              </div>
-            </PopoverContent>
-          </Popover>
-
           {/* Réinitialiser les filtres */}
-          {(documentNameFilter || selectedFunds.length > 0 || selectedSegments.length > 0 || selectedGroups.length > 0) && (
+          {(documentNameFilter || selectedFunds.length > 0 || selectedSegments.length > 0) && (
             <button
               onClick={() => {
                 setDocumentNameFilter('');
                 setSelectedFunds([]);
                 setSelectedSegments([]);
-                setSelectedGroups([]);
               }}
               className="h-10 px-3 text-sm text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-100 flex items-center gap-2"
             >
