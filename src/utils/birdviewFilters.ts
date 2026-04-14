@@ -5,28 +5,26 @@ interface DocumentNode {
   name: string;
   type: 'space' | 'folder' | 'document';
   children?: DocumentNode[];
+  isNominatif?: boolean;
   engagement?: {
     viewedBy: number;
     totalViewers: number;
   };
-  folderEngagement?: {
-    complete: number;
-    incomplete: number;
-  };
 }
 
 /**
- * Filtre récursif pour ne garder que les nœuds contenant des documents incomplets
- * Un document est incomplet si viewedBy < totalViewers
+ * Filtre récursif pour ne garder que les documents nominatifs non consultés
+ * Un document nominatif est non consulté si viewedBy < totalViewers
+ * Les documents non-nominatifs sont exclus du filtre
  */
 export function filterIncompleteNodes(node: DocumentNode): DocumentNode | null {
   // Si c'est un document
   if (node.type === 'document') {
-    // Vérifier s'il est incomplet
-    if (node.engagement && node.engagement.viewedBy < node.engagement.totalViewers) {
-      return node; // Document incomplet : on le garde
+    // Ne garder que les documents nominatifs non consultés
+    if (node.isNominatif && node.engagement && node.engagement.viewedBy < node.engagement.totalViewers) {
+      return node; // Document nominatif non consulté : on le garde
     }
-    return null; // Document complet : on le rejette
+    return null; // Document non-nominatif ou consulté : on le rejette
   }
 
   // Si c'est un dossier ou un espace avec des enfants
