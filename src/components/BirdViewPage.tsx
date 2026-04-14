@@ -15,7 +15,9 @@ import {
   Landmark,
   Layers3,
   UserRound,
-  Tag as TagIcon
+  Tag as TagIcon,
+  ScanText,
+  Globe2
 } from 'lucide-react';
 import { toast } from 'sonner@2.0.3';
 import {
@@ -40,6 +42,13 @@ import {
   PopoverTrigger,
 } from './ui/popover';
 import { DocumentActivityPanel } from './DocumentActivityPanel';
+import {
+  Drawer,
+  DrawerContent,
+  DrawerDescription,
+  DrawerHeader,
+  DrawerTitle,
+} from './ui/drawer';
 
 interface BirdViewPageProps {
   onBack: () => void;
@@ -90,6 +99,10 @@ export function BirdViewPage({ onBack }: BirdViewPageProps) {
   const [documentNameFilter, setDocumentNameFilter] = useState('');
   const [selectedFunds, setSelectedFunds] = useState<string[]>([]);
   const [selectedSegments, setSelectedSegments] = useState<string[]>([]);
+  const [selectedSubscriptions, setSelectedSubscriptions] = useState<string[]>([]);
+  const [subscriptionSearch, setSubscriptionSearch] = useState('');
+  const [previewDocument, setPreviewDocument] = useState<{ id: string; name: string; format?: string; date?: string } | null>(null);
+  const [isPreviewDrawerOpen, setIsPreviewDrawerOpen] = useState(false);
 
   // Charger les données
   useEffect(() => {
@@ -209,6 +222,13 @@ export function BirdViewPage({ onBack }: BirdViewPageProps) {
               }
             }
 
+            // Filtre souscription (au moins une souscription sélectionnée)
+            if (selectedSubscriptions.length > 0) {
+              if (!node.subscriptionRestriction || !selectedSubscriptions.includes(node.subscriptionRestriction)) {
+                matches = false;
+              }
+            }
+
             return matches ? node : null;
           }
 
@@ -250,7 +270,11 @@ export function BirdViewPage({ onBack }: BirdViewPageProps) {
     };
 
     // Appliquer les filtres avancés si au moins un est actif
-    const hasActiveFilters = documentNameFilter || selectedFunds.length > 0 || selectedSegments.length > 0;
+    const hasActiveFilters =
+      documentNameFilter ||
+      selectedFunds.length > 0 ||
+      selectedSegments.length > 0 ||
+      selectedSubscriptions.length > 0;
     
     if (hasActiveFilters) {
       tree = filterTree(tree);
@@ -262,7 +286,32 @@ export function BirdViewPage({ onBack }: BirdViewPageProps) {
     }
 
     return tree;
-  }, [documentTree, showOnlyIncomplete, documentNameFilter, selectedFunds, selectedSegments]);
+  }, [documentTree, showOnlyIncomplete, documentNameFilter, selectedFunds, selectedSegments, selectedSubscriptions]);
+
+  const subscriptionOptions = useMemo(() => {
+    const subscriptions = new Set<string>();
+    const collectSubscriptions = (nodes: DocumentNode[]) => {
+      nodes.forEach((node) => {
+        if (node.type === 'document' && node.subscriptionRestriction) {
+          subscriptions.add(node.subscriptionRestriction);
+        }
+        if (node.children) {
+          collectSubscriptions(node.children);
+        }
+      });
+    };
+    collectSubscriptions(documentTree);
+    return Array.from(subscriptions).sort((a, b) => a.localeCompare(b));
+  }, [documentTree]);
+
+  const filteredSubscriptionOptions = useMemo(() => {
+    if (!subscriptionSearch) {
+      return subscriptionOptions;
+    }
+    return subscriptionOptions.filter((subscription) =>
+      subscription.toLowerCase().includes(subscriptionSearch.toLowerCase())
+    );
+  }, [subscriptionOptions, subscriptionSearch]);
 
   // Statistiques filtrées basées sur displayedTree
   const filteredStats = useMemo(() => {
@@ -464,10 +513,42 @@ export function BirdViewPage({ onBack }: BirdViewPageProps) {
 
         {/* Document */}
         {node.type === 'document' && (
-          <div className="flex items-center gap-3 py-2 px-3 bg-blue-50/30 dark:bg-blue-950/10 rounded hover:bg-blue-50/50 dark:hover:bg-blue-950/20 transition-colors group">
+          <div
+            className={cn(
+              'flex items-center gap-3 py-2 px-3 rounded transition-colors group border border-gray-200/70 dark:border-gray-800',
+              node.isNominatif
+                ? 'bg-white dark:bg-gray-950 hover:bg-gray-50 dark:hover:bg-gray-900/70'
+                : 'bg-gray-50/70 dark:bg-gray-900/40 hover:bg-gray-100/70 dark:hover:bg-gray-900/70'
+            )}
+          >
+            {/* Marqueur latéral discret sans barres horizontales */}
+            <div
+              className={cn(
+                'w-1.5 h-6 rounded-full flex-shrink-0',
+                node.isNominatif ? 'bg-amber-400/80 dark:bg-amber-500/70' : 'bg-indigo-400/80 dark:bg-indigo-500/70'
+              )}
+            />
+
             {/* Icon */}
             <div className="w-4 h-4 flex items-center justify-center flex-shrink-0">
               <FileText className="w-4 h-4 text-gray-400" />
+            </div>
+
+            {/* Type badge (différenciation forte) */}
+            <div
+              className={cn(
+                'inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[11px] font-medium',
+                node.isNominatif
+                  ? 'bg-amber-100 text-amber-800 dark:bg-amber-900/40 dark:text-amber-300'
+                  : 'bg-indigo-100 text-indigo-800 dark:bg-indigo-900/40 dark:text-indigo-300'
+              )}
+            >
+              {node.isNominatif ? (
+                <UserRound className="w-3 h-3" />
+              ) : (
+                <Globe2 className="w-3 h-3" />
+              )}
+              {node.isNominatif ? 'Nominatif' : 'Générique'}
             </div>
 
             {/* Name */}
@@ -512,8 +593,26 @@ export function BirdViewPage({ onBack }: BirdViewPageProps) {
               </div>
             )}
 
-            {/* Activity button */}
-            <button className="ml-auto flex items-center gap-1.5 px-3 py-1 text-xs font-medium text-purple-600 hover:text-purple-700 dark:text-purple-400 dark:hover:text-purple-300 transition-colors opacity-0 group-hover:opacity-100"
+            {/* Indicateur discret pour document générique */}
+            {!node.isNominatif && (
+              <div className="flex items-center gap-1.5 ml-4 text-[11px] text-gray-500 dark:text-gray-400">
+                <Globe2 className="w-3.5 h-3.5" />
+                <span>{node.engagement?.totalViewers ?? 0} investisseurs</span>
+              </div>
+            )}
+
+            {/* Activity & Preview buttons */}
+            <div className="ml-auto flex items-center gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
+            <button className="flex items-center gap-1.5 px-3 py-1 text-xs font-medium text-gray-600 hover:text-gray-800 dark:text-gray-400 dark:hover:text-gray-200 transition-colors"
+              onClick={() => {
+                setPreviewDocument({ id: node.id, name: node.name, format: node.format, date: node.date });
+                setIsPreviewDrawerOpen(true);
+              }}
+            >
+              <ScanText className="w-3.5 h-3.5" />
+              Aperçu
+            </button>
+            <button className="flex items-center gap-1.5 px-3 py-1 text-xs font-medium text-purple-600 hover:text-purple-700 dark:text-purple-400 dark:hover:text-purple-300 transition-colors"
               onClick={() => {
                 setSelectedDocument({ id: node.id, name: node.name });
                 setIsActivityPanelOpen(true);
@@ -524,6 +623,7 @@ export function BirdViewPage({ onBack }: BirdViewPageProps) {
               </svg>
               Activité
             </button>
+            </div>
           </div>
         )}
 
@@ -883,13 +983,67 @@ export function BirdViewPage({ onBack }: BirdViewPageProps) {
             </PopoverContent>
           </Popover>
 
+          {/* Filtre Souscription (auto-complete, multi-select) */}
+          <Popover>
+            <PopoverTrigger asChild>
+              <button className="h-10 px-4 py-2 bg-white dark:bg-gray-950 border border-gray-300 dark:border-gray-700 rounded-lg text-sm hover:bg-gray-50 dark:hover:bg-gray-900 transition-all flex items-center gap-2 min-w-[180px]">
+                <FileText className="w-4 h-4 text-gray-500" />
+                <span className="flex-1 text-left text-gray-700 dark:text-gray-300">
+                  {selectedSubscriptions.length > 0 ? `Souscription (${selectedSubscriptions.length})` : 'Souscription'}
+                </span>
+                <ChevronDown className="w-4 h-4 text-gray-400" />
+              </button>
+            </PopoverTrigger>
+            <PopoverContent className="w-[320px] p-3" align="start">
+              <div className="space-y-2">
+                <div className="text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wide mb-2">
+                  Souscriptions
+                </div>
+                <div className="relative mb-2">
+                  <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-gray-400" />
+                  <input
+                    type="text"
+                    placeholder="Rechercher une souscription..."
+                    value={subscriptionSearch}
+                    onChange={(e) => setSubscriptionSearch(e.target.value)}
+                    className="h-9 w-full pl-8 pr-3 border border-gray-300 dark:border-gray-700 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white dark:bg-gray-950"
+                  />
+                </div>
+                <div className="max-h-[220px] overflow-auto space-y-1">
+                  {filteredSubscriptionOptions.map((subscription) => (
+                    <label key={subscription} className="flex items-center gap-2 p-2 hover:bg-gray-50 dark:hover:bg-gray-900 rounded cursor-pointer">
+                      <input
+                        type="checkbox"
+                        checked={selectedSubscriptions.includes(subscription)}
+                        onChange={(e) => {
+                          if (e.target.checked) {
+                            setSelectedSubscriptions([...selectedSubscriptions, subscription]);
+                          } else {
+                            setSelectedSubscriptions(selectedSubscriptions.filter(s => s !== subscription));
+                          }
+                        }}
+                        className="w-4 h-4"
+                      />
+                      <span className="text-sm text-gray-700 dark:text-gray-300">{subscription}</span>
+                    </label>
+                  ))}
+                  {filteredSubscriptionOptions.length === 0 && (
+                    <p className="text-xs text-gray-500 dark:text-gray-400 p-2">Aucune souscription trouvée.</p>
+                  )}
+                </div>
+              </div>
+            </PopoverContent>
+          </Popover>
+
           {/* Réinitialiser les filtres */}
-          {(documentNameFilter || selectedFunds.length > 0 || selectedSegments.length > 0) && (
+          {(documentNameFilter || selectedFunds.length > 0 || selectedSegments.length > 0 || selectedSubscriptions.length > 0) && (
             <button
               onClick={() => {
                 setDocumentNameFilter('');
                 setSelectedFunds([]);
                 setSelectedSegments([]);
+                setSelectedSubscriptions([]);
+                setSubscriptionSearch('');
               }}
               className="h-10 px-3 text-sm text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-100 flex items-center gap-2"
             >
@@ -927,7 +1081,33 @@ export function BirdViewPage({ onBack }: BirdViewPageProps) {
           setSelectedDocument(null);
         }}
       />
+
+      {/* Document Preview Drawer */}
+      <Drawer open={isPreviewDrawerOpen} onOpenChange={setIsPreviewDrawerOpen} direction="right">
+        <DrawerContent className="w-full max-w-2xl overflow-y-auto p-0">
+          <DrawerHeader className="border-b border-gray-100 dark:border-gray-800">
+            <DrawerTitle>Aperçu du document</DrawerTitle>
+            <DrawerDescription>
+              {previewDocument?.name || 'Document'}
+            </DrawerDescription>
+          </DrawerHeader>
+          <div className="p-6 space-y-4">
+            <div className="rounded-xl border border-dashed border-gray-300 dark:border-gray-700 bg-gray-50 dark:bg-gray-900 p-8 text-center">
+              <div className="mx-auto mb-3 w-12 h-12 rounded-full bg-blue-100 dark:bg-blue-900/50 flex items-center justify-center">
+                <FileText className="w-6 h-6 text-blue-600 dark:text-blue-300" />
+              </div>
+              <p className="text-sm font-medium text-gray-900 dark:text-gray-100">{previewDocument?.name}</p>
+              <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
+                {previewDocument?.date ? `Mis à jour le ${previewDocument.date}` : 'Date non disponible'}
+                {previewDocument?.format ? ` • ${previewDocument.format.toUpperCase()}` : ''}
+              </p>
+            </div>
+            <div className="text-sm text-gray-600 dark:text-gray-300">
+              Aperçu simplifié en mode Birdview. Ouvrez le document complet depuis la GED pour visualiser le contenu intégral.
+            </div>
+          </div>
+        </DrawerContent>
+      </Drawer>
     </div>
   );
 }
-
