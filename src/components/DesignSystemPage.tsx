@@ -131,6 +131,86 @@ const functionalColors = [
   { name: 'Orange warning', usage: 'Avertissement / attention', hex: '#F97316', tailwind: 'orange-500', bg: 'bg-orange-500' },
 ];
 
+const baseColorPalette: Array<{
+  name: string;
+  description: string;
+  prefix: string;
+  shades: string[];
+}> = [
+  {
+    name: 'Dust Red',
+    description: 'Fighting Spirit, Unrestrained',
+    prefix: 'red',
+    shades: ['#fff1f0', '#ffccc7', '#ffa39e', '#ff7875', '#ff4d4f', '#f5222d', '#cf1322', '#a8071a', '#820014', '#5c0011'],
+  },
+  {
+    name: 'Volcano',
+    description: 'Eye-catching, Surging',
+    prefix: 'volcano',
+    shades: ['#fff2e8', '#ffd8bf', '#ffbb96', '#ff9c6e', '#ff7a45', '#fa541c', '#d4380d', '#ad2102', '#871400', '#610b00'],
+  },
+  {
+    name: 'Sunset Orange',
+    description: 'Warm, Cheerful',
+    prefix: 'orange',
+    shades: ['#fff7e6', '#ffe7ba', '#ffd591', '#ffc069', '#ffa940', '#fa8c16', '#d46b08', '#ad4e00', '#873800', '#612500'],
+  },
+  {
+    name: 'Calendula Gold',
+    description: 'Energetic, Positive',
+    prefix: 'gold',
+    shades: ['#fffbe6', '#fff1b8', '#ffe58f', '#ffd666', '#ffc53d', '#faad14', '#d48806', '#ad6800', '#874d00', '#613400'],
+  },
+  {
+    name: 'Sunrise Yellow',
+    description: 'Birth, Sunshine',
+    prefix: 'yellow',
+    shades: ['#feffe6', '#ffffb8', '#fffb8f', '#fff566', '#ffec3d', '#fadb14', '#d4b106', '#ad8b00', '#876800', '#614700'],
+  },
+  {
+    name: 'Lime',
+    description: 'Natural, Vitality',
+    prefix: 'lime',
+    shades: ['#fcffe6', '#f4ffb8', '#eaff8f', '#d3f261', '#bae637', '#a0d911', '#7cb305', '#5b8c00', '#3f6600', '#254000'],
+  },
+  {
+    name: 'Polar Green',
+    description: 'Healthy, Innovative',
+    prefix: 'green',
+    shades: ['#f6ffed', '#d9f7be', '#b7eb8f', '#95de64', '#73d13d', '#52c41a', '#389e0d', '#237804', '#135200', '#092b00'],
+  },
+  {
+    name: 'Cyan',
+    description: 'Hope, Strong',
+    prefix: 'cyan',
+    shades: ['#e6fffb', '#b5f5ec', '#87e8de', '#5cdbd3', '#36cfc9', '#13c2c2', '#08979c', '#006d75', '#00474f', '#002329'],
+  },
+  {
+    name: 'Daybreak Blue',
+    description: 'Inclusive, Technology, Universal',
+    prefix: 'blue',
+    shades: ['#e6f4ff', '#bae0ff', '#91caff', '#69b1ff', '#4096ff', '#1677ff', '#0958d9', '#003eb3', '#002c8c', '#001d66'],
+  },
+  {
+    name: 'Geek Blue',
+    description: 'Exploration, Research',
+    prefix: 'geekblue',
+    shades: ['#f0f5ff', '#d6e4ff', '#adc6ff', '#85a5ff', '#597ef7', '#2f54eb', '#1d39c4', '#10239e', '#061178', '#030852'],
+  },
+  {
+    name: 'Golden Purple',
+    description: 'Elegant, Romantic',
+    prefix: 'purple',
+    shades: ['#f9f0ff', '#efdbff', '#d3adf7', '#b37feb', '#9254de', '#722ed1', '#531dab', '#391085', '#22075e', '#120338'],
+  },
+  {
+    name: 'French Magenta',
+    description: 'Bright, Emotional',
+    prefix: 'magenta',
+    shades: ['#fff0f6', '#ffd6e7', '#ffadd2', '#ff85c0', '#f759ab', '#eb2f96', '#c41d7f', '#9e1068', '#780650', '#520339'],
+  },
+];
+
 const folderSelectorDemoOptions = (() => {
   const options = [{ id: 'root', label: 'Racine / Documents' }];
   for (let branch = 1; branch <= 12; branch += 1) {
@@ -1015,6 +1095,54 @@ export function DesignSystemPage() {
               </div>
             </article>
           ))}
+        </div>
+      </section>
+
+      <section className="rounded-2xl border border-[#D7E0DD] dark:border-[#1F2D2A] bg-white dark:bg-[#101615] p-6">
+        <h2 className="text-lg font-semibold text-[#1F3137] dark:text-[#E8F0EE] mb-2">Base Color Palette</h2>
+        <p className="text-sm text-[#4F6166] dark:text-[#9DB2AE] mb-6">
+          12 palettes de couleurs avec 10 nuances chacune (0 le plus clair, 9 le plus fonce). La nuance 6 est la couleur principale de chaque palette.
+        </p>
+        <div className="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-6">
+          {baseColorPalette.map((palette) => {
+            const midIndex = 5;
+            return (
+              <article key={palette.prefix} className="rounded-xl border border-[#D4DCDA] dark:border-[#1F2D2A] overflow-hidden">
+                <div className="px-4 py-3 bg-white dark:bg-[#0F1514] text-center border-b border-[#D4DCDA] dark:border-[#1F2D2A]">
+                  <h3 className="text-base font-semibold" style={{ color: palette.shades[5] }}>{palette.name}</h3>
+                  <p className="text-xs text-[#6A8084] dark:text-[#93AAA6] mt-0.5">{palette.description}</p>
+                </div>
+                <div className="flex flex-col">
+                  {palette.shades.map((hex, i) => {
+                    const isDark = i >= midIndex;
+                    return (
+                      <div
+                        key={i}
+                        className="flex items-center justify-between px-3 py-2"
+                        style={{ backgroundColor: hex }}
+                      >
+                        <span
+                          className="text-xs font-medium"
+                          style={{
+                            color: isDark ? '#ffffff' : '#595959',
+                            fontWeight: i === 6 ? 700 : 500,
+                          }}
+                        >
+                          {palette.prefix}-{i}
+                        </span>
+                        <span
+                          className="text-xs font-mono"
+                          style={{ color: isDark ? 'rgba(255,255,255,0.75)' : 'rgba(0,0,0,0.45)' }}
+                        >
+                          {hex}
+                        </span>
+                      </div>
+                    );
+                  })}
+                </div>
+              </article>
+            );
+          })}
         </div>
       </section>
 
