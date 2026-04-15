@@ -11,8 +11,6 @@ import {
   ChevronDown
 } from 'lucide-react';
 import { Button } from './ui/button';
-import { Badge } from './ui/badge';
-import { Checkbox } from './ui/checkbox';
 import { cn } from './ui/utils';
 import { Tag } from './Tag';
 import {
@@ -103,11 +101,11 @@ const mockRecipients: Recipient[] = [
     lastNotificationDate: '09/04/2026 09:12',
     receptionStatus: 'pending',
     openingStatus: 'pending',
-    consultationStatus: 'not-accessible',
+    consultationStatus: 'pending',
   },
 ];
 
-type FilterCriteria = 'all' | 'not-opened' | 'not-consulted';
+type FilterCriteria = 'all' | 'not-consulted';
 
 const emailTemplates = [
   { id: 'relance-standard', name: 'Relance Standard', description: 'Template classique de relance' },
@@ -124,7 +122,6 @@ export function DocumentRelaunchModal({
   documentId,
 }: DocumentRelaunchModalProps) {
   const [selectedCriteria, setSelectedCriteria] = useState<FilterCriteria>('all');
-  const [selectedRecipients, setSelectedRecipients] = useState<Set<string>>(new Set());
   const [model, setModel] = useState('Relance Standard');
 
   const investorRecipients = useMemo(
@@ -134,8 +131,6 @@ export function DocumentRelaunchModal({
 
   const filteredRecipients = useMemo(() => {
     switch (selectedCriteria) {
-      case 'not-opened':
-        return investorRecipients.filter((r) => r.inTarget && r.openingStatus !== 'done');
       case 'not-consulted':
         return investorRecipients.filter((r) => r.inTarget && r.consultationStatus !== 'done');
       case 'all':
@@ -144,28 +139,20 @@ export function DocumentRelaunchModal({
     }
   }, [investorRecipients, selectedCriteria]);
 
-  const toggleSelectAll = () => {
-    if (selectedRecipients.size === filteredRecipients.length) {
-      setSelectedRecipients(new Set());
-    } else {
-      setSelectedRecipients(new Set(filteredRecipients.map((r) => r.id)));
-    }
-  };
-
-  const toggleRecipient = (id: string) => {
-    setSelectedRecipients((prev) => {
-      const next = new Set(prev);
-      if (next.has(id)) {
-        next.delete(id);
-      } else {
-        next.add(id);
-      }
-      return next;
-    });
-  };
+  // Les destinataires réellement notifiables (cherry-pick impossible : on envoie à tous
+  // ceux qui sont dans la cible du filtre courant)
+  const notifiableRecipients = useMemo(
+    () => filteredRecipients.filter((r) => r.inTarget),
+    [filteredRecipients]
+  );
 
   const handleSend = () => {
-    console.log('Sending notifications to:', Array.from(selectedRecipients), 'for document', documentId);
+    console.log(
+      'Sending notifications to:',
+      notifiableRecipients.map((r) => r.id),
+      'for document',
+      documentId
+    );
     onClose();
   };
 
@@ -175,11 +162,7 @@ export function DocumentRelaunchModal({
 
   const handleCriteriaChange = (criteria: FilterCriteria) => {
     setSelectedCriteria(criteria);
-    setSelectedRecipients(new Set());
   };
-
-  const allSelected = selectedRecipients.size === filteredRecipients.length && filteredRecipients.length > 0;
-  const someSelected = selectedRecipients.size > 0 && selectedRecipients.size < filteredRecipients.length;
 
   const renderDateOrIcon = (
     status: 'done' | 'pending' | 'not-targeted' | 'not-accessible',
@@ -315,12 +298,9 @@ export function DocumentRelaunchModal({
           </div>
 
           <div className="space-y-3">
-            <div className="flex items-center justify-between">
-              <span className="text-sm font-medium text-gray-700 dark:text-gray-300">Critère</span>
-              <Badge className="bg-blue-500 text-white">Destinataires : {filteredRecipients.length}</Badge>
-            </div>
+            <span className="text-sm font-medium text-gray-700 dark:text-gray-300">Critère</span>
 
-            <div className="grid grid-cols-3 gap-3">
+            <div className="grid grid-cols-2 gap-3">
               <button
                 onClick={() => handleCriteriaChange('all')}
                 className={cn(
@@ -339,27 +319,6 @@ export function DocumentRelaunchModal({
                   selectedCriteria === 'all' ? 'text-blue-700 dark:text-blue-300' : 'text-gray-600 dark:text-gray-400'
                 )}>
                   Tous les destinataires
-                </span>
-              </button>
-
-              <button
-                onClick={() => handleCriteriaChange('not-opened')}
-                className={cn(
-                  'flex flex-col items-center justify-center gap-2 px-4 py-4 rounded-lg border-2 transition-all',
-                  selectedCriteria === 'not-opened'
-                    ? 'border-blue-500 bg-blue-50 dark:bg-blue-950'
-                    : 'border-gray-200 dark:border-gray-700 hover:border-gray-300 dark:hover:border-gray-600'
-                )}
-              >
-                <Mail className={cn(
-                  'w-5 h-5',
-                  selectedCriteria === 'not-opened' ? 'text-blue-500' : 'text-gray-400'
-                )} />
-                <span className={cn(
-                  'text-xs font-medium text-center',
-                  selectedCriteria === 'not-opened' ? 'text-blue-700 dark:text-blue-300' : 'text-gray-600 dark:text-gray-400'
-                )}>
-                  N'ont pas ouvert l'email
                 </span>
               </button>
 
@@ -404,15 +363,6 @@ export function DocumentRelaunchModal({
               <table className="w-full text-sm">
                 <thead className="bg-gray-50 dark:bg-gray-900 border-b border-gray-200 dark:border-gray-800">
                   <tr>
-                    <th className="px-4 py-3 text-left w-12">
-                      <Checkbox
-                        checked={allSelected}
-                        onCheckedChange={toggleSelectAll}
-                        className={cn(
-                          someSelected && !allSelected && 'data-[state=checked]:bg-gray-400'
-                        )}
-                      />
-                    </th>
                     <th className="px-4 py-3 text-left text-xs font-medium text-gray-600 dark:text-gray-400">Nom</th>
                     <th className="px-4 py-3 text-left text-xs font-medium text-gray-600 dark:text-gray-400">Type</th>
                     <th className="px-4 py-3 text-center text-xs font-medium text-gray-600 dark:text-gray-400">Dernière notification</th>
@@ -425,17 +375,8 @@ export function DocumentRelaunchModal({
                   {filteredRecipients.map((recipient) => (
                     <tr
                       key={recipient.id}
-                      className={cn(
-                        'hover:bg-gray-50 dark:hover:bg-gray-900 transition-colors',
-                        selectedRecipients.has(recipient.id) && 'bg-blue-50/50 dark:bg-blue-950/20'
-                      )}
+                      className="hover:bg-gray-50 dark:hover:bg-gray-900 transition-colors"
                     >
-                      <td className="px-4 py-3">
-                        <Checkbox
-                          checked={selectedRecipients.has(recipient.id)}
-                          onCheckedChange={() => toggleRecipient(recipient.id)}
-                        />
-                      </td>
                       <td className="px-4 py-3">
                         <div className="flex flex-col gap-1">
                           <span className="font-medium text-gray-900 dark:text-gray-100">{recipient.name}</span>
@@ -465,17 +406,19 @@ export function DocumentRelaunchModal({
           </Button>
           <Button
             onClick={handleSend}
-            disabled={selectedRecipients.size === 0}
+            disabled={notifiableRecipients.length === 0}
             className="gap-2"
             style={{
-              background: selectedRecipients.size > 0
+              background: notifiableRecipients.length > 0
                 ? 'linear-gradient(135deg, #3B82F6 0%, #1D4ED8 100%)'
                 : undefined,
-              color: selectedRecipients.size > 0 ? 'white' : undefined
+              color: notifiableRecipients.length > 0 ? 'white' : undefined
             }}
           >
             <Send className="w-4 h-4" />
-            Envoyer {selectedRecipients.size > 0 ? `${selectedRecipients.size} notification${selectedRecipients.size > 1 ? 's' : ''}` : 'les notifications'}
+            Envoyer {notifiableRecipients.length > 0
+              ? `${notifiableRecipients.length} notification${notifiableRecipients.length > 1 ? 's' : ''}`
+              : 'les notifications'}
           </Button>
         </div>
       </AlertDialogContent>
