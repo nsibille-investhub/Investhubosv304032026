@@ -223,7 +223,7 @@ export function DocumentRelaunchModal({
 
     return (
       <MinusCircle
-        className="w-4 h-4 text-muted-foreground/50 mx-auto"
+        className="w-4 h-4 text-slate-300 mx-auto"
         aria-label="Non applicable"
       />
     );
@@ -234,13 +234,13 @@ export function DocumentRelaunchModal({
       if (recipient.name === 'Pierre Dupont') {
         return (
           <div className="flex items-center justify-center gap-2">
-            <MinusCircle className="w-4 h-4 text-muted-foreground/50" />
+            <MinusCircle className="w-4 h-4 text-slate-300" />
             <span className="text-xs text-muted-foreground">Non habilité au document</span>
           </div>
         );
       }
 
-      return <MinusCircle className="w-4 h-4 text-muted-foreground/50 mx-auto" />;
+      return <MinusCircle className="w-4 h-4 text-slate-300 mx-auto" />;
     }
 
     return renderDateOrIcon(recipient.consultationStatus, recipient.consultationDate);
@@ -248,7 +248,7 @@ export function DocumentRelaunchModal({
 
   const renderLastNotification = (recipient: Recipient) => {
     if (!recipient.inTarget || !recipient.lastNotificationDate) {
-      return <MinusCircle className="w-4 h-4 text-muted-foreground/50 mx-auto" />;
+      return <MinusCircle className="w-4 h-4 text-slate-300 mx-auto" />;
     }
 
     return (
