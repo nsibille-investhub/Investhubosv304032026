@@ -1,4 +1,4 @@
-import { useState, useMemo } from 'react';
+import { useMemo, useState } from 'react';
 import {
   X,
   Send,
@@ -8,11 +8,16 @@ import {
   XCircle,
   MinusCircle,
   Download,
-  ChevronDown
+  ChevronDown,
+  ChevronRight,
+  FileText,
+  CheckCircle2,
+  Zap,
 } from 'lucide-react';
 import { Button } from './ui/button';
+import { Badge } from './ui/badge';
+import { Separator } from './ui/separator';
 import { cn } from './ui/utils';
-import { Tag } from './Tag';
 import {
   AlertDialog,
   AlertDialogContent,
@@ -25,6 +30,15 @@ import {
   PopoverContent,
   PopoverTrigger,
 } from './ui/popover';
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from './ui/table';
+import { DocumentPreviewDrawer } from './DocumentPreviewDrawer';
 
 interface Recipient {
   id: string;
@@ -127,6 +141,11 @@ const emailTemplates = [
   { id: 'rappel-douceur', name: 'Rappel en Douceur', description: 'Relance subtile et non intrusive' },
 ];
 
+const getDocumentFormat = (name: string): string | undefined => {
+  const match = name.match(/\.([A-Za-z0-9]+)$/);
+  return match ? match[1].toLowerCase() : undefined;
+};
+
 export function DocumentRelaunchModal({
   isOpen,
   onClose,
@@ -136,10 +155,12 @@ export function DocumentRelaunchModal({
 }: DocumentRelaunchModalProps) {
   const [selectedCriteria, setSelectedCriteria] = useState<FilterCriteria>('all');
   const [model, setModel] = useState('Relance Standard');
+  const [templatePopoverOpen, setTemplatePopoverOpen] = useState(false);
+  const [isPreviewOpen, setIsPreviewOpen] = useState(false);
 
   const investorRecipients = useMemo(
     () => mockRecipients.filter((recipient) => recipient.investorId === 'inv-1'),
-    []
+    [],
   );
 
   const filteredRecipients = useMemo(() => {
@@ -152,14 +173,11 @@ export function DocumentRelaunchModal({
     }
   }, [investorRecipients, selectedCriteria]);
 
-  // Les destinataires réellement notifiables (cherry-pick impossible : on envoie à tous
-  // ceux qui sont dans la cible du filtre courant)
   const notifiableRecipients = useMemo(
     () => filteredRecipients.filter((r) => r.inTarget),
-    [filteredRecipients]
+    [filteredRecipients],
   );
 
-  // Nombre de destinataires pour l'affichage et le bouton d'envoi
   const notifiableCount = isNominatif
     ? notifiableRecipients.length
     : selectedCriteria === 'not-consulted'
@@ -172,14 +190,14 @@ export function DocumentRelaunchModal({
         'Sending notifications to:',
         notifiableRecipients.map((r) => r.id),
         'for document',
-        documentId
+        documentId,
       );
     } else {
       console.log(
         'Sending notifications to',
         notifiableCount,
         'investors for generic document',
-        documentId
+        documentId,
       );
     }
     onClose();
@@ -189,23 +207,26 @@ export function DocumentRelaunchModal({
     console.log('Exporting CSV for document:', documentId);
   };
 
-  const handleCriteriaChange = (criteria: FilterCriteria) => {
-    setSelectedCriteria(criteria);
-  };
-
   const renderDateOrIcon = (
     status: 'done' | 'pending' | 'not-targeted' | 'not-accessible',
     date?: string,
   ) => {
     if (status === 'done' && date) {
-      return <span className="text-xs text-gray-700 dark:text-gray-300">{date}</span>;
+      return (
+        <span className="text-xs text-foreground tabular-nums">{date}</span>
+      );
     }
 
     if (status === 'pending') {
-      return <XCircle className="w-4 h-4 text-red-500 mx-auto" />;
+      return <XCircle className="w-4 h-4 text-destructive mx-auto" aria-label="En attente" />;
     }
 
-    return <MinusCircle className="w-4 h-4 text-gray-300 dark:text-gray-600 mx-auto" />;
+    return (
+      <MinusCircle
+        className="w-4 h-4 text-muted-foreground/50 mx-auto"
+        aria-label="Non applicable"
+      />
+    );
   };
 
   const renderConsultationCell = (recipient: Recipient) => {
@@ -213,13 +234,13 @@ export function DocumentRelaunchModal({
       if (recipient.name === 'Pierre Dupont') {
         return (
           <div className="flex items-center justify-center gap-2">
-            <MinusCircle className="w-4 h-4 text-gray-300 dark:text-gray-600" />
-            <span className="text-xs text-gray-500">Non habilité au document</span>
+            <MinusCircle className="w-4 h-4 text-muted-foreground/50" />
+            <span className="text-xs text-muted-foreground">Non habilité au document</span>
           </div>
         );
       }
 
-      return <MinusCircle className="w-4 h-4 text-gray-300 dark:text-gray-600 mx-auto" />;
+      return <MinusCircle className="w-4 h-4 text-muted-foreground/50 mx-auto" />;
     }
 
     return renderDateOrIcon(recipient.consultationStatus, recipient.consultationDate);
@@ -227,278 +248,406 @@ export function DocumentRelaunchModal({
 
   const renderLastNotification = (recipient: Recipient) => {
     if (!recipient.inTarget || !recipient.lastNotificationDate) {
-      return <MinusCircle className="w-4 h-4 text-gray-300 dark:text-gray-600 mx-auto" />;
+      return <MinusCircle className="w-4 h-4 text-muted-foreground/50 mx-auto" />;
     }
 
-    return <span className="text-xs text-gray-700 dark:text-gray-300">{recipient.lastNotificationDate}</span>;
+    return (
+      <span className="text-xs text-foreground tabular-nums">
+        {recipient.lastNotificationDate}
+      </span>
+    );
   };
 
   return (
-    <AlertDialog open={isOpen} onOpenChange={onClose}>
-      <AlertDialogContent className="w-[90vw] max-w-[90vw] max-h-[90vh] overflow-hidden flex flex-col p-0 bg-white dark:bg-black">
-        <AlertDialogHeader className="px-6 py-5 border-b border-gray-200 dark:border-gray-800 bg-white dark:bg-black">
-          <div className="flex items-start gap-3">
-            <div className="w-10 h-10 rounded-lg bg-blue-500 flex items-center justify-center flex-shrink-0">
-              <Send className="w-5 h-5 text-white" />
-            </div>
-            <div className="flex-1">
-              <AlertDialogTitle className="text-lg font-semibold text-gray-900 dark:text-gray-100">
-                Relancer une notification
-              </AlertDialogTitle>
-              <AlertDialogDescription className="text-sm text-gray-500 dark:text-gray-400">
-                Notifier les destinataires pour ce document
-              </AlertDialogDescription>
-            </div>
-            <button
-              onClick={onClose}
-              className="p-2 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-lg transition-colors"
-            >
-              <X className="w-5 h-5 text-gray-500" />
-            </button>
-          </div>
-        </AlertDialogHeader>
-
-        <div className="flex-1 overflow-y-auto px-6 py-5 space-y-5 bg-white dark:bg-black">
-          <div className="flex items-center gap-2 px-3 py-2 bg-gray-50 dark:bg-gray-900 rounded-lg">
-            <svg className="w-4 h-4 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
-            </svg>
-            <span className="text-sm font-medium text-gray-700 dark:text-gray-300">
-              {documentName}
-            </span>
-          </div>
-
-          <div className="space-y-3">
-            <div className="flex items-center justify-between">
-              <div className="flex items-center gap-2">
-                <svg className="w-4 h-4 text-blue-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
-                </svg>
-                <span className="text-sm font-medium text-gray-700 dark:text-gray-300">
-                  Récapitulatif de l'envoi
-                </span>
+    <>
+      <AlertDialog open={isOpen} onOpenChange={onClose}>
+        <AlertDialogContent
+          className={cn(
+            'p-0 gap-0 overflow-hidden flex flex-col',
+            'w-full max-w-full sm:max-w-full',
+            'max-h-[88vh]',
+            'bg-background',
+          )}
+          style={{ width: 'min(960px, 60vw)', maxWidth: 'min(960px, 60vw)' }}
+        >
+          {/* Header */}
+          <AlertDialogHeader className="px-6 py-5 border-b border-border">
+            <div className="flex items-start gap-3">
+              <div
+                className="w-10 h-10 rounded-lg flex items-center justify-center flex-shrink-0 shadow-brand"
+                style={{
+                  background:
+                    'linear-gradient(135deg, var(--brand-primary) 0%, var(--brand-accent) 100%)',
+                }}
+              >
+                <Send className="w-5 h-5 text-white" />
               </div>
-              <div className="flex items-center gap-2">
-                <span className="text-xs text-gray-500">Modèle :</span>
-                <Popover>
-                  <PopoverTrigger asChild>
-                    <button className="flex items-center gap-2 px-3 py-1.5 bg-white dark:bg-gray-950 border border-blue-200 dark:border-blue-800 rounded-lg text-sm hover:bg-blue-50 dark:hover:bg-blue-950 transition-colors">
-                      {model}
-                      <ChevronDown className="w-4 h-4 text-blue-500" />
-                    </button>
-                  </PopoverTrigger>
-                  <PopoverContent className="w-80 p-2" align="end">
-                    <div className="space-y-1">
-                      {emailTemplates.map((template) => (
-                        <button
-                          key={template.id}
-                          onClick={() => setModel(template.name)}
-                          className={cn(
-                            'w-full text-left px-3 py-2 rounded-lg transition-colors',
-                            model === template.name
-                              ? 'bg-blue-50 dark:bg-blue-950'
-                              : 'hover:bg-gray-50 dark:hover:bg-gray-900'
-                          )}
-                        >
-                          <div className="flex items-center gap-2 mb-1">
-                            <Mail className={cn(
-                              'w-4 h-4',
-                              model === template.name ? 'text-blue-500' : 'text-gray-400'
-                            )} />
-                            <span className={cn(
-                              'text-sm font-medium',
-                              model === template.name
-                                ? 'text-blue-700 dark:text-blue-300'
-                                : 'text-gray-900 dark:text-gray-100'
-                            )}>
-                              {template.name}
-                            </span>
-                          </div>
-                          <p className="text-xs text-gray-500 dark:text-gray-400 ml-6">
-                            {template.description}
-                          </p>
-                        </button>
-                      ))}
-                    </div>
-                  </PopoverContent>
-                </Popover>
+              <div className="flex-1 min-w-0">
+                <AlertDialogTitle className="text-lg font-semibold text-foreground">
+                  Relancer une notification
+                </AlertDialogTitle>
+                <AlertDialogDescription className="text-sm text-muted-foreground">
+                  Notifier les destinataires pour ce document
+                </AlertDialogDescription>
               </div>
-            </div>
-          </div>
-
-          <div className="space-y-3">
-            <span className="text-sm font-medium text-gray-700 dark:text-gray-300">Critère</span>
-
-            <div className="grid grid-cols-2 gap-3">
               <button
-                onClick={() => handleCriteriaChange('all')}
+                onClick={onClose}
+                aria-label="Fermer"
+                className="p-2 hover:bg-muted rounded-lg transition-colors"
+              >
+                <X className="w-5 h-5 text-muted-foreground" />
+              </button>
+            </div>
+          </AlertDialogHeader>
+
+          {/* Body */}
+          <div className="flex-1 overflow-y-auto scrollbar-thin">
+            <div className="px-6 py-5 space-y-5">
+              {/* Document preview card (clickable) */}
+              <button
+                type="button"
+                onClick={() => {
+                  // Close the modal first so the preview drawer layers above
+                  // the activity panel cleanly instead of competing with the
+                  // AlertDialog's portal stacking context.
+                  onClose();
+                  setIsPreviewOpen(true);
+                }}
                 className={cn(
-                  'flex flex-col items-center justify-center gap-2 px-4 py-4 rounded-lg border-2 transition-all',
-                  selectedCriteria === 'all'
-                    ? 'border-blue-500 bg-blue-50 dark:bg-blue-950'
-                    : 'border-gray-200 dark:border-gray-700 hover:border-gray-300 dark:hover:border-gray-600'
+                  'group w-full flex items-center gap-3 px-4 py-3 rounded-md border border-border bg-background text-left',
+                  'hover:bg-muted/40 hover:border-primary/40 focus-visible:outline-none focus-visible:ring-[3px] focus-visible:ring-ring/50',
+                  'transition-colors',
                 )}
+                aria-label={`Ouvrir l'aperçu de ${documentName}`}
               >
-                <Users className={cn(
-                  'w-5 h-5',
-                  selectedCriteria === 'all' ? 'text-blue-500' : 'text-gray-400'
-                )} />
-                <span className={cn(
-                  'text-xs font-medium',
-                  selectedCriteria === 'all' ? 'text-blue-700 dark:text-blue-300' : 'text-gray-600 dark:text-gray-400'
-                )}>
-                  Tous les destinataires
-                </span>
+                <div className="w-9 h-9 rounded-md bg-muted flex items-center justify-center flex-shrink-0">
+                  <FileText className="w-4 h-4 text-muted-foreground" />
+                </div>
+                <div className="flex-1 min-w-0">
+                  <div className="text-sm font-medium text-foreground truncate">
+                    {documentName}
+                  </div>
+                  <div className="text-xs text-muted-foreground">
+                    Cliquer pour afficher l'aperçu du document
+                  </div>
+                </div>
+                <Badge variant="secondary" className="hidden sm:inline-flex gap-1">
+                  <Eye className="w-3 h-3" />
+                  Aperçu
+                </Badge>
+                <ChevronRight className="w-4 h-4 text-muted-foreground group-hover:text-foreground transition-colors" />
               </button>
 
-              <button
-                onClick={() => handleCriteriaChange('not-consulted')}
-                className={cn(
-                  'flex flex-col items-center justify-center gap-2 px-4 py-4 rounded-lg border-2 transition-all',
-                  selectedCriteria === 'not-consulted'
-                    ? 'border-blue-500 bg-blue-50 dark:bg-blue-950'
-                    : 'border-gray-200 dark:border-gray-700 hover:border-gray-300 dark:hover:border-gray-600'
-                )}
-              >
-                <Eye className={cn(
-                  'w-5 h-5',
-                  selectedCriteria === 'not-consulted' ? 'text-blue-500' : 'text-gray-400'
-                )} />
-                <span className={cn(
-                  'text-xs font-medium text-center',
-                  selectedCriteria === 'not-consulted' ? 'text-blue-700 dark:text-blue-300' : 'text-gray-600 dark:text-gray-400'
-                )}>
-                  N'ont pas consulté le document
-                </span>
-              </button>
-            </div>
-          </div>
-
-          <div className="space-y-3">
-            <div className="flex items-center justify-end">
-              <button
-                onClick={handleExportCSV}
-                className="flex items-center gap-2 px-3 py-1.5 text-xs font-medium text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-100 transition-colors"
-              >
-                <Download className="w-3.5 h-3.5" />
-                Exporter CSV
-              </button>
-            </div>
-
-            {isNominatif ? (
-              <div className="border border-gray-200 dark:border-gray-800 rounded-lg overflow-hidden">
-                <table className="w-full text-sm">
-                  <thead className="bg-gray-50 dark:bg-gray-900 border-b border-gray-200 dark:border-gray-800">
-                    <tr>
-                      <th className="px-4 py-3 text-left text-xs font-medium text-gray-600 dark:text-gray-400">Nom</th>
-                      <th className="px-4 py-3 text-left text-xs font-medium text-gray-600 dark:text-gray-400">Type</th>
-                      <th className="px-4 py-3 text-center text-xs font-medium text-gray-600 dark:text-gray-400">Dernière notification</th>
-                      <th className="px-4 py-3 text-center text-xs font-medium text-gray-600 dark:text-gray-400">Dernière Réception</th>
-                      <th className="px-4 py-3 text-center text-xs font-medium text-gray-600 dark:text-gray-400">Dernière Ouverture</th>
-                      <th className="px-4 py-3 text-center text-xs font-medium text-gray-600 dark:text-gray-400">Dernière Consultation document</th>
-                    </tr>
-                  </thead>
-                  <tbody className="divide-y divide-gray-200 dark:divide-gray-800">
-                    {filteredRecipients.map((recipient) => (
-                      <tr
-                        key={recipient.id}
-                        className="hover:bg-gray-50 dark:hover:bg-gray-900 transition-colors"
+              {/* Recap header + template selector */}
+              <div className="flex items-center justify-between gap-3">
+                <div className="flex items-center gap-2">
+                  <Zap className="w-4 h-4 text-primary" />
+                  <span className="text-sm font-medium text-foreground">
+                    Récapitulatif de l'envoi
+                  </span>
+                </div>
+                <div className="flex items-center gap-2">
+                  <span className="text-xs text-muted-foreground">Modèle</span>
+                  <Popover open={templatePopoverOpen} onOpenChange={setTemplatePopoverOpen}>
+                    <PopoverTrigger asChild>
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        className="h-8 gap-2 font-normal"
                       >
-                        <td className="px-4 py-3">
-                          <div className="flex flex-col gap-1">
-                            <span className="font-medium text-gray-900 dark:text-gray-100">{recipient.name}</span>
-                            {recipient.name === 'Pierre Dupont' && (
-                              <span className="text-xs text-gray-500">Accès refusé : non habilité au document</span>
+                        <Mail className="w-3.5 h-3.5 text-muted-foreground" />
+                        {model}
+                        <ChevronDown className="w-3.5 h-3.5 text-muted-foreground" />
+                      </Button>
+                    </PopoverTrigger>
+                    <PopoverContent className="w-80 p-1" align="end">
+                      <div className="space-y-0.5">
+                        {emailTemplates.map((template) => (
+                          <button
+                            key={template.id}
+                            onClick={() => {
+                              setModel(template.name);
+                              setTemplatePopoverOpen(false);
+                            }}
+                            className={cn(
+                              'w-full text-left px-2.5 py-2 rounded-md transition-colors',
+                              model === template.name
+                                ? 'bg-accent text-accent-foreground'
+                                : 'hover:bg-muted',
                             )}
-                          </div>
-                        </td>
-                        <td className="px-4 py-3">
-                          <Tag label={recipient.type} />
-                        </td>
-                        <td className="px-4 py-3 text-center">{renderLastNotification(recipient)}</td>
-                        <td className="px-4 py-3 text-center">{renderDateOrIcon(recipient.receptionStatus, recipient.receptionDate)}</td>
-                        <td className="px-4 py-3 text-center">{renderDateOrIcon(recipient.openingStatus, recipient.openingDate)}</td>
-                        <td className="px-4 py-3 text-center">{renderConsultationCell(recipient)}</td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
+                          >
+                            <div className="flex items-center gap-2">
+                              <Mail
+                                className={cn(
+                                  'w-3.5 h-3.5',
+                                  model === template.name
+                                    ? 'text-primary'
+                                    : 'text-muted-foreground',
+                                )}
+                              />
+                              <span className="text-sm font-medium text-foreground">
+                                {template.name}
+                              </span>
+                              {model === template.name && (
+                                <CheckCircle2 className="w-3.5 h-3.5 text-primary ml-auto" />
+                              )}
+                            </div>
+                            <p className="text-xs text-muted-foreground ml-6 mt-0.5">
+                              {template.description}
+                            </p>
+                          </button>
+                        ))}
+                      </div>
+                    </PopoverContent>
+                  </Popover>
+                </div>
               </div>
-            ) : (
-              // ── Récapitulatif pour un document générique ─────────────────
-              <div className="border border-gray-200 dark:border-gray-800 rounded-lg p-6 bg-gradient-to-br from-blue-50/60 to-white dark:from-blue-950/20 dark:to-gray-950">
-                <div className="flex items-center gap-4">
-                  <div className="w-14 h-14 rounded-full bg-blue-500/10 flex items-center justify-center flex-shrink-0">
-                    <Users className="w-7 h-7 text-blue-500" />
-                  </div>
-                  <div className="flex-1 min-w-0">
-                    <div className="flex items-baseline gap-2">
-                      <span className="text-3xl font-bold text-gray-900 dark:text-gray-100">
-                        {notifiableCount}
-                      </span>
-                      <span className="text-sm font-medium text-gray-600 dark:text-gray-400">
-                        investisseur{notifiableCount > 1 ? 's' : ''}
-                      </span>
+
+              {/* Critère */}
+              <div className="space-y-2">
+                <label className="text-xs font-medium text-muted-foreground uppercase tracking-wide">
+                  Critère
+                </label>
+                <div className="grid grid-cols-2 gap-2">
+                  <button
+                    onClick={() => setSelectedCriteria('all')}
+                    className={cn(
+                      'flex items-center gap-2.5 px-3 py-2.5 rounded-md border text-left transition-colors',
+                      selectedCriteria === 'all'
+                        ? 'border-primary bg-accent text-accent-foreground'
+                        : 'border-border bg-background hover:bg-muted/40',
+                    )}
+                    aria-pressed={selectedCriteria === 'all'}
+                  >
+                    <div
+                      className={cn(
+                        'w-7 h-7 rounded-full flex items-center justify-center flex-shrink-0',
+                        selectedCriteria === 'all'
+                          ? 'bg-primary text-primary-foreground'
+                          : 'bg-muted text-muted-foreground',
+                      )}
+                    >
+                      <Users className="w-3.5 h-3.5" />
                     </div>
-                    <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">
-                      {selectedCriteria === 'not-consulted'
-                        ? "Investisseurs n'ayant pas encore consulté ce document"
-                        : 'Investisseurs ayant accès à ce document'}
-                    </p>
+                    <span className="text-sm font-medium">
+                      Tous les destinataires
+                    </span>
+                  </button>
+
+                  <button
+                    onClick={() => setSelectedCriteria('not-consulted')}
+                    className={cn(
+                      'flex items-center gap-2.5 px-3 py-2.5 rounded-md border text-left transition-colors',
+                      selectedCriteria === 'not-consulted'
+                        ? 'border-primary bg-accent text-accent-foreground'
+                        : 'border-border bg-background hover:bg-muted/40',
+                    )}
+                    aria-pressed={selectedCriteria === 'not-consulted'}
+                  >
+                    <div
+                      className={cn(
+                        'w-7 h-7 rounded-full flex items-center justify-center flex-shrink-0',
+                        selectedCriteria === 'not-consulted'
+                          ? 'bg-primary text-primary-foreground'
+                          : 'bg-muted text-muted-foreground',
+                      )}
+                    >
+                      <Eye className="w-3.5 h-3.5" />
+                    </div>
+                    <span className="text-sm font-medium">
+                      N'ont pas consulté le document
+                    </span>
+                  </button>
+                </div>
+              </div>
+
+              <Separator />
+
+              {/* Body: recipients table (nominatif) or summary (generic) */}
+              {isNominatif ? (
+                <div className="space-y-2">
+                  <div className="flex items-center justify-between">
+                    <span className="text-xs font-medium text-muted-foreground uppercase tracking-wide">
+                      Destinataires ({filteredRecipients.length})
+                    </span>
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      onClick={handleExportCSV}
+                      className="h-7 text-xs gap-1.5"
+                    >
+                      <Download className="w-3.5 h-3.5" />
+                      Exporter CSV
+                    </Button>
+                  </div>
+
+                  <div className="rounded-md border border-border overflow-hidden">
+                    <Table>
+                      <TableHeader>
+                        <TableRow className="bg-muted/50 hover:bg-muted/50">
+                          <TableHead className="px-3 text-xs text-muted-foreground font-medium">
+                            Nom
+                          </TableHead>
+                          <TableHead className="px-3 text-xs text-muted-foreground font-medium">
+                            Type
+                          </TableHead>
+                          <TableHead className="px-3 text-xs text-muted-foreground font-medium text-center">
+                            Notification
+                          </TableHead>
+                          <TableHead className="px-3 text-xs text-muted-foreground font-medium text-center">
+                            Réception
+                          </TableHead>
+                          <TableHead className="px-3 text-xs text-muted-foreground font-medium text-center">
+                            Ouverture
+                          </TableHead>
+                          <TableHead className="px-3 text-xs text-muted-foreground font-medium text-center">
+                            Consultation
+                          </TableHead>
+                        </TableRow>
+                      </TableHeader>
+                      <TableBody>
+                        {filteredRecipients.map((recipient) => (
+                          <TableRow key={recipient.id}>
+                            <TableCell className="px-3 py-3 align-top">
+                              <div className="flex flex-col gap-0.5">
+                                <span className="text-sm font-medium text-foreground">
+                                  {recipient.name}
+                                </span>
+                                {recipient.role && (
+                                  <span className="text-[11px] text-muted-foreground">
+                                    {recipient.role}
+                                  </span>
+                                )}
+                                {recipient.name === 'Pierre Dupont' && (
+                                  <span className="text-[11px] text-muted-foreground">
+                                    Accès refusé · non habilité
+                                  </span>
+                                )}
+                              </div>
+                            </TableCell>
+                            <TableCell className="px-3">
+                              <Badge
+                                variant="outline"
+                                className="border-border bg-muted/60 text-muted-foreground font-normal"
+                              >
+                                {recipient.type}
+                              </Badge>
+                            </TableCell>
+                            <TableCell className="px-3 text-center">
+                              {renderLastNotification(recipient)}
+                            </TableCell>
+                            <TableCell className="px-3 text-center">
+                              {renderDateOrIcon(recipient.receptionStatus, recipient.receptionDate)}
+                            </TableCell>
+                            <TableCell className="px-3 text-center">
+                              {renderDateOrIcon(recipient.openingStatus, recipient.openingDate)}
+                            </TableCell>
+                            <TableCell className="px-3 text-center">
+                              {renderConsultationCell(recipient)}
+                            </TableCell>
+                          </TableRow>
+                        ))}
+                      </TableBody>
+                    </Table>
                   </div>
                 </div>
-
-                <div className="mt-5 pt-5 border-t border-gray-200 dark:border-gray-800 grid grid-cols-2 gap-4 text-sm">
-                  <div>
-                    <div className="text-xs uppercase tracking-wide text-gray-500 dark:text-gray-400 mb-1">
-                      Total ayant accès
+              ) : (
+                <div className="rounded-md border border-border bg-muted/30 p-5">
+                  <div className="flex items-center gap-4">
+                    <div className="w-12 h-12 rounded-full bg-primary/10 flex items-center justify-center flex-shrink-0">
+                      <Users className="w-6 h-6 text-primary" />
                     </div>
-                    <div className="font-semibold text-gray-900 dark:text-gray-100">
-                      {mockGenericStats.totalInvestors} investisseurs
+                    <div className="flex-1 min-w-0">
+                      <div className="flex items-baseline gap-2">
+                        <span className="text-2xl font-semibold text-foreground tabular-nums">
+                          {notifiableCount}
+                        </span>
+                        <span className="text-sm text-muted-foreground">
+                          investisseur{notifiableCount > 1 ? 's' : ''}
+                        </span>
+                      </div>
+                      <p className="text-xs text-muted-foreground mt-0.5">
+                        {selectedCriteria === 'not-consulted'
+                          ? "Investisseurs n'ayant pas encore consulté ce document"
+                          : 'Investisseurs ayant accès à ce document'}
+                      </p>
                     </div>
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      onClick={handleExportCSV}
+                      className="h-8 text-xs gap-1.5 flex-shrink-0"
+                    >
+                      <Download className="w-3.5 h-3.5" />
+                      Exporter CSV
+                    </Button>
                   </div>
-                  <div>
-                    <div className="text-xs uppercase tracking-wide text-gray-500 dark:text-gray-400 mb-1">
-                      Non consulté
+
+                  <Separator className="my-4" />
+
+                  <div className="grid grid-cols-2 gap-4">
+                    <div>
+                      <div className="text-[11px] uppercase tracking-wide text-muted-foreground mb-0.5">
+                        Total ayant accès
+                      </div>
+                      <div className="text-sm font-semibold text-foreground">
+                        {mockGenericStats.totalInvestors} investisseurs
+                      </div>
                     </div>
-                    <div className="font-semibold text-gray-900 dark:text-gray-100">
-                      {mockGenericStats.notConsulted} investisseur{mockGenericStats.notConsulted > 1 ? 's' : ''}
+                    <div>
+                      <div className="text-[11px] uppercase tracking-wide text-muted-foreground mb-0.5">
+                        Non consulté
+                      </div>
+                      <div className="text-sm font-semibold text-foreground">
+                        {mockGenericStats.notConsulted} investisseur
+                        {mockGenericStats.notConsulted > 1 ? 's' : ''}
+                      </div>
                     </div>
                   </div>
                 </div>
-
-                <p className="mt-5 text-xs text-gray-500 dark:text-gray-400 flex items-start gap-2">
-                  <Download className="w-3.5 h-3.5 mt-0.5 flex-shrink-0" />
-                  Téléchargez le CSV pour obtenir le détail des investisseurs
-                  concernés par cette relance.
-                </p>
-              </div>
-            )}
+              )}
+            </div>
           </div>
-        </div>
 
-        <div className="px-6 py-4 border-t border-gray-200 dark:border-gray-800 flex items-center justify-between bg-white dark:bg-black">
-          <Button variant="outline" onClick={onClose}>
-            Retour
-          </Button>
-          <Button
-            onClick={handleSend}
-            disabled={notifiableCount === 0}
-            className="gap-2"
-            style={{
-              background: notifiableCount > 0
-                ? 'linear-gradient(135deg, #3B82F6 0%, #1D4ED8 100%)'
-                : undefined,
-              color: notifiableCount > 0 ? 'white' : undefined
-            }}
-          >
-            <Send className="w-4 h-4" />
-            Envoyer {notifiableCount > 0
-              ? `${notifiableCount} notification${notifiableCount > 1 ? 's' : ''}`
-              : 'les notifications'}
-          </Button>
-        </div>
-      </AlertDialogContent>
-    </AlertDialog>
+          {/* Footer */}
+          <div className="px-6 py-4 border-t border-border bg-muted/30 flex items-center justify-between gap-2">
+            <Button variant="outline" onClick={onClose}>
+              Retour
+            </Button>
+            <Button
+              onClick={handleSend}
+              disabled={notifiableCount === 0}
+              className={cn(
+                'gap-2 text-white border-0',
+                notifiableCount === 0 && 'opacity-60',
+              )}
+              style={
+                notifiableCount > 0
+                  ? {
+                      background:
+                        'linear-gradient(135deg, var(--brand-primary) 0%, var(--brand-accent) 100%)',
+                    }
+                  : undefined
+              }
+            >
+              <Send className="w-4 h-4" />
+              Envoyer{' '}
+              {notifiableCount > 0
+                ? `${notifiableCount} notification${notifiableCount > 1 ? 's' : ''}`
+                : 'les notifications'}
+            </Button>
+          </div>
+        </AlertDialogContent>
+      </AlertDialog>
+
+      {/* Preview drawer */}
+      <DocumentPreviewDrawer
+        isOpen={isPreviewOpen}
+        onClose={() => setIsPreviewOpen(false)}
+        documentName={documentName}
+        documentId={documentId}
+        format={getDocumentFormat(documentName)}
+      />
+    </>
   );
 }
