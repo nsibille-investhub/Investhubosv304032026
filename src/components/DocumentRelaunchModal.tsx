@@ -75,6 +75,12 @@ const mockGenericStats = {
   notConsulted: 19,
 };
 
+const genericConsulted =
+  mockGenericStats.totalInvestors - mockGenericStats.notConsulted;
+const genericConsultationRate = Math.round(
+  (genericConsulted / Math.max(1, mockGenericStats.totalInvestors)) * 100,
+);
+
 const mockRecipients: Recipient[] = [
   {
     id: '1',
@@ -556,24 +562,34 @@ export function DocumentRelaunchModal({
                   </div>
                 </div>
               ) : (
-                <div className="rounded-md border border-border bg-white p-5">
-                  <div className="flex items-center gap-4">
-                    <div className="w-12 h-12 rounded-full bg-primary/10 flex items-center justify-center flex-shrink-0">
-                      <Users className="w-6 h-6 text-primary" />
+                <div
+                  className="rounded-xl border border-border bg-white overflow-hidden"
+                  style={{ backgroundColor: '#FFFFFF' }}
+                >
+                  {/* Headline */}
+                  <div className="flex items-center gap-4 px-5 py-4">
+                    <div
+                      className="w-12 h-12 rounded-xl flex items-center justify-center flex-shrink-0 shadow-brand"
+                      style={{
+                        background:
+                          'linear-gradient(135deg, var(--brand-primary) 0%, var(--brand-accent) 100%)',
+                      }}
+                    >
+                      <Users className="w-6 h-6 text-white" />
                     </div>
                     <div className="flex-1 min-w-0">
                       <div className="flex items-baseline gap-2">
-                        <span className="text-2xl font-semibold text-foreground tabular-nums">
+                        <span className="text-3xl font-semibold text-foreground tabular-nums tracking-tight leading-none">
                           {notifiableCount}
                         </span>
                         <span className="text-sm text-muted-foreground">
-                          investisseur{notifiableCount > 1 ? 's' : ''}
+                          investisseur{notifiableCount > 1 ? 's' : ''} à notifier
                         </span>
                       </div>
-                      <p className="text-xs text-muted-foreground mt-0.5">
+                      <p className="text-xs text-muted-foreground mt-1">
                         {selectedCriteria === 'not-consulted'
-                          ? "Investisseurs n'ayant pas encore consulté ce document"
-                          : 'Investisseurs ayant accès à ce document'}
+                          ? "N'ont pas encore consulté ce document"
+                          : 'Destinataires concernés par cette relance'}
                       </p>
                     </div>
                     <Button
@@ -587,24 +603,87 @@ export function DocumentRelaunchModal({
                     </Button>
                   </div>
 
-                  <Separator className="my-4" />
+                  {/* Consultation progress */}
+                  <div className="px-5 py-4 border-t border-border">
+                    <div className="flex items-center justify-between text-xs mb-2">
+                      <span className="font-medium text-foreground">
+                        Taux de consultation
+                      </span>
+                      <span className="tabular-nums font-semibold text-foreground">
+                        {genericConsultationRate}%
+                      </span>
+                    </div>
+                    <div
+                      className="h-2 rounded-full overflow-hidden"
+                      style={{ backgroundColor: '#F1F5F9' }}
+                      role="progressbar"
+                      aria-valuenow={genericConsultationRate}
+                      aria-valuemin={0}
+                      aria-valuemax={100}
+                    >
+                      <div
+                        className="h-full rounded-full transition-all duration-500"
+                        style={{
+                          width: `${genericConsultationRate}%`,
+                          background:
+                            'linear-gradient(90deg, var(--brand-primary) 0%, var(--brand-accent) 100%)',
+                        }}
+                      />
+                    </div>
+                    <p className="text-[11px] text-muted-foreground mt-2">
+                      <span className="font-medium text-foreground tabular-nums">
+                        {genericConsulted}
+                      </span>{' '}
+                      sur{' '}
+                      <span className="font-medium text-foreground tabular-nums">
+                        {mockGenericStats.totalInvestors}
+                      </span>{' '}
+                      investisseurs ont consulté le document
+                    </p>
+                  </div>
 
-                  <div className="grid grid-cols-2 gap-4">
-                    <div>
-                      <div className="text-[11px] uppercase tracking-wide text-muted-foreground mb-0.5">
-                        Total ayant accès
+                  {/* KPI grid */}
+                  <div className="grid grid-cols-3 border-t border-border divide-x divide-border">
+                    <div className="px-5 py-3">
+                      <div className="flex items-center gap-1.5 mb-1">
+                        <span
+                          className="w-1.5 h-1.5 rounded-full"
+                          style={{ backgroundColor: '#94A3B8' }}
+                        />
+                        <span className="text-[10px] uppercase tracking-wide text-muted-foreground font-medium">
+                          Total accès
+                        </span>
                       </div>
-                      <div className="text-sm font-semibold text-foreground">
-                        {mockGenericStats.totalInvestors} investisseurs
+                      <div className="text-lg font-semibold text-foreground tabular-nums leading-tight">
+                        {mockGenericStats.totalInvestors}
                       </div>
                     </div>
-                    <div>
-                      <div className="text-[11px] uppercase tracking-wide text-muted-foreground mb-0.5">
-                        Non consulté
+                    <div className="px-5 py-3">
+                      <div className="flex items-center gap-1.5 mb-1">
+                        <span
+                          className="w-1.5 h-1.5 rounded-full"
+                          style={{ backgroundColor: 'var(--brand-success)' }}
+                        />
+                        <span className="text-[10px] uppercase tracking-wide text-muted-foreground font-medium">
+                          Consultés
+                        </span>
                       </div>
-                      <div className="text-sm font-semibold text-foreground">
-                        {mockGenericStats.notConsulted} investisseur
-                        {mockGenericStats.notConsulted > 1 ? 's' : ''}
+                      <div className="text-lg font-semibold text-foreground tabular-nums leading-tight">
+                        {genericConsulted}
+                      </div>
+                    </div>
+                    <div className="px-5 py-3">
+                      <div className="flex items-center gap-1.5 mb-1">
+                        <span
+                          className="w-1.5 h-1.5 rounded-full"
+                          style={{ backgroundColor: 'var(--brand-warning)' }}
+                        />
+                        <span className="text-[10px] uppercase tracking-wide text-muted-foreground font-medium">
+                          Non consulté
+                        </span>
+                      </div>
+                      <div className="text-lg font-semibold text-foreground tabular-nums leading-tight">
+                        {mockGenericStats.notConsulted}
                       </div>
                     </div>
                   </div>
