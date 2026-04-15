@@ -119,22 +119,135 @@ type DoctrineItem = {
   implications: string[];
 };
 
-const colorTokens = [
-  { name: 'Noir brut', hex: '#000000', textClass: 'text-white' },
-  { name: 'Marron', hex: '#2E211C', textClass: 'text-white' },
-  { name: 'Vert de gris', hex: '#456B6C', textClass: 'text-white' },
-  { name: 'Bleu xxx', hex: '#8DB4B8', textClass: 'text-white' },
-  { name: 'Vert forêt', hex: '#3F7358', textClass: 'text-white' },
-  { name: 'Vert lumière', hex: '#B6E68A', textClass: 'text-[#213547]' },
-  { name: 'Beige clair', hex: '#B4AEA4', textClass: 'text-[#213547]' },
-  { name: 'Blanc pur', hex: '#FFFFFF', textClass: 'text-[#213547]' },
+type BrandColor = {
+  name: string;
+  hex: string;
+  textClass: string;
+  role?: string;
+};
+
+type BrandColorFamily = {
+  id: string;
+  name: string;
+  description: string;
+  colors: BrandColor[];
+};
+
+const brandColorFamilies: BrandColorFamily[] = [
+  {
+    id: 'blue',
+    name: 'Famille Bleu',
+    description: 'Famille principale de la marque. Bleu solide est la couleur primaire, déclinée vers des bleus plus doux pour l’interface.',
+    colors: [
+      { name: 'Bleu solide', hex: '#000E2B', textClass: 'text-white', role: 'Primary' },
+      { name: 'Bleu financier', hex: '#0A3D4A', textClass: 'text-white' },
+      { name: 'Vert de gris', hex: '#456B6C', textClass: 'text-white' },
+      { name: 'Bleu', hex: '#8DB4B8', textClass: 'text-white' },
+    ],
+  },
+  {
+    id: 'green',
+    name: 'Famille Vert',
+    description: 'Verts de croissance, de nature et de vitalité. Utilisés pour valoriser la performance et les signaux positifs.',
+    colors: [
+      { name: 'Vert croissance', hex: '#25563F', textClass: 'text-white' },
+      { name: 'Vert forêt', hex: '#3F7358', textClass: 'text-white' },
+      { name: 'Vert lumière', hex: '#B6E68A', textClass: 'text-[#213547]' },
+    ],
+  },
+  {
+    id: 'earth',
+    name: 'Famille Terre & Neutres',
+    description: 'Tons naturels et neutres pour ancrer la lecture, gérer les contrastes et habiller les surfaces support.',
+    colors: [
+      { name: 'Noir brut', hex: '#000000', textClass: 'text-white' },
+      { name: 'Marron', hex: '#2E211C', textClass: 'text-white' },
+      { name: 'Beige clair', hex: '#B4AEA4', textClass: 'text-[#213547]' },
+      { name: 'Écru papier', hex: '#D9D8CB', textClass: 'text-[#153943]' },
+    ],
+  },
 ];
 
-const primaryBrandColors = [
-  { name: 'Bleu solide', hex: '#000E2B', textClass: 'text-white' },
-  { name: 'Bleu financier', hex: '#0A3D4A', textClass: 'text-white' },
-  { name: 'Vert croissance', hex: '#25563F', textClass: 'text-white' },
-  { name: 'Écru papier', hex: '#D9D8CB', textClass: 'text-[#153943]' },
+type AntPalette = {
+  id: string;
+  name: string;
+  mood: string;
+  shades: string[];
+};
+
+const antColorPalettes: AntPalette[] = [
+  {
+    id: 'red',
+    name: 'Dust Red',
+    mood: 'Fighting Spirit, Unrestrained',
+    shades: ['#fff1f0', '#ffccc7', '#ffa39e', '#ff7875', '#ff4d4f', '#f5222d', '#cf1322', '#a8071a', '#820014', '#5c0011'],
+  },
+  {
+    id: 'volcano',
+    name: 'Volcano',
+    mood: 'Eye-catching, Surging',
+    shades: ['#fff2e8', '#ffd8bf', '#ffbb96', '#ff9c6e', '#ff7a45', '#fa541c', '#d4380d', '#ad2102', '#871400', '#610b00'],
+  },
+  {
+    id: 'orange',
+    name: 'Sunset Orange',
+    mood: 'Warm, Cheerful',
+    shades: ['#fff7e6', '#ffe7ba', '#ffd591', '#ffc069', '#ffa940', '#fa8c16', '#d46b08', '#ad4e00', '#873800', '#612500'],
+  },
+  {
+    id: 'gold',
+    name: 'Calendula Gold',
+    mood: 'Energetic, Positive',
+    shades: ['#fffbe6', '#fff1b8', '#ffe58f', '#ffd666', '#ffc53d', '#faad14', '#d48806', '#ad6800', '#874d00', '#613400'],
+  },
+  {
+    id: 'yellow',
+    name: 'Sunrise Yellow',
+    mood: 'Birth, Sunshine',
+    shades: ['#feffe6', '#ffffb8', '#fffb8f', '#fff566', '#ffec3d', '#fadb14', '#d4b106', '#ad8b00', '#876800', '#614700'],
+  },
+  {
+    id: 'lime',
+    name: 'Lime',
+    mood: 'Natural, Vitality',
+    shades: ['#fcffe6', '#f4ffb8', '#eaff8f', '#d3f261', '#bae637', '#a0d911', '#7cb305', '#5b8c00', '#3f6600', '#254000'],
+  },
+  {
+    id: 'green',
+    name: 'Polar Green',
+    mood: 'Healthy, Innovative',
+    shades: ['#f6ffed', '#d9f7be', '#b7eb8f', '#95de64', '#73d13d', '#52c41a', '#389e0d', '#237804', '#135200', '#092b00'],
+  },
+  {
+    id: 'cyan',
+    name: 'Cyan',
+    mood: 'Hope, Strong',
+    shades: ['#e6fffb', '#b5f5ec', '#87e8de', '#5cdbd3', '#36cfc9', '#13c2c2', '#08979c', '#006d75', '#00474f', '#002329'],
+  },
+  {
+    id: 'blue',
+    name: 'Daybreak Blue',
+    mood: 'Inclusive, Technology, Universal',
+    shades: ['#e6f4ff', '#bae0ff', '#91caff', '#69b1ff', '#4096ff', '#1677ff', '#0958d9', '#003eb3', '#002c8c', '#001d66'],
+  },
+  {
+    id: 'geekblue',
+    name: 'Geek Blue',
+    mood: 'Exploration, Research',
+    shades: ['#f0f5ff', '#d6e4ff', '#adc6ff', '#85a5ff', '#597ef7', '#2f54eb', '#1d39c4', '#10239e', '#061178', '#030852'],
+  },
+  {
+    id: 'purple',
+    name: 'Golden Purple',
+    mood: 'Elegant, Romantic',
+    shades: ['#f9f0ff', '#efdbff', '#d3adf7', '#b37feb', '#9254de', '#722ed1', '#531dab', '#391085', '#22075e', '#120338'],
+  },
+  {
+    id: 'magenta',
+    name: 'French Magenta',
+    mood: 'Bright, Emotional',
+    shades: ['#fff0f6', '#ffd6e7', '#ffadd2', '#ff85c0', '#f759ab', '#eb2f96', '#c41d7f', '#9e1068', '#780650', '#520339'],
+  },
 ];
 
 const functionalColors = [
@@ -1157,17 +1270,45 @@ const types: TimelineTypeMap<'created' | 'updated'> = {
       </section>
 
       <section className="rounded-2xl border border-[#D7E0DD] dark:border-[#1F2D2A] bg-white dark:bg-[#101615] p-6">
-        <h2 className="text-lg font-semibold text-[#1F3137] dark:text-[#E8F0EE] mb-4">4 couleurs principales (branding)</h2>
-        <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-4">
-          {primaryBrandColors.map((color) => (
-            <article key={color.name} className="rounded-xl overflow-hidden border border-[#D4DCDA] dark:border-[#1F2D2A]">
-              <div className={`h-28 p-4 ${color.textClass}`} style={{ backgroundColor: color.hex }}>
-                <p className="text-base font-semibold">{color.name}</p>
+        <h2 className="text-lg font-semibold text-[#1F3137] dark:text-[#E8F0EE] mb-2">Palette de marque — 3 familles</h2>
+        <p className="text-sm text-[#4F6166] dark:text-[#9DB2AE] mb-4">
+          Les couleurs de la marque sont organisées en 3 familles complémentaires. La 4<sup>e</sup> famille (Ant Design) couvre les usages fonctionnels ci-dessous.
+        </p>
+        <div className="space-y-6">
+          {brandColorFamilies.map((family) => (
+            <div
+              key={family.id}
+              className="rounded-xl border border-[#D7E0DD] dark:border-[#1F2D2A] p-4 bg-[#FCFDFC] dark:bg-[#101716]"
+            >
+              <div className="flex flex-col md:flex-row md:items-baseline md:justify-between gap-1 mb-3">
+                <p className="text-xs uppercase tracking-widest text-[#5A7376] dark:text-[#9DB2AE]">
+                  {family.name}
+                </p>
+                <p className="text-xs text-[#6A8084] dark:text-[#93AAA6] md:max-w-[70%] md:text-right">
+                  {family.description}
+                </p>
               </div>
-              <div className="p-3 bg-white dark:bg-[#0F1514] text-sm">
-                <code className="text-[#456B6C] dark:text-[#9BD1C5]">{color.hex}</code>
+              <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-4">
+                {family.colors.map((color) => (
+                  <article
+                    key={color.name}
+                    className="rounded-xl overflow-hidden border border-[#D4DCDA] dark:border-[#1F2D2A]"
+                  >
+                    <div className={`h-28 p-4 ${color.textClass}`} style={{ backgroundColor: color.hex }}>
+                      {color.role ? (
+                        <span className="inline-block text-[10px] uppercase tracking-widest font-semibold opacity-80 mb-1">
+                          {color.role}
+                        </span>
+                      ) : null}
+                      <p className="text-base font-semibold">{color.name}</p>
+                    </div>
+                    <div className="p-3 bg-white dark:bg-[#0F1514] text-sm">
+                      <code className="text-[#456B6C] dark:text-[#9BD1C5]">{color.hex}</code>
+                    </div>
+                  </article>
+                ))}
               </div>
-            </article>
+            </div>
           ))}
         </div>
       </section>
@@ -1209,17 +1350,50 @@ const types: TimelineTypeMap<'created' | 'updated'> = {
       </section>
 
       <section className="rounded-2xl border border-[#D7E0DD] dark:border-[#1F2D2A] bg-white dark:bg-[#101615] p-6">
-        <h2 className="text-lg font-semibold text-[#1F3137] dark:text-[#E8F0EE] mb-4">Couleurs de base</h2>
-        <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-4">
-          {colorTokens.map((color) => (
-            <article key={color.name} className="rounded-xl overflow-hidden border border-[#D4DCDA] dark:border-[#1F2D2A]">
-              <div className={`h-28 p-4 ${color.textClass}`} style={{ backgroundColor: color.hex }}>
-                <p className="text-base font-semibold">{color.name}</p>
+        <h2 className="text-lg font-semibold text-[#1F3137] dark:text-[#E8F0EE] mb-2">
+          Famille Ant Design — palette fonctionnelle
+        </h2>
+        <p className="text-sm text-[#4F6166] dark:text-[#9DB2AE] mb-4">
+          4<sup>e</sup> famille : la palette Ant Design couvre les usages fonctionnels (statuts, alertes, graphes, catégorisation). Chaque teinte dispose de 10 pas, de la plus claire (0) à la plus sombre (9). La teinte de référence est <span className="font-semibold">-5</span> pour les fonds et <span className="font-semibold">-6</span> pour le texte.
+        </p>
+        <div className="space-y-4">
+          {antColorPalettes.map((palette) => (
+            <div
+              key={palette.id}
+              className="rounded-xl border border-[#D7E0DD] dark:border-[#1F2D2A] p-4 bg-[#FCFDFC] dark:bg-[#101716]"
+            >
+              <div className="flex flex-col md:flex-row md:items-baseline md:justify-between gap-1 mb-3">
+                <div>
+                  <p className="text-sm font-semibold text-[#1F3137] dark:text-[#E8F0EE]">
+                    {palette.name}
+                  </p>
+                  <p className="text-xs text-[#6A8084] dark:text-[#93AAA6]">{palette.mood}</p>
+                </div>
+                <code className="text-[11px] text-[#5A7376] dark:text-[#9DB2AE]">{palette.id}-0 → {palette.id}-9</code>
               </div>
-              <div className="p-3 bg-white dark:bg-[#0F1514] text-sm">
-                <code className="text-[#456B6C] dark:text-[#9BD1C5]">{color.hex}</code>
+              <div className="grid grid-cols-5 md:grid-cols-10 gap-1.5">
+                {palette.shades.map((hex, index) => {
+                  const isLight = index <= 3;
+                  return (
+                    <div
+                      key={`${palette.id}-${index}`}
+                      className="rounded-md overflow-hidden border border-[#E3EAE8] dark:border-[#1F2D2A]"
+                      title={`${palette.id}-${index} ${hex}`}
+                    >
+                      <div
+                        className={`h-10 flex items-start justify-start p-1.5 ${isLight ? 'text-[#1F3137]' : 'text-white'}`}
+                        style={{ backgroundColor: hex }}
+                      >
+                        <span className="text-[10px] font-semibold opacity-90">{index}</span>
+                      </div>
+                      <div className="px-1.5 py-1 bg-white dark:bg-[#0F1514] text-[10px] font-mono text-[#456B6C] dark:text-[#9BD1C5] truncate">
+                        {hex}
+                      </div>
+                    </div>
+                  );
+                })}
               </div>
-            </article>
+            </div>
           ))}
         </div>
       </section>
