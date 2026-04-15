@@ -346,10 +346,7 @@ export function DocumentRelaunchModal({
           </div>
 
           <div className="space-y-3">
-            <div className="flex items-center justify-between">
-              <span className="text-sm font-medium text-gray-700 dark:text-gray-300">
-                Liste des destinataires ({filteredRecipients.length})
-              </span>
+            <div className="flex items-center justify-end">
               <button
                 onClick={handleExportCSV}
                 className="flex items-center gap-2 px-3 py-1.5 text-xs font-medium text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-100 transition-colors"
