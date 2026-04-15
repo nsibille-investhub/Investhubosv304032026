@@ -266,12 +266,16 @@ export function DocumentRelaunchModal({
             'p-0 gap-0 overflow-hidden flex flex-col',
             'w-full max-w-full sm:max-w-full',
             'max-h-[88vh]',
-            'bg-background',
+            'bg-white',
           )}
-          style={{ width: 'min(960px, 60vw)', maxWidth: 'min(960px, 60vw)' }}
+          style={{
+            width: 'min(960px, 60vw)',
+            maxWidth: 'min(960px, 60vw)',
+            backgroundColor: '#FFFFFF',
+          }}
         >
           {/* Header */}
-          <AlertDialogHeader className="px-6 py-5 border-b border-border">
+          <AlertDialogHeader className="px-6 py-5 border-b border-border bg-white" style={{ backgroundColor: '#FFFFFF' }}>
             <div className="flex items-start gap-3">
               <div
                 className="w-10 h-10 rounded-lg flex items-center justify-center flex-shrink-0 shadow-brand"
@@ -301,7 +305,7 @@ export function DocumentRelaunchModal({
           </AlertDialogHeader>
 
           {/* Body */}
-          <div className="flex-1 overflow-y-auto scrollbar-thin">
+          <div className="flex-1 overflow-y-auto scrollbar-thin bg-white" style={{ backgroundColor: '#FFFFFF' }}>
             <div className="px-6 py-5 space-y-5">
               {/* Document preview card (clickable) */}
               <button
@@ -314,7 +318,7 @@ export function DocumentRelaunchModal({
                   setIsPreviewOpen(true);
                 }}
                 className={cn(
-                  'group w-full flex items-center gap-3 px-4 py-3 rounded-md border border-border bg-background text-left',
+                  'group w-full flex items-center gap-3 px-4 py-3 rounded-md border border-border bg-white text-left',
                   'hover:bg-muted/40 hover:border-primary/40 focus-visible:outline-none focus-visible:ring-[3px] focus-visible:ring-ring/50',
                   'transition-colors',
                 )}
@@ -415,7 +419,7 @@ export function DocumentRelaunchModal({
                       'flex items-center gap-2.5 px-3 py-2.5 rounded-md border text-left transition-colors',
                       selectedCriteria === 'all'
                         ? 'border-primary bg-accent text-accent-foreground'
-                        : 'border-border bg-background hover:bg-muted/40',
+                        : 'border-border bg-white hover:bg-muted/40',
                     )}
                     aria-pressed={selectedCriteria === 'all'}
                   >
@@ -440,7 +444,7 @@ export function DocumentRelaunchModal({
                       'flex items-center gap-2.5 px-3 py-2.5 rounded-md border text-left transition-colors',
                       selectedCriteria === 'not-consulted'
                         ? 'border-primary bg-accent text-accent-foreground'
-                        : 'border-border bg-background hover:bg-muted/40',
+                        : 'border-border bg-white hover:bg-muted/40',
                     )}
                     aria-pressed={selectedCriteria === 'not-consulted'}
                   >
@@ -484,7 +488,7 @@ export function DocumentRelaunchModal({
                   <div className="rounded-md border border-border overflow-hidden">
                     <Table>
                       <TableHeader>
-                        <TableRow className="bg-background hover:bg-background border-b-border">
+                        <TableRow className="bg-white hover:bg-white border-b-border">
                           <TableHead className="px-3 text-xs text-muted-foreground font-medium">
                             Nom
                           </TableHead>
@@ -552,7 +556,7 @@ export function DocumentRelaunchModal({
                   </div>
                 </div>
               ) : (
-                <div className="rounded-md border border-border bg-background p-5">
+                <div className="rounded-md border border-border bg-white p-5">
                   <div className="flex items-center gap-4">
                     <div className="w-12 h-12 rounded-full bg-primary/10 flex items-center justify-center flex-shrink-0">
                       <Users className="w-6 h-6 text-primary" />
@@ -610,7 +614,7 @@ export function DocumentRelaunchModal({
           </div>
 
           {/* Footer */}
-          <div className="px-6 py-4 border-t border-border bg-background flex items-center justify-between gap-2">
+          <div className="px-6 py-4 border-t border-border bg-white flex items-center justify-between gap-2" style={{ backgroundColor: '#FFFFFF' }}>
             <Button variant="outline" onClick={onClose}>
               Retour
             </Button>

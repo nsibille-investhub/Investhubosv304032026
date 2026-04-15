@@ -468,10 +468,11 @@ export function DocumentActivityPanel({
             animate={{ x: 0 }}
             exit={{ x: '100%' }}
             transition={{ type: 'spring', damping: 30, stiffness: 300 }}
-            className="fixed top-0 right-0 h-full w-[560px] max-w-full bg-background text-foreground shadow-2xl z-50 flex flex-col border-l border-border"
+            className="fixed top-0 right-0 h-full w-[560px] max-w-full bg-white text-foreground shadow-2xl z-50 flex flex-col border-l border-border"
+            style={{ backgroundColor: '#FFFFFF' }}
           >
             {/* Header */}
-            <div className="flex items-start gap-3 px-6 py-5 border-b border-border">
+            <div className="flex items-start gap-3 px-6 py-5 border-b border-border bg-white" style={{ backgroundColor: '#FFFFFF' }}>
               <div
                 className="w-10 h-10 rounded-lg flex items-center justify-center flex-shrink-0 shadow-brand"
                 style={{
@@ -499,8 +500,8 @@ export function DocumentActivityPanel({
             </div>
 
             {/* Document info + engagement KPI + Relancer */}
-            <div className="px-6 py-4 space-y-3 bg-background border-b border-border">
-              <div className="flex items-center gap-2 rounded-md border border-border bg-background px-3 py-2">
+            <div className="px-6 py-4 space-y-3 bg-white border-b border-border" style={{ backgroundColor: '#FFFFFF' }}>
+              <div className="flex items-center gap-2 rounded-md border border-border bg-white px-3 py-2">
                 <FileText className="w-4 h-4 text-muted-foreground flex-shrink-0" />
                 <span className="text-sm font-medium text-foreground truncate">
                   {documentName}
@@ -510,7 +511,7 @@ export function DocumentActivityPanel({
                 </span>
               </div>
 
-              <div className="flex items-center gap-3 rounded-md border border-border bg-background px-3 py-2.5">
+              <div className="flex items-center gap-3 rounded-md border border-border bg-white px-3 py-2.5">
                 {/* Engagement visual */}
                 <div className="relative w-12 h-12 flex-shrink-0">
                   <svg className="w-12 h-12 -rotate-90" viewBox="0 0 36 36">
@@ -579,7 +580,7 @@ export function DocumentActivityPanel({
             </div>
 
             {/* Filters toolbar */}
-            <div className="px-6 py-3 border-b border-border flex items-center justify-between gap-2">
+            <div className="px-6 py-3 border-b border-border flex items-center justify-between gap-2 bg-white" style={{ backgroundColor: '#FFFFFF' }}>
               <div className="flex items-center gap-2">
                 <Button
                   variant="outline"
@@ -632,7 +633,8 @@ export function DocumentActivityPanel({
                   animate={{ height: 'auto', opacity: 1 }}
                   exit={{ height: 0, opacity: 0 }}
                   transition={{ duration: 0.18 }}
-                  className="overflow-hidden border-b border-border bg-background"
+                  className="overflow-hidden border-b border-border bg-white"
+                  style={{ backgroundColor: '#FFFFFF' }}
                 >
                   <div className="px-6 py-4 grid grid-cols-2 gap-3">
                     {/* Utilisateur */}
@@ -753,7 +755,7 @@ export function DocumentActivityPanel({
             </AnimatePresence>
 
             {/* Timeline */}
-            <div className="flex-1 overflow-y-auto scrollbar-thin">
+            <div className="flex-1 overflow-y-auto scrollbar-thin bg-white" style={{ backgroundColor: '#FFFFFF' }}>
               {isLoading ? (
                 <div className="flex items-center justify-center h-full">
                   <div className="text-center">
@@ -872,7 +874,7 @@ export function DocumentActivityPanel({
 
             {/* Pagination */}
             {!isLoading && filteredActivities.length > 0 && (
-              <div className="flex items-center justify-between gap-2 px-6 py-3 border-t border-border bg-background">
+              <div className="flex items-center justify-between gap-2 px-6 py-3 border-t border-border bg-white" style={{ backgroundColor: '#FFFFFF' }}>
                 <span className="text-xs text-muted-foreground">
                   <span className="font-medium text-foreground">{rangeStart}</span>
                   {'–'}
