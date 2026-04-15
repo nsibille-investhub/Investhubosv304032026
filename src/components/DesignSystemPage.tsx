@@ -54,6 +54,12 @@ import {
   MoreVertical,
   Copy,
   ChevronRight,
+  Send,
+  MailOpen,
+  MailCheck,
+  MousePointerClick,
+  AlertCircle,
+  Clock,
   type LucideIcon,
 } from 'lucide-react';
 import * as React from 'react';
@@ -100,6 +106,11 @@ import { FolderSelectionTreeviewDropdown } from './DocumentAddModal';
 import { GenericAudienceCard } from './GenericAudienceCard';
 import { SpecificAudience } from './SpecificAudience';
 import { ItemSelector } from './InternalResponsibleSelector';
+import {
+  Timeline,
+  type TimelineEvent,
+  type TimelineTypeMap,
+} from './ui/timeline';
 import type { Contact, LegalStructure } from '../utils/investorGenerator';
 
 type DoctrineItem = {
@@ -276,6 +287,99 @@ const doctrinePillars: DoctrineItem[] = [
       'Migration brique par brique, modules isolables/remplaçables.',
       'Coexistence v1/v3, rollback possible et migration transparente.',
     ],
+  },
+];
+
+type TimelineDemoType =
+  | 'notification_sent'
+  | 'notification_delivered'
+  | 'notification_opened'
+  | 'notification_clicked'
+  | 'notification_failed'
+  | 'document_viewed'
+  | 'document_downloaded';
+
+const timelineDemoTypes: TimelineTypeMap<TimelineDemoType> = {
+  notification_sent:      { label: 'Notification envoyée',   Icon: Send },
+  notification_delivered: { label: 'Notification délivrée',  Icon: MailCheck },
+  notification_failed:    { label: 'Notification échouée',   Icon: AlertCircle },
+  notification_opened:    { label: 'Notification ouverte',   Icon: MailOpen },
+  notification_clicked:   { label: 'Notification cliquée',   Icon: MousePointerClick },
+  document_viewed:        { label: 'Document consulté',      Icon: Eye },
+  document_downloaded:    { label: 'Document téléchargé',    Icon: Download },
+};
+
+const timelineDemoIso = (daysAgo: number, h: number, m: number) => {
+  const date = new Date();
+  date.setDate(date.getDate() - daysAgo);
+  date.setHours(h, m, 0, 0);
+  return date.toISOString();
+};
+
+const timelineDemoEvents: TimelineEvent<TimelineDemoType>[] = [
+  {
+    id: 'dsd1',
+    type: 'document_downloaded',
+    timestamp: timelineDemoIso(0, 14, 12),
+    actorName: 'Jean Dupont',
+    actorSublabel: 'jean.dupont@lvmh.fr',
+    actorRole: 'Investisseur',
+  },
+  {
+    id: 'dsd2',
+    type: 'document_viewed',
+    timestamp: timelineDemoIso(0, 12, 35),
+    actorName: 'Jean Dupont',
+    actorSublabel: 'jean.dupont@lvmh.fr',
+    actorRole: 'Investisseur',
+  },
+  {
+    id: 'dsd3',
+    type: 'notification_opened',
+    timestamp: timelineDemoIso(0, 12, 30),
+    actorName: 'Jean Dupont',
+    actorSublabel: 'jean.dupont@lvmh.fr',
+    actorRole: 'Investisseur',
+  },
+  {
+    id: 'dsd4',
+    type: 'notification_sent',
+    timestamp: timelineDemoIso(0, 11, 0),
+    actorName: 'Sophie Martin',
+    actorSublabel: 'sophie.martin@kering.com',
+    actorRole: 'Investisseur',
+  },
+  {
+    id: 'dsd5',
+    type: 'document_viewed',
+    timestamp: timelineDemoIso(1, 16, 42),
+    actorName: 'Sophie Martin',
+    actorSublabel: 'sophie.martin@kering.com',
+    actorRole: 'Investisseur',
+  },
+  {
+    id: 'dsd6',
+    type: 'notification_delivered',
+    timestamp: timelineDemoIso(1, 11, 2),
+    actorName: 'Thomas Bernard',
+    actorSublabel: 'thomas.bernard@axa-im.fr',
+    actorRole: 'Investisseur',
+  },
+  {
+    id: 'dsd7',
+    type: 'notification_failed',
+    timestamp: timelineDemoIso(1, 10, 58),
+    actorName: 'Claire Moreau',
+    actorSublabel: 'claire.moreau@bnp-wm.fr',
+    actorRole: 'Investisseur',
+  },
+  {
+    id: 'dsd8',
+    type: 'notification_opened',
+    timestamp: timelineDemoIso(2, 9, 30),
+    actorName: 'Antoine Leroy',
+    actorSublabel: 'a.leroy@conseil-patrimoine.fr',
+    actorRole: 'Conseiller',
   },
 ];
 
@@ -939,6 +1043,75 @@ export function DesignSystemPage() {
             subscription="SUB-002"
             className="text-sm text-[#4F6166] dark:text-[#B7CCC7]"
           />
+        </div>
+      </section>
+
+      <section className="rounded-2xl border border-[#D7E0DD] dark:border-[#1F2D2A] bg-white dark:bg-[#101615] p-6">
+        <div className="flex items-start gap-3 mb-4">
+          <div className="w-10 h-10 rounded-lg bg-[#F1F5F4] dark:bg-[#1C2624] flex items-center justify-center flex-shrink-0">
+            <Clock className="w-5 h-5 text-[#456B6C]" />
+          </div>
+          <div>
+            <h2 className="text-lg font-semibold text-[#1F3137] dark:text-[#E8F0EE] mb-1">Composant coeur — Timeline</h2>
+            <p className="text-sm text-[#4F6166] dark:text-[#9DB2AE] max-w-3xl">
+              Composant neutre réutilisable pour toute piste d&apos;activité / historique d&apos;événements
+              (Birdview, documents, souscriptions, logs, audit…). Fournit le regroupement par jour,
+              les filtres intégrés (acteur, type, rôle, recherche, plage de dates), l&apos;export CSV
+              et la pagination. Chaque appel fournit sa propre map <code className="text-xs px-1 py-0.5 rounded bg-[#F1F5F4] dark:bg-[#1C2624]">types → {'{ Icon, label }'}</code>
+              pour rester agnostique au domaine métier.
+            </p>
+          </div>
+        </div>
+
+        <div className="grid lg:grid-cols-3 gap-4 mb-4 text-sm">
+          <div className="rounded-xl border border-[#D7E0DD] dark:border-[#1F2D2A] p-4">
+            <p className="font-semibold mb-1">États couverts</p>
+            <p className="text-[#4F6166] dark:text-[#9DB2AE]">
+              loading / empty / filtré-vide / dataset — conforme à la doctrine V3 (chaque composant explicite ses états).
+            </p>
+          </div>
+          <div className="rounded-xl border border-[#D7E0DD] dark:border-[#1F2D2A] p-4">
+            <p className="font-semibold mb-1">Filtres natifs</p>
+            <p className="text-[#4F6166] dark:text-[#9DB2AE]">
+              Acteur, type d&apos;événement, rôle, recherche texte, plage de dates. Compteur
+              d&apos;événements et reset intégrés.
+            </p>
+          </div>
+          <div className="rounded-xl border border-[#D7E0DD] dark:border-[#1F2D2A] p-4">
+            <p className="font-semibold mb-1">Export CSV</p>
+            <p className="text-[#4F6166] dark:text-[#9DB2AE]">
+              Colonnes par défaut fournies, surchargeables via <code className="text-xs">exportColumns</code>.
+              Respecte les événements actuellement filtrés.
+            </p>
+          </div>
+        </div>
+
+        <div className="rounded-xl border border-[#D7E0DD] dark:border-[#1F2D2A] p-5 bg-white dark:bg-[#0F1716]">
+          <Timeline<TimelineDemoType>
+            events={timelineDemoEvents}
+            types={timelineDemoTypes}
+            exportFileName="timeline-demo"
+            pageSize={6}
+          />
+        </div>
+
+        <div className="mt-4 rounded-lg border border-dashed border-[#C5D4CF] dark:border-[#2C413B] px-4 py-3 text-sm text-[#4F6166] dark:text-[#9DB2AE]">
+          <p className="font-semibold mb-1 text-[#1F3137] dark:text-[#E8F0EE]">Usage</p>
+          <pre className="text-xs bg-[#F8FAFA] dark:bg-[#0B0D0D] p-3 rounded overflow-x-auto">
+{`import { Timeline, type TimelineEvent, type TimelineTypeMap } from '@/components/ui/timeline';
+
+const types: TimelineTypeMap<'created' | 'updated'> = {
+  created: { label: 'Création', Icon: Plus },
+  updated: { label: 'Mise à jour', Icon: Pencil },
+};
+
+<Timeline
+  events={events}
+  types={types}
+  pageSize={10}
+  exportFileName="historique-souscription-SUB-042"
+/>`}
+          </pre>
         </div>
       </section>
 
