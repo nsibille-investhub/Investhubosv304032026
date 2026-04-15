@@ -484,7 +484,7 @@ export function DocumentRelaunchModal({
                   <div className="rounded-md border border-border overflow-hidden">
                     <Table>
                       <TableHeader>
-                        <TableRow className="bg-muted/50 hover:bg-muted/50">
+                        <TableRow className="bg-background hover:bg-background border-b-border">
                           <TableHead className="px-3 text-xs text-muted-foreground font-medium">
                             Nom
                           </TableHead>
@@ -552,7 +552,7 @@ export function DocumentRelaunchModal({
                   </div>
                 </div>
               ) : (
-                <div className="rounded-md border border-border bg-muted/30 p-5">
+                <div className="rounded-md border border-border bg-background p-5">
                   <div className="flex items-center gap-4">
                     <div className="w-12 h-12 rounded-full bg-primary/10 flex items-center justify-center flex-shrink-0">
                       <Users className="w-6 h-6 text-primary" />
@@ -610,7 +610,7 @@ export function DocumentRelaunchModal({
           </div>
 
           {/* Footer */}
-          <div className="px-6 py-4 border-t border-border bg-muted/30 flex items-center justify-between gap-2">
+          <div className="px-6 py-4 border-t border-border bg-background flex items-center justify-between gap-2">
             <Button variant="outline" onClick={onClose}>
               Retour
             </Button>

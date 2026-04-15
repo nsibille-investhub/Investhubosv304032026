@@ -499,7 +499,7 @@ export function DocumentActivityPanel({
             </div>
 
             {/* Document info + engagement KPI + Relancer */}
-            <div className="px-6 py-4 space-y-3 bg-muted/40 border-b border-border">
+            <div className="px-6 py-4 space-y-3 bg-background border-b border-border">
               <div className="flex items-center gap-2 rounded-md border border-border bg-background px-3 py-2">
                 <FileText className="w-4 h-4 text-muted-foreground flex-shrink-0" />
                 <span className="text-sm font-medium text-foreground truncate">
@@ -632,7 +632,7 @@ export function DocumentActivityPanel({
                   animate={{ height: 'auto', opacity: 1 }}
                   exit={{ height: 0, opacity: 0 }}
                   transition={{ duration: 0.18 }}
-                  className="overflow-hidden border-b border-border bg-muted/30"
+                  className="overflow-hidden border-b border-border bg-background"
                 >
                   <div className="px-6 py-4 grid grid-cols-2 gap-3">
                     {/* Utilisateur */}
@@ -872,7 +872,7 @@ export function DocumentActivityPanel({
 
             {/* Pagination */}
             {!isLoading && filteredActivities.length > 0 && (
-              <div className="flex items-center justify-between gap-2 px-6 py-3 border-t border-border bg-muted/30">
+              <div className="flex items-center justify-between gap-2 px-6 py-3 border-t border-border bg-background">
                 <span className="text-xs text-muted-foreground">
                   <span className="font-medium text-foreground">{rangeStart}</span>
                   {'–'}
