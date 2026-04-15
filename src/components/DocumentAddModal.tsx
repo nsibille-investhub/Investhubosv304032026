@@ -4,7 +4,6 @@ import { Button } from './ui/button';
 import { Input } from './ui/input';
 import { Label } from './ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from './ui/select';
-import { Checkbox } from './ui/checkbox';
 import { Switch } from './ui/switch';
 import { Tabs, TabsList, TabsTrigger, TabsContent } from './ui/tabs';
 import { Popover, PopoverContent, PopoverTrigger } from './ui/popover';
@@ -14,6 +13,9 @@ import {
   DropdownMenuContent,
   DropdownMenuTrigger,
 } from './ui/dropdown-menu';
+import { ModernMultiSelect, type MultiSelectOption } from './ui/modern-multiselect';
+import { Avatar, AvatarFallback } from './ui/avatar';
+import { Badge } from './ui/badge';
 import { toast } from 'sonner';
 import { ChevronDown, ChevronRight, UploadCloud, FileCheck2, Download, Users2, UserRound, Mail, Eye, Trash2, Check, Folder, FileText, Bell, ShieldCheck, Clock3, CheckCircle2, Star } from 'lucide-react';
 import { Document } from '../utils/documentMockData';
@@ -507,18 +509,31 @@ export function DocumentAddModal({ isOpen, onClose, folderOptions, defaultFolder
     };
   }, [targetedInvestors]);
 
-  const selectedValidators = useMemo(() => {
-    return TEAMS.filter((team) => validationTeams.includes(team.id)).flatMap((team) =>
-      team.validators.map((validator) => ({ team: team.name, validator }))
-    );
-  }, [validationTeams]);
+  const teamOptions: MultiSelectOption[] = useMemo(
+    () => TEAMS.map((team) => ({ value: team.id, label: team.name, icon: Users2 })),
+    []
+  );
+
+  const selectedTeamsDetailed = useMemo(
+    () => TEAMS.filter((team) => validationTeams.includes(team.id)),
+    [validationTeams]
+  );
+
+  const totalValidators = useMemo(
+    () => selectedTeamsDetailed.reduce((sum, team) => sum + team.validators.length, 0),
+    [selectedTeamsDetailed]
+  );
+
+  const getInitials = (name: string) =>
+    name
+      .split(/[\s.]+/)
+      .filter(Boolean)
+      .map((part) => part[0]?.toUpperCase() || '')
+      .slice(0, 2)
+      .join('');
 
   const updateVersion = (language: 'fr' | 'en', patch: Partial<DocumentVersion>) => {
     setVersions((prev) => prev.map((version) => (version.language === language ? { ...version, ...patch } : version)));
-  };
-
-  const toggleArrayValue = (list: string[], value: string, setter: (next: string[]) => void) => {
-    setter(list.includes(value) ? list.filter((item) => item !== value) : [...list, value]);
   };
 
   const handleSubmit = () => {
@@ -1039,23 +1054,80 @@ export function DocumentAddModal({ isOpen, onClose, folderOptions, defaultFolder
               </>
             ) : (
               <>
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-2">
-                  {TEAMS.map((team) => (
-                    <label key={team.id} className="flex items-center gap-2 text-sm border rounded-md p-2">
-                      <Checkbox
-                        checked={validationTeams.includes(team.id)}
-                        onCheckedChange={() => toggleArrayValue(validationTeams, team.id, setValidationTeams)}
-                      />
-                      {team.name}
-                    </label>
-                  ))}
+                <div className="space-y-2">
+                  <Label className="text-sm font-medium text-slate-800">Équipes de validation</Label>
+                  <ModernMultiSelect
+                    options={teamOptions}
+                    value={validationTeams}
+                    onChange={setValidationTeams}
+                    placeholder="Sélectionner une ou plusieurs équipes…"
+                    searchPlaceholder="Rechercher une équipe…"
+                    maxDisplay={4}
+                  />
+                  <p className="text-xs text-slate-500">
+                    Sélectionnez les équipes qui devront approuver ce document. Tous les validateurs de chaque équipe seront notifiés.
+                  </p>
                 </div>
-                <div className="border rounded-xl p-3 text-sm space-y-1">
-                  <p className="font-medium">Détail des validateurs</p>
-                  {selectedValidators.length === 0 ? (
-                    <p className="text-gray-500">Aucune équipe sélectionnée.</p>
+
+                <div className="rounded-xl border border-slate-200 bg-white p-4 space-y-3">
+                  <div className="flex items-center justify-between gap-2">
+                    <div className="flex items-center gap-2">
+                      <div className="w-8 h-8 rounded-lg bg-blue-100 text-blue-700 flex items-center justify-center">
+                        <Users2 className="w-4 h-4" />
+                      </div>
+                      <div>
+                        <p className="font-medium text-slate-900 text-sm">Détail des validateurs</p>
+                        <p className="text-xs text-slate-500">
+                          Personnes qui recevront la demande de validation
+                        </p>
+                      </div>
+                    </div>
+                    {selectedTeamsDetailed.length > 0 && (
+                      <Badge variant="outline" className="bg-blue-50 border-blue-200 text-blue-700">
+                        {totalValidators} {totalValidators > 1 ? 'validateurs' : 'validateur'} · {selectedTeamsDetailed.length} {selectedTeamsDetailed.length > 1 ? 'équipes' : 'équipe'}
+                      </Badge>
+                    )}
+                  </div>
+
+                  {selectedTeamsDetailed.length === 0 ? (
+                    <div className="flex flex-col items-center justify-center gap-2 rounded-lg border border-dashed border-slate-200 bg-slate-50/60 py-8 text-center">
+                      <Users2 className="w-6 h-6 text-slate-400" />
+                      <p className="text-sm font-medium text-slate-700">Aucune équipe sélectionnée</p>
+                      <p className="text-xs text-slate-500">
+                        Choisissez une ou plusieurs équipes ci-dessus pour afficher leurs validateurs.
+                      </p>
+                    </div>
                   ) : (
-                    selectedValidators.map((item) => <p key={`${item.team}-${item.validator}`}>• {item.validator} ({item.team})</p>)
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                      {selectedTeamsDetailed.map((team) => (
+                        <div
+                          key={team.id}
+                          className="rounded-lg border border-slate-200 bg-slate-50/50 p-3 space-y-2"
+                        >
+                          <div className="flex items-center justify-between gap-2">
+                            <p className="text-sm font-semibold text-slate-800">{team.name}</p>
+                            <Badge variant="outline" className="bg-white border-slate-200 text-slate-600 text-[11px]">
+                              {team.validators.length} {team.validators.length > 1 ? 'validateurs' : 'validateur'}
+                            </Badge>
+                          </div>
+                          <ul className="space-y-1.5">
+                            {team.validators.map((validator) => (
+                              <li
+                                key={`${team.id}-${validator}`}
+                                className="flex items-center gap-2 rounded-md bg-white border border-slate-200 px-2 py-1.5"
+                              >
+                                <Avatar className="w-7 h-7">
+                                  <AvatarFallback className="text-[10px] font-semibold bg-gradient-to-r from-black to-[#0F323D] text-white">
+                                    {getInitials(validator)}
+                                  </AvatarFallback>
+                                </Avatar>
+                                <span className="text-sm text-slate-800 truncate">{validator}</span>
+                              </li>
+                            ))}
+                          </ul>
+                        </div>
+                      ))}
+                    </div>
                   )}
                 </div>
               </>
