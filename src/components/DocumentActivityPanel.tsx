@@ -195,6 +195,82 @@ const groupByDay = (events: ActivityEvent[]) => {
 };
 
 // ---------------------------------------------------------------------------
+// CSV export
+// ---------------------------------------------------------------------------
+
+const userTypeLabel: Record<ActivityEvent['userType'], string> = {
+  Investor: 'Investisseur',
+  Contact: 'Contact',
+  Advisor: 'Conseiller',
+};
+
+/** RFC 4180-ish quoting for a single CSV field. */
+const csvField = (value: string | undefined | null) => {
+  const v = value ?? '';
+  if (/[",;\n\r]/.test(v)) {
+    return `"${v.replace(/"/g, '""')}"`;
+  }
+  return v;
+};
+
+const sanitizeFilename = (name: string) =>
+  name
+    .replace(/\.[A-Za-z0-9]+$/, '')
+    .replace(/[^A-Za-z0-9-_]+/g, '-')
+    .replace(/^-+|-+$/g, '')
+    .slice(0, 80) || 'document';
+
+const buildCsv = (events: ActivityEvent[]) => {
+  const headers = [
+    'Date',
+    'Heure',
+    "Type d'événement",
+    'Utilisateur',
+    'Email',
+    'Type utilisateur',
+    'Investisseur principal',
+  ];
+  const lines = [headers.map(csvField).join(';')];
+
+  for (const ev of events) {
+    const d = new Date(ev.timestamp);
+    const date = d.toLocaleDateString('fr-FR');
+    const time = d.toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' });
+    lines.push(
+      [
+        csvField(date),
+        csvField(time),
+        csvField(eventMeta[ev.type].label),
+        csvField(ev.userName),
+        csvField(ev.userEmail),
+        csvField(userTypeLabel[ev.userType]),
+        csvField(ev.primaryInvestor ?? ''),
+      ].join(';'),
+    );
+  }
+
+  // Prepend BOM so Excel opens UTF-8 properly.
+  return '\ufeff' + lines.join('\r\n');
+};
+
+const downloadCsv = (events: ActivityEvent[], documentName: string) => {
+  if (typeof document === 'undefined') return;
+  const csv = buildCsv(events);
+  const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+  const url = URL.createObjectURL(blob);
+  const today = new Date().toISOString().slice(0, 10);
+  const link = document.createElement('a');
+  link.href = url;
+  link.download = `piste-activite-${sanitizeFilename(documentName)}-${today}.csv`;
+  link.style.display = 'none';
+  document.body.appendChild(link);
+  link.click();
+  document.body.removeChild(link);
+  // Defer revocation so Safari has time to trigger the download.
+  setTimeout(() => URL.revokeObjectURL(url), 1000);
+};
+
+// ---------------------------------------------------------------------------
 // Filters
 // ---------------------------------------------------------------------------
 
@@ -504,27 +580,41 @@ export function DocumentActivityPanel({
 
             {/* Filters toolbar */}
             <div className="px-6 py-3 border-b border-border flex items-center justify-between gap-2">
-              <Button
-                variant="outline"
-                size="sm"
-                className="gap-2"
-                onClick={() => setShowFilters((v) => !v)}
-                aria-expanded={showFilters}
-              >
-                <SlidersHorizontal className="w-3.5 h-3.5" />
-                Filtres
-                {filtersActive && (
-                  <span className="ml-0.5 inline-flex items-center justify-center min-w-[18px] h-[18px] rounded-full bg-primary text-primary-foreground text-[10px] font-semibold px-1">
-                    {[
-                      filters.userName ? 1 : 0,
-                      filters.email.trim() ? 1 : 0,
-                      filters.type !== 'all' ? 1 : 0,
-                      filters.dateFrom ? 1 : 0,
-                      filters.dateTo ? 1 : 0,
-                    ].reduce((a, b) => a + b, 0)}
-                  </span>
-                )}
-              </Button>
+              <div className="flex items-center gap-2">
+                <Button
+                  variant="outline"
+                  size="sm"
+                  className="gap-2"
+                  onClick={() => setShowFilters((v) => !v)}
+                  aria-expanded={showFilters}
+                >
+                  <SlidersHorizontal className="w-3.5 h-3.5" />
+                  Filtres
+                  {filtersActive && (
+                    <span className="ml-0.5 inline-flex items-center justify-center min-w-[18px] h-[18px] rounded-full bg-primary text-primary-foreground text-[10px] font-semibold px-1">
+                      {[
+                        filters.userName ? 1 : 0,
+                        filters.email.trim() ? 1 : 0,
+                        filters.type !== 'all' ? 1 : 0,
+                        filters.dateFrom ? 1 : 0,
+                        filters.dateTo ? 1 : 0,
+                      ].reduce((a, b) => a + b, 0)}
+                    </span>
+                  )}
+                </Button>
+
+                <Button
+                  variant="outline"
+                  size="sm"
+                  className="gap-2"
+                  onClick={() => downloadCsv(filteredActivities, documentName)}
+                  disabled={filteredActivities.length === 0}
+                  title="Télécharger la piste d'activité au format CSV"
+                >
+                  <Download className="w-3.5 h-3.5" />
+                  Exporter CSV
+                </Button>
+              </div>
 
               <span className="text-xs text-muted-foreground">
                 {filteredActivities.length} événement{filteredActivities.length > 1 ? 's' : ''}
