@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
 import { 
   X, 
@@ -15,15 +15,21 @@ import { Button } from './ui/button';
 import { Badge } from './ui/badge';
 import { cn } from './ui/utils';
 import { DocumentRelaunchModal } from './DocumentRelaunchModal';
+import { Input } from './ui/input';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from './ui/select';
+import { DatePicker } from './ui/date-picker';
+import { DataPagination } from './ui/data-pagination';
 
 interface ActivityEvent {
   id: string;
   type: 'notification_sent' | 'notification_delivered' | 'notification_failed' | 'notification_opened' | 'notification_clicked' | 'document_viewed' | 'document_downloaded';
   userName: string;
+  userEmail: string;
   userType: 'Investor' | 'Contact' | 'Advisor';
-  timestamp: string;
+  timestamp: string; // ISO
   metadata?: {
-    contactName?: string;
+    mainInvestor?: string;
+    documentMode: 'generic' | 'nominative';
   };
 }
 
@@ -35,84 +41,68 @@ interface DocumentActivityPanelProps {
   isNominatif?: boolean;
 }
 
-// Mock data generator
-const generateMockActivities = (): ActivityEvent[] => {
-  const events: ActivityEvent[] = [
-    {
-      id: '1',
-      type: 'document_viewed',
-      userName: 'Jean Dupont',
-      userType: 'Investor',
-      timestamp: '12:35',
-    },
-    {
-      id: '2',
-      type: 'document_viewed',
-      userName: 'Jean Dupont',
-      userType: 'Investor',
-      timestamp: '12:30',
-    },
-    {
-      id: '3',
-      type: 'notification_opened',
-      userName: 'Jean Dupont',
-      userType: 'Investor',
-      timestamp: '12:30',
-    },
-    {
-      id: '4',
-      type: 'notification_sent',
-      userName: 'Pierre Dupont',
-      userType: 'Contact',
-      timestamp: '11:00',
-      metadata: {
-        contactName: 'Contact'
-      }
-    },
-    {
-      id: '5',
-      type: 'notification_sent',
-      userName: 'Marie Dupont',
-      userType: 'Contact',
-      timestamp: '11:00',
-      metadata: {
-        contactName: 'Contact'
-      }
-    },
-    {
-      id: '6',
-      type: 'notification_sent',
-      userName: 'Sophie Martin',
-      userType: 'Investor',
-      timestamp: '11:00',
-    },
-    {
-      id: '7',
-      type: 'notification_sent',
-      userName: 'Luc Martin',
-      userType: 'Contact',
-      timestamp: '11:00',
-      metadata: {
-        contactName: 'Contact'
-      }
-    },
-    {
-      id: '8',
-      type: 'notification_sent',
-      userName: 'Thomas Bernard',
-      userType: 'Investor',
-      timestamp: '11:00',
-    },
-  ];
-  
-  return events;
+const formatDate = (isoDate: string) => {
+  const date = new Date(isoDate);
+  return new Intl.DateTimeFormat('fr-FR', {
+    day: '2-digit',
+    month: '2-digit',
+    year: 'numeric',
+  }).format(date);
 };
 
-// Mock engagement data
-const mockEngagementData = {
-  totalRecipients: 6, // 3 investisseurs + 3 contacts
-  viewedRecipients: 4, // Nombre d'investisseurs/contacts ayant consulté
-  engagementRate: 67, // Pourcentage
+const formatTime = (isoDate: string) => {
+  const date = new Date(isoDate);
+  return new Intl.DateTimeFormat('fr-FR', {
+    hour: '2-digit',
+    minute: '2-digit',
+  }).format(date);
+};
+
+const generateMockActivities = (isNominatif: boolean, documentName: string): ActivityEvent[] => {
+  const docMode: ActivityEvent['metadata']['documentMode'] = isNominatif ? 'nominative' : 'generic';
+  const baseDate = '2026-04-15';
+
+  if (isNominatif) {
+    return [
+      { id: '1', type: 'notification_sent', userName: 'Jean Dupont', userEmail: 'jean.dupont@alpheon-capital.com', userType: 'Investor', timestamp: `${baseDate}T09:00:00Z`, metadata: { documentMode: docMode } },
+      { id: '2', type: 'notification_opened', userName: 'Jean Dupont', userEmail: 'jean.dupont@alpheon-capital.com', userType: 'Investor', timestamp: `${baseDate}T09:04:00Z`, metadata: { documentMode: docMode } },
+      { id: '3', type: 'document_viewed', userName: 'Jean Dupont', userEmail: 'jean.dupont@alpheon-capital.com', userType: 'Investor', timestamp: `${baseDate}T09:06:00Z`, metadata: { documentMode: docMode } },
+      { id: '4', type: 'notification_sent', userName: 'Luc Martin', userEmail: 'luc.martin@novacrest.com', userType: 'Contact', timestamp: `${baseDate}T09:11:00Z`, metadata: { mainInvestor: 'Sophie Martin', documentMode: docMode } },
+      { id: '5', type: 'notification_delivered', userName: 'Luc Martin', userEmail: 'luc.martin@novacrest.com', userType: 'Contact', timestamp: `${baseDate}T09:12:00Z`, metadata: { mainInvestor: 'Sophie Martin', documentMode: docMode } },
+      { id: '6', type: 'notification_sent', userName: 'Pierre Bernard', userEmail: 'pierre.bernard@helios-am.fr', userType: 'Contact', timestamp: `${baseDate}T09:20:00Z`, metadata: { mainInvestor: 'Thomas Bernard', documentMode: docMode } },
+      { id: '7', type: 'notification_opened', userName: 'Pierre Bernard', userEmail: 'pierre.bernard@helios-am.fr', userType: 'Contact', timestamp: `${baseDate}T09:24:00Z`, metadata: { mainInvestor: 'Thomas Bernard', documentMode: docMode } },
+      { id: '8', type: 'document_viewed', userName: 'Pierre Bernard', userEmail: 'pierre.bernard@helios-am.fr', userType: 'Contact', timestamp: `${baseDate}T09:28:00Z`, metadata: { mainInvestor: 'Thomas Bernard', documentMode: docMode } },
+      { id: '9', type: 'notification_sent', userName: 'Sophie Martin', userEmail: 'sophie.martin@novacrest.com', userType: 'Investor', timestamp: `${baseDate}T09:32:00Z`, metadata: { documentMode: docMode } },
+      { id: '10', type: 'notification_failed', userName: 'Marie Durand', userEmail: 'marie.durand@bluepeak.vc', userType: 'Investor', timestamp: `${baseDate}T09:39:00Z`, metadata: { documentMode: docMode } },
+      { id: '11', type: 'notification_clicked', userName: 'Jean Dupont', userEmail: 'jean.dupont@alpheon-capital.com', userType: 'Investor', timestamp: `${baseDate}T09:42:00Z`, metadata: { documentMode: docMode } },
+      { id: '12', type: 'document_downloaded', userName: 'Pierre Bernard', userEmail: 'pierre.bernard@helios-am.fr', userType: 'Contact', timestamp: `${baseDate}T09:55:00Z`, metadata: { mainInvestor: 'Thomas Bernard', documentMode: docMode } },
+    ];
+  }
+
+  return [
+    { id: '1', type: 'notification_sent', userName: 'Sophie Martin', userEmail: 'sophie.martin@novacrest.com', userType: 'Investor', timestamp: `${baseDate}T10:00:00Z`, metadata: { documentMode: docMode } },
+    { id: '2', type: 'notification_opened', userName: 'Sophie Martin', userEmail: 'sophie.martin@novacrest.com', userType: 'Investor', timestamp: `${baseDate}T10:05:00Z`, metadata: { documentMode: docMode } },
+    { id: '3', type: 'document_viewed', userName: 'Sophie Martin', userEmail: 'sophie.martin@novacrest.com', userType: 'Investor', timestamp: `${baseDate}T10:08:00Z`, metadata: { documentMode: docMode } },
+    { id: '4', type: 'notification_sent', userName: 'Thomas Bernard', userEmail: 'thomas.bernard@helios-am.fr', userType: 'Investor', timestamp: `${baseDate}T10:12:00Z`, metadata: { documentMode: docMode } },
+    { id: '5', type: 'notification_opened', userName: 'Thomas Bernard', userEmail: 'thomas.bernard@helios-am.fr', userType: 'Investor', timestamp: `${baseDate}T10:15:00Z`, metadata: { documentMode: docMode } },
+    { id: '6', type: 'document_viewed', userName: 'Thomas Bernard', userEmail: 'thomas.bernard@helios-am.fr', userType: 'Investor', timestamp: `${baseDate}T10:17:00Z`, metadata: { documentMode: docMode } },
+    { id: '7', type: 'notification_sent', userName: 'Jean Dupont', userEmail: 'jean.dupont@alpheon-capital.com', userType: 'Investor', timestamp: `${baseDate}T10:20:00Z`, metadata: { documentMode: docMode } },
+    { id: '8', type: 'notification_failed', userName: 'Camille Leroy', userEmail: 'camille.leroy@altaris.fr', userType: 'Investor', timestamp: `${baseDate}T10:23:00Z`, metadata: { documentMode: docMode } },
+    { id: '9', type: 'notification_delivered', userName: 'Aline Moreau', userEmail: 'aline.moreau@equinoxe-cp.fr', userType: 'Advisor', timestamp: `${baseDate}T10:24:00Z`, metadata: { documentMode: docMode } },
+    { id: '10', type: 'notification_opened', userName: 'Aline Moreau', userEmail: 'aline.moreau@equinoxe-cp.fr', userType: 'Advisor', timestamp: `${baseDate}T10:29:00Z`, metadata: { documentMode: docMode } },
+    { id: '11', type: 'document_downloaded', userName: 'Sophie Martin', userEmail: 'sophie.martin@novacrest.com', userType: 'Investor', timestamp: `${baseDate}T10:31:00Z`, metadata: { documentMode: docMode } },
+    { id: '12', type: 'notification_clicked', userName: 'Thomas Bernard', userEmail: 'thomas.bernard@helios-am.fr', userType: 'Investor', timestamp: `${baseDate}T10:35:00Z`, metadata: { documentMode: docMode } },
+    { id: '13', type: 'document_viewed', userName: 'Jean Dupont', userEmail: 'jean.dupont@alpheon-capital.com', userType: 'Investor', timestamp: `${baseDate}T10:37:00Z`, metadata: { documentMode: docMode } },
+    { id: '14', type: 'notification_sent', userName: 'Nora Petit', userEmail: 'nora.petit@meridian-partners.fr', userType: 'Investor', timestamp: `${baseDate}T10:40:00Z`, metadata: { documentMode: docMode } },
+    { id: '15', type: 'notification_opened', userName: 'Nora Petit', userEmail: 'nora.petit@meridian-partners.fr', userType: 'Investor', timestamp: `${baseDate}T10:43:00Z`, metadata: { documentMode: docMode } },
+    { id: '16', type: 'document_viewed', userName: 'Nora Petit', userEmail: 'nora.petit@meridian-partners.fr', userType: 'Investor', timestamp: `${baseDate}T10:44:00Z`, metadata: { documentMode: docMode } },
+  ].map((event) => ({
+    ...event,
+    metadata: {
+      ...event.metadata,
+      documentMode: documentName.toLowerCase().includes('cap') ? 'generic' : docMode,
+    },
+  }));
 };
 
 export function DocumentActivityPanel({
@@ -125,17 +115,25 @@ export function DocumentActivityPanel({
   const [activities, setActivities] = useState<ActivityEvent[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const [isRelaunchModalOpen, setIsRelaunchModalOpen] = useState(false);
+  const [selectedUser, setSelectedUser] = useState<string>('all');
+  const [selectedEventType, setSelectedEventType] = useState<string>('all');
+  const [emailFilter, setEmailFilter] = useState('');
+  const [startDate, setStartDate] = useState<Date | undefined>(undefined);
+  const [endDate, setEndDate] = useState<Date | undefined>(undefined);
+  const [currentPage, setCurrentPage] = useState(1);
+  const [pageSize, setPageSize] = useState(6);
 
   useEffect(() => {
     if (isOpen) {
       setIsLoading(true);
       // Simulate API call
       setTimeout(() => {
-        setActivities(generateMockActivities());
+        setActivities(generateMockActivities(isNominatif, documentName));
+        setCurrentPage(1);
         setIsLoading(false);
       }, 300);
     }
-  }, [isOpen, documentId]);
+  }, [isOpen, documentId, isNominatif, documentName]);
 
   const getEventIcon = (type: ActivityEvent['type']) => {
     switch (type) {
@@ -199,6 +197,82 @@ export function DocumentActivityPanel({
     return name.substring(0, 2).toUpperCase();
   };
 
+  const filteredActivities = useMemo(() => {
+    return activities
+      .filter((event) => selectedUser === 'all' || event.userName === selectedUser)
+      .filter((event) => selectedEventType === 'all' || event.type === selectedEventType)
+      .filter((event) => event.userEmail.toLowerCase().includes(emailFilter.toLowerCase().trim()))
+      .filter((event) => {
+        const eventDate = new Date(event.timestamp);
+        if (startDate) {
+          const startOfDay = new Date(startDate);
+          startOfDay.setHours(0, 0, 0, 0);
+          if (eventDate < startOfDay) {
+            return false;
+          }
+        }
+        if (endDate) {
+          const endOfDay = new Date(endDate);
+          endOfDay.setHours(23, 59, 59, 999);
+          if (eventDate > endOfDay) {
+            return false;
+          }
+        }
+        return true;
+      });
+  }, [activities, selectedUser, selectedEventType, emailFilter, startDate, endDate]);
+
+  const paginatedActivities = useMemo(() => {
+    const startIndex = (currentPage - 1) * pageSize;
+    return filteredActivities.slice(startIndex, startIndex + pageSize);
+  }, [filteredActivities, currentPage, pageSize]);
+
+  const totalPages = Math.max(1, Math.ceil(filteredActivities.length / pageSize));
+
+  useEffect(() => {
+    if (currentPage > totalPages) {
+      setCurrentPage(totalPages);
+    }
+  }, [currentPage, totalPages]);
+
+  const engagementData = useMemo(() => {
+    const viewers = new Set(
+      activities
+        .filter((event) => event.type === 'document_viewed')
+        .map((event) => event.userEmail)
+    );
+
+    if (isNominatif) {
+      const hasAtLeastOneView = viewers.size > 0;
+      return {
+        title: "Taux d'engagement (nominatif)",
+        detail: hasAtLeastOneView ? 'Consulté par au moins un contact' : 'Aucune consultation',
+        percentage: hasAtLeastOneView ? 100 : 0,
+      };
+    }
+
+    const investorRecipients = new Set(
+      activities
+        .filter((event) => event.userType === 'Investor')
+        .map((event) => event.userEmail)
+    );
+
+    const investorViewers = new Set(
+      activities
+        .filter((event) => event.type === 'document_viewed' && event.userType === 'Investor')
+        .map((event) => event.userEmail)
+    );
+
+    const percentage = investorRecipients.size === 0 ? 0 : Math.round((investorViewers.size / investorRecipients.size) * 100);
+    return {
+      title: "Taux d'engagement (générique)",
+      detail: `${investorViewers.size} / ${investorRecipients.size} investisseurs`,
+      percentage,
+    };
+  }, [activities, isNominatif]);
+
+  const users = Array.from(new Set(activities.map((event) => event.userName)));
+
   return (
     <AnimatePresence>
       {isOpen && (
@@ -218,11 +292,11 @@ export function DocumentActivityPanel({
             animate={{ x: 0 }}
             exit={{ x: '100%' }}
             transition={{ type: 'spring', damping: 30, stiffness: 300 }}
-            className="fixed top-0 right-0 h-full w-[480px] bg-white dark:bg-gray-950 shadow-2xl z-50 flex flex-col"
+            className="fixed top-0 right-0 h-full w-[560px] bg-white dark:bg-gray-950 shadow-2xl z-50 flex flex-col"
           >
             {/* Header */}
             <div className="flex items-start gap-3 px-6 py-5 border-b border-gray-200 dark:border-gray-800">
-              <div className="w-10 h-10 rounded-lg bg-purple-500 flex items-center justify-center flex-shrink-0">
+              <div className="w-10 h-10 rounded-lg bg-gradient-to-br from-violet-500 to-indigo-600 flex items-center justify-center flex-shrink-0 shadow-sm">
                 <Zap className="w-5 h-5 text-white" />
               </div>
               <div className="flex-1">
@@ -252,31 +326,97 @@ export function DocumentActivityPanel({
             </div>
 
             {/* Engagement KPI */}
-            <div className="px-6 py-4 border-b border-gray-200 dark:border-gray-800">
-              <div className="flex items-center justify-between">
+            <div className="px-6 py-4 border-b border-gray-200 dark:border-gray-800 bg-gradient-to-b from-gray-50 to-white dark:from-gray-900 dark:to-gray-950">
+              <div className="flex items-center justify-between gap-3">
                 <div className="flex items-center gap-2">
                   <div className="w-6 h-6 rounded-full bg-green-100 dark:bg-green-900 flex items-center justify-center">
                     <FileText className="w-3.5 h-3.5 text-green-600 dark:text-green-400" />
                   </div>
-                  <span className="text-sm font-medium text-gray-700 dark:text-gray-300">
-                    Taux d'engagement
-                  </span>
+                  <div>
+                    <p className="text-sm font-medium text-gray-700 dark:text-gray-300">{engagementData.title}</p>
+                    <p className="text-xs text-gray-500 dark:text-gray-400">{engagementData.detail}</p>
+                  </div>
                 </div>
                 <div className="flex items-center gap-3">
-                  <span className="text-sm font-medium text-gray-900 dark:text-gray-100">
-                    {mockEngagementData.viewedRecipients} / {mockEngagementData.totalRecipients} investisseurs
-                  </span>
                   <div className="w-12 h-12 rounded-full border-4 border-green-500 flex items-center justify-center">
                     <span className="text-sm font-bold text-green-600 dark:text-green-400">
-                      {mockEngagementData.engagementRate}%
+                      {engagementData.percentage}%
                     </span>
                   </div>
+                  <Button
+                    onClick={() => setIsRelaunchModalOpen(true)}
+                    className="h-9"
+                    style={{
+                      background: 'linear-gradient(135deg, #3B82F6 0%, #1D4ED8 100%)',
+                      color: 'white'
+                    }}
+                  >
+                    Relancer
+                  </Button>
                 </div>
               </div>
             </div>
 
+            <div className="px-6 py-4 border-b border-gray-200 dark:border-gray-800">
+              <div className="grid grid-cols-2 gap-2">
+                <Select value={selectedUser} onValueChange={(value) => { setSelectedUser(value); setCurrentPage(1); }}>
+                  <SelectTrigger className="h-9">
+                    <SelectValue placeholder="Utilisateur" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="all">Tous les utilisateurs</SelectItem>
+                    {users.map((user) => (
+                      <SelectItem key={user} value={user}>{user}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+                <Select value={selectedEventType} onValueChange={(value) => { setSelectedEventType(value); setCurrentPage(1); }}>
+                  <SelectTrigger className="h-9">
+                    <SelectValue placeholder="Type d'événement" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="all">Tous les événements</SelectItem>
+                    <SelectItem value="notification_sent">Notification envoyée</SelectItem>
+                    <SelectItem value="notification_opened">Notification ouverte</SelectItem>
+                    <SelectItem value="notification_delivered">Notification délivrée</SelectItem>
+                    <SelectItem value="notification_failed">Notification échouée</SelectItem>
+                    <SelectItem value="notification_clicked">Notification cliquée</SelectItem>
+                    <SelectItem value="document_viewed">Document consulté</SelectItem>
+                    <SelectItem value="document_downloaded">Document téléchargé</SelectItem>
+                  </SelectContent>
+                </Select>
+                <Input
+                  placeholder="Filtrer par email"
+                  value={emailFilter}
+                  onChange={(event) => { setEmailFilter(event.target.value); setCurrentPage(1); }}
+                  className="h-9"
+                />
+                <div className="text-xs text-gray-500 dark:text-gray-400 flex items-center px-2">
+                  Date range
+                </div>
+                <DatePicker
+                  date={startDate}
+                  onDateChange={(date) => {
+                    setStartDate(date);
+                    setCurrentPage(1);
+                  }}
+                  placeholder="Date début"
+                  className="h-9"
+                />
+                <DatePicker
+                  date={endDate}
+                  onDateChange={(date) => {
+                    setEndDate(date);
+                    setCurrentPage(1);
+                  }}
+                  placeholder="Date fin"
+                  className="h-9"
+                />
+              </div>
+            </div>
+
             {/* Timeline */}
-            <div className="flex-1 overflow-y-auto px-6 py-4">
+            <div className="flex-1 overflow-y-auto px-6 py-4 bg-gray-50/50 dark:bg-gray-950">
               {isLoading ? (
                 <div className="flex items-center justify-center h-full">
                   <div className="text-center">
@@ -285,11 +425,11 @@ export function DocumentActivityPanel({
                   </div>
                 </div>
               ) : (
-                <div className="space-y-1">
-                  {activities.map((event, index) => (
+                <div className="space-y-2">
+                  {paginatedActivities.map((event) => (
                     <div
                       key={event.id}
-                      className="flex items-start gap-3 py-2.5 px-3 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-900 transition-colors"
+                      className="flex items-start gap-3 py-3 px-3 rounded-lg border border-gray-200/80 dark:border-gray-800 bg-white dark:bg-gray-900"
                     >
                       {/* Icon */}
                       <div className="flex-shrink-0 mt-0.5">
@@ -298,12 +438,16 @@ export function DocumentActivityPanel({
 
                       {/* Content */}
                       <div className="flex-1 min-w-0">
-                        <div className="flex items-center gap-2 mb-1">
+                        <div className="flex items-center gap-2 mb-1 flex-wrap">
                           <span className="text-sm font-medium text-gray-900 dark:text-gray-100">
                             {getEventLabel(event.type)}
                           </span>
+                          <Badge variant="secondary" className="text-[10px]">
+                            {event.metadata?.documentMode === 'generic' ? 'Générique' : 'Nominatif'}
+                          </Badge>
+                          <span className="text-xs text-gray-500">{formatDate(event.timestamp)} · {formatTime(event.timestamp)}</span>
                         </div>
-                        <div className="flex items-center gap-2">
+                        <div className="flex items-center gap-2 flex-wrap">
                           {/* Avatar */}
                           <div className={cn(
                             'w-5 h-5 rounded-full bg-gradient-to-br flex items-center justify-center flex-shrink-0',
@@ -316,17 +460,25 @@ export function DocumentActivityPanel({
                           <span className="text-sm text-gray-900 dark:text-gray-100">
                             {event.userName}
                           </span>
-                          {event.metadata?.contactName && (
+                          <span className="text-xs text-gray-500 dark:text-gray-400">
+                            {event.userEmail}
+                          </span>
+                          {event.userType === 'Contact' && event.metadata?.mainInvestor && (
                             <span className="text-xs text-gray-500 dark:text-gray-400">
-                              ({event.metadata.contactName})
+                              (Contact de {event.metadata.mainInvestor})
                             </span>
                           )}
                         </div>
                       </div>
 
                       {/* Time */}
-                      <div className="flex-shrink-0 text-xs text-gray-500 dark:text-gray-400">
-                        {event.timestamp}
+                      <div className="flex-shrink-0 text-right">
+                        <div className="text-xs text-gray-500 dark:text-gray-400">
+                          {formatTime(event.timestamp)}
+                        </div>
+                        <div className="text-[11px] text-gray-400 dark:text-gray-500">
+                          {formatDate(event.timestamp)}
+                        </div>
                       </div>
                     </div>
                   ))}
@@ -334,25 +486,27 @@ export function DocumentActivityPanel({
                   {/* Event count */}
                   <div className="pt-4 text-center">
                     <p className="text-xs text-gray-500 dark:text-gray-400">
-                      {activities.length} événements
+                      {filteredActivities.length} événements filtrés sur {activities.length}
                     </p>
                   </div>
                 </div>
               )}
             </div>
 
-            {/* Footer */}
-            <div className="px-6 py-4 border-t border-gray-200 dark:border-gray-800">
-              <Button
-                onClick={() => setIsRelaunchModalOpen(true)}
-                className="w-full"
-                style={{
-                  background: 'linear-gradient(135deg, #3B82F6 0%, #1D4ED8 100%)',
-                  color: 'white'
+            <div className="border-t border-gray-200 dark:border-gray-800">
+              <DataPagination
+                currentPage={currentPage}
+                totalPages={totalPages}
+                pageSize={pageSize}
+                totalItems={filteredActivities.length}
+                onPageChange={setCurrentPage}
+                onPageSizeChange={(size) => {
+                  setPageSize(size);
+                  setCurrentPage(1);
                 }}
-              >
-                Relancer
-              </Button>
+                showPageSizeSelector={true}
+                pageSizeOptions={[4, 6, 10, 20]}
+              />
             </div>
           </motion.div>
 
