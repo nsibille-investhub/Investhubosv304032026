@@ -44,6 +44,7 @@ import {
 } from './ui/popover';
 import { DocumentActivityPanel } from './DocumentActivityPanel';
 import { DocumentPreviewDrawer } from './DocumentPreviewDrawer';
+import { Tooltip, TooltipContent, TooltipTrigger } from './ui/tooltip';
 
 interface BirdViewPageProps {
   onBack: () => void;
@@ -413,9 +414,109 @@ export function BirdViewPage({ onBack }: BirdViewPageProps) {
     setExpandedNodes(new Set());
   };
 
-  const renderNode = (node: DocumentNode, level: number = 0) => {
+  // Contexte hérité par un document depuis ses parents (space / folders)
+  interface AccessContext {
+    fund?: string;
+    shareClass?: string;
+    segments?: string[];
+  }
+
+  // Joindre une liste en français : "A", "A et B", "A, B et C"
+  const joinFr = (items: string[]): string => {
+    if (items.length === 0) return '';
+    if (items.length === 1) return items[0];
+    if (items.length === 2) return `${items[0]} et ${items[1]}`;
+    return `${items.slice(0, -1).join(', ')} et ${items[items.length - 1]}`;
+  };
+
+  // Construire le message d'accès dynamique selon le contexte du document
+  const buildAccessMessage = (node: DocumentNode, context: AccessContext) => {
+    // Résoudre les restrictions effectives (document > parent)
+    const effectiveFund = node.fundRestriction || context.fund;
+    const effectiveShareClass = context.shareClass; // seuls les folders ont un shareClass
+    const effectiveSegments =
+      node.segmentRestrictions && node.segmentRestrictions.length > 0
+        ? node.segmentRestrictions
+        : context.segments && context.segments.length > 0
+        ? context.segments
+        : undefined;
+
+    if (node.isNominatif) {
+      // ── Document nominatif ─────────────────────────────────────────
+      const investor = node.investorRestriction || 'un investisseur';
+      const title = 'Document nominatif';
+
+      const parts: string[] = [
+        `Limité à l'investisseur ${investor} et ses contacts`,
+      ];
+
+      if (node.subscriptionRestriction) {
+        parts.push(
+          `ayant les droits d'accès sur la souscription ${node.subscriptionRestriction}`
+        );
+      }
+
+      // Contexte fonds / part si hérité du dossier parent
+      if (effectiveFund && effectiveShareClass) {
+        parts.push(`dans le fonds ${effectiveFund} (${effectiveShareClass})`);
+      } else if (effectiveFund) {
+        parts.push(`dans le fonds ${effectiveFund}`);
+      }
+
+      return { title, body: parts.join(' '), color: 'purple' as const };
+    }
+
+    // ── Document générique ──────────────────────────────────────────
+    const title = 'Document générique';
+    const constraints: string[] = [];
+
+    if (effectiveFund) {
+      const fundLabel = effectiveShareClass
+        ? `${effectiveFund} (${effectiveShareClass})`
+        : effectiveFund;
+      constraints.push(`ayant investi dans ${fundLabel}`);
+    }
+
+    if (effectiveSegments && effectiveSegments.length > 0) {
+      constraints.push(
+        `appartenant au${effectiveSegments.length > 1 ? 'x' : ''} segment${
+          effectiveSegments.length > 1 ? 's' : ''
+        } ${joinFr(effectiveSegments)}`
+      );
+    }
+
+    const viewerCount = node.engagement?.totalViewers ?? 0;
+
+    let body: string;
+    if (constraints.length === 0) {
+      body = `Accessible à tous les investisseurs ayant accès à cet espace (${viewerCount} investisseur${viewerCount > 1 ? 's' : ''}).`;
+    } else {
+      body = `Limité aux investisseurs ${constraints.join(' et ')} — ${viewerCount} investisseur${viewerCount > 1 ? 's' : ''} y ${viewerCount > 1 ? 'ont' : 'a'} accès.`;
+    }
+
+    return { title, body, color: 'blue' as const };
+  };
+
+  const renderNode = (
+    node: DocumentNode,
+    level: number = 0,
+    inheritedContext: AccessContext = {}
+  ) => {
     const isExpanded = expandedNodes.has(node.id);
     const hasChildren = node.children && node.children.length > 0;
+
+    // Accumuler le contexte pour les enfants
+    const childContext: AccessContext =
+      node.type === 'document'
+        ? inheritedContext
+        : {
+            fund: node.fundRestriction || inheritedContext.fund,
+            shareClass: node.shareClassRestriction || inheritedContext.shareClass,
+            segments:
+              node.segmentRestrictions && node.segmentRestrictions.length > 0
+                ? node.segmentRestrictions
+                : inheritedContext.segments,
+          };
 
     return (
       <div key={node.id} className={cn(level > 0 && 'ml-8')}>
@@ -532,34 +633,63 @@ export function BirdViewPage({ onBack }: BirdViewPageProps) {
             </div>
 
             {/* Statut selon le type de document */}
-            {node.isNominatif && node.engagement ? (
-              // Document nominatif : Consulté / Non Consulté
-              <div className="flex items-center gap-1.5 ml-4">
-                {node.engagement.viewedBy === node.engagement.totalViewers ? (
-                  <>
-                    <CheckCircle2 className="w-4 h-4 text-green-500" />
-                    <span className="text-xs font-medium text-green-600">Consulté</span>
-                  </>
-                ) : (
-                  <>
-                    <EyeOff className="w-4 h-4 text-red-400" />
-                    <span className="text-xs font-medium text-red-500">Non Consulté</span>
-                  </>
-                )}
-              </div>
-            ) : (
-              // Document générique : indicateur discret avec nombre d'investisseurs
-              <div
-                className="flex items-center gap-1 ml-4 text-gray-400 dark:text-gray-500"
-                title={`Document générique — ${node.engagement?.totalViewers ?? 0} investisseur${(node.engagement?.totalViewers ?? 0) > 1 ? 's' : ''} y ont accès`}
-              >
-                <Globe className="w-3.5 h-3.5" />
-                <span className="text-xs">
-                  {node.engagement?.totalViewers ?? 0}
-                </span>
-                <Users className="w-3 h-3" />
-              </div>
-            )}
+            {(() => {
+              const access = buildAccessMessage(node, inheritedContext);
+              const headerColorClass =
+                access.color === 'purple'
+                  ? 'text-purple-200'
+                  : 'text-blue-200';
+
+              if (node.isNominatif && node.engagement) {
+                // Document nominatif : Consulté / Non Consulté (avec hover)
+                return (
+                  <Tooltip>
+                    <TooltipTrigger asChild>
+                      <div className="flex items-center gap-1.5 ml-4 cursor-help">
+                        {node.engagement.viewedBy === node.engagement.totalViewers ? (
+                          <>
+                            <CheckCircle2 className="w-4 h-4 text-green-500" />
+                            <span className="text-xs font-medium text-green-600">Consulté</span>
+                          </>
+                        ) : (
+                          <>
+                            <EyeOff className="w-4 h-4 text-red-400" />
+                            <span className="text-xs font-medium text-red-500">Non Consulté</span>
+                          </>
+                        )}
+                      </div>
+                    </TooltipTrigger>
+                    <TooltipContent side="top" className="max-w-sm">
+                      <div className={cn('text-[11px] font-semibold uppercase tracking-wide mb-0.5', headerColorClass)}>
+                        {access.title}
+                      </div>
+                      <div className="text-xs leading-snug">{access.body}</div>
+                    </TooltipContent>
+                  </Tooltip>
+                );
+              }
+
+              // Document générique : indicateur discret avec nombre d'investisseurs (avec hover)
+              return (
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <div className="flex items-center gap-1 ml-4 text-gray-400 dark:text-gray-500 cursor-help">
+                      <Globe className="w-3.5 h-3.5" />
+                      <span className="text-xs">
+                        {node.engagement?.totalViewers ?? 0}
+                      </span>
+                      <Users className="w-3 h-3" />
+                    </div>
+                  </TooltipTrigger>
+                  <TooltipContent side="top" className="max-w-sm">
+                    <div className={cn('text-[11px] font-semibold uppercase tracking-wide mb-0.5', headerColorClass)}>
+                      {access.title}
+                    </div>
+                    <div className="text-xs leading-snug">{access.body}</div>
+                  </TooltipContent>
+                </Tooltip>
+              );
+            })()}
 
             {/* Actions */}
             <div className="ml-auto flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
@@ -602,7 +732,7 @@ export function BirdViewPage({ onBack }: BirdViewPageProps) {
         {/* Children */}
         {isExpanded && hasChildren && (
           <div className="mt-1">
-            {node.children!.map(child => renderNode(child, level + 1))}
+            {node.children!.map(child => renderNode(child, level + 1, childContext))}
           </div>
         )}
       </div>
