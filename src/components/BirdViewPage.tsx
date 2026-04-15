@@ -88,7 +88,7 @@ export function BirdViewPage({ onBack }: BirdViewPageProps) {
   const [showInvestorDropdown, setShowInvestorDropdown] = useState(false);
   const [showContactDropdown, setShowContactDropdown] = useState(false);
   const [showOnlyIncomplete, setShowOnlyIncomplete] = useState(false);
-  const [selectedDocument, setSelectedDocument] = useState<{ id: string; name: string } | null>(null);
+  const [selectedDocument, setSelectedDocument] = useState<{ id: string; name: string; isNominatif: boolean } | null>(null);
   const [isActivityPanelOpen, setIsActivityPanelOpen] = useState(false);
   const [previewDocument, setPreviewDocument] = useState<{
     id: string;
@@ -716,7 +716,7 @@ export function BirdViewPage({ onBack }: BirdViewPageProps) {
               <button
                 className="flex items-center gap-1.5 px-3 py-1 text-xs font-medium text-purple-600 hover:text-purple-700 dark:text-purple-400 dark:hover:text-purple-300 transition-colors"
                 onClick={() => {
-                  setSelectedDocument({ id: node.id, name: node.name });
+                  setSelectedDocument({ id: node.id, name: node.name, isNominatif: !!node.isNominatif });
                   setIsActivityPanelOpen(true);
                 }}
               >
@@ -1223,6 +1223,7 @@ export function BirdViewPage({ onBack }: BirdViewPageProps) {
         isOpen={isActivityPanelOpen}
         documentId={selectedDocument?.id || ''}
         documentName={selectedDocument?.name || ''}
+        isNominatif={selectedDocument?.isNominatif ?? true}
         onClose={() => {
           setIsActivityPanelOpen(false);
           setSelectedDocument(null);

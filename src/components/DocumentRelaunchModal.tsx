@@ -11,8 +11,6 @@ import {
   ChevronDown
 } from 'lucide-react';
 import { Button } from './ui/button';
-import { Badge } from './ui/badge';
-import { Checkbox } from './ui/checkbox';
 import { cn } from './ui/utils';
 import { Tag } from './Tag';
 import {
@@ -49,7 +47,19 @@ interface DocumentRelaunchModalProps {
   onClose: () => void;
   documentName: string;
   documentId: string;
+  /**
+   * Si `true` (défaut) : écran nominatif avec listing détaillé des
+   * investisseurs et contacts. Si `false` : écran générique avec uniquement
+   * un récapitulatif du nombre d'investisseurs concernés.
+   */
+  isNominatif?: boolean;
 }
+
+// Statistiques simulées pour un document générique
+const mockGenericStats = {
+  totalInvestors: 47,
+  notConsulted: 19,
+};
 
 const mockRecipients: Recipient[] = [
   {
@@ -103,11 +113,11 @@ const mockRecipients: Recipient[] = [
     lastNotificationDate: '09/04/2026 09:12',
     receptionStatus: 'pending',
     openingStatus: 'pending',
-    consultationStatus: 'not-accessible',
+    consultationStatus: 'pending',
   },
 ];
 
-type FilterCriteria = 'all' | 'not-opened' | 'not-consulted';
+type FilterCriteria = 'all' | 'not-consulted';
 
 const emailTemplates = [
   { id: 'relance-standard', name: 'Relance Standard', description: 'Template classique de relance' },
@@ -122,9 +132,9 @@ export function DocumentRelaunchModal({
   onClose,
   documentName,
   documentId,
+  isNominatif = true,
 }: DocumentRelaunchModalProps) {
   const [selectedCriteria, setSelectedCriteria] = useState<FilterCriteria>('all');
-  const [selectedRecipients, setSelectedRecipients] = useState<Set<string>>(new Set());
   const [model, setModel] = useState('Relance Standard');
 
   const investorRecipients = useMemo(
@@ -134,8 +144,6 @@ export function DocumentRelaunchModal({
 
   const filteredRecipients = useMemo(() => {
     switch (selectedCriteria) {
-      case 'not-opened':
-        return investorRecipients.filter((r) => r.inTarget && r.openingStatus !== 'done');
       case 'not-consulted':
         return investorRecipients.filter((r) => r.inTarget && r.consultationStatus !== 'done');
       case 'all':
@@ -144,28 +152,36 @@ export function DocumentRelaunchModal({
     }
   }, [investorRecipients, selectedCriteria]);
 
-  const toggleSelectAll = () => {
-    if (selectedRecipients.size === filteredRecipients.length) {
-      setSelectedRecipients(new Set());
-    } else {
-      setSelectedRecipients(new Set(filteredRecipients.map((r) => r.id)));
-    }
-  };
+  // Les destinataires réellement notifiables (cherry-pick impossible : on envoie à tous
+  // ceux qui sont dans la cible du filtre courant)
+  const notifiableRecipients = useMemo(
+    () => filteredRecipients.filter((r) => r.inTarget),
+    [filteredRecipients]
+  );
 
-  const toggleRecipient = (id: string) => {
-    setSelectedRecipients((prev) => {
-      const next = new Set(prev);
-      if (next.has(id)) {
-        next.delete(id);
-      } else {
-        next.add(id);
-      }
-      return next;
-    });
-  };
+  // Nombre de destinataires pour l'affichage et le bouton d'envoi
+  const notifiableCount = isNominatif
+    ? notifiableRecipients.length
+    : selectedCriteria === 'not-consulted'
+    ? mockGenericStats.notConsulted
+    : mockGenericStats.totalInvestors;
 
   const handleSend = () => {
-    console.log('Sending notifications to:', Array.from(selectedRecipients), 'for document', documentId);
+    if (isNominatif) {
+      console.log(
+        'Sending notifications to:',
+        notifiableRecipients.map((r) => r.id),
+        'for document',
+        documentId
+      );
+    } else {
+      console.log(
+        'Sending notifications to',
+        notifiableCount,
+        'investors for generic document',
+        documentId
+      );
+    }
     onClose();
   };
 
@@ -175,11 +191,7 @@ export function DocumentRelaunchModal({
 
   const handleCriteriaChange = (criteria: FilterCriteria) => {
     setSelectedCriteria(criteria);
-    setSelectedRecipients(new Set());
   };
-
-  const allSelected = selectedRecipients.size === filteredRecipients.length && filteredRecipients.length > 0;
-  const someSelected = selectedRecipients.size > 0 && selectedRecipients.size < filteredRecipients.length;
 
   const renderDateOrIcon = (
     status: 'done' | 'pending' | 'not-targeted' | 'not-accessible',
@@ -315,12 +327,9 @@ export function DocumentRelaunchModal({
           </div>
 
           <div className="space-y-3">
-            <div className="flex items-center justify-between">
-              <span className="text-sm font-medium text-gray-700 dark:text-gray-300">Critère</span>
-              <Badge className="bg-blue-500 text-white">Destinataires : {filteredRecipients.length}</Badge>
-            </div>
+            <span className="text-sm font-medium text-gray-700 dark:text-gray-300">Critère</span>
 
-            <div className="grid grid-cols-3 gap-3">
+            <div className="grid grid-cols-2 gap-3">
               <button
                 onClick={() => handleCriteriaChange('all')}
                 className={cn(
@@ -339,27 +348,6 @@ export function DocumentRelaunchModal({
                   selectedCriteria === 'all' ? 'text-blue-700 dark:text-blue-300' : 'text-gray-600 dark:text-gray-400'
                 )}>
                   Tous les destinataires
-                </span>
-              </button>
-
-              <button
-                onClick={() => handleCriteriaChange('not-opened')}
-                className={cn(
-                  'flex flex-col items-center justify-center gap-2 px-4 py-4 rounded-lg border-2 transition-all',
-                  selectedCriteria === 'not-opened'
-                    ? 'border-blue-500 bg-blue-50 dark:bg-blue-950'
-                    : 'border-gray-200 dark:border-gray-700 hover:border-gray-300 dark:hover:border-gray-600'
-                )}
-              >
-                <Mail className={cn(
-                  'w-5 h-5',
-                  selectedCriteria === 'not-opened' ? 'text-blue-500' : 'text-gray-400'
-                )} />
-                <span className={cn(
-                  'text-xs font-medium text-center',
-                  selectedCriteria === 'not-opened' ? 'text-blue-700 dark:text-blue-300' : 'text-gray-600 dark:text-gray-400'
-                )}>
-                  N'ont pas ouvert l'email
                 </span>
               </button>
 
@@ -387,10 +375,7 @@ export function DocumentRelaunchModal({
           </div>
 
           <div className="space-y-3">
-            <div className="flex items-center justify-between">
-              <span className="text-sm font-medium text-gray-700 dark:text-gray-300">
-                Liste des destinataires ({filteredRecipients.length})
-              </span>
+            <div className="flex items-center justify-end">
               <button
                 onClick={handleExportCSV}
                 className="flex items-center gap-2 px-3 py-1.5 text-xs font-medium text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-100 transition-colors"
@@ -400,62 +385,95 @@ export function DocumentRelaunchModal({
               </button>
             </div>
 
-            <div className="border border-gray-200 dark:border-gray-800 rounded-lg overflow-hidden">
-              <table className="w-full text-sm">
-                <thead className="bg-gray-50 dark:bg-gray-900 border-b border-gray-200 dark:border-gray-800">
-                  <tr>
-                    <th className="px-4 py-3 text-left w-12">
-                      <Checkbox
-                        checked={allSelected}
-                        onCheckedChange={toggleSelectAll}
-                        className={cn(
-                          someSelected && !allSelected && 'data-[state=checked]:bg-gray-400'
-                        )}
-                      />
-                    </th>
-                    <th className="px-4 py-3 text-left text-xs font-medium text-gray-600 dark:text-gray-400">Nom</th>
-                    <th className="px-4 py-3 text-left text-xs font-medium text-gray-600 dark:text-gray-400">Type</th>
-                    <th className="px-4 py-3 text-center text-xs font-medium text-gray-600 dark:text-gray-400">Dernière notification</th>
-                    <th className="px-4 py-3 text-center text-xs font-medium text-gray-600 dark:text-gray-400">Dernière Réception</th>
-                    <th className="px-4 py-3 text-center text-xs font-medium text-gray-600 dark:text-gray-400">Dernière Ouverture</th>
-                    <th className="px-4 py-3 text-center text-xs font-medium text-gray-600 dark:text-gray-400">Dernière Consultation document</th>
-                  </tr>
-                </thead>
-                <tbody className="divide-y divide-gray-200 dark:divide-gray-800">
-                  {filteredRecipients.map((recipient) => (
-                    <tr
-                      key={recipient.id}
-                      className={cn(
-                        'hover:bg-gray-50 dark:hover:bg-gray-900 transition-colors',
-                        selectedRecipients.has(recipient.id) && 'bg-blue-50/50 dark:bg-blue-950/20'
-                      )}
-                    >
-                      <td className="px-4 py-3">
-                        <Checkbox
-                          checked={selectedRecipients.has(recipient.id)}
-                          onCheckedChange={() => toggleRecipient(recipient.id)}
-                        />
-                      </td>
-                      <td className="px-4 py-3">
-                        <div className="flex flex-col gap-1">
-                          <span className="font-medium text-gray-900 dark:text-gray-100">{recipient.name}</span>
-                          {recipient.name === 'Pierre Dupont' && (
-                            <span className="text-xs text-gray-500">Accès refusé : non habilité au document</span>
-                          )}
-                        </div>
-                      </td>
-                      <td className="px-4 py-3">
-                        <Tag label={recipient.type} />
-                      </td>
-                      <td className="px-4 py-3 text-center">{renderLastNotification(recipient)}</td>
-                      <td className="px-4 py-3 text-center">{renderDateOrIcon(recipient.receptionStatus, recipient.receptionDate)}</td>
-                      <td className="px-4 py-3 text-center">{renderDateOrIcon(recipient.openingStatus, recipient.openingDate)}</td>
-                      <td className="px-4 py-3 text-center">{renderConsultationCell(recipient)}</td>
+            {isNominatif ? (
+              <div className="border border-gray-200 dark:border-gray-800 rounded-lg overflow-hidden">
+                <table className="w-full text-sm">
+                  <thead className="bg-gray-50 dark:bg-gray-900 border-b border-gray-200 dark:border-gray-800">
+                    <tr>
+                      <th className="px-4 py-3 text-left text-xs font-medium text-gray-600 dark:text-gray-400">Nom</th>
+                      <th className="px-4 py-3 text-left text-xs font-medium text-gray-600 dark:text-gray-400">Type</th>
+                      <th className="px-4 py-3 text-center text-xs font-medium text-gray-600 dark:text-gray-400">Dernière notification</th>
+                      <th className="px-4 py-3 text-center text-xs font-medium text-gray-600 dark:text-gray-400">Dernière Réception</th>
+                      <th className="px-4 py-3 text-center text-xs font-medium text-gray-600 dark:text-gray-400">Dernière Ouverture</th>
+                      <th className="px-4 py-3 text-center text-xs font-medium text-gray-600 dark:text-gray-400">Dernière Consultation document</th>
                     </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
+                  </thead>
+                  <tbody className="divide-y divide-gray-200 dark:divide-gray-800">
+                    {filteredRecipients.map((recipient) => (
+                      <tr
+                        key={recipient.id}
+                        className="hover:bg-gray-50 dark:hover:bg-gray-900 transition-colors"
+                      >
+                        <td className="px-4 py-3">
+                          <div className="flex flex-col gap-1">
+                            <span className="font-medium text-gray-900 dark:text-gray-100">{recipient.name}</span>
+                            {recipient.name === 'Pierre Dupont' && (
+                              <span className="text-xs text-gray-500">Accès refusé : non habilité au document</span>
+                            )}
+                          </div>
+                        </td>
+                        <td className="px-4 py-3">
+                          <Tag label={recipient.type} />
+                        </td>
+                        <td className="px-4 py-3 text-center">{renderLastNotification(recipient)}</td>
+                        <td className="px-4 py-3 text-center">{renderDateOrIcon(recipient.receptionStatus, recipient.receptionDate)}</td>
+                        <td className="px-4 py-3 text-center">{renderDateOrIcon(recipient.openingStatus, recipient.openingDate)}</td>
+                        <td className="px-4 py-3 text-center">{renderConsultationCell(recipient)}</td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            ) : (
+              // ── Récapitulatif pour un document générique ─────────────────
+              <div className="border border-gray-200 dark:border-gray-800 rounded-lg p-6 bg-gradient-to-br from-blue-50/60 to-white dark:from-blue-950/20 dark:to-gray-950">
+                <div className="flex items-center gap-4">
+                  <div className="w-14 h-14 rounded-full bg-blue-500/10 flex items-center justify-center flex-shrink-0">
+                    <Users className="w-7 h-7 text-blue-500" />
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <div className="flex items-baseline gap-2">
+                      <span className="text-3xl font-bold text-gray-900 dark:text-gray-100">
+                        {notifiableCount}
+                      </span>
+                      <span className="text-sm font-medium text-gray-600 dark:text-gray-400">
+                        investisseur{notifiableCount > 1 ? 's' : ''}
+                      </span>
+                    </div>
+                    <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">
+                      {selectedCriteria === 'not-consulted'
+                        ? "Investisseurs n'ayant pas encore consulté ce document"
+                        : 'Investisseurs ayant accès à ce document'}
+                    </p>
+                  </div>
+                </div>
+
+                <div className="mt-5 pt-5 border-t border-gray-200 dark:border-gray-800 grid grid-cols-2 gap-4 text-sm">
+                  <div>
+                    <div className="text-xs uppercase tracking-wide text-gray-500 dark:text-gray-400 mb-1">
+                      Total ayant accès
+                    </div>
+                    <div className="font-semibold text-gray-900 dark:text-gray-100">
+                      {mockGenericStats.totalInvestors} investisseurs
+                    </div>
+                  </div>
+                  <div>
+                    <div className="text-xs uppercase tracking-wide text-gray-500 dark:text-gray-400 mb-1">
+                      Non consulté
+                    </div>
+                    <div className="font-semibold text-gray-900 dark:text-gray-100">
+                      {mockGenericStats.notConsulted} investisseur{mockGenericStats.notConsulted > 1 ? 's' : ''}
+                    </div>
+                  </div>
+                </div>
+
+                <p className="mt-5 text-xs text-gray-500 dark:text-gray-400 flex items-start gap-2">
+                  <Download className="w-3.5 h-3.5 mt-0.5 flex-shrink-0" />
+                  Téléchargez le CSV pour obtenir le détail des investisseurs
+                  concernés par cette relance.
+                </p>
+              </div>
+            )}
           </div>
         </div>
 
@@ -465,17 +483,19 @@ export function DocumentRelaunchModal({
           </Button>
           <Button
             onClick={handleSend}
-            disabled={selectedRecipients.size === 0}
+            disabled={notifiableCount === 0}
             className="gap-2"
             style={{
-              background: selectedRecipients.size > 0
+              background: notifiableCount > 0
                 ? 'linear-gradient(135deg, #3B82F6 0%, #1D4ED8 100%)'
                 : undefined,
-              color: selectedRecipients.size > 0 ? 'white' : undefined
+              color: notifiableCount > 0 ? 'white' : undefined
             }}
           >
             <Send className="w-4 h-4" />
-            Envoyer {selectedRecipients.size > 0 ? `${selectedRecipients.size} notification${selectedRecipients.size > 1 ? 's' : ''}` : 'les notifications'}
+            Envoyer {notifiableCount > 0
+              ? `${notifiableCount} notification${notifiableCount > 1 ? 's' : ''}`
+              : 'les notifications'}
           </Button>
         </div>
       </AlertDialogContent>

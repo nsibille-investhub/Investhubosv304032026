@@ -32,6 +32,7 @@ interface DocumentActivityPanelProps {
   onClose: () => void;
   documentName: string;
   documentId: string;
+  isNominatif?: boolean;
 }
 
 // Mock data generator
@@ -119,6 +120,7 @@ export function DocumentActivityPanel({
   onClose,
   documentName,
   documentId,
+  isNominatif = true,
 }: DocumentActivityPanelProps) {
   const [activities, setActivities] = useState<ActivityEvent[]>([]);
   const [isLoading, setIsLoading] = useState(false);
@@ -358,6 +360,7 @@ export function DocumentActivityPanel({
           <DocumentRelaunchModal
             documentId={documentId}
             documentName={documentName}
+            isNominatif={isNominatif}
             isOpen={isRelaunchModalOpen}
             onClose={() => setIsRelaunchModalOpen(false)}
           />
