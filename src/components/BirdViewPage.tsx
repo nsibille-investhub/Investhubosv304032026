@@ -15,7 +15,10 @@ import {
   Landmark,
   Layers3,
   UserRound,
-  Tag as TagIcon
+  Tag as TagIcon,
+  Users,
+  Globe,
+  FileSearch
 } from 'lucide-react';
 import { toast } from 'sonner@2.0.3';
 import {
@@ -40,6 +43,8 @@ import {
   PopoverTrigger,
 } from './ui/popover';
 import { DocumentActivityPanel } from './DocumentActivityPanel';
+import { DocumentPreviewDrawer } from './DocumentPreviewDrawer';
+import { Tooltip, TooltipContent, TooltipTrigger } from './ui/tooltip';
 
 interface BirdViewPageProps {
   onBack: () => void;
@@ -85,11 +90,21 @@ export function BirdViewPage({ onBack }: BirdViewPageProps) {
   const [showOnlyIncomplete, setShowOnlyIncomplete] = useState(false);
   const [selectedDocument, setSelectedDocument] = useState<{ id: string; name: string } | null>(null);
   const [isActivityPanelOpen, setIsActivityPanelOpen] = useState(false);
-  
+  const [previewDocument, setPreviewDocument] = useState<{
+    id: string;
+    name: string;
+    format?: string;
+    size?: string;
+    date?: string;
+  } | null>(null);
+  const [isPreviewDrawerOpen, setIsPreviewDrawerOpen] = useState(false);
+
   // Filtres avancés
   const [documentNameFilter, setDocumentNameFilter] = useState('');
   const [selectedFunds, setSelectedFunds] = useState<string[]>([]);
   const [selectedSegments, setSelectedSegments] = useState<string[]>([]);
+  const [selectedSubscriptions, setSelectedSubscriptions] = useState<string[]>([]);
+  const [subscriptionSearch, setSubscriptionSearch] = useState('');
 
   // Charger les données
   useEffect(() => {
@@ -156,6 +171,21 @@ export function BirdViewPage({ onBack }: BirdViewPageProps) {
     });
   }, []);
 
+  // Souscriptions disponibles (collectées depuis l'arbre de documents)
+  const availableSubscriptions = useMemo(() => {
+    const subs = new Set<string>();
+    const collect = (nodes: DocumentNode[]) => {
+      nodes.forEach(node => {
+        if (node.type === 'document' && node.subscriptionRestriction) {
+          subs.add(node.subscriptionRestriction);
+        }
+        if (node.children) collect(node.children);
+      });
+    };
+    collect(documentTree);
+    return Array.from(subs).sort();
+  }, [documentTree]);
+
   // Contacts disponibles
   const availableContacts = useMemo(() => {
     if (!selectedInvestor) return [];
@@ -209,6 +239,13 @@ export function BirdViewPage({ onBack }: BirdViewPageProps) {
               }
             }
 
+            // Filtre souscription (match exact sur la restriction du document)
+            if (selectedSubscriptions.length > 0) {
+              if (!node.subscriptionRestriction || !selectedSubscriptions.includes(node.subscriptionRestriction)) {
+                matches = false;
+              }
+            }
+
             return matches ? node : null;
           }
 
@@ -250,8 +287,8 @@ export function BirdViewPage({ onBack }: BirdViewPageProps) {
     };
 
     // Appliquer les filtres avancés si au moins un est actif
-    const hasActiveFilters = documentNameFilter || selectedFunds.length > 0 || selectedSegments.length > 0;
-    
+    const hasActiveFilters = documentNameFilter || selectedFunds.length > 0 || selectedSegments.length > 0 || selectedSubscriptions.length > 0;
+
     if (hasActiveFilters) {
       tree = filterTree(tree);
     }
@@ -262,7 +299,7 @@ export function BirdViewPage({ onBack }: BirdViewPageProps) {
     }
 
     return tree;
-  }, [documentTree, showOnlyIncomplete, documentNameFilter, selectedFunds, selectedSegments]);
+  }, [documentTree, showOnlyIncomplete, documentNameFilter, selectedFunds, selectedSegments, selectedSubscriptions]);
 
   // Statistiques filtrées basées sur displayedTree
   const filteredStats = useMemo(() => {
@@ -336,7 +373,7 @@ export function BirdViewPage({ onBack }: BirdViewPageProps) {
 
   // Auto-expand l'arbre quand le filtre est actif
   useEffect(() => {
-    if (showOnlyIncomplete && displayedTree.length > 0) {
+    if ((showOnlyIncomplete || selectedSubscriptions.length > 0) && displayedTree.length > 0) {
       const allIds = new Set<string>();
       const collect = (nodes: DocumentNode[]) => {
         nodes.forEach(node => {
@@ -347,7 +384,7 @@ export function BirdViewPage({ onBack }: BirdViewPageProps) {
       collect(displayedTree);
       setExpandedNodes(allIds);
     }
-  }, [showOnlyIncomplete, displayedTree]);
+  }, [showOnlyIncomplete, selectedSubscriptions, displayedTree]);
 
   const toggleNode = (nodeId: string) => {
     setExpandedNodes(prev => {
@@ -377,9 +414,109 @@ export function BirdViewPage({ onBack }: BirdViewPageProps) {
     setExpandedNodes(new Set());
   };
 
-  const renderNode = (node: DocumentNode, level: number = 0) => {
+  // Contexte hérité par un document depuis ses parents (space / folders)
+  interface AccessContext {
+    fund?: string;
+    shareClass?: string;
+    segments?: string[];
+  }
+
+  // Joindre une liste en français : "A", "A et B", "A, B et C"
+  const joinFr = (items: string[]): string => {
+    if (items.length === 0) return '';
+    if (items.length === 1) return items[0];
+    if (items.length === 2) return `${items[0]} et ${items[1]}`;
+    return `${items.slice(0, -1).join(', ')} et ${items[items.length - 1]}`;
+  };
+
+  // Construire le message d'accès dynamique selon le contexte du document
+  const buildAccessMessage = (node: DocumentNode, context: AccessContext) => {
+    // Résoudre les restrictions effectives (document > parent)
+    const effectiveFund = node.fundRestriction || context.fund;
+    const effectiveShareClass = context.shareClass; // seuls les folders ont un shareClass
+    const effectiveSegments =
+      node.segmentRestrictions && node.segmentRestrictions.length > 0
+        ? node.segmentRestrictions
+        : context.segments && context.segments.length > 0
+        ? context.segments
+        : undefined;
+
+    if (node.isNominatif) {
+      // ── Document nominatif ─────────────────────────────────────────
+      const investor = node.investorRestriction || 'un investisseur';
+      const title = 'Document nominatif';
+
+      const parts: string[] = [
+        `Limité à l'investisseur ${investor} et ses contacts`,
+      ];
+
+      if (node.subscriptionRestriction) {
+        parts.push(
+          `ayant les droits d'accès sur la souscription ${node.subscriptionRestriction}`
+        );
+      }
+
+      // Contexte fonds / part si hérité du dossier parent
+      if (effectiveFund && effectiveShareClass) {
+        parts.push(`dans le fonds ${effectiveFund} (${effectiveShareClass})`);
+      } else if (effectiveFund) {
+        parts.push(`dans le fonds ${effectiveFund}`);
+      }
+
+      return { title, body: parts.join(' '), color: 'purple' as const };
+    }
+
+    // ── Document générique ──────────────────────────────────────────
+    const title = 'Document générique';
+    const constraints: string[] = [];
+
+    if (effectiveFund) {
+      const fundLabel = effectiveShareClass
+        ? `${effectiveFund} (${effectiveShareClass})`
+        : effectiveFund;
+      constraints.push(`ayant investi dans ${fundLabel}`);
+    }
+
+    if (effectiveSegments && effectiveSegments.length > 0) {
+      constraints.push(
+        `appartenant au${effectiveSegments.length > 1 ? 'x' : ''} segment${
+          effectiveSegments.length > 1 ? 's' : ''
+        } ${joinFr(effectiveSegments)}`
+      );
+    }
+
+    const viewerCount = node.engagement?.totalViewers ?? 0;
+
+    let body: string;
+    if (constraints.length === 0) {
+      body = `Accessible à tous les investisseurs ayant accès à cet espace (${viewerCount} investisseur${viewerCount > 1 ? 's' : ''}).`;
+    } else {
+      body = `Limité aux investisseurs ${constraints.join(' et ')} — ${viewerCount} investisseur${viewerCount > 1 ? 's' : ''} y ${viewerCount > 1 ? 'ont' : 'a'} accès.`;
+    }
+
+    return { title, body, color: 'blue' as const };
+  };
+
+  const renderNode = (
+    node: DocumentNode,
+    level: number = 0,
+    inheritedContext: AccessContext = {}
+  ) => {
     const isExpanded = expandedNodes.has(node.id);
     const hasChildren = node.children && node.children.length > 0;
+
+    // Accumuler le contexte pour les enfants
+    const childContext: AccessContext =
+      node.type === 'document'
+        ? inheritedContext
+        : {
+            fund: node.fundRestriction || inheritedContext.fund,
+            shareClass: node.shareClassRestriction || inheritedContext.shareClass,
+            segments:
+              node.segmentRestrictions && node.segmentRestrictions.length > 0
+                ? node.segmentRestrictions
+                : inheritedContext.segments,
+          };
 
     return (
       <div key={node.id} className={cn(level > 0 && 'ml-8')}>
@@ -495,42 +632,107 @@ export function BirdViewPage({ onBack }: BirdViewPageProps) {
               ))}
             </div>
 
-            {/* Statut Consulté / Non Consulté - uniquement pour les documents nominatifs */}
-            {node.isNominatif && node.engagement && (
-              <div className="flex items-center gap-1.5 ml-4">
-                {node.engagement.viewedBy === node.engagement.totalViewers ? (
-                  <>
-                    <CheckCircle2 className="w-4 h-4 text-green-500" />
-                    <span className="text-xs font-medium text-green-600">Consulté</span>
-                  </>
-                ) : (
-                  <>
-                    <EyeOff className="w-4 h-4 text-red-400" />
-                    <span className="text-xs font-medium text-red-500">Non Consulté</span>
-                  </>
-                )}
-              </div>
-            )}
+            {/* Statut selon le type de document */}
+            {(() => {
+              const access = buildAccessMessage(node, inheritedContext);
+              const headerColorClass =
+                access.color === 'purple'
+                  ? 'text-purple-200'
+                  : 'text-blue-200';
 
-            {/* Activity button */}
-            <button className="ml-auto flex items-center gap-1.5 px-3 py-1 text-xs font-medium text-purple-600 hover:text-purple-700 dark:text-purple-400 dark:hover:text-purple-300 transition-colors opacity-0 group-hover:opacity-100"
-              onClick={() => {
-                setSelectedDocument({ id: node.id, name: node.name });
-                setIsActivityPanelOpen(true);
-              }}
-            >
-              <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
-              </svg>
-              Activité
-            </button>
+              if (node.isNominatif && node.engagement) {
+                // Document nominatif : Consulté / Non Consulté (avec hover)
+                return (
+                  <Tooltip>
+                    <TooltipTrigger asChild>
+                      <div className="flex items-center gap-1.5 ml-4 cursor-help">
+                        {node.engagement.viewedBy === node.engagement.totalViewers ? (
+                          <>
+                            <CheckCircle2 className="w-4 h-4 text-green-500" />
+                            <span className="text-xs font-medium text-green-600">Consulté</span>
+                          </>
+                        ) : (
+                          <>
+                            <EyeOff className="w-4 h-4 text-red-400" />
+                            <span className="text-xs font-medium text-red-500">Non Consulté</span>
+                          </>
+                        )}
+                      </div>
+                    </TooltipTrigger>
+                    <TooltipContent side="top" className="max-w-sm">
+                      <div className={cn('text-[11px] font-semibold uppercase tracking-wide mb-0.5', headerColorClass)}>
+                        {access.title}
+                      </div>
+                      <div className="text-xs leading-snug">{access.body}</div>
+                    </TooltipContent>
+                  </Tooltip>
+                );
+              }
+
+              // Document générique : indicateur discret avec nombre d'investisseurs (avec hover)
+              return (
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <div className="flex items-center gap-1 ml-4 text-gray-400 dark:text-gray-500 cursor-help">
+                      <Globe className="w-3.5 h-3.5" />
+                      <span className="text-xs">
+                        {node.engagement?.totalViewers ?? 0}
+                      </span>
+                      <Users className="w-3 h-3" />
+                    </div>
+                  </TooltipTrigger>
+                  <TooltipContent side="top" className="max-w-sm">
+                    <div className={cn('text-[11px] font-semibold uppercase tracking-wide mb-0.5', headerColorClass)}>
+                      {access.title}
+                    </div>
+                    <div className="text-xs leading-snug">{access.body}</div>
+                  </TooltipContent>
+                </Tooltip>
+              );
+            })()}
+
+            {/* Actions */}
+            <div className="ml-auto flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+              {/* Preview button */}
+              <button
+                className="flex items-center gap-1.5 px-3 py-1 text-xs font-medium text-blue-600 hover:text-blue-700 dark:text-blue-400 dark:hover:text-blue-300 transition-colors"
+                onClick={() => {
+                  setPreviewDocument({
+                    id: node.id,
+                    name: node.name,
+                    format: node.format,
+                    size: node.size,
+                    date: node.date,
+                  });
+                  setIsPreviewDrawerOpen(true);
+                }}
+                title="Aperçu du document"
+              >
+                <FileSearch className="w-3.5 h-3.5" />
+                Aperçu
+              </button>
+
+              {/* Activity button */}
+              <button
+                className="flex items-center gap-1.5 px-3 py-1 text-xs font-medium text-purple-600 hover:text-purple-700 dark:text-purple-400 dark:hover:text-purple-300 transition-colors"
+                onClick={() => {
+                  setSelectedDocument({ id: node.id, name: node.name });
+                  setIsActivityPanelOpen(true);
+                }}
+              >
+                <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
+                </svg>
+                Activité
+              </button>
+            </div>
           </div>
         )}
 
         {/* Children */}
         {isExpanded && hasChildren && (
           <div className="mt-1">
-            {node.children!.map(child => renderNode(child, level + 1))}
+            {node.children!.map(child => renderNode(child, level + 1, childContext))}
           </div>
         )}
       </div>
@@ -883,13 +1085,112 @@ export function BirdViewPage({ onBack }: BirdViewPageProps) {
             </PopoverContent>
           </Popover>
 
+          {/* Filtre Souscription (autocomplete, multi-select) */}
+          <Popover>
+            <PopoverTrigger asChild>
+              <button className="h-10 px-4 py-2 bg-white dark:bg-gray-950 border border-gray-300 dark:border-gray-700 rounded-lg text-sm hover:bg-gray-50 dark:hover:bg-gray-900 transition-all flex items-center gap-2 min-w-[180px]">
+                <FileText className="w-4 h-4 text-gray-500" />
+                <span className="flex-1 text-left text-gray-700 dark:text-gray-300">
+                  {selectedSubscriptions.length > 0
+                    ? `Souscription (${selectedSubscriptions.length})`
+                    : 'Souscription'}
+                </span>
+                <ChevronDown className="w-4 h-4 text-gray-400" />
+              </button>
+            </PopoverTrigger>
+            <PopoverContent className="w-[320px] p-0" align="start">
+              {/* Search */}
+              <div className="p-3 border-b border-gray-200 dark:border-gray-800">
+                <div className="relative">
+                  <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
+                  <input
+                    type="text"
+                    placeholder="Rechercher une souscription..."
+                    value={subscriptionSearch}
+                    onChange={(e) => setSubscriptionSearch(e.target.value)}
+                    className="w-full h-9 pl-9 pr-3 border border-gray-200 dark:border-gray-800 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white dark:bg-gray-950"
+                  />
+                </div>
+              </div>
+
+              {/* Selected chips */}
+              {selectedSubscriptions.length > 0 && (
+                <div className="px-3 pt-2 flex flex-wrap gap-1.5">
+                  {selectedSubscriptions.map(sub => (
+                    <span
+                      key={sub}
+                      className="inline-flex items-center gap-1 px-2 py-0.5 bg-blue-50 dark:bg-blue-950 border border-blue-200 dark:border-blue-800 rounded text-xs text-blue-700 dark:text-blue-300"
+                    >
+                      {sub}
+                      <button
+                        onClick={() =>
+                          setSelectedSubscriptions(selectedSubscriptions.filter(s => s !== sub))
+                        }
+                        className="hover:text-blue-900 dark:hover:text-blue-100"
+                      >
+                        <X className="w-3 h-3" />
+                      </button>
+                    </span>
+                  ))}
+                </div>
+              )}
+
+              {/* Options */}
+              <div className="max-h-[260px] overflow-y-auto p-2">
+                {(() => {
+                  const filtered = availableSubscriptions.filter(sub =>
+                    sub.toLowerCase().includes(subscriptionSearch.toLowerCase())
+                  );
+
+                  if (filtered.length === 0) {
+                    return (
+                      <div className="px-3 py-6 text-center text-xs text-gray-500">
+                        Aucune souscription trouvée
+                      </div>
+                    );
+                  }
+
+                  return filtered.map(sub => {
+                    const isSelected = selectedSubscriptions.includes(sub);
+                    return (
+                      <label
+                        key={sub}
+                        className="flex items-center gap-2 p-2 hover:bg-gray-50 dark:hover:bg-gray-900 rounded cursor-pointer"
+                      >
+                        <input
+                          type="checkbox"
+                          checked={isSelected}
+                          onChange={(e) => {
+                            if (e.target.checked) {
+                              setSelectedSubscriptions([...selectedSubscriptions, sub]);
+                            } else {
+                              setSelectedSubscriptions(
+                                selectedSubscriptions.filter(s => s !== sub)
+                              );
+                            }
+                          }}
+                          className="w-4 h-4"
+                        />
+                        <span className="text-sm text-gray-700 dark:text-gray-300 font-mono">
+                          {sub}
+                        </span>
+                      </label>
+                    );
+                  });
+                })()}
+              </div>
+            </PopoverContent>
+          </Popover>
+
           {/* Réinitialiser les filtres */}
-          {(documentNameFilter || selectedFunds.length > 0 || selectedSegments.length > 0) && (
+          {(documentNameFilter || selectedFunds.length > 0 || selectedSegments.length > 0 || selectedSubscriptions.length > 0) && (
             <button
               onClick={() => {
                 setDocumentNameFilter('');
                 setSelectedFunds([]);
                 setSelectedSegments([]);
+                setSelectedSubscriptions([]);
+                setSubscriptionSearch('');
               }}
               className="h-10 px-3 text-sm text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-100 flex items-center gap-2"
             >
@@ -925,6 +1226,20 @@ export function BirdViewPage({ onBack }: BirdViewPageProps) {
         onClose={() => {
           setIsActivityPanelOpen(false);
           setSelectedDocument(null);
+        }}
+      />
+
+      {/* Document Preview Drawer */}
+      <DocumentPreviewDrawer
+        isOpen={isPreviewDrawerOpen}
+        documentId={previewDocument?.id || ''}
+        documentName={previewDocument?.name || ''}
+        format={previewDocument?.format}
+        size={previewDocument?.size}
+        date={previewDocument?.date}
+        onClose={() => {
+          setIsPreviewDrawerOpen(false);
+          setPreviewDocument(null);
         }}
       />
     </div>
