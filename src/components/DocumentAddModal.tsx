@@ -21,6 +21,8 @@ import { ChevronDown, ChevronRight, UploadCloud, FileCheck2, Download, Users2, U
 import { Document } from '../utils/documentMockData';
 import { AudienceCounterCards } from './AudienceCounter';
 import { SegmentsMultiSelect, FundSingleSelect, ShareClassSingleSelect } from './ui/targeting-selects';
+import { AutocompleteSingleSelect } from './ui/autocomplete-select';
+import { Building2 } from 'lucide-react';
 
 function formatFrenchDate(dateStr: string): string {
   const days = ['dimanche', 'lundi', 'mardi', 'mercredi', 'jeudi', 'vendredi', 'samedi'];
@@ -635,7 +637,7 @@ export function DocumentAddModal({ isOpen, onClose, folderOptions, defaultFolder
         </SheetHeader>
 
         <div className="flex-1 overflow-y-auto px-6 py-5 space-y-5">
-          <section className="space-y-3 rounded-2xl p-4 border" style={{ backgroundColor: '#EEF1F7', borderColor: '#000E2B' }}>
+          <section className="space-y-3 rounded-2xl p-4 border" style={{ backgroundColor: '#EEF1F7', borderColor: '#000E2B1F' }}>
             <div>
               <p className="font-semibold flex items-center gap-2" style={{ color: '#000E2B' }}><FileText className="w-5 h-5" style={{ color: '#000E2B' }} /> Document</p>
               <p className="text-sm text-slate-600">Versions, fichiers et emplacement du document.</p>
@@ -770,7 +772,7 @@ export function DocumentAddModal({ isOpen, onClose, folderOptions, defaultFolder
             </div>
           </section>
 
-          <section className="space-y-4 rounded-2xl p-4 border" style={{ backgroundColor: '#EEF1F7', borderColor: '#000E2B' }}>
+          <section className="space-y-4 rounded-2xl p-4 border" style={{ backgroundColor: '#EEF1F7', borderColor: '#000E2B1F' }}>
             <div>
               <p className="font-semibold flex items-center gap-2" style={{ color: '#000E2B' }}><Users2 className="w-5 h-5" style={{ color: '#000E2B' }} /> Audience</p>
               <p className="text-sm text-slate-600">Configuration des critères de ciblage.</p>
@@ -818,66 +820,63 @@ export function DocumentAddModal({ isOpen, onClose, folderOptions, defaultFolder
                 </div>
               </div>
             ) : (
-              <div className="space-y-4 border rounded-2xl p-5 bg-white shadow-sm" style={{ borderColor: '#000E2B33' }}>
+              <div className="space-y-4 border rounded-2xl p-5 bg-white" style={{ borderColor: '#000E2B1F' }}>
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
                   <div className="space-y-2">
                     <Label>Investisseur (unique)</Label>
-                    <Select
-                      value={selectedInvestor || 'none'}
-                      onValueChange={(value) => {
-                        const nextInvestor = value === 'none' ? '' : value;
-                        setSelectedInvestor(nextInvestor);
+                    <AutocompleteSingleSelect
+                      value={selectedInvestor || null}
+                      onChange={(value) => {
+                        setSelectedInvestor(value || '');
                         setSelectedStructureId('');
                         setSelectedSubscription('');
                       }}
-                    >
-                      <SelectTrigger className="h-11"><SelectValue /></SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="none">Sélectionner</SelectItem>
-                        {INVESTORS.map((investor) => <SelectItem key={investor.id} value={investor.id}>{investor.name}</SelectItem>)}
-                      </SelectContent>
-                    </Select>
+                      options={INVESTORS.map((inv) => ({
+                        value: inv.id,
+                        label: inv.name,
+                        description: `${inv.segment} · ${inv.fund}`,
+                      }))}
+                      placeholder="Sélectionner un investisseur"
+                      icon={UserRound}
+                    />
                   </div>
                   <div className="space-y-2">
                     <Label>Structure (optionnelle)</Label>
-                    <Select
-                      value={selectedStructureId || 'none'}
-                      onValueChange={(value) => {
-                        setSelectedStructureId(value === 'none' ? '' : value);
+                    <AutocompleteSingleSelect
+                      value={selectedStructureId || null}
+                      onChange={(value) => {
+                        setSelectedStructureId(value || '');
                         setSelectedSubscription('');
                       }}
+                      options={structureOptions.map((st) => ({
+                        value: st.id,
+                        label: st.name,
+                        description: `${st.subscriptions.length} souscription${st.subscriptions.length > 1 ? 's' : ''}`,
+                      }))}
+                      placeholder="Toutes les structures"
+                      icon={Building2}
                       disabled={!selectedInvestor}
-                    >
-                      <SelectTrigger className="h-11"><SelectValue /></SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="none">Toutes les structures</SelectItem>
-                        {structureOptions.map((structure) => (
-                          <SelectItem key={structure.id} value={structure.id}>{structure.name}</SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
+                    />
                   </div>
                   <div className="space-y-2">
                     <Label>Souscription (optionnelle)</Label>
-                    <Select
-                      value={selectedSubscription || 'none'}
-                      onValueChange={(value) => setSelectedSubscription(value === 'none' ? '' : value)}
+                    <AutocompleteSingleSelect
+                      value={selectedSubscription || null}
+                      onChange={(value) => setSelectedSubscription(value || '')}
+                      options={subscriptionOptions.map((sub) => ({
+                        value: sub,
+                        label: sub,
+                      }))}
+                      placeholder="Toutes les souscriptions"
+                      icon={FileText}
                       disabled={!selectedInvestor}
-                    >
-                      <SelectTrigger className="h-11"><SelectValue /></SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="none">Toutes les souscriptions</SelectItem>
-                        {subscriptionOptions.map((subscription) => (
-                          <SelectItem key={subscription} value={subscription}>{subscription}</SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
+                    />
                   </div>
                 </div>
               </div>
             )}
 
-            <div className="rounded-2xl border p-4 space-y-4" style={{ borderColor: '#000E2B', backgroundColor: '#EEF1F7' }}>
+            <div className="rounded-2xl border p-4 space-y-4" style={{ borderColor: '#000E2B1F', backgroundColor: '#EEF1F7' }}>
                 <div className="flex items-center justify-between gap-3">
                   <div>
                     <p className="font-semibold flex items-center gap-2" style={{ color: '#000E2B' }}><ShieldCheck className="w-5 h-5" style={{ color: '#000E2B' }} /> Droits d'accès</p>
@@ -894,13 +893,13 @@ export function DocumentAddModal({ isOpen, onClose, folderOptions, defaultFolder
                   <AudienceCounterCards investors={audience.investors} contacts={audience.contacts} />
                 ) : (
                   selectedInvestorProfile ? (
-                    <div className="rounded-2xl border bg-white p-4 space-y-3" style={{ borderColor: '#000E2B' }}>
+                    <div className="rounded-2xl border bg-white p-4 space-y-3" style={{ borderColor: '#000E2B1F' }}>
                       <div>
                         <p className="text-xl font-semibold" style={{ color: '#000E2B' }}>{selectedInvestorProfile.name}</p>
                       </div>
                       <div className="border-t pt-3 space-y-2">
                         <p className="text-xs uppercase tracking-wide font-semibold" style={{ color: '#000E2B' }}>Contacts autorisés</p>
-                        <div className="rounded-xl border p-3 flex items-center gap-3" style={{ borderColor: '#000E2B', backgroundColor: '#EEF1F7' }}>
+                        <div className="rounded-xl border p-3 flex items-center gap-3" style={{ borderColor: '#000E2B1F', backgroundColor: '#EEF1F7' }}>
                           <div className="w-9 h-9 rounded-full flex items-center justify-center" style={{ backgroundColor: '#EEF1F7', color: '#000E2B' }}>
                             <UserRound className="w-4 h-4" />
                           </div>
@@ -916,7 +915,7 @@ export function DocumentAddModal({ isOpen, onClose, folderOptions, defaultFolder
                           </div>
                         </div>
                         {selectedInvestorProfile.contacts.map((contact) => (
-                          <div key={contact.name} className="rounded-xl border bg-white p-3 flex items-center gap-3" style={{ borderColor: '#000E2B' }}>
+                          <div key={contact.name} className="rounded-xl border bg-white p-3 flex items-center gap-3" style={{ borderColor: '#000E2B1F' }}>
                             <div className="w-9 h-9 rounded-full flex items-center justify-center" style={{ backgroundColor: '#EEF1F7', color: '#000E2B' }}>
                               <UserRound className="w-4 h-4" />
                             </div>
@@ -936,7 +935,7 @@ export function DocumentAddModal({ isOpen, onClose, folderOptions, defaultFolder
 
           </section>
 
-          <section className="space-y-4 rounded-2xl p-4 border" style={{ backgroundColor: '#EEF1F7', borderColor: '#000E2B' }}>
+          <section className="space-y-4 rounded-2xl p-4 border" style={{ backgroundColor: '#EEF1F7', borderColor: '#000E2B1F' }}>
             <div>
               <p className="font-semibold flex items-center gap-2" style={{ color: '#000E2B' }}><Bell className="w-5 h-5" style={{ color: '#000E2B' }} /> Notification</p>
               <p className="text-sm text-slate-600">Notifications immédiates et relances automatiques.</p>
@@ -997,7 +996,7 @@ export function DocumentAddModal({ isOpen, onClose, folderOptions, defaultFolder
             )}
           </section>
 
-          <section className="space-y-3 pb-2 rounded-2xl p-4 border" style={{ backgroundColor: '#EEF1F7', borderColor: '#000E2B' }}>
+          <section className="space-y-3 pb-2 rounded-2xl p-4 border" style={{ backgroundColor: '#EEF1F7', borderColor: '#000E2B1F' }}>
             <div>
               <p className="font-semibold flex items-center gap-2" style={{ color: '#000E2B' }}><Check className="w-5 h-5" style={{ color: '#000E2B' }} /> Validation</p>
               <p className="text-sm text-slate-600">Équipes de validation et validateurs associés.</p>

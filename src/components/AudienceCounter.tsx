@@ -23,7 +23,7 @@ interface AudienceCounterCardsProps {
 export function AudienceCounterCards({ investors, contacts }: AudienceCounterCardsProps) {
   return (
     <div className="grid grid-cols-2 gap-3">
-      <div className="rounded-xl border bg-white p-3 flex items-center gap-3" style={{ borderColor: '#000E2B' }}>
+      <div className="rounded-xl border bg-white p-3 flex items-center gap-3" style={{ borderColor: '#000E2B1F' }}>
         <div className="w-10 h-10 rounded-lg flex items-center justify-center" style={{ backgroundColor: '#EEF1F7' }}>
           <UserRound className="w-5 h-5" style={{ color: '#000E2B' }} />
         </div>
@@ -32,7 +32,7 @@ export function AudienceCounterCards({ investors, contacts }: AudienceCounterCar
           <p className="text-2xl font-bold leading-tight" style={{ color: '#000E2B' }}>{investors}</p>
         </div>
       </div>
-      <div className="rounded-xl border bg-white p-3 flex items-center gap-3" style={{ borderColor: '#000E2B' }}>
+      <div className="rounded-xl border bg-white p-3 flex items-center gap-3" style={{ borderColor: '#000E2B1F' }}>
         <div className="w-10 h-10 rounded-lg flex items-center justify-center" style={{ backgroundColor: '#EEF1F7' }}>
           <Users className="w-5 h-5" style={{ color: '#000E2B' }} />
         </div>
@@ -57,7 +57,7 @@ export function AudienceCounter({
   description = 'Basée sur le ciblage défini ci-dessus.',
 }: AudienceCounterProps) {
   return (
-    <div className="space-y-3 rounded-2xl p-4 border" style={{ backgroundColor: '#EEF1F7', borderColor: '#000E2B' }}>
+    <div className="space-y-3 rounded-2xl p-4 border" style={{ backgroundColor: '#EEF1F7', borderColor: '#000E2B1F' }}>
       <div>
         <p className="font-semibold flex items-center gap-2" style={{ color: '#000E2B' }}>
           <Users className="w-5 h-5" style={{ color: '#000E2B' }} />
