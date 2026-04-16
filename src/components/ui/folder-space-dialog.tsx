@@ -114,7 +114,7 @@ interface SegmentsMultiSelectProps {
   placeholder?: string;
 }
 
-function SegmentsMultiSelect({ value, onChange, options, placeholder = 'Sélectionner des segments' }: SegmentsMultiSelectProps) {
+function SegmentsMultiSelect({ value, onChange, options, placeholder = 'Tous les segments' }: SegmentsMultiSelectProps) {
   const [open, setOpen] = useState(false);
 
   const toggle = (seg: string) => {
@@ -215,7 +215,7 @@ interface FundSingleSelectProps {
   placeholder?: string;
 }
 
-function FundSingleSelect({ value, onChange, options, placeholder = 'Sélectionner un fonds' }: FundSingleSelectProps) {
+function FundSingleSelect({ value, onChange, options, placeholder = 'Tous les fonds' }: FundSingleSelectProps) {
   const [open, setOpen] = useState(false);
 
   return (
@@ -538,7 +538,7 @@ export function FolderSpaceDialog(props: FolderSpaceDialogProps) {
                 value={targeting.segments}
                 onChange={setSegments}
                 options={ALL_SEGMENTS}
-                placeholder="Sélectionner des segments"
+                placeholder="Tous les segments"
               />
             </div>
 
@@ -549,7 +549,7 @@ export function FolderSpaceDialog(props: FolderSpaceDialogProps) {
                 value={selectedFund}
                 onChange={setSelectedFund}
                 options={ALL_FUNDS}
-                placeholder="Sélectionner un fonds"
+                placeholder="Tous les fonds"
               />
             </div>
           </div>
