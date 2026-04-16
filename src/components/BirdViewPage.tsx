@@ -547,7 +547,7 @@ export function BirdViewPage({ onBack }: BirdViewPageProps) {
                 <Tag icon={Landmark} label={node.fundRestriction} />
               )}
               {node.segmentRestrictions && node.segmentRestrictions.map(seg => (
-                <Tag key={seg} label={seg} />
+                <Tag key={seg} icon={TagIcon} label={seg} />
               ))}
             </div>
 
@@ -588,7 +588,7 @@ export function BirdViewPage({ onBack }: BirdViewPageProps) {
                 <Tag icon={Layers3} label={node.shareClassRestriction} />
               )}
               {node.segmentRestrictions && node.segmentRestrictions.map(seg => (
-                <Tag key={seg} label={seg} />
+                <Tag key={seg} icon={TagIcon} label={seg} />
               ))}
             </div>
 
@@ -628,7 +628,7 @@ export function BirdViewPage({ onBack }: BirdViewPageProps) {
                 <Tag icon={Landmark} label={node.fundRestriction} />
               )}
               {node.segmentRestrictions && node.segmentRestrictions.map(seg => (
-                <Tag key={seg} label={seg} />
+                <Tag key={seg} icon={TagIcon} label={seg} />
               ))}
             </div>
 

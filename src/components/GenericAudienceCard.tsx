@@ -1,4 +1,4 @@
-import { Folder, Landmark, Settings, Users, ArrowRight, Layers3 } from 'lucide-react';
+import { Folder, Landmark, Settings, Users, ArrowRight, Layers3, Tag as TagIcon } from 'lucide-react';
 import { Button } from './ui/button';
 import { Tag } from './Tag';
 import {
@@ -125,7 +125,7 @@ export function GenericAudienceInline({
         {hasSpecificSegment ? (
           <Tooltip>
             <TooltipTrigger asChild>
-              <span><Tag icon={Users} label={segmentLabel} /></span>
+              <span><Tag icon={TagIcon} label={segmentLabel} /></span>
             </TooltipTrigger>
             <TooltipContent side="top"><span className="text-xs">Segment</span></TooltipContent>
           </Tooltip>
