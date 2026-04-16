@@ -6,6 +6,8 @@ import {
   ArrowLeft,
   ChevronDown,
   ChevronRight,
+  ChevronsDown,
+  ChevronsRight,
   FileText,
   FolderOpen,
   User,
@@ -105,6 +107,8 @@ export function BirdViewPage({ onBack }: BirdViewPageProps) {
   const [selectedSegments, setSelectedSegments] = useState<string[]>([]);
   const [selectedSubscriptions, setSelectedSubscriptions] = useState<string[]>([]);
   const [subscriptionSearch, setSubscriptionSearch] = useState('');
+  const [fundSearch, setFundSearch] = useState('');
+  const [segmentSearch, setSegmentSearch] = useState('');
 
   // Charger les données
   useEffect(() => {
@@ -184,6 +188,32 @@ export function BirdViewPage({ onBack }: BirdViewPageProps) {
     };
     collect(documentTree);
     return Array.from(subs).sort();
+  }, [documentTree]);
+
+  // Fonds disponibles (collectés depuis l'arbre de documents)
+  const availableFunds = useMemo(() => {
+    const funds = new Set<string>();
+    const collect = (nodes: DocumentNode[]) => {
+      nodes.forEach(node => {
+        if (node.fundRestriction) funds.add(node.fundRestriction);
+        if (node.children) collect(node.children);
+      });
+    };
+    collect(documentTree);
+    return Array.from(funds).sort();
+  }, [documentTree]);
+
+  // Segments disponibles (collectés depuis l'arbre de documents)
+  const availableSegments = useMemo(() => {
+    const segments = new Set<string>();
+    const collect = (nodes: DocumentNode[]) => {
+      nodes.forEach(node => {
+        node.segmentRestrictions?.forEach(s => segments.add(s));
+        if (node.children) collect(node.children);
+      });
+    };
+    collect(documentTree);
+    return Array.from(segments).sort();
   }, [documentTree]);
 
   // Contacts disponibles
@@ -534,8 +564,8 @@ export function BirdViewPage({ onBack }: BirdViewPageProps) {
             </button>
 
             {/* Icon */}
-            <div className="w-5 h-5 rounded-full bg-blue-500 flex items-center justify-center flex-shrink-0">
-              <FolderOpen className="w-3 h-3 text-white" />
+            <div className="w-7 h-7 rounded-lg bg-blue-600 flex items-center justify-center flex-shrink-0 shadow-sm">
+              <FolderOpen className="w-4 h-4 text-white" />
             </div>
 
             {/* Name */}
@@ -544,10 +574,20 @@ export function BirdViewPage({ onBack }: BirdViewPageProps) {
             {/* Restrictions */}
             <div className="flex items-center gap-1.5">
               {node.fundRestriction && (
-                <Tag icon={Landmark} label={node.fundRestriction} />
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <span><Tag icon={Landmark} label={node.fundRestriction} /></span>
+                  </TooltipTrigger>
+                  <TooltipContent side="top"><span className="text-xs">Ciblage par fonds</span></TooltipContent>
+                </Tooltip>
               )}
               {node.segmentRestrictions && node.segmentRestrictions.map(seg => (
-                <Tag key={seg} icon={TagIcon} label={seg} />
+                <Tooltip key={seg}>
+                  <TooltipTrigger asChild>
+                    <span><Tag icon={TagIcon} label={seg} /></span>
+                  </TooltipTrigger>
+                  <TooltipContent side="top"><span className="text-xs">Ciblage par segment</span></TooltipContent>
+                </Tooltip>
               ))}
             </div>
 
@@ -582,13 +622,28 @@ export function BirdViewPage({ onBack }: BirdViewPageProps) {
             {/* Restrictions */}
             <div className="flex items-center gap-1.5">
               {node.fundRestriction && (
-                <Tag icon={Landmark} label={node.fundRestriction} />
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <span><Tag icon={Landmark} label={node.fundRestriction} /></span>
+                  </TooltipTrigger>
+                  <TooltipContent side="top"><span className="text-xs">Ciblage par fonds</span></TooltipContent>
+                </Tooltip>
               )}
               {node.shareClassRestriction && (
-                <Tag icon={Layers3} label={node.shareClassRestriction} />
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <span><Tag icon={Layers3} label={node.shareClassRestriction} /></span>
+                  </TooltipTrigger>
+                  <TooltipContent side="top"><span className="text-xs">Ciblage par part</span></TooltipContent>
+                </Tooltip>
               )}
               {node.segmentRestrictions && node.segmentRestrictions.map(seg => (
-                <Tag key={seg} icon={TagIcon} label={seg} />
+                <Tooltip key={seg}>
+                  <TooltipTrigger asChild>
+                    <span><Tag icon={TagIcon} label={seg} /></span>
+                  </TooltipTrigger>
+                  <TooltipContent side="top"><span className="text-xs">Ciblage par segment</span></TooltipContent>
+                </Tooltip>
               ))}
             </div>
 
@@ -619,16 +674,36 @@ export function BirdViewPage({ onBack }: BirdViewPageProps) {
             {/* Restrictions du document */}
             <div className="flex items-center gap-1.5">
               {node.investorRestriction && (
-                <Tag icon={UserRound} label={node.investorRestriction} />
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <span><Tag icon={UserRound} label={node.investorRestriction} /></span>
+                  </TooltipTrigger>
+                  <TooltipContent side="top"><span className="text-xs">Ciblage nominatif (investisseur)</span></TooltipContent>
+                </Tooltip>
               )}
               {node.subscriptionRestriction && (
-                <Tag icon={FileText} label={node.subscriptionRestriction} />
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <span><Tag icon={FileText} label={node.subscriptionRestriction} /></span>
+                  </TooltipTrigger>
+                  <TooltipContent side="top"><span className="text-xs">Ciblage par souscription</span></TooltipContent>
+                </Tooltip>
               )}
               {node.fundRestriction && (
-                <Tag icon={Landmark} label={node.fundRestriction} />
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <span><Tag icon={Landmark} label={node.fundRestriction} /></span>
+                  </TooltipTrigger>
+                  <TooltipContent side="top"><span className="text-xs">Ciblage par fonds</span></TooltipContent>
+                </Tooltip>
               )}
               {node.segmentRestrictions && node.segmentRestrictions.map(seg => (
-                <Tag key={seg} icon={TagIcon} label={seg} />
+                <Tooltip key={seg}>
+                  <TooltipTrigger asChild>
+                    <span><Tag icon={TagIcon} label={seg} /></span>
+                  </TooltipTrigger>
+                  <TooltipContent side="top"><span className="text-xs">Ciblage par segment</span></TooltipContent>
+                </Tooltip>
               ))}
             </div>
 
@@ -780,32 +855,32 @@ export function BirdViewPage({ onBack }: BirdViewPageProps) {
 
         {/* KPIs */}
         <div className="grid grid-cols-3 gap-4 mb-6">
-          <div className="bg-blue-50 dark:bg-blue-950 rounded-lg p-4 border border-blue-100 dark:border-blue-900">
+          <div className="bg-blue-600 dark:bg-blue-700 rounded-lg p-4 border border-blue-700 dark:border-blue-600">
             <div className="flex items-center gap-2 mb-1">
-              <FolderOpen className="w-5 h-5 text-blue-600 dark:text-blue-400" />
-              <span className="text-sm text-blue-700 dark:text-blue-300">Espaces</span>
+              <FolderOpen className="w-5 h-5 text-blue-100" />
+              <span className="text-sm text-blue-50">Espaces</span>
             </div>
-            <div className="text-3xl font-bold text-blue-900 dark:text-blue-100">
+            <div className="text-3xl font-bold text-white">
               {filteredStats.totalSpaces}
             </div>
           </div>
 
-          <div className="bg-orange-50 dark:bg-orange-950 rounded-lg p-4 border border-orange-100 dark:border-orange-900">
+          <div className="bg-blue-100 dark:bg-blue-900 rounded-lg p-4 border border-blue-200 dark:border-blue-800">
             <div className="flex items-center gap-2 mb-1">
-              <FolderOpen className="w-5 h-5 text-orange-600 dark:text-orange-400" />
-              <span className="text-sm text-orange-700 dark:text-orange-300">Dossiers</span>
+              <FolderOpen className="w-5 h-5 text-blue-700 dark:text-blue-300" />
+              <span className="text-sm text-blue-800 dark:text-blue-200">Dossiers</span>
             </div>
-            <div className="text-3xl font-bold text-orange-900 dark:text-orange-100">
+            <div className="text-3xl font-bold text-blue-900 dark:text-blue-100">
               {filteredStats.totalFolders}
             </div>
           </div>
 
-          <div className="bg-gray-50 dark:bg-gray-900 rounded-lg p-4 border border-gray-200 dark:border-gray-800">
+          <div className="bg-blue-50 dark:bg-blue-950 rounded-lg p-4 border border-blue-100 dark:border-blue-900">
             <div className="flex items-center gap-2 mb-1">
-              <FileText className="w-5 h-5 text-gray-600 dark:text-gray-400" />
-              <span className="text-sm text-gray-700 dark:text-gray-300">Documents</span>
+              <FileText className="w-5 h-5 text-blue-600 dark:text-blue-400" />
+              <span className="text-sm text-blue-700 dark:text-blue-300">Documents</span>
             </div>
-            <div className="text-3xl font-bold text-gray-900 dark:text-gray-100">
+            <div className="text-3xl font-bold text-blue-900 dark:text-blue-100">
               {filteredStats.totalDocuments}
             </div>
           </div>
@@ -1011,7 +1086,7 @@ export function BirdViewPage({ onBack }: BirdViewPageProps) {
             />
           </div>
 
-          {/* Filtre Fonds */}
+          {/* Filtre Fonds (autocomplete, multi-select) */}
           <Popover>
             <PopoverTrigger asChild>
               <button className="h-10 px-4 py-2 bg-white dark:bg-gray-950 border border-gray-300 dark:border-gray-700 rounded-lg text-sm hover:bg-gray-50 dark:hover:bg-gray-900 transition-all flex items-center gap-2 min-w-[150px]">
@@ -1022,33 +1097,80 @@ export function BirdViewPage({ onBack }: BirdViewPageProps) {
                 <ChevronDown className="w-4 h-4 text-gray-400" />
               </button>
             </PopoverTrigger>
-            <PopoverContent className="w-[280px] p-3" align="start">
-              <div className="space-y-2">
-                <div className="text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wide mb-2">
-                  Sélectionner des fonds
+            <PopoverContent className="w-[320px] p-0" align="start">
+              {/* Search */}
+              <div className="p-3 border-b border-gray-200 dark:border-gray-800">
+                <div className="relative">
+                  <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
+                  <input
+                    type="text"
+                    placeholder="Rechercher un fonds..."
+                    value={fundSearch}
+                    onChange={(e) => setFundSearch(e.target.value)}
+                    className="w-full h-9 pl-9 pr-3 border border-gray-200 dark:border-gray-800 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white dark:bg-gray-950"
+                  />
                 </div>
-                {['KORELYA CAPITAL II', 'LP Investors', 'Fund Alpha', 'Fund Beta'].map((fund) => (
-                  <label key={fund} className="flex items-center gap-2 p-2 hover:bg-gray-50 dark:hover:bg-gray-900 rounded cursor-pointer">
-                    <input
-                      type="checkbox"
-                      checked={selectedFunds.includes(fund)}
-                      onChange={(e) => {
-                        if (e.target.checked) {
-                          setSelectedFunds([...selectedFunds, fund]);
-                        } else {
-                          setSelectedFunds(selectedFunds.filter(f => f !== fund));
-                        }
-                      }}
-                      className="w-4 h-4"
-                    />
-                    <span className="text-sm text-gray-700 dark:text-gray-300">{fund}</span>
-                  </label>
-                ))}
+              </div>
+
+              {/* Selected chips */}
+              {selectedFunds.length > 0 && (
+                <div className="px-3 pt-2 flex flex-wrap gap-1.5">
+                  {selectedFunds.map(fund => (
+                    <span
+                      key={fund}
+                      className="inline-flex items-center gap-1 px-2 py-0.5 bg-blue-50 dark:bg-blue-950 border border-blue-200 dark:border-blue-800 rounded text-xs text-blue-700 dark:text-blue-300"
+                    >
+                      {fund}
+                      <button
+                        onClick={() => setSelectedFunds(selectedFunds.filter(f => f !== fund))}
+                        className="hover:text-blue-900 dark:hover:text-blue-100"
+                      >
+                        <X className="w-3 h-3" />
+                      </button>
+                    </span>
+                  ))}
+                </div>
+              )}
+
+              {/* Options */}
+              <div className="max-h-[260px] overflow-y-auto p-2">
+                {(() => {
+                  const filtered = availableFunds.filter(f =>
+                    f.toLowerCase().includes(fundSearch.toLowerCase())
+                  );
+                  if (filtered.length === 0) {
+                    return (
+                      <div className="px-3 py-6 text-center text-xs text-gray-500">
+                        Aucun fonds trouvé
+                      </div>
+                    );
+                  }
+                  return filtered.map(fund => (
+                    <label
+                      key={fund}
+                      className="flex items-center gap-2 p-2 hover:bg-gray-50 dark:hover:bg-gray-900 rounded cursor-pointer"
+                    >
+                      <input
+                        type="checkbox"
+                        checked={selectedFunds.includes(fund)}
+                        onChange={(e) => {
+                          if (e.target.checked) {
+                            setSelectedFunds([...selectedFunds, fund]);
+                          } else {
+                            setSelectedFunds(selectedFunds.filter(f => f !== fund));
+                          }
+                        }}
+                        className="w-4 h-4"
+                      />
+                      <span className="text-sm text-gray-700 dark:text-gray-300">{fund}</span>
+                    </label>
+                  ));
+                })()}
               </div>
             </PopoverContent>
           </Popover>
 
-          {/* Filtre Segment */}
+          {/* Filtre Segment (autocomplete, multi-select) */}
           <Popover>
             <PopoverTrigger asChild>
               <button className="h-10 px-4 py-2 bg-white dark:bg-gray-950 border border-gray-300 dark:border-gray-700 rounded-lg text-sm hover:bg-gray-50 dark:hover:bg-gray-900 transition-all flex items-center gap-2 min-w-[150px]">
@@ -1059,28 +1181,75 @@ export function BirdViewPage({ onBack }: BirdViewPageProps) {
                 <ChevronDown className="w-4 h-4 text-gray-400" />
               </button>
             </PopoverTrigger>
-            <PopoverContent className="w-[280px] p-3" align="start">
-              <div className="space-y-2">
-                <div className="text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wide mb-2">
-                  Sélectionner des segments
+            <PopoverContent className="w-[320px] p-0" align="start">
+              {/* Search */}
+              <div className="p-3 border-b border-gray-200 dark:border-gray-800">
+                <div className="relative">
+                  <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
+                  <input
+                    type="text"
+                    placeholder="Rechercher un segment..."
+                    value={segmentSearch}
+                    onChange={(e) => setSegmentSearch(e.target.value)}
+                    className="w-full h-9 pl-9 pr-3 border border-gray-200 dark:border-gray-800 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white dark:bg-gray-950"
+                  />
                 </div>
-                {['HNWI', 'UHNWI', 'Retail', 'Professional', 'Institutional'].map((segment) => (
-                  <label key={segment} className="flex items-center gap-2 p-2 hover:bg-gray-50 dark:hover:bg-gray-900 rounded cursor-pointer">
-                    <input
-                      type="checkbox"
-                      checked={selectedSegments.includes(segment)}
-                      onChange={(e) => {
-                        if (e.target.checked) {
-                          setSelectedSegments([...selectedSegments, segment]);
-                        } else {
-                          setSelectedSegments(selectedSegments.filter(s => s !== segment));
-                        }
-                      }}
-                      className="w-4 h-4"
-                    />
-                    <span className="text-sm text-gray-700 dark:text-gray-300">{segment}</span>
-                  </label>
-                ))}
+              </div>
+
+              {/* Selected chips */}
+              {selectedSegments.length > 0 && (
+                <div className="px-3 pt-2 flex flex-wrap gap-1.5">
+                  {selectedSegments.map(seg => (
+                    <span
+                      key={seg}
+                      className="inline-flex items-center gap-1 px-2 py-0.5 bg-blue-50 dark:bg-blue-950 border border-blue-200 dark:border-blue-800 rounded text-xs text-blue-700 dark:text-blue-300"
+                    >
+                      {seg}
+                      <button
+                        onClick={() => setSelectedSegments(selectedSegments.filter(s => s !== seg))}
+                        className="hover:text-blue-900 dark:hover:text-blue-100"
+                      >
+                        <X className="w-3 h-3" />
+                      </button>
+                    </span>
+                  ))}
+                </div>
+              )}
+
+              {/* Options */}
+              <div className="max-h-[260px] overflow-y-auto p-2">
+                {(() => {
+                  const filtered = availableSegments.filter(s =>
+                    s.toLowerCase().includes(segmentSearch.toLowerCase())
+                  );
+                  if (filtered.length === 0) {
+                    return (
+                      <div className="px-3 py-6 text-center text-xs text-gray-500">
+                        Aucun segment trouvé
+                      </div>
+                    );
+                  }
+                  return filtered.map(segment => (
+                    <label
+                      key={segment}
+                      className="flex items-center gap-2 p-2 hover:bg-gray-50 dark:hover:bg-gray-900 rounded cursor-pointer"
+                    >
+                      <input
+                        type="checkbox"
+                        checked={selectedSegments.includes(segment)}
+                        onChange={(e) => {
+                          if (e.target.checked) {
+                            setSelectedSegments([...selectedSegments, segment]);
+                          } else {
+                            setSelectedSegments(selectedSegments.filter(s => s !== segment));
+                          }
+                        }}
+                        className="w-4 h-4"
+                      />
+                      <span className="text-sm text-gray-700 dark:text-gray-300">{segment}</span>
+                    </label>
+                  ));
+                })()}
               </div>
             </PopoverContent>
           </Popover>
@@ -1191,6 +1360,8 @@ export function BirdViewPage({ onBack }: BirdViewPageProps) {
                 setSelectedSegments([]);
                 setSelectedSubscriptions([]);
                 setSubscriptionSearch('');
+                setFundSearch('');
+                setSegmentSearch('');
               }}
               className="h-10 px-3 text-sm text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-100 flex items-center gap-2"
             >
@@ -1198,6 +1369,28 @@ export function BirdViewPage({ onBack }: BirdViewPageProps) {
               Réinitialiser les filtres
             </button>
           )}
+
+          {/* Expand / Collapse All */}
+          <div className="ml-auto flex items-center gap-2">
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={expandAll}
+              className="gap-2"
+            >
+              <ChevronsDown className="w-4 h-4" />
+              Tout ouvrir
+            </Button>
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={collapseAll}
+              className="gap-2"
+            >
+              <ChevronsRight className="w-4 h-4" />
+              Tout fermer
+            </Button>
+          </div>
         </div>
 
         {/* Vue complete message */}
