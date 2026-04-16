@@ -1,6 +1,12 @@
 import { Folder, Landmark, Settings, Users, ArrowRight, Layers3 } from 'lucide-react';
 import { Button } from './ui/button';
 import { Tag } from './Tag';
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from './ui/tooltip';
 
 type GenericAudienceCardProps = {
   title: string;
@@ -97,11 +103,34 @@ export function GenericAudienceInline({
   const hasSpecificSegment = segmentLabel && !['Tous segments', 'Tous les segments'].includes(segmentLabel);
 
   return (
-    <div className={`flex flex-wrap items-center gap-1.5 ${className}`}>
-      {hasSpecificFund ? <Tag icon={Landmark} label={`Fonds: ${fundLabel}`} /> : null}
-      {hasSpecificShareClass ? <Tag icon={Layers3} label={`Parts: ${shareClassLabel}`} /> : null}
-      {hasSpecificSegment ? <Tag icon={Users} label={`Segment: ${segmentLabel}`} /> : null}
-      {!hasSpecificFund && !hasSpecificShareClass && !hasSpecificSegment ? <span className="text-gray-400">—</span> : null}
-    </div>
+    <TooltipProvider delayDuration={200}>
+      <div className={`flex flex-wrap items-center gap-1.5 ${className}`}>
+        {hasSpecificFund ? (
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <span><Tag icon={Landmark} label={fundLabel} /></span>
+            </TooltipTrigger>
+            <TooltipContent side="top"><span className="text-xs">Fonds</span></TooltipContent>
+          </Tooltip>
+        ) : null}
+        {hasSpecificShareClass ? (
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <span><Tag icon={Layers3} label={shareClassLabel} /></span>
+            </TooltipTrigger>
+            <TooltipContent side="top"><span className="text-xs">Parts</span></TooltipContent>
+          </Tooltip>
+        ) : null}
+        {hasSpecificSegment ? (
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <span><Tag icon={Users} label={segmentLabel} /></span>
+            </TooltipTrigger>
+            <TooltipContent side="top"><span className="text-xs">Segment</span></TooltipContent>
+          </Tooltip>
+        ) : null}
+        {!hasSpecificFund && !hasSpecificShareClass && !hasSpecificSegment ? <span className="text-gray-400">—</span> : null}
+      </div>
+    </TooltipProvider>
   );
 }

@@ -1,15 +1,16 @@
 import { useEffect, useRef, useState } from 'react';
 import { AnimatePresence, motion } from 'motion/react';
-import { 
-  FileText, 
-  Folder, 
-  Eye, 
+import {
+  FileText,
+  Folder,
+  Eye,
   Download,
   MoreVertical,
   ChevronRight,
   Search,
   X,
-  Plus
+  Plus,
+  Trash2
 } from 'lucide-react';
 import { Document } from '../utils/documentMockData';
 import { Button } from './ui/button';
@@ -22,6 +23,16 @@ import {
   DropdownMenuTrigger,
 } from './ui/dropdown-menu';
 import { Input } from './ui/input';
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from './ui/alert-dialog';
 
 interface DocumentListViewProps {
   documents: Document[];
@@ -65,6 +76,7 @@ export function DocumentListView({
   const [hoveredId, setHoveredId] = useState<string | null>(null);
   const [viewerOpen, setViewerOpen] = useState(false);
   const [viewerDocument, setViewerDocument] = useState<Document | null>(null);
+  const [deleteTarget, setDeleteTarget] = useState<Document | null>(null);
   const itemRefs = useRef<Record<string, HTMLDivElement | null>>({});
 
   // Get current level items
@@ -222,7 +234,7 @@ export function DocumentListView({
           <div>Nature</div>
           <div>Audience</div>
           <div>Ajouté le</div>
-          <div>Taille</div>
+          <div>Statut</div>
           <div className="text-right">Actions</div>
         </div>
       </div>
@@ -284,11 +296,11 @@ export function DocumentListView({
                     <div>
                       <p className="text-sm text-gray-600">{formatDate(folder.date)}</p>
                     </div>
-                    
+
                     <div>
-                      <p className="text-sm text-gray-600">—</p>
+                      <p className="text-sm text-gray-400">—</p>
                     </div>
-                    
+
                     <div className="flex items-center justify-end gap-2">
                       <DropdownMenu>
                         <DropdownMenuTrigger asChild>
@@ -338,6 +350,7 @@ export function DocumentListView({
                               onDeleteFolder?.(folder);
                             }}
                           >
+                            <Trash2 className="w-4 h-4 mr-2" />
                             Supprimer le dossier
                           </DropdownMenuItem>
                         </DropdownMenuContent>
@@ -389,11 +402,19 @@ export function DocumentListView({
                     <div>
                       <p className="text-sm text-gray-600">{formatDate(file.date)}</p>
                     </div>
-                    
+
                     <div>
-                      <p className="text-sm text-gray-600">{formatFileSize(file.size)}</p>
+                      {file.status === 'published' ? (
+                        <span className="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-green-50 text-green-700">
+                          Publié
+                        </span>
+                      ) : (
+                        <span className="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-amber-50 text-amber-700">
+                          En Attente
+                        </span>
+                      )}
                     </div>
-                    
+
                     <div className="flex items-center justify-end gap-2">
                       <button
                         type="button"
@@ -424,8 +445,15 @@ export function DocumentListView({
                             <Download className="w-4 h-4 mr-2" />
                             Télécharger
                           </DropdownMenuItem>
-                          <DropdownMenuItem className="text-red-600 focus:text-red-600">
-                            Archiver document
+                          <DropdownMenuItem
+                            className="text-red-600 focus:text-red-600"
+                            onClick={(event) => {
+                              event.stopPropagation();
+                              setDeleteTarget(file);
+                            }}
+                          >
+                            <Trash2 className="w-4 h-4 mr-2" />
+                            Supprimer le document
                           </DropdownMenuItem>
                         </DropdownMenuContent>
                       </DropdownMenu>
@@ -499,6 +527,27 @@ export function DocumentListView({
           </>
         )}
       </AnimatePresence>
+
+      {/* Delete confirmation dialog */}
+      <AlertDialog open={!!deleteTarget} onOpenChange={(open) => { if (!open) setDeleteTarget(null); }}>
+        <AlertDialogContent className="max-w-md">
+          <AlertDialogHeader>
+            <AlertDialogTitle>Supprimer le document</AlertDialogTitle>
+            <AlertDialogDescription>
+              Êtes-vous sûr de vouloir supprimer « {deleteTarget?.name} » ? Cette action est irréversible.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Annuler</AlertDialogCancel>
+            <AlertDialogAction
+              className="bg-red-600 hover:bg-red-700 text-white"
+              onClick={() => setDeleteTarget(null)}
+            >
+              Supprimer
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }
