@@ -57,7 +57,7 @@ export function AudienceCounter({
   description = 'Basée sur le ciblage défini ci-dessus.',
 }: AudienceCounterProps) {
   return (
-    <div className="space-y-3 rounded-2xl p-4" style={{ backgroundColor: '#EEF1F7' }}>
+    <div className="space-y-3 rounded-2xl p-4 border" style={{ backgroundColor: '#EEF1F7', borderColor: '#000E2B' }}>
       <div>
         <p className="font-semibold flex items-center gap-2" style={{ color: '#000E2B' }}>
           <Users className="w-5 h-5" style={{ color: '#000E2B' }} />

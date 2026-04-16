@@ -634,7 +634,7 @@ export function DocumentAddModal({ isOpen, onClose, folderOptions, defaultFolder
         </SheetHeader>
 
         <div className="flex-1 overflow-y-auto px-6 py-5 space-y-5">
-          <section className="space-y-3 rounded-2xl p-4" style={{ backgroundColor: '#EEF1F7' }}>
+          <section className="space-y-3 rounded-2xl p-4 border" style={{ backgroundColor: '#EEF1F7', borderColor: '#000E2B' }}>
             <div>
               <p className="font-semibold flex items-center gap-2" style={{ color: '#000E2B' }}><FileText className="w-5 h-5" style={{ color: '#000E2B' }} /> Document</p>
               <p className="text-sm text-slate-600">Versions, fichiers et emplacement du document.</p>
@@ -769,7 +769,7 @@ export function DocumentAddModal({ isOpen, onClose, folderOptions, defaultFolder
             </div>
           </section>
 
-          <section className="space-y-4 rounded-2xl p-4" style={{ backgroundColor: '#EEF1F7' }}>
+          <section className="space-y-4 rounded-2xl p-4 border" style={{ backgroundColor: '#EEF1F7', borderColor: '#000E2B' }}>
             <div>
               <p className="font-semibold flex items-center gap-2" style={{ color: '#000E2B' }}><Users2 className="w-5 h-5" style={{ color: '#000E2B' }} /> Audience</p>
               <p className="text-sm text-slate-600">Configuration des critères de ciblage.</p>
@@ -915,7 +915,7 @@ export function DocumentAddModal({ isOpen, onClose, folderOptions, defaultFolder
               </div>
             )}
 
-            <div className="rounded-2xl border p-4 space-y-4" style={{ borderColor: '#000E2B33', backgroundColor: '#EEF1F7' }}>
+            <div className="rounded-2xl border p-4 space-y-4" style={{ borderColor: '#000E2B', backgroundColor: '#EEF1F7' }}>
                 <div className="flex items-center justify-between gap-3">
                   <div>
                     <p className="font-semibold flex items-center gap-2" style={{ color: '#000E2B' }}><ShieldCheck className="w-5 h-5" style={{ color: '#000E2B' }} /> Droits d'accès</p>
@@ -974,7 +974,7 @@ export function DocumentAddModal({ isOpen, onClose, folderOptions, defaultFolder
 
           </section>
 
-          <section className="space-y-4 rounded-2xl p-4" style={{ backgroundColor: '#EEF1F7' }}>
+          <section className="space-y-4 rounded-2xl p-4 border" style={{ backgroundColor: '#EEF1F7', borderColor: '#000E2B' }}>
             <div>
               <p className="font-semibold flex items-center gap-2" style={{ color: '#000E2B' }}><Bell className="w-5 h-5" style={{ color: '#000E2B' }} /> Notification</p>
               <p className="text-sm text-slate-600">Notifications immédiates et relances automatiques.</p>
@@ -1035,7 +1035,7 @@ export function DocumentAddModal({ isOpen, onClose, folderOptions, defaultFolder
             )}
           </section>
 
-          <section className="space-y-3 pb-2 rounded-2xl p-4" style={{ backgroundColor: '#EEF1F7' }}>
+          <section className="space-y-3 pb-2 rounded-2xl p-4 border" style={{ backgroundColor: '#EEF1F7', borderColor: '#000E2B' }}>
             <div>
               <p className="font-semibold flex items-center gap-2" style={{ color: '#000E2B' }}><Check className="w-5 h-5" style={{ color: '#000E2B' }} /> Validation</p>
               <p className="text-sm text-slate-600">Équipes de validation et validateurs associés.</p>
