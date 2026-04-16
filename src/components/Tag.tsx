@@ -27,9 +27,10 @@ export function Tag({ icon: Icon, label, className }: TagProps) {
     <span
       title={label}
       className={cn(
-        'inline-flex max-w-full min-w-0 shrink items-center gap-1.5 whitespace-nowrap rounded-full border border-border bg-muted px-2.5 py-1 text-xs font-medium text-muted-foreground transition-colors',
+        'inline-flex max-w-full min-w-0 shrink items-center gap-1.5 whitespace-nowrap rounded-full border px-2.5 py-1 text-xs font-medium transition-colors',
         className
       )}
+      style={{ color: '#7a7a7a', borderColor: '#ddd7cc', backgroundColor: '#f5f3ee' }}
     >
       {Icon && <Icon className="h-3.5 w-3.5 shrink-0" />}
       <span className="block max-w-[30ch] min-w-0 truncate">{truncatedLabel}</span>

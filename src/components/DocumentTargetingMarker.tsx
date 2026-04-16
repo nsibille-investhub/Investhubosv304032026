@@ -22,7 +22,7 @@ export function DocumentTargetingMarker({ document, mode = 'full' }: DocumentTar
     <Tag
       icon={isGeneric ? Globe : UserRound}
       label={title}
-      className={`text-[11px] ${isGeneric ? 'bg-indigo-50 text-indigo-700 border-indigo-200' : 'bg-emerald-50 text-emerald-700 border-emerald-200'}`}
+      className="text-[11px]"
     />
   );
 

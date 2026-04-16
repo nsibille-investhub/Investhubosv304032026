@@ -19,7 +19,24 @@ import { Badge } from './ui/badge';
 import { toast } from 'sonner';
 import { ChevronDown, ChevronRight, UploadCloud, FileCheck2, Download, Users2, UserRound, Mail, Eye, Trash2, Check, Folder, FileText, Bell, ShieldCheck, Clock3, CheckCircle2, Star } from 'lucide-react';
 import { Document } from '../utils/documentMockData';
-import { DocumentTargetingMarker } from './DocumentTargetingMarker';
+import { AudienceCounterCards } from './AudienceCounter';
+import { SegmentsMultiSelect, FundSingleSelect, ShareClassSingleSelect } from './ui/targeting-selects';
+import { AutocompleteSingleSelect } from './ui/autocomplete-select';
+import { Building2 } from 'lucide-react';
+
+function formatFrenchDate(dateStr: string): string {
+  const days = ['dimanche', 'lundi', 'mardi', 'mercredi', 'jeudi', 'vendredi', 'samedi'];
+  const months = ['janvier', 'février', 'mars', 'avril', 'mai', 'juin', 'juillet', 'août', 'septembre', 'octobre', 'novembre', 'décembre'];
+  const d = new Date(dateStr.replace(' ', 'T'));
+  if (isNaN(d.getTime())) return dateStr;
+  const dayName = days[d.getDay()];
+  const dayNum = d.getDate();
+  const month = months[d.getMonth()];
+  const year = d.getFullYear();
+  const hours = d.getHours();
+  const minutes = String(d.getMinutes()).padStart(2, '0');
+  return `${dayName} ${dayNum} ${month} ${year} à ${hours}h${minutes}`;
+}
 
 export interface FolderOption {
   id: string;
@@ -98,6 +115,9 @@ const documentLifecycleMock: Record<string, {
   'doc-1': { notification: { sentAt: '2026-03-18 09:42', template: 'Nouveau document' }, reminder: { dueInDays: 2, template: 'Relance standard' }, validation: { status: 'pending' } },
   'doc-2': { notification: { sentAt: '2026-03-15 14:20', template: 'Rapport trimestriel' }, reminder: { sentAt: '2026-03-19 10:00', template: 'Relance premium' }, validation: { status: 'approved', team: 'Compliance', validator: 'Patricia Mercier', validatedAt: '2026-03-16 11:05' } },
   'doc-3': { validation: { status: 'approved', team: 'Middle Office', validator: 'S. Roussel', validatedAt: '2026-03-10 16:32' } },
+  'doc-pere2-hnwi-1': { notification: { sentAt: '2024-03-05 10:00', template: 'Nouveau document' }, validation: { status: 'approved', team: 'Compliance', validator: 'P. Mercier', validatedAt: '2024-03-04 14:20' } },
+  'doc-pere2-hnwi-2': { validation: { status: 'pending' } },
+  'doc-pere2-hnwi-3': { validation: { status: 'pending' } },
 };
 
 const INVESTORS: InvestorProfile[] = [
@@ -406,7 +426,11 @@ export function DocumentAddModal({ isOpen, onClose, folderOptions, defaultFolder
   const [validationTeams, setValidationTeams] = useState<string[]>([]);
   const fileInputRefs = useRef<Record<'fr' | 'en', HTMLInputElement | null>>({ fr: null, en: null });
   const [selectedContactAccess, setSelectedContactAccess] = useState<Record<string, string[]>>({});
-  const detailState = document ? (documentLifecycleMock[document.id] || { validation: { status: 'pending' as const } }) : null;
+  const detailState = document ? (documentLifecycleMock[document.id] || {
+    validation: document.status === 'published'
+      ? { status: 'approved' as const, team: 'Front Office', validator: 'N. Sibille', validatedAt: document.uploadedAt ? `${document.uploadedAt} 10:00` : '2026-03-01 10:00' }
+      : { status: 'pending' as const }
+  }) : null;
 
   useEffect(() => {
     if (!isOpen) return;
@@ -417,11 +441,25 @@ export function DocumentAddModal({ isOpen, onClose, folderOptions, defaultFolder
         { language: 'fr', name: document.name, fileName: document.name },
         { language: 'en', name: document.name, fileName: '' },
       ]);
-      setSelectedFund(document.metadata?.fund || 'all');
-      setAudienceMode(document.target?.type === 'investor' ? 'nominative' : 'general');
-      setSelectedInvestor(document.target?.investors?.[0] || '');
-      setSelectedSubscription(document.target?.subscriptions?.[0] || '');
-      setSelectedSegments(document.target?.segments?.length ? document.target.segments : ['all']);
+      const nt = document.navigatorTargeting;
+      if (nt?.mode === 'nominative') {
+        setAudienceMode('nominative');
+        const matchedInvestor = INVESTORS.find((inv) => inv.name === nt.investor);
+        setSelectedInvestor(matchedInvestor?.id || '');
+        setSelectedSubscription(nt.subscription || '');
+      } else {
+        setAudienceMode('general');
+        const fundName = nt?.fund || document.metadata?.fund || '';
+        const matchedFund = FUNDS.find((f) => f !== 'all' && fundName.toLowerCase().includes(f.toLowerCase()));
+        setSelectedFund(matchedFund || 'all');
+        setSelectedShareClass(nt?.shareClass || '');
+        const seg = nt?.segment;
+        if (seg && seg !== 'Tous segments' && seg !== 'Tous les segments') {
+          setSelectedSegments([seg]);
+        } else {
+          setSelectedSegments(document.target?.segments?.length ? document.target.segments : ['all']);
+        }
+      }
     }
   }, [defaultFolderId, isOpen]);
 
@@ -599,12 +637,12 @@ export function DocumentAddModal({ isOpen, onClose, folderOptions, defaultFolder
         </SheetHeader>
 
         <div className="flex-1 overflow-y-auto px-6 py-5 space-y-5">
-          <section className="space-y-3 rounded-2xl border-2 border-blue-200 bg-gradient-to-br from-blue-50 to-indigo-50 p-4">
+          <section className="space-y-3 rounded-2xl p-4 border" style={{ backgroundColor: '#EEF1F7', borderColor: '#000E2B1F' }}>
             <div>
-              <p className="font-semibold text-slate-900 flex items-center gap-2"><FileText className="w-5 h-5 text-blue-600" /> Document</p>
+              <p className="font-semibold flex items-center gap-2" style={{ color: '#000E2B' }}><FileText className="w-5 h-5" style={{ color: '#000E2B' }} /> Document</p>
               <p className="text-sm text-slate-600">Versions, fichiers et emplacement du document.</p>
             </div>
-            <div className="rounded-2xl border bg-gradient-to-b from-white to-slate-50 p-4 md:p-5">
+            <div className="rounded-2xl border bg-white p-4 md:p-5" style={{ borderColor: '#000E2B33' }}>
               <Tabs defaultValue="fr" className="w-full">
                 <TabsList className="grid w-full grid-cols-2 h-11">
                   <TabsTrigger value="fr">🇫🇷 FR</TabsTrigger>
@@ -734,204 +772,140 @@ export function DocumentAddModal({ isOpen, onClose, folderOptions, defaultFolder
             </div>
           </section>
 
-          <section className="space-y-4 rounded-2xl border-2 border-blue-200 bg-gradient-to-br from-blue-50 to-indigo-50 p-4">
+          <section className="space-y-4 rounded-2xl p-4 border" style={{ backgroundColor: '#EEF1F7', borderColor: '#000E2B1F' }}>
             <div>
-              <p className="font-semibold text-slate-900 flex items-center gap-2"><Users2 className="w-5 h-5 text-blue-600" /> Audience</p>
+              <p className="font-semibold flex items-center gap-2" style={{ color: '#000E2B' }}><Users2 className="w-5 h-5" style={{ color: '#000E2B' }} /> Audience</p>
               <p className="text-sm text-slate-600">Configuration des critères de ciblage.</p>
             </div>
-            {isDetailMode && document && (
-              <div className="rounded-xl border border-slate-200 bg-white p-3">
-                <p className="mb-2 text-xs font-semibold uppercase tracking-wide text-slate-500">Ciblage harmonisé</p>
-                <DocumentTargetingMarker document={document} />
-              </div>
-            )}
             <div className="flex gap-2 p-1 rounded-xl bg-slate-100 w-fit">
-              <Button variant={audienceMode === 'general' ? 'default' : 'outline'} onClick={() => setAudienceMode('general')} disabled={isDetailMode}>Document général</Button>
-              <Button variant={audienceMode === 'nominative' ? 'default' : 'outline'} onClick={() => setAudienceMode('nominative')} disabled={isDetailMode}>Document nominatif</Button>
+              <Button variant={audienceMode === 'general' ? 'default' : 'outline'} onClick={() => setAudienceMode('general')}>Document général</Button>
+              <Button variant={audienceMode === 'nominative' ? 'default' : 'outline'} onClick={() => setAudienceMode('nominative')}>Document nominatif</Button>
             </div>
 
             {audienceMode === 'general' ? (
-              <div className="space-y-4 border rounded-2xl p-5 bg-gradient-to-br from-white to-blue-50/40 shadow-sm">
+              <div className="space-y-4 border rounded-2xl p-5 bg-white shadow-sm" style={{ borderColor: '#000E2B33' }}>
                 <div className="space-y-2">
                   <Label>Segments investisseurs</Label>
-                  <DropdownMenu>
-                    <DropdownMenuTrigger asChild>
-                      <Button variant="outline" className="w-full justify-between h-11 font-normal" disabled={isDetailMode}>
-                        {selectedSegments.includes('all')
-                          ? 'Tous les segments'
-                          : `${selectedSegments.length} segment(s) sélectionné(s)`}
-                        <ChevronDown className="w-4 h-4" />
-                      </Button>
-                    </DropdownMenuTrigger>
-                    <DropdownMenuContent className="w-[320px]">
-                      <DropdownMenuCheckboxItem
-                        checked={selectedSegments.includes('all')}
-                        onCheckedChange={(checked) => setSelectedSegments(checked ? ['all'] : [])}
-                      >
-                        Tous les segments
-                      </DropdownMenuCheckboxItem>
-                      {SEGMENTS.map((segment) => (
-                        <DropdownMenuCheckboxItem
-                          key={segment}
-                          checked={selectedSegments.includes(segment)}
-                          onCheckedChange={(checked) => {
-                            let next = selectedSegments.filter((item) => item !== 'all');
-                            if (isDetailMode) return;
-                            next = checked ? [...next, segment] : next.filter((item) => item !== segment);
-                            if (next.length === 0) next = ['all'];
-                            setSelectedSegments(next);
-                          }}
-                        >
-                          {segment}
-                        </DropdownMenuCheckboxItem>
-                      ))}
-                    </DropdownMenuContent>
-                  </DropdownMenu>
+                  <SegmentsMultiSelect
+                    value={selectedSegments.includes('all') ? [] : selectedSegments}
+                    onChange={(next) => setSelectedSegments(next.length === 0 ? ['all'] : next)}
+                    options={SEGMENTS}
+                    placeholder="Tous les segments"
+                  />
                 </div>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
                   <div className="space-y-2">
                     <Label>Fonds</Label>
-                    <Select
-                      value={selectedFund}
-                      onValueChange={(value) => {
-                        if (isDetailMode) return;
-                        setSelectedFund(value);
+                    <FundSingleSelect
+                      value={selectedFund === 'all' ? null : selectedFund}
+                      onChange={(next) => {
+                        setSelectedFund(next || 'all');
                         setSelectedShareClass('');
                       }}
-                      disabled={isDetailMode}
-                    >
-                      <SelectTrigger className="h-11"><SelectValue /></SelectTrigger>
-                      <SelectContent>
-                        {FUNDS.map((fund) => (
-                          <SelectItem key={fund} value={fund}>
-                            {fund === 'all' ? 'Tous les fonds' : fund}
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
+                      options={FUNDS.filter((f) => f !== 'all')}
+                      placeholder="Tous les fonds"
+                    />
                   </div>
                   {selectedFund !== 'all' && (
                     <div className="space-y-2">
                       <Label>Part du fonds</Label>
-                      <Select
-                        value={selectedShareClass || 'all'}
-                        onValueChange={(value) => setSelectedShareClass(value === 'all' ? '' : value)}
-                        disabled={isDetailMode}
-                      >
-                        <SelectTrigger className="h-11"><SelectValue /></SelectTrigger>
-                        <SelectContent>
-                          <SelectItem value="all">Toutes les parts</SelectItem>
-                          {shareClassOptions.map((shareClass) => (
-                            <SelectItem key={shareClass} value={shareClass}>{shareClass}</SelectItem>
-                          ))}
-                        </SelectContent>
-                      </Select>
+                      <ShareClassSingleSelect
+                        value={selectedShareClass || null}
+                        onChange={(next) => setSelectedShareClass(next || '')}
+                        options={shareClassOptions}
+                        placeholder="Toutes les parts"
+                      />
                     </div>
                   )}
                 </div>
               </div>
             ) : (
-              <div className="space-y-4 border rounded-2xl p-5 bg-gradient-to-br from-white to-indigo-50/40 shadow-sm">
+              <div className="space-y-4 border rounded-2xl p-5 bg-white" style={{ borderColor: '#000E2B1F' }}>
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
                   <div className="space-y-2">
                     <Label>Investisseur (unique)</Label>
-                    <Select
-                      value={selectedInvestor || 'none'}
-                      onValueChange={(value) => {
-                        if (isDetailMode) return;
-                        const nextInvestor = value === 'none' ? '' : value;
-                        setSelectedInvestor(nextInvestor);
+                    <AutocompleteSingleSelect
+                      value={selectedInvestor || null}
+                      onChange={(value) => {
+                        setSelectedInvestor(value || '');
                         setSelectedStructureId('');
                         setSelectedSubscription('');
                       }}
-                    >
-                      <SelectTrigger className="h-11" disabled={isDetailMode}><SelectValue /></SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="none">Sélectionner</SelectItem>
-                        {INVESTORS.map((investor) => <SelectItem key={investor.id} value={investor.id}>{investor.name}</SelectItem>)}
-                      </SelectContent>
-                    </Select>
+                      options={INVESTORS.map((inv) => ({
+                        value: inv.id,
+                        label: inv.name,
+                      }))}
+                      placeholder="Sélectionner un investisseur"
+                      icon={UserRound}
+                    />
                   </div>
                   <div className="space-y-2">
                     <Label>Structure (optionnelle)</Label>
-                    <Select
-                      value={selectedStructureId || 'none'}
-                      onValueChange={(value) => {
-                        if (isDetailMode) return;
-                        setSelectedStructureId(value === 'none' ? '' : value);
+                    <AutocompleteSingleSelect
+                      value={selectedStructureId || null}
+                      onChange={(value) => {
+                        setSelectedStructureId(value || '');
                         setSelectedSubscription('');
                       }}
-                      disabled={!selectedInvestor || isDetailMode}
-                    >
-                      <SelectTrigger className="h-11"><SelectValue /></SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="none">Toutes les structures</SelectItem>
-                        {structureOptions.map((structure) => (
-                          <SelectItem key={structure.id} value={structure.id}>{structure.name}</SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
+                      options={structureOptions.map((st) => ({
+                        value: st.id,
+                        label: st.name,
+                        description: `${st.subscriptions.length} souscription${st.subscriptions.length > 1 ? 's' : ''}`,
+                      }))}
+                      placeholder="Toutes les structures"
+                      icon={Building2}
+                      disabled={!selectedInvestor}
+                    />
                   </div>
                   <div className="space-y-2">
                     <Label>Souscription (optionnelle)</Label>
-                    <Select
-                      value={selectedSubscription || 'none'}
-                      onValueChange={(value) => setSelectedSubscription(value === 'none' ? '' : value)}
-                      disabled={!selectedInvestor || isDetailMode}
-                    >
-                      <SelectTrigger className="h-11"><SelectValue /></SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="none">Toutes les souscriptions</SelectItem>
-                        {subscriptionOptions.map((subscription) => (
-                          <SelectItem key={subscription} value={subscription}>{subscription}</SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
+                    <AutocompleteSingleSelect
+                      value={selectedSubscription || null}
+                      onChange={(value) => setSelectedSubscription(value || '')}
+                      options={subscriptionOptions.map((sub) => ({
+                        value: sub,
+                        label: sub,
+                      }))}
+                      placeholder="Toutes les souscriptions"
+                      icon={FileText}
+                      disabled={!selectedInvestor}
+                    />
                   </div>
                 </div>
               </div>
             )}
 
-            <div className="rounded-2xl border-2 border-blue-200 bg-gradient-to-br from-blue-50 to-indigo-50 p-4 space-y-4">
+            <div className="rounded-2xl border p-4 space-y-4" style={{ borderColor: '#000E2B1F', backgroundColor: '#EEF1F7' }}>
                 <div className="flex items-center justify-between gap-3">
                   <div>
-                    <p className="font-semibold text-slate-900 flex items-center gap-2"><ShieldCheck className="w-5 h-5 text-blue-600" /> Droits d'accès</p>
+                    <p className="font-semibold flex items-center gap-2" style={{ color: '#000E2B' }}><ShieldCheck className="w-5 h-5" style={{ color: '#000E2B' }} /> Droits d'accès</p>
                     <p className="text-sm text-slate-600">Ce document sera visible selon le ciblage défini.</p>
                   </div>
                   {audienceMode === 'general' && (
-                  <Button variant="outline" className="border-blue-300 text-blue-700" onClick={handleExportScope}>
+                  <Button variant="outline" onClick={handleExportScope} style={{ borderColor: '#000E2B', color: '#000E2B' }}>
                     <Download className="w-4 h-4 mr-2" />
                     Export CSV
                   </Button>
                   )}
                 </div>
                 {audienceMode === 'general' ? (
-                <div className="grid grid-cols-2 gap-3">
-                  <div className="rounded-xl border border-blue-200 bg-white p-3">
-                    <p className="text-blue-700 text-sm font-medium">Investisseurs</p>
-                    <p className="text-3xl font-bold text-blue-800">{audience.investors}</p>
-                  </div>
-                  <div className="rounded-xl border border-indigo-200 bg-white p-3">
-                    <p className="text-indigo-700 text-sm font-medium">Contacts</p>
-                    <p className="text-3xl font-bold text-indigo-800">{audience.contacts}</p>
-                  </div>
-                </div>
+                  <AudienceCounterCards investors={audience.investors} contacts={audience.contacts} />
                 ) : (
                   selectedInvestorProfile ? (
-                    <div className="rounded-2xl border bg-white p-4 space-y-3">
+                    <div className="rounded-2xl border bg-white p-4 space-y-3" style={{ borderColor: '#000E2B1F' }}>
                       <div>
-                        <p className="text-xl font-semibold text-slate-900">{selectedInvestorProfile.name}</p>
+                        <p className="text-xl font-semibold" style={{ color: '#000E2B' }}>{selectedInvestorProfile.name}</p>
                       </div>
                       <div className="border-t pt-3 space-y-2">
-                        <p className="text-xs uppercase tracking-wide text-slate-500 font-semibold">Contacts autorisés</p>
-                        <div className="rounded-xl border bg-blue-50/60 p-3 flex items-center gap-3">
-                          <div className="w-9 h-9 rounded-full bg-blue-100 text-blue-700 flex items-center justify-center">
+                        <p className="text-xs uppercase tracking-wide font-semibold" style={{ color: '#000E2B' }}>Contacts autorisés</p>
+                        <div className="rounded-xl border p-3 flex items-center gap-3" style={{ borderColor: '#000E2B1F', backgroundColor: '#EEF1F7' }}>
+                          <div className="w-9 h-9 rounded-full flex items-center justify-center" style={{ backgroundColor: '#EEF1F7', color: '#000E2B' }}>
                             <UserRound className="w-4 h-4" />
                           </div>
                           <div className="flex-1">
-                            <p className="font-medium text-slate-900 flex items-center gap-2">
+                            <p className="font-medium flex items-center gap-2" style={{ color: '#000E2B' }}>
                               {selectedInvestorProfile.name}
-                              <span className="inline-flex items-center gap-1 rounded-full border border-blue-300 bg-blue-100 px-2 py-0.5 text-[11px] font-medium text-blue-700">
+                              <span className="inline-flex items-center gap-1 rounded-full border px-2 py-0.5 text-[11px] font-medium" style={{ borderColor: '#000E2B', backgroundColor: '#EEF1F7', color: '#000E2B' }}>
                                 <Star className="w-3 h-3 fill-current" />
                                 Principal
                               </span>
@@ -940,12 +914,12 @@ export function DocumentAddModal({ isOpen, onClose, folderOptions, defaultFolder
                           </div>
                         </div>
                         {selectedInvestorProfile.contacts.map((contact) => (
-                          <div key={contact.name} className="rounded-xl border bg-slate-50 p-3 flex items-center gap-3">
-                            <div className="w-9 h-9 rounded-full bg-blue-100 text-blue-700 flex items-center justify-center">
+                          <div key={contact.name} className="rounded-xl border bg-white p-3 flex items-center gap-3" style={{ borderColor: '#000E2B1F' }}>
+                            <div className="w-9 h-9 rounded-full flex items-center justify-center" style={{ backgroundColor: '#EEF1F7', color: '#000E2B' }}>
                               <UserRound className="w-4 h-4" />
                             </div>
                             <div>
-                              <p className="font-medium text-slate-900">{contact.name}</p>
+                              <p className="font-medium" style={{ color: '#000E2B' }}>{contact.name}</p>
                               <p className="text-sm text-slate-500 flex items-center gap-1"><Mail className="w-3 h-3" /> {contact.role}</p>
                             </div>
                           </div>
@@ -960,29 +934,29 @@ export function DocumentAddModal({ isOpen, onClose, folderOptions, defaultFolder
 
           </section>
 
-          <section className="space-y-4 rounded-2xl border-2 border-blue-200 bg-gradient-to-br from-blue-50 to-indigo-50 p-4">
+          <section className="space-y-4 rounded-2xl p-4 border" style={{ backgroundColor: '#EEF1F7', borderColor: '#000E2B1F' }}>
             <div>
-              <p className="font-semibold text-slate-900 flex items-center gap-2"><Bell className="w-5 h-5 text-blue-600" /> Notification</p>
+              <p className="font-semibold flex items-center gap-2" style={{ color: '#000E2B' }}><Bell className="w-5 h-5" style={{ color: '#000E2B' }} /> Notification</p>
               <p className="text-sm text-slate-600">Notifications immédiates et relances automatiques.</p>
             </div>
             {isDetailMode ? (
               <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
-                <div className="space-y-2 border rounded-xl p-4 bg-white">
+                <div className="space-y-2 border rounded-xl p-4 bg-white" style={{ borderColor: '#000E2B33' }}>
                   <Label>Notification document</Label>
                   {detailState?.notification ? (
                     <p className="text-sm text-slate-700">
-                      Notification envoyée le <span className="font-medium">{detailState.notification.sentAt}</span> via le gabarit <span className="font-medium">{detailState.notification.template}</span>.
+                      Notification envoyée le <span className="font-medium">{formatFrenchDate(detailState.notification.sentAt)}</span> via le gabarit <span className="font-medium">{detailState.notification.template}</span>.
                     </p>
                   ) : (
                     <p className="text-sm text-slate-500">Aucune notification envoyée pour ce document.</p>
                   )}
                 </div>
-                <div className="space-y-2 border rounded-xl p-4 bg-white">
+                <div className="space-y-2 border rounded-xl p-4 bg-white" style={{ borderColor: '#000E2B33' }}>
                   <Label>Relance auto si non consulté</Label>
                   {detailState?.reminder?.dueInDays !== undefined ? (
                     <p className="text-sm text-slate-700">Relance prévue dans <span className="font-medium">{detailState.reminder.dueInDays} jour(s)</span> avec le gabarit <span className="font-medium">{detailState.reminder.template}</span>.</p>
                   ) : detailState?.reminder?.sentAt ? (
-                    <p className="text-sm text-slate-700">Relance envoyée le <span className="font-medium">{detailState.reminder.sentAt}</span> avec le gabarit <span className="font-medium">{detailState.reminder.template}</span>.</p>
+                    <p className="text-sm text-slate-700">Relance envoyée le <span className="font-medium">{formatFrenchDate(detailState.reminder.sentAt)}</span> avec le gabarit <span className="font-medium">{detailState.reminder.template}</span>.</p>
                   ) : (
                     <p className="text-sm text-slate-500">Aucune relance automatique configurée.</p>
                   )}
@@ -990,7 +964,7 @@ export function DocumentAddModal({ isOpen, onClose, folderOptions, defaultFolder
               </div>
             ) : (
               <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
-                <div className="space-y-3 border rounded-xl p-4">
+                <div className="space-y-3 border rounded-xl p-4" style={{ borderColor: '#000E2B33' }}>
                   <div className="flex items-center justify-between">
                     <Label>Notification document</Label>
                     <Switch checked={notify} onCheckedChange={setNotify} />
@@ -1001,7 +975,7 @@ export function DocumentAddModal({ isOpen, onClose, folderOptions, defaultFolder
                   </Select>
                 </div>
 
-                <div className="space-y-3 border rounded-xl p-4">
+                <div className="space-y-3 border rounded-xl p-4" style={{ borderColor: '#000E2B33' }}>
                   <div className="flex items-center justify-between">
                     <Label>Relance auto si non consulté</Label>
                     <Switch checked={reminder} onCheckedChange={setReminder} />
@@ -1021,9 +995,9 @@ export function DocumentAddModal({ isOpen, onClose, folderOptions, defaultFolder
             )}
           </section>
 
-          <section className="space-y-3 pb-2 rounded-2xl border-2 border-blue-200 bg-gradient-to-br from-blue-50 to-indigo-50 p-4">
+          <section className="space-y-3 pb-2 rounded-2xl p-4 border" style={{ backgroundColor: '#EEF1F7', borderColor: '#000E2B1F' }}>
             <div>
-              <p className="font-semibold text-slate-900 flex items-center gap-2"><Check className="w-5 h-5 text-blue-600" /> Validation</p>
+              <p className="font-semibold flex items-center gap-2" style={{ color: '#000E2B' }}><Check className="w-5 h-5" style={{ color: '#000E2B' }} /> Validation</p>
               <p className="text-sm text-slate-600">Équipes de validation et validateurs associés.</p>
             </div>
             {isDetailMode ? (
@@ -1032,25 +1006,27 @@ export function DocumentAddModal({ isOpen, onClose, folderOptions, defaultFolder
                   <div className="rounded-xl border border-emerald-200 bg-emerald-50 p-4">
                     <p className="font-semibold text-emerald-800 flex items-center gap-2"><CheckCircle2 className="h-4 w-4" /> Document validé</p>
                     <p className="text-sm text-emerald-700 mt-1">Équipe: {detailState.validation.team} • Validé par {detailState.validation.validator}</p>
-                    <p className="text-sm text-emerald-700">Le {detailState.validation.validatedAt}</p>
+                    <p className="text-sm text-emerald-700">Le {formatFrenchDate(detailState.validation.validatedAt || '')}</p>
                   </div>
                 ) : (
-                  <div className="rounded-xl border border-amber-200 bg-amber-50 p-4">
-                    <p className="font-semibold text-amber-800 flex items-center gap-2"><Clock3 className="h-4 w-4" /> En attente de validation</p>
-                    <p className="text-sm text-amber-700 mt-1">Ce document est en cours de revue par les équipes de validation.</p>
-                  </div>
-                )}
-                <div className="rounded-xl border border-slate-200 bg-white p-4 space-y-3">
-                  <p className="font-medium text-slate-900">Équipes de validation et personnes associées</p>
-                  <div className="space-y-2">
-                    {TEAMS.map((team) => (
-                      <div key={team.id} className="rounded-lg border border-slate-200 p-3">
-                        <p className="font-medium text-slate-800">{team.name}</p>
-                        <p className="text-sm text-slate-600 mt-1">Personnes: {team.validators.join(', ')}</p>
+                  <>
+                    <div className="rounded-xl border border-amber-200 bg-amber-50 p-4">
+                      <p className="font-semibold text-amber-800 flex items-center gap-2"><Clock3 className="h-4 w-4" /> En attente de validation</p>
+                      <p className="text-sm text-amber-700 mt-1">Ce document est en cours de revue par les équipes de validation.</p>
+                    </div>
+                    <div className="rounded-xl border bg-white p-4 space-y-3" style={{ borderColor: '#000E2B33' }}>
+                      <p className="font-medium text-slate-900">Équipes de validation et personnes associées</p>
+                      <div className="space-y-2">
+                        {TEAMS.map((team) => (
+                          <div key={team.id} className="rounded-lg border p-3" style={{ borderColor: '#000E2B33' }}>
+                            <p className="font-medium text-slate-800">{team.name}</p>
+                            <p className="text-sm text-slate-600 mt-1">Personnes: {team.validators.join(', ')}</p>
+                          </div>
+                        ))}
                       </div>
-                    ))}
-                  </div>
-                </div>
+                    </div>
+                  </>
+                )}
               </>
             ) : (
               <>
@@ -1063,6 +1039,8 @@ export function DocumentAddModal({ isOpen, onClose, folderOptions, defaultFolder
                     placeholder="Sélectionner une ou plusieurs équipes…"
                     searchPlaceholder="Rechercher une équipe…"
                     maxDisplay={4}
+                    showIconInBadge
+                    badgeStyle={{ color: '#7a7a7a', borderColor: '#ddd7cc', backgroundColor: '#f5f3ee', border: '1px solid #ddd7cc' }}
                   />
                   <p className="text-xs text-slate-500">
                     Sélectionnez les équipes qui devront approuver ce document. Tous les validateurs de chaque équipe seront notifiés.
@@ -1072,7 +1050,7 @@ export function DocumentAddModal({ isOpen, onClose, folderOptions, defaultFolder
                 <div className="rounded-xl border border-slate-200 bg-white p-4 space-y-3">
                   <div className="flex items-center justify-between gap-2">
                     <div className="flex items-center gap-2">
-                      <div className="w-8 h-8 rounded-lg bg-blue-100 text-blue-700 flex items-center justify-center">
+                      <div className="w-8 h-8 rounded-lg flex items-center justify-center" style={{ backgroundColor: '#EEF1F7', color: '#000E2B' }}>
                         <Users2 className="w-4 h-4" />
                       </div>
                       <div>
@@ -1083,7 +1061,7 @@ export function DocumentAddModal({ isOpen, onClose, folderOptions, defaultFolder
                       </div>
                     </div>
                     {selectedTeamsDetailed.length > 0 && (
-                      <Badge variant="outline" className="bg-blue-50 border-blue-200 text-blue-700">
+                      <Badge variant="outline" style={{ backgroundColor: '#EEF1F7', borderColor: '#000E2B', color: '#000E2B' }}>
                         {totalValidators} {totalValidators > 1 ? 'validateurs' : 'validateur'} · {selectedTeamsDetailed.length} {selectedTeamsDetailed.length > 1 ? 'équipes' : 'équipe'}
                       </Badge>
                     )}

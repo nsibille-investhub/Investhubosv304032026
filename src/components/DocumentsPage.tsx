@@ -122,7 +122,7 @@ export function DocumentsPage({ selectedSpace, navigationTarget, onNavigationHan
         owner: node.owner || 'Système',
         views: Math.floor(Math.random() * 100),
         downloads: Math.floor(Math.random() * 50),
-        status: 'published' as const,
+        status: (node.type !== 'folder' && seed % 3 !== 0) ? 'draft' as const : 'published' as const,
         children: node.children
           ? convertTreeToDocuments(node.children, nextPath, inheritedGenericTargeting || folderGetsGenericTargeting)
           : undefined,
@@ -471,7 +471,11 @@ export function DocumentsPage({ selectedSpace, navigationTarget, onNavigationHan
               onAddFolder={() => openAddFolderPopup()}
               onAddFolderFromFolder={(folder) => openAddFolderPopup(folder.id)}
               onEditFolder={openEditFolderPopup}
-              onDeleteFolder={openEditFolderPopup}
+              onDeleteFolder={(folder) => {
+                toast.success('Dossier supprimé', {
+                  description: `Le dossier « ${folder.name} » a été supprimé.`,
+                });
+              }}
             />
           </div>
         </div>

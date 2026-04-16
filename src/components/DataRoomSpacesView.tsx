@@ -1,6 +1,6 @@
 import { useMemo, useState } from 'react';
 import { motion } from 'motion/react';
-import { Plus, Folder, Settings, Users, Handshake, TrendingUp, Target, ArrowRight, Search, FileText, FolderOpen, Layers, Landmark } from 'lucide-react';
+import { Plus, Folder, Settings, Users, Handshake, TrendingUp, Target, ArrowRight, Search, FileText, FolderOpen, Landmark, Tag as TagIcon } from 'lucide-react';
 import { Button } from './ui/button';
 import { Badge } from './ui/badge';
 import { DataRoomSpace } from '../utils/dataRoomSpacesData';
@@ -246,14 +246,14 @@ export function DataRoomSpacesView({
                         <div className="space-y-1.5 mb-4">
                           {space.targeting.segments.length > 0 && (
                             <div className="flex items-start gap-2 text-xs text-gray-600">
-                              <Layers className="w-3.5 h-3.5 mt-0.5 text-indigo-500 flex-shrink-0" />
+                              <TagIcon className="w-3.5 h-3.5 mt-0.5 flex-shrink-0" />
                               <span className="line-clamp-1" title={space.targeting.segments.join(', ')}>
                                 <span className="font-medium text-gray-700">Segments :</span> {space.targeting.segments.join(', ')}
                               </span>
                             </div>
                           )}
                           <div className="flex items-start gap-2 text-xs text-gray-600">
-                            <Landmark className="w-3.5 h-3.5 mt-0.5 text-emerald-600 flex-shrink-0" />
+                            <Landmark className="w-3.5 h-3.5 mt-0.5 flex-shrink-0" />
                             <span className="line-clamp-1" title={space.targeting.funds.join(', ') || 'Tous fonds'}>
                               <span className="font-medium text-gray-700">Fonds :</span> {space.targeting.funds.join(', ') || 'Tous fonds'}
                             </span>
@@ -262,11 +262,11 @@ export function DataRoomSpacesView({
 
                         <div className="flex items-center gap-4 text-sm text-gray-500 mb-4 pb-4 border-b border-gray-200">
                           <div className="flex items-center gap-1.5">
-                            <div className="w-1.5 h-1.5 rounded-full bg-[#060D19]" />
+                            <div className="w-1.5 h-1.5 rounded-full" style={{ backgroundColor: '#000E2B' }} />
                             <span>{space.documentCount} documents</span>
                           </div>
                           <div className="flex items-center gap-1.5">
-                            <div className="w-1.5 h-1.5 rounded-full bg-purple-500" />
+                            <div className="w-1.5 h-1.5 rounded-full" style={{ backgroundColor: '#000E2B' }} />
                             <span>{space.folderCount} dossiers</span>
                           </div>
                         </div>

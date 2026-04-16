@@ -1,15 +1,18 @@
 import { useEffect, useRef, useState } from 'react';
 import { AnimatePresence, motion } from 'motion/react';
-import { 
-  FileText, 
-  Folder, 
-  Eye, 
+import {
+  FileText,
+  Folder,
+  Eye,
   Download,
   MoreVertical,
   ChevronRight,
   Search,
   X,
-  Plus
+  Plus,
+  Trash2,
+  SquarePen,
+  Copy,
 } from 'lucide-react';
 import { Document } from '../utils/documentMockData';
 import { Button } from './ui/button';
@@ -22,6 +25,16 @@ import {
   DropdownMenuTrigger,
 } from './ui/dropdown-menu';
 import { Input } from './ui/input';
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from './ui/alert-dialog';
 
 interface DocumentListViewProps {
   documents: Document[];
@@ -41,6 +54,8 @@ interface DocumentListViewProps {
   onAddFolderFromFolder?: (folder: Document) => void;
   onEditFolder?: (folder: Document) => void;
   onDeleteFolder?: (folder: Document) => void;
+  onDuplicateFolder?: (folder: Document) => void;
+  onDuplicateDocument?: (doc: Document) => void;
 }
 
 export function DocumentListView({
@@ -60,11 +75,15 @@ export function DocumentListView({
   onAddFolderFromFolder,
   onEditFolder,
   onDeleteFolder,
+  onDuplicateFolder,
+  onDuplicateDocument,
 }: DocumentListViewProps) {
   const tableGridClassName = 'document-list-grid';
   const [hoveredId, setHoveredId] = useState<string | null>(null);
   const [viewerOpen, setViewerOpen] = useState(false);
   const [viewerDocument, setViewerDocument] = useState<Document | null>(null);
+  const [deleteTarget, setDeleteTarget] = useState<Document | null>(null);
+  const [deleteFolderTarget, setDeleteFolderTarget] = useState<Document | null>(null);
   const itemRefs = useRef<Record<string, HTMLDivElement | null>>({});
 
   // Get current level items
@@ -141,37 +160,35 @@ export function DocumentListView({
   return (
     <div className="flex flex-col h-full">
       {/* Breadcrumb */}
-      {currentPath.length > 0 && (
-        <div className="px-6 py-3 border-b border-gray-200 bg-gray-50/50">
-          <div className="flex items-center gap-2 text-sm">
-            <button
-              onClick={() => onFolderNavigate(null, [])}
-              className="text-gray-600 hover:text-gray-900 transition-colors"
-            >
-              Documents
-            </button>
-            {currentPath.map((folder, index) => (
-              <div key={index} className="flex items-center gap-2">
-                <ChevronRight className="w-4 h-4 text-gray-400" />
-                <button
-                  onClick={() => {
-                    const newPath = currentPath.slice(0, index + 1);
-                    const targetFolderId = findFolderIdByPath(newPath);
-                    onFolderNavigate(targetFolderId, newPath);
-                  }}
-                  className={`${
-                    index === currentPath.length - 1
-                      ? 'text-gray-900 font-medium'
-                      : 'text-gray-600 hover:text-gray-900'
-                  } transition-colors`}
-                >
-                  {folder}
-                </button>
-              </div>
-            ))}
-          </div>
+      <div className="px-6 py-3 border-b border-gray-200 bg-gray-50/50">
+        <div className="flex items-center gap-2 text-sm">
+          <button
+            onClick={() => onFolderNavigate(null, [])}
+            className={`${currentPath.length === 0 ? 'text-gray-900 font-medium' : 'text-gray-600 hover:text-gray-900'} transition-colors`}
+          >
+            Documents
+          </button>
+          {currentPath.map((folder, index) => (
+            <div key={index} className="flex items-center gap-2">
+              <ChevronRight className="w-4 h-4 text-gray-400" />
+              <button
+                onClick={() => {
+                  const newPath = currentPath.slice(0, index + 1);
+                  const targetFolderId = findFolderIdByPath(newPath);
+                  onFolderNavigate(targetFolderId, newPath);
+                }}
+                className={`${
+                  index === currentPath.length - 1
+                    ? 'text-gray-900 font-medium'
+                    : 'text-gray-600 hover:text-gray-900'
+                } transition-colors`}
+              >
+                {folder}
+              </button>
+            </div>
+          ))}
         </div>
-      )}
+      </div>
 
       {/* Search below breadcrumb */}
       <div className="px-6 py-3 border-b border-gray-200 bg-white space-y-3">
@@ -222,7 +239,7 @@ export function DocumentListView({
           <div>Nature</div>
           <div>Audience</div>
           <div>Ajouté le</div>
-          <div>Taille</div>
+          <div>Statut</div>
           <div className="text-right">Actions</div>
         </div>
       </div>
@@ -284,12 +301,24 @@ export function DocumentListView({
                     <div>
                       <p className="text-sm text-gray-600">{formatDate(folder.date)}</p>
                     </div>
-                    
+
                     <div>
-                      <p className="text-sm text-gray-600">—</p>
+                      <p className="text-sm text-gray-400">—</p>
                     </div>
-                    
+
                     <div className="flex items-center justify-end gap-2">
+                      <button
+                        type="button"
+                        onClick={(event) => {
+                          event.stopPropagation();
+                          onEditFolder?.(folder);
+                        }}
+                        className="p-2 rounded-lg transition-colors text-gray-500 hover:bg-gray-100"
+                        style={isHovered ? { backgroundColor: '#EEF1F7', color: '#000E2B' } : undefined}
+                        aria-label={`Modifier le dossier ${folder.name}`}
+                      >
+                        <SquarePen className="w-4 h-4" />
+                      </button>
                       <DropdownMenu>
                         <DropdownMenuTrigger asChild>
                           <button
@@ -321,11 +350,11 @@ export function DocumentListView({
                           <DropdownMenuItem
                             onClick={(event) => {
                               event.stopPropagation();
-                              onEditFolder?.(folder);
+                              onDuplicateFolder?.(folder);
                             }}
                           >
-                            <Eye className="w-4 h-4 mr-2" />
-                            Voir les détails
+                            <Copy className="w-4 h-4 mr-2" />
+                            Dupliquer
                           </DropdownMenuItem>
                           <DropdownMenuItem>
                             <Download className="w-4 h-4 mr-2" />
@@ -335,9 +364,10 @@ export function DocumentListView({
                             className="text-red-600 focus:text-red-600"
                             onClick={(event) => {
                               event.stopPropagation();
-                              onDeleteFolder?.(folder);
+                              setDeleteFolderTarget(folder);
                             }}
                           >
+                            <Trash2 className="w-4 h-4 mr-2" />
                             Supprimer le dossier
                           </DropdownMenuItem>
                         </DropdownMenuContent>
@@ -365,8 +395,8 @@ export function DocumentListView({
                 >
                   <div className={`grid ${tableGridClassName} gap-4 items-center`}>
                     <div className="flex items-center gap-3">
-                      <div className="w-8 h-8 rounded-lg bg-blue-50 flex items-center justify-center flex-shrink-0">
-                        <Icon className="w-4 h-4 text-blue-600" />
+                      <div className="w-8 h-8 rounded-lg flex items-center justify-center flex-shrink-0" style={{ backgroundColor: '#EEF1F7' }}>
+                        <Icon className="w-4 h-4" style={{ color: '#000E2B' }} />
                       </div>
                       <div className="flex-1 min-w-0">
                         <p className="text-sm font-medium text-gray-900 truncate">
@@ -389,11 +419,19 @@ export function DocumentListView({
                     <div>
                       <p className="text-sm text-gray-600">{formatDate(file.date)}</p>
                     </div>
-                    
+
                     <div>
-                      <p className="text-sm text-gray-600">{formatFileSize(file.size)}</p>
+                      {file.status === 'published' ? (
+                        <span className="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-green-50 text-green-700">
+                          Publié
+                        </span>
+                      ) : (
+                        <span className="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-amber-50 text-amber-700">
+                          En Attente
+                        </span>
+                      )}
                     </div>
-                    
+
                     <div className="flex items-center justify-end gap-2">
                       <button
                         type="button"
@@ -401,10 +439,23 @@ export function DocumentListView({
                           event.stopPropagation();
                           openViewer(file);
                         }}
-                        className={`p-2 rounded-lg transition-colors ${isHovered ? 'bg-blue-50 text-blue-600' : 'text-gray-500 hover:bg-gray-100'}`}
+                        className="p-2 rounded-lg transition-colors text-gray-500 hover:bg-gray-100"
+                        style={isHovered ? { backgroundColor: '#EEF1F7', color: '#000E2B' } : undefined}
                         aria-label={`Ouvrir la visionneuse pour ${file.name}`}
                       >
                         <Eye className="w-4 h-4" />
+                      </button>
+                      <button
+                        type="button"
+                        onClick={(event) => {
+                          event.stopPropagation();
+                          onDocumentClick(file);
+                        }}
+                        className="p-2 rounded-lg transition-colors text-gray-500 hover:bg-gray-100"
+                        style={isHovered ? { backgroundColor: '#EEF1F7', color: '#000E2B' } : undefined}
+                        aria-label={`Modifier le document ${file.name}`}
+                      >
+                        <SquarePen className="w-4 h-4" />
                       </button>
                       <DropdownMenu>
                         <DropdownMenuTrigger asChild>
@@ -416,16 +467,28 @@ export function DocumentListView({
                           </button>
                         </DropdownMenuTrigger>
                         <DropdownMenuContent align="end">
-                          <DropdownMenuItem>
-                            <Eye className="w-4 h-4 mr-2" />
-                            Voir les détails
+                          <DropdownMenuItem
+                            onClick={(event) => {
+                              event.stopPropagation();
+                              onDuplicateDocument?.(file);
+                            }}
+                          >
+                            <Copy className="w-4 h-4 mr-2" />
+                            Dupliquer
                           </DropdownMenuItem>
                           <DropdownMenuItem>
                             <Download className="w-4 h-4 mr-2" />
                             Télécharger
                           </DropdownMenuItem>
-                          <DropdownMenuItem className="text-red-600 focus:text-red-600">
-                            Archiver document
+                          <DropdownMenuItem
+                            className="text-red-600 focus:text-red-600"
+                            onClick={(event) => {
+                              event.stopPropagation();
+                              setDeleteTarget(file);
+                            }}
+                          >
+                            <Trash2 className="w-4 h-4 mr-2" />
+                            Supprimer le document
                           </DropdownMenuItem>
                         </DropdownMenuContent>
                       </DropdownMenu>
@@ -499,6 +562,69 @@ export function DocumentListView({
           </>
         )}
       </AnimatePresence>
+
+      {/* Document delete confirmation */}
+      <AlertDialog open={!!deleteTarget} onOpenChange={(open) => { if (!open) setDeleteTarget(null); }}>
+        <AlertDialogContent className="max-w-md">
+          <AlertDialogHeader>
+            <AlertDialogTitle>Supprimer le document</AlertDialogTitle>
+            <AlertDialogDescription>
+              Êtes-vous sûr de vouloir supprimer « {deleteTarget?.name} » ? Cette action est irréversible.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Annuler</AlertDialogCancel>
+            <AlertDialogAction
+              className="bg-red-600 hover:bg-red-700 text-white"
+              onClick={() => setDeleteTarget(null)}
+            >
+              Supprimer
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
+      {/* Folder delete confirmation */}
+      <AlertDialog open={!!deleteFolderTarget} onOpenChange={(open) => { if (!open) setDeleteFolderTarget(null); }}>
+        <AlertDialogContent className="max-w-md">
+          {(() => {
+            if (!deleteFolderTarget) return null;
+            const childrenCount = deleteFolderTarget.children?.length || 0;
+            const isEmpty = childrenCount === 0;
+            return (
+              <>
+                <AlertDialogHeader>
+                  <AlertDialogTitle>Supprimer le dossier</AlertDialogTitle>
+                  <AlertDialogDescription>
+                    {isEmpty ? (
+                      <>Êtes-vous sûr de vouloir supprimer « {deleteFolderTarget.name} » ? Cette action est irréversible.</>
+                    ) : (
+                      <>
+                        Le dossier « {deleteFolderTarget.name} » contient {childrenCount} élément{childrenCount > 1 ? 's' : ''}.
+                        Videz-le (ou déplacez son contenu) avant de pouvoir le supprimer.
+                      </>
+                    )}
+                  </AlertDialogDescription>
+                </AlertDialogHeader>
+                <AlertDialogFooter>
+                  <AlertDialogCancel>Annuler</AlertDialogCancel>
+                  {isEmpty && (
+                    <AlertDialogAction
+                      className="bg-red-600 hover:bg-red-700 text-white"
+                      onClick={() => {
+                        onDeleteFolder?.(deleteFolderTarget);
+                        setDeleteFolderTarget(null);
+                      }}
+                    >
+                      Supprimer
+                    </AlertDialogAction>
+                  )}
+                </AlertDialogFooter>
+              </>
+            );
+          })()}
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }
