@@ -27,7 +27,7 @@ export function Tag({ icon: Icon, label, className }: TagProps) {
     <span
       title={label}
       className={cn(
-        'inline-flex max-w-full min-w-0 shrink items-center gap-1.5 whitespace-nowrap rounded-full border border-[#D9D8CB] bg-[#D9D8CB] px-2.5 py-1 text-xs font-medium text-[#B4AEA4] transition-colors',
+        'inline-flex max-w-full min-w-0 shrink items-center gap-1.5 whitespace-nowrap rounded-full border border-[#C6C0B7] bg-[#D9D8CB] px-2.5 py-1 text-xs font-medium text-[#C6C0B7] transition-colors',
         className
       )}
     >
