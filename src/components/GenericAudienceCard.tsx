@@ -1,4 +1,4 @@
-import { Folder, Landmark, Settings, Users, ArrowRight, Layers3, Tag as TagIcon } from 'lucide-react';
+import { Folder, Landmark, Settings, Users, ArrowRight, Tag as TagIcon } from 'lucide-react';
 import { Button } from './ui/button';
 import { Tag } from './Tag';
 import {
@@ -50,24 +50,30 @@ export function GenericAudienceCard({
 
         <div className="space-y-2 text-[19px] text-[#4D5D75]">
           <p className="flex items-center gap-2">
-            <Users className="h-4 w-4 text-[#617491]" />
+            <Users className="h-4 w-4" />
             <span>{audienceType}</span>
           </p>
-          <p className="flex items-center gap-2">
-            <Landmark className="h-4 w-4 text-[#1BAE70]" />
-            <span><span className="font-medium text-[#2C3E55]">Fonds :</span> {fundLabel}</span>
-          </p>
           {segmentLabel ? (
-            <p className="pl-6">
-              <span className="font-medium text-[#2C3E55]">Segment :</span> {segmentLabel}
+            <p className="flex items-center gap-2">
+              <TagIcon className="h-4 w-4" />
+              <span><span className="font-medium text-[#2C3E55]">Segments :</span> {segmentLabel}</span>
             </p>
           ) : null}
+          <p className="flex items-center gap-2">
+            <Landmark className="h-4 w-4" />
+            <span><span className="font-medium text-[#2C3E55]">Fonds :</span> {fundLabel}</span>
+          </p>
         </div>
 
-        <div className="flex items-center gap-2 text-[18px] text-[#6B7B92] pt-1">
-          <span>{documentsCount} documents</span>
-          <span className="h-1.5 w-1.5 rounded-full bg-[#915BFF]" />
-          <span>{foldersCount} dossiers</span>
+        <div className="flex items-center gap-4 text-[18px] text-[#6B7B92] pt-1">
+          <div className="flex items-center gap-1.5">
+            <span className="h-1.5 w-1.5 rounded-full" style={{ backgroundColor: '#000E2B' }} />
+            <span>{documentsCount} documents</span>
+          </div>
+          <div className="flex items-center gap-1.5">
+            <span className="h-1.5 w-1.5 rounded-full" style={{ backgroundColor: '#EAB308' }} />
+            <span>{foldersCount} dossiers</span>
+          </div>
         </div>
 
         <div className="pt-2">
