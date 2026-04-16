@@ -1,4 +1,4 @@
-import { Folder, Landmark, Settings, Users, ArrowRight, Tag as TagIcon } from 'lucide-react';
+import { Folder, Landmark, Settings, Users, ArrowRight, Layers3, Tag as TagIcon } from 'lucide-react';
 import { Button } from './ui/button';
 import { Tag } from './Tag';
 import {
