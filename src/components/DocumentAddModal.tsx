@@ -620,12 +620,12 @@ export function DocumentAddModal({ isOpen, onClose, folderOptions, defaultFolder
         </SheetHeader>
 
         <div className="flex-1 overflow-y-auto px-6 py-5 space-y-5">
-          <section className="space-y-3 rounded-2xl border-2 p-4" style={{ borderColor: '#000E2B', backgroundColor: '#EEF1F7' }}>
+          <section className="space-y-3 rounded-2xl p-4" style={{ backgroundColor: '#EEF1F7' }}>
             <div>
               <p className="font-semibold flex items-center gap-2" style={{ color: '#000E2B' }}><FileText className="w-5 h-5" style={{ color: '#000E2B' }} /> Document</p>
               <p className="text-sm text-slate-600">Versions, fichiers et emplacement du document.</p>
             </div>
-            <div className="rounded-2xl border bg-gradient-to-b from-white to-slate-50 p-4 md:p-5">
+            <div className="rounded-2xl border bg-white p-4 md:p-5" style={{ borderColor: '#000E2B33' }}>
               <Tabs defaultValue="fr" className="w-full">
                 <TabsList className="grid w-full grid-cols-2 h-11">
                   <TabsTrigger value="fr">🇫🇷 FR</TabsTrigger>
@@ -755,7 +755,7 @@ export function DocumentAddModal({ isOpen, onClose, folderOptions, defaultFolder
             </div>
           </section>
 
-          <section className="space-y-4 rounded-2xl border-2 p-4" style={{ borderColor: '#000E2B', backgroundColor: '#EEF1F7' }}>
+          <section className="space-y-4 rounded-2xl p-4" style={{ backgroundColor: '#EEF1F7' }}>
             <div>
               <p className="font-semibold flex items-center gap-2" style={{ color: '#000E2B' }}><Users2 className="w-5 h-5" style={{ color: '#000E2B' }} /> Audience</p>
               <p className="text-sm text-slate-600">Configuration des critères de ciblage.</p>
@@ -766,7 +766,7 @@ export function DocumentAddModal({ isOpen, onClose, folderOptions, defaultFolder
             </div>
 
             {audienceMode === 'general' ? (
-              <div className="space-y-4 border rounded-2xl p-5 bg-gradient-to-br from-white to-blue-50/40 shadow-sm">
+              <div className="space-y-4 border rounded-2xl p-5 bg-white shadow-sm" style={{ borderColor: '#000E2B33' }}>
                 <div className="space-y-2">
                   <Label>Segments investisseurs</Label>
                   <DropdownMenu>
@@ -842,7 +842,7 @@ export function DocumentAddModal({ isOpen, onClose, folderOptions, defaultFolder
                 </div>
               </div>
             ) : (
-              <div className="space-y-4 border rounded-2xl p-5 bg-gradient-to-br from-white to-indigo-50/40 shadow-sm">
+              <div className="space-y-4 border rounded-2xl p-5 bg-white shadow-sm" style={{ borderColor: '#000E2B33' }}>
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
                   <div className="space-y-2">
                     <Label>Investisseur (unique)</Label>
@@ -901,7 +901,7 @@ export function DocumentAddModal({ isOpen, onClose, folderOptions, defaultFolder
               </div>
             )}
 
-            <div className="rounded-2xl border-2 p-4 space-y-4" style={{ borderColor: '#000E2B', backgroundColor: '#EEF1F7' }}>
+            <div className="rounded-2xl border p-4 space-y-4" style={{ borderColor: '#000E2B33', backgroundColor: '#EEF1F7' }}>
                 <div className="flex items-center justify-between gap-3">
                   <div>
                     <p className="font-semibold flex items-center gap-2" style={{ color: '#000E2B' }}><ShieldCheck className="w-5 h-5" style={{ color: '#000E2B' }} /> Droits d'accès</p>
@@ -969,14 +969,14 @@ export function DocumentAddModal({ isOpen, onClose, folderOptions, defaultFolder
 
           </section>
 
-          <section className="space-y-4 rounded-2xl border-2 p-4" style={{ borderColor: '#000E2B', backgroundColor: '#EEF1F7' }}>
+          <section className="space-y-4 rounded-2xl p-4" style={{ backgroundColor: '#EEF1F7' }}>
             <div>
               <p className="font-semibold flex items-center gap-2" style={{ color: '#000E2B' }}><Bell className="w-5 h-5" style={{ color: '#000E2B' }} /> Notification</p>
               <p className="text-sm text-slate-600">Notifications immédiates et relances automatiques.</p>
             </div>
             {isDetailMode ? (
               <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
-                <div className="space-y-2 border rounded-xl p-4 bg-white">
+                <div className="space-y-2 border rounded-xl p-4 bg-white" style={{ borderColor: '#000E2B33' }}>
                   <Label>Notification document</Label>
                   {detailState?.notification ? (
                     <p className="text-sm text-slate-700">
@@ -986,7 +986,7 @@ export function DocumentAddModal({ isOpen, onClose, folderOptions, defaultFolder
                     <p className="text-sm text-slate-500">Aucune notification envoyée pour ce document.</p>
                   )}
                 </div>
-                <div className="space-y-2 border rounded-xl p-4 bg-white">
+                <div className="space-y-2 border rounded-xl p-4 bg-white" style={{ borderColor: '#000E2B33' }}>
                   <Label>Relance auto si non consulté</Label>
                   {detailState?.reminder?.dueInDays !== undefined ? (
                     <p className="text-sm text-slate-700">Relance prévue dans <span className="font-medium">{detailState.reminder.dueInDays} jour(s)</span> avec le gabarit <span className="font-medium">{detailState.reminder.template}</span>.</p>
@@ -999,7 +999,7 @@ export function DocumentAddModal({ isOpen, onClose, folderOptions, defaultFolder
               </div>
             ) : (
               <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
-                <div className="space-y-3 border rounded-xl p-4">
+                <div className="space-y-3 border rounded-xl p-4" style={{ borderColor: '#000E2B33' }}>
                   <div className="flex items-center justify-between">
                     <Label>Notification document</Label>
                     <Switch checked={notify} onCheckedChange={setNotify} />
@@ -1010,7 +1010,7 @@ export function DocumentAddModal({ isOpen, onClose, folderOptions, defaultFolder
                   </Select>
                 </div>
 
-                <div className="space-y-3 border rounded-xl p-4">
+                <div className="space-y-3 border rounded-xl p-4" style={{ borderColor: '#000E2B33' }}>
                   <div className="flex items-center justify-between">
                     <Label>Relance auto si non consulté</Label>
                     <Switch checked={reminder} onCheckedChange={setReminder} />
@@ -1030,7 +1030,7 @@ export function DocumentAddModal({ isOpen, onClose, folderOptions, defaultFolder
             )}
           </section>
 
-          <section className="space-y-3 pb-2 rounded-2xl border-2 p-4" style={{ borderColor: '#000E2B', backgroundColor: '#EEF1F7' }}>
+          <section className="space-y-3 pb-2 rounded-2xl p-4" style={{ backgroundColor: '#EEF1F7' }}>
             <div>
               <p className="font-semibold flex items-center gap-2" style={{ color: '#000E2B' }}><Check className="w-5 h-5" style={{ color: '#000E2B' }} /> Validation</p>
               <p className="text-sm text-slate-600">Équipes de validation et validateurs associés.</p>

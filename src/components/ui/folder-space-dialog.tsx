@@ -371,9 +371,11 @@ export function FolderSpaceDialog(props: FolderSpaceDialogProps) {
           <div className="space-y-4">
             <div>
               <h3 className="text-sm font-medium text-gray-900 mb-1">Ciblage</h3>
+              {isSpace && (
               <p className="text-xs text-gray-500">
-                {isSpace ? "Définissez qui peut accéder à cet espace" : "Hérité directement de l'espace (lecture seule)"}
+                Définissez qui peut accéder à cet espace
               </p>
+              )}
             </div>
 
             {/* User types — space variant only */}
@@ -607,9 +609,11 @@ export function FolderSpaceDialogPreview({ variant }: FolderSpaceDialogPreviewPr
         <div className="space-y-4">
           <div>
             <h4 className="text-sm font-medium text-gray-900 mb-1">Ciblage</h4>
+            {isSpace && (
             <p className="text-xs text-gray-500">
-              {isSpace ? "Définissez qui peut accéder à cet espace" : "Hérité directement de l'espace (lecture seule)"}
+              Définissez qui peut accéder à cet espace
             </p>
+            )}
           </div>
 
           {isSpace && (
