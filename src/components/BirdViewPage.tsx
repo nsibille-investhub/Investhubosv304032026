@@ -534,7 +534,7 @@ export function BirdViewPage({ onBack }: BirdViewPageProps) {
       <div key={node.id} className={cn(level > 0 && 'ml-8')}>
         {/* Space */}
         {node.type === 'space' && (
-          <div className="flex items-center gap-2 py-2 group">
+          <div className="flex items-center gap-2 py-2 px-2 -mx-2 rounded hover:bg-gray-100 dark:hover:bg-gray-800/60 transition-colors group">
             {/* Chevron */}
             <button onClick={() => hasChildren && toggleNode(node.id)} className="flex-shrink-0">
               <ChevronRight
@@ -582,7 +582,7 @@ export function BirdViewPage({ onBack }: BirdViewPageProps) {
 
         {/* Folder */}
         {node.type === 'folder' && (
-          <div className="flex items-center gap-2 py-2 group">
+          <div className="flex items-center gap-2 py-2 px-2 -mx-2 rounded hover:bg-gray-100 dark:hover:bg-gray-800/60 transition-colors group">
             {/* Chevron */}
             <button onClick={() => hasChildren && toggleNode(node.id)} className="flex-shrink-0">
               <ChevronRight
@@ -638,7 +638,7 @@ export function BirdViewPage({ onBack }: BirdViewPageProps) {
 
         {/* Document */}
         {node.type === 'document' && (
-          <div className="flex items-center gap-3 py-2 px-3 bg-blue-50/30 dark:bg-blue-950/10 rounded hover:bg-blue-50/50 dark:hover:bg-blue-950/20 transition-colors group">
+          <div className="flex items-center gap-3 py-2 px-3 bg-blue-50/30 dark:bg-blue-950/10 rounded hover:bg-gray-100 dark:hover:bg-gray-800/60 transition-colors group">
             {/* Icon */}
             <div className="w-4 h-4 flex items-center justify-center flex-shrink-0">
               <FileText className="w-4 h-4 text-gray-400" />
