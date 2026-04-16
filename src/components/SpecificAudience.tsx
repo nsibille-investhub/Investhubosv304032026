@@ -18,7 +18,7 @@ export function SpecificAudience({
   investor,
   structure,
   subscription,
-  className = 'text-xs leading-snug text-gray-500',
+  className = 'text-xs leading-snug',
 }: SpecificAudienceProps) {
   return (
     <TooltipProvider delayDuration={200}>

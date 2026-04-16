@@ -1150,12 +1150,12 @@ export function DesignSystemPage() {
             investor="Sophie Bernard"
             structure="SAS Bernard Invest"
             subscription="SUB-004"
-            className="text-sm text-[#4F6166] dark:text-[#B7CCC7]"
+            className="text-sm"
           />
           <SpecificAudience
             investor="Marie Martin"
             subscription="SUB-002"
-            className="text-sm text-[#4F6166] dark:text-[#B7CCC7]"
+            className="text-sm"
           />
         </div>
       </section>

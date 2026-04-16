@@ -96,7 +96,7 @@ export function GenericAudienceInline({
   fundLabel,
   shareClassLabel,
   segmentLabel,
-  className = 'text-xs leading-snug text-gray-500',
+  className = 'text-xs leading-snug',
 }: GenericAudienceInlineProps) {
   const hasSpecificFund = fundLabel && !['Tous fonds', 'Tous les fonds'].includes(fundLabel);
   const hasSpecificShareClass = shareClassLabel && !['Toutes parts', 'Toutes les parts'].includes(shareClassLabel);
