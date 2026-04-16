@@ -19,7 +19,7 @@ import { Badge } from './ui/badge';
 import { toast } from 'sonner';
 import { ChevronDown, ChevronRight, UploadCloud, FileCheck2, Download, Users2, UserRound, Mail, Eye, Trash2, Check, Folder, FileText, Bell, ShieldCheck, Clock3, CheckCircle2, Star } from 'lucide-react';
 import { Document } from '../utils/documentMockData';
-import { DocumentTargetingMarker } from './DocumentTargetingMarker';
+
 
 export interface FolderOption {
   id: string;
@@ -98,6 +98,9 @@ const documentLifecycleMock: Record<string, {
   'doc-1': { notification: { sentAt: '2026-03-18 09:42', template: 'Nouveau document' }, reminder: { dueInDays: 2, template: 'Relance standard' }, validation: { status: 'pending' } },
   'doc-2': { notification: { sentAt: '2026-03-15 14:20', template: 'Rapport trimestriel' }, reminder: { sentAt: '2026-03-19 10:00', template: 'Relance premium' }, validation: { status: 'approved', team: 'Compliance', validator: 'Patricia Mercier', validatedAt: '2026-03-16 11:05' } },
   'doc-3': { validation: { status: 'approved', team: 'Middle Office', validator: 'S. Roussel', validatedAt: '2026-03-10 16:32' } },
+  'doc-pere2-hnwi-1': { notification: { sentAt: '2024-03-05 10:00', template: 'Nouveau document' }, validation: { status: 'approved', team: 'Compliance', validator: 'P. Mercier', validatedAt: '2024-03-04 14:20' } },
+  'doc-pere2-hnwi-2': { validation: { status: 'pending' } },
+  'doc-pere2-hnwi-3': { validation: { status: 'pending' } },
 };
 
 const INVESTORS: InvestorProfile[] = [
@@ -406,7 +409,11 @@ export function DocumentAddModal({ isOpen, onClose, folderOptions, defaultFolder
   const [validationTeams, setValidationTeams] = useState<string[]>([]);
   const fileInputRefs = useRef<Record<'fr' | 'en', HTMLInputElement | null>>({ fr: null, en: null });
   const [selectedContactAccess, setSelectedContactAccess] = useState<Record<string, string[]>>({});
-  const detailState = document ? (documentLifecycleMock[document.id] || { validation: { status: 'pending' as const } }) : null;
+  const detailState = document ? (documentLifecycleMock[document.id] || {
+    validation: document.status === 'published'
+      ? { status: 'approved' as const, team: 'Front Office', validator: 'N. Sibille', validatedAt: document.uploadedAt ? `${document.uploadedAt} 10:00` : '2026-03-01 10:00' }
+      : { status: 'pending' as const }
+  }) : null;
 
   useEffect(() => {
     if (!isOpen) return;
@@ -417,11 +424,25 @@ export function DocumentAddModal({ isOpen, onClose, folderOptions, defaultFolder
         { language: 'fr', name: document.name, fileName: document.name },
         { language: 'en', name: document.name, fileName: '' },
       ]);
-      setSelectedFund(document.metadata?.fund || 'all');
-      setAudienceMode(document.target?.type === 'investor' ? 'nominative' : 'general');
-      setSelectedInvestor(document.target?.investors?.[0] || '');
-      setSelectedSubscription(document.target?.subscriptions?.[0] || '');
-      setSelectedSegments(document.target?.segments?.length ? document.target.segments : ['all']);
+      const nt = document.navigatorTargeting;
+      if (nt?.mode === 'nominative') {
+        setAudienceMode('nominative');
+        const matchedInvestor = INVESTORS.find((inv) => inv.name === nt.investor);
+        setSelectedInvestor(matchedInvestor?.id || '');
+        setSelectedSubscription(nt.subscription || '');
+      } else {
+        setAudienceMode('general');
+        const fundName = nt?.fund || document.metadata?.fund || '';
+        const matchedFund = FUNDS.find((f) => f !== 'all' && fundName.toLowerCase().includes(f.toLowerCase()));
+        setSelectedFund(matchedFund || 'all');
+        setSelectedShareClass(nt?.shareClass || '');
+        const seg = nt?.segment;
+        if (seg && seg !== 'Tous segments' && seg !== 'Tous les segments') {
+          setSelectedSegments([seg]);
+        } else {
+          setSelectedSegments(document.target?.segments?.length ? document.target.segments : ['all']);
+        }
+      }
     }
   }, [defaultFolderId, isOpen]);
 
@@ -739,15 +760,9 @@ export function DocumentAddModal({ isOpen, onClose, folderOptions, defaultFolder
               <p className="font-semibold text-slate-900 flex items-center gap-2"><Users2 className="w-5 h-5 text-blue-600" /> Audience</p>
               <p className="text-sm text-slate-600">Configuration des critères de ciblage.</p>
             </div>
-            {isDetailMode && document && (
-              <div className="rounded-xl border border-slate-200 bg-white p-3">
-                <p className="mb-2 text-xs font-semibold uppercase tracking-wide text-slate-500">Ciblage harmonisé</p>
-                <DocumentTargetingMarker document={document} />
-              </div>
-            )}
             <div className="flex gap-2 p-1 rounded-xl bg-slate-100 w-fit">
-              <Button variant={audienceMode === 'general' ? 'default' : 'outline'} onClick={() => setAudienceMode('general')} disabled={isDetailMode}>Document général</Button>
-              <Button variant={audienceMode === 'nominative' ? 'default' : 'outline'} onClick={() => setAudienceMode('nominative')} disabled={isDetailMode}>Document nominatif</Button>
+              <Button variant={audienceMode === 'general' ? 'default' : 'outline'} onClick={() => setAudienceMode('general')}>Document général</Button>
+              <Button variant={audienceMode === 'nominative' ? 'default' : 'outline'} onClick={() => setAudienceMode('nominative')}>Document nominatif</Button>
             </div>
 
             {audienceMode === 'general' ? (
@@ -756,7 +771,7 @@ export function DocumentAddModal({ isOpen, onClose, folderOptions, defaultFolder
                   <Label>Segments investisseurs</Label>
                   <DropdownMenu>
                     <DropdownMenuTrigger asChild>
-                      <Button variant="outline" className="w-full justify-between h-11 font-normal" disabled={isDetailMode}>
+                      <Button variant="outline" className="w-full justify-between h-11 font-normal">
                         {selectedSegments.includes('all')
                           ? 'Tous les segments'
                           : `${selectedSegments.length} segment(s) sélectionné(s)`}
@@ -776,7 +791,6 @@ export function DocumentAddModal({ isOpen, onClose, folderOptions, defaultFolder
                           checked={selectedSegments.includes(segment)}
                           onCheckedChange={(checked) => {
                             let next = selectedSegments.filter((item) => item !== 'all');
-                            if (isDetailMode) return;
                             next = checked ? [...next, segment] : next.filter((item) => item !== segment);
                             if (next.length === 0) next = ['all'];
                             setSelectedSegments(next);
@@ -794,11 +808,9 @@ export function DocumentAddModal({ isOpen, onClose, folderOptions, defaultFolder
                     <Select
                       value={selectedFund}
                       onValueChange={(value) => {
-                        if (isDetailMode) return;
                         setSelectedFund(value);
                         setSelectedShareClass('');
                       }}
-                      disabled={isDetailMode}
                     >
                       <SelectTrigger className="h-11"><SelectValue /></SelectTrigger>
                       <SelectContent>
@@ -816,7 +828,6 @@ export function DocumentAddModal({ isOpen, onClose, folderOptions, defaultFolder
                       <Select
                         value={selectedShareClass || 'all'}
                         onValueChange={(value) => setSelectedShareClass(value === 'all' ? '' : value)}
-                        disabled={isDetailMode}
                       >
                         <SelectTrigger className="h-11"><SelectValue /></SelectTrigger>
                         <SelectContent>
@@ -838,14 +849,13 @@ export function DocumentAddModal({ isOpen, onClose, folderOptions, defaultFolder
                     <Select
                       value={selectedInvestor || 'none'}
                       onValueChange={(value) => {
-                        if (isDetailMode) return;
                         const nextInvestor = value === 'none' ? '' : value;
                         setSelectedInvestor(nextInvestor);
                         setSelectedStructureId('');
                         setSelectedSubscription('');
                       }}
                     >
-                      <SelectTrigger className="h-11" disabled={isDetailMode}><SelectValue /></SelectTrigger>
+                      <SelectTrigger className="h-11"><SelectValue /></SelectTrigger>
                       <SelectContent>
                         <SelectItem value="none">Sélectionner</SelectItem>
                         {INVESTORS.map((investor) => <SelectItem key={investor.id} value={investor.id}>{investor.name}</SelectItem>)}
@@ -857,11 +867,10 @@ export function DocumentAddModal({ isOpen, onClose, folderOptions, defaultFolder
                     <Select
                       value={selectedStructureId || 'none'}
                       onValueChange={(value) => {
-                        if (isDetailMode) return;
                         setSelectedStructureId(value === 'none' ? '' : value);
                         setSelectedSubscription('');
                       }}
-                      disabled={!selectedInvestor || isDetailMode}
+                      disabled={!selectedInvestor}
                     >
                       <SelectTrigger className="h-11"><SelectValue /></SelectTrigger>
                       <SelectContent>
@@ -877,7 +886,7 @@ export function DocumentAddModal({ isOpen, onClose, folderOptions, defaultFolder
                     <Select
                       value={selectedSubscription || 'none'}
                       onValueChange={(value) => setSelectedSubscription(value === 'none' ? '' : value)}
-                      disabled={!selectedInvestor || isDetailMode}
+                      disabled={!selectedInvestor}
                     >
                       <SelectTrigger className="h-11"><SelectValue /></SelectTrigger>
                       <SelectContent>

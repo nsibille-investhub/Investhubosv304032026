@@ -122,7 +122,7 @@ export function DocumentsPage({ selectedSpace, navigationTarget, onNavigationHan
         owner: node.owner || 'Système',
         views: Math.floor(Math.random() * 100),
         downloads: Math.floor(Math.random() * 50),
-        status: 'published' as const,
+        status: (node.type !== 'folder' && seed % 5 === 0) ? 'draft' as const : 'published' as const,
         children: node.children
           ? convertTreeToDocuments(node.children, nextPath, inheritedGenericTargeting || folderGetsGenericTargeting)
           : undefined,
