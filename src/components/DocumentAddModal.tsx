@@ -19,6 +19,7 @@ import { Badge } from './ui/badge';
 import { toast } from 'sonner';
 import { ChevronDown, ChevronRight, UploadCloud, FileCheck2, Download, Users2, UserRound, Mail, Eye, Trash2, Check, Folder, FileText, Bell, ShieldCheck, Clock3, CheckCircle2, Star } from 'lucide-react';
 import { Document } from '../utils/documentMockData';
+import { AudienceCounterCards } from './AudienceCounter';
 
 function formatFrenchDate(dateStr: string): string {
   const days = ['dimanche', 'lundi', 'mardi', 'mercredi', 'jeudi', 'vendredi', 'samedi'];
@@ -928,16 +929,7 @@ export function DocumentAddModal({ isOpen, onClose, folderOptions, defaultFolder
                   )}
                 </div>
                 {audienceMode === 'general' ? (
-                <div className="grid grid-cols-2 gap-3">
-                  <div className="rounded-xl border bg-white p-3" style={{ borderColor: '#000E2B' }}>
-                    <p className="text-sm font-medium" style={{ color: '#000E2B' }}>Investisseurs</p>
-                    <p className="text-3xl font-bold" style={{ color: '#000E2B' }}>{audience.investors}</p>
-                  </div>
-                  <div className="rounded-xl border bg-white p-3" style={{ borderColor: '#000E2B' }}>
-                    <p className="text-sm font-medium" style={{ color: '#000E2B' }}>Contacts</p>
-                    <p className="text-3xl font-bold" style={{ color: '#000E2B' }}>{audience.contacts}</p>
-                  </div>
-                </div>
+                  <AudienceCounterCards investors={audience.investors} contacts={audience.contacts} />
                 ) : (
                   selectedInvestorProfile ? (
                     <div className="rounded-2xl border bg-white p-4 space-y-3" style={{ borderColor: '#000E2B' }}>

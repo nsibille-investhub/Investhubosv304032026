@@ -106,6 +106,7 @@ import { FolderSelectionTreeviewDropdown } from './DocumentAddModal';
 import { GenericAudienceCard } from './GenericAudienceCard';
 import { SpecificAudience } from './SpecificAudience';
 import { FolderSpaceDialogPreview } from './ui/folder-space-dialog';
+import { AudienceCounter, AudienceCounterCards } from './AudienceCounter';
 import { ItemSelector } from './InternalResponsibleSelector';
 import {
   Timeline,
@@ -1164,8 +1165,9 @@ export function DesignSystemPage() {
         <h2 className="text-lg font-semibold text-[#1F3137] dark:text-[#E8F0EE] mb-2">Composant GED — ds-folder-space-dialog</h2>
         <p className="text-sm text-[#4F6166] dark:text-[#9DB2AE] mb-1">
           Modale unifiée pour la création / édition de dossiers et d&apos;espaces dans la Data Room.
-          Deux variants : <code className="text-xs px-1 py-0.5 rounded bg-[#F1F5F4] dark:bg-[#1C2624]">folder</code> (avec sélecteur de dossier parent, ciblage hérité en lecture seule) et{' '}
-          <code className="text-xs px-1 py-0.5 rounded bg-[#F1F5F4] dark:bg-[#1C2624]">space</code> (sans dossier parent, ciblage éditable).
+          Deux variants : <code className="text-xs px-1 py-0.5 rounded bg-[#F1F5F4] dark:bg-[#1C2624]">folder</code> (avec tree view du dossier parent, ciblage éditable) et{' '}
+          <code className="text-xs px-1 py-0.5 rounded bg-[#F1F5F4] dark:bg-[#1C2624]">space</code> (sans dossier parent, ciblage + types d&apos;utilisateur).
+          Segments en multi-select badges inline, fonds en single-select, compteur d&apos;audience dynamique.
         </p>
         <p className="text-xs text-[#4F6166] dark:text-[#9DB2AE] mb-4">
           Identifiant : <code className="text-xs px-1 py-0.5 rounded bg-[#F1F5F4] dark:bg-[#1C2624] font-semibold">ds-folder-space-dialog</code> — Largeur : 50vw — Couleur primaire : <span className="font-mono">#000E2B</span>
@@ -1178,6 +1180,29 @@ export function DesignSystemPage() {
           <div>
             <p className="text-xs font-semibold uppercase tracking-wide text-[#4F6166] mb-2">variant=&quot;space&quot;</p>
             <FolderSpaceDialogPreview variant="space" />
+          </div>
+        </div>
+      </section>
+
+      <section className="rounded-2xl border border-[#D7E0DD] dark:border-[#1F2D2A] bg-white dark:bg-[#101615] p-6">
+        <h2 className="text-lg font-semibold text-[#1F3137] dark:text-[#E8F0EE] mb-2">Composant GED — ds-audience-counter</h2>
+        <p className="text-sm text-[#4F6166] dark:text-[#9DB2AE] mb-1">
+          Compteur d&apos;audience affichant le nombre d&apos;investisseurs et de contacts concernés par un ciblage
+          (segments + fonds). Utilisé dans la création/édition de documents génériques, de dossiers et d&apos;espaces.
+        </p>
+        <p className="text-xs text-[#4F6166] dark:text-[#9DB2AE] mb-4">
+          Identifiant : <code className="text-xs px-1 py-0.5 rounded bg-[#F1F5F4] dark:bg-[#1C2624] font-semibold">ds-audience-counter</code> — 2 exports : <code className="text-xs px-1 py-0.5 rounded bg-[#F1F5F4] dark:bg-[#1C2624]">AudienceCounter</code> (version complète avec titre + fond) et <code className="text-xs px-1 py-0.5 rounded bg-[#F1F5F4] dark:bg-[#1C2624]">AudienceCounterCards</code> (cartes uniquement pour intégration).
+        </p>
+        <div className="grid lg:grid-cols-2 gap-6">
+          <div>
+            <p className="text-xs font-semibold uppercase tracking-wide text-[#4F6166] mb-2">&lt;AudienceCounter&gt; (complet)</p>
+            <AudienceCounter investors={8} contacts={23} />
+          </div>
+          <div>
+            <p className="text-xs font-semibold uppercase tracking-wide text-[#4F6166] mb-2">&lt;AudienceCounterCards&gt; (embedded)</p>
+            <div className="rounded-2xl p-4" style={{ backgroundColor: '#EEF1F7' }}>
+              <AudienceCounterCards investors={15} contacts={42} />
+            </div>
           </div>
         </div>
       </section>

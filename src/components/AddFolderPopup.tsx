@@ -42,9 +42,11 @@ export function AddFolderPopup({
       inheritedTargeting={inheritedTargeting}
       folderToEdit={folderToEdit}
       onDeleteFolder={onDeleteFolder}
-      onSave={({ name, parentId }) => {
+      onSave={({ name, parentId, targeting }) => {
+        const segmentsInfo = targeting.segments.length > 0 ? ` · ${targeting.segments.length} segment(s)` : '';
+        const fundInfo = targeting.funds.length > 0 ? ` · ${targeting.funds[0]}` : '';
         toast.success(mode === 'edit' ? 'Dossier mis à jour' : 'Dossier créé', {
-          description: `${name} dans ${selectedParentLabel(parentId)}`,
+          description: `${name} dans ${selectedParentLabel(parentId)}${segmentsInfo}${fundInfo}`,
         });
       }}
     />

@@ -5,12 +5,16 @@
  * Unified dialog for creating / editing folders and spaces in the Data Room.
  *
  * Variants:
- *  - "folder"  → Shows parent folder selector, targeting is read-only (inherited from space).
- *  - "space"   → No parent folder selector, targeting is editable.
+ *  - "folder"  → Shows parent folder selector (treeview), targeting is editable
+ *                (segments multi-select with inline badges, fund single select).
+ *  - "space"   → No parent folder selector, targeting is editable + user types.
  *
- * Usage:
- *  <FolderSpaceDialog variant="folder" ... />
- *  <FolderSpaceDialog variant="space" ... />
+ * Targeting inputs:
+ *  - Segments: multi-select, selected values appear as badges INSIDE the field
+ *  - Fund: single-select, selected value shown INSIDE the field
+ *
+ * An AudienceCounter is displayed below the targeting showing the number of
+ * concerned investors and contacts.
  */
 
 import { useEffect, useMemo, useState } from 'react';
@@ -18,10 +22,10 @@ import {
   Users,
   Building2,
   Briefcase,
-  Target,
   ChevronDown,
   Check,
-  Folder,
+  Landmark,
+  Layers3,
   FolderOpen,
   Trash2,
   X,
@@ -29,7 +33,6 @@ import {
 import { Button } from './button';
 import { Input } from './input';
 import { Label } from './label';
-import { Badge } from './badge';
 import {
   Dialog,
   DialogContent,
@@ -38,15 +41,9 @@ import {
   DialogHeader,
   DialogTitle,
 } from './dialog';
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuCheckboxItem,
-  DropdownMenuTrigger,
-  DropdownMenuSeparator,
-} from './dropdown-menu';
-import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from './command';
 import { Popover, PopoverContent, PopoverTrigger } from './popover';
+import { FolderSelectionTreeviewDropdown, FolderOption } from '../DocumentAddModal';
+import { AudienceCounter, computeAudience } from '../AudienceCounter';
 
 // ---------------------------------------------------------------------------
 // Brand color token
@@ -58,16 +55,13 @@ const BRAND_BLUE = '#000E2B';
 // ---------------------------------------------------------------------------
 const USER_TYPES = ['Investisseur', 'Participation', 'Partenaire'] as const;
 const ALL_SEGMENTS = ['HNWI', 'UHNWI', 'Retail', 'Professional', 'Institutional'] as const;
-const ALL_FUNDS = ['Tous les fonds', 'VENTECH I', 'VENTECH II', 'KORELYA I'] as const;
+const ALL_FUNDS = ['VENTECH I', 'VENTECH II', 'KORELYA I'] as const;
 
 // ---------------------------------------------------------------------------
 // Types
 // ---------------------------------------------------------------------------
 
-export interface FolderOption {
-  id: string;
-  label: string;
-}
+export type { FolderOption };
 
 export interface SpaceTargeting {
   userTypes: string[];
@@ -75,45 +69,30 @@ export interface SpaceTargeting {
   funds: string[];
 }
 
-/** Props shared by both variants. */
 interface BaseProps {
   open: boolean;
   onClose: () => void;
-  /** 'create' (default) or 'edit' */
   mode?: 'create' | 'edit';
 }
 
-/** Folder-specific props. */
 interface FolderVariantProps extends BaseProps {
   variant: 'folder';
-  /** Available parent folders. */
   folderOptions: FolderOption[];
-  /** Pre-selected parent folder ID. */
   defaultParentId: string;
-  /** Targeting inherited from the parent space (read-only). */
   inheritedTargeting: SpaceTargeting;
-  /** Existing folder data when editing. */
   folderToEdit?: { id: string; name: string } | null;
-  /** Callback when the user confirms deletion + migration. */
   onDeleteFolder?: (folderId: string, migrateToFolderId: string) => void;
-  /** Called on save with the folder name and selected parentId. */
-  onSave?: (data: { name: string; parentId: string }) => void;
-  /* Space-only props — absent */
+  onSave?: (data: { name: string; parentId: string; targeting: SpaceTargeting }) => void;
   space?: never;
   onSaveSpace?: never;
   onDeleteSpace?: never;
 }
 
-/** Space-specific props. */
 interface SpaceVariantProps extends BaseProps {
   variant: 'space';
-  /** Existing space data when editing. null for creation. */
   space?: { id: string; name: string; targeting: SpaceTargeting; documentCount?: number; folderCount?: number } | null;
-  /** Called on save with name + targeting. */
   onSaveSpace?: (data: { id?: string; name: string; targeting: SpaceTargeting; documentCount: number; folderCount: number }) => void;
-  /** Called on delete with space ID. */
   onDeleteSpace?: (spaceId: string) => void;
-  /* Folder-only props — absent */
   folderOptions?: never;
   defaultParentId?: never;
   inheritedTargeting?: never;
@@ -125,7 +104,197 @@ interface SpaceVariantProps extends BaseProps {
 export type FolderSpaceDialogProps = FolderVariantProps | SpaceVariantProps;
 
 // ---------------------------------------------------------------------------
-// Component
+// Inline multi-select with badges (segments)
+// ---------------------------------------------------------------------------
+
+interface SegmentsMultiSelectProps {
+  value: string[];
+  onChange: (next: string[]) => void;
+  options: readonly string[];
+  placeholder?: string;
+}
+
+function SegmentsMultiSelect({ value, onChange, options, placeholder = 'Sélectionner des segments' }: SegmentsMultiSelectProps) {
+  const [open, setOpen] = useState(false);
+
+  const toggle = (seg: string) => {
+    if (value.includes(seg)) onChange(value.filter((v) => v !== seg));
+    else onChange([...value, seg]);
+  };
+
+  const remove = (seg: string, e?: React.MouseEvent) => {
+    e?.stopPropagation();
+    onChange(value.filter((v) => v !== seg));
+  };
+
+  return (
+    <Popover open={open} onOpenChange={setOpen}>
+      <PopoverTrigger asChild>
+        <button
+          type="button"
+          className="w-full min-h-[44px] px-3 py-2 text-left bg-white border border-gray-200 rounded-lg hover:border-gray-300 transition-colors flex items-center justify-between gap-2"
+        >
+          <div className="flex-1 flex flex-wrap gap-1.5 items-center min-h-[26px]">
+            {value.length === 0 ? (
+              <span className="text-sm text-gray-500">{placeholder}</span>
+            ) : (
+              value.map((seg) => (
+                <span
+                  key={seg}
+                  className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-medium border"
+                  style={{ color: '#7a7a7a', borderColor: '#ddd7cc', backgroundColor: '#f5f3ee' }}
+                >
+                  <Users className="w-3 h-3" />
+                  {seg}
+                  <span
+                    onClick={(e) => remove(seg, e)}
+                    className="ml-0.5 hover:bg-black/10 rounded-full p-0.5 cursor-pointer inline-flex"
+                  >
+                    <X className="w-3 h-3" />
+                  </span>
+                </span>
+              ))
+            )}
+          </div>
+          <ChevronDown className={`w-4 h-4 text-gray-500 transition-transform ${open ? 'rotate-180' : ''}`} />
+        </button>
+      </PopoverTrigger>
+      <PopoverContent className="w-[var(--radix-popover-trigger-width)] p-1" align="start">
+        <div className="max-h-64 overflow-y-auto">
+          {options.map((seg) => {
+            const selected = value.includes(seg);
+            return (
+              <button
+                key={seg}
+                type="button"
+                onClick={() => toggle(seg)}
+                className={`w-full flex items-center gap-2 px-2 py-2 text-sm rounded-md text-left ${
+                  selected ? 'bg-blue-50' : 'hover:bg-gray-50'
+                }`}
+              >
+                <div
+                  className={`w-4 h-4 rounded border flex items-center justify-center ${
+                    selected ? 'border-transparent' : 'border-gray-300'
+                  }`}
+                  style={selected ? { backgroundColor: BRAND_BLUE } : undefined}
+                >
+                  {selected && <Check className="w-3 h-3 text-white" />}
+                </div>
+                <Users className="w-3.5 h-3.5 text-gray-500" />
+                <span>{seg}</span>
+              </button>
+            );
+          })}
+          {value.length > 0 && (
+            <>
+              <div className="border-t border-gray-100 my-1" />
+              <button
+                type="button"
+                onClick={() => onChange([])}
+                className="w-full flex items-center gap-2 px-2 py-2 text-sm rounded-md text-left text-red-600 hover:bg-red-50"
+              >
+                <X className="w-3.5 h-3.5" />
+                Tout désélectionner
+              </button>
+            </>
+          )}
+        </div>
+      </PopoverContent>
+    </Popover>
+  );
+}
+
+// ---------------------------------------------------------------------------
+// Inline single-select with badge (fund)
+// ---------------------------------------------------------------------------
+
+interface FundSingleSelectProps {
+  value: string | null;
+  onChange: (next: string | null) => void;
+  options: readonly string[];
+  placeholder?: string;
+}
+
+function FundSingleSelect({ value, onChange, options, placeholder = 'Sélectionner un fonds' }: FundSingleSelectProps) {
+  const [open, setOpen] = useState(false);
+
+  return (
+    <Popover open={open} onOpenChange={setOpen}>
+      <PopoverTrigger asChild>
+        <button
+          type="button"
+          className="w-full min-h-[44px] px-3 py-2 text-left bg-white border border-gray-200 rounded-lg hover:border-gray-300 transition-colors flex items-center justify-between gap-2"
+        >
+          <div className="flex-1 flex items-center min-h-[26px]">
+            {!value ? (
+              <span className="text-sm text-gray-500">{placeholder}</span>
+            ) : (
+              <span
+                className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-medium border"
+                style={{ color: '#7a7a7a', borderColor: '#ddd7cc', backgroundColor: '#f5f3ee' }}
+              >
+                <Landmark className="w-3 h-3" />
+                {value}
+                <span
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    onChange(null);
+                  }}
+                  className="ml-0.5 hover:bg-black/10 rounded-full p-0.5 cursor-pointer inline-flex"
+                >
+                  <X className="w-3 h-3" />
+                </span>
+              </span>
+            )}
+          </div>
+          <ChevronDown className={`w-4 h-4 text-gray-500 transition-transform ${open ? 'rotate-180' : ''}`} />
+        </button>
+      </PopoverTrigger>
+      <PopoverContent className="w-[var(--radix-popover-trigger-width)] p-1" align="start">
+        <div className="max-h-64 overflow-y-auto">
+          <button
+            type="button"
+            onClick={() => {
+              onChange(null);
+              setOpen(false);
+            }}
+            className={`w-full flex items-center gap-2 px-2 py-2 text-sm rounded-md text-left ${
+              !value ? 'bg-blue-50' : 'hover:bg-gray-50'
+            }`}
+          >
+            <Layers3 className="w-3.5 h-3.5 text-gray-500" />
+            <span>Tous les fonds</span>
+            {!value && <Check className="w-4 h-4 ml-auto text-blue-600" />}
+          </button>
+          <div className="border-t border-gray-100 my-1" />
+          {options.map((fund) => {
+            const selected = value === fund;
+            return (
+              <button
+                key={fund}
+                type="button"
+                onClick={() => {
+                  onChange(fund);
+                  setOpen(false);
+                }}
+                className={`w-full flex items-center gap-2 px-2 py-2 text-sm rounded-md text-left ${
+                  selected ? 'bg-blue-50' : 'hover:bg-gray-50'
+                }`}
+              >
+                <Landmark className="w-3.5 h-3.5 text-gray-500" />
+                <span>{fund}</span>
+                {selected && <Check className="w-4 h-4 ml-auto text-blue-600" />}
+              </button>
+            );
+          })}
+        </div>
+      </PopoverContent>
+    </Popover>
+  );
+}
+
+// ---------------------------------------------------------------------------
+// Main component
 // ---------------------------------------------------------------------------
 
 export function FolderSpaceDialog(props: FolderSpaceDialogProps) {
@@ -133,17 +302,12 @@ export function FolderSpaceDialog(props: FolderSpaceDialogProps) {
   const isSpace = variant === 'space';
   const isEdit = mode === 'edit';
 
-  // ---- Local state ----
   const [name, setName] = useState('');
   const [parentId, setParentId] = useState('');
-  const [parentOpen, setParentOpen] = useState(false);
   const [deleteMode, setDeleteMode] = useState(false);
   const [migrationTargetId, setMigrationTargetId] = useState('');
-
-  // Space-only: editable targeting
   const [targeting, setTargeting] = useState<SpaceTargeting>({ userTypes: [], segments: [], funds: [] });
 
-  // ---- Reset on open ----
   useEffect(() => {
     if (!open) return;
     setDeleteMode(false);
@@ -157,53 +321,40 @@ export function FolderSpaceDialog(props: FolderSpaceDialogProps) {
       const fp = props as FolderVariantProps;
       setParentId(fp.defaultParentId);
       setName(isEdit ? fp.folderToEdit?.name || '' : '');
+      // For folders: start from inherited targeting so user can customize
+      setTargeting({
+        userTypes: fp.inheritedTargeting?.userTypes || [],
+        segments: fp.inheritedTargeting?.segments || [],
+        funds: fp.inheritedTargeting?.funds || [],
+      });
     }
-  // eslint-disable-next-line react-hooks/exhaustive-deps
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [open]);
 
-  // ---- Derived ----
   const folderOptions = isSpace ? [] : (props as FolderVariantProps).folderOptions;
-  const selectedParentLabel = useMemo(
-    () => folderOptions.find((f) => f.id === parentId)?.label || 'Racine / Documents',
-    [folderOptions, parentId],
-  );
 
-  // Read-only targeting for folder variant
-  const displayTargeting: SpaceTargeting = isSpace
-    ? targeting
-    : (props as FolderVariantProps).inheritedTargeting;
-  const displayUserTypes = displayTargeting.userTypes.length ? displayTargeting.userTypes : [...USER_TYPES];
-  const segmentsLabel = displayTargeting.segments.length
-    ? displayTargeting.segments.join(', ')
-    : 'Tous les investisseurs / Participation / Partenaires';
-  const fundsLabel = displayTargeting.funds.length
-    ? displayTargeting.funds.join(', ')
-    : 'Tous les fonds';
-
-  // ---- Handlers ----
   const toggleUserType = (type: string) =>
     setTargeting((prev) => ({
       ...prev,
       userTypes: prev.userTypes.includes(type) ? prev.userTypes.filter((t) => t !== type) : [...prev.userTypes, type],
     }));
 
-  const toggleSegment = (seg: string) =>
-    setTargeting((prev) => ({
-      ...prev,
-      segments: prev.segments.includes(seg) ? prev.segments.filter((s) => s !== seg) : [...prev.segments, seg],
-    }));
+  const selectedFund = targeting.funds[0] || null;
+  const setSelectedFund = (fund: string | null) =>
+    setTargeting((prev) => ({ ...prev, funds: fund ? [fund] : [] }));
 
-  const toggleFund = (fund: string) =>
-    setTargeting((prev) => ({
-      ...prev,
-      funds: prev.funds.includes(fund) ? prev.funds.filter((f) => f !== fund) : [...prev.funds, fund],
-    }));
+  const setSegments = (segs: string[]) =>
+    setTargeting((prev) => ({ ...prev, segments: segs }));
+
+  const audience = useMemo(
+    () => computeAudience(targeting.segments, selectedFund),
+    [targeting.segments, selectedFund],
+  );
 
   const handleSubmit = () => {
     if (!name.trim()) return;
-
     if (isSpace) {
-      const sp = (props as SpaceVariantProps);
+      const sp = props as SpaceVariantProps;
       sp.onSaveSpace?.({
         id: sp.space?.id,
         name: name.trim(),
@@ -212,7 +363,7 @@ export function FolderSpaceDialog(props: FolderSpaceDialogProps) {
         folderCount: sp.space?.folderCount || 0,
       });
     } else {
-      (props as FolderVariantProps).onSave?.({ name: name.trim(), parentId });
+      (props as FolderVariantProps).onSave?.({ name: name.trim(), parentId, targeting });
     }
     onClose();
   };
@@ -229,7 +380,7 @@ export function FolderSpaceDialog(props: FolderSpaceDialogProps) {
 
   const handleDeleteSpace = () => {
     if (isSpace) {
-      const sp = (props as SpaceVariantProps);
+      const sp = props as SpaceVariantProps;
       if (sp.space) {
         sp.onDeleteSpace?.(sp.space.id);
         onClose();
@@ -237,10 +388,12 @@ export function FolderSpaceDialog(props: FolderSpaceDialogProps) {
     }
   };
 
-  // ---- Title / labels ----
   const title = isSpace
     ? isEdit ? "Configurer l'espace" : 'Nouvel espace'
     : isEdit ? 'Modifier le dossier' : 'Nouveau dossier';
+  const description = isSpace
+    ? "Définissez le nom et le ciblage de l'espace"
+    : 'Définissez le dossier parent, le nom et le ciblage du dossier';
   const nameLabel = isSpace ? "Nom de l'espace *" : 'Nom du dossier *';
   const namePlaceholder = isSpace
     ? 'Ex: Investisseurs LP, Documentation Partenaires...'
@@ -249,11 +402,9 @@ export function FolderSpaceDialog(props: FolderSpaceDialogProps) {
     ? isEdit ? 'Enregistrer' : "Créer l'espace"
     : isEdit ? 'Enregistrer' : 'Créer le dossier';
 
-  // ---- Render ----
   return (
     <Dialog open={open} onOpenChange={(o) => { if (!o) onClose(); }}>
       <DialogContent className="!max-w-[50vw] !w-[50vw] max-h-[90vh] overflow-hidden flex flex-col p-0 gap-0 bg-white">
-        {/* Header */}
         <DialogHeader className="px-6 py-4 border-b border-gray-200">
           <div className="flex items-center gap-3">
             <div
@@ -264,14 +415,13 @@ export function FolderSpaceDialog(props: FolderSpaceDialogProps) {
             </div>
             <div>
               <DialogTitle>{title}</DialogTitle>
-              <DialogDescription>Définissez le nom et le ciblage de l&apos;espace</DialogDescription>
+              <DialogDescription>{description}</DialogDescription>
             </div>
           </div>
         </DialogHeader>
 
-        {/* Body */}
         <div className="flex-1 overflow-y-auto p-6 space-y-6">
-          {/* Delete section (folder edit only) */}
+          {/* Delete section — folder edit only */}
           {!isSpace && isEdit && (props as FolderVariantProps).folderToEdit && (
             <div className="rounded-xl border border-red-200 bg-red-50 p-4 space-y-3">
               <div>
@@ -316,42 +466,15 @@ export function FolderSpaceDialog(props: FolderSpaceDialogProps) {
             </div>
           )}
 
-          {/* Parent folder (folder variant only) */}
+          {/* Parent folder — folder variant only (tree view) */}
           {!isSpace && (
             <div className="space-y-2">
               <Label>Dossier parent</Label>
-              <Popover open={parentOpen} onOpenChange={setParentOpen}>
-                <PopoverTrigger asChild>
-                  <Button variant="outline" className="w-full justify-between font-normal">
-                    <span className="truncate">{selectedParentLabel}</span>
-                    <ChevronDown className="w-4 h-4" />
-                  </Button>
-                </PopoverTrigger>
-                <PopoverContent className="w-[var(--radix-popover-trigger-width)] p-0" align="start">
-                  <Command>
-                    <CommandInput placeholder="Rechercher un dossier..." />
-                    <CommandList>
-                      <CommandEmpty>Aucun dossier trouvé.</CommandEmpty>
-                      <CommandGroup>
-                        {folderOptions.map((folder) => (
-                          <CommandItem
-                            key={folder.id}
-                            value={folder.label}
-                            onSelect={() => { setParentId(folder.id); setParentOpen(false); }}
-                            className="flex items-center justify-between"
-                          >
-                            <span className="flex items-center gap-2 truncate">
-                              <Folder className="w-4 h-4" style={{ color: BRAND_BLUE }} />
-                              {folder.label}
-                            </span>
-                            {folder.id === parentId && <Check className="w-4 h-4" style={{ color: BRAND_BLUE }} />}
-                          </CommandItem>
-                        ))}
-                      </CommandGroup>
-                    </CommandList>
-                  </Command>
-                </PopoverContent>
-              </Popover>
+              <FolderSelectionTreeviewDropdown
+                value={parentId}
+                onChange={setParentId}
+                folderOptions={folderOptions}
+              />
             </div>
           )}
 
@@ -371,147 +494,73 @@ export function FolderSpaceDialog(props: FolderSpaceDialogProps) {
           <div className="space-y-4">
             <div>
               <h3 className="text-sm font-medium text-gray-900 mb-1">Ciblage</h3>
-              {isSpace && (
               <p className="text-xs text-gray-500">
-                Définissez qui peut accéder à cet espace
+                {isSpace
+                  ? 'Définissez qui peut accéder à cet espace'
+                  : 'Affiner le ciblage hérité de l\'espace pour ce dossier'}
               </p>
-              )}
             </div>
 
             {/* User types — space variant only */}
             {isSpace && (
-            <div className="space-y-2">
-              <Label>Type d&apos;utilisateur</Label>
-              <div className="flex flex-wrap gap-2">
-                {USER_TYPES.map((type) => {
-                  const isSelected = targeting.userTypes.includes(type);
-                  const Icon = type === 'Investisseur' ? Users : type === 'Participation' ? Building2 : Briefcase;
-
-                  return (
-                    <button
-                      key={type}
-                      type="button"
-                      onClick={() => toggleUserType(type)}
-                      className={`flex items-center gap-2 px-4 py-2 rounded-lg border-2 transition-all cursor-pointer ${
-                        isSelected
-                          ? 'bg-white'
-                          : 'border-gray-200 bg-white text-gray-400 hover:border-gray-300'
-                      }`}
-                      style={isSelected ? { borderColor: BRAND_BLUE, color: BRAND_BLUE } : undefined}
-                    >
-                      <Icon className="w-4 h-4" style={isSelected ? { color: BRAND_BLUE } : undefined} />
-                      <span className="text-sm font-medium">{type}</span>
-                    </button>
-                  );
-                })}
+              <div className="space-y-2">
+                <Label>Type d&apos;utilisateur</Label>
+                <div className="flex flex-wrap gap-2">
+                  {USER_TYPES.map((type) => {
+                    const isSelected = targeting.userTypes.includes(type);
+                    const Icon = type === 'Investisseur' ? Users : type === 'Participation' ? Building2 : Briefcase;
+                    return (
+                      <button
+                        key={type}
+                        type="button"
+                        onClick={() => toggleUserType(type)}
+                        className={`flex items-center gap-2 px-4 py-2 rounded-lg border-2 transition-all cursor-pointer ${
+                          isSelected ? 'bg-white' : 'border-gray-200 bg-white text-gray-400 hover:border-gray-300'
+                        }`}
+                        style={isSelected ? { borderColor: BRAND_BLUE, color: BRAND_BLUE } : undefined}
+                      >
+                        <Icon className="w-4 h-4" style={isSelected ? { color: BRAND_BLUE } : undefined} />
+                        <span className="text-sm font-medium">{type}</span>
+                      </button>
+                    );
+                  })}
+                </div>
+                {targeting.userTypes.length === 0 && (
+                  <p className="text-xs text-amber-600">Aucun type d&apos;utilisateur sélectionné</p>
+                )}
               </div>
-              {targeting.userTypes.length === 0 && (
-                <p className="text-xs text-amber-600">Aucun type d&apos;utilisateur sélectionné</p>
-              )}
-            </div>
             )}
 
-            {/* Segments */}
+            {/* Segments — multi-select inline badges */}
             <div className="space-y-2">
               <Label>Segments</Label>
-              {isSpace ? (
-                <DropdownMenu>
-                  <DropdownMenuTrigger asChild>
-                    <Button variant="outline" className="w-full justify-between">
-                      <span className="text-sm">
-                        {targeting.segments.length > 0
-                          ? `${targeting.segments.length} segment${targeting.segments.length > 1 ? 's' : ''} sélectionné${targeting.segments.length > 1 ? 's' : ''}`
-                          : 'Sélectionner des segments'}
-                      </span>
-                      <Target className="w-4 h-4 ml-2" />
-                    </Button>
-                  </DropdownMenuTrigger>
-                  <DropdownMenuContent className="w-full">
-                    {ALL_SEGMENTS.map((seg) => (
-                      <DropdownMenuCheckboxItem key={seg} checked={targeting.segments.includes(seg)} onCheckedChange={() => toggleSegment(seg)}>
-                        {seg}
-                      </DropdownMenuCheckboxItem>
-                    ))}
-                    {targeting.segments.length > 0 && (
-                      <>
-                        <DropdownMenuSeparator />
-                        <DropdownMenuCheckboxItem checked={false} onCheckedChange={() => setTargeting((p) => ({ ...p, segments: [] }))} className="text-red-600">
-                          <X className="w-3.5 h-3.5 mr-2" />
-                          Tout désélectionner
-                        </DropdownMenuCheckboxItem>
-                      </>
-                    )}
-                  </DropdownMenuContent>
-                </DropdownMenu>
-              ) : (
-                <Button variant="outline" className="w-full justify-between" disabled>
-                  <span className="text-sm text-left truncate">Limiter à des segments : {segmentsLabel}</span>
-                  <Target className="w-4 h-4 ml-2" />
-                </Button>
-              )}
-              {displayTargeting.segments.length > 0 && (
-                <div className="flex flex-wrap gap-1.5 mt-2">
-                  {displayTargeting.segments.map((seg) => (
-                    <Badge key={seg} variant="outline" className="bg-blue-50 text-blue-700 border-blue-200">
-                      {seg}
-                    </Badge>
-                  ))}
-                </div>
-              )}
+              <SegmentsMultiSelect
+                value={targeting.segments}
+                onChange={setSegments}
+                options={ALL_SEGMENTS}
+                placeholder="Sélectionner des segments"
+              />
             </div>
 
-            {/* Funds */}
+            {/* Fund — single-select inline badge */}
             <div className="space-y-2">
               <Label>Fonds</Label>
-              {isSpace ? (
-                <DropdownMenu>
-                  <DropdownMenuTrigger asChild>
-                    <Button variant="outline" className="w-full justify-between">
-                      <span className="text-sm">
-                        {targeting.funds.length > 0
-                          ? `${targeting.funds.length} fond${targeting.funds.length > 1 ? 's' : ''} sélectionné${targeting.funds.length > 1 ? 's' : ''}`
-                          : 'Sélectionner des fonds'}
-                      </span>
-                      <Target className="w-4 h-4 ml-2" />
-                    </Button>
-                  </DropdownMenuTrigger>
-                  <DropdownMenuContent className="w-full">
-                    {ALL_FUNDS.map((fund) => (
-                      <DropdownMenuCheckboxItem key={fund} checked={targeting.funds.includes(fund)} onCheckedChange={() => toggleFund(fund)}>
-                        {fund}
-                      </DropdownMenuCheckboxItem>
-                    ))}
-                    {targeting.funds.length > 0 && (
-                      <>
-                        <DropdownMenuSeparator />
-                        <DropdownMenuCheckboxItem checked={false} onCheckedChange={() => setTargeting((p) => ({ ...p, funds: [] }))} className="text-red-600">
-                          <X className="w-3.5 h-3.5 mr-2" />
-                          Tout désélectionner
-                        </DropdownMenuCheckboxItem>
-                      </>
-                    )}
-                  </DropdownMenuContent>
-                </DropdownMenu>
-              ) : (
-                <Button variant="outline" className="w-full justify-between" disabled>
-                  <span className="text-sm text-left truncate">Limiter à un fonds : {fundsLabel}</span>
-                  <Target className="w-4 h-4 ml-2" />
-                </Button>
-              )}
-              {displayTargeting.funds.length > 0 && (
-                <div className="flex flex-wrap gap-1.5 mt-2">
-                  {displayTargeting.funds.map((fund) => (
-                    <Badge key={fund} variant="outline" className="bg-purple-50 text-purple-700 border-purple-200">
-                      {fund}
-                    </Badge>
-                  ))}
-                </div>
-              )}
+              <FundSingleSelect
+                value={selectedFund}
+                onChange={setSelectedFund}
+                options={ALL_FUNDS}
+                placeholder="Sélectionner un fonds"
+              />
             </div>
           </div>
+
+          {/* Audience counter */}
+          <AudienceCounter
+            investors={audience.investors}
+            contacts={audience.contacts}
+          />
         </div>
 
-        {/* Footer */}
         <DialogFooter className="px-6 py-4 border-t border-gray-200 bg-gray-50 flex items-center justify-between sm:justify-between">
           <div>
             {isSpace && isEdit && (props as SpaceVariantProps).space && (props as SpaceVariantProps).onDeleteSpace && (
@@ -555,22 +604,28 @@ export function FolderSpaceDialogPreview({ variant }: FolderSpaceDialogPreviewPr
   const isSpace = variant === 'space';
   const [targeting, setTargeting] = useState<SpaceTargeting>({
     userTypes: ['Investisseur'],
-    segments: [],
+    segments: ['HNWI', 'UHNWI'],
     funds: ['VENTECH I'],
   });
 
+  const selectedFund = targeting.funds[0] || null;
+  const setSelectedFund = (fund: string | null) =>
+    setTargeting((prev) => ({ ...prev, funds: fund ? [fund] : [] }));
+  const setSegments = (segs: string[]) =>
+    setTargeting((prev) => ({ ...prev, segments: segs }));
   const toggleUserType = (type: string) =>
     setTargeting((prev) => ({
       ...prev,
       userTypes: prev.userTypes.includes(type) ? prev.userTypes.filter((t) => t !== type) : [...prev.userTypes, type],
     }));
 
-  const displayUserTypes = isSpace ? targeting.userTypes : ['Investisseur'];
-  const fundsLabel = 'VENTECH I';
+  const audience = useMemo(
+    () => computeAudience(targeting.segments, selectedFund),
+    [targeting.segments, selectedFund],
+  );
 
   return (
     <div className="rounded-2xl border border-gray-200 bg-white overflow-hidden shadow-lg">
-      {/* Header */}
       <div className="px-6 py-4 border-b border-gray-200 flex items-center gap-3">
         <div className="w-10 h-10 rounded-lg flex items-center justify-center" style={{ backgroundColor: BRAND_BLUE }}>
           <FolderOpen className="w-5 h-5 text-white" />
@@ -579,13 +634,15 @@ export function FolderSpaceDialogPreview({ variant }: FolderSpaceDialogPreviewPr
           <h3 className="text-lg font-semibold text-gray-900">
             {isSpace ? 'Nouvel espace' : 'Nouveau dossier'}
           </h3>
-          <p className="text-sm text-gray-500">Définissez le nom et le ciblage de l&apos;espace</p>
+          <p className="text-sm text-gray-500">
+            {isSpace
+              ? "Définissez le nom et le ciblage de l'espace"
+              : 'Définissez le dossier parent, le nom et le ciblage du dossier'}
+          </p>
         </div>
       </div>
 
-      {/* Body */}
       <div className="p-6 space-y-6">
-        {/* Parent folder — folder only */}
         {!isSpace && (
           <div className="space-y-2">
             <Label>Dossier parent</Label>
@@ -596,7 +653,6 @@ export function FolderSpaceDialogPreview({ variant }: FolderSpaceDialogPreviewPr
           </div>
         )}
 
-        {/* Name */}
         <div className="space-y-2">
           <Label>{isSpace ? "Nom de l'espace *" : 'Nom du dossier *'}</Label>
           <Input
@@ -605,71 +661,65 @@ export function FolderSpaceDialogPreview({ variant }: FolderSpaceDialogPreviewPr
           />
         </div>
 
-        {/* Targeting */}
         <div className="space-y-4">
           <div>
             <h4 className="text-sm font-medium text-gray-900 mb-1">Ciblage</h4>
-            {isSpace && (
             <p className="text-xs text-gray-500">
-              Définissez qui peut accéder à cet espace
+              {isSpace ? 'Définissez qui peut accéder à cet espace' : "Affiner le ciblage hérité de l'espace pour ce dossier"}
             </p>
-            )}
           </div>
 
           {isSpace && (
-          <div className="space-y-2">
-            <Label>Type d&apos;utilisateur</Label>
-            <div className="flex flex-wrap gap-2">
-              {USER_TYPES.map((type) => {
-                const isSelected = targeting.userTypes.includes(type);
-                const Icon = type === 'Investisseur' ? Users : type === 'Participation' ? Building2 : Briefcase;
-                return (
-                  <button
-                    key={type}
-                    type="button"
-                    onClick={() => toggleUserType(type)}
-                    className={`flex items-center gap-2 px-4 py-2 rounded-lg border-2 transition-all cursor-pointer ${
-                      isSelected ? 'bg-white' : 'border-gray-200 bg-white text-gray-400 hover:border-gray-300'
-                    }`}
-                    style={isSelected ? { borderColor: BRAND_BLUE, color: BRAND_BLUE } : undefined}
-                  >
-                    <Icon className="w-4 h-4" style={isSelected ? { color: BRAND_BLUE } : undefined} />
-                    <span className="text-sm font-medium">{type}</span>
-                  </button>
-                );
-              })}
+            <div className="space-y-2">
+              <Label>Type d&apos;utilisateur</Label>
+              <div className="flex flex-wrap gap-2">
+                {USER_TYPES.map((type) => {
+                  const isSelected = targeting.userTypes.includes(type);
+                  const Icon = type === 'Investisseur' ? Users : type === 'Participation' ? Building2 : Briefcase;
+                  return (
+                    <button
+                      key={type}
+                      type="button"
+                      onClick={() => toggleUserType(type)}
+                      className={`flex items-center gap-2 px-4 py-2 rounded-lg border-2 transition-all cursor-pointer ${
+                        isSelected ? 'bg-white' : 'border-gray-200 bg-white text-gray-400 hover:border-gray-300'
+                      }`}
+                      style={isSelected ? { borderColor: BRAND_BLUE, color: BRAND_BLUE } : undefined}
+                    >
+                      <Icon className="w-4 h-4" style={isSelected ? { color: BRAND_BLUE } : undefined} />
+                      <span className="text-sm font-medium">{type}</span>
+                    </button>
+                  );
+                })}
+              </div>
             </div>
-          </div>
           )}
 
           <div className="space-y-2">
             <Label>Segments</Label>
-            <Button variant="outline" className="w-full justify-between" disabled={!isSpace}>
-              <span className="text-sm text-left truncate">
-                {isSpace ? 'Sélectionner des segments' : 'Limiter à des segments : Tous les investisseurs / Participation / Partenaires'}
-              </span>
-              <Target className="w-4 h-4 ml-2" />
-            </Button>
+            <SegmentsMultiSelect
+              value={targeting.segments}
+              onChange={setSegments}
+              options={ALL_SEGMENTS}
+            />
           </div>
 
           <div className="space-y-2">
             <Label>Fonds</Label>
-            <Button variant="outline" className="w-full justify-between" disabled={!isSpace}>
-              <span className="text-sm text-left truncate">
-                {isSpace ? '1 fond sélectionné' : `Limiter à un fonds : ${fundsLabel}`}
-              </span>
-              <Target className="w-4 h-4 ml-2" />
-            </Button>
-            <div className="flex flex-wrap gap-1.5 mt-2">
-              <Badge variant="outline" className="bg-purple-50 text-purple-700 border-purple-200">
-                VENTECH I
-              </Badge>
-            </div>
+            <FundSingleSelect
+              value={selectedFund}
+              onChange={setSelectedFund}
+              options={ALL_FUNDS}
+            />
           </div>
         </div>
+
+        <AudienceCounter
+          investors={audience.investors}
+          contacts={audience.contacts}
+        />
       </div>
 
-      {/* Footer */}
       <div className="px-6 py-4 border-t border-gray-200 bg-gray-50 flex items-center justify-end gap-2">
         <Button variant="outline">Annuler</Button>
         <Button className="text-white" style={{ backgroundColor: BRAND_BLUE }}>
