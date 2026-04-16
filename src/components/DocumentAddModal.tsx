@@ -20,6 +20,19 @@ import { toast } from 'sonner';
 import { ChevronDown, ChevronRight, UploadCloud, FileCheck2, Download, Users2, UserRound, Mail, Eye, Trash2, Check, Folder, FileText, Bell, ShieldCheck, Clock3, CheckCircle2, Star } from 'lucide-react';
 import { Document } from '../utils/documentMockData';
 
+function formatFrenchDate(dateStr: string): string {
+  const days = ['dimanche', 'lundi', 'mardi', 'mercredi', 'jeudi', 'vendredi', 'samedi'];
+  const months = ['janvier', 'février', 'mars', 'avril', 'mai', 'juin', 'juillet', 'août', 'septembre', 'octobre', 'novembre', 'décembre'];
+  const d = new Date(dateStr.replace(' ', 'T'));
+  if (isNaN(d.getTime())) return dateStr;
+  const dayName = days[d.getDay()];
+  const dayNum = d.getDate();
+  const month = months[d.getMonth()];
+  const year = d.getFullYear();
+  const hours = d.getHours();
+  const minutes = String(d.getMinutes()).padStart(2, '0');
+  return `${dayName} ${dayNum} ${month} ${year} à ${hours}h${minutes}`;
+}
 
 export interface FolderOption {
   id: string;
@@ -980,7 +993,7 @@ export function DocumentAddModal({ isOpen, onClose, folderOptions, defaultFolder
                   <Label>Notification document</Label>
                   {detailState?.notification ? (
                     <p className="text-sm text-slate-700">
-                      Notification envoyée le <span className="font-medium">{detailState.notification.sentAt}</span> via le gabarit <span className="font-medium">{detailState.notification.template}</span>.
+                      Notification envoyée le <span className="font-medium">{formatFrenchDate(detailState.notification.sentAt)}</span> via le gabarit <span className="font-medium">{detailState.notification.template}</span>.
                     </p>
                   ) : (
                     <p className="text-sm text-slate-500">Aucune notification envoyée pour ce document.</p>
@@ -991,7 +1004,7 @@ export function DocumentAddModal({ isOpen, onClose, folderOptions, defaultFolder
                   {detailState?.reminder?.dueInDays !== undefined ? (
                     <p className="text-sm text-slate-700">Relance prévue dans <span className="font-medium">{detailState.reminder.dueInDays} jour(s)</span> avec le gabarit <span className="font-medium">{detailState.reminder.template}</span>.</p>
                   ) : detailState?.reminder?.sentAt ? (
-                    <p className="text-sm text-slate-700">Relance envoyée le <span className="font-medium">{detailState.reminder.sentAt}</span> avec le gabarit <span className="font-medium">{detailState.reminder.template}</span>.</p>
+                    <p className="text-sm text-slate-700">Relance envoyée le <span className="font-medium">{formatFrenchDate(detailState.reminder.sentAt)}</span> avec le gabarit <span className="font-medium">{detailState.reminder.template}</span>.</p>
                   ) : (
                     <p className="text-sm text-slate-500">Aucune relance automatique configurée.</p>
                   )}
@@ -1041,25 +1054,27 @@ export function DocumentAddModal({ isOpen, onClose, folderOptions, defaultFolder
                   <div className="rounded-xl border border-emerald-200 bg-emerald-50 p-4">
                     <p className="font-semibold text-emerald-800 flex items-center gap-2"><CheckCircle2 className="h-4 w-4" /> Document validé</p>
                     <p className="text-sm text-emerald-700 mt-1">Équipe: {detailState.validation.team} • Validé par {detailState.validation.validator}</p>
-                    <p className="text-sm text-emerald-700">Le {detailState.validation.validatedAt}</p>
+                    <p className="text-sm text-emerald-700">Le {formatFrenchDate(detailState.validation.validatedAt || '')}</p>
                   </div>
                 ) : (
-                  <div className="rounded-xl border border-amber-200 bg-amber-50 p-4">
-                    <p className="font-semibold text-amber-800 flex items-center gap-2"><Clock3 className="h-4 w-4" /> En attente de validation</p>
-                    <p className="text-sm text-amber-700 mt-1">Ce document est en cours de revue par les équipes de validation.</p>
-                  </div>
-                )}
-                <div className="rounded-xl border border-slate-200 bg-white p-4 space-y-3">
-                  <p className="font-medium text-slate-900">Équipes de validation et personnes associées</p>
-                  <div className="space-y-2">
-                    {TEAMS.map((team) => (
-                      <div key={team.id} className="rounded-lg border border-slate-200 p-3">
-                        <p className="font-medium text-slate-800">{team.name}</p>
-                        <p className="text-sm text-slate-600 mt-1">Personnes: {team.validators.join(', ')}</p>
+                  <>
+                    <div className="rounded-xl border border-amber-200 bg-amber-50 p-4">
+                      <p className="font-semibold text-amber-800 flex items-center gap-2"><Clock3 className="h-4 w-4" /> En attente de validation</p>
+                      <p className="text-sm text-amber-700 mt-1">Ce document est en cours de revue par les équipes de validation.</p>
+                    </div>
+                    <div className="rounded-xl border bg-white p-4 space-y-3" style={{ borderColor: '#000E2B33' }}>
+                      <p className="font-medium text-slate-900">Équipes de validation et personnes associées</p>
+                      <div className="space-y-2">
+                        {TEAMS.map((team) => (
+                          <div key={team.id} className="rounded-lg border p-3" style={{ borderColor: '#000E2B33' }}>
+                            <p className="font-medium text-slate-800">{team.name}</p>
+                            <p className="text-sm text-slate-600 mt-1">Personnes: {team.validators.join(', ')}</p>
+                          </div>
+                        ))}
                       </div>
-                    ))}
-                  </div>
-                </div>
+                    </div>
+                  </>
+                )}
               </>
             ) : (
               <>
