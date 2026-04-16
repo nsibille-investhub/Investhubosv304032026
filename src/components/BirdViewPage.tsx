@@ -828,7 +828,7 @@ export function BirdViewPage({ onBack }: BirdViewPageProps) {
           <div>
             <h1 className="text-xl font-semibold text-gray-900 dark:text-gray-100">Bird View</h1>
             <p className="text-sm text-gray-500 dark:text-gray-400">
-              Arborescence complète de tous les espaces
+              Engagement documentaire, monitoring d'activité et relances
             </p>
           </div>
         </div>
