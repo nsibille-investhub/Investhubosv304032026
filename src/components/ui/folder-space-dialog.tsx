@@ -252,7 +252,7 @@ export function FolderSpaceDialog(props: FolderSpaceDialogProps) {
   // ---- Render ----
   return (
     <Dialog open={open} onOpenChange={(o) => { if (!o) onClose(); }}>
-      <DialogContent className="sm:max-w-[50vw] max-h-[90vh] overflow-hidden flex flex-col p-0 gap-0 bg-white">
+      <DialogContent className="!max-w-[50vw] !w-[50vw] max-h-[90vh] overflow-hidden flex flex-col p-0 gap-0 bg-white">
         {/* Header */}
         <DialogHeader className="px-6 py-4 border-b border-gray-200">
           <div className="flex items-center gap-3">
