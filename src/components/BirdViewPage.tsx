@@ -842,7 +842,7 @@ export function BirdViewPage({ onBack }: BirdViewPageProps) {
         </div>
 
         <div className="flex items-start gap-3 mb-6">
-          <div className="w-12 h-12 rounded-lg bg-purple-500 flex items-center justify-center">
+          <div className="w-12 h-12 rounded-lg bg-blue-600 flex items-center justify-center">
             <Eye className="w-6 h-6 text-white" />
           </div>
           <div>
@@ -855,22 +855,22 @@ export function BirdViewPage({ onBack }: BirdViewPageProps) {
 
         {/* KPIs */}
         <div className="grid grid-cols-3 gap-4 mb-6">
-          <div className="bg-blue-600 dark:bg-blue-700 rounded-lg p-4 border border-blue-700 dark:border-blue-600">
+          <div className="bg-blue-50 dark:bg-blue-950 rounded-lg p-4 border border-blue-100 dark:border-blue-900">
             <div className="flex items-center gap-2 mb-1">
-              <FolderOpen className="w-5 h-5 text-blue-100" />
-              <span className="text-sm text-blue-50">Espaces</span>
+              <FolderOpen className="w-5 h-5 text-blue-600 dark:text-blue-400" />
+              <span className="text-sm text-blue-600 dark:text-blue-400">Espaces</span>
             </div>
-            <div className="text-3xl font-bold text-white">
+            <div className="text-3xl font-bold text-blue-600 dark:text-blue-400">
               {filteredStats.totalSpaces}
             </div>
           </div>
 
-          <div className="bg-blue-100 dark:bg-blue-900 rounded-lg p-4 border border-blue-200 dark:border-blue-800">
+          <div className="bg-blue-50 dark:bg-blue-950 rounded-lg p-4 border border-blue-100 dark:border-blue-900">
             <div className="flex items-center gap-2 mb-1">
-              <FolderOpen className="w-5 h-5 text-blue-700 dark:text-blue-300" />
-              <span className="text-sm text-blue-800 dark:text-blue-200">Dossiers</span>
+              <FolderOpen className="w-5 h-5 text-blue-600 dark:text-blue-400" />
+              <span className="text-sm text-blue-600 dark:text-blue-400">Dossiers</span>
             </div>
-            <div className="text-3xl font-bold text-blue-900 dark:text-blue-100">
+            <div className="text-3xl font-bold text-blue-600 dark:text-blue-400">
               {filteredStats.totalFolders}
             </div>
           </div>
@@ -878,9 +878,9 @@ export function BirdViewPage({ onBack }: BirdViewPageProps) {
           <div className="bg-blue-50 dark:bg-blue-950 rounded-lg p-4 border border-blue-100 dark:border-blue-900">
             <div className="flex items-center gap-2 mb-1">
               <FileText className="w-5 h-5 text-blue-600 dark:text-blue-400" />
-              <span className="text-sm text-blue-700 dark:text-blue-300">Documents</span>
+              <span className="text-sm text-blue-600 dark:text-blue-400">Documents</span>
             </div>
-            <div className="text-3xl font-bold text-blue-900 dark:text-blue-100">
+            <div className="text-3xl font-bold text-blue-600 dark:text-blue-400">
               {filteredStats.totalDocuments}
             </div>
           </div>
