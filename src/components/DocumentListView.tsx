@@ -10,7 +10,9 @@ import {
   Search,
   X,
   Plus,
-  Trash2
+  Trash2,
+  SquarePen,
+  Copy,
 } from 'lucide-react';
 import { Document } from '../utils/documentMockData';
 import { Button } from './ui/button';
@@ -52,6 +54,8 @@ interface DocumentListViewProps {
   onAddFolderFromFolder?: (folder: Document) => void;
   onEditFolder?: (folder: Document) => void;
   onDeleteFolder?: (folder: Document) => void;
+  onDuplicateFolder?: (folder: Document) => void;
+  onDuplicateDocument?: (doc: Document) => void;
 }
 
 export function DocumentListView({
@@ -71,6 +75,8 @@ export function DocumentListView({
   onAddFolderFromFolder,
   onEditFolder,
   onDeleteFolder,
+  onDuplicateFolder,
+  onDuplicateDocument,
 }: DocumentListViewProps) {
   const tableGridClassName = 'document-list-grid';
   const [hoveredId, setHoveredId] = useState<string | null>(null);
@@ -302,6 +308,18 @@ export function DocumentListView({
                     </div>
 
                     <div className="flex items-center justify-end gap-2">
+                      <button
+                        type="button"
+                        onClick={(event) => {
+                          event.stopPropagation();
+                          onEditFolder?.(folder);
+                        }}
+                        className="p-2 rounded-lg transition-colors text-gray-500 hover:bg-gray-100"
+                        style={isHovered ? { backgroundColor: '#EEF1F7', color: '#000E2B' } : undefined}
+                        aria-label={`Modifier le dossier ${folder.name}`}
+                      >
+                        <SquarePen className="w-4 h-4" />
+                      </button>
                       <DropdownMenu>
                         <DropdownMenuTrigger asChild>
                           <button
@@ -333,11 +351,11 @@ export function DocumentListView({
                           <DropdownMenuItem
                             onClick={(event) => {
                               event.stopPropagation();
-                              onEditFolder?.(folder);
+                              onDuplicateFolder?.(folder);
                             }}
                           >
-                            <Eye className="w-4 h-4 mr-2" />
-                            Voir les détails
+                            <Copy className="w-4 h-4 mr-2" />
+                            Dupliquer
                           </DropdownMenuItem>
                           <DropdownMenuItem>
                             <Download className="w-4 h-4 mr-2" />
@@ -428,6 +446,18 @@ export function DocumentListView({
                       >
                         <Eye className="w-4 h-4" />
                       </button>
+                      <button
+                        type="button"
+                        onClick={(event) => {
+                          event.stopPropagation();
+                          onDocumentClick(file);
+                        }}
+                        className="p-2 rounded-lg transition-colors text-gray-500 hover:bg-gray-100"
+                        style={isHovered ? { backgroundColor: '#EEF1F7', color: '#000E2B' } : undefined}
+                        aria-label={`Modifier le document ${file.name}`}
+                      >
+                        <SquarePen className="w-4 h-4" />
+                      </button>
                       <DropdownMenu>
                         <DropdownMenuTrigger asChild>
                           <button
@@ -438,9 +468,14 @@ export function DocumentListView({
                           </button>
                         </DropdownMenuTrigger>
                         <DropdownMenuContent align="end">
-                          <DropdownMenuItem>
-                            <Eye className="w-4 h-4 mr-2" />
-                            Voir les détails
+                          <DropdownMenuItem
+                            onClick={(event) => {
+                              event.stopPropagation();
+                              onDuplicateDocument?.(file);
+                            }}
+                          >
+                            <Copy className="w-4 h-4 mr-2" />
+                            Dupliquer
                           </DropdownMenuItem>
                           <DropdownMenuItem>
                             <Download className="w-4 h-4 mr-2" />
