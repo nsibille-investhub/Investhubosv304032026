@@ -20,6 +20,7 @@ import { toast } from 'sonner';
 import { ChevronDown, ChevronRight, UploadCloud, FileCheck2, Download, Users2, UserRound, Mail, Eye, Trash2, Check, Folder, FileText, Bell, ShieldCheck, Clock3, CheckCircle2, Star } from 'lucide-react';
 import { Document } from '../utils/documentMockData';
 import { AudienceCounterCards } from './AudienceCounter';
+import { SegmentsMultiSelect, FundSingleSelect, ShareClassSingleSelect } from './ui/targeting-selects';
 
 function formatFrenchDate(dateStr: string): string {
   const days = ['dimanche', 'lundi', 'mardi', 'mercredi', 'jeudi', 'vendredi', 'samedi'];
@@ -783,74 +784,35 @@ export function DocumentAddModal({ isOpen, onClose, folderOptions, defaultFolder
               <div className="space-y-4 border rounded-2xl p-5 bg-white shadow-sm" style={{ borderColor: '#000E2B33' }}>
                 <div className="space-y-2">
                   <Label>Segments investisseurs</Label>
-                  <DropdownMenu>
-                    <DropdownMenuTrigger asChild>
-                      <Button variant="outline" className="w-full justify-between h-11 font-normal">
-                        {selectedSegments.includes('all')
-                          ? 'Tous les segments'
-                          : `${selectedSegments.length} segment(s) sélectionné(s)`}
-                        <ChevronDown className="w-4 h-4" />
-                      </Button>
-                    </DropdownMenuTrigger>
-                    <DropdownMenuContent className="w-[320px]">
-                      <DropdownMenuCheckboxItem
-                        checked={selectedSegments.includes('all')}
-                        onCheckedChange={(checked) => setSelectedSegments(checked ? ['all'] : [])}
-                      >
-                        Tous les segments
-                      </DropdownMenuCheckboxItem>
-                      {SEGMENTS.map((segment) => (
-                        <DropdownMenuCheckboxItem
-                          key={segment}
-                          checked={selectedSegments.includes(segment)}
-                          onCheckedChange={(checked) => {
-                            let next = selectedSegments.filter((item) => item !== 'all');
-                            next = checked ? [...next, segment] : next.filter((item) => item !== segment);
-                            if (next.length === 0) next = ['all'];
-                            setSelectedSegments(next);
-                          }}
-                        >
-                          {segment}
-                        </DropdownMenuCheckboxItem>
-                      ))}
-                    </DropdownMenuContent>
-                  </DropdownMenu>
+                  <SegmentsMultiSelect
+                    value={selectedSegments.includes('all') ? [] : selectedSegments}
+                    onChange={(next) => setSelectedSegments(next.length === 0 ? ['all'] : next)}
+                    options={SEGMENTS}
+                    placeholder="Tous les segments"
+                  />
                 </div>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
                   <div className="space-y-2">
                     <Label>Fonds</Label>
-                    <Select
-                      value={selectedFund}
-                      onValueChange={(value) => {
-                        setSelectedFund(value);
+                    <FundSingleSelect
+                      value={selectedFund === 'all' ? null : selectedFund}
+                      onChange={(next) => {
+                        setSelectedFund(next || 'all');
                         setSelectedShareClass('');
                       }}
-                    >
-                      <SelectTrigger className="h-11"><SelectValue /></SelectTrigger>
-                      <SelectContent>
-                        {FUNDS.map((fund) => (
-                          <SelectItem key={fund} value={fund}>
-                            {fund === 'all' ? 'Tous les fonds' : fund}
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
+                      options={FUNDS.filter((f) => f !== 'all')}
+                      placeholder="Tous les fonds"
+                    />
                   </div>
                   {selectedFund !== 'all' && (
                     <div className="space-y-2">
                       <Label>Part du fonds</Label>
-                      <Select
-                        value={selectedShareClass || 'all'}
-                        onValueChange={(value) => setSelectedShareClass(value === 'all' ? '' : value)}
-                      >
-                        <SelectTrigger className="h-11"><SelectValue /></SelectTrigger>
-                        <SelectContent>
-                          <SelectItem value="all">Toutes les parts</SelectItem>
-                          {shareClassOptions.map((shareClass) => (
-                            <SelectItem key={shareClass} value={shareClass}>{shareClass}</SelectItem>
-                          ))}
-                        </SelectContent>
-                      </Select>
+                      <ShareClassSingleSelect
+                        value={selectedShareClass || null}
+                        onChange={(next) => setSelectedShareClass(next || '')}
+                        options={shareClassOptions}
+                        placeholder="Toutes les parts"
+                      />
                     </div>
                   )}
                 </div>
