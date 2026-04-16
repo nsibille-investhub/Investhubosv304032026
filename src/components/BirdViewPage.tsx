@@ -41,7 +41,7 @@ import { cn } from './ui/utils';
 import { DocumentActivityPanel } from './DocumentActivityPanel';
 import { DocumentPreviewDrawer } from './DocumentPreviewDrawer';
 import { Tooltip, TooltipContent, TooltipTrigger } from './ui/tooltip';
-import { SegmentsMultiSelect } from './ui/targeting-selects';
+import { SegmentsMultiSelect, FundSingleSelect } from './ui/targeting-selects';
 import { AutocompleteSingleSelect } from './ui/autocomplete-select';
 
 interface BirdViewPageProps {
@@ -96,9 +96,9 @@ export function BirdViewPage({ onBack }: BirdViewPageProps) {
 
   // Filtres avancés
   const [documentNameFilter, setDocumentNameFilter] = useState('');
-  const [selectedFunds, setSelectedFunds] = useState<string[]>([]);
+  const [selectedFund, setSelectedFund] = useState<string | null>(null);
   const [selectedSegments, setSelectedSegments] = useState<string[]>([]);
-  const [selectedSubscriptions, setSelectedSubscriptions] = useState<string[]>([]);
+  const [selectedSubscription, setSelectedSubscription] = useState<string | null>(null);
 
   // Charger les données
   useEffect(() => {
@@ -237,8 +237,8 @@ export function BirdViewPage({ onBack }: BirdViewPageProps) {
             }
 
             // Filtre fonds (restriction exacte)
-            if (selectedFunds.length > 0 && node.fundRestriction) {
-              if (!selectedFunds.includes(node.fundRestriction)) {
+            if (selectedFund && node.fundRestriction) {
+              if (node.fundRestriction !== selectedFund) {
                 matches = false;
               }
             }
@@ -252,8 +252,8 @@ export function BirdViewPage({ onBack }: BirdViewPageProps) {
             }
 
             // Filtre souscription (match exact sur la restriction du document)
-            if (selectedSubscriptions.length > 0) {
-              if (!node.subscriptionRestriction || !selectedSubscriptions.includes(node.subscriptionRestriction)) {
+            if (selectedSubscription) {
+              if (node.subscriptionRestriction !== selectedSubscription) {
                 matches = false;
               }
             }
@@ -276,10 +276,10 @@ export function BirdViewPage({ onBack }: BirdViewPageProps) {
             // Vérifier aussi les restrictions du folder lui-même
             let folderMatches = false;
             
-            if (selectedFunds.length > 0 && node.fundRestriction) {
-              folderMatches = selectedFunds.includes(node.fundRestriction);
+            if (selectedFund && node.fundRestriction) {
+              folderMatches = node.fundRestriction === selectedFund;
             }
-            
+
             if (selectedSegments.length > 0 && node.segmentRestrictions && node.segmentRestrictions.length > 0) {
               const hasMatch = node.segmentRestrictions.some(seg => selectedSegments.includes(seg));
               folderMatches = folderMatches || hasMatch;
@@ -299,7 +299,7 @@ export function BirdViewPage({ onBack }: BirdViewPageProps) {
     };
 
     // Appliquer les filtres avancés si au moins un est actif
-    const hasActiveFilters = documentNameFilter || selectedFunds.length > 0 || selectedSegments.length > 0 || selectedSubscriptions.length > 0;
+    const hasActiveFilters = !!documentNameFilter || !!selectedFund || selectedSegments.length > 0 || !!selectedSubscription;
 
     if (hasActiveFilters) {
       tree = filterTree(tree);
@@ -311,7 +311,7 @@ export function BirdViewPage({ onBack }: BirdViewPageProps) {
     }
 
     return tree;
-  }, [documentTree, showOnlyIncomplete, documentNameFilter, selectedFunds, selectedSegments, selectedSubscriptions]);
+  }, [documentTree, showOnlyIncomplete, documentNameFilter, selectedFund, selectedSegments, selectedSubscription]);
 
   // Statistiques filtrées basées sur displayedTree
   const filteredStats = useMemo(() => {
@@ -385,7 +385,7 @@ export function BirdViewPage({ onBack }: BirdViewPageProps) {
 
   // Auto-expand l'arbre quand le filtre est actif
   useEffect(() => {
-    if ((showOnlyIncomplete || selectedSubscriptions.length > 0) && displayedTree.length > 0) {
+    if ((showOnlyIncomplete || !!selectedSubscription) && displayedTree.length > 0) {
       const allIds = new Set<string>();
       const collect = (nodes: DocumentNode[]) => {
         nodes.forEach(node => {
@@ -396,7 +396,7 @@ export function BirdViewPage({ onBack }: BirdViewPageProps) {
       collect(displayedTree);
       setExpandedNodes(allIds);
     }
-  }, [showOnlyIncomplete, selectedSubscriptions, displayedTree]);
+  }, [showOnlyIncomplete, selectedSubscription, displayedTree]);
 
   const toggleNode = (nodeId: string) => {
     setExpandedNodes(prev => {
@@ -968,12 +968,11 @@ export function BirdViewPage({ onBack }: BirdViewPageProps) {
 
           {/* Filtre Fonds */}
           <div className="min-w-[220px]">
-            <SegmentsMultiSelect
-              value={selectedFunds}
-              onChange={setSelectedFunds}
+            <FundSingleSelect
+              value={selectedFund}
+              onChange={setSelectedFund}
               options={availableFunds}
               placeholder="Fonds"
-              icon={Landmark}
             />
           </div>
 
@@ -990,23 +989,23 @@ export function BirdViewPage({ onBack }: BirdViewPageProps) {
 
           {/* Filtre Souscription */}
           <div className="min-w-[240px]">
-            <SegmentsMultiSelect
-              value={selectedSubscriptions}
-              onChange={setSelectedSubscriptions}
-              options={availableSubscriptions}
+            <AutocompleteSingleSelect
+              value={selectedSubscription}
+              onChange={setSelectedSubscription}
+              options={availableSubscriptions.map(s => ({ value: s, label: s }))}
               placeholder="Souscription"
               icon={FileText}
             />
           </div>
 
           {/* Réinitialiser les filtres */}
-          {(documentNameFilter || selectedFunds.length > 0 || selectedSegments.length > 0 || selectedSubscriptions.length > 0) && (
+          {(documentNameFilter || selectedFund || selectedSegments.length > 0 || selectedSubscription) && (
             <button
               onClick={() => {
                 setDocumentNameFilter('');
-                setSelectedFunds([]);
+                setSelectedFund(null);
                 setSelectedSegments([]);
-                setSelectedSubscriptions([]);
+                setSelectedSubscription(null);
               }}
               className="h-10 px-3 text-sm text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-100 flex items-center gap-2"
             >
