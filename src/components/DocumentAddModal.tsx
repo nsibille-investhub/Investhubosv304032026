@@ -620,9 +620,9 @@ export function DocumentAddModal({ isOpen, onClose, folderOptions, defaultFolder
         </SheetHeader>
 
         <div className="flex-1 overflow-y-auto px-6 py-5 space-y-5">
-          <section className="space-y-3 rounded-2xl border-2 border-blue-200 bg-gradient-to-br from-blue-50 to-indigo-50 p-4">
+          <section className="space-y-3 rounded-2xl border-2 p-4" style={{ borderColor: '#000E2B', backgroundColor: '#EEF1F7' }}>
             <div>
-              <p className="font-semibold text-slate-900 flex items-center gap-2"><FileText className="w-5 h-5 text-blue-600" /> Document</p>
+              <p className="font-semibold flex items-center gap-2" style={{ color: '#000E2B' }}><FileText className="w-5 h-5" style={{ color: '#000E2B' }} /> Document</p>
               <p className="text-sm text-slate-600">Versions, fichiers et emplacement du document.</p>
             </div>
             <div className="rounded-2xl border bg-gradient-to-b from-white to-slate-50 p-4 md:p-5">
@@ -755,9 +755,9 @@ export function DocumentAddModal({ isOpen, onClose, folderOptions, defaultFolder
             </div>
           </section>
 
-          <section className="space-y-4 rounded-2xl border-2 border-blue-200 bg-gradient-to-br from-blue-50 to-indigo-50 p-4">
+          <section className="space-y-4 rounded-2xl border-2 p-4" style={{ borderColor: '#000E2B', backgroundColor: '#EEF1F7' }}>
             <div>
-              <p className="font-semibold text-slate-900 flex items-center gap-2"><Users2 className="w-5 h-5 text-blue-600" /> Audience</p>
+              <p className="font-semibold flex items-center gap-2" style={{ color: '#000E2B' }}><Users2 className="w-5 h-5" style={{ color: '#000E2B' }} /> Audience</p>
               <p className="text-sm text-slate-600">Configuration des critères de ciblage.</p>
             </div>
             <div className="flex gap-2 p-1 rounded-xl bg-slate-100 w-fit">
@@ -901,14 +901,14 @@ export function DocumentAddModal({ isOpen, onClose, folderOptions, defaultFolder
               </div>
             )}
 
-            <div className="rounded-2xl border-2 border-blue-200 bg-gradient-to-br from-blue-50 to-indigo-50 p-4 space-y-4">
+            <div className="rounded-2xl border-2 p-4 space-y-4" style={{ borderColor: '#000E2B', backgroundColor: '#EEF1F7' }}>
                 <div className="flex items-center justify-between gap-3">
                   <div>
-                    <p className="font-semibold text-slate-900 flex items-center gap-2"><ShieldCheck className="w-5 h-5 text-blue-600" /> Droits d'accès</p>
+                    <p className="font-semibold flex items-center gap-2" style={{ color: '#000E2B' }}><ShieldCheck className="w-5 h-5" style={{ color: '#000E2B' }} /> Droits d'accès</p>
                     <p className="text-sm text-slate-600">Ce document sera visible selon le ciblage défini.</p>
                   </div>
                   {audienceMode === 'general' && (
-                  <Button variant="outline" className="border-blue-300 text-blue-700" onClick={handleExportScope}>
+                  <Button variant="outline" onClick={handleExportScope} style={{ borderColor: '#000E2B', color: '#000E2B' }}>
                     <Download className="w-4 h-4 mr-2" />
                     Export CSV
                   </Button>
@@ -916,31 +916,31 @@ export function DocumentAddModal({ isOpen, onClose, folderOptions, defaultFolder
                 </div>
                 {audienceMode === 'general' ? (
                 <div className="grid grid-cols-2 gap-3">
-                  <div className="rounded-xl border border-blue-200 bg-white p-3">
-                    <p className="text-blue-700 text-sm font-medium">Investisseurs</p>
-                    <p className="text-3xl font-bold text-blue-800">{audience.investors}</p>
+                  <div className="rounded-xl border bg-white p-3" style={{ borderColor: '#000E2B' }}>
+                    <p className="text-sm font-medium" style={{ color: '#000E2B' }}>Investisseurs</p>
+                    <p className="text-3xl font-bold" style={{ color: '#000E2B' }}>{audience.investors}</p>
                   </div>
-                  <div className="rounded-xl border border-indigo-200 bg-white p-3">
-                    <p className="text-indigo-700 text-sm font-medium">Contacts</p>
-                    <p className="text-3xl font-bold text-indigo-800">{audience.contacts}</p>
+                  <div className="rounded-xl border bg-white p-3" style={{ borderColor: '#000E2B' }}>
+                    <p className="text-sm font-medium" style={{ color: '#000E2B' }}>Contacts</p>
+                    <p className="text-3xl font-bold" style={{ color: '#000E2B' }}>{audience.contacts}</p>
                   </div>
                 </div>
                 ) : (
                   selectedInvestorProfile ? (
-                    <div className="rounded-2xl border bg-white p-4 space-y-3">
+                    <div className="rounded-2xl border bg-white p-4 space-y-3" style={{ borderColor: '#000E2B' }}>
                       <div>
-                        <p className="text-xl font-semibold text-slate-900">{selectedInvestorProfile.name}</p>
+                        <p className="text-xl font-semibold" style={{ color: '#000E2B' }}>{selectedInvestorProfile.name}</p>
                       </div>
                       <div className="border-t pt-3 space-y-2">
-                        <p className="text-xs uppercase tracking-wide text-slate-500 font-semibold">Contacts autorisés</p>
-                        <div className="rounded-xl border bg-blue-50/60 p-3 flex items-center gap-3">
-                          <div className="w-9 h-9 rounded-full bg-blue-100 text-blue-700 flex items-center justify-center">
+                        <p className="text-xs uppercase tracking-wide font-semibold" style={{ color: '#000E2B' }}>Contacts autorisés</p>
+                        <div className="rounded-xl border p-3 flex items-center gap-3" style={{ borderColor: '#000E2B', backgroundColor: '#EEF1F7' }}>
+                          <div className="w-9 h-9 rounded-full flex items-center justify-center" style={{ backgroundColor: '#EEF1F7', color: '#000E2B' }}>
                             <UserRound className="w-4 h-4" />
                           </div>
                           <div className="flex-1">
-                            <p className="font-medium text-slate-900 flex items-center gap-2">
+                            <p className="font-medium flex items-center gap-2" style={{ color: '#000E2B' }}>
                               {selectedInvestorProfile.name}
-                              <span className="inline-flex items-center gap-1 rounded-full border border-blue-300 bg-blue-100 px-2 py-0.5 text-[11px] font-medium text-blue-700">
+                              <span className="inline-flex items-center gap-1 rounded-full border px-2 py-0.5 text-[11px] font-medium" style={{ borderColor: '#000E2B', backgroundColor: '#EEF1F7', color: '#000E2B' }}>
                                 <Star className="w-3 h-3 fill-current" />
                                 Principal
                               </span>
@@ -949,12 +949,12 @@ export function DocumentAddModal({ isOpen, onClose, folderOptions, defaultFolder
                           </div>
                         </div>
                         {selectedInvestorProfile.contacts.map((contact) => (
-                          <div key={contact.name} className="rounded-xl border bg-slate-50 p-3 flex items-center gap-3">
-                            <div className="w-9 h-9 rounded-full bg-blue-100 text-blue-700 flex items-center justify-center">
+                          <div key={contact.name} className="rounded-xl border bg-white p-3 flex items-center gap-3" style={{ borderColor: '#000E2B' }}>
+                            <div className="w-9 h-9 rounded-full flex items-center justify-center" style={{ backgroundColor: '#EEF1F7', color: '#000E2B' }}>
                               <UserRound className="w-4 h-4" />
                             </div>
                             <div>
-                              <p className="font-medium text-slate-900">{contact.name}</p>
+                              <p className="font-medium" style={{ color: '#000E2B' }}>{contact.name}</p>
                               <p className="text-sm text-slate-500 flex items-center gap-1"><Mail className="w-3 h-3" /> {contact.role}</p>
                             </div>
                           </div>
@@ -969,9 +969,9 @@ export function DocumentAddModal({ isOpen, onClose, folderOptions, defaultFolder
 
           </section>
 
-          <section className="space-y-4 rounded-2xl border-2 border-blue-200 bg-gradient-to-br from-blue-50 to-indigo-50 p-4">
+          <section className="space-y-4 rounded-2xl border-2 p-4" style={{ borderColor: '#000E2B', backgroundColor: '#EEF1F7' }}>
             <div>
-              <p className="font-semibold text-slate-900 flex items-center gap-2"><Bell className="w-5 h-5 text-blue-600" /> Notification</p>
+              <p className="font-semibold flex items-center gap-2" style={{ color: '#000E2B' }}><Bell className="w-5 h-5" style={{ color: '#000E2B' }} /> Notification</p>
               <p className="text-sm text-slate-600">Notifications immédiates et relances automatiques.</p>
             </div>
             {isDetailMode ? (
@@ -1030,9 +1030,9 @@ export function DocumentAddModal({ isOpen, onClose, folderOptions, defaultFolder
             )}
           </section>
 
-          <section className="space-y-3 pb-2 rounded-2xl border-2 border-blue-200 bg-gradient-to-br from-blue-50 to-indigo-50 p-4">
+          <section className="space-y-3 pb-2 rounded-2xl border-2 p-4" style={{ borderColor: '#000E2B', backgroundColor: '#EEF1F7' }}>
             <div>
-              <p className="font-semibold text-slate-900 flex items-center gap-2"><Check className="w-5 h-5 text-blue-600" /> Validation</p>
+              <p className="font-semibold flex items-center gap-2" style={{ color: '#000E2B' }}><Check className="w-5 h-5" style={{ color: '#000E2B' }} /> Validation</p>
               <p className="text-sm text-slate-600">Équipes de validation et validateurs associés.</p>
             </div>
             {isDetailMode ? (
@@ -1081,7 +1081,7 @@ export function DocumentAddModal({ isOpen, onClose, folderOptions, defaultFolder
                 <div className="rounded-xl border border-slate-200 bg-white p-4 space-y-3">
                   <div className="flex items-center justify-between gap-2">
                     <div className="flex items-center gap-2">
-                      <div className="w-8 h-8 rounded-lg bg-blue-100 text-blue-700 flex items-center justify-center">
+                      <div className="w-8 h-8 rounded-lg flex items-center justify-center" style={{ backgroundColor: '#EEF1F7', color: '#000E2B' }}>
                         <Users2 className="w-4 h-4" />
                       </div>
                       <div>
@@ -1092,7 +1092,7 @@ export function DocumentAddModal({ isOpen, onClose, folderOptions, defaultFolder
                       </div>
                     </div>
                     {selectedTeamsDetailed.length > 0 && (
-                      <Badge variant="outline" className="bg-blue-50 border-blue-200 text-blue-700">
+                      <Badge variant="outline" style={{ backgroundColor: '#EEF1F7', borderColor: '#000E2B', color: '#000E2B' }}>
                         {totalValidators} {totalValidators > 1 ? 'validateurs' : 'validateur'} · {selectedTeamsDetailed.length} {selectedTeamsDetailed.length > 1 ? 'équipes' : 'équipe'}
                       </Badge>
                     )}
