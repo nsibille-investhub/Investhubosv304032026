@@ -4,6 +4,7 @@ import {
   Eye,
   EyeOff,
   ArrowLeft,
+  Activity,
   ChevronRight,
   ChevronsDown,
   ChevronsRight,
@@ -545,7 +546,7 @@ export function BirdViewPage({ onBack }: BirdViewPageProps) {
             </button>
 
             {/* Icon */}
-            <div className="w-7 h-7 rounded-lg bg-blue-600 flex items-center justify-center flex-shrink-0 shadow-sm">
+            <div className="w-7 h-7 rounded-lg flex items-center justify-center flex-shrink-0 shadow-sm" style={{ backgroundColor: '#000E2B' }}>
               <FolderOpen className="w-4 h-4 text-white" />
             </div>
 
@@ -769,15 +770,14 @@ export function BirdViewPage({ onBack }: BirdViewPageProps) {
 
               {/* Activity button */}
               <button
-                className="flex items-center gap-1.5 px-3 py-1 text-xs font-medium text-purple-600 hover:text-purple-700 dark:text-purple-400 dark:hover:text-purple-300 transition-colors"
+                className="flex items-center gap-1.5 px-2 py-1.5 rounded text-xs font-medium text-gray-600 dark:text-gray-400 hover:bg-gray-200 dark:hover:bg-gray-800 transition-colors"
                 onClick={() => {
                   setSelectedDocument({ id: node.id, name: node.name, isNominatif: !!node.isNominatif });
                   setIsActivityPanelOpen(true);
                 }}
+                title="Activité du document"
               >
-                <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
-                </svg>
+                <Activity className="w-4 h-4" />
                 Activité
               </button>
             </div>
@@ -822,8 +822,8 @@ export function BirdViewPage({ onBack }: BirdViewPageProps) {
         </div>
 
         <div className="flex items-start gap-3 mb-6">
-          <div className="w-12 h-12 rounded-lg bg-blue-600 flex items-center justify-center">
-            <Eye className="w-6 h-6 text-white" />
+          <div className="w-12 h-12 rounded-lg flex items-center justify-center" style={{ backgroundColor: '#000E2B' }}>
+            <Activity className="w-6 h-6 text-white" />
           </div>
           <div>
             <h1 className="text-xl font-semibold text-gray-900 dark:text-gray-100">Bird View</h1>
@@ -837,30 +837,30 @@ export function BirdViewPage({ onBack }: BirdViewPageProps) {
         <div className="grid grid-cols-3 gap-4 mb-6">
           <div className="bg-blue-50 dark:bg-blue-950 rounded-lg p-4 border border-blue-100 dark:border-blue-900">
             <div className="flex items-center gap-2 mb-1">
-              <FolderOpen className="w-5 h-5 text-blue-600 dark:text-blue-400" />
-              <span className="text-sm text-blue-600 dark:text-blue-400">Espaces</span>
+              <FolderOpen className="w-5 h-5" style={{ color: '#000E2B' }} />
+              <span className="text-sm" style={{ color: '#000E2B' }}>Espaces</span>
             </div>
-            <div className="text-3xl font-bold text-blue-600 dark:text-blue-400">
+            <div className="text-3xl font-bold" style={{ color: '#000E2B' }}>
               {filteredStats.totalSpaces}
             </div>
           </div>
 
           <div className="bg-blue-50 dark:bg-blue-950 rounded-lg p-4 border border-blue-100 dark:border-blue-900">
             <div className="flex items-center gap-2 mb-1">
-              <FolderOpen className="w-5 h-5 text-blue-600 dark:text-blue-400" />
-              <span className="text-sm text-blue-600 dark:text-blue-400">Dossiers</span>
+              <FolderOpen className="w-5 h-5" style={{ color: '#000E2B' }} />
+              <span className="text-sm" style={{ color: '#000E2B' }}>Dossiers</span>
             </div>
-            <div className="text-3xl font-bold text-blue-600 dark:text-blue-400">
+            <div className="text-3xl font-bold" style={{ color: '#000E2B' }}>
               {filteredStats.totalFolders}
             </div>
           </div>
 
           <div className="bg-blue-50 dark:bg-blue-950 rounded-lg p-4 border border-blue-100 dark:border-blue-900">
             <div className="flex items-center gap-2 mb-1">
-              <FileText className="w-5 h-5 text-blue-600 dark:text-blue-400" />
-              <span className="text-sm text-blue-600 dark:text-blue-400">Documents</span>
+              <FileText className="w-5 h-5" style={{ color: '#000E2B' }} />
+              <span className="text-sm" style={{ color: '#000E2B' }}>Documents</span>
             </div>
-            <div className="text-3xl font-bold text-blue-600 dark:text-blue-400">
+            <div className="text-3xl font-bold" style={{ color: '#000E2B' }}>
               {filteredStats.totalDocuments}
             </div>
           </div>
