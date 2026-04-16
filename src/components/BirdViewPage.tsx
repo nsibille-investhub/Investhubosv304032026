@@ -18,8 +18,7 @@ import {
   UserRound,
   Tag as TagIcon,
   Users,
-  Globe,
-  FileSearch
+  Globe
 } from 'lucide-react';
 import { toast } from 'sonner@2.0.3';
 import {
@@ -749,10 +748,10 @@ export function BirdViewPage({ onBack }: BirdViewPageProps) {
             })()}
 
             {/* Actions */}
-            <div className="ml-auto flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
-              {/* Preview button */}
+            <div className="ml-auto flex items-center gap-1">
+              {/* Preview button (icon-only, like in the arbo) */}
               <button
-                className="flex items-center gap-1.5 px-3 py-1 text-xs font-medium text-blue-600 hover:text-blue-700 dark:text-blue-400 dark:hover:text-blue-300 transition-colors"
+                className="p-1.5 hover:bg-gray-200 dark:hover:bg-gray-800 rounded transition-colors"
                 onClick={() => {
                   setPreviewDocument({
                     id: node.id,
@@ -765,8 +764,7 @@ export function BirdViewPage({ onBack }: BirdViewPageProps) {
                 }}
                 title="Aperçu du document"
               >
-                <FileSearch className="w-3.5 h-3.5" />
-                Aperçu
+                <Eye className="w-4 h-4 text-gray-600 dark:text-gray-400" />
               </button>
 
               {/* Activity button */}
