@@ -32,7 +32,7 @@ export function GenericAudienceCard({
   return (
     <article className="rounded-2xl border border-[#D7DEE6] bg-[#F4F6FA] p-4 shadow-[0_2px_10px_rgba(15,23,42,0.06)]">
       <div className="mb-5 flex items-start justify-between">
-        <div className="h-14 w-14 rounded-2xl bg-[#020F2B] text-white flex items-center justify-center shadow-[0_6px_16px_rgba(2,15,43,0.28)]">
+        <div className="h-14 w-14 rounded-2xl text-white flex items-center justify-center" style={{ backgroundColor: '#000E2B', boxShadow: '0 6px 16px rgba(0,14,43,0.28)' }}>
           <Folder className="h-7 w-7" />
         </div>
         <button
@@ -74,7 +74,8 @@ export function GenericAudienceCard({
           <Button
             type="button"
             onClick={onOpen}
-            className="w-full h-12 rounded-xl bg-[#020F2B] hover:bg-[#051A42] text-white text-[22px] font-medium"
+            className="w-full h-12 rounded-xl text-white text-[22px] font-medium"
+            style={{ backgroundColor: '#000E2B' }}
           >
             Ouvrir l'espace
             <ArrowRight className="h-5 w-5" />

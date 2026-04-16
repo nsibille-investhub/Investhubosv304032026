@@ -573,7 +573,7 @@ const investorListingColumnSpecs = [
     column: 'SEGMENT',
     component: 'Tag',
     functional: 'Classifier l’investisseur pour filtres et reporting.',
-    guidelines: 'Tag outline léger, text-sm, espacement compact.',
+    guidelines: 'Tag neutre unifié — fond #F0EFEA, texte/border/icône #C6C0B7, rounded-full, text-xs.',
     variants: 'HNWI / Retail / Professional / UHNWI…',
   },
   {

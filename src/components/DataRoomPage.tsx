@@ -6,7 +6,7 @@ import { DataRoomSpace, mockDataRoomSpaces } from '../utils/dataRoomSpacesData';
 import { DocumentsPage } from './DocumentsPage';
 import { BirdViewPage } from './BirdViewPage';
 import { toast } from 'sonner';
-import { ArrowLeft, Folder } from 'lucide-react';
+import { ArrowLeft, Folder, Users, Layers3, Landmark } from 'lucide-react';
 import { Button } from './ui/button';
 import { MassUploadWizard } from './MassUploadWizard';
 import { getTreeForSpace, TreeNode } from '../utils/dataRoomTreeData';
@@ -227,7 +227,7 @@ export function DataRoomPage({ onSpaceChange }: DataRoomPageProps) {
               </Button>
 
               <div className="flex items-center gap-4">
-                <div className="w-16 h-16 rounded-2xl bg-[#060D19] flex items-center justify-center shadow-sm">
+                <div className="w-16 h-16 rounded-2xl flex items-center justify-center" style={{ backgroundColor: '#000E2B', boxShadow: '0 6px 16px rgba(0,14,43,0.28)' }}>
                   <Folder className="w-8 h-8 text-white" />
                 </div>
                 <div>
@@ -235,6 +235,26 @@ export function DataRoomPage({ onSpaceChange }: DataRoomPageProps) {
                   <p className="text-base text-gray-500 mt-2">
                     {selectedSpace.documentCount} documents • {selectedSpace.folderCount} dossiers
                   </p>
+                  <div className="flex items-center gap-4 mt-2 text-sm text-gray-600">
+                    {selectedSpace.targeting.userTypes.length > 0 && (
+                      <span className="flex items-center gap-1.5">
+                        <Users className="w-4 h-4" style={{ color: '#000E2B' }} />
+                        {selectedSpace.targeting.userTypes.join(', ')}
+                      </span>
+                    )}
+                    {selectedSpace.targeting.segments.length > 0 && (
+                      <span className="flex items-center gap-1.5">
+                        <Layers3 className="w-4 h-4" style={{ color: '#000E2B' }} />
+                        <span><span className="font-medium text-gray-700">Segments :</span> {selectedSpace.targeting.segments.join(', ')}</span>
+                      </span>
+                    )}
+                    {selectedSpace.targeting.funds.length > 0 && (
+                      <span className="flex items-center gap-1.5">
+                        <Landmark className="w-4 h-4" style={{ color: '#000E2B' }} />
+                        <span><span className="font-medium text-gray-700">Fonds :</span> {selectedSpace.targeting.funds.join(', ')}</span>
+                      </span>
+                    )}
+                  </div>
                 </div>
               </div>
             </div>
