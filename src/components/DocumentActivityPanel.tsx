@@ -167,8 +167,8 @@ interface EngagementResult {
   sublabel: string;
   /** 0–100 for the progress ring. */
   percent: number;
-  /** success / neutral for color accent. */
-  tone: 'success' | 'neutral';
+  /** success / warning / neutral for color accent. */
+  tone: 'success' | 'warning' | 'neutral';
 }
 
 const computeEngagement = (
@@ -203,11 +203,13 @@ const computeEngagement = (
   const total = allInvestors.size;
   const count = viewedInvestors.size;
   const percent = total === 0 ? 0 : Math.round((count / total) * 100);
+  const tone: EngagementResult['tone'] =
+    percent >= 75 ? 'success' : percent >= 35 ? 'warning' : 'neutral';
   return {
     label: `${count} / ${total} investisseur${total > 1 ? 's' : ''}`,
     sublabel: 'ont consulté le document',
     percent,
-    tone: percent >= 50 ? 'success' : 'neutral',
+    tone,
   };
 };
 
@@ -341,72 +343,117 @@ export function DocumentActivityPanel({
                 </span>
               </div>
 
-              <div className="flex items-center gap-3 rounded-md border border-border bg-white px-3 py-2.5">
-                {/* Engagement visual */}
-                <div className="relative w-12 h-12 flex-shrink-0">
-                  <svg className="w-12 h-12 -rotate-90" viewBox="0 0 36 36">
-                    <circle
-                      cx="18"
-                      cy="18"
-                      r="15.9155"
-                      className="stroke-border"
-                      strokeWidth="3"
-                      fill="none"
-                    />
-                    <circle
-                      cx="18"
-                      cy="18"
-                      r="15.9155"
-                      className={cn(
-                        engagement.tone === 'success'
-                          ? 'stroke-brand-success'
-                          : 'stroke-muted-foreground/50',
-                      )}
-                      strokeWidth="3"
-                      fill="none"
-                      strokeDasharray={`${engagement.percent}, 100`}
-                      strokeLinecap="round"
-                    />
-                  </svg>
-                  <div className="absolute inset-0 flex items-center justify-center">
-                    {isNominatif ? (
-                      engagement.tone === 'success' ? (
+              {isNominatif ? (
+                /* Nominatif: compact single-row layout */
+                <div className="flex items-center gap-3 rounded-md border border-border bg-white px-3 py-2.5">
+                  <div className="relative w-12 h-12 flex-shrink-0">
+                    <svg className="w-12 h-12 -rotate-90" viewBox="0 0 36 36">
+                      <circle cx="18" cy="18" r="15.9155" className="stroke-border" strokeWidth="3" fill="none" />
+                      <circle
+                        cx="18" cy="18" r="15.9155"
+                        className={cn(engagement.tone === 'success' ? 'stroke-brand-success' : 'stroke-muted-foreground/50')}
+                        strokeWidth="3" fill="none"
+                        strokeDasharray={`${engagement.percent}, 100`}
+                        strokeLinecap="round"
+                      />
+                    </svg>
+                    <div className="absolute inset-0 flex items-center justify-center">
+                      {engagement.tone === 'success' ? (
                         <CheckCircle2 className="w-5 h-5 text-brand-success" />
                       ) : (
                         <Eye className="w-4 h-4 text-muted-foreground" />
-                      )
-                    ) : (
-                      <span className="text-[11px] font-semibold text-foreground">
-                        {engagement.percent}%
-                      </span>
-                    )}
+                      )}
+                    </div>
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <div className="text-sm font-medium text-foreground truncate">{engagement.label}</div>
+                    <div className="text-xs text-muted-foreground truncate">{engagement.sublabel}</div>
+                  </div>
+                  <Button
+                    size="sm"
+                    onClick={() => setIsRelaunchModalOpen(true)}
+                    className="text-white border-0 flex-shrink-0"
+                    style={{ background: 'linear-gradient(135deg, var(--brand-primary) 0%, var(--brand-accent) 100%)' }}
+                  >
+                    <Send className="w-3.5 h-3.5" />
+                    Relancer
+                  </Button>
+                </div>
+              ) : (
+                /* Générique: enhanced layout with prominent percentage */
+                <div className="rounded-lg border border-border bg-white overflow-hidden">
+                  <div className="flex items-center gap-4 px-4 py-3">
+                    {/* Large progress ring */}
+                    <div className="relative w-16 h-16 flex-shrink-0">
+                      <svg className="w-16 h-16 -rotate-90" viewBox="0 0 36 36">
+                        <circle cx="18" cy="18" r="15.9155" className="stroke-border" strokeWidth="2.5" fill="none" />
+                        <circle
+                          cx="18" cy="18" r="15.9155"
+                          className={cn(
+                            engagement.tone === 'success'
+                              ? 'stroke-brand-success'
+                              : engagement.tone === 'warning'
+                                ? 'stroke-amber-500'
+                                : 'stroke-muted-foreground/50',
+                          )}
+                          strokeWidth="2.5" fill="none"
+                          strokeDasharray={`${engagement.percent}, 100`}
+                          strokeLinecap="round"
+                        />
+                      </svg>
+                      <div className="absolute inset-0 flex items-center justify-center">
+                        <span
+                          className={cn(
+                            'text-base font-bold',
+                            engagement.tone === 'success'
+                              ? 'text-brand-success'
+                              : engagement.tone === 'warning'
+                                ? 'text-amber-600'
+                                : 'text-muted-foreground',
+                          )}
+                        >
+                          {engagement.percent}%
+                        </span>
+                      </div>
+                    </div>
+
+                    {/* Text + sub-bar */}
+                    <div className="flex-1 min-w-0 space-y-1.5">
+                      <div className="text-sm font-semibold text-foreground">
+                        {engagement.label}
+                      </div>
+                      <div className="text-xs text-muted-foreground">
+                        {engagement.sublabel}
+                      </div>
+                      {/* Mini progress bar */}
+                      <div className="h-1.5 w-full rounded-full bg-muted overflow-hidden">
+                        <div
+                          className={cn(
+                            'h-full rounded-full transition-all duration-500',
+                            engagement.tone === 'success'
+                              ? 'bg-brand-success'
+                              : engagement.tone === 'warning'
+                                ? 'bg-amber-500'
+                                : 'bg-muted-foreground/50',
+                          )}
+                          style={{ width: `${engagement.percent}%` }}
+                        />
+                      </div>
+                    </div>
+
+                    {/* Relancer */}
+                    <Button
+                      size="sm"
+                      onClick={() => setIsRelaunchModalOpen(true)}
+                      className="text-white border-0 flex-shrink-0"
+                      style={{ background: 'linear-gradient(135deg, var(--brand-primary) 0%, var(--brand-accent) 100%)' }}
+                    >
+                      <Send className="w-3.5 h-3.5" />
+                      Relancer
+                    </Button>
                   </div>
                 </div>
-
-                {/* Engagement text */}
-                <div className="flex-1 min-w-0">
-                  <div className="text-sm font-medium text-foreground truncate">
-                    {engagement.label}
-                  </div>
-                  <div className="text-xs text-muted-foreground truncate">
-                    {engagement.sublabel}
-                  </div>
-                </div>
-
-                {/* Relancer */}
-                <Button
-                  size="sm"
-                  onClick={() => setIsRelaunchModalOpen(true)}
-                  className="text-white border-0 flex-shrink-0"
-                  style={{
-                    background:
-                      'linear-gradient(135deg, var(--brand-primary) 0%, var(--brand-accent) 100%)',
-                  }}
-                >
-                  <Send className="w-3.5 h-3.5" />
-                  Relancer
-                </Button>
-              </div>
+              )}
             </div>
 
             {/* Timeline (shared, neutral DS component) */}
