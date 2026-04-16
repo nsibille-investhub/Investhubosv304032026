@@ -378,8 +378,8 @@ export function DocumentListView({
                 >
                   <div className={`grid ${tableGridClassName} gap-4 items-center`}>
                     <div className="flex items-center gap-3">
-                      <div className="w-8 h-8 rounded-lg bg-blue-50 flex items-center justify-center flex-shrink-0">
-                        <Icon className="w-4 h-4 text-blue-600" />
+                      <div className="w-8 h-8 rounded-lg flex items-center justify-center flex-shrink-0" style={{ backgroundColor: '#EEF1F7' }}>
+                        <Icon className="w-4 h-4" style={{ color: '#000E2B' }} />
                       </div>
                       <div className="flex-1 min-w-0">
                         <p className="text-sm font-medium text-gray-900 truncate">
@@ -422,7 +422,8 @@ export function DocumentListView({
                           event.stopPropagation();
                           openViewer(file);
                         }}
-                        className={`p-2 rounded-lg transition-colors ${isHovered ? 'bg-blue-50 text-blue-600' : 'text-gray-500 hover:bg-gray-100'}`}
+                        className="p-2 rounded-lg transition-colors text-gray-500 hover:bg-gray-100"
+                        style={isHovered ? { backgroundColor: '#EEF1F7', color: '#000E2B' } : undefined}
                         aria-label={`Ouvrir la visionneuse pour ${file.name}`}
                       >
                         <Eye className="w-4 h-4" />

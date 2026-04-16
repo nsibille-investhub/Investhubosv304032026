@@ -58,12 +58,12 @@ function TreeItem({ document, level, currentFolderId, onFolderSelect, parentPath
         onClick={handleClick}
         className={`
           flex items-center gap-2 px-3 py-2 rounded-lg cursor-pointer transition-all
-          ${isActive 
-            ? 'bg-gradient-to-r from-blue-50 to-blue-100/50 text-blue-700 font-medium' 
+          ${isActive
+            ? 'font-medium'
             : 'text-gray-700 hover:bg-gray-100'
           }
         `}
-        style={{ paddingLeft: `${level * 16 + 12}px` }}
+        style={{ paddingLeft: `${level * 16 + 12}px`, ...(isActive ? { backgroundColor: '#EEF1F7', color: '#000E2B' } : {}) }}
       >
         {hasChildren && filteredChildren.length > 0 ? (
           <motion.div
@@ -75,11 +75,11 @@ function TreeItem({ document, level, currentFolderId, onFolderSelect, parentPath
         ) : (
           <div className="w-4" />
         )}
-        
+
         {isExpanded && isActive ? (
-          <FolderOpen className="w-4 h-4 text-blue-600" />
+          <FolderOpen className="w-4 h-4" style={{ color: '#000E2B' }} />
         ) : (
-          <Folder className={`w-4 h-4 ${isActive ? 'text-blue-600' : 'text-gray-400'}`} />
+          <Folder className={`w-4 h-4 ${isActive ? '' : 'text-gray-400'}`} style={isActive ? { color: '#000E2B' } : undefined} />
         )}
         
         <span className="text-sm truncate flex-1">{document.name}</span>
@@ -128,13 +128,14 @@ export function DocumentTreeSidebar({ documents, currentFolderId, onFolderSelect
           onClick={() => onFolderSelect(null, [])}
           className={`
             flex items-center gap-2 px-3 py-2 mx-2 rounded-lg cursor-pointer transition-all
-            ${currentFolderId === null 
-              ? 'bg-gradient-to-r from-blue-50 to-blue-100/50 text-blue-700 font-medium' 
+            ${currentFolderId === null
+              ? 'font-medium'
               : 'text-gray-700 hover:bg-gray-100'
             }
           `}
+          style={currentFolderId === null ? { backgroundColor: '#EEF1F7', color: '#000E2B' } : undefined}
         >
-          <Folder className={`w-4 h-4 ${currentFolderId === null ? 'text-blue-600' : 'text-gray-400'}`} />
+          <Folder className={`w-4 h-4 ${currentFolderId === null ? '' : 'text-gray-400'}`} style={currentFolderId === null ? { color: '#000E2B' } : undefined} />
           <span className="text-sm">Tous les documents</span>
         </motion.div>
 
