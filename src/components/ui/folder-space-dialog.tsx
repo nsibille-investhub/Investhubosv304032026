@@ -376,25 +376,25 @@ export function FolderSpaceDialog(props: FolderSpaceDialogProps) {
               </p>
             </div>
 
-            {/* User types */}
+            {/* User types — space variant only */}
+            {isSpace && (
             <div className="space-y-2">
               <Label>Type d&apos;utilisateur</Label>
               <div className="flex flex-wrap gap-2">
                 {USER_TYPES.map((type) => {
-                  const isSelected = isSpace ? targeting.userTypes.includes(type) : displayUserTypes.includes(type);
+                  const isSelected = targeting.userTypes.includes(type);
                   const Icon = type === 'Investisseur' ? Users : type === 'Participation' ? Building2 : Briefcase;
 
                   return (
                     <button
                       key={type}
                       type="button"
-                      onClick={isSpace ? () => toggleUserType(type) : undefined}
-                      disabled={!isSpace}
-                      className={`flex items-center gap-2 px-4 py-2 rounded-lg border-2 transition-all ${
+                      onClick={() => toggleUserType(type)}
+                      className={`flex items-center gap-2 px-4 py-2 rounded-lg border-2 transition-all cursor-pointer ${
                         isSelected
                           ? 'bg-white'
-                          : 'border-gray-200 bg-white text-gray-400'
-                      } ${isSpace && !isSelected ? 'hover:border-gray-300 cursor-pointer' : ''} ${!isSpace ? 'cursor-default' : 'cursor-pointer'}`}
+                          : 'border-gray-200 bg-white text-gray-400 hover:border-gray-300'
+                      }`}
                       style={isSelected ? { borderColor: BRAND_BLUE, color: BRAND_BLUE } : undefined}
                     >
                       <Icon className="w-4 h-4" style={isSelected ? { color: BRAND_BLUE } : undefined} />
@@ -403,10 +403,11 @@ export function FolderSpaceDialog(props: FolderSpaceDialogProps) {
                   );
                 })}
               </div>
-              {isSpace && targeting.userTypes.length === 0 && (
+              {targeting.userTypes.length === 0 && (
                 <p className="text-xs text-amber-600">Aucun type d&apos;utilisateur sélectionné</p>
               )}
             </div>
+            )}
 
             {/* Segments */}
             <div className="space-y-2">
@@ -611,21 +612,21 @@ export function FolderSpaceDialogPreview({ variant }: FolderSpaceDialogPreviewPr
             </p>
           </div>
 
+          {isSpace && (
           <div className="space-y-2">
             <Label>Type d&apos;utilisateur</Label>
             <div className="flex flex-wrap gap-2">
               {USER_TYPES.map((type) => {
-                const isSelected = displayUserTypes.includes(type);
+                const isSelected = targeting.userTypes.includes(type);
                 const Icon = type === 'Investisseur' ? Users : type === 'Participation' ? Building2 : Briefcase;
                 return (
                   <button
                     key={type}
                     type="button"
-                    onClick={isSpace ? () => toggleUserType(type) : undefined}
-                    disabled={!isSpace}
-                    className={`flex items-center gap-2 px-4 py-2 rounded-lg border-2 transition-all ${
-                      isSelected ? 'bg-white' : 'border-gray-200 bg-white text-gray-400'
-                    } ${isSpace ? 'cursor-pointer' : 'cursor-default'}`}
+                    onClick={() => toggleUserType(type)}
+                    className={`flex items-center gap-2 px-4 py-2 rounded-lg border-2 transition-all cursor-pointer ${
+                      isSelected ? 'bg-white' : 'border-gray-200 bg-white text-gray-400 hover:border-gray-300'
+                    }`}
                     style={isSelected ? { borderColor: BRAND_BLUE, color: BRAND_BLUE } : undefined}
                   >
                     <Icon className="w-4 h-4" style={isSelected ? { color: BRAND_BLUE } : undefined} />
@@ -635,6 +636,7 @@ export function FolderSpaceDialogPreview({ variant }: FolderSpaceDialogPreviewPr
               })}
             </div>
           </div>
+          )}
 
           <div className="space-y-2">
             <Label>Segments</Label>
