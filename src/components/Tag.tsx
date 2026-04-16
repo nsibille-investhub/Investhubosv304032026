@@ -30,7 +30,7 @@ export function Tag({ icon: Icon, label, className }: TagProps) {
         'inline-flex max-w-full min-w-0 shrink items-center gap-1.5 whitespace-nowrap rounded-full border px-2.5 py-1 text-xs font-medium transition-colors',
         className
       )}
-      style={{ color: '#C6C0B7', borderColor: '#C6C0B7', backgroundColor: '#F0EFEA' }}
+      style={{ color: '#7a7a7a', borderColor: '#7a7a7a', backgroundColor: '#ddd7cc' }}
     >
       {Icon && <Icon className="h-3.5 w-3.5 shrink-0" />}
       <span className="block max-w-[30ch] min-w-0 truncate">{truncatedLabel}</span>
