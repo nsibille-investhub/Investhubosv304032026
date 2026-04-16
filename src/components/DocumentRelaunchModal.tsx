@@ -5,8 +5,6 @@ import {
   Users,
   Mail,
   Eye,
-  XCircle,
-  MinusCircle,
   Download,
   ChevronDown,
   ChevronRight,
@@ -14,6 +12,7 @@ import {
   CheckCircle2,
   Zap,
 } from 'lucide-react';
+import { StatusIndicator } from './CheckIndicator';
 import { Button } from './ui/button';
 import { Badge } from './ui/badge';
 import { Separator } from './ui/separator';
@@ -224,15 +223,10 @@ export function DocumentRelaunchModal({
     }
 
     if (status === 'pending') {
-      return <XCircle className="w-4 h-4 text-destructive mx-auto" aria-label="En attente" />;
+      return <StatusIndicator state="failed" className="mx-auto" />;
     }
 
-    return (
-      <MinusCircle
-        className="w-4 h-4 text-slate-300 mx-auto"
-        aria-label="Non applicable"
-      />
-    );
+    return <StatusIndicator state="na" className="mx-auto" />;
   };
 
   const renderConsultationCell = (recipient: Recipient) => {
@@ -240,13 +234,13 @@ export function DocumentRelaunchModal({
       if (recipient.name === 'Pierre Dupont') {
         return (
           <div className="flex items-center justify-center gap-2">
-            <MinusCircle className="w-4 h-4 text-slate-300" />
+            <StatusIndicator state="na" label="Non habilité au document" />
             <span className="text-xs text-muted-foreground">Non habilité au document</span>
           </div>
         );
       }
 
-      return <MinusCircle className="w-4 h-4 text-slate-300 mx-auto" />;
+      return <StatusIndicator state="na" className="mx-auto" />;
     }
 
     return renderDateOrIcon(recipient.consultationStatus, recipient.consultationDate);
@@ -254,7 +248,7 @@ export function DocumentRelaunchModal({
 
   const renderLastNotification = (recipient: Recipient) => {
     if (!recipient.inTarget || !recipient.lastNotificationDate) {
-      return <MinusCircle className="w-4 h-4 text-slate-300 mx-auto" />;
+      return <StatusIndicator state="na" className="mx-auto" />;
     }
 
     return (
