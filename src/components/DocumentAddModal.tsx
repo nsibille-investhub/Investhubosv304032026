@@ -834,7 +834,6 @@ export function DocumentAddModal({ isOpen, onClose, folderOptions, defaultFolder
                       options={INVESTORS.map((inv) => ({
                         value: inv.id,
                         label: inv.name,
-                        description: `${inv.segment} · ${inv.fund}`,
                       }))}
                       placeholder="Sélectionner un investisseur"
                       icon={UserRound}
