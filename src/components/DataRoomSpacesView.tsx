@@ -266,7 +266,7 @@ export function DataRoomSpacesView({
                             <span>{space.documentCount} documents</span>
                           </div>
                           <div className="flex items-center gap-1.5">
-                            <div className="w-1.5 h-1.5 rounded-full" style={{ backgroundColor: '#EAB308' }} />
+                            <div className="w-1.5 h-1.5 rounded-full" style={{ backgroundColor: '#000E2B' }} />
                             <span>{space.folderCount} dossiers</span>
                           </div>
                         </div>
