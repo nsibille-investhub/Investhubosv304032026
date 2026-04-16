@@ -20,6 +20,9 @@ interface ModernMultiSelectProps {
   className?: string;
   maxDisplay?: number;
   disabled?: boolean;
+  badgeClassName?: string;
+  badgeStyle?: React.CSSProperties;
+  showIconInBadge?: boolean;
 }
 
 export function ModernMultiSelect({
@@ -31,6 +34,9 @@ export function ModernMultiSelect({
   className,
   maxDisplay = 3,
   disabled = false,
+  badgeClassName,
+  badgeStyle: customBadgeStyle,
+  showIconInBadge = false,
 }: ModernMultiSelectProps) {
   const [isOpen, setIsOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
@@ -113,11 +119,8 @@ export function ModernMultiSelect({
     onChange([]);
   };
 
-  // Get display label for a value
-  const getDisplayLabel = (val: string) => {
-    const option = normalizedOptions.find(opt => opt.value === val);
-    return option?.label || val;
-  };
+  const getOption = (val: string) => normalizedOptions.find(opt => opt.value === val);
+  const getDisplayLabel = (val: string) => getOption(val)?.label || val;
 
   const displayedValues = value.slice(0, maxDisplay);
   const remainingCount = value.length - maxDisplay;
@@ -144,25 +147,30 @@ export function ModernMultiSelect({
               <span className="text-sm text-gray-500 dark:text-gray-400">{placeholder}</span>
             ) : (
               <>
-                {displayedValues.map((item) => (
-                  <Badge
-                    key={item}
-                    className="pl-2 pr-1 py-0.5 text-xs transition-all hover:scale-105"
-                    style={{
-                      backgroundColor: '#DCFDBC',
-                      border: '1px solid #DCFDBC',
-                      color: '#000',
-                    }}
-                  >
-                    <span className="max-w-[120px] truncate">{getDisplayLabel(item)}</span>
-                    <span
-                      onClick={(e) => removeOption(item, e)}
-                      className="ml-1 hover:bg-black/10 rounded-full p-0.5 transition-colors cursor-pointer inline-flex"
+                {displayedValues.map((item) => {
+                  const opt = getOption(item);
+                  const BadgeIcon = showIconInBadge ? opt?.icon : undefined;
+                  return (
+                    <Badge
+                      key={item}
+                      className={cn("pl-2 pr-1 py-0.5 text-xs transition-all hover:scale-105", badgeClassName)}
+                      style={customBadgeStyle || {
+                        backgroundColor: '#DCFDBC',
+                        border: '1px solid #DCFDBC',
+                        color: '#000',
+                      }}
                     >
-                      <X className="w-3 h-3" />
-                    </span>
-                  </Badge>
-                ))}
+                      {BadgeIcon && <BadgeIcon className="w-3 h-3 mr-0.5 flex-shrink-0" />}
+                      <span className="max-w-[120px] truncate">{getDisplayLabel(item)}</span>
+                      <span
+                        onClick={(e) => removeOption(item, e)}
+                        className="ml-1 hover:bg-black/10 rounded-full p-0.5 transition-colors cursor-pointer inline-flex"
+                      >
+                        <X className="w-3 h-3" />
+                      </span>
+                    </Badge>
+                  );
+                })}
                 {remainingCount > 0 && (
                   <Badge
                     variant="outline"

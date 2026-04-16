@@ -1040,6 +1040,8 @@ export function DocumentAddModal({ isOpen, onClose, folderOptions, defaultFolder
                     placeholder="Sélectionner une ou plusieurs équipes…"
                     searchPlaceholder="Rechercher une équipe…"
                     maxDisplay={4}
+                    showIconInBadge
+                    badgeStyle={{ color: '#7a7a7a', borderColor: '#ddd7cc', backgroundColor: '#f5f3ee', border: '1px solid #ddd7cc' }}
                   />
                   <p className="text-xs text-slate-500">
                     Sélectionnez les équipes qui devront approuver ce document. Tous les validateurs de chaque équipe seront notifiés.
