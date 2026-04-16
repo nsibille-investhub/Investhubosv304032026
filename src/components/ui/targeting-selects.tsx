@@ -14,7 +14,7 @@
  */
 
 import { useState, useMemo } from 'react';
-import { ChevronDown, Check, Tag, Landmark, Layers3, X } from 'lucide-react';
+import { ChevronDown, Check, Tag, Landmark, Layers3, X, LucideIcon } from 'lucide-react';
 import { Popover, PopoverContent, PopoverTrigger } from './popover';
 import { AutocompleteSingleSelect, AutocompleteOption } from './autocomplete-select';
 
@@ -38,6 +38,7 @@ interface SegmentsMultiSelectProps {
   onChange: (next: string[]) => void;
   options: readonly string[];
   placeholder?: string;
+  icon?: LucideIcon;
 }
 
 export function SegmentsMultiSelect({
@@ -45,6 +46,7 @@ export function SegmentsMultiSelect({
   onChange,
   options,
   placeholder = 'Tous les segments',
+  icon: Icon = Tag,
 }: SegmentsMultiSelectProps) {
   const [open, setOpen] = useState(false);
 
@@ -75,7 +77,7 @@ export function SegmentsMultiSelect({
                   className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-medium border"
                   style={badgeStyle}
                 >
-                  <Tag className="w-3 h-3" />
+                  <Icon className="w-3 h-3" />
                   {seg}
                   <span
                     onClick={(e) => remove(seg, e)}
@@ -111,7 +113,7 @@ export function SegmentsMultiSelect({
                 >
                   {selected && <Check className="w-3 h-3 text-white" />}
                 </div>
-                <Tag className="w-3.5 h-3.5 text-gray-500" />
+                <Icon className="w-3.5 h-3.5 text-gray-500" />
                 <span>{seg}</span>
               </button>
             );

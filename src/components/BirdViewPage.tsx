@@ -4,7 +4,6 @@ import {
   Eye,
   EyeOff,
   ArrowLeft,
-  ChevronDown,
   ChevronRight,
   ChevronsDown,
   ChevronsRight,
@@ -39,14 +38,11 @@ import { filterTreeForIncomplete } from '../utils/birdviewFilters';
 import { Button } from './ui/button';
 import { Tag } from './Tag';
 import { cn } from './ui/utils';
-import {
-  Popover,
-  PopoverContent,
-  PopoverTrigger,
-} from './ui/popover';
 import { DocumentActivityPanel } from './DocumentActivityPanel';
 import { DocumentPreviewDrawer } from './DocumentPreviewDrawer';
 import { Tooltip, TooltipContent, TooltipTrigger } from './ui/tooltip';
+import { SegmentsMultiSelect } from './ui/targeting-selects';
+import { AutocompleteSingleSelect } from './ui/autocomplete-select';
 
 interface BirdViewPageProps {
   onBack: () => void;
@@ -86,9 +82,6 @@ export function BirdViewPage({ onBack }: BirdViewPageProps) {
   const [selectedInvestor, setSelectedInvestor] = useState<string | null>(null);
   const [selectedContact, setSelectedContact] = useState<string | null>(null);
   const [expandedNodes, setExpandedNodes] = useState<Set<string>>(new Set());
-  const [searchQuery, setSearchQuery] = useState('');
-  const [showInvestorDropdown, setShowInvestorDropdown] = useState(false);
-  const [showContactDropdown, setShowContactDropdown] = useState(false);
   const [showOnlyIncomplete, setShowOnlyIncomplete] = useState(false);
   const [selectedDocument, setSelectedDocument] = useState<{ id: string; name: string; isNominatif: boolean } | null>(null);
   const [isActivityPanelOpen, setIsActivityPanelOpen] = useState(false);
@@ -106,9 +99,6 @@ export function BirdViewPage({ onBack }: BirdViewPageProps) {
   const [selectedFunds, setSelectedFunds] = useState<string[]>([]);
   const [selectedSegments, setSelectedSegments] = useState<string[]>([]);
   const [selectedSubscriptions, setSelectedSubscriptions] = useState<string[]>([]);
-  const [subscriptionSearch, setSubscriptionSearch] = useState('');
-  const [fundSearch, setFundSearch] = useState('');
-  const [segmentSearch, setSegmentSearch] = useState('');
 
   // Charger les données
   useEffect(() => {
@@ -228,14 +218,6 @@ export function BirdViewPage({ onBack }: BirdViewPageProps) {
     if (!selectedInvestor) return null;
     return investors.find(i => i.name === selectedInvestor);
   }, [selectedInvestor, investors]);
-
-  // Filtrer les investisseurs
-  const filteredInvestors = useMemo(() => {
-    if (!searchQuery) return investors;
-    return investors.filter(inv =>
-      inv.name.toLowerCase().includes(searchQuery.toLowerCase())
-    );
-  }, [investors, searchQuery]);
 
   // Arbre affiché (filtré ou complet)
   const displayedTree = useMemo(() => {
@@ -937,138 +919,38 @@ export function BirdViewPage({ onBack }: BirdViewPageProps) {
           <span className="text-sm text-gray-700 dark:text-gray-300">Visualiser comme :</span>
 
           {/* Investisseur */}
-          <Popover open={showInvestorDropdown} onOpenChange={setShowInvestorDropdown}>
-            <PopoverTrigger asChild>
-              <button className="h-10 px-4 py-2 bg-white dark:bg-gray-950 border border-purple-300 dark:border-purple-700 rounded-lg text-sm hover:bg-purple-50 dark:hover:bg-purple-950 transition-all flex items-center gap-2 min-w-[250px]">
-                {selectedInvestorData ? (
-                  <>
-                    <User className="w-4 h-4 text-purple-600" />
-                    <span className="flex-1 text-left">{selectedInvestorData.name}</span>
-                    <Tag label={selectedInvestorData.type} />
-                  </>
-                ) : (
-                  <>
-                    <span className="flex-1 text-left text-gray-500">Sélectionner une entité...</span>
-                  </>
-                )}
-                <ChevronDown className="w-4 h-4 text-gray-400" />
-              </button>
-            </PopoverTrigger>
-            <PopoverContent className="w-[400px] p-0" align="start">
-              {/* Search */}
-              <div className="p-3 border-b border-gray-200 dark:border-gray-800">
-                <div className="relative">
-                  <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
-                  <input
-                    type="text"
-                    placeholder="Rechercher..."
-                    value={searchQuery}
-                    onChange={(e) => setSearchQuery(e.target.value)}
-                    className="w-full h-10 pl-9 pr-3 border border-purple-200 dark:border-purple-800 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-purple-500"
-                  />
-                </div>
-              </div>
-
-              {/* Investors */}
-              <div className="max-h-[300px] overflow-y-auto p-2">
-                <div className="text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wide px-3 py-2">
-                  Investisseurs
-                </div>
-                {filteredInvestors.map(investor => (
-                  <button
-                    key={investor.id}
-                    onClick={() => {
-                      setSelectedInvestor(investor.name);
-                      setSelectedContact(null);
-                      setShowInvestorDropdown(false);
-                      setSearchQuery('');
-                    }}
-                    className={cn(
-                      'w-full flex items-center gap-3 px-3 py-2 rounded-lg text-sm hover:bg-purple-50 dark:hover:bg-purple-900 transition-colors',
-                      selectedInvestor === investor.name && 'bg-purple-100 dark:bg-purple-900'
-                    )}
-                  >
-                    <User className="w-4 h-4 text-purple-600 dark:text-purple-400" />
-                    <span className="flex-1 text-left font-medium">{investor.name}</span>
-                    <Tag label={investor.type} />
-                  </button>
-                ))}
-              </div>
-            </PopoverContent>
-          </Popover>
+          <div className="min-w-[260px]">
+            <AutocompleteSingleSelect
+              value={selectedInvestor}
+              onChange={(next) => {
+                setSelectedInvestor(next);
+                setSelectedContact(null);
+              }}
+              options={investors.map(inv => ({
+                value: inv.name,
+                label: inv.name,
+                description: inv.type,
+              }))}
+              placeholder="Sélectionner une entité..."
+              icon={User}
+            />
+          </div>
 
           {/* Contact */}
           {selectedInvestor && availableContacts.length > 0 && (
-            <Popover open={showContactDropdown} onOpenChange={setShowContactDropdown}>
-              <PopoverTrigger asChild>
-                <button className="h-10 px-4 py-2 bg-white dark:bg-gray-950 border border-gray-300 dark:border-gray-700 rounded-lg text-sm hover:bg-gray-50 dark:hover:bg-gray-900 transition-all flex items-center gap-2 min-w-[200px]">
-                  <span className="flex-1 text-left text-gray-500">
-                    {selectedContact || 'Contact ou conseiller...'}
-                  </span>
-                  <ChevronDown className="w-4 h-4 text-gray-400" />
-                </button>
-              </PopoverTrigger>
-              <PopoverContent className="w-[350px] p-0" align="start">
-                <div className="max-h-[300px] overflow-y-auto p-2">
-                  <div className="text-xs font-semibold text-gray-500 uppercase tracking-wide px-3 py-2">
-                    Contacts
-                  </div>
-                  
-                  {/* Investisseur principal */}
-                  <button
-                    onClick={() => {
-                      setSelectedContact(null);
-                      setShowContactDropdown(false);
-                    }}
-                    className={cn(
-                      'w-full flex items-center gap-3 px-3 py-2 rounded-lg text-sm hover:bg-gray-50 dark:hover:bg-gray-900',
-                      !selectedContact && 'bg-gray-100 dark:bg-gray-800'
-                    )}
-                  >
-                    <User className="w-4 h-4 text-gray-600" />
-                    <div className="flex-1 text-left">
-                      <div className="font-medium">{selectedInvestor}</div>
-                      <div className="text-xs text-gray-500">Investisseur principal</div>
-                    </div>
-                  </button>
-
-                  {/* Tous les contacts */}
-                  {availableContacts.map(contact => (
-                    <button
-                      key={contact.id}
-                      onClick={() => {
-                        setSelectedContact(contact.name);
-                        setShowContactDropdown(false);
-                      }}
-                      className={cn(
-                        'w-full flex items-center gap-3 px-3 py-2 rounded-lg text-sm hover:bg-gray-50 dark:hover:bg-gray-900',
-                        selectedContact === contact.name && 'bg-gray-100 dark:bg-gray-800'
-                      )}
-                    >
-                      <User className="w-4 h-4 text-gray-600" />
-                      <div className="flex-1 text-left">
-                        <div className="font-medium">{contact.name}</div>
-                        <div className="text-xs text-gray-500">{contact.relationLabel}</div>
-                      </div>
-                    </button>
-                  ))}
-                </div>
-              </PopoverContent>
-            </Popover>
-          )}
-
-          {/* Reset */}
-          {selectedInvestor && (
-            <button
-              onClick={() => {
-                setSelectedInvestor(null);
-                setSelectedContact(null);
-              }}
-              className="h-10 px-3 text-sm text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-100 flex items-center gap-2"
-            >
-              <X className="w-4 h-4" />
-              Réinitialiser
-            </button>
+            <div className="min-w-[220px]">
+              <AutocompleteSingleSelect
+                value={selectedContact}
+                onChange={setSelectedContact}
+                options={availableContacts.map(c => ({
+                  value: c.name,
+                  label: c.name,
+                  description: c.relationLabel,
+                }))}
+                placeholder="Contact ou conseiller..."
+                icon={User}
+              />
+            </div>
           )}
         </div>
 
@@ -1086,270 +968,38 @@ export function BirdViewPage({ onBack }: BirdViewPageProps) {
             />
           </div>
 
-          {/* Filtre Fonds (autocomplete, multi-select) */}
-          <Popover>
-            <PopoverTrigger asChild>
-              <button className="h-10 px-4 py-2 bg-white dark:bg-gray-950 border border-gray-300 dark:border-gray-700 rounded-lg text-sm hover:bg-gray-50 dark:hover:bg-gray-900 transition-all flex items-center gap-2 min-w-[150px]">
-                <Landmark className="w-4 h-4 text-gray-500" />
-                <span className="flex-1 text-left text-gray-700 dark:text-gray-300">
-                  {selectedFunds.length > 0 ? `Fonds (${selectedFunds.length})` : 'Fonds'}
-                </span>
-                <ChevronDown className="w-4 h-4 text-gray-400" />
-              </button>
-            </PopoverTrigger>
-            <PopoverContent className="w-[320px] p-0" align="start">
-              {/* Search */}
-              <div className="p-3 border-b border-gray-200 dark:border-gray-800">
-                <div className="relative">
-                  <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
-                  <input
-                    type="text"
-                    placeholder="Rechercher un fonds..."
-                    value={fundSearch}
-                    onChange={(e) => setFundSearch(e.target.value)}
-                    className="w-full h-9 pl-9 pr-3 border border-gray-200 dark:border-gray-800 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white dark:bg-gray-950"
-                  />
-                </div>
-              </div>
+          {/* Filtre Fonds */}
+          <div className="min-w-[220px]">
+            <SegmentsMultiSelect
+              value={selectedFunds}
+              onChange={setSelectedFunds}
+              options={availableFunds}
+              placeholder="Fonds"
+              icon={Landmark}
+            />
+          </div>
 
-              {/* Selected chips */}
-              {selectedFunds.length > 0 && (
-                <div className="px-3 pt-2 flex flex-wrap gap-1.5">
-                  {selectedFunds.map(fund => (
-                    <span
-                      key={fund}
-                      className="inline-flex items-center gap-1 px-2 py-0.5 bg-blue-50 dark:bg-blue-950 border border-blue-200 dark:border-blue-800 rounded text-xs text-blue-700 dark:text-blue-300"
-                    >
-                      {fund}
-                      <button
-                        onClick={() => setSelectedFunds(selectedFunds.filter(f => f !== fund))}
-                        className="hover:text-blue-900 dark:hover:text-blue-100"
-                      >
-                        <X className="w-3 h-3" />
-                      </button>
-                    </span>
-                  ))}
-                </div>
-              )}
+          {/* Filtre Segment */}
+          <div className="min-w-[220px]">
+            <SegmentsMultiSelect
+              value={selectedSegments}
+              onChange={setSelectedSegments}
+              options={availableSegments}
+              placeholder="Segment"
+              icon={TagIcon}
+            />
+          </div>
 
-              {/* Options */}
-              <div className="max-h-[260px] overflow-y-auto p-2">
-                {(() => {
-                  const filtered = availableFunds.filter(f =>
-                    f.toLowerCase().includes(fundSearch.toLowerCase())
-                  );
-                  if (filtered.length === 0) {
-                    return (
-                      <div className="px-3 py-6 text-center text-xs text-gray-500">
-                        Aucun fonds trouvé
-                      </div>
-                    );
-                  }
-                  return filtered.map(fund => (
-                    <label
-                      key={fund}
-                      className="flex items-center gap-2 p-2 hover:bg-gray-50 dark:hover:bg-gray-900 rounded cursor-pointer"
-                    >
-                      <input
-                        type="checkbox"
-                        checked={selectedFunds.includes(fund)}
-                        onChange={(e) => {
-                          if (e.target.checked) {
-                            setSelectedFunds([...selectedFunds, fund]);
-                          } else {
-                            setSelectedFunds(selectedFunds.filter(f => f !== fund));
-                          }
-                        }}
-                        className="w-4 h-4"
-                      />
-                      <span className="text-sm text-gray-700 dark:text-gray-300">{fund}</span>
-                    </label>
-                  ));
-                })()}
-              </div>
-            </PopoverContent>
-          </Popover>
-
-          {/* Filtre Segment (autocomplete, multi-select) */}
-          <Popover>
-            <PopoverTrigger asChild>
-              <button className="h-10 px-4 py-2 bg-white dark:bg-gray-950 border border-gray-300 dark:border-gray-700 rounded-lg text-sm hover:bg-gray-50 dark:hover:bg-gray-900 transition-all flex items-center gap-2 min-w-[150px]">
-                <TagIcon className="w-4 h-4 text-gray-500" />
-                <span className="flex-1 text-left text-gray-700 dark:text-gray-300">
-                  {selectedSegments.length > 0 ? `Segment (${selectedSegments.length})` : 'Segment'}
-                </span>
-                <ChevronDown className="w-4 h-4 text-gray-400" />
-              </button>
-            </PopoverTrigger>
-            <PopoverContent className="w-[320px] p-0" align="start">
-              {/* Search */}
-              <div className="p-3 border-b border-gray-200 dark:border-gray-800">
-                <div className="relative">
-                  <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
-                  <input
-                    type="text"
-                    placeholder="Rechercher un segment..."
-                    value={segmentSearch}
-                    onChange={(e) => setSegmentSearch(e.target.value)}
-                    className="w-full h-9 pl-9 pr-3 border border-gray-200 dark:border-gray-800 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white dark:bg-gray-950"
-                  />
-                </div>
-              </div>
-
-              {/* Selected chips */}
-              {selectedSegments.length > 0 && (
-                <div className="px-3 pt-2 flex flex-wrap gap-1.5">
-                  {selectedSegments.map(seg => (
-                    <span
-                      key={seg}
-                      className="inline-flex items-center gap-1 px-2 py-0.5 bg-blue-50 dark:bg-blue-950 border border-blue-200 dark:border-blue-800 rounded text-xs text-blue-700 dark:text-blue-300"
-                    >
-                      {seg}
-                      <button
-                        onClick={() => setSelectedSegments(selectedSegments.filter(s => s !== seg))}
-                        className="hover:text-blue-900 dark:hover:text-blue-100"
-                      >
-                        <X className="w-3 h-3" />
-                      </button>
-                    </span>
-                  ))}
-                </div>
-              )}
-
-              {/* Options */}
-              <div className="max-h-[260px] overflow-y-auto p-2">
-                {(() => {
-                  const filtered = availableSegments.filter(s =>
-                    s.toLowerCase().includes(segmentSearch.toLowerCase())
-                  );
-                  if (filtered.length === 0) {
-                    return (
-                      <div className="px-3 py-6 text-center text-xs text-gray-500">
-                        Aucun segment trouvé
-                      </div>
-                    );
-                  }
-                  return filtered.map(segment => (
-                    <label
-                      key={segment}
-                      className="flex items-center gap-2 p-2 hover:bg-gray-50 dark:hover:bg-gray-900 rounded cursor-pointer"
-                    >
-                      <input
-                        type="checkbox"
-                        checked={selectedSegments.includes(segment)}
-                        onChange={(e) => {
-                          if (e.target.checked) {
-                            setSelectedSegments([...selectedSegments, segment]);
-                          } else {
-                            setSelectedSegments(selectedSegments.filter(s => s !== segment));
-                          }
-                        }}
-                        className="w-4 h-4"
-                      />
-                      <span className="text-sm text-gray-700 dark:text-gray-300">{segment}</span>
-                    </label>
-                  ));
-                })()}
-              </div>
-            </PopoverContent>
-          </Popover>
-
-          {/* Filtre Souscription (autocomplete, multi-select) */}
-          <Popover>
-            <PopoverTrigger asChild>
-              <button className="h-10 px-4 py-2 bg-white dark:bg-gray-950 border border-gray-300 dark:border-gray-700 rounded-lg text-sm hover:bg-gray-50 dark:hover:bg-gray-900 transition-all flex items-center gap-2 min-w-[180px]">
-                <FileText className="w-4 h-4 text-gray-500" />
-                <span className="flex-1 text-left text-gray-700 dark:text-gray-300">
-                  {selectedSubscriptions.length > 0
-                    ? `Souscription (${selectedSubscriptions.length})`
-                    : 'Souscription'}
-                </span>
-                <ChevronDown className="w-4 h-4 text-gray-400" />
-              </button>
-            </PopoverTrigger>
-            <PopoverContent className="w-[320px] p-0" align="start">
-              {/* Search */}
-              <div className="p-3 border-b border-gray-200 dark:border-gray-800">
-                <div className="relative">
-                  <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
-                  <input
-                    type="text"
-                    placeholder="Rechercher une souscription..."
-                    value={subscriptionSearch}
-                    onChange={(e) => setSubscriptionSearch(e.target.value)}
-                    className="w-full h-9 pl-9 pr-3 border border-gray-200 dark:border-gray-800 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white dark:bg-gray-950"
-                  />
-                </div>
-              </div>
-
-              {/* Selected chips */}
-              {selectedSubscriptions.length > 0 && (
-                <div className="px-3 pt-2 flex flex-wrap gap-1.5">
-                  {selectedSubscriptions.map(sub => (
-                    <span
-                      key={sub}
-                      className="inline-flex items-center gap-1 px-2 py-0.5 bg-blue-50 dark:bg-blue-950 border border-blue-200 dark:border-blue-800 rounded text-xs text-blue-700 dark:text-blue-300"
-                    >
-                      {sub}
-                      <button
-                        onClick={() =>
-                          setSelectedSubscriptions(selectedSubscriptions.filter(s => s !== sub))
-                        }
-                        className="hover:text-blue-900 dark:hover:text-blue-100"
-                      >
-                        <X className="w-3 h-3" />
-                      </button>
-                    </span>
-                  ))}
-                </div>
-              )}
-
-              {/* Options */}
-              <div className="max-h-[260px] overflow-y-auto p-2">
-                {(() => {
-                  const filtered = availableSubscriptions.filter(sub =>
-                    sub.toLowerCase().includes(subscriptionSearch.toLowerCase())
-                  );
-
-                  if (filtered.length === 0) {
-                    return (
-                      <div className="px-3 py-6 text-center text-xs text-gray-500">
-                        Aucune souscription trouvée
-                      </div>
-                    );
-                  }
-
-                  return filtered.map(sub => {
-                    const isSelected = selectedSubscriptions.includes(sub);
-                    return (
-                      <label
-                        key={sub}
-                        className="flex items-center gap-2 p-2 hover:bg-gray-50 dark:hover:bg-gray-900 rounded cursor-pointer"
-                      >
-                        <input
-                          type="checkbox"
-                          checked={isSelected}
-                          onChange={(e) => {
-                            if (e.target.checked) {
-                              setSelectedSubscriptions([...selectedSubscriptions, sub]);
-                            } else {
-                              setSelectedSubscriptions(
-                                selectedSubscriptions.filter(s => s !== sub)
-                              );
-                            }
-                          }}
-                          className="w-4 h-4"
-                        />
-                        <span className="text-sm text-gray-700 dark:text-gray-300 font-mono">
-                          {sub}
-                        </span>
-                      </label>
-                    );
-                  });
-                })()}
-              </div>
-            </PopoverContent>
-          </Popover>
+          {/* Filtre Souscription */}
+          <div className="min-w-[240px]">
+            <SegmentsMultiSelect
+              value={selectedSubscriptions}
+              onChange={setSelectedSubscriptions}
+              options={availableSubscriptions}
+              placeholder="Souscription"
+              icon={FileText}
+            />
+          </div>
 
           {/* Réinitialiser les filtres */}
           {(documentNameFilter || selectedFunds.length > 0 || selectedSegments.length > 0 || selectedSubscriptions.length > 0) && (
@@ -1359,9 +1009,6 @@ export function BirdViewPage({ onBack }: BirdViewPageProps) {
                 setSelectedFunds([]);
                 setSelectedSegments([]);
                 setSelectedSubscriptions([]);
-                setSubscriptionSearch('');
-                setFundSearch('');
-                setSegmentSearch('');
               }}
               className="h-10 px-3 text-sm text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-100 flex items-center gap-2"
             >
