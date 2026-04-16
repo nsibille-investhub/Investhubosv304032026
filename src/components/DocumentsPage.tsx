@@ -471,7 +471,11 @@ export function DocumentsPage({ selectedSpace, navigationTarget, onNavigationHan
               onAddFolder={() => openAddFolderPopup()}
               onAddFolderFromFolder={(folder) => openAddFolderPopup(folder.id)}
               onEditFolder={openEditFolderPopup}
-              onDeleteFolder={openEditFolderPopup}
+              onDeleteFolder={(folder) => {
+                toast.success('Dossier supprimé', {
+                  description: `Le dossier « ${folder.name} » a été supprimé.`,
+                });
+              }}
             />
           </div>
         </div>

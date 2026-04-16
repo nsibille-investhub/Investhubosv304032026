@@ -110,14 +110,10 @@ export function FolderSpaceDialog(props: FolderSpaceDialogProps) {
 
   const [name, setName] = useState('');
   const [parentId, setParentId] = useState('');
-  const [deleteMode, setDeleteMode] = useState(false);
-  const [migrationTargetId, setMigrationTargetId] = useState('');
   const [targeting, setTargeting] = useState<SpaceTargeting>({ userTypes: [], segments: [], funds: [] });
 
   useEffect(() => {
     if (!open) return;
-    setDeleteMode(false);
-    setMigrationTargetId('');
 
     if (isSpace) {
       const sp = (props as SpaceVariantProps).space;
@@ -174,16 +170,6 @@ export function FolderSpaceDialog(props: FolderSpaceDialogProps) {
     onClose();
   };
 
-  const handleDeleteFolder = () => {
-    if (!isSpace) {
-      const fp = props as FolderVariantProps;
-      if (fp.folderToEdit && migrationTargetId) {
-        fp.onDeleteFolder?.(fp.folderToEdit.id, migrationTargetId);
-        onClose();
-      }
-    }
-  };
-
   const handleDeleteSpace = () => {
     if (isSpace) {
       const sp = props as SpaceVariantProps;
@@ -227,51 +213,6 @@ export function FolderSpaceDialog(props: FolderSpaceDialogProps) {
         </DialogHeader>
 
         <div className="flex-1 overflow-y-auto p-6 space-y-6">
-          {/* Delete section — folder edit only */}
-          {!isSpace && isEdit && (props as FolderVariantProps).folderToEdit && (
-            <div className="rounded-xl border border-red-200 bg-red-50 p-4 space-y-3">
-              <div>
-                <p className="text-sm font-semibold text-red-700">Suppression du dossier</p>
-                <p className="text-xs text-red-600 mt-1">
-                  La migration vers un autre dossier est obligatoire avant suppression.
-                </p>
-              </div>
-              {deleteMode ? (
-                <div className="space-y-3">
-                  <div className="space-y-2">
-                    <Label>Dossier de migration (obligatoire)</Label>
-                    <select
-                      value={migrationTargetId}
-                      onChange={(e) => setMigrationTargetId(e.target.value)}
-                      className="w-full h-10 rounded-md border border-gray-300 bg-white px-3 text-sm"
-                    >
-                      <option value="">Sélectionner un dossier de destination</option>
-                      {folderOptions
-                        .filter((o) => o.id !== (props as FolderVariantProps).folderToEdit?.id)
-                        .map((o) => (
-                          <option key={o.id} value={o.id}>{o.label}</option>
-                        ))}
-                    </select>
-                  </div>
-                  <div className="flex items-center justify-end gap-2">
-                    <Button variant="outline" onClick={() => setDeleteMode(false)}>Annuler</Button>
-                    <Button
-                      className="bg-red-600 hover:bg-red-700 text-white"
-                      onClick={handleDeleteFolder}
-                      disabled={!migrationTargetId}
-                    >
-                      Confirmer la suppression
-                    </Button>
-                  </div>
-                </div>
-              ) : (
-                <Button variant="outline" className="border-red-300 text-red-700" onClick={() => setDeleteMode(true)}>
-                  Supprimer ce dossier
-                </Button>
-              )}
-            </div>
-          )}
-
           {/* Parent folder — folder variant only (tree view) */}
           {!isSpace && (
             <div className="space-y-2">

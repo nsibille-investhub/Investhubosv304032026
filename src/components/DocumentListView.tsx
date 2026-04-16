@@ -83,6 +83,7 @@ export function DocumentListView({
   const [viewerOpen, setViewerOpen] = useState(false);
   const [viewerDocument, setViewerDocument] = useState<Document | null>(null);
   const [deleteTarget, setDeleteTarget] = useState<Document | null>(null);
+  const [deleteFolderTarget, setDeleteFolderTarget] = useState<Document | null>(null);
   const itemRefs = useRef<Record<string, HTMLDivElement | null>>({});
 
   // Get current level items
@@ -363,7 +364,7 @@ export function DocumentListView({
                             className="text-red-600 focus:text-red-600"
                             onClick={(event) => {
                               event.stopPropagation();
-                              onDeleteFolder?.(folder);
+                              setDeleteFolderTarget(folder);
                             }}
                           >
                             <Trash2 className="w-4 h-4 mr-2" />
@@ -562,7 +563,7 @@ export function DocumentListView({
         )}
       </AnimatePresence>
 
-      {/* Delete confirmation dialog */}
+      {/* Document delete confirmation */}
       <AlertDialog open={!!deleteTarget} onOpenChange={(open) => { if (!open) setDeleteTarget(null); }}>
         <AlertDialogContent className="max-w-md">
           <AlertDialogHeader>
@@ -580,6 +581,48 @@ export function DocumentListView({
               Supprimer
             </AlertDialogAction>
           </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
+      {/* Folder delete confirmation */}
+      <AlertDialog open={!!deleteFolderTarget} onOpenChange={(open) => { if (!open) setDeleteFolderTarget(null); }}>
+        <AlertDialogContent className="max-w-md">
+          {(() => {
+            if (!deleteFolderTarget) return null;
+            const childrenCount = deleteFolderTarget.children?.length || 0;
+            const isEmpty = childrenCount === 0;
+            return (
+              <>
+                <AlertDialogHeader>
+                  <AlertDialogTitle>Supprimer le dossier</AlertDialogTitle>
+                  <AlertDialogDescription>
+                    {isEmpty ? (
+                      <>Êtes-vous sûr de vouloir supprimer « {deleteFolderTarget.name} » ? Cette action est irréversible.</>
+                    ) : (
+                      <>
+                        Le dossier « {deleteFolderTarget.name} » contient {childrenCount} élément{childrenCount > 1 ? 's' : ''}.
+                        Videz-le (ou déplacez son contenu) avant de pouvoir le supprimer.
+                      </>
+                    )}
+                  </AlertDialogDescription>
+                </AlertDialogHeader>
+                <AlertDialogFooter>
+                  <AlertDialogCancel>Annuler</AlertDialogCancel>
+                  {isEmpty && (
+                    <AlertDialogAction
+                      className="bg-red-600 hover:bg-red-700 text-white"
+                      onClick={() => {
+                        onDeleteFolder?.(deleteFolderTarget);
+                        setDeleteFolderTarget(null);
+                      }}
+                    >
+                      Supprimer
+                    </AlertDialogAction>
+                  )}
+                </AlertDialogFooter>
+              </>
+            );
+          })()}
         </AlertDialogContent>
       </AlertDialog>
     </div>
