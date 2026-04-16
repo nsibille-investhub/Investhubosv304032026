@@ -14,7 +14,7 @@
  */
 
 import { useState } from 'react';
-import { ChevronDown, Check, Users, Landmark, Layers3, X } from 'lucide-react';
+import { ChevronDown, Check, Tag, Landmark, Layers3, X } from 'lucide-react';
 import { Popover, PopoverContent, PopoverTrigger } from './popover';
 
 const BRAND_BLUE = '#000E2B';
@@ -74,7 +74,7 @@ export function SegmentsMultiSelect({
                   className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-medium border"
                   style={badgeStyle}
                 >
-                  <Users className="w-3 h-3" />
+                  <Tag className="w-3 h-3" />
                   {seg}
                   <span
                     onClick={(e) => remove(seg, e)}
@@ -110,7 +110,7 @@ export function SegmentsMultiSelect({
                 >
                   {selected && <Check className="w-3 h-3 text-white" />}
                 </div>
-                <Users className="w-3.5 h-3.5 text-gray-500" />
+                <Tag className="w-3.5 h-3.5 text-gray-500" />
                 <span>{seg}</span>
               </button>
             );
