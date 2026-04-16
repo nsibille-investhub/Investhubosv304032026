@@ -539,3 +539,137 @@ export function FolderSpaceDialog(props: FolderSpaceDialogProps) {
     </Dialog>
   );
 }
+
+// ---------------------------------------------------------------------------
+// Preview variant — renders inline without Dialog overlay (for Design System)
+// ---------------------------------------------------------------------------
+
+interface FolderSpaceDialogPreviewProps {
+  variant: 'folder' | 'space';
+}
+
+export function FolderSpaceDialogPreview({ variant }: FolderSpaceDialogPreviewProps) {
+  const isSpace = variant === 'space';
+  const [targeting, setTargeting] = useState<SpaceTargeting>({
+    userTypes: ['Investisseur'],
+    segments: [],
+    funds: ['VENTECH I'],
+  });
+
+  const toggleUserType = (type: string) =>
+    setTargeting((prev) => ({
+      ...prev,
+      userTypes: prev.userTypes.includes(type) ? prev.userTypes.filter((t) => t !== type) : [...prev.userTypes, type],
+    }));
+
+  const displayUserTypes = isSpace ? targeting.userTypes : ['Investisseur'];
+  const fundsLabel = 'VENTECH I';
+
+  return (
+    <div className="rounded-2xl border border-gray-200 bg-white overflow-hidden shadow-lg">
+      {/* Header */}
+      <div className="px-6 py-4 border-b border-gray-200 flex items-center gap-3">
+        <div className="w-10 h-10 rounded-lg flex items-center justify-center" style={{ backgroundColor: BRAND_BLUE }}>
+          <FolderOpen className="w-5 h-5 text-white" />
+        </div>
+        <div>
+          <h3 className="text-lg font-semibold text-gray-900">
+            {isSpace ? 'Nouvel espace' : 'Nouveau dossier'}
+          </h3>
+          <p className="text-sm text-gray-500">Définissez le nom et le ciblage de l&apos;espace</p>
+        </div>
+      </div>
+
+      {/* Body */}
+      <div className="p-6 space-y-6">
+        {/* Parent folder — folder only */}
+        {!isSpace && (
+          <div className="space-y-2">
+            <Label>Dossier parent</Label>
+            <Button variant="outline" className="w-full justify-between font-normal">
+              <span className="truncate">Constitutifs du Fonds</span>
+              <ChevronDown className="w-4 h-4" />
+            </Button>
+          </div>
+        )}
+
+        {/* Name */}
+        <div className="space-y-2">
+          <Label>{isSpace ? "Nom de l'espace *" : 'Nom du dossier *'}</Label>
+          <Input
+            placeholder={isSpace ? 'Ex: Investisseurs LP, Documentation Partenaires...' : 'Ex: Rapports investisseurs Q2'}
+            defaultValue=""
+          />
+        </div>
+
+        {/* Targeting */}
+        <div className="space-y-4">
+          <div>
+            <h4 className="text-sm font-medium text-gray-900 mb-1">Ciblage</h4>
+            <p className="text-xs text-gray-500">
+              {isSpace ? "Définissez qui peut accéder à cet espace" : "Hérité directement de l'espace (lecture seule)"}
+            </p>
+          </div>
+
+          <div className="space-y-2">
+            <Label>Type d&apos;utilisateur</Label>
+            <div className="flex flex-wrap gap-2">
+              {USER_TYPES.map((type) => {
+                const isSelected = displayUserTypes.includes(type);
+                const Icon = type === 'Investisseur' ? Users : type === 'Participation' ? Building2 : Briefcase;
+                return (
+                  <button
+                    key={type}
+                    type="button"
+                    onClick={isSpace ? () => toggleUserType(type) : undefined}
+                    disabled={!isSpace}
+                    className={`flex items-center gap-2 px-4 py-2 rounded-lg border-2 transition-all ${
+                      isSelected ? 'bg-white' : 'border-gray-200 bg-white text-gray-400'
+                    } ${isSpace ? 'cursor-pointer' : 'cursor-default'}`}
+                    style={isSelected ? { borderColor: BRAND_BLUE, color: BRAND_BLUE } : undefined}
+                  >
+                    <Icon className="w-4 h-4" style={isSelected ? { color: BRAND_BLUE } : undefined} />
+                    <span className="text-sm font-medium">{type}</span>
+                  </button>
+                );
+              })}
+            </div>
+          </div>
+
+          <div className="space-y-2">
+            <Label>Segments</Label>
+            <Button variant="outline" className="w-full justify-between" disabled={!isSpace}>
+              <span className="text-sm text-left truncate">
+                {isSpace ? 'Sélectionner des segments' : 'Limiter à des segments : Tous les investisseurs / Participation / Partenaires'}
+              </span>
+              <Target className="w-4 h-4 ml-2" />
+            </Button>
+          </div>
+
+          <div className="space-y-2">
+            <Label>Fonds</Label>
+            <Button variant="outline" className="w-full justify-between" disabled={!isSpace}>
+              <span className="text-sm text-left truncate">
+                {isSpace ? '1 fond sélectionné' : `Limiter à un fonds : ${fundsLabel}`}
+              </span>
+              <Target className="w-4 h-4 ml-2" />
+            </Button>
+            <div className="flex flex-wrap gap-1.5 mt-2">
+              <Badge variant="outline" className="bg-purple-50 text-purple-700 border-purple-200">
+                VENTECH I
+              </Badge>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {/* Footer */}
+      <div className="px-6 py-4 border-t border-gray-200 bg-gray-50 flex items-center justify-end gap-2">
+        <Button variant="outline">Annuler</Button>
+        <Button className="text-white" style={{ backgroundColor: BRAND_BLUE }}>
+          {isSpace ? "Créer l'espace" : 'Créer le dossier'}
+        </Button>
+      </div>
+    </div>
+  );
+}
