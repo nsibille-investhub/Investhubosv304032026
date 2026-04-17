@@ -17,8 +17,8 @@ import { ModernMultiSelect, type MultiSelectOption } from './ui/modern-multisele
 import { Avatar, AvatarFallback } from './ui/avatar';
 import { Badge } from './ui/badge';
 import { toast } from 'sonner';
-import { ChevronDown, ChevronRight, UploadCloud, FileCheck2, Download, Users2, UserRound, Mail, Eye, Trash2, Check, Folder, FileText, Bell, ShieldCheck, Clock3, CheckCircle2, Star } from 'lucide-react';
-import { Document } from '../utils/documentMockData';
+import { ChevronDown, ChevronRight, UploadCloud, FileCheck2, Download, Users2, UserRound, Mail, Eye, Trash2, Check, Folder, FileText, Bell, ShieldCheck, Clock3, CheckCircle2, Star, Lock, TrendingUp } from 'lucide-react';
+import { Document, mockDocuments } from '../utils/documentMockData';
 import { AudienceCounterCards } from './AudienceCounter';
 import { SegmentsMultiSelect, FundSingleSelect, ShareClassSingleSelect } from './ui/targeting-selects';
 import { AutocompleteSingleSelect } from './ui/autocomplete-select';
@@ -176,6 +176,40 @@ const defaultVersions: DocumentVersion[] = [
   { language: 'fr', name: '', fileName: '' },
   { language: 'en', name: '', fileName: '' },
 ];
+
+function findFolderById(docs: Document[], id: string): Document | null {
+  for (const doc of docs) {
+    if (doc.id === id) return doc;
+    if (doc.children) {
+      const found = findFolderById(doc.children, id);
+      if (found) return found;
+    }
+  }
+  return null;
+}
+
+function collectParentFolderRestrictions(folderId: string | undefined): {
+  fund: string | null;
+  segments: string[];
+} {
+  if (!folderId || folderId === 'root') return { fund: null, segments: [] };
+
+  let inheritedFund: string | null = null;
+  const segmentSet = new Set<string>();
+
+  let currentId: string | undefined = folderId;
+  while (currentId && currentId !== 'root') {
+    const folder = findFolderById(mockDocuments, currentId);
+    if (!folder) break;
+    if (!inheritedFund && folder.metadata?.fund) {
+      inheritedFund = folder.metadata.fund;
+    }
+    folder.metadata?.segments?.forEach((segment) => segmentSet.add(segment));
+    currentId = folder.parentId;
+  }
+
+  return { fund: inheritedFund, segments: Array.from(segmentSet) };
+}
 
 interface FolderSelectionTreeviewDropdownProps {
   value: string;
@@ -478,6 +512,13 @@ export function DocumentAddModal({ isOpen, onClose, folderOptions, defaultFolder
 
   const shareClassOptions = selectedFund !== 'all' ? SHARE_CLASSES_BY_FUND[selectedFund] || [] : [];
 
+  const parentFolderRestrictions = useMemo(
+    () => collectParentFolderRestrictions(parentFolderId),
+    [parentFolderId]
+  );
+  const hasParentFolderRestrictions =
+    !!parentFolderRestrictions.fund || parentFolderRestrictions.segments.length > 0;
+
   useEffect(() => {
     if (!selectedInvestorProfile) return;
     setSelectedContactAccess((prev) => ({
@@ -777,6 +818,33 @@ export function DocumentAddModal({ isOpen, onClose, folderOptions, defaultFolder
               <p className="font-semibold flex items-center gap-2" style={{ color: '#000E2B' }}><Users2 className="w-5 h-5" style={{ color: '#000E2B' }} /> Audience</p>
               <p className="text-sm text-slate-600">Configuration des critères de ciblage.</p>
             </div>
+            {hasParentFolderRestrictions && (
+              <div className="rounded-xl border border-amber-200 bg-amber-50 p-3 space-y-2">
+                <div className="flex items-center gap-2 text-sm font-semibold text-amber-900">
+                  <Lock className="w-4 h-4 text-amber-600" />
+                  Restrictions du dossier parent
+                </div>
+                <p className="text-xs text-amber-800">
+                  Le ciblage de ce document sera automatiquement limité par les restrictions héritées du dossier parent.
+                </p>
+                <div className="flex flex-wrap gap-2">
+                  {parentFolderRestrictions.fund && (
+                    <div className="inline-flex items-center gap-1.5 rounded-md border border-amber-300 bg-white px-2 py-1 text-xs">
+                      <Building2 className="w-3.5 h-3.5 text-amber-600" />
+                      <span className="text-amber-700 font-medium">Fonds restreint</span>
+                      <span className="text-amber-900 font-semibold">{parentFolderRestrictions.fund}</span>
+                    </div>
+                  )}
+                  {parentFolderRestrictions.segments.map((segment) => (
+                    <div key={segment} className="inline-flex items-center gap-1.5 rounded-md border border-purple-300 bg-white px-2 py-1 text-xs">
+                      <TrendingUp className="w-3.5 h-3.5 text-purple-600" />
+                      <span className="text-purple-700 font-medium">Segment restreint</span>
+                      <span className="text-purple-900 font-semibold">{segment}</span>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
             <div className="flex gap-2 p-1 rounded-xl bg-slate-100 w-fit">
               <Button variant={audienceMode === 'general' ? 'default' : 'outline'} onClick={() => setAudienceMode('general')}>Document général</Button>
               <Button variant={audienceMode === 'nominative' ? 'default' : 'outline'} onClick={() => setAudienceMode('nominative')}>Document nominatif</Button>
