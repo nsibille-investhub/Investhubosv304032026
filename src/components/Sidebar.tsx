@@ -365,17 +365,8 @@ export function Sidebar({ expanded, onToggle, currentPage = 'entities', onPageCh
             isActive={currentPage === 'documents'}
             onClick={() => onPageChange?.('documents')}
           />
-          <SubMenuItem 
-            icon={icons.Activity}
-            label="Tracking" 
-            expanded={expanded}
-            badge="NEW"
-            badgeColor="blue"
-            isActive={currentPage === 'tracking'}
-            onClick={() => onPageChange?.('tracking')}
-          />
           <SubMenuItem
-            icon={icons.Eye}
+            icon={icons.Activity}
             label="Bird View"
             expanded={expanded}
             isActive={currentPage === 'birdview'}
