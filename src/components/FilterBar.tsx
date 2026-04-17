@@ -91,14 +91,14 @@ export function FilterBar({
                 className={cn(
                   'px-4 py-2.5 rounded-lg border transition-all flex items-center gap-2 text-sm font-medium',
                 showAdvanced || activeFiltersCount > 0
-                  ? 'bg-[#E8EFF6] border-[#AFC2D9] text-[#060D19]'
+                  ? 'bg-[#E8EFF6] border-[#AFC2D9] text-[#082C35]'
                   : 'bg-white dark:bg-gray-900 border-gray-300 dark:border-gray-700 text-gray-700 dark:text-gray-300 hover:border-gray-400 dark:hover:border-gray-600'
               )}
             >
               <SlidersHorizontal className="w-4 h-4" />
               <span>Filtres supplémentaires</span>
               {activeFiltersCount > 0 && (
-                <span className="px-1.5 py-0.5 rounded-full bg-[#060D19] text-white text-xs font-bold min-w-[20px] text-center">
+                <span className="px-1.5 py-0.5 rounded-full bg-[#082C35] text-white text-xs font-bold min-w-[20px] text-center">
                   {activeFiltersCount}
                 </span>
               )}
@@ -142,7 +142,7 @@ export function FilterBar({
                             e.stopPropagation();
                             onClearAll();
                           }}
-                          className="text-xs text-[#060D19] hover:text-[#0B3C49] font-medium transition-colors"
+                          className="text-xs text-[#082C35] hover:text-[#0B3C49] font-medium transition-colors"
                         >
                           Tout effacer
                         </button>
@@ -219,7 +219,7 @@ export function FilterBar({
                   exit={{ opacity: 0, scale: 0.8 }}
                   className="px-2.5 py-1 rounded-md bg-[#E8EFF6] border border-[#AFC2D9] flex items-center gap-1.5 group"
                 >
-                  <span className="text-xs font-medium text-[#060D19]">
+                  <span className="text-xs font-medium text-[#082C35]">
                     {filter.label}:
                   </span>
                   <span className="text-xs text-[#0B3C49]">
@@ -274,7 +274,7 @@ function FilterSelect({
         className={cn(
           'w-full px-3 py-2.5 pr-8 bg-white dark:bg-gray-900 border rounded-lg text-sm font-medium appearance-none cursor-pointer transition-all focus:outline-none focus:ring-2 focus:ring-[#0B3C49]',
           hasValue
-            ? 'border-[#AFC2D9] text-[#060D19] bg-[#E8EFF6]'
+            ? 'border-[#AFC2D9] text-[#082C35] bg-[#E8EFF6]'
             : 'border-gray-300 dark:border-gray-700 text-gray-700 dark:text-gray-300 hover:border-gray-400 dark:hover:border-gray-600'
         )}
       >
