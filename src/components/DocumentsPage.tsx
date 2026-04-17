@@ -415,6 +415,31 @@ export function DocumentsPage({ selectedSpace, navigationTarget, onNavigationHan
     [filteredDocuments]
   );
 
+  const folderInheritedRestrictions = useMemo(() => {
+    const map: Record<string, { fund?: string; segments?: string[]; shareClass?: string }> = {};
+    const visit = (
+      docs: Document[],
+      parent: { fund?: string; segments: string[]; shareClass?: string }
+    ) => {
+      docs.forEach((doc) => {
+        if (doc.type !== 'folder') return;
+        const fund = parent.fund || doc.metadata?.fund;
+        const segmentSet = new Set<string>(parent.segments);
+        doc.metadata?.segments?.forEach((segment) => segmentSet.add(segment));
+        const shareClass = parent.shareClass || doc.navigatorTargeting?.shareClass;
+        const next = { fund, segments: Array.from(segmentSet), shareClass };
+        map[doc.id] = {
+          fund: next.fund,
+          segments: next.segments,
+          shareClass: next.shareClass,
+        };
+        if (doc.children?.length) visit(doc.children, next);
+      });
+    };
+    visit(filteredDocuments, { segments: [] });
+    return map;
+  }, [filteredDocuments]);
+
   if (wizardOpen) {
     return (
       <div className="flex-1 min-h-0">
@@ -506,6 +531,7 @@ export function DocumentsPage({ selectedSpace, navigationTarget, onNavigationHan
         folderOptions={folderOptions}
         defaultFolderId={addDocumentDefaultFolderId}
         document={selectedDocument}
+        folderInheritedRestrictions={folderInheritedRestrictions}
       />
       <AddFolderPopup
         isOpen={addFolderPopupOpen}

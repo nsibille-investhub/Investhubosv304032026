@@ -74,6 +74,12 @@ interface InvestorProfile {
   }>;
 }
 
+export interface FolderInheritedRestrictions {
+  fund?: string;
+  segments?: string[];
+  shareClass?: string;
+}
+
 interface DocumentAddModalProps {
   isOpen: boolean;
   onClose: () => void;
@@ -81,6 +87,7 @@ interface DocumentAddModalProps {
   defaultFolderId: string;
   document?: Document | null;
   initialFolderPickerOpen?: boolean;
+  folderInheritedRestrictions?: Record<string, FolderInheritedRestrictions>;
 }
 
 interface FolderTreeNode {
@@ -440,7 +447,7 @@ export function FolderSelectionTreeviewDropdown({
   );
 }
 
-export function DocumentAddModal({ isOpen, onClose, folderOptions, defaultFolderId, document, initialFolderPickerOpen = false }: DocumentAddModalProps) {
+export function DocumentAddModal({ isOpen, onClose, folderOptions, defaultFolderId, document, initialFolderPickerOpen = false, folderInheritedRestrictions }: DocumentAddModalProps) {
   const isDetailMode = !!document;
   const [versions, setVersions] = useState<DocumentVersion[]>(defaultVersions);
   const [addDate, setAddDate] = useState(new Date().toISOString().slice(0, 10));
@@ -512,12 +519,22 @@ export function DocumentAddModal({ isOpen, onClose, folderOptions, defaultFolder
 
   const shareClassOptions = selectedFund !== 'all' ? SHARE_CLASSES_BY_FUND[selectedFund] || [] : [];
 
-  const parentFolderRestrictions = useMemo(
-    () => collectParentFolderRestrictions(parentFolderId),
-    [parentFolderId]
-  );
+  const parentFolderRestrictions = useMemo(() => {
+    if (folderInheritedRestrictions && folderInheritedRestrictions[parentFolderId]) {
+      const entry = folderInheritedRestrictions[parentFolderId];
+      return {
+        fund: entry.fund ?? null,
+        segments: entry.segments ?? [],
+        shareClass: entry.shareClass ?? null,
+      };
+    }
+    const fallback = collectParentFolderRestrictions(parentFolderId);
+    return { ...fallback, shareClass: null };
+  }, [parentFolderId, folderInheritedRestrictions]);
   const hasParentFolderRestrictions =
-    !!parentFolderRestrictions.fund || parentFolderRestrictions.segments.length > 0;
+    !!parentFolderRestrictions.fund ||
+    parentFolderRestrictions.segments.length > 0 ||
+    !!parentFolderRestrictions.shareClass;
 
   useEffect(() => {
     if (!selectedInvestorProfile) return;
@@ -833,6 +850,13 @@ export function DocumentAddModal({ isOpen, onClose, folderOptions, defaultFolder
                       <Building2 className="w-3.5 h-3.5 text-amber-600" />
                       <span className="text-amber-700 font-medium">Fonds restreint</span>
                       <span className="text-amber-900 font-semibold">{parentFolderRestrictions.fund}</span>
+                    </div>
+                  )}
+                  {parentFolderRestrictions.shareClass && (
+                    <div className="inline-flex items-center gap-1.5 rounded-md border border-amber-300 bg-white px-2 py-1 text-xs">
+                      <Building2 className="w-3.5 h-3.5 text-amber-600" />
+                      <span className="text-amber-700 font-medium">Part restreinte</span>
+                      <span className="text-amber-900 font-semibold">{parentFolderRestrictions.shareClass}</span>
                     </div>
                   )}
                   {parentFolderRestrictions.segments.map((segment) => (
