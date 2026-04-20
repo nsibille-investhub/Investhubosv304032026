@@ -50,6 +50,8 @@ import {
   Eye,
   Download,
   BadgeCheck,
+  FileCheck,
+  ShieldAlert,
   Plus,
   MoreVertical,
   Copy,
@@ -406,22 +408,28 @@ const doctrinePillars: DoctrineItem[] = [
 ];
 
 type TimelineDemoType =
+  | 'notification_send_initiated'
   | 'notification_sent'
   | 'notification_delivered'
   | 'notification_opened'
   | 'notification_clicked'
   | 'notification_failed'
+  | 'notification_complained'
   | 'document_viewed'
-  | 'document_downloaded';
+  | 'document_downloaded'
+  | 'document_validated';
 
 const timelineDemoTypes: TimelineTypeMap<TimelineDemoType> = {
-  notification_sent:      { label: 'Notification envoyée',   Icon: Send },
-  notification_delivered: { label: 'Notification délivrée',  Icon: MailCheck },
-  notification_failed:    { label: 'Notification échouée',   Icon: AlertCircle },
-  notification_opened:    { label: 'Notification ouverte',   Icon: MailOpen },
-  notification_clicked:   { label: 'Notification cliquée',   Icon: MousePointerClick },
-  document_viewed:        { label: 'Document consulté',      Icon: Eye },
-  document_downloaded:    { label: 'Document téléchargé',    Icon: Download },
+  notification_send_initiated: { label: "Envoi initié",           Icon: Clock },
+  notification_sent:           { label: 'Notification envoyée',   Icon: Send },
+  notification_delivered:      { label: 'Notification délivrée',  Icon: MailCheck },
+  notification_failed:         { label: 'Notification échouée',   Icon: AlertCircle },
+  notification_opened:         { label: 'Notification ouverte',   Icon: MailOpen },
+  notification_clicked:        { label: 'Notification cliquée',   Icon: MousePointerClick },
+  notification_complained:     { label: 'Signalée comme spam',    Icon: ShieldAlert },
+  document_viewed:             { label: 'Document consulté',      Icon: Eye },
+  document_downloaded:         { label: 'Document téléchargé',    Icon: Download },
+  document_validated:          { label: 'Document validé',        Icon: FileCheck },
 };
 
 const timelineDemoIso = (daysAgo: number, h: number, m: number) => {
@@ -434,6 +442,14 @@ const timelineDemoIso = (daysAgo: number, h: number, m: number) => {
 const timelineDemoEvents: TimelineEvent<TimelineDemoType>[] = [
   {
     id: 'dsd1',
+    type: 'document_validated',
+    timestamp: timelineDemoIso(0, 14, 30),
+    actorName: 'Jean Dupont',
+    actorSublabel: 'jean.dupont@lvmh.fr',
+    actorRole: 'Investisseur',
+  },
+  {
+    id: 'dsd2',
     type: 'document_downloaded',
     timestamp: timelineDemoIso(0, 14, 12),
     actorName: 'Jean Dupont',
@@ -441,7 +457,7 @@ const timelineDemoEvents: TimelineEvent<TimelineDemoType>[] = [
     actorRole: 'Investisseur',
   },
   {
-    id: 'dsd2',
+    id: 'dsd3',
     type: 'document_viewed',
     timestamp: timelineDemoIso(0, 12, 35),
     actorName: 'Jean Dupont',
@@ -449,7 +465,7 @@ const timelineDemoEvents: TimelineEvent<TimelineDemoType>[] = [
     actorRole: 'Investisseur',
   },
   {
-    id: 'dsd3',
+    id: 'dsd4',
     type: 'notification_opened',
     timestamp: timelineDemoIso(0, 12, 30),
     actorName: 'Jean Dupont',
@@ -457,7 +473,7 @@ const timelineDemoEvents: TimelineEvent<TimelineDemoType>[] = [
     actorRole: 'Investisseur',
   },
   {
-    id: 'dsd4',
+    id: 'dsd5',
     type: 'notification_sent',
     timestamp: timelineDemoIso(0, 11, 0),
     actorName: 'Sophie Martin',
@@ -465,7 +481,15 @@ const timelineDemoEvents: TimelineEvent<TimelineDemoType>[] = [
     actorRole: 'Investisseur',
   },
   {
-    id: 'dsd5',
+    id: 'dsd6',
+    type: 'notification_send_initiated',
+    timestamp: timelineDemoIso(0, 10, 58),
+    actorName: 'Sophie Martin',
+    actorSublabel: 'sophie.martin@kering.com',
+    actorRole: 'Investisseur',
+  },
+  {
+    id: 'dsd7',
     type: 'document_viewed',
     timestamp: timelineDemoIso(1, 16, 42),
     actorName: 'Sophie Martin',
@@ -473,7 +497,15 @@ const timelineDemoEvents: TimelineEvent<TimelineDemoType>[] = [
     actorRole: 'Investisseur',
   },
   {
-    id: 'dsd6',
+    id: 'dsd8',
+    type: 'notification_complained',
+    timestamp: timelineDemoIso(1, 14, 20),
+    actorName: 'Luc Martin',
+    actorSublabel: 'luc.martin@kering.com',
+    actorRole: 'Contact',
+  },
+  {
+    id: 'dsd9',
     type: 'notification_delivered',
     timestamp: timelineDemoIso(1, 11, 2),
     actorName: 'Thomas Bernard',
@@ -481,7 +513,7 @@ const timelineDemoEvents: TimelineEvent<TimelineDemoType>[] = [
     actorRole: 'Investisseur',
   },
   {
-    id: 'dsd7',
+    id: 'dsd10',
     type: 'notification_failed',
     timestamp: timelineDemoIso(1, 10, 58),
     actorName: 'Claire Moreau',
@@ -489,7 +521,7 @@ const timelineDemoEvents: TimelineEvent<TimelineDemoType>[] = [
     actorRole: 'Investisseur',
   },
   {
-    id: 'dsd8',
+    id: 'dsd11',
     type: 'notification_opened',
     timestamp: timelineDemoIso(2, 9, 30),
     actorName: 'Antoine Leroy',
