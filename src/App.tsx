@@ -1,7 +1,9 @@
 import { useState, useEffect, useMemo } from 'react';
 import { AppStoreProvider } from './utils/appStoreContext';
 import { ThemeProvider } from './utils/themeContext';
+import { useTranslation } from './utils/languageContext';
 import { ThemeToggle } from './components/ThemeToggle';
+import { LanguageSwitcher } from './components/LanguageSwitcher';
 import { Search, Bell, Settings, Menu, ChevronDown, Plus, Info, MoreVertical, ArrowLeft, ChevronLeft, ChevronRight, Download, FileSpreadsheet, History, ArchiveX, Users, Palette } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 import { Badge } from './components/ui/badge';
@@ -105,6 +107,7 @@ import './utils/hashPreserver'; // Import to execute hash preservation logic
 type StatusType = 'need_review' | 'reviewed' | 'all' | 'rejected' | 'archived' | 'deleted' | 'flagged' | 'created' | 'onboarding' | 'signature' | 'counter_signature' | 'active' | 'prospect' | 'en_discussion' | 'en_relation';
 
 export default function App() {
+  const { t } = useTranslation();
   // Initialize from URL hash
   const [currentPage, setCurrentPage] = useState<Page>(() => {
     const page = getPageFromHash();
@@ -596,26 +599,26 @@ export default function App() {
                 className="inline-flex items-center gap-2 border-[#D2DDD9] text-[#2F4D51] hover:text-[#1F3137] bg-white"
               >
                 <Palette className="w-4 h-4" />
-                Design System
+                {t('header.designSystem')}
               </Button>
               <ThemeToggle />
-              
+
               <Tooltip>
                 <TooltipTrigger asChild>
-                  <motion.button 
+                  <motion.button
                     whileHover={{ scale: 1.05 }}
                     whileTap={{ scale: 0.95, rotate: -15 }}
                     className="p-2.5 hover:bg-gray-100 rounded-xl transition-all duration-300 relative group"
                   >
                     <Bell className="w-5 h-5 text-gray-600 group-hover:text-gray-900 transition-colors" />
-                    <motion.span 
+                    <motion.span
                       initial={{ scale: 0 }}
                       animate={{ scale: 1 }}
                       className="absolute top-1.5 right-1.5 w-2 h-2 bg-red-500 rounded-full ring-2 ring-white"
                     />
                   </motion.button>
                 </TooltipTrigger>
-                <TooltipContent>11 notifications</TooltipContent>
+                <TooltipContent>{t('header.notifications', { count: 11 })}</TooltipContent>
               </Tooltip>
 
               <motion.div 
@@ -639,16 +642,10 @@ export default function App() {
                     <Settings className="w-5 h-5 text-gray-600 dark:text-gray-400 group-hover:text-gray-900 dark:group-hover:text-gray-100 transition-colors" />
                   </motion.button>
                 </TooltipTrigger>
-                <TooltipContent>App Store</TooltipContent>
+                <TooltipContent>{t('header.appStore')}</TooltipContent>
               </Tooltip>
 
-              <motion.button
-                whileHover={{ scale: 1.05 }}
-                whileTap={{ scale: 0.95 }}
-                className="p-2.5 hover:bg-gray-100 rounded-xl transition-all duration-300"
-              >
-                <span className="text-gray-600">🌐</span>
-              </motion.button>
+              <LanguageSwitcher />
             </div>
           </motion.header>
 

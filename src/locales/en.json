@@ -1,0 +1,14 @@
+{
+  "header": {
+    "designSystem": "Design System",
+    "notifications": "{{count}} notifications",
+    "appStore": "App Store",
+    "languageSwitcher": "Change language",
+    "toggleDarkMode": "Switch to dark mode",
+    "toggleLightMode": "Switch to light mode"
+  },
+  "language": {
+    "french": "French",
+    "english": "English"
+  }
+}
