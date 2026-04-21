@@ -12,6 +12,7 @@ import { toast } from 'sonner';
 import { MassUploadWizard } from './MassUploadWizard';
 import { DataRoomSpace } from '../utils/dataRoomSpacesData';
 import { getTreeForSpace, TreeNode } from '../utils/dataRoomTreeData';
+import { useTranslation } from '../utils/languageContext';
 
 type ViewMode = 'list' | 'grid';
 
@@ -32,6 +33,7 @@ interface DocumentsPageProps {
 }
 
 export function DocumentsPage({ selectedSpace, navigationTarget, onNavigationHandled }: DocumentsPageProps) {
+  const { t } = useTranslation();
   const [viewMode, setViewMode] = useState<ViewMode>('list');
   const [selectedDocument, setSelectedDocument] = useState<Document | null>(null);
   const [selectedFolder, setSelectedFolder] = useState<Document | null>(null);
@@ -91,7 +93,7 @@ export function DocumentsPage({ selectedSpace, navigationTarget, onNavigationHan
     parentPath: string[] = [],
     inheritedGenericTargeting: boolean = false
   ): Document[] => {
-    const primaryFund = selectedSpace.targeting.funds[0] || 'Tous fonds';
+    const primaryFund = selectedSpace.targeting.funds[0] || t('ged.dataRoom.spacesView.allFunds');
     const primarySegment = selectedSpace.targeting.segments[0] || 'Tous segments';
 
     return treeNodes.map((node) => {
@@ -119,7 +121,7 @@ export function DocumentsPage({ selectedSpace, navigationTarget, onNavigationHan
         type: node.type,
         size: node.size || '0 KB',
         date: node.date || new Date().toLocaleDateString('fr-FR'),
-        owner: node.owner || 'Système',
+        owner: node.owner || t('ged.documents.ownerSystem'),
         views: Math.floor(Math.random() * 100),
         downloads: Math.floor(Math.random() * 50),
         status: (node.type !== 'folder' && seed % 3 !== 0) ? 'draft' as const : 'published' as const,
@@ -151,7 +153,7 @@ export function DocumentsPage({ selectedSpace, navigationTarget, onNavigationHan
         path: `/${nextPath.join('/')}`,
         version: 1,
         uploadedAt: uploadedAt.toISOString(),
-        uploadedBy: node.owner || 'Système',
+        uploadedBy: node.owner || t('ged.documents.ownerSystem'),
         updatedAt: uploadedAt.toISOString(),
         metadata: {
           fund: primaryFund,
@@ -199,14 +201,14 @@ export function DocumentsPage({ selectedSpace, navigationTarget, onNavigationHan
       setSelectedFolder(doc);
       setSelectedDocument(null);
       setDetailsTab(openTab);
-      toast.info('Dossier sélectionné', {
+      toast.info(t('ged.toast.folderSelected'), {
         description: doc.name
       });
     } else {
       setSelectedDocument(doc);
       setSelectedFolder(null);
       setDetailsTab(openTab);
-      toast.info('Document sélectionné', {
+      toast.info(t('ged.toast.documentSelected'), {
         description: doc.name
       });
     }
@@ -262,14 +264,14 @@ export function DocumentsPage({ selectedSpace, navigationTarget, onNavigationHan
   };
 
   const handleDownloadAll = () => {
-    toast.success('Téléchargement en cours', {
-      description: 'Préparation de l\'archive complète...'
+    toast.success(t('ged.toast.downloadInProgress'), {
+      description: t('ged.toast.archivePreparing')
     });
   };
 
   const handleExportList = () => {
-    toast.success('Export réussi', {
-      description: 'La liste a été exportée en CSV'
+    toast.success(t('ged.toast.exportSucceeded'), {
+      description: t('ged.toast.listExported')
     });
   };
 
@@ -345,7 +347,7 @@ export function DocumentsPage({ selectedSpace, navigationTarget, onNavigationHan
       setSelectedFolder(null);
     }
 
-    toast.success('Positionné sur le résultat', {
+    toast.success(t('ged.toast.positionedOnResult'), {
       description: navigationTarget.itemName,
     });
 
@@ -411,8 +413,8 @@ export function DocumentsPage({ selectedSpace, navigationTarget, onNavigationHan
   };
 
   const folderOptions = useMemo(
-    () => [{ id: 'root', label: 'Racine / Documents' }, ...buildFolderOptions(filteredDocuments)],
-    [filteredDocuments]
+    () => [{ id: 'root', label: t('ged.dataRoom.folderDefaults.root') }, ...buildFolderOptions(filteredDocuments)],
+    [filteredDocuments, t]
   );
 
   const folderInheritedRestrictions = useMemo(() => {
@@ -497,8 +499,8 @@ export function DocumentsPage({ selectedSpace, navigationTarget, onNavigationHan
               onAddFolderFromFolder={(folder) => openAddFolderPopup(folder.id)}
               onEditFolder={openEditFolderPopup}
               onDeleteFolder={(folder) => {
-                toast.success('Dossier supprimé', {
-                  description: `Le dossier « ${folder.name} » a été supprimé.`,
+                toast.success(t('ged.toast.folderDeleted'), {
+                  description: t('ged.toast.folderDeletedDesc', { name: folder.name }),
                 });
               }}
             />
@@ -545,9 +547,9 @@ export function DocumentsPage({ selectedSpace, navigationTarget, onNavigationHan
         mode={folderBeingEdited ? 'edit' : 'create'}
         folderToEdit={folderBeingEdited ? { id: folderBeingEdited.id, name: folderBeingEdited.name } : null}
         onDeleteFolder={(folderId, migrateToFolderId) => {
-          const migrationTarget = folderOptions.find((folder) => folder.id === migrateToFolderId)?.label || 'dossier cible';
-          toast.success('Suppression simulée', {
-            description: `Le dossier ${folderId} est migré vers ${migrationTarget}`,
+          const migrationTarget = folderOptions.find((folder) => folder.id === migrateToFolderId)?.label || t('ged.dataRoom.folderDefaults.targetFolder');
+          toast.success(t('ged.toast.deletionSimulated'), {
+            description: t('ged.toast.folderMigration', { id: folderId, target: migrationTarget }),
           });
         }}
       />

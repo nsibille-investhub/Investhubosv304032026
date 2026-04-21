@@ -1,11 +1,11 @@
 import { motion } from 'motion/react';
 import { Button } from './ui/button';
-import { 
-  Activity, 
-  Users, 
-  Bell, 
-  Mail, 
-  BarChart3, 
+import {
+  Activity,
+  Users,
+  Bell,
+  Mail,
+  BarChart3,
   FileText,
   Shield,
   Zap,
@@ -20,52 +20,54 @@ import { SmartNudgesIllustration } from './illustrations/SmartNudgesIllustration
 import { AutomatedCampaignsIllustration } from './illustrations/AutomatedCampaignsIllustration';
 import { DocumentHeatmapIllustration } from './illustrations/DocumentHeatmapIllustration';
 import { AuditComplianceIllustration } from './illustrations/AuditComplianceIllustration';
+import { useTranslation } from '../utils/languageContext';
 
 interface TrackingLandingPageProps {
   onEnableModule: () => void;
 }
 
 export function TrackingLandingPage({ onEnableModule }: TrackingLandingPageProps) {
+  const { t } = useTranslation();
   const features = [
     {
       icon: Activity,
-      title: 'Vue d\'ensemble en temps réel',
-      description: 'Activité globale, pics de trafic, documents chauds/froids',
+      title: t('ged.tracking.features.realtimeTitle'),
+      description: t('ged.tracking.features.realtimeDesc'),
       illustration: RealTimeAnalyticsIllustration,
       gradient: 'from-cyan-500 to-blue-600'
     },
     {
       icon: Target,
-      title: 'LP Engagement Score',
-      description: 'Score par organisation basé sur vues, temps de lecture, profondeur de scroll, Q&A',
+      title: t('ged.tracking.features.engagementTitle'),
+      description: t('ged.tracking.features.engagementDesc'),
       illustration: EngagementScoreIllustration,
       gradient: 'from-blue-500 to-purple-600'
     },
     {
       icon: BarChart3,
-      title: 'Heatmaps d\'intérêt',
-      description: 'Thèmes consultés (ESG, governance, fees…), par LP et par rôle/segment',
+      title: t('ged.tracking.features.heatmapsTitle'),
+      description: t('ged.tracking.features.heatmapsDesc'),
       illustration: DocumentHeatmapIllustration,
       gradient: 'from-purple-500 to-pink-600'
     },
     {
       icon: Bell,
-      title: 'Nudges intelligents',
-      description: 'Alertes prêtes à l\'emploi (ex. "3 LP n\'ont pas ouvert la section Fees")',
+      title: t('ged.tracking.features.nudgesTitle'),
+      description: t('ged.tracking.features.nudgesDesc'),
       illustration: SmartNudgesIllustration,
       gradient: 'from-orange-500 to-red-600'
     },
     {
       icon: Mail,
-      title: 'Relances scénarisées',
-      description: 'Cibles : Pas visité / Inactif X jours / Q&A en attente / Story non complétée',
+      title: t('ged.tracking.features.campaignsTitle'),
+      description: t('ged.tracking.features.campaignsDesc'),
       illustration: AutomatedCampaignsIllustration,
       gradient: 'from-indigo-500 to-purple-600'
     },
     {
       icon: Shield,
-      title: 'Exports & preuves',
-      description: 'Journaux signés (hash) et export Excel/CSV pour audit/BI',
+      title: t('ged.tracking.features.exportsTitle'),
+      description: t('ged.tracking.features.exportsDesc'),
       illustration: AuditComplianceIllustration,
       gradient: 'from-emerald-500 to-green-600'
     },
@@ -73,23 +75,23 @@ export function TrackingLandingPage({ onEnableModule }: TrackingLandingPageProps
 
   const useCases = [
     {
-      title: 'Analytics par invité',
-      description: 'Fiche 360° LP avec timeline d\'activité, silences & risques',
+      title: t('ged.tracking.useCases.perGuestTitle'),
+      description: t('ged.tracking.useCases.perGuestDesc'),
       icon: Users,
     },
     {
-      title: 'Analytics par fichier',
-      description: 'Top vues, temps médian de lecture, heatmap intra-document',
+      title: t('ged.tracking.useCases.perFileTitle'),
+      description: t('ged.tracking.useCases.perFileDesc'),
       icon: FileText,
     },
     {
-      title: 'Relances & Campagnes',
-      description: 'Segments automatiques avec rappels 1-to-1 ou en masse',
+      title: t('ged.tracking.useCases.campaignsTitle'),
+      description: t('ged.tracking.useCases.campaignsDesc'),
       icon: Mail,
     },
     {
-      title: 'Sécurité & conformité',
-      description: 'Analytics privés, watermarking dynamique, détection d\'anomalies',
+      title: t('ged.tracking.useCases.complianceTitle'),
+      description: t('ged.tracking.useCases.complianceDesc'),
       icon: Shield,
     },
   ];
@@ -137,7 +139,7 @@ export function TrackingLandingPage({ onEnableModule }: TrackingLandingPageProps
               className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-white/10 backdrop-blur-sm border border-white/20 mb-6"
             >
               <Activity className="w-4 h-4 text-[#DCFDBC]" />
-              <span className="text-sm font-semibold text-white">Data Room</span>
+              <span className="text-sm font-semibold text-white">{t('ged.tracking.badge')}</span>
             </motion.div>
 
             {/* Title */}
@@ -147,7 +149,7 @@ export function TrackingLandingPage({ onEnableModule }: TrackingLandingPageProps
               transition={{ delay: 0.1 }}
               className="text-5xl font-bold text-white mb-6"
             >
-              Tracking
+              {t('ged.tracking.heroTitle')}
             </motion.h1>
 
             {/* Subtitle */}
@@ -157,7 +159,7 @@ export function TrackingLandingPage({ onEnableModule }: TrackingLandingPageProps
               transition={{ delay: 0.2 }}
               className="text-xl text-white/80 mb-8 leading-relaxed"
             >
-              Suivi d'engagement & Relances intelligentes pour votre Data Room
+              {t('ged.tracking.heroSubtitle')}
             </motion.p>
 
             {/* Description */}
@@ -167,8 +169,7 @@ export function TrackingLandingPage({ onEnableModule }: TrackingLandingPageProps
               transition={{ delay: 0.3 }}
               className="text-base text-white/70 mb-10 leading-relaxed max-w-3xl mx-auto"
             >
-              Fournir, en un coup d'œil, tout ce qu'un GP doit savoir pour mesurer l'engagement LP, 
-              identifier les silences et relancer efficacement — en toute conformité.
+              {t('ged.tracking.heroDesc')}
             </motion.p>
 
             {/* CTA Buttons */}
@@ -184,7 +185,7 @@ export function TrackingLandingPage({ onEnableModule }: TrackingLandingPageProps
                 className="bg-white text-gray-900 hover:bg-gray-100 shadow-xl hover:shadow-2xl transition-all duration-300 px-8"
               >
                 <Zap className="w-5 h-5 mr-2" />
-                Activer le module
+                {t('ged.tracking.activateModule')}
               </Button>
               <Button
                 variant="outline"
@@ -192,7 +193,7 @@ export function TrackingLandingPage({ onEnableModule }: TrackingLandingPageProps
                 className="bg-white/10 text-white border-white/20 hover:bg-white/20 backdrop-blur-sm"
               >
                 <Mail className="w-5 h-5 mr-2" />
-                Demander une démo
+                {t('ged.tracking.requestDemo')}
               </Button>
             </motion.div>
           </div>
@@ -208,10 +209,10 @@ export function TrackingLandingPage({ onEnableModule }: TrackingLandingPageProps
           className="text-center mb-12"
         >
           <h2 className="text-3xl font-bold text-gray-900 mb-4">
-            Fonctionnalités principales
+            {t('ged.tracking.featuresTitle')}
           </h2>
           <p className="text-lg text-gray-600 max-w-2xl mx-auto">
-            Des outils puissants pour suivre, analyser et optimiser l'engagement de vos investisseurs
+            {t('ged.tracking.featuresSubtitle')}
           </p>
         </motion.div>
 
@@ -265,10 +266,10 @@ export function TrackingLandingPage({ onEnableModule }: TrackingLandingPageProps
             className="text-center mb-12"
           >
             <h2 className="text-3xl font-bold text-gray-900 mb-4">
-              Cas d'usage
+              {t('ged.tracking.useCasesTitle')}
             </h2>
             <p className="text-lg text-gray-600 max-w-2xl mx-auto">
-              Optimisez chaque aspect de votre processus de levée de fonds
+              {t('ged.tracking.useCasesSubtitle')}
             </p>
           </motion.div>
 
@@ -336,10 +337,10 @@ export function TrackingLandingPage({ onEnableModule }: TrackingLandingPageProps
 
           <div className="relative z-10">
             <h2 className="text-3xl font-bold text-white mb-4">
-              Prêt à optimiser votre Data Room ?
+              {t('ged.tracking.ctaTitle')}
             </h2>
             <p className="text-lg text-white/80 mb-8 max-w-2xl mx-auto">
-              Activez le module Tracking et commencez à mesurer l'engagement de vos investisseurs dès aujourd'hui
+              {t('ged.tracking.ctaSubtitle')}
             </p>
             <div className="flex items-center gap-4 justify-center">
               <Button
@@ -348,14 +349,14 @@ export function TrackingLandingPage({ onEnableModule }: TrackingLandingPageProps
                 className="bg-white text-gray-900 hover:bg-gray-100 shadow-xl hover:shadow-2xl transition-all duration-300 px-8"
               >
                 <Zap className="w-5 h-5 mr-2" />
-                Activer le module
+                {t('ged.tracking.activateModule')}
               </Button>
               <Button
                 variant="outline"
                 size="lg"
                 className="bg-white/10 text-white border-white/20 hover:bg-white/20 backdrop-blur-sm"
               >
-                Contacter un conseiller
+                {t('ged.tracking.contactAdvisor')}
               </Button>
             </div>
           </div>

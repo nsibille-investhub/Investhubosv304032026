@@ -521,5 +521,153 @@
         "subscriptionCreatedDesc": "{{investor}} - {{amount}} €"
       }
     }
+  },
+  "ged": {
+    "toast": {
+      "spaceOpened": "Space opened",
+      "resultOpened": "Result opened",
+      "spaceCreated": "Space created",
+      "spaceUpdated": "Space updated",
+      "spaceDeleted": "Space deleted",
+      "spaceDeleteConfirm": "Are you sure you want to delete this space?",
+      "folderCreated": "Folder created",
+      "folderUpdated": "Folder updated",
+      "folderSelected": "Folder selected",
+      "documentSelected": "Document selected",
+      "folderDeleted": "Folder deleted",
+      "folderDeletedDesc": "Folder \"{{name}}\" has been deleted.",
+      "deletionSimulated": "Deletion simulated",
+      "folderMigration": "Folder {{id}} is migrated to {{target}}",
+      "downloadInProgress": "Download in progress",
+      "archivePreparing": "Preparing the full archive...",
+      "exportSucceeded": "Export succeeded",
+      "listExported": "The list has been exported as CSV",
+      "positionedOnResult": "Positioned on the result",
+      "aiAssistantTitle": "AI Assistant",
+      "aiAssistantDesc": "Ask AI to analyse your documents"
+    },
+    "dataRoom": {
+      "massUpload": {
+        "backToSpaces": "Back to spaces",
+        "title": "Multi-space mass import",
+        "subtitle": "Add documents from the spaces view"
+      },
+      "spaceHeader": {
+        "backToSpaces": "Back to spaces",
+        "documentsAndFolders": "{{documents}} documents • {{folders}} folders",
+        "segmentsPrefix": "Segments:",
+        "fundsPrefix": "Funds:"
+      },
+      "spacesView": {
+        "title": "Data Room Spaces",
+        "subtitle": "Select a space to access its documents and folders",
+        "import": "Import",
+        "newSpace": "New space",
+        "globalSearchPlaceholder": "Global search across all spaces (documents and folders)",
+        "resultsCountOne": "{{count}} result found in {{spaces}} space",
+        "resultsCountMany": "{{count}} results found in {{spaces}} spaces",
+        "noResultsFor": "No document or folder found for \"{{query}}\".",
+        "folder": "Folder",
+        "document": "Document",
+        "investorSpaces": "Investor spaces",
+        "partnerSpaces": "Partner spaces",
+        "noUserType": "No user type",
+        "segmentsPrefix": "Segments:",
+        "fundsPrefix": "Funds:",
+        "allFunds": "All funds",
+        "documentsCount": "{{count}} documents",
+        "foldersCount": "{{count}} folders",
+        "openSpace": "Open space",
+        "emptyNoMatch": "No space matches your search",
+        "emptyNone": "No space created",
+        "emptyHintFilter": "Adjust your global search \"{{query}}\" or clear the field to see all spaces again.",
+        "emptyHint": "Create your first space to organise your documents and control access",
+        "createSpace": "Create a space"
+      },
+      "folderDefaults": {
+        "root": "Root / Documents",
+        "targetFolder": "target folder"
+      }
+    },
+    "documents": {
+      "ownerSystem": "System"
+    },
+    "filterBar": {
+      "searchPlaceholder": "Search documents...",
+      "askAi": "Ask AI",
+      "statusLabel": "Status",
+      "typeLabel": "Type",
+      "periodLabel": "Period",
+      "dateUpdatedLabel": "Updated",
+      "datePlaceholder": "Select a period",
+      "activeFilters": "Active filters:",
+      "clearAll": "Clear all",
+      "statusPrefix": "Status: {{value}}",
+      "typePrefix": "Type: {{value}}",
+      "periodPrefix": "Period: {{value}}",
+      "status": {
+        "published": "Published",
+        "draft": "Draft"
+      },
+      "type": {
+        "pdf": "PDF",
+        "word": "Word",
+        "excel": "Excel",
+        "image": "Image",
+        "video": "Video",
+        "folder": "Folders"
+      },
+      "target": {
+        "all": "All",
+        "investors": "Investors",
+        "distributors": "Distributors",
+        "subscriptions": "Subscriptions"
+      }
+    },
+    "targeting": {
+      "generic": "Generic",
+      "nominative": "Nominative"
+    },
+    "tracking": {
+      "badge": "Data Room",
+      "heroTitle": "Tracking",
+      "heroSubtitle": "Engagement tracking & smart follow-ups for your Data Room",
+      "heroDesc": "Give any GP, at a glance, everything they need to measure LP engagement, spot silences and follow up efficiently — with full compliance.",
+      "activateModule": "Enable the module",
+      "requestDemo": "Request a demo",
+      "featuresTitle": "Key features",
+      "featuresSubtitle": "Powerful tools to track, analyse and optimise investor engagement",
+      "useCasesTitle": "Use cases",
+      "useCasesSubtitle": "Optimise every aspect of your fundraising process",
+      "ctaTitle": "Ready to optimise your Data Room?",
+      "ctaSubtitle": "Enable the Tracking module and start measuring investor engagement today",
+      "contactAdvisor": "Contact an advisor",
+      "moduleActivatedTitle": "Tracking module enabled",
+      "moduleActivatedDesc": "The tracking dashboard will soon be available with every engagement metric for your Data Room.",
+      "features": {
+        "realtimeTitle": "Real-time overview",
+        "realtimeDesc": "Global activity, traffic peaks, hot/cold documents",
+        "engagementTitle": "LP Engagement Score",
+        "engagementDesc": "Per-organisation score based on views, read time, scroll depth, Q&A",
+        "heatmapsTitle": "Interest heatmaps",
+        "heatmapsDesc": "Topics consulted (ESG, governance, fees…), per LP and per role/segment",
+        "nudgesTitle": "Smart nudges",
+        "nudgesDesc": "Ready-to-use alerts (e.g. \"3 LPs haven't opened the Fees section\")",
+        "campaignsTitle": "Scripted follow-ups",
+        "campaignsDesc": "Targets: Unvisited / Inactive X days / Pending Q&A / Incomplete story",
+        "exportsTitle": "Exports & proofs",
+        "exportsDesc": "Signed logs (hash) and Excel/CSV export for audit/BI"
+      },
+      "useCases": {
+        "perGuestTitle": "Analytics per guest",
+        "perGuestDesc": "360° LP profile with activity timeline, silences & risks",
+        "perFileTitle": "Analytics per file",
+        "perFileDesc": "Top views, median read time, in-document heatmap",
+        "campaignsTitle": "Follow-ups & campaigns",
+        "campaignsDesc": "Automatic segments with 1-to-1 or bulk reminders",
+        "complianceTitle": "Security & compliance",
+        "complianceDesc": "Private analytics, dynamic watermarking, anomaly detection"
+      }
+    }
   }
 }

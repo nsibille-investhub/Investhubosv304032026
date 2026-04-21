@@ -1,6 +1,7 @@
 import { toast } from 'sonner';
 import { FolderSpaceDialog } from './ui/folder-space-dialog';
 import { DataRoomSpace } from '../utils/dataRoomSpacesData';
+import { useTranslation } from '../utils/languageContext';
 
 interface DataRoomSpaceConfigDialogProps {
   open: boolean;
@@ -17,6 +18,7 @@ export function DataRoomSpaceConfigDialog({
   onSave,
   onDelete,
 }: DataRoomSpaceConfigDialogProps) {
+  const { t } = useTranslation();
   return (
     <FolderSpaceDialog
       variant="space"
@@ -26,14 +28,14 @@ export function DataRoomSpaceConfigDialog({
       space={space}
       onSaveSpace={(data) => {
         onSave(data);
-        toast.success(space ? 'Espace mis à jour' : 'Espace créé', {
+        toast.success(space ? t('ged.toast.spaceUpdated') : t('ged.toast.spaceCreated'), {
           description: data.name,
         });
       }}
       onDeleteSpace={(spaceId) => {
-        if (confirm(`Êtes-vous sûr de vouloir supprimer cet espace ?`)) {
+        if (confirm(t('ged.toast.spaceDeleteConfirm'))) {
           onDelete?.(spaceId);
-          toast.success('Espace supprimé');
+          toast.success(t('ged.toast.spaceDeleted'));
         }
       }}
     />

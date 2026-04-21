@@ -11,34 +11,36 @@ import {
   PopoverContent,
   PopoverTrigger,
 } from "./ui/popover";
+import { useTranslation } from '../utils/languageContext';
 
 interface DocumentFilterBarProps {
   onFilterChange: (filters: any[]) => void;
 }
 
 export function DocumentFilterBar({ onFilterChange }: DocumentFilterBarProps) {
+  const { t } = useTranslation();
   const [showFilters, setShowFilters] = useState(false);
   const [activeFilters, setActiveFilters] = useState<any[]>([]);
 
   const statusOptions = [
-    { value: 'published', label: 'Publié' },
-    { value: 'draft', label: 'Brouillon' },
+    { value: 'published', label: t('ged.filterBar.status.published') },
+    { value: 'draft', label: t('ged.filterBar.status.draft') },
   ];
 
   const typeOptions = [
-    { value: 'pdf', label: 'PDF' },
-    { value: 'word', label: 'Word' },
-    { value: 'excel', label: 'Excel' },
-    { value: 'image', label: 'Image' },
-    { value: 'video', label: 'Vidéo' },
-    { value: 'folder', label: 'Dossiers' },
+    { value: 'pdf', label: t('ged.filterBar.type.pdf') },
+    { value: 'word', label: t('ged.filterBar.type.word') },
+    { value: 'excel', label: t('ged.filterBar.type.excel') },
+    { value: 'image', label: t('ged.filterBar.type.image') },
+    { value: 'video', label: t('ged.filterBar.type.video') },
+    { value: 'folder', label: t('ged.filterBar.type.folder') },
   ];
 
   const targetOptions = [
-    { value: 'all', label: 'Tous' },
-    { value: 'investors', label: 'Investisseurs' },
-    { value: 'distributors', label: 'Distributeurs' },
-    { value: 'subscriptions', label: 'Souscriptions' },
+    { value: 'all', label: t('ged.filterBar.target.all') },
+    { value: 'investors', label: t('ged.filterBar.target.investors') },
+    { value: 'distributors', label: t('ged.filterBar.target.distributors') },
+    { value: 'subscriptions', label: t('ged.filterBar.target.subscriptions') },
   ];
 
   const handleAddFilter = (type: string, value: any, label: string) => {
@@ -69,7 +71,7 @@ export function DocumentFilterBar({ onFilterChange }: DocumentFilterBarProps) {
             <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-gray-400" />
             <input
               type="text"
-              placeholder="Rechercher dans les documents..."
+              placeholder={t('ged.filterBar.searchPlaceholder')}
               className="w-full pl-9 pr-3 py-1.5 bg-gray-50 border border-gray-200 rounded-lg text-sm outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"
             />
           </div>
@@ -78,11 +80,11 @@ export function DocumentFilterBar({ onFilterChange }: DocumentFilterBarProps) {
           <motion.button
             whileHover={{ scale: 1.02 }}
             whileTap={{ scale: 0.98 }}
-            onClick={() => toast.info('AI Assistant', { description: 'Demandez à l\'IA d\'analyser vos documents' })}
+            onClick={() => toast.info(t('ged.toast.aiAssistantTitle'), { description: t('ged.toast.aiAssistantDesc') })}
             className="px-3 py-1.5 bg-gradient-to-r from-[#7C3AED] to-[#A78BFA] text-white rounded-lg text-sm hover:shadow-md transition-all duration-200 flex items-center gap-2 shadow-sm"
           >
             <Sparkles className="w-3.5 h-3.5" />
-            Ask AI
+            {t('ged.filterBar.askAi')}
           </motion.button>
 
           {/* Status Filter */}
@@ -94,14 +96,14 @@ export function DocumentFilterBar({ onFilterChange }: DocumentFilterBarProps) {
                 className="px-3 py-1.5 bg-white border border-gray-300 rounded-lg text-sm text-gray-700 hover:bg-gray-50 transition-all duration-200 flex items-center gap-2 shadow-sm"
               >
                 <FileText className="w-3.5 h-3.5" />
-                Statut
+                {t('ged.filterBar.statusLabel')}
                 <ChevronDown className="w-3.5 h-3.5" />
               </motion.button>
             </PopoverTrigger>
             <PopoverContent className="w-64 p-0" align="start">
               <SelectFilter
                 options={statusOptions}
-                onApply={(value) => handleAddFilter('status', value, `Statut: ${statusOptions.find(o => o.value === value)?.label}`)}
+                onApply={(value) => handleAddFilter('status', value, t('ged.filterBar.statusPrefix', { value: statusOptions.find(o => o.value === value)?.label ?? '' }))}
               />
             </PopoverContent>
           </Popover>
@@ -115,14 +117,14 @@ export function DocumentFilterBar({ onFilterChange }: DocumentFilterBarProps) {
                 className="px-3 py-1.5 bg-white border border-gray-300 rounded-lg text-sm text-gray-700 hover:bg-gray-50 transition-all duration-200 flex items-center gap-2 shadow-sm"
               >
                 <FileText className="w-3.5 h-3.5" />
-                Type
+                {t('ged.filterBar.typeLabel')}
                 <ChevronDown className="w-3.5 h-3.5" />
               </motion.button>
             </PopoverTrigger>
             <PopoverContent className="w-64 p-0" align="start">
               <SelectFilter
                 options={typeOptions}
-                onApply={(value) => handleAddFilter('type', value, `Type: ${typeOptions.find(o => o.value === value)?.label}`)}
+                onApply={(value) => handleAddFilter('type', value, t('ged.filterBar.typePrefix', { value: typeOptions.find(o => o.value === value)?.label ?? '' }))}
               />
             </PopoverContent>
           </Popover>
@@ -136,16 +138,16 @@ export function DocumentFilterBar({ onFilterChange }: DocumentFilterBarProps) {
                 className="px-3 py-1.5 bg-white border border-gray-300 rounded-lg text-sm text-gray-700 hover:bg-gray-50 transition-all duration-200 flex items-center gap-2 shadow-sm"
               >
                 <Calendar className="w-3.5 h-3.5" />
-                Période
+                {t('ged.filterBar.periodLabel')}
                 <ChevronDown className="w-3.5 h-3.5" />
               </motion.button>
             </PopoverTrigger>
             <PopoverContent className="w-80 p-0" align="start">
               <DateFilter
                 icon={Calendar}
-                label="Mise à jour"
-                placeholder="Sélectionner une période"
-                onSelect={(value, label) => handleAddFilter('updated', value, `Période: ${label}`)}
+                label={t('ged.filterBar.dateUpdatedLabel')}
+                placeholder={t('ged.filterBar.datePlaceholder')}
+                onSelect={(value, label) => handleAddFilter('updated', value, t('ged.filterBar.periodPrefix', { value: label }))}
               />
             </PopoverContent>
           </Popover>
@@ -161,7 +163,7 @@ export function DocumentFilterBar({ onFilterChange }: DocumentFilterBarProps) {
             exit={{ height: 0, opacity: 0 }}
             className="px-6 py-3 border-t border-gray-100 flex items-center gap-2 flex-wrap"
           >
-            <span className="text-xs text-gray-500">Filtres actifs:</span>
+            <span className="text-xs text-gray-500">{t('ged.filterBar.activeFilters')}</span>
             {activeFilters.map((filter, index) => (
               <motion.div
                 key={`${filter.type}-${index}`}
@@ -191,7 +193,7 @@ export function DocumentFilterBar({ onFilterChange }: DocumentFilterBarProps) {
               onClick={handleClearAll}
               className="text-xs text-gray-500 hover:text-gray-700 underline ml-2"
             >
-              Tout effacer
+              {t('ged.filterBar.clearAll')}
             </motion.button>
           </motion.div>
         )}
