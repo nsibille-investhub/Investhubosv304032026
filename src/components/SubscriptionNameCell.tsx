@@ -5,6 +5,7 @@ import { toast } from 'sonner@2.0.3';
 import { HighlightText } from './HighlightText';
 import { copyToClipboard } from '../utils/clipboard';
 import { ClickableName } from './ClickableName';
+import { useTranslation } from '../utils/languageContext';
 
 interface SubscriptionNameCellProps {
   name: string;
@@ -13,19 +14,20 @@ interface SubscriptionNameCellProps {
 }
 
 export function SubscriptionNameCell({ name, id, searchTerm = '' }: SubscriptionNameCellProps) {
+  const { t } = useTranslation();
   const [copied, setCopied] = useState(false);
 
   const handleCopyId = async (e: React.MouseEvent) => {
     e.stopPropagation();
     const idText = `SUB-${id}`;
     const success = await copyToClipboard(idText);
-    
+
     if (success) {
       setCopied(true);
-      toast.success('ID copié !', { description: idText });
+      toast.success(t('subscriptions.table.idCopied'), { description: idText });
       setTimeout(() => setCopied(false), 2000);
     } else {
-      toast.error('Erreur de copie', { description: 'Impossible de copier dans le presse-papier' });
+      toast.error(t('subscriptions.table.copyError'), { description: t('subscriptions.table.copyErrorDesc') });
     }
   };
 

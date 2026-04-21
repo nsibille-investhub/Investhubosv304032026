@@ -4,141 +4,139 @@ export type SubscriptionWorkflowStatus = 'created' | 'onboarding' | 'signature' 
 
 export interface ColumnConfig {
   id: string;
+  /** Translation key resolved at render time via t() */
   label: string;
   width?: string;
   sortable?: boolean;
   align?: 'left' | 'center' | 'right';
 }
 
-// 🟦 ÉTAT : CRÉÉES - Objectif : qualifier et prioriser avant onboarding
+const COL = (id: string, label: string, rest: Partial<ColumnConfig> = {}): ColumnConfig => ({ id, label, ...rest });
+
 const CREATED_COLUMNS: ColumnConfig[] = [
-  { id: 'name', label: 'Name', width: '300px', sortable: true },
-  { id: 'investor', label: 'Investisseur', width: '250px', sortable: true },
-  { id: 'amount', label: 'Montant engagé', width: '150px', sortable: true, align: 'right' },
-  { id: 'quantity', label: 'Quantité', width: '120px', sortable: true, align: 'right' },
-  { id: 'fundShare', label: 'Fonds / Part', sortable: true, width: 'auto' },
-  { id: 'language', label: 'Langue', width: '100px', sortable: true, align: 'center' },
-  { id: 'partner', label: 'Partenaire', sortable: false, width: 'auto' },
-  { id: 'createdAt', label: 'Date de création', width: '140px', sortable: true },
-  { id: 'source', label: 'Origine', width: '140px', sortable: true },
-  { id: 'analyst', label: 'Responsable', width: '140px', sortable: true },
+  COL('name', 'subscriptions.columns.name', { width: '300px', sortable: true }),
+  COL('investor', 'subscriptions.columns.investor', { width: '250px', sortable: true }),
+  COL('amount', 'subscriptions.columns.amount', { width: '150px', sortable: true, align: 'right' }),
+  COL('quantity', 'subscriptions.columns.quantity', { width: '120px', sortable: true, align: 'right' }),
+  COL('fundShare', 'subscriptions.columns.fundShare', { sortable: true, width: 'auto' }),
+  COL('language', 'subscriptions.columns.language', { width: '100px', sortable: true, align: 'center' }),
+  COL('partner', 'subscriptions.columns.partner', { sortable: false, width: 'auto' }),
+  COL('createdAt', 'subscriptions.columns.createdAt', { width: '140px', sortable: true }),
+  COL('source', 'subscriptions.columns.source', { width: '140px', sortable: true }),
+  COL('analyst', 'subscriptions.columns.analyst', { width: '140px', sortable: true }),
 ];
 
-// 🟨 ÉTAT : ONBOARDING - Objectif : identifier immédiatement les blocages
 const ONBOARDING_COLUMNS: ColumnConfig[] = [
-  { id: 'name', label: 'Name', width: '300px', sortable: true },
-  { id: 'investor', label: 'Investisseur', width: '250px', sortable: true },
-  { id: 'amount', label: 'Montant engagé', width: '150px', sortable: true, align: 'right' },
-  { id: 'quantity', label: 'Quantité', width: '120px', sortable: true, align: 'right' },
-  { id: 'fundShare', label: 'Fonds / Part', sortable: true, width: 'auto' },
-  { id: 'language', label: 'Langue', width: '100px', sortable: true, align: 'center' },
-  { id: 'onboardingStatus', label: 'Statut onboarding', width: '180px', sortable: true },
-  { id: 'blockageReason', label: 'Motif de blocage', width: '200px', sortable: false },
-  { id: 'completionRate', label: 'Complétion (%)', width: '130px', sortable: true, align: 'center' },
-  { id: 'lastAction', label: 'Dernière action', width: '140px', sortable: true },
-  { id: 'analyst', label: 'Responsable', width: '140px', sortable: true },
+  COL('name', 'subscriptions.columns.name', { width: '300px', sortable: true }),
+  COL('investor', 'subscriptions.columns.investor', { width: '250px', sortable: true }),
+  COL('amount', 'subscriptions.columns.amount', { width: '150px', sortable: true, align: 'right' }),
+  COL('quantity', 'subscriptions.columns.quantity', { width: '120px', sortable: true, align: 'right' }),
+  COL('fundShare', 'subscriptions.columns.fundShare', { sortable: true, width: 'auto' }),
+  COL('language', 'subscriptions.columns.language', { width: '100px', sortable: true, align: 'center' }),
+  COL('onboardingStatus', 'subscriptions.columns.onboardingStatus', { width: '180px', sortable: true }),
+  COL('blockageReason', 'subscriptions.columns.blockageReason', { width: '200px', sortable: false }),
+  COL('completionRate', 'subscriptions.columns.completionRate', { width: '130px', sortable: true, align: 'center' }),
+  COL('lastAction', 'subscriptions.columns.lastAction', { width: '140px', sortable: true }),
+  COL('analyst', 'subscriptions.columns.analyst', { width: '140px', sortable: true }),
 ];
 
-// 🟧 ÉTAT : SIGNATURE - Objectif : suivi et relance des signatures
 const SIGNATURE_COLUMNS: ColumnConfig[] = [
-  { id: 'name', label: 'Name', width: '300px', sortable: true },
-  { id: 'investor', label: 'Investisseur', width: '250px', sortable: true },
-  { id: 'amount', label: 'Montant engagé', width: '150px', sortable: true, align: 'right' },
-  { id: 'quantity', label: 'Quantité', width: '120px', sortable: true, align: 'right' },
-  { id: 'fundShare', label: 'Fonds / Part', sortable: true, width: 'auto' },
-  { id: 'language', label: 'Langue', width: '100px', sortable: true, align: 'center' },
-  { id: 'statut', label: 'Statut', width: '140px', sortable: true },
-  { id: 'signatures', label: 'Signatures', width: '180px', sortable: false },
-  { id: 'sentAt', label: 'Envoi à signature', width: '140px', sortable: true },
-  { id: 'lastReminder', label: 'Dernière relance', width: '140px', sortable: true },
-  { id: 'signatureChannel', label: 'Canal', width: '120px', sortable: true },
+  COL('name', 'subscriptions.columns.name', { width: '300px', sortable: true }),
+  COL('investor', 'subscriptions.columns.investor', { width: '250px', sortable: true }),
+  COL('amount', 'subscriptions.columns.amount', { width: '150px', sortable: true, align: 'right' }),
+  COL('quantity', 'subscriptions.columns.quantity', { width: '120px', sortable: true, align: 'right' }),
+  COL('fundShare', 'subscriptions.columns.fundShare', { sortable: true, width: 'auto' }),
+  COL('language', 'subscriptions.columns.language', { width: '100px', sortable: true, align: 'center' }),
+  COL('statut', 'subscriptions.columns.statut', { width: '140px', sortable: true }),
+  COL('signatures', 'subscriptions.columns.signatures', { width: '180px', sortable: false }),
+  COL('sentAt', 'subscriptions.columns.sentAt', { width: '140px', sortable: true }),
+  COL('lastReminder', 'subscriptions.columns.lastReminder', { width: '140px', sortable: true }),
+  COL('signatureChannel', 'subscriptions.columns.signatureChannel', { width: '120px', sortable: true }),
 ];
 
-// 🟥 ÉTAT : CONTRE-SIGNATURE - Objectif : finalisation interne rapide
 const COUNTER_SIGNATURE_COLUMNS: ColumnConfig[] = [
-  { id: 'investor', label: 'Investisseur', width: '250px', sortable: true },
-  { id: 'amount', label: 'Montant engagé', width: '150px', sortable: true, align: 'right' },
-  { id: 'quantity', label: 'Quantité', width: '120px', sortable: true, align: 'right' },
-  { id: 'fund', label: 'Fonds', sortable: true, width: 'auto' },
-  { id: 'compartment', label: 'Part', sortable: false, width: 'auto' },
-  { id: 'language', label: 'Langue', width: '100px', sortable: true, align: 'center' },
-  { id: 'counterSignatureStatus', label: 'Statut contre-signature', width: '180px', sortable: true },
-  { id: 'counterSignatureOwner', label: 'Responsable', width: '160px', sortable: true },
-  { id: 'investorSignedAt', label: 'Signature investisseur', width: '160px', sortable: true },
-  { id: 'daysSinceSignature', label: 'Jours écoulés', width: '130px', sortable: true, align: 'center' },
+  COL('investor', 'subscriptions.columns.investor', { width: '250px', sortable: true }),
+  COL('amount', 'subscriptions.columns.amount', { width: '150px', sortable: true, align: 'right' }),
+  COL('quantity', 'subscriptions.columns.quantity', { width: '120px', sortable: true, align: 'right' }),
+  COL('fund', 'subscriptions.columns.fund', { sortable: true, width: 'auto' }),
+  COL('compartment', 'subscriptions.columns.compartment', { sortable: false, width: 'auto' }),
+  COL('language', 'subscriptions.columns.language', { width: '100px', sortable: true, align: 'center' }),
+  COL('counterSignatureStatus', 'subscriptions.columns.counterSignatureStatus', { width: '180px', sortable: true }),
+  COL('counterSignatureOwner', 'subscriptions.columns.counterSignatureOwner', { width: '160px', sortable: true }),
+  COL('investorSignedAt', 'subscriptions.columns.investorSignedAt', { width: '160px', sortable: true }),
+  COL('daysSinceSignature', 'subscriptions.columns.daysSinceSignature', { width: '130px', sortable: true, align: 'center' }),
 ];
 
-// 🟩 ÉTAT : ACTIVES - Objectif : suivi financier et opérationnel
 const ACTIVE_COLUMNS: ColumnConfig[] = [
-  { id: 'investor', label: 'Investisseur', width: '250px', sortable: true },
-  { id: 'fund', label: 'Fonds', sortable: true, width: 'auto' },
-  { id: 'compartment', label: 'Part', sortable: false, width: 'auto' },
-  { id: 'amount', label: 'Montant engagé', width: '150px', sortable: true, align: 'right' },
-  { id: 'quantity', label: 'Quantité', width: '120px', sortable: true, align: 'right' },
-  { id: 'language', label: 'Langue', width: '100px', sortable: true, align: 'center' },
-  { id: 'calledAmount', label: 'Montant appelé', width: '150px', sortable: true, align: 'right' },
-  { id: 'remainingAmount', label: 'Restant à appeler', width: '150px', sortable: true, align: 'right' },
-  { id: 'distributedAmount', label: 'Montant distribué', width: '150px', sortable: true, align: 'right' },
-  { id: 'entryFees', label: 'Frais d\'entrée (%)', width: '140px', sortable: true, align: 'right' },
-  { id: 'entryFeesAmount', label: 'Frais d\'entrée (montant)', width: '180px', sortable: true, align: 'right' },
-  { id: 'depositary', label: 'Dépositaire', width: '120px', sortable: true, align: 'center' },
-  { id: 'activatedAt', label: 'Date d\'activation', width: '140px', sortable: true },
+  COL('investor', 'subscriptions.columns.investor', { width: '250px', sortable: true }),
+  COL('fund', 'subscriptions.columns.fund', { sortable: true, width: 'auto' }),
+  COL('compartment', 'subscriptions.columns.compartment', { sortable: false, width: 'auto' }),
+  COL('amount', 'subscriptions.columns.amount', { width: '150px', sortable: true, align: 'right' }),
+  COL('quantity', 'subscriptions.columns.quantity', { width: '120px', sortable: true, align: 'right' }),
+  COL('language', 'subscriptions.columns.language', { width: '100px', sortable: true, align: 'center' }),
+  COL('calledAmount', 'subscriptions.columns.calledAmount', { width: '150px', sortable: true, align: 'right' }),
+  COL('remainingAmount', 'subscriptions.columns.remainingAmount', { width: '150px', sortable: true, align: 'right' }),
+  COL('distributedAmount', 'subscriptions.columns.distributedAmount', { width: '150px', sortable: true, align: 'right' }),
+  COL('entryFees', 'subscriptions.columns.entryFees', { width: '140px', sortable: true, align: 'right' }),
+  COL('entryFeesAmount', 'subscriptions.columns.entryFeesAmount', { width: '180px', sortable: true, align: 'right' }),
+  COL('depositary', 'subscriptions.columns.depositary', { width: '120px', sortable: true, align: 'center' }),
+  COL('activatedAt', 'subscriptions.columns.activatedAt', { width: '140px', sortable: true }),
 ];
 
-// ⬛ ÉTAT : TOUTES - Objectif : vision globale, recherche et export
 const ALL_COLUMNS: ColumnConfig[] = [
   // Identification
-  { id: 'name', label: 'Name', width: '300px', sortable: true },
-  { id: 'investor', label: 'Investisseur', width: '250px', sortable: true },
-  
-  // Montants et produits
-  { id: 'amount', label: 'Montant engagé', width: '150px', sortable: true, align: 'right' },
-  { id: 'quantity', label: 'Quantité', width: '120px', sortable: true, align: 'right' },
-  { id: 'calledAmount', label: 'Montant appelé', width: '150px', sortable: true, align: 'right' },
-  { id: 'remainingAmount', label: 'Restant à appeler', width: '150px', sortable: true, align: 'right' },
-  { id: 'distributedAmount', label: 'Montant distribué', width: '150px', sortable: true, align: 'right' },
-  { id: 'entryFees', label: 'Frais d\'entrée (%)', width: '140px', sortable: true, align: 'right' },
-  { id: 'entryFeesAmount', label: 'Frais d\'entrée (montant)', width: '180px', sortable: true, align: 'right' },
-  { id: 'fund', label: 'Fonds', sortable: true, width: 'auto' },
-  { id: 'compartment', label: 'Part', sortable: false, width: 'auto' },
-  
-  // Distribution et partenariat
-  { id: 'partner', label: 'Partenaire', sortable: true, width: 'auto' },
-  { id: 'source', label: 'Source', width: '140px', sortable: true },
-  { id: 'depositary', label: 'Dépositaire', width: '140px', sortable: true },
-  
-  // Configuration et paramètres
-  { id: 'language', label: 'Langue', width: '120px', sortable: true },
-  { id: 'sepaEnabled', label: 'SEPA activé', width: '120px', sortable: true, align: 'center' },
-  { id: 'pendingCalls', label: 'Appels en attente', width: '140px', sortable: true, align: 'center' },
-  
-  // Gestion et responsabilité
-  { id: 'analyst', label: 'Responsable', width: '140px', sortable: true },
-  { id: 'globalStatus', label: 'Statut global', width: '160px', sortable: true },
-  
+  COL('name', 'subscriptions.columns.name', { width: '300px', sortable: true }),
+  COL('investor', 'subscriptions.columns.investor', { width: '250px', sortable: true }),
+
+  // Amounts & products
+  COL('amount', 'subscriptions.columns.amount', { width: '150px', sortable: true, align: 'right' }),
+  COL('quantity', 'subscriptions.columns.quantity', { width: '120px', sortable: true, align: 'right' }),
+  COL('calledAmount', 'subscriptions.columns.calledAmount', { width: '150px', sortable: true, align: 'right' }),
+  COL('remainingAmount', 'subscriptions.columns.remainingAmount', { width: '150px', sortable: true, align: 'right' }),
+  COL('distributedAmount', 'subscriptions.columns.distributedAmount', { width: '150px', sortable: true, align: 'right' }),
+  COL('entryFees', 'subscriptions.columns.entryFees', { width: '140px', sortable: true, align: 'right' }),
+  COL('entryFeesAmount', 'subscriptions.columns.entryFeesAmount', { width: '180px', sortable: true, align: 'right' }),
+  COL('fund', 'subscriptions.columns.fund', { sortable: true, width: 'auto' }),
+  COL('compartment', 'subscriptions.columns.compartment', { sortable: false, width: 'auto' }),
+
+  // Distribution & partnership
+  COL('partner', 'subscriptions.columns.partner', { sortable: true, width: 'auto' }),
+  COL('source', 'subscriptions.columns.sourceAll', { width: '140px', sortable: true }),
+  COL('depositary', 'subscriptions.columns.depositary', { width: '140px', sortable: true }),
+
+  // Config & settings
+  COL('language', 'subscriptions.columns.language', { width: '120px', sortable: true }),
+  COL('sepaEnabled', 'subscriptions.columns.sepaEnabled', { width: '120px', sortable: true, align: 'center' }),
+  COL('pendingCalls', 'subscriptions.columns.pendingCalls', { width: '140px', sortable: true, align: 'center' }),
+
+  // Management
+  COL('analyst', 'subscriptions.columns.analyst', { width: '140px', sortable: true }),
+  COL('globalStatus', 'subscriptions.columns.globalStatus', { width: '160px', sortable: true }),
+
   // Onboarding
-  { id: 'onboardingStatus', label: 'Statut onboarding', width: '180px', sortable: true },
-  { id: 'blockageReason', label: 'Motif de blocage', width: '200px', sortable: false },
-  { id: 'completionRate', label: 'Complétion (%)', width: '130px', sortable: true, align: 'center' },
-  { id: 'onboardingReopened', label: 'Nb réouvertures', width: '140px', sortable: true, align: 'center' },
-  { id: 'notes', label: 'Notes', width: '200px', sortable: false },
-  
+  COL('onboardingStatus', 'subscriptions.columns.onboardingStatus', { width: '180px', sortable: true }),
+  COL('blockageReason', 'subscriptions.columns.blockageReason', { width: '200px', sortable: false }),
+  COL('completionRate', 'subscriptions.columns.completionRate', { width: '130px', sortable: true, align: 'center' }),
+  COL('onboardingReopened', 'subscriptions.columns.onboardingReopened', { width: '140px', sortable: true, align: 'center' }),
+  COL('notes', 'subscriptions.columns.notes', { width: '200px', sortable: false }),
+
   // Signatures
-  { id: 'signatures', label: 'Signatures', width: '180px', sortable: false },
-  { id: 'sentAt', label: 'Envoi à signature', width: '140px', sortable: true },
-  { id: 'lastReminder', label: 'Dernière relance', width: '140px', sortable: true },
-  { id: 'signatureChannel', label: 'Canal', width: '120px', sortable: true },
-  { id: 'counterSignatureStatus', label: 'Statut contre-signature', width: '180px', sortable: true },
-  { id: 'counterSignatureOwner', label: 'Responsable contre-signature', width: '180px', sortable: true },
-  { id: 'investorSignedAt', label: 'Signature investisseur', width: '160px', sortable: true },
-  { id: 'daysSinceSignature', label: 'Jours écoulés', width: '130px', sortable: true, align: 'center' },
-  
-  // Dates et historique
-  { id: 'createdAt', label: 'Date de création', width: '140px', sortable: true },
-  { id: 'updatedAt', label: 'Dernière MAJ', width: '140px', sortable: true },
-  { id: 'lastAction', label: 'Dernière action', width: '140px', sortable: true },
-  { id: 'activatedAt', label: 'Date d\'activation', width: '140px', sortable: true },
+  COL('signatures', 'subscriptions.columns.signatures', { width: '180px', sortable: false }),
+  COL('sentAt', 'subscriptions.columns.sentAt', { width: '140px', sortable: true }),
+  COL('lastReminder', 'subscriptions.columns.lastReminder', { width: '140px', sortable: true }),
+  COL('signatureChannel', 'subscriptions.columns.signatureChannel', { width: '120px', sortable: true }),
+  COL('counterSignatureStatus', 'subscriptions.columns.counterSignatureStatus', { width: '180px', sortable: true }),
+  COL('counterSignatureOwner', 'subscriptions.columns.counterSignatureOwnerLong', { width: '180px', sortable: true }),
+  COL('investorSignedAt', 'subscriptions.columns.investorSignedAt', { width: '160px', sortable: true }),
+  COL('daysSinceSignature', 'subscriptions.columns.daysSinceSignature', { width: '130px', sortable: true, align: 'center' }),
+
+  // Dates & history
+  COL('createdAt', 'subscriptions.columns.createdAt', { width: '140px', sortable: true }),
+  COL('updatedAt', 'subscriptions.columns.updatedAt', { width: '140px', sortable: true }),
+  COL('lastAction', 'subscriptions.columns.lastAction', { width: '140px', sortable: true }),
+  COL('activatedAt', 'subscriptions.columns.activatedAt', { width: '140px', sortable: true }),
 ];
+
 // Mapping des colonnes par statut
 export const COLUMNS_BY_STATUS: Record<SubscriptionWorkflowStatus, ColumnConfig[]> = {
   created: CREATED_COLUMNS,
@@ -149,27 +147,35 @@ export const COLUMNS_BY_STATUS: Record<SubscriptionWorkflowStatus, ColumnConfig[
   all: ALL_COLUMNS,
 };
 
-// Helper pour obtenir les colonnes selon le statut
 export function getColumnsForStatus(status: SubscriptionWorkflowStatus): ColumnConfig[] {
   return COLUMNS_BY_STATUS[status] || ALL_COLUMNS;
 }
 
-// Helper pour mapper les labels de statut normalisés
-export function getGlobalStatus(rawStatus: string): string {
-  if (rawStatus === 'Draft') return 'Créée';
-  if (rawStatus === 'Onboarding') return 'Onboarding';
-  if (rawStatus === 'À signer') return 'Signature';
-  if (rawStatus === 'Investisseur signé') return 'Contre-signature';
-  if (['Exécuté', 'En attente de fonds', 'Active'].includes(rawStatus)) return 'Active';
+// Mapping raw workflow status → translation key for global status label
+export function getGlobalStatusKey(rawStatus: string): string {
+  if (rawStatus === 'Draft') return 'subscriptions.globalStatus.created';
+  if (rawStatus === 'Onboarding') return 'subscriptions.globalStatus.onboarding';
+  if (rawStatus === 'À signer') return 'subscriptions.globalStatus.signature';
+  if (rawStatus === 'Investisseur signé') return 'subscriptions.globalStatus.counterSignature';
+  if (['Exécuté', 'En attente de fonds', 'Active'].includes(rawStatus)) return 'subscriptions.globalStatus.active';
   return rawStatus;
 }
 
-// Helper pour obtenir le statut synthétique d'onboarding
+/** Back-compat: returns the translation key instead of a French label. Callers should translate via t(). */
+export function getGlobalStatus(rawStatus: string): string {
+  return getGlobalStatusKey(rawStatus);
+}
+
+export function getSyntheticOnboardingStatusKey(completionRate: number, hasBlockage: boolean): string {
+  if (hasBlockage) return 'subscriptions.onboardingStatus.blocked';
+  if (completionRate === 100) return 'subscriptions.onboardingStatus.completed';
+  if (completionRate >= 75) return 'subscriptions.onboardingStatus.advanced';
+  if (completionRate >= 50) return 'subscriptions.onboardingStatus.inProgress';
+  if (completionRate >= 25) return 'subscriptions.onboardingStatus.started';
+  return 'subscriptions.onboardingStatus.notStarted';
+}
+
+/** Back-compat: returns a translation key. */
 export function getSyntheticOnboardingStatus(completionRate: number, hasBlockage: boolean): string {
-  if (hasBlockage) return 'Bloqué';
-  if (completionRate === 100) return 'Complété';
-  if (completionRate >= 75) return 'En cours avancé';
-  if (completionRate >= 50) return 'En cours';
-  if (completionRate >= 25) return 'Démarré';
-  return 'Non démarré';
+  return getSyntheticOnboardingStatusKey(completionRate, hasBlockage);
 }

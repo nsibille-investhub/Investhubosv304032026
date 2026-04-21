@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { motion } from 'motion/react';
 import { Badge } from './ui/badge';
 import { XCircle, Ban, Clock, Archive } from 'lucide-react';
+import { useTranslation } from '../utils/languageContext';
 
 type InactiveStatus = 'rejected' | 'cancelled' | 'expired' | 'archived' | 'all';
 
@@ -18,7 +19,8 @@ interface StatusKPIs {
 }
 
 export function InactiveSubscriptionTabs({ data, activeStatus, onStatusChange }: InactiveSubscriptionTabsProps) {
-  
+  const { t } = useTranslation();
+
   const calculateKPIs = (filteredData: any[]): StatusKPIs => {
     const total = filteredData.length;
     const totalAmount = filteredData.reduce((sum, s) => sum + (s.amount || 0), 0);
@@ -166,13 +168,13 @@ export function InactiveSubscriptionTabs({ data, activeStatus, onStatusChange }:
         {/* KPIs */}
         <div className="space-y-1 text-left">
           <div className="flex items-baseline gap-1.5">
-            <span className="text-[10px] text-gray-500 uppercase tracking-wide">Total</span>
+            <span className="text-[10px] text-gray-500 uppercase tracking-wide">{t('subscriptions.inactiveTabs.total')}</span>
             <span className={`text-xs font-semibold ${isActive ? textColor : 'text-gray-700'}`}>
               {formatAmount(kpis.totalAmount)}
             </span>
           </div>
           <div className="flex items-baseline gap-1.5">
-            <span className="text-[10px] text-gray-500 uppercase tracking-wide">Avg</span>
+            <span className="text-[10px] text-gray-500 uppercase tracking-wide">{t('subscriptions.inactiveTabs.average')}</span>
             <span className={`text-xs font-medium ${isActive ? 'text-gray-700' : 'text-gray-600'}`}>
               {formatAmount(kpis.avgAmount)}
             </span>
@@ -202,8 +204,8 @@ export function InactiveSubscriptionTabs({ data, activeStatus, onStatusChange }:
     <div className="grid grid-cols-5 gap-4 mb-6">
       <StatusCard
         status="rejected"
-        label="Rejected"
-        description="Compliance/capacité"
+        label={t('subscriptions.inactiveTabs.rejected')}
+        description={t('subscriptions.inactiveTabs.rejectedDesc')}
         icon={XCircle}
         kpis={rejectedKPIs}
         gradient="bg-gradient-to-r from-red-500 to-rose-500"
@@ -211,11 +213,11 @@ export function InactiveSubscriptionTabs({ data, activeStatus, onStatusChange }:
         borderColor="border-red-300"
         textColor="text-red-600"
       />
-      
+
       <StatusCard
         status="cancelled"
-        label="Cancelled"
-        description="Abandon investisseur"
+        label={t('subscriptions.inactiveTabs.cancelled')}
+        description={t('subscriptions.inactiveTabs.cancelledDesc')}
         icon={Ban}
         kpis={cancelledKPIs}
         gradient="bg-gradient-to-r from-orange-500 to-amber-500"
@@ -223,11 +225,11 @@ export function InactiveSubscriptionTabs({ data, activeStatus, onStatusChange }:
         borderColor="border-orange-300"
         textColor="text-orange-600"
       />
-      
+
       <StatusCard
         status="expired"
-        label="Expired"
-        description="Deadline dépassée"
+        label={t('subscriptions.inactiveTabs.expired')}
+        description={t('subscriptions.inactiveTabs.expiredDesc')}
         icon={Clock}
         kpis={expiredKPIs}
         gradient="bg-gradient-to-r from-rose-500 to-pink-500"
@@ -235,11 +237,11 @@ export function InactiveSubscriptionTabs({ data, activeStatus, onStatusChange }:
         borderColor="border-rose-300"
         textColor="text-rose-600"
       />
-      
+
       <StatusCard
         status="archived"
-        label="Archived"
-        description="Marqueur archivage"
+        label={t('subscriptions.inactiveTabs.archived')}
+        description={t('subscriptions.inactiveTabs.archivedDesc')}
         icon={Archive}
         kpis={archivedKPIs}
         gradient="bg-gradient-to-r from-slate-500 to-gray-500"
@@ -247,11 +249,11 @@ export function InactiveSubscriptionTabs({ data, activeStatus, onStatusChange }:
         borderColor="border-slate-300"
         textColor="text-slate-600"
       />
-      
+
       <StatusCard
         status="all"
-        label="Toutes"
-        description="Toutes inactives"
+        label={t('subscriptions.inactiveTabs.all')}
+        description={t('subscriptions.inactiveTabs.allDesc')}
         icon={Archive}
         kpis={allKPIs}
         gradient="bg-gradient-to-r from-red-600 to-rose-600"

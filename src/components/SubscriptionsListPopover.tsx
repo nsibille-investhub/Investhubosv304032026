@@ -8,6 +8,7 @@ import {
 } from "./ui/popover";
 import { Subscription } from '../utils/subscriptionGenerator';
 import { ScrollArea } from './ui/scroll-area';
+import { useTranslation } from '../utils/languageContext';
 
 interface SubscriptionsListPopoverProps {
   count: number;
@@ -16,6 +17,7 @@ interface SubscriptionsListPopoverProps {
 }
 
 export function SubscriptionsListPopover({ count, subscriptions, onSubscriptionClick }: SubscriptionsListPopoverProps) {
+  const { t } = useTranslation();
   const getStatusColor = (status: string) => {
     const colors: { [key: string]: string } = {
       'Draft': 'bg-gray-100 text-gray-700 border-gray-300',
@@ -87,9 +89,9 @@ export function SubscriptionsListPopover({ count, subscriptions, onSubscriptionC
                   <FileText className="w-4 h-4" />
                 </motion.div>
                 <div>
-                  <h3 className="text-sm font-semibold text-gray-900">Souscriptions</h3>
+                  <h3 className="text-sm font-semibold text-gray-900">{t('subscriptions.listPopover.title')}</h3>
                   <div className="text-[10px] text-gray-500">
-                    {count} souscription{count > 1 ? 's' : ''} totale{count > 1 ? 's' : ''}
+                    {t(count > 1 ? 'subscriptions.listPopover.totalCountMany' : 'subscriptions.listPopover.totalCountOne', { count })}
                   </div>
                 </div>
               </div>
@@ -103,7 +105,7 @@ export function SubscriptionsListPopover({ count, subscriptions, onSubscriptionC
           {subscriptions.length === 0 ? (
             <div className="p-6 text-center">
               <FileText className="w-10 h-10 text-gray-300 mx-auto mb-2" />
-              <p className="text-sm text-gray-500">Aucune souscription trouvée</p>
+              <p className="text-sm text-gray-500">{t('subscriptions.listPopover.noSubscriptions')}</p>
             </div>
           ) : (
             <ScrollArea className="h-[320px]">
@@ -112,22 +114,22 @@ export function SubscriptionsListPopover({ count, subscriptions, onSubscriptionC
                   <thead className="sticky top-0 bg-gray-50 border-b border-gray-200 z-10">
                     <tr>
                       <th className="px-2 py-1.5 text-left text-[10px] font-semibold text-gray-600 uppercase tracking-wide">
-                        Date
+                        {t('subscriptions.listPopover.columns.date')}
                       </th>
                       <th className="px-2 py-1.5 text-left text-[10px] font-semibold text-gray-600 uppercase tracking-wide">
-                        Capital
+                        {t('subscriptions.listPopover.columns.capital')}
                       </th>
                       <th className="px-2 py-1.5 text-left text-[10px] font-semibold text-gray-600 uppercase tracking-wide">
-                        Fonds
+                        {t('subscriptions.listPopover.columns.fund')}
                       </th>
                       <th className="px-2 py-1.5 text-left text-[10px] font-semibold text-gray-600 uppercase tracking-wide">
-                        Part
+                        {t('subscriptions.listPopover.columns.share')}
                       </th>
                       <th className="px-2 py-1.5 text-left text-[10px] font-semibold text-gray-600 uppercase tracking-wide">
-                        Structure
+                        {t('subscriptions.listPopover.columns.structure')}
                       </th>
                       <th className="px-2 py-1.5 text-left text-[10px] font-semibold text-gray-600 uppercase tracking-wide">
-                        Statut
+                        {t('subscriptions.listPopover.columns.status')}
                       </th>
                       <th className="px-2 py-1.5 text-center text-[10px] font-semibold text-gray-600 uppercase tracking-wide w-8">
                         
@@ -198,7 +200,7 @@ export function SubscriptionsListPopover({ count, subscriptions, onSubscriptionC
                               </span>
                             </div>
                           ) : (
-                            <span className="text-xs text-gray-400 italic">Direct</span>
+                            <span className="text-xs text-gray-400 italic">{t('subscriptions.listPopover.direct')}</span>
                           )}
                         </td>
 
@@ -232,10 +234,10 @@ export function SubscriptionsListPopover({ count, subscriptions, onSubscriptionC
             <div className="px-3 py-2 border-t border-gray-200 bg-gradient-to-r from-gray-50 to-blue-50/30">
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-3 text-[10px] text-gray-500">
-                  <span>{count} souscription{count > 1 ? 's' : ''}</span>
+                  <span>{t(count > 1 ? 'subscriptions.listPopover.countMany' : 'subscriptions.listPopover.countOne', { count })}</span>
                 </div>
                 <div className="flex items-center gap-1.5">
-                  <span className="text-[10px] text-gray-500">Total investi</span>
+                  <span className="text-[10px] text-gray-500">{t('subscriptions.listPopover.totalInvested')}</span>
                   <span className="text-xs font-bold text-gray-900">
                     {formatCurrency(subscriptions.reduce((sum, s) => sum + s.amount, 0))}
                   </span>

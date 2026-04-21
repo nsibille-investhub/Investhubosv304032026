@@ -19,6 +19,7 @@ import { AskAIDialog } from './AskAIDialog';
 import { AIInsightBanner } from './AIInsightBanner';
 import { AIAnalysis, analyzeSubscriptions } from '../utils/aiAnalyzer';
 import { SubscriptionWorkflowStatus } from '../utils/subscriptionColumns';
+import { useTranslation } from '../utils/languageContext';
 
 interface SubscriptionsPageProps {
   data: Subscription[];
@@ -30,6 +31,7 @@ interface SubscriptionsPageProps {
 }
 
 export function SubscriptionsPage({ data, isLoading, allData, setAllData, onSubscriptionClick, activeStatus = 'all' }: SubscriptionsPageProps) {
+  const { t } = useTranslation();
   const [paginationPage, setPaginationPage] = useState(1);
   const [itemsPerPage, setItemsPerPage] = useState(20);
   const [sortConfig, setSortConfig] = useState<{ key: string; direction: 'asc' | 'desc' } | null>(null);
@@ -92,7 +94,7 @@ export function SubscriptionsPage({ data, isLoading, allData, setAllData, onSubs
   const filterConfigs: FilterConfig[] = useMemo(() => [
     {
       id: 'status',
-      label: 'Statut',
+      label: t('subscriptions.filters.status'),
       type: 'select',
       isPrimary: true,
       options: Array.from(new Set(normalizedData.map((sub) => sub.status)))
@@ -102,11 +104,11 @@ export function SubscriptionsPage({ data, isLoading, allData, setAllData, onSubs
     },
     {
       id: 'partner',
-      label: 'Partenaire',
+      label: t('subscriptions.filters.partner'),
       type: 'select',
       isPrimary: true,
       options: [
-        { value: 'Sans partenaire', label: 'Sans partenaire' },
+        { value: 'Sans partenaire', label: t('subscriptions.filters.noPartner') },
         ...Array.from(new Set(normalizedData.map((sub) => sub.partenaire?.name).filter(Boolean) as string[]))
           .sort()
           .map((partner) => ({ value: partner, label: partner })),
@@ -114,7 +116,7 @@ export function SubscriptionsPage({ data, isLoading, allData, setAllData, onSubs
     },
     {
       id: 'fund',
-      label: 'Fonds',
+      label: t('subscriptions.filters.fund'),
       type: 'select',
       isPrimary: false,
       options: Array.from(new Set(normalizedData.map((sub) => sub.fund?.name).filter(Boolean) as string[]))
@@ -123,7 +125,7 @@ export function SubscriptionsPage({ data, isLoading, allData, setAllData, onSubs
     },
     {
       id: 'shareClass',
-      label: 'Classe de part',
+      label: t('subscriptions.filters.shareClass'),
       type: 'select',
       isPrimary: false,
       options: Array.from(new Set(normalizedData.map((sub) => sub.fund?.shareClass).filter(Boolean) as string[]))
@@ -132,7 +134,7 @@ export function SubscriptionsPage({ data, isLoading, allData, setAllData, onSubs
     },
     {
       id: 'type',
-      label: 'Type',
+      label: t('subscriptions.filters.type'),
       type: 'select',
       isPrimary: false,
       options: Array.from(new Set(normalizedData.map((sub) => sub.type)))
@@ -142,7 +144,7 @@ export function SubscriptionsPage({ data, isLoading, allData, setAllData, onSubs
     },
     {
       id: 'gestionnaire',
-      label: 'Gestionnaire',
+      label: t('subscriptions.filters.manager'),
       type: 'select',
       isPrimary: false,
       options: Array.from(new Set(normalizedData.map((sub) => sub.analyst)))
@@ -150,14 +152,14 @@ export function SubscriptionsPage({ data, isLoading, allData, setAllData, onSubs
         .sort()
         .map((analyst) => ({ value: analyst, label: analyst })),
     },
-  ], [normalizedData]);
+  ], [normalizedData, t]);
 
   const handleClearAllFilters = () => {
     setActiveFilters({});
     setSearchTerm('');
     setAiFilteredData(null);
     setPaginationPage(1);
-    toast.success('Filtres réinitialisés');
+    toast.success(t('toast.filtersReset'));
   };
 
   const filteredData = useMemo(() => {
@@ -240,8 +242,8 @@ export function SubscriptionsPage({ data, isLoading, allData, setAllData, onSubs
       direction = 'desc';
     }
     setSortConfig({ key, direction });
-    toast.success('Tri appliqué', {
-      description: `Tri par ${key} (${direction === 'asc' ? 'croissant' : 'décroissant'})`,
+    toast.success(t('toast.sortApplied'), {
+      description: t(direction === 'asc' ? 'subscriptions.page.sortByAsc' : 'subscriptions.page.sortByDesc', { key }),
     });
   };
 
@@ -249,8 +251,8 @@ export function SubscriptionsPage({ data, isLoading, allData, setAllData, onSubs
     if (page >= 1 && page <= totalPages) {
       setPaginationPage(page);
       setSelectedSubscription(null);
-      toast.info('Page changée', {
-        description: `Page ${page} sur ${totalPages}`,
+      toast.info(t('toast.pageChanged'), {
+        description: t('subscriptions.page.pageOf', { page, total: totalPages }),
       });
     }
   };
@@ -258,8 +260,8 @@ export function SubscriptionsPage({ data, isLoading, allData, setAllData, onSubs
   const handleItemsPerPageChange = (newItemsPerPage: number) => {
     setItemsPerPage(newItemsPerPage);
     setPaginationPage(1);
-    toast.success('Affichage modifié', {
-      description: `${newItemsPerPage} items par page`,
+    toast.success(t('toast.displayUpdated'), {
+      description: t('subscriptions.page.itemsPerPageApplied', { count: newItemsPerPage }),
     });
   };
 
@@ -279,22 +281,22 @@ export function SubscriptionsPage({ data, isLoading, allData, setAllData, onSubs
       )
     );
     
-    toast.success(newMonitoringState ? 'Monitoring activé' : 'Monitoring désactivé', {
-      description: `pour ${allData.find(s => s.id === subscriptionId)?.name}`,
+    toast.success(newMonitoringState ? t('toast.monitoringEnabled') : t('toast.monitoringDisabled'), {
+      description: t('subscriptions.detail.monitoringFor', { name: allData.find(s => s.id === subscriptionId)?.name ?? '' }),
     });
   };
 
   const handleAnalystChange = (subscriptionId: number, newAnalyst: string) => {
     setAllData(
-      allData.map(subscription => 
-        subscription.id === subscriptionId 
+      allData.map(subscription =>
+        subscription.id === subscriptionId
           ? { ...subscription, analyst: newAnalyst }
           : subscription
       )
     );
-    
-    toast.success('Analyst updated', {
-      description: `${newAnalyst} assigned to ${allData.find(s => s.id === subscriptionId)?.name}`,
+
+    toast.success(t('toast.analystUpdated'), {
+      description: t('subscriptions.detail.analystAssigned', { analyst: newAnalyst, name: allData.find(s => s.id === subscriptionId)?.name ?? '' }),
     });
   };
 
@@ -331,8 +333,8 @@ export function SubscriptionsPage({ data, isLoading, allData, setAllData, onSubs
     setAiFilteredData(items);
     setAiAnalysis(null);
     setPaginationPage(1);
-    toast.success('Filtre AI appliqué', {
-      description: `${items.length} souscription${items.length > 1 ? 's' : ''} affichée${items.length > 1 ? 's' : ''}`
+    toast.success(t('toast.aiFilterApplied'), {
+      description: t('toast.subscriptionsDisplayed', { count: items.length })
     });
   };
 
@@ -344,8 +346,8 @@ export function SubscriptionsPage({ data, isLoading, allData, setAllData, onSubs
     setAiAnalysis(null);
     setAiFilteredData(null);
     if (aiFilteredData) {
-      toast.info('Filtre AI désactivé', {
-        description: 'Affichage de toutes les souscriptions'
+      toast.info(t('toast.aiFilterDisabled'), {
+        description: t('toast.showAllSubscriptions')
       });
     }
   };
@@ -416,7 +418,7 @@ export function SubscriptionsPage({ data, isLoading, allData, setAllData, onSubs
           <FilterBar
             searchValue={searchTerm}
             onSearchChange={handleSearchChange}
-            searchPlaceholder="Rechercher une souscription..."
+            searchPlaceholder={t('subscriptions.page.searchPlaceholder')}
             filters={filterConfigs}
             activeFilters={activeFilters}
             onFilterChange={handleFilterChange}
@@ -460,10 +462,10 @@ export function SubscriptionsPage({ data, isLoading, allData, setAllData, onSubs
             className="px-6 py-4 border-t border-gray-100 dark:border-gray-800 flex items-center justify-between bg-gray-50/50 dark:bg-gray-900/50"
           >
             <div className="text-sm text-gray-600 dark:text-gray-400">
-              {startIndex + 1}-{endIndex} of {totalItems} items
+              {t('subscriptions.page.itemsRange', { start: startIndex + 1, end: endIndex, total: totalItems })}
               {(hasActiveSearch || Object.keys(activeFilters).length > 0) && (
                 <span className="ml-2 text-blue-600 dark:text-blue-400">
-                  (filtré{totalItems !== data.length && ` de ${data.length}`})
+                  ({totalItems !== data.length ? t('subscriptions.page.filteredOf', { count: data.length }) : t('subscriptions.page.filtered')})
                 </span>
               )}
             </div>
@@ -514,22 +516,15 @@ export function SubscriptionsPage({ data, isLoading, allData, setAllData, onSubs
               <div className="ml-2 flex items-center gap-2">
                 <DropdownMenu>
                   <DropdownMenuTrigger className="flex items-center gap-1 px-2 py-1 hover:bg-white dark:hover:bg-gray-800 rounded-lg transition-all duration-200 outline-none">
-                    <span className="text-sm text-gray-600 dark:text-gray-400">{itemsPerPage}/page</span>
+                    <span className="text-sm text-gray-600 dark:text-gray-400">{t('subscriptions.page.itemsPerPage', { count: itemsPerPage })}</span>
                     <ChevronDown className="w-4 h-4 text-gray-600 dark:text-gray-400" />
                   </DropdownMenuTrigger>
                   <DropdownMenuContent align="end">
-                    <DropdownMenuItem onClick={() => handleItemsPerPageChange(10)} className="cursor-pointer">
-                      10 par page
-                    </DropdownMenuItem>
-                    <DropdownMenuItem onClick={() => handleItemsPerPageChange(20)} className="cursor-pointer">
-                      20 par page
-                    </DropdownMenuItem>
-                    <DropdownMenuItem onClick={() => handleItemsPerPageChange(50)} className="cursor-pointer">
-                      50 par page
-                    </DropdownMenuItem>
-                    <DropdownMenuItem onClick={() => handleItemsPerPageChange(100)} className="cursor-pointer">
-                      100 par page
-                    </DropdownMenuItem>
+                    {[10, 20, 50, 100].map((n) => (
+                      <DropdownMenuItem key={n} onClick={() => handleItemsPerPageChange(n)} className="cursor-pointer">
+                        {t('subscriptions.page.itemsPerPageOption', { count: n })}
+                      </DropdownMenuItem>
+                    ))}
                   </DropdownMenuContent>
                 </DropdownMenu>
               </div>

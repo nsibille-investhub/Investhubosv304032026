@@ -3,6 +3,7 @@ import { ExternalLink, Building2, User, Store, TrendingUp, Globe, Hash, Phone, M
 import { Badge } from './ui/badge';
 import { Button } from './ui/button';
 import { Popover, PopoverContent, PopoverTrigger } from './ui/popover';
+import { useTranslation } from '../utils/languageContext';
 
 interface InfoPopoverProps {
   type: 'investor' | 'structure' | 'partner' | 'fund';
@@ -11,6 +12,7 @@ interface InfoPopoverProps {
 }
 
 export function SubscriptionInfoPopover({ type, data, children }: InfoPopoverProps) {
+  const { t } = useTranslation();
   if (!data) return <>{children}</>;
 
   const renderContent = () => {
@@ -31,7 +33,7 @@ export function SubscriptionInfoPopover({ type, data, children }: InfoPopoverPro
               <div className="flex-1 min-w-0">
                 <div className="font-semibold text-sm text-gray-900">{data.name}</div>
                 <Badge variant="outline" className="text-xs mt-1">
-                  {data.type === 'individual' ? 'Personne Physique' : 'Personne Morale'}
+                  {data.type === 'individual' ? t('subscriptions.infoPopover.individual') : t('subscriptions.infoPopover.corporate')}
                 </Badge>
               </div>
             </div>
@@ -39,19 +41,19 @@ export function SubscriptionInfoPopover({ type, data, children }: InfoPopoverPro
             <div className="space-y-2 pt-2 border-t border-gray-100">
               <div className="flex items-center gap-2 text-xs">
                 <Hash className="w-3.5 h-3.5 text-gray-400" />
-                <span className="text-gray-600">ID :</span>
+                <span className="text-gray-600">{t('subscriptions.infoPopover.id')}</span>
                 <span className="font-medium text-gray-900">{data.id}</span>
               </div>
               {data.country && (
                 <div className="flex items-center gap-2 text-xs">
                   <Globe className="w-3.5 h-3.5 text-gray-400" />
-                  <span className="text-gray-600">Pays :</span>
+                  <span className="text-gray-600">{t('subscriptions.infoPopover.country')}</span>
                   <span className="font-medium text-gray-900">{data.country}</span>
                 </div>
               )}
               <div className="flex items-center gap-2 text-xs">
                 <TrendingUp className="w-3.5 h-3.5 text-gray-400" />
-                <span className="text-gray-600">Risque :</span>
+                <span className="text-gray-600">{t('subscriptions.infoPopover.risk')}</span>
                 <Badge className={`text-xs h-5 ${
                   data.riskLevel === 'High' ? 'bg-red-100 text-red-700 border-red-200' :
                   data.riskLevel === 'Medium' ? 'bg-amber-100 text-amber-700 border-amber-200' :
@@ -62,11 +64,11 @@ export function SubscriptionInfoPopover({ type, data, children }: InfoPopoverPro
               </div>
               {data.kycStatus && (
                 <div className="flex items-center gap-2 text-xs">
-                  <span className="text-gray-600">KYC :</span>
+                  <span className="text-gray-600">{t('subscriptions.infoPopover.kyc')}</span>
                   <Badge variant="outline" className="text-xs h-5">
-                    {data.kycStatus === 'validated' ? '✓ Validé' :
-                     data.kycStatus === 'in review' ? '⏳ En révision' :
-                     data.kycStatus === 'to review' ? '📋 À réviser' : '🔄 En cours'}
+                    {data.kycStatus === 'validated' ? t('subscriptions.infoPopover.kycValidated') :
+                     data.kycStatus === 'in review' ? t('subscriptions.infoPopover.kycInReview') :
+                     data.kycStatus === 'to review' ? t('subscriptions.infoPopover.kycToReview') : t('subscriptions.infoPopover.kycInProgress')}
                   </Badge>
                 </div>
               )}
@@ -77,7 +79,7 @@ export function SubscriptionInfoPopover({ type, data, children }: InfoPopoverPro
               size="sm"
               className="w-full justify-between text-blue-600 hover:text-blue-700 hover:bg-blue-50"
             >
-              Voir la fiche complète
+              {t('subscriptions.infoPopover.viewFullProfile')}
               <ExternalLink className="w-3.5 h-3.5" />
             </Button>
           </div>
@@ -92,27 +94,27 @@ export function SubscriptionInfoPopover({ type, data, children }: InfoPopoverPro
               </div>
               <div className="flex-1 min-w-0">
                 <div className="font-semibold text-sm text-gray-900">{data.name || data.structure}</div>
-                <Badge variant="outline" className="text-xs mt-1">Structure</Badge>
+                <Badge variant="outline" className="text-xs mt-1">{t('subscriptions.infoPopover.structure')}</Badge>
               </div>
             </div>
 
             <div className="space-y-2 pt-2 border-t border-gray-100">
               <div className="flex items-center gap-2 text-xs">
                 <Hash className="w-3.5 h-3.5 text-gray-400" />
-                <span className="text-gray-600">ID :</span>
+                <span className="text-gray-600">{t('subscriptions.infoPopover.id')}</span>
                 <span className="font-medium text-gray-900">{data.id}</span>
               </div>
               {data.country && (
                 <div className="flex items-center gap-2 text-xs">
                   <Globe className="w-3.5 h-3.5 text-gray-400" />
-                  <span className="text-gray-600">Pays :</span>
+                  <span className="text-gray-600">{t('subscriptions.infoPopover.country')}</span>
                   <span className="font-medium text-gray-900">{data.country}</span>
                 </div>
               )}
               {data.mainContact && (
                 <div className="flex items-center gap-2 text-xs">
                   <User className="w-3.5 h-3.5 text-gray-400" />
-                  <span className="text-gray-600">Contact :</span>
+                  <span className="text-gray-600">{t('subscriptions.infoPopover.contact')}</span>
                   <span className="font-medium text-gray-900">{data.mainContact}</span>
                 </div>
               )}
@@ -123,7 +125,7 @@ export function SubscriptionInfoPopover({ type, data, children }: InfoPopoverPro
               size="sm"
               className="w-full justify-between text-blue-600 hover:text-blue-700 hover:bg-blue-50"
             >
-              Voir la fiche complète
+              {t('subscriptions.infoPopover.viewFullProfile')}
               <ExternalLink className="w-3.5 h-3.5" />
             </Button>
           </div>
@@ -138,20 +140,20 @@ export function SubscriptionInfoPopover({ type, data, children }: InfoPopoverPro
               </div>
               <div className="flex-1 min-w-0">
                 <div className="font-semibold text-sm text-gray-900">{data.name}</div>
-                <Badge variant="outline" className="text-xs mt-1">Distributeur</Badge>
+                <Badge variant="outline" className="text-xs mt-1">{t('subscriptions.infoPopover.distributor')}</Badge>
               </div>
             </div>
 
             <div className="space-y-2 pt-2 border-t border-gray-100">
               <div className="flex items-center gap-2 text-xs">
                 <Hash className="w-3.5 h-3.5 text-gray-400" />
-                <span className="text-gray-600">ID :</span>
+                <span className="text-gray-600">{t('subscriptions.infoPopover.id')}</span>
                 <span className="font-medium text-gray-900">{data.id}</span>
               </div>
               <div className="flex items-center gap-2 text-xs">
-                <span className="text-gray-600">Type :</span>
+                <span className="text-gray-600">{t('subscriptions.infoPopover.type')}</span>
                 <Badge variant="outline" className="text-xs h-5">
-                  {data.type === 'corporate' ? 'Corporate' : 'Individual'}
+                  {data.type === 'corporate' ? t('subscriptions.infoPopover.corporateType') : t('subscriptions.infoPopover.individualType')}
                 </Badge>
               </div>
             </div>
@@ -161,7 +163,7 @@ export function SubscriptionInfoPopover({ type, data, children }: InfoPopoverPro
               size="sm"
               className="w-full justify-between text-blue-600 hover:text-blue-700 hover:bg-blue-50"
             >
-              Voir la fiche complète
+              {t('subscriptions.infoPopover.viewFullProfile')}
               <ExternalLink className="w-3.5 h-3.5" />
             </Button>
           </div>
@@ -176,15 +178,15 @@ export function SubscriptionInfoPopover({ type, data, children }: InfoPopoverPro
               </div>
               <div className="flex-1 min-w-0">
                 <div className="font-semibold text-sm text-gray-900">{data.name}</div>
-                <Badge variant="outline" className="text-xs mt-1">Fonds</Badge>
+                <Badge variant="outline" className="text-xs mt-1">{t('subscriptions.infoPopover.fund')}</Badge>
               </div>
             </div>
 
             <div className="space-y-2 pt-2 border-t border-gray-100">
               <div className="flex items-center gap-2 text-xs">
-                <span className="text-gray-600">Classe :</span>
+                <span className="text-gray-600">{t('subscriptions.infoPopover.class')}</span>
                 <Badge className="text-xs h-5 bg-blue-100 text-blue-700 border-blue-200">
-                  Part {data.shareClass}
+                  {t('subscriptions.infoPopover.shareLabel', { class: data.shareClass })}
                 </Badge>
               </div>
             </div>
@@ -194,7 +196,7 @@ export function SubscriptionInfoPopover({ type, data, children }: InfoPopoverPro
               size="sm"
               className="w-full justify-between text-blue-600 hover:text-blue-700 hover:bg-blue-50"
             >
-              Voir la fiche complète
+              {t('subscriptions.infoPopover.viewFullProfile')}
               <ExternalLink className="w-3.5 h-3.5" />
             </Button>
           </div>
