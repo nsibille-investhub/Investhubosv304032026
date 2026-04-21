@@ -47,16 +47,8 @@ import {
   Eye,
   Download,
   BadgeCheck,
-  FileCheck,
-  ShieldAlert,
-  Plus,
   Copy,
   ChevronRight,
-  Send,
-  MailOpen,
-  MailCheck,
-  MousePointerClick,
-  AlertCircle,
   Clock,
   type LucideIcon,
 } from 'lucide-react';
@@ -91,8 +83,13 @@ import { ItemSelector } from './InternalResponsibleSelector';
 import {
   Timeline,
   type TimelineEvent,
-  type TimelineTypeMap,
 } from './ui/timeline';
+import {
+  birdviewActivityCatalog,
+  birdviewActivityTypes,
+  type BirdviewActivityEventCode,
+} from '../utils/birdviewActivityCatalog';
+import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import type { Contact, LegalStructure } from '../utils/investorGenerator';
 
 type DoctrineItem = {
@@ -370,124 +367,8 @@ const doctrinePillars: DoctrineItem[] = [
   },
 ];
 
-type TimelineDemoType =
-  | 'notification_send_initiated'
-  | 'notification_sent'
-  | 'notification_delivered'
-  | 'notification_opened'
-  | 'notification_clicked'
-  | 'notification_failed'
-  | 'notification_complained'
-  | 'document_viewed'
-  | 'document_downloaded'
-  | 'document_validated';
-
-const timelineDemoTypes: TimelineTypeMap<TimelineDemoType> = {
-  notification_send_initiated: { label: "Envoi initié",           Icon: Clock },
-  notification_sent:           { label: 'Notification envoyée',   Icon: Send },
-  notification_delivered:      { label: 'Notification délivrée',  Icon: MailCheck },
-  notification_failed:         { label: 'Notification échouée',   Icon: AlertCircle },
-  notification_opened:         { label: 'Notification ouverte',   Icon: MailOpen },
-  notification_clicked:        { label: 'Notification cliquée',   Icon: MousePointerClick },
-  notification_complained:     { label: 'Signalée comme spam',    Icon: ShieldAlert },
-  document_viewed:             { label: 'Document consulté',      Icon: Eye },
-  document_downloaded:         { label: 'Document téléchargé',    Icon: Download },
-  document_validated:          { label: 'Document validé',        Icon: FileCheck },
-};
-
-/**
- * Référentiel des événements de la piste d'activité Birdview.
- * Ordonné selon le cycle de vie : envoi → réception → engagement → action document.
- */
-const birdviewActivityCatalog: Array<{
-  code: TimelineDemoType;
-  labelFr: string;
-  labelEn: string;
-  description: string;
-  Icon: LucideIcon;
-  group: 'Notification' | 'Document';
-}> = [
-  {
-    code: 'notification_send_initiated',
-    labelFr: 'Envoi initié',
-    labelEn: 'Send initiated',
-    description: "L'envoi de la notification a été mis en file d'attente par le système.",
-    Icon: Clock,
-    group: 'Notification',
-  },
-  {
-    code: 'notification_sent',
-    labelFr: 'Notification envoyée',
-    labelEn: 'Notification sent',
-    description: "La notification a été transmise au serveur SMTP.",
-    Icon: Send,
-    group: 'Notification',
-  },
-  {
-    code: 'notification_delivered',
-    labelFr: 'Notification délivrée',
-    labelEn: 'Notification delivered',
-    description: "Le serveur du destinataire a confirmé la réception du message.",
-    Icon: MailCheck,
-    group: 'Notification',
-  },
-  {
-    code: 'notification_failed',
-    labelFr: 'Notification échouée',
-    labelEn: 'Notification failed',
-    description: "L'envoi ou la remise a échoué (bounce, adresse invalide, rejet).",
-    Icon: AlertCircle,
-    group: 'Notification',
-  },
-  {
-    code: 'notification_opened',
-    labelFr: 'Notification ouverte',
-    labelEn: 'Notification opened',
-    description: "Le destinataire a ouvert l'email dans sa messagerie.",
-    Icon: MailOpen,
-    group: 'Notification',
-  },
-  {
-    code: 'notification_clicked',
-    labelFr: 'Notification cliquée',
-    labelEn: 'Notification clicked',
-    description: "Le destinataire a cliqué sur un lien de la notification.",
-    Icon: MousePointerClick,
-    group: 'Notification',
-  },
-  {
-    code: 'notification_complained',
-    labelFr: 'Signalée comme spam',
-    labelEn: 'Marked as spam',
-    description: "Le destinataire a signalé le message comme indésirable.",
-    Icon: ShieldAlert,
-    group: 'Notification',
-  },
-  {
-    code: 'document_viewed',
-    labelFr: 'Document consulté',
-    labelEn: 'Document viewed',
-    description: "Le document a été ouvert depuis le portail investisseur.",
-    Icon: Eye,
-    group: 'Document',
-  },
-  {
-    code: 'document_downloaded',
-    labelFr: 'Document téléchargé',
-    labelEn: 'Document downloaded',
-    description: "Le document a été téléchargé localement par le destinataire.",
-    Icon: Download,
-    group: 'Document',
-  },
-  {
-    code: 'document_validated',
-    labelFr: 'Document validé',
-    labelEn: 'Document validated',
-    description: "Le destinataire a validé le document (acceptation, accusé de lecture).",
-    Icon: FileCheck,
-    group: 'Document',
-  },
-];
+type TimelineDemoType = BirdviewActivityEventCode;
+const timelineDemoTypes = birdviewActivityTypes;
 
 const timelineDemoIso = (daysAgo: number, h: number, m: number) => {
   const date = new Date();
@@ -1051,7 +932,7 @@ export function DesignSystemPage() {
               Catalogue des événements — piste d&apos;activité Birdview
             </p>
             <p className="text-xs text-[#4F6166] dark:text-[#9DB2AE] mt-0.5">
-              Référentiel des types supportés, libellés FR / EN et icône associée. Ordonnés selon le cycle de vie (envoi → réception → engagement → action document).
+              Référentiel des types supportés, libellés FR / EN, icône Font Awesome et code associé. Ordonnés selon le cycle de vie (envoi → réception → engagement → action document).
             </p>
           </div>
           <div className="overflow-x-auto">
@@ -1059,7 +940,8 @@ export function DesignSystemPage() {
               <TableHeader>
                 <TableRow>
                   <TableHead className="w-12">ICÔNE</TableHead>
-                  <TableHead>CODE</TableHead>
+                  <TableHead>CODE FA</TableHead>
+                  <TableHead>CODE ÉVÉNEMENT</TableHead>
                   <TableHead>LIBELLÉ FR</TableHead>
                   <TableHead>LIBELLÉ EN</TableHead>
                   <TableHead>GROUPE</TableHead>
@@ -1067,12 +949,17 @@ export function DesignSystemPage() {
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {birdviewActivityCatalog.map(({ code, labelFr, labelEn, description, Icon, group }) => (
+                {birdviewActivityCatalog.map(({ code, labelFr, labelEn, description, faIcon, faCode, group }) => (
                   <TableRow key={code}>
                     <TableCell>
                       <div className="w-8 h-8 rounded-md bg-[#F1F5F4] dark:bg-[#1C2624] flex items-center justify-center">
-                        <Icon className="w-4 h-4 text-[#456B6C]" />
+                        <FontAwesomeIcon icon={faIcon} className="w-4 h-4 text-[#456B6C]" />
                       </div>
+                    </TableCell>
+                    <TableCell>
+                      <code className="text-xs px-1.5 py-0.5 rounded bg-[#F1F5F4] dark:bg-[#1C2624] text-[#2E4F4F] dark:text-[#9DB2AE]">
+                        {faCode}
+                      </code>
                     </TableCell>
                     <TableCell>
                       <code className="text-xs px-1.5 py-0.5 rounded bg-[#F1F5F4] dark:bg-[#1C2624] text-[#1F3137] dark:text-[#E8F0EE]">

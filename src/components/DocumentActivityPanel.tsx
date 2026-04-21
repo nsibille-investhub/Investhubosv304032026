@@ -4,40 +4,25 @@ import {
   X,
   Zap,
   Eye,
-  MailOpen,
-  MailCheck,
   Send,
   FileText,
-  FileCheck,
-  AlertCircle,
-  MousePointerClick,
   Users,
   CheckCircle2,
-  Download,
-  Clock,
-  ShieldAlert,
 } from 'lucide-react';
 import { Button } from './ui/button';
 import { cn } from './ui/utils';
 import {
   Timeline,
   type TimelineEvent,
-  type TimelineTypeMap,
   type TimelineCsvColumn,
 } from './ui/timeline';
 import { DocumentRelaunchModal } from './DocumentRelaunchModal';
+import {
+  birdviewActivityTypes,
+  type BirdviewActivityEventCode,
+} from '../utils/birdviewActivityCatalog';
 
-type ActivityType =
-  | 'notification_send_initiated'
-  | 'notification_sent'
-  | 'notification_delivered'
-  | 'notification_failed'
-  | 'notification_opened'
-  | 'notification_clicked'
-  | 'notification_complained'
-  | 'document_viewed'
-  | 'document_downloaded'
-  | 'document_validated';
+type ActivityType = BirdviewActivityEventCode;
 
 type UserType = 'Investor' | 'Contact' | 'Advisor';
 
@@ -133,18 +118,7 @@ const generateNominatifMockActivities = (): ActivitySource[] => [
 // Timeline type descriptors (shared icon + label map)
 // ---------------------------------------------------------------------------
 
-const activityTypes: TimelineTypeMap<ActivityType> = {
-  notification_send_initiated: { label: "Envoi initié",           Icon: Clock },
-  notification_sent:           { label: 'Notification envoyée',   Icon: Send },
-  notification_delivered:      { label: 'Notification délivrée',  Icon: MailCheck },
-  notification_failed:         { label: 'Notification échouée',   Icon: AlertCircle },
-  notification_opened:         { label: 'Notification ouverte',   Icon: MailOpen },
-  notification_clicked:        { label: 'Notification cliquée',   Icon: MousePointerClick },
-  notification_complained:     { label: 'Signalée comme spam',    Icon: ShieldAlert },
-  document_viewed:             { label: 'Document consulté',      Icon: Eye },
-  document_downloaded:         { label: 'Document téléchargé',    Icon: Download },
-  document_validated:          { label: 'Document validé',        Icon: FileCheck },
-};
+const activityTypes = birdviewActivityTypes;
 
 const userTypeLabel: Record<UserType, string> = {
   Investor: 'Investisseur',
