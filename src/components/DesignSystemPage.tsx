@@ -24,7 +24,6 @@ import {
   RefreshCw,
   Clipboard,
   UserPlus,
-  MessageCircle,
   CircleHelp,
   Briefcase,
   Globe,
@@ -44,8 +43,6 @@ import {
   BookOpen,
   Database,
   Table,
-  Filter,
-  Columns3,
   ArrowUpDown,
   Eye,
   Download,
@@ -53,7 +50,6 @@ import {
   FileCheck,
   ShieldAlert,
   Plus,
-  MoreVertical,
   Copy,
   ChevronRight,
   Send,
@@ -67,23 +63,8 @@ import {
 import * as React from 'react';
 import { motion } from 'motion/react';
 import logoInvestHub from 'figma:asset/2a84b4397fac896d4ed7e7f4faff09c957de9a6b.png';
-import { Button } from './ui/button';
-import { Input } from './ui/input';
-import { Checkbox } from './ui/checkbox';
-import { Switch } from './ui/switch';
 import { Badge } from './ui/badge';
-import { Avatar, AvatarFallback } from './ui/avatar';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from './ui/card';
-import { Alert, AlertDescription, AlertTitle } from './ui/alert';
-import { Skeleton } from './ui/skeleton';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from './ui/tabs';
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from './ui/select';
 import {
   Table as UITable,
   TableBody,
@@ -102,9 +83,6 @@ import { OriginStructureCell } from './OriginStructureCell';
 import { PartnerCard } from './PartnerCard';
 import { CheckIndicator } from './CheckIndicator';
 import { CalledAmountCell } from './CalledAmountCell';
-import { FilterCard } from './FilterCard';
-import { FilterBar, type FilterConfig } from './FilterBar';
-import { FolderSelectionTreeviewDropdown } from './DocumentAddModal';
 import { GenericAudienceCard } from './GenericAudienceCard';
 import { SpecificAudience } from './SpecificAudience';
 import { FolderSpaceDialogPreview } from './ui/folder-space-dialog';
@@ -258,21 +236,6 @@ const functionalColors = [
   { name: 'Rouge interdiction', usage: 'Erreurs / suppression / blocage', hex: '#DC2626', tailwind: 'red-600', bg: 'bg-red-600' },
   { name: 'Orange warning', usage: 'Avertissement / attention', hex: '#F97316', tailwind: 'orange-500', bg: 'bg-orange-500' },
 ];
-
-const folderSelectorDemoOptions = (() => {
-  const options = [{ id: 'root', label: 'Racine / Documents' }];
-  for (let branch = 1; branch <= 12; branch += 1) {
-    let currentPath = 'Racine / Documents';
-    for (let level = 1; level <= 5; level += 1) {
-      currentPath = `${currentPath} / Dossier ${branch}.${level}`;
-      options.push({
-        id: `branch-${branch}-level-${level}`,
-        label: currentPath,
-      });
-    }
-  }
-  return options;
-})();
 
 const iconFamilies: Array<{
   family: string;
@@ -940,54 +903,6 @@ function ItemSelectorPreview() {
 }
 
 export function DesignSystemPage() {
-  const [switchOn, setSwitchOn] = React.useState(true);
-  const [designSystemFolderId, setDesignSystemFolderId] = React.useState('branch-7-level-5');
-  const [activeFilterCard, setActiveFilterCard] = React.useState('all');
-  const [filterDemoSearch, setFilterDemoSearch] = React.useState('');
-  const [filterDemoValues, setFilterDemoValues] = React.useState<Record<string, string | string[]>>({});
-  const filterDemoConfigs: FilterConfig[] = React.useMemo(() => [
-    {
-      id: 'status',
-      label: 'Statut',
-      type: 'select',
-      isPrimary: true,
-      options: [
-        { value: 'prospect', label: 'Prospect' },
-        { value: 'discussion', label: 'En discussion' },
-        { value: 'relation', label: 'En relation' },
-      ],
-    },
-    {
-      id: 'partner',
-      label: 'Partenaire',
-      type: 'select',
-      isPrimary: true,
-      options: [
-        { value: 'direct', label: 'Direct' },
-        { value: 'cgp', label: 'CGP Excellence' },
-        { value: 'fo', label: 'Family Office' },
-      ],
-    },
-    {
-      id: 'fund',
-      label: 'Fonds',
-      type: 'select',
-      options: [
-        { value: 'future', label: 'FutureInvest Fund' },
-        { value: 'alpha', label: 'Alpha Growth Fund' },
-      ],
-    },
-    {
-      id: 'type',
-      label: 'Type',
-      type: 'select',
-      options: [
-        { value: 'individual', label: 'Individual' },
-        { value: 'corporate', label: 'Corporate' },
-      ],
-    },
-  ], []);
-
   return (
     <div className="flex-1 overflow-auto px-6 py-6 space-y-6 bg-[#F8FAFA] dark:bg-[#0B0D0D]">
       <section className="rounded-2xl border border-[#D7E0DD] dark:border-[#1F2D2A] bg-white dark:bg-[#101615] p-6">
@@ -996,258 +911,6 @@ export function DesignSystemPage() {
         <p className="mt-2 text-sm text-[#4F6166] dark:text-[#9DB2AE] max-w-4xl">
           Bibliothèque complète des composants. On commence par la couche tableaux (data-intensive), puis les composants coeur.
         </p>
-      </section>
-
-      <section className="rounded-2xl border border-[#D7E0DD] dark:border-[#1F2D2A] bg-white dark:bg-[#101615] p-6">
-        <h2 className="text-lg font-semibold text-[#1F3137] dark:text-[#E8F0EE] mb-1">Storybook intégré (Foundations)</h2>
-        <p className="text-sm text-[#4F6166] dark:text-[#9DB2AE] mb-4">
-          Les composants sont affichés ici directement (pas de page Storybook séparée).
-        </p>
-        <div className="grid lg:grid-cols-2 gap-4">
-          <Card>
-            <CardHeader><CardTitle>Navigation</CardTitle></CardHeader>
-            <CardContent className="space-y-3">
-              <Tabs defaultValue="breadcrumb">
-                <TabsList>
-                  <TabsTrigger value="breadcrumb">Breadcrumb</TabsTrigger>
-                  <TabsTrigger value="tabs">Tabs</TabsTrigger>
-                </TabsList>
-                <TabsContent value="breadcrumb">
-                  <div className="flex items-center gap-2 text-[#8B96A8]"><span>InvestHub OS</span><span>/</span><span className="font-semibold text-[#1F2937]">Investisseurs</span></div>
-                </TabsContent>
-                <TabsContent value="tabs">
-                  <Tabs defaultValue="foundation">
-                    <TabsList>
-                      <TabsTrigger value="foundation">Foundation</TabsTrigger>
-                      <TabsTrigger value="inputs">Inputs</TabsTrigger>
-                    </TabsList>
-                    <TabsContent value="foundation">Tokens, couleurs, typo.</TabsContent>
-                    <TabsContent value="inputs">Boutons, champs, filtres.</TabsContent>
-                  </Tabs>
-                </TabsContent>
-              </Tabs>
-            </CardContent>
-          </Card>
-
-          <Card>
-            <CardHeader><CardTitle>Inputs & Actions</CardTitle></CardHeader>
-            <CardContent className="space-y-3">
-              <Input placeholder="Rechercher un investisseur..." />
-              <div className="grid grid-cols-3 gap-2">
-                <Select defaultValue="structure"><SelectTrigger><SelectValue /></SelectTrigger><SelectContent><SelectItem value="structure">Structure</SelectItem></SelectContent></Select>
-                <Select defaultValue="segment"><SelectTrigger><SelectValue /></SelectTrigger><SelectContent><SelectItem value="segment">Segment</SelectItem></SelectContent></Select>
-                <Button variant="secondary">Filtres</Button>
-              </div>
-              <div className="flex gap-2 flex-wrap">
-                <Button className="bg-gradient-to-r from-black to-[#0D4A5A] text-white"><Plus className="w-4 h-4" />Nouvel Investisseur</Button>
-                <Button variant="secondary" className="w-10 h-10 p-0"><MoreVertical className="w-4 h-4" /></Button>
-                <Checkbox defaultChecked />
-                <Switch checked={switchOn} onCheckedChange={setSwitchOn} />
-              </div>
-            </CardContent>
-          </Card>
-
-          <Card className="lg:col-span-2">
-            <CardHeader><CardTitle>Data Display</CardTitle></CardHeader>
-            <CardContent>
-              <UITable>
-                <TableHeader>
-                  <TableRow>
-                    <TableHead>NOM</TableHead>
-                    <TableHead>STATUT</TableHead>
-                    <TableHead>DATE</TableHead>
-                    <TableHead>CAPITAL</TableHead>
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  <TableRow>
-                    <TableCell>
-                      <div className="flex flex-col gap-1 max-w-[300px]">
-                        <motion.div
-                          whileHover={{ x: 2 }}
-                          title="NextGen Ventures"
-                          className="text-sm font-medium cursor-pointer transition-all truncate"
-                        >
-                          <ClickableText>NextGen Ventures</ClickableText>
-                        </motion.div>
-                        <div className="flex items-center gap-1.5">
-                          <span className="text-xs text-gray-500">ID: 1</span>
-                          <button className="p-0.5 hover:bg-gray-100 rounded transition-colors">
-                            <Copy className="w-3 h-3 text-gray-400" />
-                          </button>
-                        </div>
-                      </div>
-                    </TableCell>
-                    <TableCell><Badge className="bg-emerald-50 text-emerald-800 border-emerald-200">En relation</Badge></TableCell>
-                    <TableCell>27/12/2023</TableCell>
-                    <TableCell className="font-semibold">1 141 699 €</TableCell>
-                  </TableRow>
-                </TableBody>
-              </UITable>
-              <Alert className="mt-3">
-                <AlertTitle>Aucun investisseur trouvé</AlertTitle>
-                <AlertDescription>Les filtres appliqués ne correspondent à aucun investisseur.</AlertDescription>
-              </Alert>
-            </CardContent>
-          </Card>
-
-          <Card>
-            <CardHeader><CardTitle>Filter Card</CardTitle></CardHeader>
-            <CardContent>
-              <div className="grid grid-cols-2 lg:grid-cols-4 gap-2">
-                <FilterCard
-                  status="prospect"
-                  activeStatus={activeFilterCard}
-                  onStatusChange={setActiveFilterCard}
-                  label="Prospect"
-                  icon={UserPlus}
-                  total={32}
-                  metricLabel="Total investi"
-                  metricValue="€83.7M"
-                  averageValue="€2.1M"
-                />
-                <FilterCard
-                  status="discussion"
-                  activeStatus={activeFilterCard}
-                  onStatusChange={setActiveFilterCard}
-                  label="En discussion"
-                  icon={MessageCircle}
-                  total={39}
-                  metricLabel="Total investi"
-                  metricValue="€97.7M"
-                  averageValue="€2.4M"
-                />
-                <FilterCard
-                  status="relation"
-                  activeStatus={activeFilterCard}
-                  onStatusChange={setActiveFilterCard}
-                  label="En relation"
-                  icon={Users}
-                  total={40}
-                  metricLabel="Total investi"
-                  metricValue="€181.4M"
-                  averageValue="€1.6M"
-                />
-                <FilterCard
-                  status="all"
-                  activeStatus={activeFilterCard}
-                  onStatusChange={setActiveFilterCard}
-                  label="Tous"
-                  icon={Filter}
-                  total={111}
-                  metricLabel="Total investi"
-                  metricValue="€181.4M"
-                  averageValue="€1.6M"
-                />
-              </div>
-            </CardContent>
-          </Card>
-
-          <Card>
-            <CardHeader><CardTitle>Filter</CardTitle></CardHeader>
-            <CardContent>
-              <FilterBar
-                searchValue={filterDemoSearch}
-                onSearchChange={setFilterDemoSearch}
-                searchPlaceholder="Rechercher..."
-                filters={filterDemoConfigs}
-                activeFilters={filterDemoValues}
-                onFilterChange={(filterId, value) =>
-                  setFilterDemoValues((prev) => {
-                    const next = { ...prev };
-                    if (value === null || value === '' || (Array.isArray(value) && value.length === 0)) {
-                      delete next[filterId];
-                    } else {
-                      next[filterId] = value;
-                    }
-                    return next;
-                  })
-                }
-                onClearAll={() => {
-                  setFilterDemoValues({});
-                  setFilterDemoSearch('');
-                }}
-              />
-            </CardContent>
-          </Card>
-        </div>
-      </section>
-
-      <section className="rounded-2xl border border-[#D7E0DD] dark:border-[#1F2D2A] bg-white dark:bg-[#101615] p-6">
-        <div className="flex items-center gap-2 mb-4">
-          <Columns3 className="w-4 h-4 text-[#3F7358]" />
-          <h2 className="text-lg font-semibold text-[#1F3137] dark:text-[#E8F0EE]">Composants affichés — Inputs & Navigation</h2>
-        </div>
-        <div className="grid lg:grid-cols-2 gap-4">
-          <Card>
-            <CardHeader>
-              <CardTitle>Inputs</CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-3">
-              <Input placeholder="Nom du composant" />
-              <Select defaultValue="stable">
-                <SelectTrigger>
-                  <SelectValue placeholder="Choisir un état" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="stable">Stable</SelectItem>
-                  <SelectItem value="beta">Beta</SelectItem>
-                  <SelectItem value="deprecated">Deprecated</SelectItem>
-                </SelectContent>
-              </Select>
-              <div className="flex items-center gap-3">
-                <Checkbox defaultChecked />
-                <Switch checked={switchOn} onCheckedChange={setSwitchOn} />
-              </div>
-              <div className="flex gap-2 flex-wrap">
-                <Button variant="primary">Primary</Button>
-                <Button variant="secondary">Secondary</Button>
-                <Button variant="ghost">Ghost</Button>
-                <Button variant="danger">Danger</Button>
-              </div>
-            </CardContent>
-          </Card>
-
-          <Card>
-            <CardHeader>
-              <CardTitle>Navigation & feedback</CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-3">
-              <Tabs defaultValue="foundation">
-                <TabsList>
-                  <TabsTrigger value="foundation">Foundation</TabsTrigger>
-                  <TabsTrigger value="inputs">Inputs</TabsTrigger>
-                </TabsList>
-                <TabsContent value="foundation" className="text-sm text-muted-foreground">Tokens, couleurs, typo.</TabsContent>
-                <TabsContent value="inputs" className="text-sm text-muted-foreground">Boutons, champs, sélection.</TabsContent>
-              </Tabs>
-              <Alert>
-                <AlertTitle>Documentation active</AlertTitle>
-                <AlertDescription>Chaque composant est affiché directement dans cette page.</AlertDescription>
-              </Alert>
-              <div className="flex items-center gap-2">
-                <Avatar><AvatarFallback>IH</AvatarFallback></Avatar>
-                <Badge variant="outline">Avatar</Badge>
-                <Badge variant="destructive">Error</Badge>
-              </div>
-              <Skeleton className="h-8 w-full" />
-            </CardContent>
-          </Card>
-        </div>
-      </section>
-
-      <section className="rounded-2xl border border-[#D7E0DD] dark:border-[#1F2D2A] bg-white dark:bg-[#101615] p-6">
-        <h2 className="text-lg font-semibold text-[#1F3137] dark:text-[#E8F0EE] mb-2">Composant GED — folder-selection-treeview-dropdown</h2>
-        <p className="text-sm text-[#4F6166] dark:text-[#9DB2AE] mb-4">
-          Sélecteur GED affiché directement dans le Design System (sans drawer), avec hover sur la valeur et hiérarchie occidentale.
-        </p>
-        <div className="max-w-[300px]">
-          <FolderSelectionTreeviewDropdown
-            value={designSystemFolderId}
-            onChange={setDesignSystemFolderId}
-            folderOptions={folderSelectorDemoOptions}
-          />
-        </div>
       </section>
 
       <section className="rounded-2xl border border-[#D7E0DD] dark:border-[#1F2D2A] bg-white dark:bg-[#101615] p-6">
