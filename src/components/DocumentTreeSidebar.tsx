@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
 import { ChevronRight, Folder, FolderOpen } from 'lucide-react';
 import { Document } from '../utils/documentMockData';
+import { useTranslation } from '../utils/languageContext';
 
 interface DocumentTreeSidebarProps {
   documents: Document[];
@@ -119,6 +120,7 @@ function TreeItem({ document, level, currentFolderId, onFolderSelect, parentPath
 }
 
 export function DocumentTreeSidebar({ documents, currentFolderId, onFolderSelect, searchTerm = '' }: DocumentTreeSidebarProps) {
+  const { t } = useTranslation();
   return (
     <div className="h-full flex flex-col bg-white border-r border-gray-200">
       {/* Tree */}
@@ -136,7 +138,7 @@ export function DocumentTreeSidebar({ documents, currentFolderId, onFolderSelect
           style={currentFolderId === null ? { backgroundColor: '#EEF1F7', color: '#000E2B' } : undefined}
         >
           <Folder className={`w-4 h-4 ${currentFolderId === null ? '' : 'text-gray-400'}`} style={currentFolderId === null ? { color: '#000E2B' } : undefined} />
-          <span className="text-sm">Tous les documents</span>
+          <span className="text-sm">{t('ged.tree.allDocuments')}</span>
         </motion.div>
 
         {/* Folders tree */}

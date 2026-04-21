@@ -23,6 +23,7 @@ import { AudienceCounterCards } from './AudienceCounter';
 import { SegmentsMultiSelect, FundSingleSelect, ShareClassSingleSelect } from './ui/targeting-selects';
 import { AutocompleteSingleSelect } from './ui/autocomplete-select';
 import { Building2 } from 'lucide-react';
+import { useTranslation } from '../utils/languageContext';
 
 function formatFrenchDate(dateStr: string): string {
   const days = ['dimanche', 'lundi', 'mardi', 'mercredi', 'jeudi', 'vendredi', 'samedi'];
@@ -233,6 +234,7 @@ export function FolderSelectionTreeviewDropdown({
   disabled = false,
   initialOpen = false,
 }: FolderSelectionTreeviewDropdownProps) {
+  const { t } = useTranslation();
   const [open, setOpen] = useState(initialOpen);
   const [folderSearch, setFolderSearch] = useState('');
   const [expandedFolderIds, setExpandedFolderIds] = useState<Set<string>>(new Set());
@@ -243,7 +245,7 @@ export function FolderSelectionTreeviewDropdown({
   }, [initialOpen]);
 
   const folderTreeData = useMemo(() => {
-    const rootOption = folderOptions.find((folder) => folder.id === 'root') || { id: 'root', label: 'Racine / Documents' };
+    const rootOption = folderOptions.find((folder) => folder.id === 'root') || { id: 'root', label: t('ged.dataRoom.folderDefaults.root') };
     const rootNode: FolderTreeNode = {
       id: rootOption.id,
       name: rootOption.label,
@@ -298,7 +300,7 @@ export function FolderSelectionTreeviewDropdown({
 
     const getSelectedBreadcrumbDisplay = (nodeId: string) => {
       const node = folderMap.get(nodeId);
-      if (!node) return 'Choisir un dossier';
+      if (!node) return t('ged.addModal.pickFolder');
       if (node.id === rootNode.id) return rootNode.name;
       const partsFromRoot = node.fullLabel.split(' / ').filter(Boolean);
       if (partsFromRoot.length <= 3) {
@@ -309,7 +311,7 @@ export function FolderSelectionTreeviewDropdown({
 
     const getSelectedBreadcrumbHover = (nodeId: string) => {
       const node = folderMap.get(nodeId);
-      if (!node) return 'Choisir un dossier';
+      if (!node) return t('ged.addModal.pickFolder');
       if (node.id === rootNode.id) return rootNode.name;
       const partsFromRoot = node.fullLabel.split(' / ').filter(Boolean);
       return partsFromRoot.join(' / ');
@@ -378,7 +380,7 @@ export function FolderSelectionTreeviewDropdown({
           <Input
             value={folderSearch}
             onChange={(event) => setFolderSearch(event.target.value)}
-            placeholder="Rechercher un dossier..."
+            placeholder={t('ged.addModal.searchFolder')}
             className="h-9 border-0 bg-transparent shadow-none focus-visible:ring-0"
           />
         </div>
@@ -404,7 +406,7 @@ export function FolderSelectionTreeviewDropdown({
                         onClick={() => hasChildren && toggleFolderExpansion(node.id)}
                         className="h-7 w-5 flex items-center justify-center text-gray-500 hover:text-gray-700 disabled:opacity-0"
                         disabled={!hasChildren}
-                        aria-label={hasChildren ? `Déplier ${node.name}` : undefined}
+                        aria-label={hasChildren ? t('ged.addModal.expandAria', { name: node.name }) : undefined}
                         style={{ marginLeft: `${depth * 14}px` }}
                       >
                         {hasChildren ? (
@@ -439,7 +441,7 @@ export function FolderSelectionTreeviewDropdown({
             };
 
             const renderedTree = renderTreeNode(folderTreeData.rootNode, 0);
-            return renderedTree ?? <p className="text-sm text-gray-500 py-6 text-center">Aucun dossier trouvé.</p>;
+            return renderedTree ?? <p className="text-sm text-gray-500 py-6 text-center">{t('ged.addModal.noFolder')}</p>;
           })()}
         </div>
       </PopoverContent>
@@ -448,6 +450,7 @@ export function FolderSelectionTreeviewDropdown({
 }
 
 export function DocumentAddModal({ isOpen, onClose, folderOptions, defaultFolderId, document, initialFolderPickerOpen = false, folderInheritedRestrictions }: DocumentAddModalProps) {
+  const { t } = useTranslation();
   const isDetailMode = !!document;
   const [versions, setVersions] = useState<DocumentVersion[]>(defaultVersions);
   const [addDate, setAddDate] = useState(new Date().toISOString().slice(0, 10));
@@ -634,18 +637,18 @@ export function DocumentAddModal({ isOpen, onClose, folderOptions, defaultFolder
 
   const handleSubmit = () => {
     if (!versions.some((version) => version.name.trim() && version.fileName.trim())) {
-      toast.error('Ajouter au moins une version FR ou EN du document.');
+      toast.error(t('ged.addModal.errors.addOneVersion'));
       return;
     }
 
     if (validationTeams.length === 0) {
-      toast.error('Sélectionnez au moins une équipe de validation.');
+      toast.error(t('ged.addModal.errors.pickTeam'));
       return;
     }
 
-    const folderLabel = folderOptions.find((folder) => folder.id === parentFolderId)?.label || 'Dossier courant';
-    toast.success('Document prêt à être ajouté', {
-      description: `${audience.investors} investisseur(s), ${audience.contacts} contact(s) • ${folderLabel}`,
+    const folderLabel = folderOptions.find((folder) => folder.id === parentFolderId)?.label || t('ged.addModal.currentFolder');
+    toast.success(t('ged.addModal.docReadyToast'), {
+      description: t('ged.addModal.docReadyDesc', { investors: audience.investors, contacts: audience.contacts, folder: folderLabel }),
     });
     onClose();
   };
@@ -665,7 +668,7 @@ export function DocumentAddModal({ isOpen, onClose, folderOptions, defaultFolder
 
   const handleExportScope = () => {
     if (targetedInvestors.length === 0) {
-      toast.error('Aucun investisseur ciblé à exporter.');
+      toast.error(t('ged.addModal.errors.noInvestorToExport'));
       return;
     }
     const rows = ['Investisseur,Fonds,Segment,Contact,Rôle'];
@@ -687,9 +690,9 @@ export function DocumentAddModal({ isOpen, onClose, folderOptions, defaultFolder
       <SheetContent side="right" className="h-full p-0 gap-0">
         <SheetHeader className="px-6 py-5 border-b bg-white">
           <div>
-            <SheetTitle className="text-[26px] leading-8">{document ? 'Détail du document' : 'Ajouter un document'}</SheetTitle>
+            <SheetTitle className="text-[26px] leading-8">{document ? t('ged.addModal.detailTitle') : t('ged.addModal.addTitle')}</SheetTitle>
           <SheetDescription className="mt-1 text-[15px]">
-            Créez des versions FR/EN, configurez l'audience et le workflow de validation.
+            {t('ged.addModal.description')}
           </SheetDescription>
           </div>
         </SheetHeader>
@@ -697,8 +700,8 @@ export function DocumentAddModal({ isOpen, onClose, folderOptions, defaultFolder
         <div className="flex-1 overflow-y-auto px-6 py-5 space-y-5">
           <section className="space-y-3 rounded-2xl p-4 border" style={{ backgroundColor: '#EEF1F7', borderColor: '#000E2B1F' }}>
             <div>
-              <p className="font-semibold flex items-center gap-2" style={{ color: '#000E2B' }}><FileText className="w-5 h-5" style={{ color: '#000E2B' }} /> Document</p>
-              <p className="text-sm text-slate-600">Versions, fichiers et emplacement du document.</p>
+              <p className="font-semibold flex items-center gap-2" style={{ color: '#000E2B' }}><FileText className="w-5 h-5" style={{ color: '#000E2B' }} /> {t('ged.addModal.sectionDocument')}</p>
+              <p className="text-sm text-slate-600">{t('ged.addModal.sectionDocumentDesc')}</p>
             </div>
             <div className="rounded-2xl border bg-white p-4 md:p-5" style={{ borderColor: '#000E2B33' }}>
               <Tabs defaultValue="fr" className="w-full">
@@ -712,18 +715,18 @@ export function DocumentAddModal({ isOpen, onClose, folderOptions, defaultFolder
                     <TabsContent key={language} value={language} className="mt-4">
                       <div className="grid grid-cols-1 gap-4">
                         <div className="space-y-2">
-                          <Label>Nom du document ({language.toUpperCase()})</Label>
+                          <Label>{t('ged.addModal.nameLabel', { lang: language.toUpperCase() })}</Label>
                           <Input
                             value={version.name}
                             onChange={(event) => updateVersion(language, { name: event.target.value })}
-                            placeholder={`Nom ${language.toUpperCase()}`}
+                            placeholder={t('ged.addModal.namePlaceholder', { lang: language.toUpperCase() })}
                             className="h-11"
                             disabled={isDetailMode}
                           />
                         </div>
                         <div className="space-y-2">
                           <Label>
-                            {language === 'fr' ? 'Ajouter un document (FR)' : 'Ajouter un document (EN) optionnel'}
+                            {language === 'fr' ? t('ged.addModal.addFileFr') : t('ged.addModal.addFileEn')}
                           </Label>
                           <input
                             ref={(el) => { fileInputRefs.current[language] = el; }}
@@ -749,8 +752,8 @@ export function DocumentAddModal({ isOpen, onClose, folderOptions, defaultFolder
                             {!version.fileName ? (
                               <div className="flex flex-col items-center justify-center text-center gap-2 text-slate-600">
                                 <UploadCloud className="w-8 h-8 text-slate-500" />
-                                <p className="font-medium">Glissez-déposez ou cliquez pour choisir un fichier</p>
-                                <p className="text-xs text-slate-500">PDF, DOCX, XLSX, PNG... max 10MB</p>
+                                <p className="font-medium">{t('ged.addModal.dropHint')}</p>
+                                <p className="text-xs text-slate-500">{t('ged.addModal.dropHintDesc')}</p>
                               </div>
                             ) : (
                               <div className="flex items-center justify-between gap-3">
@@ -764,7 +767,7 @@ export function DocumentAddModal({ isOpen, onClose, folderOptions, defaultFolder
                                 )}
                                 <div>
                                   <p className="font-medium text-slate-900">{version.fileName}</p>
-                                  <p className="text-xs text-slate-500">Fichier prêt à être envoyé</p>
+                                  <p className="text-xs text-slate-500">{t('ged.addModal.fileReady')}</p>
                                 </div>
                                 </div>
                                 <div className="flex items-center gap-2">
@@ -778,7 +781,7 @@ export function DocumentAddModal({ isOpen, onClose, folderOptions, defaultFolder
                                     }}
                                   >
                                     <Eye className="w-3.5 h-3.5 mr-1.5" />
-                                    Aperçu
+                                    {t('ged.addModal.preview')}
                                   </Button>
                                   {!isDetailMode && (
                                     <Button
@@ -792,7 +795,7 @@ export function DocumentAddModal({ isOpen, onClose, folderOptions, defaultFolder
                                       }}
                                     >
                                       <Trash2 className="w-3.5 h-3.5 mr-1.5" />
-                                      Supprimer
+                                      {t('ged.addModal.delete')}
                                     </Button>
                                   )}
                                 </div>
@@ -800,10 +803,10 @@ export function DocumentAddModal({ isOpen, onClose, folderOptions, defaultFolder
                             )}
                           </div>
                           {isDetailMode && language === 'fr' && (
-                            <p className="text-xs text-slate-500">La version FR existante ne peut pas être remplacée.</p>
+                            <p className="text-xs text-slate-500">{t('ged.addModal.frReadonlyHint')}</p>
                           )}
                           {isDetailMode && language === 'en' && !version.fileName && (
-                            <p className="text-xs text-slate-500">Vous pouvez uniquement ajouter la version anglaise.</p>
+                            <p className="text-xs text-slate-500">{t('ged.addModal.enAddOnlyHint')}</p>
                           )}
                         </div>
                       </div>
@@ -814,11 +817,11 @@ export function DocumentAddModal({ isOpen, onClose, folderOptions, defaultFolder
             </div>
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 pt-2">
               <div className="space-y-2">
-                <Label>Date d'ajout</Label>
+                <Label>{t('ged.addModal.addDateLabel')}</Label>
                 <Input type="date" className="h-11" value={addDate} onChange={(event) => setAddDate(event.target.value)} disabled={isDetailMode} />
               </div>
               <div className="space-y-2">
-                <Label>Dossier parent (dans l'espace courant)</Label>
+                <Label>{t('ged.addModal.parentFolderLabel')}</Label>
                 <FolderSelectionTreeviewDropdown
                   value={parentFolderId}
                   onChange={setParentFolderId}
@@ -832,37 +835,37 @@ export function DocumentAddModal({ isOpen, onClose, folderOptions, defaultFolder
 
           <section className="space-y-4 rounded-2xl p-4 border" style={{ backgroundColor: '#EEF1F7', borderColor: '#000E2B1F' }}>
             <div>
-              <p className="font-semibold flex items-center gap-2" style={{ color: '#000E2B' }}><Users2 className="w-5 h-5" style={{ color: '#000E2B' }} /> Audience</p>
-              <p className="text-sm text-slate-600">Configuration des critères de ciblage.</p>
+              <p className="font-semibold flex items-center gap-2" style={{ color: '#000E2B' }}><Users2 className="w-5 h-5" style={{ color: '#000E2B' }} /> {t('ged.addModal.sectionAudience')}</p>
+              <p className="text-sm text-slate-600">{t('ged.addModal.sectionAudienceDesc')}</p>
             </div>
             {hasParentFolderRestrictions && (
               <div className="rounded-xl border border-amber-200 bg-amber-50 p-3 space-y-2">
                 <div className="flex items-center gap-2 text-sm font-semibold text-amber-900">
                   <Lock className="w-4 h-4 text-amber-600" />
-                  Restrictions du dossier parent
+                  {t('ged.addModal.parentRestrictions')}
                 </div>
                 <p className="text-xs text-amber-800">
-                  Le ciblage de ce document sera automatiquement limité par les restrictions héritées du dossier parent.
+                  {t('ged.addModal.parentRestrictionsHint')}
                 </p>
                 <div className="flex flex-wrap gap-2">
                   {parentFolderRestrictions.fund && (
                     <div className="inline-flex items-center gap-1.5 rounded-md border border-amber-300 bg-white px-2 py-1 text-xs">
                       <Building2 className="w-3.5 h-3.5 text-amber-600" />
-                      <span className="text-amber-700 font-medium">Fonds restreint</span>
+                      <span className="text-amber-700 font-medium">{t('ged.addModal.restrictedFund')}</span>
                       <span className="text-amber-900 font-semibold">{parentFolderRestrictions.fund}</span>
                     </div>
                   )}
                   {parentFolderRestrictions.shareClass && (
                     <div className="inline-flex items-center gap-1.5 rounded-md border border-amber-300 bg-white px-2 py-1 text-xs">
                       <Building2 className="w-3.5 h-3.5 text-amber-600" />
-                      <span className="text-amber-700 font-medium">Part restreinte</span>
+                      <span className="text-amber-700 font-medium">{t('ged.addModal.restrictedShare')}</span>
                       <span className="text-amber-900 font-semibold">{parentFolderRestrictions.shareClass}</span>
                     </div>
                   )}
                   {parentFolderRestrictions.segments.map((segment) => (
                     <div key={segment} className="inline-flex items-center gap-1.5 rounded-md border border-purple-300 bg-white px-2 py-1 text-xs">
                       <TrendingUp className="w-3.5 h-3.5 text-purple-600" />
-                      <span className="text-purple-700 font-medium">Segment restreint</span>
+                      <span className="text-purple-700 font-medium">{t('ged.addModal.restrictedSegment')}</span>
                       <span className="text-purple-900 font-semibold">{segment}</span>
                     </div>
                   ))}
@@ -870,24 +873,24 @@ export function DocumentAddModal({ isOpen, onClose, folderOptions, defaultFolder
               </div>
             )}
             <div className="flex gap-2 p-1 rounded-xl bg-slate-100 w-fit">
-              <Button variant={audienceMode === 'general' ? 'default' : 'outline'} onClick={() => setAudienceMode('general')}>Document général</Button>
-              <Button variant={audienceMode === 'nominative' ? 'default' : 'outline'} onClick={() => setAudienceMode('nominative')}>Document nominatif</Button>
+              <Button variant={audienceMode === 'general' ? 'default' : 'outline'} onClick={() => setAudienceMode('general')}>{t('ged.addModal.generalDoc')}</Button>
+              <Button variant={audienceMode === 'nominative' ? 'default' : 'outline'} onClick={() => setAudienceMode('nominative')}>{t('ged.addModal.nominativeDoc')}</Button>
             </div>
 
             {audienceMode === 'general' ? (
               <div className="space-y-4 border rounded-2xl p-5 bg-white shadow-sm" style={{ borderColor: '#000E2B33' }}>
                 <div className="space-y-2">
-                  <Label>Segments investisseurs</Label>
+                  <Label>{t('ged.addModal.segmentsLabel')}</Label>
                   <SegmentsMultiSelect
                     value={selectedSegments.includes('all') ? [] : selectedSegments}
                     onChange={(next) => setSelectedSegments(next.length === 0 ? ['all'] : next)}
                     options={SEGMENTS}
-                    placeholder="Tous les segments"
+                    placeholder={t('ged.addModal.allSegments')}
                   />
                 </div>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
                   <div className="space-y-2">
-                    <Label>Fonds</Label>
+                    <Label>{t('ged.addModal.fundLabel')}</Label>
                     <FundSingleSelect
                       value={selectedFund === 'all' ? null : selectedFund}
                       onChange={(next) => {
@@ -895,17 +898,17 @@ export function DocumentAddModal({ isOpen, onClose, folderOptions, defaultFolder
                         setSelectedShareClass('');
                       }}
                       options={FUNDS.filter((f) => f !== 'all')}
-                      placeholder="Tous les fonds"
+                      placeholder={t('ged.addModal.allFunds')}
                     />
                   </div>
                   {selectedFund !== 'all' && (
                     <div className="space-y-2">
-                      <Label>Part du fonds</Label>
+                      <Label>{t('ged.addModal.shareLabel')}</Label>
                       <ShareClassSingleSelect
                         value={selectedShareClass || null}
                         onChange={(next) => setSelectedShareClass(next || '')}
                         options={shareClassOptions}
-                        placeholder="Toutes les parts"
+                        placeholder={t('ged.addModal.allShares')}
                       />
                     </div>
                   )}
@@ -915,7 +918,7 @@ export function DocumentAddModal({ isOpen, onClose, folderOptions, defaultFolder
               <div className="space-y-4 border rounded-2xl p-5 bg-white" style={{ borderColor: '#000E2B1F' }}>
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
                   <div className="space-y-2">
-                    <Label>Investisseur (unique)</Label>
+                    <Label>{t('ged.addModal.investorLabel')}</Label>
                     <AutocompleteSingleSelect
                       value={selectedInvestor || null}
                       onChange={(value) => {
@@ -927,12 +930,12 @@ export function DocumentAddModal({ isOpen, onClose, folderOptions, defaultFolder
                         value: inv.id,
                         label: inv.name,
                       }))}
-                      placeholder="Sélectionner un investisseur"
+                      placeholder={t('ged.addModal.pickInvestor')}
                       icon={UserRound}
                     />
                   </div>
                   <div className="space-y-2">
-                    <Label>Structure (optionnelle)</Label>
+                    <Label>{t('ged.addModal.structureLabel')}</Label>
                     <AutocompleteSingleSelect
                       value={selectedStructureId || null}
                       onChange={(value) => {
@@ -942,15 +945,15 @@ export function DocumentAddModal({ isOpen, onClose, folderOptions, defaultFolder
                       options={structureOptions.map((st) => ({
                         value: st.id,
                         label: st.name,
-                        description: `${st.subscriptions.length} souscription${st.subscriptions.length > 1 ? 's' : ''}`,
+                        description: t(st.subscriptions.length > 1 ? 'ged.addModal.subscriptionsCountMany' : 'ged.addModal.subscriptionsCountOne', { count: st.subscriptions.length }),
                       }))}
-                      placeholder="Toutes les structures"
+                      placeholder={t('ged.addModal.allStructures')}
                       icon={Building2}
                       disabled={!selectedInvestor}
                     />
                   </div>
                   <div className="space-y-2">
-                    <Label>Souscription (optionnelle)</Label>
+                    <Label>{t('ged.addModal.subscriptionLabel')}</Label>
                     <AutocompleteSingleSelect
                       value={selectedSubscription || null}
                       onChange={(value) => setSelectedSubscription(value || '')}
@@ -958,7 +961,7 @@ export function DocumentAddModal({ isOpen, onClose, folderOptions, defaultFolder
                         value: sub,
                         label: sub,
                       }))}
-                      placeholder="Toutes les souscriptions"
+                      placeholder={t('ged.addModal.allSubscriptions')}
                       icon={FileText}
                       disabled={!selectedInvestor}
                     />
@@ -970,13 +973,13 @@ export function DocumentAddModal({ isOpen, onClose, folderOptions, defaultFolder
             <div className="rounded-2xl border p-4 space-y-4" style={{ borderColor: '#000E2B1F', backgroundColor: '#EEF1F7' }}>
                 <div className="flex items-center justify-between gap-3">
                   <div>
-                    <p className="font-semibold flex items-center gap-2" style={{ color: '#000E2B' }}><ShieldCheck className="w-5 h-5" style={{ color: '#000E2B' }} /> Droits d'accès</p>
-                    <p className="text-sm text-slate-600">Ce document sera visible selon le ciblage défini.</p>
+                    <p className="font-semibold flex items-center gap-2" style={{ color: '#000E2B' }}><ShieldCheck className="w-5 h-5" style={{ color: '#000E2B' }} /> {t('ged.addModal.accessRights')}</p>
+                    <p className="text-sm text-slate-600">{t('ged.addModal.accessRightsDesc')}</p>
                   </div>
                   {audienceMode === 'general' && (
                   <Button variant="outline" onClick={handleExportScope} style={{ borderColor: '#000E2B', color: '#000E2B' }}>
                     <Download className="w-4 h-4 mr-2" />
-                    Export CSV
+                    {t('ged.addModal.exportCsv')}
                   </Button>
                   )}
                 </div>
@@ -989,7 +992,7 @@ export function DocumentAddModal({ isOpen, onClose, folderOptions, defaultFolder
                         <p className="text-xl font-semibold" style={{ color: '#000E2B' }}>{selectedInvestorProfile.name}</p>
                       </div>
                       <div className="border-t pt-3 space-y-2">
-                        <p className="text-xs uppercase tracking-wide font-semibold" style={{ color: '#000E2B' }}>Contacts autorisés</p>
+                        <p className="text-xs uppercase tracking-wide font-semibold" style={{ color: '#000E2B' }}>{t('ged.addModal.authorizedContacts')}</p>
                         <div className="rounded-xl border p-3 flex items-center gap-3" style={{ borderColor: '#000E2B1F', backgroundColor: '#EEF1F7' }}>
                           <div className="w-9 h-9 rounded-full flex items-center justify-center" style={{ backgroundColor: '#EEF1F7', color: '#000E2B' }}>
                             <UserRound className="w-4 h-4" />
@@ -999,10 +1002,10 @@ export function DocumentAddModal({ isOpen, onClose, folderOptions, defaultFolder
                               {selectedInvestorProfile.name}
                               <span className="inline-flex items-center gap-1 rounded-full border px-2 py-0.5 text-[11px] font-medium" style={{ borderColor: '#000E2B', backgroundColor: '#EEF1F7', color: '#000E2B' }}>
                                 <Star className="w-3 h-3 fill-current" />
-                                Principal
+                                {t('ged.addModal.principalBadge')}
                               </span>
                             </p>
-                            <p className="text-sm text-slate-500 flex items-center gap-1"><Mail className="w-3 h-3" /> Investisseur principal (obligatoire)</p>
+                            <p className="text-sm text-slate-500 flex items-center gap-1"><Mail className="w-3 h-3" /> {t('ged.addModal.principalHint')}</p>
                           </div>
                         </div>
                         {selectedInvestorProfile.contacts.map((contact) => (
@@ -1019,7 +1022,7 @@ export function DocumentAddModal({ isOpen, onClose, folderOptions, defaultFolder
                       </div>
                     </div>
                   ) : (
-                    <p className="text-sm text-slate-600">Sélectionnez un investisseur pour définir les accès contacts.</p>
+                    <p className="text-sm text-slate-600">{t('ged.addModal.pickInvestorHint')}</p>
                   )
                 )}
               </div>
@@ -1028,29 +1031,29 @@ export function DocumentAddModal({ isOpen, onClose, folderOptions, defaultFolder
 
           <section className="space-y-4 rounded-2xl p-4 border" style={{ backgroundColor: '#EEF1F7', borderColor: '#000E2B1F' }}>
             <div>
-              <p className="font-semibold flex items-center gap-2" style={{ color: '#000E2B' }}><Bell className="w-5 h-5" style={{ color: '#000E2B' }} /> Notification</p>
-              <p className="text-sm text-slate-600">Notifications immédiates et relances automatiques.</p>
+              <p className="font-semibold flex items-center gap-2" style={{ color: '#000E2B' }}><Bell className="w-5 h-5" style={{ color: '#000E2B' }} /> {t('ged.addModal.sectionNotification')}</p>
+              <p className="text-sm text-slate-600">{t('ged.addModal.sectionNotificationDesc')}</p>
             </div>
             {isDetailMode ? (
               <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
                 <div className="space-y-2 border rounded-xl p-4 bg-white" style={{ borderColor: '#000E2B33' }}>
-                  <Label>Notification document</Label>
+                  <Label>{t('ged.addModal.notificationLabel')}</Label>
                   {detailState?.notification ? (
                     <p className="text-sm text-slate-700">
-                      Notification envoyée le <span className="font-medium">{formatFrenchDate(detailState.notification.sentAt)}</span> via le gabarit <span className="font-medium">{detailState.notification.template}</span>.
+                      {t('ged.addModal.notificationSent', { date: formatFrenchDate(detailState.notification.sentAt), template: detailState.notification.template })}
                     </p>
                   ) : (
-                    <p className="text-sm text-slate-500">Aucune notification envoyée pour ce document.</p>
+                    <p className="text-sm text-slate-500">{t('ged.addModal.noNotification')}</p>
                   )}
                 </div>
                 <div className="space-y-2 border rounded-xl p-4 bg-white" style={{ borderColor: '#000E2B33' }}>
-                  <Label>Relance auto si non consulté</Label>
+                  <Label>{t('ged.addModal.reminderLabel')}</Label>
                   {detailState?.reminder?.dueInDays !== undefined ? (
-                    <p className="text-sm text-slate-700">Relance prévue dans <span className="font-medium">{detailState.reminder.dueInDays} jour(s)</span> avec le gabarit <span className="font-medium">{detailState.reminder.template}</span>.</p>
+                    <p className="text-sm text-slate-700">{t('ged.addModal.reminderDueIn', { days: detailState.reminder.dueInDays, template: detailState.reminder.template })}</p>
                   ) : detailState?.reminder?.sentAt ? (
-                    <p className="text-sm text-slate-700">Relance envoyée le <span className="font-medium">{formatFrenchDate(detailState.reminder.sentAt)}</span> avec le gabarit <span className="font-medium">{detailState.reminder.template}</span>.</p>
+                    <p className="text-sm text-slate-700">{t('ged.addModal.reminderSent', { date: formatFrenchDate(detailState.reminder.sentAt), template: detailState.reminder.template })}</p>
                   ) : (
-                    <p className="text-sm text-slate-500">Aucune relance automatique configurée.</p>
+                    <p className="text-sm text-slate-500">{t('ged.addModal.noReminder')}</p>
                   )}
                 </div>
               </div>
@@ -1058,7 +1061,7 @@ export function DocumentAddModal({ isOpen, onClose, folderOptions, defaultFolder
               <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
                 <div className="space-y-3 border rounded-xl p-4" style={{ borderColor: '#000E2B33' }}>
                   <div className="flex items-center justify-between">
-                    <Label>Notification document</Label>
+                    <Label>{t('ged.addModal.notificationLabel')}</Label>
                     <Switch checked={notify} onCheckedChange={setNotify} />
                   </div>
                   <Select value={notifyTemplate} onValueChange={setNotifyTemplate} disabled={!notify}>
@@ -1069,7 +1072,7 @@ export function DocumentAddModal({ isOpen, onClose, folderOptions, defaultFolder
 
                 <div className="space-y-3 border rounded-xl p-4" style={{ borderColor: '#000E2B33' }}>
                   <div className="flex items-center justify-between">
-                    <Label>Relance auto si non consulté</Label>
+                    <Label>{t('ged.addModal.reminderLabel')}</Label>
                     <Switch checked={reminder} onCheckedChange={setReminder} />
                   </div>
                   <div className="grid grid-cols-2 gap-2">
@@ -1089,30 +1092,30 @@ export function DocumentAddModal({ isOpen, onClose, folderOptions, defaultFolder
 
           <section className="space-y-3 pb-2 rounded-2xl p-4 border" style={{ backgroundColor: '#EEF1F7', borderColor: '#000E2B1F' }}>
             <div>
-              <p className="font-semibold flex items-center gap-2" style={{ color: '#000E2B' }}><Check className="w-5 h-5" style={{ color: '#000E2B' }} /> Validation</p>
-              <p className="text-sm text-slate-600">Équipes de validation et validateurs associés.</p>
+              <p className="font-semibold flex items-center gap-2" style={{ color: '#000E2B' }}><Check className="w-5 h-5" style={{ color: '#000E2B' }} /> {t('ged.addModal.sectionValidation')}</p>
+              <p className="text-sm text-slate-600">{t('ged.addModal.sectionValidationDesc')}</p>
             </div>
             {isDetailMode ? (
               <>
                 {detailState?.validation.status === 'approved' ? (
                   <div className="rounded-xl border border-emerald-200 bg-emerald-50 p-4">
-                    <p className="font-semibold text-emerald-800 flex items-center gap-2"><CheckCircle2 className="h-4 w-4" /> Document validé</p>
-                    <p className="text-sm text-emerald-700 mt-1">Équipe: {detailState.validation.team} • Validé par {detailState.validation.validator}</p>
-                    <p className="text-sm text-emerald-700">Le {formatFrenchDate(detailState.validation.validatedAt || '')}</p>
+                    <p className="font-semibold text-emerald-800 flex items-center gap-2"><CheckCircle2 className="h-4 w-4" /> {t('ged.addModal.docValidated')}</p>
+                    <p className="text-sm text-emerald-700 mt-1">{t('ged.addModal.validatedBy', { team: detailState.validation.team ?? '', validator: detailState.validation.validator ?? '' })}</p>
+                    <p className="text-sm text-emerald-700">{t('ged.addModal.validatedOn', { date: formatFrenchDate(detailState.validation.validatedAt || '') })}</p>
                   </div>
                 ) : (
                   <>
                     <div className="rounded-xl border border-amber-200 bg-amber-50 p-4">
-                      <p className="font-semibold text-amber-800 flex items-center gap-2"><Clock3 className="h-4 w-4" /> En attente de validation</p>
-                      <p className="text-sm text-amber-700 mt-1">Ce document est en cours de revue par les équipes de validation.</p>
+                      <p className="font-semibold text-amber-800 flex items-center gap-2"><Clock3 className="h-4 w-4" /> {t('ged.addModal.pendingValidation')}</p>
+                      <p className="text-sm text-amber-700 mt-1">{t('ged.addModal.pendingValidationHint')}</p>
                     </div>
                     <div className="rounded-xl border bg-white p-4 space-y-3" style={{ borderColor: '#000E2B33' }}>
-                      <p className="font-medium text-slate-900">Équipes de validation et personnes associées</p>
+                      <p className="font-medium text-slate-900">{t('ged.addModal.teamsAndValidators')}</p>
                       <div className="space-y-2">
                         {TEAMS.map((team) => (
                           <div key={team.id} className="rounded-lg border p-3" style={{ borderColor: '#000E2B33' }}>
                             <p className="font-medium text-slate-800">{team.name}</p>
-                            <p className="text-sm text-slate-600 mt-1">Personnes: {team.validators.join(', ')}</p>
+                            <p className="text-sm text-slate-600 mt-1">{t('ged.addModal.peoplePrefix', { list: team.validators.join(', ') })}</p>
                           </div>
                         ))}
                       </div>
@@ -1123,19 +1126,19 @@ export function DocumentAddModal({ isOpen, onClose, folderOptions, defaultFolder
             ) : (
               <>
                 <div className="space-y-2">
-                  <Label className="text-sm font-medium text-slate-800">Équipes de validation</Label>
+                  <Label className="text-sm font-medium text-slate-800">{t('ged.addModal.teamsLabel')}</Label>
                   <ModernMultiSelect
                     options={teamOptions}
                     value={validationTeams}
                     onChange={setValidationTeams}
-                    placeholder="Sélectionner une ou plusieurs équipes…"
-                    searchPlaceholder="Rechercher une équipe…"
+                    placeholder={t('ged.addModal.pickTeams')}
+                    searchPlaceholder={t('ged.addModal.searchTeam')}
                     maxDisplay={4}
                     showIconInBadge
                     badgeStyle={{ color: '#7a7a7a', borderColor: '#ddd7cc', backgroundColor: '#f5f3ee', border: '1px solid #ddd7cc' }}
                   />
                   <p className="text-xs text-slate-500">
-                    Sélectionnez les équipes qui devront approuver ce document. Tous les validateurs de chaque équipe seront notifiés.
+                    {t('ged.addModal.pickTeamsHint')}
                   </p>
                 </div>
 
@@ -1146,15 +1149,15 @@ export function DocumentAddModal({ isOpen, onClose, folderOptions, defaultFolder
                         <Users2 className="w-4 h-4" />
                       </div>
                       <div>
-                        <p className="font-medium text-slate-900 text-sm">Détail des validateurs</p>
+                        <p className="font-medium text-slate-900 text-sm">{t('ged.addModal.validatorsDetail')}</p>
                         <p className="text-xs text-slate-500">
-                          Personnes qui recevront la demande de validation
+                          {t('ged.addModal.validatorsDetailHint')}
                         </p>
                       </div>
                     </div>
                     {selectedTeamsDetailed.length > 0 && (
                       <Badge variant="outline" style={{ backgroundColor: '#EEF1F7', borderColor: '#000E2B', color: '#000E2B' }}>
-                        {totalValidators} {totalValidators > 1 ? 'validateurs' : 'validateur'} · {selectedTeamsDetailed.length} {selectedTeamsDetailed.length > 1 ? 'équipes' : 'équipe'}
+                        {t(totalValidators > 1 ? 'ged.addModal.validatorsCountBadgeMany' : 'ged.addModal.validatorsCountBadgeOne', { validators: totalValidators, teams: selectedTeamsDetailed.length })}
                       </Badge>
                     )}
                   </div>
@@ -1162,9 +1165,9 @@ export function DocumentAddModal({ isOpen, onClose, folderOptions, defaultFolder
                   {selectedTeamsDetailed.length === 0 ? (
                     <div className="flex flex-col items-center justify-center gap-2 rounded-lg border border-dashed border-slate-200 bg-slate-50/60 py-8 text-center">
                       <Users2 className="w-6 h-6 text-slate-400" />
-                      <p className="text-sm font-medium text-slate-700">Aucune équipe sélectionnée</p>
+                      <p className="text-sm font-medium text-slate-700">{t('ged.addModal.noTeamSelected')}</p>
                       <p className="text-xs text-slate-500">
-                        Choisissez une ou plusieurs équipes ci-dessus pour afficher leurs validateurs.
+                        {t('ged.addModal.noTeamSelectedHint')}
                       </p>
                     </div>
                   ) : (
@@ -1177,7 +1180,7 @@ export function DocumentAddModal({ isOpen, onClose, folderOptions, defaultFolder
                           <div className="flex items-center justify-between gap-2">
                             <p className="text-sm font-semibold text-slate-800">{team.name}</p>
                             <Badge variant="outline" className="bg-white border-slate-200 text-slate-600 text-[11px]">
-                              {team.validators.length} {team.validators.length > 1 ? 'validateurs' : 'validateur'}
+                              {t(team.validators.length > 1 ? 'ged.addModal.teamValidatorsCountMany' : 'ged.addModal.teamValidatorsCountOne', { count: team.validators.length })}
                             </Badge>
                           </div>
                           <ul className="space-y-1.5">
@@ -1206,8 +1209,8 @@ export function DocumentAddModal({ isOpen, onClose, folderOptions, defaultFolder
 
         </div>
         <div className="border-t bg-white px-6 py-4 flex justify-end gap-2">
-          <Button variant="outline" onClick={onClose}>Annuler</Button>
-          <Button onClick={handleSubmit}>{document ? 'Enregistrer' : 'Valider'}</Button>
+          <Button variant="outline" onClick={onClose}>{t('ged.addModal.cancel')}</Button>
+          <Button onClick={handleSubmit}>{document ? t('ged.addModal.save') : t('ged.addModal.validate')}</Button>
         </div>
       </SheetContent>
     </Sheet>

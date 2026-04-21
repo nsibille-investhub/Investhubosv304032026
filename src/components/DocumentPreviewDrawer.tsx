@@ -10,6 +10,7 @@ import {
 import { useState } from 'react';
 import { Button } from './ui/button';
 import { cn } from './ui/utils';
+import { useTranslation } from '../utils/languageContext';
 
 interface DocumentPreviewDrawerProps {
   isOpen: boolean;
@@ -36,6 +37,7 @@ export function DocumentPreviewDrawer({
   size,
   date,
 }: DocumentPreviewDrawerProps) {
+  const { t } = useTranslation();
   const [zoom, setZoom] = useState(100);
 
   const formatKey = (format || '').toLowerCase();
@@ -69,7 +71,7 @@ export function DocumentPreviewDrawer({
               </div>
               <div className="flex-1 min-w-0">
                 <h2 className="text-lg font-semibold text-gray-900 dark:text-gray-100 truncate">
-                  Aperçu du document
+                  {t('ged.preview.title')}
                 </h2>
                 <p className="text-sm text-gray-500 dark:text-gray-400 truncate">
                   {documentName}
@@ -126,7 +128,7 @@ export function DocumentPreviewDrawer({
                   onClick={() => setZoom(100)}
                   className="h-8 px-2 text-xs"
                 >
-                  Reset
+                  {t('ged.preview.reset')}
                 </Button>
               </div>
               <div className="flex items-center gap-1">
@@ -156,7 +158,7 @@ export function DocumentPreviewDrawer({
                     {documentName}
                   </h4>
                   <p className="text-sm text-gray-500 dark:text-gray-400 mb-6">
-                    Aperçu non disponible en mode démo
+                    {t('ged.preview.notAvailableDemo')}
                   </p>
 
                   {/* Mock document content */}

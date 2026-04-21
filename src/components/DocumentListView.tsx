@@ -35,6 +35,7 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from './ui/alert-dialog';
+import { useTranslation } from '../utils/languageContext';
 
 interface DocumentListViewProps {
   documents: Document[];
@@ -78,6 +79,7 @@ export function DocumentListView({
   onDuplicateFolder,
   onDuplicateDocument,
 }: DocumentListViewProps) {
+  const { t } = useTranslation();
   const tableGridClassName = 'document-list-grid';
   const [hoveredId, setHoveredId] = useState<string | null>(null);
   const [viewerOpen, setViewerOpen] = useState(false);
@@ -166,7 +168,7 @@ export function DocumentListView({
             onClick={() => onFolderNavigate(null, [])}
             className={`${currentPath.length === 0 ? 'text-gray-900 font-medium' : 'text-gray-600 hover:text-gray-900'} transition-colors`}
           >
-            Documents
+            {t('ged.listView.breadcrumbRoot')}
           </button>
           {currentPath.map((folder, index) => (
             <div key={index} className="flex items-center gap-2">
@@ -197,7 +199,7 @@ export function DocumentListView({
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
             <Input
               type="text"
-              placeholder="Rechercher un document ou un dossier"
+              placeholder={t('ged.listView.searchPlaceholder')}
               value={searchTerm}
               onChange={(e) => onSearchTermChange(e.target.value)}
               className="pl-10 h-10"
@@ -206,7 +208,7 @@ export function DocumentListView({
               <button
                 onClick={() => onSearchTermChange('')}
                 className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600"
-                aria-label="Effacer la recherche"
+                aria-label={t('ged.listView.clearSearchAria')}
               >
                 <X className="w-4 h-4" />
               </button>
@@ -214,20 +216,20 @@ export function DocumentListView({
           </div>
           <Button variant="secondary" size="sm" onClick={onOpenWizard}>
             <Plus className="w-4 h-4 mr-2" />
-            Import
+            {t('ged.listView.import')}
           </Button>
           <Button variant="secondary" size="sm" onClick={onAddFolder}>
             <Folder className="w-4 h-4 mr-2" />
-            Ajouter un dossier
+            {t('ged.listView.addFolder')}
           </Button>
           <Button size="sm" onClick={onAddDocument} className="ml-auto">
             <Plus className="w-4 h-4 mr-2" />
-            Ajouter un document
+            {t('ged.listView.addDocument')}
           </Button>
         </div>
         {searchTerm.trim() && (
           <p className="mt-2 text-xs text-gray-500">
-            {itemsToRender.length} résultat{itemsToRender.length > 1 ? 's' : ''} dans {currentPath.length > 0 ? currentPath.join(' / ') : 'Documents'}
+            {t(itemsToRender.length > 1 ? 'ged.listView.resultsCountMany' : 'ged.listView.resultsCountOne', { count: itemsToRender.length, path: currentPath.length > 0 ? currentPath.join(' / ') : t('ged.listView.breadcrumbRoot') })}
           </p>
         )}
       </div>
@@ -235,12 +237,12 @@ export function DocumentListView({
       {/* Table Header */}
       <div className="px-6 py-3 border-b border-gray-200 bg-gray-50/30">
         <div className={`grid ${tableGridClassName} gap-4 text-xs font-medium text-gray-500 uppercase tracking-wide`}>
-          <div>Nom</div>
-          <div>Nature</div>
-          <div>Audience</div>
-          <div>Ajouté le</div>
-          <div>Statut</div>
-          <div className="text-right">Actions</div>
+          <div>{t('ged.listView.headers.name')}</div>
+          <div>{t('ged.listView.headers.nature')}</div>
+          <div>{t('ged.listView.headers.audience')}</div>
+          <div>{t('ged.listView.headers.addedOn')}</div>
+          <div>{t('ged.listView.headers.status')}</div>
+          <div className="text-right">{t('ged.listView.headers.actions')}</div>
         </div>
       </div>
 
@@ -249,7 +251,7 @@ export function DocumentListView({
         {itemsToRender.length === 0 ? (
           <div className="flex flex-col items-center justify-center py-12 text-center">
             <Folder className="w-12 h-12 text-gray-300 mb-3" />
-            <p className="text-gray-500">{hasActiveSearch ? 'Aucun résultat trouvé' : 'Ce dossier est vide'}</p>
+            <p className="text-gray-500">{hasActiveSearch ? t('ged.listView.noResults') : t('ged.listView.emptyFolder')}</p>
           </div>
         ) : (
           <>
@@ -278,16 +280,16 @@ export function DocumentListView({
                           {folder.name}
                         </p>
                         {hasActiveSearch && (folder as any).__path && (
-                          <p className="text-xs text-gray-400 truncate">{(folder as any).__path.slice(0, -1).join(' / ') || 'Racine'}</p>
+                          <p className="text-xs text-gray-400 truncate">{(folder as any).__path.slice(0, -1).join(' / ') || t('ged.listView.root')}</p>
                         )}
                         <p className="text-xs text-gray-500">
-                          {folder.children?.length || 0} élément{(folder.children?.length || 0) > 1 ? 's' : ''}
+                          {t((folder.children?.length || 0) > 1 ? 'ged.listView.folderCount' : 'ged.listView.folderCountOne', { count: folder.children?.length || 0 })}
                         </p>
                       </div>
                     </div>
 
                     <div>
-                      <Tag label="Dossier" />
+                      <Tag label={t('ged.listView.folderTag')} />
                     </div>
 
                     <div>
@@ -315,7 +317,7 @@ export function DocumentListView({
                         }}
                         className="p-2 rounded-lg transition-colors text-gray-500 hover:bg-gray-100"
                         style={isHovered ? { backgroundColor: '#EEF1F7', color: '#000E2B' } : undefined}
-                        aria-label={`Modifier le dossier ${folder.name}`}
+                        aria-label={t('ged.listView.actions.editFolderAria', { name: folder.name })}
                       >
                         <SquarePen className="w-4 h-4" />
                       </button>
@@ -336,7 +338,7 @@ export function DocumentListView({
                             }}
                           >
                             <Plus className="w-4 h-4 mr-2" />
-                            Ajouter un document
+                            {t('ged.listView.actions.addDocument')}
                           </DropdownMenuItem>
                           <DropdownMenuItem
                             onClick={(event) => {
@@ -345,7 +347,7 @@ export function DocumentListView({
                             }}
                           >
                             <Folder className="w-4 h-4 mr-2" />
-                            Ajouter un dossier
+                            {t('ged.listView.actions.addFolder')}
                           </DropdownMenuItem>
                           <DropdownMenuItem
                             onClick={(event) => {
@@ -354,11 +356,11 @@ export function DocumentListView({
                             }}
                           >
                             <Copy className="w-4 h-4 mr-2" />
-                            Dupliquer
+                            {t('ged.listView.actions.duplicate')}
                           </DropdownMenuItem>
                           <DropdownMenuItem>
                             <Download className="w-4 h-4 mr-2" />
-                            Télécharger le dossier
+                            {t('ged.listView.actions.downloadFolder')}
                           </DropdownMenuItem>
                           <DropdownMenuItem
                             className="text-red-600 focus:text-red-600"
@@ -368,7 +370,7 @@ export function DocumentListView({
                             }}
                           >
                             <Trash2 className="w-4 h-4 mr-2" />
-                            Supprimer le dossier
+                            {t('ged.listView.actions.deleteFolder')}
                           </DropdownMenuItem>
                         </DropdownMenuContent>
                       </DropdownMenu>
@@ -403,7 +405,7 @@ export function DocumentListView({
                           {file.name}
                         </p>
                         {hasActiveSearch && (file as any).__path && (
-                          <p className="text-xs text-gray-400 truncate">{(file as any).__path.slice(0, -1).join(' / ') || 'Racine'}</p>
+                          <p className="text-xs text-gray-400 truncate">{(file as any).__path.slice(0, -1).join(' / ') || t('ged.listView.root')}</p>
                         )}
                       </div>
                     </div>
@@ -423,11 +425,11 @@ export function DocumentListView({
                     <div>
                       {file.status === 'published' ? (
                         <span className="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-green-50 text-green-700">
-                          Publié
+                          {t('ged.listView.status.published')}
                         </span>
                       ) : (
                         <span className="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-amber-50 text-amber-700">
-                          En Attente
+                          {t('ged.listView.status.pending')}
                         </span>
                       )}
                     </div>
@@ -441,7 +443,7 @@ export function DocumentListView({
                         }}
                         className="p-2 rounded-lg transition-colors text-gray-500 hover:bg-gray-100"
                         style={isHovered ? { backgroundColor: '#EEF1F7', color: '#000E2B' } : undefined}
-                        aria-label={`Ouvrir la visionneuse pour ${file.name}`}
+                        aria-label={t('ged.listView.actions.openViewerAria', { name: file.name })}
                       >
                         <Eye className="w-4 h-4" />
                       </button>
@@ -453,7 +455,7 @@ export function DocumentListView({
                         }}
                         className="p-2 rounded-lg transition-colors text-gray-500 hover:bg-gray-100"
                         style={isHovered ? { backgroundColor: '#EEF1F7', color: '#000E2B' } : undefined}
-                        aria-label={`Modifier le document ${file.name}`}
+                        aria-label={t('ged.listView.actions.editDocumentAria', { name: file.name })}
                       >
                         <SquarePen className="w-4 h-4" />
                       </button>
@@ -474,11 +476,11 @@ export function DocumentListView({
                             }}
                           >
                             <Copy className="w-4 h-4 mr-2" />
-                            Dupliquer
+                            {t('ged.listView.actions.duplicate')}
                           </DropdownMenuItem>
                           <DropdownMenuItem>
                             <Download className="w-4 h-4 mr-2" />
-                            Télécharger
+                            {t('ged.listView.actions.download')}
                           </DropdownMenuItem>
                           <DropdownMenuItem
                             className="text-red-600 focus:text-red-600"
@@ -488,7 +490,7 @@ export function DocumentListView({
                             }}
                           >
                             <Trash2 className="w-4 h-4 mr-2" />
-                            Supprimer le document
+                            {t('ged.listView.actions.deleteDocument')}
                           </DropdownMenuItem>
                         </DropdownMenuContent>
                       </DropdownMenu>
@@ -505,7 +507,7 @@ export function DocumentListView({
       <div className="px-6 py-3 border-t border-gray-200 bg-gray-50/30">
         <div className="flex items-center justify-between text-xs text-gray-500">
           <span>
-            {(hasActiveSearch ? searchFolders.length : folders.length)} dossier{(hasActiveSearch ? searchFolders.length : folders.length) > 1 ? 's' : ''} · {(hasActiveSearch ? searchFiles.length : files.length)} document{(hasActiveSearch ? searchFiles.length : files.length) > 1 ? 's' : ''}
+            {t((hasActiveSearch ? searchFolders.length : folders.length) > 1 ? 'ged.listView.footerFolders' : 'ged.listView.footerFoldersOne', { count: hasActiveSearch ? searchFolders.length : folders.length })} · {t((hasActiveSearch ? searchFiles.length : files.length) > 1 ? 'ged.listView.footerDocuments' : 'ged.listView.footerDocumentsOne', { count: hasActiveSearch ? searchFiles.length : files.length })}
           </span>
         </div>
       </div>
@@ -532,13 +534,13 @@ export function DocumentListView({
             >
               <div className="px-5 py-3 border-b border-gray-200 flex items-center justify-between">
                 <h2 className="text-base font-semibold text-gray-900">
-                  {viewerDocument?.name || 'Document'}
+                  {viewerDocument?.name || t('ged.listView.viewerTitle')}
                 </h2>
                 <button
                   type="button"
                   onClick={() => setViewerOpen(false)}
                   className="p-2 rounded-lg text-gray-500 hover:bg-gray-100 hover:text-gray-700 transition-colors"
-                  aria-label="Fermer la visionneuse"
+                  aria-label={t('ged.listView.closeViewerAria')}
                 >
                   <X className="w-4 h-4" />
                 </button>
@@ -546,12 +548,12 @@ export function DocumentListView({
               <div className="flex-1 overflow-hidden">
                 {!viewerDocument ? (
                   <div className="h-full flex items-center justify-center text-sm text-gray-500">
-                    Aucun document à afficher.
+                    {t('ged.listView.noDocumentToShow')}
                   </div>
                 ) : (
                   <div className="h-full w-full bg-white">
                     <iframe
-                      title={`Visionneuse ${viewerDocument.name}`}
+                      title={t('ged.listView.viewerTitleFor', { name: viewerDocument.name })}
                       src={defaultPreviewUrl}
                       className="w-full h-full"
                     />
@@ -567,18 +569,18 @@ export function DocumentListView({
       <AlertDialog open={!!deleteTarget} onOpenChange={(open) => { if (!open) setDeleteTarget(null); }}>
         <AlertDialogContent className="max-w-md">
           <AlertDialogHeader>
-            <AlertDialogTitle>Supprimer le document</AlertDialogTitle>
+            <AlertDialogTitle>{t('ged.listView.deleteDocumentTitle')}</AlertDialogTitle>
             <AlertDialogDescription>
-              Êtes-vous sûr de vouloir supprimer « {deleteTarget?.name} » ? Cette action est irréversible.
+              {t('ged.listView.deleteDocumentConfirm', { name: deleteTarget?.name ?? '' })}
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
-            <AlertDialogCancel>Annuler</AlertDialogCancel>
+            <AlertDialogCancel>{t('ged.listView.cancel')}</AlertDialogCancel>
             <AlertDialogAction
               className="bg-red-600 hover:bg-red-700 text-white"
               onClick={() => setDeleteTarget(null)}
             >
-              Supprimer
+              {t('ged.listView.delete')}
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
@@ -594,20 +596,16 @@ export function DocumentListView({
             return (
               <>
                 <AlertDialogHeader>
-                  <AlertDialogTitle>Supprimer le dossier</AlertDialogTitle>
+                  <AlertDialogTitle>{t('ged.listView.deleteFolderTitle')}</AlertDialogTitle>
                   <AlertDialogDescription>
-                    {isEmpty ? (
-                      <>Êtes-vous sûr de vouloir supprimer « {deleteFolderTarget.name} » ? Cette action est irréversible.</>
-                    ) : (
-                      <>
-                        Le dossier « {deleteFolderTarget.name} » contient {childrenCount} élément{childrenCount > 1 ? 's' : ''}.
-                        Videz-le (ou déplacez son contenu) avant de pouvoir le supprimer.
-                      </>
-                    )}
+                    {isEmpty
+                      ? t('ged.listView.deleteFolderConfirmEmpty', { name: deleteFolderTarget.name })
+                      : t(childrenCount > 1 ? 'ged.listView.deleteFolderNotEmptyMany' : 'ged.listView.deleteFolderNotEmptyOne', { name: deleteFolderTarget.name, count: childrenCount })
+                    }
                   </AlertDialogDescription>
                 </AlertDialogHeader>
                 <AlertDialogFooter>
-                  <AlertDialogCancel>Annuler</AlertDialogCancel>
+                  <AlertDialogCancel>{t('ged.listView.cancel')}</AlertDialogCancel>
                   {isEmpty && (
                     <AlertDialogAction
                       className="bg-red-600 hover:bg-red-700 text-white"
@@ -616,7 +614,7 @@ export function DocumentListView({
                         setDeleteFolderTarget(null);
                       }}
                     >
-                      Supprimer
+                      {t('ged.listView.delete')}
                     </AlertDialogAction>
                   )}
                 </AlertDialogFooter>

@@ -30,10 +30,10 @@ import {
 } from './ui/tooltip';
 import { AuditLogDialog } from './AuditLogDialog';
 import { HighlightText } from './HighlightText';
-import { getColumnsForStatus } from '../utils/subscriptionColumns';
+import { getColumnsForStatus, getGlobalStatusKey, SubscriptionWorkflowStatus } from '../utils/subscriptionColumns';
 import { formatCurrency, formatDate, formatNumber } from '../utils/formatters';
 import { copyToClipboard } from '../utils/clipboard';
-import { SubscriptionWorkflowStatus } from '../utils/subscriptionStatuses';
+import { useTranslation } from '../utils/languageContext';
 import { OriginStructureCell } from './OriginStructureCell';
 import { PartnerCard } from './PartnerCard';
 import { SubscriptionStatusBadge } from './SubscriptionStatusBadge';
@@ -48,33 +48,15 @@ import { CheckIndicator } from './CheckIndicator';
 import { StatusBadge } from './StatusBadge';
 import { InternalResponsibleSelector } from './InternalResponsibleSelector';
 
-// Helper function to get global status
-const getGlobalStatus = (status: string) => {
-  // Map detailed status to global status
-  const statusMap: Record<string, string> = {
-    'Draft': 'Draft',
-    'Onboarding': 'Onboarding',
-    'À signer': 'Signature',
-    'Investisseur signé': 'Signature',
-    'Exécuté': 'Exécuté',
-    'En attente de fonds': 'En attente',
-    'En attente de paiement': 'En attente',
-    'Active': 'Active',
-    'Rejected': 'Inactive',
-    'Cancelled': 'Inactive',
-    'Expired': 'Inactive',
-    'Archived': 'Inactive',
-  };
-  return statusMap[status] || status;
-};
-
-const getGlobalStatusVariant = (status: string): 'success' | 'warning' | 'danger' | 'neutral' => {
-  if (['Active', 'Exécuté'].includes(status)) return 'success';
-  if (['Onboarding', 'Signature', 'En attente'].includes(status)) return 'warning';
-  if (['Inactive', 'Rejected', 'Cancelled', 'Expired', 'Archived'].includes(status)) return 'danger';
+// Raw status → variant used for the global status badge
+const getGlobalStatusVariantFromRaw = (raw: string): 'success' | 'warning' | 'danger' | 'neutral' => {
+  if (['Active', 'Exécuté'].includes(raw)) return 'success';
+  if (['Onboarding', 'À signer', 'Investisseur signé', 'En attente de fonds', 'En attente de paiement'].includes(raw)) return 'warning';
+  if (['Rejected', 'Cancelled', 'Expired', 'Archived'].includes(raw)) return 'danger';
   return 'neutral';
 };
 
+// Raw onboarding label → variant
 const getOnboardingStatusVariant = (status: string): 'success' | 'warning' | 'danger' | 'neutral' => {
   if (status === 'Complété') return 'success';
   if (status === 'Bloqué') return 'danger';
@@ -82,11 +64,28 @@ const getOnboardingStatusVariant = (status: string): 'success' | 'warning' | 'da
   return 'neutral';
 };
 
+// Raw counter-signature label → variant
 const getCounterSignatureVariant = (status: string): 'success' | 'warning' | 'danger' | 'neutral' => {
   if (status === 'Complétée') return 'success';
   if (status === 'Refusée') return 'danger';
   if (['En cours', 'En attente'].includes(status)) return 'warning';
   return 'neutral';
+};
+
+const ONBOARDING_KEY_BY_RAW: Record<string, string> = {
+  'Complété': 'subscriptions.onboardingStatus.completed',
+  'Bloqué': 'subscriptions.onboardingStatus.blocked',
+  'En cours avancé': 'subscriptions.onboardingStatus.advanced',
+  'En cours': 'subscriptions.onboardingStatus.inProgress',
+  'Démarré': 'subscriptions.onboardingStatus.started',
+  'Non démarré': 'subscriptions.onboardingStatus.notStarted',
+};
+
+const COUNTER_SIGNATURE_KEY_BY_RAW: Record<string, string> = {
+  'Complétée': 'subscriptions.counterSignatureStatus.completed',
+  'Refusée': 'subscriptions.counterSignatureStatus.rejected',
+  'En cours': 'subscriptions.counterSignatureStatus.inProgress',
+  'En attente': 'subscriptions.counterSignatureStatus.pending',
 };
 
 interface SubscriptionDynamicTableProps {
@@ -110,6 +109,7 @@ export function SubscriptionDynamicTable({
   searchTerm = '',
   allFilteredData
 }: SubscriptionDynamicTableProps) {
+  const { t } = useTranslation();
   const [hoveredRow, setHoveredRow] = useState<number | null>(null);
   const [auditDialogOpen, setAuditDialogOpen] = useState(false);
   const [selectedSubscriptionForAudit, setSelectedSubscriptionForAudit] = useState<any>(null);
@@ -139,24 +139,24 @@ export function SubscriptionDynamicTable({
     const success = await copyToClipboard(id);
     if (success) {
       setCopiedId(subscriptionId);
-      toast.success('ID copié !', { description: id });
+      toast.success(t('subscriptions.table.idCopied'), { description: id });
       setTimeout(() => setCopiedId(null), 2000);
     } else {
-      toast.error('Erreur de copie', { description: 'Impossible de copier dans le presse-papier' });
+      toast.error(t('subscriptions.table.copyError'), { description: t('subscriptions.table.copyErrorDesc') });
     }
   };
 
   const handleSelectAll = () => {
     if (selectAll) {
       setSelectedIds(new Set());
-      toast.info('Sélection annulée', {
-        description: 'Toutes les souscriptions ont été désélectionnées',
+      toast.info(t('subscriptions.table.selectionCancelled'), {
+        description: t('subscriptions.table.selectionCancelledDesc'),
       });
     } else {
       const allIds = new Set(totalFilteredData.map(item => item.id));
       setSelectedIds(allIds);
-      toast.success(`${allIds.size} souscriptions sélectionnées`, {
-        description: `Toutes les pages sont sélectionnées (${allIds.size} souscriptions au total)`,
+      toast.success(t('subscriptions.table.selectedCount', { count: allIds.size }), {
+        description: t('subscriptions.table.selectedCountDesc', { count: allIds.size }),
         duration: 4000,
       });
     }
@@ -174,7 +174,7 @@ export function SubscriptionDynamicTable({
 
   const handleClearSelection = () => {
     setSelectedIds(new Set());
-    toast.info('Sélection annulée');
+    toast.info(t('subscriptions.table.selectionCancelled'));
   };
 
   const SortIcon = ({ columnKey }: { columnKey: string }) => {
@@ -246,12 +246,12 @@ export function SubscriptionDynamicTable({
                 />
               </ClickableText>
             </motion.span>
-            <OriginStructureCell 
+            <OriginStructureCell
               contrepartie={row.contrepartie}
               searchTerm={searchTerm}
               onStructureClick={(structureName) => {
-                toast.info('Navigation vers la structure', {
-                  description: `Redirection vers ${structureName}...`,
+                toast.info(t('subscriptions.table.navigateToStructure'), {
+                  description: t('subscriptions.table.navigateToStructureDesc', { name: structureName }),
                 });
                 // TODO: Implémenter la navigation vers la structure
               }}
@@ -317,8 +317,8 @@ export function SubscriptionDynamicTable({
             partenaire={row.partenaire}
             searchTerm={searchTerm}
             onPartnerClick={(partnerId, partnerName) => {
-              toast.info('Navigation vers le partenaire', {
-                description: `Redirection vers ${partnerName}...`,
+              toast.info(t('subscriptions.table.navigateToPartner'), {
+                description: t('subscriptions.table.navigateToPartnerDesc', { name: partnerName }),
               });
               // TODO: Implémenter la navigation vers le partenaire
             }}
@@ -330,7 +330,7 @@ export function SubscriptionDynamicTable({
 
       case 'source':
         return (
-          <Tag label={row.source === 'api' ? 'API' : row.source.charAt(0).toUpperCase() + row.source.slice(1)} />
+          <Tag label={row.source === 'api' ? t('subscriptions.table.api') : row.source.charAt(0).toUpperCase() + row.source.slice(1)} />
         );
 
       case 'analyst':
@@ -342,8 +342,11 @@ export function SubscriptionDynamicTable({
           />
         );
 
-      case 'onboardingStatus':
-        return <StatusBadge label={row.onboardingStatus || 'Non démarré'} variant={getOnboardingStatusVariant(row.onboardingStatus || 'Non démarré')} />;
+      case 'onboardingStatus': {
+        const raw = row.onboardingStatus || 'Non démarré';
+        const key = ONBOARDING_KEY_BY_RAW[raw];
+        return <StatusBadge label={key ? t(key) : raw} variant={getOnboardingStatusVariant(raw)} />;
+      }
 
       case 'blockageReason':
         return row.blockageReason ? (
@@ -383,7 +386,7 @@ export function SubscriptionDynamicTable({
       case 'signatureStatus':
         return (
           <Badge className="bg-purple-100 dark:bg-purple-950/50 text-purple-700 dark:text-purple-300 border-purple-200 dark:border-purple-800">
-            {row.signatureStatus || 'Non envoyée'}
+            {row.signatureStatus || t('subscriptions.table.notSent')}
           </Badge>
         );
 
@@ -416,11 +419,14 @@ export function SubscriptionDynamicTable({
 
       case 'signatureChannel':
         return (
-          <Tag label={row.signatureChannel === 'e-signature' ? 'E-signature' : 'Papier'} />
+          <Tag label={row.signatureChannel === 'e-signature' ? t('subscriptions.table.eSignature') : t('subscriptions.table.paper')} />
         );
 
-      case 'counterSignatureStatus':
-        return <StatusBadge label={row.counterSignatureStatus || 'Non requis'} variant={getCounterSignatureVariant(row.counterSignatureStatus || 'Non requis')} />;
+      case 'counterSignatureStatus': {
+        const raw = row.counterSignatureStatus || 'Non requis';
+        const key = COUNTER_SIGNATURE_KEY_BY_RAW[raw];
+        return <StatusBadge label={key ? t(key) : (raw === 'Non requis' ? t('subscriptions.table.notRequired') : raw)} variant={getCounterSignatureVariant(raw)} />;
+      }
 
       case 'counterSignatureOwner':
         return <span className="text-sm text-gray-700 dark:text-gray-300">{row.counterSignatureOwner || '-'}</span>;
@@ -440,7 +446,7 @@ export function SubscriptionDynamicTable({
             row.daysSinceSignature > 3 ? "bg-orange-100 dark:bg-orange-950/50 text-orange-700 dark:text-orange-300" :
             "bg-green-100 dark:bg-green-950/50 text-green-700 dark:text-green-300"
           )}>
-            {row.daysSinceSignature}j
+            {row.daysSinceSignature}{t('subscriptions.table.daysShort')}
           </div>
         ) : (
           <span className="text-sm text-gray-400 dark:text-gray-600">-</span>
@@ -467,8 +473,8 @@ export function SubscriptionDynamicTable({
           <div className="flex justify-center">
             <CheckIndicator
               checked={Boolean(row.hasDepositary)}
-              checkedLabel="Dépositaire renseigné"
-              uncheckedLabel="Aucun dépositaire"
+              checkedLabel={t('subscriptions.table.depositaryPresent')}
+              uncheckedLabel={t('subscriptions.table.noDepositary')}
             />
           </div>
         );
@@ -481,7 +487,7 @@ export function SubscriptionDynamicTable({
         );
 
       case 'globalStatus':
-        return <StatusBadge label={getGlobalStatus(row.status)} variant={getGlobalStatusVariant(getGlobalStatus(row.status))} />;
+        return <StatusBadge label={t(getGlobalStatusKey(row.status))} variant={getGlobalStatusVariantFromRaw(row.status)} />;
 
       case 'updatedAt':
         return <DateTimeCell date={row.updatedAt} />;
@@ -520,13 +526,6 @@ export function SubscriptionDynamicTable({
         );
 
       case 'language':
-        const languageLabels: Record<string, string> = {
-          'fr': 'Français',
-          'en': 'Anglais',
-          'de': 'Allemand',
-          'it': 'Italien',
-          'es': 'Espagnol'
-        };
         const languageFlags: Record<string, string> = {
           'fr': '🇫🇷',
           'en': '🇬🇧',
@@ -537,7 +536,7 @@ export function SubscriptionDynamicTable({
         return row.language ? (
           <div className="flex items-center gap-2 text-sm">
             <span>{languageFlags[row.language]}</span>
-            <span className="text-gray-700 dark:text-gray-300">{languageLabels[row.language]}</span>
+            <span className="text-gray-700 dark:text-gray-300">{t(`subscriptions.language.${row.language}`)}</span>
           </div>
         ) : (
           <span className="text-sm text-gray-400 dark:text-gray-600">-</span>
@@ -548,8 +547,8 @@ export function SubscriptionDynamicTable({
           <div className="flex justify-center">
             <CheckIndicator
               checked={Boolean(row.sepaEnabled)}
-              checkedLabel="Prélèvement SEPA activé"
-              uncheckedLabel="Prélèvement SEPA désactivé"
+              checkedLabel={t('subscriptions.table.sepaEnabledLabel')}
+              uncheckedLabel={t('subscriptions.table.sepaDisabledLabel')}
             />
           </div>
         );
@@ -558,7 +557,7 @@ export function SubscriptionDynamicTable({
         return row.pendingCalls ? (
           <div className="flex justify-center">
             <Badge className="bg-orange-100 dark:bg-orange-950/50 text-orange-700 dark:text-orange-300 border-orange-200 dark:border-orange-800">
-              Oui
+              {t('subscriptions.table.yes')}
             </Badge>
           </div>
         ) : (
@@ -603,12 +602,12 @@ export function SubscriptionDynamicTable({
             <div className="px-6 py-3 flex items-center justify-between">
               <div className="flex items-center gap-3">
                 <Badge className="bg-primary text-primary-foreground px-3 py-1 shadow-sm">
-                  {selectedIds.size} {selectedIds.size === 1 ? 'souscription sélectionnée' : 'souscriptions sélectionnées'}
+                  {selectedIds.size} {selectedIds.size === 1 ? t('subscriptions.table.selectionOne') : t('subscriptions.table.selectionMany')}
                 </Badge>
                 <span className="text-sm text-muted-foreground font-medium">
-                  {selectedIds.size === totalFilteredData.length 
-                    ? '(Toutes les pages sont sélectionnées)'
-                    : '(Sélection partielle sur toutes les pages)'}
+                  {selectedIds.size === totalFilteredData.length
+                    ? t('subscriptions.table.allPagesSelected')
+                    : t('subscriptions.table.partialSelection')}
                 </span>
               </div>
               <div className="flex items-center gap-2">
@@ -619,7 +618,7 @@ export function SubscriptionDynamicTable({
                   className="text-muted-foreground hover:text-foreground hover:bg-muted"
                 >
                   <X className="w-4 h-4 mr-1" />
-                  Annuler la sélection
+                  {t('subscriptions.table.cancelSelection')}
                 </Button>
               </div>
             </div>
@@ -642,24 +641,24 @@ export function SubscriptionDynamicTable({
                     />
                   </TooltipTrigger>
                   <TooltipContent>
-                    {selectAll 
-                      ? `Désélectionner toutes les ${totalFilteredData.length} souscriptions (toutes pages)` 
-                      : `Sélectionner toutes les ${totalFilteredData.length} souscriptions (toutes pages)`}
+                    {selectAll
+                      ? t('subscriptions.table.deselectAllTooltip', { count: totalFilteredData.length })
+                      : t('subscriptions.table.selectAllTooltip', { count: totalFilteredData.length })}
                   </TooltipContent>
                 </Tooltip>
               </th>
               {columns.map((column) => (
                 column.sortable ? (
-                  <SortableHeader 
-                    key={column.id} 
-                    label={column.label} 
+                  <SortableHeader
+                    key={column.id}
+                    label={t(column.label)}
                     sortKey={column.id}
                     align={column.align}
                   />
                 ) : (
-                  <NonSortableHeader 
-                    key={column.id} 
-                    label={column.label}
+                  <NonSortableHeader
+                    key={column.id}
+                    label={t(column.label)}
                     align={column.align}
                   />
                 )

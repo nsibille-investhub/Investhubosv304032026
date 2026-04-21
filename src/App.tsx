@@ -1,7 +1,9 @@
 import { useState, useEffect, useMemo } from 'react';
 import { AppStoreProvider } from './utils/appStoreContext';
 import { ThemeProvider } from './utils/themeContext';
+import { useTranslation } from './utils/languageContext';
 import { ThemeToggle } from './components/ThemeToggle';
+import { LanguageSwitcher } from './components/LanguageSwitcher';
 import { Search, Bell, Settings, Menu, ChevronDown, Plus, Info, MoreVertical, ArrowLeft, ChevronLeft, ChevronRight, Download, FileSpreadsheet, History, ArchiveX, Users, Palette } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 import { Badge } from './components/ui/badge';
@@ -105,6 +107,7 @@ import './utils/hashPreserver'; // Import to execute hash preservation logic
 type StatusType = 'need_review' | 'reviewed' | 'all' | 'rejected' | 'archived' | 'deleted' | 'flagged' | 'created' | 'onboarding' | 'signature' | 'counter_signature' | 'active' | 'prospect' | 'en_discussion' | 'en_relation';
 
 export default function App() {
+  const { t } = useTranslation();
   // Initialize from URL hash
   const [currentPage, setCurrentPage] = useState<Page>(() => {
     const page = getPageFromHash();
@@ -178,7 +181,7 @@ export default function App() {
   // Handler pour créer une nouvelle souscription
   const handleSubscriptionCreated = (newSubscription: any) => {
     setAllSubscriptionsData(prevData => [newSubscription, ...prevData]);
-    toast.success('Souscription créée avec succès !', {
+    toast.success(t('toast.subscriptionCreated'), {
       description: `${newSubscription.name} a été ajoutée au statut Draft`,
       duration: 5000
     });
@@ -222,7 +225,7 @@ export default function App() {
         const generatedData = generateEntities(100);
         setAllTableData(generatedData);
         setIsLoading(false);
-        toast.success('Données chargées avec succès', {
+        toast.success(t('toast.dataLoaded'), {
           description: `${generatedData.length} entités chargées`,
         });
       }, 800);
@@ -342,12 +345,12 @@ export default function App() {
       let description = 'Données chargées';
       if (currentPage === 'subscriptions') {
         description = `${allSubscriptionsData.length} souscriptions trouvées`;
-        toast.success('Données chargées avec succès', {
+        toast.success(t('toast.dataLoaded'), {
           description,
         });
       } else if (currentPage === 'entities') {
         description = `${allTableData.length} entités trouvées`;
-        toast.success('Données chargées avec succès', {
+        toast.success(t('toast.dataLoaded'), {
           description,
         });
       }
@@ -358,7 +361,7 @@ export default function App() {
 
   const handleRowClick = (row: any) => {
     setSelectedEntity(row);
-    toast.info('Détails de l\'entité', {
+    toast.info(t('toast.entityDetails'), {
       description: `Ouverture des détails pour ${row.name}`,
     });
   };
@@ -369,7 +372,7 @@ export default function App() {
       direction = 'desc';
     }
     setSortConfig({ key, direction });
-    toast.success('Tri appliqué', {
+    toast.success(t('toast.sortApplied'), {
       description: `Tri par ${key} (${direction === 'asc' ? 'croissant' : 'décroissant'})`,
     });
   };
@@ -423,21 +426,21 @@ export default function App() {
       'flagged': 'Flagged'
     };
     
-    toast.info(`Filtre actif: ${statusLabels[status]}`, {
+    toast.info(t('toast.activeFilter', { label: statusLabels[status] }), {
       description: `${count} entités affichées`,
     });
   };
 
   const handleExportTable = () => {
     exportTableToCSV(allTableData);
-    toast.success('Tableau exporté', {
+    toast.success(t('toast.tableExported'), {
       description: `${totalItems} entités exportées en CSV`,
     });
   };
 
   const handleExportAllAudits = () => {
     exportAllAuditTrailsToCSV(allTableData);
-    toast.success('Audit trails exportés', {
+    toast.success(t('toast.auditTrailsExported'), {
       description: 'Toutes les pistes d\'audit ont été exportées',
     });
   };
@@ -446,7 +449,7 @@ export default function App() {
     if (page >= 1 && page <= totalPages) {
       setPaginationPage(page);
       setSelectedEntity(null);
-      toast.info('Page changée', {
+      toast.info(t('toast.pageChanged'), {
         description: `Page ${page} sur ${totalPages}`,
       });
     }
@@ -455,7 +458,7 @@ export default function App() {
   const handleItemsPerPageChange = (newItemsPerPage: number) => {
     setItemsPerPage(newItemsPerPage);
     setPaginationPage(1);
-    toast.success('Affichage modifié', {
+    toast.success(t('toast.displayUpdated'), {
       description: `${newItemsPerPage} items par page`,
     });
   };
@@ -474,7 +477,7 @@ export default function App() {
       setSelectedEntity({ ...selectedEntity, monitoring: newMonitoringState });
     }
     
-    toast.success(newMonitoringState ? 'Monitoring activé' : 'Monitoring désactivé', {
+    toast.success(newMonitoringState ? t('toast.monitoringEnabled') : t('toast.monitoringDisabled'), {
       description: `pour ${allTableData.find(e => e.id === entityId)?.name}`,
     });
   };
@@ -493,7 +496,7 @@ export default function App() {
       setSelectedEntity({ ...selectedEntity, analyst: newAnalyst });
     }
     
-    toast.success('Analyst updated', {
+    toast.success(t('toast.analystUpdated'), {
       description: `${newAnalyst} assigned to ${allTableData.find(e => e.id === entityId)?.name}`,
     });
   };
@@ -596,26 +599,26 @@ export default function App() {
                 className="inline-flex items-center gap-2 border-[#D2DDD9] text-[#2F4D51] hover:text-[#1F3137] bg-white"
               >
                 <Palette className="w-4 h-4" />
-                Design System
+                {t('header.designSystem')}
               </Button>
               <ThemeToggle />
-              
+
               <Tooltip>
                 <TooltipTrigger asChild>
-                  <motion.button 
+                  <motion.button
                     whileHover={{ scale: 1.05 }}
                     whileTap={{ scale: 0.95, rotate: -15 }}
                     className="p-2.5 hover:bg-gray-100 rounded-xl transition-all duration-300 relative group"
                   >
                     <Bell className="w-5 h-5 text-gray-600 group-hover:text-gray-900 transition-colors" />
-                    <motion.span 
+                    <motion.span
                       initial={{ scale: 0 }}
                       animate={{ scale: 1 }}
                       className="absolute top-1.5 right-1.5 w-2 h-2 bg-red-500 rounded-full ring-2 ring-white"
                     />
                   </motion.button>
                 </TooltipTrigger>
-                <TooltipContent>11 notifications</TooltipContent>
+                <TooltipContent>{t('header.notifications', { count: 11 })}</TooltipContent>
               </Tooltip>
 
               <motion.div 
@@ -639,16 +642,10 @@ export default function App() {
                     <Settings className="w-5 h-5 text-gray-600 dark:text-gray-400 group-hover:text-gray-900 dark:group-hover:text-gray-100 transition-colors" />
                   </motion.button>
                 </TooltipTrigger>
-                <TooltipContent>App Store</TooltipContent>
+                <TooltipContent>{t('header.appStore')}</TooltipContent>
               </Tooltip>
 
-              <motion.button
-                whileHover={{ scale: 1.05 }}
-                whileTap={{ scale: 0.95 }}
-                className="p-2.5 hover:bg-gray-100 rounded-xl transition-all duration-300"
-              >
-                <span className="text-gray-600">🌐</span>
-              </motion.button>
+              <LanguageSwitcher />
             </div>
           </motion.header>
 
@@ -666,43 +663,43 @@ export default function App() {
               >
                 <ArrowLeft className="w-4 h-4" />
               </motion.button>
-              <span className="text-gray-400 dark:text-gray-500">InvestHub OS</span>
+              <span className="text-gray-400 dark:text-gray-500">{t('breadcrumb.investhubOs')}</span>
               <span className="text-gray-300 dark:text-gray-700">/</span>
               {currentPage === 'entities' ? (
                 <>
-                  <span className="text-gray-400 dark:text-gray-500">Compliance</span>
+                  <span className="text-gray-400 dark:text-gray-500">{t('breadcrumb.compliance')}</span>
                   <span className="text-gray-300 dark:text-gray-700">/</span>
-                  <span className="text-gray-900 dark:text-gray-100 font-medium">Entities</span>
+                  <span className="text-gray-900 dark:text-gray-100 font-medium">{t('breadcrumb.entities')}</span>
                 </>
               ) : currentPage === 'investors' ? (
                 <>
-                  <span className="text-gray-900 dark:text-gray-100 font-medium">Investisseurs</span>
+                  <span className="text-gray-900 dark:text-gray-100 font-medium">{t('breadcrumb.investors')}</span>
                 </>
               ) : currentPage === 'partners' ? (
                 <>
-                  <span className="text-gray-400 dark:text-gray-500">Partenaires</span>
+                  <span className="text-gray-400 dark:text-gray-500">{t('breadcrumb.partners')}</span>
                   <span className="text-gray-300 dark:text-gray-700">/</span>
-                  <span className="text-gray-900 dark:text-gray-100 font-medium">Partenaires</span>
+                  <span className="text-gray-900 dark:text-gray-100 font-medium">{t('breadcrumb.partners')}</span>
                 </>
               ) : currentPage === 'retrocessions' ? (
                 <>
-                  <span className="text-gray-400 dark:text-gray-500">Partenaires</span>
+                  <span className="text-gray-400 dark:text-gray-500">{t('breadcrumb.partners')}</span>
                   <span className="text-gray-300 dark:text-gray-700">/</span>
-                  <span className="text-gray-900 dark:text-gray-100 font-medium">Rétrocessions</span>
+                  <span className="text-gray-900 dark:text-gray-100 font-medium">{t('breadcrumb.retrocessions')}</span>
                 </>
               ) : currentPage === 'allfunds' ? (
                 <>
-                  <span className="text-gray-400 dark:text-gray-500">Fund Life</span>
+                  <span className="text-gray-400 dark:text-gray-500">{t('breadcrumb.fundLife')}</span>
                   <span className="text-gray-300 dark:text-gray-700">/</span>
-                  <span className="text-gray-900 dark:text-gray-100 font-medium">Tous les fonds</span>
+                  <span className="text-gray-900 dark:text-gray-100 font-medium">{t('breadcrumb.allFunds')}</span>
                 </>
               ) : currentPage === 'subscriptions' ? (
                 <>
-                  <span className="text-gray-400 dark:text-gray-500">Investisseurs</span>
+                  <span className="text-gray-400 dark:text-gray-500">{t('breadcrumb.investors')}</span>
                   <span className="text-gray-300 dark:text-gray-700">/</span>
                   {selectedSubscriptionDetail ? (
                     <>
-                      <span className="text-gray-400 dark:text-gray-500">Souscriptions</span>
+                      <span className="text-gray-400 dark:text-gray-500">{t('breadcrumb.subscriptions')}</span>
                       <span className="text-gray-300 dark:text-gray-700">/</span>
                       <Badge className="bg-blue-50 text-blue-700 border-blue-200 font-medium">
                         FutureInvest Fund
@@ -712,107 +709,107 @@ export default function App() {
                         Part A
                       </Badge>
                       <span className="text-gray-300 dark:text-gray-700">/</span>
-                      <span className="text-gray-900 dark:text-gray-100 font-medium">Détail de la souscription</span>
+                      <span className="text-gray-900 dark:text-gray-100 font-medium">{t('breadcrumb.subscriptionDetail')}</span>
                     </>
                   ) : (
-                    <span className="text-gray-900 dark:text-gray-100 font-medium">Souscriptions</span>
+                    <span className="text-gray-900 dark:text-gray-100 font-medium">{t('breadcrumb.subscriptions')}</span>
                   )}
                 </>
               ) : currentPage === 'dossiers' ? (
                 <>
-                  <span className="text-gray-400 dark:text-gray-500">Conformité</span>
+                  <span className="text-gray-400 dark:text-gray-500">{t('breadcrumb.compliance')}</span>
                   <span className="text-gray-300 dark:text-gray-700">/</span>
-                  <span className="text-gray-900 dark:text-gray-100 font-medium">Dossiers</span>
+                  <span className="text-gray-900 dark:text-gray-100 font-medium">{t('breadcrumb.dossiers')}</span>
                 </>
               ) : currentPage === 'monitoring' ? (
                 <>
-                  <span className="text-gray-400 dark:text-gray-500">Conformité</span>
+                  <span className="text-gray-400 dark:text-gray-500">{t('breadcrumb.compliance')}</span>
                   <span className="text-gray-300 dark:text-gray-700">/</span>
-                  <span className="text-gray-900 dark:text-gray-100 font-medium">Alertes</span>
+                  <span className="text-gray-900 dark:text-gray-100 font-medium">{t('breadcrumb.alerts')}</span>
                 </>
               ) : currentPage === 'tracking' ? (
                 <>
-                  <span className="text-gray-400 dark:text-gray-500">Data Room</span>
+                  <span className="text-gray-400 dark:text-gray-500">{t('breadcrumb.dataRoom')}</span>
                   <span className="text-gray-300 dark:text-gray-700">/</span>
-                  <span className="text-gray-900 dark:text-gray-100 font-medium">Tracking</span>
+                  <span className="text-gray-900 dark:text-gray-100 font-medium">{t('breadcrumb.tracking')}</span>
                 </>
               ) : currentPage === 'birdview' ? (
                 <>
-                  <span className="text-gray-400 dark:text-gray-500">Data Room</span>
+                  <span className="text-gray-400 dark:text-gray-500">{t('breadcrumb.dataRoom')}</span>
                   <span className="text-gray-300 dark:text-gray-700">/</span>
-                  <span className="text-gray-900 dark:text-gray-100 font-medium">Bird View</span>
+                  <span className="text-gray-900 dark:text-gray-100 font-medium">{t('breadcrumb.birdView')}</span>
                 </>
               ) : currentPage === 'events' ? (
                 <>
-                  <span className="text-gray-400 dark:text-gray-500">Portails et Contenu</span>
+                  <span className="text-gray-400 dark:text-gray-500">{t('breadcrumb.portalsAndContent')}</span>
                   <span className="text-gray-300 dark:text-gray-700">/</span>
-                  <span className="text-gray-900 dark:text-gray-100 font-medium">Événements</span>
+                  <span className="text-gray-900 dark:text-gray-100 font-medium">{t('breadcrumb.events')}</span>
                 </>
               ) : currentPage === 'news' ? (
                 <>
-                  <span className="text-gray-400 dark:text-gray-500">Portails et Contenu</span>
+                  <span className="text-gray-400 dark:text-gray-500">{t('breadcrumb.portalsAndContent')}</span>
                   <span className="text-gray-300 dark:text-gray-700">/</span>
-                  <span className="text-gray-900 dark:text-gray-100 font-medium">Actualités</span>
+                  <span className="text-gray-900 dark:text-gray-100 font-medium">{t('breadcrumb.news')}</span>
                 </>
               ) : currentPage === 'design-system' ? (
                 <>
-                  <span className="text-gray-400 dark:text-gray-500">Portails et Contenu</span>
+                  <span className="text-gray-400 dark:text-gray-500">{t('breadcrumb.portalsAndContent')}</span>
                   <span className="text-gray-300 dark:text-gray-700">/</span>
-                  <span className="text-gray-900 dark:text-gray-100 font-medium">Design System</span>
+                  <span className="text-gray-900 dark:text-gray-100 font-medium">{t('breadcrumb.designSystem')}</span>
                 </>
               ) : currentPage?.startsWith('settings-') ? (
                 <>
-                  <span className="text-gray-400">Administration</span>
+                  <span className="text-gray-400">{t('breadcrumb.administration')}</span>
                   <span className="text-gray-300">/</span>
                   <span className="text-gray-900 font-medium">
-                    {currentPage === 'settings-app-store' ? 'App Store' :
-                     currentPage === 'settings-users' ? 'Utilisateurs' :
-                     currentPage === 'settings-teams' ? 'Équipes' :
-                     currentPage === 'settings-rights' ? 'Droits' :
-                     currentPage === 'settings-mail-history' ? 'Historique des mails' :
-                     currentPage === 'settings-sms-history' ? 'Historique des SMS' :
-                     currentPage === 'settings-mail-templates' ? 'Gabarits des mails' :
-                     currentPage === 'settings-mail-stats' ? 'Statistiques des mails' :
-                     currentPage === 'settings-mail-groups' ? 'Groupes de mails' :
-                     currentPage === 'settings-investor-status' ? 'Statuts investisseurs' :
-                     currentPage === 'settings-deal-status' ? 'Statuts deals' :
-                     currentPage === 'settings-deal-types' ? 'Types de deals' :
-                     currentPage === 'settings-flow-types' ? 'Types de flux actif' :
-                     currentPage === 'settings-management-companies' ? 'Sociétés de gestion' :
-                     currentPage === 'settings-custom-fields' ? 'Champs personnalisés' :
-                     currentPage === 'settings-custom-status' ? 'Status personnalisés' :
-                     currentPage === 'settings-countries-risks' ? 'Gestion des pays/risques' :
-                     currentPage === 'settings-providers' ? 'Fournisseurs' :
-                     currentPage === 'settings-chart-of-accounts' ? 'Plan comptable' :
-                     currentPage === 'settings-logs' ? 'Logs' :
-                     currentPage === 'settings-logs-lemonway' ? 'Logs Lemonway' :
-                     currentPage === 'settings-logs-harvest' ? 'Logs Harvest' :
-                     currentPage === 'settings-known-ips' ? 'IPs connues' :
-                     currentPage === 'settings-docusign' ? 'Signatures DocuSign' :
-                     currentPage === 'settings-controls' ? 'Contrôles' :
-                     currentPage === 'settings-aics' ? 'AICs' :
-                     currentPage === 'settings-imports' ? 'Imports' :
-                     currentPage === 'settings-hosted-files' ? 'Fichiers hébergés' :
-                     currentPage === 'settings-section-categories' ? 'Catégories de sections' :
-                     currentPage === 'settings-reporting' ? 'Reporting' :
-                     currentPage === 'settings-reports' ? 'Rapports' :
-                     currentPage === 'settings-queries' ? 'Requêtes' :
-                     currentPage === 'settings-variable-formatting' ? 'Formatage des variables' :
-                     currentPage === 'settings-tools' ? 'Outils' :
-                     'Paramètres'}
+                    {currentPage === 'settings-app-store' ? t('sidebar.submenu.appStore') :
+                     currentPage === 'settings-users' ? t('sidebar.submenu.users') :
+                     currentPage === 'settings-teams' ? t('sidebar.submenu.teams') :
+                     currentPage === 'settings-rights' ? t('sidebar.submenu.rights') :
+                     currentPage === 'settings-mail-history' ? t('sidebar.submenu.mailHistory') :
+                     currentPage === 'settings-sms-history' ? t('sidebar.submenu.smsHistory') :
+                     currentPage === 'settings-mail-templates' ? t('sidebar.submenu.mailTemplates') :
+                     currentPage === 'settings-mail-stats' ? t('sidebar.submenu.mailStats') :
+                     currentPage === 'settings-mail-groups' ? t('sidebar.submenu.mailGroups') :
+                     currentPage === 'settings-investor-status' ? t('sidebar.submenu.investorStatus') :
+                     currentPage === 'settings-deal-status' ? t('sidebar.submenu.dealStatus') :
+                     currentPage === 'settings-deal-types' ? t('sidebar.submenu.dealTypes') :
+                     currentPage === 'settings-flow-types' ? t('sidebar.submenu.flowTypes') :
+                     currentPage === 'settings-management-companies' ? t('sidebar.submenu.managementCompanies') :
+                     currentPage === 'settings-custom-fields' ? t('sidebar.submenu.customFields') :
+                     currentPage === 'settings-custom-status' ? t('sidebar.submenu.customStatus') :
+                     currentPage === 'settings-countries-risks' ? t('sidebar.submenu.countriesRisks') :
+                     currentPage === 'settings-providers' ? t('sidebar.submenu.providers') :
+                     currentPage === 'settings-chart-of-accounts' ? t('sidebar.submenu.chartOfAccounts') :
+                     currentPage === 'settings-logs' ? t('sidebar.submenu.logs') :
+                     currentPage === 'settings-logs-lemonway' ? t('sidebar.submenu.logsLemonway') :
+                     currentPage === 'settings-logs-harvest' ? t('sidebar.submenu.logsHarvest') :
+                     currentPage === 'settings-known-ips' ? t('sidebar.submenu.knownIps') :
+                     currentPage === 'settings-docusign' ? t('sidebar.submenu.docusign') :
+                     currentPage === 'settings-controls' ? t('sidebar.submenu.controls') :
+                     currentPage === 'settings-aics' ? t('sidebar.submenu.aics') :
+                     currentPage === 'settings-imports' ? t('sidebar.submenu.imports') :
+                     currentPage === 'settings-hosted-files' ? t('sidebar.submenu.hostedFiles') :
+                     currentPage === 'settings-section-categories' ? t('sidebar.submenu.sectionCategories') :
+                     currentPage === 'settings-reporting' ? t('sidebar.submenu.reporting') :
+                     currentPage === 'settings-reports' ? t('sidebar.submenu.reports') :
+                     currentPage === 'settings-queries' ? t('sidebar.submenu.queries') :
+                     currentPage === 'settings-variable-formatting' ? t('sidebar.submenu.variableFormatting') :
+                     currentPage === 'settings-tools' ? t('sidebar.submenu.tools') :
+                     t('breadcrumb.settings')}
                   </span>
                 </>
               ) : selectedDataRoomSpace ? (
                 <>
-                  <span className="text-gray-400 dark:text-gray-500">Data Room</span>
+                  <span className="text-gray-400 dark:text-gray-500">{t('breadcrumb.dataRoom')}</span>
                   <span className="text-gray-300 dark:text-gray-700">/</span>
                   <span className="text-gray-900 dark:text-gray-100 font-medium">{selectedDataRoomSpace.name}</span>
                 </>
               ) : (
                 <>
-                  <span className="text-gray-400 dark:text-gray-500">Data Room</span>
+                  <span className="text-gray-400 dark:text-gray-500">{t('breadcrumb.dataRoom')}</span>
                   <span className="text-gray-300 dark:text-gray-700">/</span>
-                  <span className="text-gray-900 dark:text-gray-100 font-medium">Espaces</span>
+                  <span className="text-gray-900 dark:text-gray-100 font-medium">{t('breadcrumb.spaces')}</span>
                 </>
               )}
             </div>
@@ -863,7 +860,7 @@ export default function App() {
                         onClick={() => {
                           setSubscriptionViewMode('active');
                           setActiveStatus('all');
-                          toast.info('Retour aux souscriptions actives');
+                          toast.info(t('toast.backToActiveSubscriptions'));
                         }}
                       >
                         <ArrowLeft className="w-4 h-4" />
@@ -922,7 +919,7 @@ export default function App() {
                             onClick={() => {
                               setSubscriptionViewMode('inactive');
                               setActiveStatus('all');
-                              toast.info('Affichage des souscriptions inactives', {
+                              toast.info(t('toast.viewInactiveSubscriptions'), {
                                 description: `${allSubscriptionsData.filter(s => ['Rejected', 'Cancelled', 'Expired', 'Archived'].includes(s.status)).length} souscriptions inactives`
                               });
                             }}
@@ -988,7 +985,7 @@ export default function App() {
                         onClick={() => {
                           setInvestorViewMode('active');
                           setActiveStatus('all');
-                          toast.info('Retour aux investisseurs actifs');
+                          toast.info(t('toast.backToActiveInvestors'));
                         }}
                       >
                         <ArrowLeft className="w-4 h-4" />
@@ -1004,7 +1001,7 @@ export default function App() {
                         whileTap={{ scale: 0.97 }}
                       >
                         <Button
-                          onClick={() => toast.success('Fonctionnalité à venir')}
+                          onClick={() => toast.success(t('toast.comingSoon'))}
                           style={{ background: 'linear-gradient(62.32deg, #000000 10.53%, #0F323D 88.82%)' }}
                           className="gap-2 hover:opacity-90 shadow-lg shadow-black/20 hover:shadow-xl hover:shadow-black/30 transition-all duration-300 group relative overflow-hidden text-white"
                         >
@@ -1040,7 +1037,7 @@ export default function App() {
                             onClick={() => {
                               setInvestorViewMode('inactive');
                               setActiveStatus('all');
-                              toast.info('Affichage des investisseurs archivés', {
+                              toast.info(t('toast.viewArchivedInvestors'), {
                                 description: `${allInvestorsData.filter(i => getInactiveInvestorStatuses().includes(i.status)).length} investisseurs archivés`
                               });
                             }}
@@ -1055,7 +1052,7 @@ export default function App() {
                           <DropdownMenuItem
                             onClick={() => {
                               exportTableToCSV(allInvestorsData, 'investisseurs');
-                              toast.success('Export CSV', {
+                              toast.success(t('toast.exportCsv'), {
                                 description: 'Les données ont été exportées en CSV'
                               });
                             }}
@@ -1066,7 +1063,7 @@ export default function App() {
                           </DropdownMenuItem>
                           <DropdownMenuItem
                             onClick={() => {
-                              toast.info('Export XLSX', {
+                              toast.info(t('toast.exportXlsx'), {
                                 description: 'Fonctionnalité à venir'
                               });
                             }}
@@ -1079,7 +1076,7 @@ export default function App() {
                             onClick={() => {
                               const totalContacts = allInvestorsData.reduce((sum, inv) => sum + (inv.contacts?.length || 0), 0);
                               exportContactsToCSV(allInvestorsData);
-                              toast.success('Export des contacts', {
+                              toast.success(t('toast.contactsExported'), {
                                 description: `${totalContacts} contacts exportés en CSV`
                               });
                             }}
@@ -1186,7 +1183,7 @@ export default function App() {
                     console.log('App.tsx - currentPage:', currentPage);
                     setSelectedSubscriptionDetail(subscription);
                     console.log('App.tsx - selectedSubscriptionDetail set to:', subscription);
-                    toast.info('Détails de la souscription', {
+                    toast.info(t('toast.subscriptionDetails'), {
                       description: `Ouverture des détails pour ${subscription.name}`,
                     });
                   }}
@@ -1207,7 +1204,7 @@ export default function App() {
                     onBack={() => {
                       console.log('App.tsx - onBack called');
                       setSelectedSubscriptionDetail(null);
-                      toast.info('Retour aux souscriptions');
+                      toast.info(t('toast.backToSubscriptions'));
                     }}
                   />
                 </div>
@@ -1289,7 +1286,7 @@ export default function App() {
                     setSelectedInvestorDetail(investor);
                     setInvestorDetailTab(tab || 'profil');
                     console.log('App.tsx - selectedInvestorDetail set to:', investor);
-                    toast.info('Détails de l\'investisseur', {
+                    toast.info(t('toast.investorDetails'), {
                       description: `Ouverture des détails pour ${investor.name}`,
                     });
                   }}
@@ -1308,7 +1305,7 @@ export default function App() {
                   console.log('App.tsx - onBack called for investor');
                   setSelectedInvestorDetail(null);
                   setInvestorDetailTab('profil');
-                  toast.info('Retour aux investisseurs');
+                  toast.info(t('toast.backToInvestors'));
                 }}
               />
             </div>
@@ -1353,7 +1350,7 @@ export default function App() {
                       whileTap={{ scale: 0.97 }}
                     >
                       <Button
-                        onClick={() => toast.success('Fonctionnalité à venir')}
+                        onClick={() => toast.success(t('toast.comingSoon'))}
                         style={{ background: 'linear-gradient(62.32deg, #000000 10.53%, #0F323D 88.82%)' }}
                         className="gap-2 hover:opacity-90 shadow-lg shadow-black/20 hover:shadow-xl hover:shadow-black/30 transition-all duration-300 group relative overflow-hidden text-white"
                       >
@@ -1388,7 +1385,7 @@ export default function App() {
                         <DropdownMenuItem
                           onClick={() => {
                             const archivedCount = allFundsData.filter(f => f.status === 'Clôturé').length;
-                            toast.info('Fonctionnalité à venir', {
+                            toast.info(t('toast.comingSoon'), {
                               description: `${archivedCount} fonds clôturés`
                             });
                           }}
@@ -1403,7 +1400,7 @@ export default function App() {
                         <DropdownMenuItem
                           onClick={() => {
                             exportTableToCSV(allFundsData, 'fonds');
-                            toast.success('Export CSV', {
+                            toast.success(t('toast.exportCsv'), {
                               description: 'Les données ont été exportées en CSV'
                             });
                           }}
@@ -1414,7 +1411,7 @@ export default function App() {
                         </DropdownMenuItem>
                         <DropdownMenuItem
                           onClick={() => {
-                            toast.info('Export XLSX', {
+                            toast.info(t('toast.exportXlsx'), {
                               description: 'Fonctionnalité à venir'
                             });
                           }}
@@ -1469,7 +1466,7 @@ export default function App() {
                   allData={allFundsData}
                   setAllData={setAllFundsData}
                   onFundClick={(fund) => {
-                    toast.info('Détails du fonds', {
+                    toast.info(t('toast.fundDetails'), {
                       description: `Ouverture des détails pour ${fund.name}`,
                     });
                   }}
@@ -1523,7 +1520,7 @@ export default function App() {
                       whileTap={{ scale: 0.97 }}
                     >
                       <Button
-                        onClick={() => toast.success('Fonctionnalité à venir')}
+                        onClick={() => toast.success(t('toast.comingSoon'))}
                         style={{ background: 'linear-gradient(62.32deg, #000000 10.53%, #0F323D 88.82%)' }}
                         className="gap-2 hover:opacity-90 shadow-lg shadow-black/20 hover:shadow-xl hover:shadow-black/30 transition-all duration-300 group relative overflow-hidden text-white"
                       >
@@ -1558,7 +1555,7 @@ export default function App() {
                         <DropdownMenuItem
                           onClick={() => {
                             const archivedCount = allPartnersData.filter(p => p.status === 'Archivé').length;
-                            toast.info('Fonctionnalité à venir', {
+                            toast.info(t('toast.comingSoon'), {
                               description: `${archivedCount} partenaires archivés`
                             });
                           }}
@@ -1573,7 +1570,7 @@ export default function App() {
                         <DropdownMenuItem
                           onClick={() => {
                             exportTableToCSV(allPartnersData, 'partenaires');
-                            toast.success('Export CSV', {
+                            toast.success(t('toast.exportCsv'), {
                               description: 'Les données ont été exportées en CSV'
                             });
                           }}
@@ -1584,7 +1581,7 @@ export default function App() {
                         </DropdownMenuItem>
                         <DropdownMenuItem
                           onClick={() => {
-                            toast.info('Export XLSX', {
+                            toast.info(t('toast.exportXlsx'), {
                               description: 'Fonctionnalité à venir'
                             });
                           }}
@@ -1597,7 +1594,7 @@ export default function App() {
                           onClick={() => {
                             const totalAdvisors = allPartnersData.reduce((sum, partner) => sum + (partner.contacts?.length || 0), 0);
                             exportPartnerContactsToCSV(allPartnersData);
-                            toast.success('Export des conseillers', {
+                            toast.success(t('toast.advisorsExported'), {
                               description: `${totalAdvisors} conseillers exportés en CSV`
                             });
                           }}
@@ -1620,7 +1617,7 @@ export default function App() {
                   allData={allPartnersData}
                   setAllData={setAllPartnersData}
                   onPartnerClick={(partner) => {
-                    toast.info('Détails du partenaire', {
+                    toast.info(t('toast.partnerDetails'), {
                       description: `Ouverture des détails pour ${partner.name}`,
                     });
                   }}
@@ -1633,7 +1630,7 @@ export default function App() {
             <CompliancePlusPage 
               onEnableModule={() => {
                 setEntitiesManagementEnabled(true);
-                toast.success('Module activé', {
+                toast.success(t('toast.moduleActivated'), {
                   description: 'Le module Compliance+ est maintenant actif'
                 });
               }}
@@ -1646,7 +1643,7 @@ export default function App() {
               entitiesManagementEnabled={entitiesManagementEnabled}
               onEnableModule={() => {
                 setEntitiesManagementEnabled(true);
-                toast.success('Module activé', {
+                toast.success(t('toast.moduleActivated'), {
                   description: 'Le module de filtrage LCB-FT est maintenant actif'
                 });
               }}
@@ -1664,7 +1661,7 @@ export default function App() {
               trackingEnabled={trackingEnabled}
               onEnableModule={() => {
                 setTrackingEnabled(true);
-                toast.success('Module activé', {
+                toast.success(t('toast.moduleActivated'), {
                   description: 'Le module Tracking de la Data Room est maintenant actif'
                 });
               }}
@@ -1878,7 +1875,7 @@ export default function App() {
         onEntitiesManagementChange={(enabled) => {
           setEntitiesManagementEnabled(enabled);
           toast.success(
-            enabled ? 'Module activé' : 'Module désactivé',
+            enabled ? t('toast.moduleActivated') : t('toast.moduleDeactivated'),
             {
               description: enabled 
                 ? 'La gestion des entités est maintenant active'

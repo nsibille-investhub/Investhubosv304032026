@@ -10,12 +10,14 @@ import { ArrowLeft, Folder, Users, Layers3, Landmark } from 'lucide-react';
 import { Button } from './ui/button';
 import { MassUploadWizard } from './MassUploadWizard';
 import { getTreeForSpace, TreeNode } from '../utils/dataRoomTreeData';
+import { useTranslation } from '../utils/languageContext';
 
 interface DataRoomPageProps {
   onSpaceChange?: (space: DataRoomSpace | null) => void;
 }
 
 export function DataRoomPage({ onSpaceChange }: DataRoomPageProps) {
+  const { t } = useTranslation();
   const [dataRoomSpaces, setDataRoomSpaces] = useState<DataRoomSpace[]>(mockDataRoomSpaces);
   const [selectedSpace, setSelectedSpace] = useState<DataRoomSpace | null>(null);
   const [spaceConfigDialogOpen, setSpaceConfigDialogOpen] = useState(false);
@@ -35,7 +37,7 @@ export function DataRoomPage({ onSpaceChange }: DataRoomPageProps) {
     if (onSpaceChange) {
       onSpaceChange(space);
     }
-    toast.success('Espace ouvert', {
+    toast.success(t('ged.toast.spaceOpened'), {
       description: space.name
     });
   };
@@ -56,7 +58,7 @@ export function DataRoomPage({ onSpaceChange }: DataRoomPageProps) {
       onSpaceChange(targetSpace);
     }
 
-    toast.success('Résultat ouvert', {
+    toast.success(t('ged.toast.resultOpened'), {
       description: `${result.name} · ${result.spaceName}`,
     });
   };
@@ -164,13 +166,13 @@ export function DataRoomPage({ onSpaceChange }: DataRoomPageProps) {
                   className="gap-2"
                 >
                   <ArrowLeft className="w-4 h-4" />
-                  Retour aux espaces
+                  {t('ged.dataRoom.massUpload.backToSpaces')}
                 </Button>
                 <div className="h-4 w-px bg-gray-300" />
                 <div>
-                  <h2 className="font-semibold text-gray-900">Import massif multi-espace</h2>
+                  <h2 className="font-semibold text-gray-900">{t('ged.dataRoom.massUpload.title')}</h2>
                   <p className="text-xs text-gray-500">
-                    Ajoutez des documents depuis la vue espaces
+                    {t('ged.dataRoom.massUpload.subtitle')}
                   </p>
                 </div>
               </div>
@@ -223,7 +225,7 @@ export function DataRoomPage({ onSpaceChange }: DataRoomPageProps) {
                 className="gap-2 mb-4"
               >
                 <ArrowLeft className="w-4 h-4" />
-                Retour aux espaces
+                {t('ged.dataRoom.spaceHeader.backToSpaces')}
               </Button>
 
               <div className="flex items-center gap-4">
@@ -233,7 +235,7 @@ export function DataRoomPage({ onSpaceChange }: DataRoomPageProps) {
                 <div>
                   <h2 className="text-5xl leading-none font-semibold text-gray-900">{selectedSpace.name}</h2>
                   <div className="flex items-center gap-3 mt-2 text-base" style={{ color: '#6a7282' }}>
-                    <span>{selectedSpace.documentCount} documents • {selectedSpace.folderCount} dossiers</span>
+                    <span>{t('ged.dataRoom.spaceHeader.documentsAndFolders', { documents: selectedSpace.documentCount, folders: selectedSpace.folderCount })}</span>
                     {selectedSpace.targeting.userTypes.length > 0 && (
                       <>
                         <span style={{ color: '#6a7282' }}>·</span>
@@ -248,7 +250,7 @@ export function DataRoomPage({ onSpaceChange }: DataRoomPageProps) {
                         <span style={{ color: '#6a7282' }}>·</span>
                         <span className="flex items-center gap-1.5">
                           <Layers3 className="w-4 h-4" />
-                          Segments : {selectedSpace.targeting.segments.join(', ')}
+                          {t('ged.dataRoom.spaceHeader.segmentsPrefix')} {selectedSpace.targeting.segments.join(', ')}
                         </span>
                       </>
                     )}
@@ -257,7 +259,7 @@ export function DataRoomPage({ onSpaceChange }: DataRoomPageProps) {
                         <span style={{ color: '#6a7282' }}>·</span>
                         <span className="flex items-center gap-1.5">
                           <Landmark className="w-4 h-4" />
-                          Fonds : {selectedSpace.targeting.funds.join(', ')}
+                          {t('ged.dataRoom.spaceHeader.fundsPrefix')} {selectedSpace.targeting.funds.join(', ')}
                         </span>
                       </>
                     )}

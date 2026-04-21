@@ -33,6 +33,7 @@ import { Separator } from './ui/separator';
 import { Label } from './ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from './ui/select';
 import { toast } from 'sonner';
+import { useTranslation } from '../utils/languageContext';
 
 interface NewSubscriptionDialogProps {
   open: boolean;
@@ -158,6 +159,7 @@ const funds = [
 const shareClasses = ['A', 'B', 'C', 'I', 'R'];
 
 export function NewSubscriptionDialog({ open, onClose, onSubscriptionCreated }: NewSubscriptionDialogProps) {
+  const { t } = useTranslation();
   const [step, setStep] = useState(1);
   const [subStep, setSubStep] = useState<'investor' | 'structure'>('investor'); // Sub-step pour étape 1
   const [searchQuery, setSearchQuery] = useState('');
@@ -330,7 +332,7 @@ export function NewSubscriptionDialog({ open, onClose, onSubscriptionCreated }: 
 
   const handleCreateInvestor = () => {
     if (!newInvestor.name || !newInvestor.email) {
-      toast.error('Nom et email requis');
+      toast.error(t('subscriptions.newDialog.errors.missingNameEmail'));
       return;
     }
 
@@ -347,12 +349,12 @@ export function NewSubscriptionDialog({ open, onClose, onSubscriptionCreated }: 
     setNewInvestor({ name: '', type: 'individual', email: '' });
     setSearchQuery('');
     setSubStep('structure');
-    toast.success(`${investor.name} créé avec succès`);
+    toast.success(t('subscriptions.newDialog.toast.investorCreated', { name: investor.name }));
   };
 
   const handleCreateStructure = () => {
     if (!newStructure.name || !newStructure.siret) {
-      toast.error('Raison sociale et SIRET requis');
+      toast.error(t('subscriptions.newDialog.errors.missingLegalNameSiret'));
       return;
     }
 
@@ -368,7 +370,7 @@ export function NewSubscriptionDialog({ open, onClose, onSubscriptionCreated }: 
     setShowNewStructureForm(false);
     setNewStructure({ name: '', siret: '', country: 'France', address: '' });
     setStructureSearchQuery('');
-    toast.success(`${structure.name} créée avec succès`);
+    toast.success(t('subscriptions.newDialog.toast.structureCreated', { name: structure.name }));
   };
 
   const handleQuickCreate = () => {
@@ -385,7 +387,7 @@ export function NewSubscriptionDialog({ open, onClose, onSubscriptionCreated }: 
 
   const handleSubmit = async () => {
     if (!formData.investor || !formData.fund || !formData.shareClass || !formData.numberOfShares) {
-      toast.error('Données incomplètes');
+      toast.error(t('subscriptions.newDialog.errors.incompleteData'));
       return;
     }
 
@@ -451,25 +453,28 @@ export function NewSubscriptionDialog({ open, onClose, onSubscriptionCreated }: 
       onSubscriptionCreated(newSubscription);
     }
 
-    toast.success('Souscription créée !', {
-      description: `${formData.investor?.name} - ${calculatedAmount.toLocaleString('fr-FR')} €`,
+    toast.success(t('subscriptions.newDialog.toast.subscriptionCreated'), {
+      description: t('subscriptions.newDialog.toast.subscriptionCreatedDesc', {
+        investor: formData.investor?.name ?? '',
+        amount: calculatedAmount.toLocaleString('fr-FR'),
+      }),
     });
     setIsSubmitting(false);
     onClose();
   };
 
   const steps = [
-    { number: 1, title: 'Investisseur', icon: Users },
-    { number: 2, title: 'Détails', icon: FileText },
-    { number: 3, title: 'Confirmation', icon: Check },
+    { number: 1, title: t('subscriptions.newDialog.steps.investor'), icon: Users },
+    { number: 2, title: t('subscriptions.newDialog.steps.details'), icon: FileText },
+    { number: 3, title: t('subscriptions.newDialog.steps.confirmation'), icon: Check },
   ];
 
   return (
     <BigModal open={open} onOpenChange={onClose}>
       <BigModalContent className="p-0 gap-0">
-        <BigModalTitle className="sr-only">Nouvelle Souscription</BigModalTitle>
+        <BigModalTitle className="sr-only">{t('subscriptions.newDialog.srTitle')}</BigModalTitle>
         <BigModalDescription className="sr-only">
-          Créez une nouvelle souscription en 3 étapes
+          {t('subscriptions.newDialog.srDescription')}
         </BigModalDescription>
         
         <div className="flex flex-col h-full overflow-hidden rounded-3xl">
@@ -483,8 +488,8 @@ export function NewSubscriptionDialog({ open, onClose, onSubscriptionCreated }: 
                   <Plus className="w-5 h-5 text-white" />
                 </div>
                 <div>
-                  <h2 className="text-xl font-bold text-gray-900">Nouvelle Souscription</h2>
-                  <p className="text-xs text-gray-600">Étape {step}/3</p>
+                  <h2 className="text-xl font-bold text-gray-900">{t('subscriptions.newDialog.title')}</h2>
+                  <p className="text-xs text-gray-600">{t('subscriptions.newDialog.stepCount', { current: step })}</p>
                 </div>
               </div>
               
@@ -560,13 +565,13 @@ export function NewSubscriptionDialog({ open, onClose, onSubscriptionCreated }: 
                       <div className="mb-4">
                         <Label className="text-xs mb-2 flex items-center gap-1">
                           <Search className="w-3 h-3" />
-                          Rechercher un investisseur
+                          {t('subscriptions.newDialog.searchInvestorLabel')}
                         </Label>
                         <div className="relative">
                           <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400 z-10" />
                           <Input
                             ref={inputRef}
-                            placeholder="Nom, email ou structure..."
+                            placeholder={t('subscriptions.newDialog.searchInvestorPlaceholder')}
                             value={searchQuery}
                             onChange={(e) => setSearchQuery(e.target.value)}
                             className="pl-10 h-10"
@@ -609,7 +614,7 @@ export function NewSubscriptionDialog({ open, onClose, onSubscriptionCreated }: 
                                           <div className="ml-10">
                                             <Badge variant="outline" className="text-xs h-5">
                                               <Building2 className="w-3 h-3 mr-1" />
-                                              {investor.structures.length} structure{investor.structures.length > 1 ? 's' : ''}
+                                              {t(investor.structures.length > 1 ? 'subscriptions.newDialog.structureCountMany' : 'subscriptions.newDialog.structureCountOne', { count: investor.structures.length })}
                                             </Badge>
                                           </div>
                                         )}
@@ -622,14 +627,14 @@ export function NewSubscriptionDialog({ open, onClose, onSubscriptionCreated }: 
                                     <div className="w-10 h-10 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-2">
                                       <Search className="w-5 h-5 text-gray-400" />
                                     </div>
-                                    <p className="text-xs text-gray-600 mb-3">Aucun investisseur trouvé pour "{searchQuery}"</p>
+                                    <p className="text-xs text-gray-600 mb-3">{t('subscriptions.newDialog.noInvestorFound', { query: searchQuery })}</p>
                                     <Button
                                       onClick={handleQuickCreate}
                                       size="sm"
                                       className="bg-gradient-to-r from-blue-500 to-indigo-600 text-white h-9"
                                     >
                                       <Plus className="w-4 h-4 mr-2" />
-                                      Créer "{searchQuery}"
+                                      {t('subscriptions.newDialog.createInvestor', { query: searchQuery })}
                                     </Button>
                                   </div>
                                 )}
@@ -643,7 +648,7 @@ export function NewSubscriptionDialog({ open, onClose, onSubscriptionCreated }: 
                       <div>
                         <div className="flex items-center gap-2 mb-3">
                           <Clock className="w-3.5 h-3.5 text-gray-500" />
-                          <Label className="text-xs text-gray-600">Récemment ajoutés</Label>
+                          <Label className="text-xs text-gray-600">{t('subscriptions.newDialog.recentlyAdded')}</Label>
                         </div>
                         <div className="grid grid-cols-2 gap-3">
                           {recentInvestors.map((investor) => (
@@ -670,7 +675,7 @@ export function NewSubscriptionDialog({ open, onClose, onSubscriptionCreated }: 
                               {investor.structures && investor.structures.length > 0 && (
                                 <Badge variant="outline" className="text-xs">
                                   <Building2 className="w-3 h-3 mr-1" />
-                                  {investor.structures.length} structure{investor.structures.length > 1 ? 's' : ''}
+                                  {t(investor.structures.length > 1 ? 'subscriptions.newDialog.structureCountMany' : 'subscriptions.newDialog.structureCountOne', { count: investor.structures.length })}
                                 </Badge>
                               )}
                             </button>
@@ -686,7 +691,7 @@ export function NewSubscriptionDialog({ open, onClose, onSubscriptionCreated }: 
                           className="w-full border-dashed border-2 border-blue-300 text-blue-600 hover:bg-blue-50 h-10"
                         >
                           <Plus className="w-4 h-4 mr-2" />
-                          Créer un nouvel investisseur
+                          {t('subscriptions.newDialog.createNewInvestor')}
                         </Button>
                       </div>
                     </>
@@ -696,7 +701,7 @@ export function NewSubscriptionDialog({ open, onClose, onSubscriptionCreated }: 
                       <div className="flex items-center justify-between mb-3">
                         <div className="flex items-center gap-2">
                           <Sparkles className="w-4 h-4 text-blue-600" />
-                          <span className="font-semibold text-sm">Nouvel Investisseur</span>
+                          <span className="font-semibold text-sm">{t('subscriptions.newDialog.newInvestor')}</span>
                         </div>
                         <Button
                           variant="ghost"
@@ -722,7 +727,7 @@ export function NewSubscriptionDialog({ open, onClose, onSubscriptionCreated }: 
                             onClick={() => setNewInvestor({ ...newInvestor, type: 'individual' })}
                           >
                             <User className="w-3 h-3 mr-1" />
-                            Physique
+                            {t('subscriptions.newDialog.individual')}
                           </Button>
                           <Button
                             type="button"
@@ -732,13 +737,13 @@ export function NewSubscriptionDialog({ open, onClose, onSubscriptionCreated }: 
                             onClick={() => setNewInvestor({ ...newInvestor, type: 'corporate' })}
                           >
                             <Building2 className="w-3 h-3 mr-1" />
-                            Morale
+                            {t('subscriptions.newDialog.corporate')}
                           </Button>
                         </div>
 
                         {/* Name */}
                         <div>
-                          <Label className="text-xs mb-1">Nom complet</Label>
+                          <Label className="text-xs mb-1">{t('subscriptions.newDialog.fullName')}</Label>
                           <Input
                             value={newInvestor.name}
                             onChange={(e) => setNewInvestor({ ...newInvestor, name: e.target.value })}
@@ -749,12 +754,12 @@ export function NewSubscriptionDialog({ open, onClose, onSubscriptionCreated }: 
 
                         {/* Email */}
                         <div>
-                          <Label className="text-xs mb-1">Email</Label>
+                          <Label className="text-xs mb-1">{t('subscriptions.newDialog.email')}</Label>
                           <Input
                             type="email"
                             value={newInvestor.email}
                             onChange={(e) => setNewInvestor({ ...newInvestor, email: e.target.value })}
-                            placeholder="exemple@email.com"
+                            placeholder={t('subscriptions.newDialog.emailPlaceholder')}
                             className="h-9"
                           />
                         </div>
@@ -767,7 +772,7 @@ export function NewSubscriptionDialog({ open, onClose, onSubscriptionCreated }: 
                             className="flex-1 bg-gradient-to-r from-blue-500 to-indigo-600 text-white h-9"
                           >
                             <Check className="w-3 h-3 mr-1" />
-                            Créer et sélectionner
+                            {t('subscriptions.newDialog.createAndSelect')}
                           </Button>
                           <Button
                             size="sm"
@@ -778,7 +783,7 @@ export function NewSubscriptionDialog({ open, onClose, onSubscriptionCreated }: 
                             }}
                             className="h-9"
                           >
-                            Annuler
+                            {t('subscriptions.newDialog.cancel')}
                           </Button>
                         </div>
                       </div>
@@ -794,7 +799,7 @@ export function NewSubscriptionDialog({ open, onClose, onSubscriptionCreated }: 
                         <div className="w-8 h-8 rounded-full bg-emerald-500 flex items-center justify-center">
                           <Check className="w-4 h-4 text-white" />
                         </div>
-                        <span className="font-semibold text-emerald-900">Investisseur sélectionné</span>
+                        <span className="font-semibold text-emerald-900">{t('subscriptions.newDialog.investorSelected')}</span>
                       </div>
                       <div className="flex items-center gap-3 p-3 bg-white rounded-lg">
                         <div className={`w-10 h-10 rounded-lg flex items-center justify-center ${
@@ -819,7 +824,7 @@ export function NewSubscriptionDialog({ open, onClose, onSubscriptionCreated }: 
                           }}
                           className="text-gray-500 hover:text-gray-700 h-8"
                         >
-                          Changer
+                          {t('subscriptions.newDialog.change')}
                         </Button>
                       </div>
                     </motion.div>
@@ -831,7 +836,7 @@ export function NewSubscriptionDialog({ open, onClose, onSubscriptionCreated }: 
                       {/* Investor Recap Card - Always visible */}
                       <div className="mb-3 p-3 bg-gradient-to-br from-blue-50 to-indigo-50 border-2 border-blue-200 rounded-xl">
                         <div className="flex items-center justify-between mb-2">
-                          <div className="text-xs font-semibold text-blue-900 uppercase">Investisseur sélectionné</div>
+                          <div className="text-xs font-semibold text-blue-900 uppercase">{t('subscriptions.newDialog.investorSelectedCaps')}</div>
                           <Button
                             variant="ghost"
                             size="sm"
@@ -845,7 +850,7 @@ export function NewSubscriptionDialog({ open, onClose, onSubscriptionCreated }: 
                             }}
                             className="h-6 text-xs text-blue-600 hover:text-blue-700 hover:bg-blue-100"
                           >
-                            Modifier
+                            {t('subscriptions.newDialog.modify')}
                           </Button>
                         </div>
                         <div className="flex items-center gap-3 p-2 bg-white rounded-lg">
@@ -863,7 +868,7 @@ export function NewSubscriptionDialog({ open, onClose, onSubscriptionCreated }: 
                             <div className="text-xs text-gray-500 truncate">{formData.investor?.email}</div>
                             <div className="flex items-center gap-1 mt-1">
                               <Badge variant="outline" className="text-xs h-4">
-                                {formData.investor?.type === 'individual' ? 'Physique' : 'Morale'}
+                                {formData.investor?.type === 'individual' ? t('subscriptions.newDialog.individual') : t('subscriptions.newDialog.corporate')}
                               </Badge>
                             </div>
                           </div>
@@ -877,13 +882,13 @@ export function NewSubscriptionDialog({ open, onClose, onSubscriptionCreated }: 
                           <div className="mb-4">
                             <Label className="text-xs mb-2 flex items-center gap-1">
                               <Search className="w-3 h-3" />
-                              Rechercher une structure (Pappers)
+                              {t('subscriptions.newDialog.searchStructureLabel')}
                             </Label>
                             <div className="relative">
                               <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400 z-10" />
                               <Input
                                 ref={structureInputRef}
-                                placeholder="SIRET ou raison sociale..."
+                                placeholder={t('subscriptions.newDialog.searchStructurePlaceholder')}
                                 value={structureSearchQuery}
                                 onChange={(e) => setStructureSearchQuery(e.target.value)}
                                 className="pl-10 h-10"
@@ -937,14 +942,14 @@ export function NewSubscriptionDialog({ open, onClose, onSubscriptionCreated }: 
                                         <div className="w-10 h-10 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-2">
                                           <Search className="w-5 h-5 text-gray-400" />
                                         </div>
-                                        <p className="text-xs text-gray-600 mb-3">Aucune structure trouvée</p>
+                                        <p className="text-xs text-gray-600 mb-3">{t('subscriptions.newDialog.noStructureFound')}</p>
                                         <Button
                                           onClick={handleQuickCreateStructure}
                                           size="sm"
                                           className="bg-gradient-to-r from-purple-500 to-indigo-600 text-white h-9"
                                         >
                                           <Plus className="w-4 h-4 mr-2" />
-                                          Créer la structure
+                                          {t('subscriptions.newDialog.createStructure')}
                                         </Button>
                                       </div>
                                     )}
@@ -959,7 +964,7 @@ export function NewSubscriptionDialog({ open, onClose, onSubscriptionCreated }: 
                             <div className="mb-4">
                               <Label className="text-xs text-gray-600 mb-2 flex items-center gap-1">
                                 <Building2 className="w-3 h-3" />
-                                Structures de {formData.investor.name.split(' ')[0]}
+                                {t('subscriptions.newDialog.structuresOf', { name: formData.investor.name.split(' ')[0] })}
                               </Label>
                               <div className="space-y-2">
                                 {formData.investor.structures.slice(0, 2).map((structure) => (
@@ -998,7 +1003,7 @@ export function NewSubscriptionDialog({ open, onClose, onSubscriptionCreated }: 
                               className="w-full border-dashed border-2 border-purple-300 text-purple-600 hover:bg-purple-50 h-9"
                             >
                               <Plus className="w-4 h-4 mr-2" />
-                              Créer une nouvelle structure
+                              {t('subscriptions.newDialog.createNewStructure')}
                             </Button>
 
                             <Button
@@ -1007,7 +1012,7 @@ export function NewSubscriptionDialog({ open, onClose, onSubscriptionCreated }: 
                               className="w-full border-2 border-emerald-300 text-emerald-700 hover:bg-emerald-50 h-9"
                             >
                               <User className="w-4 h-4 mr-2" />
-                              Investissement en direct (sans structure)
+                              {t('subscriptions.newDialog.directInvestment')}
                             </Button>
                           </div>
                         </>
@@ -1017,7 +1022,7 @@ export function NewSubscriptionDialog({ open, onClose, onSubscriptionCreated }: 
                           <div className="flex items-center justify-between mb-3">
                             <div className="flex items-center gap-2">
                               <Sparkles className="w-4 h-4 text-purple-600" />
-                              <span className="font-semibold text-sm">Nouvelle Structure</span>
+                              <span className="font-semibold text-sm">{t('subscriptions.newDialog.newStructure')}</span>
                             </div>
                             <Button
                               variant="ghost"
@@ -1035,7 +1040,7 @@ export function NewSubscriptionDialog({ open, onClose, onSubscriptionCreated }: 
                           <div className="space-y-2">
                             {/* Legal Name */}
                             <div>
-                              <Label className="text-xs mb-1">Raison Légale <span className="text-red-500">*</span></Label>
+                              <Label className="text-xs mb-1">{t('subscriptions.newDialog.legalName')} <span className="text-red-500">*</span></Label>
                               <Input
                                 value={newStructure.name}
                                 onChange={(e) => setNewStructure({ ...newStructure, name: e.target.value })}
@@ -1047,7 +1052,7 @@ export function NewSubscriptionDialog({ open, onClose, onSubscriptionCreated }: 
                             {/* SIRET & Country */}
                             <div className="grid grid-cols-2 gap-2">
                               <div>
-                                <Label className="text-xs mb-1">SIRET <span className="text-red-500">*</span></Label>
+                                <Label className="text-xs mb-1">{t('subscriptions.newDialog.siret')} <span className="text-red-500">*</span></Label>
                                 <Input
                                   value={newStructure.siret}
                                   onChange={(e) => setNewStructure({ ...newStructure, siret: e.target.value })}
@@ -1056,7 +1061,7 @@ export function NewSubscriptionDialog({ open, onClose, onSubscriptionCreated }: 
                                 />
                               </div>
                               <div>
-                                <Label className="text-xs mb-1">Pays</Label>
+                                <Label className="text-xs mb-1">{t('subscriptions.newDialog.countryLabel')}</Label>
                                 <Input
                                   value={newStructure.country}
                                   onChange={(e) => setNewStructure({ ...newStructure, country: e.target.value })}
@@ -1068,7 +1073,7 @@ export function NewSubscriptionDialog({ open, onClose, onSubscriptionCreated }: 
 
                             {/* Address */}
                             <div>
-                              <Label className="text-xs mb-1">Adresse</Label>
+                              <Label className="text-xs mb-1">{t('subscriptions.newDialog.addressLabel')}</Label>
                               <Input
                                 value={newStructure.address}
                                 onChange={(e) => setNewStructure({ ...newStructure, address: e.target.value })}
@@ -1085,7 +1090,7 @@ export function NewSubscriptionDialog({ open, onClose, onSubscriptionCreated }: 
                                 className="flex-1 bg-gradient-to-r from-purple-500 to-indigo-600 text-white h-9"
                               >
                                 <Check className="w-3 h-3 mr-1" />
-                                Créer et sélectionner
+                                {t('subscriptions.newDialog.createAndSelect')}
                               </Button>
                               <Button
                                 size="sm"
@@ -1096,7 +1101,7 @@ export function NewSubscriptionDialog({ open, onClose, onSubscriptionCreated }: 
                                 }}
                                 className="h-9"
                               >
-                                Annuler
+                                {t('subscriptions.newDialog.cancel')}
                               </Button>
                             </div>
                           </div>
@@ -1109,18 +1114,18 @@ export function NewSubscriptionDialog({ open, onClose, onSubscriptionCreated }: 
                               <Check className="w-3.5 h-3.5 text-white" />
                             </div>
                             <span className="font-semibold text-sm text-emerald-900">
-                              {formData.structure === 'direct' ? 'Investissement en direct' : 'Structure sélectionnée'}
+                              {formData.structure === 'direct' ? t('subscriptions.newDialog.directInvestmentTitle') : t('subscriptions.newDialog.structureSelected')}
                             </span>
                           </div>
-                          
+
                           {formData.structure === 'direct' ? (
                             <div className="p-2 bg-white rounded-lg">
                               <div className="flex items-center gap-2 mb-1">
                                 <User className="w-4 h-4 text-emerald-600" />
-                                <span className="text-sm font-medium text-gray-900">Sans structure</span>
+                                <span className="text-sm font-medium text-gray-900">{t('subscriptions.newDialog.noStructure')}</span>
                               </div>
                               <p className="text-xs text-gray-600">
-                                {formData.investor?.name} investira directement en nom propre
+                                {t('subscriptions.newDialog.directInvestorDesc', { name: formData.investor?.name ?? '' })}
                               </p>
                             </div>
                           ) : typeof formData.structure === 'object' && (
@@ -1149,7 +1154,7 @@ export function NewSubscriptionDialog({ open, onClose, onSubscriptionCreated }: 
                                 onClick={() => setFormData({ ...formData, structure: null })}
                                 className="w-full mt-2 h-7 text-xs"
                               >
-                                Changer de structure
+                                {t('subscriptions.newDialog.changeStructure')}
                               </Button>
                             </div>
                           )}
@@ -1174,7 +1179,7 @@ export function NewSubscriptionDialog({ open, onClose, onSubscriptionCreated }: 
                   <div className="mb-3">
                     <Label className="text-xs mb-2 flex items-center gap-1">
                       <TrendingUp className="w-3 h-3" />
-                      Fonds <span className="text-red-500">*</span>
+                      {t('subscriptions.newDialog.fundLabel')} <span className="text-red-500">*</span>
                     </Label>
                     <div className="grid grid-cols-2 gap-2">
                       {funds.map((fund) => (
@@ -1206,7 +1211,7 @@ export function NewSubscriptionDialog({ open, onClose, onSubscriptionCreated }: 
                   <div className="mb-3">
                     <Label className="text-xs mb-1 flex items-center gap-1">
                       <FileText className="w-3 h-3" />
-                      Classe <span className="text-red-500">*</span>
+                      {t('subscriptions.newDialog.shareClassLabel')} <span className="text-red-500">*</span>
                     </Label>
                     <div className="flex gap-1">
                       {shareClasses.slice(0, 5).map((sc) => (
@@ -1228,7 +1233,7 @@ export function NewSubscriptionDialog({ open, onClose, onSubscriptionCreated }: 
                   <div className="mb-3">
                     <Label className="text-xs mb-1 flex items-center gap-1">
                       <Percent className="w-3 h-3" />
-                      Nombre de parts <span className="text-red-500">*</span>
+                      {t('subscriptions.newDialog.numberOfShares')} <span className="text-red-500">*</span>
                     </Label>
                     <Input
                       type="number"
@@ -1246,21 +1251,21 @@ export function NewSubscriptionDialog({ open, onClose, onSubscriptionCreated }: 
                   <div className="mb-3">
                     <Label className="text-xs mb-1 flex items-center gap-1">
                       <Store className="w-3 h-3" />
-                      Distributeur
+                      {t('subscriptions.newDialog.distributorLabel')}
                       {formData.investor?.distributorId && authorizedDistributors.some(d => d.id === formData.investor?.distributorId) && (
                         <Badge variant="outline" className="text-xs ml-1 h-4 border-blue-500 text-blue-700">
-                          Attitré
+                          {t('subscriptions.newDialog.attitled')}
                         </Badge>
                       )}
                     </Label>
-                    
+
                     {formData.fund && formData.shareClass ? (
                       <Select
                         value={formData.distributor}
                         onValueChange={(value) => setFormData({ ...formData, distributor: value })}
                       >
                         <SelectTrigger className="h-10">
-                          <SelectValue placeholder="Sélectionner un distributeur" />
+                          <SelectValue placeholder={t('subscriptions.newDialog.selectDistributor')} />
                         </SelectTrigger>
                         <SelectContent>
                           {/* Direct Option */}
@@ -1268,19 +1273,19 @@ export function NewSubscriptionDialog({ open, onClose, onSubscriptionCreated }: 
                             <div className="flex items-center gap-2">
                               <Briefcase className="w-4 h-4 text-emerald-600" />
                               <div>
-                                <div className="font-medium">Souscription Directe</div>
-                                <div className="text-xs text-gray-500">Sans frais d'entrée (0%)</div>
+                                <div className="font-medium">{t('subscriptions.newDialog.directSubscription')}</div>
+                                <div className="text-xs text-gray-500">{t('subscriptions.newDialog.noEntryFees')}</div>
                               </div>
                             </div>
                           </SelectItem>
-                          
+
                           {/* Authorized Distributors */}
                           {authorizedDistributors.length > 0 && authorizedDistributors.map((dist) => {
                             const feeConfig = dist.fees.find(
                               f => f.fundId === formData.fund && f.shareClass === formData.shareClass
                             );
                             const isInvestorDistributor = formData.investor?.distributorId === dist.id;
-                            
+
                             return (
                               <SelectItem key={dist.id} value={dist.id}>
                                 <div className="flex items-center gap-2">
@@ -1290,12 +1295,12 @@ export function NewSubscriptionDialog({ open, onClose, onSubscriptionCreated }: 
                                       {dist.name}
                                       {isInvestorDistributor && (
                                         <Badge variant="outline" className="ml-2 text-xs h-4 border-blue-500 text-blue-700">
-                                          Attitré
+                                          {t('subscriptions.newDialog.attitled')}
                                         </Badge>
                                       )}
                                     </div>
                                     <div className="text-xs text-gray-500">
-                                      Frais d'entrée : {feeConfig?.entryFeePercent}%
+                                      {t('subscriptions.newDialog.entryFeesPct', { percent: feeConfig?.entryFeePercent ?? 0 })}
                                     </div>
                                   </div>
                                 </div>
@@ -1308,17 +1313,17 @@ export function NewSubscriptionDialog({ open, onClose, onSubscriptionCreated }: 
                       <div className="p-3 bg-gray-50 border border-gray-200 rounded-lg text-center">
                         <Info className="w-4 h-4 text-gray-400 mx-auto mb-1" />
                         <p className="text-xs text-gray-600">
-                          Sélectionnez d'abord un fonds et une classe
+                          {t('subscriptions.newDialog.selectFundFirst')}
                         </p>
                       </div>
                     )}
-                    
+
                     {/* Warning if no distributors */}
                     {formData.fund && formData.shareClass && authorizedDistributors.length === 0 && (
                       <div className="mt-2 p-2 bg-amber-50 border border-amber-200 rounded-lg flex items-center gap-2">
                         <Info className="w-4 h-4 text-amber-600 flex-shrink-0" />
                         <p className="text-xs text-amber-800">
-                          Aucun distributeur conventionné. Seule la souscription directe est disponible.
+                          {t('subscriptions.newDialog.noDistributorsWarning')}
                         </p>
                       </div>
                     )}
@@ -1333,15 +1338,15 @@ export function NewSubscriptionDialog({ open, onClose, onSubscriptionCreated }: 
                     >
                       <div className="space-y-1">
                         <div className="flex justify-between text-xs">
-                          <span className="text-gray-600">Montant</span>
+                          <span className="text-gray-600">{t('subscriptions.newDialog.amount')}</span>
                           <span className="font-medium text-gray-900">{calculatedAmount.toLocaleString('fr-FR')} €</span>
                         </div>
                         <div className="flex justify-between text-xs">
                           <span className="text-gray-600">
-                            Frais ({calculatedEntryFeePercent}%)
+                            {t('subscriptions.newDialog.feesWithPercent', { percent: calculatedEntryFeePercent })}
                             {formData.distributor === 'direct' && (
                               <Badge variant="outline" className="ml-1 text-xs h-4 border-emerald-500 text-emerald-700">
-                                Direct
+                                {t('subscriptions.newDialog.direct')}
                               </Badge>
                             )}
                           </span>
@@ -1351,7 +1356,7 @@ export function NewSubscriptionDialog({ open, onClose, onSubscriptionCreated }: 
                         </div>
                         <Separator />
                         <div className="flex justify-between">
-                          <span className="text-xs font-semibold text-gray-900">Total</span>
+                          <span className="text-xs font-semibold text-gray-900">{t('subscriptions.newDialog.total')}</span>
                           <span className="font-bold text-blue-600">{(calculatedAmount + calculatedFees).toLocaleString('fr-FR')} €</span>
                         </div>
                       </div>
@@ -1372,13 +1377,13 @@ export function NewSubscriptionDialog({ open, onClose, onSubscriptionCreated }: 
                 >
                   <div className="flex items-center gap-2 p-2 bg-emerald-50 border border-emerald-200 rounded-lg mb-2">
                     <Check className="w-3.5 h-3.5 text-emerald-600" />
-                    <span className="text-xs font-semibold text-emerald-900">Vérifiez les informations</span>
+                    <span className="text-xs font-semibold text-emerald-900">{t('subscriptions.newDialog.verifyInfo')}</span>
                   </div>
 
                   {/* Investor Card - Compact */}
                   <div className="p-2 bg-white border border-gray-200 rounded-lg mb-2">
                     <div className="flex items-center justify-between mb-1.5">
-                      <div className="text-xs font-semibold text-gray-500 uppercase">Investisseur</div>
+                      <div className="text-xs font-semibold text-gray-500 uppercase">{t('subscriptions.newDialog.investorCaps')}</div>
                       <Button
                         variant="ghost"
                         size="sm"
@@ -1388,7 +1393,7 @@ export function NewSubscriptionDialog({ open, onClose, onSubscriptionCreated }: 
                         }}
                         className="h-5 text-xs text-blue-600 hover:text-blue-700 hover:bg-blue-50 px-2"
                       >
-                        Modifier
+                        {t('subscriptions.newDialog.modify')}
                       </Button>
                     </div>
                     <div className="flex items-center gap-2">
@@ -1406,7 +1411,7 @@ export function NewSubscriptionDialog({ open, onClose, onSubscriptionCreated }: 
                         <div className="text-xs text-gray-500 truncate">{formData.investor?.email}</div>
                       </div>
                       <Badge variant="outline" className="text-xs h-4 flex-shrink-0">
-                        {formData.investor?.type === 'individual' ? 'Physique' : 'Morale'}
+                        {formData.investor?.type === 'individual' ? t('subscriptions.newDialog.individual') : t('subscriptions.newDialog.corporate')}
                       </Badge>
                     </div>
                   </div>
@@ -1414,7 +1419,7 @@ export function NewSubscriptionDialog({ open, onClose, onSubscriptionCreated }: 
                   {/* Structure Card - Compact */}
                   <div className="p-2 bg-white border border-gray-200 rounded-lg mb-2">
                     <div className="flex items-center justify-between mb-1.5">
-                      <div className="text-xs font-semibold text-gray-500 uppercase">Structure</div>
+                      <div className="text-xs font-semibold text-gray-500 uppercase">{t('subscriptions.newDialog.structureCaps')}</div>
                       <Button
                         variant="ghost"
                         size="sm"
@@ -1424,7 +1429,7 @@ export function NewSubscriptionDialog({ open, onClose, onSubscriptionCreated }: 
                         }}
                         className="h-5 text-xs text-blue-600 hover:text-blue-700 hover:bg-blue-50 px-2"
                       >
-                        Modifier
+                        {t('subscriptions.newDialog.modify')}
                       </Button>
                     </div>
                     {formData.structure === 'direct' ? (
@@ -1433,8 +1438,8 @@ export function NewSubscriptionDialog({ open, onClose, onSubscriptionCreated }: 
                           <User className="w-4 h-4 text-emerald-600" />
                         </div>
                         <div className="flex-1 min-w-0">
-                          <div className="font-medium text-xs text-gray-900">Direct</div>
-                          <div className="text-xs text-gray-500">Sans structure</div>
+                          <div className="font-medium text-xs text-gray-900">{t('subscriptions.newDialog.directShort')}</div>
+                          <div className="text-xs text-gray-500">{t('subscriptions.newDialog.noStructure')}</div>
                         </div>
                       </div>
                     ) : typeof formData.structure === 'object' && formData.structure && (
@@ -1457,34 +1462,34 @@ export function NewSubscriptionDialog({ open, onClose, onSubscriptionCreated }: 
                   {/* Fund & Details - Compact */}
                   <div className="p-2 bg-white border border-gray-200 rounded-lg mb-2">
                     <div className="flex items-center justify-between mb-1.5">
-                      <div className="text-xs font-semibold text-gray-500 uppercase">Fonds & Détails</div>
+                      <div className="text-xs font-semibold text-gray-500 uppercase">{t('subscriptions.newDialog.fundDetailsCaps')}</div>
                       <Button
                         variant="ghost"
                         size="sm"
                         onClick={() => setStep(2)}
                         className="h-5 text-xs text-blue-600 hover:text-blue-700 hover:bg-blue-50 px-2"
                       >
-                        Modifier
+                        {t('subscriptions.newDialog.modify')}
                       </Button>
                     </div>
                     <div className="grid grid-cols-2 gap-x-3 gap-y-1 text-xs">
-                      <div className="text-gray-600">Fonds :</div>
+                      <div className="text-gray-600">{t('subscriptions.newDialog.fundLine')}</div>
                       <div className="font-medium text-gray-900 text-right truncate">
                         {funds.find(f => f.id === formData.fund)?.name}
                       </div>
-                      
-                      <div className="text-gray-600">Classe :</div>
-                      <div className="font-medium text-gray-900 text-right">Part {formData.shareClass}</div>
-                      
-                      <div className="text-gray-600">Parts :</div>
+
+                      <div className="text-gray-600">{t('subscriptions.newDialog.classLine')}</div>
+                      <div className="font-medium text-gray-900 text-right">{t('subscriptions.newDialog.shareLabel', { class: formData.shareClass })}</div>
+
+                      <div className="text-gray-600">{t('subscriptions.newDialog.sharesLine')}</div>
                       <div className="font-medium text-gray-900 text-right">{formData.numberOfShares}</div>
-                      
+
                       <div className="col-span-2"><Separator className="my-1" /></div>
-                      
-                      <div className="text-gray-600">Distributeur :</div>
+
+                      <div className="text-gray-600">{t('subscriptions.newDialog.distributorLine')}</div>
                       <div className="font-medium text-gray-900 text-right truncate">
-                        {formData.distributor === 'direct' 
-                          ? 'Direct' 
+                        {formData.distributor === 'direct'
+                          ? t('subscriptions.newDialog.directShort')
                           : mockDistributors.find(d => d.id === formData.distributor)?.name || 'N/A'}
                       </div>
                     </div>
@@ -1492,18 +1497,18 @@ export function NewSubscriptionDialog({ open, onClose, onSubscriptionCreated }: 
 
                   {/* Financial Summary - Compact */}
                   <div className="p-2 bg-gradient-to-br from-blue-50 to-indigo-50 border-2 border-blue-200 rounded-lg">
-                    <div className="text-xs font-semibold text-blue-900 uppercase mb-1.5">Montants</div>
+                    <div className="text-xs font-semibold text-blue-900 uppercase mb-1.5">{t('subscriptions.newDialog.amountsCaps')}</div>
                     <div className="space-y-1 text-xs">
                       <div className="flex justify-between">
-                        <span className="text-gray-700">Montant :</span>
+                        <span className="text-gray-700">{t('subscriptions.newDialog.amountLine')}</span>
                         <span className="font-medium text-gray-900">{calculatedAmount.toLocaleString('fr-FR')} €</span>
                       </div>
                       <div className="flex justify-between items-center">
                         <div className="flex items-center gap-1">
-                          <span className="text-gray-700">Frais ({calculatedEntryFeePercent}%) :</span>
+                          <span className="text-gray-700">{t('subscriptions.newDialog.feesLineWithPercent', { percent: calculatedEntryFeePercent })}</span>
                           {formData.distributor === 'direct' && (
                             <Badge variant="outline" className="text-xs h-4 border-emerald-500 text-emerald-700">
-                              Direct
+                              {t('subscriptions.newDialog.direct')}
                             </Badge>
                           )}
                         </div>
@@ -1513,7 +1518,7 @@ export function NewSubscriptionDialog({ open, onClose, onSubscriptionCreated }: 
                       </div>
                       <Separator className="my-1" />
                       <div className="flex justify-between pt-1">
-                        <span className="font-semibold text-gray-900">Total :</span>
+                        <span className="font-semibold text-gray-900">{t('subscriptions.newDialog.totalLine')}</span>
                         <span className="font-bold text-blue-600">
                           {(calculatedAmount + calculatedFees).toLocaleString('fr-FR')} €
                         </span>
@@ -1541,12 +1546,12 @@ export function NewSubscriptionDialog({ open, onClose, onSubscriptionCreated }: 
                 {step === 1 ? (
                   <>
                     <X className="w-4 h-4 mr-1" />
-                    Annuler
+                    {t('subscriptions.newDialog.cancel')}
                   </>
                 ) : (
                   <>
                     <ChevronLeft className="w-4 h-4 mr-1" />
-                    Précédent
+                    {t('subscriptions.newDialog.previous')}
                   </>
                 )}
               </Button>
@@ -1567,16 +1572,16 @@ export function NewSubscriptionDialog({ open, onClose, onSubscriptionCreated }: 
                 {isSubmitting ? (
                   <>
                     <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-                    Création...
+                    {t('subscriptions.newDialog.creating')}
                   </>
                 ) : step === 3 ? (
                   <>
                     <Check className="w-4 h-4 mr-2" />
-                    Créer
+                    {t('subscriptions.newDialog.create')}
                   </>
                 ) : (
                   <>
-                    Suivant
+                    {t('subscriptions.newDialog.next')}
                     <ArrowRight className="w-4 h-4 ml-2" />
                   </>
                 )}

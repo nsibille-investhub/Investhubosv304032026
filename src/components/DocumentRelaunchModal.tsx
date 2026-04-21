@@ -38,6 +38,7 @@ import {
   TableRow,
 } from './ui/table';
 import { DocumentPreviewDrawer } from './DocumentPreviewDrawer';
+import { useTranslation } from '../utils/languageContext';
 
 interface Recipient {
   id: string;
@@ -138,12 +139,14 @@ const mockRecipients: Recipient[] = [
 
 type FilterCriteria = 'all' | 'not-consulted';
 
-const emailTemplates = [
-  { id: 'relance-standard', name: 'Relance Standard', description: 'Template classique de relance' },
-  { id: 'relance-urgente', name: 'Relance Urgente', description: 'Pour les documents nécessitant une action rapide' },
-  { id: 'relance-amicale', name: 'Relance Amicale', description: 'Ton plus décontracté et convivial' },
-  { id: 'relance-formelle', name: 'Relance Formelle', description: 'Communication professionnelle formelle' },
-  { id: 'rappel-douceur', name: 'Rappel en Douceur', description: 'Relance subtile et non intrusive' },
+type TFn = (key: string, vars?: Record<string, string | number>) => string;
+
+const buildEmailTemplates = (t: TFn) => [
+  { id: 'relance-standard', name: t('ged.relaunchModal.templates.standard'), description: t('ged.relaunchModal.templates.standardDesc') },
+  { id: 'relance-urgente', name: t('ged.relaunchModal.templates.urgent'), description: t('ged.relaunchModal.templates.urgentDesc') },
+  { id: 'relance-amicale', name: t('ged.relaunchModal.templates.friendly'), description: t('ged.relaunchModal.templates.friendlyDesc') },
+  { id: 'relance-formelle', name: t('ged.relaunchModal.templates.formal'), description: t('ged.relaunchModal.templates.formalDesc') },
+  { id: 'rappel-douceur', name: t('ged.relaunchModal.templates.softReminder'), description: t('ged.relaunchModal.templates.softReminderDesc') },
 ];
 
 const getDocumentFormat = (name: string): string | undefined => {
@@ -158,8 +161,10 @@ export function DocumentRelaunchModal({
   documentId,
   isNominatif = true,
 }: DocumentRelaunchModalProps) {
+  const { t } = useTranslation();
+  const emailTemplates = useMemo(() => buildEmailTemplates(t), [t]);
   const [selectedCriteria, setSelectedCriteria] = useState<FilterCriteria>('all');
-  const [model, setModel] = useState('Relance Standard');
+  const [model, setModel] = useState(emailTemplates[0].name);
   const [templatePopoverOpen, setTemplatePopoverOpen] = useState(false);
   const [isPreviewOpen, setIsPreviewOpen] = useState(false);
 
@@ -234,8 +239,8 @@ export function DocumentRelaunchModal({
       if (recipient.name === 'Pierre Dupont') {
         return (
           <div className="flex items-center justify-center gap-2">
-            <StatusIndicator state="na" label="Non habilité au document" />
-            <span className="text-xs text-muted-foreground">Non habilité au document</span>
+            <StatusIndicator state="na" label={t('ged.relaunchModal.notEntitled')} />
+            <span className="text-xs text-muted-foreground">{t('ged.relaunchModal.notEntitled')}</span>
           </div>
         );
       }
@@ -288,15 +293,15 @@ export function DocumentRelaunchModal({
               </div>
               <div className="flex-1 min-w-0">
                 <AlertDialogTitle className="text-lg font-semibold text-foreground">
-                  Relancer une notification
+                  {t('ged.relaunchModal.title')}
                 </AlertDialogTitle>
                 <AlertDialogDescription className="text-sm text-muted-foreground">
-                  Notifier les destinataires pour ce document
+                  {t('ged.relaunchModal.subtitle')}
                 </AlertDialogDescription>
               </div>
               <button
                 onClick={onClose}
-                aria-label="Fermer"
+                aria-label={t('ged.relaunchModal.closeAria')}
                 className="p-2 hover:bg-muted rounded-lg transition-colors"
               >
                 <X className="w-5 h-5 text-muted-foreground" />
@@ -322,7 +327,7 @@ export function DocumentRelaunchModal({
                   'hover:bg-muted/40 hover:border-primary/40 focus-visible:outline-none focus-visible:ring-[3px] focus-visible:ring-ring/50',
                   'transition-colors',
                 )}
-                aria-label={`Ouvrir l'aperçu de ${documentName}`}
+                aria-label={t('ged.relaunchModal.previewAria', { name: documentName })}
               >
                 <div className="w-9 h-9 rounded-md bg-muted flex items-center justify-center flex-shrink-0">
                   <FileText className="w-4 h-4 text-muted-foreground" />
@@ -332,12 +337,12 @@ export function DocumentRelaunchModal({
                     {documentName}
                   </div>
                   <div className="text-xs text-muted-foreground">
-                    Cliquer pour afficher l'aperçu du document
+                    {t('ged.relaunchModal.previewHint')}
                   </div>
                 </div>
                 <Badge variant="secondary" className="hidden sm:inline-flex gap-1">
                   <Eye className="w-3 h-3" />
-                  Aperçu
+                  {t('ged.relaunchModal.previewBadge')}
                 </Badge>
                 <ChevronRight className="w-4 h-4 text-muted-foreground group-hover:text-foreground transition-colors" />
               </button>
@@ -347,11 +352,11 @@ export function DocumentRelaunchModal({
                 <div className="flex items-center gap-2">
                   <Zap className="w-4 h-4 text-primary" />
                   <span className="text-sm font-medium text-foreground">
-                    Récapitulatif de l'envoi
+                    {t('ged.relaunchModal.recapTitle')}
                   </span>
                 </div>
                 <div className="flex items-center gap-2">
-                  <span className="text-xs text-muted-foreground">Modèle</span>
+                  <span className="text-xs text-muted-foreground">{t('ged.relaunchModal.templateLabel')}</span>
                   <Popover open={templatePopoverOpen} onOpenChange={setTemplatePopoverOpen}>
                     <PopoverTrigger asChild>
                       <Button
@@ -410,7 +415,7 @@ export function DocumentRelaunchModal({
               {/* Critère */}
               <div className="space-y-2">
                 <label className="text-xs font-medium text-muted-foreground uppercase tracking-wide">
-                  Critère
+                  {t('ged.relaunchModal.criteriaLabel')}
                 </label>
                 <div className="grid grid-cols-2 gap-2">
                   <button
@@ -434,7 +439,7 @@ export function DocumentRelaunchModal({
                       <Users className="w-3.5 h-3.5" />
                     </div>
                     <span className="text-sm font-medium">
-                      Tous les destinataires
+                      {t('ged.relaunchModal.allRecipients')}
                     </span>
                   </button>
 
@@ -459,7 +464,7 @@ export function DocumentRelaunchModal({
                       <Eye className="w-3.5 h-3.5" />
                     </div>
                     <span className="text-sm font-medium">
-                      N'ont pas consulté le document
+                      {t('ged.relaunchModal.notConsulted')}
                     </span>
                   </button>
                 </div>
@@ -472,7 +477,7 @@ export function DocumentRelaunchModal({
                 <div className="space-y-2">
                   <div className="flex items-center justify-between">
                     <span className="text-xs font-medium text-muted-foreground uppercase tracking-wide">
-                      Destinataires ({filteredRecipients.length})
+                      {t('ged.relaunchModal.recipientsHeader', { count: filteredRecipients.length })}
                     </span>
                     <Button
                       variant="ghost"
@@ -481,7 +486,7 @@ export function DocumentRelaunchModal({
                       className="h-7 text-xs gap-1.5"
                     >
                       <Download className="w-3.5 h-3.5" />
-                      Exporter CSV
+                      {t('ged.relaunchModal.exportCsv')}
                     </Button>
                   </div>
 
@@ -490,22 +495,22 @@ export function DocumentRelaunchModal({
                       <TableHeader>
                         <TableRow className="bg-white hover:bg-white border-b-border">
                           <TableHead className="px-3 text-xs text-muted-foreground font-medium">
-                            Nom
+                            {t('ged.relaunchModal.columnName')}
                           </TableHead>
                           <TableHead className="px-3 text-xs text-muted-foreground font-medium">
-                            Type
+                            {t('ged.relaunchModal.columnType')}
                           </TableHead>
                           <TableHead className="px-3 text-xs text-muted-foreground font-medium text-center">
-                            Notification
+                            {t('ged.relaunchModal.columnNotification')}
                           </TableHead>
                           <TableHead className="px-3 text-xs text-muted-foreground font-medium text-center">
-                            Réception
+                            {t('ged.relaunchModal.columnReception')}
                           </TableHead>
                           <TableHead className="px-3 text-xs text-muted-foreground font-medium text-center">
-                            Ouverture
+                            {t('ged.relaunchModal.columnOpening')}
                           </TableHead>
                           <TableHead className="px-3 text-xs text-muted-foreground font-medium text-center">
-                            Consultation
+                            {t('ged.relaunchModal.columnConsultation')}
                           </TableHead>
                         </TableRow>
                       </TableHeader>
@@ -524,7 +529,7 @@ export function DocumentRelaunchModal({
                                 )}
                                 {recipient.name === 'Pierre Dupont' && (
                                   <span className="text-[11px] text-muted-foreground">
-                                    Accès refusé · non habilité
+                                    {t('ged.relaunchModal.accessDenied')}
                                   </span>
                                 )}
                               </div>
@@ -577,13 +582,13 @@ export function DocumentRelaunchModal({
                           {notifiableCount}
                         </span>
                         <span className="text-sm text-muted-foreground">
-                          investisseur{notifiableCount > 1 ? 's' : ''} à notifier
+                          {t(notifiableCount > 1 ? 'ged.relaunchModal.investorsToNotifyMany' : 'ged.relaunchModal.investorsToNotifyOne')}
                         </span>
                       </div>
                       <p className="text-xs text-muted-foreground mt-1">
                         {selectedCriteria === 'not-consulted'
-                          ? "N'ont pas encore consulté ce document"
-                          : 'Destinataires concernés par cette relance'}
+                          ? t('ged.relaunchModal.notConsultedHint')
+                          : t('ged.relaunchModal.concernedHint')}
                       </p>
                     </div>
                     <Button
@@ -593,7 +598,7 @@ export function DocumentRelaunchModal({
                       className="h-8 text-xs gap-1.5 flex-shrink-0"
                     >
                       <Download className="w-3.5 h-3.5" />
-                      Exporter CSV
+                      {t('ged.relaunchModal.exportCsv')}
                     </Button>
                   </div>
 
@@ -601,7 +606,7 @@ export function DocumentRelaunchModal({
                   <div className="px-5 py-4 border-t border-border">
                     <div className="flex items-center justify-between text-xs mb-2">
                       <span className="font-medium text-foreground">
-                        Taux de consultation
+                        {t('ged.relaunchModal.consultationRate')}
                       </span>
                       <span className="tabular-nums font-semibold text-foreground">
                         {genericConsultationRate}%
@@ -625,14 +630,7 @@ export function DocumentRelaunchModal({
                       />
                     </div>
                     <p className="text-[11px] text-muted-foreground mt-2">
-                      <span className="font-medium text-foreground tabular-nums">
-                        {genericConsulted}
-                      </span>{' '}
-                      sur{' '}
-                      <span className="font-medium text-foreground tabular-nums">
-                        {mockGenericStats.totalInvestors}
-                      </span>{' '}
-                      investisseurs ont consulté le document
+                      {t(mockGenericStats.totalInvestors > 1 ? 'ged.relaunchModal.consultedSummaryMany' : 'ged.relaunchModal.consultedSummaryOne', { consulted: genericConsulted, total: mockGenericStats.totalInvestors })}
                     </p>
                   </div>
 
@@ -645,7 +643,7 @@ export function DocumentRelaunchModal({
                           style={{ backgroundColor: '#94A3B8' }}
                         />
                         <span className="text-[10px] uppercase tracking-wide text-muted-foreground font-medium">
-                          Total accès
+                          {t('ged.relaunchModal.totalAccess')}
                         </span>
                       </div>
                       <div className="text-lg font-semibold text-foreground tabular-nums leading-tight">
@@ -659,7 +657,7 @@ export function DocumentRelaunchModal({
                           style={{ backgroundColor: 'var(--brand-success)' }}
                         />
                         <span className="text-[10px] uppercase tracking-wide text-muted-foreground font-medium">
-                          Consultés
+                          {t('ged.relaunchModal.consultedLabel')}
                         </span>
                       </div>
                       <div className="text-lg font-semibold text-foreground tabular-nums leading-tight">
@@ -673,7 +671,7 @@ export function DocumentRelaunchModal({
                           style={{ backgroundColor: 'var(--brand-warning)' }}
                         />
                         <span className="text-[10px] uppercase tracking-wide text-muted-foreground font-medium">
-                          Non consulté
+                          {t('ged.relaunchModal.notConsultedLabel')}
                         </span>
                       </div>
                       <div className="text-lg font-semibold text-foreground tabular-nums leading-tight">
@@ -689,7 +687,7 @@ export function DocumentRelaunchModal({
           {/* Footer */}
           <div className="px-6 py-4 border-t border-border bg-white flex items-center justify-between gap-2" style={{ backgroundColor: '#FFFFFF' }}>
             <Button variant="outline" onClick={onClose}>
-              Retour
+              {t('ged.relaunchModal.back')}
             </Button>
             <Button
               onClick={handleSend}
@@ -708,10 +706,9 @@ export function DocumentRelaunchModal({
               }
             >
               <Send className="w-4 h-4" />
-              Envoyer{' '}
               {notifiableCount > 0
-                ? `${notifiableCount} notification${notifiableCount > 1 ? 's' : ''}`
-                : 'les notifications'}
+                ? t(notifiableCount > 1 ? 'ged.relaunchModal.sendMany' : 'ged.relaunchModal.sendOne', { count: notifiableCount })
+                : t('ged.relaunchModal.sendNotifications')}
             </Button>
           </div>
         </AlertDialogContent>

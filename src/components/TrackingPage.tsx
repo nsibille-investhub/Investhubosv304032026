@@ -1,6 +1,7 @@
 import { motion } from 'motion/react';
 import { Activity } from 'lucide-react';
 import { TrackingLandingPage } from './TrackingLandingPage';
+import { useTranslation } from '../utils/languageContext';
 
 interface TrackingPageProps {
   trackingEnabled: boolean;
@@ -8,12 +9,11 @@ interface TrackingPageProps {
 }
 
 export function TrackingPage({ trackingEnabled, onEnableModule }: TrackingPageProps) {
-  // Si le module n'est pas activé, afficher la landing page
+  const { t } = useTranslation();
   if (!trackingEnabled) {
     return <TrackingLandingPage onEnableModule={onEnableModule} />;
   }
 
-  // Module activé - afficher la page de tracking (à implémenter plus tard)
   return (
     <div className="flex-1 p-6">
       <motion.div
@@ -25,10 +25,10 @@ export function TrackingPage({ trackingEnabled, onEnableModule }: TrackingPagePr
           <Activity className="w-10 h-10 text-white" />
         </div>
         <h2 className="text-2xl font-bold text-gray-900 mb-4">
-          Module Tracking activé
+          {t('ged.tracking.moduleActivatedTitle')}
         </h2>
         <p className="text-gray-600 max-w-md mx-auto">
-          Le tableau de bord de tracking sera bientôt disponible avec toutes les métriques d'engagement de votre Data Room.
+          {t('ged.tracking.moduleActivatedDesc')}
         </p>
       </motion.div>
     </div>

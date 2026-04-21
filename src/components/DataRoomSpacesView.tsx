@@ -6,6 +6,7 @@ import { Badge } from './ui/badge';
 import { DataRoomSpace } from '../utils/dataRoomSpacesData';
 import { getTreeForSpace, TreeNode } from '../utils/dataRoomTreeData';
 import { Input } from './ui/input';
+import { useTranslation } from '../utils/languageContext';
 
 export interface GlobalSearchHit {
   id: string;
@@ -34,6 +35,7 @@ export function DataRoomSpacesView({
   onConfigureSpace,
   onSearchResultSelect
 }: DataRoomSpacesViewProps) {
+  const { t } = useTranslation();
   const [globalSearch, setGlobalSearch] = useState('');
 
   const getTargetIcon = (userTypes: string[]) => {
@@ -102,9 +104,9 @@ export function DataRoomSpacesView({
       >
         <div className="flex items-center justify-between">
           <div>
-            <h1 className="text-2xl font-semibold text-gray-900">Espaces Data Room</h1>
+            <h1 className="text-2xl font-semibold text-gray-900">{t('ged.dataRoom.spacesView.title')}</h1>
             <p className="text-gray-500 mt-1">
-              Sélectionnez un espace pour accéder aux documents et dossiers
+              {t('ged.dataRoom.spacesView.subtitle')}
             </p>
           </div>
           <div className="flex items-center gap-3">
@@ -114,7 +116,7 @@ export function DataRoomSpacesView({
               className="gap-2"
             >
               <Plus className="w-4 h-4" />
-              Import
+              {t('ged.dataRoom.spacesView.import')}
             </Button>
             <Button
               onClick={onAddSpace}
@@ -122,7 +124,7 @@ export function DataRoomSpacesView({
               className="gap-2"
             >
               <Plus className="w-4 h-4" />
-              Nouvel espace
+              {t('ged.dataRoom.spacesView.newSpace')}
             </Button>
           </div>
         </div>
@@ -139,7 +141,7 @@ export function DataRoomSpacesView({
           <Input
             value={globalSearch}
             onChange={(e) => setGlobalSearch(e.target.value)}
-            placeholder="Recherche globale dans tous les espaces (documents et dossiers)"
+            placeholder={t('ged.dataRoom.spacesView.globalSearchPlaceholder')}
             className="pl-10"
           />
         </div>
@@ -147,13 +149,13 @@ export function DataRoomSpacesView({
         {normalizedQuery && (
           <div className="mt-3">
             <p className="text-xs text-gray-500">
-              {globalResults.length} résultat{globalResults.length > 1 ? 's' : ''} trouvé{globalResults.length > 1 ? 's' : ''} dans {matchedSpaceIds.size} espace{matchedSpaceIds.size > 1 ? 's' : ''}
+              {t(globalResults.length > 1 ? 'ged.dataRoom.spacesView.resultsCountMany' : 'ged.dataRoom.spacesView.resultsCountOne', { count: globalResults.length, spaces: matchedSpaceIds.size })}
             </p>
 
             <div className="mt-2 max-h-64 overflow-y-auto rounded-xl border border-gray-100">
               {globalResults.length === 0 ? (
                 <div className="px-4 py-6 text-center text-sm text-gray-500">
-                  Aucun document ou dossier trouvé pour « {globalSearch} ».
+                  {t('ged.dataRoom.spacesView.noResultsFor', { query: globalSearch })}
                 </div>
               ) : (
                 globalResults.map((result) => (
@@ -179,7 +181,7 @@ export function DataRoomSpacesView({
                       <p className="truncate text-xs text-gray-500">{result.spaceName} · {result.path}</p>
                     </div>
                     <Badge variant="outline" className="text-[10px] uppercase">
-                      {result.type === 'folder' ? 'Dossier' : 'Document'}
+                      {result.type === 'folder' ? t('ged.dataRoom.spacesView.folder') : t('ged.dataRoom.spacesView.document')}
                     </Badge>
                   </button>
                 ))
@@ -191,8 +193,8 @@ export function DataRoomSpacesView({
 
       {/* Spaces by zone */}
       {[
-        { title: 'Espaces investisseurs', spaces: investorSpaces },
-        { title: 'Espaces partenaires', spaces: partnerSpaces },
+        { title: t('ged.dataRoom.spacesView.investorSpaces'), spaces: investorSpaces },
+        { title: t('ged.dataRoom.spacesView.partnerSpaces'), spaces: partnerSpaces },
       ].map((section) => (
         <div key={section.title} className="mb-8 last:mb-0">
           {section.spaces.length > 0 && (
@@ -241,21 +243,21 @@ export function DataRoomSpacesView({
 
                         <div className="flex items-center gap-2 text-sm text-gray-600 mb-4">
                           <TargetIcon className="w-4 h-4 flex-shrink-0" />
-                          <span className="line-clamp-2 text-xs">{space.targeting.userTypes[0] || 'Aucun type utilisateur'}</span>
+                          <span className="line-clamp-2 text-xs">{space.targeting.userTypes[0] || t('ged.dataRoom.spacesView.noUserType')}</span>
                         </div>
                         <div className="space-y-1.5 mb-4">
                           {space.targeting.segments.length > 0 && (
                             <div className="flex items-start gap-2 text-xs text-gray-600">
                               <TagIcon className="w-3.5 h-3.5 mt-0.5 flex-shrink-0" />
                               <span className="line-clamp-1" title={space.targeting.segments.join(', ')}>
-                                <span className="font-medium text-gray-700">Segments :</span> {space.targeting.segments.join(', ')}
+                                <span className="font-medium text-gray-700">{t('ged.dataRoom.spacesView.segmentsPrefix')}</span> {space.targeting.segments.join(', ')}
                               </span>
                             </div>
                           )}
                           <div className="flex items-start gap-2 text-xs text-gray-600">
                             <Landmark className="w-3.5 h-3.5 mt-0.5 flex-shrink-0" />
-                            <span className="line-clamp-1" title={space.targeting.funds.join(', ') || 'Tous fonds'}>
-                              <span className="font-medium text-gray-700">Fonds :</span> {space.targeting.funds.join(', ') || 'Tous fonds'}
+                            <span className="line-clamp-1" title={space.targeting.funds.join(', ') || t('ged.dataRoom.spacesView.allFunds')}>
+                              <span className="font-medium text-gray-700">{t('ged.dataRoom.spacesView.fundsPrefix')}</span> {space.targeting.funds.join(', ') || t('ged.dataRoom.spacesView.allFunds')}
                             </span>
                           </div>
                         </div>
@@ -263,11 +265,11 @@ export function DataRoomSpacesView({
                         <div className="flex items-center gap-4 text-sm text-gray-500 mb-4 pb-4 border-b border-gray-200">
                           <div className="flex items-center gap-1.5">
                             <div className="w-1.5 h-1.5 rounded-full" style={{ backgroundColor: '#000E2B' }} />
-                            <span>{space.documentCount} documents</span>
+                            <span>{t('ged.dataRoom.spacesView.documentsCount', { count: space.documentCount })}</span>
                           </div>
                           <div className="flex items-center gap-1.5">
                             <div className="w-1.5 h-1.5 rounded-full" style={{ backgroundColor: '#000E2B' }} />
-                            <span>{space.folderCount} dossiers</span>
+                            <span>{t('ged.dataRoom.spacesView.foldersCount', { count: space.folderCount })}</span>
                           </div>
                         </div>
 
@@ -276,7 +278,7 @@ export function DataRoomSpacesView({
                           className="mt-auto w-full flex items-center justify-center gap-2 py-2.5 px-4 rounded-lg bg-financial-blue border border-financial-blue text-white transition-all group/btn"
                           style={{ backgroundColor: '#060D19' }}
                         >
-                          <span className="font-medium">Ouvrir l'espace</span>
+                          <span className="font-medium">{t('ged.dataRoom.spacesView.openSpace')}</span>
                           <ArrowRight className="w-4 h-4 group-hover/btn:translate-x-1 transition-transform" />
                         </button>
                       </div>
@@ -300,19 +302,19 @@ export function DataRoomSpacesView({
             <Folder className="w-10 h-10 text-gray-400" />
           </div>
           <h3 className="text-lg font-medium text-gray-900 mb-2">
-            {normalizedQuery ? 'Aucun espace ne correspond à la recherche' : 'Aucun espace créé'}
+            {normalizedQuery ? t('ged.dataRoom.spacesView.emptyNoMatch') : t('ged.dataRoom.spacesView.emptyNone')}
           </h3>
           <p className="text-gray-500 mb-6 max-w-md">
             {normalizedQuery
-              ? `Ajustez votre recherche globale « ${globalSearch} » ou videz le champ pour revoir tous les espaces.`
-              : 'Créez votre premier espace pour organiser vos documents et contrôler l\'accès'}
+              ? t('ged.dataRoom.spacesView.emptyHintFilter', { query: globalSearch })
+              : t('ged.dataRoom.spacesView.emptyHint')}
           </p>
           <Button
             onClick={onAddSpace}
             className="bg-gradient-to-br from-blue-500 to-blue-600 text-white hover:from-blue-600 hover:to-blue-700 gap-2"
           >
             <Plus className="w-4 h-4" />
-            Créer un espace
+            {t('ged.dataRoom.spacesView.createSpace')}
           </Button>
         </motion.div>
       )}

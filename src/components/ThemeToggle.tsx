@@ -1,9 +1,11 @@
 import { Moon, Sun } from 'lucide-react';
 import { useTheme } from '../utils/themeContext';
+import { useTranslation } from '../utils/languageContext';
 import { motion } from 'motion/react';
 
 export function ThemeToggle() {
   const { theme, toggleTheme } = useTheme();
+  const { t } = useTranslation();
 
   return (
     <motion.button
@@ -11,7 +13,7 @@ export function ThemeToggle() {
       whileTap={{ scale: 0.95 }}
       onClick={toggleTheme}
       className="relative w-10 h-10 rounded-lg bg-gray-100 dark:bg-gray-800 hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors flex items-center justify-center group"
-      aria-label={theme === 'light' ? 'Activer le mode sombre' : 'Activer le mode clair'}
+      aria-label={theme === 'light' ? t('header.toggleDarkMode') : t('header.toggleLightMode')}
     >
       <motion.div
         initial={false}

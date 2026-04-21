@@ -3,6 +3,7 @@ import { Globe, UserRound } from 'lucide-react';
 import { GenericAudienceInline } from './GenericAudienceCard';
 import { SpecificAudience } from './SpecificAudience';
 import { Tag } from './Tag';
+import { useTranslation } from '../utils/languageContext';
 
 interface DocumentTargetingMarkerProps {
   document: Document;
@@ -10,6 +11,7 @@ interface DocumentTargetingMarkerProps {
 }
 
 export function DocumentTargetingMarker({ document, mode = 'full' }: DocumentTargetingMarkerProps) {
+  const { t } = useTranslation();
   const targeting = document.navigatorTargeting;
 
   if (!targeting) {
@@ -17,7 +19,7 @@ export function DocumentTargetingMarker({ document, mode = 'full' }: DocumentTar
   }
 
   const isGeneric = targeting.mode === 'generic';
-  const title = isGeneric ? 'Générique' : 'Nominatif';
+  const title = isGeneric ? t('ged.targeting.generic') : t('ged.targeting.nominative');
   const natureTag = (
     <Tag
       icon={isGeneric ? Globe : UserRound}

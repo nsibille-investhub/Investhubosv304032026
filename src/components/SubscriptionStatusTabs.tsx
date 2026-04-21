@@ -2,6 +2,7 @@ import { motion } from 'motion/react';
 import { Badge } from './ui/badge';
 import { Plus, UserCheck, FileSignature, CheckCircle2, Activity, List } from 'lucide-react';
 import { FilterCard } from './FilterCard';
+import { useTranslation } from '../utils/languageContext';
 
 type SubscriptionStatus = 'created' | 'onboarding' | 'signature' | 'counter_signature' | 'active' | 'all';
 
@@ -18,6 +19,7 @@ interface StatusKPIs {
 }
 
 export function SubscriptionStatusTabs({ data, activeStatus, onStatusChange }: SubscriptionStatusTabsProps) {
+  const { t } = useTranslation();
   const calculateKPIs = (filteredData: any[]): StatusKPIs => {
     const total = filteredData.length;
     const totalAmount = filteredData.reduce((sum, s) => sum + (s.amount || 0), 0);
@@ -76,12 +78,12 @@ export function SubscriptionStatusTabs({ data, activeStatus, onStatusChange }: S
       <div className="mb-3 flex items-center justify-between">
         <div className="flex items-center gap-2">
           <div className="w-1 h-6 bg-primary rounded-full" />
-          <h3 className="font-semibold text-gray-900">Workflow de Souscription</h3>
+          <h3 className="font-semibold text-gray-900">{t('subscriptions.workflowTabs.title')}</h3>
           <Badge variant="outline" className="text-xs bg-primary/10 text-primary border-primary/25">
-            6 étapes
+            {t('subscriptions.workflowTabs.stepsBadge')}
           </Badge>
         </div>
-        <div className="text-xs text-gray-500">Cliquez sur une étape pour filtrer</div>
+        <div className="text-xs text-gray-500">{t('subscriptions.workflowTabs.clickToFilter')}</div>
       </div>
 
       <div className="grid grid-cols-6 gap-1.5 items-center">
@@ -89,10 +91,10 @@ export function SubscriptionStatusTabs({ data, activeStatus, onStatusChange }: S
           status="created"
           activeStatus={activeStatus}
           onStatusChange={(status) => onStatusChange(status as SubscriptionStatus)}
-          label="Créées"
+          label={t('subscriptions.workflowTabs.created')}
           icon={Plus}
           total={createdKPIs.total}
-          metricLabel="Total"
+          metricLabel={t('subscriptions.workflowTabs.metricTotal')}
           metricValue={`€${formatAmount(createdKPIs.totalAmount)}`}
           averageValue={`€${formatAmount(createdKPIs.avgAmount)}`}
         />
@@ -100,10 +102,10 @@ export function SubscriptionStatusTabs({ data, activeStatus, onStatusChange }: S
           status="onboarding"
           activeStatus={activeStatus}
           onStatusChange={(status) => onStatusChange(status as SubscriptionStatus)}
-          label="Onboarding"
+          label={t('subscriptions.workflowTabs.onboarding')}
           icon={UserCheck}
           total={onboardingKPIs.total}
-          metricLabel="Total"
+          metricLabel={t('subscriptions.workflowTabs.metricTotal')}
           metricValue={`€${formatAmount(onboardingKPIs.totalAmount)}`}
           averageValue={`€${formatAmount(onboardingKPIs.avgAmount)}`}
         />
@@ -111,10 +113,10 @@ export function SubscriptionStatusTabs({ data, activeStatus, onStatusChange }: S
           status="signature"
           activeStatus={activeStatus}
           onStatusChange={(status) => onStatusChange(status as SubscriptionStatus)}
-          label="Signature"
+          label={t('subscriptions.workflowTabs.signature')}
           icon={FileSignature}
           total={signatureKPIs.total}
-          metricLabel="Total"
+          metricLabel={t('subscriptions.workflowTabs.metricTotal')}
           metricValue={`€${formatAmount(signatureKPIs.totalAmount)}`}
           averageValue={`€${formatAmount(signatureKPIs.avgAmount)}`}
         />
@@ -122,10 +124,10 @@ export function SubscriptionStatusTabs({ data, activeStatus, onStatusChange }: S
           status="counter_signature"
           activeStatus={activeStatus}
           onStatusChange={(status) => onStatusChange(status as SubscriptionStatus)}
-          label="Contre-Signature"
+          label={t('subscriptions.workflowTabs.counterSignature')}
           icon={CheckCircle2}
           total={counterSignatureKPIs.total}
-          metricLabel="Total"
+          metricLabel={t('subscriptions.workflowTabs.metricTotal')}
           metricValue={`€${formatAmount(counterSignatureKPIs.totalAmount)}`}
           averageValue={`€${formatAmount(counterSignatureKPIs.avgAmount)}`}
         />
@@ -133,10 +135,10 @@ export function SubscriptionStatusTabs({ data, activeStatus, onStatusChange }: S
           status="active"
           activeStatus={activeStatus}
           onStatusChange={(status) => onStatusChange(status as SubscriptionStatus)}
-          label="Actives"
+          label={t('subscriptions.workflowTabs.active')}
           icon={Activity}
           total={activeKPIs.total}
-          metricLabel="Total"
+          metricLabel={t('subscriptions.workflowTabs.metricTotal')}
           metricValue={`€${formatAmount(activeKPIs.totalAmount)}`}
           averageValue={`€${formatAmount(activeKPIs.avgAmount)}`}
         />
@@ -144,10 +146,10 @@ export function SubscriptionStatusTabs({ data, activeStatus, onStatusChange }: S
           status="all"
           activeStatus={activeStatus}
           onStatusChange={(status) => onStatusChange(status as SubscriptionStatus)}
-          label="Toutes"
+          label={t('subscriptions.workflowTabs.all')}
           icon={List}
           total={allKPIs.total}
-          metricLabel="Total"
+          metricLabel={t('subscriptions.workflowTabs.metricTotal')}
           metricValue={`€${formatAmount(allKPIs.totalAmount)}`}
           averageValue={`€${formatAmount(allKPIs.avgAmount)}`}
         />
