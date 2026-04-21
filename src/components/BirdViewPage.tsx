@@ -43,6 +43,7 @@ import { DocumentPreviewDrawer } from './DocumentPreviewDrawer';
 import { Tooltip, TooltipContent, TooltipTrigger } from './ui/tooltip';
 import { SegmentsMultiSelect, FundSingleSelect } from './ui/targeting-selects';
 import { AutocompleteSingleSelect } from './ui/autocomplete-select';
+import { useTranslation } from '../utils/languageContext';
 
 interface BirdViewPageProps {
   onBack: () => void;
@@ -76,6 +77,7 @@ interface DocumentNode {
 }
 
 export function BirdViewPage({ onBack }: BirdViewPageProps) {
+  const { t } = useTranslation();
   const [events, setEvents] = useState<BirdviewEvent[]>([]);
   const [investors, setInvestors] = useState<BirdviewInvestor[]>([]);
   const [isLoading, setIsLoading] = useState(true);
@@ -109,7 +111,7 @@ export function BirdViewPage({ onBack }: BirdViewPageProps) {
       setEvents(generatedEvents);
       setInvestors(generatedInvestors);
       setIsLoading(false);
-      toast.success('Bird View chargé');
+      toast.success(t('ged.birdview.loadedToast'));
     }, 800);
   }, []);
 
@@ -433,12 +435,13 @@ export function BirdViewPage({ onBack }: BirdViewPageProps) {
     segments?: string[];
   }
 
-  // Joindre une liste en français : "A", "A et B", "A, B et C"
-  const joinFr = (items: string[]): string => {
+  const joinList = (items: string[]): string => {
+    const and = t('ged.birdview.access.joinAnd');
+    const comma = t('ged.birdview.access.joinComma');
     if (items.length === 0) return '';
     if (items.length === 1) return items[0];
-    if (items.length === 2) return `${items[0]} et ${items[1]}`;
-    return `${items.slice(0, -1).join(', ')} et ${items[items.length - 1]}`;
+    if (items.length === 2) return `${items[0]}${and}${items[1]}`;
+    return `${items.slice(0, -1).join(comma)}${and}${items[items.length - 1]}`;
   };
 
   // Construire le message d'accès dynamique selon le contexte du document
@@ -454,56 +457,49 @@ export function BirdViewPage({ onBack }: BirdViewPageProps) {
         : undefined;
 
     if (node.isNominatif) {
-      // ── Document nominatif ─────────────────────────────────────────
-      const investor = node.investorRestriction || 'un investisseur';
-      const title = 'Document nominatif';
+      const investor = node.investorRestriction || t('ged.birdview.access.anInvestor');
+      const title = t('ged.birdview.access.nominativeTitle');
 
       const parts: string[] = [
-        `Limité à l'investisseur ${investor} et ses contacts`,
+        t('ged.birdview.access.limitedToInvestor', { name: investor }),
       ];
 
       if (node.subscriptionRestriction) {
-        parts.push(
-          `ayant les droits d'accès sur la souscription ${node.subscriptionRestriction}`
-        );
+        parts.push(t('ged.birdview.access.withSubscriptionAccess', { name: node.subscriptionRestriction }));
       }
 
-      // Contexte fonds / part si hérité du dossier parent
       if (effectiveFund && effectiveShareClass) {
-        parts.push(`dans le fonds ${effectiveFund} (${effectiveShareClass})`);
+        parts.push(t('ged.birdview.access.inFundWithShare', { fund: effectiveFund, share: effectiveShareClass }));
       } else if (effectiveFund) {
-        parts.push(`dans le fonds ${effectiveFund}`);
+        parts.push(t('ged.birdview.access.inFund', { fund: effectiveFund }));
       }
 
       return { title, body: parts.join(' '), color: 'purple' as const };
     }
 
-    // ── Document générique ──────────────────────────────────────────
-    const title = 'Document générique';
+    const title = t('ged.birdview.access.genericTitle');
     const constraints: string[] = [];
 
     if (effectiveFund) {
       const fundLabel = effectiveShareClass
         ? `${effectiveFund} (${effectiveShareClass})`
         : effectiveFund;
-      constraints.push(`ayant investi dans ${fundLabel}`);
+      constraints.push(t('ged.birdview.access.havingInvestedIn', { fund: fundLabel }));
     }
 
     if (effectiveSegments && effectiveSegments.length > 0) {
-      constraints.push(
-        `appartenant au${effectiveSegments.length > 1 ? 'x' : ''} segment${
-          effectiveSegments.length > 1 ? 's' : ''
-        } ${joinFr(effectiveSegments)}`
-      );
+      const key = effectiveSegments.length > 1 ? 'ged.birdview.access.belongingToSegmentMany' : 'ged.birdview.access.belongingToSegmentOne';
+      constraints.push(t(key, { segments: joinList(effectiveSegments) }));
     }
 
     const viewerCount = node.engagement?.totalViewers ?? 0;
 
     let body: string;
     if (constraints.length === 0) {
-      body = `Accessible à tous les investisseurs ayant accès à cet espace (${viewerCount} investisseur${viewerCount > 1 ? 's' : ''}).`;
+      body = t(viewerCount > 1 ? 'ged.birdview.access.accessibleAllMany' : 'ged.birdview.access.accessibleAllOne', { count: viewerCount });
     } else {
-      body = `Limité aux investisseurs ${constraints.join(' et ')} — ${viewerCount} investisseur${viewerCount > 1 ? 's' : ''} y ${viewerCount > 1 ? 'ont' : 'a'} accès.`;
+      const key = viewerCount > 1 ? 'ged.birdview.access.limitedToInvestorsMany' : 'ged.birdview.access.limitedToInvestorsOne';
+      body = t(key, { constraints: constraints.join(t('ged.birdview.access.joinAnd')), count: viewerCount });
     }
 
     return { title, body, color: 'blue' as const };
@@ -560,7 +556,7 @@ export function BirdViewPage({ onBack }: BirdViewPageProps) {
                   <TooltipTrigger asChild>
                     <span><Tag icon={Landmark} label={node.fundRestriction} /></span>
                   </TooltipTrigger>
-                  <TooltipContent side="top"><span className="text-xs">Ciblage par fonds</span></TooltipContent>
+                  <TooltipContent side="top"><span className="text-xs">{t('ged.birdview.tooltips.targetFund')}</span></TooltipContent>
                 </Tooltip>
               )}
               {node.segmentRestrictions && node.segmentRestrictions.map(seg => (
@@ -568,14 +564,14 @@ export function BirdViewPage({ onBack }: BirdViewPageProps) {
                   <TooltipTrigger asChild>
                     <span><Tag icon={TagIcon} label={seg} /></span>
                   </TooltipTrigger>
-                  <TooltipContent side="top"><span className="text-xs">Ciblage par segment</span></TooltipContent>
+                  <TooltipContent side="top"><span className="text-xs">{t('ged.birdview.tooltips.targetSegment')}</span></TooltipContent>
                 </Tooltip>
               ))}
             </div>
 
             {/* Count */}
             <span className="ml-auto text-xs text-gray-500">
-              {node.children?.length || 0} éléments
+              {t('ged.birdview.elementCount', { count: node.children?.length || 0 })}
             </span>
           </div>
         )}
@@ -608,7 +604,7 @@ export function BirdViewPage({ onBack }: BirdViewPageProps) {
                   <TooltipTrigger asChild>
                     <span><Tag icon={Landmark} label={node.fundRestriction} /></span>
                   </TooltipTrigger>
-                  <TooltipContent side="top"><span className="text-xs">Ciblage par fonds</span></TooltipContent>
+                  <TooltipContent side="top"><span className="text-xs">{t('ged.birdview.tooltips.targetFund')}</span></TooltipContent>
                 </Tooltip>
               )}
               {node.shareClassRestriction && (
@@ -616,7 +612,7 @@ export function BirdViewPage({ onBack }: BirdViewPageProps) {
                   <TooltipTrigger asChild>
                     <span><Tag icon={Layers3} label={node.shareClassRestriction} /></span>
                   </TooltipTrigger>
-                  <TooltipContent side="top"><span className="text-xs">Ciblage par part</span></TooltipContent>
+                  <TooltipContent side="top"><span className="text-xs">{t('ged.birdview.tooltips.targetShare')}</span></TooltipContent>
                 </Tooltip>
               )}
               {node.segmentRestrictions && node.segmentRestrictions.map(seg => (
@@ -624,14 +620,14 @@ export function BirdViewPage({ onBack }: BirdViewPageProps) {
                   <TooltipTrigger asChild>
                     <span><Tag icon={TagIcon} label={seg} /></span>
                   </TooltipTrigger>
-                  <TooltipContent side="top"><span className="text-xs">Ciblage par segment</span></TooltipContent>
+                  <TooltipContent side="top"><span className="text-xs">{t('ged.birdview.tooltips.targetSegment')}</span></TooltipContent>
                 </Tooltip>
               ))}
             </div>
 
             {/* Count */}
             <span className="ml-auto text-xs text-gray-500">
-              {node.children?.length || 0} éléments
+              {t('ged.birdview.elementCount', { count: node.children?.length || 0 })}
             </span>
           </div>
         )}
@@ -660,7 +656,7 @@ export function BirdViewPage({ onBack }: BirdViewPageProps) {
                   <TooltipTrigger asChild>
                     <span><Tag icon={UserRound} label={node.investorRestriction} /></span>
                   </TooltipTrigger>
-                  <TooltipContent side="top"><span className="text-xs">Ciblage nominatif (investisseur)</span></TooltipContent>
+                  <TooltipContent side="top"><span className="text-xs">{t('ged.birdview.tooltips.targetInvestor')}</span></TooltipContent>
                 </Tooltip>
               )}
               {node.subscriptionRestriction && (
@@ -668,7 +664,7 @@ export function BirdViewPage({ onBack }: BirdViewPageProps) {
                   <TooltipTrigger asChild>
                     <span><Tag icon={FileText} label={node.subscriptionRestriction} /></span>
                   </TooltipTrigger>
-                  <TooltipContent side="top"><span className="text-xs">Ciblage par souscription</span></TooltipContent>
+                  <TooltipContent side="top"><span className="text-xs">{t('ged.birdview.tooltips.targetSubscription')}</span></TooltipContent>
                 </Tooltip>
               )}
               {node.fundRestriction && (
@@ -676,7 +672,7 @@ export function BirdViewPage({ onBack }: BirdViewPageProps) {
                   <TooltipTrigger asChild>
                     <span><Tag icon={Landmark} label={node.fundRestriction} /></span>
                   </TooltipTrigger>
-                  <TooltipContent side="top"><span className="text-xs">Ciblage par fonds</span></TooltipContent>
+                  <TooltipContent side="top"><span className="text-xs">{t('ged.birdview.tooltips.targetFund')}</span></TooltipContent>
                 </Tooltip>
               )}
               {node.segmentRestrictions && node.segmentRestrictions.map(seg => (
@@ -684,7 +680,7 @@ export function BirdViewPage({ onBack }: BirdViewPageProps) {
                   <TooltipTrigger asChild>
                     <span><Tag icon={TagIcon} label={seg} /></span>
                   </TooltipTrigger>
-                  <TooltipContent side="top"><span className="text-xs">Ciblage par segment</span></TooltipContent>
+                  <TooltipContent side="top"><span className="text-xs">{t('ged.birdview.tooltips.targetSegment')}</span></TooltipContent>
                 </Tooltip>
               ))}
             </div>
@@ -706,12 +702,12 @@ export function BirdViewPage({ onBack }: BirdViewPageProps) {
                         {node.engagement.viewedBy === node.engagement.totalViewers ? (
                           <>
                             <CheckCircle2 className="w-4 h-4 text-green-500" />
-                            <span className="text-xs font-medium text-green-600">Consulté</span>
+                            <span className="text-xs font-medium text-green-600">{t('ged.birdview.node.viewed')}</span>
                           </>
                         ) : (
                           <>
                             <EyeOff className="w-4 h-4 text-red-400" />
-                            <span className="text-xs font-medium text-red-500">Non Consulté</span>
+                            <span className="text-xs font-medium text-red-500">{t('ged.birdview.node.notViewed')}</span>
                           </>
                         )}
                       </div>
@@ -763,7 +759,7 @@ export function BirdViewPage({ onBack }: BirdViewPageProps) {
                   });
                   setIsPreviewDrawerOpen(true);
                 }}
-                title="Aperçu du document"
+                title={t('ged.birdview.node.preview')}
               >
                 <Eye className="w-4 h-4 text-gray-600 dark:text-gray-400" />
               </button>
@@ -775,10 +771,10 @@ export function BirdViewPage({ onBack }: BirdViewPageProps) {
                   setSelectedDocument({ id: node.id, name: node.name, isNominatif: !!node.isNominatif });
                   setIsActivityPanelOpen(true);
                 }}
-                title="Activité du document"
+                title={t('ged.birdview.node.activity')}
               >
                 <Activity className="w-4 h-4" />
-                Activité
+                {t('ged.birdview.node.activityLabel')}
               </button>
             </div>
           </div>
@@ -799,7 +795,7 @@ export function BirdViewPage({ onBack }: BirdViewPageProps) {
       <div className="flex-1 flex items-center justify-center bg-gray-50 dark:bg-black">
         <div className="text-center">
           <div className="w-16 h-16 border-4 border-blue-500 border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
-          <p className="text-sm text-gray-600 dark:text-gray-400">Chargement de Bird View...</p>
+          <p className="text-sm text-gray-600 dark:text-gray-400">{t('ged.birdview.loading')}</p>
         </div>
       </div>
     );
@@ -817,7 +813,7 @@ export function BirdViewPage({ onBack }: BirdViewPageProps) {
             className="gap-2"
           >
             <ArrowLeft className="w-4 h-4" />
-            Retour aux espaces
+            {t('ged.birdview.backToSpaces')}
           </Button>
         </div>
 
@@ -826,9 +822,9 @@ export function BirdViewPage({ onBack }: BirdViewPageProps) {
             <Activity className="w-6 h-6 text-white" />
           </div>
           <div>
-            <h1 className="text-xl font-semibold text-gray-900 dark:text-gray-100">Bird View</h1>
+            <h1 className="text-xl font-semibold text-gray-900 dark:text-gray-100">{t('ged.birdview.title')}</h1>
             <p className="text-sm text-gray-500 dark:text-gray-400">
-              Engagement documentaire, monitoring d'activité et relances
+              {t('ged.birdview.subtitle')}
             </p>
           </div>
         </div>
@@ -838,7 +834,7 @@ export function BirdViewPage({ onBack }: BirdViewPageProps) {
           <div className="bg-blue-50 dark:bg-blue-950 rounded-lg p-4 border border-blue-100 dark:border-blue-900">
             <div className="flex items-center gap-2 mb-1">
               <FolderOpen className="w-5 h-5" style={{ color: '#000E2B' }} />
-              <span className="text-sm" style={{ color: '#000E2B' }}>Espaces</span>
+              <span className="text-sm" style={{ color: '#000E2B' }}>{t('ged.birdview.kpi.spaces')}</span>
             </div>
             <div className="text-3xl font-bold" style={{ color: '#000E2B' }}>
               {filteredStats.totalSpaces}
@@ -848,7 +844,7 @@ export function BirdViewPage({ onBack }: BirdViewPageProps) {
           <div className="bg-blue-50 dark:bg-blue-950 rounded-lg p-4 border border-blue-100 dark:border-blue-900">
             <div className="flex items-center gap-2 mb-1">
               <FolderOpen className="w-5 h-5" style={{ color: '#000E2B' }} />
-              <span className="text-sm" style={{ color: '#000E2B' }}>Dossiers</span>
+              <span className="text-sm" style={{ color: '#000E2B' }}>{t('ged.birdview.kpi.folders')}</span>
             </div>
             <div className="text-3xl font-bold" style={{ color: '#000E2B' }}>
               {filteredStats.totalFolders}
@@ -858,7 +854,7 @@ export function BirdViewPage({ onBack }: BirdViewPageProps) {
           <div className="bg-blue-50 dark:bg-blue-950 rounded-lg p-4 border border-blue-100 dark:border-blue-900">
             <div className="flex items-center gap-2 mb-1">
               <FileText className="w-5 h-5" style={{ color: '#000E2B' }} />
-              <span className="text-sm" style={{ color: '#000E2B' }}>Documents</span>
+              <span className="text-sm" style={{ color: '#000E2B' }}>{t('ged.birdview.kpi.documents')}</span>
             </div>
             <div className="text-3xl font-bold" style={{ color: '#000E2B' }}>
               {filteredStats.totalDocuments}
@@ -870,7 +866,7 @@ export function BirdViewPage({ onBack }: BirdViewPageProps) {
         <div className="bg-green-50 dark:bg-green-950 rounded-lg p-4 border border-green-200 dark:border-green-900 mb-6">
           <div className="flex items-center justify-between mb-2">
             <span className="text-sm font-medium text-green-900 dark:text-green-100">
-              Taux d'engagement documentaire
+              {t('ged.birdview.engagement.rate')}
             </span>
             {selectedInvestorData && (
               <div className="w-14 h-14 rounded-full border-4 border-green-600 dark:border-green-400 flex items-center justify-center">
@@ -890,10 +886,10 @@ export function BirdViewPage({ onBack }: BirdViewPageProps) {
           </div>
           <div className="flex items-center justify-between mt-2">
             <div className="text-xs text-green-700 dark:text-green-300">
-              {filteredStats.viewedNominatifDocs} sur {filteredStats.totalNominatifDocs} documents nominatifs vus ou téléchargés
+              {t('ged.birdview.engagement.summary', { viewed: filteredStats.viewedNominatifDocs, total: filteredStats.totalNominatifDocs })}
               {selectedInvestorData && (
                 <span className="ml-2">
-                  • par <span className="font-semibold">{selectedInvestorData.name}</span> et ses contacts
+                  • {t('ged.birdview.engagement.contactsSuffix', { name: selectedInvestorData.name })}
                 </span>
               )}
             </div>
@@ -907,14 +903,14 @@ export function BirdViewPage({ onBack }: BirdViewPageProps) {
               onClick={() => setShowOnlyIncomplete(!showOnlyIncomplete)}
             >
               <EyeOff className="w-4 h-4" />
-              {showOnlyIncomplete ? "Afficher tous" : "Documents nominatifs non vus"}
+              {showOnlyIncomplete ? t('ged.birdview.engagement.showAll') : t('ged.birdview.engagement.showIncomplete')}
             </Button>
           </div>
         </div>
 
         {/* Filtres */}
         <div className="flex items-center gap-3">
-          <span className="text-sm text-gray-700 dark:text-gray-300">Visualiser comme :</span>
+          <span className="text-sm text-gray-700 dark:text-gray-300">{t('ged.birdview.filters.visualizeAs')}</span>
 
           {/* Investisseur */}
           <div className="min-w-[260px]">
@@ -929,7 +925,7 @@ export function BirdViewPage({ onBack }: BirdViewPageProps) {
                 label: inv.name,
                 description: inv.type,
               }))}
-              placeholder="Sélectionner une entité..."
+              placeholder={t('ged.birdview.filters.pickEntity')}
               icon={User}
             />
           </div>
@@ -945,7 +941,7 @@ export function BirdViewPage({ onBack }: BirdViewPageProps) {
                   label: c.name,
                   description: c.relationLabel,
                 }))}
-                placeholder="Contact ou conseiller..."
+                placeholder={t('ged.birdview.filters.pickContact')}
                 icon={User}
               />
             </div>
@@ -959,7 +955,7 @@ export function BirdViewPage({ onBack }: BirdViewPageProps) {
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
             <input
               type="text"
-              placeholder="Nom du document..."
+              placeholder={t('ged.birdview.filters.documentName')}
               value={documentNameFilter}
               onChange={(e) => setDocumentNameFilter(e.target.value)}
               className="h-10 pl-9 pr-3 min-w-[200px] border border-gray-300 dark:border-gray-700 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white dark:bg-gray-950"
@@ -972,7 +968,7 @@ export function BirdViewPage({ onBack }: BirdViewPageProps) {
               value={selectedFund}
               onChange={setSelectedFund}
               options={availableFunds}
-              placeholder="Fonds"
+              placeholder={t('ged.birdview.filters.fund')}
             />
           </div>
 
@@ -982,7 +978,7 @@ export function BirdViewPage({ onBack }: BirdViewPageProps) {
               value={selectedSegments}
               onChange={setSelectedSegments}
               options={availableSegments}
-              placeholder="Segment"
+              placeholder={t('ged.birdview.filters.segment')}
               icon={TagIcon}
             />
           </div>
@@ -993,7 +989,7 @@ export function BirdViewPage({ onBack }: BirdViewPageProps) {
               value={selectedSubscription}
               onChange={setSelectedSubscription}
               options={availableSubscriptions.map(s => ({ value: s, label: s }))}
-              placeholder="Souscription"
+              placeholder={t('ged.birdview.filters.subscription')}
               icon={FileText}
             />
           </div>
@@ -1010,7 +1006,7 @@ export function BirdViewPage({ onBack }: BirdViewPageProps) {
               className="h-10 px-3 text-sm text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-100 flex items-center gap-2"
             >
               <X className="w-4 h-4" />
-              Réinitialiser les filtres
+              {t('ged.birdview.filters.reset')}
             </button>
           )}
 
@@ -1023,7 +1019,7 @@ export function BirdViewPage({ onBack }: BirdViewPageProps) {
               className="gap-2"
             >
               <ChevronsDown className="w-4 h-4" />
-              Tout ouvrir
+              {t('ged.birdview.filters.expandAll')}
             </Button>
             <Button
               variant="outline"
@@ -1032,7 +1028,7 @@ export function BirdViewPage({ onBack }: BirdViewPageProps) {
               className="gap-2"
             >
               <ChevronsRight className="w-4 h-4" />
-              Tout fermer
+              {t('ged.birdview.filters.collapseAll')}
             </Button>
           </div>
         </div>
@@ -1042,7 +1038,7 @@ export function BirdViewPage({ onBack }: BirdViewPageProps) {
           <div className="mt-4 flex items-center gap-2 px-4 py-2 bg-purple-50 dark:bg-purple-950 border border-purple-200 dark:border-purple-800 rounded-lg">
             <Eye className="w-4 h-4 text-purple-600 dark:text-purple-400" />
             <span className="text-sm text-purple-900 dark:text-purple-100">
-              Vue complète de <span className="font-semibold">{selectedInvestor}</span>
+              {t('ged.birdview.filters.fullView', { name: selectedInvestor })}
             </span>
           </div>
         )}

@@ -21,6 +21,7 @@ import {
   birdviewActivityTypes,
   type BirdviewActivityEventCode,
 } from '../utils/birdviewActivityCatalog';
+import { useTranslation } from '../utils/languageContext';
 
 type ActivityType = BirdviewActivityEventCode;
 
@@ -120,27 +121,24 @@ const generateNominatifMockActivities = (): ActivitySource[] => [
 
 const activityTypes = birdviewActivityTypes;
 
-const userTypeLabel: Record<UserType, string> = {
-  Investor: 'Investisseur',
-  Contact: 'Contact',
-  Advisor: 'Conseiller',
-};
+type TFn = (key: string, vars?: Record<string, string | number>) => string;
 
 // Map the domain-specific source to the neutral TimelineEvent shape.
 const toTimelineEvent = (
   source: ActivitySource,
+  t: TFn,
 ): TimelineEvent<ActivityType> => ({
   id: source.id,
   type: source.type,
   timestamp: source.timestamp,
   actorName: source.userName,
   actorSublabel: source.userEmail,
-  actorRole: userTypeLabel[source.userType],
+  actorRole: t(`ged.activityPanel.userType.${source.userType}`),
   description:
     source.userType === 'Contact' && source.primaryInvestor ? (
       <span className="inline-flex items-center gap-1">
         <Users className="w-3 h-3" />
-        Rattaché à{' '}
+        {t('ged.activityPanel.attachedTo')}{' '}
         <span className="font-medium text-foreground">
           {source.primaryInvestor}
         </span>
@@ -168,6 +166,7 @@ interface EngagementResult {
 const computeEngagement = (
   events: ActivitySource[],
   isNominatif: boolean,
+  t: TFn,
 ): EngagementResult => {
   const viewedEvents = events.filter(
     (e) =>
@@ -182,11 +181,11 @@ const computeEngagement = (
     const count = viewers.size;
     const total = recipients.size;
     return {
-      label: count > 0 ? 'Document consulté' : 'Non consulté',
+      label: count > 0 ? t('ged.activityPanel.engagement.viewed') : t('ged.activityPanel.engagement.notViewed'),
       sublabel:
         count > 0
-          ? `Par ${count} contact${count > 1 ? 's' : ''} sur ${total}`
-          : `Aucun destinataire n'a encore ouvert`,
+          ? t(count > 1 ? 'ged.activityPanel.engagement.byContactsMany' : 'ged.activityPanel.engagement.byContactsOne', { count, total })
+          : t('ged.activityPanel.engagement.noRecipientOpened'),
       percent: count > 0 ? 100 : 0,
       tone: count > 0 ? 'success' : 'neutral',
     };
@@ -203,21 +202,20 @@ const computeEngagement = (
   const tone: EngagementResult['tone'] =
     percent >= 75 ? 'success' : percent >= 35 ? 'warning' : 'neutral';
   return {
-    label: `${count} / ${total} investisseur${total > 1 ? 's' : ''}`,
-    sublabel: 'ont consulté le document',
+    label: t(total > 1 ? 'ged.activityPanel.engagement.investorsRatioMany' : 'ged.activityPanel.engagement.investorsRatioOne', { count, total }),
+    sublabel: t('ged.activityPanel.engagement.investorsViewed'),
     percent,
     tone,
   };
 };
 
-// Domain-specific CSV columns (keeps the "Investisseur principal" field).
-const buildExportColumns = (): TimelineCsvColumn<ActivityType>[] => [
+const buildExportColumns = (t: TFn): TimelineCsvColumn<ActivityType>[] => [
   {
-    header: 'Date',
+    header: t('ged.activityPanel.export.date'),
     value: (ev) => new Date(ev.timestamp).toLocaleDateString('fr-FR'),
   },
   {
-    header: 'Heure',
+    header: t('ged.activityPanel.export.time'),
     value: (ev) =>
       new Date(ev.timestamp).toLocaleTimeString('fr-FR', {
         hour: '2-digit',
@@ -225,14 +223,14 @@ const buildExportColumns = (): TimelineCsvColumn<ActivityType>[] => [
       }),
   },
   {
-    header: "Type d'événement",
+    header: t('ged.activityPanel.export.eventType'),
     value: (ev) => activityTypes[ev.type]?.label ?? String(ev.type),
   },
-  { header: 'Utilisateur', value: (ev) => ev.actorName ?? '' },
-  { header: 'Email', value: (ev) => ev.actorSublabel ?? '' },
-  { header: 'Type utilisateur', value: (ev) => ev.actorRole ?? '' },
+  { header: t('ged.activityPanel.export.user'), value: (ev) => ev.actorName ?? '' },
+  { header: t('ged.activityPanel.export.email'), value: (ev) => ev.actorSublabel ?? '' },
+  { header: t('ged.activityPanel.export.userType'), value: (ev) => ev.actorRole ?? '' },
   {
-    header: 'Investisseur principal',
+    header: t('ged.activityPanel.export.primaryInvestor'),
     value: (ev) => (ev.meta?.primaryInvestor as string | undefined) ?? '',
   },
 ];
@@ -248,6 +246,7 @@ export function DocumentActivityPanel({
   documentId,
   isNominatif = true,
 }: DocumentActivityPanelProps) {
+  const { t } = useTranslation();
   const [activities, setActivities] = useState<ActivitySource[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const [isRelaunchModalOpen, setIsRelaunchModalOpen] = useState(false);
@@ -267,16 +266,16 @@ export function DocumentActivityPanel({
   }, [isOpen, documentId, isNominatif]);
 
   const timelineEvents = useMemo(
-    () => activities.map(toTimelineEvent),
-    [activities],
+    () => activities.map((a) => toTimelineEvent(a, t)),
+    [activities, t],
   );
 
   const engagement = useMemo(
-    () => computeEngagement(activities, isNominatif),
-    [activities, isNominatif],
+    () => computeEngagement(activities, isNominatif, t),
+    [activities, isNominatif, t],
   );
 
-  const exportColumns = useMemo(buildExportColumns, []);
+  const exportColumns = useMemo(() => buildExportColumns(t), [t]);
 
   return (
     <AnimatePresence>
@@ -313,15 +312,15 @@ export function DocumentActivityPanel({
               </div>
               <div className="flex-1 min-w-0">
                 <h2 className="text-lg font-semibold text-foreground">
-                  Piste d'activité
+                  {t('ged.activityPanel.title')}
                 </h2>
                 <p className="text-sm text-muted-foreground">
-                  Historique des interactions
+                  {t('ged.activityPanel.subtitle')}
                 </p>
               </div>
               <button
                 onClick={onClose}
-                aria-label="Fermer la piste d'activité"
+                aria-label={t('ged.activityPanel.closeAria')}
                 className="p-2 hover:bg-muted rounded-lg transition-colors"
               >
                 <X className="w-5 h-5 text-muted-foreground" />
@@ -336,7 +335,7 @@ export function DocumentActivityPanel({
                   {documentName}
                 </span>
                 <span className="ml-auto text-[10px] font-semibold uppercase tracking-wide text-muted-foreground">
-                  {isNominatif ? 'Nominatif' : 'Générique'}
+                  {isNominatif ? t('ged.activityPanel.nominative') : t('ged.activityPanel.generic')}
                 </span>
               </div>
 
@@ -373,7 +372,7 @@ export function DocumentActivityPanel({
                     style={{ background: 'linear-gradient(135deg, var(--brand-primary) 0%, var(--brand-accent) 100%)' }}
                   >
                     <Send className="w-3.5 h-3.5" />
-                    Relancer
+                    {t('ged.activityPanel.relaunch')}
                   </Button>
                 </div>
               ) : (
@@ -460,9 +459,9 @@ export function DocumentActivityPanel({
                 types={activityTypes}
                 isLoading={isLoading}
                 pageSize={6}
-                exportFileName={`piste-activite-${documentName}`}
+                exportFileName={t('ged.activityPanel.export.fileName', { name: documentName })}
                 exportColumns={exportColumns}
-                emptyLabel="Aucune activité enregistrée pour ce document."
+                emptyLabel={t('ged.activityPanel.emptyLabel')}
               />
             </div>
           </motion.div>

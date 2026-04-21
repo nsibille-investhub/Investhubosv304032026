@@ -9,8 +9,10 @@ import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigge
 import { Badge } from './ui/badge';
 import { copyToClipboard } from '../utils/clipboard';
 import { cn } from './ui/utils';
+import { useTranslation } from '../utils/languageContext';
 
 export function KYCFilesPage() {
+  const { t } = useTranslation();
   const [paginationPage, setPaginationPage] = useState(1);
   const [itemsPerPage, setItemsPerPage] = useState(20);
   const [hoveredRow, setHoveredRow] = useState<number | null>(null);
@@ -28,8 +30,8 @@ export function KYCFilesPage() {
         const generatedData = generateKYCFiles(100);
         setAllTableData(generatedData);
         setIsLoading(false);
-        toast.success('Dossiers KYC chargés', {
-          description: `${generatedData.length} dossiers disponibles`,
+        toast.success(t('ged.kyc.loadedToast'), {
+          description: `${generatedData.length}`,
         });
       }, 800);
     }
@@ -78,7 +80,7 @@ export function KYCFilesPage() {
 
   const handleRowClick = (row: KYCFile) => {
     setSelectedFile(row);
-    toast.info('Dossier sélectionné', {
+    toast.info(t('ged.kyc.selectedToast'), {
       description: `${row.name}`,
     });
   };
@@ -97,10 +99,10 @@ export function KYCFilesPage() {
     const success = await copyToClipboard(uid);
     if (success) {
       setCopiedId(fileId);
-      toast.success('ID copié !', { description: uid });
+      toast.success(t('ged.kyc.copyIdToast'), { description: uid });
       setTimeout(() => setCopiedId(null), 2000);
     } else {
-      toast.error('Erreur de copie', { description: 'Impossible de copier dans le presse-papier' });
+      toast.error(t('ged.kyc.copyError'), { description: t('ged.kyc.copyErrorDesc') });
     }
   };
 
@@ -137,7 +139,7 @@ export function KYCFilesPage() {
   const columns: ColumnConfig<KYCFile>[] = [
     {
       key: 'name',
-      label: 'Nom',
+      label: t('ged.kyc.columns.name'),
       sortable: true,
       render: (file) => (
         <div className="flex flex-col gap-1 max-w-[300px]">
@@ -167,7 +169,7 @@ export function KYCFilesPage() {
     },
     {
       key: 'type',
-      label: 'Type',
+      label: t('ged.kyc.columns.type'),
       sortable: true,
       render: (file) => {
         const isIndividual = file.type === 'Personne physique';
@@ -195,7 +197,7 @@ export function KYCFilesPage() {
     },
     {
       key: 'status',
-      label: 'Statut',
+      label: t('ged.kyc.columns.status'),
       sortable: true,
       render: (file) => {
         const statusColors: Record<string, string> = {
@@ -215,7 +217,7 @@ export function KYCFilesPage() {
     },
     {
       key: 'nextReview',
-      label: 'Prochaine révision',
+      label: t('ged.kyc.columns.nextReview'),
       sortable: true,
       render: (file) => (
         file.nextReview ? (
@@ -227,7 +229,7 @@ export function KYCFilesPage() {
     },
     {
       key: 'progress',
-      label: 'Progression',
+      label: t('ged.kyc.columns.progress'),
       sortable: false,
       render: (file) => {
         const progressIcons: Record<string, string> = {
@@ -247,7 +249,7 @@ export function KYCFilesPage() {
     },
     {
       key: 'risk',
-      label: 'Risque',
+      label: t('ged.kyc.columns.risk'),
       sortable: true,
       render: (file) => {
         if (!file.risk) {
@@ -284,7 +286,7 @@ export function KYCFilesPage() {
     },
     {
       key: 'template',
-      label: 'Modèle',
+      label: t('ged.kyc.columns.template'),
       sortable: true,
       render: (file) => (
         <span className="text-sm text-gray-600 truncate max-w-[180px] block">
@@ -294,7 +296,7 @@ export function KYCFilesPage() {
     },
     {
       key: 'tags',
-      label: 'Tags',
+      label: t('ged.kyc.columns.tags'),
       sortable: false,
       render: (file) => {
         if (file.tags.length === 0) {
@@ -336,7 +338,7 @@ export function KYCFilesPage() {
     },
     {
       key: 'assignee',
-      label: 'Assigné à',
+      label: t('ged.kyc.columns.assignedTo'),
       sortable: false,
       render: (file) => {
         if (!file.assignee) {
@@ -345,7 +347,7 @@ export function KYCFilesPage() {
               <div className="w-6 h-6 rounded-full bg-gray-100 flex items-center justify-center">
                 <UserCircle className="w-4 h-4 text-gray-400" />
               </div>
-              <span className="text-sm text-gray-400">Non assigné</span>
+              <span className="text-sm text-gray-400">{t('ged.kyc.unassigned')}</span>
             </div>
           );
         }
@@ -362,7 +364,7 @@ export function KYCFilesPage() {
     },
     {
       key: 'lastActivity',
-      label: 'Dernière activité',
+      label: t('ged.kyc.columns.lastActivity'),
       sortable: true,
       render: (file) => (
         <span className="text-sm text-gray-500">{file.lastActivity.text}</span>
@@ -382,9 +384,9 @@ export function KYCFilesPage() {
         <div className="px-6 py-4 border-b border-gray-200 bg-gradient-to-r from-white to-gray-50/30">
           <div className="flex items-center justify-between">
             <div>
-              <h2 className="text-xl font-semibold text-gray-900">Dossiers KYC</h2>
+              <h2 className="text-xl font-semibold text-gray-900">{t('ged.kyc.title')}</h2>
               <p className="text-sm text-gray-600 mt-1">
-                Gérez tous les dossiers KYC des investisseurs, partenaires et participations
+                {t('ged.kyc.subtitle')}
               </p>
             </div>
             <motion.button

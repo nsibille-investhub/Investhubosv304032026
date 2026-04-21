@@ -25,6 +25,7 @@ import { Badge } from './ui/badge';
 import { Document } from '../utils/documentMockData';
 import { calculateTargetingScope, downloadTargetingScopeCSV } from './TargetingScopeBadge';
 import { toast } from 'sonner';
+import { useTranslation } from '../utils/languageContext';
 
 interface FolderDetailPanelProps {
   folder: Document;
@@ -33,7 +34,7 @@ interface FolderDetailPanelProps {
 }
 
 export function FolderDetailPanel({ folder, onClose, allFolders }: FolderDetailPanelProps) {
-  // Calculer le scope de ciblage
+  const { t } = useTranslation();
   const targetingScope = calculateTargetingScope(folder);
   
   const [formData, setFormData] = useState({
@@ -53,8 +54,8 @@ export function FolderDetailPanel({ folder, onClose, allFolders }: FolderDetailP
   };
 
   const handleSave = () => {
-    toast.success('Dossier mis à jour', {
-      description: `Les modifications de "${formData.name}" ont été enregistrées`
+    toast.success(t('ged.folderDetail.folderUpdatedToast'), {
+      description: t('ged.folderDetail.folderUpdatedToastDesc', { name: formData.name })
     });
     setHasChanges(false);
   };
@@ -112,7 +113,7 @@ export function FolderDetailPanel({ folder, onClose, allFolders }: FolderDetailP
                 <Folder className="w-6 h-6 text-white" />
               </div>
               <div>
-                <h3 className="font-semibold text-gray-900">Éditer le dossier</h3>
+                <h3 className="font-semibold text-gray-900">{t('ged.folderDetail.title')}</h3>
                 <p className="text-sm text-gray-600 mt-0.5">
                   {folder.path}
                 </p>
@@ -135,7 +136,7 @@ export function FolderDetailPanel({ folder, onClose, allFolders }: FolderDetailP
               className="flex items-center gap-2 p-3 bg-blue-50 border border-blue-200 rounded-lg"
             >
               <AlertCircle className="w-4 h-4 text-blue-600 flex-shrink-0" />
-              <p className="text-sm text-blue-700">Vous avez des modifications non enregistrées</p>
+              <p className="text-sm text-blue-700">{t('ged.folderDetail.unsavedChanges')}</p>
             </motion.div>
           )}
         </div>
@@ -146,24 +147,24 @@ export function FolderDetailPanel({ folder, onClose, allFolders }: FolderDetailP
           <div className="space-y-4">
             <h4 className="font-semibold text-gray-900 flex items-center gap-2">
               <Folder className="w-4 h-4 text-amber-600" />
-              Informations générales
+              {t('ged.folderDetail.generalInfo')}
             </h4>
 
             {/* Nom */}
             <div>
-              <Label htmlFor="folder-name">Nom</Label>
+              <Label htmlFor="folder-name">{t('ged.folderDetail.nameLabel')}</Label>
               <Input
                 id="folder-name"
                 value={formData.name}
                 onChange={(e) => handleChange('name', e.target.value)}
-                placeholder="Nom du dossier..."
+                placeholder={t('ged.folderDetail.namePlaceholder')}
                 className="mt-1.5"
               />
             </div>
 
             {/* Parent */}
             <div>
-              <Label htmlFor="folder-parent">Parent</Label>
+              <Label htmlFor="folder-parent">{t('ged.folderDetail.parentLabel')}</Label>
               <Select 
                 value={formData.parentId} 
                 onValueChange={(value) => handleChange('parentId', value)}
@@ -194,7 +195,7 @@ export function FolderDetailPanel({ folder, onClose, allFolders }: FolderDetailP
                 </SelectContent>
               </Select>
               <p className="text-xs text-gray-500 mt-1.5">
-                Chemin : <span className="font-medium text-gray-700">{buildFolderPath(formData.parentId)}</span>
+                {t('ged.folderDetail.pathPrefix')} <span className="font-medium text-gray-700">{buildFolderPath(formData.parentId)}</span>
               </p>
             </div>
           </div>
@@ -204,7 +205,7 @@ export function FolderDetailPanel({ folder, onClose, allFolders }: FolderDetailP
             <div className="flex items-center justify-between">
               <h4 className="font-semibold text-gray-900 flex items-center gap-2">
                 <Users className="w-4 h-4 text-blue-600" />
-                Ciblage et accès
+                {t('ged.folderDetail.targetingAccess')}
               </h4>
             </div>
             
@@ -212,16 +213,16 @@ export function FolderDetailPanel({ folder, onClose, allFolders }: FolderDetailP
             <div className="bg-gradient-to-br from-blue-50 via-indigo-50 to-purple-50 rounded-xl border-2 border-blue-200 p-4">
               <div className="flex items-start justify-between mb-3">
                 <div>
-                  <h5 className="text-xs font-semibold text-gray-900 mb-0.5">Scope Actuel</h5>
-                  <p className="text-[10px] text-gray-600">Investisseurs qui verront ce dossier</p>
+                  <h5 className="text-xs font-semibold text-gray-900 mb-0.5">{t('ged.folderDetail.currentScope')}</h5>
+                  <p className="text-[10px] text-gray-600">{t('ged.folderDetail.currentScopeDesc')}</p>
                 </div>
                 <motion.button
                   whileHover={{ scale: 1.05 }}
                   whileTap={{ scale: 0.95 }}
                   onClick={() => {
                     downloadTargetingScopeCSV(folder, targetingScope);
-                    toast.success('Liste exportée', {
-                      description: `${targetingScope.investorCount} LPs et ${targetingScope.contactCount} contacts exportés`
+                    toast.success(t('ged.folderDetail.listExported'), {
+                      description: t('ged.folderDetail.listExportedDesc', { lps: targetingScope.investorCount, contacts: targetingScope.contactCount })
                     });
                   }}
                   className="flex items-center gap-1.5 px-2 py-1.5 bg-white hover:bg-gray-50 text-blue-700 rounded-md text-[10px] border border-blue-300 hover:border-blue-400 transition-all duration-200"
@@ -235,15 +236,15 @@ export function FolderDetailPanel({ folder, onClose, allFolders }: FolderDetailP
                 <div className="bg-white rounded-lg p-3 border border-blue-200">
                   <div className="flex items-center gap-1.5 text-blue-700 mb-1">
                     <Users className="w-4 h-4" />
-                    <span className="text-[10px] font-medium">LPs</span>
+                    <span className="text-[10px] font-medium">{t('ged.folderDetail.lpsLabel')}</span>
                   </div>
                   <p className="text-2xl font-bold text-blue-900">{targetingScope.investorCount}</p>
                 </div>
-                
+
                 <div className="bg-white rounded-lg p-3 border border-indigo-200">
                   <div className="flex items-center gap-1.5 text-indigo-700 mb-1">
                     <Users className="w-4 h-4" />
-                    <span className="text-[10px] font-medium">Contacts</span>
+                    <span className="text-[10px] font-medium">{t('ged.folderDetail.contactsLabel')}</span>
                   </div>
                   <p className="text-2xl font-bold text-indigo-900">{targetingScope.contactCount}</p>
                 </div>
@@ -252,9 +253,9 @@ export function FolderDetailPanel({ folder, onClose, allFolders }: FolderDetailP
 
             {/* Type */}
             <div>
-              <Label htmlFor="folder-type">Type</Label>
-              <Select 
-                value={formData.targetType} 
+              <Label htmlFor="folder-type">{t('ged.folderDetail.typeLabel')}</Label>
+              <Select
+                value={formData.targetType}
                 onValueChange={(value) => handleChange('targetType', value)}
               >
                 <SelectTrigger id="folder-type" className="mt-1.5">
@@ -264,25 +265,25 @@ export function FolderDetailPanel({ folder, onClose, allFolders }: FolderDetailP
                   <SelectItem value="all">
                     <div className="flex items-center gap-2">
                       <Users className="w-4 h-4 text-gray-500" />
-                      Tous
+                      {t('ged.folderDetail.typeAll')}
                     </div>
                   </SelectItem>
                   <SelectItem value="investor">
                     <div className="flex items-center gap-2">
                       <TrendingUp className="w-4 h-4 text-emerald-600" />
-                      Investisseur
+                      {t('ged.folderDetail.typeInvestor')}
                     </div>
                   </SelectItem>
                   <SelectItem value="distributor">
                     <div className="flex items-center gap-2">
                       <Users className="w-4 h-4 text-purple-600" />
-                      Distributeur
+                      {t('ged.folderDetail.typeDistributor')}
                     </div>
                   </SelectItem>
                   <SelectItem value="subscription">
                     <div className="flex items-center gap-2">
                       <Building2 className="w-4 h-4 text-blue-600" />
-                      Souscription
+                      {t('ged.folderDetail.typeSubscription')}
                     </div>
                   </SelectItem>
                 </SelectContent>
@@ -291,16 +292,16 @@ export function FolderDetailPanel({ folder, onClose, allFolders }: FolderDetailP
 
             {/* Segment d'investisseur */}
             <div>
-              <Label htmlFor="folder-segment">Segment d'investisseur</Label>
+              <Label htmlFor="folder-segment">{t('ged.folderDetail.segmentLabel')}</Label>
               <Input
                 id="folder-segment"
                 value={formData.segment}
                 onChange={(e) => handleChange('segment', e.target.value)}
-                placeholder="Choisissez un segment d'investisseur"
+                placeholder={t('ged.folderDetail.segmentPlaceholder')}
                 className="mt-1.5"
               />
               <p className="text-xs text-gray-500 mt-1.5">
-                Exemples : Investisseurs Qualifiés, LP Premium, Family Offices
+                {t('ged.folderDetail.segmentExamples')}
               </p>
             </div>
           </div>
@@ -309,21 +310,21 @@ export function FolderDetailPanel({ folder, onClose, allFolders }: FolderDetailP
           <div className="space-y-4 pt-4 border-t border-gray-100">
             <h4 className="font-semibold text-gray-900 flex items-center gap-2">
               <Building2 className="w-4 h-4 text-purple-600" />
-              Configuration
+              {t('ged.folderDetail.configuration')}
             </h4>
 
             {/* Fonds */}
             <div>
-              <Label htmlFor="folder-fund">Fonds</Label>
-              <Select 
-                value={formData.fund} 
+              <Label htmlFor="folder-fund">{t('ged.folderDetail.fundLabel')}</Label>
+              <Select
+                value={formData.fund}
                 onValueChange={(value) => handleChange('fund', value)}
               >
                 <SelectTrigger id="folder-fund" className="mt-1.5">
-                  <SelectValue placeholder="Sélectionner un fonds" />
+                  <SelectValue placeholder={t('ged.folderDetail.pickFund')} />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="all">Tous fonds</SelectItem>
+                  <SelectItem value="all">{t('ged.folderDetail.fundAll')}</SelectItem>
                   <SelectItem value="pere1">PERE 1</SelectItem>
                   <SelectItem value="pere2">PERE 2</SelectItem>
                   <SelectItem value="fund-a">Fonds A</SelectItem>
@@ -334,19 +335,19 @@ export function FolderDetailPanel({ folder, onClose, allFolders }: FolderDetailP
 
             {/* Disclaimer */}
             <div>
-              <Label htmlFor="folder-disclaimer">Disclaimer</Label>
-              <Select 
-                value={formData.disclaimer} 
+              <Label htmlFor="folder-disclaimer">{t('ged.folderDetail.disclaimerLabel')}</Label>
+              <Select
+                value={formData.disclaimer}
                 onValueChange={(value) => handleChange('disclaimer', value)}
               >
                 <SelectTrigger id="folder-disclaimer" className="mt-1.5">
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="none">Aucun</SelectItem>
-                  <SelectItem value="standard">Standard</SelectItem>
-                  <SelectItem value="confidential">Confidentiel</SelectItem>
-                  <SelectItem value="restricted">Restreint</SelectItem>
+                  <SelectItem value="none">{t('ged.folderDetail.disclaimerNone')}</SelectItem>
+                  <SelectItem value="standard">{t('ged.folderDetail.disclaimerStandard')}</SelectItem>
+                  <SelectItem value="confidential">{t('ged.folderDetail.disclaimerConfidential')}</SelectItem>
+                  <SelectItem value="restricted">{t('ged.folderDetail.disclaimerRestricted')}</SelectItem>
                 </SelectContent>
               </Select>
             </div>
@@ -356,23 +357,23 @@ export function FolderDetailPanel({ folder, onClose, allFolders }: FolderDetailP
           <div className="pt-4 border-t border-gray-100">
             <div className="grid grid-cols-2 gap-4 text-sm">
               <div>
-                <span className="text-gray-500">Créé par</span>
+                <span className="text-gray-500">{t('ged.folderDetail.createdBy')}</span>
                 <p className="font-medium text-gray-900">{folder.uploadedBy}</p>
               </div>
               <div>
-                <span className="text-gray-500">Date de création</span>
+                <span className="text-gray-500">{t('ged.folderDetail.createdAt')}</span>
                 <p className="font-medium text-gray-900">
                   {new Date(folder.uploadedAt).toLocaleDateString('fr-FR')}
                 </p>
               </div>
               <div>
-                <span className="text-gray-500">Dernière modification</span>
+                <span className="text-gray-500">{t('ged.folderDetail.lastUpdate')}</span>
                 <p className="font-medium text-gray-900">
                   {new Date(folder.updatedAt).toLocaleDateString('fr-FR')}
                 </p>
               </div>
               <div>
-                <span className="text-gray-500">Version</span>
+                <span className="text-gray-500">{t('ged.folderDetail.version')}</span>
                 <p className="font-medium text-gray-900">v{folder.version}</p>
               </div>
             </div>
@@ -382,7 +383,7 @@ export function FolderDetailPanel({ folder, onClose, allFolders }: FolderDetailP
         {/* Footer */}
         <div className="px-6 py-4 border-t border-gray-200 bg-gray-50 flex items-center justify-between">
           <Button variant="outline" onClick={onClose}>
-            Annuler
+            {t('ged.folderDetail.cancel')}
           </Button>
           <Button
             onClick={handleSave}
@@ -390,7 +391,7 @@ export function FolderDetailPanel({ folder, onClose, allFolders }: FolderDetailP
             className="bg-gradient-to-r from-[#0066FF] to-[#0052CC] disabled:opacity-50 disabled:cursor-not-allowed"
           >
             <Save className="w-4 h-4 mr-2" />
-            Enregistrer
+            {t('ged.folderDetail.save')}
           </Button>
         </div>
       </motion.div>

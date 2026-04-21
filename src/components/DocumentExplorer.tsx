@@ -46,6 +46,7 @@ import {
   TooltipProvider,
   TooltipTrigger,
 } from './ui/tooltip';
+import { useTranslation } from '../utils/languageContext';
 
 interface DocumentExplorerProps {
   documents: Document[];
@@ -55,6 +56,7 @@ interface DocumentExplorerProps {
 }
 
 export function DocumentExplorer({ documents, onDocumentClick, compactMode, onSelectionChange }: DocumentExplorerProps) {
+  const { t } = useTranslation();
   const [expandedFolders, setExpandedFolders] = useState<Set<string>>(new Set(['root', 'cat-1', 'cat-2']));
   const [hoveredRow, setHoveredRow] = useState<string | null>(null);
   const [selectedItems, setSelectedItems] = useState<Set<string>>(new Set());
@@ -115,15 +117,15 @@ export function DocumentExplorer({ documents, onDocumentClick, compactMode, onSe
     const allFolderIds = getAllFolderIds(documents);
     setExpandedFolders(new Set(['root', ...allFolderIds]));
     const count = allFolderIds.length;
-    toast.success('Tous les dossiers sont ouverts', {
-      description: `${count} dossier${count > 1 ? 's' : ''} déployé${count > 1 ? 's' : ''} à tous les niveaux`
+    toast.success(t('ged.explorer.openedAllToast'), {
+      description: t(count > 1 ? 'ged.explorer.openedAllDescMany' : 'ged.explorer.openedAllDesc', { count })
     });
   };
 
   // Collapse all folders (except root)
   const collapseAll = () => {
     setExpandedFolders(new Set(['root']));
-    toast.success('Tous les dossiers sont fermés');
+    toast.success(t('ged.explorer.closedAllToast'));
   };
 
   // Get all children IDs recursively
@@ -172,8 +174,11 @@ export function DocumentExplorer({ documents, onDocumentClick, compactMode, onSe
     onSelectionChange?.(newSelected.size, selectedDocs);
     
     const count = affectedIds.length;
-    toast.success(checked ? 'Sélection ajoutée' : 'Sélection retirée', {
-      description: `${count} élément${count > 1 ? 's' : ''} ${checked ? 'sélectionné' : 'désélectionné'}${count > 1 ? 's' : ''}`
+    const descKey = checked
+      ? (count > 1 ? 'ged.explorer.selectionAddedDescMany' : 'ged.explorer.selectionAddedDescOne')
+      : (count > 1 ? 'ged.explorer.selectionRemovedDescMany' : 'ged.explorer.selectionRemovedDescOne');
+    toast.success(checked ? t('ged.explorer.selectionAdded') : t('ged.explorer.selectionRemoved'), {
+      description: t(descKey, { count })
     });
   };
 
@@ -184,13 +189,13 @@ export function DocumentExplorer({ documents, onDocumentClick, compactMode, onSe
       setSelectedItems(newSelected);
       const selectedDocs = getSelectedDocuments(newSelected);
       onSelectionChange?.(allDocIds.length, selectedDocs);
-      toast.success('Tout sélectionné', {
-        description: `${allDocIds.length} éléments sélectionnés`
+      toast.success(t('ged.explorer.allSelected'), {
+        description: t('ged.explorer.allSelectedDesc', { count: allDocIds.length })
       });
     } else {
       setSelectedItems(new Set());
       onSelectionChange?.(0, []);
-      toast.info('Sélection vidée');
+      toast.info(t('ged.explorer.selectionCleared'));
     }
   };
 
@@ -288,7 +293,7 @@ export function DocumentExplorer({ documents, onDocumentClick, compactMode, onSe
           className="inline-flex items-center gap-1.5 px-2 py-1 bg-blue-50 text-blue-700 rounded-md text-xs border border-blue-200"
         >
           <Users className="w-3 h-3" />
-          <span>Tous</span>
+          <span>{t('ged.explorer.targetAll')}</span>
         </motion.div>
       );
     }
@@ -338,7 +343,7 @@ export function DocumentExplorer({ documents, onDocumentClick, compactMode, onSe
           className="inline-flex items-center gap-1.5 px-2 py-1 bg-emerald-50 text-emerald-700 rounded-md text-xs border border-emerald-200"
         >
           <Building2 className="w-3 h-3" />
-          <span>Souscription</span>
+          <span>{t('ged.explorer.targetSubscription')}</span>
           {doc.target.subscriptions.length > 1 && (
             <Badge className="bg-emerald-200 text-emerald-800 px-1 py-0 text-[10px] ml-0.5">
               +{doc.target.subscriptions.length - 1}
@@ -356,13 +361,13 @@ export function DocumentExplorer({ documents, onDocumentClick, compactMode, onSe
       case 'published':
         return (
           <Badge className="bg-emerald-50 text-emerald-700 border-emerald-200 text-xs">
-            Publié
+            {t('ged.explorer.statusPublished')}
           </Badge>
         );
       case 'draft':
         return (
           <Badge className="bg-amber-50 text-amber-700 border-amber-200 text-xs">
-            Brouillon
+            {t('ged.explorer.statusDraft')}
           </Badge>
         );
       default:
@@ -587,11 +592,11 @@ export function DocumentExplorer({ documents, onDocumentClick, compactMode, onSe
                   <>
                     <DropdownMenuItem onClick={() => onDocumentClick(doc)}>
                       <Eye className="w-4 h-4 mr-2" />
-                      Prévisualiser
+                      {t('ged.explorer.actions.preview')}
                     </DropdownMenuItem>
                     <DropdownMenuItem>
                       <Download className="w-4 h-4 mr-2" />
-                      Télécharger
+                      {t('ged.explorer.actions.download')}
                     </DropdownMenuItem>
                     <DropdownMenuSeparator />
                   </>
@@ -670,14 +675,14 @@ export function DocumentExplorer({ documents, onDocumentClick, compactMode, onSe
         {/* Expand/Icon column */}
         <div className="w-8 flex-shrink-0"></div>
         
-        <div className="flex-1 min-w-0">Nom</div>
+        <div className="flex-1 min-w-0">{t('ged.explorer.headers.name')}</div>
         {!compactMode && (
           <>
-            <div className="hidden lg:flex items-center w-56 flex-shrink-0">Ciblage</div>
-            <div className="hidden md:flex items-center w-24 flex-shrink-0">Taille</div>
-            <div className="hidden xl:flex items-center w-28 flex-shrink-0">Statut</div>
-            <div className="hidden lg:flex items-center w-32 flex-shrink-0">Mise à jour</div>
-            <div className="flex items-center w-24 flex-shrink-0">Actions</div>
+            <div className="hidden lg:flex items-center w-56 flex-shrink-0">{t('ged.explorer.headers.targeting')}</div>
+            <div className="hidden md:flex items-center w-24 flex-shrink-0">{t('ged.explorer.headers.size')}</div>
+            <div className="hidden xl:flex items-center w-28 flex-shrink-0">{t('ged.explorer.headers.status')}</div>
+            <div className="hidden lg:flex items-center w-32 flex-shrink-0">{t('ged.explorer.headers.updated')}</div>
+            <div className="flex items-center w-24 flex-shrink-0">{t('ged.explorer.headers.actions')}</div>
           </>
         )}
         
@@ -694,7 +699,7 @@ export function DocumentExplorer({ documents, onDocumentClick, compactMode, onSe
                 <Maximize2 className="w-4 h-4 text-gray-600 group-hover:text-blue-600 transition-colors" />
               </motion.button>
             </TooltipTrigger>
-            <TooltipContent>Tout ouvrir</TooltipContent>
+            <TooltipContent>{t('ged.explorer.tooltips.expandAll')}</TooltipContent>
           </Tooltip>
           
           <Tooltip>
@@ -708,7 +713,7 @@ export function DocumentExplorer({ documents, onDocumentClick, compactMode, onSe
                 <Minimize2 className="w-4 h-4 text-gray-600 group-hover:text-blue-600 transition-colors" />
               </motion.button>
             </TooltipTrigger>
-            <TooltipContent>Tout fermer</TooltipContent>
+            <TooltipContent>{t('ged.explorer.tooltips.collapseAll')}</TooltipContent>
           </Tooltip>
         </div>
       </div>
