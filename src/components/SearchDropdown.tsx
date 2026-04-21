@@ -1,17 +1,18 @@
 import { useState, useEffect, useRef } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
-import { 
-  Search, 
-  Building2, 
-  User, 
-  FileText, 
-  HelpCircle, 
-  Sparkles, 
+import {
+  Search,
+  Building2,
+  User,
+  FileText,
+  HelpCircle,
+  Sparkles,
   TrendingUp,
   ArrowRight,
   Clock,
   ChevronRight
 } from 'lucide-react';
+import { useTranslation } from '../utils/languageContext';
 
 interface SearchResult {
   id: string;
@@ -24,7 +25,9 @@ interface SearchResult {
   metadata?: string;
 }
 
-const mockSearchResults = (query: string): SearchResult[] => {
+type TFn = (key: string, vars?: Record<string, string | number>) => string;
+
+const mockSearchResults = (query: string, t: TFn): SearchResult[] => {
   const q = query.toLowerCase();
   
   const allResults: SearchResult[] = [
@@ -170,8 +173,8 @@ const mockSearchResults = (query: string): SearchResult[] => {
     filtered.unshift({
       id: 'ai-1',
       type: 'ai_suggestion',
-      title: `Cherchez-vous des informations sur "${query}" ?`,
-      description: 'Posez votre question à l\'IA pour obtenir une réponse personnalisée',
+      title: t('search.ai.suggestionTitle', { query }),
+      description: t('search.ai.suggestionDescription'),
       path: `/ai/ask?q=${encodeURIComponent(query)}`,
     });
   }
@@ -252,20 +255,20 @@ const getResultColor = (type: SearchResult['type']) => {
   }
 };
 
-const getCategoryLabel = (type: SearchResult['type']) => {
+const getCategoryLabel = (type: SearchResult['type'], t: TFn) => {
   switch (type) {
     case 'subscription':
-      return 'Souscription';
+      return t('search.category.subscription');
     case 'investor_individual':
-      return 'Investisseur';
+      return t('search.category.investorIndividual');
     case 'investor_corporate':
-      return 'Entreprise';
+      return t('search.category.investorCorporate');
     case 'help':
-      return 'Centre d\'aide';
+      return t('search.category.help');
     case 'document':
-      return 'Document';
+      return t('search.category.document');
     case 'ai_suggestion':
-      return 'IA';
+      return t('search.category.aiSuggestion');
     default:
       return '';
   }
@@ -289,6 +292,7 @@ const highlightMatch = (text: string, query: string) => {
 };
 
 export function SearchDropdown() {
+  const { t } = useTranslation();
   const [query, setQuery] = useState('');
   const [isFocused, setIsFocused] = useState(false);
   const [results, setResults] = useState<SearchResult[]>([]);
@@ -297,10 +301,10 @@ export function SearchDropdown() {
   const inputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
-    const searchResults = mockSearchResults(query);
+    const searchResults = mockSearchResults(query, t);
     setResults(searchResults);
     setSelectedIndex(0);
-  }, [query]);
+  }, [query, t]);
 
   // Close dropdown when clicking outside
   useEffect(() => {
@@ -371,10 +375,10 @@ export function SearchDropdown() {
         <Search className={`w-4 h-4 transition-colors ${
           isFocused ? 'text-blue-600' : 'text-gray-400 group-hover:text-gray-600'
         }`} />
-        <input 
+        <input
           ref={inputRef}
-          type="text" 
-          placeholder="Search... Ask anything to your Hub."
+          type="text"
+          placeholder={t('search.placeholder')}
           value={query}
           onChange={(e) => setQuery(e.target.value)}
           onFocus={() => setIsFocused(true)}
@@ -415,12 +419,12 @@ export function SearchDropdown() {
                 <div className="flex items-center gap-2">
                   <Search className="w-4 h-4 text-gray-400" />
                   <span className="text-sm font-semibold text-gray-900">
-                    {results.length} résultat{results.length > 1 ? 's' : ''} trouvé{results.length > 1 ? 's' : ''}
+                    {t(results.length > 1 ? 'search.resultsCountMany' : 'search.resultsCountOne', { count: results.length })}
                   </span>
                 </div>
                 <div className="flex items-center gap-2 px-3 py-1.5 bg-gradient-to-r from-violet-50 to-fuchsia-50 border border-violet-200 rounded-lg">
                   <Sparkles className="w-4 h-4 text-violet-600" />
-                  <span className="text-xs font-bold text-violet-700">Powered by InvestHub AI</span>
+                  <span className="text-xs font-bold text-violet-700">{t('search.poweredBy')}</span>
                 </div>
               </div>
             </div>
@@ -442,7 +446,7 @@ export function SearchDropdown() {
                       {type !== 'ai_suggestion' && (
                         <div className="px-4 py-2 bg-gray-50/50 sticky top-0 z-10">
                           <span className="text-xs font-semibold text-gray-500 uppercase tracking-wider">
-                            {getCategoryLabel(type)}s
+                            {getCategoryLabel(type, t)}
                           </span>
                         </div>
                       )}
@@ -541,8 +545,8 @@ export function SearchDropdown() {
                       <HelpCircle className="w-4 h-4 text-white" />
                     </div>
                     <div>
-                      <h3 className="text-xs font-bold text-emerald-900 uppercase tracking-wider">Centre d'aide</h3>
-                      <p className="text-[10px] text-emerald-600">Besoin d'assistance ?</p>
+                      <h3 className="text-xs font-bold text-emerald-900 uppercase tracking-wider">{t('search.helpCenter')}</h3>
+                      <p className="text-[10px] text-emerald-600">{t('search.needHelp')}</p>
                     </div>
                   </div>
                 </div>
@@ -557,27 +561,27 @@ export function SearchDropdown() {
                       {
                         id: 'help-default-1',
                         type: 'help' as const,
-                        title: 'Guide de démarrage',
-                        subtitle: 'Getting Started',
-                        description: 'Apprenez les bases d\'InvestHub',
+                        title: t('search.defaultHelp.gettingStartedTitle'),
+                        subtitle: t('search.defaultHelp.gettingStartedSubtitle'),
+                        description: t('search.defaultHelp.gettingStartedDescription'),
                         path: '/help/getting-started',
                         metadata: '5 min read'
                       },
                       {
                         id: 'help-default-2',
                         type: 'help' as const,
-                        title: 'Gestion des entités',
-                        subtitle: 'Entities Guide',
-                        description: 'Comment gérer vos entités',
+                        title: t('search.defaultHelp.entitiesTitle'),
+                        subtitle: t('search.defaultHelp.entitiesSubtitle'),
+                        description: t('search.defaultHelp.entitiesDescription'),
                         path: '/help/manage-entities',
                         metadata: '7 min read'
                       },
                       {
                         id: 'help-default-3',
                         type: 'help' as const,
-                        title: 'Compliance & Screening',
-                        subtitle: 'Compliance',
-                        description: 'Comprendre les processus de vérification',
+                        title: t('search.defaultHelp.complianceTitle'),
+                        subtitle: t('search.defaultHelp.complianceSubtitle'),
+                        description: t('search.defaultHelp.complianceDescription'),
                         path: '/help/compliance',
                         metadata: '10 min read'
                       }
@@ -652,7 +656,7 @@ export function SearchDropdown() {
                     className="w-full px-3 py-2.5 bg-gradient-to-r from-emerald-500 to-teal-500 hover:from-emerald-600 hover:to-teal-600 text-white rounded-xl shadow-md hover:shadow-lg transition-all duration-200 flex items-center justify-center gap-2 group"
                   >
                     <HelpCircle className="w-4 h-4" />
-                    <span className="text-xs font-semibold">Voir tous les articles</span>
+                    <span className="text-xs font-semibold">{t('search.viewAllArticles')}</span>
                     <ArrowRight className="w-3.5 h-3.5 group-hover:translate-x-1 transition-transform" />
                   </motion.button>
                 </div>
@@ -664,15 +668,15 @@ export function SearchDropdown() {
               <div className="flex items-center gap-4 text-xs text-gray-500">
                 <div className="flex items-center gap-1.5">
                   <kbd className="px-2 py-1 bg-white border border-gray-200 rounded shadow-sm font-mono">↑↓</kbd>
-                  <span>Navigate</span>
+                  <span>{t('search.navigate')}</span>
                 </div>
                 <div className="flex items-center gap-1.5">
                   <kbd className="px-2 py-1 bg-white border border-gray-200 rounded shadow-sm font-mono">↵</kbd>
-                  <span>Select</span>
+                  <span>{t('search.select')}</span>
                 </div>
                 <div className="flex items-center gap-1.5">
                   <kbd className="px-2 py-1 bg-white border border-gray-200 rounded shadow-sm font-mono">Esc</kbd>
-                  <span>Close</span>
+                  <span>{t('search.close')}</span>
                 </div>
               </div>
             </div>

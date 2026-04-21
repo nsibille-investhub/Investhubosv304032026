@@ -7,6 +7,7 @@ import logoInvestHub from 'figma:asset/2a84b4397fac896d4ed7e7f4faff09c957de9a6b.
 import logoMinimized from 'figma:asset/2115896087cf66bcb781a8f9d0f680a46ffd65c4.png';
 import { FundContextSelectorCompact } from './FundContextSelectorCompact';
 import { Fund } from '../utils/fundGenerator';
+import { useTranslation } from '../utils/languageContext';
 
 interface SidebarProps {
   expanded: boolean;
@@ -22,6 +23,7 @@ interface SidebarProps {
 }
 
 export function ModernSidebar({ expanded, onToggle, currentPage = 'entities', onPageChange, entitiesManagementEnabled = false, pendingAlertsCount = 0, onOpenEcosystem, selectedFundId, onSelectFund, allFunds = [] }: SidebarProps) {
+  const { t } = useTranslation();
   const [settingsFocusMode, setSettingsFocusMode] = useState(false);
   
   const [openMenus, setOpenMenus] = useState<Record<string, boolean>>({
@@ -92,7 +94,7 @@ export function ModernSidebar({ expanded, onToggle, currentPage = 'entities', on
           whileHover={{ scale: 1.02 }}
           whileTap={{ scale: 0.98 }}
           onClick={onOpenEcosystem}
-          title="Voir l'écosystème InvestHub"
+          title={t('sidebar.ecosystemTooltip')}
         >
           {expanded ? (
             <motion.div
@@ -142,7 +144,7 @@ export function ModernSidebar({ expanded, onToggle, currentPage = 'entities', on
               className="w-full mb-3 px-3 py-2 flex items-center gap-2.5 text-[#333333] dark:text-[#A1A1A1] hover:text-[#171717] dark:hover:text-[#FAFAFA] hover:bg-[#F5F5F5] dark:hover:bg-[#1A1A1A] rounded-lg transition-all group"
             >
               <icons.ArrowLeft className="w-3.5 h-3.5 group-hover:-translate-x-0.5 transition-transform" />
-              <span className="text-[13px]">Retour au menu principal</span>
+              <span className="text-[13px]">{t('sidebar.backToMainMenu')}</span>
             </motion.button>
           )}
         </AnimatePresence>
@@ -161,45 +163,45 @@ export function ModernSidebar({ expanded, onToggle, currentPage = 'entities', on
             
             <MenuItem
               icon={icons.LayoutDashboard}
-              label="Dashboards"
+              label={t('sidebar.menu.dashboards')}
               expanded={expanded}
               hasSubmenu
               isOpen={openMenus.dashboards}
               onToggle={() => toggleMenu('dashboards')}
             >
-              <SubMenuItem icon={icons.BarChart3} label="Vue d'ensemble" expanded={expanded} />
-              <SubMenuItem icon={icons.TrendingUp} label="Analytics" expanded={expanded} />
+              <SubMenuItem icon={icons.BarChart3} label={t('sidebar.submenu.overview')} expanded={expanded} />
+              <SubMenuItem icon={icons.TrendingUp} label={t('sidebar.submenu.analytics')} expanded={expanded} />
             </MenuItem>
 
             <MenuItem
               icon={icons.FolderOpen}
-              label="Conformité"
+              label={t('sidebar.menu.compliance')}
               expanded={expanded}
               hasSubmenu
               isOpen={openMenus.conformite}
               onToggle={() => toggleMenu('conformite')}
             >
-              <SubMenuItem 
+              <SubMenuItem
                 icon={icons.FolderLock}
-                label="Dossiers" 
+                label={t('sidebar.submenu.dossiers')}
                 expanded={expanded}
                 badge="NEW"
                 badgeColor="blue"
                 isActive={currentPage === 'dossiers'}
                 onClick={() => onPageChange?.('dossiers')}
               />
-              <SubMenuItem 
+              <SubMenuItem
                 icon={icons.UserCircle}
-                label="Entités" 
+                label={t('sidebar.submenu.entities')}
                 expanded={expanded}
                 badge={!entitiesManagementEnabled ? 'NEW' : undefined}
                 badgeColor="blue"
                 isActive={currentPage === 'entities'}
                 onClick={() => onPageChange?.('entities')}
               />
-              <SubMenuItem 
+              <SubMenuItem
                 icon={icons.AlertTriangle}
-                label="Alertes" 
+                label={t('sidebar.submenu.alerts')}
                 expanded={expanded}
                 badge={!entitiesManagementEnabled ? 'NEW' : (pendingAlertsCount > 0 ? pendingAlertsCount.toString() : undefined)}
                 badgeColor={!entitiesManagementEnabled ? 'blue' : 'red'}
@@ -210,22 +212,22 @@ export function ModernSidebar({ expanded, onToggle, currentPage = 'entities', on
 
             <MenuItem
               icon={icons.UsersRound}
-              label="Investisseurs"
+              label={t('sidebar.menu.investors')}
               expanded={expanded}
               hasSubmenu
               isOpen={openMenus.investisseurs}
               onToggle={() => toggleMenu('investisseurs')}
             >
-              <SubMenuItem 
+              <SubMenuItem
                 icon={icons.Users}
-                label="Investisseurs" 
+                label={t('sidebar.submenu.investors')}
                 expanded={expanded}
                 isActive={currentPage === 'investors'}
                 onClick={() => onPageChange?.('investors')}
               />
-              <SubMenuItem 
+              <SubMenuItem
                 icon={icons.FileCheck}
-                label="Souscriptions" 
+                label={t('sidebar.submenu.subscriptions')}
                 expanded={expanded}
                 isActive={currentPage === 'subscriptions'}
                 onClick={() => onPageChange?.('subscriptions')}
@@ -234,29 +236,29 @@ export function ModernSidebar({ expanded, onToggle, currentPage = 'entities', on
 
             <MenuItem
               icon={icons.Handshake}
-              label="Partenaires"
+              label={t('sidebar.menu.partners')}
               expanded={expanded}
               hasSubmenu
               isOpen={openMenus.partenaires}
               onToggle={() => toggleMenu('partenaires')}
             >
-              <SubMenuItem 
+              <SubMenuItem
                 icon={icons.Users}
-                label="Partenaires" 
+                label={t('sidebar.submenu.partners')}
                 expanded={expanded}
                 onClick={() => navigateToPage('partners')}
                 active={currentPage === 'partners'}
               />
-              <SubMenuItem 
-                icon={icons.ArrowLeftRight} 
-                label="Rétrocessions" 
+              <SubMenuItem
+                icon={icons.ArrowLeftRight}
+                label={t('sidebar.submenu.retrocessions')}
                 expanded={expanded}
                 onClick={() => onPageChange?.('retrocessions')}
                 active={currentPage === 'retrocessions'}
               />
-              <SubMenuItem 
-                icon={icons.FileSignature} 
-                label="Conventions" 
+              <SubMenuItem
+                icon={icons.FileSignature}
+                label={t('sidebar.submenu.conventions')}
                 expanded={expanded}
                 onClick={() => navigateToPage('settings-conventions')}
                 active={currentPage === 'settings-conventions'}
@@ -265,54 +267,54 @@ export function ModernSidebar({ expanded, onToggle, currentPage = 'entities', on
 
             <MenuItem
               icon={icons.TrendingUp}
-              label="Participations"
+              label={t('sidebar.menu.participations')}
               expanded={expanded}
               hasSubmenu
               isOpen={openMenus.participations}
               onToggle={() => toggleMenu('participations')}
             >
-              <SubMenuItem icon={icons.BarChart3} label="Portfolio" expanded={expanded} />
-              <SubMenuItem icon={icons.TrendingUp} label="Performance" expanded={expanded} />
+              <SubMenuItem icon={icons.BarChart3} label={t('sidebar.submenu.portfolio')} expanded={expanded} />
+              <SubMenuItem icon={icons.TrendingUp} label={t('sidebar.submenu.performance')} expanded={expanded} />
             </MenuItem>
 
             <MenuItem
               icon={icons.Briefcase}
-              label="Fund Life"
+              label={t('sidebar.menu.fundLife')}
               expanded={expanded}
               hasSubmenu
               isOpen={openMenus.fundlife}
               onToggle={() => toggleMenu('fundlife')}
             >
-              <SubMenuItem 
-                icon={icons.Briefcase} 
-                label="Tous les fonds" 
+              <SubMenuItem
+                icon={icons.Briefcase}
+                label={t('sidebar.submenu.allFunds')}
                 expanded={expanded}
                 isActive={currentPage === 'allfunds'}
                 onClick={() => onPageChange?.('allfunds')}
               />
-              <SubMenuItem icon={icons.Settings} label="Paramètres" expanded={expanded} />
-              <SubMenuItem icon={icons.DollarSign} label="Appels" expanded={expanded} />
-              <SubMenuItem icon={icons.Wallet} label="Capital accounts" expanded={expanded} />
-              <SubMenuItem icon={icons.ArrowDownCircle} label="Distributions" expanded={expanded} />
-              <SubMenuItem icon={icons.TrendingDown} label="Prévisions de flux" expanded={expanded} />
-              <SubMenuItem icon={icons.FileText} label="Contrats" expanded={expanded} />
-              <SubMenuItem icon={icons.FileCheck} label="Souscriptions" expanded={expanded} />
-              <SubMenuItem icon={icons.Repeat} label="Transferts" expanded={expanded} />
-              <SubMenuItem icon={icons.Calendar} label="Évènements" expanded={expanded} />
-              <SubMenuItem icon={icons.Store} label="Marché Secondaire" expanded={expanded} />
+              <SubMenuItem icon={icons.Settings} label={t('sidebar.submenu.settings')} expanded={expanded} />
+              <SubMenuItem icon={icons.DollarSign} label={t('sidebar.submenu.calls')} expanded={expanded} />
+              <SubMenuItem icon={icons.Wallet} label={t('sidebar.submenu.capitalAccounts')} expanded={expanded} />
+              <SubMenuItem icon={icons.ArrowDownCircle} label={t('sidebar.submenu.distributions')} expanded={expanded} />
+              <SubMenuItem icon={icons.TrendingDown} label={t('sidebar.submenu.cashFlowForecasts')} expanded={expanded} />
+              <SubMenuItem icon={icons.FileText} label={t('sidebar.submenu.contracts')} expanded={expanded} />
+              <SubMenuItem icon={icons.FileCheck} label={t('sidebar.submenu.subscriptions')} expanded={expanded} />
+              <SubMenuItem icon={icons.Repeat} label={t('sidebar.submenu.transfers')} expanded={expanded} />
+              <SubMenuItem icon={icons.Calendar} label={t('sidebar.submenu.events')} expanded={expanded} />
+              <SubMenuItem icon={icons.Store} label={t('sidebar.submenu.secondaryMarket')} expanded={expanded} />
             </MenuItem>
 
             <MenuItem
               icon={icons.FolderOpen}
-              label="Data Room"
+              label={t('sidebar.menu.dataRoom')}
               expanded={expanded}
               hasSubmenu
               isOpen={openMenus.dataroom}
               onToggle={() => toggleMenu('dataroom')}
             >
-              <SubMenuItem 
+              <SubMenuItem
                 icon={icons.Folder}
-                label="Documents" 
+                label={t('sidebar.submenu.documents')}
                 expanded={expanded}
                 badge={!entitiesManagementEnabled ? 'NEW' : undefined}
                 badgeColor="blue"
@@ -321,7 +323,7 @@ export function ModernSidebar({ expanded, onToggle, currentPage = 'entities', on
               />
               <SubMenuItem
                 icon={icons.Activity}
-                label="Bird View"
+                label={t('sidebar.submenu.birdView')}
                 expanded={expanded}
                 isActive={currentPage === 'birdview'}
                 onClick={() => onPageChange?.('birdview')}
@@ -330,48 +332,48 @@ export function ModernSidebar({ expanded, onToggle, currentPage = 'entities', on
 
             <MenuItem
               icon={icons.ExternalLink}
-              label="Portails et Contenu"
+              label={t('sidebar.menu.portalsAndContent')}
               expanded={expanded}
               hasSubmenu
               isOpen={openMenus.portails}
               onToggle={() => toggleMenu('portails')}
             >
-              <SubMenuItem icon={icons.Globe} label="Branding / Thème" expanded={expanded} />
-              <SubMenuItem icon={icons.Users} label="Navigation partenaires" expanded={expanded} />
-              <SubMenuItem icon={icons.Building2} label="Navigation investisseurs" expanded={expanded} />
-              <SubMenuItem icon={icons.TrendingUp} label="Navigation participations" expanded={expanded} />
-              <SubMenuItem icon={icons.FileText} label="Editeur" expanded={expanded} />
-              <SubMenuItem icon={icons.MessageSquare} label="Formulaires de contact" expanded={expanded} />
-              <SubMenuItem 
+              <SubMenuItem icon={icons.Globe} label={t('sidebar.submenu.brandingTheme')} expanded={expanded} />
+              <SubMenuItem icon={icons.Users} label={t('sidebar.submenu.partnersNavigation')} expanded={expanded} />
+              <SubMenuItem icon={icons.Building2} label={t('sidebar.submenu.investorsNavigation')} expanded={expanded} />
+              <SubMenuItem icon={icons.TrendingUp} label={t('sidebar.submenu.participationsNavigation')} expanded={expanded} />
+              <SubMenuItem icon={icons.FileText} label={t('sidebar.submenu.editor')} expanded={expanded} />
+              <SubMenuItem icon={icons.MessageSquare} label={t('sidebar.submenu.contactForms')} expanded={expanded} />
+              <SubMenuItem
                 icon={icons.FileText}
-                label="Actualités" 
+                label={t('sidebar.submenu.news')}
                 expanded={expanded}
                 isActive={currentPage === 'news'}
                 onClick={() => onPageChange?.('news')}
               />
-              <SubMenuItem 
+              <SubMenuItem
                 icon={icons.Calendar}
-                label="Événements" 
+                label={t('sidebar.submenu.eventsPortal')}
                 expanded={expanded}
                 isActive={currentPage === 'events'}
                 onClick={() => onPageChange?.('events')}
               />
-              <SubMenuItem icon={icons.LifeBuoy} label="FAQ" expanded={expanded} />
-              <SubMenuItem icon={icons.Users} label="Contacts" expanded={expanded} />
-              <SubMenuItem icon={icons.Globe} label="Traductions" expanded={expanded} />
-              <SubMenuItem icon={icons.Shield} label="Disclaimers" expanded={expanded} />
+              <SubMenuItem icon={icons.LifeBuoy} label={t('sidebar.submenu.faq')} expanded={expanded} />
+              <SubMenuItem icon={icons.Users} label={t('sidebar.submenu.contacts')} expanded={expanded} />
+              <SubMenuItem icon={icons.Globe} label={t('sidebar.submenu.translations')} expanded={expanded} />
+              <SubMenuItem icon={icons.Shield} label={t('sidebar.submenu.disclaimers')} expanded={expanded} />
             </MenuItem>
 
             <MenuItem
               icon={icons.Send}
-              label="Communications"
+              label={t('sidebar.menu.communications')}
               expanded={expanded}
               hasSubmenu
               isOpen={openMenus.communications}
               onToggle={() => toggleMenu('communications')}
             >
-              <SubMenuItem icon={icons.Send} label="Messages" expanded={expanded} />
-              <SubMenuItem icon={icons.MessageSquare} label="Notifications" expanded={expanded} />
+              <SubMenuItem icon={icons.Send} label={t('sidebar.submenu.messages')} expanded={expanded} />
+              <SubMenuItem icon={icons.MessageSquare} label={t('sidebar.submenu.notifications')} expanded={expanded} />
             </MenuItem>
           </>
         )}
@@ -379,79 +381,79 @@ export function ModernSidebar({ expanded, onToggle, currentPage = 'entities', on
         <div className={!settingsFocusMode ? "mt-3 pt-3 border-t border-[#E5E5E5] dark:border-[#1A1A1A]" : ""}>
           <MenuItem
             icon={icons.Settings}
-            label="Paramètres"
+            label={t('sidebar.menu.settings')}
             expanded={expanded}
             hasSubmenu
             isOpen={openMenus.settings}
             onToggle={() => toggleMenu('settings')}
           >
-            <SubMenuItem 
+            <SubMenuItem
               icon={icons.Package}
-              label="App Store" 
+              label={t('sidebar.submenu.appStore')}
               expanded={expanded}
               isActive={currentPage === 'settings-app-store'}
               onClick={() => onPageChange?.('settings-app-store')}
             />
-            
+
             {expanded && <div className="h-px bg-[#E5E5E5] dark:bg-[#1A1A1A] my-1.5 mx-3" />}
-            {expanded && <div className="px-3 py-1 text-[10px] uppercase tracking-wider text-[#A1A1A1] dark:text-[#525252]">Utilisateurs & Accès</div>}
-            <SubMenuItem icon={icons.Users} label="Utilisateurs" expanded={expanded} isActive={currentPage === 'settings-users'} onClick={() => onPageChange?.('settings-users')} />
-            <SubMenuItem icon={icons.Users} label="Équipes" expanded={expanded} isActive={currentPage === 'settings-teams'} onClick={() => onPageChange?.('settings-teams')} />
-            <SubMenuItem icon={icons.Shield} label="Droits" expanded={expanded} isActive={currentPage === 'settings-rights'} onClick={() => onPageChange?.('settings-rights')} />
-            
+            {expanded && <div className="px-3 py-1 text-[10px] uppercase tracking-wider text-[#A1A1A1] dark:text-[#525252]">{t('sidebar.section.usersAccess')}</div>}
+            <SubMenuItem icon={icons.Users} label={t('sidebar.submenu.users')} expanded={expanded} isActive={currentPage === 'settings-users'} onClick={() => onPageChange?.('settings-users')} />
+            <SubMenuItem icon={icons.Users} label={t('sidebar.submenu.teams')} expanded={expanded} isActive={currentPage === 'settings-teams'} onClick={() => onPageChange?.('settings-teams')} />
+            <SubMenuItem icon={icons.Shield} label={t('sidebar.submenu.rights')} expanded={expanded} isActive={currentPage === 'settings-rights'} onClick={() => onPageChange?.('settings-rights')} />
+
             {expanded && <div className="h-px bg-[#E5E5E5] dark:bg-[#1A1A1A] my-1.5 mx-3" />}
-            {expanded && <div className="px-3 py-1 text-[10px] uppercase tracking-wider text-[#A1A1A1] dark:text-[#525252]">Communication</div>}
-            <SubMenuItem icon={icons.Mail} label="Historique des mails" expanded={expanded} isActive={currentPage === 'settings-mail-history'} onClick={() => onPageChange?.('settings-mail-history')} />
-            <SubMenuItem icon={icons.MessageSquare} label="Historique des SMS" expanded={expanded} isActive={currentPage === 'settings-sms-history'} onClick={() => onPageChange?.('settings-sms-history')} />
-            <SubMenuItem icon={icons.FileText} label="Gabarits des mails" expanded={expanded} isActive={currentPage === 'settings-mail-templates'} onClick={() => onPageChange?.('settings-mail-templates')} />
-            <SubMenuItem icon={icons.BarChart3} label="Statistiques des mails" expanded={expanded} isActive={currentPage === 'settings-mail-stats'} onClick={() => onPageChange?.('settings-mail-stats')} />
-            <SubMenuItem icon={icons.Users} label="Groupes de mails" expanded={expanded} isActive={currentPage === 'settings-mail-groups'} onClick={() => onPageChange?.('settings-mail-groups')} />
-            
+            {expanded && <div className="px-3 py-1 text-[10px] uppercase tracking-wider text-[#A1A1A1] dark:text-[#525252]">{t('sidebar.section.communication')}</div>}
+            <SubMenuItem icon={icons.Mail} label={t('sidebar.submenu.mailHistory')} expanded={expanded} isActive={currentPage === 'settings-mail-history'} onClick={() => onPageChange?.('settings-mail-history')} />
+            <SubMenuItem icon={icons.MessageSquare} label={t('sidebar.submenu.smsHistory')} expanded={expanded} isActive={currentPage === 'settings-sms-history'} onClick={() => onPageChange?.('settings-sms-history')} />
+            <SubMenuItem icon={icons.FileText} label={t('sidebar.submenu.mailTemplates')} expanded={expanded} isActive={currentPage === 'settings-mail-templates'} onClick={() => onPageChange?.('settings-mail-templates')} />
+            <SubMenuItem icon={icons.BarChart3} label={t('sidebar.submenu.mailStats')} expanded={expanded} isActive={currentPage === 'settings-mail-stats'} onClick={() => onPageChange?.('settings-mail-stats')} />
+            <SubMenuItem icon={icons.Users} label={t('sidebar.submenu.mailGroups')} expanded={expanded} isActive={currentPage === 'settings-mail-groups'} onClick={() => onPageChange?.('settings-mail-groups')} />
+
             {expanded && <div className="h-px bg-[#E5E5E5] dark:bg-[#1A1A1A] my-1.5 mx-3" />}
-            {expanded && <div className="px-3 py-1 text-[10px] uppercase tracking-wider text-[#A1A1A1] dark:text-[#525252]">Configuration</div>}
-            <SubMenuItem icon={icons.FileCheck} label="Statuts investisseurs" expanded={expanded} isActive={currentPage === 'settings-investor-status'} onClick={() => onPageChange?.('settings-investor-status')} />
-            <SubMenuItem icon={icons.FileCheck} label="Statuts deals" expanded={expanded} isActive={currentPage === 'settings-deal-status'} onClick={() => onPageChange?.('settings-deal-status')} />
-            <SubMenuItem icon={icons.Folder} label="Types de deals" expanded={expanded} isActive={currentPage === 'settings-deal-types'} onClick={() => onPageChange?.('settings-deal-types')} />
-            <SubMenuItem icon={icons.TrendingUp} label="Types de flux actif" expanded={expanded} isActive={currentPage === 'settings-flow-types'} onClick={() => onPageChange?.('settings-flow-types')} />
-            <SubMenuItem icon={icons.Building2} label="Sociétés de gestion" expanded={expanded} isActive={currentPage === 'settings-management-companies'} onClick={() => onPageChange?.('settings-management-companies')} />
-            <SubMenuItem icon={icons.FileText} label="Champs personnalisés" expanded={expanded} isActive={currentPage === 'settings-custom-fields'} onClick={() => onPageChange?.('settings-custom-fields')} />
-            <SubMenuItem icon={icons.FileCheck} label="Status personnalisés" expanded={expanded} isActive={currentPage === 'settings-custom-status'} onClick={() => onPageChange?.('settings-custom-status')} />
-            
+            {expanded && <div className="px-3 py-1 text-[10px] uppercase tracking-wider text-[#A1A1A1] dark:text-[#525252]">{t('sidebar.section.configuration')}</div>}
+            <SubMenuItem icon={icons.FileCheck} label={t('sidebar.submenu.investorStatus')} expanded={expanded} isActive={currentPage === 'settings-investor-status'} onClick={() => onPageChange?.('settings-investor-status')} />
+            <SubMenuItem icon={icons.FileCheck} label={t('sidebar.submenu.dealStatus')} expanded={expanded} isActive={currentPage === 'settings-deal-status'} onClick={() => onPageChange?.('settings-deal-status')} />
+            <SubMenuItem icon={icons.Folder} label={t('sidebar.submenu.dealTypes')} expanded={expanded} isActive={currentPage === 'settings-deal-types'} onClick={() => onPageChange?.('settings-deal-types')} />
+            <SubMenuItem icon={icons.TrendingUp} label={t('sidebar.submenu.flowTypes')} expanded={expanded} isActive={currentPage === 'settings-flow-types'} onClick={() => onPageChange?.('settings-flow-types')} />
+            <SubMenuItem icon={icons.Building2} label={t('sidebar.submenu.managementCompanies')} expanded={expanded} isActive={currentPage === 'settings-management-companies'} onClick={() => onPageChange?.('settings-management-companies')} />
+            <SubMenuItem icon={icons.FileText} label={t('sidebar.submenu.customFields')} expanded={expanded} isActive={currentPage === 'settings-custom-fields'} onClick={() => onPageChange?.('settings-custom-fields')} />
+            <SubMenuItem icon={icons.FileCheck} label={t('sidebar.submenu.customStatus')} expanded={expanded} isActive={currentPage === 'settings-custom-status'} onClick={() => onPageChange?.('settings-custom-status')} />
+
             {expanded && <div className="h-px bg-[#E5E5E5] dark:bg-[#1A1A1A] my-1.5 mx-3" />}
-            {expanded && <div className="px-3 py-1 text-[10px] uppercase tracking-wider text-[#A1A1A1] dark:text-[#525252]">Données & Sécurité</div>}
-            <SubMenuItem icon={icons.Globe} label="Gestion des pays/risques" expanded={expanded} isActive={currentPage === 'settings-countries-risks'} onClick={() => onPageChange?.('settings-countries-risks')} />
-            <SubMenuItem icon={icons.Building2} label="Fournisseurs" expanded={expanded} isActive={currentPage === 'settings-providers'} onClick={() => onPageChange?.('settings-providers')} />
-            <SubMenuItem icon={icons.BarChart3} label="Plan comptable" expanded={expanded} isActive={currentPage === 'settings-chart-of-accounts'} onClick={() => onPageChange?.('settings-chart-of-accounts')} />
-            
+            {expanded && <div className="px-3 py-1 text-[10px] uppercase tracking-wider text-[#A1A1A1] dark:text-[#525252]">{t('sidebar.section.dataSecurity')}</div>}
+            <SubMenuItem icon={icons.Globe} label={t('sidebar.submenu.countriesRisks')} expanded={expanded} isActive={currentPage === 'settings-countries-risks'} onClick={() => onPageChange?.('settings-countries-risks')} />
+            <SubMenuItem icon={icons.Building2} label={t('sidebar.submenu.providers')} expanded={expanded} isActive={currentPage === 'settings-providers'} onClick={() => onPageChange?.('settings-providers')} />
+            <SubMenuItem icon={icons.BarChart3} label={t('sidebar.submenu.chartOfAccounts')} expanded={expanded} isActive={currentPage === 'settings-chart-of-accounts'} onClick={() => onPageChange?.('settings-chart-of-accounts')} />
+
             {expanded && <div className="h-px bg-[#E5E5E5] dark:bg-[#1A1A1A] my-1.5 mx-3" />}
-            {expanded && <div className="px-3 py-1 text-[10px] uppercase tracking-wider text-[#A1A1A1] dark:text-[#525252]">Logs & Monitoring</div>}
-            <SubMenuItem icon={icons.Database} label="Logs" expanded={expanded} isActive={currentPage === 'settings-logs'} onClick={() => onPageChange?.('settings-logs')} />
-            <SubMenuItem icon={icons.Database} label="Logs Lemonway" expanded={expanded} isActive={currentPage === 'settings-logs-lemonway'} onClick={() => onPageChange?.('settings-logs-lemonway')} />
-            <SubMenuItem icon={icons.Database} label="Logs Harvest" expanded={expanded} isActive={currentPage === 'settings-logs-harvest'} onClick={() => onPageChange?.('settings-logs-harvest')} />
-            <SubMenuItem icon={icons.Shield} label="IPs connues" expanded={expanded} isActive={currentPage === 'settings-known-ips'} onClick={() => onPageChange?.('settings-known-ips')} />
-            
+            {expanded && <div className="px-3 py-1 text-[10px] uppercase tracking-wider text-[#A1A1A1] dark:text-[#525252]">{t('sidebar.section.logsMonitoring')}</div>}
+            <SubMenuItem icon={icons.Database} label={t('sidebar.submenu.logs')} expanded={expanded} isActive={currentPage === 'settings-logs'} onClick={() => onPageChange?.('settings-logs')} />
+            <SubMenuItem icon={icons.Database} label={t('sidebar.submenu.logsLemonway')} expanded={expanded} isActive={currentPage === 'settings-logs-lemonway'} onClick={() => onPageChange?.('settings-logs-lemonway')} />
+            <SubMenuItem icon={icons.Database} label={t('sidebar.submenu.logsHarvest')} expanded={expanded} isActive={currentPage === 'settings-logs-harvest'} onClick={() => onPageChange?.('settings-logs-harvest')} />
+            <SubMenuItem icon={icons.Shield} label={t('sidebar.submenu.knownIps')} expanded={expanded} isActive={currentPage === 'settings-known-ips'} onClick={() => onPageChange?.('settings-known-ips')} />
+
             {expanded && <div className="h-px bg-[#E5E5E5] dark:bg-[#1A1A1A] my-1.5 mx-3" />}
-            {expanded && <div className="px-3 py-1 text-[10px] uppercase tracking-wider text-[#A1A1A1] dark:text-[#525252]">Intégrations</div>}
-            <SubMenuItem icon={icons.FileText} label="Signatures DocuSign" expanded={expanded} isActive={currentPage === 'settings-docusign'} onClick={() => onPageChange?.('settings-docusign')} />
-            <SubMenuItem icon={icons.Shield} label="Contrôles" expanded={expanded} isActive={currentPage === 'settings-controls'} onClick={() => onPageChange?.('settings-controls')} />
-            <SubMenuItem icon={icons.Shield} label="AICs" expanded={expanded} isActive={currentPage === 'settings-aics'} onClick={() => onPageChange?.('settings-aics')} />
-            
+            {expanded && <div className="px-3 py-1 text-[10px] uppercase tracking-wider text-[#A1A1A1] dark:text-[#525252]">{t('sidebar.section.integrations')}</div>}
+            <SubMenuItem icon={icons.FileText} label={t('sidebar.submenu.docusign')} expanded={expanded} isActive={currentPage === 'settings-docusign'} onClick={() => onPageChange?.('settings-docusign')} />
+            <SubMenuItem icon={icons.Shield} label={t('sidebar.submenu.controls')} expanded={expanded} isActive={currentPage === 'settings-controls'} onClick={() => onPageChange?.('settings-controls')} />
+            <SubMenuItem icon={icons.Shield} label={t('sidebar.submenu.aics')} expanded={expanded} isActive={currentPage === 'settings-aics'} onClick={() => onPageChange?.('settings-aics')} />
+
             {expanded && <div className="h-px bg-[#E5E5E5] dark:bg-[#1A1A1A] my-1.5 mx-3" />}
-            {expanded && <div className="px-3 py-1 text-[10px] uppercase tracking-wider text-[#A1A1A1] dark:text-[#525252]">Imports & Fichiers</div>}
-            <SubMenuItem icon={icons.Upload} label="Imports" expanded={expanded} isActive={currentPage === 'settings-imports'} onClick={() => onPageChange?.('settings-imports')} />
-            <SubMenuItem icon={icons.Folder} label="Fichiers hébergés" expanded={expanded} isActive={currentPage === 'settings-hosted-files'} onClick={() => onPageChange?.('settings-hosted-files')} />
-            <SubMenuItem icon={icons.Folder} label="Catégories de sections" expanded={expanded} isActive={currentPage === 'settings-section-categories'} onClick={() => onPageChange?.('settings-section-categories')} />
-            
+            {expanded && <div className="px-3 py-1 text-[10px] uppercase tracking-wider text-[#A1A1A1] dark:text-[#525252]">{t('sidebar.section.importsFiles')}</div>}
+            <SubMenuItem icon={icons.Upload} label={t('sidebar.submenu.imports')} expanded={expanded} isActive={currentPage === 'settings-imports'} onClick={() => onPageChange?.('settings-imports')} />
+            <SubMenuItem icon={icons.Folder} label={t('sidebar.submenu.hostedFiles')} expanded={expanded} isActive={currentPage === 'settings-hosted-files'} onClick={() => onPageChange?.('settings-hosted-files')} />
+            <SubMenuItem icon={icons.Folder} label={t('sidebar.submenu.sectionCategories')} expanded={expanded} isActive={currentPage === 'settings-section-categories'} onClick={() => onPageChange?.('settings-section-categories')} />
+
             {expanded && <div className="h-px bg-[#E5E5E5] dark:bg-[#1A1A1A] my-1.5 mx-3" />}
-            {expanded && <div className="px-3 py-1 text-[10px] uppercase tracking-wider text-[#A1A1A1] dark:text-[#525252]">Reporting</div>}
-            <SubMenuItem icon={icons.BarChart3} label="Reporting" expanded={expanded} isActive={currentPage === 'settings-reporting'} onClick={() => onPageChange?.('settings-reporting')} />
-            <SubMenuItem icon={icons.FileText} label="Rapports" expanded={expanded} isActive={currentPage === 'settings-reports'} onClick={() => onPageChange?.('settings-reports')} />
-            <SubMenuItem icon={icons.Database} label="Requêtes" expanded={expanded} isActive={currentPage === 'settings-queries'} onClick={() => onPageChange?.('settings-queries')} />
-            <SubMenuItem icon={icons.FileText} label="Formatage des variables" expanded={expanded} isActive={currentPage === 'settings-variable-formatting'} onClick={() => onPageChange?.('settings-variable-formatting')} />
-            
+            {expanded && <div className="px-3 py-1 text-[10px] uppercase tracking-wider text-[#A1A1A1] dark:text-[#525252]">{t('sidebar.section.reporting')}</div>}
+            <SubMenuItem icon={icons.BarChart3} label={t('sidebar.submenu.reporting')} expanded={expanded} isActive={currentPage === 'settings-reporting'} onClick={() => onPageChange?.('settings-reporting')} />
+            <SubMenuItem icon={icons.FileText} label={t('sidebar.submenu.reports')} expanded={expanded} isActive={currentPage === 'settings-reports'} onClick={() => onPageChange?.('settings-reports')} />
+            <SubMenuItem icon={icons.Database} label={t('sidebar.submenu.queries')} expanded={expanded} isActive={currentPage === 'settings-queries'} onClick={() => onPageChange?.('settings-queries')} />
+            <SubMenuItem icon={icons.FileText} label={t('sidebar.submenu.variableFormatting')} expanded={expanded} isActive={currentPage === 'settings-variable-formatting'} onClick={() => onPageChange?.('settings-variable-formatting')} />
+
             {expanded && <div className="h-px bg-[#E5E5E5] dark:bg-[#1A1A1A] my-1.5 mx-3" />}
-            {expanded && <div className="px-3 py-1 text-[10px] uppercase tracking-wider text-[#A1A1A1] dark:text-[#525252]">Outils</div>}
-            <SubMenuItem icon={icons.Wrench} label="Outils" expanded={expanded} isActive={currentPage === 'settings-tools'} onClick={() => onPageChange?.('settings-tools')} />
+            {expanded && <div className="px-3 py-1 text-[10px] uppercase tracking-wider text-[#A1A1A1] dark:text-[#525252]">{t('sidebar.section.tools')}</div>}
+            <SubMenuItem icon={icons.Wrench} label={t('sidebar.submenu.tools')} expanded={expanded} isActive={currentPage === 'settings-tools'} onClick={() => onPageChange?.('settings-tools')} />
           </MenuItem>
         </div>
       </nav>
