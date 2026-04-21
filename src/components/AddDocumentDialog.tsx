@@ -29,6 +29,7 @@ import {
 } from "./ui/popover";
 import { toast } from 'sonner';
 import { mockDocuments, Document } from '../utils/documentMockData';
+import { useTranslation } from '../utils/languageContext';
 
 interface AddDocumentDialogProps {
   isOpen: boolean;
@@ -304,6 +305,7 @@ const availableEmailTemplates = [
 ];
 
 export function AddDocumentDialog({ isOpen, onClose, type, parentFolder }: AddDocumentDialogProps) {
+  const { t } = useTranslation();
   const [currentStep, setCurrentStep] = useState(1);
   const [formData, setFormData] = useState({
     name: '',
@@ -523,22 +525,22 @@ export function AddDocumentDialog({ isOpen, onClose, type, parentFolder }: AddDo
   };
 
   const steps = [
-    { 
-      number: 1, 
-      title: 'Informations', 
-      description: 'Détails de base',
+    {
+      number: 1,
+      title: t('ged.addDialog.stepInfo'),
+      description: t('ged.addDialog.stepInfoDesc'),
       icon: Info
     },
-    { 
-      number: 2, 
-      title: 'Ciblage & Accès', 
-      description: 'Permissions et visibilité',
+    {
+      number: 2,
+      title: t('ged.addDialog.stepTargeting'),
+      description: t('ged.addDialog.stepTargetingDesc'),
       icon: Lock
     },
-    { 
-      number: 3, 
-      title: 'Finalisation', 
-      description: 'Tags et fichier',
+    {
+      number: 3,
+      title: t('ged.addDialog.stepFinalize'),
+      description: t('ged.addDialog.stepFinalizeDesc'),
       icon: Upload
     },
   ];
@@ -546,8 +548,8 @@ export function AddDocumentDialog({ isOpen, onClose, type, parentFolder }: AddDo
   // Export du scope en CSV
   const handleExportTargetScope = () => {
     if (targetScope.isEmpty || targetScope.investors.length === 0) {
-      toast.error('Impossible d\'exporter', {
-        description: 'Le scope de ciblage est vide'
+      toast.error(t('ged.addDialog.exportImpossible'), {
+        description: t('ged.addDialog.scopeEmpty')
       });
       return;
     }
@@ -613,7 +615,7 @@ export function AddDocumentDialog({ isOpen, onClose, type, parentFolder }: AddDo
       ? ` • Langue: ${availableLanguages.find(l => l.value === selectedLanguage)?.label}${restrictToLanguage ? ' (restreint)' : ''}`
       : '';
     
-    toast.success(`${type === 'document' ? 'Document' : 'Dossier'} créé avec succès !`, {
+    toast.success(type === 'document' ? t('ged.addDialog.createdToastDoc') : t('ged.addDialog.createdToastFolder'), {
       description: `"${formData.name}" dans "${folderPath}"${languageInfo}`,
       duration: 5000,
     });
@@ -723,10 +725,10 @@ export function AddDocumentDialog({ isOpen, onClose, type, parentFolder }: AddDo
                 </div>
                 <div>
                   <h2 className="font-semibold text-gray-900">
-                    {type === 'document' ? 'Nouveau Document' : 'Nouveau Dossier'}
+                    {type === 'document' ? t('ged.addDialog.newDocument') : t('ged.addDialog.newFolder')}
                   </h2>
                   <p className="text-xs text-gray-500 mt-0.5">
-                    Dans {selectedFolder}
+                    {t('ged.addDialog.inFolder', { folder: selectedFolder })}
                   </p>
                 </div>
               </div>
@@ -825,10 +827,10 @@ export function AddDocumentDialog({ isOpen, onClose, type, parentFolder }: AddDo
                   <div className="mb-4">
                     <h3 className="font-semibold text-gray-900 flex items-center gap-2">
                       <Info className="w-4 h-4 text-blue-600" />
-                      Informations de base
+                      {t('ged.addDialog.basicInfo')}
                     </h3>
                     <p className="text-sm text-gray-500 mt-1">
-                      {type === 'document' ? 'Uploadez votre document ou saisissez les informations manuellement' : 'Commencez par les informations essentielles'}
+                      {type === 'document' ? t('ged.addDialog.uploadDocManually') : t('ged.addDialog.startEssentials')}
                     </p>
                   </div>
 
@@ -882,13 +884,13 @@ export function AddDocumentDialog({ isOpen, onClose, type, parentFolder }: AddDo
                           <Upload className="w-10 h-10 text-gray-400 group-hover:text-purple-600 mx-auto mb-3 transition-colors" />
                         </motion.div>
                         <p className="font-medium text-gray-700 group-hover:text-purple-700 transition-colors">
-                          Cliquez pour uploader votre document
+                          {t('ged.addDialog.uploadClick')}
                         </p>
                         <p className="text-xs text-gray-500 mt-2 flex items-center gap-1.5 justify-center">
                           <Sparkles className="w-3.5 h-3.5 text-purple-500" />
-                          L'IA va pré-remplir automatiquement les champs
+                          {t('ged.addDialog.aiWillFill')}
                         </p>
-                        <p className="text-xs text-gray-400 mt-1">PDF, Word, Excel, PowerPoint (max. 50MB)</p>
+                        <p className="text-xs text-gray-400 mt-1">{t('ged.addDialog.uploadHint')}</p>
                       </div>
                     </motion.div>
                   ) : (
@@ -915,7 +917,7 @@ export function AddDocumentDialog({ isOpen, onClose, type, parentFolder }: AddDo
                                 <Sparkles className="w-4 h-4 text-purple-600" />
                               </motion.div>
                               <span className="text-xs text-purple-700 font-medium">
-                                Analyse IA en cours...
+                                {t('ged.addDialog.aiAnalysing')}
                               </span>
                             </div>
                           )}
@@ -947,7 +949,7 @@ export function AddDocumentDialog({ isOpen, onClose, type, parentFolder }: AddDo
                       <div className="flex items-center gap-2">
                         <Check className="w-4 h-4 text-emerald-600" />
                         <p className="text-sm text-emerald-800 font-medium">
-                          Analyse terminée ! Les champs ont été pré-remplis
+                          {t('ged.addDialog.aiFinished')}
                         </p>
                       </div>
                     </motion.div>
@@ -959,7 +961,7 @@ export function AddDocumentDialog({ isOpen, onClose, type, parentFolder }: AddDo
               <div className="space-y-2">
                 <Label className="flex items-center gap-2">
                   <FolderOpen className="w-4 h-4 text-amber-600" />
-                  Dossier parent
+                  {t('ged.addDialog.parentFolder')}
                 </Label>
                 <Popover open={folderPickerOpen} onOpenChange={setFolderPickerOpen}>
                   <PopoverTrigger asChild>
@@ -988,7 +990,7 @@ export function AddDocumentDialog({ isOpen, onClose, type, parentFolder }: AddDo
                   </PopoverTrigger>
                   <PopoverContent className="w-[500px] p-0" align="start">
                     <Command>
-                      <CommandInput placeholder="Rechercher un dossier..." />
+                      <CommandInput placeholder={t('ged.addDialog.searchFolder')} />
                       <CommandList className="max-h-[300px]">
                         <CommandEmpty>Aucun dossier trouvé.</CommandEmpty>
                         <CommandGroup heading="Arborescence des dossiers">
@@ -1050,7 +1052,7 @@ export function AddDocumentDialog({ isOpen, onClose, type, parentFolder }: AddDo
                   </PopoverContent>
                 </Popover>
                 <p className="text-xs text-gray-500 mt-1.5">
-                  Le {type === 'document' ? 'document' : 'dossier'} sera créé dans ce dossier
+                  {t('ged.addDialog.willBeCreatedHere', { kind: type === 'document' ? t('ged.addDialog.kindDocument') : t('ged.addDialog.kindFolder') })}
                 </p>
               </div>
 
@@ -1059,11 +1061,11 @@ export function AddDocumentDialog({ isOpen, onClose, type, parentFolder }: AddDo
                 <div className="space-y-3 pt-4 border-t border-gray-100">
                   <div className="flex items-center gap-2 text-sm font-medium text-gray-700">
                     <Languages className="w-4 h-4 text-blue-600" />
-                    Langue du document
+                    {t('ged.addDialog.documentLanguage')}
                   </div>
                   
                   <div>
-                    <Label htmlFor="language">Langue</Label>
+                    <Label htmlFor="language">{t('ged.addDialog.languageLabel')}</Label>
                     <Select 
                       value={selectedLanguage} 
                       onValueChange={(value) => setSelectedLanguage(value)}
@@ -1108,39 +1110,31 @@ export function AddDocumentDialog({ isOpen, onClose, type, parentFolder }: AddDo
               <div className="pt-4 border-t border-gray-100" />
 
               <div>
-                <Label htmlFor="name">Nom {uploadedFile && !isProcessingAI && (
-                  <Badge className="ml-2 bg-purple-100 text-purple-700 border-purple-300">
-                    Pré-rempli par IA
-                  </Badge>
-                )} *</Label>
+                <Label htmlFor="name">{t('ged.addDialog.nameLabel')} *</Label>
                 <Input
                   id="name"
                   value={formData.name}
                   onChange={(e) => setFormData(prev => ({ ...prev, name: e.target.value }))}
-                  placeholder={type === 'document' ? 'Nom du document...' : 'Nom du dossier...'}
+                  placeholder={type === 'document' ? t('ged.addDialog.docNamePlaceholder') : t('ged.addDialog.folderNamePlaceholder')}
                   className="mt-1.5"
                   disabled={isProcessingAI}
                 />
               </div>
 
               <div>
-                <Label htmlFor="description">Description {uploadedFile && !isProcessingAI && (
-                  <Badge className="ml-2 bg-purple-100 text-purple-700 border-purple-300">
-                    Pré-rempli par IA
-                  </Badge>
-                )}</Label>
+                <Label htmlFor="description">{t('ged.addDialog.descriptionLabel')}</Label>
                 <Textarea
                   id="description"
                   value={formData.description}
                   onChange={(e) => setFormData(prev => ({ ...prev, description: e.target.value }))}
-                  placeholder="Ajoutez une description..."
+                  placeholder={t('ged.addDialog.descriptionPlaceholder')}
                   className="mt-1.5 min-h-[80px]"
                   disabled={isProcessingAI}
                 />
               </div>
 
               <div>
-                <Label htmlFor="status">Statut</Label>
+                <Label htmlFor="status">{t('ged.addDialog.statusLabel')}</Label>
                 <Select 
                   value={formData.status} 
                   onValueChange={(value) => setFormData(prev => ({ ...prev, status: value }))}
@@ -1278,16 +1272,12 @@ export function AddDocumentDialog({ isOpen, onClose, type, parentFolder }: AddDo
               <div className="space-y-4">
                 <div className="flex items-center gap-2 text-sm font-medium text-gray-700">
                   <Users className="w-4 h-4 text-blue-600" />
-                  Ciblage du {type === 'document' ? 'document' : 'dossier'}
+                  {t('ged.addDialog.targetingOf', { kind: type === 'document' ? t('ged.addDialog.kindDocument') : t('ged.addDialog.kindFolder') })}
                 </div>
 
                 {/* Type de ciblage */}
                 <div>
-                  <Label htmlFor="targetType">Type de ciblage {uploadedFile && !isProcessingAI && formData.targetType !== 'all' && (
-                    <Badge className="ml-2 bg-purple-100 text-purple-700 border-purple-300">
-                      Pré-rempli par IA
-                    </Badge>
-                  )}</Label>
+                  <Label htmlFor="targetType">{t('ged.addDialog.targetTypeLabel')}</Label>
                   <Select 
                     value={formData.targetType} 
                     onValueChange={(value) => {
@@ -1342,7 +1332,7 @@ export function AddDocumentDialog({ isOpen, onClose, type, parentFolder }: AddDo
                       exit={{ opacity: 0, height: 0 }}
                       transition={{ duration: 0.2 }}
                     >
-                      <Label>Segments d'investisseurs (optionnel)</Label>
+                      <Label>{t('ged.addDialog.segmentsLabel')}</Label>
                       <Popover>
                         <PopoverTrigger asChild>
                           <Button
@@ -1368,7 +1358,7 @@ export function AddDocumentDialog({ isOpen, onClose, type, parentFolder }: AddDo
                         </PopoverTrigger>
                         <PopoverContent className="w-[400px] p-0" align="start">
                           <Command>
-                            <CommandInput placeholder="Rechercher un segment..." />
+                            <CommandInput placeholder={t('ged.addDialog.searchSegment')} />
                             <CommandList>
                               <CommandEmpty>Aucun segment trouvé.</CommandEmpty>
                               <CommandGroup>
@@ -1419,11 +1409,7 @@ export function AddDocumentDialog({ isOpen, onClose, type, parentFolder }: AddDo
                       exit={{ opacity: 0, height: 0 }}
                       transition={{ duration: 0.2 }}
                     >
-                      <Label>Investisseurs {uploadedFile && !isProcessingAI && formData.targetInvestors.length > 0 && (
-                        <Badge className="ml-2 bg-purple-100 text-purple-700 border-purple-300">
-                          Pré-rempli par IA
-                        </Badge>
-                      )}</Label>
+                      <Label>{t('ged.addDialog.investorsLabel')}</Label>
                       <Popover>
                         <PopoverTrigger asChild>
                           <Button
@@ -1457,7 +1443,7 @@ export function AddDocumentDialog({ isOpen, onClose, type, parentFolder }: AddDo
                         </PopoverTrigger>
                         <PopoverContent className="w-[450px] p-0" align="start">
                           <Command>
-                            <CommandInput placeholder="Rechercher un investisseur..." />
+                            <CommandInput placeholder={t('ged.addDialog.searchInvestor')} />
                             <CommandList>
                               <CommandEmpty>Aucun investisseur trouvé.</CommandEmpty>
                               <CommandGroup>
@@ -1511,7 +1497,7 @@ export function AddDocumentDialog({ isOpen, onClose, type, parentFolder }: AddDo
                       exit={{ opacity: 0, height: 0 }}
                       transition={{ duration: 0.2 }}
                     >
-                      <Label>Souscriptions</Label>
+                      <Label>{t('ged.addDialog.subscriptionsLabel')}</Label>
                       <Popover>
                         <PopoverTrigger asChild>
                           <Button
@@ -1545,7 +1531,7 @@ export function AddDocumentDialog({ isOpen, onClose, type, parentFolder }: AddDo
                         </PopoverTrigger>
                         <PopoverContent className="w-[500px] p-0" align="start">
                           <Command>
-                            <CommandInput placeholder="Rechercher une souscription..." />
+                            <CommandInput placeholder={t('ged.addDialog.searchSubscription')} />
                             <CommandList>
                               <CommandEmpty>Aucune souscription trouvée.</CommandEmpty>
                               <CommandGroup>
@@ -1603,7 +1589,7 @@ export function AddDocumentDialog({ isOpen, onClose, type, parentFolder }: AddDo
                       exit={{ opacity: 0, height: 0 }}
                       transition={{ duration: 0.2 }}
                     >
-                      <Label>Fonds</Label>
+                      <Label>{t('ged.addDialog.fundsLabel')}</Label>
                       <Popover>
                         <PopoverTrigger asChild>
                           <Button
@@ -1637,7 +1623,7 @@ export function AddDocumentDialog({ isOpen, onClose, type, parentFolder }: AddDo
                         </PopoverTrigger>
                         <PopoverContent className="w-[400px] p-0" align="start">
                           <Command>
-                            <CommandInput placeholder="Rechercher un fonds..." />
+                            <CommandInput placeholder={t('ged.addDialog.searchFund')} />
                             <CommandList>
                               <CommandEmpty>Aucun fonds trouvé.</CommandEmpty>
                               <CommandGroup>
@@ -1696,7 +1682,7 @@ export function AddDocumentDialog({ isOpen, onClose, type, parentFolder }: AddDo
                       onValueChange={(value) => setFormData(prev => ({ ...prev, fund: value }))}
                     >
                       <SelectTrigger id="fund" className="mt-1.5">
-                        <SelectValue placeholder="Sélectionner un fonds" />
+                        <SelectValue placeholder={t('ged.addDialog.pickFund')} />
                       </SelectTrigger>
                       <SelectContent>
                         {availableFunds.map(fund => (
@@ -1715,7 +1701,7 @@ export function AddDocumentDialog({ isOpen, onClose, type, parentFolder }: AddDo
                 {/* Disclaimer (pour les dossiers uniquement) */}
                 {type === 'folder' && (
                   <div>
-                    <Label htmlFor="disclaimer">Disclaimer</Label>
+                    <Label htmlFor="disclaimer">{t('ged.addDialog.disclaimerLabel')}</Label>
                     <Select 
                       value={formData.disclaimer} 
                       onValueChange={(value) => setFormData(prev => ({ ...prev, disclaimer: value }))}
@@ -1743,7 +1729,7 @@ export function AddDocumentDialog({ isOpen, onClose, type, parentFolder }: AddDo
 
               {/* Rôles de contacts autorisés */}
               <div>
-                <Label>Rôles de contacts autorisés</Label>
+                <Label>{t('ged.addDialog.authorizedRolesLabel')}</Label>
                 <Popover>
                   <PopoverTrigger asChild>
                     <Button
@@ -1774,7 +1760,7 @@ export function AddDocumentDialog({ isOpen, onClose, type, parentFolder }: AddDo
                   </PopoverTrigger>
                   <PopoverContent className="w-[450px] p-0" align="start">
                     <Command>
-                      <CommandInput placeholder="Rechercher un rôle..." />
+                      <CommandInput placeholder={t('ged.addDialog.searchRole')} />
                       <CommandList>
                         <CommandEmpty>Aucun rôle trouvé.</CommandEmpty>
                         <CommandGroup>
@@ -1857,7 +1843,7 @@ export function AddDocumentDialog({ isOpen, onClose, type, parentFolder }: AddDo
               </div>
               
               <p className="text-xs text-gray-600">
-                Aperçu des personnes qui auront accès à ce {type === 'document' ? 'document' : 'dossier'} selon vos critères de ciblage
+                {t('ged.addDialog.accessPreview', { kind: type === 'document' ? t('ged.addDialog.kindDocument') : t('ged.addDialog.kindFolder') })}
               </p>
 
               {targetScope.isEmpty ? (
@@ -2014,7 +2000,7 @@ export function AddDocumentDialog({ isOpen, onClose, type, parentFolder }: AddDo
                         handleAddTag();
                       }
                     }}
-                    placeholder="Ajouter un tag..."
+                    placeholder={t('ged.addDialog.addTagPlaceholder')}
                   />
                   <Button type="button" onClick={handleAddTag} variant="outline">
                     Ajouter
@@ -2047,7 +2033,7 @@ export function AddDocumentDialog({ isOpen, onClose, type, parentFolder }: AddDo
               <div className="space-y-3 pt-4 border-t border-gray-100">
                 <div className="flex items-center gap-2 text-sm font-medium text-gray-700">
                   <Droplet className="w-4 h-4 text-purple-600" />
-                  Options avancées
+                  {t('ged.addDialog.advancedOptions')}
                 </div>
 
                 {/* Watermark */}
@@ -2095,7 +2081,7 @@ export function AddDocumentDialog({ isOpen, onClose, type, parentFolder }: AddDo
                           onValueChange={(value) => setFormData(prev => ({ ...prev, emailTemplate: value }))}
                         >
                           <SelectTrigger className="text-sm h-10 bg-white border-blue-200 hover:border-blue-400 focus:border-blue-400 focus:ring-2 focus:ring-blue-100 transition-all">
-                            <SelectValue placeholder="Choisir un template..." />
+                            <SelectValue placeholder={t('ged.addDialog.pickTemplate')} />
                           </SelectTrigger>
                           <SelectContent>
                             {availableEmailTemplates.map((template) => (
@@ -2172,7 +2158,7 @@ export function AddDocumentDialog({ isOpen, onClose, type, parentFolder }: AddDo
 
                 {/* Date d'ajout */}
                 <div>
-                  <Label htmlFor="upload-date" className="text-sm text-gray-700">Date d'ajout</Label>
+                  <Label htmlFor="upload-date" className="text-sm text-gray-700">{t('ged.addDialog.uploadDateLabel')}</Label>
                   <div className="mt-1.5 flex items-center gap-2">
                     <Input
                       id="upload-date"
@@ -2215,7 +2201,7 @@ export function AddDocumentDialog({ isOpen, onClose, type, parentFolder }: AddDo
                     onValueChange={(value) => setFormData(prev => ({ ...prev, validationTeam: value }))}
                   >
                     <SelectTrigger id="validation-team" className={`mt-1.5 ${!formData.validationTeam ? 'border-red-300' : ''}`}>
-                      <SelectValue placeholder="Sélectionner une équipe" />
+                      <SelectValue placeholder={t('ged.addDialog.pickTeam')} />
                     </SelectTrigger>
                     <SelectContent>
                       {availableValidationTeams.map(team => (
@@ -2371,20 +2357,20 @@ export function AddDocumentDialog({ isOpen, onClose, type, parentFolder }: AddDo
 
             <div className="flex items-center gap-3">
               <Button type="button" variant="ghost" onClick={onClose}>
-                Annuler
+                {t('subscriptions.newDialog.cancel')}
               </Button>
-              
+
               {currentStep < 3 ? (
                 <Button
                   type="button"
                   onClick={handleNext}
                   disabled={!isStepValid(currentStep)}
                   className="gap-2"
-                  style={{ 
+                  style={{
                     background: 'linear-gradient(135deg, #0066FF 0%, #0052CC 100%)'
                   }}
                 >
-                  Suivant
+                  {t('subscriptions.newDialog.next')}
                   <ChevronRight className="w-4 h-4" />
                 </Button>
               ) : (
@@ -2392,7 +2378,7 @@ export function AddDocumentDialog({ isOpen, onClose, type, parentFolder }: AddDo
                   type="button"
                   onClick={handleSubmit}
                   disabled={!isStepValid(1)}
-                  style={{ 
+                  style={{
                     background: 'linear-gradient(62.32deg, #000000 10.53%, #0F323D 88.82%)'
                   }}
                   className="gap-2 hover:opacity-90 shadow-lg hover:shadow-xl transition-all duration-300"
@@ -2402,7 +2388,7 @@ export function AddDocumentDialog({ isOpen, onClose, type, parentFolder }: AddDo
                   ) : (
                     <Folder className="w-4 h-4" />
                   )}
-                  Créer {type === 'document' ? 'le document' : 'le dossier'}
+                  {type === 'document' ? t('ged.addDialog.createDocument') : t('ged.addDialog.createFolder')}
                 </Button>
               )}
             </div>
