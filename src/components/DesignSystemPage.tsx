@@ -24,7 +24,6 @@ import {
   RefreshCw,
   Clipboard,
   UserPlus,
-  MessageCircle,
   CircleHelp,
   Briefcase,
   Globe,
@@ -44,44 +43,20 @@ import {
   BookOpen,
   Database,
   Table,
-  Filter,
-  Columns3,
   ArrowUpDown,
   Eye,
   Download,
   BadgeCheck,
-  Plus,
-  MoreVertical,
   Copy,
   ChevronRight,
-  Send,
-  MailOpen,
-  MailCheck,
-  MousePointerClick,
-  AlertCircle,
   Clock,
   type LucideIcon,
 } from 'lucide-react';
 import * as React from 'react';
 import { motion } from 'motion/react';
 import logoInvestHub from 'figma:asset/2a84b4397fac896d4ed7e7f4faff09c957de9a6b.png';
-import { Button } from './ui/button';
-import { Input } from './ui/input';
-import { Checkbox } from './ui/checkbox';
-import { Switch } from './ui/switch';
 import { Badge } from './ui/badge';
-import { Avatar, AvatarFallback } from './ui/avatar';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from './ui/card';
-import { Alert, AlertDescription, AlertTitle } from './ui/alert';
-import { Skeleton } from './ui/skeleton';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from './ui/tabs';
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from './ui/select';
 import {
   Table as UITable,
   TableBody,
@@ -100,9 +75,6 @@ import { OriginStructureCell } from './OriginStructureCell';
 import { PartnerCard } from './PartnerCard';
 import { CheckIndicator } from './CheckIndicator';
 import { CalledAmountCell } from './CalledAmountCell';
-import { FilterCard } from './FilterCard';
-import { FilterBar, type FilterConfig } from './FilterBar';
-import { FolderSelectionTreeviewDropdown } from './DocumentAddModal';
 import { GenericAudienceCard } from './GenericAudienceCard';
 import { SpecificAudience } from './SpecificAudience';
 import { FolderSpaceDialogPreview } from './ui/folder-space-dialog';
@@ -111,8 +83,13 @@ import { ItemSelector } from './InternalResponsibleSelector';
 import {
   Timeline,
   type TimelineEvent,
-  type TimelineTypeMap,
 } from './ui/timeline';
+import {
+  birdviewActivityCatalog,
+  birdviewActivityTypes,
+  type BirdviewActivityEventCode,
+} from '../utils/birdviewActivityCatalog';
+import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import type { Contact, LegalStructure } from '../utils/investorGenerator';
 
 type DoctrineItem = {
@@ -257,21 +234,6 @@ const functionalColors = [
   { name: 'Orange warning', usage: 'Avertissement / attention', hex: '#F97316', tailwind: 'orange-500', bg: 'bg-orange-500' },
 ];
 
-const folderSelectorDemoOptions = (() => {
-  const options = [{ id: 'root', label: 'Racine / Documents' }];
-  for (let branch = 1; branch <= 12; branch += 1) {
-    let currentPath = 'Racine / Documents';
-    for (let level = 1; level <= 5; level += 1) {
-      currentPath = `${currentPath} / Dossier ${branch}.${level}`;
-      options.push({
-        id: `branch-${branch}-level-${level}`,
-        label: currentPath,
-      });
-    }
-  }
-  return options;
-})();
-
 const iconFamilies: Array<{
   family: string;
   items: Array<{ name: string; code: string; icon: LucideIcon }>;
@@ -405,24 +367,8 @@ const doctrinePillars: DoctrineItem[] = [
   },
 ];
 
-type TimelineDemoType =
-  | 'notification_sent'
-  | 'notification_delivered'
-  | 'notification_opened'
-  | 'notification_clicked'
-  | 'notification_failed'
-  | 'document_viewed'
-  | 'document_downloaded';
-
-const timelineDemoTypes: TimelineTypeMap<TimelineDemoType> = {
-  notification_sent:      { label: 'Notification envoyée',   Icon: Send },
-  notification_delivered: { label: 'Notification délivrée',  Icon: MailCheck },
-  notification_failed:    { label: 'Notification échouée',   Icon: AlertCircle },
-  notification_opened:    { label: 'Notification ouverte',   Icon: MailOpen },
-  notification_clicked:   { label: 'Notification cliquée',   Icon: MousePointerClick },
-  document_viewed:        { label: 'Document consulté',      Icon: Eye },
-  document_downloaded:    { label: 'Document téléchargé',    Icon: Download },
-};
+type TimelineDemoType = BirdviewActivityEventCode;
+const timelineDemoTypes = birdviewActivityTypes;
 
 const timelineDemoIso = (daysAgo: number, h: number, m: number) => {
   const date = new Date();
@@ -434,6 +380,14 @@ const timelineDemoIso = (daysAgo: number, h: number, m: number) => {
 const timelineDemoEvents: TimelineEvent<TimelineDemoType>[] = [
   {
     id: 'dsd1',
+    type: 'document_validated',
+    timestamp: timelineDemoIso(0, 14, 30),
+    actorName: 'Jean Dupont',
+    actorSublabel: 'jean.dupont@lvmh.fr',
+    actorRole: 'Investisseur',
+  },
+  {
+    id: 'dsd2',
     type: 'document_downloaded',
     timestamp: timelineDemoIso(0, 14, 12),
     actorName: 'Jean Dupont',
@@ -441,7 +395,7 @@ const timelineDemoEvents: TimelineEvent<TimelineDemoType>[] = [
     actorRole: 'Investisseur',
   },
   {
-    id: 'dsd2',
+    id: 'dsd3',
     type: 'document_viewed',
     timestamp: timelineDemoIso(0, 12, 35),
     actorName: 'Jean Dupont',
@@ -449,7 +403,7 @@ const timelineDemoEvents: TimelineEvent<TimelineDemoType>[] = [
     actorRole: 'Investisseur',
   },
   {
-    id: 'dsd3',
+    id: 'dsd4',
     type: 'notification_opened',
     timestamp: timelineDemoIso(0, 12, 30),
     actorName: 'Jean Dupont',
@@ -457,7 +411,7 @@ const timelineDemoEvents: TimelineEvent<TimelineDemoType>[] = [
     actorRole: 'Investisseur',
   },
   {
-    id: 'dsd4',
+    id: 'dsd5',
     type: 'notification_sent',
     timestamp: timelineDemoIso(0, 11, 0),
     actorName: 'Sophie Martin',
@@ -465,7 +419,15 @@ const timelineDemoEvents: TimelineEvent<TimelineDemoType>[] = [
     actorRole: 'Investisseur',
   },
   {
-    id: 'dsd5',
+    id: 'dsd6',
+    type: 'notification_send_initiated',
+    timestamp: timelineDemoIso(0, 10, 58),
+    actorName: 'Sophie Martin',
+    actorSublabel: 'sophie.martin@kering.com',
+    actorRole: 'Investisseur',
+  },
+  {
+    id: 'dsd7',
     type: 'document_viewed',
     timestamp: timelineDemoIso(1, 16, 42),
     actorName: 'Sophie Martin',
@@ -473,7 +435,15 @@ const timelineDemoEvents: TimelineEvent<TimelineDemoType>[] = [
     actorRole: 'Investisseur',
   },
   {
-    id: 'dsd6',
+    id: 'dsd8',
+    type: 'notification_complained',
+    timestamp: timelineDemoIso(1, 14, 20),
+    actorName: 'Luc Martin',
+    actorSublabel: 'luc.martin@kering.com',
+    actorRole: 'Contact',
+  },
+  {
+    id: 'dsd9',
     type: 'notification_delivered',
     timestamp: timelineDemoIso(1, 11, 2),
     actorName: 'Thomas Bernard',
@@ -481,7 +451,7 @@ const timelineDemoEvents: TimelineEvent<TimelineDemoType>[] = [
     actorRole: 'Investisseur',
   },
   {
-    id: 'dsd7',
+    id: 'dsd10',
     type: 'notification_failed',
     timestamp: timelineDemoIso(1, 10, 58),
     actorName: 'Claire Moreau',
@@ -489,7 +459,7 @@ const timelineDemoEvents: TimelineEvent<TimelineDemoType>[] = [
     actorRole: 'Investisseur',
   },
   {
-    id: 'dsd8',
+    id: 'dsd11',
     type: 'notification_opened',
     timestamp: timelineDemoIso(2, 9, 30),
     actorName: 'Antoine Leroy',
@@ -814,54 +784,6 @@ function ItemSelectorPreview() {
 }
 
 export function DesignSystemPage() {
-  const [switchOn, setSwitchOn] = React.useState(true);
-  const [designSystemFolderId, setDesignSystemFolderId] = React.useState('branch-7-level-5');
-  const [activeFilterCard, setActiveFilterCard] = React.useState('all');
-  const [filterDemoSearch, setFilterDemoSearch] = React.useState('');
-  const [filterDemoValues, setFilterDemoValues] = React.useState<Record<string, string | string[]>>({});
-  const filterDemoConfigs: FilterConfig[] = React.useMemo(() => [
-    {
-      id: 'status',
-      label: 'Statut',
-      type: 'select',
-      isPrimary: true,
-      options: [
-        { value: 'prospect', label: 'Prospect' },
-        { value: 'discussion', label: 'En discussion' },
-        { value: 'relation', label: 'En relation' },
-      ],
-    },
-    {
-      id: 'partner',
-      label: 'Partenaire',
-      type: 'select',
-      isPrimary: true,
-      options: [
-        { value: 'direct', label: 'Direct' },
-        { value: 'cgp', label: 'CGP Excellence' },
-        { value: 'fo', label: 'Family Office' },
-      ],
-    },
-    {
-      id: 'fund',
-      label: 'Fonds',
-      type: 'select',
-      options: [
-        { value: 'future', label: 'FutureInvest Fund' },
-        { value: 'alpha', label: 'Alpha Growth Fund' },
-      ],
-    },
-    {
-      id: 'type',
-      label: 'Type',
-      type: 'select',
-      options: [
-        { value: 'individual', label: 'Individual' },
-        { value: 'corporate', label: 'Corporate' },
-      ],
-    },
-  ], []);
-
   return (
     <div className="flex-1 overflow-auto px-6 py-6 space-y-6 bg-[#F8FAFA] dark:bg-[#0B0D0D]">
       <section className="rounded-2xl border border-[#D7E0DD] dark:border-[#1F2D2A] bg-white dark:bg-[#101615] p-6">
@@ -870,258 +792,6 @@ export function DesignSystemPage() {
         <p className="mt-2 text-sm text-[#4F6166] dark:text-[#9DB2AE] max-w-4xl">
           Bibliothèque complète des composants. On commence par la couche tableaux (data-intensive), puis les composants coeur.
         </p>
-      </section>
-
-      <section className="rounded-2xl border border-[#D7E0DD] dark:border-[#1F2D2A] bg-white dark:bg-[#101615] p-6">
-        <h2 className="text-lg font-semibold text-[#1F3137] dark:text-[#E8F0EE] mb-1">Storybook intégré (Foundations)</h2>
-        <p className="text-sm text-[#4F6166] dark:text-[#9DB2AE] mb-4">
-          Les composants sont affichés ici directement (pas de page Storybook séparée).
-        </p>
-        <div className="grid lg:grid-cols-2 gap-4">
-          <Card>
-            <CardHeader><CardTitle>Navigation</CardTitle></CardHeader>
-            <CardContent className="space-y-3">
-              <Tabs defaultValue="breadcrumb">
-                <TabsList>
-                  <TabsTrigger value="breadcrumb">Breadcrumb</TabsTrigger>
-                  <TabsTrigger value="tabs">Tabs</TabsTrigger>
-                </TabsList>
-                <TabsContent value="breadcrumb">
-                  <div className="flex items-center gap-2 text-[#8B96A8]"><span>InvestHub OS</span><span>/</span><span className="font-semibold text-[#1F2937]">Investisseurs</span></div>
-                </TabsContent>
-                <TabsContent value="tabs">
-                  <Tabs defaultValue="foundation">
-                    <TabsList>
-                      <TabsTrigger value="foundation">Foundation</TabsTrigger>
-                      <TabsTrigger value="inputs">Inputs</TabsTrigger>
-                    </TabsList>
-                    <TabsContent value="foundation">Tokens, couleurs, typo.</TabsContent>
-                    <TabsContent value="inputs">Boutons, champs, filtres.</TabsContent>
-                  </Tabs>
-                </TabsContent>
-              </Tabs>
-            </CardContent>
-          </Card>
-
-          <Card>
-            <CardHeader><CardTitle>Inputs & Actions</CardTitle></CardHeader>
-            <CardContent className="space-y-3">
-              <Input placeholder="Rechercher un investisseur..." />
-              <div className="grid grid-cols-3 gap-2">
-                <Select defaultValue="structure"><SelectTrigger><SelectValue /></SelectTrigger><SelectContent><SelectItem value="structure">Structure</SelectItem></SelectContent></Select>
-                <Select defaultValue="segment"><SelectTrigger><SelectValue /></SelectTrigger><SelectContent><SelectItem value="segment">Segment</SelectItem></SelectContent></Select>
-                <Button variant="secondary">Filtres</Button>
-              </div>
-              <div className="flex gap-2 flex-wrap">
-                <Button className="bg-gradient-to-r from-black to-[#0D4A5A] text-white"><Plus className="w-4 h-4" />Nouvel Investisseur</Button>
-                <Button variant="secondary" className="w-10 h-10 p-0"><MoreVertical className="w-4 h-4" /></Button>
-                <Checkbox defaultChecked />
-                <Switch checked={switchOn} onCheckedChange={setSwitchOn} />
-              </div>
-            </CardContent>
-          </Card>
-
-          <Card className="lg:col-span-2">
-            <CardHeader><CardTitle>Data Display</CardTitle></CardHeader>
-            <CardContent>
-              <UITable>
-                <TableHeader>
-                  <TableRow>
-                    <TableHead>NOM</TableHead>
-                    <TableHead>STATUT</TableHead>
-                    <TableHead>DATE</TableHead>
-                    <TableHead>CAPITAL</TableHead>
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  <TableRow>
-                    <TableCell>
-                      <div className="flex flex-col gap-1 max-w-[300px]">
-                        <motion.div
-                          whileHover={{ x: 2 }}
-                          title="NextGen Ventures"
-                          className="text-sm font-medium cursor-pointer transition-all truncate"
-                        >
-                          <ClickableText>NextGen Ventures</ClickableText>
-                        </motion.div>
-                        <div className="flex items-center gap-1.5">
-                          <span className="text-xs text-gray-500">ID: 1</span>
-                          <button className="p-0.5 hover:bg-gray-100 rounded transition-colors">
-                            <Copy className="w-3 h-3 text-gray-400" />
-                          </button>
-                        </div>
-                      </div>
-                    </TableCell>
-                    <TableCell><Badge className="bg-emerald-50 text-emerald-800 border-emerald-200">En relation</Badge></TableCell>
-                    <TableCell>27/12/2023</TableCell>
-                    <TableCell className="font-semibold">1 141 699 €</TableCell>
-                  </TableRow>
-                </TableBody>
-              </UITable>
-              <Alert className="mt-3">
-                <AlertTitle>Aucun investisseur trouvé</AlertTitle>
-                <AlertDescription>Les filtres appliqués ne correspondent à aucun investisseur.</AlertDescription>
-              </Alert>
-            </CardContent>
-          </Card>
-
-          <Card>
-            <CardHeader><CardTitle>Filter Card</CardTitle></CardHeader>
-            <CardContent>
-              <div className="grid grid-cols-2 lg:grid-cols-4 gap-2">
-                <FilterCard
-                  status="prospect"
-                  activeStatus={activeFilterCard}
-                  onStatusChange={setActiveFilterCard}
-                  label="Prospect"
-                  icon={UserPlus}
-                  total={32}
-                  metricLabel="Total investi"
-                  metricValue="€83.7M"
-                  averageValue="€2.1M"
-                />
-                <FilterCard
-                  status="discussion"
-                  activeStatus={activeFilterCard}
-                  onStatusChange={setActiveFilterCard}
-                  label="En discussion"
-                  icon={MessageCircle}
-                  total={39}
-                  metricLabel="Total investi"
-                  metricValue="€97.7M"
-                  averageValue="€2.4M"
-                />
-                <FilterCard
-                  status="relation"
-                  activeStatus={activeFilterCard}
-                  onStatusChange={setActiveFilterCard}
-                  label="En relation"
-                  icon={Users}
-                  total={40}
-                  metricLabel="Total investi"
-                  metricValue="€181.4M"
-                  averageValue="€1.6M"
-                />
-                <FilterCard
-                  status="all"
-                  activeStatus={activeFilterCard}
-                  onStatusChange={setActiveFilterCard}
-                  label="Tous"
-                  icon={Filter}
-                  total={111}
-                  metricLabel="Total investi"
-                  metricValue="€181.4M"
-                  averageValue="€1.6M"
-                />
-              </div>
-            </CardContent>
-          </Card>
-
-          <Card>
-            <CardHeader><CardTitle>Filter</CardTitle></CardHeader>
-            <CardContent>
-              <FilterBar
-                searchValue={filterDemoSearch}
-                onSearchChange={setFilterDemoSearch}
-                searchPlaceholder="Rechercher..."
-                filters={filterDemoConfigs}
-                activeFilters={filterDemoValues}
-                onFilterChange={(filterId, value) =>
-                  setFilterDemoValues((prev) => {
-                    const next = { ...prev };
-                    if (value === null || value === '' || (Array.isArray(value) && value.length === 0)) {
-                      delete next[filterId];
-                    } else {
-                      next[filterId] = value;
-                    }
-                    return next;
-                  })
-                }
-                onClearAll={() => {
-                  setFilterDemoValues({});
-                  setFilterDemoSearch('');
-                }}
-              />
-            </CardContent>
-          </Card>
-        </div>
-      </section>
-
-      <section className="rounded-2xl border border-[#D7E0DD] dark:border-[#1F2D2A] bg-white dark:bg-[#101615] p-6">
-        <div className="flex items-center gap-2 mb-4">
-          <Columns3 className="w-4 h-4 text-[#3F7358]" />
-          <h2 className="text-lg font-semibold text-[#1F3137] dark:text-[#E8F0EE]">Composants affichés — Inputs & Navigation</h2>
-        </div>
-        <div className="grid lg:grid-cols-2 gap-4">
-          <Card>
-            <CardHeader>
-              <CardTitle>Inputs</CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-3">
-              <Input placeholder="Nom du composant" />
-              <Select defaultValue="stable">
-                <SelectTrigger>
-                  <SelectValue placeholder="Choisir un état" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="stable">Stable</SelectItem>
-                  <SelectItem value="beta">Beta</SelectItem>
-                  <SelectItem value="deprecated">Deprecated</SelectItem>
-                </SelectContent>
-              </Select>
-              <div className="flex items-center gap-3">
-                <Checkbox defaultChecked />
-                <Switch checked={switchOn} onCheckedChange={setSwitchOn} />
-              </div>
-              <div className="flex gap-2 flex-wrap">
-                <Button variant="primary">Primary</Button>
-                <Button variant="secondary">Secondary</Button>
-                <Button variant="ghost">Ghost</Button>
-                <Button variant="danger">Danger</Button>
-              </div>
-            </CardContent>
-          </Card>
-
-          <Card>
-            <CardHeader>
-              <CardTitle>Navigation & feedback</CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-3">
-              <Tabs defaultValue="foundation">
-                <TabsList>
-                  <TabsTrigger value="foundation">Foundation</TabsTrigger>
-                  <TabsTrigger value="inputs">Inputs</TabsTrigger>
-                </TabsList>
-                <TabsContent value="foundation" className="text-sm text-muted-foreground">Tokens, couleurs, typo.</TabsContent>
-                <TabsContent value="inputs" className="text-sm text-muted-foreground">Boutons, champs, sélection.</TabsContent>
-              </Tabs>
-              <Alert>
-                <AlertTitle>Documentation active</AlertTitle>
-                <AlertDescription>Chaque composant est affiché directement dans cette page.</AlertDescription>
-              </Alert>
-              <div className="flex items-center gap-2">
-                <Avatar><AvatarFallback>IH</AvatarFallback></Avatar>
-                <Badge variant="outline">Avatar</Badge>
-                <Badge variant="destructive">Error</Badge>
-              </div>
-              <Skeleton className="h-8 w-full" />
-            </CardContent>
-          </Card>
-        </div>
-      </section>
-
-      <section className="rounded-2xl border border-[#D7E0DD] dark:border-[#1F2D2A] bg-white dark:bg-[#101615] p-6">
-        <h2 className="text-lg font-semibold text-[#1F3137] dark:text-[#E8F0EE] mb-2">Composant GED — folder-selection-treeview-dropdown</h2>
-        <p className="text-sm text-[#4F6166] dark:text-[#9DB2AE] mb-4">
-          Sélecteur GED affiché directement dans le Design System (sans drawer), avec hover sur la valeur et hiérarchie occidentale.
-        </p>
-        <div className="max-w-[300px]">
-          <FolderSelectionTreeviewDropdown
-            value={designSystemFolderId}
-            onChange={setDesignSystemFolderId}
-            folderOptions={folderSelectorDemoOptions}
-          />
-        </div>
       </section>
 
       <section className="rounded-2xl border border-[#D7E0DD] dark:border-[#1F2D2A] bg-white dark:bg-[#101615] p-6">
@@ -1254,6 +924,74 @@ export function DesignSystemPage() {
             exportFileName="timeline-demo"
             pageSize={6}
           />
+        </div>
+
+        <div className="mt-6 rounded-xl border border-[#D7E0DD] dark:border-[#1F2D2A] overflow-hidden">
+          <div className="px-4 py-3 border-b border-[#D7E0DD] dark:border-[#1F2D2A] bg-[#F8FAFA] dark:bg-[#0B0D0D]">
+            <p className="text-sm font-semibold text-[#1F3137] dark:text-[#E8F0EE]">
+              Catalogue des événements — piste d&apos;activité Birdview
+            </p>
+            <p className="text-xs text-[#4F6166] dark:text-[#9DB2AE] mt-0.5">
+              Référentiel des types supportés, libellés FR / EN, icône Font Awesome et code associé. Ordonnés selon le cycle de vie (envoi → réception → engagement → action document).
+            </p>
+          </div>
+          <div className="overflow-x-auto">
+            <UITable>
+              <TableHeader>
+                <TableRow>
+                  <TableHead className="w-12">ICÔNE</TableHead>
+                  <TableHead>CODE FA</TableHead>
+                  <TableHead>CODE ÉVÉNEMENT</TableHead>
+                  <TableHead>LIBELLÉ FR</TableHead>
+                  <TableHead>LIBELLÉ EN</TableHead>
+                  <TableHead>GROUPE</TableHead>
+                  <TableHead>DESCRIPTION</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {birdviewActivityCatalog.map(({ code, labelFr, labelEn, description, faIcon, faCode, group }) => (
+                  <TableRow key={code}>
+                    <TableCell>
+                      <div className="w-8 h-8 rounded-md bg-[#F1F5F4] dark:bg-[#1C2624] flex items-center justify-center">
+                        <FontAwesomeIcon icon={faIcon} className="w-4 h-4 text-[#456B6C]" />
+                      </div>
+                    </TableCell>
+                    <TableCell>
+                      <code className="text-xs px-1.5 py-0.5 rounded bg-[#F1F5F4] dark:bg-[#1C2624] text-[#2E4F4F] dark:text-[#9DB2AE]">
+                        {faCode}
+                      </code>
+                    </TableCell>
+                    <TableCell>
+                      <code className="text-xs px-1.5 py-0.5 rounded bg-[#F1F5F4] dark:bg-[#1C2624] text-[#1F3137] dark:text-[#E8F0EE]">
+                        {code}
+                      </code>
+                    </TableCell>
+                    <TableCell className="text-sm font-medium text-[#1F3137] dark:text-[#E8F0EE]">
+                      {labelFr}
+                    </TableCell>
+                    <TableCell className="text-sm text-[#4F6166] dark:text-[#9DB2AE]">
+                      {labelEn}
+                    </TableCell>
+                    <TableCell>
+                      <Badge
+                        variant="outline"
+                        className={
+                          group === 'Notification'
+                            ? 'bg-[#EEF4F3] text-[#2E4F4F] border-[#C5D4CF] dark:bg-[#1C2624] dark:text-[#9DB2AE] dark:border-[#2C413B]'
+                            : 'bg-[#F4EFE8] text-[#6B4F2E] border-[#E2D4BF] dark:bg-[#241C16] dark:text-[#C8AE8A] dark:border-[#3A2F22]'
+                        }
+                      >
+                        {group}
+                      </Badge>
+                    </TableCell>
+                    <TableCell className="text-xs text-[#4F6166] dark:text-[#9DB2AE] max-w-md">
+                      {description}
+                    </TableCell>
+                  </TableRow>
+                ))}
+              </TableBody>
+            </UITable>
+          </div>
         </div>
 
         <div className="mt-4 rounded-lg border border-dashed border-[#C5D4CF] dark:border-[#2C413B] px-4 py-3 text-sm text-[#4F6166] dark:text-[#9DB2AE]">

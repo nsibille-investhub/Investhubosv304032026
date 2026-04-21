@@ -4,34 +4,25 @@ import {
   X,
   Zap,
   Eye,
-  MailOpen,
-  MailCheck,
   Send,
   FileText,
-  AlertCircle,
-  MousePointerClick,
   Users,
   CheckCircle2,
-  Download,
 } from 'lucide-react';
 import { Button } from './ui/button';
 import { cn } from './ui/utils';
 import {
   Timeline,
   type TimelineEvent,
-  type TimelineTypeMap,
   type TimelineCsvColumn,
 } from './ui/timeline';
 import { DocumentRelaunchModal } from './DocumentRelaunchModal';
+import {
+  birdviewActivityTypes,
+  type BirdviewActivityEventCode,
+} from '../utils/birdviewActivityCatalog';
 
-type ActivityType =
-  | 'notification_sent'
-  | 'notification_delivered'
-  | 'notification_failed'
-  | 'notification_opened'
-  | 'notification_clicked'
-  | 'document_viewed'
-  | 'document_downloaded';
+type ActivityType = BirdviewActivityEventCode;
 
 type UserType = 'Investor' | 'Contact' | 'Advisor';
 
@@ -71,26 +62,32 @@ const iso = (daysAgo: number, h: number, m: number) => {
  * Engagement = share of distinct investors who at least consulted it.
  */
 const generateGenericMockActivities = (): ActivitySource[] => [
-  // Aujourd'hui — Jean Dupont (investisseur principal) + son cercle
-  { id: 'g1',  type: 'document_downloaded', userName: 'Jean Dupont',     userEmail: 'jean.dupont@lvmh.fr',       userType: 'Investor', timestamp: iso(0, 14, 12) },
-  { id: 'g2',  type: 'document_viewed',     userName: 'Jean Dupont',     userEmail: 'jean.dupont@lvmh.fr',       userType: 'Investor', timestamp: iso(0, 12, 35) },
-  { id: 'g3',  type: 'notification_opened', userName: 'Jean Dupont',     userEmail: 'jean.dupont@lvmh.fr',       userType: 'Investor', timestamp: iso(0, 12, 30) },
-  { id: 'g4',  type: 'notification_clicked',userName: 'Marie Dupont',    userEmail: 'marie.dupont@lvmh.fr',      userType: 'Contact',  timestamp: iso(0, 11, 45), primaryInvestor: 'Jean Dupont' },
-  { id: 'g5',  type: 'notification_opened', userName: 'Pierre Dupont',   userEmail: 'pierre.dupont@cabinet-kl.fr', userType: 'Contact', timestamp: iso(0, 11, 20), primaryInvestor: 'Jean Dupont' },
-  // Aujourd'hui — broadcast initial
-  { id: 'g6',  type: 'notification_sent',   userName: 'Jean Dupont',     userEmail: 'jean.dupont@lvmh.fr',       userType: 'Investor', timestamp: iso(0, 11, 0) },
-  { id: 'g7',  type: 'notification_sent',   userName: 'Marie Dupont',    userEmail: 'marie.dupont@lvmh.fr',      userType: 'Contact',  timestamp: iso(0, 11, 0), primaryInvestor: 'Jean Dupont' },
-  { id: 'g8',  type: 'notification_sent',   userName: 'Pierre Dupont',   userEmail: 'pierre.dupont@cabinet-kl.fr', userType: 'Contact', timestamp: iso(0, 11, 0), primaryInvestor: 'Jean Dupont' },
-  { id: 'g9',  type: 'notification_sent',   userName: 'Sophie Martin',   userEmail: 'sophie.martin@kering.com',  userType: 'Investor', timestamp: iso(0, 11, 0) },
-  { id: 'g10', type: 'notification_sent',   userName: 'Luc Martin',      userEmail: 'luc.martin@kering.com',     userType: 'Contact',  timestamp: iso(0, 11, 0), primaryInvestor: 'Sophie Martin' },
-  { id: 'g11', type: 'notification_sent',   userName: 'Thomas Bernard',  userEmail: 'thomas.bernard@axa-im.fr',  userType: 'Investor', timestamp: iso(0, 11, 0) },
-  { id: 'g12', type: 'notification_sent',   userName: 'Claire Moreau',   userEmail: 'claire.moreau@bnp-wm.fr',   userType: 'Investor', timestamp: iso(0, 11, 0) },
-  // Hier — Sophie Martin consulte
-  { id: 'g13', type: 'document_viewed',     userName: 'Sophie Martin',   userEmail: 'sophie.martin@kering.com',  userType: 'Investor', timestamp: iso(1, 16, 42) },
-  { id: 'g14', type: 'notification_delivered', userName: 'Thomas Bernard', userEmail: 'thomas.bernard@axa-im.fr', userType: 'Investor', timestamp: iso(1, 11, 2) },
-  { id: 'g15', type: 'notification_failed', userName: 'Claire Moreau',   userEmail: 'claire.moreau@bnp-wm.fr',   userType: 'Investor', timestamp: iso(1, 10, 58) },
+  // Aujourd'hui — validation du document après consultation
+  { id: 'g1',  type: 'document_validated', userName: 'Jean Dupont',     userEmail: 'jean.dupont@lvmh.fr',       userType: 'Investor', timestamp: iso(0, 14, 30) },
+  { id: 'g2',  type: 'document_downloaded', userName: 'Jean Dupont',     userEmail: 'jean.dupont@lvmh.fr',       userType: 'Investor', timestamp: iso(0, 14, 12) },
+  { id: 'g3',  type: 'document_viewed',     userName: 'Jean Dupont',     userEmail: 'jean.dupont@lvmh.fr',       userType: 'Investor', timestamp: iso(0, 12, 35) },
+  { id: 'g4',  type: 'notification_opened', userName: 'Jean Dupont',     userEmail: 'jean.dupont@lvmh.fr',       userType: 'Investor', timestamp: iso(0, 12, 30) },
+  { id: 'g5',  type: 'notification_clicked',userName: 'Marie Dupont',    userEmail: 'marie.dupont@lvmh.fr',      userType: 'Contact',  timestamp: iso(0, 11, 45), primaryInvestor: 'Jean Dupont' },
+  { id: 'g6',  type: 'notification_opened', userName: 'Pierre Dupont',   userEmail: 'pierre.dupont@cabinet-kl.fr', userType: 'Contact', timestamp: iso(0, 11, 20), primaryInvestor: 'Jean Dupont' },
+  // Aujourd'hui — broadcast initial (initiation puis envoi)
+  { id: 'g7',  type: 'notification_sent',   userName: 'Jean Dupont',     userEmail: 'jean.dupont@lvmh.fr',       userType: 'Investor', timestamp: iso(0, 11, 0) },
+  { id: 'g8',  type: 'notification_sent',   userName: 'Marie Dupont',    userEmail: 'marie.dupont@lvmh.fr',      userType: 'Contact',  timestamp: iso(0, 11, 0), primaryInvestor: 'Jean Dupont' },
+  { id: 'g9',  type: 'notification_sent',   userName: 'Pierre Dupont',   userEmail: 'pierre.dupont@cabinet-kl.fr', userType: 'Contact', timestamp: iso(0, 11, 0), primaryInvestor: 'Jean Dupont' },
+  { id: 'g10', type: 'notification_sent',   userName: 'Sophie Martin',   userEmail: 'sophie.martin@kering.com',  userType: 'Investor', timestamp: iso(0, 11, 0) },
+  { id: 'g11', type: 'notification_sent',   userName: 'Luc Martin',      userEmail: 'luc.martin@kering.com',     userType: 'Contact',  timestamp: iso(0, 11, 0), primaryInvestor: 'Sophie Martin' },
+  { id: 'g12', type: 'notification_sent',   userName: 'Thomas Bernard',  userEmail: 'thomas.bernard@axa-im.fr',  userType: 'Investor', timestamp: iso(0, 11, 0) },
+  { id: 'g13', type: 'notification_sent',   userName: 'Claire Moreau',   userEmail: 'claire.moreau@bnp-wm.fr',   userType: 'Investor', timestamp: iso(0, 11, 0) },
+  { id: 'g14', type: 'notification_send_initiated', userName: 'Jean Dupont',     userEmail: 'jean.dupont@lvmh.fr',       userType: 'Investor', timestamp: iso(0, 10, 58) },
+  { id: 'g15', type: 'notification_send_initiated', userName: 'Marie Dupont',    userEmail: 'marie.dupont@lvmh.fr',      userType: 'Contact',  timestamp: iso(0, 10, 58), primaryInvestor: 'Jean Dupont' },
+  { id: 'g16', type: 'notification_send_initiated', userName: 'Sophie Martin',   userEmail: 'sophie.martin@kering.com',  userType: 'Investor', timestamp: iso(0, 10, 58) },
+  { id: 'g17', type: 'notification_send_initiated', userName: 'Thomas Bernard',  userEmail: 'thomas.bernard@axa-im.fr',  userType: 'Investor', timestamp: iso(0, 10, 58) },
+  // Hier — Sophie Martin consulte, Luc Martin signale comme spam
+  { id: 'g18', type: 'document_viewed',     userName: 'Sophie Martin',   userEmail: 'sophie.martin@kering.com',  userType: 'Investor', timestamp: iso(1, 16, 42) },
+  { id: 'g19', type: 'notification_complained', userName: 'Luc Martin',  userEmail: 'luc.martin@kering.com',     userType: 'Contact',  timestamp: iso(1, 14, 20), primaryInvestor: 'Sophie Martin' },
+  { id: 'g20', type: 'notification_delivered', userName: 'Thomas Bernard', userEmail: 'thomas.bernard@axa-im.fr', userType: 'Investor', timestamp: iso(1, 11, 2) },
+  { id: 'g21', type: 'notification_failed', userName: 'Claire Moreau',   userEmail: 'claire.moreau@bnp-wm.fr',   userType: 'Investor', timestamp: iso(1, 10, 58) },
   // Avant-hier — advisor
-  { id: 'g16', type: 'notification_opened', userName: 'Antoine Leroy',   userEmail: 'a.leroy@conseil-patrimoine.fr', userType: 'Advisor', timestamp: iso(2, 9, 30) },
+  { id: 'g22', type: 'notification_opened', userName: 'Antoine Leroy',   userEmail: 'a.leroy@conseil-patrimoine.fr', userType: 'Advisor', timestamp: iso(2, 9, 30) },
 ];
 
 /**
@@ -98,33 +95,30 @@ const generateGenericMockActivities = (): ActivitySource[] => [
  * Engagement = viewed by at least one of the linked contacts.
  */
 const generateNominatifMockActivities = (): ActivitySource[] => [
-  { id: 'n1', type: 'document_downloaded', userName: 'Jean Dupont',   userEmail: 'jean.dupont@lvmh.fr',          userType: 'Investor', timestamp: iso(0, 15, 10) },
-  { id: 'n2', type: 'document_viewed',     userName: 'Jean Dupont',   userEmail: 'jean.dupont@lvmh.fr',          userType: 'Investor', timestamp: iso(0, 12, 35) },
-  { id: 'n3', type: 'notification_clicked',userName: 'Jean Dupont',   userEmail: 'jean.dupont@lvmh.fr',          userType: 'Investor', timestamp: iso(0, 12, 30) },
-  { id: 'n4', type: 'notification_opened', userName: 'Jean Dupont',   userEmail: 'jean.dupont@lvmh.fr',          userType: 'Investor', timestamp: iso(0, 12, 30) },
-  { id: 'n5', type: 'notification_opened', userName: 'Marie Dupont',  userEmail: 'marie.dupont@lvmh.fr',         userType: 'Contact',  timestamp: iso(0, 11, 42), primaryInvestor: 'Jean Dupont' },
-  { id: 'n6', type: 'notification_delivered', userName: 'Jean Dupont', userEmail: 'jean.dupont@lvmh.fr',         userType: 'Investor', timestamp: iso(0, 11, 2) },
-  { id: 'n7', type: 'notification_delivered', userName: 'Marie Dupont', userEmail: 'marie.dupont@lvmh.fr',       userType: 'Contact',  timestamp: iso(0, 11, 2),  primaryInvestor: 'Jean Dupont' },
-  { id: 'n8', type: 'notification_delivered', userName: 'Pierre Dupont', userEmail: 'pierre.dupont@cabinet-kl.fr', userType: 'Contact', timestamp: iso(0, 11, 2),  primaryInvestor: 'Jean Dupont' },
-  { id: 'n9', type: 'notification_sent',   userName: 'Jean Dupont',   userEmail: 'jean.dupont@lvmh.fr',          userType: 'Investor', timestamp: iso(0, 11, 0) },
-  { id: 'n10',type: 'notification_sent',   userName: 'Marie Dupont',  userEmail: 'marie.dupont@lvmh.fr',         userType: 'Contact',  timestamp: iso(0, 11, 0),  primaryInvestor: 'Jean Dupont' },
-  { id: 'n11',type: 'notification_sent',   userName: 'Pierre Dupont', userEmail: 'pierre.dupont@cabinet-kl.fr',  userType: 'Contact',  timestamp: iso(0, 11, 0),  primaryInvestor: 'Jean Dupont' },
-  { id: 'n12',type: 'notification_failed', userName: 'Antoine Leroy', userEmail: 'a.leroy@conseil-patrimoine.fr', userType: 'Advisor', timestamp: iso(1, 18, 5),  primaryInvestor: 'Jean Dupont' },
+  { id: 'n1', type: 'document_validated', userName: 'Jean Dupont',   userEmail: 'jean.dupont@lvmh.fr',          userType: 'Investor', timestamp: iso(0, 15, 25) },
+  { id: 'n2', type: 'document_downloaded', userName: 'Jean Dupont',   userEmail: 'jean.dupont@lvmh.fr',          userType: 'Investor', timestamp: iso(0, 15, 10) },
+  { id: 'n3', type: 'document_viewed',     userName: 'Jean Dupont',   userEmail: 'jean.dupont@lvmh.fr',          userType: 'Investor', timestamp: iso(0, 12, 35) },
+  { id: 'n4', type: 'notification_clicked',userName: 'Jean Dupont',   userEmail: 'jean.dupont@lvmh.fr',          userType: 'Investor', timestamp: iso(0, 12, 30) },
+  { id: 'n5', type: 'notification_opened', userName: 'Jean Dupont',   userEmail: 'jean.dupont@lvmh.fr',          userType: 'Investor', timestamp: iso(0, 12, 30) },
+  { id: 'n6', type: 'notification_opened', userName: 'Marie Dupont',  userEmail: 'marie.dupont@lvmh.fr',         userType: 'Contact',  timestamp: iso(0, 11, 42), primaryInvestor: 'Jean Dupont' },
+  { id: 'n7', type: 'notification_complained', userName: 'Pierre Dupont', userEmail: 'pierre.dupont@cabinet-kl.fr', userType: 'Contact', timestamp: iso(0, 11, 35), primaryInvestor: 'Jean Dupont' },
+  { id: 'n8', type: 'notification_delivered', userName: 'Jean Dupont', userEmail: 'jean.dupont@lvmh.fr',         userType: 'Investor', timestamp: iso(0, 11, 2) },
+  { id: 'n9', type: 'notification_delivered', userName: 'Marie Dupont', userEmail: 'marie.dupont@lvmh.fr',       userType: 'Contact',  timestamp: iso(0, 11, 2),  primaryInvestor: 'Jean Dupont' },
+  { id: 'n10',type: 'notification_delivered', userName: 'Pierre Dupont', userEmail: 'pierre.dupont@cabinet-kl.fr', userType: 'Contact', timestamp: iso(0, 11, 2),  primaryInvestor: 'Jean Dupont' },
+  { id: 'n11',type: 'notification_sent',   userName: 'Jean Dupont',   userEmail: 'jean.dupont@lvmh.fr',          userType: 'Investor', timestamp: iso(0, 11, 0) },
+  { id: 'n12',type: 'notification_sent',   userName: 'Marie Dupont',  userEmail: 'marie.dupont@lvmh.fr',         userType: 'Contact',  timestamp: iso(0, 11, 0),  primaryInvestor: 'Jean Dupont' },
+  { id: 'n13',type: 'notification_sent',   userName: 'Pierre Dupont', userEmail: 'pierre.dupont@cabinet-kl.fr',  userType: 'Contact',  timestamp: iso(0, 11, 0),  primaryInvestor: 'Jean Dupont' },
+  { id: 'n14',type: 'notification_send_initiated', userName: 'Jean Dupont',   userEmail: 'jean.dupont@lvmh.fr',          userType: 'Investor', timestamp: iso(0, 10, 58) },
+  { id: 'n15',type: 'notification_send_initiated', userName: 'Marie Dupont',  userEmail: 'marie.dupont@lvmh.fr',         userType: 'Contact',  timestamp: iso(0, 10, 58), primaryInvestor: 'Jean Dupont' },
+  { id: 'n16',type: 'notification_send_initiated', userName: 'Pierre Dupont', userEmail: 'pierre.dupont@cabinet-kl.fr',  userType: 'Contact',  timestamp: iso(0, 10, 58), primaryInvestor: 'Jean Dupont' },
+  { id: 'n17',type: 'notification_failed', userName: 'Antoine Leroy', userEmail: 'a.leroy@conseil-patrimoine.fr', userType: 'Advisor', timestamp: iso(1, 18, 5),  primaryInvestor: 'Jean Dupont' },
 ];
 
 // ---------------------------------------------------------------------------
 // Timeline type descriptors (shared icon + label map)
 // ---------------------------------------------------------------------------
 
-const activityTypes: TimelineTypeMap<ActivityType> = {
-  notification_sent:      { label: 'Notification envoyée',   Icon: Send },
-  notification_delivered: { label: 'Notification délivrée',  Icon: MailCheck },
-  notification_failed:    { label: 'Notification échouée',   Icon: AlertCircle },
-  notification_opened:    { label: 'Notification ouverte',   Icon: MailOpen },
-  notification_clicked:   { label: 'Notification cliquée',   Icon: MousePointerClick },
-  document_viewed:        { label: 'Document consulté',      Icon: Eye },
-  document_downloaded:    { label: 'Document téléchargé',    Icon: Download },
-};
+const activityTypes = birdviewActivityTypes;
 
 const userTypeLabel: Record<UserType, string> = {
   Investor: 'Investisseur',
@@ -176,7 +170,10 @@ const computeEngagement = (
   isNominatif: boolean,
 ): EngagementResult => {
   const viewedEvents = events.filter(
-    (e) => e.type === 'document_viewed' || e.type === 'document_downloaded',
+    (e) =>
+      e.type === 'document_viewed' ||
+      e.type === 'document_downloaded' ||
+      e.type === 'document_validated',
   );
 
   if (isNominatif) {
