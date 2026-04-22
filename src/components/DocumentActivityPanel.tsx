@@ -18,7 +18,7 @@ import {
 } from './ui/timeline';
 import { DocumentRelaunchModal } from './DocumentRelaunchModal';
 import {
-  birdviewActivityTypes,
+  getBirdviewActivityTypes,
   type BirdviewActivityEventCode,
 } from '../utils/birdviewActivityCatalog';
 import { useTranslation } from '../utils/languageContext';
@@ -119,8 +119,6 @@ const generateNominatifMockActivities = (): ActivitySource[] => [
 // Timeline type descriptors (shared icon + label map)
 // ---------------------------------------------------------------------------
 
-const activityTypes = birdviewActivityTypes;
-
 type TFn = (key: string, vars?: Record<string, string | number>) => string;
 
 // Map the domain-specific source to the neutral TimelineEvent shape.
@@ -209,15 +207,19 @@ const computeEngagement = (
   };
 };
 
-const buildExportColumns = (t: TFn): TimelineCsvColumn<ActivityType>[] => [
+const buildExportColumns = (
+  t: TFn,
+  activityTypes: ReturnType<typeof getBirdviewActivityTypes>,
+  locale: string,
+): TimelineCsvColumn<ActivityType>[] => [
   {
     header: t('ged.activityPanel.export.date'),
-    value: (ev) => new Date(ev.timestamp).toLocaleDateString('fr-FR'),
+    value: (ev) => new Date(ev.timestamp).toLocaleDateString(locale),
   },
   {
     header: t('ged.activityPanel.export.time'),
     value: (ev) =>
-      new Date(ev.timestamp).toLocaleTimeString('fr-FR', {
+      new Date(ev.timestamp).toLocaleTimeString(locale, {
         hour: '2-digit',
         minute: '2-digit',
       }),
@@ -246,7 +248,8 @@ export function DocumentActivityPanel({
   documentId,
   isNominatif = true,
 }: DocumentActivityPanelProps) {
-  const { t } = useTranslation();
+  const { t, lang } = useTranslation();
+  const activityTypes = useMemo(() => getBirdviewActivityTypes(lang), [lang]);
   const [activities, setActivities] = useState<ActivitySource[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const [isRelaunchModalOpen, setIsRelaunchModalOpen] = useState(false);
@@ -275,7 +278,10 @@ export function DocumentActivityPanel({
     [activities, isNominatif, t],
   );
 
-  const exportColumns = useMemo(() => buildExportColumns(t), [t]);
+  const exportColumns = useMemo(
+    () => buildExportColumns(t, activityTypes, lang === 'en' ? 'en-US' : 'fr-FR'),
+    [t, activityTypes, lang],
+  );
 
   return (
     <AnimatePresence>
@@ -445,7 +451,7 @@ export function DocumentActivityPanel({
                       style={{ background: 'linear-gradient(135deg, var(--brand-primary) 0%, var(--brand-accent) 100%)' }}
                     >
                       <Send className="w-3.5 h-3.5" />
-                      Relancer
+                      {t('ged.activityPanel.relaunch')}
                     </Button>
                   </div>
                 </div>

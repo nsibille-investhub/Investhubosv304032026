@@ -22,6 +22,7 @@ import {
 } from './select';
 import { DatePicker } from './date-picker';
 import { cn } from './utils';
+import { useTranslation, type Language } from '../../utils/languageContext';
 
 // ---------------------------------------------------------------------------
 // Types
@@ -132,20 +133,24 @@ const getInitials = (name: string) => {
   return name.substring(0, 2).toUpperCase();
 };
 
-const formatTime = (iso: string) =>
-  new Date(iso).toLocaleTimeString('fr-FR', {
+const localeFor = (lang: Language) => (lang === 'en' ? 'en-US' : 'fr-FR');
+
+const formatTime = (iso: string, lang: Language) =>
+  new Date(iso).toLocaleTimeString(localeFor(lang), {
     hour: '2-digit',
     minute: '2-digit',
   });
 
-const formatFullDate = (iso: string) =>
-  new Date(iso).toLocaleDateString('fr-FR', {
+const formatFullDate = (iso: string, lang: Language) =>
+  new Date(iso).toLocaleDateString(localeFor(lang), {
     day: '2-digit',
     month: 'short',
     year: 'numeric',
   });
 
-const formatDateGroupLabel = (iso: string) => {
+type TFn = (key: string, vars?: Record<string, string | number>) => string;
+
+const formatDateGroupLabel = (iso: string, lang: Language, t: TFn) => {
   const date = new Date(iso);
   const today = new Date();
   const yesterday = new Date();
@@ -156,10 +161,10 @@ const formatDateGroupLabel = (iso: string) => {
     a.getMonth() === b.getMonth() &&
     a.getDate() === b.getDate();
 
-  if (sameDay(date, today)) return "Aujourd'hui";
-  if (sameDay(date, yesterday)) return 'Hier';
+  if (sameDay(date, today)) return t('ged.timeline.today');
+  if (sameDay(date, yesterday)) return t('ged.timeline.yesterday');
 
-  return date.toLocaleDateString('fr-FR', {
+  return date.toLocaleDateString(localeFor(lang), {
     weekday: 'long',
     day: '2-digit',
     month: 'long',
@@ -271,26 +276,27 @@ const downloadCsv = <TType extends string>(
 
 const buildDefaultExportColumns = <TType extends string>(
   types: TimelineTypeMap<TType>,
+  lang: Language,
 ): TimelineCsvColumn<TType>[] => [
   {
     header: 'Date',
-    value: (ev) => new Date(ev.timestamp).toLocaleDateString('fr-FR'),
+    value: (ev) => new Date(ev.timestamp).toLocaleDateString(localeFor(lang)),
   },
   {
-    header: 'Heure',
+    header: lang === 'en' ? 'Time' : 'Heure',
     value: (ev) =>
-      new Date(ev.timestamp).toLocaleTimeString('fr-FR', {
+      new Date(ev.timestamp).toLocaleTimeString(localeFor(lang), {
         hour: '2-digit',
         minute: '2-digit',
       }),
   },
   {
-    header: "Type d'événement",
+    header: lang === 'en' ? 'Event type' : "Type d'événement",
     value: (ev) => types[ev.type]?.label ?? String(ev.type),
   },
-  { header: 'Acteur', value: (ev) => ev.actorName ?? '' },
-  { header: 'Détail', value: (ev) => ev.actorSublabel ?? '' },
-  { header: 'Rôle', value: (ev) => ev.actorRole ?? '' },
+  { header: lang === 'en' ? 'Actor' : 'Acteur', value: (ev) => ev.actorName ?? '' },
+  { header: lang === 'en' ? 'Detail' : 'Détail', value: (ev) => ev.actorSublabel ?? '' },
+  { header: lang === 'en' ? 'Role' : 'Rôle', value: (ev) => ev.actorRole ?? '' },
 ];
 
 // ---------------------------------------------------------------------------
@@ -306,12 +312,16 @@ export function Timeline<TType extends string = string>({
   exportFileName = 'timeline',
   exportColumns,
   pageSize = 10,
-  emptyLabel = 'Aucun événement à afficher.',
-  emptyFilteredLabel = 'Aucun événement ne correspond à vos filtres.',
+  emptyLabel,
+  emptyFilteredLabel,
   renderEventAside,
   className,
   dense = false,
 }: TimelineProps<TType>) {
+  const { t, lang } = useTranslation();
+  const resolvedEmptyLabel = emptyLabel ?? t('ged.timeline.emptyLabel');
+  const resolvedEmptyFilteredLabel =
+    emptyFilteredLabel ?? t('ged.timeline.emptyFilteredLabel');
   const [showFilters, setShowFilters] = React.useState(false);
   const [filters, setFilters] = React.useState<TimelineFilters<TType>>(
     emptyTimelineFilters as TimelineFilters<TType>,
@@ -380,8 +390,8 @@ export function Timeline<TType extends string = string>({
   );
 
   const resolvedExportColumns = React.useMemo(
-    () => exportColumns ?? buildDefaultExportColumns(types),
-    [exportColumns, types],
+    () => exportColumns ?? buildDefaultExportColumns(types, lang),
+    [exportColumns, types, lang],
   );
 
   const activeFilterCount = React.useMemo(
@@ -426,7 +436,7 @@ export function Timeline<TType extends string = string>({
                 aria-expanded={showFilters}
               >
                 <SlidersHorizontal className="w-3.5 h-3.5" />
-                Filtres
+                {t('ged.timeline.filters')}
                 {filtersActive && (
                   <span className="ml-0.5 inline-flex items-center justify-center min-w-[18px] h-[18px] rounded-full bg-primary text-primary-foreground text-[10px] font-semibold px-1">
                     {activeFilterCount}
@@ -443,17 +453,21 @@ export function Timeline<TType extends string = string>({
                   downloadCsv(filteredEvents, resolvedExportColumns, exportFileName)
                 }
                 disabled={filteredEvents.length === 0}
-                title="Télécharger la timeline au format CSV"
+                title={t('ged.timeline.exportCsvTitle')}
               >
                 <Download className="w-3.5 h-3.5" />
-                Exporter CSV
+                {t('ged.timeline.exportCsv')}
               </Button>
             )}
           </div>
 
           <span className="text-xs text-muted-foreground">
-            {filteredEvents.length} événement
-            {filteredEvents.length > 1 ? 's' : ''}
+            {t(
+              filteredEvents.length > 1
+                ? 'ged.timeline.eventCountMany'
+                : 'ged.timeline.eventCountOne',
+              { count: filteredEvents.length },
+            )}
             {filtersActive && events.length !== filteredEvents.length && (
               <span className="text-muted-foreground/70"> / {events.length}</span>
             )}
@@ -475,7 +489,7 @@ export function Timeline<TType extends string = string>({
               {distinctActors.length > 0 && (
                 <div className="col-span-1">
                   <label className="text-[11px] font-medium text-muted-foreground mb-1 block">
-                    Acteur
+                    {t('ged.timeline.actor')}
                   </label>
                   <Select
                     value={filters.actor || 'all'}
@@ -484,10 +498,10 @@ export function Timeline<TType extends string = string>({
                     }
                   >
                     <SelectTrigger size="sm" className="h-8 text-xs">
-                      <SelectValue placeholder="Tous" />
+                      <SelectValue placeholder={t('ged.timeline.allPlaceholder')} />
                     </SelectTrigger>
                     <SelectContent>
-                      <SelectItem value="all">Tous les acteurs</SelectItem>
+                      <SelectItem value="all">{t('ged.timeline.allActors')}</SelectItem>
                       {distinctActors.map((name) => (
                         <SelectItem key={name} value={name}>
                           {name}
@@ -501,7 +515,7 @@ export function Timeline<TType extends string = string>({
               {typeOptions.length > 0 && (
                 <div className="col-span-1">
                   <label className="text-[11px] font-medium text-muted-foreground mb-1 block">
-                    Type d'événement
+                    {t('ged.timeline.eventType')}
                   </label>
                   <Select
                     value={filters.type as string}
@@ -516,7 +530,7 @@ export function Timeline<TType extends string = string>({
                       <SelectValue />
                     </SelectTrigger>
                     <SelectContent>
-                      <SelectItem value="all">Tous les types</SelectItem>
+                      <SelectItem value="all">{t('ged.timeline.allTypes')}</SelectItem>
                       {typeOptions.map((opt) => (
                         <SelectItem key={String(opt.value)} value={String(opt.value)}>
                           {opt.label}
@@ -530,7 +544,7 @@ export function Timeline<TType extends string = string>({
               {distinctRoles.length > 0 && (
                 <div className="col-span-1">
                   <label className="text-[11px] font-medium text-muted-foreground mb-1 block">
-                    Rôle
+                    {t('ged.timeline.role')}
                   </label>
                   <Select
                     value={filters.role || 'all'}
@@ -539,10 +553,10 @@ export function Timeline<TType extends string = string>({
                     }
                   >
                     <SelectTrigger size="sm" className="h-8 text-xs">
-                      <SelectValue placeholder="Tous" />
+                      <SelectValue placeholder={t('ged.timeline.allPlaceholder')} />
                     </SelectTrigger>
                     <SelectContent>
-                      <SelectItem value="all">Tous les rôles</SelectItem>
+                      <SelectItem value="all">{t('ged.timeline.allRoles')}</SelectItem>
                       {distinctRoles.map((role) => (
                         <SelectItem key={role} value={role}>
                           {role}
@@ -559,13 +573,13 @@ export function Timeline<TType extends string = string>({
                 )}
               >
                 <label className="text-[11px] font-medium text-muted-foreground mb-1 block">
-                  Recherche
+                  {t('ged.timeline.search')}
                 </label>
                 <div className="relative">
                   <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-muted-foreground" />
                   <Input
                     className="pl-8 h-8 text-xs"
-                    placeholder="Nom, email, …"
+                    placeholder={t('ged.timeline.searchPlaceholder')}
                     value={filters.search}
                     onChange={(e) =>
                       setFilters((f) => ({ ...f, search: e.target.value }))
@@ -576,26 +590,26 @@ export function Timeline<TType extends string = string>({
 
               <div className="col-span-1">
                 <label className="text-[11px] font-medium text-muted-foreground mb-1 block">
-                  Du
+                  {t('ged.timeline.dateFrom')}
                 </label>
                 <DatePicker
                   date={filters.dateFrom}
                   onDateChange={(d) =>
                     setFilters((f) => ({ ...f, dateFrom: d }))
                   }
-                  placeholder="Date de début"
+                  placeholder={t('ged.timeline.dateFromPlaceholder')}
                   className="h-8 text-xs"
                   maxDate={filters.dateTo}
                 />
               </div>
               <div className="col-span-1">
                 <label className="text-[11px] font-medium text-muted-foreground mb-1 block">
-                  Au
+                  {t('ged.timeline.dateTo')}
                 </label>
                 <DatePicker
                   date={filters.dateTo}
                   onDateChange={(d) => setFilters((f) => ({ ...f, dateTo: d }))}
-                  placeholder="Date de fin"
+                  placeholder={t('ged.timeline.dateToPlaceholder')}
                   className="h-8 text-xs"
                   minDate={filters.dateFrom}
                 />
@@ -610,7 +624,7 @@ export function Timeline<TType extends string = string>({
                     onClick={resetFilters}
                   >
                     <X className="w-3.5 h-3.5" />
-                    Réinitialiser les filtres
+                    {t('ged.timeline.resetFilters')}
                   </Button>
                 </div>
               )}
@@ -625,14 +639,14 @@ export function Timeline<TType extends string = string>({
           <div className="flex items-center justify-center py-10">
             <div className="text-center">
               <div className="w-8 h-8 border-2 border-primary border-t-transparent rounded-full animate-spin mx-auto mb-2" />
-              <p className="text-sm text-muted-foreground">Chargement…</p>
+              <p className="text-sm text-muted-foreground">{t('ged.timeline.loading')}</p>
             </div>
           </div>
         ) : filteredEvents.length === 0 ? (
           <div className="flex items-center justify-center py-10 text-center">
             <div>
               <p className="text-sm text-muted-foreground">
-                {filtersActive ? emptyFilteredLabel : emptyLabel}
+                {filtersActive ? resolvedEmptyFilteredLabel : resolvedEmptyLabel}
               </p>
               {filtersActive && (
                 <Button
@@ -641,7 +655,7 @@ export function Timeline<TType extends string = string>({
                   className="mt-2 text-xs"
                   onClick={resetFilters}
                 >
-                  Réinitialiser les filtres
+                  {t('ged.timeline.resetFilters')}
                 </Button>
               )}
             </div>
@@ -652,11 +666,11 @@ export function Timeline<TType extends string = string>({
               <div key={groupIdx}>
                 <div className="flex items-center gap-3 mb-3">
                   <span className="text-xs font-semibold text-muted-foreground uppercase tracking-wide">
-                    {formatDateGroupLabel(dayEvents[0].timestamp)}
+                    {formatDateGroupLabel(dayEvents[0].timestamp, lang, t)}
                   </span>
                   <Separator className="flex-1" />
                   <span className="text-xs text-muted-foreground">
-                    {formatFullDate(dayEvents[0].timestamp)}
+                    {formatFullDate(dayEvents[0].timestamp, lang)}
                   </span>
                 </div>
 
@@ -696,10 +710,10 @@ export function Timeline<TType extends string = string>({
                             ) : (
                               <div className="flex flex-col items-end flex-shrink-0">
                                 <span className="text-xs font-medium text-foreground tabular-nums">
-                                  {formatTime(event.timestamp)}
+                                  {formatTime(event.timestamp, lang)}
                                 </span>
                                 <span className="text-[11px] text-muted-foreground">
-                                  {formatFullDate(event.timestamp)}
+                                  {formatFullDate(event.timestamp, lang)}
                                 </span>
                               </div>
                             )}
@@ -747,12 +761,13 @@ export function Timeline<TType extends string = string>({
           <span className="text-xs text-muted-foreground">
             <span className="font-medium text-foreground">{rangeStart}</span>
             {'–'}
-            <span className="font-medium text-foreground">{rangeEnd}</span>
-            {' sur '}
-            <span className="font-medium text-foreground">
-              {filteredEvents.length}
-            </span>
-            {' événements'}
+            <span className="font-medium text-foreground">{rangeEnd}</span>{' '}
+            {t(
+              filteredEvents.length > 1
+                ? 'ged.timeline.paginationRangeMany'
+                : 'ged.timeline.paginationRangeOne',
+              { total: filteredEvents.length },
+            )}
           </span>
 
           <div className="flex items-center gap-1">
@@ -762,13 +777,14 @@ export function Timeline<TType extends string = string>({
               className="h-8 w-8 p-0"
               onClick={() => setCurrentPage((p) => Math.max(1, p - 1))}
               disabled={safePage === 1}
-              aria-label="Page précédente"
+              aria-label={t('ged.timeline.previousPage')}
             >
               <ChevronLeft className="w-4 h-4" />
             </Button>
 
             <span className="text-xs text-muted-foreground px-2 tabular-nums">
-              Page <span className="font-medium text-foreground">{safePage}</span>
+              {t('ged.timeline.page')}{' '}
+              <span className="font-medium text-foreground">{safePage}</span>
               {' / '}
               <span className="font-medium text-foreground">{totalPages}</span>
             </span>
@@ -781,7 +797,7 @@ export function Timeline<TType extends string = string>({
                 setCurrentPage((p) => Math.min(totalPages, p + 1))
               }
               disabled={safePage === totalPages}
-              aria-label="Page suivante"
+              aria-label={t('ged.timeline.nextPage')}
             >
               <ChevronRight className="w-4 h-4" />
             </Button>
