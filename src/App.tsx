@@ -670,8 +670,8 @@ export default function App() {
             </div>
           </motion.header>
 
-          {/* Breadcrumb (the datahub module renders its own PageHeader with breadcrumb) */}
-          {currentPage !== 'datahub' && (
+          {/* Breadcrumb (datahub and whats-new render their own PageHeader with breadcrumb) */}
+          {currentPage !== 'datahub' && currentPage !== 'whats-new' && (
           <motion.div
             initial={{ opacity: 0, y: -10 }}
             animate={{ opacity: 1, y: 0 }}
