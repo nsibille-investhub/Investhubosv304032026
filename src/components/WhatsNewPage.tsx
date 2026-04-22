@@ -1,10 +1,11 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
-import { ArrowLeft, Calendar, Mail, Rocket, Sparkles } from 'lucide-react';
+import { ArrowLeft, Calendar, Mail, Rocket } from 'lucide-react';
 import { motion } from 'motion/react';
 import { Badge } from './ui/badge';
 import { Card } from './ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from './ui/tabs';
 import { Button } from './ui/button';
+import { PageHeader } from './ui/page-header';
 import { useTranslation } from '../utils/languageContext';
 import { useWhatsNewUnread } from '../utils/useWhatsNewUnread';
 import {
@@ -58,28 +59,21 @@ export function WhatsNewPage({ initialTab = 'newsletters' }: WhatsNewPageProps) 
   );
 
   return (
-    <div className="flex-1 px-6 pb-6">
+    <div className="flex-1">
+      <PageHeader
+        breadcrumb={[
+          { label: t('breadcrumb.investhubOs') },
+          { label: t('breadcrumb.whatsNew') },
+        ]}
+        title={t('whatsNew.title')}
+        subtitle={t('whatsNew.subtitle')}
+      />
       <motion.div
         initial={{ opacity: 0, y: 8 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.25 }}
-        className="max-w-[1100px] mx-auto"
+        className="max-w-[1100px] mx-auto px-6 pt-6 pb-6"
       >
-        {/* Header */}
-        <div className="pt-6 pb-4 flex items-start gap-4">
-          <div className="w-11 h-11 rounded-xl bg-gradient-to-br from-[#0066FF] to-[#00C2FF] flex items-center justify-center shadow-sm">
-            <Sparkles className="w-5 h-5 text-white" />
-          </div>
-          <div className="flex-1">
-            <h1 className="text-2xl text-gray-900 dark:text-gray-100 font-medium">
-              {t('whatsNew.title')}
-            </h1>
-            <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">
-              {t('whatsNew.subtitle')}
-            </p>
-          </div>
-        </div>
-
         {/* Tabs */}
         {!selected && (
           <Tabs value={tab} onValueChange={(v) => setTab(v as 'newsletters' | 'changelog')}>
