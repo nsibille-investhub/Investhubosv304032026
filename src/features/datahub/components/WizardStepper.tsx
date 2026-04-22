@@ -1,4 +1,5 @@
 import { Check } from 'lucide-react';
+import { motion } from 'motion/react';
 import { cn } from '../../../components/ui/utils';
 
 export interface WizardStepperStep {
@@ -27,65 +28,99 @@ export function WizardStepper({
   onStepClick,
   className,
 }: WizardStepperProps) {
+  const total = steps.length;
+  const progress = total > 1 ? (currentStep - 1) / (total - 1) : 0;
+
   return (
-    <ol
-      className={cn('flex w-full items-center gap-2', className)}
+    <div
+      className={cn('relative w-full', className)}
+      role="group"
       aria-label="Étapes"
     >
-      {steps.map((step, idx) => {
-        const state = stateOf(step, currentStep);
-        const isClickable = state === 'past' && !!onStepClick;
-        const isLast = idx === steps.length - 1;
+      {/* Progress rail (background + animated fill) */}
+      <div className="pointer-events-none absolute left-0 right-0 top-4 -translate-y-1/2">
+        <div className="mx-4 h-0.5 rounded-full bg-gray-200 dark:bg-gray-800" />
+        <motion.div
+          aria-hidden
+          className="absolute left-4 right-4 top-1/2 h-0.5 origin-left -translate-y-1/2 rounded-full"
+          style={{ background: 'linear-gradient(90deg, #000000 0%, #0F323D 100%)' }}
+          initial={false}
+          animate={{ scaleX: progress }}
+          transition={{ duration: 0.5, ease: 'easeOut' }}
+        />
+      </div>
 
-        const circleClass = cn(
-          'flex size-7 shrink-0 items-center justify-center rounded-full border text-xs font-semibold transition-colors',
-          state === 'current' &&
-            'border-primary bg-primary text-primary-foreground',
-          state === 'past' &&
-            'border-primary bg-primary/10 text-primary',
-          state === 'future' && 'border-border bg-muted text-muted-foreground',
-        );
+      <ol className="relative flex w-full items-start justify-between">
+        {steps.map((step) => {
+          const state = stateOf(step, currentStep);
+          const isClickable = state === 'past' && !!onStepClick;
 
-        const labelClass = cn(
-          'text-sm whitespace-nowrap transition-colors',
-          state === 'current' && 'text-foreground font-medium',
-          state === 'past' && 'text-foreground',
-          state === 'future' && 'text-muted-foreground',
-        );
-
-        const connectorClass = cn(
-          'h-px flex-1',
-          step.id < currentStep ? 'bg-primary/40' : 'bg-border',
-        );
-
-        return (
-          <li
-            key={step.id}
-            className="flex min-w-0 flex-1 items-center gap-2"
-            aria-current={state === 'current' ? 'step' : undefined}
-          >
-            <button
-              type="button"
-              onClick={isClickable ? () => onStepClick?.(step.id) : undefined}
-              disabled={!isClickable}
-              className={cn(
-                'flex items-center gap-2 rounded-md px-1 py-0.5 outline-none',
-                isClickable &&
-                  'cursor-pointer hover:bg-muted focus-visible:ring-2 focus-visible:ring-ring/50',
-                !isClickable && 'cursor-default',
-              )}
-              aria-label={`Étape ${step.id} : ${step.label}`}
+          return (
+            <li
+              key={step.id}
+              className="flex min-w-0 flex-col items-center gap-2"
+              aria-current={state === 'current' ? 'step' : undefined}
             >
-              <span className={circleClass} aria-hidden>
-                {state === 'past' ? <Check className="size-3.5" /> : step.id}
-              </span>
-              <span className={labelClass}>{step.label}</span>
-            </button>
-            {!isLast && <span className={connectorClass} aria-hidden />}
-          </li>
-        );
-      })}
-    </ol>
+              <motion.button
+                type="button"
+                onClick={isClickable ? () => onStepClick?.(step.id) : undefined}
+                disabled={!isClickable}
+                whileHover={isClickable ? { scale: 1.05 } : undefined}
+                whileTap={isClickable ? { scale: 0.95 } : undefined}
+                aria-label={`Étape ${step.id} : ${step.label}`}
+                className={cn(
+                  'relative z-10 flex size-8 items-center justify-center rounded-full border-2 text-xs font-semibold outline-none transition-colors',
+                  state === 'current' &&
+                    'border-transparent text-white shadow-lg shadow-black/20 ring-4 ring-black/5 dark:ring-white/10',
+                  state === 'past' &&
+                    'border-transparent text-white',
+                  state === 'future' &&
+                    'border-gray-200 bg-white text-gray-400 dark:border-gray-800 dark:bg-gray-950 dark:text-gray-500',
+                  isClickable && 'cursor-pointer hover:shadow-md focus-visible:ring-4 focus-visible:ring-black/20',
+                  !isClickable && 'cursor-default',
+                )}
+                style={
+                  state === 'current' || state === 'past'
+                    ? {
+                        background:
+                          'linear-gradient(62.32deg, #000000 10.53%, #0F323D 88.82%)',
+                      }
+                    : undefined
+                }
+              >
+                {state === 'past' ? (
+                  <motion.span
+                    initial={{ scale: 0, rotate: -90 }}
+                    animate={{ scale: 1, rotate: 0 }}
+                    transition={{ type: 'spring', stiffness: 300, damping: 20 }}
+                  >
+                    <Check className="size-4" strokeWidth={3} />
+                  </motion.span>
+                ) : (
+                  <span>{step.id}</span>
+                )}
+              </motion.button>
+
+              <button
+                type="button"
+                onClick={isClickable ? () => onStepClick?.(step.id) : undefined}
+                disabled={!isClickable}
+                className={cn(
+                  'max-w-[140px] truncate text-center text-xs font-medium transition-colors',
+                  state === 'current' && 'text-foreground',
+                  state === 'past' && 'text-foreground',
+                  state === 'future' && 'text-muted-foreground',
+                  isClickable && 'cursor-pointer hover:text-foreground',
+                  !isClickable && 'cursor-default',
+                )}
+              >
+                {step.label}
+              </button>
+            </li>
+          );
+        })}
+      </ol>
+    </div>
   );
 }
 
