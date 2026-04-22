@@ -103,6 +103,7 @@ export interface WizardData {
   pivotKeys?: Partial<Record<InvestHubPivotObject, string>>;
   visibility?: WizardVisibility;
   pivotType?: PivotTemporalType;
+  pivotColumn?: string;
   // Step 4 (prompt 3.4)
   columns?: CollectionColumn[];
   publicationWorkflow?: PublicationWorkflow;

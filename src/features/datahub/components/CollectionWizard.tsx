@@ -11,6 +11,7 @@ import type { IngestionMode } from '../types';
 import { WizardStepper } from './WizardStepper';
 import { WizardStepMode } from './wizard/WizardStepMode';
 import { WizardStepConfig } from './wizard/WizardStepConfig';
+import { WizardStepLinking } from './wizard/WizardStepLinking';
 
 const STEPS = [
   { id: 1, label: 'Mode' },
@@ -103,7 +104,9 @@ export function CollectionWizard({ onExit }: CollectionWizardProps) {
                 onChange={handleConfigPatch}
               />
             )}
-            {currentStep === 3 && <StepPlaceholder step={3} />}
+            {currentStep === 3 && (
+              <WizardStepLinking data={wizardData} onChange={updateWizardData} />
+            )}
             {currentStep === 4 && <StepPlaceholder step={4} />}
           </div>
 

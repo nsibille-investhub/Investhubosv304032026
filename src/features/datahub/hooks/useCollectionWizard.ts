@@ -30,9 +30,16 @@ function isStepValid(step: WizardStep, data: WizardData): boolean {
           return false;
       }
     }
-    case 3:
-      // Filled in prompt 3.3.
-      return true;
+    case 3: {
+      const displayOk =
+        typeof data.displayName === 'string' &&
+        data.displayName.trim().length > 0;
+      const techOk =
+        typeof data.technicalName === 'string' &&
+        /^[a-z0-9_]+$/.test(data.technicalName);
+      const pivotOk = !!data.pivotType;
+      return displayOk && techOk && pivotOk;
+    }
     case 4:
       // Filled in prompt 3.4.
       return true;
