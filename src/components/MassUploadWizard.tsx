@@ -104,11 +104,11 @@ interface UploadedFile {
   status: 'uploading' | 'analyzing' | 'uploaded' | 'error';
   progress: number;
   thumbnail?: string;
-  // Metadata consistantes - calculées une seule fois
+  // Consistent metadata - computed once
   pageCount: number;
   lpCount: number;
   contactCount: number;
-  // Workflow de validation
+  // Validation workflow
   notify: boolean;
   emailTemplate: string;
   hideNewLabel: boolean;
@@ -125,7 +125,7 @@ interface FolderItem {
   parentId?: string;
 }
 
-// Fonction pour extraire tous les dossiers de l'arborescence avec leur niveau
+// Function to extract all folders from the tree with their level
 const extractAllFolders = (documents: Document[], level: number = 0, folders: FolderItem[] = []): FolderItem[] => {
   documents.forEach(doc => {
     if (doc.type === 'folder') {
@@ -154,7 +154,7 @@ const availableLanguages = [
   { value: 'nl', label: 'Nederlands', flag: '🇳🇱' },
 ];
 
-// Extraire la liste des fonds depuis investorsMockData
+// Extract the list of funds from investorsMockData
 const availableFunds = Object.keys(fundLabelMap).map(key => ({
   id: key,
   name: fundLabelMap[key]
@@ -162,52 +162,52 @@ const availableFunds = Object.keys(fundLabelMap).map(key => ({
 
 // Mock segments
 const availableSegments = [
-  'Investisseurs Qualifiés',
-  'Comité Stratégique',
+  'Qualified Investors',
+  'Strategic Committee',
   'Family Offices',
-  'Institutionnels',
-  'Particuliers',
+  'Institutional',
+  'Individuals',
   'Corporate Investors',
   'HNWI (High Net Worth)',
-  'Distributeurs Partenaires'
+  'Partner Distributors'
 ];
 
-// Mock souscriptions
+// Mock subscriptions
 const availableSubscriptions = [
-  { id: 'sub-1', name: 'SOUSCRIPTION-2024-001', investor: 'Jean Dupont' },
-  { id: 'sub-2', name: 'SOUSCRIPTION-2024-002', investor: 'Marie Martin' },
-  { id: 'sub-3', name: 'SOUSCRIPTION-2024-003', investor: 'Pierre Durand' },
+  { id: 'sub-1', name: 'SUBSCRIPTION-2024-001', investor: 'Jean Dupont' },
+  { id: 'sub-2', name: 'SUBSCRIPTION-2024-002', investor: 'Marie Martin' },
+  { id: 'sub-3', name: 'SUBSCRIPTION-2024-003', investor: 'Pierre Durand' },
 ];
 
-// Mock rôles de contacts
+// Mock contact roles
 const availableContactRoles = [
-  'Investisseur',
-  'Conseil Juridique',
-  'Conseil Fiscal',
-  'Expert Comptable',
-  'Auditeur',
-  'Administrateur',
-  'Représentant Légal',
-  'Gestionnaire de Patrimoine',
+  'Investor',
+  'Legal Advisor',
+  'Tax Advisor',
+  'Accountant',
+  'Auditor',
+  'Administrator',
+  'Legal Representative',
+  'Wealth Manager',
   'Family Office',
-  'Distributeur',
-  'Partenaire Bancaire',
+  'Distributor',
+  'Banking Partner',
   'Compliance Officer',
   'Trustee',
-  'Dépositaire'
+  'Custodian'
 ];
 
-// Templates d'email disponibles
+// Available email templates
 const availableEmailTemplates = [
-  { value: 'none', label: 'Aucun template', icon: '📭' },
-  { value: 'new_document', label: 'Nouveau document', icon: '📄' },
-  { value: 'capital_call', label: 'Appel de fond', icon: '💰' },
-  { value: 'notification', label: 'Notification générale', icon: '🔔' },
-  { value: 'quarterly_report', label: 'Rapport trimestriel', icon: '📊' },
-  { value: 'tax_document', label: 'Document fiscal', icon: '📋' },
-  { value: 'general_meeting', label: 'Convocation AG', icon: '📅' },
-  { value: 'dividend', label: 'Distribution dividendes', icon: '💵' },
-  { value: 'amendment', label: 'Avenant', icon: '📝' },
+  { value: 'none', label: 'No template', icon: '📭' },
+  { value: 'new_document', label: 'New document', icon: '📄' },
+  { value: 'capital_call', label: 'Capital call', icon: '💰' },
+  { value: 'notification', label: 'General notification', icon: '🔔' },
+  { value: 'quarterly_report', label: 'Quarterly report', icon: '📊' },
+  { value: 'tax_document', label: 'Tax document', icon: '📋' },
+  { value: 'general_meeting', label: 'AGM notice', icon: '📅' },
+  { value: 'dividend', label: 'Dividend distribution', icon: '💵' },
+  { value: 'amendment', label: 'Amendment', icon: '📝' },
   { value: 'newsletter', label: 'Newsletter', icon: '📰' },
 ];
 
@@ -226,10 +226,10 @@ export function MassUploadWizard({ isOpen, onClose, existingFolders, inline = fa
   const [currentReviewingDocIndex, setCurrentReviewingDocIndex] = useState(0);
   const [documentZoom, setDocumentZoom] = useState(100);
 
-  // Extraire tous les dossiers disponibles
+  // Extract all available folders
   const availableFolders = extractAllFolders(mockDocuments);
 
-  // Fonction pour obtenir la taille du fichier formatée
+  // Function to get the formatted file size
   const getFileSize = (bytes: number): string => {
     if (bytes === 0) return '0 B';
     const k = 1024;
@@ -238,7 +238,7 @@ export function MassUploadWizard({ isOpen, onClose, existingFolders, inline = fa
     return Math.round((bytes / Math.pow(k, i)) * 100) / 100 + ' ' + sizes[i];
   };
 
-  // Générer une miniature pour les images
+  // Generate a thumbnail for images
   const generateThumbnail = (file: File): Promise<string> => {
     return new Promise((resolve) => {
       if (file.type.startsWith('image/')) {
@@ -251,17 +251,17 @@ export function MassUploadWizard({ isOpen, onClose, existingFolders, inline = fa
     });
   };
 
-  // Simuler l'upload avec étapes: upload -> analyze -> done
+  // Simulate upload with stages: upload -> analyze -> done
   const simulateUpload = async (fileId: string, file: File) => {
     // Phase 1: Upload (0-100%)
     let progress = 0;
     const uploadInterval = setInterval(() => {
-      progress += Math.random() * 25 + 10; // Plus rapide
+      progress += Math.random() * 25 + 10; // Faster
       if (progress >= 100) {
         progress = 100;
         clearInterval(uploadInterval);
-        
-        // Transition vers l'analyse
+
+        // Transition to analysis
         setTimeout(() => {
           setUploadedFiles(prev =>
             prev.map(f =>
@@ -270,8 +270,8 @@ export function MassUploadWizard({ isOpen, onClose, existingFolders, inline = fa
                 : f
             )
           );
-          
-          // Phase 2: Analyse IA (1.5 secondes)
+
+          // Phase 2: AI analysis (1.5 seconds)
           setTimeout(async () => {
             const aiData = await analyzeFileWithAI(file);
             
@@ -296,50 +296,50 @@ export function MassUploadWizard({ isOpen, onClose, existingFolders, inline = fa
     }, 200);
   };
 
-  // Analyse IA du fichier (mock)
+  // AI file analysis (mock)
   const analyzeFileWithAI = async (file: File): Promise<Partial<UploadedFile>> => {
     // Simulate AI processing delay
     await new Promise(resolve => setTimeout(resolve, 1500));
 
     const fileName = file.name.replace(/\.[^/.]+$/, ''); // Remove extension
-    
+
     // Simulate intelligent extraction based on file name
     return {
       name: fileName,
-      description: `Document automatiquement analysé : ${fileName}. Ce document contient des informations importantes relatives aux activités de l'entreprise.`,
-      folder: '/PERE 1', // Dossier par défaut
-      language: 'fr',
+      description: `Document automatically analyzed: ${fileName}. This document contains important information related to the company's activities.`,
+      folder: '/PERE 1', // Default folder
+      language: 'en',
       restrictToLanguage: false,
-      targetType: fileName.toLowerCase().includes('investor') ? 'investor' : 
+      targetType: fileName.toLowerCase().includes('investor') ? 'investor' :
                    fileName.toLowerCase().includes('legal') ? 'all' : 'investor',
-      targetSegments: fileName.toLowerCase().includes('premium') ? ['Investisseurs Qualifiés'] : [],
-      targetInvestors: fileName.toLowerCase().includes('investor') || !fileName.toLowerCase().includes('legal') 
-        ? ['inv-3'] 
+      targetSegments: fileName.toLowerCase().includes('premium') ? ['Qualified Investors'] : [],
+      targetInvestors: fileName.toLowerCase().includes('investor') || !fileName.toLowerCase().includes('legal')
+        ? ['inv-3']
         : [],
       targetSubscriptions: [],
-      accessRoles: ['Investisseur'],
+      accessRoles: ['Investor'],
       watermark: false,
       downloadable: true,
       printable: true,
       tags: [
-        fileName.toLowerCase().includes('rapport') ? 'Rapport' : '',
-        fileName.toLowerCase().includes('financial') || fileName.toLowerCase().includes('financier') ? 'Financier' : '',
-        fileName.toLowerCase().includes('legal') ? 'Légal' : '',
+        fileName.toLowerCase().includes('rapport') || fileName.toLowerCase().includes('report') ? 'Report' : '',
+        fileName.toLowerCase().includes('financial') || fileName.toLowerCase().includes('financier') ? 'Financial' : '',
+        fileName.toLowerCase().includes('legal') ? 'Legal' : '',
       ].filter(Boolean),
     };
   };
 
-  // Gérer l'upload de fichiers
+  // Handle file upload
   const handleFileUpload = async (files: FileList | null) => {
     if (!files || files.length === 0) return;
 
     const newFiles: UploadedFile[] = [];
 
-    toast.info('Upload en cours...', {
-      description: `${files.length} fichier(s) sélectionné(s)`,
+    toast.info('Upload in progress...', {
+      description: `${files.length} file(s) selected`,
     });
 
-    // Créer immédiatement les placeholders
+    // Create placeholders immediately
     for (let i = 0; i < files.length; i++) {
       const file = files[i];
       const thumbnail = await generateThumbnail(file);
@@ -351,11 +351,11 @@ export function MassUploadWizard({ isOpen, onClose, existingFolders, inline = fa
         status: 'uploading',
         progress: 0,
         thumbnail,
-        // Valeurs par défaut temporaires (seront remplies par l'IA)
+        // Temporary default values (will be filled by AI)
         name: file.name.replace(/\.[^/.]+$/, ''),
         description: '',
         folder: '/PERE 1',
-        language: 'fr',
+        language: 'en',
         restrictToLanguage: false,
         targetType: 'all',
         targetSegments: [],
@@ -367,11 +367,11 @@ export function MassUploadWizard({ isOpen, onClose, existingFolders, inline = fa
         downloadable: true,
         printable: true,
         tags: [],
-        // Metadata consistantes - générées une seule fois
+        // Consistent metadata - generated once
         pageCount: Math.floor(Math.random() * 20) + 5,
-        lpCount: 0, // Sera mis à jour dynamiquement selon targetInvestors
-        contactCount: 0, // Sera mis à jour dynamiquement selon targetInvestors
-        // Workflow de validation - valeurs par défaut
+        lpCount: 0, // Will be updated dynamically based on targetInvestors
+        contactCount: 0, // Will be updated dynamically based on targetInvestors
+        // Validation workflow - default values
         notify: false,
         emailTemplate: 'none',
         hideNewLabel: false,
@@ -382,16 +382,16 @@ export function MassUploadWizard({ isOpen, onClose, existingFolders, inline = fa
       newFiles.push(newFile);
     }
 
-    // Afficher immédiatement les placeholders
+    // Display placeholders immediately
     setUploadedFiles(prev => [...prev, ...newFiles]);
-    
-    // Lancer les uploads et analyses en parallèle
+
+    // Launch uploads and analyses in parallel
     newFiles.forEach(newFile => {
       simulateUpload(newFile.id, newFile.file);
     });
   };
 
-  // Gestion du drag & drop
+  // Drag & drop handling
   const handleDrag = useCallback((e: React.DragEvent) => {
     e.preventDefault();
     e.stopPropagation();
@@ -416,18 +416,18 @@ export function MassUploadWizard({ isOpen, onClose, existingFolders, inline = fa
     const file = uploadedFiles.find(f => f.id === id);
     
     if (file && (file.status === 'uploading' || file.status === 'analyzing')) {
-      toast.error('Impossible de supprimer', {
-        description: 'Veuillez attendre la fin du traitement'
+      toast.error('Unable to delete', {
+        description: 'Please wait for processing to complete'
       });
       return;
     }
-    
+
     setUploadedFiles(prev => prev.filter(f => f.id !== id));
     setSelectedFiles(prev => prev.filter(fid => fid !== id));
-    toast.info('Fichier supprimé');
+    toast.info('File deleted');
   };
 
-  // Gérer la sélection des fichiers
+  // Handle file selection
   const handleSelectAll = (checked: boolean) => {
     if (checked) {
       setSelectedFiles(uploadedFiles.map(f => f.id));
@@ -444,7 +444,7 @@ export function MassUploadWizard({ isOpen, onClose, existingFolders, inline = fa
     }
   };
 
-  // Modification en masse
+  // Bulk update
   const handleBulkUpdate = (field: string, value: any) => {
     setUploadedFiles(prev =>
       prev.map(f =>
@@ -453,22 +453,22 @@ export function MassUploadWizard({ isOpen, onClose, existingFolders, inline = fa
           : f
       )
     );
-    
-    toast.success('Modification en masse', {
-      description: `${selectedFiles.length} document(s) modifié(s)`
+
+    toast.success('Bulk update', {
+      description: `${selectedFiles.length} document(s) updated`
     });
   };
 
-  // Ouvrir le document dans un nouvel onglet
+  // Open the document in a new tab
   const handlePreviewDocument = (file: UploadedFile) => {
     const url = URL.createObjectURL(file.file);
     window.open(url, '_blank');
-    toast.info('Document ouvert', {
+    toast.info('Document opened', {
       description: file.name
     });
   };
 
-  // Mettre à jour un fichier
+  // Update a file
   const handleUpdateFile = (id: string, field: keyof UploadedFile, value: any) => {
     setUploadedFiles(prev =>
       prev.map(f =>
@@ -479,7 +479,7 @@ export function MassUploadWizard({ isOpen, onClose, existingFolders, inline = fa
     );
   };
 
-  // Ajouter/retirer un segment
+  // Add/remove a segment
   const toggleSegment = (fileId: string, segment: string) => {
     setUploadedFiles(prev =>
       prev.map(f => {
@@ -492,7 +492,7 @@ export function MassUploadWizard({ isOpen, onClose, existingFolders, inline = fa
     );
   };
 
-  // Ajouter/retirer un investisseur
+  // Add/remove an investor
   const toggleInvestor = (fileId: string, investorId: string) => {
     setUploadedFiles(prev =>
       prev.map(f => {
@@ -505,7 +505,7 @@ export function MassUploadWizard({ isOpen, onClose, existingFolders, inline = fa
     );
   };
 
-  // Ajouter/retirer une souscription
+  // Add/remove a subscription
   const toggleSubscription = (fileId: string, subscriptionId: string) => {
     setUploadedFiles(prev =>
       prev.map(f => {
@@ -518,7 +518,7 @@ export function MassUploadWizard({ isOpen, onClose, existingFolders, inline = fa
     );
   };
 
-  // Ajouter/retirer un fonds
+  // Add/remove a fund
   const toggleFund = (fileId: string, fundId: string) => {
     setUploadedFiles(prev =>
       prev.map(f => {
@@ -531,7 +531,7 @@ export function MassUploadWizard({ isOpen, onClose, existingFolders, inline = fa
     );
   };
 
-  // Ajouter/retirer un rôle
+  // Add/remove a role
   const toggleRole = (fileId: string, role: string) => {
     setUploadedFiles(prev =>
       prev.map(f => {
@@ -544,7 +544,7 @@ export function MassUploadWizard({ isOpen, onClose, existingFolders, inline = fa
     );
   };
 
-  // Ajouter un tag
+  // Add a tag
   const addTag = (fileId: string, tag: string) => {
     if (!tag.trim()) return;
     setUploadedFiles(prev =>
@@ -556,7 +556,7 @@ export function MassUploadWizard({ isOpen, onClose, existingFolders, inline = fa
     );
   };
 
-  // Retirer un tag
+  // Remove a tag
   const removeTag = (fileId: string, tag: string) => {
     setUploadedFiles(prev =>
       prev.map(f => {
@@ -566,89 +566,89 @@ export function MassUploadWizard({ isOpen, onClose, existingFolders, inline = fa
     );
   };
 
-  // Télécharger la liste des destinataires en CSV
+  // Download the list of recipients as CSV
   const handleDownloadRecipients = (file: UploadedFile) => {
     const recipients: string[] = [];
-    
+
     file.targetInvestors.forEach(invId => {
       const investor = availableInvestors.find(i => i.id === invId);
       if (investor) {
-        // Investisseur principal (To)
-        recipients.push(`"To","${investor.name}","${investor.email}","Investisseur Principal","${investor.company || ''}"`);
-        
+        // Main investor (To)
+        recipients.push(`"To","${investor.name}","${investor.email}","Main Investor","${investor.company || ''}"`);
+
         // Contacts (Cc)
         investor.contacts.forEach(contact => {
           recipients.push(`"Cc","${contact.name}","${contact.email}","${contact.role}","${investor.company || ''}"`);
         });
       }
     });
-    
+
     const csvContent = [
-      'Type,Nom,Email,Rôle,Société',
+      'Type,Name,Email,Role,Company',
       ...recipients
     ].join('\n');
-    
+
     const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
     const link = document.createElement('a');
     const url = URL.createObjectURL(blob);
-    
+
     link.setAttribute('href', url);
-    link.setAttribute('download', `destinataires-${file.name}.csv`);
+    link.setAttribute('download', `recipients-${file.name}.csv`);
     link.style.visibility = 'hidden';
     document.body.appendChild(link);
     link.click();
     document.body.removeChild(link);
-    
-    toast.success('Export CSV réussi', {
-      description: `${recipients.length} destinataires exportés`
+
+    toast.success('CSV export successful', {
+      description: `${recipients.length} recipients exported`
     });
   };
 
-  // Télécharger le scope de ciblage en CSV
+  // Download the targeting scope as CSV
   const handleDownloadScope = (file: UploadedFile) => {
     const scopeData: string[] = [];
-    
+
     file.targetInvestors.forEach(invId => {
       const investor = availableInvestors.find(i => i.id === invId);
       if (investor) {
         const lpCount = 12; // Mock LP count per investor
         const contactCount = investor.contacts.length;
-        
+
         scopeData.push(`"${investor.name}","${investor.email}","${lpCount}","${contactCount}","${investor.segment}","${investor.fund}"`);
       }
     });
-    
+
     const csvContent = [
-      'Investisseur,Email,Nb LP,Nb Contacts,Segment,Fonds',
+      'Investor,Email,LP Count,Contact Count,Segment,Fund',
       ...scopeData
     ].join('\n');
-    
+
     const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
     const link = document.createElement('a');
     const url = URL.createObjectURL(blob);
-    
+
     link.setAttribute('href', url);
     link.setAttribute('download', `scope-${file.name}.csv`);
     link.style.visibility = 'hidden';
     document.body.appendChild(link);
     link.click();
     document.body.removeChild(link);
-    
-    toast.success('Export du scope réussi', {
-      description: `Scope de ciblage exporté`
+
+    toast.success('Scope export successful', {
+      description: `Targeting scope exported`
     });
   };
 
   const handleFinish = () => {
     const hasErrors = uploadedFiles.some(f => f.status === 'uploading' || f.status === 'error');
-    
+
     if (hasErrors) {
-      toast.error('Erreur', { description: 'Certains fichiers sont encore en cours d\'upload ou en erreur' });
+      toast.error('Error', { description: 'Some files are still uploading or in error' });
       return;
     }
 
-    toast.success('Import réussi', {
-      description: `${uploadedFiles.length} document(s) ont été importés avec succès`
+    toast.success('Import successful', {
+      description: `${uploadedFiles.length} document(s) were successfully imported`
     });
     onClose();
   };
@@ -694,7 +694,7 @@ export function MassUploadWizard({ isOpen, onClose, existingFolders, inline = fa
     }
   };
 
-  // Statistiques des fichiers
+  // File statistics
   const fileStats = useMemo(() => {
     return {
       total: uploadedFiles.length,
@@ -705,17 +705,17 @@ export function MassUploadWizard({ isOpen, onClose, existingFolders, inline = fa
     };
   }, [uploadedFiles]);
 
-  // Toast quand tous les fichiers sont analysés
+  // Toast when all files are analyzed
   useEffect(() => {
     if (fileStats.total > 0 && fileStats.uploaded === fileStats.total && !allAnalyzedToastShown) {
-      toast.success('Analyse terminée !', { 
-        description: `${fileStats.total} fichier(s) pré-remplis par l'IA`,
+      toast.success('Analysis completed!', {
+        description: `${fileStats.total} file(s) pre-filled by AI`,
         duration: 5000,
       });
       setAllAnalyzedToastShown(true);
     }
-    
-    // Reset le flag quand on supprime des fichiers
+
+    // Reset the flag when files are deleted
     if (fileStats.total === 0) {
       setAllAnalyzedToastShown(false);
     }
@@ -749,11 +749,11 @@ export function MassUploadWizard({ isOpen, onClose, existingFolders, inline = fa
                 <Upload className="w-6 h-6 text-white" />
               </div>
               <div>
-                <h2 className="font-semibold text-gray-900">Import Massif de Documents</h2>
+                <h2 className="font-semibold text-gray-900">Bulk Document Import</h2>
                 <p className="text-sm text-gray-500">
-                  {isReviewStep 
-                    ? `Document ${currentReviewingDocIndex + 1} sur ${uploadedFiles.length}`
-                    : `Étape ${deepReview && currentStep > 1 + uploadedFiles.length ? 'finale' : currentStep} sur ${totalSteps}`
+                  {isReviewStep
+                    ? `Document ${currentReviewingDocIndex + 1} of ${uploadedFiles.length}`
+                    : `Step ${deepReview && currentStep > 1 + uploadedFiles.length ? 'final' : currentStep} of ${totalSteps}`
                   }
                 </p>
               </div>
@@ -776,7 +776,7 @@ export function MassUploadWizard({ isOpen, onClose, existingFolders, inline = fa
               {!deepReview ? (
                 // Standard 2-step flow
                 [
-                  { num: 1, label: 'Upload & Analyse IA', icon: Sparkles },
+                  { num: 1, label: 'Upload & AI Analysis', icon: Sparkles },
                   { num: 2, label: 'Configuration', icon: Check }
                 ].map((step, idx) => (
                   <div key={step.num} className="flex items-center flex-1">
@@ -808,9 +808,9 @@ export function MassUploadWizard({ isOpen, onClose, existingFolders, inline = fa
               ) : (
                 // Deep review flow with 3 steps
                 [
-                  { num: 1, label: 'Upload & Analyse', icon: Sparkles },
-                  { num: 2, label: 'Revue approfondie', icon: Eye, isRange: true },
-                  { num: 3, label: 'Validation finale', icon: Check }
+                  { num: 1, label: 'Upload & Analysis', icon: Sparkles },
+                  { num: 2, label: 'Deep Review', icon: Eye, isRange: true },
+                  { num: 3, label: 'Final Validation', icon: Check }
                 ].map((step, idx) => {
                   const stepNum = step.num === 2 ? (currentStep > 1 && currentStep <= 1 + uploadedFiles.length ? currentStep : 2) : 
                                   step.num === 3 ? totalSteps : step.num;
@@ -876,10 +876,10 @@ export function MassUploadWizard({ isOpen, onClose, existingFolders, inline = fa
                   <div className="mb-4">
                     <h3 className="font-semibold text-gray-900 flex items-center gap-2">
                       <Info className="w-4 h-4 text-blue-600" />
-                      Upload massif de documents
+                      Bulk document upload
                     </h3>
                     <p className="text-sm text-gray-500 mt-1">
-                      Uploadez vos documents ou saisissez les informations manuellement
+                      Upload your documents or enter the information manually
                     </p>
                   </div>
 
@@ -887,7 +887,7 @@ export function MassUploadWizard({ isOpen, onClose, existingFolders, inline = fa
                   <div className="space-y-3">
                     <div className="flex items-center gap-2 text-sm font-medium text-gray-700">
                       <Sparkles className="w-4 h-4 text-purple-600" />
-                      Upload intelligent
+                      Smart upload
                     </div>
                     
                     <input
@@ -940,11 +940,11 @@ export function MassUploadWizard({ isOpen, onClose, existingFolders, inline = fa
                           <Upload className="w-10 h-10 text-gray-400 group-hover:text-purple-600 mx-auto mb-3 transition-colors" />
                         </motion.div>
                         <p className="font-medium text-gray-700 group-hover:text-purple-700 transition-colors">
-                          Cliquez pour uploader vos documents
+                          Click to upload your documents
                         </p>
                         <p className="text-xs text-gray-500 mt-2 flex items-center gap-1.5 justify-center">
                           <Sparkles className="w-3.5 h-3.5 text-purple-500" />
-                          L'IA va pré-remplir automatiquement les champs
+                          AI will automatically pre-fill the fields
                         </p>
                         <p className="text-xs text-gray-400 mt-1">PDF, Word, Excel, PowerPoint (max. 50MB)</p>
                       </div>
@@ -962,21 +962,21 @@ export function MassUploadWizard({ isOpen, onClose, existingFolders, inline = fa
                         <Eye className="w-5 h-5 text-blue-600 flex-shrink-0 mt-0.5" />
                         <div className="flex-1">
                           <div className="flex items-center justify-between mb-2">
-                            <h4 className="font-semibold text-gray-900">Revue approfondie</h4>
+                            <h4 className="font-semibold text-gray-900">Deep review</h4>
                             <Switch
                               checked={deepReview}
                               onCheckedChange={setDeepReview}
                             />
                           </div>
                           <p className="text-sm text-gray-600">
-                            Examinez chaque document individuellement avec une visionneuse interactive et ajustez les métadonnées extraites par l'IA avant la validation finale.
+                            Examine each document individually with an interactive viewer and adjust the metadata extracted by AI before the final validation.
                           </p>
                         </div>
                       </div>
                     </motion.div>
                   )}
 
-                  {/* Info banner pendant l'analyse */}
+                  {/* Info banner during analysis */}
                   {(fileStats.uploading > 0 || fileStats.analyzing > 0) && (
                     <motion.div
                       initial={{ opacity: 0, y: -10 }}
@@ -992,12 +992,12 @@ export function MassUploadWizard({ isOpen, onClose, existingFolders, inline = fa
                         </motion.div>
                         <div className="flex-1">
                           <h4 className="font-semibold text-gray-900 mb-1">
-                            {fileStats.analyzing > 0 ? 'Analyse IA en cours...' : 'Upload en cours...'}
+                            {fileStats.analyzing > 0 ? 'AI analysis in progress...' : 'Upload in progress...'}
                           </h4>
                           <p className="text-sm text-gray-600">
-                            {fileStats.analyzing > 0 
-                              ? `L'IA analyse ${fileStats.analyzing} document(s) pour pré-remplir automatiquement tous les champs : nom, description, ciblage, permissions, tags...`
-                              : `Upload de ${fileStats.uploading} document(s) en cours...`
+                            {fileStats.analyzing > 0
+                              ? `AI is analyzing ${fileStats.analyzing} document(s) to automatically pre-fill all fields: name, description, targeting, permissions, tags...`
+                              : `Uploading ${fileStats.uploading} document(s)...`
                             }
                           </p>
                         </div>
@@ -1009,7 +1009,7 @@ export function MassUploadWizard({ isOpen, onClose, existingFolders, inline = fa
                   {uploadedFiles.length > 0 && (
                     <div className="space-y-3">
                       <div className="flex items-center justify-between">
-                        <h4 className="font-medium text-gray-900">Fichiers ({uploadedFiles.length})</h4>
+                        <h4 className="font-medium text-gray-900">Files ({uploadedFiles.length})</h4>
                         <div className="flex items-center gap-2">
                           {fileStats.uploading > 0 && (
                             <Badge className="bg-blue-100 text-blue-700 border-blue-200">
@@ -1025,7 +1025,7 @@ export function MassUploadWizard({ isOpen, onClose, existingFolders, inline = fa
                               >
                                 <Sparkles className="w-3 h-3 mr-1" />
                               </motion.div>
-                              {fileStats.analyzing} Analyse IA...
+                              {fileStats.analyzing} AI Analysis...
                             </Badge>
                           )}
                           {fileStats.uploaded === fileStats.total && fileStats.total > 0 && (
@@ -1036,7 +1036,7 @@ export function MassUploadWizard({ isOpen, onClose, existingFolders, inline = fa
                             >
                               <Badge className="bg-emerald-100 text-emerald-700 border-emerald-200">
                                 <CheckCircle2 className="w-3 h-3 mr-1" />
-                                Tous analysés
+                                All analyzed
                               </Badge>
                             </motion.div>
                           )}
@@ -1078,7 +1078,7 @@ export function MassUploadWizard({ isOpen, onClose, existingFolders, inline = fa
                                 {file.status === 'uploading' && (
                                   <span className="text-xs text-blue-700 font-medium flex items-center gap-1">
                                     <Loader2 className="w-3 h-3 animate-spin" />
-                                    Upload en cours...
+                                    Uploading...
                                   </span>
                                 )}
                                 {file.status === 'analyzing' && (
@@ -1089,19 +1089,19 @@ export function MassUploadWizard({ isOpen, onClose, existingFolders, inline = fa
                                     >
                                       <Sparkles className="w-3 h-3" />
                                     </motion.div>
-                                    Analyse IA en cours...
+                                    AI analysis in progress...
                                   </span>
                                 )}
                                 {file.status === 'uploaded' && (
                                   <span className="text-xs text-emerald-700 font-medium flex items-center gap-1">
                                     <CheckCircle2 className="w-3 h-3" />
-                                    Analysé et prêt
+                                    Analyzed and ready
                                   </span>
                                 )}
                                 {file.status === 'error' && (
                                   <span className="text-xs text-red-700 font-medium flex items-center gap-1">
                                     <AlertCircle className="w-3 h-3" />
-                                    Erreur
+                                    Error
                                   </span>
                                 )}
                               </div>
@@ -1179,10 +1179,10 @@ export function MassUploadWizard({ isOpen, onClose, existingFolders, inline = fa
                       <div className="flex-1">
                         <h3 className="font-semibold text-gray-900 mb-1 flex items-center gap-2">
                           <Eye className="w-5 h-5 text-blue-600" />
-                          Revue du document {currentReviewingDocIndex + 1}/{uploadedFiles.length}
+                          Document review {currentReviewingDocIndex + 1}/{uploadedFiles.length}
                         </h3>
                         <p className="text-sm text-gray-600">
-                          Vérifiez le document et ajustez les métadonnées extraites par l'IA
+                          Check the document and adjust the metadata extracted by AI
                         </p>
                       </div>
                       <Badge className="bg-blue-100 text-blue-700 border-blue-300">
@@ -1199,7 +1199,7 @@ export function MassUploadWizard({ isOpen, onClose, existingFolders, inline = fa
                       <div className="bg-white border-b border-gray-200 px-4 py-3 flex items-center justify-between">
                         <div className="flex items-center gap-2">
                           <FileText className="w-4 h-4 text-gray-600" />
-                          <span className="text-sm font-medium text-gray-700">Aperçu du document</span>
+                          <span className="text-sm font-medium text-gray-700">Document preview</span>
                         </div>
                         <div className="flex items-center gap-2">
                           <Button
@@ -1254,7 +1254,7 @@ export function MassUploadWizard({ isOpen, onClose, existingFolders, inline = fa
                                 {currentReviewDoc.file.name}
                               </h4>
                               <p className="text-sm text-gray-500 mb-4">
-                                Aperçu du document PDF
+                                PDF document preview
                               </p>
                               <div className="space-y-2 text-left w-full max-w-md">
                                 <div className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
@@ -1262,7 +1262,7 @@ export function MassUploadWizard({ isOpen, onClose, existingFolders, inline = fa
                                   <Badge variant="outline">{currentReviewDoc.file.type || 'PDF'}</Badge>
                                 </div>
                                 <div className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
-                                  <span className="text-sm text-gray-600">Taille</span>
+                                  <span className="text-sm text-gray-600">Size</span>
                                   <Badge variant="outline">{currentReviewDoc.size}</Badge>
                                 </div>
                                 <div className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
@@ -1281,15 +1281,15 @@ export function MassUploadWizard({ isOpen, onClose, existingFolders, inline = fa
                       <div className="bg-gradient-to-r from-amber-50 to-orange-50 border-b border-amber-200 px-4 py-3">
                         <div className="flex items-center gap-2">
                           <Sparkles className="w-4 h-4 text-amber-600" />
-                          <span className="text-sm font-semibold text-gray-900">Métadonnées extraites par l'IA</span>
+                          <span className="text-sm font-semibold text-gray-900">Metadata extracted by AI</span>
                         </div>
                       </div>
-                      
+
                       <div className="flex-1 overflow-y-auto p-4 space-y-4">
-                        {/* Nom du document */}
+                        {/* Document name */}
                         <div>
                           <Label className="text-xs font-semibold text-gray-700 mb-1.5 block">
-                            Nom du document
+                            Document name
                           </Label>
                           <Input
                             value={currentReviewDoc.name}
@@ -1311,10 +1311,10 @@ export function MassUploadWizard({ isOpen, onClose, existingFolders, inline = fa
                           />
                         </div>
 
-                        {/* Dossier */}
+                        {/* Folder */}
                         <div>
                           <Label className="text-xs font-semibold text-gray-700 mb-1.5 block">
-                            Dossier de destination
+                            Destination folder
                           </Label>
                           <Select
                             value={currentReviewDoc.folder}
@@ -1335,10 +1335,10 @@ export function MassUploadWizard({ isOpen, onClose, existingFolders, inline = fa
                           </Select>
                         </div>
 
-                        {/* Langue */}
+                        {/* Language */}
                         <div>
                           <Label className="text-xs font-semibold text-gray-700 mb-1.5 block">
-                            Langue du document
+                            Document language
                           </Label>
                           <Select
                             value={currentReviewDoc.language}
@@ -1363,7 +1363,7 @@ export function MassUploadWizard({ isOpen, onClose, existingFolders, inline = fa
                         {/* Tags */}
                         <div>
                           <Label className="text-xs font-semibold text-gray-700 mb-1.5 block">
-                            Tags (séparés par virgule)
+                            Tags (comma separated)
                           </Label>
                           <Input
                             value={currentReviewDoc.tags.join(', ')}
@@ -1371,7 +1371,7 @@ export function MassUploadWizard({ isOpen, onClose, existingFolders, inline = fa
                               const tags = e.target.value.split(',').map(t => t.trim()).filter(Boolean);
                               handleUpdateFile(currentReviewDoc.id, 'tags', tags);
                             }}
-                            placeholder="Financier, Q1 2024, Rapport..."
+                            placeholder="Financial, Q1 2024, Report..."
                             className="text-sm"
                           />
                           {currentReviewDoc.tags.length > 0 && (
@@ -1392,14 +1392,14 @@ export function MassUploadWizard({ isOpen, onClose, existingFolders, inline = fa
                           </Label>
                           <div className="space-y-2">
                             <div className="flex items-center justify-between p-2.5 bg-gray-50 rounded-lg">
-                              <span className="text-sm text-gray-700">Téléchargeable</span>
+                              <span className="text-sm text-gray-700">Downloadable</span>
                               <Switch
                                 checked={currentReviewDoc.downloadable}
                                 onCheckedChange={(checked) => handleUpdateFile(currentReviewDoc.id, 'downloadable', checked)}
                               />
                             </div>
                             <div className="flex items-center justify-between p-2.5 bg-gray-50 rounded-lg">
-                              <span className="text-sm text-gray-700">Imprimable</span>
+                              <span className="text-sm text-gray-700">Printable</span>
                               <Switch
                                 checked={currentReviewDoc.printable}
                                 onCheckedChange={(checked) => handleUpdateFile(currentReviewDoc.id, 'printable', checked)}
@@ -1418,7 +1418,7 @@ export function MassUploadWizard({ isOpen, onClose, existingFolders, inline = fa
                         {/* Statistics */}
                         <div className="pt-3 border-t border-gray-200">
                           <Label className="text-xs font-semibold text-gray-700 mb-2 block">
-                            Statistiques du document
+                            Document statistics
                           </Label>
                           <div className="grid grid-cols-2 gap-2">
                             <div className="p-3 bg-blue-50 rounded-lg border border-blue-200">
@@ -1426,7 +1426,7 @@ export function MassUploadWizard({ isOpen, onClose, existingFolders, inline = fa
                               <div className="text-lg font-semibold text-blue-900">{currentReviewDoc.pageCount}</div>
                             </div>
                             <div className="p-3 bg-purple-50 rounded-lg border border-purple-200">
-                              <div className="text-xs text-purple-600 font-medium mb-0.5">Taille</div>
+                              <div className="text-xs text-purple-600 font-medium mb-0.5">Size</div>
                               <div className="text-lg font-semibold text-purple-900">{currentReviewDoc.size}</div>
                             </div>
                           </div>
@@ -1450,9 +1450,9 @@ export function MassUploadWizard({ isOpen, onClose, existingFolders, inline = fa
                     <div className="flex items-start gap-3">
                       <Edit3 className="w-5 h-5 text-amber-600 flex-shrink-0 mt-0.5" />
                       <div className="flex-1">
-                        <h3 className="font-semibold text-gray-900 mb-1">Configuration des documents</h3>
+                        <h3 className="font-semibold text-gray-900 mb-1">Document configuration</h3>
                         <p className="text-sm text-gray-600">
-                          Vérifiez et modifiez les informations pré-remplies par l'IA. Cliquez sur une cellule pour l'éditer.
+                          Check and modify the information pre-filled by AI. Click a cell to edit it.
                         </p>
                       </div>
                       <div className="flex items-center gap-2">
@@ -1462,49 +1462,49 @@ export function MassUploadWizard({ isOpen, onClose, existingFolders, inline = fa
                               variant="outline"
                               size="sm"
                               onClick={() => {
-                                // Exporter la configuration en CSV
+                                // Export configuration as CSV
                                 const headers = [
-                                  'Nom du document',
+                                  'Document name',
                                   'Description',
-                                  'Dossier',
-                                  'Langue',
-                                  'Restreindre à langue',
-                                  'Type de ciblage',
+                                  'Folder',
+                                  'Language',
+                                  'Restrict to language',
+                                  'Targeting type',
                                   'Segments',
-                                  'Investisseurs',
-                                  'Souscriptions',
-                                  'Fonds',
+                                  'Investors',
+                                  'Subscriptions',
+                                  'Funds',
                                   'Watermark',
-                                  'Téléchargeable',
-                                  'Imprimable',
+                                  'Downloadable',
+                                  'Printable',
                                   'Tags',
-                                  'Notifier',
-                                  'Template email',
-                                  'Masquer label nouveau',
+                                  'Notify',
+                                  'Email template',
+                                  'Hide new label',
                                   'Reporting',
-                                  'Date ajout',
-                                  'Équipe validation'
+                                  'Add date',
+                                  'Validation team'
                                 ];
-                                
+
                                 const rows = uploadedFiles.map(file => [
                                   file.name,
                                   file.description,
                                   file.folder,
                                   file.language,
-                                  file.restrictToLanguage ? 'Oui' : 'Non',
+                                  file.restrictToLanguage ? 'Yes' : 'No',
                                   file.targetType,
                                   file.targetSegments.join(';'),
                                   file.targetInvestors.join(';'),
                                   file.targetSubscriptions.join(';'),
                                   file.targetFunds.join(';'),
-                                  file.watermark ? 'Oui' : 'Non',
-                                  file.downloadable ? 'Oui' : 'Non',
-                                  file.printable ? 'Oui' : 'Non',
+                                  file.watermark ? 'Yes' : 'No',
+                                  file.downloadable ? 'Yes' : 'No',
+                                  file.printable ? 'Yes' : 'No',
                                   file.tags.join(';'),
-                                  file.notify ? 'Oui' : 'Non',
+                                  file.notify ? 'Yes' : 'No',
                                   file.emailTemplate,
-                                  file.hideNewLabel ? 'Oui' : 'Non',
-                                  file.reporting ? 'Oui' : 'Non',
+                                  file.hideNewLabel ? 'Yes' : 'No',
+                                  file.reporting ? 'Yes' : 'No',
                                   file.addDate,
                                   file.validationTeam.join(';')
                                 ]);
@@ -1523,18 +1523,18 @@ export function MassUploadWizard({ isOpen, onClose, existingFolders, inline = fa
                                 link.href = URL.createObjectURL(blob);
                                 link.download = `configuration_documents_${new Date().toISOString().split('T')[0]}.csv`;
                                 link.click();
-                                
-                                toast.success('Configuration exportée', {
-                                  description: `${uploadedFiles.length} documents exportés en CSV`
+
+                                toast.success('Configuration exported', {
+                                  description: `${uploadedFiles.length} documents exported as CSV`
                                 });
                               }}
                               className="gap-2 bg-white hover:bg-amber-50 border-amber-300 hover:border-amber-400"
                             >
                               <Download className="w-4 h-4 text-amber-600" />
-                              Exporter
+                              Export
                             </Button>
                           </TooltipTrigger>
-                          <TooltipContent>Exporter la configuration en CSV</TooltipContent>
+                          <TooltipContent>Export configuration as CSV</TooltipContent>
                         </Tooltip>
                         
                         <Tooltip>
@@ -1543,35 +1543,35 @@ export function MassUploadWizard({ isOpen, onClose, existingFolders, inline = fa
                               variant="outline"
                               size="sm"
                               onClick={() => {
-                                // Créer un input file invisible
+                                // Create an invisible file input
                                 const input = document.createElement('input');
                                 input.type = 'file';
                                 input.accept = '.csv';
                                 input.onchange = (e: any) => {
                                   const file = e.target.files?.[0];
                                   if (!file) return;
-                                  
+
                                   const reader = new FileReader();
                                   reader.onload = (event) => {
                                     try {
                                       const text = event.target?.result as string;
                                       const lines = text.split('\n');
                                       const headers = lines[0].split(',');
-                                      
-                                      toast.success('Import en cours...', {
-                                        description: 'Analyse du fichier CSV'
+
+                                      toast.success('Import in progress...', {
+                                        description: 'Analyzing CSV file'
                                       });
-                                      
-                                      // Simuler un délai de traitement
+
+                                      // Simulate processing delay
                                       setTimeout(() => {
-                                        toast.success('Configuration importée', {
-                                          description: `${lines.length - 1} lignes détectées. Fonctionnalité complète à venir.`
+                                        toast.success('Configuration imported', {
+                                          description: `${lines.length - 1} rows detected. Full functionality coming soon.`
                                         });
                                       }, 500);
-                                      
+
                                     } catch (error) {
-                                      toast.error('Erreur d\'import', {
-                                        description: 'Le fichier CSV est invalide'
+                                      toast.error('Import error', {
+                                        description: 'The CSV file is invalid'
                                       });
                                     }
                                   };
@@ -1582,10 +1582,10 @@ export function MassUploadWizard({ isOpen, onClose, existingFolders, inline = fa
                               className="gap-2 bg-white hover:bg-amber-50 border-amber-300 hover:border-amber-400"
                             >
                               <Upload className="w-4 h-4 text-amber-600" />
-                              Importer
+                              Import
                             </Button>
                           </TooltipTrigger>
-                          <TooltipContent>Importer une configuration CSV</TooltipContent>
+                          <TooltipContent>Import a CSV configuration</TooltipContent>
                         </Tooltip>
                       </div>
                     </div>
@@ -1623,12 +1623,12 @@ export function MassUploadWizard({ isOpen, onClose, existingFolders, inline = fa
                               >
                                 <Badge className="bg-gradient-to-r from-blue-600 to-indigo-600 text-white px-4 py-2 text-sm font-semibold shadow-md">
                                   <Sparkles className="w-4 h-4 mr-2" />
-                                  {selectedFiles.length} document{selectedFiles.length > 1 ? 's' : ''} sélectionné{selectedFiles.length > 1 ? 's' : ''}
+                                  {selectedFiles.length} document{selectedFiles.length > 1 ? 's' : ''} selected
                                 </Badge>
                               </motion.div>
                               <span className="font-semibold text-gray-800 flex items-center gap-2">
                                 <Edit3 className="w-4 h-4 text-blue-600" />
-                                Modification en masse
+                                Bulk edit
                               </span>
                             </div>
                             <div className="flex items-center gap-2">
@@ -1640,7 +1640,7 @@ export function MassUploadWizard({ isOpen, onClose, existingFolders, inline = fa
                                   className="gap-2 bg-white/80 backdrop-blur-sm hover:bg-white border-blue-300 hover:border-blue-400 shadow-sm hover:shadow-md transition-all duration-200"
                                 >
                                   <Edit3 className="w-4 h-4" />
-                                  {showBulkEdit ? 'Masquer' : 'Afficher'} les options
+                                  {showBulkEdit ? 'Hide' : 'Show'} options
                                 </Button>
                               </motion.div>
                               <motion.div whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}>
@@ -1651,7 +1651,7 @@ export function MassUploadWizard({ isOpen, onClose, existingFolders, inline = fa
                                   className="gap-2 bg-white/80 backdrop-blur-sm hover:bg-red-50 border-gray-300 hover:border-red-300 text-gray-700 hover:text-red-600 shadow-sm hover:shadow-md transition-all duration-200"
                                 >
                                   <X className="w-4 h-4" />
-                                  Désélectionner
+                                  Deselect
                                 </Button>
                               </motion.div>
                             </div>
@@ -1674,11 +1674,11 @@ export function MassUploadWizard({ isOpen, onClose, existingFolders, inline = fa
                                 >
                                   <Label className="text-xs font-semibold text-gray-700 flex items-center gap-1.5">
                                     <Folder className="w-3.5 h-3.5 text-amber-600" />
-                                    Dossier de destination
+                                    Destination folder
                                   </Label>
                                   <Select onValueChange={(value) => handleBulkUpdate('folder', value)}>
                                     <SelectTrigger className="text-sm h-10 bg-white/80 backdrop-blur-sm border-amber-200 hover:border-amber-400 focus:border-amber-400 focus:ring-2 focus:ring-amber-100 transition-all shadow-sm">
-                                      <SelectValue placeholder="Changer le dossier..." />
+                                      <SelectValue placeholder="Change folder..." />
                                     </SelectTrigger>
                                     <SelectContent>
                                       {availableFolders.map((folder) => (
@@ -1701,11 +1701,11 @@ export function MassUploadWizard({ isOpen, onClose, existingFolders, inline = fa
                                 >
                                   <Label className="text-xs font-semibold text-gray-700 flex items-center gap-1.5">
                                     <Languages className="w-3.5 h-3.5 text-green-600" />
-                                    Langue du document
+                                    Document language
                                   </Label>
                                   <Select onValueChange={(value) => handleBulkUpdate('language', value)}>
                                     <SelectTrigger className="text-sm h-10 bg-white/80 backdrop-blur-sm border-green-200 hover:border-green-400 focus:border-green-400 focus:ring-2 focus:ring-green-100 transition-all shadow-sm">
-                                      <SelectValue placeholder="Changer la langue..." />
+                                      <SelectValue placeholder="Change language..." />
                                     </SelectTrigger>
                                     <SelectContent>
                                       {availableLanguages.map((lang) => (
@@ -1728,17 +1728,17 @@ export function MassUploadWizard({ isOpen, onClose, existingFolders, inline = fa
                                 >
                                   <Label className="text-xs font-semibold text-gray-700 flex items-center gap-1.5">
                                     <Users className="w-3.5 h-3.5 text-purple-600" />
-                                    Type de ciblage
+                                    Targeting type
                                   </Label>
                                   <Select onValueChange={(value) => handleBulkUpdate('targetType', value)}>
                                     <SelectTrigger className="text-sm h-10 bg-white/80 backdrop-blur-sm border-purple-200 hover:border-purple-400 focus:border-purple-400 focus:ring-2 focus:ring-purple-100 transition-all shadow-sm">
-                                      <SelectValue placeholder="Changer le ciblage..." />
+                                      <SelectValue placeholder="Change targeting..." />
                                     </SelectTrigger>
                                     <SelectContent>
                                       <SelectItem value="all" className="hover:bg-purple-50 cursor-pointer">
                                         <div className="flex items-center gap-2">
                                           <Users className="w-3 h-3 text-gray-500" />
-                                          Tous
+                                          All
                                         </div>
                                       </SelectItem>
                                       <SelectItem value="segment" className="hover:bg-purple-50 cursor-pointer">
@@ -1750,13 +1750,13 @@ export function MassUploadWizard({ isOpen, onClose, existingFolders, inline = fa
                                       <SelectItem value="investor" className="hover:bg-purple-50 cursor-pointer">
                                         <div className="flex items-center gap-2">
                                           <Users className="w-3 h-3 text-purple-500" />
-                                          Investisseurs
+                                          Investors
                                         </div>
                                       </SelectItem>
                                       <SelectItem value="subscription" className="hover:bg-purple-50 cursor-pointer">
                                         <div className="flex items-center gap-2">
                                           <FileText className="w-3 h-3 text-indigo-500" />
-                                          Souscriptions
+                                          Subscriptions
                                         </div>
                                       </SelectItem>
                                     </SelectContent>
@@ -1770,7 +1770,7 @@ export function MassUploadWizard({ isOpen, onClose, existingFolders, inline = fa
                     )}
                   </AnimatePresence>
 
-                  {/* Tableau éditable - scroll horizontal */}
+                  {/* Editable table - horizontal scroll */}
                   <div className="border border-gray-200 rounded-xl overflow-hidden bg-white shadow-sm hover:shadow-md transition-shadow duration-300">
                     <div className="overflow-x-auto scrollbar-thin scrollbar-track-gray-100 scrollbar-thumb-gray-300">
                       <table className="w-full text-sm">
@@ -1786,13 +1786,13 @@ export function MassUploadWizard({ isOpen, onClose, existingFolders, inline = fa
                             <th className="px-4 py-4 text-left min-w-[160px] sticky left-[45px] bg-gradient-to-r from-gray-50 to-gray-50 z-20 border-b border-gray-200 shadow-[2px_0_4px_-2px_rgba(0,0,0,0.1)]">
                               <div className="flex items-center gap-2">
                                 <Eye className="w-4 h-4 text-blue-600" />
-                                <span className="font-semibold text-gray-900">Aperçu</span>
+                                <span className="font-semibold text-gray-900">Preview</span>
                               </div>
                             </th>
                             <th className="px-4 py-4 text-left min-w-[220px] border-b border-gray-200">
                               <div className="flex items-center gap-2">
                                 <FileText className="w-4 h-4 text-gray-600" />
-                                <span className="font-semibold text-gray-900">Nom du document</span>
+                                <span className="font-semibold text-gray-900">Document name</span>
                               </div>
                             </th>
                             <th className="px-4 py-4 text-left min-w-[280px] border-b border-gray-200">
@@ -1804,19 +1804,19 @@ export function MassUploadWizard({ isOpen, onClose, existingFolders, inline = fa
                             <th className="px-4 py-4 text-left min-w-[180px] border-b border-gray-200">
                               <div className="flex items-center gap-2">
                                 <Folder className="w-4 h-4 text-amber-600" />
-                                <span className="font-semibold text-gray-900">Dossier</span>
+                                <span className="font-semibold text-gray-900">Folder</span>
                               </div>
                             </th>
                             <th className="px-4 py-4 text-left min-w-[140px] border-b border-gray-200">
                               <div className="flex items-center gap-2">
                                 <Languages className="w-4 h-4 text-green-600" />
-                                <span className="font-semibold text-gray-900">Langue</span>
+                                <span className="font-semibold text-gray-900">Language</span>
                               </div>
                             </th>
                             <th className="px-4 py-4 text-left min-w-[240px] border-b border-gray-200">
                               <div className="flex items-center gap-2">
                                 <Users className="w-4 h-4 text-purple-600" />
-                                <span className="font-semibold text-gray-900">Ciblage</span>
+                                <span className="font-semibold text-gray-900">Targeting</span>
                               </div>
                             </th>
                             <th className="px-4 py-4 text-left min-w-[200px] border-b border-gray-200">
@@ -1834,19 +1834,19 @@ export function MassUploadWizard({ isOpen, onClose, existingFolders, inline = fa
                             <th className="px-4 py-4 text-left min-w-[120px] border-b border-gray-200">
                               <div className="flex items-center gap-2">
                                 <Bell className="w-4 h-4 text-orange-600" />
-                                <span className="font-semibold text-gray-900">Notifier</span>
+                                <span className="font-semibold text-gray-900">Notify</span>
                               </div>
                             </th>
                             <th className="px-4 py-4 text-left min-w-[220px] border-b border-gray-200">
                               <div className="flex items-center gap-2">
                                 <Mail className="w-4 h-4 text-blue-600" />
-                                <span className="font-semibold text-gray-900">Template Email</span>
+                                <span className="font-semibold text-gray-900">Email template</span>
                               </div>
                             </th>
                             <th className="px-4 py-4 text-left min-w-[140px] border-b border-gray-200">
                               <div className="flex items-center gap-2">
                                 <EyeOff className="w-4 h-4 text-gray-600" />
-                                <span className="font-semibold text-gray-900">Cacher "New"</span>
+                                <span className="font-semibold text-gray-900">Hide "New"</span>
                               </div>
                             </th>
                             <th className="px-4 py-4 text-left min-w-[120px] border-b border-gray-200">
@@ -1858,13 +1858,13 @@ export function MassUploadWizard({ isOpen, onClose, existingFolders, inline = fa
                             <th className="px-4 py-4 text-left min-w-[160px] border-b border-gray-200">
                               <div className="flex items-center gap-2">
                                 <Calendar className="w-4 h-4 text-violet-600" />
-                                <span className="font-semibold text-gray-900">Date d'ajout</span>
+                                <span className="font-semibold text-gray-900">Add date</span>
                               </div>
                             </th>
                             <th className="px-4 py-4 text-left min-w-[200px] border-b border-gray-200">
                               <div className="flex items-center gap-2">
                                 <Shield className="w-4 h-4 text-red-600" />
-                                <span className="font-semibold text-gray-900">Équipe validation</span>
+                                <span className="font-semibold text-gray-900">Validation team</span>
                               </div>
                             </th>
                             <th className="px-4 py-4 text-left min-w-[200px] border-b border-gray-200">
@@ -1878,45 +1878,45 @@ export function MassUploadWizard({ isOpen, onClose, existingFolders, inline = fa
                         <tbody className="divide-y divide-gray-100">
                           {uploadedFiles.map((file, idx) => {
                             const isSelected = selectedFiles.includes(file.id);
-                            // Calculer le scope dynamiquement selon le type de ciblage
+                            // Calculate scope dynamically based on targeting type
                             let lpCount = 0;
                             let contactCount = 0;
-                            
+
                             if (file.targetType === 'all') {
-                              // Tous les investisseurs
+                              // All investors
                               lpCount = availableInvestors.length;
                               contactCount = availableInvestors.reduce((sum, inv) => sum + inv.contacts.length, 0);
                             } else if (file.targetType === 'fund') {
-                              // Investisseurs dans les fonds sélectionnés (+ segments si sélectionnés)
-                              let investorsInFunds = availableInvestors.filter(inv => 
+                              // Investors in selected funds (+ segments if selected)
+                              let investorsInFunds = availableInvestors.filter(inv =>
                                 file.targetFunds.includes(inv.fund)
                               );
-                              
-                              // Si des segments sont aussi sélectionnés, filtrer davantage
+
+                              // If segments are also selected, filter further
                               if (file.targetSegments.length > 0) {
-                                investorsInFunds = investorsInFunds.filter(inv => 
+                                investorsInFunds = investorsInFunds.filter(inv =>
                                   file.targetSegments.includes(inv.segment)
                                 );
                               }
-                              
+
                               lpCount = investorsInFunds.length;
                               contactCount = investorsInFunds.reduce((sum, inv) => sum + inv.contacts.length, 0);
                             } else if (file.targetType === 'segment') {
-                              // Investisseurs dans les segments sélectionnés
-                              const investorsInSegments = availableInvestors.filter(inv => 
+                              // Investors in selected segments
+                              const investorsInSegments = availableInvestors.filter(inv =>
                                 file.targetSegments.includes(inv.segment)
                               );
                               lpCount = investorsInSegments.length;
                               contactCount = investorsInSegments.reduce((sum, inv) => sum + inv.contacts.length, 0);
                             } else if (file.targetType === 'investor') {
-                              // Investisseurs sélectionnés directement
-                              const selectedInvestors = availableInvestors.filter(inv => 
+                              // Directly selected investors
+                              const selectedInvestors = availableInvestors.filter(inv =>
                                 file.targetInvestors.includes(inv.id)
                               );
                               lpCount = selectedInvestors.length;
                               contactCount = selectedInvestors.reduce((sum, inv) => sum + inv.contacts.length, 0);
                             } else if (file.targetType === 'subscription') {
-                              // Investisseurs liés aux souscriptions sélectionnées
+                              // Investors linked to selected subscriptions
                               const investorsFromSubscriptions = availableSubscriptions
                                 .filter(sub => file.targetSubscriptions.includes(sub.id))
                                 .map(sub => sub.investor);
@@ -1951,7 +1951,7 @@ export function MassUploadWizard({ isOpen, onClose, existingFolders, inline = fa
                                 />
                               </td>
 
-                              {/* Aperçu */}
+                              {/* Preview */}
                               <td className={`px-4 py-4 sticky left-[45px] z-10 transition-all duration-200 shadow-[2px_0_4px_-2px_rgba(0,0,0,0.1)] ${
                                 isSelected ? 'bg-blue-50' : 'bg-white group-hover:bg-gray-50'
                               }`}>
@@ -2006,19 +2006,19 @@ export function MassUploadWizard({ isOpen, onClose, existingFolders, inline = fa
                                       className="flex items-center gap-1 text-xs text-blue-600 font-medium"
                                     >
                                       <Eye className="w-3 h-3" />
-                                      <span>Ouvrir</span>
+                                      <span>Open</span>
                                     </motion.div>
                                   </div>
                                 </motion.button>
                               </td>
 
-                              {/* Nom */}
+                              {/* Name */}
                               <td className="px-4 py-4">
                                 <Input
                                   value={file.name}
                                   onChange={(e) => handleUpdateFile(file.id, 'name', e.target.value)}
                                   className="text-sm font-medium border-gray-200 focus:border-blue-400 focus:ring-2 focus:ring-blue-100 transition-all duration-200 bg-white hover:bg-gray-50"
-                                  placeholder="Nom du document..."
+                                  placeholder="Document name..."
                                 />
                               </td>
 
@@ -2029,11 +2029,11 @@ export function MassUploadWizard({ isOpen, onClose, existingFolders, inline = fa
                                   onChange={(e) => handleUpdateFile(file.id, 'description', e.target.value)}
                                   className="text-sm min-h-[70px] border-gray-200 focus:border-blue-400 focus:ring-2 focus:ring-blue-100 transition-all duration-200 bg-white hover:bg-gray-50 resize-none"
                                   rows={3}
-                                  placeholder="Description du document..."
+                                  placeholder="Document description..."
                                 />
                               </td>
 
-                              {/* Dossier */}
+                              {/* Folder */}
                               <td className="px-4 py-4">
                                 <Select
                                   value={file.folder}
@@ -2060,7 +2060,7 @@ export function MassUploadWizard({ isOpen, onClose, existingFolders, inline = fa
                                 </Select>
                               </td>
 
-                              {/* Langue */}
+                              {/* Language */}
                               <td className="px-4 py-4">
                                 <div className="space-y-2.5">
                                   <Select
@@ -2087,24 +2087,24 @@ export function MassUploadWizard({ isOpen, onClose, existingFolders, inline = fa
                                       onCheckedChange={(checked) => handleUpdateFile(file.id, 'restrictToLanguage', checked)}
                                       className="data-[state=checked]:bg-green-600"
                                     />
-                                    <span className="text-xs text-gray-600 font-medium">Restreindre à cette langue</span>
+                                    <span className="text-xs text-gray-600 font-medium">Restrict to this language</span>
                                   </div>
                                 </div>
                               </td>
 
-                              {/* Ciblage - Type + Objet fusionnés */}
+                              {/* Targeting - Type + Object merged */}
                               <td className="px-4 py-4">
                                 <div className="space-y-2.5">
-                                  {/* Type de ciblage */}
+                                  {/* Targeting type */}
                                   <Select
                                     value={file.targetType}
                                     onValueChange={(value) => {
                                       handleUpdateFile(file.id, 'targetType', value);
-                                      // Vider les segments si on passe en investisseur ou souscription
+                                      // Clear segments if switching to investor or subscription
                                       if (value === 'investor' || value === 'subscription') {
                                         handleUpdateFile(file.id, 'targetSegments', []);
                                       }
-                                      // Vider les fonds si on ne sélectionne pas fund
+                                      // Clear funds if not selecting fund
                                       if (value !== 'fund') {
                                         handleUpdateFile(file.id, 'targetFunds', []);
                                       }
@@ -2117,13 +2117,13 @@ export function MassUploadWizard({ isOpen, onClose, existingFolders, inline = fa
                                       <SelectItem value="all" className="hover:bg-purple-50 cursor-pointer">
                                         <div className="flex items-center gap-2">
                                           <Users className="w-4 h-4 text-gray-500" />
-                                          <span className="font-medium">Tous</span>
+                                          <span className="font-medium">All</span>
                                         </div>
                                       </SelectItem>
                                       <SelectItem value="fund" className="hover:bg-purple-50 cursor-pointer">
                                         <div className="flex items-center gap-2">
                                           <Droplet className="w-4 h-4 text-teal-500" />
-                                          <span className="font-medium">Fonds</span>
+                                          <span className="font-medium">Funds</span>
                                         </div>
                                       </SelectItem>
                                       <SelectItem value="segment" className="hover:bg-purple-50 cursor-pointer">
@@ -2135,19 +2135,19 @@ export function MassUploadWizard({ isOpen, onClose, existingFolders, inline = fa
                                       <SelectItem value="investor" className="hover:bg-purple-50 cursor-pointer">
                                         <div className="flex items-center gap-2">
                                           <Users className="w-4 h-4 text-purple-500" />
-                                          <span className="font-medium">Investisseurs</span>
+                                          <span className="font-medium">Investors</span>
                                         </div>
                                       </SelectItem>
                                       <SelectItem value="subscription" className="hover:bg-purple-50 cursor-pointer">
                                         <div className="flex items-center gap-2">
                                           <FileText className="w-4 h-4 text-indigo-500" />
-                                          <span className="font-medium">Souscriptions</span>
+                                          <span className="font-medium">Subscriptions</span>
                                         </div>
                                       </SelectItem>
                                     </SelectContent>
                                   </Select>
 
-                                  {/* Objet sous-jacent - Investisseurs */}
+                                  {/* Underlying object - Investors */}
                                   {file.targetType === 'investor' && (
                                     <Popover>
                                       <PopoverTrigger asChild>
@@ -2163,19 +2163,19 @@ export function MassUploadWizard({ isOpen, onClose, existingFolders, inline = fa
                                           {file.targetInvestors.length > 0 ? (
                                             <span className="flex items-center gap-1.5 font-medium">
                                               <Users className="w-3.5 h-3.5" />
-                                              {file.targetInvestors.length} LP sélectionné{file.targetInvestors.length > 1 ? 's' : ''}
+                                              {file.targetInvestors.length} LP selected
                                             </span>
                                           ) : (
-                                            <span className="text-gray-500">Sélectionner des LP...</span>
+                                            <span className="text-gray-500">Select LPs...</span>
                                           )}
                                           <ChevronsUpDown className="ml-2 h-3.5 w-3.5 opacity-50" />
                                         </Button>
                                       </PopoverTrigger>
                                       <PopoverContent className="w-[240px] p-0" align="start">
                                         <Command>
-                                          <CommandInput placeholder="Rechercher un LP..." className="text-xs border-b" />
+                                          <CommandInput placeholder="Search for an LP..." className="text-xs border-b" />
                                           <CommandList>
-                                            <CommandEmpty className="py-6 text-center text-sm text-gray-500">Aucun investisseur trouvé.</CommandEmpty>
+                                            <CommandEmpty className="py-6 text-center text-sm text-gray-500">No investor found.</CommandEmpty>
                                             <CommandGroup>
                                               {availableInvestors.map((investor) => (
                                                 <CommandItem
@@ -2203,7 +2203,7 @@ export function MassUploadWizard({ isOpen, onClose, existingFolders, inline = fa
                                     </Popover>
                                   )}
 
-                                  {/* Objet sous-jacent - Fonds */}
+                                  {/* Underlying object - Funds */}
                                   {file.targetType === 'fund' && (
                                     <Popover>
                                       <PopoverTrigger asChild>
@@ -2219,19 +2219,19 @@ export function MassUploadWizard({ isOpen, onClose, existingFolders, inline = fa
                                           {file.targetFunds.length > 0 ? (
                                             <span className="flex items-center gap-1.5 font-medium">
                                               <Droplet className="w-3.5 h-3.5" />
-                                              {file.targetFunds.length} fonds sélectionné{file.targetFunds.length > 1 ? 's' : ''}
+                                              {file.targetFunds.length} fund{file.targetFunds.length > 1 ? 's' : ''} selected
                                             </span>
                                           ) : (
-                                            <span className="text-gray-500">Sélectionner des fonds...</span>
+                                            <span className="text-gray-500">Select funds...</span>
                                           )}
                                           <ChevronsUpDown className="ml-2 h-3.5 w-3.5 opacity-50" />
                                         </Button>
                                       </PopoverTrigger>
                                       <PopoverContent className="w-[260px] p-0" align="start">
                                         <Command>
-                                          <CommandInput placeholder="Rechercher un fonds..." className="text-xs border-b" />
+                                          <CommandInput placeholder="Search for a fund..." className="text-xs border-b" />
                                           <CommandList>
-                                            <CommandEmpty className="py-6 text-center text-sm text-gray-500">Aucun fonds trouvé.</CommandEmpty>
+                                            <CommandEmpty className="py-6 text-center text-sm text-gray-500">No fund found.</CommandEmpty>
                                             <CommandGroup>
                                               {availableFunds.map((fund) => (
                                                 <CommandItem
@@ -2258,7 +2258,7 @@ export function MassUploadWizard({ isOpen, onClose, existingFolders, inline = fa
                                     </Popover>
                                   )}
 
-                                  {/* Objet sous-jacent - Souscriptions */}
+                                  {/* Underlying object - Subscriptions */}
                                   {file.targetType === 'subscription' && (
                                     <Popover>
                                       <PopoverTrigger asChild>
@@ -2274,19 +2274,19 @@ export function MassUploadWizard({ isOpen, onClose, existingFolders, inline = fa
                                           {file.targetSubscriptions.length > 0 ? (
                                             <span className="flex items-center gap-1.5 font-medium">
                                               <FileText className="w-3.5 h-3.5" />
-                                              {file.targetSubscriptions.length} souscription{file.targetSubscriptions.length > 1 ? 's' : ''}
+                                              {file.targetSubscriptions.length} subscription{file.targetSubscriptions.length > 1 ? 's' : ''}
                                             </span>
                                           ) : (
-                                            <span className="text-gray-500">Sélectionner...</span>
+                                            <span className="text-gray-500">Select...</span>
                                           )}
                                           <ChevronsUpDown className="ml-2 h-3.5 w-3.5 opacity-50" />
                                         </Button>
                                       </PopoverTrigger>
                                       <PopoverContent className="w-[280px] p-0" align="start">
                                         <Command>
-                                          <CommandInput placeholder="Rechercher une souscription..." className="text-xs border-b" />
+                                          <CommandInput placeholder="Search for a subscription..." className="text-xs border-b" />
                                           <CommandList>
-                                            <CommandEmpty className="py-6 text-center text-sm text-gray-500">Aucune souscription trouvée.</CommandEmpty>
+                                            <CommandEmpty className="py-6 text-center text-sm text-gray-500">No subscription found.</CommandEmpty>
                                             <CommandGroup>
                                               {availableSubscriptions.map((subscription) => (
                                                 <CommandItem
@@ -2314,10 +2314,10 @@ export function MassUploadWizard({ isOpen, onClose, existingFolders, inline = fa
                                     </Popover>
                                   )}
                                   
-                                  {/* Afficher les éléments sélectionnés de manière explicite */}
+                                  {/* Explicitly display selected items */}
                                   {file.targetType === 'investor' && file.targetInvestors.length > 0 && (
                                     <div className="p-2 bg-purple-50/50 border border-purple-200 rounded-lg">
-                                      <p className="text-[10px] text-gray-500 font-medium mb-1.5">Ciblage défini :</p>
+                                      <p className="text-[10px] text-gray-500 font-medium mb-1.5">Targeting defined:</p>
                                       <div className="space-y-1">
                                         {file.targetInvestors.slice(0, 3).map(invId => {
                                           const investor = availableInvestors.find(i => i.id === invId);
@@ -2330,16 +2330,16 @@ export function MassUploadWizard({ isOpen, onClose, existingFolders, inline = fa
                                         })}
                                         {file.targetInvestors.length > 3 && (
                                           <div className="text-xs text-purple-600 font-semibold">
-                                            +{file.targetInvestors.length - 3} autre{file.targetInvestors.length - 3 > 1 ? 's' : ''}
+                                            +{file.targetInvestors.length - 3} more
                                           </div>
                                         )}
                                       </div>
                                     </div>
                                   )}
-                                  
+
                                   {file.targetType === 'fund' && file.targetFunds.length > 0 && (
                                     <div className="p-2 bg-teal-50/50 border border-teal-200 rounded-lg">
-                                      <p className="text-[10px] text-gray-500 font-medium mb-1.5">Ciblage défini :</p>
+                                      <p className="text-[10px] text-gray-500 font-medium mb-1.5">Targeting defined:</p>
                                       <div className="space-y-1">
                                         {file.targetFunds.map(fundId => {
                                           const fund = availableFunds.find(f => f.id === fundId);
@@ -2353,10 +2353,10 @@ export function MassUploadWizard({ isOpen, onClose, existingFolders, inline = fa
                                       </div>
                                     </div>
                                   )}
-                                  
+
                                   {file.targetType === 'subscription' && file.targetSubscriptions.length > 0 && (
                                     <div className="p-2 bg-indigo-50/50 border border-indigo-200 rounded-lg">
-                                      <p className="text-[10px] text-gray-500 font-medium mb-1.5">Ciblage défini :</p>
+                                      <p className="text-[10px] text-gray-500 font-medium mb-1.5">Targeting defined:</p>
                                       <div className="space-y-1">
                                         {file.targetSubscriptions.slice(0, 3).map(subId => {
                                           const subscription = availableSubscriptions.find(s => s.id === subId);
@@ -2369,7 +2369,7 @@ export function MassUploadWizard({ isOpen, onClose, existingFolders, inline = fa
                                         })}
                                         {file.targetSubscriptions.length > 3 && (
                                           <div className="text-xs text-indigo-600 font-semibold">
-                                            +{file.targetSubscriptions.length - 3} autre{file.targetSubscriptions.length - 3 > 1 ? 's' : ''}
+                                            +{file.targetSubscriptions.length - 3} more
                                           </div>
                                         )}
                                       </div>
@@ -2378,7 +2378,7 @@ export function MassUploadWizard({ isOpen, onClose, existingFolders, inline = fa
                                 </div>
                               </td>
 
-                              {/* Segments - Grisé si investor ou subscription, actif pour fund et segment */}
+                              {/* Segments - Grayed out if investor or subscription, active for fund and segment */}
                               <td className={`px-4 py-4 transition-all duration-200 ${
                                 (file.targetType === 'investor' || file.targetType === 'subscription') 
                                   ? 'opacity-40 pointer-events-none bg-gray-50/50' 
@@ -2403,16 +2403,16 @@ export function MassUploadWizard({ isOpen, onClose, existingFolders, inline = fa
                                             {file.targetSegments.length} segment{file.targetSegments.length > 1 ? 's' : ''}
                                           </span>
                                         ) : (
-                                          <span className="text-gray-500">Sélectionner...</span>
+                                          <span className="text-gray-500">Select...</span>
                                         )}
                                         <ChevronsUpDown className="ml-2 h-3.5 w-3.5 opacity-50" />
                                       </Button>
                                     </PopoverTrigger>
                                     <PopoverContent className="w-[260px] p-0" align="start">
                                       <Command>
-                                        <CommandInput placeholder="Rechercher un segment..." className="text-xs border-b" />
+                                        <CommandInput placeholder="Search for a segment..." className="text-xs border-b" />
                                         <CommandList>
-                                          <CommandEmpty className="py-6 text-center text-sm text-gray-500">Aucun segment trouvé.</CommandEmpty>
+                                          <CommandEmpty className="py-6 text-center text-sm text-gray-500">No segment found.</CommandEmpty>
                                           <CommandGroup>
                                             {availableSegments.map((segment) => (
                                               <CommandItem
@@ -2436,14 +2436,14 @@ export function MassUploadWizard({ isOpen, onClose, existingFolders, inline = fa
                                     </PopoverContent>
                                   </Popover>
                                   
-                                  {/* Info pour le type Fund */}
+                                  {/* Info for Fund type */}
                                   {file.targetType === 'fund' && file.targetFunds.length > 0 && file.targetSegments.length === 0 && (
                                     <div className="text-[10px] text-gray-500 italic p-2 bg-blue-50/30 rounded border border-blue-200">
-                                      💡 Filtrer par segments (optionnel)
+                                      💡 Filter by segments (optional)
                                     </div>
                                   )}
-                                  
-                                  {/* Afficher les valeurs sélectionnées avec animation */}
+
+                                  {/* Display selected values with animation */}
                                   <AnimatePresence>
                                     {file.targetSegments.length > 0 && (
                                       <motion.div 
@@ -2510,13 +2510,13 @@ export function MassUploadWizard({ isOpen, onClose, existingFolders, inline = fa
                                       className="w-full text-xs gap-2 h-9 bg-white hover:bg-gradient-to-r hover:from-blue-50 hover:to-indigo-50 border-gray-300 hover:border-blue-400 transition-all duration-200 font-medium shadow-sm hover:shadow-md"
                                     >
                                       <DownloadIcon className="w-3.5 h-3.5" />
-                                      Télécharger le scope
+                                      Download scope
                                     </Button>
                                   </motion.div>
                                 </div>
                               </td>
 
-                              {/* Notifier */}
+                              {/* Notify */}
                               <td className="px-4 py-4">
                                 <div className="flex items-center justify-center">
                                   <Switch
@@ -2527,7 +2527,7 @@ export function MassUploadWizard({ isOpen, onClose, existingFolders, inline = fa
                                 </div>
                               </td>
 
-                              {/* Template Email */}
+                              {/* Email Template */}
                               <td className="px-4 py-4">
                                 {file.notify ? (
                                   <Select
@@ -2535,7 +2535,7 @@ export function MassUploadWizard({ isOpen, onClose, existingFolders, inline = fa
                                     onValueChange={(value) => handleUpdateFile(file.id, 'emailTemplate', value)}
                                   >
                                     <SelectTrigger className="text-xs h-9 bg-white border-blue-200 hover:border-blue-400 focus:border-blue-400 focus:ring-2 focus:ring-blue-100 transition-all">
-                                      <SelectValue placeholder="Choisir un template..." />
+                                      <SelectValue placeholder="Choose a template..." />
                                     </SelectTrigger>
                                     <SelectContent>
                                       {availableEmailTemplates.map((template) => (
@@ -2555,7 +2555,7 @@ export function MassUploadWizard({ isOpen, onClose, existingFolders, inline = fa
                                 )}
                               </td>
 
-                              {/* Cacher "New" */}
+                              {/* Hide "New" */}
                               <td className="px-4 py-4">
                                 <div className="flex items-center justify-center">
                                   <Switch
@@ -2576,7 +2576,7 @@ export function MassUploadWizard({ isOpen, onClose, existingFolders, inline = fa
                                 </div>
                               </td>
 
-                              {/* Date d'ajout */}
+                              {/* Add date */}
                               <td className="px-4 py-4">
                                 <Input
                                   type="date"
@@ -2586,14 +2586,14 @@ export function MassUploadWizard({ isOpen, onClose, existingFolders, inline = fa
                                 />
                               </td>
 
-                              {/* Équipe de validation */}
+                              {/* Validation team */}
                               <td className="px-4 py-4">
                                 <Select
                                   value={file.validationTeam[0] || ''}
                                   onValueChange={(value) => handleUpdateFile(file.id, 'validationTeam', value ? [value] : [])}
                                 >
                                   <SelectTrigger className="text-xs h-9 bg-white border-gray-200 hover:border-red-400 focus:border-red-400 focus:ring-2 focus:ring-red-100 transition-all">
-                                    <SelectValue placeholder="Sélectionner équipe..." />
+                                    <SelectValue placeholder="Select team..." />
                                   </SelectTrigger>
                                   <SelectContent>
                                     <SelectItem value="Front">Front</SelectItem>
@@ -2643,7 +2643,7 @@ export function MassUploadWizard({ isOpen, onClose, existingFolders, inline = fa
                                     )}
                                   </AnimatePresence>
                                   <Input
-                                    placeholder="Ajouter un tag (Entrée)..."
+                                    placeholder="Add a tag (Enter)..."
                                     className="text-xs border-gray-200 focus:border-pink-400 focus:ring-2 focus:ring-pink-100 transition-all duration-200 bg-white hover:bg-pink-50/30 placeholder:text-gray-400"
                                     onKeyPress={(e) => {
                                       if (e.key === 'Enter') {
@@ -2676,12 +2676,12 @@ export function MassUploadWizard({ isOpen, onClose, existingFolders, inline = fa
                   className="gap-2"
                 >
                   <ChevronLeft className="w-4 h-4" />
-                  Annuler
+                  Cancel
                 </Button>
                 {isReviewStep && (
                   <Badge variant="outline" className="bg-blue-50 text-blue-700 border-blue-300">
                     <Eye className="w-3 h-3 mr-1" />
-                    Revue approfondie: {currentReviewingDocIndex + 1}/{uploadedFiles.length}
+                    Deep review: {currentReviewingDocIndex + 1}/{uploadedFiles.length}
                   </Badge>
                 )}
               </div>
@@ -2694,12 +2694,12 @@ export function MassUploadWizard({ isOpen, onClose, existingFolders, inline = fa
                   variant="outline"
                   onClick={() => {
                     handlePrevStep();
-                    toast.info(isReviewStep ? 'Document précédent' : 'Étape précédente');
+                    toast.info(isReviewStep ? 'Previous document' : 'Previous step');
                   }}
                   className="gap-2"
                 >
                   <ChevronLeft className="w-4 h-4" />
-                  {isReviewStep ? 'Précédent' : 'Retour'}
+                  {isReviewStep ? 'Previous' : 'Back'}
                 </Button>
               )}
 
@@ -2709,15 +2709,15 @@ export function MassUploadWizard({ isOpen, onClose, existingFolders, inline = fa
                     if (canGoNext()) {
                       handleNextStep();
                       if (isReviewStep && currentReviewingDocIndex < uploadedFiles.length - 1) {
-                        toast.success('Document suivant');
+                        toast.success('Next document');
                       } else if (currentStep === 1) {
-                        toast.success(deepReview ? 'Début de la revue approfondie' : 'Configuration des documents');
+                        toast.success(deepReview ? 'Starting deep review' : 'Document configuration');
                       } else {
-                        toast.success('Validation finale');
+                        toast.success('Final validation');
                       }
                     } else {
-                      toast.error('Action requise', {
-                        description: 'Veuillez compléter l\'étape actuelle'
+                      toast.error('Action required', {
+                        description: 'Please complete the current step'
                       });
                     }
                   }}
@@ -2725,7 +2725,7 @@ export function MassUploadWizard({ isOpen, onClose, existingFolders, inline = fa
                   style={{ background: !canGoNext() ? undefined : 'linear-gradient(62.32deg, #000000 10.53%, #0F323D 88.82%)' }}
                   className={`gap-2 ${!canGoNext() ? '' : 'text-white hover:opacity-90'}`}
                 >
-                  {isReviewStep && currentReviewingDocIndex < uploadedFiles.length - 1 ? 'Document suivant' : 'Suivant'}
+                  {isReviewStep && currentReviewingDocIndex < uploadedFiles.length - 1 ? 'Next document' : 'Next'}
                   <ChevronRight className="w-4 h-4" />
                 </Button>
               )}
@@ -2733,8 +2733,8 @@ export function MassUploadWizard({ isOpen, onClose, existingFolders, inline = fa
               {currentStep === totalSteps && (
                 <Button
                   onClick={() => {
-                    toast.success('Import lancé !', {
-                      description: `${uploadedFiles.length} document(s) en cours d'importation`,
+                    toast.success('Import launched!', {
+                      description: `${uploadedFiles.length} document(s) being imported`,
                       duration: 5000
                     });
                     onClose();
@@ -2743,7 +2743,7 @@ export function MassUploadWizard({ isOpen, onClose, existingFolders, inline = fa
                   className="gap-2 text-white hover:opacity-90"
                 >
                   <Upload className="w-4 h-4" />
-                  Importer {uploadedFiles.length} document(s)
+                  Import {uploadedFiles.length} document(s)
                 </Button>
               )}
             </div>

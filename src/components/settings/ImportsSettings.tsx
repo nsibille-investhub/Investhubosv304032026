@@ -3,12 +3,12 @@ import { ImportsLandingPage } from '../ImportsLandingPage';
 import { toast } from 'sonner';
 
 export function ImportsSettings() {
-  // Afficher systématiquement la landing page pour l'instant
+  // Always display the landing page for now
   return (
-    <ImportsLandingPage 
+    <ImportsLandingPage
       onEnableModule={() => {
-        toast.info('Fonctionnalité à venir', {
-          description: 'La configuration des imports sera bientôt disponible'
+        toast.info('Coming soon', {
+          description: 'Imports configuration will be available soon'
         });
       }}
     />
