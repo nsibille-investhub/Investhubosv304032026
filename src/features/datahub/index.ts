@@ -4,4 +4,8 @@ export * from './components/IngestionModeBadge';
 export * from './components/PivotTypeBadge';
 export * from './components/SyncIndicator';
 export * from './components/CollectionCard';
+export * from './components/WizardStepper';
+export * from './components/CollectionWizard';
 export { astorgCollections } from './seed/collections';
+export { useCollectionWizard, WIZARD_TOTAL_STEPS } from './hooks/useCollectionWizard';
+export type { WizardStep, CollectionWizardController } from './hooks/useCollectionWizard';

@@ -83,3 +83,27 @@ export interface CollectionRow {
   publishedAt?: string;
   version: number;
 }
+
+export interface WizardVisibility {
+  lpPortal: boolean;
+  autoFilterByInvestor: boolean;
+  distributorPortal: boolean;
+}
+
+export interface WizardData {
+  // Step 1 (prompt 3.1)
+  ingestionMode?: IngestionMode;
+  // Step 2 (prompt 3.2)
+  modeConfig?: Record<string, unknown>;
+  // Step 3 (prompt 3.3)
+  displayName?: string;
+  technicalName?: string;
+  description?: string;
+  linkedPivotObjects?: InvestHubPivotObject[];
+  pivotKeys?: Partial<Record<InvestHubPivotObject, string>>;
+  visibility?: WizardVisibility;
+  pivotType?: PivotTemporalType;
+  // Step 4 (prompt 3.4)
+  columns?: CollectionColumn[];
+  publicationWorkflow?: PublicationWorkflow;
+}
