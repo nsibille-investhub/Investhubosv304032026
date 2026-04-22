@@ -1,17 +1,20 @@
 import { ArrowLeft } from 'lucide-react';
+import { toast } from 'sonner';
 
 import { Button } from '../../../components/ui/button';
 import { Card } from '../../../components/ui/card';
+import { useCollections } from '../context/CollectionsContext';
 import {
   useCollectionWizard,
   WIZARD_TOTAL_STEPS,
   type WizardStep,
 } from '../hooks/useCollectionWizard';
-import type { IngestionMode } from '../types';
+import type { IngestionMode, WizardData } from '../types';
 import { WizardStepper } from './WizardStepper';
 import { WizardStepMode } from './wizard/WizardStepMode';
 import { WizardStepConfig } from './wizard/WizardStepConfig';
 import { WizardStepLinking } from './wizard/WizardStepLinking';
+import { WizardStepSchema } from './wizard/WizardStepSchema';
 
 const STEPS = [
   { id: 1, label: 'Mode' },
@@ -20,24 +23,12 @@ const STEPS = [
   { id: 4, label: 'Schéma' },
 ];
 
-function StepPlaceholder({ step }: { step: WizardStep }) {
-  return (
-    <div className="flex min-h-[320px] flex-col items-center justify-center gap-2 rounded-md border border-dashed border-border bg-muted/20 py-12 text-center">
-      <p className="text-sm font-medium text-foreground">
-        Étape {step} — à venir
-      </p>
-      <p className="text-xs text-muted-foreground">
-        Cette étape sera livrée dans un prochain prompt.
-      </p>
-    </div>
-  );
-}
-
 export interface CollectionWizardProps {
   onExit: () => void;
+  onCreated: (collectionId: string, options: { openImport: boolean }) => void;
 }
 
-export function CollectionWizard({ onExit }: CollectionWizardProps) {
+export function CollectionWizard({ onExit, onCreated }: CollectionWizardProps) {
   const {
     currentStep,
     wizardData,
@@ -48,6 +39,8 @@ export function CollectionWizard({ onExit }: CollectionWizardProps) {
     updateWizardData,
   } = useCollectionWizard();
 
+  const { createCollection } = useCollections();
+
   const handleModeChange = (mode: IngestionMode) => {
     updateWizardData({ ingestionMode: mode });
   };
@@ -55,6 +48,19 @@ export function CollectionWizard({ onExit }: CollectionWizardProps) {
   const modeConfig = (wizardData.modeConfig ?? {}) as Record<string, unknown>;
   const handleConfigPatch = (patch: Record<string, unknown>) => {
     updateWizardData({ modeConfig: { ...modeConfig, ...patch } });
+  };
+
+  const isLastStep = currentStep === WIZARD_TOTAL_STEPS;
+  const mode = wizardData.ingestionMode;
+  const canImportNow = mode === 'file' || mode === 'api-pull';
+
+  const submit = (options: { openImport: boolean }) => {
+    if (!canProceed) return;
+    const created = createCollection(wizardData as WizardData);
+    toast.success('Collection créée', {
+      description: created.displayName,
+    });
+    onCreated(created.id, options);
   };
 
   return (
@@ -107,7 +113,9 @@ export function CollectionWizard({ onExit }: CollectionWizardProps) {
             {currentStep === 3 && (
               <WizardStepLinking data={wizardData} onChange={updateWizardData} />
             )}
-            {currentStep === 4 && <StepPlaceholder step={4} />}
+            {currentStep === 4 && (
+              <WizardStepSchema data={wizardData} onChange={updateWizardData} />
+            )}
           </div>
 
           <div className="flex items-center justify-between gap-2 border-t border-border bg-muted/30 px-6 py-4">
@@ -121,12 +129,32 @@ export function CollectionWizard({ onExit }: CollectionWizardProps) {
             <Button variant="ghost" onClick={onExit}>
               Annuler
             </Button>
-            <Button
-              onClick={nextStep}
-              disabled={!canProceed || currentStep === WIZARD_TOTAL_STEPS}
-            >
-              Suivant
-            </Button>
+            {isLastStep ? (
+              <div className="flex items-center gap-2">
+                {canImportNow && (
+                  <Button
+                    variant="outline"
+                    onClick={() => submit({ openImport: true })}
+                    disabled={!canProceed}
+                  >
+                    Créer et importer maintenant
+                  </Button>
+                )}
+                <Button
+                  onClick={() => submit({ openImport: false })}
+                  disabled={!canProceed}
+                >
+                  Créer la collection
+                </Button>
+              </div>
+            ) : (
+              <Button
+                onClick={nextStep}
+                disabled={!canProceed}
+              >
+                Suivant
+              </Button>
+            )}
           </div>
         </Card>
       </div>

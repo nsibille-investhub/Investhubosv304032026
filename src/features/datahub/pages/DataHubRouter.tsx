@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react';
 import { CollectionWizard } from '../components/CollectionWizard';
+import { CollectionsProvider } from '../context/CollectionsContext';
 import { DataHubDashboardPage } from './DataHubDashboardPage';
 import { DataHubPlaceholderPage } from './DataHubPlaceholderPage';
 
@@ -12,7 +13,7 @@ function navigateHash(path: string) {
   window.location.hash = `#${path}`;
 }
 
-export function DataHubRouter() {
+function InnerRouter() {
   const [path, setPath] = useState(readHashPath);
 
   useEffect(() => {
@@ -24,10 +25,27 @@ export function DataHubRouter() {
   if (path === '/datahub' || path === '/datahub/') {
     return <DataHubDashboardPage />;
   }
+
   if (path === '/datahub/new') {
-    return <CollectionWizard onExit={() => navigateHash('/datahub')} />;
+    return (
+      <CollectionWizard
+        onExit={() => navigateHash('/datahub')}
+        onCreated={(collectionId) =>
+          navigateHash(`/datahub/${collectionId}`)
+        }
+      />
+    );
   }
+
   return <DataHubPlaceholderPage />;
+}
+
+export function DataHubRouter() {
+  return (
+    <CollectionsProvider>
+      <InnerRouter />
+    </CollectionsProvider>
+  );
 }
 
 export default DataHubRouter;

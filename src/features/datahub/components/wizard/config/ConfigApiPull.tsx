@@ -31,6 +31,8 @@ export interface ApiPullConfig {
   oauthClientSecret?: string;
   oauthTokenUrl?: string;
   frequency?: Frequency;
+  lastTestSuccess?: boolean;
+  lastPayload?: unknown;
 }
 
 const MOCK_PAYLOAD = {
@@ -84,7 +86,10 @@ export function ConfigApiPull({ value, onChange }: ConfigApiPullProps) {
   const runTest = () => {
     setTestState('loading');
     // Simulated 1s roundtrip, deterministic success for demo.
-    window.setTimeout(() => setTestState('success'), 1000);
+    window.setTimeout(() => {
+      setTestState('success');
+      onChange({ lastTestSuccess: true, lastPayload: MOCK_PAYLOAD });
+    }, 1000);
   };
 
   return (

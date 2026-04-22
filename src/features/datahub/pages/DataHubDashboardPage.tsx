@@ -13,7 +13,7 @@ import {
 } from '../../../components/ui/select';
 
 import { CollectionCard } from '../components/CollectionCard';
-import { astorgCollections } from '../seed/collections';
+import { useCollections } from '../context/CollectionsContext';
 import type {
   CollectionRowStatus,
   IngestionMode,
@@ -88,8 +88,10 @@ export function DataHubDashboardPage() {
   const [mode, setMode] = useState<ModeFilter>('all');
   const [object, setObject] = useState<ObjectFilter>('all');
 
+  const { allCollections } = useCollections();
+
   const totals = useMemo(() => {
-    return astorgCollections.reduce(
+    return allCollections.reduce(
       (acc, c) => {
         acc.totalRows += c.stats.totalRows;
         acc.publishedRows += c.stats.publishedRows;
@@ -98,11 +100,11 @@ export function DataHubDashboardPage() {
       },
       { totalRows: 0, publishedRows: 0, draftRows: 0 },
     );
-  }, []);
+  }, [allCollections]);
 
   const visible = useMemo(() => {
     const q = search.trim().toLowerCase();
-    return astorgCollections
+    return allCollections
       .filter((c) => {
         if (q) {
           const haystack = `${c.displayName} ${c.technicalName} ${c.description ?? ''}`.toLowerCase();
@@ -119,7 +121,7 @@ export function DataHubDashboardPage() {
         }
         return b.updatedAt.localeCompare(a.updatedAt);
       });
-  }, [search, status, mode, object]);
+  }, [search, status, mode, object, allCollections]);
 
   const hasActiveFilters =
     search.trim() !== '' || status !== 'all' || mode !== 'all' || object !== 'all';
@@ -159,7 +161,7 @@ export function DataHubDashboardPage() {
         </header>
 
         <div className="grid grid-cols-2 gap-4 md:grid-cols-4">
-          <Kpi label="Collections" value={astorgCollections.length} />
+          <Kpi label="Collections" value={allCollections.length} />
           <Kpi label="Total lignes" value={totals.totalRows} />
           <Kpi label="Publiées" value={totals.publishedRows} />
           <Kpi label="Brouillons" value={totals.draftRows} />
