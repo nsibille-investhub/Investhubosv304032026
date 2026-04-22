@@ -13,6 +13,6 @@ Source of truth: `src/components/ui/*`.
 - Feedback
   - `Alert`, `Skeleton`
 - Navigation
-  - `Tabs`, `Breadcrumb`
+  - `Tabs`, `Breadcrumb`, `PageHeader`
 
 No generated components, no renamed components, no merged components.

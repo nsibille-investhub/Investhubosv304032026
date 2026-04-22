@@ -1,9 +1,10 @@
 import { useEffect, useMemo, useState } from 'react';
-import { Plus, Search, SearchX } from 'lucide-react';
+import { Search, SearchX } from 'lucide-react';
 
 import { Button } from '../../../components/ui/button';
 import { Card, CardContent } from '../../../components/ui/card';
 import { Input } from '../../../components/ui/input';
+import { PageHeader } from '../../../components/ui/page-header';
 import {
   Select,
   SelectContent,
@@ -151,32 +152,23 @@ export function DataHubDashboardPage() {
   };
 
   return (
-    <div className="flex-1 px-6 pb-6">
-      <div className="mx-auto flex max-w-7xl flex-col gap-6 py-6">
-        <nav aria-label="Fil d'Ariane" className="text-xs text-muted-foreground">
-          <span>InvestHub OS</span>
-          <span className="mx-1.5">›</span>
-          <span>Portails et Contenu</span>
-          <span className="mx-1.5">›</span>
-          <span className="text-foreground">DataHub</span>
-        </nav>
+    <div className="flex-1">
+      <PageHeader
+        breadcrumb={[
+          { label: 'InvestHub OS' },
+          { label: 'Portails et Contenu' },
+          { label: 'DataHub' },
+        ]}
+        title="DataHub"
+        subtitle="Gestion des collections de données personnalisées"
+        primaryAction={{
+          label: 'Nouvelle collection',
+          onClick: () => navigateHash('/datahub/new'),
+          ariaLabel: 'Créer une nouvelle collection',
+        }}
+      />
 
-        <header className="flex flex-wrap items-start justify-between gap-4">
-          <div className="flex flex-col gap-1">
-            <h1 className="text-2xl font-semibold text-foreground">DataHub</h1>
-            <p className="text-sm text-muted-foreground">
-              Gestion des collections de données personnalisées
-            </p>
-          </div>
-          <Button
-            onClick={() => navigateHash('/datahub/new')}
-            aria-label="Créer une nouvelle collection"
-          >
-            <Plus />
-            Nouvelle collection
-          </Button>
-        </header>
-
+      <div className="mx-auto flex max-w-7xl flex-col gap-6 px-6 py-6">
         <div className="grid grid-cols-2 gap-4 md:grid-cols-4">
           <Kpi label="Collections" value={allCollections.length} />
           <Kpi label="Total lignes" value={totals.totalRows} />

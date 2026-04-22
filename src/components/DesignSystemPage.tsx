@@ -50,6 +50,8 @@ import {
   Copy,
   ChevronRight,
   Clock,
+  Plus,
+  ArchiveX,
   type LucideIcon,
 } from 'lucide-react';
 import * as React from 'react';
@@ -78,6 +80,7 @@ import { CalledAmountCell } from './CalledAmountCell';
 import { GenericAudienceCard } from './GenericAudienceCard';
 import { SpecificAudience } from './SpecificAudience';
 import { FolderSpaceDialogPreview } from './ui/folder-space-dialog';
+import { PageHeader } from './ui/page-header';
 import { AudienceCounter, AudienceCounterCards } from './AudienceCounter';
 import { ItemSelector } from './InternalResponsibleSelector';
 import {
@@ -792,6 +795,109 @@ export function DesignSystemPage() {
         <p className="mt-2 text-sm text-[#4F6166] dark:text-[#9DB2AE] max-w-4xl">
           Bibliothèque complète des composants. On commence par la couche tableaux (data-intensive), puis les composants coeur.
         </p>
+      </section>
+
+      <section className="rounded-2xl border border-[#D7E0DD] dark:border-[#1F2D2A] bg-white dark:bg-[#101615] p-6">
+        <h2 className="text-lg font-semibold text-[#1F3137] dark:text-[#E8F0EE] mb-2">Composant Navigation — ds-page-header</h2>
+        <p className="text-sm text-[#4F6166] dark:text-[#9DB2AE] mb-1">
+          En-tête de page unifié pour tous les modules. Structure cohérente&nbsp;:
+          fil d&apos;Ariane (optionnel avec bouton retour), titre, sous-titre,
+          action principale (bouton noir dégradé), action secondaire (optionnelle, variant outline),
+          et menu tertiaire &laquo;&nbsp;...&nbsp;&raquo; (optionnel, pour exports et actions secondaires).
+        </p>
+        <p className="text-xs text-[#4F6166] dark:text-[#9DB2AE] mb-4">
+          Identifiant&nbsp;: <code className="text-xs px-1 py-0.5 rounded bg-[#F1F5F4] dark:bg-[#1C2624] font-semibold">ds-page-header</code> — Import&nbsp;:
+          <code className="text-xs px-1 py-0.5 rounded bg-[#F1F5F4] dark:bg-[#1C2624] ml-1">{`import { PageHeader } from '@/components/ui/page-header'`}</code>
+        </p>
+
+        <div className="space-y-8">
+          <div>
+            <p className="text-xs font-semibold uppercase tracking-wide text-[#4F6166] mb-2">
+              Exemple complet — primaire + secondaire + tertiaire (DataHub)
+            </p>
+            <div className="overflow-hidden rounded-xl border border-[#D7E0DD] dark:border-[#1F2D2A]">
+              <PageHeader
+                breadcrumb={[
+                  { label: 'InvestHub OS' },
+                  { label: 'Portails et Contenu' },
+                  { label: 'DataHub' },
+                ]}
+                onBack={() => undefined}
+                title="DataHub"
+                subtitle="Gestion des collections de données personnalisées"
+                primaryAction={{
+                  label: 'Nouvelle collection',
+                  onClick: () => undefined,
+                }}
+                secondaryAction={{
+                  label: 'Importer',
+                  onClick: () => undefined,
+                  icon: <Download className="w-4 h-4" />,
+                }}
+                tertiaryActions={[
+                  {
+                    label: 'Archivées',
+                    icon: <ArchiveX className="w-4 h-4 text-gray-600" />,
+                    onClick: () => undefined,
+                  },
+                  {
+                    label: 'Télécharger .csv',
+                    icon: <FileSpreadsheet className="w-4 h-4 text-green-600" />,
+                    onClick: () => undefined,
+                  },
+                ]}
+              />
+            </div>
+          </div>
+
+          <div>
+            <p className="text-xs font-semibold uppercase tracking-wide text-[#4F6166] mb-2">
+              Exemple minimal — titre + sous-titre + action principale
+            </p>
+            <div className="overflow-hidden rounded-xl border border-[#D7E0DD] dark:border-[#1F2D2A]">
+              <PageHeader
+                breadcrumb={[
+                  { label: 'InvestHub OS' },
+                  { label: 'Investors' },
+                ]}
+                title="Investisseurs"
+                subtitle="Gérer et suivre tous les investisseurs"
+                primaryAction={{
+                  label: 'Nouvel Investisseur',
+                  onClick: () => undefined,
+                  icon: <Plus className="w-4 h-4" />,
+                }}
+              />
+            </div>
+          </div>
+        </div>
+
+        <pre className="mt-6 text-xs bg-[#F8FAFA] dark:bg-[#0B0D0D] p-3 rounded overflow-x-auto">
+{`<PageHeader
+  breadcrumb={[
+    { label: 'InvestHub OS' },
+    { label: 'Portails et Contenu' },
+    { label: 'DataHub' },
+  ]}
+  onBack={() => navigateBack()}           // optionnel
+  title="DataHub"
+  subtitle="Gestion des collections..."   // optionnel
+  primaryAction={{                        // optionnel
+    label: 'Nouvelle collection',
+    onClick: () => create(),
+    icon: <Plus />,                       // optionnel (Plus par défaut)
+  }}
+  secondaryAction={{                      // optionnel
+    label: 'Importer',
+    onClick: () => importData(),
+    icon: <Download />,
+  }}
+  tertiaryActions={[                      // optionnel (menu "...")
+    { label: 'Télécharger .csv', onClick: () => ..., icon: <FileSpreadsheet /> },
+    { label: 'Archiver', onClick: () => ..., destructive: true, separatorBefore: true },
+  ]}
+/>`}
+        </pre>
       </section>
 
       <section className="rounded-2xl border border-[#D7E0DD] dark:border-[#1F2D2A] bg-white dark:bg-[#101615] p-6">
