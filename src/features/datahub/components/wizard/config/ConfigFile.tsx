@@ -1,14 +1,19 @@
 import { useEffect, useState } from 'react';
-import { FileSpreadsheet, FileText, FileJson, FileCode, Trash2 } from 'lucide-react';
+import {
+  FileCode,
+  FileJson,
+  FileSpreadsheet,
+  FileText,
+  Globe,
+  Server,
+  Trash2,
+  UploadCloud,
+} from 'lucide-react';
 
 import { Button } from '../../../../../components/ui/button';
 import { Checkbox } from '../../../../../components/ui/checkbox';
 import { Input } from '../../../../../components/ui/input';
 import { Label } from '../../../../../components/ui/label';
-import {
-  RadioGroup,
-  RadioGroupItem,
-} from '../../../../../components/ui/radio-group';
 import {
   Select,
   SelectContent,
@@ -16,6 +21,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from '../../../../../components/ui/select';
+import { SegmentedControl } from '../../../../../components/ui/segmented-control';
 import { Switch } from '../../../../../components/ui/switch';
 import { FileDropZone } from '../../FileDropZone';
 
@@ -244,24 +250,28 @@ export function ConfigFile({ value, onChange }: ConfigFileProps) {
         </div>
 
         {value.recurring && (
-          <RadioGroup
+          <SegmentedControl<RecurringKind>
+            aria-label="Canal de dépôt récurrent"
             value={value.recurringKind ?? 'manual'}
-            onValueChange={(v) => onChange({ recurringKind: v as RecurringKind })}
-            className="gap-2"
-          >
-            <div className="flex items-center gap-2">
-              <RadioGroupItem value="manual" id="kind-manual" />
-              <Label htmlFor="kind-manual">Upload manuel depuis InvestHub</Label>
-            </div>
-            <div className="flex items-center gap-2">
-              <RadioGroupItem value="ftp" id="kind-ftp" />
-              <Label htmlFor="kind-ftp">Dépôt FTP / SFTP</Label>
-            </div>
-            <div className="flex items-center gap-2">
-              <RadioGroupItem value="url" id="kind-url" />
-              <Label htmlFor="kind-url">URL d'upload dédiée</Label>
-            </div>
-          </RadioGroup>
+            onValueChange={(v) => onChange({ recurringKind: v })}
+            options={[
+              {
+                value: 'manual',
+                label: 'Upload manuel',
+                icon: <UploadCloud className="size-4" />,
+              },
+              {
+                value: 'ftp',
+                label: 'Dépôt FTP / SFTP',
+                icon: <Server className="size-4" />,
+              },
+              {
+                value: 'url',
+                label: 'URL d’upload dédiée',
+                icon: <Globe className="size-4" />,
+              },
+            ]}
+          />
         )}
 
         {value.recurring && value.recurringKind === 'ftp' && (

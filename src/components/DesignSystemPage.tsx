@@ -55,6 +55,8 @@ import {
   Rows3,
   CheckCircle2,
   FileEdit,
+  UploadCloud,
+  Server as ServerIcon,
   type LucideIcon,
 } from 'lucide-react';
 import * as React from 'react';
@@ -86,6 +88,7 @@ import { FolderSpaceDialogPreview } from './ui/folder-space-dialog';
 import { KpiCard, KpiStrip } from './ui/kpi-card';
 import { PageHeader } from './ui/page-header';
 import { SearchInput } from './ui/search-input';
+import { SegmentedControl } from './ui/segmented-control';
 import {
   Select as UiSelect,
   SelectContent as UiSelectContent,
@@ -798,6 +801,85 @@ function ItemSelectorPreview() {
   );
 }
 
+function SegmentedControlBasicPreview() {
+  const [value, setValue] = React.useState<'all' | 'one' | 'many'>('all');
+  return (
+    <SegmentedControl
+      aria-label="Portée de l'import"
+      value={value}
+      onValueChange={(v) => setValue(v as 'all' | 'one' | 'many')}
+      options={[
+        { value: 'all', label: 'Tous les fonds' },
+        { value: 'one', label: 'Un fonds' },
+        { value: 'many', label: 'Plusieurs fonds' },
+      ]}
+    />
+  );
+}
+
+function SegmentedControlWithIconsPreview() {
+  const [value, setValue] = React.useState<'manual' | 'ftp' | 'url'>('url');
+  return (
+    <SegmentedControl
+      aria-label="Canal de dépôt récurrent"
+      value={value}
+      onValueChange={(v) => setValue(v as 'manual' | 'ftp' | 'url')}
+      options={[
+        {
+          value: 'manual',
+          label: 'Upload manuel',
+          icon: <UploadCloud className="size-4" />,
+        },
+        {
+          value: 'ftp',
+          label: 'Dépôt FTP / SFTP',
+          icon: <ServerIcon className="size-4" />,
+        },
+        {
+          value: 'url',
+          label: 'URL d’upload dédiée',
+          icon: <Globe className="size-4" />,
+        },
+      ]}
+    />
+  );
+}
+
+function SegmentedControlSmallPreview() {
+  const [value, setValue] = React.useState('monthly');
+  return (
+    <SegmentedControl
+      size="sm"
+      aria-label="Période"
+      value={value}
+      onValueChange={setValue}
+      options={[
+        { value: 'daily', label: 'Jour' },
+        { value: 'weekly', label: 'Semaine' },
+        { value: 'monthly', label: 'Mois' },
+        { value: 'quarterly', label: 'Trimestre' },
+      ]}
+    />
+  );
+}
+
+function SegmentedControlFullWidthPreview() {
+  const [value, setValue] = React.useState('table');
+  return (
+    <SegmentedControl
+      fullWidth
+      aria-label="Vue"
+      value={value}
+      onValueChange={setValue}
+      options={[
+        { value: 'table', label: 'Tableau' },
+        { value: 'cards', label: 'Cartes' },
+        { value: 'kanban', label: 'Kanban' },
+      ]}
+    />
+  );
+}
+
 function SearchInputPreview({ initial = '' }: { initial?: string }) {
   const [value, setValue] = React.useState(initial);
   return (
@@ -856,6 +938,109 @@ export function DesignSystemPage() {
         <p className="mt-2 text-sm text-[#4F6166] dark:text-[#9DB2AE] max-w-4xl">
           Bibliothèque complète des composants. On commence par la couche tableaux (data-intensive), puis les composants coeur.
         </p>
+      </section>
+
+      <section className="rounded-2xl border border-[#D7E0DD] dark:border-[#1F2D2A] bg-white dark:bg-[#101615] p-8 md:p-10">
+        <header className="mb-8 space-y-3">
+          <h2 className="text-lg font-semibold text-[#1F3137] dark:text-[#E8F0EE]">
+            Composant Inputs — ds-segmented-control
+          </h2>
+          <p className="text-sm text-[#4F6166] dark:text-[#9DB2AE] max-w-3xl leading-relaxed">
+            Sélection exclusive à labels courts&nbsp;: preferable à un
+            <code className="text-xs px-1 py-0.5 rounded bg-[#F1F5F4] dark:bg-[#1C2624] mx-1">RadioGroup</code>
+            pour 2–5 options sans description. Bordure 2&nbsp;px neutre au repos, bordure
+            et texte en <code className="text-xs px-1 py-0.5 rounded bg-[#F1F5F4] dark:bg-[#1C2624]">#000E2B</code>
+            pour l&apos;option sélectionnée. Basé sur <code className="text-xs px-1 py-0.5 rounded bg-[#F1F5F4] dark:bg-[#1C2624]">@radix-ui/react-toggle-group</code>
+            (type=&quot;single&quot;) donc gestion clavier, aria-pressed et focus ring gérés.
+          </p>
+          <p className="text-xs text-[#4F6166] dark:text-[#9DB2AE] leading-relaxed">
+            Identifiant&nbsp;: <code className="text-xs px-1 py-0.5 rounded bg-[#F1F5F4] dark:bg-[#1C2624] font-semibold">ds-segmented-control</code> — Import&nbsp;:
+            <code className="text-xs px-1 py-0.5 rounded bg-[#F1F5F4] dark:bg-[#1C2624] ml-1">{`import { SegmentedControl } from '@/components/ui/segmented-control'`}</code>
+          </p>
+        </header>
+
+        <div className="space-y-16">
+          <div className="space-y-4">
+            <div className="flex items-baseline gap-3">
+              <span className="text-[11px] font-semibold uppercase tracking-[0.14em] text-[#456B6C]">
+                Variant — labels seuls
+              </span>
+              <span className="text-xs text-[#4F6166] dark:text-[#9DB2AE]">
+                3 options, taille par défaut
+              </span>
+            </div>
+            <div className="rounded-xl border border-[#D7E0DD] dark:border-[#1F2D2A] bg-[#F8FAFA] dark:bg-[#0B0D0D] p-4 md:p-6">
+              <SegmentedControlBasicPreview />
+            </div>
+          </div>
+
+          <div className="space-y-4">
+            <div className="flex items-baseline gap-3">
+              <span className="text-[11px] font-semibold uppercase tracking-[0.14em] text-[#456B6C]">
+                Variant — avec icônes
+              </span>
+              <span className="text-xs text-[#4F6166] dark:text-[#9DB2AE]">
+                canal de dépôt récurrent (wizard DataHub)
+              </span>
+            </div>
+            <div className="rounded-xl border border-[#D7E0DD] dark:border-[#1F2D2A] bg-[#F8FAFA] dark:bg-[#0B0D0D] p-4 md:p-6">
+              <SegmentedControlWithIconsPreview />
+            </div>
+          </div>
+
+          <div className="space-y-4">
+            <div className="flex items-baseline gap-3">
+              <span className="text-[11px] font-semibold uppercase tracking-[0.14em] text-[#456B6C]">
+                Variant — taille sm
+              </span>
+              <span className="text-xs text-[#4F6166] dark:text-[#9DB2AE]">
+                pour les barres de filtres denses
+              </span>
+            </div>
+            <div className="rounded-xl border border-[#D7E0DD] dark:border-[#1F2D2A] bg-[#F8FAFA] dark:bg-[#0B0D0D] p-4 md:p-6">
+              <SegmentedControlSmallPreview />
+            </div>
+          </div>
+
+          <div className="space-y-4">
+            <div className="flex items-baseline gap-3">
+              <span className="text-[11px] font-semibold uppercase tracking-[0.14em] text-[#456B6C]">
+                Variant — fullWidth
+              </span>
+              <span className="text-xs text-[#4F6166] dark:text-[#9DB2AE]">
+                occupe la largeur parente et distribue les segments
+              </span>
+            </div>
+            <div className="rounded-xl border border-[#D7E0DD] dark:border-[#1F2D2A] bg-[#F8FAFA] dark:bg-[#0B0D0D] p-4 md:p-6">
+              <SegmentedControlFullWidthPreview />
+            </div>
+          </div>
+
+          <div className="space-y-4">
+            <div className="flex items-baseline gap-3">
+              <span className="text-[11px] font-semibold uppercase tracking-[0.14em] text-[#456B6C]">
+                Usage
+              </span>
+              <span className="text-xs text-[#4F6166] dark:text-[#9DB2AE]">
+                signature typique de la prop
+              </span>
+            </div>
+            <pre className="text-xs bg-[#F8FAFA] dark:bg-[#0B0D0D] border border-[#D7E0DD] dark:border-[#1F2D2A] p-5 rounded-xl overflow-x-auto leading-relaxed">
+{`<SegmentedControl
+  value={kind}
+  onValueChange={setKind}
+  aria-label="Canal de dépôt récurrent"
+  size="md"             // 'sm' | 'md' | 'lg'  (default: 'md')
+  // fullWidth           // remplit le parent et répartit les segments
+  options={[
+    { value: 'manual', label: 'Upload manuel', icon: <UploadCloud /> },
+    { value: 'ftp',    label: 'Dépôt FTP / SFTP', icon: <Server /> },
+    { value: 'url',    label: 'URL d’upload dédiée', icon: <Globe /> },
+  ]}
+/>`}
+            </pre>
+          </div>
+        </div>
       </section>
 
       <section className="rounded-2xl border border-[#D7E0DD] dark:border-[#1F2D2A] bg-white dark:bg-[#101615] p-8 md:p-10">
