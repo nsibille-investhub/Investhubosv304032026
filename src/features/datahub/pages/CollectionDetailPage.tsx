@@ -346,6 +346,7 @@ interface DataTabProps {
   collection: Collection;
   rows: CollectionRow[];
   originals: Map<string, CollectionRow>;
+  dirtyCount: number;
   onChangeRowStatus: (rowId: string, nextStatus: CollectionRowStatus) => void;
   onEditRow: (row: CollectionRow) => void;
   onRevertRow: (rowId: string) => void;
@@ -355,6 +356,7 @@ function DataTab({
   collection,
   rows,
   originals,
+  dirtyCount,
   onChangeRowStatus,
   onEditRow,
   onRevertRow,
@@ -390,6 +392,16 @@ function DataTab({
           size="sm"
         />
       </div>
+
+      {dirtyCount === 0 ? (
+        <div className="flex items-center gap-2 rounded-md border border-dashed border-border bg-muted/30 px-3 py-2 text-xs text-muted-foreground">
+          <MoreHorizontal className="size-3.5" aria-hidden />
+          Modérer une ligne&nbsp;: cliquez le menu
+          <code className="rounded border border-border bg-background px-1 font-semibold">⋯</code>
+          à droite (publier, mettre en attente, dépublier, modifier). La barre
+          de commit en bas de page valide toutes les modifications d’un coup.
+        </div>
+      ) : null}
 
       {filtered.length === 0 ? (
         <Card>
@@ -503,7 +515,7 @@ function DataTab({
                               variant="ghost"
                               size="icon"
                               aria-label="Actions sur cette ligne"
-                              className="size-8 opacity-60 group-hover:opacity-100 focus-visible:opacity-100 data-[state=open]:opacity-100"
+                              className="size-8 text-muted-foreground hover:text-foreground data-[state=open]:bg-muted data-[state=open]:text-foreground"
                             >
                               <MoreHorizontal className="size-4" />
                             </Button>
@@ -1129,6 +1141,7 @@ export function CollectionDetailPage({
               collection={collection}
               rows={rows}
               originals={originals}
+              dirtyCount={dirtyCount}
               onChangeRowStatus={changeRowStatus}
               onEditRow={setEditingRow}
               onRevertRow={revertRow}
