@@ -1,15 +1,22 @@
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
+import { motion, AnimatePresence } from 'motion/react';
 import {
   BarChart3,
   CheckCircle2,
+  Clock,
   Download,
   Edit3,
   Eye,
+  EyeOff,
   FileSpreadsheet,
   Layers,
   Link2,
+  MoreHorizontal,
+  Pencil,
   RefreshCw,
+  RotateCcw,
   Rows3,
+  Send,
   Table as TableIcon,
 } from 'lucide-react';
 import { toast } from 'sonner';
@@ -17,10 +24,29 @@ import { toast } from 'sonner';
 import { Badge } from '../../../components/ui/badge';
 import { Button } from '../../../components/ui/button';
 import { Card, CardContent } from '../../../components/ui/card';
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from '../../../components/ui/dialog';
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from '../../../components/ui/dropdown-menu';
+import { Input } from '../../../components/ui/input';
 import { KpiCard, KpiStrip } from '../../../components/ui/kpi-card';
+import { Label } from '../../../components/ui/label';
 import { PageHeader } from '../../../components/ui/page-header';
 import { SearchInput } from '../../../components/ui/search-input';
 import { SegmentedControl } from '../../../components/ui/segmented-control';
+import { Switch } from '../../../components/ui/switch';
 import {
   Table,
   TableBody,
@@ -152,12 +178,187 @@ function resolveCollection(
   );
 }
 
+function isRowDirty(current: CollectionRow, original: CollectionRow): boolean {
+  if (current.status !== original.status) return true;
+  return JSON.stringify(current.data) !== JSON.stringify(original.data);
+}
+
+/**
+ * Edit-a-row dialog. Builds an ad-hoc form from the collection schema so
+ * users can moderate data without leaving the detail page. Numbers, dates,
+ * booleans etc. get the matching HTML input type.
+ */
+interface RowEditDialogProps {
+  open: boolean;
+  collection: Collection;
+  row: CollectionRow | null;
+  onClose: () => void;
+  onSave: (nextData: Record<string, unknown>) => void;
+}
+
+function RowEditDialog({
+  open,
+  collection,
+  row,
+  onClose,
+  onSave,
+}: RowEditDialogProps) {
+  const [draft, setDraft] = useState<Record<string, unknown>>({});
+
+  useEffect(() => {
+    if (row) setDraft({ ...row.data });
+  }, [row]);
+
+  if (!row) return null;
+
+  const patch = (key: string, value: unknown) =>
+    setDraft((prev) => ({ ...prev, [key]: value }));
+
+  const inputFor = (column: CollectionColumn) => {
+    const raw = draft[column.technicalName];
+    const common = { id: `edit-${column.id}` as const };
+    switch (column.type) {
+      case 'boolean':
+        return (
+          <Switch
+            checked={!!raw}
+            onCheckedChange={(c) => patch(column.technicalName, c)}
+          />
+        );
+      case 'number':
+      case 'currency':
+      case 'percentage':
+        return (
+          <Input
+            {...common}
+            type="number"
+            step={column.type === 'percentage' ? '0.001' : 'any'}
+            value={raw == null || raw === '' ? '' : String(raw)}
+            onChange={(e) =>
+              patch(
+                column.technicalName,
+                e.target.value === '' ? '' : Number(e.target.value),
+              )
+            }
+            className="tabular-nums"
+          />
+        );
+      case 'date':
+        return (
+          <Input
+            {...common}
+            type="date"
+            value={typeof raw === 'string' ? raw.slice(0, 10) : ''}
+            onChange={(e) => patch(column.technicalName, e.target.value)}
+          />
+        );
+      case 'datetime':
+        return (
+          <Input
+            {...common}
+            type="datetime-local"
+            value={
+              typeof raw === 'string' && raw.length > 0
+                ? new Date(raw).toISOString().slice(0, 16)
+                : ''
+            }
+            onChange={(e) =>
+              patch(
+                column.technicalName,
+                e.target.value
+                  ? new Date(e.target.value).toISOString()
+                  : '',
+              )
+            }
+          />
+        );
+      case 'url':
+        return (
+          <Input
+            {...common}
+            type="url"
+            placeholder="https://…"
+            value={typeof raw === 'string' ? raw : ''}
+            onChange={(e) => patch(column.technicalName, e.target.value)}
+          />
+        );
+      default:
+        return (
+          <Input
+            {...common}
+            value={raw == null ? '' : String(raw)}
+            onChange={(e) => patch(column.technicalName, e.target.value)}
+          />
+        );
+    }
+  };
+
+  return (
+    <Dialog open={open} onOpenChange={(next) => !next && onClose()}>
+      <DialogContent className="max-h-[80vh] max-w-2xl overflow-y-auto">
+        <DialogHeader>
+          <DialogTitle>Modifier la ligne</DialogTitle>
+          <DialogDescription>
+            {collection.displayName} · version {row.version}. Les modifications
+            marqueront la ligne comme &laquo;&nbsp;Modif. en attente&nbsp;&raquo;
+            jusqu&apos;au commit.
+          </DialogDescription>
+        </DialogHeader>
+
+        <div className="grid grid-cols-1 gap-4 py-2 md:grid-cols-2">
+          {collection.columns.map((column) => (
+            <div key={column.id} className="flex flex-col gap-1.5">
+              <Label htmlFor={`edit-${column.id}`}>
+                {column.label}
+                {column.required ? (
+                  <span className="ml-1 text-destructive">*</span>
+                ) : null}
+              </Label>
+              {inputFor(column)}
+              {column.unit ? (
+                <p className="text-[11px] text-muted-foreground">
+                  Unité&nbsp;: {column.unit}
+                </p>
+              ) : null}
+            </div>
+          ))}
+        </div>
+
+        <DialogFooter>
+          <Button variant="ghost" onClick={onClose}>
+            Annuler
+          </Button>
+          <Button
+            onClick={() => {
+              onSave(draft);
+              onClose();
+            }}
+          >
+            Enregistrer les modifications
+          </Button>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
+  );
+}
+
 interface DataTabProps {
   collection: Collection;
   rows: CollectionRow[];
+  originals: Map<string, CollectionRow>;
+  onChangeRowStatus: (rowId: string, nextStatus: CollectionRowStatus) => void;
+  onEditRow: (row: CollectionRow) => void;
+  onRevertRow: (rowId: string) => void;
 }
 
-function DataTab({ collection, rows }: DataTabProps) {
+function DataTab({
+  collection,
+  rows,
+  originals,
+  onChangeRowStatus,
+  onEditRow,
+  onRevertRow,
+}: DataTabProps) {
   const [status, setStatus] = useState<StatusFilter>('all');
   const [search, setSearch] = useState('');
 
@@ -208,7 +409,7 @@ function DataTab({ collection, rows }: DataTabProps) {
             <Table>
               <TableHeader>
                 <TableRow className="bg-muted/40">
-                  <TableHead className="w-[140px]">Statut</TableHead>
+                  <TableHead className="w-[150px]">Statut</TableHead>
                   {collection.columns.map((column) => (
                     <TableHead
                       key={column.id}
@@ -229,53 +430,158 @@ function DataTab({ collection, rows }: DataTabProps) {
                   <TableHead className="w-[80px] whitespace-nowrap">
                     Version
                   </TableHead>
+                  <TableHead className="w-[56px]">
+                    <span className="sr-only">Actions</span>
+                  </TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {filtered.map((row) => (
-                  <TableRow key={row.id} className="group">
-                    <TableCell className="py-2.5">
-                      <StatusBadge status={row.status} size="sm" />
-                    </TableCell>
-                    {collection.columns.map((column) => {
-                      const value = row.data[column.technicalName];
-                      const formatted = formatValue(column, value);
-                      const isNumeric =
-                        column.type === 'number' ||
-                        column.type === 'currency' ||
-                        column.type === 'percentage';
-                      return (
-                        <TableCell
-                          key={column.id}
-                          className={cn(
-                            'max-w-[280px] truncate py-2.5',
-                            isNumeric && 'text-right tabular-nums',
-                          )}
-                          title={formatted}
-                        >
-                          {column.type === 'url' && typeof value === 'string' ? (
-                            <a
-                              href={value}
-                              target="_blank"
-                              rel="noopener noreferrer"
-                              className="text-primary underline-offset-2 hover:underline"
+                {filtered.map((row) => {
+                  const original = originals.get(row.id);
+                  const dirty = original ? isRowDirty(row, original) : false;
+                  return (
+                    <TableRow
+                      key={row.id}
+                      className={cn('group', dirty && 'bg-amber-50/40 dark:bg-amber-900/10')}
+                    >
+                      <TableCell className="py-2.5">
+                        <div className="flex items-center gap-1.5">
+                          <StatusBadge status={row.status} size="sm" />
+                          {dirty ? (
+                            <span
+                              title="Modification non validée"
+                              aria-label="Modification non validée"
+                              className="relative inline-flex size-1.5"
                             >
-                              {formatted}
-                            </a>
-                          ) : (
-                            formatted
-                          )}
-                        </TableCell>
-                      );
-                    })}
-                    <TableCell className="whitespace-nowrap py-2.5 text-xs text-muted-foreground">
-                      {rowUpdatedLabel(row)}
-                    </TableCell>
-                    <TableCell className="py-2.5 text-xs tabular-nums text-muted-foreground">
-                      v{row.version}
-                    </TableCell>
-                  </TableRow>
-                ))}
+                              <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-amber-500 opacity-70" />
+                              <span className="relative inline-flex size-1.5 rounded-full bg-amber-500" />
+                            </span>
+                          ) : null}
+                        </div>
+                      </TableCell>
+                      {collection.columns.map((column) => {
+                        const value = row.data[column.technicalName];
+                        const formatted = formatValue(column, value);
+                        const isNumeric =
+                          column.type === 'number' ||
+                          column.type === 'currency' ||
+                          column.type === 'percentage';
+                        return (
+                          <TableCell
+                            key={column.id}
+                            className={cn(
+                              'max-w-[280px] truncate py-2.5',
+                              isNumeric && 'text-right tabular-nums',
+                            )}
+                            title={formatted}
+                          >
+                            {column.type === 'url' && typeof value === 'string' ? (
+                              <a
+                                href={value}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                className="text-primary underline-offset-2 hover:underline"
+                              >
+                                {formatted}
+                              </a>
+                            ) : (
+                              formatted
+                            )}
+                          </TableCell>
+                        );
+                      })}
+                      <TableCell className="whitespace-nowrap py-2.5 text-xs text-muted-foreground">
+                        {rowUpdatedLabel(row)}
+                      </TableCell>
+                      <TableCell className="py-2.5 text-xs tabular-nums text-muted-foreground">
+                        v{row.version}
+                      </TableCell>
+                      <TableCell className="py-2.5 text-right">
+                        <DropdownMenu>
+                          <DropdownMenuTrigger asChild>
+                            <Button
+                              variant="ghost"
+                              size="icon"
+                              aria-label="Actions sur cette ligne"
+                              className="size-8 opacity-60 group-hover:opacity-100 focus-visible:opacity-100 data-[state=open]:opacity-100"
+                            >
+                              <MoreHorizontal className="size-4" />
+                            </Button>
+                          </DropdownMenuTrigger>
+                          <DropdownMenuContent align="end" className="w-56">
+                            <DropdownMenuLabel className="text-[11px] font-semibold uppercase tracking-[0.08em] text-muted-foreground">
+                              Modération
+                            </DropdownMenuLabel>
+                            <DropdownMenuItem
+                              onClick={() => onEditRow(row)}
+                              className="cursor-pointer"
+                            >
+                              <Pencil className="mr-2 size-4 text-muted-foreground" />
+                              Modifier la donnée
+                            </DropdownMenuItem>
+                            <DropdownMenuSeparator />
+                            {row.status !== 'published' && (
+                              <DropdownMenuItem
+                                onClick={() =>
+                                  onChangeRowStatus(row.id, 'published')
+                                }
+                                className="cursor-pointer"
+                              >
+                                <CheckCircle2 className="mr-2 size-4 text-emerald-600" />
+                                Publier
+                              </DropdownMenuItem>
+                            )}
+                            {row.status !== 'draft' && (
+                              <DropdownMenuItem
+                                onClick={() =>
+                                  onChangeRowStatus(row.id, 'draft')
+                                }
+                                className="cursor-pointer"
+                              >
+                                <Clock className="mr-2 size-4 text-amber-600" />
+                                Mettre en attente
+                              </DropdownMenuItem>
+                            )}
+                            {row.status === 'published' && (
+                              <DropdownMenuItem
+                                onClick={() =>
+                                  onChangeRowStatus(row.id, 'changes')
+                                }
+                                className="cursor-pointer"
+                              >
+                                <Pencil className="mr-2 size-4 text-blue-600" />
+                                Marquer comme modifiée
+                              </DropdownMenuItem>
+                            )}
+                            {row.status !== 'unpublished' && (
+                              <DropdownMenuItem
+                                onClick={() =>
+                                  onChangeRowStatus(row.id, 'unpublished')
+                                }
+                                className="cursor-pointer"
+                              >
+                                <EyeOff className="mr-2 size-4 text-muted-foreground" />
+                                Dépublier
+                              </DropdownMenuItem>
+                            )}
+                            {dirty ? (
+                              <>
+                                <DropdownMenuSeparator />
+                                <DropdownMenuItem
+                                  onClick={() => onRevertRow(row.id)}
+                                  className="cursor-pointer text-destructive focus:text-destructive"
+                                >
+                                  <RotateCcw className="mr-2 size-4" />
+                                  Annuler les modifications
+                                </DropdownMenuItem>
+                              </>
+                            ) : null}
+                          </DropdownMenuContent>
+                        </DropdownMenu>
+                      </TableCell>
+                    </TableRow>
+                  );
+                })}
               </TableBody>
             </Table>
           </div>
@@ -522,17 +828,118 @@ export function CollectionDetailPage({
   onRefresh,
   onViewAsLp,
 }: CollectionDetailPageProps) {
-  const { allCollections } = useCollections();
+  const { allCollections, updateCollection } = useCollections();
 
   const collection = useMemo(
     () => resolveCollection(allCollections, collectionKey),
     [allCollections, collectionKey],
   );
 
-  const rows = useMemo(() => {
+  const initialRows = useMemo(() => {
     if (!collection) return [];
     return getCollectionRows(collection);
   }, [collection]);
+
+  // Working copy (mutated by moderation actions) + pristine snapshot we
+  // diff against to know what's dirty and what "Annuler" should restore.
+  const [rows, setRows] = useState<CollectionRow[]>(initialRows);
+  const originalsRef = useRef<Map<string, CollectionRow>>(new Map());
+
+  useEffect(() => {
+    setRows(initialRows);
+    originalsRef.current = new Map(initialRows.map((r) => [r.id, r]));
+  }, [initialRows]);
+
+  const originals = originalsRef.current;
+
+  const dirtyCount = useMemo(
+    () =>
+      rows.reduce((acc, row) => {
+        const original = originals.get(row.id);
+        return original && isRowDirty(row, original) ? acc + 1 : acc;
+      }, 0),
+    [rows, originals],
+  );
+
+  const [editingRow, setEditingRow] = useState<CollectionRow | null>(null);
+
+  const changeRowStatus = (rowId: string, nextStatus: CollectionRowStatus) => {
+    setRows((prev) =>
+      prev.map((row) =>
+        row.id === rowId
+          ? {
+              ...row,
+              status: nextStatus,
+              updatedAt: new Date().toISOString(),
+            }
+          : row,
+      ),
+    );
+  };
+
+  const revertRow = (rowId: string) => {
+    const original = originals.get(rowId);
+    if (!original) return;
+    setRows((prev) => prev.map((row) => (row.id === rowId ? original : row)));
+  };
+
+  const saveEditedRow = (nextData: Record<string, unknown>) => {
+    if (!editingRow) return;
+    setRows((prev) =>
+      prev.map((row) =>
+        row.id === editingRow.id
+          ? {
+              ...row,
+              data: { ...nextData },
+              // Editing a published row bumps it to "changes" pending review.
+              status: row.status === 'published' ? 'changes' : row.status,
+              updatedAt: new Date().toISOString(),
+              version: row.version + 1,
+            }
+          : row,
+      ),
+    );
+  };
+
+  const commitAll = () => {
+    if (!collection || dirtyCount === 0) return;
+
+    const nextStats = rows.reduce(
+      (acc, row) => {
+        acc.totalRows += 1;
+        if (row.status === 'published') acc.publishedRows += 1;
+        else if (row.status === 'draft') acc.draftRows += 1;
+        else if (row.status === 'unpublished') acc.unpublishedRows += 1;
+        else if (row.status === 'changes') acc.changesRows += 1;
+        return acc;
+      },
+      {
+        totalRows: 0,
+        publishedRows: 0,
+        draftRows: 0,
+        unpublishedRows: 0,
+        changesRows: 0,
+      },
+    );
+
+    updateCollection(collection.id, {
+      stats: nextStats,
+      updatedAt: new Date().toISOString(),
+    });
+
+    // Freeze the new baseline so the commit bar disappears.
+    originalsRef.current = new Map(rows.map((r) => [r.id, r]));
+    toast.success(`${dirtyCount} modification(s) validée(s)`, {
+      description: `Les compteurs de ${collection.displayName} sont à jour.`,
+    });
+  };
+
+  const discardAll = () => {
+    if (dirtyCount === 0) return;
+    const restored = rows.map((row) => originals.get(row.id) ?? row);
+    setRows(restored);
+    toast.info(`${dirtyCount} modification(s) annulée(s)`);
+  };
 
   if (!collection) {
     return (
@@ -559,11 +966,33 @@ export function CollectionDetailPage({
     );
   }
 
-  const stats = collection.stats;
+  // Live stats reflect the in-progress working copy, so the KPI strip
+  // moves as the user moderates rows — even before commit.
+  const stats = useMemo(() => {
+    return rows.reduce(
+      (acc, row) => {
+        acc.totalRows += 1;
+        if (row.status === 'published') acc.publishedRows += 1;
+        else if (row.status === 'draft') acc.draftRows += 1;
+        else if (row.status === 'unpublished') acc.unpublishedRows += 1;
+        else if (row.status === 'changes') acc.changesRows += 1;
+        return acc;
+      },
+      {
+        totalRows: 0,
+        publishedRows: 0,
+        draftRows: 0,
+        unpublishedRows: 0,
+        changesRows: 0,
+      },
+    );
+  }, [rows]);
+
   const publishPct =
     stats.totalRows > 0
       ? Math.round((stats.publishedRows / stats.totalRows) * 100)
       : 0;
+  const pendingChanges = stats.changesRows;
 
   return (
     <div className="flex-1">
@@ -664,14 +1093,11 @@ export function CollectionDetailPage({
           />
           <KpiCard
             index={3}
-            icon={Layers}
-            label="Colonnes"
-            value={collection.columns.length}
-            hint={
-              collection.columns.filter((c) => c.required).length > 0
-                ? `${collection.columns.filter((c) => c.required).length} requises`
-                : undefined
-            }
+            icon={Pencil}
+            label="Modif. en attente"
+            value={pendingChanges}
+            pulse={pendingChanges > 0}
+            hint={pendingChanges > 0 ? 'à valider' : undefined}
           />
         </KpiStrip>
 
@@ -699,7 +1125,14 @@ export function CollectionDetailPage({
           </TabsList>
 
           <TabsContent value="data" className="mt-2">
-            <DataTab collection={collection} rows={rows} />
+            <DataTab
+              collection={collection}
+              rows={rows}
+              originals={originals}
+              onChangeRowStatus={changeRowStatus}
+              onEditRow={setEditingRow}
+              onRevertRow={revertRow}
+            />
           </TabsContent>
 
           <TabsContent value="widgets" className="mt-2">
@@ -710,7 +1143,67 @@ export function CollectionDetailPage({
             <SchemaTab collection={collection} />
           </TabsContent>
         </Tabs>
+
+        {/* Spacer so the sticky commit bar doesn't overlap last rows. */}
+        {dirtyCount > 0 ? <div aria-hidden className="h-16" /> : null}
       </div>
+
+      <RowEditDialog
+        open={!!editingRow}
+        collection={collection}
+        row={editingRow}
+        onClose={() => setEditingRow(null)}
+        onSave={saveEditedRow}
+      />
+
+      {/* Global commit bar — sticks at the bottom while the user is editing. */}
+      <AnimatePresence>
+        {dirtyCount > 0 ? (
+          <motion.div
+            key="commit-bar"
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: 20 }}
+            transition={{ duration: 0.2, ease: 'easeOut' }}
+            className="pointer-events-none fixed inset-x-0 bottom-6 z-30 flex justify-center px-4"
+          >
+            <div className="pointer-events-auto flex items-center gap-3 rounded-full border border-border bg-white/95 px-4 py-2.5 shadow-xl shadow-black/10 backdrop-blur-sm dark:bg-gray-950/95">
+              <span className="relative inline-flex size-2">
+                <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-amber-500 opacity-70" />
+                <span className="relative inline-flex size-2 rounded-full bg-amber-500" />
+              </span>
+              <span className="text-sm font-medium text-foreground">
+                {dirtyCount} modification{dirtyCount > 1 ? 's' : ''} en attente
+              </span>
+              <span className="text-xs text-muted-foreground">
+                · non validée{dirtyCount > 1 ? 's' : ''}
+              </span>
+              <div className="mx-1 h-5 w-px bg-border" aria-hidden />
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={discardAll}
+                className="gap-1.5"
+              >
+                <RotateCcw className="size-4" />
+                Annuler
+              </Button>
+              <Button
+                size="sm"
+                onClick={commitAll}
+                style={{
+                  background:
+                    'linear-gradient(62.32deg, #000000 10.53%, #0F323D 88.82%)',
+                }}
+                className="gap-1.5 text-white shadow-md shadow-black/20 hover:opacity-90"
+              >
+                <Send className="size-4" />
+                Commit {dirtyCount} modification{dirtyCount > 1 ? 's' : ''}
+              </Button>
+            </div>
+          </motion.div>
+        ) : null}
+      </AnimatePresence>
     </div>
   );
 }
