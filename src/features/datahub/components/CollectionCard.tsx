@@ -87,6 +87,7 @@ export function CollectionCard({
 
   const showSync = ingestionMode === 'api-pull' || ingestionMode === 'api-push' || ingestionMode === 'mcp';
   const hasDrafts = stats.draftRows > 0;
+  const canRefresh = ingestionMode !== 'manual';
 
   const stopAndRun = (fn?: () => void) => (e: MouseEvent) => {
     e.stopPropagation();
@@ -136,7 +137,12 @@ export function CollectionCard({
               </Button>
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end" onClick={(e) => e.stopPropagation()}>
-              <DropdownMenuItem onSelect={() => onRefresh?.()}>Rafraîchir</DropdownMenuItem>
+              <DropdownMenuItem
+                onSelect={() => canRefresh && onRefresh?.()}
+                disabled={!canRefresh}
+              >
+                Rafraîchir
+              </DropdownMenuItem>
               <DropdownMenuItem>Dupliquer</DropdownMenuItem>
               <DropdownMenuItem>Voir la doc API</DropdownMenuItem>
               <DropdownMenuItem>Exporter schéma</DropdownMenuItem>

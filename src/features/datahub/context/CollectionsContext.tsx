@@ -15,12 +15,14 @@ import type {
 } from '../types';
 
 interface CollectionsContextValue {
-  /** Collections persisted in-memory for this session (created via the wizard). */
-  createdCollections: Collection[];
-  /** Merge of seed + in-memory, sorted by newest first for created ones. */
+  /** Every collection known in this session (seed + created), newest first. */
   allCollections: Collection[];
   /** Create a Collection from a fully-filled WizardData payload. */
   createCollection: (data: WizardData) => Collection;
+  /** Shallow-merge patch into the collection with the given id. */
+  updateCollection: (id: string, patch: Partial<Collection>) => void;
+  /** Find a collection by id in the current session state. */
+  getCollection: (id: string) => Collection | undefined;
 }
 
 const CollectionsContext = createContext<CollectionsContextValue | null>(null);
@@ -57,22 +59,40 @@ function buildCollectionFromWizard(data: WizardData): Collection {
 }
 
 export function CollectionsProvider({ children }: { children: ReactNode }) {
-  const [createdCollections, setCreatedCollections] = useState<Collection[]>([]);
+  // Seed collections are cloned into state on mount so they can be mutated
+  // uniformly alongside the ones created via the wizard.
+  const [collections, setCollections] = useState<Collection[]>(() =>
+    astorgCollections.map((c) => ({ ...c })),
+  );
 
   const createCollection = useCallback((data: WizardData) => {
     const collection = buildCollectionFromWizard(data);
-    setCreatedCollections((prev) => [collection, ...prev]);
+    setCollections((prev) => [collection, ...prev]);
     return collection;
   }, []);
 
-  const allCollections = useMemo(
-    () => [...createdCollections, ...astorgCollections],
-    [createdCollections],
+  const updateCollection = useCallback(
+    (id: string, patch: Partial<Collection>) => {
+      setCollections((prev) =>
+        prev.map((c) => (c.id === id ? { ...c, ...patch } : c)),
+      );
+    },
+    [],
+  );
+
+  const getCollection = useCallback(
+    (id: string) => collections.find((c) => c.id === id),
+    [collections],
   );
 
   const value = useMemo<CollectionsContextValue>(
-    () => ({ createdCollections, allCollections, createCollection }),
-    [createdCollections, allCollections, createCollection],
+    () => ({
+      allCollections: collections,
+      createCollection,
+      updateCollection,
+      getCollection,
+    }),
+    [collections, createCollection, updateCollection, getCollection],
   );
 
   return (

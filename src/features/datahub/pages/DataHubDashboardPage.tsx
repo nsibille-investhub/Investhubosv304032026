@@ -13,8 +13,10 @@ import {
 } from '../../../components/ui/select';
 
 import { CollectionCard } from '../components/CollectionCard';
+import { RefreshDataModal } from '../components/RefreshDataModal';
 import { useCollections } from '../context/CollectionsContext';
 import type {
+  Collection,
   CollectionRowStatus,
   IngestionMode,
   InvestHubPivotObject,
@@ -87,6 +89,7 @@ export function DataHubDashboardPage() {
   const [status, setStatus] = useState<StatusFilter>('all');
   const [mode, setMode] = useState<ModeFilter>('all');
   const [object, setObject] = useState<ObjectFilter>('all');
+  const [refreshTarget, setRefreshTarget] = useState<Collection | null>(null);
 
   const { allCollections } = useCollections();
 
@@ -244,11 +247,22 @@ export function DataHubDashboardPage() {
                 key={collection.id}
                 collection={collection}
                 onClick={() => navigateHash(`/datahub/${collection.id}`)}
+                onRefresh={() => setRefreshTarget(collection)}
               />
             ))}
           </div>
         )}
       </div>
+
+      {refreshTarget && (
+        <RefreshDataModal
+          open={!!refreshTarget}
+          onOpenChange={(next) => {
+            if (!next) setRefreshTarget(null);
+          }}
+          collection={refreshTarget}
+        />
+      )}
     </div>
   );
 }
