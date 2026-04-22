@@ -1,11 +1,25 @@
 {
   "header": {
     "designSystem": "Design System",
+    "whatsNew": "What's new",
+    "whatsNewUnread": "Unread updates",
     "notifications": "{{count}} notifications",
     "appStore": "App Store",
     "languageSwitcher": "Change language",
     "toggleDarkMode": "Switch to dark mode",
     "toggleLightMode": "Switch to light mode"
+  },
+  "whatsNew": {
+    "title": "What's new",
+    "subtitle": "Monthly newsletters and the full product release history in one place.",
+    "tabs": {
+      "newsletters": "Newsletters",
+      "changelog": "Changelog"
+    },
+    "read": "Read",
+    "backToList": "Back to list",
+    "emptyNewsletters": "No newsletters yet.",
+    "emptyChangelog": "No releases yet."
   },
   "language": {
     "french": "French",
@@ -132,6 +146,7 @@
     "events": "Events",
     "news": "News",
     "designSystem": "Design System",
+    "whatsNew": "What's new",
     "administration": "Administration",
     "spaces": "Spaces",
     "settings": "Settings"

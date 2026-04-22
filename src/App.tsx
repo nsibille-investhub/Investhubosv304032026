@@ -4,7 +4,7 @@ import { ThemeProvider } from './utils/themeContext';
 import { useTranslation } from './utils/languageContext';
 import { ThemeToggle } from './components/ThemeToggle';
 import { LanguageSwitcher } from './components/LanguageSwitcher';
-import { Search, Bell, Settings, Menu, ChevronDown, Plus, Info, MoreVertical, ArrowLeft, ChevronLeft, ChevronRight, Download, FileSpreadsheet, History, ArchiveX, Users, Palette } from 'lucide-react';
+import { Search, Bell, Settings, Menu, ChevronDown, Plus, Info, MoreVertical, ArrowLeft, ChevronLeft, ChevronRight, Download, FileSpreadsheet, History, ArchiveX, Users, Palette, Sparkles } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 import { Badge } from './components/ui/badge';
 import { Switch } from './components/ui/switch';
@@ -60,6 +60,8 @@ import { EventsPage } from './components/EventsPage';
 import { NewsPage } from './components/NewsPage';
 import EcosystemPage from './components/EcosystemPage';
 import { DesignSystemPage } from './components/DesignSystemPage';
+import { WhatsNewPage } from './components/WhatsNewPage';
+import { useWhatsNewUnread } from './utils/useWhatsNewUnread';
 import { DataHubRouter } from './features/datahub/pages/DataHubRouter';
 import { generateFunds, Fund } from './utils/fundGenerator';
 import { AllFundsPage } from './components/AllFundsPage';
@@ -109,6 +111,7 @@ type StatusType = 'need_review' | 'reviewed' | 'all' | 'rejected' | 'archived' |
 
 export default function App() {
   const { t } = useTranslation();
+  const { hasUnread: whatsNewHasUnread } = useWhatsNewUnread();
   // Initialize from URL hash
   const [currentPage, setCurrentPage] = useState<Page>(() => {
     const page = getPageFromHash();
@@ -596,6 +599,23 @@ export default function App() {
               <Button
                 variant="outline"
                 size="sm"
+                onClick={() => navigateToPage('whats-new')}
+                className="relative inline-flex items-center gap-2 border-[#D2DDD9] text-[#2F4D51] hover:text-[#1F3137] bg-white"
+              >
+                <Sparkles className="w-4 h-4" />
+                {t('header.whatsNew')}
+                {whatsNewHasUnread && (
+                  <motion.span
+                    initial={{ scale: 0 }}
+                    animate={{ scale: 1 }}
+                    className="absolute -top-1 -right-1 w-2.5 h-2.5 bg-[#0066FF] rounded-full ring-2 ring-white"
+                    aria-label={t('header.whatsNewUnread')}
+                  />
+                )}
+              </Button>
+              <Button
+                variant="outline"
+                size="sm"
                 onClick={() => navigateToPage('design-system')}
                 className="inline-flex items-center gap-2 border-[#D2DDD9] text-[#2F4D51] hover:text-[#1F3137] bg-white"
               >
@@ -758,6 +778,12 @@ export default function App() {
                   <span className="text-gray-400 dark:text-gray-500">{t('breadcrumb.portalsAndContent')}</span>
                   <span className="text-gray-300 dark:text-gray-700">/</span>
                   <span className="text-gray-900 dark:text-gray-100 font-medium">{t('breadcrumb.designSystem')}</span>
+                </>
+              ) : currentPage === 'whats-new' ? (
+                <>
+                  <span className="text-gray-400 dark:text-gray-500">{t('breadcrumb.investhubOs')}</span>
+                  <span className="text-gray-300 dark:text-gray-700">/</span>
+                  <span className="text-gray-900 dark:text-gray-100 font-medium">{t('breadcrumb.whatsNew')}</span>
                 </>
               ) : currentPage?.startsWith('settings-') ? (
                 <>
@@ -1691,6 +1717,10 @@ export default function App() {
 
           {currentPage === 'design-system' && (
             <DesignSystemPage />
+          )}
+
+          {currentPage === 'whats-new' && (
+            <WhatsNewPage />
           )}
 
           {currentPage === 'datahub' && (

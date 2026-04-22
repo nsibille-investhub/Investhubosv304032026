@@ -16,6 +16,7 @@ export type Page =
   | 'news'
   | 'datahub'
   | 'design-system'
+  | 'whats-new'
   | 'settings-app-store' 
   | 'settings-users' 
   | 'settings-teams' 
@@ -69,6 +70,7 @@ const PAGE_TO_PATH: Record<Page, string> = {
   'news': '/news',
   'datahub': '/datahub',
   'design-system': '/design-system',
+  'whats-new': '/whats-new',
   'settings-app-store': '/settings/app-store',
   'settings-users': '/settings/users',
   'settings-teams': '/settings/teams',

@@ -1,11 +1,25 @@
 {
   "header": {
     "designSystem": "Design System",
+    "whatsNew": "Nouveautés",
+    "whatsNewUnread": "Nouveautés non lues",
     "notifications": "{{count}} notifications",
     "appStore": "App Store",
     "languageSwitcher": "Changer de langue",
     "toggleDarkMode": "Activer le mode sombre",
     "toggleLightMode": "Activer le mode clair"
+  },
+  "whatsNew": {
+    "title": "Nouveautés",
+    "subtitle": "Retrouvez ici les newsletters mensuelles et l’historique des releases produit.",
+    "tabs": {
+      "newsletters": "Newsletters",
+      "changelog": "Changelog"
+    },
+    "read": "Lire",
+    "backToList": "Retour à la liste",
+    "emptyNewsletters": "Aucune newsletter pour le moment.",
+    "emptyChangelog": "Aucune release pour le moment."
   },
   "language": {
     "french": "Français",
@@ -132,6 +146,7 @@
     "events": "Événements",
     "news": "Actualités",
     "designSystem": "Design System",
+    "whatsNew": "Nouveautés",
     "administration": "Administration",
     "spaces": "Espaces",
     "settings": "Paramètres"

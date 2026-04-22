@@ -10999,3 +10999,34 @@ html {
 .document-list-grid {
   grid-template-columns: minmax(0, 3fr) minmax(0, 1.2fr) minmax(0, 2.8fr) minmax(0, 1fr) minmax(0, 0.8fr) minmax(0, 1.4fr);
 }
+
+/* Scoped typography for newsletter HTML pasted verbatim into the What's New page */
+.newsletter-content {
+  color: rgb(55 65 81);
+  font-size: 14px;
+  line-height: 1.65;
+}
+.dark .newsletter-content {
+  color: rgb(209 213 219);
+}
+.newsletter-content h1 { font-size: 22px; font-weight: 600; margin: 24px 0 12px; color: rgb(17 24 39); }
+.newsletter-content h2 { font-size: 18px; font-weight: 600; margin: 22px 0 10px; color: rgb(17 24 39); }
+.newsletter-content h3 { font-size: 15px; font-weight: 600; margin: 18px 0 8px; color: rgb(17 24 39); }
+.dark .newsletter-content h1,
+.dark .newsletter-content h2,
+.dark .newsletter-content h3 { color: rgb(243 244 246); }
+.newsletter-content p { margin: 10px 0; }
+.newsletter-content ul,
+.newsletter-content ol { margin: 10px 0; padding-left: 22px; }
+.newsletter-content ul { list-style: disc; }
+.newsletter-content ol { list-style: decimal; }
+.newsletter-content li { margin: 4px 0; }
+.newsletter-content a { color: #0066FF; text-decoration: underline; }
+.newsletter-content img { max-width: 100%; height: auto; border-radius: 8px; }
+.newsletter-content blockquote {
+  border-left: 3px solid #E5E5E5;
+  padding: 4px 0 4px 16px;
+  margin: 14px 0;
+  color: rgb(107 114 128);
+}
+.newsletter-content hr { border: none; border-top: 1px solid #E5E5E5; margin: 20px 0; }
