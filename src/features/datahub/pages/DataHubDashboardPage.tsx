@@ -71,35 +71,50 @@ type StatAccent = 'indigo' | 'slate' | 'emerald' | 'amber';
 
 const STAT_ACCENT: Record<
   StatAccent,
-  { chip: string; icon: string; bar: string; dot: string }
+  {
+    card: string;
+    icon: string;
+    label: string;
+    track: string;
+    bar: string;
+    dot: string;
+  }
 > = {
   indigo: {
-    chip: 'bg-indigo-50 dark:bg-indigo-500/10',
+    card: 'bg-indigo-50/70 border-indigo-100 hover:border-indigo-200 dark:bg-indigo-950/40 dark:border-indigo-900/60',
     icon: 'text-indigo-600 dark:text-indigo-400',
+    label: 'text-indigo-900/80 dark:text-indigo-200',
+    track: 'bg-indigo-100 dark:bg-indigo-900/50',
     bar: 'bg-indigo-500',
     dot: 'bg-indigo-500',
   },
   slate: {
-    chip: 'bg-slate-100 dark:bg-slate-500/15',
+    card: 'bg-slate-50 border-slate-200 hover:border-slate-300 dark:bg-slate-900/40 dark:border-slate-800',
     icon: 'text-slate-600 dark:text-slate-300',
+    label: 'text-slate-700 dark:text-slate-200',
+    track: 'bg-slate-200 dark:bg-slate-800',
     bar: 'bg-slate-500',
     dot: 'bg-slate-400',
   },
   emerald: {
-    chip: 'bg-emerald-50 dark:bg-emerald-500/10',
+    card: 'bg-emerald-50/80 border-emerald-100 hover:border-emerald-200 dark:bg-emerald-950/40 dark:border-emerald-900/60',
     icon: 'text-emerald-600 dark:text-emerald-400',
+    label: 'text-emerald-900/80 dark:text-emerald-200',
+    track: 'bg-emerald-100 dark:bg-emerald-900/50',
     bar: 'bg-emerald-500',
     dot: 'bg-emerald-500',
   },
   amber: {
-    chip: 'bg-amber-50 dark:bg-amber-500/10',
-    icon: 'text-amber-600 dark:text-amber-400',
+    card: 'bg-amber-50/80 border-amber-100 hover:border-amber-200 dark:bg-amber-950/40 dark:border-amber-900/60',
+    icon: 'text-amber-700 dark:text-amber-400',
+    label: 'text-amber-900/80 dark:text-amber-200',
+    track: 'bg-amber-100 dark:bg-amber-900/50',
     bar: 'bg-amber-500',
     dot: 'bg-amber-500',
   },
 };
 
-type StatItemProps = {
+type StatCardProps = {
   icon: LucideIcon;
   label: string;
   value: number;
@@ -110,7 +125,7 @@ type StatItemProps = {
   hint?: string;
 };
 
-function StatItem({
+function StatCard({
   icon: Icon,
   label,
   value,
@@ -119,27 +134,24 @@ function StatItem({
   progress,
   pulse,
   hint,
-}: StatItemProps) {
+}: StatCardProps) {
   const palette = STAT_ACCENT[accent];
   const ratio = progress && progress.total > 0 ? progress.current / progress.total : 0;
 
   return (
     <motion.div
-      initial={{ opacity: 0, y: 6 }}
+      initial={{ opacity: 0, y: 8 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ delay: 0.08 + index * 0.06, duration: 0.35, ease: 'easeOut' }}
-      className="group relative flex-1 px-6 py-5 transition-colors hover:bg-muted/40"
+      whileHover={{ y: -2 }}
+      className={cn(
+        'group relative flex flex-col justify-between rounded-xl border p-4 transition-colors duration-200',
+        palette.card,
+      )}
     >
       <div className="flex items-center gap-2">
-        <span
-          className={cn(
-            'inline-flex size-7 items-center justify-center rounded-md ring-1 ring-inset ring-border/60',
-            palette.chip,
-          )}
-        >
-          <Icon className={cn('size-3.5', palette.icon)} strokeWidth={2.25} />
-        </span>
-        <span className="text-[11px] font-medium uppercase tracking-[0.14em] text-muted-foreground">
+        <Icon className={cn('size-4', palette.icon)} strokeWidth={2.25} />
+        <span className={cn('text-xs font-semibold uppercase tracking-[0.08em]', palette.label)}>
           {label}
         </span>
         {pulse ? (
@@ -160,18 +172,18 @@ function StatItem({
           initial={{ opacity: 0, y: 4 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.18 + index * 0.06, duration: 0.3 }}
-          className="text-3xl font-semibold leading-none tracking-tight tabular-nums text-foreground"
+          className="text-3xl font-bold leading-none tracking-tight tabular-nums text-foreground"
         >
           {nf.format(value)}
         </motion.span>
         {hint ? (
-          <span className="text-xs font-medium text-muted-foreground">{hint}</span>
+          <span className={cn('text-xs font-medium', palette.label)}>{hint}</span>
         ) : null}
       </div>
 
       {progress ? (
         <div className="mt-3 flex items-center gap-2">
-          <div className="h-1 flex-1 overflow-hidden rounded-full bg-muted">
+          <div className={cn('h-1 flex-1 overflow-hidden rounded-full', palette.track)}>
             <motion.div
               className={cn('h-full rounded-full', palette.bar)}
               initial={{ width: 0 }}
@@ -179,7 +191,7 @@ function StatItem({
               transition={{ delay: 0.32 + index * 0.06, duration: 0.8, ease: 'easeOut' }}
             />
           </div>
-          <span className="text-[10px] font-semibold tabular-nums text-muted-foreground">
+          <span className={cn('text-[10px] font-semibold tabular-nums', palette.label)}>
             {Math.round(ratio * 100)}%
           </span>
         </div>
@@ -197,52 +209,39 @@ type StatStripProps = {
 
 function StatStrip({ collections, totalRows, publishedRows, draftRows }: StatStripProps) {
   return (
-    <motion.div
-      initial={{ opacity: 0, y: 10 }}
-      animate={{ opacity: 1, y: 0 }}
-      transition={{ duration: 0.4, ease: 'easeOut' }}
-    >
-      <Card className="overflow-hidden shadow-sm">
-        <CardContent className="p-0">
-          <div className="flex flex-col md:flex-row md:divide-x md:divide-border">
-            <StatItem
-              index={0}
-              icon={Database}
-              accent="indigo"
-              label="Collections"
-              value={collections}
-            />
-            <div className="border-t border-border md:hidden" />
-            <StatItem
-              index={1}
-              icon={Rows3}
-              accent="slate"
-              label="Total lignes"
-              value={totalRows}
-            />
-            <div className="border-t border-border md:hidden" />
-            <StatItem
-              index={2}
-              icon={CheckCircle2}
-              accent="emerald"
-              label="Publiées"
-              value={publishedRows}
-              progress={totalRows > 0 ? { current: publishedRows, total: totalRows } : undefined}
-            />
-            <div className="border-t border-border md:hidden" />
-            <StatItem
-              index={3}
-              icon={FileEdit}
-              accent="amber"
-              label="Brouillons"
-              value={draftRows}
-              pulse={draftRows > 0}
-              hint={draftRows > 0 ? 'à publier' : undefined}
-            />
-          </div>
-        </CardContent>
-      </Card>
-    </motion.div>
+    <div className="grid grid-cols-2 gap-3 md:grid-cols-4 md:gap-4">
+      <StatCard
+        index={0}
+        icon={Database}
+        accent="indigo"
+        label="Collections"
+        value={collections}
+      />
+      <StatCard
+        index={1}
+        icon={Rows3}
+        accent="slate"
+        label="Total lignes"
+        value={totalRows}
+      />
+      <StatCard
+        index={2}
+        icon={CheckCircle2}
+        accent="emerald"
+        label="Publiées"
+        value={publishedRows}
+        progress={totalRows > 0 ? { current: publishedRows, total: totalRows } : undefined}
+      />
+      <StatCard
+        index={3}
+        icon={FileEdit}
+        accent="amber"
+        label="Brouillons"
+        value={draftRows}
+        pulse={draftRows > 0}
+        hint={draftRows > 0 ? 'à publier' : undefined}
+      />
+    </div>
   );
 }
 
