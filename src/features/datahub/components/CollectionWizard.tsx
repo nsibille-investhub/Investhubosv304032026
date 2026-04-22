@@ -59,7 +59,10 @@ export function CollectionWizard({ open, onClose }: CollectionWizardProps) {
         style={{
           top: 0,
           left: 0,
-          transform: 'none',
+          // Tailwind v4 uses the standalone `translate:` CSS property, not
+          // `transform: translate(...)`. Overriding `transform` does nothing
+          // here — we must neutralize `translate` directly.
+          translate: 'none',
           width: '100vw',
           height: '100vh',
           maxWidth: 'none',
