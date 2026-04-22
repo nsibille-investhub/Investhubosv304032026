@@ -90,6 +90,40 @@ export interface WizardVisibility {
   distributorPortal: boolean;
 }
 
+/**
+ * How a Collection relates to InvestHub business objects.
+ * - free: editorial, not linked to any business object
+ * - link: rows reference existing InvestHub objects via a pivot key
+ * - create: rows materialise new InvestHub objects on ingestion
+ */
+export type CollectionLinkStrategy = 'free' | 'link' | 'create';
+
+export interface FieldMapping {
+  id: string;
+  /** Source column technicalName coming from the collection schema. */
+  sourceColumn: string;
+  /** Target attribute name on the InvestHub object. */
+  targetField: string;
+  /** Optional — which pivot object this mapping targets. */
+  pivotObject?: InvestHubPivotObject;
+}
+
+/**
+ * How a pivot key column resolves to an InvestHub internal id. Users can
+ * either reuse a pre-existing referential (a saved ext_id ↔ int_id table)
+ * or declare a new one inline.
+ */
+export interface PivotReferential {
+  pivotObject: InvestHubPivotObject;
+  mode: 'existing' | 'new';
+  /** When mode === 'existing'. */
+  referentialId?: string;
+  /** When mode === 'new' — column carrying the external id. */
+  externalKey?: string;
+  /** When mode === 'new' — target InvestHub id attribute. */
+  internalKey?: string;
+}
+
 export interface WizardData {
   // Step 1 (prompt 3.1)
   ingestionMode?: IngestionMode;
@@ -99,8 +133,13 @@ export interface WizardData {
   displayName?: string;
   technicalName?: string;
   description?: string;
+  linkStrategy?: CollectionLinkStrategy;
   linkedPivotObjects?: InvestHubPivotObject[];
   pivotKeys?: Partial<Record<InvestHubPivotObject, string>>;
+  fieldMappings?: FieldMapping[];
+  pivotReferentials?: PivotReferential[];
+  /** The id of an applied mapping template, if any. */
+  mappingTemplateId?: string;
   visibility?: WizardVisibility;
   pivotType?: PivotTemporalType;
   pivotColumn?: string;
