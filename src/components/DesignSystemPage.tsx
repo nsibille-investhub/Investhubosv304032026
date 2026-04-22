@@ -52,6 +52,9 @@ import {
   Clock,
   Plus,
   ArchiveX,
+  Rows3,
+  CheckCircle2,
+  FileEdit,
   type LucideIcon,
 } from 'lucide-react';
 import * as React from 'react';
@@ -80,6 +83,7 @@ import { CalledAmountCell } from './CalledAmountCell';
 import { GenericAudienceCard } from './GenericAudienceCard';
 import { SpecificAudience } from './SpecificAudience';
 import { FolderSpaceDialogPreview } from './ui/folder-space-dialog';
+import { KpiCard, KpiStrip } from './ui/kpi-card';
 import { PageHeader } from './ui/page-header';
 import { AudienceCounter, AudienceCounterCards } from './AudienceCounter';
 import { ItemSelector } from './InternalResponsibleSelector';
@@ -795,6 +799,154 @@ export function DesignSystemPage() {
         <p className="mt-2 text-sm text-[#4F6166] dark:text-[#9DB2AE] max-w-4xl">
           Bibliothèque complète des composants. On commence par la couche tableaux (data-intensive), puis les composants coeur.
         </p>
+      </section>
+
+      <section className="rounded-2xl border border-[#D7E0DD] dark:border-[#1F2D2A] bg-white dark:bg-[#101615] p-8 md:p-10">
+        <header className="mb-8 space-y-3">
+          <h2 className="text-lg font-semibold text-[#1F3137] dark:text-[#E8F0EE]">
+            Composant Data Display — ds-kpi-card
+          </h2>
+          <p className="text-sm text-[#4F6166] dark:text-[#9DB2AE] max-w-3xl leading-relaxed">
+            Card KPI unifiée pour les tableaux de bord. Fond bleu teinté
+            (<code className="text-xs px-1 py-0.5 rounded bg-[#F1F5F4] dark:bg-[#1C2624]">bg-blue-50</code>)
+            et texte <code className="text-xs px-1 py-0.5 rounded bg-[#F1F5F4] dark:bg-[#1C2624]">#000E2B</code>
+            pour rester harmonieux avec les autres modules (Bird View, DataHub…). Trois variants :
+            statique (icône + label + valeur), avec
+            <strong className="font-semibold"> progress bar</strong> (ratio current / total), ou avec
+            <strong className="font-semibold"> indicateur d’alerte</strong> (dot pulse ambre + hint textuel).
+          </p>
+          <p className="text-xs text-[#4F6166] dark:text-[#9DB2AE] leading-relaxed">
+            Identifiant&nbsp;: <code className="text-xs px-1 py-0.5 rounded bg-[#F1F5F4] dark:bg-[#1C2624] font-semibold">ds-kpi-card</code> — Import&nbsp;:
+            <code className="text-xs px-1 py-0.5 rounded bg-[#F1F5F4] dark:bg-[#1C2624] ml-1">{`import { KpiCard, KpiStrip } from '@/components/ui/kpi-card'`}</code>
+          </p>
+        </header>
+
+        <div className="space-y-16">
+          <div className="space-y-4">
+            <div className="flex items-baseline gap-3">
+              <span className="text-[11px] font-semibold uppercase tracking-[0.14em] text-[#456B6C]">
+                Variant — statique
+              </span>
+              <span className="text-xs text-[#4F6166] dark:text-[#9DB2AE]">
+                icône + label + valeur
+              </span>
+            </div>
+            <div className="rounded-xl border border-[#D7E0DD] dark:border-[#1F2D2A] bg-[#F8FAFA] dark:bg-[#0B0D0D] p-4 md:p-6">
+              <KpiStrip columns={2}>
+                <KpiCard index={0} icon={Database} label="Collections" value={6} />
+                <KpiCard index={1} icon={Rows3} label="Total lignes" value={327} />
+              </KpiStrip>
+            </div>
+          </div>
+
+          <div className="space-y-4">
+            <div className="flex items-baseline gap-3">
+              <span className="text-[11px] font-semibold uppercase tracking-[0.14em] text-[#456B6C]">
+                Variant — progress bar
+              </span>
+              <span className="text-xs text-[#4F6166] dark:text-[#9DB2AE]">
+                ratio current / total, % animé
+              </span>
+            </div>
+            <div className="rounded-xl border border-[#D7E0DD] dark:border-[#1F2D2A] bg-[#F8FAFA] dark:bg-[#0B0D0D] p-4 md:p-6">
+              <KpiStrip columns={2}>
+                <KpiCard
+                  index={0}
+                  icon={CheckCircle2}
+                  label="Publiées"
+                  value={317}
+                  progress={{ current: 317, total: 327 }}
+                />
+                <KpiCard
+                  index={1}
+                  icon={CheckCircle2}
+                  label="Conformité"
+                  value={48}
+                  progress={{ current: 48, total: 120 }}
+                />
+              </KpiStrip>
+            </div>
+          </div>
+
+          <div className="space-y-4">
+            <div className="flex items-baseline gap-3">
+              <span className="text-[11px] font-semibold uppercase tracking-[0.14em] text-[#456B6C]">
+                Variant — alerte
+              </span>
+              <span className="text-xs text-[#4F6166] dark:text-[#9DB2AE]">
+                dot pulse ambre + hint textuel
+              </span>
+            </div>
+            <div className="rounded-xl border border-[#D7E0DD] dark:border-[#1F2D2A] bg-[#F8FAFA] dark:bg-[#0B0D0D] p-4 md:p-6">
+              <KpiStrip columns={2}>
+                <KpiCard index={0} icon={FileEdit} label="Brouillons" value={10} pulse hint="à publier" />
+                <KpiCard index={1} icon={FileEdit} label="Alertes ouvertes" value={3} pulse hint="à traiter" />
+              </KpiStrip>
+            </div>
+          </div>
+
+          <div className="space-y-4">
+            <div className="flex items-baseline gap-3">
+              <span className="text-[11px] font-semibold uppercase tracking-[0.14em] text-[#456B6C]">
+                Composition
+              </span>
+              <span className="text-xs text-[#4F6166] dark:text-[#9DB2AE]">
+                strip 4 colonnes (DataHub)
+              </span>
+            </div>
+            <div className="rounded-xl border border-[#D7E0DD] dark:border-[#1F2D2A] bg-[#F8FAFA] dark:bg-[#0B0D0D] p-4 md:p-6">
+              <KpiStrip columns={4}>
+                <KpiCard index={0} icon={Database} label="Collections" value={6} />
+                <KpiCard index={1} icon={Rows3} label="Total lignes" value={327} />
+                <KpiCard
+                  index={2}
+                  icon={CheckCircle2}
+                  label="Publiées"
+                  value={317}
+                  progress={{ current: 317, total: 327 }}
+                />
+                <KpiCard index={3} icon={FileEdit} label="Brouillons" value={10} pulse hint="à publier" />
+              </KpiStrip>
+            </div>
+          </div>
+
+          <div className="space-y-4">
+            <div className="flex items-baseline gap-3">
+              <span className="text-[11px] font-semibold uppercase tracking-[0.14em] text-[#456B6C]">
+                Usage
+              </span>
+              <span className="text-xs text-[#4F6166] dark:text-[#9DB2AE]">
+                signature typique de la prop
+              </span>
+            </div>
+            <pre className="text-xs bg-[#F8FAFA] dark:bg-[#0B0D0D] border border-[#D7E0DD] dark:border-[#1F2D2A] p-5 rounded-xl overflow-x-auto leading-relaxed">
+{`<KpiStrip columns={4}>
+  {/* Statique */}
+  <KpiCard icon={Database} label="Collections" value={6} />
+
+  {/* Avec progress bar (ratio current / total) */}
+  <KpiCard
+    icon={CheckCircle2}
+    label="Publiées"
+    value={317}
+    progress={{ current: 317, total: 327 }}
+  />
+
+  {/* Avec alerte (dot pulse + hint) */}
+  <KpiCard
+    icon={FileEdit}
+    label="Brouillons"
+    value={10}
+    pulse
+    hint="à publier"
+  />
+
+  {/* Stagger facultatif : passer "index" pour décaler l’animation */}
+  <KpiCard index={3} icon={Rows3} label="Lignes" value={327} />
+</KpiStrip>`}
+            </pre>
+          </div>
+        </div>
       </section>
 
       <section className="rounded-2xl border border-[#D7E0DD] dark:border-[#1F2D2A] bg-white dark:bg-[#101615] p-8 md:p-10">
