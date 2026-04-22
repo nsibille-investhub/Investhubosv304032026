@@ -2,9 +2,11 @@ import { useEffect, useMemo, useState } from 'react';
 import { CollectionWizard } from '../components/CollectionWizard';
 import { DemoScenarioHelper } from '../components/DemoScenarioHelper';
 import { CollectionsProvider } from '../context/CollectionsContext';
+import { CollectionDetailPage } from './CollectionDetailPage';
 import { DataHubDashboardPage } from './DataHubDashboardPage';
 import { DataHubPlaceholderPage } from './DataHubPlaceholderPage';
 import { ViewAsLpPage } from './ViewAsLpPage';
+import type { Collection } from '../types';
 
 interface ParsedHash {
   path: string;
@@ -60,8 +62,24 @@ function InnerRouter() {
         />
       );
     }
-    if (DETAIL_RE.test(path)) {
-      return <DataHubPlaceholderPage />;
+    const detail = path.match(DETAIL_RE);
+    if (detail) {
+      const collectionKey = detail[1];
+      const gotoDashboard = () => navigateHash('/datahub');
+      const refresh = (collection: Collection) => {
+        navigateHash(`/datahub?refresh=${collection.id}`);
+      };
+      const viewAsLp = (collection: Collection) => {
+        navigateHash(`/datahub/${collection.id}/view-as-lp`);
+      };
+      return (
+        <CollectionDetailPage
+          collectionKey={collectionKey}
+          onExit={gotoDashboard}
+          onRefresh={refresh}
+          onViewAsLp={viewAsLp}
+        />
+      );
     }
     return <DataHubPlaceholderPage />;
   }, [hash]);

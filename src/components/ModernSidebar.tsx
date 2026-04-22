@@ -8,7 +8,6 @@ import logoMinimized from 'figma:asset/2115896087cf66bcb781a8f9d0f680a46ffd65c4.
 import { FundContextSelectorCompact } from './FundContextSelectorCompact';
 import { Fund } from '../utils/fundGenerator';
 import { useTranslation } from '../utils/languageContext';
-import { Badge } from './ui/badge';
 
 interface SidebarProps {
   expanded: boolean;
@@ -35,7 +34,7 @@ export function ModernSidebar({ expanded, onToggle, currentPage = 'entities', on
     participations: false,
     fundlife: false,
     dataroom: currentPage === 'documents' || currentPage === 'tracking' || currentPage === 'birdview',
-    portails: currentPage === 'events' || currentPage === 'news',
+    portails: currentPage === 'events' || currentPage === 'news' || currentPage === 'datahub',
     communications: false,
     settings: currentPage?.startsWith('settings-') || false,
   });
@@ -72,7 +71,7 @@ export function ModernSidebar({ expanded, onToggle, currentPage = 'entities', on
       participations: false,
       fundlife: false,
       dataroom: currentPage === 'documents' || currentPage === 'tracking' || currentPage === 'birdview',
-      portails: currentPage === 'events' || currentPage === 'news',
+      portails: currentPage === 'events' || currentPage === 'news' || currentPage === 'datahub',
       communications: false,
       settings: currentPage?.startsWith('settings-') || false,
     });
@@ -343,6 +342,14 @@ export function ModernSidebar({ expanded, onToggle, currentPage = 'entities', on
               <SubMenuItem icon={icons.Users} label={t('sidebar.submenu.partnersNavigation')} expanded={expanded} />
               <SubMenuItem icon={icons.Building2} label={t('sidebar.submenu.investorsNavigation')} expanded={expanded} />
               <SubMenuItem icon={icons.TrendingUp} label={t('sidebar.submenu.participationsNavigation')} expanded={expanded} />
+              <SubMenuItem
+                icon={icons.Database}
+                label="DataHub"
+                expanded={expanded}
+                isActive={currentPage === 'datahub'}
+                onClick={() => onPageChange?.('datahub')}
+                badge="NEW"
+              />
               <SubMenuItem icon={icons.FileText} label={t('sidebar.submenu.editor')} expanded={expanded} />
               <SubMenuItem icon={icons.MessageSquare} label={t('sidebar.submenu.contactForms')} expanded={expanded} />
               <SubMenuItem
@@ -364,19 +371,6 @@ export function ModernSidebar({ expanded, onToggle, currentPage = 'entities', on
               <SubMenuItem icon={icons.Globe} label={t('sidebar.submenu.translations')} expanded={expanded} />
               <SubMenuItem icon={icons.Shield} label={t('sidebar.submenu.disclaimers')} expanded={expanded} />
             </MenuItem>
-
-            <MenuItem
-              icon={icons.Database}
-              label="DataHub"
-              expanded={expanded}
-              isActive={currentPage === 'datahub'}
-              onClick={() => onPageChange?.('datahub')}
-              badge={
-                <Badge variant="secondary" className="h-4 px-1.5 text-[10px] leading-none">
-                  NEW
-                </Badge>
-              }
-            />
 
             <MenuItem
               icon={icons.Send}

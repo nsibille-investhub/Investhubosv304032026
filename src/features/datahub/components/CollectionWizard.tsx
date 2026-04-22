@@ -1,8 +1,8 @@
-import { ArrowLeft } from 'lucide-react';
+import { AnimatePresence, motion } from 'motion/react';
 import { toast } from 'sonner';
 
 import { Button } from '../../../components/ui/button';
-import { Card } from '../../../components/ui/card';
+import { PageHeader } from '../../../components/ui/page-header';
 import { useCollections } from '../context/CollectionsContext';
 import {
   useCollectionWizard,
@@ -64,39 +64,37 @@ export function CollectionWizard({ onExit, onCreated }: CollectionWizardProps) {
   };
 
   return (
-    <div className="flex-1 px-6 pb-6">
-      <div className="mx-auto flex max-w-5xl flex-col gap-5 py-6">
-        <div className="flex items-center gap-3">
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={onExit}
-            className="gap-2"
+    <div className="flex-1">
+      <PageHeader
+        breadcrumb={[
+          { label: 'InvestHub OS' },
+          { label: 'Portails et Contenu' },
+          { label: 'DataHub', onClick: onExit },
+          { label: 'Nouvelle collection' },
+        ]}
+        onBack={onExit}
+        title="Nouvelle collection"
+        subtitle={`Étape ${currentStep} sur ${WIZARD_TOTAL_STEPS} · ${STEPS[currentStep - 1].label}`}
+      />
+
+      <div className="mx-auto flex max-w-5xl flex-col gap-8 px-6 py-8">
+        {/* Stepper */}
+        <WizardStepper
+          steps={STEPS}
+          currentStep={currentStep}
+          onStepClick={(id) => goToStep(id as WizardStep)}
+        />
+
+        {/* Step content */}
+        <AnimatePresence mode="wait">
+          <motion.div
+            key={`step-${currentStep}`}
+            initial={{ opacity: 0, x: 16 }}
+            animate={{ opacity: 1, x: 0 }}
+            exit={{ opacity: 0, x: -16 }}
+            transition={{ duration: 0.25, ease: 'easeOut' }}
+            className="rounded-xl border border-border bg-white p-6 shadow-sm dark:bg-gray-950"
           >
-            <ArrowLeft className="size-4" />
-            Retour au DataHub
-          </Button>
-          <div className="h-4 w-px bg-border" aria-hidden />
-          <div className="flex flex-col">
-            <h1 className="text-sm font-semibold text-foreground">
-              Nouvelle collection
-            </h1>
-            <p className="text-xs text-muted-foreground">
-              Étape {currentStep} sur {WIZARD_TOTAL_STEPS}
-            </p>
-          </div>
-        </div>
-
-        <Card className="gap-0 overflow-hidden p-0">
-          <div className="border-b border-border bg-muted/30 px-6 py-4">
-            <WizardStepper
-              steps={STEPS}
-              currentStep={currentStep}
-              onStepClick={(id) => goToStep(id as WizardStep)}
-            />
-          </div>
-
-          <div className="px-6 py-8">
             {currentStep === 1 && (
               <WizardStepMode
                 mode={wizardData.ingestionMode}
@@ -116,9 +114,12 @@ export function CollectionWizard({ onExit, onCreated }: CollectionWizardProps) {
             {currentStep === 4 && (
               <WizardStepSchema data={wizardData} onChange={updateWizardData} />
             )}
-          </div>
+          </motion.div>
+        </AnimatePresence>
 
-          <div className="flex items-center justify-between gap-2 border-t border-border bg-muted/30 px-6 py-4">
+        {/* Footer actions */}
+        <div className="sticky bottom-4 z-10 flex items-center justify-between gap-2 rounded-xl border border-border bg-white/90 px-5 py-3 shadow-lg shadow-black/5 backdrop-blur-sm dark:bg-gray-950/90">
+          <div className="flex items-center gap-1">
             <Button
               variant="ghost"
               onClick={prevStep}
@@ -129,34 +130,39 @@ export function CollectionWizard({ onExit, onCreated }: CollectionWizardProps) {
             <Button variant="ghost" onClick={onExit}>
               Annuler
             </Button>
-            {isLastStep ? (
-              <div className="flex items-center gap-2">
-                {canImportNow && (
-                  <Button
-                    variant="outline"
-                    onClick={() => submit({ openImport: true })}
-                    disabled={!canProceed}
-                  >
-                    Créer et importer maintenant
-                  </Button>
-                )}
+          </div>
+
+          {isLastStep ? (
+            <div className="flex items-center gap-2">
+              {canImportNow && (
                 <Button
-                  onClick={() => submit({ openImport: false })}
+                  variant="outline"
+                  onClick={() => submit({ openImport: true })}
                   disabled={!canProceed}
                 >
-                  Créer la collection
+                  Créer et importer maintenant
                 </Button>
-              </div>
-            ) : (
+              )}
               <Button
-                onClick={nextStep}
+                onClick={() => submit({ openImport: false })}
                 disabled={!canProceed}
+                style={{ background: 'linear-gradient(62.32deg, #000000 10.53%, #0F323D 88.82%)' }}
+                className="text-white shadow-lg shadow-black/20 hover:opacity-90"
               >
-                Suivant
+                Créer la collection
               </Button>
-            )}
-          </div>
-        </Card>
+            </div>
+          ) : (
+            <Button
+              onClick={nextStep}
+              disabled={!canProceed}
+              style={{ background: 'linear-gradient(62.32deg, #000000 10.53%, #0F323D 88.82%)' }}
+              className="text-white shadow-lg shadow-black/20 hover:opacity-90"
+            >
+              Suivant
+            </Button>
+          )}
+        </div>
       </div>
     </div>
   );

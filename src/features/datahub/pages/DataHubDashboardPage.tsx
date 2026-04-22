@@ -1,9 +1,17 @@
 import { useEffect, useMemo, useState } from 'react';
-import { Plus, Search, SearchX } from 'lucide-react';
+import {
+  CheckCircle2,
+  Database,
+  FileEdit,
+  Rows3,
+  SearchX,
+} from 'lucide-react';
 
 import { Button } from '../../../components/ui/button';
 import { Card, CardContent } from '../../../components/ui/card';
-import { Input } from '../../../components/ui/input';
+import { KpiCard, KpiStrip } from '../../../components/ui/kpi-card';
+import { PageHeader } from '../../../components/ui/page-header';
+import { SearchInput } from '../../../components/ui/search-input';
 import {
   Select,
   SelectContent,
@@ -55,19 +63,6 @@ const OBJECT_LABELS: Record<ObjectFilter, string> = {
   'capital-account': 'Compte de capital',
   commitment: 'Engagement',
 };
-
-function Kpi({ label, value }: { label: string; value: number }) {
-  return (
-    <Card>
-      <CardContent className="flex flex-col gap-1 px-6 py-5">
-        <span className="text-xs text-muted-foreground">{label}</span>
-        <span className="text-2xl font-semibold leading-none text-foreground">
-          {nf.format(value)}
-        </span>
-      </CardContent>
-    </Card>
-  );
-}
 
 function matchesStatus(
   stats: { publishedRows: number; draftRows: number; unpublishedRows: number; changesRows: number },
@@ -151,53 +146,55 @@ export function DataHubDashboardPage() {
   };
 
   return (
-    <div className="flex-1 px-6 pb-6">
-      <div className="mx-auto flex max-w-7xl flex-col gap-6 py-6">
-        <nav aria-label="Fil d'Ariane" className="text-xs text-muted-foreground">
-          <span>InvestHub OS</span>
-          <span className="mx-1.5">›</span>
-          <span>Portails et Contenu</span>
-          <span className="mx-1.5">›</span>
-          <span className="text-foreground">DataHub</span>
-        </nav>
+    <div className="flex-1">
+      <PageHeader
+        breadcrumb={[
+          { label: 'InvestHub OS' },
+          { label: 'Portails et Contenu' },
+          { label: 'DataHub' },
+        ]}
+        title="DataHub"
+        subtitle="Gestion des collections de données personnalisées"
+        primaryAction={{
+          label: 'Nouvelle collection',
+          onClick: () => navigateHash('/datahub/new'),
+          ariaLabel: 'Créer une nouvelle collection',
+        }}
+      />
 
-        <header className="flex flex-wrap items-start justify-between gap-4">
-          <div className="flex flex-col gap-1">
-            <h1 className="text-2xl font-semibold text-foreground">DataHub</h1>
-            <p className="text-sm text-muted-foreground">
-              Gestion des collections de données personnalisées
-            </p>
-          </div>
-          <Button
-            onClick={() => navigateHash('/datahub/new')}
-            aria-label="Créer une nouvelle collection"
-          >
-            <Plus />
-            Nouvelle collection
-          </Button>
-        </header>
-
-        <div className="grid grid-cols-2 gap-4 md:grid-cols-4">
-          <Kpi label="Collections" value={allCollections.length} />
-          <Kpi label="Total lignes" value={totals.totalRows} />
-          <Kpi label="Publiées" value={totals.publishedRows} />
-          <Kpi label="Brouillons" value={totals.draftRows} />
-        </div>
+      <div className="mx-auto flex max-w-7xl flex-col gap-6 px-6 py-6">
+        <KpiStrip columns={4}>
+          <KpiCard index={0} icon={Database} label="Collections" value={allCollections.length} />
+          <KpiCard index={1} icon={Rows3} label="Total lignes" value={totals.totalRows} />
+          <KpiCard
+            index={2}
+            icon={CheckCircle2}
+            label="Publiées"
+            value={totals.publishedRows}
+            progress={
+              totals.totalRows > 0
+                ? { current: totals.publishedRows, total: totals.totalRows }
+                : undefined
+            }
+          />
+          <KpiCard
+            index={3}
+            icon={FileEdit}
+            label="Brouillons"
+            value={totals.draftRows}
+            pulse={totals.draftRows > 0}
+            hint={totals.draftRows > 0 ? 'à publier' : undefined}
+          />
+        </KpiStrip>
 
         <div className="flex flex-wrap items-center gap-2">
-          <div className="relative min-w-[240px] flex-1">
-            <Search
-              aria-hidden
-              className="pointer-events-none absolute left-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground"
-            />
-            <Input
-              value={search}
-              onChange={(e) => setSearch(e.target.value)}
-              placeholder="Rechercher une collection…"
-              className="pl-9"
-              aria-label="Rechercher une collection"
-            />
-          </div>
+          <SearchInput
+            value={search}
+            onValueChange={setSearch}
+            placeholder="Rechercher une collection…"
+            aria-label="Rechercher une collection"
+            className="min-w-[240px] flex-1"
+          />
           <Select value={status} onValueChange={(v) => setStatus(v as StatusFilter)}>
             <SelectTrigger className="w-[180px]" aria-label="Filtrer par statut">
               <SelectValue />

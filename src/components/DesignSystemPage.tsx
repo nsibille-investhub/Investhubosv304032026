@@ -50,6 +50,13 @@ import {
   Copy,
   ChevronRight,
   Clock,
+  Plus,
+  ArchiveX,
+  Rows3,
+  CheckCircle2,
+  FileEdit,
+  UploadCloud,
+  Server as ServerIcon,
   type LucideIcon,
 } from 'lucide-react';
 import * as React from 'react';
@@ -78,6 +85,17 @@ import { CalledAmountCell } from './CalledAmountCell';
 import { GenericAudienceCard } from './GenericAudienceCard';
 import { SpecificAudience } from './SpecificAudience';
 import { FolderSpaceDialogPreview } from './ui/folder-space-dialog';
+import { KpiCard, KpiStrip } from './ui/kpi-card';
+import { PageHeader } from './ui/page-header';
+import { SearchInput } from './ui/search-input';
+import { SegmentedControl } from './ui/segmented-control';
+import {
+  Select as UiSelect,
+  SelectContent as UiSelectContent,
+  SelectItem as UiSelectItem,
+  SelectTrigger as UiSelectTrigger,
+  SelectValue as UiSelectValue,
+} from './ui/select';
 import { AudienceCounter, AudienceCounterCards } from './AudienceCounter';
 import { ItemSelector } from './InternalResponsibleSelector';
 import {
@@ -783,6 +801,134 @@ function ItemSelectorPreview() {
   );
 }
 
+function SegmentedControlBasicPreview() {
+  const [value, setValue] = React.useState<'all' | 'one' | 'many'>('all');
+  return (
+    <SegmentedControl
+      aria-label="Portée de l'import"
+      value={value}
+      onValueChange={(v) => setValue(v as 'all' | 'one' | 'many')}
+      options={[
+        { value: 'all', label: 'Tous les fonds' },
+        { value: 'one', label: 'Un fonds' },
+        { value: 'many', label: 'Plusieurs fonds' },
+      ]}
+    />
+  );
+}
+
+function SegmentedControlWithIconsPreview() {
+  const [value, setValue] = React.useState<'manual' | 'ftp' | 'url'>('url');
+  return (
+    <SegmentedControl
+      aria-label="Canal de dépôt récurrent"
+      value={value}
+      onValueChange={(v) => setValue(v as 'manual' | 'ftp' | 'url')}
+      options={[
+        {
+          value: 'manual',
+          label: 'Upload manuel',
+          icon: <UploadCloud className="size-4" />,
+        },
+        {
+          value: 'ftp',
+          label: 'Dépôt FTP / SFTP',
+          icon: <ServerIcon className="size-4" />,
+        },
+        {
+          value: 'url',
+          label: 'URL d’upload dédiée',
+          icon: <Globe className="size-4" />,
+        },
+      ]}
+    />
+  );
+}
+
+function SegmentedControlSmallPreview() {
+  const [value, setValue] = React.useState('monthly');
+  return (
+    <SegmentedControl
+      size="sm"
+      aria-label="Période"
+      value={value}
+      onValueChange={setValue}
+      options={[
+        { value: 'daily', label: 'Jour' },
+        { value: 'weekly', label: 'Semaine' },
+        { value: 'monthly', label: 'Mois' },
+        { value: 'quarterly', label: 'Trimestre' },
+      ]}
+    />
+  );
+}
+
+function SegmentedControlFullWidthPreview() {
+  const [value, setValue] = React.useState('table');
+  return (
+    <SegmentedControl
+      fullWidth
+      aria-label="Vue"
+      value={value}
+      onValueChange={setValue}
+      options={[
+        { value: 'table', label: 'Tableau' },
+        { value: 'cards', label: 'Cartes' },
+        { value: 'kanban', label: 'Kanban' },
+      ]}
+    />
+  );
+}
+
+function SearchInputPreview({ initial = '' }: { initial?: string }) {
+  const [value, setValue] = React.useState(initial);
+  return (
+    <SearchInput
+      value={value}
+      onValueChange={setValue}
+      placeholder="Rechercher une collection…"
+      aria-label="Rechercher une collection"
+    />
+  );
+}
+
+function FilterBarPreview() {
+  const [search, setSearch] = React.useState('');
+  const [status, setStatus] = React.useState('all');
+  const [mode, setMode] = React.useState('all');
+  return (
+    <div className="flex flex-wrap items-center gap-2">
+      <SearchInput
+        value={search}
+        onValueChange={setSearch}
+        placeholder="Rechercher une collection…"
+        aria-label="Rechercher une collection"
+        className="min-w-[240px] flex-1"
+      />
+      <UiSelect value={status} onValueChange={setStatus}>
+        <UiSelectTrigger className="w-[180px]" aria-label="Filtrer par statut">
+          <UiSelectValue />
+        </UiSelectTrigger>
+        <UiSelectContent>
+          <UiSelectItem value="all">Tous les statuts</UiSelectItem>
+          <UiSelectItem value="published">Publiées</UiSelectItem>
+          <UiSelectItem value="draft">Brouillons</UiSelectItem>
+        </UiSelectContent>
+      </UiSelect>
+      <UiSelect value={mode} onValueChange={setMode}>
+        <UiSelectTrigger className="w-[180px]" aria-label="Filtrer par mode">
+          <UiSelectValue />
+        </UiSelectTrigger>
+        <UiSelectContent>
+          <UiSelectItem value="all">Tous les modes</UiSelectItem>
+          <UiSelectItem value="manual">Manuel</UiSelectItem>
+          <UiSelectItem value="api-pull">API (pull)</UiSelectItem>
+        </UiSelectContent>
+      </UiSelect>
+    </div>
+  );
+}
+
 export function DesignSystemPage() {
   return (
     <div className="flex-1 overflow-auto px-6 py-6 space-y-6 bg-[#F8FAFA] dark:bg-[#0B0D0D]">
@@ -792,6 +938,491 @@ export function DesignSystemPage() {
         <p className="mt-2 text-sm text-[#4F6166] dark:text-[#9DB2AE] max-w-4xl">
           Bibliothèque complète des composants. On commence par la couche tableaux (data-intensive), puis les composants coeur.
         </p>
+      </section>
+
+      <section className="rounded-2xl border border-[#D7E0DD] dark:border-[#1F2D2A] bg-white dark:bg-[#101615] p-8 md:p-10">
+        <header className="mb-8 space-y-3">
+          <h2 className="text-lg font-semibold text-[#1F3137] dark:text-[#E8F0EE]">
+            Composant Inputs — ds-segmented-control
+          </h2>
+          <p className="text-sm text-[#4F6166] dark:text-[#9DB2AE] max-w-3xl leading-relaxed">
+            Sélection exclusive à labels courts&nbsp;: preferable à un
+            <code className="text-xs px-1 py-0.5 rounded bg-[#F1F5F4] dark:bg-[#1C2624] mx-1">RadioGroup</code>
+            pour 2–5 options sans description. Bordure 2&nbsp;px neutre au repos, bordure
+            et texte en <code className="text-xs px-1 py-0.5 rounded bg-[#F1F5F4] dark:bg-[#1C2624]">#000E2B</code>
+            pour l&apos;option sélectionnée. Basé sur <code className="text-xs px-1 py-0.5 rounded bg-[#F1F5F4] dark:bg-[#1C2624]">@radix-ui/react-toggle-group</code>
+            (type=&quot;single&quot;) donc gestion clavier, aria-pressed et focus ring gérés.
+          </p>
+          <p className="text-xs text-[#4F6166] dark:text-[#9DB2AE] leading-relaxed">
+            Identifiant&nbsp;: <code className="text-xs px-1 py-0.5 rounded bg-[#F1F5F4] dark:bg-[#1C2624] font-semibold">ds-segmented-control</code> — Import&nbsp;:
+            <code className="text-xs px-1 py-0.5 rounded bg-[#F1F5F4] dark:bg-[#1C2624] ml-1">{`import { SegmentedControl } from '@/components/ui/segmented-control'`}</code>
+          </p>
+        </header>
+
+        <div className="space-y-16">
+          <div className="space-y-4">
+            <div className="flex items-baseline gap-3">
+              <span className="text-[11px] font-semibold uppercase tracking-[0.14em] text-[#456B6C]">
+                Variant — labels seuls
+              </span>
+              <span className="text-xs text-[#4F6166] dark:text-[#9DB2AE]">
+                3 options, taille par défaut
+              </span>
+            </div>
+            <div className="rounded-xl border border-[#D7E0DD] dark:border-[#1F2D2A] bg-[#F8FAFA] dark:bg-[#0B0D0D] p-4 md:p-6">
+              <SegmentedControlBasicPreview />
+            </div>
+          </div>
+
+          <div className="space-y-4">
+            <div className="flex items-baseline gap-3">
+              <span className="text-[11px] font-semibold uppercase tracking-[0.14em] text-[#456B6C]">
+                Variant — avec icônes
+              </span>
+              <span className="text-xs text-[#4F6166] dark:text-[#9DB2AE]">
+                canal de dépôt récurrent (wizard DataHub)
+              </span>
+            </div>
+            <div className="rounded-xl border border-[#D7E0DD] dark:border-[#1F2D2A] bg-[#F8FAFA] dark:bg-[#0B0D0D] p-4 md:p-6">
+              <SegmentedControlWithIconsPreview />
+            </div>
+          </div>
+
+          <div className="space-y-4">
+            <div className="flex items-baseline gap-3">
+              <span className="text-[11px] font-semibold uppercase tracking-[0.14em] text-[#456B6C]">
+                Variant — taille sm
+              </span>
+              <span className="text-xs text-[#4F6166] dark:text-[#9DB2AE]">
+                pour les barres de filtres denses
+              </span>
+            </div>
+            <div className="rounded-xl border border-[#D7E0DD] dark:border-[#1F2D2A] bg-[#F8FAFA] dark:bg-[#0B0D0D] p-4 md:p-6">
+              <SegmentedControlSmallPreview />
+            </div>
+          </div>
+
+          <div className="space-y-4">
+            <div className="flex items-baseline gap-3">
+              <span className="text-[11px] font-semibold uppercase tracking-[0.14em] text-[#456B6C]">
+                Variant — fullWidth
+              </span>
+              <span className="text-xs text-[#4F6166] dark:text-[#9DB2AE]">
+                occupe la largeur parente et distribue les segments
+              </span>
+            </div>
+            <div className="rounded-xl border border-[#D7E0DD] dark:border-[#1F2D2A] bg-[#F8FAFA] dark:bg-[#0B0D0D] p-4 md:p-6">
+              <SegmentedControlFullWidthPreview />
+            </div>
+          </div>
+
+          <div className="space-y-4">
+            <div className="flex items-baseline gap-3">
+              <span className="text-[11px] font-semibold uppercase tracking-[0.14em] text-[#456B6C]">
+                Usage
+              </span>
+              <span className="text-xs text-[#4F6166] dark:text-[#9DB2AE]">
+                signature typique de la prop
+              </span>
+            </div>
+            <pre className="text-xs bg-[#F8FAFA] dark:bg-[#0B0D0D] border border-[#D7E0DD] dark:border-[#1F2D2A] p-5 rounded-xl overflow-x-auto leading-relaxed">
+{`<SegmentedControl
+  value={kind}
+  onValueChange={setKind}
+  aria-label="Canal de dépôt récurrent"
+  size="md"             // 'sm' | 'md' | 'lg'  (default: 'md')
+  // fullWidth           // remplit le parent et répartit les segments
+  options={[
+    { value: 'manual', label: 'Upload manuel', icon: <UploadCloud /> },
+    { value: 'ftp',    label: 'Dépôt FTP / SFTP', icon: <Server /> },
+    { value: 'url',    label: 'URL d’upload dédiée', icon: <Globe /> },
+  ]}
+/>`}
+            </pre>
+          </div>
+        </div>
+      </section>
+
+      <section className="rounded-2xl border border-[#D7E0DD] dark:border-[#1F2D2A] bg-white dark:bg-[#101615] p-8 md:p-10">
+        <header className="mb-8 space-y-3">
+          <h2 className="text-lg font-semibold text-[#1F3137] dark:text-[#E8F0EE]">
+            Composant Inputs — ds-search-input
+          </h2>
+          <p className="text-sm text-[#4F6166] dark:text-[#9DB2AE] max-w-3xl leading-relaxed">
+            Input de recherche standard. Encapsule le pattern &laquo;&nbsp;Input + icône
+            loupe à gauche&nbsp;&raquo; réutilisé partout (FilterBar, DocumentFilterBar,
+            DataHub…). Affiche un bouton &times; de réinitialisation dès qu&apos;une valeur
+            est saisie, et vide le champ sur <code className="text-xs px-1 py-0.5 rounded bg-[#F1F5F4] dark:bg-[#1C2624]">Escape</code>.
+            Les filtres secondaires sont composés avec le <code className="text-xs px-1 py-0.5 rounded bg-[#F1F5F4] dark:bg-[#1C2624]">Select</code> du DS.
+          </p>
+          <p className="text-xs text-[#4F6166] dark:text-[#9DB2AE] leading-relaxed">
+            Identifiant&nbsp;: <code className="text-xs px-1 py-0.5 rounded bg-[#F1F5F4] dark:bg-[#1C2624] font-semibold">ds-search-input</code> — Import&nbsp;:
+            <code className="text-xs px-1 py-0.5 rounded bg-[#F1F5F4] dark:bg-[#1C2624] ml-1">{`import { SearchInput } from '@/components/ui/search-input'`}</code>
+          </p>
+        </header>
+
+        <div className="space-y-16">
+          <div className="space-y-4">
+            <div className="flex items-baseline gap-3">
+              <span className="text-[11px] font-semibold uppercase tracking-[0.14em] text-[#456B6C]">
+                Variant — vide
+              </span>
+              <span className="text-xs text-[#4F6166] dark:text-[#9DB2AE]">
+                placeholder + icône loupe
+              </span>
+            </div>
+            <div className="rounded-xl border border-[#D7E0DD] dark:border-[#1F2D2A] bg-[#F8FAFA] dark:bg-[#0B0D0D] p-4 md:p-6">
+              <div className="max-w-md">
+                <SearchInputPreview />
+              </div>
+            </div>
+          </div>
+
+          <div className="space-y-4">
+            <div className="flex items-baseline gap-3">
+              <span className="text-[11px] font-semibold uppercase tracking-[0.14em] text-[#456B6C]">
+                Variant — avec valeur
+              </span>
+              <span className="text-xs text-[#4F6166] dark:text-[#9DB2AE]">
+                bouton clear + raccourci <kbd>Esc</kbd>
+              </span>
+            </div>
+            <div className="rounded-xl border border-[#D7E0DD] dark:border-[#1F2D2A] bg-[#F8FAFA] dark:bg-[#0B0D0D] p-4 md:p-6">
+              <div className="max-w-md">
+                <SearchInputPreview initial="Reporting ESG" />
+              </div>
+            </div>
+          </div>
+
+          <div className="space-y-4">
+            <div className="flex items-baseline gap-3">
+              <span className="text-[11px] font-semibold uppercase tracking-[0.14em] text-[#456B6C]">
+                Composition
+              </span>
+              <span className="text-xs text-[#4F6166] dark:text-[#9DB2AE]">
+                SearchInput + Select (filter bar DataHub)
+              </span>
+            </div>
+            <div className="rounded-xl border border-[#D7E0DD] dark:border-[#1F2D2A] bg-[#F8FAFA] dark:bg-[#0B0D0D] p-4 md:p-6">
+              <FilterBarPreview />
+            </div>
+          </div>
+
+          <div className="space-y-4">
+            <div className="flex items-baseline gap-3">
+              <span className="text-[11px] font-semibold uppercase tracking-[0.14em] text-[#456B6C]">
+                Usage
+              </span>
+              <span className="text-xs text-[#4F6166] dark:text-[#9DB2AE]">
+                signature typique de la prop
+              </span>
+            </div>
+            <pre className="text-xs bg-[#F8FAFA] dark:bg-[#0B0D0D] border border-[#D7E0DD] dark:border-[#1F2D2A] p-5 rounded-xl overflow-x-auto leading-relaxed">
+{`<div className="flex flex-wrap items-center gap-2">
+  <SearchInput
+    value={search}
+    onValueChange={setSearch}
+    placeholder="Rechercher une collection…"
+    className="min-w-[240px] flex-1"
+  />
+
+  <Select value={status} onValueChange={setStatus}>
+    <SelectTrigger className="w-[180px]"><SelectValue /></SelectTrigger>
+    <SelectContent>
+      <SelectItem value="all">Tous les statuts</SelectItem>
+      <SelectItem value="published">Publiées</SelectItem>
+    </SelectContent>
+  </Select>
+</div>`}
+            </pre>
+          </div>
+        </div>
+      </section>
+
+      <section className="rounded-2xl border border-[#D7E0DD] dark:border-[#1F2D2A] bg-white dark:bg-[#101615] p-8 md:p-10">
+        <header className="mb-8 space-y-3">
+          <h2 className="text-lg font-semibold text-[#1F3137] dark:text-[#E8F0EE]">
+            Composant Data Display — ds-kpi-card
+          </h2>
+          <p className="text-sm text-[#4F6166] dark:text-[#9DB2AE] max-w-3xl leading-relaxed">
+            Card KPI unifiée pour les tableaux de bord. Fond bleu teinté
+            (<code className="text-xs px-1 py-0.5 rounded bg-[#F1F5F4] dark:bg-[#1C2624]">bg-blue-50</code>)
+            et texte <code className="text-xs px-1 py-0.5 rounded bg-[#F1F5F4] dark:bg-[#1C2624]">#000E2B</code>
+            pour rester harmonieux avec les autres modules (Bird View, DataHub…). Trois variants :
+            statique (icône + label + valeur), avec
+            <strong className="font-semibold"> progress bar</strong> (ratio current / total), ou avec
+            <strong className="font-semibold"> indicateur d’alerte</strong> (dot pulse ambre + hint textuel).
+          </p>
+          <p className="text-xs text-[#4F6166] dark:text-[#9DB2AE] leading-relaxed">
+            Identifiant&nbsp;: <code className="text-xs px-1 py-0.5 rounded bg-[#F1F5F4] dark:bg-[#1C2624] font-semibold">ds-kpi-card</code> — Import&nbsp;:
+            <code className="text-xs px-1 py-0.5 rounded bg-[#F1F5F4] dark:bg-[#1C2624] ml-1">{`import { KpiCard, KpiStrip } from '@/components/ui/kpi-card'`}</code>
+          </p>
+        </header>
+
+        <div className="space-y-16">
+          <div className="space-y-4">
+            <div className="flex items-baseline gap-3">
+              <span className="text-[11px] font-semibold uppercase tracking-[0.14em] text-[#456B6C]">
+                Variant — statique
+              </span>
+              <span className="text-xs text-[#4F6166] dark:text-[#9DB2AE]">
+                icône + label + valeur
+              </span>
+            </div>
+            <div className="rounded-xl border border-[#D7E0DD] dark:border-[#1F2D2A] bg-[#F8FAFA] dark:bg-[#0B0D0D] p-4 md:p-6">
+              <KpiStrip columns={2}>
+                <KpiCard index={0} icon={Database} label="Collections" value={6} />
+                <KpiCard index={1} icon={Rows3} label="Total lignes" value={327} />
+              </KpiStrip>
+            </div>
+          </div>
+
+          <div className="space-y-4">
+            <div className="flex items-baseline gap-3">
+              <span className="text-[11px] font-semibold uppercase tracking-[0.14em] text-[#456B6C]">
+                Variant — progress bar
+              </span>
+              <span className="text-xs text-[#4F6166] dark:text-[#9DB2AE]">
+                ratio current / total, % animé
+              </span>
+            </div>
+            <div className="rounded-xl border border-[#D7E0DD] dark:border-[#1F2D2A] bg-[#F8FAFA] dark:bg-[#0B0D0D] p-4 md:p-6">
+              <KpiStrip columns={2}>
+                <KpiCard
+                  index={0}
+                  icon={CheckCircle2}
+                  label="Publiées"
+                  value={317}
+                  progress={{ current: 317, total: 327 }}
+                />
+                <KpiCard
+                  index={1}
+                  icon={CheckCircle2}
+                  label="Conformité"
+                  value={48}
+                  progress={{ current: 48, total: 120 }}
+                />
+              </KpiStrip>
+            </div>
+          </div>
+
+          <div className="space-y-4">
+            <div className="flex items-baseline gap-3">
+              <span className="text-[11px] font-semibold uppercase tracking-[0.14em] text-[#456B6C]">
+                Variant — alerte
+              </span>
+              <span className="text-xs text-[#4F6166] dark:text-[#9DB2AE]">
+                dot pulse ambre + hint textuel
+              </span>
+            </div>
+            <div className="rounded-xl border border-[#D7E0DD] dark:border-[#1F2D2A] bg-[#F8FAFA] dark:bg-[#0B0D0D] p-4 md:p-6">
+              <KpiStrip columns={2}>
+                <KpiCard index={0} icon={FileEdit} label="Brouillons" value={10} pulse hint="à publier" />
+                <KpiCard index={1} icon={FileEdit} label="Alertes ouvertes" value={3} pulse hint="à traiter" />
+              </KpiStrip>
+            </div>
+          </div>
+
+          <div className="space-y-4">
+            <div className="flex items-baseline gap-3">
+              <span className="text-[11px] font-semibold uppercase tracking-[0.14em] text-[#456B6C]">
+                Composition
+              </span>
+              <span className="text-xs text-[#4F6166] dark:text-[#9DB2AE]">
+                strip 4 colonnes (DataHub)
+              </span>
+            </div>
+            <div className="rounded-xl border border-[#D7E0DD] dark:border-[#1F2D2A] bg-[#F8FAFA] dark:bg-[#0B0D0D] p-4 md:p-6">
+              <KpiStrip columns={4}>
+                <KpiCard index={0} icon={Database} label="Collections" value={6} />
+                <KpiCard index={1} icon={Rows3} label="Total lignes" value={327} />
+                <KpiCard
+                  index={2}
+                  icon={CheckCircle2}
+                  label="Publiées"
+                  value={317}
+                  progress={{ current: 317, total: 327 }}
+                />
+                <KpiCard index={3} icon={FileEdit} label="Brouillons" value={10} pulse hint="à publier" />
+              </KpiStrip>
+            </div>
+          </div>
+
+          <div className="space-y-4">
+            <div className="flex items-baseline gap-3">
+              <span className="text-[11px] font-semibold uppercase tracking-[0.14em] text-[#456B6C]">
+                Usage
+              </span>
+              <span className="text-xs text-[#4F6166] dark:text-[#9DB2AE]">
+                signature typique de la prop
+              </span>
+            </div>
+            <pre className="text-xs bg-[#F8FAFA] dark:bg-[#0B0D0D] border border-[#D7E0DD] dark:border-[#1F2D2A] p-5 rounded-xl overflow-x-auto leading-relaxed">
+{`<KpiStrip columns={4}>
+  {/* Statique */}
+  <KpiCard icon={Database} label="Collections" value={6} />
+
+  {/* Avec progress bar (ratio current / total) */}
+  <KpiCard
+    icon={CheckCircle2}
+    label="Publiées"
+    value={317}
+    progress={{ current: 317, total: 327 }}
+  />
+
+  {/* Avec alerte (dot pulse + hint) */}
+  <KpiCard
+    icon={FileEdit}
+    label="Brouillons"
+    value={10}
+    pulse
+    hint="à publier"
+  />
+
+  {/* Stagger facultatif : passer "index" pour décaler l’animation */}
+  <KpiCard index={3} icon={Rows3} label="Lignes" value={327} />
+</KpiStrip>`}
+            </pre>
+          </div>
+        </div>
+      </section>
+
+      <section className="rounded-2xl border border-[#D7E0DD] dark:border-[#1F2D2A] bg-white dark:bg-[#101615] p-8 md:p-10">
+        <header className="mb-8 space-y-3">
+          <h2 className="text-lg font-semibold text-[#1F3137] dark:text-[#E8F0EE]">
+            Composant Navigation — ds-page-header
+          </h2>
+          <p className="text-sm text-[#4F6166] dark:text-[#9DB2AE] max-w-3xl leading-relaxed">
+            En-tête de page unifié pour tous les modules. Structure cohérente&nbsp;:
+            fil d&apos;Ariane (optionnel avec bouton retour), titre, sous-titre,
+            action principale (bouton noir dégradé), action secondaire (optionnelle, variant outline),
+            et menu tertiaire &laquo;&nbsp;...&nbsp;&raquo; (optionnel, pour exports et actions secondaires).
+          </p>
+          <p className="text-xs text-[#4F6166] dark:text-[#9DB2AE] leading-relaxed">
+            Identifiant&nbsp;: <code className="text-xs px-1 py-0.5 rounded bg-[#F1F5F4] dark:bg-[#1C2624] font-semibold">ds-page-header</code> — Import&nbsp;:
+            <code className="text-xs px-1 py-0.5 rounded bg-[#F1F5F4] dark:bg-[#1C2624] ml-1">{`import { PageHeader } from '@/components/ui/page-header'`}</code>
+          </p>
+          <p className="text-xs text-[#4F6166] dark:text-[#9DB2AE] leading-relaxed max-w-3xl">
+            Le bouton retour (flèche gauche) fait partie du pattern&nbsp;: il est affiché par défaut
+            et utilise <code className="text-xs px-1 py-0.5 rounded bg-[#F1F5F4] dark:bg-[#1C2624]">window.history.back()</code>.
+            Passer <code className="text-xs px-1 py-0.5 rounded bg-[#F1F5F4] dark:bg-[#1C2624]">onBack</code> pour surcharger, ou
+            <code className="text-xs px-1 py-0.5 rounded bg-[#F1F5F4] dark:bg-[#1C2624] ml-1">hideBackButton</code> pour le masquer (landing pages).
+          </p>
+        </header>
+
+        <div className="space-y-16">
+          <div className="space-y-4">
+            <div className="flex items-baseline gap-3">
+              <span className="text-[11px] font-semibold uppercase tracking-[0.14em] text-[#456B6C]">
+                Exemple complet
+              </span>
+              <span className="text-xs text-[#4F6166] dark:text-[#9DB2AE]">
+                primaire + secondaire + tertiaire (DataHub)
+              </span>
+            </div>
+            <div className="overflow-hidden rounded-xl border border-[#D7E0DD] dark:border-[#1F2D2A] bg-[#F8FAFA] dark:bg-[#0B0D0D] p-4 md:p-6">
+              <div className="overflow-hidden rounded-lg border border-[#E6EDEB] dark:border-[#25332F] bg-white dark:bg-[#101615] shadow-sm">
+                <PageHeader
+                  breadcrumb={[
+                    { label: 'InvestHub OS' },
+                    { label: 'Portails et Contenu' },
+                    { label: 'DataHub' },
+                  ]}
+                  title="DataHub"
+                  subtitle="Gestion des collections de données personnalisées"
+                  primaryAction={{
+                    label: 'Nouvelle collection',
+                    onClick: () => undefined,
+                  }}
+                  secondaryAction={{
+                    label: 'Importer',
+                    onClick: () => undefined,
+                    icon: <Download className="w-4 h-4" />,
+                  }}
+                  tertiaryActions={[
+                    {
+                      label: 'Archivées',
+                      icon: <ArchiveX className="w-4 h-4 text-gray-600" />,
+                      onClick: () => undefined,
+                    },
+                    {
+                      label: 'Télécharger .csv',
+                      icon: <FileSpreadsheet className="w-4 h-4 text-green-600" />,
+                      onClick: () => undefined,
+                    },
+                  ]}
+                />
+              </div>
+            </div>
+          </div>
+
+          <div className="space-y-4">
+            <div className="flex items-baseline gap-3">
+              <span className="text-[11px] font-semibold uppercase tracking-[0.14em] text-[#456B6C]">
+                Exemple minimal
+              </span>
+              <span className="text-xs text-[#4F6166] dark:text-[#9DB2AE]">
+                titre + sous-titre + action principale
+              </span>
+            </div>
+            <div className="overflow-hidden rounded-xl border border-[#D7E0DD] dark:border-[#1F2D2A] bg-[#F8FAFA] dark:bg-[#0B0D0D] p-4 md:p-6">
+              <div className="overflow-hidden rounded-lg border border-[#E6EDEB] dark:border-[#25332F] bg-white dark:bg-[#101615] shadow-sm">
+                <PageHeader
+                  breadcrumb={[
+                    { label: 'InvestHub OS' },
+                    { label: 'Investors' },
+                  ]}
+                  title="Investisseurs"
+                  subtitle="Gérer et suivre tous les investisseurs"
+                  primaryAction={{
+                    label: 'Nouvel Investisseur',
+                    onClick: () => undefined,
+                    icon: <Plus className="w-4 h-4" />,
+                  }}
+                />
+              </div>
+            </div>
+          </div>
+
+          <div className="space-y-4">
+            <div className="flex items-baseline gap-3">
+              <span className="text-[11px] font-semibold uppercase tracking-[0.14em] text-[#456B6C]">
+                Usage
+              </span>
+              <span className="text-xs text-[#4F6166] dark:text-[#9DB2AE]">
+                signature typique de la prop
+              </span>
+            </div>
+            <pre className="text-xs bg-[#F8FAFA] dark:bg-[#0B0D0D] border border-[#D7E0DD] dark:border-[#1F2D2A] p-5 rounded-xl overflow-x-auto leading-relaxed">
+{`<PageHeader
+  breadcrumb={[
+    { label: 'InvestHub OS' },
+    { label: 'Portails et Contenu' },
+    { label: 'DataHub' },
+  ]}
+  // Bouton retour affiché par défaut (window.history.back())
+  // onBack={() => navigateBack()}         // surcharge optionnelle
+  // hideBackButton                        // pour le masquer
+  title="DataHub"
+  subtitle="Gestion des collections..."   // optionnel
+  primaryAction={{                        // optionnel
+    label: 'Nouvelle collection',
+    onClick: () => create(),
+    icon: <Plus />,                       // optionnel (Plus par défaut)
+  }}
+  secondaryAction={{                      // optionnel
+    label: 'Importer',
+    onClick: () => importData(),
+    icon: <Download />,
+  }}
+  tertiaryActions={[                      // optionnel (menu "...")
+    { label: 'Télécharger .csv', onClick: () => ..., icon: <FileSpreadsheet /> },
+    { label: 'Archiver', onClick: () => ..., destructive: true, separatorBefore: true },
+  ]}
+/>`}
+            </pre>
+          </div>
+        </div>
       </section>
 
       <section className="rounded-2xl border border-[#D7E0DD] dark:border-[#1F2D2A] bg-white dark:bg-[#101615] p-6">

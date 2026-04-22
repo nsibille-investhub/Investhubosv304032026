@@ -1,11 +1,24 @@
-import { useEffect, useMemo, useRef, useState, type ComponentType } from 'react';
-import { BookOpen, Info, TrendingUp, Zap } from 'lucide-react';
+import { useEffect, useMemo, useRef, type ComponentType } from 'react';
+import {
+  ArrowRight,
+  BookOpen,
+  Info,
+  Link2,
+  Plus,
+  Sparkles,
+  TrendingUp,
+  Trash2,
+  Wand2,
+  Zap,
+} from 'lucide-react';
 
 import {
   Alert,
   AlertDescription,
   AlertTitle,
 } from '../../../../components/ui/alert';
+import { Badge } from '../../../../components/ui/badge';
+import { Button } from '../../../../components/ui/button';
 import { Checkbox } from '../../../../components/ui/checkbox';
 import { Input } from '../../../../components/ui/input';
 import { Label } from '../../../../components/ui/label';
@@ -13,11 +26,26 @@ import {
   RadioGroup,
   RadioGroupItem,
 } from '../../../../components/ui/radio-group';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '../../../../components/ui/select';
+import { SegmentedControl } from '../../../../components/ui/segmented-control';
 import { Separator } from '../../../../components/ui/separator';
 import { Switch } from '../../../../components/ui/switch';
 import { Textarea } from '../../../../components/ui/textarea';
+import {
+  MAPPING_TEMPLATES,
+  templatesFor,
+} from '../../seed/mappings';
 import type {
+  CollectionLinkStrategy,
+  FieldMapping,
   InvestHubPivotObject,
+  PivotReferential,
   PivotTemporalType,
   WizardData,
   WizardVisibility,
@@ -25,7 +53,9 @@ import type {
 
 type LucideIcon = ComponentType<{ className?: string; 'aria-hidden'?: boolean }>;
 
-type LinkedMode = 'free' | 'objects';
+function newMappingId(): string {
+  return `map_${Math.random().toString(36).slice(2, 9)}`;
+}
 
 interface PivotObjectDescriptor {
   key: InvestHubPivotObject;
@@ -108,15 +138,12 @@ export function WizardStepLinking({ data, onChange }: WizardStepLinkingProps) {
   const pivotKeys = (data.pivotKeys ?? {}) as Partial<
     Record<InvestHubPivotObject, string>
   >;
+  const fieldMappings: FieldMapping[] = data.fieldMappings ?? [];
+  const pivotReferentials: PivotReferential[] = data.pivotReferentials ?? [];
 
-  // Derive initial radio choice from data; otherwise default to 'free' once the
-  // user interacts. We keep this local because an empty `linkedPivotObjects`
-  // array is ambiguous (free vs. picked "objects" then unchecked everything).
-  const [linkedMode, setLinkedMode] = useState<LinkedMode | undefined>(() => {
-    if (linked.length > 0) return 'objects';
-    if (data.linkedPivotObjects === undefined) return undefined;
-    return 'free';
-  });
+  // Resolved link strategy (persisted in WizardData).
+  const linkStrategy: CollectionLinkStrategy =
+    data.linkStrategy ?? (linked.length > 0 ? 'link' : 'free');
 
   // Auto-slugify technicalName from displayName until the user manually edits it.
   const techEditedRef = useRef<boolean>(
@@ -154,14 +181,85 @@ export function WizardStepLinking({ data, onChange }: WizardStepLinkingProps) {
     onChange({ pivotKeys: { ...pivotKeys, [obj]: value } });
   };
 
-  const handleLinkedModeChange = (next: LinkedMode) => {
-    setLinkedMode(next);
+  const handleLinkStrategyChange = (next: CollectionLinkStrategy) => {
     if (next === 'free') {
-      onChange({ linkedPivotObjects: [], pivotKeys: {} });
-    } else if (data.linkedPivotObjects === undefined) {
-      onChange({ linkedPivotObjects: [] });
+      onChange({
+        linkStrategy: 'free',
+        linkedPivotObjects: [],
+        pivotKeys: {},
+        fieldMappings: [],
+        pivotReferentials: [],
+        mappingTemplateId: undefined,
+      });
+    } else {
+      onChange({
+        linkStrategy: next,
+        linkedPivotObjects: linked,
+      });
     }
   };
+
+  const addFieldMapping = () => {
+    onChange({
+      fieldMappings: [
+        ...fieldMappings,
+        { id: newMappingId(), sourceColumn: '', targetField: '' },
+      ],
+    });
+  };
+
+  const updateFieldMapping = (id: string, patch: Partial<FieldMapping>) => {
+    onChange({
+      fieldMappings: fieldMappings.map((m) =>
+        m.id === id ? { ...m, ...patch } : m,
+      ),
+    });
+  };
+
+  const removeFieldMapping = (id: string) => {
+    onChange({ fieldMappings: fieldMappings.filter((m) => m.id !== id) });
+  };
+
+  const applyMappingTemplate = (templateId: string) => {
+    const template = MAPPING_TEMPLATES.find((t) => t.id === templateId);
+    if (!template) return;
+    // Overwrite existing mappings with the template and union the pivot
+    // objects, so the user keeps their existing selections as a superset.
+    const mergedObjects: InvestHubPivotObject[] = Array.from(
+      new Set([...linked, ...template.pivotObjects]),
+    );
+    onChange({
+      mappingTemplateId: templateId,
+      fieldMappings: template.mappings.map((m) => ({
+        id: newMappingId(),
+        ...m,
+      })),
+      linkedPivotObjects: mergedObjects,
+    });
+  };
+
+  const getReferential = (
+    pivot: InvestHubPivotObject,
+  ): PivotReferential | undefined =>
+    pivotReferentials.find((r) => r.pivotObject === pivot);
+
+  const setReferential = (
+    pivot: InvestHubPivotObject,
+    patch: Partial<PivotReferential>,
+  ) => {
+    const existing = getReferential(pivot);
+    const next: PivotReferential = existing
+      ? { ...existing, ...patch }
+      : { pivotObject: pivot, mode: 'existing', ...patch };
+    onChange({
+      pivotReferentials: [
+        ...pivotReferentials.filter((r) => r.pivotObject !== pivot),
+        next,
+      ],
+    });
+  };
+
+  const collectionColumns = data.columns ?? [];
 
   const selectedPivot = useMemo(
     () => PIVOT_TYPES.find((p) => p.key === data.pivotType),
@@ -246,99 +344,440 @@ export function WizardStepLinking({ data, onChange }: WizardStepLinkingProps) {
       <Separator />
 
       {/* Bloc 2 — Rattachement */}
-      <section className="flex flex-col gap-4">
-        <h3 className="text-sm font-medium text-foreground">
-          Rattachement aux objets InvestHub
-        </h3>
-        <p className="text-sm text-muted-foreground">
-          Cette collection est-elle rattachée à des objets métier InvestHub ?
-        </p>
+      <section className="flex flex-col gap-5">
+        <div>
+          <h3 className="text-sm font-medium text-foreground">
+            Rattachement aux objets InvestHub
+          </h3>
+          <p className="text-sm text-muted-foreground">
+            Cette collection est-elle rattachée à des objets métier InvestHub&nbsp;?
+          </p>
+        </div>
 
-        <RadioGroup
-          value={linkedMode ?? ''}
-          onValueChange={(v) => handleLinkedModeChange(v as LinkedMode)}
-          className="gap-2"
-        >
-          <div className="flex items-start gap-2">
-            <RadioGroupItem value="free" id="link-free" className="mt-1" />
-            <Label htmlFor="link-free" className="flex flex-col gap-0.5">
-              <span className="font-medium">Non, donnée libre</span>
-              <span className="text-xs text-muted-foreground">
-                Éditoriale, générale — non rattachée à un objet métier.
-              </span>
-            </Label>
-          </div>
-          <div className="flex items-start gap-2">
-            <RadioGroupItem value="objects" id="link-objects" className="mt-1" />
-            <Label htmlFor="link-objects" className="flex flex-col gap-0.5">
-              <span className="font-medium">
-                Oui, rattachée à un ou plusieurs objets
-              </span>
-              <span className="text-xs text-muted-foreground">
-                Sélectionnez les objets et indiquez la colonne qui fait clé.
-              </span>
-            </Label>
-          </div>
-        </RadioGroup>
+        <div className="flex flex-col gap-2">
+          <SegmentedControl<CollectionLinkStrategy>
+            aria-label="Stratégie de rattachement"
+            value={linkStrategy}
+            onValueChange={handleLinkStrategyChange}
+            options={[
+              { value: 'free', label: 'Non, donnée libre' },
+              {
+                value: 'link',
+                label: 'Relier aux objets existants',
+                icon: <Link2 className="size-4" />,
+              },
+              {
+                value: 'create',
+                label: 'Créer des objets InvestHub',
+                icon: <Sparkles className="size-4" />,
+              },
+            ]}
+          />
+          <p className="text-xs text-muted-foreground">
+            {linkStrategy === 'free' &&
+              'Éditoriale, générale — non rattachée à un objet métier.'}
+            {linkStrategy === 'link' &&
+              'Chaque ligne référence un objet InvestHub existant via une clé pivot (fund_id, lp_id…).'}
+            {linkStrategy === 'create' &&
+              'Chaque ligne crée (ou met à jour) un objet dans InvestHub. L’agent d’ingestion les instancie automatiquement.'}
+          </p>
+        </div>
 
-        {linkedMode === 'objects' && (
-          <div className="grid grid-cols-1 gap-3 md:grid-cols-2">
-            {PIVOT_OBJECTS.map((obj) => {
-              const checked = linked.includes(obj.key);
-              return (
-                <div
-                  key={obj.key}
-                  className="flex flex-col gap-2 rounded-md border border-border bg-card p-3"
-                >
-                  <div className="flex items-start gap-2">
-                    <Checkbox
-                      id={`obj-${obj.key}`}
-                      checked={checked}
-                      onCheckedChange={(c) =>
-                        toggleObject(obj.key, c === true)
-                      }
-                      className="mt-0.5"
-                    />
-                    <Label
-                      htmlFor={`obj-${obj.key}`}
-                      className="font-medium"
+        {linkStrategy !== 'free' && (
+          <>
+            {/* Objects grid — same pattern as before but also surfaces referentials */}
+            <div className="flex flex-col gap-2">
+              <h4 className="text-xs font-semibold uppercase tracking-[0.08em] text-muted-foreground">
+                Objets pivots
+              </h4>
+              <div className="grid grid-cols-1 gap-3 md:grid-cols-2">
+                {PIVOT_OBJECTS.map((obj) => {
+                  const checked = linked.includes(obj.key);
+                  return (
+                    <div
+                      key={obj.key}
+                      className="flex flex-col gap-2 rounded-md border border-border bg-card p-3"
                     >
-                      {obj.label}
-                    </Label>
-                  </div>
-                  {checked && (
-                    <div className="flex flex-col gap-1 pl-6">
-                      <Label
-                        htmlFor={`key-${obj.key}`}
-                        className="text-xs text-muted-foreground"
-                      >
-                        Clé de rattachement
-                      </Label>
-                      <Input
-                        id={`key-${obj.key}`}
-                        placeholder={obj.hint}
-                        value={pivotKeys[obj.key] ?? ''}
-                        onChange={(e) =>
-                          setPivotKey(obj.key, e.target.value)
-                        }
-                        className="font-mono"
-                      />
+                      <div className="flex items-start gap-2">
+                        <Checkbox
+                          id={`obj-${obj.key}`}
+                          checked={checked}
+                          onCheckedChange={(c) =>
+                            toggleObject(obj.key, c === true)
+                          }
+                          className="mt-0.5"
+                        />
+                        <Label
+                          htmlFor={`obj-${obj.key}`}
+                          className="font-medium"
+                        >
+                          {obj.label}
+                        </Label>
+                      </div>
+                      {checked && (
+                        <div className="flex flex-col gap-1 pl-6">
+                          <Label
+                            htmlFor={`key-${obj.key}`}
+                            className="text-xs text-muted-foreground"
+                          >
+                            Clé de rattachement
+                          </Label>
+                          <Input
+                            id={`key-${obj.key}`}
+                            placeholder={obj.hint}
+                            value={pivotKeys[obj.key] ?? ''}
+                            onChange={(e) =>
+                              setPivotKey(obj.key, e.target.value)
+                            }
+                            className="font-mono"
+                          />
+                        </div>
+                      )}
                     </div>
-                  )}
+                  );
+                })}
+              </div>
+            </div>
+
+            <Separator />
+
+            {/* Mapping des champs */}
+            <div className="flex flex-col gap-3">
+              <div className="flex items-start justify-between gap-3">
+                <div>
+                  <h4 className="text-xs font-semibold uppercase tracking-[0.08em] text-muted-foreground">
+                    Mapping des champs
+                  </h4>
+                  <p className="text-xs text-muted-foreground">
+                    {linkStrategy === 'link'
+                      ? 'Associez chaque colonne source à l’attribut de l’objet InvestHub qu’elle renseigne.'
+                      : 'Associez chaque colonne source à l’attribut de l’objet à créer.'}
+                  </p>
                 </div>
-              );
-            })}
-          </div>
+                <div className="shrink-0">
+                  <Select
+                    value={data.mappingTemplateId ?? ''}
+                    onValueChange={applyMappingTemplate}
+                  >
+                    <SelectTrigger className="w-[260px]" aria-label="Appliquer un modèle de mapping">
+                      <Wand2 className="mr-2 size-4 text-muted-foreground" />
+                      <SelectValue placeholder="Appliquer un modèle…" />
+                    </SelectTrigger>
+                    <SelectContent align="end">
+                      {MAPPING_TEMPLATES.map((tpl) => (
+                        <SelectItem key={tpl.id} value={tpl.id}>
+                          <div className="flex flex-col gap-0.5">
+                            <span className="font-medium">{tpl.name}</span>
+                            {tpl.description ? (
+                              <span className="text-xs text-muted-foreground">
+                                {tpl.description}
+                              </span>
+                            ) : null}
+                          </div>
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+              </div>
+
+              {fieldMappings.length === 0 ? (
+                <div className="flex flex-col items-center gap-2 rounded-md border border-dashed border-border bg-muted/30 px-4 py-6 text-center">
+                  <p className="text-sm text-foreground">
+                    Aucun mapping configuré.
+                  </p>
+                  <p className="text-xs text-muted-foreground">
+                    Appliquez un modèle ci-dessus ou ajoutez un mapping manuel.
+                  </p>
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="sm"
+                    onClick={addFieldMapping}
+                    className="mt-1 gap-1.5"
+                  >
+                    <Plus className="size-4" />
+                    Ajouter un mapping
+                  </Button>
+                </div>
+              ) : (
+                <div className="flex flex-col divide-y divide-border rounded-md border border-border">
+                  <div className="grid grid-cols-[minmax(0,1fr)_auto_minmax(0,1fr)_auto] items-center gap-3 bg-muted/40 px-3 py-2 text-[11px] font-semibold uppercase tracking-[0.08em] text-muted-foreground">
+                    <span>Colonne source</span>
+                    <span aria-hidden />
+                    <span>Attribut InvestHub</span>
+                    <span className="w-8" aria-hidden />
+                  </div>
+                  {fieldMappings.map((mapping) => (
+                    <div
+                      key={mapping.id}
+                      className="grid grid-cols-[minmax(0,1fr)_auto_minmax(0,1fr)_auto] items-center gap-3 px-3 py-2"
+                    >
+                      {collectionColumns.length > 0 ? (
+                        <Select
+                          value={mapping.sourceColumn}
+                          onValueChange={(v) =>
+                            updateFieldMapping(mapping.id, { sourceColumn: v })
+                          }
+                        >
+                          <SelectTrigger className="h-9" aria-label="Colonne source">
+                            <SelectValue placeholder="Sélectionner…" />
+                          </SelectTrigger>
+                          <SelectContent>
+                            {collectionColumns.map((col) => (
+                              <SelectItem
+                                key={col.id}
+                                value={col.technicalName}
+                              >
+                                <span className="font-mono text-xs">
+                                  {col.technicalName}
+                                </span>
+                                {col.label ? (
+                                  <span className="ml-2 text-xs text-muted-foreground">
+                                    {col.label}
+                                  </span>
+                                ) : null}
+                              </SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
+                      ) : (
+                        <Input
+                          value={mapping.sourceColumn}
+                          onChange={(e) =>
+                            updateFieldMapping(mapping.id, {
+                              sourceColumn: e.target.value,
+                            })
+                          }
+                          placeholder="ex : fund_id"
+                          className="h-9 font-mono text-xs"
+                        />
+                      )}
+                      <ArrowRight
+                        aria-hidden
+                        className="size-4 text-muted-foreground"
+                      />
+                      <Input
+                        value={mapping.targetField}
+                        onChange={(e) =>
+                          updateFieldMapping(mapping.id, {
+                            targetField: e.target.value,
+                          })
+                        }
+                        placeholder="ex : campaign.code"
+                        className="h-9 font-mono text-xs"
+                      />
+                      <Button
+                        type="button"
+                        variant="ghost"
+                        size="icon"
+                        aria-label="Supprimer ce mapping"
+                        onClick={() => removeFieldMapping(mapping.id)}
+                        className="size-8 text-muted-foreground hover:text-destructive"
+                      >
+                        <Trash2 className="size-4" />
+                      </Button>
+                    </div>
+                  ))}
+                  <div className="flex items-center justify-between bg-muted/20 px-3 py-2">
+                    <span className="text-xs text-muted-foreground">
+                      {fieldMappings.length} mapping(s)
+                      {data.mappingTemplateId ? (
+                        <>
+                          {' · '}
+                          <Badge variant="outline" className="ml-1 gap-1">
+                            <Wand2 className="size-3" />
+                            {
+                              MAPPING_TEMPLATES.find(
+                                (t) => t.id === data.mappingTemplateId,
+                              )?.name
+                            }
+                          </Badge>
+                        </>
+                      ) : null}
+                    </span>
+                    <Button
+                      type="button"
+                      variant="ghost"
+                      size="sm"
+                      onClick={addFieldMapping}
+                      className="gap-1.5"
+                    >
+                      <Plus className="size-4" />
+                      Ajouter un mapping
+                    </Button>
+                  </div>
+                </div>
+              )}
+            </div>
+
+            {linked.length > 0 && (
+              <>
+                <Separator />
+
+                {/* Référentiels d'identifiants */}
+                <div className="flex flex-col gap-3">
+                  <div>
+                    <h4 className="text-xs font-semibold uppercase tracking-[0.08em] text-muted-foreground">
+                      Référentiels d’identifiants
+                    </h4>
+                    <p className="text-xs text-muted-foreground">
+                      Pour chaque objet pivot, maintenez la correspondance
+                      entre l’id externe (ex.&nbsp;
+                      <code className="rounded bg-muted px-1 py-0.5 font-mono text-[11px]">
+                        ext_fund_id
+                      </code>
+                      ) et l’id interne InvestHub (ex.&nbsp;
+                      <code className="rounded bg-muted px-1 py-0.5 font-mono text-[11px]">
+                        fund_id
+                      </code>
+                      ).
+                    </p>
+                  </div>
+
+                  <div className="grid grid-cols-1 gap-3 lg:grid-cols-2">
+                    {linked.map((pivot) => {
+                      const descriptor = PIVOT_OBJECTS.find(
+                        (p) => p.key === pivot,
+                      );
+                      const ref = getReferential(pivot);
+                      const mode = ref?.mode ?? 'existing';
+                      const available = templatesFor(pivot);
+                      return (
+                        <div
+                          key={pivot}
+                          className="flex flex-col gap-3 rounded-md border border-border bg-card p-3"
+                        >
+                          <div className="flex items-center justify-between gap-2">
+                            <span className="text-sm font-medium text-foreground">
+                              {descriptor?.label ?? pivot}
+                            </span>
+                            <Badge variant="outline" className="gap-1">
+                              <Link2 className="size-3" />
+                              Pivot
+                            </Badge>
+                          </div>
+
+                          <SegmentedControl<'existing' | 'new'>
+                            size="sm"
+                            aria-label={`Référentiel pour ${descriptor?.label ?? pivot}`}
+                            value={mode}
+                            onValueChange={(v) =>
+                              setReferential(pivot, { mode: v })
+                            }
+                            options={[
+                              { value: 'existing', label: 'Existant' },
+                              { value: 'new', label: 'Nouveau' },
+                            ]}
+                          />
+
+                          {mode === 'existing' ? (
+                            available.length === 0 ? (
+                              <p className="text-xs text-muted-foreground">
+                                Aucun référentiel pré-enregistré pour cet
+                                objet. Choisissez « Nouveau ».
+                              </p>
+                            ) : (
+                              <Select
+                                value={ref?.referentialId ?? ''}
+                                onValueChange={(v) =>
+                                  setReferential(pivot, { referentialId: v })
+                                }
+                              >
+                                <SelectTrigger
+                                  className="h-9"
+                                  aria-label="Sélectionner un référentiel"
+                                >
+                                  <SelectValue placeholder="Sélectionner un référentiel…" />
+                                </SelectTrigger>
+                                <SelectContent>
+                                  {available.map((tpl) => (
+                                    <SelectItem key={tpl.id} value={tpl.id}>
+                                      <div className="flex flex-col gap-0.5">
+                                        <span className="font-medium">
+                                          {tpl.name}
+                                        </span>
+                                        <span className="text-xs text-muted-foreground">
+                                          <code className="font-mono">
+                                            {tpl.externalKey}
+                                          </code>{' '}
+                                          →{' '}
+                                          <code className="font-mono">
+                                            {tpl.internalKey}
+                                          </code>
+                                        </span>
+                                      </div>
+                                    </SelectItem>
+                                  ))}
+                                </SelectContent>
+                              </Select>
+                            )
+                          ) : (
+                            <div className="grid grid-cols-[minmax(0,1fr)_auto_minmax(0,1fr)] items-end gap-2">
+                              <div className="flex flex-col gap-1">
+                                <Label
+                                  htmlFor={`ref-ext-${pivot}`}
+                                  className="text-[11px] text-muted-foreground"
+                                >
+                                  Id externe
+                                </Label>
+                                <Input
+                                  id={`ref-ext-${pivot}`}
+                                  placeholder="ext_fund_id"
+                                  value={ref?.externalKey ?? ''}
+                                  onChange={(e) =>
+                                    setReferential(pivot, {
+                                      externalKey: e.target.value,
+                                    })
+                                  }
+                                  className="h-9 font-mono text-xs"
+                                />
+                              </div>
+                              <ArrowRight
+                                aria-hidden
+                                className="mb-2 size-4 text-muted-foreground"
+                              />
+                              <div className="flex flex-col gap-1">
+                                <Label
+                                  htmlFor={`ref-int-${pivot}`}
+                                  className="text-[11px] text-muted-foreground"
+                                >
+                                  Id InvestHub
+                                </Label>
+                                <Input
+                                  id={`ref-int-${pivot}`}
+                                  placeholder="campaign.code"
+                                  value={ref?.internalKey ?? ''}
+                                  onChange={(e) =>
+                                    setReferential(pivot, {
+                                      internalKey: e.target.value,
+                                    })
+                                  }
+                                  className="h-9 font-mono text-xs"
+                                />
+                              </div>
+                            </div>
+                          )}
+                        </div>
+                      );
+                    })}
+                  </div>
+                </div>
+              </>
+            )}
+          </>
         )}
 
-        <Alert>
-          <Info />
-          <AlertTitle>Pas de rattachement ?</AlertTitle>
-          <AlertDescription>
-            La collection reste exploitable en back-office mais ne peut pas
-            filtrer l'affichage par LP ou campagne dans le portail.
-          </AlertDescription>
-        </Alert>
+        {linkStrategy === 'free' && (
+          <Alert>
+            <Info />
+            <AlertTitle>Pas de rattachement ?</AlertTitle>
+            <AlertDescription>
+              La collection reste exploitable en back-office mais ne peut pas
+              filtrer l’affichage par LP ou campagne dans le portail.
+            </AlertDescription>
+          </Alert>
+        )}
       </section>
 
       <Separator />

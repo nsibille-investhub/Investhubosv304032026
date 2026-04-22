@@ -29,6 +29,7 @@ import {
   RadioGroup,
   RadioGroupItem,
 } from '../../../components/ui/radio-group';
+import { SegmentedControl } from '../../../components/ui/segmented-control';
 import {
   Select,
   SelectContent,
@@ -270,27 +271,19 @@ export function RefreshDataModal({
               <h3 className="text-sm font-medium text-foreground">
                 Portée de l'import
               </h3>
-              <RadioGroup
+              <SegmentedControl<ImportScope>
+                aria-label="Portée de l'import"
                 value={scope}
                 onValueChange={(v) => {
-                  setScope(v as ImportScope);
+                  setScope(v);
                   if (v !== 'one' && v !== 'many') setScopeIds([]);
                 }}
-                className="gap-2"
-              >
-                <div className="flex items-center gap-2">
-                  <RadioGroupItem value="all" id="scope-all" />
-                  <Label htmlFor="scope-all">Tous les {plural} disponibles</Label>
-                </div>
-                <div className="flex items-center gap-2">
-                  <RadioGroupItem value="one" id="scope-one" />
-                  <Label htmlFor="scope-one">Un {singular} spécifique</Label>
-                </div>
-                <div className="flex items-center gap-2">
-                  <RadioGroupItem value="many" id="scope-many" />
-                  <Label htmlFor="scope-many">Plusieurs {plural}</Label>
-                </div>
-              </RadioGroup>
+                options={[
+                  { value: 'all', label: `Tous les ${plural}` },
+                  { value: 'one', label: `Un ${singular}` },
+                  { value: 'many', label: `Plusieurs ${plural}` },
+                ]}
+              />
 
               {scope === 'one' && (
                 <Select
@@ -345,24 +338,16 @@ export function RefreshDataModal({
                 <h3 className="text-sm font-medium text-foreground">
                   Période à importer
                 </h3>
-                <RadioGroup
+                <SegmentedControl<ImportPeriod>
+                  aria-label="Période à importer"
                   value={period}
-                  onValueChange={(v) => setPeriod(v as ImportPeriod)}
-                  className="gap-2"
-                >
-                  <div className="flex items-center gap-2">
-                    <RadioGroupItem value="last" id="period-last" />
-                    <Label htmlFor="period-last">Dernière période disponible</Label>
-                  </div>
-                  <div className="flex items-center gap-2">
-                    <RadioGroupItem value="quarter" id="period-quarter" />
-                    <Label htmlFor="period-quarter">Période spécifique</Label>
-                  </div>
-                  <div className="flex items-center gap-2">
-                    <RadioGroupItem value="custom" id="period-custom" />
-                    <Label htmlFor="period-custom">Plage personnalisée</Label>
-                  </div>
-                </RadioGroup>
+                  onValueChange={(v) => setPeriod(v)}
+                  options={[
+                    { value: 'last', label: 'Dernière période' },
+                    { value: 'quarter', label: 'Période spécifique' },
+                    { value: 'custom', label: 'Plage personnalisée' },
+                  ]}
+                />
 
                 {period === 'quarter' && (
                   <Select value={periodQuarter} onValueChange={setPeriodQuarter}>
