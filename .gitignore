@@ -7,6 +7,8 @@ dist/
 
 # Lock files (not currently tracked)
 package-lock.json
+pnpm-lock.yaml
+yarn.lock
 
 # Logs
 *.log
