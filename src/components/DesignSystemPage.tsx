@@ -797,87 +797,113 @@ export function DesignSystemPage() {
         </p>
       </section>
 
-      <section className="rounded-2xl border border-[#D7E0DD] dark:border-[#1F2D2A] bg-white dark:bg-[#101615] p-6">
-        <h2 className="text-lg font-semibold text-[#1F3137] dark:text-[#E8F0EE] mb-2">Composant Navigation — ds-page-header</h2>
-        <p className="text-sm text-[#4F6166] dark:text-[#9DB2AE] mb-1">
-          En-tête de page unifié pour tous les modules. Structure cohérente&nbsp;:
-          fil d&apos;Ariane (optionnel avec bouton retour), titre, sous-titre,
-          action principale (bouton noir dégradé), action secondaire (optionnelle, variant outline),
-          et menu tertiaire &laquo;&nbsp;...&nbsp;&raquo; (optionnel, pour exports et actions secondaires).
-        </p>
-        <p className="text-xs text-[#4F6166] dark:text-[#9DB2AE] mb-4">
-          Identifiant&nbsp;: <code className="text-xs px-1 py-0.5 rounded bg-[#F1F5F4] dark:bg-[#1C2624] font-semibold">ds-page-header</code> — Import&nbsp;:
-          <code className="text-xs px-1 py-0.5 rounded bg-[#F1F5F4] dark:bg-[#1C2624] ml-1">{`import { PageHeader } from '@/components/ui/page-header'`}</code>
-        </p>
-        <p className="text-xs text-[#4F6166] dark:text-[#9DB2AE] mb-4">
-          Le bouton retour (flèche gauche) fait partie du pattern&nbsp;: il est affiché par défaut
-          et utilise <code className="text-xs px-1 py-0.5 rounded bg-[#F1F5F4] dark:bg-[#1C2624]">window.history.back()</code>.
-          Passer <code className="text-xs px-1 py-0.5 rounded bg-[#F1F5F4] dark:bg-[#1C2624]">onBack</code> pour surcharger, ou
-          <code className="text-xs px-1 py-0.5 rounded bg-[#F1F5F4] dark:bg-[#1C2624] ml-1">hideBackButton</code> pour le masquer (landing pages).
-        </p>
+      <section className="rounded-2xl border border-[#D7E0DD] dark:border-[#1F2D2A] bg-white dark:bg-[#101615] p-8 md:p-10">
+        <header className="mb-8 space-y-3">
+          <h2 className="text-lg font-semibold text-[#1F3137] dark:text-[#E8F0EE]">
+            Composant Navigation — ds-page-header
+          </h2>
+          <p className="text-sm text-[#4F6166] dark:text-[#9DB2AE] max-w-3xl leading-relaxed">
+            En-tête de page unifié pour tous les modules. Structure cohérente&nbsp;:
+            fil d&apos;Ariane (optionnel avec bouton retour), titre, sous-titre,
+            action principale (bouton noir dégradé), action secondaire (optionnelle, variant outline),
+            et menu tertiaire &laquo;&nbsp;...&nbsp;&raquo; (optionnel, pour exports et actions secondaires).
+          </p>
+          <p className="text-xs text-[#4F6166] dark:text-[#9DB2AE] leading-relaxed">
+            Identifiant&nbsp;: <code className="text-xs px-1 py-0.5 rounded bg-[#F1F5F4] dark:bg-[#1C2624] font-semibold">ds-page-header</code> — Import&nbsp;:
+            <code className="text-xs px-1 py-0.5 rounded bg-[#F1F5F4] dark:bg-[#1C2624] ml-1">{`import { PageHeader } from '@/components/ui/page-header'`}</code>
+          </p>
+          <p className="text-xs text-[#4F6166] dark:text-[#9DB2AE] leading-relaxed max-w-3xl">
+            Le bouton retour (flèche gauche) fait partie du pattern&nbsp;: il est affiché par défaut
+            et utilise <code className="text-xs px-1 py-0.5 rounded bg-[#F1F5F4] dark:bg-[#1C2624]">window.history.back()</code>.
+            Passer <code className="text-xs px-1 py-0.5 rounded bg-[#F1F5F4] dark:bg-[#1C2624]">onBack</code> pour surcharger, ou
+            <code className="text-xs px-1 py-0.5 rounded bg-[#F1F5F4] dark:bg-[#1C2624] ml-1">hideBackButton</code> pour le masquer (landing pages).
+          </p>
+        </header>
 
-        <div className="space-y-8">
-          <div>
-            <p className="text-xs font-semibold uppercase tracking-wide text-[#4F6166] mb-2">
-              Exemple complet — primaire + secondaire + tertiaire (DataHub)
-            </p>
-            <div className="overflow-hidden rounded-xl border border-[#D7E0DD] dark:border-[#1F2D2A]">
-              <PageHeader
-                breadcrumb={[
-                  { label: 'InvestHub OS' },
-                  { label: 'Portails et Contenu' },
-                  { label: 'DataHub' },
-                ]}
-                title="DataHub"
-                subtitle="Gestion des collections de données personnalisées"
-                primaryAction={{
-                  label: 'Nouvelle collection',
-                  onClick: () => undefined,
-                }}
-                secondaryAction={{
-                  label: 'Importer',
-                  onClick: () => undefined,
-                  icon: <Download className="w-4 h-4" />,
-                }}
-                tertiaryActions={[
-                  {
-                    label: 'Archivées',
-                    icon: <ArchiveX className="w-4 h-4 text-gray-600" />,
+        <div className="space-y-16">
+          <div className="space-y-4">
+            <div className="flex items-baseline gap-3">
+              <span className="text-[11px] font-semibold uppercase tracking-[0.14em] text-[#456B6C]">
+                Exemple complet
+              </span>
+              <span className="text-xs text-[#4F6166] dark:text-[#9DB2AE]">
+                primaire + secondaire + tertiaire (DataHub)
+              </span>
+            </div>
+            <div className="overflow-hidden rounded-xl border border-[#D7E0DD] dark:border-[#1F2D2A] bg-[#F8FAFA] dark:bg-[#0B0D0D] p-4 md:p-6">
+              <div className="overflow-hidden rounded-lg border border-[#E6EDEB] dark:border-[#25332F] bg-white dark:bg-[#101615] shadow-sm">
+                <PageHeader
+                  breadcrumb={[
+                    { label: 'InvestHub OS' },
+                    { label: 'Portails et Contenu' },
+                    { label: 'DataHub' },
+                  ]}
+                  title="DataHub"
+                  subtitle="Gestion des collections de données personnalisées"
+                  primaryAction={{
+                    label: 'Nouvelle collection',
                     onClick: () => undefined,
-                  },
-                  {
-                    label: 'Télécharger .csv',
-                    icon: <FileSpreadsheet className="w-4 h-4 text-green-600" />,
+                  }}
+                  secondaryAction={{
+                    label: 'Importer',
                     onClick: () => undefined,
-                  },
-                ]}
-              />
+                    icon: <Download className="w-4 h-4" />,
+                  }}
+                  tertiaryActions={[
+                    {
+                      label: 'Archivées',
+                      icon: <ArchiveX className="w-4 h-4 text-gray-600" />,
+                      onClick: () => undefined,
+                    },
+                    {
+                      label: 'Télécharger .csv',
+                      icon: <FileSpreadsheet className="w-4 h-4 text-green-600" />,
+                      onClick: () => undefined,
+                    },
+                  ]}
+                />
+              </div>
             </div>
           </div>
 
-          <div>
-            <p className="text-xs font-semibold uppercase tracking-wide text-[#4F6166] mb-2">
-              Exemple minimal — titre + sous-titre + action principale
-            </p>
-            <div className="overflow-hidden rounded-xl border border-[#D7E0DD] dark:border-[#1F2D2A]">
-              <PageHeader
-                breadcrumb={[
-                  { label: 'InvestHub OS' },
-                  { label: 'Investors' },
-                ]}
-                title="Investisseurs"
-                subtitle="Gérer et suivre tous les investisseurs"
-                primaryAction={{
-                  label: 'Nouvel Investisseur',
-                  onClick: () => undefined,
-                  icon: <Plus className="w-4 h-4" />,
-                }}
-              />
+          <div className="space-y-4">
+            <div className="flex items-baseline gap-3">
+              <span className="text-[11px] font-semibold uppercase tracking-[0.14em] text-[#456B6C]">
+                Exemple minimal
+              </span>
+              <span className="text-xs text-[#4F6166] dark:text-[#9DB2AE]">
+                titre + sous-titre + action principale
+              </span>
+            </div>
+            <div className="overflow-hidden rounded-xl border border-[#D7E0DD] dark:border-[#1F2D2A] bg-[#F8FAFA] dark:bg-[#0B0D0D] p-4 md:p-6">
+              <div className="overflow-hidden rounded-lg border border-[#E6EDEB] dark:border-[#25332F] bg-white dark:bg-[#101615] shadow-sm">
+                <PageHeader
+                  breadcrumb={[
+                    { label: 'InvestHub OS' },
+                    { label: 'Investors' },
+                  ]}
+                  title="Investisseurs"
+                  subtitle="Gérer et suivre tous les investisseurs"
+                  primaryAction={{
+                    label: 'Nouvel Investisseur',
+                    onClick: () => undefined,
+                    icon: <Plus className="w-4 h-4" />,
+                  }}
+                />
+              </div>
             </div>
           </div>
-        </div>
 
-        <pre className="mt-6 text-xs bg-[#F8FAFA] dark:bg-[#0B0D0D] p-3 rounded overflow-x-auto">
+          <div className="space-y-4">
+            <div className="flex items-baseline gap-3">
+              <span className="text-[11px] font-semibold uppercase tracking-[0.14em] text-[#456B6C]">
+                Usage
+              </span>
+              <span className="text-xs text-[#4F6166] dark:text-[#9DB2AE]">
+                signature typique de la prop
+              </span>
+            </div>
+            <pre className="text-xs bg-[#F8FAFA] dark:bg-[#0B0D0D] border border-[#D7E0DD] dark:border-[#1F2D2A] p-5 rounded-xl overflow-x-auto leading-relaxed">
 {`<PageHeader
   breadcrumb={[
     { label: 'InvestHub OS' },
@@ -904,7 +930,9 @@ export function DesignSystemPage() {
     { label: 'Archiver', onClick: () => ..., destructive: true, separatorBefore: true },
   ]}
 />`}
-        </pre>
+            </pre>
+          </div>
+        </div>
       </section>
 
       <section className="rounded-2xl border border-[#D7E0DD] dark:border-[#1F2D2A] bg-white dark:bg-[#101615] p-6">
