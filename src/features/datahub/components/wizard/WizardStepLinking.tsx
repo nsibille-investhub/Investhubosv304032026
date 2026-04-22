@@ -13,6 +13,7 @@ import {
   RadioGroup,
   RadioGroupItem,
 } from '../../../../components/ui/radio-group';
+import { SegmentedControl } from '../../../../components/ui/segmented-control';
 import { Separator } from '../../../../components/ui/separator';
 import { Switch } from '../../../../components/ui/switch';
 import { Textarea } from '../../../../components/ui/textarea';
@@ -254,32 +255,22 @@ export function WizardStepLinking({ data, onChange }: WizardStepLinkingProps) {
           Cette collection est-elle rattachée à des objets métier InvestHub ?
         </p>
 
-        <RadioGroup
-          value={linkedMode ?? ''}
-          onValueChange={(v) => handleLinkedModeChange(v as LinkedMode)}
-          className="gap-2"
-        >
-          <div className="flex items-start gap-2">
-            <RadioGroupItem value="free" id="link-free" className="mt-1" />
-            <Label htmlFor="link-free" className="flex flex-col gap-0.5">
-              <span className="font-medium">Non, donnée libre</span>
-              <span className="text-xs text-muted-foreground">
-                Éditoriale, générale — non rattachée à un objet métier.
-              </span>
-            </Label>
-          </div>
-          <div className="flex items-start gap-2">
-            <RadioGroupItem value="objects" id="link-objects" className="mt-1" />
-            <Label htmlFor="link-objects" className="flex flex-col gap-0.5">
-              <span className="font-medium">
-                Oui, rattachée à un ou plusieurs objets
-              </span>
-              <span className="text-xs text-muted-foreground">
-                Sélectionnez les objets et indiquez la colonne qui fait clé.
-              </span>
-            </Label>
-          </div>
-        </RadioGroup>
+        <div className="flex flex-col gap-2">
+          <SegmentedControl<LinkedMode>
+            aria-label="Rattachement aux objets InvestHub"
+            value={linkedMode ?? 'free'}
+            onValueChange={handleLinkedModeChange}
+            options={[
+              { value: 'free', label: 'Non, donnée libre' },
+              { value: 'objects', label: 'Oui, rattachée aux objets' },
+            ]}
+          />
+          <p className="text-xs text-muted-foreground">
+            {linkedMode === 'objects'
+              ? 'Sélectionnez les objets et indiquez la colonne qui fait clé.'
+              : 'Éditoriale, générale — non rattachée à un objet métier.'}
+          </p>
+        </div>
 
         {linkedMode === 'objects' && (
           <div className="grid grid-cols-1 gap-3 md:grid-cols-2">
