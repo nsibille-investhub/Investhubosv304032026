@@ -21,21 +21,12 @@ export function DataHubRouter() {
     return () => window.removeEventListener('hashchange', onChange);
   }, []);
 
-  const isRoot = path === '/datahub' || path === '/datahub/';
-  const isWizard = path === '/datahub/new';
-
-  if (isRoot || isWizard) {
-    return (
-      <>
-        <DataHubDashboardPage />
-        <CollectionWizard
-          open={isWizard}
-          onClose={() => navigateHash('/datahub')}
-        />
-      </>
-    );
+  if (path === '/datahub' || path === '/datahub/') {
+    return <DataHubDashboardPage />;
   }
-
+  if (path === '/datahub/new') {
+    return <CollectionWizard onExit={() => navigateHash('/datahub')} />;
+  }
   return <DataHubPlaceholderPage />;
 }
 

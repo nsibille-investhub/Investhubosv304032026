@@ -1,10 +1,7 @@
+import { ArrowLeft } from 'lucide-react';
+
 import { Button } from '../../../components/ui/button';
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogTitle,
-} from '../../../components/ui/dialog';
+import { Card } from '../../../components/ui/card';
 import {
   useCollectionWizard,
   WIZARD_TOTAL_STEPS,
@@ -35,63 +32,58 @@ function StepPlaceholder({ step }: { step: WizardStep }) {
 }
 
 export interface CollectionWizardProps {
-  open: boolean;
-  onClose: () => void;
+  onExit: () => void;
 }
 
-export function CollectionWizard({ open, onClose }: CollectionWizardProps) {
-  const controller = useCollectionWizard();
-  const { currentStep, wizardData, canProceed, goToStep, nextStep, prevStep, updateWizardData } =
-    controller;
-
-  const handleOpenChange = (nextOpen: boolean) => {
-    if (!nextOpen) onClose();
-  };
+export function CollectionWizard({ onExit }: CollectionWizardProps) {
+  const {
+    currentStep,
+    wizardData,
+    canProceed,
+    goToStep,
+    nextStep,
+    prevStep,
+    updateWizardData,
+  } = useCollectionWizard();
 
   const handleModeChange = (mode: IngestionMode) => {
     updateWizardData({ ingestionMode: mode });
   };
 
   return (
-    <Dialog open={open} onOpenChange={handleOpenChange}>
-      <DialogContent
-        className="flex h-screen w-screen max-w-none flex-col gap-0 rounded-none border-0 p-0 sm:max-w-none"
-        style={{
-          top: 0,
-          left: 0,
-          // Tailwind v4 uses the standalone `translate:` CSS property, not
-          // `transform: translate(...)`. Overriding `transform` does nothing
-          // here — we must neutralize `translate` directly.
-          translate: 'none',
-          width: '100vw',
-          height: '100vh',
-          maxWidth: 'none',
-          borderRadius: 0,
-          padding: 0,
-        }}
-      >
-        <header className="flex items-center border-b border-border bg-card px-6 py-4 pr-16">
-          {/* Built-in DialogContent close button sits at top-right (top-4 right-4). */}
+    <div className="flex-1 px-6 pb-6">
+      <div className="mx-auto flex max-w-5xl flex-col gap-5 py-6">
+        <div className="flex items-center gap-3">
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={onExit}
+            className="gap-2"
+          >
+            <ArrowLeft className="size-4" />
+            Retour au DataHub
+          </Button>
+          <div className="h-4 w-px bg-border" aria-hidden />
           <div className="flex flex-col">
-            <DialogTitle className="text-lg font-semibold">
+            <h1 className="text-sm font-semibold text-foreground">
               Nouvelle collection
-            </DialogTitle>
-            <DialogDescription className="text-xs">
+            </h1>
+            <p className="text-xs text-muted-foreground">
               Étape {currentStep} sur {WIZARD_TOTAL_STEPS}
-            </DialogDescription>
+            </p>
           </div>
-        </header>
-
-        <div className="border-b border-border bg-card px-6 py-4">
-          <WizardStepper
-            steps={STEPS}
-            currentStep={currentStep}
-            onStepClick={(id) => goToStep(id as WizardStep)}
-          />
         </div>
 
-        <div className="flex-1 overflow-y-auto bg-background">
-          <div className="mx-auto max-w-4xl px-6 py-8">
+        <Card className="gap-0 overflow-hidden p-0">
+          <div className="border-b border-border bg-muted/30 px-6 py-4">
+            <WizardStepper
+              steps={STEPS}
+              currentStep={currentStep}
+              onStepClick={(id) => goToStep(id as WizardStep)}
+            />
+          </div>
+
+          <div className="px-6 py-8">
             {currentStep === 1 && (
               <WizardStepMode
                 mode={wizardData.ingestionMode}
@@ -102,28 +94,28 @@ export function CollectionWizard({ open, onClose }: CollectionWizardProps) {
             {currentStep === 3 && <StepPlaceholder step={3} />}
             {currentStep === 4 && <StepPlaceholder step={4} />}
           </div>
-        </div>
 
-        <footer className="sticky bottom-0 flex items-center justify-between border-t border-border bg-card px-6 py-4">
-          <Button
-            variant="ghost"
-            onClick={prevStep}
-            disabled={currentStep === 1}
-          >
-            Précédent
-          </Button>
-          <Button variant="ghost" onClick={onClose}>
-            Annuler
-          </Button>
-          <Button
-            onClick={nextStep}
-            disabled={!canProceed || currentStep === WIZARD_TOTAL_STEPS}
-          >
-            Suivant
-          </Button>
-        </footer>
-      </DialogContent>
-    </Dialog>
+          <div className="flex items-center justify-between gap-2 border-t border-border bg-muted/30 px-6 py-4">
+            <Button
+              variant="ghost"
+              onClick={prevStep}
+              disabled={currentStep === 1}
+            >
+              Précédent
+            </Button>
+            <Button variant="ghost" onClick={onExit}>
+              Annuler
+            </Button>
+            <Button
+              onClick={nextStep}
+              disabled={!canProceed || currentStep === WIZARD_TOTAL_STEPS}
+            >
+              Suivant
+            </Button>
+          </div>
+        </Card>
+      </div>
+    </div>
   );
 }
 
