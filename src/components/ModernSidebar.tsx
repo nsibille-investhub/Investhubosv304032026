@@ -8,6 +8,7 @@ import logoMinimized from 'figma:asset/2115896087cf66bcb781a8f9d0f680a46ffd65c4.
 import { FundContextSelectorCompact } from './FundContextSelectorCompact';
 import { Fund } from '../utils/fundGenerator';
 import { useTranslation } from '../utils/languageContext';
+import { Badge } from './ui/badge';
 
 interface SidebarProps {
   expanded: boolean;
@@ -365,6 +366,19 @@ export function ModernSidebar({ expanded, onToggle, currentPage = 'entities', on
             </MenuItem>
 
             <MenuItem
+              icon={icons.Database}
+              label="DataHub"
+              expanded={expanded}
+              isActive={currentPage === 'datahub'}
+              onClick={() => onPageChange?.('datahub')}
+              badge={
+                <Badge variant="secondary" className="h-4 px-1.5 text-[10px] leading-none">
+                  NEW
+                </Badge>
+              }
+            />
+
+            <MenuItem
               icon={icons.Send}
               label={t('sidebar.menu.communications')}
               expanded={expanded}
@@ -479,17 +493,19 @@ interface MenuItemProps {
   hasSubmenu?: boolean;
   isOpen?: boolean;
   onToggle?: () => void;
+  onClick?: () => void;
   isActive?: boolean;
+  badge?: React.ReactNode;
   children?: React.ReactNode;
 }
 
-function MenuItem({ icon, label, expanded, hasSubmenu, isOpen, onToggle, isActive, children }: MenuItemProps) {
+function MenuItem({ icon, label, expanded, hasSubmenu, isOpen, onToggle, onClick, isActive, badge, children }: MenuItemProps) {
   return (
     <div className="mb-0.5">
       <motion.button
         whileHover={{ x: expanded ? 2 : 0 }}
         whileTap={{ scale: 0.98 }}
-        onClick={onToggle}
+        onClick={hasSubmenu ? onToggle : onClick}
         style={isActive ? {
           background: 'linear-gradient(135deg, rgba(0,0,0,0.04) 0%, rgba(15,50,61,0.08) 100%)'
         } : undefined}
@@ -517,6 +533,9 @@ function MenuItem({ icon, label, expanded, hasSubmenu, isOpen, onToggle, isActiv
             </motion.span>
           )}
         </AnimatePresence>
+        {badge && expanded && (
+          <span className="ml-auto flex items-center">{badge}</span>
+        )}
         {hasSubmenu && expanded && (
           <motion.div
             animate={{ rotate: isOpen ? 180 : 0 }}

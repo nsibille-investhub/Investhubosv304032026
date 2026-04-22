@@ -13,7 +13,8 @@ export type Page =
   | 'retrocessions'
   | 'allfunds'
   | 'events'
-  | 'news' 
+  | 'news'
+  | 'datahub'
   | 'design-system'
   | 'settings-app-store' 
   | 'settings-users' 
@@ -66,6 +67,7 @@ const PAGE_TO_PATH: Record<Page, string> = {
   'allfunds': '/allfunds',
   'events': '/events',
   'news': '/news',
+  'datahub': '/datahub',
   'design-system': '/design-system',
   'settings-app-store': '/settings/app-store',
   'settings-users': '/settings/users',
@@ -125,14 +127,21 @@ export function getPageFromHash(): Page {
     console.log('[Routing] No hash found, defaulting to investors');
     return 'investors';
   }
-  
+
+  // DataHub: any subpath (/datahub, /datahub/new, /datahub/:id, /datahub/:id/view-as-lp)
+  // resolves to the same page key. The page reads window.location.hash for the
+  // full URL, so sub-routes are handled in-page rather than in the page enum.
+  if (path === '/datahub' || path.startsWith('/datahub/')) {
+    return 'datahub';
+  }
+
   // Return the page or default to 'investors'
   const page = PATH_TO_PAGE[path];
   if (!page) {
     console.warn('[Routing] Unknown path:', path, '-> Defaulting to investors');
     return 'investors';
   }
-  
+
   return page;
 }
 
