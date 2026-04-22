@@ -85,6 +85,14 @@ import { SpecificAudience } from './SpecificAudience';
 import { FolderSpaceDialogPreview } from './ui/folder-space-dialog';
 import { KpiCard, KpiStrip } from './ui/kpi-card';
 import { PageHeader } from './ui/page-header';
+import { SearchInput } from './ui/search-input';
+import {
+  Select as UiSelect,
+  SelectContent as UiSelectContent,
+  SelectItem as UiSelectItem,
+  SelectTrigger as UiSelectTrigger,
+  SelectValue as UiSelectValue,
+} from './ui/select';
 import { AudienceCounter, AudienceCounterCards } from './AudienceCounter';
 import { ItemSelector } from './InternalResponsibleSelector';
 import {
@@ -790,6 +798,55 @@ function ItemSelectorPreview() {
   );
 }
 
+function SearchInputPreview({ initial = '' }: { initial?: string }) {
+  const [value, setValue] = React.useState(initial);
+  return (
+    <SearchInput
+      value={value}
+      onValueChange={setValue}
+      placeholder="Rechercher une collection…"
+      aria-label="Rechercher une collection"
+    />
+  );
+}
+
+function FilterBarPreview() {
+  const [search, setSearch] = React.useState('');
+  const [status, setStatus] = React.useState('all');
+  const [mode, setMode] = React.useState('all');
+  return (
+    <div className="flex flex-wrap items-center gap-2">
+      <SearchInput
+        value={search}
+        onValueChange={setSearch}
+        placeholder="Rechercher une collection…"
+        aria-label="Rechercher une collection"
+        className="min-w-[240px] flex-1"
+      />
+      <UiSelect value={status} onValueChange={setStatus}>
+        <UiSelectTrigger className="w-[180px]" aria-label="Filtrer par statut">
+          <UiSelectValue />
+        </UiSelectTrigger>
+        <UiSelectContent>
+          <UiSelectItem value="all">Tous les statuts</UiSelectItem>
+          <UiSelectItem value="published">Publiées</UiSelectItem>
+          <UiSelectItem value="draft">Brouillons</UiSelectItem>
+        </UiSelectContent>
+      </UiSelect>
+      <UiSelect value={mode} onValueChange={setMode}>
+        <UiSelectTrigger className="w-[180px]" aria-label="Filtrer par mode">
+          <UiSelectValue />
+        </UiSelectTrigger>
+        <UiSelectContent>
+          <UiSelectItem value="all">Tous les modes</UiSelectItem>
+          <UiSelectItem value="manual">Manuel</UiSelectItem>
+          <UiSelectItem value="api-pull">API (pull)</UiSelectItem>
+        </UiSelectContent>
+      </UiSelect>
+    </div>
+  );
+}
+
 export function DesignSystemPage() {
   return (
     <div className="flex-1 overflow-auto px-6 py-6 space-y-6 bg-[#F8FAFA] dark:bg-[#0B0D0D]">
@@ -799,6 +856,102 @@ export function DesignSystemPage() {
         <p className="mt-2 text-sm text-[#4F6166] dark:text-[#9DB2AE] max-w-4xl">
           Bibliothèque complète des composants. On commence par la couche tableaux (data-intensive), puis les composants coeur.
         </p>
+      </section>
+
+      <section className="rounded-2xl border border-[#D7E0DD] dark:border-[#1F2D2A] bg-white dark:bg-[#101615] p-8 md:p-10">
+        <header className="mb-8 space-y-3">
+          <h2 className="text-lg font-semibold text-[#1F3137] dark:text-[#E8F0EE]">
+            Composant Inputs — ds-search-input
+          </h2>
+          <p className="text-sm text-[#4F6166] dark:text-[#9DB2AE] max-w-3xl leading-relaxed">
+            Input de recherche standard. Encapsule le pattern &laquo;&nbsp;Input + icône
+            loupe à gauche&nbsp;&raquo; réutilisé partout (FilterBar, DocumentFilterBar,
+            DataHub…). Affiche un bouton &times; de réinitialisation dès qu&apos;une valeur
+            est saisie, et vide le champ sur <code className="text-xs px-1 py-0.5 rounded bg-[#F1F5F4] dark:bg-[#1C2624]">Escape</code>.
+            Les filtres secondaires sont composés avec le <code className="text-xs px-1 py-0.5 rounded bg-[#F1F5F4] dark:bg-[#1C2624]">Select</code> du DS.
+          </p>
+          <p className="text-xs text-[#4F6166] dark:text-[#9DB2AE] leading-relaxed">
+            Identifiant&nbsp;: <code className="text-xs px-1 py-0.5 rounded bg-[#F1F5F4] dark:bg-[#1C2624] font-semibold">ds-search-input</code> — Import&nbsp;:
+            <code className="text-xs px-1 py-0.5 rounded bg-[#F1F5F4] dark:bg-[#1C2624] ml-1">{`import { SearchInput } from '@/components/ui/search-input'`}</code>
+          </p>
+        </header>
+
+        <div className="space-y-16">
+          <div className="space-y-4">
+            <div className="flex items-baseline gap-3">
+              <span className="text-[11px] font-semibold uppercase tracking-[0.14em] text-[#456B6C]">
+                Variant — vide
+              </span>
+              <span className="text-xs text-[#4F6166] dark:text-[#9DB2AE]">
+                placeholder + icône loupe
+              </span>
+            </div>
+            <div className="rounded-xl border border-[#D7E0DD] dark:border-[#1F2D2A] bg-[#F8FAFA] dark:bg-[#0B0D0D] p-4 md:p-6">
+              <div className="max-w-md">
+                <SearchInputPreview />
+              </div>
+            </div>
+          </div>
+
+          <div className="space-y-4">
+            <div className="flex items-baseline gap-3">
+              <span className="text-[11px] font-semibold uppercase tracking-[0.14em] text-[#456B6C]">
+                Variant — avec valeur
+              </span>
+              <span className="text-xs text-[#4F6166] dark:text-[#9DB2AE]">
+                bouton clear + raccourci <kbd>Esc</kbd>
+              </span>
+            </div>
+            <div className="rounded-xl border border-[#D7E0DD] dark:border-[#1F2D2A] bg-[#F8FAFA] dark:bg-[#0B0D0D] p-4 md:p-6">
+              <div className="max-w-md">
+                <SearchInputPreview initial="Reporting ESG" />
+              </div>
+            </div>
+          </div>
+
+          <div className="space-y-4">
+            <div className="flex items-baseline gap-3">
+              <span className="text-[11px] font-semibold uppercase tracking-[0.14em] text-[#456B6C]">
+                Composition
+              </span>
+              <span className="text-xs text-[#4F6166] dark:text-[#9DB2AE]">
+                SearchInput + Select (filter bar DataHub)
+              </span>
+            </div>
+            <div className="rounded-xl border border-[#D7E0DD] dark:border-[#1F2D2A] bg-[#F8FAFA] dark:bg-[#0B0D0D] p-4 md:p-6">
+              <FilterBarPreview />
+            </div>
+          </div>
+
+          <div className="space-y-4">
+            <div className="flex items-baseline gap-3">
+              <span className="text-[11px] font-semibold uppercase tracking-[0.14em] text-[#456B6C]">
+                Usage
+              </span>
+              <span className="text-xs text-[#4F6166] dark:text-[#9DB2AE]">
+                signature typique de la prop
+              </span>
+            </div>
+            <pre className="text-xs bg-[#F8FAFA] dark:bg-[#0B0D0D] border border-[#D7E0DD] dark:border-[#1F2D2A] p-5 rounded-xl overflow-x-auto leading-relaxed">
+{`<div className="flex flex-wrap items-center gap-2">
+  <SearchInput
+    value={search}
+    onValueChange={setSearch}
+    placeholder="Rechercher une collection…"
+    className="min-w-[240px] flex-1"
+  />
+
+  <Select value={status} onValueChange={setStatus}>
+    <SelectTrigger className="w-[180px]"><SelectValue /></SelectTrigger>
+    <SelectContent>
+      <SelectItem value="all">Tous les statuts</SelectItem>
+      <SelectItem value="published">Publiées</SelectItem>
+    </SelectContent>
+  </Select>
+</div>`}
+            </pre>
+          </div>
+        </div>
       </section>
 
       <section className="rounded-2xl border border-[#D7E0DD] dark:border-[#1F2D2A] bg-white dark:bg-[#101615] p-8 md:p-10">

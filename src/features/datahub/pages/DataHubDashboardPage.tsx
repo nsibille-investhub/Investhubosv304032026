@@ -4,15 +4,14 @@ import {
   Database,
   FileEdit,
   Rows3,
-  Search,
   SearchX,
 } from 'lucide-react';
 
 import { Button } from '../../../components/ui/button';
 import { Card, CardContent } from '../../../components/ui/card';
-import { Input } from '../../../components/ui/input';
 import { KpiCard, KpiStrip } from '../../../components/ui/kpi-card';
 import { PageHeader } from '../../../components/ui/page-header';
+import { SearchInput } from '../../../components/ui/search-input';
 import {
   Select,
   SelectContent,
@@ -189,19 +188,13 @@ export function DataHubDashboardPage() {
         </KpiStrip>
 
         <div className="flex flex-wrap items-center gap-2">
-          <div className="relative min-w-[240px] flex-1">
-            <Search
-              aria-hidden
-              className="pointer-events-none absolute left-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground"
-            />
-            <Input
-              value={search}
-              onChange={(e) => setSearch(e.target.value)}
-              placeholder="Rechercher une collection…"
-              className="pl-9"
-              aria-label="Rechercher une collection"
-            />
-          </div>
+          <SearchInput
+            value={search}
+            onValueChange={setSearch}
+            placeholder="Rechercher une collection…"
+            aria-label="Rechercher une collection"
+            className="min-w-[240px] flex-1"
+          />
           <Select value={status} onValueChange={(v) => setStatus(v as StatusFilter)}>
             <SelectTrigger className="w-[180px]" aria-label="Filtrer par statut">
               <SelectValue />
