@@ -9,9 +9,27 @@ function isStepValid(step: WizardStep, data: WizardData): boolean {
   switch (step) {
     case 1:
       return !!data.ingestionMode;
-    case 2:
-      // Filled in prompt 3.2 — for now anything passes.
-      return true;
+    case 2: {
+      const cfg = (data.modeConfig ?? {}) as Record<string, unknown>;
+      switch (data.ingestionMode) {
+        case 'manual':
+          return true;
+        case 'file':
+          return typeof cfg.fileName === 'string' || cfg.configureLater === true;
+        case 'api-pull':
+          return (
+            typeof cfg.endpointUrl === 'string' &&
+            (cfg.endpointUrl as string).trim().length > 0 &&
+            typeof cfg.authType === 'string'
+          );
+        case 'api-push':
+          return true;
+        case 'mcp':
+          return true;
+        default:
+          return false;
+      }
+    }
     case 3:
       // Filled in prompt 3.3.
       return true;

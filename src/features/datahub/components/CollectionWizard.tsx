@@ -10,6 +10,7 @@ import {
 import type { IngestionMode } from '../types';
 import { WizardStepper } from './WizardStepper';
 import { WizardStepMode } from './wizard/WizardStepMode';
+import { WizardStepConfig } from './wizard/WizardStepConfig';
 
 const STEPS = [
   { id: 1, label: 'Mode' },
@@ -48,6 +49,11 @@ export function CollectionWizard({ onExit }: CollectionWizardProps) {
 
   const handleModeChange = (mode: IngestionMode) => {
     updateWizardData({ ingestionMode: mode });
+  };
+
+  const modeConfig = (wizardData.modeConfig ?? {}) as Record<string, unknown>;
+  const handleConfigPatch = (patch: Record<string, unknown>) => {
+    updateWizardData({ modeConfig: { ...modeConfig, ...patch } });
   };
 
   return (
@@ -90,7 +96,13 @@ export function CollectionWizard({ onExit }: CollectionWizardProps) {
                 onChange={handleModeChange}
               />
             )}
-            {currentStep === 2 && <StepPlaceholder step={2} />}
+            {currentStep === 2 && (
+              <WizardStepConfig
+                mode={wizardData.ingestionMode}
+                modeConfig={modeConfig}
+                onChange={handleConfigPatch}
+              />
+            )}
             {currentStep === 3 && <StepPlaceholder step={3} />}
             {currentStep === 4 && <StepPlaceholder step={4} />}
           </div>
