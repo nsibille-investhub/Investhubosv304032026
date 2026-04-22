@@ -10422,6 +10422,45 @@
   --success-soft: #e8f2ed;
   --warning-soft: #fef3c7;
   --danger-soft: #fee2e2;
+
+  /* DataHub — Statuts (light) */
+  --datahub-status-published-bg: #dcfce7;
+  --datahub-status-published-fg: #166534;
+  --datahub-status-published-border: #86efac;
+  --datahub-status-draft-bg: #ffedd5;
+  --datahub-status-draft-fg: #9a3412;
+  --datahub-status-draft-border: #fdba74;
+  --datahub-status-unpublished-bg: #f3f4f6;
+  --datahub-status-unpublished-fg: #374151;
+  --datahub-status-unpublished-border: #d1d5db;
+  --datahub-status-changes-bg: #dbeafe;
+  --datahub-status-changes-fg: #1e40af;
+  --datahub-status-changes-border: #93c5fd;
+
+  /* DataHub — Modes d'ingestion (light) */
+  --datahub-mode-manual-bg: #eceaf4;
+  --datahub-mode-manual-fg: #4338ca;
+  --datahub-mode-manual-border: #c7c3e0;
+  --datahub-mode-file-bg: #fef3c7;
+  --datahub-mode-file-fg: #92400e;
+  --datahub-mode-file-border: #fcd34d;
+  --datahub-mode-api-bg: #cffafe;
+  --datahub-mode-api-fg: #155e75;
+  --datahub-mode-api-border: #67e8f9;
+  --datahub-mode-mcp-bg: #ede9fe;
+  --datahub-mode-mcp-fg: #5b21b6;
+  --datahub-mode-mcp-border: #c4b5fd;
+
+  /* DataHub — Pivots temporels (light) */
+  --datahub-pivot-timeseries-bg: #e0e7ff;
+  --datahub-pivot-timeseries-fg: #3730a3;
+  --datahub-pivot-timeseries-border: #a5b4fc;
+  --datahub-pivot-reference-bg: #d1fae5;
+  --datahub-pivot-reference-fg: #065f46;
+  --datahub-pivot-reference-border: #6ee7b7;
+  --datahub-pivot-event-bg: #ffe4e6;
+  --datahub-pivot-event-fg: #9f1239;
+  --datahub-pivot-event-border: #fda4af;
 }
 
 .dark {
@@ -10465,6 +10504,45 @@
   --success-soft: color-mix(in oklab, var(--success) 24%, transparent);
   --warning-soft: color-mix(in oklab, var(--warning) 24%, transparent);
   --danger-soft: color-mix(in oklab, var(--danger) 24%, transparent);
+
+  /* DataHub — Statuts (dark) */
+  --datahub-status-published-bg: #052e16;
+  --datahub-status-published-fg: #86efac;
+  --datahub-status-published-border: #166534;
+  --datahub-status-draft-bg: #431407;
+  --datahub-status-draft-fg: #fdba74;
+  --datahub-status-draft-border: #9a3412;
+  --datahub-status-unpublished-bg: #1f2937;
+  --datahub-status-unpublished-fg: #9ca3af;
+  --datahub-status-unpublished-border: #374151;
+  --datahub-status-changes-bg: #172554;
+  --datahub-status-changes-fg: #93c5fd;
+  --datahub-status-changes-border: #1e40af;
+
+  /* DataHub — Modes d'ingestion (dark) */
+  --datahub-mode-manual-bg: #1e1b2e;
+  --datahub-mode-manual-fg: #a5b4fc;
+  --datahub-mode-manual-border: #3730a3;
+  --datahub-mode-file-bg: #451a03;
+  --datahub-mode-file-fg: #fcd34d;
+  --datahub-mode-file-border: #92400e;
+  --datahub-mode-api-bg: #083344;
+  --datahub-mode-api-fg: #67e8f9;
+  --datahub-mode-api-border: #155e75;
+  --datahub-mode-mcp-bg: #2e1065;
+  --datahub-mode-mcp-fg: #c4b5fd;
+  --datahub-mode-mcp-border: #5b21b6;
+
+  /* DataHub — Pivots temporels (dark) */
+  --datahub-pivot-timeseries-bg: #1e1b4b;
+  --datahub-pivot-timeseries-fg: #a5b4fc;
+  --datahub-pivot-timeseries-border: #3730a3;
+  --datahub-pivot-reference-bg: #022c22;
+  --datahub-pivot-reference-fg: #6ee7b7;
+  --datahub-pivot-reference-border: #065f46;
+  --datahub-pivot-event-bg: #4c0519;
+  --datahub-pivot-event-fg: #fda4af;
+  --datahub-pivot-event-border: #9f1239;
 }
 
 html {
