@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { Plus, Search, SearchX } from 'lucide-react';
 
 import { Button } from '../../../components/ui/button';
@@ -92,6 +92,20 @@ export function DataHubDashboardPage() {
   const [refreshTarget, setRefreshTarget] = useState<Collection | null>(null);
 
   const { allCollections } = useCollections();
+
+  // Deep-link: /datahub?refresh={id|technicalName} auto-opens the Refresh modal
+  // on first mount. Used by the DemoScenarioHelper (step 4).
+  useEffect(() => {
+    const query = window.location.hash.split('?')[1] ?? '';
+    const params = new URLSearchParams(query);
+    const refreshKey = params.get('refresh');
+    if (!refreshKey) return;
+    const target =
+      allCollections.find((c) => c.id === refreshKey) ??
+      allCollections.find((c) => c.technicalName === refreshKey);
+    if (target) setRefreshTarget(target);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   const totals = useMemo(() => {
     return allCollections.reduce(
