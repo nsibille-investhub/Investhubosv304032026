@@ -14,6 +14,7 @@ import {
   faFileCircleCheck,
 } from '@fortawesome/free-solid-svg-icons';
 import type { TimelineTypeMap } from '../components/ui/timeline';
+import type { Language } from './languageContext';
 
 /**
  * Wraps a FontAwesome icon definition into a React component compatible with
@@ -158,9 +159,21 @@ export const birdviewActivityCatalog: BirdviewActivityCatalogEntry[] = [
   },
 ];
 
-/** Map ready to feed the generic Timeline component. */
+/** Map ready to feed the generic Timeline component. Defaults to French labels. */
 export const birdviewActivityTypes: TimelineTypeMap<BirdviewActivityEventCode> =
   birdviewActivityCatalog.reduce((acc, entry) => {
     acc[entry.code] = { label: entry.labelFr, Icon: entry.Icon };
+    return acc;
+  }, {} as TimelineTypeMap<BirdviewActivityEventCode>);
+
+/** Returns the activity type map with labels resolved for the given language. */
+export const getBirdviewActivityTypes = (
+  lang: Language,
+): TimelineTypeMap<BirdviewActivityEventCode> =>
+  birdviewActivityCatalog.reduce((acc, entry) => {
+    acc[entry.code] = {
+      label: lang === 'en' ? entry.labelEn : entry.labelFr,
+      Icon: entry.Icon,
+    };
     return acc;
   }, {} as TimelineTypeMap<BirdviewActivityEventCode>);
