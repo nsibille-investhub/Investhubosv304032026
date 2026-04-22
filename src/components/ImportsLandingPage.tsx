@@ -1,8 +1,8 @@
 import { motion } from 'motion/react';
 import { Button } from './ui/button';
 import { Badge } from './ui/badge';
-import { 
-  Sparkles, 
+import {
+  Sparkles,
   FileUp,
   Scan,
   Network,
@@ -28,31 +28,31 @@ export function ImportsLandingPage({ onEnableModule }: ImportsLandingPageProps) 
     if (onEnableModule) {
       onEnableModule();
     } else {
-      toast.info('Navigation vers App Store à implémenter');
+      toast.info('Navigation to App Store to be implemented');
     }
   };
 
   const features = [
     {
       icon: Scan,
-      title: 'Extraction & pré-remplissage automatiques',
-      description: 'OCR + NLP pour lire vos pièces (PDF, scans, emails), extraire automatiquement les champs clés : investisseur, fonds, montants, dates, clauses et pré-remplir vos formulaires.',
+      title: 'Automatic extraction & pre-fill',
+      description: 'OCR + NLP to read your documents (PDF, scans, emails), automatically extract key fields: investor, fund, amounts, dates, clauses and pre-fill your forms.',
       gradient: 'from-blue-500 to-cyan-500',
       delay: 0.1,
       illustration: DataExtractionIllustration
     },
     {
       icon: Network,
-      title: 'Classification & rapprochement intelligents',
-      description: 'Auto-classement par fonds, closing et type de document. Déduplication et matching automatique des entités (investisseurs ↔ souscriptions ↔ documents) selon vos règles métier.',
+      title: 'Smart classification & matching',
+      description: 'Auto-classification by fund, closing and document type. Deduplication and automatic matching of entities (investors ↔ subscriptions ↔ documents) according to your business rules.',
       gradient: 'from-purple-500 to-pink-500',
       delay: 0.2,
       illustration: SmartClassificationIllustration
     },
     {
       icon: Shield,
-      title: 'Contrôles & conformité by design',
-      description: 'Règles de validation paramétrables, gestion des exceptions, audit trail complet, conformité RGPD, et validation humaine en lot dans une vue de revue dédiée.',
+      title: 'Controls & compliance by design',
+      description: 'Configurable validation rules, exception handling, complete audit trail, GDPR compliance, and human batch validation in a dedicated review view.',
       gradient: 'from-green-500 to-emerald-500',
       delay: 0.3,
       illustration: ComplianceControlsIllustration
@@ -60,12 +60,12 @@ export function ImportsLandingPage({ onEnableModule }: ImportsLandingPageProps) 
   ];
 
   const benefits = [
-    'Gain de temps : 90% de réduction du travail manuel',
-    'Précision accrue grâce à l\'IA et au double contrôle',
-    'Traçabilité complète de chaque import',
-    'Intégration directe avec vos workflows',
-    'Support multi-formats (PDF, images, emails, CSV)',
-    'Apprentissage continu des modèles IA'
+    'Time savings: 90% reduction in manual work',
+    'Increased accuracy thanks to AI and double-checking',
+    'Complete traceability of every import',
+    'Direct integration with your workflows',
+    'Multi-format support (PDF, images, emails, CSV)',
+    'Continuous learning of AI models'
   ];
 
   return (
@@ -113,18 +113,18 @@ export function ImportsLandingPage({ onEnableModule }: ImportsLandingPageProps) 
                   Compliance Plus Module
                 </Badge>
                 <h1 className="text-5xl text-white mb-4">
-                  De documents <span className="bg-gradient-to-r from-blue-400 to-purple-400 bg-clip-text text-transparent">à données exploitables</span>
+                  From documents <span className="bg-gradient-to-r from-blue-400 to-purple-400 bg-clip-text text-transparent">to actionable data</span>
                 </h1>
                 <p className="text-xl text-white/80 mb-8 max-w-2xl">
-                  Transformez vos documents déstructurés (PDF, scans, emails…) en données fiables, liées et exploitables dans InvestHub. Extraction automatique, classification intelligente et conformité intégrée.
+                  Transform your unstructured documents (PDF, scans, emails…) into reliable, linked and actionable data in InvestHub. Automatic extraction, smart classification and built-in compliance.
                 </p>
                 <div className="flex gap-4">
-                  <Button 
+                  <Button
                     size="lg"
                     onClick={handleEnableModule}
                     className="bg-white text-gray-900 hover:bg-gray-100 h-11"
                   >
-                    Activer le module
+                    Enable module
                     <ArrowRight className="w-4 h-4 ml-2" />
                   </Button>
                 </div>
@@ -188,9 +188,9 @@ export function ImportsLandingPage({ onEnableModule }: ImportsLandingPageProps) 
           transition={{ duration: 0.6, delay: 0.3 }}
           className="text-center mb-12"
         >
-          <h2 className="text-3xl mb-4">Comment ça marche ?</h2>
+          <h2 className="text-3xl mb-4">How does it work?</h2>
           <p className="text-lg text-gray-600">
-            Un pipeline intelligent pour transformer vos documents en données structurées
+            A smart pipeline to transform your documents into structured data
           </p>
         </motion.div>
 
@@ -207,7 +207,7 @@ export function ImportsLandingPage({ onEnableModule }: ImportsLandingPageProps) 
               <div className="h-64">
                 <feature.illustration />
               </div>
-              
+
               {/* Content */}
               <div className="p-6">
                 <div className={`w-14 h-14 rounded-xl bg-gradient-to-br ${feature.gradient} flex items-center justify-center mb-4`}>
@@ -227,14 +227,14 @@ export function ImportsLandingPage({ onEnableModule }: ImportsLandingPageProps) 
           transition={{ duration: 0.6, delay: 0.6 }}
           className="bg-white rounded-2xl p-8 shadow-lg border border-gray-100 mb-16"
         >
-          <h3 className="text-2xl mb-6 text-center">Pipeline d'import automatisé</h3>
+          <h3 className="text-2xl mb-6 text-center">Automated import pipeline</h3>
           <div className="grid md:grid-cols-5 gap-4">
             {[
               { icon: FileSearch, label: 'Upload', color: 'blue' },
               { icon: Scan, label: 'Extraction', color: 'purple' },
               { icon: Network, label: 'Classification', color: 'pink' },
-              { icon: Shield, label: 'Contrôles', color: 'green' },
-              { icon: Zap, label: 'Intégration', color: 'yellow' }
+              { icon: Shield, label: 'Controls', color: 'green' },
+              { icon: Zap, label: 'Integration', color: 'yellow' }
             ].map((step, index) => (
               <motion.div
                 key={index}
@@ -254,7 +254,7 @@ export function ImportsLandingPage({ onEnableModule }: ImportsLandingPageProps) 
                     <div className="absolute right-0 top-1/2 -translate-y-1/2 w-0 h-0 border-l-8 border-l-gray-300 border-t-4 border-t-transparent border-b-4 border-b-transparent" />
                   </motion.div>
                 )}
-                
+
                 <div className={`w-16 h-16 rounded-full bg-gradient-to-br from-${step.color}-100 to-${step.color}-50 border-2 border-${step.color}-300 flex items-center justify-center mb-3 relative z-10`}>
                   <step.icon className={`w-8 h-8 text-${step.color}-600`} />
                 </div>
@@ -271,7 +271,7 @@ export function ImportsLandingPage({ onEnableModule }: ImportsLandingPageProps) 
           transition={{ duration: 0.6, delay: 1 }}
           className="bg-white rounded-2xl p-8 shadow-lg border border-gray-100"
         >
-          <h3 className="text-2xl mb-6">Avantages clés</h3>
+          <h3 className="text-2xl mb-6">Key benefits</h3>
           <div className="grid md:grid-cols-2 gap-4">
             {benefits.map((benefit, index) => (
               <motion.div
@@ -298,16 +298,16 @@ export function ImportsLandingPage({ onEnableModule }: ImportsLandingPageProps) 
           className="text-center mt-16 bg-gradient-to-br from-gray-900 to-[#0F323D] rounded-2xl p-12 text-white"
         >
           <Lock className="w-16 h-16 mx-auto mb-4 text-white/80" />
-          <h3 className="text-3xl mb-4">Prêt à automatiser vos imports ?</h3>
+          <h3 className="text-3xl mb-4">Ready to automate your imports?</h3>
           <p className="text-lg text-white/80 mb-8 max-w-2xl mx-auto">
-            Activez le module Compliance Plus pour accéder aux imports intelligents et libérer votre équipe des tâches répétitives.
+            Enable the Compliance Plus module to access smart imports and free your team from repetitive tasks.
           </p>
-          <Button 
+          <Button
             size="lg"
             onClick={handleEnableModule}
             className="bg-white text-gray-900 hover:bg-gray-100 h-11"
           >
-            Activer Compliance Plus
+            Enable Compliance Plus
             <ArrowRight className="w-4 h-4 ml-2" />
           </Button>
         </motion.div>
