@@ -60,7 +60,7 @@ import { EventsPage } from './components/EventsPage';
 import { NewsPage } from './components/NewsPage';
 import EcosystemPage from './components/EcosystemPage';
 import { DesignSystemPage } from './components/DesignSystemPage';
-import { DataHubPlaceholderPage } from './features/datahub/pages/DataHubPlaceholderPage';
+import { DataHubRouter } from './features/datahub/pages/DataHubRouter';
 import { generateFunds, Fund } from './utils/fundGenerator';
 import { AllFundsPage } from './components/AllFundsPage';
 import { FundStatusTabs } from './components/FundStatusTabs';
@@ -1692,7 +1692,7 @@ export default function App() {
           )}
 
           {currentPage === 'datahub' && (
-            <DataHubPlaceholderPage />
+            <DataHubRouter />
           )}
           
           {/* Settings Pages */}
