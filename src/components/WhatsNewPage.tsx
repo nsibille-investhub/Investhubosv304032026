@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { ArrowLeft, Calendar, Mail, Rocket, Sparkles } from 'lucide-react';
 import { motion } from 'motion/react';
 import { Badge } from './ui/badge';
@@ -200,13 +200,18 @@ export function WhatsNewPage({ initialTab = 'newsletters' }: WhatsNewPageProps) 
               <h2 className="text-xl font-medium text-gray-900 dark:text-gray-100 mb-6">
                 {selected.title}
               </h2>
-              {/* Scoped container: newsletter HTML is rendered as-is.
-                  `.newsletter-content` resets a few defaults so pasted markup
-                  keeps reasonable typography without leaking to the rest of the app. */}
-              <div
-                className="newsletter-content"
-                dangerouslySetInnerHTML={{ __html: selected.html }}
-              />
+              {/* Newsletters provided as a full HTML email document render in an
+                  isolated iframe so their own <style> blocks don't leak. Inline
+                  `html` snippets render through `.newsletter-content`, which
+                  resets a few defaults without affecting the rest of the app. */}
+              {selected.htmlUrl ? (
+                <NewsletterFrame src={selected.htmlUrl} title={selected.title} />
+              ) : selected.html ? (
+                <div
+                  className="newsletter-content"
+                  dangerouslySetInnerHTML={{ __html: selected.html }}
+                />
+              ) : null}
             </Card>
           </motion.div>
         )}
@@ -220,6 +225,51 @@ function EmptyState({ message }: { message: string }) {
     <div className="py-16 text-center text-sm text-gray-500 dark:text-gray-400">
       {message}
     </div>
+  );
+}
+
+function NewsletterFrame({ src, title }: { src: string; title: string }) {
+  const ref = useRef<HTMLIFrameElement | null>(null);
+  const [height, setHeight] = useState<number>(800);
+
+  const resize = () => {
+    const doc = ref.current?.contentDocument;
+    if (!doc) return;
+    const h = Math.max(
+      doc.body?.scrollHeight ?? 0,
+      doc.documentElement?.scrollHeight ?? 0,
+    );
+    if (h > 0) setHeight(h + 16);
+  };
+
+  useEffect(() => {
+    const iframe = ref.current;
+    if (!iframe) return;
+    let observer: ResizeObserver | null = null;
+    const onLoad = () => {
+      resize();
+      const doc = iframe.contentDocument;
+      if (doc?.body && 'ResizeObserver' in window) {
+        observer = new ResizeObserver(() => resize());
+        observer.observe(doc.body);
+      }
+    };
+    iframe.addEventListener('load', onLoad);
+    return () => {
+      iframe.removeEventListener('load', onLoad);
+      observer?.disconnect();
+    };
+  }, []);
+
+  return (
+    <iframe
+      ref={ref}
+      src={src}
+      title={title}
+      sandbox="allow-same-origin allow-popups"
+      className="w-full border-0 bg-transparent"
+      style={{ height }}
+    />
   );
 }
 

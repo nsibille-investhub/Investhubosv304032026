@@ -9,7 +9,11 @@ export interface Newsletter {
   title: string;
   excerpt: string;
   /** Raw HTML body as provided by the product team. Rendered as-is. */
-  html: string;
+  html?: string;
+  /** Optional URL to a standalone HTML email document (served from /public).
+   *  When set, the newsletter is rendered inside an isolated iframe so its own
+   *  styles don't leak into the host app. Takes precedence over `html`. */
+  htmlUrl?: string;
 }
 
 export type ChangelogEntryType = 'added' | 'changed' | 'fixed' | 'removed';
@@ -32,36 +36,12 @@ export interface ChangelogRelease {
 // ---------------------------------------------------------------------------
 export const newsletters: Newsletter[] = [
   {
-    id: '2026-04',
-    date: '2026-04-15',
-    title: 'Newsletter d’avril 2026',
+    id: '2026-03',
+    date: '2026-03-31',
+    title: 'Product News — Mars 2026',
     excerpt:
-      'Première édition de la newsletter InvestHub : rappel des nouveautés produit, événements à venir et retour sur le trimestre.',
-    html: `
-      <h2>Édito</h2>
-      <p>
-        Bienvenue dans la première newsletter mensuelle d’InvestHub. Chaque mois,
-        nous partagerons ici les principales nouveautés produit, les événements
-        à venir et quelques retours d’usage de nos clients.
-      </p>
-
-      <h2>Nouveautés du mois</h2>
-      <ul>
-        <li><strong>Dossiers de conformité :</strong> nouvelle vue consolidée avec indicateurs de complétude.</li>
-        <li><strong>DataHub :</strong> partage de vues personnalisées aux LP avec prévisualisation en &laquo; view as LP &raquo;.</li>
-        <li><strong>Bird View :</strong> filtrage multi-fonds amélioré.</li>
-      </ul>
-
-      <h2>À venir</h2>
-      <p>
-        Le module de retrocessions va recevoir son refresh UI courant mai, avec notamment
-        une nouvelle timeline des flux et un export CSV enrichi.
-      </p>
-
-      <p style="color:#6b7280;font-size:13px;margin-top:24px">
-        Vous recevez cette newsletter car vous êtes utilisateur d’InvestHub OS.
-      </p>
-    `,
+      'Focus distribution déléguée : notification automatique du contresignataire SDG après validation partenaire, flux Penelop personnalisables par application, règles conditionnelles alignées sur tous les modes de soumission.',
+    htmlUrl: '/newsletters/2026-03-mars.html',
   },
 ];
 
