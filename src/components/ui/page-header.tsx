@@ -37,6 +37,7 @@ export type PageHeaderTertiaryAction = {
 export type PageHeaderProps = {
   breadcrumb?: PageHeaderBreadcrumbItem[];
   onBack?: () => void;
+  hideBackButton?: boolean;
   title: React.ReactNode;
   subtitle?: React.ReactNode;
   primaryAction?: PageHeaderAction;
@@ -46,12 +47,20 @@ export type PageHeaderProps = {
   className?: string;
 };
 
+function defaultBack() {
+  if (typeof window !== 'undefined') {
+    window.history.back();
+  }
+}
+
 function PageHeaderBreadcrumb({
   items,
   onBack,
+  showBack,
 }: {
   items: PageHeaderBreadcrumbItem[];
-  onBack?: PageHeaderProps['onBack'];
+  onBack: () => void;
+  showBack: boolean;
 }) {
   return (
     <motion.nav
@@ -62,7 +71,7 @@ function PageHeaderBreadcrumb({
       className="px-6 py-4 border-b border-gray-100 dark:border-gray-800 bg-white/60 dark:bg-black/60 backdrop-blur-sm"
     >
       <div className="flex items-center gap-2 text-sm">
-        {onBack ? (
+        {showBack ? (
           <motion.button
             type="button"
             onClick={onBack}
@@ -113,6 +122,7 @@ const PRIMARY_BUTTON_GRADIENT =
 function PageHeader({
   breadcrumb,
   onBack,
+  hideBackButton,
   title,
   subtitle,
   primaryAction,
@@ -126,7 +136,11 @@ function PageHeader({
   return (
     <div data-slot="page-header" className={cn('flex flex-col', className)}>
       {breadcrumb && breadcrumb.length > 0 ? (
-        <PageHeaderBreadcrumb items={breadcrumb} onBack={onBack} />
+        <PageHeaderBreadcrumb
+          items={breadcrumb}
+          onBack={onBack ?? defaultBack}
+          showBack={!hideBackButton}
+        />
       ) : null}
 
       <motion.div

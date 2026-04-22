@@ -11,7 +11,7 @@ const meta = {
     docs: {
       description: {
         component:
-          "En-tête de page unifié. Expose un breadcrumb optionnel (avec bouton retour), un titre, un sous-titre optionnel, une action principale optionnelle, une action secondaire optionnelle, et un menu tertiaire \"...\" optionnel pour des actions additionnelles (exports, archivage, etc.).",
+          "En-tête de page unifié. Le breadcrumb est rendu avec un bouton retour standard (flèche gauche) qui utilise window.history.back() par défaut — surcharger via onBack ou masquer via hideBackButton. Expose un titre, un sous-titre optionnel, une action principale optionnelle, une action secondaire optionnelle, et un menu tertiaire \"...\" optionnel pour des actions additionnelles (exports, archivage, etc.).",
       },
     },
   },
@@ -80,7 +80,6 @@ export const FullStack: Story = {
       { label: 'Data Room' },
       { label: 'Investisseurs LP' },
     ],
-    onBack: () => undefined,
     title: 'Investisseurs LP',
     subtitle: 'Espace documentaire dédié aux Limited Partners',
     primaryAction: {

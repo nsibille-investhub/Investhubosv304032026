@@ -809,6 +809,12 @@ export function DesignSystemPage() {
           Identifiant&nbsp;: <code className="text-xs px-1 py-0.5 rounded bg-[#F1F5F4] dark:bg-[#1C2624] font-semibold">ds-page-header</code> — Import&nbsp;:
           <code className="text-xs px-1 py-0.5 rounded bg-[#F1F5F4] dark:bg-[#1C2624] ml-1">{`import { PageHeader } from '@/components/ui/page-header'`}</code>
         </p>
+        <p className="text-xs text-[#4F6166] dark:text-[#9DB2AE] mb-4">
+          Le bouton retour (flèche gauche) fait partie du pattern&nbsp;: il est affiché par défaut
+          et utilise <code className="text-xs px-1 py-0.5 rounded bg-[#F1F5F4] dark:bg-[#1C2624]">window.history.back()</code>.
+          Passer <code className="text-xs px-1 py-0.5 rounded bg-[#F1F5F4] dark:bg-[#1C2624]">onBack</code> pour surcharger, ou
+          <code className="text-xs px-1 py-0.5 rounded bg-[#F1F5F4] dark:bg-[#1C2624] ml-1">hideBackButton</code> pour le masquer (landing pages).
+        </p>
 
         <div className="space-y-8">
           <div>
@@ -822,7 +828,6 @@ export function DesignSystemPage() {
                   { label: 'Portails et Contenu' },
                   { label: 'DataHub' },
                 ]}
-                onBack={() => undefined}
                 title="DataHub"
                 subtitle="Gestion des collections de données personnalisées"
                 primaryAction={{
@@ -879,7 +884,9 @@ export function DesignSystemPage() {
     { label: 'Portails et Contenu' },
     { label: 'DataHub' },
   ]}
-  onBack={() => navigateBack()}           // optionnel
+  // Bouton retour affiché par défaut (window.history.back())
+  // onBack={() => navigateBack()}         // surcharge optionnelle
+  // hideBackButton                        // pour le masquer
   title="DataHub"
   subtitle="Gestion des collections..."   // optionnel
   primaryAction={{                        // optionnel

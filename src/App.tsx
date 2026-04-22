@@ -650,8 +650,9 @@ export default function App() {
             </div>
           </motion.header>
 
-          {/* Breadcrumb */}
-          <motion.div 
+          {/* Breadcrumb (the datahub module renders its own PageHeader with breadcrumb) */}
+          {currentPage !== 'datahub' && (
+          <motion.div
             initial={{ opacity: 0, y: -10 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.1 }}
@@ -815,6 +816,7 @@ export default function App() {
               )}
             </div>
           </motion.div>
+          )}
 
           {/* Page Header - Subscriptions */}
           {currentPage === 'subscriptions' && !selectedSubscriptionDetail && (
