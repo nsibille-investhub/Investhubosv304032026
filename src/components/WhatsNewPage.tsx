@@ -36,11 +36,15 @@ interface WhatsNewPageProps {
   initialTab?: 'newsletters' | 'changelog';
 }
 
+const SHOW_CHANGELOG = false;
+
 export function WhatsNewPage({ initialTab = 'newsletters' }: WhatsNewPageProps) {
   const { t, lang } = useTranslation();
   const { markAsSeen } = useWhatsNewUnread();
   const [selected, setSelected] = useState<Newsletter | null>(null);
-  const [tab, setTab] = useState<'newsletters' | 'changelog'>(initialTab);
+  const [tab, setTab] = useState<'newsletters' | 'changelog'>(
+    SHOW_CHANGELOG ? initialTab : 'newsletters'
+  );
 
   const locale = lang === 'fr' ? 'fr-FR' : 'en-US';
 
@@ -82,10 +86,12 @@ export function WhatsNewPage({ initialTab = 'newsletters' }: WhatsNewPageProps) 
                 <Mail className="w-3.5 h-3.5" />
                 {t('whatsNew.tabs.newsletters')}
               </TabsTrigger>
-              <TabsTrigger value="changelog" className="gap-1.5">
-                <Rocket className="w-3.5 h-3.5" />
-                {t('whatsNew.tabs.changelog')}
-              </TabsTrigger>
+              {SHOW_CHANGELOG && (
+                <TabsTrigger value="changelog" className="gap-1.5">
+                  <Rocket className="w-3.5 h-3.5" />
+                  {t('whatsNew.tabs.changelog')}
+                </TabsTrigger>
+              )}
             </TabsList>
 
             <TabsContent value="newsletters">
