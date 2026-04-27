@@ -9,12 +9,15 @@ import {
   ChevronDown,
   ChevronRight,
   FileText,
+  Check,
   CheckCircle2,
+  Minus,
   Zap,
 } from 'lucide-react';
 import { StatusIndicator } from './CheckIndicator';
 import { Button } from './ui/button';
 import { Badge } from './ui/badge';
+import { Checkbox } from './ui/checkbox';
 import { Separator } from './ui/separator';
 import { cn } from './ui/utils';
 import {
@@ -137,7 +140,7 @@ const mockRecipients: Recipient[] = [
   },
 ];
 
-type FilterCriteria = 'all' | 'not-consulted';
+type FilterCriteria = 'all' | 'not-consulted' | 'custom';
 
 type TFn = (key: string, vars?: Record<string, string | number>) => string;
 
@@ -163,7 +166,6 @@ export function DocumentRelaunchModal({
 }: DocumentRelaunchModalProps) {
   const { t } = useTranslation();
   const emailTemplates = useMemo(() => buildEmailTemplates(t), [t]);
-  const [selectedCriteria, setSelectedCriteria] = useState<FilterCriteria>('all');
   const [model, setModel] = useState(emailTemplates[0].name);
   const [templatePopoverOpen, setTemplatePopoverOpen] = useState(false);
   const [isPreviewOpen, setIsPreviewOpen] = useState(false);
@@ -173,23 +175,76 @@ export function DocumentRelaunchModal({
     [],
   );
 
-  const filteredRecipients = useMemo(() => {
-    switch (selectedCriteria) {
-      case 'not-consulted':
-        return investorRecipients.filter((r) => r.inTarget && r.consultationStatus !== 'done');
-      case 'all':
-      default:
-        return investorRecipients;
-    }
-  }, [investorRecipients, selectedCriteria]);
-
-  const notifiableRecipients = useMemo(
-    () => filteredRecipients.filter((r) => r.inTarget),
-    [filteredRecipients],
+  const allTargetableIds = useMemo(
+    () => investorRecipients.filter((r) => r.inTarget).map((r) => r.id),
+    [investorRecipients],
+  );
+  const notConsultedIds = useMemo(
+    () =>
+      investorRecipients
+        .filter((r) => r.inTarget && r.consultationStatus !== 'done')
+        .map((r) => r.id),
+    [investorRecipients],
   );
 
+  const [selectedCriteria, setSelectedCriteria] = useState<FilterCriteria>('all');
+  const [selectedIds, setSelectedIds] = useState<Set<string>>(
+    () => new Set(allTargetableIds),
+  );
+
+  const setsEqual = (a: Set<string>, b: string[]) =>
+    a.size === b.length && b.every((id) => a.has(id));
+
+  const applyCriteria = (criteria: FilterCriteria) => {
+    if (criteria === 'all') {
+      setSelectedCriteria('all');
+      setSelectedIds(new Set(allTargetableIds));
+    } else if (criteria === 'not-consulted') {
+      setSelectedCriteria('not-consulted');
+      setSelectedIds(new Set(notConsultedIds));
+    }
+  };
+
+  const toggleRecipient = (id: string) => {
+    setSelectedIds((prev) => {
+      const next = new Set(prev);
+      if (next.has(id)) {
+        next.delete(id);
+      } else {
+        next.add(id);
+      }
+
+      if (setsEqual(next, allTargetableIds)) {
+        setSelectedCriteria('all');
+      } else if (setsEqual(next, notConsultedIds)) {
+        setSelectedCriteria('not-consulted');
+      } else {
+        setSelectedCriteria('custom');
+      }
+
+      return next;
+    });
+  };
+
+  const toggleAll = () => {
+    if (selectedIds.size === allTargetableIds.length) {
+      setSelectedIds(new Set());
+      setSelectedCriteria('custom');
+    } else {
+      setSelectedIds(new Set(allTargetableIds));
+      setSelectedCriteria('all');
+    }
+  };
+
+  const headerCheckboxState: 'checked' | 'unchecked' | 'indeterminate' =
+    selectedIds.size === 0
+      ? 'unchecked'
+      : allTargetableIds.length > 0 && selectedIds.size === allTargetableIds.length
+      ? 'checked'
+      : 'indeterminate';
+
   const notifiableCount = isNominatif
-    ? notifiableRecipients.length
+    ? selectedIds.size
     : selectedCriteria === 'not-consulted'
     ? mockGenericStats.notConsulted
     : mockGenericStats.totalInvestors;
@@ -198,7 +253,7 @@ export function DocumentRelaunchModal({
     if (isNominatif) {
       console.log(
         'Sending notifications to:',
-        notifiableRecipients.map((r) => r.id),
+        Array.from(selectedIds),
         'for document',
         documentId,
       );
@@ -419,7 +474,7 @@ export function DocumentRelaunchModal({
                 </label>
                 <div className="grid grid-cols-2 gap-2">
                   <button
-                    onClick={() => setSelectedCriteria('all')}
+                    onClick={() => applyCriteria('all')}
                     className={cn(
                       'flex items-center gap-2.5 px-3 py-2.5 rounded-md border text-left transition-colors',
                       selectedCriteria === 'all'
@@ -444,7 +499,7 @@ export function DocumentRelaunchModal({
                   </button>
 
                   <button
-                    onClick={() => setSelectedCriteria('not-consulted')}
+                    onClick={() => applyCriteria('not-consulted')}
                     className={cn(
                       'flex items-center gap-2.5 px-3 py-2.5 rounded-md border text-left transition-colors',
                       selectedCriteria === 'not-consulted'
@@ -477,7 +532,13 @@ export function DocumentRelaunchModal({
                 <div className="space-y-2">
                   <div className="flex items-center justify-between">
                     <span className="text-xs font-medium text-muted-foreground uppercase tracking-wide">
-                      {t('ged.relaunchModal.recipientsHeader', { count: filteredRecipients.length })}
+                      {t('ged.relaunchModal.recipientsHeader', { count: investorRecipients.length })}
+                      <span className="ml-2 normal-case tracking-normal text-foreground">
+                        {t('ged.relaunchModal.selectionSummary', {
+                          selected: selectedIds.size,
+                          total: allTargetableIds.length,
+                        })}
+                      </span>
                     </span>
                     <Button
                       variant="ghost"
@@ -494,6 +555,35 @@ export function DocumentRelaunchModal({
                     <Table>
                       <TableHeader>
                         <TableRow className="bg-white hover:bg-white border-b-border">
+                          <TableHead className="w-10 px-3">
+                            <button
+                              type="button"
+                              role="checkbox"
+                              aria-checked={
+                                headerCheckboxState === 'checked'
+                                  ? 'true'
+                                  : headerCheckboxState === 'indeterminate'
+                                  ? 'mixed'
+                                  : 'false'
+                              }
+                              aria-label={t('ged.relaunchModal.selectAllAria')}
+                              onClick={toggleAll}
+                              disabled={allTargetableIds.length === 0}
+                              className={cn(
+                                'size-4 shrink-0 rounded-[4px] border shadow-xs transition-shadow outline-none focus-visible:border-ring focus-visible:ring-ring/50 focus-visible:ring-[3px] flex items-center justify-center disabled:cursor-not-allowed disabled:opacity-50',
+                                headerCheckboxState === 'unchecked'
+                                  ? 'bg-input-background border-input'
+                                  : 'bg-primary text-primary-foreground border-primary',
+                              )}
+                            >
+                              {headerCheckboxState === 'checked' && (
+                                <Check className="size-3" strokeWidth={3} />
+                              )}
+                              {headerCheckboxState === 'indeterminate' && (
+                                <Minus className="size-3" strokeWidth={3} />
+                              )}
+                            </button>
+                          </TableHead>
                           <TableHead className="px-3 text-xs text-muted-foreground font-medium">
                             {t('ged.relaunchModal.columnName')}
                           </TableHead>
@@ -515,47 +605,65 @@ export function DocumentRelaunchModal({
                         </TableRow>
                       </TableHeader>
                       <TableBody>
-                        {filteredRecipients.map((recipient) => (
-                          <TableRow key={recipient.id}>
-                            <TableCell className="px-3 py-3 align-top">
-                              <div className="flex flex-col gap-0.5">
-                                <span className="text-sm font-medium text-foreground">
-                                  {recipient.name}
-                                </span>
-                                {recipient.role && (
-                                  <span className="text-[11px] text-muted-foreground">
-                                    {recipient.role}
+                        {investorRecipients.map((recipient) => {
+                          const isSelectable = recipient.inTarget;
+                          const isSelected = selectedIds.has(recipient.id);
+                          return (
+                            <TableRow
+                              key={recipient.id}
+                              data-state={isSelected ? 'selected' : undefined}
+                              className={cn(!isSelectable && 'opacity-60')}
+                            >
+                              <TableCell className="px-3 py-3 align-top">
+                                <Checkbox
+                                  checked={isSelected}
+                                  disabled={!isSelectable}
+                                  onCheckedChange={() => toggleRecipient(recipient.id)}
+                                  aria-label={t('ged.relaunchModal.selectRowAria', {
+                                    name: recipient.name,
+                                  })}
+                                />
+                              </TableCell>
+                              <TableCell className="px-3 py-3 align-top">
+                                <div className="flex flex-col gap-0.5">
+                                  <span className="text-sm font-medium text-foreground">
+                                    {recipient.name}
                                   </span>
-                                )}
-                                {recipient.name === 'Pierre Dupont' && (
-                                  <span className="text-[11px] text-muted-foreground">
-                                    {t('ged.relaunchModal.accessDenied')}
-                                  </span>
-                                )}
-                              </div>
-                            </TableCell>
-                            <TableCell className="px-3">
-                              <Badge
-                                variant="outline"
-                                className="border-border bg-muted/60 text-muted-foreground font-normal"
-                              >
-                                {recipient.type}
-                              </Badge>
-                            </TableCell>
-                            <TableCell className="px-3 text-center">
-                              {renderLastNotification(recipient)}
-                            </TableCell>
-                            <TableCell className="px-3 text-center">
-                              {renderDateOrIcon(recipient.receptionStatus, recipient.receptionDate)}
-                            </TableCell>
-                            <TableCell className="px-3 text-center">
-                              {renderDateOrIcon(recipient.openingStatus, recipient.openingDate)}
-                            </TableCell>
-                            <TableCell className="px-3 text-center">
-                              {renderConsultationCell(recipient)}
-                            </TableCell>
-                          </TableRow>
-                        ))}
+                                  {recipient.role && (
+                                    <span className="text-[11px] text-muted-foreground">
+                                      {recipient.role}
+                                    </span>
+                                  )}
+                                  {recipient.name === 'Pierre Dupont' && (
+                                    <span className="text-[11px] text-muted-foreground">
+                                      {t('ged.relaunchModal.accessDenied')}
+                                    </span>
+                                  )}
+                                </div>
+                              </TableCell>
+                              <TableCell className="px-3">
+                                <Badge
+                                  variant="outline"
+                                  className="border-border bg-muted/60 text-muted-foreground font-normal"
+                                >
+                                  {recipient.type}
+                                </Badge>
+                              </TableCell>
+                              <TableCell className="px-3 text-center">
+                                {renderLastNotification(recipient)}
+                              </TableCell>
+                              <TableCell className="px-3 text-center">
+                                {renderDateOrIcon(recipient.receptionStatus, recipient.receptionDate)}
+                              </TableCell>
+                              <TableCell className="px-3 text-center">
+                                {renderDateOrIcon(recipient.openingStatus, recipient.openingDate)}
+                              </TableCell>
+                              <TableCell className="px-3 text-center">
+                                {renderConsultationCell(recipient)}
+                              </TableCell>
+                            </TableRow>
+                          );
+                        })}
                       </TableBody>
                     </Table>
                   </div>
