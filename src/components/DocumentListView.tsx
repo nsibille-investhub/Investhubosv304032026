@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { AnimatePresence, motion } from 'motion/react';
 import {
   FileText,
@@ -13,6 +13,8 @@ import {
   Trash2,
   SquarePen,
   Copy,
+  AlertTriangle,
+  ShieldAlert,
 } from 'lucide-react';
 import { Document } from '../utils/documentMockData';
 import { Button } from './ui/button';
@@ -35,6 +37,16 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from './ui/alert-dialog';
+import { Label } from './ui/label';
+import { FolderSelectionTreeviewDropdown, FolderOption } from './DocumentAddModal';
+import {
+  collectDescendantDocuments,
+  collectFolderIds,
+  countDescendantDocuments,
+  checkDestinationForDocs,
+  normalizeInheritedRestrictions,
+  type RestrictionsMap,
+} from '../utils/folderDeletion';
 import { useTranslation } from '../utils/languageContext';
 
 interface DocumentListViewProps {
@@ -54,9 +66,11 @@ interface DocumentListViewProps {
   onAddFolder?: () => void;
   onAddFolderFromFolder?: (folder: Document) => void;
   onEditFolder?: (folder: Document) => void;
-  onDeleteFolder?: (folder: Document) => void;
+  onDeleteFolder?: (folder: Document, migrateToFolderId: string | null) => void;
   onDuplicateFolder?: (folder: Document) => void;
   onDuplicateDocument?: (doc: Document) => void;
+  folderInheritedRestrictions?: RestrictionsMap;
+  folderOptions?: FolderOption[];
 }
 
 export function DocumentListView({
@@ -78,6 +92,8 @@ export function DocumentListView({
   onDeleteFolder,
   onDuplicateFolder,
   onDuplicateDocument,
+  folderInheritedRestrictions,
+  folderOptions,
 }: DocumentListViewProps) {
   const { t } = useTranslation();
   const tableGridClassName = 'document-list-grid';
@@ -86,7 +102,30 @@ export function DocumentListView({
   const [viewerDocument, setViewerDocument] = useState<Document | null>(null);
   const [deleteTarget, setDeleteTarget] = useState<Document | null>(null);
   const [deleteFolderTarget, setDeleteFolderTarget] = useState<Document | null>(null);
+  const [migrationDestId, setMigrationDestId] = useState<string>('');
   const itemRefs = useRef<Record<string, HTMLDivElement | null>>({});
+
+  useEffect(() => {
+    if (!deleteFolderTarget) setMigrationDestId('');
+  }, [deleteFolderTarget]);
+
+  const compatibleDestinationOptions = useMemo<FolderOption[]>(() => {
+    if (!deleteFolderTarget || !folderOptions) return [];
+
+    const docs = collectDescendantDocuments(deleteFolderTarget);
+    if (docs.length === 0) return [];
+
+    const excludedIds = collectFolderIds(deleteFolderTarget);
+
+    return folderOptions.filter((option) => {
+      if (excludedIds.has(option.id)) return false;
+      const inherited = normalizeInheritedRestrictions(
+        option.id === 'root' ? undefined : folderInheritedRestrictions?.[option.id],
+      );
+      const { compatible } = checkDestinationForDocs(inherited, docs);
+      return compatible;
+    });
+  }, [deleteFolderTarget, folderOptions, folderInheritedRestrictions]);
 
   // Get current level items
   const currentItems = currentFolder?.children || documents;
@@ -588,11 +627,14 @@ export function DocumentListView({
 
       {/* Folder delete confirmation */}
       <AlertDialog open={!!deleteFolderTarget} onOpenChange={(open) => { if (!open) setDeleteFolderTarget(null); }}>
-        <AlertDialogContent className="max-w-md">
+        <AlertDialogContent className="max-w-lg">
           {(() => {
             if (!deleteFolderTarget) return null;
-            const childrenCount = deleteFolderTarget.children?.length || 0;
-            const isEmpty = childrenCount === 0;
+            const documentCount = countDescendantDocuments(deleteFolderTarget);
+            const isEmpty = documentCount === 0;
+            const hasFolderOptions = !!folderOptions;
+            const noCompatibleDestination = !isEmpty && hasFolderOptions && compatibleDestinationOptions.length === 0;
+
             return (
               <>
                 <AlertDialogHeader>
@@ -600,22 +642,64 @@ export function DocumentListView({
                   <AlertDialogDescription>
                     {isEmpty
                       ? t('ged.listView.deleteFolderConfirmEmpty', { name: deleteFolderTarget.name })
-                      : t(childrenCount > 1 ? 'ged.listView.deleteFolderNotEmptyMany' : 'ged.listView.deleteFolderNotEmptyOne', { name: deleteFolderTarget.name, count: childrenCount })
-                    }
+                      : t(documentCount > 1 ? 'ged.listView.deleteFolderReassignMany' : 'ged.listView.deleteFolderReassignOne', { name: deleteFolderTarget.name, count: documentCount })}
                   </AlertDialogDescription>
                 </AlertDialogHeader>
+
+                {!isEmpty && hasFolderOptions && (
+                  <div className="space-y-3 py-2">
+                    {noCompatibleDestination ? (
+                      <div className="flex items-start gap-3 rounded-md border border-amber-200 bg-amber-50 p-3">
+                        <ShieldAlert className="w-4 h-4 mt-0.5 text-amber-600 flex-shrink-0" />
+                        <div className="text-sm text-amber-900">
+                          {t('ged.listView.deleteFolderNoCompatible')}
+                        </div>
+                      </div>
+                    ) : (
+                      <>
+                        <Label htmlFor="ds-folder-delete-target">
+                          {t('ged.listView.deleteFolderTargetLabel')}
+                        </Label>
+                        <FolderSelectionTreeviewDropdown
+                          value={migrationDestId}
+                          onChange={setMigrationDestId}
+                          folderOptions={compatibleDestinationOptions}
+                        />
+                        <div className="flex items-start gap-2 text-xs text-gray-500">
+                          <AlertTriangle className="w-3.5 h-3.5 mt-0.5 flex-shrink-0 text-gray-400" />
+                          <span>{t('ged.listView.deleteFolderRestrictionHint')}</span>
+                        </div>
+                      </>
+                    )}
+                  </div>
+                )}
+
                 <AlertDialogFooter>
                   <AlertDialogCancel>{t('ged.listView.cancel')}</AlertDialogCancel>
-                  {isEmpty && (
+                  {isEmpty ? (
                     <AlertDialogAction
                       className="bg-red-600 hover:bg-red-700 text-white"
                       onClick={() => {
-                        onDeleteFolder?.(deleteFolderTarget);
+                        onDeleteFolder?.(deleteFolderTarget, null);
                         setDeleteFolderTarget(null);
                       }}
                     >
                       {t('ged.listView.delete')}
                     </AlertDialogAction>
+                  ) : (
+                    !noCompatibleDestination && (
+                      <AlertDialogAction
+                        className="bg-red-600 hover:bg-red-700 text-white disabled:opacity-50 disabled:pointer-events-none"
+                        disabled={!migrationDestId}
+                        onClick={() => {
+                          if (!migrationDestId) return;
+                          onDeleteFolder?.(deleteFolderTarget, migrationDestId);
+                          setDeleteFolderTarget(null);
+                        }}
+                      >
+                        {t('ged.listView.deleteFolderReassignCta')}
+                      </AlertDialogAction>
+                    )
                   )}
                 </AlertDialogFooter>
               </>
