@@ -916,7 +916,7 @@ export function DocumentAddModal({ isOpen, onClose, folderOptions, defaultFolder
               </div>
             ) : (
               <div className="space-y-4 border rounded-2xl p-5 bg-white" style={{ borderColor: '#000E2B1F' }}>
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
                   <div className="space-y-2">
                     <Label>{t('ged.addModal.investorLabel')}</Label>
                     <AutocompleteSingleSelect
@@ -952,20 +952,20 @@ export function DocumentAddModal({ isOpen, onClose, folderOptions, defaultFolder
                       disabled={!selectedInvestor}
                     />
                   </div>
-                  <div className="space-y-2">
-                    <Label>{t('ged.addModal.subscriptionLabel')}</Label>
-                    <AutocompleteSingleSelect
-                      value={selectedSubscription || null}
-                      onChange={(value) => setSelectedSubscription(value || '')}
-                      options={subscriptionOptions.map((sub) => ({
-                        value: sub,
-                        label: sub,
-                      }))}
-                      placeholder={t('ged.addModal.allSubscriptions')}
-                      icon={FileText}
-                      disabled={!selectedInvestor}
-                    />
-                  </div>
+                </div>
+                <div className="space-y-2">
+                  <Label>{t('ged.addModal.subscriptionLabel')}</Label>
+                  <AutocompleteSingleSelect
+                    value={selectedSubscription || null}
+                    onChange={(value) => setSelectedSubscription(value || '')}
+                    options={subscriptionOptions.map((sub) => ({
+                      value: sub,
+                      label: sub,
+                    }))}
+                    placeholder={t('ged.addModal.allSubscriptions')}
+                    icon={FileText}
+                    disabled={!selectedInvestor}
+                  />
                 </div>
               </div>
             )}
