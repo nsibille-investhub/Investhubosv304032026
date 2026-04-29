@@ -1770,6 +1770,11 @@ export function MassUploadWizard({ isOpen, onClose, existingFolders, inline = fa
                     )}
                   </AnimatePresence>
 
+                  {/* Document count header */}
+                  <div className="flex items-center justify-between">
+                    <h4 className="font-medium text-gray-900">Files ({uploadedFiles.length})</h4>
+                  </div>
+
                   {/* Editable table - horizontal scroll */}
                   <div className="border border-gray-200 rounded-xl overflow-hidden bg-white shadow-sm hover:shadow-md transition-shadow duration-300">
                     <div className="overflow-x-auto scrollbar-thin scrollbar-track-gray-100 scrollbar-thumb-gray-300">
