@@ -2,6 +2,7 @@ import { useMemo, useState } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
 import { DataRoomSpacesView, GlobalSearchHit } from './DataRoomSpacesView';
 import { DataRoomSpaceConfigDialog } from './DataRoomSpaceConfigDialog';
+import { SpaceDeleteDialog } from './SpaceDeleteDialog';
 import { DataRoomSpace, mockDataRoomSpaces } from '../utils/dataRoomSpacesData';
 import { DocumentsPage } from './DocumentsPage';
 import { BirdViewPage } from './BirdViewPage';
@@ -22,6 +23,7 @@ export function DataRoomPage({ onSpaceChange }: DataRoomPageProps) {
   const [selectedSpace, setSelectedSpace] = useState<DataRoomSpace | null>(null);
   const [spaceConfigDialogOpen, setSpaceConfigDialogOpen] = useState(false);
   const [editingSpace, setEditingSpace] = useState<DataRoomSpace | null>(null);
+  const [spaceToDelete, setSpaceToDelete] = useState<DataRoomSpace | null>(null);
   const [showBirdView, setShowBirdView] = useState(false);
   const [showMassUploadWizard, setShowMassUploadWizard] = useState(false);
   const [pendingNavigationTarget, setPendingNavigationTarget] = useState<{
@@ -104,10 +106,47 @@ export function DataRoomPage({ onSpaceChange }: DataRoomPageProps) {
     }
   };
 
-  const handleDeleteSpace = (spaceId: string) => {
-    setDataRoomSpaces(prev => prev.filter(s => s.id !== spaceId));
+  const handleRequestDeleteSpace = (space: DataRoomSpace) => {
+    setSpaceConfigDialogOpen(false);
+    setEditingSpace(null);
+    setSpaceToDelete(space);
+  };
+
+  const handleConfirmDeleteSpace = (spaceId: string, migrateToSpaceId: string | null) => {
+    const removed = dataRoomSpaces.find((s) => s.id === spaceId);
+    const target = migrateToSpaceId ? dataRoomSpaces.find((s) => s.id === migrateToSpaceId) : null;
+    const movedDocs = migrateToSpaceId ? removed?.documentCount ?? 0 : 0;
+    const movedFolders = migrateToSpaceId ? removed?.folderCount ?? 0 : 0;
+
+    setDataRoomSpaces((prev) => {
+      const next = prev
+        .filter((s) => s.id !== spaceId)
+        .map((s) =>
+          migrateToSpaceId && s.id === migrateToSpaceId
+            ? {
+                ...s,
+                documentCount: s.documentCount + movedDocs,
+                folderCount: s.folderCount + movedFolders,
+              }
+            : s,
+        );
+      return next;
+    });
+
     if (selectedSpace?.id === spaceId) {
-      setSelectedSpace(dataRoomSpaces[0] || null);
+      setSelectedSpace(null);
+    }
+
+    if (migrateToSpaceId && target && removed) {
+      toast.success(t('ged.toast.spaceDeleted'), {
+        description: t(movedDocs > 1 ? 'ged.toast.spaceReassignedMany' : 'ged.toast.spaceReassignedOne', {
+          name: removed.name,
+          count: movedDocs,
+          target: target.name,
+        }),
+      });
+    } else {
+      toast.success(t('ged.toast.spaceDeleted'));
     }
   };
 
@@ -289,7 +328,15 @@ export function DataRoomPage({ onSpaceChange }: DataRoomPageProps) {
         }}
         space={editingSpace}
         onSave={handleSaveSpace}
-        onDelete={handleDeleteSpace}
+        onRequestDelete={handleRequestDeleteSpace}
+      />
+
+      <SpaceDeleteDialog
+        open={!!spaceToDelete}
+        onClose={() => setSpaceToDelete(null)}
+        space={spaceToDelete}
+        spaces={dataRoomSpaces}
+        onConfirm={handleConfirmDeleteSpace}
       />
     </div>
   );

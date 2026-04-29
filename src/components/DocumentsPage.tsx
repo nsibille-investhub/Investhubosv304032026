@@ -12,6 +12,12 @@ import { toast } from 'sonner';
 import { MassUploadWizard } from './MassUploadWizard';
 import { DataRoomSpace } from '../utils/dataRoomSpacesData';
 import { getTreeForSpace, TreeNode } from '../utils/dataRoomTreeData';
+import {
+  collectDescendantDocuments,
+  collectFolderIds,
+  countDescendantDocuments,
+  deleteFolderFromTree,
+} from '../utils/folderDeletion';
 import { useTranslation } from '../utils/languageContext';
 
 type ViewMode = 'list' | 'grid';
@@ -190,11 +196,52 @@ export function DocumentsPage({ selectedSpace, navigationTarget, onNavigationHan
     });
   };
 
-  // Get documents for the selected space
-  const spaceDocuments: Document[] = useMemo(() => {
+  // Get documents for the selected space (stateful so deletes & reassignments persist
+  // for the demo session; resets when the user switches spaces).
+  const initialSpaceDocuments: Document[] = useMemo(() => {
     const treeData = getTreeForSpace(selectedSpace.id);
     return convertTreeToDocuments(treeData);
-  }, [selectedSpace]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [selectedSpace.id]);
+
+  const [spaceDocuments, setSpaceDocuments] = useState<Document[]>(initialSpaceDocuments);
+
+  useEffect(() => {
+    setSpaceDocuments(initialSpaceDocuments);
+  }, [initialSpaceDocuments]);
+
+  const handleDeleteFolder = (folder: Document, migrateToFolderId: string | null) => {
+    const docCount = countDescendantDocuments(folder);
+    const docsToMigrate = migrateToFolderId ? collectDescendantDocuments(folder) : [];
+    const removedFolderIds = collectFolderIds(folder);
+
+    setSpaceDocuments((prev) => deleteFolderFromTree(prev, folder.id, migrateToFolderId, docsToMigrate));
+
+    if (currentFolderId && removedFolderIds.has(currentFolderId)) {
+      setCurrentFolderId(null);
+      setCurrentFolderPath([]);
+    }
+    if (selectedFolder && removedFolderIds.has(selectedFolder.id)) {
+      setSelectedFolder(null);
+    }
+
+    if (docCount === 0) {
+      toast.success(t('ged.toast.folderDeleted'), {
+        description: t('ged.toast.folderDeletedDesc', { name: folder.name }),
+      });
+    } else {
+      const targetLabel =
+        folderOptions.find((f) => f.id === migrateToFolderId)?.label ||
+        t('ged.dataRoom.folderDefaults.root');
+      toast.success(t('ged.toast.folderDeleted'), {
+        description: t(docCount > 1 ? 'ged.toast.folderReassignedMany' : 'ged.toast.folderReassignedOne', {
+          name: folder.name,
+          count: docCount,
+          target: targetLabel,
+        }),
+      });
+    }
+  };
 
   const handleDocumentClick = (doc: Document, openTab: string = 'details') => {
     if (doc.type === 'folder') {
@@ -498,11 +545,9 @@ export function DocumentsPage({ selectedSpace, navigationTarget, onNavigationHan
               onAddFolder={() => openAddFolderPopup()}
               onAddFolderFromFolder={(folder) => openAddFolderPopup(folder.id)}
               onEditFolder={openEditFolderPopup}
-              onDeleteFolder={(folder) => {
-                toast.success(t('ged.toast.folderDeleted'), {
-                  description: t('ged.toast.folderDeletedDesc', { name: folder.name }),
-                });
-              }}
+              onDeleteFolder={handleDeleteFolder}
+              folderInheritedRestrictions={folderInheritedRestrictions}
+              folderOptions={folderOptions}
             />
           </div>
         </div>

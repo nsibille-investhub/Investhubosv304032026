@@ -8,7 +8,7 @@ interface DataRoomSpaceConfigDialogProps {
   onClose: () => void;
   space: DataRoomSpace | null;
   onSave: (space: Partial<DataRoomSpace>) => void;
-  onDelete?: (spaceId: string) => void;
+  onRequestDelete?: (space: DataRoomSpace) => void;
 }
 
 export function DataRoomSpaceConfigDialog({
@@ -16,7 +16,7 @@ export function DataRoomSpaceConfigDialog({
   onClose,
   space,
   onSave,
-  onDelete,
+  onRequestDelete,
 }: DataRoomSpaceConfigDialogProps) {
   const { t } = useTranslation();
   return (
@@ -32,11 +32,8 @@ export function DataRoomSpaceConfigDialog({
           description: data.name,
         });
       }}
-      onDeleteSpace={(spaceId) => {
-        if (confirm(t('ged.toast.spaceDeleteConfirm'))) {
-          onDelete?.(spaceId);
-          toast.success(t('ged.toast.spaceDeleted'));
-        }
+      onDeleteSpace={() => {
+        if (space) onRequestDelete?.(space);
       }}
     />
   );
