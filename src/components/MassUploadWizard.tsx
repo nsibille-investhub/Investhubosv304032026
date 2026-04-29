@@ -1009,7 +1009,7 @@ export function MassUploadWizard({ isOpen, onClose, existingFolders, inline = fa
                   {uploadedFiles.length > 0 && (
                     <div className="space-y-3">
                       <div className="flex items-center justify-between">
-                        <h4 className="font-medium text-gray-900">Files ({uploadedFiles.length})</h4>
+                        <h4 className="font-medium text-gray-900">Documents ({uploadedFiles.length})</h4>
                         <div className="flex items-center gap-2">
                           {fileStats.uploading > 0 && (
                             <Badge className="bg-blue-100 text-blue-700 border-blue-200">
@@ -1772,7 +1772,7 @@ export function MassUploadWizard({ isOpen, onClose, existingFolders, inline = fa
 
                   {/* Document count header */}
                   <div className="flex items-center justify-between">
-                    <h4 className="font-medium text-gray-900">Files ({uploadedFiles.length})</h4>
+                    <h4 className="font-medium text-gray-900">Documents ({uploadedFiles.length})</h4>
                   </div>
 
                   {/* Editable table - horizontal scroll */}
