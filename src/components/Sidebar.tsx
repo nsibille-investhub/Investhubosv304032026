@@ -27,7 +27,7 @@ export function Sidebar({ expanded, onToggle, currentPage = 'entities', onPageCh
     partenaires: currentPage === 'partners',
     participations: false,
     fundlife: false,
-    dataroom: currentPage === 'documents' || currentPage === 'tracking' || currentPage === 'birdview',
+    dataroom: currentPage === 'documents' || currentPage === 'tracking' || currentPage === 'birdview' || currentPage === 'validation',
     portails: currentPage === 'events' || currentPage === 'news',
     communications: false,
     settings: currentPage?.startsWith('settings-') || false,
@@ -69,7 +69,7 @@ export function Sidebar({ expanded, onToggle, currentPage = 'entities', onPageCh
       partenaires: currentPage === 'partners',
       participations: false,
       fundlife: false,
-      dataroom: currentPage === 'documents' || currentPage === 'tracking' || currentPage === 'birdview',
+      dataroom: currentPage === 'documents' || currentPage === 'tracking' || currentPage === 'birdview' || currentPage === 'validation',
       portails: currentPage === 'events' || currentPage === 'news',
       communications: false,
       settings: currentPage?.startsWith('settings-') || false,
@@ -371,6 +371,13 @@ export function Sidebar({ expanded, onToggle, currentPage = 'entities', onPageCh
             expanded={expanded}
             isActive={currentPage === 'birdview'}
             onClick={() => onPageChange?.('birdview')}
+          />
+          <SubMenuItem
+            icon={icons.FileCheck}
+            label="Validation"
+            expanded={expanded}
+            isActive={currentPage === 'validation'}
+            onClick={() => onPageChange?.('validation')}
           />
         </MenuItem>
 
