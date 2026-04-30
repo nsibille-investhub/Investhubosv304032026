@@ -256,48 +256,51 @@ export function DataRoomPage({ onSpaceChange }: DataRoomPageProps) {
             className="flex-1 flex flex-col overflow-hidden"
           >
             {/* Space header */}
-            <div className="px-6 py-5 border-b border-gray-200 bg-white">
+            <div className="px-6 py-3 border-b border-gray-200 bg-white">
               <Button
                 variant="outline"
                 size="sm"
                 onClick={handleBackToSpaces}
-                className="gap-2 mb-4"
+                className="gap-2 mb-2 h-7 text-xs"
               >
-                <ArrowLeft className="w-4 h-4" />
+                <ArrowLeft className="w-3 h-3" />
                 {t('ged.dataRoom.spaceHeader.backToSpaces')}
               </Button>
 
-              <div className="flex items-center gap-4">
-                <div className="w-16 h-16 rounded-2xl flex items-center justify-center" style={{ backgroundColor: '#000E2B', boxShadow: '0 6px 16px rgba(0,14,43,0.28)' }}>
-                  <Folder className="w-8 h-8 text-white" />
+              <div className="flex items-center gap-3">
+                <div
+                  className="w-9 h-9 rounded-md flex items-center justify-center"
+                  style={{ backgroundColor: '#000E2B' }}
+                >
+                  <Folder className="w-4 h-4 text-white" />
                 </div>
                 <div>
-                  <h2 className="text-5xl leading-none font-semibold text-gray-900">{selectedSpace.name}</h2>
-                  <div className="flex items-center gap-3 mt-2 text-base" style={{ color: '#6a7282' }}>
+                  <h2 className="text-lg leading-tight font-semibold text-gray-900">{selectedSpace.name}</h2>
+                  <div className="flex items-center gap-2 mt-1 text-xs" style={{ color: '#6a7282' }}>
                     <span>{t('ged.dataRoom.spaceHeader.documentsAndFolders', { documents: selectedSpace.documentCount, folders: selectedSpace.folderCount })}</span>
                     {selectedSpace.targeting.userTypes.length > 0 && (
                       <>
-                        <span style={{ color: '#6a7282' }}>·</span>
-                        <span className="flex items-center gap-1.5">
-                          <Users className="w-4 h-4" />
+                        <span style={{ color: '#cbd5e1' }}>·</span>
+                        <span className="flex items-center gap-1">
+                          <Users className="w-3 h-3" />
                           {selectedSpace.targeting.userTypes.join(', ')}
                         </span>
                       </>
                     )}
                     {selectedSpace.targeting.segments.length > 0 && (
                       <>
-                        <span style={{ color: '#6a7282' }}>·</span>
-                        <span className="flex items-center gap-1.5">
-                          <Layers3 className="w-4 h-4" />
+                        <span style={{ color: '#cbd5e1' }}>·</span>
+                        <span className="flex items-center gap-1">
+                          <Layers3 className="w-3 h-3" />
                           {t('ged.dataRoom.spaceHeader.segmentsPrefix')} {selectedSpace.targeting.segments.join(', ')}
                         </span>
                       </>
                     )}
                     {selectedSpace.targeting.funds.length > 0 && (
                       <>
-                        <span style={{ color: '#6a7282' }}>·</span>
-                        <span className="flex items-center gap-1.5">
-                          <Landmark className="w-4 h-4" />
+                        <span style={{ color: '#cbd5e1' }}>·</span>
+                        <span className="flex items-center gap-1">
+                          <Landmark className="w-3 h-3" />
                           {t('ged.dataRoom.spaceHeader.fundsPrefix')} {selectedSpace.targeting.funds.join(', ')}
                         </span>
                       </>
