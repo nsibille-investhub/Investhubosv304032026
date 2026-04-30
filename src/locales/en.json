@@ -583,7 +583,11 @@
       "massUpload": {
         "backToSpaces": "Back to spaces",
         "title": "Multi-space mass import",
-        "subtitle": "Add documents from the spaces view"
+        "subtitle": "Add documents from the spaces view",
+        "originFolderTitle": "Documents will be filed in the origin folder",
+        "originFolderBody": "By default, your documents will land in \"{{name}}\". You can override the folder individually on the next step.",
+        "originSpaceTitle": "Documents will be filed in the origin space",
+        "originSpaceBody": "By default, your documents will land at the root of the \"{{name}}\" space. You can pick a sub-folder on the next step."
       },
       "spaceHeader": {
         "backToSpaces": "Back to spaces",
@@ -807,7 +811,8 @@
         "download": "Download",
         "deleteDocument": "Delete document",
         "addDocument": "Add a document",
-        "addFolder": "Add a folder"
+        "addFolder": "Add a folder",
+        "importDocuments": "Import documents"
       },
       "footerFolders": "{{count}} folders",
       "footerFoldersOne": "{{count}} folder",

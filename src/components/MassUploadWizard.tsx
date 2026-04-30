@@ -75,11 +75,24 @@ import { toast } from 'sonner';
 import { mockDocuments, Document } from '../utils/documentMockData';
 import { availableInvestors, fundLabelMap } from '../utils/investorsMockData';
 
+export interface MassUploadOriginContext {
+  /** "folder" when the wizard is opened from a folder context menu, "space" from the space-level Import button. */
+  kind: 'folder' | 'space';
+  /** Stable identifier of the originating folder or space. */
+  id: string;
+  /** Display name of the originating folder or space. */
+  name: string;
+  /** Folder path (e.g. "/PERE 1/Comités"). For a space without folder, use "/". */
+  pathLabel: string;
+}
+
 interface MassUploadWizardProps {
   isOpen: boolean;
   onClose: () => void;
   existingFolders: string[];
   inline?: boolean;
+  /** Optional origin — when set from a folder/space, documents are pre-targeted to that location. */
+  originContext?: MassUploadOriginContext | null;
 }
 
 interface UploadedFile {
@@ -211,7 +224,10 @@ const availableEmailTemplates = [
   { value: 'newsletter', label: 'Newsletter', icon: '📰' },
 ];
 
-export function MassUploadWizard({ isOpen, onClose, existingFolders, inline = false }: MassUploadWizardProps) {
+export function MassUploadWizard({ isOpen, onClose, existingFolders, inline = false, originContext = null }: MassUploadWizardProps) {
+  // Resolve the default folder from origin context (folder path or space root).
+  // No origin (= launched from the spaces root) keeps the folder field empty.
+  const defaultFolder = originContext ? originContext.pathLabel : '';
   const [currentStep, setCurrentStep] = useState(1);
   const [uploadedFiles, setUploadedFiles] = useState<UploadedFile[]>([]);
   const [dragActive, setDragActive] = useState(false);
@@ -227,7 +243,27 @@ export function MassUploadWizard({ isOpen, onClose, existingFolders, inline = fa
   const [documentZoom, setDocumentZoom] = useState(100);
 
   // Extract all available folders
-  const availableFolders = extractAllFolders(mockDocuments);
+  const availableFolders = useMemo(() => {
+    const base = extractAllFolders(mockDocuments);
+    // If launched from a folder that isn't part of the mock tree, surface it as a virtual option
+    if (
+      originContext?.kind === 'folder' &&
+      originContext.pathLabel &&
+      !base.some((f) => f.path === originContext.pathLabel)
+    ) {
+      return [
+        {
+          id: `origin-${originContext.id}`,
+          name: originContext.name,
+          path: originContext.pathLabel,
+          level: 0,
+          parentId: undefined,
+        },
+        ...base,
+      ];
+    }
+    return base;
+  }, [originContext]);
 
   // Function to get the formatted file size
   const getFileSize = (bytes: number): string => {
@@ -307,7 +343,7 @@ export function MassUploadWizard({ isOpen, onClose, existingFolders, inline = fa
     return {
       name: fileName,
       description: `Document automatically analyzed: ${fileName}. This document contains important information related to the company's activities.`,
-      folder: '/PERE 1', // Default folder
+      folder: defaultFolder, // Origin folder if launched from a folder; empty otherwise
       language: 'en',
       restrictToLanguage: false,
       targetType: fileName.toLowerCase().includes('investor') ? 'investor' :
@@ -354,7 +390,7 @@ export function MassUploadWizard({ isOpen, onClose, existingFolders, inline = fa
         // Temporary default values (will be filled by AI)
         name: file.name.replace(/\.[^/.]+$/, ''),
         description: '',
-        folder: '/PERE 1',
+        folder: defaultFolder,
         language: 'en',
         restrictToLanguage: false,
         targetType: 'all',
@@ -882,6 +918,46 @@ export function MassUploadWizard({ isOpen, onClose, existingFolders, inline = fa
                       Upload your documents or enter the information manually
                     </p>
                   </div>
+
+                  {/* Origin hint — shown when launched from a folder or a space (not from spaces root) */}
+                  {originContext && (
+                    <motion.div
+                      initial={{ opacity: 0, y: -8 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      className="flex items-start gap-3 rounded-xl border border-blue-200 bg-gradient-to-r from-blue-50 to-indigo-50 px-4 py-3"
+                    >
+                      <div
+                        className="mt-0.5 flex h-8 w-8 shrink-0 items-center justify-center rounded-md text-white"
+                        style={{ backgroundColor: '#000E2B' }}
+                      >
+                        <Folder className="h-4 w-4" />
+                      </div>
+                      <div className="min-w-0 flex-1">
+                        <p className="text-sm font-medium text-blue-900">
+                          {originContext.kind === 'folder'
+                            ? t('ged.dataRoom.massUpload.originFolderTitle')
+                            : t('ged.dataRoom.massUpload.originSpaceTitle')}
+                        </p>
+                        <p className="mt-0.5 text-xs text-blue-700">
+                          {originContext.kind === 'folder'
+                            ? t('ged.dataRoom.massUpload.originFolderBody', {
+                                name: originContext.name,
+                              })
+                            : t('ged.dataRoom.massUpload.originSpaceBody', {
+                                name: originContext.name,
+                              })}
+                        </p>
+                        <code
+                          className="mt-1 inline-block rounded bg-white/70 px-1.5 py-0.5 font-mono text-[11px] text-blue-900"
+                          title={originContext.pathLabel}
+                        >
+                          {originContext.kind === 'folder'
+                            ? originContext.pathLabel
+                            : `${originContext.name} / —`}
+                        </code>
+                      </div>
+                    </motion.div>
+                  )}
 
                   {/* AI-Powered Document Upload */}
                   <div className="space-y-3">

@@ -15,6 +15,7 @@ import {
   Copy,
   AlertTriangle,
   ShieldAlert,
+  FileStack,
 } from 'lucide-react';
 import { Document } from '../utils/documentMockData';
 import { Button } from './ui/button';
@@ -60,6 +61,7 @@ interface DocumentListViewProps {
   searchResults?: Array<{ item: Document; path: string[] }>;
   focusedItemId?: string | null;
   onAddDocumentFromFolder?: (folder: Document) => void;
+  onImportToFolder?: (folder: Document) => void;
   onAddDocument?: () => void;
   onOpenWizard?: () => void;
   onDownloadAll?: () => void;
@@ -84,6 +86,7 @@ export function DocumentListView({
   searchResults = [],
   focusedItemId = null,
   onAddDocumentFromFolder,
+  onImportToFolder,
   onAddDocument,
   onOpenWizard,
   onAddFolder,
@@ -378,6 +381,15 @@ export function DocumentListView({
                           >
                             <Plus className="w-4 h-4 mr-2" />
                             {t('ged.listView.actions.addDocument')}
+                          </DropdownMenuItem>
+                          <DropdownMenuItem
+                            onClick={(event) => {
+                              event.stopPropagation();
+                              onImportToFolder?.(folder);
+                            }}
+                          >
+                            <FileStack className="w-4 h-4 mr-2" />
+                            {t('ged.listView.actions.importDocuments')}
                           </DropdownMenuItem>
                           <DropdownMenuItem
                             onClick={(event) => {
