@@ -584,9 +584,9 @@
         "backToSpaces": "Back to spaces",
         "title": "Multi-space mass import",
         "subtitle": "Add documents from the spaces view",
-        "originFolderTitle": "Documents will be filed in the origin folder",
+        "originFolderTitle": "Default destination folder",
         "originFolderBody": "By default, your documents will land in \"{{name}}\". You can override the folder individually on the next step.",
-        "originSpaceTitle": "Documents will be filed in the origin space",
+        "originSpaceTitle": "Default destination folder",
         "originSpaceBody": "By default, your documents will land at the root of the \"{{name}}\" space. You can pick a sub-folder on the next step.",
         "originResetCta": "Reset the default folder",
         "originResetToast": "Default folder cleared — documents will need to be filed manually"
