@@ -10,7 +10,6 @@ import {
   X,
   ShieldCheck,
   FileText,
-  ChevronRight,
 } from 'lucide-react';
 import { toast } from 'sonner@2.0.3';
 import { Button } from './ui/button';
@@ -27,6 +26,9 @@ import { Tag } from './Tag';
 import { StatusBadge } from './StatusBadge';
 import { TableSkeleton } from './TableSkeleton';
 import { DocumentPreviewDrawer } from './DocumentPreviewDrawer';
+import { DocumentNameCell } from './DocumentNameCell';
+import { UserCell } from './UserCell';
+import { CommentIndicator } from './CommentIndicator';
 import { useTableSearch } from '../utils/useTableSearch';
 import {
   generateValidationDocuments,
@@ -63,52 +65,6 @@ function formatDate(iso: string) {
 
 function buildPath(segments: string[]) {
   return segments.join(' / ');
-}
-
-interface TruncatedPathProps {
-  segments: string[];
-  maxLength?: number;
-}
-
-function TruncatedPath({ segments, maxLength = 48 }: TruncatedPathProps) {
-  const fullPath = buildPath(segments);
-  let display: string = fullPath;
-
-  if (fullPath.length > maxLength && segments.length >= 3) {
-    const head = segments[0];
-    const tail = segments[segments.length - 1];
-    const middle = segments.length > 3 ? `${segments[1]} / …` : '…';
-    const candidate = `${head} / ${middle} / ${tail}`;
-    display = candidate.length > maxLength
-      ? `${head} / … / ${tail}`
-      : candidate;
-  } else if (fullPath.length > maxLength) {
-    const half = Math.floor((maxLength - 3) / 2);
-    display = `${fullPath.slice(0, half)}…${fullPath.slice(-half)}`;
-  }
-
-  return (
-    <Tooltip>
-      <TooltipTrigger asChild>
-        <span className="inline-flex max-w-[280px] items-center gap-1 truncate rounded-md bg-gray-50 px-2 py-1 text-xs text-gray-600 dark:bg-gray-900 dark:text-gray-300">
-          <FileText className="h-3 w-3 shrink-0 text-gray-400" />
-          <span className="truncate">{display}</span>
-        </span>
-      </TooltipTrigger>
-      <TooltipContent side="top" className="max-w-md">
-        <div className="flex flex-wrap items-center gap-1 text-xs">
-          {segments.map((segment, idx) => (
-            <span key={idx} className="inline-flex items-center gap-1">
-              <span>{segment}</span>
-              {idx < segments.length - 1 && (
-                <ChevronRight className="h-3 w-3 opacity-60" />
-              )}
-            </span>
-          ))}
-        </div>
-      </TooltipContent>
-    </Tooltip>
-  );
 }
 
 const STATUS_VARIANT: Record<
@@ -323,37 +279,24 @@ export function ValidationPage({ onBack }: ValidationPageProps) {
     setPreviewDocument(doc);
   };
 
+  const stickyActionsCellClass =
+    'sticky right-0 z-10 bg-white dark:bg-gray-950 shadow-[-8px_0_12px_-12px_rgba(0,0,0,0.18)] text-right';
+
   const columns: ColumnConfig<ValidationDocument>[] = [
     {
       key: 'name',
       label: 'Document',
       sortable: true,
       render: (row) => (
-        <div className="flex items-center gap-2 min-w-0">
-          <FileText className="h-4 w-4 shrink-0 text-gray-400" />
-          <span className="truncate font-medium text-gray-900 dark:text-gray-100">
-            {row.name}
-          </span>
-        </div>
+        <DocumentNameCell name={row.name} pathSegments={row.pathSegments} />
       ),
-    },
-    {
-      key: 'path',
-      label: 'Emplacement',
-      sortable: false,
-      render: (row) => <TruncatedPath segments={row.pathSegments} />,
     },
     {
       key: 'createdBy',
       label: 'Créé par',
       sortable: true,
       render: (row) => (
-        <div className="flex flex-col">
-          <span className="text-sm text-gray-900 dark:text-gray-100">
-            {row.createdBy.name}
-          </span>
-          <span className="text-xs text-gray-500">{row.createdBy.role}</span>
-        </div>
+        <UserCell name={row.createdBy.name} sublabel={row.createdBy.role} />
       ),
     },
     {
@@ -361,7 +304,7 @@ export function ValidationPage({ onBack }: ValidationPageProps) {
       label: 'Date',
       sortable: true,
       render: (row) => (
-        <span className="text-sm text-gray-600 dark:text-gray-400">
+        <span className="text-sm text-gray-600 dark:text-gray-400 whitespace-nowrap">
           {formatDate(row.createdAt)}
         </span>
       ),
@@ -398,21 +341,16 @@ export function ValidationPage({ onBack }: ValidationPageProps) {
       key: 'comment',
       label: 'Commentaire',
       sortable: false,
-      render: (row) =>
-        row.comment ? (
-          <Tooltip>
-            <TooltipTrigger asChild>
-              <span className="block max-w-[220px] truncate text-sm text-gray-600 dark:text-gray-400 cursor-help">
-                {row.comment}
-              </span>
-            </TooltipTrigger>
-            <TooltipContent side="top" className="max-w-sm">
-              <span className="text-xs leading-snug">{row.comment}</span>
-            </TooltipContent>
-          </Tooltip>
-        ) : (
-          <span className="text-xs text-gray-400">—</span>
-        ),
+      className: 'text-center',
+      render: (row) => (
+        <div className="flex justify-center">
+          <CommentIndicator
+            comment={row.comment}
+            author={row.createdBy.name}
+            date={formatDate(row.createdAt)}
+          />
+        </div>
+      ),
     },
     {
       key: 'status',
@@ -427,7 +365,7 @@ export function ValidationPage({ onBack }: ValidationPageProps) {
       key: 'actions',
       label: 'Actions',
       sortable: false,
-      className: 'text-right',
+      className: stickyActionsCellClass,
       render: (row) => (
         <div className="flex items-center justify-end gap-1" onClick={(e) => e.stopPropagation()}>
           <Tooltip>

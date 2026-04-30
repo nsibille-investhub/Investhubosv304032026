@@ -82,6 +82,9 @@ import { OriginStructureCell } from './OriginStructureCell';
 import { PartnerCard } from './PartnerCard';
 import { CheckIndicator } from './CheckIndicator';
 import { CalledAmountCell } from './CalledAmountCell';
+import { DocumentNameCell } from './DocumentNameCell';
+import { UserCell } from './UserCell';
+import { CommentIndicator } from './CommentIndicator';
 import { GenericAudienceCard } from './GenericAudienceCard';
 import { SpecificAudience } from './SpecificAudience';
 import { FolderSpaceDialogPreview } from './ui/folder-space-dialog';
@@ -628,6 +631,36 @@ const investorListingColumnSpecs = [
     guidelines: 'Montant principal en text-sm font-semibold; barre de progression 1.5px (vert appelé, orange en attente, bleu solide #000E2B restant); détails secondaires text-xs avec icône Clock (orange) et ArrowRight (bleu solide); tooltips explicites sur chaque segment.',
     variants: 'Engagement non appelé (100% bleu solide), partiellement appelé avec attente, totalement appelé.',
   },
+  {
+    column: 'DOCUMENT (nom + emplacement)',
+    component: 'DocumentNameCell',
+    functional:
+      'Présenter en colonne unique le nom du document et son chemin dans l’arborescence (Espace / Dossier / …). Compact sur 2 lignes, ellipse centrale automatique pour les chemins longs et fil d’Ariane complet au survol.',
+    guidelines:
+      'Icône fichier 16px dans un conteneur 32px gris clair ; nom en text-sm font-medium tronqué ; chemin en text-xs muted-foreground avec ellipse centrale (max 48 caractères par défaut) ; Tooltip avec breadcrumb segmenté au hover.',
+    variants:
+      'Chemin court (affiché tel quel), chemin long (Espace / … / Sous-dossier), chemin très long (mid-string ellipse), document à la racine d’un espace.',
+  },
+  {
+    column: 'USER (auteur / acteur)',
+    component: 'UserCell',
+    functional:
+      'Représentation compacte d’un utilisateur — avatar (initiales par défaut) + nom et libellé secondaire (rôle, email…). Réutilisé dans les listings et la Timeline.',
+    guidelines:
+      'Avatar circulaire (size-5/-6/-8) avec fallback initiales sur fond primary ; nom en text-sm tronqué, sous-ligne en text-[11px] muted-foreground ; gap-2.',
+    variants:
+      'avatarOnly (avatar seul + tooltip), tailles xs / sm / md, avec ou sans sublabel, avec image (avatarUrl) ou initiales.',
+  },
+  {
+    column: 'COMMENTAIRE (indicateur)',
+    component: 'CommentIndicator',
+    functional:
+      'Indique la présence d’un commentaire sans occuper de place en plain text. Icône bulle pleine si commentaire, bulle pointillée sinon ; le contenu apparaît au survol via Tooltip.',
+    guidelines:
+      'Pastille 28px arrondie ; état rempli : fond blue-50 / icône blue-600 ; état vide : icône gris 300 sans fond. Tooltip max-w-sm avec auteur + date en uppercase tracking-wide et corps text-xs.',
+    variants:
+      'Avec commentaire (filled, hover affiche texte), sans commentaire (état dashed silencieux), avec auteur+date dans le tooltip.',
+  },
 ];
 
 const previewContacts: Contact[] = [
@@ -784,6 +817,44 @@ function renderInvestorColumnPreview(column: string) {
       );
     case 'RESPONSABLE':
       return <ItemSelectorPreview />;
+    case 'DOCUMENT (nom + emplacement)':
+      return (
+        <div className="flex flex-col gap-3 max-w-[320px]">
+          <DocumentNameCell
+            name="Reporting trimestriel Q1 2026 - Fonds Alpha Croissance.pdf"
+            pathSegments={[
+              'Investisseurs HNWI',
+              'Reportings',
+              '2026',
+              'Q1',
+              'Alpha Croissance',
+            ]}
+          />
+          <DocumentNameCell
+            name="Lettre aux investisseurs.docx"
+            pathSegments={['Communication', 'Lettres trimestrielles', '2026']}
+          />
+        </div>
+      );
+    case 'USER (auteur / acteur)':
+      return (
+        <div className="flex flex-col gap-3">
+          <UserCell name="Camille Renard" sublabel="Asset Manager" />
+          <UserCell name="Léa Marchand" sublabel="lea.marchand@investhub.io" size="md" />
+          <UserCell name="Antoine Leblanc" avatarOnly />
+        </div>
+      );
+    case 'COMMENTAIRE (indicateur)':
+      return (
+        <div className="flex items-center gap-4">
+          <CommentIndicator
+            comment="Reporting Q1 prêt à diffuser, à valider avant publication portail LP."
+            author="Camille Renard"
+            date="28 avr. 2026"
+          />
+          <CommentIndicator />
+        </div>
+      );
     default:
       return null;
   }

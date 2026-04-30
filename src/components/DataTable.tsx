@@ -240,7 +240,10 @@ export function DataTable<T extends { id: number }>({
 
                   {/* Dynamic columns */}
                   {columns.map((column) => (
-                    <td key={column.key} className="px-6 py-4">
+                    <td
+                      key={column.key}
+                      className={cn('px-6 py-4', column.className)}
+                    >
                       {column.render(row, searchTerm)}
                     </td>
                   ))}
