@@ -48,6 +48,12 @@ export function DocumentsPage({ selectedSpace, navigationTarget, onNavigationHan
   const [selectedCount, setSelectedCount] = useState(0);
   const [selectedItems, setSelectedItems] = useState<any[]>([]);
   const [wizardOpen, setWizardOpen] = useState(false);
+  const [wizardOriginContext, setWizardOriginContext] = useState<{
+    kind: 'folder' | 'space';
+    id: string;
+    name: string;
+    pathLabel: string;
+  } | null>(null);
   
   // Navigation state
   const [currentFolderId, setCurrentFolderId] = useState<string | null>(null);
@@ -276,6 +282,23 @@ export function DocumentsPage({ selectedSpace, navigationTarget, onNavigationHan
   };
 
   const handleOpenWizard = () => {
+    // Top-level Import button → space-level context
+    setWizardOriginContext({
+      kind: 'space',
+      id: selectedSpace.id,
+      name: selectedSpace.name,
+      pathLabel: '/',
+    });
+    setWizardOpen(true);
+  };
+
+  const handleImportToFolder = (folder: Document) => {
+    setWizardOriginContext({
+      kind: 'folder',
+      id: folder.id,
+      name: folder.name,
+      pathLabel: folder.path,
+    });
     setWizardOpen(true);
   };
 
@@ -494,8 +517,12 @@ export function DocumentsPage({ selectedSpace, navigationTarget, onNavigationHan
       <div className="flex-1 min-h-0">
         <MassUploadWizard
           isOpen={wizardOpen}
-          onClose={() => setWizardOpen(false)}
+          onClose={() => {
+            setWizardOpen(false);
+            setWizardOriginContext(null);
+          }}
           existingFolders={getAllFolderNames(spaceDocuments)}
+          originContext={wizardOriginContext}
           inline
         />
       </div>
@@ -539,6 +566,7 @@ export function DocumentsPage({ selectedSpace, navigationTarget, onNavigationHan
               searchResults={scopedSearchResults}
               focusedItemId={focusedItemId}
               onAddDocumentFromFolder={(folder) => openAddDocumentModal(folder.id)}
+              onImportToFolder={handleImportToFolder}
               onAddDocument={() => openAddDocumentModal()}
               onOpenWizard={handleOpenWizard}
               onDownloadAll={handleDownloadAll}

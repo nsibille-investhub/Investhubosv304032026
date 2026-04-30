@@ -583,7 +583,13 @@
       "massUpload": {
         "backToSpaces": "Retour aux espaces",
         "title": "Import massif multi-espace",
-        "subtitle": "Ajoutez des documents depuis la vue espaces"
+        "subtitle": "Ajoutez des documents depuis la vue espaces",
+        "originFolderTitle": "Dossier de destination par défaut",
+        "originFolderBody": "Par défaut, vos documents seront positionnés dans « {{name}} ». Vous pourrez modifier le dossier individuellement à l'étape suivante.",
+        "originSpaceTitle": "Dossier de destination par défaut",
+        "originSpaceBody": "Par défaut, vos documents seront positionnés à la racine de l'espace « {{name}} ». Vous pourrez choisir un sous-dossier à l'étape suivante.",
+        "originResetCta": "Réinitialiser le dossier par défaut",
+        "originResetToast": "Dossier par défaut retiré — les documents devront être placés manuellement"
       },
       "spaceHeader": {
         "backToSpaces": "Retour aux espaces",
@@ -807,7 +813,8 @@
         "download": "Télécharger",
         "deleteDocument": "Supprimer le document",
         "addDocument": "Ajouter un document",
-        "addFolder": "Ajouter un dossier"
+        "addFolder": "Ajouter un dossier",
+        "importDocuments": "Importer des documents"
       },
       "footerFolders": "{{count}} dossiers",
       "footerFoldersOne": "{{count}} dossier",

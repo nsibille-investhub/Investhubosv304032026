@@ -21,7 +21,6 @@ import {
   Bell,
   BellOff,
   Mail,
-  Paperclip,
   type LucideIcon,
 } from 'lucide-react';
 import { toast } from 'sonner@2.0.3';
@@ -1217,12 +1216,7 @@ function BatchRowGroup({
                 />
               </div>
             </td>
-            <td className="px-6 py-2.5">
-              <span className="inline-flex items-center gap-1 rounded-md border border-blue-200 bg-blue-50 px-2 py-0.5 text-[10px] font-medium uppercase tracking-wide text-blue-700 dark:border-blue-800 dark:bg-blue-950 dark:text-blue-300">
-                <Paperclip className="h-3 w-3" />
-                Lot
-              </span>
-            </td>
+            <td className="px-6 py-2.5 text-[11px] text-gray-400">—</td>
             <td className={cn('px-6 py-2.5', stickyClass('bg-blue-50/10 dark:bg-blue-950/5'))}>
               <div
                 className="flex items-center justify-end gap-1"
