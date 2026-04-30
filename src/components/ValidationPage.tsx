@@ -16,6 +16,12 @@ import {
   Layers3,
   UserRound,
   Globe,
+  Package,
+  ChevronRight,
+  Bell,
+  BellOff,
+  Mail,
+  Paperclip,
   type LucideIcon,
 } from 'lucide-react';
 import { toast } from 'sonner@2.0.3';
@@ -27,7 +33,6 @@ import {
 } from './ui/tooltip';
 import { FilterCard } from './FilterCard';
 import { FilterBar, FilterConfig } from './FilterBar';
-import { DataTable, ColumnConfig } from './DataTable';
 import { DataPagination } from './ui/data-pagination';
 import { Tag } from './Tag';
 import { StatusBadge } from './StatusBadge';
@@ -36,14 +41,17 @@ import { DocumentPreviewDrawer } from './DocumentPreviewDrawer';
 import { DocumentNameCell } from './DocumentNameCell';
 import { UserCell } from './UserCell';
 import { CommentIndicator } from './CommentIndicator';
+import { NotificationPreviewDrawer } from './NotificationPreviewDrawer';
 import { useTableSearch } from '../utils/useTableSearch';
 import {
   generateValidationDocuments,
+  getValidationBatches,
   TargetingKind,
-  TargetingTag,
+  ValidationBatch,
   ValidationDocument,
   ValidationStatus,
 } from '../utils/validationDocumentsGenerator';
+import { cn } from './ui/utils';
 
 interface ValidationPageProps {
   onBack: () => void;
@@ -70,10 +78,6 @@ const dateFormatter = new Intl.DateTimeFormat('fr-FR', {
 
 function formatDate(iso: string) {
   return dateFormatter.format(new Date(iso));
-}
-
-function buildPath(segments: string[]) {
-  return segments.join(' / ');
 }
 
 const STATUS_VARIANT: Record<
@@ -103,6 +107,27 @@ const TARGETING_TOOLTIP: Record<TargetingKind, string> = {
   audience: 'Audience',
 };
 
+// ---------------------------------------------------------------------------
+// Row tree
+// ---------------------------------------------------------------------------
+
+type RowNode =
+  | { kind: 'standalone'; doc: ValidationDocument; sortKey: number }
+  | {
+      kind: 'batch';
+      batch: ValidationBatch;
+      docs: ValidationDocument[];
+      status: ValidationStatus;
+      sortKey: number;
+    };
+
+function deriveBatchStatus(docs: ValidationDocument[]): ValidationStatus {
+  if (docs.length === 0) return 'pending';
+  if (docs.every((d) => d.status === 'validated')) return 'validated';
+  if (docs.every((d) => d.status === 'rejected')) return 'rejected';
+  return 'pending';
+}
+
 export function ValidationPage({ onBack }: ValidationPageProps) {
   const [isLoading, setIsLoading] = useState(true);
   const [documents, setDocuments] = useState<ValidationDocument[]>([]);
@@ -110,14 +135,23 @@ export function ValidationPage({ onBack }: ValidationPageProps) {
   const [activeFilters, setActiveFilters] = useState<
     Record<string, string | string[]>
   >({});
-  const [sortConfig, setSortConfig] = useState<
-    { key: string; direction: 'asc' | 'desc' } | null
-  >({ key: 'createdAt', direction: 'desc' });
-  const [hoveredRow, setHoveredRow] = useState<number | null>(null);
   const [page, setPage] = useState(1);
   const [pageSize, setPageSize] = useState(10);
   const [previewDocument, setPreviewDocument] =
     useState<ValidationDocument | null>(null);
+  const [expandedBatchIds, setExpandedBatchIds] = useState<Set<string>>(
+    new Set(),
+  );
+  const [activeNotificationBatchId, setActiveNotificationBatchId] = useState<
+    string | null
+  >(null);
+
+  const batches = useMemo(() => getValidationBatches(), []);
+  const batchById = useMemo(() => {
+    const map = new Map<string, ValidationBatch>();
+    batches.forEach((b) => map.set(b.id, b));
+    return map;
+  }, [batches]);
 
   useEffect(() => {
     setIsLoading(true);
@@ -148,6 +182,81 @@ export function ValidationPage({ onBack }: ValidationPageProps) {
     filteredData: searchedData,
     hasActiveSearch,
   } = useTableSearch(dataByStatus, SEARCH_FIELDS);
+
+  /** Documents matching status + search + advanced filters. */
+  const matchingDocs = useMemo(() => {
+    return searchedData.filter((doc) => {
+      if (activeFilters.createdBy && doc.createdBy.name !== activeFilters.createdBy) {
+        return false;
+      }
+      if (activeFilters.format && doc.format !== activeFilters.format) {
+        return false;
+      }
+      const targetingFilter = activeFilters.targeting;
+      if (Array.isArray(targetingFilter) && targetingFilter.length > 0) {
+        const labels = doc.targeting.map((t) => t.label);
+        const hasAny = targetingFilter.some((t) => labels.includes(t));
+        if (!hasAny) return false;
+      }
+      return true;
+    });
+  }, [searchedData, activeFilters]);
+
+  /** Build row nodes (batches + standalone), preserving the matching docs. */
+  const rowNodes: RowNode[] = useMemo(() => {
+    const matchingIds = new Set(matchingDocs.map((d) => d.id));
+    const docsByBatch = new Map<string, ValidationDocument[]>();
+    const standalones: ValidationDocument[] = [];
+
+    // Group by batch using ALL docs (so a batch keeps every child once it appears)
+    documents.forEach((doc) => {
+      if (doc.batchId) {
+        const list = docsByBatch.get(doc.batchId) ?? [];
+        list.push(doc);
+        docsByBatch.set(doc.batchId, list);
+      }
+    });
+
+    // Standalones = docs without batchId AND matching the current filters
+    matchingDocs.forEach((doc) => {
+      if (!doc.batchId) standalones.push(doc);
+    });
+
+    const nodes: RowNode[] = [];
+
+    // Batch nodes — visible if at least one of its docs matches
+    docsByBatch.forEach((docs, batchId) => {
+      const hasMatch = docs.some((d) => matchingIds.has(d.id));
+      if (!hasMatch) return;
+      const batch = batchById.get(batchId);
+      if (!batch) return;
+      const sortedDocs = [...docs].sort(
+        (a, b) =>
+          new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime(),
+      );
+      const sortKey = Math.max(
+        ...sortedDocs.map((d) => new Date(d.createdAt).getTime()),
+      );
+      nodes.push({
+        kind: 'batch',
+        batch,
+        docs: sortedDocs,
+        status: deriveBatchStatus(sortedDocs),
+        sortKey,
+      });
+    });
+
+    standalones.forEach((doc) => {
+      nodes.push({
+        kind: 'standalone',
+        doc,
+        sortKey: new Date(doc.createdAt).getTime(),
+      });
+    });
+
+    nodes.sort((a, b) => b.sortKey - a.sortKey);
+    return nodes;
+  }, [documents, matchingDocs, batchById]);
 
   const allCreators = useMemo(() => {
     const map = new Map<string, string>();
@@ -191,72 +300,30 @@ export function ValidationPage({ onBack }: ValidationPageProps) {
     [allCreators, allTargetings],
   );
 
-  const filteredData = useMemo(() => {
-    return searchedData.filter((doc) => {
-      if (activeFilters.createdBy && doc.createdBy.name !== activeFilters.createdBy) {
-        return false;
-      }
-      if (activeFilters.format && doc.format !== activeFilters.format) {
-        return false;
-      }
-      const targetingFilter = activeFilters.targeting;
-      if (Array.isArray(targetingFilter) && targetingFilter.length > 0) {
-        const labels = doc.targeting.map((t) => t.label);
-        const hasAny = targetingFilter.some((t) => labels.includes(t));
-        if (!hasAny) return false;
-      }
-      return true;
-    });
-  }, [searchedData, activeFilters]);
-
-  const sortedData = useMemo(() => {
-    if (!sortConfig) return filteredData;
-    const items = [...filteredData];
-    items.sort((a, b) => {
-      const dir = sortConfig.direction === 'asc' ? 1 : -1;
-      const key = sortConfig.key;
-      const get = (doc: ValidationDocument): string | number => {
-        switch (key) {
-          case 'name':
-            return doc.name.toLowerCase();
-          case 'createdBy':
-            return doc.createdBy.name.toLowerCase();
-          case 'createdAt':
-            return new Date(doc.createdAt).getTime();
-          case 'status':
-            return doc.status;
-          case 'path':
-            return buildPath(doc.pathSegments).toLowerCase();
-          default:
-            return '';
-        }
-      };
-      const va = get(a);
-      const vb = get(b);
-      if (va < vb) return -1 * dir;
-      if (va > vb) return 1 * dir;
-      return 0;
-    });
-    return items;
-  }, [filteredData, sortConfig]);
-
-  const totalItems = sortedData.length;
+  const totalItems = rowNodes.length;
   const totalPages = Math.max(1, Math.ceil(totalItems / pageSize));
   const safePage = Math.min(page, totalPages);
   const startIndex = (safePage - 1) * pageSize;
-  const pageData = sortedData.slice(startIndex, startIndex + pageSize);
+  const pageNodes = rowNodes.slice(startIndex, startIndex + pageSize);
+
+  const hasActiveFilters =
+    hasActiveSearch || Object.keys(activeFilters).length > 0;
+
+  /** Auto-expand all visible batches when filters/search are active. */
+  useEffect(() => {
+    if (!hasActiveFilters) return;
+    setExpandedBatchIds((prev) => {
+      const next = new Set(prev);
+      pageNodes.forEach((n) => {
+        if (n.kind === 'batch') next.add(n.batch.id);
+      });
+      return next;
+    });
+  }, [hasActiveFilters, pageNodes]);
 
   useEffect(() => {
     setPage(1);
   }, [activeStatus, activeFilters, searchTerm, pageSize]);
-
-  const handleSort = (key: string) => {
-    setSortConfig((prev) => {
-      if (!prev || prev.key !== key) return { key, direction: 'asc' };
-      if (prev.direction === 'asc') return { key, direction: 'desc' };
-      return null;
-    });
-  };
 
   const handleFilterChange = (
     filterId: string,
@@ -313,182 +380,128 @@ export function ValidationPage({ onBack }: ValidationPageProps) {
     toast.info('Document remis en attente', { description: doc.name });
   };
 
-  const handleRowClick = (doc: ValidationDocument) => {
-    setPreviewDocument(doc);
+  /** Atomic batch action: applies a status to ALL children at once. */
+  const updateBatchStatus = (batchId: string, status: ValidationStatus) => {
+    const stamp = new Date().toISOString();
+    setDocuments((prev) =>
+      prev.map((d) => {
+        if (d.batchId !== batchId) return d;
+        if (status === 'pending') {
+          const { reviewedAt, reviewedBy, ...rest } = d;
+          void reviewedAt;
+          void reviewedBy;
+          return { ...rest, status };
+        }
+        return { ...d, status, reviewedAt: stamp, reviewedBy: 'Vous' };
+      }),
+    );
   };
 
-  const stickyActionsCellClass =
-    'sticky right-0 z-10 bg-white dark:bg-gray-950 shadow-[-8px_0_12px_-12px_rgba(0,0,0,0.18)] text-right';
+  const handleValidateBatch = (batch: ValidationBatch, count: number) => {
+    updateBatchStatus(batch.id, 'validated');
+    if (batch.notification) {
+      toast.success(`Lot validé · notification envoyée`, {
+        description: `${count} document${count > 1 ? 's' : ''} • ${batch.name}`,
+      });
+    } else {
+      toast.success(`Lot validé`, { description: batch.name });
+    }
+  };
 
-  const columns: ColumnConfig<ValidationDocument>[] = [
-    {
-      key: 'name',
-      label: 'Document',
-      sortable: true,
-      render: (row) => (
-        <DocumentNameCell name={row.name} pathSegments={row.pathSegments} />
-      ),
-    },
-    {
-      key: 'createdBy',
-      label: 'Créé par',
-      sortable: true,
-      render: (row) => (
-        <UserCell name={row.createdBy.name} sublabel={row.createdBy.role} />
-      ),
-    },
-    {
-      key: 'createdAt',
-      label: 'Date',
-      sortable: true,
-      render: (row) => (
-        <span className="text-sm text-gray-600 dark:text-gray-400 whitespace-nowrap">
-          {formatDate(row.createdAt)}
-        </span>
-      ),
-    },
-    {
-      key: 'targeting',
-      label: 'Ciblage',
-      sortable: false,
-      render: (row) => (
-        <div className="flex flex-wrap items-center gap-1">
-          {row.targeting.slice(0, 3).map((tag) => (
-            <Tooltip key={`${tag.kind}:${tag.label}`}>
-              <TooltipTrigger asChild>
-                <span>
-                  <Tag icon={TARGETING_ICON[tag.kind]} label={tag.label} />
-                </span>
-              </TooltipTrigger>
-              <TooltipContent side="top">
-                <span className="text-xs">{TARGETING_TOOLTIP[tag.kind]}</span>
-              </TooltipContent>
-            </Tooltip>
-          ))}
-          {row.targeting.length > 3 && (
-            <Tooltip>
-              <TooltipTrigger asChild>
-                <span className="text-xs text-gray-500 cursor-help">
-                  +{row.targeting.length - 3}
-                </span>
-              </TooltipTrigger>
-              <TooltipContent>
-                <div className="flex flex-col gap-1">
-                  {row.targeting.slice(3).map((tag) => {
-                    const Icon = TARGETING_ICON[tag.kind];
-                    return (
-                      <span
-                        key={`${tag.kind}:${tag.label}`}
-                        className="inline-flex items-center gap-1.5 text-xs"
-                      >
-                        <Icon className="h-3 w-3 opacity-70" />
-                        {tag.label}
-                      </span>
-                    );
-                  })}
-                </div>
-              </TooltipContent>
-            </Tooltip>
-          )}
-        </div>
-      ),
-    },
-    {
-      key: 'comment',
-      label: 'Commentaire',
-      sortable: false,
-      className: 'text-center',
-      render: (row) => (
-        <div className="flex justify-center">
-          <CommentIndicator
-            comment={row.comment}
-            author={row.createdBy.name}
-            date={formatDate(row.createdAt)}
-          />
-        </div>
-      ),
-    },
-    {
-      key: 'status',
-      label: 'Statut',
-      sortable: true,
-      render: (row) => {
-        const conf = STATUS_VARIANT[row.status];
-        return <StatusBadge label={conf.label} variant={conf.variant} />;
-      },
-    },
-    {
-      key: 'actions',
-      label: 'Actions',
-      sortable: false,
-      className: stickyActionsCellClass,
-      render: (row) => (
-        <div className="flex items-center justify-end gap-1" onClick={(e) => e.stopPropagation()}>
-          <Tooltip>
-            <TooltipTrigger asChild>
-              <Button
-                variant="ghost"
-                size="sm"
-                className="h-8 w-8 p-0"
-                onClick={() => setPreviewDocument(row)}
-              >
-                <Eye className="h-4 w-4" />
-              </Button>
-            </TooltipTrigger>
-            <TooltipContent>Aperçu du document</TooltipContent>
-          </Tooltip>
+  const handleRejectBatch = (batch: ValidationBatch, count: number) => {
+    updateBatchStatus(batch.id, 'rejected');
+    toast.error(`Lot rejeté`, {
+      description: `${count} document${count > 1 ? 's' : ''} • ${batch.name}`,
+    });
+  };
 
-          {row.status === 'validated' && (
-            <Tooltip>
-              <TooltipTrigger asChild>
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  className="h-8 w-8 p-0 text-amber-600 hover:bg-amber-50 hover:text-amber-700 dark:hover:bg-amber-950"
-                  onClick={() => handleResetToPending(row)}
-                >
-                  <RotateCcw className="h-4 w-4" />
-                </Button>
-              </TooltipTrigger>
-              <TooltipContent>Remettre en attente</TooltipContent>
-            </Tooltip>
-          )}
+  const handleResetBatch = (batch: ValidationBatch) => {
+    updateBatchStatus(batch.id, 'pending');
+    toast.info('Lot remis en attente', { description: batch.name });
+  };
 
-          {row.status !== 'validated' && (
-            <Tooltip>
-              <TooltipTrigger asChild>
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  className="h-8 w-8 p-0 text-emerald-600 hover:bg-emerald-50 hover:text-emerald-700 dark:hover:bg-emerald-950"
-                  onClick={() => handleValidate(row)}
-                >
-                  <Check className="h-4 w-4" />
-                </Button>
-              </TooltipTrigger>
-              <TooltipContent>Valider</TooltipContent>
-            </Tooltip>
-          )}
+  const toggleBatch = (batchId: string) => {
+    setExpandedBatchIds((prev) => {
+      const next = new Set(prev);
+      if (next.has(batchId)) next.delete(batchId);
+      else next.add(batchId);
+      return next;
+    });
+  };
 
-          {row.status !== 'rejected' && (
-            <Tooltip>
-              <TooltipTrigger asChild>
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  className="h-8 w-8 p-0 text-red-600 hover:bg-red-50 hover:text-red-700 dark:hover:bg-red-950"
-                  onClick={() => handleReject(row)}
-                >
-                  <X className="h-4 w-4" />
-                </Button>
-              </TooltipTrigger>
-              <TooltipContent>Rejeter</TooltipContent>
-            </Tooltip>
-          )}
-        </div>
-      ),
-    },
-  ];
+  // Active notification batch (for the notification drawer)
+  const activeNotificationBatch = useMemo(() => {
+    if (!activeNotificationBatchId) return null;
+    const node = rowNodes.find(
+      (n): n is Extract<RowNode, { kind: 'batch' }> =>
+        n.kind === 'batch' && n.batch.id === activeNotificationBatchId,
+    );
+    if (node) return node;
+    // fallback: find from raw data even if not in current page (e.g. after status flip)
+    const batch = batchById.get(activeNotificationBatchId);
+    if (!batch) return null;
+    const docs = documents.filter((d) => d.batchId === batch.id);
+    return {
+      kind: 'batch' as const,
+      batch,
+      docs,
+      status: deriveBatchStatus(docs),
+      sortKey: 0,
+    };
+  }, [activeNotificationBatchId, rowNodes, batchById, documents]);
+
+  const stickyHeadActionsClass =
+    'sticky right-0 z-20 bg-muted/40 backdrop-blur-sm';
+  const stickyBodyActionsClass = (extra?: string) =>
+    cn(
+      'sticky right-0 z-10 shadow-[-8px_0_12px_-12px_rgba(0,0,0,0.18)] text-right',
+      extra ?? 'bg-white dark:bg-gray-950',
+    );
+
+  const renderTargetingTags = (
+    targeting: ValidationDocument['targeting'],
+    maxVisible = 3,
+  ) => (
+    <div className="flex flex-wrap items-center gap-1">
+      {targeting.slice(0, maxVisible).map((tag) => (
+        <Tooltip key={`${tag.kind}:${tag.label}`}>
+          <TooltipTrigger asChild>
+            <span>
+              <Tag icon={TARGETING_ICON[tag.kind]} label={tag.label} />
+            </span>
+          </TooltipTrigger>
+          <TooltipContent side="top">
+            <span className="text-xs">{TARGETING_TOOLTIP[tag.kind]}</span>
+          </TooltipContent>
+        </Tooltip>
+      ))}
+      {targeting.length > maxVisible && (
+        <Tooltip>
+          <TooltipTrigger asChild>
+            <span className="text-xs text-gray-500 cursor-help">
+              +{targeting.length - maxVisible}
+            </span>
+          </TooltipTrigger>
+          <TooltipContent>
+            <div className="flex flex-col gap-1">
+              {targeting.slice(maxVisible).map((tag) => {
+                const Icon = TARGETING_ICON[tag.kind];
+                return (
+                  <span
+                    key={`${tag.kind}:${tag.label}`}
+                    className="inline-flex items-center gap-1.5 text-xs"
+                  >
+                    <Icon className="h-3 w-3 opacity-70" />
+                    {tag.label}
+                  </span>
+                );
+              })}
+            </div>
+          </TooltipContent>
+        </Tooltip>
+      )}
+    </div>
+  );
 
   return (
     <div className="flex-1 flex flex-col bg-gray-50 dark:bg-black overflow-hidden">
@@ -608,14 +621,13 @@ export function ValidationPage({ onBack }: ValidationPageProps) {
           <div className="flex-1">
             {isLoading ? (
               <TableSkeleton />
-            ) : sortedData.length === 0 ? (
+            ) : rowNodes.length === 0 ? (
               <div className="py-16 text-center">
                 <ShieldCheck className="mx-auto h-10 w-10 text-gray-300" />
                 <p className="mt-3 text-sm text-gray-500">
                   Aucun document à afficher
                 </p>
-                {(hasActiveSearch ||
-                  Object.keys(activeFilters).length > 0) && (
+                {hasActiveFilters && (
                   <Button
                     variant="link"
                     size="sm"
@@ -627,23 +639,82 @@ export function ValidationPage({ onBack }: ValidationPageProps) {
                 )}
               </div>
             ) : (
-              <DataTable
-                data={pageData}
-                columns={columns}
-                hoveredRow={hoveredRow}
-                setHoveredRow={setHoveredRow}
-                onRowClick={handleRowClick}
-                sortConfig={sortConfig}
-                onSort={handleSort}
-                allFilteredData={sortedData}
-                searchTerm={searchTerm}
-                entityName="document"
-              />
+              <div className="overflow-x-auto relative">
+                <table className="w-full">
+                  <thead>
+                    <tr className="border-b border-border bg-muted/40 backdrop-blur-sm">
+                      <th className="w-8 px-2 py-4" />
+                      <th className="px-6 py-4 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider">
+                        Document
+                      </th>
+                      <th className="px-6 py-4 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider">
+                        Créé par
+                      </th>
+                      <th className="px-6 py-4 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider">
+                        Date
+                      </th>
+                      <th className="px-6 py-4 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider">
+                        Ciblage
+                      </th>
+                      <th className="px-6 py-4 text-center text-xs font-medium text-muted-foreground uppercase tracking-wider">
+                        Comm.
+                      </th>
+                      <th className="px-6 py-4 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider">
+                        Statut
+                      </th>
+                      <th
+                        className={cn(
+                          'px-6 py-4 text-right text-xs font-medium text-muted-foreground uppercase tracking-wider',
+                          stickyHeadActionsClass,
+                        )}
+                      >
+                        Actions
+                      </th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {pageNodes.map((node) =>
+                      node.kind === 'standalone' ? (
+                        <StandaloneDocumentRow
+                          key={`doc-${node.doc.id}`}
+                          doc={node.doc}
+                          onPreview={() => setPreviewDocument(node.doc)}
+                          onValidate={() => handleValidate(node.doc)}
+                          onReject={() => handleReject(node.doc)}
+                          onResetToPending={() => handleResetToPending(node.doc)}
+                          renderTargeting={renderTargetingTags}
+                          stickyClass={stickyBodyActionsClass()}
+                        />
+                      ) : (
+                        <BatchRowGroup
+                          key={`batch-${node.batch.id}`}
+                          node={node}
+                          expanded={expandedBatchIds.has(node.batch.id)}
+                          onToggle={() => toggleBatch(node.batch.id)}
+                          onOpenNotification={() =>
+                            setActiveNotificationBatchId(node.batch.id)
+                          }
+                          onValidate={() =>
+                            handleValidateBatch(node.batch, node.docs.length)
+                          }
+                          onReject={() =>
+                            handleRejectBatch(node.batch, node.docs.length)
+                          }
+                          onReset={() => handleResetBatch(node.batch)}
+                          onPreviewChild={(d) => setPreviewDocument(d)}
+                          renderTargeting={renderTargetingTags}
+                          stickyClass={stickyBodyActionsClass}
+                        />
+                      ),
+                    )}
+                  </tbody>
+                </table>
+              </div>
             )}
           </div>
 
           {/* Pagination */}
-          {!isLoading && sortedData.length > 0 && (
+          {!isLoading && rowNodes.length > 0 && (
             <DataPagination
               currentPage={safePage}
               totalPages={totalPages}
@@ -656,7 +727,7 @@ export function ValidationPage({ onBack }: ValidationPageProps) {
         </motion.div>
       </div>
 
-      {/* Preview drawer */}
+      {/* Document preview drawer */}
       <DocumentPreviewDrawer
         isOpen={!!previewDocument}
         onClose={() => setPreviewDocument(null)}
@@ -666,6 +737,468 @@ export function ValidationPage({ onBack }: ValidationPageProps) {
         size={previewDocument?.size}
         date={previewDocument ? formatDate(previewDocument.createdAt) : undefined}
       />
+
+      {/* Notification preview drawer */}
+      <NotificationPreviewDrawer
+        isOpen={!!activeNotificationBatchId}
+        onClose={() => setActiveNotificationBatchId(null)}
+        batch={activeNotificationBatch?.batch ?? null}
+        documents={activeNotificationBatch?.docs ?? []}
+        status={activeNotificationBatch?.status ?? 'pending'}
+        onValidate={() => {
+          if (!activeNotificationBatch) return;
+          handleValidateBatch(
+            activeNotificationBatch.batch,
+            activeNotificationBatch.docs.length,
+          );
+        }}
+        onReject={() => {
+          if (!activeNotificationBatch) return;
+          handleRejectBatch(
+            activeNotificationBatch.batch,
+            activeNotificationBatch.docs.length,
+          );
+        }}
+        onResetToPending={() => {
+          if (!activeNotificationBatch) return;
+          handleResetBatch(activeNotificationBatch.batch);
+        }}
+        onPreviewDocument={(d) => setPreviewDocument(d)}
+      />
     </div>
+  );
+}
+
+// ---------------------------------------------------------------------------
+// Row sub-components
+// ---------------------------------------------------------------------------
+
+interface StandaloneDocumentRowProps {
+  doc: ValidationDocument;
+  onPreview: () => void;
+  onValidate: () => void;
+  onReject: () => void;
+  onResetToPending: () => void;
+  renderTargeting: (
+    targeting: ValidationDocument['targeting'],
+    maxVisible?: number,
+  ) => JSX.Element;
+  stickyClass: string;
+}
+
+function StandaloneDocumentRow({
+  doc,
+  onPreview,
+  onValidate,
+  onReject,
+  onResetToPending,
+  renderTargeting,
+  stickyClass,
+}: StandaloneDocumentRowProps) {
+  const conf = STATUS_VARIANT[doc.status];
+  return (
+    <tr
+      className="border-b border-border/70 transition-colors hover:bg-muted/50 cursor-pointer"
+      onClick={onPreview}
+    >
+      <td className="w-8 px-2 py-4" />
+      <td className="px-6 py-4">
+        <DocumentNameCell name={doc.name} pathSegments={doc.pathSegments} />
+      </td>
+      <td className="px-6 py-4">
+        <UserCell name={doc.createdBy.name} sublabel={doc.createdBy.role} />
+      </td>
+      <td className="px-6 py-4">
+        <span className="text-sm text-gray-600 dark:text-gray-400 whitespace-nowrap">
+          {formatDate(doc.createdAt)}
+        </span>
+      </td>
+      <td className="px-6 py-4">{renderTargeting(doc.targeting)}</td>
+      <td className="px-6 py-4 text-center">
+        <div className="flex justify-center">
+          <CommentIndicator
+            comment={doc.comment}
+            author={doc.createdBy.name}
+            date={formatDate(doc.createdAt)}
+          />
+        </div>
+      </td>
+      <td className="px-6 py-4">
+        <StatusBadge label={conf.label} variant={conf.variant} />
+      </td>
+      <td className={cn('px-6 py-4', stickyClass)}>
+        <div
+          className="flex items-center justify-end gap-1"
+          onClick={(e) => e.stopPropagation()}
+        >
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <Button
+                variant="ghost"
+                size="sm"
+                className="h-8 w-8 p-0"
+                onClick={onPreview}
+              >
+                <Eye className="h-4 w-4" />
+              </Button>
+            </TooltipTrigger>
+            <TooltipContent>Aperçu du document</TooltipContent>
+          </Tooltip>
+          {doc.status === 'validated' && (
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  className="h-8 w-8 p-0 text-amber-600 hover:bg-amber-50 hover:text-amber-700 dark:hover:bg-amber-950"
+                  onClick={onResetToPending}
+                >
+                  <RotateCcw className="h-4 w-4" />
+                </Button>
+              </TooltipTrigger>
+              <TooltipContent>Remettre en attente</TooltipContent>
+            </Tooltip>
+          )}
+          {doc.status !== 'validated' && (
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  className="h-8 w-8 p-0 text-emerald-600 hover:bg-emerald-50 hover:text-emerald-700 dark:hover:bg-emerald-950"
+                  onClick={onValidate}
+                >
+                  <Check className="h-4 w-4" />
+                </Button>
+              </TooltipTrigger>
+              <TooltipContent>Valider</TooltipContent>
+            </Tooltip>
+          )}
+          {doc.status !== 'rejected' && (
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  className="h-8 w-8 p-0 text-red-600 hover:bg-red-50 hover:text-red-700 dark:hover:bg-red-950"
+                  onClick={onReject}
+                >
+                  <X className="h-4 w-4" />
+                </Button>
+              </TooltipTrigger>
+              <TooltipContent>Rejeter</TooltipContent>
+            </Tooltip>
+          )}
+        </div>
+      </td>
+    </tr>
+  );
+}
+
+interface BatchRowGroupProps {
+  node: Extract<RowNode, { kind: 'batch' }>;
+  expanded: boolean;
+  onToggle: () => void;
+  onOpenNotification: () => void;
+  onValidate: () => void;
+  onReject: () => void;
+  onReset: () => void;
+  onPreviewChild: (doc: ValidationDocument) => void;
+  renderTargeting: (
+    targeting: ValidationDocument['targeting'],
+    maxVisible?: number,
+  ) => JSX.Element;
+  stickyClass: (extra?: string) => string;
+}
+
+function BatchRowGroup({
+  node,
+  expanded,
+  onToggle,
+  onOpenNotification,
+  onValidate,
+  onReject,
+  onReset,
+  onPreviewChild,
+  renderTargeting,
+  stickyClass,
+}: BatchRowGroupProps) {
+  const { batch, docs, status } = node;
+  const conf = STATUS_VARIANT[status];
+  const isSilent = !batch.notification;
+  const earliestDate = docs.reduce(
+    (min, d) =>
+      new Date(d.createdAt).getTime() < new Date(min).getTime()
+        ? d.createdAt
+        : min,
+    docs[0]?.createdAt ?? batch.createdAt,
+  );
+
+  // Aggregate targeting tags (unique by kind:label)
+  const aggregatedTargeting = useMemo(() => {
+    const seen = new Set<string>();
+    const out: ValidationDocument['targeting'] = [];
+    docs.forEach((d) =>
+      d.targeting.forEach((t) => {
+        const key = `${t.kind}:${t.label}`;
+        if (!seen.has(key)) {
+          seen.add(key);
+          out.push(t);
+        }
+      }),
+    );
+    return out;
+  }, [docs]);
+
+  const recipientCount = batch.notification?.recipients.length ?? 0;
+
+  return (
+    <>
+      {/* Batch header row */}
+      <tr
+        className={cn(
+          'border-b border-border/70 transition-colors cursor-pointer group',
+          'bg-blue-50/40 hover:bg-blue-50 dark:bg-blue-950/20 dark:hover:bg-blue-950/40',
+        )}
+        onClick={onOpenNotification}
+      >
+        <td className="w-8 px-2 py-3">
+          <button
+            type="button"
+            className="flex h-6 w-6 items-center justify-center rounded text-gray-500 hover:bg-blue-100 dark:hover:bg-blue-900"
+            onClick={(e) => {
+              e.stopPropagation();
+              onToggle();
+            }}
+            aria-label={expanded ? 'Réduire le lot' : 'Développer le lot'}
+          >
+            <ChevronRight
+              className={cn(
+                'h-4 w-4 transition-transform',
+                expanded && 'rotate-90',
+              )}
+            />
+          </button>
+        </td>
+
+        <td className="px-6 py-3">
+          <div className="flex items-start gap-3">
+            <div
+              className="mt-0.5 flex h-9 w-9 shrink-0 items-center justify-center rounded-md"
+              style={{ backgroundColor: '#000E2B' }}
+            >
+              <Package className="h-4 w-4 text-white" />
+            </div>
+            <div className="min-w-0">
+              <div className="mb-0.5 flex items-center gap-2">
+                <span className="text-[11px] font-semibold uppercase tracking-wide text-blue-600 dark:text-blue-300">
+                  {batch.kind}
+                </span>
+                <span className="rounded-full bg-blue-100 px-2 py-0.5 text-[10px] font-semibold text-blue-700 dark:bg-blue-900 dark:text-blue-200">
+                  {docs.length} doc{docs.length > 1 ? 's' : ''}
+                </span>
+              </div>
+              <span
+                className="block truncate text-sm font-semibold text-gray-900 dark:text-gray-100"
+                title={batch.name}
+              >
+                {batch.name}
+              </span>
+              <div className="mt-1 flex items-center gap-1.5 text-xs text-gray-600 dark:text-gray-400">
+                {isSilent ? (
+                  <>
+                    <BellOff className="h-3 w-3 text-gray-400" />
+                    <span className="italic">
+                      Aucune notification — validation interne
+                    </span>
+                  </>
+                ) : (
+                  <>
+                    <Bell className="h-3 w-3 text-blue-500" />
+                    <span>
+                      1 notification → {recipientCount} destinataire
+                      {recipientCount > 1 ? 's' : ''}
+                    </span>
+                    {batch.notification?.channel === 'portal' && (
+                      <Globe className="h-3 w-3 text-gray-400" />
+                    )}
+                    {batch.notification?.channel === 'email' && (
+                      <Mail className="h-3 w-3 text-gray-400" />
+                    )}
+                    {batch.notification?.channel === 'both' && (
+                      <>
+                        <Mail className="h-3 w-3 text-gray-400" />
+                        <Globe className="h-3 w-3 text-gray-400" />
+                      </>
+                    )}
+                  </>
+                )}
+              </div>
+            </div>
+          </div>
+        </td>
+
+        <td className="px-6 py-3">
+          <UserCell
+            name={batch.createdBy.name}
+            sublabel={batch.createdBy.role}
+          />
+        </td>
+        <td className="px-6 py-3">
+          <span className="text-sm text-gray-600 dark:text-gray-400 whitespace-nowrap">
+            {formatDate(earliestDate)}
+          </span>
+        </td>
+        <td className="px-6 py-3">{renderTargeting(aggregatedTargeting, 4)}</td>
+        <td className="px-6 py-3 text-center text-[11px] text-gray-500">—</td>
+        <td className="px-6 py-3">
+          <StatusBadge label={conf.label} variant={conf.variant} />
+        </td>
+
+        <td
+          className={cn(
+            'px-6 py-3',
+            stickyClass(
+              'bg-blue-50/40 group-hover:bg-blue-50 dark:bg-blue-950/20 dark:group-hover:bg-blue-950/40',
+            ),
+          )}
+        >
+          <div
+            className="flex items-center justify-end gap-1"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  className="h-8 gap-1.5 px-2 text-xs"
+                  onClick={onOpenNotification}
+                >
+                  <Eye className="h-3.5 w-3.5" />
+                  Aperçu
+                </Button>
+              </TooltipTrigger>
+              <TooltipContent>
+                {isSilent ? 'Aperçu du lot' : 'Aperçu de la notification'}
+              </TooltipContent>
+            </Tooltip>
+            {status === 'validated' && (
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    className="h-8 w-8 p-0 text-amber-600 hover:bg-amber-50 hover:text-amber-700 dark:hover:bg-amber-950"
+                    onClick={onReset}
+                  >
+                    <RotateCcw className="h-4 w-4" />
+                  </Button>
+                </TooltipTrigger>
+                <TooltipContent>Remettre le lot en attente</TooltipContent>
+              </Tooltip>
+            )}
+            {status !== 'validated' && (
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    className="h-8 w-8 p-0 text-emerald-600 hover:bg-emerald-50 hover:text-emerald-700 dark:hover:bg-emerald-950"
+                    onClick={onValidate}
+                  >
+                    <Check className="h-4 w-4" />
+                  </Button>
+                </TooltipTrigger>
+                <TooltipContent>
+                  {isSilent
+                    ? 'Valider le lot'
+                    : 'Valider et envoyer la notification'}
+                </TooltipContent>
+              </Tooltip>
+            )}
+            {status !== 'rejected' && (
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    className="h-8 w-8 p-0 text-red-600 hover:bg-red-50 hover:text-red-700 dark:hover:bg-red-950"
+                    onClick={onReject}
+                  >
+                    <X className="h-4 w-4" />
+                  </Button>
+                </TooltipTrigger>
+                <TooltipContent>Rejeter le lot</TooltipContent>
+              </Tooltip>
+            )}
+          </div>
+        </td>
+      </tr>
+
+      {/* Children rows */}
+      {expanded &&
+        docs.map((doc) => (
+          <tr
+            key={`batch-${batch.id}-doc-${doc.id}`}
+            className="border-b border-border/40 bg-blue-50/10 transition-colors hover:bg-blue-50/30 dark:bg-blue-950/5 dark:hover:bg-blue-950/15 cursor-pointer"
+            onClick={() => onPreviewChild(doc)}
+          >
+            <td className="w-8 px-2 py-2.5">
+              <span
+                aria-hidden
+                className="ml-2 block h-full w-px bg-blue-200 dark:bg-blue-800"
+              />
+            </td>
+            <td className="px-6 py-2.5 pl-12">
+              <DocumentNameCell name={doc.name} pathSegments={doc.pathSegments} />
+            </td>
+            <td className="px-6 py-2.5">
+              <UserCell name={doc.createdBy.name} sublabel={doc.createdBy.role} />
+            </td>
+            <td className="px-6 py-2.5">
+              <span className="text-sm text-gray-600 dark:text-gray-400 whitespace-nowrap">
+                {formatDate(doc.createdAt)}
+              </span>
+            </td>
+            <td className="px-6 py-2.5">{renderTargeting(doc.targeting)}</td>
+            <td className="px-6 py-2.5 text-center">
+              <div className="flex justify-center">
+                <CommentIndicator
+                  comment={doc.comment}
+                  author={doc.createdBy.name}
+                  date={formatDate(doc.createdAt)}
+                />
+              </div>
+            </td>
+            <td className="px-6 py-2.5">
+              <span className="inline-flex items-center gap-1 rounded-md border border-blue-200 bg-blue-50 px-2 py-0.5 text-[10px] font-medium uppercase tracking-wide text-blue-700 dark:border-blue-800 dark:bg-blue-950 dark:text-blue-300">
+                <Paperclip className="h-3 w-3" />
+                Lot
+              </span>
+            </td>
+            <td className={cn('px-6 py-2.5', stickyClass('bg-blue-50/10 dark:bg-blue-950/5'))}>
+              <div
+                className="flex items-center justify-end gap-1"
+                onClick={(e) => e.stopPropagation()}
+              >
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      className="h-8 w-8 p-0"
+                      onClick={() => onPreviewChild(doc)}
+                    >
+                      <Eye className="h-4 w-4" />
+                    </Button>
+                  </TooltipTrigger>
+                  <TooltipContent>Aperçu du document</TooltipContent>
+                </Tooltip>
+              </div>
+            </td>
+          </tr>
+        ))}
+    </>
   );
 }
