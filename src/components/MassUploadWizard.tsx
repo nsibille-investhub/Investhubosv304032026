@@ -74,6 +74,7 @@ import { Progress } from './ui/progress';
 import { toast } from 'sonner';
 import { mockDocuments, Document } from '../utils/documentMockData';
 import { availableInvestors, fundLabelMap } from '../utils/investorsMockData';
+import { useTranslation } from '../utils/languageContext';
 
 export interface MassUploadOriginContext {
   /** "folder" when the wizard is opened from a folder context menu, "space" from the space-level Import button. */
@@ -225,6 +226,7 @@ const availableEmailTemplates = [
 ];
 
 export function MassUploadWizard({ isOpen, onClose, existingFolders, inline = false, originContext = null }: MassUploadWizardProps) {
+  const { t } = useTranslation();
   // Resolve the default folder from origin context (folder path or space root).
   // No origin (= launched from the spaces root) keeps the folder field empty.
   const defaultFolder = originContext ? originContext.pathLabel : '';
