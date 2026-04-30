@@ -1,6 +1,6 @@
 import { useMemo, useState } from 'react';
 import { motion } from 'motion/react';
-import { Plus, Folder, Settings, Users, Handshake, TrendingUp, Target, ArrowRight, Search, FileText, FolderOpen, Landmark, Tag as TagIcon } from 'lucide-react';
+import { Plus, Folder, Settings, Users, Handshake, TrendingUp, Target, ArrowRight, Search, FileText, FileUp, FolderOpen, Landmark, Tag as TagIcon } from 'lucide-react';
 import { Button } from './ui/button';
 import { Badge } from './ui/badge';
 import { DataRoomSpace } from '../utils/dataRoomSpacesData';
@@ -115,7 +115,7 @@ export function DataRoomSpacesView({
               variant="secondary"
               className="gap-2"
             >
-              <Plus className="w-4 h-4" />
+              <FileUp className="w-4 h-4" />
               {t('ged.dataRoom.spacesView.import')}
             </Button>
             <Button

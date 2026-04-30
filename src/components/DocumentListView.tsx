@@ -15,7 +15,7 @@ import {
   Copy,
   AlertTriangle,
   ShieldAlert,
-  FileStack,
+  FileUp,
 } from 'lucide-react';
 import { Document } from '../utils/documentMockData';
 import { Button } from './ui/button';
@@ -257,7 +257,7 @@ export function DocumentListView({
             )}
           </div>
           <Button variant="secondary" size="sm" onClick={onOpenWizard}>
-            <Plus className="w-4 h-4 mr-2" />
+            <FileUp className="w-4 h-4 mr-2" />
             {t('ged.listView.import')}
           </Button>
           <Button variant="secondary" size="sm" onClick={onAddFolder}>
@@ -388,7 +388,7 @@ export function DocumentListView({
                               onImportToFolder?.(folder);
                             }}
                           >
-                            <FileStack className="w-4 h-4 mr-2" />
+                            <FileUp className="w-4 h-4 mr-2" />
                             {t('ged.listView.actions.importDocuments')}
                           </DropdownMenuItem>
                           <DropdownMenuItem
