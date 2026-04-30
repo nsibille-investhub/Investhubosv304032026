@@ -53,6 +53,7 @@ export function DocumentsPage({ selectedSpace, navigationTarget, onNavigationHan
     id: string;
     name: string;
     pathLabel: string;
+    spaceName?: string;
   } | null>(null);
   
   // Navigation state
@@ -298,6 +299,7 @@ export function DocumentsPage({ selectedSpace, navigationTarget, onNavigationHan
       id: folder.id,
       name: folder.name,
       pathLabel: folder.path,
+      spaceName: selectedSpace.name,
     });
     setWizardOpen(true);
   };

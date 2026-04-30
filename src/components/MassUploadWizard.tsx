@@ -93,6 +93,8 @@ export interface MassUploadOriginContext {
   name: string;
   /** Folder path (e.g. "/PERE 1/Comités"). For a space without folder, use "/". */
   pathLabel: string;
+  /** Name of the parent space — only relevant when kind === 'folder'. */
+  spaceName?: string;
 }
 
 interface MassUploadWizardProps {
@@ -958,6 +960,7 @@ export function MassUploadWizard({ isOpen, onClose, existingFolders, inline = fa
                           {effectiveOrigin.kind === 'folder'
                             ? t('ged.dataRoom.massUpload.originFolderBody', {
                                 name: effectiveOrigin.name,
+                                spaceName: effectiveOrigin.spaceName ?? '',
                               })
                             : t('ged.dataRoom.massUpload.originSpaceBody', {
                                 name: effectiveOrigin.name,
@@ -970,7 +973,7 @@ export function MassUploadWizard({ isOpen, onClose, existingFolders, inline = fa
                           >
                             {effectiveOrigin.kind === 'folder'
                               ? effectiveOrigin.pathLabel
-                              : `${effectiveOrigin.name} / —`}
+                              : effectiveOrigin.name}
                           </code>
                           <button
                             type="button"
