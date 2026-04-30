@@ -258,6 +258,20 @@ export function MassUploadWizard({ isOpen, onClose, existingFolders, inline = fa
   const [step2Page, setStep2Page] = useState(1);
   const [step2PageSize, setStep2PageSize] = useState(100);
 
+  /**
+   * Synthetic mapping folder → inherited restriction. In production this
+   * would be wired to the folder's actual targeting rules; here we derive
+   * a deterministic pair (fund, segment) from the folder path so the UI
+   * stays consistent across re-renders.
+   */
+  const getInheritedRestriction = (folderPath: string): { fund?: string; segment?: string } => {
+    if (!folderPath) return {};
+    const hash = folderPath.split('').reduce((acc, c) => acc + c.charCodeAt(0), 0);
+    const fund = availableFunds[hash % availableFunds.length];
+    const segment = availableSegments[hash % availableSegments.length];
+    return { fund: fund?.name, segment };
+  };
+
   // Extract all available folders
   const availableFolders = useMemo(() => {
     const base = extractAllFolders(mockDocuments);
@@ -931,10 +945,10 @@ export function MassUploadWizard({ isOpen, onClose, existingFolders, inline = fa
                     <motion.div
                       initial={{ opacity: 0, y: -8 }}
                       animate={{ opacity: 1, y: 0 }}
-                      className="relative flex items-start gap-3 rounded-lg border border-blue-200 bg-blue-50/60 px-4 py-3"
+                      className="flex items-start gap-3 rounded-lg border border-blue-200 bg-blue-50/60 px-4 py-3"
                     >
                       <Folder className="mt-0.5 h-4 w-4 shrink-0 text-blue-700" />
-                      <div className="min-w-0 flex-1 pr-6">
+                      <div className="min-w-0 flex-1">
                         <p className="text-sm font-medium text-gray-900">
                           {effectiveOrigin.kind === 'folder'
                             ? t('ged.dataRoom.massUpload.originFolderTitle')
@@ -976,22 +990,6 @@ export function MassUploadWizard({ isOpen, onClose, existingFolders, inline = fa
                           </button>
                         </div>
                       </div>
-                      <button
-                        type="button"
-                        aria-label={t('ged.dataRoom.massUpload.originResetCta')}
-                        onClick={() => {
-                          setOriginCleared(true);
-                          setUploadedFiles((prev) =>
-                            prev.map((f) => ({ ...f, folder: '' })),
-                          );
-                          toast.info(
-                            t('ged.dataRoom.massUpload.originResetToast'),
-                          );
-                        }}
-                        className="absolute right-2 top-2 flex h-6 w-6 items-center justify-center rounded-md text-gray-500 transition-colors hover:bg-white hover:text-gray-900"
-                      >
-                        <X className="h-3.5 w-3.5" />
-                      </button>
                     </motion.div>
                   )}
 
@@ -1615,181 +1613,126 @@ export function MassUploadWizard({ isOpen, onClose, existingFolders, inline = fa
                     </div>
                   </div>
 
-                  {/* Bulk Edit Bar */}
+                  {/* Bulk Edit Bar — sober design-system styling */}
                   <AnimatePresence>
                     {selectedFiles.length > 0 && (
                       <motion.div
-                        initial={{ opacity: 0, y: -20, scale: 0.95 }}
-                        animate={{ opacity: 1, y: 0, scale: 1 }}
-                        exit={{ opacity: 0, y: -20, scale: 0.95 }}
-                        className="relative overflow-hidden p-5 bg-gradient-to-r from-blue-50 via-indigo-50 to-purple-50 border-2 border-blue-300 rounded-2xl mb-4 shadow-lg hover:shadow-xl transition-all duration-300"
+                        initial={{ opacity: 0, y: -8 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        exit={{ opacity: 0, y: -8 }}
+                        className="rounded-lg border border-gray-200 bg-gray-50 px-3 py-2"
                       >
-                        {/* Animated background gradient */}
-                        <motion.div
-                          className="absolute inset-0 bg-gradient-to-r from-blue-400/10 via-indigo-400/10 to-purple-400/10"
-                          animate={{
-                            x: ['-100%', '100%'],
-                          }}
-                          transition={{
-                            duration: 3,
-                            repeat: Infinity,
-                            ease: 'linear',
-                          }}
-                        />
-                        
-                        <div className="relative z-10">
-                          <div className="flex items-center justify-between">
-                            <div className="flex items-center gap-4">
-                              <motion.div
-                                initial={{ scale: 0 }}
-                                animate={{ scale: 1 }}
-                                transition={{ type: "spring", stiffness: 500, damping: 30 }}
-                              >
-                                <Badge className="bg-gradient-to-r from-blue-600 to-indigo-600 text-white px-4 py-2 text-sm font-semibold shadow-md">
-                                  <Sparkles className="w-4 h-4 mr-2" />
-                                  {selectedFiles.length} document{selectedFiles.length > 1 ? 's' : ''} selected
-                                </Badge>
-                              </motion.div>
-                              <span className="font-semibold text-gray-800 flex items-center gap-2">
-                                <Edit3 className="w-4 h-4 text-blue-600" />
-                                Bulk edit
-                              </span>
-                            </div>
-                            <div className="flex items-center gap-2">
-                              <motion.div whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}>
-                                <Button
-                                  variant="outline"
-                                  size="sm"
-                                  onClick={() => setShowBulkEdit(!showBulkEdit)}
-                                  className="gap-2 bg-white/80 backdrop-blur-sm hover:bg-white border-blue-300 hover:border-blue-400 shadow-sm hover:shadow-md transition-all duration-200"
-                                >
-                                  <Edit3 className="w-4 h-4" />
-                                  {showBulkEdit ? 'Hide' : 'Show'} options
-                                </Button>
-                              </motion.div>
-                              <motion.div whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}>
-                                <Button
-                                  variant="outline"
-                                  size="sm"
-                                  onClick={() => setSelectedFiles([])}
-                                  className="gap-2 bg-white/80 backdrop-blur-sm hover:bg-red-50 border-gray-300 hover:border-red-300 text-gray-700 hover:text-red-600 shadow-sm hover:shadow-md transition-all duration-200"
-                                >
-                                  <X className="w-4 h-4" />
-                                  Deselect
-                                </Button>
-                              </motion.div>
-                            </div>
+                        <div className="flex items-center justify-between gap-3">
+                          <div className="flex items-center gap-3">
+                            <Badge variant="outline" className="border-gray-300 bg-white px-2 py-0.5 text-xs font-medium text-gray-700">
+                              {selectedFiles.length} sélectionné{selectedFiles.length > 1 ? 's' : ''}
+                            </Badge>
+                            <span className="text-xs text-gray-600">Édition groupée</span>
                           </div>
-
-                          {showBulkEdit && (
-                            <motion.div
-                              initial={{ opacity: 0, height: 0, y: -10 }}
-                              animate={{ opacity: 1, height: 'auto', y: 0 }}
-                              exit={{ opacity: 0, height: 0, y: -10 }}
-                              transition={{ duration: 0.3, ease: "easeInOut" }}
-                              className="mt-5 pt-4 border-t border-blue-200"
+                          <div className="flex items-center gap-1.5">
+                            <Button
+                              variant="outline"
+                              size="sm"
+                              className="h-7 gap-1.5 text-xs"
+                              onClick={() => setShowBulkEdit(!showBulkEdit)}
                             >
-                              <div className="grid grid-cols-3 gap-4">
-                                <motion.div
-                                  initial={{ opacity: 0, x: -20 }}
-                                  animate={{ opacity: 1, x: 0 }}
-                                  transition={{ delay: 0.1 }}
-                                  className="space-y-2"
-                                >
-                                  <Label className="text-xs font-semibold text-gray-700 flex items-center gap-1.5">
-                                    <Folder className="w-3.5 h-3.5 text-amber-600" />
-                                    Destination folder
-                                  </Label>
-                                  <Select onValueChange={(value) => handleBulkUpdate('folder', value)}>
-                                    <SelectTrigger className="text-sm h-10 bg-white/80 backdrop-blur-sm border-amber-200 hover:border-amber-400 focus:border-amber-400 focus:ring-2 focus:ring-amber-100 transition-all shadow-sm">
-                                      <SelectValue placeholder="Change folder..." />
-                                    </SelectTrigger>
-                                    <SelectContent>
-                                      {availableFolders.map((folder) => (
-                                        <SelectItem key={folder.id} value={folder.path} className="hover:bg-amber-50 cursor-pointer">
-                                          <div className="flex items-center gap-2">
-                                            <Folder className="w-3 h-3 text-amber-500" />
-                                            {folder.path}
-                                          </div>
-                                        </SelectItem>
-                                      ))}
-                                    </SelectContent>
-                                  </Select>
-                                </motion.div>
-                                
-                                <motion.div
-                                  initial={{ opacity: 0, x: -20 }}
-                                  animate={{ opacity: 1, x: 0 }}
-                                  transition={{ delay: 0.15 }}
-                                  className="space-y-2"
-                                >
-                                  <Label className="text-xs font-semibold text-gray-700 flex items-center gap-1.5">
-                                    <Languages className="w-3.5 h-3.5 text-green-600" />
-                                    Document language
-                                  </Label>
-                                  <Select onValueChange={(value) => handleBulkUpdate('language', value)}>
-                                    <SelectTrigger className="text-sm h-10 bg-white/80 backdrop-blur-sm border-green-200 hover:border-green-400 focus:border-green-400 focus:ring-2 focus:ring-green-100 transition-all shadow-sm">
-                                      <SelectValue placeholder="Change language..." />
-                                    </SelectTrigger>
-                                    <SelectContent>
-                                      {availableLanguages.map((lang) => (
-                                        <SelectItem key={lang.value} value={lang.value} className="hover:bg-green-50 cursor-pointer">
-                                          <div className="flex items-center gap-2">
-                                            <span className="text-base">{lang.flag}</span>
-                                            <span className="font-medium">{lang.label}</span>
-                                          </div>
-                                        </SelectItem>
-                                      ))}
-                                    </SelectContent>
-                                  </Select>
-                                </motion.div>
-                                
-                                <motion.div
-                                  initial={{ opacity: 0, x: -20 }}
-                                  animate={{ opacity: 1, x: 0 }}
-                                  transition={{ delay: 0.2 }}
-                                  className="space-y-2"
-                                >
-                                  <Label className="text-xs font-semibold text-gray-700 flex items-center gap-1.5">
-                                    <Users className="w-3.5 h-3.5 text-purple-600" />
-                                    Targeting type
-                                  </Label>
-                                  <Select onValueChange={(value) => handleBulkUpdate('targetType', value)}>
-                                    <SelectTrigger className="text-sm h-10 bg-white/80 backdrop-blur-sm border-purple-200 hover:border-purple-400 focus:border-purple-400 focus:ring-2 focus:ring-purple-100 transition-all shadow-sm">
-                                      <SelectValue placeholder="Change targeting..." />
-                                    </SelectTrigger>
-                                    <SelectContent>
-                                      <SelectItem value="all" className="hover:bg-purple-50 cursor-pointer">
-                                        <div className="flex items-center gap-2">
-                                          <Users className="w-3 h-3 text-gray-500" />
-                                          All
-                                        </div>
-                                      </SelectItem>
-                                      <SelectItem value="segment" className="hover:bg-purple-50 cursor-pointer">
-                                        <div className="flex items-center gap-2">
-                                          <TrendingUp className="w-3 h-3 text-blue-500" />
-                                          Segments
-                                        </div>
-                                      </SelectItem>
-                                      <SelectItem value="investor" className="hover:bg-purple-50 cursor-pointer">
-                                        <div className="flex items-center gap-2">
-                                          <Users className="w-3 h-3 text-purple-500" />
-                                          Investors
-                                        </div>
-                                      </SelectItem>
-                                      <SelectItem value="subscription" className="hover:bg-purple-50 cursor-pointer">
-                                        <div className="flex items-center gap-2">
-                                          <FileText className="w-3 h-3 text-indigo-500" />
-                                          Subscriptions
-                                        </div>
-                                      </SelectItem>
-                                    </SelectContent>
-                                  </Select>
-                                </motion.div>
-                              </div>
-                            </motion.div>
-                          )}
+                              <Edit3 className="h-3 w-3" />
+                              {showBulkEdit ? 'Masquer' : 'Afficher'}
+                            </Button>
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              className="h-7 gap-1.5 text-xs text-gray-600 hover:text-gray-900"
+                              onClick={() => setSelectedFiles([])}
+                            >
+                              <X className="h-3 w-3" />
+                              Désélectionner
+                            </Button>
+                          </div>
                         </div>
+
+                        {showBulkEdit && (
+                          <motion.div
+                            initial={{ opacity: 0, height: 0 }}
+                            animate={{ opacity: 1, height: 'auto' }}
+                            exit={{ opacity: 0, height: 0 }}
+                            transition={{ duration: 0.18 }}
+                            className="mt-2 grid grid-cols-1 gap-2 border-t border-gray-200 pt-2 sm:grid-cols-3"
+                          >
+                            <div className="space-y-1">
+                              <Label className="flex items-center gap-1.5 text-[11px] font-medium text-gray-600">
+                                <Folder className="h-3 w-3 text-gray-400" />
+                                Dossier
+                              </Label>
+                              <Select onValueChange={(value) => handleBulkUpdate('folder', value)}>
+                                <SelectTrigger className="h-8 text-xs">
+                                  <SelectValue placeholder="Modifier le dossier…" />
+                                </SelectTrigger>
+                                <SelectContent>
+                                  {availableFolders.map((folder) => (
+                                    <SelectItem key={folder.id} value={folder.path} className="text-xs">
+                                      <div className="flex items-center gap-2">
+                                        <Folder className="h-3 w-3 text-gray-400" />
+                                        {folder.path}
+                                      </div>
+                                    </SelectItem>
+                                  ))}
+                                </SelectContent>
+                              </Select>
+                            </div>
+
+                            <div className="space-y-1">
+                              <Label className="flex items-center gap-1.5 text-[11px] font-medium text-gray-600">
+                                <Languages className="h-3 w-3 text-gray-400" />
+                                Langue
+                              </Label>
+                              <Select onValueChange={(value) => handleBulkUpdate('language', value)}>
+                                <SelectTrigger className="h-8 text-xs">
+                                  <SelectValue placeholder="Modifier la langue…" />
+                                </SelectTrigger>
+                                <SelectContent>
+                                  {availableLanguages.map((lang) => (
+                                    <SelectItem key={lang.value} value={lang.value} className="text-xs">
+                                      <div className="flex items-center gap-2">
+                                        <span>{lang.flag}</span>
+                                        {lang.label}
+                                      </div>
+                                    </SelectItem>
+                                  ))}
+                                </SelectContent>
+                              </Select>
+                            </div>
+
+                            <div className="space-y-1">
+                              <Label className="flex items-center gap-1.5 text-[11px] font-medium text-gray-600">
+                                <Users className="h-3 w-3 text-gray-400" />
+                                Type de ciblage
+                              </Label>
+                              <Select onValueChange={(value) => handleBulkUpdate('targetType', value)}>
+                                <SelectTrigger className="h-8 text-xs">
+                                  <SelectValue placeholder="Modifier le ciblage…" />
+                                </SelectTrigger>
+                                <SelectContent>
+                                  <SelectItem value="all" className="text-xs">
+                                    <div className="flex items-center gap-2"><Users className="h-3 w-3 text-gray-500" />Tous</div>
+                                  </SelectItem>
+                                  <SelectItem value="segment" className="text-xs">
+                                    <div className="flex items-center gap-2"><Users className="h-3 w-3 text-gray-500" />Segments</div>
+                                  </SelectItem>
+                                  <SelectItem value="investor" className="text-xs">
+                                    <div className="flex items-center gap-2"><Users className="h-3 w-3 text-gray-500" />Investisseurs</div>
+                                  </SelectItem>
+                                  <SelectItem value="subscription" className="text-xs">
+                                    <div className="flex items-center gap-2"><FileText className="h-3 w-3 text-gray-500" />Souscriptions</div>
+                                  </SelectItem>
+                                  <SelectItem value="fund" className="text-xs">
+                                    <div className="flex items-center gap-2"><Landmark className="h-3 w-3 text-gray-500" />Fonds</div>
+                                  </SelectItem>
+                                </SelectContent>
+                              </Select>
+                            </div>
+                          </motion.div>
+                        )}
                       </motion.div>
                     )}
                   </AnimatePresence>
@@ -1893,27 +1836,46 @@ export function MassUploadWizard({ isOpen, onClose, existingFolders, inline = fa
                                               ))}
                                             </SelectContent>
                                           </Select>
-                                          {file.folder && (
-                                            <div className="flex items-center gap-1.5">
-                                              <span
-                                                className="inline-flex items-center gap-1 rounded border px-1.5 py-0.5 text-[10px] font-medium"
-                                                style={{ color: '#7a7a7a', borderColor: '#ddd7cc', backgroundColor: '#f5f3ee' }}
-                                              >
-                                                <Lock className="h-2.5 w-2.5" />
-                                                Restriction héritée
-                                              </span>
-                                              <Tooltip>
-                                                <TooltipTrigger asChild>
-                                                  <button type="button" className="text-blue-600 hover:text-blue-700">
-                                                    <Info className="h-3 w-3" />
-                                                  </button>
-                                                </TooltipTrigger>
-                                                <TooltipContent className="max-w-xs">
-                                                  <span className="text-xs">Le dossier porte des restrictions de ciblage. Le document en hérite par défaut.</span>
-                                                </TooltipContent>
-                                              </Tooltip>
-                                            </div>
-                                          )}
+                                          {file.folder && (() => {
+                                            const restriction = getInheritedRestriction(file.folder);
+                                            if (!restriction.fund && !restriction.segment) return null;
+                                            return (
+                                              <div className="flex flex-wrap items-center gap-1">
+                                                {restriction.fund && (
+                                                  <Tooltip>
+                                                    <TooltipTrigger asChild>
+                                                      <span
+                                                        className="inline-flex items-center gap-1 rounded-full border px-2 py-0.5 text-[10px] font-medium"
+                                                        style={{ color: '#7a7a7a', borderColor: '#ddd7cc', backgroundColor: '#f5f3ee' }}
+                                                      >
+                                                        <Landmark className="h-2.5 w-2.5" />
+                                                        {restriction.fund}
+                                                      </span>
+                                                    </TooltipTrigger>
+                                                    <TooltipContent>
+                                                      <span className="text-xs">Restriction de fonds héritée du dossier</span>
+                                                    </TooltipContent>
+                                                  </Tooltip>
+                                                )}
+                                                {restriction.segment && (
+                                                  <Tooltip>
+                                                    <TooltipTrigger asChild>
+                                                      <span
+                                                        className="inline-flex items-center gap-1 rounded-full border px-2 py-0.5 text-[10px] font-medium"
+                                                        style={{ color: '#7a7a7a', borderColor: '#ddd7cc', backgroundColor: '#f5f3ee' }}
+                                                      >
+                                                        <Users className="h-2.5 w-2.5" />
+                                                        {restriction.segment}
+                                                      </span>
+                                                    </TooltipTrigger>
+                                                    <TooltipContent>
+                                                      <span className="text-xs">Restriction de segment héritée du dossier</span>
+                                                    </TooltipContent>
+                                                  </Tooltip>
+                                                )}
+                                              </div>
+                                            );
+                                          })()}
                                         </div>
                                       </td>
 
