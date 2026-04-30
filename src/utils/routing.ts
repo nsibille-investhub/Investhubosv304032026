@@ -6,8 +6,9 @@ export type Page =
   | 'subscriptions' 
   | 'monitoring' 
   | 'dossiers' 
-  | 'tracking' 
+  | 'tracking'
   | 'birdview'
+  | 'validation'
   | 'investors'
   | 'partners'
   | 'retrocessions'
@@ -62,6 +63,7 @@ const PAGE_TO_PATH: Record<Page, string> = {
   'dossiers': '/dossiers',
   'tracking': '/tracking',
   'birdview': '/birdview',
+  'validation': '/validation',
   'investors': '/investors',
   'partners': '/partners',
   'retrocessions': '/retrocessions',

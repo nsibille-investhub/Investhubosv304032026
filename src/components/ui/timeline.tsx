@@ -12,7 +12,6 @@ import {
 import { Button } from './button';
 import { Input } from './input';
 import { Separator } from './separator';
-import { Avatar, AvatarFallback } from './avatar';
 import {
   Select,
   SelectContent,
@@ -22,6 +21,7 @@ import {
 } from './select';
 import { DatePicker } from './date-picker';
 import { cn } from './utils';
+import { UserCell } from '../UserCell';
 import { useTranslation, type Language } from '../../utils/languageContext';
 
 // ---------------------------------------------------------------------------
@@ -126,12 +126,6 @@ export interface TimelineProps<TType extends string = string> {
 // ---------------------------------------------------------------------------
 // Helpers
 // ---------------------------------------------------------------------------
-
-const getInitials = (name: string) => {
-  const parts = name.trim().split(/\s+/);
-  if (parts.length >= 2) return (parts[0][0] + parts[1][0]).toUpperCase();
-  return name.substring(0, 2).toUpperCase();
-};
 
 const localeFor = (lang: Language) => (lang === 'en' ? 'en-US' : 'fr-FR');
 
@@ -720,22 +714,12 @@ export function Timeline<TType extends string = string>({
                           </div>
 
                           {event.actorName && (
-                            <div className="mt-1.5 flex items-center gap-2 min-w-0">
-                              <Avatar className="size-6">
-                                <AvatarFallback className="text-[10px] font-semibold text-primary-foreground bg-primary">
-                                  {getInitials(event.actorName)}
-                                </AvatarFallback>
-                              </Avatar>
-                              <div className="flex flex-col min-w-0">
-                                <span className="text-sm text-foreground truncate">
-                                  {event.actorName}
-                                </span>
-                                {event.actorSublabel && (
-                                  <span className="text-[11px] text-muted-foreground truncate">
-                                    {event.actorSublabel}
-                                  </span>
-                                )}
-                              </div>
+                            <div className="mt-1.5">
+                              <UserCell
+                                name={event.actorName}
+                                sublabel={event.actorSublabel}
+                                size="sm"
+                              />
                             </div>
                           )}
 

@@ -33,7 +33,7 @@ export function ModernSidebar({ expanded, onToggle, currentPage = 'entities', on
     partenaires: currentPage === 'partners' || currentPage === 'settings-conventions' || currentPage === 'retrocessions',
     participations: false,
     fundlife: false,
-    dataroom: currentPage === 'documents' || currentPage === 'tracking' || currentPage === 'birdview',
+    dataroom: currentPage === 'documents' || currentPage === 'tracking' || currentPage === 'birdview' || currentPage === 'validation',
     portails: currentPage === 'events' || currentPage === 'news' || currentPage === 'datahub',
     communications: false,
     settings: currentPage?.startsWith('settings-') || false,
@@ -70,7 +70,7 @@ export function ModernSidebar({ expanded, onToggle, currentPage = 'entities', on
       partenaires: currentPage === 'partners' || currentPage === 'settings-conventions' || currentPage === 'retrocessions',
       participations: false,
       fundlife: false,
-      dataroom: currentPage === 'documents' || currentPage === 'tracking' || currentPage === 'birdview',
+      dataroom: currentPage === 'documents' || currentPage === 'tracking' || currentPage === 'birdview' || currentPage === 'validation',
       portails: currentPage === 'events' || currentPage === 'news' || currentPage === 'datahub',
       communications: false,
       settings: currentPage?.startsWith('settings-') || false,
@@ -327,6 +327,13 @@ export function ModernSidebar({ expanded, onToggle, currentPage = 'entities', on
                 expanded={expanded}
                 isActive={currentPage === 'birdview'}
                 onClick={() => onPageChange?.('birdview')}
+              />
+              <SubMenuItem
+                icon={icons.FileCheck}
+                label={t('sidebar.submenu.validation')}
+                expanded={expanded}
+                isActive={currentPage === 'validation'}
+                onClick={() => onPageChange?.('validation')}
               />
             </MenuItem>
 
