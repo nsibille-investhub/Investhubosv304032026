@@ -587,7 +587,9 @@
         "originFolderTitle": "Documents will be filed in the origin folder",
         "originFolderBody": "By default, your documents will land in \"{{name}}\". You can override the folder individually on the next step.",
         "originSpaceTitle": "Documents will be filed in the origin space",
-        "originSpaceBody": "By default, your documents will land at the root of the \"{{name}}\" space. You can pick a sub-folder on the next step."
+        "originSpaceBody": "By default, your documents will land at the root of the \"{{name}}\" space. You can pick a sub-folder on the next step.",
+        "originResetCta": "Reset the default folder",
+        "originResetToast": "Default folder cleared — documents will need to be filed manually"
       },
       "spaceHeader": {
         "backToSpaces": "Back to spaces",

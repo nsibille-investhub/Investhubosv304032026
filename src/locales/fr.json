@@ -587,7 +587,9 @@
         "originFolderTitle": "Les documents seront classés dans le dossier d'origine",
         "originFolderBody": "Par défaut, vos documents seront positionnés dans « {{name}} ». Vous pourrez modifier le dossier individuellement à l'étape suivante.",
         "originSpaceTitle": "Les documents seront classés dans l'espace d'origine",
-        "originSpaceBody": "Par défaut, vos documents seront positionnés à la racine de l'espace « {{name}} ». Vous pourrez choisir un sous-dossier à l'étape suivante."
+        "originSpaceBody": "Par défaut, vos documents seront positionnés à la racine de l'espace « {{name}} ». Vous pourrez choisir un sous-dossier à l'étape suivante.",
+        "originResetCta": "Réinitialiser le dossier par défaut",
+        "originResetToast": "Dossier par défaut retiré — les documents devront être placés manuellement"
       },
       "spaceHeader": {
         "backToSpaces": "Retour aux espaces",

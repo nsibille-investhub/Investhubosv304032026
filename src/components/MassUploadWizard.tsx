@@ -227,9 +227,13 @@ const availableEmailTemplates = [
 
 export function MassUploadWizard({ isOpen, onClose, existingFolders, inline = false, originContext = null }: MassUploadWizardProps) {
   const { t } = useTranslation();
+  // The user can clear the origin-context prefill from step 1 — this hides the
+  // banner and stops new uploads from being pre-targeted.
+  const [originCleared, setOriginCleared] = useState(false);
+  const effectiveOrigin = originCleared ? null : originContext;
   // Resolve the default folder from origin context (folder path or space root).
-  // No origin (= launched from the spaces root) keeps the folder field empty.
-  const defaultFolder = originContext ? originContext.pathLabel : '';
+  // No origin (= launched from the spaces root, or cleared by the user) keeps the folder field empty.
+  const defaultFolder = effectiveOrigin ? effectiveOrigin.pathLabel : '';
   const [currentStep, setCurrentStep] = useState(1);
   const [uploadedFiles, setUploadedFiles] = useState<UploadedFile[]>([]);
   const [dragActive, setDragActive] = useState(false);
@@ -922,11 +926,11 @@ export function MassUploadWizard({ isOpen, onClose, existingFolders, inline = fa
                   </div>
 
                   {/* Origin hint — shown when launched from a folder or a space (not from spaces root) */}
-                  {originContext && (
+                  {effectiveOrigin && (
                     <motion.div
                       initial={{ opacity: 0, y: -8 }}
                       animate={{ opacity: 1, y: 0 }}
-                      className="flex items-start gap-3 rounded-xl border border-blue-200 bg-gradient-to-r from-blue-50 to-indigo-50 px-4 py-3"
+                      className="relative flex items-start gap-3 rounded-xl border border-blue-200 bg-gradient-to-r from-blue-50 to-indigo-50 px-4 py-3"
                     >
                       <div
                         className="mt-0.5 flex h-8 w-8 shrink-0 items-center justify-center rounded-md text-white"
@@ -934,30 +938,64 @@ export function MassUploadWizard({ isOpen, onClose, existingFolders, inline = fa
                       >
                         <Folder className="h-4 w-4" />
                       </div>
-                      <div className="min-w-0 flex-1">
+                      <div className="min-w-0 flex-1 pr-8">
                         <p className="text-sm font-medium text-blue-900">
-                          {originContext.kind === 'folder'
+                          {effectiveOrigin.kind === 'folder'
                             ? t('ged.dataRoom.massUpload.originFolderTitle')
                             : t('ged.dataRoom.massUpload.originSpaceTitle')}
                         </p>
                         <p className="mt-0.5 text-xs text-blue-700">
-                          {originContext.kind === 'folder'
+                          {effectiveOrigin.kind === 'folder'
                             ? t('ged.dataRoom.massUpload.originFolderBody', {
-                                name: originContext.name,
+                                name: effectiveOrigin.name,
                               })
                             : t('ged.dataRoom.massUpload.originSpaceBody', {
-                                name: originContext.name,
+                                name: effectiveOrigin.name,
                               })}
                         </p>
-                        <code
-                          className="mt-1 inline-block rounded bg-white/70 px-1.5 py-0.5 font-mono text-[11px] text-blue-900"
-                          title={originContext.pathLabel}
-                        >
-                          {originContext.kind === 'folder'
-                            ? originContext.pathLabel
-                            : `${originContext.name} / —`}
-                        </code>
+                        <div className="mt-1.5 flex flex-wrap items-center gap-2">
+                          <code
+                            className="inline-block rounded bg-white/70 px-1.5 py-0.5 font-mono text-[11px] text-blue-900"
+                            title={effectiveOrigin.pathLabel}
+                          >
+                            {effectiveOrigin.kind === 'folder'
+                              ? effectiveOrigin.pathLabel
+                              : `${effectiveOrigin.name} / —`}
+                          </code>
+                          <button
+                            type="button"
+                            onClick={() => {
+                              setOriginCleared(true);
+                              setUploadedFiles((prev) =>
+                                prev.map((f) => ({ ...f, folder: '' })),
+                              );
+                              toast.info(
+                                t('ged.dataRoom.massUpload.originResetToast'),
+                              );
+                            }}
+                            className="inline-flex items-center gap-1 text-[11px] font-medium text-blue-700 underline-offset-2 hover:text-blue-900 hover:underline"
+                          >
+                            <X className="h-3 w-3" />
+                            {t('ged.dataRoom.massUpload.originResetCta')}
+                          </button>
+                        </div>
                       </div>
+                      <button
+                        type="button"
+                        aria-label={t('ged.dataRoom.massUpload.originResetCta')}
+                        onClick={() => {
+                          setOriginCleared(true);
+                          setUploadedFiles((prev) =>
+                            prev.map((f) => ({ ...f, folder: '' })),
+                          );
+                          toast.info(
+                            t('ged.dataRoom.massUpload.originResetToast'),
+                          );
+                        }}
+                        className="absolute right-2 top-2 flex h-6 w-6 items-center justify-center rounded-md text-blue-700/70 transition-colors hover:bg-blue-100 hover:text-blue-900"
+                      >
+                        <X className="h-3.5 w-3.5" />
+                      </button>
                     </motion.div>
                   )}
 
