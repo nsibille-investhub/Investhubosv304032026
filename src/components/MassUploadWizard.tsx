@@ -919,7 +919,7 @@ export function MassUploadWizard({ isOpen, onClose, existingFolders, inline = fa
                   initial={{ opacity: 0, x: 20 }}
                   animate={{ opacity: 1, x: 0 }}
                   exit={{ opacity: 0, x: -20 }}
-                  className="space-y-5"
+                  className="mx-auto max-w-3xl space-y-5 py-2"
                 >
                   {/* Origin hint — shown when launched from a folder or a space (not from spaces root) */}
                   {effectiveOrigin && (
