@@ -585,7 +585,7 @@
         "title": "Multi-space mass import",
         "subtitle": "Add documents from the spaces view",
         "originFolderTitle": "Default destination folder",
-        "originFolderBody": "By default, your documents will land in \"{{name}}\". You can override the folder individually on the next step.",
+        "originFolderBody": "By default, your documents will land in the \"{{name}}\" folder, inside the \"{{spaceName}}\" space. You can override the folder individually on the next step.",
         "originSpaceTitle": "Default destination folder",
         "originSpaceBody": "By default, your documents will land at the root of the \"{{name}}\" space. You can pick a sub-folder on the next step.",
         "originResetCta": "Reset the default folder",
