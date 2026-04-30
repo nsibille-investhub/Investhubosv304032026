@@ -1,10 +1,11 @@
 import { useState, useCallback, useRef, useMemo, useEffect } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
-import { 
-  X, 
-  Upload, 
-  Check, 
-  ChevronRight, 
+import {
+  X,
+  Upload,
+  FileUp,
+  Check,
+  ChevronRight,
   ChevronLeft,
   FileText,
   Folder,
@@ -785,17 +786,22 @@ export function MassUploadWizard({ isOpen, onClose, existingFolders, inline = fa
             : 'bg-white rounded-2xl shadow-2xl w-full max-w-7xl max-h-[90vh] overflow-hidden flex flex-col'}
         >
           {/* Header */}
-          <div className="px-6 py-5 border-b border-gray-200 bg-gradient-to-r from-white to-gray-50 flex items-center justify-between">
-            <div className="flex items-center gap-4">
-              <div className="w-12 h-12 bg-gradient-to-br from-[#0066FF] to-[#00C2FF] rounded-xl flex items-center justify-center shadow-lg">
-                <Upload className="w-6 h-6 text-white" />
+          <div className="px-6 py-4 border-b border-gray-200 bg-white flex items-center justify-between">
+            <div className="flex items-center gap-3">
+              <div
+                className="w-10 h-10 rounded-lg flex items-center justify-center"
+                style={{ backgroundColor: '#000E2B' }}
+              >
+                <FileUp className="w-5 h-5 text-white" />
               </div>
               <div>
-                <h2 className="font-semibold text-gray-900">Bulk Document Import</h2>
-                <p className="text-sm text-gray-500">
+                <h2 className="text-base font-semibold text-gray-900 leading-tight">
+                  Import de documents
+                </h2>
+                <p className="text-xs text-gray-500 mt-0.5">
                   {isReviewStep
-                    ? `Document ${currentReviewingDocIndex + 1} of ${uploadedFiles.length}`
-                    : `Step ${deepReview && currentStep > 1 + uploadedFiles.length ? 'final' : currentStep} of ${totalSteps}`
+                    ? `Document ${currentReviewingDocIndex + 1} sur ${uploadedFiles.length}`
+                    : `Étape ${deepReview && currentStep > 1 + uploadedFiles.length ? 'finale' : currentStep} sur ${totalSteps}`
                   }
                 </p>
               </div>
@@ -913,38 +919,23 @@ export function MassUploadWizard({ isOpen, onClose, existingFolders, inline = fa
                   initial={{ opacity: 0, x: 20 }}
                   animate={{ opacity: 1, x: 0 }}
                   exit={{ opacity: 0, x: -20 }}
-                  className="space-y-6"
+                  className="space-y-5"
                 >
-                  <div className="mb-4">
-                    <h3 className="font-semibold text-gray-900 flex items-center gap-2">
-                      <Info className="w-4 h-4 text-blue-600" />
-                      Bulk document upload
-                    </h3>
-                    <p className="text-sm text-gray-500 mt-1">
-                      Upload your documents or enter the information manually
-                    </p>
-                  </div>
-
                   {/* Origin hint — shown when launched from a folder or a space (not from spaces root) */}
                   {effectiveOrigin && (
                     <motion.div
                       initial={{ opacity: 0, y: -8 }}
                       animate={{ opacity: 1, y: 0 }}
-                      className="relative flex items-start gap-3 rounded-xl border border-blue-200 bg-gradient-to-r from-blue-50 to-indigo-50 px-4 py-3"
+                      className="relative flex items-start gap-3 rounded-lg border border-blue-200 bg-blue-50/60 px-4 py-3"
                     >
-                      <div
-                        className="mt-0.5 flex h-8 w-8 shrink-0 items-center justify-center rounded-md text-white"
-                        style={{ backgroundColor: '#000E2B' }}
-                      >
-                        <Folder className="h-4 w-4" />
-                      </div>
-                      <div className="min-w-0 flex-1 pr-8">
-                        <p className="text-sm font-medium text-blue-900">
+                      <Folder className="mt-0.5 h-4 w-4 shrink-0 text-blue-700" />
+                      <div className="min-w-0 flex-1 pr-6">
+                        <p className="text-sm font-medium text-gray-900">
                           {effectiveOrigin.kind === 'folder'
                             ? t('ged.dataRoom.massUpload.originFolderTitle')
                             : t('ged.dataRoom.massUpload.originSpaceTitle')}
                         </p>
-                        <p className="mt-0.5 text-xs text-blue-700">
+                        <p className="mt-0.5 text-xs text-gray-600">
                           {effectiveOrigin.kind === 'folder'
                             ? t('ged.dataRoom.massUpload.originFolderBody', {
                                 name: effectiveOrigin.name,
@@ -955,7 +946,7 @@ export function MassUploadWizard({ isOpen, onClose, existingFolders, inline = fa
                         </p>
                         <div className="mt-1.5 flex flex-wrap items-center gap-2">
                           <code
-                            className="inline-block rounded bg-white/70 px-1.5 py-0.5 font-mono text-[11px] text-blue-900"
+                            className="inline-block rounded bg-white px-1.5 py-0.5 font-mono text-[11px] text-gray-700 border border-gray-200"
                             title={effectiveOrigin.pathLabel}
                           >
                             {effectiveOrigin.kind === 'folder'
@@ -973,7 +964,7 @@ export function MassUploadWizard({ isOpen, onClose, existingFolders, inline = fa
                                 t('ged.dataRoom.massUpload.originResetToast'),
                               );
                             }}
-                            className="inline-flex items-center gap-1 text-[11px] font-medium text-blue-700 underline-offset-2 hover:text-blue-900 hover:underline"
+                            className="inline-flex items-center gap-1 text-[11px] font-medium text-gray-600 underline-offset-2 hover:text-gray-900 hover:underline"
                           >
                             <X className="h-3 w-3" />
                             {t('ged.dataRoom.massUpload.originResetCta')}
@@ -992,100 +983,72 @@ export function MassUploadWizard({ isOpen, onClose, existingFolders, inline = fa
                             t('ged.dataRoom.massUpload.originResetToast'),
                           );
                         }}
-                        className="absolute right-2 top-2 flex h-6 w-6 items-center justify-center rounded-md text-blue-700/70 transition-colors hover:bg-blue-100 hover:text-blue-900"
+                        className="absolute right-2 top-2 flex h-6 w-6 items-center justify-center rounded-md text-gray-500 transition-colors hover:bg-white hover:text-gray-900"
                       >
                         <X className="h-3.5 w-3.5" />
                       </button>
                     </motion.div>
                   )}
 
-                  {/* AI-Powered Document Upload */}
-                  <div className="space-y-3">
-                    <div className="flex items-center gap-2 text-sm font-medium text-gray-700">
-                      <Sparkles className="w-4 h-4 text-purple-600" />
-                      Smart upload
-                    </div>
-                    
-                    <input
-                      ref={fileInputRef}
-                      type="file"
-                      multiple
-                      accept=".pdf,.doc,.docx,.xls,.xlsx,.ppt,.pptx"
-                      onChange={(e) => handleFileUpload(e.target.files)}
-                      className="hidden"
-                    />
-                    
-                    <motion.div
-                      whileHover={{ scale: 1.01 }}
-                      whileTap={{ scale: 0.99 }}
-                      onClick={() => fileInputRef.current?.click()}
-                      onDragEnter={handleDrag}
-                      onDragLeave={handleDrag}
-                      onDragOver={handleDrag}
-                      onDrop={handleDrop}
-                      className={`relative border-2 border-dashed rounded-xl p-8 text-center transition-all cursor-pointer group overflow-hidden ${
-                        dragActive 
-                          ? 'border-purple-500 bg-gradient-to-br from-purple-50 to-blue-50'
-                          : 'border-gray-300 hover:border-purple-500 hover:bg-gradient-to-br hover:from-purple-50 hover:to-blue-50'
-                      }`}
-                    >
-                      {/* Animated background gradient */}
-                      <motion.div
-                        className="absolute inset-0 bg-gradient-to-r from-purple-500/10 via-blue-500/10 to-purple-500/10 opacity-0 group-hover:opacity-100 transition-opacity"
-                        animate={{
-                          x: ['-100%', '100%'],
-                        }}
-                        transition={{
-                          duration: 3,
-                          repeat: Infinity,
-                          ease: 'linear',
-                        }}
-                      />
-                      
-                      <div className="relative z-10">
-                        <motion.div
-                          animate={{ 
-                            y: [0, -5, 0],
-                          }}
-                          transition={{
-                            duration: 2,
-                            repeat: Infinity,
-                            ease: "easeInOut"
-                          }}
-                        >
-                          <Upload className="w-10 h-10 text-gray-400 group-hover:text-purple-600 mx-auto mb-3 transition-colors" />
-                        </motion.div>
-                        <p className="font-medium text-gray-700 group-hover:text-purple-700 transition-colors">
-                          Click to upload your documents
-                        </p>
-                        <p className="text-xs text-gray-500 mt-2 flex items-center gap-1.5 justify-center">
-                          <Sparkles className="w-3.5 h-3.5 text-purple-500" />
-                          AI will automatically pre-fill the fields
-                        </p>
-                        <p className="text-xs text-gray-400 mt-1">PDF, Word, Excel, PowerPoint (max. 50MB)</p>
-                      </div>
-                    </motion.div>
+                  {/* Dropzone */}
+                  <input
+                    ref={fileInputRef}
+                    type="file"
+                    multiple
+                    accept=".pdf,.doc,.docx,.xls,.xlsx,.ppt,.pptx"
+                    onChange={(e) => handleFileUpload(e.target.files)}
+                    className="hidden"
+                  />
+
+                  <div
+                    onClick={() => fileInputRef.current?.click()}
+                    onDragEnter={handleDrag}
+                    onDragLeave={handleDrag}
+                    onDragOver={handleDrag}
+                    onDrop={handleDrop}
+                    className={`flex flex-col items-center justify-center rounded-lg border border-dashed px-6 py-10 text-center transition-colors cursor-pointer ${
+                      dragActive
+                        ? 'border-gray-400 bg-gray-50'
+                        : 'border-gray-300 hover:border-gray-400 hover:bg-gray-50/60'
+                    }`}
+                  >
+                    <Upload className="h-6 w-6 text-gray-400 mb-2" />
+                    <p className="text-sm font-medium text-gray-900">
+                      Choisir un fichier
+                    </p>
+                    <p className="mt-1 text-xs text-gray-500">
+                      50 Mo max
+                    </p>
+                    <p className="mt-2 text-[11px] text-gray-400">
+                      Formats acceptés : PDF, DOC, DOCX, XLS, XLSX, PPT, PPTX
+                    </p>
+                    <p className="mt-2 inline-flex items-center gap-1 text-[11px] text-gray-500">
+                      <Sparkles className="h-3 w-3" />
+                      L'IA pré-remplit automatiquement les champs
+                    </p>
                   </div>
 
                   {/* Deep Review Option */}
                   {uploadedFiles.length > 0 && fileStats.uploaded === fileStats.total && (
                     <motion.div
-                      initial={{ opacity: 0, y: -10 }}
+                      initial={{ opacity: 0, y: -8 }}
                       animate={{ opacity: 1, y: 0 }}
-                      className="p-4 bg-gradient-to-r from-blue-50 to-indigo-50 border border-blue-200 rounded-xl"
+                      className="rounded-lg border border-gray-200 bg-white px-4 py-3"
                     >
                       <div className="flex items-start gap-3">
-                        <Eye className="w-5 h-5 text-blue-600 flex-shrink-0 mt-0.5" />
+                        <Eye className="mt-0.5 h-4 w-4 shrink-0 text-gray-500" />
                         <div className="flex-1">
-                          <div className="flex items-center justify-between mb-2">
-                            <h4 className="font-semibold text-gray-900">Deep review</h4>
+                          <div className="flex items-center justify-between gap-3">
+                            <h4 className="text-sm font-medium text-gray-900">
+                              Revue détaillée
+                            </h4>
                             <Switch
                               checked={deepReview}
                               onCheckedChange={setDeepReview}
                             />
                           </div>
-                          <p className="text-sm text-gray-600">
-                            Examine each document individually with an interactive viewer and adjust the metadata extracted by AI before the final validation.
+                          <p className="mt-1 text-xs text-gray-500">
+                            Examiner chaque document avec son aperçu et ajuster les métadonnées extraites par l'IA avant la validation finale.
                           </p>
                         </div>
                       </div>
@@ -1095,185 +1058,129 @@ export function MassUploadWizard({ isOpen, onClose, existingFolders, inline = fa
                   {/* Info banner during analysis */}
                   {(fileStats.uploading > 0 || fileStats.analyzing > 0) && (
                     <motion.div
-                      initial={{ opacity: 0, y: -10 }}
+                      initial={{ opacity: 0, y: -8 }}
                       animate={{ opacity: 1, y: 0 }}
-                      className="p-4 bg-gradient-to-r from-purple-50 to-blue-50 border border-purple-200 rounded-xl"
+                      className="flex items-start gap-2 rounded-lg border border-gray-200 bg-gray-50 px-3 py-2"
                     >
-                      <div className="flex items-start gap-3">
-                        <motion.div
-                          animate={{ rotate: 360 }}
-                          transition={{ duration: 2, repeat: Infinity, ease: "linear" }}
-                        >
-                          <Sparkles className="w-5 h-5 text-purple-600 flex-shrink-0 mt-0.5" />
-                        </motion.div>
-                        <div className="flex-1">
-                          <h4 className="font-semibold text-gray-900 mb-1">
-                            {fileStats.analyzing > 0 ? 'AI analysis in progress...' : 'Upload in progress...'}
-                          </h4>
-                          <p className="text-sm text-gray-600">
-                            {fileStats.analyzing > 0
-                              ? `AI is analyzing ${fileStats.analyzing} document(s) to automatically pre-fill all fields: name, description, targeting, permissions, tags...`
-                              : `Uploading ${fileStats.uploading} document(s)...`
-                            }
-                          </p>
-                        </div>
+                      <Loader2 className="mt-0.5 h-4 w-4 shrink-0 text-gray-500 animate-spin" />
+                      <div className="min-w-0 flex-1">
+                        <p className="text-sm font-medium text-gray-900">
+                          {fileStats.analyzing > 0
+                            ? 'Analyse IA en cours…'
+                            : 'Upload en cours…'}
+                        </p>
+                        <p className="mt-0.5 text-xs text-gray-500">
+                          {fileStats.analyzing > 0
+                            ? `${fileStats.analyzing} document(s) — l'IA pré-remplit nom, description, ciblage, droits et tags.`
+                            : `${fileStats.uploading} document(s) en cours de transfert.`}
+                        </p>
                       </div>
                     </motion.div>
                   )}
 
-                  {/* Uploaded Files List */}
+                  {/* Uploaded files list */}
                   {uploadedFiles.length > 0 && (
-                    <div className="space-y-3">
+                    <div className="space-y-2">
                       <div className="flex items-center justify-between">
-                        <h4 className="font-medium text-gray-900">Documents ({uploadedFiles.length})</h4>
-                        <div className="flex items-center gap-2">
-                          {fileStats.uploading > 0 && (
-                            <Badge className="bg-blue-100 text-blue-700 border-blue-200">
-                              <Loader2 className="w-3 h-3 mr-1 animate-spin" />
-                              {fileStats.uploading} Upload...
-                            </Badge>
+                        <h4 className="text-sm font-medium text-gray-900">
+                          Fichiers uploadés ({fileStats.uploaded}/{uploadedFiles.length})
+                        </h4>
+                        <button
+                          type="button"
+                          onClick={() =>
+                            setUploadedFiles((prev) =>
+                              prev.filter(
+                                (f) =>
+                                  f.status === 'uploading' ||
+                                  f.status === 'analyzing',
+                              ),
+                            )
+                          }
+                          disabled={uploadedFiles.every(
+                            (f) =>
+                              f.status === 'uploading' ||
+                              f.status === 'analyzing',
                           )}
-                          {fileStats.analyzing > 0 && (
-                            <Badge className="bg-purple-100 text-purple-700 border-purple-200">
-                              <motion.div
-                                animate={{ rotate: 360 }}
-                                transition={{ duration: 2, repeat: Infinity, ease: "linear" }}
-                              >
-                                <Sparkles className="w-3 h-3 mr-1" />
-                              </motion.div>
-                              {fileStats.analyzing} AI Analysis...
-                            </Badge>
-                          )}
-                          {fileStats.uploaded === fileStats.total && fileStats.total > 0 && (
-                            <motion.div
-                              initial={{ scale: 0 }}
-                              animate={{ scale: 1 }}
-                              transition={{ type: "spring", stiffness: 500, damping: 25 }}
-                            >
-                              <Badge className="bg-emerald-100 text-emerald-700 border-emerald-200">
-                                <CheckCircle2 className="w-3 h-3 mr-1" />
-                                All analyzed
-                              </Badge>
-                            </motion.div>
-                          )}
-                        </div>
+                          className="inline-flex items-center gap-1 rounded-md border border-red-200 bg-white px-2 py-1 text-xs font-medium text-red-600 transition-colors hover:bg-red-50 hover:text-red-700 disabled:opacity-40 disabled:hover:bg-white disabled:hover:text-red-600"
+                        >
+                          <Trash2 className="h-3 w-3" />
+                          Tout supprimer
+                        </button>
                       </div>
-                      <div className="space-y-2 max-h-96 overflow-y-auto">
-                        {uploadedFiles.map((file) => (
-                          <motion.div
-                            key={file.id}
-                            initial={{ opacity: 0, y: -10 }}
-                            animate={{ opacity: 1, y: 0 }}
-                            className={`flex items-center gap-3 p-3 rounded-lg border transition-all ${
-                              file.status === 'uploading' 
-                                ? 'bg-blue-50 border-blue-200' 
-                                : file.status === 'analyzing'
-                                ? 'bg-purple-50 border-purple-200'
-                                : file.status === 'uploaded'
-                                ? 'bg-emerald-50 border-emerald-200'
-                                : 'bg-red-50 border-red-200'
-                            }`}
-                          >
-                            {/* Thumbnail or Icon */}
-                            <div className="w-12 h-12 bg-white rounded border border-gray-200 flex items-center justify-center flex-shrink-0 overflow-hidden">
-                              {file.thumbnail ? (
-                                <img src={file.thumbnail} alt="" className="w-full h-full object-cover" />
-                              ) : (
-                                <FileText className="w-6 h-6 text-blue-600" />
-                              )}
-                            </div>
 
-                            {/* File Info */}
-                            <div className="flex-1 min-w-0">
-                              <p className="text-sm font-medium text-gray-900 truncate">{file.name}</p>
-                              <div className="flex items-center gap-2 mt-1">
-                                <span className="text-xs text-gray-500">{file.size}</span>
-                                <span className="text-xs text-gray-300">•</span>
-                                
-                                {/* Status label */}
-                                {file.status === 'uploading' && (
-                                  <span className="text-xs text-blue-700 font-medium flex items-center gap-1">
-                                    <Loader2 className="w-3 h-3 animate-spin" />
-                                    Uploading...
-                                  </span>
-                                )}
-                                {file.status === 'analyzing' && (
-                                  <span className="text-xs text-purple-700 font-medium flex items-center gap-1">
-                                    <motion.div
-                                      animate={{ rotate: 360 }}
-                                      transition={{ duration: 2, repeat: Infinity, ease: "linear" }}
-                                    >
-                                      <Sparkles className="w-3 h-3" />
-                                    </motion.div>
-                                    AI analysis in progress...
-                                  </span>
-                                )}
-                                {file.status === 'uploaded' && (
-                                  <span className="text-xs text-emerald-700 font-medium flex items-center gap-1">
-                                    <CheckCircle2 className="w-3 h-3" />
-                                    Analyzed and ready
-                                  </span>
-                                )}
-                                {file.status === 'error' && (
-                                  <span className="text-xs text-red-700 font-medium flex items-center gap-1">
-                                    <AlertCircle className="w-3 h-3" />
-                                    Error
-                                  </span>
-                                )}
-                              </div>
-                              {file.status === 'uploading' && (
-                                <Progress value={file.progress} className="h-1.5 mt-2" />
-                              )}
-                            </div>
-
-                            {/* Status Icon */}
-                            <div className="flex-shrink-0 flex items-center gap-2">
-                              {file.status === 'uploading' && (
-                                <div className="relative">
-                                  <Loader2 className="w-5 h-5 text-blue-600 animate-spin" />
-                                </div>
-                              )}
-                              {file.status === 'analyzing' && (
-                                <motion.div
-                                  animate={{ 
-                                    rotate: 360,
-                                    scale: [1, 1.2, 1]
-                                  }}
-                                  transition={{ 
-                                    rotate: { duration: 2, repeat: Infinity, ease: "linear" },
-                                    scale: { duration: 1, repeat: Infinity, ease: "easeInOut" }
-                                  }}
-                                >
-                                  <Sparkles className="w-5 h-5 text-purple-600" />
-                                </motion.div>
-                              )}
-                              {file.status === 'uploaded' && (
-                                <motion.div
-                                  initial={{ scale: 0 }}
-                                  animate={{ scale: 1 }}
-                                  transition={{ type: "spring", stiffness: 500, damping: 30 }}
-                                >
-                                  <CheckCircle2 className="w-5 h-5 text-emerald-600" />
-                                </motion.div>
-                              )}
-                              {file.status === 'error' && (
-                                <AlertCircle className="w-5 h-5 text-red-600" />
-                              )}
-
-                              <button
-                                onClick={() => handleRemoveFile(file.id)}
-                                className="p-1.5 hover:bg-white/50 rounded transition-colors"
-                                disabled={file.status === 'uploading' || file.status === 'analyzing'}
+                      <div className="overflow-hidden rounded-lg border border-gray-200 bg-white">
+                        <ul className="divide-y divide-gray-100 max-h-96 overflow-y-auto">
+                          {uploadedFiles.map((file) => {
+                            const ext = file.file.name
+                              .split('.')
+                              .pop()
+                              ?.toUpperCase() ?? 'FILE';
+                            return (
+                              <motion.li
+                                key={file.id}
+                                initial={{ opacity: 0 }}
+                                animate={{ opacity: 1 }}
+                                className="flex items-center gap-3 px-3 py-2.5"
                               >
-                                <Trash2 className={`w-4 h-4 ${
-                                  file.status === 'uploading' || file.status === 'analyzing'
-                                    ? 'text-gray-400 cursor-not-allowed'
-                                    : 'text-red-600'
-                                }`} />
-                              </button>
-                            </div>
-                          </motion.div>
-                        ))}
+                                {/* Icon */}
+                                <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-md bg-gray-100">
+                                  <FileText className="h-4 w-4 text-gray-500" />
+                                </div>
+
+                                {/* Filename + meta */}
+                                <div className="min-w-0 flex-1">
+                                  <div className="flex items-center gap-2 min-w-0">
+                                    <p className="truncate text-sm text-gray-900">
+                                      {file.name}
+                                    </p>
+                                    <Badge
+                                      variant="outline"
+                                      className="shrink-0 px-1.5 py-0 text-[10px] font-medium text-gray-600"
+                                    >
+                                      {ext}
+                                    </Badge>
+                                  </div>
+                                  {file.status === 'uploading' && (
+                                    <Progress
+                                      value={file.progress}
+                                      className="h-1 mt-1.5"
+                                    />
+                                  )}
+                                </div>
+
+                                {/* Right meta */}
+                                <div className="flex shrink-0 items-center gap-2 text-xs text-gray-500">
+                                  <span>{file.size}</span>
+                                  {file.status === 'uploading' && (
+                                    <Loader2 className="h-3.5 w-3.5 animate-spin text-gray-500" />
+                                  )}
+                                  {file.status === 'analyzing' && (
+                                    <Sparkles className="h-3.5 w-3.5 text-gray-500" />
+                                  )}
+                                  {file.status === 'uploaded' && (
+                                    <CheckCircle2 className="h-3.5 w-3.5 text-emerald-600" />
+                                  )}
+                                  {file.status === 'error' && (
+                                    <AlertCircle className="h-3.5 w-3.5 text-red-600" />
+                                  )}
+                                </div>
+
+                                <button
+                                  type="button"
+                                  onClick={() => handleRemoveFile(file.id)}
+                                  disabled={
+                                    file.status === 'uploading' ||
+                                    file.status === 'analyzing'
+                                  }
+                                  className="ml-1 flex h-7 w-7 shrink-0 items-center justify-center rounded-md text-gray-400 transition-colors hover:bg-gray-100 hover:text-red-600 disabled:cursor-not-allowed disabled:hover:bg-transparent disabled:hover:text-gray-300"
+                                  aria-label="Supprimer le fichier"
+                                >
+                                  <Trash2 className="h-3.5 w-3.5" />
+                                </button>
+                              </motion.li>
+                            );
+                          })}
+                        </ul>
                       </div>
                     </div>
                   )}
