@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
 import { DataRoomSpacesView, GlobalSearchHit } from './DataRoomSpacesView';
 import { DataRoomSpaceConfigDialog } from './DataRoomSpaceConfigDialog';
@@ -15,9 +15,11 @@ import { useTranslation } from '../utils/languageContext';
 
 interface DataRoomPageProps {
   onSpaceChange?: (space: DataRoomSpace | null) => void;
+  /** When this number changes, the page goes back to the spaces overview (used by the breadcrumb back). */
+  backToSpacesSignal?: number;
 }
 
-export function DataRoomPage({ onSpaceChange }: DataRoomPageProps) {
+export function DataRoomPage({ onSpaceChange, backToSpacesSignal }: DataRoomPageProps) {
   const { t } = useTranslation();
   const [dataRoomSpaces, setDataRoomSpaces] = useState<DataRoomSpace[]>(mockDataRoomSpaces);
   const [selectedSpace, setSelectedSpace] = useState<DataRoomSpace | null>(null);
@@ -71,6 +73,13 @@ export function DataRoomPage({ onSpaceChange }: DataRoomPageProps) {
       onSpaceChange(null);
     }
   };
+
+  // External back-to-spaces signal (e.g. clicked from the breadcrumb pill).
+  useEffect(() => {
+    if (backToSpacesSignal === undefined || backToSpacesSignal === 0) return;
+    setSelectedSpace(null);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [backToSpacesSignal]);
 
   const handleAddSpace = () => {
     setEditingSpace(null);
@@ -257,15 +266,6 @@ export function DataRoomPage({ onSpaceChange }: DataRoomPageProps) {
           >
             {/* Space header */}
             <div className="px-6 py-3 border-b border-gray-200 bg-white">
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={handleBackToSpaces}
-                className="gap-2 mb-2 h-7 text-xs"
-              >
-                <ArrowLeft className="w-3 h-3" />
-                {t('ged.dataRoom.spaceHeader.backToSpaces')}
-              </Button>
 
               <div className="flex items-center gap-3">
                 <div

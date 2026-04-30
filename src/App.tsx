@@ -146,6 +146,7 @@ export default function App() {
   const [selectedSubscriptionDetail, setSelectedSubscriptionDetail] = useState<Subscription | null>(null);
   const [ecosystemPageOpen, setEcosystemPageOpen] = useState(false);
   const [selectedDataRoomSpace, setSelectedDataRoomSpace] = useState<any | null>(null);
+  const [dataRoomBackSignal, setDataRoomBackSignal] = useState(0);
   const [selectedFundContextId, setSelectedFundContextId] = useState<number | null>(null);
   
   // Debug: Log when selectedSubscriptionDetail changes
@@ -680,12 +681,26 @@ export default function App() {
             className="px-6 py-4 border-b border-gray-100 dark:border-gray-800 bg-white/60 dark:bg-black/60 backdrop-blur-sm"
           >
             <div className="flex items-center gap-2 text-sm">
-              <motion.button 
-                whileHover={{ x: -2 }}
-                className="text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-100 transition-colors p-1.5 hover:bg-gray-100 dark:hover:bg-gray-900 rounded-lg"
-              >
-                <ArrowLeft className="w-4 h-4" />
-              </motion.button>
+              {selectedDataRoomSpace ? (
+                <motion.button
+                  whileHover={{ x: -2 }}
+                  onClick={() => {
+                    setSelectedDataRoomSpace(null);
+                    setDataRoomBackSignal((n) => n + 1);
+                  }}
+                  className="inline-flex items-center gap-1.5 rounded-lg border border-gray-200 bg-white px-2.5 py-1 text-xs font-medium text-gray-700 transition-colors hover:bg-gray-50 hover:text-gray-900 dark:border-gray-800 dark:bg-gray-950 dark:text-gray-300 dark:hover:bg-gray-900"
+                >
+                  <ArrowLeft className="w-3.5 h-3.5" />
+                  {t('ged.dataRoom.spaceHeader.backToSpaces')}
+                </motion.button>
+              ) : (
+                <motion.button
+                  whileHover={{ x: -2 }}
+                  className="text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-100 transition-colors p-1.5 hover:bg-gray-100 dark:hover:bg-gray-900 rounded-lg"
+                >
+                  <ArrowLeft className="w-4 h-4" />
+                </motion.button>
+              )}
               <span className="text-gray-400 dark:text-gray-500">{t('breadcrumb.investhubOs')}</span>
               <span className="text-gray-300 dark:text-gray-700">/</span>
               {currentPage === 'entities' ? (
@@ -1688,7 +1703,10 @@ export default function App() {
           
           {currentPage === 'documents' && (
             <div className="flex-1 flex flex-col overflow-hidden">
-              <DataRoomPage onSpaceChange={(space) => setSelectedDataRoomSpace(space)} />
+              <DataRoomPage
+                onSpaceChange={(space) => setSelectedDataRoomSpace(space)}
+                backToSpacesSignal={dataRoomBackSignal}
+              />
             </div>
           )}
           
