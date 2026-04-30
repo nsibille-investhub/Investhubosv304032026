@@ -146,6 +146,7 @@ export default function App() {
   const [selectedSubscriptionDetail, setSelectedSubscriptionDetail] = useState<Subscription | null>(null);
   const [ecosystemPageOpen, setEcosystemPageOpen] = useState(false);
   const [selectedDataRoomSpace, setSelectedDataRoomSpace] = useState<any | null>(null);
+  const [dataRoomMassUploadOpen, setDataRoomMassUploadOpen] = useState(false);
   const [dataRoomBackSignal, setDataRoomBackSignal] = useState(0);
   const [selectedFundContextId, setSelectedFundContextId] = useState<number | null>(null);
   
@@ -681,11 +682,12 @@ export default function App() {
             className="px-6 py-4 border-b border-gray-100 dark:border-gray-800 bg-white/60 dark:bg-black/60 backdrop-blur-sm"
           >
             <div className="flex items-center gap-2 text-sm">
-              {selectedDataRoomSpace ? (
+              {selectedDataRoomSpace || dataRoomMassUploadOpen ? (
                 <motion.button
                   whileHover={{ x: -2 }}
                   onClick={() => {
                     setSelectedDataRoomSpace(null);
+                    setDataRoomMassUploadOpen(false);
                     setDataRoomBackSignal((n) => n + 1);
                   }}
                   className="inline-flex items-center gap-1.5 rounded-lg border border-gray-200 bg-white px-2.5 py-1 text-xs font-medium text-gray-700 transition-colors hover:bg-gray-50 hover:text-gray-900 dark:border-gray-800 dark:bg-gray-950 dark:text-gray-300 dark:hover:bg-gray-900"
@@ -854,6 +856,12 @@ export default function App() {
                   <span className="text-gray-400 dark:text-gray-500">{t('breadcrumb.dataRoom')}</span>
                   <span className="text-gray-300 dark:text-gray-700">/</span>
                   <span className="text-gray-900 dark:text-gray-100 font-medium">{selectedDataRoomSpace.name}</span>
+                </>
+              ) : dataRoomMassUploadOpen ? (
+                <>
+                  <span className="text-gray-400 dark:text-gray-500">{t('breadcrumb.dataRoom')}</span>
+                  <span className="text-gray-300 dark:text-gray-700">/</span>
+                  <span className="text-gray-900 dark:text-gray-100 font-medium">{t('ged.dataRoom.massUpload.title')}</span>
                 </>
               ) : (
                 <>
@@ -1705,6 +1713,7 @@ export default function App() {
             <div className="flex-1 flex flex-col overflow-hidden">
               <DataRoomPage
                 onSpaceChange={(space) => setSelectedDataRoomSpace(space)}
+                onMassUploadChange={setDataRoomMassUploadOpen}
                 backToSpacesSignal={dataRoomBackSignal}
               />
             </div>

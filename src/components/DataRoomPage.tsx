@@ -7,7 +7,7 @@ import { DataRoomSpace, mockDataRoomSpaces } from '../utils/dataRoomSpacesData';
 import { DocumentsPage } from './DocumentsPage';
 import { BirdViewPage } from './BirdViewPage';
 import { toast } from 'sonner';
-import { ArrowLeft, Folder, Users, Layers3, Landmark } from 'lucide-react';
+import { Folder, Users, Layers3, Landmark } from 'lucide-react';
 import { Button } from './ui/button';
 import { MassUploadWizard } from './MassUploadWizard';
 import { getTreeForSpace, TreeNode } from '../utils/dataRoomTreeData';
@@ -15,11 +15,13 @@ import { useTranslation } from '../utils/languageContext';
 
 interface DataRoomPageProps {
   onSpaceChange?: (space: DataRoomSpace | null) => void;
+  /** Notifies the host when the multi-space mass-upload wizard opens/closes. */
+  onMassUploadChange?: (open: boolean) => void;
   /** When this number changes, the page goes back to the spaces overview (used by the breadcrumb back). */
   backToSpacesSignal?: number;
 }
 
-export function DataRoomPage({ onSpaceChange, backToSpacesSignal }: DataRoomPageProps) {
+export function DataRoomPage({ onSpaceChange, onMassUploadChange, backToSpacesSignal }: DataRoomPageProps) {
   const { t } = useTranslation();
   const [dataRoomSpaces, setDataRoomSpaces] = useState<DataRoomSpace[]>(mockDataRoomSpaces);
   const [selectedSpace, setSelectedSpace] = useState<DataRoomSpace | null>(null);
@@ -78,8 +80,16 @@ export function DataRoomPage({ onSpaceChange, backToSpacesSignal }: DataRoomPage
   useEffect(() => {
     if (backToSpacesSignal === undefined || backToSpacesSignal === 0) return;
     setSelectedSpace(null);
+    setShowMassUploadWizard(false);
+    onMassUploadChange?.(false);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [backToSpacesSignal]);
+
+  // Notify the host whenever the multi-space mass-upload wizard opens/closes.
+  useEffect(() => {
+    onMassUploadChange?.(showMassUploadWizard);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [showMassUploadWizard]);
 
   const handleAddSpace = () => {
     setEditingSpace(null);
@@ -205,24 +215,12 @@ export function DataRoomPage({ onSpaceChange, backToSpacesSignal }: DataRoomPage
             transition={{ duration: 0.3 }}
             className="flex-1 flex flex-col overflow-hidden"
           >
-            <div className="px-6 py-4 border-b border-gray-200 bg-white">
-              <div className="flex items-center gap-3">
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={() => setShowMassUploadWizard(false)}
-                  className="gap-2"
-                >
-                  <ArrowLeft className="w-4 h-4" />
-                  {t('ged.dataRoom.massUpload.backToSpaces')}
-                </Button>
-                <div className="h-4 w-px bg-gray-300" />
-                <div>
-                  <h2 className="font-semibold text-gray-900">{t('ged.dataRoom.massUpload.title')}</h2>
-                  <p className="text-xs text-gray-500">
-                    {t('ged.dataRoom.massUpload.subtitle')}
-                  </p>
-                </div>
+            <div className="px-6 py-3 border-b border-gray-200 bg-white">
+              <div>
+                <h2 className="text-sm font-semibold text-gray-900">{t('ged.dataRoom.massUpload.title')}</h2>
+                <p className="text-xs text-gray-500 mt-0.5">
+                  {t('ged.dataRoom.massUpload.subtitle')}
+                </p>
               </div>
             </div>
 
