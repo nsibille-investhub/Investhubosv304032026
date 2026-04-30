@@ -786,19 +786,19 @@ export function MassUploadWizard({ isOpen, onClose, existingFolders, inline = fa
             : 'bg-white rounded-2xl shadow-2xl w-full max-w-7xl max-h-[90vh] overflow-hidden flex flex-col'}
         >
           {/* Header */}
-          <div className="px-6 py-4 border-b border-gray-200 bg-white flex items-center justify-between">
-            <div className="flex items-center gap-3">
+          <div className="px-5 py-3 border-b border-gray-200 bg-white flex items-center justify-between">
+            <div className="flex items-center gap-2.5">
               <div
-                className="w-10 h-10 rounded-lg flex items-center justify-center"
+                className="w-7 h-7 rounded-md flex items-center justify-center"
                 style={{ backgroundColor: '#000E2B' }}
               >
-                <FileUp className="w-5 h-5 text-white" />
+                <FileUp className="w-3.5 h-3.5 text-white" />
               </div>
               <div>
-                <h2 className="text-base font-semibold text-gray-900 leading-tight">
+                <h2 className="text-sm font-semibold text-gray-900 leading-tight">
                   Import de documents
                 </h2>
-                <p className="text-xs text-gray-500 mt-0.5">
+                <p className="text-[11px] text-gray-500 mt-0.5">
                   {isReviewStep
                     ? `Document ${currentReviewingDocIndex + 1} sur ${uploadedFiles.length}`
                     : `Étape ${deepReview && currentStep > 1 + uploadedFiles.length ? 'finale' : currentStep} sur ${totalSteps}`
@@ -831,7 +831,7 @@ export function MassUploadWizard({ isOpen, onClose, existingFolders, inline = fa
                     <div className="flex flex-col items-center flex-1">
                       <motion.div
                         animate={{
-                          backgroundColor: currentStep >= step.num ? '#0066FF' : '#E5E7EB'
+                          backgroundColor: currentStep >= step.num ? '#000E2B' : '#E5E7EB'
                         }}
                         className={`w-9 h-9 rounded-full flex items-center justify-center ${
                           currentStep >= step.num ? 'text-white' : 'text-gray-400'
@@ -847,7 +847,7 @@ export function MassUploadWizard({ isOpen, onClose, existingFolders, inline = fa
                     </div>
                     {idx < 1 && (
                       <div className={`h-px flex-1 mx-2 ${
-                        currentStep > step.num ? 'bg-[#0066FF]' : 'bg-gray-200'
+                        currentStep > step.num ? 'bg-[#000E2B]' : 'bg-gray-200'
                       }`} />
                     )}
                   </div>
@@ -871,7 +871,7 @@ export function MassUploadWizard({ isOpen, onClose, existingFolders, inline = fa
                       <div className="flex flex-col items-center flex-1">
                         <motion.div
                           animate={{
-                            backgroundColor: isActive || isCompleted ? '#0066FF' : '#E5E7EB'
+                            backgroundColor: isActive || isCompleted ? '#000E2B' : '#E5E7EB'
                           }}
                           className={`w-9 h-9 rounded-full flex items-center justify-center ${
                             isActive || isCompleted ? 'text-white' : 'text-gray-400'
@@ -894,7 +894,7 @@ export function MassUploadWizard({ isOpen, onClose, existingFolders, inline = fa
                         <div className={`h-px flex-1 mx-2 transition-colors ${
                           (step.num === 1 && currentStep > 1) ||
                           (step.num === 2 && currentStep > 1 + uploadedFiles.length)
-                            ? 'bg-[#0066FF]'
+                            ? 'bg-[#000E2B]'
                             : 'bg-gray-200'
                         }`} />
                       )}
