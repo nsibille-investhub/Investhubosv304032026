@@ -770,6 +770,65 @@ export function ValidationPage({ onBack }: ValidationPageProps) {
 }
 
 // ---------------------------------------------------------------------------
+// Notification line — small inline indicator under a document/batch name
+// ---------------------------------------------------------------------------
+
+interface NotificationLineProps {
+  notification?: ValidationBatch['notification'];
+  /** Source hint (italic prefix) — e.g. "Issu du lot · " for batch children. */
+  sourceHint?: string;
+  /** When true, silent state caption uses a dedicated wording for documents. */
+  context?: 'document' | 'batch';
+}
+
+function NotificationLine({
+  notification,
+  sourceHint,
+  context = 'document',
+}: NotificationLineProps) {
+  if (!notification) {
+    return (
+      <div className="flex items-center gap-1.5 text-[11px] italic text-gray-500 dark:text-gray-500">
+        <BellOff className="h-3 w-3 text-gray-400" />
+        {sourceHint && <span className="not-italic">{sourceHint}</span>}
+        <span>
+          {context === 'batch'
+            ? 'Aucune notification — validation interne'
+            : 'Aucune notification'}
+        </span>
+      </div>
+    );
+  }
+
+  const recipientCount = notification.recipients.length;
+
+  return (
+    <div className="flex items-center gap-1.5 text-[11px] text-gray-600 dark:text-gray-400">
+      <Bell className="h-3 w-3 text-blue-500" />
+      {sourceHint && (
+        <span className="italic text-gray-500">{sourceHint}</span>
+      )}
+      <span>
+        1 notification → {recipientCount} destinataire
+        {recipientCount > 1 ? 's' : ''}
+      </span>
+      {notification.channel === 'email' && (
+        <Mail className="h-3 w-3 text-gray-400" />
+      )}
+      {notification.channel === 'portal' && (
+        <Globe className="h-3 w-3 text-gray-400" />
+      )}
+      {notification.channel === 'both' && (
+        <>
+          <Mail className="h-3 w-3 text-gray-400" />
+          <Globe className="h-3 w-3 text-gray-400" />
+        </>
+      )}
+    </div>
+  );
+}
+
+// ---------------------------------------------------------------------------
 // Row sub-components
 // ---------------------------------------------------------------------------
 
@@ -803,7 +862,12 @@ function StandaloneDocumentRow({
     >
       <td className="w-8 px-2 py-4" />
       <td className="px-6 py-4">
-        <DocumentNameCell name={doc.name} pathSegments={doc.pathSegments} />
+        <div className="flex flex-col gap-1.5">
+          <DocumentNameCell name={doc.name} pathSegments={doc.pathSegments} />
+          <div className="pl-[44px]">
+            <NotificationLine notification={doc.notification} />
+          </div>
+        </div>
       </td>
       <td className="px-6 py-4">
         <UserCell name={doc.createdBy.name} sublabel={doc.createdBy.role} />
@@ -950,8 +1014,6 @@ function BatchRowGroup({
     return out;
   }, [docs]);
 
-  const recipientCount = batch.notification?.recipients.length ?? 0;
-
   return (
     <>
       {/* Batch header row */}
@@ -1004,35 +1066,11 @@ function BatchRowGroup({
               >
                 {batch.name}
               </span>
-              <div className="mt-1 flex items-center gap-1.5 text-xs text-gray-600 dark:text-gray-400">
-                {isSilent ? (
-                  <>
-                    <BellOff className="h-3 w-3 text-gray-400" />
-                    <span className="italic">
-                      Aucune notification — validation interne
-                    </span>
-                  </>
-                ) : (
-                  <>
-                    <Bell className="h-3 w-3 text-blue-500" />
-                    <span>
-                      1 notification → {recipientCount} destinataire
-                      {recipientCount > 1 ? 's' : ''}
-                    </span>
-                    {batch.notification?.channel === 'portal' && (
-                      <Globe className="h-3 w-3 text-gray-400" />
-                    )}
-                    {batch.notification?.channel === 'email' && (
-                      <Mail className="h-3 w-3 text-gray-400" />
-                    )}
-                    {batch.notification?.channel === 'both' && (
-                      <>
-                        <Mail className="h-3 w-3 text-gray-400" />
-                        <Globe className="h-3 w-3 text-gray-400" />
-                      </>
-                    )}
-                  </>
-                )}
+              <div className="mt-1">
+                <NotificationLine
+                  notification={batch.notification}
+                  context="batch"
+                />
               </div>
             </div>
           </div>
@@ -1151,7 +1189,15 @@ function BatchRowGroup({
               />
             </td>
             <td className="px-6 py-2.5 pl-12">
-              <DocumentNameCell name={doc.name} pathSegments={doc.pathSegments} />
+              <div className="flex flex-col gap-1.5">
+                <DocumentNameCell name={doc.name} pathSegments={doc.pathSegments} />
+                <div className="pl-[44px]">
+                  <NotificationLine
+                    notification={batch.notification}
+                    sourceHint="Issu du lot ·"
+                  />
+                </div>
+              </div>
             </td>
             <td className="px-6 py-2.5">
               <UserCell name={doc.createdBy.name} sublabel={doc.createdBy.role} />

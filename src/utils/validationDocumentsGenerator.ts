@@ -62,6 +62,8 @@ export interface ValidationDocument {
   reviewedAt?: string;
   /** When set, the document is part of a notification batch (atomic validation). */
   batchId?: string;
+  /** Standalone documents may carry their own notification (1 doc → 1 notification). Undefined = silent. */
+  notification?: ValidationNotification;
 }
 
 const seg = (label: string): TargetingTag => ({ kind: 'segment', label });
@@ -263,6 +265,20 @@ const PENDING: Omit<ValidationDocument, 'id' | 'status'>[] = [
     createdAt: '2026-04-27T16:08:00Z',
     targeting: [aud('Tous segments'), aud('Multi-fonds')],
     comment: 'Relecture juridique requise sur le paragraphe risques marché.',
+    notification: {
+      channel: 'email',
+      subject: 'Lettre trimestrielle d\'avril 2026 — InvestHub',
+      greeting: 'Chers investisseurs,',
+      paragraphs: [
+        "Veuillez trouver ci-joint notre **lettre trimestrielle d'avril 2026**, avec un focus sur la conjoncture macro et nos convictions pour le S2 2026.",
+      ],
+      signature: 'Léa Marchand — Investor Relations',
+      recipients: [
+        { name: 'Liste de diffusion HNWI', email: 'lp-hnwi@investhub.io', role: 'Liste de diffusion' },
+        { name: 'Liste de diffusion Institutional', email: 'lp-instit@investhub.io', role: 'Liste de diffusion' },
+        { name: 'Distributeurs partenaires', email: 'partenaires@investhub.io', role: 'Liste de diffusion' },
+      ],
+    },
   },
   {
     name: 'Annexes fiscales 2025 - Family Office Dupont.pdf',
@@ -279,6 +295,18 @@ const PENDING: Omit<ValidationDocument, 'id' | 'status'>[] = [
     createdAt: '2026-04-26T14:22:00Z',
     targeting: [inv('Family Office Dupont')],
     comment: 'Document nominatif - vérifier identité du destinataire.',
+    notification: {
+      channel: 'both',
+      subject: 'Annexes fiscales 2025 — Family Office Dupont',
+      greeting: 'Madame, Monsieur,',
+      paragraphs: [
+        "Vous trouverez en pièce jointe vos **annexes fiscales 2025** ainsi que les IFU correspondants.",
+      ],
+      signature: 'Sophie Bernard — Tax Specialist',
+      recipients: [
+        { name: 'Family Office Dupont', email: 'office@dupont-family.com', role: 'Investisseur' },
+      ],
+    },
   },
   {
     name: 'Term Sheet - Co-investissement Gamma Healthcare.pdf',
@@ -289,6 +317,19 @@ const PENDING: Omit<ValidationDocument, 'id' | 'status'>[] = [
     createdAt: '2026-04-25T08:30:00Z',
     targeting: [seg('UHNWI'), seg('Institutional'), fund('Gamma Healthcare')],
     comment: 'Version 3 - intègre les commentaires du comité d\'investissement.',
+    notification: {
+      channel: 'email',
+      subject: 'Opportunité de co-investissement — Gamma Healthcare',
+      greeting: 'Chers partenaires,',
+      paragraphs: [
+        "Nous vous invitons à étudier la **term sheet** du co-investissement Gamma Healthcare (closing visé fin Q3 2026).",
+      ],
+      signature: 'Maxime Dubois — Investment Director',
+      recipients: [
+        { name: 'LPs UHNWI sélectionnés', email: 'select-uhnwi@investhub.io', role: 'Liste restreinte' },
+        { name: 'Investisseurs institutionnels', email: 'institutional@investhub.io', role: 'Liste restreinte' },
+      ],
+    },
   },
   {
     name: 'Synthèse performance YTD - Tableau de bord.xlsx',
@@ -299,6 +340,7 @@ const PENDING: Omit<ValidationDocument, 'id' | 'status'>[] = [
     createdAt: '2026-04-24T17:50:00Z',
     targeting: [seg('Distributeurs'), aud('Multi-fonds')],
     comment: 'Chiffres consolidés à valider avec le middle-office.',
+    // Pas de notification — usage interne, à publier sur le portail middle-office après validation
   },
 ];
 
@@ -343,6 +385,18 @@ const VALIDATED: Omit<ValidationDocument, 'id' | 'status'>[] = [
     comment: '',
     reviewedBy: 'Hugo Petit',
     reviewedAt: '2026-02-21T11:18:00Z',
+    notification: {
+      channel: 'portal',
+      subject: 'Note de marché — Tendances Private Equity 2026',
+      greeting: 'Chers investisseurs,',
+      paragraphs: [
+        "Notre dernière **note de marché** est disponible sur votre portail LP.",
+      ],
+      signature: 'Léa Marchand — Investor Relations',
+      recipients: [
+        { name: 'Tous les LPs InvestHub', email: 'portail-lp@investhub.io', role: 'Portail LP' },
+      ],
+    },
   },
   {
     name: 'Présentation comité - Roadshow Q2.pptx',
@@ -355,6 +409,7 @@ const VALIDATED: Omit<ValidationDocument, 'id' | 'status'>[] = [
     comment: 'Validé après corrections mineures sur slides 12-14.',
     reviewedBy: 'Sophie Bernard',
     reviewedAt: '2026-04-11T16:42:00Z',
+    // Pas de notification — support de roadshow, partagé en main propre
   },
 ];
 
@@ -370,6 +425,18 @@ const REJECTED: Omit<ValidationDocument, 'id' | 'status'>[] = [
     comment: 'Refusé : termes promotionnels non conformes au cadre AMF, à reformuler.',
     reviewedBy: 'Hugo Petit',
     reviewedAt: '2026-04-21T10:05:00Z',
+    notification: {
+      channel: 'email',
+      subject: '[Refusé] Lancement Delta Tech — communication marketing',
+      greeting: 'Chers partenaires,',
+      paragraphs: [
+        "Découvrez la nouvelle opportunité **Delta Tech** dans notre dossier de présentation.",
+      ],
+      signature: 'Mathilde Garcia — Marketing Manager',
+      recipients: [
+        { name: 'Réseau distributeurs Retail', email: 'retail-network@investhub.io', role: 'Distributeurs' },
+      ],
+    },
   },
 ];
 
