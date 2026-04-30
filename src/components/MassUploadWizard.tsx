@@ -824,21 +824,20 @@ export function MassUploadWizard({ isOpen, onClose, existingFolders, inline = fa
               {!deepReview ? (
                 // Standard 2-step flow
                 [
-                  { num: 1, label: 'Upload & AI Analysis', icon: Sparkles },
+                  { num: 1, label: 'Import', icon: Sparkles },
                   { num: 2, label: 'Configuration', icon: Check }
                 ].map((step, idx) => (
                   <div key={step.num} className="flex items-center flex-1">
                     <div className="flex flex-col items-center flex-1">
                       <motion.div
                         animate={{
-                          scale: currentStep === step.num ? 1.1 : 1,
                           backgroundColor: currentStep >= step.num ? '#0066FF' : '#E5E7EB'
                         }}
-                        className={`w-10 h-10 rounded-full flex items-center justify-center ${
+                        className={`w-9 h-9 rounded-full flex items-center justify-center ${
                           currentStep >= step.num ? 'text-white' : 'text-gray-400'
-                        } shadow-sm mb-2`}
+                        } mb-2`}
                       >
-                        <step.icon className="w-5 h-5" />
+                        <step.icon className="w-4 h-4" />
                       </motion.div>
                       <span className={`text-xs font-medium ${
                         currentStep >= step.num ? 'text-gray-900' : 'text-gray-400'
@@ -847,7 +846,7 @@ export function MassUploadWizard({ isOpen, onClose, existingFolders, inline = fa
                       </span>
                     </div>
                     {idx < 1 && (
-                      <div className={`h-0.5 flex-1 mx-2 ${
+                      <div className={`h-px flex-1 mx-2 ${
                         currentStep > step.num ? 'bg-[#0066FF]' : 'bg-gray-200'
                       }`} />
                     )}
@@ -856,49 +855,46 @@ export function MassUploadWizard({ isOpen, onClose, existingFolders, inline = fa
               ) : (
                 // Deep review flow with 3 steps
                 [
-                  { num: 1, label: 'Upload & Analysis', icon: Sparkles },
-                  { num: 2, label: 'Deep Review', icon: Eye, isRange: true },
-                  { num: 3, label: 'Final Validation', icon: Check }
+                  { num: 1, label: 'Import', icon: Sparkles },
+                  { num: 2, label: 'Revue détaillée', icon: Eye, isRange: true },
+                  { num: 3, label: 'Validation finale', icon: Check }
                 ].map((step, idx) => {
-                  const stepNum = step.num === 2 ? (currentStep > 1 && currentStep <= 1 + uploadedFiles.length ? currentStep : 2) : 
-                                  step.num === 3 ? totalSteps : step.num;
                   const isActive = step.num === 1 ? currentStep === 1 :
                                    step.num === 2 ? isReviewStep :
                                    currentStep === totalSteps;
                   const isCompleted = step.num === 1 ? currentStep > 1 :
                                       step.num === 2 ? currentStep > 1 + uploadedFiles.length :
                                       false;
-                  
+
                   return (
                     <div key={step.num} className="flex items-center flex-1">
                       <div className="flex flex-col items-center flex-1">
                         <motion.div
                           animate={{
-                            scale: isActive ? 1.1 : 1,
                             backgroundColor: isActive || isCompleted ? '#0066FF' : '#E5E7EB'
                           }}
-                          className={`w-10 h-10 rounded-full flex items-center justify-center ${
+                          className={`w-9 h-9 rounded-full flex items-center justify-center ${
                             isActive || isCompleted ? 'text-white' : 'text-gray-400'
-                          } shadow-sm mb-2`}
+                          } mb-2`}
                         >
-                          <step.icon className="w-5 h-5" />
+                          <step.icon className="w-4 h-4" />
                         </motion.div>
                         <span className={`text-xs font-medium text-center ${
                           isActive || isCompleted ? 'text-gray-900' : 'text-gray-400'
                         }`}>
                           {step.label}
                           {step.isRange && isActive && (
-                            <div className="text-[10px] text-blue-600 font-semibold mt-0.5">
+                            <div className="text-[10px] text-gray-600 font-semibold mt-0.5">
                               {currentReviewingDocIndex + 1}/{uploadedFiles.length}
                             </div>
                           )}
                         </span>
                       </div>
                       {idx < 2 && (
-                        <div className={`h-0.5 flex-1 mx-2 transition-colors ${
-                          (step.num === 1 && currentStep > 1) || 
+                        <div className={`h-px flex-1 mx-2 transition-colors ${
+                          (step.num === 1 && currentStep > 1) ||
                           (step.num === 2 && currentStep > 1 + uploadedFiles.length)
-                            ? 'bg-[#0066FF]' 
+                            ? 'bg-[#0066FF]'
                             : 'bg-gray-200'
                         }`} />
                       )}
@@ -919,7 +915,7 @@ export function MassUploadWizard({ isOpen, onClose, existingFolders, inline = fa
                   initial={{ opacity: 0, x: 20 }}
                   animate={{ opacity: 1, x: 0 }}
                   exit={{ opacity: 0, x: -20 }}
-                  className="mx-auto max-w-3xl space-y-5 py-2"
+                  className="space-y-4 py-1"
                 >
                   {/* Origin hint — shown when launched from a folder or a space (not from spaces root) */}
                   {effectiveOrigin && (
@@ -1469,148 +1465,144 @@ export function MassUploadWizard({ isOpen, onClose, existingFolders, inline = fa
                   exit={{ opacity: 0, x: -20 }}
                   className="space-y-4"
                 >
-                  <div className="bg-gradient-to-r from-amber-50 to-orange-50 border border-amber-200 rounded-xl p-4">
-                    <div className="flex items-start gap-3">
-                      <Edit3 className="w-5 h-5 text-amber-600 flex-shrink-0 mt-0.5" />
-                      <div className="flex-1">
-                        <h3 className="font-semibold text-gray-900 mb-1">Document configuration</h3>
-                        <p className="text-sm text-gray-600">
-                          Check and modify the information pre-filled by AI. Click a cell to edit it.
-                        </p>
-                      </div>
-                      <div className="flex items-center gap-2">
-                        <Tooltip>
-                          <TooltipTrigger asChild>
-                            <Button
-                              variant="outline"
-                              size="sm"
-                              onClick={() => {
-                                // Export configuration as CSV
-                                const headers = [
-                                  'Document name',
-                                  'Description',
-                                  'Folder',
-                                  'Language',
-                                  'Restrict to language',
-                                  'Targeting type',
-                                  'Segments',
-                                  'Investors',
-                                  'Subscriptions',
-                                  'Funds',
-                                  'Watermark',
-                                  'Downloadable',
-                                  'Printable',
-                                  'Tags',
-                                  'Notify',
-                                  'Email template',
-                                  'Hide new label',
-                                  'Reporting',
-                                  'Add date',
-                                  'Validation team'
-                                ];
+                  <div className="flex flex-col gap-3 border-b border-gray-200 pb-3 sm:flex-row sm:items-end sm:justify-between">
+                    <div>
+                      <h3 className="text-sm font-semibold text-gray-900">
+                        Configuration des documents
+                      </h3>
+                      <p className="mt-0.5 text-xs text-gray-500">
+                        Vérifiez et ajustez les métadonnées pré-remplies par l'IA. Cliquez sur une cellule pour l'éditer.
+                      </p>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <Tooltip>
+                        <TooltipTrigger asChild>
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            className="h-8 gap-1.5"
+                            onClick={() => {
+                              // Export configuration as CSV
+                              const headers = [
+                                'Document name',
+                                'Description',
+                                'Folder',
+                                'Language',
+                                'Restrict to language',
+                                'Targeting type',
+                                'Segments',
+                                'Investors',
+                                'Subscriptions',
+                                'Funds',
+                                'Watermark',
+                                'Downloadable',
+                                'Printable',
+                                'Tags',
+                                'Notify',
+                                'Email template',
+                                'Hide new label',
+                                'Reporting',
+                                'Add date',
+                                'Validation team'
+                              ];
 
-                                const rows = uploadedFiles.map(file => [
-                                  file.name,
-                                  file.description,
-                                  file.folder,
-                                  file.language,
-                                  file.restrictToLanguage ? 'Yes' : 'No',
-                                  file.targetType,
-                                  file.targetSegments.join(';'),
-                                  file.targetInvestors.join(';'),
-                                  file.targetSubscriptions.join(';'),
-                                  file.targetFunds.join(';'),
-                                  file.watermark ? 'Yes' : 'No',
-                                  file.downloadable ? 'Yes' : 'No',
-                                  file.printable ? 'Yes' : 'No',
-                                  file.tags.join(';'),
-                                  file.notify ? 'Yes' : 'No',
-                                  file.emailTemplate,
-                                  file.hideNewLabel ? 'Yes' : 'No',
-                                  file.reporting ? 'Yes' : 'No',
-                                  file.addDate,
-                                  file.validationTeam.join(';')
-                                ]);
-                                
-                                const csvContent = [
-                                  headers.join(','),
-                                  ...rows.map(row => row.map(cell => 
-                                    typeof cell === 'string' && (cell.includes(',') || cell.includes('"') || cell.includes('\n'))
-                                      ? `"${cell.replace(/"/g, '""')}"`
-                                      : cell
-                                  ).join(','))
-                                ].join('\n');
-                                
-                                const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
-                                const link = document.createElement('a');
-                                link.href = URL.createObjectURL(blob);
-                                link.download = `configuration_documents_${new Date().toISOString().split('T')[0]}.csv`;
-                                link.click();
+                              const rows = uploadedFiles.map(file => [
+                                file.name,
+                                file.description,
+                                file.folder,
+                                file.language,
+                                file.restrictToLanguage ? 'Yes' : 'No',
+                                file.targetType,
+                                file.targetSegments.join(';'),
+                                file.targetInvestors.join(';'),
+                                file.targetSubscriptions.join(';'),
+                                file.targetFunds.join(';'),
+                                file.watermark ? 'Yes' : 'No',
+                                file.downloadable ? 'Yes' : 'No',
+                                file.printable ? 'Yes' : 'No',
+                                file.tags.join(';'),
+                                file.notify ? 'Yes' : 'No',
+                                file.emailTemplate,
+                                file.hideNewLabel ? 'Yes' : 'No',
+                                file.reporting ? 'Yes' : 'No',
+                                file.addDate,
+                                file.validationTeam.join(';')
+                              ]);
 
-                                toast.success('Configuration exported', {
-                                  description: `${uploadedFiles.length} documents exported as CSV`
-                                });
-                              }}
-                              className="gap-2 bg-white hover:bg-amber-50 border-amber-300 hover:border-amber-400"
-                            >
-                              <Download className="w-4 h-4 text-amber-600" />
-                              Export
-                            </Button>
-                          </TooltipTrigger>
-                          <TooltipContent>Export configuration as CSV</TooltipContent>
-                        </Tooltip>
-                        
-                        <Tooltip>
-                          <TooltipTrigger asChild>
-                            <Button
-                              variant="outline"
-                              size="sm"
-                              onClick={() => {
-                                // Create an invisible file input
-                                const input = document.createElement('input');
-                                input.type = 'file';
-                                input.accept = '.csv';
-                                input.onchange = (e: any) => {
-                                  const file = e.target.files?.[0];
-                                  if (!file) return;
+                              const csvContent = [
+                                headers.join(','),
+                                ...rows.map(row => row.map(cell =>
+                                  typeof cell === 'string' && (cell.includes(',') || cell.includes('"') || cell.includes('\n'))
+                                    ? `"${cell.replace(/"/g, '""')}"`
+                                    : cell
+                                ).join(','))
+                              ].join('\n');
 
-                                  const reader = new FileReader();
-                                  reader.onload = (event) => {
-                                    try {
-                                      const text = event.target?.result as string;
-                                      const lines = text.split('\n');
-                                      const headers = lines[0].split(',');
+                              const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+                              const link = document.createElement('a');
+                              link.href = URL.createObjectURL(blob);
+                              link.download = `configuration_documents_${new Date().toISOString().split('T')[0]}.csv`;
+                              link.click();
 
-                                      toast.success('Import in progress...', {
-                                        description: 'Analyzing CSV file'
+                              toast.success('Configuration exportée', {
+                                description: `${uploadedFiles.length} documents exportés en CSV`
+                              });
+                            }}
+                          >
+                            <Download className="h-3.5 w-3.5" />
+                            Exporter
+                          </Button>
+                        </TooltipTrigger>
+                        <TooltipContent>Exporter la configuration en CSV</TooltipContent>
+                      </Tooltip>
+
+                      <Tooltip>
+                        <TooltipTrigger asChild>
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            className="h-8 gap-1.5"
+                            onClick={() => {
+                              // Create an invisible file input
+                              const input = document.createElement('input');
+                              input.type = 'file';
+                              input.accept = '.csv';
+                              input.onchange = (e: any) => {
+                                const file = e.target.files?.[0];
+                                if (!file) return;
+
+                                const reader = new FileReader();
+                                reader.onload = (event) => {
+                                  try {
+                                    const text = event.target?.result as string;
+                                    const lines = text.split('\n');
+
+                                    toast.success('Import en cours…', {
+                                      description: 'Analyse du fichier CSV'
+                                    });
+
+                                    setTimeout(() => {
+                                      toast.success('Configuration importée', {
+                                        description: `${lines.length - 1} lignes détectées. Fonctionnalité complète à venir.`
                                       });
-
-                                      // Simulate processing delay
-                                      setTimeout(() => {
-                                        toast.success('Configuration imported', {
-                                          description: `${lines.length - 1} rows detected. Full functionality coming soon.`
-                                        });
-                                      }, 500);
-
-                                    } catch (error) {
-                                      toast.error('Import error', {
-                                        description: 'The CSV file is invalid'
-                                      });
-                                    }
-                                  };
-                                  reader.readAsText(file);
+                                    }, 500);
+                                  } catch (error) {
+                                    toast.error('Erreur d\'import', {
+                                      description: 'Le fichier CSV est invalide'
+                                    });
+                                  }
                                 };
-                                input.click();
-                              }}
-                              className="gap-2 bg-white hover:bg-amber-50 border-amber-300 hover:border-amber-400"
-                            >
-                              <Upload className="w-4 h-4 text-amber-600" />
-                              Import
-                            </Button>
-                          </TooltipTrigger>
-                          <TooltipContent>Import a CSV configuration</TooltipContent>
-                        </Tooltip>
-                      </div>
+                                reader.readAsText(file);
+                              };
+                              input.click();
+                            }}
+                          >
+                            <Upload className="h-3.5 w-3.5" />
+                            Importer
+                          </Button>
+                        </TooltipTrigger>
+                        <TooltipContent>Importer une configuration CSV</TooltipContent>
+                      </Tooltip>
                     </div>
                   </div>
 
@@ -1802,104 +1794,58 @@ export function MassUploadWizard({ isOpen, onClose, existingFolders, inline = fa
                   <div className="border border-gray-200 rounded-xl overflow-hidden bg-white shadow-sm hover:shadow-md transition-shadow duration-300">
                     <div className="overflow-x-auto scrollbar-thin scrollbar-track-gray-100 scrollbar-thumb-gray-300">
                       <table className="w-full text-sm">
-                        <thead className="bg-gradient-to-r from-gray-50 via-gray-50 to-blue-50/30 sticky top-0 z-20">
-                          <tr>
-                            <th className="px-4 py-4 text-left w-[60px] sticky left-0 bg-gradient-to-r from-gray-50 to-gray-50 z-20 border-b border-gray-200 shadow-[2px_0_4px_-2px_rgba(0,0,0,0.1)]">
+                        <thead className="bg-gray-50 sticky top-0 z-20">
+                          <tr className="text-[11px] font-medium uppercase tracking-wider text-gray-500">
+                            <th className="px-3 py-2.5 text-left w-[44px] sticky left-0 bg-gray-50 z-20 border-b border-gray-200">
                               <Checkbox
                                 checked={selectedFiles.length === uploadedFiles.length && uploadedFiles.length > 0}
                                 onCheckedChange={handleSelectAll}
-                                className="transition-all duration-200 hover:scale-110"
                               />
                             </th>
-                            <th className="px-4 py-4 text-left min-w-[160px] sticky left-[45px] bg-gradient-to-r from-gray-50 to-gray-50 z-20 border-b border-gray-200 shadow-[2px_0_4px_-2px_rgba(0,0,0,0.1)]">
-                              <div className="flex items-center gap-2">
-                                <Eye className="w-4 h-4 text-blue-600" />
-                                <span className="font-semibold text-gray-900">Preview</span>
-                              </div>
+                            <th className="px-3 py-2.5 text-left min-w-[140px] sticky left-[44px] bg-gray-50 z-20 border-b border-gray-200">
+                              <div className="flex items-center gap-1.5"><Eye className="w-3.5 h-3.5 text-gray-400" />Aperçu</div>
                             </th>
-                            <th className="px-4 py-4 text-left min-w-[220px] border-b border-gray-200">
-                              <div className="flex items-center gap-2">
-                                <FileText className="w-4 h-4 text-gray-600" />
-                                <span className="font-semibold text-gray-900">Document name</span>
-                              </div>
+                            <th className="px-3 py-2.5 text-left min-w-[200px] border-b border-gray-200">
+                              <div className="flex items-center gap-1.5"><FileText className="w-3.5 h-3.5 text-gray-400" />Document</div>
                             </th>
-                            <th className="px-4 py-4 text-left min-w-[280px] border-b border-gray-200">
-                              <div className="flex items-center gap-2">
-                                <Edit3 className="w-4 h-4 text-gray-600" />
-                                <span className="font-semibold text-gray-900">Description</span>
-                              </div>
+                            <th className="px-3 py-2.5 text-left min-w-[260px] border-b border-gray-200">
+                              <div className="flex items-center gap-1.5"><Edit3 className="w-3.5 h-3.5 text-gray-400" />Description</div>
                             </th>
-                            <th className="px-4 py-4 text-left min-w-[180px] border-b border-gray-200">
-                              <div className="flex items-center gap-2">
-                                <Folder className="w-4 h-4 text-amber-600" />
-                                <span className="font-semibold text-gray-900">Folder</span>
-                              </div>
+                            <th className="px-3 py-2.5 text-left min-w-[180px] border-b border-gray-200">
+                              <div className="flex items-center gap-1.5"><Folder className="w-3.5 h-3.5 text-gray-400" />Dossier</div>
                             </th>
-                            <th className="px-4 py-4 text-left min-w-[140px] border-b border-gray-200">
-                              <div className="flex items-center gap-2">
-                                <Languages className="w-4 h-4 text-green-600" />
-                                <span className="font-semibold text-gray-900">Language</span>
-                              </div>
+                            <th className="px-3 py-2.5 text-left min-w-[140px] border-b border-gray-200">
+                              <div className="flex items-center gap-1.5"><Languages className="w-3.5 h-3.5 text-gray-400" />Langue</div>
                             </th>
-                            <th className="px-4 py-4 text-left min-w-[240px] border-b border-gray-200">
-                              <div className="flex items-center gap-2">
-                                <Users className="w-4 h-4 text-purple-600" />
-                                <span className="font-semibold text-gray-900">Targeting</span>
-                              </div>
+                            <th className="px-3 py-2.5 text-left min-w-[240px] border-b border-gray-200">
+                              <div className="flex items-center gap-1.5"><Users className="w-3.5 h-3.5 text-gray-400" />Ciblage</div>
                             </th>
-                            <th className="px-4 py-4 text-left min-w-[200px] border-b border-gray-200">
-                              <div className="flex items-center gap-2">
-                                <TrendingUp className="w-4 h-4 text-blue-600" />
-                                <span className="font-semibold text-gray-900">Segments</span>
-                              </div>
+                            <th className="px-3 py-2.5 text-left min-w-[200px] border-b border-gray-200">
+                              <div className="flex items-center gap-1.5"><TrendingUp className="w-3.5 h-3.5 text-gray-400" />Segments</div>
                             </th>
-                            <th className="px-4 py-4 text-left min-w-[200px] border-b border-gray-200">
-                              <div className="flex items-center gap-2">
-                                <Building2 className="w-4 h-4 text-indigo-600" />
-                                <span className="font-semibold text-gray-900">Scope</span>
-                              </div>
+                            <th className="px-3 py-2.5 text-left min-w-[200px] border-b border-gray-200">
+                              <div className="flex items-center gap-1.5"><Building2 className="w-3.5 h-3.5 text-gray-400" />Portée</div>
                             </th>
-                            <th className="px-4 py-4 text-left min-w-[120px] border-b border-gray-200">
-                              <div className="flex items-center gap-2">
-                                <Bell className="w-4 h-4 text-orange-600" />
-                                <span className="font-semibold text-gray-900">Notify</span>
-                              </div>
+                            <th className="px-3 py-2.5 text-left min-w-[120px] border-b border-gray-200">
+                              <div className="flex items-center gap-1.5"><Bell className="w-3.5 h-3.5 text-gray-400" />Notification</div>
                             </th>
-                            <th className="px-4 py-4 text-left min-w-[220px] border-b border-gray-200">
-                              <div className="flex items-center gap-2">
-                                <Mail className="w-4 h-4 text-blue-600" />
-                                <span className="font-semibold text-gray-900">Email template</span>
-                              </div>
+                            <th className="px-3 py-2.5 text-left min-w-[220px] border-b border-gray-200">
+                              <div className="flex items-center gap-1.5"><Mail className="w-3.5 h-3.5 text-gray-400" />Template email</div>
                             </th>
-                            <th className="px-4 py-4 text-left min-w-[140px] border-b border-gray-200">
-                              <div className="flex items-center gap-2">
-                                <EyeOff className="w-4 h-4 text-gray-600" />
-                                <span className="font-semibold text-gray-900">Hide "New"</span>
-                              </div>
+                            <th className="px-3 py-2.5 text-left min-w-[140px] border-b border-gray-200">
+                              <div className="flex items-center gap-1.5"><EyeOff className="w-3.5 h-3.5 text-gray-400" />Masquer « Nouveau »</div>
                             </th>
-                            <th className="px-4 py-4 text-left min-w-[120px] border-b border-gray-200">
-                              <div className="flex items-center gap-2">
-                                <BarChart3 className="w-4 h-4 text-emerald-600" />
-                                <span className="font-semibold text-gray-900">Reporting</span>
-                              </div>
+                            <th className="px-3 py-2.5 text-left min-w-[120px] border-b border-gray-200">
+                              <div className="flex items-center gap-1.5"><BarChart3 className="w-3.5 h-3.5 text-gray-400" />Reporting</div>
                             </th>
-                            <th className="px-4 py-4 text-left min-w-[160px] border-b border-gray-200">
-                              <div className="flex items-center gap-2">
-                                <Calendar className="w-4 h-4 text-violet-600" />
-                                <span className="font-semibold text-gray-900">Add date</span>
-                              </div>
+                            <th className="px-3 py-2.5 text-left min-w-[160px] border-b border-gray-200">
+                              <div className="flex items-center gap-1.5"><Calendar className="w-3.5 h-3.5 text-gray-400" />Date d'ajout</div>
                             </th>
-                            <th className="px-4 py-4 text-left min-w-[200px] border-b border-gray-200">
-                              <div className="flex items-center gap-2">
-                                <Shield className="w-4 h-4 text-red-600" />
-                                <span className="font-semibold text-gray-900">Validation team</span>
-                              </div>
+                            <th className="px-3 py-2.5 text-left min-w-[200px] border-b border-gray-200">
+                              <div className="flex items-center gap-1.5"><Shield className="w-3.5 h-3.5 text-gray-400" />Équipe de validation</div>
                             </th>
-                            <th className="px-4 py-4 text-left min-w-[200px] border-b border-gray-200">
-                              <div className="flex items-center gap-2">
-                                <Sparkles className="w-4 h-4 text-pink-600" />
-                                <span className="font-semibold text-gray-900">Tags</span>
-                              </div>
+                            <th className="px-3 py-2.5 text-left min-w-[200px] border-b border-gray-200">
+                              <div className="flex items-center gap-1.5"><Sparkles className="w-3.5 h-3.5 text-gray-400" />Tags</div>
                             </th>
                           </tr>
                         </thead>
