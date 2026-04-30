@@ -1,5 +1,18 @@
 export type ValidationStatus = 'pending' | 'validated' | 'rejected';
 
+export type TargetingKind =
+  | 'segment'
+  | 'fund'
+  | 'shareClass'
+  | 'investor'
+  | 'subscription'
+  | 'audience';
+
+export interface TargetingTag {
+  kind: TargetingKind;
+  label: string;
+}
+
 export interface ValidationDocument {
   id: number;
   name: string;
@@ -11,12 +24,19 @@ export interface ValidationDocument {
     role: string;
   };
   createdAt: string;
-  targeting: string[];
+  targeting: TargetingTag[];
   comment: string;
   status: ValidationStatus;
   reviewedBy?: string;
   reviewedAt?: string;
 }
+
+const seg = (label: string): TargetingTag => ({ kind: 'segment', label });
+const fund = (label: string): TargetingTag => ({ kind: 'fund', label });
+const share = (label: string): TargetingTag => ({ kind: 'shareClass', label });
+const inv = (label: string): TargetingTag => ({ kind: 'investor', label });
+const sub = (label: string): TargetingTag => ({ kind: 'subscription', label });
+const aud = (label: string): TargetingTag => ({ kind: 'audience', label });
 
 const PENDING: Omit<ValidationDocument, 'id' | 'status'>[] = [
   {
@@ -26,7 +46,7 @@ const PENDING: Omit<ValidationDocument, 'id' | 'status'>[] = [
     pathSegments: ['Investisseurs HNWI', 'Reportings', '2026', 'Q1', 'Alpha Croissance'],
     createdBy: { name: 'Camille Renard', role: 'Asset Manager' },
     createdAt: '2026-04-28T09:42:00Z',
-    targeting: ['HNWI', 'Alpha Croissance', 'Part A'],
+    targeting: [seg('HNWI'), fund('Alpha Croissance'), share('Part A')],
     comment: 'Reporting Q1 prêt à diffuser, à valider avant publication portail LP.',
   },
   {
@@ -36,7 +56,7 @@ const PENDING: Omit<ValidationDocument, 'id' | 'status'>[] = [
     pathSegments: ['Communication', 'Lettres trimestrielles', '2026', 'Avril'],
     createdBy: { name: 'Léa Marchand', role: 'IR Manager' },
     createdAt: '2026-04-27T16:08:00Z',
-    targeting: ['Tous segments', 'Multi-fonds'],
+    targeting: [aud('Tous segments'), aud('Multi-fonds')],
     comment: 'Relecture juridique requise sur le paragraphe risques marché.',
   },
   {
@@ -51,7 +71,7 @@ const PENDING: Omit<ValidationDocument, 'id' | 'status'>[] = [
     ],
     createdBy: { name: 'Antoine Leblanc', role: 'Fund Accountant' },
     createdAt: '2026-04-27T11:15:00Z',
-    targeting: ['Beta Infrastructure', 'Subscription BETA-2024-0421'],
+    targeting: [fund('Beta Infrastructure'), sub('Subscription BETA-2024-0421')],
     comment: 'Montant 1 250 000 € — à valider avant envoi.',
   },
   {
@@ -67,7 +87,7 @@ const PENDING: Omit<ValidationDocument, 'id' | 'status'>[] = [
     ],
     createdBy: { name: 'Sophie Bernard', role: 'Tax Specialist' },
     createdAt: '2026-04-26T14:22:00Z',
-    targeting: ['Family Office Dupont'],
+    targeting: [inv('Family Office Dupont')],
     comment: 'Document nominatif - vérifier identité du destinataire.',
   },
   {
@@ -77,7 +97,7 @@ const PENDING: Omit<ValidationDocument, 'id' | 'status'>[] = [
     pathSegments: ['Deals', 'Pipeline 2026', 'Gamma Healthcare', 'Documentation'],
     createdBy: { name: 'Maxime Dubois', role: 'Investment Director' },
     createdAt: '2026-04-25T08:30:00Z',
-    targeting: ['UHNWI', 'Institutional', 'Gamma Healthcare'],
+    targeting: [seg('UHNWI'), seg('Institutional'), fund('Gamma Healthcare')],
     comment: 'Version 3 - intègre les commentaires du comité d\'investissement.',
   },
   {
@@ -87,7 +107,7 @@ const PENDING: Omit<ValidationDocument, 'id' | 'status'>[] = [
     pathSegments: ['Reporting interne', 'Performances', '2026', 'YTD'],
     createdBy: { name: 'Julien Moreau', role: 'Performance Analyst' },
     createdAt: '2026-04-24T17:50:00Z',
-    targeting: ['Distributeurs', 'Multi-fonds'],
+    targeting: [seg('Distributeurs'), aud('Multi-fonds')],
     comment: 'Chiffres consolidés à valider avec le middle-office.',
   },
 ];
@@ -106,7 +126,7 @@ const VALIDATED: Omit<ValidationDocument, 'id' | 'status'>[] = [
     ],
     createdBy: { name: 'Camille Renard', role: 'Asset Manager' },
     createdAt: '2026-03-12T10:00:00Z',
-    targeting: ['HNWI', 'UHNWI', 'Alpha Croissance'],
+    targeting: [seg('HNWI'), seg('UHNWI'), fund('Alpha Croissance')],
     comment: 'Rapport annuel — validé par le compliance officer.',
     reviewedBy: 'Hugo Petit',
     reviewedAt: '2026-03-15T09:30:00Z',
@@ -118,7 +138,7 @@ const VALIDATED: Omit<ValidationDocument, 'id' | 'status'>[] = [
     pathSegments: ['Communication', 'Notes de marché', '2026', 'PE'],
     createdBy: { name: 'Léa Marchand', role: 'IR Manager' },
     createdAt: '2026-02-20T14:00:00Z',
-    targeting: ['Tous segments'],
+    targeting: [aud('Tous segments')],
     comment: '',
     reviewedBy: 'Hugo Petit',
     reviewedAt: '2026-02-21T11:18:00Z',
@@ -130,7 +150,7 @@ const VALIDATED: Omit<ValidationDocument, 'id' | 'status'>[] = [
     pathSegments: ['Distribution', 'Roadshow', '2026', 'Q2', 'Supports'],
     createdBy: { name: 'Antoine Leblanc', role: 'Distribution Lead' },
     createdAt: '2026-04-10T09:15:00Z',
-    targeting: ['Distributeurs', 'Multi-fonds'],
+    targeting: [seg('Distributeurs'), aud('Multi-fonds')],
     comment: 'Validé après corrections mineures sur slides 12-14.',
     reviewedBy: 'Sophie Bernard',
     reviewedAt: '2026-04-11T16:42:00Z',
@@ -147,7 +167,7 @@ const VALIDATED: Omit<ValidationDocument, 'id' | 'status'>[] = [
     ],
     createdBy: { name: 'Antoine Leblanc', role: 'Fund Accountant' },
     createdAt: '2026-01-18T13:45:00Z',
-    targeting: ['Beta Infrastructure'],
+    targeting: [fund('Beta Infrastructure')],
     comment: '',
     reviewedBy: 'Hugo Petit',
     reviewedAt: '2026-01-19T08:50:00Z',
@@ -162,7 +182,7 @@ const REJECTED: Omit<ValidationDocument, 'id' | 'status'>[] = [
     pathSegments: ['Communication', 'Marketing', '2026', 'Lancements', 'Delta Tech'],
     createdBy: { name: 'Mathilde Garcia', role: 'Marketing Manager' },
     createdAt: '2026-04-20T11:30:00Z',
-    targeting: ['Distributeurs', 'Retail'],
+    targeting: [seg('Distributeurs'), seg('Retail')],
     comment: 'Refusé : termes promotionnels non conformes au cadre AMF, à reformuler.',
     reviewedBy: 'Hugo Petit',
     reviewedAt: '2026-04-21T10:05:00Z',
@@ -174,7 +194,7 @@ const REJECTED: Omit<ValidationDocument, 'id' | 'status'>[] = [
     pathSegments: ['Distribution', 'Partenaires', 'Conventions', '2026'],
     createdBy: { name: 'Julien Moreau', role: 'Legal Counsel' },
     createdAt: '2026-04-15T15:20:00Z',
-    targeting: ['Partenaires distributeurs'],
+    targeting: [seg('Partenaires distributeurs')],
     comment: 'Refusé : version brouillon, manque la grille de rétrocession finalisée.',
     reviewedBy: 'Sophie Bernard',
     reviewedAt: '2026-04-16T09:30:00Z',

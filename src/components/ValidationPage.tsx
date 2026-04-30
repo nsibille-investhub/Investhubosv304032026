@@ -10,6 +10,12 @@ import {
   X,
   ShieldCheck,
   FileText,
+  Tag as TagIcon,
+  Landmark,
+  Layers3,
+  UserRound,
+  Globe,
+  type LucideIcon,
 } from 'lucide-react';
 import { toast } from 'sonner@2.0.3';
 import { Button } from './ui/button';
@@ -32,6 +38,8 @@ import { CommentIndicator } from './CommentIndicator';
 import { useTableSearch } from '../utils/useTableSearch';
 import {
   generateValidationDocuments,
+  TargetingKind,
+  TargetingTag,
   ValidationDocument,
   ValidationStatus,
 } from '../utils/validationDocumentsGenerator';
@@ -74,6 +82,24 @@ const STATUS_VARIANT: Record<
   pending: { label: 'En attente', variant: 'warning' },
   validated: { label: 'Validé', variant: 'success' },
   rejected: { label: 'Rejeté', variant: 'danger' },
+};
+
+const TARGETING_ICON: Record<TargetingKind, LucideIcon> = {
+  segment: TagIcon,
+  fund: Landmark,
+  shareClass: Layers3,
+  investor: UserRound,
+  subscription: FileText,
+  audience: Globe,
+};
+
+const TARGETING_TOOLTIP: Record<TargetingKind, string> = {
+  segment: 'Segment',
+  fund: 'Fonds',
+  shareClass: 'Part / Classe',
+  investor: 'Investisseur',
+  subscription: 'Souscription',
+  audience: 'Audience',
 };
 
 export function ValidationPage({ onBack }: ValidationPageProps) {
@@ -130,7 +156,7 @@ export function ValidationPage({ onBack }: ValidationPageProps) {
 
   const allTargetings = useMemo(() => {
     const set = new Set<string>();
-    documents.forEach((d) => d.targeting.forEach((t) => set.add(t)));
+    documents.forEach((d) => d.targeting.forEach((t) => set.add(t.label)));
     return Array.from(set).sort();
   }, [documents]);
 
@@ -174,7 +200,8 @@ export function ValidationPage({ onBack }: ValidationPageProps) {
       }
       const targetingFilter = activeFilters.targeting;
       if (Array.isArray(targetingFilter) && targetingFilter.length > 0) {
-        const hasAny = targetingFilter.some((t) => doc.targeting.includes(t));
+        const labels = doc.targeting.map((t) => t.label);
+        const hasAny = targetingFilter.some((t) => labels.includes(t));
         if (!hasAny) return false;
       }
       return true;
@@ -315,8 +342,17 @@ export function ValidationPage({ onBack }: ValidationPageProps) {
       sortable: false,
       render: (row) => (
         <div className="flex flex-wrap items-center gap-1">
-          {row.targeting.slice(0, 3).map((t) => (
-            <Tag key={t} label={t} />
+          {row.targeting.slice(0, 3).map((tag) => (
+            <Tooltip key={`${tag.kind}:${tag.label}`}>
+              <TooltipTrigger asChild>
+                <span>
+                  <Tag icon={TARGETING_ICON[tag.kind]} label={tag.label} />
+                </span>
+              </TooltipTrigger>
+              <TooltipContent side="top">
+                <span className="text-xs">{TARGETING_TOOLTIP[tag.kind]}</span>
+              </TooltipContent>
+            </Tooltip>
           ))}
           {row.targeting.length > 3 && (
             <Tooltip>
@@ -327,9 +363,18 @@ export function ValidationPage({ onBack }: ValidationPageProps) {
               </TooltipTrigger>
               <TooltipContent>
                 <div className="flex flex-col gap-1">
-                  {row.targeting.slice(3).map((t) => (
-                    <span key={t} className="text-xs">{t}</span>
-                  ))}
+                  {row.targeting.slice(3).map((tag) => {
+                    const Icon = TARGETING_ICON[tag.kind];
+                    return (
+                      <span
+                        key={`${tag.kind}:${tag.label}`}
+                        className="inline-flex items-center gap-1.5 text-xs"
+                      >
+                        <Icon className="h-3 w-3 opacity-70" />
+                        {tag.label}
+                      </span>
+                    );
+                  })}
                 </div>
               </TooltipContent>
             </Tooltip>
