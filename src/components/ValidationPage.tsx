@@ -8,6 +8,7 @@ import {
   Eye,
   Check,
   X,
+  RotateCcw,
   ShieldCheck,
   FileText,
   Tag as TagIcon,
@@ -279,16 +280,21 @@ export function ValidationPage({ onBack }: ValidationPageProps) {
 
   const updateStatus = (docId: number, status: ValidationStatus) => {
     setDocuments((prev) =>
-      prev.map((d) =>
-        d.id === docId
-          ? {
-              ...d,
-              status,
-              reviewedAt: new Date().toISOString(),
-              reviewedBy: 'Vous',
-            }
-          : d,
-      ),
+      prev.map((d) => {
+        if (d.id !== docId) return d;
+        if (status === 'pending') {
+          const { reviewedAt, reviewedBy, ...rest } = d;
+          void reviewedAt;
+          void reviewedBy;
+          return { ...rest, status };
+        }
+        return {
+          ...d,
+          status,
+          reviewedAt: new Date().toISOString(),
+          reviewedBy: 'Vous',
+        };
+      }),
     );
   };
 
@@ -300,6 +306,11 @@ export function ValidationPage({ onBack }: ValidationPageProps) {
   const handleReject = (doc: ValidationDocument) => {
     updateStatus(doc.id, 'rejected');
     toast.error('Document rejeté', { description: doc.name });
+  };
+
+  const handleResetToPending = (doc: ValidationDocument) => {
+    updateStatus(doc.id, 'pending');
+    toast.info('Document remis en attente', { description: doc.name });
   };
 
   const handleRowClick = (doc: ValidationDocument) => {
@@ -426,6 +437,22 @@ export function ValidationPage({ onBack }: ValidationPageProps) {
             </TooltipTrigger>
             <TooltipContent>Aperçu du document</TooltipContent>
           </Tooltip>
+
+          {row.status === 'validated' && (
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  className="h-8 w-8 p-0 text-amber-600 hover:bg-amber-50 hover:text-amber-700 dark:hover:bg-amber-950"
+                  onClick={() => handleResetToPending(row)}
+                >
+                  <RotateCcw className="h-4 w-4" />
+                </Button>
+              </TooltipTrigger>
+              <TooltipContent>Remettre en attente</TooltipContent>
+            </Tooltip>
+          )}
 
           {row.status !== 'validated' && (
             <Tooltip>
