@@ -21,6 +21,8 @@ import {
   Users,
   TrendingUp,
   Building2,
+  Landmark,
+  Settings,
   Droplet,
   Lock,
   Unlock,
@@ -248,6 +250,8 @@ export function MassUploadWizard({ isOpen, onClose, existingFolders, inline = fa
   const [deepReview, setDeepReview] = useState(false);
   const [currentReviewingDocIndex, setCurrentReviewingDocIndex] = useState(0);
   const [documentZoom, setDocumentZoom] = useState(100);
+  const [step2Page, setStep2Page] = useState(1);
+  const [step2PageSize, setStep2PageSize] = useState(100);
 
   // Extract all available folders
   const availableFolders = useMemo(() => {
@@ -1785,856 +1789,333 @@ export function MassUploadWizard({ isOpen, onClose, existingFolders, inline = fa
                     )}
                   </AnimatePresence>
 
-                  {/* Document count header */}
-                  <div className="flex items-center justify-between">
-                    <h4 className="font-medium text-gray-900">Documents ({uploadedFiles.length})</h4>
-                  </div>
+                  {/* Step 2 — sober configuration table */}
+                  {(() => {
+                    const totalRows = uploadedFiles.length;
+                    const totalPages = Math.max(1, Math.ceil(totalRows / step2PageSize));
+                    const safePage = Math.min(step2Page, totalPages);
+                    const startIndex = (safePage - 1) * step2PageSize;
+                    const pageRows = uploadedFiles.slice(startIndex, startIndex + step2PageSize);
+                    const allSelected = selectedFiles.length === totalRows && totalRows > 0;
+                    return (
+                      <>
+                        <div className="flex items-center justify-end">
+                          <Tooltip>
+                            <TooltipTrigger asChild>
+                              <Button variant="ghost" size="sm" className="h-7 w-7 p-0">
+                                <Settings className="h-3.5 w-3.5 text-gray-500" />
+                              </Button>
+                            </TooltipTrigger>
+                            <TooltipContent>Colonnes affichées</TooltipContent>
+                          </Tooltip>
+                        </div>
 
-                  {/* Editable table - horizontal scroll */}
-                  <div className="border border-gray-200 rounded-xl overflow-hidden bg-white shadow-sm hover:shadow-md transition-shadow duration-300">
-                    <div className="overflow-x-auto scrollbar-thin scrollbar-track-gray-100 scrollbar-thumb-gray-300">
-                      <table className="w-full text-sm">
-                        <thead className="bg-gray-50 sticky top-0 z-20">
-                          <tr className="text-[11px] font-medium uppercase tracking-wider text-gray-500">
-                            <th className="px-3 py-2.5 text-left w-[44px] sticky left-0 bg-gray-50 z-20 border-b border-gray-200">
-                              <Checkbox
-                                checked={selectedFiles.length === uploadedFiles.length && uploadedFiles.length > 0}
-                                onCheckedChange={handleSelectAll}
-                              />
-                            </th>
-                            <th className="px-3 py-2.5 text-left min-w-[140px] sticky left-[44px] bg-gray-50 z-20 border-b border-gray-200">
-                              <div className="flex items-center gap-1.5"><Eye className="w-3.5 h-3.5 text-gray-400" />Aperçu</div>
-                            </th>
-                            <th className="px-3 py-2.5 text-left min-w-[200px] border-b border-gray-200">
-                              <div className="flex items-center gap-1.5"><FileText className="w-3.5 h-3.5 text-gray-400" />Document</div>
-                            </th>
-                            <th className="px-3 py-2.5 text-left min-w-[260px] border-b border-gray-200">
-                              <div className="flex items-center gap-1.5"><Edit3 className="w-3.5 h-3.5 text-gray-400" />Description</div>
-                            </th>
-                            <th className="px-3 py-2.5 text-left min-w-[180px] border-b border-gray-200">
-                              <div className="flex items-center gap-1.5"><Folder className="w-3.5 h-3.5 text-gray-400" />Dossier</div>
-                            </th>
-                            <th className="px-3 py-2.5 text-left min-w-[140px] border-b border-gray-200">
-                              <div className="flex items-center gap-1.5"><Languages className="w-3.5 h-3.5 text-gray-400" />Langue</div>
-                            </th>
-                            <th className="px-3 py-2.5 text-left min-w-[240px] border-b border-gray-200">
-                              <div className="flex items-center gap-1.5"><Users className="w-3.5 h-3.5 text-gray-400" />Ciblage</div>
-                            </th>
-                            <th className="px-3 py-2.5 text-left min-w-[200px] border-b border-gray-200">
-                              <div className="flex items-center gap-1.5"><TrendingUp className="w-3.5 h-3.5 text-gray-400" />Segments</div>
-                            </th>
-                            <th className="px-3 py-2.5 text-left min-w-[200px] border-b border-gray-200">
-                              <div className="flex items-center gap-1.5"><Building2 className="w-3.5 h-3.5 text-gray-400" />Portée</div>
-                            </th>
-                            <th className="px-3 py-2.5 text-left min-w-[120px] border-b border-gray-200">
-                              <div className="flex items-center gap-1.5"><Bell className="w-3.5 h-3.5 text-gray-400" />Notification</div>
-                            </th>
-                            <th className="px-3 py-2.5 text-left min-w-[220px] border-b border-gray-200">
-                              <div className="flex items-center gap-1.5"><Mail className="w-3.5 h-3.5 text-gray-400" />Template email</div>
-                            </th>
-                            <th className="px-3 py-2.5 text-left min-w-[140px] border-b border-gray-200">
-                              <div className="flex items-center gap-1.5"><EyeOff className="w-3.5 h-3.5 text-gray-400" />Masquer « Nouveau »</div>
-                            </th>
-                            <th className="px-3 py-2.5 text-left min-w-[120px] border-b border-gray-200">
-                              <div className="flex items-center gap-1.5"><BarChart3 className="w-3.5 h-3.5 text-gray-400" />Reporting</div>
-                            </th>
-                            <th className="px-3 py-2.5 text-left min-w-[160px] border-b border-gray-200">
-                              <div className="flex items-center gap-1.5"><Calendar className="w-3.5 h-3.5 text-gray-400" />Date d'ajout</div>
-                            </th>
-                            <th className="px-3 py-2.5 text-left min-w-[200px] border-b border-gray-200">
-                              <div className="flex items-center gap-1.5"><Shield className="w-3.5 h-3.5 text-gray-400" />Équipe de validation</div>
-                            </th>
-                            <th className="px-3 py-2.5 text-left min-w-[200px] border-b border-gray-200">
-                              <div className="flex items-center gap-1.5"><Sparkles className="w-3.5 h-3.5 text-gray-400" />Tags</div>
-                            </th>
-                          </tr>
-                        </thead>
-                        <tbody className="divide-y divide-gray-100">
-                          {uploadedFiles.map((file, idx) => {
-                            const isSelected = selectedFiles.includes(file.id);
-                            // Calculate scope dynamically based on targeting type
-                            let lpCount = 0;
-                            let contactCount = 0;
-
-                            if (file.targetType === 'all') {
-                              // All investors
-                              lpCount = availableInvestors.length;
-                              contactCount = availableInvestors.reduce((sum, inv) => sum + inv.contacts.length, 0);
-                            } else if (file.targetType === 'fund') {
-                              // Investors in selected funds (+ segments if selected)
-                              let investorsInFunds = availableInvestors.filter(inv =>
-                                file.targetFunds.includes(inv.fund)
-                              );
-
-                              // If segments are also selected, filter further
-                              if (file.targetSegments.length > 0) {
-                                investorsInFunds = investorsInFunds.filter(inv =>
-                                  file.targetSegments.includes(inv.segment)
-                                );
-                              }
-
-                              lpCount = investorsInFunds.length;
-                              contactCount = investorsInFunds.reduce((sum, inv) => sum + inv.contacts.length, 0);
-                            } else if (file.targetType === 'segment') {
-                              // Investors in selected segments
-                              const investorsInSegments = availableInvestors.filter(inv =>
-                                file.targetSegments.includes(inv.segment)
-                              );
-                              lpCount = investorsInSegments.length;
-                              contactCount = investorsInSegments.reduce((sum, inv) => sum + inv.contacts.length, 0);
-                            } else if (file.targetType === 'investor') {
-                              // Directly selected investors
-                              const selectedInvestors = availableInvestors.filter(inv =>
-                                file.targetInvestors.includes(inv.id)
-                              );
-                              lpCount = selectedInvestors.length;
-                              contactCount = selectedInvestors.reduce((sum, inv) => sum + inv.contacts.length, 0);
-                            } else if (file.targetType === 'subscription') {
-                              // Investors linked to selected subscriptions
-                              const investorsFromSubscriptions = availableSubscriptions
-                                .filter(sub => file.targetSubscriptions.includes(sub.id))
-                                .map(sub => sub.investor);
-                              const uniqueInvestorNames = [...new Set(investorsFromSubscriptions)];
-                              const selectedInvestors = availableInvestors.filter(inv => 
-                                uniqueInvestorNames.includes(inv.name)
-                              );
-                              lpCount = selectedInvestors.length;
-                              contactCount = selectedInvestors.reduce((sum, inv) => sum + inv.contacts.length, 0);
-                            }
-                            
-                            return (
-                            <motion.tr 
-                              key={file.id} 
-                              initial={{ opacity: 0, y: 10 }}
-                              animate={{ opacity: 1, y: 0 }}
-                              transition={{ delay: idx * 0.03 }}
-                              className={`group transition-all duration-200 ${
-                                isSelected 
-                                  ? 'bg-gradient-to-r from-blue-50 via-blue-50/50 to-transparent' 
-                                  : 'hover:bg-gradient-to-r hover:from-gray-50 hover:via-gray-50/30 hover:to-transparent'
-                              }`}
-                            >
-                              {/* Checkbox */}
-                              <td className={`px-4 py-4 sticky left-0 z-10 transition-all duration-200 shadow-[2px_0_4px_-2px_rgba(0,0,0,0.1)] ${
-                                isSelected ? 'bg-blue-50' : 'bg-white group-hover:bg-gray-50'
-                              }`}>
-                                <Checkbox
-                                  checked={isSelected}
-                                  onCheckedChange={(checked) => handleSelectFile(file.id, checked as boolean)}
-                                  className="transition-all duration-200 hover:scale-110"
-                                />
-                              </td>
-
-                              {/* Preview */}
-                              <td className={`px-4 py-4 sticky left-[45px] z-10 transition-all duration-200 shadow-[2px_0_4px_-2px_rgba(0,0,0,0.1)] ${
-                                isSelected ? 'bg-blue-50' : 'bg-white group-hover:bg-gray-50'
-                              }`}>
-                                <motion.button
-                                  whileHover={{ scale: 1.02, y: -2 }}
-                                  whileTap={{ scale: 0.98 }}
-                                  onClick={() => handlePreviewDocument(file)}
-                                  className="flex items-center gap-3 hover:bg-white/80 p-2 rounded-xl transition-all duration-200 hover:shadow-md border border-transparent hover:border-blue-200"
-                                >
-                                  {file.thumbnail ? (
-                                    <div className="relative w-16 h-20 bg-gray-100 rounded-lg border-2 border-gray-200 overflow-hidden shadow-sm hover:shadow-lg transition-all duration-300">
-                                      <img 
-                                        src={file.thumbnail} 
-                                        alt="" 
-                                        className="w-full h-full object-cover"
-                                      />
-                                      <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-black/0 to-black/0 opacity-0 hover:opacity-100 transition-all duration-300 flex items-center justify-center">
-                                        <motion.div
-                                          initial={{ scale: 0 }}
-                                          whileHover={{ scale: 1 }}
-                                          transition={{ type: "spring", stiffness: 400, damping: 17 }}
-                                        >
-                                          <ExternalLink className="w-5 h-5 text-white drop-shadow-lg" />
-                                        </motion.div>
-                                      </div>
-                                    </div>
-                                  ) : (
-                                    <div className="w-16 h-20 bg-gradient-to-br from-blue-50 via-indigo-50 to-purple-50 rounded-lg border-2 border-blue-200 flex items-center justify-center hover:from-blue-100 hover:via-indigo-100 hover:to-purple-100 transition-all duration-300 shadow-sm hover:shadow-md relative overflow-hidden group">
-                                      {/* Animated background shimmer */}
-                                      <motion.div
-                                        className="absolute inset-0 bg-gradient-to-r from-transparent via-white/30 to-transparent"
-                                        animate={{
-                                          x: ['-100%', '100%']
-                                        }}
-                                        transition={{
-                                          duration: 2,
-                                          repeat: Infinity,
-                                          ease: 'linear'
-                                        }}
-                                      />
-                                      <FileText className="w-8 h-8 text-blue-600 relative z-10" />
-                                    </div>
-                                  )}
-                                  <div className="flex flex-col items-start gap-1">
-                                    <Badge className="bg-gradient-to-r from-gray-100 to-gray-50 text-gray-700 border-gray-300 text-xs font-medium shadow-sm">
-                                      <FileText className="w-3 h-3 mr-1" />
-                                      {file.pageCount} pages
-                                    </Badge>
-                                    <motion.div
-                                      initial={{ opacity: 0 }}
-                                      whileHover={{ opacity: 1 }}
-                                      className="flex items-center gap-1 text-xs text-blue-600 font-medium"
-                                    >
-                                      <Eye className="w-3 h-3" />
-                                      <span>Open</span>
-                                    </motion.div>
-                                  </div>
-                                </motion.button>
-                              </td>
-
-                              {/* Name */}
-                              <td className="px-4 py-4">
-                                <Input
-                                  value={file.name}
-                                  onChange={(e) => handleUpdateFile(file.id, 'name', e.target.value)}
-                                  className="text-sm font-medium border-gray-200 focus:border-blue-400 focus:ring-2 focus:ring-blue-100 transition-all duration-200 bg-white hover:bg-gray-50"
-                                  placeholder="Document name..."
-                                />
-                              </td>
-
-                              {/* Description */}
-                              <td className="px-4 py-4">
-                                <Textarea
-                                  value={file.description}
-                                  onChange={(e) => handleUpdateFile(file.id, 'description', e.target.value)}
-                                  className="text-sm min-h-[70px] border-gray-200 focus:border-blue-400 focus:ring-2 focus:ring-blue-100 transition-all duration-200 bg-white hover:bg-gray-50 resize-none"
-                                  rows={3}
-                                  placeholder="Document description..."
-                                />
-                              </td>
-
-                              {/* Folder */}
-                              <td className="px-4 py-4">
-                                <Select
-                                  value={file.folder}
-                                  onValueChange={(value) => handleUpdateFile(file.id, 'folder', value)}
-                                >
-                                  <SelectTrigger className="text-sm border-gray-200 hover:border-amber-300 focus:border-amber-400 focus:ring-2 focus:ring-amber-100 transition-all duration-200 bg-white hover:bg-amber-50/30">
-                                    <SelectValue />
-                                  </SelectTrigger>
-                                  <SelectContent>
-                                    {availableFolders.map((folder) => (
-                                      <SelectItem key={folder.id} value={folder.path} className="hover:bg-amber-50 cursor-pointer">
-                                        <div className="flex items-center gap-2">
-                                          {folder.level > 0 && (
-                                            <span className="text-gray-400" style={{ marginLeft: `${folder.level * 12}px` }}>
-                                              └─
-                                            </span>
-                                          )}
-                                          <Folder className="w-4 h-4 text-amber-500" />
-                                          <span className="font-medium">{folder.name}</span>
-                                        </div>
-                                      </SelectItem>
-                                    ))}
-                                  </SelectContent>
-                                </Select>
-                              </td>
-
-                              {/* Language */}
-                              <td className="px-4 py-4">
-                                <div className="space-y-2.5">
-                                  <Select
-                                    value={file.language}
-                                    onValueChange={(value) => handleUpdateFile(file.id, 'language', value)}
-                                  >
-                                    <SelectTrigger className="text-sm border-gray-200 hover:border-green-300 focus:border-green-400 focus:ring-2 focus:ring-green-100 transition-all duration-200 bg-white hover:bg-green-50/30">
-                                      <SelectValue />
-                                    </SelectTrigger>
-                                    <SelectContent>
-                                      {availableLanguages.map((lang) => (
-                                        <SelectItem key={lang.value} value={lang.value} className="hover:bg-green-50 cursor-pointer">
-                                          <div className="flex items-center gap-2">
-                                            <span className="text-lg">{lang.flag}</span>
-                                            <span className="font-medium">{lang.label}</span>
-                                          </div>
-                                        </SelectItem>
-                                      ))}
-                                    </SelectContent>
-                                  </Select>
-                                  <div className="flex items-center gap-2 p-2 rounded-lg hover:bg-green-50/50 transition-colors duration-200">
-                                    <Switch
-                                      checked={file.restrictToLanguage}
-                                      onCheckedChange={(checked) => handleUpdateFile(file.id, 'restrictToLanguage', checked)}
-                                      className="data-[state=checked]:bg-green-600"
+                        <div className="rounded-lg border border-gray-200 bg-white overflow-hidden">
+                          <div className="overflow-x-auto">
+                            <table className="w-full text-sm">
+                              <thead className="bg-gray-50 border-b border-gray-200">
+                                <tr className="text-[11px] font-medium uppercase tracking-wider text-gray-500">
+                                  <th className="px-3 py-2.5 text-left w-[44px]">
+                                    <Checkbox
+                                      checked={allSelected}
+                                      onCheckedChange={handleSelectAll}
                                     />
-                                    <span className="text-xs text-gray-600 font-medium">Restrict to this language</span>
-                                  </div>
-                                </div>
-                              </td>
+                                  </th>
+                                  <th className="px-3 py-2.5 text-left min-w-[260px]">Document</th>
+                                  <th className="px-3 py-2.5 text-left min-w-[200px]">Dossier</th>
+                                  <th className="px-3 py-2.5 text-left min-w-[280px]">Ciblage</th>
+                                  <th className="px-3 py-2.5 text-left min-w-[220px]">Notification</th>
+                                  <th className="px-3 py-2.5 text-left min-w-[200px]">Équipes de validation</th>
+                                </tr>
+                              </thead>
+                              <tbody className="divide-y divide-gray-100">
+                                {pageRows.map((file) => {
+                                  const ext = file.file.name.split('.').pop()?.toUpperCase() ?? 'FILE';
+                                  const isSelected = selectedFiles.includes(file.id);
+                                  return (
+                                    <tr key={file.id} className="hover:bg-gray-50/40">
+                                      <td className="px-3 py-3 align-top">
+                                        <Checkbox
+                                          checked={isSelected}
+                                          onCheckedChange={() => handleSelectFile(file.id)}
+                                        />
+                                      </td>
 
-                              {/* Targeting - Type + Object merged */}
-                              <td className="px-4 py-4">
-                                <div className="space-y-2.5">
-                                  {/* Targeting type */}
-                                  <Select
-                                    value={file.targetType}
-                                    onValueChange={(value) => {
-                                      handleUpdateFile(file.id, 'targetType', value);
-                                      // Clear segments if switching to investor or subscription
-                                      if (value === 'investor' || value === 'subscription') {
-                                        handleUpdateFile(file.id, 'targetSegments', []);
-                                      }
-                                      // Clear funds if not selecting fund
-                                      if (value !== 'fund') {
-                                        handleUpdateFile(file.id, 'targetFunds', []);
-                                      }
-                                    }}
-                                  >
-                                    <SelectTrigger className="text-sm border-gray-200 hover:border-purple-300 focus:border-purple-400 focus:ring-2 focus:ring-purple-100 transition-all duration-200 bg-white hover:bg-purple-50/30">
-                                      <SelectValue />
-                                    </SelectTrigger>
-                                    <SelectContent>
-                                      <SelectItem value="all" className="hover:bg-purple-50 cursor-pointer">
-                                        <div className="flex items-center gap-2">
-                                          <Users className="w-4 h-4 text-gray-500" />
-                                          <span className="font-medium">All</span>
-                                        </div>
-                                      </SelectItem>
-                                      <SelectItem value="fund" className="hover:bg-purple-50 cursor-pointer">
-                                        <div className="flex items-center gap-2">
-                                          <Droplet className="w-4 h-4 text-teal-500" />
-                                          <span className="font-medium">Funds</span>
-                                        </div>
-                                      </SelectItem>
-                                      <SelectItem value="segment" className="hover:bg-purple-50 cursor-pointer">
-                                        <div className="flex items-center gap-2">
-                                          <TrendingUp className="w-4 h-4 text-blue-500" />
-                                          <span className="font-medium">Segments</span>
-                                        </div>
-                                      </SelectItem>
-                                      <SelectItem value="investor" className="hover:bg-purple-50 cursor-pointer">
-                                        <div className="flex items-center gap-2">
-                                          <Users className="w-4 h-4 text-purple-500" />
-                                          <span className="font-medium">Investors</span>
-                                        </div>
-                                      </SelectItem>
-                                      <SelectItem value="subscription" className="hover:bg-purple-50 cursor-pointer">
-                                        <div className="flex items-center gap-2">
-                                          <FileText className="w-4 h-4 text-indigo-500" />
-                                          <span className="font-medium">Subscriptions</span>
-                                        </div>
-                                      </SelectItem>
-                                    </SelectContent>
-                                  </Select>
-
-                                  {/* Underlying object - Investors */}
-                                  {file.targetType === 'investor' && (
-                                    <Popover>
-                                      <PopoverTrigger asChild>
-                                        <Button 
-                                          variant="outline" 
-                                          size="sm" 
-                                          className={`w-full justify-between text-xs transition-all duration-200 ${
-                                            file.targetInvestors.length > 0 
-                                              ? 'bg-gradient-to-r from-purple-50 to-indigo-50 border-purple-300 hover:border-purple-400 text-purple-700 shadow-sm' 
-                                              : 'hover:border-purple-300 hover:bg-purple-50/30'
-                                          }`}
-                                        >
-                                          {file.targetInvestors.length > 0 ? (
-                                            <span className="flex items-center gap-1.5 font-medium">
-                                              <Users className="w-3.5 h-3.5" />
-                                              {file.targetInvestors.length} LP selected
-                                            </span>
-                                          ) : (
-                                            <span className="text-gray-500">Select LPs...</span>
-                                          )}
-                                          <ChevronsUpDown className="ml-2 h-3.5 w-3.5 opacity-50" />
-                                        </Button>
-                                      </PopoverTrigger>
-                                      <PopoverContent className="w-[240px] p-0" align="start">
-                                        <Command>
-                                          <CommandInput placeholder="Search for an LP..." className="text-xs border-b" />
-                                          <CommandList>
-                                            <CommandEmpty className="py-6 text-center text-sm text-gray-500">No investor found.</CommandEmpty>
-                                            <CommandGroup>
-                                              {availableInvestors.map((investor) => (
-                                                <CommandItem
-                                                  key={investor.id}
-                                                  onSelect={() => toggleInvestor(file.id, investor.id)}
-                                                  className="text-xs cursor-pointer hover:bg-purple-50"
-                                                >
-                                                  <div className={`mr-2 flex h-4 w-4 items-center justify-center rounded border transition-all ${
-                                                    file.targetInvestors.includes(investor.id)
-                                                      ? 'bg-purple-600 border-purple-600 shadow-sm'
-                                                      : 'border-gray-300'
-                                                  }`}>
-                                                    {file.targetInvestors.includes(investor.id) && <Check className="h-3 w-3 text-white" />}
-                                                  </div>
-                                                  <div className="flex flex-col">
-                                                    <span className="font-medium">{investor.name}</span>
-                                                    <span className="text-[10px] text-gray-500">{investor.email}</span>
-                                                  </div>
-                                                </CommandItem>
-                                              ))}
-                                            </CommandGroup>
-                                          </CommandList>
-                                        </Command>
-                                      </PopoverContent>
-                                    </Popover>
-                                  )}
-
-                                  {/* Underlying object - Funds */}
-                                  {file.targetType === 'fund' && (
-                                    <Popover>
-                                      <PopoverTrigger asChild>
-                                        <Button 
-                                          variant="outline" 
-                                          size="sm" 
-                                          className={`w-full justify-between text-xs transition-all duration-200 ${
-                                            file.targetFunds.length > 0 
-                                              ? 'bg-gradient-to-r from-teal-50 to-cyan-50 border-teal-300 hover:border-teal-400 text-teal-700 shadow-sm' 
-                                              : 'hover:border-teal-300 hover:bg-teal-50/30'
-                                          }`}
-                                        >
-                                          {file.targetFunds.length > 0 ? (
-                                            <span className="flex items-center gap-1.5 font-medium">
-                                              <Droplet className="w-3.5 h-3.5" />
-                                              {file.targetFunds.length} fund{file.targetFunds.length > 1 ? 's' : ''} selected
-                                            </span>
-                                          ) : (
-                                            <span className="text-gray-500">Select funds...</span>
-                                          )}
-                                          <ChevronsUpDown className="ml-2 h-3.5 w-3.5 opacity-50" />
-                                        </Button>
-                                      </PopoverTrigger>
-                                      <PopoverContent className="w-[260px] p-0" align="start">
-                                        <Command>
-                                          <CommandInput placeholder="Search for a fund..." className="text-xs border-b" />
-                                          <CommandList>
-                                            <CommandEmpty className="py-6 text-center text-sm text-gray-500">No fund found.</CommandEmpty>
-                                            <CommandGroup>
-                                              {availableFunds.map((fund) => (
-                                                <CommandItem
-                                                  key={fund.id}
-                                                  onSelect={() => toggleFund(file.id, fund.id)}
-                                                  className="text-xs cursor-pointer hover:bg-teal-50"
-                                                >
-                                                  <div className={`mr-2 flex h-4 w-4 items-center justify-center rounded border transition-all ${
-                                                    file.targetFunds.includes(fund.id)
-                                                      ? 'bg-teal-600 border-teal-600 shadow-sm'
-                                                      : 'border-gray-300'
-                                                  }`}>
-                                                    {file.targetFunds.includes(fund.id) && <Check className="h-3 w-3 text-white" />}
-                                                  </div>
-                                                  <div className="flex flex-col">
-                                                    <span className="font-medium">{fund.name}</span>
-                                                  </div>
-                                                </CommandItem>
-                                              ))}
-                                            </CommandGroup>
-                                          </CommandList>
-                                        </Command>
-                                      </PopoverContent>
-                                    </Popover>
-                                  )}
-
-                                  {/* Underlying object - Subscriptions */}
-                                  {file.targetType === 'subscription' && (
-                                    <Popover>
-                                      <PopoverTrigger asChild>
-                                        <Button 
-                                          variant="outline" 
-                                          size="sm" 
-                                          className={`w-full justify-between text-xs transition-all duration-200 ${
-                                            file.targetSubscriptions.length > 0 
-                                              ? 'bg-gradient-to-r from-indigo-50 to-blue-50 border-indigo-300 hover:border-indigo-400 text-indigo-700 shadow-sm' 
-                                              : 'hover:border-indigo-300 hover:bg-indigo-50/30'
-                                          }`}
-                                        >
-                                          {file.targetSubscriptions.length > 0 ? (
-                                            <span className="flex items-center gap-1.5 font-medium">
-                                              <FileText className="w-3.5 h-3.5" />
-                                              {file.targetSubscriptions.length} subscription{file.targetSubscriptions.length > 1 ? 's' : ''}
-                                            </span>
-                                          ) : (
-                                            <span className="text-gray-500">Select...</span>
-                                          )}
-                                          <ChevronsUpDown className="ml-2 h-3.5 w-3.5 opacity-50" />
-                                        </Button>
-                                      </PopoverTrigger>
-                                      <PopoverContent className="w-[280px] p-0" align="start">
-                                        <Command>
-                                          <CommandInput placeholder="Search for a subscription..." className="text-xs border-b" />
-                                          <CommandList>
-                                            <CommandEmpty className="py-6 text-center text-sm text-gray-500">No subscription found.</CommandEmpty>
-                                            <CommandGroup>
-                                              {availableSubscriptions.map((subscription) => (
-                                                <CommandItem
-                                                  key={subscription.id}
-                                                  onSelect={() => toggleSubscription(file.id, subscription.id)}
-                                                  className="text-xs cursor-pointer hover:bg-indigo-50"
-                                                >
-                                                  <div className={`mr-2 flex h-4 w-4 items-center justify-center rounded border transition-all ${
-                                                    file.targetSubscriptions.includes(subscription.id)
-                                                      ? 'bg-indigo-600 border-indigo-600 shadow-sm'
-                                                      : 'border-gray-300'
-                                                  }`}>
-                                                    {file.targetSubscriptions.includes(subscription.id) && <Check className="h-3 w-3 text-white" />}
-                                                  </div>
-                                                  <div className="flex flex-col">
-                                                    <span className="font-medium">{subscription.name}</span>
-                                                    <span className="text-[10px] text-gray-500">{subscription.investor}</span>
-                                                  </div>
-                                                </CommandItem>
-                                              ))}
-                                            </CommandGroup>
-                                          </CommandList>
-                                        </Command>
-                                      </PopoverContent>
-                                    </Popover>
-                                  )}
-                                  
-                                  {/* Explicitly display selected items */}
-                                  {file.targetType === 'investor' && file.targetInvestors.length > 0 && (
-                                    <div className="p-2 bg-purple-50/50 border border-purple-200 rounded-lg">
-                                      <p className="text-[10px] text-gray-500 font-medium mb-1.5">Targeting defined:</p>
-                                      <div className="space-y-1">
-                                        {file.targetInvestors.slice(0, 3).map(invId => {
-                                          const investor = availableInvestors.find(i => i.id === invId);
-                                          return investor ? (
-                                            <div key={invId} className="text-xs text-purple-700 font-medium flex items-center gap-1">
-                                              <span className="w-1 h-1 bg-purple-600 rounded-full"></span>
-                                              {investor.name}
-                                            </div>
-                                          ) : null;
-                                        })}
-                                        {file.targetInvestors.length > 3 && (
-                                          <div className="text-xs text-purple-600 font-semibold">
-                                            +{file.targetInvestors.length - 3} more
+                                      <td className="px-3 py-3 align-top">
+                                        <div className="flex items-start gap-2.5">
+                                          <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-md bg-gray-100">
+                                            <FileText className="h-4 w-4 text-gray-500" />
                                           </div>
-                                        )}
-                                      </div>
-                                    </div>
-                                  )}
-
-                                  {file.targetType === 'fund' && file.targetFunds.length > 0 && (
-                                    <div className="p-2 bg-teal-50/50 border border-teal-200 rounded-lg">
-                                      <p className="text-[10px] text-gray-500 font-medium mb-1.5">Targeting defined:</p>
-                                      <div className="space-y-1">
-                                        {file.targetFunds.map(fundId => {
-                                          const fund = availableFunds.find(f => f.id === fundId);
-                                          return fund ? (
-                                            <div key={fundId} className="text-xs text-teal-700 font-medium flex items-center gap-1">
-                                              <span className="w-1 h-1 bg-teal-600 rounded-full"></span>
-                                              {fund.name}
+                                          <div className="min-w-0 flex-1">
+                                            <div className="flex items-center gap-1.5">
+                                              <Badge variant="outline" className="px-1.5 py-0 text-[10px] font-medium text-gray-600">
+                                                {ext}
+                                              </Badge>
+                                              <span className="inline-flex items-center gap-0.5 text-[11px] text-gray-500">
+                                                <FileText className="h-2.5 w-2.5" />
+                                                {file.pageCount}p
+                                              </span>
                                             </div>
-                                          ) : null;
-                                        })}
-                                      </div>
-                                    </div>
-                                  )}
-
-                                  {file.targetType === 'subscription' && file.targetSubscriptions.length > 0 && (
-                                    <div className="p-2 bg-indigo-50/50 border border-indigo-200 rounded-lg">
-                                      <p className="text-[10px] text-gray-500 font-medium mb-1.5">Targeting defined:</p>
-                                      <div className="space-y-1">
-                                        {file.targetSubscriptions.slice(0, 3).map(subId => {
-                                          const subscription = availableSubscriptions.find(s => s.id === subId);
-                                          return subscription ? (
-                                            <div key={subId} className="text-xs text-indigo-700 font-medium flex items-center gap-1">
-                                              <span className="w-1 h-1 bg-indigo-600 rounded-full"></span>
-                                              {subscription.name}
-                                            </div>
-                                          ) : null;
-                                        })}
-                                        {file.targetSubscriptions.length > 3 && (
-                                          <div className="text-xs text-indigo-600 font-semibold">
-                                            +{file.targetSubscriptions.length - 3} more
+                                            <Input
+                                              value={file.name}
+                                              onChange={(e) => handleUpdateFile(file.id, 'name', e.target.value)}
+                                              className="h-7 mt-1 px-2 text-xs"
+                                            />
                                           </div>
-                                        )}
-                                      </div>
-                                    </div>
-                                  )}
-                                </div>
-                              </td>
+                                        </div>
+                                      </td>
 
-                              {/* Segments - Grayed out if investor or subscription, active for fund and segment */}
-                              <td className={`px-4 py-4 transition-all duration-200 ${
-                                (file.targetType === 'investor' || file.targetType === 'subscription') 
-                                  ? 'opacity-40 pointer-events-none bg-gray-50/50' 
-                                  : ''
-                              }`}>
-                                <div className="space-y-2">
-                                  <Popover>
-                                    <PopoverTrigger asChild>
-                                      <Button 
-                                        variant="outline" 
-                                        size="sm" 
-                                        className={`w-full justify-between text-xs transition-all duration-200 ${
-                                          file.targetSegments.length > 0 
-                                            ? 'bg-gradient-to-r from-blue-50 to-cyan-50 border-blue-300 hover:border-blue-400 text-blue-700 shadow-sm' 
-                                            : 'hover:border-blue-300 hover:bg-blue-50/30'
-                                        }`}
-                                        disabled={file.targetType === 'investor' || file.targetType === 'subscription'}
-                                      >
-                                        {file.targetSegments.length > 0 ? (
-                                          <span className="flex items-center gap-1.5 font-medium">
-                                            <TrendingUp className="w-3.5 h-3.5" />
-                                            {file.targetSegments.length} segment{file.targetSegments.length > 1 ? 's' : ''}
-                                          </span>
-                                        ) : (
-                                          <span className="text-gray-500">Select...</span>
-                                        )}
-                                        <ChevronsUpDown className="ml-2 h-3.5 w-3.5 opacity-50" />
-                                      </Button>
-                                    </PopoverTrigger>
-                                    <PopoverContent className="w-[260px] p-0" align="start">
-                                      <Command>
-                                        <CommandInput placeholder="Search for a segment..." className="text-xs border-b" />
-                                        <CommandList>
-                                          <CommandEmpty className="py-6 text-center text-sm text-gray-500">No segment found.</CommandEmpty>
-                                          <CommandGroup>
-                                            {availableSegments.map((segment) => (
-                                              <CommandItem
-                                                key={segment}
-                                                onSelect={() => toggleSegment(file.id, segment)}
-                                                className="text-xs cursor-pointer hover:bg-blue-50"
+                                      <td className="px-3 py-3 align-top">
+                                        <div className="space-y-1.5">
+                                          <Select
+                                            value={file.folder}
+                                            onValueChange={(value) => handleUpdateFile(file.id, 'folder', value)}
+                                          >
+                                            <SelectTrigger className="h-8 text-xs">
+                                              <SelectValue placeholder="Choisir un dossier…" />
+                                            </SelectTrigger>
+                                            <SelectContent>
+                                              {availableFolders.map((folder) => (
+                                                <SelectItem key={folder.id} value={folder.path} className="text-xs">
+                                                  <div className="flex items-center gap-2">
+                                                    {folder.level > 0 && (
+                                                      <span className="text-gray-400" style={{ marginLeft: `${folder.level * 8}px` }}>└</span>
+                                                    )}
+                                                    <Folder className="w-3 h-3 text-gray-400" />
+                                                    <span>{folder.name}</span>
+                                                  </div>
+                                                </SelectItem>
+                                              ))}
+                                            </SelectContent>
+                                          </Select>
+                                          {file.folder && (
+                                            <div className="flex items-center gap-1.5">
+                                              <span
+                                                className="inline-flex items-center gap-1 rounded border px-1.5 py-0.5 text-[10px] font-medium"
+                                                style={{ color: '#7a7a7a', borderColor: '#ddd7cc', backgroundColor: '#f5f3ee' }}
                                               >
-                                                <div className={`mr-2 flex h-4 w-4 items-center justify-center rounded border transition-all ${
-                                                  file.targetSegments.includes(segment)
-                                                    ? 'bg-blue-600 border-blue-600 shadow-sm'
-                                                    : 'border-gray-300'
-                                                }`}>
-                                                  {file.targetSegments.includes(segment) && <Check className="h-3 w-3 text-white" />}
-                                                </div>
-                                                <span className="font-medium">{segment}</span>
-                                              </CommandItem>
-                                            ))}
-                                          </CommandGroup>
-                                        </CommandList>
-                                      </Command>
-                                    </PopoverContent>
-                                  </Popover>
-                                  
-                                  {/* Info for Fund type */}
-                                  {file.targetType === 'fund' && file.targetFunds.length > 0 && file.targetSegments.length === 0 && (
-                                    <div className="text-[10px] text-gray-500 italic p-2 bg-blue-50/30 rounded border border-blue-200">
-                                      💡 Filter by segments (optional)
-                                    </div>
-                                  )}
+                                                <Lock className="h-2.5 w-2.5" />
+                                                Restriction héritée
+                                              </span>
+                                              <Tooltip>
+                                                <TooltipTrigger asChild>
+                                                  <button type="button" className="text-blue-600 hover:text-blue-700">
+                                                    <Info className="h-3 w-3" />
+                                                  </button>
+                                                </TooltipTrigger>
+                                                <TooltipContent className="max-w-xs">
+                                                  <span className="text-xs">Le dossier porte des restrictions de ciblage. Le document en hérite par défaut.</span>
+                                                </TooltipContent>
+                                              </Tooltip>
+                                            </div>
+                                          )}
+                                        </div>
+                                      </td>
 
-                                  {/* Display selected values with animation */}
-                                  <AnimatePresence>
-                                    {file.targetSegments.length > 0 && (
-                                      <motion.div 
-                                        initial={{ opacity: 0, height: 0 }}
-                                        animate={{ opacity: 1, height: 'auto' }}
-                                        exit={{ opacity: 0, height: 0 }}
-                                        className="flex flex-wrap gap-1.5"
-                                      >
-                                        {file.targetSegments.slice(0, 2).map((segment) => (
-                                          <motion.div
-                                            key={segment}
-                                            initial={{ scale: 0 }}
-                                            animate={{ scale: 1 }}
-                                            exit={{ scale: 0 }}
+                                      <td className="px-3 py-3 align-top">
+                                        <div className="space-y-1.5">
+                                          <Select
+                                            value={file.targetType}
+                                            onValueChange={(value) => handleUpdateFile(file.id, 'targetType', value)}
                                           >
-                                            <Badge variant="outline" className="bg-gradient-to-r from-blue-50 to-cyan-50 text-blue-700 border-blue-300 text-[10px] font-medium shadow-sm">
-                                              {segment.length > 15 ? segment.substring(0, 15) + '...' : segment}
-                                            </Badge>
-                                          </motion.div>
-                                        ))}
-                                        {file.targetSegments.length > 2 && (
-                                          <Badge variant="outline" className="bg-gray-100 text-gray-600 border-gray-300 text-[10px] font-semibold">
-                                            +{file.targetSegments.length - 2}
-                                          </Badge>
-                                        )}
-                                      </motion.div>
-                                    )}
-                                  </AnimatePresence>
-                                </div>
-                              </td>
+                                            <SelectTrigger className="h-8 text-xs">
+                                              <SelectValue />
+                                            </SelectTrigger>
+                                            <SelectContent>
+                                              <SelectItem value="all" className="text-xs"><div className="flex items-center gap-2"><Users className="h-3 w-3 text-gray-500" />Tous</div></SelectItem>
+                                              <SelectItem value="segment" className="text-xs"><div className="flex items-center gap-2"><Users className="h-3 w-3 text-gray-500" />Segments</div></SelectItem>
+                                              <SelectItem value="investor" className="text-xs"><div className="flex items-center gap-2"><Users className="h-3 w-3 text-gray-500" />Investisseurs</div></SelectItem>
+                                              <SelectItem value="subscription" className="text-xs"><div className="flex items-center gap-2"><FileText className="h-3 w-3 text-gray-500" />Souscriptions</div></SelectItem>
+                                              <SelectItem value="fund" className="text-xs"><div className="flex items-center gap-2"><Landmark className="h-3 w-3 text-gray-500" />Fonds</div></SelectItem>
+                                            </SelectContent>
+                                          </Select>
 
-                              {/* Scope */}
-                              <td className="px-4 py-4">
-                                <div className="space-y-2.5">
-                                  <motion.div 
-                                    whileHover={{ scale: 1.02 }}
-                                    className="flex items-center gap-2 p-2 bg-gradient-to-r from-emerald-50 to-teal-50 border border-emerald-200 rounded-lg shadow-sm hover:shadow-md transition-all duration-200"
-                                  >
-                                    <div className="w-8 h-8 bg-emerald-100 rounded-lg flex items-center justify-center">
-                                      <Users className="w-4 h-4 text-emerald-700" />
-                                    </div>
-                                    <div className="flex flex-col">
-                                      <span className="text-xs text-gray-500 font-medium">Limited Partners</span>
-                                      <span className="font-semibold text-emerald-700">{lpCount} LP</span>
-                                    </div>
-                                  </motion.div>
-                                  <motion.div 
-                                    whileHover={{ scale: 1.02 }}
-                                    className="flex items-center gap-2 p-2 bg-gradient-to-r from-indigo-50 to-purple-50 border border-indigo-200 rounded-lg shadow-sm hover:shadow-md transition-all duration-200"
-                                  >
-                                    <div className="w-8 h-8 bg-indigo-100 rounded-lg flex items-center justify-center">
-                                      <Building2 className="w-4 h-4 text-indigo-700" />
-                                    </div>
-                                    <div className="flex flex-col">
-                                      <span className="text-xs text-gray-500 font-medium">Contacts</span>
-                                      <span className="font-semibold text-indigo-700">{contactCount} contacts</span>
-                                    </div>
-                                  </motion.div>
-                                  <motion.div whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.98 }}>
-                                    <Button
-                                      variant="outline"
-                                      size="sm"
-                                      onClick={() => handleDownloadScope(file)}
-                                      className="w-full text-xs gap-2 h-9 bg-white hover:bg-gradient-to-r hover:from-blue-50 hover:to-indigo-50 border-gray-300 hover:border-blue-400 transition-all duration-200 font-medium shadow-sm hover:shadow-md"
-                                    >
-                                      <DownloadIcon className="w-3.5 h-3.5" />
-                                      Download scope
-                                    </Button>
-                                  </motion.div>
-                                </div>
-                              </td>
-
-                              {/* Notify */}
-                              <td className="px-4 py-4">
-                                <div className="flex items-center justify-center">
-                                  <Switch
-                                    checked={file.notify}
-                                    onCheckedChange={(checked) => handleUpdateFile(file.id, 'notify', checked)}
-                                    className="data-[state=checked]:bg-orange-600"
-                                  />
-                                </div>
-                              </td>
-
-                              {/* Email Template */}
-                              <td className="px-4 py-4">
-                                {file.notify ? (
-                                  <Select
-                                    value={file.emailTemplate}
-                                    onValueChange={(value) => handleUpdateFile(file.id, 'emailTemplate', value)}
-                                  >
-                                    <SelectTrigger className="text-xs h-9 bg-white border-blue-200 hover:border-blue-400 focus:border-blue-400 focus:ring-2 focus:ring-blue-100 transition-all">
-                                      <SelectValue placeholder="Choose a template..." />
-                                    </SelectTrigger>
-                                    <SelectContent>
-                                      {availableEmailTemplates.map((template) => (
-                                        <SelectItem key={template.value} value={template.value} className="hover:bg-blue-50 cursor-pointer">
-                                          <div className="flex items-center gap-2">
-                                            <span className="text-base">{template.icon}</span>
-                                            <span className="font-medium">{template.label}</span>
-                                          </div>
-                                        </SelectItem>
-                                      ))}
-                                    </SelectContent>
-                                  </Select>
-                                ) : (
-                                  <div className="flex items-center justify-center h-9">
-                                    <span className="text-xs text-gray-400 italic">-</span>
-                                  </div>
-                                )}
-                              </td>
-
-                              {/* Hide "New" */}
-                              <td className="px-4 py-4">
-                                <div className="flex items-center justify-center">
-                                  <Switch
-                                    checked={file.hideNewLabel}
-                                    onCheckedChange={(checked) => handleUpdateFile(file.id, 'hideNewLabel', checked)}
-                                  />
-                                </div>
-                              </td>
-
-                              {/* Reporting */}
-                              <td className="px-4 py-4">
-                                <div className="flex items-center justify-center">
-                                  <Switch
-                                    checked={file.reporting}
-                                    onCheckedChange={(checked) => handleUpdateFile(file.id, 'reporting', checked)}
-                                    className="data-[state=checked]:bg-emerald-600"
-                                  />
-                                </div>
-                              </td>
-
-                              {/* Add date */}
-                              <td className="px-4 py-4">
-                                <Input
-                                  type="date"
-                                  value={file.addDate}
-                                  onChange={(e) => handleUpdateFile(file.id, 'addDate', e.target.value)}
-                                  className="text-xs border-gray-200 focus:border-violet-400 focus:ring-2 focus:ring-violet-100 transition-all duration-200 bg-white"
-                                />
-                              </td>
-
-                              {/* Validation team */}
-                              <td className="px-4 py-4">
-                                <Select
-                                  value={file.validationTeam[0] || ''}
-                                  onValueChange={(value) => handleUpdateFile(file.id, 'validationTeam', value ? [value] : [])}
-                                >
-                                  <SelectTrigger className="text-xs h-9 bg-white border-gray-200 hover:border-red-400 focus:border-red-400 focus:ring-2 focus:ring-red-100 transition-all">
-                                    <SelectValue placeholder="Select team..." />
-                                  </SelectTrigger>
-                                  <SelectContent>
-                                    <SelectItem value="Front">Front</SelectItem>
-                                    <SelectItem value="Middle">Middle</SelectItem>
-                                    <SelectItem value="Back">Back</SelectItem>
-                                    <SelectItem value="Compliance">Compliance</SelectItem>
-                                  </SelectContent>
-                                </Select>
-                              </td>
-
-                              {/* Tags */}
-                              <td className="px-4 py-4">
-                                <div className="space-y-2.5">
-                                  <AnimatePresence>
-                                    {file.tags.length > 0 && (
-                                      <motion.div 
-                                        initial={{ opacity: 0 }}
-                                        animate={{ opacity: 1 }}
-                                        className="flex flex-wrap gap-1.5"
-                                      >
-                                        {file.tags.map((tag) => (
-                                          <motion.div
-                                            key={tag}
-                                            initial={{ scale: 0, opacity: 0 }}
-                                            animate={{ scale: 1, opacity: 1 }}
-                                            exit={{ scale: 0, opacity: 0 }}
-                                            whileHover={{ scale: 1.05 }}
-                                          >
-                                            <Badge
-                                              variant="outline"
-                                              className="bg-gradient-to-r from-pink-50 to-rose-50 text-pink-700 border-pink-300 text-[10px] font-medium shadow-sm hover:shadow-md transition-all duration-200 pr-1"
+                                          {file.targetType === 'investor' && (
+                                            <Select
+                                              value={file.targetInvestors[0] ?? ''}
+                                              onValueChange={(value) => handleUpdateFile(file.id, 'targetInvestors', [value])}
                                             >
-                                              <Sparkles className="w-2.5 h-2.5 mr-1" />
-                                              {tag}
-                                              <motion.button
-                                                whileHover={{ scale: 1.2, rotate: 90 }}
-                                                whileTap={{ scale: 0.9 }}
-                                                onClick={() => removeTag(file.id, tag)}
-                                                className="ml-1.5 p-0.5 hover:bg-pink-200 rounded-full transition-colors"
+                                              <SelectTrigger className="h-8 text-xs">
+                                                <SelectValue placeholder="Choisir un investisseur…" />
+                                              </SelectTrigger>
+                                              <SelectContent>
+                                                {availableInvestors.map((inv) => (
+                                                  <SelectItem key={inv.id} value={inv.id} className="text-xs">{inv.name}</SelectItem>
+                                                ))}
+                                              </SelectContent>
+                                            </Select>
+                                          )}
+
+                                          {file.targetType === 'subscription' && (
+                                            <Select
+                                              value={file.targetSubscriptions[0] ?? ''}
+                                              onValueChange={(value) => handleUpdateFile(file.id, 'targetSubscriptions', [value])}
+                                            >
+                                              <SelectTrigger className="h-8 text-xs">
+                                                <SelectValue placeholder="Choisir une souscription…" />
+                                              </SelectTrigger>
+                                              <SelectContent>
+                                                {availableInvestors.map((inv) => {
+                                                  const fundLabel = fundLabelMap[inv.fund] ?? inv.fund;
+                                                  const subId = `${inv.id}-${inv.fund}`;
+                                                  return (
+                                                    <SelectItem key={subId} value={subId} className="text-xs">
+                                                      {inv.name} · {fundLabel}
+                                                    </SelectItem>
+                                                  );
+                                                })}
+                                              </SelectContent>
+                                            </Select>
+                                          )}
+
+                                          {file.targetType === 'fund' && (
+                                            <div className="flex gap-1.5">
+                                              <Select
+                                                value={file.targetFunds[0] ?? ''}
+                                                onValueChange={(value) => handleUpdateFile(file.id, 'targetFunds', [value])}
                                               >
-                                                <X className="w-2.5 h-2.5" />
-                                              </motion.button>
-                                            </Badge>
-                                          </motion.div>
-                                        ))}
-                                      </motion.div>
-                                    )}
-                                  </AnimatePresence>
-                                  <Input
-                                    placeholder="Add a tag (Enter)..."
-                                    className="text-xs border-gray-200 focus:border-pink-400 focus:ring-2 focus:ring-pink-100 transition-all duration-200 bg-white hover:bg-pink-50/30 placeholder:text-gray-400"
-                                    onKeyPress={(e) => {
-                                      if (e.key === 'Enter') {
-                                        addTag(file.id, (e.target as HTMLInputElement).value);
-                                        (e.target as HTMLInputElement).value = '';
-                                      }
-                                    }}
-                                  />
-                                </div>
-                              </td>
-                            </motion.tr>
-                            );
-                          })}
-                        </tbody>
-                      </table>
-                    </div>
-                  </div>
+                                                <SelectTrigger className="h-8 flex-1 text-xs">
+                                                  <SelectValue placeholder="Fonds…" />
+                                                </SelectTrigger>
+                                                <SelectContent>
+                                                  {availableFunds.map((fund) => (
+                                                    <SelectItem key={fund.id} value={fund.id} className="text-xs">{fund.name}</SelectItem>
+                                                  ))}
+                                                </SelectContent>
+                                              </Select>
+                                              <Select
+                                                value={file.targetSegments[0] ?? ''}
+                                                onValueChange={(value) => handleUpdateFile(file.id, 'targetSegments', [value])}
+                                              >
+                                                <SelectTrigger className="h-8 w-20 text-xs">
+                                                  <SelectValue placeholder="Part" />
+                                                </SelectTrigger>
+                                                <SelectContent>
+                                                  <SelectItem value="A" className="text-xs">A</SelectItem>
+                                                  <SelectItem value="B" className="text-xs">B</SelectItem>
+                                                  <SelectItem value="C" className="text-xs">C</SelectItem>
+                                                </SelectContent>
+                                              </Select>
+                                            </div>
+                                          )}
+
+                                          {file.targetType === 'segment' && (
+                                            <Select
+                                              value={file.targetSegments[0] ?? ''}
+                                              onValueChange={(value) => handleUpdateFile(file.id, 'targetSegments', [value])}
+                                            >
+                                              <SelectTrigger className="h-8 text-xs">
+                                                <SelectValue placeholder="Choisir un segment…" />
+                                              </SelectTrigger>
+                                              <SelectContent>
+                                                {availableSegments.map((seg) => (
+                                                  <SelectItem key={seg} value={seg} className="text-xs">{seg}</SelectItem>
+                                                ))}
+                                              </SelectContent>
+                                            </Select>
+                                          )}
+                                        </div>
+                                      </td>
+
+                                      <td className="px-3 py-3 align-top">
+                                        <div className="space-y-1.5">
+                                          <div className="flex items-center gap-2">
+                                            <Switch
+                                              checked={file.notify}
+                                              onCheckedChange={(checked) => handleUpdateFile(file.id, 'notify', checked)}
+                                            />
+                                            <span className="text-xs text-gray-700">Notifier les destinataires</span>
+                                          </div>
+                                          {file.notify && (
+                                            <Select
+                                              value={file.emailTemplate}
+                                              onValueChange={(value) => handleUpdateFile(file.id, 'emailTemplate', value)}
+                                            >
+                                              <SelectTrigger className="h-7 text-xs">
+                                                <SelectValue placeholder="Template…" />
+                                              </SelectTrigger>
+                                              <SelectContent>
+                                                {availableEmailTemplates.map((tpl) => (
+                                                  <SelectItem key={tpl.value} value={tpl.value} className="text-xs">
+                                                    <span className="mr-1.5">{tpl.icon}</span>{tpl.label}
+                                                  </SelectItem>
+                                                ))}
+                                              </SelectContent>
+                                            </Select>
+                                          )}
+                                        </div>
+                                      </td>
+
+                                      <td className="px-3 py-3 align-top">
+                                        <Select
+                                          value={file.validationTeam[0] ?? ''}
+                                          onValueChange={(value) => handleUpdateFile(file.id, 'validationTeam', [value])}
+                                        >
+                                          <SelectTrigger className="h-8 text-xs">
+                                            <SelectValue placeholder="Choisir une équipe…" />
+                                          </SelectTrigger>
+                                          <SelectContent>
+                                            <SelectItem value="admin" className="text-xs">Admin</SelectItem>
+                                            <SelectItem value="compliance" className="text-xs">Compliance</SelectItem>
+                                            <SelectItem value="legal" className="text-xs">Juridique</SelectItem>
+                                            <SelectItem value="ir" className="text-xs">Investor Relations</SelectItem>
+                                          </SelectContent>
+                                        </Select>
+                                      </td>
+                                    </tr>
+                                  );
+                                })}
+                              </tbody>
+                            </table>
+                          </div>
+
+                          {/* Pagination footer */}
+                          <div className="flex items-center justify-between border-t border-gray-100 bg-white px-3 py-2">
+                            <span className="text-xs text-gray-500">
+                              {startIndex + 1}-{Math.min(startIndex + step2PageSize, totalRows)} sur {totalRows} élément{totalRows > 1 ? 's' : ''}
+                            </span>
+                            <div className="flex items-center gap-2">
+                              <Button
+                                variant="outline"
+                                size="sm"
+                                className="h-7 w-7 p-0"
+                                disabled={safePage <= 1}
+                                onClick={() => setStep2Page((p) => Math.max(1, p - 1))}
+                              >
+                                <ChevronLeft className="h-3.5 w-3.5" />
+                              </Button>
+                              <span className="text-xs text-gray-600 tabular-nums">{safePage}</span>
+                              <Button
+                                variant="outline"
+                                size="sm"
+                                className="h-7 w-7 p-0"
+                                disabled={safePage >= totalPages}
+                                onClick={() => setStep2Page((p) => Math.min(totalPages, p + 1))}
+                              >
+                                <ChevronRight className="h-3.5 w-3.5" />
+                              </Button>
+                              <Select
+                                value={String(step2PageSize)}
+                                onValueChange={(value) => {
+                                  setStep2PageSize(Number(value));
+                                  setStep2Page(1);
+                                }}
+                              >
+                                <SelectTrigger className="h-7 w-[88px] text-xs">
+                                  <SelectValue />
+                                </SelectTrigger>
+                                <SelectContent>
+                                  <SelectItem value="20" className="text-xs">20 / page</SelectItem>
+                                  <SelectItem value="50" className="text-xs">50 / page</SelectItem>
+                                  <SelectItem value="100" className="text-xs">100 / page</SelectItem>
+                                </SelectContent>
+                              </Select>
+                            </div>
+                          </div>
+                        </div>
+                      </>
+                    );
+                  })()}
                 </motion.div>
               )}
             </AnimatePresence>
