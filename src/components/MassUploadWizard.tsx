@@ -23,6 +23,10 @@ import {
   Building2,
   Landmark,
   Settings,
+  Wallet,
+  Receipt,
+  Banknote,
+  Newspaper,
   Droplet,
   Lock,
   Unlock,
@@ -39,7 +43,8 @@ import {
   BarChart3,
   Calendar,
   Shield,
-  Mail
+  Mail,
+  type LucideIcon,
 } from 'lucide-react';
 import { Button } from './ui/button';
 import { Input } from './ui/input';
@@ -215,17 +220,17 @@ const availableContactRoles = [
 ];
 
 // Available email templates
-const availableEmailTemplates = [
-  { value: 'none', label: 'No template', icon: '📭' },
-  { value: 'new_document', label: 'New document', icon: '📄' },
-  { value: 'capital_call', label: 'Capital call', icon: '💰' },
-  { value: 'notification', label: 'General notification', icon: '🔔' },
-  { value: 'quarterly_report', label: 'Quarterly report', icon: '📊' },
-  { value: 'tax_document', label: 'Tax document', icon: '📋' },
-  { value: 'general_meeting', label: 'AGM notice', icon: '📅' },
-  { value: 'dividend', label: 'Dividend distribution', icon: '💵' },
-  { value: 'amendment', label: 'Amendment', icon: '📝' },
-  { value: 'newsletter', label: 'Newsletter', icon: '📰' },
+const availableEmailTemplates: { value: string; label: string; icon: LucideIcon }[] = [
+  { value: 'none', label: 'Aucun template', icon: Mail },
+  { value: 'new_document', label: 'Nouveau document', icon: FileText },
+  { value: 'capital_call', label: 'Appel de fonds', icon: Wallet },
+  { value: 'notification', label: 'Notification générale', icon: Bell },
+  { value: 'quarterly_report', label: 'Reporting trimestriel', icon: BarChart3 },
+  { value: 'tax_document', label: 'Document fiscal', icon: Receipt },
+  { value: 'general_meeting', label: 'Convocation AG', icon: Calendar },
+  { value: 'dividend', label: 'Distribution de dividendes', icon: Banknote },
+  { value: 'amendment', label: 'Avenant', icon: Edit3 },
+  { value: 'newsletter', label: 'Newsletter', icon: Newspaper },
 ];
 
 export function MassUploadWizard({ isOpen, onClose, existingFolders, inline = false, originContext = null }: MassUploadWizardProps) {
@@ -2035,11 +2040,17 @@ export function MassUploadWizard({ isOpen, onClose, existingFolders, inline = fa
                                                 <SelectValue placeholder="Template…" />
                                               </SelectTrigger>
                                               <SelectContent>
-                                                {availableEmailTemplates.map((tpl) => (
-                                                  <SelectItem key={tpl.value} value={tpl.value} className="text-xs">
-                                                    <span className="mr-1.5">{tpl.icon}</span>{tpl.label}
-                                                  </SelectItem>
-                                                ))}
+                                                {availableEmailTemplates.map((tpl) => {
+                                                  const Icon = tpl.icon;
+                                                  return (
+                                                    <SelectItem key={tpl.value} value={tpl.value} className="text-xs">
+                                                      <div className="flex items-center gap-2">
+                                                        <Icon className="h-3 w-3 text-gray-500" />
+                                                        {tpl.label}
+                                                      </div>
+                                                    </SelectItem>
+                                                  );
+                                                })}
                                               </SelectContent>
                                             </Select>
                                           )}
