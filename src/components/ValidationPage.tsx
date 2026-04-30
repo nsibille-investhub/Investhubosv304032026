@@ -862,12 +862,11 @@ function StandaloneDocumentRow({
     >
       <td className="w-8 px-2 py-4" />
       <td className="px-6 py-4">
-        <div className="flex flex-col gap-1.5">
-          <DocumentNameCell name={doc.name} pathSegments={doc.pathSegments} />
-          <div className="pl-[44px]">
-            <NotificationLine notification={doc.notification} />
-          </div>
-        </div>
+        <DocumentNameCell
+          name={doc.name}
+          pathSegments={doc.pathSegments}
+          extra={<NotificationLine notification={doc.notification} />}
+        />
       </td>
       <td className="px-6 py-4">
         <UserCell name={doc.createdBy.name} sublabel={doc.createdBy.role} />
@@ -1189,15 +1188,16 @@ function BatchRowGroup({
               />
             </td>
             <td className="px-6 py-2.5 pl-12">
-              <div className="flex flex-col gap-1.5">
-                <DocumentNameCell name={doc.name} pathSegments={doc.pathSegments} />
-                <div className="pl-[44px]">
+              <DocumentNameCell
+                name={doc.name}
+                pathSegments={doc.pathSegments}
+                extra={
                   <NotificationLine
                     notification={batch.notification}
                     sourceHint="Issu du lot ·"
                   />
-                </div>
-              </div>
+                }
+              />
             </td>
             <td className="px-6 py-2.5">
               <UserCell name={doc.createdBy.name} sublabel={doc.createdBy.role} />

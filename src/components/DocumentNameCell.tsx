@@ -1,3 +1,4 @@
+import * as React from 'react';
 import { ChevronRight, FileText } from 'lucide-react';
 import {
   Tooltip,
@@ -13,6 +14,8 @@ export interface DocumentNameCellProps {
   pathSegments: string[];
   /** Maximum displayed path length — defaults to 48 chars. Overflow uses centered ellipsis. */
   maxPathLength?: number;
+  /** Optional 3rd line rendered below the path (e.g. notification info). Inherits the same horizontal alignment as title and path. */
+  extra?: React.ReactNode;
   className?: string;
 }
 
@@ -57,6 +60,7 @@ export function DocumentNameCell({
   name,
   pathSegments,
   maxPathLength = 48,
+  extra,
   className,
 }: DocumentNameCellProps) {
   const displayPath = truncatePath(pathSegments, maxPathLength);
@@ -64,10 +68,10 @@ export function DocumentNameCell({
   return (
     <div
       data-slot="document-name-cell"
-      className={cn('flex items-center gap-2.5 min-w-0', className)}
+      className={cn('flex items-start gap-2.5 min-w-0', className)}
     >
       <div
-        className="flex h-8 w-8 shrink-0 items-center justify-center rounded-md text-gray-500 dark:bg-gray-800 dark:text-gray-300"
+        className="mt-0.5 flex h-8 w-8 shrink-0 items-center justify-center rounded-md text-gray-500 dark:bg-gray-800 dark:text-gray-300"
         style={{ backgroundColor: FORMAT_ICON_BG }}
         aria-hidden
       >
@@ -101,6 +105,8 @@ export function DocumentNameCell({
             </div>
           </TooltipContent>
         </Tooltip>
+
+        {extra && <div className="mt-1">{extra}</div>}
       </div>
     </div>
   );
