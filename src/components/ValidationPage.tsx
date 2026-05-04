@@ -30,7 +30,7 @@ import {
   TooltipContent,
   TooltipTrigger,
 } from './ui/tooltip';
-import { FilterCard } from './FilterCard';
+import { FilterCard } from './ui/filter-card';
 import { FilterBar, FilterConfig } from './FilterBar';
 import { DataPagination } from './ui/data-pagination';
 import { Tag } from './Tag';

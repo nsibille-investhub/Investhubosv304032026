@@ -33,7 +33,7 @@ import {
 } from './ui/card';
 import { Avatar, AvatarFallback } from './ui/avatar';
 import { DataPagination } from './ui/data-pagination';
-import { KpiCard, KpiStrip } from './ui/kpi-card';
+import { FilterCard } from './ui/filter-card';
 import { SearchInput } from './ui/search-input';
 import {
   Select,
@@ -106,39 +106,49 @@ const DAY_MS = 24 * 60 * 60 * 1000;
 const REVIEW_WINDOWS: Array<{
   key: ReviewWindowKey;
   label: string;
+  metricLabel: string;
   icon: typeof AlertTriangle;
-  pulse?: boolean;
+  iconActiveClassName: string;
   match: (deltaDays: number) => boolean;
 }> = [
   {
     key: 'overdue',
     label: 'En retard',
+    metricLabel: 'Dépassées',
     icon: AlertTriangle,
-    pulse: true,
+    iconActiveClassName: 'text-red-600',
     match: (d) => d < 0,
   },
   {
     key: '1w',
     label: 'Dans 1 semaine',
+    metricLabel: 'À revoir',
     icon: CalendarClock,
+    iconActiveClassName: 'text-amber-600',
     match: (d) => d >= 0 && d <= 7,
   },
   {
     key: '1m',
     label: 'Dans 1 mois',
+    metricLabel: 'À revoir',
     icon: CalendarRange,
+    iconActiveClassName: 'text-amber-600',
     match: (d) => d >= 0 && d <= 30,
   },
   {
     key: '3m',
     label: 'Dans 3 mois',
+    metricLabel: 'À revoir',
     icon: CalendarDays,
+    iconActiveClassName: 'text-primary',
     match: (d) => d >= 0 && d <= 90,
   },
   {
     key: '6m',
     label: 'Dans 6 mois',
+    metricLabel: 'À revoir',
     icon: CalendarCheck,
+    iconActiveClassName: 'text-primary',
     match: (d) => d >= 0 && d <= 180,
   },
 ];
@@ -624,41 +634,35 @@ export function KYCFilesPage() {
             </Button>
           )}
         </div>
-        <KpiStrip columns={5}>
-          {REVIEW_WINDOWS.map((win, index) => {
-            const isActive = reviewWindow === win.key;
+        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-1.5">
+          {REVIEW_WINDOWS.map((win) => {
             const count = reviewCounts[win.key];
             const totalReviewable = allTableData.filter((f) => f.nextReview).length;
+            const ratio =
+              totalReviewable > 0
+                ? `${Math.round((count / totalReviewable) * 100)}%`
+                : '0%';
             return (
-              <button
+              <FilterCard
                 key={win.key}
-                type="button"
-                onClick={() =>
-                  setReviewWindow((current) => (current === win.key ? null : win.key))
+                status={win.key}
+                activeStatus={reviewWindow ?? ''}
+                onStatusChange={(s) =>
+                  setReviewWindow((current) =>
+                    current === (s as ReviewWindowKey) ? null : (s as ReviewWindowKey),
+                  )
                 }
-                aria-pressed={isActive}
-                className={cn(
-                  'rounded-lg text-left transition-all focus-visible:outline-none',
-                  'focus-visible:ring-2 focus-visible:ring-ring/50',
-                  isActive && 'ring-2 ring-primary ring-offset-2 ring-offset-background',
-                )}
-              >
-                <KpiCard
-                  index={index}
-                  icon={win.icon}
-                  label={win.label}
-                  value={count}
-                  pulse={win.pulse && count > 0}
-                  progress={
-                    totalReviewable > 0
-                      ? { current: count, total: totalReviewable }
-                      : undefined
-                  }
-                />
-              </button>
+                label={win.label}
+                icon={win.icon}
+                total={count}
+                metricLabel={win.metricLabel}
+                metricValue={`${count}`}
+                averageValue={ratio}
+                iconActiveClassName={win.iconActiveClassName}
+              />
             );
           })}
-        </KpiStrip>
+        </div>
       </section>
 
       <motion.div

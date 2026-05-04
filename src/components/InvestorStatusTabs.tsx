@@ -1,7 +1,7 @@
 import { motion } from 'motion/react';
 import { Badge } from './ui/badge';
 import { UserPlus, MessageCircle, UserCheck, List } from 'lucide-react';
-import { FilterCard } from './FilterCard';
+import { FilterCard } from './ui/filter-card';
 
 interface InvestorStatusTabsProps {
   data: any[];

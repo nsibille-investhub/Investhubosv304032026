@@ -1,7 +1,7 @@
 import { motion } from 'motion/react';
 import { Badge } from './ui/badge';
 import { Plus, UserCheck, FileSignature, CheckCircle2, Activity, List } from 'lucide-react';
-import { FilterCard } from './FilterCard';
+import { FilterCard } from './ui/filter-card';
 import { useTranslation } from '../utils/languageContext';
 
 type SubscriptionStatus = 'created' | 'onboarding' | 'signature' | 'counter_signature' | 'active' | 'all';
