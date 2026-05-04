@@ -151,19 +151,17 @@ interface UploadedFile {
   batchId?: string;
 }
 
-// A batch (lot) groups multiple uploaded files so a single consolidated
-// notification is sent per recipient instead of one per document. The
-// validation team and notification fields are MANDATORILY consolidated
-// (uniform across all members). Folder and targeting can be either:
+// A batch (lot) groups multiple uploaded files so they share a single
+// validation team. Only the validation team is MANDATORILY consolidated
+// (uniform across all members). Folder, targeting and notification can
+// each be either:
 //   - "global"        → batch enforces a single value for all members
 //   - "per-document"  → each member keeps its own value (heterogeneous)
 interface UploadBatch {
   id: string;
   name: string;
-  // Consolidated fields — always uniform across members.
+  // Consolidated field — always uniform across members.
   validationTeam: string[];
-  notify: boolean;
-  emailTemplate: string;
   // Per-field consolidation modes.
   folderMode: 'global' | 'per-document';
   globalFolder: string;
@@ -602,15 +600,16 @@ export function MassUploadWizard({ isOpen, onClose, existingFolders, inline = fa
     });
   };
 
-  /** Apply a batch's consolidated/global values to all its child files. */
+  /** Apply a batch's consolidated/global values to all its child files.
+   * Only the validation team is mandatorily uniform; folder & targeting are
+   * propagated only when the matching mode is "global". Notification stays
+   * per-document. */
   const propagateBatchToFiles = (batch: UploadBatch, files: UploadedFile[]): UploadedFile[] =>
     files.map((f) => {
       if (f.batchId !== batch.id) return f;
       const next: UploadedFile = {
         ...f,
         validationTeam: batch.validationTeam,
-        notify: batch.notify,
-        emailTemplate: batch.emailTemplate,
       };
       if (batch.folderMode === 'global') {
         next.folder = batch.globalFolder;
@@ -630,8 +629,6 @@ export function MassUploadWizard({ isOpen, onClose, existingFolders, inline = fa
     id: `batch-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`,
     name: `Lot ${batches.length + 1}`,
     validationTeam: firstFile?.validationTeam ?? [],
-    notify: firstFile?.notify ?? false,
-    emailTemplate: firstFile?.emailTemplate ?? '',
     folderMode: 'per-document',
     globalFolder: firstFile?.folder ?? '',
     targetingMode: 'per-document',
@@ -670,7 +667,6 @@ export function MassUploadWizard({ isOpen, onClose, existingFolders, inline = fa
     // configure them before being able to confirm.
     setBulkFields((prev) => {
       const next = new Set<BulkFieldKey>(prev);
-      next.add('notification');
       next.add('validationTeam');
       return Array.from(next);
     });
@@ -682,18 +678,15 @@ export function MassUploadWizard({ isOpen, onClose, existingFolders, inline = fa
   };
 
   /** Validate the batch creation form. Returns the reason string when the form
-   * cannot be confirmed yet, or null when ready. */
+   * cannot be confirmed yet, or null when ready. Only the validation team is
+   * required to be uniform — notification stays per-document. */
   const batchCreationBlockReason = (): string | null => {
     if (!batchCreationMode) return null;
     if (selectedFiles.length < 2) return 'Sélectionnez au moins 2 documents';
     if (!batchNameDraft.trim()) return 'Donnez un nom au lot';
-    if (!bulkFields.includes('notification')) return 'La notification doit être configurée pour le lot';
     if (!bulkFields.includes('validationTeam')) return 'L’équipe de validation doit être configurée pour le lot';
     const team = bulkValues.validationTeam ?? [];
     if (team.length === 0) return 'Choisissez une équipe de validation';
-    // Notification: either explicitly disabled, or template chosen if enabled.
-    const n = bulkValues.notification;
-    if (n?.notify && !n.emailTemplate) return 'Choisissez un template de notification';
     return null;
   };
 
@@ -718,8 +711,6 @@ export function MassUploadWizard({ isOpen, onClose, existingFolders, inline = fa
       id: `batch-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`,
       name: batchNameDraft.trim(),
       validationTeam: bulkValues.validationTeam ?? [],
-      notify: bulkValues.notification?.notify ?? false,
-      emailTemplate: bulkValues.notification?.emailTemplate ?? '',
       // If the user staged a folder/targeting value in the bulk form we treat
       // it as a global batch-level value; otherwise members keep their own.
       folderMode: bulkFields.includes('folder') ? 'global' : 'per-document',
@@ -734,10 +725,15 @@ export function MassUploadWizard({ isOpen, onClose, existingFolders, inline = fa
         prev.map((f) => {
           if (!selectedFiles.includes(f.id)) return f;
           // Per-document fields not consolidated by the batch still get the
-          // staged bulk values (e.g. language) so the bulk values aren't lost.
+          // staged bulk values (e.g. language, notification) so the bulk
+          // values aren't lost.
           const next: UploadedFile = { ...f, batchId: batch.id };
           if (bulkFields.includes('language') && bulkValues.language !== undefined) {
             next.language = bulkValues.language;
+          }
+          if (bulkFields.includes('notification') && bulkValues.notification) {
+            next.notify = bulkValues.notification.notify;
+            next.emailTemplate = bulkValues.notification.emailTemplate;
           }
           // When folder/targeting are NOT global, still apply the staged value
           // to each member as a starting point (heterogeneous lot).
@@ -2416,12 +2412,12 @@ export function MassUploadWizard({ isOpen, onClose, existingFolders, inline = fa
                               if (bulkFields.includes('notification')) {
                                 const n = bulkValues.notification;
                                 summary.push({
-                                  label: 'Notification (consolidée)',
+                                  label: 'Notification',
                                   value: n
                                     ? n.notify
-                                      ? `Activée · ${availableEmailTemplates.find((tpl) => tpl.value === n.emailTemplate)?.label ?? 'Template à choisir'}`
-                                      : 'Désactivée'
-                                    : 'À configurer',
+                                      ? `Appliquée à chaque membre · ${availableEmailTemplates.find((tpl) => tpl.value === n.emailTemplate)?.label ?? 'Template à choisir'}`
+                                      : 'Désactivée par défaut'
+                                    : 'Par document',
                                 });
                               }
                               if (bulkFields.includes('validationTeam')) {
@@ -2435,7 +2431,7 @@ export function MassUploadWizard({ isOpen, onClose, existingFolders, inline = fa
                                   <div className="flex items-center gap-2">
                                     <Layers3 className="h-3.5 w-3.5 text-blue-700" />
                                     <Label className="text-[11px] font-medium text-blue-900">
-                                      Nouveau lot — notification consolidée
+                                      Nouveau lot — équipe de validation consolidée
                                     </Label>
                                   </div>
                                   <Input
@@ -2455,7 +2451,7 @@ export function MassUploadWizard({ isOpen, onClose, existingFolders, inline = fa
                                     </ul>
                                   )}
                                   <p className="text-[11px] text-blue-700/80">
-                                    Notification et équipe de validation doivent être configurées au niveau du lot.
+                                    L’équipe de validation doit être configurée pour le lot.
                                   </p>
                                 </div>
                               );
@@ -2580,7 +2576,8 @@ export function MassUploadWizard({ isOpen, onClose, existingFolders, inline = fa
                       const isSelected = selectedFiles.includes(file.id);
                       const folderLocked = !!inBatch && inBatch.folderMode === 'global';
                       const targetingLocked = !!inBatch && inBatch.targetingMode === 'global';
-                      const notificationLocked = !!inBatch;
+                      // Notification stays per-document (only validation team is consolidated).
+                      const notificationLocked = false;
                       const validationTeamLocked = !!inBatch;
                       const inheritedBadge = (
                         <Tooltip>
@@ -2931,7 +2928,7 @@ export function MassUploadWizard({ isOpen, onClose, existingFolders, inline = fa
                                     className="h-7 text-sm font-medium border-blue-200 bg-white"
                                   />
                                   <div className="text-[11px] text-gray-600">
-                                    {children.length} document{children.length > 1 ? 's' : ''} · notification & équipe consolidées
+                                    {children.length} document{children.length > 1 ? 's' : ''} · équipe de validation consolidée
                                   </div>
                                   <div className="flex items-center gap-1">
                                     <Button
@@ -2981,40 +2978,37 @@ export function MassUploadWizard({ isOpen, onClose, existingFolders, inline = fa
                               )}
                             </td>
 
-                            {/* Col 5 — Notification (consolidated, inline editor) */}
+                            {/* Col 5 — Notification (per-document, summary at the batch level) */}
                             <td className="px-3 py-2 align-top">
-                              <div className="space-y-1.5">
-                                <div className="flex items-center gap-2">
-                                  <Switch
-                                    checked={batch.notify}
-                                    onCheckedChange={(checked) =>
-                                      handleUpdateBatch(batch.id, {
-                                        notify: checked,
-                                        emailTemplate: checked ? batch.emailTemplate : '',
-                                      })
-                                    }
-                                  />
-                                  <span className="text-[11px] text-gray-700">1 mail consolidé / destinataire</span>
-                                </div>
-                                {batch.notify && (
-                                  <Select
-                                    value={batch.emailTemplate}
-                                    onValueChange={(value) => handleUpdateBatch(batch.id, { emailTemplate: value })}
-                                  >
-                                    <SelectTrigger className="h-7 text-xs"><SelectValue placeholder="Template…" /></SelectTrigger>
-                                    <SelectContent>
-                                      {availableEmailTemplates.map((tpl) => {
-                                        const Icon = tpl.icon;
-                                        return (
-                                          <SelectItem key={tpl.value} value={tpl.value} className="text-xs">
-                                            <div className="flex items-center gap-2"><Icon className="h-3 w-3 text-gray-500" />{tpl.label}</div>
-                                          </SelectItem>
-                                        );
-                                      })}
-                                    </SelectContent>
-                                  </Select>
-                                )}
-                              </div>
+                              {(() => {
+                                const notifyingCount = children.filter((c) => c.notify).length;
+                                const total = children.length;
+                                if (total === 0) {
+                                  return <span className="text-xs text-gray-400">—</span>;
+                                }
+                                if (notifyingCount === 0) {
+                                  return (
+                                    <div className="flex items-center gap-1.5 text-xs text-gray-500">
+                                      <Bell className="h-3 w-3 text-gray-400 shrink-0" />
+                                      <span>Aucune notification</span>
+                                    </div>
+                                  );
+                                }
+                                if (notifyingCount === total) {
+                                  return (
+                                    <div className="flex items-center gap-1.5 text-xs text-gray-700">
+                                      <Bell className="h-3 w-3 text-gray-400 shrink-0" />
+                                      <span>Toutes notifient</span>
+                                    </div>
+                                  );
+                                }
+                                return (
+                                  <div className="flex items-center gap-1.5 text-xs text-gray-700">
+                                    <Bell className="h-3 w-3 text-gray-400 shrink-0" />
+                                    <span>{notifyingCount} / {total} notifient</span>
+                                  </div>
+                                );
+                              })()}
                             </td>
 
                             {/* Col 6 — Équipe de validation (consolidated, inline editor) */}
