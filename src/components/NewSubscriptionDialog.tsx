@@ -703,14 +703,6 @@ export function NewSubscriptionDialog({ open, onClose, onSubscriptionCreated }: 
 
                         <div className="flex gap-2 pt-1">
                           <Button
-                            onClick={handleCreateInvestor}
-                            size="sm"
-                            className="flex-1 bg-primary text-primary-foreground h-9"
-                          >
-                            <Check className="w-3 h-3 mr-1" />
-                            {t('subscriptions.newDialog.createAndSelect')}
-                          </Button>
-                          <Button
                             size="sm"
                             variant="outline"
                             onClick={() => {
@@ -720,6 +712,14 @@ export function NewSubscriptionDialog({ open, onClose, onSubscriptionCreated }: 
                             className="h-9"
                           >
                             {t('subscriptions.newDialog.cancel')}
+                          </Button>
+                          <Button
+                            onClick={handleCreateInvestor}
+                            size="sm"
+                            className="flex-1 bg-primary text-primary-foreground h-9"
+                          >
+                            <Check className="w-3 h-3 mr-1" />
+                            {t('subscriptions.newDialog.createAndSelect')}
                           </Button>
                         </div>
                       </div>
@@ -1016,14 +1016,6 @@ export function NewSubscriptionDialog({ open, onClose, onSubscriptionCreated }: 
                             </div>
                             <div className="flex gap-2 pt-1">
                               <Button
-                                onClick={handleCreateStructure}
-                                size="sm"
-                                className="flex-1 bg-primary text-primary-foreground h-9"
-                              >
-                                <Check className="w-3 h-3 mr-1" />
-                                {t('subscriptions.newDialog.createAndSelect')}
-                              </Button>
-                              <Button
                                 size="sm"
                                 variant="outline"
                                 onClick={() => {
@@ -1033,6 +1025,14 @@ export function NewSubscriptionDialog({ open, onClose, onSubscriptionCreated }: 
                                 className="h-9"
                               >
                                 {t('subscriptions.newDialog.cancel')}
+                              </Button>
+                              <Button
+                                onClick={handleCreateStructure}
+                                size="sm"
+                                className="flex-1 bg-primary text-primary-foreground h-9"
+                              >
+                                <Check className="w-3 h-3 mr-1" />
+                                {t('subscriptions.newDialog.createAndSelect')}
                               </Button>
                             </div>
                           </div>
