@@ -1062,26 +1062,33 @@ export function NewSubscriptionDialog({ open, onClose, onSubscriptionCreated }: 
                           </div>
                         </div>
                       ) : !investorHasStructures ? (
-                        /* Investor has no structures — direct is the implicit choice,
-                           show a compact line with a discreet 'Ajouter une structure'. */
-                        <div className="flex items-center justify-between gap-3 px-3 py-2 rounded-lg border border-dashed border-border bg-muted/30">
-                          <div className="flex items-center gap-2 min-w-0">
-                            <User
-                              className="w-4 h-4 shrink-0"
-                              style={{ color: 'var(--success)' }}
-                            />
-                            <span className="text-sm text-muted-foreground truncate">
-                              {t('subscriptions.newDialog.directDefaultLine', {
+                        /* Investor has no structures — direct is the implicit choice.
+                           Render the same direct-investment chip as below, but with
+                           a discreet '+ Ajouter une structure' action instead of the
+                           clear button (clearing would have nothing to fall back to). */
+                        <div className="flex items-center gap-3 p-3 rounded-xl border border-border bg-card">
+                          <div
+                            className="size-9 rounded-lg flex items-center justify-center shrink-0"
+                            style={{ backgroundColor: 'color-mix(in oklab, var(--success) 12%, transparent)' }}
+                          >
+                            <User className="w-4 h-4" style={{ color: 'var(--success)' }} />
+                          </div>
+                          <div className="flex-1 min-w-0">
+                            <div className="font-semibold text-sm text-foreground truncate">
+                              {t('subscriptions.newDialog.directInvestmentTitle')}
+                            </div>
+                            <div className="text-xs text-muted-foreground truncate">
+                              {t('subscriptions.newDialog.directInvestorDesc', {
                                 name: formData.investor.name,
                               })}
-                            </span>
+                            </div>
                           </div>
                           <Button
                             type="button"
                             variant="ghost"
                             size="sm"
                             onClick={() => setShowNewStructureForm(true)}
-                            className="h-7 text-xs gap-1 shrink-0"
+                            className="h-8 text-xs gap-1 shrink-0"
                           >
                             <Plus className="w-3.5 h-3.5" />
                             {t('subscriptions.newDialog.addStructure')}
