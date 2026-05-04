@@ -2878,13 +2878,36 @@ export function MassUploadWizard({ isOpen, onClose, existingFolders, inline = fa
                       );
                     };
                     // Render the batch header row (banner + inline configuration panel).
+                    // Targeting summary string (e.g. "Segments · HNWI") for the global mode.
+                    const renderTargetingSummary = (t: UploadBatch['globalTargeting']) => {
+                      const typeMap: Record<string, string> = { all: 'Tous', segment: 'Segments', investor: 'Investisseurs', subscription: 'Souscriptions', fund: 'Fonds' };
+                      const head = typeMap[t.targetType] ?? t.targetType;
+                      const tail = (t.targetSegments[0] || t.targetInvestors[0] || t.targetSubscriptions[0] || t.targetFunds[0]) ?? '';
+                      return tail ? `${head} · ${tail}` : head;
+                    };
+                    // Inline pill used to mark a heterogeneous (per-document) batch field.
+                    const heterogeneousPill = (
+                      <Tooltip>
+                        <TooltipTrigger asChild>
+                          <span className="inline-flex items-center gap-1 rounded-full border border-amber-200 bg-amber-50 px-2 py-0.5 text-[10px] font-medium text-amber-700">
+                            <Layers className="h-2.5 w-2.5" />
+                            Hétérogène
+                          </span>
+                        </TooltipTrigger>
+                        <TooltipContent>
+                          <span className="text-xs">Chaque document du lot a sa propre valeur. Cliquez « Configurer » pour la rendre globale.</span>
+                        </TooltipContent>
+                      </Tooltip>
+                    );
+
                     const renderBatchHeader = (batch: UploadBatch, children: UploadedFile[]) => {
                       const expanded = expandedBatchIds.has(batch.id);
                       const editing = editingBatchId === batch.id;
                       return (
-                        <tr key={`batch-${batch.id}`} className="bg-blue-50/60">
-                          <td colSpan={6} className="p-0">
-                            <div className="flex items-center gap-3 border-y border-blue-200/70 px-3 py-2">
+                        <Fragment key={`batch-${batch.id}`}>
+                          <tr className="bg-blue-50/60 border-y border-blue-200/70">
+                            {/* Col 1 — expand toggle */}
+                            <td className="px-3 py-2 align-top">
                               <button
                                 type="button"
                                 onClick={() => toggleBatchExpanded(batch.id)}
@@ -2893,194 +2916,227 @@ export function MassUploadWizard({ isOpen, onClose, existingFolders, inline = fa
                               >
                                 <ChevronDown className={`h-3.5 w-3.5 text-blue-700 transition-transform ${expanded ? '' : '-rotate-90'}`} />
                               </button>
-                              <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-md bg-blue-100">
-                                <Layers3 className="h-4 w-4 text-blue-700" />
+                            </td>
+
+                            {/* Col 2 — Document : icon + name + summary + actions */}
+                            <td className="px-3 py-2 align-top">
+                              <div className="flex items-start gap-2.5">
+                                <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-md bg-blue-100">
+                                  <Layers3 className="h-4 w-4 text-blue-700" />
+                                </div>
+                                <div className="min-w-0 flex-1 space-y-1">
+                                  <Input
+                                    value={batch.name}
+                                    onChange={(e) => handleUpdateBatch(batch.id, { name: e.target.value })}
+                                    className="h-7 text-sm font-medium border-blue-200 bg-white"
+                                  />
+                                  <div className="text-[11px] text-gray-600">
+                                    {children.length} document{children.length > 1 ? 's' : ''} · notification & équipe consolidées
+                                  </div>
+                                  <div className="flex items-center gap-1">
+                                    <Button
+                                      variant="ghost"
+                                      size="sm"
+                                      className="h-6 gap-1 px-1.5 text-[11px] text-blue-700 hover:bg-blue-100"
+                                      onClick={() => setEditingBatchId(editing ? null : batch.id)}
+                                    >
+                                      <Settings className="h-3 w-3" />
+                                      {editing ? 'Fermer' : 'Configurer'}
+                                    </Button>
+                                    <Button
+                                      variant="ghost"
+                                      size="sm"
+                                      className="h-6 gap-1 px-1.5 text-[11px] text-gray-600 hover:bg-gray-100"
+                                      onClick={() => handleDissolveBatch(batch.id)}
+                                    >
+                                      <Unlink className="h-3 w-3" />
+                                      Dissoudre
+                                    </Button>
+                                  </div>
+                                </div>
                               </div>
-                              <div className="min-w-0 flex-1">
-                                <Input
-                                  value={batch.name}
-                                  onChange={(e) => handleUpdateBatch(batch.id, { name: e.target.value })}
-                                  className="h-7 text-sm font-medium border-blue-200 bg-white"
-                                />
-                                <div className="mt-0.5 text-[11px] text-gray-600">
-                                  {children.length} document{children.length > 1 ? 's' : ''} · notification & équipe consolidées
-                                </div>
-                              </div>
-                              <Button
-                                variant="ghost"
-                                size="sm"
-                                className="h-7 gap-1 text-xs text-blue-700 hover:bg-blue-100"
-                                onClick={() => setEditingBatchId(editing ? null : batch.id)}
-                              >
-                                <Settings className="h-3.5 w-3.5" />
-                                {editing ? 'Fermer' : 'Configurer'}
-                              </Button>
-                              <Button
-                                variant="ghost"
-                                size="sm"
-                                className="h-7 gap-1 text-xs text-gray-600 hover:bg-gray-100"
-                                onClick={() => handleDissolveBatch(batch.id)}
-                              >
-                                <Unlink className="h-3.5 w-3.5" />
-                                Dissoudre
-                              </Button>
-                            </div>
-                            {editing && (
-                              <div className="grid grid-cols-1 gap-3 border-b border-blue-200/70 bg-blue-50/40 px-3 py-3 sm:grid-cols-2">
-                                {/* Folder mode */}
-                                <div className="space-y-1.5 rounded-md border border-blue-200 bg-white p-2">
-                                  <div className="flex items-center justify-between gap-2">
-                                    <Label className="flex items-center gap-1.5 text-[11px] font-medium text-gray-700">
-                                      <Folder className="h-3 w-3 text-gray-400" />Dossier
-                                    </Label>
-                                    <Select
-                                      value={batch.folderMode}
-                                      onValueChange={(value) =>
-                                        handleUpdateBatch(batch.id, {
-                                          folderMode: value as 'global' | 'per-document',
-                                        })
-                                      }
-                                    >
-                                      <SelectTrigger className="h-6 w-[140px] text-[11px]"><SelectValue /></SelectTrigger>
-                                      <SelectContent>
-                                        <SelectItem value="global" className="text-xs">Global (tous identiques)</SelectItem>
-                                        <SelectItem value="per-document" className="text-xs">Par document</SelectItem>
-                                      </SelectContent>
-                                    </Select>
-                                  </div>
-                                  {batch.folderMode === 'global' ? (
-                                    <Select
-                                      value={batch.globalFolder}
-                                      onValueChange={(value) => handleUpdateBatch(batch.id, { globalFolder: value })}
-                                    >
-                                      <SelectTrigger className="h-8 text-xs"><SelectValue placeholder="Dossier du lot…" /></SelectTrigger>
-                                      <SelectContent>
-                                        {availableFolders.map((folder) => (
-                                          <SelectItem key={folder.id} value={folder.path} className="text-xs">
-                                            <div className="flex items-center gap-2"><Folder className="h-3 w-3 text-gray-400" />{folder.path}</div>
-                                          </SelectItem>
-                                        ))}
-                                      </SelectContent>
-                                    </Select>
-                                  ) : (
-                                    <p className="text-[11px] text-gray-500">Chaque document conserve son propre dossier.</p>
-                                  )}
-                                </div>
+                            </td>
 
-                                {/* Targeting mode */}
-                                <div className="space-y-1.5 rounded-md border border-blue-200 bg-white p-2">
-                                  <div className="flex items-center justify-between gap-2">
-                                    <Label className="flex items-center gap-1.5 text-[11px] font-medium text-gray-700">
-                                      <Users className="h-3 w-3 text-gray-400" />Ciblage
-                                    </Label>
-                                    <Select
-                                      value={batch.targetingMode}
-                                      onValueChange={(value) =>
-                                        handleUpdateBatch(batch.id, {
-                                          targetingMode: value as 'global' | 'per-document',
-                                        })
-                                      }
-                                    >
-                                      <SelectTrigger className="h-6 w-[140px] text-[11px]"><SelectValue /></SelectTrigger>
-                                      <SelectContent>
-                                        <SelectItem value="global" className="text-xs">Global (tous identiques)</SelectItem>
-                                        <SelectItem value="per-document" className="text-xs">Par document</SelectItem>
-                                      </SelectContent>
-                                    </Select>
-                                  </div>
-                                  {batch.targetingMode === 'global' ? (
-                                    <Select
-                                      value={batch.globalTargeting.targetType}
-                                      onValueChange={(value) =>
-                                        handleUpdateBatch(batch.id, {
-                                          globalTargeting: {
-                                            ...batch.globalTargeting,
-                                            targetType: value,
-                                            targetSegments: [],
-                                            targetInvestors: [],
-                                            targetSubscriptions: [],
-                                            targetFunds: [],
-                                          },
-                                        })
-                                      }
-                                    >
-                                      <SelectTrigger className="h-8 text-xs"><SelectValue placeholder="Type de ciblage…" /></SelectTrigger>
-                                      <SelectContent>
-                                        <SelectItem value="all" className="text-xs">Tous</SelectItem>
-                                        <SelectItem value="segment" className="text-xs">Segments</SelectItem>
-                                        <SelectItem value="investor" className="text-xs">Investisseurs</SelectItem>
-                                        <SelectItem value="subscription" className="text-xs">Souscriptions</SelectItem>
-                                        <SelectItem value="fund" className="text-xs">Fonds</SelectItem>
-                                      </SelectContent>
-                                    </Select>
-                                  ) : (
-                                    <p className="text-[11px] text-gray-500">Chaque document conserve son propre ciblage.</p>
-                                  )}
+                            {/* Col 3 — Dossier */}
+                            <td className="px-3 py-2 align-top">
+                              {batch.folderMode === 'global' ? (
+                                <div className="flex items-center gap-1.5 text-xs text-gray-700">
+                                  <Folder className="h-3 w-3 text-gray-400 shrink-0" />
+                                  <span className="truncate">{batch.globalFolder || <span className="text-gray-400">Non défini</span>}</span>
                                 </div>
+                              ) : (
+                                heterogeneousPill
+                              )}
+                            </td>
 
-                                {/* Notification (always consolidated) */}
-                                <div className="space-y-1.5 rounded-md border border-blue-200 bg-white p-2">
-                                  <Label className="flex items-center gap-1.5 text-[11px] font-medium text-gray-700">
-                                    <Bell className="h-3 w-3 text-gray-400" />Notification
-                                    <Badge variant="outline" className="ml-1 px-1.5 py-0 text-[9px] uppercase">Consolidée</Badge>
-                                  </Label>
-                                  <div className="flex items-center gap-2">
-                                    <Switch
-                                      checked={batch.notify}
-                                      onCheckedChange={(checked) =>
-                                        handleUpdateBatch(batch.id, {
-                                          notify: checked,
-                                          emailTemplate: checked ? batch.emailTemplate : '',
-                                        })
-                                      }
-                                    />
-                                    <span className="text-xs text-gray-700">Notifier (1 mail consolidé par destinataire)</span>
-                                  </div>
-                                  {batch.notify && (
-                                    <Select
-                                      value={batch.emailTemplate}
-                                      onValueChange={(value) => handleUpdateBatch(batch.id, { emailTemplate: value })}
-                                    >
-                                      <SelectTrigger className="h-8 text-xs"><SelectValue placeholder="Template…" /></SelectTrigger>
-                                      <SelectContent>
-                                        {availableEmailTemplates.map((tpl) => {
-                                          const Icon = tpl.icon;
-                                          return (
-                                            <SelectItem key={tpl.value} value={tpl.value} className="text-xs">
-                                              <div className="flex items-center gap-2"><Icon className="h-3 w-3 text-gray-500" />{tpl.label}</div>
-                                            </SelectItem>
-                                          );
-                                        })}
-                                      </SelectContent>
-                                    </Select>
-                                  )}
+                            {/* Col 4 — Ciblage */}
+                            <td className="px-3 py-2 align-top">
+                              {batch.targetingMode === 'global' ? (
+                                <div className="flex items-center gap-1.5 text-xs text-gray-700">
+                                  <Users className="h-3 w-3 text-gray-400 shrink-0" />
+                                  <span className="truncate">{renderTargetingSummary(batch.globalTargeting)}</span>
                                 </div>
+                              ) : (
+                                heterogeneousPill
+                              )}
+                            </td>
 
-                                {/* Validation team (always consolidated) */}
-                                <div className="space-y-1.5 rounded-md border border-blue-200 bg-white p-2">
-                                  <Label className="flex items-center gap-1.5 text-[11px] font-medium text-gray-700">
-                                    <Shield className="h-3 w-3 text-gray-400" />Équipe de validation
-                                    <Badge variant="outline" className="ml-1 px-1.5 py-0 text-[9px] uppercase">Consolidée</Badge>
-                                  </Label>
-                                  <Select
-                                    value={batch.validationTeam[0] ?? ''}
-                                    onValueChange={(value) =>
-                                      handleUpdateBatch(batch.id, { validationTeam: value ? [value] : [] })
+                            {/* Col 5 — Notification (consolidated, inline editor) */}
+                            <td className="px-3 py-2 align-top">
+                              <div className="space-y-1.5">
+                                <div className="flex items-center gap-2">
+                                  <Switch
+                                    checked={batch.notify}
+                                    onCheckedChange={(checked) =>
+                                      handleUpdateBatch(batch.id, {
+                                        notify: checked,
+                                        emailTemplate: checked ? batch.emailTemplate : '',
+                                      })
                                     }
+                                  />
+                                  <span className="text-[11px] text-gray-700">1 mail consolidé / destinataire</span>
+                                </div>
+                                {batch.notify && (
+                                  <Select
+                                    value={batch.emailTemplate}
+                                    onValueChange={(value) => handleUpdateBatch(batch.id, { emailTemplate: value })}
                                   >
-                                    <SelectTrigger className="h-8 text-xs"><SelectValue placeholder="Choisir une équipe…" /></SelectTrigger>
+                                    <SelectTrigger className="h-7 text-xs"><SelectValue placeholder="Template…" /></SelectTrigger>
                                     <SelectContent>
-                                      <SelectItem value="admin" className="text-xs">Admin</SelectItem>
-                                      <SelectItem value="compliance" className="text-xs">Compliance</SelectItem>
-                                      <SelectItem value="legal" className="text-xs">Juridique</SelectItem>
-                                      <SelectItem value="ir" className="text-xs">Investor Relations</SelectItem>
+                                      {availableEmailTemplates.map((tpl) => {
+                                        const Icon = tpl.icon;
+                                        return (
+                                          <SelectItem key={tpl.value} value={tpl.value} className="text-xs">
+                                            <div className="flex items-center gap-2"><Icon className="h-3 w-3 text-gray-500" />{tpl.label}</div>
+                                          </SelectItem>
+                                        );
+                                      })}
                                     </SelectContent>
                                   </Select>
-                                </div>
+                                )}
                               </div>
-                            )}
-                          </td>
-                        </tr>
+                            </td>
+
+                            {/* Col 6 — Équipe de validation (consolidated, inline editor) */}
+                            <td className="px-3 py-2 align-top">
+                              <Select
+                                value={batch.validationTeam[0] ?? ''}
+                                onValueChange={(value) =>
+                                  handleUpdateBatch(batch.id, { validationTeam: value ? [value] : [] })
+                                }
+                              >
+                                <SelectTrigger className="h-8 text-xs"><SelectValue placeholder="Choisir une équipe…" /></SelectTrigger>
+                                <SelectContent>
+                                  <SelectItem value="admin" className="text-xs">Admin</SelectItem>
+                                  <SelectItem value="compliance" className="text-xs">Compliance</SelectItem>
+                                  <SelectItem value="legal" className="text-xs">Juridique</SelectItem>
+                                  <SelectItem value="ir" className="text-xs">Investor Relations</SelectItem>
+                                </SelectContent>
+                              </Select>
+                            </td>
+                          </tr>
+
+                          {/* Configurer panel — only folder & targeting modes/values now,
+                              notification & team are edited inline in the columns above. */}
+                          {editing && (
+                            <tr className="bg-blue-50/40">
+                              <td colSpan={6} className="p-0">
+                                <div className="grid grid-cols-1 gap-3 border-b border-blue-200/70 px-3 py-3 sm:grid-cols-2">
+                                  {/* Folder mode */}
+                                  <div className="space-y-1.5 rounded-md border border-blue-200 bg-white p-2">
+                                    <div className="flex items-center justify-between gap-2">
+                                      <Label className="flex items-center gap-1.5 text-[11px] font-medium text-gray-700">
+                                        <Folder className="h-3 w-3 text-gray-400" />Dossier
+                                      </Label>
+                                      <Select
+                                        value={batch.folderMode}
+                                        onValueChange={(value) =>
+                                          handleUpdateBatch(batch.id, {
+                                            folderMode: value as 'global' | 'per-document',
+                                          })
+                                        }
+                                      >
+                                        <SelectTrigger className="h-6 w-[140px] text-[11px]"><SelectValue /></SelectTrigger>
+                                        <SelectContent>
+                                          <SelectItem value="global" className="text-xs">Global (tous identiques)</SelectItem>
+                                          <SelectItem value="per-document" className="text-xs">Par document</SelectItem>
+                                        </SelectContent>
+                                      </Select>
+                                    </div>
+                                    {batch.folderMode === 'global' ? (
+                                      <Select
+                                        value={batch.globalFolder}
+                                        onValueChange={(value) => handleUpdateBatch(batch.id, { globalFolder: value })}
+                                      >
+                                        <SelectTrigger className="h-8 text-xs"><SelectValue placeholder="Dossier du lot…" /></SelectTrigger>
+                                        <SelectContent>
+                                          {availableFolders.map((folder) => (
+                                            <SelectItem key={folder.id} value={folder.path} className="text-xs">
+                                              <div className="flex items-center gap-2"><Folder className="h-3 w-3 text-gray-400" />{folder.path}</div>
+                                            </SelectItem>
+                                          ))}
+                                        </SelectContent>
+                                      </Select>
+                                    ) : (
+                                      <p className="text-[11px] text-gray-500">Chaque document conserve son propre dossier.</p>
+                                    )}
+                                  </div>
+
+                                  {/* Targeting mode */}
+                                  <div className="space-y-1.5 rounded-md border border-blue-200 bg-white p-2">
+                                    <div className="flex items-center justify-between gap-2">
+                                      <Label className="flex items-center gap-1.5 text-[11px] font-medium text-gray-700">
+                                        <Users className="h-3 w-3 text-gray-400" />Ciblage
+                                      </Label>
+                                      <Select
+                                        value={batch.targetingMode}
+                                        onValueChange={(value) =>
+                                          handleUpdateBatch(batch.id, {
+                                            targetingMode: value as 'global' | 'per-document',
+                                          })
+                                        }
+                                      >
+                                        <SelectTrigger className="h-6 w-[140px] text-[11px]"><SelectValue /></SelectTrigger>
+                                        <SelectContent>
+                                          <SelectItem value="global" className="text-xs">Global (tous identiques)</SelectItem>
+                                          <SelectItem value="per-document" className="text-xs">Par document</SelectItem>
+                                        </SelectContent>
+                                      </Select>
+                                    </div>
+                                    {batch.targetingMode === 'global' ? (
+                                      <Select
+                                        value={batch.globalTargeting.targetType}
+                                        onValueChange={(value) =>
+                                          handleUpdateBatch(batch.id, {
+                                            globalTargeting: {
+                                              ...batch.globalTargeting,
+                                              targetType: value,
+                                              targetSegments: [],
+                                              targetInvestors: [],
+                                              targetSubscriptions: [],
+                                              targetFunds: [],
+                                            },
+                                          })
+                                        }
+                                      >
+                                        <SelectTrigger className="h-8 text-xs"><SelectValue placeholder="Type de ciblage…" /></SelectTrigger>
+                                        <SelectContent>
+                                          <SelectItem value="all" className="text-xs">Tous</SelectItem>
+                                          <SelectItem value="segment" className="text-xs">Segments</SelectItem>
+                                          <SelectItem value="investor" className="text-xs">Investisseurs</SelectItem>
+                                          <SelectItem value="subscription" className="text-xs">Souscriptions</SelectItem>
+                                          <SelectItem value="fund" className="text-xs">Fonds</SelectItem>
+                                        </SelectContent>
+                                      </Select>
+                                    ) : (
+                                      <p className="text-[11px] text-gray-500">Chaque document conserve son propre ciblage.</p>
+                                    )}
+                                  </div>
+                                </div>
+                              </td>
+                            </tr>
+                          )}
+                        </Fragment>
                       );
                     };
                     return (
