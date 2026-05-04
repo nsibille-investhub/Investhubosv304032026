@@ -167,10 +167,18 @@ export function NewSubscriptionDialog({ open, onClose, onSubscriptionCreated }: 
   const { t } = useTranslation();
   const [step, setStep] = useState(1);
   const [searchQuery, setSearchQuery] = useState('');
+  const [structureFilter, setStructureFilter] = useState('');
   const [showAutocomplete, setShowAutocomplete] = useState(false);
   const [showNewStructureForm, setShowNewStructureForm] = useState(false);
+  const [showNewInvestorForm, setShowNewInvestorForm] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const inputRef = useRef<HTMLInputElement>(null);
+
+  const [newInvestor, setNewInvestor] = useState({
+    name: '',
+    type: 'individual' as 'individual' | 'corporate',
+    email: '',
+  });
 
   const [formData, setFormData] = useState<FormData>({
     investor: null,
@@ -204,7 +212,10 @@ export function NewSubscriptionDialog({ open, onClose, onSubscriptionCreated }: 
           distributor: 'direct',
         });
         setShowNewStructureForm(false);
+        setShowNewInvestorForm(false);
+        setNewInvestor({ name: '', type: 'individual', email: '' });
         setSearchQuery('');
+        setStructureFilter('');
         setShowAutocomplete(false);
       }, 300);
     }
@@ -301,6 +312,7 @@ export function NewSubscriptionDialog({ open, onClose, onSubscriptionCreated }: 
   const handleInvestorSelect = (investor: Investor) => {
     setFormData({ ...formData, investor, structure: null });
     setSearchQuery('');
+    setStructureFilter('');
     setShowAutocomplete(false);
   };
 
@@ -308,12 +320,14 @@ export function NewSubscriptionDialog({ open, onClose, onSubscriptionCreated }: 
     const { owner, ...structure } = structureWithOwner;
     setFormData({ ...formData, investor: owner, structure });
     setSearchQuery('');
+    setStructureFilter('');
     setShowAutocomplete(false);
   };
 
   const handleStructureSelect = (structure: Structure) => {
     setFormData({ ...formData, structure });
     setShowNewStructureForm(false);
+    setStructureFilter('');
   };
 
   const handleDirectInvestment = () => {
@@ -322,6 +336,32 @@ export function NewSubscriptionDialog({ open, onClose, onSubscriptionCreated }: 
 
   const handleClearInvestor = () => {
     setFormData({ ...formData, investor: null, structure: null });
+    setStructureFilter('');
+  };
+
+  const handleQuickCreateInvestor = () => {
+    setNewInvestor({ name: searchQuery, type: 'individual', email: '' });
+    setShowNewInvestorForm(true);
+    setShowAutocomplete(false);
+  };
+
+  const handleCreateInvestor = () => {
+    if (!newInvestor.name || !newInvestor.email) {
+      toast.error(t('subscriptions.newDialog.errors.missingNameEmail'));
+      return;
+    }
+    const investor: Investor = {
+      id: `new-${Date.now()}`,
+      name: newInvestor.name,
+      type: newInvestor.type,
+      email: newInvestor.email,
+      structures: [],
+    };
+    setFormData({ ...formData, investor, structure: null });
+    setShowNewInvestorForm(false);
+    setNewInvestor({ name: '', type: 'individual', email: '' });
+    setSearchQuery('');
+    toast.success(t('subscriptions.newDialog.toast.investorCreated', { name: investor.name }));
   };
 
   const handleClearStructure = () => {
@@ -525,16 +565,107 @@ export function NewSubscriptionDialog({ open, onClose, onSubscriptionCreated }: 
                   animate={{ opacity: 1, x: 0 }}
                   exit={{ opacity: 0, x: -20 }}
                   transition={{ duration: 0.2 }}
-                  className="h-full flex flex-col gap-5"
+                  className="h-full flex flex-col gap-6"
                 >
                   {/* INVESTOR SECTION */}
-                  <div>
-                    <Label className="text-xs mb-2 flex items-center gap-1">
-                      <User className="w-3 h-3" />
-                      {t('subscriptions.newDialog.investorLabel')} <span className="text-destructive">*</span>
+                  <div className="space-y-2">
+                    <Label className="text-xs uppercase tracking-wide font-semibold text-muted-foreground flex items-center gap-1.5">
+                      <User className="w-3.5 h-3.5" />
+                      {t('subscriptions.newDialog.investorLabel')}{' '}
+                      <span className="text-destructive">*</span>
                     </Label>
 
-                    {!formData.investor ? (
+                    {showNewInvestorForm ? (
+                      <div className="border border-border bg-card rounded-xl p-4 space-y-3">
+                        <div className="flex items-center justify-between">
+                          <div className="flex items-center gap-2">
+                            <Sparkles className="w-4 h-4 text-primary" />
+                            <span className="font-semibold text-sm">{t('subscriptions.newDialog.newInvestor')}</span>
+                          </div>
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            onClick={() => {
+                              setShowNewInvestorForm(false);
+                              setNewInvestor({ name: '', type: 'individual', email: '' });
+                            }}
+                            className="h-7 w-7 p-0"
+                          >
+                            <X className="w-4 h-4" />
+                          </Button>
+                        </div>
+
+                        <div className="grid grid-cols-2 gap-2">
+                          <Button
+                            type="button"
+                            size="sm"
+                            variant={newInvestor.type === 'individual' ? 'primary' : 'outline'}
+                            onClick={() => setNewInvestor({ ...newInvestor, type: 'individual' })}
+                          >
+                            <User className="w-3 h-3 mr-1" />
+                            {t('subscriptions.newDialog.individual')}
+                          </Button>
+                          <Button
+                            type="button"
+                            size="sm"
+                            variant={newInvestor.type === 'corporate' ? 'primary' : 'outline'}
+                            onClick={() => setNewInvestor({ ...newInvestor, type: 'corporate' })}
+                          >
+                            <Building2 className="w-3 h-3 mr-1" />
+                            {t('subscriptions.newDialog.corporate')}
+                          </Button>
+                        </div>
+
+                        <div>
+                          <Label className="text-xs mb-1">
+                            {t('subscriptions.newDialog.fullName')}{' '}
+                            <span className="text-destructive">*</span>
+                          </Label>
+                          <Input
+                            value={newInvestor.name}
+                            onChange={(e) => setNewInvestor({ ...newInvestor, name: e.target.value })}
+                            placeholder="Sophie Martin"
+                            className="h-9"
+                          />
+                        </div>
+
+                        <div>
+                          <Label className="text-xs mb-1">
+                            {t('subscriptions.newDialog.email')}{' '}
+                            <span className="text-destructive">*</span>
+                          </Label>
+                          <Input
+                            type="email"
+                            value={newInvestor.email}
+                            onChange={(e) => setNewInvestor({ ...newInvestor, email: e.target.value })}
+                            placeholder={t('subscriptions.newDialog.emailPlaceholder')}
+                            className="h-9"
+                          />
+                        </div>
+
+                        <div className="flex gap-2 pt-1">
+                          <Button
+                            onClick={handleCreateInvestor}
+                            size="sm"
+                            className="flex-1 bg-primary text-primary-foreground h-9"
+                          >
+                            <Check className="w-3 h-3 mr-1" />
+                            {t('subscriptions.newDialog.createAndSelect')}
+                          </Button>
+                          <Button
+                            size="sm"
+                            variant="outline"
+                            onClick={() => {
+                              setShowNewInvestorForm(false);
+                              setNewInvestor({ name: '', type: 'individual', email: '' });
+                            }}
+                            className="h-9"
+                          >
+                            {t('subscriptions.newDialog.cancel')}
+                          </Button>
+                        </div>
+                      </div>
+                    ) : !formData.investor ? (
                       <div className="relative">
                         <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground z-10" />
                         <Input
@@ -556,9 +687,17 @@ export function NewSubscriptionDialog({ open, onClose, onSubscriptionCreated }: 
                             >
                               {filteredInvestors.length === 0 && filteredStructuresWithOwner.length === 0 ? (
                                 <div className="p-4 text-center">
-                                  <p className="text-xs text-muted-foreground">
+                                  <p className="text-xs text-muted-foreground mb-3">
                                     {t('subscriptions.newDialog.noResultFound', { query: searchQuery })}
                                   </p>
+                                  <Button
+                                    onClick={handleQuickCreateInvestor}
+                                    size="sm"
+                                    className="bg-primary text-primary-foreground h-9"
+                                  >
+                                    <Plus className="w-4 h-4 mr-2" />
+                                    {t('subscriptions.newDialog.createInvestorWithName', { query: searchQuery })}
+                                  </Button>
                                 </div>
                               ) : (
                                 <>
@@ -631,6 +770,15 @@ export function NewSubscriptionDialog({ open, onClose, onSubscriptionCreated }: 
                                       ))}
                                     </div>
                                   )}
+
+                                  <button
+                                    type="button"
+                                    onClick={handleQuickCreateInvestor}
+                                    className="w-full px-3 py-2 hover:bg-muted transition-colors text-left flex items-center gap-2 border-t border-border text-sm text-primary"
+                                  >
+                                    <Plus className="w-4 h-4" />
+                                    {t('subscriptions.newDialog.createNewInvestor')}
+                                  </button>
                                 </>
                               )}
                             </motion.div>
@@ -680,10 +828,11 @@ export function NewSubscriptionDialog({ open, onClose, onSubscriptionCreated }: 
 
                   {/* STRUCTURE SECTION */}
                   {formData.investor && (
-                    <div>
-                      <Label className="text-xs mb-2 flex items-center gap-1">
-                        <Building2 className="w-3 h-3" />
-                        {t('subscriptions.newDialog.structureLabel')} <span className="text-destructive">*</span>
+                    <div className="space-y-2">
+                      <Label className="text-xs uppercase tracking-wide font-semibold text-muted-foreground flex items-center gap-1.5">
+                        <Building2 className="w-3.5 h-3.5" />
+                        {t('subscriptions.newDialog.structureLabel')}{' '}
+                        <span className="text-destructive">*</span>
                       </Label>
 
                       {showNewStructureForm ? (
@@ -830,41 +979,72 @@ export function NewSubscriptionDialog({ open, onClose, onSubscriptionCreated }: 
                         </div>
                       ) : (
                         /* Structure choice list */
-                        <div className="space-y-2">
-                          {formData.investor.structures && formData.investor.structures.length > 0 ? (
-                            formData.investor.structures.map((structure) => (
-                              <button
-                                key={structure.id}
-                                type="button"
-                                onClick={() => handleStructureSelect(structure)}
-                                className="w-full p-3 border border-border rounded-xl text-left transition-colors hover:bg-muted hover:border-primary/40"
-                              >
-                                <div className="flex items-center gap-3">
-                                  <div className="size-8 rounded-md bg-muted flex items-center justify-center shrink-0">
-                                    <Building2 className="w-4 h-4 text-muted-foreground" />
-                                  </div>
-                                  <div className="flex-1 min-w-0">
-                                    <div className="font-medium text-sm text-foreground truncate">
-                                      {structure.name}
-                                    </div>
-                                    <div className="text-xs text-muted-foreground truncate">
-                                      {structure.siret}
-                                      {structure.city ? ` · ${structure.city}` : ''}
-                                    </div>
-                                  </div>
-                                  <Badge variant="outline" className="text-[10px] h-5 shrink-0">
-                                    {structure.country}
-                                  </Badge>
-                                </div>
-                              </button>
-                            ))
-                          ) : (
-                            <p className="text-xs text-muted-foreground italic">
-                              {t('subscriptions.newDialog.noStructureForInvestor')}
-                            </p>
-                          )}
+                        (() => {
+                          const investorStructures = formData.investor.structures ?? [];
+                          const filterQuery = structureFilter.trim().toLowerCase();
+                          const filteredStructures = filterQuery
+                            ? investorStructures.filter(
+                                (s) =>
+                                  s.name.toLowerCase().includes(filterQuery) ||
+                                  s.siret.toLowerCase().includes(filterQuery) ||
+                                  s.city?.toLowerCase().includes(filterQuery),
+                              )
+                            : investorStructures;
 
-                          <div className="grid grid-cols-2 gap-2 pt-1">
+                          return (
+                            <div className="space-y-3">
+                              {investorStructures.length > 0 && (
+                                <div className="relative">
+                                  <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground z-10" />
+                                  <Input
+                                    placeholder={t('subscriptions.newDialog.searchStructureInListPlaceholder')}
+                                    value={structureFilter}
+                                    onChange={(e) => setStructureFilter(e.target.value)}
+                                    className="pl-10 h-9"
+                                  />
+                                </div>
+                              )}
+
+                              <div className="space-y-2 max-h-[260px] overflow-y-auto">
+                                {investorStructures.length === 0 ? (
+                                  <p className="text-xs text-muted-foreground italic px-1">
+                                    {t('subscriptions.newDialog.noStructureForInvestor')}
+                                  </p>
+                                ) : filteredStructures.length === 0 ? (
+                                  <p className="text-xs text-muted-foreground italic px-1">
+                                    {t('subscriptions.newDialog.noStructureMatch', { query: structureFilter })}
+                                  </p>
+                                ) : (
+                                  filteredStructures.map((structure) => (
+                                    <button
+                                      key={structure.id}
+                                      type="button"
+                                      onClick={() => handleStructureSelect(structure)}
+                                      className="w-full p-3 border border-border rounded-xl text-left transition-colors hover:bg-muted hover:border-primary/40"
+                                    >
+                                      <div className="flex items-center gap-3">
+                                        <div className="size-8 rounded-md bg-muted flex items-center justify-center shrink-0">
+                                          <Building2 className="w-4 h-4 text-muted-foreground" />
+                                        </div>
+                                        <div className="flex-1 min-w-0">
+                                          <div className="font-medium text-sm text-foreground truncate">
+                                            {structure.name}
+                                          </div>
+                                          <div className="text-xs text-muted-foreground truncate">
+                                            {structure.siret}
+                                            {structure.city ? ` · ${structure.city}` : ''}
+                                          </div>
+                                        </div>
+                                        <Badge variant="outline" className="text-[10px] h-5 shrink-0">
+                                          {structure.country}
+                                        </Badge>
+                                      </div>
+                                    </button>
+                                  ))
+                                )}
+                              </div>
+
+                              <div className="grid grid-cols-2 gap-2 pt-1">
                             <Button
                               onClick={() => setShowNewStructureForm(true)}
                               variant="outline"
@@ -882,7 +1062,9 @@ export function NewSubscriptionDialog({ open, onClose, onSubscriptionCreated }: 
                               {t('subscriptions.newDialog.directInvestment')}
                             </Button>
                           </div>
-                        </div>
+                            </div>
+                          );
+                        })()
                       )}
                     </div>
                   )}
@@ -899,58 +1081,60 @@ export function NewSubscriptionDialog({ open, onClose, onSubscriptionCreated }: 
                   transition={{ duration: 0.2 }}
                   className="h-full flex flex-col"
                 >
-                  {/* Fund Selection - Compact Grid */}
-                  <div className="mb-3">
-                    <Label className="text-xs mb-2 flex items-center gap-1">
-                      <TrendingUp className="w-3 h-3" />
-                      {t('subscriptions.newDialog.fundLabel')} <span className="text-destructive">*</span>
+                  {/* Fund Selection — classic select */}
+                  <div className="mb-4 space-y-1.5">
+                    <Label className="text-xs flex items-center gap-1.5">
+                      <TrendingUp className="w-3.5 h-3.5" />
+                      {t('subscriptions.newDialog.fundLabel')}{' '}
+                      <span className="text-destructive">*</span>
                     </Label>
-                    <div className="grid grid-cols-2 gap-2">
-                      {funds.map((fund) => (
-                        <button
-                          key={fund.id}
-                          onClick={() => setFormData({ ...formData, fund: fund.id })}
-                          className={`p-2 border-2 rounded-lg text-left transition-all ${
-                            formData.fund === fund.id
-                              ? 'border-primary bg-primary/10'
-                              : 'border-border hover:border-primary/40'
-                          }`}
-                        >
-                          <div className="flex items-center justify-between mb-1">
-                            <Badge variant="outline" className="text-xs h-5">
-                              {fund.category}
-                            </Badge>
-                            {formData.fund === fund.id && (
-                              <Check className="w-3 h-3 text-primary" />
-                            )}
-                          </div>
-                          <div className="font-medium text-xs text-foreground mb-0.5">{fund.name}</div>
-                          <div className="text-xs text-muted-foreground">{fund.aum}</div>
-                        </button>
-                      ))}
-                    </div>
+                    <Select
+                      value={formData.fund}
+                      onValueChange={(value) => setFormData({ ...formData, fund: value })}
+                    >
+                      <SelectTrigger className="h-10">
+                        <SelectValue placeholder={t('subscriptions.newDialog.selectFund')} />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {funds.map((fund) => (
+                          <SelectItem key={fund.id} value={fund.id}>
+                            <div className="flex items-center justify-between gap-3 min-w-0 w-full">
+                              <span className="font-medium truncate">{fund.name}</span>
+                              <span className="text-xs text-muted-foreground inline-flex items-center gap-2 shrink-0">
+                                <Badge variant="outline" className="text-[10px] h-4">
+                                  {fund.category}
+                                </Badge>
+                                {fund.aum}
+                              </span>
+                            </div>
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
                   </div>
 
-                  {/* Share Class */}
-                  <div className="mb-3">
-                    <Label className="text-xs mb-1 flex items-center gap-1">
-                      <FileText className="w-3 h-3" />
-                      {t('subscriptions.newDialog.shareClassLabel')} <span className="text-destructive">*</span>
+                  {/* Share Class — classic select */}
+                  <div className="mb-4 space-y-1.5">
+                    <Label className="text-xs flex items-center gap-1.5">
+                      <FileText className="w-3.5 h-3.5" />
+                      {t('subscriptions.newDialog.shareClassLabel')}{' '}
+                      <span className="text-destructive">*</span>
                     </Label>
-                    <div className="flex gap-1">
-                      {shareClasses.slice(0, 5).map((sc) => (
-                        <Button
-                          key={sc}
-                          type="button"
-                          size="sm"
-                          variant={formData.shareClass === sc ? 'default' : 'outline'}
-                          className={`flex-1 h-8 text-xs ${formData.shareClass === sc ? 'bg-primary' : ''}`}
-                          onClick={() => setFormData({ ...formData, shareClass: sc })}
-                        >
-                          {sc}
-                        </Button>
-                      ))}
-                    </div>
+                    <Select
+                      value={formData.shareClass}
+                      onValueChange={(value) => setFormData({ ...formData, shareClass: value })}
+                    >
+                      <SelectTrigger className="h-10">
+                        <SelectValue placeholder={t('subscriptions.newDialog.selectShareClass')} />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {shareClasses.map((sc) => (
+                          <SelectItem key={sc} value={sc}>
+                            {t('subscriptions.newDialog.shareLabel', { class: sc })}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
                   </div>
 
                   {/* Number of Shares - BIG */}
