@@ -669,12 +669,6 @@ export function KYCFilesPage() {
   return (
     <div className="flex-1 flex flex-col">
       <PageHeader
-        breadcrumb={[
-          { label: 'InvestHub OS' },
-          { label: 'Conformité' },
-          { label: t('ged.kyc.title') },
-        ]}
-        hideBackButton
         title={t('ged.kyc.title')}
         subtitle={t('ged.kyc.subtitle')}
         primaryAction={{
