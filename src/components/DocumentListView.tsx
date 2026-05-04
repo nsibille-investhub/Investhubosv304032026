@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef, useState } from 'react';
+import { Fragment, useEffect, useMemo, useRef, useState } from 'react';
 import { AnimatePresence, motion } from 'motion/react';
 import {
   FileText,
@@ -16,6 +16,7 @@ import {
   AlertTriangle,
   ShieldAlert,
   FileUp,
+  Layers3,
 } from 'lucide-react';
 import { Document } from '../utils/documentMockData';
 import { Button } from './ui/button';
@@ -431,23 +432,64 @@ export function DocumentListView({
               );
             })}
 
-            {/* Then files */}
-            {(hasActiveSearch ? searchFiles : files).map((file) => {
+            {/* Then files — batched documents are grouped under a banner with a single
+                consolidated notification indicator. */}
+            {(() => {
+              const items = hasActiveSearch ? searchFiles : files;
+              // Order so members of a batch sit contiguously, anchored at the first
+              // member's position; standalone files keep their original order.
+              const sorted: Document[] = [];
+              const seenBatches = new Set<string>();
+              for (const f of items) {
+                if (f.batchId) {
+                  if (seenBatches.has(f.batchId)) continue;
+                  seenBatches.add(f.batchId);
+                  for (const ff of items) if (ff.batchId === f.batchId) sorted.push(ff);
+                } else {
+                  sorted.push(f);
+                }
+              }
+              let prevBatchId: string | undefined;
+              return sorted.map((file) => {
               const Icon = getFileIcon(file.type);
               const isHovered = hoveredId === file.id;
-              
+              const showBatchBanner = !!file.batchId && file.batchId !== prevBatchId;
+              const batchCount = showBatchBanner
+                ? sorted.filter((x) => x.batchId === file.batchId).length
+                : 0;
+              const inBatch = !!file.batchId;
+              prevBatchId = file.batchId;
+
               return (
+                <Fragment key={file.id}>
+                {showBatchBanner && (
+                  <div className="px-6 py-2 border-b border-blue-200/60 bg-gradient-to-r from-blue-50 to-blue-50/40">
+                    <div className="flex items-center gap-3">
+                      <div className="flex h-7 w-7 items-center justify-center rounded-md bg-blue-100">
+                        <Layers3 className="h-4 w-4 text-blue-700" />
+                      </div>
+                      <div className="min-w-0 flex-1">
+                        <p className="text-sm font-medium text-blue-900 truncate">{file.batchName ?? 'Lot de documents'}</p>
+                        <p className="text-[11px] text-blue-700/80">
+                          {batchCount} document{batchCount > 1 ? 's' : ''} · 1 notification consolidée
+                        </p>
+                      </div>
+                    </div>
+                  </div>
+                )}
                 <motion.div
-                  key={file.id}
                   ref={(el) => { itemRefs.current[file.id] = el; }}
                   onMouseEnter={() => setHoveredId(file.id)}
                   onMouseLeave={() => setHoveredId(null)}
                   whileHover={{ backgroundColor: 'rgba(0, 0, 0, 0.02)' }}
                   onClick={() => handleRowClick(file)}
-                  className={`px-6 py-3 border-b border-gray-100 cursor-pointer transition-colors ${focusedItemId === file.id ? 'bg-blue-50 ring-1 ring-inset ring-blue-300' : ''}`}
+                  className={`px-6 py-3 border-b border-gray-100 cursor-pointer transition-colors ${focusedItemId === file.id ? 'bg-blue-50 ring-1 ring-inset ring-blue-300' : ''} ${inBatch ? 'bg-blue-50/20' : ''}`}
                 >
                   <div className={`grid ${tableGridClassName} gap-4 items-center`}>
                     <div className="flex items-center gap-3">
+                      {inBatch && (
+                        <span className="text-blue-300 select-none" aria-hidden>└</span>
+                      )}
                       <div className="w-8 h-8 rounded-lg flex items-center justify-center flex-shrink-0" style={{ backgroundColor: '#EEF1F7' }}>
                         <Icon className="w-4 h-4" style={{ color: '#000E2B' }} />
                       </div>
@@ -548,8 +590,10 @@ export function DocumentListView({
                     </div>
                   </div>
                 </motion.div>
+                </Fragment>
               );
-            })}
+              });
+            })()}
           </>
         )}
       </div>
