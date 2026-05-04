@@ -142,7 +142,7 @@ const mockInvestors: Investor[] = [
 ];
 
 // Les 4 derniers investisseurs créés
-const recentInvestors = mockInvestors.slice(0, 4);
+const recentInvestors = mockInvestors.slice(0, 10);
 
 const funds = [
   { id: 'f1', name: 'FutureInvest Fund', aum: '€245M', category: 'Growth' },
@@ -169,6 +169,7 @@ export function NewSubscriptionDialog({ open, onClose, onSubscriptionCreated }: 
   const [searchQuery, setSearchQuery] = useState('');
   const [structureFilter, setStructureFilter] = useState('');
   const [showAutocomplete, setShowAutocomplete] = useState(false);
+  const [searchFocused, setSearchFocused] = useState(false);
   const [showNewStructureForm, setShowNewStructureForm] = useState(false);
   const [showNewInvestorForm, setShowNewInvestorForm] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -271,10 +272,10 @@ export function NewSubscriptionDialog({ open, onClose, onSubscriptionCreated }: 
       .slice(0, 5);
   }, [searchQuery]);
 
-  // Show autocomplete when typing and no investor is selected yet
+  // Show autocomplete when the input is focused (or the user is typing) and no investor is selected yet
   useEffect(() => {
-    setShowAutocomplete(!!searchQuery.trim() && !formData.investor);
-  }, [searchQuery, formData.investor]);
+    setShowAutocomplete(!formData.investor && (searchFocused || !!searchQuery.trim()));
+  }, [searchQuery, searchFocused, formData.investor]);
 
   // Get authorized distributors for selected fund and share class
   const authorizedDistributors = useMemo(() => {
@@ -723,31 +724,73 @@ export function NewSubscriptionDialog({ open, onClose, onSubscriptionCreated }: 
                         </div>
                       </div>
                     ) : !formData.investor ? (
-                      <div className="relative">
-                        <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground z-10" />
-                        <Input
-                          ref={inputRef}
-                          placeholder={t('subscriptions.newDialog.searchInvestorOrStructurePlaceholder')}
-                          value={searchQuery}
-                          onChange={(e) => setSearchQuery(e.target.value)}
-                          className="pl-10 h-10"
-                        />
+                      <>
+                        <div className="relative">
+                          <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground z-10 pointer-events-none" />
+                          <Input
+                            ref={inputRef}
+                            placeholder={t('subscriptions.newDialog.searchInvestorOrStructurePlaceholder')}
+                            value={searchQuery}
+                            onChange={(e) => setSearchQuery(e.target.value)}
+                            onFocus={() => setSearchFocused(true)}
+                            onBlur={() => setTimeout(() => setSearchFocused(false), 150)}
+                            className="pl-10 h-10"
+                          />
 
-                        <AnimatePresence>
-                          {showAutocomplete && (
-                            <motion.div
-                              initial={{ opacity: 0, y: -8 }}
-                              animate={{ opacity: 1, y: 0 }}
-                              exit={{ opacity: 0, y: -8 }}
-                              transition={{ duration: 0.15 }}
-                              className="absolute top-full left-0 right-0 mt-1 bg-card border border-border rounded-xl shadow-lg z-50 overflow-hidden max-h-[320px] overflow-y-auto"
-                            >
-                              {filteredInvestors.length === 0 && filteredStructuresWithOwner.length === 0 ? (
+                          <AnimatePresence>
+                            {showAutocomplete && (
+                              <motion.div
+                                initial={{ opacity: 0, y: -8 }}
+                                animate={{ opacity: 1, y: 0 }}
+                                exit={{ opacity: 0, y: -8 }}
+                                transition={{ duration: 0.15 }}
+                                className="absolute top-full left-0 right-0 mt-1 bg-card border border-border rounded-xl shadow-lg z-50 overflow-hidden max-h-[320px] overflow-y-auto"
+                              >
+                                {!searchQuery.trim() ? (
+                                  <div>
+                                    <div className="px-3 pt-2 pb-1 text-[10px] font-semibold uppercase tracking-wide text-muted-foreground">
+                                      {t('subscriptions.newDialog.recentlyAdded')}
+                                    </div>
+                                    {recentInvestors.map((investor) => (
+                                      <button
+                                        key={`recent-${investor.id}`}
+                                        type="button"
+                                        onMouseDown={(e) => e.preventDefault()}
+                                        onClick={() => handleInvestorSelect(investor)}
+                                        className="w-full px-3 py-2 hover:bg-muted transition-colors text-left flex items-center gap-3 border-b border-border last:border-0"
+                                      >
+                                        <Badge
+                                          variant="outline"
+                                          className="text-[10px] h-5 shrink-0 uppercase tracking-wide"
+                                        >
+                                          {investor.type === 'individual'
+                                            ? t('subscriptions.newDialog.shortIndividual')
+                                            : t('subscriptions.newDialog.shortCorporate')}
+                                        </Badge>
+                                        <div className="flex-1 min-w-0">
+                                          <div className="text-sm font-medium text-foreground truncate">
+                                            {investor.name}
+                                          </div>
+                                          <div className="text-xs text-muted-foreground truncate">
+                                            {investor.email}
+                                          </div>
+                                        </div>
+                                        {investor.structures && investor.structures.length > 0 && (
+                                          <span className="text-[11px] text-muted-foreground shrink-0 inline-flex items-center gap-1">
+                                            <Building2 className="w-3 h-3" />
+                                            {investor.structures.length}
+                                          </span>
+                                        )}
+                                      </button>
+                                    ))}
+                                  </div>
+                                ) : filteredInvestors.length === 0 && filteredStructuresWithOwner.length === 0 ? (
                                 <div className="p-4 text-center">
                                   <p className="text-xs text-muted-foreground mb-3">
                                     {t('subscriptions.newDialog.noResultFound', { query: searchQuery })}
                                   </p>
                                   <Button
+                                    onMouseDown={(e) => e.preventDefault()}
                                     onClick={handleQuickCreateInvestor}
                                     size="sm"
                                     className="bg-primary text-primary-foreground h-9"
@@ -767,6 +810,7 @@ export function NewSubscriptionDialog({ open, onClose, onSubscriptionCreated }: 
                                         <button
                                           key={`inv-${investor.id}`}
                                           type="button"
+                                          onMouseDown={(e) => e.preventDefault()}
                                           onClick={() => handleInvestorSelect(investor)}
                                           className="w-full px-3 py-2 hover:bg-muted transition-colors text-left flex items-center gap-3 border-b border-border last:border-0"
                                         >
@@ -806,6 +850,7 @@ export function NewSubscriptionDialog({ open, onClose, onSubscriptionCreated }: 
                                         <button
                                           key={`str-${s.id}`}
                                           type="button"
+                                          onMouseDown={(e) => e.preventDefault()}
                                           onClick={() => handleStructureFromSearchSelect(s)}
                                           className="w-full px-3 py-2 hover:bg-muted transition-colors text-left flex items-center gap-3 border-b border-border last:border-0"
                                         >
@@ -830,6 +875,7 @@ export function NewSubscriptionDialog({ open, onClose, onSubscriptionCreated }: 
 
                                   <button
                                     type="button"
+                                    onMouseDown={(e) => e.preventDefault()}
                                     onClick={handleQuickCreateInvestor}
                                     className="w-full px-3 py-2 hover:bg-muted transition-colors text-left flex items-center gap-2 border-t border-border text-sm text-primary"
                                   >
@@ -841,17 +887,18 @@ export function NewSubscriptionDialog({ open, onClose, onSubscriptionCreated }: 
                             </motion.div>
                           )}
                         </AnimatePresence>
+                        </div>
 
                         <Button
                           type="button"
                           onClick={handleQuickCreateInvestor}
                           variant="outline"
-                          className="w-full mt-2 border-dashed h-9"
+                          className="w-full border-dashed h-9"
                         >
                           <Plus className="w-4 h-4 mr-2" />
                           {t('subscriptions.newDialog.createNewInvestor')}
                         </Button>
-                      </div>
+                      </>
                     ) : (
                       <div className="flex items-center gap-3 p-3 rounded-xl border border-border bg-card">
                         <div
