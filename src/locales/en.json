@@ -475,6 +475,7 @@
       "change": "Change",
       "investorSelectedCaps": "SELECTED INVESTOR",
       "modify": "Edit",
+      "subscribesVia": "invests via",
       "searchStructureLabel": "Search a structure (Pappers)",
       "searchStructurePlaceholder": "SIRET or company name...",
       "noStructureFound": "No structure found",
