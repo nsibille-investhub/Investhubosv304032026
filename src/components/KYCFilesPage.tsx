@@ -12,7 +12,6 @@ import {
   Download,
   DownloadCloud,
   Eye,
-  Filter,
   RefreshCw,
   UserCircle,
   Building2,
@@ -24,24 +23,12 @@ import { DataTable, ColumnConfig } from './DataTable';
 import { TableSkeleton } from './TableSkeleton';
 import { Badge } from './ui/badge';
 import { Button } from './ui/button';
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from './ui/card';
+import { Card, CardContent } from './ui/card';
 import { Avatar, AvatarFallback } from './ui/avatar';
 import { DataPagination } from './ui/data-pagination';
 import { FilterCard } from './ui/filter-card';
-import { SearchInput } from './ui/search-input';
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from './ui/select';
+import { PageHeader } from './ui/page-header';
+import { FilterBar, type FilterConfig } from './FilterBar';
 import { StatusBadge } from './StatusBadge';
 import { Tag } from './Tag';
 import { KYCThirdPartiesCell } from './KYCThirdPartiesCell';
@@ -150,6 +137,47 @@ const REVIEW_WINDOWS: Array<{
     icon: CalendarCheck,
     iconActiveClassName: 'text-primary',
     match: (d) => d >= 0 && d <= 180,
+  },
+];
+
+const KYC_FILTER_CONFIGS: FilterConfig[] = [
+  {
+    id: 'status',
+    label: 'Statut',
+    type: 'select',
+    isPrimary: true,
+    placeholder: 'Statut',
+    options: [
+      { value: 'Ouvert', label: 'Ouvert' },
+      { value: 'Brouillon', label: 'Brouillon' },
+      { value: 'Approuvé', label: 'Approuvé' },
+      { value: 'Rejeté', label: 'Rejeté' },
+    ],
+  },
+  {
+    id: 'risk',
+    label: 'Risque',
+    type: 'select',
+    isPrimary: true,
+    placeholder: 'Risque',
+    options: [
+      { value: 'Bloqué', label: 'Bloqué' },
+      { value: 'Élevé', label: 'Élevé' },
+      { value: 'Moyen', label: 'Moyen' },
+      { value: 'Faible', label: 'Faible' },
+      { value: 'none', label: 'Non noté' },
+    ],
+  },
+  {
+    id: 'type',
+    label: 'Type',
+    type: 'select',
+    isPrimary: false,
+    placeholder: 'Type',
+    options: [
+      { value: 'Personne physique', label: 'Personne physique' },
+      { value: 'Personne morale', label: 'Personne morale' },
+    ],
   },
 ];
 
@@ -293,6 +321,29 @@ export function KYCFilesPage() {
     typeFilter !== 'all' ||
     riskFilter !== 'all' ||
     reviewWindow !== null;
+
+  const activeFiltersObj = useMemo<Record<string, string>>(() => {
+    const obj: Record<string, string> = {};
+    if (statusFilter !== 'all') obj.status = statusFilter;
+    if (riskFilter !== 'all') obj.risk = riskFilter;
+    if (typeFilter !== 'all') obj.type = typeFilter;
+    return obj;
+  }, [statusFilter, riskFilter, typeFilter]);
+
+  const handleDsFilterChange = (
+    filterId: string,
+    value: string | string[] | null,
+  ) => {
+    const v =
+      value === null
+        ? 'all'
+        : Array.isArray(value)
+          ? value[0] ?? 'all'
+          : value;
+    if (filterId === 'status') setStatusFilter(v as typeof statusFilter);
+    else if (filterId === 'type') setTypeFilter(v as typeof typeFilter);
+    else if (filterId === 'risk') setRiskFilter(v as typeof riskFilter);
+  };
 
   const handleResetFilters = () => {
     setSearchQuery('');
@@ -616,7 +667,24 @@ export function KYCFilesPage() {
   }
 
   return (
-    <div className="flex-1 px-6 pt-6 pb-6 flex flex-col gap-4">
+    <div className="flex-1 flex flex-col">
+      <PageHeader
+        breadcrumb={[
+          { label: 'InvestHub OS' },
+          { label: 'Conformité' },
+          { label: t('ged.kyc.title') },
+        ]}
+        hideBackButton
+        title={t('ged.kyc.title')}
+        subtitle={t('ged.kyc.subtitle')}
+        primaryAction={{
+          label: 'Exporter',
+          icon: <Download className="w-4 h-4" />,
+          onClick: () => undefined,
+        }}
+      />
+
+      <div className="flex-1 px-6 pt-6 pb-6 flex flex-col gap-4">
       <section aria-label="Prochaines révisions">
         <div className="flex items-baseline justify-between mb-3">
           <h3 className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
@@ -672,100 +740,16 @@ export function KYCFilesPage() {
         className="w-full"
       >
         <Card className="overflow-hidden p-0 gap-0 hover:shadow-lg transition-shadow duration-500">
-          <CardHeader className="px-6 py-4 border-b border-border bg-card">
-            <div className="flex items-center justify-between gap-4">
-              <div className="min-w-0">
-                <CardTitle className="text-xl font-semibold text-foreground">
-                  {t('ged.kyc.title')}
-                </CardTitle>
-                <CardDescription className="mt-1">
-                  {t('ged.kyc.subtitle')}
-                </CardDescription>
-              </div>
-              <Button variant="primary" className="gap-2">
-                <Download className="w-4 h-4" />
-                Exporter
-              </Button>
-            </div>
-          </CardHeader>
-
-          <div className="px-6 py-3 border-b border-border bg-muted/30 flex items-center gap-3 flex-wrap">
-            <div className="flex items-center gap-2 text-xs font-medium text-muted-foreground">
-              <Filter className="w-3.5 h-3.5" />
-              Filtres
-            </div>
-            <SearchInput
-              value={searchQuery}
-              onValueChange={setSearchQuery}
-              onClear={() => setSearchQuery('')}
-              placeholder="Rechercher par nom ou ID…"
-              className="w-full sm:w-72"
-              inputClassName="h-9"
+          <div className="px-6 py-4 border-b border-border bg-card">
+            <FilterBar
+              searchValue={searchQuery}
+              onSearchChange={setSearchQuery}
+              searchPlaceholder="Rechercher par nom ou ID…"
+              filters={KYC_FILTER_CONFIGS}
+              activeFilters={activeFiltersObj}
+              onFilterChange={handleDsFilterChange}
+              onClearAll={handleResetFilters}
             />
-            <Select
-              value={statusFilter}
-              onValueChange={(v) => setStatusFilter(v as typeof statusFilter)}
-            >
-              <SelectTrigger size="sm" className="h-9 w-[150px]">
-                <SelectValue placeholder="Statut" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="all">Tous statuts</SelectItem>
-                <SelectItem value="Ouvert">Ouvert</SelectItem>
-                <SelectItem value="Brouillon">Brouillon</SelectItem>
-                <SelectItem value="Approuvé">Approuvé</SelectItem>
-                <SelectItem value="Rejeté">Rejeté</SelectItem>
-              </SelectContent>
-            </Select>
-            <Select
-              value={typeFilter}
-              onValueChange={(v) => setTypeFilter(v as typeof typeFilter)}
-            >
-              <SelectTrigger size="sm" className="h-9 w-[170px]">
-                <SelectValue placeholder="Type" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="all">Tous types</SelectItem>
-                <SelectItem value="Personne physique">Personne physique</SelectItem>
-                <SelectItem value="Personne morale">Personne morale</SelectItem>
-              </SelectContent>
-            </Select>
-            <Select
-              value={riskFilter}
-              onValueChange={(v) => setRiskFilter(v as typeof riskFilter)}
-            >
-              <SelectTrigger size="sm" className="h-9 w-[150px]">
-                <SelectValue placeholder="Risque" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="all">Tous risques</SelectItem>
-                <SelectItem value="Bloqué">Bloqué</SelectItem>
-                <SelectItem value="Élevé">Élevé</SelectItem>
-                <SelectItem value="Moyen">Moyen</SelectItem>
-                <SelectItem value="Faible">Faible</SelectItem>
-                <SelectItem value="none">Non noté</SelectItem>
-              </SelectContent>
-            </Select>
-
-            <div className="ml-auto flex items-center gap-3">
-              <span className="text-xs text-muted-foreground tabular-nums">
-                {totalItems} dossier{totalItems > 1 ? 's' : ''}
-                {hasActiveFilters && allTableData.length !== totalItems && (
-                  <span className="text-muted-foreground/70"> / {allTableData.length}</span>
-                )}
-              </span>
-              {hasActiveFilters && (
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  className="h-8 text-xs gap-1"
-                  onClick={handleResetFilters}
-                >
-                  <X className="w-3.5 h-3.5" />
-                  Réinitialiser
-                </Button>
-              )}
-            </div>
           </div>
 
           <CardContent className="p-0 flex flex-col">
@@ -816,6 +800,7 @@ export function KYCFilesPage() {
           </CardContent>
         </Card>
       </motion.div>
+      </div>
     </div>
   );
 }
