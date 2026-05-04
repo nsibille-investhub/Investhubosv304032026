@@ -13,7 +13,6 @@ import {
   Euro,
   FileText,
   Percent,
-  Users,
   ArrowRight,
   Loader2,
   ChevronLeft,
@@ -21,7 +20,6 @@ import {
   MapPin,
   Globe,
   Hash,
-  ChevronRight,
   Store,
   Briefcase
 } from 'lucide-react';
@@ -464,9 +462,9 @@ export function NewSubscriptionDialog({ open, onClose, onSubscriptionCreated }: 
   };
 
   const steps = [
-    { number: 1, title: t('subscriptions.newDialog.steps.investor'), icon: Users },
-    { number: 2, title: t('subscriptions.newDialog.steps.details'), icon: FileText },
-    { number: 3, title: t('subscriptions.newDialog.steps.confirmation'), icon: Check },
+    { number: 1, title: t('subscriptions.newDialog.steps.investor') },
+    { number: 2, title: t('subscriptions.newDialog.steps.details') },
+    { number: 3, title: t('subscriptions.newDialog.steps.confirmation') },
   ];
 
   return (
@@ -479,18 +477,15 @@ export function NewSubscriptionDialog({ open, onClose, onSubscriptionCreated }: 
         
         <div className="flex flex-col h-full overflow-hidden rounded-3xl">
           {/* Header Compact */}
-          <div className="relative px-8 py-4 bg-card border-b border-border">
-            <div className="relative flex items-center justify-between mb-3">
+          <div className="px-8 py-4 bg-card border-b border-border">
+            <div className="flex items-center justify-between mb-4">
               <div className="flex items-center gap-3">
-                <div className="w-10 h-10 rounded-xl bg-primary text-primary-foreground flex items-center justify-center shadow-sm">
+                <div className="size-10 rounded-xl bg-primary text-primary-foreground flex items-center justify-center shadow-sm">
                   <Plus className="w-5 h-5" />
                 </div>
-                <div>
-                  <h2 className="text-xl font-bold text-foreground">{t('subscriptions.newDialog.title')}</h2>
-                  <p className="text-xs text-muted-foreground">{t('subscriptions.newDialog.stepCount', { current: step })}</p>
-                </div>
+                <h2 className="text-xl font-bold text-foreground">{t('subscriptions.newDialog.title')}</h2>
               </div>
-              
+
               <Button
                 onClick={onClose}
                 variant="ghost"
@@ -501,48 +496,56 @@ export function NewSubscriptionDialog({ open, onClose, onSubscriptionCreated }: 
               </Button>
             </div>
 
-            {/* Mini Stepper */}
-            <div className="flex items-center gap-1">
-              {steps.map((s, idx) => (
-                <div key={s.number} className="flex items-center flex-1">
-                  <div className="flex items-center gap-2 flex-1">
-                    <div
-                      className={`flex items-center justify-center w-7 h-7 rounded-lg border transition-all ${
-                        step > s.number
-                          ? 'border-transparent text-primary-foreground'
-                          : step === s.number
-                            ? 'bg-primary border-primary text-primary-foreground'
-                            : 'bg-card border-border text-muted-foreground'
-                      }`}
-                      style={
-                        step > s.number ? { backgroundColor: 'var(--success)' } : undefined
-                      }
-                    >
-                      {step > s.number ? (
-                        <Check className="w-4 h-4" />
-                      ) : (
-                        <s.icon className="w-4 h-4" />
-                      )}
+            {/* Stepper */}
+            <div className="flex items-center">
+              {steps.map((s, idx) => {
+                const isCompleted = step > s.number;
+                const isCurrent = step === s.number;
+                return (
+                  <div key={s.number} className="flex items-center flex-1 min-w-0">
+                    <div className="flex items-center gap-2.5 min-w-0">
+                      <div
+                        className={`flex items-center justify-center size-7 rounded-full text-xs font-semibold shrink-0 transition-colors ${
+                          isCompleted
+                            ? 'text-primary-foreground'
+                            : isCurrent
+                              ? 'bg-primary text-primary-foreground'
+                              : 'bg-muted text-muted-foreground'
+                        }`}
+                        style={
+                          isCompleted ? { backgroundColor: 'var(--success)' } : undefined
+                        }
+                        aria-current={isCurrent ? 'step' : undefined}
+                      >
+                        {isCompleted ? <Check className="w-3.5 h-3.5" /> : s.number}
+                      </div>
+                      <span
+                        className={`text-sm truncate ${
+                          isCurrent
+                            ? 'text-foreground font-semibold'
+                            : isCompleted
+                              ? 'text-foreground font-medium'
+                              : 'text-muted-foreground font-medium'
+                        }`}
+                      >
+                        {s.title}
+                      </span>
                     </div>
-                    <span className={`text-xs font-medium ${
-                      step === s.number ? 'text-foreground' : 'text-muted-foreground'
-                    }`}>
-                      {s.title}
-                    </span>
+
+                    {idx < steps.length - 1 && (
+                      <div className="flex-1 mx-3 h-px bg-border relative">
+                        {isCompleted && (
+                          <motion.div
+                            layoutId={`stepper-connector-${idx}`}
+                            className="absolute inset-0"
+                            style={{ backgroundColor: 'var(--success)' }}
+                          />
+                        )}
+                      </div>
+                    )}
                   </div>
-                  
-                  {idx < steps.length - 1 && (
-                    <div className="w-8 h-0.5 mx-1 bg-muted rounded-full overflow-hidden">
-                      <motion.div
-                        className="h-full bg-primary"
-                        initial={{ width: 0 }}
-                        animate={{ width: step > s.number ? '100%' : '0%' }}
-                        transition={{ duration: 0.3 }}
-                      />
-                    </div>
-                  )}
-                </div>
-              ))}
+                );
+              })}
             </div>
           </div>
 
