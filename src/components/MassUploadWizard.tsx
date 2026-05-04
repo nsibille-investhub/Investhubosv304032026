@@ -2353,30 +2353,40 @@ export function MassUploadWizard({ isOpen, onClose, existingFolders, inline = fa
                                   );
                                 })()}
 
-                                {bulkFields.includes('validationTeam') && (
-                                  <div className="space-y-1">
-                                    <Label className="flex items-center gap-1.5 text-[11px] font-medium text-gray-600">
-                                      <Shield className="h-3 w-3 text-gray-400" />
-                                      Équipes de validation
-                                    </Label>
-                                    <Select
-                                      value={bulkValues.validationTeam?.[0] ?? ''}
-                                      onValueChange={(value) =>
-                                        setBulkValues((prev) => ({ ...prev, validationTeam: value ? [value] : [] }))
-                                      }
-                                    >
-                                      <SelectTrigger className="h-8 text-xs">
-                                        <SelectValue placeholder="Choisir une équipe…" />
-                                      </SelectTrigger>
-                                      <SelectContent>
-                                        <SelectItem value="admin" className="text-xs">Admin</SelectItem>
-                                        <SelectItem value="compliance" className="text-xs">Compliance</SelectItem>
-                                        <SelectItem value="legal" className="text-xs">Juridique</SelectItem>
-                                        <SelectItem value="ir" className="text-xs">Investor Relations</SelectItem>
-                                      </SelectContent>
-                                    </Select>
-                                  </div>
-                                )}
+                                {bulkFields.includes('validationTeam') && (() => {
+                                  const teamMissing = batchCreationMode && (bulkValues.validationTeam?.length ?? 0) === 0;
+                                  return (
+                                    <div className="space-y-1">
+                                      <Label className="flex items-center gap-1.5 text-[11px] font-medium text-gray-600">
+                                        <Shield className="h-3 w-3 text-gray-400" />
+                                        Équipes de validation
+                                        {batchCreationMode && <span className="text-red-600">*</span>}
+                                      </Label>
+                                      <Select
+                                        value={bulkValues.validationTeam?.[0] ?? ''}
+                                        onValueChange={(value) =>
+                                          setBulkValues((prev) => ({ ...prev, validationTeam: value ? [value] : [] }))
+                                        }
+                                      >
+                                        <SelectTrigger className={`h-8 text-xs ${teamMissing ? 'border-red-300 ring-1 ring-red-200' : ''}`}>
+                                          <SelectValue placeholder="Choisir une équipe…" />
+                                        </SelectTrigger>
+                                        <SelectContent>
+                                          <SelectItem value="admin" className="text-xs">Admin</SelectItem>
+                                          <SelectItem value="compliance" className="text-xs">Compliance</SelectItem>
+                                          <SelectItem value="legal" className="text-xs">Juridique</SelectItem>
+                                          <SelectItem value="ir" className="text-xs">Investor Relations</SelectItem>
+                                        </SelectContent>
+                                      </Select>
+                                      {teamMissing && (
+                                        <p className="flex items-center gap-1 text-[11px] text-red-600">
+                                          <AlertCircle className="h-3 w-3" />
+                                          Aucune équipe de validation sélectionnée.
+                                        </p>
+                                      )}
+                                    </div>
+                                  );
+                                })()}
                               </div>
                             )}
 
@@ -2450,9 +2460,22 @@ export function MassUploadWizard({ isOpen, onClose, existingFolders, inline = fa
                                       ))}
                                     </ul>
                                   )}
-                                  <p className="text-[11px] text-blue-700/80">
-                                    L’équipe de validation doit être configurée pour le lot.
-                                  </p>
+                                  {(() => {
+                                    const reason = batchCreationBlockReason();
+                                    if (reason) {
+                                      return (
+                                        <div className="flex items-start gap-1.5 rounded-md border border-red-200 bg-red-50 px-2 py-1.5 text-[11px] text-red-700">
+                                          <AlertCircle className="h-3 w-3 shrink-0 mt-0.5" />
+                                          <span>{reason}</span>
+                                        </div>
+                                      );
+                                    }
+                                    return (
+                                      <p className="text-[11px] text-blue-700/80">
+                                        L’équipe de validation est consolidée pour le lot ; les autres champs restent libres.
+                                      </p>
+                                    );
+                                  })()}
                                 </div>
                               );
                             })()}
