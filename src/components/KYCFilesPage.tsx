@@ -634,7 +634,7 @@ export function KYCFilesPage() {
             </Button>
           )}
         </div>
-        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-1.5">
+        <div className="grid grid-cols-5 gap-1.5">
           {REVIEW_WINDOWS.map((win) => {
             const count = reviewCounts[win.key];
             const totalReviewable = allTableData.filter((f) => f.nextReview).length;
