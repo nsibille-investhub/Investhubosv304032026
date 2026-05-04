@@ -1120,7 +1120,6 @@
       "parentRestrictions": "Restrictions du dossier parent",
       "parentRestrictionsHint": "Le ciblage de ce document sera automatiquement limité par les restrictions héritées du dossier parent.",
       "restrictedFund": "Fonds restreint",
-      "restrictedShare": "Part restreinte",
       "restrictedSegment": "Segment restreint",
       "generalDoc": "Document général",
       "nominativeDoc": "Document nominatif",
