@@ -1,15 +1,213 @@
 import { useState, useMemo, useEffect } from 'react';
-import { motion, AnimatePresence } from 'motion/react';
-import { ChevronLeft, ChevronRight, ChevronDown, Eye, Download, UserCircle, Building2, Copy, Check } from 'lucide-react';
+import { motion } from 'motion/react';
+import {
+  AlertTriangle,
+  CalendarClock,
+  CalendarRange,
+  CalendarCheck,
+  CalendarDays,
+  CheckCircle2,
+  Copy,
+  Check,
+  Download,
+  DownloadCloud,
+  Eye,
+  RefreshCw,
+  UserCircle,
+  Building2,
+  X,
+} from 'lucide-react';
 import { toast } from 'sonner@2.0.3';
 import { generateKYCFiles, KYCFile } from '../utils/kycFileGenerator';
 import { DataTable, ColumnConfig } from './DataTable';
 import { TableSkeleton } from './TableSkeleton';
-import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from './ui/dropdown-menu';
 import { Badge } from './ui/badge';
+import { Button } from './ui/button';
+import { Card, CardContent } from './ui/card';
+import { Avatar, AvatarFallback } from './ui/avatar';
+import { DataPagination } from './ui/data-pagination';
+import { FilterCard } from './ui/filter-card';
+import { PageHeader } from './ui/page-header';
+import { FilterBar, type FilterConfig } from './FilterBar';
+import { StatusBadge } from './StatusBadge';
+import { Tag } from './Tag';
+import { KYCThirdPartiesCell } from './KYCThirdPartiesCell';
+import { KYCDossierDetail } from './KYCDossierDetail';
+import type {
+  DossierStatus,
+  KYCDossierDetail as KYCDossierDetailModel,
+  RiskLevel,
+} from './KYCDossierDetail.types';
+import { mockEntityDossier, mockIndividualDossier } from '../utils/kycDossierMock';
 import { copyToClipboard } from '../utils/clipboard';
 import { cn } from './ui/utils';
 import { useTranslation } from '../utils/languageContext';
+
+const LISTING_STATUS_TO_DETAIL: Record<KYCFile['status'], DossierStatus> = {
+  Rejeté: 'rejected',
+  Brouillon: 'to_review',
+  Ouvert: 'in_review',
+  Approuvé: 'approved',
+};
+
+const LISTING_RISK_TO_LEVEL: Record<NonNullable<KYCFile['risk']>, RiskLevel> = {
+  Bloqué: 'high',
+  Élevé: 'high',
+  Moyen: 'medium',
+  Faible: 'low',
+};
+
+function buildDossierFromRow(row: KYCFile): KYCDossierDetailModel {
+  const isEntity = row.type === 'Personne morale';
+  const base = isEntity ? mockEntityDossier : mockIndividualDossier;
+  return {
+    ...base,
+    id: `kyc-${row.id}`,
+    reference: row.uid,
+    displayName: row.name.replace(/^KYB - /, ''),
+    status: LISTING_STATUS_TO_DETAIL[row.status],
+    riskLevel: row.risk ? LISTING_RISK_TO_LEVEL[row.risk] : 'low',
+  };
+}
+
+type StatusVariant = 'success' | 'warning' | 'danger' | 'neutral';
+
+const STATUS_VARIANT: Record<string, StatusVariant> = {
+  Rejeté: 'danger',
+  Brouillon: 'neutral',
+  Ouvert: 'success',
+  Approuvé: 'success',
+};
+
+const RISK_CONFIG: Record<string, { token: string; bars: number }> = {
+  Bloqué: { token: 'var(--danger)', bars: 4 },
+  Élevé: { token: 'var(--warning)', bars: 3 },
+  Moyen: { token: 'var(--warning)', bars: 2 },
+  Faible: { token: 'var(--success)', bars: 1 },
+};
+
+type ReviewWindowKey = 'overdue' | '1w' | '1m' | '3m' | '6m';
+
+const DAY_MS = 24 * 60 * 60 * 1000;
+
+const REVIEW_WINDOWS: Array<{
+  key: ReviewWindowKey;
+  label: string;
+  metricLabel: string;
+  icon: typeof AlertTriangle;
+  iconActiveClassName: string;
+  match: (deltaDays: number) => boolean;
+}> = [
+  {
+    key: 'overdue',
+    label: 'En retard',
+    metricLabel: 'Dépassées',
+    icon: AlertTriangle,
+    iconActiveClassName: 'text-red-600',
+    match: (d) => d < 0,
+  },
+  {
+    key: '1w',
+    label: 'Dans 1 semaine',
+    metricLabel: 'À revoir',
+    icon: CalendarClock,
+    iconActiveClassName: 'text-amber-600',
+    match: (d) => d >= 0 && d <= 7,
+  },
+  {
+    key: '1m',
+    label: 'Dans 1 mois',
+    metricLabel: 'À revoir',
+    icon: CalendarRange,
+    iconActiveClassName: 'text-amber-600',
+    match: (d) => d >= 0 && d <= 30,
+  },
+  {
+    key: '3m',
+    label: 'Dans 3 mois',
+    metricLabel: 'À revoir',
+    icon: CalendarDays,
+    iconActiveClassName: 'text-primary',
+    match: (d) => d >= 0 && d <= 90,
+  },
+  {
+    key: '6m',
+    label: 'Dans 6 mois',
+    metricLabel: 'À revoir',
+    icon: CalendarCheck,
+    iconActiveClassName: 'text-primary',
+    match: (d) => d >= 0 && d <= 180,
+  },
+];
+
+const KYC_FILTER_CONFIGS: FilterConfig[] = [
+  {
+    id: 'status',
+    label: 'Statut',
+    type: 'select',
+    isPrimary: true,
+    placeholder: 'Statut',
+    options: [
+      { value: 'Ouvert', label: 'Ouvert' },
+      { value: 'Brouillon', label: 'Brouillon' },
+      { value: 'Approuvé', label: 'Approuvé' },
+      { value: 'Rejeté', label: 'Rejeté' },
+    ],
+  },
+  {
+    id: 'risk',
+    label: 'Risque',
+    type: 'select',
+    isPrimary: true,
+    placeholder: 'Risque',
+    options: [
+      { value: 'Bloqué', label: 'Bloqué' },
+      { value: 'Élevé', label: 'Élevé' },
+      { value: 'Moyen', label: 'Moyen' },
+      { value: 'Faible', label: 'Faible' },
+      { value: 'none', label: 'Non noté' },
+    ],
+  },
+  {
+    id: 'type',
+    label: 'Type',
+    type: 'select',
+    isPrimary: false,
+    placeholder: 'Type',
+    options: [
+      { value: 'Personne physique', label: 'Personne physique' },
+      { value: 'Personne morale', label: 'Personne morale' },
+    ],
+  },
+];
+
+type ProgressKey = 'En révision' | 'En collecte' | 'Recollecte' | 'Finalisation';
+
+const PROGRESS_CONFIG: Record<
+  ProgressKey,
+  { icon: typeof Eye; tokenColor: string; bgClass: string }
+> = {
+  'En révision': {
+    icon: Eye,
+    tokenColor: 'var(--primary)',
+    bgClass: 'bg-primary/10',
+  },
+  'En collecte': {
+    icon: DownloadCloud,
+    tokenColor: 'var(--warning)',
+    bgClass: 'bg-muted',
+  },
+  Recollecte: {
+    icon: RefreshCw,
+    tokenColor: 'var(--warning)',
+    bgClass: 'bg-muted',
+  },
+  Finalisation: {
+    icon: CheckCircle2,
+    tokenColor: 'var(--success)',
+    bgClass: 'bg-muted',
+  },
+};
 
 export function KYCFilesPage() {
   const { t } = useTranslation();
@@ -17,12 +215,17 @@ export function KYCFilesPage() {
   const [itemsPerPage, setItemsPerPage] = useState(20);
   const [hoveredRow, setHoveredRow] = useState<number | null>(null);
   const [selectedFile, setSelectedFile] = useState<KYCFile | null>(null);
+  const [openedDossier, setOpenedDossier] = useState<KYCFile | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [sortConfig, setSortConfig] = useState<{ key: string; direction: 'asc' | 'desc' } | null>(null);
   const [allTableData, setAllTableData] = useState<KYCFile[]>([]);
   const [copiedId, setCopiedId] = useState<number | null>(null);
+  const [searchQuery, setSearchQuery] = useState('');
+  const [statusFilter, setStatusFilter] = useState<'all' | KYCFile['status']>('all');
+  const [typeFilter, setTypeFilter] = useState<'all' | KYCFile['type']>('all');
+  const [riskFilter, setRiskFilter] = useState<'all' | 'none' | NonNullable<KYCFile['risk']>>('all');
+  const [reviewWindow, setReviewWindow] = useState<ReviewWindowKey | null>(null);
 
-  // Charger les dossiers au démarrage
   useEffect(() => {
     if (allTableData.length === 0) {
       setIsLoading(true);
@@ -37,37 +240,132 @@ export function KYCFilesPage() {
     }
   }, []);
 
-  // Trier les données
-  const sortedData = useMemo(() => {
-    if (!sortConfig) return allTableData;
-    
-    const sorted = [...allTableData].sort((a, b) => {
-      let aVal = a[sortConfig.key as keyof KYCFile];
-      let bVal = b[sortConfig.key as keyof KYCFile];
-      
-      // Handle special case for lastActivity
-      if (sortConfig.key === 'lastActivity') {
-        aVal = (a.lastActivity as any).timestamp;
-        bVal = (b.lastActivity as any).timestamp;
+  const reviewCounts = useMemo(() => {
+    const now = Date.now();
+    const init: Record<ReviewWindowKey, number> = {
+      overdue: 0,
+      '1w': 0,
+      '1m': 0,
+      '3m': 0,
+      '6m': 0,
+    };
+    for (const file of allTableData) {
+      if (!file.nextReview) continue;
+      const deltaDays = (file.nextReview.timestamp - now) / DAY_MS;
+      for (const win of REVIEW_WINDOWS) {
+        if (win.match(deltaDays)) init[win.key] += 1;
       }
-      
+    }
+    return init;
+  }, [allTableData]);
+
+  const filteredData = useMemo(() => {
+    const now = Date.now();
+    const search = searchQuery.trim().toLowerCase();
+    const activeWindow = reviewWindow
+      ? REVIEW_WINDOWS.find((w) => w.key === reviewWindow)
+      : null;
+
+    return allTableData.filter((file) => {
+      if (search) {
+        const haystack = `${file.name} ${file.uid}`.toLowerCase();
+        if (!haystack.includes(search)) return false;
+      }
+      if (statusFilter !== 'all' && file.status !== statusFilter) return false;
+      if (typeFilter !== 'all' && file.type !== typeFilter) return false;
+      if (riskFilter !== 'all') {
+        if (riskFilter === 'none') {
+          if (file.risk !== null) return false;
+        } else if (file.risk !== riskFilter) {
+          return false;
+        }
+      }
+      if (activeWindow) {
+        if (!file.nextReview) return false;
+        const deltaDays = (file.nextReview.timestamp - now) / DAY_MS;
+        if (!activeWindow.match(deltaDays)) return false;
+      }
+      return true;
+    });
+  }, [allTableData, searchQuery, statusFilter, typeFilter, riskFilter, reviewWindow]);
+
+  const sortedData = useMemo(() => {
+    if (!sortConfig) return filteredData;
+
+    const sorted = [...filteredData].sort((a, b) => {
+      let aVal: unknown = a[sortConfig.key as keyof KYCFile];
+      let bVal: unknown = b[sortConfig.key as keyof KYCFile];
+
+      if (sortConfig.key === 'lastActivity') {
+        aVal = a.lastActivity.timestamp;
+        bVal = b.lastActivity.timestamp;
+      } else if (sortConfig.key === 'nextReview') {
+        aVal = a.nextReview?.timestamp ?? Number.POSITIVE_INFINITY;
+        bVal = b.nextReview?.timestamp ?? Number.POSITIVE_INFINITY;
+      }
+
+      if (aVal == null && bVal == null) return 0;
+      if (aVal == null) return 1;
+      if (bVal == null) return -1;
       if (aVal < bVal) return sortConfig.direction === 'asc' ? -1 : 1;
       if (aVal > bVal) return sortConfig.direction === 'asc' ? 1 : -1;
       return 0;
     });
-    
-    return sorted;
-  }, [allTableData, sortConfig]);
 
-  // Pagination
+    return sorted;
+  }, [filteredData, sortConfig]);
+
+  const hasActiveFilters =
+    !!searchQuery ||
+    statusFilter !== 'all' ||
+    typeFilter !== 'all' ||
+    riskFilter !== 'all' ||
+    reviewWindow !== null;
+
+  const activeFiltersObj = useMemo<Record<string, string>>(() => {
+    const obj: Record<string, string> = {};
+    if (statusFilter !== 'all') obj.status = statusFilter;
+    if (riskFilter !== 'all') obj.risk = riskFilter;
+    if (typeFilter !== 'all') obj.type = typeFilter;
+    return obj;
+  }, [statusFilter, riskFilter, typeFilter]);
+
+  const handleDsFilterChange = (
+    filterId: string,
+    value: string | string[] | null,
+  ) => {
+    const v =
+      value === null
+        ? 'all'
+        : Array.isArray(value)
+          ? value[0] ?? 'all'
+          : value;
+    if (filterId === 'status') setStatusFilter(v as typeof statusFilter);
+    else if (filterId === 'type') setTypeFilter(v as typeof typeFilter);
+    else if (filterId === 'risk') setRiskFilter(v as typeof riskFilter);
+  };
+
+  const handleResetFilters = () => {
+    setSearchQuery('');
+    setStatusFilter('all');
+    setTypeFilter('all');
+    setRiskFilter('all');
+    setReviewWindow(null);
+    setPaginationPage(1);
+  };
+
+  useEffect(() => {
+    setPaginationPage(1);
+  }, [searchQuery, statusFilter, typeFilter, riskFilter, reviewWindow]);
+
   const totalItems = sortedData.length;
-  const totalPages = Math.ceil(totalItems / itemsPerPage);
+  const totalPages = Math.max(1, Math.ceil(totalItems / itemsPerPage));
   const startIndex = (paginationPage - 1) * itemsPerPage;
   const endIndex = Math.min(startIndex + itemsPerPage, totalItems);
   const tableData = sortedData.slice(startIndex, endIndex);
 
   const handleSort = (key: string) => {
-    setSortConfig(current => {
+    setSortConfig((current) => {
       if (!current || current.key !== key) {
         return { key, direction: 'asc' };
       }
@@ -80,9 +378,15 @@ export function KYCFilesPage() {
 
   const handleRowClick = (row: KYCFile) => {
     setSelectedFile(row);
-    toast.info(t('ged.kyc.selectedToast'), {
-      description: `${row.name}`,
-    });
+    setOpenedDossier(row);
+  };
+
+  const handleBackToList = () => {
+    setOpenedDossier(null);
+  };
+
+  const handleDossierAction = (action: string) => {
+    toast.info(action);
   };
 
   const handlePageChange = (page: number) => {
@@ -106,36 +410,6 @@ export function KYCFilesPage() {
     }
   };
 
-  const getPageNumbers = () => {
-    const pages: (number | string)[] = [];
-    const maxVisible = 7;
-    
-    if (totalPages <= maxVisible) {
-      for (let i = 1; i <= totalPages; i++) {
-        pages.push(i);
-      }
-    } else {
-      if (paginationPage <= 4) {
-        for (let i = 1; i <= 5; i++) pages.push(i);
-        pages.push('...');
-        pages.push(totalPages);
-      } else if (paginationPage >= totalPages - 3) {
-        pages.push(1);
-        pages.push('...');
-        for (let i = totalPages - 4; i <= totalPages; i++) pages.push(i);
-      } else {
-        pages.push(1);
-        pages.push('...');
-        for (let i = paginationPage - 1; i <= paginationPage + 1; i++) pages.push(i);
-        pages.push('...');
-        pages.push(totalPages);
-      }
-    }
-    
-    return pages;
-  };
-
-  // Définition des colonnes
   const columns: ColumnConfig<KYCFile>[] = [
     {
       key: 'name',
@@ -145,27 +419,27 @@ export function KYCFilesPage() {
         <div className="flex flex-col gap-1 max-w-[300px]">
           <motion.span
             whileHover={{ x: 2 }}
-            className="text-sm text-blue-600 hover:text-blue-700 font-medium cursor-pointer hover:underline transition-all truncate"
+            className="text-sm text-primary hover:text-primary/80 font-medium cursor-pointer hover:underline transition-all truncate"
           >
             {file.name}
           </motion.span>
           <div className="flex items-center gap-1.5">
-            <span className="text-xs text-gray-500">ID: {file.uid}</span>
+            <span className="text-xs text-muted-foreground">ID: {file.uid}</span>
             <motion.button
               whileHover={{ scale: 1.1 }}
               whileTap={{ scale: 0.9 }}
               onClick={(e) => handleCopyId(file.uid, file.id, e)}
-              className="p-0.5 hover:bg-gray-100 rounded transition-colors"
+              className="p-0.5 hover:bg-muted rounded transition-colors"
             >
               {copiedId === file.id ? (
-                <Check className="w-3 h-3 text-emerald-600" />
+                <Check className="w-3 h-3" style={{ color: 'var(--success)' }} />
               ) : (
-                <Copy className="w-3 h-3 text-gray-400" />
+                <Copy className="w-3 h-3 text-muted-foreground" />
               )}
             </motion.button>
           </div>
         </div>
-      )
+      ),
     },
     {
       key: 'type',
@@ -176,76 +450,89 @@ export function KYCFilesPage() {
         return (
           <div className="flex items-center gap-2">
             {isIndividual ? (
-              <UserCircle className="w-4 h-4 text-blue-500" />
+              <UserCircle className="w-4 h-4 text-primary" />
             ) : (
-              <Building2 className="w-4 h-4 text-purple-500" />
+              <Building2 className="w-4 h-4 text-muted-foreground" />
             )}
-            <Badge 
-              variant="outline" 
-              className={cn(
-                "text-xs font-medium",
-                isIndividual 
-                  ? "bg-blue-50 text-blue-700 border-blue-200" 
-                  : "bg-purple-50 text-purple-700 border-purple-200"
-              )}
-            >
+            <Badge variant="secondary" className="text-xs font-medium">
               {file.type}
             </Badge>
           </div>
         );
-      }
+      },
     },
     {
       key: 'status',
       label: t('ged.kyc.columns.status'),
       sortable: true,
-      render: (file) => {
-        const statusColors: Record<string, string> = {
-          'Rejeté': 'bg-red-100 text-red-700 border-red-200',
-          'Brouillon': 'bg-gray-100 text-gray-700 border-gray-200',
-          'Ouvert': 'bg-green-100 text-green-700 border-green-200',
-          'Approuvé': 'bg-blue-100 text-blue-700 border-blue-200',
-        };
-        const statusClass = statusColors[file.status] || 'bg-gray-100 text-gray-700 border-gray-200';
-        
-        return (
-          <Badge variant="outline" className={cn("text-xs font-medium", statusClass)}>
-            {file.status}
-          </Badge>
-        );
-      }
+      render: (file) => (
+        <StatusBadge
+          label={file.status}
+          variant={STATUS_VARIANT[file.status] ?? 'neutral'}
+        />
+      ),
     },
     {
       key: 'nextReview',
       label: t('ged.kyc.columns.nextReview'),
       sortable: true,
-      render: (file) => (
-        file.nextReview ? (
-          <span className="text-sm text-gray-600">{file.nextReview}</span>
-        ) : (
-          <span className="text-sm text-gray-400">—</span>
-        )
-      )
+      render: (file) => {
+        if (!file.nextReview) {
+          return <span className="text-sm text-muted-foreground">—</span>;
+        }
+        const deltaDays = (file.nextReview.timestamp - Date.now()) / DAY_MS;
+        const isOverdue = deltaDays < 0;
+        const isUrgent = deltaDays >= 0 && deltaDays <= 7;
+        return (
+          <div className="flex flex-col">
+            <span
+              className={cn(
+                'text-sm',
+                isOverdue
+                  ? 'font-medium'
+                  : 'text-foreground',
+              )}
+              style={isOverdue ? { color: 'var(--danger)' } : undefined}
+            >
+              {file.nextReview.text}
+            </span>
+            {(isOverdue || isUrgent) && (
+              <span
+                className="text-[11px]"
+                style={{
+                  color: isOverdue ? 'var(--danger)' : 'var(--warning)',
+                }}
+              >
+                {isOverdue
+                  ? `En retard de ${Math.abs(Math.round(deltaDays))} j`
+                  : `Dans ${Math.max(1, Math.round(deltaDays))} j`}
+              </span>
+            )}
+          </div>
+        );
+      },
     },
     {
       key: 'progress',
       label: t('ged.kyc.columns.progress'),
       sortable: false,
       render: (file) => {
-        const progressIcons: Record<string, string> = {
-          'En révision': '👁️',
-          'En collecte': '⬇️',
-          'Recollecte': '🔄',
-          'Finalisation': '✅'
-        };
-        
+        const config = PROGRESS_CONFIG[file.progress.status as ProgressKey];
+        const Icon = config.icon;
         return (
           <div className="flex items-center gap-2">
-            <span className="text-sm">{progressIcons[file.progress.status]}</span>
-            <span className="text-sm text-gray-600">{file.progress.status}</span>
+            <span
+              className={cn(
+                'inline-flex items-center justify-center rounded-full size-6',
+                config.bgClass,
+              )}
+            >
+              <Icon className="w-3.5 h-3.5" style={{ color: config.tokenColor }} />
+            </span>
+            <span className="text-sm text-foreground">{file.progress.status}</span>
           </div>
         );
-      }
+      },
     },
     {
       key: 'risk',
@@ -253,46 +540,54 @@ export function KYCFilesPage() {
       sortable: true,
       render: (file) => {
         if (!file.risk) {
-          return <span className="text-sm text-gray-400">—</span>;
+          return <span className="text-sm text-muted-foreground">—</span>;
         }
-        
-        const riskConfig: Record<string, { color: string; bars: number }> = {
-          'Prohibé': { color: 'bg-red-500', bars: 4 },
-          'Élevé': { color: 'bg-orange-500', bars: 3 },
-          'Moyen': { color: 'bg-yellow-500', bars: 2 },
-          'Faible': { color: 'bg-green-500', bars: 1 },
-        };
-        
-        const config = riskConfig[file.risk];
-        
+
+        const config = RISK_CONFIG[file.risk];
+
         return (
           <div className="flex items-center gap-2">
             <div className="flex items-end gap-0.5 h-4">
-              {[1, 2, 3, 4].map((bar) => (
-                <div
-                  key={bar}
-                  className={cn(
-                    "w-1 rounded-sm transition-all",
-                    bar <= config.bars ? config.color : 'bg-gray-200'
-                  )}
-                  style={{ height: `${bar * 25}%` }}
-                />
-              ))}
+              {[1, 2, 3, 4].map((bar) => {
+                const isActive = bar <= config.bars;
+                return (
+                  <div
+                    key={bar}
+                    className={cn('w-1 rounded-sm transition-all', !isActive && 'bg-muted')}
+                    style={{
+                      height: `${bar * 25}%`,
+                      backgroundColor: isActive ? config.token : undefined,
+                    }}
+                  />
+                );
+              })}
             </div>
-            <span className="text-sm text-gray-600">{file.risk}</span>
+            <span className="text-sm text-foreground">{file.risk}</span>
           </div>
         );
-      }
+      },
     },
     {
-      key: 'template',
-      label: t('ged.kyc.columns.template'),
+      key: 'onboarding',
+      label: t('ged.kyc.columns.onboarding'),
       sortable: true,
       render: (file) => (
-        <span className="text-sm text-gray-600 truncate max-w-[180px] block">
-          {file.template}
+        <span className="text-sm text-foreground truncate max-w-[180px] block">
+          {file.onboarding}
         </span>
-      )
+      ),
+    },
+    {
+      key: 'thirdParties',
+      label: t('ged.kyc.columns.thirdParties'),
+      sortable: false,
+      render: (file) => (
+        <KYCThirdPartiesCell
+          parties={file.thirdParties}
+          emptyLabel={t('ged.kyc.thirdParties.empty')}
+          popoverLabel={t('ged.kyc.thirdParties.title')}
+        />
+      ),
     },
     {
       key: 'tags',
@@ -300,41 +595,18 @@ export function KYCFilesPage() {
       sortable: false,
       render: (file) => {
         if (file.tags.length === 0) {
-          return <span className="text-sm text-gray-400">—</span>;
+          return <span className="text-sm text-muted-foreground">—</span>;
         }
-        
-        const tagColors: Record<string, string> = {
-          'Démo': 'bg-purple-50 text-purple-700 border-purple-200',
-          'LP': 'bg-blue-50 text-blue-700 border-blue-200',
-          'Actif': 'bg-green-50 text-green-700 border-green-200',
-          'EDD': 'bg-red-50 text-red-700 border-red-200',
-          'Déclaration 4': 'bg-gray-50 text-gray-700 border-gray-200',
-          'Prioritaire': 'bg-orange-50 text-orange-700 border-orange-200',
-          'Urgent': 'bg-red-50 text-red-700 border-red-200',
-          'Révision requise': 'bg-yellow-50 text-yellow-700 border-yellow-200',
-          'Compliance': 'bg-indigo-50 text-indigo-700 border-indigo-200',
-          'Juridique': 'bg-cyan-50 text-cyan-700 border-cyan-200',
-        };
-        
+
         return (
           <div className="flex flex-wrap gap-1">
             {file.tags.slice(0, 2).map((tag) => (
-              <Badge
-                key={tag}
-                variant="outline"
-                className={cn("text-xs", tagColors[tag] || 'bg-gray-50 text-gray-700 border-gray-200')}
-              >
-                {tag}
-              </Badge>
+              <Tag key={tag} label={tag} />
             ))}
-            {file.tags.length > 2 && (
-              <Badge variant="outline" className="text-xs bg-gray-50 text-gray-700 border-gray-200">
-                +{file.tags.length - 2}
-              </Badge>
-            )}
+            {file.tags.length > 2 && <Tag label={`+${file.tags.length - 2}`} />}
           </div>
         );
-      }
+      },
     },
     {
       key: 'assignee',
@@ -344,161 +616,185 @@ export function KYCFilesPage() {
         if (!file.assignee) {
           return (
             <div className="flex items-center gap-2">
-              <div className="w-6 h-6 rounded-full bg-gray-100 flex items-center justify-center">
-                <UserCircle className="w-4 h-4 text-gray-400" />
-              </div>
-              <span className="text-sm text-gray-400">{t('ged.kyc.unassigned')}</span>
+              <Avatar className="size-6">
+                <AvatarFallback className="bg-muted text-muted-foreground">
+                  <UserCircle className="w-4 h-4" />
+                </AvatarFallback>
+              </Avatar>
+              <span className="text-sm text-muted-foreground">{t('ged.kyc.unassigned')}</span>
             </div>
           );
         }
-        
+
         return (
           <div className="flex items-center gap-2">
-            <div className="w-6 h-6 rounded-full bg-gradient-to-br from-blue-500 to-purple-500 flex items-center justify-center text-white text-xs font-semibold">
-              {file.assignee.initials}
-            </div>
-            <span className="text-sm text-gray-600">{file.assignee.name}</span>
+            <Avatar className="size-6">
+              <AvatarFallback className="bg-primary text-primary-foreground text-xs font-semibold">
+                {file.assignee.initials}
+              </AvatarFallback>
+            </Avatar>
+            <span className="text-sm text-foreground">{file.assignee.name}</span>
           </div>
         );
-      }
+      },
     },
     {
       key: 'lastActivity',
       label: t('ged.kyc.columns.lastActivity'),
       sortable: true,
       render: (file) => (
-        <span className="text-sm text-gray-500">{file.lastActivity.text}</span>
-      )
-    }
+        <span className="text-sm text-muted-foreground">{file.lastActivity.text}</span>
+      ),
+    },
   ];
 
+  if (openedDossier) {
+    const dossier = buildDossierFromRow(openedDossier);
+    return (
+      <KYCDossierDetail
+        {...dossier}
+        onBack={handleBackToList}
+        onValidate={() => handleDossierAction('Dossier validé')}
+        onReject={() => handleDossierAction('Dossier rejeté')}
+        onRequestComplement={() => handleDossierAction('Demande de complément envoyée')}
+        onReassign={() => handleDossierAction('Dossier réassigné')}
+        onRunScreening={() => handleDossierAction('Screening relancé')}
+        onCommentSubmit={(body) =>
+          handleDossierAction(`Note publiée : « ${body.slice(0, 60)} »`)
+        }
+      />
+    );
+  }
+
   return (
-    <div className="flex-1 px-6 pt-6 pb-6 flex gap-4">
-      <motion.div 
+    <div className="flex-1 flex flex-col">
+      <PageHeader
+        title={t('ged.kyc.title')}
+        subtitle={t('ged.kyc.subtitle')}
+        primaryAction={{
+          label: 'Exporter',
+          icon: <Download className="w-4 h-4" />,
+          onClick: () => undefined,
+        }}
+      />
+
+      <div className="flex-1 px-6 pt-6 pb-6 flex flex-col gap-4">
+      <section aria-label="Prochaines révisions">
+        <div className="flex items-baseline justify-between mb-3">
+          <h3 className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+            Prochaines révisions
+          </h3>
+          {reviewWindow !== null && (
+            <Button
+              variant="ghost"
+              size="sm"
+              className="h-7 text-xs gap-1"
+              onClick={() => setReviewWindow(null)}
+            >
+              <X className="w-3 h-3" />
+              Désactiver le filtre
+            </Button>
+          )}
+        </div>
+        <div className="grid grid-cols-5 gap-1.5">
+          {REVIEW_WINDOWS.map((win) => {
+            const count = reviewCounts[win.key];
+            const totalReviewable = allTableData.filter((f) => f.nextReview).length;
+            const ratio =
+              totalReviewable > 0
+                ? `${Math.round((count / totalReviewable) * 100)}%`
+                : '0%';
+            return (
+              <FilterCard
+                key={win.key}
+                status={win.key}
+                activeStatus={reviewWindow ?? ''}
+                onStatusChange={(s) =>
+                  setReviewWindow((current) =>
+                    current === (s as ReviewWindowKey) ? null : (s as ReviewWindowKey),
+                  )
+                }
+                label={win.label}
+                icon={win.icon}
+                total={count}
+                metricLabel={win.metricLabel}
+                metricValue={`${count}`}
+                averageValue={ratio}
+                iconActiveClassName={win.iconActiveClassName}
+              />
+            );
+          })}
+        </div>
+      </section>
+
+      <motion.div
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ delay: 0.2 }}
-        className="w-full bg-white rounded-2xl shadow-sm border border-gray-200 overflow-hidden hover:shadow-lg transition-shadow duration-500 flex flex-col"
+        className="w-full"
       >
-        {/* Header */}
-        <div className="px-6 py-4 border-b border-gray-200 bg-gradient-to-r from-white to-gray-50/30">
-          <div className="flex items-center justify-between">
-            <div>
-              <h2 className="text-xl font-semibold text-gray-900">{t('ged.kyc.title')}</h2>
-              <p className="text-sm text-gray-600 mt-1">
-                {t('ged.kyc.subtitle')}
-              </p>
-            </div>
-            <motion.button
-              whileHover={{ scale: 1.02 }}
-              whileTap={{ scale: 0.98 }}
-              className="px-4 py-2 bg-gradient-to-r from-[#000000] to-[#0F323D] text-white rounded-lg text-sm font-medium hover:shadow-lg transition-all duration-200 flex items-center gap-2"
-            >
-              <Download className="w-4 h-4" />
-              Exporter
-            </motion.button>
-          </div>
-        </div>
-
-        {/* Table */}
-        <div className="flex-1 overflow-auto">
-          {isLoading ? (
-            <TableSkeleton />
-          ) : (
-            <DataTable 
-              data={tableData} 
-              hoveredRow={hoveredRow}
-              setHoveredRow={setHoveredRow}
-              onRowClick={handleRowClick}
-              sortConfig={sortConfig}
-              onSort={handleSort}
-              compactMode={false}
-              columns={columns}
+        <Card className="overflow-hidden p-0 gap-0 hover:shadow-lg transition-shadow duration-500">
+          <div className="px-6 py-4 border-b border-border bg-card">
+            <FilterBar
+              searchValue={searchQuery}
+              onSearchChange={setSearchQuery}
+              searchPlaceholder="Rechercher par nom ou ID…"
+              filters={KYC_FILTER_CONFIGS}
+              activeFilters={activeFiltersObj}
+              onFilterChange={handleDsFilterChange}
+              onClearAll={handleResetFilters}
             />
-          )}
-        </div>
+          </div>
 
-        {/* Pagination */}
-        {!isLoading && (
-          <motion.div 
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            transition={{ delay: 0.4 }}
-            className="px-6 py-4 border-t border-gray-100 flex items-center justify-between bg-gray-50/50"
-          >
-            <div className="text-sm text-gray-600">
-              {startIndex + 1}-{endIndex} sur {totalItems} dossiers
+          <CardContent className="p-0 flex flex-col">
+            <div className="flex-1 overflow-auto">
+              {isLoading ? (
+                <TableSkeleton />
+              ) : tableData.length === 0 ? (
+                <div className="py-16 text-center">
+                  <p className="text-sm text-muted-foreground">
+                    Aucun dossier ne correspond aux filtres actuels.
+                  </p>
+                  {hasActiveFilters && (
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      className="mt-3 text-xs"
+                      onClick={handleResetFilters}
+                    >
+                      Réinitialiser les filtres
+                    </Button>
+                  )}
+                </div>
+              ) : (
+                <DataTable
+                  data={tableData}
+                  hoveredRow={hoveredRow}
+                  setHoveredRow={setHoveredRow}
+                  onRowClick={handleRowClick}
+                  sortConfig={sortConfig}
+                  onSort={handleSort}
+                  compactMode={false}
+                  columns={columns}
+                />
+              )}
             </div>
-            <div className="flex items-center gap-2">
-              <motion.button
-                whileHover={{ scale: paginationPage > 1 ? 1.05 : 1, x: paginationPage > 1 ? -2 : 0 }}
-                whileTap={{ scale: paginationPage > 1 ? 0.95 : 1 }}
-                onClick={() => handlePageChange(paginationPage - 1)}
-                disabled={paginationPage === 1}
-                className={`p-2 hover:bg-white rounded-lg transition-all duration-200 border border-transparent hover:border-gray-200 hover:shadow-sm ${
-                  paginationPage === 1 ? 'opacity-40 cursor-not-allowed' : ''
-                }`}
-              >
-                <ChevronLeft className="w-4 h-4 text-gray-600" />
-              </motion.button>
-              
-              {getPageNumbers().map((page, idx) => (
-                <motion.button
-                  key={idx}
-                  whileHover={{ scale: page !== '...' ? 1.1 : 1, y: page !== '...' ? -2 : 0 }}
-                  whileTap={{ scale: page !== '...' ? 0.95 : 1 }}
-                  onClick={() => typeof page === 'number' && handlePageChange(page)}
-                  className={`min-w-[36px] h-9 px-3 rounded-lg transition-all duration-300 ${
-                    page === paginationPage
-                      ? 'bg-gradient-to-br from-[#0066FF] to-[#0052CC] text-white shadow-md'
-                      : page === '...'
-                      ? 'text-gray-400 cursor-default'
-                      : 'hover:bg-white text-gray-600 hover:text-gray-900 border border-transparent hover:border-gray-200 hover:shadow-sm'
-                  }`}
-                  disabled={page === '...'}
-                >
-                  {page}
-                </motion.button>
-              ))}
-              
-              <motion.button
-                whileHover={{ scale: paginationPage < totalPages ? 1.05 : 1, x: paginationPage < totalPages ? 2 : 0 }}
-                whileTap={{ scale: paginationPage < totalPages ? 0.95 : 1 }}
-                onClick={() => handlePageChange(paginationPage + 1)}
-                disabled={paginationPage === totalPages}
-                className={`p-2 hover:bg-white rounded-lg transition-all duration-200 border border-transparent hover:border-gray-200 hover:shadow-sm ${
-                  paginationPage === totalPages ? 'opacity-40 cursor-not-allowed' : ''
-                }`}
-              >
-                <ChevronRight className="w-4 h-4 text-gray-600" />
-              </motion.button>
-              
-              <div className="ml-2 flex items-center gap-2">
-                <DropdownMenu>
-                  <DropdownMenuTrigger className="flex items-center gap-1 px-2 py-1 hover:bg-white rounded-lg transition-all duration-200 outline-none">
-                    <span className="text-sm text-gray-600">{itemsPerPage}/page</span>
-                    <ChevronDown className="w-4 h-4 text-gray-600" />
-                  </DropdownMenuTrigger>
-                  <DropdownMenuContent align="end">
-                    <DropdownMenuItem onClick={() => handleItemsPerPageChange(10)} className="cursor-pointer">
-                      10 par page
-                    </DropdownMenuItem>
-                    <DropdownMenuItem onClick={() => handleItemsPerPageChange(20)} className="cursor-pointer">
-                      20 par page
-                    </DropdownMenuItem>
-                    <DropdownMenuItem onClick={() => handleItemsPerPageChange(50)} className="cursor-pointer">
-                      50 par page
-                    </DropdownMenuItem>
-                    <DropdownMenuItem onClick={() => handleItemsPerPageChange(100)} className="cursor-pointer">
-                      100 par page
-                    </DropdownMenuItem>
-                  </DropdownMenuContent>
-                </DropdownMenu>
-              </div>
-            </div>
-          </motion.div>
-        )}
+
+            {!isLoading && (
+              <DataPagination
+                currentPage={paginationPage}
+                totalPages={totalPages}
+                pageSize={itemsPerPage}
+                totalItems={totalItems}
+                onPageChange={handlePageChange}
+                onPageSizeChange={handleItemsPerPageChange}
+                pageSizeOptions={[10, 20, 50, 100]}
+              />
+            )}
+          </CardContent>
+        </Card>
       </motion.div>
+      </div>
     </div>
   );
 }
