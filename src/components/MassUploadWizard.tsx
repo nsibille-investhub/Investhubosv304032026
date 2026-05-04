@@ -287,7 +287,12 @@ export function MassUploadWizard({ isOpen, onClose, existingFolders, inline = fa
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [allAnalyzedToastShown, setAllAnalyzedToastShown] = useState(false);
   const [selectedFiles, setSelectedFiles] = useState<string[]>([]);
-  const [showBulkEdit, setShowBulkEdit] = useState(false);
+  // When true, the bulk-edit form is in "create batch" mode — it collects a
+  // batch name and gates the confirm action behind notification + validation
+  // team being explicitly configured. Otherwise the form just applies the
+  // staged values to the selected files.
+  const [batchCreationMode, setBatchCreationMode] = useState(false);
+  const [batchNameDraft, setBatchNameDraft] = useState('');
 
   // Bulk edit — staged fields + values applied in one go via "Modifier"
   type BulkFieldKey = 'folder' | 'language' | 'targeting' | 'notification' | 'validationTeam';
@@ -639,7 +644,10 @@ export function MassUploadWizard({ isOpen, onClose, existingFolders, inline = fa
     },
   });
 
-  /** Create a new batch from the currently-selected files. */
+  /** Toggle the bulk-edit form into "create a batch" mode. The batch is not
+   * created yet — the form gains a name input and a summary, and the bottom
+   * action is replaced by a "Créer le lot" button gated on notification +
+   * validation team being configured. */
   const handleCreateBatch = () => {
     if (selectedFiles.length < 2) {
       toast.error('Sélectionnez au moins 2 documents pour créer un lot');
@@ -655,17 +663,97 @@ export function MassUploadWizard({ isOpen, onClose, existingFolders, inline = fa
       });
       return;
     }
+    setBatchCreationMode(true);
+    setBatchNameDraft(`Lot ${batches.length + 1}`);
+    // Notification & validation team are CONSOLIDATED at the batch level —
+    // ensure both are part of the staged fields so the user is forced to
+    // configure them before being able to confirm.
+    setBulkFields((prev) => {
+      const next = new Set<BulkFieldKey>(prev);
+      next.add('notification');
+      next.add('validationTeam');
+      return Array.from(next);
+    });
+  };
+
+  const handleCancelBatchCreation = () => {
+    setBatchCreationMode(false);
+    setBatchNameDraft('');
+  };
+
+  /** Validate the batch creation form. Returns the reason string when the form
+   * cannot be confirmed yet, or null when ready. */
+  const batchCreationBlockReason = (): string | null => {
+    if (!batchCreationMode) return null;
+    if (selectedFiles.length < 2) return 'Sélectionnez au moins 2 documents';
+    if (!batchNameDraft.trim()) return 'Donnez un nom au lot';
+    if (!bulkFields.includes('notification')) return 'La notification doit être configurée pour le lot';
+    if (!bulkFields.includes('validationTeam')) return 'L’équipe de validation doit être configurée pour le lot';
+    const team = bulkValues.validationTeam ?? [];
+    if (team.length === 0) return 'Choisissez une équipe de validation';
+    // Notification: either explicitly disabled, or template chosen if enabled.
+    const n = bulkValues.notification;
+    if (n?.notify && !n.emailTemplate) return 'Choisissez un template de notification';
+    return null;
+  };
+
+  /** Confirm batch creation — applies staged bulk values to the selected files,
+   * creates the batch with consolidated/global config derived from the staged
+   * fields, and rattaches the files. */
+  const handleConfirmCreateBatch = () => {
+    const block = batchCreationBlockReason();
+    if (block) {
+      toast.error(block);
+      return;
+    }
     const firstFile = uploadedFiles.find((f) => f.id === selectedFiles[0]);
-    const batch = buildDefaultBatch(firstFile);
+    const targeting = bulkValues.targeting ?? {
+      targetType: firstFile?.targetType ?? 'all',
+      targetSegments: firstFile?.targetSegments ?? [],
+      targetInvestors: firstFile?.targetInvestors ?? [],
+      targetSubscriptions: firstFile?.targetSubscriptions ?? [],
+      targetFunds: firstFile?.targetFunds ?? [],
+    };
+    const batch: UploadBatch = {
+      id: `batch-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`,
+      name: batchNameDraft.trim(),
+      validationTeam: bulkValues.validationTeam ?? [],
+      notify: bulkValues.notification?.notify ?? false,
+      emailTemplate: bulkValues.notification?.emailTemplate ?? '',
+      // If the user staged a folder/targeting value in the bulk form we treat
+      // it as a global batch-level value; otherwise members keep their own.
+      folderMode: bulkFields.includes('folder') ? 'global' : 'per-document',
+      globalFolder: bulkValues.folder ?? '',
+      targetingMode: bulkFields.includes('targeting') ? 'global' : 'per-document',
+      globalTargeting: targeting,
+    };
     setBatches((prev) => [...prev, batch]);
     setUploadedFiles((prev) =>
       propagateBatchToFiles(
         batch,
-        prev.map((f) => (selectedFiles.includes(f.id) ? { ...f, batchId: batch.id } : f)),
+        prev.map((f) => {
+          if (!selectedFiles.includes(f.id)) return f;
+          // Per-document fields not consolidated by the batch still get the
+          // staged bulk values (e.g. language) so the bulk values aren't lost.
+          const next: UploadedFile = { ...f, batchId: batch.id };
+          if (bulkFields.includes('language') && bulkValues.language !== undefined) {
+            next.language = bulkValues.language;
+          }
+          // When folder/targeting are NOT global, still apply the staged value
+          // to each member as a starting point (heterogeneous lot).
+          if (bulkFields.includes('folder') && batch.folderMode !== 'global' && bulkValues.folder !== undefined) {
+            next.folder = bulkValues.folder;
+          }
+          return next;
+        }),
       ),
     );
     setExpandedBatchIds((prev) => new Set(prev).add(batch.id));
-    setEditingBatchId(batch.id);
+    setEditingBatchId(null);
+    setBatchCreationMode(false);
+    setBatchNameDraft('');
+    setBulkFields([]);
+    setBulkValues({});
     setSelectedFiles([]);
     toast.success('Lot créé', {
       description: `${selectedFiles.length} documents regroupés dans « ${batch.name} »`,
@@ -1914,35 +2002,31 @@ export function MassUploadWizard({ isOpen, onClose, existingFolders, inline = fa
                             <span className="text-xs text-gray-600">Édition groupée</span>
                           </div>
                           <div className="flex items-center gap-1.5">
-                            <Button
-                              variant="outline"
-                              size="sm"
-                              className="h-7 gap-1.5 text-xs"
-                              onClick={handleCreateBatch}
-                              disabled={selectedFiles.length < 2}
-                              title={
-                                selectedFiles.length < 2
-                                  ? 'Sélectionnez au moins 2 documents pour créer un lot'
-                                  : 'Créer un lot avec les documents sélectionnés'
-                              }
-                            >
-                              <Layers3 className="h-3 w-3" />
-                              Créer un lot
-                            </Button>
-                            <Button
-                              variant="outline"
-                              size="sm"
-                              className="h-7 gap-1.5 text-xs"
-                              onClick={() => setShowBulkEdit(!showBulkEdit)}
-                            >
-                              <Edit3 className="h-3 w-3" />
-                              {showBulkEdit ? 'Masquer' : 'Afficher'}
-                            </Button>
+                            {!batchCreationMode && (
+                              <Button
+                                variant="outline"
+                                size="sm"
+                                className="h-7 gap-1.5 text-xs"
+                                onClick={handleCreateBatch}
+                                disabled={selectedFiles.length < 2}
+                                title={
+                                  selectedFiles.length < 2
+                                    ? 'Sélectionnez au moins 2 documents pour créer un lot'
+                                    : 'Créer un lot avec les documents sélectionnés'
+                                }
+                              >
+                                <Layers3 className="h-3 w-3" />
+                                Créer un lot
+                              </Button>
+                            )}
                             <Button
                               variant="ghost"
                               size="sm"
                               className="h-7 gap-1.5 text-xs text-gray-600 hover:text-gray-900"
-                              onClick={() => setSelectedFiles([])}
+                              onClick={() => {
+                                setSelectedFiles([]);
+                                handleCancelBatchCreation();
+                              }}
                             >
                               <X className="h-3 w-3" />
                               Désélectionner
@@ -1950,14 +2034,13 @@ export function MassUploadWizard({ isOpen, onClose, existingFolders, inline = fa
                           </div>
                         </div>
 
-                        {showBulkEdit && (
-                          <motion.div
-                            initial={{ opacity: 0, height: 0 }}
-                            animate={{ opacity: 1, height: 'auto' }}
-                            exit={{ opacity: 0, height: 0 }}
-                            transition={{ duration: 0.18 }}
-                            className="mt-2 space-y-3 border-t border-gray-200 pt-3"
-                          >
+                        <motion.div
+                          initial={{ opacity: 0, height: 0 }}
+                          animate={{ opacity: 1, height: 'auto' }}
+                          exit={{ opacity: 0, height: 0 }}
+                          transition={{ duration: 0.18 }}
+                          className="mt-2 space-y-3 border-t border-gray-200 pt-3"
+                        >
                             {/* Step A — pick which fields to modify in bulk */}
                             <div className="space-y-1">
                               <Label className="text-[11px] font-medium text-gray-700">Champs à modifier</Label>
@@ -2301,8 +2384,85 @@ export function MassUploadWizard({ isOpen, onClose, existingFolders, inline = fa
                               </div>
                             )}
 
-                            {/* Apply / reset action bar */}
-                            {bulkFields.length > 0 && (
+                            {/* Batch creation — name input + summary derived from staged values */}
+                            {batchCreationMode && (() => {
+                              const summary: { label: string; value: string }[] = [];
+                              if (bulkFields.includes('folder')) {
+                                summary.push({
+                                  label: 'Dossier',
+                                  value: bulkValues.folder
+                                    ? `Global · ${bulkValues.folder}`
+                                    : 'Par document (à compléter par membre)',
+                                });
+                              }
+                              if (bulkFields.includes('language')) {
+                                summary.push({
+                                  label: 'Langue',
+                                  value:
+                                    availableLanguages.find((l) => l.value === bulkValues.language)?.label ??
+                                    'Non choisie',
+                                });
+                              }
+                              if (bulkFields.includes('targeting')) {
+                                const t = bulkValues.targeting;
+                                const typeMap: Record<string, string> = { all: 'Tous', segment: 'Segments', investor: 'Investisseurs', subscription: 'Souscriptions', fund: 'Fonds' };
+                                summary.push({
+                                  label: 'Ciblage',
+                                  value: t
+                                    ? `Global · ${typeMap[t.targetType] ?? t.targetType}`
+                                    : 'Par document (hétérogène)',
+                                });
+                              }
+                              if (bulkFields.includes('notification')) {
+                                const n = bulkValues.notification;
+                                summary.push({
+                                  label: 'Notification (consolidée)',
+                                  value: n
+                                    ? n.notify
+                                      ? `Activée · ${availableEmailTemplates.find((tpl) => tpl.value === n.emailTemplate)?.label ?? 'Template à choisir'}`
+                                      : 'Désactivée'
+                                    : 'À configurer',
+                                });
+                              }
+                              if (bulkFields.includes('validationTeam')) {
+                                summary.push({
+                                  label: 'Équipe de validation (consolidée)',
+                                  value: bulkValues.validationTeam?.[0] ?? 'À choisir',
+                                });
+                              }
+                              return (
+                                <div className="space-y-2 rounded-lg border border-blue-200 bg-blue-50/40 p-3">
+                                  <div className="flex items-center gap-2">
+                                    <Layers3 className="h-3.5 w-3.5 text-blue-700" />
+                                    <Label className="text-[11px] font-medium text-blue-900">
+                                      Nouveau lot — notification consolidée
+                                    </Label>
+                                  </div>
+                                  <Input
+                                    value={batchNameDraft}
+                                    onChange={(e) => setBatchNameDraft(e.target.value)}
+                                    placeholder="Nom du lot…"
+                                    className="h-8 text-sm border-blue-200 bg-white"
+                                  />
+                                  {summary.length > 0 && (
+                                    <ul className="space-y-1 text-[11px] text-gray-700">
+                                      {summary.map((row) => (
+                                        <li key={row.label} className="flex items-baseline gap-2">
+                                          <span className="font-medium text-gray-600">{row.label} :</span>
+                                          <span className="text-gray-800">{row.value}</span>
+                                        </li>
+                                      ))}
+                                    </ul>
+                                  )}
+                                  <p className="text-[11px] text-blue-700/80">
+                                    Notification et équipe de validation doivent être configurées au niveau du lot.
+                                  </p>
+                                </div>
+                              );
+                            })()}
+
+                            {/* Action bar — Modifier (apply only) OR Créer le lot (batch mode) */}
+                            {(bulkFields.length > 0 || batchCreationMode) && (
                               <div className="flex items-center gap-2 pt-1">
                                 <Tooltip>
                                   <TooltipTrigger asChild>
@@ -2317,17 +2477,49 @@ export function MassUploadWizard({ isOpen, onClose, existingFolders, inline = fa
                                   </TooltipTrigger>
                                   <TooltipContent>Réinitialiser la sélection</TooltipContent>
                                 </Tooltip>
-                                <Button
-                                  onClick={handleBulkApply}
-                                  className="h-9 flex-1 text-white hover:opacity-90"
-                                  style={{ background: 'linear-gradient(62.32deg, #000000 10.53%, #0F323D 88.82%)' }}
-                                >
-                                  Modifier
-                                </Button>
+                                {batchCreationMode ? (
+                                  <>
+                                    <Button
+                                      variant="outline"
+                                      onClick={handleCancelBatchCreation}
+                                      className="h-9"
+                                    >
+                                      Annuler
+                                    </Button>
+                                    {(() => {
+                                      const reason = batchCreationBlockReason();
+                                      const btn = (
+                                        <Button
+                                          onClick={handleConfirmCreateBatch}
+                                          disabled={!!reason}
+                                          className="h-9 flex-1 text-white hover:opacity-90 disabled:opacity-60"
+                                          style={{ background: 'linear-gradient(62.32deg, #000000 10.53%, #0F323D 88.82%)' }}
+                                        >
+                                          <Layers3 className="h-3.5 w-3.5 mr-1.5" />
+                                          Créer le lot
+                                        </Button>
+                                      );
+                                      if (!reason) return btn;
+                                      return (
+                                        <Tooltip>
+                                          <TooltipTrigger asChild><span className="flex-1">{btn}</span></TooltipTrigger>
+                                          <TooltipContent><span className="text-xs">{reason}</span></TooltipContent>
+                                        </Tooltip>
+                                      );
+                                    })()}
+                                  </>
+                                ) : (
+                                  <Button
+                                    onClick={handleBulkApply}
+                                    className="h-9 flex-1 text-white hover:opacity-90"
+                                    style={{ background: 'linear-gradient(62.32deg, #000000 10.53%, #0F323D 88.82%)' }}
+                                  >
+                                    Modifier
+                                  </Button>
+                                )}
                               </div>
                             )}
-                          </motion.div>
-                        )}
+                        </motion.div>
                       </motion.div>
                     )}
                   </AnimatePresence>
