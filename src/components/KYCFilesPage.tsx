@@ -1,6 +1,16 @@
 import { useState, useMemo, useEffect } from 'react';
 import { motion } from 'motion/react';
-import { Download, UserCircle, Building2, Copy, Check } from 'lucide-react';
+import {
+  CheckCircle2,
+  Copy,
+  Check,
+  Download,
+  DownloadCloud,
+  Eye,
+  RefreshCw,
+  UserCircle,
+  Building2,
+} from 'lucide-react';
 import { toast } from 'sonner@2.0.3';
 import { generateKYCFiles, KYCFile } from '../utils/kycFileGenerator';
 import { DataTable, ColumnConfig } from './DataTable';
@@ -18,6 +28,7 @@ import { Avatar, AvatarFallback } from './ui/avatar';
 import { DataPagination } from './ui/data-pagination';
 import { StatusBadge } from './StatusBadge';
 import { Tag } from './Tag';
+import { KYCThirdPartiesCell } from './KYCThirdPartiesCell';
 import { copyToClipboard } from '../utils/clipboard';
 import { cn } from './ui/utils';
 import { useTranslation } from '../utils/languageContext';
@@ -32,17 +43,38 @@ const STATUS_VARIANT: Record<string, StatusVariant> = {
 };
 
 const RISK_CONFIG: Record<string, { token: string; bars: number }> = {
-  Prohibé: { token: 'var(--danger)', bars: 4 },
+  Bloqué: { token: 'var(--danger)', bars: 4 },
   Élevé: { token: 'var(--warning)', bars: 3 },
   Moyen: { token: 'var(--warning)', bars: 2 },
   Faible: { token: 'var(--success)', bars: 1 },
 };
 
-const PROGRESS_ICONS: Record<string, string> = {
-  'En révision': '👁️',
-  'En collecte': '⬇️',
-  Recollecte: '🔄',
-  Finalisation: '✅',
+type ProgressKey = 'En révision' | 'En collecte' | 'Recollecte' | 'Finalisation';
+
+const PROGRESS_CONFIG: Record<
+  ProgressKey,
+  { icon: typeof Eye; tokenColor: string; bgClass: string }
+> = {
+  'En révision': {
+    icon: Eye,
+    tokenColor: 'var(--primary)',
+    bgClass: 'bg-primary/10',
+  },
+  'En collecte': {
+    icon: DownloadCloud,
+    tokenColor: 'var(--warning)',
+    bgClass: 'bg-muted',
+  },
+  Recollecte: {
+    icon: RefreshCw,
+    tokenColor: 'var(--warning)',
+    bgClass: 'bg-muted',
+  },
+  Finalisation: {
+    icon: CheckCircle2,
+    tokenColor: 'var(--success)',
+    bgClass: 'bg-muted',
+  },
 };
 
 export function KYCFilesPage() {
@@ -213,12 +245,23 @@ export function KYCFilesPage() {
       key: 'progress',
       label: t('ged.kyc.columns.progress'),
       sortable: false,
-      render: (file) => (
-        <div className="flex items-center gap-2">
-          <span className="text-sm">{PROGRESS_ICONS[file.progress.status]}</span>
-          <span className="text-sm text-foreground">{file.progress.status}</span>
-        </div>
-      ),
+      render: (file) => {
+        const config = PROGRESS_CONFIG[file.progress.status as ProgressKey];
+        const Icon = config.icon;
+        return (
+          <div className="flex items-center gap-2">
+            <span
+              className={cn(
+                'inline-flex items-center justify-center rounded-full size-6',
+                config.bgClass,
+              )}
+            >
+              <Icon className="w-3.5 h-3.5" style={{ color: config.tokenColor }} />
+            </span>
+            <span className="text-sm text-foreground">{file.progress.status}</span>
+          </div>
+        );
+      },
     },
     {
       key: 'risk',
@@ -254,13 +297,25 @@ export function KYCFilesPage() {
       },
     },
     {
-      key: 'template',
-      label: t('ged.kyc.columns.template'),
+      key: 'onboarding',
+      label: t('ged.kyc.columns.onboarding'),
       sortable: true,
       render: (file) => (
         <span className="text-sm text-foreground truncate max-w-[180px] block">
-          {file.template}
+          {file.onboarding}
         </span>
+      ),
+    },
+    {
+      key: 'thirdParties',
+      label: t('ged.kyc.columns.thirdParties'),
+      sortable: false,
+      render: (file) => (
+        <KYCThirdPartiesCell
+          parties={file.thirdParties}
+          emptyLabel={t('ged.kyc.thirdParties.empty')}
+          popoverLabel={t('ged.kyc.thirdParties.title')}
+        />
       ),
     },
     {

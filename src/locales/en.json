@@ -978,7 +978,8 @@
         "nextReview": "Next review",
         "progress": "Progress",
         "risk": "Risk",
-        "template": "Template",
+        "onboarding": "Onboarding",
+        "thirdParties": "Third parties",
         "tags": "Tags",
         "assignedTo": "Assigned to",
         "lastActivity": "Last activity"
@@ -993,11 +994,18 @@
       "statusCollecting": "Collecting",
       "statusRecollecting": "Re-collecting",
       "statusFinalizing": "Finalising",
-      "riskProhibited": "Prohibited",
+      "riskBlocked": "Blocked",
       "riskHigh": "High",
       "riskMedium": "Medium",
       "riskLow": "Low",
       "unassigned": "Unassigned",
+      "thirdParties": {
+        "title": "Linked third parties",
+        "empty": "No third party",
+        "representative": "Representative",
+        "company": "Company",
+        "ubo": "UBO"
+      },
       "tag": {
         "demo": "Demo",
         "active": "Active",

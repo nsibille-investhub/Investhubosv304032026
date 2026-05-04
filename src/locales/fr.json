@@ -978,7 +978,8 @@
         "nextReview": "Prochaine révision",
         "progress": "Progression",
         "risk": "Risque",
-        "template": "Modèle",
+        "onboarding": "Onboarding",
+        "thirdParties": "Partie Tiers",
         "tags": "Tags",
         "assignedTo": "Assigné à",
         "lastActivity": "Dernière activité"
@@ -993,11 +994,18 @@
       "statusCollecting": "En collecte",
       "statusRecollecting": "Recollecte",
       "statusFinalizing": "Finalisation",
-      "riskProhibited": "Prohibé",
+      "riskBlocked": "Bloqué",
       "riskHigh": "Élevé",
       "riskMedium": "Moyen",
       "riskLow": "Faible",
       "unassigned": "Non assigné",
+      "thirdParties": {
+        "title": "Parties tiers liées",
+        "empty": "Aucune partie tiers",
+        "representative": "Représentant",
+        "company": "Entreprise",
+        "ubo": "UBO"
+      },
       "tag": {
         "demo": "Démo",
         "active": "Actif",
