@@ -29,9 +29,43 @@ import { DataPagination } from './ui/data-pagination';
 import { StatusBadge } from './StatusBadge';
 import { Tag } from './Tag';
 import { KYCThirdPartiesCell } from './KYCThirdPartiesCell';
+import { KYCDossierDetail } from './KYCDossierDetail';
+import type {
+  DossierStatus,
+  KYCDossierDetail as KYCDossierDetailModel,
+  RiskLevel,
+} from './KYCDossierDetail.types';
+import { mockEntityDossier, mockIndividualDossier } from '../utils/kycDossierMock';
 import { copyToClipboard } from '../utils/clipboard';
 import { cn } from './ui/utils';
 import { useTranslation } from '../utils/languageContext';
+
+const LISTING_STATUS_TO_DETAIL: Record<KYCFile['status'], DossierStatus> = {
+  Rejeté: 'rejected',
+  Brouillon: 'to_review',
+  Ouvert: 'in_review',
+  Approuvé: 'approved',
+};
+
+const LISTING_RISK_TO_LEVEL: Record<NonNullable<KYCFile['risk']>, RiskLevel> = {
+  Bloqué: 'high',
+  Élevé: 'high',
+  Moyen: 'medium',
+  Faible: 'low',
+};
+
+function buildDossierFromRow(row: KYCFile): KYCDossierDetailModel {
+  const isEntity = row.type === 'Personne morale';
+  const base = isEntity ? mockEntityDossier : mockIndividualDossier;
+  return {
+    ...base,
+    id: `kyc-${row.id}`,
+    reference: row.uid,
+    displayName: row.name.replace(/^KYB - /, ''),
+    status: LISTING_STATUS_TO_DETAIL[row.status],
+    riskLevel: row.risk ? LISTING_RISK_TO_LEVEL[row.risk] : 'low',
+  };
+}
 
 type StatusVariant = 'success' | 'warning' | 'danger' | 'neutral';
 
@@ -83,6 +117,7 @@ export function KYCFilesPage() {
   const [itemsPerPage, setItemsPerPage] = useState(20);
   const [hoveredRow, setHoveredRow] = useState<number | null>(null);
   const [selectedFile, setSelectedFile] = useState<KYCFile | null>(null);
+  const [openedDossier, setOpenedDossier] = useState<KYCFile | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [sortConfig, setSortConfig] = useState<{ key: string; direction: 'asc' | 'desc' } | null>(null);
   const [allTableData, setAllTableData] = useState<KYCFile[]>([]);
@@ -142,9 +177,15 @@ export function KYCFilesPage() {
 
   const handleRowClick = (row: KYCFile) => {
     setSelectedFile(row);
-    toast.info(t('ged.kyc.selectedToast'), {
-      description: `${row.name}`,
-    });
+    setOpenedDossier(row);
+  };
+
+  const handleBackToList = () => {
+    setOpenedDossier(null);
+  };
+
+  const handleDossierAction = (action: string) => {
+    toast.info(action);
   };
 
   const handlePageChange = (page: number) => {
@@ -376,6 +417,24 @@ export function KYCFilesPage() {
       ),
     },
   ];
+
+  if (openedDossier) {
+    const dossier = buildDossierFromRow(openedDossier);
+    return (
+      <KYCDossierDetail
+        {...dossier}
+        onBack={handleBackToList}
+        onValidate={() => handleDossierAction('Dossier validé')}
+        onReject={() => handleDossierAction('Dossier rejeté')}
+        onRequestComplement={() => handleDossierAction('Demande de complément envoyée')}
+        onReassign={() => handleDossierAction('Dossier réassigné')}
+        onRunScreening={() => handleDossierAction('Screening relancé')}
+        onCommentSubmit={(body) =>
+          handleDossierAction(`Note publiée : « ${body.slice(0, 60)} »`)
+        }
+      />
+    );
+  }
 
   return (
     <div className="flex-1 px-6 pt-6 pb-6 flex gap-4">
