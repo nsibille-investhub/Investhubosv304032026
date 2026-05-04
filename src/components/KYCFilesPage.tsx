@@ -33,6 +33,7 @@ import {
 } from './ui/card';
 import { Avatar, AvatarFallback } from './ui/avatar';
 import { DataPagination } from './ui/data-pagination';
+import { KpiCard, KpiStrip } from './ui/kpi-card';
 import { SearchInput } from './ui/search-input';
 import {
   Select,
@@ -106,51 +107,41 @@ const REVIEW_WINDOWS: Array<{
   key: ReviewWindowKey;
   label: string;
   icon: typeof AlertTriangle;
-  tone: 'danger' | 'warning' | 'neutral';
+  pulse?: boolean;
   match: (deltaDays: number) => boolean;
 }> = [
   {
     key: 'overdue',
     label: 'En retard',
     icon: AlertTriangle,
-    tone: 'danger',
+    pulse: true,
     match: (d) => d < 0,
   },
   {
     key: '1w',
     label: 'Dans 1 semaine',
     icon: CalendarClock,
-    tone: 'warning',
     match: (d) => d >= 0 && d <= 7,
   },
   {
     key: '1m',
     label: 'Dans 1 mois',
     icon: CalendarRange,
-    tone: 'warning',
     match: (d) => d >= 0 && d <= 30,
   },
   {
     key: '3m',
     label: 'Dans 3 mois',
     icon: CalendarDays,
-    tone: 'neutral',
     match: (d) => d >= 0 && d <= 90,
   },
   {
     key: '6m',
     label: 'Dans 6 mois',
     icon: CalendarCheck,
-    tone: 'neutral',
     match: (d) => d >= 0 && d <= 180,
   },
 ];
-
-const REVIEW_WINDOW_TOKEN: Record<'danger' | 'warning' | 'neutral', string> = {
-  danger: 'var(--danger)',
-  warning: 'var(--warning)',
-  neutral: 'var(--primary)',
-};
 
 type ProgressKey = 'En révision' | 'En collecte' | 'Recollecte' | 'Finalisation';
 
@@ -616,13 +607,8 @@ export function KYCFilesPage() {
 
   return (
     <div className="flex-1 px-6 pt-6 pb-6 flex flex-col gap-4">
-      <motion.section
-        initial={{ opacity: 0, y: 12 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ delay: 0.1 }}
-        aria-label="Prochaines révisions"
-      >
-        <div className="flex items-baseline justify-between mb-2">
+      <section aria-label="Prochaines révisions">
+        <div className="flex items-baseline justify-between mb-3">
           <h3 className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
             Prochaines révisions
           </h3>
@@ -638,12 +624,11 @@ export function KYCFilesPage() {
             </Button>
           )}
         </div>
-        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-3">
-          {REVIEW_WINDOWS.map((win) => {
-            const Icon = win.icon;
+        <KpiStrip columns={5}>
+          {REVIEW_WINDOWS.map((win, index) => {
             const isActive = reviewWindow === win.key;
-            const tokenColor = REVIEW_WINDOW_TOKEN[win.tone];
             const count = reviewCounts[win.key];
+            const totalReviewable = allTableData.filter((f) => f.nextReview).length;
             return (
               <button
                 key={win.key}
@@ -651,38 +636,30 @@ export function KYCFilesPage() {
                 onClick={() =>
                   setReviewWindow((current) => (current === win.key ? null : win.key))
                 }
-                className={cn(
-                  'rounded-xl border bg-card p-4 text-left transition-all hover:shadow-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/50',
-                  isActive
-                    ? 'border-primary ring-2 ring-primary/30'
-                    : 'border-border hover:border-foreground/30',
-                )}
                 aria-pressed={isActive}
+                className={cn(
+                  'rounded-lg text-left transition-all focus-visible:outline-none',
+                  'focus-visible:ring-2 focus-visible:ring-ring/50',
+                  isActive && 'ring-2 ring-primary ring-offset-2 ring-offset-background',
+                )}
               >
-                <div className="flex items-center justify-between">
-                  <span
-                    className="inline-flex items-center justify-center rounded-full size-9"
-                    style={{
-                      backgroundColor: `color-mix(in oklab, ${tokenColor} 12%, transparent)`,
-                    }}
-                  >
-                    <Icon className="w-4 h-4" style={{ color: tokenColor }} />
-                  </span>
-                  <span className="text-2xl font-semibold tabular-nums text-foreground">
-                    {count}
-                  </span>
-                </div>
-                <p className="text-sm font-medium text-foreground mt-3">{win.label}</p>
-                <p className="text-xs text-muted-foreground mt-0.5">
-                  {win.key === 'overdue'
-                    ? 'Révisions dépassées'
-                    : 'Dossier(s) à revoir'}
-                </p>
+                <KpiCard
+                  index={index}
+                  icon={win.icon}
+                  label={win.label}
+                  value={count}
+                  pulse={win.pulse && count > 0}
+                  progress={
+                    totalReviewable > 0
+                      ? { current: count, total: totalReviewable }
+                      : undefined
+                  }
+                />
               </button>
             );
           })}
-        </div>
-      </motion.section>
+        </KpiStrip>
+      </section>
 
       <motion.div
         initial={{ opacity: 0, y: 20 }}
