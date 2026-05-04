@@ -2601,7 +2601,7 @@ export function MassUploadWizard({ isOpen, onClose, existingFolders, inline = fa
                             {inBatch ? (
                               <span className="ml-2 inline-block text-gray-300">└</span>
                             ) : (
-                              <Checkbox checked={isSelected} onCheckedChange={() => handleSelectFile(file.id)} />
+                              <Checkbox checked={isSelected} onCheckedChange={(checked) => handleSelectFile(file.id, checked === true)} />
                             )}
                           </td>
 
