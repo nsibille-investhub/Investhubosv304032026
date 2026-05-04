@@ -277,11 +277,20 @@ export function MassUploadWizard({ isOpen, onClose, existingFolders, inline = fa
   // Extract all available folders
   const availableFolders = useMemo(() => {
     const base = extractAllFolders(mockDocuments);
+    // Deduplicate by path: the Select uses folder.path as its value, and Radix's
+    // SelectValue renders every SelectItem whose value matches — so duplicate paths
+    // produce a doubled trigger label (e.g. "└ 2024  └ 2024").
+    const seen = new Set<string>();
+    const deduped = base.filter((folder) => {
+      if (seen.has(folder.path)) return false;
+      seen.add(folder.path);
+      return true;
+    });
     // If launched from a folder that isn't part of the mock tree, surface it as a virtual option
     if (
       originContext?.kind === 'folder' &&
       originContext.pathLabel &&
-      !base.some((f) => f.path === originContext.pathLabel)
+      !seen.has(originContext.pathLabel)
     ) {
       return [
         {
@@ -291,10 +300,10 @@ export function MassUploadWizard({ isOpen, onClose, existingFolders, inline = fa
           level: 0,
           parentId: undefined,
         },
-        ...base,
+        ...deduped,
       ];
     }
-    return base;
+    return deduped;
   }, [originContext]);
 
   // Function to get the formatted file size
