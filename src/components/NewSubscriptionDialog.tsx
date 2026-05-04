@@ -321,7 +321,15 @@ export function NewSubscriptionDialog({ open, onClose, onSubscriptionCreated }: 
   const isStep2Valid = formData.fund && formData.shareClass && formData.numberOfShares && parseFloat(formData.numberOfShares) > 0;
 
   const handleInvestorSelect = (investor: Investor) => {
-    setFormData({ ...formData, investor, structure: null });
+    const noStructures = !investor.structures || investor.structures.length === 0;
+    setFormData({
+      ...formData,
+      investor,
+      // No structures available → default the subscription to direct so the
+      // user doesn't have to make a non-choice. They can still 'Ajouter une
+      // structure' if they need to.
+      structure: noStructures ? 'direct' : null,
+    });
     setSearchQuery('');
     setStructureFilter('');
     setShowAutocomplete(false);
@@ -386,7 +394,8 @@ export function NewSubscriptionDialog({ open, onClose, onSubscriptionCreated }: 
       email: newInvestor.email,
       structures: [],
     };
-    setFormData({ ...formData, investor, structure: null });
+    // A freshly created investor has no structures yet → default to direct.
+    setFormData({ ...formData, investor, structure: 'direct' });
     setShowNewInvestorForm(false);
     setNewInvestor(emptyNewInvestor);
     setSearchQuery('');
@@ -941,12 +950,27 @@ export function NewSubscriptionDialog({ open, onClose, onSubscriptionCreated }: 
                   </div>
 
                   {/* STRUCTURE SECTION */}
-                  {formData.investor && (
+                  {formData.investor && (() => {
+                    const investorHasStructures =
+                      (formData.investor.structures?.length ?? 0) > 0;
+                    const isOptional = !investorHasStructures && !showNewStructureForm;
+
+                    return (
                     <div className="space-y-2">
-                      <Label className="text-xs uppercase tracking-wide font-semibold text-muted-foreground flex items-center gap-1.5">
+                      <Label
+                        className={`text-xs uppercase tracking-wide font-semibold flex items-center gap-1.5 ${
+                          isOptional ? 'text-muted-foreground/70' : 'text-muted-foreground'
+                        }`}
+                      >
                         <Building2 className="w-3.5 h-3.5" />
-                        {t('subscriptions.newDialog.structureLabel')}{' '}
-                        <span className="text-destructive">*</span>
+                        {t('subscriptions.newDialog.structureLabel')}
+                        {isOptional ? (
+                          <span className="text-muted-foreground/70 font-normal normal-case tracking-normal">
+                            {t('subscriptions.newDialog.optional')}
+                          </span>
+                        ) : (
+                          <span className="text-destructive">*</span>
+                        )}
                       </Label>
 
                       {showNewStructureForm ? (
@@ -1036,6 +1060,32 @@ export function NewSubscriptionDialog({ open, onClose, onSubscriptionCreated }: 
                               </Button>
                             </div>
                           </div>
+                        </div>
+                      ) : !investorHasStructures ? (
+                        /* Investor has no structures — direct is the implicit choice,
+                           show a compact line with a discreet 'Ajouter une structure'. */
+                        <div className="flex items-center justify-between gap-3 px-3 py-2 rounded-lg border border-dashed border-border bg-muted/30">
+                          <div className="flex items-center gap-2 min-w-0">
+                            <User
+                              className="w-4 h-4 shrink-0"
+                              style={{ color: 'var(--success)' }}
+                            />
+                            <span className="text-sm text-muted-foreground truncate">
+                              {t('subscriptions.newDialog.directDefaultLine', {
+                                name: formData.investor.name,
+                              })}
+                            </span>
+                          </div>
+                          <Button
+                            type="button"
+                            variant="ghost"
+                            size="sm"
+                            onClick={() => setShowNewStructureForm(true)}
+                            className="h-7 text-xs gap-1 shrink-0"
+                          >
+                            <Plus className="w-3.5 h-3.5" />
+                            {t('subscriptions.newDialog.addStructure')}
+                          </Button>
                         </div>
                       ) : formData.structure ? (
                         /* Structure selected — chip with remove button */
@@ -1181,7 +1231,8 @@ export function NewSubscriptionDialog({ open, onClose, onSubscriptionCreated }: 
                         })()
                       )}
                     </div>
-                  )}
+                    );
+                  })()}
                 </motion.div>
               )}
 
