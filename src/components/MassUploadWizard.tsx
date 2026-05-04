@@ -1,4 +1,4 @@
-import { useState, useCallback, useRef, useMemo, useEffect } from 'react';
+import { Fragment, useState, useCallback, useRef, useMemo, useEffect } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
 import {
   X,
@@ -45,6 +45,11 @@ import {
   Shield,
   Mail,
   RotateCcw,
+  Layers,
+  Layers3,
+  Link as LinkIcon,
+  Unlink,
+  ChevronDown,
   type LucideIcon,
 } from 'lucide-react';
 import { Button } from './ui/button';
@@ -140,6 +145,36 @@ interface UploadedFile {
   reporting: boolean;
   addDate: string;
   validationTeam: string[];
+  // When set, the file belongs to a UploadBatch — its validationTeam, notify
+  // and emailTemplate are forced to the batch's consolidated values, and folder
+  // / targeting can be either inherited (global mode) or per-document.
+  batchId?: string;
+}
+
+// A batch (lot) groups multiple uploaded files so a single consolidated
+// notification is sent per recipient instead of one per document. The
+// validation team and notification fields are MANDATORILY consolidated
+// (uniform across all members). Folder and targeting can be either:
+//   - "global"        → batch enforces a single value for all members
+//   - "per-document"  → each member keeps its own value (heterogeneous)
+interface UploadBatch {
+  id: string;
+  name: string;
+  // Consolidated fields — always uniform across members.
+  validationTeam: string[];
+  notify: boolean;
+  emailTemplate: string;
+  // Per-field consolidation modes.
+  folderMode: 'global' | 'per-document';
+  globalFolder: string;
+  targetingMode: 'global' | 'per-document';
+  globalTargeting: {
+    targetType: string;
+    targetSegments: string[];
+    targetInvestors: string[];
+    targetSubscriptions: string[];
+    targetFunds: string[];
+  };
 }
 
 interface FolderItem {
@@ -273,6 +308,11 @@ export function MassUploadWizard({ isOpen, onClose, existingFolders, inline = fa
     validationTeam?: string[];
   }>({});
   const [bulkFieldsPickerOpen, setBulkFieldsPickerOpen] = useState(false);
+
+  // Document batches (lots) — see UploadBatch.
+  const [batches, setBatches] = useState<UploadBatch[]>([]);
+  const [expandedBatchIds, setExpandedBatchIds] = useState<Set<string>>(new Set());
+  const [editingBatchId, setEditingBatchId] = useState<string | null>(null);
 
   // Deep Review mode
   const [deepReview, setDeepReview] = useState(false);
@@ -543,6 +583,159 @@ export function MassUploadWizard({ isOpen, onClose, existingFolders, inline = fa
   };
 
   // Bulk update
+  // ---------------------------------------------------------------------------
+  // Batches (lots)
+  // ---------------------------------------------------------------------------
+
+  /** Toggle a batch's expanded state in the step-2 table. */
+  const toggleBatchExpanded = (batchId: string) => {
+    setExpandedBatchIds((prev) => {
+      const next = new Set(prev);
+      if (next.has(batchId)) next.delete(batchId);
+      else next.add(batchId);
+      return next;
+    });
+  };
+
+  /** Apply a batch's consolidated/global values to all its child files. */
+  const propagateBatchToFiles = (batch: UploadBatch, files: UploadedFile[]): UploadedFile[] =>
+    files.map((f) => {
+      if (f.batchId !== batch.id) return f;
+      const next: UploadedFile = {
+        ...f,
+        validationTeam: batch.validationTeam,
+        notify: batch.notify,
+        emailTemplate: batch.emailTemplate,
+      };
+      if (batch.folderMode === 'global') {
+        next.folder = batch.globalFolder;
+      }
+      if (batch.targetingMode === 'global') {
+        next.targetType = batch.globalTargeting.targetType;
+        next.targetSegments = batch.globalTargeting.targetSegments;
+        next.targetInvestors = batch.globalTargeting.targetInvestors;
+        next.targetSubscriptions = batch.globalTargeting.targetSubscriptions;
+        next.targetFunds = batch.globalTargeting.targetFunds;
+      }
+      return next;
+    });
+
+  /** Build a sensible default batch from the first selected file. */
+  const buildDefaultBatch = (firstFile: UploadedFile | undefined): UploadBatch => ({
+    id: `batch-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`,
+    name: `Lot ${batches.length + 1}`,
+    validationTeam: firstFile?.validationTeam ?? [],
+    notify: firstFile?.notify ?? false,
+    emailTemplate: firstFile?.emailTemplate ?? '',
+    folderMode: 'per-document',
+    globalFolder: firstFile?.folder ?? '',
+    targetingMode: 'per-document',
+    globalTargeting: {
+      targetType: firstFile?.targetType ?? 'all',
+      targetSegments: firstFile?.targetSegments ?? [],
+      targetInvestors: firstFile?.targetInvestors ?? [],
+      targetSubscriptions: firstFile?.targetSubscriptions ?? [],
+      targetFunds: firstFile?.targetFunds ?? [],
+    },
+  });
+
+  /** Create a new batch from the currently-selected files. */
+  const handleCreateBatch = () => {
+    if (selectedFiles.length < 2) {
+      toast.error('Sélectionnez au moins 2 documents pour créer un lot');
+      return;
+    }
+    // Refuse if any selected file already belongs to another batch.
+    const alreadyBatched = uploadedFiles.filter(
+      (f) => selectedFiles.includes(f.id) && f.batchId,
+    );
+    if (alreadyBatched.length > 0) {
+      toast.error('Documents déjà groupés', {
+        description: 'Détachez-les d’abord de leur lot actuel.',
+      });
+      return;
+    }
+    const firstFile = uploadedFiles.find((f) => f.id === selectedFiles[0]);
+    const batch = buildDefaultBatch(firstFile);
+    setBatches((prev) => [...prev, batch]);
+    setUploadedFiles((prev) =>
+      propagateBatchToFiles(
+        batch,
+        prev.map((f) => (selectedFiles.includes(f.id) ? { ...f, batchId: batch.id } : f)),
+      ),
+    );
+    setExpandedBatchIds((prev) => new Set(prev).add(batch.id));
+    setEditingBatchId(batch.id);
+    setSelectedFiles([]);
+    toast.success('Lot créé', {
+      description: `${selectedFiles.length} documents regroupés dans « ${batch.name} »`,
+    });
+  };
+
+  /** Detach a single file from its batch (file becomes standalone again). */
+  const handleDetachFromBatch = (fileId: string) => {
+    setUploadedFiles((prev) => {
+      const file = prev.find((f) => f.id === fileId);
+      if (!file?.batchId) return prev;
+      const updated = prev.map((f) => (f.id === fileId ? { ...f, batchId: undefined } : f));
+      // If the batch is now empty, dissolve it.
+      const batchId = file.batchId;
+      const stillHasMembers = updated.some((f) => f.batchId === batchId);
+      if (!stillHasMembers) {
+        setBatches((prevB) => prevB.filter((b) => b.id !== batchId));
+        setExpandedBatchIds((prevE) => {
+          const next = new Set(prevE);
+          next.delete(batchId);
+          return next;
+        });
+      }
+      return updated;
+    });
+    toast.info('Document détaché du lot');
+  };
+
+  /** Attach an existing standalone file to an existing batch. */
+  const handleAttachToBatch = (fileId: string, batchId: string) => {
+    const batch = batches.find((b) => b.id === batchId);
+    if (!batch) return;
+    setUploadedFiles((prev) =>
+      propagateBatchToFiles(
+        batch,
+        prev.map((f) => (f.id === fileId ? { ...f, batchId } : f)),
+      ),
+    );
+    toast.success('Document rattaché au lot', {
+      description: `« ${batch.name} »`,
+    });
+  };
+
+  /** Update a batch (and propagate consolidated/global fields to its files). */
+  const handleUpdateBatch = (batchId: string, patch: Partial<UploadBatch>) => {
+    setBatches((prev) => {
+      const next = prev.map((b) => (b.id === batchId ? { ...b, ...patch } : b));
+      const updated = next.find((b) => b.id === batchId);
+      if (updated) {
+        setUploadedFiles((files) => propagateBatchToFiles(updated, files));
+      }
+      return next;
+    });
+  };
+
+  /** Dissolve a batch entirely — children become standalone again. */
+  const handleDissolveBatch = (batchId: string) => {
+    setUploadedFiles((prev) =>
+      prev.map((f) => (f.batchId === batchId ? { ...f, batchId: undefined } : f)),
+    );
+    setBatches((prev) => prev.filter((b) => b.id !== batchId));
+    setExpandedBatchIds((prev) => {
+      const next = new Set(prev);
+      next.delete(batchId);
+      return next;
+    });
+    if (editingBatchId === batchId) setEditingBatchId(null);
+    toast.info('Lot dissous');
+  };
+
   // Field catalogue used to render the bulk edit picker chips and the per-field editors.
   const BULK_FIELDS: { key: BulkFieldKey; label: string; icon: LucideIcon }[] = [
     { key: 'folder', label: 'Dossier', icon: Folder },
@@ -1725,6 +1918,21 @@ export function MassUploadWizard({ isOpen, onClose, existingFolders, inline = fa
                               variant="outline"
                               size="sm"
                               className="h-7 gap-1.5 text-xs"
+                              onClick={handleCreateBatch}
+                              disabled={selectedFiles.length < 2}
+                              title={
+                                selectedFiles.length < 2
+                                  ? 'Sélectionnez au moins 2 documents pour créer un lot'
+                                  : 'Créer un lot avec les documents sélectionnés'
+                              }
+                            >
+                              <Layers3 className="h-3 w-3" />
+                              Créer un lot
+                            </Button>
+                            <Button
+                              variant="outline"
+                              size="sm"
+                              className="h-7 gap-1.5 text-xs"
                               onClick={() => setShowBulkEdit(!showBulkEdit)}
                             >
                               <Edit3 className="h-3 w-3" />
@@ -2130,8 +2338,559 @@ export function MassUploadWizard({ isOpen, onClose, existingFolders, inline = fa
                     const totalPages = Math.max(1, Math.ceil(totalRows / step2PageSize));
                     const safePage = Math.min(step2Page, totalPages);
                     const startIndex = (safePage - 1) * step2PageSize;
-                    const pageRows = uploadedFiles.slice(startIndex, startIndex + step2PageSize);
+                    // Sort files for display so members of the same batch are contiguous,
+                    // anchored at the position of the first member. Standalone files keep
+                    // their insertion order.
+                    const displayFiles: UploadedFile[] = (() => {
+                      const result: UploadedFile[] = [];
+                      const seen = new Set<string>();
+                      for (const f of uploadedFiles) {
+                        if (f.batchId) {
+                          if (seen.has(f.batchId)) continue;
+                          seen.add(f.batchId);
+                          for (const ff of uploadedFiles) if (ff.batchId === f.batchId) result.push(ff);
+                        } else {
+                          result.push(f);
+                        }
+                      }
+                      return result;
+                    })();
+                    const pageRows = displayFiles.slice(startIndex, startIndex + step2PageSize);
                     const allSelected = selectedFiles.length === totalRows && totalRows > 0;
+                    // Build a flat rendering plan grouping batched files under their batch header.
+                    type RenderItem =
+                      | { kind: 'standalone'; file: UploadedFile }
+                      | { kind: 'batch'; batch: UploadBatch; children: UploadedFile[] };
+                    const renderPlan: RenderItem[] = (() => {
+                      const plan: RenderItem[] = [];
+                      let i = 0;
+                      while (i < pageRows.length) {
+                        const f = pageRows[i];
+                        const batch = f.batchId ? batches.find((b) => b.id === f.batchId) : undefined;
+                        if (!batch) {
+                          plan.push({ kind: 'standalone', file: f });
+                          i++;
+                          continue;
+                        }
+                        const children: UploadedFile[] = [];
+                        while (i < pageRows.length && pageRows[i].batchId === batch.id) {
+                          children.push(pageRows[i]);
+                          i++;
+                        }
+                        plan.push({ kind: 'batch', batch, children });
+                      }
+                      return plan;
+                    })();
+                    // Render a single file row. When `inBatch` is set, controls for fields
+                    // consolidated/locked at the batch level are replaced by inherited badges.
+                    const renderFileRow = (file: UploadedFile, inBatch?: UploadBatch) => {
+                      const ext = file.file.name.split('.').pop()?.toUpperCase() ?? 'FILE';
+                      const isSelected = selectedFiles.includes(file.id);
+                      const folderLocked = !!inBatch && inBatch.folderMode === 'global';
+                      const targetingLocked = !!inBatch && inBatch.targetingMode === 'global';
+                      const notificationLocked = !!inBatch;
+                      const validationTeamLocked = !!inBatch;
+                      const inheritedBadge = (
+                        <Tooltip>
+                          <TooltipTrigger asChild>
+                            <span className="inline-flex items-center gap-1 rounded-full border border-blue-200 bg-blue-50 px-2 py-0.5 text-[10px] font-medium text-blue-700">
+                              <Layers className="h-2.5 w-2.5" />
+                              Hérité du lot
+                            </span>
+                          </TooltipTrigger>
+                          <TooltipContent>
+                            <span className="text-xs">Champ consolidé au niveau du lot — modifiable depuis le lot.</span>
+                          </TooltipContent>
+                        </Tooltip>
+                      );
+                      return (
+                        <tr key={file.id} className={`hover:bg-gray-50/40 ${inBatch ? 'bg-blue-50/30' : ''}`}>
+                          <td className="px-3 py-3 align-top">
+                            {inBatch ? (
+                              <span className="ml-2 inline-block text-gray-300">└</span>
+                            ) : (
+                              <Checkbox checked={isSelected} onCheckedChange={() => handleSelectFile(file.id)} />
+                            )}
+                          </td>
+
+                          <td className="px-3 py-3 align-top">
+                            <div className="flex items-start gap-2.5">
+                              <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-md bg-gray-100">
+                                <FileText className="h-4 w-4 text-gray-500" />
+                              </div>
+                              <div className="min-w-0 flex-1">
+                                <div className="flex items-center gap-1.5">
+                                  <Badge variant="outline" className="px-1.5 py-0 text-[10px] font-medium text-gray-600">{ext}</Badge>
+                                  <span className="inline-flex items-center gap-0.5 text-[11px] text-gray-500">
+                                    <FileText className="h-2.5 w-2.5" />{file.pageCount}p
+                                  </span>
+                                  {inBatch && (
+                                    <Tooltip>
+                                      <TooltipTrigger asChild>
+                                        <Button
+                                          variant="ghost"
+                                          size="sm"
+                                          className="ml-auto h-6 gap-1 px-1.5 text-[10px] text-blue-700 hover:bg-blue-100"
+                                          onClick={() => handleDetachFromBatch(file.id)}
+                                        >
+                                          <Unlink className="h-3 w-3" />
+                                          Détacher
+                                        </Button>
+                                      </TooltipTrigger>
+                                      <TooltipContent><span className="text-xs">Retirer ce document du lot</span></TooltipContent>
+                                    </Tooltip>
+                                  )}
+                                </div>
+                                <Input
+                                  value={file.name}
+                                  onChange={(e) => handleUpdateFile(file.id, 'name', e.target.value)}
+                                  className="h-7 mt-1 px-2 text-xs"
+                                />
+                              </div>
+                            </div>
+                          </td>
+
+                          <td className="px-3 py-3 align-top">
+                            <div className="space-y-1.5">
+                              {folderLocked ? (
+                                <div className="space-y-1">
+                                  {inheritedBadge}
+                                  <div className="text-xs text-gray-700 truncate">{file.folder || <span className="text-gray-400">Aucun dossier</span>}</div>
+                                </div>
+                              ) : (
+                                <Select
+                                  value={file.folder}
+                                  onValueChange={(value) => handleUpdateFile(file.id, 'folder', value)}
+                                >
+                                  <SelectTrigger className="h-8 text-xs">
+                                    <SelectValue placeholder="Choisir un dossier…" />
+                                  </SelectTrigger>
+                                  <SelectContent>
+                                    {availableFolders.map((folder) => (
+                                      <SelectItem key={folder.id} value={folder.path} className="text-xs">
+                                        <div className="flex items-center gap-2">
+                                          {folder.level > 0 && (
+                                            <span className="text-gray-400" style={{ marginLeft: `${folder.level * 8}px` }}>└</span>
+                                          )}
+                                          <Folder className="w-3 h-3 text-gray-400" />
+                                          <span>{folder.name}</span>
+                                        </div>
+                                      </SelectItem>
+                                    ))}
+                                  </SelectContent>
+                                </Select>
+                              )}
+                              {file.folder && (() => {
+                                const restriction = getInheritedRestriction(file.folder);
+                                if (!restriction.fund && !restriction.segment) return null;
+                                return (
+                                  <div className="flex flex-wrap items-center gap-1">
+                                    {restriction.fund && (
+                                      <Tooltip>
+                                        <TooltipTrigger asChild>
+                                          <span
+                                            className="inline-flex items-center gap-1 rounded-full border px-2 py-0.5 text-[10px] font-medium"
+                                            style={{ color: '#7a7a7a', borderColor: '#ddd7cc', backgroundColor: '#f5f3ee' }}
+                                          >
+                                            <Landmark className="h-2.5 w-2.5" />
+                                            {restriction.fund}
+                                          </span>
+                                        </TooltipTrigger>
+                                        <TooltipContent><span className="text-xs">Restriction de fonds héritée du dossier</span></TooltipContent>
+                                      </Tooltip>
+                                    )}
+                                    {restriction.segment && (
+                                      <Tooltip>
+                                        <TooltipTrigger asChild>
+                                          <span
+                                            className="inline-flex items-center gap-1 rounded-full border px-2 py-0.5 text-[10px] font-medium"
+                                            style={{ color: '#7a7a7a', borderColor: '#ddd7cc', backgroundColor: '#f5f3ee' }}
+                                          >
+                                            <Users className="h-2.5 w-2.5" />
+                                            {restriction.segment}
+                                          </span>
+                                        </TooltipTrigger>
+                                        <TooltipContent><span className="text-xs">Restriction de segment héritée du dossier</span></TooltipContent>
+                                      </Tooltip>
+                                    )}
+                                  </div>
+                                );
+                              })()}
+                            </div>
+                          </td>
+
+                          <td className="px-3 py-3 align-top">
+                            {targetingLocked ? (
+                              <div className="space-y-1">
+                                {inheritedBadge}
+                                <div className="text-xs text-gray-700">
+                                  {(() => {
+                                    const map: Record<string, string> = { all: 'Tous', segment: 'Segments', investor: 'Investisseurs', subscription: 'Souscriptions', fund: 'Fonds' };
+                                    return map[file.targetType] ?? file.targetType;
+                                  })()}
+                                </div>
+                              </div>
+                            ) : (
+                              <div className="space-y-1.5">
+                                <Select
+                                  value={file.targetType}
+                                  onValueChange={(value) => handleUpdateFile(file.id, 'targetType', value)}
+                                >
+                                  <SelectTrigger className="h-8 text-xs"><SelectValue /></SelectTrigger>
+                                  <SelectContent>
+                                    <SelectItem value="all" className="text-xs"><div className="flex items-center gap-2"><Users className="h-3 w-3 text-gray-500" />Tous</div></SelectItem>
+                                    <SelectItem value="segment" className="text-xs"><div className="flex items-center gap-2"><Users className="h-3 w-3 text-gray-500" />Segments</div></SelectItem>
+                                    <SelectItem value="investor" className="text-xs"><div className="flex items-center gap-2"><Users className="h-3 w-3 text-gray-500" />Investisseurs</div></SelectItem>
+                                    <SelectItem value="subscription" className="text-xs"><div className="flex items-center gap-2"><FileText className="h-3 w-3 text-gray-500" />Souscriptions</div></SelectItem>
+                                    <SelectItem value="fund" className="text-xs"><div className="flex items-center gap-2"><Landmark className="h-3 w-3 text-gray-500" />Fonds</div></SelectItem>
+                                  </SelectContent>
+                                </Select>
+                                {file.targetType === 'investor' && (
+                                  <Select
+                                    value={file.targetInvestors[0] ?? ''}
+                                    onValueChange={(value) => handleUpdateFile(file.id, 'targetInvestors', [value])}
+                                  >
+                                    <SelectTrigger className="h-8 text-xs"><SelectValue placeholder="Choisir un investisseur…" /></SelectTrigger>
+                                    <SelectContent>
+                                      {availableInvestors.map((inv) => (
+                                        <SelectItem key={inv.id} value={inv.id} className="text-xs">{inv.name}</SelectItem>
+                                      ))}
+                                    </SelectContent>
+                                  </Select>
+                                )}
+                                {file.targetType === 'subscription' && (
+                                  <Select
+                                    value={file.targetSubscriptions[0] ?? ''}
+                                    onValueChange={(value) => handleUpdateFile(file.id, 'targetSubscriptions', [value])}
+                                  >
+                                    <SelectTrigger className="h-8 text-xs"><SelectValue placeholder="Choisir une souscription…" /></SelectTrigger>
+                                    <SelectContent>
+                                      {availableInvestors.map((inv) => {
+                                        const fundLabel = fundLabelMap[inv.fund] ?? inv.fund;
+                                        const subId = `${inv.id}-${inv.fund}`;
+                                        return (
+                                          <SelectItem key={subId} value={subId} className="text-xs">{inv.name} · {fundLabel}</SelectItem>
+                                        );
+                                      })}
+                                    </SelectContent>
+                                  </Select>
+                                )}
+                                {file.targetType === 'fund' && (
+                                  <div className="flex gap-1.5">
+                                    <Select
+                                      value={file.targetFunds[0] ?? ''}
+                                      onValueChange={(value) => handleUpdateFile(file.id, 'targetFunds', [value])}
+                                    >
+                                      <SelectTrigger className="h-8 flex-1 text-xs"><SelectValue placeholder="Fonds…" /></SelectTrigger>
+                                      <SelectContent>
+                                        {availableFunds.map((fund) => (
+                                          <SelectItem key={fund.id} value={fund.id} className="text-xs">{fund.name}</SelectItem>
+                                        ))}
+                                      </SelectContent>
+                                    </Select>
+                                    <Select
+                                      value={file.targetSegments[0] ?? ''}
+                                      onValueChange={(value) => handleUpdateFile(file.id, 'targetSegments', [value])}
+                                    >
+                                      <SelectTrigger className="h-8 w-20 text-xs"><SelectValue placeholder="Part" /></SelectTrigger>
+                                      <SelectContent>
+                                        <SelectItem value="A" className="text-xs">A</SelectItem>
+                                        <SelectItem value="B" className="text-xs">B</SelectItem>
+                                        <SelectItem value="C" className="text-xs">C</SelectItem>
+                                      </SelectContent>
+                                    </Select>
+                                  </div>
+                                )}
+                                {file.targetType === 'segment' && (
+                                  <Select
+                                    value={file.targetSegments[0] ?? ''}
+                                    onValueChange={(value) => handleUpdateFile(file.id, 'targetSegments', [value])}
+                                  >
+                                    <SelectTrigger className="h-8 text-xs"><SelectValue placeholder="Choisir un segment…" /></SelectTrigger>
+                                    <SelectContent>
+                                      {availableSegments.map((seg) => (
+                                        <SelectItem key={seg} value={seg} className="text-xs">{seg}</SelectItem>
+                                      ))}
+                                    </SelectContent>
+                                  </Select>
+                                )}
+                              </div>
+                            )}
+                          </td>
+
+                          <td className="px-3 py-3 align-top">
+                            {notificationLocked ? (
+                              <div className="space-y-1">
+                                {inheritedBadge}
+                                <div className="text-xs text-gray-700">
+                                  {file.notify ? (
+                                    <span className="inline-flex items-center gap-1"><Bell className="h-3 w-3 text-blue-600" />Activée · {availableEmailTemplates.find(t => t.value === file.emailTemplate)?.label ?? '—'}</span>
+                                  ) : (
+                                    <span className="text-gray-400">Désactivée</span>
+                                  )}
+                                </div>
+                              </div>
+                            ) : (
+                              <div className="space-y-1.5">
+                                <div className="flex items-center gap-2">
+                                  <Switch
+                                    checked={file.notify}
+                                    onCheckedChange={(checked) => handleUpdateFile(file.id, 'notify', checked)}
+                                  />
+                                  <span className="text-xs text-gray-700">Notifier les destinataires</span>
+                                </div>
+                                {file.notify && (
+                                  <Select
+                                    value={file.emailTemplate}
+                                    onValueChange={(value) => handleUpdateFile(file.id, 'emailTemplate', value)}
+                                  >
+                                    <SelectTrigger className="h-7 text-xs"><SelectValue placeholder="Template…" /></SelectTrigger>
+                                    <SelectContent>
+                                      {availableEmailTemplates.map((tpl) => {
+                                        const Icon = tpl.icon;
+                                        return (
+                                          <SelectItem key={tpl.value} value={tpl.value} className="text-xs">
+                                            <div className="flex items-center gap-2"><Icon className="h-3 w-3 text-gray-500" />{tpl.label}</div>
+                                          </SelectItem>
+                                        );
+                                      })}
+                                    </SelectContent>
+                                  </Select>
+                                )}
+                              </div>
+                            )}
+                          </td>
+
+                          <td className="px-3 py-3 align-top">
+                            {validationTeamLocked ? (
+                              <div className="space-y-1">
+                                {inheritedBadge}
+                                <div className="text-xs text-gray-700">{file.validationTeam[0] ?? <span className="text-gray-400">Aucune</span>}</div>
+                              </div>
+                            ) : (
+                              <Select
+                                value={file.validationTeam[0] ?? ''}
+                                onValueChange={(value) => handleUpdateFile(file.id, 'validationTeam', [value])}
+                              >
+                                <SelectTrigger className="h-8 text-xs"><SelectValue placeholder="Choisir une équipe…" /></SelectTrigger>
+                                <SelectContent>
+                                  <SelectItem value="admin" className="text-xs">Admin</SelectItem>
+                                  <SelectItem value="compliance" className="text-xs">Compliance</SelectItem>
+                                  <SelectItem value="legal" className="text-xs">Juridique</SelectItem>
+                                  <SelectItem value="ir" className="text-xs">Investor Relations</SelectItem>
+                                </SelectContent>
+                              </Select>
+                            )}
+                          </td>
+                        </tr>
+                      );
+                    };
+                    // Render the batch header row (banner + inline configuration panel).
+                    const renderBatchHeader = (batch: UploadBatch, children: UploadedFile[]) => {
+                      const expanded = expandedBatchIds.has(batch.id);
+                      const editing = editingBatchId === batch.id;
+                      return (
+                        <tr key={`batch-${batch.id}`} className="bg-blue-50/60">
+                          <td colSpan={6} className="p-0">
+                            <div className="flex items-center gap-3 border-y border-blue-200/70 px-3 py-2">
+                              <button
+                                type="button"
+                                onClick={() => toggleBatchExpanded(batch.id)}
+                                className="flex h-6 w-6 items-center justify-center rounded hover:bg-blue-100"
+                                aria-label={expanded ? 'Réduire le lot' : 'Développer le lot'}
+                              >
+                                <ChevronDown className={`h-3.5 w-3.5 text-blue-700 transition-transform ${expanded ? '' : '-rotate-90'}`} />
+                              </button>
+                              <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-md bg-blue-100">
+                                <Layers3 className="h-4 w-4 text-blue-700" />
+                              </div>
+                              <div className="min-w-0 flex-1">
+                                <Input
+                                  value={batch.name}
+                                  onChange={(e) => handleUpdateBatch(batch.id, { name: e.target.value })}
+                                  className="h-7 text-sm font-medium border-blue-200 bg-white"
+                                />
+                                <div className="mt-0.5 text-[11px] text-gray-600">
+                                  {children.length} document{children.length > 1 ? 's' : ''} · notification & équipe consolidées
+                                </div>
+                              </div>
+                              <Button
+                                variant="ghost"
+                                size="sm"
+                                className="h-7 gap-1 text-xs text-blue-700 hover:bg-blue-100"
+                                onClick={() => setEditingBatchId(editing ? null : batch.id)}
+                              >
+                                <Settings className="h-3.5 w-3.5" />
+                                {editing ? 'Fermer' : 'Configurer'}
+                              </Button>
+                              <Button
+                                variant="ghost"
+                                size="sm"
+                                className="h-7 gap-1 text-xs text-gray-600 hover:bg-gray-100"
+                                onClick={() => handleDissolveBatch(batch.id)}
+                              >
+                                <Unlink className="h-3.5 w-3.5" />
+                                Dissoudre
+                              </Button>
+                            </div>
+                            {editing && (
+                              <div className="grid grid-cols-1 gap-3 border-b border-blue-200/70 bg-blue-50/40 px-3 py-3 sm:grid-cols-2">
+                                {/* Folder mode */}
+                                <div className="space-y-1.5 rounded-md border border-blue-200 bg-white p-2">
+                                  <div className="flex items-center justify-between gap-2">
+                                    <Label className="flex items-center gap-1.5 text-[11px] font-medium text-gray-700">
+                                      <Folder className="h-3 w-3 text-gray-400" />Dossier
+                                    </Label>
+                                    <Select
+                                      value={batch.folderMode}
+                                      onValueChange={(value) =>
+                                        handleUpdateBatch(batch.id, {
+                                          folderMode: value as 'global' | 'per-document',
+                                        })
+                                      }
+                                    >
+                                      <SelectTrigger className="h-6 w-[140px] text-[11px]"><SelectValue /></SelectTrigger>
+                                      <SelectContent>
+                                        <SelectItem value="global" className="text-xs">Global (tous identiques)</SelectItem>
+                                        <SelectItem value="per-document" className="text-xs">Par document</SelectItem>
+                                      </SelectContent>
+                                    </Select>
+                                  </div>
+                                  {batch.folderMode === 'global' ? (
+                                    <Select
+                                      value={batch.globalFolder}
+                                      onValueChange={(value) => handleUpdateBatch(batch.id, { globalFolder: value })}
+                                    >
+                                      <SelectTrigger className="h-8 text-xs"><SelectValue placeholder="Dossier du lot…" /></SelectTrigger>
+                                      <SelectContent>
+                                        {availableFolders.map((folder) => (
+                                          <SelectItem key={folder.id} value={folder.path} className="text-xs">
+                                            <div className="flex items-center gap-2"><Folder className="h-3 w-3 text-gray-400" />{folder.path}</div>
+                                          </SelectItem>
+                                        ))}
+                                      </SelectContent>
+                                    </Select>
+                                  ) : (
+                                    <p className="text-[11px] text-gray-500">Chaque document conserve son propre dossier.</p>
+                                  )}
+                                </div>
+
+                                {/* Targeting mode */}
+                                <div className="space-y-1.5 rounded-md border border-blue-200 bg-white p-2">
+                                  <div className="flex items-center justify-between gap-2">
+                                    <Label className="flex items-center gap-1.5 text-[11px] font-medium text-gray-700">
+                                      <Users className="h-3 w-3 text-gray-400" />Ciblage
+                                    </Label>
+                                    <Select
+                                      value={batch.targetingMode}
+                                      onValueChange={(value) =>
+                                        handleUpdateBatch(batch.id, {
+                                          targetingMode: value as 'global' | 'per-document',
+                                        })
+                                      }
+                                    >
+                                      <SelectTrigger className="h-6 w-[140px] text-[11px]"><SelectValue /></SelectTrigger>
+                                      <SelectContent>
+                                        <SelectItem value="global" className="text-xs">Global (tous identiques)</SelectItem>
+                                        <SelectItem value="per-document" className="text-xs">Par document</SelectItem>
+                                      </SelectContent>
+                                    </Select>
+                                  </div>
+                                  {batch.targetingMode === 'global' ? (
+                                    <Select
+                                      value={batch.globalTargeting.targetType}
+                                      onValueChange={(value) =>
+                                        handleUpdateBatch(batch.id, {
+                                          globalTargeting: {
+                                            ...batch.globalTargeting,
+                                            targetType: value,
+                                            targetSegments: [],
+                                            targetInvestors: [],
+                                            targetSubscriptions: [],
+                                            targetFunds: [],
+                                          },
+                                        })
+                                      }
+                                    >
+                                      <SelectTrigger className="h-8 text-xs"><SelectValue placeholder="Type de ciblage…" /></SelectTrigger>
+                                      <SelectContent>
+                                        <SelectItem value="all" className="text-xs">Tous</SelectItem>
+                                        <SelectItem value="segment" className="text-xs">Segments</SelectItem>
+                                        <SelectItem value="investor" className="text-xs">Investisseurs</SelectItem>
+                                        <SelectItem value="subscription" className="text-xs">Souscriptions</SelectItem>
+                                        <SelectItem value="fund" className="text-xs">Fonds</SelectItem>
+                                      </SelectContent>
+                                    </Select>
+                                  ) : (
+                                    <p className="text-[11px] text-gray-500">Chaque document conserve son propre ciblage.</p>
+                                  )}
+                                </div>
+
+                                {/* Notification (always consolidated) */}
+                                <div className="space-y-1.5 rounded-md border border-blue-200 bg-white p-2">
+                                  <Label className="flex items-center gap-1.5 text-[11px] font-medium text-gray-700">
+                                    <Bell className="h-3 w-3 text-gray-400" />Notification
+                                    <Badge variant="outline" className="ml-1 px-1.5 py-0 text-[9px] uppercase">Consolidée</Badge>
+                                  </Label>
+                                  <div className="flex items-center gap-2">
+                                    <Switch
+                                      checked={batch.notify}
+                                      onCheckedChange={(checked) =>
+                                        handleUpdateBatch(batch.id, {
+                                          notify: checked,
+                                          emailTemplate: checked ? batch.emailTemplate : '',
+                                        })
+                                      }
+                                    />
+                                    <span className="text-xs text-gray-700">Notifier (1 mail consolidé par destinataire)</span>
+                                  </div>
+                                  {batch.notify && (
+                                    <Select
+                                      value={batch.emailTemplate}
+                                      onValueChange={(value) => handleUpdateBatch(batch.id, { emailTemplate: value })}
+                                    >
+                                      <SelectTrigger className="h-8 text-xs"><SelectValue placeholder="Template…" /></SelectTrigger>
+                                      <SelectContent>
+                                        {availableEmailTemplates.map((tpl) => {
+                                          const Icon = tpl.icon;
+                                          return (
+                                            <SelectItem key={tpl.value} value={tpl.value} className="text-xs">
+                                              <div className="flex items-center gap-2"><Icon className="h-3 w-3 text-gray-500" />{tpl.label}</div>
+                                            </SelectItem>
+                                          );
+                                        })}
+                                      </SelectContent>
+                                    </Select>
+                                  )}
+                                </div>
+
+                                {/* Validation team (always consolidated) */}
+                                <div className="space-y-1.5 rounded-md border border-blue-200 bg-white p-2">
+                                  <Label className="flex items-center gap-1.5 text-[11px] font-medium text-gray-700">
+                                    <Shield className="h-3 w-3 text-gray-400" />Équipe de validation
+                                    <Badge variant="outline" className="ml-1 px-1.5 py-0 text-[9px] uppercase">Consolidée</Badge>
+                                  </Label>
+                                  <Select
+                                    value={batch.validationTeam[0] ?? ''}
+                                    onValueChange={(value) =>
+                                      handleUpdateBatch(batch.id, { validationTeam: value ? [value] : [] })
+                                    }
+                                  >
+                                    <SelectTrigger className="h-8 text-xs"><SelectValue placeholder="Choisir une équipe…" /></SelectTrigger>
+                                    <SelectContent>
+                                      <SelectItem value="admin" className="text-xs">Admin</SelectItem>
+                                      <SelectItem value="compliance" className="text-xs">Compliance</SelectItem>
+                                      <SelectItem value="legal" className="text-xs">Juridique</SelectItem>
+                                      <SelectItem value="ir" className="text-xs">Investor Relations</SelectItem>
+                                    </SelectContent>
+                                  </Select>
+                                </div>
+                              </div>
+                            )}
+                          </td>
+                        </tr>
+                      );
+                    };
                     return (
                       <>
                         <div className="flex items-center justify-end">
@@ -2164,265 +2923,16 @@ export function MassUploadWizard({ isOpen, onClose, existingFolders, inline = fa
                                 </tr>
                               </thead>
                               <tbody className="divide-y divide-gray-100">
-                                {pageRows.map((file) => {
-                                  const ext = file.file.name.split('.').pop()?.toUpperCase() ?? 'FILE';
-                                  const isSelected = selectedFiles.includes(file.id);
+                                {renderPlan.map((item) => {
+                                  if (item.kind === 'standalone') {
+                                    return renderFileRow(item.file);
+                                  }
+                                  const expanded = expandedBatchIds.has(item.batch.id);
                                   return (
-                                    <tr key={file.id} className="hover:bg-gray-50/40">
-                                      <td className="px-3 py-3 align-top">
-                                        <Checkbox
-                                          checked={isSelected}
-                                          onCheckedChange={() => handleSelectFile(file.id)}
-                                        />
-                                      </td>
-
-                                      <td className="px-3 py-3 align-top">
-                                        <div className="flex items-start gap-2.5">
-                                          <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-md bg-gray-100">
-                                            <FileText className="h-4 w-4 text-gray-500" />
-                                          </div>
-                                          <div className="min-w-0 flex-1">
-                                            <div className="flex items-center gap-1.5">
-                                              <Badge variant="outline" className="px-1.5 py-0 text-[10px] font-medium text-gray-600">
-                                                {ext}
-                                              </Badge>
-                                              <span className="inline-flex items-center gap-0.5 text-[11px] text-gray-500">
-                                                <FileText className="h-2.5 w-2.5" />
-                                                {file.pageCount}p
-                                              </span>
-                                            </div>
-                                            <Input
-                                              value={file.name}
-                                              onChange={(e) => handleUpdateFile(file.id, 'name', e.target.value)}
-                                              className="h-7 mt-1 px-2 text-xs"
-                                            />
-                                          </div>
-                                        </div>
-                                      </td>
-
-                                      <td className="px-3 py-3 align-top">
-                                        <div className="space-y-1.5">
-                                          <Select
-                                            value={file.folder}
-                                            onValueChange={(value) => handleUpdateFile(file.id, 'folder', value)}
-                                          >
-                                            <SelectTrigger className="h-8 text-xs">
-                                              <SelectValue placeholder="Choisir un dossier…" />
-                                            </SelectTrigger>
-                                            <SelectContent>
-                                              {availableFolders.map((folder) => (
-                                                <SelectItem key={folder.id} value={folder.path} className="text-xs">
-                                                  <div className="flex items-center gap-2">
-                                                    {folder.level > 0 && (
-                                                      <span className="text-gray-400" style={{ marginLeft: `${folder.level * 8}px` }}>└</span>
-                                                    )}
-                                                    <Folder className="w-3 h-3 text-gray-400" />
-                                                    <span>{folder.name}</span>
-                                                  </div>
-                                                </SelectItem>
-                                              ))}
-                                            </SelectContent>
-                                          </Select>
-                                          {file.folder && (() => {
-                                            const restriction = getInheritedRestriction(file.folder);
-                                            if (!restriction.fund && !restriction.segment) return null;
-                                            return (
-                                              <div className="flex flex-wrap items-center gap-1">
-                                                {restriction.fund && (
-                                                  <Tooltip>
-                                                    <TooltipTrigger asChild>
-                                                      <span
-                                                        className="inline-flex items-center gap-1 rounded-full border px-2 py-0.5 text-[10px] font-medium"
-                                                        style={{ color: '#7a7a7a', borderColor: '#ddd7cc', backgroundColor: '#f5f3ee' }}
-                                                      >
-                                                        <Landmark className="h-2.5 w-2.5" />
-                                                        {restriction.fund}
-                                                      </span>
-                                                    </TooltipTrigger>
-                                                    <TooltipContent>
-                                                      <span className="text-xs">Restriction de fonds héritée du dossier</span>
-                                                    </TooltipContent>
-                                                  </Tooltip>
-                                                )}
-                                                {restriction.segment && (
-                                                  <Tooltip>
-                                                    <TooltipTrigger asChild>
-                                                      <span
-                                                        className="inline-flex items-center gap-1 rounded-full border px-2 py-0.5 text-[10px] font-medium"
-                                                        style={{ color: '#7a7a7a', borderColor: '#ddd7cc', backgroundColor: '#f5f3ee' }}
-                                                      >
-                                                        <Users className="h-2.5 w-2.5" />
-                                                        {restriction.segment}
-                                                      </span>
-                                                    </TooltipTrigger>
-                                                    <TooltipContent>
-                                                      <span className="text-xs">Restriction de segment héritée du dossier</span>
-                                                    </TooltipContent>
-                                                  </Tooltip>
-                                                )}
-                                              </div>
-                                            );
-                                          })()}
-                                        </div>
-                                      </td>
-
-                                      <td className="px-3 py-3 align-top">
-                                        <div className="space-y-1.5">
-                                          <Select
-                                            value={file.targetType}
-                                            onValueChange={(value) => handleUpdateFile(file.id, 'targetType', value)}
-                                          >
-                                            <SelectTrigger className="h-8 text-xs">
-                                              <SelectValue />
-                                            </SelectTrigger>
-                                            <SelectContent>
-                                              <SelectItem value="all" className="text-xs"><div className="flex items-center gap-2"><Users className="h-3 w-3 text-gray-500" />Tous</div></SelectItem>
-                                              <SelectItem value="segment" className="text-xs"><div className="flex items-center gap-2"><Users className="h-3 w-3 text-gray-500" />Segments</div></SelectItem>
-                                              <SelectItem value="investor" className="text-xs"><div className="flex items-center gap-2"><Users className="h-3 w-3 text-gray-500" />Investisseurs</div></SelectItem>
-                                              <SelectItem value="subscription" className="text-xs"><div className="flex items-center gap-2"><FileText className="h-3 w-3 text-gray-500" />Souscriptions</div></SelectItem>
-                                              <SelectItem value="fund" className="text-xs"><div className="flex items-center gap-2"><Landmark className="h-3 w-3 text-gray-500" />Fonds</div></SelectItem>
-                                            </SelectContent>
-                                          </Select>
-
-                                          {file.targetType === 'investor' && (
-                                            <Select
-                                              value={file.targetInvestors[0] ?? ''}
-                                              onValueChange={(value) => handleUpdateFile(file.id, 'targetInvestors', [value])}
-                                            >
-                                              <SelectTrigger className="h-8 text-xs">
-                                                <SelectValue placeholder="Choisir un investisseur…" />
-                                              </SelectTrigger>
-                                              <SelectContent>
-                                                {availableInvestors.map((inv) => (
-                                                  <SelectItem key={inv.id} value={inv.id} className="text-xs">{inv.name}</SelectItem>
-                                                ))}
-                                              </SelectContent>
-                                            </Select>
-                                          )}
-
-                                          {file.targetType === 'subscription' && (
-                                            <Select
-                                              value={file.targetSubscriptions[0] ?? ''}
-                                              onValueChange={(value) => handleUpdateFile(file.id, 'targetSubscriptions', [value])}
-                                            >
-                                              <SelectTrigger className="h-8 text-xs">
-                                                <SelectValue placeholder="Choisir une souscription…" />
-                                              </SelectTrigger>
-                                              <SelectContent>
-                                                {availableInvestors.map((inv) => {
-                                                  const fundLabel = fundLabelMap[inv.fund] ?? inv.fund;
-                                                  const subId = `${inv.id}-${inv.fund}`;
-                                                  return (
-                                                    <SelectItem key={subId} value={subId} className="text-xs">
-                                                      {inv.name} · {fundLabel}
-                                                    </SelectItem>
-                                                  );
-                                                })}
-                                              </SelectContent>
-                                            </Select>
-                                          )}
-
-                                          {file.targetType === 'fund' && (
-                                            <div className="flex gap-1.5">
-                                              <Select
-                                                value={file.targetFunds[0] ?? ''}
-                                                onValueChange={(value) => handleUpdateFile(file.id, 'targetFunds', [value])}
-                                              >
-                                                <SelectTrigger className="h-8 flex-1 text-xs">
-                                                  <SelectValue placeholder="Fonds…" />
-                                                </SelectTrigger>
-                                                <SelectContent>
-                                                  {availableFunds.map((fund) => (
-                                                    <SelectItem key={fund.id} value={fund.id} className="text-xs">{fund.name}</SelectItem>
-                                                  ))}
-                                                </SelectContent>
-                                              </Select>
-                                              <Select
-                                                value={file.targetSegments[0] ?? ''}
-                                                onValueChange={(value) => handleUpdateFile(file.id, 'targetSegments', [value])}
-                                              >
-                                                <SelectTrigger className="h-8 w-20 text-xs">
-                                                  <SelectValue placeholder="Part" />
-                                                </SelectTrigger>
-                                                <SelectContent>
-                                                  <SelectItem value="A" className="text-xs">A</SelectItem>
-                                                  <SelectItem value="B" className="text-xs">B</SelectItem>
-                                                  <SelectItem value="C" className="text-xs">C</SelectItem>
-                                                </SelectContent>
-                                              </Select>
-                                            </div>
-                                          )}
-
-                                          {file.targetType === 'segment' && (
-                                            <Select
-                                              value={file.targetSegments[0] ?? ''}
-                                              onValueChange={(value) => handleUpdateFile(file.id, 'targetSegments', [value])}
-                                            >
-                                              <SelectTrigger className="h-8 text-xs">
-                                                <SelectValue placeholder="Choisir un segment…" />
-                                              </SelectTrigger>
-                                              <SelectContent>
-                                                {availableSegments.map((seg) => (
-                                                  <SelectItem key={seg} value={seg} className="text-xs">{seg}</SelectItem>
-                                                ))}
-                                              </SelectContent>
-                                            </Select>
-                                          )}
-                                        </div>
-                                      </td>
-
-                                      <td className="px-3 py-3 align-top">
-                                        <div className="space-y-1.5">
-                                          <div className="flex items-center gap-2">
-                                            <Switch
-                                              checked={file.notify}
-                                              onCheckedChange={(checked) => handleUpdateFile(file.id, 'notify', checked)}
-                                            />
-                                            <span className="text-xs text-gray-700">Notifier les destinataires</span>
-                                          </div>
-                                          {file.notify && (
-                                            <Select
-                                              value={file.emailTemplate}
-                                              onValueChange={(value) => handleUpdateFile(file.id, 'emailTemplate', value)}
-                                            >
-                                              <SelectTrigger className="h-7 text-xs">
-                                                <SelectValue placeholder="Template…" />
-                                              </SelectTrigger>
-                                              <SelectContent>
-                                                {availableEmailTemplates.map((tpl) => {
-                                                  const Icon = tpl.icon;
-                                                  return (
-                                                    <SelectItem key={tpl.value} value={tpl.value} className="text-xs">
-                                                      <div className="flex items-center gap-2">
-                                                        <Icon className="h-3 w-3 text-gray-500" />
-                                                        {tpl.label}
-                                                      </div>
-                                                    </SelectItem>
-                                                  );
-                                                })}
-                                              </SelectContent>
-                                            </Select>
-                                          )}
-                                        </div>
-                                      </td>
-
-                                      <td className="px-3 py-3 align-top">
-                                        <Select
-                                          value={file.validationTeam[0] ?? ''}
-                                          onValueChange={(value) => handleUpdateFile(file.id, 'validationTeam', [value])}
-                                        >
-                                          <SelectTrigger className="h-8 text-xs">
-                                            <SelectValue placeholder="Choisir une équipe…" />
-                                          </SelectTrigger>
-                                          <SelectContent>
-                                            <SelectItem value="admin" className="text-xs">Admin</SelectItem>
-                                            <SelectItem value="compliance" className="text-xs">Compliance</SelectItem>
-                                            <SelectItem value="legal" className="text-xs">Juridique</SelectItem>
-                                            <SelectItem value="ir" className="text-xs">Investor Relations</SelectItem>
-                                          </SelectContent>
-                                        </Select>
-                                      </td>
-                                    </tr>
+                                    <Fragment key={`batch-frag-${item.batch.id}`}>
+                                      {renderBatchHeader(item.batch, item.children)}
+                                      {expanded && item.children.map((child) => renderFileRow(child, item.batch))}
+                                    </Fragment>
                                   );
                                 })}
                               </tbody>
