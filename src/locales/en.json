@@ -498,6 +498,8 @@
       "directInvestment": "Direct investment (no structure)",
       "newStructure": "New Structure",
       "legalName": "Legal name",
+      "firstName": "First name",
+      "lastName": "Last name",
       "siret": "SIRET",
       "countryLabel": "Country",
       "addressLabel": "Address",

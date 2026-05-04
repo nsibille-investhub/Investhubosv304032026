@@ -498,6 +498,8 @@
       "directInvestment": "Investissement en direct (sans structure)",
       "newStructure": "Nouvelle Structure",
       "legalName": "Raison Légale",
+      "firstName": "Prénom",
+      "lastName": "Nom",
       "siret": "SIRET",
       "countryLabel": "Pays",
       "addressLabel": "Adresse",

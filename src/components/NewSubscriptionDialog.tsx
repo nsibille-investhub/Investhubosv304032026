@@ -175,10 +175,20 @@ export function NewSubscriptionDialog({ open, onClose, onSubscriptionCreated }: 
   const inputRef = useRef<HTMLInputElement>(null);
 
   const [newInvestor, setNewInvestor] = useState({
-    name: '',
     type: 'individual' as 'individual' | 'corporate',
+    firstName: '',
+    lastName: '',
+    legalName: '',
     email: '',
   });
+
+  const emptyNewInvestor = {
+    type: 'individual' as 'individual' | 'corporate',
+    firstName: '',
+    lastName: '',
+    legalName: '',
+    email: '',
+  };
 
   const [formData, setFormData] = useState<FormData>({
     investor: null,
@@ -213,7 +223,7 @@ export function NewSubscriptionDialog({ open, onClose, onSubscriptionCreated }: 
         });
         setShowNewStructureForm(false);
         setShowNewInvestorForm(false);
-        setNewInvestor({ name: '', type: 'individual', email: '' });
+        setNewInvestor(emptyNewInvestor);
         setSearchQuery('');
         setStructureFilter('');
         setShowAutocomplete(false);
@@ -340,26 +350,44 @@ export function NewSubscriptionDialog({ open, onClose, onSubscriptionCreated }: 
   };
 
   const handleQuickCreateInvestor = () => {
-    setNewInvestor({ name: searchQuery, type: 'individual', email: '' });
+    const initial: typeof newInvestor = { ...emptyNewInvestor };
+    if (searchQuery.trim()) {
+      // Pre-fill the most likely field with the search query
+      const parts = searchQuery.trim().split(/\s+/);
+      if (parts.length >= 2) {
+        initial.firstName = parts[0];
+        initial.lastName = parts.slice(1).join(' ');
+      } else {
+        initial.lastName = searchQuery.trim();
+        initial.legalName = searchQuery.trim();
+      }
+    }
+    setNewInvestor(initial);
     setShowNewInvestorForm(true);
     setShowAutocomplete(false);
   };
 
   const handleCreateInvestor = () => {
-    if (!newInvestor.name || !newInvestor.email) {
+    const isIndividual = newInvestor.type === 'individual';
+    const composedName = isIndividual
+      ? `${newInvestor.firstName.trim()} ${newInvestor.lastName.trim()}`.trim()
+      : newInvestor.legalName.trim();
+
+    if (!composedName || !newInvestor.email.trim()) {
       toast.error(t('subscriptions.newDialog.errors.missingNameEmail'));
       return;
     }
+
     const investor: Investor = {
       id: `new-${Date.now()}`,
-      name: newInvestor.name,
+      name: composedName,
       type: newInvestor.type,
       email: newInvestor.email,
       structures: [],
     };
     setFormData({ ...formData, investor, structure: null });
     setShowNewInvestorForm(false);
-    setNewInvestor({ name: '', type: 'individual', email: '' });
+    setNewInvestor(emptyNewInvestor);
     setSearchQuery('');
     toast.success(t('subscriptions.newDialog.toast.investorCreated', { name: investor.name }));
   };
@@ -587,7 +615,7 @@ export function NewSubscriptionDialog({ open, onClose, onSubscriptionCreated }: 
                             size="sm"
                             onClick={() => {
                               setShowNewInvestorForm(false);
-                              setNewInvestor({ name: '', type: 'individual', email: '' });
+                              setNewInvestor(emptyNewInvestor);
                             }}
                             className="h-7 w-7 p-0"
                           >
@@ -616,18 +644,47 @@ export function NewSubscriptionDialog({ open, onClose, onSubscriptionCreated }: 
                           </Button>
                         </div>
 
-                        <div>
-                          <Label className="text-xs mb-1">
-                            {t('subscriptions.newDialog.fullName')}{' '}
-                            <span className="text-destructive">*</span>
-                          </Label>
-                          <Input
-                            value={newInvestor.name}
-                            onChange={(e) => setNewInvestor({ ...newInvestor, name: e.target.value })}
-                            placeholder="Sophie Martin"
-                            className="h-9"
-                          />
-                        </div>
+                        {newInvestor.type === 'individual' ? (
+                          <div className="grid grid-cols-2 gap-2">
+                            <div>
+                              <Label className="text-xs mb-1">
+                                {t('subscriptions.newDialog.firstName')}{' '}
+                                <span className="text-destructive">*</span>
+                              </Label>
+                              <Input
+                                value={newInvestor.firstName}
+                                onChange={(e) => setNewInvestor({ ...newInvestor, firstName: e.target.value })}
+                                placeholder="Sophie"
+                                className="h-9"
+                              />
+                            </div>
+                            <div>
+                              <Label className="text-xs mb-1">
+                                {t('subscriptions.newDialog.lastName')}{' '}
+                                <span className="text-destructive">*</span>
+                              </Label>
+                              <Input
+                                value={newInvestor.lastName}
+                                onChange={(e) => setNewInvestor({ ...newInvestor, lastName: e.target.value })}
+                                placeholder="Martin"
+                                className="h-9"
+                              />
+                            </div>
+                          </div>
+                        ) : (
+                          <div>
+                            <Label className="text-xs mb-1">
+                              {t('subscriptions.newDialog.legalName')}{' '}
+                              <span className="text-destructive">*</span>
+                            </Label>
+                            <Input
+                              value={newInvestor.legalName}
+                              onChange={(e) => setNewInvestor({ ...newInvestor, legalName: e.target.value })}
+                              placeholder="Alpha Capital Holding SAS"
+                              className="h-9"
+                            />
+                          </div>
+                        )}
 
                         <div>
                           <Label className="text-xs mb-1">
@@ -657,7 +714,7 @@ export function NewSubscriptionDialog({ open, onClose, onSubscriptionCreated }: 
                             variant="outline"
                             onClick={() => {
                               setShowNewInvestorForm(false);
-                              setNewInvestor({ name: '', type: 'individual', email: '' });
+                              setNewInvestor(emptyNewInvestor);
                             }}
                             className="h-9"
                           >
@@ -784,6 +841,16 @@ export function NewSubscriptionDialog({ open, onClose, onSubscriptionCreated }: 
                             </motion.div>
                           )}
                         </AnimatePresence>
+
+                        <Button
+                          type="button"
+                          onClick={handleQuickCreateInvestor}
+                          variant="outline"
+                          className="w-full mt-2 border-dashed h-9"
+                        >
+                          <Plus className="w-4 h-4 mr-2" />
+                          {t('subscriptions.newDialog.createNewInvestor')}
+                        </Button>
                       </div>
                     ) : (
                       <div className="flex items-center gap-3 p-3 rounded-xl border border-border bg-card">
