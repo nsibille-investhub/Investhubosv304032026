@@ -17,7 +17,7 @@ export interface KYCFile {
   id: number;
   uid: string;
   status: 'Rejeté' | 'Brouillon' | 'Ouvert' | 'Approuvé';
-  nextReview: string | null;
+  nextReview: { text: string; timestamp: number } | null;
   name: string;
   entityType: 'Investisseur' | 'Partenaire' | 'Participation';
   type: 'Personne morale' | 'Personne physique';
@@ -118,20 +118,38 @@ function generateUniqueId(): string {
   return result;
 }
 
-function generateNextReviewDate(status: string): string | null {
+const FR_MONTHS_SHORT = ['Jan', 'Fév', 'Mar', 'Avr', 'Mai', 'Juin', 'Juil', 'Août', 'Sep', 'Oct', 'Nov', 'Déc'];
+
+function formatReviewDate(date: Date): string {
+  return `${date.getDate()} ${FR_MONTHS_SHORT[date.getMonth()]} ${date.getFullYear()}`;
+}
+
+const DAY_MS = 24 * 60 * 60 * 1000;
+
+function generateNextReviewDate(status: string): { text: string; timestamp: number } | null {
   if (status === 'Brouillon' || status === 'Rejeté') return null;
 
-  if (status === 'Approuvé') {
-    const months = ['Jan', 'Fév', 'Mar', 'Avr', 'Mai', 'Juin', 'Juil', 'Août', 'Sep', 'Oct', 'Nov', 'Déc'];
-    return `${randomNumber(1, 28)} ${randomElement(months)} ${randomNumber(2027, 2028)}`;
-  }
-
+  // Bucket distribution targeted at making the review-window cards meaningful.
+  const r = Math.random();
+  let offsetDays: number;
   if (status === 'Ouvert') {
-    const months = ['Mar', 'Avr', 'Mai', 'Juin'];
-    return `${randomNumber(1, 28)} ${randomElement(months)} 2026`;
+    if (r < 0.1) offsetDays = -randomNumber(1, 20);            // 10% overdue
+    else if (r < 0.25) offsetDays = randomNumber(0, 7);        // 15% within 1w
+    else if (r < 0.55) offsetDays = randomNumber(8, 30);       // 30% within 1m
+    else if (r < 0.8) offsetDays = randomNumber(31, 90);       // 25% within 3m
+    else offsetDays = randomNumber(91, 180);                   // 20% within 6m
+  } else if (status === 'Approuvé') {
+    if (r < 0.05) offsetDays = -randomNumber(1, 30);           // 5% overdue
+    else if (r < 0.1) offsetDays = randomNumber(0, 30);        // 5% within 1m
+    else if (r < 0.25) offsetDays = randomNumber(31, 90);      // 15% within 3m
+    else if (r < 0.5) offsetDays = randomNumber(91, 180);      // 25% within 6m
+    else offsetDays = randomNumber(181, 730);                  // 50% later
+  } else {
+    return null;
   }
 
-  return null;
+  const ts = Date.now() + offsetDays * DAY_MS;
+  return { text: formatReviewDate(new Date(ts)), timestamp: ts };
 }
 
 function generateLastActivity(): { text: string; timestamp: number } {

@@ -1,15 +1,22 @@
 import { useState, useMemo, useEffect } from 'react';
 import { motion } from 'motion/react';
 import {
+  AlertTriangle,
+  CalendarClock,
+  CalendarRange,
+  CalendarCheck,
+  CalendarDays,
   CheckCircle2,
   Copy,
   Check,
   Download,
   DownloadCloud,
   Eye,
+  Filter,
   RefreshCw,
   UserCircle,
   Building2,
+  X,
 } from 'lucide-react';
 import { toast } from 'sonner@2.0.3';
 import { generateKYCFiles, KYCFile } from '../utils/kycFileGenerator';
@@ -26,6 +33,14 @@ import {
 } from './ui/card';
 import { Avatar, AvatarFallback } from './ui/avatar';
 import { DataPagination } from './ui/data-pagination';
+import { SearchInput } from './ui/search-input';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from './ui/select';
 import { StatusBadge } from './StatusBadge';
 import { Tag } from './Tag';
 import { KYCThirdPartiesCell } from './KYCThirdPartiesCell';
@@ -83,6 +98,60 @@ const RISK_CONFIG: Record<string, { token: string; bars: number }> = {
   Faible: { token: 'var(--success)', bars: 1 },
 };
 
+type ReviewWindowKey = 'overdue' | '1w' | '1m' | '3m' | '6m';
+
+const DAY_MS = 24 * 60 * 60 * 1000;
+
+const REVIEW_WINDOWS: Array<{
+  key: ReviewWindowKey;
+  label: string;
+  icon: typeof AlertTriangle;
+  tone: 'danger' | 'warning' | 'neutral';
+  match: (deltaDays: number) => boolean;
+}> = [
+  {
+    key: 'overdue',
+    label: 'En retard',
+    icon: AlertTriangle,
+    tone: 'danger',
+    match: (d) => d < 0,
+  },
+  {
+    key: '1w',
+    label: 'Dans 1 semaine',
+    icon: CalendarClock,
+    tone: 'warning',
+    match: (d) => d >= 0 && d <= 7,
+  },
+  {
+    key: '1m',
+    label: 'Dans 1 mois',
+    icon: CalendarRange,
+    tone: 'warning',
+    match: (d) => d >= 0 && d <= 30,
+  },
+  {
+    key: '3m',
+    label: 'Dans 3 mois',
+    icon: CalendarDays,
+    tone: 'neutral',
+    match: (d) => d >= 0 && d <= 90,
+  },
+  {
+    key: '6m',
+    label: 'Dans 6 mois',
+    icon: CalendarCheck,
+    tone: 'neutral',
+    match: (d) => d >= 0 && d <= 180,
+  },
+];
+
+const REVIEW_WINDOW_TOKEN: Record<'danger' | 'warning' | 'neutral', string> = {
+  danger: 'var(--danger)',
+  warning: 'var(--warning)',
+  neutral: 'var(--primary)',
+};
+
 type ProgressKey = 'En révision' | 'En collecte' | 'Recollecte' | 'Finalisation';
 
 const PROGRESS_CONFIG: Record<
@@ -122,6 +191,11 @@ export function KYCFilesPage() {
   const [sortConfig, setSortConfig] = useState<{ key: string; direction: 'asc' | 'desc' } | null>(null);
   const [allTableData, setAllTableData] = useState<KYCFile[]>([]);
   const [copiedId, setCopiedId] = useState<number | null>(null);
+  const [searchQuery, setSearchQuery] = useState('');
+  const [statusFilter, setStatusFilter] = useState<'all' | KYCFile['status']>('all');
+  const [typeFilter, setTypeFilter] = useState<'all' | KYCFile['type']>('all');
+  const [riskFilter, setRiskFilter] = useState<'all' | 'none' | NonNullable<KYCFile['risk']>>('all');
+  const [reviewWindow, setReviewWindow] = useState<ReviewWindowKey | null>(null);
 
   useEffect(() => {
     if (allTableData.length === 0) {
@@ -137,25 +211,100 @@ export function KYCFilesPage() {
     }
   }, []);
 
-  const sortedData = useMemo(() => {
-    if (!sortConfig) return allTableData;
+  const reviewCounts = useMemo(() => {
+    const now = Date.now();
+    const init: Record<ReviewWindowKey, number> = {
+      overdue: 0,
+      '1w': 0,
+      '1m': 0,
+      '3m': 0,
+      '6m': 0,
+    };
+    for (const file of allTableData) {
+      if (!file.nextReview) continue;
+      const deltaDays = (file.nextReview.timestamp - now) / DAY_MS;
+      for (const win of REVIEW_WINDOWS) {
+        if (win.match(deltaDays)) init[win.key] += 1;
+      }
+    }
+    return init;
+  }, [allTableData]);
 
-    const sorted = [...allTableData].sort((a, b) => {
-      let aVal = a[sortConfig.key as keyof KYCFile];
-      let bVal = b[sortConfig.key as keyof KYCFile];
+  const filteredData = useMemo(() => {
+    const now = Date.now();
+    const search = searchQuery.trim().toLowerCase();
+    const activeWindow = reviewWindow
+      ? REVIEW_WINDOWS.find((w) => w.key === reviewWindow)
+      : null;
+
+    return allTableData.filter((file) => {
+      if (search) {
+        const haystack = `${file.name} ${file.uid}`.toLowerCase();
+        if (!haystack.includes(search)) return false;
+      }
+      if (statusFilter !== 'all' && file.status !== statusFilter) return false;
+      if (typeFilter !== 'all' && file.type !== typeFilter) return false;
+      if (riskFilter !== 'all') {
+        if (riskFilter === 'none') {
+          if (file.risk !== null) return false;
+        } else if (file.risk !== riskFilter) {
+          return false;
+        }
+      }
+      if (activeWindow) {
+        if (!file.nextReview) return false;
+        const deltaDays = (file.nextReview.timestamp - now) / DAY_MS;
+        if (!activeWindow.match(deltaDays)) return false;
+      }
+      return true;
+    });
+  }, [allTableData, searchQuery, statusFilter, typeFilter, riskFilter, reviewWindow]);
+
+  const sortedData = useMemo(() => {
+    if (!sortConfig) return filteredData;
+
+    const sorted = [...filteredData].sort((a, b) => {
+      let aVal: unknown = a[sortConfig.key as keyof KYCFile];
+      let bVal: unknown = b[sortConfig.key as keyof KYCFile];
 
       if (sortConfig.key === 'lastActivity') {
-        aVal = (a.lastActivity as any).timestamp;
-        bVal = (b.lastActivity as any).timestamp;
+        aVal = a.lastActivity.timestamp;
+        bVal = b.lastActivity.timestamp;
+      } else if (sortConfig.key === 'nextReview') {
+        aVal = a.nextReview?.timestamp ?? Number.POSITIVE_INFINITY;
+        bVal = b.nextReview?.timestamp ?? Number.POSITIVE_INFINITY;
       }
 
+      if (aVal == null && bVal == null) return 0;
+      if (aVal == null) return 1;
+      if (bVal == null) return -1;
       if (aVal < bVal) return sortConfig.direction === 'asc' ? -1 : 1;
       if (aVal > bVal) return sortConfig.direction === 'asc' ? 1 : -1;
       return 0;
     });
 
     return sorted;
-  }, [allTableData, sortConfig]);
+  }, [filteredData, sortConfig]);
+
+  const hasActiveFilters =
+    !!searchQuery ||
+    statusFilter !== 'all' ||
+    typeFilter !== 'all' ||
+    riskFilter !== 'all' ||
+    reviewWindow !== null;
+
+  const handleResetFilters = () => {
+    setSearchQuery('');
+    setStatusFilter('all');
+    setTypeFilter('all');
+    setRiskFilter('all');
+    setReviewWindow(null);
+    setPaginationPage(1);
+  };
+
+  useEffect(() => {
+    setPaginationPage(1);
+  }, [searchQuery, statusFilter, typeFilter, riskFilter, reviewWindow]);
 
   const totalItems = sortedData.length;
   const totalPages = Math.max(1, Math.ceil(totalItems / itemsPerPage));
@@ -275,12 +424,41 @@ export function KYCFilesPage() {
       key: 'nextReview',
       label: t('ged.kyc.columns.nextReview'),
       sortable: true,
-      render: (file) =>
-        file.nextReview ? (
-          <span className="text-sm text-foreground">{file.nextReview}</span>
-        ) : (
-          <span className="text-sm text-muted-foreground">—</span>
-        ),
+      render: (file) => {
+        if (!file.nextReview) {
+          return <span className="text-sm text-muted-foreground">—</span>;
+        }
+        const deltaDays = (file.nextReview.timestamp - Date.now()) / DAY_MS;
+        const isOverdue = deltaDays < 0;
+        const isUrgent = deltaDays >= 0 && deltaDays <= 7;
+        return (
+          <div className="flex flex-col">
+            <span
+              className={cn(
+                'text-sm',
+                isOverdue
+                  ? 'font-medium'
+                  : 'text-foreground',
+              )}
+              style={isOverdue ? { color: 'var(--danger)' } : undefined}
+            >
+              {file.nextReview.text}
+            </span>
+            {(isOverdue || isUrgent) && (
+              <span
+                className="text-[11px]"
+                style={{
+                  color: isOverdue ? 'var(--danger)' : 'var(--warning)',
+                }}
+              >
+                {isOverdue
+                  ? `En retard de ${Math.abs(Math.round(deltaDays))} j`
+                  : `Dans ${Math.max(1, Math.round(deltaDays))} j`}
+              </span>
+            )}
+          </div>
+        );
+      },
     },
     {
       key: 'progress',
@@ -437,7 +615,75 @@ export function KYCFilesPage() {
   }
 
   return (
-    <div className="flex-1 px-6 pt-6 pb-6 flex gap-4">
+    <div className="flex-1 px-6 pt-6 pb-6 flex flex-col gap-4">
+      <motion.section
+        initial={{ opacity: 0, y: 12 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ delay: 0.1 }}
+        aria-label="Prochaines révisions"
+      >
+        <div className="flex items-baseline justify-between mb-2">
+          <h3 className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+            Prochaines révisions
+          </h3>
+          {reviewWindow !== null && (
+            <Button
+              variant="ghost"
+              size="sm"
+              className="h-7 text-xs gap-1"
+              onClick={() => setReviewWindow(null)}
+            >
+              <X className="w-3 h-3" />
+              Désactiver le filtre
+            </Button>
+          )}
+        </div>
+        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-3">
+          {REVIEW_WINDOWS.map((win) => {
+            const Icon = win.icon;
+            const isActive = reviewWindow === win.key;
+            const tokenColor = REVIEW_WINDOW_TOKEN[win.tone];
+            const count = reviewCounts[win.key];
+            return (
+              <button
+                key={win.key}
+                type="button"
+                onClick={() =>
+                  setReviewWindow((current) => (current === win.key ? null : win.key))
+                }
+                className={cn(
+                  'rounded-xl border bg-card p-4 text-left transition-all hover:shadow-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/50',
+                  isActive
+                    ? 'border-primary ring-2 ring-primary/30'
+                    : 'border-border hover:border-foreground/30',
+                )}
+                aria-pressed={isActive}
+              >
+                <div className="flex items-center justify-between">
+                  <span
+                    className="inline-flex items-center justify-center rounded-full size-9"
+                    style={{
+                      backgroundColor: `color-mix(in oklab, ${tokenColor} 12%, transparent)`,
+                    }}
+                  >
+                    <Icon className="w-4 h-4" style={{ color: tokenColor }} />
+                  </span>
+                  <span className="text-2xl font-semibold tabular-nums text-foreground">
+                    {count}
+                  </span>
+                </div>
+                <p className="text-sm font-medium text-foreground mt-3">{win.label}</p>
+                <p className="text-xs text-muted-foreground mt-0.5">
+                  {win.key === 'overdue'
+                    ? 'Révisions dépassées'
+                    : 'Dossier(s) à revoir'}
+                </p>
+              </button>
+            );
+          })}
+        </div>
+      </motion.section>
+
       <motion.div
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
@@ -462,10 +708,105 @@ export function KYCFilesPage() {
             </div>
           </CardHeader>
 
+          <div className="px-6 py-3 border-b border-border bg-muted/30 flex items-center gap-3 flex-wrap">
+            <div className="flex items-center gap-2 text-xs font-medium text-muted-foreground">
+              <Filter className="w-3.5 h-3.5" />
+              Filtres
+            </div>
+            <SearchInput
+              value={searchQuery}
+              onValueChange={setSearchQuery}
+              onClear={() => setSearchQuery('')}
+              placeholder="Rechercher par nom ou ID…"
+              className="w-full sm:w-72"
+              inputClassName="h-9"
+            />
+            <Select
+              value={statusFilter}
+              onValueChange={(v) => setStatusFilter(v as typeof statusFilter)}
+            >
+              <SelectTrigger size="sm" className="h-9 w-[150px]">
+                <SelectValue placeholder="Statut" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">Tous statuts</SelectItem>
+                <SelectItem value="Ouvert">Ouvert</SelectItem>
+                <SelectItem value="Brouillon">Brouillon</SelectItem>
+                <SelectItem value="Approuvé">Approuvé</SelectItem>
+                <SelectItem value="Rejeté">Rejeté</SelectItem>
+              </SelectContent>
+            </Select>
+            <Select
+              value={typeFilter}
+              onValueChange={(v) => setTypeFilter(v as typeof typeFilter)}
+            >
+              <SelectTrigger size="sm" className="h-9 w-[170px]">
+                <SelectValue placeholder="Type" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">Tous types</SelectItem>
+                <SelectItem value="Personne physique">Personne physique</SelectItem>
+                <SelectItem value="Personne morale">Personne morale</SelectItem>
+              </SelectContent>
+            </Select>
+            <Select
+              value={riskFilter}
+              onValueChange={(v) => setRiskFilter(v as typeof riskFilter)}
+            >
+              <SelectTrigger size="sm" className="h-9 w-[150px]">
+                <SelectValue placeholder="Risque" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">Tous risques</SelectItem>
+                <SelectItem value="Bloqué">Bloqué</SelectItem>
+                <SelectItem value="Élevé">Élevé</SelectItem>
+                <SelectItem value="Moyen">Moyen</SelectItem>
+                <SelectItem value="Faible">Faible</SelectItem>
+                <SelectItem value="none">Non noté</SelectItem>
+              </SelectContent>
+            </Select>
+
+            <div className="ml-auto flex items-center gap-3">
+              <span className="text-xs text-muted-foreground tabular-nums">
+                {totalItems} dossier{totalItems > 1 ? 's' : ''}
+                {hasActiveFilters && allTableData.length !== totalItems && (
+                  <span className="text-muted-foreground/70"> / {allTableData.length}</span>
+                )}
+              </span>
+              {hasActiveFilters && (
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  className="h-8 text-xs gap-1"
+                  onClick={handleResetFilters}
+                >
+                  <X className="w-3.5 h-3.5" />
+                  Réinitialiser
+                </Button>
+              )}
+            </div>
+          </div>
+
           <CardContent className="p-0 flex flex-col">
             <div className="flex-1 overflow-auto">
               {isLoading ? (
                 <TableSkeleton />
+              ) : tableData.length === 0 ? (
+                <div className="py-16 text-center">
+                  <p className="text-sm text-muted-foreground">
+                    Aucun dossier ne correspond aux filtres actuels.
+                  </p>
+                  {hasActiveFilters && (
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      className="mt-3 text-xs"
+                      onClick={handleResetFilters}
+                    >
+                      Réinitialiser les filtres
+                    </Button>
+                  )}
+                </div>
               ) : (
                 <DataTable
                   data={tableData}
