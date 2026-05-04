@@ -44,6 +44,7 @@ import {
   Calendar,
   Shield,
   Mail,
+  RotateCcw,
   type LucideIcon,
 } from 'lucide-react';
 import { Button } from './ui/button';
@@ -252,7 +253,27 @@ export function MassUploadWizard({ isOpen, onClose, existingFolders, inline = fa
   const [allAnalyzedToastShown, setAllAnalyzedToastShown] = useState(false);
   const [selectedFiles, setSelectedFiles] = useState<string[]>([]);
   const [showBulkEdit, setShowBulkEdit] = useState(false);
-  
+
+  // Bulk edit — staged fields + values applied in one go via "Modifier"
+  type BulkFieldKey = 'folder' | 'language' | 'targeting' | 'notification' | 'validationTeam';
+  type BulkTargetingValue = {
+    targetType: string;
+    targetSegments: string[];
+    targetInvestors: string[];
+    targetSubscriptions: string[];
+    targetFunds: string[];
+  };
+  type BulkNotificationValue = { notify: boolean; emailTemplate: string };
+  const [bulkFields, setBulkFields] = useState<BulkFieldKey[]>([]);
+  const [bulkValues, setBulkValues] = useState<{
+    folder?: string;
+    language?: string;
+    targeting?: BulkTargetingValue;
+    notification?: BulkNotificationValue;
+    validationTeam?: string[];
+  }>({});
+  const [bulkFieldsPickerOpen, setBulkFieldsPickerOpen] = useState(false);
+
   // Deep Review mode
   const [deepReview, setDeepReview] = useState(false);
   const [currentReviewingDocIndex, setCurrentReviewingDocIndex] = useState(0);
@@ -277,11 +298,20 @@ export function MassUploadWizard({ isOpen, onClose, existingFolders, inline = fa
   // Extract all available folders
   const availableFolders = useMemo(() => {
     const base = extractAllFolders(mockDocuments);
+    // Deduplicate by path: the Select uses folder.path as its value, and Radix's
+    // SelectValue renders every SelectItem whose value matches — so duplicate paths
+    // produce a doubled trigger label (e.g. "└ 2024  └ 2024").
+    const seen = new Set<string>();
+    const deduped = base.filter((folder) => {
+      if (seen.has(folder.path)) return false;
+      seen.add(folder.path);
+      return true;
+    });
     // If launched from a folder that isn't part of the mock tree, surface it as a virtual option
     if (
       originContext?.kind === 'folder' &&
       originContext.pathLabel &&
-      !base.some((f) => f.path === originContext.pathLabel)
+      !seen.has(originContext.pathLabel)
     ) {
       return [
         {
@@ -291,10 +321,10 @@ export function MassUploadWizard({ isOpen, onClose, existingFolders, inline = fa
           level: 0,
           parentId: undefined,
         },
-        ...base,
+        ...deduped,
       ];
     }
-    return base;
+    return deduped;
   }, [originContext]);
 
   // Function to get the formatted file size
@@ -513,17 +543,75 @@ export function MassUploadWizard({ isOpen, onClose, existingFolders, inline = fa
   };
 
   // Bulk update
-  const handleBulkUpdate = (field: string, value: any) => {
-    setUploadedFiles(prev =>
-      prev.map(f =>
-        selectedFiles.includes(f.id)
-          ? { ...f, [field]: value }
-          : f
-      )
-    );
+  // Field catalogue used to render the bulk edit picker chips and the per-field editors.
+  const BULK_FIELDS: { key: BulkFieldKey; label: string; icon: LucideIcon }[] = [
+    { key: 'folder', label: 'Dossier', icon: Folder },
+    { key: 'language', label: 'Langue', icon: Languages },
+    { key: 'targeting', label: 'Ciblage', icon: Users },
+    { key: 'notification', label: 'Notification', icon: Bell },
+    { key: 'validationTeam', label: 'Équipes de validation', icon: Shield },
+  ];
 
-    toast.success('Bulk update', {
-      description: `${selectedFiles.length} document(s) updated`
+  const toggleBulkField = (key: BulkFieldKey) => {
+    setBulkFields(prev => prev.includes(key) ? prev.filter(f => f !== key) : [...prev, key]);
+  };
+
+  const removeBulkField = (key: BulkFieldKey) => {
+    setBulkFields(prev => prev.filter(f => f !== key));
+    setBulkValues(prev => {
+      const next = { ...prev };
+      delete next[key];
+      return next;
+    });
+  };
+
+  const handleBulkReset = () => {
+    setBulkFields([]);
+    setBulkValues({});
+  };
+
+  const handleBulkApply = () => {
+    if (bulkFields.length === 0) {
+      toast.error('Aucun champ sélectionné', {
+        description: 'Choisissez au moins un champ à modifier.',
+      });
+      return;
+    }
+    setUploadedFiles(prev =>
+      prev.map(f => {
+        if (!selectedFiles.includes(f.id)) return f;
+        const updated: UploadedFile = { ...f };
+        for (const key of bulkFields) {
+          if (key === 'folder') {
+            updated.folder = bulkValues.folder ?? '';
+          } else if (key === 'language') {
+            updated.language = bulkValues.language ?? '';
+          } else if (key === 'targeting') {
+            const t = bulkValues.targeting ?? {
+              targetType: 'all',
+              targetSegments: [],
+              targetInvestors: [],
+              targetSubscriptions: [],
+              targetFunds: [],
+            };
+            updated.targetType = t.targetType;
+            updated.targetSegments = t.targetSegments;
+            updated.targetInvestors = t.targetInvestors;
+            updated.targetSubscriptions = t.targetSubscriptions;
+            updated.targetFunds = t.targetFunds;
+          } else if (key === 'notification') {
+            const n = bulkValues.notification ?? { notify: false, emailTemplate: '' };
+            updated.notify = n.notify;
+            updated.emailTemplate = n.emailTemplate;
+          } else if (key === 'validationTeam') {
+            updated.validationTeam = bulkValues.validationTeam ?? [];
+          }
+        }
+        return updated;
+      })
+    );
+    toast.success('Modification groupée appliquée', {
+      description: `${selectedFiles.length} document(s) · ${bulkFields.length} champ(s) modifié(s)`,
     });
   };
 
@@ -1660,80 +1748,376 @@ export function MassUploadWizard({ isOpen, onClose, existingFolders, inline = fa
                             animate={{ opacity: 1, height: 'auto' }}
                             exit={{ opacity: 0, height: 0 }}
                             transition={{ duration: 0.18 }}
-                            className="mt-2 grid grid-cols-1 gap-2 border-t border-gray-200 pt-2 sm:grid-cols-3"
+                            className="mt-2 space-y-3 border-t border-gray-200 pt-3"
                           >
+                            {/* Step A — pick which fields to modify in bulk */}
                             <div className="space-y-1">
-                              <Label className="flex items-center gap-1.5 text-[11px] font-medium text-gray-600">
-                                <Folder className="h-3 w-3 text-gray-400" />
-                                Dossier
-                              </Label>
-                              <Select onValueChange={(value) => handleBulkUpdate('folder', value)}>
-                                <SelectTrigger className="h-8 text-xs">
-                                  <SelectValue placeholder="Modifier le dossier…" />
-                                </SelectTrigger>
-                                <SelectContent>
-                                  {availableFolders.map((folder) => (
-                                    <SelectItem key={folder.id} value={folder.path} className="text-xs">
-                                      <div className="flex items-center gap-2">
-                                        <Folder className="h-3 w-3 text-gray-400" />
-                                        {folder.path}
-                                      </div>
-                                    </SelectItem>
-                                  ))}
-                                </SelectContent>
-                              </Select>
+                              <Label className="text-[11px] font-medium text-gray-700">Champs à modifier</Label>
+                              <Popover open={bulkFieldsPickerOpen} onOpenChange={setBulkFieldsPickerOpen}>
+                                <PopoverTrigger asChild>
+                                  <button
+                                    type="button"
+                                    className="flex min-h-[36px] w-full flex-wrap items-center gap-1.5 rounded-md border border-gray-300 bg-white px-2 py-1 text-left text-xs hover:border-gray-400"
+                                  >
+                                    {bulkFields.length === 0 ? (
+                                      <span className="text-gray-400">Choisir les champs à modifier…</span>
+                                    ) : (
+                                      bulkFields.map((key) => {
+                                        const cfg = BULK_FIELDS.find((f) => f.key === key);
+                                        if (!cfg) return null;
+                                        const Icon = cfg.icon;
+                                        return (
+                                          <span
+                                            key={key}
+                                            className="inline-flex items-center gap-1 rounded-full border border-gray-200 bg-gray-50 px-2 py-0.5 text-[11px] text-gray-700"
+                                          >
+                                            <Icon className="h-3 w-3 text-gray-500" />
+                                            {cfg.label}
+                                            <span
+                                              role="button"
+                                              tabIndex={0}
+                                              onClick={(e) => {
+                                                e.stopPropagation();
+                                                removeBulkField(key);
+                                              }}
+                                              onKeyDown={(e) => {
+                                                if (e.key === 'Enter' || e.key === ' ') {
+                                                  e.stopPropagation();
+                                                  e.preventDefault();
+                                                  removeBulkField(key);
+                                                }
+                                              }}
+                                              className="ml-0.5 inline-flex cursor-pointer rounded-full p-0.5 hover:bg-gray-200"
+                                              aria-label={`Retirer ${cfg.label}`}
+                                            >
+                                              <X className="h-2.5 w-2.5" />
+                                            </span>
+                                          </span>
+                                        );
+                                      })
+                                    )}
+                                    <ChevronsUpDown className="ml-auto h-3.5 w-3.5 shrink-0 text-gray-400" />
+                                  </button>
+                                </PopoverTrigger>
+                                <PopoverContent className="w-[280px] p-0" align="start">
+                                  <Command>
+                                    <CommandList>
+                                      <CommandEmpty>Aucun champ</CommandEmpty>
+                                      <CommandGroup>
+                                        {BULK_FIELDS.map((f) => {
+                                          const Icon = f.icon;
+                                          const checked = bulkFields.includes(f.key);
+                                          return (
+                                            <CommandItem
+                                              key={f.key}
+                                              onSelect={() => toggleBulkField(f.key)}
+                                              className="text-xs"
+                                            >
+                                              <Checkbox checked={checked} className="mr-2" />
+                                              <Icon className="mr-2 h-3 w-3 text-gray-500" />
+                                              {f.label}
+                                            </CommandItem>
+                                          );
+                                        })}
+                                      </CommandGroup>
+                                    </CommandList>
+                                  </Command>
+                                </PopoverContent>
+                              </Popover>
                             </div>
 
-                            <div className="space-y-1">
-                              <Label className="flex items-center gap-1.5 text-[11px] font-medium text-gray-600">
-                                <Languages className="h-3 w-3 text-gray-400" />
-                                Langue
-                              </Label>
-                              <Select onValueChange={(value) => handleBulkUpdate('language', value)}>
-                                <SelectTrigger className="h-8 text-xs">
-                                  <SelectValue placeholder="Modifier la langue…" />
-                                </SelectTrigger>
-                                <SelectContent>
-                                  {availableLanguages.map((lang) => (
-                                    <SelectItem key={lang.value} value={lang.value} className="text-xs">
-                                      <div className="flex items-center gap-2">
-                                        <span>{lang.flag}</span>
-                                        {lang.label}
-                                      </div>
-                                    </SelectItem>
-                                  ))}
-                                </SelectContent>
-                              </Select>
-                            </div>
+                            {/* Step B — per-field value editors */}
+                            {bulkFields.length > 0 && (
+                              <div className="space-y-2.5">
+                                {bulkFields.includes('folder') && (
+                                  <div className="space-y-1">
+                                    <Label className="flex items-center gap-1.5 text-[11px] font-medium text-gray-600">
+                                      <Folder className="h-3 w-3 text-gray-400" />
+                                      Dossier
+                                    </Label>
+                                    <Select
+                                      value={bulkValues.folder ?? ''}
+                                      onValueChange={(value) => setBulkValues((prev) => ({ ...prev, folder: value }))}
+                                    >
+                                      <SelectTrigger className="h-8 text-xs">
+                                        <SelectValue placeholder="Choisir un dossier…" />
+                                      </SelectTrigger>
+                                      <SelectContent>
+                                        {availableFolders.map((folder) => (
+                                          <SelectItem key={folder.id} value={folder.path} className="text-xs">
+                                            <div className="flex items-center gap-2">
+                                              <Folder className="h-3 w-3 text-gray-400" />
+                                              {folder.path}
+                                            </div>
+                                          </SelectItem>
+                                        ))}
+                                      </SelectContent>
+                                    </Select>
+                                  </div>
+                                )}
 
-                            <div className="space-y-1">
-                              <Label className="flex items-center gap-1.5 text-[11px] font-medium text-gray-600">
-                                <Users className="h-3 w-3 text-gray-400" />
-                                Type de ciblage
-                              </Label>
-                              <Select onValueChange={(value) => handleBulkUpdate('targetType', value)}>
-                                <SelectTrigger className="h-8 text-xs">
-                                  <SelectValue placeholder="Modifier le ciblage…" />
-                                </SelectTrigger>
-                                <SelectContent>
-                                  <SelectItem value="all" className="text-xs">
-                                    <div className="flex items-center gap-2"><Users className="h-3 w-3 text-gray-500" />Tous</div>
-                                  </SelectItem>
-                                  <SelectItem value="segment" className="text-xs">
-                                    <div className="flex items-center gap-2"><Users className="h-3 w-3 text-gray-500" />Segments</div>
-                                  </SelectItem>
-                                  <SelectItem value="investor" className="text-xs">
-                                    <div className="flex items-center gap-2"><Users className="h-3 w-3 text-gray-500" />Investisseurs</div>
-                                  </SelectItem>
-                                  <SelectItem value="subscription" className="text-xs">
-                                    <div className="flex items-center gap-2"><FileText className="h-3 w-3 text-gray-500" />Souscriptions</div>
-                                  </SelectItem>
-                                  <SelectItem value="fund" className="text-xs">
-                                    <div className="flex items-center gap-2"><Landmark className="h-3 w-3 text-gray-500" />Fonds</div>
-                                  </SelectItem>
-                                </SelectContent>
-                              </Select>
-                            </div>
+                                {bulkFields.includes('language') && (
+                                  <div className="space-y-1">
+                                    <Label className="flex items-center gap-1.5 text-[11px] font-medium text-gray-600">
+                                      <Languages className="h-3 w-3 text-gray-400" />
+                                      Langue
+                                    </Label>
+                                    <Select
+                                      value={bulkValues.language ?? ''}
+                                      onValueChange={(value) => setBulkValues((prev) => ({ ...prev, language: value }))}
+                                    >
+                                      <SelectTrigger className="h-8 text-xs">
+                                        <SelectValue placeholder="Choisir une langue…" />
+                                      </SelectTrigger>
+                                      <SelectContent>
+                                        {availableLanguages.map((lang) => (
+                                          <SelectItem key={lang.value} value={lang.value} className="text-xs">
+                                            <div className="flex items-center gap-2">
+                                              <span>{lang.flag}</span>
+                                              {lang.label}
+                                            </div>
+                                          </SelectItem>
+                                        ))}
+                                      </SelectContent>
+                                    </Select>
+                                  </div>
+                                )}
+
+                                {bulkFields.includes('targeting') && (() => {
+                                  const targeting: BulkTargetingValue = bulkValues.targeting ?? {
+                                    targetType: 'all',
+                                    targetSegments: [],
+                                    targetInvestors: [],
+                                    targetSubscriptions: [],
+                                    targetFunds: [],
+                                  };
+                                  const updateTargeting = (patch: Partial<BulkTargetingValue>) =>
+                                    setBulkValues((prev) => ({
+                                      ...prev,
+                                      targeting: { ...targeting, ...patch },
+                                    }));
+                                  return (
+                                    <div className="space-y-1">
+                                      <Label className="flex items-center gap-1.5 text-[11px] font-medium text-gray-600">
+                                        <Users className="h-3 w-3 text-gray-400" />
+                                        Ciblage
+                                      </Label>
+                                      <Select
+                                        value={targeting.targetType}
+                                        onValueChange={(value) =>
+                                          updateTargeting({
+                                            targetType: value,
+                                            targetSegments: [],
+                                            targetInvestors: [],
+                                            targetSubscriptions: [],
+                                            targetFunds: [],
+                                          })
+                                        }
+                                      >
+                                        <SelectTrigger className="h-8 text-xs">
+                                          <SelectValue placeholder="Type de ciblage…" />
+                                        </SelectTrigger>
+                                        <SelectContent>
+                                          <SelectItem value="all" className="text-xs"><div className="flex items-center gap-2"><Users className="h-3 w-3 text-gray-500" />Tous</div></SelectItem>
+                                          <SelectItem value="segment" className="text-xs"><div className="flex items-center gap-2"><Users className="h-3 w-3 text-gray-500" />Segments</div></SelectItem>
+                                          <SelectItem value="investor" className="text-xs"><div className="flex items-center gap-2"><Users className="h-3 w-3 text-gray-500" />Investisseurs</div></SelectItem>
+                                          <SelectItem value="subscription" className="text-xs"><div className="flex items-center gap-2"><FileText className="h-3 w-3 text-gray-500" />Souscriptions</div></SelectItem>
+                                          <SelectItem value="fund" className="text-xs"><div className="flex items-center gap-2"><Landmark className="h-3 w-3 text-gray-500" />Fonds</div></SelectItem>
+                                        </SelectContent>
+                                      </Select>
+
+                                      {targeting.targetType === 'segment' && (
+                                        <Select
+                                          value={targeting.targetSegments[0] ?? ''}
+                                          onValueChange={(value) => updateTargeting({ targetSegments: [value] })}
+                                        >
+                                          <SelectTrigger className="h-8 text-xs">
+                                            <SelectValue placeholder="Choisir un segment…" />
+                                          </SelectTrigger>
+                                          <SelectContent>
+                                            {availableSegments.map((seg) => (
+                                              <SelectItem key={seg} value={seg} className="text-xs">{seg}</SelectItem>
+                                            ))}
+                                          </SelectContent>
+                                        </Select>
+                                      )}
+
+                                      {targeting.targetType === 'investor' && (
+                                        <Select
+                                          value={targeting.targetInvestors[0] ?? ''}
+                                          onValueChange={(value) => updateTargeting({ targetInvestors: [value] })}
+                                        >
+                                          <SelectTrigger className="h-8 text-xs">
+                                            <SelectValue placeholder="Choisir un investisseur…" />
+                                          </SelectTrigger>
+                                          <SelectContent>
+                                            {availableInvestors.map((inv) => (
+                                              <SelectItem key={inv.id} value={inv.id} className="text-xs">{inv.name}</SelectItem>
+                                            ))}
+                                          </SelectContent>
+                                        </Select>
+                                      )}
+
+                                      {targeting.targetType === 'subscription' && (
+                                        <Select
+                                          value={targeting.targetSubscriptions[0] ?? ''}
+                                          onValueChange={(value) => updateTargeting({ targetSubscriptions: [value] })}
+                                        >
+                                          <SelectTrigger className="h-8 text-xs">
+                                            <SelectValue placeholder="Choisir une souscription…" />
+                                          </SelectTrigger>
+                                          <SelectContent>
+                                            {availableInvestors.map((inv) => {
+                                              const fundLabel = fundLabelMap[inv.fund] ?? inv.fund;
+                                              const subId = `${inv.id}-${inv.fund}`;
+                                              return (
+                                                <SelectItem key={subId} value={subId} className="text-xs">
+                                                  {inv.name} · {fundLabel}
+                                                </SelectItem>
+                                              );
+                                            })}
+                                          </SelectContent>
+                                        </Select>
+                                      )}
+
+                                      {targeting.targetType === 'fund' && (
+                                        <div className="flex gap-1.5">
+                                          <Select
+                                            value={targeting.targetFunds[0] ?? ''}
+                                            onValueChange={(value) => updateTargeting({ targetFunds: [value] })}
+                                          >
+                                            <SelectTrigger className="h-8 flex-1 text-xs">
+                                              <SelectValue placeholder="Fonds…" />
+                                            </SelectTrigger>
+                                            <SelectContent>
+                                              {availableFunds.map((fund) => (
+                                                <SelectItem key={fund.id} value={fund.id} className="text-xs">{fund.name}</SelectItem>
+                                              ))}
+                                            </SelectContent>
+                                          </Select>
+                                          <Select
+                                            value={targeting.targetSegments[0] ?? ''}
+                                            onValueChange={(value) => updateTargeting({ targetSegments: [value] })}
+                                          >
+                                            <SelectTrigger className="h-8 w-20 text-xs">
+                                              <SelectValue placeholder="Part" />
+                                            </SelectTrigger>
+                                            <SelectContent>
+                                              <SelectItem value="A" className="text-xs">A</SelectItem>
+                                              <SelectItem value="B" className="text-xs">B</SelectItem>
+                                              <SelectItem value="C" className="text-xs">C</SelectItem>
+                                            </SelectContent>
+                                          </Select>
+                                        </div>
+                                      )}
+                                    </div>
+                                  );
+                                })()}
+
+                                {bulkFields.includes('notification') && (() => {
+                                  const notification: BulkNotificationValue = bulkValues.notification ?? {
+                                    notify: false,
+                                    emailTemplate: '',
+                                  };
+                                  const updateNotification = (patch: Partial<BulkNotificationValue>) =>
+                                    setBulkValues((prev) => ({
+                                      ...prev,
+                                      notification: { ...notification, ...patch },
+                                    }));
+                                  return (
+                                    <div className="space-y-1">
+                                      <Label className="flex items-center gap-1.5 text-[11px] font-medium text-gray-600">
+                                        <Bell className="h-3 w-3 text-gray-400" />
+                                        Notification
+                                      </Label>
+                                      <div className="flex items-center gap-2 rounded-md border border-gray-200 bg-white px-2 py-1.5">
+                                        <Switch
+                                          checked={notification.notify}
+                                          onCheckedChange={(checked) =>
+                                            updateNotification({ notify: checked, emailTemplate: checked ? notification.emailTemplate : '' })
+                                          }
+                                        />
+                                        <span className="text-xs text-gray-700">Notifier les destinataires</span>
+                                      </div>
+                                      {notification.notify && (
+                                        <Select
+                                          value={notification.emailTemplate}
+                                          onValueChange={(value) => updateNotification({ emailTemplate: value })}
+                                        >
+                                          <SelectTrigger className="h-8 text-xs">
+                                            <SelectValue placeholder="Template…" />
+                                          </SelectTrigger>
+                                          <SelectContent>
+                                            {availableEmailTemplates.map((tpl) => {
+                                              const Icon = tpl.icon;
+                                              return (
+                                                <SelectItem key={tpl.value} value={tpl.value} className="text-xs">
+                                                  <div className="flex items-center gap-2">
+                                                    <Icon className="h-3 w-3 text-gray-500" />
+                                                    {tpl.label}
+                                                  </div>
+                                                </SelectItem>
+                                              );
+                                            })}
+                                          </SelectContent>
+                                        </Select>
+                                      )}
+                                    </div>
+                                  );
+                                })()}
+
+                                {bulkFields.includes('validationTeam') && (
+                                  <div className="space-y-1">
+                                    <Label className="flex items-center gap-1.5 text-[11px] font-medium text-gray-600">
+                                      <Shield className="h-3 w-3 text-gray-400" />
+                                      Équipes de validation
+                                    </Label>
+                                    <Select
+                                      value={bulkValues.validationTeam?.[0] ?? ''}
+                                      onValueChange={(value) =>
+                                        setBulkValues((prev) => ({ ...prev, validationTeam: value ? [value] : [] }))
+                                      }
+                                    >
+                                      <SelectTrigger className="h-8 text-xs">
+                                        <SelectValue placeholder="Choisir une équipe…" />
+                                      </SelectTrigger>
+                                      <SelectContent>
+                                        <SelectItem value="admin" className="text-xs">Admin</SelectItem>
+                                        <SelectItem value="compliance" className="text-xs">Compliance</SelectItem>
+                                        <SelectItem value="legal" className="text-xs">Juridique</SelectItem>
+                                        <SelectItem value="ir" className="text-xs">Investor Relations</SelectItem>
+                                      </SelectContent>
+                                    </Select>
+                                  </div>
+                                )}
+                              </div>
+                            )}
+
+                            {/* Apply / reset action bar */}
+                            {bulkFields.length > 0 && (
+                              <div className="flex items-center gap-2 pt-1">
+                                <Tooltip>
+                                  <TooltipTrigger asChild>
+                                    <Button
+                                      variant="outline"
+                                      size="sm"
+                                      className="h-9 w-9 shrink-0 p-0"
+                                      onClick={handleBulkReset}
+                                    >
+                                      <RotateCcw className="h-3.5 w-3.5" />
+                                    </Button>
+                                  </TooltipTrigger>
+                                  <TooltipContent>Réinitialiser la sélection</TooltipContent>
+                                </Tooltip>
+                                <Button
+                                  onClick={handleBulkApply}
+                                  className="h-9 flex-1 text-white hover:opacity-90"
+                                  style={{ background: 'linear-gradient(62.32deg, #000000 10.53%, #0F323D 88.82%)' }}
+                                >
+                                  Modifier
+                                </Button>
+                              </div>
+                            )}
                           </motion.div>
                         )}
                       </motion.div>
