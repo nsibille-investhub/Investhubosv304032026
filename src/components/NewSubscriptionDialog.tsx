@@ -1335,11 +1335,6 @@ export function NewSubscriptionDialog({ open, onClose, onSubscriptionCreated }: 
                     <Label className="text-xs mb-1 flex items-center gap-1">
                       <Handshake className="w-3.5 h-3.5" />
                       {t('subscriptions.newDialog.distributorLabel')}
-                      {formData.investor?.distributorId && authorizedDistributors.some(d => d.id === formData.investor?.distributorId) && (
-                        <Badge variant="outline" className="text-xs ml-1 h-4 border-primary text-primary">
-                          {t('subscriptions.newDialog.attitled')}
-                        </Badge>
-                      )}
                     </Label>
 
                     {formData.fund && formData.shareClass ? (
