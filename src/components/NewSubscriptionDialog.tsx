@@ -156,7 +156,13 @@ const funds = [
   { id: 'f4', name: 'Tech Innovation Fund', aum: '€150M', category: 'Tech' },
 ];
 
-const shareClasses = ['A', 'B', 'C', 'I', 'R'];
+const shareClasses: { id: string; minAmount: number }[] = [
+  { id: 'A', minAmount: 1000 },
+  { id: 'B', minAmount: 5000 },
+  { id: 'C', minAmount: 10000 },
+  { id: 'I', minAmount: 100000 },
+  { id: 'R', minAmount: 500 },
+];
 
 // Demo-only pricing — real apps fetch this per fund / share class.
 const SHARE_PRICE = 100;
@@ -348,6 +354,14 @@ export function NewSubscriptionDialog({ open, onClose, onSubscriptionCreated }: 
     const shares = parseFloat(formData.numberOfShares) || 0;
     return shares * SHARE_PRICE;
   }, [formData.numberOfShares]);
+
+  // Minimum subscription amount/shares from the selected share class.
+  const selectedShareClass = useMemo(
+    () => shareClasses.find((sc) => sc.id === formData.shareClass),
+    [formData.shareClass],
+  );
+  const minAmount = selectedShareClass?.minAmount;
+  const minShares = minAmount !== undefined ? minAmount / SHARE_PRICE : undefined;
 
   // Bidirectional binding: typing into Montant infers the number of shares.
   // Decimal and sub-1 values are accepted (any positive amount works).
@@ -1319,8 +1333,8 @@ export function NewSubscriptionDialog({ open, onClose, onSubscriptionCreated }: 
                         </SelectTrigger>
                         <SelectContent>
                           {shareClasses.map((sc) => (
-                            <SelectItem key={sc} value={sc}>
-                              {t('subscriptions.newDialog.shareLabel', { class: sc })}
+                            <SelectItem key={sc.id} value={sc.id}>
+                              {t('subscriptions.newDialog.shareLabel', { class: sc.id })}
                             </SelectItem>
                           ))}
                         </SelectContent>
@@ -1352,6 +1366,13 @@ export function NewSubscriptionDialog({ open, onClose, onSubscriptionCreated }: 
                         placeholder="100"
                         className="h-10 font-semibold text-right"
                       />
+                      {minShares !== undefined && (
+                        <p className="text-[10px] text-muted-foreground">
+                          {t('subscriptions.newDialog.minSharesHint', {
+                            count: minShares.toLocaleString('fr-FR'),
+                          })}
+                        </p>
+                      )}
                     </div>
 
                     <div className="space-y-1.5 min-w-0">
@@ -1373,9 +1394,14 @@ export function NewSubscriptionDialog({ open, onClose, onSubscriptionCreated }: 
                         className="h-10 font-semibold text-right"
                       />
                       <p className="text-[10px] text-muted-foreground">
-                        {t('subscriptions.newDialog.pricePerShareHint', {
-                          price: SHARE_PRICE.toLocaleString('fr-FR'),
-                        })}
+                        {minAmount !== undefined
+                          ? t('subscriptions.newDialog.pricePerShareAndMinHint', {
+                              price: SHARE_PRICE.toLocaleString('fr-FR'),
+                              min: minAmount.toLocaleString('fr-FR'),
+                            })
+                          : t('subscriptions.newDialog.pricePerShareHint', {
+                              price: SHARE_PRICE.toLocaleString('fr-FR'),
+                            })}
                       </p>
                     </div>
 
@@ -1502,7 +1528,7 @@ export function NewSubscriptionDialog({ open, onClose, onSubscriptionCreated }: 
                         <Euro className="w-3.5 h-3.5" />
                         {t('subscriptions.newDialog.entryFeesEditableLabel')}
                       </Label>
-                      <div className="relative">
+                      <div className="flex h-10 w-full items-center rounded-md border border-input bg-white pr-3 focus-within:ring-2 focus-within:ring-ring/40">
                         <Input
                           type="text"
                           inputMode="decimal"
@@ -1514,11 +1540,9 @@ export function NewSubscriptionDialog({ open, onClose, onSubscriptionCreated }: 
                             setFormData({ ...formData, entryFees: cleaned });
                           }}
                           placeholder="0"
-                          className="h-10 font-semibold text-right pr-7"
+                          className="h-full border-0 bg-transparent font-semibold text-right shadow-none focus-visible:ring-0 focus-visible:ring-offset-0"
                         />
-                        <span className="absolute right-3 top-1/2 -translate-y-1/2 text-xs text-muted-foreground pointer-events-none">
-                          %
-                        </span>
+                        <span className="ml-1 text-sm text-muted-foreground select-none">%</span>
                       </div>
                       <p className="text-[10px] text-muted-foreground">
                         {t('subscriptions.newDialog.entryFeesEditableHint', {
@@ -1532,7 +1556,7 @@ export function NewSubscriptionDialog({ open, onClose, onSubscriptionCreated }: 
                         <Sparkles className="w-3.5 h-3.5" />
                         {t('subscriptions.newDialog.subscriptionPremiumLabel')}
                       </Label>
-                      <div className="relative">
+                      <div className="flex h-10 w-full items-center rounded-md border border-input bg-white pr-3 focus-within:ring-2 focus-within:ring-ring/40">
                         <Input
                           type="text"
                           inputMode="decimal"
@@ -1544,11 +1568,9 @@ export function NewSubscriptionDialog({ open, onClose, onSubscriptionCreated }: 
                             setFormData({ ...formData, subscriptionPremium: cleaned });
                           }}
                           placeholder="0"
-                          className="h-10 font-semibold text-right pr-7"
+                          className="h-full border-0 bg-transparent font-semibold text-right shadow-none focus-visible:ring-0 focus-visible:ring-offset-0"
                         />
-                        <span className="absolute right-3 top-1/2 -translate-y-1/2 text-xs text-muted-foreground pointer-events-none">
-                          %
-                        </span>
+                        <span className="ml-1 text-sm text-muted-foreground select-none">%</span>
                       </div>
                       <p className="text-[10px] text-muted-foreground">
                         {t('subscriptions.newDialog.subscriptionPremiumHint')}

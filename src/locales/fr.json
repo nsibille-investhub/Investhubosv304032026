@@ -532,6 +532,8 @@
       "noDistributorsWarning": "Aucun distributeur conventionné. Seule la souscription directe est disponible.",
       "amount": "Montant",
       "pricePerShareHint": "Prix par part : {{price}} €",
+      "pricePerShareAndMinHint": "Prix par part : {{price}} € · Min : {{min}} €",
+      "minSharesHint": "Min : {{count}} parts",
       "feesWithPercent": "Frais d'entrée ({{percent}}%)",
       "subscriptionPremiumLabel": "Prime de souscription",
       "subscriptionPremiumHint": "À la main de la Société de Gestion",
