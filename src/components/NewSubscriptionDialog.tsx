@@ -9,15 +9,14 @@ import {
   Check,
   Info,
   Sparkles,
-  TrendingUp,
-  FileText,
-  Percent,
+  Landmark,
+  Layers3,
   ArrowRight,
   Loader2,
   ChevronLeft,
   Globe,
   Hash,
-  Store,
+  Handshake,
   Briefcase,
 } from 'lucide-react';
 import { BigModal, BigModalContent, BigModalTitle, BigModalDescription } from './ui/big-modal';
@@ -1260,7 +1259,7 @@ export function NewSubscriptionDialog({ open, onClose, onSubscriptionCreated }: 
                   {/* Fund Selection — classic select */}
                   <div className="mb-4 space-y-1.5">
                     <Label className="text-xs flex items-center gap-1.5">
-                      <TrendingUp className="w-3.5 h-3.5" />
+                      <Landmark className="w-3.5 h-3.5" />
                       {t('subscriptions.newDialog.fundLabel')}{' '}
                       <span className="text-destructive">*</span>
                     </Label>
@@ -1292,7 +1291,7 @@ export function NewSubscriptionDialog({ open, onClose, onSubscriptionCreated }: 
                   {/* Share Class — classic select */}
                   <div className="mb-4 space-y-1.5">
                     <Label className="text-xs flex items-center gap-1.5">
-                      <FileText className="w-3.5 h-3.5" />
+                      <Layers3 className="w-3.5 h-3.5" />
                       {t('subscriptions.newDialog.shareClassLabel')}{' '}
                       <span className="text-destructive">*</span>
                     </Label>
@@ -1316,7 +1315,7 @@ export function NewSubscriptionDialog({ open, onClose, onSubscriptionCreated }: 
                   {/* Number of Shares - BIG */}
                   <div className="mb-3">
                     <Label className="text-xs mb-1 flex items-center gap-1">
-                      <Percent className="w-3 h-3" />
+                      <Hash className="w-3.5 h-3.5" />
                       {t('subscriptions.newDialog.numberOfShares')} <span className="text-destructive">*</span>
                     </Label>
                     <Input
@@ -1334,7 +1333,7 @@ export function NewSubscriptionDialog({ open, onClose, onSubscriptionCreated }: 
                   {/* Distributor Selection - Dropdown */}
                   <div className="mb-3">
                     <Label className="text-xs mb-1 flex items-center gap-1">
-                      <Store className="w-3 h-3" />
+                      <Handshake className="w-3.5 h-3.5" />
                       {t('subscriptions.newDialog.distributorLabel')}
                       {formData.investor?.distributorId && authorizedDistributors.some(d => d.id === formData.investor?.distributorId) && (
                         <Badge variant="outline" className="text-xs ml-1 h-4 border-primary text-primary">
@@ -1373,7 +1372,7 @@ export function NewSubscriptionDialog({ open, onClose, onSubscriptionCreated }: 
                             return (
                               <SelectItem key={dist.id} value={dist.id}>
                                 <div className="flex items-center gap-2">
-                                  <Store className="w-4 h-4 text-primary" />
+                                  <Handshake className="w-4 h-4 text-primary" />
                                   <div>
                                     <div className="font-medium">
                                       {dist.name}
