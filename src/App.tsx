@@ -188,6 +188,9 @@ export default function App() {
   // Handler pour créer une nouvelle souscription
   const handleSubscriptionCreated = (newSubscription: any) => {
     setAllSubscriptionsData(prevData => [newSubscription, ...prevData]);
+    // Land directly on the new subscription's detail page, at the
+    // Initialisation step (driven by newSubscription.initialStep = 0).
+    setSelectedSubscriptionDetail(newSubscription);
     toast.success(t('toast.subscriptionCreated'), {
       description: `${newSubscription.name} a été ajoutée au statut Draft`,
       duration: 5000

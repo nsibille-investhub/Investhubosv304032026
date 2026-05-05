@@ -435,24 +435,63 @@ export function NewSubscriptionDialog({ open, onClose, onSubscriptionCreated }: 
     setIsSubmitting(true);
     await new Promise(resolve => setTimeout(resolve, 1500));
 
+    const fundName = funds.find((f) => f.id === formData.fund)?.name ?? '';
+    const distributorName =
+      formData.distributor === 'direct'
+        ? 'Souscription Directe'
+        : mockDistributors.find((d) => d.id === formData.distributor)?.name ?? 'N/A';
+    const structureName =
+      typeof formData.structure === 'object' && formData.structure
+        ? formData.structure.name
+        : '';
+
     // Créer la nouvelle souscription
     const newSubscription: any = {
       id: Date.now(), // ID temporaire basé sur le timestamp
-      name: `${formData.investor.name} - €${(calculatedAmount / 1000)}K - ${funds.find(f => f.id === formData.fund)?.name} Part ${formData.shareClass}`,
+      name: `${formData.investor.name} - €${calculatedAmount / 1000}K - ${fundName} Part ${formData.shareClass}`,
       status: 'Draft',
       type: formData.investor.type === 'individual' ? 'Individual' : 'Corporate',
+      // The detail page reads this to land on the Initialisation step (0)
+      // instead of the default Onboarding step (1) for newly-created drafts.
+      initialStep: 0,
+      // Snapshot of every field the wizard captured so the Initialisation
+      // form on the detail page can pre-fill them.
+      initData: {
+        investorId: formData.investor.id,
+        investorName: formData.investor.name,
+        investorType: formData.investor.type,
+        investorEmail: formData.investor.email,
+        structureId:
+          typeof formData.structure === 'object' && formData.structure
+            ? formData.structure.id
+            : null,
+        structureName,
+        isDirect: formData.structure === 'direct',
+        fundId: formData.fund,
+        fundName,
+        shareClass: formData.shareClass,
+        numberOfShares: formData.numberOfShares,
+        totalAmount: calculatedAmount,
+        distributorId: formData.distributor,
+        distributorName,
+        entryFeePercent: calculatedEntryFeePercent,
+        totalFees: calculatedFees,
+      },
       contrepartie: {
         name: formData.investor.name,
         id: `INV-${Math.floor(1000 + Math.random() * 9000)}`,
         type: formData.investor.type,
-        structure: typeof formData.structure === 'object' ? formData.structure.name : undefined,
+        structure: structureName || undefined,
         investor: formData.investor.name,
         investorType: formData.investor.type,
         mainContact: formData.investor.email,
-        country: typeof formData.structure === 'object' ? formData.structure.country : 'France',
+        country:
+          typeof formData.structure === 'object' && formData.structure
+            ? formData.structure.country
+            : 'France',
         riskLevel: 'Medium',
         kycStatus: 'to review' as const,
-        crmSegments: ['Retail']
+        crmSegments: ['Retail'],
       },
       exposure: 'None',
       riskLevel: 'Medium',
@@ -461,32 +500,33 @@ export function NewSubscriptionDialog({ open, onClose, onSubscriptionCreated }: 
       decisions: 0,
       analyst: '',
       fund: {
-        name: funds.find(f => f.id === formData.fund)?.name || '',
-        shareClass: formData.shareClass
+        name: fundName,
+        shareClass: formData.shareClass,
       },
       amount: calculatedAmount,
       completionOnboarding: 15, // Draft = faible complétion
       createdAt: new Date(),
       updatedAt: new Date(),
       partenaire: {
-        name: formData.distributor === 'direct' 
-          ? 'Souscription Directe' 
-          : mockDistributors.find(d => d.id === formData.distributor)?.name || 'N/A',
+        name: distributorName,
         id: `PART-${Math.floor(100 + Math.random() * 900)}`,
-        type: 'corporate' as const
+        type: 'corporate' as const,
       },
       lastUpdate: {
         relativeTime: 'Just now',
-        timestamp: Date.now()
+        timestamp: Date.now(),
       },
       details: {
         alerts: [],
         structure: typeof formData.structure === 'object' ? formData.structure : null,
-        distributor: formData.distributor === 'direct' ? 'direct' : mockDistributors.find(d => d.id === formData.distributor),
+        distributor:
+          formData.distributor === 'direct'
+            ? 'direct'
+            : mockDistributors.find((d) => d.id === formData.distributor),
         entryFees: calculatedEntryFeePercent,
         totalFees: calculatedFees,
-        numberOfShares: formData.numberOfShares
-      }
+        numberOfShares: formData.numberOfShares,
+      },
     };
 
     // Appeler la fonction de callback pour ajouter la souscription

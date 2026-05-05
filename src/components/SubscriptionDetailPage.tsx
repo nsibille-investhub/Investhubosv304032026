@@ -621,8 +621,15 @@ export function SubscriptionDetailPage({ subscription, onBack }: SubscriptionDet
   const [note, setNote] = useState('');
   const [notes, setNotes] = useState<Array<{ text: string; date: string; author: string }>>([]);
   
-  // Stepper state
-  const [currentStep, setCurrentStep] = useState(1); // 0: Initialisation, 1: Onboarding, 2: Validation, etc.
+  // Stepper state — newly created subscriptions carry initialStep=0 so they
+  // land on the Initialisation step (the wizard's data is pre-filled below).
+  const [currentStep, setCurrentStep] = useState(
+    typeof (subscription as any).initialStep === 'number'
+      ? (subscription as any).initialStep
+      : 1,
+  ); // 0: Initialisation, 1: Onboarding, 2: Validation, etc.
+
+  const initData = (subscription as any).initData ?? {};
   
   // Question states management
   const [questionStatuses, setQuestionStatuses] = useState<Record<string, QuestionStatus>>({});
@@ -1157,43 +1164,75 @@ export function SubscriptionDetailPage({ subscription, onBack }: SubscriptionDet
                           {/* Investisseur */}
                           <div>
                             <label className="block text-sm font-semibold text-gray-700 mb-2">Investisseur *</label>
-                            <Input placeholder="Sélectionner un investisseur" />
+                            <Input
+                              placeholder="Sélectionner un investisseur"
+                              defaultValue={initData.investorName ?? ''}
+                            />
                           </div>
 
                           {/* Structure */}
                           <div>
                             <label className="block text-sm font-semibold text-gray-700 mb-2">Structure</label>
-                            <Input placeholder="Sélectionner une structure" />
+                            <Input
+                              placeholder="Sélectionner une structure"
+                              defaultValue={
+                                initData.isDirect
+                                  ? 'Investissement en direct (sans structure)'
+                                  : initData.structureName ?? ''
+                              }
+                            />
                           </div>
 
                           {/* Fonds */}
                           <div>
                             <label className="block text-sm font-semibold text-gray-700 mb-2">Fonds *</label>
-                            <Input placeholder="Sélectionner un fonds" />
+                            <Input
+                              placeholder="Sélectionner un fonds"
+                              defaultValue={initData.fundName ?? ''}
+                            />
                           </div>
 
                           {/* Part */}
                           <div>
                             <label className="block text-sm font-semibold text-gray-700 mb-2">Part *</label>
-                            <Input placeholder="Sélectionner une part" />
+                            <Input
+                              placeholder="Sélectionner une part"
+                              defaultValue={
+                                initData.shareClass ? `Part ${initData.shareClass}` : ''
+                              }
+                            />
                           </div>
 
                           {/* Nombre de parts */}
                           <div className="grid grid-cols-2 gap-4">
                             <div>
                               <label className="block text-sm font-semibold text-gray-700 mb-2">Nombre de parts *</label>
-                              <Input type="number" placeholder="0" />
+                              <Input
+                                type="number"
+                                placeholder="0"
+                                defaultValue={initData.numberOfShares ?? ''}
+                              />
                             </div>
                             <div>
                               <label className="block text-sm font-semibold text-gray-700 mb-2">Montant total *</label>
-                              <Input placeholder="0 €" />
+                              <Input
+                                placeholder="0 €"
+                                defaultValue={
+                                  typeof initData.totalAmount === 'number'
+                                    ? `${initData.totalAmount.toLocaleString('fr-FR')} €`
+                                    : ''
+                                }
+                              />
                             </div>
                           </div>
 
                           {/* Partenaire */}
                           <div>
                             <label className="block text-sm font-semibold text-gray-700 mb-2">Partenaire en charge</label>
-                            <Input placeholder="Sélectionner un partenaire" />
+                            <Input
+                              placeholder="Sélectionner un partenaire"
+                              defaultValue={initData.distributorName ?? ''}
+                            />
                           </div>
 
                           <Separator />
