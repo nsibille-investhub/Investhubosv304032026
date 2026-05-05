@@ -888,45 +888,29 @@ export function NewSubscriptionDialog({ open, onClose, onSubscriptionCreated }: 
                         </Button>
                       </>
                     ) : (
-                      <div className="flex items-center gap-3 p-3 rounded-xl border border-border bg-card">
-                        <div
-                          className={`size-9 rounded-lg flex items-center justify-center shrink-0 ${
-                            formData.investor.type === 'individual' ? 'bg-primary/15' : 'bg-muted'
-                          }`}
-                        >
-                          {formData.investor.type === 'individual' ? (
-                            <User className="w-4 h-4 text-primary" />
-                          ) : (
-                            <Building2 className="w-4 h-4 text-muted-foreground" />
-                          )}
-                        </div>
-                        <div className="flex-1 min-w-0">
-                          <div className="font-semibold text-sm text-foreground truncate">
-                            {formData.investor.name}
-                          </div>
-                          <div className="flex items-center gap-2 mt-0.5">
-                            <PartyTypeBadge
-                              type={formData.investor.type === 'individual' ? 'individual' : 'corporate'}
-                              label={
-                                formData.investor.type === 'individual'
-                                  ? t('subscriptions.newDialog.shortIndividual')
-                                  : t('subscriptions.newDialog.shortCorporate')
-                              }
-                            />
-                            <span className="text-xs text-muted-foreground truncate">
-                              {formData.investor.email}
-                            </span>
-                          </div>
-                        </div>
-                        <Button
-                          variant="ghost"
-                          size="icon"
+                      <div className="flex h-10 w-full items-center gap-2 rounded-md border border-input bg-white px-3 py-2 text-sm">
+                        <PartyTypeBadge
+                          type={formData.investor.type === 'individual' ? 'individual' : 'corporate'}
+                          label={
+                            formData.investor.type === 'individual'
+                              ? t('subscriptions.newDialog.shortIndividual')
+                              : t('subscriptions.newDialog.shortCorporate')
+                          }
+                        />
+                        <span className="font-medium text-foreground truncate">
+                          {formData.investor.name}
+                        </span>
+                        <span className="text-xs text-muted-foreground truncate hidden sm:inline">
+                          {formData.investor.email}
+                        </span>
+                        <button
+                          type="button"
                           onClick={handleClearInvestor}
-                          className="h-8 w-8 shrink-0"
                           aria-label={t('subscriptions.newDialog.change')}
+                          className="ml-auto inline-flex size-6 items-center justify-center rounded-md text-muted-foreground hover:bg-muted hover:text-foreground transition-colors"
                         >
-                          <X className="w-4 h-4 text-muted-foreground" />
-                        </Button>
+                          <X className="w-3.5 h-3.5" />
+                        </button>
                       </div>
                     )}
                   </div>
@@ -1045,90 +1029,72 @@ export function NewSubscriptionDialog({ open, onClose, onSubscriptionCreated }: 
                         </div>
                       ) : !investorHasStructures ? (
                         /* Investor has no structures — direct is the implicit choice.
-                           Render the same direct-investment chip as below, but with
-                           a discreet '+ Ajouter une structure' action instead of the
-                           clear button (clearing would have nothing to fall back to). */
-                        <div className="flex items-center gap-3 p-3 rounded-xl border border-border bg-card">
-                          <div
-                            className="size-9 rounded-lg flex items-center justify-center shrink-0"
-                            style={{ backgroundColor: 'color-mix(in oklab, var(--success) 12%, transparent)' }}
-                          >
-                            <User className="w-4 h-4" style={{ color: 'var(--success)' }} />
-                          </div>
-                          <div className="flex-1 min-w-0">
-                            <div className="font-semibold text-sm text-foreground truncate">
-                              {t('subscriptions.newDialog.directInvestmentTitle')}
-                            </div>
-                            <div className="text-xs text-muted-foreground truncate">
-                              {t('subscriptions.newDialog.directInvestorDesc', {
-                                name: formData.investor.name,
-                              })}
-                            </div>
-                          </div>
-                          <Button
+                           Same SelectTrigger-styled row as a selected structure, plus
+                           a discreet '+ Ajouter une structure' button on the right. */
+                        <div className="flex h-10 w-full items-center gap-2 rounded-md border border-input bg-white px-3 py-2 text-sm">
+                          <User
+                            className="w-4 h-4 shrink-0"
+                            style={{ color: 'var(--success)' }}
+                          />
+                          <span className="font-medium text-foreground truncate">
+                            {t('subscriptions.newDialog.directInvestmentTitle')}
+                          </span>
+                          <span className="text-xs text-muted-foreground truncate hidden sm:inline">
+                            {t('subscriptions.newDialog.directInvestorDesc', {
+                              name: formData.investor.name,
+                            })}
+                          </span>
+                          <button
                             type="button"
-                            variant="ghost"
-                            size="sm"
                             onClick={() => setShowNewStructureForm(true)}
-                            className="h-8 text-xs gap-1 shrink-0"
+                            className="ml-auto inline-flex items-center gap-1 rounded-md px-2 h-7 text-xs text-primary hover:bg-muted transition-colors"
                           >
                             <Plus className="w-3.5 h-3.5" />
                             {t('subscriptions.newDialog.addStructure')}
-                          </Button>
+                          </button>
                         </div>
                       ) : formData.structure ? (
-                        /* Structure selected — chip with remove button */
-                        <div className="flex items-center gap-3 p-3 rounded-xl border border-border bg-card">
+                        /* Structure selected — SelectTrigger-styled row with × to clear */
+                        <div className="flex h-10 w-full items-center gap-2 rounded-md border border-input bg-white px-3 py-2 text-sm">
                           {formData.structure === 'direct' ? (
                             <>
-                              <div
-                                className="size-9 rounded-lg flex items-center justify-center shrink-0"
-                                style={{ backgroundColor: 'color-mix(in oklab, var(--success) 12%, transparent)' }}
-                              >
-                                <User className="w-4 h-4" style={{ color: 'var(--success)' }} />
-                              </div>
-                              <div className="flex-1 min-w-0">
-                                <div className="font-semibold text-sm text-foreground truncate">
-                                  {t('subscriptions.newDialog.directInvestmentTitle')}
-                                </div>
-                                <div className="text-xs text-muted-foreground truncate">
-                                  {t('subscriptions.newDialog.directInvestorDesc', {
-                                    name: formData.investor.name,
-                                  })}
-                                </div>
-                              </div>
+                              <User
+                                className="w-4 h-4 shrink-0"
+                                style={{ color: 'var(--success)' }}
+                              />
+                              <span className="font-medium text-foreground truncate">
+                                {t('subscriptions.newDialog.directInvestmentTitle')}
+                              </span>
+                              <span className="text-xs text-muted-foreground truncate hidden sm:inline">
+                                {t('subscriptions.newDialog.directInvestorDesc', {
+                                  name: formData.investor.name,
+                                })}
+                              </span>
                             </>
                           ) : typeof formData.structure === 'object' ? (
                             <>
-                              <div className="size-9 rounded-lg bg-muted flex items-center justify-center shrink-0">
-                                <Building2 className="w-4 h-4 text-muted-foreground" />
-                              </div>
-                              <div className="flex-1 min-w-0">
-                                <div className="font-semibold text-sm text-foreground truncate">
-                                  {formData.structure.name}
-                                </div>
-                                <div className="flex items-center gap-2 mt-0.5">
-                                  <span className="text-xs text-muted-foreground inline-flex items-center gap-1 truncate">
-                                    <Hash className="w-3 h-3" />
-                                    {formData.structure.siret}
-                                  </span>
-                                  <span className="text-xs text-muted-foreground inline-flex items-center gap-1 shrink-0">
-                                    <Globe className="w-3 h-3" />
-                                    {formData.structure.country}
-                                  </span>
-                                </div>
-                              </div>
+                              <Building2 className="w-4 h-4 text-muted-foreground shrink-0" />
+                              <span className="font-medium text-foreground truncate">
+                                {formData.structure.name}
+                              </span>
+                              <span className="text-xs text-muted-foreground inline-flex items-center gap-1 truncate hidden sm:inline-flex">
+                                <Hash className="w-3 h-3" />
+                                {formData.structure.siret}
+                              </span>
+                              <span className="text-xs text-muted-foreground inline-flex items-center gap-1 shrink-0 hidden md:inline-flex">
+                                <Globe className="w-3 h-3" />
+                                {formData.structure.country}
+                              </span>
                             </>
                           ) : null}
-                          <Button
-                            variant="ghost"
-                            size="icon"
+                          <button
+                            type="button"
                             onClick={handleClearStructure}
-                            className="h-8 w-8 shrink-0"
                             aria-label={t('subscriptions.newDialog.change')}
+                            className="ml-auto inline-flex size-6 items-center justify-center rounded-md text-muted-foreground hover:bg-muted hover:text-foreground transition-colors"
                           >
-                            <X className="w-4 h-4 text-muted-foreground" />
-                          </Button>
+                            <X className="w-3.5 h-3.5" />
+                          </button>
                         </div>
                       ) : (
                         /* Structure choice list */
@@ -1222,76 +1188,77 @@ export function NewSubscriptionDialog({ open, onClose, onSubscriptionCreated }: 
                     </div>
                     );
                   })()}
-                  {/* Fund Selection — classic select */}
-                  <div className="mb-4 space-y-1.5">
-                    <Label className="text-xs flex items-center gap-1.5">
-                      <Landmark className="w-3.5 h-3.5" />
-                      {t('subscriptions.newDialog.fundLabel')}{' '}
-                      <span className="text-destructive">*</span>
-                    </Label>
-                    <Select
-                      value={formData.fund}
-                      onValueChange={(value) => setFormData({ ...formData, fund: value })}
-                    >
-                      <SelectTrigger className="h-10">
-                        <SelectValue placeholder={t('subscriptions.newDialog.selectFund')} />
-                      </SelectTrigger>
-                      <SelectContent>
-                        {funds.map((fund) => (
-                          <SelectItem key={fund.id} value={fund.id}>
-                            <div className="flex items-center justify-between gap-3 min-w-0 w-full">
-                              <span className="font-medium truncate">{fund.name}</span>
-                              <span className="text-xs text-muted-foreground inline-flex items-center gap-2 shrink-0">
-                                <Badge variant="outline" className="text-[10px] h-4">
-                                  {fund.category}
-                                </Badge>
-                                {fund.aum}
-                              </span>
-                            </div>
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                  </div>
+                  {/* Fonds + Classe + Nombre de parts on one row */}
+                  <div className="grid grid-cols-1 sm:grid-cols-[1fr_140px_140px] gap-3">
+                    <div className="space-y-1.5 min-w-0">
+                      <Label className="text-xs flex items-center gap-1.5">
+                        <Landmark className="w-3.5 h-3.5" />
+                        {t('subscriptions.newDialog.fundLabel')}{' '}
+                        <span className="text-destructive">*</span>
+                      </Label>
+                      <Select
+                        value={formData.fund}
+                        onValueChange={(value) => setFormData({ ...formData, fund: value })}
+                      >
+                        <SelectTrigger className="h-10">
+                          <SelectValue placeholder={t('subscriptions.newDialog.selectFund')} />
+                        </SelectTrigger>
+                        <SelectContent>
+                          {funds.map((fund) => (
+                            <SelectItem key={fund.id} value={fund.id}>
+                              <div className="flex items-center justify-between gap-3 min-w-0 w-full">
+                                <span className="font-medium truncate">{fund.name}</span>
+                                <span className="text-xs text-muted-foreground inline-flex items-center gap-2 shrink-0">
+                                  <Badge variant="outline" className="text-[10px] h-4">
+                                    {fund.category}
+                                  </Badge>
+                                  {fund.aum}
+                                </span>
+                              </div>
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                    </div>
 
-                  {/* Share Class — classic select */}
-                  <div className="mb-4 space-y-1.5">
-                    <Label className="text-xs flex items-center gap-1.5">
-                      <Layers3 className="w-3.5 h-3.5" />
-                      {t('subscriptions.newDialog.shareClassLabel')}{' '}
-                      <span className="text-destructive">*</span>
-                    </Label>
-                    <Select
-                      value={formData.shareClass}
-                      onValueChange={(value) => setFormData({ ...formData, shareClass: value })}
-                    >
-                      <SelectTrigger className="h-10">
-                        <SelectValue placeholder={t('subscriptions.newDialog.selectShareClass')} />
-                      </SelectTrigger>
-                      <SelectContent>
-                        {shareClasses.map((sc) => (
-                          <SelectItem key={sc} value={sc}>
-                            {t('subscriptions.newDialog.shareLabel', { class: sc })}
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                  </div>
+                    <div className="space-y-1.5 min-w-0">
+                      <Label className="text-xs flex items-center gap-1.5">
+                        <Layers3 className="w-3.5 h-3.5" />
+                        {t('subscriptions.newDialog.shareClassLabel')}{' '}
+                        <span className="text-destructive">*</span>
+                      </Label>
+                      <Select
+                        value={formData.shareClass}
+                        onValueChange={(value) => setFormData({ ...formData, shareClass: value })}
+                      >
+                        <SelectTrigger className="h-10">
+                          <SelectValue placeholder={t('subscriptions.newDialog.selectShareClass')} />
+                        </SelectTrigger>
+                        <SelectContent>
+                          {shareClasses.map((sc) => (
+                            <SelectItem key={sc} value={sc}>
+                              {t('subscriptions.newDialog.shareLabel', { class: sc })}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                    </div>
 
-                  {/* Number of Shares - BIG */}
-                  <div className="mb-3">
-                    <Label className="text-xs mb-1 flex items-center gap-1">
-                      <Hash className="w-3.5 h-3.5" />
-                      {t('subscriptions.newDialog.numberOfShares')} <span className="text-destructive">*</span>
-                    </Label>
-                    <Input
-                      type="number"
-                      value={formData.numberOfShares}
-                      onChange={(e) => setFormData({ ...formData, numberOfShares: e.target.value })}
-                      placeholder="100"
-                      className="h-12 text-xl font-semibold text-center"
-                      min="1"
-                    />
+                    <div className="space-y-1.5 min-w-0">
+                      <Label className="text-xs flex items-center gap-1.5">
+                        <Hash className="w-3.5 h-3.5" />
+                        {t('subscriptions.newDialog.numberOfShares')}{' '}
+                        <span className="text-destructive">*</span>
+                      </Label>
+                      <Input
+                        type="number"
+                        value={formData.numberOfShares}
+                        onChange={(e) => setFormData({ ...formData, numberOfShares: e.target.value })}
+                        placeholder="100"
+                        className="h-10 font-semibold text-right"
+                        min="1"
+                      />
+                    </div>
                   </div>
 
                   <Separator className="my-2" />
