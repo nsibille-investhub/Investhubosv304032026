@@ -39,6 +39,7 @@ import {
   ExternalLink,
   Eye,
   Bell,
+  BellOff,
   EyeOff,
   BarChart3,
   Calendar,
@@ -2880,31 +2881,36 @@ export function MassUploadWizard({ isOpen, onClose, existingFolders, inline = fa
 
                           <td className="px-3 py-3 align-top">
                             {homogeneousNotification ? (
-                              // Notification is consolidated at the batch level → show
-                              // the value read-only with a small icon flagging the
-                              // inheritance.
-                              <div className="flex items-start gap-1.5 text-xs text-gray-700">
+                              homogeneousNotification.notify ? (
+                                // Notification consolidée et activée : icône Bell +
+                                // template, indication d'héritage via tooltip.
                                 <Tooltip>
                                   <TooltipTrigger asChild>
-                                    <Layers className="h-3 w-3 text-blue-500 mt-0.5 shrink-0" />
+                                    <div className="flex items-center gap-1.5 text-xs text-gray-700">
+                                      <Bell className="h-3 w-3 text-blue-500 shrink-0" />
+                                      <span className="truncate">
+                                        {availableEmailTemplates.find((tpl) => tpl.value === homogeneousNotification.emailTemplate)?.label ?? '—'}
+                                      </span>
+                                    </div>
                                   </TooltipTrigger>
                                   <TooltipContent>
                                     <span className="text-xs">Notification définie au niveau du lot.</span>
                                   </TooltipContent>
                                 </Tooltip>
-                                <div className="min-w-0">
-                                  {homogeneousNotification.notify ? (
-                                    <>
-                                      <div className="flex items-center gap-1"><Bell className="h-3 w-3 text-gray-400" /> Activée</div>
-                                      <div className="text-[11px] text-gray-500 truncate">
-                                        {availableEmailTemplates.find((tpl) => tpl.value === homogeneousNotification.emailTemplate)?.label ?? '—'}
-                                      </div>
-                                    </>
-                                  ) : (
-                                    <span className="text-gray-500">Désactivée</span>
-                                  )}
-                                </div>
-                              </div>
+                              ) : (
+                                // Notification consolidée et désactivée : cloche barrée + "—".
+                                <Tooltip>
+                                  <TooltipTrigger asChild>
+                                    <div className="flex items-center gap-1.5 text-xs text-gray-500">
+                                      <BellOff className="h-3 w-3 text-gray-400 shrink-0" />
+                                      <span>—</span>
+                                    </div>
+                                  </TooltipTrigger>
+                                  <TooltipContent>
+                                    <span className="text-xs">Notification désactivée au niveau du lot.</span>
+                                  </TooltipContent>
+                                </Tooltip>
+                              )
                             ) : (
                               <div className="space-y-1.5">
                                 <div className="flex items-center gap-2">
