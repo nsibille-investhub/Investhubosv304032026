@@ -85,6 +85,12 @@ export interface Document {
     structure?: string;
     subscription?: string;
   };
+
+  // Batch (lot) — when set, this document belongs to a published batch,
+  // meaning a single consolidated notification was sent for the whole lot.
+  // Documents sharing the same batchId are visually grouped in the listing.
+  batchId?: string;
+  batchName?: string;
 }
 
 export const mockDocuments: Document[] = [
@@ -316,7 +322,9 @@ export const mockDocuments: Document[] = [
                 reporting: true,
                 views: 42,
                 downloads: 15,
-                tags: ['Stratégie', 'Q1 2024', 'HNWI']
+                tags: ['Stratégie', 'Q1 2024', 'HNWI'],
+                batchId: 'batch-hnwi-q1-2024',
+                batchName: 'Lot HNWI — Communication Q1 2024'
               },
               {
                 id: 'doc-pere2-hnwi-2',
@@ -366,7 +374,9 @@ export const mockDocuments: Document[] = [
                 reporting: true,
                 views: 28,
                 downloads: 9,
-                tags: ['Souscription', 'Q1 2024', 'HNWI']
+                tags: ['Souscription', 'Q1 2024', 'HNWI'],
+                batchId: 'batch-hnwi-q1-2024',
+                batchName: 'Lot HNWI — Communication Q1 2024'
               }
             ]
           }

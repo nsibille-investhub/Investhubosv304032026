@@ -522,22 +522,21 @@ export function DocumentAddModal({ isOpen, onClose, folderOptions, defaultFolder
 
   const shareClassOptions = selectedFund !== 'all' ? SHARE_CLASSES_BY_FUND[selectedFund] || [] : [];
 
+  // Documents don't carry a share-class restriction of their own, so the
+  // inherited-restrictions banner only surfaces fund and segment constraints.
   const parentFolderRestrictions = useMemo(() => {
     if (folderInheritedRestrictions && folderInheritedRestrictions[parentFolderId]) {
       const entry = folderInheritedRestrictions[parentFolderId];
       return {
         fund: entry.fund ?? null,
         segments: entry.segments ?? [],
-        shareClass: entry.shareClass ?? null,
       };
     }
     const fallback = collectParentFolderRestrictions(parentFolderId);
-    return { ...fallback, shareClass: null };
+    return { fund: fallback.fund, segments: fallback.segments };
   }, [parentFolderId, folderInheritedRestrictions]);
   const hasParentFolderRestrictions =
-    !!parentFolderRestrictions.fund ||
-    parentFolderRestrictions.segments.length > 0 ||
-    !!parentFolderRestrictions.shareClass;
+    !!parentFolderRestrictions.fund || parentFolderRestrictions.segments.length > 0;
 
   useEffect(() => {
     if (!selectedInvestorProfile) return;
@@ -853,13 +852,6 @@ export function DocumentAddModal({ isOpen, onClose, folderOptions, defaultFolder
                       <Building2 className="w-3.5 h-3.5 text-amber-600" />
                       <span className="text-amber-700 font-medium">{t('ged.addModal.restrictedFund')}</span>
                       <span className="text-amber-900 font-semibold">{parentFolderRestrictions.fund}</span>
-                    </div>
-                  )}
-                  {parentFolderRestrictions.shareClass && (
-                    <div className="inline-flex items-center gap-1.5 rounded-md border border-amber-300 bg-white px-2 py-1 text-xs">
-                      <Building2 className="w-3.5 h-3.5 text-amber-600" />
-                      <span className="text-amber-700 font-medium">{t('ged.addModal.restrictedShare')}</span>
-                      <span className="text-amber-900 font-semibold">{parentFolderRestrictions.shareClass}</span>
                     </div>
                   )}
                   {parentFolderRestrictions.segments.map((segment) => (

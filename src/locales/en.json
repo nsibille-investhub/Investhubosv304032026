@@ -1155,7 +1155,6 @@
       "parentRestrictions": "Parent folder restrictions",
       "parentRestrictionsHint": "This document's targeting will be automatically limited by the restrictions inherited from the parent folder.",
       "restrictedFund": "Restricted fund",
-      "restrictedShare": "Restricted share",
       "restrictedSegment": "Restricted segment",
       "generalDoc": "General document",
       "nominativeDoc": "Nominative document",
