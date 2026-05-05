@@ -450,6 +450,7 @@
       "srDescription": "Create a new subscription in 3 steps",
       "title": "New Subscription",
       "stepCount": "Step {{current}}/3",
+      "singleStepSubtitle": "Initialise the subscription — you can complete it afterwards",
       "steps": {
         "investor": "Investor",
         "details": "Details",

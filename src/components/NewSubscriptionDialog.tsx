@@ -11,9 +11,7 @@ import {
   Sparkles,
   Landmark,
   Layers3,
-  ArrowRight,
   Loader2,
-  ChevronLeft,
   Globe,
   Hash,
   Handshake,
@@ -165,7 +163,6 @@ function findInvestorOfStructure(structureId: string): Investor | null {
 
 export function NewSubscriptionDialog({ open, onClose, onSubscriptionCreated }: NewSubscriptionDialogProps) {
   const { t } = useTranslation();
-  const [step, setStep] = useState(1);
   const [searchQuery, setSearchQuery] = useState('');
   const [structureFilter, setStructureFilter] = useState('');
   const [showAutocomplete, setShowAutocomplete] = useState(false);
@@ -212,7 +209,6 @@ export function NewSubscriptionDialog({ open, onClose, onSubscriptionCreated }: 
   useEffect(() => {
     if (!open) {
       setTimeout(() => {
-        setStep(1);
         setFormData({
           investor: null,
           structure: null,
@@ -232,13 +228,14 @@ export function NewSubscriptionDialog({ open, onClose, onSubscriptionCreated }: 
     }
   }, [open]);
 
-  // Auto-select investor's distributor when investor is selected and moving to step 2
+  // Auto-select investor's attitled distributor as the default whenever the
+  // investor is (re)selected.
   useEffect(() => {
-    if (step === 2 && formData.investor) {
+    if (formData.investor) {
       const defaultDistributor = formData.investor.distributorId || 'direct';
-      setFormData(prev => ({ ...prev, distributor: defaultDistributor }));
+      setFormData((prev) => ({ ...prev, distributor: defaultDistributor }));
     }
-  }, [step, formData.investor]);
+  }, [formData.investor]);
 
   // Filter investors based on search (name or email)
   const filteredInvestors = useMemo(() => {
@@ -317,8 +314,13 @@ export function NewSubscriptionDialog({ open, onClose, onSubscriptionCreated }: 
   }, [calculatedAmount, calculatedEntryFeePercent]);
 
   // Validation
-  const isStep1Valid = formData.investor !== null && formData.structure !== null;
-  const isStep2Valid = formData.fund && formData.shareClass && formData.numberOfShares && parseFloat(formData.numberOfShares) > 0;
+  const isFormValid =
+    formData.investor !== null &&
+    formData.structure !== null &&
+    !!formData.fund &&
+    !!formData.shareClass &&
+    !!formData.numberOfShares &&
+    parseFloat(formData.numberOfShares) > 0;
 
   const handleInvestorSelect = (investor: Investor) => {
     const noStructures = !investor.structures || investor.structures.length === 0;
@@ -544,12 +546,6 @@ export function NewSubscriptionDialog({ open, onClose, onSubscriptionCreated }: 
     onClose();
   };
 
-  const steps = [
-    { number: 1, title: t('subscriptions.newDialog.steps.investor') },
-    { number: 2, title: t('subscriptions.newDialog.steps.details') },
-    { number: 3, title: t('subscriptions.newDialog.steps.confirmation') },
-  ];
-
   return (
     <BigModal open={open} onOpenChange={onClose}>
       <BigModalContent className="p-0 gap-0">
@@ -561,12 +557,17 @@ export function NewSubscriptionDialog({ open, onClose, onSubscriptionCreated }: 
         <div className="flex flex-col h-full overflow-hidden rounded-3xl">
           {/* Header Compact */}
           <div className="px-8 py-4 bg-card border-b border-border">
-            <div className="flex items-center justify-between mb-4">
+            <div className="flex items-center justify-between">
               <div className="flex items-center gap-3">
                 <div className="size-10 rounded-xl bg-primary text-primary-foreground flex items-center justify-center shadow-sm">
                   <Plus className="w-5 h-5" />
                 </div>
-                <h2 className="text-xl font-bold text-foreground">{t('subscriptions.newDialog.title')}</h2>
+                <div>
+                  <h2 className="text-xl font-bold text-foreground">{t('subscriptions.newDialog.title')}</h2>
+                  <p className="text-xs text-muted-foreground">
+                    {t('subscriptions.newDialog.singleStepSubtitle')}
+                  </p>
+                </div>
               </div>
 
               <Button
@@ -578,73 +579,11 @@ export function NewSubscriptionDialog({ open, onClose, onSubscriptionCreated }: 
                 <X className="w-4 h-4 text-muted-foreground" />
               </Button>
             </div>
-
-            {/* Stepper */}
-            <div className="flex items-center">
-              {steps.map((s, idx) => {
-                const isCompleted = step > s.number;
-                const isCurrent = step === s.number;
-                return (
-                  <div key={s.number} className="flex items-center flex-1 min-w-0">
-                    <div className="flex items-center gap-2.5 min-w-0">
-                      <div
-                        className={`flex items-center justify-center size-7 rounded-full text-xs font-semibold shrink-0 transition-colors ${
-                          isCompleted
-                            ? 'text-primary-foreground'
-                            : isCurrent
-                              ? 'bg-primary text-primary-foreground'
-                              : 'bg-muted text-muted-foreground'
-                        }`}
-                        style={
-                          isCompleted ? { backgroundColor: 'var(--success)' } : undefined
-                        }
-                        aria-current={isCurrent ? 'step' : undefined}
-                      >
-                        {isCompleted ? <Check className="w-3.5 h-3.5" /> : s.number}
-                      </div>
-                      <span
-                        className={`text-sm truncate ${
-                          isCurrent
-                            ? 'text-foreground font-semibold'
-                            : isCompleted
-                              ? 'text-foreground font-medium'
-                              : 'text-muted-foreground font-medium'
-                        }`}
-                      >
-                        {s.title}
-                      </span>
-                    </div>
-
-                    {idx < steps.length - 1 && (
-                      <div className="flex-1 mx-3 h-px bg-border relative">
-                        {isCompleted && (
-                          <motion.div
-                            layoutId={`stepper-connector-${idx}`}
-                            className="absolute inset-0"
-                            style={{ backgroundColor: 'var(--success)' }}
-                          />
-                        )}
-                      </div>
-                    )}
-                  </div>
-                );
-              })}
-            </div>
           </div>
 
-          {/* Content - NO SCROLL */}
-          <div className="flex-1 p-8 min-h-0">
-            <AnimatePresence mode="wait">
-              {/* Step 1: Investor & Structure Selection */}
-              {step === 1 && (
-                <motion.div
-                  key="step1"
-                  initial={{ opacity: 0, x: 20 }}
-                  animate={{ opacity: 1, x: 0 }}
-                  exit={{ opacity: 0, x: -20 }}
-                  transition={{ duration: 0.2 }}
-                  className="h-full flex flex-col gap-6"
-                >
+          {/* Single-step content */}
+          <div className="flex-1 overflow-y-auto px-8 py-6">
+            <div className="flex flex-col gap-6">
                   {/* INVESTOR SECTION */}
                   <div className="space-y-2">
                     <Label className="text-xs uppercase tracking-wide font-semibold text-muted-foreground flex items-center gap-1.5">
@@ -1283,19 +1222,6 @@ export function NewSubscriptionDialog({ open, onClose, onSubscriptionCreated }: 
                     </div>
                     );
                   })()}
-                </motion.div>
-              )}
-
-              {/* Step 2: Subscription Details */}
-              {step === 2 && (
-                <motion.div
-                  key="step2"
-                  initial={{ opacity: 0, x: 20 }}
-                  animate={{ opacity: 1, x: 0 }}
-                  exit={{ opacity: 0, x: -20 }}
-                  transition={{ duration: 0.2 }}
-                  className="h-full flex flex-col"
-                >
                   {/* Fund Selection — classic select */}
                   <div className="mb-4 space-y-1.5">
                     <Label className="text-xs flex items-center gap-1.5">
@@ -1492,233 +1418,38 @@ export function NewSubscriptionDialog({ open, onClose, onSubscriptionCreated }: 
                       </div>
                     </motion.div>
                   )}
-                </motion.div>
-              )}
-
-              {/* Step 3: Confirmation */}
-              {step === 3 && (
-                <motion.div
-                  key="step3"
-                  initial={{ opacity: 0, x: 20 }}
-                  animate={{ opacity: 1, x: 0 }}
-                  exit={{ opacity: 0, x: -20 }}
-                  transition={{ duration: 0.2 }}
-                  className="h-full flex flex-col"
-                >
-                  <div
-                    className="flex items-center gap-2 p-2 rounded-lg mb-2 border"
-                    style={{
-                      backgroundColor: 'color-mix(in oklab, var(--success) 12%, transparent)',
-                      borderColor: 'color-mix(in oklab, var(--success) 30%, transparent)',
-                    }}
-                  >
-                    <Check className="w-3.5 h-3.5" style={{ color: 'var(--success)' }} />
-                    <span className="text-xs font-semibold text-foreground">{t('subscriptions.newDialog.verifyInfo')}</span>
-                  </div>
-
-                  {/* Investor Card - Compact */}
-                  <div className="p-2 bg-card border border-border rounded-lg mb-2">
-                    <div className="flex items-center justify-between mb-1.5">
-                      <div className="text-xs font-semibold text-muted-foreground uppercase">{t('subscriptions.newDialog.investorCaps')}</div>
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        onClick={() => setStep(1)}
-                        className="h-5 text-xs text-primary hover:text-primary hover:bg-primary/10 px-2"
-                      >
-                        {t('subscriptions.newDialog.modify')}
-                      </Button>
-                    </div>
-                    <div className="flex items-center gap-2">
-                      <div className={`w-8 h-8 rounded-lg flex items-center justify-center flex-shrink-0 ${
-                        formData.investor?.type === 'individual' ? 'bg-primary/15' : 'bg-muted'
-                      }`}>
-                        {formData.investor?.type === 'individual' ? (
-                          <User className="w-4 h-4 text-primary" />
-                        ) : (
-                          <Building2 className="w-4 h-4 text-muted-foreground" />
-                        )}
-                      </div>
-                      <div className="flex-1 min-w-0">
-                        <div className="font-medium text-xs text-foreground truncate">{formData.investor?.name}</div>
-                        <div className="text-xs text-muted-foreground truncate">{formData.investor?.email}</div>
-                      </div>
-                      <Badge variant="outline" className="text-xs h-4 flex-shrink-0">
-                        {formData.investor?.type === 'individual' ? t('subscriptions.newDialog.individual') : t('subscriptions.newDialog.corporate')}
-                      </Badge>
-                    </div>
-                  </div>
-
-                  {/* Structure Card - Compact */}
-                  <div className="p-2 bg-card border border-border rounded-lg mb-2">
-                    <div className="flex items-center justify-between mb-1.5">
-                      <div className="text-xs font-semibold text-muted-foreground uppercase">{t('subscriptions.newDialog.structureCaps')}</div>
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        onClick={() => setStep(1)}
-                        className="h-5 text-xs text-primary hover:text-primary hover:bg-primary/10 px-2"
-                      >
-                        {t('subscriptions.newDialog.modify')}
-                      </Button>
-                    </div>
-                    {formData.structure === 'direct' ? (
-                      <div className="flex items-center gap-2">
-                        <div
-                          className="w-8 h-8 rounded-lg flex items-center justify-center flex-shrink-0"
-                          style={{ backgroundColor: 'color-mix(in oklab, var(--success) 12%, transparent)' }}
-                        >
-                          <User className="w-4 h-4" style={{ color: 'var(--success)' }} />
-                        </div>
-                        <div className="flex-1 min-w-0">
-                          <div className="font-medium text-xs text-foreground">{t('subscriptions.newDialog.directShort')}</div>
-                          <div className="text-xs text-muted-foreground">{t('subscriptions.newDialog.noStructure')}</div>
-                        </div>
-                      </div>
-                    ) : typeof formData.structure === 'object' && formData.structure && (
-                      <div className="flex items-center gap-2">
-                        <div className="w-8 h-8 rounded-lg bg-muted flex items-center justify-center flex-shrink-0">
-                          <Building2 className="w-4 h-4 text-muted-foreground" />
-                        </div>
-                        <div className="flex-1 min-w-0">
-                          <div className="font-medium text-xs text-foreground truncate">{formData.structure.name}</div>
-                          <div className="flex items-center gap-2 text-xs text-muted-foreground">
-                            <span className="truncate">{formData.structure.siret}</span>
-                            <span>•</span>
-                            <span>{formData.structure.country}</span>
-                          </div>
-                        </div>
-                      </div>
-                    )}
-                  </div>
-
-                  {/* Fund & Details - Compact */}
-                  <div className="p-2 bg-card border border-border rounded-lg mb-2">
-                    <div className="flex items-center justify-between mb-1.5">
-                      <div className="text-xs font-semibold text-muted-foreground uppercase">{t('subscriptions.newDialog.fundDetailsCaps')}</div>
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        onClick={() => setStep(2)}
-                        className="h-5 text-xs text-primary hover:text-primary hover:bg-primary/10 px-2"
-                      >
-                        {t('subscriptions.newDialog.modify')}
-                      </Button>
-                    </div>
-                    <div className="grid grid-cols-2 gap-x-3 gap-y-1 text-xs">
-                      <div className="text-muted-foreground">{t('subscriptions.newDialog.fundLine')}</div>
-                      <div className="font-medium text-foreground text-right truncate">
-                        {funds.find(f => f.id === formData.fund)?.name}
-                      </div>
-
-                      <div className="text-muted-foreground">{t('subscriptions.newDialog.classLine')}</div>
-                      <div className="font-medium text-foreground text-right">{t('subscriptions.newDialog.shareLabel', { class: formData.shareClass })}</div>
-
-                      <div className="text-muted-foreground">{t('subscriptions.newDialog.sharesLine')}</div>
-                      <div className="font-medium text-foreground text-right">{formData.numberOfShares}</div>
-
-                      <div className="col-span-2"><Separator className="my-1" /></div>
-
-                      <div className="text-muted-foreground">{t('subscriptions.newDialog.distributorLine')}</div>
-                      <div className="font-medium text-foreground text-right truncate">
-                        {formData.distributor === 'direct'
-                          ? t('subscriptions.newDialog.directShort')
-                          : mockDistributors.find(d => d.id === formData.distributor)?.name || 'N/A'}
-                      </div>
-                    </div>
-                  </div>
-
-                  {/* Financial Summary - Compact */}
-                  <div className="p-2 bg-primary/5 border-2 border-primary/30 rounded-lg">
-                    <div className="text-xs font-semibold text-foreground uppercase mb-1.5">{t('subscriptions.newDialog.amountsCaps')}</div>
-                    <div className="space-y-1 text-xs">
-                      <div className="flex justify-between">
-                        <span className="text-foreground">{t('subscriptions.newDialog.amountLine')}</span>
-                        <span className="font-medium text-foreground">{calculatedAmount.toLocaleString('fr-FR')} €</span>
-                      </div>
-                      <div className="flex justify-between items-center">
-                        <div className="flex items-center gap-1">
-                          <span className="text-foreground">{t('subscriptions.newDialog.feesLineWithPercent', { percent: calculatedEntryFeePercent })}</span>
-                          {formData.distributor === 'direct' && (
-                            <Badge variant="outline" className="text-xs h-4" style={{ borderColor: 'var(--success)', color: 'var(--success)' }}>
-                              {t('subscriptions.newDialog.direct')}
-                            </Badge>
-                          )}
-                        </div>
-                        <span
-                          className="font-medium"
-                          style={{ color: calculatedFees === 0 ? 'var(--success)' : 'var(--warning)' }}
-                        >
-                          {calculatedFees.toLocaleString('fr-FR')} €
-                        </span>
-                      </div>
-                      <Separator className="my-1" />
-                      <div className="flex justify-between pt-1">
-                        <span className="font-semibold text-foreground">{t('subscriptions.newDialog.totalLine')}</span>
-                        <span className="font-bold text-primary">
-                          {(calculatedAmount + calculatedFees).toLocaleString('fr-FR')} €
-                        </span>
-                      </div>
-                    </div>
-                  </div>
-                </motion.div>
-              )}
-            </AnimatePresence>
+            </div>
           </div>
 
-          {/* Footer Compact */}
+          {/* Footer */}
           <div className="border-t border-border px-8 py-4 bg-muted">
             <div className="flex items-center justify-between">
               <Button
                 variant="ghost"
-                onClick={() => {
-                  if (step > 1) setStep(step - 1);
-                  else onClose();
-                }}
+                onClick={onClose}
                 disabled={isSubmitting}
                 size="sm"
                 className="h-9"
               >
-                {step === 1 ? (
-                  <>
-                    <X className="w-4 h-4 mr-1" />
-                    {t('subscriptions.newDialog.cancel')}
-                  </>
-                ) : (
-                  <>
-                    <ChevronLeft className="w-4 h-4 mr-1" />
-                    {t('subscriptions.newDialog.previous')}
-                  </>
-                )}
+                <X className="w-4 h-4 mr-1" />
+                {t('subscriptions.newDialog.cancel')}
               </Button>
 
               <Button
-                onClick={() => {
-                  if (step < 3) setStep(step + 1);
-                  else handleSubmit();
-                }}
-                disabled={
-                  (step === 1 && !isStep1Valid) ||
-                  (step === 2 && !isStep2Valid) ||
-                  isSubmitting
-                }
+                onClick={handleSubmit}
+                disabled={!isFormValid || isSubmitting}
                 size="sm"
-                className="bg-primary text-primary-foreground min-w-[120px] h-9"
+                className="bg-primary text-primary-foreground min-w-[180px] h-9"
               >
                 {isSubmitting ? (
                   <>
                     <Loader2 className="w-4 h-4 mr-2 animate-spin" />
                     {t('subscriptions.newDialog.creating')}
                   </>
-                ) : step === 3 ? (
+                ) : (
                   <>
                     <Check className="w-4 h-4 mr-2" />
                     {t('subscriptions.newDialog.create')}
-                  </>
-                ) : (
-                  <>
-                    {t('subscriptions.newDialog.next')}
-                    <ArrowRight className="w-4 h-4 ml-2" />
                   </>
                 )}
               </Button>

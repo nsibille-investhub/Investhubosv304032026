@@ -450,6 +450,7 @@
       "srDescription": "Créez une nouvelle souscription en 3 étapes",
       "title": "Nouvelle Souscription",
       "stepCount": "Étape {{current}}/3",
+      "singleStepSubtitle": "Initialisez la souscription, vous pourrez la compléter ensuite",
       "steps": {
         "investor": "Investisseur",
         "details": "Détails",
