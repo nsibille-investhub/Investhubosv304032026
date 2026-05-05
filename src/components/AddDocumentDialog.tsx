@@ -292,16 +292,16 @@ const availableContactRoles = [
 
 // Templates d'email disponibles
 const availableEmailTemplates = [
-  { value: 'none', label: 'Aucun template', icon: '📭' },
-  { value: 'new_document', label: 'Nouveau document', icon: '📄' },
-  { value: 'capital_call', label: 'Appel de fond', icon: '💰' },
-  { value: 'notification', label: 'Notification générale', icon: '🔔' },
-  { value: 'quarterly_report', label: 'Rapport trimestriel', icon: '📊' },
-  { value: 'tax_document', label: 'Document fiscal', icon: '📋' },
-  { value: 'general_meeting', label: 'Convocation AG', icon: '📅' },
-  { value: 'dividend', label: 'Distribution dividendes', icon: '💵' },
-  { value: 'amendment', label: 'Avenant', icon: '📝' },
-  { value: 'newsletter', label: 'Newsletter', icon: '📰' },
+  { value: 'none', labelKey: 'ged.dataRoom.massUpload.wizard.emailTemplates.none', icon: '📭' },
+  { value: 'new_document', labelKey: 'ged.dataRoom.massUpload.wizard.emailTemplates.newDocument', icon: '📄' },
+  { value: 'capital_call', labelKey: 'ged.dataRoom.massUpload.wizard.emailTemplates.capitalCall', icon: '💰' },
+  { value: 'notification', labelKey: 'ged.dataRoom.massUpload.wizard.emailTemplates.notification', icon: '🔔' },
+  { value: 'quarterly_report', labelKey: 'ged.dataRoom.massUpload.wizard.emailTemplates.quarterlyReport', icon: '📊' },
+  { value: 'tax_document', labelKey: 'ged.dataRoom.massUpload.wizard.emailTemplates.taxDocument', icon: '📋' },
+  { value: 'general_meeting', labelKey: 'ged.dataRoom.massUpload.wizard.emailTemplates.generalMeeting', icon: '📅' },
+  { value: 'dividend', labelKey: 'ged.dataRoom.massUpload.wizard.emailTemplates.dividend', icon: '💵' },
+  { value: 'amendment', labelKey: 'ged.dataRoom.massUpload.wizard.emailTemplates.amendment', icon: '📝' },
+  { value: 'newsletter', labelKey: 'ged.dataRoom.massUpload.wizard.emailTemplates.newsletter', icon: '📰' },
 ];
 
 export function AddDocumentDialog({ isOpen, onClose, type, parentFolder }: AddDocumentDialogProps) {
@@ -2088,7 +2088,7 @@ export function AddDocumentDialog({ isOpen, onClose, type, parentFolder }: AddDo
                               <SelectItem key={template.value} value={template.value} className="hover:bg-blue-50 cursor-pointer">
                                 <div className="flex items-center gap-2">
                                   <span className="text-base">{template.icon}</span>
-                                  <span className="font-medium">{template.label}</span>
+                                  <span className="font-medium">{t(template.labelKey)}</span>
                                 </div>
                               </SelectItem>
                             ))}
