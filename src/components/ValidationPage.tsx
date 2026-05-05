@@ -1012,6 +1012,21 @@ function BatchRowGroup({
     return out;
   }, [docs]);
 
+  // Targeting is "homogeneous" when every document carries the exact same set
+  // of (kind, label) tags. In that case the targeting is shown on the batch
+  // row and children get a "—". Otherwise the batch row shows "—" and each
+  // child renders its own targeting.
+  const isHomogeneousTargeting = useMemo(() => {
+    if (docs.length <= 1) return true;
+    const fingerprint = (doc: ValidationDocument) =>
+      doc.targeting
+        .map((t) => `${t.kind}:${t.label}`)
+        .sort()
+        .join('|');
+    const ref = fingerprint(docs[0]);
+    return docs.every((d) => fingerprint(d) === ref);
+  }, [docs]);
+
   return (
     <>
       {/* Batch header row */}
@@ -1085,7 +1100,20 @@ function BatchRowGroup({
             {formatDate(earliestDate)}
           </span>
         </td>
-        <td className="px-6 py-3">{renderTargeting(aggregatedTargeting, 4)}</td>
+        <td className="px-6 py-3">
+          {isHomogeneousTargeting ? (
+            renderTargeting(aggregatedTargeting, 4)
+          ) : (
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <span className="text-sm text-gray-300 select-none">—</span>
+              </TooltipTrigger>
+              <TooltipContent>
+                <span className="text-xs">Ciblage différent selon les documents — voir chaque ligne.</span>
+              </TooltipContent>
+            </Tooltip>
+          )}
+        </td>
         <td className="px-6 py-3 text-center text-[11px] text-gray-500">—</td>
         <td className="px-6 py-3">
           <StatusBadge label={conf.label} variant={conf.variant} />
@@ -1206,7 +1234,20 @@ function BatchRowGroup({
                 {formatDate(doc.createdAt)}
               </span>
             </td>
-            <td className="px-6 py-2.5">{renderTargeting(doc.targeting)}</td>
+            <td className="px-6 py-2.5">
+              {isHomogeneousTargeting ? (
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <span className="text-sm text-gray-300 select-none">—</span>
+                  </TooltipTrigger>
+                  <TooltipContent>
+                    <span className="text-xs">Ciblage piloté au niveau du lot.</span>
+                  </TooltipContent>
+                </Tooltip>
+              ) : (
+                renderTargeting(doc.targeting)
+              )}
+            </td>
             <td className="px-6 py-2.5 text-center">
               <div className="flex justify-center">
                 <CommentIndicator
