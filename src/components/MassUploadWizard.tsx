@@ -624,23 +624,6 @@ export function MassUploadWizard({ isOpen, onClose, existingFolders, inline = fa
       return next;
     });
 
-  /** Build a sensible default batch from the first selected file. */
-  const buildDefaultBatch = (firstFile: UploadedFile | undefined): UploadBatch => ({
-    id: `batch-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`,
-    name: `Lot ${batches.length + 1}`,
-    validationTeam: firstFile?.validationTeam ?? [],
-    folderMode: 'per-document',
-    globalFolder: firstFile?.folder ?? '',
-    targetingMode: 'per-document',
-    globalTargeting: {
-      targetType: firstFile?.targetType ?? 'all',
-      targetSegments: firstFile?.targetSegments ?? [],
-      targetInvestors: firstFile?.targetInvestors ?? [],
-      targetSubscriptions: firstFile?.targetSubscriptions ?? [],
-      targetFunds: firstFile?.targetFunds ?? [],
-    },
-  });
-
   /** Toggle the bulk-edit form into "create a batch" mode. The batch is not
    * created yet — the form gains a name input and a summary, and the bottom
    * action is replaced by a "Créer le lot" button gated on notification +
@@ -853,21 +836,6 @@ export function MassUploadWizard({ isOpen, onClose, existingFolders, inline = fa
       return updated;
     });
     toast.info('Document détaché du lot');
-  };
-
-  /** Attach an existing standalone file to an existing batch. */
-  const handleAttachToBatch = (fileId: string, batchId: string) => {
-    const batch = batches.find((b) => b.id === batchId);
-    if (!batch) return;
-    setUploadedFiles((prev) =>
-      propagateBatchToFiles(
-        batch,
-        prev.map((f) => (f.id === fileId ? { ...f, batchId } : f)),
-      ),
-    );
-    toast.success('Document rattaché au lot', {
-      description: `« ${batch.name} »`,
-    });
   };
 
   /** Update a batch (and propagate consolidated/global fields to its files). */
@@ -2946,14 +2914,6 @@ export function MassUploadWizard({ isOpen, onClose, existingFolders, inline = fa
                           </td>
                         </tr>
                       );
-                    };
-                    // Render the batch header row (banner + inline configuration panel).
-                    // Targeting summary string (e.g. "Segments · HNWI") for the global mode.
-                    const renderTargetingSummary = (t: UploadBatch['globalTargeting']) => {
-                      const typeMap: Record<string, string> = { all: 'Tous', segment: 'Segments', investor: 'Investisseurs', subscription: 'Souscriptions', fund: 'Fonds' };
-                      const head = typeMap[t.targetType] ?? t.targetType;
-                      const tail = (t.targetSegments[0] || t.targetInvestors[0] || t.targetSubscriptions[0] || t.targetFunds[0]) ?? '';
-                      return tail ? `${head} · ${tail}` : head;
                     };
                     // Placeholder shown in the batch header for fields that are piloted
                     // per-document (the value lives on each child row, not on the batch).
