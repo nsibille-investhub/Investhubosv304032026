@@ -26,6 +26,7 @@ import { Button } from './ui/button';
 import { Badge } from './ui/badge';
 import { Separator } from './ui/separator';
 import { Label } from './ui/label';
+import { PartyTypeBadge } from './ui/party-type-badge';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from './ui/select';
 import { toast } from 'sonner';
 import { useTranslation } from '../utils/languageContext';
@@ -768,14 +769,14 @@ export function NewSubscriptionDialog({ open, onClose, onSubscriptionCreated }: 
                                         onClick={() => handleInvestorSelect(investor)}
                                         className="w-full px-3 py-2 hover:bg-muted transition-colors text-left flex items-center gap-3 border-b border-border last:border-0"
                                       >
-                                        <Badge
-                                          variant="outline"
-                                          className="text-[10px] h-5 shrink-0 uppercase tracking-wide"
-                                        >
-                                          {investor.type === 'individual'
-                                            ? t('subscriptions.newDialog.shortIndividual')
-                                            : t('subscriptions.newDialog.shortCorporate')}
-                                        </Badge>
+                                        <PartyTypeBadge
+                                          type={investor.type === 'individual' ? 'individual' : 'corporate'}
+                                          label={
+                                            investor.type === 'individual'
+                                              ? t('subscriptions.newDialog.shortIndividual')
+                                              : t('subscriptions.newDialog.shortCorporate')
+                                          }
+                                        />
                                         <div className="flex-1 min-w-0">
                                           <div className="text-sm font-medium text-foreground truncate">
                                             {investor.name}
@@ -823,14 +824,14 @@ export function NewSubscriptionDialog({ open, onClose, onSubscriptionCreated }: 
                                           onClick={() => handleInvestorSelect(investor)}
                                           className="w-full px-3 py-2 hover:bg-muted transition-colors text-left flex items-center gap-3 border-b border-border last:border-0"
                                         >
-                                          <Badge
-                                            variant="outline"
-                                            className="text-[10px] h-5 shrink-0 uppercase tracking-wide"
-                                          >
-                                            {investor.type === 'individual'
-                                              ? t('subscriptions.newDialog.shortIndividual')
-                                              : t('subscriptions.newDialog.shortCorporate')}
-                                          </Badge>
+                                          <PartyTypeBadge
+                                            type={investor.type === 'individual' ? 'individual' : 'corporate'}
+                                            label={
+                                              investor.type === 'individual'
+                                                ? t('subscriptions.newDialog.shortIndividual')
+                                                : t('subscriptions.newDialog.shortCorporate')
+                                            }
+                                          />
                                           <div className="flex-1 min-w-0">
                                             <div className="text-sm font-medium text-foreground truncate">
                                               {investor.name}
@@ -926,11 +927,14 @@ export function NewSubscriptionDialog({ open, onClose, onSubscriptionCreated }: 
                             {formData.investor.name}
                           </div>
                           <div className="flex items-center gap-2 mt-0.5">
-                            <Badge variant="outline" className="text-[10px] h-4 shrink-0 uppercase tracking-wide">
-                              {formData.investor.type === 'individual'
-                                ? t('subscriptions.newDialog.shortIndividual')
-                                : t('subscriptions.newDialog.shortCorporate')}
-                            </Badge>
+                            <PartyTypeBadge
+                              type={formData.investor.type === 'individual' ? 'individual' : 'corporate'}
+                              label={
+                                formData.investor.type === 'individual'
+                                  ? t('subscriptions.newDialog.shortIndividual')
+                                  : t('subscriptions.newDialog.shortCorporate')
+                              }
+                            />
                             <span className="text-xs text-muted-foreground truncate">
                               {formData.investor.email}
                             </span>
