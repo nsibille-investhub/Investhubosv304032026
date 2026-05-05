@@ -18,6 +18,7 @@ import {
   Briefcase,
   Euro,
   ChevronDown,
+  ShieldCheck,
 } from 'lucide-react';
 import { BigModal, BigModalContent, BigModalTitle, BigModalDescription } from './ui/big-modal';
 import { Input } from './ui/input';
@@ -28,6 +29,7 @@ import { Label } from './ui/label';
 import { PartyTypeBadge } from './ui/party-type-badge';
 import { Popover, PopoverContent, PopoverTrigger } from './ui/popover';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from './ui/select';
+import { Switch } from './ui/switch';
 import { toast } from 'sonner';
 import { useTranslation } from '../utils/languageContext';
 
@@ -76,6 +78,7 @@ interface FormData {
   numberOfShares: string;
   entryFees: string;
   distributor: string | 'direct'; // ID du distributeur ou 'direct'
+  hasCustodyOption: boolean;
 }
 
 const mockStructures: Structure[] = [
@@ -203,6 +206,7 @@ export function NewSubscriptionDialog({ open, onClose, onSubscriptionCreated }: 
     numberOfShares: '',
     entryFees: '2.5',
     distributor: 'direct',
+    hasCustodyOption: false,
   });
 
   const [newStructure, setNewStructure] = useState({
@@ -224,6 +228,7 @@ export function NewSubscriptionDialog({ open, onClose, onSubscriptionCreated }: 
           numberOfShares: '',
           entryFees: '2.5',
           distributor: 'direct',
+          hasCustodyOption: false,
         });
         setShowNewStructureForm(false);
         setShowNewInvestorForm(false);
@@ -496,6 +501,7 @@ export function NewSubscriptionDialog({ open, onClose, onSubscriptionCreated }: 
         distributorName,
         entryFeePercent: calculatedEntryFeePercent,
         totalFees: calculatedFees,
+        hasCustodyOption: formData.hasCustodyOption,
       },
       contrepartie: {
         name: formData.investor.name,
@@ -1223,10 +1229,10 @@ export function NewSubscriptionDialog({ open, onClose, onSubscriptionCreated }: 
                     </div>
                     );
                   })()}
-                  {/* Fonds + Classe + Nombre de parts + Montant on one row */}
+                  {/* Row 1: Fonds + Part */}
                   <div
                     className="grid gap-3"
-                    style={{ gridTemplateColumns: '1.6fr 0.9fr 0.9fr 1.2fr' }}
+                    style={{ gridTemplateColumns: '1.6fr 1fr' }}
                   >
                     <div className="space-y-1.5 min-w-0">
                       <Label className="text-xs flex items-center gap-1.5">
@@ -1262,7 +1268,7 @@ export function NewSubscriptionDialog({ open, onClose, onSubscriptionCreated }: 
                     <div className="space-y-1.5 min-w-0">
                       <Label className="text-xs flex items-center gap-1.5">
                         <Layers3 className="w-3.5 h-3.5" />
-                        {t('subscriptions.newDialog.shareClassLabel')}{' '}
+                        {t('subscriptions.newDialog.partLabel')}{' '}
                         <span className="text-destructive">*</span>
                       </Label>
                       <Select
@@ -1281,7 +1287,13 @@ export function NewSubscriptionDialog({ open, onClose, onSubscriptionCreated }: 
                         </SelectContent>
                       </Select>
                     </div>
+                  </div>
 
+                  {/* Row 2: Nombre de parts + Montant + Option de conservation */}
+                  <div
+                    className="grid gap-3"
+                    style={{ gridTemplateColumns: '1fr 1.2fr 1.4fr' }}
+                  >
                     <div className="space-y-1.5 min-w-0">
                       <Label className="text-xs flex items-center gap-1.5">
                         <Hash className="w-3.5 h-3.5" />
@@ -1321,6 +1333,30 @@ export function NewSubscriptionDialog({ open, onClose, onSubscriptionCreated }: 
                           price: SHARE_PRICE.toLocaleString('fr-FR'),
                         })}
                       </p>
+                    </div>
+
+                    <div className="space-y-1.5 min-w-0">
+                      <Label className="text-xs flex items-center gap-1.5">
+                        <ShieldCheck className="w-3.5 h-3.5" />
+                        {t('subscriptions.newDialog.custodyOptionLabel')}
+                      </Label>
+                      <label
+                        htmlFor="custody-option-switch"
+                        className="flex h-10 w-full items-center justify-between gap-3 rounded-md border border-input bg-white px-3 py-2 text-sm cursor-pointer hover:bg-muted/40 transition-colors"
+                      >
+                        <span className="text-foreground truncate">
+                          {formData.hasCustodyOption
+                            ? t('subscriptions.newDialog.custodyOptionOn')
+                            : t('subscriptions.newDialog.custodyOptionOff')}
+                        </span>
+                        <Switch
+                          id="custody-option-switch"
+                          checked={formData.hasCustodyOption}
+                          onCheckedChange={(checked) =>
+                            setFormData({ ...formData, hasCustodyOption: checked })
+                          }
+                        />
+                      </label>
                     </div>
                   </div>
 
