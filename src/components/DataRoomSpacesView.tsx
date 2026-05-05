@@ -243,7 +243,16 @@ export function DataRoomSpacesView({
 
                         <div className="flex items-center gap-2 text-sm text-gray-600 mb-4">
                           <TargetIcon className="w-4 h-4 flex-shrink-0" />
-                          <span className="line-clamp-2 text-xs">{space.targeting.userTypes[0] || t('ged.dataRoom.spacesView.noUserType')}</span>
+                          <span className="line-clamp-2 text-xs">
+                            {(() => {
+                              const userType = space.targeting.userTypes[0];
+                              if (!userType) return t('ged.dataRoom.spacesView.noUserType');
+                              const translated = t(`ged.dataRoom.spacesView.userTypeLabels.${userType}`);
+                              return translated.startsWith('ged.dataRoom.spacesView.userTypeLabels.')
+                                ? userType
+                                : translated;
+                            })()}
+                          </span>
                         </div>
                         <div className="space-y-1.5 mb-4">
                           {space.targeting.segments.length > 0 && (
