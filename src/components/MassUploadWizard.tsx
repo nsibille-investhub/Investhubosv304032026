@@ -1231,12 +1231,14 @@ export function MassUploadWizard({ isOpen, onClose, existingFolders, inline = fa
               </div>
               <div>
                 <h2 className="text-sm font-semibold text-gray-900 leading-tight">
-                  Import de documents
+                  {t('ged.dataRoom.massUpload.wizard.headerTitle')}
                 </h2>
                 <p className="text-[11px] text-gray-500 mt-0.5">
                   {isReviewStep
-                    ? `Document ${currentReviewingDocIndex + 1} sur ${uploadedFiles.length}`
-                    : `Étape ${deepReview && currentStep > 1 + uploadedFiles.length ? 'finale' : currentStep} sur ${totalSteps}`
+                    ? t('ged.dataRoom.massUpload.wizard.documentOf', { current: currentReviewingDocIndex + 1, total: uploadedFiles.length })
+                    : (deepReview && currentStep > 1 + uploadedFiles.length
+                        ? t('ged.dataRoom.massUpload.wizard.stepFinal', { total: totalSteps })
+                        : t('ged.dataRoom.massUpload.wizard.stepOf', { current: currentStep, total: totalSteps }))
                   }
                 </p>
               </div>
@@ -1259,8 +1261,8 @@ export function MassUploadWizard({ isOpen, onClose, existingFolders, inline = fa
               {!deepReview ? (
                 // Standard 2-step flow
                 [
-                  { num: 1, label: 'Import', icon: Sparkles },
-                  { num: 2, label: 'Configuration', icon: Check }
+                  { num: 1, label: t('ged.dataRoom.massUpload.wizard.stepImport'), icon: Sparkles },
+                  { num: 2, label: t('ged.dataRoom.massUpload.wizard.stepConfiguration'), icon: Check }
                 ].map((step, idx) => (
                   <div key={step.num} className="flex items-center flex-1">
                     <div className="flex flex-col items-center flex-1">
@@ -1290,9 +1292,9 @@ export function MassUploadWizard({ isOpen, onClose, existingFolders, inline = fa
               ) : (
                 // Deep review flow with 3 steps
                 [
-                  { num: 1, label: 'Import', icon: Sparkles },
-                  { num: 2, label: 'Revue détaillée', icon: Eye, isRange: true },
-                  { num: 3, label: 'Validation finale', icon: Check }
+                  { num: 1, label: t('ged.dataRoom.massUpload.wizard.stepImport'), icon: Sparkles },
+                  { num: 2, label: t('ged.dataRoom.massUpload.wizard.stepDeepReview'), icon: Eye, isRange: true },
+                  { num: 3, label: t('ged.dataRoom.massUpload.wizard.stepFinalValidation'), icon: Check }
                 ].map((step, idx) => {
                   const isActive = step.num === 1 ? currentStep === 1 :
                                    step.num === 2 ? isReviewStep :
@@ -1430,17 +1432,17 @@ export function MassUploadWizard({ isOpen, onClose, existingFolders, inline = fa
                   >
                     <Upload className="h-6 w-6 text-gray-400 mb-2" />
                     <p className="text-sm font-medium text-gray-900">
-                      Choisir un fichier
+                      {t('ged.dataRoom.massUpload.wizard.chooseFile')}
                     </p>
                     <p className="mt-1 text-xs text-gray-500">
-                      50 Mo max
+                      {t('ged.dataRoom.massUpload.wizard.maxSize')}
                     </p>
                     <p className="mt-2 text-[11px] text-gray-400">
-                      Formats acceptés : PDF, DOC, DOCX, XLS, XLSX, PPT, PPTX
+                      {t('ged.dataRoom.massUpload.wizard.formats')}
                     </p>
                     <p className="mt-2 inline-flex items-center gap-1 text-[11px] text-gray-500">
                       <Sparkles className="h-3 w-3" />
-                      L'IA pré-remplit automatiquement les champs
+                      {t('ged.dataRoom.massUpload.wizard.aiAutofill')}
                     </p>
                   </div>
 
@@ -1456,7 +1458,7 @@ export function MassUploadWizard({ isOpen, onClose, existingFolders, inline = fa
                         <div className="flex-1">
                           <div className="flex items-center justify-between gap-3">
                             <h4 className="text-sm font-medium text-gray-900">
-                              Revue détaillée
+                              {t('ged.dataRoom.massUpload.wizard.deepReviewTitle')}
                             </h4>
                             <Switch
                               checked={deepReview}
@@ -1464,7 +1466,7 @@ export function MassUploadWizard({ isOpen, onClose, existingFolders, inline = fa
                             />
                           </div>
                           <p className="mt-1 text-xs text-gray-500">
-                            Examiner chaque document avec son aperçu et ajuster les métadonnées extraites par l'IA avant la validation finale.
+                            {t('ged.dataRoom.massUpload.wizard.deepReviewDesc')}
                           </p>
                         </div>
                       </div>
@@ -1482,13 +1484,13 @@ export function MassUploadWizard({ isOpen, onClose, existingFolders, inline = fa
                       <div className="min-w-0 flex-1">
                         <p className="text-sm font-medium text-gray-900">
                           {fileStats.analyzing > 0
-                            ? 'Analyse IA en cours…'
-                            : 'Upload en cours…'}
+                            ? t('ged.dataRoom.massUpload.wizard.analyzing')
+                            : t('ged.dataRoom.massUpload.wizard.uploading')}
                         </p>
                         <p className="mt-0.5 text-xs text-gray-500">
                           {fileStats.analyzing > 0
-                            ? `${fileStats.analyzing} document(s) — l'IA pré-remplit nom, description, ciblage, droits et tags.`
-                            : `${fileStats.uploading} document(s) en cours de transfert.`}
+                            ? t('ged.dataRoom.massUpload.wizard.analyzingDesc', { count: fileStats.analyzing })
+                            : t('ged.dataRoom.massUpload.wizard.uploadingDesc', { count: fileStats.uploading })}
                         </p>
                       </div>
                     </motion.div>
@@ -1499,7 +1501,7 @@ export function MassUploadWizard({ isOpen, onClose, existingFolders, inline = fa
                     <div className="space-y-2">
                       <div className="flex items-center justify-between">
                         <h4 className="text-sm font-medium text-gray-900">
-                          Fichiers uploadés ({fileStats.uploaded}/{uploadedFiles.length})
+                          {t('ged.dataRoom.massUpload.wizard.uploadedFiles', { uploaded: fileStats.uploaded, total: uploadedFiles.length })}
                         </h4>
                         <button
                           type="button"
@@ -1520,7 +1522,7 @@ export function MassUploadWizard({ isOpen, onClose, existingFolders, inline = fa
                           className="inline-flex items-center gap-1 rounded-md border border-red-200 bg-white px-2 py-1 text-xs font-medium text-red-600 transition-colors hover:bg-red-50 hover:text-red-700 disabled:opacity-40 disabled:hover:bg-white disabled:hover:text-red-600"
                         >
                           <Trash2 className="h-3 w-3" />
-                          Tout supprimer
+                          {t('ged.dataRoom.massUpload.wizard.deleteAll')}
                         </button>
                       </div>
 
@@ -1589,7 +1591,7 @@ export function MassUploadWizard({ isOpen, onClose, existingFolders, inline = fa
                                     file.status === 'analyzing'
                                   }
                                   className="ml-1 flex h-7 w-7 shrink-0 items-center justify-center rounded-md text-gray-400 transition-colors hover:bg-gray-100 hover:text-red-600 disabled:cursor-not-allowed disabled:hover:bg-transparent disabled:hover:text-gray-300"
-                                  aria-label="Supprimer le fichier"
+                                  aria-label={t('ged.dataRoom.massUpload.wizard.removeFileAria')}
                                 >
                                   <Trash2 className="h-3.5 w-3.5" />
                                 </button>
@@ -1618,10 +1620,10 @@ export function MassUploadWizard({ isOpen, onClose, existingFolders, inline = fa
                       <div className="flex-1">
                         <h3 className="font-semibold text-gray-900 mb-1 flex items-center gap-2">
                           <Eye className="w-5 h-5 text-blue-600" />
-                          Document review {currentReviewingDocIndex + 1}/{uploadedFiles.length}
+                          {t('ged.dataRoom.massUpload.wizard.documentReview', { current: currentReviewingDocIndex + 1, total: uploadedFiles.length })}
                         </h3>
                         <p className="text-sm text-gray-600">
-                          Check the document and adjust the metadata extracted by AI
+                          {t('ged.dataRoom.massUpload.wizard.documentReviewDesc')}
                         </p>
                       </div>
                       <Badge className="bg-blue-100 text-blue-700 border-blue-300">
@@ -1888,10 +1890,10 @@ export function MassUploadWizard({ isOpen, onClose, existingFolders, inline = fa
                   <div className="flex flex-col gap-3 border-b border-gray-200 pb-3 sm:flex-row sm:items-end sm:justify-between">
                     <div>
                       <h3 className="text-sm font-semibold text-gray-900">
-                        Configuration des documents
+                        {t('ged.dataRoom.massUpload.wizard.configTitle')}
                       </h3>
                       <p className="mt-0.5 text-xs text-gray-500">
-                        Vérifiez et ajustez les métadonnées pré-remplies par l'IA. Cliquez sur une cellule pour l'éditer.
+                        {t('ged.dataRoom.massUpload.wizard.configSubtitle')}
                       </p>
                     </div>
                     <div className="flex items-center gap-2">
@@ -1964,16 +1966,16 @@ export function MassUploadWizard({ isOpen, onClose, existingFolders, inline = fa
                               link.download = `configuration_documents_${new Date().toISOString().split('T')[0]}.csv`;
                               link.click();
 
-                              toast.success('Configuration exportée', {
-                                description: `${uploadedFiles.length} documents exportés en CSV`
+                              toast.success(t('ged.dataRoom.massUpload.wizard.exportToastTitle'), {
+                                description: t('ged.dataRoom.massUpload.wizard.exportToastDesc', { count: uploadedFiles.length })
                               });
                             }}
                           >
                             <Download className="h-3.5 w-3.5" />
-                            Exporter
+                            {t('ged.dataRoom.massUpload.wizard.export')}
                           </Button>
                         </TooltipTrigger>
-                        <TooltipContent>Exporter la configuration en CSV</TooltipContent>
+                        <TooltipContent>{t('ged.dataRoom.massUpload.wizard.exportTooltip')}</TooltipContent>
                       </Tooltip>
 
                       <Tooltip>
@@ -1997,18 +1999,18 @@ export function MassUploadWizard({ isOpen, onClose, existingFolders, inline = fa
                                     const text = event.target?.result as string;
                                     const lines = text.split('\n');
 
-                                    toast.success('Import en cours…', {
-                                      description: 'Analyse du fichier CSV'
+                                    toast.success(t('ged.dataRoom.massUpload.wizard.importToastTitle'), {
+                                      description: t('ged.dataRoom.massUpload.wizard.importToastDesc')
                                     });
 
                                     setTimeout(() => {
-                                      toast.success('Configuration importée', {
-                                        description: `${lines.length - 1} lignes détectées. Fonctionnalité complète à venir.`
+                                      toast.success(t('ged.dataRoom.massUpload.wizard.importDoneTitle'), {
+                                        description: t('ged.dataRoom.massUpload.wizard.importDoneDesc', { count: lines.length - 1 })
                                       });
                                     }, 500);
                                   } catch (error) {
-                                    toast.error('Erreur d\'import', {
-                                      description: 'Le fichier CSV est invalide'
+                                    toast.error(t('ged.dataRoom.massUpload.wizard.importErrorTitle'), {
+                                      description: t('ged.dataRoom.massUpload.wizard.importErrorDesc')
                                     });
                                   }
                                 };
@@ -2018,10 +2020,10 @@ export function MassUploadWizard({ isOpen, onClose, existingFolders, inline = fa
                             }}
                           >
                             <Upload className="h-3.5 w-3.5" />
-                            Importer
+                            {t('ged.dataRoom.massUpload.wizard.import')}
                           </Button>
                         </TooltipTrigger>
-                        <TooltipContent>Importer une configuration CSV</TooltipContent>
+                        <TooltipContent>{t('ged.dataRoom.massUpload.wizard.importTooltip')}</TooltipContent>
                       </Tooltip>
                     </div>
                   </div>
@@ -2172,7 +2174,7 @@ export function MassUploadWizard({ isOpen, onClose, existingFolders, inline = fa
                                       onValueChange={(value) => setBulkValues((prev) => ({ ...prev, folder: value }))}
                                     >
                                       <SelectTrigger className="h-8 text-xs">
-                                        <SelectValue placeholder="Choisir un dossier…" />
+                                        <SelectValue placeholder={t('ged.dataRoom.massUpload.wizard.selectFolder')} />
                                       </SelectTrigger>
                                       <SelectContent>
                                         {availableFolders.map((folder) => (
@@ -2199,7 +2201,7 @@ export function MassUploadWizard({ isOpen, onClose, existingFolders, inline = fa
                                       onValueChange={(value) => setBulkValues((prev) => ({ ...prev, language: value }))}
                                     >
                                       <SelectTrigger className="h-8 text-xs">
-                                        <SelectValue placeholder="Choisir une langue…" />
+                                        <SelectValue placeholder={t('ged.dataRoom.massUpload.wizard.selectLanguage')} />
                                       </SelectTrigger>
                                       <SelectContent>
                                         {availableLanguages.map((lang) => (
@@ -2247,14 +2249,14 @@ export function MassUploadWizard({ isOpen, onClose, existingFolders, inline = fa
                                         }
                                       >
                                         <SelectTrigger className="h-8 text-xs">
-                                          <SelectValue placeholder="Type de ciblage…" />
+                                          <SelectValue placeholder={t('ged.dataRoom.massUpload.wizard.selectTargetingType')} />
                                         </SelectTrigger>
                                         <SelectContent>
-                                          <SelectItem value="all" className="text-xs"><div className="flex items-center gap-2"><Users className="h-3 w-3 text-gray-500" />Tous</div></SelectItem>
-                                          <SelectItem value="segment" className="text-xs"><div className="flex items-center gap-2"><Users className="h-3 w-3 text-gray-500" />Segments</div></SelectItem>
-                                          <SelectItem value="investor" className="text-xs"><div className="flex items-center gap-2"><Users className="h-3 w-3 text-gray-500" />Investisseurs</div></SelectItem>
-                                          <SelectItem value="subscription" className="text-xs"><div className="flex items-center gap-2"><FileText className="h-3 w-3 text-gray-500" />Souscriptions</div></SelectItem>
-                                          <SelectItem value="fund" className="text-xs"><div className="flex items-center gap-2"><Landmark className="h-3 w-3 text-gray-500" />Fonds</div></SelectItem>
+                                          <SelectItem value="all" className="text-xs"><div className="flex items-center gap-2"><Users className="h-3 w-3 text-gray-500" />{t('ged.dataRoom.massUpload.wizard.targetTypeAll')}</div></SelectItem>
+                                          <SelectItem value="segment" className="text-xs"><div className="flex items-center gap-2"><Users className="h-3 w-3 text-gray-500" />{t('ged.dataRoom.massUpload.wizard.targetTypeSegment')}</div></SelectItem>
+                                          <SelectItem value="investor" className="text-xs"><div className="flex items-center gap-2"><Users className="h-3 w-3 text-gray-500" />{t('ged.dataRoom.massUpload.wizard.targetTypeInvestor')}</div></SelectItem>
+                                          <SelectItem value="subscription" className="text-xs"><div className="flex items-center gap-2"><FileText className="h-3 w-3 text-gray-500" />{t('ged.dataRoom.massUpload.wizard.targetTypeSubscription')}</div></SelectItem>
+                                          <SelectItem value="fund" className="text-xs"><div className="flex items-center gap-2"><Landmark className="h-3 w-3 text-gray-500" />{t('ged.dataRoom.massUpload.wizard.targetTypeFund')}</div></SelectItem>
                                         </SelectContent>
                                       </Select>
 
@@ -2264,7 +2266,7 @@ export function MassUploadWizard({ isOpen, onClose, existingFolders, inline = fa
                                           onValueChange={(value) => updateTargeting({ targetSegments: [value] })}
                                         >
                                           <SelectTrigger className="h-8 text-xs">
-                                            <SelectValue placeholder="Choisir un segment…" />
+                                            <SelectValue placeholder={t('ged.dataRoom.massUpload.wizard.selectSegment')} />
                                           </SelectTrigger>
                                           <SelectContent>
                                             {availableSegments.map((seg) => (
@@ -2280,7 +2282,7 @@ export function MassUploadWizard({ isOpen, onClose, existingFolders, inline = fa
                                           onValueChange={(value) => updateTargeting({ targetInvestors: [value] })}
                                         >
                                           <SelectTrigger className="h-8 text-xs">
-                                            <SelectValue placeholder="Choisir un investisseur…" />
+                                            <SelectValue placeholder={t('ged.dataRoom.massUpload.wizard.selectInvestor')} />
                                           </SelectTrigger>
                                           <SelectContent>
                                             {availableInvestors.map((inv) => (
@@ -2296,7 +2298,7 @@ export function MassUploadWizard({ isOpen, onClose, existingFolders, inline = fa
                                           onValueChange={(value) => updateTargeting({ targetSubscriptions: [value] })}
                                         >
                                           <SelectTrigger className="h-8 text-xs">
-                                            <SelectValue placeholder="Choisir une souscription…" />
+                                            <SelectValue placeholder={t('ged.dataRoom.massUpload.wizard.selectSubscription')} />
                                           </SelectTrigger>
                                           <SelectContent>
                                             {availableInvestors.map((inv) => {
@@ -2319,7 +2321,7 @@ export function MassUploadWizard({ isOpen, onClose, existingFolders, inline = fa
                                             onValueChange={(value) => updateTargeting({ targetFunds: [value] })}
                                           >
                                             <SelectTrigger className="h-8 flex-1 text-xs">
-                                              <SelectValue placeholder="Fonds…" />
+                                              <SelectValue placeholder={t('ged.dataRoom.massUpload.wizard.selectFund')} />
                                             </SelectTrigger>
                                             <SelectContent>
                                               {availableFunds.map((fund) => (
@@ -2332,7 +2334,7 @@ export function MassUploadWizard({ isOpen, onClose, existingFolders, inline = fa
                                             onValueChange={(value) => updateTargeting({ targetSegments: [value] })}
                                           >
                                             <SelectTrigger className="h-8 w-20 text-xs">
-                                              <SelectValue placeholder="Part" />
+                                              <SelectValue placeholder={t('ged.dataRoom.massUpload.wizard.selectPart')} />
                                             </SelectTrigger>
                                             <SelectContent>
                                               <SelectItem value="A" className="text-xs">A</SelectItem>
@@ -2369,7 +2371,7 @@ export function MassUploadWizard({ isOpen, onClose, existingFolders, inline = fa
                                             updateNotification({ notify: checked, emailTemplate: checked ? notification.emailTemplate : '' })
                                           }
                                         />
-                                        <span className="text-xs text-gray-700">Notifier les destinataires</span>
+                                        <span className="text-xs text-gray-700">{t('ged.dataRoom.massUpload.wizard.notifyRecipients')}</span>
                                       </div>
                                       {notification.notify && (
                                         <Select
@@ -2377,7 +2379,7 @@ export function MassUploadWizard({ isOpen, onClose, existingFolders, inline = fa
                                           onValueChange={(value) => updateNotification({ emailTemplate: value })}
                                         >
                                           <SelectTrigger className="h-8 text-xs">
-                                            <SelectValue placeholder="Template…" />
+                                            <SelectValue placeholder={t('ged.dataRoom.massUpload.wizard.selectTemplate')} />
                                           </SelectTrigger>
                                           <SelectContent>
                                             {availableEmailTemplates.map((tpl) => {
@@ -2414,19 +2416,19 @@ export function MassUploadWizard({ isOpen, onClose, existingFolders, inline = fa
                                         }
                                       >
                                         <SelectTrigger className={`h-8 text-xs ${teamMissing ? 'border-red-300 ring-1 ring-red-200' : ''}`}>
-                                          <SelectValue placeholder="Choisir une équipe…" />
+                                          <SelectValue placeholder={t('ged.dataRoom.massUpload.wizard.selectTeam')} />
                                         </SelectTrigger>
                                         <SelectContent>
-                                          <SelectItem value="admin" className="text-xs">Admin</SelectItem>
-                                          <SelectItem value="compliance" className="text-xs">Compliance</SelectItem>
-                                          <SelectItem value="legal" className="text-xs">Juridique</SelectItem>
-                                          <SelectItem value="ir" className="text-xs">Investor Relations</SelectItem>
+                                          <SelectItem value="admin" className="text-xs">{t('ged.dataRoom.massUpload.wizard.teamAdmin')}</SelectItem>
+                                          <SelectItem value="compliance" className="text-xs">{t('ged.dataRoom.massUpload.wizard.teamCompliance')}</SelectItem>
+                                          <SelectItem value="legal" className="text-xs">{t('ged.dataRoom.massUpload.wizard.teamLegal')}</SelectItem>
+                                          <SelectItem value="ir" className="text-xs">{t('ged.dataRoom.massUpload.wizard.teamIR')}</SelectItem>
                                         </SelectContent>
                                       </Select>
                                       {teamMissing && (
                                         <p className="flex items-center gap-1 text-[11px] text-red-600">
                                           <AlertCircle className="h-3 w-3" />
-                                          Aucune équipe de validation sélectionnée.
+                                          {t('ged.dataRoom.massUpload.wizard.noValidationTeam')}
                                         </p>
                                       )}
                                     </div>
@@ -2730,7 +2732,7 @@ export function MassUploadWizard({ isOpen, onClose, existingFolders, inline = fa
                                   onValueChange={(value) => handleUpdateFile(file.id, 'folder', value)}
                                 >
                                   <SelectTrigger className="h-8 text-xs">
-                                    <SelectValue placeholder="Choisir un dossier…" />
+                                    <SelectValue placeholder={t('ged.dataRoom.massUpload.wizard.selectFolder')} />
                                   </SelectTrigger>
                                   <SelectContent>
                                     {availableFolders.map((folder) => (
@@ -2797,11 +2799,11 @@ export function MassUploadWizard({ isOpen, onClose, existingFolders, inline = fa
                                 >
                                   <SelectTrigger className="h-8 text-xs"><SelectValue /></SelectTrigger>
                                   <SelectContent>
-                                    <SelectItem value="all" className="text-xs"><div className="flex items-center gap-2"><Users className="h-3 w-3 text-gray-500" />Tous</div></SelectItem>
-                                    <SelectItem value="segment" className="text-xs"><div className="flex items-center gap-2"><Users className="h-3 w-3 text-gray-500" />Segments</div></SelectItem>
-                                    <SelectItem value="investor" className="text-xs"><div className="flex items-center gap-2"><Users className="h-3 w-3 text-gray-500" />Investisseurs</div></SelectItem>
-                                    <SelectItem value="subscription" className="text-xs"><div className="flex items-center gap-2"><FileText className="h-3 w-3 text-gray-500" />Souscriptions</div></SelectItem>
-                                    <SelectItem value="fund" className="text-xs"><div className="flex items-center gap-2"><Landmark className="h-3 w-3 text-gray-500" />Fonds</div></SelectItem>
+                                    <SelectItem value="all" className="text-xs"><div className="flex items-center gap-2"><Users className="h-3 w-3 text-gray-500" />{t('ged.dataRoom.massUpload.wizard.targetTypeAll')}</div></SelectItem>
+                                    <SelectItem value="segment" className="text-xs"><div className="flex items-center gap-2"><Users className="h-3 w-3 text-gray-500" />{t('ged.dataRoom.massUpload.wizard.targetTypeSegment')}</div></SelectItem>
+                                    <SelectItem value="investor" className="text-xs"><div className="flex items-center gap-2"><Users className="h-3 w-3 text-gray-500" />{t('ged.dataRoom.massUpload.wizard.targetTypeInvestor')}</div></SelectItem>
+                                    <SelectItem value="subscription" className="text-xs"><div className="flex items-center gap-2"><FileText className="h-3 w-3 text-gray-500" />{t('ged.dataRoom.massUpload.wizard.targetTypeSubscription')}</div></SelectItem>
+                                    <SelectItem value="fund" className="text-xs"><div className="flex items-center gap-2"><Landmark className="h-3 w-3 text-gray-500" />{t('ged.dataRoom.massUpload.wizard.targetTypeFund')}</div></SelectItem>
                                   </SelectContent>
                                 </Select>
                                 {file.targetType === 'investor' && (
@@ -2809,7 +2811,7 @@ export function MassUploadWizard({ isOpen, onClose, existingFolders, inline = fa
                                     value={file.targetInvestors[0] ?? ''}
                                     onValueChange={(value) => handleUpdateFile(file.id, 'targetInvestors', [value])}
                                   >
-                                    <SelectTrigger className="h-8 text-xs"><SelectValue placeholder="Choisir un investisseur…" /></SelectTrigger>
+                                    <SelectTrigger className="h-8 text-xs"><SelectValue placeholder={t('ged.dataRoom.massUpload.wizard.selectInvestor')} /></SelectTrigger>
                                     <SelectContent>
                                       {availableInvestors.map((inv) => (
                                         <SelectItem key={inv.id} value={inv.id} className="text-xs">{inv.name}</SelectItem>
@@ -2822,7 +2824,7 @@ export function MassUploadWizard({ isOpen, onClose, existingFolders, inline = fa
                                     value={file.targetSubscriptions[0] ?? ''}
                                     onValueChange={(value) => handleUpdateFile(file.id, 'targetSubscriptions', [value])}
                                   >
-                                    <SelectTrigger className="h-8 text-xs"><SelectValue placeholder="Choisir une souscription…" /></SelectTrigger>
+                                    <SelectTrigger className="h-8 text-xs"><SelectValue placeholder={t('ged.dataRoom.massUpload.wizard.selectSubscription')} /></SelectTrigger>
                                     <SelectContent>
                                       {availableInvestors.map((inv) => {
                                         const fundLabel = fundLabelMap[inv.fund] ?? inv.fund;
@@ -2840,7 +2842,7 @@ export function MassUploadWizard({ isOpen, onClose, existingFolders, inline = fa
                                       value={file.targetFunds[0] ?? ''}
                                       onValueChange={(value) => handleUpdateFile(file.id, 'targetFunds', [value])}
                                     >
-                                      <SelectTrigger className="h-8 flex-1 text-xs"><SelectValue placeholder="Fonds…" /></SelectTrigger>
+                                      <SelectTrigger className="h-8 flex-1 text-xs"><SelectValue placeholder={t('ged.dataRoom.massUpload.wizard.selectFund')} /></SelectTrigger>
                                       <SelectContent>
                                         {availableFunds.map((fund) => (
                                           <SelectItem key={fund.id} value={fund.id} className="text-xs">{fund.name}</SelectItem>
@@ -2851,7 +2853,7 @@ export function MassUploadWizard({ isOpen, onClose, existingFolders, inline = fa
                                       value={file.targetSegments[0] ?? ''}
                                       onValueChange={(value) => handleUpdateFile(file.id, 'targetSegments', [value])}
                                     >
-                                      <SelectTrigger className="h-8 w-20 text-xs"><SelectValue placeholder="Part" /></SelectTrigger>
+                                      <SelectTrigger className="h-8 w-20 text-xs"><SelectValue placeholder={t('ged.dataRoom.massUpload.wizard.selectPart')} /></SelectTrigger>
                                       <SelectContent>
                                         <SelectItem value="A" className="text-xs">A</SelectItem>
                                         <SelectItem value="B" className="text-xs">B</SelectItem>
@@ -2865,7 +2867,7 @@ export function MassUploadWizard({ isOpen, onClose, existingFolders, inline = fa
                                     value={file.targetSegments[0] ?? ''}
                                     onValueChange={(value) => handleUpdateFile(file.id, 'targetSegments', [value])}
                                   >
-                                    <SelectTrigger className="h-8 text-xs"><SelectValue placeholder="Choisir un segment…" /></SelectTrigger>
+                                    <SelectTrigger className="h-8 text-xs"><SelectValue placeholder={t('ged.dataRoom.massUpload.wizard.selectSegment')} /></SelectTrigger>
                                     <SelectContent>
                                       {availableSegments.map((seg) => (
                                         <SelectItem key={seg} value={seg} className="text-xs">{seg}</SelectItem>
@@ -2901,14 +2903,14 @@ export function MassUploadWizard({ isOpen, onClose, existingFolders, inline = fa
                                     checked={file.notify}
                                     onCheckedChange={(checked) => handleUpdateFile(file.id, 'notify', checked)}
                                   />
-                                  <span className="text-xs text-gray-700">Notifier les destinataires</span>
+                                  <span className="text-xs text-gray-700">{t('ged.dataRoom.massUpload.wizard.notifyRecipients')}</span>
                                 </div>
                                 {file.notify && (
                                   <Select
                                     value={file.emailTemplate}
                                     onValueChange={(value) => handleUpdateFile(file.id, 'emailTemplate', value)}
                                   >
-                                    <SelectTrigger className="h-7 text-xs"><SelectValue placeholder="Template…" /></SelectTrigger>
+                                    <SelectTrigger className="h-7 text-xs"><SelectValue placeholder={t('ged.dataRoom.massUpload.wizard.selectTemplate')} /></SelectTrigger>
                                     <SelectContent>
                                       {availableEmailTemplates.map((tpl) => {
                                         const Icon = tpl.icon;
@@ -2933,12 +2935,12 @@ export function MassUploadWizard({ isOpen, onClose, existingFolders, inline = fa
                                 value={file.validationTeam[0] ?? ''}
                                 onValueChange={(value) => handleUpdateFile(file.id, 'validationTeam', [value])}
                               >
-                                <SelectTrigger className="h-8 text-xs"><SelectValue placeholder="Choisir une équipe…" /></SelectTrigger>
+                                <SelectTrigger className="h-8 text-xs"><SelectValue placeholder={t('ged.dataRoom.massUpload.wizard.selectTeam')} /></SelectTrigger>
                                 <SelectContent>
-                                  <SelectItem value="admin" className="text-xs">Admin</SelectItem>
-                                  <SelectItem value="compliance" className="text-xs">Compliance</SelectItem>
-                                  <SelectItem value="legal" className="text-xs">Juridique</SelectItem>
-                                  <SelectItem value="ir" className="text-xs">Investor Relations</SelectItem>
+                                  <SelectItem value="admin" className="text-xs">{t('ged.dataRoom.massUpload.wizard.teamAdmin')}</SelectItem>
+                                  <SelectItem value="compliance" className="text-xs">{t('ged.dataRoom.massUpload.wizard.teamCompliance')}</SelectItem>
+                                  <SelectItem value="legal" className="text-xs">{t('ged.dataRoom.massUpload.wizard.teamLegal')}</SelectItem>
+                                  <SelectItem value="ir" className="text-xs">{t('ged.dataRoom.massUpload.wizard.teamIR')}</SelectItem>
                                 </SelectContent>
                               </Select>
                             )}
@@ -3023,7 +3025,7 @@ export function MassUploadWizard({ isOpen, onClose, existingFolders, inline = fa
                                   onValueChange={(value) => handleUpdateBatch(batch.id, { globalFolder: value })}
                                 >
                                   <SelectTrigger className="h-8 text-xs">
-                                    <SelectValue placeholder="Choisir un dossier…" />
+                                    <SelectValue placeholder={t('ged.dataRoom.massUpload.wizard.selectFolder')} />
                                   </SelectTrigger>
                                   <SelectContent>
                                     {availableFolders.map((folder) => (
@@ -3065,11 +3067,11 @@ export function MassUploadWizard({ isOpen, onClose, existingFolders, inline = fa
                                   >
                                     <SelectTrigger className="h-8 text-xs"><SelectValue /></SelectTrigger>
                                     <SelectContent>
-                                      <SelectItem value="all" className="text-xs"><div className="flex items-center gap-2"><Users className="h-3 w-3 text-gray-500" />Tous</div></SelectItem>
-                                      <SelectItem value="segment" className="text-xs"><div className="flex items-center gap-2"><Users className="h-3 w-3 text-gray-500" />Segments</div></SelectItem>
-                                      <SelectItem value="investor" className="text-xs"><div className="flex items-center gap-2"><Users className="h-3 w-3 text-gray-500" />Investisseurs</div></SelectItem>
-                                      <SelectItem value="subscription" className="text-xs"><div className="flex items-center gap-2"><FileText className="h-3 w-3 text-gray-500" />Souscriptions</div></SelectItem>
-                                      <SelectItem value="fund" className="text-xs"><div className="flex items-center gap-2"><Landmark className="h-3 w-3 text-gray-500" />Fonds</div></SelectItem>
+                                      <SelectItem value="all" className="text-xs"><div className="flex items-center gap-2"><Users className="h-3 w-3 text-gray-500" />{t('ged.dataRoom.massUpload.wizard.targetTypeAll')}</div></SelectItem>
+                                      <SelectItem value="segment" className="text-xs"><div className="flex items-center gap-2"><Users className="h-3 w-3 text-gray-500" />{t('ged.dataRoom.massUpload.wizard.targetTypeSegment')}</div></SelectItem>
+                                      <SelectItem value="investor" className="text-xs"><div className="flex items-center gap-2"><Users className="h-3 w-3 text-gray-500" />{t('ged.dataRoom.massUpload.wizard.targetTypeInvestor')}</div></SelectItem>
+                                      <SelectItem value="subscription" className="text-xs"><div className="flex items-center gap-2"><FileText className="h-3 w-3 text-gray-500" />{t('ged.dataRoom.massUpload.wizard.targetTypeSubscription')}</div></SelectItem>
+                                      <SelectItem value="fund" className="text-xs"><div className="flex items-center gap-2"><Landmark className="h-3 w-3 text-gray-500" />{t('ged.dataRoom.massUpload.wizard.targetTypeFund')}</div></SelectItem>
                                     </SelectContent>
                                   </Select>
                                   {batch.globalTargeting.targetType === 'segment' && (
@@ -3081,7 +3083,7 @@ export function MassUploadWizard({ isOpen, onClose, existingFolders, inline = fa
                                         })
                                       }
                                     >
-                                      <SelectTrigger className="h-7 text-xs"><SelectValue placeholder="Segment…" /></SelectTrigger>
+                                      <SelectTrigger className="h-7 text-xs"><SelectValue placeholder={t('ged.dataRoom.massUpload.wizard.selectSegment')} /></SelectTrigger>
                                       <SelectContent>
                                         {availableSegments.map((seg) => (
                                           <SelectItem key={seg} value={seg} className="text-xs">{seg}</SelectItem>
@@ -3098,7 +3100,7 @@ export function MassUploadWizard({ isOpen, onClose, existingFolders, inline = fa
                                         })
                                       }
                                     >
-                                      <SelectTrigger className="h-7 text-xs"><SelectValue placeholder="Fonds…" /></SelectTrigger>
+                                      <SelectTrigger className="h-7 text-xs"><SelectValue placeholder={t('ged.dataRoom.massUpload.wizard.selectFund')} /></SelectTrigger>
                                       <SelectContent>
                                         {availableFunds.map((fund) => (
                                           <SelectItem key={fund.id} value={fund.id} className="text-xs">{fund.name}</SelectItem>
@@ -3145,7 +3147,7 @@ export function MassUploadWizard({ isOpen, onClose, existingFolders, inline = fa
                                           );
                                         }}
                                       />
-                                      <span className="text-[11px] text-gray-700">Notifier les destinataires</span>
+                                      <span className="text-[11px] text-gray-700">{t('ged.dataRoom.massUpload.wizard.notifyRecipients')}</span>
                                     </div>
                                     <Select
                                       value={homogeneous.emailTemplate}
@@ -3157,7 +3159,7 @@ export function MassUploadWizard({ isOpen, onClose, existingFolders, inline = fa
                                         );
                                       }}
                                     >
-                                      <SelectTrigger className="h-7 text-xs"><SelectValue placeholder="Template…" /></SelectTrigger>
+                                      <SelectTrigger className="h-7 text-xs"><SelectValue placeholder={t('ged.dataRoom.massUpload.wizard.selectTemplate')} /></SelectTrigger>
                                       <SelectContent>
                                         {availableEmailTemplates.map((tpl) => {
                                           const Icon = tpl.icon;
@@ -3182,12 +3184,12 @@ export function MassUploadWizard({ isOpen, onClose, existingFolders, inline = fa
                                   handleUpdateBatch(batch.id, { validationTeam: value ? [value] : [] })
                                 }
                               >
-                                <SelectTrigger className="h-8 text-xs"><SelectValue placeholder="Choisir une équipe…" /></SelectTrigger>
+                                <SelectTrigger className="h-8 text-xs"><SelectValue placeholder={t('ged.dataRoom.massUpload.wizard.selectTeam')} /></SelectTrigger>
                                 <SelectContent>
-                                  <SelectItem value="admin" className="text-xs">Admin</SelectItem>
-                                  <SelectItem value="compliance" className="text-xs">Compliance</SelectItem>
-                                  <SelectItem value="legal" className="text-xs">Juridique</SelectItem>
-                                  <SelectItem value="ir" className="text-xs">Investor Relations</SelectItem>
+                                  <SelectItem value="admin" className="text-xs">{t('ged.dataRoom.massUpload.wizard.teamAdmin')}</SelectItem>
+                                  <SelectItem value="compliance" className="text-xs">{t('ged.dataRoom.massUpload.wizard.teamCompliance')}</SelectItem>
+                                  <SelectItem value="legal" className="text-xs">{t('ged.dataRoom.massUpload.wizard.teamLegal')}</SelectItem>
+                                  <SelectItem value="ir" className="text-xs">{t('ged.dataRoom.massUpload.wizard.teamIR')}</SelectItem>
                                 </SelectContent>
                               </Select>
                             </td>
@@ -3205,7 +3207,7 @@ export function MassUploadWizard({ isOpen, onClose, existingFolders, inline = fa
                                 <Settings className="h-3.5 w-3.5 text-gray-500" />
                               </Button>
                             </TooltipTrigger>
-                            <TooltipContent>Colonnes affichées</TooltipContent>
+                            <TooltipContent>{t('ged.dataRoom.massUpload.wizard.columnsTooltip')}</TooltipContent>
                           </Tooltip>
                         </div>
 
@@ -3220,11 +3222,11 @@ export function MassUploadWizard({ isOpen, onClose, existingFolders, inline = fa
                                       onCheckedChange={handleSelectAll}
                                     />
                                   </th>
-                                  <th className="px-3 py-2.5 text-left min-w-[260px]">Document</th>
-                                  <th className="px-3 py-2.5 text-left min-w-[200px]">Dossier</th>
-                                  <th className="px-3 py-2.5 text-left min-w-[280px]">Ciblage</th>
-                                  <th className="px-3 py-2.5 text-left min-w-[220px]">Notification</th>
-                                  <th className="px-3 py-2.5 text-left min-w-[200px]">Équipes de validation</th>
+                                  <th className="px-3 py-2.5 text-left min-w-[260px]">{t('ged.dataRoom.massUpload.wizard.tableDocument')}</th>
+                                  <th className="px-3 py-2.5 text-left min-w-[200px]">{t('ged.dataRoom.massUpload.wizard.tableFolder')}</th>
+                                  <th className="px-3 py-2.5 text-left min-w-[280px]">{t('ged.dataRoom.massUpload.wizard.tableTargeting')}</th>
+                                  <th className="px-3 py-2.5 text-left min-w-[220px]">{t('ged.dataRoom.massUpload.wizard.tableNotification')}</th>
+                                  <th className="px-3 py-2.5 text-left min-w-[200px]">{t('ged.dataRoom.massUpload.wizard.tableValidationTeams')}</th>
                                 </tr>
                               </thead>
                               <tbody className="divide-y divide-gray-100">
@@ -3247,7 +3249,7 @@ export function MassUploadWizard({ isOpen, onClose, existingFolders, inline = fa
                           {/* Pagination footer */}
                           <div className="flex items-center justify-between border-t border-gray-100 bg-white px-3 py-2">
                             <span className="text-xs text-gray-500">
-                              {startIndex + 1}-{Math.min(startIndex + step2PageSize, totalRows)} sur {totalRows} élément{totalRows > 1 ? 's' : ''}
+                              {t(totalRows > 1 ? 'ged.dataRoom.massUpload.wizard.paginationRangeMany' : 'ged.dataRoom.massUpload.wizard.paginationRangeOne', { start: startIndex + 1, end: Math.min(startIndex + step2PageSize, totalRows), total: totalRows })}
                             </span>
                             <div className="flex items-center gap-2">
                               <Button
@@ -3280,9 +3282,9 @@ export function MassUploadWizard({ isOpen, onClose, existingFolders, inline = fa
                                   <SelectValue />
                                 </SelectTrigger>
                                 <SelectContent>
-                                  <SelectItem value="20" className="text-xs">20 / page</SelectItem>
-                                  <SelectItem value="50" className="text-xs">50 / page</SelectItem>
-                                  <SelectItem value="100" className="text-xs">100 / page</SelectItem>
+                                  <SelectItem value="20" className="text-xs">{t('ged.dataRoom.massUpload.wizard.pageSize', { size: 20 })}</SelectItem>
+                                  <SelectItem value="50" className="text-xs">{t('ged.dataRoom.massUpload.wizard.pageSize', { size: 50 })}</SelectItem>
+                                  <SelectItem value="100" className="text-xs">{t('ged.dataRoom.massUpload.wizard.pageSize', { size: 100 })}</SelectItem>
                                 </SelectContent>
                               </Select>
                             </div>
@@ -3306,12 +3308,12 @@ export function MassUploadWizard({ isOpen, onClose, existingFolders, inline = fa
                   className="gap-2"
                 >
                   <ChevronLeft className="w-4 h-4" />
-                  Cancel
+                  {t('ged.dataRoom.massUpload.wizard.cancel')}
                 </Button>
                 {isReviewStep && (
                   <Badge variant="outline" className="bg-blue-50 text-blue-700 border-blue-300">
                     <Eye className="w-3 h-3 mr-1" />
-                    Deep review: {currentReviewingDocIndex + 1}/{uploadedFiles.length}
+                    {t('ged.dataRoom.massUpload.wizard.deepReviewBadge', { current: currentReviewingDocIndex + 1, total: uploadedFiles.length })}
                   </Badge>
                 )}
               </div>
@@ -3324,12 +3326,12 @@ export function MassUploadWizard({ isOpen, onClose, existingFolders, inline = fa
                   variant="outline"
                   onClick={() => {
                     handlePrevStep();
-                    toast.info(isReviewStep ? 'Previous document' : 'Previous step');
+                    toast.info(isReviewStep ? t('ged.dataRoom.massUpload.wizard.toastPreviousDocument') : t('ged.dataRoom.massUpload.wizard.toastPreviousStep'));
                   }}
                   className="gap-2"
                 >
                   <ChevronLeft className="w-4 h-4" />
-                  {isReviewStep ? 'Previous' : 'Back'}
+                  {isReviewStep ? t('ged.dataRoom.massUpload.wizard.previous') : t('ged.dataRoom.massUpload.wizard.back')}
                 </Button>
               )}
 
@@ -3339,15 +3341,15 @@ export function MassUploadWizard({ isOpen, onClose, existingFolders, inline = fa
                     if (canGoNext()) {
                       handleNextStep();
                       if (isReviewStep && currentReviewingDocIndex < uploadedFiles.length - 1) {
-                        toast.success('Next document');
+                        toast.success(t('ged.dataRoom.massUpload.wizard.toastNextDocument'));
                       } else if (currentStep === 1) {
-                        toast.success(deepReview ? 'Starting deep review' : 'Document configuration');
+                        toast.success(deepReview ? t('ged.dataRoom.massUpload.wizard.toastStartingDeepReview') : t('ged.dataRoom.massUpload.wizard.toastDocumentConfig'));
                       } else {
-                        toast.success('Final validation');
+                        toast.success(t('ged.dataRoom.massUpload.wizard.toastFinalValidation'));
                       }
                     } else {
-                      toast.error('Action required', {
-                        description: 'Please complete the current step'
+                      toast.error(t('ged.dataRoom.massUpload.wizard.toastActionRequired'), {
+                        description: t('ged.dataRoom.massUpload.wizard.toastActionRequiredDesc')
                       });
                     }
                   }}
@@ -3355,7 +3357,7 @@ export function MassUploadWizard({ isOpen, onClose, existingFolders, inline = fa
                   style={{ background: !canGoNext() ? undefined : 'linear-gradient(62.32deg, #000000 10.53%, #0F323D 88.82%)' }}
                   className={`gap-2 ${!canGoNext() ? '' : 'text-white hover:opacity-90'}`}
                 >
-                  {isReviewStep && currentReviewingDocIndex < uploadedFiles.length - 1 ? 'Next document' : 'Next'}
+                  {isReviewStep && currentReviewingDocIndex < uploadedFiles.length - 1 ? t('ged.dataRoom.massUpload.wizard.nextDocument') : t('ged.dataRoom.massUpload.wizard.next')}
                   <ChevronRight className="w-4 h-4" />
                 </Button>
               )}
@@ -3363,8 +3365,8 @@ export function MassUploadWizard({ isOpen, onClose, existingFolders, inline = fa
               {currentStep === totalSteps && (
                 <Button
                   onClick={() => {
-                    toast.success('Import launched!', {
-                      description: `${uploadedFiles.length} document(s) being imported`,
+                    toast.success(t('ged.dataRoom.massUpload.wizard.toastImportLaunched'), {
+                      description: t('ged.dataRoom.massUpload.wizard.toastImportLaunchedDesc', { count: uploadedFiles.length }),
                       duration: 5000
                     });
                     onClose();
@@ -3373,7 +3375,7 @@ export function MassUploadWizard({ isOpen, onClose, existingFolders, inline = fa
                   className="gap-2 text-white hover:opacity-90"
                 >
                   <Upload className="w-4 h-4" />
-                  Import {uploadedFiles.length} document(s)
+                  {t('ged.dataRoom.massUpload.wizard.importCount', { count: uploadedFiles.length })}
                 </Button>
               )}
             </div>
