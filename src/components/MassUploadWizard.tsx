@@ -39,7 +39,6 @@ import {
   ExternalLink,
   Eye,
   Bell,
-  BellOff,
   EyeOff,
   BarChart3,
   Calendar,
@@ -2640,17 +2639,16 @@ export function MassUploadWizard({ isOpen, onClose, existingFolders, inline = fa
                       return plan;
                     })();
                     // For a batch, the notification is auto-detected as "consolidated"
-                    // when every member shares the same notify + emailTemplate. In that
-                    // case the editor lives on the batch row and children get a small
-                    // icon showing they inherit. Returns the homogeneous values or null.
-                    const getBatchNotification = (batchId: string): { notify: boolean; emailTemplate: string } | null => {
+                    // ONLY when every member is notifying with the exact same template.
+                    // If notifications are absent or differ, the batch row shows "—"
+                    // and each member keeps its own editor.
+                    const getBatchNotification = (batchId: string): { notify: true; emailTemplate: string } | null => {
                       const members = uploadedFiles.filter((f) => f.batchId === batchId);
                       if (members.length === 0) return null;
-                      const ref = { notify: members[0].notify, emailTemplate: members[0].emailTemplate };
-                      const homogeneous = members.every(
-                        (m) => m.notify === ref.notify && m.emailTemplate === ref.emailTemplate,
-                      );
-                      return homogeneous ? ref : null;
+                      if (!members.every((m) => m.notify)) return null;
+                      const ref = members[0].emailTemplate;
+                      if (!members.every((m) => m.emailTemplate === ref)) return null;
+                      return { notify: true, emailTemplate: ref };
                     };
                     // Render a single file row. When `inBatch` is set, fields piloted at
                     // the batch level (folder/targeting in global mode, validation team
@@ -2881,36 +2879,21 @@ export function MassUploadWizard({ isOpen, onClose, existingFolders, inline = fa
 
                           <td className="px-3 py-3 align-top">
                             {homogeneousNotification ? (
-                              homogeneousNotification.notify ? (
-                                // Notification consolidée et activée : icône Bell +
-                                // template, indication d'héritage via tooltip.
-                                <Tooltip>
-                                  <TooltipTrigger asChild>
-                                    <div className="flex items-center gap-1.5 text-xs text-gray-700">
-                                      <Bell className="h-3 w-3 text-blue-500 shrink-0" />
-                                      <span className="truncate">
-                                        {availableEmailTemplates.find((tpl) => tpl.value === homogeneousNotification.emailTemplate)?.label ?? '—'}
-                                      </span>
-                                    </div>
-                                  </TooltipTrigger>
-                                  <TooltipContent>
-                                    <span className="text-xs">Notification définie au niveau du lot.</span>
-                                  </TooltipContent>
-                                </Tooltip>
-                              ) : (
-                                // Notification consolidée et désactivée : cloche barrée + "—".
-                                <Tooltip>
-                                  <TooltipTrigger asChild>
-                                    <div className="flex items-center gap-1.5 text-xs text-gray-500">
-                                      <BellOff className="h-3 w-3 text-gray-400 shrink-0" />
-                                      <span>—</span>
-                                    </div>
-                                  </TooltipTrigger>
-                                  <TooltipContent>
-                                    <span className="text-xs">Notification désactivée au niveau du lot.</span>
-                                  </TooltipContent>
-                                </Tooltip>
-                              )
+                              // Notification consolidée au niveau du lot : icône Bell +
+                              // template, indication d'héritage via tooltip.
+                              <Tooltip>
+                                <TooltipTrigger asChild>
+                                  <div className="flex items-center gap-1.5 text-xs text-gray-700">
+                                    <Bell className="h-3 w-3 text-blue-500 shrink-0" />
+                                    <span className="truncate">
+                                      {availableEmailTemplates.find((tpl) => tpl.value === homogeneousNotification.emailTemplate)?.label ?? '—'}
+                                    </span>
+                                  </div>
+                                </TooltipTrigger>
+                                <TooltipContent>
+                                  <span className="text-xs">Notification définie au niveau du lot.</span>
+                                </TooltipContent>
+                              </Tooltip>
                             ) : (
                               <div className="space-y-1.5">
                                 <div className="flex items-center gap-2">
@@ -3130,67 +3113,62 @@ export function MassUploadWizard({ isOpen, onClose, existingFolders, inline = fa
                             </td>
 
                             {/* Col 5 — Notification : éditeur consolidé quand toutes les
-                                lignes du lot partagent la même valeur, sinon résumé "X/N
-                                notifient" puisque la valeur vit sur chaque ligne. */}
+                                lignes du lot notifient avec le même template, sinon "—"
+                                et chaque ligne enfant garde son propre éditeur. */}
                             <td className="px-3 py-2 align-top">
                               {(() => {
                                 const homogeneous = getBatchNotification(batch.id);
-                                if (homogeneous) {
+                                if (!homogeneous) {
                                   return (
-                                    <div className="space-y-1.5">
-                                      <div className="flex items-center gap-2">
-                                        <Switch
-                                          checked={homogeneous.notify}
-                                          onCheckedChange={(checked) => {
-                                            // Propagate to every member so they stay homogeneous.
-                                            setUploadedFiles((prev) =>
-                                              prev.map((f) =>
-                                                f.batchId === batch.id
-                                                  ? { ...f, notify: checked, emailTemplate: checked ? f.emailTemplate : '' }
-                                                  : f,
-                                              ),
-                                            );
-                                          }}
-                                        />
-                                        <span className="text-[11px] text-gray-700">Notifier les destinataires</span>
-                                      </div>
-                                      {homogeneous.notify && (
-                                        <Select
-                                          value={homogeneous.emailTemplate}
-                                          onValueChange={(value) => {
-                                            setUploadedFiles((prev) =>
-                                              prev.map((f) =>
-                                                f.batchId === batch.id ? { ...f, emailTemplate: value } : f,
-                                              ),
-                                            );
-                                          }}
-                                        >
-                                          <SelectTrigger className="h-7 text-xs"><SelectValue placeholder="Template…" /></SelectTrigger>
-                                          <SelectContent>
-                                            {availableEmailTemplates.map((tpl) => {
-                                              const Icon = tpl.icon;
-                                              return (
-                                                <SelectItem key={tpl.value} value={tpl.value} className="text-xs">
-                                                  <div className="flex items-center gap-2"><Icon className="h-3 w-3 text-gray-500" />{tpl.label}</div>
-                                                </SelectItem>
-                                              );
-                                            })}
-                                          </SelectContent>
-                                        </Select>
-                                      )}
-                                    </div>
+                                    <Tooltip>
+                                      <TooltipTrigger asChild>
+                                        <span className="text-sm text-gray-300 select-none">—</span>
+                                      </TooltipTrigger>
+                                      <TooltipContent>
+                                        <span className="text-xs">Aucune notification consolidée pour le lot — pilotez chaque document individuellement.</span>
+                                      </TooltipContent>
+                                    </Tooltip>
                                   );
                                 }
-                                // Heterogeneous → fall back to a small summary.
-                                const notifyingCount = children.filter((c) => c.notify).length;
-                                const total = children.length;
-                                if (total === 0) {
-                                  return <span className="text-xs text-gray-400">—</span>;
-                                }
                                 return (
-                                  <div className="flex items-center gap-1.5 text-xs text-gray-700">
-                                    <Bell className="h-3 w-3 text-gray-400 shrink-0" />
-                                    <span>{notifyingCount} / {total} notifient</span>
+                                  <div className="space-y-1.5">
+                                    <div className="flex items-center gap-2">
+                                      <Switch
+                                        checked={homogeneous.notify}
+                                        onCheckedChange={(checked) => {
+                                          setUploadedFiles((prev) =>
+                                            prev.map((f) =>
+                                              f.batchId === batch.id
+                                                ? { ...f, notify: checked, emailTemplate: checked ? f.emailTemplate : '' }
+                                                : f,
+                                            ),
+                                          );
+                                        }}
+                                      />
+                                      <span className="text-[11px] text-gray-700">Notifier les destinataires</span>
+                                    </div>
+                                    <Select
+                                      value={homogeneous.emailTemplate}
+                                      onValueChange={(value) => {
+                                        setUploadedFiles((prev) =>
+                                          prev.map((f) =>
+                                            f.batchId === batch.id ? { ...f, emailTemplate: value } : f,
+                                          ),
+                                        );
+                                      }}
+                                    >
+                                      <SelectTrigger className="h-7 text-xs"><SelectValue placeholder="Template…" /></SelectTrigger>
+                                      <SelectContent>
+                                        {availableEmailTemplates.map((tpl) => {
+                                          const Icon = tpl.icon;
+                                          return (
+                                            <SelectItem key={tpl.value} value={tpl.value} className="text-xs">
+                                              <div className="flex items-center gap-2"><Icon className="h-3 w-3 text-gray-500" />{tpl.label}</div>
+                                            </SelectItem>
+                                          );
+                                        })}
+                                      </SelectContent>
+                                    </Select>
                                   </div>
                                 );
                               })()}
