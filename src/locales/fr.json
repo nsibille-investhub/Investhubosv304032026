@@ -526,6 +526,7 @@
       "selectFundFirst": "Sélectionnez d'abord un fonds et une classe",
       "noDistributorsWarning": "Aucun distributeur conventionné. Seule la souscription directe est disponible.",
       "amount": "Montant",
+      "pricePerShareHint": "Prix par part : {{price}} €",
       "feesWithPercent": "Frais ({{percent}}%)",
       "direct": "Direct",
       "total": "Total",

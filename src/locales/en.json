@@ -526,6 +526,7 @@
       "selectFundFirst": "Select a fund and share class first",
       "noDistributorsWarning": "No conventioned distributor. Only direct subscription is available.",
       "amount": "Amount",
+      "pricePerShareHint": "Price per share: €{{price}}",
       "feesWithPercent": "Fees ({{percent}}%)",
       "direct": "Direct",
       "total": "Total",

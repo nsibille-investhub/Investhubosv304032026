@@ -16,6 +16,7 @@ import {
   Hash,
   Handshake,
   Briefcase,
+  Euro,
 } from 'lucide-react';
 import { BigModal, BigModalContent, BigModalTitle, BigModalDescription } from './ui/big-modal';
 import { Input } from './ui/input';
@@ -150,6 +151,9 @@ const funds = [
 ];
 
 const shareClasses = ['A', 'B', 'C', 'I', 'R'];
+
+// Demo-only pricing — real apps fetch this per fund / share class.
+const SHARE_PRICE = 100;
 
 interface StructureWithOwner extends Structure {
   owner: Investor;
@@ -300,12 +304,23 @@ export function NewSubscriptionDialog({ open, onClose, onSubscriptionCreated }: 
     return feeConfig?.entryFeePercent || parseFloat(formData.entryFees) || 2.5;
   }, [formData.distributor, formData.fund, formData.shareClass, formData.entryFees]);
 
-  // Calculate total amount
+  // Calculate total amount (price per share is fixed for the demo).
   const calculatedAmount = useMemo(() => {
     const shares = parseFloat(formData.numberOfShares) || 0;
-    const pricePerShare = 1000;
-    return shares * pricePerShare;
+    return shares * SHARE_PRICE;
   }, [formData.numberOfShares]);
+
+  // Bidirectional binding: typing into Montant infers the number of shares.
+  const handleAmountChange = (raw: string) => {
+    const cleaned = raw.replace(/[^0-9.,]/g, '').replace(',', '.');
+    const amount = parseFloat(cleaned);
+    if (!Number.isFinite(amount) || amount <= 0) {
+      setFormData({ ...formData, numberOfShares: '' });
+      return;
+    }
+    const shares = Math.max(1, Math.round(amount / SHARE_PRICE));
+    setFormData({ ...formData, numberOfShares: String(shares) });
+  };
 
   // Calculate fees based on distributor
   const calculatedFees = useMemo(() => {
@@ -1188,8 +1203,11 @@ export function NewSubscriptionDialog({ open, onClose, onSubscriptionCreated }: 
                     </div>
                     );
                   })()}
-                  {/* Fonds + Classe + Nombre de parts on one row */}
-                  <div className="grid grid-cols-1 sm:grid-cols-[1fr_140px_140px] gap-3">
+                  {/* Fonds + Classe + Nombre de parts + Montant on one row */}
+                  <div
+                    className="grid gap-3"
+                    style={{ gridTemplateColumns: '1.6fr 0.9fr 0.9fr 1.2fr' }}
+                  >
                     <div className="space-y-1.5 min-w-0">
                       <Label className="text-xs flex items-center gap-1.5">
                         <Landmark className="w-3.5 h-3.5" />
@@ -1258,6 +1276,31 @@ export function NewSubscriptionDialog({ open, onClose, onSubscriptionCreated }: 
                         className="h-10 font-semibold text-right"
                         min="1"
                       />
+                    </div>
+
+                    <div className="space-y-1.5 min-w-0">
+                      <Label className="text-xs flex items-center gap-1.5">
+                        <Euro className="w-3.5 h-3.5" />
+                        {t('subscriptions.newDialog.amount')}{' '}
+                        <span className="text-destructive">*</span>
+                      </Label>
+                      <Input
+                        type="text"
+                        inputMode="decimal"
+                        value={
+                          calculatedAmount > 0
+                            ? calculatedAmount.toLocaleString('fr-FR')
+                            : ''
+                        }
+                        onChange={(e) => handleAmountChange(e.target.value)}
+                        placeholder="10 000"
+                        className="h-10 font-semibold text-right"
+                      />
+                      <p className="text-[10px] text-muted-foreground">
+                        {t('subscriptions.newDialog.pricePerShareHint', {
+                          price: SHARE_PRICE.toLocaleString('fr-FR'),
+                        })}
+                      </p>
                     </div>
                   </div>
 
