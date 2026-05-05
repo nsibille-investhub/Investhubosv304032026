@@ -1177,25 +1177,6 @@ export function NewSubscriptionDialog({ open, onClose, onSubscriptionCreated }: 
                                   ))
                                 )}
                               </div>
-
-                              <div className="grid grid-cols-2 gap-2 pt-1">
-                            <Button
-                              onClick={() => setShowNewStructureForm(true)}
-                              variant="outline"
-                              className="border-dashed h-9"
-                            >
-                              <Plus className="w-4 h-4 mr-2" />
-                              {t('subscriptions.newDialog.createNewStructure')}
-                            </Button>
-                            <Button
-                              onClick={handleDirectInvestment}
-                              variant="outline"
-                              className="h-9"
-                            >
-                              <User className="w-4 h-4 mr-2" style={{ color: 'var(--success)' }} />
-                              {t('subscriptions.newDialog.directInvestment')}
-                            </Button>
-                          </div>
                             </div>
                           );
                         })()
