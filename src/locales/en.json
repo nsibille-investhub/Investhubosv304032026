@@ -491,6 +491,7 @@
       "optional": "(optional)",
       "noStructureMatch": "No structure matches \"{{query}}\"",
       "searchStructureInListPlaceholder": "Filter the structures…",
+      "selectStructurePlaceholder": "Select a structure",
       "createInvestorWithName": "Create \"{{query}}\"",
       "searchStructureLabel": "Search a structure (Pappers)",
       "searchStructurePlaceholder": "SIRET or company name...",

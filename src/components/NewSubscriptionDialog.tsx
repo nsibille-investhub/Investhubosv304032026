@@ -17,6 +17,7 @@ import {
   Handshake,
   Briefcase,
   Euro,
+  ChevronDown,
 } from 'lucide-react';
 import { BigModal, BigModalContent, BigModalTitle, BigModalDescription } from './ui/big-modal';
 import { Input } from './ui/input';
@@ -25,6 +26,7 @@ import { Badge } from './ui/badge';
 import { Separator } from './ui/separator';
 import { Label } from './ui/label';
 import { PartyTypeBadge } from './ui/party-type-badge';
+import { Popover, PopoverContent, PopoverTrigger } from './ui/popover';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from './ui/select';
 import { toast } from 'sonner';
 import { useTranslation } from '../utils/languageContext';
@@ -169,6 +171,7 @@ export function NewSubscriptionDialog({ open, onClose, onSubscriptionCreated }: 
   const { t } = useTranslation();
   const [searchQuery, setSearchQuery] = useState('');
   const [structureFilter, setStructureFilter] = useState('');
+  const [structurePickerOpen, setStructurePickerOpen] = useState(false);
   const [showAutocomplete, setShowAutocomplete] = useState(false);
   const [searchFocused, setSearchFocused] = useState(false);
   const [showNewStructureForm, setShowNewStructureForm] = useState(false);
@@ -1112,7 +1115,7 @@ export function NewSubscriptionDialog({ open, onClose, onSubscriptionCreated }: 
                           </button>
                         </div>
                       ) : (
-                        /* Structure choice list */
+                        /* Closed-by-default dropdown picker */
                         (() => {
                           const investorStructures = formData.investor.structures ?? [];
                           const filterQuery = structureFilter.trim().toLowerCase();
@@ -1126,39 +1129,63 @@ export function NewSubscriptionDialog({ open, onClose, onSubscriptionCreated }: 
                             : investorStructures;
 
                           return (
-                            <div className="space-y-3">
-                              {investorStructures.length > 0 && (
-                                <div className="relative">
-                                  <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground z-10" />
-                                  <Input
-                                    placeholder={t('subscriptions.newDialog.searchStructureInListPlaceholder')}
-                                    value={structureFilter}
-                                    onChange={(e) => setStructureFilter(e.target.value)}
-                                    className="pl-10 h-9"
-                                  />
-                                </div>
-                              )}
+                            <Popover
+                              open={structurePickerOpen}
+                              onOpenChange={(open) => {
+                                setStructurePickerOpen(open);
+                                if (!open) setStructureFilter('');
+                              }}
+                            >
+                              <PopoverTrigger asChild>
+                                <button
+                                  type="button"
+                                  className="flex h-10 w-full items-center justify-between gap-2 rounded-md border border-input bg-white px-3 py-2 text-sm hover:bg-muted/40 transition-colors"
+                                >
+                                  <span className="text-muted-foreground">
+                                    {t('subscriptions.newDialog.selectStructurePlaceholder')}
+                                  </span>
+                                  <ChevronDown className="size-4 opacity-50 shrink-0" />
+                                </button>
+                              </PopoverTrigger>
+                              <PopoverContent
+                                align="start"
+                                className="p-0 w-[var(--radix-popover-trigger-width)] min-w-[320px]"
+                              >
+                                {investorStructures.length > 3 && (
+                                  <div className="p-2 border-b border-border">
+                                    <div className="relative">
+                                      <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-muted-foreground z-10" />
+                                      <Input
+                                        autoFocus
+                                        placeholder={t('subscriptions.newDialog.searchStructureInListPlaceholder')}
+                                        value={structureFilter}
+                                        onChange={(e) => setStructureFilter(e.target.value)}
+                                        className="pl-8 h-8 text-sm"
+                                      />
+                                    </div>
+                                  </div>
+                                )}
 
-                              <div className="space-y-2 max-h-[260px] overflow-y-auto">
-                                {investorStructures.length === 0 ? (
-                                  <p className="text-xs text-muted-foreground italic px-1">
-                                    {t('subscriptions.newDialog.noStructureForInvestor')}
-                                  </p>
-                                ) : filteredStructures.length === 0 ? (
-                                  <p className="text-xs text-muted-foreground italic px-1">
-                                    {t('subscriptions.newDialog.noStructureMatch', { query: structureFilter })}
-                                  </p>
-                                ) : (
-                                  filteredStructures.map((structure) => (
-                                    <button
-                                      key={structure.id}
-                                      type="button"
-                                      onClick={() => handleStructureSelect(structure)}
-                                      className="w-full p-3 border border-border rounded-xl text-left transition-colors hover:bg-muted hover:border-primary/40"
-                                    >
-                                      <div className="flex items-center gap-3">
-                                        <div className="size-8 rounded-md bg-muted flex items-center justify-center shrink-0">
-                                          <Building2 className="w-4 h-4 text-muted-foreground" />
+                                <div className="max-h-[260px] overflow-y-auto py-1">
+                                  {filteredStructures.length === 0 ? (
+                                    <p className="text-xs text-muted-foreground italic px-3 py-3 text-center">
+                                      {t('subscriptions.newDialog.noStructureMatch', {
+                                        query: structureFilter,
+                                      })}
+                                    </p>
+                                  ) : (
+                                    filteredStructures.map((structure) => (
+                                      <button
+                                        key={structure.id}
+                                        type="button"
+                                        onClick={() => {
+                                          handleStructureSelect(structure);
+                                          setStructurePickerOpen(false);
+                                        }}
+                                        className="w-full px-3 py-2 hover:bg-muted transition-colors text-left flex items-center gap-3"
+                                      >
+                                        <div className="size-7 rounded-md bg-muted flex items-center justify-center shrink-0">
+                                          <Building2 className="w-3.5 h-3.5 text-muted-foreground" />
                                         </div>
                                         <div className="flex-1 min-w-0">
                                           <div className="font-medium text-sm text-foreground truncate">
@@ -1169,15 +1196,27 @@ export function NewSubscriptionDialog({ open, onClose, onSubscriptionCreated }: 
                                             {structure.city ? ` · ${structure.city}` : ''}
                                           </div>
                                         </div>
-                                        <Badge variant="outline" className="text-[10px] h-5 shrink-0">
+                                        <Badge variant="outline" className="text-[10px] h-4 shrink-0">
                                           {structure.country}
                                         </Badge>
-                                      </div>
-                                    </button>
-                                  ))
-                                )}
-                              </div>
-                            </div>
+                                      </button>
+                                    ))
+                                  )}
+                                </div>
+
+                                <button
+                                  type="button"
+                                  onClick={() => {
+                                    setStructurePickerOpen(false);
+                                    setShowNewStructureForm(true);
+                                  }}
+                                  className="w-full px-3 py-2 hover:bg-muted transition-colors text-left flex items-center gap-2 border-t border-border text-sm text-primary"
+                                >
+                                  <Plus className="w-4 h-4" />
+                                  {t('subscriptions.newDialog.createNewStructure')}
+                                </button>
+                              </PopoverContent>
+                            </Popover>
                           );
                         })()
                       )}
