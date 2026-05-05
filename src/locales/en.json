@@ -486,7 +486,6 @@
       "shortCorporate": "Corp.",
       "ownedBy": "Linked to {{name}}",
       "noStructureForInvestor": "This investor has no registered structure yet.",
-      "directDefaultLine": "{{name}} will invest directly (no structure).",
       "addStructure": "Add a structure",
       "optional": "(optional)",
       "noStructureMatch": "No structure matches \"{{query}}\"",
