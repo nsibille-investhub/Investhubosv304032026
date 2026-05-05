@@ -77,7 +77,7 @@ interface FormData {
   shareClass: string;
   numberOfShares: string;
   entryFees: string;
-  subscriptionPremium: string; // Prime de souscription (%) - à la main de la SG
+  subscriptionPremium: string; // Prime de souscription (€) - à la main de la SG
   distributor: string | 'direct'; // ID du distributeur ou 'direct'
   hasCustodyOption: boolean;
 }
@@ -344,7 +344,7 @@ export function NewSubscriptionDialog({ open, onClose, onSubscriptionCreated }: 
     return Number.isFinite(v) && v >= 0 ? v : 0;
   }, [formData.entryFees]);
 
-  const subscriptionPremiumPercent = useMemo(() => {
+  const subscriptionPremiumAmount = useMemo(() => {
     const v = parseFloat((formData.subscriptionPremium || '').replace(',', '.'));
     return Number.isFinite(v) && v >= 0 ? v : 0;
   }, [formData.subscriptionPremium]);
@@ -383,14 +383,9 @@ export function NewSubscriptionDialog({ open, onClose, onSubscriptionCreated }: 
     [calculatedAmount, entryFeePercent],
   );
 
-  const calculatedSubscriptionPremium = useMemo(
-    () => calculatedAmount * (subscriptionPremiumPercent / 100),
-    [calculatedAmount, subscriptionPremiumPercent],
-  );
-
   const calculatedFees = useMemo(
-    () => calculatedEntryFees + calculatedSubscriptionPremium,
-    [calculatedEntryFees, calculatedSubscriptionPremium],
+    () => calculatedEntryFees + subscriptionPremiumAmount,
+    [calculatedEntryFees, subscriptionPremiumAmount],
   );
 
   // Validation
@@ -557,9 +552,8 @@ export function NewSubscriptionDialog({ open, onClose, onSubscriptionCreated }: 
         distributorId: formData.distributor,
         distributorName,
         entryFeePercent,
-        subscriptionPremiumPercent,
         entryFeesAmount: calculatedEntryFees,
-        subscriptionPremiumAmount: calculatedSubscriptionPremium,
+        subscriptionPremiumAmount,
         totalFees: calculatedFees,
         hasCustodyOption: formData.hasCustodyOption,
       },
@@ -610,7 +604,7 @@ export function NewSubscriptionDialog({ open, onClose, onSubscriptionCreated }: 
             ? 'direct'
             : mockDistributors.find((d) => d.id === formData.distributor),
         entryFees: entryFeePercent,
-        subscriptionPremium: subscriptionPremiumPercent,
+        subscriptionPremium: subscriptionPremiumAmount,
         totalFees: calculatedFees,
         numberOfShares: formData.numberOfShares,
       },
@@ -1570,7 +1564,7 @@ export function NewSubscriptionDialog({ open, onClose, onSubscriptionCreated }: 
                           placeholder="0"
                           className="h-full border-0 bg-transparent font-semibold text-right shadow-none focus-visible:ring-0 focus-visible:ring-offset-0"
                         />
-                        <span className="ml-1 text-sm text-muted-foreground select-none">%</span>
+                        <span className="ml-1 text-sm text-muted-foreground select-none">€</span>
                       </div>
                       <p className="text-[10px] text-muted-foreground">
                         {t('subscriptions.newDialog.subscriptionPremiumHint')}
@@ -1606,16 +1600,16 @@ export function NewSubscriptionDialog({ open, onClose, onSubscriptionCreated }: 
                             {calculatedEntryFees.toLocaleString('fr-FR')} €
                           </span>
                         </div>
-                        {subscriptionPremiumPercent > 0 && (
+                        {subscriptionPremiumAmount > 0 && (
                           <div className="flex justify-between text-xs">
                             <span className="text-muted-foreground">
-                              {t('subscriptions.newDialog.subscriptionPremiumWithPercent', { percent: subscriptionPremiumPercent })}
+                              {t('subscriptions.newDialog.subscriptionPremiumLabel')}
                             </span>
                             <span
                               className="font-medium"
                               style={{ color: 'var(--warning)' }}
                             >
-                              {calculatedSubscriptionPremium.toLocaleString('fr-FR')} €
+                              {subscriptionPremiumAmount.toLocaleString('fr-FR')} €
                             </span>
                           </div>
                         )}
