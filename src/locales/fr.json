@@ -582,6 +582,20 @@
         "structureCreated": "{{name}} créée avec succès",
         "subscriptionCreated": "Souscription créée !",
         "subscriptionCreatedDesc": "{{investor}} - {{amount}} €"
+      },
+      "notificationSection": {
+        "title": "Notification et langue",
+        "notifyInvestorLabel": "Notifier l'investisseur à la création",
+        "notifyInvestorDescription": "Envoyer le mail d'onboarding pour que l'investisseur puisse démarrer sa souscription.",
+        "notifyDistributorLabel": "Notifier le CGP à la création",
+        "notifyDistributorDescription": "Envoyer le mail d'onboarding au distributeur (souscription intermédiée).",
+        "languageLabel": "Langue de l'onboarding et de la communication",
+        "languageHelper": "Reprend par défaut la langue préférée de l'investisseur.",
+        "languageHelperFallback": "Aucune préférence sur l'investisseur — utilise la langue de la plateforme par défaut.",
+        "languageOptions": {
+          "fr": "Français",
+          "en": "Anglais"
+        }
       }
     }
   },

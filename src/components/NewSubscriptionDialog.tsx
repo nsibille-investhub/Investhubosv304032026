@@ -68,7 +68,13 @@ interface Investor {
   email?: string;
   structures?: Structure[];
   distributorId?: string | null; // Distributeur attitré de l'investisseur
+  preferredLanguage?: SubscriptionLanguage; // Langue de communication préférée
 }
+
+type SubscriptionLanguage = 'fr' | 'en';
+
+const SUBSCRIPTION_LANGUAGES: SubscriptionLanguage[] = ['fr', 'en'];
+const DEFAULT_SUBSCRIPTION_LANGUAGE: SubscriptionLanguage = 'fr';
 
 interface FormData {
   investor: Investor | null;
@@ -80,6 +86,8 @@ interface FormData {
   subscriptionPremium: string; // Prime de souscription (€) - à la main de la SG
   distributor: string | 'direct'; // ID du distributeur ou 'direct'
   hasCustodyOption: boolean;
+  notifyOnCreation: boolean;
+  language: SubscriptionLanguage;
 }
 
 const mockStructures: Structure[] = [
@@ -136,13 +144,13 @@ const mockDistributors: Distributor[] = [
 ];
 
 const mockInvestors: Investor[] = [
-  { id: '1', name: 'Sophie Martin', type: 'individual', email: 'sophie.martin@email.com', structures: [mockStructures[0], mockStructures[2]], distributorId: 'd1' },
-  { id: '2', name: 'Jean Dubois', type: 'individual', email: 'jean.dubois@email.com', structures: [], distributorId: null },
-  { id: '3', name: 'Alpha Capital Holding', type: 'corporate', email: 'contact@alphacapital.com', structures: [mockStructures[0]], distributorId: 'd2' },
-  { id: '4', name: 'Global Invest SARL', type: 'corporate', email: 'info@globalinvest.com', structures: [mockStructures[1]], distributorId: 'd3' },
-  { id: '5', name: 'Marie Bernard', type: 'individual', email: 'marie.bernard@email.com', structures: [mockStructures[2]], distributorId: null },
+  { id: '1', name: 'Sophie Martin', type: 'individual', email: 'sophie.martin@email.com', structures: [mockStructures[0], mockStructures[2]], distributorId: 'd1', preferredLanguage: 'fr' },
+  { id: '2', name: 'Jean Dubois', type: 'individual', email: 'jean.dubois@email.com', structures: [], distributorId: null, preferredLanguage: 'fr' },
+  { id: '3', name: 'Alpha Capital Holding', type: 'corporate', email: 'contact@alphacapital.com', structures: [mockStructures[0]], distributorId: 'd2', preferredLanguage: 'en' },
+  { id: '4', name: 'Global Invest SARL', type: 'corporate', email: 'info@globalinvest.com', structures: [mockStructures[1]], distributorId: 'd3', preferredLanguage: 'fr' },
+  { id: '5', name: 'Marie Bernard', type: 'individual', email: 'marie.bernard@email.com', structures: [mockStructures[2]], distributorId: null, preferredLanguage: 'fr' },
   { id: '6', name: 'Pierre Durand', type: 'individual', email: 'pierre.durand@email.com', structures: [], distributorId: 'd1' },
-  { id: '7', name: 'Claire Petit', type: 'individual', email: 'claire.petit@email.com', structures: [mockStructures[3]], distributorId: 'd4' },
+  { id: '7', name: 'Claire Petit', type: 'individual', email: 'claire.petit@email.com', structures: [mockStructures[3]], distributorId: 'd4', preferredLanguage: 'en' },
   { id: '8', name: 'Thomas Leroy', type: 'individual', email: 'thomas.leroy@email.com', structures: [], distributorId: null },
 ];
 
@@ -215,6 +223,8 @@ export function NewSubscriptionDialog({ open, onClose, onSubscriptionCreated }: 
     subscriptionPremium: '0',
     distributor: 'direct',
     hasCustodyOption: false,
+    notifyOnCreation: true,
+    language: DEFAULT_SUBSCRIPTION_LANGUAGE,
   });
 
   const [newStructure, setNewStructure] = useState({
@@ -238,6 +248,8 @@ export function NewSubscriptionDialog({ open, onClose, onSubscriptionCreated }: 
           subscriptionPremium: '0',
           distributor: 'direct',
           hasCustodyOption: false,
+          notifyOnCreation: true,
+          language: DEFAULT_SUBSCRIPTION_LANGUAGE,
         });
         setShowNewStructureForm(false);
         setShowNewInvestorForm(false);
@@ -271,6 +283,17 @@ export function NewSubscriptionDialog({ open, onClose, onSubscriptionCreated }: 
     }
     setFormData((prev) => (prev.distributor === next ? prev : { ...prev, distributor: next }));
   }, [formData.investor, formData.fund, formData.shareClass]);
+
+  // Default the onboarding/communication language to the selected investor's
+  // preferred language. The user can still override the value manually.
+  const lastSyncedInvestorRef = useRef<string | null>(null);
+  useEffect(() => {
+    const investorId = formData.investor?.id ?? null;
+    if (lastSyncedInvestorRef.current === investorId) return;
+    lastSyncedInvestorRef.current = investorId;
+    const preferred = formData.investor?.preferredLanguage ?? DEFAULT_SUBSCRIPTION_LANGUAGE;
+    setFormData((prev) => (prev.language === preferred ? prev : { ...prev, language: preferred }));
+  }, [formData.investor]);
 
   // Filter investors based on search (name or email)
   const filteredInvestors = useMemo(() => {
@@ -556,6 +579,8 @@ export function NewSubscriptionDialog({ open, onClose, onSubscriptionCreated }: 
         subscriptionPremiumAmount,
         totalFees: calculatedFees,
         hasCustodyOption: formData.hasCustodyOption,
+        notifyOnCreation: formData.notifyOnCreation,
+        language: formData.language,
       },
       contrepartie: {
         name: formData.investor.name,
@@ -1635,6 +1660,81 @@ export function NewSubscriptionDialog({ open, onClose, onSubscriptionCreated }: 
                       </div>
                     </motion.div>
                   )}
+
+                  {/* NOTIFICATION & LANGUAGE SECTION */}
+                  <Separator className="my-2" />
+                  <div className="space-y-3">
+                    <Label className="text-xs uppercase tracking-wide font-semibold text-muted-foreground flex items-center gap-1.5">
+                      <Globe className="w-3.5 h-3.5" />
+                      {t('subscriptions.newDialog.notificationSection.title')}
+                    </Label>
+
+                    {(() => {
+                      const isIntermediated = formData.distributor !== 'direct';
+                      const notifyLabelKey = isIntermediated
+                        ? 'subscriptions.newDialog.notificationSection.notifyDistributorLabel'
+                        : 'subscriptions.newDialog.notificationSection.notifyInvestorLabel';
+                      const notifyDescriptionKey = isIntermediated
+                        ? 'subscriptions.newDialog.notificationSection.notifyDistributorDescription'
+                        : 'subscriptions.newDialog.notificationSection.notifyInvestorDescription';
+                      const hasInvestorPreference = Boolean(formData.investor?.preferredLanguage);
+                      const helperKey = hasInvestorPreference
+                        ? 'subscriptions.newDialog.notificationSection.languageHelper'
+                        : 'subscriptions.newDialog.notificationSection.languageHelperFallback';
+
+                      return (
+                        <>
+                          <label
+                            htmlFor="notify-on-creation-switch"
+                            className="flex w-full items-start justify-between gap-3 rounded-md border border-input bg-white px-3 py-2.5 text-sm cursor-pointer hover:bg-muted/40 transition-colors"
+                          >
+                            <div className="flex-1 min-w-0">
+                              <div className="text-foreground font-medium">
+                                {t(notifyLabelKey)}
+                              </div>
+                              <div className="text-xs text-muted-foreground mt-0.5">
+                                {t(notifyDescriptionKey)}
+                              </div>
+                            </div>
+                            <Switch
+                              id="notify-on-creation-switch"
+                              checked={formData.notifyOnCreation}
+                              onCheckedChange={(checked) =>
+                                setFormData((prev) => ({ ...prev, notifyOnCreation: checked }))
+                              }
+                            />
+                          </label>
+
+                          <div className="space-y-1.5">
+                            <Label className="text-xs flex items-center gap-1.5">
+                              <Globe className="w-3.5 h-3.5" />
+                              {t('subscriptions.newDialog.notificationSection.languageLabel')}
+                            </Label>
+                            <Select
+                              value={formData.language}
+                              onValueChange={(value) =>
+                                setFormData((prev) => ({ ...prev, language: value as SubscriptionLanguage }))
+                              }
+                            >
+                              <SelectTrigger className="h-10">
+                                <SelectValue />
+                              </SelectTrigger>
+                              <SelectContent>
+                                {SUBSCRIPTION_LANGUAGES.map((code) => (
+                                  <SelectItem key={code} value={code}>
+                                    {t(`subscriptions.newDialog.notificationSection.languageOptions.${code}`)}
+                                  </SelectItem>
+                                ))}
+                              </SelectContent>
+                            </Select>
+                            <p className="text-[11px] text-muted-foreground">
+                              {t(helperKey)}
+                            </p>
+                          </div>
+                        </>
+                      );
+                    })()}
+                  </div>
             </div>
           </div>
 
