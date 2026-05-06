@@ -1,6 +1,6 @@
-// Bird View data — sourced from the unified gedFixtures so DataRoom and
-// Bird View stay in sync. Engagement / stats are synthesised here since
-// they are pure UI noise and not part of the document model.
+// Bird View data — derived from the unified gedFixtures. Each document's
+// `targeting` field maps deterministically to the BirdView restrictions
+// (no randomization).
 
 import {
   DocumentSpec,
@@ -10,7 +10,6 @@ import {
   findInvestor,
   getSpaces,
   pseudoRandom,
-  pick,
 } from './gedFixtures';
 import { DocumentCategory } from './documentMockData';
 
@@ -36,6 +35,7 @@ export interface DataRoomDocument {
   subscriptionRestriction?: string;
   fundRestriction?: string;
   segmentRestrictions?: string[];
+  shareClassRestriction?: string;
 }
 
 export interface DataRoomFolder {
@@ -58,23 +58,6 @@ export interface DataRoomSpace {
 let docCounter = 0;
 let folderCounter = 0;
 
-const SUBSCRIPTIONS_BY_INVESTOR: Record<string, string> = {
-  'INV-001': 'SUB-2024-0011',
-  'INV-002': 'SUB-2024-0012',
-  'INV-003': 'SUB-2024-0014',
-  'INV-004': 'SUB-2024-0017',
-  'INV-005': 'SUB-2024-0021',
-  'INV-006': 'SUB-2024-0024',
-  'INV-007': 'SUB-2024-0027',
-  'INV-008': 'SUB-2024-0029',
-  'INV-009': 'SUB-2024-0033',
-  'INV-010': 'SUB-2024-0036',
-  'INV-011': 'SUB-2024-0042',
-  'INV-012': 'SUB-2024-0045',
-};
-
-const allInvestors = Object.keys(SUBSCRIPTIONS_BY_INVESTOR);
-
 const formatDate = (iso: string): string => {
   const [y, m, d] = iso.split('-');
   return `${d}/${m}/${y}`;
@@ -89,9 +72,7 @@ const randomStats = () => ({
 
 const randomEngagement = () => {
   const totalViewers = Math.floor(pseudoRandom() * 12) + 6;
-  const viewedBy = pseudoRandom() < 0.78
-    ? totalViewers
-    : Math.floor(pseudoRandom() * totalViewers);
+  const viewedBy = pseudoRandom() < 0.78 ? totalViewers : Math.floor(pseudoRandom() * totalViewers);
   return { viewedBy, totalViewers };
 };
 
@@ -113,15 +94,11 @@ const categoryMap = (cat: string): DocumentCategory => {
   }
 };
 
-const ALL_SEGMENTS = ['HNWI', 'UHNWI', 'Family Office', 'Institutional', 'Insurance', 'Pension Fund', 'Sovereign', 'Distributor'];
-
 const toDocument = (
   doc: DocumentSpec,
-  context: { fundName?: string; segments?: string[]; shareClass?: string },
+  context: { fundName?: string; segments?: string[] },
 ): DataRoomDocument => {
   docCounter++;
-  // Targeting ratio: ~85% nominatif, 10% generic, 3% fund-only, 2% segment-only
-  const roll = pseudoRandom();
   const base: DataRoomDocument = {
     id: `bv-doc-${docCounter}`,
     name: doc.name,
@@ -134,47 +111,34 @@ const toDocument = (
     engagement: randomEngagement(),
   };
 
-  // Document-level explicit nominatif (subscription, side letter, statement…)
-  if (doc.investorId) {
-    const inv = findInvestor(doc.investorId);
-    return {
-      ...base,
-      isNominatif: true,
-      investorRestriction: inv?.name ?? doc.investorId,
-      subscriptionRestriction: SUBSCRIPTIONS_BY_INVESTOR[doc.investorId],
-      fundRestriction: context.fundName,
-    };
+  switch (doc.targeting.mode) {
+    case 'fund':
+    case 'fund-internal':
+      return { ...base, fundRestriction: context.fundName };
+    case 'shareClass':
+      return {
+        ...base,
+        fundRestriction: context.fundName,
+        shareClassRestriction: doc.targeting.shareClass,
+      };
+    case 'investor': {
+      const inv = findInvestor(doc.targeting.investorId);
+      return {
+        ...base,
+        isNominatif: true,
+        investorRestriction: inv?.name ?? doc.targeting.investorId,
+        subscriptionRestriction: doc.targeting.subscriptionId,
+        fundRestriction: context.fundName,
+        shareClassRestriction: doc.targeting.shareClass,
+      };
+    }
+    case 'segment':
+      return {
+        ...base,
+        segmentRestrictions: doc.targeting.segments,
+        fundRestriction: context.fundName,
+      };
   }
-
-  if (doc.category === 'capitalCall' || doc.category === 'distribution' || doc.category === 'subscription' || doc.category === 'tax') {
-    const investorId = pick(allInvestors);
-    const inv = findInvestor(investorId);
-    return {
-      ...base,
-      isNominatif: true,
-      investorRestriction: inv?.name,
-      subscriptionRestriction: SUBSCRIPTIONS_BY_INVESTOR[investorId],
-      fundRestriction: context.fundName,
-    };
-  }
-
-  if (roll < 0.7) {
-    return { ...base, fundRestriction: context.fundName, segmentRestrictions: context.segments };
-  }
-  if (roll < 0.85) {
-    const investorId = pick(allInvestors);
-    const inv = findInvestor(investorId);
-    return {
-      ...base,
-      isNominatif: true,
-      investorRestriction: inv?.name,
-      fundRestriction: context.fundName,
-    };
-  }
-  if (roll < 0.95) {
-    return { ...base, segmentRestrictions: context.segments ?? [pick(ALL_SEGMENTS)] };
-  }
-  return base; // pure generic, no restriction
 };
 
 const toFolder = (
@@ -196,7 +160,7 @@ const toFolder = (
     node.children.push(toFolder(sub, { fundName, segments }));
   }
   for (const doc of folder.documents ?? []) {
-    node.children.push(toDocument(doc, { fundName, segments, shareClass: folder.shareClass }));
+    node.children.push(toDocument(doc, { fundName, segments }));
   }
   return node;
 };
