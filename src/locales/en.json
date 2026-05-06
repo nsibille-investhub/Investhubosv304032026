@@ -700,6 +700,270 @@
       "oneMonthAgo": "1 month ago",
       "monthsAgo": "{{count}} months ago",
       "overOneYear": "Over a year ago"
+    },
+    "detail": {
+      "header": {
+        "registeredOn": "Registered on {{date}}",
+        "sendEmail": "Send an email",
+        "newSubscription": "New subscription"
+      },
+      "stats": {
+        "title": "Investment statistics",
+        "totalCapital": "Total invested capital",
+        "subscriptionsCount": "Number of subscriptions",
+        "averageTicket": "Average ticket",
+        "lastActivity": "Last activity"
+      },
+      "tabs": {
+        "profile": "Profile",
+        "contacts": "Contacts & access",
+        "signatories": "Signatories",
+        "structures": "Structures",
+        "notes": "Notes",
+        "subscriptions": "Subscriptions",
+        "fiscal": "Tax & Banking",
+        "emails": "E-mails"
+      },
+      "actions": {
+        "edit": "Edit",
+        "save": "Save",
+        "cancel": "Cancel",
+        "comingSoon": "Feature coming soon",
+        "notProvided": "Not provided"
+      },
+      "general": {
+        "title": "General information",
+        "fullName": "Full name",
+        "investorType": "Investor type",
+        "firstName": "First name",
+        "lastName": "Last name",
+        "siren": "SIREN",
+        "company": "Company",
+        "email": "Email",
+        "phone": "Phone",
+        "address": "Address",
+        "postalCode": "Postal code",
+        "city": "City",
+        "country": "Country",
+        "crmSegment": "CRM segment",
+        "manager": "Manager",
+        "parentInvestor": "Parent investor",
+        "partner": "Partner",
+        "noPartner": "None"
+      },
+      "kyc": {
+        "title": "KYC & Compliance",
+        "kycStatus": "KYC status",
+        "kycExpiry": "KYC expiry",
+        "riskLevel": "Risk level",
+        "amlScore": "AML score",
+        "monitoringActive": "Active monitoring",
+        "monitoringEnabled": "Enabled",
+        "monitoringDisabled": "Disabled"
+      },
+      "kycStatus": {
+        "Validé": "Validated",
+        "En cours": "In progress",
+        "En revue": "Under review",
+        "À revoir": "To review",
+        "Expiré": "Expired",
+        "Non commencé": "Not started"
+      },
+      "riskLevel": {
+        "Low": "Low",
+        "Medium": "Medium",
+        "High": "High"
+      },
+      "relationship": {
+        "title": "Relationship information",
+        "status": "Status",
+        "relationshipStartDate": "Relationship start date",
+        "referralSource": "How did you hear about us?",
+        "marketingOptIn": "Marketing opt-in",
+        "accepted": "Accepted",
+        "refused": "Declined"
+      },
+      "referralOptions": {
+        "professionalInvestor": "Professional investor",
+        "recommendation": "Referral",
+        "website": "Website",
+        "event": "Event",
+        "partner": "Partner",
+        "advertising": "Advertising",
+        "socialNetwork": "Social network"
+      },
+      "personal": {
+        "title": "Personal information",
+        "birthDate": "Date of birth",
+        "birthPlace": "Place of birth",
+        "birthCountry": "Country of birth",
+        "nationality": "Nationality",
+        "language": "Language",
+        "maritalStatus": "Marital status",
+        "matrimonialRegime": "Matrimonial regime"
+      },
+      "marital": {
+        "single": "Single",
+        "married": "Married",
+        "civilUnion": "Civil partnership",
+        "divorced": "Divorced",
+        "widowed": "Widowed"
+      },
+      "regime": {
+        "communityReduced": "Community reduced to acquests",
+        "separation": "Separation of property",
+        "communityUniversal": "Universal community",
+        "participation": "Participation in acquests"
+      },
+      "nationalityOptions": {
+        "France": "French",
+        "Belgium": "Belgian",
+        "Switzerland": "Swiss",
+        "Luxembourg": "Luxembourgish",
+        "Germany": "German"
+      },
+      "countryOptions": {
+        "France": "France",
+        "Belgium": "Belgium",
+        "Switzerland": "Switzerland",
+        "Luxembourg": "Luxembourg",
+        "Germany": "Germany",
+        "UnitedKingdom": "United Kingdom",
+        "Spain": "Spain",
+        "Italy": "Italy"
+      },
+      "tags": "Tags",
+      "signatories": {
+        "title": "Authorized signatories ({{count}})",
+        "addSignatory": "Add a signatory",
+        "primarySignatory": "Primary signatory"
+      },
+      "signatureLevel": {
+        "Individual": "Individual",
+        "Joint": "Joint",
+        "Collective": "Collective"
+      },
+      "structuresList": {
+        "title": "Legal structures ({{count}})",
+        "contactsCountOne": "{{count}} contact",
+        "contactsCountMany": "{{count}} contacts",
+        "subscriptionsCountOne": "{{count}} subscription",
+        "subscriptionsCountMany": "{{count}} subscriptions",
+        "investedAmount": "Invested amount: {{amount}}",
+        "kycLabel": "KYC: {{status}}",
+        "riskScore": "Risk score: {{score}}/100"
+      },
+      "notes": {
+        "title": "Internal notes ({{count}})",
+        "filter": "Filter",
+        "newNote": "New note",
+        "important": "Important",
+        "byAuthor": "by {{author}}"
+      },
+      "noteTypes": {
+        "General": "General",
+        "KYC": "KYC",
+        "Risk": "Risk",
+        "Commercial": "Commercial",
+        "Legal": "Legal"
+      },
+      "subscriptions": {
+        "title": "Subscriptions ({{count}})",
+        "comingSoon": "Subscriptions list coming soon",
+        "viewAll": "View all subscriptions"
+      },
+      "fiscal": {
+        "title": "Tax information",
+        "taxResidence": "Tax residence",
+        "taxAddress": "Tax address",
+        "taxPostalCode": "Tax postal code",
+        "taxCity": "Tax city",
+        "taxCountry": "Tax country",
+        "tin": "TIN"
+      },
+      "bank": {
+        "title": "Banking information",
+        "iban": "IBAN",
+        "bic": "BIC",
+        "filled": "Information provided",
+        "notFilled": "Not provided"
+      },
+      "emails": {
+        "title": "Email history ({{count}})",
+        "newEmail": "New email",
+        "from": "From: {{value}}",
+        "to": "To: {{value}}",
+        "openEmail": "Opening email"
+      },
+      "emailStatus": {
+        "Sent": "Sent",
+        "Delivered": "Delivered",
+        "Opened": "Opened",
+        "Replied": "Replied"
+      },
+      "toast": {
+        "copied": "Copied!",
+        "copyError": "Copy error",
+        "copyErrorDesc": "Unable to copy to clipboard",
+        "validationErrors": "Validation errors",
+        "validationErrorsDesc": "Please fix the errors before saving",
+        "changesSaved": "Changes saved",
+        "changesSavedDesc": "Information has been updated successfully",
+        "validationGeneric": "Validation error"
+      },
+      "contactsTab": {
+        "portalTitle": "Primary investor — Portal access",
+        "accessStatus": "Access status",
+        "active": "Active",
+        "inactive": "Inactive",
+        "lastLogin": "Last login",
+        "portalV2": "Portal V2",
+        "v2Enabled": "Enabled",
+        "v2Disabled": "Disabled",
+        "resetPassword": "Reset password",
+        "resetPasswordSent": "Reset email sent",
+        "contactsTitle": "Contacts ({{count}})",
+        "addContact": "Add a contact",
+        "primaryBadge": "Primary",
+        "openPortalAs": "Open portal as {{name}}",
+        "openPortalToast": "Opening portal as {{name}}",
+        "noPortalAccess": "{{name}} does not have portal access yet",
+        "investorPortalNoAccess": "Investor portal (access not enabled)",
+        "portalAccessBadge": "Portal access",
+        "noAccess": "No access",
+        "edit": "Edit",
+        "dialogAddTitle": "Add a contact",
+        "dialogEditTitle": "Edit contact",
+        "dialogAddDesc": "Fill in the details to create a new contact.",
+        "dialogEditDesc": "Edit the details of the existing contact.",
+        "generalSection": "General information",
+        "firstName": "First name",
+        "lastName": "Last name",
+        "email": "Email",
+        "phone": "Phone",
+        "function": "Role",
+        "functionPlaceholder": "Chief Financial Officer",
+        "language": "Language",
+        "languagePlaceholder": "Select a language",
+        "preferencesSection": "Preferences",
+        "primaryContact": "Primary contact",
+        "preferredContact": "Investor preference",
+        "portalAccessSection": "Portal access",
+        "enablePortalAccess": "Enable portal access",
+        "accessLevel": "Access level",
+        "selectAccessLevel": "Select a level",
+        "password": "Password",
+        "reset": "Reset",
+        "linkedStructures": "Linked structures",
+        "primaryAttachAll": "The primary contact is automatically linked to all structures",
+        "notifications": "Notifications",
+        "authorizedFunds": "Authorized funds",
+        "authorizedSubscriptions": "Authorized subscriptions",
+        "cancel": "Cancel",
+        "save": "Save",
+        "contactAdded": "Contact added successfully",
+        "contactUpdated": "Contact updated successfully"
+      }
     }
   },
   "common": {

@@ -29,6 +29,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '.
 import { Checkbox } from '../ui/checkbox';
 import { toast } from 'sonner';
 import { LanguageFlag } from '../LanguageFlag';
+import { useTranslation } from '../../utils/languageContext';
 
 interface Contact {
   id: string;
@@ -84,6 +85,7 @@ const mockTeams = [
 ];
 
 export function ContactsTab({ investor }: ContactsTabProps) {
+  const { t, lang } = useTranslation();
   const [contacts, setContacts] = useState<Contact[]>(investor.contacts || []);
   const [selectedContact, setSelectedContact] = useState<Contact | null>(null);
   const [isDialogOpen, setIsDialogOpen] = useState(false);
@@ -93,10 +95,10 @@ export function ContactsTab({ investor }: ContactsTabProps) {
     try {
       await navigator.clipboard.writeText(text);
       setCopiedField(field);
-      toast.success('Copié !');
+      toast.success(t('investors.detail.toast.copied'));
       setTimeout(() => setCopiedField(null), 2000);
     } catch (err) {
-      toast.error('Erreur de copie');
+      toast.error(t('investors.detail.toast.copyError'));
     }
   };
 
@@ -140,10 +142,10 @@ export function ContactsTab({ investor }: ContactsTabProps) {
     
     if (isNew) {
       setContacts([...contacts, selectedContact]);
-      toast.success('Contact ajouté avec succès');
+      toast.success(t('investors.detail.contactsTab.contactAdded'));
     } else {
       setContacts(contacts.map(c => c.id === selectedContact.id ? selectedContact : c));
-      toast.success('Contact mis à jour avec succès');
+      toast.success(t('investors.detail.contactsTab.contactUpdated'));
     }
     
     setIsDialogOpen(false);
@@ -170,31 +172,31 @@ export function ContactsTab({ investor }: ContactsTabProps) {
         <div className="flex items-center justify-between mb-4">
           <h2 className="font-semibold text-gray-900 flex items-center gap-2">
             <Key className="w-5 h-5 text-purple-600" />
-            Investisseur Principal - Accès Portail
+            {t('investors.detail.contactsTab.portalTitle')}
           </h2>
         </div>
-        
+
         <div className="grid grid-cols-3 gap-6">
           <div>
-            <label className="text-xs text-gray-500 mb-2 block">Statut d'accès</label>
-            <Badge 
-              variant="outline" 
+            <label className="text-xs text-gray-500 mb-2 block">{t('investors.detail.contactsTab.accessStatus')}</label>
+            <Badge
+              variant="outline"
               className={`border w-full justify-center ${
-                investor.portalActive 
-                  ? 'bg-emerald-50 text-emerald-700 border-emerald-200' 
+                investor.portalActive
+                  ? 'bg-emerald-50 text-emerald-700 border-emerald-200'
                   : 'bg-gray-50 text-gray-500 border-gray-300'
               }`}
             >
-              {investor.portalActive ? 'Actif' : 'Inactif'}
+              {investor.portalActive ? t('investors.detail.contactsTab.active') : t('investors.detail.contactsTab.inactive')}
             </Badge>
           </div>
-          
+
           {investor.lastLogin && (
             <div>
-              <label className="text-xs text-gray-500 mb-1 block">Dernière connexion</label>
+              <label className="text-xs text-gray-500 mb-1 block">{t('investors.detail.contactsTab.lastLogin')}</label>
               <div className="flex items-center gap-2 text-sm">
                 <span className="text-gray-900">
-                  {new Date(investor.lastLogin).toLocaleDateString('fr-FR', {
+                  {new Date(investor.lastLogin).toLocaleDateString(lang === 'en' ? 'en-US' : 'fr-FR', {
                     day: '2-digit',
                     month: 'short',
                     year: 'numeric'
@@ -203,32 +205,32 @@ export function ContactsTab({ investor }: ContactsTabProps) {
               </div>
             </div>
           )}
-          
+
           <div>
-            <label className="text-xs text-gray-500 mb-2 block">Portail V2</label>
-            <Badge 
-              variant="outline" 
+            <label className="text-xs text-gray-500 mb-2 block">{t('investors.detail.contactsTab.portalV2')}</label>
+            <Badge
+              variant="outline"
               className={`border w-full justify-center ${
-                investor.portalV2Enabled 
-                  ? 'bg-blue-50 text-blue-700 border-blue-200' 
+                investor.portalV2Enabled
+                  ? 'bg-blue-50 text-blue-700 border-blue-200'
                   : 'bg-gray-50 text-gray-500 border-gray-300'
               }`}
             >
-              {investor.portalV2Enabled ? 'Activé' : 'Désactivé'}
+              {investor.portalV2Enabled ? t('investors.detail.contactsTab.v2Enabled') : t('investors.detail.contactsTab.v2Disabled')}
             </Badge>
           </div>
         </div>
-        
+
         {investor.portalActive && (
           <div className="mt-4">
             <Button
               size="sm"
               variant="outline"
               className="gap-2"
-              onClick={() => toast.success('Email de réinitialisation envoyé')}
+              onClick={() => toast.success(t('investors.detail.contactsTab.resetPasswordSent'))}
             >
               <Key className="w-4 h-4" />
-              Réinitialiser mot de passe
+              {t('investors.detail.contactsTab.resetPassword')}
             </Button>
           </div>
         )}
@@ -240,7 +242,7 @@ export function ContactsTab({ investor }: ContactsTabProps) {
           <div className="flex items-center justify-between">
             <h2 className="font-semibold text-gray-900 flex items-center gap-2">
               <Users className="w-5 h-5 text-blue-600" />
-              Contacts ({contacts.length})
+              {t('investors.detail.contactsTab.contactsTitle', { count: contacts.length })}
             </h2>
             <Button
               size="sm"
@@ -249,7 +251,7 @@ export function ContactsTab({ investor }: ContactsTabProps) {
               onClick={handleAddContact}
             >
               <Plus className="w-4 h-4" />
-              Ajouter un contact
+              {t('investors.detail.contactsTab.addContact')}
             </Button>
           </div>
         </div>
@@ -283,7 +285,7 @@ export function ContactsTab({ investor }: ContactsTabProps) {
                         {contact.isPrimary && (
                           <Badge className="bg-blue-100 text-blue-700 border-blue-300 text-xs px-2">
                             <Star className="w-3 h-3 mr-1 fill-blue-700" />
-                            Principal
+                            {t('investors.detail.contactsTab.primaryBadge')}
                           </Badge>
                         )}
                       </div>
@@ -313,10 +315,10 @@ export function ContactsTab({ investor }: ContactsTabProps) {
                         onClick={(e) => {
                           e.stopPropagation();
                           if (contact.hasPortalAccess) {
-                            toast.success(`Ouverture du portail en tant que ${contact.firstName} ${contact.lastName}`);
+                            toast.success(t('investors.detail.contactsTab.openPortalToast', { name: `${contact.firstName} ${contact.lastName}` }));
                             window.open(`/portal?impersonate=${contact.id}`, '_blank');
                           } else {
-                            toast.info(`${contact.firstName} ${contact.lastName} n'a pas encore d'accès au portail`);
+                            toast.info(t('investors.detail.contactsTab.noPortalAccess', { name: `${contact.firstName} ${contact.lastName}` }));
                           }
                         }}
                         className={`flex items-center gap-1.5 text-xs transition-colors ${
@@ -326,9 +328,9 @@ export function ContactsTab({ investor }: ContactsTabProps) {
                         }`}
                       >
                         <UserCheck className="w-3.5 h-3.5" />
-                        {contact.hasPortalAccess 
-                          ? `Ouvrir le portail en tant que ${contact.firstName}`
-                          : `Portail investisseur (accès non activé)`
+                        {contact.hasPortalAccess
+                          ? t('investors.detail.contactsTab.openPortalAs', { name: contact.firstName })
+                          : t('investors.detail.contactsTab.investorPortalNoAccess')
                         }
                         <ExternalLink className="w-3 h-3" />
                       </button>
@@ -341,7 +343,7 @@ export function ContactsTab({ investor }: ContactsTabProps) {
                     <>
                       <Badge className="bg-emerald-50 text-emerald-700 border-emerald-200">
                         <Key className="w-3 h-3 mr-1" />
-                        Accès portail
+                        {t('investors.detail.contactsTab.portalAccessBadge')}
                       </Badge>
                       <Badge variant="outline" className="border-gray-300">
                         {contact.accessLevel}
@@ -349,7 +351,7 @@ export function ContactsTab({ investor }: ContactsTabProps) {
                     </>
                   ) : (
                     <Badge variant="outline" className="border-gray-300 text-gray-500">
-                      Pas d'accès
+                      {t('investors.detail.contactsTab.noAccess')}
                     </Badge>
                   )}
                   <Button
@@ -362,7 +364,7 @@ export function ContactsTab({ investor }: ContactsTabProps) {
                     }}
                   >
                     <Edit2 className="w-3.5 h-3.5" />
-                    Modifier
+                    {t('investors.detail.contactsTab.edit')}
                   </Button>
                 </div>
               </div>
@@ -377,42 +379,41 @@ export function ContactsTab({ investor }: ContactsTabProps) {
           <DialogHeader>
             <DialogTitle>
               {selectedContact?.id.startsWith('contact-') && !contacts.find(c => c.id === selectedContact.id)
-                ? 'Ajouter un contact'
-                : 'Modifier le contact'}
+                ? t('investors.detail.contactsTab.dialogAddTitle')
+                : t('investors.detail.contactsTab.dialogEditTitle')}
             </DialogTitle>
             <DialogDescription>
               {selectedContact?.id.startsWith('contact-') && !contacts.find(c => c.id === selectedContact.id)
-                ? 'Remplissez les informations pour créer un nouveau contact.'
-                : 'Modifiez les informations du contact existant.'}
+                ? t('investors.detail.contactsTab.dialogAddDesc')
+                : t('investors.detail.contactsTab.dialogEditDesc')}
             </DialogDescription>
           </DialogHeader>
 
           {selectedContact && (
             <div className="space-y-6 py-4">
-              {/* Informations de base */}
               <div className="space-y-4">
-                <h3 className="font-medium text-gray-900">Informations générales</h3>
+                <h3 className="font-medium text-gray-900">{t('investors.detail.contactsTab.generalSection')}</h3>
                 <div className="grid grid-cols-2 gap-4">
                   <div className="space-y-2">
-                    <Label htmlFor="firstName">Prénom</Label>
+                    <Label htmlFor="firstName">{t('investors.detail.contactsTab.firstName')}</Label>
                     <Input
                       id="firstName"
                       value={selectedContact.firstName}
                       onChange={(e) => setSelectedContact({ ...selectedContact, firstName: e.target.value })}
-                      placeholder="Prénom"
+                      placeholder={t('investors.detail.contactsTab.firstName')}
                     />
                   </div>
                   <div className="space-y-2">
-                    <Label htmlFor="lastName">Nom</Label>
+                    <Label htmlFor="lastName">{t('investors.detail.contactsTab.lastName')}</Label>
                     <Input
                       id="lastName"
                       value={selectedContact.lastName}
                       onChange={(e) => setSelectedContact({ ...selectedContact, lastName: e.target.value })}
-                      placeholder="Nom"
+                      placeholder={t('investors.detail.contactsTab.lastName')}
                     />
                   </div>
                   <div className="space-y-2">
-                    <Label htmlFor="email">Email</Label>
+                    <Label htmlFor="email">{t('investors.detail.contactsTab.email')}</Label>
                     <Input
                       id="email"
                       type="email"
@@ -422,7 +423,7 @@ export function ContactsTab({ investor }: ContactsTabProps) {
                     />
                   </div>
                   <div className="space-y-2">
-                    <Label htmlFor="phone">Téléphone</Label>
+                    <Label htmlFor="phone">{t('investors.detail.contactsTab.phone')}</Label>
                     <Input
                       id="phone"
                       value={selectedContact.phone}
@@ -431,22 +432,22 @@ export function ContactsTab({ investor }: ContactsTabProps) {
                     />
                   </div>
                   <div className="space-y-2">
-                    <Label htmlFor="function">Fonction</Label>
+                    <Label htmlFor="function">{t('investors.detail.contactsTab.function')}</Label>
                     <Input
                       id="function"
                       value={selectedContact.function}
                       onChange={(e) => setSelectedContact({ ...selectedContact, function: e.target.value })}
-                      placeholder="Directeur Financier"
+                      placeholder={t('investors.detail.contactsTab.functionPlaceholder')}
                     />
                   </div>
                   <div className="space-y-2">
-                    <Label htmlFor="language">Langue</Label>
+                    <Label htmlFor="language">{t('investors.detail.contactsTab.language')}</Label>
                     <Select
                       value={selectedContact.language}
                       onValueChange={(value) => setSelectedContact({ ...selectedContact, language: value })}
                     >
                       <SelectTrigger>
-                        <SelectValue placeholder="Sélectionner une langue" />
+                        <SelectValue placeholder={t('investors.detail.contactsTab.languagePlaceholder')} />
                       </SelectTrigger>
                       <SelectContent>
                         <SelectItem value="Français">Français</SelectItem>
@@ -459,43 +460,41 @@ export function ContactsTab({ investor }: ContactsTabProps) {
                 </div>
               </div>
 
-              {/* Préférences */}
               <div className="space-y-4 border-t pt-4">
-                <h3 className="font-medium text-gray-900">Préférences</h3>
+                <h3 className="font-medium text-gray-900">{t('investors.detail.contactsTab.preferencesSection')}</h3>
                 <div className="space-y-3">
                   <div className="flex items-center gap-2">
                     <Checkbox
                       id="isPrimary"
                       checked={selectedContact.isPrimary}
-                      onCheckedChange={(checked) => 
+                      onCheckedChange={(checked) =>
                         setSelectedContact({ ...selectedContact, isPrimary: checked as boolean })
                       }
                       disabled={selectedContact.isPrimary}
                     />
                     <Label htmlFor="isPrimary" className="cursor-pointer">
-                      Contact principal
+                      {t('investors.detail.contactsTab.primaryContact')}
                     </Label>
                   </div>
                   <div className="flex items-center gap-2">
                     <Checkbox
                       id="isPreferredContact"
                       checked={selectedContact.isPreferredContact}
-                      onCheckedChange={(checked) => 
+                      onCheckedChange={(checked) =>
                         setSelectedContact({ ...selectedContact, isPreferredContact: checked as boolean })
                       }
                     />
                     <Label htmlFor="isPreferredContact" className="cursor-pointer">
-                      Préférence investisseur
+                      {t('investors.detail.contactsTab.preferredContact')}
                     </Label>
                   </div>
                 </div>
               </div>
 
-              {/* Accès portail */}
               <div className="space-y-4 border-t pt-4">
                 <h3 className="font-medium text-gray-900 flex items-center gap-2">
                   <Shield className="w-4 h-4" />
-                  Accès portail
+                  {t('investors.detail.contactsTab.portalAccessSection')}
                 </h3>
                 <div className="space-y-3">
                   <div className="flex items-center gap-2">
@@ -507,18 +506,18 @@ export function ContactsTab({ investor }: ContactsTabProps) {
                       }
                     />
                     <Label htmlFor="hasPortalAccess" className="cursor-pointer">
-                      Activer l'accès portail
+                      {t('investors.detail.contactsTab.enablePortalAccess')}
                     </Label>
                   </div>
                   {selectedContact.hasPortalAccess && (
                     <div className="space-y-2 ml-6">
-                      <Label htmlFor="accessLevel">Niveau d'accès</Label>
+                      <Label htmlFor="accessLevel">{t('investors.detail.contactsTab.accessLevel')}</Label>
                       <Select
                         value={selectedContact.accessLevel}
                         onValueChange={(value) => setSelectedContact({ ...selectedContact, accessLevel: value })}
                       >
                         <SelectTrigger>
-                          <SelectValue placeholder="Sélectionner un niveau" />
+                          <SelectValue placeholder={t('investors.detail.contactsTab.selectAccessLevel')} />
                         </SelectTrigger>
                         <SelectContent>
                           <SelectItem value="Admin">Admin</SelectItem>
@@ -529,16 +528,16 @@ export function ContactsTab({ investor }: ContactsTabProps) {
                       <div className="space-y-2 mt-3">
                         <Label>
                           <Lock className="w-3.5 h-3.5 inline mr-1" />
-                          Mot de passe
+                          {t('investors.detail.contactsTab.password')}
                         </Label>
                         <div className="flex gap-2">
                           <Input type="password" placeholder="••••••••" disabled className="flex-1" />
                           <Button
                             variant="outline"
                             size="sm"
-                            onClick={() => toast.success('Email de réinitialisation envoyé')}
+                            onClick={() => toast.success(t('investors.detail.contactsTab.resetPasswordSent'))}
                           >
-                            Réinitialiser
+                            {t('investors.detail.contactsTab.reset')}
                           </Button>
                         </div>
                       </div>
@@ -547,11 +546,10 @@ export function ContactsTab({ investor }: ContactsTabProps) {
                 </div>
               </div>
 
-              {/* Structures rattachées */}
               <div className="space-y-4 border-t pt-4">
                 <h3 className="font-medium text-gray-900 flex items-center gap-2">
                   <Building2 className="w-4 h-4" />
-                  Structures rattachées
+                  {t('investors.detail.contactsTab.linkedStructures')}
                 </h3>
                 <div className="space-y-2">
                   {mockStructures.map((structure) => (
@@ -578,17 +576,16 @@ export function ContactsTab({ investor }: ContactsTabProps) {
                   ))}
                   {selectedContact.isPrimary && (
                     <p className="text-xs text-gray-500 mt-2">
-                      Le contact principal est automatiquement rattaché à toutes les structures
+                      {t('investors.detail.contactsTab.primaryAttachAll')}
                     </p>
                   )}
                 </div>
               </div>
 
-              {/* Notifications */}
               <div className="space-y-4 border-t pt-4">
                 <h3 className="font-medium text-gray-900 flex items-center gap-2">
                   <Bell className="w-4 h-4" />
-                  Notifications
+                  {t('investors.detail.contactsTab.notifications')}
                 </h3>
                 <div className="space-y-2">
                   {mockTeams.map((team) => (
@@ -612,11 +609,10 @@ export function ContactsTab({ investor }: ContactsTabProps) {
                 </div>
               </div>
 
-              {/* Fonds autorisés */}
               <div className="space-y-4 border-t pt-4">
                 <h3 className="font-medium text-gray-900 flex items-center gap-2">
                   <FileText className="w-4 h-4" />
-                  Fonds autorisés
+                  {t('investors.detail.contactsTab.authorizedFunds')}
                 </h3>
                 <div className="space-y-2">
                   {mockFunds.map((fund) => (
@@ -640,11 +636,10 @@ export function ContactsTab({ investor }: ContactsTabProps) {
                 </div>
               </div>
 
-              {/* Souscriptions autorisées */}
               <div className="space-y-4 border-t pt-4">
                 <h3 className="font-medium text-gray-900 flex items-center gap-2">
                   <FileText className="w-4 h-4" />
-                  Souscriptions autorisées
+                  {t('investors.detail.contactsTab.authorizedSubscriptions')}
                 </h3>
                 <div className="space-y-2">
                   {mockSubscriptions.map((sub) => (
@@ -668,7 +663,6 @@ export function ContactsTab({ investor }: ContactsTabProps) {
                 </div>
               </div>
 
-              {/* Actions */}
               <div className="flex justify-end gap-2 border-t pt-4">
                 <Button
                   variant="outline"
@@ -677,14 +671,14 @@ export function ContactsTab({ investor }: ContactsTabProps) {
                     setSelectedContact(null);
                   }}
                 >
-                  Annuler
+                  {t('investors.detail.contactsTab.cancel')}
                 </Button>
                 <Button
                   onClick={handleSaveContact}
                   style={{ background: 'linear-gradient(62.32deg, #000000 10.53%, #0F323D 88.82%)' }}
                   className="text-white"
                 >
-                  Sauvegarder
+                  {t('investors.detail.contactsTab.save')}
                 </Button>
               </div>
             </div>
