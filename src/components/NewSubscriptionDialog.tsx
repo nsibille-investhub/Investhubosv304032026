@@ -24,6 +24,7 @@ import { BigModal, BigModalContent, BigModalTitle, BigModalDescription } from '.
 import { Input } from './ui/input';
 import { Button } from './ui/button';
 import { Badge } from './ui/badge';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from './ui/card';
 import { Separator } from './ui/separator';
 import { Label } from './ui/label';
 import { PartyTypeBadge } from './ui/party-type-badge';
@@ -689,15 +690,16 @@ export function NewSubscriptionDialog({ open, onClose, onSubscriptionCreated }: 
           <div className="flex-1 overflow-y-auto px-8 py-6">
             <div className="flex flex-col gap-6">
                   {/* INVESTOR SECTION */}
-                  <div className="space-y-3">
-                    <div>
-                      <h3 className="text-sm font-medium text-foreground mb-1">
+                  <Card className="gap-4 py-5">
+                    <CardHeader className="pt-0 px-5">
+                      <CardTitle className="text-sm font-semibold text-foreground">
                         {t('subscriptions.newDialog.sections.investorTitle')} <span className="text-destructive">*</span>
-                      </h3>
-                      <p className="text-xs text-muted-foreground">
+                      </CardTitle>
+                      <CardDescription className="text-xs">
                         {t('subscriptions.newDialog.sections.investorDescription')}
-                      </p>
-                    </div>
+                      </CardDescription>
+                    </CardHeader>
+                    <CardContent className="px-5 pb-0 space-y-4">
 
                     {showNewInvestorForm ? (
                       <div className="border border-border bg-card rounded-xl p-4 space-y-3">
@@ -1012,32 +1014,27 @@ export function NewSubscriptionDialog({ open, onClose, onSubscriptionCreated }: 
                         </button>
                       </div>
                     )}
-                  </div>
 
-                  {/* STRUCTURE SECTION */}
+                  {/* STRUCTURE — sub-block of Investor card */}
                   {formData.investor && (() => {
                     const investorHasStructures =
                       (formData.investor.structures?.length ?? 0) > 0;
                     const isOptional = !investorHasStructures && !showNewStructureForm;
 
                     return (
-                    <div className="space-y-3">
-                      <div>
-                        <h3 className="text-sm font-medium text-foreground mb-1">
-                          {t('subscriptions.newDialog.sections.structureTitle')}{' '}
+                    <div className="space-y-2 pt-1">
+                      <div className="flex items-center gap-1.5">
+                        <Label className="text-xs flex items-center gap-1.5">
+                          <Building2 className="w-3.5 h-3.5" />
+                          {t('subscriptions.newDialog.structureLabel')}
                           {isOptional ? (
-                            <span className="text-xs font-normal text-muted-foreground">
+                            <span className="text-muted-foreground font-normal normal-case">
                               {t('subscriptions.newDialog.optional')}
                             </span>
                           ) : (
                             <span className="text-destructive">*</span>
                           )}
-                        </h3>
-                        <p className="text-xs text-muted-foreground">
-                          {isOptional
-                            ? t('subscriptions.newDialog.sections.structureOptionalDescription')
-                            : t('subscriptions.newDialog.sections.structureDescription')}
-                        </p>
+                        </Label>
                       </div>
 
                       {showNewStructureForm ? (
@@ -1328,17 +1325,20 @@ export function NewSubscriptionDialog({ open, onClose, onSubscriptionCreated }: 
                     </div>
                     );
                   })()}
+                    </CardContent>
+                  </Card>
 
                   {/* INVESTMENT SECTION */}
-                  <div className="space-y-3">
-                    <div>
-                      <h3 className="text-sm font-medium text-foreground mb-1">
+                  <Card className="gap-4 py-5">
+                    <CardHeader className="pt-0 px-5">
+                      <CardTitle className="text-sm font-semibold text-foreground">
                         {t('subscriptions.newDialog.sections.investmentTitle')} <span className="text-destructive">*</span>
-                      </h3>
-                      <p className="text-xs text-muted-foreground">
+                      </CardTitle>
+                      <CardDescription className="text-xs">
                         {t('subscriptions.newDialog.sections.investmentDescription')}
-                      </p>
-                    </div>
+                      </CardDescription>
+                    </CardHeader>
+                    <CardContent className="px-5 pb-0 space-y-4">
                   {/* Row 1: Fonds + Part */}
                   <div
                     className="grid gap-3"
@@ -1478,18 +1478,20 @@ export function NewSubscriptionDialog({ open, onClose, onSubscriptionCreated }: 
                       </label>
                     </div>
                   </div>
-                  </div>
+                    </CardContent>
+                  </Card>
 
                   {/* DISTRIBUTION & FEES SECTION */}
-                  <div className="space-y-3">
-                    <div>
-                      <h3 className="text-sm font-medium text-foreground mb-1">
+                  <Card className="gap-4 py-5">
+                    <CardHeader className="pt-0 px-5">
+                      <CardTitle className="text-sm font-semibold text-foreground">
                         {t('subscriptions.newDialog.sections.distributionTitle')}
-                      </h3>
-                      <p className="text-xs text-muted-foreground">
+                      </CardTitle>
+                      <CardDescription className="text-xs">
                         {t('subscriptions.newDialog.sections.distributionDescription')}
-                      </p>
-                    </div>
+                      </CardDescription>
+                    </CardHeader>
+                    <CardContent className="px-5 pb-0 space-y-4">
 
                   {/* Distributor Selection - Dropdown */}
                   <div>
@@ -1686,18 +1688,20 @@ export function NewSubscriptionDialog({ open, onClose, onSubscriptionCreated }: 
                       </div>
                     </motion.div>
                   )}
-                  </div>
+                    </CardContent>
+                  </Card>
 
                   {/* NOTIFICATION & LANGUAGE SECTION */}
-                  <div className="space-y-3">
-                    <div>
-                      <h3 className="text-sm font-medium text-foreground mb-1">
+                  <Card className="gap-4 py-5">
+                    <CardHeader className="pt-0 px-5">
+                      <CardTitle className="text-sm font-semibold text-foreground">
                         {t('subscriptions.newDialog.sections.notificationTitle')}
-                      </h3>
-                      <p className="text-xs text-muted-foreground">
+                      </CardTitle>
+                      <CardDescription className="text-xs">
                         {t('subscriptions.newDialog.sections.notificationDescription')}
-                      </p>
-                    </div>
+                      </CardDescription>
+                    </CardHeader>
+                    <CardContent className="px-5 pb-0 space-y-4">
 
                     {(() => {
                       const isIntermediated = formData.distributor !== 'direct';
@@ -1764,7 +1768,8 @@ export function NewSubscriptionDialog({ open, onClose, onSubscriptionCreated }: 
                         </>
                       );
                     })()}
-                  </div>
+                    </CardContent>
+                  </Card>
             </div>
           </div>
 
