@@ -38,16 +38,8 @@ export interface FundProfile {
 /* ----------------------------------------------------------------------- */
 
 export const FUNDS: FundProfile[] = [
-  { code: 'NWGC2',  name: 'Northwind Growth Capital II',          vehicle: 'FPCI', strategy: 'Growth',          vintage: 2021, manager: 'Camille Renard',   domicile: 'FR', currency: 'EUR', hasAdvisoryCommittee: true,  hasImpactCommittee: false, shareClasses: ['Class A', 'Class B', 'GP Class'] },
-  { code: 'HBF3',   name: 'Helios Buyout Fund III',               vehicle: 'SCSp', strategy: 'Buyout',          vintage: 2020, manager: 'Antoine Leblanc',  domicile: 'LU', currency: 'EUR', hasAdvisoryCommittee: true,  hasImpactCommittee: false, shareClasses: ['Class A', 'Class B'] },
-  { code: 'AIP1',   name: 'Atlas Infrastructure Partners I',      vehicle: 'SLP',  strategy: 'Infrastructure',  vintage: 2019, manager: 'Maxime Dubois',    domicile: 'FR', currency: 'EUR', hasAdvisoryCommittee: true,  hasImpactCommittee: true,  shareClasses: ['Class A', 'Class B'] },
-  { code: 'LVF4',   name: 'Lumen Venture Fund IV',                vehicle: 'FPCI', strategy: 'Venture',         vintage: 2022, manager: 'Léa Marchand',     domicile: 'FR', currency: 'EUR', hasAdvisoryCommittee: true,  hasImpactCommittee: false, shareClasses: ['Class A'] },
-  { code: 'SREO',   name: 'Sequana Real Estate Opportunities',    vehicle: 'SCSp', strategy: 'Real Estate',     vintage: 2020, manager: 'Julien Moreau',    domicile: 'LU', currency: 'EUR', hasAdvisoryCommittee: false, hasImpactCommittee: false, shareClasses: ['Class A', 'Class I'] },
-  { code: 'MPDF2',  name: 'Meridian Private Debt Fund II',        vehicle: 'SLP',  strategy: 'Private Debt',    vintage: 2021, manager: 'Sophie Bernard',   domicile: 'FR', currency: 'EUR', hasAdvisoryCommittee: true,  hasImpactCommittee: false, shareClasses: ['Class A', 'Class B', 'Class S'] },
-  { code: 'PCTF',   name: 'Polaris Climate Tech Fund',            vehicle: 'SCSp', strategy: 'Climate Impact',  vintage: 2022, manager: 'Mathilde Garcia',  domicile: 'LU', currency: 'EUR', hasAdvisoryCommittee: true,  hasImpactCommittee: true,  shareClasses: ['Class A', 'Class I'] },
-  { code: 'AHV',    name: 'Aurora Healthcare Ventures',           vehicle: 'FPCI', strategy: 'Healthcare',      vintage: 2021, manager: 'Hugo Petit',       domicile: 'FR', currency: 'EUR', hasAdvisoryCommittee: true,  hasImpactCommittee: false, shareClasses: ['Class A'] },
-  { code: 'CMM',    name: 'Cedar Mid-Market Fund',                vehicle: 'SCSp', strategy: 'Mid-Market',      vintage: 2018, manager: 'Nathalie Bonnet',  domicile: 'LU', currency: 'EUR', hasAdvisoryCommittee: true,  hasImpactCommittee: false, shareClasses: ['Class A', 'Class B'] },
-  { code: 'VS3',    name: 'Vesta Secondaries III',                vehicle: 'SLP',  strategy: 'Secondaries',     vintage: 2023, manager: 'Olivier Lambert',  domicile: 'FR', currency: 'EUR', hasAdvisoryCommittee: false, hasImpactCommittee: false, shareClasses: ['Class A', 'Class B'] },
+  { code: 'NWGC2', name: 'Northwind Growth Capital II',     vehicle: 'FPCI', strategy: 'Growth',         vintage: 2021, manager: 'Camille Renard', domicile: 'FR', currency: 'EUR', hasAdvisoryCommittee: true, hasImpactCommittee: false, shareClasses: ['Class A', 'Class B', 'GP Class'] },
+  { code: 'AIP1',  name: 'Atlas Infrastructure Partners I', vehicle: 'SLP',  strategy: 'Infrastructure', vintage: 2019, manager: 'Maxime Dubois',  domicile: 'FR', currency: 'EUR', hasAdvisoryCommittee: true, hasImpactCommittee: true,  shareClasses: ['Class A', 'Class B'] },
 ];
 
 export const findFund = (code: string): FundProfile | undefined =>
@@ -121,74 +113,16 @@ const mkCommitments = (
 
 export const COMMITMENTS: Commitment[] = [
   ...mkCommitments('NWGC2', [
-    { investor: 'INV-001', sc: 'Class A', amount: 25_000_000 },
-    { investor: 'INV-002', sc: 'Class B', amount:  8_000_000 },
-    { investor: 'INV-003', sc: 'Class A', amount: 30_000_000 },
-    { investor: 'INV-008', sc: 'Class A', amount: 20_000_000 },
-    { investor: 'INV-009', sc: 'Class B', amount: 12_000_000 },
-  ]),
-  ...mkCommitments('HBF3', [
-    { investor: 'INV-001', sc: 'Class A', amount: 35_000_000 },
-    { investor: 'INV-004', sc: 'Class A', amount: 50_000_000 },
-    { investor: 'INV-006', sc: 'Class A', amount: 15_000_000 },
-    { investor: 'INV-007', sc: 'Class B', amount:  5_000_000 },
-    { investor: 'INV-010', sc: 'Class A', amount: 25_000_000 },
+    { investor: 'INV-001', sc: 'Class A',  amount: 25_000_000 },
+    { investor: 'INV-002', sc: 'Class B',  amount:  8_000_000 },
+    { investor: 'INV-003', sc: 'Class A',  amount: 30_000_000 },
+    { investor: 'INV-009', sc: 'Class B',  amount: 12_000_000 },
   ]),
   ...mkCommitments('AIP1', [
     { investor: 'INV-001', sc: 'Class A', amount: 40_000_000 },
-    { investor: 'INV-003', sc: 'Class A', amount: 45_000_000 },
     { investor: 'INV-004', sc: 'Class A', amount: 60_000_000 },
     { investor: 'INV-008', sc: 'Class A', amount: 22_000_000 },
     { investor: 'INV-010', sc: 'Class B', amount: 18_000_000 },
-  ]),
-  ...mkCommitments('LVF4', [
-    { investor: 'INV-002', sc: 'Class A', amount:  6_000_000 },
-    { investor: 'INV-005', sc: 'Class A', amount:  4_000_000 },
-    { investor: 'INV-007', sc: 'Class A', amount:  3_000_000 },
-    { investor: 'INV-009', sc: 'Class A', amount:  8_000_000 },
-    { investor: 'INV-012', sc: 'Class A', amount:  2_000_000 },
-  ]),
-  ...mkCommitments('SREO', [
-    { investor: 'INV-002', sc: 'Class B', amount:  7_500_000 },
-    { investor: 'INV-003', sc: 'Class I', amount: 28_000_000 },
-    { investor: 'INV-008', sc: 'Class I', amount: 17_000_000 },
-    { investor: 'INV-009', sc: 'Class B', amount: 10_000_000 },
-    { investor: 'INV-011', sc: 'Class B', amount:  5_000_000 },
-  ]),
-  ...mkCommitments('MPDF2', [
-    { investor: 'INV-001', sc: 'Class A', amount: 30_000_000 },
-    { investor: 'INV-003', sc: 'Class A', amount: 40_000_000 },
-    { investor: 'INV-006', sc: 'Class B', amount: 12_000_000 },
-    { investor: 'INV-008', sc: 'Class A', amount: 25_000_000 },
-    { investor: 'INV-010', sc: 'Class S', amount: 15_000_000 },
-  ]),
-  ...mkCommitments('PCTF', [
-    { investor: 'INV-001', sc: 'Class A', amount: 20_000_000 },
-    { investor: 'INV-002', sc: 'Class I', amount:  4_000_000 },
-    { investor: 'INV-004', sc: 'Class A', amount: 35_000_000 },
-    { investor: 'INV-005', sc: 'Class I', amount:  3_500_000 },
-    { investor: 'INV-006', sc: 'Class A', amount: 14_000_000 },
-    { investor: 'INV-012', sc: 'Class I', amount:  2_500_000 },
-  ]),
-  ...mkCommitments('AHV', [
-    { investor: 'INV-002', sc: 'Class A', amount:  5_000_000 },
-    { investor: 'INV-007', sc: 'Class A', amount:  3_000_000 },
-    { investor: 'INV-009', sc: 'Class A', amount:  7_500_000 },
-    { investor: 'INV-011', sc: 'Class A', amount:  2_500_000 },
-  ]),
-  ...mkCommitments('CMM', [
-    { investor: 'INV-001', sc: 'Class A', amount: 28_000_000 },
-    { investor: 'INV-003', sc: 'Class A', amount: 35_000_000 },
-    { investor: 'INV-008', sc: 'Class A', amount: 15_000_000 },
-    { investor: 'INV-009', sc: 'Class B', amount:  8_000_000 },
-    { investor: 'INV-010', sc: 'Class A', amount: 18_000_000 },
-  ]),
-  ...mkCommitments('VS3', [
-    { investor: 'INV-001', sc: 'Class A', amount: 22_000_000 },
-    { investor: 'INV-004', sc: 'Class A', amount: 30_000_000 },
-    { investor: 'INV-006', sc: 'Class A', amount: 12_000_000 },
-    { investor: 'INV-007', sc: 'Class B', amount:  4_000_000 },
-    { investor: 'INV-010', sc: 'Class A', amount: 16_000_000 },
   ]),
 ];
 
