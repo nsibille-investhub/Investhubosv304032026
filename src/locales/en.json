@@ -911,6 +911,7 @@
         "pickEntity": "Select an entity...",
         "pickContact": "Contact or advisor...",
         "documentName": "Document name...",
+        "documentCategory": "Document type",
         "fund": "Fund",
         "segment": "Segment",
         "subscription": "Subscription",
@@ -1301,6 +1302,20 @@
       "delete": "Delete",
       "frReadonlyHint": "The existing FR version cannot be replaced.",
       "enAddOnlyHint": "You can only add the English version.",
+      "documentCategoryLabel": "Document type",
+      "documentCategoryPlaceholder": "Select a document type",
+      "documentCategory": {
+        "capitalCall": "Capital call",
+        "distribution": "Distribution",
+        "quarterlyReport": "Quarterly report",
+        "annualReport": "Annual report",
+        "subscription": "Subscription document",
+        "kyc": "KYC / AML",
+        "legal": "Legal document",
+        "tax": "Tax document",
+        "marketing": "Marketing document",
+        "other": "Other"
+      },
       "addDateLabel": "Add date",
       "parentFolderLabel": "Parent folder (within the current space)",
       "sectionAudience": "Audience",
@@ -1372,6 +1387,7 @@
       "currentFolder": "Current folder",
       "errors": {
         "addOneVersion": "Add at least one FR or EN version of the document.",
+        "pickDocumentCategory": "Select the document type.",
         "pickTeam": "Pick at least one validation team.",
         "noInvestorToExport": "No targeted investor to export."
       },

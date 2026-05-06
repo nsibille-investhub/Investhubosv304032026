@@ -38,6 +38,7 @@ import {
   DropdownMenuSeparator,
 } from './ui/dropdown-menu';
 import { AddDocumentDialog } from './AddDocumentDialog';
+import { DocumentCategoryBadge } from './DocumentCategoryBadge';
 import { TargetingScopeBadge } from './TargetingScopeBadge';
 import { toast } from 'sonner';
 import {
@@ -468,6 +469,7 @@ export function DocumentExplorer({ documents, onDocumentClick, compactMode, onSe
                 <p className="break-words">{doc.name}</p>
               </TooltipContent>
             </Tooltip>
+            {!isFolder && <DocumentCategoryBadge category={doc.documentCategory} />}
             {isFolder && docCount > 0 && !isRoot && (
               <motion.div
                 initial={{ scale: 0 }}

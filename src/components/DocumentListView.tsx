@@ -20,6 +20,7 @@ import {
 } from 'lucide-react';
 import { Document } from '../utils/documentMockData';
 import { Button } from './ui/button';
+import { DocumentCategoryBadge } from './DocumentCategoryBadge';
 import { DocumentTargetingMarker } from './DocumentTargetingMarker';
 import { Tag } from './Tag';
 import {
@@ -497,6 +498,7 @@ export function DocumentListView({
                         <p className="text-sm font-medium text-gray-900 truncate">
                           {file.name}
                         </p>
+                        <DocumentCategoryBadge category={file.documentCategory} className="mt-1" />
                         {hasActiveSearch && (file as any).__path && (
                           <p className="text-xs text-gray-400 truncate">{(file as any).__path.slice(0, -1).join(' / ') || t('ged.listView.root')}</p>
                         )}

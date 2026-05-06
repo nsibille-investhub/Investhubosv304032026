@@ -1,5 +1,16 @@
 export type DocumentType = 'pdf' | 'excel' | 'word' | 'image' | 'video' | 'folder';
 export type DocumentStatus = 'published' | 'draft';
+export type DocumentCategory =
+  | 'capitalCall'
+  | 'distribution'
+  | 'quarterlyReport'
+  | 'annualReport'
+  | 'subscription'
+  | 'kyc'
+  | 'legal'
+  | 'tax'
+  | 'marketing'
+  | 'other';
 export type AccessLevel = 'view' | 'download' | 'edit' | 'admin';
 export type TargetType = 'all' | 'segment' | 'investor' | 'subscription' | 'participation';
 
@@ -64,6 +75,9 @@ export interface Document {
   // Tags
   tags?: string[];
   description?: string;
+
+  // Document category (e.g. capital call, quarterly report). Required for files; folders may omit it.
+  documentCategory?: DocumentCategory;
   
   // Root marker
   isRoot?: boolean;
@@ -182,6 +196,7 @@ export const mockDocuments: Document[] = [
                 views: 45,
                 downloads: 12,
                 tags: ['Comité', 'Q2 2024'],
+                documentCategory: 'quarterlyReport',
                 description: 'Document de présentation pour le comité consultatif du 22 avril 2024',
                 activities: [
                   {
@@ -228,7 +243,8 @@ export const mockDocuments: Document[] = [
                 reporting: true,
                 views: 28,
                 downloads: 8,
-                tags: ['Stratégie', 'Q2 2024']
+                tags: ['Stratégie', 'Q2 2024'],
+                documentCategory: 'quarterlyReport'
               }
             ]
           },
@@ -323,6 +339,7 @@ export const mockDocuments: Document[] = [
                 views: 42,
                 downloads: 15,
                 tags: ['Stratégie', 'Q1 2024', 'HNWI'],
+                documentCategory: 'quarterlyReport',
                 batchId: 'batch-hnwi-q1-2024',
                 batchName: 'Lot HNWI — Communication Q1 2024'
               },
@@ -349,7 +366,8 @@ export const mockDocuments: Document[] = [
                 reporting: true,
                 views: 12,
                 downloads: 3,
-                tags: ['Confidentiel', 'Alpha', 'Q1 2024']
+                tags: ['Confidentiel', 'Alpha', 'Q1 2024'],
+                documentCategory: 'legal'
               },
               {
                 id: 'doc-pere2-hnwi-3',
@@ -375,6 +393,7 @@ export const mockDocuments: Document[] = [
                 views: 28,
                 downloads: 9,
                 tags: ['Souscription', 'Q1 2024', 'HNWI'],
+                documentCategory: 'subscription',
                 batchId: 'batch-hnwi-q1-2024',
                 batchName: 'Lot HNWI — Communication Q1 2024'
               }
@@ -444,7 +463,8 @@ export const mockDocuments: Document[] = [
                 reporting: false,
                 views: 0,
                 downloads: 0,
-                tags: ['Conflit', 'Retail']
+                tags: ['Conflit', 'Retail'],
+                documentCategory: 'marketing'
               }
             ]
           }
@@ -553,6 +573,7 @@ export const mockDocuments: Document[] = [
                 views: 320,
                 downloads: 85,
                 tags: ['Rapport Annuel', '2025', 'PERE1'],
+                documentCategory: 'annualReport',
                 description: 'Rapport de gestion annuel 2025'
               }
             ]

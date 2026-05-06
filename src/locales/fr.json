@@ -911,6 +911,7 @@
         "pickEntity": "Sélectionner une entité...",
         "pickContact": "Contact ou conseiller...",
         "documentName": "Nom du document...",
+        "documentCategory": "Type de document",
         "fund": "Fonds",
         "segment": "Segment",
         "subscription": "Souscription",
@@ -1301,6 +1302,20 @@
       "delete": "Supprimer",
       "frReadonlyHint": "La version FR existante ne peut pas être remplacée.",
       "enAddOnlyHint": "Vous pouvez uniquement ajouter la version anglaise.",
+      "documentCategoryLabel": "Type de document",
+      "documentCategoryPlaceholder": "Sélectionner un type de document",
+      "documentCategory": {
+        "capitalCall": "Appel de fonds",
+        "distribution": "Distribution",
+        "quarterlyReport": "Rapport trimestriel",
+        "annualReport": "Rapport annuel",
+        "subscription": "Document de souscription",
+        "kyc": "KYC / AML",
+        "legal": "Document juridique",
+        "tax": "Document fiscal",
+        "marketing": "Document marketing",
+        "other": "Autre"
+      },
       "addDateLabel": "Date d'ajout",
       "parentFolderLabel": "Dossier parent (dans l'espace courant)",
       "sectionAudience": "Audience",
@@ -1372,6 +1387,7 @@
       "currentFolder": "Dossier courant",
       "errors": {
         "addOneVersion": "Ajouter au moins une version FR ou EN du document.",
+        "pickDocumentCategory": "Sélectionnez le type de document.",
         "pickTeam": "Sélectionnez au moins une équipe de validation.",
         "noInvestorToExport": "Aucun investisseur ciblé à exporter."
       },
