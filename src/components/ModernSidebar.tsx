@@ -16,13 +16,13 @@ interface SidebarProps {
   onPageChange?: (page: string) => void;
   entitiesManagementEnabled?: boolean;
   pendingAlertsCount?: number;
-  onOpenEcosystem?: () => void;
+  onLogoClick?: () => void;
   selectedFundId?: number | null;
   onSelectFund?: (fundId: number | null) => void;
   allFunds?: Fund[];
 }
 
-export function ModernSidebar({ expanded, onToggle, currentPage = 'entities', onPageChange, entitiesManagementEnabled = false, pendingAlertsCount = 0, onOpenEcosystem, selectedFundId, onSelectFund, allFunds = [] }: SidebarProps) {
+export function ModernSidebar({ expanded, onToggle, currentPage = 'entities', onPageChange, entitiesManagementEnabled = false, pendingAlertsCount = 0, onLogoClick, selectedFundId, onSelectFund, allFunds = [] }: SidebarProps) {
   const { t } = useTranslation();
   const [settingsFocusMode, setSettingsFocusMode] = useState(false);
   
@@ -93,8 +93,8 @@ export function ModernSidebar({ expanded, onToggle, currentPage = 'entities', on
           animate={{ justifyContent: expanded ? 'flex-start' : 'center' }}
           whileHover={{ scale: 1.02 }}
           whileTap={{ scale: 0.98 }}
-          onClick={onOpenEcosystem}
-          title={t('sidebar.ecosystemTooltip')}
+          onClick={onLogoClick}
+          title={t('sidebar.backToHomeTooltip')}
         >
           {expanded ? (
             <motion.div

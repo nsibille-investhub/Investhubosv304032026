@@ -59,7 +59,6 @@ import { InactiveInvestorTabs } from './components/InactiveInvestorTabs';
 import { InvestorDetailPage } from './components/InvestorDetailPage';
 import { EventsPage } from './components/EventsPage';
 import { NewsPage } from './components/NewsPage';
-import EcosystemPage from './components/EcosystemPage';
 import { DesignSystemPage } from './components/DesignSystemPage';
 import { WhatsNewPage } from './components/WhatsNewPage';
 import { useWhatsNewUnread } from './utils/useWhatsNewUnread';
@@ -144,7 +143,6 @@ export default function App() {
   const [trackingEnabled, setTrackingEnabled] = useState(false);
   const [newSubscriptionDialogOpen, setNewSubscriptionDialogOpen] = useState(false);
   const [selectedSubscriptionDetail, setSelectedSubscriptionDetail] = useState<Subscription | null>(null);
-  const [ecosystemPageOpen, setEcosystemPageOpen] = useState(false);
   const [selectedDataRoomSpace, setSelectedDataRoomSpace] = useState<any | null>(null);
   const [dataRoomMassUploadOpen, setDataRoomMassUploadOpen] = useState(false);
   const [dataRoomBackSignal, setDataRoomBackSignal] = useState(0);
@@ -574,7 +572,7 @@ export default function App() {
           }}
           entitiesManagementEnabled={entitiesManagementEnabled}
           pendingAlertsCount={pendingAlertsCount}
-          onOpenEcosystem={() => setEcosystemPageOpen(true)}
+          onLogoClick={() => navigateToPage('investors')}
           selectedFundId={selectedFundContextId}
           onSelectFund={setSelectedFundContextId}
           allFunds={allFundsData}
@@ -1972,10 +1970,6 @@ export default function App() {
         onSubscriptionCreated={handleSubscriptionCreated}
       />
 
-      {/* Ecosystem Page */}
-      {ecosystemPageOpen && (
-        <EcosystemPage onClose={() => setEcosystemPageOpen(false)} />
-      )}
         </TooltipProvider>
       </AppStoreProvider>
     </ThemeProvider>
