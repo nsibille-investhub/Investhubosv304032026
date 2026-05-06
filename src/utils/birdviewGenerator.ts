@@ -58,6 +58,8 @@ export interface BirdviewContact {
   relationLabel: string;
   email: string;
   canAccess: boolean;
+  /** 'full' | 'commercial-only' | 'revoked' — drives greying in the tree. */
+  accessLevel: 'full' | 'commercial-only' | 'revoked';
 }
 
 export interface BirdviewSpace {
@@ -317,6 +319,7 @@ export function generateBirdviewInvestors(): BirdviewInvestor[] {
         relationLabel: c.role,
         email: c.email,
         canAccess: c.canAccess,
+        accessLevel: c.accessLevel,
       })),
       totalDocuments: total,
       viewedDocuments: viewed,

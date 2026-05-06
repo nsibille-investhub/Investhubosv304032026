@@ -1324,14 +1324,16 @@
         "reset": "Reset filters",
         "expandAll": "Expand all",
         "collapseAll": "Collapse all",
-        "fullView": "Full view of {{name}}"
+        "fullView": "Full view of {{name}}",
+        "fullViewContact": "Full view of contact {{contact}} from {{investor}}"
       },
       "tooltips": {
         "targetFund": "Fund targeting",
         "targetSegment": "Segment targeting",
         "targetShare": "Share targeting",
         "targetInvestor": "Nominative targeting (investor)",
-        "targetSubscription": "Subscription targeting"
+        "targetSubscription": "Subscription targeting",
+        "contactNoAccess": "{{contact}} does not have access to this document"
       },
       "elementCount": "{{count}} items",
       "node": {

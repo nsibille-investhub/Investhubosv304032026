@@ -1324,14 +1324,16 @@
         "reset": "Réinitialiser les filtres",
         "expandAll": "Tout ouvrir",
         "collapseAll": "Tout fermer",
-        "fullView": "Vue complète de {{name}}"
+        "fullView": "Vue complète de {{name}}",
+        "fullViewContact": "Vue complète du contact {{contact}} de {{investor}}"
       },
       "tooltips": {
         "targetFund": "Ciblage par fonds",
         "targetSegment": "Ciblage par segment",
         "targetShare": "Ciblage par part",
         "targetInvestor": "Ciblage nominatif (investisseur)",
-        "targetSubscription": "Ciblage par souscription"
+        "targetSubscription": "Ciblage par souscription",
+        "contactNoAccess": "{{contact}} n'a pas accès à ce document"
       },
       "elementCount": "{{count}} éléments",
       "node": {

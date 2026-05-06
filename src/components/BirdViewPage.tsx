@@ -1,4 +1,4 @@
-import { useState, useEffect, useMemo } from 'react';
+import { useState, useEffect, useMemo, useCallback } from 'react';
 import { motion } from 'motion/react';
 import {
   Eye,
@@ -20,7 +20,8 @@ import {
   Tag as TagIcon,
   FileType,
   Users,
-  Globe
+  Globe,
+  Lock
 } from 'lucide-react';
 import { toast } from 'sonner@2.0.3';
 import {
@@ -226,6 +227,31 @@ export function BirdViewPage({ onBack }: BirdViewPageProps) {
     if (!selectedInvestor) return null;
     return investors.find(i => i.name === selectedInvestor);
   }, [selectedInvestor, investors]);
+
+  // Contact sélectionné (objet) — null tant qu'aucun contact n'est choisi
+  const selectedContactData = useMemo(() => {
+    if (!selectedContact) return null;
+    return availableContacts.find((c) => c.name === selectedContact) ?? null;
+  }, [selectedContact, availableContacts]);
+
+  /**
+   * Renvoie true quand le document n'est PAS accessible par le contact
+   * sélectionné (mais l'investisseur lui y a bien accès). Ces documents
+   * sont rendus en gris dans l'arbre pour montrer la limite d'audience.
+   */
+  const isInaccessibleForContact = useCallback(
+    (node: DocumentNode): boolean => {
+      if (!selectedContactData) return false;
+      const lvl = selectedContactData.accessLevel;
+      if (lvl === 'full') return false;
+      if (lvl === 'revoked') return true;
+      // commercial-only: marketing category OR segment-targeted only
+      if (node.documentCategory === 'marketing') return false;
+      if (node.segmentRestrictions && node.segmentRestrictions.length > 0) return false;
+      return true;
+    },
+    [selectedContactData],
+  );
 
   // Arbre affiché (filtré ou complet)
   const displayedTree = useMemo(() => {
@@ -644,11 +670,29 @@ export function BirdViewPage({ onBack }: BirdViewPageProps) {
         )}
 
         {/* Document */}
-        {node.type === 'document' && (
-          <div className="flex items-center gap-3 py-2 px-3 bg-blue-50/30 dark:bg-blue-950/10 rounded hover:bg-gray-100 dark:hover:bg-gray-800/60 transition-colors group">
+        {node.type === 'document' && (() => {
+          const inaccessible = isInaccessibleForContact(node);
+          return (
+          <div
+            className={cn(
+              'flex items-center gap-3 py-2 px-3 bg-blue-50/30 dark:bg-blue-950/10 rounded hover:bg-gray-100 dark:hover:bg-gray-800/60 transition-colors group',
+              inaccessible && 'opacity-50 grayscale',
+            )}
+            title={
+              inaccessible && selectedContactData
+                ? t('ged.birdview.tooltips.contactNoAccess', {
+                    contact: selectedContactData.name,
+                  })
+                : undefined
+            }
+          >
             {/* Icon */}
             <div className="w-4 h-4 flex items-center justify-center flex-shrink-0">
-              <FileText className="w-4 h-4 text-gray-400" />
+              {inaccessible ? (
+                <Lock className="w-4 h-4 text-gray-400" />
+              ) : (
+                <FileText className="w-4 h-4 text-gray-400" />
+              )}
             </div>
 
             {/* Name */}
@@ -790,7 +834,8 @@ export function BirdViewPage({ onBack }: BirdViewPageProps) {
               </button>
             </div>
           </div>
-        )}
+          );
+        })()}
 
         {/* Children */}
         {isExpanded && hasChildren && (
@@ -1065,7 +1110,12 @@ export function BirdViewPage({ onBack }: BirdViewPageProps) {
           <div className="mt-4 flex items-center gap-2 px-4 py-2 bg-purple-50 dark:bg-purple-950 border border-purple-200 dark:border-purple-800 rounded-lg">
             <Eye className="w-4 h-4 text-purple-600 dark:text-purple-400" />
             <span className="text-sm text-purple-900 dark:text-purple-100">
-              {t('ged.birdview.filters.fullView', { name: selectedInvestor })}
+              {selectedContact
+                ? t('ged.birdview.filters.fullViewContact', {
+                    contact: selectedContact,
+                    investor: selectedInvestor,
+                  })
+                : t('ged.birdview.filters.fullView', { name: selectedInvestor })}
             </span>
           </div>
         )}
