@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
 import { Globe, ChevronDown, Check, Building2, Search, X } from 'lucide-react';
 import { Fund } from '../utils/fundGenerator';
+import { useTranslation } from '../utils/languageContext';
 import { cn } from './ui/utils';
 
 interface FundContextSelectorCompactProps {
@@ -12,6 +13,7 @@ interface FundContextSelectorCompactProps {
 }
 
 export function FundContextSelectorCompact({ selectedFundId, onSelectFund, allFunds, expanded }: FundContextSelectorCompactProps) {
+  const { t } = useTranslation();
   const [isOpen, setIsOpen] = useState(false);
   const [searchTerm, setSearchTerm] = useState('');
 
@@ -45,7 +47,7 @@ export function FundContextSelectorCompact({ selectedFundId, onSelectFund, allFu
                 ? "bg-gray-100 dark:bg-gray-800 hover:bg-gray-200 dark:hover:bg-gray-700"
                 : "bg-emerald-100 dark:bg-emerald-900/30 hover:bg-emerald-200 dark:hover:bg-emerald-900/50"
           )}
-          title={isGlobalContext ? 'Tous les fonds' : selectedFund?.name}
+          title={isGlobalContext ? t('sidebar.fundContextSelector.allFunds') : selectedFund?.name}
         >
           {isGlobalContext ? (
             <Globe className="w-4 h-4 text-blue-600 dark:text-blue-400" />
@@ -88,10 +90,10 @@ export function FundContextSelectorCompact({ selectedFundId, onSelectFund, allFu
                     </div>
                     <div className="flex-1">
                       <div className="text-xs font-semibold text-gray-900 dark:text-gray-100">
-                        Sélecteur de fonds
+                        {t('sidebar.fundContextSelector.title')}
                       </div>
                       <div className="text-[10px] text-gray-500 dark:text-gray-400">
-                        {allFunds.length} fonds disponibles
+                        {t('sidebar.fundContextSelector.fundsAvailable', { count: allFunds.length })}
                       </div>
                     </div>
                   </div>
@@ -101,7 +103,7 @@ export function FundContextSelectorCompact({ selectedFundId, onSelectFund, allFu
                       type="text"
                       value={searchTerm}
                       onChange={(e) => setSearchTerm(e.target.value)}
-                      placeholder="Rechercher un fonds..."
+                      placeholder={t('sidebar.fundContextSelector.searchPlaceholder')}
                       className="w-full pl-10 pr-10 py-2 bg-white dark:bg-gray-900 border border-gray-300 dark:border-gray-600 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 dark:focus:ring-blue-400"
                       autoFocus
                     />
@@ -135,10 +137,10 @@ export function FundContextSelectorCompact({ selectedFundId, onSelectFund, allFu
                     <div className="px-4 py-8 text-center">
                       <Building2 className="w-10 h-10 mx-auto mb-3 opacity-20 text-gray-400" />
                       <p className="text-xs text-gray-500 dark:text-gray-400 font-medium">
-                        Aucun fonds trouvé
+                        {t('sidebar.fundContextSelector.noFundFound')}
                       </p>
                       <p className="text-[10px] text-gray-400 dark:text-gray-500 mt-1">
-                        Essayez un autre terme de recherche
+                        {t('sidebar.fundContextSelector.tryAnotherSearch')}
                       </p>
                     </div>
                   ) : null}
@@ -147,9 +149,9 @@ export function FundContextSelectorCompact({ selectedFundId, onSelectFund, allFu
                 {/* Footer */}
                 <div className="p-2.5 border-t border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800/50">
                   <div className="text-[10px] text-gray-500 dark:text-gray-400 text-center font-medium">
-                    {filteredFunds.length === allFunds.length 
-                      ? `${allFunds.length} fonds au total`
-                      : `${filteredFunds.length} sur ${allFunds.length} fonds`}
+                    {filteredFunds.length === allFunds.length
+                      ? t('sidebar.fundContextSelector.totalFunds', { count: allFunds.length })
+                      : t('sidebar.fundContextSelector.filteredFunds', { filtered: filteredFunds.length, total: allFunds.length })}
                   </div>
                 </div>
               </motion.div>
@@ -205,7 +207,7 @@ export function FundContextSelectorCompact({ selectedFundId, onSelectFund, allFu
                 ? "text-gray-900 dark:text-gray-100"
                 : "text-emerald-900 dark:text-emerald-100"
           )}>
-            {isGlobalContext ? 'Tous les fonds' : selectedFund?.name || 'Fonds sélectionné'}
+            {isGlobalContext ? t('sidebar.fundContextSelector.allFunds') : selectedFund?.name || t('sidebar.fundContextSelector.selectedFund')}
           </div>
         </div>
 
@@ -263,7 +265,7 @@ export function FundContextSelectorCompact({ selectedFundId, onSelectFund, allFu
                     type="text"
                     value={searchTerm}
                     onChange={(e) => setSearchTerm(e.target.value)}
-                    placeholder="Rechercher..."
+                    placeholder={t('sidebar.fundContextSelector.searchPlaceholderShort')}
                     className="w-full pl-9 pr-9 py-1.5 bg-white dark:bg-gray-900 border border-gray-300 dark:border-gray-600 rounded-lg text-xs focus:outline-none focus:ring-2 focus:ring-blue-500 dark:focus:ring-blue-400"
                     autoFocus
                   />
@@ -294,7 +296,7 @@ export function FundContextSelectorCompact({ selectedFundId, onSelectFund, allFu
                 ) : (
                   <div className="px-4 py-6 text-center text-gray-500 dark:text-gray-400">
                     <Building2 className="w-10 h-10 mx-auto mb-2 opacity-30" />
-                    <p className="text-xs">Aucun fonds trouvé</p>
+                    <p className="text-xs">{t('sidebar.fundContextSelector.noFundFound')}</p>
                   </div>
                 )}
               </div>
@@ -302,9 +304,9 @@ export function FundContextSelectorCompact({ selectedFundId, onSelectFund, allFu
               {/* Footer */}
               <div className="p-2 border-t border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800/50">
                 <div className="text-[10px] text-gray-500 dark:text-gray-400 text-center">
-                  {filteredFunds.length === allFunds.length 
-                    ? `${allFunds.length} fonds au total`
-                    : `${filteredFunds.length} sur ${allFunds.length} fonds`}
+                  {filteredFunds.length === allFunds.length
+                    ? t('sidebar.fundContextSelector.totalFunds', { count: allFunds.length })
+                    : t('sidebar.fundContextSelector.filteredFunds', { filtered: filteredFunds.length, total: allFunds.length })}
                 </div>
               </div>
             </motion.div>
@@ -317,6 +319,7 @@ export function FundContextSelectorCompact({ selectedFundId, onSelectFund, allFu
 
 // Composants helper
 function GlobalOption({ isSelected, onClick, fundsCount }: { isSelected: boolean; onClick: () => void; fundsCount: number }) {
+  const { t } = useTranslation();
   return (
     <motion.button
       whileHover={{ backgroundColor: 'rgba(59, 130, 246, 0.05)' }}
@@ -331,10 +334,10 @@ function GlobalOption({ isSelected, onClick, fundsCount }: { isSelected: boolean
       </div>
       <div className="flex-1 min-w-0">
         <div className="text-xs font-semibold text-gray-900 dark:text-gray-100">
-          Tous les fonds
+          {t('sidebar.fundContextSelector.allFunds')}
         </div>
         <div className="text-[10px] text-gray-500 dark:text-gray-400">
-          Vue globale • {fundsCount} fonds
+          {t('sidebar.fundContextSelector.globalView', { count: fundsCount })}
         </div>
       </div>
       {isSelected && (

@@ -125,6 +125,19 @@
       "importsFiles": "Imports & Fichiers",
       "reporting": "Reporting",
       "tools": "Outils"
+    },
+    "fundContextSelector": {
+      "allFunds": "Tous les fonds",
+      "selectedFund": "Fonds sélectionné",
+      "title": "Sélecteur de fonds",
+      "fundsAvailable": "{{count}} fonds disponibles",
+      "searchPlaceholder": "Rechercher un fonds...",
+      "searchPlaceholderShort": "Rechercher...",
+      "noFundFound": "Aucun fonds trouvé",
+      "tryAnotherSearch": "Essayez un autre terme de recherche",
+      "totalFunds": "{{count}} fonds au total",
+      "filteredFunds": "{{filtered}} sur {{total}} fonds",
+      "globalView": "Vue globale • {{count}} fonds"
     }
   },
   "breadcrumb": {
