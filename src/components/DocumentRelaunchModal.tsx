@@ -44,8 +44,10 @@ import { DocumentPreviewDrawer } from './DocumentPreviewDrawer';
 import { useTranslation } from '../utils/languageContext';
 import {
   buildAudience,
+  buildConsolidatedRecipientMatrix,
   contextFromDoc,
   type ActivityRecipient,
+  type DocActivityContext,
 } from '../utils/documentActivityGenerator';
 import { getInvestorContacts } from '../utils/gedFixtures';
 
@@ -63,6 +65,12 @@ interface Recipient {
   openingDate?: string;
   consultationStatus: 'done' | 'pending' | 'not-accessible' | 'not-targeted';
   consultationDate?: string;
+  /**
+   * In consolidated mode: number of docs in the folder that this
+   * recipient has actually consulted, out of the total docs in their
+   * scope. Surfaced as "X / N" next to the row name.
+   */
+  consolidatedSummary?: { consulted: number; total: number };
 }
 
 interface DocumentRelaunchModalProps {
@@ -87,6 +95,12 @@ interface DocumentRelaunchModalProps {
    * narrowed to the selected investor (and optionally contact).
    */
   viewerScope?: { investorName?: string; contactName?: string };
+  /**
+   * Folder-level consolidation. When provided, the modal aggregates
+   * recipients across multiple documents and shows a "X / N documents
+   * consultés" column per LP / contact.
+   */
+  consolidatedDocs?: DocActivityContext[];
 }
 
 // ---------------------------------------------------------------------------
@@ -182,7 +196,69 @@ const buildRecipients = (
   fundRestriction?: string,
   segmentRestrictions?: string[],
   viewerScope?: { investorName?: string; contactName?: string },
+  consolidatedDocs?: DocActivityContext[],
 ): Recipient[] => {
+  // ── Consolidated (folder-level) mode: aggregate the recipients of
+  // every doc so each LP / contact appears only once with their
+  // "consulted X / N docs" summary.
+  if (consolidatedDocs && consolidatedDocs.length > 0) {
+    const scoped = consolidatedDocs.map((c) => ({ ...c, viewerScope }));
+    const matrix = buildConsolidatedRecipientMatrix(scoped);
+    type Agg = {
+      sample: ReturnType<typeof scoped[0] extends never ? never : (() => any)>;
+    };
+    const byEmail = new Map<string, {
+      name: string;
+      email: string;
+      role?: string;
+      isInvestor: boolean;
+      investorName: string;
+      delivered: number;
+      opened: number;
+      viewed: number;
+      total: number;
+    }>();
+    for (const row of matrix) {
+      const key = row.contactEmail;
+      const acc = byEmail.get(key) ?? {
+        name: row.contactName,
+        email: row.contactEmail,
+        role: row.contactRole,
+        isInvestor: row.isInvestor,
+        investorName: row.investorName,
+        delivered: 0,
+        opened: 0,
+        viewed: 0,
+        total: 0,
+      };
+      acc.total += 1;
+      if (row.status.delivered) acc.delivered += 1;
+      if (row.status.opened) acc.opened += 1;
+      if (row.status.viewed || row.status.downloaded || row.status.validated) acc.viewed += 1;
+      byEmail.set(key, acc);
+    }
+    let i = 0;
+    return Array.from(byEmail.values()).map((a): Recipient => {
+      i++;
+      const allConsulted = a.viewed > 0 && a.viewed === a.total;
+      return {
+        id: `R-cons-${i}`,
+        investorId: a.investorName,
+        name: a.name,
+        role: a.isInvestor ? null : (a.role ?? null),
+        type: a.isInvestor ? 'Investisseur' : 'Contact',
+        inTarget: true,
+        lastNotificationDate: a.delivered > 0 ? baseNotificationDate : null,
+        receptionStatus: a.delivered === a.total ? 'done' : a.delivered > 0 ? 'pending' : 'not-targeted',
+        receptionDate: a.delivered > 0 ? baseNotificationDate : undefined,
+        openingStatus: a.opened === a.total ? 'done' : a.opened > 0 ? 'pending' : 'not-targeted',
+        consultationStatus: allConsulted ? 'done' : a.viewed > 0 ? 'pending' : 'not-targeted',
+        consolidatedSummary: { consulted: a.viewed, total: a.total },
+      };
+    });
+  }
+
+  // ── Single-doc mode (existing behaviour)
   const ctx = contextFromDoc({
     name: documentName,
     isNominatif,
@@ -193,10 +269,6 @@ const buildRecipients = (
   });
   const audience = buildAudience(ctx);
   const inTargetRows = audience.map((r, i) => recipientFromAudience(r, i));
-  // Out-of-target contacts (Intern on strategic docs, revoked) are
-  // appended only when no viewer scope is active — when a specific
-  // investor or contact has been selected we already narrowed the
-  // audience to exactly what they should see.
   const outOfTargetRows = viewerScope?.investorName || viewerScope?.contactName
     ? []
     : buildOutOfTargetContacts(
@@ -233,7 +305,9 @@ export function DocumentRelaunchModal({
   fundRestriction,
   segmentRestrictions,
   viewerScope,
+  consolidatedDocs,
 }: DocumentRelaunchModalProps) {
+  const isConsolidated = !!(consolidatedDocs && consolidatedDocs.length > 0);
   const { t } = useTranslation();
   const emailTemplates = useMemo(() => buildEmailTemplates(t), [t]);
   const [model, setModel] = useState(emailTemplates[0].name);
@@ -241,11 +315,16 @@ export function DocumentRelaunchModal({
   const [isPreviewOpen, setIsPreviewOpen] = useState(false);
 
   const investorRecipients = useMemo(
-    () => buildRecipients(documentName, isNominatif, investorRestriction, fundRestriction, segmentRestrictions, viewerScope),
+    () => buildRecipients(
+      documentName, isNominatif,
+      investorRestriction, fundRestriction, segmentRestrictions,
+      viewerScope, consolidatedDocs,
+    ),
     [
       documentName, isNominatif,
       investorRestriction, fundRestriction, segmentRestrictions?.join('|'),
       viewerScope?.investorName, viewerScope?.contactName,
+      consolidatedDocs,
     ],
   );
 
@@ -719,6 +798,14 @@ export function DocumentRelaunchModal({
                                   {recipient.role && (
                                     <span className="text-[11px] text-muted-foreground">
                                       {recipient.role}
+                                    </span>
+                                  )}
+                                  {recipient.consolidatedSummary && (
+                                    <span className="text-[11px] font-medium text-muted-foreground">
+                                      {t('ged.relaunchModal.consolidatedConsulted', {
+                                        consulted: recipient.consolidatedSummary.consulted,
+                                        total: recipient.consolidatedSummary.total,
+                                      })}
                                     </span>
                                   )}
                                   {recipient.name === 'Pierre Dupont' && (

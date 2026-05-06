@@ -1335,6 +1335,10 @@
         "targetSubscription": "Ciblage par souscription",
         "contactNoAccess": "{{contact}} n'a pas accès à ce document"
       },
+      "consolidated": {
+        "tooltip": "{{viewed}} / {{total}} consultations sur {{docs}} documents nominatifs",
+        "activity": "Voir l'activité consolidée du dossier"
+      },
       "elementCount": "{{count}} éléments",
       "node": {
         "viewed": "Consulté",
@@ -1482,6 +1486,13 @@
       "generic": "Générique",
       "relaunch": "Relancer",
       "emptyLabel": "Aucune activité enregistrée pour ce document.",
+      "consolidated": {
+        "badge": "Dossier · {{count}} doc.",
+        "viewedAllOne": "{{count}} / {{total}} investisseur a consulté l'ensemble des {{docs}} documents",
+        "viewedAllMany": "{{count}} / {{total}} investisseurs ont consulté l'ensemble des {{docs}} documents",
+        "viewedSome": "+{{count}} investisseur(s) ont consulté au moins un document",
+        "allOrNothing": "Aucun investisseur n'a partiellement consulté"
+      },
       "userType": {
         "Investor": "Investisseur",
         "Contact": "Contact",
@@ -1644,6 +1655,7 @@
     "relaunchModal": {
       "title": "Relancer une notification",
       "subtitle": "Notifier les destinataires pour ce document",
+      "consolidatedConsulted": "{{consulted}} / {{total}} document(s) consulté(s)",
       "closeAria": "Fermer",
       "previewAria": "Ouvrir l'aperçu de {{name}}",
       "previewHint": "Cliquer pour afficher l'aperçu du document",

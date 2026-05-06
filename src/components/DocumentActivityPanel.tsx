@@ -24,7 +24,10 @@ import {
 import { useTranslation } from '../utils/languageContext';
 import {
   buildActivityEvents,
+  buildConsolidatedActivityEvents,
+  buildConsolidatedEngagement,
   contextFromDoc,
+  type DocActivityContext,
 } from '../utils/documentActivityGenerator';
 
 type ActivityType = BirdviewActivityEventCode;
@@ -63,6 +66,17 @@ interface DocumentActivityPanelProps {
    * undefined to show the doc's full audience.
    */
   viewerScope?: { investorName?: string; contactName?: string };
+  /**
+   * Folder-level / consolidated mode. When provided, the panel
+   * ignores the single-doc props above and aggregates events + stats
+   * over every doc context in the array.
+   */
+  consolidatedDocs?: DocActivityContext[];
+  /**
+   * Optional title shown at the top of the panel when in consolidated
+   * mode (e.g. the folder name).
+   */
+  consolidatedTitle?: string;
 }
 
 // ---------------------------------------------------------------------------
@@ -237,26 +251,49 @@ export function DocumentActivityPanel({
   segmentRestrictions,
   subscriptionRestriction: _subscriptionRestriction,
   viewerScope,
+  consolidatedDocs,
+  consolidatedTitle,
 }: DocumentActivityPanelProps) {
+  const isConsolidated = !!(consolidatedDocs && consolidatedDocs.length > 0);
   const { t, lang } = useTranslation();
   const activityTypes = useMemo(() => getBirdviewActivityTypes(lang), [lang]);
   const [activities, setActivities] = useState<ActivitySource[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const [isRelaunchModalOpen, setIsRelaunchModalOpen] = useState(false);
 
+  // Apply the active viewerScope to every consolidated context so
+  // folder-level aggregation also follows the BirdView View-as.
+  const effectiveConsolidatedDocs = useMemo<DocActivityContext[] | undefined>(() => {
+    if (!consolidatedDocs || consolidatedDocs.length === 0) return undefined;
+    return consolidatedDocs.map((c) => ({ ...c, viewerScope }));
+  }, [consolidatedDocs, viewerScope?.investorName, viewerScope?.contactName]);
+
   useEffect(() => {
     if (isOpen) {
       setIsLoading(true);
       const timer = setTimeout(() => {
-        const source = buildActivitiesForDocument({
-          documentName,
-          isNominatif,
-          investorRestriction,
-          fundRestriction,
-          segmentRestrictions,
-          viewerScope,
-        });
-        setActivities(source);
+        if (effectiveConsolidatedDocs) {
+          const events = buildConsolidatedActivityEvents(effectiveConsolidatedDocs);
+          setActivities(events.map((e) => ({
+            id: e.id,
+            type: e.type as ActivityType,
+            userName: e.userName,
+            userEmail: e.userEmail,
+            userType: e.userType,
+            timestamp: e.timestamp,
+            primaryInvestor: e.primaryInvestor,
+          })));
+        } else {
+          const source = buildActivitiesForDocument({
+            documentName,
+            isNominatif,
+            investorRestriction,
+            fundRestriction,
+            segmentRestrictions,
+            viewerScope,
+          });
+          setActivities(source);
+        }
         setIsLoading(false);
       }, 300);
       return () => clearTimeout(timer);
@@ -265,17 +302,47 @@ export function DocumentActivityPanel({
     isOpen, documentId, isNominatif,
     investorRestriction, fundRestriction, segmentRestrictions?.join('|'),
     viewerScope?.investorName, viewerScope?.contactName,
+    effectiveConsolidatedDocs,
   ]);
+
+  /**
+   * Aggregated engagement across all consolidated docs — used to render
+   * a header line "X / N investisseurs ont consulté l'ensemble des
+   * documents du dossier".
+   */
+  const consolidatedSummary = useMemo(() => {
+    if (!effectiveConsolidatedDocs) return null;
+    return buildConsolidatedEngagement(effectiveConsolidatedDocs);
+  }, [effectiveConsolidatedDocs]);
 
   const timelineEvents = useMemo(
     () => activities.map((a) => toTimelineEvent(a, t)),
     [activities, t],
   );
 
-  const engagement = useMemo(
-    () => computeEngagement(activities, isNominatif, t),
-    [activities, isNominatif, t],
-  );
+  const engagement = useMemo(() => {
+    if (isConsolidated && consolidatedSummary) {
+      const { interactionsViewed, totalInteractions, investorsViewedAll, investorsViewedAny, totalInvestors, docCount } = consolidatedSummary;
+      const percent = totalInteractions === 0 ? 0 : Math.round((interactionsViewed / totalInteractions) * 100);
+      const tone: 'success' | 'warning' | 'neutral' = percent >= 75 ? 'success' : percent >= 35 ? 'warning' : 'neutral';
+      return {
+        label: t(
+          investorsViewedAll > 1
+            ? 'ged.activityPanel.consolidated.viewedAllMany'
+            : 'ged.activityPanel.consolidated.viewedAllOne',
+          { count: investorsViewedAll, total: totalInvestors, docs: docCount },
+        ),
+        sublabel: investorsViewedAny > investorsViewedAll
+          ? t('ged.activityPanel.consolidated.viewedSome', {
+              count: investorsViewedAny - investorsViewedAll,
+            })
+          : t('ged.activityPanel.consolidated.allOrNothing'),
+        percent,
+        tone,
+      };
+    }
+    return computeEngagement(activities, isNominatif, t);
+  }, [activities, isNominatif, t, isConsolidated, consolidatedSummary]);
 
   const exportColumns = useMemo(
     () => buildExportColumns(t, activityTypes, lang === 'en' ? 'en-US' : 'fr-FR'),
@@ -337,14 +404,16 @@ export function DocumentActivityPanel({
               <div className="flex items-center gap-2 rounded-md border border-border bg-white px-3 py-2">
                 <FileText className="w-4 h-4 text-muted-foreground flex-shrink-0" />
                 <span className="text-sm font-medium text-foreground truncate">
-                  {documentName}
+                  {isConsolidated ? (consolidatedTitle ?? documentName) : documentName}
                 </span>
                 <span className="ml-auto text-[10px] font-semibold uppercase tracking-wide text-muted-foreground">
-                  {isNominatif ? t('ged.activityPanel.nominative') : t('ged.activityPanel.generic')}
+                  {isConsolidated
+                    ? t('ged.activityPanel.consolidated.badge', { count: consolidatedSummary?.docCount ?? 0 })
+                    : (isNominatif ? t('ged.activityPanel.nominative') : t('ged.activityPanel.generic'))}
                 </span>
               </div>
 
-              {isNominatif ? (
+              {isNominatif && !isConsolidated ? (
                 /* Nominatif: compact single-row layout */
                 <div className="flex items-center gap-3 rounded-md border border-border bg-white px-3 py-2.5">
                   <div className="relative w-12 h-12 flex-shrink-0">
@@ -474,12 +543,13 @@ export function DocumentActivityPanel({
           {/* Relaunch Modal */}
           <DocumentRelaunchModal
             documentId={documentId}
-            documentName={documentName}
+            documentName={isConsolidated ? (consolidatedTitle ?? documentName) : documentName}
             isNominatif={isNominatif}
             investorRestriction={investorRestriction}
             fundRestriction={fundRestriction}
             segmentRestrictions={segmentRestrictions}
             viewerScope={viewerScope}
+            consolidatedDocs={consolidatedDocs}
             isOpen={isRelaunchModalOpen}
             onClose={() => setIsRelaunchModalOpen(false)}
           />

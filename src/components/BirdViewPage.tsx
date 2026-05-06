@@ -107,6 +107,10 @@ export function BirdViewPage({ onBack }: BirdViewPageProps) {
     segmentRestrictions?: string[];
   } | null>(null);
   const [isActivityPanelOpen, setIsActivityPanelOpen] = useState(false);
+  const [selectedConsolidated, setSelectedConsolidated] = useState<{
+    title: string;
+    docs: DocumentNode[];
+  } | null>(null);
   const [previewDocument, setPreviewDocument] = useState<{
     id: string;
     name: string;
@@ -300,6 +304,61 @@ export function BirdViewPage({ onBack }: BirdViewPageProps) {
       return true;
     },
     [selectedInvestor, selectedContactData],
+  );
+
+  /* ----------------------------------------------------------------- */
+  /* Folder-level consolidation                                        */
+  /* ----------------------------------------------------------------- */
+
+  /**
+   * True when every leaf descendant of the node is a nominatif doc.
+   * Empty containers return false (nothing to consolidate).
+   */
+  const isAllNominatif = useCallback((node: DocumentNode): boolean => {
+    if (node.type === 'document') return !!node.isNominatif;
+    if (!node.children || node.children.length === 0) return false;
+    return node.children.every(isAllNominatif);
+  }, []);
+
+  /**
+   * Aggregates the engagement of every nominatif descendant (sum of
+   * audience and viewers across documents).
+   */
+  const consolidatedEngagement = useCallback(
+    (node: DocumentNode): { viewedBy: number; totalViewers: number; docCount: number } => {
+      if (node.type === 'document') {
+        return {
+          viewedBy: node.engagement?.viewedBy ?? 0,
+          totalViewers: node.engagement?.totalViewers ?? 0,
+          docCount: 1,
+        };
+      }
+      let viewedBy = 0, totalViewers = 0, docCount = 0;
+      for (const c of node.children ?? []) {
+        const r = consolidatedEngagement(c);
+        viewedBy += r.viewedBy;
+        totalViewers += r.totalViewers;
+        docCount += r.docCount;
+      }
+      return { viewedBy, totalViewers, docCount };
+    },
+    [],
+  );
+
+  /**
+   * Collects all nominatif descendant doc nodes — used to build the
+   * consolidated activity / relaunch context.
+   */
+  const collectNominatifDocs = useCallback(
+    (node: DocumentNode, out: DocumentNode[] = []): DocumentNode[] => {
+      if (node.type === 'document' && node.isNominatif) {
+        out.push(node);
+      } else if (node.children) {
+        for (const c of node.children) collectNominatifDocs(c, out);
+      }
+      return out;
+    },
+    [],
   );
 
   // Arbre affiché (filtré ou complet)
@@ -685,7 +744,17 @@ export function BirdViewPage({ onBack }: BirdViewPageProps) {
         )}
 
         {/* Folder */}
-        {node.type === 'folder' && (
+        {node.type === 'folder' && (() => {
+          const allNominatif = isAllNominatif(node);
+          const consolidated = allNominatif ? consolidatedEngagement(node) : null;
+          const consolidatedPercent = consolidated && consolidated.totalViewers > 0
+            ? Math.round((consolidated.viewedBy / consolidated.totalViewers) * 100)
+            : 0;
+          const consolidatedTone =
+            consolidatedPercent >= 75 ? 'text-green-600' :
+            consolidatedPercent >= 35 ? 'text-amber-600' :
+            'text-gray-500';
+          return (
           <div className="flex items-center gap-2 py-2 px-2 -mx-2 rounded hover:bg-gray-100 dark:hover:bg-gray-800/60 transition-colors group">
             {/* Chevron */}
             <button onClick={() => hasChildren && toggleNode(node.id)} className="flex-shrink-0">
@@ -733,12 +802,55 @@ export function BirdViewPage({ onBack }: BirdViewPageProps) {
               ))}
             </div>
 
+            {/* Consolidated rate badge — visible only when every leaf
+                of the folder is a nominatif doc */}
+            {allNominatif && consolidated && consolidated.totalViewers > 0 && (
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <span className={cn('inline-flex items-center gap-1 ml-2 text-xs font-semibold', consolidatedTone)}>
+                    <CheckCircle2 className="w-3.5 h-3.5" />
+                    {consolidatedPercent}%
+                  </span>
+                </TooltipTrigger>
+                <TooltipContent side="top">
+                  <div className="text-xs">
+                    {t('ged.birdview.consolidated.tooltip', {
+                      viewed: consolidated.viewedBy,
+                      total: consolidated.totalViewers,
+                      docs: consolidated.docCount,
+                    })}
+                  </div>
+                </TooltipContent>
+              </Tooltip>
+            )}
+
             {/* Count */}
             <span className="ml-auto text-xs text-gray-500">
               {t('ged.birdview.elementCount', { count: node.children?.length || 0 })}
             </span>
+
+            {/* Folder activity / relaunch buttons (consolidated mode) */}
+            {allNominatif && consolidated && consolidated.totalViewers > 0 && (
+              <div className="flex items-center gap-1">
+                <button
+                  className="flex items-center gap-1 px-2 py-1 rounded text-xs font-medium text-gray-600 dark:text-gray-400 hover:bg-gray-200 dark:hover:bg-gray-800 transition-colors"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    setSelectedConsolidated({
+                      title: node.name,
+                      docs: collectNominatifDocs(node),
+                    });
+                    setIsActivityPanelOpen(true);
+                  }}
+                  title={t('ged.birdview.consolidated.activity')}
+                >
+                  <Activity className="w-3.5 h-3.5" />
+                </button>
+              </div>
+            )}
           </div>
-        )}
+          );
+        })()}
 
         {/* Document */}
         {node.type === 'document' && (
@@ -1194,8 +1306,22 @@ export function BirdViewPage({ onBack }: BirdViewPageProps) {
       {/* Document Activity Panel */}
       <DocumentActivityPanel
         isOpen={isActivityPanelOpen}
-        documentId={selectedDocument?.id || ''}
-        documentName={selectedDocument?.name || ''}
+        documentId={selectedConsolidated ? `folder-${selectedConsolidated.title}` : (selectedDocument?.id || '')}
+        documentName={selectedConsolidated ? selectedConsolidated.title : (selectedDocument?.name || '')}
+        consolidatedTitle={selectedConsolidated?.title}
+        consolidatedDocs={
+          selectedConsolidated
+            ? selectedConsolidated.docs.map((d) => ({
+                docKey: d.name,
+                isNominatif: !!d.isNominatif,
+                documentCategory: d.documentCategory,
+                investorRestriction: d.investorRestriction,
+                fundRestriction: d.fundRestriction,
+                segmentRestrictions: d.segmentRestrictions,
+                subscriptionRestriction: d.subscriptionRestriction,
+              }))
+            : undefined
+        }
         isNominatif={selectedDocument?.isNominatif ?? true}
         investorRestriction={selectedDocument?.investorRestriction}
         subscriptionRestriction={selectedDocument?.subscriptionRestriction}
@@ -1209,6 +1335,7 @@ export function BirdViewPage({ onBack }: BirdViewPageProps) {
         onClose={() => {
           setIsActivityPanelOpen(false);
           setSelectedDocument(null);
+          setSelectedConsolidated(null);
         }}
       />
 

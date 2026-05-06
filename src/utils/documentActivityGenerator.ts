@@ -458,3 +458,127 @@ export const contextFromDoc = (input: {
   subscriptionRestriction: input.subscriptionRestriction,
   viewerScope: input.viewerScope,
 });
+
+/* ----------------------------------------------------------------------- */
+/* Consolidated (multi-document) helpers                                   */
+/* ----------------------------------------------------------------------- */
+
+/** Engagement aggregated across many documents. */
+export interface ConsolidatedEngagement {
+  /** Sum of audience entries × document. */
+  totalInteractions: number;
+  /** Number of (recipient, doc) pairs that resulted in a view. */
+  interactionsViewed: number;
+  /** Number of distinct LPs in the union of all audiences. */
+  totalInvestors: number;
+  /** Number of LPs that consulted at least one of the documents. */
+  investorsViewedAny: number;
+  /** Number of LPs that consulted ALL of the documents. */
+  investorsViewedAll: number;
+  /** Number of documents in scope. */
+  docCount: number;
+}
+
+/**
+ * Aggregate engagement over many docs (e.g. a folder's content).
+ * Useful for the BirdView consolidated folder KPI and the multi-doc
+ * relaunch screen.
+ */
+export const buildConsolidatedEngagement = (
+  contexts: DocActivityContext[],
+): ConsolidatedEngagement => {
+  let totalInteractions = 0;
+  let interactionsViewed = 0;
+  /** investorName -> { docs viewed, total docs in their audience for this folder } */
+  const perInvestor = new Map<string, { viewed: number; total: number }>();
+
+  for (const ctx of contexts) {
+    const audience = buildAudience(ctx);
+    totalInteractions += audience.length;
+    interactionsViewed += audience.filter((r) =>
+      r.status.viewed || r.status.downloaded || r.status.validated,
+    ).length;
+
+    // For each LP touched by this doc, count whether any of their
+    // recipients consulted the doc.
+    const perLpThisDoc = new Map<string, { viewed: boolean }>();
+    for (const r of audience) {
+      const lpKey = r.primaryInvestor ?? r.name;
+      if (!perLpThisDoc.has(lpKey)) perLpThisDoc.set(lpKey, { viewed: false });
+      if (r.status.viewed || r.status.downloaded || r.status.validated) {
+        perLpThisDoc.get(lpKey)!.viewed = true;
+      }
+    }
+    for (const [lp, info] of perLpThisDoc) {
+      const acc = perInvestor.get(lp) ?? { viewed: 0, total: 0 };
+      acc.total += 1;
+      if (info.viewed) acc.viewed += 1;
+      perInvestor.set(lp, acc);
+    }
+  }
+
+  let investorsViewedAny = 0;
+  let investorsViewedAll = 0;
+  for (const v of perInvestor.values()) {
+    if (v.viewed > 0) investorsViewedAny++;
+    if (v.viewed === v.total && v.total > 0) investorsViewedAll++;
+  }
+
+  return {
+    totalInteractions,
+    interactionsViewed,
+    totalInvestors: perInvestor.size,
+    investorsViewedAny,
+    investorsViewedAll,
+    docCount: contexts.length,
+  };
+};
+
+/** Returns events from every document, sorted by timestamp DESC. */
+export const buildConsolidatedActivityEvents = (
+  contexts: DocActivityContext[],
+): ActivityEvent[] => {
+  const all: ActivityEvent[] = [];
+  for (const ctx of contexts) {
+    all.push(...buildActivityEvents(ctx));
+  }
+  all.sort((a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime());
+  return all;
+};
+
+/**
+ * For the consolidated relaunch screen: returns one row per
+ * (investor, doc) tuple with the per-doc status. The UI can then
+ * pivot it into a recipient-by-recipient summary.
+ */
+export interface ConsolidatedRecipientRow {
+  investorName: string;
+  investorEmail: string;
+  contactName: string;
+  contactEmail: string;
+  contactRole?: string;
+  isInvestor: boolean;
+  docKey: string;
+  status: RecipientStatus;
+}
+
+export const buildConsolidatedRecipientMatrix = (
+  contexts: DocActivityContext[],
+): ConsolidatedRecipientRow[] => {
+  const out: ConsolidatedRecipientRow[] = [];
+  for (const ctx of contexts) {
+    for (const r of buildAudience(ctx)) {
+      out.push({
+        investorName: r.primaryInvestor ?? r.name,
+        investorEmail: r.type === 'Investor' ? r.email : '',
+        contactName: r.name,
+        contactEmail: r.email,
+        contactRole: r.role,
+        isInvestor: r.type === 'Investor',
+        docKey: ctx.docKey,
+        status: r.status,
+      });
+    }
+  }
+  return out;
+};

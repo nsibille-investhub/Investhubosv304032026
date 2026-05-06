@@ -1335,6 +1335,10 @@
         "targetSubscription": "Subscription targeting",
         "contactNoAccess": "{{contact}} does not have access to this document"
       },
+      "consolidated": {
+        "tooltip": "{{viewed}} / {{total}} consultations across {{docs}} nominatif documents",
+        "activity": "View consolidated folder activity"
+      },
       "elementCount": "{{count}} items",
       "node": {
         "viewed": "Viewed",
@@ -1482,6 +1486,13 @@
       "generic": "Generic",
       "relaunch": "Follow up",
       "emptyLabel": "No activity recorded for this document.",
+      "consolidated": {
+        "badge": "Folder · {{count}} docs",
+        "viewedAllOne": "{{count}} / {{total}} investor consulted all {{docs}} documents",
+        "viewedAllMany": "{{count}} / {{total}} investors consulted all {{docs}} documents",
+        "viewedSome": "+{{count}} investor(s) consulted at least one document",
+        "allOrNothing": "No investor has partially consulted"
+      },
       "userType": {
         "Investor": "Investor",
         "Contact": "Contact",
@@ -1644,6 +1655,7 @@
     "relaunchModal": {
       "title": "Send a follow-up",
       "subtitle": "Notify the document recipients",
+      "consolidatedConsulted": "{{consulted}} / {{total}} document(s) consulted",
       "closeAria": "Close",
       "previewAria": "Open preview of {{name}}",
       "previewHint": "Click to display the document preview",
