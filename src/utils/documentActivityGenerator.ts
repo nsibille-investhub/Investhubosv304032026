@@ -183,35 +183,86 @@ const investorsForContext = (ctx: DocActivityContext): InvestorProfile[] => {
 /* Status derivation (deterministic per recipient)                         */
 /* ----------------------------------------------------------------------- */
 
+const TODAY_YEAR = 2026;
+
+/**
+ * Extract the year from a doc filename. Most fixtures start with
+ * `YYYY-MM-DD - …`, `YYYY - …` or `YYYY-Q1 - …`, so we can grab the
+ * first 4-digit number we find. Falls back to the current year.
+ */
+const yearFromDocKey = (docKey: string): number => {
+  const m = docKey.match(/(?:^|[^\d])(\d{4})(?:[^\d]|$)/);
+  if (!m) return TODAY_YEAR;
+  const y = Number(m[1]);
+  return y >= 2010 && y <= 2099 ? y : TODAY_YEAR;
+};
+
+interface EngagementThresholds {
+  failed: number;
+  spam: number;
+  opened: number;
+  clicked: number;
+  viewed: number;
+  downloaded: number;
+  validated: number;
+}
+
+/**
+ * Engagement ladder by document age.
+ *
+ *  - Pre-2026 docs (already in circulation for months/years): the LP
+ *    universe has had time to read, click, view and validate. Most
+ *    recipients are at or beyond the "viewed" stage.
+ *  - 2026 docs (just published): only a small fraction of recipients
+ *    have had the time to engage. Most are still at "delivered" or
+ *    "opened" at best.
+ *
+ * The bucket is uniformly distributed in [0, 100). A threshold of 80
+ * for "viewed" therefore means ~20% of recipients have viewed.
+ */
+const THRESHOLDS_OLD: EngagementThresholds = {
+  failed: 2,
+  spam: 3,
+  opened: 7,
+  clicked: 15,
+  viewed: 20,
+  downloaded: 38,
+  validated: 60,
+};
+const THRESHOLDS_RECENT: EngagementThresholds = {
+  failed: 4,
+  spam: 5,
+  opened: 45,
+  clicked: 78,
+  viewed: 88,
+  downloaded: 96,
+  validated: 99,
+};
+
 const buildStatus = (docKey: string, recipientEmail: string): RecipientStatus => {
   const b = bucket(`${docKey}|${recipientEmail}|status`);
-  // 4% bounce, 1% spam
-  if (b < 4) {
+  const year = yearFromDocKey(docKey);
+  const T = year < TODAY_YEAR ? THRESHOLDS_OLD : THRESHOLDS_RECENT;
+
+  if (b < T.failed) {
     return {
       delivered: false, opened: false, clicked: false, viewed: false,
       downloaded: false, validated: false, failed: true, complained: false,
     };
   }
-  if (b < 5) {
+  if (b < T.spam) {
     return {
       delivered: true, opened: true, clicked: false, viewed: false,
       downloaded: false, validated: false, failed: false, complained: true,
     };
   }
-  // Engagement ladder:
-  //  - delivered: always
-  //  - opened   : b >= 17 (~83%)
-  //  - clicked  : b >= 38
-  //  - viewed   : b >= 50
-  //  - downloaded: b >= 73
-  //  - validated: b >= 88 (only meaningful for nominatif docs)
   return {
     delivered: true,
-    opened: b >= 17,
-    clicked: b >= 38,
-    viewed: b >= 50,
-    downloaded: b >= 73,
-    validated: b >= 88,
+    opened: b >= T.opened,
+    clicked: b >= T.clicked,
+    viewed: b >= T.viewed,
+    downloaded: b >= T.downloaded,
+    validated: b >= T.validated,
     failed: false,
     complained: false,
   };

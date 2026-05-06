@@ -759,12 +759,14 @@ export function BirdViewPage({ onBack }: BirdViewPageProps) {
                   : 'text-blue-200';
 
               if (node.isNominatif && node.engagement) {
-                // Document nominatif : Consulté / Non Consulté (avec hover)
+                // Document nominatif : Consulté dès qu'au moins une personne
+                // (LP ou contact accessible) a consulté le doc.
+                const consulted = (node.engagement.viewedBy ?? 0) > 0;
                 return (
                   <Tooltip>
                     <TooltipTrigger asChild>
                       <div className="flex items-center gap-1.5 ml-4 cursor-help">
-                        {node.engagement.viewedBy === node.engagement.totalViewers ? (
+                        {consulted ? (
                           <>
                             <CheckCircle2 className="w-4 h-4 text-green-500" />
                             <span className="text-xs font-medium text-green-600">{t('ged.birdview.node.viewed')}</span>
