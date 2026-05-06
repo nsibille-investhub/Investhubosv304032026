@@ -25,9 +25,6 @@ import {
   ChevronDown,
   FolderOpen,
   Trash2,
-  Target,
-  FolderTree,
-  PencilLine,
 } from 'lucide-react';
 import { Button } from './button';
 import { Input } from './input';
@@ -40,7 +37,6 @@ import {
   DialogHeader,
   DialogTitle,
 } from './dialog';
-import { FormSection } from './form-section';
 import { FolderSelectionTreeviewDropdown, FolderOption } from '../DocumentAddModal';
 import { AudienceCounter, computeAudience } from '../AudienceCounter';
 import { SegmentsMultiSelect, FundSingleSelect } from './targeting-selects';
@@ -219,54 +215,39 @@ export function FolderSpaceDialog(props: FolderSpaceDialogProps) {
         <div className="flex-1 overflow-y-auto p-6 space-y-6">
           {/* Parent folder — folder variant only (tree view) */}
           {!isSpace && (
-            <FormSection
-              title="Emplacement"
-              description="Choisissez le dossier parent dans lequel placer ce dossier."
-              icon={FolderTree}
-            >
-              <div className="space-y-2">
-                <Label>Dossier parent</Label>
-                <FolderSelectionTreeviewDropdown
-                  value={parentId}
-                  onChange={setParentId}
-                  folderOptions={folderOptions}
-                />
-              </div>
-            </FormSection>
+            <div className="space-y-2">
+              <Label>Dossier parent</Label>
+              <FolderSelectionTreeviewDropdown
+                value={parentId}
+                onChange={setParentId}
+                folderOptions={folderOptions}
+              />
+            </div>
           )}
 
           {/* Name */}
-          <FormSection
-            title={isSpace ? "Nom de l'espace" : 'Nom du dossier'}
-            description={
-              isSpace
-                ? 'Le nom apparaîtra dans la Data Room et dans les liens de partage.'
-                : 'Le nom apparaîtra dans l\'arborescence du dossier parent.'
-            }
-            icon={PencilLine}
-            required
-          >
+          <div className="space-y-2">
+            <Label htmlFor="ds-fsd-name">{nameLabel}</Label>
             <Input
               id="ds-fsd-name"
               value={name}
               onChange={(e) => setName(e.target.value)}
               placeholder={namePlaceholder}
               className="w-full"
-              aria-label={nameLabel}
             />
-          </FormSection>
+          </div>
 
           {/* Targeting */}
-          <FormSection
-            title="Ciblage"
-            description={
-              isSpace
-                ? 'Définissez qui peut accéder à cet espace'
-                : "Affiner le ciblage hérité de l'espace pour ce dossier"
-            }
-            icon={Target}
-            contentSpacing="lg"
-          >
+          <div className="space-y-4">
+            <div>
+              <h3 className="text-sm font-medium text-gray-900 mb-1">Ciblage</h3>
+              <p className="text-xs text-gray-500">
+                {isSpace
+                  ? 'Définissez qui peut accéder à cet espace'
+                  : 'Affiner le ciblage hérité de l\'espace pour ce dossier'}
+              </p>
+            </div>
+
             {/* User types — space variant only */}
             {isSpace && (
               <div className="space-y-2">
@@ -318,13 +299,13 @@ export function FolderSpaceDialog(props: FolderSpaceDialogProps) {
                 placeholder="Tous les fonds"
               />
             </div>
+          </div>
 
-            {/* Audience counter */}
-            <AudienceCounter
-              investors={audience.investors}
-              contacts={audience.contacts}
-            />
-          </FormSection>
+          {/* Audience counter */}
+          <AudienceCounter
+            investors={audience.investors}
+            contacts={audience.contacts}
+          />
         </div>
 
         <DialogFooter className="px-6 py-4 border-t border-gray-200 bg-gray-50 flex items-center justify-between sm:justify-between">
@@ -410,47 +391,31 @@ export function FolderSpaceDialogPreview({ variant }: FolderSpaceDialogPreviewPr
 
       <div className="p-6 space-y-6">
         {!isSpace && (
-          <FormSection
-            title="Emplacement"
-            description="Choisissez le dossier parent dans lequel placer ce dossier."
-            icon={FolderTree}
-          >
-            <div className="space-y-2">
-              <Label>Dossier parent</Label>
-              <Button variant="outline" className="w-full justify-between font-normal">
-                <span className="truncate">Constitutifs du Fonds</span>
-                <ChevronDown className="w-4 h-4" />
-              </Button>
-            </div>
-          </FormSection>
+          <div className="space-y-2">
+            <Label>Dossier parent</Label>
+            <Button variant="outline" className="w-full justify-between font-normal">
+              <span className="truncate">Constitutifs du Fonds</span>
+              <ChevronDown className="w-4 h-4" />
+            </Button>
+          </div>
         )}
 
-        <FormSection
-          title={isSpace ? "Nom de l'espace" : 'Nom du dossier'}
-          description={
-            isSpace
-              ? 'Le nom apparaîtra dans la Data Room et dans les liens de partage.'
-              : "Le nom apparaîtra dans l'arborescence du dossier parent."
-          }
-          icon={PencilLine}
-          required
-        >
+        <div className="space-y-2">
+          <Label>{isSpace ? "Nom de l'espace *" : 'Nom du dossier *'}</Label>
           <Input
             placeholder={isSpace ? 'Ex: Investisseurs LP, Documentation Partenaires...' : 'Ex: Rapports investisseurs Q2'}
             defaultValue=""
           />
-        </FormSection>
+        </div>
 
-        <FormSection
-          title="Ciblage"
-          description={
-            isSpace
-              ? 'Définissez qui peut accéder à cet espace'
-              : "Affiner le ciblage hérité de l'espace pour ce dossier"
-          }
-          icon={Target}
-          contentSpacing="lg"
-        >
+        <div className="space-y-4">
+          <div>
+            <h4 className="text-sm font-medium text-gray-900 mb-1">Ciblage</h4>
+            <p className="text-xs text-gray-500">
+              {isSpace ? 'Définissez qui peut accéder à cet espace' : "Affiner le ciblage hérité de l'espace pour ce dossier"}
+            </p>
+          </div>
+
           {isSpace && (
             <div className="space-y-2">
               <Label>Type d&apos;utilisateur</Label>
@@ -494,12 +459,12 @@ export function FolderSpaceDialogPreview({ variant }: FolderSpaceDialogPreviewPr
               options={ALL_FUNDS}
             />
           </div>
+        </div>
 
-          <AudienceCounter
-            investors={audience.investors}
-            contacts={audience.contacts}
-          />
-        </FormSection>
+        <AudienceCounter
+          investors={audience.investors}
+          contacts={audience.contacts}
+        />
       </div>
 
       <div className="px-6 py-4 border-t border-gray-200 bg-gray-50 flex items-center justify-end gap-2">

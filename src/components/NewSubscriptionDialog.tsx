@@ -26,7 +26,6 @@ import { Button } from './ui/button';
 import { Badge } from './ui/badge';
 import { Separator } from './ui/separator';
 import { Label } from './ui/label';
-import { FormSection } from './ui/form-section';
 import { PartyTypeBadge } from './ui/party-type-badge';
 import { Popover, PopoverContent, PopoverTrigger } from './ui/popover';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from './ui/select';
@@ -690,12 +689,13 @@ export function NewSubscriptionDialog({ open, onClose, onSubscriptionCreated }: 
           <div className="flex-1 overflow-y-auto px-8 py-6">
             <div className="flex flex-col gap-6">
                   {/* INVESTOR SECTION */}
-                  <FormSection
-                    title={t('subscriptions.newDialog.sections.investorTitle')}
-                    description={t('subscriptions.newDialog.sections.investorDescription')}
-                    icon={User}
-                    required
-                  >
+                  <div className="space-y-2">
+                    <Label className="text-xs uppercase tracking-wide font-semibold text-muted-foreground flex items-center gap-1.5">
+                      <User className="w-3.5 h-3.5" />
+                      {t('subscriptions.newDialog.investorLabel')}{' '}
+                      <span className="text-destructive">*</span>
+                    </Label>
+
                     {showNewInvestorForm ? (
                       <div className="border border-border bg-card rounded-xl p-4 space-y-3">
                         <div className="flex items-center justify-between">
@@ -1009,7 +1009,7 @@ export function NewSubscriptionDialog({ open, onClose, onSubscriptionCreated }: 
                         </button>
                       </div>
                     )}
-                  </FormSection>
+                  </div>
 
                   {/* STRUCTURE SECTION */}
                   {formData.investor && (() => {
@@ -1018,17 +1018,23 @@ export function NewSubscriptionDialog({ open, onClose, onSubscriptionCreated }: 
                     const isOptional = !investorHasStructures && !showNewStructureForm;
 
                     return (
-                    <FormSection
-                      title={t('subscriptions.newDialog.sections.structureTitle')}
-                      description={
-                        isOptional
-                          ? t('subscriptions.newDialog.sections.structureOptionalDescription')
-                          : t('subscriptions.newDialog.sections.structureDescription')
-                      }
-                      icon={Building2}
-                      required={!isOptional}
-                      optionalLabel={isOptional ? t('subscriptions.newDialog.optional') : undefined}
-                    >
+                    <div className="space-y-2">
+                      <Label
+                        className={`text-xs uppercase tracking-wide font-semibold flex items-center gap-1.5 ${
+                          isOptional ? 'text-muted-foreground/70' : 'text-muted-foreground'
+                        }`}
+                      >
+                        <Building2 className="w-3.5 h-3.5" />
+                        {t('subscriptions.newDialog.structureLabel')}
+                        {isOptional ? (
+                          <span className="text-muted-foreground/70 font-normal normal-case tracking-normal">
+                            {t('subscriptions.newDialog.optional')}
+                          </span>
+                        ) : (
+                          <span className="text-destructive">*</span>
+                        )}
+                      </Label>
+
                       {showNewStructureForm ? (
                         /* New Structure Form */
                         <div className="border border-border bg-card rounded-xl p-4">
@@ -1314,17 +1320,9 @@ export function NewSubscriptionDialog({ open, onClose, onSubscriptionCreated }: 
                           );
                         })()
                       )}
-                    </FormSection>
+                    </div>
                     );
                   })()}
-
-                  {/* INVESTMENT SECTION */}
-                  <FormSection
-                    title={t('subscriptions.newDialog.sections.investmentTitle')}
-                    description={t('subscriptions.newDialog.sections.investmentDescription')}
-                    icon={Landmark}
-                    required
-                  >
                   {/* Row 1: Fonds + Part */}
                   <div
                     className="grid gap-3"
@@ -1464,16 +1462,11 @@ export function NewSubscriptionDialog({ open, onClose, onSubscriptionCreated }: 
                       </label>
                     </div>
                   </div>
-                  </FormSection>
 
-                  {/* DISTRIBUTION & FEES SECTION */}
-                  <FormSection
-                    title={t('subscriptions.newDialog.sections.distributionTitle')}
-                    description={t('subscriptions.newDialog.sections.distributionDescription')}
-                    icon={Handshake}
-                  >
+                  <Separator className="my-2" />
+
                   {/* Distributor Selection - Dropdown */}
-                  <div>
+                  <div className="mb-3">
                     <Label className="text-xs mb-1 flex items-center gap-1">
                       <Handshake className="w-3.5 h-3.5" />
                       {t('subscriptions.newDialog.distributorLabel')}
@@ -1667,78 +1660,81 @@ export function NewSubscriptionDialog({ open, onClose, onSubscriptionCreated }: 
                       </div>
                     </motion.div>
                   )}
-                  </FormSection>
 
                   {/* NOTIFICATION & LANGUAGE SECTION */}
-                  {(() => {
-                    const isIntermediated = formData.distributor !== 'direct';
-                    const notifyLabelKey = isIntermediated
-                      ? 'subscriptions.newDialog.notificationSection.notifyDistributorLabel'
-                      : 'subscriptions.newDialog.notificationSection.notifyInvestorLabel';
-                    const notifyDescriptionKey = isIntermediated
-                      ? 'subscriptions.newDialog.notificationSection.notifyDistributorDescription'
-                      : 'subscriptions.newDialog.notificationSection.notifyInvestorDescription';
-                    const hasInvestorPreference = Boolean(formData.investor?.preferredLanguage);
-                    const helperKey = hasInvestorPreference
-                      ? 'subscriptions.newDialog.notificationSection.languageHelper'
-                      : 'subscriptions.newDialog.notificationSection.languageHelperFallback';
+                  <Separator className="my-2" />
+                  <div className="space-y-3">
+                    <Label className="text-xs uppercase tracking-wide font-semibold text-muted-foreground flex items-center gap-1.5">
+                      <Globe className="w-3.5 h-3.5" />
+                      {t('subscriptions.newDialog.notificationSection.title')}
+                    </Label>
 
-                    return (
-                      <FormSection
-                        title={t('subscriptions.newDialog.sections.notificationTitle')}
-                        description={t('subscriptions.newDialog.sections.notificationDescription')}
-                        icon={Globe}
-                      >
-                        <label
-                          htmlFor="notify-on-creation-switch"
-                          className="flex w-full items-start justify-between gap-3 rounded-md border border-input bg-white px-3 py-2.5 text-sm cursor-pointer hover:bg-muted/40 transition-colors"
-                        >
-                          <div className="flex-1 min-w-0">
-                            <div className="text-foreground font-medium">
-                              {t(notifyLabelKey)}
-                            </div>
-                            <div className="text-xs text-muted-foreground mt-0.5">
-                              {t(notifyDescriptionKey)}
-                            </div>
-                          </div>
-                          <Switch
-                            id="notify-on-creation-switch"
-                            checked={formData.notifyOnCreation}
-                            onCheckedChange={(checked) =>
-                              setFormData((prev) => ({ ...prev, notifyOnCreation: checked }))
-                            }
-                          />
-                        </label>
+                    {(() => {
+                      const isIntermediated = formData.distributor !== 'direct';
+                      const notifyLabelKey = isIntermediated
+                        ? 'subscriptions.newDialog.notificationSection.notifyDistributorLabel'
+                        : 'subscriptions.newDialog.notificationSection.notifyInvestorLabel';
+                      const notifyDescriptionKey = isIntermediated
+                        ? 'subscriptions.newDialog.notificationSection.notifyDistributorDescription'
+                        : 'subscriptions.newDialog.notificationSection.notifyInvestorDescription';
+                      const hasInvestorPreference = Boolean(formData.investor?.preferredLanguage);
+                      const helperKey = hasInvestorPreference
+                        ? 'subscriptions.newDialog.notificationSection.languageHelper'
+                        : 'subscriptions.newDialog.notificationSection.languageHelperFallback';
 
-                        <div className="space-y-1.5">
-                          <Label className="text-xs flex items-center gap-1.5">
-                            <Globe className="w-3.5 h-3.5" />
-                            {t('subscriptions.newDialog.notificationSection.languageLabel')}
-                          </Label>
-                          <Select
-                            value={formData.language}
-                            onValueChange={(value) =>
-                              setFormData((prev) => ({ ...prev, language: value as SubscriptionLanguage }))
-                            }
+                      return (
+                        <>
+                          <label
+                            htmlFor="notify-on-creation-switch"
+                            className="flex w-full items-start justify-between gap-3 rounded-md border border-input bg-white px-3 py-2.5 text-sm cursor-pointer hover:bg-muted/40 transition-colors"
                           >
-                            <SelectTrigger className="h-10">
-                              <SelectValue />
-                            </SelectTrigger>
-                            <SelectContent>
-                              {SUBSCRIPTION_LANGUAGES.map((code) => (
-                                <SelectItem key={code} value={code}>
-                                  {t(`subscriptions.newDialog.notificationSection.languageOptions.${code}`)}
-                                </SelectItem>
-                              ))}
-                            </SelectContent>
-                          </Select>
-                          <p className="text-[11px] text-muted-foreground">
-                            {t(helperKey)}
-                          </p>
-                        </div>
-                      </FormSection>
-                    );
-                  })()}
+                            <div className="flex-1 min-w-0">
+                              <div className="text-foreground font-medium">
+                                {t(notifyLabelKey)}
+                              </div>
+                              <div className="text-xs text-muted-foreground mt-0.5">
+                                {t(notifyDescriptionKey)}
+                              </div>
+                            </div>
+                            <Switch
+                              id="notify-on-creation-switch"
+                              checked={formData.notifyOnCreation}
+                              onCheckedChange={(checked) =>
+                                setFormData((prev) => ({ ...prev, notifyOnCreation: checked }))
+                              }
+                            />
+                          </label>
+
+                          <div className="space-y-1.5">
+                            <Label className="text-xs flex items-center gap-1.5">
+                              <Globe className="w-3.5 h-3.5" />
+                              {t('subscriptions.newDialog.notificationSection.languageLabel')}
+                            </Label>
+                            <Select
+                              value={formData.language}
+                              onValueChange={(value) =>
+                                setFormData((prev) => ({ ...prev, language: value as SubscriptionLanguage }))
+                              }
+                            >
+                              <SelectTrigger className="h-10">
+                                <SelectValue />
+                              </SelectTrigger>
+                              <SelectContent>
+                                {SUBSCRIPTION_LANGUAGES.map((code) => (
+                                  <SelectItem key={code} value={code}>
+                                    {t(`subscriptions.newDialog.notificationSection.languageOptions.${code}`)}
+                                  </SelectItem>
+                                ))}
+                              </SelectContent>
+                            </Select>
+                            <p className="text-[11px] text-muted-foreground">
+                              {t(helperKey)}
+                            </p>
+                          </div>
+                        </>
+                      );
+                    })()}
+                  </div>
             </div>
           </div>
 

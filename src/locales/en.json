@@ -596,21 +596,6 @@
           "fr": "French",
           "en": "English"
         }
-      },
-      "sections": {
-        "investorTitle": "Investor",
-        "investorDescription": "Search for the existing investor — or create a new one.",
-        "structureTitle": "Subscription structure",
-        "structureDescription": "Pick the structure used for this subscription, or subscribe directly.",
-        "structureOptionalDescription": "This investor has no structure. You can subscribe directly or create one.",
-        "investmentTitle": "Investment",
-        "investmentDescription": "Fund, share class and amount subscribed.",
-        "distributionTitle": "Distribution & fees",
-        "distributionDescription": "Distributor in charge and fee overrides for this subscription.",
-        "summaryTitle": "Summary",
-        "summaryDescription": "Final amount including fees and subscription premium.",
-        "notificationTitle": "Notification & language",
-        "notificationDescription": "Notify the recipient on creation and pick the onboarding language."
       }
     }
   },

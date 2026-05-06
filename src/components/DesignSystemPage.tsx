@@ -57,8 +57,6 @@ import {
   FileEdit,
   UploadCloud,
   Server as ServerIcon,
-  Building2,
-  Bell,
   type LucideIcon,
 } from 'lucide-react';
 import * as React from 'react';
@@ -90,7 +88,6 @@ import { CommentIndicator } from './CommentIndicator';
 import { GenericAudienceCard } from './GenericAudienceCard';
 import { SpecificAudience } from './SpecificAudience';
 import { FolderSpaceDialogPreview } from './ui/folder-space-dialog';
-import { FormSection } from './ui/form-section';
 import { KpiCard, KpiStrip } from './ui/kpi-card';
 import { PageHeader } from './ui/page-header';
 import { SearchInput } from './ui/search-input';
@@ -1533,66 +1530,6 @@ export function DesignSystemPage() {
             subscription="SUB-002"
             className="text-sm"
           />
-        </div>
-      </section>
-
-      <section className="rounded-2xl border border-[#D7E0DD] dark:border-[#1F2D2A] bg-white dark:bg-[#101615] p-6">
-        <h2 className="text-lg font-semibold text-[#1F3137] dark:text-[#E8F0EE] mb-2">Form layout — ds-form-section</h2>
-        <p className="text-sm text-[#4F6166] dark:text-[#9DB2AE] mb-1">
-          Wrapper to group related form fields under a clearly identified heading. Use it inside dialogs and settings panels
-          to keep the visual hierarchy consistent (FolderSpaceDialog, NewSubscriptionDialog, …).
-        </p>
-        <p className="text-xs text-[#4F6166] dark:text-[#9DB2AE] mb-4">
-          Identifiant : <code className="text-xs px-1 py-0.5 rounded bg-[#F1F5F4] dark:bg-[#1C2624] font-semibold">ds-form-section</code>
-          {' '}— Props : <code className="text-xs">title</code>, <code className="text-xs">description</code>, <code className="text-xs">icon</code>, <code className="text-xs">required</code>, <code className="text-xs">optionalLabel</code>, <code className="text-xs">trailing</code>, <code className="text-xs">contentSpacing</code>.
-        </p>
-        <div className="grid lg:grid-cols-2 gap-6">
-          <div className="rounded-xl border border-border bg-white dark:bg-[#101615] p-5 space-y-6">
-            <FormSection
-              title="Investisseur"
-              description="Recherchez l'investisseur existant — ou créez-en un nouveau."
-              icon={Users}
-              required
-            >
-              <div className="h-10 rounded-md border border-input bg-muted/30 flex items-center px-3 text-xs text-muted-foreground">
-                Champ : recherche investisseur…
-              </div>
-            </FormSection>
-            <FormSection
-              title="Structure de souscription"
-              description="Cet investisseur n'a pas de structure. Vous pouvez souscrire en direct ou en créer une."
-              icon={Building2}
-              optionalLabel="(optional)"
-            >
-              <div className="h-10 rounded-md border border-input bg-muted/30 flex items-center px-3 text-xs text-muted-foreground">
-                Champ : sélection de structure…
-              </div>
-            </FormSection>
-          </div>
-          <div className="rounded-xl border border-border bg-white dark:bg-[#101615] p-5 space-y-6">
-            <FormSection
-              title="Distribution & frais"
-              description="Distributeur en charge et ajustement des frais pour cette souscription."
-              icon={Briefcase}
-              trailing={
-                <span className="text-[10px] uppercase tracking-wide text-muted-foreground">2 champs</span>
-              }
-            >
-              <div className="grid grid-cols-2 gap-3">
-                <div className="h-10 rounded-md border border-input bg-muted/30" />
-                <div className="h-10 rounded-md border border-input bg-muted/30" />
-              </div>
-            </FormSection>
-            <FormSection
-              title="Notification & langue"
-              description="Prévenez le destinataire à la création et choisissez la langue d'onboarding."
-              icon={Bell}
-              contentSpacing="sm"
-            >
-              <div className="h-10 rounded-md border border-input bg-muted/30" />
-              <div className="h-10 rounded-md border border-input bg-muted/30" />
-            </FormSection>
-          </div>
         </div>
       </section>
 
