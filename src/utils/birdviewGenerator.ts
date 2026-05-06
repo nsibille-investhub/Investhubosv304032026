@@ -233,7 +233,7 @@ const recipientsForDocument = (entry: DocIndexEntry): RecipientCandidate[] => {
       break;
     }
     case 'segment': {
-      for (const inv of INVESTORS) {
+      for (const inv of GED_INVESTORS) {
         if (t.segments.includes(inv.typology)) {
           include(inv, getInvestorContacts(inv.id));
         }
