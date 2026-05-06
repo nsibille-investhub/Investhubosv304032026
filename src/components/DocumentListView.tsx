@@ -320,7 +320,10 @@ export function DocumentListView({
                         <Icon className="w-4 h-4 text-amber-600" />
                       </div>
                       <div className="flex-1 min-w-0">
-                        <p className="text-sm font-medium text-gray-900 truncate">
+                        <p
+                          className="text-sm font-medium text-gray-900 truncate"
+                          title={folder.name}
+                        >
                           {folder.name}
                         </p>
                         {hasActiveSearch && (folder as any).__path && (
@@ -495,10 +498,18 @@ export function DocumentListView({
                         <Icon className="w-4 h-4" style={{ color: '#000E2B' }} />
                       </div>
                       <div className="flex-1 min-w-0">
-                        <p className="text-sm font-medium text-gray-900 truncate">
-                          {file.name}
-                        </p>
-                        <DocumentCategoryBadge category={file.documentCategory} className="mt-1" />
+                        <div className="flex items-center gap-2 min-w-0">
+                          <p
+                            className="text-sm font-medium text-gray-900 truncate"
+                            title={file.name}
+                          >
+                            {file.name}
+                          </p>
+                          <DocumentCategoryBadge
+                            category={file.documentCategory}
+                            className="flex-shrink-0"
+                          />
+                        </div>
                         {hasActiveSearch && (file as any).__path && (
                           <p className="text-xs text-gray-400 truncate">{(file as any).__path.slice(0, -1).join(' / ') || t('ged.listView.root')}</p>
                         )}
