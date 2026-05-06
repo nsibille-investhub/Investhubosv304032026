@@ -1,4 +1,5 @@
 // Générateur de données réalistes pour Bird View - Private Equity
+import { DocumentCategory } from './documentMockData';
 
 export interface DataRoomDocument {
   id: string;
@@ -7,6 +8,7 @@ export interface DataRoomDocument {
   size: string;
   date: string;
   isNominatif: boolean;
+  documentCategory: DocumentCategory;
   stats: {
     sent: number;
     opened: number;
@@ -90,6 +92,18 @@ const SUBSCRIPTIONS = [
 
 const FUNDS = ['KORELYA CAPITAL II', 'LP Investors', 'Fund Alpha', 'Fund Beta'];
 const SEGMENTS = ['HNWI', 'UHNWI', 'Retail', 'Professional', 'Institutional'];
+const DOCUMENT_CATEGORIES: DocumentCategory[] = [
+  'capitalCall',
+  'distribution',
+  'quarterlyReport',
+  'annualReport',
+  'subscription',
+  'kyc',
+  'legal',
+  'tax',
+  'marketing',
+  'other',
+];
 
 const pick = <T>(arr: T[]): T => arr[Math.floor(Math.random() * arr.length)];
 
@@ -112,6 +126,7 @@ const createDocument = (name: string, format: 'pdf' | 'docx' | 'xlsx' | 'pptx' =
     date: randomDate(new Date(2023, 0, 1), new Date()).toLocaleDateString('fr-FR'),
     stats: randomStats(),
     engagement: randomEngagement(),
+    documentCategory: pick(DOCUMENT_CATEGORIES),
   };
 
   if (roll < 0.85) {

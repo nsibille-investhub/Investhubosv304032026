@@ -39,7 +39,9 @@ import { Button } from './ui/button';
 import { Tag } from './Tag';
 import { cn } from './ui/utils';
 import { DocumentActivityPanel } from './DocumentActivityPanel';
+import { DocumentCategoryBadge } from './DocumentCategoryBadge';
 import { DocumentPreviewDrawer } from './DocumentPreviewDrawer';
+import type { DocumentCategory } from '../utils/documentMockData';
 import { Tooltip, TooltipContent, TooltipTrigger } from './ui/tooltip';
 import { SegmentsMultiSelect, FundSingleSelect } from './ui/targeting-selects';
 import { AutocompleteSingleSelect } from './ui/autocomplete-select';
@@ -57,6 +59,7 @@ interface DocumentNode {
   size?: string;
   date?: string;
   format?: string;
+  documentCategory?: DocumentCategory;
   isNominatif?: boolean;
   stats?: {
     sent: number;
@@ -129,6 +132,7 @@ export function BirdViewPage({ onBack }: BirdViewPageProps) {
           size: item.size,
           date: item.date,
           format: item.format,
+          documentCategory: item.documentCategory,
           isNominatif: item.isNominatif,
           stats: item.stats,
           engagement: item.engagement,
@@ -642,6 +646,7 @@ export function BirdViewPage({ onBack }: BirdViewPageProps) {
 
             {/* Name */}
             <span className="text-sm text-gray-900 dark:text-gray-100">{node.name}</span>
+            <DocumentCategoryBadge category={node.documentCategory} />
 
             {/* Metadata */}
             <div className="flex items-center gap-3 text-xs text-gray-500">
