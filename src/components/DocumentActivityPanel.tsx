@@ -22,6 +22,14 @@ import {
   type BirdviewActivityEventCode,
 } from '../utils/birdviewActivityCatalog';
 import { useTranslation } from '../utils/languageContext';
+import {
+  COMMITMENTS,
+  INVESTORS,
+  findFund,
+  findInvestor,
+  getInvestorContacts,
+  type InvestorProfile,
+} from '../utils/gedFixtures';
 
 type ActivityType = BirdviewActivityEventCode;
 
@@ -45,6 +53,14 @@ interface DocumentActivityPanelProps {
   documentName: string;
   documentId: string;
   isNominatif?: boolean;
+  /** LP entity name (when isNominatif). Used to source the real contacts. */
+  investorRestriction?: string;
+  /** Fund the document belongs to — used to scope generic-doc recipients. */
+  fundRestriction?: string;
+  /** Optional segment restrictions for marketing / segment-targeted docs. */
+  segmentRestrictions?: string[];
+  /** Subscription id (for nominatif docs) — surfaced in the timeline. */
+  subscriptionRestriction?: string;
 }
 
 // ---------------------------------------------------------------------------
@@ -56,6 +72,146 @@ const iso = (daysAgo: number, h: number, m: number) => {
   date.setDate(date.getDate() - daysAgo);
   date.setHours(h, m, 0, 0);
   return date.toISOString();
+};
+
+// ---------------------------------------------------------------------------
+// Real-data activity generator
+// ---------------------------------------------------------------------------
+
+const seededRand = (() => {
+  let s = 7777;
+  return () => {
+    s = (s + 0x6d2b79f5) | 0;
+    let t = s;
+    t = Math.imul(t ^ (t >>> 15), t | 1);
+    t ^= t + Math.imul(t ^ (t >>> 7), t | 61);
+    return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
+  };
+})();
+
+interface DocContext {
+  isNominatif: boolean;
+  investorRestriction?: string;
+  fundRestriction?: string;
+  segmentRestrictions?: string[];
+}
+
+const fundCodeFromName = (fundName: string | undefined): string | undefined => {
+  if (!fundName) return undefined;
+  // Reverse lookup: scan FUNDS via findFund — we only have ~2 fixtures so a
+  // linear scan is cheap.
+  return ['NWGC2', 'AIP1'].find((code) => findFund(code)?.name === fundName);
+};
+
+const investorsForDoc = (ctx: DocContext): InvestorProfile[] => {
+  if (ctx.isNominatif && ctx.investorRestriction) {
+    const inv = INVESTORS.find((i) => i.name === ctx.investorRestriction);
+    return inv ? [inv] : [];
+  }
+  // Fund-level: every LP committed to the fund.
+  const fundCode = fundCodeFromName(ctx.fundRestriction);
+  if (fundCode) {
+    return COMMITMENTS
+      .filter((c) => c.fundCode === fundCode)
+      .map((c) => findInvestor(c.investorId))
+      .filter((x): x is InvestorProfile => Boolean(x));
+  }
+  // Segment-level (marketing): LPs whose typology matches.
+  if (ctx.segmentRestrictions?.length) {
+    return INVESTORS.filter((inv) =>
+      ctx.segmentRestrictions!.includes(inv.typology),
+    );
+  }
+  return [];
+};
+
+/** Builds a realistic activity timeline for the given document context. */
+const buildActivitiesForDocument = (ctx: DocContext): ActivitySource[] => {
+  const investors = investorsForDoc(ctx);
+  if (investors.length === 0) {
+    // Fallback to legacy hardcoded mock when we have no context.
+    return ctx.isNominatif ? generateNominatifMockActivities() : generateGenericMockActivities();
+  }
+
+  // Cap to a reasonable number for the panel — keep the doc owner + the
+  // first 5-6 LPs to avoid an overly busy timeline. The full audience
+  // remains visible from the relaunch modal.
+  const sample = investors.slice(0, ctx.isNominatif ? 1 : Math.min(5, investors.length));
+
+  const now = new Date();
+  const at = (daysAgo: number, h: number, m: number) => {
+    const d = new Date(now);
+    d.setDate(d.getDate() - daysAgo);
+    d.setHours(h, m, 0, 0);
+    return d.toISOString();
+  };
+
+  const events: ActivitySource[] = [];
+  let id = 0;
+  const next = () => `act-${++id}`;
+
+  // 1. Send chain (initiated → sent → delivered) for every LP + contacts
+  for (const inv of sample) {
+    events.push({ id: next(), type: 'notification_send_initiated', userName: inv.name, userEmail: inv.email, userType: 'Investor', timestamp: at(2, 10, 58) });
+    for (const c of getInvestorContacts(inv.id)) {
+      if (!c.canAccess) continue;
+      events.push({ id: next(), type: 'notification_send_initiated', userName: c.name, userEmail: c.email, userType: 'Contact', timestamp: at(2, 10, 58), primaryInvestor: inv.name });
+    }
+    events.push({ id: next(), type: 'notification_sent', userName: inv.name, userEmail: inv.email, userType: 'Investor', timestamp: at(2, 11, 0) });
+    for (const c of getInvestorContacts(inv.id)) {
+      if (!c.canAccess) continue;
+      events.push({ id: next(), type: 'notification_sent', userName: c.name, userEmail: c.email, userType: 'Contact', timestamp: at(2, 11, 0), primaryInvestor: inv.name });
+    }
+    events.push({ id: next(), type: 'notification_delivered', userName: inv.name, userEmail: inv.email, userType: 'Investor', timestamp: at(2, 11, 2) });
+    for (const c of getInvestorContacts(inv.id)) {
+      if (!c.canAccess) continue;
+      events.push({ id: next(), type: 'notification_delivered', userName: c.name, userEmail: c.email, userType: 'Contact', timestamp: at(2, 11, 2), primaryInvestor: inv.name });
+    }
+  }
+
+  // 2. Engagement (open / click / view / download / validate) — distributed
+  //    over the past 1-2 days with realistic ratios.
+  for (const inv of sample) {
+    const contacts = getInvestorContacts(inv.id).filter((c) => c.canAccess);
+    const opensInvestor = seededRand() < 0.85;
+    if (opensInvestor) {
+      events.push({ id: next(), type: 'notification_opened', userName: inv.name, userEmail: inv.email, userType: 'Investor', timestamp: at(1, 9, 12) });
+    }
+    contacts.forEach((c, i) => {
+      if (seededRand() < 0.7) {
+        events.push({ id: next(), type: 'notification_opened', userName: c.name, userEmail: c.email, userType: 'Contact', timestamp: at(1, 10, 5 + i * 7), primaryInvestor: inv.name });
+      }
+    });
+
+    if (opensInvestor && seededRand() < 0.7) {
+      events.push({ id: next(), type: 'notification_clicked', userName: inv.name, userEmail: inv.email, userType: 'Investor', timestamp: at(1, 11, 18) });
+      events.push({ id: next(), type: 'document_viewed', userName: inv.name, userEmail: inv.email, userType: 'Investor', timestamp: at(1, 11, 22) });
+      if (seededRand() < 0.55) {
+        events.push({ id: next(), type: 'document_downloaded', userName: inv.name, userEmail: inv.email, userType: 'Investor', timestamp: at(1, 11, 30) });
+      }
+      if (ctx.isNominatif && seededRand() < 0.5) {
+        events.push({ id: next(), type: 'document_validated', userName: inv.name, userEmail: inv.email, userType: 'Investor', timestamp: at(0, 9, 5) });
+      }
+    }
+
+    contacts.forEach((c, i) => {
+      if (seededRand() < 0.5) {
+        events.push({ id: next(), type: 'document_viewed', userName: c.name, userEmail: c.email, userType: 'Contact', timestamp: at(0, 14 + (i % 3), 12 + i * 5), primaryInvestor: inv.name });
+      }
+    });
+  }
+
+  // 3. Sprinkle one bounce on a non-sample LP to keep the timeline lively
+  //    when there are more recipients than the sample.
+  const remaining = investors.slice(sample.length);
+  if (remaining.length > 0 && !ctx.isNominatif) {
+    const bouncer = remaining[0];
+    events.push({ id: next(), type: 'notification_failed', userName: bouncer.name, userEmail: bouncer.email, userType: 'Investor', timestamp: at(2, 11, 3) });
+  }
+
+  // Sort by timestamp DESC (most recent first — Timeline expects this order)
+  events.sort((a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime());
+  return events;
 };
 
 /**
@@ -247,6 +403,10 @@ export function DocumentActivityPanel({
   documentName,
   documentId,
   isNominatif = true,
+  investorRestriction,
+  fundRestriction,
+  segmentRestrictions,
+  subscriptionRestriction: _subscriptionRestriction,
 }: DocumentActivityPanelProps) {
   const { t, lang } = useTranslation();
   const activityTypes = useMemo(() => getBirdviewActivityTypes(lang), [lang]);
@@ -258,15 +418,18 @@ export function DocumentActivityPanel({
     if (isOpen) {
       setIsLoading(true);
       const timer = setTimeout(() => {
-        const source = isNominatif
-          ? generateNominatifMockActivities()
-          : generateGenericMockActivities();
+        const source = buildActivitiesForDocument({
+          isNominatif,
+          investorRestriction,
+          fundRestriction,
+          segmentRestrictions,
+        });
         setActivities(source);
         setIsLoading(false);
       }, 300);
       return () => clearTimeout(timer);
     }
-  }, [isOpen, documentId, isNominatif]);
+  }, [isOpen, documentId, isNominatif, investorRestriction, fundRestriction, segmentRestrictions?.join('|')]);
 
   const timelineEvents = useMemo(
     () => activities.map((a) => toTimelineEvent(a, t)),
@@ -477,6 +640,9 @@ export function DocumentActivityPanel({
             documentId={documentId}
             documentName={documentName}
             isNominatif={isNominatif}
+            investorRestriction={investorRestriction}
+            fundRestriction={fundRestriction}
+            segmentRestrictions={segmentRestrictions}
             isOpen={isRelaunchModalOpen}
             onClose={() => setIsRelaunchModalOpen(false)}
           />

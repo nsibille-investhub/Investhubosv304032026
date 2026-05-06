@@ -1084,6 +1084,10 @@ export function BirdViewPage({ onBack }: BirdViewPageProps) {
         documentId={selectedDocument?.id || ''}
         documentName={selectedDocument?.name || ''}
         isNominatif={selectedDocument?.isNominatif ?? true}
+        investorRestriction={selectedDocument?.investorRestriction}
+        subscriptionRestriction={selectedDocument?.subscriptionRestriction}
+        fundRestriction={selectedDocument?.fundRestriction}
+        segmentRestrictions={selectedDocument?.segmentRestrictions}
         onClose={() => {
           setIsActivityPanelOpen(false);
           setSelectedDocument(null);

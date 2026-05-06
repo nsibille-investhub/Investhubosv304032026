@@ -114,6 +114,109 @@ export const findInvestor = (id: string): InvestorProfile | undefined =>
   INVESTORS.find((i) => i.id === id);
 
 /* ----------------------------------------------------------------------- */
+/* 2.bis Contacts attached to investors                                    */
+/* ----------------------------------------------------------------------- */
+//
+// Each investor exposes a deterministic set of 2-3 contacts whose roles
+// match the investor's typology. These are used by the "View as LP"
+// selector, the BirdView activity panel, the document relaunch modal,
+// and the engagement statistics — all of which therefore reference the
+// same coherent population of contacts.
+
+export interface InvestorContact {
+  id: string;
+  investorId: string;
+  name: string;
+  role: string;
+  email: string;
+  /**
+   * Authorisation flag — whether the contact is currently allowed to
+   * view the LP's documents on the portal.
+   */
+  canAccess: boolean;
+}
+
+const CONTACT_ROLES_BY_TYPOLOGY: Record<InvestorTypology, string[]> = {
+  'Pension Fund':  ['CIO', 'Senior Portfolio Manager', 'Risk Officer'],
+  'Insurance':     ['Head of Private Markets', 'Investment Officer', 'Compliance Officer'],
+  'Sovereign':     ['Head of Alternatives', 'Senior Investment Officer', 'Legal Counsel'],
+  'Institutional': ['Head of Private Equity', 'Senior Investment Analyst', 'Operations Manager'],
+  'Family Office': ['Head of Investments', 'Investment Analyst', 'Tax & Estate Advisor'],
+  'HNWI':          ['Wealth Advisor', 'Personal Assistant'],
+  'UHNWI':         ['Family Office Manager', 'Tax Advisor', 'Personal Assistant'],
+  'Distributor':   ['Head of Fund Selection', 'Senior Analyst', 'Compliance Officer'],
+};
+
+const CONTACT_FIRST_NAMES = [
+  'Marc', 'Sophie', 'Thomas', 'Camille', 'Olivier', 'Isabelle', 'Antoine', 'Nathalie',
+  'Pierre', 'Émilie', 'Julien', 'Claire', 'Vincent', 'Hélène', 'Laurent', 'Caroline',
+  'Mathieu', 'Sandrine', 'Nicolas', 'Stéphanie', 'David', 'Aurélie', 'Benoît', 'Marion',
+  'Patrick', 'Élise', 'Frédéric', 'Anne-Sophie', 'Christophe', 'Valérie',
+] as const;
+
+const CONTACT_LAST_NAMES = [
+  'Lefèvre', 'Moreau', 'Lambert', 'Roux', 'Fontaine', 'Garnier', 'Faure', 'Mercier',
+  'Blanchard', 'Renard', 'Henry', 'Marchal', 'Vasseur', 'Charpentier', 'Legrand',
+  'Berger', 'Dumas', 'Lemoine', 'Brunet', 'Pasquier', 'Lacroix', 'Bourgeois',
+  'Chevalier', 'Carpentier', 'Marchand', 'Dupré', 'Rolland', 'Schneider', 'Klein',
+  'Becker', 'Müller', 'Andersson', 'Lindqvist', 'O\'Connor', 'Ahmadi',
+] as const;
+
+const investorEmailDomain = (inv: InvestorProfile): string => {
+  const at = inv.email.indexOf('@');
+  return at >= 0 ? inv.email.slice(at + 1) : 'investhub.io';
+};
+
+const slugify = (name: string): string =>
+  name
+    .toLowerCase()
+    .normalize('NFD')
+    .replace(/[̀-ͯ]/g, '')
+    .replace(/[^a-z0-9]+/g, '.')
+    .replace(/^\.|\.$/g, '');
+
+const investorSeed = (id: string): number => {
+  let h = 0;
+  for (let i = 0; i < id.length; i++) h = (h * 31 + id.charCodeAt(i)) | 0;
+  return Math.abs(h);
+};
+
+const cachedContacts: Record<string, InvestorContact[]> = {};
+
+/** Returns 2-3 deterministic contacts attached to the given investor. */
+export const getInvestorContacts = (investorId: string): InvestorContact[] => {
+  if (cachedContacts[investorId]) return cachedContacts[investorId];
+  const inv = findInvestor(investorId);
+  if (!inv) return [];
+
+  const seed = investorSeed(investorId);
+  const roles = CONTACT_ROLES_BY_TYPOLOGY[inv.typology];
+  const numContacts = Math.min(roles.length, 2 + (seed % 2)); // 2 or 3
+  const domain = investorEmailDomain(inv);
+
+  const out: InvestorContact[] = [];
+  for (let i = 0; i < numContacts; i++) {
+    const fn = CONTACT_FIRST_NAMES[(seed + i * 7) % CONTACT_FIRST_NAMES.length];
+    const ln = CONTACT_LAST_NAMES[(seed + i * 13 + 3) % CONTACT_LAST_NAMES.length];
+    const name = `${fn} ${ln}`;
+    out.push({
+      id: `${investorId}-C${i + 1}`,
+      investorId,
+      name,
+      role: roles[i],
+      email: `${slugify(fn)}.${slugify(ln)}@${domain}`,
+      canAccess: !(i === numContacts - 1 && seed % 5 === 0), // ~20% chance the last contact lost access
+    });
+  }
+  cachedContacts[investorId] = out;
+  return out;
+};
+
+/** All contacts across all investors (cached). */
+export const getAllInvestorContacts = (): InvestorContact[] =>
+  INVESTORS.flatMap((inv) => getInvestorContacts(inv.id));
+
+/* ----------------------------------------------------------------------- */
 /* 3. Commitments — which investors invested in which fund                 */
 /* ----------------------------------------------------------------------- */
 

@@ -42,6 +42,14 @@ import {
 } from './ui/table';
 import { DocumentPreviewDrawer } from './DocumentPreviewDrawer';
 import { useTranslation } from '../utils/languageContext';
+import {
+  COMMITMENTS,
+  INVESTORS,
+  findFund,
+  findInvestor,
+  getInvestorContacts,
+  type InvestorProfile,
+} from '../utils/gedFixtures';
 
 interface Recipient {
   id: string;
@@ -70,75 +78,130 @@ interface DocumentRelaunchModalProps {
    * un récapitulatif du nombre d'investisseurs concernés.
    */
   isNominatif?: boolean;
+  /** LP entity name (when nominatif). Used to fetch the real contacts. */
+  investorRestriction?: string;
+  /** Fund the document belongs to (used for generic-doc audience size). */
+  fundRestriction?: string;
+  /** Segment restrictions (marketing docs). */
+  segmentRestrictions?: string[];
 }
 
-// Statistiques simulées pour un document générique
-const mockGenericStats = {
-  totalInvestors: 47,
-  notConsulted: 19,
+// ---------------------------------------------------------------------------
+// Real recipients & generic stats — derived from gedFixtures so the modal
+// shows the same LPs & contacts referenced by the activity panel.
+// ---------------------------------------------------------------------------
+
+const fundCodeFromName = (fundName: string | undefined): string | undefined => {
+  if (!fundName) return undefined;
+  return ['NWGC2', 'AIP1'].find((code) => findFund(code)?.name === fundName);
 };
 
-const genericConsulted =
-  mockGenericStats.totalInvestors - mockGenericStats.notConsulted;
-const genericConsultationRate = Math.round(
-  (genericConsulted / Math.max(1, mockGenericStats.totalInvestors)) * 100,
-);
+const investorsForContext = (
+  isNominatif: boolean,
+  investorRestriction?: string,
+  fundRestriction?: string,
+  segmentRestrictions?: string[],
+): InvestorProfile[] => {
+  if (isNominatif && investorRestriction) {
+    const inv = INVESTORS.find((i) => i.name === investorRestriction);
+    return inv ? [inv] : [];
+  }
+  const fundCode = fundCodeFromName(fundRestriction);
+  if (fundCode) {
+    return COMMITMENTS
+      .filter((c) => c.fundCode === fundCode)
+      .map((c) => findInvestor(c.investorId))
+      .filter((x): x is InvestorProfile => Boolean(x));
+  }
+  if (segmentRestrictions?.length) {
+    return INVESTORS.filter((inv) => segmentRestrictions.includes(inv.typology));
+  }
+  return [];
+};
 
-const mockRecipients: Recipient[] = [
-  {
-    id: '1',
-    investorId: 'inv-1',
-    name: 'Jean Dupont',
+interface ReminderSeed {
+  // Sent on day -2, opened ratio, viewed ratio…
+  reminderDate: string;
+  openedRatio: number; // 0..1
+  consultedRatio: number; // 0..1 (subset of opened)
+}
+
+const REMINDER_SEED: ReminderSeed = {
+  reminderDate: '03/05/2026 09:12',
+  openedRatio: 0.78,
+  consultedRatio: 0.55,
+};
+
+const buildRecipientsForInvestor = (
+  inv: InvestorProfile,
+  seedOffset: number,
+): Recipient[] => {
+  // Hash investor id so the engagement stats stay stable across renders.
+  let h = seedOffset;
+  for (let i = 0; i < inv.id.length; i++) h = (h * 31 + inv.id.charCodeAt(i)) | 0;
+  const seed = Math.abs(h);
+
+  const opened = (seed % 100) / 100 < REMINDER_SEED.openedRatio;
+  const consulted = opened && (((seed >> 3) % 100) / 100 < REMINDER_SEED.consultedRatio);
+
+  const baseDate = REMINDER_SEED.reminderDate;
+  const recipients: Recipient[] = [];
+
+  recipients.push({
+    id: `R-${inv.id}`,
+    investorId: inv.id,
+    name: inv.name,
     role: null,
     type: 'Investisseur',
     inTarget: true,
-    lastNotificationDate: '09/04/2026 09:12',
+    lastNotificationDate: baseDate,
     receptionStatus: 'done',
-    receptionDate: '09/04/2026 09:13',
-    openingStatus: 'done',
-    openingDate: '09/04/2026 09:35',
-    consultationStatus: 'done',
-    consultationDate: '09/04/2026 10:02',
-  },
-  {
-    id: '2',
-    investorId: 'inv-1',
-    name: 'Marie Dupont',
-    role: 'Avocat',
-    type: 'Contact',
-    inTarget: true,
-    lastNotificationDate: '09/04/2026 09:12',
-    receptionStatus: 'done',
-    receptionDate: '09/04/2026 09:14',
-    openingStatus: 'done',
-    openingDate: '09/04/2026 11:08',
-    consultationStatus: 'pending',
-  },
-  {
-    id: '3',
-    investorId: 'inv-1',
-    name: 'Pierre Dupont',
-    role: 'Comptable',
-    type: 'Contact',
-    inTarget: false,
-    lastNotificationDate: null,
-    receptionStatus: 'not-targeted',
-    openingStatus: 'not-targeted',
-    consultationStatus: 'not-targeted',
-  },
-  {
-    id: '4',
-    investorId: 'inv-1',
-    name: 'Luc Martin',
-    role: 'Dirigeant',
-    type: 'Contact',
-    inTarget: true,
-    lastNotificationDate: '09/04/2026 09:12',
-    receptionStatus: 'pending',
-    openingStatus: 'pending',
-    consultationStatus: 'pending',
-  },
-];
+    receptionDate: baseDate,
+    openingStatus: opened ? 'done' : 'pending',
+    openingDate: opened ? '03/05/2026 09:25' : undefined,
+    consultationStatus: consulted ? 'done' : 'pending',
+    consultationDate: consulted ? '03/05/2026 10:08' : undefined,
+  });
+
+  const contacts = getInvestorContacts(inv.id);
+  contacts.forEach((c, i) => {
+    const cSeed = Math.abs((seed * 17 + i * 11) | 0);
+    const cOpened = c.canAccess && (cSeed % 100) / 100 < 0.7;
+    const cConsulted = cOpened && ((cSeed >> 5) % 100) / 100 < 0.5;
+    recipients.push({
+      id: c.id,
+      investorId: inv.id,
+      name: c.name,
+      role: c.role,
+      type: 'Contact',
+      inTarget: c.canAccess,
+      lastNotificationDate: c.canAccess ? baseDate : null,
+      receptionStatus: c.canAccess ? 'done' : 'not-targeted',
+      receptionDate: c.canAccess ? baseDate : undefined,
+      openingStatus: c.canAccess ? (cOpened ? 'done' : 'pending') : 'not-targeted',
+      openingDate: cOpened ? '03/05/2026 11:08' : undefined,
+      consultationStatus: c.canAccess ? (cConsulted ? 'done' : 'pending') : 'not-targeted',
+      consultationDate: cConsulted ? `03/05/2026 ${12 + (i % 4)}:${10 + (i * 5) % 50}` : undefined,
+    });
+  });
+
+  return recipients;
+};
+
+const buildRecipients = (
+  isNominatif: boolean,
+  investorRestriction?: string,
+  fundRestriction?: string,
+  segmentRestrictions?: string[],
+): Recipient[] => {
+  const investors = investorsForContext(
+    isNominatif,
+    investorRestriction,
+    fundRestriction,
+    segmentRestrictions,
+  );
+  return investors.flatMap((inv, idx) => buildRecipientsForInvestor(inv, idx));
+};
 
 type FilterCriteria = 'all' | 'not-consulted' | 'custom';
 
@@ -163,6 +226,9 @@ export function DocumentRelaunchModal({
   documentName,
   documentId,
   isNominatif = true,
+  investorRestriction,
+  fundRestriction,
+  segmentRestrictions,
 }: DocumentRelaunchModalProps) {
   const { t } = useTranslation();
   const emailTemplates = useMemo(() => buildEmailTemplates(t), [t]);
@@ -171,9 +237,22 @@ export function DocumentRelaunchModal({
   const [isPreviewOpen, setIsPreviewOpen] = useState(false);
 
   const investorRecipients = useMemo(
-    () => mockRecipients.filter((recipient) => recipient.investorId === 'inv-1'),
-    [],
+    () => buildRecipients(isNominatif, investorRestriction, fundRestriction, segmentRestrictions),
+    [isNominatif, investorRestriction, fundRestriction, segmentRestrictions?.join('|')],
   );
+
+  // Generic-mode stats — derived from the same recipients pool so the
+  // headline numbers stay coherent with the underlying audience.
+  const genericStats = useMemo(() => {
+    const investorRecips = investorRecipients.filter((r) => r.type === 'Investisseur' && r.inTarget);
+    const totalInvestors = investorRecips.length;
+    const notConsulted = investorRecips.filter((r) => r.consultationStatus !== 'done').length;
+    return { totalInvestors, notConsulted };
+  }, [investorRecipients]);
+  const genericConsulted = genericStats.totalInvestors - genericStats.notConsulted;
+  const genericConsultationRate = genericStats.totalInvestors === 0
+    ? 0
+    : Math.round((genericConsulted / genericStats.totalInvestors) * 100);
 
   const allTargetableIds = useMemo(
     () => investorRecipients.filter((r) => r.inTarget).map((r) => r.id),
@@ -246,8 +325,8 @@ export function DocumentRelaunchModal({
   const notifiableCount = isNominatif
     ? selectedIds.size
     : selectedCriteria === 'not-consulted'
-    ? mockGenericStats.notConsulted
-    : mockGenericStats.totalInvestors;
+    ? genericStats.notConsulted
+    : genericStats.totalInvestors;
 
   const handleSend = () => {
     if (isNominatif) {
@@ -738,7 +817,7 @@ export function DocumentRelaunchModal({
                       />
                     </div>
                     <p className="text-[11px] text-muted-foreground mt-2">
-                      {t(mockGenericStats.totalInvestors > 1 ? 'ged.relaunchModal.consultedSummaryMany' : 'ged.relaunchModal.consultedSummaryOne', { consulted: genericConsulted, total: mockGenericStats.totalInvestors })}
+                      {t(genericStats.totalInvestors > 1 ? 'ged.relaunchModal.consultedSummaryMany' : 'ged.relaunchModal.consultedSummaryOne', { consulted: genericConsulted, total: genericStats.totalInvestors })}
                     </p>
                   </div>
 
@@ -755,7 +834,7 @@ export function DocumentRelaunchModal({
                         </span>
                       </div>
                       <div className="text-lg font-semibold text-foreground tabular-nums leading-tight">
-                        {mockGenericStats.totalInvestors}
+                        {genericStats.totalInvestors}
                       </div>
                     </div>
                     <div className="px-5 py-3">
@@ -783,7 +862,7 @@ export function DocumentRelaunchModal({
                         </span>
                       </div>
                       <div className="text-lg font-semibold text-foreground tabular-nums leading-tight">
-                        {mockGenericStats.notConsulted}
+                        {genericStats.notConsulted}
                       </div>
                     </div>
                   </div>
