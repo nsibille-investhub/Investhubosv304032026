@@ -596,19 +596,6 @@
           "fr": "Français",
           "en": "Anglais"
         }
-      },
-      "sections": {
-        "investorTitle": "Investisseur",
-        "investorDescription": "Recherchez l'investisseur existant — ou créez-en un nouveau.",
-        "structureTitle": "Structure de souscription",
-        "structureDescription": "Sélectionnez la structure utilisée pour cette souscription, ou souscrivez en direct.",
-        "structureOptionalDescription": "Cet investisseur n'a pas de structure. Souscrivez en direct ou créez-en une.",
-        "investmentTitle": "Investissement",
-        "investmentDescription": "Fonds, classe de parts et montant souscrit.",
-        "distributionTitle": "Distribution et frais",
-        "distributionDescription": "Distributeur en charge et ajustement des frais pour cette souscription.",
-        "notificationTitle": "Notification et langue",
-        "notificationDescription": "Prévenez le destinataire à la création et choisissez la langue d'onboarding."
       }
     }
   },
