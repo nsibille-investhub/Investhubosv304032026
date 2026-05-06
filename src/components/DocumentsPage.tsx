@@ -7,7 +7,7 @@ import { DocumentTreeSidebar } from './DocumentTreeSidebar';
 import { DocumentListView } from './DocumentListView';
 import { DocumentAddModal } from './DocumentAddModal';
 import { AddFolderPopup } from './AddFolderPopup';
-import { Document, mockDocuments } from '../utils/documentMockData';
+import { Document, DocumentCategory, mockDocuments } from '../utils/documentMockData';
 import { toast } from 'sonner';
 import { MassUploadWizard } from './MassUploadWizard';
 import { DataRoomSpace } from '../utils/dataRoomSpacesData';
@@ -108,6 +108,18 @@ export function DocumentsPage({ selectedSpace, navigationTarget, onNavigationHan
   ): Document[] => {
     const primaryFund = selectedSpace.targeting.funds[0] || t('ged.dataRoom.spacesView.allFunds');
     const primarySegment = selectedSpace.targeting.segments[0] || 'Tous segments';
+    const fileCategoryPool: DocumentCategory[] = [
+      'capitalCall',
+      'distribution',
+      'quarterlyReport',
+      'annualReport',
+      'subscription',
+      'kyc',
+      'legal',
+      'tax',
+      'marketing',
+      'other',
+    ];
 
     return treeNodes.map((node) => {
       // Parse the french date format (DD/MM/YYYY) to create a proper Date object
@@ -172,6 +184,9 @@ export function DocumentsPage({ selectedSpace, navigationTarget, onNavigationHan
           fund: primaryFund,
           segments: selectedSegment !== 'Tous segments' ? [selectedSegment] : [],
         },
+        documentCategory: node.type === 'folder'
+          ? undefined
+          : fileCategoryPool[seed % fileCategoryPool.length],
         navigatorTargeting: node.type === 'folder'
           ? (
               folderGetsGenericTargeting
