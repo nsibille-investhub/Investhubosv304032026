@@ -256,17 +256,17 @@ const availableContactRoles = [
 ];
 
 // Available email templates
-const availableEmailTemplates: { value: string; label: string; icon: LucideIcon }[] = [
-  { value: 'none', label: 'Aucun template', icon: Mail },
-  { value: 'new_document', label: 'Nouveau document', icon: FileText },
-  { value: 'capital_call', label: 'Appel de fonds', icon: Wallet },
-  { value: 'notification', label: 'Notification générale', icon: Bell },
-  { value: 'quarterly_report', label: 'Reporting trimestriel', icon: BarChart3 },
-  { value: 'tax_document', label: 'Document fiscal', icon: Receipt },
-  { value: 'general_meeting', label: 'Convocation AG', icon: Calendar },
-  { value: 'dividend', label: 'Distribution de dividendes', icon: Banknote },
-  { value: 'amendment', label: 'Avenant', icon: Edit3 },
-  { value: 'newsletter', label: 'Newsletter', icon: Newspaper },
+const availableEmailTemplates: { value: string; labelKey: string; icon: LucideIcon }[] = [
+  { value: 'none', labelKey: 'ged.dataRoom.massUpload.wizard.emailTemplates.none', icon: Mail },
+  { value: 'new_document', labelKey: 'ged.dataRoom.massUpload.wizard.emailTemplates.newDocument', icon: FileText },
+  { value: 'capital_call', labelKey: 'ged.dataRoom.massUpload.wizard.emailTemplates.capitalCall', icon: Wallet },
+  { value: 'notification', labelKey: 'ged.dataRoom.massUpload.wizard.emailTemplates.notification', icon: Bell },
+  { value: 'quarterly_report', labelKey: 'ged.dataRoom.massUpload.wizard.emailTemplates.quarterlyReport', icon: BarChart3 },
+  { value: 'tax_document', labelKey: 'ged.dataRoom.massUpload.wizard.emailTemplates.taxDocument', icon: Receipt },
+  { value: 'general_meeting', labelKey: 'ged.dataRoom.massUpload.wizard.emailTemplates.generalMeeting', icon: Calendar },
+  { value: 'dividend', labelKey: 'ged.dataRoom.massUpload.wizard.emailTemplates.dividend', icon: Banknote },
+  { value: 'amendment', labelKey: 'ged.dataRoom.massUpload.wizard.emailTemplates.amendment', icon: Edit3 },
+  { value: 'newsletter', labelKey: 'ged.dataRoom.massUpload.wizard.emailTemplates.newsletter', icon: Newspaper },
 ];
 
 export function MassUploadWizard({ isOpen, onClose, existingFolders, inline = false, originContext = null }: MassUploadWizardProps) {
@@ -2388,7 +2388,7 @@ export function MassUploadWizard({ isOpen, onClose, existingFolders, inline = fa
                                                 <SelectItem key={tpl.value} value={tpl.value} className="text-xs">
                                                   <div className="flex items-center gap-2">
                                                     <Icon className="h-3 w-3 text-gray-500" />
-                                                    {tpl.label}
+                                                    {t(tpl.labelKey)}
                                                   </div>
                                                 </SelectItem>
                                               );
@@ -2472,7 +2472,10 @@ export function MassUploadWizard({ isOpen, onClose, existingFolders, inline = fa
                                   label: 'Notification',
                                   value: n
                                     ? n.notify
-                                      ? `Appliquée à chaque membre · ${availableEmailTemplates.find((tpl) => tpl.value === n.emailTemplate)?.label ?? 'Template à choisir'}`
+                                      ? `Appliquée à chaque membre · ${(() => {
+                                          const tpl = availableEmailTemplates.find((tpl) => tpl.value === n.emailTemplate);
+                                          return tpl ? t(tpl.labelKey) : 'Template à choisir';
+                                        })()}`
                                       : 'Désactivée par défaut'
                                     : 'Par document',
                                 });
@@ -2779,7 +2782,7 @@ export function MassUploadWizard({ isOpen, onClose, existingFolders, inline = fa
                                             {restriction.segment}
                                           </span>
                                         </TooltipTrigger>
-                                        <TooltipContent><span className="text-xs">Restriction de segment héritée du dossier</span></TooltipContent>
+                                        <TooltipContent><span className="text-xs">{t('ged.dataRoom.massUpload.wizard.segmentRestrictionInherited')}</span></TooltipContent>
                                       </Tooltip>
                                     )}
                                   </div>
@@ -2888,7 +2891,10 @@ export function MassUploadWizard({ isOpen, onClose, existingFolders, inline = fa
                                   <div className="flex items-center gap-1.5 text-xs text-gray-700">
                                     <Bell className="h-3 w-3 text-blue-500 shrink-0" />
                                     <span className="truncate">
-                                      {availableEmailTemplates.find((tpl) => tpl.value === homogeneousNotification.emailTemplate)?.label ?? '—'}
+                                      {(() => {
+                                        const tpl = availableEmailTemplates.find((tpl) => tpl.value === homogeneousNotification.emailTemplate);
+                                        return tpl ? t(tpl.labelKey) : '—';
+                                      })()}
                                     </span>
                                   </div>
                                 </TooltipTrigger>
@@ -2916,7 +2922,7 @@ export function MassUploadWizard({ isOpen, onClose, existingFolders, inline = fa
                                         const Icon = tpl.icon;
                                         return (
                                           <SelectItem key={tpl.value} value={tpl.value} className="text-xs">
-                                            <div className="flex items-center gap-2"><Icon className="h-3 w-3 text-gray-500" />{tpl.label}</div>
+                                            <div className="flex items-center gap-2"><Icon className="h-3 w-3 text-gray-500" />{t(tpl.labelKey)}</div>
                                           </SelectItem>
                                         );
                                       })}
@@ -3165,7 +3171,7 @@ export function MassUploadWizard({ isOpen, onClose, existingFolders, inline = fa
                                           const Icon = tpl.icon;
                                           return (
                                             <SelectItem key={tpl.value} value={tpl.value} className="text-xs">
-                                              <div className="flex items-center gap-2"><Icon className="h-3 w-3 text-gray-500" />{tpl.label}</div>
+                                              <div className="flex items-center gap-2"><Icon className="h-3 w-3 text-gray-500" />{t(tpl.labelKey)}</div>
                                             </SelectItem>
                                           );
                                         })}
