@@ -57,6 +57,12 @@ interface DocumentActivityPanelProps {
   segmentRestrictions?: string[];
   /** Subscription id (for nominatif docs) — surfaced in the timeline. */
   subscriptionRestriction?: string;
+  /**
+   * BirdView contextual scope. When set, the timeline + stats are
+   * narrowed to the selected investor (and optionally contact). Pass
+   * undefined to show the doc's full audience.
+   */
+  viewerScope?: { investorName?: string; contactName?: string };
 }
 
 // ---------------------------------------------------------------------------
@@ -71,6 +77,7 @@ interface DocContext {
   investorRestriction?: string;
   fundRestriction?: string;
   segmentRestrictions?: string[];
+  viewerScope?: { investorName?: string; contactName?: string };
 }
 
 const buildActivitiesForDocument = (ctx: DocContext): ActivitySource[] =>
@@ -81,6 +88,7 @@ const buildActivitiesForDocument = (ctx: DocContext): ActivitySource[] =>
       investorRestriction: ctx.investorRestriction,
       fundRestriction: ctx.fundRestriction,
       segmentRestrictions: ctx.segmentRestrictions,
+      viewerScope: ctx.viewerScope,
     }),
   ).map((e) => ({
     id: e.id,
@@ -228,6 +236,7 @@ export function DocumentActivityPanel({
   fundRestriction,
   segmentRestrictions,
   subscriptionRestriction: _subscriptionRestriction,
+  viewerScope,
 }: DocumentActivityPanelProps) {
   const { t, lang } = useTranslation();
   const activityTypes = useMemo(() => getBirdviewActivityTypes(lang), [lang]);
@@ -245,13 +254,18 @@ export function DocumentActivityPanel({
           investorRestriction,
           fundRestriction,
           segmentRestrictions,
+          viewerScope,
         });
         setActivities(source);
         setIsLoading(false);
       }, 300);
       return () => clearTimeout(timer);
     }
-  }, [isOpen, documentId, isNominatif, investorRestriction, fundRestriction, segmentRestrictions?.join('|')]);
+  }, [
+    isOpen, documentId, isNominatif,
+    investorRestriction, fundRestriction, segmentRestrictions?.join('|'),
+    viewerScope?.investorName, viewerScope?.contactName,
+  ]);
 
   const timelineEvents = useMemo(
     () => activities.map((a) => toTimelineEvent(a, t)),
@@ -465,6 +479,7 @@ export function DocumentActivityPanel({
             investorRestriction={investorRestriction}
             fundRestriction={fundRestriction}
             segmentRestrictions={segmentRestrictions}
+            viewerScope={viewerScope}
             isOpen={isRelaunchModalOpen}
             onClose={() => setIsRelaunchModalOpen(false)}
           />

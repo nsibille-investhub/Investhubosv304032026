@@ -36,6 +36,18 @@ export interface DocActivityContext {
   fundRestriction?: string;
   segmentRestrictions?: string[];
   subscriptionRestriction?: string;
+  /**
+   * BirdView contextual filter. When set, the audience returned by
+   * buildAudience is narrowed to:
+   *   - viewerScope.investorName : keep only that LP and its contacts
+   *   - viewerScope.contactName  : on top, keep only the entry whose
+   *     name matches (the LP themselves, or this single contact)
+   * Stats and timeline events automatically follow.
+   */
+  viewerScope?: {
+    investorName?: string;
+    contactName?: string;
+  };
 }
 
 export interface RecipientStatus {
@@ -214,10 +226,10 @@ export const buildAudience = (ctx: DocActivityContext): ActivityRecipient[] => {
   if (investors.length === 0) return [];
 
   const desc = docDescriptor(ctx);
-  const out: ActivityRecipient[] = [];
+  const all: ActivityRecipient[] = [];
 
   for (const inv of investors) {
-    out.push({
+    all.push({
       type: 'Investor',
       primaryInvestor: inv.name,
       primaryInvestorId: inv.id,
@@ -228,7 +240,7 @@ export const buildAudience = (ctx: DocActivityContext): ActivityRecipient[] => {
     });
     for (const c of getInvestorContacts(inv.id)) {
       if (!canContactAccessDoc(c, desc)) continue;
-      out.push({
+      all.push({
         type: 'Contact',
         primaryInvestor: inv.name,
         primaryInvestorId: inv.id,
@@ -241,7 +253,16 @@ export const buildAudience = (ctx: DocActivityContext): ActivityRecipient[] => {
     }
   }
 
-  return out;
+  // Apply contextual scope filter (BirdView: viewing as investor / contact).
+  const scope = ctx.viewerScope;
+  if (!scope || (!scope.investorName && !scope.contactName)) {
+    return all;
+  }
+  return all.filter((r) => {
+    if (scope.investorName && r.primaryInvestor !== scope.investorName) return false;
+    if (scope.contactName && r.name !== scope.contactName) return false;
+    return true;
+  });
 };
 
 /* ----------------------------------------------------------------------- */
@@ -375,6 +396,7 @@ export const contextFromDoc = (input: {
   fundRestriction?: string;
   segmentRestrictions?: string[];
   subscriptionRestriction?: string;
+  viewerScope?: { investorName?: string; contactName?: string };
 }): DocActivityContext => ({
   docKey: input.name,
   isNominatif: !!input.isNominatif,
@@ -383,4 +405,5 @@ export const contextFromDoc = (input: {
   fundRestriction: input.fundRestriction,
   segmentRestrictions: input.segmentRestrictions,
   subscriptionRestriction: input.subscriptionRestriction,
+  viewerScope: input.viewerScope,
 });

@@ -1156,6 +1156,11 @@ export function BirdViewPage({ onBack }: BirdViewPageProps) {
         subscriptionRestriction={selectedDocument?.subscriptionRestriction}
         fundRestriction={selectedDocument?.fundRestriction}
         segmentRestrictions={selectedDocument?.segmentRestrictions}
+        viewerScope={
+          selectedInvestor
+            ? { investorName: selectedInvestor, contactName: selectedContact ?? undefined }
+            : undefined
+        }
         onClose={() => {
           setIsActivityPanelOpen(false);
           setSelectedDocument(null);

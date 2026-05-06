@@ -82,6 +82,11 @@ interface DocumentRelaunchModalProps {
   fundRestriction?: string;
   /** Segment restrictions (marketing docs). */
   segmentRestrictions?: string[];
+  /**
+   * BirdView contextual scope. When set, the recipient table is
+   * narrowed to the selected investor (and optionally contact).
+   */
+  viewerScope?: { investorName?: string; contactName?: string };
 }
 
 // ---------------------------------------------------------------------------
@@ -176,6 +181,7 @@ const buildRecipients = (
   investorRestriction?: string,
   fundRestriction?: string,
   segmentRestrictions?: string[],
+  viewerScope?: { investorName?: string; contactName?: string },
 ): Recipient[] => {
   const ctx = contextFromDoc({
     name: documentName,
@@ -183,13 +189,20 @@ const buildRecipients = (
     investorRestriction,
     fundRestriction,
     segmentRestrictions,
+    viewerScope,
   });
   const audience = buildAudience(ctx);
   const inTargetRows = audience.map((r, i) => recipientFromAudience(r, i));
-  const outOfTargetRows = buildOutOfTargetContacts(
-    audience, documentName, isNominatif,
-    investorRestriction, fundRestriction, segmentRestrictions,
-  );
+  // Out-of-target contacts (Intern on strategic docs, revoked) are
+  // appended only when no viewer scope is active — when a specific
+  // investor or contact has been selected we already narrowed the
+  // audience to exactly what they should see.
+  const outOfTargetRows = viewerScope?.investorName || viewerScope?.contactName
+    ? []
+    : buildOutOfTargetContacts(
+        audience, documentName, isNominatif,
+        investorRestriction, fundRestriction, segmentRestrictions,
+      );
   return [...inTargetRows, ...outOfTargetRows];
 };
 
@@ -219,6 +232,7 @@ export function DocumentRelaunchModal({
   investorRestriction,
   fundRestriction,
   segmentRestrictions,
+  viewerScope,
 }: DocumentRelaunchModalProps) {
   const { t } = useTranslation();
   const emailTemplates = useMemo(() => buildEmailTemplates(t), [t]);
@@ -227,8 +241,12 @@ export function DocumentRelaunchModal({
   const [isPreviewOpen, setIsPreviewOpen] = useState(false);
 
   const investorRecipients = useMemo(
-    () => buildRecipients(documentName, isNominatif, investorRestriction, fundRestriction, segmentRestrictions),
-    [documentName, isNominatif, investorRestriction, fundRestriction, segmentRestrictions?.join('|')],
+    () => buildRecipients(documentName, isNominatif, investorRestriction, fundRestriction, segmentRestrictions, viewerScope),
+    [
+      documentName, isNominatif,
+      investorRestriction, fundRestriction, segmentRestrictions?.join('|'),
+      viewerScope?.investorName, viewerScope?.contactName,
+    ],
   );
 
   // Generic-mode stats — derived from the same recipients pool so the
