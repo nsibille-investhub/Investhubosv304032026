@@ -19,8 +19,8 @@ const PARTY_DEFAULT_LABEL: Record<PartyType, string> = {
 export interface PartyTypeBadgeProps {
   /** Subject type — drives the icon + default short label. */
   type: PartyType;
-  /** Override the default short label (PP / PM / STR). */
-  label?: string;
+  /** Override the default short label (PP / PM / STR). Pass `null` to hide the label and keep only the icon. */
+  label?: string | null;
   className?: string;
 }
 
@@ -31,6 +31,7 @@ export interface PartyTypeBadgeProps {
  */
 export function PartyTypeBadge({ type, label, className }: PartyTypeBadgeProps) {
   const Icon = PARTY_ICON[type];
+  const resolvedLabel = label === null ? null : label ?? PARTY_DEFAULT_LABEL[type];
   return (
     <span
       data-slot="party-type-badge"
@@ -41,7 +42,7 @@ export function PartyTypeBadge({ type, label, className }: PartyTypeBadgeProps) 
       )}
     >
       <Icon className="size-3" />
-      {label ?? PARTY_DEFAULT_LABEL[type]}
+      {resolvedLabel}
     </span>
   );
 }

@@ -828,11 +828,7 @@ export function NewSubscriptionDialog({ open, onClose, onSubscriptionCreated }: 
                                       >
                                         <PartyTypeBadge
                                           type={investor.type === 'individual' ? 'individual' : 'corporate'}
-                                          label={
-                                            investor.type === 'individual'
-                                              ? t('subscriptions.newDialog.shortIndividual')
-                                              : t('subscriptions.newDialog.shortCorporate')
-                                          }
+                                          label={null}
                                         />
                                         <div className="flex-1 min-w-0">
                                           <div className="text-sm font-medium text-foreground truncate">
@@ -883,11 +879,7 @@ export function NewSubscriptionDialog({ open, onClose, onSubscriptionCreated }: 
                                         >
                                           <PartyTypeBadge
                                             type={investor.type === 'individual' ? 'individual' : 'corporate'}
-                                            label={
-                                              investor.type === 'individual'
-                                                ? t('subscriptions.newDialog.shortIndividual')
-                                                : t('subscriptions.newDialog.shortCorporate')
-                                            }
+                                            label={null}
                                           />
                                           <div className="flex-1 min-w-0">
                                             <div className="text-sm font-medium text-foreground truncate">
