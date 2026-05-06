@@ -26,7 +26,7 @@
     "english": "Anglais"
   },
   "sidebar": {
-    "ecosystemTooltip": "Voir l'écosystème InvestHub",
+    "backToHomeTooltip": "Revenir à l'accueil de l'application",
     "backToMainMenu": "Retour au menu principal",
     "menu": {
       "dashboards": "Dashboards",
