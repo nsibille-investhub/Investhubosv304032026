@@ -9,9 +9,12 @@ import {
   findFund,
   findInvestor,
   getSpaces,
-  pseudoRandom,
 } from './gedFixtures';
 import { DocumentCategory } from './documentMockData';
+import {
+  buildEngagement,
+  contextFromDoc,
+} from './documentActivityGenerator';
 
 export interface DataRoomDocument {
   id: string;
@@ -63,17 +66,45 @@ const formatDate = (iso: string): string => {
   return `${d}/${m}/${y}`;
 };
 
-const randomStats = () => ({
-  sent: Math.floor(pseudoRandom() * 35) + 5,
-  opened: Math.floor(pseudoRandom() * 25),
-  viewed: Math.floor(pseudoRandom() * 22),
-  downloaded: Math.floor(pseudoRandom() * 18),
-});
+/**
+ * Stats / engagement are now derived from the same audience+status hash
+ * the activity panel uses. The numbers shown in the BirdView tree
+ * therefore match exactly what the panel displays once opened.
+ */
+const computeStatsAndEngagement = (
+  doc: DocumentSpec,
+  fundName: string | undefined,
+): { stats: DataRoomDocument['stats']; engagement: DataRoomDocument['engagement'] } => {
+  const inv = doc.targeting.mode === 'investor' ? findInvestor(doc.targeting.investorId) : undefined;
+  const ctx = contextFromDoc({
+    name: doc.name,
+    documentCategory: doc.category as DocumentCategory,
+    isNominatif: doc.targeting.mode === 'investor',
+    investorRestriction: inv?.name,
+    fundRestriction: fundName,
+    segmentRestrictions: doc.targeting.mode === 'segment' ? doc.targeting.segments : undefined,
+  });
+  const eng = buildEngagement(ctx);
+  // For nominatif docs the "viewed" panel ratio is at recipient level
+  // (investor + their accessible contacts). For generic docs we expose
+  // the LP-level ratio (X / N investisseurs).
+  const isNominatif = doc.targeting.mode === 'investor';
+  const totalViewers = isNominatif ? eng.totalRecipients : eng.totalInvestors;
+  const viewedBy = isNominatif ? eng.recipientsViewed : eng.investorsViewed;
 
-const randomEngagement = () => {
-  const totalViewers = Math.floor(pseudoRandom() * 12) + 6;
-  const viewedBy = pseudoRandom() < 0.78 ? totalViewers : Math.floor(pseudoRandom() * totalViewers);
-  return { viewedBy, totalViewers };
+  // Notification stats: derive from audience statuses
+  let sent = 0, opened = 0, viewed = 0, downloaded = 0;
+  for (const r of eng.audience) {
+    sent += 1; // every recipient gets a notification attempt
+    if (r.status.opened) opened += 1;
+    if (r.status.viewed) viewed += 1;
+    if (r.status.downloaded) downloaded += 1;
+  }
+
+  return {
+    stats: { sent, opened, viewed, downloaded },
+    engagement: { viewedBy, totalViewers },
+  };
 };
 
 const categoryMap = (cat: string): DocumentCategory => {
@@ -99,6 +130,7 @@ const toDocument = (
   context: { fundName?: string; segments?: string[] },
 ): DataRoomDocument => {
   docCounter++;
+  const { stats, engagement } = computeStatsAndEngagement(doc, context.fundName);
   const base: DataRoomDocument = {
     id: `bv-doc-${docCounter}`,
     name: doc.name,
@@ -107,8 +139,8 @@ const toDocument = (
     date: formatDate(doc.date),
     isNominatif: false,
     documentCategory: categoryMap(doc.category),
-    stats: randomStats(),
-    engagement: randomEngagement(),
+    stats,
+    engagement,
   };
 
   switch (doc.targeting.mode) {

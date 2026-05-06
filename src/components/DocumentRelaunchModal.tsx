@@ -43,16 +43,11 @@ import {
 import { DocumentPreviewDrawer } from './DocumentPreviewDrawer';
 import { useTranslation } from '../utils/languageContext';
 import {
-  COMMITMENTS,
-  INVESTORS,
-  canContactAccessDoc,
-  findFund,
-  findInvestor,
-  getInvestorContacts,
-  type DocCategory,
-  type DocTargeting,
-  type InvestorProfile,
-} from '../utils/gedFixtures';
+  buildAudience,
+  contextFromDoc,
+  type ActivityRecipient,
+} from '../utils/documentActivityGenerator';
+import { getInvestorContacts } from '../utils/gedFixtures';
 
 interface Recipient {
   id: string;
@@ -90,140 +85,112 @@ interface DocumentRelaunchModalProps {
 }
 
 // ---------------------------------------------------------------------------
-// Real recipients & generic stats — derived from gedFixtures so the modal
-// shows the same LPs & contacts referenced by the activity panel.
+// Recipients & engagement — derived from the shared documentActivity
+// generator so that the row-level statuses (received / opened /
+// consulted) match the timeline shown in the activity panel exactly.
 // ---------------------------------------------------------------------------
 
-const fundCodeFromName = (fundName: string | undefined): string | undefined => {
-  if (!fundName) return undefined;
-  return ['NWGC2', 'AIP1'].find((code) => findFund(code)?.name === fundName);
+const baseNotificationDate = '03/05/2026 09:12';
+
+/**
+ * Build a recipient row from the shared audience entry. The reminder
+ * timestamps are intentionally simplified (we are not the source of
+ * truth for timestamps — those live in the activity panel).
+ */
+const recipientFromAudience = (r: ActivityRecipient, idx: number): Recipient => {
+  const isInvestor = r.type === 'Investor';
+  const inTarget = isInvestor || true; // every audience entry is in target by construction
+  return {
+    id: isInvestor ? `R-${r.primaryInvestorId ?? idx}` : `R-${r.primaryInvestorId ?? idx}-C${idx}`,
+    investorId: r.primaryInvestorId ?? '',
+    name: r.name,
+    role: isInvestor ? null : (r.role ?? null),
+    type: isInvestor ? 'Investisseur' : 'Contact',
+    inTarget,
+    lastNotificationDate: r.status.failed ? null : baseNotificationDate,
+    receptionStatus: r.status.delivered ? 'done' : (r.status.failed ? 'not-targeted' : 'pending'),
+    receptionDate: r.status.delivered ? baseNotificationDate : undefined,
+    openingStatus: r.status.opened ? 'done' : (r.status.delivered ? 'pending' : 'not-targeted'),
+    openingDate: r.status.opened ? `03/05/2026 ${10 + (idx % 6)}:${(idx * 7) % 60}`.slice(0, 16) : undefined,
+    consultationStatus: r.status.viewed || r.status.downloaded || r.status.validated
+      ? 'done'
+      : (r.status.delivered ? 'pending' : 'not-targeted'),
+    consultationDate: r.status.viewed
+      ? `03/05/2026 ${12 + (idx % 5)}:${(idx * 11) % 60}`.slice(0, 16)
+      : undefined,
+  };
 };
 
-const investorsForContext = (
+/**
+ * In the relaunch UI we also want to surface the contacts that exist
+ * for each LP but were filtered out (Intern on strategic docs,
+ * revoked-access contacts) so the GP sees clearly *why* a doc didn't
+ * reach them. We rebuild that list separately from gedFixtures.
+ */
+const buildOutOfTargetContacts = (
+  audience: ActivityRecipient[],
+  docName: string,
   isNominatif: boolean,
   investorRestriction?: string,
   fundRestriction?: string,
   segmentRestrictions?: string[],
-): InvestorProfile[] => {
-  if (isNominatif && investorRestriction) {
-    const inv = INVESTORS.find((i) => i.name === investorRestriction);
-    return inv ? [inv] : [];
-  }
-  const fundCode = fundCodeFromName(fundRestriction);
-  if (fundCode) {
-    return COMMITMENTS
-      .filter((c) => c.fundCode === fundCode)
-      .map((c) => findInvestor(c.investorId))
-      .filter((x): x is InvestorProfile => Boolean(x));
-  }
-  if (segmentRestrictions?.length) {
-    return INVESTORS.filter((inv) => segmentRestrictions.includes(inv.typology));
-  }
-  return [];
-};
-
-interface ReminderSeed {
-  // Sent on day -2, opened ratio, viewed ratio…
-  reminderDate: string;
-  openedRatio: number; // 0..1
-  consultedRatio: number; // 0..1 (subset of opened)
-}
-
-const REMINDER_SEED: ReminderSeed = {
-  reminderDate: '03/05/2026 09:12',
-  openedRatio: 0.78,
-  consultedRatio: 0.55,
-};
-
-const docDescriptor = (
-  isNominatif: boolean,
-  segmentRestrictions?: string[],
-): { category: DocCategory; targeting: DocTargeting } => {
-  if (segmentRestrictions?.length) {
-    return { category: 'marketing', targeting: { mode: 'segment', segments: segmentRestrictions } };
-  }
-  if (isNominatif) {
-    return { category: 'other', targeting: { mode: 'investor', investorId: '', subscriptionId: '' } };
-  }
-  return { category: 'other', targeting: { mode: 'fund' } };
-};
-
-const buildRecipientsForInvestor = (
-  inv: InvestorProfile,
-  seedOffset: number,
-  doc: { category: DocCategory; targeting: DocTargeting },
 ): Recipient[] => {
-  // Hash investor id so the engagement stats stay stable across renders.
-  let h = seedOffset;
-  for (let i = 0; i < inv.id.length; i++) h = (h * 31 + inv.id.charCodeAt(i)) | 0;
-  const seed = Math.abs(h);
-
-  const opened = (seed % 100) / 100 < REMINDER_SEED.openedRatio;
-  const consulted = opened && (((seed >> 3) % 100) / 100 < REMINDER_SEED.consultedRatio);
-
-  const baseDate = REMINDER_SEED.reminderDate;
-  const recipients: Recipient[] = [];
-
-  recipients.push({
-    id: `R-${inv.id}`,
-    investorId: inv.id,
-    name: inv.name,
-    role: null,
-    type: 'Investisseur',
-    inTarget: true,
-    lastNotificationDate: baseDate,
-    receptionStatus: 'done',
-    receptionDate: baseDate,
-    openingStatus: opened ? 'done' : 'pending',
-    openingDate: opened ? '03/05/2026 09:25' : undefined,
-    consultationStatus: consulted ? 'done' : 'pending',
-    consultationDate: consulted ? '03/05/2026 10:08' : undefined,
-  });
-
-  const contacts = getInvestorContacts(inv.id);
-  contacts.forEach((c, i) => {
-    const cSeed = Math.abs((seed * 17 + i * 11) | 0);
-    // A contact is in target only if its accessLevel allows this doc
-    // (Intern excluded from strategic docs, Revoked never in target).
-    const inTarget = canContactAccessDoc(c, doc);
-    const cOpened = inTarget && (cSeed % 100) / 100 < 0.7;
-    const cConsulted = cOpened && ((cSeed >> 5) % 100) / 100 < 0.5;
-    recipients.push({
-      id: c.id,
-      investorId: inv.id,
-      name: c.name,
-      role: c.role,
-      type: 'Contact',
-      inTarget,
-      lastNotificationDate: inTarget ? baseDate : null,
-      receptionStatus: inTarget ? 'done' : 'not-targeted',
-      receptionDate: inTarget ? baseDate : undefined,
-      openingStatus: inTarget ? (cOpened ? 'done' : 'pending') : 'not-targeted',
-      openingDate: cOpened ? '03/05/2026 11:08' : undefined,
-      consultationStatus: inTarget
-        ? (cConsulted ? 'done' : 'pending')
-        : (c.accessLevel === 'commercial-only' ? 'not-accessible' : 'not-targeted'),
-      consultationDate: cConsulted ? `03/05/2026 ${12 + (i % 4)}:${10 + (i * 5) % 50}` : undefined,
-    });
-  });
-
-  return recipients;
+  // We only show out-of-target contacts attached to LPs already in the
+  // audience — otherwise the modal explodes for fund-level docs with
+  // dozens of LPs.
+  // Each LP's full contact list is computed by the shared module via
+  // its targeting check. We piggy-back on that by walking the audience
+  // and re-asking the gedFixtures contacts list, then filter those
+  // already in audience.
+  const inAudienceEmails = new Set(audience.map((r) => r.email));
+  const out: Recipient[] = [];
+  const lpIds = new Set<string>();
+  for (const r of audience) {
+    if (r.primaryInvestorId) lpIds.add(r.primaryInvestorId);
+  }
+  for (const id of lpIds) {
+    for (const c of getInvestorContacts(id)) {
+      if (inAudienceEmails.has(c.email)) continue;
+      out.push({
+        id: c.id,
+        investorId: id,
+        name: c.name,
+        role: c.role,
+        type: 'Contact',
+        inTarget: false,
+        lastNotificationDate: null,
+        receptionStatus: 'not-targeted',
+        openingStatus: 'not-targeted',
+        consultationStatus: c.accessLevel === 'commercial-only' ? 'not-accessible' : 'not-targeted',
+      });
+    }
+  }
+  // Suppress unused-vars warning
+  void docName; void isNominatif; void investorRestriction; void fundRestriction; void segmentRestrictions;
+  return out;
 };
 
 const buildRecipients = (
+  documentName: string,
   isNominatif: boolean,
   investorRestriction?: string,
   fundRestriction?: string,
   segmentRestrictions?: string[],
 ): Recipient[] => {
-  const investors = investorsForContext(
+  const ctx = contextFromDoc({
+    name: documentName,
     isNominatif,
     investorRestriction,
     fundRestriction,
     segmentRestrictions,
+  });
+  const audience = buildAudience(ctx);
+  const inTargetRows = audience.map((r, i) => recipientFromAudience(r, i));
+  const outOfTargetRows = buildOutOfTargetContacts(
+    audience, documentName, isNominatif,
+    investorRestriction, fundRestriction, segmentRestrictions,
   );
-  const doc = docDescriptor(isNominatif, segmentRestrictions);
-  return investors.flatMap((inv, idx) => buildRecipientsForInvestor(inv, idx, doc));
+  return [...inTargetRows, ...outOfTargetRows];
 };
 
 type FilterCriteria = 'all' | 'not-consulted' | 'custom';
@@ -260,8 +227,8 @@ export function DocumentRelaunchModal({
   const [isPreviewOpen, setIsPreviewOpen] = useState(false);
 
   const investorRecipients = useMemo(
-    () => buildRecipients(isNominatif, investorRestriction, fundRestriction, segmentRestrictions),
-    [isNominatif, investorRestriction, fundRestriction, segmentRestrictions?.join('|')],
+    () => buildRecipients(documentName, isNominatif, investorRestriction, fundRestriction, segmentRestrictions),
+    [documentName, isNominatif, investorRestriction, fundRestriction, segmentRestrictions?.join('|')],
   );
 
   // Generic-mode stats — derived from the same recipients pool so the

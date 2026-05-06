@@ -90,7 +90,16 @@ export function BirdViewPage({ onBack }: BirdViewPageProps) {
   const [selectedContact, setSelectedContact] = useState<string | null>(null);
   const [expandedNodes, setExpandedNodes] = useState<Set<string>>(new Set());
   const [showOnlyIncomplete, setShowOnlyIncomplete] = useState(false);
-  const [selectedDocument, setSelectedDocument] = useState<{ id: string; name: string; isNominatif: boolean } | null>(null);
+  const [selectedDocument, setSelectedDocument] = useState<{
+    id: string;
+    name: string;
+    isNominatif: boolean;
+    documentCategory?: DocumentCategory;
+    investorRestriction?: string;
+    subscriptionRestriction?: string;
+    fundRestriction?: string;
+    segmentRestrictions?: string[];
+  } | null>(null);
   const [isActivityPanelOpen, setIsActivityPanelOpen] = useState(false);
   const [previewDocument, setPreviewDocument] = useState<{
     id: string;
@@ -824,7 +833,16 @@ export function BirdViewPage({ onBack }: BirdViewPageProps) {
               <button
                 className="flex items-center gap-1.5 px-2 py-1.5 rounded text-xs font-medium text-gray-600 dark:text-gray-400 hover:bg-gray-200 dark:hover:bg-gray-800 transition-colors"
                 onClick={() => {
-                  setSelectedDocument({ id: node.id, name: node.name, isNominatif: !!node.isNominatif });
+                  setSelectedDocument({
+                    id: node.id,
+                    name: node.name,
+                    isNominatif: !!node.isNominatif,
+                    documentCategory: node.documentCategory,
+                    investorRestriction: node.investorRestriction,
+                    subscriptionRestriction: node.subscriptionRestriction,
+                    fundRestriction: node.fundRestriction,
+                    segmentRestrictions: node.segmentRestrictions,
+                  });
                   setIsActivityPanelOpen(true);
                 }}
                 title={t('ged.birdview.node.activity')}
