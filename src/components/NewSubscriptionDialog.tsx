@@ -19,6 +19,10 @@ import {
   Euro,
   ChevronDown,
   ShieldCheck,
+  ArrowLeft,
+  CloudUpload,
+  FileText,
+  Trash2,
 } from 'lucide-react';
 import { BigModal, BigModalContent, BigModalTitle, BigModalDescription } from './ui/big-modal';
 import { Input } from './ui/input';
@@ -196,6 +200,10 @@ export function NewSubscriptionDialog({ open, onClose, onSubscriptionCreated }: 
   const [showNewInvestorForm, setShowNewInvestorForm] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const inputRef = useRef<HTMLInputElement>(null);
+  const fileInputRef = useRef<HTMLInputElement>(null);
+
+  const [step, setStep] = useState<'init' | 'documents'>('init');
+  const [uploadedDocuments, setUploadedDocuments] = useState<File[]>([]);
 
   const [newInvestor, setNewInvestor] = useState({
     type: 'individual' as 'individual' | 'corporate',
@@ -257,6 +265,8 @@ export function NewSubscriptionDialog({ open, onClose, onSubscriptionCreated }: 
         setSearchQuery('');
         setStructureFilter('');
         setShowAutocomplete(false);
+        setStep('init');
+        setUploadedDocuments([]);
       }, 300);
     }
   }, [open]);
@@ -581,6 +591,7 @@ export function NewSubscriptionDialog({ open, onClose, onSubscriptionCreated }: 
         hasCustodyOption: formData.hasCustodyOption,
         notifyOnCreation: formData.notifyOnCreation,
         language: formData.language,
+        documents: uploadedDocuments.map((file) => ({ name: file.name, size: file.size })),
       },
       contrepartie: {
         name: formData.investor.name,
@@ -650,6 +661,24 @@ export function NewSubscriptionDialog({ open, onClose, onSubscriptionCreated }: 
     onClose();
   };
 
+  const handleProceedToDocuments = () => {
+    if (!isFormValid) {
+      toast.error(t('subscriptions.newDialog.errors.incompleteData'));
+      return;
+    }
+    setStep('documents');
+  };
+
+  const handleAddDocuments = (files: FileList | null) => {
+    if (!files || files.length === 0) return;
+    setUploadedDocuments((prev) => [...prev, ...Array.from(files)]);
+    if (fileInputRef.current) fileInputRef.current.value = '';
+  };
+
+  const handleRemoveDocument = (index: number) => {
+    setUploadedDocuments((prev) => prev.filter((_, i) => i !== index));
+  };
+
   return (
     <BigModal open={open} onOpenChange={onClose}>
       <BigModalContent className="p-0 gap-0">
@@ -685,8 +714,9 @@ export function NewSubscriptionDialog({ open, onClose, onSubscriptionCreated }: 
             </div>
           </div>
 
-          {/* Single-step content */}
+          {/* Step content */}
           <div className="flex-1 overflow-y-auto px-8 py-6">
+            {step === 'init' && (
             <div className="flex flex-col gap-6">
                   {/* INVESTOR SECTION */}
                   <div className="space-y-2">
@@ -1736,40 +1766,177 @@ export function NewSubscriptionDialog({ open, onClose, onSubscriptionCreated }: 
                     })()}
                   </div>
             </div>
+            )}
+
+            {step === 'documents' && (
+            <div className="flex flex-col gap-4">
+              <div className="space-y-2">
+                <h3 className="text-sm font-medium text-foreground">
+                  {t('subscriptions.newDialog.documentsStep.title')}
+                </h3>
+                <p className="text-xs text-muted-foreground">
+                  {t('subscriptions.newDialog.documentsStep.subtitle')}
+                </p>
+              </div>
+
+              <input
+                ref={fileInputRef}
+                type="file"
+                multiple
+                accept=".pdf,.doc,.docx,.xls,.xlsx,.ppt,.pptx"
+                onChange={(e) => handleAddDocuments(e.target.files)}
+                className="hidden"
+              />
+
+              <button
+                type="button"
+                onClick={() => fileInputRef.current?.click()}
+                className="border-2 border-dashed border-border rounded-xl px-6 py-8 text-center hover:border-primary/60 hover:bg-primary/5 transition-colors flex flex-col items-center gap-2"
+              >
+                <CloudUpload className="w-8 h-8 text-muted-foreground" />
+                <div className="text-sm font-medium text-foreground">
+                  {t('subscriptions.newDialog.documentsStep.dropzoneTitle')}
+                </div>
+                <div className="text-xs text-muted-foreground">
+                  {t('subscriptions.newDialog.documentsStep.dropzoneSubtitle')}
+                </div>
+                <div className="text-[11px] text-muted-foreground/80 mt-1">
+                  {t('subscriptions.newDialog.documentsStep.dropzoneFormats')}
+                </div>
+              </button>
+
+              {uploadedDocuments.length > 0 && (
+                <div className="space-y-2">
+                  <div className="text-xs font-medium text-muted-foreground">
+                    {t(
+                      uploadedDocuments.length === 1
+                        ? 'subscriptions.newDialog.documentsStep.uploadedFilesOne'
+                        : 'subscriptions.newDialog.documentsStep.uploadedFilesMany',
+                      { count: uploadedDocuments.length },
+                    )}
+                  </div>
+                  <ul className="space-y-1.5">
+                    {uploadedDocuments.map((file, idx) => (
+                      <li
+                        key={`${file.name}-${idx}`}
+                        className="flex items-center gap-3 rounded-md border border-border bg-card px-3 py-2"
+                      >
+                        <FileText className="w-4 h-4 text-muted-foreground shrink-0" />
+                        <div className="flex-1 min-w-0">
+                          <div className="text-sm text-foreground truncate">{file.name}</div>
+                          <div className="text-[11px] text-muted-foreground">
+                            {(file.size / 1024).toFixed(1)} KB
+                          </div>
+                        </div>
+                        <button
+                          type="button"
+                          onClick={() => handleRemoveDocument(idx)}
+                          aria-label={t('subscriptions.newDialog.documentsStep.removeFile')}
+                          className="inline-flex size-7 items-center justify-center rounded-md text-muted-foreground hover:bg-muted hover:text-destructive transition-colors"
+                        >
+                          <Trash2 className="w-3.5 h-3.5" />
+                        </button>
+                      </li>
+                    ))}
+                  </ul>
+
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="sm"
+                    onClick={() => fileInputRef.current?.click()}
+                    className="h-9"
+                  >
+                    <Plus className="w-3.5 h-3.5 mr-1" />
+                    {t('subscriptions.newDialog.documentsStep.addMoreFiles')}
+                  </Button>
+                </div>
+              )}
+            </div>
+            )}
           </div>
 
           {/* Footer */}
           <div className="border-t border-border px-8 py-4 bg-muted">
-            <div className="flex items-center justify-between">
-              <Button
-                variant="ghost"
-                onClick={onClose}
-                disabled={isSubmitting}
-                size="sm"
-                className="h-9"
-              >
-                <X className="w-4 h-4 mr-1" />
-                {t('subscriptions.newDialog.cancel')}
-              </Button>
+            <div className="flex items-center justify-between gap-3">
+              {step === 'init' ? (
+                <>
+                  <Button
+                    variant="ghost"
+                    onClick={onClose}
+                    disabled={isSubmitting}
+                    size="sm"
+                    className="h-9"
+                  >
+                    <X className="w-4 h-4 mr-1" />
+                    {t('subscriptions.newDialog.cancel')}
+                  </Button>
 
-              <Button
-                onClick={handleSubmit}
-                disabled={!isFormValid || isSubmitting}
-                size="sm"
-                className="bg-primary text-primary-foreground min-w-[180px] h-9"
-              >
-                {isSubmitting ? (
-                  <>
-                    <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-                    {t('subscriptions.newDialog.creating')}
-                  </>
-                ) : (
-                  <>
-                    <Check className="w-4 h-4 mr-2" />
-                    {t('subscriptions.newDialog.create')}
-                  </>
-                )}
-              </Button>
+                  <div className="flex items-center gap-2">
+                    <Button
+                      onClick={handleSubmit}
+                      disabled={!isFormValid || isSubmitting}
+                      variant="outline"
+                      size="sm"
+                      className="min-w-[160px] h-9"
+                    >
+                      {isSubmitting ? (
+                        <>
+                          <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                          {t('subscriptions.newDialog.creating')}
+                        </>
+                      ) : (
+                        <>
+                          <Check className="w-4 h-4 mr-2" />
+                          {t('subscriptions.newDialog.create')}
+                        </>
+                      )}
+                    </Button>
+
+                    <Button
+                      onClick={handleProceedToDocuments}
+                      disabled={!isFormValid || isSubmitting}
+                      size="sm"
+                      className="bg-primary text-primary-foreground min-w-[180px] h-9"
+                    >
+                      <Check className="w-4 h-4 mr-2" />
+                      {t('subscriptions.newDialog.createAndValidate')}
+                    </Button>
+                  </div>
+                </>
+              ) : (
+                <>
+                  <Button
+                    variant="ghost"
+                    onClick={() => setStep('init')}
+                    disabled={isSubmitting}
+                    size="sm"
+                    className="h-9"
+                  >
+                    <ArrowLeft className="w-4 h-4 mr-1" />
+                    {t('subscriptions.newDialog.back')}
+                  </Button>
+
+                  <Button
+                    onClick={handleSubmit}
+                    disabled={isSubmitting}
+                    size="sm"
+                    className="bg-primary text-primary-foreground min-w-[200px] h-9"
+                  >
+                    {isSubmitting ? (
+                      <>
+                        <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                        {t('subscriptions.newDialog.validating')}
+                      </>
+                    ) : (
+                      <>
+                        <Check className="w-4 h-4 mr-2" />
+                        {t('subscriptions.newDialog.validateSubscription')}
+                      </>
+                    )}
+                  </Button>
+                </>
+              )}
             </div>
           </div>
         </div>
