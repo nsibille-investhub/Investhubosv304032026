@@ -1228,6 +1228,28 @@ export function NewSubscriptionDialog({ open, onClose, onSubscriptionCreated }: 
                                 )}
 
                                 <div className="max-h-[260px] overflow-y-auto py-1">
+                                  <button
+                                    type="button"
+                                    onClick={() => {
+                                      handleDirectInvestment();
+                                      setStructurePickerOpen(false);
+                                      setStructureFilter('');
+                                    }}
+                                    className="w-full px-3 py-2 hover:bg-muted transition-colors text-left flex items-center gap-3 border-b border-border"
+                                  >
+                                    <div className="size-7 rounded-md bg-muted flex items-center justify-center shrink-0">
+                                      <User className="w-3.5 h-3.5 text-muted-foreground" />
+                                    </div>
+                                    <div className="flex-1 min-w-0">
+                                      <div className="font-medium text-sm text-foreground truncate">
+                                        {t('subscriptions.newDialog.directInvestmentTitle')}
+                                      </div>
+                                      <div className="text-xs text-muted-foreground truncate">
+                                        {t('subscriptions.newDialog.directInvestment')}
+                                      </div>
+                                    </div>
+                                  </button>
+
                                   {filteredStructures.length === 0 ? (
                                     <p className="text-xs text-muted-foreground italic px-3 py-3 text-center">
                                       {t('subscriptions.newDialog.noStructureMatch', {
