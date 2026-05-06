@@ -19,6 +19,10 @@ import {
   Euro,
   ChevronDown,
   ShieldCheck,
+  ArrowLeft,
+  CloudUpload,
+  FileText,
+  Trash2,
 } from 'lucide-react';
 import { BigModal, BigModalContent, BigModalTitle, BigModalDescription } from './ui/big-modal';
 import { Input } from './ui/input';
@@ -68,7 +72,13 @@ interface Investor {
   email?: string;
   structures?: Structure[];
   distributorId?: string | null; // Distributeur attitré de l'investisseur
+  preferredLanguage?: SubscriptionLanguage; // Langue de communication préférée
 }
+
+type SubscriptionLanguage = 'fr' | 'en';
+
+const SUBSCRIPTION_LANGUAGES: SubscriptionLanguage[] = ['fr', 'en'];
+const DEFAULT_SUBSCRIPTION_LANGUAGE: SubscriptionLanguage = 'fr';
 
 interface FormData {
   investor: Investor | null;
@@ -80,6 +90,8 @@ interface FormData {
   subscriptionPremium: string; // Prime de souscription (€) - à la main de la SG
   distributor: string | 'direct'; // ID du distributeur ou 'direct'
   hasCustodyOption: boolean;
+  notifyOnCreation: boolean;
+  language: SubscriptionLanguage;
 }
 
 const mockStructures: Structure[] = [
@@ -136,13 +148,13 @@ const mockDistributors: Distributor[] = [
 ];
 
 const mockInvestors: Investor[] = [
-  { id: '1', name: 'Sophie Martin', type: 'individual', email: 'sophie.martin@email.com', structures: [mockStructures[0], mockStructures[2]], distributorId: 'd1' },
-  { id: '2', name: 'Jean Dubois', type: 'individual', email: 'jean.dubois@email.com', structures: [], distributorId: null },
-  { id: '3', name: 'Alpha Capital Holding', type: 'corporate', email: 'contact@alphacapital.com', structures: [mockStructures[0]], distributorId: 'd2' },
-  { id: '4', name: 'Global Invest SARL', type: 'corporate', email: 'info@globalinvest.com', structures: [mockStructures[1]], distributorId: 'd3' },
-  { id: '5', name: 'Marie Bernard', type: 'individual', email: 'marie.bernard@email.com', structures: [mockStructures[2]], distributorId: null },
+  { id: '1', name: 'Sophie Martin', type: 'individual', email: 'sophie.martin@email.com', structures: [mockStructures[0], mockStructures[2]], distributorId: 'd1', preferredLanguage: 'fr' },
+  { id: '2', name: 'Jean Dubois', type: 'individual', email: 'jean.dubois@email.com', structures: [], distributorId: null, preferredLanguage: 'fr' },
+  { id: '3', name: 'Alpha Capital Holding', type: 'corporate', email: 'contact@alphacapital.com', structures: [mockStructures[0]], distributorId: 'd2', preferredLanguage: 'en' },
+  { id: '4', name: 'Global Invest SARL', type: 'corporate', email: 'info@globalinvest.com', structures: [mockStructures[1]], distributorId: 'd3', preferredLanguage: 'fr' },
+  { id: '5', name: 'Marie Bernard', type: 'individual', email: 'marie.bernard@email.com', structures: [mockStructures[2]], distributorId: null, preferredLanguage: 'fr' },
   { id: '6', name: 'Pierre Durand', type: 'individual', email: 'pierre.durand@email.com', structures: [], distributorId: 'd1' },
-  { id: '7', name: 'Claire Petit', type: 'individual', email: 'claire.petit@email.com', structures: [mockStructures[3]], distributorId: 'd4' },
+  { id: '7', name: 'Claire Petit', type: 'individual', email: 'claire.petit@email.com', structures: [mockStructures[3]], distributorId: 'd4', preferredLanguage: 'en' },
   { id: '8', name: 'Thomas Leroy', type: 'individual', email: 'thomas.leroy@email.com', structures: [], distributorId: null },
 ];
 
@@ -188,6 +200,10 @@ export function NewSubscriptionDialog({ open, onClose, onSubscriptionCreated }: 
   const [showNewInvestorForm, setShowNewInvestorForm] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const inputRef = useRef<HTMLInputElement>(null);
+  const fileInputRef = useRef<HTMLInputElement>(null);
+
+  const [step, setStep] = useState<'init' | 'documents'>('init');
+  const [uploadedDocuments, setUploadedDocuments] = useState<File[]>([]);
 
   const [newInvestor, setNewInvestor] = useState({
     type: 'individual' as 'individual' | 'corporate',
@@ -215,6 +231,8 @@ export function NewSubscriptionDialog({ open, onClose, onSubscriptionCreated }: 
     subscriptionPremium: '0',
     distributor: 'direct',
     hasCustodyOption: false,
+    notifyOnCreation: true,
+    language: DEFAULT_SUBSCRIPTION_LANGUAGE,
   });
 
   const [newStructure, setNewStructure] = useState({
@@ -238,6 +256,8 @@ export function NewSubscriptionDialog({ open, onClose, onSubscriptionCreated }: 
           subscriptionPremium: '0',
           distributor: 'direct',
           hasCustodyOption: false,
+          notifyOnCreation: true,
+          language: DEFAULT_SUBSCRIPTION_LANGUAGE,
         });
         setShowNewStructureForm(false);
         setShowNewInvestorForm(false);
@@ -245,6 +265,8 @@ export function NewSubscriptionDialog({ open, onClose, onSubscriptionCreated }: 
         setSearchQuery('');
         setStructureFilter('');
         setShowAutocomplete(false);
+        setStep('init');
+        setUploadedDocuments([]);
       }, 300);
     }
   }, [open]);
@@ -271,6 +293,17 @@ export function NewSubscriptionDialog({ open, onClose, onSubscriptionCreated }: 
     }
     setFormData((prev) => (prev.distributor === next ? prev : { ...prev, distributor: next }));
   }, [formData.investor, formData.fund, formData.shareClass]);
+
+  // Default the onboarding/communication language to the selected investor's
+  // preferred language. The user can still override the value manually.
+  const lastSyncedInvestorRef = useRef<string | null>(null);
+  useEffect(() => {
+    const investorId = formData.investor?.id ?? null;
+    if (lastSyncedInvestorRef.current === investorId) return;
+    lastSyncedInvestorRef.current = investorId;
+    const preferred = formData.investor?.preferredLanguage ?? DEFAULT_SUBSCRIPTION_LANGUAGE;
+    setFormData((prev) => (prev.language === preferred ? prev : { ...prev, language: preferred }));
+  }, [formData.investor]);
 
   // Filter investors based on search (name or email)
   const filteredInvestors = useMemo(() => {
@@ -556,6 +589,9 @@ export function NewSubscriptionDialog({ open, onClose, onSubscriptionCreated }: 
         subscriptionPremiumAmount,
         totalFees: calculatedFees,
         hasCustodyOption: formData.hasCustodyOption,
+        notifyOnCreation: formData.notifyOnCreation,
+        language: formData.language,
+        documents: uploadedDocuments.map((file) => ({ name: file.name, size: file.size })),
       },
       contrepartie: {
         name: formData.investor.name,
@@ -625,6 +661,24 @@ export function NewSubscriptionDialog({ open, onClose, onSubscriptionCreated }: 
     onClose();
   };
 
+  const handleProceedToDocuments = () => {
+    if (!isFormValid) {
+      toast.error(t('subscriptions.newDialog.errors.incompleteData'));
+      return;
+    }
+    setStep('documents');
+  };
+
+  const handleAddDocuments = (files: FileList | null) => {
+    if (!files || files.length === 0) return;
+    setUploadedDocuments((prev) => [...prev, ...Array.from(files)]);
+    if (fileInputRef.current) fileInputRef.current.value = '';
+  };
+
+  const handleRemoveDocument = (index: number) => {
+    setUploadedDocuments((prev) => prev.filter((_, i) => i !== index));
+  };
+
   return (
     <BigModal open={open} onOpenChange={onClose}>
       <BigModalContent className="p-0 gap-0">
@@ -660,8 +714,9 @@ export function NewSubscriptionDialog({ open, onClose, onSubscriptionCreated }: 
             </div>
           </div>
 
-          {/* Single-step content */}
+          {/* Step content */}
           <div className="flex-1 overflow-y-auto px-8 py-6">
+            {step === 'init' && (
             <div className="flex flex-col gap-6">
                   {/* INVESTOR SECTION */}
                   <div className="space-y-2">
@@ -828,11 +883,7 @@ export function NewSubscriptionDialog({ open, onClose, onSubscriptionCreated }: 
                                       >
                                         <PartyTypeBadge
                                           type={investor.type === 'individual' ? 'individual' : 'corporate'}
-                                          label={
-                                            investor.type === 'individual'
-                                              ? t('subscriptions.newDialog.shortIndividual')
-                                              : t('subscriptions.newDialog.shortCorporate')
-                                          }
+                                          label={null}
                                         />
                                         <div className="flex-1 min-w-0">
                                           <div className="text-sm font-medium text-foreground truncate">
@@ -883,11 +934,7 @@ export function NewSubscriptionDialog({ open, onClose, onSubscriptionCreated }: 
                                         >
                                           <PartyTypeBadge
                                             type={investor.type === 'individual' ? 'individual' : 'corporate'}
-                                            label={
-                                              investor.type === 'individual'
-                                                ? t('subscriptions.newDialog.shortIndividual')
-                                                : t('subscriptions.newDialog.shortCorporate')
-                                            }
+                                            label={null}
                                           />
                                           <div className="flex-1 min-w-0">
                                             <div className="text-sm font-medium text-foreground truncate">
@@ -1643,41 +1690,253 @@ export function NewSubscriptionDialog({ open, onClose, onSubscriptionCreated }: 
                       </div>
                     </motion.div>
                   )}
+
+                  {/* NOTIFICATION & LANGUAGE SECTION */}
+                  <Separator className="my-2" />
+                  <div className="space-y-3">
+                    <Label className="text-xs uppercase tracking-wide font-semibold text-muted-foreground flex items-center gap-1.5">
+                      <Globe className="w-3.5 h-3.5" />
+                      {t('subscriptions.newDialog.notificationSection.title')}
+                    </Label>
+
+                    {(() => {
+                      const isIntermediated = formData.distributor !== 'direct';
+                      const notifyLabelKey = isIntermediated
+                        ? 'subscriptions.newDialog.notificationSection.notifyDistributorLabel'
+                        : 'subscriptions.newDialog.notificationSection.notifyInvestorLabel';
+                      const notifyDescriptionKey = isIntermediated
+                        ? 'subscriptions.newDialog.notificationSection.notifyDistributorDescription'
+                        : 'subscriptions.newDialog.notificationSection.notifyInvestorDescription';
+                      const hasInvestorPreference = Boolean(formData.investor?.preferredLanguage);
+                      const helperKey = hasInvestorPreference
+                        ? 'subscriptions.newDialog.notificationSection.languageHelper'
+                        : 'subscriptions.newDialog.notificationSection.languageHelperFallback';
+
+                      return (
+                        <>
+                          <label
+                            htmlFor="notify-on-creation-switch"
+                            className="flex w-full items-start justify-between gap-3 rounded-md border border-input bg-white px-3 py-2.5 text-sm cursor-pointer hover:bg-muted/40 transition-colors"
+                          >
+                            <div className="flex-1 min-w-0">
+                              <div className="text-foreground font-medium">
+                                {t(notifyLabelKey)}
+                              </div>
+                              <div className="text-xs text-muted-foreground mt-0.5">
+                                {t(notifyDescriptionKey)}
+                              </div>
+                            </div>
+                            <Switch
+                              id="notify-on-creation-switch"
+                              checked={formData.notifyOnCreation}
+                              onCheckedChange={(checked) =>
+                                setFormData((prev) => ({ ...prev, notifyOnCreation: checked }))
+                              }
+                            />
+                          </label>
+
+                          <div className="space-y-1.5">
+                            <Label className="text-xs flex items-center gap-1.5">
+                              <Globe className="w-3.5 h-3.5" />
+                              {t('subscriptions.newDialog.notificationSection.languageLabel')}
+                            </Label>
+                            <Select
+                              value={formData.language}
+                              onValueChange={(value) =>
+                                setFormData((prev) => ({ ...prev, language: value as SubscriptionLanguage }))
+                              }
+                            >
+                              <SelectTrigger className="h-10">
+                                <SelectValue />
+                              </SelectTrigger>
+                              <SelectContent>
+                                {SUBSCRIPTION_LANGUAGES.map((code) => (
+                                  <SelectItem key={code} value={code}>
+                                    {t(`subscriptions.newDialog.notificationSection.languageOptions.${code}`)}
+                                  </SelectItem>
+                                ))}
+                              </SelectContent>
+                            </Select>
+                            <p className="text-[11px] text-muted-foreground">
+                              {t(helperKey)}
+                            </p>
+                          </div>
+                        </>
+                      );
+                    })()}
+                  </div>
             </div>
+            )}
+
+            {step === 'documents' && (
+            <div className="flex flex-col gap-4">
+              <div className="space-y-2">
+                <h3 className="text-sm font-medium text-foreground">
+                  {t('subscriptions.newDialog.documentsStep.title')}
+                </h3>
+                <p className="text-xs text-muted-foreground">
+                  {t('subscriptions.newDialog.documentsStep.subtitle')}
+                </p>
+              </div>
+
+              <input
+                ref={fileInputRef}
+                type="file"
+                multiple
+                accept=".pdf,.doc,.docx,.xls,.xlsx,.ppt,.pptx"
+                onChange={(e) => handleAddDocuments(e.target.files)}
+                className="hidden"
+              />
+
+              <button
+                type="button"
+                onClick={() => fileInputRef.current?.click()}
+                className="border-2 border-dashed border-border rounded-xl px-6 py-8 text-center hover:border-primary/60 hover:bg-primary/5 transition-colors flex flex-col items-center gap-2"
+              >
+                <CloudUpload className="w-8 h-8 text-muted-foreground" />
+                <div className="text-sm font-medium text-foreground">
+                  {t('subscriptions.newDialog.documentsStep.dropzoneTitle')}
+                </div>
+                <div className="text-xs text-muted-foreground">
+                  {t('subscriptions.newDialog.documentsStep.dropzoneSubtitle')}
+                </div>
+                <div className="text-[11px] text-muted-foreground/80 mt-1">
+                  {t('subscriptions.newDialog.documentsStep.dropzoneFormats')}
+                </div>
+              </button>
+
+              {uploadedDocuments.length > 0 && (
+                <div className="space-y-2">
+                  <div className="text-xs font-medium text-muted-foreground">
+                    {t(
+                      uploadedDocuments.length === 1
+                        ? 'subscriptions.newDialog.documentsStep.uploadedFilesOne'
+                        : 'subscriptions.newDialog.documentsStep.uploadedFilesMany',
+                      { count: uploadedDocuments.length },
+                    )}
+                  </div>
+                  <ul className="space-y-1.5">
+                    {uploadedDocuments.map((file, idx) => (
+                      <li
+                        key={`${file.name}-${idx}`}
+                        className="flex items-center gap-3 rounded-md border border-border bg-card px-3 py-2"
+                      >
+                        <FileText className="w-4 h-4 text-muted-foreground shrink-0" />
+                        <div className="flex-1 min-w-0">
+                          <div className="text-sm text-foreground truncate">{file.name}</div>
+                          <div className="text-[11px] text-muted-foreground">
+                            {(file.size / 1024).toFixed(1)} KB
+                          </div>
+                        </div>
+                        <button
+                          type="button"
+                          onClick={() => handleRemoveDocument(idx)}
+                          aria-label={t('subscriptions.newDialog.documentsStep.removeFile')}
+                          className="inline-flex size-7 items-center justify-center rounded-md text-muted-foreground hover:bg-muted hover:text-destructive transition-colors"
+                        >
+                          <Trash2 className="w-3.5 h-3.5" />
+                        </button>
+                      </li>
+                    ))}
+                  </ul>
+
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="sm"
+                    onClick={() => fileInputRef.current?.click()}
+                    className="h-9"
+                  >
+                    <Plus className="w-3.5 h-3.5 mr-1" />
+                    {t('subscriptions.newDialog.documentsStep.addMoreFiles')}
+                  </Button>
+                </div>
+              )}
+            </div>
+            )}
           </div>
 
           {/* Footer */}
           <div className="border-t border-border px-8 py-4 bg-muted">
-            <div className="flex items-center justify-between">
-              <Button
-                variant="ghost"
-                onClick={onClose}
-                disabled={isSubmitting}
-                size="sm"
-                className="h-9"
-              >
-                <X className="w-4 h-4 mr-1" />
-                {t('subscriptions.newDialog.cancel')}
-              </Button>
+            <div className="flex items-center justify-between gap-3">
+              {step === 'init' ? (
+                <>
+                  <Button
+                    variant="ghost"
+                    onClick={onClose}
+                    disabled={isSubmitting}
+                    size="sm"
+                    className="h-9"
+                  >
+                    <X className="w-4 h-4 mr-1" />
+                    {t('subscriptions.newDialog.cancel')}
+                  </Button>
 
-              <Button
-                onClick={handleSubmit}
-                disabled={!isFormValid || isSubmitting}
-                size="sm"
-                className="bg-primary text-primary-foreground min-w-[180px] h-9"
-              >
-                {isSubmitting ? (
-                  <>
-                    <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-                    {t('subscriptions.newDialog.creating')}
-                  </>
-                ) : (
-                  <>
-                    <Check className="w-4 h-4 mr-2" />
-                    {t('subscriptions.newDialog.create')}
-                  </>
-                )}
-              </Button>
+                  <div className="flex items-center gap-2">
+                    <Button
+                      onClick={handleSubmit}
+                      disabled={!isFormValid || isSubmitting}
+                      variant="outline"
+                      size="sm"
+                      className="min-w-[160px] h-9"
+                    >
+                      {isSubmitting ? (
+                        <>
+                          <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                          {t('subscriptions.newDialog.creating')}
+                        </>
+                      ) : (
+                        <>
+                          <Check className="w-4 h-4 mr-2" />
+                          {t('subscriptions.newDialog.create')}
+                        </>
+                      )}
+                    </Button>
+
+                    <Button
+                      onClick={handleProceedToDocuments}
+                      disabled={!isFormValid || isSubmitting}
+                      size="sm"
+                      className="bg-primary text-primary-foreground min-w-[180px] h-9"
+                    >
+                      <Check className="w-4 h-4 mr-2" />
+                      {t('subscriptions.newDialog.createAndValidate')}
+                    </Button>
+                  </div>
+                </>
+              ) : (
+                <>
+                  <Button
+                    variant="ghost"
+                    onClick={() => setStep('init')}
+                    disabled={isSubmitting}
+                    size="sm"
+                    className="h-9"
+                  >
+                    <ArrowLeft className="w-4 h-4 mr-1" />
+                    {t('subscriptions.newDialog.back')}
+                  </Button>
+
+                  <Button
+                    onClick={handleSubmit}
+                    disabled={isSubmitting}
+                    size="sm"
+                    className="bg-primary text-primary-foreground min-w-[200px] h-9"
+                  >
+                    {isSubmitting ? (
+                      <>
+                        <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                        {t('subscriptions.newDialog.validating')}
+                      </>
+                    ) : (
+                      <>
+                        <Check className="w-4 h-4 mr-2" />
+                        {t('subscriptions.newDialog.validateSubscription')}
+                      </>
+                    )}
+                  </Button>
+                </>
+              )}
             </div>
           </div>
         </div>

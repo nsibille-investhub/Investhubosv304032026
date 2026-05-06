@@ -125,6 +125,19 @@
       "importsFiles": "Imports & Fichiers",
       "reporting": "Reporting",
       "tools": "Outils"
+    },
+    "fundContextSelector": {
+      "allFunds": "Tous les fonds",
+      "selectedFund": "Fonds sélectionné",
+      "title": "Sélecteur de fonds",
+      "fundsAvailable": "{{count}} fonds disponibles",
+      "searchPlaceholder": "Rechercher un fonds...",
+      "searchPlaceholderShort": "Rechercher...",
+      "noFundFound": "Aucun fonds trouvé",
+      "tryAnotherSearch": "Essayez un autre terme de recherche",
+      "totalFunds": "{{count}} fonds au total",
+      "filteredFunds": "{{filtered}} sur {{total}} fonds",
+      "globalView": "Vue globale • {{count}} fonds"
     }
   },
   "breadcrumb": {
@@ -556,9 +569,25 @@
       "feesLineWithPercent": "Frais ({{percent}}%) :",
       "totalLine": "Total :",
       "previous": "Précédent",
-      "creating": "Création...",
-      "create": "Créer",
+      "creating": "Initialisation...",
+      "create": "Initialiser",
+      "createAndValidate": "Créer et valider",
+      "validating": "Validation...",
+      "validateSubscription": "Valider la souscription",
+      "back": "Retour",
       "next": "Suivant",
+      "documentsStep": {
+        "title": "Documents de souscription",
+        "subtitle": "Importez les documents nécessaires à la validation. Cette étape est optionnelle.",
+        "dropzoneTitle": "Déposez vos fichiers ici",
+        "dropzoneSubtitle": "ou cliquez pour parcourir",
+        "dropzoneFormats": "PDF, Word, Excel, PowerPoint — 25 Mo max par fichier",
+        "addMoreFiles": "Ajouter d'autres fichiers",
+        "uploadedFilesOne": "{{count}} fichier importé",
+        "uploadedFilesMany": "{{count}} fichiers importés",
+        "removeFile": "Retirer ce fichier",
+        "skip": "Passer cette étape"
+      },
       "errors": {
         "missingNameEmail": "Nom et email requis",
         "missingLegalNameSiret": "Raison sociale et SIRET requis",
@@ -569,6 +598,20 @@
         "structureCreated": "{{name}} créée avec succès",
         "subscriptionCreated": "Souscription créée !",
         "subscriptionCreatedDesc": "{{investor}} - {{amount}} €"
+      },
+      "notificationSection": {
+        "title": "Notification et langue",
+        "notifyInvestorLabel": "Notifier l'investisseur à l'initialisation",
+        "notifyInvestorDescription": "Envoyer le mail d'onboarding pour que l'investisseur puisse démarrer sa souscription.",
+        "notifyDistributorLabel": "Notifier le CGP à l'initialisation",
+        "notifyDistributorDescription": "Envoyer le mail d'onboarding au distributeur (souscription intermédiée).",
+        "languageLabel": "Langue de l'onboarding et de la communication",
+        "languageHelper": "Reprend par défaut la langue préférée de l'investisseur.",
+        "languageHelperFallback": "Aucune préférence sur l'investisseur — utilise la langue de la plateforme par défaut.",
+        "languageOptions": {
+          "fr": "Français",
+          "en": "Anglais"
+        }
       }
     }
   },
