@@ -18,6 +18,7 @@ import {
   Layers3,
   UserRound,
   Tag as TagIcon,
+  FileType,
   Users,
   Globe
 } from 'lucide-react';
@@ -101,6 +102,7 @@ export function BirdViewPage({ onBack }: BirdViewPageProps) {
 
   // Filtres avancés
   const [documentNameFilter, setDocumentNameFilter] = useState('');
+  const [selectedDocumentCategory, setSelectedDocumentCategory] = useState<string | null>(null);
   const [selectedFund, setSelectedFund] = useState<string | null>(null);
   const [selectedSegments, setSelectedSegments] = useState<string[]>([]);
   const [selectedSubscription, setSelectedSubscription] = useState<string | null>(null);
@@ -242,6 +244,11 @@ export function BirdViewPage({ onBack }: BirdViewPageProps) {
               matches = false;
             }
 
+            // Filtre type de document
+            if (selectedDocumentCategory && node.documentCategory !== selectedDocumentCategory) {
+              matches = false;
+            }
+
             // Filtre fonds (restriction exacte)
             if (selectedFund && node.fundRestriction) {
               if (node.fundRestriction !== selectedFund) {
@@ -305,7 +312,7 @@ export function BirdViewPage({ onBack }: BirdViewPageProps) {
     };
 
     // Appliquer les filtres avancés si au moins un est actif
-    const hasActiveFilters = !!documentNameFilter || !!selectedFund || selectedSegments.length > 0 || !!selectedSubscription;
+    const hasActiveFilters = !!documentNameFilter || !!selectedDocumentCategory || !!selectedFund || selectedSegments.length > 0 || !!selectedSubscription;
 
     if (hasActiveFilters) {
       tree = filterTree(tree);
@@ -317,7 +324,7 @@ export function BirdViewPage({ onBack }: BirdViewPageProps) {
     }
 
     return tree;
-  }, [documentTree, showOnlyIncomplete, documentNameFilter, selectedFund, selectedSegments, selectedSubscription]);
+  }, [documentTree, showOnlyIncomplete, documentNameFilter, selectedDocumentCategory, selectedFund, selectedSegments, selectedSubscription]);
 
   // Statistiques filtrées basées sur displayedTree
   const filteredStats = useMemo(() => {
@@ -967,6 +974,20 @@ export function BirdViewPage({ onBack }: BirdViewPageProps) {
             />
           </div>
 
+          {/* Filtre Type de document */}
+          <div className="min-w-[220px]">
+            <AutocompleteSingleSelect
+              value={selectedDocumentCategory}
+              onChange={setSelectedDocumentCategory}
+              options={(['capitalCall','distribution','quarterlyReport','annualReport','subscription','kyc','legal','tax','marketing','other'] as DocumentCategory[]).map((c) => ({
+                value: c,
+                label: t(`ged.addModal.documentCategory.${c}`),
+              }))}
+              placeholder={t('ged.birdview.filters.documentCategory')}
+              icon={FileType}
+            />
+          </div>
+
           {/* Filtre Fonds */}
           <div className="min-w-[220px]">
             <FundSingleSelect
@@ -1000,10 +1021,11 @@ export function BirdViewPage({ onBack }: BirdViewPageProps) {
           </div>
 
           {/* Réinitialiser les filtres */}
-          {(documentNameFilter || selectedFund || selectedSegments.length > 0 || selectedSubscription) && (
+          {(documentNameFilter || selectedDocumentCategory || selectedFund || selectedSegments.length > 0 || selectedSubscription) && (
             <button
               onClick={() => {
                 setDocumentNameFilter('');
+                setSelectedDocumentCategory(null);
                 setSelectedFund(null);
                 setSelectedSegments([]);
                 setSelectedSubscription(null);

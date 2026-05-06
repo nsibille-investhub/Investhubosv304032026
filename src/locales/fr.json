@@ -868,6 +868,7 @@
         "pickEntity": "Sélectionner une entité...",
         "pickContact": "Contact ou conseiller...",
         "documentName": "Nom du document...",
+        "documentCategory": "Type de document",
         "fund": "Fonds",
         "segment": "Segment",
         "subscription": "Souscription",
