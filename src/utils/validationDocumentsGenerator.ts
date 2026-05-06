@@ -1,3 +1,9 @@
+// Pending-validation test data — wired on top of the unified gedFixtures
+// universe so the funds / investors / share classes match the DataRoom and
+// the Bird View. Default language: English.
+
+import { findFund, findInvestor } from './gedFixtures';
+
 export type ValidationStatus = 'pending' | 'validated' | 'rejected';
 
 export type TargetingKind =
@@ -24,9 +30,7 @@ export type NotificationChannel = 'email' | 'portal' | 'both';
 export interface ValidationNotification {
   channel: NotificationChannel;
   subject: string;
-  /** Greeting shown before the body. */
   greeting: string;
-  /** Body paragraphs (already resolved variables). */
   paragraphs: string[];
   signature: string;
   recipients: NotificationRecipient[];
@@ -34,11 +38,8 @@ export interface ValidationNotification {
 
 export interface ValidationBatch {
   id: string;
-  /** Batch display name — usually the notification subject or a campaign name. */
   name: string;
-  /** Human label hint (Reporting trimestriel, Capital call, …). */
   kind: string;
-  /** Optional notification — undefined means "silent batch / validation interne". */
   notification?: ValidationNotification;
   createdAt: string;
   createdBy: { name: string; role: string };
@@ -50,391 +51,408 @@ export interface ValidationDocument {
   format: 'pdf' | 'docx' | 'xlsx' | 'pptx';
   size?: string;
   pathSegments: string[];
-  createdBy: {
-    name: string;
-    role: string;
-  };
+  createdBy: { name: string; role: string };
   createdAt: string;
   targeting: TargetingTag[];
   comment: string;
   status: ValidationStatus;
   reviewedBy?: string;
   reviewedAt?: string;
-  /** When set, the document is part of a notification batch (atomic validation). */
   batchId?: string;
-  /** Standalone documents may carry their own notification (1 doc → 1 notification). Undefined = silent. */
   notification?: ValidationNotification;
 }
 
 const seg = (label: string): TargetingTag => ({ kind: 'segment', label });
-const fund = (label: string): TargetingTag => ({ kind: 'fund', label });
+const fundTag = (label: string): TargetingTag => ({ kind: 'fund', label });
 const share = (label: string): TargetingTag => ({ kind: 'shareClass', label });
 const inv = (label: string): TargetingTag => ({ kind: 'investor', label });
 const sub = (label: string): TargetingTag => ({ kind: 'subscription', label });
 const aud = (label: string): TargetingTag => ({ kind: 'audience', label });
 
-// ---------------------------------------------------------------------------
-// Batches
-// ---------------------------------------------------------------------------
+const FUND_NW   = findFund('NWGC2')!;   // Northwind Growth Capital II
+const FUND_HEL  = findFund('HBF3')!;    // Helios Buyout Fund III
+const FUND_ATL  = findFund('AIP1')!;    // Atlas Infrastructure Partners I
+const FUND_LUM  = findFund('LVF4')!;    // Lumen Venture Fund IV
+const FUND_POL  = findFund('PCTF')!;    // Polaris Climate Tech Fund
+const FUND_AUR  = findFund('AHV')!;     // Aurora Healthcare Ventures
+const FUND_VES  = findFund('VS3')!;     // Vesta Secondaries III
+
+const LP_BRUNSWICK = findInvestor('INV-002')!; // Brunswick Family Office
+const LP_DUNMORE   = findInvestor('INV-004')!; // Dunmore Sovereign
+const LP_ALDEBARAN = findInvestor('INV-001')!; // Aldebaran Pension Fund
+const LP_KENS      = findInvestor('INV-011')!; // Kensington Private Bank
+
+/* --------------------------------------------------------------------- */
+/* Batches                                                               */
+/* --------------------------------------------------------------------- */
 
 const BATCHES: ValidationBatch[] = [
   {
-    id: 'batch-capital-call-beta-q2',
-    name: 'Appel de fonds #07 — Beta Infrastructure',
-    kind: 'Capital call',
+    id: 'batch-capital-call-helios-q2',
+    name: `Capital Call #08 — ${FUND_HEL.name}`,
+    kind: 'Capital Call',
     createdAt: '2026-04-27T11:15:00Z',
     createdBy: { name: 'Antoine Leblanc', role: 'Fund Accountant' },
     notification: {
       channel: 'both',
-      subject: 'Appel de fonds n°7 — Beta Infrastructure (échéance 15 mai 2026)',
-      greeting: 'Madame, Monsieur,',
+      subject: `Capital Call notice #08 — ${FUND_HEL.name} (due 22 May 2026)`,
+      greeting: 'Dear Limited Partner,',
       paragraphs: [
-        "Dans le cadre de votre souscription au fonds **Beta Infrastructure** (subscription BETA-2024-0421), nous vous prions de bien vouloir trouver ci-joint l'appel de fonds n°7 d'un montant de **1 250 000 €**, à régler avant le **15 mai 2026**.",
-        "Vous trouverez en pièces jointes : la lettre d'appel de fonds, l'instruction de virement bancaire, ainsi que la grille de répartition par investisseur.",
-        "Pour toute question, votre interlocuteur Investor Relations reste à votre disposition.",
+        `In connection with your commitment to **${FUND_HEL.name}**, please find attached drawdown notice #08 for an aggregate amount of **EUR 18,500,000** (your pro-rata share is detailed in the LP allocation schedule).`,
+        'Funds must be wired to the depositary account before **22 May 2026, 12:00 CET**.',
+        'For any question please contact your dedicated Investor Relations representative.',
       ],
-      signature: 'L\'équipe Investor Relations — InvestHub',
+      signature: 'Investor Relations — InvestHub',
       recipients: [
-        { name: 'Family Office Dupont', email: 'office@dupont-family.com', role: 'Investisseur' },
-        { name: 'Pension Fund Helios', email: 'lp-relations@helios-pension.eu', role: 'Investisseur' },
-        { name: 'Groupe Vauban Capital', email: 'capital@vauban.fr', role: 'Investisseur' },
+        { name: LP_ALDEBARAN.name, email: LP_ALDEBARAN.email, role: 'Investor' },
+        { name: LP_BRUNSWICK.name, email: LP_BRUNSWICK.email, role: 'Investor' },
+        { name: LP_DUNMORE.name,   email: LP_DUNMORE.email,   role: 'Investor' },
       ],
     },
   },
   {
-    id: 'batch-reporting-q1-alpha',
-    name: 'Reporting Q1 2026 — Alpha Croissance',
-    kind: 'Reporting trimestriel',
+    id: 'batch-quarterly-report-q1-northwind',
+    name: `Q1 2026 Reporting — ${FUND_NW.name}`,
+    kind: 'Quarterly Reporting',
     createdAt: '2026-04-28T09:42:00Z',
     createdBy: { name: 'Camille Renard', role: 'Asset Manager' },
     notification: {
       channel: 'email',
-      subject: 'Reporting trimestriel Q1 2026 — Fonds Alpha Croissance',
-      greeting: 'Cher investisseur,',
+      subject: `Q1 2026 Reporting Pack — ${FUND_NW.name}`,
+      greeting: 'Dear Investor,',
       paragraphs: [
-        "Nous avons le plaisir de partager avec vous le **reporting du premier trimestre 2026** du fonds Alpha Croissance.",
-        "Au programme : performance vs benchmark, déploiement (3 nouveaux investissements), valorisation NAV au 31/03/2026 et perspectives Q2.",
-        "L'annexe ESG et les commentaires de gérant complètent le rapport.",
+        `Please find enclosed the **Q1 2026 Reporting Pack** for ${FUND_NW.name}: quarterly report, NAV statement at 31/03/2026 and detailed portfolio KPIs.`,
+        'New investments closed during the quarter (3) and exit pipeline updates are summarised in the manager letter.',
       ],
-      signature: 'Camille Renard — Asset Manager Alpha Croissance',
+      signature: 'Camille Renard — Asset Manager',
       recipients: [
-        { name: 'Tous les LPs HNWI Alpha', email: 'lp-distribution@investhub.io', role: 'Liste de diffusion' },
+        { name: 'All LPs Northwind Growth Capital II', email: 'lp-nwgc2@investhub.io', role: 'Distribution list' },
       ],
     },
   },
   {
-    id: 'batch-annual-letter-2025',
-    name: 'Lettre annuelle 2025 — Alpha Croissance',
-    kind: 'Communication LP',
+    id: 'batch-annual-letter-2025-atlas',
+    name: `Annual Letter 2025 — ${FUND_ATL.name}`,
+    kind: 'LP Communication',
     createdAt: '2026-03-12T10:00:00Z',
     createdBy: { name: 'Léa Marchand', role: 'IR Manager' },
     notification: {
       channel: 'portal',
-      subject: 'Lettre annuelle 2025 et rapport ESG — Alpha Croissance',
-      greeting: 'Chers porteurs,',
+      subject: `Annual Letter 2025 and ESG Report — ${FUND_ATL.name}`,
+      greeting: 'Dear LPs,',
       paragraphs: [
-        "L'année 2025 a été marquée par une **TRI net de 18,2 %** et le déploiement de 4 nouveaux investissements stratégiques.",
-        "Vous trouverez en pièces jointes notre lettre annuelle ainsi que le rapport ESG validé par notre comité indépendant.",
+        '2025 was marked by a **net IRR of 14.8%**, the closing of two greenfield assets (Bluewater Port Terminal and Verdant Wind Cluster) and the successful refinancing of Aerolinea Toll Road.',
+        'The Annual Letter and the SFDR Article 9 disclosure have been published on the LP Portal.',
       ],
       signature: 'Léa Marchand — Investor Relations',
       recipients: [
-        { name: 'Tous les LPs Alpha Croissance', email: 'portail-lp@investhub.io', role: 'Portail LP' },
+        { name: `All LPs ${FUND_ATL.name}`, email: 'portal-lp@investhub.io', role: 'LP Portal' },
       ],
     },
   },
   {
-    id: 'batch-convention-massena',
-    name: 'Avenant convention 2026 — Masséna Wealth Management',
-    kind: 'Convention partenaire (interne)',
+    id: 'batch-distribution-agreement-kensington',
+    name: `2026 Distribution Agreement — ${LP_KENS.name}`,
+    kind: 'Distributor Agreement (internal)',
     createdAt: '2026-04-15T15:20:00Z',
     createdBy: { name: 'Julien Moreau', role: 'Legal Counsel' },
-    // Pas de notification — validation purement interne, le doc reste sur le portail BO
+    // No notification — purely internal validation, document remains on the BO portal
   },
 ];
 
-// ---------------------------------------------------------------------------
-// Documents (some rattachés à un batch via batchId)
-// ---------------------------------------------------------------------------
+/* --------------------------------------------------------------------- */
+/* Documents                                                             */
+/* --------------------------------------------------------------------- */
 
 const PENDING: Omit<ValidationDocument, 'id' | 'status'>[] = [
-  // ── Batch capital call Beta Infrastructure (3 docs)
+  // ── Capital Call batch — Helios Buyout Fund III (3 docs)
   {
-    name: 'Capital call notice #07 - Beta Infrastructure.pdf',
+    name: `${FUND_HEL.name} - Capital Call Notice #08.pdf`,
     format: 'pdf',
-    size: '312 Ko',
-    pathSegments: [
-      'Espace LP - Beta Infrastructure',
-      'Souscriptions',
-      'BETA-2024-0421',
-      'Appels de fonds',
-    ],
+    size: '312 KB',
+    pathSegments: [FUND_HEL.name, 'Capital Calls', '2026', '2026-05-12 - Drawdown #08'],
     createdBy: { name: 'Antoine Leblanc', role: 'Fund Accountant' },
     createdAt: '2026-04-27T11:15:00Z',
-    targeting: [fund('Beta Infrastructure'), sub('Subscription BETA-2024-0421')],
-    comment: 'Montant 1 250 000 € — à valider avant envoi.',
-    batchId: 'batch-capital-call-beta-q2',
+    targeting: [fundTag(FUND_HEL.name), share('Class A')],
+    comment: 'EUR 18.5M aggregate — to be approved before LP dispatch.',
+    batchId: 'batch-capital-call-helios-q2',
   },
   {
-    name: 'Instructions de virement bancaire - Beta Infrastructure.pdf',
+    name: `${FUND_HEL.name} - Wire Instructions.pdf`,
     format: 'pdf',
-    size: '128 Ko',
-    pathSegments: [
-      'Espace LP - Beta Infrastructure',
-      'Souscriptions',
-      'BETA-2024-0421',
-      'Appels de fonds',
-    ],
+    size: '128 KB',
+    pathSegments: [FUND_HEL.name, 'Capital Calls', '2026', '2026-05-12 - Drawdown #08'],
     createdBy: { name: 'Antoine Leblanc', role: 'Fund Accountant' },
     createdAt: '2026-04-27T11:18:00Z',
-    targeting: [fund('Beta Infrastructure')],
+    targeting: [fundTag(FUND_HEL.name)],
     comment: '',
-    batchId: 'batch-capital-call-beta-q2',
+    batchId: 'batch-capital-call-helios-q2',
   },
   {
-    name: 'Grille de répartition par LP - Capital call #07.xlsx',
+    name: `${FUND_HEL.name} - LP Allocation Schedule #08.xlsx`,
     format: 'xlsx',
-    size: '92 Ko',
-    pathSegments: [
-      'Espace LP - Beta Infrastructure',
-      'Souscriptions',
-      'BETA-2024-0421',
-      'Appels de fonds',
-    ],
+    size: '92 KB',
+    pathSegments: [FUND_HEL.name, 'Capital Calls', '2026', '2026-05-12 - Drawdown #08'],
     createdBy: { name: 'Antoine Leblanc', role: 'Fund Accountant' },
     createdAt: '2026-04-27T11:20:00Z',
-    targeting: [fund('Beta Infrastructure')],
-    comment: 'Vérifier la quote-part Pension Fund Helios.',
-    batchId: 'batch-capital-call-beta-q2',
+    targeting: [fundTag(FUND_HEL.name)],
+    comment: 'Double-check Aldebaran Pension Fund pro-rata before dispatch.',
+    batchId: 'batch-capital-call-helios-q2',
   },
 
-  // ── Batch reporting Q1 Alpha (2 docs)
+  // ── Q1 reporting batch — Northwind Growth Capital II (3 docs)
   {
-    name: 'Reporting trimestriel Q1 2026 - Fonds Alpha Croissance.pdf',
+    name: `2026-Q1 - ${FUND_NW.name} - Quarterly Report.pdf`,
     format: 'pdf',
-    size: '2.4 Mo',
-    pathSegments: ['Investisseurs HNWI', 'Reportings', '2026', 'Q1', 'Alpha Croissance'],
+    size: '2.4 MB',
+    pathSegments: [FUND_NW.name, 'Management Reports', '2026', 'Q1'],
     createdBy: { name: 'Camille Renard', role: 'Asset Manager' },
     createdAt: '2026-04-28T09:42:00Z',
-    targeting: [seg('HNWI'), fund('Alpha Croissance'), share('Part A')],
-    comment: 'Reporting Q1 prêt à diffuser, à valider avant publication portail LP.',
-    batchId: 'batch-reporting-q1-alpha',
+    targeting: [fundTag(FUND_NW.name), share('Class A')],
+    comment: 'Reporting Q1 ready for dispatch — to validate before LP Portal publication.',
+    batchId: 'batch-quarterly-report-q1-northwind',
   },
   {
-    name: 'Annexe ESG Q1 2026 - Alpha Croissance.pdf',
+    name: `2026-Q1 - ${FUND_NW.name} - NAV Statement.pdf`,
     format: 'pdf',
-    size: '780 Ko',
-    pathSegments: ['Investisseurs HNWI', 'Reportings', '2026', 'Q1', 'Alpha Croissance'],
+    size: '780 KB',
+    pathSegments: [FUND_NW.name, 'Management Reports', '2026', 'Q1'],
+    createdBy: { name: 'Camille Renard', role: 'Asset Manager' },
+    createdAt: '2026-04-28T09:45:00Z',
+    targeting: [fundTag(FUND_NW.name)],
+    comment: '',
+    batchId: 'batch-quarterly-report-q1-northwind',
+  },
+  {
+    name: `2026-Q1 - ${FUND_NW.name} - Portfolio KPIs.xlsx`,
+    format: 'xlsx',
+    size: '420 KB',
+    pathSegments: [FUND_NW.name, 'Management Reports', '2026', 'Q1'],
     createdBy: { name: 'Camille Renard', role: 'Asset Manager' },
     createdAt: '2026-04-28T09:50:00Z',
-    targeting: [seg('HNWI'), fund('Alpha Croissance')],
+    targeting: [fundTag(FUND_NW.name)],
     comment: '',
-    batchId: 'batch-reporting-q1-alpha',
+    batchId: 'batch-quarterly-report-q1-northwind',
   },
 
-  // ── Batch silencieux : avenant convention Masséna (2 docs)
+  // ── Silent batch — Kensington distribution agreement (2 docs)
   {
-    name: 'Avenant convention partenaire - Masséna 2026.docx',
+    name: `Distribution Agreement - ${LP_KENS.name} - 2026.docx`,
     format: 'docx',
-    size: '210 Ko',
-    pathSegments: ['Distribution', 'Partenaires', 'Conventions', '2026', 'Masséna'],
+    size: '210 KB',
+    pathSegments: ['Marketing & Distribution', 'Distributors & Private Banks', 'Distribution Agreements', '2026', LP_KENS.name],
     createdBy: { name: 'Julien Moreau', role: 'Legal Counsel' },
     createdAt: '2026-04-15T15:20:00Z',
-    targeting: [seg('Partenaires distributeurs')],
-    comment: 'Validation juridique à finaliser avant signature.',
-    batchId: 'batch-convention-massena',
+    targeting: [seg('Distributor'), inv(LP_KENS.name)],
+    comment: 'Legal review pending before signature.',
+    batchId: 'batch-distribution-agreement-kensington',
   },
   {
-    name: 'Grille de rétrocession Masséna - 2026.xlsx',
+    name: `Retrocession Grid - ${LP_KENS.name} - 2026.xlsx`,
     format: 'xlsx',
-    size: '88 Ko',
-    pathSegments: ['Distribution', 'Partenaires', 'Conventions', '2026', 'Masséna'],
+    size: '88 KB',
+    pathSegments: ['Marketing & Distribution', 'Distributors & Private Banks', 'Distribution Agreements', '2026', LP_KENS.name],
     createdBy: { name: 'Julien Moreau', role: 'Legal Counsel' },
     createdAt: '2026-04-15T15:24:00Z',
-    targeting: [seg('Partenaires distributeurs')],
+    targeting: [seg('Distributor'), inv(LP_KENS.name)],
     comment: '',
-    batchId: 'batch-convention-massena',
+    batchId: 'batch-distribution-agreement-kensington',
   },
 
-  // ── Documents standalone (non groupés)
+  // ── Standalone documents
   {
-    name: 'Lettre aux investisseurs - Avril 2026.docx',
+    name: `${FUND_LUM.name} - April 2026 LP Newsletter.docx`,
     format: 'docx',
-    size: '480 Ko',
-    pathSegments: ['Communication', 'Lettres trimestrielles', '2026', 'Avril'],
+    size: '480 KB',
+    pathSegments: [FUND_LUM.name, 'Other Communications', 'Misc'],
     createdBy: { name: 'Léa Marchand', role: 'IR Manager' },
     createdAt: '2026-04-27T16:08:00Z',
-    targeting: [aud('Tous segments'), aud('Multi-fonds')],
-    comment: 'Relecture juridique requise sur le paragraphe risques marché.',
+    targeting: [aud('All segments'), fundTag(FUND_LUM.name)],
+    comment: 'Legal review needed on the “market risks” paragraph.',
     notification: {
       channel: 'email',
-      subject: 'Lettre trimestrielle d\'avril 2026 — InvestHub',
-      greeting: 'Chers investisseurs,',
+      subject: `${FUND_LUM.name} — April 2026 LP Newsletter`,
+      greeting: 'Dear Investors,',
       paragraphs: [
-        "Veuillez trouver ci-joint notre **lettre trimestrielle d'avril 2026**, avec un focus sur la conjoncture macro et nos convictions pour le S2 2026.",
+        `Please find attached the **April 2026 newsletter** for ${FUND_LUM.name} with a focus on H2 2026 deployment plans.`,
       ],
       signature: 'Léa Marchand — Investor Relations',
       recipients: [
-        { name: 'Liste de diffusion HNWI', email: 'lp-hnwi@investhub.io', role: 'Liste de diffusion' },
-        { name: 'Liste de diffusion Institutional', email: 'lp-instit@investhub.io', role: 'Liste de diffusion' },
-        { name: 'Distributeurs partenaires', email: 'partenaires@investhub.io', role: 'Liste de diffusion' },
+        { name: 'HNWI distribution list',         email: 'lp-hnwi@investhub.io',  role: 'Distribution list' },
+        { name: 'Institutional distribution list', email: 'lp-instit@investhub.io', role: 'Distribution list' },
       ],
     },
   },
   {
-    name: 'Annexes fiscales 2025 - Family Office Dupont.pdf',
+    name: `Tax Annexes 2025 - ${LP_BRUNSWICK.name}.pdf`,
     format: 'pdf',
-    size: '1.1 Mo',
-    pathSegments: [
-      'Espace nominatif',
-      'Family Office Dupont',
-      'Fiscal',
-      '2025',
-      'IFU et annexes',
-    ],
+    size: '1.1 MB',
+    pathSegments: [FUND_NW.name, 'Financial Documents', '2025', 'Tax'],
     createdBy: { name: 'Sophie Bernard', role: 'Tax Specialist' },
     createdAt: '2026-04-26T14:22:00Z',
-    targeting: [inv('Family Office Dupont')],
-    comment: 'Document nominatif - vérifier identité du destinataire.',
+    targeting: [inv(LP_BRUNSWICK.name), fundTag(FUND_NW.name), sub('SUB-2024-0012')],
+    comment: 'Nominative document — verify recipient identity.',
     notification: {
       channel: 'both',
-      subject: 'Annexes fiscales 2025 — Family Office Dupont',
-      greeting: 'Madame, Monsieur,',
+      subject: `Tax Annexes 2025 — ${LP_BRUNSWICK.name}`,
+      greeting: 'Dear Sir or Madam,',
       paragraphs: [
-        "Vous trouverez en pièce jointe vos **annexes fiscales 2025** ainsi que les IFU correspondants.",
+        'Please find enclosed your **2025 tax annexes** as well as the corresponding tax certificates.',
       ],
       signature: 'Sophie Bernard — Tax Specialist',
       recipients: [
-        { name: 'Family Office Dupont', email: 'office@dupont-family.com', role: 'Investisseur' },
+        { name: LP_BRUNSWICK.name, email: LP_BRUNSWICK.email, role: 'Investor' },
       ],
     },
   },
   {
-    name: 'Term Sheet - Co-investissement Gamma Healthcare.pdf',
+    name: `${FUND_AUR.name} - Co-Investment Term Sheet (Project Aurora).pdf`,
     format: 'pdf',
-    size: '890 Ko',
-    pathSegments: ['Deals', 'Pipeline 2026', 'Gamma Healthcare', 'Documentation'],
+    size: '890 KB',
+    pathSegments: ['Marketing & Distribution', 'Family Offices & UHNWI', 'Co-Investment Opportunities'],
     createdBy: { name: 'Maxime Dubois', role: 'Investment Director' },
     createdAt: '2026-04-25T08:30:00Z',
-    targeting: [seg('UHNWI'), seg('Institutional'), fund('Gamma Healthcare')],
-    comment: 'Version 3 - intègre les commentaires du comité d\'investissement.',
+    targeting: [seg('UHNWI'), seg('Institutional'), fundTag(FUND_AUR.name)],
+    comment: 'Version 3 — incorporates Investment Committee comments.',
     notification: {
       channel: 'email',
-      subject: 'Opportunité de co-investissement — Gamma Healthcare',
-      greeting: 'Chers partenaires,',
+      subject: `Co-Investment Opportunity — Project Aurora (${FUND_AUR.name})`,
+      greeting: 'Dear Partners,',
       paragraphs: [
-        "Nous vous invitons à étudier la **term sheet** du co-investissement Gamma Healthcare (closing visé fin Q3 2026).",
+        `Please find enclosed the **term sheet** for the Project Aurora co-investment alongside ${FUND_AUR.name} (closing targeted Q3 2026).`,
       ],
       signature: 'Maxime Dubois — Investment Director',
       recipients: [
-        { name: 'LPs UHNWI sélectionnés', email: 'select-uhnwi@investhub.io', role: 'Liste restreinte' },
-        { name: 'Investisseurs institutionnels', email: 'institutional@investhub.io', role: 'Liste restreinte' },
+        { name: 'Selected UHNWI LPs',     email: 'select-uhnwi@investhub.io',   role: 'Restricted list' },
+        { name: 'Institutional investors', email: 'institutional@investhub.io', role: 'Restricted list' },
       ],
     },
   },
   {
-    name: 'Synthèse performance YTD - Tableau de bord.xlsx',
-    format: 'xlsx',
-    size: '1.7 Mo',
-    pathSegments: ['Reporting interne', 'Performances', '2026', 'YTD'],
-    createdBy: { name: 'Julien Moreau', role: 'Performance Analyst' },
+    name: `${FUND_VES.name} - Secondary Opportunity Memo (Project Bluefin).pdf`,
+    format: 'pdf',
+    size: '1.7 MB',
+    pathSegments: [FUND_VES.name, 'Asset Documents', 'Deal Memos & Investment Committee'],
+    createdBy: { name: 'Olivier Lambert', role: 'Performance Analyst' },
     createdAt: '2026-04-24T17:50:00Z',
-    targeting: [seg('Distributeurs'), aud('Multi-fonds')],
-    comment: 'Chiffres consolidés à valider avec le middle-office.',
-    // Pas de notification — usage interne, à publier sur le portail middle-office après validation
+    targeting: [fundTag(FUND_VES.name), aud('Multi-fund')],
+    comment: 'Pricing assumptions to be cross-checked with middle-office before circulation.',
+    // No notification — internal use, posted to the middle-office portal once approved
+  },
+  {
+    name: `${FUND_POL.name} - SFDR Article 9 - 2025 Disclosure.pdf`,
+    format: 'pdf',
+    size: '1.2 MB',
+    pathSegments: [FUND_POL.name, 'Asset Documents', 'ESG & Impact Reports', '2025'],
+    createdBy: { name: 'Mathilde Garcia', role: 'ESG Officer' },
+    createdAt: '2026-04-22T13:15:00Z',
+    targeting: [fundTag(FUND_POL.name), aud('All segments')],
+    comment: 'Awaiting confirmation of the carbon footprint figures by external auditor.',
+    notification: {
+      channel: 'portal',
+      subject: `${FUND_POL.name} — SFDR Article 9 Disclosure 2025`,
+      greeting: 'Dear LPs,',
+      paragraphs: [
+        `Our SFDR Article 9 disclosure for ${FUND_POL.name} is now available on the LP Portal alongside the 2025 ESG report.`,
+      ],
+      signature: 'Mathilde Garcia — ESG Officer',
+      recipients: [
+        { name: `All LPs ${FUND_POL.name}`, email: 'portal-lp@investhub.io', role: 'LP Portal' },
+      ],
+    },
   },
 ];
 
 const VALIDATED: Omit<ValidationDocument, 'id' | 'status'>[] = [
-  // ── Batch annuel 2025 Alpha (2 docs validés)
+  // ── Annual letter batch — Atlas Infrastructure Partners I (2 docs)
   {
-    name: 'Lettre annuelle 2025 - Alpha Croissance.pdf',
+    name: `${FUND_ATL.name} - Annual Letter 2025.pdf`,
     format: 'pdf',
-    size: '1.3 Mo',
-    pathSegments: ['Communication', 'Lettres annuelles', '2025', 'Alpha Croissance'],
+    size: '1.3 MB',
+    pathSegments: [FUND_ATL.name, 'Management Reports', '2025', 'Q4 / Annual'],
     createdBy: { name: 'Léa Marchand', role: 'IR Manager' },
     createdAt: '2026-03-12T10:00:00Z',
-    targeting: [aud('Tous segments'), fund('Alpha Croissance')],
+    targeting: [aud('All segments'), fundTag(FUND_ATL.name)],
     comment: '',
     reviewedBy: 'Hugo Petit',
     reviewedAt: '2026-03-15T09:30:00Z',
-    batchId: 'batch-annual-letter-2025',
+    batchId: 'batch-annual-letter-2025-atlas',
   },
   {
-    name: 'Rapport ESG 2025 - Alpha Croissance.pdf',
+    name: `${FUND_ATL.name} - ESG Annual Report 2025.pdf`,
     format: 'pdf',
-    size: '4.2 Mo',
-    pathSegments: ['Communication', 'ESG', '2025', 'Alpha Croissance'],
+    size: '4.2 MB',
+    pathSegments: [FUND_ATL.name, 'Asset Documents', 'ESG & Impact Reports', '2025'],
     createdBy: { name: 'Léa Marchand', role: 'IR Manager' },
     createdAt: '2026-03-12T10:08:00Z',
-    targeting: [aud('Tous segments'), fund('Alpha Croissance')],
-    comment: 'Validé par le comité ESG indépendant.',
+    targeting: [aud('All segments'), fundTag(FUND_ATL.name)],
+    comment: 'Approved by the independent ESG committee.',
     reviewedBy: 'Hugo Petit',
     reviewedAt: '2026-03-15T09:30:00Z',
-    batchId: 'batch-annual-letter-2025',
+    batchId: 'batch-annual-letter-2025-atlas',
   },
 
-  // ── Documents standalone validés
+  // ── Validated standalone docs
   {
-    name: 'Note de marché - Tendances Private Equity 2026.pdf',
+    name: 'Market Note — Private Equity Trends 2026.pdf',
     format: 'pdf',
-    size: '720 Ko',
-    pathSegments: ['Communication', 'Notes de marché', '2026', 'PE'],
+    size: '720 KB',
+    pathSegments: ['Marketing & Distribution', 'Institutional Investors', 'Track Record'],
     createdBy: { name: 'Léa Marchand', role: 'IR Manager' },
     createdAt: '2026-02-20T14:00:00Z',
-    targeting: [aud('Tous segments')],
+    targeting: [aud('All segments')],
     comment: '',
     reviewedBy: 'Hugo Petit',
     reviewedAt: '2026-02-21T11:18:00Z',
     notification: {
       channel: 'portal',
-      subject: 'Note de marché — Tendances Private Equity 2026',
-      greeting: 'Chers investisseurs,',
+      subject: 'Market Note — Private Equity Trends 2026',
+      greeting: 'Dear Investors,',
       paragraphs: [
-        "Notre dernière **note de marché** est disponible sur votre portail LP.",
+        'Our latest **market note** is now available on your LP Portal.',
       ],
       signature: 'Léa Marchand — Investor Relations',
       recipients: [
-        { name: 'Tous les LPs InvestHub', email: 'portail-lp@investhub.io', role: 'Portail LP' },
+        { name: 'All InvestHub LPs', email: 'portal-lp@investhub.io', role: 'LP Portal' },
       ],
     },
   },
   {
-    name: 'Présentation comité - Roadshow Q2.pptx',
+    name: 'Roadshow 2026 - Master Presentation.pptx',
     format: 'pptx',
-    size: '5.2 Mo',
-    pathSegments: ['Distribution', 'Roadshow', '2026', 'Q2', 'Supports'],
+    size: '5.2 MB',
+    pathSegments: ['Marketing & Distribution', 'Distributors & Private Banks', 'Roadshow 2026'],
     createdBy: { name: 'Antoine Leblanc', role: 'Distribution Lead' },
     createdAt: '2026-04-10T09:15:00Z',
-    targeting: [seg('Distributeurs'), aud('Multi-fonds')],
-    comment: 'Validé après corrections mineures sur slides 12-14.',
+    targeting: [seg('Distributor'), aud('Multi-fund')],
+    comment: 'Approved with minor edits on slides 12 to 14.',
     reviewedBy: 'Sophie Bernard',
     reviewedAt: '2026-04-11T16:42:00Z',
-    // Pas de notification — support de roadshow, partagé en main propre
   },
 ];
 
 const REJECTED: Omit<ValidationDocument, 'id' | 'status'>[] = [
   {
-    name: 'Communication marketing - Lancement Delta Tech.pptx',
+    name: `${FUND_LUM.name} - Marketing Pitch Deck (DRAFT).pptx`,
     format: 'pptx',
-    size: '4.6 Mo',
-    pathSegments: ['Communication', 'Marketing', '2026', 'Lancements', 'Delta Tech'],
+    size: '4.6 MB',
+    pathSegments: ['Marketing & Distribution', 'Distributors & Private Banks', 'Sales Toolkit'],
     createdBy: { name: 'Mathilde Garcia', role: 'Marketing Manager' },
     createdAt: '2026-04-20T11:30:00Z',
-    targeting: [seg('Distributeurs'), seg('Retail')],
-    comment: 'Refusé : termes promotionnels non conformes au cadre AMF, à reformuler.',
+    targeting: [seg('Distributor'), seg('HNWI')],
+    comment: 'Rejected: promotional language not compliant with AMF guidelines — to be reworded.',
     reviewedBy: 'Hugo Petit',
     reviewedAt: '2026-04-21T10:05:00Z',
     notification: {
       channel: 'email',
-      subject: '[Refusé] Lancement Delta Tech — communication marketing',
-      greeting: 'Chers partenaires,',
+      subject: `[Rejected] ${FUND_LUM.name} — Marketing Pitch Deck`,
+      greeting: 'Dear Partners,',
       paragraphs: [
-        "Découvrez la nouvelle opportunité **Delta Tech** dans notre dossier de présentation.",
+        `Discover our latest investment opportunity: **${FUND_LUM.name}** — please find enclosed our pitch deck.`,
       ],
       signature: 'Mathilde Garcia — Marketing Manager',
       recipients: [
-        { name: 'Réseau distributeurs Retail', email: 'retail-network@investhub.io', role: 'Distributeurs' },
+        { name: 'Retail distributor network', email: 'retail-network@investhub.io', role: 'Distributors' },
       ],
     },
   },
