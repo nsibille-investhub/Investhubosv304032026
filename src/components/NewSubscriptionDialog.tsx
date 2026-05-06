@@ -689,12 +689,15 @@ export function NewSubscriptionDialog({ open, onClose, onSubscriptionCreated }: 
           <div className="flex-1 overflow-y-auto px-8 py-6">
             <div className="flex flex-col gap-6">
                   {/* INVESTOR SECTION */}
-                  <div className="space-y-2">
-                    <Label className="text-xs uppercase tracking-wide font-semibold text-muted-foreground flex items-center gap-1.5">
-                      <User className="w-3.5 h-3.5" />
-                      {t('subscriptions.newDialog.investorLabel')}{' '}
-                      <span className="text-destructive">*</span>
-                    </Label>
+                  <div className="space-y-3">
+                    <div>
+                      <h3 className="text-sm font-medium text-foreground mb-1">
+                        {t('subscriptions.newDialog.sections.investorTitle')} <span className="text-destructive">*</span>
+                      </h3>
+                      <p className="text-xs text-muted-foreground">
+                        {t('subscriptions.newDialog.sections.investorDescription')}
+                      </p>
+                    </div>
 
                     {showNewInvestorForm ? (
                       <div className="border border-border bg-card rounded-xl p-4 space-y-3">
@@ -1018,22 +1021,24 @@ export function NewSubscriptionDialog({ open, onClose, onSubscriptionCreated }: 
                     const isOptional = !investorHasStructures && !showNewStructureForm;
 
                     return (
-                    <div className="space-y-2">
-                      <Label
-                        className={`text-xs uppercase tracking-wide font-semibold flex items-center gap-1.5 ${
-                          isOptional ? 'text-muted-foreground/70' : 'text-muted-foreground'
-                        }`}
-                      >
-                        <Building2 className="w-3.5 h-3.5" />
-                        {t('subscriptions.newDialog.structureLabel')}
-                        {isOptional ? (
-                          <span className="text-muted-foreground/70 font-normal normal-case tracking-normal">
-                            {t('subscriptions.newDialog.optional')}
-                          </span>
-                        ) : (
-                          <span className="text-destructive">*</span>
-                        )}
-                      </Label>
+                    <div className="space-y-3">
+                      <div>
+                        <h3 className="text-sm font-medium text-foreground mb-1">
+                          {t('subscriptions.newDialog.sections.structureTitle')}{' '}
+                          {isOptional ? (
+                            <span className="text-xs font-normal text-muted-foreground">
+                              {t('subscriptions.newDialog.optional')}
+                            </span>
+                          ) : (
+                            <span className="text-destructive">*</span>
+                          )}
+                        </h3>
+                        <p className="text-xs text-muted-foreground">
+                          {isOptional
+                            ? t('subscriptions.newDialog.sections.structureOptionalDescription')
+                            : t('subscriptions.newDialog.sections.structureDescription')}
+                        </p>
+                      </div>
 
                       {showNewStructureForm ? (
                         /* New Structure Form */
@@ -1323,6 +1328,17 @@ export function NewSubscriptionDialog({ open, onClose, onSubscriptionCreated }: 
                     </div>
                     );
                   })()}
+
+                  {/* INVESTMENT SECTION */}
+                  <div className="space-y-3">
+                    <div>
+                      <h3 className="text-sm font-medium text-foreground mb-1">
+                        {t('subscriptions.newDialog.sections.investmentTitle')} <span className="text-destructive">*</span>
+                      </h3>
+                      <p className="text-xs text-muted-foreground">
+                        {t('subscriptions.newDialog.sections.investmentDescription')}
+                      </p>
+                    </div>
                   {/* Row 1: Fonds + Part */}
                   <div
                     className="grid gap-3"
@@ -1462,11 +1478,21 @@ export function NewSubscriptionDialog({ open, onClose, onSubscriptionCreated }: 
                       </label>
                     </div>
                   </div>
+                  </div>
 
-                  <Separator className="my-2" />
+                  {/* DISTRIBUTION & FEES SECTION */}
+                  <div className="space-y-3">
+                    <div>
+                      <h3 className="text-sm font-medium text-foreground mb-1">
+                        {t('subscriptions.newDialog.sections.distributionTitle')}
+                      </h3>
+                      <p className="text-xs text-muted-foreground">
+                        {t('subscriptions.newDialog.sections.distributionDescription')}
+                      </p>
+                    </div>
 
                   {/* Distributor Selection - Dropdown */}
-                  <div className="mb-3">
+                  <div>
                     <Label className="text-xs mb-1 flex items-center gap-1">
                       <Handshake className="w-3.5 h-3.5" />
                       {t('subscriptions.newDialog.distributorLabel')}
@@ -1660,14 +1686,18 @@ export function NewSubscriptionDialog({ open, onClose, onSubscriptionCreated }: 
                       </div>
                     </motion.div>
                   )}
+                  </div>
 
                   {/* NOTIFICATION & LANGUAGE SECTION */}
-                  <Separator className="my-2" />
                   <div className="space-y-3">
-                    <Label className="text-xs uppercase tracking-wide font-semibold text-muted-foreground flex items-center gap-1.5">
-                      <Globe className="w-3.5 h-3.5" />
-                      {t('subscriptions.newDialog.notificationSection.title')}
-                    </Label>
+                    <div>
+                      <h3 className="text-sm font-medium text-foreground mb-1">
+                        {t('subscriptions.newDialog.sections.notificationTitle')}
+                      </h3>
+                      <p className="text-xs text-muted-foreground">
+                        {t('subscriptions.newDialog.sections.notificationDescription')}
+                      </p>
+                    </div>
 
                     {(() => {
                       const isIntermediated = formData.distributor !== 'direct';
