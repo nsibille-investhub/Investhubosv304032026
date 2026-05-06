@@ -20,8 +20,7 @@ import {
   Tag as TagIcon,
   FileType,
   Users,
-  Globe,
-  Lock
+  Globe
 } from 'lucide-react';
 import { toast } from 'sonner@2.0.3';
 import {
@@ -48,6 +47,11 @@ import { Tooltip, TooltipContent, TooltipTrigger } from './ui/tooltip';
 import { SegmentsMultiSelect, FundSingleSelect } from './ui/targeting-selects';
 import { AutocompleteSingleSelect } from './ui/autocomplete-select';
 import { useTranslation } from '../utils/languageContext';
+import {
+  COMMITMENTS,
+  INVESTORS,
+  findFund,
+} from '../utils/gedFixtures';
 
 interface BirdViewPageProps {
   onBack: () => void;
@@ -63,6 +67,8 @@ interface DocumentNode {
   format?: string;
   documentCategory?: DocumentCategory;
   isNominatif?: boolean;
+  /** Back-office / internal — never visible to an LP context. */
+  isInternal?: boolean;
   stats?: {
     sent: number;
     opened: number;
@@ -146,6 +152,7 @@ export function BirdViewPage({ onBack }: BirdViewPageProps) {
           format: item.format,
           documentCategory: item.documentCategory,
           isNominatif: item.isNominatif,
+          isInternal: item.isInternal,
           stats: item.stats,
           engagement: item.engagement,
           fundRestriction: item.fundRestriction,
@@ -244,22 +251,55 @@ export function BirdViewPage({ onBack }: BirdViewPageProps) {
   }, [selectedContact, availableContacts]);
 
   /**
-   * Renvoie true quand le document n'est PAS accessible par le contact
-   * sélectionné (mais l'investisseur lui y a bien accès). Ces documents
-   * sont rendus en gris dans l'arbre pour montrer la limite d'audience.
+   * Renvoie true quand le document EST accessible par le viewer courant
+   * (LP sélectionné + contact optionnel). Quand aucun viewer n'est
+   * sélectionné (vue Global), la fonction renvoie toujours true.
+   *
+   * Règles appliquées sur les documents :
+   *   - Les docs back-office (isInternal) ne sont jamais visibles côté LP
+   *   - Restriction nominative (investorRestriction) : doit matcher le LP
+   *   - Restriction fonds : le LP doit avoir un commitment sur ce fonds
+   *   - Restriction segment : la typologie du LP doit être listée
+   *   - Si un contact est aussi sélectionné, son accessLevel restreint :
+   *     · revoked          → rien
+   *     · commercial-only  → uniquement les docs marketing/segment
    */
-  const isInaccessibleForContact = useCallback(
+  const isAccessibleForViewer = useCallback(
     (node: DocumentNode): boolean => {
-      if (!selectedContactData) return false;
-      const lvl = selectedContactData.accessLevel;
-      if (lvl === 'full') return false;
-      if (lvl === 'revoked') return true;
-      // commercial-only: marketing category OR segment-targeted only
-      if (node.documentCategory === 'marketing') return false;
-      if (node.segmentRestrictions && node.segmentRestrictions.length > 0) return false;
+      if (!selectedInvestor) return true;
+      const lp = INVESTORS.find((i) => i.name === selectedInvestor);
+      if (!lp) return true;
+
+      if (node.isInternal) return false;
+
+      if (node.investorRestriction && node.investorRestriction !== lp.name) {
+        return false;
+      }
+
+      if (node.fundRestriction) {
+        const committed = COMMITMENTS.some(
+          (c) => c.investorId === lp.id && findFund(c.fundCode)?.name === node.fundRestriction,
+        );
+        if (!committed) return false;
+      }
+
+      if (node.segmentRestrictions && node.segmentRestrictions.length > 0) {
+        if (!node.segmentRestrictions.includes(lp.typology)) return false;
+      }
+
+      if (selectedContactData) {
+        const lvl = selectedContactData.accessLevel;
+        if (lvl === 'revoked') return false;
+        if (lvl === 'commercial-only') {
+          const isCommercial = node.documentCategory === 'marketing';
+          const isSegmentTargeted = !!(node.segmentRestrictions && node.segmentRestrictions.length > 0);
+          if (!isCommercial && !isSegmentTargeted) return false;
+        }
+      }
+
       return true;
     },
-    [selectedContactData],
+    [selectedInvestor, selectedContactData],
   );
 
   // Arbre affiché (filtré ou complet)
@@ -353,13 +393,35 @@ export function BirdViewPage({ onBack }: BirdViewPageProps) {
       tree = filterTree(tree);
     }
 
+    // Filtre "vue contextualisée" (LP / LP+contact) — cache dans le
+    // corpus tous les documents que le viewer ne pourrait pas voir.
+    // Les dossiers/spaces vides sont retirés en cascade.
+    if (selectedInvestor) {
+      const filterByAccess = (nodes: DocumentNode[]): DocumentNode[] =>
+        nodes
+          .map((n) => {
+            if (n.type === 'document') {
+              return isAccessibleForViewer(n) ? n : null;
+            }
+            const kept = n.children ? filterByAccess(n.children) : [];
+            if (kept.length === 0) return null;
+            return { ...n, children: kept };
+          })
+          .filter((n): n is DocumentNode => n !== null);
+      tree = filterByAccess(tree);
+    }
+
     // Ensuite appliquer le filtre "documents non vus"
     if (showOnlyIncomplete) {
       return filterTreeForIncomplete(tree);
     }
 
     return tree;
-  }, [documentTree, showOnlyIncomplete, documentNameFilter, selectedDocumentCategory, selectedFund, selectedSegments, selectedSubscription]);
+  }, [
+    documentTree, showOnlyIncomplete,
+    documentNameFilter, selectedDocumentCategory, selectedFund, selectedSegments, selectedSubscription,
+    selectedInvestor, isAccessibleForViewer,
+  ]);
 
   // Statistiques filtrées basées sur displayedTree
   const filteredStats = useMemo(() => {
@@ -679,29 +741,11 @@ export function BirdViewPage({ onBack }: BirdViewPageProps) {
         )}
 
         {/* Document */}
-        {node.type === 'document' && (() => {
-          const inaccessible = isInaccessibleForContact(node);
-          return (
-          <div
-            className={cn(
-              'flex items-center gap-3 py-2 px-3 bg-blue-50/30 dark:bg-blue-950/10 rounded hover:bg-gray-100 dark:hover:bg-gray-800/60 transition-colors group',
-              inaccessible && 'opacity-50 grayscale',
-            )}
-            title={
-              inaccessible && selectedContactData
-                ? t('ged.birdview.tooltips.contactNoAccess', {
-                    contact: selectedContactData.name,
-                  })
-                : undefined
-            }
-          >
+        {node.type === 'document' && (
+          <div className="flex items-center gap-3 py-2 px-3 bg-blue-50/30 dark:bg-blue-950/10 rounded hover:bg-gray-100 dark:hover:bg-gray-800/60 transition-colors group">
             {/* Icon */}
             <div className="w-4 h-4 flex items-center justify-center flex-shrink-0">
-              {inaccessible ? (
-                <Lock className="w-4 h-4 text-gray-400" />
-              ) : (
-                <FileText className="w-4 h-4 text-gray-400" />
-              )}
+              <FileText className="w-4 h-4 text-gray-400" />
             </div>
 
             {/* Name */}
@@ -854,8 +898,7 @@ export function BirdViewPage({ onBack }: BirdViewPageProps) {
               </button>
             </div>
           </div>
-          );
-        })()}
+        )}
 
         {/* Children */}
         {isExpanded && hasChildren && (

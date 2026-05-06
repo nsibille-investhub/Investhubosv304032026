@@ -23,6 +23,12 @@ export interface DataRoomDocument {
   size: string;
   date: string;
   isNominatif: boolean;
+  /**
+   * Internal / back-office documents (LP allocation schedule, IC memos,
+   * methodology memos, AMPERE feeds, internal P&L). Never visible to LPs
+   * — the BirdView hides them as soon as a viewer scope is selected.
+   */
+  isInternal?: boolean;
   documentCategory: DocumentCategory;
   stats: {
     sent: number;
@@ -145,8 +151,9 @@ const toDocument = (
 
   switch (doc.targeting.mode) {
     case 'fund':
-    case 'fund-internal':
       return { ...base, fundRestriction: context.fundName };
+    case 'fund-internal':
+      return { ...base, fundRestriction: context.fundName, isInternal: true };
     case 'shareClass':
       return {
         ...base,
