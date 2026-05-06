@@ -282,7 +282,6 @@ export function DocumentListView({
       <div className="px-6 py-3 border-b border-gray-200 bg-gray-50/30">
         <div className={`grid ${tableGridClassName} gap-4 text-xs font-medium text-gray-500 uppercase tracking-wide`}>
           <div>{t('ged.listView.headers.name')}</div>
-          <div>{t('ged.listView.headers.nature')}</div>
           <div>{t('ged.listView.headers.audience')}</div>
           <div>{t('ged.listView.headers.addedOn')}</div>
           <div>{t('ged.listView.headers.status')}</div>
@@ -329,14 +328,13 @@ export function DocumentListView({
                         {hasActiveSearch && (folder as any).__path && (
                           <p className="text-xs text-gray-400 truncate">{(folder as any).__path.slice(0, -1).join(' / ') || t('ged.listView.root')}</p>
                         )}
-                        <p className="text-xs text-gray-500">
-                          {t((folder.children?.length || 0) > 1 ? 'ged.listView.folderCount' : 'ged.listView.folderCountOne', { count: folder.children?.length || 0 })}
-                        </p>
+                        <div className="mt-1 flex items-center gap-1.5 flex-wrap">
+                          <Tag label={t('ged.listView.folderTag')} />
+                          <span className="text-xs text-gray-500">
+                            {t((folder.children?.length || 0) > 1 ? 'ged.listView.folderCount' : 'ged.listView.folderCountOne', { count: folder.children?.length || 0 })}
+                          </span>
+                        </div>
                       </div>
-                    </div>
-
-                    <div>
-                      <Tag label={t('ged.listView.folderTag')} />
                     </div>
 
                     <div>
@@ -498,26 +496,20 @@ export function DocumentListView({
                         <Icon className="w-4 h-4" style={{ color: '#000E2B' }} />
                       </div>
                       <div className="flex-1 min-w-0">
-                        <div className="flex items-center gap-2 min-w-0">
-                          <p
-                            className="text-sm font-medium text-gray-900 truncate"
-                            title={file.name}
-                          >
-                            {file.name}
-                          </p>
-                          <DocumentCategoryBadge
-                            category={file.documentCategory}
-                            className="flex-shrink-0"
-                          />
-                        </div>
+                        <p
+                          className="text-sm font-medium text-gray-900 truncate"
+                          title={file.name}
+                        >
+                          {file.name}
+                        </p>
                         {hasActiveSearch && (file as any).__path && (
                           <p className="text-xs text-gray-400 truncate">{(file as any).__path.slice(0, -1).join(' / ') || t('ged.listView.root')}</p>
                         )}
+                        <div className="mt-1 flex items-center gap-1.5 flex-wrap">
+                          <DocumentCategoryBadge category={file.documentCategory} />
+                          <DocumentTargetingMarker document={file} mode="tag" />
+                        </div>
                       </div>
-                    </div>
-
-                    <div className="min-w-0">
-                      <DocumentTargetingMarker document={file} mode="tag" />
                     </div>
 
                     <div className="min-w-0">
