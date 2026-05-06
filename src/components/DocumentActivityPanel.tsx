@@ -25,9 +25,13 @@ import { useTranslation } from '../utils/languageContext';
 import {
   COMMITMENTS,
   INVESTORS,
+  canContactAccessDoc,
   findFund,
   findInvestor,
   getInvestorContacts,
+  type DocCategory,
+  type DocTargeting,
+  type InvestorContact,
   type InvestorProfile,
 } from '../utils/gedFixtures';
 
@@ -96,6 +100,29 @@ interface DocContext {
   segmentRestrictions?: string[];
 }
 
+/**
+ * Build a synthetic doc descriptor matching the fixtures schema, used by
+ * `canContactAccessDoc` to decide if a contact (e.g. an Intern) can
+ * receive this document.
+ */
+const docDescriptor = (ctx: DocContext): { category: DocCategory; targeting: DocTargeting } => {
+  if (ctx.segmentRestrictions?.length) {
+    return { category: 'marketing', targeting: { mode: 'segment', segments: ctx.segmentRestrictions } };
+  }
+  if (ctx.investorRestriction) {
+    return { category: 'other', targeting: { mode: 'investor', investorId: '', subscriptionId: '' } };
+  }
+  return { category: 'other', targeting: { mode: 'fund' } };
+};
+
+const allowedContactsFor = (
+  ctx: DocContext,
+  contacts: InvestorContact[],
+): InvestorContact[] => {
+  const desc = docDescriptor(ctx);
+  return contacts.filter((c) => canContactAccessDoc(c, desc));
+};
+
 const fundCodeFromName = (fundName: string | undefined): string | undefined => {
   if (!fundName) return undefined;
   // Reverse lookup: scan FUNDS via findFund — we only have ~2 fixtures so a
@@ -153,18 +180,15 @@ const buildActivitiesForDocument = (ctx: DocContext): ActivitySource[] => {
   // 1. Send chain (initiated → sent → delivered) for every LP + contacts
   for (const inv of sample) {
     events.push({ id: next(), type: 'notification_send_initiated', userName: inv.name, userEmail: inv.email, userType: 'Investor', timestamp: at(2, 10, 58) });
-    for (const c of getInvestorContacts(inv.id)) {
-      if (!c.canAccess) continue;
+    for (const c of allowedContactsFor(ctx, getInvestorContacts(inv.id))) {
       events.push({ id: next(), type: 'notification_send_initiated', userName: c.name, userEmail: c.email, userType: 'Contact', timestamp: at(2, 10, 58), primaryInvestor: inv.name });
     }
     events.push({ id: next(), type: 'notification_sent', userName: inv.name, userEmail: inv.email, userType: 'Investor', timestamp: at(2, 11, 0) });
-    for (const c of getInvestorContacts(inv.id)) {
-      if (!c.canAccess) continue;
+    for (const c of allowedContactsFor(ctx, getInvestorContacts(inv.id))) {
       events.push({ id: next(), type: 'notification_sent', userName: c.name, userEmail: c.email, userType: 'Contact', timestamp: at(2, 11, 0), primaryInvestor: inv.name });
     }
     events.push({ id: next(), type: 'notification_delivered', userName: inv.name, userEmail: inv.email, userType: 'Investor', timestamp: at(2, 11, 2) });
-    for (const c of getInvestorContacts(inv.id)) {
-      if (!c.canAccess) continue;
+    for (const c of allowedContactsFor(ctx, getInvestorContacts(inv.id))) {
       events.push({ id: next(), type: 'notification_delivered', userName: c.name, userEmail: c.email, userType: 'Contact', timestamp: at(2, 11, 2), primaryInvestor: inv.name });
     }
   }
@@ -172,7 +196,7 @@ const buildActivitiesForDocument = (ctx: DocContext): ActivitySource[] => {
   // 2. Engagement (open / click / view / download / validate) — distributed
   //    over the past 1-2 days with realistic ratios.
   for (const inv of sample) {
-    const contacts = getInvestorContacts(inv.id).filter((c) => c.canAccess);
+    const contacts = allowedContactsFor(ctx, getInvestorContacts(inv.id));
     const opensInvestor = seededRand() < 0.85;
     if (opensInvestor) {
       events.push({ id: next(), type: 'notification_opened', userName: inv.name, userEmail: inv.email, userType: 'Investor', timestamp: at(1, 9, 12) });

@@ -123,15 +123,25 @@ export const findInvestor = (id: string): InvestorProfile | undefined =>
 // and the engagement statistics — all of which therefore reference the
 // same coherent population of contacts.
 
+/**
+ * Access scope of a contact:
+ *  - `full`            : sees every document the LP receives
+ *  - `commercial-only` : only sees marketing / commercial materials
+ *                        (typically the Intern profile)
+ *  - `revoked`         : access has been removed (no doc visible)
+ */
+export type ContactAccessLevel = 'full' | 'commercial-only' | 'revoked';
+
 export interface InvestorContact {
   id: string;
   investorId: string;
   name: string;
   role: string;
   email: string;
+  accessLevel: ContactAccessLevel;
   /**
-   * Authorisation flag — whether the contact is currently allowed to
-   * view the LP's documents on the portal.
+   * Backwards-compatible flag. Kept for existing call sites that ask
+   * "can this contact see anything?". Equivalent to accessLevel !== 'revoked'.
    */
   canAccess: boolean;
 }
@@ -183,7 +193,7 @@ const investorSeed = (id: string): number => {
 
 const cachedContacts: Record<string, InvestorContact[]> = {};
 
-/** Returns 2-3 deterministic contacts attached to the given investor. */
+/** Returns 3-4 deterministic contacts attached to the given investor. */
 export const getInvestorContacts = (investorId: string): InvestorContact[] => {
   if (cachedContacts[investorId]) return cachedContacts[investorId];
   const inv = findInvestor(investorId);
@@ -191,23 +201,43 @@ export const getInvestorContacts = (investorId: string): InvestorContact[] => {
 
   const seed = investorSeed(investorId);
   const roles = CONTACT_ROLES_BY_TYPOLOGY[inv.typology];
-  const numContacts = Math.min(roles.length, 2 + (seed % 2)); // 2 or 3
+  const numStandard = Math.min(roles.length, 2 + (seed % 2)); // 2 or 3 standard contacts
   const domain = investorEmailDomain(inv);
 
   const out: InvestorContact[] = [];
-  for (let i = 0; i < numContacts; i++) {
+
+  // 1. Standard role-based contacts. ~20% chance the last one had its
+  // access revoked (still listed but inaccessible).
+  for (let i = 0; i < numStandard; i++) {
     const fn = CONTACT_FIRST_NAMES[(seed + i * 7) % CONTACT_FIRST_NAMES.length];
     const ln = CONTACT_LAST_NAMES[(seed + i * 13 + 3) % CONTACT_LAST_NAMES.length];
-    const name = `${fn} ${ln}`;
+    const isRevoked = i === numStandard - 1 && seed % 5 === 0;
+    const accessLevel: ContactAccessLevel = isRevoked ? 'revoked' : 'full';
     out.push({
       id: `${investorId}-C${i + 1}`,
       investorId,
-      name,
+      name: `${fn} ${ln}`,
       role: roles[i],
       email: `${slugify(fn)}.${slugify(ln)}@${domain}`,
-      canAccess: !(i === numContacts - 1 && seed % 5 === 0), // ~20% chance the last contact lost access
+      accessLevel,
+      canAccess: accessLevel !== 'revoked',
     });
   }
+
+  // 2. Systematic Intern profile — restricted to commercial documents
+  // only. Useful to demonstrate audience filtering on strategic docs.
+  const internFn = CONTACT_FIRST_NAMES[(seed + 19) % CONTACT_FIRST_NAMES.length];
+  const internLn = CONTACT_LAST_NAMES[(seed + 23) % CONTACT_LAST_NAMES.length];
+  out.push({
+    id: `${investorId}-INTERN`,
+    investorId,
+    name: `${internFn} ${internLn}`,
+    role: 'Intern',
+    email: `${slugify(internFn)}.${slugify(internLn)}.intern@${domain}`,
+    accessLevel: 'commercial-only',
+    canAccess: true,
+  });
+
   cachedContacts[investorId] = out;
   return out;
 };
@@ -340,6 +370,34 @@ export interface DocumentSpec {
   targeting: DocTargeting;
   tags?: string[];
 }
+
+/**
+ * Whether a document is "commercial" — i.e. brochures, pitch decks,
+ * sales toolkit, roadshow… anything that interns and prospect-facing
+ * audiences can legitimately receive. Strategic documents (capital
+ * calls, distributions, NAV, reports, legal) are NOT commercial.
+ */
+export const isCommercialDocCategory = (category: DocCategory): boolean =>
+  category === 'marketing';
+
+/**
+ * Returns true when a contact is allowed to receive / open the given
+ * document. Centralised so every consumer (BirdView events, Activity
+ * Panel, Relaunch Modal, View-as) applies the same rule.
+ */
+export const canContactAccessDoc = (
+  contact: InvestorContact,
+  doc: { category: DocCategory; targeting: DocTargeting },
+): boolean => {
+  switch (contact.accessLevel) {
+    case 'revoked':
+      return false;
+    case 'full':
+      return true;
+    case 'commercial-only':
+      return isCommercialDocCategory(doc.category) || doc.targeting.mode === 'segment';
+  }
+};
 
 export interface FolderSpec {
   name: string;

@@ -11,6 +11,7 @@ import {
   InvestorProfile,
   InvestorTypology,
   INVESTORS as GED_INVESTORS,
+  canContactAccessDoc,
   commitmentsForFund,
   findFund,
   findInvestor,
@@ -200,7 +201,7 @@ const recipientsForDocument = (entry: DocIndexEntry): RecipientCandidate[] => {
       contactRole: 'Investisseur',
     });
     for (const c of contacts) {
-      if (!c.canAccess) continue;
+      if (!canContactAccessDoc(c, entry.doc)) continue;
       out.push({
         investorName: inv.name,
         investorEmail: inv.email,

@@ -77,8 +77,24 @@ const buildInvestorViewer = (inv: InvestorProfile): Viewer => ({
   allowedDocuments: [],
 });
 
+const MARKETING_SPACE_ID = 'space-marketing';
+
 const buildContactViewer = (c: InvestorContact): Viewer => {
   const inv = findInvestor(c.investorId);
+  let allowedFolders: string[];
+  switch (c.accessLevel) {
+    case 'revoked':
+      allowedFolders = [];
+      break;
+    case 'commercial-only':
+      // Intern profile: marketing space only, no fund-level access.
+      allowedFolders = [MARKETING_SPACE_ID];
+      break;
+    case 'full':
+    default:
+      allowedFolders = [...allowedSpacesForInvestor(c.investorId), MARKETING_SPACE_ID];
+      break;
+  }
   return {
     id: c.id,
     name: c.name,
@@ -88,7 +104,7 @@ const buildContactViewer = (c: InvestorContact): Viewer => {
     company: inv?.name,
     role: c.role,
     avatar: initials(c.name),
-    allowedFolders: c.canAccess ? allowedSpacesForInvestor(c.investorId) : [],
+    allowedFolders,
     allowedDocuments: [],
   };
 };

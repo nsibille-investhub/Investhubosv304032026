@@ -45,9 +45,12 @@ import { useTranslation } from '../utils/languageContext';
 import {
   COMMITMENTS,
   INVESTORS,
+  canContactAccessDoc,
   findFund,
   findInvestor,
   getInvestorContacts,
+  type DocCategory,
+  type DocTargeting,
   type InvestorProfile,
 } from '../utils/gedFixtures';
 
@@ -132,9 +135,23 @@ const REMINDER_SEED: ReminderSeed = {
   consultedRatio: 0.55,
 };
 
+const docDescriptor = (
+  isNominatif: boolean,
+  segmentRestrictions?: string[],
+): { category: DocCategory; targeting: DocTargeting } => {
+  if (segmentRestrictions?.length) {
+    return { category: 'marketing', targeting: { mode: 'segment', segments: segmentRestrictions } };
+  }
+  if (isNominatif) {
+    return { category: 'other', targeting: { mode: 'investor', investorId: '', subscriptionId: '' } };
+  }
+  return { category: 'other', targeting: { mode: 'fund' } };
+};
+
 const buildRecipientsForInvestor = (
   inv: InvestorProfile,
   seedOffset: number,
+  doc: { category: DocCategory; targeting: DocTargeting },
 ): Recipient[] => {
   // Hash investor id so the engagement stats stay stable across renders.
   let h = seedOffset;
@@ -166,7 +183,10 @@ const buildRecipientsForInvestor = (
   const contacts = getInvestorContacts(inv.id);
   contacts.forEach((c, i) => {
     const cSeed = Math.abs((seed * 17 + i * 11) | 0);
-    const cOpened = c.canAccess && (cSeed % 100) / 100 < 0.7;
+    // A contact is in target only if its accessLevel allows this doc
+    // (Intern excluded from strategic docs, Revoked never in target).
+    const inTarget = canContactAccessDoc(c, doc);
+    const cOpened = inTarget && (cSeed % 100) / 100 < 0.7;
     const cConsulted = cOpened && ((cSeed >> 5) % 100) / 100 < 0.5;
     recipients.push({
       id: c.id,
@@ -174,13 +194,15 @@ const buildRecipientsForInvestor = (
       name: c.name,
       role: c.role,
       type: 'Contact',
-      inTarget: c.canAccess,
-      lastNotificationDate: c.canAccess ? baseDate : null,
-      receptionStatus: c.canAccess ? 'done' : 'not-targeted',
-      receptionDate: c.canAccess ? baseDate : undefined,
-      openingStatus: c.canAccess ? (cOpened ? 'done' : 'pending') : 'not-targeted',
+      inTarget,
+      lastNotificationDate: inTarget ? baseDate : null,
+      receptionStatus: inTarget ? 'done' : 'not-targeted',
+      receptionDate: inTarget ? baseDate : undefined,
+      openingStatus: inTarget ? (cOpened ? 'done' : 'pending') : 'not-targeted',
       openingDate: cOpened ? '03/05/2026 11:08' : undefined,
-      consultationStatus: c.canAccess ? (cConsulted ? 'done' : 'pending') : 'not-targeted',
+      consultationStatus: inTarget
+        ? (cConsulted ? 'done' : 'pending')
+        : (c.accessLevel === 'commercial-only' ? 'not-accessible' : 'not-targeted'),
       consultationDate: cConsulted ? `03/05/2026 ${12 + (i % 4)}:${10 + (i * 5) % 50}` : undefined,
     });
   });
@@ -200,7 +222,8 @@ const buildRecipients = (
     fundRestriction,
     segmentRestrictions,
   );
-  return investors.flatMap((inv, idx) => buildRecipientsForInvestor(inv, idx));
+  const doc = docDescriptor(isNominatif, segmentRestrictions);
+  return investors.flatMap((inv, idx) => buildRecipientsForInvestor(inv, idx, doc));
 };
 
 type FilterCriteria = 'all' | 'not-consulted' | 'custom';
