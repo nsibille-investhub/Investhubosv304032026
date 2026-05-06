@@ -131,15 +131,138 @@ export function DocumentsPage({ selectedSpace, navigationTarget, onNavigationHan
 
       const nextPath = [...parentPath, node.name];
       const seed = getSeedFromNode(node.id);
-      const isNominative = node.type !== 'folder' && seed % 2 === 1;
+
+      // When the node already carries explicit targeting (the case for all
+      // nodes coming from gedFixtures), use it deterministically. We only
+      // fall back to the legacy random synthesis for nodes without it
+      // (e.g. user-created folders that don't go through the fixture
+      // pipeline).
+      const hasExplicitTargeting =
+        node.type === 'folder' ? !!node.fundName || !!node.segmentRestrictions : !!node.targeting;
+
+      // Stable nominatif flag (folders are never nominatif).
+      const isNominative = node.type !== 'folder' && (
+        hasExplicitTargeting
+          ? !!node.isNominative
+          : seed % 2 === 1
+      );
+
+      // Default profile / share class / segment for the legacy fallback.
       const profile = investorProfiles[seed % investorProfiles.length];
-      const selectedShareClass = shareClasses[seed % shareClasses.length];
-      const selectedSegment = selectedSpace.targeting.segments.length > 0
+      const fallbackShareClass = shareClasses[seed % shareClasses.length];
+      const fallbackSegment = selectedSpace.targeting.segments.length > 0
         ? selectedSpace.targeting.segments[seed % selectedSpace.targeting.segments.length]
         : primarySegment;
-      const genericTargetType = selectedSegment && selectedSegment !== 'Tous segments' ? 'segment' : 'all';
+
+      const resolvedFund = node.fundName ?? primaryFund;
+      const resolvedShareClass = node.shareClass ?? fallbackShareClass;
+      const resolvedSegment = node.segmentRestrictions?.[0]
+        ?? (fallbackSegment !== 'Tous segments' ? fallbackSegment : undefined);
+
       const folderGetsGenericTargeting = node.type === 'folder';
-      
+
+      // Compute target / navigatorTargeting / category from explicit
+      // fields when available, otherwise from the legacy seed.
+      let targetType: Document['target']['type'];
+      let targetSegments: string[] = [];
+      let targetInvestors: string[] = [];
+      let targetSubscriptions: string[] = [];
+      let documentCategory: DocumentCategory | undefined;
+      let navigatorTargeting: Document['navigatorTargeting'];
+
+      if (node.type === 'folder') {
+        documentCategory = undefined;
+        if (hasExplicitTargeting) {
+          // Folder carries fund + optional segments / share class.
+          targetType = node.segmentRestrictions?.length ? 'segment' : 'all';
+          targetSegments = node.segmentRestrictions ?? [];
+          navigatorTargeting = {
+            mode: 'generic',
+            fund: resolvedFund,
+            shareClass: node.shareClass,
+            segment: resolvedSegment,
+          };
+        } else {
+          targetType = folderGetsGenericTargeting ? 'segment' : 'all';
+          targetSegments = folderGetsGenericTargeting && fallbackSegment !== 'Tous segments'
+            ? [fallbackSegment]
+            : [];
+          navigatorTargeting = folderGetsGenericTargeting
+            ? {
+                mode: 'generic',
+                fund: primaryFund,
+                shareClass: fallbackShareClass,
+                segment: fallbackSegment,
+              }
+            : undefined;
+        }
+      } else if (hasExplicitTargeting && node.targeting) {
+        // File with explicit targeting → no randomization.
+        documentCategory = node.category;
+        switch (node.targeting.mode) {
+          case 'investor':
+            targetType = 'investor';
+            targetInvestors = node.investorName ? [node.investorName] : [];
+            targetSubscriptions = node.subscriptionId ? [node.subscriptionId] : [];
+            navigatorTargeting = {
+              mode: 'nominative',
+              investor: node.investorName,
+              subscription: node.subscriptionId,
+            };
+            break;
+          case 'segment':
+            targetType = 'segment';
+            targetSegments = node.targeting.segments;
+            navigatorTargeting = {
+              mode: 'generic',
+              fund: resolvedFund,
+              segment: node.targeting.segments[0],
+            };
+            break;
+          case 'shareClass':
+            targetType = 'all';
+            navigatorTargeting = {
+              mode: 'generic',
+              fund: resolvedFund,
+              shareClass: node.targeting.shareClass,
+            };
+            break;
+          case 'fund':
+          case 'fund-internal':
+          default:
+            targetType = 'all';
+            navigatorTargeting = {
+              mode: 'generic',
+              fund: resolvedFund,
+            };
+            break;
+        }
+      } else {
+        // Legacy fallback (random synthesis) — only for nodes that don't
+        // come from gedFixtures.
+        documentCategory = fileCategoryPool[seed % fileCategoryPool.length];
+        const genericTargetType = fallbackSegment && fallbackSegment !== 'Tous segments' ? 'segment' : 'all';
+        targetType = isNominative ? 'investor' : genericTargetType;
+        targetSegments = isNominative
+          ? [fallbackSegment]
+          : (genericTargetType === 'segment' ? [fallbackSegment] : []);
+        targetInvestors = isNominative ? [profile.id] : [];
+        targetSubscriptions = isNominative ? [profile.subscription] : [];
+        navigatorTargeting = isNominative
+          ? {
+              mode: 'nominative',
+              investor: profile.name,
+              structure: profile.structure,
+              subscription: profile.subscription,
+            }
+          : {
+              mode: 'generic',
+              fund: primaryFund,
+              shareClass: fallbackShareClass,
+              segment: fallbackSegment,
+            };
+      }
+
       const doc: Document = {
         id: node.id,
         name: node.name,
@@ -147,33 +270,25 @@ export function DocumentsPage({ selectedSpace, navigationTarget, onNavigationHan
         size: node.size || '0 KB',
         date: node.date || new Date().toLocaleDateString('fr-FR'),
         owner: node.owner || t('ged.documents.ownerSystem'),
-        views: Math.floor(Math.random() * 100),
-        downloads: Math.floor(Math.random() * 50),
+        views: ((seed * 13) % 100),
+        downloads: ((seed * 7) % 50),
         status: (node.type !== 'folder' && seed % 3 !== 0) ? 'draft' as const : 'published' as const,
         children: node.children
           ? convertTreeToDocuments(node.children, nextPath, inheritedGenericTargeting || folderGetsGenericTargeting)
           : undefined,
         isRoot: false,
         target: {
-          type: node.type === 'folder'
-            ? (folderGetsGenericTargeting ? 'segment' : 'all')
-            : (isNominative ? 'investor' : genericTargetType),
-          segments: node.type === 'folder'
-            ? (folderGetsGenericTargeting && selectedSegment !== 'Tous segments' ? [selectedSegment] : [])
-            : (isNominative ? [selectedSegment] : (genericTargetType === 'segment' ? [selectedSegment] : [])),
-          investors: node.type === 'folder'
-            ? []
-            : (isNominative ? [profile.id] : []),
-          subscriptions: node.type === 'folder'
-            ? []
-            : (isNominative ? [profile.subscription] : []),
-          participations: []
+          type: targetType,
+          segments: targetSegments,
+          investors: targetInvestors,
+          subscriptions: targetSubscriptions,
+          participations: [],
         },
         access: {
           level: 'view' as const,
           watermark: false,
           downloadable: true,
-          printable: true
+          printable: true,
         },
         path: `/${nextPath.join('/')}`,
         version: 1,
@@ -181,38 +296,11 @@ export function DocumentsPage({ selectedSpace, navigationTarget, onNavigationHan
         uploadedBy: node.owner || t('ged.documents.ownerSystem'),
         updatedAt: uploadedAt.toISOString(),
         metadata: {
-          fund: primaryFund,
-          segments: selectedSegment !== 'Tous segments' ? [selectedSegment] : [],
+          fund: resolvedFund,
+          segments: resolvedSegment ? [resolvedSegment] : [],
         },
-        documentCategory: node.type === 'folder'
-          ? undefined
-          : fileCategoryPool[seed % fileCategoryPool.length],
-        navigatorTargeting: node.type === 'folder'
-          ? (
-              folderGetsGenericTargeting
-                ? {
-                    mode: 'generic',
-                    fund: primaryFund,
-                    shareClass: selectedShareClass,
-                    segment: selectedSegment,
-                  }
-                : undefined
-            )
-          : (
-            !isNominative
-            ? {
-                mode: 'generic',
-                fund: primaryFund,
-                shareClass: selectedShareClass,
-                segment: selectedSegment,
-              }
-            : {
-                mode: 'nominative',
-                investor: profile.name,
-                structure: profile.structure,
-                subscription: profile.subscription,
-              }
-          )
+        documentCategory,
+        navigatorTargeting,
       };
       return doc;
     });
