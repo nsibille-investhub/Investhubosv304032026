@@ -77,6 +77,7 @@ interface FormData {
   shareClass: string;
   numberOfShares: string;
   entryFees: string;
+  subscriptionPremium: string; // Prime de souscription (€) - à la main de la SG
   distributor: string | 'direct'; // ID du distributeur ou 'direct'
   hasCustodyOption: boolean;
 }
@@ -155,7 +156,13 @@ const funds = [
   { id: 'f4', name: 'Tech Innovation Fund', aum: '€150M', category: 'Tech' },
 ];
 
-const shareClasses = ['A', 'B', 'C', 'I', 'R'];
+const shareClasses: { id: string; minAmount: number }[] = [
+  { id: 'A', minAmount: 1000 },
+  { id: 'B', minAmount: 5000 },
+  { id: 'C', minAmount: 10000 },
+  { id: 'I', minAmount: 100000 },
+  { id: 'R', minAmount: 500 },
+];
 
 // Demo-only pricing — real apps fetch this per fund / share class.
 const SHARE_PRICE = 100;
@@ -204,7 +211,8 @@ export function NewSubscriptionDialog({ open, onClose, onSubscriptionCreated }: 
     fund: '',
     shareClass: '',
     numberOfShares: '',
-    entryFees: '2.5',
+    entryFees: '0',
+    subscriptionPremium: '0',
     distributor: 'direct',
     hasCustodyOption: false,
   });
@@ -226,7 +234,8 @@ export function NewSubscriptionDialog({ open, onClose, onSubscriptionCreated }: 
           fund: '',
           shareClass: '',
           numberOfShares: '',
-          entryFees: '2.5',
+          entryFees: '0',
+          subscriptionPremium: '0',
           distributor: 'direct',
           hasCustodyOption: false,
         });
@@ -240,14 +249,28 @@ export function NewSubscriptionDialog({ open, onClose, onSubscriptionCreated }: 
     }
   }, [open]);
 
-  // Auto-select investor's attitled distributor as the default whenever the
-  // investor is (re)selected.
+  // Auto-select investor's attitled distributor (CGP) as the default. Falls
+  // back to 'direct' when the investor has no CGP, or when the attitled
+  // distributor isn't authorized for the selected fund/share class.
   useEffect(() => {
-    if (formData.investor) {
-      const defaultDistributor = formData.investor.distributorId || 'direct';
-      setFormData((prev) => ({ ...prev, distributor: defaultDistributor }));
+    if (!formData.investor) return;
+    const attitledId = formData.investor.distributorId;
+    let next: string;
+    if (!formData.fund || !formData.shareClass) {
+      next = attitledId || 'direct';
+    } else {
+      const attitledAuthorized =
+        attitledId && mockDistributors.some(
+          (d) =>
+            d.id === attitledId &&
+            d.fees.some(
+              (f) => f.fundId === formData.fund && f.shareClass === formData.shareClass,
+            ),
+        );
+      next = attitledAuthorized ? attitledId! : 'direct';
     }
-  }, [formData.investor]);
+    setFormData((prev) => (prev.distributor === next ? prev : { ...prev, distributor: next }));
+  }, [formData.investor, formData.fund, formData.shareClass]);
 
   // Filter investors based on search (name or email)
   const filteredInvestors = useMemo(() => {
@@ -294,23 +317,37 @@ export function NewSubscriptionDialog({ open, onClose, onSubscriptionCreated }: 
     );
   }, [formData.fund, formData.shareClass]);
 
-  // Calculate entry fees based on distributor, fund, and share class
-  const calculatedEntryFeePercent = useMemo(() => {
-    if (formData.distributor === 'direct') {
-      return 0; // Direct investment has no entry fees
-    }
-    
-    const distributor = mockDistributors.find(d => d.id === formData.distributor);
-    if (!distributor || !formData.fund || !formData.shareClass) {
-      return parseFloat(formData.entryFees) || 2.5;
-    }
-
+  // Default entry fees (%) derived from the distributor agreement for the
+  // selected fund/share class. Direct investments have no entry fees.
+  const defaultEntryFeePercent = useMemo(() => {
+    if (formData.distributor === 'direct') return 0;
+    const distributor = mockDistributors.find((d) => d.id === formData.distributor);
+    if (!distributor || !formData.fund || !formData.shareClass) return 0;
     const feeConfig = distributor.fees.find(
-      f => f.fundId === formData.fund && f.shareClass === formData.shareClass
+      (f) => f.fundId === formData.fund && f.shareClass === formData.shareClass,
     );
-    
-    return feeConfig?.entryFeePercent || parseFloat(formData.entryFees) || 2.5;
-  }, [formData.distributor, formData.fund, formData.shareClass, formData.entryFees]);
+    return feeConfig?.entryFeePercent ?? 0;
+  }, [formData.distributor, formData.fund, formData.shareClass]);
+
+  // Pre-fill the editable entry fee input with the calculated default whenever
+  // the pricing dimensions change. The SG can then override it.
+  useEffect(() => {
+    setFormData((prev) =>
+      prev.entryFees === String(defaultEntryFeePercent)
+        ? prev
+        : { ...prev, entryFees: String(defaultEntryFeePercent) },
+    );
+  }, [defaultEntryFeePercent]);
+
+  const entryFeePercent = useMemo(() => {
+    const v = parseFloat((formData.entryFees || '').replace(',', '.'));
+    return Number.isFinite(v) && v >= 0 ? v : 0;
+  }, [formData.entryFees]);
+
+  const subscriptionPremiumAmount = useMemo(() => {
+    const v = parseFloat((formData.subscriptionPremium || '').replace(',', '.'));
+    return Number.isFinite(v) && v >= 0 ? v : 0;
+  }, [formData.subscriptionPremium]);
 
   // Calculate total amount (price per share is fixed for the demo).
   const calculatedAmount = useMemo(() => {
@@ -318,7 +355,16 @@ export function NewSubscriptionDialog({ open, onClose, onSubscriptionCreated }: 
     return shares * SHARE_PRICE;
   }, [formData.numberOfShares]);
 
+  // Minimum subscription amount/shares from the selected share class.
+  const selectedShareClass = useMemo(
+    () => shareClasses.find((sc) => sc.id === formData.shareClass),
+    [formData.shareClass],
+  );
+  const minAmount = selectedShareClass?.minAmount;
+  const minShares = minAmount !== undefined ? minAmount / SHARE_PRICE : undefined;
+
   // Bidirectional binding: typing into Montant infers the number of shares.
+  // Decimal and sub-1 values are accepted (any positive amount works).
   const handleAmountChange = (raw: string) => {
     const cleaned = raw.replace(/[^0-9.,]/g, '').replace(',', '.');
     const amount = parseFloat(cleaned);
@@ -326,15 +372,21 @@ export function NewSubscriptionDialog({ open, onClose, onSubscriptionCreated }: 
       setFormData({ ...formData, numberOfShares: '' });
       return;
     }
-    const shares = Math.max(1, Math.round(amount / SHARE_PRICE));
-    setFormData({ ...formData, numberOfShares: String(shares) });
+    const shares = amount / SHARE_PRICE;
+    // Strip trailing zeros from a max-4-decimal representation
+    const formatted = parseFloat(shares.toFixed(4)).toString();
+    setFormData({ ...formData, numberOfShares: formatted });
   };
 
-  // Calculate fees based on distributor
-  const calculatedFees = useMemo(() => {
-    const amount = calculatedAmount;
-    return amount * (calculatedEntryFeePercent / 100);
-  }, [calculatedAmount, calculatedEntryFeePercent]);
+  const calculatedEntryFees = useMemo(
+    () => calculatedAmount * (entryFeePercent / 100),
+    [calculatedAmount, entryFeePercent],
+  );
+
+  const calculatedFees = useMemo(
+    () => calculatedEntryFees + subscriptionPremiumAmount,
+    [calculatedEntryFees, subscriptionPremiumAmount],
+  );
 
   // Validation
   const isFormValid =
@@ -499,7 +551,9 @@ export function NewSubscriptionDialog({ open, onClose, onSubscriptionCreated }: 
         totalAmount: calculatedAmount,
         distributorId: formData.distributor,
         distributorName,
-        entryFeePercent: calculatedEntryFeePercent,
+        entryFeePercent,
+        entryFeesAmount: calculatedEntryFees,
+        subscriptionPremiumAmount,
         totalFees: calculatedFees,
         hasCustodyOption: formData.hasCustodyOption,
       },
@@ -549,7 +603,8 @@ export function NewSubscriptionDialog({ open, onClose, onSubscriptionCreated }: 
           formData.distributor === 'direct'
             ? 'direct'
             : mockDistributors.find((d) => d.id === formData.distributor),
-        entryFees: calculatedEntryFeePercent,
+        entryFees: entryFeePercent,
+        subscriptionPremium: subscriptionPremiumAmount,
         totalFees: calculatedFees,
         numberOfShares: formData.numberOfShares,
       },
@@ -1173,6 +1228,28 @@ export function NewSubscriptionDialog({ open, onClose, onSubscriptionCreated }: 
                                 )}
 
                                 <div className="max-h-[260px] overflow-y-auto py-1">
+                                  <button
+                                    type="button"
+                                    onClick={() => {
+                                      handleDirectInvestment();
+                                      setStructurePickerOpen(false);
+                                      setStructureFilter('');
+                                    }}
+                                    className="w-full px-3 py-2 hover:bg-muted transition-colors text-left flex items-center gap-3 border-b border-border"
+                                  >
+                                    <div className="size-7 rounded-md bg-muted flex items-center justify-center shrink-0">
+                                      <User className="w-3.5 h-3.5 text-muted-foreground" />
+                                    </div>
+                                    <div className="flex-1 min-w-0">
+                                      <div className="font-medium text-sm text-foreground truncate">
+                                        {t('subscriptions.newDialog.directInvestmentTitle')}
+                                      </div>
+                                      <div className="text-xs text-muted-foreground truncate">
+                                        {t('subscriptions.newDialog.directInvestment')}
+                                      </div>
+                                    </div>
+                                  </button>
+
                                   {filteredStructures.length === 0 ? (
                                     <p className="text-xs text-muted-foreground italic px-3 py-3 text-center">
                                       {t('subscriptions.newDialog.noStructureMatch', {
@@ -1250,15 +1327,7 @@ export function NewSubscriptionDialog({ open, onClose, onSubscriptionCreated }: 
                         <SelectContent>
                           {funds.map((fund) => (
                             <SelectItem key={fund.id} value={fund.id}>
-                              <div className="flex items-center justify-between gap-3 min-w-0 w-full">
-                                <span className="font-medium truncate">{fund.name}</span>
-                                <span className="text-xs text-muted-foreground inline-flex items-center gap-2 shrink-0">
-                                  <Badge variant="outline" className="text-[10px] h-4">
-                                    {fund.category}
-                                  </Badge>
-                                  {fund.aum}
-                                </span>
-                              </div>
+                              <span className="font-medium truncate">{fund.name}</span>
                             </SelectItem>
                           ))}
                         </SelectContent>
@@ -1280,8 +1349,8 @@ export function NewSubscriptionDialog({ open, onClose, onSubscriptionCreated }: 
                         </SelectTrigger>
                         <SelectContent>
                           {shareClasses.map((sc) => (
-                            <SelectItem key={sc} value={sc}>
-                              {t('subscriptions.newDialog.shareLabel', { class: sc })}
+                            <SelectItem key={sc.id} value={sc.id}>
+                              {t('subscriptions.newDialog.shareLabel', { class: sc.id })}
                             </SelectItem>
                           ))}
                         </SelectContent>
@@ -1301,13 +1370,25 @@ export function NewSubscriptionDialog({ open, onClose, onSubscriptionCreated }: 
                         <span className="text-destructive">*</span>
                       </Label>
                       <Input
-                        type="number"
+                        type="text"
+                        inputMode="decimal"
                         value={formData.numberOfShares}
-                        onChange={(e) => setFormData({ ...formData, numberOfShares: e.target.value })}
+                        onChange={(e) => {
+                          const cleaned = e.target.value
+                            .replace(/[^0-9.,]/g, '')
+                            .replace(',', '.');
+                          setFormData({ ...formData, numberOfShares: cleaned });
+                        }}
                         placeholder="100"
                         className="h-10 font-semibold text-right"
-                        min="1"
                       />
+                      {minShares !== undefined && (
+                        <p className="text-[10px] text-muted-foreground">
+                          {t('subscriptions.newDialog.minSharesHint', {
+                            count: minShares.toLocaleString('fr-FR'),
+                          })}
+                        </p>
+                      )}
                     </div>
 
                     <div className="space-y-1.5 min-w-0">
@@ -1329,9 +1410,14 @@ export function NewSubscriptionDialog({ open, onClose, onSubscriptionCreated }: 
                         className="h-10 font-semibold text-right"
                       />
                       <p className="text-[10px] text-muted-foreground">
-                        {t('subscriptions.newDialog.pricePerShareHint', {
-                          price: SHARE_PRICE.toLocaleString('fr-FR'),
-                        })}
+                        {minAmount !== undefined
+                          ? t('subscriptions.newDialog.pricePerShareAndMinHint', {
+                              price: SHARE_PRICE.toLocaleString('fr-FR'),
+                              min: minAmount.toLocaleString('fr-FR'),
+                            })
+                          : t('subscriptions.newDialog.pricePerShareHint', {
+                              price: SHARE_PRICE.toLocaleString('fr-FR'),
+                            })}
                       </p>
                     </div>
 
@@ -1448,6 +1534,66 @@ export function NewSubscriptionDialog({ open, onClose, onSubscriptionCreated }: 
                     )}
                   </div>
 
+                  {/* Editable fees - SG can override the pre-calculated values */}
+                  <div
+                    className="grid gap-3"
+                    style={{ gridTemplateColumns: '1fr 1fr' }}
+                  >
+                    <div className="space-y-1.5 min-w-0">
+                      <Label className="text-xs flex items-center gap-1.5">
+                        <Euro className="w-3.5 h-3.5" />
+                        {t('subscriptions.newDialog.entryFeesEditableLabel')}
+                      </Label>
+                      <div className="flex h-10 w-full items-center rounded-md border border-input bg-white pr-3 focus-within:ring-2 focus-within:ring-ring/40">
+                        <Input
+                          type="text"
+                          inputMode="decimal"
+                          value={formData.entryFees}
+                          onChange={(e) => {
+                            const cleaned = e.target.value
+                              .replace(/[^0-9.,]/g, '')
+                              .replace(',', '.');
+                            setFormData({ ...formData, entryFees: cleaned });
+                          }}
+                          placeholder="0"
+                          className="h-full border-0 bg-transparent font-semibold text-right shadow-none focus-visible:ring-0 focus-visible:ring-offset-0"
+                        />
+                        <span className="ml-1 text-sm text-muted-foreground select-none">%</span>
+                      </div>
+                      <p className="text-[10px] text-muted-foreground">
+                        {t('subscriptions.newDialog.entryFeesEditableHint', {
+                          percent: defaultEntryFeePercent,
+                        })}
+                      </p>
+                    </div>
+
+                    <div className="space-y-1.5 min-w-0">
+                      <Label className="text-xs flex items-center gap-1.5">
+                        <Sparkles className="w-3.5 h-3.5" />
+                        {t('subscriptions.newDialog.subscriptionPremiumLabel')}
+                      </Label>
+                      <div className="flex h-10 w-full items-center rounded-md border border-input bg-white pr-3 focus-within:ring-2 focus-within:ring-ring/40">
+                        <Input
+                          type="text"
+                          inputMode="decimal"
+                          value={formData.subscriptionPremium}
+                          onChange={(e) => {
+                            const cleaned = e.target.value
+                              .replace(/[^0-9.,]/g, '')
+                              .replace(',', '.');
+                            setFormData({ ...formData, subscriptionPremium: cleaned });
+                          }}
+                          placeholder="0"
+                          className="h-full border-0 bg-transparent font-semibold text-right shadow-none focus-visible:ring-0 focus-visible:ring-offset-0"
+                        />
+                        <span className="ml-1 text-sm text-muted-foreground select-none">€</span>
+                      </div>
+                      <p className="text-[10px] text-muted-foreground">
+                        {t('subscriptions.newDialog.subscriptionPremiumHint')}
+                      </p>
+                    </div>
+                  </div>
+
                   {/* Amount Summary */}
                   {calculatedAmount > 0 && (
                     <motion.div
@@ -1462,7 +1608,7 @@ export function NewSubscriptionDialog({ open, onClose, onSubscriptionCreated }: 
                         </div>
                         <div className="flex justify-between text-xs">
                           <span className="text-muted-foreground">
-                            {t('subscriptions.newDialog.feesWithPercent', { percent: calculatedEntryFeePercent })}
+                            {t('subscriptions.newDialog.feesWithPercent', { percent: entryFeePercent })}
                             {formData.distributor === 'direct' && (
                               <Badge variant="outline" className="ml-1 text-xs h-4" style={{ borderColor: 'var(--success)', color: 'var(--success)' }}>
                                 {t('subscriptions.newDialog.direct')}
@@ -1471,11 +1617,24 @@ export function NewSubscriptionDialog({ open, onClose, onSubscriptionCreated }: 
                           </span>
                           <span
                             className="font-medium"
-                            style={{ color: calculatedFees === 0 ? 'var(--success)' : 'var(--warning)' }}
+                            style={{ color: calculatedEntryFees === 0 ? 'var(--success)' : 'var(--warning)' }}
                           >
-                            {calculatedFees.toLocaleString('fr-FR')} €
+                            {calculatedEntryFees.toLocaleString('fr-FR')} €
                           </span>
                         </div>
+                        {subscriptionPremiumAmount > 0 && (
+                          <div className="flex justify-between text-xs">
+                            <span className="text-muted-foreground">
+                              {t('subscriptions.newDialog.subscriptionPremiumLabel')}
+                            </span>
+                            <span
+                              className="font-medium"
+                              style={{ color: 'var(--warning)' }}
+                            >
+                              {subscriptionPremiumAmount.toLocaleString('fr-FR')} €
+                            </span>
+                          </div>
+                        )}
                         <Separator />
                         <div className="flex justify-between">
                           <span className="text-xs font-semibold text-foreground">{t('subscriptions.newDialog.total')}</span>
