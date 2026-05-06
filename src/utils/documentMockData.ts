@@ -76,7 +76,7 @@ export interface Document {
   tags?: string[];
   description?: string;
 
-  // Document category (e.g. capital call, quarterly report). Optional.
+  // Document category (e.g. capital call, quarterly report). Required for files; folders may omit it.
   documentCategory?: DocumentCategory;
   
   // Root marker
@@ -463,7 +463,8 @@ export const mockDocuments: Document[] = [
                 reporting: false,
                 views: 0,
                 downloads: 0,
-                tags: ['Conflit', 'Retail']
+                tags: ['Conflit', 'Retail'],
+                documentCategory: 'marketing'
               }
             ]
           }

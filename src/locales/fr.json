@@ -1259,9 +1259,8 @@
       "frReadonlyHint": "La version FR existante ne peut pas être remplacée.",
       "enAddOnlyHint": "Vous pouvez uniquement ajouter la version anglaise.",
       "documentCategoryLabel": "Type de document",
-      "documentCategoryPlaceholder": "Sélectionner un type de document (optionnel)",
+      "documentCategoryPlaceholder": "Sélectionner un type de document",
       "documentCategory": {
-        "none": "Aucun type",
         "capitalCall": "Appel de fonds",
         "distribution": "Distribution",
         "quarterlyReport": "Rapport trimestriel",
@@ -1344,6 +1343,7 @@
       "currentFolder": "Dossier courant",
       "errors": {
         "addOneVersion": "Ajouter au moins une version FR ou EN du document.",
+        "pickDocumentCategory": "Sélectionnez le type de document.",
         "pickTeam": "Sélectionnez au moins une équipe de validation.",
         "noInvestorToExport": "Aucun investisseur ciblé à exporter."
       },

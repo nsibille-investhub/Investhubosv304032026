@@ -1259,9 +1259,8 @@
       "frReadonlyHint": "The existing FR version cannot be replaced.",
       "enAddOnlyHint": "You can only add the English version.",
       "documentCategoryLabel": "Document type",
-      "documentCategoryPlaceholder": "Select a document type (optional)",
+      "documentCategoryPlaceholder": "Select a document type",
       "documentCategory": {
-        "none": "No type",
         "capitalCall": "Capital call",
         "distribution": "Distribution",
         "quarterlyReport": "Quarterly report",
@@ -1344,6 +1343,7 @@
       "currentFolder": "Current folder",
       "errors": {
         "addOneVersion": "Add at least one FR or EN version of the document.",
+        "pickDocumentCategory": "Select the document type.",
         "pickTeam": "Pick at least one validation team.",
         "noInvestorToExport": "No targeted investor to export."
       },

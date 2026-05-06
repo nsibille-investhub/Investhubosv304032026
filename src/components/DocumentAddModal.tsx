@@ -119,7 +119,6 @@ const DOCUMENT_CATEGORIES: { value: DocumentCategory; labelKey: string }[] = [
   { value: 'marketing', labelKey: 'ged.addModal.documentCategory.marketing' },
   { value: 'other', labelKey: 'ged.addModal.documentCategory.other' },
 ];
-const DOCUMENT_CATEGORY_NONE = '__none__';
 const REMINDER_DELAYS = ['3 jours', '7 jours', '14 jours'];
 
 const TEAMS: ValidationTeam[] = [
@@ -655,6 +654,11 @@ export function DocumentAddModal({ isOpen, onClose, folderOptions, defaultFolder
       return;
     }
 
+    if (!documentCategory) {
+      toast.error(t('ged.addModal.errors.pickDocumentCategory'));
+      return;
+    }
+
     if (validationTeams.length === 0) {
       toast.error(t('ged.addModal.errors.pickTeam'));
       return;
@@ -831,21 +835,19 @@ export function DocumentAddModal({ isOpen, onClose, folderOptions, defaultFolder
             </div>
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 pt-2">
               <div className="space-y-2 lg:col-span-2">
-                <Label>{t('ged.addModal.documentCategoryLabel')}</Label>
+                <Label>
+                  {t('ged.addModal.documentCategoryLabel')}
+                  <span className="text-red-600 ml-0.5">*</span>
+                </Label>
                 <Select
-                  value={documentCategory ?? DOCUMENT_CATEGORY_NONE}
-                  onValueChange={(value) =>
-                    setDocumentCategory(value === DOCUMENT_CATEGORY_NONE ? null : (value as DocumentCategory))
-                  }
+                  value={documentCategory ?? ''}
+                  onValueChange={(value) => setDocumentCategory(value as DocumentCategory)}
                   disabled={isDetailMode}
                 >
                   <SelectTrigger className="h-11">
                     <SelectValue placeholder={t('ged.addModal.documentCategoryPlaceholder')} />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value={DOCUMENT_CATEGORY_NONE}>
-                      {t('ged.addModal.documentCategory.none')}
-                    </SelectItem>
                     {DOCUMENT_CATEGORIES.map((option) => (
                       <SelectItem key={option.value} value={option.value}>
                         {t(option.labelKey)}
