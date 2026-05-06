@@ -615,6 +615,412 @@
       }
     }
   },
+  "investors": {
+    "header": {
+      "titleActive": "Investisseurs",
+      "titleArchived": "Investisseurs Archivés",
+      "subtitleActive": "Gérer et suivre tous les investisseurs",
+      "subtitleArchived": "Consultez les investisseurs archivés",
+      "newInvestor": "Nouvel Investisseur",
+      "backToInvestors": "Retour aux investisseurs",
+      "archived": "Archivés",
+      "downloadCsv": "Télécharger .csv",
+      "downloadXlsx": "Télécharger .xlsx",
+      "exportContactsCsv": "Exporter contacts .csv"
+    },
+    "pipeline": {
+      "title": "Pipeline Investisseurs",
+      "statusBadge": "4 statuts",
+      "clickToFilter": "Cliquez sur un statut pour filtrer",
+      "totalInvested": "Total investi",
+      "average": "Moy",
+      "prospect": "Prospect",
+      "inDiscussion": "En discussion",
+      "inRelation": "En relation",
+      "all": "Tous"
+    },
+    "inactiveTabs": {
+      "allArchived": "Tous archivés",
+      "archived": "Archivés"
+    },
+    "page": {
+      "searchPlaceholder": "Rechercher un investisseur...",
+      "itemsRange": "{{start}}-{{end}} sur {{total}} éléments",
+      "filtered": "filtré",
+      "filteredOf": "filtré sur {{count}}",
+      "itemsPerPage": "{{count}}/page",
+      "itemsPerPageOption": "{{count}} par page",
+      "itemsPerPageApplied": "{{count}} éléments par page",
+      "sortDescription": "Tri par {{key}} ({{direction}})",
+      "sortAsc": "croissant",
+      "sortDesc": "décroissant",
+      "pageOf": "Page {{page}} sur {{total}}"
+    },
+    "filters": {
+      "structure": "Structure",
+      "noStructure": "Sans structure",
+      "segment": "Segment",
+      "type": "Type",
+      "manager": "Gestionnaire",
+      "partner": "Partenaire",
+      "direct": "Direct",
+      "fund": "Fonds"
+    },
+    "table": {
+      "columns": {
+        "name": "Nom",
+        "contacts": "Contacts",
+        "structure": "Structure",
+        "type": "Type",
+        "status": "Statut",
+        "registrationDate": "Date d'inscription",
+        "investedCapital": "Capital Investi",
+        "subscriptions": "Souscriptions",
+        "segment": "Segment",
+        "lastActivity": "Dernière activité",
+        "partner": "Partenaire"
+      },
+      "viewProfile": "Voir la fiche",
+      "portalConnection": "Connexion Portail",
+      "portalConnectionToast": "Connexion au portail",
+      "portalConnectionDesc": "Redirection vers le portail pour {{name}}...",
+      "idCopied": "ID copié !",
+      "copyError": "Erreur de copie",
+      "copyErrorDesc": "Impossible de copier dans le presse-papier",
+      "selectionCancelled": "Sélection annulée",
+      "selectionCancelledDesc": "Tous les investisseurs ont été désélectionnés",
+      "selectedCount": "{{count}} investisseurs sélectionnés",
+      "selectedCountDesc": "Toutes les pages sont sélectionnées ({{count}} investisseurs au total)",
+      "selectionOne": "investisseur sélectionné",
+      "selectionMany": "investisseurs sélectionnés",
+      "allPagesSelected": "(Toutes les pages sont sélectionnées)",
+      "partialSelection": "(Sélection partielle sur toutes les pages)",
+      "cancelSelection": "Annuler la sélection",
+      "selectAllTooltip": "Sélectionner tous les {{count}} investisseurs (toutes pages)",
+      "deselectAllTooltip": "Désélectionner tous les {{count}} investisseurs (toutes pages)",
+      "noContact": "Aucun contact",
+      "noStructure": "Aucune structure",
+      "lastActivity": "Dernière activité"
+    },
+    "status": {
+      "Prospect": "Prospect",
+      "En discussion": "En discussion",
+      "En relation": "En relation",
+      "Archivé": "Archivé"
+    },
+    "type": {
+      "Individual": "Particulier",
+      "Company": "Entreprise"
+    },
+    "toast": {
+      "openingDetails": "Ouverture des détails pour {{name}}",
+      "exportCsvDesc": "Les données ont été exportées en CSV",
+      "exportXlsxDesc": "Fonctionnalité à venir",
+      "contactsExportedDesc": "{{count}} contacts exportés en CSV",
+      "archivedCount": "{{count}} investisseurs archivés",
+      "navigationNotConfigured": "Navigation non configurée",
+      "navigationNotConfiguredDesc": "Le callback onInvestorClick n'est pas défini",
+      "monitoringFor": "pour {{name}}",
+      "analystAssigned": "{{analyst}} assigné à {{name}}",
+      "aiFilterAppliedDescOne": "{{count}} investisseur affiché",
+      "aiFilterAppliedDescMany": "{{count}} investisseurs affichés",
+      "aiFilterDisabledDesc": "Affichage de tous les investisseurs"
+    },
+    "emptyState": {
+      "titleEmpty": "Aucun investisseur",
+      "titleFiltered": "Aucun investisseur trouvé",
+      "descEmpty": "Aucun investisseur n'est enregistré dans la base de données.",
+      "descFiltered": "Les filtres appliqués ne correspondent à aucun investisseur actuellement présent dans la base de données.",
+      "resetCta": "Réinitialiser les filtres"
+    },
+    "relativeTime": {
+      "minAgo": "Il y a {{count}} min",
+      "hoursAgo": "Il y a {{count}}h",
+      "oneDayAgo": "Il y a 1 jour",
+      "daysAgo": "Il y a {{count}} jours",
+      "oneWeekAgo": "Il y a 1 sem",
+      "weeksAgo": "Il y a {{count}} sem",
+      "oneMonthAgo": "Il y a 1 mois",
+      "monthsAgo": "Il y a {{count}} mois",
+      "overOneYear": "Il y a plus d'un an"
+    },
+    "detail": {
+      "header": {
+        "registeredOn": "Inscrit le {{date}}",
+        "sendEmail": "Envoyer un email",
+        "newSubscription": "Nouvelle souscription"
+      },
+      "stats": {
+        "title": "Statistiques d'investissement",
+        "totalCapital": "Capital total investi",
+        "subscriptionsCount": "Nombre de souscriptions",
+        "averageTicket": "Ticket moyen",
+        "lastActivity": "Dernière activité"
+      },
+      "tabs": {
+        "profile": "Profil",
+        "contacts": "Contacts & accès",
+        "signatories": "Signataires",
+        "structures": "Structures",
+        "notes": "Notes",
+        "subscriptions": "Souscriptions",
+        "fiscal": "Fiscal & Bancaire",
+        "emails": "E-mails"
+      },
+      "actions": {
+        "edit": "Modifier",
+        "save": "Sauvegarder",
+        "cancel": "Annuler",
+        "comingSoon": "Fonctionnalité à venir",
+        "notProvided": "Non renseigné"
+      },
+      "general": {
+        "title": "Informations générales",
+        "fullName": "Nom complet",
+        "investorType": "Type d'investisseur",
+        "firstName": "Prénom",
+        "lastName": "Nom",
+        "siren": "SIREN",
+        "company": "Société",
+        "email": "Email",
+        "phone": "Téléphone",
+        "address": "Adresse",
+        "postalCode": "Code postal",
+        "city": "Ville",
+        "country": "Pays",
+        "crmSegment": "Segment CRM",
+        "manager": "Gestionnaire",
+        "parentInvestor": "Investisseur de rattachement",
+        "partner": "Partenaire",
+        "noPartner": "Aucun"
+      },
+      "kyc": {
+        "title": "KYC & Compliance",
+        "kycStatus": "Statut KYC",
+        "kycExpiry": "Expiration KYC",
+        "riskLevel": "Niveau de risque",
+        "amlScore": "Score AML",
+        "monitoringActive": "Monitoring actif",
+        "monitoringEnabled": "Activé",
+        "monitoringDisabled": "Désactivé"
+      },
+      "kycStatus": {
+        "Validé": "Validé",
+        "En cours": "En cours",
+        "En revue": "En revue",
+        "À revoir": "À revoir",
+        "Expiré": "Expiré",
+        "Non commencé": "Non commencé"
+      },
+      "riskLevel": {
+        "Low": "Faible",
+        "Medium": "Moyen",
+        "High": "Élevé"
+      },
+      "relationship": {
+        "title": "Informations relationnelles",
+        "status": "Statut",
+        "relationshipStartDate": "Date d'entrée en relation",
+        "referralSource": "Comment avez-vous entendu parler de nous ?",
+        "marketingOptIn": "Optin Marketing",
+        "accepted": "Accepté",
+        "refused": "Refusé"
+      },
+      "referralOptions": {
+        "professionalInvestor": "Investisseur professionnel",
+        "recommendation": "Recommandation",
+        "website": "Site web",
+        "event": "Événement",
+        "partner": "Partenaire",
+        "advertising": "Publicité",
+        "socialNetwork": "Réseau social"
+      },
+      "personal": {
+        "title": "Informations personnelles",
+        "birthDate": "Date de naissance",
+        "birthPlace": "Lieu de naissance",
+        "birthCountry": "Pays de naissance",
+        "nationality": "Nationalité",
+        "language": "Langue",
+        "maritalStatus": "Situation de famille",
+        "matrimonialRegime": "Régime matrimonial"
+      },
+      "marital": {
+        "single": "Célibataire",
+        "married": "Marié(e)",
+        "civilUnion": "Pacsé(e)",
+        "divorced": "Divorcé(e)",
+        "widowed": "Veuf(ve)"
+      },
+      "regime": {
+        "communityReduced": "Communauté réduite aux acquêts",
+        "separation": "Séparation de biens",
+        "communityUniversal": "Communauté universelle",
+        "participation": "Participation aux acquêts"
+      },
+      "nationalityOptions": {
+        "France": "Française",
+        "Belgium": "Belge",
+        "Switzerland": "Suisse",
+        "Luxembourg": "Luxembourgeoise",
+        "Germany": "Allemande"
+      },
+      "countryOptions": {
+        "France": "France",
+        "Belgium": "Belgique",
+        "Switzerland": "Suisse",
+        "Luxembourg": "Luxembourg",
+        "Germany": "Allemagne",
+        "UnitedKingdom": "Royaume-Uni",
+        "Spain": "Espagne",
+        "Italy": "Italie"
+      },
+      "tags": "Tags",
+      "signatories": {
+        "title": "Signataires autorisés ({{count}})",
+        "addSignatory": "Ajouter un signataire",
+        "primarySignatory": "Signataire principal"
+      },
+      "signatureLevel": {
+        "Individual": "Individuelle",
+        "Joint": "Conjointe",
+        "Collective": "Collective"
+      },
+      "structuresList": {
+        "title": "Structures légales ({{count}})",
+        "contactsCountOne": "{{count}} contact",
+        "contactsCountMany": "{{count}} contacts",
+        "subscriptionsCountOne": "{{count}} souscription",
+        "subscriptionsCountMany": "{{count}} souscriptions",
+        "investedAmount": "Montant investi : {{amount}}",
+        "kycLabel": "KYC : {{status}}",
+        "riskScore": "Score de risque : {{score}}/100"
+      },
+      "notes": {
+        "title": "Notes internes ({{count}})",
+        "filter": "Filtrer",
+        "newNote": "Nouvelle note",
+        "important": "Important",
+        "byAuthor": "par {{author}}"
+      },
+      "noteTypes": {
+        "General": "Général",
+        "KYC": "KYC",
+        "Risk": "Risque",
+        "Commercial": "Commercial",
+        "Legal": "Juridique"
+      },
+      "subscriptions": {
+        "title": "Souscriptions ({{count}})",
+        "comingSoon": "Liste des souscriptions disponible prochainement",
+        "viewAll": "Voir toutes les souscriptions"
+      },
+      "fiscal": {
+        "title": "Informations fiscales",
+        "taxResidence": "Résidence fiscale",
+        "taxAddress": "Adresse fiscale",
+        "taxPostalCode": "Code postal fiscal",
+        "taxCity": "Ville fiscale",
+        "taxCountry": "Pays fiscal",
+        "tin": "TIN/NIF"
+      },
+      "bank": {
+        "title": "Informations bancaires",
+        "iban": "IBAN",
+        "bic": "BIC",
+        "filled": "Informations renseignées",
+        "notFilled": "Non renseignées"
+      },
+      "emails": {
+        "title": "Historique e-mails ({{count}})",
+        "newEmail": "Nouvel e-mail",
+        "from": "De : {{value}}",
+        "to": "À : {{value}}",
+        "openEmail": "Ouverture de l'email"
+      },
+      "emailStatus": {
+        "Sent": "Envoyé",
+        "Delivered": "Distribué",
+        "Opened": "Ouvert",
+        "Replied": "Répondu"
+      },
+      "toast": {
+        "copied": "Copié !",
+        "copyError": "Erreur de copie",
+        "copyErrorDesc": "Impossible de copier dans le presse-papier",
+        "validationErrors": "Erreurs de validation",
+        "validationErrorsDesc": "Veuillez corriger les erreurs avant de sauvegarder",
+        "changesSaved": "Modifications enregistrées",
+        "changesSavedDesc": "Les informations ont été mises à jour avec succès",
+        "validationGeneric": "Erreur de validation"
+      },
+      "contactsTab": {
+        "portalTitle": "Investisseur Principal - Accès Portail",
+        "accessStatus": "Statut d'accès",
+        "active": "Actif",
+        "inactive": "Inactif",
+        "lastLogin": "Dernière connexion",
+        "portalV2": "Portail V2",
+        "v2Enabled": "Activé",
+        "v2Disabled": "Désactivé",
+        "resetPassword": "Réinitialiser mot de passe",
+        "resetPasswordSent": "Email de réinitialisation envoyé",
+        "contactsTitle": "Contacts ({{count}})",
+        "addContact": "Ajouter un contact",
+        "primaryBadge": "Principal",
+        "openPortalAs": "Ouvrir le portail en tant que {{name}}",
+        "openPortalToast": "Ouverture du portail en tant que {{name}}",
+        "noPortalAccess": "{{name}} n'a pas encore d'accès au portail",
+        "investorPortalNoAccess": "Portail investisseur (accès non activé)",
+        "portalAccessBadge": "Accès portail",
+        "noAccess": "Pas d'accès",
+        "edit": "Modifier",
+        "dialogAddTitle": "Ajouter un contact",
+        "dialogEditTitle": "Modifier le contact",
+        "dialogAddDesc": "Remplissez les informations pour créer un nouveau contact.",
+        "dialogEditDesc": "Modifiez les informations du contact existant.",
+        "generalSection": "Informations générales",
+        "firstName": "Prénom",
+        "lastName": "Nom",
+        "email": "Email",
+        "phone": "Téléphone",
+        "function": "Fonction",
+        "functionPlaceholder": "Directeur Financier",
+        "language": "Langue",
+        "languagePlaceholder": "Sélectionner une langue",
+        "preferencesSection": "Préférences",
+        "primaryContact": "Contact principal",
+        "preferredContact": "Préférence investisseur",
+        "portalAccessSection": "Accès portail",
+        "enablePortalAccess": "Activer l'accès portail",
+        "accessLevel": "Niveau d'accès",
+        "selectAccessLevel": "Sélectionner un niveau",
+        "password": "Mot de passe",
+        "reset": "Réinitialiser",
+        "linkedStructures": "Structures rattachées",
+        "primaryAttachAll": "Le contact principal est automatiquement rattaché à toutes les structures",
+        "notifications": "Notifications",
+        "authorizedFunds": "Fonds autorisés",
+        "authorizedSubscriptions": "Souscriptions autorisées",
+        "cancel": "Annuler",
+        "save": "Sauvegarder",
+        "contactAdded": "Contact ajouté avec succès",
+        "contactUpdated": "Contact mis à jour avec succès"
+      }
+    }
+  },
+  "common": {
+    "average": "Moy",
+    "filterBar": {
+      "additionalFilters": "Filtres supplémentaires",
+      "clearAll": "Tout effacer",
+      "clearAllTooltip": "Effacer tous les filtres",
+      "activeFilters": "Filtres actifs :",
+      "selectedOne": "{{count}} sélectionné",
+      "selectedMany": "{{count}} sélectionnés",
+      "searchPlaceholder": "Rechercher..."
+    }
+  },
   "ged": {
     "toast": {
       "spaceOpened": "Espace ouvert",

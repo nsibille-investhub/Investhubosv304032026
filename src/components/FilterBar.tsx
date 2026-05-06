@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
 import { Search, SlidersHorizontal, X, ChevronDown } from 'lucide-react';
 import { cn } from './ui/utils';
+import { useTranslation } from '../utils/languageContext';
 
 export interface FilterOption {
   value: string;
@@ -34,7 +35,7 @@ interface FilterBarProps {
 export function FilterBar({
   searchValue,
   onSearchChange,
-  searchPlaceholder = 'Rechercher...',
+  searchPlaceholder,
   filters = [],
   activeFilters = {},
   onFilterChange,
@@ -43,7 +44,9 @@ export function FilterBar({
   onAskAI,
   onAskAIDirect
 }: FilterBarProps) {
+  const { t } = useTranslation();
   const [showAdvanced, setShowAdvanced] = useState(false);
+  const resolvedSearchPlaceholder = searchPlaceholder ?? t('common.filterBar.searchPlaceholder');
 
   const primaryFilters = filters?.filter(f => f.isPrimary) || [];
   const secondaryFilters = filters?.filter(f => !f.isPrimary) || [];
@@ -66,7 +69,7 @@ export function FilterBar({
             type="text"
             value={searchValue}
             onChange={(e) => onSearchChange(e.target.value)}
-            placeholder={searchPlaceholder}
+            placeholder={resolvedSearchPlaceholder}
             className="w-full pl-10 pr-4 py-2.5 bg-white dark:bg-gray-900 border border-gray-300 dark:border-gray-700 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 dark:focus:ring-blue-400 transition-all"
           />
         </div>
@@ -96,7 +99,7 @@ export function FilterBar({
               )}
             >
               <SlidersHorizontal className="w-4 h-4" />
-              <span>Filtres supplémentaires</span>
+              <span>{t('common.filterBar.additionalFilters')}</span>
               {activeFiltersCount > 0 && (
                 <span className="px-1.5 py-0.5 rounded-full bg-[#060D19] text-white text-xs font-bold min-w-[20px] text-center">
                   {activeFiltersCount}
@@ -133,7 +136,7 @@ export function FilterBar({
                       <div className="flex items-center gap-2">
                         <SlidersHorizontal className="w-4 h-4 text-gray-600 dark:text-gray-400" />
                         <span className="text-sm font-semibold text-gray-900 dark:text-gray-100">
-                          Filtres supplémentaires
+                          {t('common.filterBar.additionalFilters')}
                         </span>
                       </div>
                       {hasActiveFilters && onClearAll && (
@@ -144,7 +147,7 @@ export function FilterBar({
                           }}
                           className="text-xs text-[#060D19] hover:text-[#0B3C49] font-medium transition-colors"
                         >
-                          Tout effacer
+                          {t('common.filterBar.clearAll')}
                         </button>
                       )}
                     </div>
@@ -182,7 +185,7 @@ export function FilterBar({
             whileTap={{ scale: 0.95 }}
             onClick={onClearAll}
             className="px-3 py-2.5 rounded-lg border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-900 text-gray-600 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors text-sm font-medium"
-            title="Effacer tous les filtres"
+            title={t('common.filterBar.clearAllTooltip')}
           >
             <X className="w-4 h-4" />
           </motion.button>
@@ -199,7 +202,7 @@ export function FilterBar({
             className="flex flex-wrap items-center gap-2"
           >
             <span className="text-xs text-gray-500 dark:text-gray-400 font-medium">
-              Filtres actifs :
+              {t('common.filterBar.activeFilters')}
             </span>
             {Object.entries(activeFilters).map(([filterId, value]) => {
               if (!value || (Array.isArray(value) && value.length === 0)) return null;
@@ -208,7 +211,9 @@ export function FilterBar({
               if (!filter) return null;
 
               const displayValue = Array.isArray(value)
-                ? `${value.length} sélectionné${value.length > 1 ? 's' : ''}`
+                ? value.length > 1
+                  ? t('common.filterBar.selectedMany', { count: value.length })
+                  : t('common.filterBar.selectedOne', { count: value.length })
                 : filter.options?.find(o => o.value === value)?.label || value;
 
               return (
@@ -253,10 +258,13 @@ function FilterSelect({
   onChange: (value: string | string[] | null) => void;
   fullWidth?: boolean;
 }) {
+  const { t } = useTranslation();
   const displayValue = value
     ? Array.isArray(value)
       ? value.length > 0
-        ? `${value.length} sélectionné${value.length > 1 ? 's' : ''}`
+        ? value.length > 1
+          ? t('common.filterBar.selectedMany', { count: value.length })
+          : t('common.filterBar.selectedOne', { count: value.length })
         : filter.placeholder || filter.label
       : filter.options?.find(o => o.value === value)?.label || value
     : filter.placeholder || filter.label;

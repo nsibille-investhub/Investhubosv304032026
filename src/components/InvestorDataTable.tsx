@@ -48,6 +48,7 @@ import { copyToClipboard } from '../utils/clipboard';
 import { StatusBadge } from './StatusBadge';
 import { Tag } from './Tag';
 import { ClickableText } from './ClickableText';
+import { useTranslation } from '../utils/languageContext';
 
 interface InvestorDataTableProps {
   data: Investor[];
@@ -76,6 +77,7 @@ export function InvestorDataTable({
   allFilteredData,
   searchTerm = ''
 }: InvestorDataTableProps) {
+  const { t } = useTranslation();
   const [auditDialogOpen, setAuditDialogOpen] = useState(false);
   const [selectedInvestorForAudit, setSelectedInvestorForAudit] = useState<Investor | null>(null);
   const [copiedId, setCopiedId] = useState<number | null>(null);
@@ -103,10 +105,9 @@ export function InvestorDataTable({
 
   const handlePortalConnection = (row: Investor, e: React.MouseEvent) => {
     e.stopPropagation();
-    toast.info('Connexion au portail', {
-      description: `Redirection vers le portail pour ${row.name}...`,
+    toast.info(t('investors.table.portalConnectionToast'), {
+      description: t('investors.table.portalConnectionDesc', { name: row.name }),
     });
-    // Logique de redirection vers le portail ici
   };
 
   const handleCopyId = async (id: string, investorId: number, e: React.MouseEvent) => {
@@ -114,24 +115,24 @@ export function InvestorDataTable({
     const success = await copyToClipboard(id);
     if (success) {
       setCopiedId(investorId);
-      toast.success('ID copié !', { description: id });
+      toast.success(t('investors.table.idCopied'), { description: id });
       setTimeout(() => setCopiedId(null), 2000);
     } else {
-      toast.error('Erreur de copie', { description: 'Impossible de copier dans le presse-papier' });
+      toast.error(t('investors.table.copyError'), { description: t('investors.table.copyErrorDesc') });
     }
   };
 
   const handleSelectAll = () => {
     if (selectAll) {
       setSelectedIds(new Set());
-      toast.info('Sélection annulée', {
-        description: 'Tous les investisseurs ont été désélectionnés',
+      toast.info(t('investors.table.selectionCancelled'), {
+        description: t('investors.table.selectionCancelledDesc'),
       });
     } else {
       const allIds = new Set(totalFilteredData.map(item => item.id));
       setSelectedIds(allIds);
-      toast.success(`${allIds.size} investisseurs sélectionnés`, {
-        description: `Toutes les pages sont sélectionnées (${allIds.size} investisseurs au total)`,
+      toast.success(t('investors.table.selectedCount', { count: allIds.size }), {
+        description: t('investors.table.selectedCountDesc', { count: allIds.size }),
         duration: 4000,
       });
     }
@@ -149,7 +150,7 @@ export function InvestorDataTable({
 
   const handleClearSelection = () => {
     setSelectedIds(new Set());
-    toast.info('Sélection annulée');
+    toast.info(t('investors.table.selectionCancelled'));
   };
 
   const getStatusColor = (status: string) => {
@@ -234,12 +235,12 @@ export function InvestorDataTable({
             <div className="px-6 py-3 flex items-center justify-between">
               <div className="flex items-center gap-3">
                 <Badge className="bg-primary text-primary-foreground px-3 py-1 shadow-sm">
-                  {selectedIds.size} {selectedIds.size === 1 ? 'investisseur sélectionné' : 'investisseurs sélectionnés'}
+                  {selectedIds.size} {selectedIds.size === 1 ? t('investors.table.selectionOne') : t('investors.table.selectionMany')}
                 </Badge>
                 <span className="text-sm text-muted-foreground font-medium">
                   {selectedIds.size === totalFilteredData.length
-                    ? '(Toutes les pages sont sélectionnées)'
-                    : '(Sélection partielle sur toutes les pages)'}
+                    ? t('investors.table.allPagesSelected')
+                    : t('investors.table.partialSelection')}
                 </span>
               </div>
               <div className="flex items-center gap-2">
@@ -250,7 +251,7 @@ export function InvestorDataTable({
                   className="text-muted-foreground hover:text-foreground hover:bg-muted"
                 >
                   <X className="w-4 h-4 mr-1" />
-                  Annuler la sélection
+                  {t('investors.table.cancelSelection')}
                 </Button>
               </div>
             </div>
@@ -274,35 +275,35 @@ export function InvestorDataTable({
                   </TooltipTrigger>
                   <TooltipContent>
                     {selectAll
-                      ? `Désélectionner tous les ${totalFilteredData.length} investisseurs (toutes pages)`
-                      : `Sélectionner tous les ${totalFilteredData.length} investisseurs (toutes pages)`}
+                      ? t('investors.table.deselectAllTooltip', { count: totalFilteredData.length })
+                      : t('investors.table.selectAllTooltip', { count: totalFilteredData.length })}
                   </TooltipContent>
                 </Tooltip>
               </th>
               <SortableHeader
-                label="Nom"
+                label={t('investors.table.columns.name')}
                 sortKey="name"
                 className="sticky left-[64px] z-20 bg-gray-50/95 dark:bg-gray-800/95"
               />
               <th className="px-6 py-4 text-left text-xs font-medium text-gray-600 dark:text-gray-400 uppercase tracking-wider">
-                Contacts
+                {t('investors.table.columns.contacts')}
               </th>
               <th className="px-6 py-4 text-left text-xs font-medium text-gray-600 dark:text-gray-400 uppercase tracking-wider">
-                Structure
+                {t('investors.table.columns.structure')}
               </th>
-              <SortableHeader label="Type" sortKey="type" />
-              <SortableHeader label="Statut" sortKey="status" />
-              <SortableHeader label="Date d'inscription" sortKey="registrationDate" />
-              <SortableHeader label="Capital Investi" sortKey="totalInvested" />
+              <SortableHeader label={t('investors.table.columns.type')} sortKey="type" />
+              <SortableHeader label={t('investors.table.columns.status')} sortKey="status" />
+              <SortableHeader label={t('investors.table.columns.registrationDate')} sortKey="registrationDate" />
+              <SortableHeader label={t('investors.table.columns.investedCapital')} sortKey="totalInvested" />
               <th className="px-6 py-4 text-left text-xs font-medium text-gray-600 dark:text-gray-400 uppercase tracking-wider">
-                Souscriptions
+                {t('investors.table.columns.subscriptions')}
               </th>
               <th className="px-6 py-4 text-left text-xs font-medium text-gray-600 dark:text-gray-400 uppercase tracking-wider">
-                Segment
+                {t('investors.table.columns.segment')}
               </th>
-              <SortableHeader label="Dernière activité" sortKey="lastActivity" />
+              <SortableHeader label={t('investors.table.columns.lastActivity')} sortKey="lastActivity" />
               <th className="px-6 py-4 text-left text-xs font-medium text-gray-600 dark:text-gray-400 uppercase tracking-wider">
-                Partenaire
+                {t('investors.table.columns.partner')}
               </th>
               <th className="px-6 py-4 sticky right-0 z-20 bg-gray-50/95 dark:bg-gray-800/95"></th>
             </tr>
@@ -395,14 +396,14 @@ export function InvestorDataTable({
                       ) : (
                         <Building2 className="w-3.5 h-3.5" />
                       )}
-                      <span>{row.type}</span>
+                      <span>{t(`investors.type.${row.type}`)}</span>
                     </div>
                   </td>
 
                   {/* Status */}
                   <td className="px-6 py-4">
                     <StatusBadge
-                      label={row.status}
+                      label={t(`investors.status.${row.status}`)}
                       variant={
                         row.status === 'En relation'
                           ? 'success'
@@ -480,11 +481,11 @@ export function InvestorDataTable({
                       <DropdownMenuContent align="end">
                         <DropdownMenuItem onClick={(e) => handleViewProfile(row, e as any)}>
                           <Eye className="w-4 h-4 mr-2" />
-                          Voir la fiche
+                          {t('investors.table.viewProfile')}
                         </DropdownMenuItem>
                         <DropdownMenuItem onClick={(e) => handlePortalConnection(row, e as any)}>
                           <LogIn className="w-4 h-4 mr-2" />
-                          Connexion Portail
+                          {t('investors.table.portalConnection')}
                         </DropdownMenuItem>
                       </DropdownMenuContent>
                     </DropdownMenu>

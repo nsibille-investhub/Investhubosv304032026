@@ -1,6 +1,7 @@
 import { motion } from 'motion/react';
 import { Badge } from './ui/badge';
 import { UserX, Archive, Ban, AlertCircle } from 'lucide-react';
+import { useTranslation } from '../utils/languageContext';
 
 interface InactiveInvestorTabsProps {
   data: any[];
@@ -9,6 +10,7 @@ interface InactiveInvestorTabsProps {
 }
 
 export function InactiveInvestorTabs({ data, activeStatus, onStatusChange }: InactiveInvestorTabsProps) {
+  const { t } = useTranslation();
   const stats = {
     all: data.length,
     archived: data.filter((inv) => inv.status === 'Archivé').length,
@@ -17,7 +19,7 @@ export function InactiveInvestorTabs({ data, activeStatus, onStatusChange }: Ina
   const tabs = [
     {
       key: 'all',
-      label: 'Tous archivés',
+      label: t('investors.inactiveTabs.allArchived'),
       count: stats.all,
       icon: Archive,
       color: 'from-gray-500 to-gray-600',
@@ -25,7 +27,7 @@ export function InactiveInvestorTabs({ data, activeStatus, onStatusChange }: Ina
     },
     {
       key: 'archived',
-      label: 'Archivés',
+      label: t('investors.inactiveTabs.archived'),
       count: stats.archived,
       icon: Archive,
       color: 'from-gray-500 to-gray-600',

@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { motion } from 'motion/react';
 import type { LucideIcon } from 'lucide-react';
+import { useTranslation } from '../../utils/languageContext';
 
 interface FilterCardProps {
   status: string;
@@ -27,6 +28,7 @@ export function FilterCard({
   averageValue,
   iconActiveClassName = 'text-primary',
 }: FilterCardProps) {
+  const { t } = useTranslation();
   const isActive = activeStatus === status;
   const [ripples, setRipples] = useState<Array<{ x: number; y: number; id: number }>>([]);
 
@@ -138,7 +140,7 @@ export function FilterCard({
           <span className={`text-[13px] font-bold ${isActive ? 'text-primary' : 'text-foreground'}`}>{metricValue}</span>
         </div>
         <div className="flex items-baseline justify-between pt-1 border-t border-gray-200">
-          <span className="text-[9px] text-gray-400">Moy</span>
+          <span className="text-[9px] text-gray-400">{t('common.average')}</span>
           <span className="text-[10px] text-gray-500 font-medium">{averageValue}</span>
         </div>
       </div>
