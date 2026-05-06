@@ -196,6 +196,7 @@ export const mockDocuments: Document[] = [
                 views: 45,
                 downloads: 12,
                 tags: ['Comité', 'Q2 2024'],
+                documentCategory: 'quarterlyReport',
                 description: 'Document de présentation pour le comité consultatif du 22 avril 2024',
                 activities: [
                   {
@@ -242,7 +243,8 @@ export const mockDocuments: Document[] = [
                 reporting: true,
                 views: 28,
                 downloads: 8,
-                tags: ['Stratégie', 'Q2 2024']
+                tags: ['Stratégie', 'Q2 2024'],
+                documentCategory: 'quarterlyReport'
               }
             ]
           },
@@ -337,6 +339,7 @@ export const mockDocuments: Document[] = [
                 views: 42,
                 downloads: 15,
                 tags: ['Stratégie', 'Q1 2024', 'HNWI'],
+                documentCategory: 'quarterlyReport',
                 batchId: 'batch-hnwi-q1-2024',
                 batchName: 'Lot HNWI — Communication Q1 2024'
               },
@@ -363,7 +366,8 @@ export const mockDocuments: Document[] = [
                 reporting: true,
                 views: 12,
                 downloads: 3,
-                tags: ['Confidentiel', 'Alpha', 'Q1 2024']
+                tags: ['Confidentiel', 'Alpha', 'Q1 2024'],
+                documentCategory: 'legal'
               },
               {
                 id: 'doc-pere2-hnwi-3',
@@ -389,6 +393,7 @@ export const mockDocuments: Document[] = [
                 views: 28,
                 downloads: 9,
                 tags: ['Souscription', 'Q1 2024', 'HNWI'],
+                documentCategory: 'subscription',
                 batchId: 'batch-hnwi-q1-2024',
                 batchName: 'Lot HNWI — Communication Q1 2024'
               }
@@ -567,6 +572,7 @@ export const mockDocuments: Document[] = [
                 views: 320,
                 downloads: 85,
                 tags: ['Rapport Annuel', '2025', 'PERE1'],
+                documentCategory: 'annualReport',
                 description: 'Rapport de gestion annuel 2025'
               }
             ]
