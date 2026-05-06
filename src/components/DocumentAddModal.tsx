@@ -18,7 +18,7 @@ import { Avatar, AvatarFallback } from './ui/avatar';
 import { Badge } from './ui/badge';
 import { toast } from 'sonner';
 import { ChevronDown, ChevronRight, UploadCloud, FileCheck2, Download, Users2, UserRound, Mail, Eye, Trash2, Check, Folder, FileText, Bell, ShieldCheck, Clock3, CheckCircle2, Star, Lock, TrendingUp } from 'lucide-react';
-import { Document, mockDocuments } from '../utils/documentMockData';
+import { Document, DocumentCategory, mockDocuments } from '../utils/documentMockData';
 import { AudienceCounterCards } from './AudienceCounter';
 import { SegmentsMultiSelect, FundSingleSelect, ShareClassSingleSelect } from './ui/targeting-selects';
 import { AutocompleteSingleSelect } from './ui/autocomplete-select';
@@ -107,6 +107,19 @@ const SHARE_CLASSES_BY_FUND: Record<string, string[]> = {
   'Growth Tech': ['Seed', 'Growth'],
 };
 const MAIL_TEMPLATES = ['Nouveau document', 'Rapport trimestriel', 'Appel de fonds'];
+const DOCUMENT_CATEGORIES: { value: DocumentCategory; labelKey: string }[] = [
+  { value: 'capitalCall', labelKey: 'ged.addModal.documentCategory.capitalCall' },
+  { value: 'distribution', labelKey: 'ged.addModal.documentCategory.distribution' },
+  { value: 'quarterlyReport', labelKey: 'ged.addModal.documentCategory.quarterlyReport' },
+  { value: 'annualReport', labelKey: 'ged.addModal.documentCategory.annualReport' },
+  { value: 'subscription', labelKey: 'ged.addModal.documentCategory.subscription' },
+  { value: 'kyc', labelKey: 'ged.addModal.documentCategory.kyc' },
+  { value: 'legal', labelKey: 'ged.addModal.documentCategory.legal' },
+  { value: 'tax', labelKey: 'ged.addModal.documentCategory.tax' },
+  { value: 'marketing', labelKey: 'ged.addModal.documentCategory.marketing' },
+  { value: 'other', labelKey: 'ged.addModal.documentCategory.other' },
+];
+const DOCUMENT_CATEGORY_NONE = '__none__';
 const REMINDER_DELAYS = ['3 jours', '7 jours', '14 jours'];
 
 const TEAMS: ValidationTeam[] = [
@@ -455,6 +468,7 @@ export function DocumentAddModal({ isOpen, onClose, folderOptions, defaultFolder
   const [versions, setVersions] = useState<DocumentVersion[]>(defaultVersions);
   const [addDate, setAddDate] = useState(new Date().toISOString().slice(0, 10));
   const [parentFolderId, setParentFolderId] = useState(defaultFolderId);
+  const [documentCategory, setDocumentCategory] = useState<DocumentCategory | null>(null);
   const [audienceMode, setAudienceMode] = useState<'general' | 'nominative'>('general');
   const [selectedSegments, setSelectedSegments] = useState<string[]>(['all']);
   const [selectedFund, setSelectedFund] = useState('all');
@@ -480,6 +494,7 @@ export function DocumentAddModal({ isOpen, onClose, folderOptions, defaultFolder
     if (!isOpen) return;
     setParentFolderId(defaultFolderId);
     setAddDate(new Date().toISOString().slice(0, 10));
+    setDocumentCategory(document?.documentCategory ?? null);
     if (document) {
       setVersions([
         { language: 'fr', name: document.name, fileName: document.name },
@@ -815,6 +830,30 @@ export function DocumentAddModal({ isOpen, onClose, folderOptions, defaultFolder
               </Tabs>
             </div>
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 pt-2">
+              <div className="space-y-2 lg:col-span-2">
+                <Label>{t('ged.addModal.documentCategoryLabel')}</Label>
+                <Select
+                  value={documentCategory ?? DOCUMENT_CATEGORY_NONE}
+                  onValueChange={(value) =>
+                    setDocumentCategory(value === DOCUMENT_CATEGORY_NONE ? null : (value as DocumentCategory))
+                  }
+                  disabled={isDetailMode}
+                >
+                  <SelectTrigger className="h-11">
+                    <SelectValue placeholder={t('ged.addModal.documentCategoryPlaceholder')} />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value={DOCUMENT_CATEGORY_NONE}>
+                      {t('ged.addModal.documentCategory.none')}
+                    </SelectItem>
+                    {DOCUMENT_CATEGORIES.map((option) => (
+                      <SelectItem key={option.value} value={option.value}>
+                        {t(option.labelKey)}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
               <div className="space-y-2">
                 <Label>{t('ged.addModal.addDateLabel')}</Label>
                 <Input type="date" className="h-11" value={addDate} onChange={(event) => setAddDate(event.target.value)} disabled={isDetailMode} />

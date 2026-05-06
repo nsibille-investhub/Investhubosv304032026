@@ -1,5 +1,16 @@
 export type DocumentType = 'pdf' | 'excel' | 'word' | 'image' | 'video' | 'folder';
 export type DocumentStatus = 'published' | 'draft';
+export type DocumentCategory =
+  | 'capitalCall'
+  | 'distribution'
+  | 'quarterlyReport'
+  | 'annualReport'
+  | 'subscription'
+  | 'kyc'
+  | 'legal'
+  | 'tax'
+  | 'marketing'
+  | 'other';
 export type AccessLevel = 'view' | 'download' | 'edit' | 'admin';
 export type TargetType = 'all' | 'segment' | 'investor' | 'subscription' | 'participation';
 
@@ -64,6 +75,9 @@ export interface Document {
   // Tags
   tags?: string[];
   description?: string;
+
+  // Document category (e.g. capital call, quarterly report). Optional.
+  documentCategory?: DocumentCategory;
   
   // Root marker
   isRoot?: boolean;
