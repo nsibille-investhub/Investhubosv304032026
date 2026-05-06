@@ -67,18 +67,47 @@ export interface InvestorProfile {
 }
 
 export const INVESTORS: InvestorProfile[] = [
-  { id: 'INV-001', name: 'Aldebaran Pension Fund',        typology: 'Pension Fund',  email: 'lp-relations@aldebaran-pension.eu' },
-  { id: 'INV-002', name: 'Brunswick Family Office',       typology: 'Family Office', email: 'office@brunswick-fo.com' },
-  { id: 'INV-003', name: 'Caledonia Insurance Group',     typology: 'Insurance',     email: 'investments@caledonia-ins.eu' },
-  { id: 'INV-004', name: 'Dunmore Sovereign Wealth',      typology: 'Sovereign',     email: 'capital@dunmore-swf.gov' },
-  { id: 'INV-005', name: 'Everstone Family Trust',        typology: 'Family Office', email: 'trust@everstone-family.com' },
-  { id: 'INV-006', name: 'Fairfield Endowment',           typology: 'Institutional', email: 'endowment@fairfield-edu.org' },
-  { id: 'INV-007', name: 'Greycliff Wealth Partners',     typology: 'HNWI',          email: 'partners@greycliff.io' },
-  { id: 'INV-008', name: 'Highbury Capital Allocators',   typology: 'Institutional', email: 'lp@highbury-capital.com' },
-  { id: 'INV-009', name: 'Ibex Mountain Holdings',        typology: 'UHNWI',         email: 'mailbox@ibex-mountain.com' },
-  { id: 'INV-010', name: 'Juniper Asset Management',      typology: 'Institutional', email: 'pe@juniper-am.com' },
-  { id: 'INV-011', name: 'Kensington Private Bank',       typology: 'Distributor',   email: 'fund-selection@kensington-bank.co.uk' },
-  { id: 'INV-012', name: 'Loira Patrimoine',              typology: 'Distributor',   email: 'selection@loira-patrimoine.fr' },
+  // Pension funds
+  { id: 'INV-001', name: 'Aldebaran Pension Fund',         typology: 'Pension Fund',  email: 'lp-relations@aldebaran-pension.eu' },
+  { id: 'INV-014', name: 'Norwood Pension Trust',          typology: 'Pension Fund',  email: 'investments@norwood-pension.uk' },
+  { id: 'INV-021', name: 'Hartwood Retirement Plan',       typology: 'Pension Fund',  email: 'capital@hartwood-retirement.eu' },
+  { id: 'INV-031', name: 'Brentley Pension Scheme',        typology: 'Pension Fund',  email: 'lp@brentley-pension.com' },
+  // Insurance & Re
+  { id: 'INV-003', name: 'Caledonia Insurance Group',      typology: 'Insurance',     email: 'investments@caledonia-ins.eu' },
+  { id: 'INV-017', name: 'Stratton Mutual Insurance',      typology: 'Insurance',     email: 'pe@stratton-mutual.com' },
+  { id: 'INV-019', name: 'Vellington Re',                  typology: 'Insurance',     email: 'capital@vellington-re.eu' },
+  { id: 'INV-024', name: 'Drumhill Reinsurance',           typology: 'Insurance',     email: 'allocations@drumhill-re.lu' },
+  { id: 'INV-035', name: 'Northpoint Insurance',           typology: 'Insurance',     email: 'lp-relations@northpoint-ins.com' },
+  // Sovereign
+  { id: 'INV-004', name: 'Dunmore Sovereign Wealth',       typology: 'Sovereign',     email: 'capital@dunmore-swf.gov' },
+  { id: 'INV-018', name: 'Tanvir Investment Authority',    typology: 'Sovereign',     email: 'lp@tanvir-ia.gov' },
+  { id: 'INV-032', name: 'Suvarna Reserve Fund',           typology: 'Sovereign',     email: 'investments@suvarna-reserve.gov' },
+  // Institutional / endowments / foundations
+  { id: 'INV-006', name: 'Fairfield Endowment',            typology: 'Institutional', email: 'endowment@fairfield-edu.org' },
+  { id: 'INV-008', name: 'Highbury Capital Allocators',    typology: 'Institutional', email: 'lp@highbury-capital.com' },
+  { id: 'INV-010', name: 'Juniper Asset Management',       typology: 'Institutional', email: 'pe@juniper-am.com' },
+  { id: 'INV-022', name: 'Helmsford Foundation',           typology: 'Institutional', email: 'allocations@helmsford-foundation.org' },
+  { id: 'INV-023', name: 'Camberwell Allocators',          typology: 'Institutional', email: 'pe@camberwell-allocators.com' },
+  { id: 'INV-025', name: 'Saint-Gaudens Endowment',        typology: 'Institutional', email: 'investments@stgaudens-endowment.org' },
+  // Family Offices
+  { id: 'INV-002', name: 'Brunswick Family Office',        typology: 'Family Office', email: 'office@brunswick-fo.com' },
+  { id: 'INV-005', name: 'Everstone Family Trust',         typology: 'Family Office', email: 'trust@everstone-family.com' },
+  { id: 'INV-013', name: 'Marston Family Office',          typology: 'Family Office', email: 'office@marston-fo.eu' },
+  { id: 'INV-015', name: 'Pemberton House',                typology: 'Family Office', email: 'allocations@pemberton-house.com' },
+  { id: 'INV-016', name: 'Rosendale Wealth Office',        typology: 'Family Office', email: 'office@rosendale-wo.com' },
+  { id: 'INV-026', name: 'Avalon Heritage Trust',          typology: 'Family Office', email: 'trust@avalon-heritage.com' },
+  { id: 'INV-028', name: 'Stenmark Capital',               typology: 'Family Office', email: 'office@stenmark-capital.se' },
+  // HNWI / UHNWI
+  { id: 'INV-007', name: 'Greycliff Wealth Partners',      typology: 'HNWI',          email: 'partners@greycliff.io' },
+  { id: 'INV-009', name: 'Ibex Mountain Holdings',         typology: 'UHNWI',         email: 'mailbox@ibex-mountain.com' },
+  { id: 'INV-020', name: 'Westbrook Investments',          typology: 'UHNWI',         email: 'office@westbrook-investments.com' },
+  { id: 'INV-027', name: 'Carrington Private Wealth',      typology: 'HNWI',          email: 'wealth@carrington-pw.com' },
+  { id: 'INV-033', name: 'Linden Holdings',                typology: 'UHNWI',         email: 'office@linden-holdings.lu' },
+  // Distributors
+  { id: 'INV-011', name: 'Kensington Private Bank',        typology: 'Distributor',   email: 'fund-selection@kensington-bank.co.uk' },
+  { id: 'INV-012', name: 'Loira Patrimoine',               typology: 'Distributor',   email: 'selection@loira-patrimoine.fr' },
+  { id: 'INV-029', name: 'Banque Saint-Augustin',          typology: 'Distributor',   email: 'gestion@banque-staugustin.fr' },
+  { id: 'INV-030', name: 'Hartwell Wealth Advisors',       typology: 'Distributor',   email: 'advisory@hartwell-wa.com' },
 ];
 
 export const findInvestor = (id: string): InvestorProfile | undefined =>
@@ -113,16 +142,52 @@ const mkCommitments = (
 
 export const COMMITMENTS: Commitment[] = [
   ...mkCommitments('NWGC2', [
-    { investor: 'INV-001', sc: 'Class A',  amount: 25_000_000 },
-    { investor: 'INV-002', sc: 'Class B',  amount:  8_000_000 },
-    { investor: 'INV-003', sc: 'Class A',  amount: 30_000_000 },
-    { investor: 'INV-009', sc: 'Class B',  amount: 12_000_000 },
+    // Class A — institutionnels (gros tickets)
+    { investor: 'INV-001', sc: 'Class A',  amount: 25_000_000 }, // Aldebaran Pension Fund
+    { investor: 'INV-014', sc: 'Class A',  amount: 18_000_000 }, // Norwood Pension Trust
+    { investor: 'INV-021', sc: 'Class A',  amount: 22_000_000 }, // Hartwood Retirement Plan
+    { investor: 'INV-031', sc: 'Class A',  amount: 15_000_000 }, // Brentley Pension Scheme
+    { investor: 'INV-003', sc: 'Class A',  amount: 30_000_000 }, // Caledonia Insurance Group
+    { investor: 'INV-017', sc: 'Class A',  amount: 12_000_000 }, // Stratton Mutual Insurance
+    { investor: 'INV-008', sc: 'Class A',  amount: 20_000_000 }, // Highbury Capital Allocators
+    { investor: 'INV-023', sc: 'Class A',  amount: 14_000_000 }, // Camberwell Allocators
+    { investor: 'INV-022', sc: 'Class A',  amount:  8_000_000 }, // Helmsford Foundation
+    // Class B — Family Offices et HNWI/UHNWI
+    { investor: 'INV-002', sc: 'Class B',  amount:  8_000_000 }, // Brunswick Family Office
+    { investor: 'INV-005', sc: 'Class B',  amount:  6_000_000 }, // Everstone Family Trust
+    { investor: 'INV-013', sc: 'Class B',  amount:  5_000_000 }, // Marston Family Office
+    { investor: 'INV-015', sc: 'Class B',  amount:  7_000_000 }, // Pemberton House
+    { investor: 'INV-026', sc: 'Class B',  amount:  4_000_000 }, // Avalon Heritage Trust
+    { investor: 'INV-007', sc: 'Class B',  amount:  3_000_000 }, // Greycliff Wealth Partners
+    { investor: 'INV-009', sc: 'Class B',  amount: 12_000_000 }, // Ibex Mountain Holdings
+    { investor: 'INV-020', sc: 'Class B',  amount:  9_000_000 }, // Westbrook Investments
+    { investor: 'INV-027', sc: 'Class B',  amount:  2_500_000 }, // Carrington Private Wealth
   ]),
   ...mkCommitments('AIP1', [
-    { investor: 'INV-001', sc: 'Class A', amount: 40_000_000 },
-    { investor: 'INV-004', sc: 'Class A', amount: 60_000_000 },
-    { investor: 'INV-008', sc: 'Class A', amount: 22_000_000 },
-    { investor: 'INV-010', sc: 'Class B', amount: 18_000_000 },
+    // Class A — gros institutionnels (typique pour Infra)
+    { investor: 'INV-001', sc: 'Class A',  amount: 40_000_000 }, // Aldebaran Pension Fund
+    { investor: 'INV-014', sc: 'Class A',  amount: 35_000_000 }, // Norwood Pension Trust
+    { investor: 'INV-031', sc: 'Class A',  amount: 28_000_000 }, // Brentley Pension Scheme
+    { investor: 'INV-021', sc: 'Class A',  amount: 30_000_000 }, // Hartwood Retirement Plan
+    { investor: 'INV-004', sc: 'Class A',  amount: 60_000_000 }, // Dunmore Sovereign Wealth
+    { investor: 'INV-018', sc: 'Class A',  amount: 50_000_000 }, // Tanvir Investment Authority
+    { investor: 'INV-032', sc: 'Class A',  amount: 45_000_000 }, // Suvarna Reserve Fund
+    { investor: 'INV-003', sc: 'Class A',  amount: 35_000_000 }, // Caledonia Insurance Group
+    { investor: 'INV-017', sc: 'Class A',  amount: 25_000_000 }, // Stratton Mutual Insurance
+    { investor: 'INV-019', sc: 'Class A',  amount: 18_000_000 }, // Vellington Re
+    { investor: 'INV-024', sc: 'Class A',  amount: 20_000_000 }, // Drumhill Reinsurance
+    { investor: 'INV-035', sc: 'Class A',  amount: 15_000_000 }, // Northpoint Insurance
+    { investor: 'INV-008', sc: 'Class A',  amount: 22_000_000 }, // Highbury Capital Allocators
+    { investor: 'INV-010', sc: 'Class A',  amount: 20_000_000 }, // Juniper Asset Management
+    { investor: 'INV-006', sc: 'Class A',  amount: 12_000_000 }, // Fairfield Endowment
+    { investor: 'INV-022', sc: 'Class A',  amount: 10_000_000 }, // Helmsford Foundation
+    { investor: 'INV-025', sc: 'Class A',  amount: 14_000_000 }, // Saint-Gaudens Endowment
+    // Class B — Family Offices / UHNWI
+    { investor: 'INV-002', sc: 'Class B',  amount: 10_000_000 }, // Brunswick Family Office
+    { investor: 'INV-016', sc: 'Class B',  amount:  8_000_000 }, // Rosendale Wealth Office
+    { investor: 'INV-028', sc: 'Class B',  amount:  6_000_000 }, // Stenmark Capital
+    { investor: 'INV-009', sc: 'Class B',  amount: 15_000_000 }, // Ibex Mountain Holdings
+    { investor: 'INV-033', sc: 'Class B',  amount: 12_000_000 }, // Linden Holdings
   ]),
 ];
 
@@ -449,25 +514,17 @@ const buildCapitalCalls = (fund: FundProfile): FolderSpec => {
       name: String(year),
       folders: (drawdownsByYear[year] ?? []).map((d) => ({
         name: `${d.date} - Drawdown #${d.n}`,
-        documents: [
-          // Master notice — fund-level
-          { name: `${d.date} - ${fund.name} - Capital Call Notice #${d.n} (Master).pdf`, owner: ownerOf(fund, 'finance'), date: d.date, size: randomSize(true), format: 'pdf',  category: 'capitalCall', targeting: T.fund(),     tags: ['Capital Call', `#${d.n}`, 'Master'] },
-          // Wire instructions — fund-level
-          { name: `${d.date} - ${fund.name} - Wire Instructions.pdf`,                     owner: ownerOf(fund, 'finance'), date: d.date, size: randomSize(true), format: 'pdf',  category: 'capitalCall', targeting: T.fund(),     tags: ['Wire', `#${d.n}`] },
-          // Internal LP allocation schedule
-          { name: `${d.date} - ${fund.name} - LP Allocation Schedule #${d.n}.xlsx`,       owner: ownerOf(fund, 'finance'), date: d.date, size: randomSize(true), format: 'xlsx', category: 'capitalCall', targeting: T.internal(), tags: ['Allocation', `#${d.n}`, 'Internal'] },
-          // Per-LP nominative notices
-          ...lpCommitments.map((c) => ({
-            name: `${d.date} - ${fund.name} - Capital Call #${d.n} - ${lpShortName(c.investorId)} (${c.subscriptionId}).pdf`,
-            owner: ownerOf(fund, 'finance'),
-            date: d.date,
-            size: randomSize(true),
-            format: 'pdf' as const,
-            category: 'capitalCall' as DocCategory,
-            targeting: T.investor(c),
-            tags: ['Capital Call', `#${d.n}`, findInvestor(c.investorId)?.typology ?? 'LP'],
-          })),
-        ],
+        // Capital call notices are inherently nominative: one per LP of the fund.
+        documents: lpCommitments.map((c) => ({
+          name: `${d.date} - ${fund.name} - Capital Call #${d.n} - ${lpShortName(c.investorId)} (${c.subscriptionId}).pdf`,
+          owner: ownerOf(fund, 'finance'),
+          date: d.date,
+          size: randomSize(true),
+          format: 'pdf' as const,
+          category: 'capitalCall' as DocCategory,
+          targeting: T.investor(c),
+          tags: ['Capital Call', `#${d.n}`, findInvestor(c.investorId)?.typology ?? 'LP'],
+        })),
       })),
     })),
   };
@@ -494,25 +551,17 @@ const buildDistributions = (fund: FundProfile): FolderSpec => {
       name: String(year),
       folders: (distByYear[year] ?? []).map((d) => ({
         name: `${d.date} - Distribution #${d.n}`,
-        documents: [
-          // Master notice
-          { name: `${d.date} - ${fund.name} - Distribution Notice #${d.n} (Master).pdf`, owner: ownerOf(fund, 'finance'), date: d.date, size: randomSize(true), format: 'pdf',  category: 'distribution', targeting: T.fund(),     tags: ['Distribution', `#${d.n}`, 'Master'] },
-          // LP proceeds schedule (internal)
-          { name: `${d.date} - ${fund.name} - LP Proceeds Schedule #${d.n}.xlsx`,         owner: ownerOf(fund, 'finance'), date: d.date, size: randomSize(true), format: 'xlsx', category: 'distribution', targeting: T.internal(), tags: ['Proceeds', `#${d.n}`, 'Internal'] },
-          // Tax memo (fund-level)
-          { name: `${d.date} - ${fund.name} - Tax Treatment Memo.pdf`,                    owner: ownerOf(fund, 'finance'), date: d.date, size: randomSize(true), format: 'pdf',  category: 'tax',          targeting: T.fund(),     tags: ['Tax', 'Distribution'] },
-          // Per-LP nominative notices
-          ...lpCommitments.map((c) => ({
-            name: `${d.date} - ${fund.name} - Distribution #${d.n} - ${lpShortName(c.investorId)} (${c.subscriptionId}).pdf`,
-            owner: ownerOf(fund, 'finance'),
-            date: d.date,
-            size: randomSize(true),
-            format: 'pdf' as const,
-            category: 'distribution' as DocCategory,
-            targeting: T.investor(c),
-            tags: ['Distribution', `#${d.n}`, findInvestor(c.investorId)?.typology ?? 'LP'],
-          })),
-        ],
+        // Distribution notices are inherently nominative: one per LP.
+        documents: lpCommitments.map((c) => ({
+          name: `${d.date} - ${fund.name} - Distribution #${d.n} - ${lpShortName(c.investorId)} (${c.subscriptionId}).pdf`,
+          owner: ownerOf(fund, 'finance'),
+          date: d.date,
+          size: randomSize(true),
+          format: 'pdf' as const,
+          category: 'distribution' as DocCategory,
+          targeting: T.investor(c),
+          tags: ['Distribution', `#${d.n}`, findInvestor(c.investorId)?.typology ?? 'LP'],
+        })),
       })),
     })),
   };

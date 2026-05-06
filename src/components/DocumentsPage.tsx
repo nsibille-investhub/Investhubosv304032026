@@ -272,7 +272,11 @@ export function DocumentsPage({ selectedSpace, navigationTarget, onNavigationHan
         owner: node.owner || t('ged.documents.ownerSystem'),
         views: ((seed * 13) % 100),
         downloads: ((seed * 7) % 50),
-        status: (node.type !== 'folder' && seed % 3 !== 0) ? 'draft' as const : 'published' as const,
+        // Old campaigns are published; only the current year (2026) can stay
+        // in draft / pending state. Folders are always considered published.
+        status: (node.type === 'folder' || uploadedAt.getFullYear() < 2026)
+          ? 'published' as const
+          : 'draft' as const,
         children: node.children
           ? convertTreeToDocuments(node.children, nextPath, inheritedGenericTargeting || folderGetsGenericTargeting)
           : undefined,

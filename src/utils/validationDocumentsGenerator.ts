@@ -67,7 +67,6 @@ const fund  = (label: string): TargetingTag => ({ kind: 'fund',        label });
 const share = (label: string): TargetingTag => ({ kind: 'shareClass',  label });
 const inv   = (label: string): TargetingTag => ({ kind: 'investor',    label });
 const sub   = (label: string): TargetingTag => ({ kind: 'subscription',label });
-const aud   = (label: string): TargetingTag => ({ kind: 'audience',    label });
 
 const FUND_NW  = findFund('NWGC2')!;
 const FUND_ATL = findFund('AIP1')!;
@@ -147,45 +146,19 @@ const atlReportPath = [FUND_ATL.name, 'Management Reports', '2026', 'Q1'];
 
 const PENDING: Omit<ValidationDocument, 'id' | 'status'>[] = [
   // ── Capital Call batch — Northwind Growth Capital II
-  {
-    name: `${NW_DRAWDOWN_DATE} - ${FUND_NW.name} - Capital Call Notice #${NW_DRAWDOWN_NUM} (Master).pdf`,
-    format: 'pdf', size: '312 KB', pathSegments: nwCallPath,
-    createdBy: { name: 'Antoine Leblanc', role: 'Fund Accountant' },
-    createdAt: '2026-04-27T11:15:00Z',
-    targeting: [fund(FUND_NW.name)],
-    comment: 'EUR 12.5M aggregate — to be approved before LP dispatch.',
-    batchId: 'batch-capital-call-northwind',
-  },
-  {
-    name: `${NW_DRAWDOWN_DATE} - ${FUND_NW.name} - Wire Instructions.pdf`,
-    format: 'pdf', size: '128 KB', pathSegments: nwCallPath,
-    createdBy: { name: 'Antoine Leblanc', role: 'Fund Accountant' },
-    createdAt: '2026-04-27T11:18:00Z',
-    targeting: [fund(FUND_NW.name)],
-    comment: '',
-    batchId: 'batch-capital-call-northwind',
-  },
-  {
-    name: `${NW_DRAWDOWN_DATE} - ${FUND_NW.name} - LP Allocation Schedule #${NW_DRAWDOWN_NUM}.xlsx`,
-    format: 'xlsx', size: '92 KB', pathSegments: nwCallPath,
-    createdBy: { name: 'Antoine Leblanc', role: 'Fund Accountant' },
-    createdAt: '2026-04-27T11:20:00Z',
-    targeting: [fund(FUND_NW.name), aud('Internal')],
-    comment: 'Double-check Aldebaran Pension Fund pro-rata before dispatch.',
-    batchId: 'batch-capital-call-northwind',
-  },
-  // Per-LP nominative notices for the 4 LPs of NWGC2
+  // Capital call notices are inherently nominative: one per LP of the fund.
   ...NW_COMMITMENTS.map((c, i) => {
     const investor = findInvestor(c.investorId)!;
+    const minute = String(15 + i).padStart(2, '0');
     return {
       name: `${NW_DRAWDOWN_DATE} - ${FUND_NW.name} - Capital Call #${NW_DRAWDOWN_NUM} - ${investor.name} (${c.subscriptionId}).pdf`,
       format: 'pdf' as const,
       size: '180 KB',
       pathSegments: nwCallPath,
       createdBy: { name: 'Antoine Leblanc', role: 'Fund Accountant' },
-      createdAt: `2026-04-27T11:${String(22 + i).padStart(2, '0')}:00Z`,
+      createdAt: `2026-04-27T11:${minute}:00Z`,
       targeting: [fund(FUND_NW.name), inv(investor.name), sub(c.subscriptionId), share(c.shareClass)],
-      comment: '',
+      comment: i === 0 ? `EUR 12.5M aggregate drawdown — ${NW_COMMITMENTS.length} LP notices to validate before dispatch.` : '',
       batchId: 'batch-capital-call-northwind',
     };
   }),
