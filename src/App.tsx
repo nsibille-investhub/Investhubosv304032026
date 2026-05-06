@@ -1017,12 +1017,12 @@ export default function App() {
                     transition={{ delay: 0.3 }}
                   >
                     <h1 className="text-3xl font-bold text-gray-900 tracking-tight">
-                      {investorViewMode === 'active' ? 'Investisseurs' : 'Investisseurs Archivés'}
+                      {investorViewMode === 'active' ? t('investors.header.titleActive') : t('investors.header.titleArchived')}
                     </h1>
                     <p className="text-sm text-gray-600 mt-1">
-                      {investorViewMode === 'active' 
-                        ? 'Gérer et suivre tous les investisseurs' 
-                        : 'Consultez les investisseurs archivés'}
+                      {investorViewMode === 'active'
+                        ? t('investors.header.subtitleActive')
+                        : t('investors.header.subtitleArchived')}
                     </p>
                   </motion.div>
                 </div>
@@ -1049,7 +1049,7 @@ export default function App() {
                         }}
                       >
                         <ArrowLeft className="w-4 h-4" />
-                        Retour aux investisseurs
+                        {t('investors.header.backToInvestors')}
                       </Button>
                     </motion.div>
                   )}
@@ -1078,7 +1078,7 @@ export default function App() {
                             }}
                           />
                           <Plus className="w-4 h-4 group-hover:rotate-90 transition-transform duration-300" />
-                          <span className="font-semibold relative z-10">Nouvel Investisseur</span>
+                          <span className="font-semibold relative z-10">{t('investors.header.newInvestor')}</span>
                         </Button>
                       </motion.div>
                       
@@ -1098,13 +1098,15 @@ export default function App() {
                               setInvestorViewMode('inactive');
                               setActiveStatus('all');
                               toast.info(t('toast.viewArchivedInvestors'), {
-                                description: `${allInvestorsData.filter(i => getInactiveInvestorStatuses().includes(i.status)).length} investisseurs archivés`
+                                description: t('investors.toast.archivedCount', {
+                                  count: allInvestorsData.filter(i => getInactiveInvestorStatuses().includes(i.status)).length
+                                })
                               });
                             }}
                             className="cursor-pointer"
                           >
                             <ArchiveX className="w-4 h-4 mr-2 text-gray-600" />
-                            <span>Archivés</span>
+                            <span>{t('investors.header.archived')}</span>
                             <Badge className="ml-2 bg-gray-100 text-gray-700 border-gray-300">
                               {allInvestorsData.filter(i => getInactiveInvestorStatuses().includes(i.status)).length}
                             </Badge>
@@ -1113,37 +1115,37 @@ export default function App() {
                             onClick={() => {
                               exportTableToCSV(allInvestorsData, 'investisseurs');
                               toast.success(t('toast.exportCsv'), {
-                                description: 'Les données ont été exportées en CSV'
+                                description: t('investors.toast.exportCsvDesc')
                               });
                             }}
                             className="cursor-pointer"
                           >
                             <FileSpreadsheet className="w-4 h-4 mr-2 text-green-600" />
-                            <span>Télécharger .csv</span>
+                            <span>{t('investors.header.downloadCsv')}</span>
                           </DropdownMenuItem>
                           <DropdownMenuItem
                             onClick={() => {
                               toast.info(t('toast.exportXlsx'), {
-                                description: 'Fonctionnalité à venir'
+                                description: t('investors.toast.exportXlsxDesc')
                               });
                             }}
                             className="cursor-pointer"
                           >
                             <Download className="w-4 h-4 mr-2 text-blue-600" />
-                            <span>Télécharger .xlsx</span>
+                            <span>{t('investors.header.downloadXlsx')}</span>
                           </DropdownMenuItem>
                           <DropdownMenuItem
                             onClick={() => {
                               const totalContacts = allInvestorsData.reduce((sum, inv) => sum + (inv.contacts?.length || 0), 0);
                               exportContactsToCSV(allInvestorsData);
                               toast.success(t('toast.contactsExported'), {
-                                description: `${totalContacts} contacts exportés en CSV`
+                                description: t('investors.toast.contactsExportedDesc', { count: totalContacts })
                               });
                             }}
                             className="cursor-pointer"
                           >
                             <Users className="w-4 h-4 mr-2 text-purple-600" />
-                            <span>Exporter contacts .csv</span>
+                            <span>{t('investors.header.exportContactsCsv')}</span>
                           </DropdownMenuItem>
                         </DropdownMenuContent>
                       </DropdownMenu>
@@ -1347,7 +1349,7 @@ export default function App() {
                     setInvestorDetailTab(tab || 'profil');
                     console.log('App.tsx - selectedInvestorDetail set to:', investor);
                     toast.info(t('toast.investorDetails'), {
-                      description: `Ouverture des détails pour ${investor.name}`,
+                      description: t('investors.toast.openingDetails', { name: investor.name }),
                     });
                   }}
                 />

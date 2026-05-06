@@ -572,6 +572,148 @@
       }
     }
   },
+  "investors": {
+    "header": {
+      "titleActive": "Investors",
+      "titleArchived": "Archived investors",
+      "subtitleActive": "Manage and track all investors",
+      "subtitleArchived": "Browse archived investors",
+      "newInvestor": "New investor",
+      "backToInvestors": "Back to investors",
+      "archived": "Archived",
+      "downloadCsv": "Download .csv",
+      "downloadXlsx": "Download .xlsx",
+      "exportContactsCsv": "Export contacts .csv"
+    },
+    "pipeline": {
+      "title": "Investor pipeline",
+      "statusBadge": "4 statuses",
+      "clickToFilter": "Click a status to filter",
+      "totalInvested": "Total invested",
+      "average": "Avg",
+      "prospect": "Prospect",
+      "inDiscussion": "In discussion",
+      "inRelation": "In relation",
+      "all": "All"
+    },
+    "inactiveTabs": {
+      "allArchived": "All archived",
+      "archived": "Archived"
+    },
+    "page": {
+      "searchPlaceholder": "Search an investor...",
+      "itemsRange": "{{start}}-{{end}} of {{total}} items",
+      "filtered": "filtered",
+      "filteredOf": "filtered from {{count}}",
+      "itemsPerPage": "{{count}}/page",
+      "itemsPerPageOption": "{{count}} per page",
+      "itemsPerPageApplied": "{{count}} items per page",
+      "sortDescription": "Sort by {{key}} ({{direction}})",
+      "sortAsc": "ascending",
+      "sortDesc": "descending",
+      "pageOf": "Page {{page}} of {{total}}"
+    },
+    "filters": {
+      "structure": "Structure",
+      "noStructure": "No structure",
+      "segment": "Segment",
+      "type": "Type",
+      "manager": "Manager",
+      "partner": "Partner",
+      "direct": "Direct",
+      "fund": "Fund"
+    },
+    "table": {
+      "columns": {
+        "name": "Name",
+        "contacts": "Contacts",
+        "structure": "Structure",
+        "type": "Type",
+        "status": "Status",
+        "registrationDate": "Registration date",
+        "investedCapital": "Invested capital",
+        "subscriptions": "Subscriptions",
+        "segment": "Segment",
+        "lastActivity": "Last activity",
+        "partner": "Partner"
+      },
+      "viewProfile": "View profile",
+      "portalConnection": "Portal connection",
+      "portalConnectionToast": "Portal connection",
+      "portalConnectionDesc": "Redirecting to portal for {{name}}...",
+      "idCopied": "ID copied!",
+      "copyError": "Copy error",
+      "copyErrorDesc": "Unable to copy to clipboard",
+      "selectionCancelled": "Selection cleared",
+      "selectionCancelledDesc": "All investors have been deselected",
+      "selectedCount": "{{count}} investors selected",
+      "selectedCountDesc": "All pages are selected ({{count}} investors in total)",
+      "selectionOne": "investor selected",
+      "selectionMany": "investors selected",
+      "allPagesSelected": "(All pages are selected)",
+      "partialSelection": "(Partial selection across pages)",
+      "cancelSelection": "Clear selection",
+      "selectAllTooltip": "Select all {{count}} investors (all pages)",
+      "deselectAllTooltip": "Deselect all {{count}} investors (all pages)",
+      "noContact": "No contact",
+      "noStructure": "No structure",
+      "lastActivity": "Last activity"
+    },
+    "status": {
+      "Prospect": "Prospect",
+      "En discussion": "In discussion",
+      "En relation": "In relation",
+      "Archivé": "Archived"
+    },
+    "type": {
+      "Individual": "Individual",
+      "Company": "Company"
+    },
+    "toast": {
+      "openingDetails": "Opening details for {{name}}",
+      "exportCsvDesc": "Data has been exported as CSV",
+      "exportXlsxDesc": "Feature coming soon",
+      "contactsExportedDesc": "{{count}} contacts exported as CSV",
+      "archivedCount": "{{count}} archived investors",
+      "navigationNotConfigured": "Navigation not configured",
+      "navigationNotConfiguredDesc": "The onInvestorClick callback is not defined",
+      "monitoringFor": "for {{name}}",
+      "analystAssigned": "{{analyst}} assigned to {{name}}",
+      "aiFilterAppliedDescOne": "{{count}} investor displayed",
+      "aiFilterAppliedDescMany": "{{count}} investors displayed",
+      "aiFilterDisabledDesc": "Showing all investors"
+    },
+    "emptyState": {
+      "titleEmpty": "No investor",
+      "titleFiltered": "No investor found",
+      "descEmpty": "No investor is registered in the database.",
+      "descFiltered": "The applied filters don't match any investor currently in the database.",
+      "resetCta": "Reset filters"
+    },
+    "relativeTime": {
+      "minAgo": "{{count}} min ago",
+      "hoursAgo": "{{count}}h ago",
+      "oneDayAgo": "1 day ago",
+      "daysAgo": "{{count}} days ago",
+      "oneWeekAgo": "1 wk ago",
+      "weeksAgo": "{{count}} wk ago",
+      "oneMonthAgo": "1 month ago",
+      "monthsAgo": "{{count}} months ago",
+      "overOneYear": "Over a year ago"
+    }
+  },
+  "common": {
+    "average": "Avg",
+    "filterBar": {
+      "additionalFilters": "Additional filters",
+      "clearAll": "Clear all",
+      "clearAllTooltip": "Clear all filters",
+      "activeFilters": "Active filters:",
+      "selectedOne": "{{count}} selected",
+      "selectedMany": "{{count}} selected",
+      "searchPlaceholder": "Search..."
+    }
+  },
   "ged": {
     "toast": {
       "spaceOpened": "Space opened",

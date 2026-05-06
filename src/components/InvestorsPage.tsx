@@ -18,6 +18,7 @@ import { AskAIDialog } from './AskAIDialog';
 import { AIInsightBanner } from './AIInsightBanner';
 import { AIAnalysis } from '../utils/aiAnalyzer';
 import { InvestorEmptyState } from './InvestorEmptyState';
+import { useTranslation } from '../utils/languageContext';
 
 interface InvestorsPageProps {
   data: Investor[];
@@ -28,6 +29,7 @@ interface InvestorsPageProps {
 }
 
 export function InvestorsPage({ data, isLoading, allData, setAllData, onInvestorClick }: InvestorsPageProps) {
+  const { t } = useTranslation();
   const [paginationPage, setPaginationPage] = useState(1);
   const [itemsPerPage, setItemsPerPage] = useState(20);
   const [sortConfig, setSortConfig] = useState<{ key: string; direction: 'asc' | 'desc' } | null>(null);
@@ -51,18 +53,21 @@ export function InvestorsPage({ data, isLoading, allData, setAllData, onInvestor
   const filterConfigs: FilterConfig[] = useMemo(() => [
     {
       id: 'structure',
-      label: 'Structure',
+      label: t('investors.filters.structure'),
       type: 'select',
       isPrimary: true,
-      options: Array.from(new Set(allData.flatMap(inv => 
-        inv.structures && inv.structures.length > 0 
+      options: Array.from(new Set(allData.flatMap(inv =>
+        inv.structures && inv.structures.length > 0
           ? inv.structures.map((s: any) => s.name)
           : ['Sans structure']
-      ))).sort().map(s => ({ value: s, label: s }))
+      ))).sort().map(s => ({
+        value: s,
+        label: s === 'Sans structure' ? t('investors.filters.noStructure') : s,
+      }))
     },
     {
       id: 'segment',
-      label: 'Segment',
+      label: t('investors.filters.segment'),
       type: 'select',
       isPrimary: true,
       options: [
@@ -75,17 +80,17 @@ export function InvestorsPage({ data, isLoading, allData, setAllData, onInvestor
     },
     {
       id: 'type',
-      label: 'Type',
+      label: t('investors.filters.type'),
       type: 'select',
       isPrimary: false,
       options: [
-        { value: 'Individual', label: 'Individual' },
-        { value: 'Company', label: 'Company' }
+        { value: 'Individual', label: t('investors.type.Individual') },
+        { value: 'Company', label: t('investors.type.Company') }
       ]
     },
     {
       id: 'gestionnaire',
-      label: 'Gestionnaire',
+      label: t('investors.filters.manager'),
       type: 'select',
       isPrimary: false,
       options: Array.from(new Set(allData.map(inv => inv.analyst)))
@@ -95,11 +100,11 @@ export function InvestorsPage({ data, isLoading, allData, setAllData, onInvestor
     },
     {
       id: 'partner',
-      label: 'Partenaire',
+      label: t('investors.filters.partner'),
       type: 'select',
       isPrimary: false,
       options: [
-        { value: 'Direct', label: 'Direct' },
+        { value: 'Direct', label: t('investors.filters.direct') },
         ...Array.from(new Set(allData.map(inv => inv.partner).filter(Boolean)))
           .sort()
           .map(partner => ({ value: partner, label: partner }))
@@ -107,17 +112,17 @@ export function InvestorsPage({ data, isLoading, allData, setAllData, onInvestor
     },
     {
       id: 'fund',
-      label: 'Fonds',
+      label: t('investors.filters.fund'),
       type: 'select',
       isPrimary: false,
-      options: Array.from(new Set(allData.flatMap(inv => 
+      options: Array.from(new Set(allData.flatMap(inv =>
         inv.investments?.map((i: any) => i.fundName) || []
       )))
         .filter(Boolean)
         .sort()
         .map(fund => ({ value: fund, label: fund }))
     }
-  ], [allData]);
+  ], [allData, t]);
 
   const handleFilterChange = (filterId: string, value: string | string[] | null) => {
     setActiveFilters(prev => {
@@ -137,7 +142,7 @@ export function InvestorsPage({ data, isLoading, allData, setAllData, onInvestor
     setSearchTerm('');
     setAiFilteredData(null);
     setPaginationPage(1);
-    toast.success('Filtres réinitialisés');
+    toast.success(t('toast.filtersReset'));
   };
 
   const handleSearchChange = (value: string) => {
@@ -249,8 +254,11 @@ export function InvestorsPage({ data, isLoading, allData, setAllData, onInvestor
       direction = 'desc';
     }
     setSortConfig({ key, direction });
-    toast.success('Tri appliqué', {
-      description: `Tri par ${key} (${direction === 'asc' ? 'croissant' : 'décroissant'})`,
+    toast.success(t('toast.sortApplied'), {
+      description: t('investors.page.sortDescription', {
+        key,
+        direction: direction === 'asc' ? t('investors.page.sortAsc') : t('investors.page.sortDesc'),
+      }),
     });
   };
 
@@ -258,8 +266,8 @@ export function InvestorsPage({ data, isLoading, allData, setAllData, onInvestor
     if (page >= 1 && page <= totalPages) {
       setPaginationPage(page);
       setSelectedInvestor(null);
-      toast.info('Page changée', {
-        description: `Page ${page} sur ${totalPages}`,
+      toast.info(t('toast.pageChanged'), {
+        description: t('investors.page.pageOf', { page, total: totalPages }),
       });
     }
   };
@@ -267,8 +275,8 @@ export function InvestorsPage({ data, isLoading, allData, setAllData, onInvestor
   const handleItemsPerPageChange = (newItemsPerPage: number) => {
     setItemsPerPage(newItemsPerPage);
     setPaginationPage(1);
-    toast.success('Affichage modifié', {
-      description: `${newItemsPerPage} items par page`,
+    toast.success(t('toast.displayUpdated'), {
+      description: t('investors.page.itemsPerPageApplied', { count: newItemsPerPage }),
     });
   };
 
@@ -280,8 +288,8 @@ export function InvestorsPage({ data, isLoading, allData, setAllData, onInvestor
       onInvestorClick(row);
     } else {
       console.log('onInvestorClick is not defined!');
-      toast.error('Navigation non configurée', {
-        description: 'Le callback onInvestorClick n\'est pas défini'
+      toast.error(t('investors.toast.navigationNotConfigured'), {
+        description: t('investors.toast.navigationNotConfiguredDesc')
       });
     }
   };
@@ -299,8 +307,10 @@ export function InvestorsPage({ data, isLoading, allData, setAllData, onInvestor
       setSelectedInvestor({ ...selectedInvestor, monitoring: newMonitoringState });
     }
     
-    toast.success(newMonitoringState ? 'Monitoring activé' : 'Monitoring désactivé', {
-      description: `pour ${allData.find(i => i.id === investorId)?.name}`,
+    toast.success(newMonitoringState ? t('toast.monitoringEnabled') : t('toast.monitoringDisabled'), {
+      description: t('investors.toast.monitoringFor', {
+        name: allData.find(i => i.id === investorId)?.name ?? '',
+      }),
     });
   };
 
@@ -317,8 +327,11 @@ export function InvestorsPage({ data, isLoading, allData, setAllData, onInvestor
       setSelectedInvestor({ ...selectedInvestor, analyst: newAnalyst });
     }
     
-    toast.success('Analyst updated', {
-      description: `${newAnalyst} assigned to ${allData.find(i => i.id === investorId)?.name}`,
+    toast.success(t('toast.analystUpdated'), {
+      description: t('investors.toast.analystAssigned', {
+        analyst: newAnalyst,
+        name: allData.find(i => i.id === investorId)?.name ?? '',
+      }),
     });
   };
 
@@ -332,7 +345,7 @@ export function InvestorsPage({ data, isLoading, allData, setAllData, onInvestor
     const analysis: AIAnalysis = {
       question: query,
       insights: [],
-      summary: `Analyse des ${data.length} investisseurs selon : "${query}"`
+      summary: t('investors.toast.aiFilterAppliedDescMany', { count: data.length }) + ` — "${query}"`,
     };
     
     setAiAnalysis(analysis);
@@ -342,8 +355,10 @@ export function InvestorsPage({ data, isLoading, allData, setAllData, onInvestor
     setAiFilteredData(items);
     setAiAnalysis(null);
     setPaginationPage(1);
-    toast.success('Filtre AI appliqué', {
-      description: `${items.length} investisseur${items.length > 1 ? 's' : ''} affichée${items.length > 1 ? 's' : ''}`
+    toast.success(t('toast.aiFilterApplied'), {
+      description: items.length > 1
+        ? t('investors.toast.aiFilterAppliedDescMany', { count: items.length })
+        : t('investors.toast.aiFilterAppliedDescOne', { count: items.length })
     });
   };
 
@@ -351,8 +366,8 @@ export function InvestorsPage({ data, isLoading, allData, setAllData, onInvestor
     setAiAnalysis(null);
     setAiFilteredData(null);
     if (aiFilteredData) {
-      toast.info('Filtre AI désactivé', {
-        description: 'Affichage de tous les investisseurs'
+      toast.info(t('toast.aiFilterDisabled'), {
+        description: t('investors.toast.aiFilterDisabledDesc')
       });
     }
   };
@@ -420,10 +435,10 @@ export function InvestorsPage({ data, isLoading, allData, setAllData, onInvestor
       >
         {/* Filter Bar */}
         <div className="relative z-10 p-4 border-b border-gray-100 dark:border-gray-800">
-          <FilterBar 
+          <FilterBar
             searchValue={searchTerm}
             onSearchChange={handleSearchChange}
-            searchPlaceholder="Rechercher un investisseur..."
+            searchPlaceholder={t('investors.page.searchPlaceholder')}
             filters={filterConfigs}
             activeFilters={activeFilters}
             onFilterChange={handleFilterChange}
@@ -474,10 +489,12 @@ export function InvestorsPage({ data, isLoading, allData, setAllData, onInvestor
             className="px-6 py-4 border-t border-gray-100 dark:border-gray-800 flex items-center justify-between bg-gray-50/50 dark:bg-gray-900/50"
           >
             <div className="text-sm text-gray-600 dark:text-gray-400">
-              {startIndex + 1}-{endIndex} of {totalItems} items
+              {t('investors.page.itemsRange', { start: startIndex + 1, end: endIndex, total: totalItems })}
               {(hasActiveSearch || Object.keys(activeFilters).length > 0) && (
                 <span className="ml-2 text-blue-600 dark:text-blue-400">
-                  (filtré{totalItems !== data.length && ` de ${data.length}`})
+                  ({totalItems !== data.length
+                    ? t('investors.page.filteredOf', { count: data.length })
+                    : t('investors.page.filtered')})
                 </span>
               )}
             </div>
@@ -528,21 +545,21 @@ export function InvestorsPage({ data, isLoading, allData, setAllData, onInvestor
               <div className="ml-2 flex items-center gap-2">
                 <DropdownMenu>
                   <DropdownMenuTrigger className="flex items-center gap-1 px-2 py-1 hover:bg-white dark:hover:bg-gray-800 rounded-lg transition-all duration-200 outline-none">
-                    <span className="text-sm text-gray-600 dark:text-gray-400">{itemsPerPage}/page</span>
+                    <span className="text-sm text-gray-600 dark:text-gray-400">{t('investors.page.itemsPerPage', { count: itemsPerPage })}</span>
                     <ChevronDown className="w-4 h-4 text-gray-600 dark:text-gray-400" />
                   </DropdownMenuTrigger>
                   <DropdownMenuContent align="end">
                     <DropdownMenuItem onClick={() => handleItemsPerPageChange(10)} className="cursor-pointer">
-                      10 par page
+                      {t('investors.page.itemsPerPageOption', { count: 10 })}
                     </DropdownMenuItem>
                     <DropdownMenuItem onClick={() => handleItemsPerPageChange(20)} className="cursor-pointer">
-                      20 par page
+                      {t('investors.page.itemsPerPageOption', { count: 20 })}
                     </DropdownMenuItem>
                     <DropdownMenuItem onClick={() => handleItemsPerPageChange(50)} className="cursor-pointer">
-                      50 par page
+                      {t('investors.page.itemsPerPageOption', { count: 50 })}
                     </DropdownMenuItem>
                     <DropdownMenuItem onClick={() => handleItemsPerPageChange(100)} className="cursor-pointer">
-                      100 par page
+                      {t('investors.page.itemsPerPageOption', { count: 100 })}
                     </DropdownMenuItem>
                   </DropdownMenuContent>
                 </DropdownMenu>

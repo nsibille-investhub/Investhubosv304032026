@@ -10,6 +10,7 @@ import { Contact } from '../utils/investorGenerator';
 import { useState } from 'react';
 import { toast } from 'sonner';
 import { copyToClipboard } from '../utils/clipboard';
+import { useTranslation } from '../utils/languageContext';
 
 interface ContactsCardProps {
   contacts: Contact[];
@@ -33,11 +34,12 @@ export function ContactsCard({
   entityEmail,
   entityPhone
 }: ContactsCardProps) {
+  const { t } = useTranslation();
   const [copiedField, setCopiedField] = useState<string | null>(null);
 
   if (contacts.length === 0) {
     return (
-      <span className="text-xs text-gray-400 italic">Aucun contact</span>
+      <span className="text-xs text-gray-400 italic">{t('investors.table.noContact')}</span>
     );
   }
 

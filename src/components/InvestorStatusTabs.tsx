@@ -2,6 +2,7 @@ import { motion } from 'motion/react';
 import { Badge } from './ui/badge';
 import { UserPlus, MessageCircle, UserCheck, List } from 'lucide-react';
 import { FilterCard } from './ui/filter-card';
+import { useTranslation } from '../utils/languageContext';
 
 interface InvestorStatusTabsProps {
   data: any[];
@@ -10,6 +11,7 @@ interface InvestorStatusTabsProps {
 }
 
 export function InvestorStatusTabs({ data, activeStatus, onStatusChange }: InvestorStatusTabsProps) {
+  const { t } = useTranslation();
   const calculateKPIs = (filteredData: any[]) => {
     const total = filteredData.length;
     const totalInvested = filteredData.reduce((sum, inv) => sum + (inv.totalInvested || 0), 0);
@@ -62,12 +64,12 @@ export function InvestorStatusTabs({ data, activeStatus, onStatusChange }: Inves
       <div className="mb-3 flex items-center justify-between">
         <div className="flex items-center gap-2">
           <div className="w-1 h-6 bg-primary rounded-full" />
-          <h3 className="font-semibold text-gray-900">Pipeline Investisseurs</h3>
+          <h3 className="font-semibold text-gray-900">{t('investors.pipeline.title')}</h3>
           <Badge variant="outline" className="text-xs bg-primary/10 text-primary border-primary/25">
-            4 statuts
+            {t('investors.pipeline.statusBadge')}
           </Badge>
         </div>
-        <div className="text-xs text-gray-500">Cliquez sur un statut pour filtrer</div>
+        <div className="text-xs text-gray-500">{t('investors.pipeline.clickToFilter')}</div>
       </div>
 
       <div className="grid grid-cols-4 gap-1.5 items-center">
@@ -75,10 +77,10 @@ export function InvestorStatusTabs({ data, activeStatus, onStatusChange }: Inves
           status="prospect"
           activeStatus={activeStatus}
           onStatusChange={onStatusChange}
-          label="Prospect"
+          label={t('investors.pipeline.prospect')}
           icon={UserPlus}
           total={prospectKPIs.total}
-          metricLabel="Total investi"
+          metricLabel={t('investors.pipeline.totalInvested')}
           metricValue={`€${formatAmount(prospectKPIs.totalInvested)}`}
           averageValue={`€${formatAmount(prospectKPIs.avgInvested)}`}
         />
@@ -86,10 +88,10 @@ export function InvestorStatusTabs({ data, activeStatus, onStatusChange }: Inves
           status="en_discussion"
           activeStatus={activeStatus}
           onStatusChange={onStatusChange}
-          label="En discussion"
+          label={t('investors.pipeline.inDiscussion')}
           icon={MessageCircle}
           total={discussionKPIs.total}
-          metricLabel="Total investi"
+          metricLabel={t('investors.pipeline.totalInvested')}
           metricValue={`€${formatAmount(discussionKPIs.totalInvested)}`}
           averageValue={`€${formatAmount(discussionKPIs.avgInvested)}`}
         />
@@ -97,10 +99,10 @@ export function InvestorStatusTabs({ data, activeStatus, onStatusChange }: Inves
           status="en_relation"
           activeStatus={activeStatus}
           onStatusChange={onStatusChange}
-          label="En relation"
+          label={t('investors.pipeline.inRelation')}
           icon={UserCheck}
           total={relationKPIs.total}
-          metricLabel="Total investi"
+          metricLabel={t('investors.pipeline.totalInvested')}
           metricValue={`€${formatAmount(relationKPIs.totalInvested)}`}
           averageValue={`€${formatAmount(relationKPIs.avgInvested)}`}
         />
@@ -108,10 +110,10 @@ export function InvestorStatusTabs({ data, activeStatus, onStatusChange }: Inves
           status="all"
           activeStatus={activeStatus}
           onStatusChange={onStatusChange}
-          label="Tous"
+          label={t('investors.pipeline.all')}
           icon={List}
           total={allKPIs.total}
-          metricLabel="Total investi"
+          metricLabel={t('investors.pipeline.totalInvested')}
           metricValue={`€${formatAmount(allKPIs.totalInvested)}`}
           averageValue={`€${formatAmount(allKPIs.avgInvested)}`}
         />

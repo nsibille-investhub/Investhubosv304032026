@@ -8,6 +8,7 @@ import {
 } from "./ui/popover";
 import { LegalStructure } from '../utils/investorGenerator';
 import { HighlightText } from './HighlightText';
+import { useTranslation } from '../utils/languageContext';
 
 interface StructuresCellProps {
   structures: LegalStructure[];
@@ -15,9 +16,10 @@ interface StructuresCellProps {
 }
 
 export function StructuresCell({ structures, searchTerm = '' }: StructuresCellProps) {
+  const { t } = useTranslation();
   if (structures.length === 0) {
     return (
-      <span className="text-xs text-gray-400 italic">Aucune structure</span>
+      <span className="text-xs text-gray-400 italic">{t('investors.table.noStructure')}</span>
     );
   }
 
