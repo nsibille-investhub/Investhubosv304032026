@@ -219,23 +219,65 @@ const availableFunds = Object.keys(fundLabelMap).map(key => ({
   name: fundLabelMap[key]
 }));
 
-// Mock segments
+// Mock segments — aligned with the canonical InvestorTypology values
+// declared in gedFixtures.ts.
 const availableSegments = [
-  'Qualified Investors',
-  'Strategic Committee',
-  'Family Offices',
+  'Pension Fund',
+  'Insurance',
+  'Sovereign',
   'Institutional',
-  'Individuals',
-  'Corporate Investors',
-  'HNWI (High Net Worth)',
-  'Partner Distributors'
+  'Family Office',
+  'HNWI',
+  'UHNWI',
 ];
 
-// Mock subscriptions
-const availableSubscriptions = [
-  { id: 'sub-1', name: 'SUBSCRIPTION-2024-001', investor: 'Jean Dupont' },
-  { id: 'sub-2', name: 'SUBSCRIPTION-2024-002', investor: 'Marie Martin' },
-  { id: 'sub-3', name: 'SUBSCRIPTION-2024-003', investor: 'Pierre Durand' },
+// Canonical subscriptions — mirror the COMMITMENTS list in gedFixtures.ts.
+// Each subscription belongs to one investor on one fund; investors active
+// on both funds (e.g. Aldebaran Pension Fund) carry one subscription per
+// fund.
+const availableSubscriptions: { id: string; name: string; investor: string; fund: string }[] = [
+  // Northwind Growth Capital II (NWGC2)
+  { id: 'SUB-NWGC2-001', name: 'SUB-NWGC2-001', investor: 'Aldebaran Pension Fund', fund: 'NWGC2' },
+  { id: 'SUB-NWGC2-002', name: 'SUB-NWGC2-002', investor: 'Norwood Pension Trust', fund: 'NWGC2' },
+  { id: 'SUB-NWGC2-003', name: 'SUB-NWGC2-003', investor: 'Hartwood Retirement Plan', fund: 'NWGC2' },
+  { id: 'SUB-NWGC2-004', name: 'SUB-NWGC2-004', investor: 'Brentley Pension Scheme', fund: 'NWGC2' },
+  { id: 'SUB-NWGC2-005', name: 'SUB-NWGC2-005', investor: 'Caledonia Insurance Group', fund: 'NWGC2' },
+  { id: 'SUB-NWGC2-006', name: 'SUB-NWGC2-006', investor: 'Stratton Mutual Insurance', fund: 'NWGC2' },
+  { id: 'SUB-NWGC2-007', name: 'SUB-NWGC2-007', investor: 'Highbury Capital Allocators', fund: 'NWGC2' },
+  { id: 'SUB-NWGC2-008', name: 'SUB-NWGC2-008', investor: 'Camberwell Allocators', fund: 'NWGC2' },
+  { id: 'SUB-NWGC2-009', name: 'SUB-NWGC2-009', investor: 'Helmsford Foundation', fund: 'NWGC2' },
+  { id: 'SUB-NWGC2-010', name: 'SUB-NWGC2-010', investor: 'Brunswick Family Office', fund: 'NWGC2' },
+  { id: 'SUB-NWGC2-011', name: 'SUB-NWGC2-011', investor: 'Everstone Family Trust', fund: 'NWGC2' },
+  { id: 'SUB-NWGC2-012', name: 'SUB-NWGC2-012', investor: 'Marston Family Office', fund: 'NWGC2' },
+  { id: 'SUB-NWGC2-013', name: 'SUB-NWGC2-013', investor: 'Pemberton House', fund: 'NWGC2' },
+  { id: 'SUB-NWGC2-014', name: 'SUB-NWGC2-014', investor: 'Avalon Heritage Trust', fund: 'NWGC2' },
+  { id: 'SUB-NWGC2-015', name: 'SUB-NWGC2-015', investor: 'Greycliff Wealth Partners', fund: 'NWGC2' },
+  { id: 'SUB-NWGC2-016', name: 'SUB-NWGC2-016', investor: 'Ibex Mountain Holdings', fund: 'NWGC2' },
+  { id: 'SUB-NWGC2-017', name: 'SUB-NWGC2-017', investor: 'Westbrook Investments', fund: 'NWGC2' },
+  { id: 'SUB-NWGC2-018', name: 'SUB-NWGC2-018', investor: 'Carrington Private Wealth', fund: 'NWGC2' },
+  // Atlas Infrastructure Partners I (AIP1)
+  { id: 'SUB-AIP1-001', name: 'SUB-AIP1-001', investor: 'Aldebaran Pension Fund', fund: 'AIP1' },
+  { id: 'SUB-AIP1-002', name: 'SUB-AIP1-002', investor: 'Norwood Pension Trust', fund: 'AIP1' },
+  { id: 'SUB-AIP1-003', name: 'SUB-AIP1-003', investor: 'Brentley Pension Scheme', fund: 'AIP1' },
+  { id: 'SUB-AIP1-004', name: 'SUB-AIP1-004', investor: 'Hartwood Retirement Plan', fund: 'AIP1' },
+  { id: 'SUB-AIP1-005', name: 'SUB-AIP1-005', investor: 'Dunmore Sovereign Wealth', fund: 'AIP1' },
+  { id: 'SUB-AIP1-006', name: 'SUB-AIP1-006', investor: 'Tanvir Investment Authority', fund: 'AIP1' },
+  { id: 'SUB-AIP1-007', name: 'SUB-AIP1-007', investor: 'Suvarna Reserve Fund', fund: 'AIP1' },
+  { id: 'SUB-AIP1-008', name: 'SUB-AIP1-008', investor: 'Caledonia Insurance Group', fund: 'AIP1' },
+  { id: 'SUB-AIP1-009', name: 'SUB-AIP1-009', investor: 'Stratton Mutual Insurance', fund: 'AIP1' },
+  { id: 'SUB-AIP1-010', name: 'SUB-AIP1-010', investor: 'Vellington Re', fund: 'AIP1' },
+  { id: 'SUB-AIP1-011', name: 'SUB-AIP1-011', investor: 'Drumhill Reinsurance', fund: 'AIP1' },
+  { id: 'SUB-AIP1-012', name: 'SUB-AIP1-012', investor: 'Northpoint Insurance', fund: 'AIP1' },
+  { id: 'SUB-AIP1-013', name: 'SUB-AIP1-013', investor: 'Highbury Capital Allocators', fund: 'AIP1' },
+  { id: 'SUB-AIP1-014', name: 'SUB-AIP1-014', investor: 'Juniper Asset Management', fund: 'AIP1' },
+  { id: 'SUB-AIP1-015', name: 'SUB-AIP1-015', investor: 'Fairfield Endowment', fund: 'AIP1' },
+  { id: 'SUB-AIP1-016', name: 'SUB-AIP1-016', investor: 'Helmsford Foundation', fund: 'AIP1' },
+  { id: 'SUB-AIP1-017', name: 'SUB-AIP1-017', investor: 'Saint-Gaudens Endowment', fund: 'AIP1' },
+  { id: 'SUB-AIP1-018', name: 'SUB-AIP1-018', investor: 'Brunswick Family Office', fund: 'AIP1' },
+  { id: 'SUB-AIP1-019', name: 'SUB-AIP1-019', investor: 'Rosendale Wealth Office', fund: 'AIP1' },
+  { id: 'SUB-AIP1-020', name: 'SUB-AIP1-020', investor: 'Stenmark Capital', fund: 'AIP1' },
+  { id: 'SUB-AIP1-021', name: 'SUB-AIP1-021', investor: 'Ibex Mountain Holdings', fund: 'AIP1' },
+  { id: 'SUB-AIP1-022', name: 'SUB-AIP1-022', investor: 'Linden Holdings', fund: 'AIP1' },
 ];
 
 // Mock contact roles
@@ -269,6 +311,43 @@ const availableDocumentCategories: { value: DocumentCategory; labelKey: string }
   { value: 'tax', labelKey: 'ged.addModal.documentCategory.tax' },
   { value: 'marketing', labelKey: 'ged.addModal.documentCategory.marketing' },
   { value: 'other', labelKey: 'ged.addModal.documentCategory.other' },
+];
+
+// Demo scenarios — clicked from step 1 to synthesize a realistic file batch
+// that exercises the AI deduction (category, investor, subscription) plus
+// the auto-batching rules. The filenames are intentionally explicit so the
+// AI mock can recognise them; in real life filenames are messier.
+type DemoScenario = {
+  id: string;
+  titleKey: string;
+  descKey: string;
+  files: string[];
+};
+const demoScenarios: DemoScenario[] = [
+  {
+    id: 'capital-call-nwgc2',
+    titleKey: 'ged.dataRoom.massUpload.wizard.demo.capitalCallTitle',
+    descKey: 'ged.dataRoom.massUpload.wizard.demo.capitalCallDesc',
+    files: [
+      'Capital-Call_NWGC2_2025-Q3_SUB-NWGC2-001.pdf',
+      'Capital-Call_NWGC2_2025-Q3_SUB-NWGC2-002.pdf',
+      'Capital-Call_NWGC2_2025-Q3_SUB-NWGC2-003.pdf',
+      'Capital-Call_NWGC2_2025-Q3_SUB-NWGC2-004.pdf',
+      'Capital-Call_NWGC2_2025-Q3_SUB-NWGC2-005.pdf',
+    ],
+  },
+  {
+    id: 'tax-aldebaran',
+    titleKey: 'ged.dataRoom.massUpload.wizard.demo.taxPackageTitle',
+    descKey: 'ged.dataRoom.massUpload.wizard.demo.taxPackageDesc',
+    files: [
+      'IFU_Aldebaran-Pension-Fund_NWGC2_2024.pdf',
+      'IFU_Aldebaran-Pension-Fund_AIP1_2024.pdf',
+      'Annexe-Fiscale_Aldebaran-Pension-Fund_2024.pdf',
+      '2561-bis_Aldebaran-Pension-Fund_2024.pdf',
+      'Tax-Package-Cover_Aldebaran-Pension-Fund_2024.pdf',
+    ],
+  },
 ];
 
 // Available email templates
@@ -490,7 +569,23 @@ export function MassUploadWizard({ isOpen, onClose, existingFolders, inline = fa
       s => rawName.toUpperCase().includes(s.name.toUpperCase()),
     );
 
-    // 3) Investor detection — exact name, then last/distinctive token
+    // 3) Investor detection — exact name first, then longest distinctive
+    // token (filenames usually replace spaces with `_` or `-`, breaking the
+    // exact-name match, so we fall back to a single distinctive word).
+    const GENERIC_TOKENS = new Set([
+      'pension','fund','trust','plan','scheme','group','insurance','reinsurance',
+      'sovereign','wealth','authority','reserve','endowment','capital','allocators',
+      'asset','management','foundation','family','office','house','heritage',
+      'partners','holdings','investments','private','retirement','mutual',
+    ]);
+    const distinctiveToken = (name: string): string | undefined => {
+      const tokens = name
+        .toLowerCase()
+        .split(/[\s-]+/)
+        .filter(tok => tok.length >= 4 && !GENERIC_TOKENS.has(tok));
+      if (tokens.length === 0) return undefined;
+      return tokens.reduce((best, t) => (t.length > best.length ? t : best), tokens[0]);
+    };
     let detectedInvestor: typeof availableInvestors[number] | undefined;
     for (const inv of availableInvestors) {
       if (haystack.includes(inv.name.toLowerCase())) {
@@ -500,13 +595,8 @@ export function MassUploadWizard({ isOpen, onClose, existingFolders, inline = fa
     }
     if (!detectedInvestor) {
       for (const inv of availableInvestors) {
-        const tokens = inv.name
-          .toLowerCase()
-          .replace(/\(.*?\)/g, '')
-          .split(/\s+/)
-          .filter(tok => tok.length >= 4);
-        const lastToken = tokens[tokens.length - 1];
-        if (lastToken && new RegExp(`(^|[^a-z])${lastToken}([^a-z]|$)`, 'i').test(rawName)) {
+        const tok = distinctiveToken(inv.name);
+        if (tok && new RegExp(`(^|[^a-z])${tok}([^a-z]|$)`, 'i').test(rawName)) {
           detectedInvestor = inv;
           break;
         }
@@ -526,7 +616,9 @@ export function MassUploadWizard({ isOpen, onClose, existingFolders, inline = fa
     if (subscriptionMatch) {
       targetType = 'subscription';
       targetSubscriptions = [subscriptionMatch.id];
-      if (detectedInvestor?.fund) targetFunds = [detectedInvestor.fund];
+      // The subscription's own fund wins — an investor can subscribe to
+      // multiple funds, so we ignore the investor's primary fund here.
+      targetFunds = [subscriptionMatch.fund];
     } else if (detectedInvestor) {
       targetType = 'investor';
       targetInvestors = [detectedInvestor.id];
@@ -621,6 +713,17 @@ export function MassUploadWizard({ isOpen, onClose, existingFolders, inline = fa
     newFiles.forEach(newFile => {
       simulateUpload(newFile.id, newFile.file);
     });
+  };
+
+  // Synthesize empty PDF Files from a list of filenames and feed them to the
+  // existing upload pipeline — used by the demo loader buttons.
+  const loadDemoScenario = (scenario: DemoScenario) => {
+    const dt = new DataTransfer();
+    scenario.files.forEach(name => {
+      const blob = new Blob([`demo: ${name}`], { type: 'application/pdf' });
+      dt.items.add(new File([blob], name, { type: 'application/pdf' }));
+    });
+    handleFileUpload(dt.files);
   };
 
   // Drag & drop handling
@@ -1290,21 +1393,26 @@ export function MassUploadWizard({ isOpen, onClose, existingFolders, inline = fa
       });
       setAllAnalyzedToastShown(true);
 
-      // Auto-batch by investor (only on the first pass, only files not yet batched)
-      const groups = new Map<string, UploadedFile[]>();
+      // Auto-batch — two rules, applied in order:
+      //   Rule 1: same single investor (investor-targeted files)        → "Investor batch"
+      //   Rule 2: same documentCategory + same fund (subscription-       → "Campaign batch"
+      //           targeted files, e.g. fund-wide capital call)             with per-document targeting
+      const newBatches: UploadBatch[] = [];
+      const fileToBatch = new Map<string, string>();
+      let idx = 0;
+
+      // Rule 1 — investor batches
+      const investorGroups = new Map<string, UploadedFile[]>();
       for (const f of uploadedFiles) {
         if (f.batchId) continue;
         if (f.targetType !== 'investor') continue;
         if (f.targetInvestors.length !== 1) continue;
         const key = f.targetInvestors[0];
-        const arr = groups.get(key) ?? [];
+        const arr = investorGroups.get(key) ?? [];
         arr.push(f);
-        groups.set(key, arr);
+        investorGroups.set(key, arr);
       }
-      const newBatches: UploadBatch[] = [];
-      const fileToBatch = new Map<string, string>();
-      let idx = 0;
-      groups.forEach((files, investorId) => {
+      investorGroups.forEach((files, investorId) => {
         if (files.length < 2) return;
         const investor = availableInvestors.find(i => i.id === investorId);
         if (!investor) return;
@@ -1327,6 +1435,48 @@ export function MassUploadWizard({ isOpen, onClose, existingFolders, inline = fa
         newBatches.push(batch);
         files.forEach(f => fileToBatch.set(f.id, batch.id));
       });
+
+      // Rule 2 — campaign batches (category + fund) for subscription targeting
+      const campaignGroups = new Map<string, UploadedFile[]>();
+      for (const f of uploadedFiles) {
+        if (f.batchId) continue;
+        if (fileToBatch.has(f.id)) continue;
+        if (f.targetType !== 'subscription') continue;
+        if (!f.documentCategory) continue;
+        if (f.targetFunds.length !== 1) continue;
+        const key = `${f.documentCategory}|${f.targetFunds[0]}`;
+        const arr = campaignGroups.get(key) ?? [];
+        arr.push(f);
+        campaignGroups.set(key, arr);
+      }
+      campaignGroups.forEach((files, key) => {
+        if (files.length < 2) return;
+        const [category, fundCode] = key.split('|');
+        idx += 1;
+        const batch: UploadBatch = {
+          id: `batch-auto-${Date.now()}-${idx}`,
+          name: t('ged.dataRoom.massUpload.wizard.aiBatchCampaignName', {
+            category: t(`ged.addModal.documentCategory.${category}`),
+            fund: fundLabelMap[fundCode] ?? fundCode,
+          }),
+          validationTeam: ['ir'],
+          folderMode: 'per-document',
+          globalFolder: '',
+          // Per-document targeting: each file keeps its own subscription;
+          // only the (category, fund) is shared across the campaign.
+          targetingMode: 'per-document',
+          globalTargeting: {
+            targetType: 'subscription',
+            targetSegments: [],
+            targetInvestors: [],
+            targetSubscriptions: [],
+            targetFunds: [fundCode],
+          },
+        };
+        newBatches.push(batch);
+        files.forEach(f => fileToBatch.set(f.id, batch.id));
+      });
+
       if (newBatches.length > 0) {
         setBatches(prev => [...prev, ...newBatches]);
         setUploadedFiles(prev =>
@@ -1596,6 +1746,46 @@ export function MassUploadWizard({ isOpen, onClose, existingFolders, inline = fa
                       {t('ged.dataRoom.massUpload.wizard.aiAutofill')}
                     </p>
                   </div>
+
+                  {/* Demo loader — visible only when no files have been added yet */}
+                  {uploadedFiles.length === 0 && (
+                    <div className="mt-3 rounded-lg border border-dashed border-amber-200 bg-amber-50/40 px-4 py-3">
+                      <div className="flex items-center gap-2 mb-2">
+                        <Sparkles className="h-3.5 w-3.5 text-amber-500" />
+                        <span className="text-xs font-semibold text-gray-800">
+                          {t('ged.dataRoom.massUpload.wizard.demo.title')}
+                        </span>
+                        <span className="text-[11px] text-gray-500">
+                          {t('ged.dataRoom.massUpload.wizard.demo.subtitle')}
+                        </span>
+                      </div>
+                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                        {demoScenarios.map(scenario => (
+                          <button
+                            key={scenario.id}
+                            type="button"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              loadDemoScenario(scenario);
+                            }}
+                            className="text-left rounded-md border border-gray-200 bg-white px-3 py-2 hover:border-amber-300 hover:bg-amber-50 transition-colors"
+                          >
+                            <div className="flex items-start gap-2">
+                              <FileText className="mt-0.5 h-3.5 w-3.5 shrink-0 text-amber-500" />
+                              <div className="flex-1 min-w-0">
+                                <div className="text-xs font-medium text-gray-900">
+                                  {t(scenario.titleKey)}
+                                </div>
+                                <div className="mt-0.5 text-[11px] text-gray-500 truncate">
+                                  {t(scenario.descKey, { count: scenario.files.length })}
+                                </div>
+                              </div>
+                            </div>
+                          </button>
+                        ))}
+                      </div>
+                    </div>
+                  )}
 
                   {/* Deep Review Option */}
                   {uploadedFiles.length > 0 && fileStats.uploaded === fileStats.total && (

@@ -1088,8 +1088,17 @@
           "aiAnalysisCompleteTitle": "Analyse terminée !",
           "aiAnalysisCompleteDesc": "{{count}} fichier(s) pré-remplis par l'IA",
           "aiBatchName": "Lot investisseur — {{name}}",
+          "aiBatchCampaignName": "Campagne — {{category}} ({{fund}})",
           "aiBatchCreatedTitle": "Détection IA de lots",
-          "aiBatchCreatedDesc": "{{count}} lot(s) créé(s) automatiquement à partir de documents partageant le même investisseur",
+          "aiBatchCreatedDesc": "{{count}} lot(s) créé(s) automatiquement (même investisseur ou même campagne)",
+          "demo": {
+            "title": "Essayer un scénario de démo",
+            "subtitle": "Charge des noms de fichiers d'exemple pour que l'IA pré-remplisse tout",
+            "capitalCallTitle": "Appel de fonds — Northwind Growth Capital II",
+            "capitalCallDesc": "{{count}} avis de souscription · regroupés en lot campagne",
+            "taxPackageTitle": "Package fiscal — Aldebaran Pension Fund",
+            "taxPackageDesc": "{{count}} documents fiscaux (IFU, annexes) · regroupés par investisseur"
+          },
           "deepReviewTitle": "Revue détaillée",
           "deepReviewDesc": "Examiner chaque document avec son aperçu et ajuster les métadonnées extraites par l'IA avant la validation finale.",
           "analyzing": "Analyse IA en cours…",

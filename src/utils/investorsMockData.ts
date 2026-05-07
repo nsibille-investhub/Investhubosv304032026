@@ -14,180 +14,193 @@ export interface Investor {
   contacts: Contact[];
 }
 
+// Canonical investor universe — mirrors the LP list defined in
+// `gedFixtures.ts` so demo data, the wizard and the Targeting badges all
+// reference the same names. `fund` here is the investor's primary fund
+// (largest commitment); investors active on both funds are flagged via
+// subscriptions, not via this field.
 export const availableInvestors: Investor[] = [
-  { 
-    id: 'inv-1', 
-    name: 'Jean Dupont', 
-    email: 'jean.dupont@example.com',
-    segment: 'Investisseurs Qualifiés',
-    fund: 'pere1',
+  // Pension funds
+  { id: 'INV-001', name: 'Aldebaran Pension Fund', email: 'lp-relations@aldebaran-pension.eu', segment: 'Pension Fund', fund: 'AIP1',
     contacts: [
-      { id: 'c1-1', name: 'Maître Leblanc', email: 'leblanc@legal.com', role: 'Conseil Juridique' },
-      { id: 'c1-2', name: 'Antoine Mercier', email: 'mercier@audit.fr', role: 'Expert Comptable' },
-    ]
+      { id: 'INV-001-c1', name: 'Helena Krause', email: 'h.krause@aldebaran-pension.eu', role: 'Head of Private Markets' },
+      { id: 'INV-001-c2', name: 'Lars Nilsson', email: 'l.nilsson@aldebaran-pension.eu', role: 'Investment Officer' },
+    ],
   },
-  { 
-    id: 'inv-2', 
-    name: 'Marie Martin', 
-    email: 'marie.martin@example.com',
-    segment: 'Family Offices',
-    fund: 'pere1',
+  { id: 'INV-014', name: 'Norwood Pension Trust', email: 'investments@norwood-pension.uk', segment: 'Pension Fund', fund: 'AIP1',
     contacts: [
-      { id: 'c2-1', name: 'Claire Dubois', email: 'claire@family-office.com', role: 'Family Office' },
-      { id: 'c2-2', name: 'Jean Rousseau', email: 'rousseau@fiscalite.fr', role: 'Conseil Fiscal' },
-      { id: 'c2-3', name: 'Marc Vincent', email: 'vincent@patrimoine.fr', role: 'Gestionnaire de Patrimoine' },
-    ]
+      { id: 'INV-014-c1', name: 'Margaret Holloway', email: 'm.holloway@norwood-pension.uk', role: 'Director of Alternatives' },
+    ],
   },
-  { 
-    id: 'inv-3', 
-    name: 'Pierre Durand', 
-    email: 'pierre.durand@example.com',
-    segment: 'Comité Stratégique',
-    fund: 'pere2',
+  { id: 'INV-021', name: 'Hartwood Retirement Plan', email: 'capital@hartwood-retirement.eu', segment: 'Pension Fund', fund: 'AIP1',
     contacts: [
-      { id: 'c3-1', name: 'Sophie Lambert', email: 'lambert@legal.com', role: 'Représentant Légal' },
-    ]
+      { id: 'INV-021-c1', name: 'Étienne Vasseur', email: 'e.vasseur@hartwood-retirement.eu', role: 'Senior Investment Officer' },
+    ],
   },
-  { 
-    id: 'inv-4', 
-    name: 'Sophie Bernard', 
-    email: 'sophie.bernard@example.com',
-    segment: 'Institutionnels',
-    fund: 'fund-a',
+  { id: 'INV-031', name: 'Brentley Pension Scheme', email: 'lp@brentley-pension.com', segment: 'Pension Fund', fund: 'AIP1',
     contacts: [
-      { id: 'c4-1', name: 'Paul Girard', email: 'girard@bank.fr', role: 'Partenaire Bancaire' },
-      { id: 'c4-2', name: 'Lucie Fontaine', email: 'fontaine@compliance.com', role: 'Compliance Officer' },
-      { id: 'c4-3', name: 'Michel Roux', email: 'roux@trust.com', role: 'Trustee' },
-    ]
+      { id: 'INV-031-c1', name: 'Daniel Foster', email: 'd.foster@brentley-pension.com', role: 'Investment Manager' },
+    ],
   },
-  { 
-    id: 'inv-5', 
-    name: 'Thomas Petit', 
-    email: 'thomas.petit@example.com',
-    segment: 'HNWI (High Net Worth)',
-    fund: 'fund-b',
+  // Insurance & Re
+  { id: 'INV-003', name: 'Caledonia Insurance Group', email: 'investments@caledonia-ins.eu', segment: 'Insurance', fund: 'AIP1',
     contacts: [
-      { id: 'c5-1', name: 'Émilie Moreau', email: 'moreau@wealth.com', role: 'Gestionnaire de Patrimoine' },
-      { id: 'c5-2', name: 'David Laurent', email: 'laurent@legal.fr', role: 'Conseil Juridique' },
-    ]
+      { id: 'INV-003-c1', name: 'Iona Mackenzie', email: 'i.mackenzie@caledonia-ins.eu', role: 'Head of Investments' },
+      { id: 'INV-003-c2', name: 'Cameron Hughes', email: 'c.hughes@caledonia-ins.eu', role: 'Compliance Officer' },
+    ],
   },
-  { 
-    id: 'inv-6', 
-    name: 'Julie Dubois', 
-    email: 'julie.dubois@example.com',
-    segment: 'Corporate Investors',
-    fund: 'pere1',
+  { id: 'INV-017', name: 'Stratton Mutual Insurance', email: 'pe@stratton-mutual.com', segment: 'Insurance', fund: 'AIP1',
     contacts: [
-      { id: 'c6-1', name: 'François Petit', email: 'petit@corporate.com', role: 'Administrateur' },
-      { id: 'c6-2', name: 'Isabelle Blanc', email: 'blanc@audit.com', role: 'Auditeur' },
-    ]
+      { id: 'INV-017-c1', name: 'Patricia Lowell', email: 'p.lowell@stratton-mutual.com', role: 'PE Portfolio Manager' },
+    ],
   },
-  { 
-    id: 'inv-7', 
-    name: 'Charles de Montfort', 
-    email: 'charles.montfort@example.com',
-    segment: 'HNWI (High Net Worth)',
-    fund: 'pere1',
+  { id: 'INV-019', name: 'Vellington Re', email: 'capital@vellington-re.eu', segment: 'Insurance', fund: 'AIP1',
     contacts: [
-      { id: 'c7-1', name: 'Valérie Deschamps', email: 'deschamps@wealth.fr', role: 'Gestionnaire de Patrimoine' },
-      { id: 'c7-2', name: 'Philippe Arnaud', email: 'arnaud@fiscal.com', role: 'Conseil Fiscal' },
-      { id: 'c7-3', name: 'Sandrine Roussel', email: 'roussel@legal.fr', role: 'Conseil Juridique' },
-    ]
+      { id: 'INV-019-c1', name: 'Maya Bergmann', email: 'm.bergmann@vellington-re.eu', role: 'Capital Allocator' },
+    ],
   },
-  { 
-    id: 'inv-8', 
-    name: 'Alpha Investment Partners', 
-    email: 'contact@alpha-investments.com',
-    segment: 'HNWI (High Net Worth)',
-    fund: 'pere2',
+  { id: 'INV-024', name: 'Drumhill Reinsurance', email: 'allocations@drumhill-re.lu', segment: 'Insurance', fund: 'AIP1',
     contacts: [
-      { id: 'c8-1', name: 'David Richardson', email: 'drichardson@alpha-investments.com', role: 'Managing Partner' },
-      { id: 'c8-2', name: 'Sarah Mitchell', email: 'smitchell@alpha-investments.com', role: 'Investment Director' },
-      { id: 'c8-3', name: 'Thomas Chen', email: 'tchen@alpha-investments.com', role: 'Legal Counsel' },
-    ]
+      { id: 'INV-024-c1', name: 'Olivier Janssen', email: 'o.janssen@drumhill-re.lu', role: 'Head of Allocations' },
+    ],
   },
-  { 
-    id: 'inv-8b', 
-    name: 'Nathalie Beaumont', 
-    email: 'nathalie.beaumont@example.com',
-    segment: 'HNWI (High Net Worth)',
-    fund: 'pere2',
+  { id: 'INV-035', name: 'Northpoint Insurance', email: 'lp-relations@northpoint-ins.com', segment: 'Insurance', fund: 'AIP1',
     contacts: [
-      { id: 'c8b-1', name: 'Olivier Blanchard', email: 'blanchard@family-office.com', role: 'Family Office' },
-      { id: 'c8b-2', name: 'Caroline Mercier', email: 'mercier@patrimoine.com', role: 'Gestionnaire de Patrimoine' },
-    ]
+      { id: 'INV-035-c1', name: 'Erik Sandstrom', email: 'e.sandstrom@northpoint-ins.com', role: 'LP Relations' },
+    ],
   },
-  { 
-    id: 'inv-9', 
-    name: 'Alexandre Fontaine', 
-    email: 'alexandre.fontaine@example.com',
-    segment: 'HNWI (High Net Worth)',
-    fund: 'fund-a',
+  // Sovereign
+  { id: 'INV-004', name: 'Dunmore Sovereign Wealth', email: 'capital@dunmore-swf.gov', segment: 'Sovereign', fund: 'AIP1',
     contacts: [
-      { id: 'c9-1', name: 'Martine Leroy', email: 'leroy@trust.com', role: 'Trustee' },
-      { id: 'c9-2', name: 'Laurent Gauthier', email: 'gauthier@legal.fr', role: 'Conseil Juridique' },
-      { id: 'c9-3', name: 'Sylvie Renard', email: 'renard@compliance.com', role: 'Compliance Officer' },
-    ]
+      { id: 'INV-004-c1', name: 'Aiden Calder', email: 'a.calder@dunmore-swf.gov', role: 'Director, Private Markets' },
+      { id: 'INV-004-c2', name: 'Ravi Subramanian', email: 'r.subramanian@dunmore-swf.gov', role: 'Senior Analyst' },
+    ],
   },
-  { 
-    id: 'inv-10', 
-    name: 'Pension Fund Aquitaine', 
-    email: 'contact@pension-aquitaine.fr',
-    segment: 'Institutional',
-    fund: 'fund-a',
+  { id: 'INV-018', name: 'Tanvir Investment Authority', email: 'lp@tanvir-ia.gov', segment: 'Sovereign', fund: 'AIP1',
     contacts: [
-      { id: 'c10-1', name: 'Jacques Petit', email: 'petit@pension.fr', role: 'Fund Manager' },
-      { id: 'c10-2', name: 'Anne Duval', email: 'duval@pension.fr', role: 'Investment Officer' },
-    ]
+      { id: 'INV-018-c1', name: 'Salima Karim', email: 's.karim@tanvir-ia.gov', role: 'Head of Alternatives' },
+    ],
   },
-  { 
-    id: 'inv-11', 
-    name: 'Institutional Investors Group', 
-    email: 'contact@iig.com',
-    segment: 'Institutional',
-    fund: 'pere1',
+  { id: 'INV-032', name: 'Suvarna Reserve Fund', email: 'investments@suvarna-reserve.gov', segment: 'Sovereign', fund: 'AIP1',
     contacts: [
-      { id: 'c11-1', name: 'Robert Chen', email: 'chen@iig.com', role: 'Director' },
-    ]
+      { id: 'INV-032-c1', name: 'Aarav Mehta', email: 'a.mehta@suvarna-reserve.gov', role: 'Investment Director' },
+    ],
   },
-  { 
-    id: 'inv-12', 
-    name: 'John Smith (Retail)', 
-    email: 'john.smith@gmail.com',
-    segment: 'Retail',
-    fund: 'pere1',
+  // Institutional / endowments / foundations
+  { id: 'INV-006', name: 'Fairfield Endowment', email: 'endowment@fairfield-edu.org', segment: 'Institutional', fund: 'AIP1',
     contacts: [
-      { id: 'c12-1', name: 'John Smith', email: 'john.smith@gmail.com', role: 'Investisseur' },
-    ]
+      { id: 'INV-006-c1', name: 'Catherine Whitman', email: 'c.whitman@fairfield-edu.org', role: 'CIO' },
+    ],
   },
-  { 
-    id: 'inv-13', 
-    name: 'Marie Rousseau (Retail)', 
-    email: 'marie.rousseau@gmail.com',
-    segment: 'Retail',
-    fund: 'fund-b',
+  { id: 'INV-008', name: 'Highbury Capital Allocators', email: 'lp@highbury-capital.com', segment: 'Institutional', fund: 'AIP1',
     contacts: [
-      { id: 'c13-1', name: 'Marie Rousseau', email: 'marie.rousseau@gmail.com', role: 'Investisseur' },
-    ]
+      { id: 'INV-008-c1', name: 'Marcus Bellamy', email: 'm.bellamy@highbury-capital.com', role: 'Managing Director' },
+    ],
+  },
+  { id: 'INV-010', name: 'Juniper Asset Management', email: 'pe@juniper-am.com', segment: 'Institutional', fund: 'AIP1',
+    contacts: [
+      { id: 'INV-010-c1', name: 'Théo Renard', email: 't.renard@juniper-am.com', role: 'Head of PE' },
+    ],
+  },
+  { id: 'INV-022', name: 'Helmsford Foundation', email: 'allocations@helmsford-foundation.org', segment: 'Institutional', fund: 'AIP1',
+    contacts: [
+      { id: 'INV-022-c1', name: 'Ophelia Beckett', email: 'o.beckett@helmsford-foundation.org', role: 'Allocations Officer' },
+    ],
+  },
+  { id: 'INV-023', name: 'Camberwell Allocators', email: 'pe@camberwell-allocators.com', segment: 'Institutional', fund: 'NWGC2',
+    contacts: [
+      { id: 'INV-023-c1', name: 'Jonas Lindqvist', email: 'j.lindqvist@camberwell-allocators.com', role: 'Senior Allocator' },
+    ],
+  },
+  { id: 'INV-025', name: 'Saint-Gaudens Endowment', email: 'investments@stgaudens-endowment.org', segment: 'Institutional', fund: 'AIP1',
+    contacts: [
+      { id: 'INV-025-c1', name: 'Eleanor Voss', email: 'e.voss@stgaudens-endowment.org', role: 'Director of Investments' },
+    ],
+  },
+  // Family Offices
+  { id: 'INV-002', name: 'Brunswick Family Office', email: 'office@brunswick-fo.com', segment: 'Family Office', fund: 'AIP1',
+    contacts: [
+      { id: 'INV-002-c1', name: 'William Brunswick', email: 'w.brunswick@brunswick-fo.com', role: 'Principal' },
+      { id: 'INV-002-c2', name: 'Hugo Caron', email: 'h.caron@brunswick-fo.com', role: 'Head of Investments' },
+    ],
+  },
+  { id: 'INV-005', name: 'Everstone Family Trust', email: 'trust@everstone-family.com', segment: 'Family Office', fund: 'NWGC2',
+    contacts: [
+      { id: 'INV-005-c1', name: 'Vivienne Everstone', email: 'v.everstone@everstone-family.com', role: 'Trustee' },
+    ],
+  },
+  { id: 'INV-013', name: 'Marston Family Office', email: 'office@marston-fo.eu', segment: 'Family Office', fund: 'NWGC2',
+    contacts: [
+      { id: 'INV-013-c1', name: 'Antoine Marston', email: 'a.marston@marston-fo.eu', role: 'Principal' },
+    ],
+  },
+  { id: 'INV-015', name: 'Pemberton House', email: 'allocations@pemberton-house.com', segment: 'Family Office', fund: 'NWGC2',
+    contacts: [
+      { id: 'INV-015-c1', name: 'Charlotte Pemberton', email: 'c.pemberton@pemberton-house.com', role: 'Head of Allocations' },
+    ],
+  },
+  { id: 'INV-016', name: 'Rosendale Wealth Office', email: 'office@rosendale-wo.com', segment: 'Family Office', fund: 'AIP1',
+    contacts: [
+      { id: 'INV-016-c1', name: 'Sebastian Rosendale', email: 's.rosendale@rosendale-wo.com', role: 'Principal' },
+    ],
+  },
+  { id: 'INV-026', name: 'Avalon Heritage Trust', email: 'trust@avalon-heritage.com', segment: 'Family Office', fund: 'NWGC2',
+    contacts: [
+      { id: 'INV-026-c1', name: 'Iris Avalon', email: 'i.avalon@avalon-heritage.com', role: 'Trustee' },
+    ],
+  },
+  { id: 'INV-028', name: 'Stenmark Capital', email: 'office@stenmark-capital.se', segment: 'Family Office', fund: 'AIP1',
+    contacts: [
+      { id: 'INV-028-c1', name: 'Annika Stenmark', email: 'a.stenmark@stenmark-capital.se', role: 'Principal' },
+    ],
+  },
+  // HNWI / UHNWI
+  { id: 'INV-007', name: 'Greycliff Wealth Partners', email: 'partners@greycliff.io', segment: 'HNWI', fund: 'NWGC2',
+    contacts: [
+      { id: 'INV-007-c1', name: 'Theodore Greycliff', email: 't.greycliff@greycliff.io', role: 'Managing Partner' },
+    ],
+  },
+  { id: 'INV-009', name: 'Ibex Mountain Holdings', email: 'mailbox@ibex-mountain.com', segment: 'UHNWI', fund: 'AIP1',
+    contacts: [
+      { id: 'INV-009-c1', name: 'Mateo Lambert', email: 'm.lambert@ibex-mountain.com', role: 'Investment Lead' },
+    ],
+  },
+  { id: 'INV-020', name: 'Westbrook Investments', email: 'office@westbrook-investments.com', segment: 'UHNWI', fund: 'NWGC2',
+    contacts: [
+      { id: 'INV-020-c1', name: 'Jessica Westbrook', email: 'j.westbrook@westbrook-investments.com', role: 'Family Principal' },
+    ],
+  },
+  { id: 'INV-027', name: 'Carrington Private Wealth', email: 'wealth@carrington-pw.com', segment: 'HNWI', fund: 'NWGC2',
+    contacts: [
+      { id: 'INV-027-c1', name: 'Beatrice Carrington', email: 'b.carrington@carrington-pw.com', role: 'Director' },
+    ],
+  },
+  { id: 'INV-033', name: 'Linden Holdings', email: 'office@linden-holdings.lu', segment: 'UHNWI', fund: 'AIP1',
+    contacts: [
+      { id: 'INV-033-c1', name: 'Mathieu Linden', email: 'm.linden@linden-holdings.lu', role: 'Family Principal' },
+    ],
   },
 ];
 
+// Maps fund codes to display labels. NWGC2 / AIP1 are the canonical funds
+// shared with `gedFixtures.ts`. The legacy keys are kept for backward
+// compatibility with components that still hardcode them (FolderDetailPanel,
+// AddDocumentDialog, documentMockData) until they are migrated.
 export const fundLabelMap: { [key: string]: string } = {
-  'pere1': 'PERE 1',
-  'pere2': 'PERE 2',
+  NWGC2: 'Northwind Growth Capital II',
+  AIP1: 'Atlas Infrastructure Partners I',
+  pere1: 'PERE 1',
+  pere2: 'PERE 2',
   'fund-a': 'Fonds A - Innovation',
   'fund-b': 'Fonds B - Tech',
 };
 
 export const availableSegments = [
-  'Investisseurs Qualifiés',
-  'Comité Stratégique',
-  'Family Offices',
-  'Institutionnels',
-  'Institutional', // Anglais pour tester les conflits
-  'Retail', // Pour tester les conflits
-  'Particuliers',
-  'Corporate Investors',
-  'HNWI (High Net Worth)',
-  'Distributeurs Partenaires'
+  'Pension Fund',
+  'Insurance',
+  'Sovereign',
+  'Institutional',
+  'Family Office',
+  'HNWI',
+  'UHNWI',
 ];
