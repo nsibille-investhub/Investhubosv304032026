@@ -19,6 +19,7 @@ import {
   deleteFolderFromTree,
 } from '../utils/folderDeletion';
 import { useTranslation } from '../utils/languageContext';
+import { GedExtraDocument, useValidationStore } from '../utils/validationStoreContext';
 
 type ViewMode = 'list' | 'grid';
 
@@ -38,8 +39,57 @@ interface DocumentsPageProps {
   onNavigationHandled?: () => void;
 }
 
+const FORMAT_TO_DOCUMENT_TYPE: Record<string, Document['type']> = {
+  pdf: 'pdf',
+  docx: 'word',
+  xlsx: 'excel',
+  pptx: 'pdf',
+};
+
+/** Build a Document so a freshly validated/rejected GED extra surfaces in
+ * the data room without going through the cached space tree. */
+function extraToDocument(extra: GedExtraDocument, _t: unknown): Document {
+  const uploadedAt = new Date(extra.uploadedAt);
+  return {
+    id: extra.id,
+    name: extra.name,
+    type: FORMAT_TO_DOCUMENT_TYPE[extra.format] ?? 'pdf',
+    size: extra.size,
+    path: `/${extra.pathSegments.join('/')}`,
+    uploadedBy: extra.uploadedBy,
+    uploadedAt: uploadedAt.toISOString(),
+    updatedAt: uploadedAt.toISOString(),
+    version: 1,
+    status: extra.status === 'validated' ? 'published' : 'draft',
+    target: {
+      type: 'all',
+      segments: [],
+      investors: [],
+      subscriptions: [],
+      participations: [],
+    },
+    access: {
+      level: 'view',
+      watermark: false,
+      downloadable: true,
+      printable: true,
+    },
+    isNew: true,
+    notifyOnUpload: false,
+    reporting: false,
+    views: 0,
+    downloads: 0,
+    metadata: {
+      fund: extra.pathSegments[0],
+      segments: [],
+    },
+  };
+}
+
+
 export function DocumentsPage({ selectedSpace, navigationTarget, onNavigationHandled }: DocumentsPageProps) {
   const { t } = useTranslation();
+  const { gedExtras } = useValidationStore();
   const [viewMode, setViewMode] = useState<ViewMode>('list');
   const [selectedDocument, setSelectedDocument] = useState<Document | null>(null);
   const [selectedFolder, setSelectedFolder] = useState<Document | null>(null);
@@ -324,6 +374,24 @@ export function DocumentsPage({ selectedSpace, navigationTarget, onNavigationHan
     setSpaceDocuments(initialSpaceDocuments);
   }, [initialSpaceDocuments]);
 
+  /** Convert a freshly validated/rejected document promoted by the validation
+   * page into a Document so the data room can render it inline. They appear
+   * at the root of the space, flagged as new, until the page is refreshed. */
+  const gedExtrasForSpace = useMemo(() => {
+    return gedExtras.filter((e) => e.spaceId === selectedSpace.id);
+  }, [gedExtras, selectedSpace.id]);
+
+  const dynamicSpaceDocuments: Document[] = useMemo(() => {
+    return gedExtrasForSpace.map((extra) => extraToDocument(extra, t));
+  }, [gedExtrasForSpace, t]);
+
+  const mergedSpaceDocuments: Document[] = useMemo(() => {
+    if (dynamicSpaceDocuments.length === 0) return spaceDocuments;
+    const existingIds = new Set(spaceDocuments.map((d) => d.id));
+    const additions = dynamicSpaceDocuments.filter((d) => !existingIds.has(d.id));
+    return [...additions, ...spaceDocuments];
+  }, [dynamicSpaceDocuments, spaceDocuments]);
+
   const handleDeleteFolder = (folder: Document, migrateToFolderId: string | null) => {
     const docCount = countDescendantDocuments(folder);
     const docsToMigrate = migrateToFolderId ? collectDescendantDocuments(folder) : [];
@@ -458,7 +526,7 @@ export function DocumentsPage({ selectedSpace, navigationTarget, onNavigationHan
     setActiveFilters(filters);
   };
 
-  const filteredDocuments = useMemo(() => spaceDocuments, [spaceDocuments]);
+  const filteredDocuments = useMemo(() => mergedSpaceDocuments, [mergedSpaceDocuments]);
 
   // Find current folder object
   const findFolderById = (docs: Document[], folderId: string | null): Document | null => {

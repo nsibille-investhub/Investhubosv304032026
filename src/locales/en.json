@@ -1091,6 +1091,10 @@
           "aiBatchCampaignName": "Campaign — {{category}} ({{fund}})",
           "aiBatchCreatedTitle": "AI batch detection",
           "aiBatchCreatedDesc": "{{count}} batch(es) automatically created (same investor or same campaign)",
+          "toast": {
+            "importSuccessTitle": "Import sent for validation",
+            "importSuccessDesc": "{{count}} document(s) added to the validation queue."
+          },
           "demo": {
             "title": "Try a demo scenario",
             "subtitle": "Download the sample files to drag them in yourself, or load them directly",
@@ -2151,7 +2155,17 @@
       "kind": {
         "capitalCall": "Capital Call",
         "quarterlyReporting": "Quarterly Reporting",
-        "distributorAgreement": "Distributor Agreement (internal)"
+        "distributorAgreement": "Distributor Agreement (internal)",
+        "taxCertificate": "Tax Certificate",
+        "esgDisclosure": "ESG / SFDR Disclosure",
+        "distribution": "Distribution",
+        "annualReport": "Annual Report",
+        "subscription": "Subscription Document",
+        "kyc": "KYC / AML",
+        "legal": "Legal Document",
+        "tax": "Tax Document",
+        "marketing": "Marketing Document",
+        "other": "Other Document"
       },
       "role": {
         "investor": "Investor",

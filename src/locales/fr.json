@@ -1091,6 +1091,10 @@
           "aiBatchCampaignName": "Campagne — {{category}} ({{fund}})",
           "aiBatchCreatedTitle": "Détection IA de lots",
           "aiBatchCreatedDesc": "{{count}} lot(s) créé(s) automatiquement (même investisseur ou même campagne)",
+          "toast": {
+            "importSuccessTitle": "Import envoyé en validation",
+            "importSuccessDesc": "{{count}} document(s) ajouté(s) à la file d'attente de validation."
+          },
           "demo": {
             "title": "Essayer un scénario de démo",
             "subtitle": "Télécharge les fichiers pour les déposer toi-même, ou charge-les directement",
@@ -2151,7 +2155,17 @@
       "kind": {
         "capitalCall": "Appel de fonds",
         "quarterlyReporting": "Reporting trimestriel",
-        "distributorAgreement": "Convention de distribution (interne)"
+        "distributorAgreement": "Convention de distribution (interne)",
+        "taxCertificate": "Certificat fiscal",
+        "esgDisclosure": "Reporting ESG / SFDR",
+        "distribution": "Distribution",
+        "annualReport": "Rapport annuel",
+        "subscription": "Document de souscription",
+        "kyc": "KYC / LAB",
+        "legal": "Document juridique",
+        "tax": "Document fiscal",
+        "marketing": "Document marketing",
+        "other": "Autre document"
       },
       "role": {
         "investor": "Investisseur",
