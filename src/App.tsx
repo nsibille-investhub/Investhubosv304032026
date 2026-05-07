@@ -35,6 +35,7 @@ import { SubscriptionStatusTabs } from './components/SubscriptionStatusTabs';
 import { InactiveSubscriptionTabs } from './components/InactiveSubscriptionTabs';
 import { DataRoomPage } from './components/DataRoomPage';
 import { BirdViewPage } from './components/BirdViewPage';
+import { PitchDeckPage } from './components/PitchDeckPage';
 import { ValidationPage } from './components/ValidationPage';
 import { CompliancePlusPage } from './components/CompliancePlusPage';
 import { SubscriptionsPage } from './components/SubscriptionsPage';
@@ -809,6 +810,12 @@ export default function App() {
                   <span className="text-gray-400 dark:text-gray-500">{t('breadcrumb.investhubOs')}</span>
                   <span className="text-gray-300 dark:text-gray-700">/</span>
                   <span className="text-gray-900 dark:text-gray-100 font-medium">{t('breadcrumb.whatsNew')}</span>
+                </>
+              ) : currentPage === 'pitch-deck' ? (
+                <>
+                  <span className="text-gray-400 dark:text-gray-500">{t('breadcrumb.dataRoom')}</span>
+                  <span className="text-gray-300 dark:text-gray-700">/</span>
+                  <span className="text-gray-900 dark:text-gray-100 font-medium">{t('ged.pitchDeck.menuLabel')}</span>
                 </>
               ) : currentPage?.startsWith('settings-') ? (
                 <>
@@ -1737,6 +1744,12 @@ export default function App() {
           {currentPage === 'birdview' && (
             <div className="flex-1 flex flex-col overflow-hidden">
               <BirdViewPage onBack={() => setCurrentPage('documents')} />
+            </div>
+          )}
+
+          {currentPage === 'pitch-deck' && (
+            <div className="flex-1 flex flex-col overflow-hidden">
+              <PitchDeckPage onBack={() => navigateToPage('documents')} />
             </div>
           )}
 

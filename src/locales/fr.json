@@ -2015,6 +2015,147 @@
       "createdToastFolder": "Dossier créé avec succès !",
       "exportImpossible": "Impossible d'exporter",
       "scopeEmpty": "Le scope de ciblage est vide"
+    },
+    "pitchDeck": {
+      "menuLabel": "Pitch Deck",
+      "menuDescription": "Découvrir la GED+ en mode démo commerciale",
+      "moreActionsLabel": "Plus d'actions",
+      "backToSpaces": "Retour aux espaces",
+      "hero": {
+        "badge": "GED+ · La Data Room d'engagement",
+        "title": "De la Data Room passive à l'outil actif de pilotage de la relation LP.",
+        "subtitle": "InvestHub centralise, structure, sécurise et diffuse l'ensemble des documents liés à la relation investisseurs — puis mesure leur engagement réel pour transformer la GED en levier commercial.",
+        "quote": "Ne vous demandez plus si vos investisseurs lisent vos rapports. Sachez-le."
+      },
+      "vision": {
+        "kicker": "Vision produit",
+        "title": "Une Data Room conçue pour l'investissement alternatif.",
+        "body": "La GED+ d'InvestHub est un composant central de la plateforme : communication investisseurs, distribution réglementaire, suivi du cycle de vie des investissements, conformité, accès portails LP & partenaires. Tout est traçable, tout est mesurable.",
+        "callout": "Là où une GED classique stocke des documents, GED+ mesure, analyse et optimise l'engagement documentaire des investisseurs et de leurs contacts.",
+        "bullets": {
+          "0": "Architecture Espaces → Dossiers → Documents pensée pour la scalabilité (plusieurs dizaines de milliers de documents par fonds).",
+          "1": "Ciblage par fonds, segments, structures, souscriptions et groupes de contacts — avec logique d'entonnoir héritée.",
+          "2": "Multi-langues, multi-rôles : LP, contacts, conseillers, partenaires de distribution.",
+          "3": "Piste d'audit complète au service de la conformité et du suivi commercial."
+        }
+      },
+      "flow": {
+        "kicker": "Le flux GED+ de bout en bout",
+        "title": "Six étapes orchestrées dans un seul outil.",
+        "subtitle": "Des sources documentaires au pilotage de l'engagement, chaque étape s'enchaîne sans rupture et nourrit la suivante.",
+        "step": "Étape {{n}}",
+        "stages": {
+          "sources": {
+            "title": "Sources documentaires",
+            "body": "Documents InvestHub ou systèmes externes connectés via connecteurs."
+          },
+          "organize": {
+            "title": "Espaces & Import en masse",
+            "body": "Espaces, dossiers, ciblage hérité et import multi-documents en une opération."
+          },
+          "validation": {
+            "title": "Workflow de validation",
+            "body": "Équipes de validation, contrôle des publications, traçabilité complète."
+          },
+          "notifications": {
+            "title": "Notifications",
+            "body": "Templates multi-langues, envoi immédiat ou programmé, relances ciblées."
+          },
+          "portals": {
+            "title": "Portails investisseurs",
+            "body": "Diffusion sécurisée vers les LP, contacts et conseillers selon leurs droits."
+          },
+          "birdview": {
+            "title": "Birdview",
+            "body": "Tracking, mesure de l'engagement, scoring et relance intelligente."
+          }
+        }
+      },
+      "pillars": {
+        "kicker": "Ce qui change avec GED+",
+        "title": "Six piliers pour transformer la GED en outil de pilotage.",
+        "0": {
+          "title": "Architecture par contexte métier",
+          "body": "Espaces dédiés Investisseurs LP, Reportings fonds, Due Diligence, Partenaires, Multi-fonds HNWI — chacun avec sa typologie, ses fonds et ses segments."
+        },
+        "1": {
+          "title": "Ciblage très précis & cohérent",
+          "body": "Fonds, segments, investisseurs, structures, souscriptions, groupes de contacts. Le contexte est hérité et ne peut jamais être élargi : sécurité par construction."
+        },
+        "2": {
+          "title": "Workflow de validation natif",
+          "body": "Activez le workflow par espace : équipes de validation désignées, publication contrôlée, notifications uniquement après validation."
+        },
+        "3": {
+          "title": "Import en masse industrialisé",
+          "body": "Jusqu'à 100 documents par session, configuration groupée (dossier, ciblage, notification, équipe), sauvegarde automatique de la session."
+        },
+        "4": {
+          "title": "Tracking & mesure d'engagement",
+          "body": "Notifications envoyées et ouvertes, documents consultés, téléchargés. Indicateur global et taux par investisseur, par contact, par conseiller."
+        },
+        "5": {
+          "title": "Relance intelligente",
+          "body": "Relancez précisément ceux qui n'ont pas ouvert l'email ou pas consulté le document. Templates personnalisables, export CSV des destinataires."
+        }
+      },
+      "kpis": {
+        "title": "L'impact mesuré côté équipes Investor Relations.",
+        "subtitle": "GED+ devient un outil de reporting interne IR, d'aide à la priorisation commerciale, de monitoring compliance et d'analyse comportementale LP.",
+        "engagement": "Taux d'engagement documentaire visible par espace, par document et par investisseur.",
+        "massUpload": "Gain de temps sur les opérations récurrentes : appels de fonds, reportings, documents réglementaires.",
+        "audit": "Piste d'audit sur les communications : envoi, délivrance, ouverture, clic, consultation, téléchargement.",
+        "availability": "Documents disponibles en continu sur les portails LP, contacts et conseillers."
+      },
+      "compare": {
+        "kicker": "Positionnement marché",
+        "title": "GED classique vs GED+ InvestHub.",
+        "classicLabel": "GED classique",
+        "classicTitle": "Stocker, partager, gérer des permissions.",
+        "classic": {
+          "0": "Stockage de documents centralisé.",
+          "1": "Partage multi-utilisateurs.",
+          "2": "Permissions et droits d'accès."
+        },
+        "gedPlusLabel": "GED+ InvestHub",
+        "gedPlusTitle": "Stocker, diffuser, mesurer, piloter la relation LP.",
+        "gedPlus": {
+          "0": "Stockage de documents centralisé.",
+          "1": "Partage multi-utilisateurs.",
+          "2": "Permissions et droits d'accès.",
+          "3": "Tracking comportemental investisseurs et contacts.",
+          "4": "Scoring d'engagement et taux de consultation par document.",
+          "5": "Relance intelligente et pilotage des LP, y compris institutionnels complexes."
+        }
+      },
+      "useCases": {
+        "kicker": "Cas d'usage",
+        "title": "GED+ au service du quotidien Investor Relations.",
+        "0": {
+          "title": "Rapport trimestriel multi-fonds",
+          "steps": {
+            "0": "Import en masse des reportings dans l'espace ciblé (fonds, segment).",
+            "1": "Validation par l'équipe désignée puis publication automatique.",
+            "2": "Notifications multi-langues envoyées aux LP éligibles.",
+            "3": "Suivi de la consultation document par document depuis Birdview, relance ciblée des non-lecteurs."
+          }
+        },
+        "1": {
+          "title": "Due diligence en cours",
+          "steps": {
+            "0": "Espace dédié à la due diligence avec ciblage investisseur.",
+            "1": "Documents partagés avec l'investisseur, ses contacts et son conseiller.",
+            "2": "Identification de l'investisseur actif et du conseiller moteur via Birdview.",
+            "3": "Relance sélective des non-actifs pour mesurer l'intérêt réel."
+          }
+        }
+      },
+      "cta": {
+        "title": "Prêt à transformer votre Data Room en moteur d'engagement ?",
+        "subtitle": "Démarrez en explorant un espace existant ou plongez directement dans Birdview pour visualiser l'engagement de vos investisseurs.",
+        "primary": "Aller aux espaces",
+        "secondary": "Découvrir Birdview"
+      }
     }
   },
   "validation": {
