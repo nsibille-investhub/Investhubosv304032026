@@ -52,16 +52,13 @@ export const availableInvestors: Investor[] = INVESTORS
     })),
   }));
 
-// Maps fund codes to display labels. Legacy aliases are kept so older
-// hardcoded callers (FolderDetailPanel, AddDocumentDialog, documentMockData)
-// still render correct labels until they are migrated to canonical codes.
-export const fundLabelMap: { [key: string]: string } = {
-  ...Object.fromEntries(FUNDS.map(f => [f.code, f.name])),
-  pere1: 'PERE 1',
-  pere2: 'PERE 2',
-  'fund-a': 'Fonds A - Innovation',
-  'fund-b': 'Fonds B - Tech',
-};
+// Maps fund codes to display labels. Only canonical funds (NWGC2 / AIP1)
+// are exposed here; legacy hardcoded callers (FolderDetailPanel,
+// AddDocumentDialog, documentMockData) carry their own local labels until
+// they are migrated.
+export const fundLabelMap: { [key: string]: string } = Object.fromEntries(
+  FUNDS.map(f => [f.code, f.name]),
+);
 
 export const availableSegments = [
   'Pension Fund',

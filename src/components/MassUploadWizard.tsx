@@ -432,12 +432,19 @@ export function MassUploadWizard({ isOpen, onClose, existingFolders, inline = fa
    * a deterministic pair (fund, segment) from the folder path so the UI
    * stays consistent across re-renders.
    */
+  // Derive the inherited fund / segment chip shown next to the folder cell.
+  // A canonical fund-space path like "/Northwind Growth Capital II/Capital
+  // Calls/2025" yields fund="Northwind Growth Capital II"; the Marketing &
+  // Distribution space carries no fund inheritance (segments are folder-
+  // level there, not surfaced in this badge).
   const getInheritedRestriction = (folderPath: string): { fund?: string; segment?: string } => {
     if (!folderPath) return {};
-    const hash = folderPath.split('').reduce((acc, c) => acc + c.charCodeAt(0), 0);
-    const fund = availableFunds[hash % availableFunds.length];
-    const segment = availableSegments[hash % availableSegments.length];
-    return { fund: fund?.name, segment };
+    for (const f of FUNDS) {
+      if (folderPath === `/${f.name}` || folderPath.startsWith(`/${f.name}/`)) {
+        return { fund: f.name };
+      }
+    }
+    return {};
   };
 
   // Extract all available folders — canonical structure derived from
