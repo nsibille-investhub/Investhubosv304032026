@@ -2155,6 +2155,86 @@
         "subtitle": "Start by exploring an existing space or jump straight into Birdview to visualize your investors' engagement.",
         "primary": "Go to spaces",
         "secondary": "Discover Birdview"
+      },
+      "orchestration": {
+        "kicker": "Orchestration schema",
+        "title": "A unified document chain, from source to piloting.",
+        "subtitle": "All your document sources converge into GED+, get validated, are distributed on a centralized and secure portal, then continuously measured via Birdview.",
+        "flowSourceLabel": "Ingestion",
+        "flowDistribLabel": "Distribution",
+        "flowFeedbackLabel": "Continuous measurement & follow-up",
+        "sources": {
+          "label": "Step 1 — Sources",
+          "title": "Document sources",
+          "subtitle": "Native InvestHub documents or external systems plugged in via connectors.",
+          "connector": "Native connectors & API",
+          "items": {
+            "0": "Native InvestHub documents",
+            "1": "SharePoint / OneDrive",
+            "2": "Google Drive / Dropbox",
+            "3": "Email & shared mailboxes",
+            "4": "External DMS via API"
+          }
+        },
+        "engine": {
+          "label": "Step 2 — GED+ Engine",
+          "title": "Centralize, structure, secure",
+          "subtitle": "Spaces → Folders → Documents architecture with inherited targeting, performant at scale.",
+          "context": "Spaces & folders — targeting by fund, segment, structure, subscription and contact group.",
+          "steps": {
+            "import": {
+              "title": "Mass upload",
+              "body": "Up to 100 docs per session, bulk configuration, automatic save."
+            },
+            "validation": {
+              "title": "Validation workflow",
+              "body": "Assigned teams, controlled publishing, full traceability."
+            },
+            "notifications": {
+              "title": "Notifications",
+              "body": "Multilingual templates, sent immediately or after validation, never before."
+            }
+          }
+        },
+        "portals": {
+          "label": "Step 3 — Distribution",
+          "title": "Centralized & secure portal",
+          "subtitle": "A single entry point for all your audiences, with granular rights and full audit.",
+          "items": {
+            "0": "LP investors",
+            "1": "Contacts (CFO, legal, back-office…)",
+            "2": "Advisors (financial, tax, legal)",
+            "3": "Distribution partners"
+          },
+          "tags": {
+            "0": "Centralized",
+            "1": "Secure",
+            "2": "Multi-role"
+          }
+        },
+        "birdview": {
+          "label": "Step 4 — Birdview",
+          "title": "Tracking & engagement",
+          "subtitle": "Every interaction is recorded as a factual event, usable for IR piloting and behavioral LP analysis.",
+          "metrics": {
+            "0": {
+              "title": "Notifications",
+              "body": "Sent · delivered · opened"
+            },
+            "1": {
+              "title": "Documents",
+              "body": "Viewed · downloaded"
+            },
+            "2": {
+              "title": "Engagement rate",
+              "body": "Global, per doc and per LP"
+            },
+            "3": {
+              "title": "Targeted follow-up",
+              "body": "On non-readers"
+            }
+          }
+        }
       }
     }
   },

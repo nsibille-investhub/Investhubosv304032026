@@ -2,6 +2,7 @@ import { motion } from 'motion/react';
 import {
   ArrowLeft,
   ArrowRight,
+  ArrowDown,
   FolderTree,
   FileUp,
   ShieldCheck,
@@ -21,6 +22,13 @@ import {
   Lock,
   Database,
   Quote,
+  Cloud,
+  Mail,
+  Plug,
+  Briefcase,
+  Handshake,
+  Globe,
+  KeyRound,
 } from 'lucide-react';
 import { Button } from './ui/button';
 import { Badge } from './ui/badge';
@@ -245,6 +253,363 @@ export function PitchDeckPage({ onBack }: { onBack?: () => void }) {
               );
             })}
           </div>
+        </div>
+      </section>
+
+      {/* Orchestration schema */}
+      <section
+        className="relative overflow-hidden py-20"
+        style={{
+          background: `linear-gradient(180deg, ${BRAND.paper}50 0%, #FFFFFF 100%)`,
+        }}
+      >
+        <div className="mx-auto max-w-7xl px-6">
+          <div className="mx-auto mb-14 max-w-3xl text-center">
+            <p className="mb-3 text-sm font-semibold uppercase tracking-widest" style={{ color: BRAND.greenGrowth }}>
+              {t('ged.pitchDeck.orchestration.kicker')}
+            </p>
+            <h2 className="text-3xl font-bold leading-tight md:text-4xl" style={{ color: BRAND.blueSolid }}>
+              {t('ged.pitchDeck.orchestration.title')}
+            </h2>
+            <p className="mt-4 text-base leading-relaxed text-gray-600">
+              {t('ged.pitchDeck.orchestration.subtitle')}
+            </p>
+          </div>
+
+          {/* Top row: Sources → Engine → Portals */}
+          <div className="grid grid-cols-1 gap-5 lg:grid-cols-12 lg:gap-3">
+            {/* Sources column */}
+            <motion.div
+              initial={{ opacity: 0, x: -16 }}
+              whileInView={{ opacity: 1, x: 0 }}
+              viewport={{ once: true }}
+              transition={{ duration: 0.4 }}
+              className="rounded-3xl border border-gray-200 bg-white p-6 shadow-sm lg:col-span-3"
+            >
+              <div className="mb-4 flex items-center gap-3">
+                <div
+                  className="flex h-10 w-10 items-center justify-center rounded-xl"
+                  style={{ background: `${BRAND.blueLight}40` }}
+                >
+                  <Database className="h-5 w-5" style={{ color: BRAND.blueFinance }} />
+                </div>
+                <div className="min-w-0">
+                  <p className="text-xs font-semibold uppercase tracking-wider text-gray-400">
+                    {t('ged.pitchDeck.orchestration.sources.label')}
+                  </p>
+                  <p className="text-sm font-semibold" style={{ color: BRAND.blueSolid }}>
+                    {t('ged.pitchDeck.orchestration.sources.title')}
+                  </p>
+                </div>
+              </div>
+
+              <p className="mb-4 text-xs leading-relaxed text-gray-500">
+                {t('ged.pitchDeck.orchestration.sources.subtitle')}
+              </p>
+
+              <ul className="space-y-2">
+                {[
+                  { icon: Sparkles, key: 0, color: BRAND.blueFinance },
+                  { icon: Cloud, key: 1, color: BRAND.greenGray },
+                  { icon: FolderTree, key: 2, color: BRAND.greenGray },
+                  { icon: Mail, key: 3, color: BRAND.greenGray },
+                  { icon: Plug, key: 4, color: BRAND.greenGrowth },
+                ].map((s) => {
+                  const Icon = s.icon;
+                  return (
+                    <li
+                      key={s.key}
+                      className="flex items-center gap-2.5 rounded-lg border border-gray-100 px-3 py-2 text-xs text-gray-700"
+                      style={{ background: '#FAFBF9' }}
+                    >
+                      <Icon className="h-3.5 w-3.5 shrink-0" style={{ color: s.color }} />
+                      <span className="truncate">{t(`ged.pitchDeck.orchestration.sources.items.${s.key}`)}</span>
+                    </li>
+                  );
+                })}
+              </ul>
+
+              <div
+                className="mt-4 rounded-lg px-3 py-2 text-[11px] font-medium"
+                style={{ background: `${BRAND.greenLight}30`, color: BRAND.greenGrowth }}
+              >
+                <Plug className="mr-1.5 inline h-3 w-3" />
+                {t('ged.pitchDeck.orchestration.sources.connector')}
+              </div>
+            </motion.div>
+
+            {/* Arrow Sources → Engine */}
+            <div className="hidden flex-col items-center justify-center lg:col-span-1 lg:flex">
+              <p className="mb-2 text-[10px] font-semibold uppercase tracking-wider" style={{ color: BRAND.greenGrowth }}>
+                {t('ged.pitchDeck.orchestration.flowSourceLabel')}
+              </p>
+              <ArrowRight className="h-6 w-6" style={{ color: BRAND.greenGray }} />
+            </div>
+            <div className="flex items-center justify-center lg:hidden">
+              <ArrowDown className="h-5 w-5" style={{ color: BRAND.greenGray }} />
+            </div>
+
+            {/* GED+ Engine column */}
+            <motion.div
+              initial={{ opacity: 0, y: 16 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              viewport={{ once: true }}
+              transition={{ duration: 0.4, delay: 0.1 }}
+              className="relative overflow-hidden rounded-3xl p-6 shadow-xl lg:col-span-4"
+              style={{
+                background: `linear-gradient(160deg, ${BRAND.blueSolid} 0%, ${BRAND.blueFinance} 100%)`,
+              }}
+            >
+              <div
+                className="pointer-events-none absolute -right-12 -top-12 h-44 w-44 rounded-full blur-3xl"
+                style={{ background: BRAND.greenLight, opacity: 0.25 }}
+                aria-hidden
+              />
+
+              <div className="relative mb-4 flex items-center gap-3">
+                <div
+                  className="flex h-10 w-10 items-center justify-center rounded-xl"
+                  style={{ background: 'rgba(255,255,255,0.12)' }}
+                >
+                  <Sparkles className="h-5 w-5" style={{ color: BRAND.greenLight }} />
+                </div>
+                <div className="min-w-0">
+                  <p className="text-xs font-semibold uppercase tracking-wider" style={{ color: BRAND.greenLight }}>
+                    {t('ged.pitchDeck.orchestration.engine.label')}
+                  </p>
+                  <p className="text-base font-semibold text-white">
+                    {t('ged.pitchDeck.orchestration.engine.title')}
+                  </p>
+                </div>
+              </div>
+
+              <p className="relative mb-5 text-xs leading-relaxed text-white/70">
+                {t('ged.pitchDeck.orchestration.engine.subtitle')}
+              </p>
+
+              <div className="relative space-y-2.5">
+                {[
+                  { icon: FileUp, key: 'import' },
+                  { icon: ShieldCheck, key: 'validation' },
+                  { icon: Bell, key: 'notifications' },
+                ].map((step, idx) => {
+                  const Icon = step.icon;
+                  return (
+                    <div key={step.key} className="relative">
+                      <div
+                        className="flex items-start gap-3 rounded-xl border border-white/10 px-3.5 py-2.5"
+                        style={{ background: 'rgba(255,255,255,0.06)' }}
+                      >
+                        <div
+                          className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg"
+                          style={{ background: BRAND.greenLight }}
+                        >
+                          <Icon className="h-4 w-4" style={{ color: BRAND.blueSolid }} />
+                        </div>
+                        <div className="min-w-0 flex-1">
+                          <p className="text-sm font-semibold text-white">
+                            {t(`ged.pitchDeck.orchestration.engine.steps.${step.key}.title`)}
+                          </p>
+                          <p className="mt-0.5 text-[11px] leading-snug text-white/70">
+                            {t(`ged.pitchDeck.orchestration.engine.steps.${step.key}.body`)}
+                          </p>
+                        </div>
+                      </div>
+                      {idx < 2 && (
+                        <div className="my-1 flex justify-center">
+                          <ArrowDown className="h-3.5 w-3.5" style={{ color: BRAND.greenLight }} />
+                        </div>
+                      )}
+                    </div>
+                  );
+                })}
+              </div>
+
+              <div
+                className="relative mt-5 flex items-center gap-2 rounded-xl border border-white/10 px-3.5 py-2.5"
+                style={{ background: 'rgba(182, 230, 138, 0.1)' }}
+              >
+                <Layers className="h-4 w-4 shrink-0" style={{ color: BRAND.greenLight }} />
+                <p className="text-[11px] leading-snug text-white/85">
+                  {t('ged.pitchDeck.orchestration.engine.context')}
+                </p>
+              </div>
+            </motion.div>
+
+            {/* Arrow Engine → Portals */}
+            <div className="hidden flex-col items-center justify-center lg:col-span-1 lg:flex">
+              <p className="mb-2 text-[10px] font-semibold uppercase tracking-wider" style={{ color: BRAND.greenGrowth }}>
+                {t('ged.pitchDeck.orchestration.flowDistribLabel')}
+              </p>
+              <ArrowRight className="h-6 w-6" style={{ color: BRAND.greenGray }} />
+            </div>
+            <div className="flex items-center justify-center lg:hidden">
+              <ArrowDown className="h-5 w-5" style={{ color: BRAND.greenGray }} />
+            </div>
+
+            {/* Portals column */}
+            <motion.div
+              initial={{ opacity: 0, x: 16 }}
+              whileInView={{ opacity: 1, x: 0 }}
+              viewport={{ once: true }}
+              transition={{ duration: 0.4, delay: 0.2 }}
+              className="rounded-3xl border-2 p-6 shadow-md lg:col-span-3"
+              style={{
+                background: `linear-gradient(160deg, ${BRAND.greenLight}30 0%, #FFFFFF 100%)`,
+                borderColor: BRAND.greenLight,
+              }}
+            >
+              <div className="mb-4 flex items-center gap-3">
+                <div
+                  className="flex h-10 w-10 items-center justify-center rounded-xl"
+                  style={{ background: BRAND.greenGrowth }}
+                >
+                  <Globe className="h-5 w-5 text-white" />
+                </div>
+                <div className="min-w-0">
+                  <p className="text-xs font-semibold uppercase tracking-wider" style={{ color: BRAND.greenGrowth }}>
+                    {t('ged.pitchDeck.orchestration.portals.label')}
+                  </p>
+                  <p className="text-sm font-semibold" style={{ color: BRAND.blueSolid }}>
+                    {t('ged.pitchDeck.orchestration.portals.title')}
+                  </p>
+                </div>
+              </div>
+
+              <p className="mb-4 text-xs leading-relaxed text-gray-600">
+                {t('ged.pitchDeck.orchestration.portals.subtitle')}
+              </p>
+
+              <ul className="space-y-2">
+                {[
+                  { icon: Users, key: 0 },
+                  { icon: UserCheck, key: 1 },
+                  { icon: Briefcase, key: 2 },
+                  { icon: Handshake, key: 3 },
+                ].map((p) => {
+                  const Icon = p.icon;
+                  return (
+                    <li
+                      key={p.key}
+                      className="flex items-center gap-2.5 rounded-lg border border-white px-3 py-2 text-xs font-medium text-gray-800 shadow-sm"
+                      style={{ background: '#FFFFFF' }}
+                    >
+                      <Icon className="h-3.5 w-3.5 shrink-0" style={{ color: BRAND.greenForest }} />
+                      <span className="truncate">{t(`ged.pitchDeck.orchestration.portals.items.${p.key}`)}</span>
+                    </li>
+                  );
+                })}
+              </ul>
+
+              <div className="mt-4 flex flex-wrap gap-1.5">
+                {[
+                  { icon: Globe, key: 0 },
+                  { icon: Lock, key: 1 },
+                  { icon: KeyRound, key: 2 },
+                ].map((tag) => {
+                  const Icon = tag.icon;
+                  return (
+                    <span
+                      key={tag.key}
+                      className="inline-flex items-center gap-1 rounded-full px-2.5 py-1 text-[10px] font-semibold"
+                      style={{ background: BRAND.blueSolid, color: BRAND.greenLight }}
+                    >
+                      <Icon className="h-3 w-3" />
+                      {t(`ged.pitchDeck.orchestration.portals.tags.${tag.key}`)}
+                    </span>
+                  );
+                })}
+              </div>
+            </motion.div>
+          </div>
+
+          {/* Feedback connector to Birdview */}
+          <div className="my-8 flex flex-col items-center">
+            <div
+              className="h-8 w-px"
+              style={{ background: `linear-gradient(180deg, transparent 0%, ${BRAND.greenGray} 100%)` }}
+              aria-hidden
+            />
+            <div
+              className="my-2 inline-flex items-center gap-2 rounded-full border px-3.5 py-1.5 text-[11px] font-semibold"
+              style={{
+                background: '#FFFFFF',
+                borderColor: BRAND.greenLight,
+                color: BRAND.greenGrowth,
+              }}
+            >
+              <ArrowDown className="h-3 w-3" />
+              {t('ged.pitchDeck.orchestration.flowFeedbackLabel')}
+            </div>
+          </div>
+
+          {/* Birdview band */}
+          <motion.div
+            initial={{ opacity: 0, y: 16 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true }}
+            transition={{ duration: 0.4 }}
+            className="relative overflow-hidden rounded-3xl p-7 shadow-xl"
+            style={{
+              background: `linear-gradient(135deg, ${BRAND.greenGrowth} 0%, ${BRAND.blueFinance} 100%)`,
+            }}
+          >
+            <div
+              className="pointer-events-none absolute -left-16 -top-16 h-56 w-56 rounded-full blur-3xl"
+              style={{ background: BRAND.greenLight, opacity: 0.25 }}
+              aria-hidden
+            />
+
+            <div className="relative grid gap-6 md:grid-cols-12 md:items-center">
+              <div className="md:col-span-4">
+                <div className="mb-3 flex items-center gap-3">
+                  <div
+                    className="flex h-10 w-10 items-center justify-center rounded-xl"
+                    style={{ background: BRAND.greenLight }}
+                  >
+                    <Radar className="h-5 w-5" style={{ color: BRAND.blueSolid }} />
+                  </div>
+                  <div className="min-w-0">
+                    <p className="text-xs font-semibold uppercase tracking-wider" style={{ color: BRAND.greenLight }}>
+                      {t('ged.pitchDeck.orchestration.birdview.label')}
+                    </p>
+                    <p className="text-base font-semibold text-white">
+                      {t('ged.pitchDeck.orchestration.birdview.title')}
+                    </p>
+                  </div>
+                </div>
+                <p className="text-xs leading-relaxed text-white/75">
+                  {t('ged.pitchDeck.orchestration.birdview.subtitle')}
+                </p>
+              </div>
+
+              <div className="grid grid-cols-2 gap-2.5 md:col-span-8 md:grid-cols-4">
+                {[
+                  { icon: MailCheck, key: 0 },
+                  { icon: Eye, key: 1 },
+                  { icon: TrendingUp, key: 2 },
+                  { icon: Zap, key: 3 },
+                ].map((m) => {
+                  const Icon = m.icon;
+                  return (
+                    <div
+                      key={m.key}
+                      className="rounded-xl border border-white/10 p-3"
+                      style={{ background: 'rgba(255,255,255,0.06)' }}
+                    >
+                      <Icon className="mb-2 h-4 w-4" style={{ color: BRAND.greenLight }} />
+                      <p className="text-[11px] font-semibold leading-snug text-white">
+                        {t(`ged.pitchDeck.orchestration.birdview.metrics.${m.key}.title`)}
+                      </p>
+                      <p className="mt-0.5 text-[10px] leading-snug text-white/60">
+                        {t(`ged.pitchDeck.orchestration.birdview.metrics.${m.key}.body`)}
+                      </p>
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
+          </motion.div>
         </div>
       </section>
 
