@@ -315,11 +315,13 @@ export function AddDocumentDialog({ isOpen, onClose, type, parentFolder }: AddDo
     targetSegments: [] as string[],
     targetInvestors: [] as string[],
     watermark: false,
+    watermarkType: 'confidential',
     accessRoles: [] as string[], // Rôles de contacts ayant accès
     tags: [] as string[],
     segment: '',
     fund: '',
-    disclaimer: 'none',
+    disclaimerEnabled: false,
+    disclaimer: 'standard',
     // Nouvelles options avancées
     notifyOnUpload: false,
     emailTemplate: 'none',
@@ -630,11 +632,13 @@ export function AddDocumentDialog({ isOpen, onClose, type, parentFolder }: AddDo
       targetSegments: [],
       targetInvestors: [],
       watermark: false,
+      watermarkType: 'confidential',
       accessRoles: [],
       tags: [],
       segment: '',
       fund: '',
-      disclaimer: 'none',
+      disclaimerEnabled: false,
+      disclaimer: 'standard',
       notifyOnUpload: false,
       hideNewLabel: false,
       reporting: false,
@@ -1698,26 +1702,46 @@ export function AddDocumentDialog({ isOpen, onClose, type, parentFolder }: AddDo
                   </div>
                 )}
 
-                {/* Disclaimer (pour les dossiers uniquement) */}
-                {type === 'folder' && (
-                  <div>
-                    <Label htmlFor="disclaimer">{t('ged.addDialog.disclaimerLabel')}</Label>
-                    <Select 
-                      value={formData.disclaimer} 
-                      onValueChange={(value) => setFormData(prev => ({ ...prev, disclaimer: value }))}
-                    >
-                      <SelectTrigger id="disclaimer" className="mt-1.5">
-                        <SelectValue />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="none">Aucun</SelectItem>
-                        <SelectItem value="standard">Standard</SelectItem>
-                        <SelectItem value="confidential">Confidentiel</SelectItem>
-                        <SelectItem value="restricted">Restreint</SelectItem>
-                      </SelectContent>
-                    </Select>
+                {/* Disclaimer (document ou dossier) */}
+                <div className="space-y-3 p-3 bg-gray-50 rounded-lg">
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-2">
+                      <AlertCircle className="w-4 h-4 text-amber-600" />
+                      <div>
+                        <span className="text-sm text-gray-900 font-medium">
+                          {t('ged.addDialog.disclaimerToggleLabel')}
+                        </span>
+                        <p className="text-xs text-gray-500">
+                          {type === 'folder'
+                            ? t('ged.addDialog.disclaimerToggleDescriptionFolder')
+                            : t('ged.addDialog.disclaimerToggleDescriptionDocument')}
+                        </p>
+                      </div>
+                    </div>
+                    <Switch
+                      checked={formData.disclaimerEnabled}
+                      onCheckedChange={(checked) => setFormData(prev => ({ ...prev, disclaimerEnabled: checked }))}
+                    />
                   </div>
-                )}
+                  {formData.disclaimerEnabled && (
+                    <div>
+                      <Label htmlFor="disclaimer">{t('ged.addDialog.disclaimerLabel')}</Label>
+                      <Select
+                        value={formData.disclaimer}
+                        onValueChange={(value) => setFormData(prev => ({ ...prev, disclaimer: value }))}
+                      >
+                        <SelectTrigger id="disclaimer" className="mt-1.5 bg-white">
+                          <SelectValue />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="standard">{t('ged.addDialog.disclaimerStandard')}</SelectItem>
+                          <SelectItem value="confidential">{t('ged.addDialog.disclaimerConfidential')}</SelectItem>
+                          <SelectItem value="restricted">{t('ged.addDialog.disclaimerRestricted')}</SelectItem>
+                        </SelectContent>
+                      </Select>
+                    </div>
+                  )}
+                </div>
               </div>
 
             {/* Access & Permissions */}
@@ -2037,18 +2061,48 @@ export function AddDocumentDialog({ isOpen, onClose, type, parentFolder }: AddDo
                 </div>
 
                 {/* Watermark */}
-                <div className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
-                  <div className="flex items-center gap-2">
-                    <Droplet className="w-4 h-4 text-purple-600" />
-                    <div>
-                      <span className="text-sm text-gray-900 font-medium">Watermark</span>
-                      <p className="text-xs text-gray-500">Ajouter un filigrane de protection sur le document</p>
+                <div className="space-y-3 p-3 bg-gray-50 rounded-lg">
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-2">
+                      <Droplet className="w-4 h-4 text-purple-600" />
+                      <div>
+                        <span className="text-sm text-gray-900 font-medium">
+                          {t('ged.addDialog.watermarkToggleLabel')}
+                        </span>
+                        <p className="text-xs text-gray-500">
+                          {type === 'folder'
+                            ? t('ged.addDialog.watermarkToggleDescriptionFolder')
+                            : t('ged.addDialog.watermarkToggleDescriptionDocument')}
+                        </p>
+                      </div>
                     </div>
+                    <Switch
+                      checked={formData.watermark}
+                      onCheckedChange={(checked) => setFormData(prev => ({ ...prev, watermark: checked }))}
+                    />
                   </div>
-                  <Switch
-                    checked={formData.watermark}
-                    onCheckedChange={(checked) => setFormData(prev => ({ ...prev, watermark: checked }))}
-                  />
+                  {formData.watermark && (
+                    <div>
+                      <Label htmlFor="watermark-type">{t('ged.addDialog.watermarkLabel')}</Label>
+                      <Select
+                        value={formData.watermarkType}
+                        onValueChange={(value) => setFormData(prev => ({ ...prev, watermarkType: value }))}
+                      >
+                        <SelectTrigger id="watermark-type" className="mt-1.5 bg-white">
+                          <SelectValue />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="confidential">{t('ged.addDialog.watermarkConfidential')}</SelectItem>
+                          <SelectItem value="internal">{t('ged.addDialog.watermarkInternal')}</SelectItem>
+                          <SelectItem value="draft">{t('ged.addDialog.watermarkDraft')}</SelectItem>
+                          <SelectItem value="personalized">{t('ged.addDialog.watermarkPersonalized')}</SelectItem>
+                        </SelectContent>
+                      </Select>
+                      <p className="text-xs text-gray-500 mt-1.5">
+                        {t('ged.addDialog.watermarkHelp')}
+                      </p>
+                    </div>
+                  )}
                 </div>
 
                 {/* Notifier */}

@@ -1,19 +1,22 @@
 import { useState } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
-import { 
-  X, 
-  Folder, 
-  Save, 
-  Users, 
-  TrendingUp, 
+import {
+  X,
+  Folder,
+  Save,
+  Users,
+  TrendingUp,
   Building2,
   AlertCircle,
   ChevronDown,
-  Download
+  Download,
+  Droplet,
+  ShieldAlert
 } from 'lucide-react';
 import { Button } from './ui/button';
 import { Input } from './ui/input';
 import { Label } from './ui/label';
+import { Switch } from './ui/switch';
 import {
   Select,
   SelectContent,
@@ -37,18 +40,24 @@ export function FolderDetailPanel({ folder, onClose, allFolders }: FolderDetailP
   const { t } = useTranslation();
   const targetingScope = calculateTargetingScope(folder);
   
+  const initialDisclaimer = folder.metadata?.disclaimer || 'none';
+  const initialWatermark = (folder.metadata as { watermark?: string })?.watermark || 'none';
+
   const [formData, setFormData] = useState({
     name: folder.name,
     parentId: folder.parentId || 'root',
     targetType: folder.target?.type || 'all',
     segment: folder.target?.segments?.[0] || '',
     fund: folder.metadata?.fund || '',
-    disclaimer: folder.metadata?.disclaimer || 'none'
+    disclaimerEnabled: initialDisclaimer !== 'none',
+    disclaimer: initialDisclaimer === 'none' ? 'standard' : initialDisclaimer,
+    watermarkEnabled: initialWatermark !== 'none',
+    watermark: initialWatermark === 'none' ? 'confidential' : initialWatermark,
   });
 
   const [hasChanges, setHasChanges] = useState(false);
 
-  const handleChange = (field: string, value: string) => {
+  const handleChange = (field: string, value: string | boolean) => {
     setFormData(prev => ({ ...prev, [field]: value }));
     setHasChanges(true);
   };
@@ -334,22 +343,85 @@ export function FolderDetailPanel({ folder, onClose, allFolders }: FolderDetailP
             </div>
 
             {/* Disclaimer */}
-            <div>
-              <Label htmlFor="folder-disclaimer">{t('ged.folderDetail.disclaimerLabel')}</Label>
-              <Select
-                value={formData.disclaimer}
-                onValueChange={(value) => handleChange('disclaimer', value)}
-              >
-                <SelectTrigger id="folder-disclaimer" className="mt-1.5">
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="none">{t('ged.folderDetail.disclaimerNone')}</SelectItem>
-                  <SelectItem value="standard">{t('ged.folderDetail.disclaimerStandard')}</SelectItem>
-                  <SelectItem value="confidential">{t('ged.folderDetail.disclaimerConfidential')}</SelectItem>
-                  <SelectItem value="restricted">{t('ged.folderDetail.disclaimerRestricted')}</SelectItem>
-                </SelectContent>
-              </Select>
+            <div className="space-y-3 p-3 bg-gray-50 rounded-lg">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-2">
+                  <ShieldAlert className="w-4 h-4 text-amber-600" />
+                  <div>
+                    <span className="text-sm text-gray-900 font-medium">
+                      {t('ged.folderDetail.disclaimerToggleLabel')}
+                    </span>
+                    <p className="text-xs text-gray-500">
+                      {t('ged.folderDetail.disclaimerToggleDescription')}
+                    </p>
+                  </div>
+                </div>
+                <Switch
+                  checked={formData.disclaimerEnabled}
+                  onCheckedChange={(checked) => handleChange('disclaimerEnabled', checked)}
+                />
+              </div>
+              {formData.disclaimerEnabled && (
+                <div>
+                  <Label htmlFor="folder-disclaimer">{t('ged.folderDetail.disclaimerLabel')}</Label>
+                  <Select
+                    value={formData.disclaimer}
+                    onValueChange={(value) => handleChange('disclaimer', value)}
+                  >
+                    <SelectTrigger id="folder-disclaimer" className="mt-1.5 bg-white">
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="standard">{t('ged.folderDetail.disclaimerStandard')}</SelectItem>
+                      <SelectItem value="confidential">{t('ged.folderDetail.disclaimerConfidential')}</SelectItem>
+                      <SelectItem value="restricted">{t('ged.folderDetail.disclaimerRestricted')}</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+              )}
+            </div>
+
+            {/* Watermark */}
+            <div className="space-y-3 p-3 bg-gray-50 rounded-lg">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-2">
+                  <Droplet className="w-4 h-4 text-purple-600" />
+                  <div>
+                    <span className="text-sm text-gray-900 font-medium">
+                      {t('ged.folderDetail.watermarkToggleLabel')}
+                    </span>
+                    <p className="text-xs text-gray-500">
+                      {t('ged.folderDetail.watermarkToggleDescription')}
+                    </p>
+                  </div>
+                </div>
+                <Switch
+                  checked={formData.watermarkEnabled}
+                  onCheckedChange={(checked) => handleChange('watermarkEnabled', checked)}
+                />
+              </div>
+              {formData.watermarkEnabled && (
+                <div>
+                  <Label htmlFor="folder-watermark">{t('ged.folderDetail.watermarkLabel')}</Label>
+                  <Select
+                    value={formData.watermark}
+                    onValueChange={(value) => handleChange('watermark', value)}
+                  >
+                    <SelectTrigger id="folder-watermark" className="mt-1.5 bg-white">
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="confidential">{t('ged.folderDetail.watermarkConfidential')}</SelectItem>
+                      <SelectItem value="internal">{t('ged.folderDetail.watermarkInternal')}</SelectItem>
+                      <SelectItem value="draft">{t('ged.folderDetail.watermarkDraft')}</SelectItem>
+                      <SelectItem value="personalized">{t('ged.folderDetail.watermarkPersonalized')}</SelectItem>
+                    </SelectContent>
+                  </Select>
+                  <p className="text-xs text-gray-500 mt-1.5">
+                    {t('ged.folderDetail.watermarkHelp')}
+                  </p>
+                </div>
+              )}
             </div>
           </div>
 
