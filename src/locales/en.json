@@ -2016,5 +2016,187 @@
       "exportImpossible": "Cannot export",
       "scopeEmpty": "The targeting scope is empty"
     }
+  },
+  "validation": {
+    "back": "Back to spaces",
+    "title": "Document validation",
+    "subtitle": "Review, approval and rejection of documents before publishing",
+    "searchPlaceholder": "Search a document, author, targeting...",
+    "kpi": {
+      "pending": "Awaiting validation",
+      "pendingMetric": "To process",
+      "validated": "Validated",
+      "validatedMetric": "Approved",
+      "rejected": "Rejected",
+      "rejectedMetric": "Refused",
+      "all": "All",
+      "allMetric": "Total"
+    },
+    "filters": {
+      "author": "Author",
+      "targeting": "Targeting",
+      "format": "Format"
+    },
+    "table": {
+      "document": "Document",
+      "createdBy": "Created by",
+      "date": "Date",
+      "targeting": "Targeting",
+      "comm": "Comm.",
+      "status": "Status",
+      "actions": "Actions"
+    },
+    "empty": "No document to display",
+    "resetFilters": "Reset filters",
+    "status": {
+      "pending": "Pending",
+      "validated": "Validated",
+      "rejected": "Rejected"
+    },
+    "targetingTooltip": {
+      "segment": "Segment",
+      "fund": "Fund",
+      "shareClass": "Class",
+      "investor": "Investor",
+      "subscription": "Subscription",
+      "audience": "Audience"
+    },
+    "tooltip": {
+      "previewDoc": "Document preview",
+      "previewBatch": "Batch preview",
+      "previewNotification": "Notification preview",
+      "validate": "Validate",
+      "validateBatch": "Validate batch",
+      "validateAndSend": "Validate and send notification",
+      "reject": "Reject",
+      "rejectBatch": "Reject batch",
+      "resetPending": "Move back to pending",
+      "resetBatchPending": "Move batch back to pending",
+      "expandBatch": "Expand batch",
+      "collapseBatch": "Collapse batch",
+      "differentTargeting": "Different targeting per document — see each row.",
+      "targetingDrivenByBatch": "Targeting driven at batch level."
+    },
+    "notificationLine": {
+      "noneDoc": "No notification",
+      "noneBatch": "No notification — internal validation",
+      "recipientsOne": "1 notification → {{count}} recipient",
+      "recipientsMany": "1 notification → {{count}} recipients",
+      "fromBatch": "From batch ·"
+    },
+    "batch": {
+      "docsOne": "{{count}} doc",
+      "docsMany": "{{count}} docs",
+      "preview": "Preview"
+    },
+    "toast": {
+      "docValidated": "Document validated",
+      "docRejected": "Document rejected",
+      "docPending": "Document moved back to pending",
+      "batchValidatedNotified": "Batch validated · notification sent",
+      "batchValidated": "Batch validated",
+      "batchRejected": "Batch rejected",
+      "batchPending": "Batch moved back to pending",
+      "descOne": "{{count}} document • {{name}}",
+      "descMany": "{{count}} documents • {{name}}"
+    },
+    "you": "You",
+    "drawer": {
+      "headerNoneSubtitle": "No notification — internal validation only",
+      "headerSubtitleOne": "1 notification → {{count}} recipient ({{channel}})",
+      "headerSubtitleMany": "1 notification → {{count}} recipients ({{channel}})",
+      "channel": {
+        "email": "email",
+        "portal": "LP portal",
+        "both": "email + portal"
+      },
+      "channelBadge": {
+        "email": "Email",
+        "portal": "LP Portal",
+        "both": "Email + Portal"
+      },
+      "attachmentsCountOne": "{{count}} attachment",
+      "attachmentsCountMany": "{{count}} attachments",
+      "createdBy": "Created by {{name}} · {{date}}",
+      "tabs": {
+        "email": "Email",
+        "recipients": "Recipients",
+        "attachments": "Attachments"
+      },
+      "silentTitle": "No notification",
+      "silentBody": "This batch groups documents for internal validation only. No email or portal publication will be triggered.",
+      "email": {
+        "from": "From",
+        "to": "To",
+        "subject": "Subject",
+        "attachmentsLabel": "Attachments",
+        "othersOne": " + {{count}} other",
+        "othersMany": " + {{count}} others",
+        "footerNote": "This e-mail is sent to you by InvestHub as part of your subscription. For any question, contact your Investor Relations representative."
+      },
+      "recipientsTable": {
+        "recipient": "Recipient",
+        "email": "Email",
+        "type": "Type"
+      },
+      "footer": {
+        "close": "Close",
+        "rejectBatch": "Reject batch",
+        "validateBatchSilent": "Validate batch",
+        "validateAndSend": "Validate and send notification",
+        "resetPending": "Move back to pending"
+      }
+    },
+    "fixtures": {
+      "kind": {
+        "capitalCall": "Capital Call",
+        "quarterlyReporting": "Quarterly Reporting",
+        "distributorAgreement": "Distributor Agreement (internal)"
+      },
+      "role": {
+        "investor": "Investor",
+        "distributionList": "Distribution list",
+        "lpPortal": "LP Portal"
+      },
+      "recipient": {
+        "allLps": "All LPs {{fund}}"
+      },
+      "comment": {
+        "capitalCall": "EUR 12.5M aggregate drawdown — {{count}} LP notices to validate before dispatch.",
+        "quarterlyReport": "Q1 reporting ready for dispatch — to validate before LP Portal publication.",
+        "distributorLegal": "Legal review pending before signature.",
+        "taxNominative": "Nominative document — verify recipient identity.",
+        "esgPending": "Awaiting confirmation of the carbon footprint figures by external auditor.",
+        "roadshowApproved": "Approved with minor edits on slides 12 to 14.",
+        "pitchRejected": "Rejected: promotional language not compliant with AMF guidelines — to be reworded."
+      },
+      "capitalCall": {
+        "subject": "Capital Call notice #{{num}} — {{fund}} (due 22 May 2026)",
+        "greeting": "Dear Limited Partner,",
+        "p1": "In connection with your commitment to **{{fund}}**, please find attached drawdown notice #{{num}} for an aggregate amount of **EUR 12,500,000** (your pro-rata share is detailed in the LP allocation schedule).",
+        "p2": "Funds must be wired to the depositary account before **22 May 2026, 12:00 CET**.",
+        "p3": "For any question please contact your dedicated Investor Relations representative.",
+        "signature": "Investor Relations — InvestHub"
+      },
+      "quarterlyReport": {
+        "subject": "Q1 2026 Reporting Pack — {{fund}}",
+        "greeting": "Dear Investor,",
+        "p1": "Please find enclosed the **Q1 2026 Reporting Pack** for {{fund}}: quarterly report, NAV statement at 31/03/2026 and detailed portfolio KPIs.",
+        "p2": "New investments closed during the quarter and exit pipeline updates are summarised in the manager letter.",
+        "signature": "Maxime Dubois — Asset Manager"
+      },
+      "taxCertificate": {
+        "subject": "Tax Certificate 2025 — {{investor}} ({{fund}})",
+        "greeting": "Dear Sir or Madam,",
+        "p1": "Please find enclosed your **2025 tax certificate** for {{fund}}.",
+        "signature": "Sophie Bernard — Tax Specialist"
+      },
+      "sfdrDisclosure": {
+        "subject": "{{fund}} — SFDR Article 9 Disclosure 2025",
+        "greeting": "Dear LPs,",
+        "p1": "Our SFDR Article 9 disclosure for {{fund}} is now available on the LP Portal alongside the 2025 ESG report.",
+        "signature": "Mathilde Garcia — ESG Officer"
+      }
+    }
   }
 }

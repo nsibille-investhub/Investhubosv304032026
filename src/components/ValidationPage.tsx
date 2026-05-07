@@ -50,6 +50,7 @@ import {
   ValidationDocument,
   ValidationStatus,
 } from '../utils/validationDocumentsGenerator';
+import { useTranslation } from '../utils/languageContext';
 import { cn } from './ui/utils';
 
 interface ValidationPageProps {
@@ -60,32 +61,25 @@ type StatusTab = ValidationStatus | 'all';
 
 const SEARCH_FIELDS: (keyof ValidationDocument | string)[] = [
   'name',
-  'comment',
   'createdBy.name',
   'createdBy.role',
   'pathSegments',
   'targeting',
 ];
 
-const dateFormatter = new Intl.DateTimeFormat('fr-FR', {
-  day: '2-digit',
-  month: 'short',
-  year: 'numeric',
-  hour: '2-digit',
-  minute: '2-digit',
-});
-
-function formatDate(iso: string) {
-  return dateFormatter.format(new Date(iso));
-}
-
 const STATUS_VARIANT: Record<
   ValidationStatus,
-  { label: string; variant: 'warning' | 'success' | 'danger' }
+  { variant: 'warning' | 'success' | 'danger' }
 > = {
-  pending: { label: 'En attente', variant: 'warning' },
-  validated: { label: 'Validé', variant: 'success' },
-  rejected: { label: 'Rejeté', variant: 'danger' },
+  pending: { variant: 'warning' },
+  validated: { variant: 'success' },
+  rejected: { variant: 'danger' },
+};
+
+const STATUS_LABEL_KEY: Record<ValidationStatus, string> = {
+  pending: 'validation.status.pending',
+  validated: 'validation.status.validated',
+  rejected: 'validation.status.rejected',
 };
 
 const TARGETING_ICON: Record<TargetingKind, LucideIcon> = {
@@ -97,13 +91,13 @@ const TARGETING_ICON: Record<TargetingKind, LucideIcon> = {
   audience: Globe,
 };
 
-const TARGETING_TOOLTIP: Record<TargetingKind, string> = {
-  segment: 'Segment',
-  fund: 'Fonds',
-  shareClass: 'Part / Classe',
-  investor: 'Investisseur',
-  subscription: 'Souscription',
-  audience: 'Audience',
+const TARGETING_TOOLTIP_KEY: Record<TargetingKind, string> = {
+  segment: 'validation.targetingTooltip.segment',
+  fund: 'validation.targetingTooltip.fund',
+  shareClass: 'validation.targetingTooltip.shareClass',
+  investor: 'validation.targetingTooltip.investor',
+  subscription: 'validation.targetingTooltip.subscription',
+  audience: 'validation.targetingTooltip.audience',
 };
 
 // ---------------------------------------------------------------------------
@@ -128,6 +122,19 @@ function deriveBatchStatus(docs: ValidationDocument[]): ValidationStatus {
 }
 
 export function ValidationPage({ onBack }: ValidationPageProps) {
+  const { t, lang } = useTranslation();
+  const dateFormatter = useMemo(
+    () =>
+      new Intl.DateTimeFormat(lang === 'en' ? 'en-GB' : 'fr-FR', {
+        day: '2-digit',
+        month: 'short',
+        year: 'numeric',
+        hour: '2-digit',
+        minute: '2-digit',
+      }),
+    [lang],
+  );
+  const formatDate = (iso: string) => dateFormatter.format(new Date(iso));
   const [isLoading, setIsLoading] = useState(true);
   const [documents, setDocuments] = useState<ValidationDocument[]>([]);
   const [activeStatus, setActiveStatus] = useState<StatusTab>('pending');
@@ -273,21 +280,21 @@ export function ValidationPage({ onBack }: ValidationPageProps) {
     () => [
       {
         id: 'createdBy',
-        label: 'Auteur',
+        label: t('validation.filters.author'),
         type: 'select',
         isPrimary: true,
         options: allCreators.map((c) => ({ value: c, label: c })),
       },
       {
         id: 'targeting',
-        label: 'Ciblage',
+        label: t('validation.filters.targeting'),
         type: 'multiselect',
         isPrimary: true,
-        options: allTargetings.map((t) => ({ value: t, label: t })),
+        options: allTargetings.map((tgt) => ({ value: tgt, label: tgt })),
       },
       {
         id: 'format',
-        label: 'Format',
+        label: t('validation.filters.format'),
         type: 'select',
         isPrimary: false,
         options: ['pdf', 'docx', 'xlsx', 'pptx'].map((f) => ({
@@ -296,7 +303,7 @@ export function ValidationPage({ onBack }: ValidationPageProps) {
         })),
       },
     ],
-    [allCreators, allTargetings],
+    [allCreators, allTargetings, t],
   );
 
   const totalItems = rowNodes.length;
@@ -345,6 +352,7 @@ export function ValidationPage({ onBack }: ValidationPageProps) {
   };
 
   const updateStatus = (docId: number, status: ValidationStatus) => {
+    const youLabel = t('validation.you');
     setDocuments((prev) =>
       prev.map((d) => {
         if (d.id !== docId) return d;
@@ -358,7 +366,7 @@ export function ValidationPage({ onBack }: ValidationPageProps) {
           ...d,
           status,
           reviewedAt: new Date().toISOString(),
-          reviewedBy: 'Vous',
+          reviewedBy: youLabel,
         };
       }),
     );
@@ -366,22 +374,23 @@ export function ValidationPage({ onBack }: ValidationPageProps) {
 
   const handleValidate = (doc: ValidationDocument) => {
     updateStatus(doc.id, 'validated');
-    toast.success('Document validé', { description: doc.name });
+    toast.success(t('validation.toast.docValidated'), { description: doc.name });
   };
 
   const handleReject = (doc: ValidationDocument) => {
     updateStatus(doc.id, 'rejected');
-    toast.error('Document rejeté', { description: doc.name });
+    toast.error(t('validation.toast.docRejected'), { description: doc.name });
   };
 
   const handleResetToPending = (doc: ValidationDocument) => {
     updateStatus(doc.id, 'pending');
-    toast.info('Document remis en attente', { description: doc.name });
+    toast.info(t('validation.toast.docPending'), { description: doc.name });
   };
 
   /** Atomic batch action: applies a status to ALL children at once. */
   const updateBatchStatus = (batchId: string, status: ValidationStatus) => {
     const stamp = new Date().toISOString();
+    const youLabel = t('validation.you');
     setDocuments((prev) =>
       prev.map((d) => {
         if (d.batchId !== batchId) return d;
@@ -391,32 +400,40 @@ export function ValidationPage({ onBack }: ValidationPageProps) {
           void reviewedBy;
           return { ...rest, status };
         }
-        return { ...d, status, reviewedAt: stamp, reviewedBy: 'Vous' };
+        return { ...d, status, reviewedAt: stamp, reviewedBy: youLabel };
       }),
     );
   };
 
+  const batchDescription = (count: number, name: string) =>
+    t(count > 1 ? 'validation.toast.descMany' : 'validation.toast.descOne', {
+      count,
+      name,
+    });
+
   const handleValidateBatch = (batch: ValidationBatch, count: number) => {
     updateBatchStatus(batch.id, 'validated');
     if (batch.notification) {
-      toast.success(`Lot validé · notification envoyée`, {
-        description: `${count} document${count > 1 ? 's' : ''} • ${batch.name}`,
+      toast.success(t('validation.toast.batchValidatedNotified'), {
+        description: batchDescription(count, batch.name),
       });
     } else {
-      toast.success(`Lot validé`, { description: batch.name });
+      toast.success(t('validation.toast.batchValidated'), {
+        description: batch.name,
+      });
     }
   };
 
   const handleRejectBatch = (batch: ValidationBatch, count: number) => {
     updateBatchStatus(batch.id, 'rejected');
-    toast.error(`Lot rejeté`, {
-      description: `${count} document${count > 1 ? 's' : ''} • ${batch.name}`,
+    toast.error(t('validation.toast.batchRejected'), {
+      description: batchDescription(count, batch.name),
     });
   };
 
   const handleResetBatch = (batch: ValidationBatch) => {
     updateBatchStatus(batch.id, 'pending');
-    toast.info('Lot remis en attente', { description: batch.name });
+    toast.info(t('validation.toast.batchPending'), { description: batch.name });
   };
 
   const toggleBatch = (batchId: string) => {
@@ -470,7 +487,7 @@ export function ValidationPage({ onBack }: ValidationPageProps) {
             </span>
           </TooltipTrigger>
           <TooltipContent side="top">
-            <span className="text-xs">{TARGETING_TOOLTIP[tag.kind]}</span>
+            <span className="text-xs">{t(TARGETING_TOOLTIP_KEY[tag.kind])}</span>
           </TooltipContent>
         </Tooltip>
       ))}
@@ -509,7 +526,7 @@ export function ValidationPage({ onBack }: ValidationPageProps) {
         <div className="flex items-center gap-4 mb-4">
           <Button variant="ghost" size="sm" onClick={onBack} className="gap-2">
             <ArrowLeft className="h-4 w-4" />
-            Retour aux espaces
+            {t('validation.back')}
           </Button>
         </div>
 
@@ -522,10 +539,10 @@ export function ValidationPage({ onBack }: ValidationPageProps) {
           </div>
           <div>
             <h1 className="text-xl font-semibold text-gray-900 dark:text-gray-100">
-              Validation des documents
+              {t('validation.title')}
             </h1>
             <p className="text-sm text-gray-500 dark:text-gray-400">
-              Revue, approbation et rejet des documents avant publication
+              {t('validation.subtitle')}
             </p>
           </div>
         </div>
@@ -542,10 +559,10 @@ export function ValidationPage({ onBack }: ValidationPageProps) {
               status="pending"
               activeStatus={activeStatus}
               onStatusChange={(s) => setActiveStatus(s as StatusTab)}
-              label="En attente de validation"
+              label={t('validation.kpi.pending')}
               icon={Clock}
               total={counts.pending}
-              metricLabel="À traiter"
+              metricLabel={t('validation.kpi.pendingMetric')}
               metricValue={`${counts.pending}`}
               averageValue={counts.all > 0
                 ? `${Math.round((counts.pending / counts.all) * 100)}%`
@@ -556,10 +573,10 @@ export function ValidationPage({ onBack }: ValidationPageProps) {
               status="validated"
               activeStatus={activeStatus}
               onStatusChange={(s) => setActiveStatus(s as StatusTab)}
-              label="Validés"
+              label={t('validation.kpi.validated')}
               icon={CheckCircle2}
               total={counts.validated}
-              metricLabel="Approuvés"
+              metricLabel={t('validation.kpi.validatedMetric')}
               metricValue={`${counts.validated}`}
               averageValue={counts.all > 0
                 ? `${Math.round((counts.validated / counts.all) * 100)}%`
@@ -570,10 +587,10 @@ export function ValidationPage({ onBack }: ValidationPageProps) {
               status="rejected"
               activeStatus={activeStatus}
               onStatusChange={(s) => setActiveStatus(s as StatusTab)}
-              label="Rejetés"
+              label={t('validation.kpi.rejected')}
               icon={XCircle}
               total={counts.rejected}
-              metricLabel="Refusés"
+              metricLabel={t('validation.kpi.rejectedMetric')}
               metricValue={`${counts.rejected}`}
               averageValue={counts.all > 0
                 ? `${Math.round((counts.rejected / counts.all) * 100)}%`
@@ -584,10 +601,10 @@ export function ValidationPage({ onBack }: ValidationPageProps) {
               status="all"
               activeStatus={activeStatus}
               onStatusChange={(s) => setActiveStatus(s as StatusTab)}
-              label="Tous"
+              label={t('validation.kpi.all')}
               icon={FileText}
               total={counts.all}
-              metricLabel="Total"
+              metricLabel={t('validation.kpi.allMetric')}
               metricValue={`${counts.all}`}
               averageValue="100%"
             />
@@ -608,7 +625,7 @@ export function ValidationPage({ onBack }: ValidationPageProps) {
             <FilterBar
               searchValue={searchTerm}
               onSearchChange={setSearchTerm}
-              searchPlaceholder="Rechercher un document, auteur, ciblage..."
+              searchPlaceholder={t('validation.searchPlaceholder')}
               filters={filterConfigs}
               activeFilters={activeFilters}
               onFilterChange={handleFilterChange}
@@ -624,7 +641,7 @@ export function ValidationPage({ onBack }: ValidationPageProps) {
               <div className="py-16 text-center">
                 <ShieldCheck className="mx-auto h-10 w-10 text-gray-300" />
                 <p className="mt-3 text-sm text-gray-500">
-                  Aucun document à afficher
+                  {t('validation.empty')}
                 </p>
                 {hasActiveFilters && (
                   <Button
@@ -633,7 +650,7 @@ export function ValidationPage({ onBack }: ValidationPageProps) {
                     onClick={handleClearAll}
                     className="mt-1"
                   >
-                    Réinitialiser les filtres
+                    {t('validation.resetFilters')}
                   </Button>
                 )}
               </div>
@@ -644,22 +661,22 @@ export function ValidationPage({ onBack }: ValidationPageProps) {
                     <tr className="border-b border-border bg-muted/40 backdrop-blur-sm">
                       <th className="w-8 px-2 py-4" />
                       <th className="px-6 py-4 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider">
-                        Document
+                        {t('validation.table.document')}
                       </th>
                       <th className="px-6 py-4 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider">
-                        Créé par
+                        {t('validation.table.createdBy')}
                       </th>
                       <th className="px-6 py-4 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider">
-                        Date
+                        {t('validation.table.date')}
                       </th>
                       <th className="px-6 py-4 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider">
-                        Ciblage
+                        {t('validation.table.targeting')}
                       </th>
                       <th className="px-6 py-4 text-center text-xs font-medium text-muted-foreground uppercase tracking-wider">
-                        Comm.
+                        {t('validation.table.comm')}
                       </th>
                       <th className="px-6 py-4 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider">
-                        Statut
+                        {t('validation.table.status')}
                       </th>
                       <th
                         className={cn(
@@ -667,7 +684,7 @@ export function ValidationPage({ onBack }: ValidationPageProps) {
                           stickyHeadActionsClass,
                         )}
                       >
-                        Actions
+                        {t('validation.table.actions')}
                       </th>
                     </tr>
                   </thead>
@@ -785,6 +802,7 @@ function NotificationLine({
   sourceHint,
   context = 'document',
 }: NotificationLineProps) {
+  const { t } = useTranslation();
   if (!notification) {
     return (
       <div className="flex items-center gap-1.5 text-[11px] italic text-gray-500 dark:text-gray-500">
@@ -792,14 +810,20 @@ function NotificationLine({
         {sourceHint && <span className="not-italic">{sourceHint}</span>}
         <span>
           {context === 'batch'
-            ? 'Aucune notification — validation interne'
-            : 'Aucune notification'}
+            ? t('validation.notificationLine.noneBatch')
+            : t('validation.notificationLine.noneDoc')}
         </span>
       </div>
     );
   }
 
   const recipientCount = notification.recipients.length;
+  const recipientsLabel = t(
+    recipientCount > 1
+      ? 'validation.notificationLine.recipientsMany'
+      : 'validation.notificationLine.recipientsOne',
+    { count: recipientCount },
+  );
 
   return (
     <div className="flex items-center gap-1.5 text-[11px] text-gray-600 dark:text-gray-400">
@@ -807,10 +831,7 @@ function NotificationLine({
       {sourceHint && (
         <span className="italic text-gray-500">{sourceHint}</span>
       )}
-      <span>
-        1 notification → {recipientCount} destinataire
-        {recipientCount > 1 ? 's' : ''}
-      </span>
+      <span>{recipientsLabel}</span>
       {notification.channel === 'email' && (
         <Mail className="h-3 w-3 text-gray-400" />
       )}
@@ -853,7 +874,22 @@ function StandaloneDocumentRow({
   renderTargeting,
   stickyClass,
 }: StandaloneDocumentRowProps) {
+  const { t, lang } = useTranslation();
+  const dateFormatter = useMemo(
+    () =>
+      new Intl.DateTimeFormat(lang === 'en' ? 'en-GB' : 'fr-FR', {
+        day: '2-digit',
+        month: 'short',
+        year: 'numeric',
+        hour: '2-digit',
+        minute: '2-digit',
+      }),
+    [lang],
+  );
+  const formatDate = (iso: string) => dateFormatter.format(new Date(iso));
   const conf = STATUS_VARIANT[doc.status];
+  const statusLabel = t(STATUS_LABEL_KEY[doc.status]);
+  const commentText = doc.comment ? t(doc.comment.key, doc.comment.vars) : '';
   return (
     <tr
       className="border-b border-border/70 transition-colors hover:bg-muted/50 cursor-pointer"
@@ -879,14 +915,14 @@ function StandaloneDocumentRow({
       <td className="px-6 py-4 text-center">
         <div className="flex justify-center">
           <CommentIndicator
-            comment={doc.comment}
+            comment={commentText}
             author={doc.createdBy.name}
             date={formatDate(doc.createdAt)}
           />
         </div>
       </td>
       <td className="px-6 py-4">
-        <StatusBadge label={conf.label} variant={conf.variant} />
+        <StatusBadge label={statusLabel} variant={conf.variant} />
       </td>
       <td className={cn('px-6 py-4', stickyClass)}>
         <div
@@ -904,7 +940,7 @@ function StandaloneDocumentRow({
                 <Eye className="h-4 w-4" />
               </Button>
             </TooltipTrigger>
-            <TooltipContent>Aperçu du document</TooltipContent>
+            <TooltipContent>{t('validation.tooltip.previewDoc')}</TooltipContent>
           </Tooltip>
           {doc.status === 'validated' && (
             <Tooltip>
@@ -918,7 +954,7 @@ function StandaloneDocumentRow({
                   <RotateCcw className="h-4 w-4" />
                 </Button>
               </TooltipTrigger>
-              <TooltipContent>Remettre en attente</TooltipContent>
+              <TooltipContent>{t('validation.tooltip.resetPending')}</TooltipContent>
             </Tooltip>
           )}
           {doc.status !== 'validated' && (
@@ -933,7 +969,7 @@ function StandaloneDocumentRow({
                   <Check className="h-4 w-4" />
                 </Button>
               </TooltipTrigger>
-              <TooltipContent>Valider</TooltipContent>
+              <TooltipContent>{t('validation.tooltip.validate')}</TooltipContent>
             </Tooltip>
           )}
           {doc.status !== 'rejected' && (
@@ -948,7 +984,7 @@ function StandaloneDocumentRow({
                   <X className="h-4 w-4" />
                 </Button>
               </TooltipTrigger>
-              <TooltipContent>Rejeter</TooltipContent>
+              <TooltipContent>{t('validation.tooltip.reject')}</TooltipContent>
             </Tooltip>
           )}
         </div>
@@ -985,8 +1021,22 @@ function BatchRowGroup({
   renderTargeting,
   stickyClass,
 }: BatchRowGroupProps) {
+  const { t, lang } = useTranslation();
+  const dateFormatter = useMemo(
+    () =>
+      new Intl.DateTimeFormat(lang === 'en' ? 'en-GB' : 'fr-FR', {
+        day: '2-digit',
+        month: 'short',
+        year: 'numeric',
+        hour: '2-digit',
+        minute: '2-digit',
+      }),
+    [lang],
+  );
+  const formatDate = (iso: string) => dateFormatter.format(new Date(iso));
   const { batch, docs, status } = node;
   const conf = STATUS_VARIANT[status];
+  const statusLabel = t(STATUS_LABEL_KEY[status]);
   const isSilent = !batch.notification;
   const earliestDate = docs.reduce(
     (min, d) =>
@@ -1001,11 +1051,11 @@ function BatchRowGroup({
     const seen = new Set<string>();
     const out: ValidationDocument['targeting'] = [];
     docs.forEach((d) =>
-      d.targeting.forEach((t) => {
-        const key = `${t.kind}:${t.label}`;
+      d.targeting.forEach((tag) => {
+        const key = `${tag.kind}:${tag.label}`;
         if (!seen.has(key)) {
           seen.add(key);
-          out.push(t);
+          out.push(tag);
         }
       }),
     );
@@ -1020,7 +1070,7 @@ function BatchRowGroup({
     if (docs.length <= 1) return true;
     const fingerprint = (doc: ValidationDocument) =>
       doc.targeting
-        .map((t) => `${t.kind}:${t.label}`)
+        .map((tag) => `${tag.kind}:${tag.label}`)
         .sort()
         .join('|');
     const ref = fingerprint(docs[0]);
@@ -1045,7 +1095,11 @@ function BatchRowGroup({
               e.stopPropagation();
               onToggle();
             }}
-            aria-label={expanded ? 'Réduire le lot' : 'Développer le lot'}
+            aria-label={
+              expanded
+                ? t('validation.tooltip.collapseBatch')
+                : t('validation.tooltip.expandBatch')
+            }
           >
             <ChevronRight
               className={cn(
@@ -1067,10 +1121,15 @@ function BatchRowGroup({
             <div className="min-w-0">
               <div className="mb-0.5 flex items-center gap-2">
                 <span className="text-[11px] font-semibold uppercase tracking-wide text-blue-600 dark:text-blue-300">
-                  {batch.kind}
+                  {t(batch.kindKey)}
                 </span>
                 <span className="rounded-full bg-blue-100 px-2 py-0.5 text-[10px] font-semibold text-blue-700 dark:bg-blue-900 dark:text-blue-200">
-                  {docs.length} doc{docs.length > 1 ? 's' : ''}
+                  {t(
+                    docs.length > 1
+                      ? 'validation.batch.docsMany'
+                      : 'validation.batch.docsOne',
+                    { count: docs.length },
+                  )}
                 </span>
               </div>
               <span
@@ -1109,14 +1168,14 @@ function BatchRowGroup({
                 <span className="text-sm text-gray-300 select-none">—</span>
               </TooltipTrigger>
               <TooltipContent>
-                <span className="text-xs">Ciblage différent selon les documents — voir chaque ligne.</span>
+                <span className="text-xs">{t('validation.tooltip.differentTargeting')}</span>
               </TooltipContent>
             </Tooltip>
           )}
         </td>
         <td className="px-6 py-3 text-center text-[11px] text-gray-500">—</td>
         <td className="px-6 py-3">
-          <StatusBadge label={conf.label} variant={conf.variant} />
+          <StatusBadge label={statusLabel} variant={conf.variant} />
         </td>
 
         <td
@@ -1140,11 +1199,13 @@ function BatchRowGroup({
                   onClick={onOpenNotification}
                 >
                   <Eye className="h-3.5 w-3.5" />
-                  Aperçu
+                  {t('validation.batch.preview')}
                 </Button>
               </TooltipTrigger>
               <TooltipContent>
-                {isSilent ? 'Aperçu du lot' : 'Aperçu de la notification'}
+                {isSilent
+                  ? t('validation.tooltip.previewBatch')
+                  : t('validation.tooltip.previewNotification')}
               </TooltipContent>
             </Tooltip>
             {status === 'validated' && (
@@ -1159,7 +1220,7 @@ function BatchRowGroup({
                     <RotateCcw className="h-4 w-4" />
                   </Button>
                 </TooltipTrigger>
-                <TooltipContent>Remettre le lot en attente</TooltipContent>
+                <TooltipContent>{t('validation.tooltip.resetBatchPending')}</TooltipContent>
               </Tooltip>
             )}
             {status !== 'validated' && (
@@ -1176,8 +1237,8 @@ function BatchRowGroup({
                 </TooltipTrigger>
                 <TooltipContent>
                   {isSilent
-                    ? 'Valider le lot'
-                    : 'Valider et envoyer la notification'}
+                    ? t('validation.tooltip.validateBatch')
+                    : t('validation.tooltip.validateAndSend')}
                 </TooltipContent>
               </Tooltip>
             )}
@@ -1193,7 +1254,7 @@ function BatchRowGroup({
                     <X className="h-4 w-4" />
                   </Button>
                 </TooltipTrigger>
-                <TooltipContent>Rejeter le lot</TooltipContent>
+                <TooltipContent>{t('validation.tooltip.rejectBatch')}</TooltipContent>
               </Tooltip>
             )}
           </div>
@@ -1221,7 +1282,7 @@ function BatchRowGroup({
                 extra={
                   <NotificationLine
                     notification={batch.notification}
-                    sourceHint="Issu du lot ·"
+                    sourceHint={t('validation.notificationLine.fromBatch')}
                   />
                 }
               />
@@ -1241,7 +1302,7 @@ function BatchRowGroup({
                     <span className="text-sm text-gray-300 select-none">—</span>
                   </TooltipTrigger>
                   <TooltipContent>
-                    <span className="text-xs">Ciblage piloté au niveau du lot.</span>
+                    <span className="text-xs">{t('validation.tooltip.targetingDrivenByBatch')}</span>
                   </TooltipContent>
                 </Tooltip>
               ) : (
@@ -1251,7 +1312,7 @@ function BatchRowGroup({
             <td className="px-6 py-2.5 text-center">
               <div className="flex justify-center">
                 <CommentIndicator
-                  comment={doc.comment}
+                  comment={doc.comment ? t(doc.comment.key, doc.comment.vars) : ''}
                   author={doc.createdBy.name}
                   date={formatDate(doc.createdAt)}
                 />
@@ -1274,7 +1335,7 @@ function BatchRowGroup({
                       <Eye className="h-4 w-4" />
                     </Button>
                   </TooltipTrigger>
-                  <TooltipContent>Aperçu du document</TooltipContent>
+                  <TooltipContent>{t('validation.tooltip.previewDoc')}</TooltipContent>
                 </Tooltip>
               </div>
             </td>

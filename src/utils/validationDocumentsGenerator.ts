@@ -19,27 +19,36 @@ export interface TargetingTag {
   label: string;
 }
 
+/** A reference to a translation key with optional interpolation variables. */
+export interface I18nRef {
+  key: string;
+  vars?: Record<string, string | number>;
+}
+
 export interface NotificationRecipient {
-  name: string;
+  /** Display name. Either a literal (real investor name) or a translation ref. */
+  name: string | I18nRef;
   email: string;
-  role?: string;
+  /** Either a literal role or a translation ref for generic roles. */
+  role?: string | I18nRef;
 }
 
 export type NotificationChannel = 'email' | 'portal' | 'both';
 
 export interface ValidationNotification {
   channel: NotificationChannel;
-  subject: string;
-  greeting: string;
-  paragraphs: string[];
-  signature: string;
+  subject: I18nRef;
+  greeting: I18nRef;
+  paragraphs: I18nRef[];
+  signature: I18nRef;
   recipients: NotificationRecipient[];
 }
 
 export interface ValidationBatch {
   id: string;
   name: string;
-  kind: string;
+  /** Translation key for the kind label (e.g. "validation.fixtures.kind.capitalCall"). */
+  kindKey: string;
   notification?: ValidationNotification;
   createdAt: string;
   createdBy: { name: string; role: string };
@@ -54,7 +63,8 @@ export interface ValidationDocument {
   createdBy: { name: string; role: string };
   createdAt: string;
   targeting: TargetingTag[];
-  comment: string;
+  /** Optional translation ref for the document comment. */
+  comment?: I18nRef;
   status: ValidationStatus;
   reviewedBy?: string;
   reviewedAt?: string;
@@ -89,49 +99,72 @@ const BATCHES: ValidationBatch[] = [
   {
     id: 'batch-capital-call-northwind',
     name: `Capital Call #${NW_DRAWDOWN_NUM} — ${FUND_NW.name}`,
-    kind: 'Capital Call',
+    kindKey: 'validation.fixtures.kind.capitalCall',
     createdAt: '2026-04-27T11:15:00Z',
     createdBy: { name: 'Antoine Leblanc', role: 'Fund Accountant' },
     notification: {
       channel: 'both',
-      subject: `Capital Call notice #${NW_DRAWDOWN_NUM} — ${FUND_NW.name} (due 22 May 2026)`,
-      greeting: 'Dear Limited Partner,',
+      subject: {
+        key: 'validation.fixtures.capitalCall.subject',
+        vars: { num: NW_DRAWDOWN_NUM, fund: FUND_NW.name },
+      },
+      greeting: { key: 'validation.fixtures.capitalCall.greeting' },
       paragraphs: [
-        `In connection with your commitment to **${FUND_NW.name}**, please find attached drawdown notice #${NW_DRAWDOWN_NUM} for an aggregate amount of **EUR 12,500,000** (your pro-rata share is detailed in the LP allocation schedule).`,
-        'Funds must be wired to the depositary account before **22 May 2026, 12:00 CET**.',
-        'For any question please contact your dedicated Investor Relations representative.',
+        {
+          key: 'validation.fixtures.capitalCall.p1',
+          vars: { fund: FUND_NW.name, num: NW_DRAWDOWN_NUM },
+        },
+        { key: 'validation.fixtures.capitalCall.p2' },
+        { key: 'validation.fixtures.capitalCall.p3' },
       ],
-      signature: 'Investor Relations — InvestHub',
+      signature: { key: 'validation.fixtures.capitalCall.signature' },
       recipients: NW_COMMITMENTS.map((c) => {
         const i = findInvestor(c.investorId)!;
-        return { name: i.name, email: i.email, role: 'Investor' };
+        return {
+          name: i.name,
+          email: i.email,
+          role: { key: 'validation.fixtures.role.investor' },
+        };
       }),
     },
   },
   {
     id: 'batch-quarterly-report-q1-atlas',
     name: `Q1 2026 Reporting — ${FUND_ATL.name}`,
-    kind: 'Quarterly Reporting',
+    kindKey: 'validation.fixtures.kind.quarterlyReporting',
     createdAt: '2026-04-28T09:42:00Z',
     createdBy: { name: 'Maxime Dubois', role: 'Asset Manager' },
     notification: {
       channel: 'email',
-      subject: `Q1 2026 Reporting Pack — ${FUND_ATL.name}`,
-      greeting: 'Dear Investor,',
+      subject: {
+        key: 'validation.fixtures.quarterlyReport.subject',
+        vars: { fund: FUND_ATL.name },
+      },
+      greeting: { key: 'validation.fixtures.quarterlyReport.greeting' },
       paragraphs: [
-        `Please find enclosed the **Q1 2026 Reporting Pack** for ${FUND_ATL.name}: quarterly report, NAV statement at 31/03/2026 and detailed portfolio KPIs.`,
-        'New investments closed during the quarter and exit pipeline updates are summarised in the manager letter.',
+        {
+          key: 'validation.fixtures.quarterlyReport.p1',
+          vars: { fund: FUND_ATL.name },
+        },
+        { key: 'validation.fixtures.quarterlyReport.p2' },
       ],
-      signature: 'Maxime Dubois — Asset Manager',
+      signature: { key: 'validation.fixtures.quarterlyReport.signature' },
       recipients: [
-        { name: `All LPs ${FUND_ATL.name}`, email: 'lp-aip1@investhub.io', role: 'Distribution list' },
+        {
+          name: {
+            key: 'validation.fixtures.recipient.allLps',
+            vars: { fund: FUND_ATL.name },
+          },
+          email: 'lp-aip1@investhub.io',
+          role: { key: 'validation.fixtures.role.distributionList' },
+        },
       ],
     },
   },
   {
     id: 'batch-distribution-agreement-kensington',
     name: `2026 Distribution Agreement — ${LP_KENS.name}`,
-    kind: 'Distributor Agreement (internal)',
+    kindKey: 'validation.fixtures.kind.distributorAgreement',
     createdAt: '2026-04-15T15:20:00Z',
     createdBy: { name: 'Julien Moreau', role: 'Legal Counsel' },
   },
@@ -158,7 +191,13 @@ const PENDING: Omit<ValidationDocument, 'id' | 'status'>[] = [
       createdBy: { name: 'Antoine Leblanc', role: 'Fund Accountant' },
       createdAt: `2026-04-27T11:${minute}:00Z`,
       targeting: [fund(FUND_NW.name), inv(investor.name), sub(c.subscriptionId), share(c.shareClass)],
-      comment: i === 0 ? `EUR 12.5M aggregate drawdown — ${NW_COMMITMENTS.length} LP notices to validate before dispatch.` : '',
+      comment:
+        i === 0
+          ? {
+              key: 'validation.fixtures.comment.capitalCall',
+              vars: { count: NW_COMMITMENTS.length },
+            }
+          : undefined,
       batchId: 'batch-capital-call-northwind',
     };
   }),
@@ -170,7 +209,7 @@ const PENDING: Omit<ValidationDocument, 'id' | 'status'>[] = [
     createdBy: { name: 'Maxime Dubois', role: 'Asset Manager' },
     createdAt: '2026-04-28T09:42:00Z',
     targeting: [fund(FUND_ATL.name)],
-    comment: 'Reporting Q1 ready for dispatch — to validate before LP Portal publication.',
+    comment: { key: 'validation.fixtures.comment.quarterlyReport' },
     batchId: 'batch-quarterly-report-q1-atlas',
   },
   {
@@ -179,7 +218,6 @@ const PENDING: Omit<ValidationDocument, 'id' | 'status'>[] = [
     createdBy: { name: 'Maxime Dubois', role: 'Asset Manager' },
     createdAt: '2026-04-28T09:45:00Z',
     targeting: [fund(FUND_ATL.name)],
-    comment: '',
     batchId: 'batch-quarterly-report-q1-atlas',
   },
   {
@@ -188,7 +226,6 @@ const PENDING: Omit<ValidationDocument, 'id' | 'status'>[] = [
     createdBy: { name: 'Maxime Dubois', role: 'Asset Manager' },
     createdAt: '2026-04-28T09:50:00Z',
     targeting: [fund(FUND_ATL.name)],
-    comment: '',
     batchId: 'batch-quarterly-report-q1-atlas',
   },
 
@@ -200,7 +237,7 @@ const PENDING: Omit<ValidationDocument, 'id' | 'status'>[] = [
     createdBy: { name: 'Julien Moreau', role: 'Legal Counsel' },
     createdAt: '2026-04-15T15:20:00Z',
     targeting: [seg('Distributor'), inv(LP_KENS.name)],
-    comment: 'Legal review pending before signature.',
+    comment: { key: 'validation.fixtures.comment.distributorLegal' },
     batchId: 'batch-distribution-agreement-kensington',
   },
   {
@@ -210,7 +247,6 @@ const PENDING: Omit<ValidationDocument, 'id' | 'status'>[] = [
     createdBy: { name: 'Julien Moreau', role: 'Legal Counsel' },
     createdAt: '2026-04-15T15:24:00Z',
     targeting: [seg('Distributor'), inv(LP_KENS.name)],
-    comment: '',
     batchId: 'batch-distribution-agreement-kensington',
   },
 
@@ -227,17 +263,27 @@ const PENDING: Omit<ValidationDocument, 'id' | 'status'>[] = [
       sub(NW_BRUNSWICK_SUB.subscriptionId),
       share(NW_BRUNSWICK_SUB.shareClass),
     ],
-    comment: 'Nominative document — verify recipient identity.',
+    comment: { key: 'validation.fixtures.comment.taxNominative' },
     notification: {
       channel: 'both',
-      subject: `Tax Certificate 2025 — ${LP_BRUNSWICK.name} (${FUND_NW.name})`,
-      greeting: 'Dear Sir or Madam,',
+      subject: {
+        key: 'validation.fixtures.taxCertificate.subject',
+        vars: { investor: LP_BRUNSWICK.name, fund: FUND_NW.name },
+      },
+      greeting: { key: 'validation.fixtures.taxCertificate.greeting' },
       paragraphs: [
-        `Please find enclosed your **2025 tax certificate** for ${FUND_NW.name}.`,
+        {
+          key: 'validation.fixtures.taxCertificate.p1',
+          vars: { fund: FUND_NW.name },
+        },
       ],
-      signature: 'Sophie Bernard — Tax Specialist',
+      signature: { key: 'validation.fixtures.taxCertificate.signature' },
       recipients: [
-        { name: LP_BRUNSWICK.name, email: LP_BRUNSWICK.email, role: 'Investor' },
+        {
+          name: LP_BRUNSWICK.name,
+          email: LP_BRUNSWICK.email,
+          role: { key: 'validation.fixtures.role.investor' },
+        },
       ],
     },
   },
@@ -248,17 +294,30 @@ const PENDING: Omit<ValidationDocument, 'id' | 'status'>[] = [
     createdBy: { name: 'Mathilde Garcia', role: 'ESG Officer' },
     createdAt: '2026-04-22T13:15:00Z',
     targeting: [fund(FUND_ATL.name)],
-    comment: 'Awaiting confirmation of the carbon footprint figures by external auditor.',
+    comment: { key: 'validation.fixtures.comment.esgPending' },
     notification: {
       channel: 'portal',
-      subject: `${FUND_ATL.name} — SFDR Article 9 Disclosure 2025`,
-      greeting: 'Dear LPs,',
+      subject: {
+        key: 'validation.fixtures.sfdrDisclosure.subject',
+        vars: { fund: FUND_ATL.name },
+      },
+      greeting: { key: 'validation.fixtures.sfdrDisclosure.greeting' },
       paragraphs: [
-        `Our SFDR Article 9 disclosure for ${FUND_ATL.name} is now available on the LP Portal alongside the 2025 ESG report.`,
+        {
+          key: 'validation.fixtures.sfdrDisclosure.p1',
+          vars: { fund: FUND_ATL.name },
+        },
       ],
-      signature: 'Mathilde Garcia — ESG Officer',
+      signature: { key: 'validation.fixtures.sfdrDisclosure.signature' },
       recipients: [
-        { name: `All LPs ${FUND_ATL.name}`, email: 'portal-lp@investhub.io', role: 'LP Portal' },
+        {
+          name: {
+            key: 'validation.fixtures.recipient.allLps',
+            vars: { fund: FUND_ATL.name },
+          },
+          email: 'portal-lp@investhub.io',
+          role: { key: 'validation.fixtures.role.lpPortal' },
+        },
       ],
     },
   },
@@ -272,7 +331,6 @@ const VALIDATED: Omit<ValidationDocument, 'id' | 'status'>[] = [
     createdBy: { name: 'Léa Marchand', role: 'IR Manager' },
     createdAt: '2026-03-12T10:00:00Z',
     targeting: [fund(FUND_ATL.name)],
-    comment: '',
     reviewedBy: 'Hugo Petit',
     reviewedAt: '2026-03-15T09:30:00Z',
   },
@@ -283,7 +341,7 @@ const VALIDATED: Omit<ValidationDocument, 'id' | 'status'>[] = [
     createdBy: { name: 'Antoine Leblanc', role: 'Distribution Lead' },
     createdAt: '2026-04-10T09:15:00Z',
     targeting: [seg('Distributor')],
-    comment: 'Approved with minor edits on slides 12 to 14.',
+    comment: { key: 'validation.fixtures.comment.roadshowApproved' },
     reviewedBy: 'Sophie Bernard',
     reviewedAt: '2026-04-11T16:42:00Z',
   },
@@ -297,7 +355,7 @@ const REJECTED: Omit<ValidationDocument, 'id' | 'status'>[] = [
     createdBy: { name: 'Mathilde Garcia', role: 'Marketing Manager' },
     createdAt: '2026-04-20T11:30:00Z',
     targeting: [seg('Distributor')],
-    comment: 'Rejected: promotional language not compliant with AMF guidelines — to be reworded.',
+    comment: { key: 'validation.fixtures.comment.pitchRejected' },
     reviewedBy: 'Hugo Petit',
     reviewedAt: '2026-04-21T10:05:00Z',
   },

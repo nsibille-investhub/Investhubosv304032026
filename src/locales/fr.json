@@ -2016,5 +2016,187 @@
       "exportImpossible": "Impossible d'exporter",
       "scopeEmpty": "Le scope de ciblage est vide"
     }
+  },
+  "validation": {
+    "back": "Retour aux espaces",
+    "title": "Validation des documents",
+    "subtitle": "Revue, approbation et rejet des documents avant publication",
+    "searchPlaceholder": "Rechercher un document, auteur, ciblage...",
+    "kpi": {
+      "pending": "En attente de validation",
+      "pendingMetric": "À traiter",
+      "validated": "Validés",
+      "validatedMetric": "Approuvés",
+      "rejected": "Rejetés",
+      "rejectedMetric": "Refusés",
+      "all": "Tous",
+      "allMetric": "Total"
+    },
+    "filters": {
+      "author": "Auteur",
+      "targeting": "Ciblage",
+      "format": "Format"
+    },
+    "table": {
+      "document": "Document",
+      "createdBy": "Créé par",
+      "date": "Date",
+      "targeting": "Ciblage",
+      "comm": "Comm.",
+      "status": "Statut",
+      "actions": "Actions"
+    },
+    "empty": "Aucun document à afficher",
+    "resetFilters": "Réinitialiser les filtres",
+    "status": {
+      "pending": "En attente",
+      "validated": "Validé",
+      "rejected": "Rejeté"
+    },
+    "targetingTooltip": {
+      "segment": "Segment",
+      "fund": "Fonds",
+      "shareClass": "Part / Classe",
+      "investor": "Investisseur",
+      "subscription": "Souscription",
+      "audience": "Audience"
+    },
+    "tooltip": {
+      "previewDoc": "Aperçu du document",
+      "previewBatch": "Aperçu du lot",
+      "previewNotification": "Aperçu de la notification",
+      "validate": "Valider",
+      "validateBatch": "Valider le lot",
+      "validateAndSend": "Valider et envoyer la notification",
+      "reject": "Rejeter",
+      "rejectBatch": "Rejeter le lot",
+      "resetPending": "Remettre en attente",
+      "resetBatchPending": "Remettre le lot en attente",
+      "expandBatch": "Développer le lot",
+      "collapseBatch": "Réduire le lot",
+      "differentTargeting": "Ciblage différent selon les documents — voir chaque ligne.",
+      "targetingDrivenByBatch": "Ciblage piloté au niveau du lot."
+    },
+    "notificationLine": {
+      "noneDoc": "Aucune notification",
+      "noneBatch": "Aucune notification — validation interne",
+      "recipientsOne": "1 notification → {{count}} destinataire",
+      "recipientsMany": "1 notification → {{count}} destinataires",
+      "fromBatch": "Issu du lot ·"
+    },
+    "batch": {
+      "docsOne": "{{count}} doc",
+      "docsMany": "{{count}} docs",
+      "preview": "Aperçu"
+    },
+    "toast": {
+      "docValidated": "Document validé",
+      "docRejected": "Document rejeté",
+      "docPending": "Document remis en attente",
+      "batchValidatedNotified": "Lot validé · notification envoyée",
+      "batchValidated": "Lot validé",
+      "batchRejected": "Lot rejeté",
+      "batchPending": "Lot remis en attente",
+      "descOne": "{{count}} document • {{name}}",
+      "descMany": "{{count}} documents • {{name}}"
+    },
+    "you": "Vous",
+    "drawer": {
+      "headerNoneSubtitle": "Aucune notification — validation interne uniquement",
+      "headerSubtitleOne": "1 notification → {{count}} destinataire ({{channel}})",
+      "headerSubtitleMany": "1 notification → {{count}} destinataires ({{channel}})",
+      "channel": {
+        "email": "email",
+        "portal": "portail LP",
+        "both": "email + portail"
+      },
+      "channelBadge": {
+        "email": "Email",
+        "portal": "Portail LP",
+        "both": "Email + Portail"
+      },
+      "attachmentsCountOne": "{{count}} pièce jointe",
+      "attachmentsCountMany": "{{count}} pièces jointes",
+      "createdBy": "Créé par {{name}} · {{date}}",
+      "tabs": {
+        "email": "Email",
+        "recipients": "Destinataires",
+        "attachments": "Pièces"
+      },
+      "silentTitle": "Aucune notification",
+      "silentBody": "Ce lot regroupe des documents pour validation interne uniquement. Aucun email ni publication portail ne sera déclenché.",
+      "email": {
+        "from": "De",
+        "to": "À",
+        "subject": "Objet",
+        "attachmentsLabel": "Pièces jointes",
+        "othersOne": " + {{count}} autre",
+        "othersMany": " + {{count}} autres",
+        "footerNote": "Cet e-mail vous est adressé par InvestHub dans le cadre de votre souscription. Pour toute question, contactez votre interlocuteur Investor Relations."
+      },
+      "recipientsTable": {
+        "recipient": "Destinataire",
+        "email": "Email",
+        "type": "Type"
+      },
+      "footer": {
+        "close": "Fermer",
+        "rejectBatch": "Rejeter le lot",
+        "validateBatchSilent": "Valider le lot",
+        "validateAndSend": "Valider et envoyer la notification",
+        "resetPending": "Remettre en attente"
+      }
+    },
+    "fixtures": {
+      "kind": {
+        "capitalCall": "Appel de fonds",
+        "quarterlyReporting": "Reporting trimestriel",
+        "distributorAgreement": "Convention de distribution (interne)"
+      },
+      "role": {
+        "investor": "Investisseur",
+        "distributionList": "Liste de diffusion",
+        "lpPortal": "Portail LP"
+      },
+      "recipient": {
+        "allLps": "Tous les LPs {{fund}}"
+      },
+      "comment": {
+        "capitalCall": "Appel de fonds global de 12,5 M€ — {{count}} avis LP à valider avant envoi.",
+        "quarterlyReport": "Reporting Q1 prêt à l'envoi — à valider avant publication sur le Portail LP.",
+        "distributorLegal": "Revue juridique en cours avant signature.",
+        "taxNominative": "Document nominatif — vérifier l'identité du destinataire.",
+        "esgPending": "En attente de la confirmation des chiffres d'empreinte carbone par l'auditeur externe.",
+        "roadshowApproved": "Approuvé avec retouches mineures sur les slides 12 à 14.",
+        "pitchRejected": "Rejeté : langage promotionnel non conforme aux recommandations AMF — à reformuler."
+      },
+      "capitalCall": {
+        "subject": "Avis d'appel de fonds n°{{num}} — {{fund}} (échéance 22 mai 2026)",
+        "greeting": "Cher Limited Partner,",
+        "p1": "Dans le cadre de votre engagement dans **{{fund}}**, veuillez trouver ci-joint l'avis d'appel de fonds n°{{num}} pour un montant global de **12 500 000 EUR** (votre quote-part est détaillée dans le tableau d'allocation LP).",
+        "p2": "Les fonds doivent être virés sur le compte dépositaire avant le **22 mai 2026, 12h00 CET**.",
+        "p3": "Pour toute question, veuillez contacter votre interlocuteur Investor Relations dédié.",
+        "signature": "Investor Relations — InvestHub"
+      },
+      "quarterlyReport": {
+        "subject": "Pack reporting Q1 2026 — {{fund}}",
+        "greeting": "Cher investisseur,",
+        "p1": "Veuillez trouver ci-joint le **pack reporting Q1 2026** de {{fund}} : rapport trimestriel, état de la VL au 31/03/2026 et KPI détaillés du portefeuille.",
+        "p2": "Les nouveaux investissements clôturés au cours du trimestre et les actualités du pipeline de cessions sont résumés dans la lettre du gérant.",
+        "signature": "Maxime Dubois — Asset Manager"
+      },
+      "taxCertificate": {
+        "subject": "Certificat fiscal 2025 — {{investor}} ({{fund}})",
+        "greeting": "Madame, Monsieur,",
+        "p1": "Veuillez trouver ci-joint votre **certificat fiscal 2025** pour {{fund}}.",
+        "signature": "Sophie Bernard — Spécialiste fiscal"
+      },
+      "sfdrDisclosure": {
+        "subject": "{{fund}} — Information SFDR Article 9 2025",
+        "greeting": "Chers LPs,",
+        "p1": "Notre information SFDR Article 9 pour {{fund}} est désormais disponible sur le Portail LP, aux côtés du rapport ESG 2025.",
+        "signature": "Mathilde Garcia — Responsable ESG"
+      }
+    }
   }
 }
