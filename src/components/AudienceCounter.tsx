@@ -14,6 +14,7 @@
  */
 
 import { Users, UserRound } from 'lucide-react';
+import { useTranslation } from '../utils/languageContext';
 
 interface AudienceCounterCardsProps {
   investors: number;
@@ -21,6 +22,7 @@ interface AudienceCounterCardsProps {
 }
 
 export function AudienceCounterCards({ investors, contacts }: AudienceCounterCardsProps) {
+  const { t } = useTranslation();
   return (
     <div className="grid grid-cols-2 gap-3">
       <div className="rounded-xl border bg-white p-3 flex items-center gap-3" style={{ borderColor: '#000E2B1F' }}>
@@ -28,7 +30,7 @@ export function AudienceCounterCards({ investors, contacts }: AudienceCounterCar
           <UserRound className="w-5 h-5" style={{ color: '#000E2B' }} />
         </div>
         <div>
-          <p className="text-xs font-medium" style={{ color: '#000E2B' }}>Investisseurs</p>
+          <p className="text-xs font-medium" style={{ color: '#000E2B' }}>{t('ged.dataRoom.audienceCounter.investors')}</p>
           <p className="text-2xl font-bold leading-tight" style={{ color: '#000E2B' }}>{investors}</p>
         </div>
       </div>
@@ -37,7 +39,7 @@ export function AudienceCounterCards({ investors, contacts }: AudienceCounterCar
           <Users className="w-5 h-5" style={{ color: '#000E2B' }} />
         </div>
         <div>
-          <p className="text-xs font-medium" style={{ color: '#000E2B' }}>Contacts</p>
+          <p className="text-xs font-medium" style={{ color: '#000E2B' }}>{t('ged.dataRoom.audienceCounter.contacts')}</p>
           <p className="text-2xl font-bold leading-tight" style={{ color: '#000E2B' }}>{contacts}</p>
         </div>
       </div>
@@ -53,17 +55,20 @@ interface AudienceCounterProps extends AudienceCounterCardsProps {
 export function AudienceCounter({
   investors,
   contacts,
-  title = 'Audience concernée',
-  description = 'Basée sur le ciblage défini ci-dessus.',
+  title,
+  description,
 }: AudienceCounterProps) {
+  const { t } = useTranslation();
+  const resolvedTitle = title ?? t('ged.dataRoom.audienceCounter.title');
+  const resolvedDescription = description ?? t('ged.dataRoom.audienceCounter.description');
   return (
     <div className="space-y-3 rounded-2xl p-4 border" style={{ backgroundColor: '#EEF1F7', borderColor: '#000E2B1F' }}>
       <div>
         <p className="font-semibold flex items-center gap-2" style={{ color: '#000E2B' }}>
           <Users className="w-5 h-5" style={{ color: '#000E2B' }} />
-          {title}
+          {resolvedTitle}
         </p>
-        <p className="text-sm text-slate-600">{description}</p>
+        <p className="text-sm text-slate-600">{resolvedDescription}</p>
       </div>
       <AudienceCounterCards investors={investors} contacts={contacts} />
     </div>

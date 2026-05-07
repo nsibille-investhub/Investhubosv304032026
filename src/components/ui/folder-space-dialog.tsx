@@ -40,6 +40,7 @@ import {
 import { FolderSelectionTreeviewDropdown, FolderOption } from '../DocumentAddModal';
 import { AudienceCounter, computeAudience } from '../AudienceCounter';
 import { SegmentsMultiSelect, FundSingleSelect } from './targeting-selects';
+import { useTranslation } from '../../utils/languageContext';
 
 // ---------------------------------------------------------------------------
 // Brand color token
@@ -107,6 +108,7 @@ export function FolderSpaceDialog(props: FolderSpaceDialogProps) {
   const { variant, open, onClose, mode = 'create' } = props;
   const isSpace = variant === 'space';
   const isEdit = mode === 'edit';
+  const { t } = useTranslation();
 
   const [name, setName] = useState('');
   const [parentId, setParentId] = useState('');
@@ -181,18 +183,20 @@ export function FolderSpaceDialog(props: FolderSpaceDialogProps) {
   };
 
   const title = isSpace
-    ? isEdit ? "Configurer l'espace" : 'Nouvel espace'
-    : isEdit ? 'Modifier le dossier' : 'Nouveau dossier';
+    ? isEdit ? t('ged.dataRoom.folderSpaceDialog.titleSpaceEdit') : t('ged.dataRoom.folderSpaceDialog.titleSpaceCreate')
+    : isEdit ? t('ged.dataRoom.folderSpaceDialog.titleFolderEdit') : t('ged.dataRoom.folderSpaceDialog.titleFolderCreate');
   const description = isSpace
-    ? "Définissez le nom et le ciblage de l'espace"
-    : 'Définissez le dossier parent, le nom et le ciblage du dossier';
-  const nameLabel = isSpace ? "Nom de l'espace *" : 'Nom du dossier *';
+    ? t('ged.dataRoom.folderSpaceDialog.descSpace')
+    : t('ged.dataRoom.folderSpaceDialog.descFolder');
+  const nameLabel = isSpace
+    ? t('ged.dataRoom.folderSpaceDialog.nameSpaceLabel')
+    : t('ged.dataRoom.folderSpaceDialog.nameFolderLabel');
   const namePlaceholder = isSpace
-    ? 'Ex: Investisseurs LP, Documentation Partenaires...'
-    : 'Ex: Rapports investisseurs Q2';
+    ? t('ged.dataRoom.folderSpaceDialog.nameSpacePlaceholder')
+    : t('ged.dataRoom.folderSpaceDialog.nameFolderPlaceholder');
   const submitLabel = isSpace
-    ? isEdit ? 'Enregistrer' : "Créer l'espace"
-    : isEdit ? 'Enregistrer' : 'Créer le dossier';
+    ? isEdit ? t('ged.dataRoom.folderSpaceDialog.save') : t('ged.dataRoom.folderSpaceDialog.submitSpaceCreate')
+    : isEdit ? t('ged.dataRoom.folderSpaceDialog.save') : t('ged.dataRoom.folderSpaceDialog.submitFolderCreate');
 
   return (
     <Dialog open={open} onOpenChange={(o) => { if (!o) onClose(); }}>
@@ -216,7 +220,7 @@ export function FolderSpaceDialog(props: FolderSpaceDialogProps) {
           {/* Parent folder — folder variant only (tree view) */}
           {!isSpace && (
             <div className="space-y-2">
-              <Label>Dossier parent</Label>
+              <Label>{t('ged.dataRoom.folderSpaceDialog.parentFolder')}</Label>
               <FolderSelectionTreeviewDropdown
                 value={parentId}
                 onChange={setParentId}
@@ -240,18 +244,18 @@ export function FolderSpaceDialog(props: FolderSpaceDialogProps) {
           {/* Targeting */}
           <div className="space-y-4">
             <div>
-              <h3 className="text-sm font-medium text-gray-900 mb-1">Ciblage</h3>
+              <h3 className="text-sm font-medium text-gray-900 mb-1">{t('ged.dataRoom.folderSpaceDialog.targeting')}</h3>
               <p className="text-xs text-gray-500">
                 {isSpace
-                  ? 'Définissez qui peut accéder à cet espace'
-                  : 'Affiner le ciblage hérité de l\'espace pour ce dossier'}
+                  ? t('ged.dataRoom.folderSpaceDialog.targetingDescSpace')
+                  : t('ged.dataRoom.folderSpaceDialog.targetingDescFolder')}
               </p>
             </div>
 
             {/* User types — space variant only */}
             {isSpace && (
               <div className="space-y-2">
-                <Label>Type d&apos;utilisateur</Label>
+                <Label>{t('ged.dataRoom.folderSpaceDialog.userType')}</Label>
                 <div className="flex flex-wrap gap-2">
                   {USER_TYPES.map((type) => {
                     const isSelected = targeting.userTypes.includes(type);
@@ -267,36 +271,36 @@ export function FolderSpaceDialog(props: FolderSpaceDialogProps) {
                         style={isSelected ? { borderColor: BRAND_BLUE, color: BRAND_BLUE } : undefined}
                       >
                         <Icon className="w-4 h-4" style={isSelected ? { color: BRAND_BLUE } : undefined} />
-                        <span className="text-sm font-medium">{type}</span>
+                        <span className="text-sm font-medium">{t(`ged.dataRoom.folderSpaceDialog.userTypes.${type}`)}</span>
                       </button>
                     );
                   })}
                 </div>
                 {targeting.userTypes.length === 0 && (
-                  <p className="text-xs text-amber-600">Aucun type d&apos;utilisateur sélectionné</p>
+                  <p className="text-xs text-amber-600">{t('ged.dataRoom.folderSpaceDialog.noUserTypeWarning')}</p>
                 )}
               </div>
             )}
 
             {/* Segments — multi-select inline badges */}
             <div className="space-y-2">
-              <Label>Segments</Label>
+              <Label>{t('ged.dataRoom.folderSpaceDialog.segmentsLabel')}</Label>
               <SegmentsMultiSelect
                 value={targeting.segments}
                 onChange={setSegments}
                 options={ALL_SEGMENTS}
-                placeholder="Tous les segments"
+                placeholder={t('ged.dataRoom.folderSpaceDialog.segmentsAll')}
               />
             </div>
 
             {/* Fund — single-select inline badge */}
             <div className="space-y-2">
-              <Label>Fonds</Label>
+              <Label>{t('ged.dataRoom.folderSpaceDialog.fundsLabel')}</Label>
               <FundSingleSelect
                 value={selectedFund}
                 onChange={setSelectedFund}
                 options={ALL_FUNDS}
-                placeholder="Tous les fonds"
+                placeholder={t('ged.dataRoom.folderSpaceDialog.fundsAll')}
               />
             </div>
           </div>
@@ -317,13 +321,13 @@ export function FolderSpaceDialog(props: FolderSpaceDialogProps) {
                 className="text-red-600 hover:bg-red-50 hover:border-red-300"
               >
                 <Trash2 className="w-4 h-4 mr-2" />
-                Supprimer
+                {t('ged.dataRoom.folderSpaceDialog.delete')}
               </Button>
             )}
           </div>
           <div className="flex items-center gap-2">
             <Button variant="outline" onClick={onClose}>
-              Annuler
+              {t('ged.dataRoom.folderSpaceDialog.cancel')}
             </Button>
             <Button
               onClick={handleSubmit}
@@ -348,6 +352,7 @@ interface FolderSpaceDialogPreviewProps {
 }
 
 export function FolderSpaceDialogPreview({ variant }: FolderSpaceDialogPreviewProps) {
+  const { t } = useTranslation();
   const isSpace = variant === 'space';
   const [targeting, setTargeting] = useState<SpaceTargeting>({
     userTypes: ['Investisseur'],
@@ -379,12 +384,12 @@ export function FolderSpaceDialogPreview({ variant }: FolderSpaceDialogPreviewPr
         </div>
         <div>
           <h3 className="text-lg font-semibold text-gray-900">
-            {isSpace ? 'Nouvel espace' : 'Nouveau dossier'}
+            {isSpace ? t('ged.dataRoom.folderSpaceDialog.titleSpaceCreate') : t('ged.dataRoom.folderSpaceDialog.titleFolderCreate')}
           </h3>
           <p className="text-sm text-gray-500">
             {isSpace
-              ? "Définissez le nom et le ciblage de l'espace"
-              : 'Définissez le dossier parent, le nom et le ciblage du dossier'}
+              ? t('ged.dataRoom.folderSpaceDialog.descSpace')
+              : t('ged.dataRoom.folderSpaceDialog.descFolder')}
           </p>
         </div>
       </div>
@@ -392,7 +397,7 @@ export function FolderSpaceDialogPreview({ variant }: FolderSpaceDialogPreviewPr
       <div className="p-6 space-y-6">
         {!isSpace && (
           <div className="space-y-2">
-            <Label>Dossier parent</Label>
+            <Label>{t('ged.dataRoom.folderSpaceDialog.parentFolder')}</Label>
             <Button variant="outline" className="w-full justify-between font-normal">
               <span className="truncate">Constitutifs du Fonds</span>
               <ChevronDown className="w-4 h-4" />
@@ -401,24 +406,34 @@ export function FolderSpaceDialogPreview({ variant }: FolderSpaceDialogPreviewPr
         )}
 
         <div className="space-y-2">
-          <Label>{isSpace ? "Nom de l'espace *" : 'Nom du dossier *'}</Label>
+          <Label>
+            {isSpace
+              ? t('ged.dataRoom.folderSpaceDialog.nameSpaceLabel')
+              : t('ged.dataRoom.folderSpaceDialog.nameFolderLabel')}
+          </Label>
           <Input
-            placeholder={isSpace ? 'Ex: Investisseurs LP, Documentation Partenaires...' : 'Ex: Rapports investisseurs Q2'}
+            placeholder={
+              isSpace
+                ? t('ged.dataRoom.folderSpaceDialog.nameSpacePlaceholder')
+                : t('ged.dataRoom.folderSpaceDialog.nameFolderPlaceholder')
+            }
             defaultValue=""
           />
         </div>
 
         <div className="space-y-4">
           <div>
-            <h4 className="text-sm font-medium text-gray-900 mb-1">Ciblage</h4>
+            <h4 className="text-sm font-medium text-gray-900 mb-1">{t('ged.dataRoom.folderSpaceDialog.targeting')}</h4>
             <p className="text-xs text-gray-500">
-              {isSpace ? 'Définissez qui peut accéder à cet espace' : "Affiner le ciblage hérité de l'espace pour ce dossier"}
+              {isSpace
+                ? t('ged.dataRoom.folderSpaceDialog.targetingDescSpace')
+                : t('ged.dataRoom.folderSpaceDialog.targetingDescFolder')}
             </p>
           </div>
 
           {isSpace && (
             <div className="space-y-2">
-              <Label>Type d&apos;utilisateur</Label>
+              <Label>{t('ged.dataRoom.folderSpaceDialog.userType')}</Label>
               <div className="flex flex-wrap gap-2">
                 {USER_TYPES.map((type) => {
                   const isSelected = targeting.userTypes.includes(type);
@@ -434,7 +449,7 @@ export function FolderSpaceDialogPreview({ variant }: FolderSpaceDialogPreviewPr
                       style={isSelected ? { borderColor: BRAND_BLUE, color: BRAND_BLUE } : undefined}
                     >
                       <Icon className="w-4 h-4" style={isSelected ? { color: BRAND_BLUE } : undefined} />
-                      <span className="text-sm font-medium">{type}</span>
+                      <span className="text-sm font-medium">{t(`ged.dataRoom.folderSpaceDialog.userTypes.${type}`)}</span>
                     </button>
                   );
                 })}
@@ -443,20 +458,22 @@ export function FolderSpaceDialogPreview({ variant }: FolderSpaceDialogPreviewPr
           )}
 
           <div className="space-y-2">
-            <Label>Segments</Label>
+            <Label>{t('ged.dataRoom.folderSpaceDialog.segmentsLabel')}</Label>
             <SegmentsMultiSelect
               value={targeting.segments}
               onChange={setSegments}
               options={ALL_SEGMENTS}
+              placeholder={t('ged.dataRoom.folderSpaceDialog.segmentsAll')}
             />
           </div>
 
           <div className="space-y-2">
-            <Label>Fonds</Label>
+            <Label>{t('ged.dataRoom.folderSpaceDialog.fundsLabel')}</Label>
             <FundSingleSelect
               value={selectedFund}
               onChange={setSelectedFund}
               options={ALL_FUNDS}
+              placeholder={t('ged.dataRoom.folderSpaceDialog.fundsAll')}
             />
           </div>
         </div>
@@ -468,9 +485,11 @@ export function FolderSpaceDialogPreview({ variant }: FolderSpaceDialogPreviewPr
       </div>
 
       <div className="px-6 py-4 border-t border-gray-200 bg-gray-50 flex items-center justify-end gap-2">
-        <Button variant="outline">Annuler</Button>
+        <Button variant="outline">{t('ged.dataRoom.folderSpaceDialog.cancel')}</Button>
         <Button className="text-white" style={{ backgroundColor: BRAND_BLUE }}>
-          {isSpace ? "Créer l'espace" : 'Créer le dossier'}
+          {isSpace
+            ? t('ged.dataRoom.folderSpaceDialog.submitSpaceCreate')
+            : t('ged.dataRoom.folderSpaceDialog.submitFolderCreate')}
         </Button>
       </div>
     </div>
