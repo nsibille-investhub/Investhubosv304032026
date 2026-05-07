@@ -122,7 +122,7 @@ export function ValidationPage({ onBack }: ValidationPageProps) {
   );
   const formatDate = (iso: string) => dateFormatter.format(new Date(iso));
   const targetingTooltip = (kind: TargetingKind) =>
-    t(`dataRoom.validation.targetingTooltip.${kind}`);
+    t(`ged.dataRoom.validation.targetingTooltip.${kind}`);
 
   const [isLoading, setIsLoading] = useState(true);
   const [documents, setDocuments] = useState<ValidationDocument[]>([]);
@@ -269,21 +269,21 @@ export function ValidationPage({ onBack }: ValidationPageProps) {
     () => [
       {
         id: 'createdBy',
-        label: t('dataRoom.validation.filters.createdBy'),
+        label: t('ged.dataRoom.validation.filters.createdBy'),
         type: 'select',
         isPrimary: true,
         options: allCreators.map((c) => ({ value: c, label: c })),
       },
       {
         id: 'targeting',
-        label: t('dataRoom.validation.filters.targeting'),
+        label: t('ged.dataRoom.validation.filters.targeting'),
         type: 'multiselect',
         isPrimary: true,
         options: allTargetings.map((tag) => ({ value: tag, label: tag })),
       },
       {
         id: 'format',
-        label: t('dataRoom.validation.filters.format'),
+        label: t('ged.dataRoom.validation.filters.format'),
         type: 'select',
         isPrimary: false,
         options: ['pdf', 'docx', 'xlsx', 'pptx'].map((f) => ({
@@ -362,21 +362,21 @@ export function ValidationPage({ onBack }: ValidationPageProps) {
 
   const handleValidate = (doc: ValidationDocument) => {
     updateStatus(doc.id, 'validated');
-    toast.success(t('dataRoom.validation.toast.documentValidated'), {
+    toast.success(t('ged.dataRoom.validation.toast.documentValidated'), {
       description: doc.name,
     });
   };
 
   const handleReject = (doc: ValidationDocument) => {
     updateStatus(doc.id, 'rejected');
-    toast.error(t('dataRoom.validation.toast.documentRejected'), {
+    toast.error(t('ged.dataRoom.validation.toast.documentRejected'), {
       description: doc.name,
     });
   };
 
   const handleResetToPending = (doc: ValidationDocument) => {
     updateStatus(doc.id, 'pending');
-    toast.info(t('dataRoom.validation.toast.documentReset'), {
+    toast.info(t('ged.dataRoom.validation.toast.documentReset'), {
       description: doc.name,
     });
   };
@@ -401,19 +401,19 @@ export function ValidationPage({ onBack }: ValidationPageProps) {
   const batchDescription = (count: number, name: string) =>
     t(
       count > 1
-        ? 'dataRoom.validation.toast.batchDescriptionMany'
-        : 'dataRoom.validation.toast.batchDescriptionOne',
+        ? 'ged.dataRoom.validation.toast.batchDescriptionMany'
+        : 'ged.dataRoom.validation.toast.batchDescriptionOne',
       { count, name },
     );
 
   const handleValidateBatch = (batch: ValidationBatch, count: number) => {
     updateBatchStatus(batch.id, 'validated');
     if (batch.notification) {
-      toast.success(t('dataRoom.validation.toast.batchValidatedWithNotification'), {
+      toast.success(t('ged.dataRoom.validation.toast.batchValidatedWithNotification'), {
         description: batchDescription(count, batch.name),
       });
     } else {
-      toast.success(t('dataRoom.validation.toast.batchValidated'), {
+      toast.success(t('ged.dataRoom.validation.toast.batchValidated'), {
         description: batch.name,
       });
     }
@@ -421,14 +421,14 @@ export function ValidationPage({ onBack }: ValidationPageProps) {
 
   const handleRejectBatch = (batch: ValidationBatch, count: number) => {
     updateBatchStatus(batch.id, 'rejected');
-    toast.error(t('dataRoom.validation.toast.batchRejected'), {
+    toast.error(t('ged.dataRoom.validation.toast.batchRejected'), {
       description: batchDescription(count, batch.name),
     });
   };
 
   const handleResetBatch = (batch: ValidationBatch) => {
     updateBatchStatus(batch.id, 'pending');
-    toast.info(t('dataRoom.validation.toast.batchReset'), {
+    toast.info(t('ged.dataRoom.validation.toast.batchReset'), {
       description: batch.name,
     });
   };
@@ -523,7 +523,7 @@ export function ValidationPage({ onBack }: ValidationPageProps) {
         <div className="flex items-center gap-4 mb-4">
           <Button variant="ghost" size="sm" onClick={onBack} className="gap-2">
             <ArrowLeft className="h-4 w-4" />
-            {t('dataRoom.validation.backToSpaces')}
+            {t('ged.dataRoom.validation.backToSpaces')}
           </Button>
         </div>
 
@@ -536,10 +536,10 @@ export function ValidationPage({ onBack }: ValidationPageProps) {
           </div>
           <div>
             <h1 className="text-xl font-semibold text-gray-900 dark:text-gray-100">
-              {t('dataRoom.validation.title')}
+              {t('ged.dataRoom.validation.title')}
             </h1>
             <p className="text-sm text-gray-500 dark:text-gray-400">
-              {t('dataRoom.validation.subtitle')}
+              {t('ged.dataRoom.validation.subtitle')}
             </p>
           </div>
         </div>
@@ -556,10 +556,10 @@ export function ValidationPage({ onBack }: ValidationPageProps) {
               status="pending"
               activeStatus={activeStatus}
               onStatusChange={(s) => setActiveStatus(s as StatusTab)}
-              label={t('dataRoom.validation.kpi.pendingLabel')}
+              label={t('ged.dataRoom.validation.kpi.pendingLabel')}
               icon={Clock}
               total={counts.pending}
-              metricLabel={t('dataRoom.validation.kpi.pendingMetric')}
+              metricLabel={t('ged.dataRoom.validation.kpi.pendingMetric')}
               metricValue={`${counts.pending}`}
               averageValue={counts.all > 0
                 ? `${Math.round((counts.pending / counts.all) * 100)}%`
@@ -570,10 +570,10 @@ export function ValidationPage({ onBack }: ValidationPageProps) {
               status="validated"
               activeStatus={activeStatus}
               onStatusChange={(s) => setActiveStatus(s as StatusTab)}
-              label={t('dataRoom.validation.kpi.validatedLabel')}
+              label={t('ged.dataRoom.validation.kpi.validatedLabel')}
               icon={CheckCircle2}
               total={counts.validated}
-              metricLabel={t('dataRoom.validation.kpi.validatedMetric')}
+              metricLabel={t('ged.dataRoom.validation.kpi.validatedMetric')}
               metricValue={`${counts.validated}`}
               averageValue={counts.all > 0
                 ? `${Math.round((counts.validated / counts.all) * 100)}%`
@@ -584,10 +584,10 @@ export function ValidationPage({ onBack }: ValidationPageProps) {
               status="rejected"
               activeStatus={activeStatus}
               onStatusChange={(s) => setActiveStatus(s as StatusTab)}
-              label={t('dataRoom.validation.kpi.rejectedLabel')}
+              label={t('ged.dataRoom.validation.kpi.rejectedLabel')}
               icon={XCircle}
               total={counts.rejected}
-              metricLabel={t('dataRoom.validation.kpi.rejectedMetric')}
+              metricLabel={t('ged.dataRoom.validation.kpi.rejectedMetric')}
               metricValue={`${counts.rejected}`}
               averageValue={counts.all > 0
                 ? `${Math.round((counts.rejected / counts.all) * 100)}%`
@@ -598,10 +598,10 @@ export function ValidationPage({ onBack }: ValidationPageProps) {
               status="all"
               activeStatus={activeStatus}
               onStatusChange={(s) => setActiveStatus(s as StatusTab)}
-              label={t('dataRoom.validation.kpi.allLabel')}
+              label={t('ged.dataRoom.validation.kpi.allLabel')}
               icon={FileText}
               total={counts.all}
-              metricLabel={t('dataRoom.validation.kpi.allMetric')}
+              metricLabel={t('ged.dataRoom.validation.kpi.allMetric')}
               metricValue={`${counts.all}`}
               averageValue="100%"
             />
@@ -622,7 +622,7 @@ export function ValidationPage({ onBack }: ValidationPageProps) {
             <FilterBar
               searchValue={searchTerm}
               onSearchChange={setSearchTerm}
-              searchPlaceholder={t('dataRoom.validation.searchPlaceholder')}
+              searchPlaceholder={t('ged.dataRoom.validation.searchPlaceholder')}
               filters={filterConfigs}
               activeFilters={activeFilters}
               onFilterChange={handleFilterChange}
@@ -638,7 +638,7 @@ export function ValidationPage({ onBack }: ValidationPageProps) {
               <div className="py-16 text-center">
                 <ShieldCheck className="mx-auto h-10 w-10 text-gray-300" />
                 <p className="mt-3 text-sm text-gray-500">
-                  {t('dataRoom.validation.empty.title')}
+                  {t('ged.dataRoom.validation.empty.title')}
                 </p>
                 {hasActiveFilters && (
                   <Button
@@ -647,7 +647,7 @@ export function ValidationPage({ onBack }: ValidationPageProps) {
                     onClick={handleClearAll}
                     className="mt-1"
                   >
-                    {t('dataRoom.validation.empty.resetFilters')}
+                    {t('ged.dataRoom.validation.empty.resetFilters')}
                   </Button>
                 )}
               </div>
@@ -658,22 +658,22 @@ export function ValidationPage({ onBack }: ValidationPageProps) {
                     <tr className="border-b border-border bg-muted/40 backdrop-blur-sm">
                       <th className="w-8 px-2 py-4" />
                       <th className="px-6 py-4 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider">
-                        {t('dataRoom.validation.table.document')}
+                        {t('ged.dataRoom.validation.table.document')}
                       </th>
                       <th className="px-6 py-4 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider">
-                        {t('dataRoom.validation.table.createdBy')}
+                        {t('ged.dataRoom.validation.table.createdBy')}
                       </th>
                       <th className="px-6 py-4 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider">
-                        {t('dataRoom.validation.table.date')}
+                        {t('ged.dataRoom.validation.table.date')}
                       </th>
                       <th className="px-6 py-4 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider">
-                        {t('dataRoom.validation.table.targeting')}
+                        {t('ged.dataRoom.validation.table.targeting')}
                       </th>
                       <th className="px-6 py-4 text-center text-xs font-medium text-muted-foreground uppercase tracking-wider">
-                        {t('dataRoom.validation.table.comments')}
+                        {t('ged.dataRoom.validation.table.comments')}
                       </th>
                       <th className="px-6 py-4 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider">
-                        {t('dataRoom.validation.table.status')}
+                        {t('ged.dataRoom.validation.table.status')}
                       </th>
                       <th
                         className={cn(
@@ -681,7 +681,7 @@ export function ValidationPage({ onBack }: ValidationPageProps) {
                           stickyHeadActionsClass,
                         )}
                       >
-                        {t('dataRoom.validation.table.actions')}
+                        {t('ged.dataRoom.validation.table.actions')}
                       </th>
                     </tr>
                   </thead>
@@ -809,8 +809,8 @@ function NotificationLine({
         {sourceHint && <span className="not-italic">{sourceHint}</span>}
         <span>
           {context === 'batch'
-            ? t('dataRoom.validation.notificationLine.noneBatch')
-            : t('dataRoom.validation.notificationLine.noneDocument')}
+            ? t('ged.dataRoom.validation.notificationLine.noneBatch')
+            : t('ged.dataRoom.validation.notificationLine.noneDocument')}
         </span>
       </div>
     );
@@ -827,8 +827,8 @@ function NotificationLine({
       <span>
         {t(
           recipientCount > 1
-            ? 'dataRoom.validation.notificationLine.recipientsMany'
-            : 'dataRoom.validation.notificationLine.recipientsOne',
+            ? 'ged.dataRoom.validation.notificationLine.recipientsMany'
+            : 'ged.dataRoom.validation.notificationLine.recipientsOne',
           { count: recipientCount },
         )}
       </span>
@@ -878,7 +878,7 @@ function StandaloneDocumentRow({
 }: StandaloneDocumentRowProps) {
   const { t } = useTranslation();
   const conf = STATUS_VARIANT[doc.status];
-  const statusLabel = t(`dataRoom.validation.status.${doc.status}`);
+  const statusLabel = t(`ged.dataRoom.validation.status.${doc.status}`);
   return (
     <tr
       className="border-b border-border/70 transition-colors hover:bg-muted/50 cursor-pointer"
@@ -929,7 +929,7 @@ function StandaloneDocumentRow({
                 <Eye className="h-4 w-4" />
               </Button>
             </TooltipTrigger>
-            <TooltipContent>{t('dataRoom.validation.tooltip.documentPreview')}</TooltipContent>
+            <TooltipContent>{t('ged.dataRoom.validation.tooltip.documentPreview')}</TooltipContent>
           </Tooltip>
           {doc.status === 'validated' && (
             <Tooltip>
@@ -943,7 +943,7 @@ function StandaloneDocumentRow({
                   <RotateCcw className="h-4 w-4" />
                 </Button>
               </TooltipTrigger>
-              <TooltipContent>{t('dataRoom.validation.tooltip.resetToPending')}</TooltipContent>
+              <TooltipContent>{t('ged.dataRoom.validation.tooltip.resetToPending')}</TooltipContent>
             </Tooltip>
           )}
           {doc.status !== 'validated' && (
@@ -958,7 +958,7 @@ function StandaloneDocumentRow({
                   <Check className="h-4 w-4" />
                 </Button>
               </TooltipTrigger>
-              <TooltipContent>{t('dataRoom.validation.tooltip.validate')}</TooltipContent>
+              <TooltipContent>{t('ged.dataRoom.validation.tooltip.validate')}</TooltipContent>
             </Tooltip>
           )}
           {doc.status !== 'rejected' && (
@@ -973,7 +973,7 @@ function StandaloneDocumentRow({
                   <X className="h-4 w-4" />
                 </Button>
               </TooltipTrigger>
-              <TooltipContent>{t('dataRoom.validation.tooltip.reject')}</TooltipContent>
+              <TooltipContent>{t('ged.dataRoom.validation.tooltip.reject')}</TooltipContent>
             </Tooltip>
           )}
         </div>
@@ -1015,7 +1015,7 @@ function BatchRowGroup({
   const { t } = useTranslation();
   const { batch, docs, status } = node;
   const conf = STATUS_VARIANT[status];
-  const statusLabel = t(`dataRoom.validation.status.${status}`);
+  const statusLabel = t(`ged.dataRoom.validation.status.${status}`);
   const isSilent = !batch.notification;
   const earliestDate = docs.reduce(
     (min, d) =>
@@ -1074,7 +1074,7 @@ function BatchRowGroup({
               e.stopPropagation();
               onToggle();
             }}
-            aria-label={expanded ? t('dataRoom.validation.tooltip.collapseBatch') : t('dataRoom.validation.tooltip.expandBatch')}
+            aria-label={expanded ? t('ged.dataRoom.validation.tooltip.collapseBatch') : t('ged.dataRoom.validation.tooltip.expandBatch')}
           >
             <ChevronRight
               className={cn(
@@ -1101,8 +1101,8 @@ function BatchRowGroup({
                 <span className="rounded-full bg-blue-100 px-2 py-0.5 text-[10px] font-semibold text-blue-700 dark:bg-blue-900 dark:text-blue-200">
                   {t(
                     docs.length > 1
-                      ? 'dataRoom.validation.batch.docCountMany'
-                      : 'dataRoom.validation.batch.docCountOne',
+                      ? 'ged.dataRoom.validation.batch.docCountMany'
+                      : 'ged.dataRoom.validation.batch.docCountOne',
                     { count: docs.length },
                   )}
                 </span>
@@ -1143,7 +1143,7 @@ function BatchRowGroup({
                 <span className="text-sm text-gray-300 select-none">—</span>
               </TooltipTrigger>
               <TooltipContent>
-                <span className="text-xs">{t('dataRoom.validation.tooltip.heterogeneousTargeting')}</span>
+                <span className="text-xs">{t('ged.dataRoom.validation.tooltip.heterogeneousTargeting')}</span>
               </TooltipContent>
             </Tooltip>
           )}
@@ -1174,13 +1174,13 @@ function BatchRowGroup({
                   onClick={onOpenNotification}
                 >
                   <Eye className="h-3.5 w-3.5" />
-                  {t('dataRoom.validation.tooltip.preview')}
+                  {t('ged.dataRoom.validation.tooltip.preview')}
                 </Button>
               </TooltipTrigger>
               <TooltipContent>
                 {isSilent
-                  ? t('dataRoom.validation.tooltip.batchPreview')
-                  : t('dataRoom.validation.tooltip.notificationPreview')}
+                  ? t('ged.dataRoom.validation.tooltip.batchPreview')
+                  : t('ged.dataRoom.validation.tooltip.notificationPreview')}
               </TooltipContent>
             </Tooltip>
             {status === 'validated' && (
@@ -1195,7 +1195,7 @@ function BatchRowGroup({
                     <RotateCcw className="h-4 w-4" />
                   </Button>
                 </TooltipTrigger>
-                <TooltipContent>{t('dataRoom.validation.tooltip.resetBatchToPending')}</TooltipContent>
+                <TooltipContent>{t('ged.dataRoom.validation.tooltip.resetBatchToPending')}</TooltipContent>
               </Tooltip>
             )}
             {status !== 'validated' && (
@@ -1212,8 +1212,8 @@ function BatchRowGroup({
                 </TooltipTrigger>
                 <TooltipContent>
                   {isSilent
-                    ? t('dataRoom.validation.tooltip.validateBatch')
-                    : t('dataRoom.validation.tooltip.validateAndNotify')}
+                    ? t('ged.dataRoom.validation.tooltip.validateBatch')
+                    : t('ged.dataRoom.validation.tooltip.validateAndNotify')}
                 </TooltipContent>
               </Tooltip>
             )}
@@ -1229,7 +1229,7 @@ function BatchRowGroup({
                     <X className="h-4 w-4" />
                   </Button>
                 </TooltipTrigger>
-                <TooltipContent>{t('dataRoom.validation.tooltip.rejectBatch')}</TooltipContent>
+                <TooltipContent>{t('ged.dataRoom.validation.tooltip.rejectBatch')}</TooltipContent>
               </Tooltip>
             )}
           </div>
@@ -1257,7 +1257,7 @@ function BatchRowGroup({
                 extra={
                   <NotificationLine
                     notification={batch.notification}
-                    sourceHint={t('dataRoom.validation.notificationLine.fromBatch')}
+                    sourceHint={t('ged.dataRoom.validation.notificationLine.fromBatch')}
                   />
                 }
               />
@@ -1277,7 +1277,7 @@ function BatchRowGroup({
                     <span className="text-sm text-gray-300 select-none">—</span>
                   </TooltipTrigger>
                   <TooltipContent>
-                    <span className="text-xs">{t('dataRoom.validation.tooltip.batchLevelTargeting')}</span>
+                    <span className="text-xs">{t('ged.dataRoom.validation.tooltip.batchLevelTargeting')}</span>
                   </TooltipContent>
                 </Tooltip>
               ) : (
@@ -1310,7 +1310,7 @@ function BatchRowGroup({
                       <Eye className="h-4 w-4" />
                     </Button>
                   </TooltipTrigger>
-                  <TooltipContent>{t('dataRoom.validation.tooltip.documentPreview')}</TooltipContent>
+                  <TooltipContent>{t('ged.dataRoom.validation.tooltip.documentPreview')}</TooltipContent>
                 </Tooltip>
               </div>
             </td>

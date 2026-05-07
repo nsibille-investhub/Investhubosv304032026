@@ -61,9 +61,9 @@ const STATUS_VARIANT: Record<
 function ChannelBadge({ channel }: { channel: 'email' | 'portal' | 'both' }) {
   const { t } = useTranslation();
   const map = {
-    email: { icon: Mail, label: t('dataRoom.validation.drawer.channelLabelEmail') },
-    portal: { icon: Globe, label: t('dataRoom.validation.drawer.channelLabelPortal') },
-    both: { icon: Mail, label: t('dataRoom.validation.drawer.channelLabelBoth') },
+    email: { icon: Mail, label: t('ged.dataRoom.validation.drawer.channelLabelEmail') },
+    portal: { icon: Globe, label: t('ged.dataRoom.validation.drawer.channelLabelPortal') },
+    both: { icon: Mail, label: t('ged.dataRoom.validation.drawer.channelLabelBoth') },
   } as const;
   const { icon: Icon, label } = map[channel];
   return (
@@ -121,10 +121,10 @@ export function NotificationPreviewDrawer({
   const recipientCount = batch?.notification?.recipients.length ?? 0;
   const isSilent = !batch?.notification;
   const statusConf = STATUS_VARIANT[status];
-  const statusLabel = t(`dataRoom.validation.status.${status}`);
+  const statusLabel = t(`ged.dataRoom.validation.status.${status}`);
 
   const headerSubtitle = useMemo(() => {
-    if (isSilent) return t('dataRoom.validation.drawer.noNotificationOnly');
+    if (isSilent) return t('ged.dataRoom.validation.drawer.noNotificationOnly');
     const channelKey =
       batch?.notification?.channel === 'portal'
         ? 'channelPortal'
@@ -133,11 +133,11 @@ export function NotificationPreviewDrawer({
           : 'channelEmail';
     return t(
       recipientCount > 1
-        ? 'dataRoom.validation.drawer.headerMany'
-        : 'dataRoom.validation.drawer.headerOne',
+        ? 'ged.dataRoom.validation.drawer.headerMany'
+        : 'ged.dataRoom.validation.drawer.headerOne',
       {
         count: recipientCount,
-        channel: t(`dataRoom.validation.drawer.${channelKey}`),
+        channel: t(`ged.dataRoom.validation.drawer.${channelKey}`),
       },
     );
   }, [isSilent, batch, recipientCount, t]);
@@ -187,13 +187,13 @@ export function NotificationPreviewDrawer({
                 <Paperclip className="h-3 w-3" />
                 {t(
                   documents.length > 1
-                    ? 'dataRoom.validation.drawer.attachmentsMany'
-                    : 'dataRoom.validation.drawer.attachmentsOne',
+                    ? 'ged.dataRoom.validation.drawer.attachmentsMany'
+                    : 'ged.dataRoom.validation.drawer.attachmentsOne',
                   { count: documents.length },
                 )}
               </Badge>
               <span className="text-xs text-gray-500">
-                {t('dataRoom.validation.drawer.createdByOn', {
+                {t('ged.dataRoom.validation.drawer.createdByOn', {
                   name: batch.createdBy.name,
                   date: formatDate(batch.createdAt),
                 })}
@@ -212,11 +212,11 @@ export function NotificationPreviewDrawer({
             <TabsList className="mx-6 mt-4 grid w-fit grid-cols-3 gap-1">
               <TabsTrigger value="email" disabled={isSilent} className="gap-1.5">
                 <Mail className="h-3.5 w-3.5" />
-                {t('dataRoom.validation.drawer.tabEmail')}
+                {t('ged.dataRoom.validation.drawer.tabEmail')}
               </TabsTrigger>
               <TabsTrigger value="recipients" disabled={isSilent} className="gap-1.5">
                 <Users className="h-3.5 w-3.5" />
-                {t('dataRoom.validation.drawer.tabRecipients')}
+                {t('ged.dataRoom.validation.drawer.tabRecipients')}
                 {recipientCount > 0 && (
                   <span className="ml-1 rounded-full bg-gray-200 px-1.5 text-[10px] font-semibold text-gray-700 dark:bg-gray-800 dark:text-gray-300">
                     {recipientCount}
@@ -225,7 +225,7 @@ export function NotificationPreviewDrawer({
               </TabsTrigger>
               <TabsTrigger value="attachments" className="gap-1.5">
                 <Paperclip className="h-3.5 w-3.5" />
-                {t('dataRoom.validation.drawer.tabAttachments')}
+                {t('ged.dataRoom.validation.drawer.tabAttachments')}
                 <span className="ml-1 rounded-full bg-gray-200 px-1.5 text-[10px] font-semibold text-gray-700 dark:bg-gray-800 dark:text-gray-300">
                   {documents.length}
                 </span>
@@ -273,7 +273,7 @@ export function NotificationPreviewDrawer({
         <SheetFooter className="border-t border-gray-200 bg-white px-6 py-3 dark:border-gray-800 dark:bg-gray-950 mt-0">
           <div className="flex w-full items-center justify-between gap-2">
             <Button variant="ghost" size="sm" onClick={onClose}>
-              {t('dataRoom.validation.drawer.close')}
+              {t('ged.dataRoom.validation.drawer.close')}
             </Button>
             <div className="flex items-center gap-2">
               {status === 'pending' && (
@@ -285,7 +285,7 @@ export function NotificationPreviewDrawer({
                     onClick={onReject}
                   >
                     <X className="h-4 w-4" />
-                    {t('dataRoom.validation.tooltip.rejectBatch')}
+                    {t('ged.dataRoom.validation.tooltip.rejectBatch')}
                   </Button>
                   <Button
                     size="sm"
@@ -294,8 +294,8 @@ export function NotificationPreviewDrawer({
                   >
                     <Check className="h-4 w-4" />
                     {isSilent
-                      ? t('dataRoom.validation.tooltip.validateBatch')
-                      : t('dataRoom.validation.tooltip.validateAndNotify')}
+                      ? t('ged.dataRoom.validation.tooltip.validateBatch')
+                      : t('ged.dataRoom.validation.tooltip.validateAndNotify')}
                   </Button>
                 </>
               )}
@@ -307,7 +307,7 @@ export function NotificationPreviewDrawer({
                   onClick={onResetToPending}
                 >
                   <RotateCcw className="h-4 w-4" />
-                  {t('dataRoom.validation.drawer.resetToPending')}
+                  {t('ged.dataRoom.validation.drawer.resetToPending')}
                 </Button>
               )}
             </div>
@@ -328,10 +328,10 @@ function SilentBatchPlaceholder() {
     <div className="flex flex-col items-center justify-center gap-2 rounded-xl border border-dashed border-gray-200 bg-gray-50 px-6 py-10 text-center dark:border-gray-800 dark:bg-gray-900/40">
       <BellOff className="h-8 w-8 text-gray-400" />
       <p className="text-sm font-medium text-gray-700 dark:text-gray-300">
-        {t('dataRoom.validation.drawer.silentTitle')}
+        {t('ged.dataRoom.validation.drawer.silentTitle')}
       </p>
       <p className="max-w-xs text-xs text-gray-500">
-        {t('dataRoom.validation.drawer.silentDescription')}
+        {t('ged.dataRoom.validation.drawer.silentDescription')}
       </p>
     </div>
   );
@@ -350,24 +350,24 @@ function EmailPreview({
       {/* Email header */}
       <div className="space-y-1 border-b border-gray-200 bg-gray-50 px-5 py-3 dark:border-gray-800 dark:bg-gray-900/40">
         <div className="flex items-baseline gap-2 text-xs">
-          <span className="w-12 shrink-0 font-medium text-gray-500">{t('dataRoom.validation.drawer.fieldFrom')}</span>
+          <span className="w-12 shrink-0 font-medium text-gray-500">{t('ged.dataRoom.validation.drawer.fieldFrom')}</span>
           <span className="text-gray-900 dark:text-gray-100">
             InvestHub &lt;no-reply@investhub.io&gt;
           </span>
         </div>
         <div className="flex items-baseline gap-2 text-xs">
-          <span className="w-12 shrink-0 font-medium text-gray-500">{t('dataRoom.validation.drawer.fieldTo')}</span>
+          <span className="w-12 shrink-0 font-medium text-gray-500">{t('ged.dataRoom.validation.drawer.fieldTo')}</span>
           <span className="text-gray-900 dark:text-gray-100">
             {notification.recipients
               .slice(0, 2)
               .map((r) => r.name)
               .join(', ')}
             {notification.recipients.length > 2 &&
-              ` ${t('dataRoom.validation.drawer.moreRecipients', { count: notification.recipients.length - 2 })}`}
+              ` ${t('ged.dataRoom.validation.drawer.moreRecipients', { count: notification.recipients.length - 2 })}`}
           </span>
         </div>
         <div className="flex items-baseline gap-2 text-xs">
-          <span className="w-12 shrink-0 font-medium text-gray-500">{t('dataRoom.validation.drawer.fieldSubject')}</span>
+          <span className="w-12 shrink-0 font-medium text-gray-500">{t('ged.dataRoom.validation.drawer.fieldSubject')}</span>
           <span className="font-semibold text-gray-900 dark:text-gray-100">
             {notification.subject}
           </span>
@@ -387,7 +387,7 @@ function EmailPreview({
           <div className="rounded-lg border border-gray-200 bg-gray-50 p-3 dark:border-gray-800 dark:bg-gray-900/40">
             <div className="mb-2 flex items-center gap-2 text-[11px] font-semibold uppercase tracking-wide text-gray-500">
               <Paperclip className="h-3 w-3" />
-              {t('dataRoom.validation.drawer.attachmentsHeading')}
+              {t('ged.dataRoom.validation.drawer.attachmentsHeading')}
             </div>
             <ul className="space-y-1.5">
               {documents.map((doc) => (
@@ -412,7 +412,7 @@ function EmailPreview({
 
       {/* Footer */}
       <div className="border-t border-gray-100 bg-gray-50/50 px-5 py-2 text-[10px] text-gray-400 dark:border-gray-900 dark:bg-gray-900/30">
-        {t('dataRoom.validation.drawer.footer')}
+        {t('ged.dataRoom.validation.drawer.footer')}
       </div>
     </div>
   );
@@ -430,13 +430,13 @@ function RecipientsList({
         <thead className="bg-gray-50 dark:bg-gray-900/40">
           <tr>
             <th className="px-4 py-2.5 text-left text-[11px] font-semibold uppercase tracking-wide text-gray-500">
-              {t('dataRoom.validation.drawer.tableRecipient')}
+              {t('ged.dataRoom.validation.drawer.tableRecipient')}
             </th>
             <th className="px-4 py-2.5 text-left text-[11px] font-semibold uppercase tracking-wide text-gray-500">
-              {t('dataRoom.validation.drawer.tableEmail')}
+              {t('ged.dataRoom.validation.drawer.tableEmail')}
             </th>
             <th className="px-4 py-2.5 text-left text-[11px] font-semibold uppercase tracking-wide text-gray-500">
-              {t('dataRoom.validation.drawer.tableType')}
+              {t('ged.dataRoom.validation.drawer.tableType')}
             </th>
           </tr>
         </thead>
