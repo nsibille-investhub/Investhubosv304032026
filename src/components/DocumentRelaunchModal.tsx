@@ -531,7 +531,7 @@ export function DocumentRelaunchModal({
           </AlertDialogHeader>
 
           {/* Body */}
-          <div className="flex-1 overflow-y-auto scrollbar-thin bg-white" style={{ backgroundColor: '#FFFFFF' }}>
+          <div className="flex-1 min-h-0 overflow-y-auto scrollbar-thin bg-white" style={{ backgroundColor: '#FFFFFF' }}>
             <div className="px-6 py-5 space-y-5">
               {/* Document preview card (clickable) */}
               <button
@@ -717,9 +717,9 @@ export function DocumentRelaunchModal({
                     </Button>
                   </div>
 
-                  <div className="rounded-md border border-border overflow-hidden">
+                  <div className="rounded-md border border-border overflow-y-auto max-h-[45vh] scrollbar-thin">
                     <Table>
-                      <TableHeader>
+                      <TableHeader className="sticky top-0 z-10 bg-white">
                         <TableRow className="bg-white hover:bg-white border-b-border">
                           <TableHead className="w-10 px-3">
                             <button
