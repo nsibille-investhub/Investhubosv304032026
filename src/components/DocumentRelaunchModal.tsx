@@ -489,15 +489,18 @@ export function DocumentRelaunchModal({
       <AlertDialog open={isOpen} onOpenChange={onClose}>
         <AlertDialogContent
           className={cn(
-            'p-0 gap-0 overflow-hidden flex flex-col',
+            'p-0 gap-0 overflow-hidden',
             'w-full max-w-full sm:max-w-full',
-            'max-h-[88vh]',
             'bg-white',
           )}
           style={{
             width: 'min(960px, 60vw)',
             maxWidth: 'min(960px, 60vw)',
             backgroundColor: '#FFFFFF',
+            display: 'flex',
+            flexDirection: 'column',
+            height: 'min(85vh, 900px)',
+            maxHeight: '85vh',
           }}
         >
           {/* Header */}
@@ -531,7 +534,15 @@ export function DocumentRelaunchModal({
           </AlertDialogHeader>
 
           {/* Body */}
-          <div className="flex-1 min-h-0 overflow-y-auto scrollbar-thin bg-white" style={{ backgroundColor: '#FFFFFF' }}>
+          <div
+            className="scrollbar-thin bg-white"
+            style={{
+              backgroundColor: '#FFFFFF',
+              flex: '1 1 0%',
+              minHeight: 0,
+              overflowY: 'auto',
+            }}
+          >
             <div className="px-6 py-5 space-y-5">
               {/* Document preview card (clickable) */}
               <button
@@ -717,9 +728,9 @@ export function DocumentRelaunchModal({
                     </Button>
                   </div>
 
-                  <div className="rounded-md border border-border overflow-y-auto max-h-[45vh] scrollbar-thin">
+                  <div className="rounded-md border border-border overflow-hidden">
                     <Table>
-                      <TableHeader className="sticky top-0 z-10 bg-white">
+                      <TableHeader>
                         <TableRow className="bg-white hover:bg-white border-b-border">
                           <TableHead className="w-10 px-3">
                             <button
