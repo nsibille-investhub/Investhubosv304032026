@@ -86,7 +86,7 @@ import {
 import { Badge } from './ui/badge';
 import { Progress } from './ui/progress';
 import { toast } from 'sonner';
-import { mockDocuments, Document } from '../utils/documentMockData';
+import { mockDocuments, Document, DocumentCategory } from '../utils/documentMockData';
 import { availableInvestors, fundLabelMap } from '../utils/investorsMockData';
 import { useTranslation } from '../utils/languageContext';
 
@@ -118,6 +118,7 @@ interface UploadedFile {
   name: string;
   description: string;
   size: string;
+  documentCategory?: DocumentCategory;
   folder: string;
   language: string;
   restrictToLanguage: boolean;
@@ -255,6 +256,21 @@ const availableContactRoles = [
   'Custodian'
 ];
 
+// Available document categories ("Document type" in the UI). Mirrors the list used in
+// DocumentAddModal so the wizard surfaces the same options as the rest of the app.
+const availableDocumentCategories: { value: DocumentCategory; labelKey: string }[] = [
+  { value: 'capitalCall', labelKey: 'ged.addModal.documentCategory.capitalCall' },
+  { value: 'distribution', labelKey: 'ged.addModal.documentCategory.distribution' },
+  { value: 'quarterlyReport', labelKey: 'ged.addModal.documentCategory.quarterlyReport' },
+  { value: 'annualReport', labelKey: 'ged.addModal.documentCategory.annualReport' },
+  { value: 'subscription', labelKey: 'ged.addModal.documentCategory.subscription' },
+  { value: 'kyc', labelKey: 'ged.addModal.documentCategory.kyc' },
+  { value: 'legal', labelKey: 'ged.addModal.documentCategory.legal' },
+  { value: 'tax', labelKey: 'ged.addModal.documentCategory.tax' },
+  { value: 'marketing', labelKey: 'ged.addModal.documentCategory.marketing' },
+  { value: 'other', labelKey: 'ged.addModal.documentCategory.other' },
+];
+
 // Available email templates
 const availableEmailTemplates: { value: string; labelKey: string; icon: LucideIcon }[] = [
   { value: 'none', labelKey: 'ged.dataRoom.massUpload.wizard.emailTemplates.none', icon: Mail },
@@ -293,7 +309,7 @@ export function MassUploadWizard({ isOpen, onClose, existingFolders, inline = fa
   const [batchNameDraft, setBatchNameDraft] = useState('');
 
   // Bulk edit — staged fields + values applied in one go via "Modifier"
-  type BulkFieldKey = 'folder' | 'language' | 'targeting' | 'notification' | 'validationTeam';
+  type BulkFieldKey = 'documentType' | 'folder' | 'language' | 'targeting' | 'notification' | 'validationTeam';
   type BulkTargetingValue = {
     targetType: string;
     targetSegments: string[];
@@ -304,6 +320,7 @@ export function MassUploadWizard({ isOpen, onClose, existingFolders, inline = fa
   type BulkNotificationValue = { notify: boolean; emailTemplate: string };
   const [bulkFields, setBulkFields] = useState<BulkFieldKey[]>([]);
   const [bulkValues, setBulkValues] = useState<{
+    documentType?: DocumentCategory;
     folder?: string;
     language?: string;
     targeting?: BulkTargetingValue;
@@ -495,6 +512,7 @@ export function MassUploadWizard({ isOpen, onClose, existingFolders, inline = fa
         // Temporary default values (will be filled by AI)
         name: file.name.replace(/\.[^/.]+$/, ''),
         description: '',
+        documentCategory: undefined,
         folder: defaultFolder,
         language: 'en',
         restrictToLanguage: false,
@@ -867,6 +885,7 @@ export function MassUploadWizard({ isOpen, onClose, existingFolders, inline = fa
 
   // Field catalogue used to render the bulk edit picker chips and the per-field editors.
   const BULK_FIELDS: { key: BulkFieldKey; label: string; icon: LucideIcon }[] = [
+    { key: 'documentType', label: t('ged.dataRoom.massUpload.wizard.bulk.fieldDocumentType'), icon: FileText },
     { key: 'folder', label: t('ged.dataRoom.massUpload.wizard.bulk.fieldFolder'), icon: Folder },
     { key: 'language', label: t('ged.dataRoom.massUpload.wizard.bulk.fieldLanguage'), icon: Languages },
     { key: 'targeting', label: t('ged.dataRoom.massUpload.wizard.bulk.fieldTargeting'), icon: Users },
@@ -904,7 +923,9 @@ export function MassUploadWizard({ isOpen, onClose, existingFolders, inline = fa
         if (!selectedFiles.includes(f.id)) return f;
         const updated: UploadedFile = { ...f };
         for (const key of bulkFields) {
-          if (key === 'folder') {
+          if (key === 'documentType') {
+            updated.documentCategory = bulkValues.documentType;
+          } else if (key === 'folder') {
             updated.folder = bulkValues.folder ?? '';
           } else if (key === 'language') {
             updated.language = bulkValues.language ?? '';
@@ -2168,6 +2189,35 @@ export function MassUploadWizard({ isOpen, onClose, existingFolders, inline = fa
                             {/* Step B — per-field value editors */}
                             {bulkFields.length > 0 && (
                               <div className="space-y-2.5">
+                                {bulkFields.includes('documentType') && (
+                                  <div className="space-y-1">
+                                    <Label className="flex items-center gap-1.5 text-[11px] font-medium text-gray-600">
+                                      <FileText className="h-3 w-3 text-gray-400" />
+                                      {t('ged.dataRoom.massUpload.wizard.bulk.fieldDocumentType')}
+                                    </Label>
+                                    <Select
+                                      value={bulkValues.documentType ?? ''}
+                                      onValueChange={(value) =>
+                                        setBulkValues((prev) => ({ ...prev, documentType: value as DocumentCategory }))
+                                      }
+                                    >
+                                      <SelectTrigger className="h-8 text-xs">
+                                        <SelectValue placeholder={t('ged.dataRoom.massUpload.wizard.selectDocumentType')} />
+                                      </SelectTrigger>
+                                      <SelectContent>
+                                        {availableDocumentCategories.map((cat) => (
+                                          <SelectItem key={cat.value} value={cat.value} className="text-xs">
+                                            <div className="flex items-center gap-2">
+                                              <FileText className="h-3 w-3 text-gray-400" />
+                                              {t(cat.labelKey)}
+                                            </div>
+                                          </SelectItem>
+                                        ))}
+                                      </SelectContent>
+                                    </Select>
+                                  </div>
+                                )}
+
                                 {bulkFields.includes('folder') && (
                                   <div className="space-y-1">
                                     <Label className="flex items-center gap-1.5 text-[11px] font-medium text-gray-600">
@@ -2744,6 +2794,27 @@ export function MassUploadWizard({ isOpen, onClose, existingFolders, inline = fa
                           </td>
 
                           <td className="px-3 py-3 align-top">
+                            <Select
+                              value={file.documentCategory ?? ''}
+                              onValueChange={(value) => handleUpdateFile(file.id, 'documentCategory', value as DocumentCategory)}
+                            >
+                              <SelectTrigger className="h-8 text-xs">
+                                <SelectValue placeholder={t('ged.dataRoom.massUpload.wizard.selectDocumentType')} />
+                              </SelectTrigger>
+                              <SelectContent>
+                                {availableDocumentCategories.map((cat) => (
+                                  <SelectItem key={cat.value} value={cat.value} className="text-xs">
+                                    <div className="flex items-center gap-2">
+                                      <FileText className="h-3 w-3 text-gray-400" />
+                                      {t(cat.labelKey)}
+                                    </div>
+                                  </SelectItem>
+                                ))}
+                              </SelectContent>
+                            </Select>
+                          </td>
+
+                          <td className="px-3 py-3 align-top">
                             <div className="space-y-1.5">
                               {folderLocked ? (
                                 dashPlaceholder
@@ -3046,7 +3117,12 @@ export function MassUploadWizard({ isOpen, onClose, existingFolders, inline = fa
                               </div>
                             </td>
 
-                            {/* Col 3 — Dossier (inline editor when piloted at batch level) */}
+                            {/* Col 3 — Document type : per-document, never consolidated at the batch level. */}
+                            <td className="px-3 py-2 align-top">
+                              {heterogeneousDash}
+                            </td>
+
+                            {/* Col 4 — Dossier (inline editor when piloted at batch level) */}
                             <td className="px-3 py-2 align-top">
                               {batch.folderMode === 'global' ? (
                                 <Select
@@ -3252,6 +3328,7 @@ export function MassUploadWizard({ isOpen, onClose, existingFolders, inline = fa
                                     />
                                   </th>
                                   <th className="px-3 py-2.5 text-left min-w-[260px]">{t('ged.dataRoom.massUpload.wizard.tableDocument')}</th>
+                                  <th className="px-3 py-2.5 text-left min-w-[180px]">{t('ged.dataRoom.massUpload.wizard.tableDocumentType')}</th>
                                   <th className="px-3 py-2.5 text-left min-w-[200px]">{t('ged.dataRoom.massUpload.wizard.tableFolder')}</th>
                                   <th className="px-3 py-2.5 text-left min-w-[280px]">{t('ged.dataRoom.massUpload.wizard.tableTargeting')}</th>
                                   <th className="px-3 py-2.5 text-left min-w-[220px]">{t('ged.dataRoom.massUpload.wizard.tableNotification')}</th>
