@@ -454,35 +454,108 @@ export function MassUploadWizard({ isOpen, onClose, existingFolders, inline = fa
     }, 200);
   };
 
-  // AI file analysis (mock)
+  // AI file analysis (mock) — deduces document category, investor, targeting
+  // (investor vs subscription) and fund from the filename. Falls back to
+  // sensible defaults when nothing matches.
   const analyzeFileWithAI = async (file: File): Promise<Partial<UploadedFile>> => {
-    // Simulate AI processing delay
     await new Promise(resolve => setTimeout(resolve, 1500));
 
-    const fileName = file.name.replace(/\.[^/.]+$/, ''); // Remove extension
+    const rawName = file.name.replace(/\.[^/.]+$/, '');
+    const haystack = rawName.toLowerCase();
 
-    // Simulate intelligent extraction based on file name
+    // 1) Document category
+    let documentCategory: DocumentCategory = 'other';
+    if (/(capital[ _-]?call|appel[ _-]?de[ _-]?fonds|appel[ _-]?capital)/i.test(rawName)) {
+      documentCategory = 'capitalCall';
+    } else if (/(distribution|distrib|payout|dividend|dividende)/i.test(rawName)) {
+      documentCategory = 'distribution';
+    } else if (/(quarter|trimestriel|\bq[1-4]\b|\bt[1-4]\b)/i.test(rawName)) {
+      documentCategory = 'quarterlyReport';
+    } else if (/(annual|annuel|year[ _-]?end|rapport[ _-]?annuel)/i.test(rawName)) {
+      documentCategory = 'annualReport';
+    } else if (/(subscription|souscription|bulletin)/i.test(rawName)) {
+      documentCategory = 'subscription';
+    } else if (/(kyc|aml|due[ _-]?diligence|lcb-?ft)/i.test(rawName)) {
+      documentCategory = 'kyc';
+    } else if (/(legal|contract|contrat|nda|agreement|juridique|statuts?)/i.test(rawName)) {
+      documentCategory = 'legal';
+    } else if (/(\btax\b|fiscal|fiscalit[eé]|ifu|cerfa|2561)/i.test(rawName)) {
+      documentCategory = 'tax';
+    } else if (/(marketing|brochure|pitch|teaser|newsletter|plaquette)/i.test(rawName)) {
+      documentCategory = 'marketing';
+    }
+
+    // 2) Subscription reference (e.g. "SUBSCRIPTION-2024-001")
+    const subscriptionMatch = availableSubscriptions.find(
+      s => rawName.toUpperCase().includes(s.name.toUpperCase()),
+    );
+
+    // 3) Investor detection — exact name, then last/distinctive token
+    let detectedInvestor: typeof availableInvestors[number] | undefined;
+    for (const inv of availableInvestors) {
+      if (haystack.includes(inv.name.toLowerCase())) {
+        detectedInvestor = inv;
+        break;
+      }
+    }
+    if (!detectedInvestor) {
+      for (const inv of availableInvestors) {
+        const tokens = inv.name
+          .toLowerCase()
+          .replace(/\(.*?\)/g, '')
+          .split(/\s+/)
+          .filter(tok => tok.length >= 4);
+        const lastToken = tokens[tokens.length - 1];
+        if (lastToken && new RegExp(`(^|[^a-z])${lastToken}([^a-z]|$)`, 'i').test(rawName)) {
+          detectedInvestor = inv;
+          break;
+        }
+      }
+    }
+    // A matched subscription locks the investor to its owner.
+    if (subscriptionMatch) {
+      const owner = availableInvestors.find(i => i.name === subscriptionMatch.investor);
+      if (owner) detectedInvestor = owner;
+    }
+
+    // 4) Targeting decision — subscription wins over investor wins over all.
+    let targetType: string;
+    let targetInvestors: string[] = [];
+    let targetSubscriptions: string[] = [];
+    let targetFunds: string[] = [];
+    if (subscriptionMatch) {
+      targetType = 'subscription';
+      targetSubscriptions = [subscriptionMatch.id];
+      if (detectedInvestor?.fund) targetFunds = [detectedInvestor.fund];
+    } else if (detectedInvestor) {
+      targetType = 'investor';
+      targetInvestors = [detectedInvestor.id];
+      if (detectedInvestor.fund) targetFunds = [detectedInvestor.fund];
+    } else {
+      targetType = 'all';
+    }
+
     return {
-      name: fileName,
-      description: `Document automatically analyzed: ${fileName}. This document contains important information related to the company's activities.`,
-      folder: defaultFolder, // Origin folder if launched from a folder; empty otherwise
+      name: rawName,
+      description: detectedInvestor
+        ? `${rawName} — auto-tagged for ${detectedInvestor.name}.`
+        : `${rawName} — auto-analyzed.`,
+      documentCategory,
+      folder: defaultFolder,
       language: 'en',
       restrictToLanguage: false,
-      targetType: fileName.toLowerCase().includes('investor') ? 'investor' :
-                   fileName.toLowerCase().includes('legal') ? 'all' : 'investor',
-      targetSegments: fileName.toLowerCase().includes('premium') ? ['Qualified Investors'] : [],
-      targetInvestors: fileName.toLowerCase().includes('investor') || !fileName.toLowerCase().includes('legal')
-        ? ['inv-3']
-        : [],
-      targetSubscriptions: [],
+      targetType,
+      targetSegments: [],
+      targetInvestors,
+      targetSubscriptions,
+      targetFunds,
       accessRoles: ['Investor'],
       watermark: false,
       downloadable: true,
       printable: true,
       tags: [
-        fileName.toLowerCase().includes('rapport') || fileName.toLowerCase().includes('report') ? 'Report' : '',
-        fileName.toLowerCase().includes('financial') || fileName.toLowerCase().includes('financier') ? 'Financial' : '',
-        fileName.toLowerCase().includes('legal') ? 'Legal' : '',
+        documentCategory !== 'other' ? documentCategory : '',
+        detectedInvestor ? detectedInvestor.name : '',
       ].filter(Boolean),
     };
   };
@@ -1204,21 +1277,78 @@ export function MassUploadWizard({ isOpen, onClose, existingFolders, inline = fa
     };
   }, [uploadedFiles]);
 
-  // Toast when all files are analyzed
+  // Toast when all files are analyzed + auto-create batches by investor.
+  // When at least two analyzed files share the same single targetInvestor we
+  // group them in a pre-built batch (investor-level global targeting, IR as
+  // default validation team, per-document folder). The user can dissolve or
+  // reconfigure the batch from step 2 like any other batch.
   useEffect(() => {
     if (fileStats.total > 0 && fileStats.uploaded === fileStats.total && !allAnalyzedToastShown) {
-      toast.success('Analysis completed!', {
-        description: `${fileStats.total} file(s) pre-filled by AI`,
+      toast.success(t('ged.dataRoom.massUpload.wizard.aiAnalysisCompleteTitle'), {
+        description: t('ged.dataRoom.massUpload.wizard.aiAnalysisCompleteDesc', { count: fileStats.total }),
         duration: 5000,
       });
       setAllAnalyzedToastShown(true);
+
+      // Auto-batch by investor (only on the first pass, only files not yet batched)
+      const groups = new Map<string, UploadedFile[]>();
+      for (const f of uploadedFiles) {
+        if (f.batchId) continue;
+        if (f.targetType !== 'investor') continue;
+        if (f.targetInvestors.length !== 1) continue;
+        const key = f.targetInvestors[0];
+        const arr = groups.get(key) ?? [];
+        arr.push(f);
+        groups.set(key, arr);
+      }
+      const newBatches: UploadBatch[] = [];
+      const fileToBatch = new Map<string, string>();
+      let idx = 0;
+      groups.forEach((files, investorId) => {
+        if (files.length < 2) return;
+        const investor = availableInvestors.find(i => i.id === investorId);
+        if (!investor) return;
+        idx += 1;
+        const batch: UploadBatch = {
+          id: `batch-auto-${Date.now()}-${idx}`,
+          name: t('ged.dataRoom.massUpload.wizard.aiBatchName', { name: investor.name }),
+          validationTeam: ['ir'],
+          folderMode: 'per-document',
+          globalFolder: '',
+          targetingMode: 'global',
+          globalTargeting: {
+            targetType: 'investor',
+            targetSegments: [],
+            targetInvestors: [investor.id],
+            targetSubscriptions: [],
+            targetFunds: investor.fund ? [investor.fund] : [],
+          },
+        };
+        newBatches.push(batch);
+        files.forEach(f => fileToBatch.set(f.id, batch.id));
+      });
+      if (newBatches.length > 0) {
+        setBatches(prev => [...prev, ...newBatches]);
+        setUploadedFiles(prev =>
+          prev.map(f => (fileToBatch.has(f.id) ? { ...f, batchId: fileToBatch.get(f.id) } : f)),
+        );
+        setExpandedBatchIds(prev => {
+          const next = new Set(prev);
+          newBatches.forEach(b => next.add(b.id));
+          return next;
+        });
+        toast.success(t('ged.dataRoom.massUpload.wizard.aiBatchCreatedTitle'), {
+          description: t('ged.dataRoom.massUpload.wizard.aiBatchCreatedDesc', { count: newBatches.length }),
+          duration: 6000,
+        });
+      }
     }
 
     // Reset the flag when files are deleted
     if (fileStats.total === 0) {
       setAllAnalyzedToastShown(false);
     }
-  }, [fileStats, allAnalyzedToastShown]);
+  }, [fileStats, allAnalyzedToastShown, t, uploadedFiles]);
 
   if (!isOpen) return null;
 
