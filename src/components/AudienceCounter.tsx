@@ -15,6 +15,13 @@
 
 import { Users, UserRound } from 'lucide-react';
 import { useTranslation } from '../utils/languageContext';
+import {
+  COMMITMENTS,
+  FUNDS,
+  INVESTORS,
+  getInvestorContacts,
+  type InvestorTypology,
+} from '../utils/gedFixtures';
 
 interface AudienceCounterCardsProps {
   investors: number;
@@ -86,23 +93,38 @@ export interface AudienceInvestor {
   contactsCount: number;
 }
 
-export const FOLDER_SPACE_MOCK_INVESTORS: AudienceInvestor[] = [
-  { id: 'ai-1', segment: 'HNWI', fund: 'VENTECH I', contactsCount: 3 },
-  { id: 'ai-2', segment: 'HNWI', fund: 'VENTECH I', contactsCount: 2 },
-  { id: 'ai-3', segment: 'HNWI', fund: 'VENTECH II', contactsCount: 4 },
-  { id: 'ai-4', segment: 'UHNWI', fund: 'VENTECH I', contactsCount: 5 },
-  { id: 'ai-5', segment: 'UHNWI', fund: 'KORELYA I', contactsCount: 6 },
-  { id: 'ai-6', segment: 'UHNWI', fund: 'VENTECH II', contactsCount: 3 },
-  { id: 'ai-7', segment: 'Retail', fund: 'VENTECH I', contactsCount: 1 },
-  { id: 'ai-8', segment: 'Retail', fund: 'KORELYA I', contactsCount: 2 },
-  { id: 'ai-9', segment: 'Retail', fund: 'VENTECH II', contactsCount: 1 },
-  { id: 'ai-10', segment: 'Professional', fund: 'VENTECH I', contactsCount: 2 },
-  { id: 'ai-11', segment: 'Professional', fund: 'KORELYA I', contactsCount: 3 },
-  { id: 'ai-12', segment: 'Professional', fund: 'VENTECH II', contactsCount: 2 },
-  { id: 'ai-13', segment: 'Institutional', fund: 'VENTECH I', contactsCount: 8 },
-  { id: 'ai-14', segment: 'Institutional', fund: 'KORELYA I', contactsCount: 7 },
-  { id: 'ai-15', segment: 'Institutional', fund: 'VENTECH II', contactsCount: 9 },
-];
+// Map GED investor typologies to the audience segments exposed in the
+// folder/space targeting UI (HNWI / UHNWI / Retail / Professional /
+// Institutional).
+const TYPOLOGY_TO_SEGMENT: Record<InvestorTypology, string> = {
+  'Family Office': 'UHNWI',
+  HNWI: 'HNWI',
+  UHNWI: 'UHNWI',
+  Institutional: 'Institutional',
+  Insurance: 'Institutional',
+  'Pension Fund': 'Institutional',
+  Sovereign: 'Institutional',
+  Distributor: 'Professional',
+};
+
+// Audience rows derived from the real GED fixtures: one row per
+// (fund, investor) commitment, with the segment inferred from the
+// investor typology and the contacts count taken from the investor's
+// declared contacts.
+export const FOLDER_SPACE_MOCK_INVESTORS: AudienceInvestor[] = COMMITMENTS.map(
+  (c) => {
+    const investor = INVESTORS.find((i) => i.id === c.investorId);
+    const fund = FUNDS.find((f) => f.code === c.fundCode);
+    const segment = investor ? TYPOLOGY_TO_SEGMENT[investor.typology] : 'Institutional';
+    const contactsCount = investor ? getInvestorContacts(investor.id).length : 0;
+    return {
+      id: c.investorId,
+      segment,
+      fund: fund?.name ?? c.fundCode,
+      contactsCount,
+    };
+  },
+);
 
 export function computeAudience(
   selectedSegments: string[],
@@ -116,8 +138,15 @@ export function computeAudience(
   if (selectedFund) {
     filtered = filtered.filter((inv) => inv.fund === selectedFund);
   }
+  // Dedupe by investor id so an investor committed in several funds is
+  // counted once when no fund filter is applied.
+  const unique = new Map<string, AudienceInvestor>();
+  for (const inv of filtered) {
+    if (!unique.has(inv.id)) unique.set(inv.id, inv);
+  }
+  const deduped = Array.from(unique.values());
   return {
-    investors: filtered.length,
-    contacts: filtered.reduce((sum, inv) => sum + inv.contactsCount, 0),
+    investors: deduped.length,
+    contacts: deduped.reduce((sum, inv) => sum + inv.contactsCount, 0),
   };
 }

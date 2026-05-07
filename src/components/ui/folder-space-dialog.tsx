@@ -41,6 +41,7 @@ import { FolderSelectionTreeviewDropdown, FolderOption } from '../DocumentAddMod
 import { AudienceCounter, computeAudience } from '../AudienceCounter';
 import { SegmentsMultiSelect, FundSingleSelect } from './targeting-selects';
 import { useTranslation } from '../../utils/languageContext';
+import { FUNDS } from '../../utils/gedFixtures';
 
 // ---------------------------------------------------------------------------
 // Brand color token
@@ -52,7 +53,7 @@ const BRAND_BLUE = '#000E2B';
 // ---------------------------------------------------------------------------
 const USER_TYPES = ['Investisseur', 'Participation', 'Partenaire'] as const;
 const ALL_SEGMENTS = ['HNWI', 'UHNWI', 'Retail', 'Professional', 'Institutional'] as const;
-const ALL_FUNDS = ['VENTECH I', 'VENTECH II', 'KORELYA I'] as const;
+const ALL_FUNDS = FUNDS.map((f) => f.name);
 
 // ---------------------------------------------------------------------------
 // Types
@@ -357,7 +358,7 @@ export function FolderSpaceDialogPreview({ variant }: FolderSpaceDialogPreviewPr
   const [targeting, setTargeting] = useState<SpaceTargeting>({
     userTypes: ['Investisseur'],
     segments: ['HNWI', 'UHNWI'],
-    funds: ['VENTECH I'],
+    funds: FUNDS[0] ? [FUNDS[0].name] : [],
   });
 
   const selectedFund = targeting.funds[0] || null;
