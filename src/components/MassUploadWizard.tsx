@@ -349,9 +349,10 @@ const demoScenarios: DemoScenario[] = [
     files: [
       'IFU_Aldebaran-Pension-Fund_NWGC2_2024.pdf',
       'IFU_Aldebaran-Pension-Fund_AIP1_2024.pdf',
-      'Annexe-Fiscale_Aldebaran-Pension-Fund_2024.pdf',
-      '2561-bis_Aldebaran-Pension-Fund_2024.pdf',
-      'Tax-Package-Cover_Aldebaran-Pension-Fund_2024.pdf',
+      'Annexe-Fiscale_Aldebaran-Pension-Fund_NWGC2_2024.pdf',
+      'Annexe-Fiscale_Aldebaran-Pension-Fund_AIP1_2024.pdf',
+      '2561-bis_Aldebaran-Pension-Fund_NWGC2_2024.pdf',
+      '2561-bis_Aldebaran-Pension-Fund_AIP1_2024.pdf',
     ],
   },
 ];
