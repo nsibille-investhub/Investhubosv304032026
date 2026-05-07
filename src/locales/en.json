@@ -1093,11 +1093,15 @@
           "aiBatchCreatedDesc": "{{count}} batch(es) automatically created (same investor or same campaign)",
           "demo": {
             "title": "Try a demo scenario",
-            "subtitle": "Loads sample filenames so the AI can pre-fill everything",
+            "subtitle": "Download the sample files to drag them in yourself, or load them directly",
             "capitalCallTitle": "Capital call — Northwind Growth Capital II",
             "capitalCallDesc": "{{count}} subscription notices · auto-batched as a campaign",
             "taxPackageTitle": "Tax package — Aldebaran Pension Fund",
-            "taxPackageDesc": "{{count}} tax documents (IFU, annexes) · auto-batched per investor"
+            "taxPackageDesc": "{{count}} tax documents (IFU, annexes) · auto-batched per investor",
+            "loadCta": "Auto-load",
+            "downloadCta": "Download files",
+            "downloadStartedTitle": "Download started",
+            "downloadStartedDesc": "{{count}} demo file(s) being downloaded — drop them on the wizard to test the AI"
           },
           "deepReviewTitle": "Detailed review",
           "deepReviewDesc": "Review each document with a preview and adjust the metadata extracted by AI before final validation.",

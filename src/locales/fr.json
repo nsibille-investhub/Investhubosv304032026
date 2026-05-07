@@ -1093,11 +1093,15 @@
           "aiBatchCreatedDesc": "{{count}} lot(s) créé(s) automatiquement (même investisseur ou même campagne)",
           "demo": {
             "title": "Essayer un scénario de démo",
-            "subtitle": "Charge des noms de fichiers d'exemple pour que l'IA pré-remplisse tout",
+            "subtitle": "Télécharge les fichiers pour les déposer toi-même, ou charge-les directement",
             "capitalCallTitle": "Appel de fonds — Northwind Growth Capital II",
             "capitalCallDesc": "{{count}} avis de souscription · regroupés en lot campagne",
             "taxPackageTitle": "Package fiscal — Aldebaran Pension Fund",
-            "taxPackageDesc": "{{count}} documents fiscaux (IFU, annexes) · regroupés par investisseur"
+            "taxPackageDesc": "{{count}} documents fiscaux (IFU, annexes) · regroupés par investisseur",
+            "loadCta": "Charger",
+            "downloadCta": "Télécharger les fichiers",
+            "downloadStartedTitle": "Téléchargement lancé",
+            "downloadStartedDesc": "{{count}} fichier(s) de démo en téléchargement — dépose-les dans le wizard pour tester l'IA"
           },
           "deepReviewTitle": "Revue détaillée",
           "deepReviewDesc": "Examiner chaque document avec son aperçu et ajuster les métadonnées extraites par l'IA avant la validation finale.",
