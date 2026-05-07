@@ -25,10 +25,19 @@ import {
   ChevronDown,
   FolderOpen,
   Trash2,
+  AlertCircle,
 } from 'lucide-react';
 import { Button } from './button';
 import { Input } from './input';
 import { Label } from './label';
+import { Switch } from './switch';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from './select';
 import {
   Dialog,
   DialogContent,
@@ -67,6 +76,18 @@ export interface SpaceTargeting {
   funds: string[];
 }
 
+export type DisclaimerType = 'standard' | 'confidential' | 'restricted';
+
+export interface DisclaimerConfig {
+  enabled: boolean;
+  type: DisclaimerType;
+}
+
+const DEFAULT_DISCLAIMER: DisclaimerConfig = {
+  enabled: false,
+  type: 'standard',
+};
+
 interface BaseProps {
   open: boolean;
   onClose: () => void;
@@ -78,9 +99,14 @@ interface FolderVariantProps extends BaseProps {
   folderOptions: FolderOption[];
   defaultParentId: string;
   inheritedTargeting: SpaceTargeting;
-  folderToEdit?: { id: string; name: string } | null;
+  folderToEdit?: { id: string; name: string; disclaimer?: DisclaimerConfig } | null;
   onDeleteFolder?: (folderId: string, migrateToFolderId: string) => void;
-  onSave?: (data: { name: string; parentId: string; targeting: SpaceTargeting }) => void;
+  onSave?: (data: {
+    name: string;
+    parentId: string;
+    targeting: SpaceTargeting;
+    disclaimer: DisclaimerConfig;
+  }) => void;
   space?: never;
   onSaveSpace?: never;
   onDeleteSpace?: never;
@@ -88,8 +114,22 @@ interface FolderVariantProps extends BaseProps {
 
 interface SpaceVariantProps extends BaseProps {
   variant: 'space';
-  space?: { id: string; name: string; targeting: SpaceTargeting; documentCount?: number; folderCount?: number } | null;
-  onSaveSpace?: (data: { id?: string; name: string; targeting: SpaceTargeting; documentCount: number; folderCount: number }) => void;
+  space?: {
+    id: string;
+    name: string;
+    targeting: SpaceTargeting;
+    documentCount?: number;
+    folderCount?: number;
+    disclaimer?: DisclaimerConfig;
+  } | null;
+  onSaveSpace?: (data: {
+    id?: string;
+    name: string;
+    targeting: SpaceTargeting;
+    documentCount: number;
+    folderCount: number;
+    disclaimer: DisclaimerConfig;
+  }) => void;
   onDeleteSpace?: (spaceId: string) => void;
   folderOptions?: never;
   defaultParentId?: never;
@@ -114,6 +154,7 @@ export function FolderSpaceDialog(props: FolderSpaceDialogProps) {
   const [name, setName] = useState('');
   const [parentId, setParentId] = useState('');
   const [targeting, setTargeting] = useState<SpaceTargeting>({ userTypes: [], segments: [], funds: [] });
+  const [disclaimer, setDisclaimer] = useState<DisclaimerConfig>(DEFAULT_DISCLAIMER);
 
   useEffect(() => {
     if (!open) return;
@@ -122,6 +163,7 @@ export function FolderSpaceDialog(props: FolderSpaceDialogProps) {
       const sp = (props as SpaceVariantProps).space;
       setName(sp?.name || '');
       setTargeting(sp?.targeting || { userTypes: [], segments: [], funds: [] });
+      setDisclaimer(sp?.disclaimer || DEFAULT_DISCLAIMER);
     } else {
       const fp = props as FolderVariantProps;
       setParentId(fp.defaultParentId);
@@ -132,6 +174,7 @@ export function FolderSpaceDialog(props: FolderSpaceDialogProps) {
         segments: fp.inheritedTargeting?.segments || [],
         funds: fp.inheritedTargeting?.funds || [],
       });
+      setDisclaimer(fp.folderToEdit?.disclaimer || DEFAULT_DISCLAIMER);
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [open]);
@@ -166,9 +209,10 @@ export function FolderSpaceDialog(props: FolderSpaceDialogProps) {
         targeting,
         documentCount: sp.space?.documentCount || 0,
         folderCount: sp.space?.folderCount || 0,
+        disclaimer,
       });
     } else {
-      (props as FolderVariantProps).onSave?.({ name: name.trim(), parentId, targeting });
+      (props as FolderVariantProps).onSave?.({ name: name.trim(), parentId, targeting, disclaimer });
     }
     onClose();
   };
@@ -311,6 +355,59 @@ export function FolderSpaceDialog(props: FolderSpaceDialogProps) {
             investors={audience.investors}
             contacts={audience.contacts}
           />
+
+          {/* Disclaimer */}
+          <div className="space-y-3 p-4 bg-gray-50 rounded-lg border border-gray-200">
+            <div className="flex items-center justify-between gap-4">
+              <div className="flex items-start gap-2">
+                <AlertCircle className="w-4 h-4 text-amber-600 mt-0.5" />
+                <div>
+                  <span className="text-sm text-gray-900 font-medium block">
+                    {t('ged.dataRoom.folderSpaceDialog.disclaimerToggleLabel')}
+                  </span>
+                  <p className="text-xs text-gray-500 mt-0.5">
+                    {isSpace
+                      ? t('ged.dataRoom.folderSpaceDialog.disclaimerToggleDescriptionSpace')
+                      : t('ged.dataRoom.folderSpaceDialog.disclaimerToggleDescriptionFolder')}
+                  </p>
+                </div>
+              </div>
+              <Switch
+                checked={disclaimer.enabled}
+                onCheckedChange={(checked) =>
+                  setDisclaimer((prev) => ({ ...prev, enabled: checked }))
+                }
+              />
+            </div>
+            {disclaimer.enabled && (
+              <div>
+                <Label htmlFor="ds-fsd-disclaimer">
+                  {t('ged.dataRoom.folderSpaceDialog.disclaimerLabel')}
+                </Label>
+                <Select
+                  value={disclaimer.type}
+                  onValueChange={(value) =>
+                    setDisclaimer((prev) => ({ ...prev, type: value as DisclaimerType }))
+                  }
+                >
+                  <SelectTrigger id="ds-fsd-disclaimer" className="mt-1.5 bg-white">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="standard">
+                      {t('ged.dataRoom.folderSpaceDialog.disclaimerStandard')}
+                    </SelectItem>
+                    <SelectItem value="confidential">
+                      {t('ged.dataRoom.folderSpaceDialog.disclaimerConfidential')}
+                    </SelectItem>
+                    <SelectItem value="restricted">
+                      {t('ged.dataRoom.folderSpaceDialog.disclaimerRestricted')}
+                    </SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+            )}
+          </div>
         </div>
 
         <DialogFooter className="px-6 py-4 border-t border-gray-200 bg-gray-50 flex items-center justify-between sm:justify-between">

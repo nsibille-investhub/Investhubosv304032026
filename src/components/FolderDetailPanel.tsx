@@ -10,7 +10,6 @@ import {
   AlertCircle,
   ChevronDown,
   Download,
-  Droplet,
   ShieldAlert
 } from 'lucide-react';
 import { Button } from './ui/button';
@@ -41,7 +40,6 @@ export function FolderDetailPanel({ folder, onClose, allFolders }: FolderDetailP
   const targetingScope = calculateTargetingScope(folder);
   
   const initialDisclaimer = folder.metadata?.disclaimer || 'none';
-  const initialWatermark = (folder.metadata as { watermark?: string })?.watermark || 'none';
 
   const [formData, setFormData] = useState({
     name: folder.name,
@@ -51,8 +49,6 @@ export function FolderDetailPanel({ folder, onClose, allFolders }: FolderDetailP
     fund: folder.metadata?.fund || '',
     disclaimerEnabled: initialDisclaimer !== 'none',
     disclaimer: initialDisclaimer === 'none' ? 'standard' : initialDisclaimer,
-    watermarkEnabled: initialWatermark !== 'none',
-    watermark: initialWatermark === 'none' ? 'confidential' : initialWatermark,
   });
 
   const [hasChanges, setHasChanges] = useState(false);
@@ -381,48 +377,6 @@ export function FolderDetailPanel({ folder, onClose, allFolders }: FolderDetailP
               )}
             </div>
 
-            {/* Watermark */}
-            <div className="space-y-3 p-3 bg-gray-50 rounded-lg">
-              <div className="flex items-center justify-between">
-                <div className="flex items-center gap-2">
-                  <Droplet className="w-4 h-4 text-purple-600" />
-                  <div>
-                    <span className="text-sm text-gray-900 font-medium">
-                      {t('ged.folderDetail.watermarkToggleLabel')}
-                    </span>
-                    <p className="text-xs text-gray-500">
-                      {t('ged.folderDetail.watermarkToggleDescription')}
-                    </p>
-                  </div>
-                </div>
-                <Switch
-                  checked={formData.watermarkEnabled}
-                  onCheckedChange={(checked) => handleChange('watermarkEnabled', checked)}
-                />
-              </div>
-              {formData.watermarkEnabled && (
-                <div>
-                  <Label htmlFor="folder-watermark">{t('ged.folderDetail.watermarkLabel')}</Label>
-                  <Select
-                    value={formData.watermark}
-                    onValueChange={(value) => handleChange('watermark', value)}
-                  >
-                    <SelectTrigger id="folder-watermark" className="mt-1.5 bg-white">
-                      <SelectValue />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="confidential">{t('ged.folderDetail.watermarkConfidential')}</SelectItem>
-                      <SelectItem value="internal">{t('ged.folderDetail.watermarkInternal')}</SelectItem>
-                      <SelectItem value="draft">{t('ged.folderDetail.watermarkDraft')}</SelectItem>
-                      <SelectItem value="personalized">{t('ged.folderDetail.watermarkPersonalized')}</SelectItem>
-                    </SelectContent>
-                  </Select>
-                  <p className="text-xs text-gray-500 mt-1.5">
-                    {t('ged.folderDetail.watermarkHelp')}
-                  </p>
-                </div>
-              )}
-            </div>
           </div>
 
           {/* Metadata Info */}

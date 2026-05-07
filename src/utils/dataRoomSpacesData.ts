@@ -17,6 +17,10 @@ export interface DataRoomSpace {
   targeting: SpaceTargeting;
   documentCount: number;
   folderCount: number;
+  disclaimer?: {
+    enabled: boolean;
+    type: 'standard' | 'confidential' | 'restricted';
+  };
 }
 
 // `userTypes` keeps the legacy French labels because they drive icon /
