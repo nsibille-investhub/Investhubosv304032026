@@ -1000,10 +1000,36 @@
         "linkedStructures": "Structures rattachées",
         "primaryAttachAll": "Le contact principal est automatiquement rattaché à toutes les structures",
         "notifications": "Notifications",
+        "notificationsHint": "Choisissez les communications que ce contact doit recevoir",
+        "notificationsAllLabel": "Toutes les communications",
+        "notificationsAllHint": "Abonner ce contact à toutes les catégories de notifications",
+        "notificationCategory": {
+          "capitalCalls": {
+            "label": "Appels de fonds",
+            "description": "Avis d'appel et calendriers de tirage"
+          },
+          "distributions": {
+            "label": "Distributions",
+            "description": "Avis de distribution et versements"
+          },
+          "reporting": {
+            "label": "Reporting",
+            "description": "Reportings trimestriels et annuels"
+          },
+          "subscriptionUpdates": {
+            "label": "Mises à jour de souscription",
+            "description": "Documents et avenants de souscription"
+          },
+          "marketing": {
+            "label": "Marketing",
+            "description": "Newsletters, événements et annonces"
+          }
+        },
         "authorizedFunds": "Fonds autorisés",
         "authorizedSubscriptions": "Souscriptions autorisées",
         "primaryHint": "Point de contact principal pour cet investisseur",
         "preferredHint": "Destinataire préféré pour les communications nominatives",
+        "portalAccessHint": "Autorise l'accès au portail investisseur et configure ce que ce contact peut voir.",
         "enablePortalAccessHint": "Autoriser ce contact à se connecter au portail investisseur",
         "accessSection": "Gestion des accès",
         "accessSectionHint": "Par défaut, ce contact a accès à tout. Activez chaque restriction pour limiter le périmètre.",

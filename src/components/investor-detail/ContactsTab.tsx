@@ -46,12 +46,6 @@ const mockSubscriptions = [
   { id: 'sub-1', name: '12071 - IH1 - Nicolas SIRIEIX' },
 ];
 
-// Mock data pour les équipes de notification
-const mockTeams = [
-  { id: 'team-1', name: 'Équipe 1' },
-  { id: 'team-2', name: 'Équipe 2' },
-];
-
 export function ContactsTab({ investor }: ContactsTabProps) {
   const { t, lang } = useTranslation();
   const [contacts, setContacts] = useState<Contact[]>(investor.contacts || []);
@@ -94,7 +88,8 @@ export function ContactsTab({ investor }: ContactsTabProps) {
       hasPortalAccess: false,
       language: 'Français',
       isPreferredContact: false,
-      notificationTeams: [],
+      notificationsAllEnabled: true,
+      notificationCategories: [],
       linkedStructures: [],
       fundsAccessRestricted: false,
       authorizedFunds: [],
@@ -362,7 +357,6 @@ export function ContactsTab({ investor }: ContactsTabProps) {
         structures={mockStructures}
         funds={mockFunds}
         subscriptions={mockSubscriptions}
-        teams={mockTeams}
       />
     </div>
   );

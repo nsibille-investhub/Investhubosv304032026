@@ -5,8 +5,6 @@ import {
   UserPlus,
   User,
   Globe,
-  Star,
-  Heart,
   Shield,
   Lock,
   Building2,
@@ -16,6 +14,7 @@ import {
   FileType,
   KeyRound,
   CheckCircle2,
+  Megaphone,
 } from 'lucide-react';
 import {
   BigModal,
@@ -40,6 +39,34 @@ import { toast } from 'sonner';
 import { useTranslation } from '../../utils/languageContext';
 import type { DocumentCategory } from '../../utils/documentMockData';
 
+export type NotificationCategory =
+  | 'capitalCalls'
+  | 'distributions'
+  | 'reporting'
+  | 'subscriptionUpdates'
+  | 'marketing';
+
+const NOTIFICATION_CATEGORIES: NotificationCategory[] = [
+  'capitalCalls',
+  'distributions',
+  'reporting',
+  'subscriptionUpdates',
+  'marketing',
+];
+
+const DOCUMENT_CATEGORIES: DocumentCategory[] = [
+  'capitalCall',
+  'distribution',
+  'quarterlyReport',
+  'annualReport',
+  'subscription',
+  'kyc',
+  'legal',
+  'tax',
+  'marketing',
+  'other',
+];
+
 export interface ContactDraft {
   id: string;
   firstName: string;
@@ -52,6 +79,8 @@ export interface ContactDraft {
   accessLevel?: string;
   language?: string;
   isPreferredContact?: boolean;
+  notificationsAllEnabled?: boolean;
+  notificationCategories?: NotificationCategory[];
   notificationTeams?: string[];
   linkedStructures?: string[];
   fundsAccessRestricted?: boolean;
@@ -83,21 +112,7 @@ interface ContactEditModalProps {
   structures: StructureOption[];
   funds: NamedOption[];
   subscriptions: NamedOption[];
-  teams: NamedOption[];
 }
-
-const DOCUMENT_CATEGORIES: DocumentCategory[] = [
-  'capitalCall',
-  'distribution',
-  'quarterlyReport',
-  'annualReport',
-  'subscription',
-  'kyc',
-  'legal',
-  'tax',
-  'marketing',
-  'other',
-];
 
 function SectionHeader({
   icon: Icon,
@@ -109,7 +124,7 @@ function SectionHeader({
   description?: string;
 }) {
   return (
-    <div className="flex flex-col gap-0.5">
+    <div className="flex flex-col gap-1">
       <Label className="text-xs uppercase tracking-wide font-semibold text-muted-foreground flex items-center gap-1.5">
         <Icon className="w-3.5 h-3.5" />
         {label}
@@ -121,29 +136,38 @@ function SectionHeader({
   );
 }
 
-function RestrictionToggle({
+function ToggleCard({
   id,
   label,
   description,
   checked,
   onCheckedChange,
+  disabled,
 }: {
   id: string;
   label: string;
   description: string;
   checked: boolean;
   onCheckedChange: (next: boolean) => void;
+  disabled?: boolean;
 }) {
   return (
     <label
       htmlFor={id}
-      className="flex w-full items-start justify-between gap-3 rounded-md border border-input bg-white px-3 py-2.5 text-sm cursor-pointer hover:bg-muted/40 transition-colors"
+      className={`flex w-full items-start justify-between gap-3 rounded-md border border-input bg-white px-3 py-2.5 text-sm transition-colors ${
+        disabled ? 'opacity-60 cursor-not-allowed' : 'cursor-pointer hover:bg-muted/40'
+      }`}
     >
       <div className="flex-1">
         <div className="text-foreground font-medium">{label}</div>
         <div className="text-xs text-muted-foreground mt-0.5">{description}</div>
       </div>
-      <Switch id={id} checked={checked} onCheckedChange={onCheckedChange} />
+      <Switch
+        id={id}
+        checked={checked}
+        onCheckedChange={onCheckedChange}
+        disabled={disabled}
+      />
     </label>
   );
 }
@@ -158,7 +182,6 @@ export function ContactEditModal({
   structures,
   funds,
   subscriptions,
-  teams,
 }: ContactEditModalProps) {
   const { t } = useTranslation();
 
@@ -167,17 +190,18 @@ export function ContactEditModal({
     onChange({ ...contact, [field]: value });
   };
 
-  const toggleArrayItem = <K extends keyof ContactDraft>(
-    field: K,
-    item: string,
+  const toggleArrayItem = <T extends string>(
+    field: keyof ContactDraft,
+    list: T[] | undefined,
+    item: T,
     checked: boolean,
   ) => {
     if (!contact) return;
-    const current = (contact[field] as unknown as string[] | undefined) || [];
+    const current = list || [];
     const next = checked
       ? Array.from(new Set([...current, item]))
       : current.filter((id) => id !== item);
-    update(field, next as unknown as ContactDraft[K]);
+    onChange({ ...contact, [field]: next as unknown as ContactDraft[typeof field] });
   };
 
   const accessSummary = useMemo(() => {
@@ -224,6 +248,9 @@ export function ContactEditModal({
     !contact.fundsAccessRestricted &&
     !contact.subscriptionsAccessRestricted &&
     !contact.documentTypesAccessRestricted;
+
+  const allNotifications = contact.notificationsAllEnabled !== false;
+  const notificationsEnabled = contact.notificationCategories || [];
 
   return (
     <BigModal open={open} onOpenChange={(o) => !o && onClose()}>
@@ -277,14 +304,14 @@ export function ContactEditModal({
           </div>
 
           {/* Body */}
-          <div className="flex-1 overflow-y-auto px-8 py-6 space-y-8">
+          <div className="flex-1 overflow-y-auto px-8 py-8 divide-y divide-border">
             {/* General */}
-            <section className="space-y-3">
+            <section className="space-y-4 pb-8">
               <SectionHeader
                 icon={User}
                 label={t('investors.detail.contactsTab.generalSection')}
               />
-              <div className="grid grid-cols-2 gap-4">
+              <div className="grid grid-cols-2 gap-x-6 gap-y-4">
                 <div className="space-y-1.5">
                   <Label htmlFor="firstName">
                     {t('investors.detail.contactsTab.firstName')}
@@ -373,39 +400,61 @@ export function ContactEditModal({
               </div>
             </section>
 
-            {/* Preferences */}
-            <section className="space-y-3">
+            {/* Notifications */}
+            <section className="space-y-4 py-8">
               <SectionHeader
-                icon={Star}
-                label={t('investors.detail.contactsTab.preferencesSection')}
+                icon={Bell}
+                label={t('investors.detail.contactsTab.notifications')}
+                description={t(
+                  'investors.detail.contactsTab.notificationsHint',
+                )}
               />
-              <div className="grid grid-cols-2 gap-3">
-                <RestrictionToggle
-                  id="isPrimary"
-                  label={t('investors.detail.contactsTab.primaryContact')}
-                  description={t('investors.detail.contactsTab.primaryHint')}
-                  checked={contact.isPrimary}
-                  onCheckedChange={(v) =>
-                    !contact.isPrimary && update('isPrimary', v)
-                  }
-                />
-                <RestrictionToggle
-                  id="isPreferredContact"
-                  label={t('investors.detail.contactsTab.preferredContact')}
-                  description={t('investors.detail.contactsTab.preferredHint')}
-                  checked={!!contact.isPreferredContact}
-                  onCheckedChange={(v) => update('isPreferredContact', v)}
-                />
-              </div>
+              <ToggleCard
+                id="notificationsAll"
+                label={t('investors.detail.contactsTab.notificationsAllLabel')}
+                description={t(
+                  'investors.detail.contactsTab.notificationsAllHint',
+                )}
+                checked={allNotifications}
+                onCheckedChange={(v) => update('notificationsAllEnabled', v)}
+              />
+              {!allNotifications && (
+                <div className="grid grid-cols-2 gap-3 pl-6 border-l-2 border-border ml-1">
+                  {NOTIFICATION_CATEGORIES.map((cat) => (
+                    <ToggleCard
+                      key={cat}
+                      id={`notif-${cat}`}
+                      label={t(
+                        `investors.detail.contactsTab.notificationCategory.${cat}.label`,
+                      )}
+                      description={t(
+                        `investors.detail.contactsTab.notificationCategory.${cat}.description`,
+                      )}
+                      checked={notificationsEnabled.includes(cat)}
+                      onCheckedChange={(v) =>
+                        toggleArrayItem(
+                          'notificationCategories',
+                          notificationsEnabled,
+                          cat,
+                          v,
+                        )
+                      }
+                    />
+                  ))}
+                </div>
+              )}
             </section>
 
-            {/* Portal access */}
-            <section className="space-y-3">
+            {/* Portal access (with nested access management) */}
+            <section className="space-y-4 pt-8">
               <SectionHeader
                 icon={Shield}
                 label={t('investors.detail.contactsTab.portalAccessSection')}
+                description={t(
+                  'investors.detail.contactsTab.portalAccessHint',
+                )}
               />
-              <RestrictionToggle
+              <ToggleCard
                 id="hasPortalAccess"
                 label={t('investors.detail.contactsTab.enablePortalAccess')}
                 description={t(
@@ -414,311 +463,300 @@ export function ContactEditModal({
                 checked={contact.hasPortalAccess}
                 onCheckedChange={(v) => update('hasPortalAccess', v)}
               />
+
               {contact.hasPortalAccess && (
-                <div className="grid grid-cols-2 gap-4 pl-1">
-                  <div className="space-y-1.5">
-                    <Label
-                      htmlFor="accessLevel"
-                      className="flex items-center gap-1.5"
-                    >
-                      <KeyRound className="w-3.5 h-3.5 text-muted-foreground" />
-                      {t('investors.detail.contactsTab.accessLevel')}
-                    </Label>
-                    <Select
-                      value={contact.accessLevel}
-                      onValueChange={(value) => update('accessLevel', value)}
-                    >
-                      <SelectTrigger id="accessLevel">
-                        <SelectValue
-                          placeholder={t(
-                            'investors.detail.contactsTab.selectAccessLevel',
-                          )}
-                        />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="Admin">Admin</SelectItem>
-                        <SelectItem value="Full Access">Full Access</SelectItem>
-                        <SelectItem value="Read Only">Read Only</SelectItem>
-                      </SelectContent>
-                    </Select>
-                  </div>
-                  <div className="space-y-1.5">
-                    <Label className="flex items-center gap-1.5">
-                      <Lock className="w-3.5 h-3.5 text-muted-foreground" />
-                      {t('investors.detail.contactsTab.password')}
-                    </Label>
-                    <div className="flex gap-2">
-                      <Input
-                        type="password"
-                        placeholder="••••••••"
-                        disabled
-                        className="flex-1"
-                      />
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        onClick={() =>
-                          toast.success(
-                            t(
-                              'investors.detail.contactsTab.resetPasswordSent',
-                            ),
-                          )
-                        }
+                <div className="pl-6 border-l-2 border-border ml-1 space-y-6">
+                  {/* Credentials */}
+                  <div className="grid grid-cols-2 gap-x-6 gap-y-4">
+                    <div className="space-y-1.5">
+                      <Label
+                        htmlFor="accessLevel"
+                        className="flex items-center gap-1.5"
                       >
-                        {t('investors.detail.contactsTab.reset')}
-                      </Button>
+                        <KeyRound className="w-3.5 h-3.5 text-muted-foreground" />
+                        {t('investors.detail.contactsTab.accessLevel')}
+                      </Label>
+                      <Select
+                        value={contact.accessLevel}
+                        onValueChange={(value) => update('accessLevel', value)}
+                      >
+                        <SelectTrigger id="accessLevel">
+                          <SelectValue
+                            placeholder={t(
+                              'investors.detail.contactsTab.selectAccessLevel',
+                            )}
+                          />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="Admin">Admin</SelectItem>
+                          <SelectItem value="Full Access">Full Access</SelectItem>
+                          <SelectItem value="Read Only">Read Only</SelectItem>
+                        </SelectContent>
+                      </Select>
+                    </div>
+                    <div className="space-y-1.5">
+                      <Label className="flex items-center gap-1.5">
+                        <Lock className="w-3.5 h-3.5 text-muted-foreground" />
+                        {t('investors.detail.contactsTab.password')}
+                      </Label>
+                      <div className="flex gap-2">
+                        <Input
+                          type="password"
+                          placeholder="••••••••"
+                          disabled
+                          className="flex-1"
+                        />
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={() =>
+                            toast.success(
+                              t(
+                                'investors.detail.contactsTab.resetPasswordSent',
+                              ),
+                            )
+                          }
+                        >
+                          {t('investors.detail.contactsTab.reset')}
+                        </Button>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Access management */}
+                  <div className="space-y-4">
+                    <SectionHeader
+                      icon={Megaphone}
+                      label={t('investors.detail.contactsTab.accessSection')}
+                      description={t(
+                        'investors.detail.contactsTab.accessSectionHint',
+                      )}
+                    />
+
+                    {/* Recap */}
+                    <div
+                      className={`rounded-lg border px-4 py-3 flex items-start gap-3 ${
+                        fullAccess
+                          ? 'bg-emerald-50 border-emerald-200'
+                          : 'bg-amber-50 border-amber-200'
+                      }`}
+                    >
+                      <CheckCircle2
+                        className={`w-4 h-4 mt-0.5 shrink-0 ${
+                          fullAccess ? 'text-emerald-600' : 'text-amber-600'
+                        }`}
+                      />
+                      <div>
+                        <div
+                          className={`text-sm font-medium ${
+                            fullAccess ? 'text-emerald-900' : 'text-amber-900'
+                          }`}
+                        >
+                          {fullAccess
+                            ? t(
+                                'investors.detail.contactsTab.accessRecapTitleAll',
+                              )
+                            : t(
+                                'investors.detail.contactsTab.accessRecapTitleRestricted',
+                              )}
+                        </div>
+                        <div
+                          className={`text-xs mt-0.5 ${
+                            fullAccess ? 'text-emerald-700' : 'text-amber-700'
+                          }`}
+                        >
+                          {accessSummary}
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* Linked structures */}
+                    <div className="space-y-2">
+                      <Label className="text-xs uppercase tracking-wide font-semibold text-muted-foreground flex items-center gap-1.5">
+                        <Building2 className="w-3.5 h-3.5" />
+                        {t('investors.detail.contactsTab.linkedStructures')}
+                      </Label>
+                      <div className="grid grid-cols-2 gap-2">
+                        {structures.map((structure) => (
+                          <label
+                            key={structure.id}
+                            htmlFor={`structure-${structure.id}`}
+                            className="flex items-center gap-2 rounded-md border border-input bg-white px-3 py-2 cursor-pointer hover:bg-muted/40 transition-colors"
+                          >
+                            <Checkbox
+                              id={`structure-${structure.id}`}
+                              checked={contact.linkedStructures?.includes(
+                                structure.id,
+                              )}
+                              onCheckedChange={(checked) =>
+                                toggleArrayItem(
+                                  'linkedStructures',
+                                  contact.linkedStructures,
+                                  structure.id,
+                                  !!checked,
+                                )
+                              }
+                              disabled={contact.isPrimary}
+                            />
+                            <span className="text-sm flex items-center gap-2 flex-1">
+                              {structure.name}
+                              <Badge variant="outline" className="text-xs">
+                                {structure.type}
+                              </Badge>
+                            </span>
+                          </label>
+                        ))}
+                      </div>
+                      {contact.isPrimary && (
+                        <p className="text-xs text-muted-foreground">
+                          {t('investors.detail.contactsTab.primaryAttachAll')}
+                        </p>
+                      )}
+                    </div>
+
+                    {/* Funds restriction */}
+                    <div className="space-y-2">
+                      <ToggleCard
+                        id="fundsAccessRestricted"
+                        label={t(
+                          'investors.detail.contactsTab.restrictFundsLabel',
+                        )}
+                        description={t(
+                          'investors.detail.contactsTab.restrictFundsHint',
+                        )}
+                        checked={!!contact.fundsAccessRestricted}
+                        onCheckedChange={(v) =>
+                          update('fundsAccessRestricted', v)
+                        }
+                      />
+                      {contact.fundsAccessRestricted && (
+                        <div className="grid grid-cols-2 gap-2 pl-6 border-l-2 border-border ml-1">
+                          {funds.map((fund) => (
+                            <label
+                              key={fund.id}
+                              htmlFor={`fund-${fund.id}`}
+                              className="flex items-center gap-2 rounded-md border border-input bg-white px-3 py-2 cursor-pointer hover:bg-muted/40 transition-colors"
+                            >
+                              <Checkbox
+                                id={`fund-${fund.id}`}
+                                checked={contact.authorizedFunds?.includes(
+                                  fund.id,
+                                )}
+                                onCheckedChange={(checked) =>
+                                  toggleArrayItem(
+                                    'authorizedFunds',
+                                    contact.authorizedFunds,
+                                    fund.id,
+                                    !!checked,
+                                  )
+                                }
+                              />
+                              <span className="text-sm flex items-center gap-1.5">
+                                <Banknote className="w-3.5 h-3.5 text-muted-foreground" />
+                                {fund.name}
+                              </span>
+                            </label>
+                          ))}
+                        </div>
+                      )}
+                    </div>
+
+                    {/* Subscriptions restriction */}
+                    <div className="space-y-2">
+                      <ToggleCard
+                        id="subscriptionsAccessRestricted"
+                        label={t(
+                          'investors.detail.contactsTab.restrictSubscriptionsLabel',
+                        )}
+                        description={t(
+                          'investors.detail.contactsTab.restrictSubscriptionsHint',
+                        )}
+                        checked={!!contact.subscriptionsAccessRestricted}
+                        onCheckedChange={(v) =>
+                          update('subscriptionsAccessRestricted', v)
+                        }
+                      />
+                      {contact.subscriptionsAccessRestricted && (
+                        <div className="grid grid-cols-1 gap-2 pl-6 border-l-2 border-border ml-1">
+                          {subscriptions.map((sub) => (
+                            <label
+                              key={sub.id}
+                              htmlFor={`sub-${sub.id}`}
+                              className="flex items-center gap-2 rounded-md border border-input bg-white px-3 py-2 cursor-pointer hover:bg-muted/40 transition-colors"
+                            >
+                              <Checkbox
+                                id={`sub-${sub.id}`}
+                                checked={contact.authorizedSubscriptions?.includes(
+                                  sub.id,
+                                )}
+                                onCheckedChange={(checked) =>
+                                  toggleArrayItem(
+                                    'authorizedSubscriptions',
+                                    contact.authorizedSubscriptions,
+                                    sub.id,
+                                    !!checked,
+                                  )
+                                }
+                              />
+                              <span className="text-sm flex items-center gap-1.5">
+                                <FileSignature className="w-3.5 h-3.5 text-muted-foreground" />
+                                {sub.name}
+                              </span>
+                            </label>
+                          ))}
+                        </div>
+                      )}
+                    </div>
+
+                    {/* Document types restriction */}
+                    <div className="space-y-2">
+                      <ToggleCard
+                        id="documentTypesAccessRestricted"
+                        label={t(
+                          'investors.detail.contactsTab.restrictDocumentTypesLabel',
+                        )}
+                        description={t(
+                          'investors.detail.contactsTab.restrictDocumentTypesHint',
+                        )}
+                        checked={!!contact.documentTypesAccessRestricted}
+                        onCheckedChange={(v) =>
+                          update('documentTypesAccessRestricted', v)
+                        }
+                      />
+                      {contact.documentTypesAccessRestricted && (
+                        <div className="grid grid-cols-2 gap-2 pl-6 border-l-2 border-border ml-1">
+                          {DOCUMENT_CATEGORIES.map((cat) => (
+                            <label
+                              key={cat}
+                              htmlFor={`doctype-${cat}`}
+                              className="flex items-center gap-2 rounded-md border border-input bg-white px-3 py-2 cursor-pointer hover:bg-muted/40 transition-colors"
+                            >
+                              <Checkbox
+                                id={`doctype-${cat}`}
+                                checked={contact.authorizedDocumentTypes?.includes(
+                                  cat,
+                                )}
+                                onCheckedChange={(checked) =>
+                                  toggleArrayItem(
+                                    'authorizedDocumentTypes',
+                                    contact.authorizedDocumentTypes,
+                                    cat,
+                                    !!checked,
+                                  )
+                                }
+                              />
+                              <span className="text-sm flex items-center gap-1.5">
+                                <FileType className="w-3.5 h-3.5 text-muted-foreground" />
+                                {t(`ged.addModal.documentCategory.${cat}`)}
+                              </span>
+                            </label>
+                          ))}
+                        </div>
+                      )}
                     </div>
                   </div>
                 </div>
               )}
-            </section>
-
-            {/* Linked structures */}
-            <section className="space-y-3">
-              <SectionHeader
-                icon={Building2}
-                label={t('investors.detail.contactsTab.linkedStructures')}
-              />
-              <div className="grid grid-cols-2 gap-2">
-                {structures.map((structure) => (
-                  <label
-                    key={structure.id}
-                    htmlFor={`structure-${structure.id}`}
-                    className="flex items-center gap-2 rounded-md border border-input bg-white px-3 py-2 cursor-pointer hover:bg-muted/40 transition-colors"
-                  >
-                    <Checkbox
-                      id={`structure-${structure.id}`}
-                      checked={contact.linkedStructures?.includes(structure.id)}
-                      onCheckedChange={(checked) =>
-                        toggleArrayItem(
-                          'linkedStructures',
-                          structure.id,
-                          !!checked,
-                        )
-                      }
-                      disabled={contact.isPrimary}
-                    />
-                    <span className="text-sm flex items-center gap-2 flex-1">
-                      {structure.name}
-                      <Badge variant="outline" className="text-xs">
-                        {structure.type}
-                      </Badge>
-                    </span>
-                  </label>
-                ))}
-              </div>
-              {contact.isPrimary && (
-                <p className="text-xs text-muted-foreground">
-                  {t('investors.detail.contactsTab.primaryAttachAll')}
-                </p>
-              )}
-            </section>
-
-            {/* Notifications */}
-            <section className="space-y-3">
-              <SectionHeader
-                icon={Bell}
-                label={t('investors.detail.contactsTab.notifications')}
-              />
-              <div className="grid grid-cols-2 gap-2">
-                {teams.map((team) => (
-                  <label
-                    key={team.id}
-                    htmlFor={`team-${team.id}`}
-                    className="flex items-center gap-2 rounded-md border border-input bg-white px-3 py-2 cursor-pointer hover:bg-muted/40 transition-colors"
-                  >
-                    <Checkbox
-                      id={`team-${team.id}`}
-                      checked={contact.notificationTeams?.includes(team.id)}
-                      onCheckedChange={(checked) =>
-                        toggleArrayItem(
-                          'notificationTeams',
-                          team.id,
-                          !!checked,
-                        )
-                      }
-                    />
-                    <span className="text-sm">{team.name}</span>
-                  </label>
-                ))}
-              </div>
-            </section>
-
-            {/* Access management */}
-            <section className="space-y-3">
-              <SectionHeader
-                icon={Shield}
-                label={t('investors.detail.contactsTab.accessSection')}
-                description={t('investors.detail.contactsTab.accessSectionHint')}
-              />
-
-              {/* Recap */}
-              <div
-                className={`rounded-lg border px-4 py-3 flex items-start gap-3 ${
-                  fullAccess
-                    ? 'bg-emerald-50 border-emerald-200'
-                    : 'bg-amber-50 border-amber-200'
-                }`}
-              >
-                <CheckCircle2
-                  className={`w-4 h-4 mt-0.5 shrink-0 ${
-                    fullAccess ? 'text-emerald-600' : 'text-amber-600'
-                  }`}
-                />
-                <div>
-                  <div
-                    className={`text-sm font-medium ${
-                      fullAccess ? 'text-emerald-900' : 'text-amber-900'
-                    }`}
-                  >
-                    {fullAccess
-                      ? t('investors.detail.contactsTab.accessRecapTitleAll')
-                      : t(
-                          'investors.detail.contactsTab.accessRecapTitleRestricted',
-                        )}
-                  </div>
-                  <div
-                    className={`text-xs mt-0.5 ${
-                      fullAccess ? 'text-emerald-700' : 'text-amber-700'
-                    }`}
-                  >
-                    {accessSummary}
-                  </div>
-                </div>
-              </div>
-
-              {/* Funds restriction */}
-              <div className="space-y-2">
-                <RestrictionToggle
-                  id="fundsAccessRestricted"
-                  label={t('investors.detail.contactsTab.restrictFundsLabel')}
-                  description={t(
-                    'investors.detail.contactsTab.restrictFundsHint',
-                  )}
-                  checked={!!contact.fundsAccessRestricted}
-                  onCheckedChange={(v) => update('fundsAccessRestricted', v)}
-                />
-                {contact.fundsAccessRestricted && (
-                  <div className="grid grid-cols-2 gap-2 pl-1">
-                    {funds.map((fund) => (
-                      <label
-                        key={fund.id}
-                        htmlFor={`fund-${fund.id}`}
-                        className="flex items-center gap-2 rounded-md border border-input bg-white px-3 py-2 cursor-pointer hover:bg-muted/40 transition-colors"
-                      >
-                        <Checkbox
-                          id={`fund-${fund.id}`}
-                          checked={contact.authorizedFunds?.includes(fund.id)}
-                          onCheckedChange={(checked) =>
-                            toggleArrayItem(
-                              'authorizedFunds',
-                              fund.id,
-                              !!checked,
-                            )
-                          }
-                        />
-                        <span className="text-sm flex items-center gap-1.5">
-                          <Banknote className="w-3.5 h-3.5 text-muted-foreground" />
-                          {fund.name}
-                        </span>
-                      </label>
-                    ))}
-                  </div>
-                )}
-              </div>
-
-              {/* Subscriptions restriction */}
-              <div className="space-y-2">
-                <RestrictionToggle
-                  id="subscriptionsAccessRestricted"
-                  label={t(
-                    'investors.detail.contactsTab.restrictSubscriptionsLabel',
-                  )}
-                  description={t(
-                    'investors.detail.contactsTab.restrictSubscriptionsHint',
-                  )}
-                  checked={!!contact.subscriptionsAccessRestricted}
-                  onCheckedChange={(v) =>
-                    update('subscriptionsAccessRestricted', v)
-                  }
-                />
-                {contact.subscriptionsAccessRestricted && (
-                  <div className="grid grid-cols-1 gap-2 pl-1">
-                    {subscriptions.map((sub) => (
-                      <label
-                        key={sub.id}
-                        htmlFor={`sub-${sub.id}`}
-                        className="flex items-center gap-2 rounded-md border border-input bg-white px-3 py-2 cursor-pointer hover:bg-muted/40 transition-colors"
-                      >
-                        <Checkbox
-                          id={`sub-${sub.id}`}
-                          checked={contact.authorizedSubscriptions?.includes(
-                            sub.id,
-                          )}
-                          onCheckedChange={(checked) =>
-                            toggleArrayItem(
-                              'authorizedSubscriptions',
-                              sub.id,
-                              !!checked,
-                            )
-                          }
-                        />
-                        <span className="text-sm flex items-center gap-1.5">
-                          <FileSignature className="w-3.5 h-3.5 text-muted-foreground" />
-                          {sub.name}
-                        </span>
-                      </label>
-                    ))}
-                  </div>
-                )}
-              </div>
-
-              {/* Document types restriction */}
-              <div className="space-y-2">
-                <RestrictionToggle
-                  id="documentTypesAccessRestricted"
-                  label={t(
-                    'investors.detail.contactsTab.restrictDocumentTypesLabel',
-                  )}
-                  description={t(
-                    'investors.detail.contactsTab.restrictDocumentTypesHint',
-                  )}
-                  checked={!!contact.documentTypesAccessRestricted}
-                  onCheckedChange={(v) =>
-                    update('documentTypesAccessRestricted', v)
-                  }
-                />
-                {contact.documentTypesAccessRestricted && (
-                  <div className="grid grid-cols-2 gap-2 pl-1">
-                    {DOCUMENT_CATEGORIES.map((cat) => (
-                      <label
-                        key={cat}
-                        htmlFor={`doctype-${cat}`}
-                        className="flex items-center gap-2 rounded-md border border-input bg-white px-3 py-2 cursor-pointer hover:bg-muted/40 transition-colors"
-                      >
-                        <Checkbox
-                          id={`doctype-${cat}`}
-                          checked={contact.authorizedDocumentTypes?.includes(
-                            cat,
-                          )}
-                          onCheckedChange={(checked) => {
-                            const current =
-                              contact.authorizedDocumentTypes || [];
-                            const next = checked
-                              ? Array.from(new Set([...current, cat]))
-                              : current.filter((c) => c !== cat);
-                            update('authorizedDocumentTypes', next);
-                          }}
-                        />
-                        <span className="text-sm flex items-center gap-1.5">
-                          <FileType className="w-3.5 h-3.5 text-muted-foreground" />
-                          {t(`ged.addModal.documentCategory.${cat}`)}
-                        </span>
-                      </label>
-                    ))}
-                  </div>
-                )}
-              </div>
             </section>
           </div>
 

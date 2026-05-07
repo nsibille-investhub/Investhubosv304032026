@@ -1000,10 +1000,36 @@
         "linkedStructures": "Linked structures",
         "primaryAttachAll": "The primary contact is automatically linked to all structures",
         "notifications": "Notifications",
+        "notificationsHint": "Choose which communications this contact should receive",
+        "notificationsAllLabel": "All communications",
+        "notificationsAllHint": "Subscribe this contact to every notification category",
+        "notificationCategory": {
+          "capitalCalls": {
+            "label": "Capital calls",
+            "description": "Drawdown notices and call schedules"
+          },
+          "distributions": {
+            "label": "Distributions",
+            "description": "Distribution notices and payouts"
+          },
+          "reporting": {
+            "label": "Reporting",
+            "description": "Quarterly and annual reports"
+          },
+          "subscriptionUpdates": {
+            "label": "Subscription updates",
+            "description": "Subscription documents and amendments"
+          },
+          "marketing": {
+            "label": "Marketing",
+            "description": "Newsletters, events and announcements"
+          }
+        },
         "authorizedFunds": "Authorized funds",
         "authorizedSubscriptions": "Authorized subscriptions",
         "primaryHint": "Main point of contact for this investor",
         "preferredHint": "Preferred recipient for nominative communications",
+        "portalAccessHint": "Grant access to the investor portal and configure what this contact can see.",
         "enablePortalAccessHint": "Allow this contact to log into the investor portal",
         "accessSection": "Access management",
         "accessSectionHint": "By default this contact has access to everything. Toggle each scope to restrict it.",
