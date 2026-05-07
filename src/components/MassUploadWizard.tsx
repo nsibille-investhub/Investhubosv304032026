@@ -90,6 +90,12 @@ import { DocumentCategory } from '../utils/documentMockData';
 import { availableInvestors, fundLabelMap } from '../utils/investorsMockData';
 import { COMMITMENTS, FUNDS, INVESTORS, getSpaces, type FolderSpec } from '../utils/gedFixtures';
 import { useTranslation } from '../utils/languageContext';
+import { useValidationStore, nextValidationDocId } from '../utils/validationStoreContext';
+import type {
+  TargetingTag,
+  ValidationBatch,
+  ValidationDocument,
+} from '../utils/validationDocumentsGenerator';
 
 export interface MassUploadOriginContext {
   /** "folder" when the wizard is opened from a folder context menu, "space" from the space-level Import button. */
@@ -371,8 +377,116 @@ const availableEmailTemplates: { value: string; labelKey: string; icon: LucideIc
   { value: 'newsletter', labelKey: 'ged.dataRoom.massUpload.wizard.emailTemplates.newsletter', icon: Newspaper },
 ];
 
+// Map a DocumentCategory to the kindKey used by the validation listing.
+const KIND_KEY_BY_CATEGORY: Record<DocumentCategory, string> = {
+  capitalCall: 'validation.fixtures.kind.capitalCall',
+  distribution: 'validation.fixtures.kind.distribution',
+  quarterlyReport: 'validation.fixtures.kind.quarterlyReporting',
+  annualReport: 'validation.fixtures.kind.annualReport',
+  subscription: 'validation.fixtures.kind.subscription',
+  kyc: 'validation.fixtures.kind.kyc',
+  legal: 'validation.fixtures.kind.legal',
+  tax: 'validation.fixtures.kind.tax',
+  marketing: 'validation.fixtures.kind.marketing',
+  other: 'validation.fixtures.kind.other',
+};
+
+const formatFromName = (name: string): ValidationDocument['format'] => {
+  const lower = name.toLowerCase();
+  if (lower.endsWith('.docx') || lower.endsWith('.doc')) return 'docx';
+  if (lower.endsWith('.xlsx') || lower.endsWith('.xls')) return 'xlsx';
+  if (lower.endsWith('.pptx') || lower.endsWith('.ppt')) return 'pptx';
+  return 'pdf';
+};
+
+const splitFolderToSegments = (folder: string): string[] => {
+  if (!folder) return [];
+  return folder.split('/').filter(Boolean);
+};
+
+const buildTargetingTags = (file: UploadedFile): TargetingTag[] => {
+  const tags: TargetingTag[] = [];
+  file.targetSegments?.forEach((label) => tags.push({ kind: 'segment', label }));
+  file.targetFunds?.forEach((code) =>
+    tags.push({ kind: 'fund', label: fundLabelMap[code] ?? code }),
+  );
+  file.targetInvestors?.forEach((id) => {
+    const inv = INVESTORS.find((i) => i.id === id);
+    tags.push({ kind: 'investor', label: inv?.name ?? id });
+  });
+  file.targetSubscriptions?.forEach((id) =>
+    tags.push({ kind: 'subscription', label: id }),
+  );
+  return tags;
+};
+
+const resolveSpaceIdForPath = (folder: string): string | undefined => {
+  const segs = splitFolderToSegments(folder);
+  if (segs.length === 0) return undefined;
+  const head = segs[0];
+  const space = getSpaces().find((s) => s.name === head);
+  return space?.id;
+};
+
+const buildValidationDocument = (
+  file: UploadedFile,
+  submittedAt: string,
+  batchId?: string,
+): ValidationDocument => {
+  const segs = splitFolderToSegments(file.folder);
+  return {
+    id: nextValidationDocId(),
+    name: file.name,
+    format: formatFromName(file.name),
+    size: file.size,
+    pathSegments: segs,
+    createdBy: { name: 'You', role: 'Operator' },
+    createdAt: submittedAt,
+    targeting: buildTargetingTags(file),
+    kindKey: file.documentCategory
+      ? KIND_KEY_BY_CATEGORY[file.documentCategory]
+      : undefined,
+    status: 'pending',
+    batchId,
+    gedSpaceId: resolveSpaceIdForPath(file.folder),
+  };
+};
+
+const buildValidationBatch = (
+  batch: UploadBatch,
+  files: UploadedFile[],
+  submittedAt: string,
+): ValidationBatch => {
+  // Pick the most common category among the batch's files for the kind label.
+  const counts = new Map<DocumentCategory, number>();
+  files.forEach((f) => {
+    if (f.documentCategory) {
+      counts.set(f.documentCategory, (counts.get(f.documentCategory) ?? 0) + 1);
+    }
+  });
+  let topCategory: DocumentCategory | undefined;
+  let topCount = 0;
+  counts.forEach((c, k) => {
+    if (c > topCount) {
+      topCategory = k;
+      topCount = c;
+    }
+  });
+  return {
+    id: batch.id,
+    name: batch.name,
+    kindKey: topCategory
+      ? KIND_KEY_BY_CATEGORY[topCategory]
+      : 'validation.fixtures.kind.other',
+    createdAt: submittedAt,
+    createdBy: { name: 'You', role: 'Operator' },
+  };
+};
+
+
 export function MassUploadWizard({ isOpen, onClose, existingFolders, inline = false, originContext = null }: MassUploadWizardProps) {
   const { t } = useTranslation();
+  const { addUploadResults } = useValidationStore();
   // The user can clear the origin-context prefill from step 1 — this hides the
   // banner and stops new uploads from being pre-targeted.
   const [originCleared, setOriginCleared] = useState(false);
@@ -1406,8 +1520,43 @@ export function MassUploadWizard({ isOpen, onClose, existingFolders, inline = fa
       return;
     }
 
-    toast.success('Import successful', {
-      description: `${uploadedFiles.length} document(s) were successfully imported`
+    // Push the freshly imported documents into the validation listing as
+    // pending. Files attached to a wizard batch become a single validation
+    // batch; the rest become standalone validation documents.
+    const submittedAt = new Date().toISOString();
+    const filesByBatch = new Map<string, UploadedFile[]>();
+    const standaloneFiles: UploadedFile[] = [];
+    uploadedFiles.forEach((f) => {
+      if (f.batchId) {
+        const list = filesByBatch.get(f.batchId) ?? [];
+        list.push(f);
+        filesByBatch.set(f.batchId, list);
+      } else {
+        standaloneFiles.push(f);
+      }
+    });
+
+    filesByBatch.forEach((files, batchId) => {
+      const batch = batches.find((b) => b.id === batchId);
+      if (!batch) return;
+      const validationBatch = buildValidationBatch(batch, files, submittedAt);
+      const validationDocs = files.map((f) =>
+        buildValidationDocument(f, submittedAt, batchId),
+      );
+      addUploadResults(validationBatch, validationDocs);
+    });
+
+    if (standaloneFiles.length > 0) {
+      const validationDocs = standaloneFiles.map((f) =>
+        buildValidationDocument(f, submittedAt),
+      );
+      addUploadResults(null, validationDocs);
+    }
+
+    toast.success(t('ged.dataRoom.massUpload.wizard.toast.importSuccessTitle'), {
+      description: t('ged.dataRoom.massUpload.wizard.toast.importSuccessDesc', {
+        count: uploadedFiles.length,
+      }),
     });
     onClose();
   };

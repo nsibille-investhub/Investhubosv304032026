@@ -51,6 +51,7 @@ import {
   ValidationStatus,
 } from '../utils/validationDocumentsGenerator';
 import { useTranslation } from '../utils/languageContext';
+import { useValidationStore } from '../utils/validationStoreContext';
 import { cn } from './ui/utils';
 
 interface ValidationPageProps {
@@ -123,6 +124,13 @@ function deriveBatchStatus(docs: ValidationDocument[]): ValidationStatus {
 
 export function ValidationPage({ onBack }: ValidationPageProps) {
   const { t, lang } = useTranslation();
+  const {
+    dynamicDocuments,
+    dynamicBatches,
+    promoteToGed,
+    setDynamicDocumentStatus,
+    setDynamicBatchStatus,
+  } = useValidationStore();
   const dateFormatter = useMemo(
     () =>
       new Intl.DateTimeFormat(lang === 'en' ? 'en-GB' : 'fr-FR', {
@@ -152,7 +160,10 @@ export function ValidationPage({ onBack }: ValidationPageProps) {
     string | null
   >(null);
 
-  const batches = useMemo(() => getValidationBatches(), []);
+  const batches = useMemo(
+    () => [...dynamicBatches, ...getValidationBatches()],
+    [dynamicBatches],
+  );
   const batchById = useMemo(() => {
     const map = new Map<string, ValidationBatch>();
     batches.forEach((b) => map.set(b.id, b));
@@ -167,6 +178,19 @@ export function ValidationPage({ onBack }: ValidationPageProps) {
     }, 300);
     return () => clearTimeout(timeout);
   }, []);
+
+  /** Merge newly imported documents from the store into the local listing.
+   * We only add documents that aren't already present (by id) so local
+   * status updates aren't overwritten when the store re-renders. */
+  useEffect(() => {
+    if (dynamicDocuments.length === 0) return;
+    setDocuments((prev) => {
+      const existingIds = new Set(prev.map((d) => d.id));
+      const additions = dynamicDocuments.filter((d) => !existingIds.has(d.id));
+      if (additions.length === 0) return prev;
+      return [...additions, ...prev];
+    });
+  }, [dynamicDocuments]);
 
   const counts = useMemo(() => {
     return {
@@ -372,18 +396,27 @@ export function ValidationPage({ onBack }: ValidationPageProps) {
     );
   };
 
+  const isDynamicDoc = (docId: number) =>
+    dynamicDocuments.some((d) => d.id === docId);
+
   const handleValidate = (doc: ValidationDocument) => {
     updateStatus(doc.id, 'validated');
+    if (isDynamicDoc(doc.id)) setDynamicDocumentStatus(doc.id, 'validated');
+    promoteToGed([doc], 'validated');
     toast.success(t('validation.toast.docValidated'), { description: doc.name });
   };
 
   const handleReject = (doc: ValidationDocument) => {
     updateStatus(doc.id, 'rejected');
+    if (isDynamicDoc(doc.id)) setDynamicDocumentStatus(doc.id, 'rejected');
+    promoteToGed([doc], 'rejected');
     toast.error(t('validation.toast.docRejected'), { description: doc.name });
   };
 
   const handleResetToPending = (doc: ValidationDocument) => {
     updateStatus(doc.id, 'pending');
+    if (isDynamicDoc(doc.id)) setDynamicDocumentStatus(doc.id, 'pending');
+    promoteToGed([doc], 'pending');
     toast.info(t('validation.toast.docPending'), { description: doc.name });
   };
 
@@ -411,8 +444,16 @@ export function ValidationPage({ onBack }: ValidationPageProps) {
       name,
     });
 
+  const isDynamicBatch = (batchId: string) =>
+    dynamicBatches.some((b) => b.id === batchId);
+
+  const docsForBatch = (batchId: string): ValidationDocument[] =>
+    documents.filter((d) => d.batchId === batchId);
+
   const handleValidateBatch = (batch: ValidationBatch, count: number) => {
     updateBatchStatus(batch.id, 'validated');
+    if (isDynamicBatch(batch.id)) setDynamicBatchStatus(batch.id, 'validated');
+    promoteToGed(docsForBatch(batch.id), 'validated');
     if (batch.notification) {
       toast.success(t('validation.toast.batchValidatedNotified'), {
         description: batchDescription(count, batch.name),
@@ -426,6 +467,8 @@ export function ValidationPage({ onBack }: ValidationPageProps) {
 
   const handleRejectBatch = (batch: ValidationBatch, count: number) => {
     updateBatchStatus(batch.id, 'rejected');
+    if (isDynamicBatch(batch.id)) setDynamicBatchStatus(batch.id, 'rejected');
+    promoteToGed(docsForBatch(batch.id), 'rejected');
     toast.error(t('validation.toast.batchRejected'), {
       description: batchDescription(count, batch.name),
     });
@@ -433,6 +476,8 @@ export function ValidationPage({ onBack }: ValidationPageProps) {
 
   const handleResetBatch = (batch: ValidationBatch) => {
     updateBatchStatus(batch.id, 'pending');
+    if (isDynamicBatch(batch.id)) setDynamicBatchStatus(batch.id, 'pending');
+    promoteToGed(docsForBatch(batch.id), 'pending');
     toast.info(t('validation.toast.batchPending'), { description: batch.name });
   };
 
@@ -467,11 +512,10 @@ export function ValidationPage({ onBack }: ValidationPageProps) {
   }, [activeNotificationBatchId, rowNodes, batchById, documents]);
 
   const stickyHeadActionsClass =
-    'sticky right-0 z-20 bg-muted/40 backdrop-blur-sm';
-  const stickyBodyActionsClass = (extra?: string) =>
+    'sticky right-0 z-20 bg-white dark:bg-gray-950 border-l border-gray-200 dark:border-gray-800';
+  const stickyBodyActionsClass = () =>
     cn(
-      'sticky right-0 z-10 shadow-[-8px_0_12px_-12px_rgba(0,0,0,0.18)] text-right',
-      extra ?? 'bg-white dark:bg-gray-950',
+      'sticky right-0 z-10 text-right bg-white dark:bg-gray-950 border-l border-gray-200 dark:border-gray-800 shadow-[-8px_0_12px_-12px_rgba(0,0,0,0.18)]',
     );
 
   const renderTargetingTags = (
@@ -719,7 +763,7 @@ export function ValidationPage({ onBack }: ValidationPageProps) {
                           onReset={() => handleResetBatch(node.batch)}
                           onPreviewChild={(d) => setPreviewDocument(d)}
                           renderTargeting={renderTargetingTags}
-                          stickyClass={stickyBodyActionsClass}
+                          stickyClass={stickyBodyActionsClass()}
                         />
                       ),
                     )}
@@ -897,6 +941,11 @@ function StandaloneDocumentRow({
     >
       <td className="w-8 px-2 py-4" />
       <td className="px-6 py-4">
+        {doc.kindKey && (
+          <div className="mb-1 text-[11px] font-semibold uppercase tracking-wide text-blue-600 dark:text-blue-300">
+            {t(doc.kindKey)}
+          </div>
+        )}
         <DocumentNameCell
           name={doc.name}
           pathSegments={doc.pathSegments}
@@ -1006,7 +1055,7 @@ interface BatchRowGroupProps {
     targeting: ValidationDocument['targeting'],
     maxVisible?: number,
   ) => JSX.Element;
-  stickyClass: (extra?: string) => string;
+  stickyClass: string;
 }
 
 function BatchRowGroup({
@@ -1179,12 +1228,7 @@ function BatchRowGroup({
         </td>
 
         <td
-          className={cn(
-            'px-6 py-3',
-            stickyClass(
-              'bg-blue-50/40 group-hover:bg-blue-50 dark:bg-blue-950/20 dark:group-hover:bg-blue-950/40',
-            ),
-          )}
+          className={cn('px-6 py-3', stickyClass)}
         >
           <div
             className="flex items-center justify-end gap-1"
@@ -1319,7 +1363,7 @@ function BatchRowGroup({
               </div>
             </td>
             <td className="px-6 py-2.5 text-[11px] text-gray-400">—</td>
-            <td className={cn('px-6 py-2.5', stickyClass('bg-blue-50/10 dark:bg-blue-950/5'))}>
+            <td className={cn('px-6 py-2.5', stickyClass)}>
               <div
                 className="flex items-center justify-end gap-1"
                 onClick={(e) => e.stopPropagation()}

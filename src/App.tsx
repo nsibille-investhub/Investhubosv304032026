@@ -1,6 +1,7 @@
 import { useState, useEffect, useMemo } from 'react';
 import { AppStoreProvider } from './utils/appStoreContext';
 import { ThemeProvider } from './utils/themeContext';
+import { ValidationStoreProvider } from './utils/validationStoreContext';
 import { useTranslation } from './utils/languageContext';
 import { ThemeToggle } from './components/ThemeToggle';
 import { LanguageSwitcher } from './components/LanguageSwitcher';
@@ -553,6 +554,7 @@ export default function App() {
   return (
     <ThemeProvider>
       <AppStoreProvider>
+        <ValidationStoreProvider>
         <TooltipProvider delayDuration={200}>
           <div className="min-h-screen bg-background flex">
           <Toaster position="top-right" richColors />
@@ -1973,6 +1975,7 @@ export default function App() {
       />
 
         </TooltipProvider>
+        </ValidationStoreProvider>
       </AppStoreProvider>
     </ThemeProvider>
   );

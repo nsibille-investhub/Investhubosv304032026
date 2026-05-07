@@ -65,11 +65,15 @@ export interface ValidationDocument {
   targeting: TargetingTag[];
   /** Optional translation ref for the document comment. */
   comment?: I18nRef;
+  /** Translation key for the document type label (e.g. "validation.fixtures.kind.taxCertificate"). */
+  kindKey?: string;
   status: ValidationStatus;
   reviewedBy?: string;
   reviewedAt?: string;
   batchId?: string;
   notification?: ValidationNotification;
+  /** Optional GED space id used to route the document to the data room after validation. */
+  gedSpaceId?: string;
 }
 
 const seg   = (label: string): TargetingTag => ({ kind: 'segment',     label });
@@ -264,6 +268,7 @@ const PENDING: Omit<ValidationDocument, 'id' | 'status'>[] = [
       share(NW_BRUNSWICK_SUB.shareClass),
     ],
     comment: { key: 'validation.fixtures.comment.taxNominative' },
+    kindKey: 'validation.fixtures.kind.taxCertificate',
     notification: {
       channel: 'both',
       subject: {
@@ -295,6 +300,7 @@ const PENDING: Omit<ValidationDocument, 'id' | 'status'>[] = [
     createdAt: '2026-04-22T13:15:00Z',
     targeting: [fund(FUND_ATL.name)],
     comment: { key: 'validation.fixtures.comment.esgPending' },
+    kindKey: 'validation.fixtures.kind.esgDisclosure',
     notification: {
       channel: 'portal',
       subject: {
