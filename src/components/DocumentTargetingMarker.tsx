@@ -1,9 +1,8 @@
 import { Document } from '../utils/documentMockData';
-import { Globe, UserRound, Users } from 'lucide-react';
+import { Globe, UserRound } from 'lucide-react';
 import { GenericAudienceInline } from './GenericAudienceCard';
 import { SpecificAudience } from './SpecificAudience';
 import { Tag } from './Tag';
-import { computeAudience } from './AudienceCounter';
 import { useTranslation } from '../utils/languageContext';
 
 interface DocumentTargetingMarkerProps {
@@ -47,18 +46,10 @@ export function DocumentTargetingMarker({ document, mode = 'full' }: DocumentTar
   // pill background, neutral gray, mirroring the BirdView pattern.
   if (mode === 'tag') {
     if (isGeneric) {
-      const audienceCount = computeAudience(
-        targeting.segment ? [targeting.segment] : [],
-        targeting.fund ?? null,
-      ).investors;
       return (
-        <div
-          className="flex items-center gap-1 text-gray-400"
-          title={t('ged.targeting.generic')}
-        >
+        <div className="flex items-center gap-1 text-gray-400">
           <Globe className="w-3.5 h-3.5" />
-          <span className="text-xs tabular-nums">{audienceCount}</span>
-          <Users className="w-3 h-3" />
+          <span className="text-xs">{t('ged.targeting.generic')}</span>
         </div>
       );
     }
