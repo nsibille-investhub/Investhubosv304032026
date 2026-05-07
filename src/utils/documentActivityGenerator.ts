@@ -465,18 +465,26 @@ export const contextFromDoc = (input: {
 
 /** Engagement aggregated across many documents. */
 export interface ConsolidatedEngagement {
-  /** Sum of audience entries × document. */
+  /**
+   * Number of documents that count as "consulted" — i.e. that have
+   * been viewed / downloaded / validated by at least ONE recipient
+   * of their audience (the LP themselves OR any of their accessible
+   * contacts). This is the headline ratio used for the BirdView
+   * folder KPI: rate = consultedDocs / docCount.
+   */
+  consultedDocs: number;
+  /** Number of documents in scope. */
+  docCount: number;
+  /** Sum of audience entries × document — granular metric. */
   totalInteractions: number;
   /** Number of (recipient, doc) pairs that resulted in a view. */
   interactionsViewed: number;
   /** Number of distinct LPs in the union of all audiences. */
   totalInvestors: number;
-  /** Number of LPs that consulted at least one of the documents. */
+  /** Number of LPs for whom at least one of their docs was consulted. */
   investorsViewedAny: number;
-  /** Number of LPs that consulted ALL of the documents. */
+  /** Number of LPs for whom every doc in scope was consulted. */
   investorsViewedAll: number;
-  /** Number of documents in scope. */
-  docCount: number;
 }
 
 /**
@@ -489,15 +497,21 @@ export const buildConsolidatedEngagement = (
 ): ConsolidatedEngagement => {
   let totalInteractions = 0;
   let interactionsViewed = 0;
+  let consultedDocs = 0;
   /** investorName -> { docs viewed, total docs in their audience for this folder } */
   const perInvestor = new Map<string, { viewed: number; total: number }>();
 
   for (const ctx of contexts) {
     const audience = buildAudience(ctx);
     totalInteractions += audience.length;
-    interactionsViewed += audience.filter((r) =>
+    const viewedRecipients = audience.filter((r) =>
       r.status.viewed || r.status.downloaded || r.status.validated,
-    ).length;
+    );
+    interactionsViewed += viewedRecipients.length;
+
+    // A doc is "consulted" as soon as ONE recipient (the LP themselves
+    // or any of their contacts) opened it.
+    if (viewedRecipients.length > 0) consultedDocs += 1;
 
     // For each LP touched by this doc, count whether any of their
     // recipients consulted the doc.
@@ -525,12 +539,13 @@ export const buildConsolidatedEngagement = (
   }
 
   return {
+    consultedDocs,
+    docCount: contexts.length,
     totalInteractions,
     interactionsViewed,
     totalInvestors: perInvestor.size,
     investorsViewedAny,
     investorsViewedAll,
-    docCount: contexts.length,
   };
 };
 

@@ -322,21 +322,27 @@ export function DocumentActivityPanel({
 
   const engagement = useMemo(() => {
     if (isConsolidated && consolidatedSummary) {
-      const { interactionsViewed, totalInteractions, investorsViewedAll, investorsViewedAny, totalInvestors, docCount } = consolidatedSummary;
-      const percent = totalInteractions === 0 ? 0 : Math.round((interactionsViewed / totalInteractions) * 100);
+      const { consultedDocs, docCount, investorsViewedAll, investorsViewedAny, totalInvestors } = consolidatedSummary;
+      // Folder consultation rate: a doc counts as "consulted" iff
+      // at least one of its recipients (LP himself or any of his
+      // contacts) viewed/downloaded/validated it.
+      const percent = docCount === 0 ? 0 : Math.round((consultedDocs / docCount) * 100);
       const tone: 'success' | 'warning' | 'neutral' = percent >= 75 ? 'success' : percent >= 35 ? 'warning' : 'neutral';
       return {
         label: t(
-          investorsViewedAll > 1
-            ? 'ged.activityPanel.consolidated.viewedAllMany'
-            : 'ged.activityPanel.consolidated.viewedAllOne',
-          { count: investorsViewedAll, total: totalInvestors, docs: docCount },
+          consultedDocs > 1
+            ? 'ged.activityPanel.consolidated.consultedMany'
+            : 'ged.activityPanel.consolidated.consultedOne',
+          { count: consultedDocs, total: docCount },
         ),
-        sublabel: investorsViewedAny > investorsViewedAll
-          ? t('ged.activityPanel.consolidated.viewedSome', {
-              count: investorsViewedAny - investorsViewedAll,
-            })
-          : t('ged.activityPanel.consolidated.allOrNothing'),
+        sublabel: totalInvestors > 0
+          ? t(
+              investorsViewedAll > 1
+                ? 'ged.activityPanel.consolidated.viewedAllMany'
+                : 'ged.activityPanel.consolidated.viewedAllOne',
+              { count: investorsViewedAll, total: totalInvestors, partial: investorsViewedAny - investorsViewedAll },
+            )
+          : t('ged.activityPanel.consolidated.noAudience'),
         percent,
         tone,
       };

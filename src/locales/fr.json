@@ -1336,7 +1336,7 @@
         "contactNoAccess": "{{contact}} n'a pas accès à ce document"
       },
       "consolidated": {
-        "tooltip": "{{viewed}} / {{total}} consultations sur {{docs}} documents nominatifs",
+        "tooltip": "{{consulted}} / {{total}} documents consultés (au moins une consultation par destinataire)",
         "activity": "Voir l'activité consolidée du dossier"
       },
       "elementCount": "{{count}} éléments",
@@ -1488,10 +1488,11 @@
       "emptyLabel": "Aucune activité enregistrée pour ce document.",
       "consolidated": {
         "badge": "Dossier · {{count}} doc.",
-        "viewedAllOne": "{{count}} / {{total}} investisseur a consulté l'ensemble des {{docs}} documents",
-        "viewedAllMany": "{{count}} / {{total}} investisseurs ont consulté l'ensemble des {{docs}} documents",
-        "viewedSome": "+{{count}} investisseur(s) ont consulté au moins un document",
-        "allOrNothing": "Aucun investisseur n'a partiellement consulté"
+        "consultedOne": "{{count}} / {{total}} document consulté",
+        "consultedMany": "{{count}} / {{total}} documents consultés",
+        "viewedAllOne": "{{count}} / {{total}} investisseur a tout consulté ({{partial}} partiellement)",
+        "viewedAllMany": "{{count}} / {{total}} investisseurs ont tout consulté ({{partial}} partiellement)",
+        "noAudience": "Aucun destinataire dans ce contexte — pas de KPI"
       },
       "userType": {
         "Investor": "Investisseur",

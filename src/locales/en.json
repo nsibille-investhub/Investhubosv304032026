@@ -1336,7 +1336,7 @@
         "contactNoAccess": "{{contact}} does not have access to this document"
       },
       "consolidated": {
-        "tooltip": "{{viewed}} / {{total}} consultations across {{docs}} nominatif documents",
+        "tooltip": "{{consulted}} / {{total}} documents consulted (at least one recipient viewed each)",
         "activity": "View consolidated folder activity"
       },
       "elementCount": "{{count}} items",
@@ -1488,10 +1488,11 @@
       "emptyLabel": "No activity recorded for this document.",
       "consolidated": {
         "badge": "Folder · {{count}} docs",
-        "viewedAllOne": "{{count}} / {{total}} investor consulted all {{docs}} documents",
-        "viewedAllMany": "{{count}} / {{total}} investors consulted all {{docs}} documents",
-        "viewedSome": "+{{count}} investor(s) consulted at least one document",
-        "allOrNothing": "No investor has partially consulted"
+        "consultedOne": "{{count}} / {{total}} document consulted",
+        "consultedMany": "{{count}} / {{total}} documents consulted",
+        "viewedAllOne": "{{count}} / {{total}} investor consulted everything ({{partial}} partially)",
+        "viewedAllMany": "{{count}} / {{total}} investors consulted everything ({{partial}} partially)",
+        "noAudience": "No recipient in this context — no KPI available"
       },
       "userType": {
         "Investor": "Investor",

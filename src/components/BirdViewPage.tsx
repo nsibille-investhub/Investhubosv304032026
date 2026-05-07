@@ -321,26 +321,27 @@ export function BirdViewPage({ onBack }: BirdViewPageProps) {
   }, []);
 
   /**
-   * Aggregates the engagement of every nominatif descendant (sum of
-   * audience and viewers across documents).
+   * Aggregates the consultation rate across every nominatif descendant.
+   *
+   * A doc counts as "consulted" iff at least one of its recipients
+   * (LP or any of their accessible contacts) viewed/downloaded/validated
+   * it — i.e. doc.engagement.viewedBy >= 1. The folder rate is the
+   * share of consulted docs over the doc count, NOT the share of
+   * recipients who viewed.
    */
   const consolidatedEngagement = useCallback(
-    (node: DocumentNode): { viewedBy: number; totalViewers: number; docCount: number } => {
+    (node: DocumentNode): { consultedDocs: number; docCount: number } => {
       if (node.type === 'document') {
-        return {
-          viewedBy: node.engagement?.viewedBy ?? 0,
-          totalViewers: node.engagement?.totalViewers ?? 0,
-          docCount: 1,
-        };
+        const consulted = (node.engagement?.viewedBy ?? 0) > 0 ? 1 : 0;
+        return { consultedDocs: consulted, docCount: 1 };
       }
-      let viewedBy = 0, totalViewers = 0, docCount = 0;
+      let consultedDocs = 0, docCount = 0;
       for (const c of node.children ?? []) {
         const r = consolidatedEngagement(c);
-        viewedBy += r.viewedBy;
-        totalViewers += r.totalViewers;
+        consultedDocs += r.consultedDocs;
         docCount += r.docCount;
       }
-      return { viewedBy, totalViewers, docCount };
+      return { consultedDocs, docCount };
     },
     [],
   );
@@ -747,8 +748,8 @@ export function BirdViewPage({ onBack }: BirdViewPageProps) {
         {node.type === 'folder' && (() => {
           const allNominatif = isAllNominatif(node);
           const consolidated = allNominatif ? consolidatedEngagement(node) : null;
-          const consolidatedPercent = consolidated && consolidated.totalViewers > 0
-            ? Math.round((consolidated.viewedBy / consolidated.totalViewers) * 100)
+          const consolidatedPercent = consolidated && consolidated.docCount > 0
+            ? Math.round((consolidated.consultedDocs / consolidated.docCount) * 100)
             : 0;
           const consolidatedTone =
             consolidatedPercent >= 75 ? 'text-green-600' :
@@ -804,7 +805,7 @@ export function BirdViewPage({ onBack }: BirdViewPageProps) {
 
             {/* Consolidated rate badge — visible only when every leaf
                 of the folder is a nominatif doc */}
-            {allNominatif && consolidated && consolidated.totalViewers > 0 && (
+            {allNominatif && consolidated && consolidated.docCount > 0 && (
               <Tooltip>
                 <TooltipTrigger asChild>
                   <span className={cn('inline-flex items-center gap-1 ml-2 text-xs font-semibold', consolidatedTone)}>
@@ -815,9 +816,8 @@ export function BirdViewPage({ onBack }: BirdViewPageProps) {
                 <TooltipContent side="top">
                   <div className="text-xs">
                     {t('ged.birdview.consolidated.tooltip', {
-                      viewed: consolidated.viewedBy,
-                      total: consolidated.totalViewers,
-                      docs: consolidated.docCount,
+                      consulted: consolidated.consultedDocs,
+                      total: consolidated.docCount,
                     })}
                   </div>
                 </TooltipContent>
@@ -830,7 +830,7 @@ export function BirdViewPage({ onBack }: BirdViewPageProps) {
             </span>
 
             {/* Folder activity / relaunch buttons (consolidated mode) */}
-            {allNominatif && consolidated && consolidated.totalViewers > 0 && (
+            {allNominatif && consolidated && consolidated.docCount > 0 && (
               <div className="flex items-center gap-1">
                 <button
                   className="flex items-center gap-1 px-2 py-1 rounded text-xs font-medium text-gray-600 dark:text-gray-400 hover:bg-gray-200 dark:hover:bg-gray-800 transition-colors"
