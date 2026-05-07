@@ -42,6 +42,14 @@ import {
 } from './ui/table';
 import { DocumentPreviewDrawer } from './DocumentPreviewDrawer';
 import { useTranslation } from '../utils/languageContext';
+import {
+  buildAudience,
+  buildConsolidatedRecipientMatrix,
+  contextFromDoc,
+  type ActivityRecipient,
+  type DocActivityContext,
+} from '../utils/documentActivityGenerator';
+import { getInvestorContacts } from '../utils/gedFixtures';
 
 interface Recipient {
   id: string;
@@ -57,6 +65,12 @@ interface Recipient {
   openingDate?: string;
   consultationStatus: 'done' | 'pending' | 'not-accessible' | 'not-targeted';
   consultationDate?: string;
+  /**
+   * In consolidated mode: number of docs in the folder that this
+   * recipient has actually consulted, out of the total docs in their
+   * scope. Surfaced as "X / N" next to the row name.
+   */
+  consolidatedSummary?: { consulted: number; total: number };
 }
 
 interface DocumentRelaunchModalProps {
@@ -70,75 +84,199 @@ interface DocumentRelaunchModalProps {
    * un récapitulatif du nombre d'investisseurs concernés.
    */
   isNominatif?: boolean;
+  /** LP entity name (when nominatif). Used to fetch the real contacts. */
+  investorRestriction?: string;
+  /** Fund the document belongs to (used for generic-doc audience size). */
+  fundRestriction?: string;
+  /** Segment restrictions (marketing docs). */
+  segmentRestrictions?: string[];
+  /**
+   * BirdView contextual scope. When set, the recipient table is
+   * narrowed to the selected investor (and optionally contact).
+   */
+  viewerScope?: { investorName?: string; contactName?: string };
+  /**
+   * Folder-level consolidation. When provided, the modal aggregates
+   * recipients across multiple documents and shows a "X / N documents
+   * consultés" column per LP / contact.
+   */
+  consolidatedDocs?: DocActivityContext[];
 }
 
-// Statistiques simulées pour un document générique
-const mockGenericStats = {
-  totalInvestors: 47,
-  notConsulted: 19,
+// ---------------------------------------------------------------------------
+// Recipients & engagement — derived from the shared documentActivity
+// generator so that the row-level statuses (received / opened /
+// consulted) match the timeline shown in the activity panel exactly.
+// ---------------------------------------------------------------------------
+
+const baseNotificationDate = '03/05/2026 09:12';
+
+/**
+ * Build a recipient row from the shared audience entry. The reminder
+ * timestamps are intentionally simplified (we are not the source of
+ * truth for timestamps — those live in the activity panel).
+ */
+const recipientFromAudience = (r: ActivityRecipient, idx: number): Recipient => {
+  const isInvestor = r.type === 'Investor';
+  const inTarget = isInvestor || true; // every audience entry is in target by construction
+  return {
+    id: isInvestor ? `R-${r.primaryInvestorId ?? idx}` : `R-${r.primaryInvestorId ?? idx}-C${idx}`,
+    investorId: r.primaryInvestorId ?? '',
+    name: r.name,
+    role: isInvestor ? null : (r.role ?? null),
+    type: isInvestor ? 'Investisseur' : 'Contact',
+    inTarget,
+    lastNotificationDate: r.status.failed ? null : baseNotificationDate,
+    receptionStatus: r.status.delivered ? 'done' : (r.status.failed ? 'not-targeted' : 'pending'),
+    receptionDate: r.status.delivered ? baseNotificationDate : undefined,
+    openingStatus: r.status.opened ? 'done' : (r.status.delivered ? 'pending' : 'not-targeted'),
+    openingDate: r.status.opened ? `03/05/2026 ${10 + (idx % 6)}:${(idx * 7) % 60}`.slice(0, 16) : undefined,
+    consultationStatus: r.status.viewed || r.status.downloaded || r.status.validated
+      ? 'done'
+      : (r.status.delivered ? 'pending' : 'not-targeted'),
+    consultationDate: r.status.viewed
+      ? `03/05/2026 ${12 + (idx % 5)}:${(idx * 11) % 60}`.slice(0, 16)
+      : undefined,
+  };
 };
 
-const genericConsulted =
-  mockGenericStats.totalInvestors - mockGenericStats.notConsulted;
-const genericConsultationRate = Math.round(
-  (genericConsulted / Math.max(1, mockGenericStats.totalInvestors)) * 100,
-);
+/**
+ * In the relaunch UI we also want to surface the contacts that exist
+ * for each LP but were filtered out (Intern on strategic docs,
+ * revoked-access contacts) so the GP sees clearly *why* a doc didn't
+ * reach them. We rebuild that list separately from gedFixtures.
+ */
+const buildOutOfTargetContacts = (
+  audience: ActivityRecipient[],
+  docName: string,
+  isNominatif: boolean,
+  investorRestriction?: string,
+  fundRestriction?: string,
+  segmentRestrictions?: string[],
+): Recipient[] => {
+  // We only show out-of-target contacts attached to LPs already in the
+  // audience — otherwise the modal explodes for fund-level docs with
+  // dozens of LPs.
+  // Each LP's full contact list is computed by the shared module via
+  // its targeting check. We piggy-back on that by walking the audience
+  // and re-asking the gedFixtures contacts list, then filter those
+  // already in audience.
+  const inAudienceEmails = new Set(audience.map((r) => r.email));
+  const out: Recipient[] = [];
+  const lpIds = new Set<string>();
+  for (const r of audience) {
+    if (r.primaryInvestorId) lpIds.add(r.primaryInvestorId);
+  }
+  for (const id of lpIds) {
+    for (const c of getInvestorContacts(id)) {
+      if (inAudienceEmails.has(c.email)) continue;
+      out.push({
+        id: c.id,
+        investorId: id,
+        name: c.name,
+        role: c.role,
+        type: 'Contact',
+        inTarget: false,
+        lastNotificationDate: null,
+        receptionStatus: 'not-targeted',
+        openingStatus: 'not-targeted',
+        consultationStatus: c.accessLevel === 'commercial-only' ? 'not-accessible' : 'not-targeted',
+      });
+    }
+  }
+  // Suppress unused-vars warning
+  void docName; void isNominatif; void investorRestriction; void fundRestriction; void segmentRestrictions;
+  return out;
+};
 
-const mockRecipients: Recipient[] = [
-  {
-    id: '1',
-    investorId: 'inv-1',
-    name: 'Jean Dupont',
-    role: null,
-    type: 'Investisseur',
-    inTarget: true,
-    lastNotificationDate: '09/04/2026 09:12',
-    receptionStatus: 'done',
-    receptionDate: '09/04/2026 09:13',
-    openingStatus: 'done',
-    openingDate: '09/04/2026 09:35',
-    consultationStatus: 'done',
-    consultationDate: '09/04/2026 10:02',
-  },
-  {
-    id: '2',
-    investorId: 'inv-1',
-    name: 'Marie Dupont',
-    role: 'Avocat',
-    type: 'Contact',
-    inTarget: true,
-    lastNotificationDate: '09/04/2026 09:12',
-    receptionStatus: 'done',
-    receptionDate: '09/04/2026 09:14',
-    openingStatus: 'done',
-    openingDate: '09/04/2026 11:08',
-    consultationStatus: 'pending',
-  },
-  {
-    id: '3',
-    investorId: 'inv-1',
-    name: 'Pierre Dupont',
-    role: 'Comptable',
-    type: 'Contact',
-    inTarget: false,
-    lastNotificationDate: null,
-    receptionStatus: 'not-targeted',
-    openingStatus: 'not-targeted',
-    consultationStatus: 'not-targeted',
-  },
-  {
-    id: '4',
-    investorId: 'inv-1',
-    name: 'Luc Martin',
-    role: 'Dirigeant',
-    type: 'Contact',
-    inTarget: true,
-    lastNotificationDate: '09/04/2026 09:12',
-    receptionStatus: 'pending',
-    openingStatus: 'pending',
-    consultationStatus: 'pending',
-  },
-];
+const buildRecipients = (
+  documentName: string,
+  isNominatif: boolean,
+  investorRestriction?: string,
+  fundRestriction?: string,
+  segmentRestrictions?: string[],
+  viewerScope?: { investorName?: string; contactName?: string },
+  consolidatedDocs?: DocActivityContext[],
+): Recipient[] => {
+  // ── Consolidated (folder-level) mode: aggregate the recipients of
+  // every doc so each LP / contact appears only once with their
+  // "consulted X / N docs" summary.
+  if (consolidatedDocs && consolidatedDocs.length > 0) {
+    const scoped = consolidatedDocs.map((c) => ({ ...c, viewerScope }));
+    const matrix = buildConsolidatedRecipientMatrix(scoped);
+    type Agg = {
+      sample: ReturnType<typeof scoped[0] extends never ? never : (() => any)>;
+    };
+    const byEmail = new Map<string, {
+      name: string;
+      email: string;
+      role?: string;
+      isInvestor: boolean;
+      investorName: string;
+      delivered: number;
+      opened: number;
+      viewed: number;
+      total: number;
+    }>();
+    for (const row of matrix) {
+      const key = row.contactEmail;
+      const acc = byEmail.get(key) ?? {
+        name: row.contactName,
+        email: row.contactEmail,
+        role: row.contactRole,
+        isInvestor: row.isInvestor,
+        investorName: row.investorName,
+        delivered: 0,
+        opened: 0,
+        viewed: 0,
+        total: 0,
+      };
+      acc.total += 1;
+      if (row.status.delivered) acc.delivered += 1;
+      if (row.status.opened) acc.opened += 1;
+      if (row.status.viewed || row.status.downloaded || row.status.validated) acc.viewed += 1;
+      byEmail.set(key, acc);
+    }
+    let i = 0;
+    return Array.from(byEmail.values()).map((a): Recipient => {
+      i++;
+      const allConsulted = a.viewed > 0 && a.viewed === a.total;
+      return {
+        id: `R-cons-${i}`,
+        investorId: a.investorName,
+        name: a.name,
+        role: a.isInvestor ? null : (a.role ?? null),
+        type: a.isInvestor ? 'Investisseur' : 'Contact',
+        inTarget: true,
+        lastNotificationDate: a.delivered > 0 ? baseNotificationDate : null,
+        receptionStatus: a.delivered === a.total ? 'done' : a.delivered > 0 ? 'pending' : 'not-targeted',
+        receptionDate: a.delivered > 0 ? baseNotificationDate : undefined,
+        openingStatus: a.opened === a.total ? 'done' : a.opened > 0 ? 'pending' : 'not-targeted',
+        consultationStatus: allConsulted ? 'done' : a.viewed > 0 ? 'pending' : 'not-targeted',
+        consolidatedSummary: { consulted: a.viewed, total: a.total },
+      };
+    });
+  }
+
+  // ── Single-doc mode (existing behaviour)
+  const ctx = contextFromDoc({
+    name: documentName,
+    isNominatif,
+    investorRestriction,
+    fundRestriction,
+    segmentRestrictions,
+    viewerScope,
+  });
+  const audience = buildAudience(ctx);
+  const inTargetRows = audience.map((r, i) => recipientFromAudience(r, i));
+  const outOfTargetRows = viewerScope?.investorName || viewerScope?.contactName
+    ? []
+    : buildOutOfTargetContacts(
+        audience, documentName, isNominatif,
+        investorRestriction, fundRestriction, segmentRestrictions,
+      );
+  return [...inTargetRows, ...outOfTargetRows];
+};
 
 type FilterCriteria = 'all' | 'not-consulted' | 'custom';
 
@@ -163,7 +301,13 @@ export function DocumentRelaunchModal({
   documentName,
   documentId,
   isNominatif = true,
+  investorRestriction,
+  fundRestriction,
+  segmentRestrictions,
+  viewerScope,
+  consolidatedDocs,
 }: DocumentRelaunchModalProps) {
+  const isConsolidated = !!(consolidatedDocs && consolidatedDocs.length > 0);
   const { t } = useTranslation();
   const emailTemplates = useMemo(() => buildEmailTemplates(t), [t]);
   const [model, setModel] = useState(emailTemplates[0].name);
@@ -171,9 +315,31 @@ export function DocumentRelaunchModal({
   const [isPreviewOpen, setIsPreviewOpen] = useState(false);
 
   const investorRecipients = useMemo(
-    () => mockRecipients.filter((recipient) => recipient.investorId === 'inv-1'),
-    [],
+    () => buildRecipients(
+      documentName, isNominatif,
+      investorRestriction, fundRestriction, segmentRestrictions,
+      viewerScope, consolidatedDocs,
+    ),
+    [
+      documentName, isNominatif,
+      investorRestriction, fundRestriction, segmentRestrictions?.join('|'),
+      viewerScope?.investorName, viewerScope?.contactName,
+      consolidatedDocs,
+    ],
   );
+
+  // Generic-mode stats — derived from the same recipients pool so the
+  // headline numbers stay coherent with the underlying audience.
+  const genericStats = useMemo(() => {
+    const investorRecips = investorRecipients.filter((r) => r.type === 'Investisseur' && r.inTarget);
+    const totalInvestors = investorRecips.length;
+    const notConsulted = investorRecips.filter((r) => r.consultationStatus !== 'done').length;
+    return { totalInvestors, notConsulted };
+  }, [investorRecipients]);
+  const genericConsulted = genericStats.totalInvestors - genericStats.notConsulted;
+  const genericConsultationRate = genericStats.totalInvestors === 0
+    ? 0
+    : Math.round((genericConsulted / genericStats.totalInvestors) * 100);
 
   const allTargetableIds = useMemo(
     () => investorRecipients.filter((r) => r.inTarget).map((r) => r.id),
@@ -246,8 +412,8 @@ export function DocumentRelaunchModal({
   const notifiableCount = isNominatif
     ? selectedIds.size
     : selectedCriteria === 'not-consulted'
-    ? mockGenericStats.notConsulted
-    : mockGenericStats.totalInvestors;
+    ? genericStats.notConsulted
+    : genericStats.totalInvestors;
 
   const handleSend = () => {
     if (isNominatif) {
@@ -634,6 +800,14 @@ export function DocumentRelaunchModal({
                                       {recipient.role}
                                     </span>
                                   )}
+                                  {recipient.consolidatedSummary && (
+                                    <span className="text-[11px] font-medium text-muted-foreground">
+                                      {t('ged.relaunchModal.consolidatedConsulted', {
+                                        consulted: recipient.consolidatedSummary.consulted,
+                                        total: recipient.consolidatedSummary.total,
+                                      })}
+                                    </span>
+                                  )}
                                   {recipient.name === 'Pierre Dupont' && (
                                     <span className="text-[11px] text-muted-foreground">
                                       {t('ged.relaunchModal.accessDenied')}
@@ -738,7 +912,7 @@ export function DocumentRelaunchModal({
                       />
                     </div>
                     <p className="text-[11px] text-muted-foreground mt-2">
-                      {t(mockGenericStats.totalInvestors > 1 ? 'ged.relaunchModal.consultedSummaryMany' : 'ged.relaunchModal.consultedSummaryOne', { consulted: genericConsulted, total: mockGenericStats.totalInvestors })}
+                      {t(genericStats.totalInvestors > 1 ? 'ged.relaunchModal.consultedSummaryMany' : 'ged.relaunchModal.consultedSummaryOne', { consulted: genericConsulted, total: genericStats.totalInvestors })}
                     </p>
                   </div>
 
@@ -755,7 +929,7 @@ export function DocumentRelaunchModal({
                         </span>
                       </div>
                       <div className="text-lg font-semibold text-foreground tabular-nums leading-tight">
-                        {mockGenericStats.totalInvestors}
+                        {genericStats.totalInvestors}
                       </div>
                     </div>
                     <div className="px-5 py-3">
@@ -783,7 +957,7 @@ export function DocumentRelaunchModal({
                         </span>
                       </div>
                       <div className="text-lg font-semibold text-foreground tabular-nums leading-tight">
-                        {mockGenericStats.notConsulted}
+                        {genericStats.notConsulted}
                       </div>
                     </div>
                   </div>

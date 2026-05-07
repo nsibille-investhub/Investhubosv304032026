@@ -13,18 +13,25 @@ interface DocumentNode {
 }
 
 /**
- * Filtre récursif pour ne garder que les documents nominatifs non consultés
- * Un document nominatif est non consulté si viewedBy < totalViewers
- * Les documents non-nominatifs sont exclus du filtre
+ * Filtre récursif pour ne garder que les documents nominatifs non
+ * consultés. Un document est "consulté" dès qu'au moins un de ses
+ * destinataires (l'investisseur lui-même ou un de ses contacts) l'a
+ * vu/téléchargé/validé — i.e. engagement.viewedBy >= 1.
+ *
+ * Le filtre "non vus" ne garde donc que les documents nominatifs où
+ * viewedBy === 0 (aucun destinataire ne l'a consulté).
  */
 export function filterIncompleteNodes(node: DocumentNode): DocumentNode | null {
   // Si c'est un document
   if (node.type === 'document') {
-    // Ne garder que les documents nominatifs non consultés
-    if (node.isNominatif && node.engagement && node.engagement.viewedBy < node.engagement.totalViewers) {
+    if (
+      node.isNominatif &&
+      node.engagement &&
+      node.engagement.viewedBy === 0
+    ) {
       return node; // Document nominatif non consulté : on le garde
     }
-    return null; // Document non-nominatif ou consulté : on le rejette
+    return null; // Document non-nominatif, consulté, ou sans engagement : rejeté
   }
 
   // Si c'est un dossier ou un espace avec des enfants

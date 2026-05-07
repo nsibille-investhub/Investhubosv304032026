@@ -1,4 +1,24 @@
-// Générateur de fausses données pour GED+ Birdview
+// BirdView events / investors / spaces — sourced from the unified
+// gedFixtures so that every name surfaced in the activity timeline,
+// the investor filter, the engagement cards and the document list
+// corresponds to a real LP, contact or fund of the GED.
+
+import {
+  COMMITMENTS,
+  DocumentSpec,
+  FolderSpec,
+  InvestorContact,
+  InvestorProfile,
+  InvestorTypology,
+  INVESTORS as GED_INVESTORS,
+  canContactAccessDoc,
+  commitmentsForFund,
+  findFund,
+  findInvestor,
+  getAllInvestorContacts,
+  getInvestorContacts,
+  getSpaces,
+} from './gedFixtures';
 
 export interface BirdviewEvent {
   id: number;
@@ -35,9 +55,11 @@ export interface BirdviewContact {
   id: number;
   name: string;
   role: 'Investisseur' | 'Contact' | 'Conseiller';
-  relationLabel: string; // "Épouse", "Fils", "Conseiller financier", etc.
+  relationLabel: string;
   email: string;
   canAccess: boolean;
+  /** 'full' | 'commercial-only' | 'revoked' — drives greying in the tree. */
+  accessLevel: 'full' | 'commercial-only' | 'revoked';
 }
 
 export interface BirdviewSpace {
@@ -49,147 +71,221 @@ export interface BirdviewSpace {
   engagementRate: number;
 }
 
-const INVESTORS = [
-  { name: 'Jean Dault', type: 'HNWI' as const, email: 'jean.dault@investhub.com' },
-  { name: 'Sophie Martin', type: 'UHNWI' as const, email: 'sophie.martin@investhub.com' },
-  { name: 'ARDIAN GROWTH', type: 'Institutional' as const, email: 'contact@ardian.com' },
-  { name: 'Marc Dubois', type: 'HNWI' as const, email: 'marc.dubois@investhub.com' },
-  { name: 'VENTECH II', type: 'Institutional' as const, email: 'contact@ventech.fr' },
-];
+/* ----------------------------------------------------------------------- */
+/* Helpers                                                                  */
+/* ----------------------------------------------------------------------- */
 
-const SPACES = [
-  'ARDIAN GROWTH - Main',
-  'Investisseurs LP',
-  'KORELYA I - Due Diligence',
-  'Multi-Fonds HNWI',
-  'Partenaires Services',
-  'Participations Portfolio',
-  'VENTECH I - LP Documents',
-  'VENTECH II - Rapports',
-];
+const TODAY = new Date('2026-05-06');
 
-const DOCUMENTS = [
-  'Rapport Trimestriel Q1 2024.pdf',
-  'Rapport Trimestriel Q2 2024.pdf',
-  'Rapport Annuel 2023.pdf',
-  'Due Diligence - Synthèse.pdf',
-  'Présentation Investisseurs.pdf',
-  'KYC - Formulaire.pdf',
-  'Contrat de souscription.pdf',
-  'Annexe fiscale.pdf',
-  'Performance Report Mars 2024.pdf',
-  'NAV Statement.pdf',
-  'Audit Report 2023.pdf',
-  'Prospectus Fonds.pdf',
-  'Règlement AIFM.pdf',
-  'Capital Call Notice.pdf',
-  'Distribution Notice.pdf',
-];
+const seededRand = (() => {
+  let s = 1234567;
+  return () => {
+    s = (s + 0x9e3779b9) | 0;
+    let t = s;
+    t = Math.imul(t ^ (t >>> 15), t | 1);
+    t ^= t + Math.imul(t ^ (t >>> 7), t | 61);
+    return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
+  };
+})();
 
-// Contacts pour personnes physiques (HNWI/UHNWI)
-const CONTACTS_PHYSICAL = [
-  { name: 'Marie Dault', relation: 'Épouse', role: 'Contact' as const },
-  { name: 'Thomas Dault', relation: 'Fils', role: 'Contact' as const },
-  { name: 'Camille Dault', relation: 'Fille', role: 'Contact' as const },
-  { name: 'Alexandre Martin', relation: 'Frère', role: 'Contact' as const },
-  { name: 'Claire Dubois', relation: 'Mère', role: 'Contact' as const },
-  { name: 'Julien Dault', relation: 'Fils', role: 'Contact' as const },
-  { name: 'Sophie Dault', relation: 'Épouse', role: 'Contact' as const },
-];
+const pick = <T>(arr: readonly T[]): T => arr[Math.floor(seededRand() * arr.length)];
 
-// Contacts pour personnes morales (Institutional)
-const CONTACTS_INSTITUTIONAL = [
-  { name: 'Laurent Mercier', relation: 'Représentant légal', role: 'Contact' as const },
-  { name: 'Isabelle Rousseau', relation: 'Directrice financière', role: 'Contact' as const },
-  { name: 'Philippe Bernard', relation: 'Comptable', role: 'Contact' as const },
-  { name: 'Caroline Petit', relation: 'Juriste', role: 'Contact' as const },
-  { name: 'Vincent Leroy', relation: 'Assistant de direction', role: 'Contact' as const },
-  { name: 'Nathalie Moreau', relation: 'Responsable conformité', role: 'Contact' as const },
-  { name: 'Éric Fontaine', relation: 'DAF', role: 'Contact' as const },
-  { name: 'Sylvie Lambert', relation: 'Secrétaire générale', role: 'Contact' as const },
-];
-
-const EVENT_TYPES = [
-  { value: 'notification_sent' as const, label: 'Notification envoyée' },
-  { value: 'notification_opened' as const, label: 'Notification ouverte' },
-  { value: 'document_viewed' as const, label: 'Document consulté' },
-  { value: 'document_downloaded' as const, label: 'Document téléchargé' },
-];
-
-function generateSessionId(): string {
-  return Math.random().toString(36).substring(2, 15);
-}
-
-function getRelativeTime(date: Date): string {
-  const now = new Date();
-  const diffMs = now.getTime() - date.getTime();
-  const diffMins = Math.floor(diffMs / 60000);
-  const diffHours = Math.floor(diffMins / 60);
-  const diffDays = Math.floor(diffHours / 24);
-
-  if (diffMins < 1) return 'À l\'instant';
-  if (diffMins < 60) return `Il y a ${diffMins} min`;
-  if (diffHours < 24) return `Il y a ${diffHours}h`;
-  if (diffDays === 1) return 'Hier';
-  if (diffDays < 7) return `Il y a ${diffDays} jours`;
-  
+const getRelativeTime = (date: Date): string => {
+  const diffMs = TODAY.getTime() - date.getTime();
+  const mins = Math.floor(diffMs / 60000);
+  const hours = Math.floor(mins / 60);
+  const days = Math.floor(hours / 24);
+  if (mins < 1) return 'À l\'instant';
+  if (mins < 60) return `Il y a ${mins} min`;
+  if (hours < 24) return `Il y a ${hours}h`;
+  if (days === 1) return 'Hier';
+  if (days < 7) return `Il y a ${days} jours`;
   return date.toLocaleDateString('fr-FR', { day: '2-digit', month: 'short' });
+};
+
+const typologyToBVType = (typology: InvestorTypology): BirdviewInvestor['type'] => {
+  switch (typology) {
+    case 'HNWI':          return 'HNWI';
+    case 'UHNWI':         return 'UHNWI';
+    case 'Family Office': return 'Professional';
+    case 'Distributor':   return 'Professional';
+    default:              return 'Institutional';
+  }
+};
+
+/* ----------------------------------------------------------------------- */
+/* Document index — flatten every space into a list of files               */
+/* ----------------------------------------------------------------------- */
+
+interface DocIndexEntry {
+  id: number;
+  doc: DocumentSpec;
+  spaceName: string;
+  fundName?: string;
+  folderPath: string[]; // parent folders names from space root
 }
+
+const flattenSpace = (
+  folders: FolderSpec[],
+  spaceName: string,
+  fundName: string | undefined,
+  parents: string[],
+  out: DocIndexEntry[],
+  counter: { id: number },
+): void => {
+  for (const folder of folders) {
+    const path = [...parents, folder.name];
+    if (folder.documents) {
+      for (const doc of folder.documents) {
+        counter.id++;
+        out.push({ id: counter.id, doc, spaceName, fundName, folderPath: path });
+      }
+    }
+    if (folder.folders) {
+      flattenSpace(folder.folders, spaceName, fundName, path, out, counter);
+    }
+  }
+};
+
+const buildDocIndex = (): DocIndexEntry[] => {
+  const out: DocIndexEntry[] = [];
+  const counter = { id: 0 };
+  for (const space of getSpaces()) {
+    const fundName = space.fundCode ? findFund(space.fundCode)?.name : undefined;
+    flattenSpace(space.folders, space.name, fundName, [], out, counter);
+  }
+  return out;
+};
+
+/* ----------------------------------------------------------------------- */
+/* Public generators                                                       */
+/* ----------------------------------------------------------------------- */
+
+const EVENT_TYPES: { value: BirdviewEvent['eventType']; label: string; weight: number }[] = [
+  { value: 'notification_sent',   label: 'Notification envoyée',   weight: 35 },
+  { value: 'notification_opened', label: 'Notification ouverte',   weight: 30 },
+  { value: 'document_viewed',     label: 'Document consulté',      weight: 25 },
+  { value: 'document_downloaded', label: 'Document téléchargé',    weight: 10 },
+];
+
+const weightedEventType = (): { value: BirdviewEvent['eventType']; label: string } => {
+  const total = EVENT_TYPES.reduce((s, e) => s + e.weight, 0);
+  let r = seededRand() * total;
+  for (const e of EVENT_TYPES) {
+    if (r < e.weight) return { value: e.value, label: e.label };
+    r -= e.weight;
+  }
+  return EVENT_TYPES[0];
+};
+
+interface RecipientCandidate {
+  investorName: string;
+  investorEmail: string;
+  contactName: string;
+  contactEmail: string;
+  contactRole: 'Investisseur' | 'Contact';
+}
+
+/**
+ * Returns the recipients suitable for the given document, based on its
+ * targeting field. Nominatif = the linked LP and his contacts only;
+ * fund-level = every LP committed to the fund + their contacts; segment
+ * = LPs whose typology matches one of the segments.
+ */
+const recipientsForDocument = (entry: DocIndexEntry): RecipientCandidate[] => {
+  const out: RecipientCandidate[] = [];
+  const include = (inv: InvestorProfile, contacts: InvestorContact[]) => {
+    out.push({
+      investorName: inv.name,
+      investorEmail: inv.email,
+      contactName: inv.name,
+      contactEmail: inv.email,
+      contactRole: 'Investisseur',
+    });
+    for (const c of contacts) {
+      if (!canContactAccessDoc(c, entry.doc)) continue;
+      out.push({
+        investorName: inv.name,
+        investorEmail: inv.email,
+        contactName: c.name,
+        contactEmail: c.email,
+        contactRole: 'Contact',
+      });
+    }
+  };
+
+  const t = entry.doc.targeting;
+  switch (t.mode) {
+    case 'investor': {
+      const inv = findInvestor(t.investorId);
+      if (inv) include(inv, getInvestorContacts(inv.id));
+      break;
+    }
+    case 'fund':
+    case 'fund-internal':
+    case 'shareClass': {
+      // Look up the fund by the fund name we resolved earlier
+      const fundCode = getSpaces()
+        .find((s) => s.name === entry.spaceName)?.fundCode;
+      if (!fundCode) return [];
+      for (const c of commitmentsForFund(fundCode)) {
+        if (t.mode === 'shareClass' && c.shareClass !== t.shareClass) continue;
+        const inv = findInvestor(c.investorId);
+        if (inv) include(inv, getInvestorContacts(inv.id));
+      }
+      break;
+    }
+    case 'segment': {
+      for (const inv of GED_INVESTORS) {
+        if (t.segments.includes(inv.typology)) {
+          include(inv, getInvestorContacts(inv.id));
+        }
+      }
+      break;
+    }
+  }
+  return out;
+};
 
 export function generateBirdviewEvents(count: number): BirdviewEvent[] {
+  const docIndex = buildDocIndex();
+  if (docIndex.length === 0) return [];
+
   const events: BirdviewEvent[] = [];
-  const now = new Date();
+  let id = 0;
 
   for (let i = 0; i < count; i++) {
-    const daysAgo = Math.random() * 30;
-    const hoursAgo = Math.random() * 24;
-    const minutesAgo = Math.random() * 60;
-    const timestamp = new Date(now.getTime() - (daysAgo * 24 * 60 * 60 * 1000) - (hoursAgo * 60 * 60 * 1000) - (minutesAgo * 60 * 1000));
+    const entry = docIndex[Math.floor(seededRand() * docIndex.length)];
+    const recipients = recipientsForDocument(entry);
+    if (recipients.length === 0) continue;
+    const r = recipients[Math.floor(seededRand() * recipients.length)];
+    const evType = weightedEventType();
 
-    const investor = INVESTORS[Math.floor(Math.random() * INVESTORS.length)];
-    const document = DOCUMENTS[Math.floor(Math.random() * DOCUMENTS.length)];
-    const space = SPACES[Math.floor(Math.random() * SPACES.length)];
-    const eventType = EVENT_TYPES[Math.floor(Math.random() * EVENT_TYPES.length)];
+    // Spread events over the past 30 days, weighted toward more recent.
+    const daysAgo = Math.pow(seededRand(), 1.6) * 30;
+    const ts = new Date(TODAY.getTime() - daysAgo * 24 * 60 * 60 * 1000);
 
-    // Générer un contact aléatoire
-    const isInvestorHimself = Math.random() > 0.3;
-    let contactName = investor.name;
-    let contactRole: 'Investisseur' | 'Contact' | 'Conseiller' = 'Investisseur';
-    let contactEmail = investor.email;
-
-    if (!isInvestorHimself) {
-      const isInstitutional = investor.type === 'Institutional';
-      const contactPool = isInstitutional ? CONTACTS_INSTITUTIONAL : CONTACTS_PHYSICAL;
-      const contact = contactPool[Math.floor(Math.random() * contactPool.length)];
-      contactName = contact.name;
-      contactRole = contact.role;
-      contactEmail = `${contact.name.toLowerCase().replace(/\s/g, '.')}@${investor.email.split('@')[1]}`;
-    }
-
+    id++;
     events.push({
-      id: i + 1,
-      timestamp: timestamp.toISOString(),
-      timestampFull: timestamp.toLocaleString('fr-FR', { 
-        day: '2-digit', 
-        month: '2-digit', 
-        year: 'numeric', 
-        hour: '2-digit', 
-        minute: '2-digit',
-        second: '2-digit'
+      id,
+      timestamp: ts.toISOString(),
+      timestampFull: ts.toLocaleString('fr-FR', {
+        day: '2-digit', month: '2-digit', year: 'numeric',
+        hour: '2-digit', minute: '2-digit', second: '2-digit',
       }),
-      timestampRelative: getRelativeTime(timestamp),
-      eventType: eventType.value,
-      eventTypeLabel: eventType.label,
-      investor: investor.name,
-      contact: contactName,
-      contactRole,
-      email: contactEmail,
-      document,
-      documentId: Math.floor(Math.random() * 100) + 1,
-      space,
-      folder: `Dossier ${Math.floor(Math.random() * 10) + 1}`,
-      notificationOpened: Math.random() > 0.3,
-      documentViewed: Math.random() > 0.4,
+      timestampRelative: getRelativeTime(ts),
+      eventType: evType.value,
+      eventTypeLabel: evType.label,
+      investor: r.investorName,
+      contact: r.contactName,
+      contactRole: r.contactRole,
+      email: r.contactEmail,
+      document: entry.doc.name,
+      documentId: entry.id,
+      space: entry.spaceName,
+      folder: entry.folderPath.join(' / ') || '/',
+      notificationOpened: evType.value === 'notification_opened' || evType.value === 'document_viewed' || evType.value === 'document_downloaded',
+      documentViewed: evType.value === 'document_viewed' || evType.value === 'document_downloaded',
     });
   }
 
@@ -197,56 +293,97 @@ export function generateBirdviewEvents(count: number): BirdviewEvent[] {
 }
 
 export function generateBirdviewInvestors(): BirdviewInvestor[] {
-  return INVESTORS.map((inv, idx) => {
-    const totalDocuments = Math.floor(Math.random() * 30) + 10;
-    const viewedDocuments = Math.floor(Math.random() * totalDocuments * 0.8);
-    const downloadedDocuments = Math.floor(viewedDocuments * 0.6);
+  // Only LPs who committed to at least one fund — those are the ones with
+  // documents and engagement to display.
+  const committed = new Set(COMMITMENTS.map((c) => c.investorId));
+  const list = GED_INVESTORS.filter((inv) => committed.has(inv.id));
 
-    // Générer des contacts en fonction du type d'investisseur
-    const isInstitutional = inv.type === 'Institutional';
-    const contactPool = isInstitutional ? CONTACTS_INSTITUTIONAL : CONTACTS_PHYSICAL;
-    const numContacts = Math.floor(Math.random() * 3) + 2; // 2 à 4 contacts
-    const contacts: BirdviewContact[] = [];
-
-    // Sélectionner des contacts uniques
-    const selectedContacts = [...contactPool]
-      .sort(() => Math.random() - 0.5)
-      .slice(0, numContacts);
-
-    selectedContacts.forEach((contact, i) => {
-      contacts.push({
-        id: idx * 10 + i,
-        name: contact.name,
-        role: contact.role,
-        relationLabel: contact.relation,
-        email: `${contact.name.toLowerCase().replace(/\s/g, '.')}@${inv.email.split('@')[1]}`,
-        canAccess: Math.random() > 0.2,
-      });
-    });
+  return list.map((inv, idx) => {
+    const contacts = getInvestorContacts(inv.id);
+    const fundCodes = COMMITMENTS.filter((c) => c.investorId === inv.id).map((c) => c.fundCode);
+    // Estimate document count: 1 nominative per drawdown / distribution + a share of fund-level docs
+    const total = fundCodes.length * 60 + contacts.length * 5;
+    const seed = (idx + 1) * 31 + total;
+    const viewed = Math.floor(total * (0.45 + (seed % 40) / 100));
+    const downloaded = Math.floor(viewed * (0.35 + (seed % 25) / 100));
 
     return {
       id: idx + 1,
       name: inv.name,
-      type: inv.type,
+      type: typologyToBVType(inv.typology),
       email: inv.email,
-      contacts,
-      totalDocuments,
-      viewedDocuments,
-      downloadedDocuments,
-      engagementRate: Math.round((viewedDocuments / totalDocuments) * 100),
+      contacts: contacts.map((c, i) => ({
+        id: idx * 100 + i,
+        name: c.name,
+        role: 'Contact' as const,
+        relationLabel: c.role,
+        email: c.email,
+        canAccess: c.canAccess,
+        accessLevel: c.accessLevel,
+      })),
+      totalDocuments: total,
+      viewedDocuments: viewed,
+      downloadedDocuments: downloaded,
+      engagementRate: total === 0 ? 0 : Math.round((viewed / total) * 100),
     };
   });
 }
 
 export function generateBirdviewSpaces(): BirdviewSpace[] {
-  return SPACES.map((space, idx) => ({
-    id: idx + 1,
-    name: space,
-    investors: INVESTORS.slice(0, Math.floor(Math.random() * 3) + 1).map(i => i.name),
-    folders: Math.floor(Math.random() * 20) + 5,
-    documents: Math.floor(Math.random() * 100) + 20,
-    engagementRate: Math.floor(Math.random() * 40) + 50,
-  }));
+  return getSpaces().map((space, idx) => {
+    const fundCode = space.fundCode;
+    const fundLPs = fundCode
+      ? commitmentsForFund(fundCode).map((c) => findInvestor(c.investorId)?.name).filter(Boolean) as string[]
+      : [];
+    const seed = (idx + 1) * 17;
+    return {
+      id: idx + 1,
+      name: space.name,
+      investors: fundLPs,
+      folders: countFoldersFlat(space.folders),
+      documents: countDocsFlat(space.folders),
+      engagementRate: 50 + (seed % 45),
+    };
+  });
 }
 
-export { INVESTORS, SPACES, DOCUMENTS, CONTACTS_PHYSICAL, CONTACTS_INSTITUTIONAL, EVENT_TYPES };
+const countFoldersFlat = (folders: FolderSpec[] | undefined): number => {
+  if (!folders) return 0;
+  let n = 0;
+  for (const f of folders) n += 1 + countFoldersFlat(f.folders);
+  return n;
+};
+
+const countDocsFlat = (folders: FolderSpec[] | undefined): number => {
+  if (!folders) return 0;
+  let n = 0;
+  for (const f of folders) n += (f.documents?.length ?? 0) + countDocsFlat(f.folders);
+  return n;
+};
+
+// Backwards-compat exports — formerly hardcoded arrays in this file.
+const FALLBACK_INVESTORS = GED_INVESTORS.map((inv) => ({
+  name: inv.name,
+  type: typologyToBVType(inv.typology),
+  email: inv.email,
+}));
+export { FALLBACK_INVESTORS as INVESTORS };
+export const SPACES = getSpaces().map((s) => s.name);
+export const DOCUMENTS = buildDocIndex().map((e) => e.doc.name);
+export const CONTACTS_PHYSICAL = getAllInvestorContacts()
+  .filter((c) => {
+    const inv = findInvestor(c.investorId);
+    return inv?.typology === 'HNWI' || inv?.typology === 'UHNWI' || inv?.typology === 'Family Office';
+  })
+  .map((c) => ({ name: c.name, relation: c.role, role: 'Contact' as const }));
+export const CONTACTS_INSTITUTIONAL = getAllInvestorContacts()
+  .filter((c) => {
+    const inv = findInvestor(c.investorId);
+    return inv && !['HNWI', 'UHNWI', 'Family Office'].includes(inv.typology);
+  })
+  .map((c) => ({ name: c.name, relation: c.role, role: 'Contact' as const }));
+export { EVENT_TYPES };
+
+// Avoid an unused-import warning when typologyToBVType is the only user
+// of `pick`. Keep `pick` exported for tests / debugging convenience.
+export { pick };

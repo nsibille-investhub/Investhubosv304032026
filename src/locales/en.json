@@ -1324,14 +1324,20 @@
         "reset": "Reset filters",
         "expandAll": "Expand all",
         "collapseAll": "Collapse all",
-        "fullView": "Full view of {{name}}"
+        "fullView": "Full view of {{name}}",
+        "fullViewContact": "Full view of contact {{contact}} from {{investor}}"
       },
       "tooltips": {
         "targetFund": "Fund targeting",
         "targetSegment": "Segment targeting",
         "targetShare": "Share targeting",
         "targetInvestor": "Nominative targeting (investor)",
-        "targetSubscription": "Subscription targeting"
+        "targetSubscription": "Subscription targeting",
+        "contactNoAccess": "{{contact}} does not have access to this document"
+      },
+      "consolidated": {
+        "tooltip": "{{consulted}} / {{total}} documents consulted (at least one recipient viewed each)",
+        "activity": "View consolidated folder activity"
       },
       "elementCount": "{{count}} items",
       "node": {
@@ -1480,6 +1486,14 @@
       "generic": "Generic",
       "relaunch": "Follow up",
       "emptyLabel": "No activity recorded for this document.",
+      "consolidated": {
+        "badge": "Folder · {{count}} docs",
+        "consultedOne": "{{count}} / {{total}} document consulted",
+        "consultedMany": "{{count}} / {{total}} documents consulted",
+        "viewedAllOne": "{{count}} / {{total}} investor consulted everything ({{partial}} partially)",
+        "viewedAllMany": "{{count}} / {{total}} investors consulted everything ({{partial}} partially)",
+        "noAudience": "No recipient in this context — no KPI available"
+      },
       "userType": {
         "Investor": "Investor",
         "Contact": "Contact",
@@ -1642,6 +1656,7 @@
     "relaunchModal": {
       "title": "Send a follow-up",
       "subtitle": "Notify the document recipients",
+      "consolidatedConsulted": "{{consulted}} / {{total}} document(s) consulted",
       "closeAria": "Close",
       "previewAria": "Open preview of {{name}}",
       "previewHint": "Click to display the document preview",

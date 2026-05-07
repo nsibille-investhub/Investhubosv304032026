@@ -1,4 +1,4 @@
-import { useState, useEffect, useMemo } from 'react';
+import { useState, useEffect, useMemo, useCallback } from 'react';
 import { motion } from 'motion/react';
 import {
   Eye,
@@ -47,6 +47,11 @@ import { Tooltip, TooltipContent, TooltipTrigger } from './ui/tooltip';
 import { SegmentsMultiSelect, FundSingleSelect } from './ui/targeting-selects';
 import { AutocompleteSingleSelect } from './ui/autocomplete-select';
 import { useTranslation } from '../utils/languageContext';
+import {
+  COMMITMENTS,
+  INVESTORS,
+  findFund,
+} from '../utils/gedFixtures';
 
 interface BirdViewPageProps {
   onBack: () => void;
@@ -62,6 +67,8 @@ interface DocumentNode {
   format?: string;
   documentCategory?: DocumentCategory;
   isNominatif?: boolean;
+  /** Back-office / internal — never visible to an LP context. */
+  isInternal?: boolean;
   stats?: {
     sent: number;
     opened: number;
@@ -89,8 +96,21 @@ export function BirdViewPage({ onBack }: BirdViewPageProps) {
   const [selectedContact, setSelectedContact] = useState<string | null>(null);
   const [expandedNodes, setExpandedNodes] = useState<Set<string>>(new Set());
   const [showOnlyIncomplete, setShowOnlyIncomplete] = useState(false);
-  const [selectedDocument, setSelectedDocument] = useState<{ id: string; name: string; isNominatif: boolean } | null>(null);
+  const [selectedDocument, setSelectedDocument] = useState<{
+    id: string;
+    name: string;
+    isNominatif: boolean;
+    documentCategory?: DocumentCategory;
+    investorRestriction?: string;
+    subscriptionRestriction?: string;
+    fundRestriction?: string;
+    segmentRestrictions?: string[];
+  } | null>(null);
   const [isActivityPanelOpen, setIsActivityPanelOpen] = useState(false);
+  const [selectedConsolidated, setSelectedConsolidated] = useState<{
+    title: string;
+    docs: DocumentNode[];
+  } | null>(null);
   const [previewDocument, setPreviewDocument] = useState<{
     id: string;
     name: string;
@@ -136,6 +156,7 @@ export function BirdViewPage({ onBack }: BirdViewPageProps) {
           format: item.format,
           documentCategory: item.documentCategory,
           isNominatif: item.isNominatif,
+          isInternal: item.isInternal,
           stats: item.stats,
           engagement: item.engagement,
           fundRestriction: item.fundRestriction,
@@ -226,6 +247,120 @@ export function BirdViewPage({ onBack }: BirdViewPageProps) {
     if (!selectedInvestor) return null;
     return investors.find(i => i.name === selectedInvestor);
   }, [selectedInvestor, investors]);
+
+  // Contact sélectionné (objet) — null tant qu'aucun contact n'est choisi
+  const selectedContactData = useMemo(() => {
+    if (!selectedContact) return null;
+    return availableContacts.find((c) => c.name === selectedContact) ?? null;
+  }, [selectedContact, availableContacts]);
+
+  /**
+   * Renvoie true quand le document EST accessible par le viewer courant
+   * (LP sélectionné + contact optionnel). Quand aucun viewer n'est
+   * sélectionné (vue Global), la fonction renvoie toujours true.
+   *
+   * Règles appliquées sur les documents :
+   *   - Les docs back-office (isInternal) ne sont jamais visibles côté LP
+   *   - Restriction nominative (investorRestriction) : doit matcher le LP
+   *   - Restriction fonds : le LP doit avoir un commitment sur ce fonds
+   *   - Restriction segment : la typologie du LP doit être listée
+   *   - Si un contact est aussi sélectionné, son accessLevel restreint :
+   *     · revoked          → rien
+   *     · commercial-only  → uniquement les docs marketing/segment
+   */
+  const isAccessibleForViewer = useCallback(
+    (node: DocumentNode): boolean => {
+      if (!selectedInvestor) return true;
+      const lp = INVESTORS.find((i) => i.name === selectedInvestor);
+      if (!lp) return true;
+
+      if (node.isInternal) return false;
+
+      if (node.investorRestriction && node.investorRestriction !== lp.name) {
+        return false;
+      }
+
+      if (node.fundRestriction) {
+        const committed = COMMITMENTS.some(
+          (c) => c.investorId === lp.id && findFund(c.fundCode)?.name === node.fundRestriction,
+        );
+        if (!committed) return false;
+      }
+
+      if (node.segmentRestrictions && node.segmentRestrictions.length > 0) {
+        if (!node.segmentRestrictions.includes(lp.typology)) return false;
+      }
+
+      if (selectedContactData) {
+        const lvl = selectedContactData.accessLevel;
+        if (lvl === 'revoked') return false;
+        if (lvl === 'commercial-only') {
+          const isCommercial = node.documentCategory === 'marketing';
+          const isSegmentTargeted = !!(node.segmentRestrictions && node.segmentRestrictions.length > 0);
+          if (!isCommercial && !isSegmentTargeted) return false;
+        }
+      }
+
+      return true;
+    },
+    [selectedInvestor, selectedContactData],
+  );
+
+  /* ----------------------------------------------------------------- */
+  /* Folder-level consolidation                                        */
+  /* ----------------------------------------------------------------- */
+
+  /**
+   * True when every leaf descendant of the node is a nominatif doc.
+   * Empty containers return false (nothing to consolidate).
+   */
+  const isAllNominatif = useCallback((node: DocumentNode): boolean => {
+    if (node.type === 'document') return !!node.isNominatif;
+    if (!node.children || node.children.length === 0) return false;
+    return node.children.every(isAllNominatif);
+  }, []);
+
+  /**
+   * Aggregates the consultation rate across every nominatif descendant.
+   *
+   * A doc counts as "consulted" iff at least one of its recipients
+   * (LP or any of their accessible contacts) viewed/downloaded/validated
+   * it — i.e. doc.engagement.viewedBy >= 1. The folder rate is the
+   * share of consulted docs over the doc count, NOT the share of
+   * recipients who viewed.
+   */
+  const consolidatedEngagement = useCallback(
+    (node: DocumentNode): { consultedDocs: number; docCount: number } => {
+      if (node.type === 'document') {
+        const consulted = (node.engagement?.viewedBy ?? 0) > 0 ? 1 : 0;
+        return { consultedDocs: consulted, docCount: 1 };
+      }
+      let consultedDocs = 0, docCount = 0;
+      for (const c of node.children ?? []) {
+        const r = consolidatedEngagement(c);
+        consultedDocs += r.consultedDocs;
+        docCount += r.docCount;
+      }
+      return { consultedDocs, docCount };
+    },
+    [],
+  );
+
+  /**
+   * Collects all nominatif descendant doc nodes — used to build the
+   * consolidated activity / relaunch context.
+   */
+  const collectNominatifDocs = useCallback(
+    (node: DocumentNode, out: DocumentNode[] = []): DocumentNode[] => {
+      if (node.type === 'document' && node.isNominatif) {
+        out.push(node);
+      } else if (node.children) {
+        for (const c of node.children) collectNominatifDocs(c, out);
+      }
+      return out;
+    },
+    [],
+  );
 
   // Arbre affiché (filtré ou complet)
   const displayedTree = useMemo(() => {
@@ -318,13 +453,35 @@ export function BirdViewPage({ onBack }: BirdViewPageProps) {
       tree = filterTree(tree);
     }
 
+    // Filtre "vue contextualisée" (LP / LP+contact) — cache dans le
+    // corpus tous les documents que le viewer ne pourrait pas voir.
+    // Les dossiers/spaces vides sont retirés en cascade.
+    if (selectedInvestor) {
+      const filterByAccess = (nodes: DocumentNode[]): DocumentNode[] =>
+        nodes
+          .map((n) => {
+            if (n.type === 'document') {
+              return isAccessibleForViewer(n) ? n : null;
+            }
+            const kept = n.children ? filterByAccess(n.children) : [];
+            if (kept.length === 0) return null;
+            return { ...n, children: kept };
+          })
+          .filter((n): n is DocumentNode => n !== null);
+      tree = filterByAccess(tree);
+    }
+
     // Ensuite appliquer le filtre "documents non vus"
     if (showOnlyIncomplete) {
       return filterTreeForIncomplete(tree);
     }
 
     return tree;
-  }, [documentTree, showOnlyIncomplete, documentNameFilter, selectedDocumentCategory, selectedFund, selectedSegments, selectedSubscription]);
+  }, [
+    documentTree, showOnlyIncomplete,
+    documentNameFilter, selectedDocumentCategory, selectedFund, selectedSegments, selectedSubscription,
+    selectedInvestor, isAccessibleForViewer,
+  ]);
 
   // Statistiques filtrées basées sur displayedTree
   const filteredStats = useMemo(() => {
@@ -588,7 +745,17 @@ export function BirdViewPage({ onBack }: BirdViewPageProps) {
         )}
 
         {/* Folder */}
-        {node.type === 'folder' && (
+        {node.type === 'folder' && (() => {
+          const allNominatif = isAllNominatif(node);
+          const consolidated = allNominatif ? consolidatedEngagement(node) : null;
+          const consolidatedPercent = consolidated && consolidated.docCount > 0
+            ? Math.round((consolidated.consultedDocs / consolidated.docCount) * 100)
+            : 0;
+          const consolidatedTone =
+            consolidatedPercent >= 75 ? 'text-green-600' :
+            consolidatedPercent >= 35 ? 'text-amber-600' :
+            'text-gray-500';
+          return (
           <div className="flex items-center gap-2 py-2 px-2 -mx-2 rounded hover:bg-gray-100 dark:hover:bg-gray-800/60 transition-colors group">
             {/* Chevron */}
             <button onClick={() => hasChildren && toggleNode(node.id)} className="flex-shrink-0">
@@ -636,12 +803,54 @@ export function BirdViewPage({ onBack }: BirdViewPageProps) {
               ))}
             </div>
 
+            {/* Consolidated rate badge — visible only when every leaf
+                of the folder is a nominatif doc */}
+            {allNominatif && consolidated && consolidated.docCount > 0 && (
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <span className={cn('inline-flex items-center gap-1 ml-2 text-xs font-semibold', consolidatedTone)}>
+                    <CheckCircle2 className="w-3.5 h-3.5" />
+                    {consolidatedPercent}%
+                  </span>
+                </TooltipTrigger>
+                <TooltipContent side="top">
+                  <div className="text-xs">
+                    {t('ged.birdview.consolidated.tooltip', {
+                      consulted: consolidated.consultedDocs,
+                      total: consolidated.docCount,
+                    })}
+                  </div>
+                </TooltipContent>
+              </Tooltip>
+            )}
+
             {/* Count */}
             <span className="ml-auto text-xs text-gray-500">
               {t('ged.birdview.elementCount', { count: node.children?.length || 0 })}
             </span>
+
+            {/* Folder activity / relaunch buttons (consolidated mode) */}
+            {allNominatif && consolidated && consolidated.docCount > 0 && (
+              <div className="flex items-center gap-1">
+                <button
+                  className="flex items-center gap-1 px-2 py-1 rounded text-xs font-medium text-gray-600 dark:text-gray-400 hover:bg-gray-200 dark:hover:bg-gray-800 transition-colors"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    setSelectedConsolidated({
+                      title: node.name,
+                      docs: collectNominatifDocs(node),
+                    });
+                    setIsActivityPanelOpen(true);
+                  }}
+                  title={t('ged.birdview.consolidated.activity')}
+                >
+                  <Activity className="w-3.5 h-3.5" />
+                </button>
+              </div>
+            )}
           </div>
-        )}
+          );
+        })()}
 
         {/* Document */}
         {node.type === 'document' && (
@@ -706,12 +915,14 @@ export function BirdViewPage({ onBack }: BirdViewPageProps) {
                   : 'text-blue-200';
 
               if (node.isNominatif && node.engagement) {
-                // Document nominatif : Consulté / Non Consulté (avec hover)
+                // Document nominatif : Consulté dès qu'au moins une personne
+                // (LP ou contact accessible) a consulté le doc.
+                const consulted = (node.engagement.viewedBy ?? 0) > 0;
                 return (
                   <Tooltip>
                     <TooltipTrigger asChild>
                       <div className="flex items-center gap-1.5 ml-4 cursor-help">
-                        {node.engagement.viewedBy === node.engagement.totalViewers ? (
+                        {consulted ? (
                           <>
                             <CheckCircle2 className="w-4 h-4 text-green-500" />
                             <span className="text-xs font-medium text-green-600">{t('ged.birdview.node.viewed')}</span>
@@ -780,7 +991,16 @@ export function BirdViewPage({ onBack }: BirdViewPageProps) {
               <button
                 className="flex items-center gap-1.5 px-2 py-1.5 rounded text-xs font-medium text-gray-600 dark:text-gray-400 hover:bg-gray-200 dark:hover:bg-gray-800 transition-colors"
                 onClick={() => {
-                  setSelectedDocument({ id: node.id, name: node.name, isNominatif: !!node.isNominatif });
+                  setSelectedDocument({
+                    id: node.id,
+                    name: node.name,
+                    isNominatif: !!node.isNominatif,
+                    documentCategory: node.documentCategory,
+                    investorRestriction: node.investorRestriction,
+                    subscriptionRestriction: node.subscriptionRestriction,
+                    fundRestriction: node.fundRestriction,
+                    segmentRestrictions: node.segmentRestrictions,
+                  });
                   setIsActivityPanelOpen(true);
                 }}
                 title={t('ged.birdview.node.activity')}
@@ -1065,7 +1285,12 @@ export function BirdViewPage({ onBack }: BirdViewPageProps) {
           <div className="mt-4 flex items-center gap-2 px-4 py-2 bg-purple-50 dark:bg-purple-950 border border-purple-200 dark:border-purple-800 rounded-lg">
             <Eye className="w-4 h-4 text-purple-600 dark:text-purple-400" />
             <span className="text-sm text-purple-900 dark:text-purple-100">
-              {t('ged.birdview.filters.fullView', { name: selectedInvestor })}
+              {selectedContact
+                ? t('ged.birdview.filters.fullViewContact', {
+                    contact: selectedContact,
+                    investor: selectedInvestor,
+                  })
+                : t('ged.birdview.filters.fullView', { name: selectedInvestor })}
             </span>
           </div>
         )}
@@ -1081,12 +1306,36 @@ export function BirdViewPage({ onBack }: BirdViewPageProps) {
       {/* Document Activity Panel */}
       <DocumentActivityPanel
         isOpen={isActivityPanelOpen}
-        documentId={selectedDocument?.id || ''}
-        documentName={selectedDocument?.name || ''}
+        documentId={selectedConsolidated ? `folder-${selectedConsolidated.title}` : (selectedDocument?.id || '')}
+        documentName={selectedConsolidated ? selectedConsolidated.title : (selectedDocument?.name || '')}
+        consolidatedTitle={selectedConsolidated?.title}
+        consolidatedDocs={
+          selectedConsolidated
+            ? selectedConsolidated.docs.map((d) => ({
+                docKey: d.name,
+                isNominatif: !!d.isNominatif,
+                documentCategory: d.documentCategory,
+                investorRestriction: d.investorRestriction,
+                fundRestriction: d.fundRestriction,
+                segmentRestrictions: d.segmentRestrictions,
+                subscriptionRestriction: d.subscriptionRestriction,
+              }))
+            : undefined
+        }
         isNominatif={selectedDocument?.isNominatif ?? true}
+        investorRestriction={selectedDocument?.investorRestriction}
+        subscriptionRestriction={selectedDocument?.subscriptionRestriction}
+        fundRestriction={selectedDocument?.fundRestriction}
+        segmentRestrictions={selectedDocument?.segmentRestrictions}
+        viewerScope={
+          selectedInvestor
+            ? { investorName: selectedInvestor, contactName: selectedContact ?? undefined }
+            : undefined
+        }
         onClose={() => {
           setIsActivityPanelOpen(false);
           setSelectedDocument(null);
+          setSelectedConsolidated(null);
         }}
       />
 

@@ -1324,14 +1324,20 @@
         "reset": "Réinitialiser les filtres",
         "expandAll": "Tout ouvrir",
         "collapseAll": "Tout fermer",
-        "fullView": "Vue complète de {{name}}"
+        "fullView": "Vue complète de {{name}}",
+        "fullViewContact": "Vue complète du contact {{contact}} de {{investor}}"
       },
       "tooltips": {
         "targetFund": "Ciblage par fonds",
         "targetSegment": "Ciblage par segment",
         "targetShare": "Ciblage par part",
         "targetInvestor": "Ciblage nominatif (investisseur)",
-        "targetSubscription": "Ciblage par souscription"
+        "targetSubscription": "Ciblage par souscription",
+        "contactNoAccess": "{{contact}} n'a pas accès à ce document"
+      },
+      "consolidated": {
+        "tooltip": "{{consulted}} / {{total}} documents consultés (au moins une consultation par destinataire)",
+        "activity": "Voir l'activité consolidée du dossier"
       },
       "elementCount": "{{count}} éléments",
       "node": {
@@ -1480,6 +1486,14 @@
       "generic": "Générique",
       "relaunch": "Relancer",
       "emptyLabel": "Aucune activité enregistrée pour ce document.",
+      "consolidated": {
+        "badge": "Dossier · {{count}} doc.",
+        "consultedOne": "{{count}} / {{total}} document consulté",
+        "consultedMany": "{{count}} / {{total}} documents consultés",
+        "viewedAllOne": "{{count}} / {{total}} investisseur a tout consulté ({{partial}} partiellement)",
+        "viewedAllMany": "{{count}} / {{total}} investisseurs ont tout consulté ({{partial}} partiellement)",
+        "noAudience": "Aucun destinataire dans ce contexte — pas de KPI"
+      },
       "userType": {
         "Investor": "Investisseur",
         "Contact": "Contact",
@@ -1642,6 +1656,7 @@
     "relaunchModal": {
       "title": "Relancer une notification",
       "subtitle": "Notifier les destinataires pour ce document",
+      "consolidatedConsulted": "{{consulted}} / {{total}} document(s) consulté(s)",
       "closeAria": "Fermer",
       "previewAria": "Ouvrir l'aperçu de {{name}}",
       "previewHint": "Cliquer pour afficher l'aperçu du document",

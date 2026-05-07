@@ -1,0 +1,599 @@
+// Single source of truth for a document's activity timeline AND its
+// aggregated engagement stats. Every consumer (BirdView tree
+// engagement, BirdView document activity panel, Relaunch modal) reads
+// the same audience and the same recipient statuses derived from a
+// deterministic per-document hash. No randomization at consumption
+// time means the numbers shown in the tree never disagree with the
+// numbers shown in the panel.
+
+import {
+  COMMITMENTS,
+  INVESTORS,
+  canContactAccessDoc,
+  findFund,
+  findInvestor,
+  getInvestorContacts,
+  type DocCategory,
+  type DocTargeting,
+  type InvestorContact,
+  type InvestorProfile,
+} from './gedFixtures';
+
+/* ----------------------------------------------------------------------- */
+/* Public types                                                            */
+/* ----------------------------------------------------------------------- */
+
+/**
+ * Minimum context needed to compute a document's audience and status.
+ * `docKey` is what seeds the deterministic hash — must be stable across
+ * renders (we use the document file name).
+ */
+export interface DocActivityContext {
+  docKey: string;
+  isNominatif: boolean;
+  documentCategory?: DocCategory;
+  investorRestriction?: string;
+  fundRestriction?: string;
+  segmentRestrictions?: string[];
+  subscriptionRestriction?: string;
+  /**
+   * BirdView contextual filter. When set, the audience returned by
+   * buildAudience is narrowed to:
+   *   - viewerScope.investorName : keep only that LP and its contacts
+   *   - viewerScope.contactName  : on top, keep only the entry whose
+   *     name matches (the LP themselves, or this single contact)
+   * Stats and timeline events automatically follow.
+   */
+  viewerScope?: {
+    investorName?: string;
+    contactName?: string;
+  };
+}
+
+export interface RecipientStatus {
+  delivered: boolean;
+  opened: boolean;
+  clicked: boolean;
+  viewed: boolean;
+  downloaded: boolean;
+  validated: boolean;
+  failed: boolean;
+  complained: boolean;
+}
+
+export interface ActivityRecipient {
+  type: 'Investor' | 'Contact';
+  /** Parent investor name (for contacts). */
+  primaryInvestor?: string;
+  primaryInvestorId?: string;
+  name: string;
+  email: string;
+  role?: string;
+  status: RecipientStatus;
+  /** Stable hash bucket 0..99 used to derive status timestamps. */
+  bucket: number;
+}
+
+export interface ActivityEvent {
+  id: string;
+  type:
+    | 'notification_send_initiated'
+    | 'notification_sent'
+    | 'notification_delivered'
+    | 'notification_failed'
+    | 'notification_opened'
+    | 'notification_clicked'
+    | 'notification_complained'
+    | 'document_viewed'
+    | 'document_downloaded'
+    | 'document_validated';
+  userName: string;
+  userEmail: string;
+  userType: 'Investor' | 'Contact';
+  primaryInvestor?: string;
+  /** ISO datetime. */
+  timestamp: string;
+}
+
+export interface DocumentEngagement {
+  /** All recipients (investor + accessible contacts) of the document. */
+  audience: ActivityRecipient[];
+  /** Number of LP audiences who consulted (LP themselves OR any of their contacts). */
+  investorsViewed: number;
+  /** Total LPs in audience. */
+  totalInvestors: number;
+  /** Number of distinct recipients (investors + contacts) who viewed. */
+  recipientsViewed: number;
+  totalRecipients: number;
+}
+
+/* ----------------------------------------------------------------------- */
+/* Deterministic hash + percentile buckets                                 */
+/* ----------------------------------------------------------------------- */
+
+const hash = (s: string): number => {
+  let h = 0x811c9dc5;
+  for (let i = 0; i < s.length; i++) {
+    h ^= s.charCodeAt(i);
+    h = Math.imul(h, 0x01000193) >>> 0;
+  }
+  return h >>> 0;
+};
+
+/** Returns an integer in [0, 100). */
+const bucket = (s: string): number => hash(s) % 100;
+
+/* ----------------------------------------------------------------------- */
+/* Audience resolution                                                     */
+/* ----------------------------------------------------------------------- */
+
+const FUND_CODES = ['NWGC2', 'AIP1'] as const;
+
+const fundCodeFromName = (fundName: string | undefined): string | undefined => {
+  if (!fundName) return undefined;
+  return FUND_CODES.find((c) => findFund(c)?.name === fundName);
+};
+
+/**
+ * Builds a synthetic doc descriptor — used by `canContactAccessDoc` to
+ * decide if a contact (Intern…) can receive this document.
+ */
+const docDescriptor = (
+  ctx: DocActivityContext,
+): { category: DocCategory; targeting: DocTargeting } => {
+  if (ctx.segmentRestrictions?.length) {
+    return {
+      category: ctx.documentCategory ?? 'marketing',
+      targeting: { mode: 'segment', segments: ctx.segmentRestrictions },
+    };
+  }
+  if (ctx.investorRestriction) {
+    return {
+      category: ctx.documentCategory ?? 'other',
+      targeting: { mode: 'investor', investorId: '', subscriptionId: '' },
+    };
+  }
+  return {
+    category: ctx.documentCategory ?? 'other',
+    targeting: { mode: 'fund' },
+  };
+};
+
+const investorsForContext = (ctx: DocActivityContext): InvestorProfile[] => {
+  if (ctx.isNominatif && ctx.investorRestriction) {
+    const inv = INVESTORS.find((i) => i.name === ctx.investorRestriction);
+    return inv ? [inv] : [];
+  }
+  const fundCode = fundCodeFromName(ctx.fundRestriction);
+  if (fundCode) {
+    return COMMITMENTS
+      .filter((c) => c.fundCode === fundCode)
+      .map((c) => findInvestor(c.investorId))
+      .filter((x): x is InvestorProfile => Boolean(x));
+  }
+  if (ctx.segmentRestrictions?.length) {
+    return INVESTORS.filter((inv) =>
+      ctx.segmentRestrictions!.includes(inv.typology),
+    );
+  }
+  return [];
+};
+
+/* ----------------------------------------------------------------------- */
+/* Status derivation (deterministic per recipient)                         */
+/* ----------------------------------------------------------------------- */
+
+const TODAY_YEAR = 2026;
+
+/**
+ * Extract the year from a doc filename. Most fixtures start with
+ * `YYYY-MM-DD - …`, `YYYY - …` or `YYYY-Q1 - …`, so we can grab the
+ * first 4-digit number we find. Falls back to the current year.
+ */
+const yearFromDocKey = (docKey: string): number => {
+  const m = docKey.match(/(?:^|[^\d])(\d{4})(?:[^\d]|$)/);
+  if (!m) return TODAY_YEAR;
+  const y = Number(m[1]);
+  return y >= 2010 && y <= 2099 ? y : TODAY_YEAR;
+};
+
+interface EngagementThresholds {
+  failed: number;
+  spam: number;
+  opened: number;
+  clicked: number;
+  viewed: number;
+  downloaded: number;
+  validated: number;
+}
+
+/**
+ * Engagement ladder by document age.
+ *
+ *  - Pre-2026 docs (already in circulation for months/years): the LP
+ *    universe has had time to read, click, view and validate. Most
+ *    recipients are at or beyond the "viewed" stage.
+ *  - 2026 docs (just published): only a small fraction of recipients
+ *    have had the time to engage. Most are still at "delivered" or
+ *    "opened" at best.
+ *
+ * The bucket is uniformly distributed in [0, 100). A threshold of 80
+ * for "viewed" therefore means ~20% of recipients have viewed.
+ */
+const THRESHOLDS_OLD: EngagementThresholds = {
+  failed: 2,
+  spam: 3,
+  opened: 7,
+  clicked: 15,
+  viewed: 20,
+  downloaded: 38,
+  validated: 60,
+};
+const THRESHOLDS_RECENT: EngagementThresholds = {
+  failed: 4,
+  spam: 5,
+  opened: 45,
+  clicked: 78,
+  viewed: 88,
+  downloaded: 96,
+  validated: 99,
+};
+
+const buildStatus = (docKey: string, recipientEmail: string): RecipientStatus => {
+  const b = bucket(`${docKey}|${recipientEmail}|status`);
+  const year = yearFromDocKey(docKey);
+  const T = year < TODAY_YEAR ? THRESHOLDS_OLD : THRESHOLDS_RECENT;
+
+  if (b < T.failed) {
+    return {
+      delivered: false, opened: false, clicked: false, viewed: false,
+      downloaded: false, validated: false, failed: true, complained: false,
+    };
+  }
+  if (b < T.spam) {
+    return {
+      delivered: true, opened: true, clicked: false, viewed: false,
+      downloaded: false, validated: false, failed: false, complained: true,
+    };
+  }
+  return {
+    delivered: true,
+    opened: b >= T.opened,
+    clicked: b >= T.clicked,
+    viewed: b >= T.viewed,
+    downloaded: b >= T.downloaded,
+    validated: b >= T.validated,
+    failed: false,
+    complained: false,
+  };
+};
+
+/* ----------------------------------------------------------------------- */
+/* Audience construction                                                   */
+/* ----------------------------------------------------------------------- */
+
+export const buildAudience = (ctx: DocActivityContext): ActivityRecipient[] => {
+  const investors = investorsForContext(ctx);
+  if (investors.length === 0) return [];
+
+  const desc = docDescriptor(ctx);
+  const all: ActivityRecipient[] = [];
+
+  for (const inv of investors) {
+    all.push({
+      type: 'Investor',
+      primaryInvestor: inv.name,
+      primaryInvestorId: inv.id,
+      name: inv.name,
+      email: inv.email,
+      status: buildStatus(ctx.docKey, inv.email),
+      bucket: bucket(`${ctx.docKey}|${inv.email}|ts`),
+    });
+    for (const c of getInvestorContacts(inv.id)) {
+      if (!canContactAccessDoc(c, desc)) continue;
+      all.push({
+        type: 'Contact',
+        primaryInvestor: inv.name,
+        primaryInvestorId: inv.id,
+        name: c.name,
+        email: c.email,
+        role: c.role,
+        status: buildStatus(ctx.docKey, c.email),
+        bucket: bucket(`${ctx.docKey}|${c.email}|ts`),
+      });
+    }
+  }
+
+  // Apply contextual scope filter (BirdView: viewing as investor / contact).
+  const scope = ctx.viewerScope;
+  if (!scope || (!scope.investorName && !scope.contactName)) {
+    return all;
+  }
+  return all.filter((r) => {
+    if (scope.investorName && r.primaryInvestor !== scope.investorName) return false;
+    if (scope.contactName && r.name !== scope.contactName) return false;
+    return true;
+  });
+};
+
+/* ----------------------------------------------------------------------- */
+/* Engagement aggregation                                                  */
+/* ----------------------------------------------------------------------- */
+
+export const buildEngagement = (ctx: DocActivityContext): DocumentEngagement => {
+  const audience = buildAudience(ctx);
+  const investorsByName = new Map<string, ActivityRecipient[]>();
+  for (const r of audience) {
+    const key = r.primaryInvestor ?? r.name;
+    if (!investorsByName.has(key)) investorsByName.set(key, []);
+    investorsByName.get(key)!.push(r);
+  }
+  let investorsViewed = 0;
+  for (const recipients of investorsByName.values()) {
+    if (recipients.some((r) => r.status.viewed || r.status.downloaded || r.status.validated)) {
+      investorsViewed++;
+    }
+  }
+  const recipientsViewed = audience.filter((r) =>
+    r.status.viewed || r.status.downloaded || r.status.validated,
+  ).length;
+
+  return {
+    audience,
+    totalInvestors: investorsByName.size,
+    investorsViewed,
+    totalRecipients: audience.length,
+    recipientsViewed,
+  };
+};
+
+/* ----------------------------------------------------------------------- */
+/* Activity events                                                         */
+/* ----------------------------------------------------------------------- */
+
+const TODAY = new Date('2026-05-06T18:00:00.000Z');
+
+const tsAt = (daysAgo: number, hour: number, minute: number): string => {
+  const d = new Date(TODAY);
+  d.setDate(d.getDate() - daysAgo);
+  d.setHours(hour, minute, 0, 0);
+  return d.toISOString();
+};
+
+/**
+ * Emits a realistic timeline for the document. Same pattern for every
+ * recipient: send → delivered → (failed | opened → clicked → viewed →
+ * downloaded → validated). The exact set of events depends on the
+ * recipient's status, the timestamps spread over the past 3 days using
+ * the recipient's own bucket so two LPs don't open at the same minute.
+ */
+export const buildActivityEvents = (ctx: DocActivityContext): ActivityEvent[] => {
+  const audience = buildAudience(ctx);
+  if (audience.length === 0) return [];
+
+  const events: ActivityEvent[] = [];
+  let id = 0;
+  const next = () => `evt-${++id}`;
+
+  for (const r of audience) {
+    const b = r.bucket; // 0..99
+    const minOffset = b % 60; // minutes
+    const hourOffset = (b * 13) % 8; // 0..7
+    const dayInitiated = 2;
+    const daySent = 2;
+    const dayDelivered = 2;
+    const dayOpened = 1;
+    const dayClicked = 1;
+    const dayViewed = 1;
+    const dayDownloaded = 0;
+    const dayValidated = 0;
+
+    const meta = {
+      userName: r.name,
+      userEmail: r.email,
+      userType: r.type,
+      primaryInvestor: r.type === 'Contact' ? r.primaryInvestor : undefined,
+    };
+
+    // Send chain — always emit initiated + sent for every audience entry
+    events.push({ id: next(), type: 'notification_send_initiated', timestamp: tsAt(dayInitiated, 9, 12 + (minOffset % 4)), ...meta });
+    events.push({ id: next(), type: 'notification_sent',           timestamp: tsAt(daySent,      9, 14 + (minOffset % 4)), ...meta });
+
+    if (r.status.failed) {
+      events.push({ id: next(), type: 'notification_failed', timestamp: tsAt(dayDelivered, 9, 17 + (minOffset % 5)), ...meta });
+      continue;
+    }
+
+    events.push({ id: next(), type: 'notification_delivered', timestamp: tsAt(dayDelivered, 9, 18 + (minOffset % 5)), ...meta });
+
+    if (r.status.complained) {
+      events.push({ id: next(), type: 'notification_opened',     timestamp: tsAt(dayOpened, 10 + hourOffset, minOffset), ...meta });
+      events.push({ id: next(), type: 'notification_complained', timestamp: tsAt(dayOpened, 11 + hourOffset, minOffset), ...meta });
+      continue;
+    }
+
+    if (r.status.opened) {
+      events.push({ id: next(), type: 'notification_opened', timestamp: tsAt(dayOpened, 10 + hourOffset, minOffset), ...meta });
+    }
+    if (r.status.clicked) {
+      events.push({ id: next(), type: 'notification_clicked', timestamp: tsAt(dayClicked, 11 + hourOffset, minOffset), ...meta });
+    }
+    if (r.status.viewed) {
+      events.push({ id: next(), type: 'document_viewed', timestamp: tsAt(dayViewed, 14 + (hourOffset % 4), minOffset), ...meta });
+    }
+    if (r.status.downloaded) {
+      events.push({ id: next(), type: 'document_downloaded', timestamp: tsAt(dayDownloaded, 9 + (hourOffset % 6), minOffset), ...meta });
+    }
+    if (r.status.validated && ctx.isNominatif) {
+      // Validation only really makes sense on nominatif docs (acknowledgement of receipt).
+      events.push({ id: next(), type: 'document_validated', timestamp: tsAt(dayValidated, 11 + (hourOffset % 4), minOffset), ...meta });
+    }
+  }
+
+  // Most recent first.
+  events.sort((a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime());
+  return events;
+};
+
+/* ----------------------------------------------------------------------- */
+/* Convenience: derive a context from a DocumentSpec/DataRoomDocument-ish  */
+/* ----------------------------------------------------------------------- */
+
+export const contextFromDoc = (input: {
+  name: string;
+  documentCategory?: DocCategory;
+  isNominatif?: boolean;
+  investorRestriction?: string;
+  fundRestriction?: string;
+  segmentRestrictions?: string[];
+  subscriptionRestriction?: string;
+  viewerScope?: { investorName?: string; contactName?: string };
+}): DocActivityContext => ({
+  docKey: input.name,
+  isNominatif: !!input.isNominatif,
+  documentCategory: input.documentCategory,
+  investorRestriction: input.investorRestriction,
+  fundRestriction: input.fundRestriction,
+  segmentRestrictions: input.segmentRestrictions,
+  subscriptionRestriction: input.subscriptionRestriction,
+  viewerScope: input.viewerScope,
+});
+
+/* ----------------------------------------------------------------------- */
+/* Consolidated (multi-document) helpers                                   */
+/* ----------------------------------------------------------------------- */
+
+/** Engagement aggregated across many documents. */
+export interface ConsolidatedEngagement {
+  /**
+   * Number of documents that count as "consulted" — i.e. that have
+   * been viewed / downloaded / validated by at least ONE recipient
+   * of their audience (the LP themselves OR any of their accessible
+   * contacts). This is the headline ratio used for the BirdView
+   * folder KPI: rate = consultedDocs / docCount.
+   */
+  consultedDocs: number;
+  /** Number of documents in scope. */
+  docCount: number;
+  /** Sum of audience entries × document — granular metric. */
+  totalInteractions: number;
+  /** Number of (recipient, doc) pairs that resulted in a view. */
+  interactionsViewed: number;
+  /** Number of distinct LPs in the union of all audiences. */
+  totalInvestors: number;
+  /** Number of LPs for whom at least one of their docs was consulted. */
+  investorsViewedAny: number;
+  /** Number of LPs for whom every doc in scope was consulted. */
+  investorsViewedAll: number;
+}
+
+/**
+ * Aggregate engagement over many docs (e.g. a folder's content).
+ * Useful for the BirdView consolidated folder KPI and the multi-doc
+ * relaunch screen.
+ */
+export const buildConsolidatedEngagement = (
+  contexts: DocActivityContext[],
+): ConsolidatedEngagement => {
+  let totalInteractions = 0;
+  let interactionsViewed = 0;
+  let consultedDocs = 0;
+  /** investorName -> { docs viewed, total docs in their audience for this folder } */
+  const perInvestor = new Map<string, { viewed: number; total: number }>();
+
+  for (const ctx of contexts) {
+    const audience = buildAudience(ctx);
+    totalInteractions += audience.length;
+    const viewedRecipients = audience.filter((r) =>
+      r.status.viewed || r.status.downloaded || r.status.validated,
+    );
+    interactionsViewed += viewedRecipients.length;
+
+    // A doc is "consulted" as soon as ONE recipient (the LP themselves
+    // or any of their contacts) opened it.
+    if (viewedRecipients.length > 0) consultedDocs += 1;
+
+    // For each LP touched by this doc, count whether any of their
+    // recipients consulted the doc.
+    const perLpThisDoc = new Map<string, { viewed: boolean }>();
+    for (const r of audience) {
+      const lpKey = r.primaryInvestor ?? r.name;
+      if (!perLpThisDoc.has(lpKey)) perLpThisDoc.set(lpKey, { viewed: false });
+      if (r.status.viewed || r.status.downloaded || r.status.validated) {
+        perLpThisDoc.get(lpKey)!.viewed = true;
+      }
+    }
+    for (const [lp, info] of perLpThisDoc) {
+      const acc = perInvestor.get(lp) ?? { viewed: 0, total: 0 };
+      acc.total += 1;
+      if (info.viewed) acc.viewed += 1;
+      perInvestor.set(lp, acc);
+    }
+  }
+
+  let investorsViewedAny = 0;
+  let investorsViewedAll = 0;
+  for (const v of perInvestor.values()) {
+    if (v.viewed > 0) investorsViewedAny++;
+    if (v.viewed === v.total && v.total > 0) investorsViewedAll++;
+  }
+
+  return {
+    consultedDocs,
+    docCount: contexts.length,
+    totalInteractions,
+    interactionsViewed,
+    totalInvestors: perInvestor.size,
+    investorsViewedAny,
+    investorsViewedAll,
+  };
+};
+
+/** Returns events from every document, sorted by timestamp DESC. */
+export const buildConsolidatedActivityEvents = (
+  contexts: DocActivityContext[],
+): ActivityEvent[] => {
+  const all: ActivityEvent[] = [];
+  for (const ctx of contexts) {
+    all.push(...buildActivityEvents(ctx));
+  }
+  all.sort((a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime());
+  return all;
+};
+
+/**
+ * For the consolidated relaunch screen: returns one row per
+ * (investor, doc) tuple with the per-doc status. The UI can then
+ * pivot it into a recipient-by-recipient summary.
+ */
+export interface ConsolidatedRecipientRow {
+  investorName: string;
+  investorEmail: string;
+  contactName: string;
+  contactEmail: string;
+  contactRole?: string;
+  isInvestor: boolean;
+  docKey: string;
+  status: RecipientStatus;
+}
+
+export const buildConsolidatedRecipientMatrix = (
+  contexts: DocActivityContext[],
+): ConsolidatedRecipientRow[] => {
+  const out: ConsolidatedRecipientRow[] = [];
+  for (const ctx of contexts) {
+    for (const r of buildAudience(ctx)) {
+      out.push({
+        investorName: r.primaryInvestor ?? r.name,
+        investorEmail: r.type === 'Investor' ? r.email : '',
+        contactName: r.name,
+        contactEmail: r.email,
+        contactRole: r.role,
+        isInvestor: r.type === 'Investor',
+        docKey: ctx.docKey,
+        status: r.status,
+      });
+    }
+  }
+  return out;
+};
