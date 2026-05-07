@@ -1212,6 +1212,122 @@
       "folderDefaults": {
         "root": "Racine / Documents",
         "targetFolder": "dossier cible"
+      },
+      "validation": {
+        "backToSpaces": "Retour aux espaces",
+        "title": "Validation des documents",
+        "subtitle": "Revue, approbation et rejet des documents avant publication",
+        "kpi": {
+          "pendingLabel": "En attente de validation",
+          "pendingMetric": "À traiter",
+          "validatedLabel": "Validés",
+          "validatedMetric": "Approuvés",
+          "rejectedLabel": "Rejetés",
+          "rejectedMetric": "Refusés",
+          "allLabel": "Tous",
+          "allMetric": "Total"
+        },
+        "searchPlaceholder": "Rechercher un document, auteur, ciblage...",
+        "filters": {
+          "createdBy": "Auteur",
+          "targeting": "Ciblage",
+          "format": "Format"
+        },
+        "table": {
+          "document": "Document",
+          "createdBy": "Créé par",
+          "date": "Date",
+          "targeting": "Ciblage",
+          "comments": "Comm.",
+          "status": "Statut",
+          "actions": "Actions"
+        },
+        "empty": {
+          "title": "Aucun document à afficher",
+          "resetFilters": "Réinitialiser les filtres"
+        },
+        "status": {
+          "pending": "En attente",
+          "validated": "Validé",
+          "rejected": "Rejeté"
+        },
+        "targetingTooltip": {
+          "segment": "Segment",
+          "fund": "Fonds",
+          "shareClass": "Part / Classe",
+          "investor": "Investisseur",
+          "subscription": "Souscription",
+          "audience": "Audience"
+        },
+        "tooltip": {
+          "documentPreview": "Aperçu du document",
+          "resetToPending": "Remettre en attente",
+          "validate": "Valider",
+          "reject": "Rejeter",
+          "preview": "Aperçu",
+          "batchPreview": "Aperçu du lot",
+          "notificationPreview": "Aperçu de la notification",
+          "resetBatchToPending": "Remettre le lot en attente",
+          "validateBatch": "Valider le lot",
+          "validateAndNotify": "Valider et envoyer la notification",
+          "rejectBatch": "Rejeter le lot",
+          "expandBatch": "Développer le lot",
+          "collapseBatch": "Réduire le lot",
+          "heterogeneousTargeting": "Ciblage différent selon les documents — voir chaque ligne.",
+          "batchLevelTargeting": "Ciblage piloté au niveau du lot."
+        },
+        "notificationLine": {
+          "noneDocument": "Aucune notification",
+          "noneBatch": "Aucune notification — validation interne",
+          "fromBatch": "Issu du lot ·",
+          "recipientsOne": "1 notification → {{count}} destinataire",
+          "recipientsMany": "1 notification → {{count}} destinataires"
+        },
+        "batch": {
+          "docCountOne": "{{count}} doc",
+          "docCountMany": "{{count}} docs"
+        },
+        "toast": {
+          "documentValidated": "Document validé",
+          "documentRejected": "Document rejeté",
+          "documentReset": "Document remis en attente",
+          "batchValidatedWithNotification": "Lot validé · notification envoyée",
+          "batchValidated": "Lot validé",
+          "batchRejected": "Lot rejeté",
+          "batchReset": "Lot remis en attente",
+          "batchDescriptionOne": "{{count}} document • {{name}}",
+          "batchDescriptionMany": "{{count}} documents • {{name}}"
+        },
+        "drawer": {
+          "noNotificationOnly": "Aucune notification — validation interne uniquement",
+          "channelEmail": "email",
+          "channelPortal": "portail LP",
+          "channelBoth": "email + portail",
+          "channelLabelEmail": "Email",
+          "channelLabelPortal": "Portail LP",
+          "channelLabelBoth": "Email + Portail",
+          "headerOne": "1 notification → {{count}} destinataire ({{channel}})",
+          "headerMany": "1 notification → {{count}} destinataires ({{channel}})",
+          "attachmentsOne": "{{count}} pièce jointe",
+          "attachmentsMany": "{{count}} pièces jointes",
+          "createdByOn": "Créé par {{name}} · {{date}}",
+          "tabEmail": "Email",
+          "tabRecipients": "Destinataires",
+          "tabAttachments": "Pièces",
+          "silentTitle": "Aucune notification",
+          "silentDescription": "Ce lot regroupe des documents pour validation interne uniquement. Aucun email ni publication portail ne sera déclenché.",
+          "fieldFrom": "De",
+          "fieldTo": "À",
+          "fieldSubject": "Objet",
+          "moreRecipients": "+ {{count}} autres",
+          "attachmentsHeading": "Pièces jointes",
+          "footer": "Cet e-mail vous est adressé par InvestHub dans le cadre de votre souscription. Pour toute question, contactez votre interlocuteur Investor Relations.",
+          "tableRecipient": "Destinataire",
+          "tableEmail": "Email",
+          "tableType": "Type",
+          "close": "Fermer",
+          "resetToPending": "Remettre en attente"
+        }
       }
     },
     "documents": {

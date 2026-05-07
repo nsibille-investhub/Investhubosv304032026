@@ -50,6 +50,7 @@ import {
   ValidationDocument,
   ValidationStatus,
 } from '../utils/validationDocumentsGenerator';
+import { useTranslation } from '../utils/languageContext';
 import { cn } from './ui/utils';
 
 interface ValidationPageProps {
@@ -67,25 +68,13 @@ const SEARCH_FIELDS: (keyof ValidationDocument | string)[] = [
   'targeting',
 ];
 
-const dateFormatter = new Intl.DateTimeFormat('fr-FR', {
-  day: '2-digit',
-  month: 'short',
-  year: 'numeric',
-  hour: '2-digit',
-  minute: '2-digit',
-});
-
-function formatDate(iso: string) {
-  return dateFormatter.format(new Date(iso));
-}
-
 const STATUS_VARIANT: Record<
   ValidationStatus,
-  { label: string; variant: 'warning' | 'success' | 'danger' }
+  { variant: 'warning' | 'success' | 'danger' }
 > = {
-  pending: { label: 'En attente', variant: 'warning' },
-  validated: { label: 'Validé', variant: 'success' },
-  rejected: { label: 'Rejeté', variant: 'danger' },
+  pending: { variant: 'warning' },
+  validated: { variant: 'success' },
+  rejected: { variant: 'danger' },
 };
 
 const TARGETING_ICON: Record<TargetingKind, LucideIcon> = {
@@ -95,15 +84,6 @@ const TARGETING_ICON: Record<TargetingKind, LucideIcon> = {
   investor: UserRound,
   subscription: FileText,
   audience: Globe,
-};
-
-const TARGETING_TOOLTIP: Record<TargetingKind, string> = {
-  segment: 'Segment',
-  fund: 'Fonds',
-  shareClass: 'Part / Classe',
-  investor: 'Investisseur',
-  subscription: 'Souscription',
-  audience: 'Audience',
 };
 
 // ---------------------------------------------------------------------------
@@ -128,6 +108,22 @@ function deriveBatchStatus(docs: ValidationDocument[]): ValidationStatus {
 }
 
 export function ValidationPage({ onBack }: ValidationPageProps) {
+  const { t, lang } = useTranslation();
+  const dateFormatter = useMemo(
+    () =>
+      new Intl.DateTimeFormat(lang === 'en' ? 'en-GB' : 'fr-FR', {
+        day: '2-digit',
+        month: 'short',
+        year: 'numeric',
+        hour: '2-digit',
+        minute: '2-digit',
+      }),
+    [lang],
+  );
+  const formatDate = (iso: string) => dateFormatter.format(new Date(iso));
+  const targetingTooltip = (kind: TargetingKind) =>
+    t(`dataRoom.validation.targetingTooltip.${kind}`);
+
   const [isLoading, setIsLoading] = useState(true);
   const [documents, setDocuments] = useState<ValidationDocument[]>([]);
   const [activeStatus, setActiveStatus] = useState<StatusTab>('pending');
@@ -273,21 +269,21 @@ export function ValidationPage({ onBack }: ValidationPageProps) {
     () => [
       {
         id: 'createdBy',
-        label: 'Auteur',
+        label: t('dataRoom.validation.filters.createdBy'),
         type: 'select',
         isPrimary: true,
         options: allCreators.map((c) => ({ value: c, label: c })),
       },
       {
         id: 'targeting',
-        label: 'Ciblage',
+        label: t('dataRoom.validation.filters.targeting'),
         type: 'multiselect',
         isPrimary: true,
-        options: allTargetings.map((t) => ({ value: t, label: t })),
+        options: allTargetings.map((tag) => ({ value: tag, label: tag })),
       },
       {
         id: 'format',
-        label: 'Format',
+        label: t('dataRoom.validation.filters.format'),
         type: 'select',
         isPrimary: false,
         options: ['pdf', 'docx', 'xlsx', 'pptx'].map((f) => ({
@@ -296,7 +292,7 @@ export function ValidationPage({ onBack }: ValidationPageProps) {
         })),
       },
     ],
-    [allCreators, allTargetings],
+    [allCreators, allTargetings, t],
   );
 
   const totalItems = rowNodes.length;
@@ -358,7 +354,7 @@ export function ValidationPage({ onBack }: ValidationPageProps) {
           ...d,
           status,
           reviewedAt: new Date().toISOString(),
-          reviewedBy: 'Vous',
+          reviewedBy: 'You',
         };
       }),
     );
@@ -366,17 +362,23 @@ export function ValidationPage({ onBack }: ValidationPageProps) {
 
   const handleValidate = (doc: ValidationDocument) => {
     updateStatus(doc.id, 'validated');
-    toast.success('Document validé', { description: doc.name });
+    toast.success(t('dataRoom.validation.toast.documentValidated'), {
+      description: doc.name,
+    });
   };
 
   const handleReject = (doc: ValidationDocument) => {
     updateStatus(doc.id, 'rejected');
-    toast.error('Document rejeté', { description: doc.name });
+    toast.error(t('dataRoom.validation.toast.documentRejected'), {
+      description: doc.name,
+    });
   };
 
   const handleResetToPending = (doc: ValidationDocument) => {
     updateStatus(doc.id, 'pending');
-    toast.info('Document remis en attente', { description: doc.name });
+    toast.info(t('dataRoom.validation.toast.documentReset'), {
+      description: doc.name,
+    });
   };
 
   /** Atomic batch action: applies a status to ALL children at once. */
@@ -391,32 +393,44 @@ export function ValidationPage({ onBack }: ValidationPageProps) {
           void reviewedBy;
           return { ...rest, status };
         }
-        return { ...d, status, reviewedAt: stamp, reviewedBy: 'Vous' };
+        return { ...d, status, reviewedAt: stamp, reviewedBy: 'You' };
       }),
     );
   };
 
+  const batchDescription = (count: number, name: string) =>
+    t(
+      count > 1
+        ? 'dataRoom.validation.toast.batchDescriptionMany'
+        : 'dataRoom.validation.toast.batchDescriptionOne',
+      { count, name },
+    );
+
   const handleValidateBatch = (batch: ValidationBatch, count: number) => {
     updateBatchStatus(batch.id, 'validated');
     if (batch.notification) {
-      toast.success(`Lot validé · notification envoyée`, {
-        description: `${count} document${count > 1 ? 's' : ''} • ${batch.name}`,
+      toast.success(t('dataRoom.validation.toast.batchValidatedWithNotification'), {
+        description: batchDescription(count, batch.name),
       });
     } else {
-      toast.success(`Lot validé`, { description: batch.name });
+      toast.success(t('dataRoom.validation.toast.batchValidated'), {
+        description: batch.name,
+      });
     }
   };
 
   const handleRejectBatch = (batch: ValidationBatch, count: number) => {
     updateBatchStatus(batch.id, 'rejected');
-    toast.error(`Lot rejeté`, {
-      description: `${count} document${count > 1 ? 's' : ''} • ${batch.name}`,
+    toast.error(t('dataRoom.validation.toast.batchRejected'), {
+      description: batchDescription(count, batch.name),
     });
   };
 
   const handleResetBatch = (batch: ValidationBatch) => {
     updateBatchStatus(batch.id, 'pending');
-    toast.info('Lot remis en attente', { description: batch.name });
+    toast.info(t('dataRoom.validation.toast.batchReset'), {
+      description: batch.name,
+    });
   };
 
   const toggleBatch = (batchId: string) => {
@@ -470,7 +484,7 @@ export function ValidationPage({ onBack }: ValidationPageProps) {
             </span>
           </TooltipTrigger>
           <TooltipContent side="top">
-            <span className="text-xs">{TARGETING_TOOLTIP[tag.kind]}</span>
+            <span className="text-xs">{targetingTooltip(tag.kind)}</span>
           </TooltipContent>
         </Tooltip>
       ))}
@@ -509,7 +523,7 @@ export function ValidationPage({ onBack }: ValidationPageProps) {
         <div className="flex items-center gap-4 mb-4">
           <Button variant="ghost" size="sm" onClick={onBack} className="gap-2">
             <ArrowLeft className="h-4 w-4" />
-            Retour aux espaces
+            {t('dataRoom.validation.backToSpaces')}
           </Button>
         </div>
 
@@ -522,10 +536,10 @@ export function ValidationPage({ onBack }: ValidationPageProps) {
           </div>
           <div>
             <h1 className="text-xl font-semibold text-gray-900 dark:text-gray-100">
-              Validation des documents
+              {t('dataRoom.validation.title')}
             </h1>
             <p className="text-sm text-gray-500 dark:text-gray-400">
-              Revue, approbation et rejet des documents avant publication
+              {t('dataRoom.validation.subtitle')}
             </p>
           </div>
         </div>
@@ -542,10 +556,10 @@ export function ValidationPage({ onBack }: ValidationPageProps) {
               status="pending"
               activeStatus={activeStatus}
               onStatusChange={(s) => setActiveStatus(s as StatusTab)}
-              label="En attente de validation"
+              label={t('dataRoom.validation.kpi.pendingLabel')}
               icon={Clock}
               total={counts.pending}
-              metricLabel="À traiter"
+              metricLabel={t('dataRoom.validation.kpi.pendingMetric')}
               metricValue={`${counts.pending}`}
               averageValue={counts.all > 0
                 ? `${Math.round((counts.pending / counts.all) * 100)}%`
@@ -556,10 +570,10 @@ export function ValidationPage({ onBack }: ValidationPageProps) {
               status="validated"
               activeStatus={activeStatus}
               onStatusChange={(s) => setActiveStatus(s as StatusTab)}
-              label="Validés"
+              label={t('dataRoom.validation.kpi.validatedLabel')}
               icon={CheckCircle2}
               total={counts.validated}
-              metricLabel="Approuvés"
+              metricLabel={t('dataRoom.validation.kpi.validatedMetric')}
               metricValue={`${counts.validated}`}
               averageValue={counts.all > 0
                 ? `${Math.round((counts.validated / counts.all) * 100)}%`
@@ -570,10 +584,10 @@ export function ValidationPage({ onBack }: ValidationPageProps) {
               status="rejected"
               activeStatus={activeStatus}
               onStatusChange={(s) => setActiveStatus(s as StatusTab)}
-              label="Rejetés"
+              label={t('dataRoom.validation.kpi.rejectedLabel')}
               icon={XCircle}
               total={counts.rejected}
-              metricLabel="Refusés"
+              metricLabel={t('dataRoom.validation.kpi.rejectedMetric')}
               metricValue={`${counts.rejected}`}
               averageValue={counts.all > 0
                 ? `${Math.round((counts.rejected / counts.all) * 100)}%`
@@ -584,10 +598,10 @@ export function ValidationPage({ onBack }: ValidationPageProps) {
               status="all"
               activeStatus={activeStatus}
               onStatusChange={(s) => setActiveStatus(s as StatusTab)}
-              label="Tous"
+              label={t('dataRoom.validation.kpi.allLabel')}
               icon={FileText}
               total={counts.all}
-              metricLabel="Total"
+              metricLabel={t('dataRoom.validation.kpi.allMetric')}
               metricValue={`${counts.all}`}
               averageValue="100%"
             />
@@ -608,7 +622,7 @@ export function ValidationPage({ onBack }: ValidationPageProps) {
             <FilterBar
               searchValue={searchTerm}
               onSearchChange={setSearchTerm}
-              searchPlaceholder="Rechercher un document, auteur, ciblage..."
+              searchPlaceholder={t('dataRoom.validation.searchPlaceholder')}
               filters={filterConfigs}
               activeFilters={activeFilters}
               onFilterChange={handleFilterChange}
@@ -624,7 +638,7 @@ export function ValidationPage({ onBack }: ValidationPageProps) {
               <div className="py-16 text-center">
                 <ShieldCheck className="mx-auto h-10 w-10 text-gray-300" />
                 <p className="mt-3 text-sm text-gray-500">
-                  Aucun document à afficher
+                  {t('dataRoom.validation.empty.title')}
                 </p>
                 {hasActiveFilters && (
                   <Button
@@ -633,7 +647,7 @@ export function ValidationPage({ onBack }: ValidationPageProps) {
                     onClick={handleClearAll}
                     className="mt-1"
                   >
-                    Réinitialiser les filtres
+                    {t('dataRoom.validation.empty.resetFilters')}
                   </Button>
                 )}
               </div>
@@ -644,22 +658,22 @@ export function ValidationPage({ onBack }: ValidationPageProps) {
                     <tr className="border-b border-border bg-muted/40 backdrop-blur-sm">
                       <th className="w-8 px-2 py-4" />
                       <th className="px-6 py-4 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider">
-                        Document
+                        {t('dataRoom.validation.table.document')}
                       </th>
                       <th className="px-6 py-4 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider">
-                        Créé par
+                        {t('dataRoom.validation.table.createdBy')}
                       </th>
                       <th className="px-6 py-4 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider">
-                        Date
+                        {t('dataRoom.validation.table.date')}
                       </th>
                       <th className="px-6 py-4 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider">
-                        Ciblage
+                        {t('dataRoom.validation.table.targeting')}
                       </th>
                       <th className="px-6 py-4 text-center text-xs font-medium text-muted-foreground uppercase tracking-wider">
-                        Comm.
+                        {t('dataRoom.validation.table.comments')}
                       </th>
                       <th className="px-6 py-4 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider">
-                        Statut
+                        {t('dataRoom.validation.table.status')}
                       </th>
                       <th
                         className={cn(
@@ -667,7 +681,7 @@ export function ValidationPage({ onBack }: ValidationPageProps) {
                           stickyHeadActionsClass,
                         )}
                       >
-                        Actions
+                        {t('dataRoom.validation.table.actions')}
                       </th>
                     </tr>
                   </thead>
@@ -683,6 +697,7 @@ export function ValidationPage({ onBack }: ValidationPageProps) {
                           onResetToPending={() => handleResetToPending(node.doc)}
                           renderTargeting={renderTargetingTags}
                           stickyClass={stickyBodyActionsClass()}
+                          formatDate={formatDate}
                         />
                       ) : (
                         <BatchRowGroup
@@ -703,6 +718,7 @@ export function ValidationPage({ onBack }: ValidationPageProps) {
                           onPreviewChild={(d) => setPreviewDocument(d)}
                           renderTargeting={renderTargetingTags}
                           stickyClass={stickyBodyActionsClass}
+                          formatDate={formatDate}
                         />
                       ),
                     )}
@@ -785,6 +801,7 @@ function NotificationLine({
   sourceHint,
   context = 'document',
 }: NotificationLineProps) {
+  const { t } = useTranslation();
   if (!notification) {
     return (
       <div className="flex items-center gap-1.5 text-[11px] italic text-gray-500 dark:text-gray-500">
@@ -792,8 +809,8 @@ function NotificationLine({
         {sourceHint && <span className="not-italic">{sourceHint}</span>}
         <span>
           {context === 'batch'
-            ? 'Aucune notification — validation interne'
-            : 'Aucune notification'}
+            ? t('dataRoom.validation.notificationLine.noneBatch')
+            : t('dataRoom.validation.notificationLine.noneDocument')}
         </span>
       </div>
     );
@@ -808,8 +825,12 @@ function NotificationLine({
         <span className="italic text-gray-500">{sourceHint}</span>
       )}
       <span>
-        1 notification → {recipientCount} destinataire
-        {recipientCount > 1 ? 's' : ''}
+        {t(
+          recipientCount > 1
+            ? 'dataRoom.validation.notificationLine.recipientsMany'
+            : 'dataRoom.validation.notificationLine.recipientsOne',
+          { count: recipientCount },
+        )}
       </span>
       {notification.channel === 'email' && (
         <Mail className="h-3 w-3 text-gray-400" />
@@ -842,6 +863,7 @@ interface StandaloneDocumentRowProps {
     maxVisible?: number,
   ) => JSX.Element;
   stickyClass: string;
+  formatDate: (iso: string) => string;
 }
 
 function StandaloneDocumentRow({
@@ -852,8 +874,11 @@ function StandaloneDocumentRow({
   onResetToPending,
   renderTargeting,
   stickyClass,
+  formatDate,
 }: StandaloneDocumentRowProps) {
+  const { t } = useTranslation();
   const conf = STATUS_VARIANT[doc.status];
+  const statusLabel = t(`dataRoom.validation.status.${doc.status}`);
   return (
     <tr
       className="border-b border-border/70 transition-colors hover:bg-muted/50 cursor-pointer"
@@ -886,7 +911,7 @@ function StandaloneDocumentRow({
         </div>
       </td>
       <td className="px-6 py-4">
-        <StatusBadge label={conf.label} variant={conf.variant} />
+        <StatusBadge label={statusLabel} variant={conf.variant} />
       </td>
       <td className={cn('px-6 py-4', stickyClass)}>
         <div
@@ -904,7 +929,7 @@ function StandaloneDocumentRow({
                 <Eye className="h-4 w-4" />
               </Button>
             </TooltipTrigger>
-            <TooltipContent>Aperçu du document</TooltipContent>
+            <TooltipContent>{t('dataRoom.validation.tooltip.documentPreview')}</TooltipContent>
           </Tooltip>
           {doc.status === 'validated' && (
             <Tooltip>
@@ -918,7 +943,7 @@ function StandaloneDocumentRow({
                   <RotateCcw className="h-4 w-4" />
                 </Button>
               </TooltipTrigger>
-              <TooltipContent>Remettre en attente</TooltipContent>
+              <TooltipContent>{t('dataRoom.validation.tooltip.resetToPending')}</TooltipContent>
             </Tooltip>
           )}
           {doc.status !== 'validated' && (
@@ -933,7 +958,7 @@ function StandaloneDocumentRow({
                   <Check className="h-4 w-4" />
                 </Button>
               </TooltipTrigger>
-              <TooltipContent>Valider</TooltipContent>
+              <TooltipContent>{t('dataRoom.validation.tooltip.validate')}</TooltipContent>
             </Tooltip>
           )}
           {doc.status !== 'rejected' && (
@@ -948,7 +973,7 @@ function StandaloneDocumentRow({
                   <X className="h-4 w-4" />
                 </Button>
               </TooltipTrigger>
-              <TooltipContent>Rejeter</TooltipContent>
+              <TooltipContent>{t('dataRoom.validation.tooltip.reject')}</TooltipContent>
             </Tooltip>
           )}
         </div>
@@ -971,6 +996,7 @@ interface BatchRowGroupProps {
     maxVisible?: number,
   ) => JSX.Element;
   stickyClass: (extra?: string) => string;
+  formatDate: (iso: string) => string;
 }
 
 function BatchRowGroup({
@@ -984,9 +1010,12 @@ function BatchRowGroup({
   onPreviewChild,
   renderTargeting,
   stickyClass,
+  formatDate,
 }: BatchRowGroupProps) {
+  const { t } = useTranslation();
   const { batch, docs, status } = node;
   const conf = STATUS_VARIANT[status];
+  const statusLabel = t(`dataRoom.validation.status.${status}`);
   const isSilent = !batch.notification;
   const earliestDate = docs.reduce(
     (min, d) =>
@@ -1045,7 +1074,7 @@ function BatchRowGroup({
               e.stopPropagation();
               onToggle();
             }}
-            aria-label={expanded ? 'Réduire le lot' : 'Développer le lot'}
+            aria-label={expanded ? t('dataRoom.validation.tooltip.collapseBatch') : t('dataRoom.validation.tooltip.expandBatch')}
           >
             <ChevronRight
               className={cn(
@@ -1070,7 +1099,12 @@ function BatchRowGroup({
                   {batch.kind}
                 </span>
                 <span className="rounded-full bg-blue-100 px-2 py-0.5 text-[10px] font-semibold text-blue-700 dark:bg-blue-900 dark:text-blue-200">
-                  {docs.length} doc{docs.length > 1 ? 's' : ''}
+                  {t(
+                    docs.length > 1
+                      ? 'dataRoom.validation.batch.docCountMany'
+                      : 'dataRoom.validation.batch.docCountOne',
+                    { count: docs.length },
+                  )}
                 </span>
               </div>
               <span
@@ -1109,14 +1143,14 @@ function BatchRowGroup({
                 <span className="text-sm text-gray-300 select-none">—</span>
               </TooltipTrigger>
               <TooltipContent>
-                <span className="text-xs">Ciblage différent selon les documents — voir chaque ligne.</span>
+                <span className="text-xs">{t('dataRoom.validation.tooltip.heterogeneousTargeting')}</span>
               </TooltipContent>
             </Tooltip>
           )}
         </td>
         <td className="px-6 py-3 text-center text-[11px] text-gray-500">—</td>
         <td className="px-6 py-3">
-          <StatusBadge label={conf.label} variant={conf.variant} />
+          <StatusBadge label={statusLabel} variant={conf.variant} />
         </td>
 
         <td
@@ -1140,11 +1174,13 @@ function BatchRowGroup({
                   onClick={onOpenNotification}
                 >
                   <Eye className="h-3.5 w-3.5" />
-                  Aperçu
+                  {t('dataRoom.validation.tooltip.preview')}
                 </Button>
               </TooltipTrigger>
               <TooltipContent>
-                {isSilent ? 'Aperçu du lot' : 'Aperçu de la notification'}
+                {isSilent
+                  ? t('dataRoom.validation.tooltip.batchPreview')
+                  : t('dataRoom.validation.tooltip.notificationPreview')}
               </TooltipContent>
             </Tooltip>
             {status === 'validated' && (
@@ -1159,7 +1195,7 @@ function BatchRowGroup({
                     <RotateCcw className="h-4 w-4" />
                   </Button>
                 </TooltipTrigger>
-                <TooltipContent>Remettre le lot en attente</TooltipContent>
+                <TooltipContent>{t('dataRoom.validation.tooltip.resetBatchToPending')}</TooltipContent>
               </Tooltip>
             )}
             {status !== 'validated' && (
@@ -1176,8 +1212,8 @@ function BatchRowGroup({
                 </TooltipTrigger>
                 <TooltipContent>
                   {isSilent
-                    ? 'Valider le lot'
-                    : 'Valider et envoyer la notification'}
+                    ? t('dataRoom.validation.tooltip.validateBatch')
+                    : t('dataRoom.validation.tooltip.validateAndNotify')}
                 </TooltipContent>
               </Tooltip>
             )}
@@ -1193,7 +1229,7 @@ function BatchRowGroup({
                     <X className="h-4 w-4" />
                   </Button>
                 </TooltipTrigger>
-                <TooltipContent>Rejeter le lot</TooltipContent>
+                <TooltipContent>{t('dataRoom.validation.tooltip.rejectBatch')}</TooltipContent>
               </Tooltip>
             )}
           </div>
@@ -1221,7 +1257,7 @@ function BatchRowGroup({
                 extra={
                   <NotificationLine
                     notification={batch.notification}
-                    sourceHint="Issu du lot ·"
+                    sourceHint={t('dataRoom.validation.notificationLine.fromBatch')}
                   />
                 }
               />
@@ -1241,7 +1277,7 @@ function BatchRowGroup({
                     <span className="text-sm text-gray-300 select-none">—</span>
                   </TooltipTrigger>
                   <TooltipContent>
-                    <span className="text-xs">Ciblage piloté au niveau du lot.</span>
+                    <span className="text-xs">{t('dataRoom.validation.tooltip.batchLevelTargeting')}</span>
                   </TooltipContent>
                 </Tooltip>
               ) : (
@@ -1274,7 +1310,7 @@ function BatchRowGroup({
                       <Eye className="h-4 w-4" />
                     </Button>
                   </TooltipTrigger>
-                  <TooltipContent>Aperçu du document</TooltipContent>
+                  <TooltipContent>{t('dataRoom.validation.tooltip.documentPreview')}</TooltipContent>
                 </Tooltip>
               </div>
             </td>

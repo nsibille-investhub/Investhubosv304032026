@@ -1212,6 +1212,122 @@
       "folderDefaults": {
         "root": "Root / Documents",
         "targetFolder": "target folder"
+      },
+      "validation": {
+        "backToSpaces": "Back to spaces",
+        "title": "Document validation",
+        "subtitle": "Review, approve and reject documents before publication",
+        "kpi": {
+          "pendingLabel": "Awaiting validation",
+          "pendingMetric": "To process",
+          "validatedLabel": "Validated",
+          "validatedMetric": "Approved",
+          "rejectedLabel": "Rejected",
+          "rejectedMetric": "Refused",
+          "allLabel": "All",
+          "allMetric": "Total"
+        },
+        "searchPlaceholder": "Search a document, author, targeting…",
+        "filters": {
+          "createdBy": "Author",
+          "targeting": "Targeting",
+          "format": "Format"
+        },
+        "table": {
+          "document": "Document",
+          "createdBy": "Created by",
+          "date": "Date",
+          "targeting": "Targeting",
+          "comments": "Comm.",
+          "status": "Status",
+          "actions": "Actions"
+        },
+        "empty": {
+          "title": "No document to display",
+          "resetFilters": "Reset filters"
+        },
+        "status": {
+          "pending": "Pending",
+          "validated": "Validated",
+          "rejected": "Rejected"
+        },
+        "targetingTooltip": {
+          "segment": "Segment",
+          "fund": "Fund",
+          "shareClass": "Class / Share class",
+          "investor": "Investor",
+          "subscription": "Subscription",
+          "audience": "Audience"
+        },
+        "tooltip": {
+          "documentPreview": "Document preview",
+          "resetToPending": "Set back to pending",
+          "validate": "Validate",
+          "reject": "Reject",
+          "preview": "Preview",
+          "batchPreview": "Batch preview",
+          "notificationPreview": "Notification preview",
+          "resetBatchToPending": "Set batch back to pending",
+          "validateBatch": "Validate batch",
+          "validateAndNotify": "Validate and send notification",
+          "rejectBatch": "Reject batch",
+          "expandBatch": "Expand batch",
+          "collapseBatch": "Collapse batch",
+          "heterogeneousTargeting": "Targeting differs across documents — see each row.",
+          "batchLevelTargeting": "Targeting managed at batch level."
+        },
+        "notificationLine": {
+          "noneDocument": "No notification",
+          "noneBatch": "No notification — internal validation",
+          "fromBatch": "From batch ·",
+          "recipientsOne": "1 notification → {{count}} recipient",
+          "recipientsMany": "1 notification → {{count}} recipients"
+        },
+        "batch": {
+          "docCountOne": "{{count}} doc",
+          "docCountMany": "{{count}} docs"
+        },
+        "toast": {
+          "documentValidated": "Document validated",
+          "documentRejected": "Document rejected",
+          "documentReset": "Document set back to pending",
+          "batchValidatedWithNotification": "Batch validated · notification sent",
+          "batchValidated": "Batch validated",
+          "batchRejected": "Batch rejected",
+          "batchReset": "Batch set back to pending",
+          "batchDescriptionOne": "{{count}} document • {{name}}",
+          "batchDescriptionMany": "{{count}} documents • {{name}}"
+        },
+        "drawer": {
+          "noNotificationOnly": "No notification — internal validation only",
+          "channelEmail": "email",
+          "channelPortal": "LP portal",
+          "channelBoth": "email + portal",
+          "channelLabelEmail": "Email",
+          "channelLabelPortal": "LP Portal",
+          "channelLabelBoth": "Email + Portal",
+          "headerOne": "1 notification → {{count}} recipient ({{channel}})",
+          "headerMany": "1 notification → {{count}} recipients ({{channel}})",
+          "attachmentsOne": "{{count}} attachment",
+          "attachmentsMany": "{{count}} attachments",
+          "createdByOn": "Created by {{name}} · {{date}}",
+          "tabEmail": "Email",
+          "tabRecipients": "Recipients",
+          "tabAttachments": "Attachments",
+          "silentTitle": "No notification",
+          "silentDescription": "This batch groups documents for internal validation only. No email or portal publication will be triggered.",
+          "fieldFrom": "From",
+          "fieldTo": "To",
+          "fieldSubject": "Subject",
+          "moreRecipients": "+ {{count}} more",
+          "attachmentsHeading": "Attachments",
+          "footer": "This email is sent by InvestHub as part of your subscription. For any question, please contact your Investor Relations representative.",
+          "tableRecipient": "Recipient",
+          "tableEmail": "Email",
+          "tableType": "Type",
+          "close": "Close",
+          "resetToPending": "Set back to pending"
+        }
       }
     },
     "documents": {
