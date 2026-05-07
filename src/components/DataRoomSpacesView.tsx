@@ -1,12 +1,19 @@
 import { useMemo, useState } from 'react';
 import { motion } from 'motion/react';
-import { Plus, Folder, Settings, Users, Handshake, TrendingUp, Target, ArrowRight, Search, FileText, FileUp, FolderOpen, Landmark, Tag as TagIcon } from 'lucide-react';
+import { Plus, Folder, Settings, Users, Handshake, TrendingUp, Target, ArrowRight, Search, FileText, FileUp, FolderOpen, Landmark, Tag as TagIcon, MoreVertical, Presentation } from 'lucide-react';
 import { Button } from './ui/button';
 import { Badge } from './ui/badge';
 import { DataRoomSpace } from '../utils/dataRoomSpacesData';
 import { getTreeForSpace, TreeNode } from '../utils/dataRoomTreeData';
 import { Input } from './ui/input';
 import { useTranslation } from '../utils/languageContext';
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from './ui/dropdown-menu';
+import { navigateToPage } from '../utils/routing';
 
 export interface GlobalSearchHit {
   id: string;
@@ -126,6 +133,34 @@ export function DataRoomSpacesView({
               <Plus className="w-4 h-4" />
               {t('ged.dataRoom.spacesView.newSpace')}
             </Button>
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button
+                  variant="outline"
+                  size="icon"
+                  aria-label={t('ged.pitchDeck.moreActionsLabel')}
+                  className="border-gray-300 hover:border-gray-400 hover:bg-gray-50"
+                >
+                  <MoreVertical className="w-4 h-4" />
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end" className="w-64">
+                <DropdownMenuItem
+                  onClick={() => navigateToPage('pitch-deck')}
+                  className="cursor-pointer flex items-start gap-3 py-2.5"
+                >
+                  <Presentation className="w-4 h-4 mt-0.5 shrink-0" style={{ color: '#25563F' }} />
+                  <div className="min-w-0 flex-1">
+                    <p className="text-sm font-medium text-gray-900">
+                      {t('ged.pitchDeck.menuLabel')}
+                    </p>
+                    <p className="text-xs text-gray-500 mt-0.5">
+                      {t('ged.pitchDeck.menuDescription')}
+                    </p>
+                  </div>
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
           </div>
         </div>
       </motion.div>

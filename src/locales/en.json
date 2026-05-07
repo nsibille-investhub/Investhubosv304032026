@@ -2019,6 +2019,227 @@
       "createdToastFolder": "Folder created successfully!",
       "exportImpossible": "Cannot export",
       "scopeEmpty": "The targeting scope is empty"
+    },
+    "pitchDeck": {
+      "menuLabel": "Pitch Deck",
+      "menuDescription": "Discover GED+ in commercial demo mode",
+      "moreActionsLabel": "More actions",
+      "backToSpaces": "Back to spaces",
+      "hero": {
+        "badge": "GED+ · The engagement Data Room",
+        "title": "From a passive Data Room to an active LP-relationship driver.",
+        "subtitle": "InvestHub centralizes, structures, secures and distributes every document tied to investor relations — and measures real engagement to turn the Data Room into a commercial lever.",
+        "quote": "Stop wondering whether your investors read your reports. Know it."
+      },
+      "vision": {
+        "kicker": "Product vision",
+        "title": "A Data Room built for alternative investments.",
+        "body": "InvestHub's GED+ is a core platform component: investor communication, regulatory distribution, lifecycle tracking, compliance, LP & partner portal access. Everything is auditable, everything is measurable.",
+        "callout": "Where a classic DMS only stores documents, GED+ measures, analyses and optimizes the documentary engagement of investors and their contacts.",
+        "bullets": {
+          "0": "Spaces → Folders → Documents architecture designed for scale (tens of thousands of documents per fund).",
+          "1": "Targeting by fund, segment, structure, subscription and contact group — with inherited funnel logic.",
+          "2": "Multi-language, multi-role: LPs, contacts, advisors, distribution partners.",
+          "3": "Full audit trail supporting compliance and commercial follow-up."
+        }
+      },
+      "flow": {
+        "kicker": "The end-to-end GED+ flow",
+        "title": "Six orchestrated stages, in one tool.",
+        "subtitle": "From document sources to engagement piloting, every stage feeds the next without friction.",
+        "step": "Step {{n}}",
+        "stages": {
+          "sources": {
+            "title": "Document sources",
+            "body": "InvestHub documents or external systems plugged in via connectors."
+          },
+          "organize": {
+            "title": "Spaces & Mass upload",
+            "body": "Spaces, folders, inherited targeting and bulk upload in a single operation."
+          },
+          "validation": {
+            "title": "Validation workflow",
+            "body": "Validation teams, controlled publishing, full traceability."
+          },
+          "notifications": {
+            "title": "Notifications",
+            "body": "Multilingual templates, immediate or scheduled sending, targeted reminders."
+          },
+          "portals": {
+            "title": "Investor portals",
+            "body": "Secure delivery to LPs, contacts and advisors based on their rights."
+          },
+          "birdview": {
+            "title": "Birdview",
+            "body": "Tracking, engagement measurement, scoring and smart follow-up."
+          }
+        }
+      },
+      "pillars": {
+        "kicker": "What changes with GED+",
+        "title": "Six pillars to turn the DMS into a piloting tool.",
+        "0": {
+          "title": "Business-context architecture",
+          "body": "Dedicated spaces for LP investors, fund reportings, due diligence, partners, multi-fund HNWI — each with its own typology, funds and segments."
+        },
+        "1": {
+          "title": "Precise & consistent targeting",
+          "body": "Funds, segments, investors, structures, subscriptions, contact groups. Context is inherited and can never be widened: security by design."
+        },
+        "2": {
+          "title": "Native validation workflow",
+          "body": "Activate the workflow per space: assigned validation teams, controlled publishing, notifications sent only after validation."
+        },
+        "3": {
+          "title": "Industrial-grade mass import",
+          "body": "Up to 100 documents per session, bulk configuration (folder, targeting, notification, team), automatic session save."
+        },
+        "4": {
+          "title": "Tracking & engagement measurement",
+          "body": "Notifications sent and opened, documents viewed and downloaded. Global indicator and rates by investor, contact and advisor."
+        },
+        "5": {
+          "title": "Smart follow-up",
+          "body": "Re-engage precisely those who did not open the email or view the document. Customizable templates, CSV export of recipients."
+        }
+      },
+      "kpis": {
+        "title": "Measured impact for Investor Relations teams.",
+        "subtitle": "GED+ becomes an internal IR reporting tool, a commercial prioritization aid, a compliance monitoring tool and a behavioral LP-analysis solution.",
+        "engagement": "Document engagement rate visible by space, document and investor.",
+        "massUpload": "Time saved on recurring operations: capital calls, reportings, regulatory documents.",
+        "audit": "Audit trail on communications: send, delivery, open, click, view, download.",
+        "availability": "Documents continuously available on LP, contact and advisor portals."
+      },
+      "compare": {
+        "kicker": "Market positioning",
+        "title": "Classic DMS vs InvestHub GED+.",
+        "classicLabel": "Classic DMS",
+        "classicTitle": "Store, share, manage permissions.",
+        "classic": {
+          "0": "Centralized document storage.",
+          "1": "Multi-user sharing.",
+          "2": "Permissions and access rights."
+        },
+        "gedPlusLabel": "InvestHub GED+",
+        "gedPlusTitle": "Store, distribute, measure, drive the LP relationship.",
+        "gedPlus": {
+          "0": "Centralized document storage.",
+          "1": "Multi-user sharing.",
+          "2": "Permissions and access rights.",
+          "3": "Behavioral tracking of investors and contacts.",
+          "4": "Engagement scoring and consultation rate per document.",
+          "5": "Smart follow-up and LP piloting, including complex institutional LPs."
+        }
+      },
+      "useCases": {
+        "kicker": "Use cases",
+        "title": "GED+ in everyday Investor Relations.",
+        "0": {
+          "title": "Multi-fund quarterly report",
+          "steps": {
+            "0": "Mass-import the reportings into the targeted space (fund, segment).",
+            "1": "Validation by the assigned team then automatic publishing.",
+            "2": "Multilingual notifications sent to the eligible LPs.",
+            "3": "Document-by-document consultation tracking via Birdview, targeted reminders to non-readers."
+          }
+        },
+        "1": {
+          "title": "Due diligence in progress",
+          "steps": {
+            "0": "Dedicated due diligence space with investor targeting.",
+            "1": "Documents shared with the investor, their contacts and their advisor.",
+            "2": "Identify the active investor and the driving advisor through Birdview.",
+            "3": "Selective follow-up of inactive parties to gauge real interest."
+          }
+        }
+      },
+      "cta": {
+        "title": "Ready to turn your Data Room into an engagement engine?",
+        "subtitle": "Start by exploring an existing space or jump straight into Birdview to visualize your investors' engagement.",
+        "primary": "Go to spaces",
+        "secondary": "Discover Birdview"
+      },
+      "orchestration": {
+        "kicker": "Orchestration schema",
+        "title": "A unified document chain, from source to piloting.",
+        "subtitle": "All your document sources converge into GED+, get validated, are distributed on a centralized and secure portal, then continuously measured via Birdview.",
+        "flowSourceLabel": "Ingestion",
+        "flowDistribLabel": "Distribution",
+        "flowFeedbackLabel": "Continuous measurement & follow-up",
+        "sources": {
+          "label": "Step 1 — Sources",
+          "title": "Document sources",
+          "subtitle": "Native InvestHub documents or external systems plugged in via connectors.",
+          "connector": "Native connectors & API",
+          "items": {
+            "0": "Native InvestHub documents",
+            "1": "SharePoint / OneDrive",
+            "2": "Google Drive / Dropbox",
+            "3": "Email & shared mailboxes",
+            "4": "External DMS via API"
+          }
+        },
+        "engine": {
+          "label": "Step 2 — GED+ Engine",
+          "title": "Centralize, structure, secure",
+          "subtitle": "Spaces → Folders → Documents architecture with inherited targeting, performant at scale.",
+          "context": "Spaces & folders — targeting by fund, segment, structure, subscription and contact group.",
+          "steps": {
+            "import": {
+              "title": "Mass upload",
+              "body": "Up to 100 docs per session, bulk configuration, automatic save."
+            },
+            "validation": {
+              "title": "Validation workflow",
+              "body": "Assigned teams, controlled publishing, full traceability."
+            },
+            "notifications": {
+              "title": "Notifications",
+              "body": "Multilingual templates, sent immediately or after validation, never before."
+            }
+          }
+        },
+        "portals": {
+          "label": "Step 3 — Distribution",
+          "title": "Centralized & secure portal",
+          "subtitle": "A single entry point for all your audiences, with granular rights and full audit.",
+          "items": {
+            "0": "LP investors",
+            "1": "Contacts (CFO, legal, back-office…)",
+            "2": "Advisors (financial, tax, legal)",
+            "3": "Distribution partners"
+          },
+          "tags": {
+            "0": "Centralized",
+            "1": "Secure",
+            "2": "Multi-role"
+          }
+        },
+        "birdview": {
+          "label": "Step 4 — Birdview",
+          "title": "Tracking & engagement",
+          "subtitle": "Every interaction is recorded as a factual event, usable for IR piloting and behavioral LP analysis.",
+          "metrics": {
+            "0": {
+              "title": "Notifications",
+              "body": "Sent · delivered · opened"
+            },
+            "1": {
+              "title": "Documents",
+              "body": "Viewed · downloaded"
+            },
+            "2": {
+              "title": "Engagement rate",
+              "body": "Global, per doc and per LP"
+            },
+            "3": {
+              "title": "Targeted follow-up",
+              "body": "On non-readers"
+            }
+          }
+        }
+      }
     }
   },
   "validation": {
