@@ -17,6 +17,7 @@ import { useState, useMemo } from 'react';
 import { ChevronDown, Check, Tag, Landmark, Layers3, X, LucideIcon } from 'lucide-react';
 import { Popover, PopoverContent, PopoverTrigger } from './popover';
 import { AutocompleteSingleSelect, AutocompleteOption } from './autocomplete-select';
+import { useTranslation } from '../../utils/languageContext';
 
 const BRAND_BLUE = '#000E2B';
 
@@ -45,10 +46,12 @@ export function SegmentsMultiSelect({
   value,
   onChange,
   options,
-  placeholder = 'Tous les segments',
+  placeholder,
   icon: Icon = Tag,
 }: SegmentsMultiSelectProps) {
+  const { t } = useTranslation();
   const [open, setOpen] = useState(false);
+  const resolvedPlaceholder = placeholder ?? t('ged.dataRoom.targetingSelects.allSegments');
 
   const toggle = (seg: string) => {
     if (value.includes(seg)) onChange(value.filter((v) => v !== seg));
@@ -69,7 +72,7 @@ export function SegmentsMultiSelect({
         >
           <div className="flex-1 flex flex-wrap gap-1.5 items-center min-h-[26px]">
             {value.length === 0 ? (
-              <span className="text-sm text-gray-500">{placeholder}</span>
+              <span className="text-sm text-gray-500">{resolvedPlaceholder}</span>
             ) : (
               value.map((seg) => (
                 <span
@@ -127,7 +130,7 @@ export function SegmentsMultiSelect({
                 className="w-full flex items-center gap-2 px-2 py-2 text-sm rounded-md text-left text-red-600 hover:bg-red-50"
               >
                 <X className="w-3.5 h-3.5" />
-                Tout désélectionner
+                {t('ged.dataRoom.targetingSelects.deselectAll')}
               </button>
             </>
           )}
@@ -159,15 +162,16 @@ export function FundSingleSelect({
   value,
   onChange,
   options,
-  placeholder = 'Tous les fonds',
+  placeholder,
 }: FundSingleSelectProps) {
+  const { t } = useTranslation();
   const autocompleteOptions = useMemo(() => toAutocompleteOptions(options), [options]);
   return (
     <AutocompleteSingleSelect
       value={value}
       onChange={onChange}
       options={autocompleteOptions}
-      placeholder={placeholder}
+      placeholder={placeholder ?? t('ged.dataRoom.targetingSelects.allFunds')}
       icon={Landmark}
       allowClear
     />
@@ -190,16 +194,17 @@ export function ShareClassSingleSelect({
   value,
   onChange,
   options,
-  placeholder = 'Toutes les parts',
+  placeholder,
   disabled,
 }: ShareClassSingleSelectProps) {
+  const { t } = useTranslation();
   const autocompleteOptions = useMemo(() => toAutocompleteOptions(options), [options]);
   return (
     <AutocompleteSingleSelect
       value={value}
       onChange={onChange}
       options={autocompleteOptions}
-      placeholder={placeholder}
+      placeholder={placeholder ?? t('ged.dataRoom.targetingSelects.allShareClasses')}
       icon={Layers3}
       disabled={disabled}
       allowClear

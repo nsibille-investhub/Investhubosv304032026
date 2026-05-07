@@ -630,7 +630,7 @@ export function MassUploadWizard({ isOpen, onClose, existingFolders, inline = fa
    * validation team being configured. */
   const handleCreateBatch = () => {
     if (selectedFiles.length < 2) {
-      toast.error('Sélectionnez au moins 2 documents pour créer un lot');
+      toast.error(t('ged.dataRoom.massUpload.wizard.bulk.selectAtLeastTwo'));
       return;
     }
     // Refuse if any selected file already belongs to another batch.
@@ -638,13 +638,13 @@ export function MassUploadWizard({ isOpen, onClose, existingFolders, inline = fa
       (f) => selectedFiles.includes(f.id) && f.batchId,
     );
     if (alreadyBatched.length > 0) {
-      toast.error('Documents déjà groupés', {
-        description: 'Détachez-les d’abord de leur lot actuel.',
+      toast.error(t('ged.dataRoom.massUpload.wizard.bulk.alreadyBatchedTitle'), {
+        description: t('ged.dataRoom.massUpload.wizard.bulk.alreadyBatchedDesc'),
       });
       return;
     }
     setBatchCreationMode(true);
-    setBatchNameDraft(`Lot ${batches.length + 1}`);
+    setBatchNameDraft(t('ged.dataRoom.massUpload.wizard.bulk.batchNamePrefix', { n: batches.length + 1 }));
     // Notification & validation team are CONSOLIDATED at the batch level —
     // ensure both are part of the staged fields so the user is forced to
     // configure them before being able to confirm.
@@ -669,11 +669,11 @@ export function MassUploadWizard({ isOpen, onClose, existingFolders, inline = fa
    * required to be uniform — notification stays per-document. */
   const batchCreationBlockReason = (): string | null => {
     if (!batchCreationMode) return null;
-    if (selectedFiles.length < 2) return 'Sélectionnez au moins 2 documents';
-    if (!batchNameDraft.trim()) return 'Donnez un nom au lot';
-    if (!bulkFields.includes('validationTeam')) return 'L’équipe de validation doit être configurée pour le lot';
+    if (selectedFiles.length < 2) return t('ged.dataRoom.massUpload.wizard.bulk.selectAtLeastTwoShort');
+    if (!batchNameDraft.trim()) return t('ged.dataRoom.massUpload.wizard.bulk.namelessBatch');
+    if (!bulkFields.includes('validationTeam')) return t('ged.dataRoom.massUpload.wizard.bulk.validationTeamRequired');
     const team = bulkValues.validationTeam ?? [];
-    if (team.length === 0) return 'Choisissez une équipe de validation';
+    if (team.length === 0) return t('ged.dataRoom.massUpload.wizard.bulk.chooseValidationTeam');
     return null;
   };
 
@@ -738,8 +738,8 @@ export function MassUploadWizard({ isOpen, onClose, existingFolders, inline = fa
     setBulkFields([]);
     setBulkValues({});
     setSelectedFiles([]);
-    toast.success('Lot créé', {
-      description: `${selectedFiles.length} documents regroupés dans « ${batch.name} »`,
+    toast.success(t('ged.dataRoom.massUpload.wizard.bulk.batchCreated'), {
+      description: t('ged.dataRoom.massUpload.wizard.bulk.batchCreatedDesc', { count: selectedFiles.length, name: batch.name }),
     });
   };
 
@@ -813,7 +813,7 @@ export function MassUploadWizard({ isOpen, onClose, existingFolders, inline = fa
     setBulkFields([]);
     setBulkValues({});
     setSelectedFiles([]);
-    toast.success('Lot mis à jour');
+    toast.success(t('ged.dataRoom.massUpload.wizard.bulk.batchUpdated'));
   };
 
   /** Detach a single file from its batch (file becomes standalone again). */
@@ -835,7 +835,7 @@ export function MassUploadWizard({ isOpen, onClose, existingFolders, inline = fa
       }
       return updated;
     });
-    toast.info('Document détaché du lot');
+    toast.info(t('ged.dataRoom.massUpload.wizard.bulk.fileDetached'));
   };
 
   /** Update a batch (and propagate consolidated/global fields to its files). */
@@ -862,16 +862,16 @@ export function MassUploadWizard({ isOpen, onClose, existingFolders, inline = fa
       return next;
     });
     if (editingBatchId === batchId) setEditingBatchId(null);
-    toast.info('Lot dissous');
+    toast.info(t('ged.dataRoom.massUpload.wizard.bulk.batchDissolved'));
   };
 
   // Field catalogue used to render the bulk edit picker chips and the per-field editors.
   const BULK_FIELDS: { key: BulkFieldKey; label: string; icon: LucideIcon }[] = [
-    { key: 'folder', label: 'Dossier', icon: Folder },
-    { key: 'language', label: 'Langue', icon: Languages },
-    { key: 'targeting', label: 'Ciblage', icon: Users },
-    { key: 'notification', label: 'Notification', icon: Bell },
-    { key: 'validationTeam', label: 'Équipes de validation', icon: Shield },
+    { key: 'folder', label: t('ged.dataRoom.massUpload.wizard.bulk.fieldFolder'), icon: Folder },
+    { key: 'language', label: t('ged.dataRoom.massUpload.wizard.bulk.fieldLanguage'), icon: Languages },
+    { key: 'targeting', label: t('ged.dataRoom.massUpload.wizard.bulk.fieldTargeting'), icon: Users },
+    { key: 'notification', label: t('ged.dataRoom.massUpload.wizard.bulk.fieldNotification'), icon: Bell },
+    { key: 'validationTeam', label: t('ged.dataRoom.massUpload.wizard.bulk.fieldValidationTeams'), icon: Shield },
   ];
 
   const toggleBulkField = (key: BulkFieldKey) => {
@@ -894,8 +894,8 @@ export function MassUploadWizard({ isOpen, onClose, existingFolders, inline = fa
 
   const handleBulkApply = () => {
     if (bulkFields.length === 0) {
-      toast.error('Aucun champ sélectionné', {
-        description: 'Choisissez au moins un champ à modifier.',
+      toast.error(t('ged.dataRoom.massUpload.wizard.bulk.noFieldSelected'), {
+        description: t('ged.dataRoom.massUpload.wizard.bulk.noFieldSelectedDesc'),
       });
       return;
     }
@@ -932,8 +932,8 @@ export function MassUploadWizard({ isOpen, onClose, existingFolders, inline = fa
         return updated;
       })
     );
-    toast.success('Modification groupée appliquée', {
-      description: `${selectedFiles.length} document(s) · ${bulkFields.length} champ(s) modifié(s)`,
+    toast.success(t('ged.dataRoom.massUpload.wizard.bulk.bulkApplied'), {
+      description: t('ged.dataRoom.massUpload.wizard.bulk.bulkAppliedDesc', { files: selectedFiles.length, fields: bulkFields.length }),
     });
   };
 
@@ -941,7 +941,7 @@ export function MassUploadWizard({ isOpen, onClose, existingFolders, inline = fa
   const handlePreviewDocument = (file: UploadedFile) => {
     const url = URL.createObjectURL(file.file);
     window.open(url, '_blank');
-    toast.info('Document opened', {
+    toast.info(t('ged.dataRoom.massUpload.wizard.bulk.documentOpened'), {
       description: file.name
     });
   };
@@ -2040,9 +2040,14 @@ export function MassUploadWizard({ isOpen, onClose, existingFolders, inline = fa
                         <div className="flex items-center justify-between gap-3">
                           <div className="flex items-center gap-3">
                             <Badge variant="outline" className="border-gray-300 bg-white px-2 py-0.5 text-xs font-medium text-gray-700">
-                              {selectedFiles.length} sélectionné{selectedFiles.length > 1 ? 's' : ''}
+                              {t(
+                                selectedFiles.length > 1
+                                  ? 'ged.dataRoom.massUpload.wizard.bulk.selectedMany'
+                                  : 'ged.dataRoom.massUpload.wizard.bulk.selectedOne',
+                                { count: selectedFiles.length }
+                              )}
                             </Badge>
-                            <span className="text-xs text-gray-600">Édition groupée</span>
+                            <span className="text-xs text-gray-600">{t('ged.dataRoom.massUpload.wizard.bulk.editGroup')}</span>
                           </div>
                           <div className="flex items-center gap-1.5">
                             {!batchCreationMode && (
@@ -2054,12 +2059,12 @@ export function MassUploadWizard({ isOpen, onClose, existingFolders, inline = fa
                                 disabled={selectedFiles.length < 2}
                                 title={
                                   selectedFiles.length < 2
-                                    ? 'Sélectionnez au moins 2 documents pour créer un lot'
-                                    : 'Créer un lot avec les documents sélectionnés'
+                                    ? t('ged.dataRoom.massUpload.wizard.bulk.createBatchDisabledTooltip')
+                                    : t('ged.dataRoom.massUpload.wizard.bulk.createBatchTooltip')
                                 }
                               >
                                 <Layers3 className="h-3 w-3" />
-                                Créer un lot
+                                {t('ged.dataRoom.massUpload.wizard.bulk.createBatch')}
                               </Button>
                             )}
                             <Button
@@ -2072,7 +2077,7 @@ export function MassUploadWizard({ isOpen, onClose, existingFolders, inline = fa
                               }}
                             >
                               <X className="h-3 w-3" />
-                              Désélectionner
+                              {t('ged.dataRoom.massUpload.wizard.bulk.deselect')}
                             </Button>
                           </div>
                         </div>
@@ -2086,7 +2091,7 @@ export function MassUploadWizard({ isOpen, onClose, existingFolders, inline = fa
                         >
                             {/* Step A — pick which fields to modify in bulk */}
                             <div className="space-y-1">
-                              <Label className="text-[11px] font-medium text-gray-700">Champs à modifier</Label>
+                              <Label className="text-[11px] font-medium text-gray-700">{t('ged.dataRoom.massUpload.wizard.bulk.fieldsToModify')}</Label>
                               <Popover open={bulkFieldsPickerOpen} onOpenChange={setBulkFieldsPickerOpen}>
                                 <PopoverTrigger asChild>
                                   <button
@@ -2094,7 +2099,7 @@ export function MassUploadWizard({ isOpen, onClose, existingFolders, inline = fa
                                     className="flex min-h-[36px] w-full flex-wrap items-center gap-1.5 rounded-md border border-gray-300 bg-white px-2 py-1 text-left text-xs hover:border-gray-400"
                                   >
                                     {bulkFields.length === 0 ? (
-                                      <span className="text-gray-400">Choisir les champs à modifier…</span>
+                                      <span className="text-gray-400">{t('ged.dataRoom.massUpload.wizard.bulk.chooseFieldsPlaceholder')}</span>
                                     ) : (
                                       bulkFields.map((key) => {
                                         const cfg = BULK_FIELDS.find((f) => f.key === key);
@@ -2122,7 +2127,7 @@ export function MassUploadWizard({ isOpen, onClose, existingFolders, inline = fa
                                                 }
                                               }}
                                               className="ml-0.5 inline-flex cursor-pointer rounded-full p-0.5 hover:bg-gray-200"
-                                              aria-label={`Retirer ${cfg.label}`}
+                                              aria-label={t('ged.dataRoom.massUpload.wizard.bulk.removeField', { field: cfg.label })}
                                             >
                                               <X className="h-2.5 w-2.5" />
                                             </span>
@@ -2136,7 +2141,7 @@ export function MassUploadWizard({ isOpen, onClose, existingFolders, inline = fa
                                 <PopoverContent className="w-[280px] p-0" align="start">
                                   <Command>
                                     <CommandList>
-                                      <CommandEmpty>Aucun champ</CommandEmpty>
+                                      <CommandEmpty>{t('ged.dataRoom.massUpload.wizard.bulk.noField')}</CommandEmpty>
                                       <CommandGroup>
                                         {BULK_FIELDS.map((f) => {
                                           const Icon = f.icon;
@@ -2167,7 +2172,7 @@ export function MassUploadWizard({ isOpen, onClose, existingFolders, inline = fa
                                   <div className="space-y-1">
                                     <Label className="flex items-center gap-1.5 text-[11px] font-medium text-gray-600">
                                       <Folder className="h-3 w-3 text-gray-400" />
-                                      Dossier
+                                      {t('ged.dataRoom.massUpload.wizard.bulk.fieldFolder')}
                                     </Label>
                                     <Select
                                       value={bulkValues.folder ?? ''}
@@ -2194,7 +2199,7 @@ export function MassUploadWizard({ isOpen, onClose, existingFolders, inline = fa
                                   <div className="space-y-1">
                                     <Label className="flex items-center gap-1.5 text-[11px] font-medium text-gray-600">
                                       <Languages className="h-3 w-3 text-gray-400" />
-                                      Langue
+                                      {t('ged.dataRoom.massUpload.wizard.bulk.fieldLanguage')}
                                     </Label>
                                     <Select
                                       value={bulkValues.language ?? ''}
@@ -2234,7 +2239,7 @@ export function MassUploadWizard({ isOpen, onClose, existingFolders, inline = fa
                                     <div className="space-y-1">
                                       <Label className="flex items-center gap-1.5 text-[11px] font-medium text-gray-600">
                                         <Users className="h-3 w-3 text-gray-400" />
-                                        Ciblage
+                                        {t('ged.dataRoom.massUpload.wizard.bulk.fieldTargeting')}
                                       </Label>
                                       <Select
                                         value={targeting.targetType}
@@ -2362,7 +2367,7 @@ export function MassUploadWizard({ isOpen, onClose, existingFolders, inline = fa
                                     <div className="space-y-1">
                                       <Label className="flex items-center gap-1.5 text-[11px] font-medium text-gray-600">
                                         <Bell className="h-3 w-3 text-gray-400" />
-                                        Notification
+                                        {t('ged.dataRoom.massUpload.wizard.bulk.fieldNotification')}
                                       </Label>
                                       <div className="flex items-center gap-2 rounded-md border border-gray-200 bg-white px-2 py-1.5">
                                         <Switch
@@ -2406,7 +2411,7 @@ export function MassUploadWizard({ isOpen, onClose, existingFolders, inline = fa
                                     <div className="space-y-1">
                                       <Label className="flex items-center gap-1.5 text-[11px] font-medium text-gray-600">
                                         <Shield className="h-3 w-3 text-gray-400" />
-                                        Équipes de validation
+                                        {t('ged.dataRoom.massUpload.wizard.bulk.fieldValidationTeams')}
                                         {batchCreationMode && <span className="text-red-600">*</span>}
                                       </Label>
                                       <Select
@@ -2442,48 +2447,56 @@ export function MassUploadWizard({ isOpen, onClose, existingFolders, inline = fa
                               const summary: { label: string; value: string }[] = [];
                               if (bulkFields.includes('folder')) {
                                 summary.push({
-                                  label: 'Dossier',
+                                  label: t('ged.dataRoom.massUpload.wizard.bulk.summaryFolder'),
                                   value: bulkValues.folder
-                                    ? `Global · ${bulkValues.folder}`
-                                    : 'Par document (à compléter par membre)',
+                                    ? t('ged.dataRoom.massUpload.wizard.bulk.summaryFolderGlobal', { folder: bulkValues.folder })
+                                    : t('ged.dataRoom.massUpload.wizard.bulk.summaryFolderPerDoc'),
                                 });
                               }
                               if (bulkFields.includes('language')) {
                                 summary.push({
-                                  label: 'Langue',
+                                  label: t('ged.dataRoom.massUpload.wizard.bulk.summaryLanguage'),
                                   value:
                                     availableLanguages.find((l) => l.value === bulkValues.language)?.label ??
-                                    'Non choisie',
+                                    t('ged.dataRoom.massUpload.wizard.bulk.summaryLanguageNone'),
                                 });
                               }
                               if (bulkFields.includes('targeting')) {
-                                const t = bulkValues.targeting;
-                                const typeMap: Record<string, string> = { all: 'Tous', segment: 'Segments', investor: 'Investisseurs', subscription: 'Souscriptions', fund: 'Fonds' };
+                                const tg = bulkValues.targeting;
+                                const typeMap: Record<string, string> = {
+                                  all: t('ged.dataRoom.massUpload.wizard.bulk.targetingTypeAll'),
+                                  segment: t('ged.dataRoom.massUpload.wizard.bulk.targetingTypeSegment'),
+                                  investor: t('ged.dataRoom.massUpload.wizard.bulk.targetingTypeInvestor'),
+                                  subscription: t('ged.dataRoom.massUpload.wizard.bulk.targetingTypeSubscription'),
+                                  fund: t('ged.dataRoom.massUpload.wizard.bulk.targetingTypeFund'),
+                                };
                                 summary.push({
-                                  label: 'Ciblage',
-                                  value: t
-                                    ? `Global · ${typeMap[t.targetType] ?? t.targetType}`
-                                    : 'Par document (hétérogène)',
+                                  label: t('ged.dataRoom.massUpload.wizard.bulk.summaryTargeting'),
+                                  value: tg
+                                    ? t('ged.dataRoom.massUpload.wizard.bulk.summaryTargetingGlobal', { type: typeMap[tg.targetType] ?? tg.targetType })
+                                    : t('ged.dataRoom.massUpload.wizard.bulk.summaryTargetingPerDoc'),
                                 });
                               }
                               if (bulkFields.includes('notification')) {
                                 const n = bulkValues.notification;
                                 summary.push({
-                                  label: 'Notification',
+                                  label: t('ged.dataRoom.massUpload.wizard.bulk.summaryNotification'),
                                   value: n
                                     ? n.notify
-                                      ? `Appliquée à chaque membre · ${(() => {
-                                          const tpl = availableEmailTemplates.find((tpl) => tpl.value === n.emailTemplate);
-                                          return tpl ? t(tpl.labelKey) : 'Template à choisir';
-                                        })()}`
-                                      : 'Désactivée par défaut'
-                                    : 'Par document',
+                                      ? t('ged.dataRoom.massUpload.wizard.bulk.summaryNotificationApplied', {
+                                          template: (() => {
+                                            const tpl = availableEmailTemplates.find((tpl) => tpl.value === n.emailTemplate);
+                                            return tpl ? t(tpl.labelKey) : t('ged.dataRoom.massUpload.wizard.bulk.summaryNotificationTemplateMissing');
+                                          })(),
+                                        })
+                                      : t('ged.dataRoom.massUpload.wizard.bulk.summaryNotificationDisabled')
+                                    : t('ged.dataRoom.massUpload.wizard.bulk.summaryNotificationPerDoc'),
                                 });
                               }
                               if (bulkFields.includes('validationTeam')) {
                                 summary.push({
-                                  label: 'Équipe de validation (consolidée)',
-                                  value: bulkValues.validationTeam?.[0] ?? 'À choisir',
+                                  label: t('ged.dataRoom.massUpload.wizard.bulk.summaryValidationTeam'),
+                                  value: bulkValues.validationTeam?.[0] ?? t('ged.dataRoom.massUpload.wizard.bulk.summaryValidationTeamMissing'),
                                 });
                               }
                               return (
@@ -2491,13 +2504,16 @@ export function MassUploadWizard({ isOpen, onClose, existingFolders, inline = fa
                                   <div className="flex items-center gap-2">
                                     <Layers3 className="h-3.5 w-3.5 text-blue-700" />
                                     <Label className="text-[11px] font-medium text-blue-900">
-                                      {editingBatchId ? 'Modification du lot' : 'Nouveau lot'} — équipe de validation consolidée
+                                      {editingBatchId
+                                        ? t('ged.dataRoom.massUpload.wizard.bulk.batchModification')
+                                        : t('ged.dataRoom.massUpload.wizard.bulk.newBatch')}{' '}
+                                      {t('ged.dataRoom.massUpload.wizard.bulk.consolidatedTeamSuffix')}
                                     </Label>
                                   </div>
                                   <Input
                                     value={batchNameDraft}
                                     onChange={(e) => setBatchNameDraft(e.target.value)}
-                                    placeholder="Nom du lot…"
+                                    placeholder={t('ged.dataRoom.massUpload.wizard.bulk.batchNamePlaceholder')}
                                     className="h-8 text-sm border-blue-200 bg-white"
                                   />
                                   {summary.length > 0 && (
@@ -2522,7 +2538,7 @@ export function MassUploadWizard({ isOpen, onClose, existingFolders, inline = fa
                                     }
                                     return (
                                       <p className="text-[11px] text-blue-700/80">
-                                        L’équipe de validation est consolidée pour le lot ; les autres champs restent libres.
+                                        {t('ged.dataRoom.massUpload.wizard.bulk.consolidatedTeamHelper')}
                                       </p>
                                     );
                                   })()}
@@ -2544,7 +2560,7 @@ export function MassUploadWizard({ isOpen, onClose, existingFolders, inline = fa
                                       <RotateCcw className="h-3.5 w-3.5" />
                                     </Button>
                                   </TooltipTrigger>
-                                  <TooltipContent>Réinitialiser la sélection</TooltipContent>
+                                  <TooltipContent>{t('ged.dataRoom.massUpload.wizard.bulk.resetSelection')}</TooltipContent>
                                 </Tooltip>
                                 {batchCreationMode ? (
                                   <>
@@ -2553,7 +2569,7 @@ export function MassUploadWizard({ isOpen, onClose, existingFolders, inline = fa
                                       onClick={handleCancelBatchCreation}
                                       className="h-9"
                                     >
-                                      Annuler
+                                      {t('ged.dataRoom.massUpload.wizard.bulk.cancel')}
                                     </Button>
                                     {(() => {
                                       const reason = batchCreationBlockReason();
@@ -2566,7 +2582,9 @@ export function MassUploadWizard({ isOpen, onClose, existingFolders, inline = fa
                                           style={{ background: 'linear-gradient(62.32deg, #000000 10.53%, #0F323D 88.82%)' }}
                                         >
                                           <Layers3 className="h-3.5 w-3.5 mr-1.5" />
-                                          {isEditing ? 'Enregistrer le lot' : 'Créer le lot'}
+                                          {isEditing
+                                            ? t('ged.dataRoom.massUpload.wizard.bulk.saveBatch')
+                                            : t('ged.dataRoom.massUpload.wizard.bulk.createBatchBtn')}
                                         </Button>
                                       );
                                       if (!reason) return btn;
@@ -2584,7 +2602,7 @@ export function MassUploadWizard({ isOpen, onClose, existingFolders, inline = fa
                                     className="h-9 flex-1 text-white hover:opacity-90"
                                     style={{ background: 'linear-gradient(62.32deg, #000000 10.53%, #0F323D 88.82%)' }}
                                   >
-                                    Modifier
+                                    {t('ged.dataRoom.massUpload.wizard.bulk.modify')}
                                   </Button>
                                 )}
                               </div>
@@ -2674,7 +2692,7 @@ export function MassUploadWizard({ isOpen, onClose, existingFolders, inline = fa
                             <span className="text-sm text-gray-300 select-none">—</span>
                           </TooltipTrigger>
                           <TooltipContent>
-                            <span className="text-xs">Champ piloté au niveau du lot.</span>
+                            <span className="text-xs">{t('ged.dataRoom.massUpload.wizard.bulk.fieldControlledByBatch')}</span>
                           </TooltipContent>
                         </Tooltip>
                       );
@@ -2712,7 +2730,7 @@ export function MassUploadWizard({ isOpen, onClose, existingFolders, inline = fa
                                           Détacher
                                         </Button>
                                       </TooltipTrigger>
-                                      <TooltipContent><span className="text-xs">Retirer ce document du lot</span></TooltipContent>
+                                      <TooltipContent><span className="text-xs">{t('ged.dataRoom.massUpload.wizard.bulk.removeFromBatch')}</span></TooltipContent>
                                     </Tooltip>
                                   )}
                                 </div>
@@ -2997,7 +3015,12 @@ export function MassUploadWizard({ isOpen, onClose, existingFolders, inline = fa
                                     className="h-7 text-sm font-medium border-blue-200 bg-white"
                                   />
                                   <div className="text-[11px] text-gray-600">
-                                    {children.length} document{children.length > 1 ? 's' : ''} · équipe de validation consolidée
+                                    {t(
+                                      children.length > 1
+                                        ? 'ged.dataRoom.massUpload.wizard.bulk.batchRowSummaryMany'
+                                        : 'ged.dataRoom.massUpload.wizard.bulk.batchRowSummaryOne',
+                                      { count: children.length }
+                                    )}
                                   </div>
                                   <div className="flex items-center gap-1">
                                     <Button
@@ -3007,7 +3030,7 @@ export function MassUploadWizard({ isOpen, onClose, existingFolders, inline = fa
                                       onClick={() => handleConfigureBatch(batch.id)}
                                     >
                                       <Settings className="h-3 w-3" />
-                                      Configurer
+                                      {t('ged.dataRoom.massUpload.wizard.bulk.configure')}
                                     </Button>
                                     <Button
                                       variant="ghost"
@@ -3016,7 +3039,7 @@ export function MassUploadWizard({ isOpen, onClose, existingFolders, inline = fa
                                       onClick={() => handleDissolveBatch(batch.id)}
                                     >
                                       <Unlink className="h-3 w-3" />
-                                      Dissoudre
+                                      {t('ged.dataRoom.massUpload.wizard.bulk.dissolve')}
                                     </Button>
                                   </div>
                                 </div>

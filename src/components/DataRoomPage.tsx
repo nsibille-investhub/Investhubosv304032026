@@ -281,7 +281,9 @@ export function DataRoomPage({ onSpaceChange, onMassUploadChange, backToSpacesSi
                         <span style={{ color: '#cbd5e1' }}>·</span>
                         <span className="flex items-center gap-1">
                           <Users className="w-3 h-3" />
-                          {selectedSpace.targeting.userTypes.join(', ')}
+                          {selectedSpace.targeting.userTypes
+                            .map((ut) => t(`ged.dataRoom.folderSpaceDialog.userTypes.${ut}`))
+                            .join(', ')}
                         </span>
                       </>
                     )}
