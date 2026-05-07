@@ -1464,130 +1464,169 @@ export function MassUploadWizard({ isOpen, onClose, existingFolders, inline = fa
     };
   }, [uploadedFiles]);
 
-  // Toast when all files are analyzed + auto-create batches by investor.
-  // When at least two analyzed files share the same single targetInvestor we
-  // group them in a pre-built batch (investor-level global targeting, IR as
-  // default validation team, per-document folder). The user can dissolve or
-  // reconfigure the batch from step 2 like any other batch.
+  // Toast when all files are analyzed + auto-create batches.
+  // The grouping rules re-run every time the wizard settles (no in-flight
+  // upload/analysis), considering only unbatched files. This way successive
+  // upload waves are batched independently — a 2nd drop of files targeting
+  // the same investor still triggers an auto-batch.
+  //
+  // Two rules:
+  //   Rule 1 — same single investor → "Investor batch"
+  //   Rule 2 — same (category, fund) for subscription-targeted files
+  //            → "Campaign batch" with per-document targeting
+  // Files that don't form a group of 2+ are also attached to a compatible
+  // pre-existing auto-batch when one matches.
   useEffect(() => {
-    if (fileStats.total > 0 && fileStats.uploaded === fileStats.total && !allAnalyzedToastShown) {
+    if (fileStats.total === 0) {
+      setAllAnalyzedToastShown(false);
+      return;
+    }
+    if (fileStats.uploaded !== fileStats.total) return;
+
+    // First-pass toast — fires once per wizard session; reset on full clear.
+    if (!allAnalyzedToastShown) {
       toast.success(t('ged.dataRoom.massUpload.wizard.aiAnalysisCompleteTitle'), {
         description: t('ged.dataRoom.massUpload.wizard.aiAnalysisCompleteDesc', { count: fileStats.total }),
         duration: 5000,
       });
       setAllAnalyzedToastShown(true);
+    }
 
-      // Auto-batch — two rules, applied in order:
-      //   Rule 1: same single investor (investor-targeted files)        → "Investor batch"
-      //   Rule 2: same documentCategory + same fund (subscription-       → "Campaign batch"
-      //           targeted files, e.g. fund-wide capital call)             with per-document targeting
-      const newBatches: UploadBatch[] = [];
-      const fileToBatch = new Map<string, string>();
-      let idx = 0;
+    const candidates = uploadedFiles.filter(f => f.status === 'uploaded' && !f.batchId);
+    if (candidates.length === 0) return;
 
-      // Rule 1 — investor batches
-      const investorGroups = new Map<string, UploadedFile[]>();
-      for (const f of uploadedFiles) {
-        if (f.batchId) continue;
-        if (f.targetType !== 'investor') continue;
-        if (f.targetInvestors.length !== 1) continue;
-        const key = f.targetInvestors[0];
-        const arr = investorGroups.get(key) ?? [];
-        arr.push(f);
-        investorGroups.set(key, arr);
-      }
-      investorGroups.forEach((files, investorId) => {
-        if (files.length < 2) return;
-        const investor = availableInvestors.find(i => i.id === investorId);
-        if (!investor) return;
-        idx += 1;
-        // If every file in the group sits on the same fund we promote the
-        // batch to global targeting; otherwise keep per-document so a
-        // cross-fund tax package preserves each file's own fund.
-        const fundSet = new Set(files.flatMap(f => f.targetFunds));
-        const isHomogeneousFund = fundSet.size === 1 && !fundSet.has('');
-        const batch: UploadBatch = {
-          id: `batch-auto-${Date.now()}-${idx}`,
-          name: t('ged.dataRoom.massUpload.wizard.aiBatchName', { name: investor.name }),
-          validationTeam: ['ir'],
-          folderMode: 'per-document',
-          globalFolder: '',
-          targetingMode: isHomogeneousFund ? 'global' : 'per-document',
-          globalTargeting: {
-            targetType: 'investor',
-            targetSegments: [],
-            targetInvestors: [investor.id],
-            targetSubscriptions: [],
-            targetFunds: isHomogeneousFund ? Array.from(fundSet) : [],
-          },
-        };
-        newBatches.push(batch);
-        files.forEach(f => fileToBatch.set(f.id, batch.id));
-      });
+    const newBatches: UploadBatch[] = [];
+    const fileToBatch = new Map<string, string>();
+    let idx = 0;
+    const stamp = Date.now();
 
-      // Rule 2 — campaign batches (category + fund) for subscription targeting
-      const campaignGroups = new Map<string, UploadedFile[]>();
-      for (const f of uploadedFiles) {
-        if (f.batchId) continue;
-        if (fileToBatch.has(f.id)) continue;
-        if (f.targetType !== 'subscription') continue;
-        if (!f.documentCategory) continue;
-        if (f.targetFunds.length !== 1) continue;
-        const key = `${f.documentCategory}|${f.targetFunds[0]}`;
-        const arr = campaignGroups.get(key) ?? [];
-        arr.push(f);
-        campaignGroups.set(key, arr);
-      }
-      campaignGroups.forEach((files, key) => {
-        if (files.length < 2) return;
-        const [category, fundCode] = key.split('|');
-        idx += 1;
-        const batch: UploadBatch = {
-          id: `batch-auto-${Date.now()}-${idx}`,
-          name: t('ged.dataRoom.massUpload.wizard.aiBatchCampaignName', {
-            category: t(`ged.addModal.documentCategory.${category}`),
-            fund: fundLabelMap[fundCode] ?? fundCode,
-          }),
-          validationTeam: ['ir'],
-          folderMode: 'per-document',
-          globalFolder: '',
-          // Per-document targeting: each file keeps its own subscription;
-          // only the (category, fund) is shared across the campaign.
-          targetingMode: 'per-document',
-          globalTargeting: {
-            targetType: 'subscription',
-            targetSegments: [],
-            targetInvestors: [],
-            targetSubscriptions: [],
-            targetFunds: [fundCode],
-          },
-        };
-        newBatches.push(batch);
-        files.forEach(f => fileToBatch.set(f.id, batch.id));
-      });
+    // Rule 1 — investor batches
+    const investorGroups = new Map<string, UploadedFile[]>();
+    for (const f of candidates) {
+      if (f.targetType !== 'investor') continue;
+      if (f.targetInvestors.length !== 1) continue;
+      const key = f.targetInvestors[0];
+      const arr = investorGroups.get(key) ?? [];
+      arr.push(f);
+      investorGroups.set(key, arr);
+    }
+    investorGroups.forEach((files, investorId) => {
+      if (files.length < 2) return;
+      const investor = availableInvestors.find(i => i.id === investorId);
+      if (!investor) return;
+      idx += 1;
+      const fundSet = new Set(files.flatMap(f => f.targetFunds));
+      const isHomogeneousFund = fundSet.size === 1 && !fundSet.has('');
+      const batch: UploadBatch = {
+        id: `batch-auto-${stamp}-${idx}`,
+        name: t('ged.dataRoom.massUpload.wizard.aiBatchName', { name: investor.name }),
+        validationTeam: ['ir'],
+        folderMode: 'per-document',
+        globalFolder: '',
+        targetingMode: isHomogeneousFund ? 'global' : 'per-document',
+        globalTargeting: {
+          targetType: 'investor',
+          targetSegments: [],
+          targetInvestors: [investor.id],
+          targetSubscriptions: [],
+          targetFunds: isHomogeneousFund ? Array.from(fundSet) : [],
+        },
+      };
+      newBatches.push(batch);
+      files.forEach(f => fileToBatch.set(f.id, batch.id));
+    });
 
-      if (newBatches.length > 0) {
-        setBatches(prev => [...prev, ...newBatches]);
-        setUploadedFiles(prev =>
-          prev.map(f => (fileToBatch.has(f.id) ? { ...f, batchId: fileToBatch.get(f.id) } : f)),
+    // Rule 2 — campaign batches (category + fund) for subscription targeting
+    const campaignGroups = new Map<string, UploadedFile[]>();
+    for (const f of candidates) {
+      if (fileToBatch.has(f.id)) continue;
+      if (f.targetType !== 'subscription') continue;
+      if (!f.documentCategory) continue;
+      if (f.targetFunds.length !== 1) continue;
+      const key = `${f.documentCategory}|${f.targetFunds[0]}`;
+      const arr = campaignGroups.get(key) ?? [];
+      arr.push(f);
+      campaignGroups.set(key, arr);
+    }
+    campaignGroups.forEach((files, key) => {
+      if (files.length < 2) return;
+      const [category, fundCode] = key.split('|');
+      idx += 1;
+      const batch: UploadBatch = {
+        id: `batch-auto-${stamp}-${idx}`,
+        name: t('ged.dataRoom.massUpload.wizard.aiBatchCampaignName', {
+          category: t(`ged.addModal.documentCategory.${category}`),
+          fund: fundLabelMap[fundCode] ?? fundCode,
+        }),
+        validationTeam: ['ir'],
+        folderMode: 'per-document',
+        globalFolder: '',
+        targetingMode: 'per-document',
+        globalTargeting: {
+          targetType: 'subscription',
+          targetSegments: [],
+          targetInvestors: [],
+          targetSubscriptions: [],
+          targetFunds: [fundCode],
+        },
+      };
+      newBatches.push(batch);
+      files.forEach(f => fileToBatch.set(f.id, batch.id));
+    });
+
+    // Attach leftover candidates to a compatible pre-existing auto-batch
+    // (so a single new file targeting an already-batched investor joins
+    // that batch instead of staying loose).
+    const autoBatchOf = (batch: UploadBatch, file: UploadedFile): boolean => {
+      if (!batch.id.startsWith('batch-auto-')) return false;
+      const target = batch.globalTargeting;
+      if (target.targetType === 'investor') {
+        return (
+          file.targetType === 'investor' &&
+          file.targetInvestors.length === 1 &&
+          target.targetInvestors.includes(file.targetInvestors[0])
         );
-        setExpandedBatchIds(prev => {
-          const next = new Set(prev);
-          newBatches.forEach(b => next.add(b.id));
-          return next;
-        });
-        toast.success(t('ged.dataRoom.massUpload.wizard.aiBatchCreatedTitle'), {
-          description: t('ged.dataRoom.massUpload.wizard.aiBatchCreatedDesc', { count: newBatches.length }),
-          duration: 6000,
-        });
       }
+      if (target.targetType === 'subscription') {
+        // Match on fund + category; we recover the campaign's category by
+        // looking at any of its current children.
+        const sample = uploadedFiles.find(x => x.batchId === batch.id);
+        return (
+          file.targetType === 'subscription' &&
+          file.targetFunds.length === 1 &&
+          target.targetFunds.includes(file.targetFunds[0]) &&
+          !!sample?.documentCategory &&
+          file.documentCategory === sample.documentCategory
+        );
+      }
+      return false;
+    };
+    for (const f of candidates) {
+      if (fileToBatch.has(f.id)) continue;
+      const host = batches.find(b => autoBatchOf(b, f));
+      if (host) fileToBatch.set(f.id, host.id);
     }
 
-    // Reset the flag when files are deleted
-    if (fileStats.total === 0) {
-      setAllAnalyzedToastShown(false);
+    if (newBatches.length === 0 && fileToBatch.size === 0) return;
+
+    if (newBatches.length > 0) setBatches(prev => [...prev, ...newBatches]);
+    if (fileToBatch.size > 0) {
+      setUploadedFiles(prev =>
+        prev.map(f => (fileToBatch.has(f.id) ? { ...f, batchId: fileToBatch.get(f.id) } : f)),
+      );
     }
-  }, [fileStats, allAnalyzedToastShown, t, uploadedFiles]);
+    if (newBatches.length > 0) {
+      setExpandedBatchIds(prev => {
+        const next = new Set(prev);
+        newBatches.forEach(b => next.add(b.id));
+        return next;
+      });
+      toast.success(t('ged.dataRoom.massUpload.wizard.aiBatchCreatedTitle'), {
+        description: t('ged.dataRoom.massUpload.wizard.aiBatchCreatedDesc', { count: newBatches.length }),
+        duration: 6000,
+      });
+    }
+  }, [fileStats, allAnalyzedToastShown, t, uploadedFiles, batches]);
 
   if (!isOpen) return null;
 
