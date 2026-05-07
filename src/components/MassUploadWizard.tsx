@@ -86,8 +86,9 @@ import {
 import { Badge } from './ui/badge';
 import { Progress } from './ui/progress';
 import { toast } from 'sonner';
-import { mockDocuments, Document, DocumentCategory } from '../utils/documentMockData';
+import { DocumentCategory } from '../utils/documentMockData';
 import { availableInvestors, fundLabelMap } from '../utils/investorsMockData';
+import { COMMITMENTS, FUNDS, INVESTORS, getSpaces, type FolderSpec } from '../utils/gedFixtures';
 import { useTranslation } from '../utils/languageContext';
 
 export interface MassUploadOriginContext {
@@ -184,25 +185,6 @@ interface FolderItem {
   parentId?: string;
 }
 
-// Function to extract all folders from the tree with their level
-const extractAllFolders = (documents: Document[], level: number = 0, folders: FolderItem[] = []): FolderItem[] => {
-  documents.forEach(doc => {
-    if (doc.type === 'folder') {
-      folders.push({
-        id: doc.id,
-        name: doc.name,
-        path: doc.path,
-        level: level,
-        parentId: doc.parentId,
-      });
-      if (doc.children && doc.children.length > 0) {
-        extractAllFolders(doc.children, level + 1, folders);
-      }
-    }
-  });
-  return folders;
-};
-
 // Mock languages
 const availableLanguages = [
   { value: 'fr', label: 'Français', flag: '🇫🇷' },
@@ -231,54 +213,39 @@ const availableSegments = [
   'UHNWI',
 ];
 
-// Canonical subscriptions — mirror the COMMITMENTS list in gedFixtures.ts.
-// Each subscription belongs to one investor on one fund; investors active
-// on both funds (e.g. Aldebaran Pension Fund) carry one subscription per
-// fund.
-const availableSubscriptions: { id: string; name: string; investor: string; fund: string }[] = [
-  // Northwind Growth Capital II (NWGC2)
-  { id: 'SUB-NWGC2-001', name: 'SUB-NWGC2-001', investor: 'Aldebaran Pension Fund', fund: 'NWGC2' },
-  { id: 'SUB-NWGC2-002', name: 'SUB-NWGC2-002', investor: 'Norwood Pension Trust', fund: 'NWGC2' },
-  { id: 'SUB-NWGC2-003', name: 'SUB-NWGC2-003', investor: 'Hartwood Retirement Plan', fund: 'NWGC2' },
-  { id: 'SUB-NWGC2-004', name: 'SUB-NWGC2-004', investor: 'Brentley Pension Scheme', fund: 'NWGC2' },
-  { id: 'SUB-NWGC2-005', name: 'SUB-NWGC2-005', investor: 'Caledonia Insurance Group', fund: 'NWGC2' },
-  { id: 'SUB-NWGC2-006', name: 'SUB-NWGC2-006', investor: 'Stratton Mutual Insurance', fund: 'NWGC2' },
-  { id: 'SUB-NWGC2-007', name: 'SUB-NWGC2-007', investor: 'Highbury Capital Allocators', fund: 'NWGC2' },
-  { id: 'SUB-NWGC2-008', name: 'SUB-NWGC2-008', investor: 'Camberwell Allocators', fund: 'NWGC2' },
-  { id: 'SUB-NWGC2-009', name: 'SUB-NWGC2-009', investor: 'Helmsford Foundation', fund: 'NWGC2' },
-  { id: 'SUB-NWGC2-010', name: 'SUB-NWGC2-010', investor: 'Brunswick Family Office', fund: 'NWGC2' },
-  { id: 'SUB-NWGC2-011', name: 'SUB-NWGC2-011', investor: 'Everstone Family Trust', fund: 'NWGC2' },
-  { id: 'SUB-NWGC2-012', name: 'SUB-NWGC2-012', investor: 'Marston Family Office', fund: 'NWGC2' },
-  { id: 'SUB-NWGC2-013', name: 'SUB-NWGC2-013', investor: 'Pemberton House', fund: 'NWGC2' },
-  { id: 'SUB-NWGC2-014', name: 'SUB-NWGC2-014', investor: 'Avalon Heritage Trust', fund: 'NWGC2' },
-  { id: 'SUB-NWGC2-015', name: 'SUB-NWGC2-015', investor: 'Greycliff Wealth Partners', fund: 'NWGC2' },
-  { id: 'SUB-NWGC2-016', name: 'SUB-NWGC2-016', investor: 'Ibex Mountain Holdings', fund: 'NWGC2' },
-  { id: 'SUB-NWGC2-017', name: 'SUB-NWGC2-017', investor: 'Westbrook Investments', fund: 'NWGC2' },
-  { id: 'SUB-NWGC2-018', name: 'SUB-NWGC2-018', investor: 'Carrington Private Wealth', fund: 'NWGC2' },
-  // Atlas Infrastructure Partners I (AIP1)
-  { id: 'SUB-AIP1-001', name: 'SUB-AIP1-001', investor: 'Aldebaran Pension Fund', fund: 'AIP1' },
-  { id: 'SUB-AIP1-002', name: 'SUB-AIP1-002', investor: 'Norwood Pension Trust', fund: 'AIP1' },
-  { id: 'SUB-AIP1-003', name: 'SUB-AIP1-003', investor: 'Brentley Pension Scheme', fund: 'AIP1' },
-  { id: 'SUB-AIP1-004', name: 'SUB-AIP1-004', investor: 'Hartwood Retirement Plan', fund: 'AIP1' },
-  { id: 'SUB-AIP1-005', name: 'SUB-AIP1-005', investor: 'Dunmore Sovereign Wealth', fund: 'AIP1' },
-  { id: 'SUB-AIP1-006', name: 'SUB-AIP1-006', investor: 'Tanvir Investment Authority', fund: 'AIP1' },
-  { id: 'SUB-AIP1-007', name: 'SUB-AIP1-007', investor: 'Suvarna Reserve Fund', fund: 'AIP1' },
-  { id: 'SUB-AIP1-008', name: 'SUB-AIP1-008', investor: 'Caledonia Insurance Group', fund: 'AIP1' },
-  { id: 'SUB-AIP1-009', name: 'SUB-AIP1-009', investor: 'Stratton Mutual Insurance', fund: 'AIP1' },
-  { id: 'SUB-AIP1-010', name: 'SUB-AIP1-010', investor: 'Vellington Re', fund: 'AIP1' },
-  { id: 'SUB-AIP1-011', name: 'SUB-AIP1-011', investor: 'Drumhill Reinsurance', fund: 'AIP1' },
-  { id: 'SUB-AIP1-012', name: 'SUB-AIP1-012', investor: 'Northpoint Insurance', fund: 'AIP1' },
-  { id: 'SUB-AIP1-013', name: 'SUB-AIP1-013', investor: 'Highbury Capital Allocators', fund: 'AIP1' },
-  { id: 'SUB-AIP1-014', name: 'SUB-AIP1-014', investor: 'Juniper Asset Management', fund: 'AIP1' },
-  { id: 'SUB-AIP1-015', name: 'SUB-AIP1-015', investor: 'Fairfield Endowment', fund: 'AIP1' },
-  { id: 'SUB-AIP1-016', name: 'SUB-AIP1-016', investor: 'Helmsford Foundation', fund: 'AIP1' },
-  { id: 'SUB-AIP1-017', name: 'SUB-AIP1-017', investor: 'Saint-Gaudens Endowment', fund: 'AIP1' },
-  { id: 'SUB-AIP1-018', name: 'SUB-AIP1-018', investor: 'Brunswick Family Office', fund: 'AIP1' },
-  { id: 'SUB-AIP1-019', name: 'SUB-AIP1-019', investor: 'Rosendale Wealth Office', fund: 'AIP1' },
-  { id: 'SUB-AIP1-020', name: 'SUB-AIP1-020', investor: 'Stenmark Capital', fund: 'AIP1' },
-  { id: 'SUB-AIP1-021', name: 'SUB-AIP1-021', investor: 'Ibex Mountain Holdings', fund: 'AIP1' },
-  { id: 'SUB-AIP1-022', name: 'SUB-AIP1-022', investor: 'Linden Holdings', fund: 'AIP1' },
-];
+// Canonical subscriptions — derived from `gedFixtures.COMMITMENTS` so the
+// wizard's data is in sync with what the data room renders. Each entry
+// carries the fields the dropdown displays (investor / amount / fund /
+// share class).
+type SubscriptionRow = {
+  id: string;
+  name: string;
+  investor: string;
+  investorId: string;
+  fund: string;
+  shareClass: string;
+  amount: number;
+};
+const investorNameById = (id: string): string =>
+  INVESTORS.find(i => i.id === id)?.name ?? id;
+const availableSubscriptions: SubscriptionRow[] = COMMITMENTS.map(c => ({
+  id: c.subscriptionId,
+  name: c.subscriptionId,
+  investor: investorNameById(c.investorId),
+  investorId: c.investorId,
+  fund: c.fundCode,
+  shareClass: c.shareClass,
+  amount: c.commitmentEur,
+}));
+// Compact EUR formatter — €25.0M / €750K / €420 — used inside the
+// subscription dropdowns so a row reads "Aldebaran · €40.0M · Atlas …".
+const formatCommitment = (amount: number): string => {
+  if (amount >= 1_000_000) return `€${(amount / 1_000_000).toFixed(1)}M`;
+  if (amount >= 1_000) return `€${Math.round(amount / 1_000)}K`;
+  return `€${amount}`;
+};
+const subscriptionLabel = (sub: SubscriptionRow): string =>
+  `${sub.investor} · ${formatCommitment(sub.amount)} · ${fundLabelMap[sub.fund] ?? sub.fund} · ${sub.shareClass}`;
 
 // Mock contact roles
 const availableContactRoles = [
@@ -434,14 +401,30 @@ export function MassUploadWizard({ isOpen, onClose, existingFolders, inline = fa
     return { fund: fund?.name, segment };
   };
 
-  // Extract all available folders
+  // Extract all available folders — canonical structure derived from
+  // gedFixtures' fund spaces (NWGC2, AIP1, Marketing & Distribution).
   const availableFolders = useMemo(() => {
-    const base = extractAllFolders(mockDocuments);
-    // Deduplicate by path: the Select uses folder.path as its value, and Radix's
-    // SelectValue renders every SelectItem whose value matches — so duplicate paths
-    // produce a doubled trigger label (e.g. "└ 2024  └ 2024").
+    const out: FolderItem[] = [];
+    // Limit depth: capital calls produce ~30 sub-folders/year, which would
+    // make the picker unusable. We keep down to the year level.
+    const MAX_DEPTH = 3;
+    const walkFolders = (folders: FolderSpec[] | undefined, parentPath: string, level: number, parentId?: string) => {
+      if (!folders || level > MAX_DEPTH) return;
+      for (const f of folders) {
+        const path = `${parentPath}/${f.name}`;
+        const id = `gf-${path}`;
+        out.push({ id, name: f.name, path, level, parentId });
+        walkFolders(f.folders, path, level + 1, id);
+      }
+    };
+    for (const space of getSpaces()) {
+      const spaceId = `gf-space-${space.id}`;
+      const spacePath = `/${space.name}`;
+      out.push({ id: spaceId, name: space.name, path: spacePath, level: 0 });
+      walkFolders(space.folders, spacePath, 1, spaceId);
+    }
     const seen = new Set<string>();
-    const deduped = base.filter((folder) => {
+    const deduped = out.filter((folder) => {
       if (seen.has(folder.path)) return false;
       seen.add(folder.path);
       return true;
@@ -608,7 +591,16 @@ export function MassUploadWizard({ isOpen, onClose, existingFolders, inline = fa
       if (owner) detectedInvestor = owner;
     }
 
-    // 4) Targeting decision — subscription wins over investor wins over all.
+    // 4) Fund detection — subscription's own fund wins; otherwise look for a
+    // fund code mentioned in the filename (NWGC2 / AIP1); fall back to the
+    // detected investor's primary fund.
+    const upperName = rawName.toUpperCase();
+    const fundFromName = FUNDS.find(f => upperName.includes(f.code))?.code;
+    let resolvedFund: string | undefined;
+    if (subscriptionMatch) resolvedFund = subscriptionMatch.fund;
+    else resolvedFund = fundFromName ?? detectedInvestor?.fund;
+
+    // 5) Targeting decision — subscription > investor > all.
     let targetType: string;
     let targetInvestors: string[] = [];
     let targetSubscriptions: string[] = [];
@@ -616,16 +608,37 @@ export function MassUploadWizard({ isOpen, onClose, existingFolders, inline = fa
     if (subscriptionMatch) {
       targetType = 'subscription';
       targetSubscriptions = [subscriptionMatch.id];
-      // The subscription's own fund wins — an investor can subscribe to
-      // multiple funds, so we ignore the investor's primary fund here.
       targetFunds = [subscriptionMatch.fund];
     } else if (detectedInvestor) {
       targetType = 'investor';
       targetInvestors = [detectedInvestor.id];
-      if (detectedInvestor.fund) targetFunds = [detectedInvestor.fund];
+      if (resolvedFund) targetFunds = [resolvedFund];
     } else {
       targetType = 'all';
     }
+
+    // 6) Folder inference — pre-file the document into the canonical
+    // sub-folder of its fund space when we know enough. Origin folder (if
+    // the wizard was opened from a folder) always wins.
+    const fundName = resolvedFund
+      ? FUNDS.find(f => f.code === resolvedFund)?.name
+      : undefined;
+    const yearMatch = rawName.match(/\b(20\d{2})\b/);
+    const docYear = yearMatch?.[1] ?? String(new Date().getFullYear());
+    const inferFolder = (): string => {
+      if (!fundName) return '';
+      switch (documentCategory) {
+        case 'capitalCall':     return `/${fundName}/Capital Calls/${docYear}`;
+        case 'distribution':    return `/${fundName}/Distributions/${docYear}`;
+        case 'quarterlyReport': return `/${fundName}/Management Reports`;
+        case 'annualReport':    return `/${fundName}/Management Reports`;
+        case 'tax':             return `/${fundName}/Other Communications/Tax Certificates 2025`;
+        case 'legal':           return `/${fundName}/Legal Documents`;
+        case 'kyc':             return `/${fundName}/Legal Documents`;
+        default:                return `/${fundName}`;
+      }
+    };
+    const inferredFolder = defaultFolder || inferFolder();
 
     return {
       name: rawName,
@@ -633,7 +646,7 @@ export function MassUploadWizard({ isOpen, onClose, existingFolders, inline = fa
         ? `${rawName} — auto-tagged for ${detectedInvestor.name}.`
         : `${rawName} — auto-analyzed.`,
       documentCategory,
-      folder: defaultFolder,
+      folder: inferredFolder,
       language: 'en',
       restrictToLanguage: false,
       targetType,
@@ -1417,19 +1430,24 @@ export function MassUploadWizard({ isOpen, onClose, existingFolders, inline = fa
         const investor = availableInvestors.find(i => i.id === investorId);
         if (!investor) return;
         idx += 1;
+        // If every file in the group sits on the same fund we promote the
+        // batch to global targeting; otherwise keep per-document so a
+        // cross-fund tax package preserves each file's own fund.
+        const fundSet = new Set(files.flatMap(f => f.targetFunds));
+        const isHomogeneousFund = fundSet.size === 1 && !fundSet.has('');
         const batch: UploadBatch = {
           id: `batch-auto-${Date.now()}-${idx}`,
           name: t('ged.dataRoom.massUpload.wizard.aiBatchName', { name: investor.name }),
           validationTeam: ['ir'],
           folderMode: 'per-document',
           globalFolder: '',
-          targetingMode: 'global',
+          targetingMode: isHomogeneousFund ? 'global' : 'per-document',
           globalTargeting: {
             targetType: 'investor',
             targetSegments: [],
             targetInvestors: [investor.id],
             targetSubscriptions: [],
-            targetFunds: investor.fund ? [investor.fund] : [],
+            targetFunds: isHomogeneousFund ? Array.from(fundSet) : [],
           },
         };
         newBatches.push(batch);
@@ -2676,15 +2694,11 @@ export function MassUploadWizard({ isOpen, onClose, existingFolders, inline = fa
                                             <SelectValue placeholder={t('ged.dataRoom.massUpload.wizard.selectSubscription')} />
                                           </SelectTrigger>
                                           <SelectContent>
-                                            {availableInvestors.map((inv) => {
-                                              const fundLabel = fundLabelMap[inv.fund] ?? inv.fund;
-                                              const subId = `${inv.id}-${inv.fund}`;
-                                              return (
-                                                <SelectItem key={subId} value={subId} className="text-xs">
-                                                  {inv.name} · {fundLabel}
-                                                </SelectItem>
-                                              );
-                                            })}
+                                            {availableSubscriptions.map((sub) => (
+                                              <SelectItem key={sub.id} value={sub.id} className="text-xs">
+                                                {subscriptionLabel(sub)}
+                                              </SelectItem>
+                                            ))}
                                           </SelectContent>
                                         </Select>
                                       )}
@@ -3238,13 +3252,9 @@ export function MassUploadWizard({ isOpen, onClose, existingFolders, inline = fa
                                   >
                                     <SelectTrigger className="h-8 text-xs"><SelectValue placeholder={t('ged.dataRoom.massUpload.wizard.selectSubscription')} /></SelectTrigger>
                                     <SelectContent>
-                                      {availableInvestors.map((inv) => {
-                                        const fundLabel = fundLabelMap[inv.fund] ?? inv.fund;
-                                        const subId = `${inv.id}-${inv.fund}`;
-                                        return (
-                                          <SelectItem key={subId} value={subId} className="text-xs">{inv.name} · {fundLabel}</SelectItem>
-                                        );
-                                      })}
+                                      {availableSubscriptions.map((sub) => (
+                                        <SelectItem key={sub.id} value={sub.id} className="text-xs">{subscriptionLabel(sub)}</SelectItem>
+                                      ))}
                                     </SelectContent>
                                   </Select>
                                 )}
