@@ -1391,7 +1391,6 @@
       },
       "folderCount": "{{count}} éléments",
       "folderCountOne": "{{count}} élément",
-      "folderTag": "Dossier",
       "noResults": "Aucun résultat trouvé",
       "emptyFolder": "Ce dossier est vide",
       "status": {

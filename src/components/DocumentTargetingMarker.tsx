@@ -1,8 +1,9 @@
 import { Document } from '../utils/documentMockData';
-import { Globe, UserRound } from 'lucide-react';
+import { Globe, UserRound, Users } from 'lucide-react';
 import { GenericAudienceInline } from './GenericAudienceCard';
 import { SpecificAudience } from './SpecificAudience';
 import { Tag } from './Tag';
+import { computeAudience } from './AudienceCounter';
 import { useTranslation } from '../utils/languageContext';
 
 interface DocumentTargetingMarkerProps {
@@ -42,8 +43,36 @@ export function DocumentTargetingMarker({ document, mode = 'full' }: DocumentTar
     />
   );
 
+  // Lightweight inline marker (used in list-view document rows): no
+  // pill background, neutral gray, mirroring the BirdView pattern.
   if (mode === 'tag') {
-    return natureTag;
+    if (isGeneric) {
+      const audienceCount = computeAudience(
+        targeting.segment ? [targeting.segment] : [],
+        targeting.fund ?? null,
+      ).investors;
+      return (
+        <div
+          className="flex items-center gap-1 text-gray-400"
+          title={t('ged.targeting.generic')}
+        >
+          <Globe className="w-3.5 h-3.5" />
+          <span className="text-xs tabular-nums">{audienceCount}</span>
+          <Users className="w-3 h-3" />
+        </div>
+      );
+    }
+    return (
+      <div
+        className="flex items-center gap-1 text-gray-400"
+        title={t('ged.targeting.nominative')}
+      >
+        <UserRound className="w-3.5 h-3.5" />
+        {targeting.investor && (
+          <span className="text-xs truncate max-w-[12rem]">{targeting.investor}</span>
+        )}
+      </div>
+    );
   }
 
   if (mode === 'details') {
