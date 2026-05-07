@@ -68,9 +68,11 @@ interface Recipient {
   /**
    * In consolidated mode: number of docs in the folder that this
    * recipient has actually consulted, out of the total docs in their
-   * scope. Surfaced as "X / N" next to the row name.
+   * scope. Surfaced as "X / N" next to the row name and inside the
+   * Ouverture / Consultation cells (where a single date doesn't make
+   * sense across multiple documents).
    */
-  consolidatedSummary?: { consulted: number; total: number };
+  consolidatedSummary?: { delivered: number; opened: number; consulted: number; total: number };
 }
 
 interface DocumentRelaunchModalProps {
@@ -253,7 +255,7 @@ const buildRecipients = (
         receptionDate: a.delivered > 0 ? baseNotificationDate : undefined,
         openingStatus: a.opened === a.total ? 'done' : a.opened > 0 ? 'pending' : 'not-targeted',
         consultationStatus: allConsulted ? 'done' : a.viewed > 0 ? 'pending' : 'not-targeted',
-        consolidatedSummary: { consulted: a.viewed, total: a.total },
+        consolidatedSummary: { delivered: a.delivered, opened: a.opened, consulted: a.viewed, total: a.total },
       };
     });
   }
@@ -455,7 +457,34 @@ export function DocumentRelaunchModal({
     return <StatusIndicator state="na" className="mx-auto" />;
   };
 
+  const renderConsolidatedFraction = (numerator: number, total: number) => {
+    if (total === 0) {
+      return <StatusIndicator state="na" className="mx-auto" />;
+    }
+    const isFull = numerator > 0 && numerator === total;
+    return (
+      <span
+        className={cn(
+          'text-xs tabular-nums',
+          isFull
+            ? 'text-foreground font-medium'
+            : numerator === 0
+            ? 'text-muted-foreground'
+            : 'text-foreground',
+        )}
+      >
+        {numerator} / {total}
+      </span>
+    );
+  };
+
   const renderConsultationCell = (recipient: Recipient) => {
+    if (recipient.consolidatedSummary) {
+      return renderConsolidatedFraction(
+        recipient.consolidatedSummary.consulted,
+        recipient.consolidatedSummary.total,
+      );
+    }
     if (!recipient.inTarget || recipient.consultationStatus === 'not-targeted') {
       if (recipient.name === 'Pierre Dupont') {
         return (
@@ -489,15 +518,18 @@ export function DocumentRelaunchModal({
       <AlertDialog open={isOpen} onOpenChange={onClose}>
         <AlertDialogContent
           className={cn(
-            'p-0 gap-0 overflow-hidden flex flex-col',
+            'p-0 gap-0 overflow-hidden',
             'w-full max-w-full sm:max-w-full',
-            'max-h-[88vh]',
             'bg-white',
           )}
           style={{
             width: 'min(960px, 60vw)',
             maxWidth: 'min(960px, 60vw)',
             backgroundColor: '#FFFFFF',
+            display: 'flex',
+            flexDirection: 'column',
+            height: 'min(85vh, 900px)',
+            maxHeight: '85vh',
           }}
         >
           {/* Header */}
@@ -531,7 +563,15 @@ export function DocumentRelaunchModal({
           </AlertDialogHeader>
 
           {/* Body */}
-          <div className="flex-1 overflow-y-auto scrollbar-thin bg-white" style={{ backgroundColor: '#FFFFFF' }}>
+          <div
+            className="scrollbar-thin bg-white"
+            style={{
+              backgroundColor: '#FFFFFF',
+              flex: '1 1 0%',
+              minHeight: 0,
+              overflowY: 'auto',
+            }}
+          >
             <div className="px-6 py-5 space-y-5">
               {/* Document preview card (clickable) */}
               <button
@@ -827,10 +867,20 @@ export function DocumentRelaunchModal({
                                 {renderLastNotification(recipient)}
                               </TableCell>
                               <TableCell className="px-3 text-center">
-                                {renderDateOrIcon(recipient.receptionStatus, recipient.receptionDate)}
+                                {recipient.consolidatedSummary
+                                  ? renderConsolidatedFraction(
+                                      recipient.consolidatedSummary.delivered,
+                                      recipient.consolidatedSummary.total,
+                                    )
+                                  : renderDateOrIcon(recipient.receptionStatus, recipient.receptionDate)}
                               </TableCell>
                               <TableCell className="px-3 text-center">
-                                {renderDateOrIcon(recipient.openingStatus, recipient.openingDate)}
+                                {recipient.consolidatedSummary
+                                  ? renderConsolidatedFraction(
+                                      recipient.consolidatedSummary.opened,
+                                      recipient.consolidatedSummary.total,
+                                    )
+                                  : renderDateOrIcon(recipient.openingStatus, recipient.openingDate)}
                               </TableCell>
                               <TableCell className="px-3 text-center">
                                 {renderConsultationCell(recipient)}

@@ -1250,7 +1250,7 @@
       }
     },
     "targeting": {
-      "generic": "Générique",
+      "generic": "Général",
       "nominative": "Nominatif"
     },
     "tracking": {
@@ -1345,7 +1345,9 @@
         "notViewed": "Non Consulté",
         "preview": "Aperçu du document",
         "activity": "Activité du document",
-        "activityLabel": "Activité"
+        "activityLabel": "Activité",
+        "inaccessibleToContact": "Hors périmètre du contact",
+        "inaccessibleToContactReason": "{{contact}} n'a pas accès à ce document, mais il est bien rattaché à {{investor}}."
       },
       "access": {
         "nominativeTitle": "Document nominatif",
@@ -1389,7 +1391,6 @@
       },
       "folderCount": "{{count}} éléments",
       "folderCountOne": "{{count}} élément",
-      "folderTag": "Dossier",
       "noResults": "Aucun résultat trouvé",
       "emptyFolder": "Ce dossier est vide",
       "status": {

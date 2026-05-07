@@ -22,7 +22,6 @@ import { Document } from '../utils/documentMockData';
 import { Button } from './ui/button';
 import { DocumentCategoryBadge } from './DocumentCategoryBadge';
 import { DocumentTargetingMarker } from './DocumentTargetingMarker';
-import { Tag } from './Tag';
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -329,7 +328,6 @@ export function DocumentListView({
                           <p className="text-xs text-gray-400 truncate">{(folder as any).__path.slice(0, -1).join(' / ') || t('ged.listView.root')}</p>
                         )}
                         <div className="mt-1 flex items-center gap-1.5 flex-wrap">
-                          <Tag label={t('ged.listView.folderTag')} />
                           <span className="text-xs text-gray-500">
                             {t((folder.children?.length || 0) > 1 ? 'ged.listView.folderCount' : 'ged.listView.folderCountOne', { count: folder.children?.length || 0 })}
                           </span>

@@ -1250,7 +1250,7 @@
       }
     },
     "targeting": {
-      "generic": "Generic",
+      "generic": "General",
       "nominative": "Nominative"
     },
     "tracking": {
@@ -1345,7 +1345,9 @@
         "notViewed": "Not viewed",
         "preview": "Document preview",
         "activity": "Document activity",
-        "activityLabel": "Activity"
+        "activityLabel": "Activity",
+        "inaccessibleToContact": "Outside contact scope",
+        "inaccessibleToContactReason": "{{contact}} doesn't have access to this document, but it is linked to {{investor}}."
       },
       "access": {
         "nominativeTitle": "Nominative document",
@@ -1389,7 +1391,6 @@
       },
       "folderCount": "{{count}} items",
       "folderCountOne": "{{count}} item",
-      "folderTag": "Folder",
       "noResults": "No result found",
       "emptyFolder": "This folder is empty",
       "status": {

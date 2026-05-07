@@ -42,8 +42,28 @@ export function DocumentTargetingMarker({ document, mode = 'full' }: DocumentTar
     />
   );
 
+  // Lightweight inline marker (used in list-view document rows): no
+  // pill background, neutral gray, mirroring the BirdView pattern.
   if (mode === 'tag') {
-    return natureTag;
+    if (isGeneric) {
+      return (
+        <div className="flex items-center gap-1 text-gray-400">
+          <Globe className="w-3.5 h-3.5" />
+          <span className="text-xs">{t('ged.targeting.generic')}</span>
+        </div>
+      );
+    }
+    return (
+      <div
+        className="flex items-center gap-1 text-gray-400"
+        title={t('ged.targeting.nominative')}
+      >
+        <UserRound className="w-3.5 h-3.5" />
+        {targeting.investor && (
+          <span className="text-xs truncate max-w-[12rem]">{targeting.investor}</span>
+        )}
+      </div>
+    );
   }
 
   if (mode === 'details') {
