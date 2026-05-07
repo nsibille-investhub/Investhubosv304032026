@@ -1345,7 +1345,9 @@
         "notViewed": "Non Consulté",
         "preview": "Aperçu du document",
         "activity": "Activité du document",
-        "activityLabel": "Activité"
+        "activityLabel": "Activité",
+        "inaccessibleToContact": "Hors périmètre du contact",
+        "inaccessibleToContactReason": "{{contact}} n'a pas accès à ce document, mais il est bien rattaché à {{investor}}."
       },
       "access": {
         "nominativeTitle": "Document nominatif",

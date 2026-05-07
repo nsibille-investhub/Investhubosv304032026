@@ -1345,7 +1345,9 @@
         "notViewed": "Not viewed",
         "preview": "Document preview",
         "activity": "Document activity",
-        "activityLabel": "Activity"
+        "activityLabel": "Activity",
+        "inaccessibleToContact": "Outside contact scope",
+        "inaccessibleToContactReason": "{{contact}} doesn't have access to this document, but it is linked to {{investor}}."
       },
       "access": {
         "nominativeTitle": "Nominative document",

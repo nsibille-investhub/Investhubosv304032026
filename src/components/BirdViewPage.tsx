@@ -20,7 +20,8 @@ import {
   Tag as TagIcon,
   FileType,
   Users,
-  Globe
+  Globe,
+  Ban
 } from 'lucide-react';
 import { toast } from 'sonner@2.0.3';
 import {
@@ -85,6 +86,13 @@ interface DocumentNode {
   segmentRestrictions?: string[];
   investorRestriction?: string;
   subscriptionRestriction?: string;
+  /**
+   * Set when filtering for a contact viewer scope: the LP can see this
+   * doc but the selected contact cannot (revoked / commercial-only
+   * access). The doc stays in the tree, rendered in a greyed-out state
+   * so the GP can still see what exists at the LP level.
+   */
+  inaccessibleForContact?: boolean;
 }
 
 export function BirdViewPage({ onBack }: BirdViewPageProps) {
@@ -255,20 +263,15 @@ export function BirdViewPage({ onBack }: BirdViewPageProps) {
   }, [selectedContact, availableContacts]);
 
   /**
-   * Renvoie true quand le document EST accessible par le viewer courant
-   * (LP sélectionné + contact optionnel). Quand aucun viewer n'est
-   * sélectionné (vue Global), la fonction renvoie toujours true.
+   * LP-level access: whether the selected investor can see this doc at
+   * all. When no LP is selected (vue Global), always true.
    *
-   * Règles appliquées sur les documents :
-   *   - Les docs back-office (isInternal) ne sont jamais visibles côté LP
-   *   - Restriction nominative (investorRestriction) : doit matcher le LP
-   *   - Restriction fonds : le LP doit avoir un commitment sur ce fonds
-   *   - Restriction segment : la typologie du LP doit être listée
-   *   - Si un contact est aussi sélectionné, son accessLevel restreint :
-   *     · revoked          → rien
-   *     · commercial-only  → uniquement les docs marketing/segment
+   *   - Back-office docs (isInternal) are never visible LP-side
+   *   - investorRestriction must match the LP
+   *   - fundRestriction requires a commitment on that fund
+   *   - segmentRestrictions must include the LP's typology
    */
-  const isAccessibleForViewer = useCallback(
+  const isAccessibleForInvestor = useCallback(
     (node: DocumentNode): boolean => {
       if (!selectedInvestor) return true;
       const lp = INVESTORS.find((i) => i.name === selectedInvestor);
@@ -291,19 +294,32 @@ export function BirdViewPage({ onBack }: BirdViewPageProps) {
         if (!node.segmentRestrictions.includes(lp.typology)) return false;
       }
 
-      if (selectedContactData) {
-        const lvl = selectedContactData.accessLevel;
-        if (lvl === 'revoked') return false;
-        if (lvl === 'commercial-only') {
-          const isCommercial = node.documentCategory === 'marketing';
-          const isSegmentTargeted = !!(node.segmentRestrictions && node.segmentRestrictions.length > 0);
-          if (!isCommercial && !isSegmentTargeted) return false;
-        }
-      }
-
       return true;
     },
-    [selectedInvestor, selectedContactData],
+    [selectedInvestor],
+  );
+
+  /**
+   * Contact-level access: whether the selected contact (if any) can
+   * see this doc, assuming the LP can. When no contact is selected,
+   * always true.
+   *
+   *   - revoked          → no access
+   *   - commercial-only  → only marketing / segment-targeted docs
+   */
+  const isAccessibleForContact = useCallback(
+    (node: DocumentNode): boolean => {
+      if (!selectedContactData) return true;
+      const lvl = selectedContactData.accessLevel;
+      if (lvl === 'revoked') return false;
+      if (lvl === 'commercial-only') {
+        const isCommercial = node.documentCategory === 'marketing';
+        const isSegmentTargeted = !!(node.segmentRestrictions && node.segmentRestrictions.length > 0);
+        if (!isCommercial && !isSegmentTargeted) return false;
+      }
+      return true;
+    },
+    [selectedContactData],
   );
 
   /* ----------------------------------------------------------------- */
@@ -453,15 +469,22 @@ export function BirdViewPage({ onBack }: BirdViewPageProps) {
       tree = filterTree(tree);
     }
 
-    // Filtre "vue contextualisée" (LP / LP+contact) — cache dans le
-    // corpus tous les documents que le viewer ne pourrait pas voir.
-    // Les dossiers/spaces vides sont retirés en cascade.
+    // Filtre "vue contextualisée" (LP / LP+contact). Les docs hors
+    // périmètre LP sont retirés du corpus, dossiers/spaces vides en
+    // cascade. Les docs accessibles au LP mais hors périmètre du
+    // contact restent visibles, marqués `inaccessibleForContact` pour
+    // un rendu grisé en aval — le GP voit ainsi tout ce que le LP
+    // pourrait recevoir, et où s'arrête le contact ciblé.
     if (selectedInvestor) {
       const filterByAccess = (nodes: DocumentNode[]): DocumentNode[] =>
         nodes
           .map((n) => {
             if (n.type === 'document') {
-              return isAccessibleForViewer(n) ? n : null;
+              if (!isAccessibleForInvestor(n)) return null;
+              if (selectedContactData && !isAccessibleForContact(n)) {
+                return { ...n, inaccessibleForContact: true };
+              }
+              return n;
             }
             const kept = n.children ? filterByAccess(n.children) : [];
             if (kept.length === 0) return null;
@@ -480,7 +503,7 @@ export function BirdViewPage({ onBack }: BirdViewPageProps) {
   }, [
     documentTree, showOnlyIncomplete,
     documentNameFilter, selectedDocumentCategory, selectedFund, selectedSegments, selectedSubscription,
-    selectedInvestor, isAccessibleForViewer,
+    selectedInvestor, selectedContactData, isAccessibleForInvestor, isAccessibleForContact,
   ]);
 
   // Statistiques filtrées basées sur displayedTree
@@ -854,7 +877,12 @@ export function BirdViewPage({ onBack }: BirdViewPageProps) {
 
         {/* Document */}
         {node.type === 'document' && (
-          <div className="flex items-center gap-3 py-2 px-3 bg-blue-50/30 dark:bg-blue-950/10 rounded hover:bg-gray-100 dark:hover:bg-gray-800/60 transition-colors group">
+          <div
+            className={cn(
+              'flex items-center gap-3 py-2 px-3 bg-blue-50/30 dark:bg-blue-950/10 rounded hover:bg-gray-100 dark:hover:bg-gray-800/60 transition-colors group',
+              node.inaccessibleForContact && 'opacity-60',
+            )}
+          >
             {/* Icon */}
             <div className="w-4 h-4 flex items-center justify-center flex-shrink-0">
               <FileText className="w-4 h-4 text-gray-400" />
@@ -913,6 +941,29 @@ export function BirdViewPage({ onBack }: BirdViewPageProps) {
                 access.color === 'purple'
                   ? 'text-purple-200'
                   : 'text-blue-200';
+
+              if (node.inaccessibleForContact) {
+                return (
+                  <Tooltip>
+                    <TooltipTrigger asChild>
+                      <div className="flex items-center gap-1.5 ml-4 cursor-help">
+                        <Ban className="w-4 h-4 text-gray-400" />
+                        <span className="text-xs font-medium text-gray-500">
+                          {t('ged.birdview.node.inaccessibleToContact')}
+                        </span>
+                      </div>
+                    </TooltipTrigger>
+                    <TooltipContent side="top" className="max-w-sm">
+                      <div className="text-xs leading-snug">
+                        {t('ged.birdview.node.inaccessibleToContactReason', {
+                          contact: selectedContact ?? '',
+                          investor: selectedInvestor ?? '',
+                        })}
+                      </div>
+                    </TooltipContent>
+                  </Tooltip>
+                );
+              }
 
               if (node.isNominatif && node.engagement) {
                 // Document nominatif : Consulté dès qu'au moins une personne
