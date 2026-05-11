@@ -1,66 +1,34 @@
 import React, { useState } from 'react';
 import { motion } from 'motion/react';
-import { 
-  Users, 
-  Plus, 
-  Mail, 
-  Phone, 
-  Briefcase, 
-  Star, 
-  Key, 
+import {
+  Users,
+  Plus,
+  Mail,
+  Phone,
+  Briefcase,
+  Star,
+  Key,
   Edit2,
   Copy,
   Check,
-  Building2,
-  Globe,
-  Bell,
-  FileText,
-  Shield,
-  Lock,
   ExternalLink,
   UserCheck
 } from 'lucide-react';
 import { Badge } from '../ui/badge';
 import { Button } from '../ui/button';
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, DialogDescription } from '../ui/dialog';
-import { Input } from '../ui/input';
-import { Label } from '../ui/label';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../ui/select';
-import { Checkbox } from '../ui/checkbox';
 import { toast } from 'sonner';
 import { LanguageFlag } from '../LanguageFlag';
 import { useTranslation } from '../../utils/languageContext';
+import { ContactEditModal, type ContactDraft, type StructureOption } from './ContactEditModal';
 
-interface Contact {
-  id: string;
-  firstName: string;
-  lastName: string;
-  email: string;
-  phone: string;
-  function: string;
-  isPrimary: boolean;
-  hasPortalAccess: boolean;
-  accessLevel?: string;
-  language?: string;
-  isPreferredContact?: boolean;
-  notificationTeams?: string[];
-  authorizedFunds?: string[];
-  authorizedSubscriptions?: string[];
-  linkedStructures?: string[];
-}
-
-interface Structure {
-  id: string;
-  name: string;
-  type: string;
-}
+type Contact = ContactDraft;
 
 interface ContactsTabProps {
   investor: any;
 }
 
 // Mock data pour les structures
-const mockStructures: Structure[] = [
+const mockStructures: StructureOption[] = [
   { id: 'str-1', name: 'Simon Holding SAS', type: 'SAS' },
   { id: 'str-2', name: 'Family Trust Simon', type: 'Trust' },
   { id: 'str-3', name: 'InvestHub SARL', type: 'SARL' },
@@ -76,12 +44,6 @@ const mockFunds = [
 // Mock data pour les souscriptions
 const mockSubscriptions = [
   { id: 'sub-1', name: '12071 - IH1 - Nicolas SIRIEIX' },
-];
-
-// Mock data pour les équipes de notification
-const mockTeams = [
-  { id: 'team-1', name: 'Équipe 1' },
-  { id: 'team-2', name: 'Équipe 2' },
 ];
 
 export function ContactsTab({ investor }: ContactsTabProps) {
@@ -126,10 +88,15 @@ export function ContactsTab({ investor }: ContactsTabProps) {
       hasPortalAccess: false,
       language: 'Français',
       isPreferredContact: false,
-      notificationTeams: [],
-      authorizedFunds: [],
-      authorizedSubscriptions: [],
+      notificationsAllEnabled: true,
+      notificationCategories: [],
       linkedStructures: [],
+      fundsAccessRestricted: false,
+      authorizedFunds: [],
+      subscriptionsAccessRestricted: false,
+      authorizedSubscriptions: [],
+      documentTypesAccessRestricted: false,
+      authorizedDocumentTypes: [],
     };
     setSelectedContact(newContact);
     setIsDialogOpen(true);
@@ -373,318 +340,24 @@ export function ContactsTab({ investor }: ContactsTabProps) {
         </div>
       </div>
 
-      {/* Dialog d'édition de contact */}
-      <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
-        <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
-          <DialogHeader>
-            <DialogTitle>
-              {selectedContact?.id.startsWith('contact-') && !contacts.find(c => c.id === selectedContact.id)
-                ? t('investors.detail.contactsTab.dialogAddTitle')
-                : t('investors.detail.contactsTab.dialogEditTitle')}
-            </DialogTitle>
-            <DialogDescription>
-              {selectedContact?.id.startsWith('contact-') && !contacts.find(c => c.id === selectedContact.id)
-                ? t('investors.detail.contactsTab.dialogAddDesc')
-                : t('investors.detail.contactsTab.dialogEditDesc')}
-            </DialogDescription>
-          </DialogHeader>
-
-          {selectedContact && (
-            <div className="space-y-6 py-4">
-              <div className="space-y-4">
-                <h3 className="font-medium text-gray-900">{t('investors.detail.contactsTab.generalSection')}</h3>
-                <div className="grid grid-cols-2 gap-4">
-                  <div className="space-y-2">
-                    <Label htmlFor="firstName">{t('investors.detail.contactsTab.firstName')}</Label>
-                    <Input
-                      id="firstName"
-                      value={selectedContact.firstName}
-                      onChange={(e) => setSelectedContact({ ...selectedContact, firstName: e.target.value })}
-                      placeholder={t('investors.detail.contactsTab.firstName')}
-                    />
-                  </div>
-                  <div className="space-y-2">
-                    <Label htmlFor="lastName">{t('investors.detail.contactsTab.lastName')}</Label>
-                    <Input
-                      id="lastName"
-                      value={selectedContact.lastName}
-                      onChange={(e) => setSelectedContact({ ...selectedContact, lastName: e.target.value })}
-                      placeholder={t('investors.detail.contactsTab.lastName')}
-                    />
-                  </div>
-                  <div className="space-y-2">
-                    <Label htmlFor="email">{t('investors.detail.contactsTab.email')}</Label>
-                    <Input
-                      id="email"
-                      type="email"
-                      value={selectedContact.email}
-                      onChange={(e) => setSelectedContact({ ...selectedContact, email: e.target.value })}
-                      placeholder="email@example.com"
-                    />
-                  </div>
-                  <div className="space-y-2">
-                    <Label htmlFor="phone">{t('investors.detail.contactsTab.phone')}</Label>
-                    <Input
-                      id="phone"
-                      value={selectedContact.phone}
-                      onChange={(e) => setSelectedContact({ ...selectedContact, phone: e.target.value })}
-                      placeholder="+33 6 12 34 56 78"
-                    />
-                  </div>
-                  <div className="space-y-2">
-                    <Label htmlFor="function">{t('investors.detail.contactsTab.function')}</Label>
-                    <Input
-                      id="function"
-                      value={selectedContact.function}
-                      onChange={(e) => setSelectedContact({ ...selectedContact, function: e.target.value })}
-                      placeholder={t('investors.detail.contactsTab.functionPlaceholder')}
-                    />
-                  </div>
-                  <div className="space-y-2">
-                    <Label htmlFor="language">{t('investors.detail.contactsTab.language')}</Label>
-                    <Select
-                      value={selectedContact.language}
-                      onValueChange={(value) => setSelectedContact({ ...selectedContact, language: value })}
-                    >
-                      <SelectTrigger>
-                        <SelectValue placeholder={t('investors.detail.contactsTab.languagePlaceholder')} />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="Français">Français</SelectItem>
-                        <SelectItem value="English">English</SelectItem>
-                        <SelectItem value="Español">Español</SelectItem>
-                        <SelectItem value="Deutsch">Deutsch</SelectItem>
-                      </SelectContent>
-                    </Select>
-                  </div>
-                </div>
-              </div>
-
-              <div className="space-y-4 border-t pt-4">
-                <h3 className="font-medium text-gray-900">{t('investors.detail.contactsTab.preferencesSection')}</h3>
-                <div className="space-y-3">
-                  <div className="flex items-center gap-2">
-                    <Checkbox
-                      id="isPrimary"
-                      checked={selectedContact.isPrimary}
-                      onCheckedChange={(checked) =>
-                        setSelectedContact({ ...selectedContact, isPrimary: checked as boolean })
-                      }
-                      disabled={selectedContact.isPrimary}
-                    />
-                    <Label htmlFor="isPrimary" className="cursor-pointer">
-                      {t('investors.detail.contactsTab.primaryContact')}
-                    </Label>
-                  </div>
-                  <div className="flex items-center gap-2">
-                    <Checkbox
-                      id="isPreferredContact"
-                      checked={selectedContact.isPreferredContact}
-                      onCheckedChange={(checked) =>
-                        setSelectedContact({ ...selectedContact, isPreferredContact: checked as boolean })
-                      }
-                    />
-                    <Label htmlFor="isPreferredContact" className="cursor-pointer">
-                      {t('investors.detail.contactsTab.preferredContact')}
-                    </Label>
-                  </div>
-                </div>
-              </div>
-
-              <div className="space-y-4 border-t pt-4">
-                <h3 className="font-medium text-gray-900 flex items-center gap-2">
-                  <Shield className="w-4 h-4" />
-                  {t('investors.detail.contactsTab.portalAccessSection')}
-                </h3>
-                <div className="space-y-3">
-                  <div className="flex items-center gap-2">
-                    <Checkbox
-                      id="hasPortalAccess"
-                      checked={selectedContact.hasPortalAccess}
-                      onCheckedChange={(checked) => 
-                        setSelectedContact({ ...selectedContact, hasPortalAccess: checked as boolean })
-                      }
-                    />
-                    <Label htmlFor="hasPortalAccess" className="cursor-pointer">
-                      {t('investors.detail.contactsTab.enablePortalAccess')}
-                    </Label>
-                  </div>
-                  {selectedContact.hasPortalAccess && (
-                    <div className="space-y-2 ml-6">
-                      <Label htmlFor="accessLevel">{t('investors.detail.contactsTab.accessLevel')}</Label>
-                      <Select
-                        value={selectedContact.accessLevel}
-                        onValueChange={(value) => setSelectedContact({ ...selectedContact, accessLevel: value })}
-                      >
-                        <SelectTrigger>
-                          <SelectValue placeholder={t('investors.detail.contactsTab.selectAccessLevel')} />
-                        </SelectTrigger>
-                        <SelectContent>
-                          <SelectItem value="Admin">Admin</SelectItem>
-                          <SelectItem value="Full Access">Full Access</SelectItem>
-                          <SelectItem value="Read Only">Read Only</SelectItem>
-                        </SelectContent>
-                      </Select>
-                      <div className="space-y-2 mt-3">
-                        <Label>
-                          <Lock className="w-3.5 h-3.5 inline mr-1" />
-                          {t('investors.detail.contactsTab.password')}
-                        </Label>
-                        <div className="flex gap-2">
-                          <Input type="password" placeholder="••••••••" disabled className="flex-1" />
-                          <Button
-                            variant="outline"
-                            size="sm"
-                            onClick={() => toast.success(t('investors.detail.contactsTab.resetPasswordSent'))}
-                          >
-                            {t('investors.detail.contactsTab.reset')}
-                          </Button>
-                        </div>
-                      </div>
-                    </div>
-                  )}
-                </div>
-              </div>
-
-              <div className="space-y-4 border-t pt-4">
-                <h3 className="font-medium text-gray-900 flex items-center gap-2">
-                  <Building2 className="w-4 h-4" />
-                  {t('investors.detail.contactsTab.linkedStructures')}
-                </h3>
-                <div className="space-y-2">
-                  {mockStructures.map((structure) => (
-                    <div key={structure.id} className="flex items-center gap-2">
-                      <Checkbox
-                        id={`structure-${structure.id}`}
-                        checked={selectedContact.linkedStructures?.includes(structure.id)}
-                        onCheckedChange={(checked) => {
-                          const current = selectedContact.linkedStructures || [];
-                          const updated = checked
-                            ? [...current, structure.id]
-                            : current.filter(id => id !== structure.id);
-                          setSelectedContact({ ...selectedContact, linkedStructures: updated });
-                        }}
-                        disabled={selectedContact.isPrimary}
-                      />
-                      <Label htmlFor={`structure-${structure.id}`} className="cursor-pointer flex items-center gap-2">
-                        {structure.name}
-                        <Badge variant="outline" className="text-xs">
-                          {structure.type}
-                        </Badge>
-                      </Label>
-                    </div>
-                  ))}
-                  {selectedContact.isPrimary && (
-                    <p className="text-xs text-gray-500 mt-2">
-                      {t('investors.detail.contactsTab.primaryAttachAll')}
-                    </p>
-                  )}
-                </div>
-              </div>
-
-              <div className="space-y-4 border-t pt-4">
-                <h3 className="font-medium text-gray-900 flex items-center gap-2">
-                  <Bell className="w-4 h-4" />
-                  {t('investors.detail.contactsTab.notifications')}
-                </h3>
-                <div className="space-y-2">
-                  {mockTeams.map((team) => (
-                    <div key={team.id} className="flex items-center gap-2">
-                      <Checkbox
-                        id={`team-${team.id}`}
-                        checked={selectedContact.notificationTeams?.includes(team.id)}
-                        onCheckedChange={(checked) => {
-                          const current = selectedContact.notificationTeams || [];
-                          const updated = checked
-                            ? [...current, team.id]
-                            : current.filter(id => id !== team.id);
-                          setSelectedContact({ ...selectedContact, notificationTeams: updated });
-                        }}
-                      />
-                      <Label htmlFor={`team-${team.id}`} className="cursor-pointer">
-                        {team.name}
-                      </Label>
-                    </div>
-                  ))}
-                </div>
-              </div>
-
-              <div className="space-y-4 border-t pt-4">
-                <h3 className="font-medium text-gray-900 flex items-center gap-2">
-                  <FileText className="w-4 h-4" />
-                  {t('investors.detail.contactsTab.authorizedFunds')}
-                </h3>
-                <div className="space-y-2">
-                  {mockFunds.map((fund) => (
-                    <div key={fund.id} className="flex items-center gap-2">
-                      <Checkbox
-                        id={`fund-${fund.id}`}
-                        checked={selectedContact.authorizedFunds?.includes(fund.id)}
-                        onCheckedChange={(checked) => {
-                          const current = selectedContact.authorizedFunds || [];
-                          const updated = checked
-                            ? [...current, fund.id]
-                            : current.filter(id => id !== fund.id);
-                          setSelectedContact({ ...selectedContact, authorizedFunds: updated });
-                        }}
-                      />
-                      <Label htmlFor={`fund-${fund.id}`} className="cursor-pointer">
-                        {fund.name}
-                      </Label>
-                    </div>
-                  ))}
-                </div>
-              </div>
-
-              <div className="space-y-4 border-t pt-4">
-                <h3 className="font-medium text-gray-900 flex items-center gap-2">
-                  <FileText className="w-4 h-4" />
-                  {t('investors.detail.contactsTab.authorizedSubscriptions')}
-                </h3>
-                <div className="space-y-2">
-                  {mockSubscriptions.map((sub) => (
-                    <div key={sub.id} className="flex items-center gap-2">
-                      <Checkbox
-                        id={`sub-${sub.id}`}
-                        checked={selectedContact.authorizedSubscriptions?.includes(sub.id)}
-                        onCheckedChange={(checked) => {
-                          const current = selectedContact.authorizedSubscriptions || [];
-                          const updated = checked
-                            ? [...current, sub.id]
-                            : current.filter(id => id !== sub.id);
-                          setSelectedContact({ ...selectedContact, authorizedSubscriptions: updated });
-                        }}
-                      />
-                      <Label htmlFor={`sub-${sub.id}`} className="cursor-pointer">
-                        {sub.name}
-                      </Label>
-                    </div>
-                  ))}
-                </div>
-              </div>
-
-              <div className="flex justify-end gap-2 border-t pt-4">
-                <Button
-                  variant="outline"
-                  onClick={() => {
-                    setIsDialogOpen(false);
-                    setSelectedContact(null);
-                  }}
-                >
-                  {t('investors.detail.contactsTab.cancel')}
-                </Button>
-                <Button
-                  onClick={handleSaveContact}
-                  style={{ background: 'linear-gradient(62.32deg, #000000 10.53%, #0F323D 88.82%)' }}
-                  className="text-white"
-                >
-                  {t('investors.detail.contactsTab.save')}
-                </Button>
-              </div>
-            </div>
-          )}
-        </DialogContent>
-      </Dialog>
+      <ContactEditModal
+        open={isDialogOpen}
+        isNew={
+          !!selectedContact &&
+          selectedContact.id.startsWith('contact-') &&
+          !contacts.find(c => c.id === selectedContact.id)
+        }
+        contact={selectedContact}
+        onChange={setSelectedContact}
+        onClose={() => {
+          setIsDialogOpen(false);
+          setSelectedContact(null);
+        }}
+        onSave={handleSaveContact}
+        structures={mockStructures}
+        funds={mockFunds}
+        subscriptions={mockSubscriptions}
+      />
     </div>
   );
 }

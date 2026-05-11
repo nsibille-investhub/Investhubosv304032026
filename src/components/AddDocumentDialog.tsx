@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
-import { X, FileText, Folder, Upload, Tag, Users, TrendingUp, Building2, Calendar, Droplet, Lock, ChevronRight, ChevronLeft, Check, Info, Sparkles, Languages, FolderOpen, Search, AlertCircle, ChevronsUpDown, Lightbulb, Download, UserCheck, Bell, Eye, FileBarChart, Mail } from 'lucide-react';
+import { X, FileText, Folder, Upload, Tag, Users, TrendingUp, Building2, Calendar, Lock, ChevronRight, ChevronLeft, Check, Info, Sparkles, Languages, FolderOpen, Search, AlertCircle, ChevronsUpDown, Lightbulb, Download, UserCheck, Bell, Eye, FileBarChart, Mail } from 'lucide-react';
 import { Button } from './ui/button';
 import { Badge } from './ui/badge';
 import { Input } from './ui/input';
@@ -314,12 +314,12 @@ export function AddDocumentDialog({ isOpen, onClose, type, parentFolder }: AddDo
     targetType: 'all',
     targetSegments: [] as string[],
     targetInvestors: [] as string[],
-    watermark: false,
     accessRoles: [] as string[], // Rôles de contacts ayant accès
     tags: [] as string[],
     segment: '',
     fund: '',
-    disclaimer: 'none',
+    disclaimerEnabled: false,
+    disclaimer: 'standard',
     // Nouvelles options avancées
     notifyOnUpload: false,
     emailTemplate: 'none',
@@ -629,12 +629,12 @@ export function AddDocumentDialog({ isOpen, onClose, type, parentFolder }: AddDo
       targetType: 'all',
       targetSegments: [],
       targetInvestors: [],
-      watermark: false,
       accessRoles: [],
       tags: [],
       segment: '',
       fund: '',
-      disclaimer: 'none',
+      disclaimerEnabled: false,
+      disclaimer: 'standard',
       notifyOnUpload: false,
       hideNewLabel: false,
       reporting: false,
@@ -1700,22 +1700,42 @@ export function AddDocumentDialog({ isOpen, onClose, type, parentFolder }: AddDo
 
                 {/* Disclaimer (pour les dossiers uniquement) */}
                 {type === 'folder' && (
-                  <div>
-                    <Label htmlFor="disclaimer">{t('ged.addDialog.disclaimerLabel')}</Label>
-                    <Select 
-                      value={formData.disclaimer} 
-                      onValueChange={(value) => setFormData(prev => ({ ...prev, disclaimer: value }))}
-                    >
-                      <SelectTrigger id="disclaimer" className="mt-1.5">
-                        <SelectValue />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="none">Aucun</SelectItem>
-                        <SelectItem value="standard">Standard</SelectItem>
-                        <SelectItem value="confidential">Confidentiel</SelectItem>
-                        <SelectItem value="restricted">Restreint</SelectItem>
-                      </SelectContent>
-                    </Select>
+                  <div className="space-y-3 p-3 bg-gray-50 rounded-lg">
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center gap-2">
+                        <AlertCircle className="w-4 h-4 text-amber-600" />
+                        <div>
+                          <span className="text-sm text-gray-900 font-medium">
+                            {t('ged.addDialog.disclaimerToggleLabel')}
+                          </span>
+                          <p className="text-xs text-gray-500">
+                            {t('ged.addDialog.disclaimerToggleDescriptionFolder')}
+                          </p>
+                        </div>
+                      </div>
+                      <Switch
+                        checked={formData.disclaimerEnabled}
+                        onCheckedChange={(checked) => setFormData(prev => ({ ...prev, disclaimerEnabled: checked }))}
+                      />
+                    </div>
+                    {formData.disclaimerEnabled && (
+                      <div>
+                        <Label htmlFor="disclaimer">{t('ged.addDialog.disclaimerLabel')}</Label>
+                        <Select
+                          value={formData.disclaimer}
+                          onValueChange={(value) => setFormData(prev => ({ ...prev, disclaimer: value }))}
+                        >
+                          <SelectTrigger id="disclaimer" className="mt-1.5 bg-white">
+                            <SelectValue />
+                          </SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value="standard">{t('ged.addDialog.disclaimerStandard')}</SelectItem>
+                            <SelectItem value="confidential">{t('ged.addDialog.disclaimerConfidential')}</SelectItem>
+                            <SelectItem value="restricted">{t('ged.addDialog.disclaimerRestricted')}</SelectItem>
+                          </SelectContent>
+                        </Select>
+                      </div>
+                    )}
                   </div>
                 )}
               </div>
@@ -2032,23 +2052,8 @@ export function AddDocumentDialog({ isOpen, onClose, type, parentFolder }: AddDo
               {/* Options avancées */}
               <div className="space-y-3 pt-4 border-t border-gray-100">
                 <div className="flex items-center gap-2 text-sm font-medium text-gray-700">
-                  <Droplet className="w-4 h-4 text-purple-600" />
+                  <Bell className="w-4 h-4 text-blue-600" />
                   {t('ged.addDialog.advancedOptions')}
-                </div>
-
-                {/* Watermark */}
-                <div className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
-                  <div className="flex items-center gap-2">
-                    <Droplet className="w-4 h-4 text-purple-600" />
-                    <div>
-                      <span className="text-sm text-gray-900 font-medium">Watermark</span>
-                      <p className="text-xs text-gray-500">Ajouter un filigrane de protection sur le document</p>
-                    </div>
-                  </div>
-                  <Switch
-                    checked={formData.watermark}
-                    onCheckedChange={(checked) => setFormData(prev => ({ ...prev, watermark: checked }))}
-                  />
                 </div>
 
                 {/* Notifier */}
@@ -2309,17 +2314,6 @@ export function AddDocumentDialog({ isOpen, onClose, type, parentFolder }: AddDo
                     <span className="text-gray-600">Rôles autorisés:</span>
                     <Badge variant="outline" className="bg-purple-50 text-purple-700 border-purple-300">
                       {formData.accessRoles.length === 0 ? 'Tous les rôles' : `${formData.accessRoles.length} rôle${formData.accessRoles.length > 1 ? 's' : ''}`}
-                    </Badge>
-                  </div>
-                  <div className="flex justify-between items-center">
-                    <span className="text-gray-600">Watermark:</span>
-                    <Badge 
-                      variant="outline" 
-                      className={formData.watermark 
-                        ? 'bg-purple-50 text-purple-700 border-purple-300' 
-                        : 'bg-gray-50 text-gray-600 border-gray-300'}
-                    >
-                      {formData.watermark ? 'Activé' : 'Désactivé'}
                     </Badge>
                   </div>
                   {uploadedFile && (
