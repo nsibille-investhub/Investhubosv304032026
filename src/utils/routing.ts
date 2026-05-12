@@ -19,6 +19,7 @@ export type Page =
   | 'design-system'
   | 'pitch-deck'
   | 'whats-new'
+  | 'not-found'
   | 'settings-app-store' 
   | 'settings-users' 
   | 'settings-teams' 
@@ -75,6 +76,7 @@ const PAGE_TO_PATH: Record<Page, string> = {
   'design-system': '/design-system',
   'pitch-deck': '/pitch-deck',
   'whats-new': '/whats-new',
+  'not-found': '/not-found',
   'settings-app-store': '/settings/app-store',
   'settings-users': '/settings/users',
   'settings-teams': '/settings/teams',

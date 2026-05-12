@@ -162,6 +162,7 @@
     "news": "News",
     "designSystem": "Design System",
     "whatsNew": "What's new",
+    "notFound": "Page not found",
     "administration": "Administration",
     "spaces": "Spaces",
     "settings": "Settings"
@@ -2511,6 +2512,42 @@
         "p1": "Our SFDR Article 9 disclosure for {{fund}} is now available on the LP Portal alongside the 2025 ESG report.",
         "signature": "Mathilde Garcia — ESG Officer"
       }
+    }
+  },
+  "notFound": {
+    "badge": "Error 404",
+    "title": "This page seems to have ventured off the map.",
+    "description": "The page you are looking for has been moved, renamed, or never existed. Find your way back from the suggestions below — or reach out to our team, we'll guide you.",
+    "cta": {
+      "primary": "Back to dashboard",
+      "back": "Previous page",
+      "search": "Open search"
+    },
+    "support": {
+      "prefix": "Need a hand?"
+    },
+    "shortcuts": {
+      "heading": "Suggested shortcuts",
+      "dashboard": {
+        "title": "Dashboard",
+        "desc": "Return to your operational overview and start over."
+      },
+      "datahub": {
+        "title": "DataHub",
+        "desc": "Resume the latest data exchanges with your distributors."
+      },
+      "designSystem": {
+        "title": "Design System",
+        "desc": "Explore the InvestHub component library."
+      }
+    }
+  },
+  "designSystem": {
+    "notFoundShowcase": {
+      "badge": "Witness page",
+      "title": "404 — a graceful exit when the path breaks",
+      "description": "A bold, fully branded fallback page for every dead link. Animated illustration, gradient typography, primary action and curated shortcuts to put the user back on track.",
+      "cta": "Open the 404 page"
     }
   }
 }

@@ -162,6 +162,7 @@
     "news": "Actualités",
     "designSystem": "Design System",
     "whatsNew": "Nouveautés",
+    "notFound": "Page introuvable",
     "administration": "Administration",
     "spaces": "Espaces",
     "settings": "Paramètres"
@@ -2511,6 +2512,42 @@
         "p1": "Notre information SFDR Article 9 pour {{fund}} est désormais disponible sur le Portail LP, aux côtés du rapport ESG 2025.",
         "signature": "Mathilde Garcia — Responsable ESG"
       }
+    }
+  },
+  "notFound": {
+    "badge": "Erreur 404",
+    "title": "Cette page a quitté la carte.",
+    "description": "La page que vous cherchez a été déplacée, renommée ou n’a jamais existé. Reprenez le fil grâce aux suggestions ci-dessous — ou contactez notre équipe, nous vous guiderons.",
+    "cta": {
+      "primary": "Retour au tableau de bord",
+      "back": "Page précédente",
+      "search": "Ouvrir la recherche"
+    },
+    "support": {
+      "prefix": "Besoin d’un coup de main ?"
+    },
+    "shortcuts": {
+      "heading": "Raccourcis suggérés",
+      "dashboard": {
+        "title": "Tableau de bord",
+        "desc": "Revenez à votre vue opérationnelle et repartez sur de bonnes bases."
+      },
+      "datahub": {
+        "title": "DataHub",
+        "desc": "Reprenez les derniers échanges de données avec vos distributeurs."
+      },
+      "designSystem": {
+        "title": "Design System",
+        "desc": "Explorez la bibliothèque de composants InvestHub."
+      }
+    }
+  },
+  "designSystem": {
+    "notFoundShowcase": {
+      "badge": "Page témoin",
+      "title": "404 — la sortie élégante quand le lien casse",
+      "description": "Une page de repli graphique, brandée et entièrement traduite pour chaque lien mort. Illustration animée, typographie en dégradé, action primaire et raccourcis pour remettre l’utilisateur sur les rails.",
+      "cta": "Voir la page 404"
     }
   }
 }

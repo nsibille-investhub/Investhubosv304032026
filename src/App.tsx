@@ -62,6 +62,7 @@ import { InvestorDetailPage } from './components/InvestorDetailPage';
 import { EventsPage } from './components/EventsPage';
 import { NewsPage } from './components/NewsPage';
 import { DesignSystemPage } from './components/DesignSystemPage';
+import { NotFoundPage } from './components/NotFoundPage';
 import { WhatsNewPage } from './components/WhatsNewPage';
 import { useWhatsNewUnread } from './utils/useWhatsNewUnread';
 import { DataHubRouter } from './features/datahub/pages/DataHubRouter';
@@ -806,6 +807,12 @@ export default function App() {
                   <span className="text-gray-400 dark:text-gray-500">{t('breadcrumb.portalsAndContent')}</span>
                   <span className="text-gray-300 dark:text-gray-700">/</span>
                   <span className="text-gray-900 dark:text-gray-100 font-medium">{t('breadcrumb.designSystem')}</span>
+                </>
+              ) : currentPage === 'not-found' ? (
+                <>
+                  <span className="text-gray-400 dark:text-gray-500">{t('breadcrumb.designSystem')}</span>
+                  <span className="text-gray-300 dark:text-gray-700">/</span>
+                  <span className="text-gray-900 dark:text-gray-100 font-medium">{t('breadcrumb.notFound')}</span>
                 </>
               ) : currentPage === 'whats-new' ? (
                 <>
@@ -1775,6 +1782,10 @@ export default function App() {
 
           {currentPage === 'design-system' && (
             <DesignSystemPage />
+          )}
+
+          {currentPage === 'not-found' && (
+            <NotFoundPage />
           )}
 
           {currentPage === 'whats-new' && (

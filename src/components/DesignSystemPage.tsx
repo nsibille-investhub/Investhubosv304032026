@@ -63,7 +63,10 @@ import * as React from 'react';
 import { motion } from 'motion/react';
 import logoInvestHub from 'figma:asset/2a84b4397fac896d4ed7e7f4faff09c957de9a6b.png';
 import { Badge } from './ui/badge';
+import { Button } from './ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from './ui/card';
+import { useTranslation } from '../utils/languageContext';
+import { navigateToPage } from '../utils/routing';
 import {
   Table as UITable,
   TableBody,
@@ -1001,6 +1004,7 @@ function FilterBarPreview() {
 }
 
 export function DesignSystemPage() {
+  const { t } = useTranslation();
   return (
     <div className="flex-1 overflow-auto px-6 py-6 space-y-6 bg-[#F8FAFA] dark:bg-[#0B0D0D]">
       <section className="rounded-2xl border border-[#D7E0DD] dark:border-[#1F2D2A] bg-white dark:bg-[#101615] p-6">
@@ -1009,6 +1013,47 @@ export function DesignSystemPage() {
         <p className="mt-2 text-sm text-[#4F6166] dark:text-[#9DB2AE] max-w-4xl">
           Bibliothèque complète des composants. On commence par la couche tableaux (data-intensive), puis les composants coeur.
         </p>
+      </section>
+
+      <section className="rounded-2xl border border-[#D7E0DD] dark:border-[#1F2D2A] overflow-hidden">
+        <div className="relative bg-gradient-to-br from-[#000E2B] via-[#0A3D4A] to-[#25563F] text-white p-8 md:p-10">
+          <div className="pointer-events-none absolute -top-20 -right-16 w-72 h-72 rounded-full bg-[#B6E68A]/20 blur-3xl" aria-hidden />
+          <div className="pointer-events-none absolute -bottom-24 -left-10 w-72 h-72 rounded-full bg-[#8DB4B8]/20 blur-3xl" aria-hidden />
+          <div className="relative grid md:grid-cols-[1fr_auto] items-center gap-6">
+            <div className="space-y-3 max-w-2xl">
+              <span className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-white/10 border border-white/20 text-[11px] font-semibold uppercase tracking-[0.16em] text-[#B6E68A]">
+                {t('designSystem.notFoundShowcase.badge')}
+              </span>
+              <h2 className="text-2xl md:text-3xl font-semibold tracking-tight">
+                {t('designSystem.notFoundShowcase.title')}
+              </h2>
+              <p className="text-sm text-white/75 leading-relaxed">
+                {t('designSystem.notFoundShowcase.description')}
+              </p>
+              <div className="flex flex-wrap items-center gap-3 pt-2">
+                <Button
+                  onClick={() => navigateToPage('not-found')}
+                  className="bg-[#B6E68A] text-[#000E2B] hover:bg-[#C8EFA0] h-10 px-5"
+                >
+                  {t('designSystem.notFoundShowcase.cta')}
+                </Button>
+                <code className="text-[11px] px-2 py-1 rounded bg-white/10 border border-white/15 text-white/80">
+                  /not-found
+                </code>
+              </div>
+            </div>
+            <div className="hidden md:flex items-center justify-center">
+              <div className="relative w-44 h-44 rounded-3xl bg-white/5 border border-white/15 backdrop-blur-sm flex items-center justify-center">
+                <span className="text-6xl font-semibold bg-gradient-to-br from-white to-[#B6E68A] bg-clip-text text-transparent">
+                  404
+                </span>
+                <span className="absolute -top-3 -right-3 w-10 h-10 rounded-full bg-[#B6E68A] text-[#000E2B] flex items-center justify-center text-lg font-semibold shadow-lg">
+                  ?
+                </span>
+              </div>
+            </div>
+          </div>
+        </div>
       </section>
 
       <section className="rounded-2xl border border-[#D7E0DD] dark:border-[#1F2D2A] bg-white dark:bg-[#101615] p-8 md:p-10">
