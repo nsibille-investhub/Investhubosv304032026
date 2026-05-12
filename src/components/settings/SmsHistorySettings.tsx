@@ -9,7 +9,6 @@ import {
   XCircle,
   Clock,
   Send,
-  ShieldAlert,
   Copy,
   X,
   Inbox,
@@ -587,28 +586,6 @@ export function SmsHistorySettings() {
         />
 
         <div className="px-6 py-6 max-w-[1400px] w-full mx-auto space-y-5">
-          {/* Sensitive access notice */}
-          <motion.div
-            initial={{ opacity: 0, y: 8 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.3 }}
-            role="note"
-            className="flex items-start gap-3 rounded-lg border border-amber-200 bg-amber-50/70 px-4 py-3 dark:border-amber-900/50 dark:bg-amber-950/30"
-          >
-            <ShieldAlert className="w-4 h-4 mt-0.5 shrink-0 text-amber-600 dark:text-amber-400" />
-            <div className="text-sm leading-relaxed">
-              <p className="font-semibold text-amber-900 dark:text-amber-200">
-                {t('smsLog.accessNoticeTitle')}
-              </p>
-              <p className="text-amber-800/90 dark:text-amber-200/80">
-                {t('smsLog.accessNoticeBody')}
-              </p>
-              <p className="mt-1 text-xs text-amber-700/80 dark:text-amber-300/70">
-                {t('smsLog.readOnlyHint')}
-              </p>
-            </div>
-          </motion.div>
-
           {/* Status FilterCard strip — same pattern as SubscriptionStatusTabs */}
           <SmsStatusTabs
             activeStatus={activeStatus}

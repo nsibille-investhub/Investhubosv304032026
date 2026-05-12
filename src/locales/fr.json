@@ -2518,9 +2518,6 @@
     "subtitle": "Consultez les envois, vérifiez la délivrabilité et auditez l'activité SMS.",
     "entityName": "SMS",
     "searchPlaceholder": "Rechercher par numéro ou contenu du SMS…",
-    "accessNoticeTitle": "Données sensibles — accès restreint",
-    "accessNoticeBody": "Les SMS contiennent des codes d'authentification et des numéros de téléphone. La consultation est réservée aux administrateurs GP et aux équipes Customer Success InvestHub.",
-    "readOnlyHint": "Vue en lecture seule — aucun renvoi, suppression ou modification possible depuis cet écran.",
     "statusTabs": {
       "title": "Filtrer par statut de délivrabilité",
       "subtitle": "5 statuts",

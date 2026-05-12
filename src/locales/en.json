@@ -2518,9 +2518,6 @@
     "subtitle": "Review outbound messages, verify delivery and audit SMS activity.",
     "entityName": "SMS",
     "searchPlaceholder": "Search by phone number or SMS content…",
-    "accessNoticeTitle": "Sensitive data — restricted access",
-    "accessNoticeBody": "SMS contain authentication codes and phone numbers. Access is limited to GP administrators and the InvestHub Customer Success team.",
-    "readOnlyHint": "Read-only view — no resend, deletion or edit is available from this screen.",
     "statusTabs": {
       "title": "Filter by delivery status",
       "subtitle": "5 statuses",
