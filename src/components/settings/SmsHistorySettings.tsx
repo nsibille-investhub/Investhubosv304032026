@@ -631,6 +631,7 @@ export function SmsHistorySettings() {
                   allFilteredData={sortedData}
                   searchTerm={searchTerm}
                   entityName={t('smsLog.entityName')}
+                  hideSelection
                 />
               )}
             </div>

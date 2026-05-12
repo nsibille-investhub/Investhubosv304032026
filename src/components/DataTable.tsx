@@ -43,10 +43,11 @@ interface DataTableProps<T extends { id: number }> {
   allFilteredData?: T[];
   searchTerm?: string;
   entityName?: string; // "investisseur", "partenaire", etc.
+  hideSelection?: boolean;
 }
 
-export function DataTable<T extends { id: number }>({ 
-  data, 
+export function DataTable<T extends { id: number }>({
+  data,
   columns,
   hoveredRow,
   setHoveredRow,
@@ -56,7 +57,8 @@ export function DataTable<T extends { id: number }>({
   compactMode = false,
   allFilteredData,
   searchTerm = '',
-  entityName = 'item'
+  entityName = 'item',
+  hideSelection = false
 }: DataTableProps<T>) {
   // Safety check
   if (!columns || columns.length === 0) {
@@ -118,7 +120,7 @@ export function DataTable<T extends { id: number }>({
     <>
       {/* Selection info banner */}
       <AnimatePresence>
-        {selectedIds.size > 0 && (
+        {!hideSelection && selectedIds.size > 0 && (
           <motion.div
             initial={{ height: 0, opacity: 0 }}
             animate={{ height: 'auto', opacity: 1 }}
@@ -157,24 +159,26 @@ export function DataTable<T extends { id: number }>({
           <thead>
             <tr className="border-b border-border bg-muted/40 backdrop-blur-sm">
               {/* Checkbox column */}
-              <th className="px-6 py-4 text-left">
-                <Tooltip>
-                  <TooltipTrigger asChild>
-                    <input 
-                      type="checkbox"
-                      checked={selectAll}
-                      onChange={handleSelectAll}
-                      className="w-4 h-4 rounded border-border text-primary focus:ring-2 focus:ring-primary focus:ring-offset-2 transition-all cursor-pointer hover:scale-110"
-                    />
-                  </TooltipTrigger>
-                  <TooltipContent>
-                    {selectAll 
-                      ? `Désélectionner tous les ${totalFilteredData.length} ${entityName}s (toutes pages)` 
-                      : `Sélectionner tous les ${totalFilteredData.length} ${entityName}s (toutes pages)`}
-                  </TooltipContent>
-                </Tooltip>
-              </th>
-              
+              {!hideSelection && (
+                <th className="px-6 py-4 text-left">
+                  <Tooltip>
+                    <TooltipTrigger asChild>
+                      <input
+                        type="checkbox"
+                        checked={selectAll}
+                        onChange={handleSelectAll}
+                        className="w-4 h-4 rounded border-border text-primary focus:ring-2 focus:ring-primary focus:ring-offset-2 transition-all cursor-pointer hover:scale-110"
+                      />
+                    </TooltipTrigger>
+                    <TooltipContent>
+                      {selectAll
+                        ? `Désélectionner tous les ${totalFilteredData.length} ${entityName}s (toutes pages)`
+                        : `Sélectionner tous les ${totalFilteredData.length} ${entityName}s (toutes pages)`}
+                    </TooltipContent>
+                  </Tooltip>
+                </th>
+              )}
+
               {/* Dynamic columns */}
               {columns.map((column) => (
                 column.sortable ? (
@@ -226,17 +230,19 @@ export function DataTable<T extends { id: number }>({
                   )}
                 >
                   {/* Checkbox */}
-                  <td className="px-6 py-4">
-                    <motion.input
-                      whileHover={{ scale: 1.1 }}
-                      whileTap={{ scale: 0.9 }}
-                      type="checkbox"
-                      checked={selectedIds.has(row.id)}
-                      onChange={() => handleSelectRow(row.id)}
-                      onClick={(e) => e.stopPropagation()}
-                      className="w-4 h-4 rounded border-border text-primary focus:ring-2 focus:ring-primary focus:ring-offset-2 transition-all cursor-pointer"
-                    />
-                  </td>
+                  {!hideSelection && (
+                    <td className="px-6 py-4">
+                      <motion.input
+                        whileHover={{ scale: 1.1 }}
+                        whileTap={{ scale: 0.9 }}
+                        type="checkbox"
+                        checked={selectedIds.has(row.id)}
+                        onChange={() => handleSelectRow(row.id)}
+                        onClick={(e) => e.stopPropagation()}
+                        className="w-4 h-4 rounded border-border text-primary focus:ring-2 focus:ring-primary focus:ring-offset-2 transition-all cursor-pointer"
+                      />
+                    </td>
+                  )}
 
                   {/* Dynamic columns */}
                   {columns.map((column) => (
