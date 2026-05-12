@@ -1,44 +1,30 @@
 import React, { useMemo, useState } from 'react';
-import { motion, AnimatePresence } from 'motion/react';
+import { motion } from 'motion/react';
 import { format, parseISO } from 'date-fns';
 import { fr as frLocale, enUS as enLocale } from 'date-fns/locale';
 import {
   MessageSquare,
   Download,
-  Search,
-  RotateCcw,
   CheckCircle2,
   XCircle,
   Clock,
-  ArrowDown,
-  ArrowUp,
-  ShieldAlert,
-  Phone,
   Send,
+  ShieldAlert,
   Copy,
   X,
   Inbox,
-  Filter as FilterIcon,
-  TrendingUp,
+  List,
+  ChevronLeft,
+  ChevronRight,
+  ChevronDown,
 } from 'lucide-react';
 import { toast } from 'sonner';
 
 import { useTranslation, type Language } from '../../utils/languageContext';
 import { Button } from '../ui/button';
-import { Input } from '../ui/input';
 import { Badge } from '../ui/badge';
-import { Label } from '../ui/label';
-import { DatePicker } from '../ui/date-picker';
-import { KpiCard, KpiStrip } from '../ui/kpi-card';
+import { FilterCard } from '../ui/filter-card';
 import { PageHeader } from '../ui/page-header';
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from '../ui/table';
 import {
   Sheet,
   SheetContent,
@@ -52,9 +38,19 @@ import {
   TooltipProvider,
   TooltipTrigger,
 } from '../ui/tooltip';
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from '../ui/dropdown-menu';
 import { cn } from '../ui/utils';
+import { FilterBar, type FilterConfig } from '../FilterBar';
+import { DataTable, type ColumnConfig } from '../DataTable';
 
 type SmsStatus = 'delivered' | 'sent' | 'pending' | 'failed';
+type StatusTab = SmsStatus | 'all';
+type PeriodPreset = 'all' | 'today' | '7d' | '30d' | '90d';
 type SmsTriggerKey =
   | 'loginCode'
   | 'otp'
@@ -63,7 +59,7 @@ type SmsTriggerKey =
   | 'signatureReminder';
 
 interface SmsLog {
-  id: string;
+  id: number;
   sentAt: string; // ISO
   recipient: string; // 33XXXXXXXXX
   sender: string;
@@ -73,10 +69,9 @@ interface SmsLog {
   providerResponse: string;
 }
 
-const PAGE_SIZE = 10;
 const PHONE_GROUP = /(\d{2})(\d{1})(\d{2})(\d{2})(\d{2})(\d{2})/;
 
-const STATUS_STYLES: Record<SmsStatus, string> = {
+const STATUS_BADGE_STYLES: Record<SmsStatus, string> = {
   delivered:
     'bg-emerald-50 text-emerald-700 border-emerald-200 dark:bg-emerald-950/50 dark:text-emerald-300 dark:border-emerald-900',
   sent: 'bg-blue-50 text-blue-700 border-blue-200 dark:bg-blue-950/50 dark:text-blue-300 dark:border-blue-900',
@@ -92,6 +87,24 @@ const STATUS_ICON: Record<SmsStatus, React.ComponentType<{ className?: string }>
   pending: Clock,
   failed: XCircle,
 };
+
+const STATUS_TAB_ICON: Record<StatusTab, React.ComponentType<{ className?: string }>> = {
+  all: List,
+  delivered: CheckCircle2,
+  sent: Send,
+  pending: Clock,
+  failed: XCircle,
+};
+
+const STATUS_TAB_ICON_CLASS: Record<StatusTab, string | undefined> = {
+  all: undefined,
+  delivered: 'text-emerald-600',
+  sent: 'text-blue-600',
+  pending: 'text-amber-600',
+  failed: 'text-rose-600',
+};
+
+const PERIOD_OPTIONS: PeriodPreset[] = ['all', 'today', '7d', '30d', '90d'];
 
 function buildMockSms(): SmsLog[] {
   const now = new Date();
@@ -218,7 +231,7 @@ function buildMockSms(): SmsLog[] {
   return items.map((it, index) => {
     const sentAt = new Date(now.getTime() - it.offsetMinutes * 60_000);
     return {
-      id: `sms_${(index + 1).toString().padStart(4, '0')}`,
+      id: index + 1,
       sentAt: sentAt.toISOString(),
       recipient: it.recipient,
       sender: it.sender,
@@ -246,83 +259,196 @@ function csvEscape(value: string): string {
   return value;
 }
 
+function periodStartTimestamp(preset: PeriodPreset): number | null {
+  if (preset === 'all') return null;
+  const now = new Date();
+  if (preset === 'today') {
+    return new Date(now.getFullYear(), now.getMonth(), now.getDate()).getTime();
+  }
+  const days = preset === '7d' ? 7 : preset === '30d' ? 30 : 90;
+  return now.getTime() - days * 24 * 60 * 60 * 1000;
+}
+
+function highlightMatch(text: string, term: string): React.ReactNode {
+  if (!term) return text;
+  const idx = text.toLowerCase().indexOf(term.toLowerCase());
+  if (idx === -1) return text;
+  return (
+    <>
+      {text.slice(0, idx)}
+      <mark className="bg-amber-100 text-gray-900 dark:bg-amber-900/40 dark:text-amber-100 rounded-sm px-0.5">
+        {text.slice(idx, idx + term.length)}
+      </mark>
+      {text.slice(idx + term.length)}
+    </>
+  );
+}
+
 export function SmsHistorySettings() {
   const { t, lang } = useTranslation();
   const dfLocale = (lang as Language) === 'en' ? enLocale : frLocale;
 
-  const [phoneFilter, setPhoneFilter] = useState('');
-  const [messageFilter, setMessageFilter] = useState('');
-  const [dateFrom, setDateFrom] = useState<Date | undefined>(undefined);
-  const [dateTo, setDateTo] = useState<Date | undefined>(undefined);
-  const [sortAsc, setSortAsc] = useState(false);
-  const [page, setPage] = useState(1);
+  const [activeStatus, setActiveStatus] = useState<StatusTab>('all');
+  const [searchTerm, setSearchTerm] = useState('');
+  const [activeFilters, setActiveFilters] = useState<Record<string, string | string[]>>({});
+  const [sortConfig, setSortConfig] = useState<{ key: string; direction: 'asc' | 'desc' } | null>({
+    key: 'sentAt',
+    direction: 'desc',
+  });
+  const [hoveredRow, setHoveredRow] = useState<number | null>(null);
+  const [paginationPage, setPaginationPage] = useState(1);
+  const [itemsPerPage, setItemsPerPage] = useState(20);
   const [selectedSms, setSelectedSms] = useState<SmsLog | null>(null);
 
-  const resetFilters = () => {
-    setPhoneFilter('');
-    setMessageFilter('');
-    setDateFrom(undefined);
-    setDateTo(undefined);
-    setPage(1);
+  const senders = useMemo(
+    () => Array.from(new Set(MOCK_SMS.map((s) => s.sender))).sort(),
+    [],
+  );
+
+  // Search across phone + message
+  const searchFilteredData = useMemo(() => {
+    const term = searchTerm.trim().toLowerCase();
+    if (!term) return MOCK_SMS;
+    const digits = term.replace(/[^\d]/g, '');
+    return MOCK_SMS.filter((sms) => {
+      if (digits && sms.recipient.includes(digits)) return true;
+      if (sms.message.toLowerCase().includes(term)) return true;
+      return false;
+    });
+  }, [searchTerm]);
+
+  // Status + secondary filters
+  const filteredData = useMemo(() => {
+    const periodValue = (activeFilters.period as PeriodPreset) || 'all';
+    const periodStart = periodStartTimestamp(periodValue);
+    const senderValue = activeFilters.sender as string | undefined;
+
+    return searchFilteredData.filter((sms) => {
+      if (activeStatus !== 'all' && sms.status !== activeStatus) return false;
+      if (senderValue && sms.sender !== senderValue) return false;
+      if (periodStart !== null && new Date(sms.sentAt).getTime() < periodStart) return false;
+      return true;
+    });
+  }, [searchFilteredData, activeFilters, activeStatus]);
+
+  const sortedData = useMemo(() => {
+    if (!sortConfig) return filteredData;
+    const { key, direction } = sortConfig;
+    const dir = direction === 'asc' ? 1 : -1;
+    return [...filteredData].sort((a, b) => {
+      const av = (a as Record<string, unknown>)[key];
+      const bv = (b as Record<string, unknown>)[key];
+      if (typeof av === 'string' && typeof bv === 'string') {
+        return av.localeCompare(bv) * dir;
+      }
+      return ((av as number) > (bv as number) ? 1 : -1) * dir;
+    });
+  }, [filteredData, sortConfig]);
+
+  const totalItems = sortedData.length;
+  const totalPages = Math.max(1, Math.ceil(totalItems / itemsPerPage));
+  const safePage = Math.min(paginationPage, totalPages);
+  const startIndex = (safePage - 1) * itemsPerPage;
+  const endIndex = Math.min(startIndex + itemsPerPage, totalItems);
+  const tableData = sortedData.slice(startIndex, endIndex);
+
+  // Status counts (computed on data after search but before status tab filter)
+  const statusKpis = useMemo(() => {
+    const counts: Record<StatusTab, number> = {
+      all: searchFilteredData.length,
+      delivered: 0,
+      sent: 0,
+      pending: 0,
+      failed: 0,
+    };
+    for (const sms of searchFilteredData) counts[sms.status] += 1;
+    return counts;
+  }, [searchFilteredData]);
+
+  const deliveryRate =
+    statusKpis.all === 0 ? 0 : Math.round((statusKpis.delivered / statusKpis.all) * 100);
+  const failureRate =
+    statusKpis.all === 0 ? 0 : Math.round((statusKpis.failed / statusKpis.all) * 100);
+
+  // average per day over 7d window for "averageValue" hint
+  const avgPerDay = useMemo(() => {
+    const sevenDaysAgo = Date.now() - 7 * 24 * 60 * 60 * 1000;
+    const recent = searchFilteredData.filter(
+      (s) => new Date(s.sentAt).getTime() >= sevenDaysAgo,
+    ).length;
+    return Math.round(recent / 7);
+  }, [searchFilteredData]);
+
+  const filterConfigs: FilterConfig[] = useMemo(
+    () => [
+      {
+        id: 'period',
+        label: t('smsLog.filters.period'),
+        type: 'select',
+        isPrimary: true,
+        options: PERIOD_OPTIONS.map((p) => ({
+          value: p,
+          label: t(`smsLog.filters.periodPresets.${p}`),
+        })),
+      },
+      {
+        id: 'sender',
+        label: t('smsLog.filters.sender'),
+        type: 'select',
+        isPrimary: false,
+        options: senders.map((s) => ({ value: s, label: s })),
+      },
+    ],
+    [t, senders],
+  );
+
+  const handleFilterChange = (filterId: string, value: string | string[] | null) => {
+    setActiveFilters((prev) => {
+      const next = { ...prev };
+      if (value === null || value === '' || (Array.isArray(value) && value.length === 0)) {
+        delete next[filterId];
+      } else {
+        next[filterId] = value;
+      }
+      return next;
+    });
+    setPaginationPage(1);
+  };
+
+  const handleClearAllFilters = () => {
+    setActiveFilters({});
+    setSearchTerm('');
+    setActiveStatus('all');
+    setPaginationPage(1);
     toast.success(t('smsLog.toast.filtersResetTitle'));
   };
 
-  const filteredSms = useMemo(() => {
-    const phoneNeedle = phoneFilter.replace(/[^\d]/g, '');
-    const messageNeedle = messageFilter.trim().toLowerCase();
-    const from = dateFrom ? new Date(dateFrom).setHours(0, 0, 0, 0) : null;
-    const to = dateTo ? new Date(dateTo).setHours(23, 59, 59, 999) : null;
+  const handleSearchChange = (value: string) => {
+    setSearchTerm(value);
+    setPaginationPage(1);
+  };
 
-    return MOCK_SMS.filter((sms) => {
-      if (phoneNeedle && !sms.recipient.includes(phoneNeedle)) return false;
-      if (messageNeedle && !sms.message.toLowerCase().includes(messageNeedle)) return false;
-      const ts = new Date(sms.sentAt).getTime();
-      if (from !== null && ts < from) return false;
-      if (to !== null && ts > to) return false;
-      return true;
-    }).sort((a, b) => {
-      const diff = new Date(a.sentAt).getTime() - new Date(b.sentAt).getTime();
-      return sortAsc ? diff : -diff;
-    });
-  }, [phoneFilter, messageFilter, dateFrom, dateTo, sortAsc]);
+  const handleStatusChange = (status: StatusTab) => {
+    setActiveStatus(status);
+    setPaginationPage(1);
+  };
 
-  const stats = useMemo(() => {
-    const total = filteredSms.length;
-    const delivered = filteredSms.filter((s) => s.status === 'delivered').length;
-    const failed = filteredSms.filter((s) => s.status === 'failed').length;
-    const rate = total === 0 ? 0 : Math.round((delivered / total) * 100);
-    return { total, delivered, failed, rate };
-  }, [filteredSms]);
+  const handleSort = (key: string) => {
+    setSortConfig((prev) => {
+      if (!prev || prev.key !== key) return { key, direction: 'desc' };
+      return { key, direction: prev.direction === 'asc' ? 'desc' : 'asc' };
+    });
+  };
 
-  const totalPages = Math.max(1, Math.ceil(filteredSms.length / PAGE_SIZE));
-  const safePage = Math.min(page, totalPages);
-  const pageRows = filteredSms.slice((safePage - 1) * PAGE_SIZE, safePage * PAGE_SIZE);
+  const handlePageChange = (page: number) => {
+    if (page < 1 || page > totalPages) return;
+    setPaginationPage(page);
+  };
 
-  const activeFilters: Array<{ key: string; label: string; clear: () => void }> = [];
-  if (phoneFilter)
-    activeFilters.push({
-      key: 'phone',
-      label: `${t('smsLog.filters.phone')} : ${phoneFilter}`,
-      clear: () => setPhoneFilter(''),
-    });
-  if (messageFilter)
-    activeFilters.push({
-      key: 'message',
-      label: `${t('smsLog.filters.message')} : ${messageFilter}`,
-      clear: () => setMessageFilter(''),
-    });
-  if (dateFrom)
-    activeFilters.push({
-      key: 'from',
-      label: `${t('smsLog.filters.dateFrom')} : ${format(dateFrom, 'dd/MM/yyyy', { locale: dfLocale })}`,
-      clear: () => setDateFrom(undefined),
-    });
-  if (dateTo)
-    activeFilters.push({
-      key: 'to',
-      label: `${t('smsLog.filters.dateTo')} : ${format(dateTo, 'dd/MM/yyyy', { locale: dfLocale })}`,
-      clear: () => setDateTo(undefined),
-    });
+  const handleItemsPerPageChange = (n: number) => {
+    setItemsPerPage(n);
+    setPaginationPage(1);
+  };
 
   const handleExport = () => {
     const header = [
@@ -333,13 +459,13 @@ export function SmsHistorySettings() {
       t('smsLog.table.delivered'),
       t('smsLog.detail.smsId'),
     ];
-    const rows = filteredSms.map((s) => [
+    const rows = sortedData.map((s) => [
       format(parseISO(s.sentAt), 'yyyy-MM-dd HH:mm:ss'),
       s.recipient,
       s.sender,
       s.message,
       t(`smsLog.status.${s.status}`),
-      s.id,
+      String(s.id),
     ]);
     const csv = [header, ...rows]
       .map((row) => row.map((cell) => csvEscape(String(cell))).join(','))
@@ -357,7 +483,7 @@ export function SmsHistorySettings() {
     URL.revokeObjectURL(url);
 
     toast.success(t('smsLog.toast.exportStartedTitle'), {
-      description: t('smsLog.toast.exportStartedBody', { count: filteredSms.length }),
+      description: t('smsLog.toast.exportStartedBody', { count: sortedData.length }),
     });
   };
 
@@ -371,8 +497,78 @@ export function SmsHistorySettings() {
     );
   };
 
-  const isEmptyDueToFilters =
-    filteredSms.length === 0 && (activeFilters.length > 0 || MOCK_SMS.length > 0);
+  const columns: ColumnConfig<SmsLog>[] = useMemo(
+    () => [
+      {
+        key: 'sentAt',
+        label: t('smsLog.table.date'),
+        sortable: true,
+        className: 'w-[180px]',
+        render: (row) => {
+          const date = parseISO(row.sentAt);
+          return (
+            <div className="flex flex-col">
+              <span className="text-sm font-medium text-gray-900 dark:text-gray-100 tabular-nums">
+                {format(date, 'dd/MM/yyyy', { locale: dfLocale })}
+              </span>
+              <span className="text-xs text-gray-500 dark:text-gray-400 tabular-nums">
+                {format(date, 'HH:mm:ss', { locale: dfLocale })}
+              </span>
+            </div>
+          );
+        },
+      },
+      {
+        key: 'recipient',
+        label: t('smsLog.table.recipient'),
+        sortable: true,
+        className: 'w-[200px]',
+        render: (row, term) => (
+          <span className="text-sm font-medium text-gray-900 dark:text-gray-100 tabular-nums">
+            {highlightMatch(formatPhone(row.recipient), term)}
+          </span>
+        ),
+      },
+      {
+        key: 'sender',
+        label: t('smsLog.table.sender'),
+        sortable: true,
+        className: 'w-[140px]',
+        render: (row) => (
+          <Badge
+            variant="outline"
+            className="border-gray-200 bg-gray-50 text-gray-700 dark:border-gray-700 dark:bg-gray-800 dark:text-gray-200"
+          >
+            {row.sender}
+          </Badge>
+        ),
+      },
+      {
+        key: 'message',
+        label: t('smsLog.table.message'),
+        sortable: false,
+        render: (row, term) => (
+          <p className="text-sm text-gray-700 dark:text-gray-300 line-clamp-2 max-w-[520px]">
+            {highlightMatch(row.message, term)}
+          </p>
+        ),
+      },
+      {
+        key: 'status',
+        label: t('smsLog.table.delivered'),
+        sortable: true,
+        className: 'w-[140px]',
+        render: (row) => (
+          <StatusBadge status={row.status} label={t(`smsLog.status.${row.status}`)} />
+        ),
+      },
+    ],
+    [t, dfLocale],
+  );
+
+  const hasActiveSearch = searchTerm.trim().length > 0;
+  const hasActiveExtraFilters = Object.keys(activeFilters).length > 0 || activeStatus !== 'all';
+  const isFiltered = hasActiveSearch || hasActiveExtraFilters;
 
   return (
     <TooltipProvider delayDuration={150}>
@@ -386,12 +582,12 @@ export function SmsHistorySettings() {
             icon: <Download className="w-4 h-4" />,
             onClick: handleExport,
             ariaLabel: t('smsLog.actions.exportTooltip'),
-            disabled: filteredSms.length === 0,
+            disabled: sortedData.length === 0,
           }}
         />
 
-        <div className="px-6 py-6 max-w-[1400px] w-full mx-auto space-y-6">
-          {/* Access notice */}
+        <div className="px-6 py-6 max-w-[1400px] w-full mx-auto space-y-5">
+          {/* Sensitive access notice */}
           <motion.div
             initial={{ opacity: 0, y: 8 }}
             animate={{ opacity: 1, y: 0 }}
@@ -413,343 +609,88 @@ export function SmsHistorySettings() {
             </div>
           </motion.div>
 
-          {/* KPIs */}
-          <KpiStrip columns={4}>
-            <KpiCard
-              index={0}
-              icon={MessageSquare}
-              label={t('smsLog.kpi.total')}
-              value={stats.total}
-              hint={t('smsLog.kpi.totalHint')}
-            />
-            <KpiCard
-              index={1}
-              icon={CheckCircle2}
-              label={t('smsLog.kpi.delivered')}
-              value={stats.delivered}
-              hint={t('smsLog.kpi.deliveredHint')}
-              progress={{ current: stats.delivered, total: Math.max(stats.total, 1) }}
-            />
-            <KpiCard
-              index={2}
-              icon={XCircle}
-              label={t('smsLog.kpi.failed')}
-              value={stats.failed}
-              hint={t('smsLog.kpi.failedHint')}
-              pulse={stats.failed > 0}
-            />
-            <KpiCard
-              index={3}
-              icon={TrendingUp}
-              label={t('smsLog.kpi.deliveryRate')}
-              value={`${stats.rate}%`}
-              hint={t('smsLog.kpi.deliveryRateHint')}
-            />
-          </KpiStrip>
+          {/* Status FilterCard strip — same pattern as SubscriptionStatusTabs */}
+          <SmsStatusTabs
+            activeStatus={activeStatus}
+            onStatusChange={handleStatusChange}
+            kpis={statusKpis}
+            deliveryRate={deliveryRate}
+            failureRate={failureRate}
+            avgPerDay={avgPerDay}
+          />
 
-          {/* Filters */}
-          <motion.section
-            initial={{ opacity: 0, y: 10 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.05 }}
-            aria-labelledby="sms-filters-title"
-            className="rounded-xl border border-gray-200 bg-white shadow-sm dark:border-gray-800 dark:bg-gray-900"
+          {/* FilterBar + DataTable card — same pattern as SubscriptionsPage */}
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0, width: '100%' }}
+            transition={{ delay: 0.2, type: 'spring', stiffness: 200, damping: 25 }}
+            className="bg-white dark:bg-gray-950 rounded-2xl shadow-sm border border-gray-200 dark:border-gray-800 flex flex-col"
           >
-            <header className="flex items-center justify-between gap-3 px-5 py-3 border-b border-gray-100 dark:border-gray-800">
-              <div className="flex items-center gap-2">
-                <span className="inline-flex items-center justify-center w-7 h-7 rounded-md bg-gray-900/5 dark:bg-white/10">
-                  <FilterIcon className="w-3.5 h-3.5 text-gray-700 dark:text-gray-300" />
-                </span>
-                <div>
-                  <h2
-                    id="sms-filters-title"
-                    className="text-sm font-semibold text-gray-900 dark:text-gray-100"
-                  >
-                    {t('smsLog.filters.title')}
-                  </h2>
-                  <p className="text-xs text-gray-500 dark:text-gray-400">
-                    {t('smsLog.filters.subtitle')}
-                  </p>
-                </div>
-              </div>
-              <div className="flex items-center gap-2">
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  onClick={resetFilters}
-                  disabled={activeFilters.length === 0}
-                  className="gap-2"
-                >
-                  <RotateCcw className="w-3.5 h-3.5" />
-                  {t('smsLog.filters.reset')}
-                </Button>
-              </div>
-            </header>
-
-            <div className="p-5 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-              <div className="space-y-1.5">
-                <Label htmlFor="sms-filter-phone" className="text-xs font-medium text-gray-700 dark:text-gray-300">
-                  {t('smsLog.filters.phone')}
-                </Label>
-                <div className="relative">
-                  <Phone className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
-                  <Input
-                    id="sms-filter-phone"
-                    value={phoneFilter}
-                    onChange={(e) => {
-                      setPhoneFilter(e.target.value);
-                      setPage(1);
-                    }}
-                    placeholder={t('smsLog.filters.phonePlaceholder')}
-                    inputMode="numeric"
-                    className="pl-9 tabular-nums"
-                  />
-                </div>
-                <p className="text-[11px] text-gray-500 dark:text-gray-400">
-                  {t('smsLog.filters.phoneHint')}
-                </p>
-              </div>
-
-              <div className="space-y-1.5">
-                <Label htmlFor="sms-filter-message" className="text-xs font-medium text-gray-700 dark:text-gray-300">
-                  {t('smsLog.filters.message')}
-                </Label>
-                <div className="relative">
-                  <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
-                  <Input
-                    id="sms-filter-message"
-                    value={messageFilter}
-                    onChange={(e) => {
-                      setMessageFilter(e.target.value);
-                      setPage(1);
-                    }}
-                    placeholder={t('smsLog.filters.messagePlaceholder')}
-                    className="pl-9"
-                  />
-                </div>
-              </div>
-
-              <div className="space-y-1.5">
-                <Label className="text-xs font-medium text-gray-700 dark:text-gray-300">
-                  {t('smsLog.filters.dateFrom')}
-                </Label>
-                <DatePicker
-                  date={dateFrom}
-                  onDateChange={(d) => {
-                    setDateFrom(d);
-                    setPage(1);
-                  }}
-                  placeholder={t('smsLog.filters.dateFrom')}
-                  maxDate={dateTo ?? new Date()}
-                />
-              </div>
-
-              <div className="space-y-1.5">
-                <Label className="text-xs font-medium text-gray-700 dark:text-gray-300">
-                  {t('smsLog.filters.dateTo')}
-                </Label>
-                <DatePicker
-                  date={dateTo}
-                  onDateChange={(d) => {
-                    setDateTo(d);
-                    setPage(1);
-                  }}
-                  placeholder={t('smsLog.filters.dateTo')}
-                  minDate={dateFrom}
-                  maxDate={new Date()}
-                />
-              </div>
+            <div className="relative z-10 p-4 border-b border-gray-100 dark:border-gray-800">
+              <FilterBar
+                searchValue={searchTerm}
+                onSearchChange={handleSearchChange}
+                searchPlaceholder={t('smsLog.searchPlaceholder')}
+                filters={filterConfigs}
+                activeFilters={activeFilters}
+                onFilterChange={handleFilterChange}
+                onClearAll={handleClearAllFilters}
+              />
             </div>
 
-            <AnimatePresence>
-              {activeFilters.length > 0 && (
-                <motion.div
-                  initial={{ opacity: 0, height: 0 }}
-                  animate={{ opacity: 1, height: 'auto' }}
-                  exit={{ opacity: 0, height: 0 }}
-                  className="overflow-hidden border-t border-gray-100 dark:border-gray-800"
-                >
-                  <div className="px-5 py-3 flex flex-wrap items-center gap-2">
-                    <span className="text-xs text-gray-500 dark:text-gray-400">
-                      {t('smsLog.filters.activeFilters')} :
-                    </span>
-                    {activeFilters.map((f) => (
-                      <Badge
-                        key={f.key}
-                        variant="outline"
-                        className="gap-1.5 pl-2 pr-1 py-1 border-gray-200 bg-gray-50 text-gray-700 dark:border-gray-700 dark:bg-gray-800/60 dark:text-gray-200"
-                      >
-                        <span className="truncate max-w-[220px]">{f.label}</span>
-                        <button
-                          type="button"
-                          onClick={f.clear}
-                          aria-label={t('smsLog.filters.clearOne')}
-                          className="inline-flex items-center justify-center w-4 h-4 rounded-sm hover:bg-gray-200 dark:hover:bg-gray-700 transition"
-                        >
-                          <X className="w-3 h-3" />
-                        </button>
-                      </Badge>
-                    ))}
-                  </div>
-                </motion.div>
+            <div className="flex-1 overflow-auto">
+              {sortedData.length === 0 ? (
+                <EmptyState isFiltered={isFiltered} onReset={handleClearAllFilters} />
+              ) : (
+                <DataTable<SmsLog>
+                  data={tableData}
+                  columns={columns}
+                  hoveredRow={hoveredRow}
+                  setHoveredRow={setHoveredRow}
+                  onRowClick={(row) => setSelectedSms(row)}
+                  sortConfig={sortConfig}
+                  onSort={handleSort}
+                  compactMode
+                  allFilteredData={sortedData}
+                  searchTerm={searchTerm}
+                  entityName={t('smsLog.entityName')}
+                />
               )}
-            </AnimatePresence>
-          </motion.section>
+            </div>
 
-          {/* Results meta */}
-          <div className="flex items-center justify-between">
-            <p className="text-xs text-gray-500 dark:text-gray-400">
-              <span className="font-semibold text-gray-900 dark:text-gray-100 tabular-nums">
-                {filteredSms.length === 1
-                  ? t('smsLog.results.one', { count: filteredSms.length })
-                  : t('smsLog.results.many', { count: filteredSms.length })}
-              </span>
-              {activeFilters.length > 0 ? (
-                <span className="ml-1">
-                  {t('smsLog.results.filtered', { total: MOCK_SMS.length })}
-                </span>
-              ) : null}
-            </p>
-          </div>
-
-          {/* Table */}
-          <motion.section
-            initial={{ opacity: 0, y: 10 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.1 }}
-            className="rounded-xl border border-gray-200 bg-white shadow-sm overflow-hidden dark:border-gray-800 dark:bg-gray-900"
-          >
-            {filteredSms.length === 0 ? (
-              <EmptyState
-                isFiltered={isEmptyDueToFilters && activeFilters.length > 0}
-                onReset={resetFilters}
-              />
-            ) : (
-              <Table>
-                <TableHeader>
-                  <TableRow className="bg-gray-50/80 dark:bg-gray-900/60 hover:bg-gray-50/80">
-                    <TableHead className="px-4 py-3 text-xs font-semibold uppercase tracking-wide text-gray-500 dark:text-gray-400 w-[200px]">
-                      <button
-                        type="button"
-                        onClick={() => setSortAsc((v) => !v)}
-                        aria-label={
-                          sortAsc
-                            ? t('smsLog.table.sortByDateDesc')
-                            : t('smsLog.table.sortByDateAsc')
-                        }
-                        className="inline-flex items-center gap-1 hover:text-gray-900 dark:hover:text-gray-100 transition"
-                      >
-                        {t('smsLog.table.date')}
-                        {sortAsc ? (
-                          <ArrowUp className="w-3 h-3" />
-                        ) : (
-                          <ArrowDown className="w-3 h-3" />
-                        )}
-                      </button>
-                    </TableHead>
-                    <TableHead className="px-4 py-3 text-xs font-semibold uppercase tracking-wide text-gray-500 dark:text-gray-400 w-[180px]">
-                      {t('smsLog.table.recipient')}
-                    </TableHead>
-                    <TableHead className="px-4 py-3 text-xs font-semibold uppercase tracking-wide text-gray-500 dark:text-gray-400 w-[120px]">
-                      {t('smsLog.table.sender')}
-                    </TableHead>
-                    <TableHead className="px-4 py-3 text-xs font-semibold uppercase tracking-wide text-gray-500 dark:text-gray-400">
-                      {t('smsLog.table.message')}
-                    </TableHead>
-                    <TableHead className="px-4 py-3 text-xs font-semibold uppercase tracking-wide text-gray-500 dark:text-gray-400 w-[130px]">
-                      {t('smsLog.table.delivered')}
-                    </TableHead>
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {pageRows.map((sms) => {
-                    const date = parseISO(sms.sentAt);
-                    return (
-                      <TableRow
-                        key={sms.id}
-                        onClick={() => setSelectedSms(sms)}
-                        tabIndex={0}
-                        role="button"
-                        aria-label={t('smsLog.table.rowAriaLabel', {
-                          date: format(date, 'dd/MM/yyyy HH:mm', { locale: dfLocale }),
-                          recipient: formatPhone(sms.recipient),
-                        })}
-                        onKeyDown={(e) => {
-                          if (e.key === 'Enter' || e.key === ' ') {
-                            e.preventDefault();
-                            setSelectedSms(sms);
-                          }
-                        }}
-                        className="cursor-pointer focus:bg-gray-50 focus:outline-none dark:focus:bg-gray-800/50"
-                      >
-                        <TableCell className="px-4 py-3 align-top">
-                          <div className="flex flex-col">
-                            <span className="text-sm font-medium text-gray-900 dark:text-gray-100 tabular-nums">
-                              {format(date, 'dd/MM/yyyy', { locale: dfLocale })}
-                            </span>
-                            <span className="text-xs text-gray-500 dark:text-gray-400 tabular-nums">
-                              {format(date, 'HH:mm:ss', { locale: dfLocale })}
-                            </span>
-                          </div>
-                        </TableCell>
-                        <TableCell className="px-4 py-3 align-top">
-                          <span className="text-sm font-medium text-gray-900 dark:text-gray-100 tabular-nums">
-                            {formatPhone(sms.recipient)}
-                          </span>
-                        </TableCell>
-                        <TableCell className="px-4 py-3 align-top">
-                          <Badge
-                            variant="outline"
-                            className="border-gray-200 bg-gray-50 text-gray-700 dark:border-gray-700 dark:bg-gray-800 dark:text-gray-200"
-                          >
-                            {sms.sender}
-                          </Badge>
-                        </TableCell>
-                        <TableCell className="px-4 py-3 align-top">
-                          <p className="text-sm text-gray-700 dark:text-gray-300 line-clamp-2 max-w-[520px]">
-                            {sms.message}
-                          </p>
-                        </TableCell>
-                        <TableCell className="px-4 py-3 align-top">
-                          <StatusBadge status={sms.status} label={t(`smsLog.status.${sms.status}`)} />
-                        </TableCell>
-                      </TableRow>
-                    );
+            {sortedData.length > 0 && (
+              <motion.div
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                transition={{ delay: 0.4 }}
+                className="px-6 py-4 border-t border-gray-100 dark:border-gray-800 flex items-center justify-between bg-gray-50/50 dark:bg-gray-900/50"
+              >
+                <div className="text-sm text-gray-600 dark:text-gray-400">
+                  {t('smsLog.pagination.itemsRange', {
+                    start: startIndex + 1,
+                    end: endIndex,
+                    total: totalItems,
                   })}
-                </TableBody>
-              </Table>
-            )}
-
-            {/* Pagination */}
-            {filteredSms.length > PAGE_SIZE && (
-              <div className="flex items-center justify-between px-4 py-3 border-t border-gray-100 dark:border-gray-800">
-                <p className="text-xs text-gray-500 dark:text-gray-400">
-                  {t('smsLog.results.page', { current: safePage, total: totalPages })}
-                </p>
-                <div className="flex items-center gap-2">
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    onClick={() => setPage((p) => Math.max(1, p - 1))}
-                    disabled={safePage === 1}
-                  >
-                    {t('smsLog.results.previous')}
-                  </Button>
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
-                    disabled={safePage === totalPages}
-                  >
-                    {t('smsLog.results.next')}
-                  </Button>
+                  {isFiltered && (
+                    <span className="ml-2 text-blue-600 dark:text-blue-400">
+                      {totalItems !== MOCK_SMS.length
+                        ? `(${t('smsLog.pagination.filteredOf', { count: MOCK_SMS.length })})`
+                        : `(${t('smsLog.pagination.filtered')})`}
+                    </span>
+                  )}
                 </div>
-              </div>
+                <Pagination
+                  page={safePage}
+                  totalPages={totalPages}
+                  itemsPerPage={itemsPerPage}
+                  onPageChange={handlePageChange}
+                  onItemsPerPageChange={handleItemsPerPageChange}
+                />
+              </motion.div>
             )}
-          </motion.section>
+          </motion.div>
         </div>
 
-        {/* Detail drawer */}
         <Sheet open={!!selectedSms} onOpenChange={(open) => !open && setSelectedSms(null)}>
           <SheetContent className="w-[460px] sm:max-w-[460px] p-0 flex flex-col">
             {selectedSms && (
@@ -766,17 +707,99 @@ export function SmsHistorySettings() {
   );
 }
 
+function SmsStatusTabs({
+  activeStatus,
+  onStatusChange,
+  kpis,
+  deliveryRate,
+  failureRate,
+  avgPerDay,
+}: {
+  activeStatus: StatusTab;
+  onStatusChange: (status: StatusTab) => void;
+  kpis: Record<StatusTab, number>;
+  deliveryRate: number;
+  failureRate: number;
+  avgPerDay: number;
+}) {
+  const { t } = useTranslation();
+  const order: StatusTab[] = ['all', 'delivered', 'sent', 'pending', 'failed'];
+  const avgLabel = t('smsLog.statusTabs.perDay', { count: avgPerDay });
+
+  const metricValueFor = (status: StatusTab): string => {
+    if (status === 'all') return kpis.all.toString();
+    if (status === 'delivered') return `${deliveryRate}%`;
+    if (status === 'failed') return `${failureRate}%`;
+    return kpis[status].toString();
+  };
+
+  const metricLabelFor = (status: StatusTab): string => {
+    if (status === 'delivered' || status === 'failed') {
+      return t('smsLog.statusTabs.metricRate');
+    }
+    return t('smsLog.statusTabs.metricCount');
+  };
+
+  return (
+    <motion.div
+      initial={{ opacity: 0, y: -10 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ duration: 0.3 }}
+      className="bg-primary/5 p-3 rounded-lg"
+    >
+      <div className="mb-3 flex items-center justify-between">
+        <div className="flex items-center gap-2">
+          <div className="w-1 h-6 bg-primary rounded-full" />
+          <h3 className="font-semibold text-gray-900 dark:text-gray-100">
+            {t('smsLog.statusTabs.title')}
+          </h3>
+          <Badge variant="outline" className="text-xs bg-primary/10 text-primary border-primary/25">
+            {t('smsLog.statusTabs.subtitle')}
+          </Badge>
+        </div>
+        <div className="text-xs text-gray-500 dark:text-gray-400">
+          {t('smsLog.statusTabs.clickToFilter')}
+        </div>
+      </div>
+
+      <div className="grid grid-cols-5 gap-1.5 items-center">
+        {order.map((status) => (
+          <FilterCard
+            key={status}
+            status={status}
+            activeStatus={activeStatus}
+            onStatusChange={(s) => onStatusChange(s as StatusTab)}
+            label={t(`smsLog.statusTabs.${status}`)}
+            icon={STATUS_TAB_ICON[status]}
+            total={kpis[status]}
+            metricLabel={metricLabelFor(status)}
+            metricValue={metricValueFor(status)}
+            averageValue={avgLabel}
+            iconActiveClassName={STATUS_TAB_ICON_CLASS[status] ?? 'text-primary'}
+          />
+        ))}
+      </div>
+    </motion.div>
+  );
+}
+
 function StatusBadge({ status, label }: { status: SmsStatus; label: string }) {
   const Icon = STATUS_ICON[status];
   return (
-    <Badge variant="outline" className={cn('gap-1.5', STATUS_STYLES[status])}>
+    <Badge variant="outline" className={cn('gap-1.5', STATUS_BADGE_STYLES[status])}>
       <Icon className="w-3 h-3" />
       <span>{label}</span>
     </Badge>
   );
 }
 
-function EmptyState({ isFiltered, onReset }: { isFiltered: boolean; onReset: () => void }) {
+function EmptyState({
+  isFiltered,
+  onReset,
+}: {
+  isFiltered: boolean;
+  onReset: () => void;
+}) {
   const { t } = useTranslation();
   return (
     <div className="flex flex-col items-center justify-center px-6 py-16 text-center">
@@ -790,11 +813,125 @@ function EmptyState({ isFiltered, onReset }: { isFiltered: boolean; onReset: () 
         {isFiltered ? t('smsLog.empty.body') : t('smsLog.empty.noDataBody')}
       </p>
       {isFiltered && (
-        <Button variant="outline" size="sm" onClick={onReset} className="mt-4 gap-2">
-          <RotateCcw className="w-3.5 h-3.5" />
+        <Button variant="outline" size="sm" onClick={onReset} className="mt-4">
           {t('smsLog.empty.resetCta')}
         </Button>
       )}
+    </div>
+  );
+}
+
+function Pagination({
+  page,
+  totalPages,
+  itemsPerPage,
+  onPageChange,
+  onItemsPerPageChange,
+}: {
+  page: number;
+  totalPages: number;
+  itemsPerPage: number;
+  onPageChange: (page: number) => void;
+  onItemsPerPageChange: (n: number) => void;
+}) {
+  const { t } = useTranslation();
+
+  const pageNumbers = (): (number | string)[] => {
+    const pages: (number | string)[] = [];
+    const max = 7;
+    if (totalPages <= max) {
+      for (let i = 1; i <= totalPages; i++) pages.push(i);
+      return pages;
+    }
+    if (page <= 3) {
+      for (let i = 1; i <= 5; i++) pages.push(i);
+      pages.push('...');
+      pages.push(totalPages);
+    } else if (page >= totalPages - 2) {
+      pages.push(1);
+      pages.push('...');
+      for (let i = totalPages - 4; i <= totalPages; i++) pages.push(i);
+    } else {
+      pages.push(1);
+      pages.push('...');
+      for (let i = page - 1; i <= page + 1; i++) pages.push(i);
+      pages.push('...');
+      pages.push(totalPages);
+    }
+    return pages;
+  };
+
+  return (
+    <div className="flex items-center gap-2">
+      <motion.button
+        whileHover={{ scale: page > 1 ? 1.05 : 1 }}
+        whileTap={{ scale: page > 1 ? 0.95 : 1 }}
+        onClick={() => onPageChange(page - 1)}
+        disabled={page === 1}
+        aria-label={t('smsLog.pagination.previous')}
+        className={cn(
+          'p-2 rounded-lg transition-all duration-200 border border-transparent hover:border-gray-200 dark:hover:border-gray-700 hover:bg-white dark:hover:bg-gray-800',
+          page === 1 && 'opacity-40 cursor-not-allowed',
+        )}
+      >
+        <ChevronLeft className="w-4 h-4 text-gray-600 dark:text-gray-400" />
+      </motion.button>
+
+      {pageNumbers().map((p, idx) => (
+        <motion.button
+          key={`${p}-${idx}`}
+          whileHover={{ scale: p !== '...' ? 1.1 : 1, y: p !== '...' ? -2 : 0 }}
+          whileTap={{ scale: p !== '...' ? 0.95 : 1 }}
+          onClick={() => typeof p === 'number' && onPageChange(p)}
+          disabled={p === '...'}
+          className={cn(
+            'min-w-[36px] h-9 px-3 rounded-lg transition-all duration-300',
+            p === page
+              ? 'bg-primary text-primary-foreground shadow-md'
+              : p === '...'
+                ? 'text-gray-400 dark:text-gray-600 cursor-default'
+                : 'hover:bg-white dark:hover:bg-gray-800 text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-100 border border-transparent hover:border-gray-200 dark:hover:border-gray-700',
+          )}
+        >
+          {p}
+        </motion.button>
+      ))}
+
+      <motion.button
+        whileHover={{ scale: page < totalPages ? 1.05 : 1 }}
+        whileTap={{ scale: page < totalPages ? 0.95 : 1 }}
+        onClick={() => onPageChange(page + 1)}
+        disabled={page === totalPages}
+        aria-label={t('smsLog.pagination.next')}
+        className={cn(
+          'p-2 rounded-lg transition-all duration-200 border border-transparent hover:border-gray-200 dark:hover:border-gray-700 hover:bg-white dark:hover:bg-gray-800',
+          page === totalPages && 'opacity-40 cursor-not-allowed',
+        )}
+      >
+        <ChevronRight className="w-4 h-4 text-gray-600 dark:text-gray-400" />
+      </motion.button>
+
+      <div className="ml-2">
+        <DropdownMenu>
+          <DropdownMenuTrigger className="flex items-center gap-1 px-2 py-1 hover:bg-white dark:hover:bg-gray-800 rounded-lg transition-all duration-200 outline-none">
+            <span className="text-sm text-gray-600 dark:text-gray-400">
+              {t('smsLog.pagination.itemsPerPage', { count: itemsPerPage })}
+            </span>
+            <ChevronDown className="w-4 h-4 text-gray-600 dark:text-gray-400" />
+          </DropdownMenuTrigger>
+          <DropdownMenuContent align="end">
+            {[10, 20, 50, 100].map((n) => (
+              <DropdownMenuItem
+                key={n}
+                onClick={() => onItemsPerPageChange(n)}
+                className="cursor-pointer"
+              >
+                {t('smsLog.pagination.itemsPerPageOption', { count: n })}
+              </DropdownMenuItem>
+            ))}
+          </DropdownMenuContent>
+        </DropdownMenu>
+      </div>
     </div>
   );
 }
@@ -899,14 +1036,16 @@ function SmsDetail({
           </p>
           <div className="flex items-center gap-2">
             <code className="flex-1 rounded-lg border border-gray-200 bg-gray-50 dark:border-gray-800 dark:bg-gray-900/60 px-3 py-2 text-xs text-gray-700 dark:text-gray-300 font-mono">
-              {sms.id}
+              sms_{String(sms.id).padStart(4, '0')}
             </code>
             <Tooltip>
               <TooltipTrigger asChild>
                 <Button
                   variant="outline"
                   size="icon"
-                  onClick={() => onCopy(sms.id)}
+                  onClick={() =>
+                    onCopy(`sms_${String(sms.id).padStart(4, '0')}`)
+                  }
                   aria-label={t('smsLog.detail.copyId')}
                 >
                   <Copy className="w-3.5 h-3.5" />

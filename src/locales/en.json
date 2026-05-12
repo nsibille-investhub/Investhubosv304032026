@@ -2516,51 +2516,50 @@
   "smsLog": {
     "title": "SMS history",
     "subtitle": "Review outbound messages, verify delivery and audit SMS activity.",
+    "entityName": "SMS",
+    "searchPlaceholder": "Search by phone number or SMS content…",
     "accessNoticeTitle": "Sensitive data — restricted access",
     "accessNoticeBody": "SMS contain authentication codes and phone numbers. Access is limited to GP administrators and the InvestHub Customer Success team.",
     "readOnlyHint": "Read-only view — no resend, deletion or edit is available from this screen.",
-    "kpi": {
-      "total": "SMS sent",
-      "totalHint": "in selected range",
+    "statusTabs": {
+      "title": "Filter by delivery status",
+      "subtitle": "5 statuses",
+      "clickToFilter": "Click to filter",
+      "all": "All",
       "delivered": "Delivered",
-      "deliveredHint": "carrier confirmed",
-      "failed": "Failures",
-      "failedHint": "needs investigation",
-      "deliveryRate": "Delivery rate",
-      "deliveryRateHint": "target > 95%"
+      "sent": "Sent",
+      "pending": "Pending",
+      "failed": "Failed",
+      "metricCount": "Total",
+      "metricRate": "Rate",
+      "perDay": "{{count}} / day (7d)"
     },
     "filters": {
-      "title": "Filters",
-      "subtitle": "Combinable — logical AND",
-      "phone": "Phone number",
-      "phonePlaceholder": "e.g. 33612345678",
-      "phoneHint": "International format, no leading « + »",
-      "message": "Message",
-      "messagePlaceholder": "Search SMS content…",
-      "dateFrom": "From",
-      "dateTo": "To",
-      "apply": "Apply",
-      "reset": "Reset",
-      "activeFilters": "Active filters",
-      "clearOne": "Remove filter"
+      "period": "Period",
+      "sender": "Sender",
+      "periodPresets": {
+        "all": "All time",
+        "today": "Today",
+        "7d": "Last 7 days",
+        "30d": "Last 30 days",
+        "90d": "Last 90 days"
+      }
     },
     "table": {
       "date": "Date",
       "recipient": "Recipient",
       "sender": "Sender",
       "message": "Message",
-      "delivered": "Delivered",
-      "sortByDateDesc": "Sort by date descending",
-      "sortByDateAsc": "Sort by date ascending",
-      "rowAriaLabel": "View SMS details for {{date}} to {{recipient}}"
+      "delivered": "Delivered"
     },
-    "results": {
-      "one": "{{count}} SMS",
-      "many": "{{count}} SMS",
-      "filtered": "filtered out of {{total}}",
-      "page": "Page {{current}} of {{total}}",
-      "previous": "Previous",
-      "next": "Next"
+    "pagination": {
+      "itemsRange": "{{start}}–{{end}} of {{total}}",
+      "filtered": "filtered results",
+      "filteredOf": "filtered out of {{count}} total",
+      "itemsPerPage": "{{count}} / page",
+      "itemsPerPageOption": "{{count}} per page",
+      "previous": "Previous page",
+      "next": "Next page"
     },
     "status": {
       "delivered": "Delivered",
@@ -2572,13 +2571,12 @@
     "actions": {
       "export": "Export",
       "exportTooltip": "Download the filtered list as CSV",
-      "refresh": "Refresh",
       "viewDetails": "View details",
       "copy": "Copy"
     },
     "empty": {
       "title": "No SMS matches your filters",
-      "body": "Adjust the period or remove some criteria to broaden the search.",
+      "body": "Adjust the period, status or clear the search to broaden the results.",
       "resetCta": "Reset filters",
       "noDataTitle": "No SMS in this period",
       "noDataBody": "Messages sent from InvestHub will appear here."
@@ -2590,7 +2588,6 @@
       "recipient": "Recipient",
       "sender": "Sender",
       "content": "Content",
-      "deliveryStatus": "Delivery status",
       "providerResponse": "Provider response",
       "smsId": "SMS ID",
       "trigger": "Trigger",

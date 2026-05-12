@@ -2516,51 +2516,50 @@
   "smsLog": {
     "title": "Historique des SMS",
     "subtitle": "Consultez les envois, vérifiez la délivrabilité et auditez l'activité SMS.",
+    "entityName": "SMS",
+    "searchPlaceholder": "Rechercher par numéro ou contenu du SMS…",
     "accessNoticeTitle": "Données sensibles — accès restreint",
     "accessNoticeBody": "Les SMS contiennent des codes d'authentification et des numéros de téléphone. La consultation est réservée aux administrateurs GP et aux équipes Customer Success InvestHub.",
     "readOnlyHint": "Vue en lecture seule — aucun renvoi, suppression ou modification possible depuis cet écran.",
-    "kpi": {
-      "total": "SMS envoyés",
-      "totalHint": "sur la période",
+    "statusTabs": {
+      "title": "Filtrer par statut de délivrabilité",
+      "subtitle": "5 statuts",
+      "clickToFilter": "Cliquez pour filtrer",
+      "all": "Tous",
       "delivered": "Délivrés",
-      "deliveredHint": "confirmation opérateur",
+      "sent": "Envoyés",
+      "pending": "En cours",
       "failed": "Échecs",
-      "failedHint": "à investiguer",
-      "deliveryRate": "Taux de délivrabilité",
-      "deliveryRateHint": "objectif > 95 %"
+      "metricCount": "Total",
+      "metricRate": "Taux",
+      "perDay": "{{count}} / jour (7j)"
     },
     "filters": {
-      "title": "Filtres",
-      "subtitle": "Combinables — ET logique",
-      "phone": "Numéro",
-      "phonePlaceholder": "Ex. 33612345678",
-      "phoneHint": "Format international sans le « + »",
-      "message": "Message",
-      "messagePlaceholder": "Recherche dans le contenu du SMS…",
-      "dateFrom": "Date de début",
-      "dateTo": "Date de fin",
-      "apply": "Filtrer",
-      "reset": "Réinitialiser",
-      "activeFilters": "Filtres actifs",
-      "clearOne": "Retirer ce filtre"
+      "period": "Période",
+      "sender": "Expéditeur",
+      "periodPresets": {
+        "all": "Toutes les périodes",
+        "today": "Aujourd'hui",
+        "7d": "7 derniers jours",
+        "30d": "30 derniers jours",
+        "90d": "90 derniers jours"
+      }
     },
     "table": {
       "date": "Date",
       "recipient": "Destinataire",
       "sender": "Expéditeur",
       "message": "Message",
-      "delivered": "Délivré",
-      "sortByDateDesc": "Tri décroissant par date",
-      "sortByDateAsc": "Tri croissant par date",
-      "rowAriaLabel": "Voir le détail du SMS du {{date}} à {{recipient}}"
+      "delivered": "Délivré"
     },
-    "results": {
-      "one": "{{count}} SMS",
-      "many": "{{count}} SMS",
-      "filtered": "filtré(s) sur {{total}}",
-      "page": "Page {{current}} sur {{total}}",
-      "previous": "Précédent",
-      "next": "Suivant"
+    "pagination": {
+      "itemsRange": "{{start}}–{{end}} sur {{total}}",
+      "filtered": "résultats filtrés",
+      "filteredOf": "filtrés sur {{count}} au total",
+      "itemsPerPage": "{{count}} / page",
+      "itemsPerPageOption": "{{count}} par page",
+      "previous": "Page précédente",
+      "next": "Page suivante"
     },
     "status": {
       "delivered": "Délivré",
@@ -2572,13 +2571,12 @@
     "actions": {
       "export": "Exporter",
       "exportTooltip": "Télécharger la liste filtrée en CSV",
-      "refresh": "Actualiser",
       "viewDetails": "Voir le détail",
       "copy": "Copier"
     },
     "empty": {
       "title": "Aucun SMS ne correspond aux filtres",
-      "body": "Ajustez la période ou retirez certains critères pour élargir la recherche.",
+      "body": "Ajustez la période, le statut ou videz la recherche pour élargir les résultats.",
       "resetCta": "Réinitialiser les filtres",
       "noDataTitle": "Aucun SMS sur la période",
       "noDataBody": "Les SMS envoyés depuis InvestHub apparaîtront ici."
@@ -2590,7 +2588,6 @@
       "recipient": "Destinataire",
       "sender": "Expéditeur",
       "content": "Contenu",
-      "deliveryStatus": "Statut de délivrabilité",
       "providerResponse": "Réponse fournisseur",
       "smsId": "Identifiant SMS",
       "trigger": "Origine de l'envoi",
