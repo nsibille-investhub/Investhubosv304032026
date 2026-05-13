@@ -1206,7 +1206,7 @@
           },
           "segmentRestrictionInherited": "Segment restriction inherited from the folder",
           "selectTargetingType": "Targeting type…",
-          "notifyRecipients": "Notify recipients",
+          "notifyRecipients": "Notify",
           "noValidationTeam": "No validation team selected.",
           "paginationRangeOne": "{{start}}-{{end}} of {{total}} item",
           "paginationRangeMany": "{{start}}-{{end}} of {{total}} items",

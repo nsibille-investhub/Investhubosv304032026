@@ -1206,7 +1206,7 @@
           },
           "segmentRestrictionInherited": "Restriction de segment héritée du dossier",
           "selectTargetingType": "Type de ciblage…",
-          "notifyRecipients": "Notifier les destinataires",
+          "notifyRecipients": "Notifier",
           "noValidationTeam": "Aucune équipe de validation sélectionnée.",
           "paginationRangeOne": "{{start}}-{{end}} sur {{total}} élément",
           "paginationRangeMany": "{{start}}-{{end}} sur {{total}} éléments",

@@ -3780,6 +3780,40 @@ export function MassUploadWizard({ isOpen, onClose, existingFolders, inline = fa
                                       </SelectContent>
                                     </Select>
                                   )}
+                                  {batch.globalTargeting.targetType === 'investor' && (
+                                    <Select
+                                      value={batch.globalTargeting.targetInvestors[0] ?? ''}
+                                      onValueChange={(value) =>
+                                        handleUpdateBatch(batch.id, {
+                                          globalTargeting: { ...batch.globalTargeting, targetInvestors: [value] },
+                                        })
+                                      }
+                                    >
+                                      <SelectTrigger className="h-7 text-xs"><SelectValue placeholder={t('ged.dataRoom.massUpload.wizard.selectInvestor')} /></SelectTrigger>
+                                      <SelectContent>
+                                        {availableInvestors.map((inv) => (
+                                          <SelectItem key={inv.id} value={inv.id} className="text-xs">{inv.name}</SelectItem>
+                                        ))}
+                                      </SelectContent>
+                                    </Select>
+                                  )}
+                                  {batch.globalTargeting.targetType === 'subscription' && (
+                                    <Select
+                                      value={batch.globalTargeting.targetSubscriptions[0] ?? ''}
+                                      onValueChange={(value) =>
+                                        handleUpdateBatch(batch.id, {
+                                          globalTargeting: { ...batch.globalTargeting, targetSubscriptions: [value] },
+                                        })
+                                      }
+                                    >
+                                      <SelectTrigger className="h-7 text-xs"><SelectValue placeholder={t('ged.dataRoom.massUpload.wizard.selectSubscription')} /></SelectTrigger>
+                                      <SelectContent>
+                                        {availableSubscriptions.map((sub) => (
+                                          <SelectItem key={sub.id} value={sub.id} className="text-xs">{subscriptionLabel(sub)}</SelectItem>
+                                        ))}
+                                      </SelectContent>
+                                    </Select>
+                                  )}
                                   {batch.globalTargeting.targetType === 'fund' && (
                                     <Select
                                       value={batch.globalTargeting.targetFunds[0] ?? ''}
