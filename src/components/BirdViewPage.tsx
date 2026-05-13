@@ -1337,21 +1337,6 @@ export function BirdViewPage({ onBack }: BirdViewPageProps) {
               />
             </div>
           )}
-
-          {/* Sélecteur de dossier (filtre périmètre Bird View) */}
-          <div className="min-w-[280px]">
-            <AutocompleteSingleSelect
-              value={selectedFolderId}
-              onChange={setSelectedFolderId}
-              options={availableFolders.map((f) => ({
-                value: f.id,
-                label: f.name,
-                description: f.path,
-              }))}
-              placeholder={t('ged.birdview.filters.pickFolder')}
-              icon={FolderOpen}
-            />
-          </div>
         </div>
 
         {/* Barre de filtres */}
@@ -1365,6 +1350,21 @@ export function BirdViewPage({ onBack }: BirdViewPageProps) {
               value={documentNameFilter}
               onChange={(e) => setDocumentNameFilter(e.target.value)}
               className="h-10 pl-9 pr-3 min-w-[200px] border border-gray-300 dark:border-gray-700 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white dark:bg-gray-950"
+            />
+          </div>
+
+          {/* Sélecteur de dossier (filtre périmètre Bird View) */}
+          <div className="min-w-[280px]">
+            <AutocompleteSingleSelect
+              value={selectedFolderId}
+              onChange={setSelectedFolderId}
+              options={availableFolders.map((f) => ({
+                value: f.id,
+                label: f.name,
+                description: f.path,
+              }))}
+              placeholder={t('ged.birdview.filters.pickFolder')}
+              icon={FolderOpen}
             />
           </div>
 
