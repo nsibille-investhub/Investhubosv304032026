@@ -3364,14 +3364,16 @@ export function MassUploadWizard({ isOpen, onClose, existingFolders, inline = fa
                     const renderFileRow = (file: UploadedFile, inBatch?: UploadBatch) => {
                       const ext = file.file.name.split('.').pop()?.toUpperCase() ?? 'FILE';
                       const isSelected = selectedFiles.includes(file.id);
-                      // Child rows stay fully editable even when the file is in a
-                      // batch — editing a per-document value diverges the file
-                      // from its siblings and the dynamic re-grouping effect
-                      // moves it out of the batch automatically.
-                      const folderLocked = false;
-                      const targetingLocked = false;
-                      const notificationLocked = false;
-                      const validationTeamLocked = false;
+                      // Inside a batch, ciblage / notification / équipe de
+                      // validation are consolidated at the group level and not
+                      // editable on individual rows. To take a document out of a
+                      // batch, the user disables the auto-group toggle, edits
+                      // the value, and re-enables the toggle. Folder remains
+                      // per-document (auto-batches use folderMode='per-document').
+                      const folderLocked = !!inBatch && inBatch.folderMode === 'global';
+                      const targetingLocked = !!inBatch;
+                      const notificationLocked = !!inBatch;
+                      const validationTeamLocked = !!inBatch;
                       const dashPlaceholder = (
                         <Tooltip>
                           <TooltipTrigger asChild>
