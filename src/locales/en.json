@@ -1311,7 +1311,9 @@
             "batchRowSummaryOne": "{{count}} document · consolidated validation team",
             "batchRowSummaryMany": "{{count}} documents · consolidated validation team",
             "configure": "Configure",
-            "dissolve": "Dissolve"
+            "dissolve": "Dissolve",
+            "autoGroupLabel": "Group documents",
+            "autoGroupTooltip": "Automatically create batches by grouping documents that share the same targeting, notification and validator. Each batch acts as the unit for validation and notification."
           }
         }
       },

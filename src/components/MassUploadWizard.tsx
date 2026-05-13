@@ -533,6 +533,11 @@ export function MassUploadWizard({ isOpen, onClose, existingFolders, inline = fa
   const [batches, setBatches] = useState<UploadBatch[]>([]);
   const [expandedBatchIds, setExpandedBatchIds] = useState<Set<string>>(new Set());
   const [editingBatchId, setEditingBatchId] = useState<string | null>(null);
+  // Auto-grouping toggle — when on, the wizard creates batches automatically
+  // by grouping files that share the same targeting, notification (notify +
+  // template) and validation team. Each resulting batch is the unit used both
+  // for validation and for notification on the next screen.
+  const [autoGroupEnabled, setAutoGroupEnabled] = useState(true);
 
   // Deep Review mode
   const [deepReview, setDeepReview] = useState(false);
@@ -1256,6 +1261,104 @@ export function MassUploadWizard({ isOpen, onClose, existingFolders, inline = fa
     if (editingBatchId === batchId) setEditingBatchId(null);
     toast.info(t('ged.dataRoom.massUpload.wizard.bulk.batchDissolved'));
   };
+
+  /** Signature used by auto-grouping to decide which files share a batch:
+   * identical targeting (type + lists), notification (on/off + template) and
+   * validation team. Lists are sorted to ignore selection order. */
+  const computeGroupSignature = (f: UploadedFile): string => {
+    const join = (xs: string[]) => [...xs].sort().join(',');
+    return [
+      f.targetType,
+      join(f.targetSegments),
+      join(f.targetInvestors),
+      join(f.targetSubscriptions),
+      join(f.targetFunds),
+      f.notify ? '1' : '0',
+      f.emailTemplate ?? '',
+      join(f.validationTeam),
+    ].join('|');
+  };
+
+  /** Detach every file from any batch and clear the batches list. Used by the
+   * auto-group toggle (when turned off) and as a first step before
+   * re-grouping. */
+  const dissolveAllBatches = () => {
+    setUploadedFiles((prev) => prev.map((f) => ({ ...f, batchId: undefined })));
+    setBatches([]);
+    setExpandedBatchIds(new Set());
+    setEditingBatchId(null);
+  };
+
+  /** Recompute batches by signature. Two or more files sharing the same
+   * targeting + notification + validation team are grouped together. Files
+   * with a unique signature remain standalone. */
+  const runAutoGrouping = () => {
+    const groups = new Map<string, UploadedFile[]>();
+    uploadedFiles.forEach((f) => {
+      const k = computeGroupSignature(f);
+      const list = groups.get(k) ?? [];
+      list.push(f);
+      groups.set(k, list);
+    });
+    const newBatches: UploadBatch[] = [];
+    const fileToBatchId = new Map<string, string>();
+    let idx = 1;
+    groups.forEach((files) => {
+      if (files.length < 2) return;
+      const first = files[0];
+      const id = `auto-batch-${Date.now()}-${idx}-${Math.random().toString(36).slice(2, 6)}`;
+      newBatches.push({
+        id,
+        name: t('ged.dataRoom.massUpload.wizard.bulk.batchNamePrefix', { n: idx }),
+        validationTeam: first.validationTeam,
+        folderMode: 'per-document',
+        globalFolder: '',
+        targetingMode: 'global',
+        globalTargeting: {
+          targetType: first.targetType,
+          targetSegments: first.targetSegments,
+          targetInvestors: first.targetInvestors,
+          targetSubscriptions: first.targetSubscriptions,
+          targetFunds: first.targetFunds,
+        },
+      });
+      files.forEach((f) => fileToBatchId.set(f.id, id));
+      idx++;
+    });
+    setBatches(newBatches);
+    setUploadedFiles((prev) =>
+      prev.map((f) => ({ ...f, batchId: fileToBatchId.get(f.id) })),
+    );
+    setExpandedBatchIds(new Set(newBatches.map((b) => b.id)));
+  };
+
+  const handleToggleAutoGroup = (checked: boolean) => {
+    setAutoGroupEnabled(checked);
+    if (checked) {
+      runAutoGrouping();
+    } else {
+      dissolveAllBatches();
+    }
+  };
+
+  // Auto-run grouping when first arriving on the configuration step.
+  // We track whether we have already grouped for the current visit so the
+  // effect doesn't fight manual changes the user makes afterwards.
+  const isConfigStep =
+    (currentStep === 2 && !deepReview) ||
+    (deepReview && currentStep === 2 + uploadedFiles.length);
+  const hasAutoGroupedRef = useRef(false);
+  useEffect(() => {
+    if (!isConfigStep) {
+      hasAutoGroupedRef.current = false;
+      return;
+    }
+    if (autoGroupEnabled && !hasAutoGroupedRef.current && uploadedFiles.length > 0) {
+      hasAutoGroupedRef.current = true;
+      runAutoGrouping();
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [isConfigStep, autoGroupEnabled, uploadedFiles.length]);
 
   // Field catalogue used to render the bulk edit picker chips and the per-field editors.
   const BULK_FIELDS: { key: BulkFieldKey; label: string; icon: LucideIcon }[] = [
@@ -2536,6 +2639,29 @@ export function MassUploadWizard({ isOpen, onClose, existingFolders, inline = fa
                     <div className="flex items-center gap-2">
                       <Tooltip>
                         <TooltipTrigger asChild>
+                          <div className="flex items-center gap-2 rounded-md border border-gray-200 bg-white px-2.5 py-1.5">
+                            <Layers3 className="h-3.5 w-3.5 text-gray-500" />
+                            <Label
+                              htmlFor="auto-group-toggle"
+                              className="cursor-pointer text-xs text-gray-700"
+                            >
+                              {t('ged.dataRoom.massUpload.wizard.bulk.autoGroupLabel')}
+                            </Label>
+                            <Switch
+                              id="auto-group-toggle"
+                              checked={autoGroupEnabled}
+                              onCheckedChange={handleToggleAutoGroup}
+                            />
+                          </div>
+                        </TooltipTrigger>
+                        <TooltipContent>
+                          <span className="text-xs">
+                            {t('ged.dataRoom.massUpload.wizard.bulk.autoGroupTooltip')}
+                          </span>
+                        </TooltipContent>
+                      </Tooltip>
+                      <Tooltip>
+                        <TooltipTrigger asChild>
                           <Button
                             variant="outline"
                             size="sm"
@@ -3701,26 +3827,9 @@ export function MassUploadWizard({ isOpen, onClose, existingFolders, inline = fa
                                       { count: children.length }
                                     )}
                                   </div>
-                                  <div className="flex items-center gap-1">
-                                    <Button
-                                      variant="ghost"
-                                      size="sm"
-                                      className="h-6 gap-1 px-1.5 text-[11px] text-blue-700 hover:bg-blue-100"
-                                      onClick={() => handleConfigureBatch(batch.id)}
-                                    >
-                                      <Settings className="h-3 w-3" />
-                                      {t('ged.dataRoom.massUpload.wizard.bulk.configure')}
-                                    </Button>
-                                    <Button
-                                      variant="ghost"
-                                      size="sm"
-                                      className="h-6 gap-1 px-1.5 text-[11px] text-gray-600 hover:bg-gray-100"
-                                      onClick={() => handleDissolveBatch(batch.id)}
-                                    >
-                                      <Unlink className="h-3 w-3" />
-                                      {t('ged.dataRoom.massUpload.wizard.bulk.dissolve')}
-                                    </Button>
-                                  </div>
+                                  {/* Configure / Dissolve actions are intentionally
+                                      hidden in this phase — grouping is fully driven
+                                      by the auto-group toggle in the Step 2 header. */}
                                 </div>
                               </div>
                             </td>

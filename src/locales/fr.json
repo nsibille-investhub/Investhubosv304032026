@@ -1311,7 +1311,9 @@
             "batchRowSummaryOne": "{{count}} document · équipe de validation consolidée",
             "batchRowSummaryMany": "{{count}} documents · équipe de validation consolidée",
             "configure": "Configurer",
-            "dissolve": "Dissoudre"
+            "dissolve": "Dissoudre",
+            "autoGroupLabel": "Grouper les documents",
+            "autoGroupTooltip": "Crée automatiquement des lots en regroupant les documents qui partagent le même ciblage, la même notification et le même validateur. Chaque lot servira d'unité pour la validation et la notification."
           }
         }
       },
