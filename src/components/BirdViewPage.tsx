@@ -93,6 +93,13 @@ interface DocumentNode {
    * so the GP can still see what exists at the LP level.
    */
   inaccessibleForContact?: boolean;
+  /**
+   * Set when a folder filter is active alongside an investor scope and
+   * the investor has no access to this doc. The doc is kept visible
+   * (greyed) so the GP can still see the structure of the selected
+   * folder, but it does NOT count in the filtered KPIs.
+   */
+  inaccessibleForViewer?: boolean;
 }
 
 export function BirdViewPage({ onBack }: BirdViewPageProps) {
@@ -134,6 +141,9 @@ export function BirdViewPage({ onBack }: BirdViewPageProps) {
   const [selectedFund, setSelectedFund] = useState<string | null>(null);
   const [selectedSegments, setSelectedSegments] = useState<string[]>([]);
   const [selectedSubscription, setSelectedSubscription] = useState<string | null>(null);
+
+  // Filtre dossier (Bird View scoped to a specific folder branch)
+  const [selectedFolderId, setSelectedFolderId] = useState<string | null>(null);
 
   // Charger les données
   useEffect(() => {
@@ -228,6 +238,28 @@ export function BirdViewPage({ onBack }: BirdViewPageProps) {
     };
     collect(documentTree);
     return Array.from(funds).sort();
+  }, [documentTree]);
+
+  /**
+   * Flat list of every folder (and space) in the tree, with a path
+   * description ("Space / Parent / Subparent") to disambiguate
+   * homonyms in the selector. Built from the unfiltered tree — per the
+   * user story, the folder selector is NOT restricted by the
+   * "Visualiser comme" context.
+   */
+  const availableFolders = useMemo(() => {
+    const out: { id: string; name: string; path: string }[] = [];
+    const walk = (node: DocumentNode, ancestors: string[]) => {
+      if (node.type === 'document') return;
+      out.push({
+        id: node.id,
+        name: node.name,
+        path: ancestors.join(' / '),
+      });
+      node.children?.forEach((c) => walk(c, [...ancestors, node.name]));
+    };
+    documentTree.forEach((space) => walk(space, []));
+    return out;
   }, [documentTree]);
 
   // Segments disponibles (collectés depuis l'arbre de documents)
@@ -378,9 +410,45 @@ export function BirdViewPage({ onBack }: BirdViewPageProps) {
     [],
   );
 
+  /**
+   * Reduce the tree to the branch leading to the selected folder:
+   * each ancestor only retains the path-child, and the selected folder
+   * itself keeps all of its descendants. Returns [] when not found.
+   */
+  const reduceTreeToFolder = useCallback(
+    (tree: DocumentNode[], folderId: string): DocumentNode[] => {
+      const findPath = (node: DocumentNode): DocumentNode[] | null => {
+        if (node.id === folderId) return [node];
+        for (const child of node.children ?? []) {
+          const sub = findPath(child);
+          if (sub) return [node, ...sub];
+        }
+        return null;
+      };
+      for (const root of tree) {
+        const path = findPath(root);
+        if (!path) continue;
+        let acc: DocumentNode = path[path.length - 1];
+        for (let i = path.length - 2; i >= 0; i--) {
+          acc = { ...path[i], children: [acc] };
+        }
+        return [acc];
+      }
+      return [];
+    },
+    [],
+  );
+
   // Arbre affiché (filtré ou complet)
   const displayedTree = useMemo(() => {
     let tree = documentTree;
+
+    // Filtre dossier : on réduit l'arbre à la branche sélectionnée
+    // (chaîne des parents → dossier sélectionné → tous ses enfants)
+    // AVANT toute autre opération.
+    if (selectedFolderId) {
+      tree = reduceTreeToFolder(tree, selectedFolderId);
+    }
 
     // Fonction récursive pour filtrer l'arbre
     const filterTree = (nodes: DocumentNode[]): DocumentNode[] => {
@@ -476,18 +544,30 @@ export function BirdViewPage({ onBack }: BirdViewPageProps) {
     // un rendu grisé en aval — le GP voit ainsi tout ce que le LP
     // pourrait recevoir, et où s'arrête le contact ciblé.
     if (selectedInvestor) {
+      // Quand un filtre dossier est actif, on conserve les documents
+      // hors périmètre investisseur en les grisant (scénario 5 du
+      // ticket : le dossier filtré reste visible, ses enfants
+      // inaccessibles apparaissent en grisé, et les KPI affichent 0
+      // document accessible). Sans filtre dossier, on garde le
+      // comportement historique : suppression cascade.
+      const folderFilterActive = !!selectedFolderId;
       const filterByAccess = (nodes: DocumentNode[]): DocumentNode[] =>
         nodes
           .map((n) => {
             if (n.type === 'document') {
-              if (!isAccessibleForInvestor(n)) return null;
+              if (!isAccessibleForInvestor(n)) {
+                if (folderFilterActive) {
+                  return { ...n, inaccessibleForViewer: true };
+                }
+                return null;
+              }
               if (selectedContactData && !isAccessibleForContact(n)) {
                 return { ...n, inaccessibleForContact: true };
               }
               return n;
             }
             const kept = n.children ? filterByAccess(n.children) : [];
-            if (kept.length === 0) return null;
+            if (kept.length === 0 && !folderFilterActive) return null;
             return { ...n, children: kept };
           })
           .filter((n): n is DocumentNode => n !== null);
@@ -504,6 +584,7 @@ export function BirdViewPage({ onBack }: BirdViewPageProps) {
     documentTree, showOnlyIncomplete,
     documentNameFilter, selectedDocumentCategory, selectedFund, selectedSegments, selectedSubscription,
     selectedInvestor, selectedContactData, isAccessibleForInvestor, isAccessibleForContact,
+    selectedFolderId, reduceTreeToFolder,
   ]);
 
   // Statistiques filtrées basées sur displayedTree
@@ -513,6 +594,10 @@ export function BirdViewPage({ onBack }: BirdViewPageProps) {
 
     const countFoldersAndDocs = (node: DocumentNode): { folders: number; docs: number } => {
       if (node.type === 'document') {
+        // Documents grisés (hors périmètre investisseur, conservés
+        // pour visibilité quand un filtre dossier est actif) ne sont
+        // pas comptés dans les KPI.
+        if (node.inaccessibleForViewer) return { folders: 0, docs: 0 };
         return { folders: 0, docs: 1 };
       }
 
@@ -540,6 +625,7 @@ export function BirdViewPage({ onBack }: BirdViewPageProps) {
     // Compter les documents nominatifs et ceux consultés
     const countNominatifDocs = (node: DocumentNode): { total: number; viewed: number } => {
       if (node.type === 'document' && node.isNominatif) {
+        if (node.inaccessibleForViewer) return { total: 0, viewed: 0 };
         const isViewed = node.engagement && node.engagement.viewedBy === node.engagement.totalViewers;
         return { total: 1, viewed: isViewed ? 1 : 0 };
       }
@@ -578,7 +664,7 @@ export function BirdViewPage({ onBack }: BirdViewPageProps) {
 
   // Auto-expand l'arbre quand le filtre est actif
   useEffect(() => {
-    if ((showOnlyIncomplete || !!selectedSubscription) && displayedTree.length > 0) {
+    if ((showOnlyIncomplete || !!selectedSubscription || !!selectedFolderId) && displayedTree.length > 0) {
       const allIds = new Set<string>();
       const collect = (nodes: DocumentNode[]) => {
         nodes.forEach(node => {
@@ -589,7 +675,7 @@ export function BirdViewPage({ onBack }: BirdViewPageProps) {
       collect(displayedTree);
       setExpandedNodes(allIds);
     }
-  }, [showOnlyIncomplete, selectedSubscription, displayedTree]);
+  }, [showOnlyIncomplete, selectedSubscription, selectedFolderId, displayedTree]);
 
   const toggleNode = (nodeId: string) => {
     setExpandedNodes(prev => {
@@ -880,7 +966,7 @@ export function BirdViewPage({ onBack }: BirdViewPageProps) {
           <div
             className={cn(
               'flex items-center gap-3 py-2 px-3 bg-blue-50/30 dark:bg-blue-950/10 rounded hover:bg-gray-100 dark:hover:bg-gray-800/60 transition-colors group',
-              node.inaccessibleForContact && 'opacity-60',
+              (node.inaccessibleForContact || node.inaccessibleForViewer) && 'opacity-60',
             )}
           >
             {/* Icon */}
@@ -941,6 +1027,28 @@ export function BirdViewPage({ onBack }: BirdViewPageProps) {
                 access.color === 'purple'
                   ? 'text-purple-200'
                   : 'text-blue-200';
+
+              if (node.inaccessibleForViewer) {
+                return (
+                  <Tooltip>
+                    <TooltipTrigger asChild>
+                      <div className="flex items-center gap-1.5 ml-4 cursor-help">
+                        <Ban className="w-4 h-4 text-gray-400" />
+                        <span className="text-xs font-medium text-gray-500">
+                          {t('ged.birdview.node.inaccessibleToViewer')}
+                        </span>
+                      </div>
+                    </TooltipTrigger>
+                    <TooltipContent side="top" className="max-w-sm">
+                      <div className="text-xs leading-snug">
+                        {t('ged.birdview.node.inaccessibleToViewerReason', {
+                          investor: selectedInvestor ?? '',
+                        })}
+                      </div>
+                    </TooltipContent>
+                  </Tooltip>
+                );
+              }
 
               if (node.inaccessibleForContact) {
                 return (
@@ -1229,6 +1337,21 @@ export function BirdViewPage({ onBack }: BirdViewPageProps) {
               />
             </div>
           )}
+
+          {/* Sélecteur de dossier (filtre périmètre Bird View) */}
+          <div className="min-w-[280px]">
+            <AutocompleteSingleSelect
+              value={selectedFolderId}
+              onChange={setSelectedFolderId}
+              options={availableFolders.map((f) => ({
+                value: f.id,
+                label: f.name,
+                description: f.path,
+              }))}
+              placeholder={t('ged.birdview.filters.pickFolder')}
+              icon={FolderOpen}
+            />
+          </div>
         </div>
 
         {/* Barre de filtres */}

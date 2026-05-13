@@ -1510,6 +1510,7 @@
         "visualizeAs": "Visualise as:",
         "pickEntity": "Select an entity...",
         "pickContact": "Contact or advisor...",
+        "pickFolder": "Filter by folder...",
         "documentName": "Document name...",
         "documentCategory": "Document type",
         "fund": "Fund",
@@ -1541,7 +1542,9 @@
         "activity": "Document activity",
         "activityLabel": "Activity",
         "inaccessibleToContact": "Outside contact scope",
-        "inaccessibleToContactReason": "{{contact}} doesn't have access to this document, but it is linked to {{investor}}."
+        "inaccessibleToContactReason": "{{contact}} doesn't have access to this document, but it is linked to {{investor}}.",
+        "inaccessibleToViewer": "Outside investor scope",
+        "inaccessibleToViewerReason": "{{investor}} does not have access to this document."
       },
       "access": {
         "nominativeTitle": "Nominative document",

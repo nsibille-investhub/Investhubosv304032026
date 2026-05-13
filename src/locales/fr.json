@@ -1510,6 +1510,7 @@
         "visualizeAs": "Visualiser comme :",
         "pickEntity": "Sélectionner une entité...",
         "pickContact": "Contact ou conseiller...",
+        "pickFolder": "Filtrer par dossier...",
         "documentName": "Nom du document...",
         "documentCategory": "Type de document",
         "fund": "Fonds",
@@ -1541,7 +1542,9 @@
         "activity": "Activité du document",
         "activityLabel": "Activité",
         "inaccessibleToContact": "Hors périmètre du contact",
-        "inaccessibleToContactReason": "{{contact}} n'a pas accès à ce document, mais il est bien rattaché à {{investor}}."
+        "inaccessibleToContactReason": "{{contact}} n'a pas accès à ce document, mais il est bien rattaché à {{investor}}.",
+        "inaccessibleToViewer": "Hors périmètre de l'investisseur",
+        "inaccessibleToViewerReason": "{{investor}} n'a pas accès à ce document."
       },
       "access": {
         "nominativeTitle": "Document nominatif",
