@@ -535,9 +535,11 @@ export function MassUploadWizard({ isOpen, onClose, existingFolders, inline = fa
   const [editingBatchId, setEditingBatchId] = useState<string | null>(null);
   // Auto-grouping toggle — when on, the wizard creates batches automatically
   // by grouping files that share the same targeting, notification (notify +
-  // template) and validation team. Each resulting batch is the unit used both
-  // for validation and for notification on the next screen.
-  const [autoGroupEnabled, setAutoGroupEnabled] = useState(true);
+  // template) and validation team. Files targeted to everyone ("Tous") are
+  // never grouped — there's no scoped audience to consolidate. Each resulting
+  // batch is the unit used both for validation and for notification on the
+  // next screen.
+  const [autoGroupEnabled, setAutoGroupEnabled] = useState(false);
 
   // Deep Review mode
   const [deepReview, setDeepReview] = useState(false);
@@ -1295,6 +1297,8 @@ export function MassUploadWizard({ isOpen, onClose, existingFolders, inline = fa
   const runAutoGrouping = () => {
     const groups = new Map<string, UploadedFile[]>();
     uploadedFiles.forEach((f) => {
+      // "Tous" (everyone) targeting is never grouped — those files stay standalone.
+      if (f.targetType === 'all') return;
       const k = computeGroupSignature(f);
       const list = groups.get(k) ?? [];
       list.push(f);
