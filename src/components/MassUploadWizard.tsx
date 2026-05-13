@@ -3680,13 +3680,8 @@ export function MassUploadWizard({ isOpen, onClose, existingFolders, inline = fa
                                 <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-md bg-blue-100">
                                   <Layers3 className="h-4 w-4 text-blue-700" />
                                 </div>
-                                <div className="min-w-0 flex-1 space-y-1">
-                                  <Input
-                                    value={batch.name}
-                                    onChange={(e) => handleUpdateBatch(batch.id, { name: e.target.value })}
-                                    className="h-7 text-sm font-medium border-blue-200 bg-white"
-                                  />
-                                  <div className="text-[11px] text-gray-600">
+                                <div className="min-w-0 flex-1">
+                                  <div className="text-sm font-medium text-gray-900">
                                     {t(
                                       children.length > 1
                                         ? 'ged.dataRoom.massUpload.wizard.bulk.batchRowSummaryMany'
@@ -3694,9 +3689,6 @@ export function MassUploadWizard({ isOpen, onClose, existingFolders, inline = fa
                                       { count: children.length }
                                     )}
                                   </div>
-                                  {/* Configure / Dissolve actions are intentionally
-                                      hidden in this phase — grouping is fully driven
-                                      by the auto-group toggle in the Step 2 header. */}
                                 </div>
                               </div>
                             </td>
