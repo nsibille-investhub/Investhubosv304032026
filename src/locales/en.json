@@ -2512,5 +2512,102 @@
         "signature": "Mathilde Garcia — ESG Officer"
       }
     }
+  },
+  "smsLog": {
+    "title": "SMS history",
+    "subtitle": "Review outbound messages, verify delivery and audit SMS activity.",
+    "entityName": "SMS",
+    "searchPlaceholder": "Search by phone number or SMS content…",
+    "statusTabs": {
+      "title": "Filter by delivery status",
+      "subtitle": "5 statuses",
+      "clickToFilter": "Click to filter",
+      "all": "All",
+      "delivered": "Delivered",
+      "sent": "Sent",
+      "pending": "Pending",
+      "failed": "Failed",
+      "metricCount": "Total",
+      "metricRate": "Rate",
+      "perDay": "{{count}} / day (7d)"
+    },
+    "filters": {
+      "period": "Period",
+      "sender": "Sender",
+      "periodPresets": {
+        "all": "All time",
+        "today": "Today",
+        "7d": "Last 7 days",
+        "30d": "Last 30 days",
+        "90d": "Last 90 days"
+      }
+    },
+    "table": {
+      "date": "Date",
+      "recipient": "Recipient",
+      "sender": "Sender",
+      "message": "Message",
+      "delivered": "Delivered"
+    },
+    "pagination": {
+      "itemsRange": "{{start}}–{{end}} of {{total}}",
+      "filtered": "filtered results",
+      "filteredOf": "filtered out of {{count}} total",
+      "itemsPerPage": "{{count}} / page",
+      "itemsPerPageOption": "{{count}} per page",
+      "previous": "Previous page",
+      "next": "Next page"
+    },
+    "status": {
+      "delivered": "Delivered",
+      "sent": "Sent",
+      "pending": "Pending",
+      "failed": "Failed",
+      "unknown": "Unknown"
+    },
+    "actions": {
+      "export": "Export",
+      "exportTooltip": "Download the filtered list as CSV",
+      "viewDetails": "View details",
+      "copy": "Copy"
+    },
+    "empty": {
+      "title": "No SMS matches your filters",
+      "body": "Adjust the period, status or clear the search to broaden the results.",
+      "resetCta": "Reset filters",
+      "noDataTitle": "No SMS in this period",
+      "noDataBody": "Messages sent from InvestHub will appear here."
+    },
+    "detail": {
+      "title": "SMS details",
+      "subtitle": "Send and delivery information",
+      "sentAt": "Sent at",
+      "recipient": "Recipient",
+      "sender": "Sender",
+      "content": "Content",
+      "providerResponse": "Provider response",
+      "smsId": "SMS ID",
+      "trigger": "Trigger",
+      "close": "Close",
+      "copyId": "Copy ID",
+      "copyContent": "Copy message"
+    },
+    "trigger": {
+      "loginCode": "Login code",
+      "otp": "One-time passcode",
+      "documentValidation": "Document validation",
+      "subscriptionReminder": "Subscription reminder",
+      "signatureReminder": "Signature reminder"
+    },
+    "toast": {
+      "exportStartedTitle": "Export started",
+      "exportStartedBody": "{{count}} SMS exported to CSV.",
+      "copySuccessTitle": "Copied",
+      "copySuccessBody": "Content copied to clipboard.",
+      "filtersResetTitle": "Filters reset"
+    },
+    "csv": {
+      "filename": "sms-history-{{date}}.csv"
+    }
   }
 }
