@@ -1206,7 +1206,7 @@
           },
           "segmentRestrictionInherited": "Restriction de segment héritée du dossier",
           "selectTargetingType": "Type de ciblage…",
-          "notifyRecipients": "Notifier les destinataires",
+          "notifyRecipients": "Notifier",
           "noValidationTeam": "Aucune équipe de validation sélectionnée.",
           "paginationRangeOne": "{{start}}-{{end}} sur {{total}} élément",
           "paginationRangeMany": "{{start}}-{{end}} sur {{total}} éléments",
@@ -1308,10 +1308,12 @@
             "bulkApplied": "Modification groupée appliquée",
             "bulkAppliedDesc": "{{files}} document(s) · {{fields}} champ(s) modifié(s)",
             "documentOpened": "Document ouvert",
-            "batchRowSummaryOne": "{{count}} document · équipe de validation consolidée",
-            "batchRowSummaryMany": "{{count}} documents · équipe de validation consolidée",
+            "batchRowSummaryOne": "{{count}} document",
+            "batchRowSummaryMany": "{{count}} documents",
             "configure": "Configurer",
-            "dissolve": "Dissoudre"
+            "dissolve": "Dissoudre",
+            "autoGroupLabel": "Grouper les documents",
+            "autoGroupTooltip": "Crée automatiquement des lots en regroupant les documents qui partagent le même ciblage, la même notification et le même validateur. Chaque lot servira d'unité pour la validation et la notification."
           }
         }
       },
