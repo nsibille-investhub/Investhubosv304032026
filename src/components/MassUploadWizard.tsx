@@ -1291,29 +1291,46 @@ export function MassUploadWizard({ isOpen, onClose, existingFolders, inline = fa
     setEditingBatchId(null);
   };
 
+  /** Deterministic batch id derived from the group signature so re-running
+   * grouping on stable inputs produces the same id (no churn, no infinite
+   * loops in the dynamic re-grouping effect). */
+  const sigToBatchId = (sig: string): string => {
+    let h = 0;
+    for (let i = 0; i < sig.length; i++) {
+      h = (Math.imul(h, 31) + sig.charCodeAt(i)) | 0;
+    }
+    return `auto-batch-${(h >>> 0).toString(36)}`;
+  };
+
   /** Recompute batches by signature. Two or more files sharing the same
    * targeting + notification + validation team are grouped together. Files
-   * with a unique signature remain standalone. */
+   * with a unique signature, or targeted to "Tous", remain standalone. The
+   * function is idempotent — if the desired partition already matches state,
+   * no React updates are emitted (important for the dynamic effect below). */
   const runAutoGrouping = () => {
     const groups = new Map<string, UploadedFile[]>();
     uploadedFiles.forEach((f) => {
-      // "Tous" (everyone) targeting is never grouped — those files stay standalone.
       if (f.targetType === 'all') return;
       const k = computeGroupSignature(f);
       const list = groups.get(k) ?? [];
       list.push(f);
       groups.set(k, list);
     });
+
+    const existingNameById = new Map(batches.map((b) => [b.id, b.name]));
     const newBatches: UploadBatch[] = [];
     const fileToBatchId = new Map<string, string>();
     let idx = 1;
-    groups.forEach((files) => {
+    groups.forEach((files, sig) => {
       if (files.length < 2) return;
       const first = files[0];
-      const id = `auto-batch-${Date.now()}-${idx}-${Math.random().toString(36).slice(2, 6)}`;
+      const id = sigToBatchId(sig);
       newBatches.push({
         id,
-        name: t('ged.dataRoom.massUpload.wizard.bulk.batchNamePrefix', { n: idx }),
+        // Preserve a user-renamed batch when the same group reappears.
+        name:
+          existingNameById.get(id) ??
+          t('ged.dataRoom.massUpload.wizard.bulk.batchNamePrefix', { n: idx }),
         validationTeam: first.validationTeam,
         folderMode: 'per-document',
         globalFolder: '',
@@ -1329,40 +1346,61 @@ export function MassUploadWizard({ isOpen, onClose, existingFolders, inline = fa
       files.forEach((f) => fileToBatchId.set(f.id, id));
       idx++;
     });
+
+    // Short-circuit when nothing actually changes — both the file→batch
+    // assignment AND the set of batch ids must be identical to skip.
+    const sameAssignments = uploadedFiles.every(
+      (f) => (f.batchId ?? undefined) === fileToBatchId.get(f.id),
+    );
+    const currentIds = new Set(batches.map((b) => b.id));
+    const desiredIds = new Set(newBatches.map((b) => b.id));
+    const sameBatchSet =
+      currentIds.size === desiredIds.size &&
+      [...desiredIds].every((id) => currentIds.has(id));
+    if (sameAssignments && sameBatchSet) return;
+
     setBatches(newBatches);
     setUploadedFiles((prev) =>
       prev.map((f) => ({ ...f, batchId: fileToBatchId.get(f.id) })),
     );
-    setExpandedBatchIds(new Set(newBatches.map((b) => b.id)));
+    setExpandedBatchIds((prev) => {
+      // Keep the collapse state the user chose for batches that still exist;
+      // expand freshly-created batches by default.
+      const next = new Set<string>();
+      for (const b of newBatches) {
+        const wasExisting = currentIds.has(b.id);
+        if (!wasExisting || prev.has(b.id)) next.add(b.id);
+      }
+      return next;
+    });
   };
 
   const handleToggleAutoGroup = (checked: boolean) => {
     setAutoGroupEnabled(checked);
-    if (checked) {
-      runAutoGrouping();
-    } else {
-      dissolveAllBatches();
-    }
+    if (!checked) dissolveAllBatches();
+    // When checked === true, the dynamic effect below picks up the new value
+    // on the next render and groups the current files.
   };
 
-  // Auto-run grouping when first arriving on the configuration step.
-  // We track whether we have already grouped for the current visit so the
-  // effect doesn't fight manual changes the user makes afterwards.
+  // Are we on the final configuration step? Used as a gate for the dynamic
+  // re-grouping effect (no point running on the upload step).
   const isConfigStep =
     (currentStep === 2 && !deepReview) ||
     (deepReview && currentStep === 2 + uploadedFiles.length);
-  const hasAutoGroupedRef = useRef(false);
+
+  // Dynamic re-grouping: whenever the toggle is on AND a file's
+  // grouping-relevant fields (targeting, notification, validation team)
+  // change, recompute the batches automatically. The dependency string is a
+  // concatenation of each file's signature so the effect only fires on real
+  // signature changes (not on batchId updates).
+  const filesSignatureKey = uploadedFiles
+    .map((f) => `${f.id}:${computeGroupSignature(f)}:${f.targetType === 'all' ? 'all' : 'scoped'}`)
+    .join('|');
   useEffect(() => {
-    if (!isConfigStep) {
-      hasAutoGroupedRef.current = false;
-      return;
-    }
-    if (autoGroupEnabled && !hasAutoGroupedRef.current && uploadedFiles.length > 0) {
-      hasAutoGroupedRef.current = true;
-      runAutoGrouping();
-    }
+    if (!isConfigStep || !autoGroupEnabled) return;
+    runAutoGrouping();
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [isConfigStep, autoGroupEnabled, uploadedFiles.length]);
+  }, [filesSignatureKey, isConfigStep, autoGroupEnabled]);
 
   // Field catalogue used to render the bulk edit picker chips and the per-field editors.
   const BULK_FIELDS: { key: BulkFieldKey; label: string; icon: LucideIcon }[] = [
@@ -3457,13 +3495,13 @@ export function MassUploadWizard({ isOpen, onClose, existingFolders, inline = fa
                     // ONLY when every member is notifying with the exact same template.
                     // If notifications are absent or differ, the batch row shows "—"
                     // and each member keeps its own editor.
-                    const getBatchNotification = (batchId: string): { notify: true; emailTemplate: string } | null => {
+                    // Notification is always consolidated at the batch level —
+                    // the batch's value is mirrored on every member. We read it
+                    // from the first member and propagate any edit to all.
+                    const getBatchNotification = (batchId: string): { notify: boolean; emailTemplate: string } => {
                       const members = uploadedFiles.filter((f) => f.batchId === batchId);
-                      if (members.length === 0) return null;
-                      if (!members.every((m) => m.notify)) return null;
-                      const ref = members[0].emailTemplate;
-                      if (!members.every((m) => m.emailTemplate === ref)) return null;
-                      return { notify: true, emailTemplate: ref };
+                      const first = members[0];
+                      return { notify: first?.notify ?? false, emailTemplate: first?.emailTemplate ?? '' };
                     };
                     // Render a single file row. When `inBatch` is set, fields piloted at
                     // the batch level (folder/targeting in global mode, validation team
@@ -3474,9 +3512,9 @@ export function MassUploadWizard({ isOpen, onClose, existingFolders, inline = fa
                       const isSelected = selectedFiles.includes(file.id);
                       const folderLocked = !!inBatch && inBatch.folderMode === 'global';
                       const targetingLocked = !!inBatch && inBatch.targetingMode === 'global';
-                      const homogeneousNotification = inBatch ? getBatchNotification(inBatch.id) : null;
-                      // Notification stays per-document (only validation team is consolidated).
-                      const notificationLocked = false;
+                      // Notification is always consolidated at the batch level —
+                      // child rows show the inherited "—" placeholder.
+                      const notificationLocked = !!inBatch;
                       const validationTeamLocked = !!inBatch;
                       const dashPlaceholder = (
                         <Tooltip>
@@ -3710,25 +3748,8 @@ export function MassUploadWizard({ isOpen, onClose, existingFolders, inline = fa
                           </td>
 
                           <td className="px-3 py-3 align-top">
-                            {homogeneousNotification ? (
-                              // Notification consolidée au niveau du lot : icône Bell +
-                              // template, indication d'héritage via tooltip.
-                              <Tooltip>
-                                <TooltipTrigger asChild>
-                                  <div className="flex items-center gap-1.5 text-xs text-gray-700">
-                                    <Bell className="h-3 w-3 text-blue-500 shrink-0" />
-                                    <span className="truncate">
-                                      {(() => {
-                                        const tpl = availableEmailTemplates.find((tpl) => tpl.value === homogeneousNotification.emailTemplate);
-                                        return tpl ? t(tpl.labelKey) : '—';
-                                      })()}
-                                    </span>
-                                  </div>
-                                </TooltipTrigger>
-                                <TooltipContent>
-                                  <span className="text-xs">Notification définie au niveau du lot.</span>
-                                </TooltipContent>
-                              </Tooltip>
+                            {notificationLocked ? (
+                              dashPlaceholder
                             ) : (
                               <div className="space-y-1.5">
                                 <div className="flex items-center gap-2">
@@ -3940,29 +3961,16 @@ export function MassUploadWizard({ isOpen, onClose, existingFolders, inline = fa
                               )}
                             </td>
 
-                            {/* Col 5 — Notification : éditeur consolidé quand toutes les
-                                lignes du lot notifient avec le même template, sinon "—"
-                                et chaque ligne enfant garde son propre éditeur. */}
+                            {/* Col 5 — Notification : toujours consolidée au niveau du lot.
+                                Toute édition est propagée à chaque document du lot. */}
                             <td className="px-3 py-2 align-top">
                               {(() => {
-                                const homogeneous = getBatchNotification(batch.id);
-                                if (!homogeneous) {
-                                  return (
-                                    <Tooltip>
-                                      <TooltipTrigger asChild>
-                                        <span className="text-sm text-gray-300 select-none">—</span>
-                                      </TooltipTrigger>
-                                      <TooltipContent>
-                                        <span className="text-xs">Aucune notification consolidée pour le lot — pilotez chaque document individuellement.</span>
-                                      </TooltipContent>
-                                    </Tooltip>
-                                  );
-                                }
+                                const consolidated = getBatchNotification(batch.id);
                                 return (
                                   <div className="space-y-1.5">
                                     <div className="flex items-center gap-2">
                                       <Switch
-                                        checked={homogeneous.notify}
+                                        checked={consolidated.notify}
                                         onCheckedChange={(checked) => {
                                           setUploadedFiles((prev) =>
                                             prev.map((f) =>
@@ -3975,28 +3983,30 @@ export function MassUploadWizard({ isOpen, onClose, existingFolders, inline = fa
                                       />
                                       <span className="text-[11px] text-gray-700">{t('ged.dataRoom.massUpload.wizard.notifyRecipients')}</span>
                                     </div>
-                                    <Select
-                                      value={homogeneous.emailTemplate}
-                                      onValueChange={(value) => {
-                                        setUploadedFiles((prev) =>
-                                          prev.map((f) =>
-                                            f.batchId === batch.id ? { ...f, emailTemplate: value } : f,
-                                          ),
-                                        );
-                                      }}
-                                    >
-                                      <SelectTrigger className="h-7 text-xs"><SelectValue placeholder={t('ged.dataRoom.massUpload.wizard.selectTemplate')} /></SelectTrigger>
-                                      <SelectContent>
-                                        {availableEmailTemplates.map((tpl) => {
-                                          const Icon = tpl.icon;
-                                          return (
-                                            <SelectItem key={tpl.value} value={tpl.value} className="text-xs">
-                                              <div className="flex items-center gap-2"><Icon className="h-3 w-3 text-gray-500" />{t(tpl.labelKey)}</div>
-                                            </SelectItem>
+                                    {consolidated.notify && (
+                                      <Select
+                                        value={consolidated.emailTemplate}
+                                        onValueChange={(value) => {
+                                          setUploadedFiles((prev) =>
+                                            prev.map((f) =>
+                                              f.batchId === batch.id ? { ...f, emailTemplate: value } : f,
+                                            ),
                                           );
-                                        })}
-                                      </SelectContent>
-                                    </Select>
+                                        }}
+                                      >
+                                        <SelectTrigger className="h-7 text-xs"><SelectValue placeholder={t('ged.dataRoom.massUpload.wizard.selectTemplate')} /></SelectTrigger>
+                                        <SelectContent>
+                                          {availableEmailTemplates.map((tpl) => {
+                                            const Icon = tpl.icon;
+                                            return (
+                                              <SelectItem key={tpl.value} value={tpl.value} className="text-xs">
+                                                <div className="flex items-center gap-2"><Icon className="h-3 w-3 text-gray-500" />{t(tpl.labelKey)}</div>
+                                              </SelectItem>
+                                            );
+                                          })}
+                                        </SelectContent>
+                                      </Select>
+                                    )}
                                   </div>
                                 );
                               })()}
