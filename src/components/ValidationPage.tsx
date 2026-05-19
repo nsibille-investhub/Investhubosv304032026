@@ -18,7 +18,6 @@ import {
   Globe,
   Bell,
   BellOff,
-  Mail,
   AlertCircle,
   type LucideIcon,
 } from 'lucide-react';
@@ -110,12 +109,17 @@ const TARGETING_TOOLTIP_KEY: Record<TargetingKind, string> = {
 function resolveNotification(
   doc: ValidationDocument,
   batchById: Map<string, ValidationBatch>,
-): { notification?: ValidationDocument['notification']; sourceBatchName?: string } {
-  if (doc.notification) return { notification: doc.notification };
+): { notification?: ValidationDocument['notification']; templateKey?: string } {
+  if (doc.notification) {
+    return { notification: doc.notification, templateKey: doc.kindKey };
+  }
   if (doc.batchId) {
     const batch = batchById.get(doc.batchId);
     if (batch?.notification) {
-      return { notification: batch.notification, sourceBatchName: batch.name };
+      return {
+        notification: batch.notification,
+        templateKey: batch.kindKey ?? doc.kindKey,
+      };
     }
   }
   return {};
@@ -748,12 +752,6 @@ export function ValidationPage({ onBack }: ValidationPageProps) {
                       <th className="px-6 py-4 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider">
                         {t('validation.table.date')}
                       </th>
-                      <th className="px-6 py-4 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider">
-                        {t('validation.table.targeting')}
-                      </th>
-                      <th className="px-6 py-4 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider">
-                        {t('validation.table.notification')}
-                      </th>
                       <th className="px-6 py-4 text-center text-xs font-medium text-muted-foreground uppercase tracking-wider">
                         {t('validation.table.comm')}
                       </th>
@@ -772,16 +770,17 @@ export function ValidationPage({ onBack }: ValidationPageProps) {
                   </thead>
                   <tbody>
                     {pageDocs.map((doc) => {
-                      const { notification, sourceBatchName } = resolveNotification(
+                      const { notification, templateKey } = resolveNotification(
                         doc,
                         batchById,
                       );
+                      const templateLabel = templateKey ? t(templateKey) : undefined;
                       return (
                         <DocumentRow
                           key={`doc-${doc.id}`}
                           doc={doc}
                           notification={notification}
-                          sourceBatchName={sourceBatchName}
+                          templateLabel={templateLabel}
                           selected={selectedIds.has(doc.id)}
                           onToggleSelect={() => toggleRowSelected(doc.id)}
                           onPreview={() => setPreviewDocument(doc)}
@@ -911,7 +910,7 @@ export function ValidationPage({ onBack }: ValidationPageProps) {
 interface DocumentRowProps {
   doc: ValidationDocument;
   notification?: ValidationDocument['notification'];
-  sourceBatchName?: string;
+  templateLabel?: string;
   selected: boolean;
   onToggleSelect: () => void;
   onPreview: () => void;
@@ -929,7 +928,7 @@ interface DocumentRowProps {
 function DocumentRow({
   doc,
   notification,
-  sourceBatchName,
+  templateLabel,
   selected,
   onToggleSelect,
   onPreview,
@@ -981,6 +980,23 @@ function DocumentRow({
           </div>
         )}
         <DocumentNameCell name={doc.name} pathSegments={doc.pathSegments} />
+        <div className="mt-1.5 flex flex-wrap items-center gap-1.5">
+          {renderTargeting(doc.targeting, 4)}
+          <span
+            onClick={(e) => {
+              if (notification) {
+                e.stopPropagation();
+                onPreviewNotification();
+              }
+            }}
+            className={notification ? 'cursor-pointer' : undefined}
+          >
+            <NotificationBadge
+              notification={notification}
+              templateLabel={templateLabel}
+            />
+          </span>
+        </div>
       </td>
       <td className="px-6 py-4 align-top">
         <UserCell name={doc.createdBy.name} sublabel={doc.createdBy.role} />
@@ -989,21 +1005,6 @@ function DocumentRow({
         <span className="text-sm text-gray-600 dark:text-gray-400 whitespace-nowrap">
           {formatDate(doc.createdAt)}
         </span>
-      </td>
-      <td className="px-6 py-4 align-top">{renderTargeting(doc.targeting)}</td>
-      <td
-        className="px-6 py-4 align-top"
-        onClick={(e) => {
-          if (notification) {
-            e.stopPropagation();
-            onPreviewNotification();
-          }
-        }}
-      >
-        <NotificationBadge
-          notification={notification}
-          sourceBatchName={sourceBatchName}
-        />
       </td>
       <td className="px-6 py-4 align-top text-center">
         <div className="flex justify-center">
@@ -1091,66 +1092,46 @@ function DocumentRow({
 }
 
 // ---------------------------------------------------------------------------
-// Notification badge — sits in its own column. Renders template subject,
-// recipients count and channel. Clicking opens the preview drawer.
+// Notification badge — compact inline pill rendered under the document name.
+// Shows the template label (kindKey) + recipient count. Clicking opens the
+// preview drawer.
 // ---------------------------------------------------------------------------
 
 function NotificationBadge({
   notification,
-  sourceBatchName,
+  templateLabel,
 }: {
   notification?: ValidationDocument['notification'];
-  sourceBatchName?: string;
+  templateLabel?: string;
 }) {
   const { t } = useTranslation();
   if (!notification) {
     return (
-      <div className="inline-flex items-center gap-1.5 rounded-full border border-gray-200 bg-gray-50 px-2 py-1 text-[11px] text-gray-500 dark:border-gray-700 dark:bg-gray-900">
+      <span className="inline-flex items-center gap-1 rounded-full border border-gray-200 bg-gray-50 px-2 py-0.5 text-[11px] text-gray-500 dark:border-gray-700 dark:bg-gray-900">
         <BellOff className="h-3 w-3" />
-        <span>{t('validation.notificationLine.noneDoc')}</span>
-      </div>
+        {t('validation.notificationLine.noneDoc')}
+      </span>
     );
   }
   const recipientCount = notification.recipients.length;
-  const channelLabel =
-    notification.channel === 'email'
-      ? t('validation.notificationLine.channelEmail')
-      : notification.channel === 'portal'
-        ? t('validation.notificationLine.channelPortal')
-        : t('validation.notificationLine.channelBoth');
-  const ChannelIcon = notification.channel === 'portal' ? Globe : Mail;
-  const subject = notification.subject
-    ? t(notification.subject.key, notification.subject.vars)
-    : '';
   return (
-    <div className="space-y-1 cursor-pointer">
-      <div className="inline-flex items-center gap-1.5 rounded-full border border-blue-200 bg-blue-50 px-2 py-1 text-[11px] font-medium text-blue-800 hover:border-blue-300 hover:bg-blue-100 dark:border-blue-900/40 dark:bg-blue-950/30 dark:text-blue-200">
-        <Bell className="h-3 w-3" />
-        <span className="max-w-[220px] truncate" title={subject}>
-          {subject || channelLabel}
+    <span className="inline-flex items-center gap-1.5 rounded-full border border-blue-200 bg-blue-50 px-2 py-0.5 text-[11px] font-medium text-blue-800 hover:border-blue-300 hover:bg-blue-100 dark:border-blue-900/40 dark:bg-blue-950/30 dark:text-blue-200">
+      <Bell className="h-3 w-3" />
+      {templateLabel && (
+        <span className="max-w-[200px] truncate" title={templateLabel}>
+          {templateLabel}
         </span>
-      </div>
-      <div className="flex items-center gap-2 text-[11px] text-gray-600 dark:text-gray-400">
-        <span className="inline-flex items-center gap-1">
-          <ChannelIcon className="h-3 w-3 text-gray-400" />
-          {channelLabel}
-        </span>
-        <span aria-hidden>·</span>
-        <span>
-          {t(
-            recipientCount > 1
-              ? 'validation.notificationLine.recipientsMany'
-              : 'validation.notificationLine.recipientsOne',
-            { count: recipientCount },
-          )}
-        </span>
-      </div>
-      {sourceBatchName && (
-        <div className="text-[10px] italic text-gray-400">
-          {t('validation.notificationLine.fromBatch')} {sourceBatchName}
-        </div>
       )}
-    </div>
+      <span aria-hidden className="text-blue-300">·</span>
+      <span className="text-blue-700/80 dark:text-blue-300/80">
+        {t(
+          recipientCount > 1
+            ? 'validation.notificationLine.recipientsMany'
+            : 'validation.notificationLine.recipientsOne',
+          { count: recipientCount },
+        )}
+      </span>
+    </span>
   );
 }
 
@@ -1181,15 +1162,16 @@ function PublicationConfirmDialog({
     sig: string;
     docs: ValidationDocument[];
     notification?: ValidationDocument['notification'];
+    templateKey?: string;
   };
   const groups = useMemo(() => {
     const map = new Map<string, Group>();
     docs.forEach((d) => {
-      const { notification } = resolveNotification(d, batchById);
+      const { notification, templateKey } = resolveNotification(d, batchById);
       const sig = notificationSignature(notification);
       const existing = map.get(sig);
       if (existing) existing.docs.push(d);
-      else map.set(sig, { sig, docs: [d], notification });
+      else map.set(sig, { sig, docs: [d], notification, templateKey });
     });
     // Sort: notification groups first (by descending size), silent last.
     return Array.from(map.values()).sort((a, b) => {
@@ -1283,6 +1265,7 @@ function GroupRow({
     sig: string;
     docs: ValidationDocument[];
     notification?: ValidationDocument['notification'];
+    templateKey?: string;
   };
   index: number;
   fallbackIdx: number;
@@ -1313,13 +1296,7 @@ function GroupRow({
     );
   }
   const notification = group.notification!;
-  const subject = t(notification.subject.key, notification.subject.vars);
-  const channelLabel =
-    notification.channel === 'email'
-      ? t('validation.notificationLine.channelEmail')
-      : notification.channel === 'portal'
-        ? t('validation.notificationLine.channelPortal')
-        : t('validation.notificationLine.channelBoth');
+  const templateName = group.templateKey ? t(group.templateKey) : '';
   const recipientNames = notification.recipients
     .map((r) =>
       typeof r.name === 'string' ? r.name : t(r.name.key, r.name.vars),
@@ -1357,15 +1334,9 @@ function GroupRow({
           <dt className="font-medium text-gray-500">
             {t('validation.confirm.templateLabel')}
           </dt>
-          <dd className="truncate" title={subject}>
-            {subject}
+          <dd className="truncate" title={templateName}>
+            {templateName}
           </dd>
-        </div>
-        <div className="flex gap-1.5">
-          <dt className="font-medium text-gray-500">
-            {t('validation.confirm.channelLabel')}
-          </dt>
-          <dd>{channelLabel}</dd>
         </div>
         <div className="col-span-full flex gap-1.5">
           <dt className="font-medium text-gray-500">
