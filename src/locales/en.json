@@ -65,7 +65,7 @@
       "secondaryMarket": "Secondary market",
       "documents": "Documents",
       "birdView": "Bird View",
-      "validation": "Validation",
+      "validation": "Publication Center",
       "brandingTheme": "Branding / Theme",
       "partnersNavigation": "Partners navigation",
       "investorsNavigation": "Investors navigation",
@@ -156,7 +156,7 @@
     "dataRoom": "Data Room",
     "tracking": "Tracking",
     "birdView": "Bird View",
-    "validation": "Validation",
+    "validation": "Publication Center",
     "portalsAndContent": "Portals & Content",
     "events": "Events",
     "news": "News",
@@ -2296,13 +2296,13 @@
   },
   "validation": {
     "back": "Back to spaces",
-    "title": "Document validation",
-    "subtitle": "Review, approval and rejection of documents before publishing",
+    "title": "Publication Center",
+    "subtitle": "Review, approve and publish documents",
     "searchPlaceholder": "Search a document, author, targeting...",
     "kpi": {
-      "pending": "Awaiting validation",
+      "pending": "Awaiting publication",
       "pendingMetric": "To process",
-      "validated": "Validated",
+      "validated": "Published",
       "validatedMetric": "Approved",
       "rejected": "Rejected",
       "rejectedMetric": "Refused",
@@ -2312,6 +2312,7 @@
     "filters": {
       "author": "Author",
       "targeting": "Targeting",
+      "investor": "Investor",
       "format": "Format"
     },
     "table": {
@@ -2319,6 +2320,7 @@
       "createdBy": "Created by",
       "date": "Date",
       "targeting": "Targeting",
+      "notification": "Notification",
       "comm": "Comm.",
       "status": "Status",
       "actions": "Actions"
@@ -2327,7 +2329,7 @@
     "resetFilters": "Reset filters",
     "status": {
       "pending": "Pending",
-      "validated": "Validated",
+      "validated": "Published",
       "rejected": "Rejected"
     },
     "targetingTooltip": {
@@ -2340,46 +2342,74 @@
     },
     "tooltip": {
       "previewDoc": "Document preview",
-      "previewBatch": "Batch preview",
       "previewNotification": "Notification preview",
-      "validate": "Validate",
-      "validateBatch": "Validate batch",
-      "validateAndSend": "Validate and send notification",
+      "validate": "Publish",
+      "validateAndSend": "Publish and send notification",
       "reject": "Reject",
-      "rejectBatch": "Reject batch",
-      "resetPending": "Move back to pending",
-      "resetBatchPending": "Move batch back to pending",
-      "expandBatch": "Expand batch",
-      "collapseBatch": "Collapse batch",
-      "differentTargeting": "Different targeting per document — see each row.",
-      "targetingDrivenByBatch": "Targeting driven at batch level."
+      "resetPending": "Move back to pending"
     },
     "notificationLine": {
       "noneDoc": "No notification",
-      "noneBatch": "No notification — internal validation",
-      "recipientsOne": "1 notification → {{count}} recipient",
-      "recipientsMany": "1 notification → {{count}} recipients",
-      "fromBatch": "From batch ·"
+      "noneBatch": "No notification — silent publication",
+      "templateLabel": "Template",
+      "recipientsOne": "{{count}} recipient",
+      "recipientsMany": "{{count}} recipients",
+      "channelEmail": "Email",
+      "channelPortal": "LP Portal",
+      "channelBoth": "Email + Portal",
+      "fromBatch": "Grouped notification ·"
     },
-    "batch": {
-      "docsOne": "{{count}} doc",
-      "docsMany": "{{count}} docs",
-      "preview": "Preview"
+    "bulk": {
+      "selectionOne": "{{count}} document selected",
+      "selectionMany": "{{count}} documents selected",
+      "clear": "Deselect",
+      "publish": "Publish selection",
+      "reject": "Reject selection"
+    },
+    "confirm": {
+      "title": "Confirm publication",
+      "subtitleOne": "{{docs}} document will be published · {{notifs}} notification(s) will be sent",
+      "subtitleMany": "{{docs}} documents will be published · {{notifs}} notification(s) will be sent",
+      "reassurance": "Review the publication groups generated automatically before confirming. One notification is sent per group of recipients sharing the same template.",
+      "groupsTitle": "Generated groups",
+      "silentGroupLabel": "Silent publication",
+      "silentGroupHelp": "Documents published without sending any notification.",
+      "groupLabel": "Notification {{n}}",
+      "groupRecipientsOne": "{{count}} recipient",
+      "groupRecipientsMany": "{{count}} recipients",
+      "groupDocsOne": "{{count}} document",
+      "groupDocsMany": "{{count}} documents",
+      "templateLabel": "Template:",
+      "channelLabel": "Channel:",
+      "recipientsLabel": "Recipients:",
+      "documentsLabel": "Documents:",
+      "moreRecipientsOne": "+ {{count}} other",
+      "moreRecipientsMany": "+ {{count}} others",
+      "moreDocsOne": "+ {{count}} more document",
+      "moreDocsMany": "+ {{count}} more documents",
+      "cancel": "Cancel",
+      "confirm": "Confirm publication"
+    },
+    "rejectConfirm": {
+      "title": "Reject selection",
+      "subtitleOne": "{{count}} document will be rejected",
+      "subtitleMany": "{{count}} documents will be rejected",
+      "reassurance": "Rejected documents won't be published and no notification will be sent.",
+      "confirm": "Reject"
     },
     "toast": {
-      "docValidated": "Document validated",
+      "docValidated": "Document published",
       "docRejected": "Document rejected",
       "docPending": "Document moved back to pending",
-      "batchValidatedNotified": "Batch validated · notification sent",
-      "batchValidated": "Batch validated",
-      "batchRejected": "Batch rejected",
-      "batchPending": "Batch moved back to pending",
-      "descOne": "{{count}} document • {{name}}",
-      "descMany": "{{count}} documents • {{name}}"
+      "batchValidatedNotified": "Publication confirmed · notifications sent",
+      "batchValidated": "Publication confirmed",
+      "bulkValidated": "{{count}} document(s) published",
+      "bulkRejected": "{{count}} document(s) rejected",
+      "bulkNotifications": "{{count}} notification(s) sent"
     },
     "you": "You",
     "drawer": {
-      "headerNoneSubtitle": "No notification — internal validation only",
+      "headerNoneSubtitle": "No notification — silent publication only",
       "headerSubtitleOne": "1 notification → {{count}} recipient ({{channel}})",
       "headerSubtitleMany": "1 notification → {{count}} recipients ({{channel}})",
       "channel": {
@@ -2401,7 +2431,7 @@
         "attachments": "Attachments"
       },
       "silentTitle": "No notification",
-      "silentBody": "This batch groups documents for internal validation only. No email or portal publication will be triggered.",
+      "silentBody": "These documents are published internally only. No email or portal publication will be triggered.",
       "email": {
         "from": "From",
         "to": "To",
@@ -2418,9 +2448,9 @@
       },
       "footer": {
         "close": "Close",
-        "rejectBatch": "Reject batch",
-        "validateBatchSilent": "Validate batch",
-        "validateAndSend": "Validate and send notification",
+        "reject": "Reject",
+        "validate": "Publish",
+        "validateAndSend": "Publish and send notification",
         "resetPending": "Move back to pending"
       }
     },

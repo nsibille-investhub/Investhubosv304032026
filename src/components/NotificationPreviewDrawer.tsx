@@ -292,7 +292,7 @@ export function NotificationPreviewDrawer({
                     onClick={onReject}
                   >
                     <X className="h-4 w-4" />
-                    {t('validation.drawer.footer.rejectBatch')}
+                    {t('validation.drawer.footer.reject')}
                   </Button>
                   <Button
                     size="sm"
@@ -301,7 +301,7 @@ export function NotificationPreviewDrawer({
                   >
                     <Check className="h-4 w-4" />
                     {isSilent
-                      ? t('validation.drawer.footer.validateBatchSilent')
+                      ? t('validation.drawer.footer.validate')
                       : t('validation.drawer.footer.validateAndSend')}
                   </Button>
                 </>

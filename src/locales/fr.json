@@ -65,7 +65,7 @@
       "secondaryMarket": "Marché Secondaire",
       "documents": "Documents",
       "birdView": "Bird View",
-      "validation": "Validation",
+      "validation": "Centre de Publication",
       "brandingTheme": "Branding / Thème",
       "partnersNavigation": "Navigation partenaires",
       "investorsNavigation": "Navigation investisseurs",
@@ -156,7 +156,7 @@
     "dataRoom": "Data Room",
     "tracking": "Tracking",
     "birdView": "Bird View",
-    "validation": "Validation",
+    "validation": "Centre de Publication",
     "portalsAndContent": "Portails et Contenu",
     "events": "Événements",
     "news": "Actualités",
@@ -2296,13 +2296,13 @@
   },
   "validation": {
     "back": "Retour aux espaces",
-    "title": "Validation des documents",
-    "subtitle": "Revue, approbation et rejet des documents avant publication",
+    "title": "Centre de Publication",
+    "subtitle": "Revue, approbation et publication des documents",
     "searchPlaceholder": "Rechercher un document, auteur, ciblage...",
     "kpi": {
-      "pending": "En attente de validation",
+      "pending": "En attente de publication",
       "pendingMetric": "À traiter",
-      "validated": "Validés",
+      "validated": "Publiés",
       "validatedMetric": "Approuvés",
       "rejected": "Rejetés",
       "rejectedMetric": "Refusés",
@@ -2312,6 +2312,7 @@
     "filters": {
       "author": "Auteur",
       "targeting": "Ciblage",
+      "investor": "Investisseur",
       "format": "Format"
     },
     "table": {
@@ -2319,6 +2320,7 @@
       "createdBy": "Créé par",
       "date": "Date",
       "targeting": "Ciblage",
+      "notification": "Notification",
       "comm": "Comm.",
       "status": "Statut",
       "actions": "Actions"
@@ -2327,7 +2329,7 @@
     "resetFilters": "Réinitialiser les filtres",
     "status": {
       "pending": "En attente",
-      "validated": "Validé",
+      "validated": "Publié",
       "rejected": "Rejeté"
     },
     "targetingTooltip": {
@@ -2340,46 +2342,74 @@
     },
     "tooltip": {
       "previewDoc": "Aperçu du document",
-      "previewBatch": "Aperçu du lot",
       "previewNotification": "Aperçu de la notification",
-      "validate": "Valider",
-      "validateBatch": "Valider le lot",
-      "validateAndSend": "Valider et envoyer la notification",
+      "validate": "Publier",
+      "validateAndSend": "Publier et envoyer la notification",
       "reject": "Rejeter",
-      "rejectBatch": "Rejeter le lot",
-      "resetPending": "Remettre en attente",
-      "resetBatchPending": "Remettre le lot en attente",
-      "expandBatch": "Développer le lot",
-      "collapseBatch": "Réduire le lot",
-      "differentTargeting": "Ciblage différent selon les documents — voir chaque ligne.",
-      "targetingDrivenByBatch": "Ciblage piloté au niveau du lot."
+      "resetPending": "Remettre en attente"
     },
     "notificationLine": {
       "noneDoc": "Aucune notification",
-      "noneBatch": "Aucune notification — validation interne",
-      "recipientsOne": "1 notification → {{count}} destinataire",
-      "recipientsMany": "1 notification → {{count}} destinataires",
-      "fromBatch": "Issu du lot ·"
+      "noneBatch": "Aucune notification — publication silencieuse",
+      "templateLabel": "Modèle",
+      "recipientsOne": "{{count}} destinataire",
+      "recipientsMany": "{{count}} destinataires",
+      "channelEmail": "Email",
+      "channelPortal": "Portail LP",
+      "channelBoth": "Email + Portail",
+      "fromBatch": "Notification groupée ·"
     },
-    "batch": {
-      "docsOne": "{{count}} doc",
-      "docsMany": "{{count}} docs",
-      "preview": "Aperçu"
+    "bulk": {
+      "selectionOne": "{{count}} document sélectionné",
+      "selectionMany": "{{count}} documents sélectionnés",
+      "clear": "Désélectionner",
+      "publish": "Publier la sélection",
+      "reject": "Rejeter la sélection"
+    },
+    "confirm": {
+      "title": "Confirmer la publication",
+      "subtitleOne": "{{docs}} document sera publié · {{notifs}} notification(s) seront envoyées",
+      "subtitleMany": "{{docs}} documents seront publiés · {{notifs}} notification(s) seront envoyées",
+      "reassurance": "Vérifiez les groupes de publication générés automatiquement avant de confirmer. Une notification est envoyée par groupe de destinataires partageant le même modèle.",
+      "groupsTitle": "Groupes générés",
+      "silentGroupLabel": "Publication silencieuse",
+      "silentGroupHelp": "Documents publiés sans envoi de notification.",
+      "groupLabel": "Notification {{n}}",
+      "groupRecipientsOne": "{{count}} destinataire",
+      "groupRecipientsMany": "{{count}} destinataires",
+      "groupDocsOne": "{{count}} document",
+      "groupDocsMany": "{{count}} documents",
+      "templateLabel": "Modèle :",
+      "channelLabel": "Canal :",
+      "recipientsLabel": "Destinataires :",
+      "documentsLabel": "Documents :",
+      "moreRecipientsOne": "+ {{count}} autre",
+      "moreRecipientsMany": "+ {{count}} autres",
+      "moreDocsOne": "+ {{count}} document supplémentaire",
+      "moreDocsMany": "+ {{count}} documents supplémentaires",
+      "cancel": "Annuler",
+      "confirm": "Confirmer la publication"
+    },
+    "rejectConfirm": {
+      "title": "Rejeter la sélection",
+      "subtitleOne": "{{count}} document sera rejeté",
+      "subtitleMany": "{{count}} documents seront rejetés",
+      "reassurance": "Les documents rejetés ne seront pas publiés et aucune notification ne sera envoyée.",
+      "confirm": "Rejeter"
     },
     "toast": {
-      "docValidated": "Document validé",
+      "docValidated": "Document publié",
       "docRejected": "Document rejeté",
       "docPending": "Document remis en attente",
-      "batchValidatedNotified": "Lot validé · notification envoyée",
-      "batchValidated": "Lot validé",
-      "batchRejected": "Lot rejeté",
-      "batchPending": "Lot remis en attente",
-      "descOne": "{{count}} document • {{name}}",
-      "descMany": "{{count}} documents • {{name}}"
+      "batchValidatedNotified": "Publication confirmée · notifications envoyées",
+      "batchValidated": "Publication confirmée",
+      "bulkValidated": "{{count}} document(s) publié(s)",
+      "bulkRejected": "{{count}} document(s) rejeté(s)",
+      "bulkNotifications": "{{count}} notification(s) envoyée(s)"
     },
     "you": "Vous",
     "drawer": {
-      "headerNoneSubtitle": "Aucune notification — validation interne uniquement",
+      "headerNoneSubtitle": "Aucune notification — publication silencieuse",
       "headerSubtitleOne": "1 notification → {{count}} destinataire ({{channel}})",
       "headerSubtitleMany": "1 notification → {{count}} destinataires ({{channel}})",
       "channel": {
@@ -2401,7 +2431,7 @@
         "attachments": "Pièces"
       },
       "silentTitle": "Aucune notification",
-      "silentBody": "Ce lot regroupe des documents pour validation interne uniquement. Aucun email ni publication portail ne sera déclenché.",
+      "silentBody": "Ces documents sont publiés en interne uniquement. Aucun email ni publication portail ne sera déclenché.",
       "email": {
         "from": "De",
         "to": "À",
@@ -2418,9 +2448,9 @@
       },
       "footer": {
         "close": "Fermer",
-        "rejectBatch": "Rejeter le lot",
-        "validateBatchSilent": "Valider le lot",
-        "validateAndSend": "Valider et envoyer la notification",
+        "reject": "Rejeter",
+        "validate": "Publier",
+        "validateAndSend": "Publier et envoyer la notification",
         "resetPending": "Remettre en attente"
       }
     },

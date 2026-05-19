@@ -374,7 +374,7 @@ export function Sidebar({ expanded, onToggle, currentPage = 'entities', onPageCh
           />
           <SubMenuItem
             icon={icons.FileCheck}
-            label="Validation"
+            label="Centre de Publication"
             expanded={expanded}
             isActive={currentPage === 'validation'}
             onClick={() => onPageChange?.('validation')}
