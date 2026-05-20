@@ -18,6 +18,8 @@ import {
   Bell,
   BellOff,
   AlertCircle,
+  ChevronRight,
+  Package,
   type LucideIcon,
 } from 'lucide-react';
 import { Checkbox } from './ui/checkbox';
@@ -48,6 +50,11 @@ import {
   ValidationDocument,
   ValidationStatus,
 } from '../utils/validationDocumentsGenerator';
+import {
+  COMMITMENTS,
+  FUNDS,
+  findInvestor,
+} from '../utils/gedFixtures';
 import { useTranslation } from '../utils/languageContext';
 import { useValidationStore } from '../utils/validationStoreContext';
 import { cn } from './ui/utils';
@@ -142,6 +149,174 @@ function notificationSignature(
   return [notification.channel, subjectKey, subjectVars, recipientFingerprint].join('|');
 }
 
+// ---------------------------------------------------------------------------
+// Investor / fund resolution from a document's targeting tags. Used by the
+// fund filter and the dynamic batch grouping (nominative scope detection).
+// ---------------------------------------------------------------------------
+
+const SUBSCRIPTION_BY_ID = new Map(COMMITMENTS.map((c) => [c.subscriptionId, c]));
+
+function resolveInvestor(doc: ValidationDocument): string | undefined {
+  const sub = doc.targeting.find((t) => t.kind === 'subscription');
+  if (sub) {
+    const commitment = SUBSCRIPTION_BY_ID.get(sub.label);
+    if (commitment) {
+      const inv = findInvestor(commitment.investorId);
+      if (inv) return inv.name;
+    }
+  }
+  const inv = doc.targeting.find((t) => t.kind === 'investor');
+  return inv?.label;
+}
+
+function resolveFundsForDoc(doc: ValidationDocument): string[] {
+  const fundNames = new Set<string>();
+  doc.targeting.forEach((tag) => {
+    if (tag.kind === 'fund') fundNames.add(tag.label);
+    if (tag.kind === 'subscription') {
+      const commitment = SUBSCRIPTION_BY_ID.get(tag.label);
+      if (commitment) {
+        const fund = FUNDS.find((f) => f.code === commitment.fundCode);
+        if (fund) fundNames.add(fund.name);
+      }
+    }
+  });
+  return Array.from(fundNames);
+}
+
+/** A document is "nominative" when its scope targets a specific investor —
+ * either directly via an investor tag, or transitively via a subscription. */
+function isNominative(doc: ValidationDocument): boolean {
+  return doc.targeting.some(
+    (t) => t.kind === 'investor' || t.kind === 'subscription',
+  );
+}
+
+// ---------------------------------------------------------------------------
+// Dynamic batches — when 2+ nominative documents share the same investor
+// AND the same notification template, they are visually grouped inside a
+// dynamic batch. The batch becomes the unit for selection + validation.
+// ---------------------------------------------------------------------------
+
+interface DynamicBatch {
+  id: string;
+  /** "Investor — Fund — Template" — Fund is omitted for direct-investor docs. */
+  name: string;
+  investor: string;
+  fundName?: string;
+  templateLabel: string;
+  notification: ValidationDocument['notification'];
+  docs: ValidationDocument[];
+}
+
+type DisplayRow =
+  | { kind: 'doc'; doc: ValidationDocument }
+  | { kind: 'batch'; batch: DynamicBatch };
+
+function buildDisplayRows(
+  docs: ValidationDocument[],
+  batchById: Map<string, ValidationBatch>,
+  resolveTemplateLabel: (key?: string) => string,
+): DisplayRow[] {
+  type Bucket = {
+    investor: string;
+    fundName?: string;
+    templateKey: string;
+    notification: ValidationDocument['notification'];
+    docs: ValidationDocument[];
+  };
+  const buckets = new Map<string, Bucket>();
+  const standalones: ValidationDocument[] = [];
+
+  docs.forEach((d) => {
+    const { notification, templateKey } = resolveNotification(d, batchById);
+    if (!notification) {
+      standalones.push(d);
+      return;
+    }
+    if (!isNominative(d)) {
+      standalones.push(d);
+      return;
+    }
+    const investor = resolveInvestor(d);
+    if (!investor) {
+      standalones.push(d);
+      return;
+    }
+    const tplKey = templateKey ?? 'unknown-template';
+    const sig = `${investor}|${tplKey}`;
+    const funds = resolveFundsForDoc(d);
+    const fundName =
+      d.targeting.some((t) => t.kind === 'subscription') && funds.length === 1
+        ? funds[0]
+        : undefined;
+    const existing = buckets.get(sig);
+    if (existing) {
+      existing.docs.push(d);
+      // If any doc in the bucket clarifies the fund, prefer it.
+      if (!existing.fundName && fundName) existing.fundName = fundName;
+    } else {
+      buckets.set(sig, {
+        investor,
+        fundName,
+        templateKey: tplKey,
+        notification,
+        docs: [d],
+      });
+    }
+  });
+
+  const rows: DisplayRow[] = [];
+  // Standalones first (single docs) preserving insertion order, then batches.
+  const groupedDocIds = new Set<number>();
+  buckets.forEach((b) => {
+    if (b.docs.length >= 2) {
+      b.docs.forEach((d) => groupedDocIds.add(d.id));
+    }
+  });
+
+  docs.forEach((d) => {
+    if (groupedDocIds.has(d.id)) return;
+    if (!standalones.includes(d)) standalones.push(d);
+  });
+
+  // Emit rows in the original sort order: for each doc in `docs`, emit the
+  // batch the first time we encounter one of its members, otherwise the doc.
+  const emittedBatches = new Set<string>();
+  docs.forEach((d) => {
+    if (groupedDocIds.has(d.id)) {
+      // Find the bucket containing this doc.
+      for (const [sig, b] of buckets.entries()) {
+        if (b.docs.includes(d) && b.docs.length >= 2) {
+          if (!emittedBatches.has(sig)) {
+            emittedBatches.add(sig);
+            const tplLabel = resolveTemplateLabel(b.templateKey);
+            const namePieces = [b.investor];
+            if (b.fundName) namePieces.push(b.fundName);
+            if (tplLabel) namePieces.push(tplLabel);
+            rows.push({
+              kind: 'batch',
+              batch: {
+                id: `dyn-${sig}`,
+                name: namePieces.join(' — '),
+                investor: b.investor,
+                fundName: b.fundName,
+                templateLabel: tplLabel,
+                notification: b.notification,
+                docs: b.docs,
+              },
+            });
+          }
+          return;
+        }
+      }
+    }
+    rows.push({ kind: 'doc', doc: d });
+  });
+
+  return rows;
+}
+
 export function ValidationPage(_props: ValidationPageProps) {
   const { t, lang } = useTranslation();
   const {
@@ -184,6 +359,10 @@ export function ValidationPage(_props: ValidationPageProps) {
   const [previewNotificationDocId, setPreviewNotificationDocId] = useState<
     number | null
   >(null);
+  // Expanded state of dynamic batches (collapsed by default).
+  const [expandedBatchIds, setExpandedBatchIds] = useState<Set<string>>(
+    new Set(),
+  );
 
   const batchById = useMemo(() => {
     const map = new Map<string, ValidationBatch>();
@@ -251,10 +430,13 @@ export function ValidationPage(_props: ValidationPageProps) {
       }
       const investorFilter = activeFilters.investor;
       if (Array.isArray(investorFilter) && investorFilter.length > 0) {
-        const investorLabels = doc.targeting
-          .filter((tag) => tag.kind === 'investor')
-          .map((tag) => tag.label);
-        const hasAny = investorFilter.some((i) => investorLabels.includes(i));
+        const investor = resolveInvestor(doc);
+        if (!investor || !investorFilter.includes(investor)) return false;
+      }
+      const fundFilter = activeFilters.fund;
+      if (Array.isArray(fundFilter) && fundFilter.length > 0) {
+        const docFunds = resolveFundsForDoc(doc);
+        const hasAny = fundFilter.some((f) => docFunds.includes(f));
         if (!hasAny) return false;
       }
       return true;
@@ -287,11 +469,16 @@ export function ValidationPage(_props: ValidationPageProps) {
 
   const allInvestors = useMemo(() => {
     const set = new Set<string>();
-    documents.forEach((d) =>
-      d.targeting
-        .filter((tag) => tag.kind === 'investor')
-        .forEach((tag) => set.add(tag.label)),
-    );
+    documents.forEach((d) => {
+      const inv = resolveInvestor(d);
+      if (inv) set.add(inv);
+    });
+    return Array.from(set).sort();
+  }, [documents]);
+
+  const allFunds = useMemo(() => {
+    const set = new Set<string>();
+    documents.forEach((d) => resolveFundsForDoc(d).forEach((f) => set.add(f)));
     return Array.from(set).sort();
   }, [documents]);
 
@@ -305,6 +492,13 @@ export function ValidationPage(_props: ValidationPageProps) {
         options: allCreators.map((c) => ({ value: c, label: c })),
       },
       {
+        id: 'fund',
+        label: t('validation.filters.fund'),
+        type: 'multiselect',
+        isPrimary: true,
+        options: allFunds.map((f) => ({ value: f, label: f })),
+      },
+      {
         id: 'investor',
         label: t('validation.filters.investor'),
         type: 'multiselect',
@@ -315,7 +509,7 @@ export function ValidationPage(_props: ValidationPageProps) {
         id: 'targeting',
         label: t('validation.filters.targeting'),
         type: 'multiselect',
-        isPrimary: true,
+        isPrimary: false,
         options: allTargetings.map((tgt) => ({ value: tgt, label: tgt })),
       },
       {
@@ -329,14 +523,29 @@ export function ValidationPage(_props: ValidationPageProps) {
         })),
       },
     ],
-    [allCreators, allInvestors, allTargetings, t],
+    [allCreators, allFunds, allInvestors, allTargetings, t],
   );
 
-  const totalItems = flatDocs.length;
+  const displayRows = useMemo(
+    () => buildDisplayRows(flatDocs, batchById, (key?: string) => (key ? t(key) : '')),
+    [flatDocs, batchById, t],
+  );
+  // Pagination operates on display rows (a batch row counts as one).
+  const totalItems = displayRows.length;
   const totalPages = Math.max(1, Math.ceil(totalItems / pageSize));
   const safePage = Math.min(page, totalPages);
   const startIndex = (safePage - 1) * pageSize;
-  const pageDocs = flatDocs.slice(startIndex, startIndex + pageSize);
+  const pageRows = displayRows.slice(startIndex, startIndex + pageSize);
+  // Flatten the rows currently visible on the page into individual docs — used
+  // by the page-level select-all checkbox.
+  const pageDocs = useMemo(() => {
+    const out: ValidationDocument[] = [];
+    pageRows.forEach((r) => {
+      if (r.kind === 'doc') out.push(r.doc);
+      else r.batch.docs.forEach((d) => out.push(d));
+    });
+    return out;
+  }, [pageRows]);
 
   const hasActiveFilters =
     hasActiveSearch || Object.keys(activeFilters).length > 0;
@@ -452,6 +661,27 @@ export function ValidationPage(_props: ValidationPageProps) {
     () => flatDocs.filter((d) => selectedIds.has(d.id)),
     [flatDocs, selectedIds],
   );
+
+  const toggleBatchExpand = (batchId: string) => {
+    setExpandedBatchIds((prev) => {
+      const next = new Set(prev);
+      if (next.has(batchId)) next.delete(batchId);
+      else next.add(batchId);
+      return next;
+    });
+  };
+
+  const toggleBatchSelected = (batch: DynamicBatch) => {
+    setSelectedIds((prev) => {
+      const next = new Set(prev);
+      const allSelected = batch.docs.every((d) => next.has(d.id));
+      batch.docs.forEach((d) => {
+        if (allSelected) next.delete(d.id);
+        else next.add(d.id);
+      });
+      return next;
+    });
+  };
 
   const openPublishConfirm = (docs: ValidationDocument[]) => {
     if (docs.length === 0) return;
@@ -790,28 +1020,63 @@ export function ValidationPage(_props: ValidationPageProps) {
                     </tr>
                   </thead>
                   <tbody>
-                    {pageDocs.map((doc) => {
-                      const { notification, templateKey } = resolveNotification(
-                        doc,
-                        batchById,
+                    {pageRows.map((row) => {
+                      if (row.kind === 'doc') {
+                        const { notification, templateKey } = resolveNotification(
+                          row.doc,
+                          batchById,
+                        );
+                        const templateLabel = templateKey ? t(templateKey) : undefined;
+                        return (
+                          <DocumentRow
+                            key={`doc-${row.doc.id}`}
+                            doc={row.doc}
+                            notification={notification}
+                            templateLabel={templateLabel}
+                            selected={selectedIds.has(row.doc.id)}
+                            onToggleSelect={() => toggleRowSelected(row.doc.id)}
+                            onPreview={() => setPreviewDocument(row.doc)}
+                            onValidate={() => openPublishConfirm([row.doc])}
+                            onReject={() => openRejectConfirm([row.doc])}
+                            onResetToPending={() => handleResetToPending(row.doc)}
+                            onPreviewNotification={() =>
+                              setPreviewNotificationDocId(row.doc.id)
+                            }
+                            renderTargeting={renderTargetingTags}
+                            stickyClass={stickyBodyActionsClass()}
+                          />
+                        );
+                      }
+                      const batch = row.batch;
+                      const batchExpanded = expandedBatchIds.has(batch.id);
+                      const batchAllSelected = batch.docs.every((d) =>
+                        selectedIds.has(d.id),
                       );
-                      const templateLabel = templateKey ? t(templateKey) : undefined;
+                      const batchSomeSelected = batch.docs.some((d) =>
+                        selectedIds.has(d.id),
+                      );
+                      const batchStatus = deriveBatchStatus(batch.docs);
                       return (
-                        <DocumentRow
-                          key={`doc-${doc.id}`}
-                          doc={doc}
-                          notification={notification}
-                          templateLabel={templateLabel}
-                          selected={selectedIds.has(doc.id)}
-                          onToggleSelect={() => toggleRowSelected(doc.id)}
-                          onPreview={() => setPreviewDocument(doc)}
-                          onValidate={() => openPublishConfirm([doc])}
-                          onReject={() => openRejectConfirm([doc])}
-                          onResetToPending={() => handleResetToPending(doc)}
+                        <DynamicBatchRow
+                          key={batch.id}
+                          batch={batch}
+                          expanded={batchExpanded}
+                          status={batchStatus}
+                          allSelected={batchAllSelected}
+                          someSelected={batchSomeSelected}
+                          onToggleExpand={() => toggleBatchExpand(batch.id)}
+                          onToggleSelect={() => toggleBatchSelected(batch)}
                           onPreviewNotification={() =>
-                            setPreviewNotificationDocId(doc.id)
+                            setPreviewNotificationDocId(batch.docs[0].id)
                           }
-                          renderTargeting={renderTargetingTags}
+                          onValidate={() => openPublishConfirm(batch.docs)}
+                          onReject={() => openRejectConfirm(batch.docs)}
+                          onReset={() =>
+                            batch.docs.forEach((d) => handleResetToPending(d))
+                          }
+                          selectedIds={selectedIds}
+                          onToggleChild={(id) => toggleRowSelected(id)}
+                          onPreviewChild={(d) => setPreviewDocument(d)}
                           stickyClass={stickyBodyActionsClass()}
                         />
                       );
@@ -1474,3 +1739,302 @@ function ConfirmShell({
   );
 }
 
+
+// ---------------------------------------------------------------------------
+// Dynamic batch row — collapsible group rendered when 2+ nominative docs
+// share the same investor + notification template. Validation acts on the
+// whole group; children rows hide consolidated fields (replaced with "—").
+// ---------------------------------------------------------------------------
+
+function deriveBatchStatus(docs: ValidationDocument[]): ValidationStatus {
+  if (docs.length === 0) return 'pending';
+  if (docs.every((d) => d.status === 'validated')) return 'validated';
+  if (docs.every((d) => d.status === 'rejected')) return 'rejected';
+  return 'pending';
+}
+
+interface DynamicBatchRowProps {
+  batch: DynamicBatch;
+  expanded: boolean;
+  status: ValidationStatus;
+  allSelected: boolean;
+  someSelected: boolean;
+  onToggleExpand: () => void;
+  onToggleSelect: () => void;
+  onPreviewNotification: () => void;
+  onValidate: () => void;
+  onReject: () => void;
+  onReset: () => void;
+  selectedIds: Set<number>;
+  onToggleChild: (id: number) => void;
+  onPreviewChild: (doc: ValidationDocument) => void;
+  stickyClass: string;
+}
+
+function DynamicBatchRow({
+  batch,
+  expanded,
+  status,
+  allSelected,
+  someSelected,
+  onToggleExpand,
+  onToggleSelect,
+  onPreviewNotification,
+  onValidate,
+  onReject,
+  onReset,
+  selectedIds,
+  onToggleChild,
+  onPreviewChild,
+  stickyClass,
+}: DynamicBatchRowProps) {
+  const { t, lang } = useTranslation();
+  const dateFormatter = useMemo(
+    () =>
+      new Intl.DateTimeFormat(lang === 'en' ? 'en-GB' : 'fr-FR', {
+        day: '2-digit',
+        month: 'short',
+        year: 'numeric',
+        hour: '2-digit',
+        minute: '2-digit',
+      }),
+    [lang],
+  );
+  const formatDate = (iso: string) => dateFormatter.format(new Date(iso));
+  const statusLabel = t(STATUS_LABEL_KEY[status]);
+  const conf = STATUS_VARIANT[status];
+  // Use the earliest createdAt as the batch's reference date.
+  const earliestDoc = batch.docs.reduce((m, d) =>
+    new Date(d.createdAt).getTime() < new Date(m.createdAt).getTime() ? d : m,
+    batch.docs[0],
+  );
+  return (
+    <>
+      <tr className="border-b border-blue-100 bg-blue-50/40 hover:bg-blue-50/60 dark:border-blue-900/30 dark:bg-blue-950/15">
+        <td
+          className="w-10 px-3 py-2.5 align-top"
+          onClick={(e) => e.stopPropagation()}
+        >
+          <Checkbox
+            checked={allSelected ? true : someSelected ? 'indeterminate' : false}
+            onCheckedChange={() => onToggleSelect()}
+            aria-label={`select-batch-${batch.id}`}
+          />
+        </td>
+        <td className="px-4 py-2.5 align-top max-w-[320px]">
+          <div className="flex items-start gap-2">
+            <button
+              type="button"
+              onClick={onToggleExpand}
+              className="mt-0.5 flex h-5 w-5 shrink-0 items-center justify-center rounded text-blue-700 hover:bg-blue-100 dark:text-blue-300 dark:hover:bg-blue-900"
+              aria-label={expanded ? 'collapse' : 'expand'}
+            >
+              <ChevronRight
+                className={cn(
+                  'h-3.5 w-3.5 transition-transform',
+                  expanded && 'rotate-90',
+                )}
+              />
+            </button>
+            <div
+              className="flex h-7 w-7 shrink-0 items-center justify-center rounded-md bg-blue-100 text-blue-700 dark:bg-blue-900/40 dark:text-blue-300"
+              aria-hidden
+            >
+              <Package className="h-3.5 w-3.5" />
+            </div>
+            <div className="min-w-0 flex-1">
+              <div className="text-[10px] font-semibold uppercase tracking-wide text-blue-700/80 dark:text-blue-300/80">
+                {t(
+                  batch.docs.length > 1
+                    ? 'validation.dynamicBatch.docsMany'
+                    : 'validation.dynamicBatch.docsOne',
+                  { count: batch.docs.length },
+                )}
+              </div>
+              <div
+                className="truncate text-sm font-semibold text-gray-900 dark:text-gray-100"
+                title={batch.name}
+              >
+                {batch.name}
+              </div>
+            </div>
+          </div>
+        </td>
+        <td
+          className="px-4 py-2.5 align-top cursor-pointer"
+          onClick={(e) => {
+            e.stopPropagation();
+            onPreviewNotification();
+          }}
+        >
+          <NotificationBadge
+            notification={batch.notification}
+            templateLabel={batch.templateLabel}
+          />
+        </td>
+        <td className="px-4 py-2.5 align-top">
+          <div className="flex flex-col gap-0.5">
+            <UserCell
+              name={earliestDoc.createdBy.name}
+              sublabel={earliestDoc.createdBy.role}
+            />
+            <span className="text-[11px] text-gray-500 whitespace-nowrap">
+              {formatDate(earliestDoc.createdAt)}
+            </span>
+          </div>
+        </td>
+        <td className="px-4 py-2.5 align-top text-center text-[11px] text-gray-300">
+          —
+        </td>
+        <td className="px-4 py-2.5 align-top">
+          <StatusBadge label={statusLabel} variant={conf.variant} />
+        </td>
+        <td className={cn('px-4 py-2.5 align-top', stickyClass)}>
+          <div
+            className="flex items-center justify-end gap-1"
+            onClick={(e) => e.stopPropagation()}
+          >
+            {status === 'validated' && (
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    className="h-8 w-8 p-0 text-amber-600 hover:bg-amber-50 hover:text-amber-700 dark:hover:bg-amber-950"
+                    onClick={onReset}
+                  >
+                    <RotateCcw className="h-4 w-4" />
+                  </Button>
+                </TooltipTrigger>
+                <TooltipContent>{t('validation.tooltip.resetPending')}</TooltipContent>
+              </Tooltip>
+            )}
+            {status !== 'validated' && (
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    className="h-8 w-8 p-0 text-emerald-600 hover:bg-emerald-50 hover:text-emerald-700 dark:hover:bg-emerald-950"
+                    onClick={onValidate}
+                  >
+                    <Check className="h-4 w-4" />
+                  </Button>
+                </TooltipTrigger>
+                <TooltipContent>
+                  {t('validation.tooltip.validateAndSend')}
+                </TooltipContent>
+              </Tooltip>
+            )}
+            {status !== 'rejected' && (
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    className="h-8 w-8 p-0 text-red-600 hover:bg-red-50 hover:text-red-700 dark:hover:bg-red-950"
+                    onClick={onReject}
+                  >
+                    <X className="h-4 w-4" />
+                  </Button>
+                </TooltipTrigger>
+                <TooltipContent>{t('validation.tooltip.reject')}</TooltipContent>
+              </Tooltip>
+            )}
+          </div>
+        </td>
+      </tr>
+      {expanded &&
+        batch.docs.map((d) => (
+          <tr
+            key={`batch-${batch.id}-child-${d.id}`}
+            className={cn(
+              'border-b border-border/40 cursor-pointer transition-colors',
+              selectedIds.has(d.id)
+                ? 'bg-blue-50/30 hover:bg-blue-50/50 dark:bg-blue-950/15'
+                : 'bg-blue-50/10 hover:bg-blue-50/30 dark:bg-blue-950/5',
+            )}
+            onClick={() => onPreviewChild(d)}
+          >
+            <td
+              className="w-10 px-3 py-2 align-top"
+              onClick={(e) => e.stopPropagation()}
+            >
+              <div className="flex items-center gap-1.5">
+                <span aria-hidden className="text-gray-300">└</span>
+                <Checkbox
+                  checked={selectedIds.has(d.id)}
+                  onCheckedChange={() => onToggleChild(d.id)}
+                  aria-label={`select-${d.id}`}
+                />
+              </div>
+            </td>
+            <td className="px-4 py-2 align-top max-w-[320px] pl-8">
+              {d.kindKey && (
+                <div className="mb-0.5 text-[10px] font-semibold uppercase tracking-wide text-gray-500 dark:text-gray-400">
+                  {t(d.kindKey)}
+                </div>
+              )}
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <div
+                    className="truncate text-sm font-medium text-gray-900 dark:text-gray-100"
+                    title={d.name}
+                  >
+                    {d.name}
+                  </div>
+                </TooltipTrigger>
+                <TooltipContent side="top">
+                  <span className="text-xs">{d.name}</span>
+                </TooltipContent>
+              </Tooltip>
+              {d.pathSegments.length > 0 && (
+                <div
+                  className="mt-0.5 truncate text-[11px] text-gray-500"
+                  title={d.pathSegments.join(' / ')}
+                >
+                  {d.pathSegments.join(' / ')}
+                </div>
+              )}
+            </td>
+            <td className="px-4 py-2 align-top text-center text-[11px] text-gray-300">
+              —
+            </td>
+            <td className="px-4 py-2 align-top">
+              <span className="text-[11px] text-gray-500 whitespace-nowrap">
+                {formatDate(d.createdAt)}
+              </span>
+            </td>
+            <td className="px-4 py-2 align-top text-center text-[11px] text-gray-300">
+              —
+            </td>
+            <td className="px-4 py-2 align-top text-[11px] text-gray-300">
+              —
+            </td>
+            <td className={cn('px-4 py-2 align-top', stickyClass)}>
+              <div
+                className="flex items-center justify-end gap-1"
+                onClick={(e) => e.stopPropagation()}
+              >
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      className="h-8 w-8 p-0"
+                      onClick={() => onPreviewChild(d)}
+                    >
+                      <Eye className="h-4 w-4" />
+                    </Button>
+                  </TooltipTrigger>
+                  <TooltipContent>
+                    {t('validation.tooltip.previewDoc')}
+                  </TooltipContent>
+                </Tooltip>
+              </div>
+            </td>
+          </tr>
+        ))}
+    </>
+  );
+}

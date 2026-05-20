@@ -2311,9 +2311,14 @@
     },
     "filters": {
       "author": "Auteur",
+      "fund": "Fonds",
       "targeting": "Ciblage",
       "investor": "Investisseur",
       "format": "Format"
+    },
+    "dynamicBatch": {
+      "docsOne": "Lot · {{count}} document",
+      "docsMany": "Lot · {{count}} documents"
     },
     "table": {
       "document": "Document",
