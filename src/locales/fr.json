@@ -2362,6 +2362,8 @@
     "bulk": {
       "selectionOne": "{{count}} document sélectionné",
       "selectionMany": "{{count}} documents sélectionnés",
+      "selectAllMatching": "Sélectionner les {{count}} documents correspondants",
+      "allMatchingSelected": "Les {{count}} documents correspondants sont sélectionnés",
       "clear": "Désélectionner",
       "publish": "Publier la sélection",
       "reject": "Rejeter la sélection"

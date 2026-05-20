@@ -665,15 +665,44 @@ export function ValidationPage({ onBack }: ValidationPageProps) {
 
           {/* Bulk action bar */}
           {selectedDocs.length > 0 && (
-            <div className="flex items-center justify-between gap-3 border-b border-blue-100 bg-blue-50/60 px-4 py-2 dark:border-blue-900/30 dark:bg-blue-950/20">
-              <span className="text-sm font-medium text-blue-900 dark:text-blue-200">
-                {t(
-                  selectedDocs.length > 1
-                    ? 'validation.bulk.selectionMany'
-                    : 'validation.bulk.selectionOne',
-                  { count: selectedDocs.length },
-                )}
-              </span>
+            <div className="flex flex-wrap items-center justify-between gap-3 border-b border-blue-100 bg-blue-50/60 px-4 py-2 dark:border-blue-900/30 dark:bg-blue-950/20">
+              <div className="flex items-baseline gap-2">
+                <span className="text-sm font-medium text-blue-900 dark:text-blue-200">
+                  {t(
+                    selectedDocs.length > 1
+                      ? 'validation.bulk.selectionMany'
+                      : 'validation.bulk.selectionOne',
+                    { count: selectedDocs.length },
+                  )}
+                </span>
+                {(() => {
+                  const allOnPageSelected =
+                    pageDocs.length > 0 &&
+                    pageDocs.every((d) => selectedIds.has(d.id));
+                  const hasMore = flatDocs.length > selectedDocs.length;
+                  if (selectedDocs.length === flatDocs.length && flatDocs.length > pageDocs.length) {
+                    return (
+                      <span className="text-xs text-blue-800/80">
+                        {t('validation.bulk.allMatchingSelected', { count: flatDocs.length })}
+                      </span>
+                    );
+                  }
+                  if (allOnPageSelected && hasMore) {
+                    return (
+                      <button
+                        type="button"
+                        onClick={() =>
+                          setSelectedIds(new Set(flatDocs.map((d) => d.id)))
+                        }
+                        className="text-xs font-medium text-blue-700 underline-offset-2 hover:underline dark:text-blue-300"
+                      >
+                        {t('validation.bulk.selectAllMatching', { count: flatDocs.length })}
+                      </button>
+                    );
+                  }
+                  return null;
+                })()}
+              </div>
               <div className="flex items-center gap-1.5">
                 <Button
                   variant="outline"
