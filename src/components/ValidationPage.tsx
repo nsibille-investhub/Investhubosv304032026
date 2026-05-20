@@ -1,7 +1,6 @@
 import { useEffect, useMemo, useState } from 'react';
 import { motion } from 'motion/react';
 import {
-  ArrowLeft,
   Clock,
   CheckCircle2,
   XCircle,
@@ -143,7 +142,7 @@ function notificationSignature(
   return [notification.channel, subjectKey, subjectVars, recipientFingerprint].join('|');
 }
 
-export function ValidationPage({ onBack }: ValidationPageProps) {
+export function ValidationPage(_props: ValidationPageProps) {
   const { t, lang } = useTranslation();
   const {
     dynamicDocuments,
@@ -570,13 +569,6 @@ export function ValidationPage({ onBack }: ValidationPageProps) {
     <div className="flex-1 flex flex-col bg-gray-50 dark:bg-black overflow-hidden">
       {/* Header */}
       <div className="bg-white dark:bg-gray-950 border-b border-gray-200 dark:border-gray-800 px-6 py-4">
-        <div className="flex items-center gap-4 mb-4">
-          <Button variant="ghost" size="sm" onClick={onBack} className="gap-2">
-            <ArrowLeft className="h-4 w-4" />
-            {t('validation.back')}
-          </Button>
-        </div>
-
         {/* Filtering KPI cards */}
         <motion.div
           initial={{ opacity: 0, y: -10 }}
