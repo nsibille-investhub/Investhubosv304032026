@@ -97,7 +97,7 @@ const LP_ALDEBARAN = findInvestor('INV-001')!;
 const LP_BRUNSWICK = findInvestor('INV-002')!;
 const LP_NORWOOD   = findInvestor('INV-014')!;
 const LP_CAMBERWELL = findInvestor('INV-023')!;
-const LP_GREYCLIFF = findInvestor('INV-007')!;
+const LP_HELMSFORD = findInvestor('INV-022')!;
 const LP_HARTWOOD  = findInvestor('INV-021')!;
 const LP_KENS      = findInvestor('INV-011')!;
 
@@ -113,8 +113,8 @@ const ATL_BRUNSWICK_SUB = subscriptionFor(FUND_ATL.code, LP_BRUNSWICK.id);
 const NW_NORWOOD_SUB = subscriptionFor(FUND_NW.code, LP_NORWOOD.id);
 const ATL_NORWOOD_SUB = subscriptionFor(FUND_ATL.code, LP_NORWOOD.id);
 const NW_CAMBERWELL_SUB = subscriptionFor(FUND_NW.code, LP_CAMBERWELL.id);
-const NW_GREYCLIFF_SUB = subscriptionFor(FUND_NW.code, LP_GREYCLIFF.id);
-const ATL_GREYCLIFF_SUB = subscriptionFor(FUND_ATL.code, LP_GREYCLIFF.id);
+const NW_HELMSFORD_SUB = subscriptionFor(FUND_NW.code, LP_HELMSFORD.id);
+const ATL_HELMSFORD_SUB = subscriptionFor(FUND_ATL.code, LP_HELMSFORD.id);
 const NW_HARTWOOD_SUB = subscriptionFor(FUND_NW.code, LP_HARTWOOD.id);
 
 /* --------------------------------------------------------------------- */
@@ -240,12 +240,12 @@ const BATCHES: ValidationBatch[] = [
     notification: taxPackNotification(LP_BRUNSWICK),
   },
   {
-    id: 'batch-tax-pack-greycliff',
-    name: `Pack fiscal 2025 — ${LP_GREYCLIFF.name}`,
+    id: 'batch-tax-pack-helmsford',
+    name: `Pack fiscal 2025 — ${LP_HELMSFORD.name}`,
     kindKey: 'validation.fixtures.kind.taxCertificate',
     createdAt: '2026-04-29T10:20:00Z',
     createdBy: { name: 'Sophie Bernard', role: 'Tax Specialist' },
-    notification: taxPackNotification(LP_GREYCLIFF),
+    notification: taxPackNotification(LP_HELMSFORD),
   },
   // Subscription onboarding pack for a new LP (3 docs).
   {
@@ -614,44 +614,44 @@ const PENDING: Omit<ValidationDocument, 'id' | 'status'>[] = [
 
   // G3 — Pack fiscal 2025 — Greycliff Wealth Partners (3 docs)
   {
-    name: `IFU 2025 - ${FUND_NW.name} - ${LP_GREYCLIFF.name}.pdf`,
+    name: `IFU 2025 - ${FUND_NW.name} - ${LP_HELMSFORD.name}.pdf`,
     format: 'pdf', size: '405 KB',
     pathSegments: taxPackPath(FUND_NW.name),
     createdBy: { name: 'Sophie Bernard', role: 'Tax Specialist' },
     createdAt: '2026-04-29T10:21:00Z',
     targeting: [
       fund(FUND_NW.name),
-      inv(LP_GREYCLIFF.name),
-      sub(NW_GREYCLIFF_SUB.subscriptionId),
-      share(NW_GREYCLIFF_SUB.shareClass),
+      inv(LP_HELMSFORD.name),
+      sub(NW_HELMSFORD_SUB.subscriptionId),
+      share(NW_HELMSFORD_SUB.shareClass),
     ],
-    batchId: 'batch-tax-pack-greycliff',
+    batchId: 'batch-tax-pack-helmsford',
   },
   {
-    name: `IFU 2025 - ${FUND_ATL.name} - ${LP_GREYCLIFF.name}.pdf`,
+    name: `IFU 2025 - ${FUND_ATL.name} - ${LP_HELMSFORD.name}.pdf`,
     format: 'pdf', size: '425 KB',
     pathSegments: taxPackPath(FUND_ATL.name),
     createdBy: { name: 'Sophie Bernard', role: 'Tax Specialist' },
     createdAt: '2026-04-29T10:22:00Z',
     targeting: [
       fund(FUND_ATL.name),
-      inv(LP_GREYCLIFF.name),
-      sub(ATL_GREYCLIFF_SUB.subscriptionId),
-      share(ATL_GREYCLIFF_SUB.shareClass),
+      inv(LP_HELMSFORD.name),
+      sub(ATL_HELMSFORD_SUB.subscriptionId),
+      share(ATL_HELMSFORD_SUB.shareClass),
     ],
-    batchId: 'batch-tax-pack-greycliff',
+    batchId: 'batch-tax-pack-helmsford',
   },
   {
-    name: `Cerfa 2561-bis 2025 - ${LP_GREYCLIFF.name}.pdf`,
+    name: `Cerfa 2561-bis 2025 - ${LP_HELMSFORD.name}.pdf`,
     format: 'pdf', size: '95 KB',
     pathSegments: taxPackPath(FUND_NW.name),
     createdBy: { name: 'Sophie Bernard', role: 'Tax Specialist' },
     createdAt: '2026-04-29T10:23:00Z',
     targeting: [
-      inv(LP_GREYCLIFF.name),
-      sub(NW_GREYCLIFF_SUB.subscriptionId),
+      inv(LP_HELMSFORD.name),
+      sub(NW_HELMSFORD_SUB.subscriptionId),
     ],
-    batchId: 'batch-tax-pack-greycliff',
+    batchId: 'batch-tax-pack-helmsford',
   },
 
   // G4 — Souscription 2026 — Norwood Pension Trust (3 docs)
