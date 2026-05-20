@@ -743,24 +743,24 @@ export function ValidationPage({ onBack }: ValidationPageProps) {
                           aria-label="select-all"
                         />
                       </th>
-                      <th className="px-6 py-4 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider">
+                      <th className="px-4 py-3 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider max-w-[320px]">
                         {t('validation.table.document')}
                       </th>
-                      <th className="px-6 py-4 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider">
+                      <th className="px-4 py-3 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider">
+                        {t('validation.table.notification')}
+                      </th>
+                      <th className="px-4 py-3 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider">
                         {t('validation.table.createdBy')}
                       </th>
-                      <th className="px-6 py-4 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider">
-                        {t('validation.table.date')}
-                      </th>
-                      <th className="px-6 py-4 text-center text-xs font-medium text-muted-foreground uppercase tracking-wider">
+                      <th className="px-4 py-3 text-center text-xs font-medium text-muted-foreground uppercase tracking-wider">
                         {t('validation.table.comm')}
                       </th>
-                      <th className="px-6 py-4 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider">
+                      <th className="px-4 py-3 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider">
                         {t('validation.table.status')}
                       </th>
                       <th
                         className={cn(
-                          'px-6 py-4 text-right text-xs font-medium text-muted-foreground uppercase tracking-wider',
+                          'px-4 py-3 text-right text-xs font-medium text-muted-foreground uppercase tracking-wider',
                           stickyHeadActionsClass,
                         )}
                       >
@@ -973,40 +973,56 @@ function DocumentRow({
           aria-label={`select-${doc.id}`}
         />
       </td>
-      <td className="px-6 py-4 align-top">
+      <td className="px-4 py-2.5 align-top max-w-[320px]">
         {doc.kindKey && (
-          <div className="mb-1 text-[11px] font-semibold uppercase tracking-wide text-gray-500 dark:text-gray-400">
+          <div className="mb-0.5 text-[10px] font-semibold uppercase tracking-wide text-gray-500 dark:text-gray-400">
             {t(doc.kindKey)}
           </div>
         )}
-        <DocumentNameCell name={doc.name} pathSegments={doc.pathSegments} />
-        <div className="mt-1.5 flex flex-wrap items-center gap-1.5">
+        <Tooltip>
+          <TooltipTrigger asChild>
+            <div className="truncate text-sm font-medium text-gray-900 dark:text-gray-100" title={doc.name}>
+              {doc.name}
+            </div>
+          </TooltipTrigger>
+          <TooltipContent side="top">
+            <span className="text-xs">{doc.name}</span>
+          </TooltipContent>
+        </Tooltip>
+        {doc.pathSegments.length > 0 && (
+          <div className="mt-0.5 truncate text-[11px] text-gray-500" title={doc.pathSegments.join(' / ')}>
+            {doc.pathSegments.join(' / ')}
+          </div>
+        )}
+        <div className="mt-1 flex flex-wrap items-center gap-1">
           {renderTargeting(doc.targeting, 4)}
-          <span
-            onClick={(e) => {
-              if (notification) {
-                e.stopPropagation();
-                onPreviewNotification();
-              }
-            }}
-            className={notification ? 'cursor-pointer' : undefined}
-          >
-            <NotificationBadge
-              notification={notification}
-              templateLabel={templateLabel}
-            />
+        </div>
+      </td>
+      <td
+        className="px-4 py-2.5 align-top"
+        onClick={(e) => {
+          if (notification) {
+            e.stopPropagation();
+            onPreviewNotification();
+          }
+        }}
+      >
+        <span className={notification ? 'cursor-pointer' : undefined}>
+          <NotificationBadge
+            notification={notification}
+            templateLabel={templateLabel}
+          />
+        </span>
+      </td>
+      <td className="px-4 py-2.5 align-top">
+        <div className="flex flex-col gap-0.5">
+          <UserCell name={doc.createdBy.name} sublabel={doc.createdBy.role} />
+          <span className="text-[11px] text-gray-500 whitespace-nowrap">
+            {formatDate(doc.createdAt)}
           </span>
         </div>
       </td>
-      <td className="px-6 py-4 align-top">
-        <UserCell name={doc.createdBy.name} sublabel={doc.createdBy.role} />
-      </td>
-      <td className="px-6 py-4 align-top">
-        <span className="text-sm text-gray-600 dark:text-gray-400 whitespace-nowrap">
-          {formatDate(doc.createdAt)}
-        </span>
-      </td>
-      <td className="px-6 py-4 align-top text-center">
+      <td className="px-4 py-2.5 align-top text-center">
         <div className="flex justify-center">
           <CommentIndicator
             comment={commentText}
@@ -1015,10 +1031,10 @@ function DocumentRow({
           />
         </div>
       </td>
-      <td className="px-6 py-4 align-top">
+      <td className="px-4 py-2.5 align-top">
         <StatusBadge label={statusLabel} variant={conf.variant} />
       </td>
-      <td className={cn('px-6 py-4 align-top', stickyClass)}>
+      <td className={cn('px-4 py-2.5 align-top', stickyClass)}>
         <div
           className="flex items-center justify-end gap-1"
           onClick={(e) => e.stopPropagation()}
