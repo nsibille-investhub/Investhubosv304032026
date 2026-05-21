@@ -1075,7 +1075,6 @@ export function ValidationPage(_props: ValidationPageProps) {
                             batch.docs.forEach((d) => handleResetToPending(d))
                           }
                           selectedIds={selectedIds}
-                          onToggleChild={(id) => toggleRowSelected(id)}
                           onPreviewChild={(d) => setPreviewDocument(d)}
                           stickyClass={stickyBodyActionsClass()}
                         />
@@ -1766,7 +1765,6 @@ interface DynamicBatchRowProps {
   onReject: () => void;
   onReset: () => void;
   selectedIds: Set<number>;
-  onToggleChild: (id: number) => void;
   onPreviewChild: (doc: ValidationDocument) => void;
   stickyClass: string;
 }
@@ -1784,7 +1782,6 @@ function DynamicBatchRow({
   onReject,
   onReset,
   selectedIds,
-  onToggleChild,
   onPreviewChild,
   stickyClass,
 }: DynamicBatchRowProps) {
@@ -1956,18 +1953,8 @@ function DynamicBatchRow({
             )}
             onClick={() => onPreviewChild(d)}
           >
-            <td
-              className="w-10 px-3 py-2 align-top"
-              onClick={(e) => e.stopPropagation()}
-            >
-              <div className="flex items-center gap-1.5">
-                <span aria-hidden className="text-gray-300">└</span>
-                <Checkbox
-                  checked={selectedIds.has(d.id)}
-                  onCheckedChange={() => onToggleChild(d.id)}
-                  aria-label={`select-${d.id}`}
-                />
-              </div>
+            <td className="w-10 px-3 py-2 align-top">
+              <span aria-hidden className="text-gray-300">└</span>
             </td>
             <td className="px-4 py-2 align-top max-w-[320px] pl-8">
               {d.kindKey && (
