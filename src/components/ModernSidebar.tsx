@@ -8,6 +8,7 @@ import logoMinimized from 'figma:asset/2115896087cf66bcb781a8f9d0f680a46ffd65c4.
 import { FundContextSelectorCompact } from './FundContextSelectorCompact';
 import { Fund } from '../utils/fundGenerator';
 import { useTranslation } from '../utils/languageContext';
+import { useAppStore } from '../utils/appStoreContext';
 
 interface SidebarProps {
   expanded: boolean;
@@ -24,6 +25,8 @@ interface SidebarProps {
 
 export function ModernSidebar({ expanded, onToggle, currentPage = 'entities', onPageChange, entitiesManagementEnabled = false, pendingAlertsCount = 0, onLogoClick, selectedFundId, onSelectFund, allFunds = [] }: SidebarProps) {
   const { t } = useTranslation();
+  const { isModuleActive } = useAppStore();
+  const isPublicationCenterActive = isModuleActive('Centre de Publication');
   const [settingsFocusMode, setSettingsFocusMode] = useState(false);
   
   const [openMenus, setOpenMenus] = useState<Record<string, boolean>>({
@@ -328,13 +331,15 @@ export function ModernSidebar({ expanded, onToggle, currentPage = 'entities', on
                 isActive={currentPage === 'birdview'}
                 onClick={() => onPageChange?.('birdview')}
               />
-              <SubMenuItem
-                icon={icons.FileCheck}
-                label={t('sidebar.submenu.validation')}
-                expanded={expanded}
-                isActive={currentPage === 'validation'}
-                onClick={() => onPageChange?.('validation')}
-              />
+              {isPublicationCenterActive && (
+                <SubMenuItem
+                  icon={icons.FileCheck}
+                  label={t('sidebar.submenu.validation')}
+                  expanded={expanded}
+                  isActive={currentPage === 'validation'}
+                  onClick={() => onPageChange?.('validation')}
+                />
+              )}
             </MenuItem>
 
             <MenuItem

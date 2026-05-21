@@ -2299,6 +2299,10 @@
     "title": "Centre de Publication",
     "subtitle": "Revue, approbation et publication des documents",
     "searchPlaceholder": "Rechercher un document, auteur, ciblage...",
+    "moduleDisabled": {
+      "title": "Centre de Publication désactivé",
+      "description": "Ce module est désactivé. Activez « Centre de Publication » dans l'App Store pour accéder au workflow de validation."
+    },
     "kpi": {
       "pending": "En attente de publication",
       "pendingMetric": "À traiter",

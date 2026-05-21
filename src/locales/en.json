@@ -2299,6 +2299,10 @@
     "title": "Publication Center",
     "subtitle": "Review, approve and publish documents",
     "searchPlaceholder": "Search a document, author, targeting...",
+    "moduleDisabled": {
+      "title": "Publication Center disabled",
+      "description": "This module is disabled. Enable \"Centre de Publication\" in the App Store to access the validation workflow."
+    },
     "kpi": {
       "pending": "Awaiting publication",
       "pendingMetric": "To process",

@@ -3,6 +3,7 @@ import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import icons from '../utils/fontAwesomeIcons';
 import { useState, useEffect } from 'react';
 import { navigateToPage } from '../utils/routing';
+import { useAppStore } from '../utils/appStoreContext';
 import logoInvestHub from 'figma:asset/2a84b4397fac896d4ed7e7f4faff09c957de9a6b.png';
 import logoMinimized from 'figma:asset/2115896087cf66bcb781a8f9d0f680a46ffd65c4.png';
 import logoBPI from 'figma:asset/fbd92a3821f271de40d6b58cd6b5b1f28a6e8ca5.png';
@@ -19,6 +20,8 @@ interface SidebarProps {
 
 export function Sidebar({ expanded, onToggle, currentPage = 'entities', onPageChange, entitiesManagementEnabled = false, pendingAlertsCount = 0, onOpenEcosystem }: SidebarProps) {
   const [settingsFocusMode, setSettingsFocusMode] = useState(false);
+  const { isModuleActive } = useAppStore();
+  const isPublicationCenterActive = isModuleActive('Centre de Publication');
   
   const [openMenus, setOpenMenus] = useState<Record<string, boolean>>({
     dashboards: false,
@@ -372,13 +375,15 @@ export function Sidebar({ expanded, onToggle, currentPage = 'entities', onPageCh
             isActive={currentPage === 'birdview'}
             onClick={() => onPageChange?.('birdview')}
           />
-          <SubMenuItem
-            icon={icons.FileCheck}
-            label="Centre de Publication"
-            expanded={expanded}
-            isActive={currentPage === 'validation'}
-            onClick={() => onPageChange?.('validation')}
-          />
+          {isPublicationCenterActive && (
+            <SubMenuItem
+              icon={icons.FileCheck}
+              label="Centre de Publication"
+              expanded={expanded}
+              isActive={currentPage === 'validation'}
+              onClick={() => onPageChange?.('validation')}
+            />
+          )}
         </MenuItem>
 
         <MenuItem

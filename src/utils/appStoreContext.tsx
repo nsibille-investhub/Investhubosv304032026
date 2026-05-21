@@ -24,7 +24,8 @@ const defaultModules: Module[] = [
   { id: '7', name: 'Analytics Pro', status: 'inactive' },
   { id: '8', name: 'WorldCheck', status: 'inactive' },
   { id: '9', name: 'Twilio SMS', status: 'inactive' },
-  { id: '10', name: 'Document AI', status: 'active' }
+  { id: '10', name: 'Document AI', status: 'active' },
+  { id: '11', name: 'Centre de Publication', status: 'active' }
 ];
 
 export function AppStoreProvider({ children }: { children: ReactNode }) {

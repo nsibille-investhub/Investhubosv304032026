@@ -56,6 +56,7 @@ import {
 } from '../utils/gedFixtures';
 import { useTranslation } from '../utils/languageContext';
 import { useValidationStore } from '../utils/validationStoreContext';
+import { useAppStore } from '../utils/appStoreContext';
 import { cn } from './ui/utils';
 
 interface ValidationPageProps {
@@ -318,6 +319,8 @@ function buildDisplayRows(
 
 export function ValidationPage(_props: ValidationPageProps) {
   const { t, lang } = useTranslation();
+  const { isModuleActive } = useAppStore();
+  const isPublicationCenterActive = isModuleActive('Centre de Publication');
   const {
     dynamicDocuments,
     dynamicBatches,
@@ -734,6 +737,24 @@ export function ValidationPage(_props: ValidationPageProps) {
       )}
     </div>
   );
+
+  if (!isPublicationCenterActive) {
+    return (
+      <div className="flex-1 flex items-center justify-center bg-gray-50 dark:bg-black p-6">
+        <div className="max-w-md text-center">
+          <div className="mx-auto mb-4 flex h-12 w-12 items-center justify-center rounded-full bg-gray-100 text-gray-400 dark:bg-gray-900">
+            <ShieldCheck className="h-6 w-6" />
+          </div>
+          <h2 className="text-lg font-semibold text-gray-900 dark:text-gray-100">
+            {t('validation.moduleDisabled.title')}
+          </h2>
+          <p className="mt-2 text-sm text-gray-600 dark:text-gray-400">
+            {t('validation.moduleDisabled.description')}
+          </p>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="flex-1 flex flex-col bg-gray-50 dark:bg-black overflow-hidden">

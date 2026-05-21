@@ -108,6 +108,15 @@ const mockModules: Module[] = [
     status: 'active',
     version: '1.2.5',
     lastUpdate: '2025-10-22'
+  },
+  {
+    id: '11',
+    name: 'Centre de Publication',
+    description: 'Workflow de validation et de publication des documents avant diffusion aux investisseurs',
+    category: 'module',
+    status: 'active',
+    version: '1.0.0',
+    lastUpdate: '2026-05-15'
   }
 ];
 
