@@ -1,11 +1,11 @@
 import React, { useState } from 'react';
-import { Search, Package, Check, X } from 'lucide-react';
+import { Search, Package, Settings } from 'lucide-react';
 import { Input } from '../ui/input';
-import { Button } from '../ui/button';
 import { Badge } from '../ui/badge';
 import { Switch } from '../ui/switch';
 import { useAppStore } from '../../utils/appStoreContext';
 import { toast } from 'sonner';
+import { PublicationCenterSettingsDialog } from './PublicationCenterSettingsDialog';
 
 interface Module {
   id: string;
@@ -108,13 +108,25 @@ const mockModules: Module[] = [
     status: 'active',
     version: '1.2.5',
     lastUpdate: '2025-10-22'
+  },
+  {
+    id: '11',
+    name: 'Centre de Publication',
+    description: 'Workflow de validation et de publication des documents avant diffusion aux investisseurs',
+    category: 'module',
+    status: 'active',
+    version: '1.0.0',
+    lastUpdate: '2026-05-15'
   }
 ];
 
 export function AppStore() {
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedCategory, setSelectedCategory] = useState<string>('all');
+  const [settingsModuleName, setSettingsModuleName] = useState<string | null>(null);
   const { modules: contextModules, toggleModule } = useAppStore();
+
+  const modulesWithSettings = new Set<string>(['Centre de Publication']);
   
   // Merge context modules with mockModules data
   const modules = mockModules.map(mock => {
@@ -229,6 +241,18 @@ export function AppStore() {
                   v{module.version} • MAJ {new Date(module.lastUpdate!).toLocaleDateString('fr-FR')}
                 </div>
                 <div className="flex items-center gap-2">
+                  {modulesWithSettings.has(module.name) && (
+                    <button
+                      type="button"
+                      onClick={() => setSettingsModuleName(module.name)}
+                      disabled={module.status !== 'active'}
+                      className="flex h-7 w-7 items-center justify-center rounded-md text-gray-500 transition-colors hover:bg-gray-100 hover:text-gray-900 disabled:opacity-40 disabled:cursor-not-allowed"
+                      aria-label={`Paramètres de ${module.name}`}
+                      title={`Paramètres de ${module.name}`}
+                    >
+                      <Settings className="h-4 w-4" />
+                    </button>
+                  )}
                   <Switch
                     checked={module.status === 'active'}
                     onCheckedChange={() => {
@@ -253,6 +277,11 @@ export function AppStore() {
           </div>
         )}
       </div>
+
+      <PublicationCenterSettingsDialog
+        open={settingsModuleName === 'Centre de Publication'}
+        onClose={() => setSettingsModuleName(null)}
+      />
     </div>
   );
 }
