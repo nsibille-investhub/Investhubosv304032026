@@ -921,6 +921,7 @@ export function ValidationPage(_props: ValidationPageProps) {
                             batch.docs.forEach((d) => handleResetToPending(d))
                           }
                           onPreviewChild={(d) => setPreviewDocument(d)}
+                          renderTargeting={renderTargetingTags}
                           stickyClass={stickyBodyActionsClass()}
                         />
                       );
@@ -1590,6 +1591,10 @@ interface DynamicBatchRowProps {
   onReject: () => void;
   onReset: () => void;
   onPreviewChild: (doc: ValidationDocument) => void;
+  renderTargeting: (
+    targeting: ValidationDocument['targeting'],
+    maxVisible?: number,
+  ) => JSX.Element;
   stickyClass: string;
 }
 
@@ -1603,6 +1608,7 @@ function DynamicBatchRow({
   onReject,
   onReset,
   onPreviewChild,
+  renderTargeting,
   stickyClass,
 }: DynamicBatchRowProps) {
   const { t, lang } = useTranslation();
@@ -1625,6 +1631,16 @@ function DynamicBatchRow({
     new Date(d.createdAt).getTime() < new Date(m.createdAt).getTime() ? d : m,
     batch.docs[0],
   );
+  // Targeting tags shared by every document in the lot.
+  const commonTargeting = useMemo(() => {
+    if (batch.docs.length === 0) return [];
+    const [first, ...rest] = batch.docs;
+    return first.targeting.filter((tag) =>
+      rest.every((d) =>
+        d.targeting.some((t) => t.kind === tag.kind && t.label === tag.label),
+      ),
+    );
+  }, [batch.docs]);
   return (
     <>
       <tr className="border-b border-blue-100 bg-blue-50/40 hover:bg-blue-50/60 dark:border-blue-900/30 dark:bg-blue-950/15">
@@ -1664,6 +1680,11 @@ function DynamicBatchRow({
               >
                 {batch.name}
               </div>
+              {commonTargeting.length > 0 && (
+                <div className="mt-1 flex flex-wrap items-center gap-1">
+                  {renderTargeting(commonTargeting, 4)}
+                </div>
+              )}
             </div>
           </div>
         </td>
