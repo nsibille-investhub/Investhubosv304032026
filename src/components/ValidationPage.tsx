@@ -1,7 +1,6 @@
 import { useEffect, useMemo, useState } from 'react';
 import { motion } from 'motion/react';
 import {
-  ArrowLeft,
   Clock,
   CheckCircle2,
   XCircle,
@@ -16,13 +15,14 @@ import {
   Layers3,
   UserRound,
   Globe,
-  Package,
-  ChevronRight,
   Bell,
   BellOff,
-  Mail,
+  AlertCircle,
+  ChevronRight,
+  Package,
   type LucideIcon,
 } from 'lucide-react';
+import { Checkbox } from './ui/checkbox';
 import { toast } from 'sonner@2.0.3';
 import { Button } from './ui/button';
 import {
@@ -50,6 +50,11 @@ import {
   ValidationDocument,
   ValidationStatus,
 } from '../utils/validationDocumentsGenerator';
+import {
+  COMMITMENTS,
+  FUNDS,
+  findInvestor,
+} from '../utils/gedFixtures';
 import { useTranslation } from '../utils/languageContext';
 import { useValidationStore } from '../utils/validationStoreContext';
 import { cn } from './ui/utils';
@@ -102,34 +107,223 @@ const TARGETING_TOOLTIP_KEY: Record<TargetingKind, string> = {
 };
 
 // ---------------------------------------------------------------------------
-// Row tree
+// Notification resolution — each document either carries its own notification,
+// or inherits it from its parent batch when the document was uploaded as part
+// of a grouped publication.
 // ---------------------------------------------------------------------------
 
-type RowNode =
-  | { kind: 'standalone'; doc: ValidationDocument; sortKey: number }
-  | {
-      kind: 'batch';
-      batch: ValidationBatch;
-      docs: ValidationDocument[];
-      status: ValidationStatus;
-      sortKey: number;
-    };
-
-function deriveBatchStatus(docs: ValidationDocument[]): ValidationStatus {
-  if (docs.length === 0) return 'pending';
-  if (docs.every((d) => d.status === 'validated')) return 'validated';
-  if (docs.every((d) => d.status === 'rejected')) return 'rejected';
-  return 'pending';
+function resolveNotification(
+  doc: ValidationDocument,
+  batchById: Map<string, ValidationBatch>,
+): { notification?: ValidationDocument['notification']; templateKey?: string } {
+  if (doc.notification) {
+    return { notification: doc.notification, templateKey: doc.kindKey };
+  }
+  if (doc.batchId) {
+    const batch = batchById.get(doc.batchId);
+    if (batch?.notification) {
+      return {
+        notification: batch.notification,
+        templateKey: batch.kindKey ?? doc.kindKey,
+      };
+    }
+  }
+  return {};
 }
 
-export function ValidationPage({ onBack }: ValidationPageProps) {
+/** Stable signature used to auto-group selected documents at confirm time:
+ * documents sharing the exact same template + channel + recipient set form
+ * a single notification group. */
+function notificationSignature(
+  notification: ValidationDocument['notification'],
+): string {
+  if (!notification) return 'silent';
+  const subjectKey = notification.subject?.key ?? '';
+  const subjectVars = notification.subject?.vars
+    ? JSON.stringify(notification.subject.vars)
+    : '';
+  const recipientFingerprint = [...notification.recipients]
+    .map((r) => r.email)
+    .sort()
+    .join(',');
+  return [notification.channel, subjectKey, subjectVars, recipientFingerprint].join('|');
+}
+
+// ---------------------------------------------------------------------------
+// Investor / fund resolution from a document's targeting tags. Used by the
+// fund filter and the dynamic batch grouping (nominative scope detection).
+// ---------------------------------------------------------------------------
+
+const SUBSCRIPTION_BY_ID = new Map(COMMITMENTS.map((c) => [c.subscriptionId, c]));
+
+function resolveInvestor(doc: ValidationDocument): string | undefined {
+  const sub = doc.targeting.find((t) => t.kind === 'subscription');
+  if (sub) {
+    const commitment = SUBSCRIPTION_BY_ID.get(sub.label);
+    if (commitment) {
+      const inv = findInvestor(commitment.investorId);
+      if (inv) return inv.name;
+    }
+  }
+  const inv = doc.targeting.find((t) => t.kind === 'investor');
+  return inv?.label;
+}
+
+function resolveFundsForDoc(doc: ValidationDocument): string[] {
+  const fundNames = new Set<string>();
+  doc.targeting.forEach((tag) => {
+    if (tag.kind === 'fund') fundNames.add(tag.label);
+    if (tag.kind === 'subscription') {
+      const commitment = SUBSCRIPTION_BY_ID.get(tag.label);
+      if (commitment) {
+        const fund = FUNDS.find((f) => f.code === commitment.fundCode);
+        if (fund) fundNames.add(fund.name);
+      }
+    }
+  });
+  return Array.from(fundNames);
+}
+
+/** A document is "nominative" when its scope targets a specific investor —
+ * either directly via an investor tag, or transitively via a subscription. */
+function isNominative(doc: ValidationDocument): boolean {
+  return doc.targeting.some(
+    (t) => t.kind === 'investor' || t.kind === 'subscription',
+  );
+}
+
+// ---------------------------------------------------------------------------
+// Dynamic batches — when 2+ nominative documents share the same investor
+// AND the same notification template, they are visually grouped inside a
+// dynamic batch. The batch becomes the unit for selection + validation.
+// ---------------------------------------------------------------------------
+
+interface DynamicBatch {
+  id: string;
+  /** "Investor — Fund — Template" — Fund is omitted for direct-investor docs. */
+  name: string;
+  investor: string;
+  fundName?: string;
+  templateLabel: string;
+  notification: ValidationDocument['notification'];
+  docs: ValidationDocument[];
+}
+
+type DisplayRow =
+  | { kind: 'doc'; doc: ValidationDocument }
+  | { kind: 'batch'; batch: DynamicBatch };
+
+function buildDisplayRows(
+  docs: ValidationDocument[],
+  batchById: Map<string, ValidationBatch>,
+  resolveTemplateLabel: (key?: string) => string,
+): DisplayRow[] {
+  type Bucket = {
+    investor: string;
+    fundName?: string;
+    templateKey: string;
+    notification: ValidationDocument['notification'];
+    docs: ValidationDocument[];
+  };
+  const buckets = new Map<string, Bucket>();
+  const standalones: ValidationDocument[] = [];
+
+  docs.forEach((d) => {
+    const { notification, templateKey } = resolveNotification(d, batchById);
+    if (!notification) {
+      standalones.push(d);
+      return;
+    }
+    if (!isNominative(d)) {
+      standalones.push(d);
+      return;
+    }
+    const investor = resolveInvestor(d);
+    if (!investor) {
+      standalones.push(d);
+      return;
+    }
+    const tplKey = templateKey ?? 'unknown-template';
+    const sig = `${investor}|${tplKey}`;
+    const funds = resolveFundsForDoc(d);
+    const fundName =
+      d.targeting.some((t) => t.kind === 'subscription') && funds.length === 1
+        ? funds[0]
+        : undefined;
+    const existing = buckets.get(sig);
+    if (existing) {
+      existing.docs.push(d);
+      // If any doc in the bucket clarifies the fund, prefer it.
+      if (!existing.fundName && fundName) existing.fundName = fundName;
+    } else {
+      buckets.set(sig, {
+        investor,
+        fundName,
+        templateKey: tplKey,
+        notification,
+        docs: [d],
+      });
+    }
+  });
+
+  const rows: DisplayRow[] = [];
+  // Standalones first (single docs) preserving insertion order, then batches.
+  const groupedDocIds = new Set<number>();
+  buckets.forEach((b) => {
+    if (b.docs.length >= 2) {
+      b.docs.forEach((d) => groupedDocIds.add(d.id));
+    }
+  });
+
+  docs.forEach((d) => {
+    if (groupedDocIds.has(d.id)) return;
+    if (!standalones.includes(d)) standalones.push(d);
+  });
+
+  // Emit rows in the original sort order: for each doc in `docs`, emit the
+  // batch the first time we encounter one of its members, otherwise the doc.
+  const emittedBatches = new Set<string>();
+  docs.forEach((d) => {
+    if (groupedDocIds.has(d.id)) {
+      // Find the bucket containing this doc.
+      for (const [sig, b] of buckets.entries()) {
+        if (b.docs.includes(d) && b.docs.length >= 2) {
+          if (!emittedBatches.has(sig)) {
+            emittedBatches.add(sig);
+            const tplLabel = resolveTemplateLabel(b.templateKey);
+            const namePieces = [b.investor];
+            if (b.fundName) namePieces.push(b.fundName);
+            if (tplLabel) namePieces.push(tplLabel);
+            rows.push({
+              kind: 'batch',
+              batch: {
+                id: `dyn-${sig}`,
+                name: namePieces.join(' — '),
+                investor: b.investor,
+                fundName: b.fundName,
+                templateLabel: tplLabel,
+                notification: b.notification,
+                docs: b.docs,
+              },
+            });
+          }
+          return;
+        }
+      }
+    }
+    rows.push({ kind: 'doc', doc: d });
+  });
+
+  return rows;
+}
+
+export function ValidationPage(_props: ValidationPageProps) {
   const { t, lang } = useTranslation();
   const {
     dynamicDocuments,
     dynamicBatches,
     promoteToGed,
     setDynamicDocumentStatus,
-    setDynamicBatchStatus,
   } = useValidationStore();
   const dateFormatter = useMemo(
     () =>
@@ -153,22 +347,28 @@ export function ValidationPage({ onBack }: ValidationPageProps) {
   const [pageSize, setPageSize] = useState(10);
   const [previewDocument, setPreviewDocument] =
     useState<ValidationDocument | null>(null);
+  // Multi-select state for bulk publish/reject.
+  const [selectedIds, setSelectedIds] = useState<Set<number>>(new Set());
+  // Active confirmation dialog (null when no dialog open).
+  const [confirmDialog, setConfirmDialog] = useState<
+    | { kind: 'publish'; docs: ValidationDocument[] }
+    | { kind: 'reject'; docs: ValidationDocument[] }
+    | null
+  >(null);
+  // Notification preview drawer (single document context).
+  const [previewNotificationDocId, setPreviewNotificationDocId] = useState<
+    number | null
+  >(null);
+  // Expanded state of dynamic batches (collapsed by default).
   const [expandedBatchIds, setExpandedBatchIds] = useState<Set<string>>(
     new Set(),
   );
-  const [activeNotificationBatchId, setActiveNotificationBatchId] = useState<
-    string | null
-  >(null);
 
-  const batches = useMemo(
-    () => [...dynamicBatches, ...getValidationBatches()],
-    [dynamicBatches],
-  );
   const batchById = useMemo(() => {
     const map = new Map<string, ValidationBatch>();
-    batches.forEach((b) => map.set(b.id, b));
+    [...dynamicBatches, ...getValidationBatches()].forEach((b) => map.set(b.id, b));
     return map;
-  }, [batches]);
+  }, [dynamicBatches]);
 
   useEffect(() => {
     setIsLoading(true);
@@ -224,69 +424,32 @@ export function ValidationPage({ onBack }: ValidationPageProps) {
       }
       const targetingFilter = activeFilters.targeting;
       if (Array.isArray(targetingFilter) && targetingFilter.length > 0) {
-        const labels = doc.targeting.map((t) => t.label);
+        const labels = doc.targeting.map((tag) => tag.label);
         const hasAny = targetingFilter.some((t) => labels.includes(t));
+        if (!hasAny) return false;
+      }
+      const investorFilter = activeFilters.investor;
+      if (Array.isArray(investorFilter) && investorFilter.length > 0) {
+        const investor = resolveInvestor(doc);
+        if (!investor || !investorFilter.includes(investor)) return false;
+      }
+      const fundFilter = activeFilters.fund;
+      if (Array.isArray(fundFilter) && fundFilter.length > 0) {
+        const docFunds = resolveFundsForDoc(doc);
+        const hasAny = fundFilter.some((f) => docFunds.includes(f));
         if (!hasAny) return false;
       }
       return true;
     });
   }, [searchedData, activeFilters]);
 
-  /** Build row nodes (batches + standalone), preserving the matching docs. */
-  const rowNodes: RowNode[] = useMemo(() => {
-    const matchingIds = new Set(matchingDocs.map((d) => d.id));
-    const docsByBatch = new Map<string, ValidationDocument[]>();
-    const standalones: ValidationDocument[] = [];
-
-    // Group by batch using ALL docs (so a batch keeps every child once it appears)
-    documents.forEach((doc) => {
-      if (doc.batchId) {
-        const list = docsByBatch.get(doc.batchId) ?? [];
-        list.push(doc);
-        docsByBatch.set(doc.batchId, list);
-      }
-    });
-
-    // Standalones = docs without batchId AND matching the current filters
-    matchingDocs.forEach((doc) => {
-      if (!doc.batchId) standalones.push(doc);
-    });
-
-    const nodes: RowNode[] = [];
-
-    // Batch nodes — visible if at least one of its docs matches
-    docsByBatch.forEach((docs, batchId) => {
-      const hasMatch = docs.some((d) => matchingIds.has(d.id));
-      if (!hasMatch) return;
-      const batch = batchById.get(batchId);
-      if (!batch) return;
-      const sortedDocs = [...docs].sort(
-        (a, b) =>
-          new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime(),
-      );
-      const sortKey = Math.max(
-        ...sortedDocs.map((d) => new Date(d.createdAt).getTime()),
-      );
-      nodes.push({
-        kind: 'batch',
-        batch,
-        docs: sortedDocs,
-        status: deriveBatchStatus(sortedDocs),
-        sortKey,
-      });
-    });
-
-    standalones.forEach((doc) => {
-      nodes.push({
-        kind: 'standalone',
-        doc,
-        sortKey: new Date(doc.createdAt).getTime(),
-      });
-    });
-
-    nodes.sort((a, b) => b.sortKey - a.sortKey);
-    return nodes;
-  }, [documents, matchingDocs, batchById]);
+  /** Flat list of documents sorted by recency. */
+  const flatDocs = useMemo(() => {
+    return [...matchingDocs].sort(
+      (a, b) =>
+        new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime(),
+    );
+  }, [matchingDocs]);
 
   const allCreators = useMemo(() => {
     const map = new Map<string, string>();
@@ -296,7 +459,26 @@ export function ValidationPage({ onBack }: ValidationPageProps) {
 
   const allTargetings = useMemo(() => {
     const set = new Set<string>();
-    documents.forEach((d) => d.targeting.forEach((t) => set.add(t.label)));
+    documents.forEach((d) =>
+      d.targeting
+        .filter((tag) => tag.kind !== 'investor')
+        .forEach((tag) => set.add(tag.label)),
+    );
+    return Array.from(set).sort();
+  }, [documents]);
+
+  const allInvestors = useMemo(() => {
+    const set = new Set<string>();
+    documents.forEach((d) => {
+      const inv = resolveInvestor(d);
+      if (inv) set.add(inv);
+    });
+    return Array.from(set).sort();
+  }, [documents]);
+
+  const allFunds = useMemo(() => {
+    const set = new Set<string>();
+    documents.forEach((d) => resolveFundsForDoc(d).forEach((f) => set.add(f)));
     return Array.from(set).sort();
   }, [documents]);
 
@@ -310,10 +492,24 @@ export function ValidationPage({ onBack }: ValidationPageProps) {
         options: allCreators.map((c) => ({ value: c, label: c })),
       },
       {
+        id: 'fund',
+        label: t('validation.filters.fund'),
+        type: 'multiselect',
+        isPrimary: true,
+        options: allFunds.map((f) => ({ value: f, label: f })),
+      },
+      {
+        id: 'investor',
+        label: t('validation.filters.investor'),
+        type: 'multiselect',
+        isPrimary: true,
+        options: allInvestors.map((i) => ({ value: i, label: i })),
+      },
+      {
         id: 'targeting',
         label: t('validation.filters.targeting'),
         type: 'multiselect',
-        isPrimary: true,
+        isPrimary: false,
         options: allTargetings.map((tgt) => ({ value: tgt, label: tgt })),
       },
       {
@@ -327,33 +523,50 @@ export function ValidationPage({ onBack }: ValidationPageProps) {
         })),
       },
     ],
-    [allCreators, allTargetings, t],
+    [allCreators, allFunds, allInvestors, allTargetings, t],
   );
 
-  const totalItems = rowNodes.length;
+  const displayRows = useMemo(
+    () => buildDisplayRows(flatDocs, batchById, (key?: string) => (key ? t(key) : '')),
+    [flatDocs, batchById, t],
+  );
+  // Pagination operates on display rows (a batch row counts as one).
+  const totalItems = displayRows.length;
   const totalPages = Math.max(1, Math.ceil(totalItems / pageSize));
   const safePage = Math.min(page, totalPages);
   const startIndex = (safePage - 1) * pageSize;
-  const pageNodes = rowNodes.slice(startIndex, startIndex + pageSize);
+  const pageRows = displayRows.slice(startIndex, startIndex + pageSize);
+  // Flatten the rows currently visible on the page into individual docs — used
+  // by the page-level select-all checkbox.
+  const pageDocs = useMemo(() => {
+    const out: ValidationDocument[] = [];
+    pageRows.forEach((r) => {
+      if (r.kind === 'doc') out.push(r.doc);
+      else r.batch.docs.forEach((d) => out.push(d));
+    });
+    return out;
+  }, [pageRows]);
 
   const hasActiveFilters =
     hasActiveSearch || Object.keys(activeFilters).length > 0;
 
-  /** Auto-expand all visible batches when filters/search are active. */
-  useEffect(() => {
-    if (!hasActiveFilters) return;
-    setExpandedBatchIds((prev) => {
-      const next = new Set(prev);
-      pageNodes.forEach((n) => {
-        if (n.kind === 'batch') next.add(n.batch.id);
-      });
-      return next;
-    });
-  }, [hasActiveFilters, pageNodes]);
-
   useEffect(() => {
     setPage(1);
   }, [activeStatus, activeFilters, searchTerm, pageSize]);
+
+  // Drop selections that are no longer visible (e.g. after status flip).
+  useEffect(() => {
+    setSelectedIds((prev) => {
+      const visibleIds = new Set(flatDocs.map((d) => d.id));
+      let changed = false;
+      const next = new Set<number>();
+      prev.forEach((id) => {
+        if (visibleIds.has(id)) next.add(id);
+        else changed = true;
+      });
+      return changed ? next : prev;
+    });
+  }, [flatDocs]);
 
   const handleFilterChange = (
     filterId: string,
@@ -420,68 +633,36 @@ export function ValidationPage({ onBack }: ValidationPageProps) {
     toast.info(t('validation.toast.docPending'), { description: doc.name });
   };
 
-  /** Atomic batch action: applies a status to ALL children at once. */
-  const updateBatchStatus = (batchId: string, status: ValidationStatus) => {
-    const stamp = new Date().toISOString();
-    const youLabel = t('validation.you');
-    setDocuments((prev) =>
-      prev.map((d) => {
-        if (d.batchId !== batchId) return d;
-        if (status === 'pending') {
-          const { reviewedAt, reviewedBy, ...rest } = d;
-          void reviewedAt;
-          void reviewedBy;
-          return { ...rest, status };
-        }
-        return { ...d, status, reviewedAt: stamp, reviewedBy: youLabel };
-      }),
-    );
-  };
+  // ---------------------------------------------------------------------------
+  // Multi-select + bulk actions
+  // ---------------------------------------------------------------------------
 
-  const batchDescription = (count: number, name: string) =>
-    t(count > 1 ? 'validation.toast.descMany' : 'validation.toast.descOne', {
-      count,
-      name,
-    });
-
-  const isDynamicBatch = (batchId: string) =>
-    dynamicBatches.some((b) => b.id === batchId);
-
-  const docsForBatch = (batchId: string): ValidationDocument[] =>
-    documents.filter((d) => d.batchId === batchId);
-
-  const handleValidateBatch = (batch: ValidationBatch, count: number) => {
-    updateBatchStatus(batch.id, 'validated');
-    if (isDynamicBatch(batch.id)) setDynamicBatchStatus(batch.id, 'validated');
-    promoteToGed(docsForBatch(batch.id), 'validated');
-    if (batch.notification) {
-      toast.success(t('validation.toast.batchValidatedNotified'), {
-        description: batchDescription(count, batch.name),
-      });
-    } else {
-      toast.success(t('validation.toast.batchValidated'), {
-        description: batch.name,
-      });
-    }
-  };
-
-  const handleRejectBatch = (batch: ValidationBatch, count: number) => {
-    updateBatchStatus(batch.id, 'rejected');
-    if (isDynamicBatch(batch.id)) setDynamicBatchStatus(batch.id, 'rejected');
-    promoteToGed(docsForBatch(batch.id), 'rejected');
-    toast.error(t('validation.toast.batchRejected'), {
-      description: batchDescription(count, batch.name),
+  const toggleRowSelected = (docId: number) => {
+    setSelectedIds((prev) => {
+      const next = new Set(prev);
+      if (next.has(docId)) next.delete(docId);
+      else next.add(docId);
+      return next;
     });
   };
 
-  const handleResetBatch = (batch: ValidationBatch) => {
-    updateBatchStatus(batch.id, 'pending');
-    if (isDynamicBatch(batch.id)) setDynamicBatchStatus(batch.id, 'pending');
-    promoteToGed(docsForBatch(batch.id), 'pending');
-    toast.info(t('validation.toast.batchPending'), { description: batch.name });
+  const togglePageSelection = (checked: boolean) => {
+    setSelectedIds((prev) => {
+      const next = new Set(prev);
+      pageDocs.forEach((doc) => {
+        if (checked) next.add(doc.id);
+        else next.delete(doc.id);
+      });
+      return next;
+    });
   };
 
-  const toggleBatch = (batchId: string) => {
+  const selectedDocs = useMemo(
+    () => flatDocs.filter((d) => selectedIds.has(d.id)),
+    [flatDocs, selectedIds],
+  );
+
+  const toggleBatchExpand = (batchId: string) => {
     setExpandedBatchIds((prev) => {
       const next = new Set(prev);
       if (next.has(batchId)) next.delete(batchId);
@@ -490,26 +671,77 @@ export function ValidationPage({ onBack }: ValidationPageProps) {
     });
   };
 
-  // Active notification batch (for the notification drawer)
-  const activeNotificationBatch = useMemo(() => {
-    if (!activeNotificationBatchId) return null;
-    const node = rowNodes.find(
-      (n): n is Extract<RowNode, { kind: 'batch' }> =>
-        n.kind === 'batch' && n.batch.id === activeNotificationBatchId,
+  const toggleBatchSelected = (batch: DynamicBatch) => {
+    setSelectedIds((prev) => {
+      const next = new Set(prev);
+      const allSelected = batch.docs.every((d) => next.has(d.id));
+      batch.docs.forEach((d) => {
+        if (allSelected) next.delete(d.id);
+        else next.add(d.id);
+      });
+      return next;
+    });
+  };
+
+  const openPublishConfirm = (docs: ValidationDocument[]) => {
+    if (docs.length === 0) return;
+    setConfirmDialog({ kind: 'publish', docs });
+  };
+
+  const openRejectConfirm = (docs: ValidationDocument[]) => {
+    if (docs.length === 0) return;
+    setConfirmDialog({ kind: 'reject', docs });
+  };
+
+  const applyBulkValidate = (docs: ValidationDocument[]) => {
+    const stamp = new Date().toISOString();
+    const youLabel = t('validation.you');
+    const docIds = new Set(docs.map((d) => d.id));
+    setDocuments((prev) =>
+      prev.map((d) =>
+        docIds.has(d.id)
+          ? { ...d, status: 'validated', reviewedAt: stamp, reviewedBy: youLabel }
+          : d,
+      ),
     );
-    if (node) return node;
-    // fallback: find from raw data even if not in current page (e.g. after status flip)
-    const batch = batchById.get(activeNotificationBatchId);
-    if (!batch) return null;
-    const docs = documents.filter((d) => d.batchId === batch.id);
-    return {
-      kind: 'batch' as const,
-      batch,
-      docs,
-      status: deriveBatchStatus(docs),
-      sortKey: 0,
-    };
-  }, [activeNotificationBatchId, rowNodes, batchById, documents]);
+    docs.forEach((d) => {
+      if (isDynamicDoc(d.id)) setDynamicDocumentStatus(d.id, 'validated');
+    });
+    promoteToGed(docs, 'validated');
+    setSelectedIds(new Set());
+    // Count notification groups for the toast.
+    const sigs = new Set<string>();
+    docs.forEach((d) => {
+      const { notification } = resolveNotification(d, batchById);
+      const sig = notificationSignature(notification);
+      if (sig !== 'silent') sigs.add(sig);
+    });
+    toast.success(t('validation.toast.bulkValidated', { count: docs.length }), {
+      description:
+        sigs.size > 0
+          ? t('validation.toast.bulkNotifications', { count: sigs.size })
+          : undefined,
+    });
+  };
+
+  const applyBulkReject = (docs: ValidationDocument[]) => {
+    const stamp = new Date().toISOString();
+    const youLabel = t('validation.you');
+    const docIds = new Set(docs.map((d) => d.id));
+    setDocuments((prev) =>
+      prev.map((d) =>
+        docIds.has(d.id)
+          ? { ...d, status: 'rejected', reviewedAt: stamp, reviewedBy: youLabel }
+          : d,
+      ),
+    );
+    docs.forEach((d) => {
+      if (isDynamicDoc(d.id)) setDynamicDocumentStatus(d.id, 'rejected');
+    });
+    promoteToGed(docs, 'rejected');
+    setSelectedIds(new Set());
+    toast.error(t('validation.toast.bulkRejected', { count: docs.length }));
+  };
 
   const stickyHeadActionsClass =
     'sticky right-0 z-20 bg-white dark:bg-gray-950 border-l border-gray-200 dark:border-gray-800';
@@ -567,30 +799,6 @@ export function ValidationPage({ onBack }: ValidationPageProps) {
     <div className="flex-1 flex flex-col bg-gray-50 dark:bg-black overflow-hidden">
       {/* Header */}
       <div className="bg-white dark:bg-gray-950 border-b border-gray-200 dark:border-gray-800 px-6 py-4">
-        <div className="flex items-center gap-4 mb-4">
-          <Button variant="ghost" size="sm" onClick={onBack} className="gap-2">
-            <ArrowLeft className="h-4 w-4" />
-            {t('validation.back')}
-          </Button>
-        </div>
-
-        <div className="flex items-start gap-3 mb-6">
-          <div
-            className="w-12 h-12 rounded-lg flex items-center justify-center"
-            style={{ backgroundColor: '#000E2B' }}
-          >
-            <ShieldCheck className="h-6 w-6 text-white" />
-          </div>
-          <div>
-            <h1 className="text-xl font-semibold text-gray-900 dark:text-gray-100">
-              {t('validation.title')}
-            </h1>
-            <p className="text-sm text-gray-500 dark:text-gray-400">
-              {t('validation.subtitle')}
-            </p>
-          </div>
-        </div>
-
         {/* Filtering KPI cards */}
         <motion.div
           initial={{ opacity: 0, y: -10 }}
@@ -677,11 +885,82 @@ export function ValidationPage({ onBack }: ValidationPageProps) {
             />
           </div>
 
+          {/* Bulk action bar */}
+          {selectedDocs.length > 0 && (
+            <div className="flex flex-wrap items-center justify-between gap-3 border-b border-blue-100 bg-blue-50/60 px-4 py-2 dark:border-blue-900/30 dark:bg-blue-950/20">
+              <div className="flex items-baseline gap-2">
+                <span className="text-sm font-medium text-blue-900 dark:text-blue-200">
+                  {t(
+                    selectedDocs.length > 1
+                      ? 'validation.bulk.selectionMany'
+                      : 'validation.bulk.selectionOne',
+                    { count: selectedDocs.length },
+                  )}
+                </span>
+                {(() => {
+                  const allOnPageSelected =
+                    pageDocs.length > 0 &&
+                    pageDocs.every((d) => selectedIds.has(d.id));
+                  const hasMore = flatDocs.length > selectedDocs.length;
+                  if (selectedDocs.length === flatDocs.length && flatDocs.length > pageDocs.length) {
+                    return (
+                      <span className="text-xs text-blue-800/80">
+                        {t('validation.bulk.allMatchingSelected', { count: flatDocs.length })}
+                      </span>
+                    );
+                  }
+                  if (allOnPageSelected && hasMore) {
+                    return (
+                      <button
+                        type="button"
+                        onClick={() =>
+                          setSelectedIds(new Set(flatDocs.map((d) => d.id)))
+                        }
+                        className="text-xs font-medium text-blue-700 underline-offset-2 hover:underline dark:text-blue-300"
+                      >
+                        {t('validation.bulk.selectAllMatching', { count: flatDocs.length })}
+                      </button>
+                    );
+                  }
+                  return null;
+                })()}
+              </div>
+              <div className="flex items-center gap-1.5">
+                <Button
+                  variant="outline"
+                  size="sm"
+                  className="h-8 gap-1.5 text-red-600 hover:bg-red-50 hover:text-red-700 dark:hover:bg-red-950"
+                  onClick={() => openRejectConfirm(selectedDocs)}
+                >
+                  <X className="h-3.5 w-3.5" />
+                  {t('validation.bulk.reject')}
+                </Button>
+                <Button
+                  size="sm"
+                  className="h-8 gap-1.5 bg-emerald-600 text-white hover:bg-emerald-700"
+                  onClick={() => openPublishConfirm(selectedDocs)}
+                >
+                  <Check className="h-3.5 w-3.5" />
+                  {t('validation.bulk.publish')}
+                </Button>
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  className="h-8 gap-1.5 text-xs text-gray-600 hover:text-gray-900"
+                  onClick={() => setSelectedIds(new Set())}
+                >
+                  <X className="h-3 w-3" />
+                  {t('validation.bulk.clear')}
+                </Button>
+              </div>
+            </div>
+          )}
+
           {/* Table */}
           <div className="flex-1">
             {isLoading ? (
               <TableSkeleton />
-            ) : rowNodes.length === 0 ? (
+            ) : flatDocs.length === 0 ? (
               <div className="py-16 text-center">
                 <ShieldCheck className="mx-auto h-10 w-10 text-gray-300" />
                 <p className="mt-3 text-sm text-gray-500">
@@ -703,28 +982,36 @@ export function ValidationPage({ onBack }: ValidationPageProps) {
                 <table className="w-full">
                   <thead>
                     <tr className="border-b border-border bg-muted/40 backdrop-blur-sm">
-                      <th className="w-8 px-2 py-4" />
-                      <th className="px-6 py-4 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider">
+                      <th className="w-10 px-3 py-4 text-left">
+                        <Checkbox
+                          checked={
+                            pageDocs.length > 0 &&
+                            pageDocs.every((d) => selectedIds.has(d.id))
+                          }
+                          onCheckedChange={(checked) =>
+                            togglePageSelection(checked === true)
+                          }
+                          aria-label="select-all"
+                        />
+                      </th>
+                      <th className="px-4 py-3 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider max-w-[320px]">
                         {t('validation.table.document')}
                       </th>
-                      <th className="px-6 py-4 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider">
+                      <th className="px-4 py-3 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider">
+                        {t('validation.table.notification')}
+                      </th>
+                      <th className="px-4 py-3 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider">
                         {t('validation.table.createdBy')}
                       </th>
-                      <th className="px-6 py-4 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider">
-                        {t('validation.table.date')}
-                      </th>
-                      <th className="px-6 py-4 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider">
-                        {t('validation.table.targeting')}
-                      </th>
-                      <th className="px-6 py-4 text-center text-xs font-medium text-muted-foreground uppercase tracking-wider">
+                      <th className="px-4 py-3 text-center text-xs font-medium text-muted-foreground uppercase tracking-wider">
                         {t('validation.table.comm')}
                       </th>
-                      <th className="px-6 py-4 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider">
+                      <th className="px-4 py-3 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider">
                         {t('validation.table.status')}
                       </th>
                       <th
                         className={cn(
-                          'px-6 py-4 text-right text-xs font-medium text-muted-foreground uppercase tracking-wider',
+                          'px-4 py-3 text-right text-xs font-medium text-muted-foreground uppercase tracking-wider',
                           stickyHeadActionsClass,
                         )}
                       >
@@ -733,40 +1020,67 @@ export function ValidationPage({ onBack }: ValidationPageProps) {
                     </tr>
                   </thead>
                   <tbody>
-                    {pageNodes.map((node) =>
-                      node.kind === 'standalone' ? (
-                        <StandaloneDocumentRow
-                          key={`doc-${node.doc.id}`}
-                          doc={node.doc}
-                          onPreview={() => setPreviewDocument(node.doc)}
-                          onValidate={() => handleValidate(node.doc)}
-                          onReject={() => handleReject(node.doc)}
-                          onResetToPending={() => handleResetToPending(node.doc)}
-                          renderTargeting={renderTargetingTags}
-                          stickyClass={stickyBodyActionsClass()}
-                        />
-                      ) : (
-                        <BatchRowGroup
-                          key={`batch-${node.batch.id}`}
-                          node={node}
-                          expanded={expandedBatchIds.has(node.batch.id)}
-                          onToggle={() => toggleBatch(node.batch.id)}
-                          onOpenNotification={() =>
-                            setActiveNotificationBatchId(node.batch.id)
+                    {pageRows.map((row) => {
+                      if (row.kind === 'doc') {
+                        const { notification, templateKey } = resolveNotification(
+                          row.doc,
+                          batchById,
+                        );
+                        const templateLabel = templateKey ? t(templateKey) : undefined;
+                        return (
+                          <DocumentRow
+                            key={`doc-${row.doc.id}`}
+                            doc={row.doc}
+                            notification={notification}
+                            templateLabel={templateLabel}
+                            selected={selectedIds.has(row.doc.id)}
+                            onToggleSelect={() => toggleRowSelected(row.doc.id)}
+                            onPreview={() => setPreviewDocument(row.doc)}
+                            onValidate={() => openPublishConfirm([row.doc])}
+                            onReject={() => openRejectConfirm([row.doc])}
+                            onResetToPending={() => handleResetToPending(row.doc)}
+                            onPreviewNotification={() =>
+                              setPreviewNotificationDocId(row.doc.id)
+                            }
+                            renderTargeting={renderTargetingTags}
+                            stickyClass={stickyBodyActionsClass()}
+                          />
+                        );
+                      }
+                      const batch = row.batch;
+                      const batchExpanded = expandedBatchIds.has(batch.id);
+                      const batchAllSelected = batch.docs.every((d) =>
+                        selectedIds.has(d.id),
+                      );
+                      const batchSomeSelected = batch.docs.some((d) =>
+                        selectedIds.has(d.id),
+                      );
+                      const batchStatus = deriveBatchStatus(batch.docs);
+                      return (
+                        <DynamicBatchRow
+                          key={batch.id}
+                          batch={batch}
+                          expanded={batchExpanded}
+                          status={batchStatus}
+                          allSelected={batchAllSelected}
+                          someSelected={batchSomeSelected}
+                          onToggleExpand={() => toggleBatchExpand(batch.id)}
+                          onToggleSelect={() => toggleBatchSelected(batch)}
+                          onPreviewNotification={() =>
+                            setPreviewNotificationDocId(batch.docs[0].id)
                           }
-                          onValidate={() =>
-                            handleValidateBatch(node.batch, node.docs.length)
+                          onValidate={() => openPublishConfirm(batch.docs)}
+                          onReject={() => openRejectConfirm(batch.docs)}
+                          onReset={() =>
+                            batch.docs.forEach((d) => handleResetToPending(d))
                           }
-                          onReject={() =>
-                            handleRejectBatch(node.batch, node.docs.length)
-                          }
-                          onReset={() => handleResetBatch(node.batch)}
+                          selectedIds={selectedIds}
+                          onToggleChild={(id) => toggleRowSelected(id)}
                           onPreviewChild={(d) => setPreviewDocument(d)}
-                          renderTargeting={renderTargetingTags}
                           stickyClass={stickyBodyActionsClass()}
                         />
-                      ),
-                    )}
+                      );
+                    })}
                   </tbody>
                 </table>
               </div>
@@ -774,7 +1088,7 @@ export function ValidationPage({ onBack }: ValidationPageProps) {
           </div>
 
           {/* Pagination */}
-          {!isLoading && rowNodes.length > 0 && (
+          {!isLoading && flatDocs.length > 0 && (
             <DataPagination
               currentPage={safePage}
               totalPages={totalPages}
@@ -798,110 +1112,98 @@ export function ValidationPage({ onBack }: ValidationPageProps) {
         date={previewDocument ? formatDate(previewDocument.createdAt) : undefined}
       />
 
-      {/* Notification preview drawer */}
-      <NotificationPreviewDrawer
-        isOpen={!!activeNotificationBatchId}
-        onClose={() => setActiveNotificationBatchId(null)}
-        batch={activeNotificationBatch?.batch ?? null}
-        documents={activeNotificationBatch?.docs ?? []}
-        status={activeNotificationBatch?.status ?? 'pending'}
-        onValidate={() => {
-          if (!activeNotificationBatch) return;
-          handleValidateBatch(
-            activeNotificationBatch.batch,
-            activeNotificationBatch.docs.length,
-          );
-        }}
-        onReject={() => {
-          if (!activeNotificationBatch) return;
-          handleRejectBatch(
-            activeNotificationBatch.batch,
-            activeNotificationBatch.docs.length,
-          );
-        }}
-        onResetToPending={() => {
-          if (!activeNotificationBatch) return;
-          handleResetBatch(activeNotificationBatch.batch);
-        }}
-        onPreviewDocument={(d) => setPreviewDocument(d)}
-      />
-    </div>
-  );
-}
+      {/* Notification preview drawer — opened from a row's notification badge. */}
+      {(() => {
+        const previewDoc = previewNotificationDocId
+          ? documents.find((d) => d.id === previewNotificationDocId)
+          : null;
+        const previewBatch = previewDoc?.batchId
+          ? batchById.get(previewDoc.batchId)
+          : null;
+        const previewDocs = previewBatch
+          ? documents.filter((d) => d.batchId === previewBatch.id)
+          : previewDoc
+            ? [previewDoc]
+            : [];
+        const previewNotification = previewDoc
+          ? resolveNotification(previewDoc, batchById).notification
+          : undefined;
+        return (
+          <NotificationPreviewDrawer
+            isOpen={!!previewNotificationDocId && !!previewNotification}
+            onClose={() => setPreviewNotificationDocId(null)}
+            batch={
+              previewBatch ??
+              (previewDoc && previewNotification
+                ? {
+                    id: `doc-${previewDoc.id}`,
+                    name: previewDoc.name,
+                    kindKey:
+                      previewDoc.kindKey ?? 'validation.fixtures.kind.other',
+                    notification: previewNotification,
+                    createdAt: previewDoc.createdAt,
+                    createdBy: previewDoc.createdBy,
+                  }
+                : null)
+            }
+            documents={previewDocs}
+            status={previewDoc?.status ?? 'pending'}
+            onValidate={() => {
+              if (!previewDoc) return;
+              openPublishConfirm([previewDoc]);
+              setPreviewNotificationDocId(null);
+            }}
+            onReject={() => {
+              if (!previewDoc) return;
+              openRejectConfirm([previewDoc]);
+              setPreviewNotificationDocId(null);
+            }}
+            onResetToPending={() => {
+              if (!previewDoc) return;
+              handleResetToPending(previewDoc);
+              setPreviewNotificationDocId(null);
+            }}
+            onPreviewDocument={(d) => setPreviewDocument(d)}
+          />
+        );
+      })()}
 
-// ---------------------------------------------------------------------------
-// Notification line — small inline indicator under a document/batch name
-// ---------------------------------------------------------------------------
-
-interface NotificationLineProps {
-  notification?: ValidationBatch['notification'];
-  /** Source hint (italic prefix) — e.g. "Issu du lot · " for batch children. */
-  sourceHint?: string;
-  /** When true, silent state caption uses a dedicated wording for documents. */
-  context?: 'document' | 'batch';
-}
-
-function NotificationLine({
-  notification,
-  sourceHint,
-  context = 'document',
-}: NotificationLineProps) {
-  const { t } = useTranslation();
-  if (!notification) {
-    return (
-      <div className="flex items-center gap-1.5 text-[11px] italic text-gray-500 dark:text-gray-500">
-        <BellOff className="h-3 w-3 text-gray-400" />
-        {sourceHint && <span className="not-italic">{sourceHint}</span>}
-        <span>
-          {context === 'batch'
-            ? t('validation.notificationLine.noneBatch')
-            : t('validation.notificationLine.noneDoc')}
-        </span>
-      </div>
-    );
-  }
-
-  const recipientCount = notification.recipients.length;
-  const recipientsLabel = t(
-    recipientCount > 1
-      ? 'validation.notificationLine.recipientsMany'
-      : 'validation.notificationLine.recipientsOne',
-    { count: recipientCount },
-  );
-
-  return (
-    <div className="flex items-center gap-1.5 text-[11px] text-gray-600 dark:text-gray-400">
-      <Bell className="h-3 w-3 text-blue-500" />
-      {sourceHint && (
-        <span className="italic text-gray-500">{sourceHint}</span>
-      )}
-      <span>{recipientsLabel}</span>
-      {notification.channel === 'email' && (
-        <Mail className="h-3 w-3 text-gray-400" />
-      )}
-      {notification.channel === 'portal' && (
-        <Globe className="h-3 w-3 text-gray-400" />
-      )}
-      {notification.channel === 'both' && (
-        <>
-          <Mail className="h-3 w-3 text-gray-400" />
-          <Globe className="h-3 w-3 text-gray-400" />
-        </>
+      {/* Confirmation dialog */}
+      {confirmDialog && (
+        <PublicationConfirmDialog
+          mode={confirmDialog.kind}
+          docs={confirmDialog.docs}
+          batchById={batchById}
+          onCancel={() => setConfirmDialog(null)}
+          onConfirm={() => {
+            if (confirmDialog.kind === 'publish') {
+              applyBulkValidate(confirmDialog.docs);
+            } else {
+              applyBulkReject(confirmDialog.docs);
+            }
+            setConfirmDialog(null);
+          }}
+        />
       )}
     </div>
   );
 }
 
 // ---------------------------------------------------------------------------
-// Row sub-components
+// Row sub-component — flat document row with checkbox + notification badge
 // ---------------------------------------------------------------------------
 
-interface StandaloneDocumentRowProps {
+interface DocumentRowProps {
   doc: ValidationDocument;
+  notification?: ValidationDocument['notification'];
+  templateLabel?: string;
+  selected: boolean;
+  onToggleSelect: () => void;
   onPreview: () => void;
   onValidate: () => void;
   onReject: () => void;
   onResetToPending: () => void;
+  onPreviewNotification: () => void;
   renderTargeting: (
     targeting: ValidationDocument['targeting'],
     maxVisible?: number,
@@ -909,15 +1211,20 @@ interface StandaloneDocumentRowProps {
   stickyClass: string;
 }
 
-function StandaloneDocumentRow({
+function DocumentRow({
   doc,
+  notification,
+  templateLabel,
+  selected,
+  onToggleSelect,
   onPreview,
   onValidate,
   onReject,
   onResetToPending,
+  onPreviewNotification,
   renderTargeting,
   stickyClass,
-}: StandaloneDocumentRowProps) {
+}: DocumentRowProps) {
   const { t, lang } = useTranslation();
   const dateFormatter = useMemo(
     () =>
@@ -936,32 +1243,72 @@ function StandaloneDocumentRow({
   const commentText = doc.comment ? t(doc.comment.key, doc.comment.vars) : '';
   return (
     <tr
-      className="border-b border-border/70 transition-colors hover:bg-muted/50 cursor-pointer"
+      className={cn(
+        'border-b border-border/70 transition-colors cursor-pointer',
+        selected ? 'bg-blue-50/40 hover:bg-blue-50 dark:bg-blue-950/20' : 'hover:bg-muted/50',
+      )}
       onClick={onPreview}
     >
-      <td className="w-8 px-2 py-4" />
-      <td className="px-6 py-4">
+      <td
+        className="w-10 px-3 py-4 align-top"
+        onClick={(e) => e.stopPropagation()}
+      >
+        <Checkbox
+          checked={selected}
+          onCheckedChange={() => onToggleSelect()}
+          aria-label={`select-${doc.id}`}
+        />
+      </td>
+      <td className="px-4 py-2.5 align-top max-w-[320px]">
         {doc.kindKey && (
-          <div className="mb-1 text-[11px] font-semibold uppercase tracking-wide text-blue-600 dark:text-blue-300">
+          <div className="mb-0.5 text-[10px] font-semibold uppercase tracking-wide text-gray-500 dark:text-gray-400">
             {t(doc.kindKey)}
           </div>
         )}
-        <DocumentNameCell
-          name={doc.name}
-          pathSegments={doc.pathSegments}
-          extra={<NotificationLine notification={doc.notification} />}
-        />
+        <Tooltip>
+          <TooltipTrigger asChild>
+            <div className="truncate text-sm font-medium text-gray-900 dark:text-gray-100" title={doc.name}>
+              {doc.name}
+            </div>
+          </TooltipTrigger>
+          <TooltipContent side="top">
+            <span className="text-xs">{doc.name}</span>
+          </TooltipContent>
+        </Tooltip>
+        {doc.pathSegments.length > 0 && (
+          <div className="mt-0.5 truncate text-[11px] text-gray-500" title={doc.pathSegments.join(' / ')}>
+            {doc.pathSegments.join(' / ')}
+          </div>
+        )}
+        <div className="mt-1 flex flex-wrap items-center gap-1">
+          {renderTargeting(doc.targeting, 4)}
+        </div>
       </td>
-      <td className="px-6 py-4">
-        <UserCell name={doc.createdBy.name} sublabel={doc.createdBy.role} />
-      </td>
-      <td className="px-6 py-4">
-        <span className="text-sm text-gray-600 dark:text-gray-400 whitespace-nowrap">
-          {formatDate(doc.createdAt)}
+      <td
+        className="px-4 py-2.5 align-top"
+        onClick={(e) => {
+          if (notification) {
+            e.stopPropagation();
+            onPreviewNotification();
+          }
+        }}
+      >
+        <span className={notification ? 'cursor-pointer' : undefined}>
+          <NotificationBadge
+            notification={notification}
+            templateLabel={templateLabel}
+          />
         </span>
       </td>
-      <td className="px-6 py-4">{renderTargeting(doc.targeting)}</td>
-      <td className="px-6 py-4 text-center">
+      <td className="px-4 py-2.5 align-top">
+        <div className="flex flex-col gap-0.5">
+          <UserCell name={doc.createdBy.name} sublabel={doc.createdBy.role} />
+          <span className="text-[11px] text-gray-500 whitespace-nowrap">
+            {formatDate(doc.createdAt)}
+          </span>
+        </div>
+      </td>
+      <td className="px-4 py-2.5 align-top text-center">
         <div className="flex justify-center">
           <CommentIndicator
             comment={commentText}
@@ -970,10 +1317,10 @@ function StandaloneDocumentRow({
           />
         </div>
       </td>
-      <td className="px-6 py-4">
+      <td className="px-4 py-2.5 align-top">
         <StatusBadge label={statusLabel} variant={conf.variant} />
       </td>
-      <td className={cn('px-6 py-4', stickyClass)}>
+      <td className={cn('px-4 py-2.5 align-top', stickyClass)}>
         <div
           className="flex items-center justify-end gap-1"
           onClick={(e) => e.stopPropagation()}
@@ -1018,7 +1365,11 @@ function StandaloneDocumentRow({
                   <Check className="h-4 w-4" />
                 </Button>
               </TooltipTrigger>
-              <TooltipContent>{t('validation.tooltip.validate')}</TooltipContent>
+              <TooltipContent>
+                {notification
+                  ? t('validation.tooltip.validateAndSend')
+                  : t('validation.tooltip.validate')}
+              </TooltipContent>
             </Tooltip>
           )}
           {doc.status !== 'rejected' && (
@@ -1042,34 +1393,401 @@ function StandaloneDocumentRow({
   );
 }
 
-interface BatchRowGroupProps {
-  node: Extract<RowNode, { kind: 'batch' }>;
+// ---------------------------------------------------------------------------
+// Notification badge — compact inline pill rendered under the document name.
+// Shows the template label (kindKey) + recipient count. Clicking opens the
+// preview drawer.
+// ---------------------------------------------------------------------------
+
+function NotificationBadge({
+  notification,
+  templateLabel,
+}: {
+  notification?: ValidationDocument['notification'];
+  templateLabel?: string;
+}) {
+  const { t } = useTranslation();
+  if (!notification) {
+    return (
+      <span className="inline-flex items-center gap-1 rounded-full border border-gray-200 bg-gray-50 px-2 py-0.5 text-[11px] text-gray-500 dark:border-gray-700 dark:bg-gray-900">
+        <BellOff className="h-3 w-3" />
+        {t('validation.notificationLine.noneDoc')}
+      </span>
+    );
+  }
+  const recipientCount = notification.recipients.length;
+  return (
+    <span className="inline-flex items-center gap-1.5 rounded-full border border-blue-200 bg-blue-50 px-2 py-0.5 text-[11px] font-medium text-blue-800 hover:border-blue-300 hover:bg-blue-100 dark:border-blue-900/40 dark:bg-blue-950/30 dark:text-blue-200">
+      <Bell className="h-3 w-3" />
+      {templateLabel && (
+        <span className="max-w-[200px] truncate" title={templateLabel}>
+          {templateLabel}
+        </span>
+      )}
+      <span aria-hidden className="text-blue-300">·</span>
+      <span className="text-blue-700/80 dark:text-blue-300/80">
+        {t(
+          recipientCount > 1
+            ? 'validation.notificationLine.recipientsMany'
+            : 'validation.notificationLine.recipientsOne',
+          { count: recipientCount },
+        )}
+      </span>
+    </span>
+  );
+}
+
+// ---------------------------------------------------------------------------
+// Publication confirmation dialog — groups selected docs by notification
+// signature so the operator sees exactly what will be sent.
+// ---------------------------------------------------------------------------
+
+interface PublicationConfirmDialogProps {
+  mode: 'publish' | 'reject';
+  docs: ValidationDocument[];
+  batchById: Map<string, ValidationBatch>;
+  onCancel: () => void;
+  onConfirm: () => void;
+}
+
+function PublicationConfirmDialog({
+  mode,
+  docs,
+  batchById,
+  onCancel,
+  onConfirm,
+}: PublicationConfirmDialogProps) {
+  const { t } = useTranslation();
+
+  // Group documents by notification signature.
+  type Group = {
+    sig: string;
+    docs: ValidationDocument[];
+    notification?: ValidationDocument['notification'];
+    templateKey?: string;
+  };
+  const groups = useMemo(() => {
+    const map = new Map<string, Group>();
+    docs.forEach((d) => {
+      const { notification, templateKey } = resolveNotification(d, batchById);
+      const sig = notificationSignature(notification);
+      const existing = map.get(sig);
+      if (existing) existing.docs.push(d);
+      else map.set(sig, { sig, docs: [d], notification, templateKey });
+    });
+    // Sort: notification groups first (by descending size), silent last.
+    return Array.from(map.values()).sort((a, b) => {
+      if (a.sig === 'silent' && b.sig !== 'silent') return 1;
+      if (b.sig === 'silent' && a.sig !== 'silent') return -1;
+      return b.docs.length - a.docs.length;
+    });
+  }, [docs, batchById]);
+
+  const notificationGroups = groups.filter((g) => g.sig !== 'silent');
+  const totalDocs = docs.length;
+
+  if (mode === 'reject') {
+    return (
+      <ConfirmShell
+        title={t('validation.rejectConfirm.title')}
+        subtitle={t(
+          totalDocs > 1
+            ? 'validation.rejectConfirm.subtitleMany'
+            : 'validation.rejectConfirm.subtitleOne',
+          { count: totalDocs },
+        )}
+        reassurance={t('validation.rejectConfirm.reassurance')}
+        onCancel={onCancel}
+        onConfirm={onConfirm}
+        confirmLabel={t('validation.rejectConfirm.confirm')}
+        confirmIntent="danger"
+      >
+        <div className="max-h-[300px] overflow-y-auto rounded-md border border-gray-200 bg-gray-50 px-3 py-2 text-xs text-gray-700 dark:border-gray-800 dark:bg-gray-900 dark:text-gray-300">
+          <ul className="space-y-0.5">
+            {docs.slice(0, 12).map((d) => (
+              <li key={d.id} className="truncate" title={d.name}>
+                • {d.name}
+              </li>
+            ))}
+          </ul>
+          {docs.length > 12 && (
+            <div className="mt-1 italic text-gray-500">
+              {t(
+                docs.length - 12 > 1
+                  ? 'validation.confirm.moreDocsMany'
+                  : 'validation.confirm.moreDocsOne',
+                { count: docs.length - 12 },
+              )}
+            </div>
+          )}
+        </div>
+      </ConfirmShell>
+    );
+  }
+
+  return (
+    <ConfirmShell
+      title={t('validation.confirm.title')}
+      subtitle={t(
+        totalDocs > 1
+          ? 'validation.confirm.subtitleMany'
+          : 'validation.confirm.subtitleOne',
+        { docs: totalDocs, notifs: notificationGroups.length },
+      )}
+      reassurance={t('validation.confirm.reassurance')}
+      onCancel={onCancel}
+      onConfirm={onConfirm}
+      confirmLabel={t('validation.confirm.confirm')}
+      confirmIntent="primary"
+    >
+      <div className="space-y-3">
+        <p className="text-xs font-semibold uppercase tracking-wide text-gray-500 dark:text-gray-400">
+          {t('validation.confirm.groupsTitle')}
+        </p>
+        <ul className="space-y-2.5">
+          {groups.map((g, idx) => (
+            <GroupRow
+              key={g.sig}
+              group={g}
+              index={notificationGroups.findIndex((ng) => ng.sig === g.sig)}
+              fallbackIdx={idx}
+            />
+          ))}
+        </ul>
+      </div>
+    </ConfirmShell>
+  );
+}
+
+function GroupRow({
+  group,
+  index,
+}: {
+  group: {
+    sig: string;
+    docs: ValidationDocument[];
+    notification?: ValidationDocument['notification'];
+    templateKey?: string;
+  };
+  index: number;
+  fallbackIdx: number;
+}) {
+  const { t } = useTranslation();
+  const isSilent = group.sig === 'silent' || !group.notification;
+  if (isSilent) {
+    return (
+      <li className="rounded-lg border border-gray-200 bg-gray-50 px-3 py-2.5 dark:border-gray-800 dark:bg-gray-900">
+        <div className="flex items-center justify-between gap-2">
+          <div className="flex items-center gap-2 text-sm font-medium text-gray-900 dark:text-gray-100">
+            <BellOff className="h-3.5 w-3.5 text-gray-500" />
+            {t('validation.confirm.silentGroupLabel')}
+          </div>
+          <span className="rounded-full bg-white px-2 py-0.5 text-[11px] font-medium text-gray-700 dark:bg-gray-800 dark:text-gray-300">
+            {t(
+              group.docs.length > 1
+                ? 'validation.confirm.groupDocsMany'
+                : 'validation.confirm.groupDocsOne',
+              { count: group.docs.length },
+            )}
+          </span>
+        </div>
+        <p className="mt-1 text-[11px] text-gray-500">
+          {t('validation.confirm.silentGroupHelp')}
+        </p>
+      </li>
+    );
+  }
+  const notification = group.notification!;
+  const templateName = group.templateKey ? t(group.templateKey) : '';
+  const recipientNames = notification.recipients
+    .map((r) =>
+      typeof r.name === 'string' ? r.name : t(r.name.key, r.name.vars),
+    )
+    .slice(0, 3);
+  const remainingRecipients = notification.recipients.length - recipientNames.length;
+  return (
+    <li className="rounded-lg border border-blue-200 bg-blue-50/60 px-3 py-2.5 dark:border-blue-900/40 dark:bg-blue-950/20">
+      <div className="flex items-center justify-between gap-2">
+        <div className="flex items-center gap-2 text-sm font-medium text-blue-900 dark:text-blue-200">
+          <Bell className="h-3.5 w-3.5" />
+          {t('validation.confirm.groupLabel', { n: index + 1 })}
+        </div>
+        <div className="flex items-center gap-1.5">
+          <span className="rounded-full bg-white px-2 py-0.5 text-[11px] font-medium text-blue-800 dark:bg-blue-900 dark:text-blue-200">
+            {t(
+              notification.recipients.length > 1
+                ? 'validation.confirm.groupRecipientsMany'
+                : 'validation.confirm.groupRecipientsOne',
+              { count: notification.recipients.length },
+            )}
+          </span>
+          <span className="rounded-full bg-white px-2 py-0.5 text-[11px] font-medium text-gray-700 dark:bg-gray-800 dark:text-gray-300">
+            {t(
+              group.docs.length > 1
+                ? 'validation.confirm.groupDocsMany'
+                : 'validation.confirm.groupDocsOne',
+              { count: group.docs.length },
+            )}
+          </span>
+        </div>
+      </div>
+      <dl className="mt-1.5 grid grid-cols-1 gap-x-3 gap-y-0.5 text-[11px] text-gray-700 dark:text-gray-300 sm:grid-cols-2">
+        <div className="flex gap-1.5">
+          <dt className="font-medium text-gray-500">
+            {t('validation.confirm.templateLabel')}
+          </dt>
+          <dd className="truncate" title={templateName}>
+            {templateName}
+          </dd>
+        </div>
+        <div className="col-span-full flex gap-1.5">
+          <dt className="font-medium text-gray-500">
+            {t('validation.confirm.recipientsLabel')}
+          </dt>
+          <dd className="truncate">
+            {recipientNames.join(', ')}
+            {remainingRecipients > 0 &&
+              ` · ${t(
+                remainingRecipients > 1
+                  ? 'validation.confirm.moreRecipientsMany'
+                  : 'validation.confirm.moreRecipientsOne',
+                { count: remainingRecipients },
+              )}`}
+          </dd>
+        </div>
+      </dl>
+    </li>
+  );
+}
+
+function ConfirmShell({
+  title,
+  subtitle,
+  reassurance,
+  onCancel,
+  onConfirm,
+  confirmLabel,
+  confirmIntent,
+  children,
+}: {
+  title: string;
+  subtitle: string;
+  reassurance: string;
+  onCancel: () => void;
+  onConfirm: () => void;
+  confirmLabel: string;
+  confirmIntent: 'primary' | 'danger';
+  children: React.ReactNode;
+}) {
+  const { t } = useTranslation();
+  return (
+    <div
+      className="fixed inset-0 z-[60] flex items-center justify-center bg-black/50 p-4"
+      onClick={onCancel}
+    >
+      <div
+        className="flex max-h-[85vh] w-full max-w-2xl flex-col overflow-hidden rounded-2xl bg-white shadow-2xl dark:bg-gray-950"
+        onClick={(e) => e.stopPropagation()}
+      >
+        <div className="flex items-start justify-between border-b border-gray-200 px-5 py-4 dark:border-gray-800">
+          <div>
+            <h3 className="text-sm font-semibold text-gray-900 dark:text-gray-100">
+              {title}
+            </h3>
+            <p className="mt-0.5 text-xs text-gray-500 dark:text-gray-400">
+              {subtitle}
+            </p>
+          </div>
+          <button
+            onClick={onCancel}
+            className="rounded-md p-1 hover:bg-gray-100 dark:hover:bg-gray-800"
+            aria-label="close"
+          >
+            <X className="h-4 w-4 text-gray-500" />
+          </button>
+        </div>
+        <div className="flex-1 space-y-3 overflow-y-auto px-5 py-4">
+          <div className="flex items-start gap-2 rounded-md border border-amber-200 bg-amber-50/60 px-3 py-2 text-xs text-amber-900 dark:border-amber-900/40 dark:bg-amber-950/30 dark:text-amber-200">
+            <AlertCircle className="mt-0.5 h-3.5 w-3.5 shrink-0" />
+            <span>{reassurance}</span>
+          </div>
+          {children}
+        </div>
+        <div className="flex items-center justify-end gap-2 border-t border-gray-200 bg-gray-50/60 px-5 py-3 dark:border-gray-800 dark:bg-gray-900/40">
+          <Button variant="outline" onClick={onCancel} className="h-9">
+            {t('validation.confirm.cancel')}
+          </Button>
+          <Button
+            onClick={onConfirm}
+            className={cn(
+              'h-9 gap-2 text-white hover:opacity-90',
+              confirmIntent === 'danger'
+                ? 'bg-red-600 hover:bg-red-700'
+                : 'bg-emerald-600 hover:bg-emerald-700',
+            )}
+          >
+            {confirmIntent === 'danger' ? (
+              <X className="h-4 w-4" />
+            ) : (
+              <Check className="h-4 w-4" />
+            )}
+            {confirmLabel}
+          </Button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+
+// ---------------------------------------------------------------------------
+// Dynamic batch row — collapsible group rendered when 2+ nominative docs
+// share the same investor + notification template. Validation acts on the
+// whole group; children rows hide consolidated fields (replaced with "—").
+// ---------------------------------------------------------------------------
+
+function deriveBatchStatus(docs: ValidationDocument[]): ValidationStatus {
+  if (docs.length === 0) return 'pending';
+  if (docs.every((d) => d.status === 'validated')) return 'validated';
+  if (docs.every((d) => d.status === 'rejected')) return 'rejected';
+  return 'pending';
+}
+
+interface DynamicBatchRowProps {
+  batch: DynamicBatch;
   expanded: boolean;
-  onToggle: () => void;
-  onOpenNotification: () => void;
+  status: ValidationStatus;
+  allSelected: boolean;
+  someSelected: boolean;
+  onToggleExpand: () => void;
+  onToggleSelect: () => void;
+  onPreviewNotification: () => void;
   onValidate: () => void;
   onReject: () => void;
   onReset: () => void;
+  selectedIds: Set<number>;
+  onToggleChild: (id: number) => void;
   onPreviewChild: (doc: ValidationDocument) => void;
-  renderTargeting: (
-    targeting: ValidationDocument['targeting'],
-    maxVisible?: number,
-  ) => JSX.Element;
   stickyClass: string;
 }
 
-function BatchRowGroup({
-  node,
+function DynamicBatchRow({
+  batch,
   expanded,
-  onToggle,
-  onOpenNotification,
+  status,
+  allSelected,
+  someSelected,
+  onToggleExpand,
+  onToggleSelect,
+  onPreviewNotification,
   onValidate,
   onReject,
   onReset,
+  selectedIds,
+  onToggleChild,
   onPreviewChild,
-  renderTargeting,
   stickyClass,
-}: BatchRowGroupProps) {
+}: DynamicBatchRowProps) {
   const { t, lang } = useTranslation();
   const dateFormatter = useMemo(
     () =>
@@ -1083,175 +1801,99 @@ function BatchRowGroup({
     [lang],
   );
   const formatDate = (iso: string) => dateFormatter.format(new Date(iso));
-  const { batch, docs, status } = node;
-  const conf = STATUS_VARIANT[status];
   const statusLabel = t(STATUS_LABEL_KEY[status]);
-  const isSilent = !batch.notification;
-  const earliestDate = docs.reduce(
-    (min, d) =>
-      new Date(d.createdAt).getTime() < new Date(min).getTime()
-        ? d.createdAt
-        : min,
-    docs[0]?.createdAt ?? batch.createdAt,
+  const conf = STATUS_VARIANT[status];
+  // Use the earliest createdAt as the batch's reference date.
+  const earliestDoc = batch.docs.reduce((m, d) =>
+    new Date(d.createdAt).getTime() < new Date(m.createdAt).getTime() ? d : m,
+    batch.docs[0],
   );
-
-  // Aggregate targeting tags (unique by kind:label)
-  const aggregatedTargeting = useMemo(() => {
-    const seen = new Set<string>();
-    const out: ValidationDocument['targeting'] = [];
-    docs.forEach((d) =>
-      d.targeting.forEach((tag) => {
-        const key = `${tag.kind}:${tag.label}`;
-        if (!seen.has(key)) {
-          seen.add(key);
-          out.push(tag);
-        }
-      }),
-    );
-    return out;
-  }, [docs]);
-
-  // Targeting is "homogeneous" when every document carries the exact same set
-  // of (kind, label) tags. In that case the targeting is shown on the batch
-  // row and children get a "—". Otherwise the batch row shows "—" and each
-  // child renders its own targeting.
-  const isHomogeneousTargeting = useMemo(() => {
-    if (docs.length <= 1) return true;
-    const fingerprint = (doc: ValidationDocument) =>
-      doc.targeting
-        .map((tag) => `${tag.kind}:${tag.label}`)
-        .sort()
-        .join('|');
-    const ref = fingerprint(docs[0]);
-    return docs.every((d) => fingerprint(d) === ref);
-  }, [docs]);
-
   return (
     <>
-      {/* Batch header row */}
-      <tr
-        className={cn(
-          'border-b border-border/70 transition-colors cursor-pointer group',
-          'bg-blue-50/40 hover:bg-blue-50 dark:bg-blue-950/20 dark:hover:bg-blue-950/40',
-        )}
-        onClick={onOpenNotification}
-      >
-        <td className="w-8 px-2 py-3">
-          <button
-            type="button"
-            className="flex h-6 w-6 items-center justify-center rounded text-gray-500 hover:bg-blue-100 dark:hover:bg-blue-900"
-            onClick={(e) => {
-              e.stopPropagation();
-              onToggle();
-            }}
-            aria-label={
-              expanded
-                ? t('validation.tooltip.collapseBatch')
-                : t('validation.tooltip.expandBatch')
-            }
-          >
-            <ChevronRight
-              className={cn(
-                'h-4 w-4 transition-transform',
-                expanded && 'rotate-90',
-              )}
-            />
-          </button>
+      <tr className="border-b border-blue-100 bg-blue-50/40 hover:bg-blue-50/60 dark:border-blue-900/30 dark:bg-blue-950/15">
+        <td
+          className="w-10 px-3 py-2.5 align-top"
+          onClick={(e) => e.stopPropagation()}
+        >
+          <Checkbox
+            checked={allSelected ? true : someSelected ? 'indeterminate' : false}
+            onCheckedChange={() => onToggleSelect()}
+            aria-label={`select-batch-${batch.id}`}
+          />
         </td>
-
-        <td className="px-6 py-3">
-          <div className="flex items-start gap-3">
-            <div
-              className="mt-0.5 flex h-9 w-9 shrink-0 items-center justify-center rounded-md"
-              style={{ backgroundColor: '#000E2B' }}
+        <td className="px-4 py-2.5 align-top max-w-[320px]">
+          <div className="flex items-start gap-2">
+            <button
+              type="button"
+              onClick={onToggleExpand}
+              className="mt-0.5 flex h-5 w-5 shrink-0 items-center justify-center rounded text-blue-700 hover:bg-blue-100 dark:text-blue-300 dark:hover:bg-blue-900"
+              aria-label={expanded ? 'collapse' : 'expand'}
             >
-              <Package className="h-4 w-4 text-white" />
+              <ChevronRight
+                className={cn(
+                  'h-3.5 w-3.5 transition-transform',
+                  expanded && 'rotate-90',
+                )}
+              />
+            </button>
+            <div
+              className="flex h-7 w-7 shrink-0 items-center justify-center rounded-md bg-blue-100 text-blue-700 dark:bg-blue-900/40 dark:text-blue-300"
+              aria-hidden
+            >
+              <Package className="h-3.5 w-3.5" />
             </div>
-            <div className="min-w-0">
-              <div className="mb-0.5 flex items-center gap-2">
-                <span className="text-[11px] font-semibold uppercase tracking-wide text-blue-600 dark:text-blue-300">
-                  {t(batch.kindKey)}
-                </span>
-                <span className="rounded-full bg-blue-100 px-2 py-0.5 text-[10px] font-semibold text-blue-700 dark:bg-blue-900 dark:text-blue-200">
-                  {t(
-                    docs.length > 1
-                      ? 'validation.batch.docsMany'
-                      : 'validation.batch.docsOne',
-                    { count: docs.length },
-                  )}
-                </span>
+            <div className="min-w-0 flex-1">
+              <div className="text-[10px] font-semibold uppercase tracking-wide text-blue-700/80 dark:text-blue-300/80">
+                {t(
+                  batch.docs.length > 1
+                    ? 'validation.dynamicBatch.docsMany'
+                    : 'validation.dynamicBatch.docsOne',
+                  { count: batch.docs.length },
+                )}
               </div>
-              <span
-                className="block truncate text-sm font-semibold text-gray-900 dark:text-gray-100"
+              <div
+                className="truncate text-sm font-semibold text-gray-900 dark:text-gray-100"
                 title={batch.name}
               >
                 {batch.name}
-              </span>
-              <div className="mt-1">
-                <NotificationLine
-                  notification={batch.notification}
-                  context="batch"
-                />
               </div>
             </div>
           </div>
         </td>
-
-        <td className="px-6 py-3">
-          <UserCell
-            name={batch.createdBy.name}
-            sublabel={batch.createdBy.role}
+        <td
+          className="px-4 py-2.5 align-top cursor-pointer"
+          onClick={(e) => {
+            e.stopPropagation();
+            onPreviewNotification();
+          }}
+        >
+          <NotificationBadge
+            notification={batch.notification}
+            templateLabel={batch.templateLabel}
           />
         </td>
-        <td className="px-6 py-3">
-          <span className="text-sm text-gray-600 dark:text-gray-400 whitespace-nowrap">
-            {formatDate(earliestDate)}
-          </span>
+        <td className="px-4 py-2.5 align-top">
+          <div className="flex flex-col gap-0.5">
+            <UserCell
+              name={earliestDoc.createdBy.name}
+              sublabel={earliestDoc.createdBy.role}
+            />
+            <span className="text-[11px] text-gray-500 whitespace-nowrap">
+              {formatDate(earliestDoc.createdAt)}
+            </span>
+          </div>
         </td>
-        <td className="px-6 py-3">
-          {isHomogeneousTargeting ? (
-            renderTargeting(aggregatedTargeting, 4)
-          ) : (
-            <Tooltip>
-              <TooltipTrigger asChild>
-                <span className="text-sm text-gray-300 select-none">—</span>
-              </TooltipTrigger>
-              <TooltipContent>
-                <span className="text-xs">{t('validation.tooltip.differentTargeting')}</span>
-              </TooltipContent>
-            </Tooltip>
-          )}
+        <td className="px-4 py-2.5 align-top text-center text-[11px] text-gray-300">
+          —
         </td>
-        <td className="px-6 py-3 text-center text-[11px] text-gray-500">—</td>
-        <td className="px-6 py-3">
+        <td className="px-4 py-2.5 align-top">
           <StatusBadge label={statusLabel} variant={conf.variant} />
         </td>
-
-        <td
-          className={cn('px-6 py-3', stickyClass)}
-        >
+        <td className={cn('px-4 py-2.5 align-top', stickyClass)}>
           <div
             className="flex items-center justify-end gap-1"
             onClick={(e) => e.stopPropagation()}
           >
-            <Tooltip>
-              <TooltipTrigger asChild>
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  className="h-8 gap-1.5 px-2 text-xs"
-                  onClick={onOpenNotification}
-                >
-                  <Eye className="h-3.5 w-3.5" />
-                  {t('validation.batch.preview')}
-                </Button>
-              </TooltipTrigger>
-              <TooltipContent>
-                {isSilent
-                  ? t('validation.tooltip.previewBatch')
-                  : t('validation.tooltip.previewNotification')}
-              </TooltipContent>
-            </Tooltip>
             {status === 'validated' && (
               <Tooltip>
                 <TooltipTrigger asChild>
@@ -1264,7 +1906,7 @@ function BatchRowGroup({
                     <RotateCcw className="h-4 w-4" />
                   </Button>
                 </TooltipTrigger>
-                <TooltipContent>{t('validation.tooltip.resetBatchPending')}</TooltipContent>
+                <TooltipContent>{t('validation.tooltip.resetPending')}</TooltipContent>
               </Tooltip>
             )}
             {status !== 'validated' && (
@@ -1280,9 +1922,7 @@ function BatchRowGroup({
                   </Button>
                 </TooltipTrigger>
                 <TooltipContent>
-                  {isSilent
-                    ? t('validation.tooltip.validateBatch')
-                    : t('validation.tooltip.validateAndSend')}
+                  {t('validation.tooltip.validateAndSend')}
                 </TooltipContent>
               </Tooltip>
             )}
@@ -1298,72 +1938,80 @@ function BatchRowGroup({
                     <X className="h-4 w-4" />
                   </Button>
                 </TooltipTrigger>
-                <TooltipContent>{t('validation.tooltip.rejectBatch')}</TooltipContent>
+                <TooltipContent>{t('validation.tooltip.reject')}</TooltipContent>
               </Tooltip>
             )}
           </div>
         </td>
       </tr>
-
-      {/* Children rows */}
       {expanded &&
-        docs.map((doc) => (
+        batch.docs.map((d) => (
           <tr
-            key={`batch-${batch.id}-doc-${doc.id}`}
-            className="border-b border-border/40 bg-blue-50/10 transition-colors hover:bg-blue-50/30 dark:bg-blue-950/5 dark:hover:bg-blue-950/15 cursor-pointer"
-            onClick={() => onPreviewChild(doc)}
+            key={`batch-${batch.id}-child-${d.id}`}
+            className={cn(
+              'border-b border-border/40 cursor-pointer transition-colors',
+              selectedIds.has(d.id)
+                ? 'bg-blue-50/30 hover:bg-blue-50/50 dark:bg-blue-950/15'
+                : 'bg-blue-50/10 hover:bg-blue-50/30 dark:bg-blue-950/5',
+            )}
+            onClick={() => onPreviewChild(d)}
           >
-            <td className="w-8 px-2 py-2.5">
-              <span
-                aria-hidden
-                className="ml-2 block h-full w-px bg-blue-200 dark:bg-blue-800"
-              />
-            </td>
-            <td className="px-6 py-2.5 pl-12">
-              <DocumentNameCell
-                name={doc.name}
-                pathSegments={doc.pathSegments}
-                extra={
-                  <NotificationLine
-                    notification={batch.notification}
-                    sourceHint={t('validation.notificationLine.fromBatch')}
-                  />
-                }
-              />
-            </td>
-            <td className="px-6 py-2.5">
-              <UserCell name={doc.createdBy.name} sublabel={doc.createdBy.role} />
-            </td>
-            <td className="px-6 py-2.5">
-              <span className="text-sm text-gray-600 dark:text-gray-400 whitespace-nowrap">
-                {formatDate(doc.createdAt)}
-              </span>
-            </td>
-            <td className="px-6 py-2.5">
-              {isHomogeneousTargeting ? (
-                <Tooltip>
-                  <TooltipTrigger asChild>
-                    <span className="text-sm text-gray-300 select-none">—</span>
-                  </TooltipTrigger>
-                  <TooltipContent>
-                    <span className="text-xs">{t('validation.tooltip.targetingDrivenByBatch')}</span>
-                  </TooltipContent>
-                </Tooltip>
-              ) : (
-                renderTargeting(doc.targeting)
-              )}
-            </td>
-            <td className="px-6 py-2.5 text-center">
-              <div className="flex justify-center">
-                <CommentIndicator
-                  comment={doc.comment ? t(doc.comment.key, doc.comment.vars) : ''}
-                  author={doc.createdBy.name}
-                  date={formatDate(doc.createdAt)}
+            <td
+              className="w-10 px-3 py-2 align-top"
+              onClick={(e) => e.stopPropagation()}
+            >
+              <div className="flex items-center gap-1.5">
+                <span aria-hidden className="text-gray-300">└</span>
+                <Checkbox
+                  checked={selectedIds.has(d.id)}
+                  onCheckedChange={() => onToggleChild(d.id)}
+                  aria-label={`select-${d.id}`}
                 />
               </div>
             </td>
-            <td className="px-6 py-2.5 text-[11px] text-gray-400">—</td>
-            <td className={cn('px-6 py-2.5', stickyClass)}>
+            <td className="px-4 py-2 align-top max-w-[320px] pl-8">
+              {d.kindKey && (
+                <div className="mb-0.5 text-[10px] font-semibold uppercase tracking-wide text-gray-500 dark:text-gray-400">
+                  {t(d.kindKey)}
+                </div>
+              )}
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <div
+                    className="truncate text-sm font-medium text-gray-900 dark:text-gray-100"
+                    title={d.name}
+                  >
+                    {d.name}
+                  </div>
+                </TooltipTrigger>
+                <TooltipContent side="top">
+                  <span className="text-xs">{d.name}</span>
+                </TooltipContent>
+              </Tooltip>
+              {d.pathSegments.length > 0 && (
+                <div
+                  className="mt-0.5 truncate text-[11px] text-gray-500"
+                  title={d.pathSegments.join(' / ')}
+                >
+                  {d.pathSegments.join(' / ')}
+                </div>
+              )}
+            </td>
+            <td className="px-4 py-2 align-top text-center text-[11px] text-gray-300">
+              —
+            </td>
+            <td className="px-4 py-2 align-top">
+              <span className="text-[11px] text-gray-500 whitespace-nowrap">
+                {formatDate(d.createdAt)}
+              </span>
+            </td>
+            <td className="px-4 py-2 align-top text-center text-[11px] text-gray-300">
+              —
+            </td>
+            <td className="px-4 py-2 align-top text-[11px] text-gray-300">
+              —
+            </td>
+            <td className={cn('px-4 py-2 align-top', stickyClass)}>
               <div
                 className="flex items-center justify-end gap-1"
                 onClick={(e) => e.stopPropagation()}
@@ -1374,12 +2022,14 @@ function BatchRowGroup({
                       variant="ghost"
                       size="sm"
                       className="h-8 w-8 p-0"
-                      onClick={() => onPreviewChild(doc)}
+                      onClick={() => onPreviewChild(d)}
                     >
                       <Eye className="h-4 w-4" />
                     </Button>
                   </TooltipTrigger>
-                  <TooltipContent>{t('validation.tooltip.previewDoc')}</TooltipContent>
+                  <TooltipContent>
+                    {t('validation.tooltip.previewDoc')}
+                  </TooltipContent>
                 </Tooltip>
               </div>
             </td>
