@@ -26,9 +26,9 @@ interface PublicationCenterSettingsDialogProps {
 }
 
 const CRITERIA: { value: AggregationCriterion; label: string; description: string }[] = [
-  { value: 'investor', label: 'Investisseur', description: 'Documents partageant le même investisseur' },
-  { value: 'subscription', label: 'Souscription', description: 'Documents liés à la même souscription' },
+  { value: 'investor', label: 'Investisseur', description: 'Documents partageant le même investisseur — critère de base, toujours actif' },
   { value: 'fund', label: 'Fonds', description: 'Documents portant sur le même fonds' },
+  { value: 'subscription', label: 'Souscription', description: 'Documents liés à la même souscription — nécessite le fonds' },
 ];
 
 const SCOPES: { value: 'generic' | 'nominative'; label: string; description: string }[] = [
@@ -66,10 +66,23 @@ export function PublicationCenterSettingsDialog({
   const hasAnyScope = selectedScopes.length > 0;
 
   const toggleCriterion = (criterion: AggregationCriterion) => {
+    // Investor is the funnel root and cannot be toggled off.
+    if (criterion === 'investor') return;
     const current = publicationCenterSettings.aggregationCriteria;
-    const next = current.includes(criterion)
-      ? current.filter((c) => c !== criterion)
-      : [...current, criterion];
+    const wasOn = current.includes(criterion);
+    let next: AggregationCriterion[];
+    if (criterion === 'fund') {
+      // Removing the fund also removes the subscription (cascade).
+      next = wasOn
+        ? current.filter((c) => c !== 'fund' && c !== 'subscription')
+        : [...current, 'fund'];
+    } else {
+      // criterion === 'subscription' — only allowed when fund is selected.
+      if (!wasOn && !current.includes('fund')) return;
+      next = wasOn ? current.filter((c) => c !== 'subscription') : [...current, 'subscription'];
+    }
+    // Investor must always remain in the set.
+    if (!next.includes('investor')) next.unshift('investor');
     updatePublicationCenterSettings({ aggregationCriteria: next });
   };
 
@@ -188,22 +201,38 @@ export function PublicationCenterSettingsDialog({
               <CardContent className="px-5 pb-5 pt-0">
                 <div className="space-y-2">
                   {CRITERIA.map((c) => {
-                    const checked = publicationCenterSettings.aggregationCriteria.includes(c.value);
+                    const selectedCriteria = publicationCenterSettings.aggregationCriteria;
+                    const checked = selectedCriteria.includes(c.value);
+                    const fundChecked = selectedCriteria.includes('fund');
+                    // Funnel: investor is locked, subscription requires fund.
+                    const locked = c.value === 'investor';
+                    const blocked = c.value === 'subscription' && !fundChecked;
+                    const disabled = locked || blocked;
                     const id = `criterion-${c.value}`;
                     return (
                       <label
                         key={c.value}
                         htmlFor={id}
-                        className="flex cursor-pointer items-start gap-3 rounded-md border border-gray-200 bg-white p-3 hover:bg-gray-50"
+                        className={
+                          'flex items-start gap-3 rounded-md border border-gray-200 bg-white p-3 ' +
+                          (disabled ? 'cursor-not-allowed opacity-60' : 'cursor-pointer hover:bg-gray-50')
+                        }
                       >
                         <Checkbox
                           id={id}
                           checked={checked}
+                          disabled={disabled}
                           onCheckedChange={() => toggleCriterion(c.value)}
                           className="mt-0.5"
                         />
                         <div className="flex-1">
-                          <Label htmlFor={id} className="cursor-pointer text-sm font-medium text-gray-900">
+                          <Label
+                            htmlFor={id}
+                            className={
+                              'text-sm font-medium text-gray-900 ' +
+                              (disabled ? 'cursor-not-allowed' : 'cursor-pointer')
+                            }
+                          >
                             {c.label}
                           </Label>
                           <p className="mt-0.5 text-xs text-gray-500">{c.description}</p>
