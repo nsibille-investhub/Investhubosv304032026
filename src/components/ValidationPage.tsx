@@ -56,7 +56,11 @@ import {
 } from '../utils/gedFixtures';
 import { useTranslation } from '../utils/languageContext';
 import { useValidationStore } from '../utils/validationStoreContext';
-import { useAppStore } from '../utils/appStoreContext';
+import {
+  useAppStore,
+  type AggregationCriterion,
+  type AggregationScope,
+} from '../utils/appStoreContext';
 import { cn } from './ui/utils';
 
 interface ValidationPageProps {
@@ -217,10 +221,15 @@ function buildDisplayRows(
   docs: ValidationDocument[],
   batchById: Map<string, ValidationBatch>,
   resolveTemplateLabel: (key?: string) => string,
+  options: {
+    criteria: AggregationCriterion[];
+    scope: AggregationScope;
+  },
 ): DisplayRow[] {
   type Bucket = {
-    investor: string;
+    investor?: string;
     fundName?: string;
+    subscriptionLabel?: string;
     templateKey: string;
     notification: ValidationDocument['notification'];
     docs: ValidationDocument[];
@@ -228,37 +237,68 @@ function buildDisplayRows(
   const buckets = new Map<string, Bucket>();
   const standalones: ValidationDocument[] = [];
 
+  const { criteria, scope } = options;
+  const wantsInvestor = criteria.includes('investor');
+  const wantsSubscription = criteria.includes('subscription');
+  const wantsFund = criteria.includes('fund');
+
   docs.forEach((d) => {
     const { notification, templateKey } = resolveNotification(d, batchById);
     if (!notification) {
       standalones.push(d);
       return;
     }
-    if (!isNominative(d)) {
+    const docIsNominative = isNominative(d);
+    const scopeOk =
+      scope === 'both' ||
+      (scope === 'nominative' && docIsNominative) ||
+      (scope === 'generic' && !docIsNominative);
+    if (!scopeOk) {
       standalones.push(d);
       return;
     }
+
     const investor = resolveInvestor(d);
-    if (!investor) {
+    const funds = resolveFundsForDoc(d);
+    const subscriptionTag = d.targeting.find((t) => t.kind === 'subscription');
+    const fundTag = d.targeting.find((t) => t.kind === 'fund');
+    const fundName = funds.length === 1 ? funds[0] : fundTag?.label;
+    const subscriptionLabel = subscriptionTag?.label;
+
+    // If a requested criterion can't be resolved for this doc, fall back to
+    // standalone — we can't bucket it deterministically.
+    if (wantsInvestor && !investor) {
       standalones.push(d);
       return;
     }
+    if (wantsSubscription && !subscriptionLabel) {
+      standalones.push(d);
+      return;
+    }
+    if (wantsFund && !fundName) {
+      standalones.push(d);
+      return;
+    }
+
     const tplKey = templateKey ?? 'unknown-template';
-    const sig = `${investor}|${tplKey}`;
-    const funds = resolveFundsForDoc(d);
-    const fundName =
-      d.targeting.some((t) => t.kind === 'subscription') && funds.length === 1
-        ? funds[0]
-        : undefined;
+    const sigParts: string[] = [`tpl:${tplKey}`];
+    if (wantsInvestor) sigParts.push(`inv:${investor}`);
+    if (wantsSubscription) sigParts.push(`sub:${subscriptionLabel}`);
+    if (wantsFund) sigParts.push(`fund:${fundName}`);
+    const sig = sigParts.join('|');
+
     const existing = buckets.get(sig);
     if (existing) {
       existing.docs.push(d);
-      // If any doc in the bucket clarifies the fund, prefer it.
       if (!existing.fundName && fundName) existing.fundName = fundName;
+      if (!existing.subscriptionLabel && subscriptionLabel)
+        existing.subscriptionLabel = subscriptionLabel;
+      if (!existing.investor && investor) existing.investor = investor;
     } else {
       buckets.set(sig, {
         investor,
         fundName,
+        subscriptionLabel,
         templateKey: tplKey,
         notification,
         docs: [d],
@@ -291,7 +331,9 @@ function buildDisplayRows(
           if (!emittedBatches.has(sig)) {
             emittedBatches.add(sig);
             const tplLabel = resolveTemplateLabel(b.templateKey);
-            const namePieces = [b.investor];
+            const namePieces: string[] = [];
+            if (b.investor) namePieces.push(b.investor);
+            if (b.subscriptionLabel) namePieces.push(b.subscriptionLabel);
             if (b.fundName) namePieces.push(b.fundName);
             if (tplLabel) namePieces.push(tplLabel);
             rows.push({
@@ -299,7 +341,7 @@ function buildDisplayRows(
               batch: {
                 id: `dyn-${sig}`,
                 name: namePieces.join(' — '),
-                investor: b.investor,
+                investor: b.investor ?? '',
                 fundName: b.fundName,
                 templateLabel: tplLabel,
                 notification: b.notification,
@@ -319,7 +361,7 @@ function buildDisplayRows(
 
 export function ValidationPage(_props: ValidationPageProps) {
   const { t, lang } = useTranslation();
-  const { isModuleActive } = useAppStore();
+  const { isModuleActive, publicationCenterSettings } = useAppStore();
   const isPublicationCenterActive = isModuleActive('Centre de Publication');
   const {
     dynamicDocuments,
@@ -527,8 +569,18 @@ export function ValidationPage(_props: ValidationPageProps) {
   );
 
   const displayRows = useMemo(
-    () => buildDisplayRows(flatDocs, batchById, (key?: string) => (key ? t(key) : '')),
-    [flatDocs, batchById, t],
+    () =>
+      buildDisplayRows(flatDocs, batchById, (key?: string) => (key ? t(key) : ''), {
+        criteria: publicationCenterSettings.aggregationCriteria,
+        scope: publicationCenterSettings.aggregationScope,
+      }),
+    [
+      flatDocs,
+      batchById,
+      t,
+      publicationCenterSettings.aggregationCriteria,
+      publicationCenterSettings.aggregationScope,
+    ],
   );
   // Pagination operates on display rows (a batch row counts as one).
   const totalItems = displayRows.length;

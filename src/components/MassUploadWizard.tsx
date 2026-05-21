@@ -83,6 +83,7 @@ import { DocumentCategory } from '../utils/documentMockData';
 import { availableInvestors, fundLabelMap } from '../utils/investorsMockData';
 import { COMMITMENTS, FUNDS, INVESTORS, getSpaces, type FolderSpec } from '../utils/gedFixtures';
 import { useTranslation } from '../utils/languageContext';
+import { useAppStore } from '../utils/appStoreContext';
 import { useValidationStore, nextValidationDocId } from '../utils/validationStoreContext';
 import type {
   TargetingTag,
@@ -453,6 +454,8 @@ const buildValidationBatch = (
 export function MassUploadWizard({ isOpen, onClose, existingFolders, inline = false, originContext = null }: MassUploadWizardProps) {
   const { t } = useTranslation();
   const { addUploadResults } = useValidationStore();
+  const { publicationCenterSettings } = useAppStore();
+  const teamsEnabled = publicationCenterSettings.teamsEnabled;
   // The user can clear the origin-context prefill from step 1 — this hides the
   // banner and stops new uploads from being pre-targeted.
   const [originCleared, setOriginCleared] = useState(false);
@@ -2939,20 +2942,22 @@ export function MassUploadWizard({ isOpen, onClose, existingFolders, inline = fa
                             </div>
                           </td>
 
-                          <td className="px-3 py-3 align-top">
-                            <Select
-                              value={file.validationTeam[0] ?? ''}
-                              onValueChange={(value) => handleUpdateFile(file.id, 'validationTeam', [value])}
-                            >
-                              <SelectTrigger className="h-8 text-xs"><SelectValue placeholder={t('ged.dataRoom.massUpload.wizard.selectTeam')} /></SelectTrigger>
-                              <SelectContent>
-                                <SelectItem value="admin" className="text-xs">{t('ged.dataRoom.massUpload.wizard.teamAdmin')}</SelectItem>
-                                <SelectItem value="compliance" className="text-xs">{t('ged.dataRoom.massUpload.wizard.teamCompliance')}</SelectItem>
-                                <SelectItem value="legal" className="text-xs">{t('ged.dataRoom.massUpload.wizard.teamLegal')}</SelectItem>
-                                <SelectItem value="ir" className="text-xs">{t('ged.dataRoom.massUpload.wizard.teamIR')}</SelectItem>
-                              </SelectContent>
-                            </Select>
-                          </td>
+                          {teamsEnabled && (
+                            <td className="px-3 py-3 align-top">
+                              <Select
+                                value={file.validationTeam[0] ?? ''}
+                                onValueChange={(value) => handleUpdateFile(file.id, 'validationTeam', [value])}
+                              >
+                                <SelectTrigger className="h-8 text-xs"><SelectValue placeholder={t('ged.dataRoom.massUpload.wizard.selectTeam')} /></SelectTrigger>
+                                <SelectContent>
+                                  <SelectItem value="admin" className="text-xs">{t('ged.dataRoom.massUpload.wizard.teamAdmin')}</SelectItem>
+                                  <SelectItem value="compliance" className="text-xs">{t('ged.dataRoom.massUpload.wizard.teamCompliance')}</SelectItem>
+                                  <SelectItem value="legal" className="text-xs">{t('ged.dataRoom.massUpload.wizard.teamLegal')}</SelectItem>
+                                  <SelectItem value="ir" className="text-xs">{t('ged.dataRoom.massUpload.wizard.teamIR')}</SelectItem>
+                                </SelectContent>
+                              </Select>
+                            </td>
+                          )}
                         </tr>
                       );
                     };
@@ -2985,7 +2990,9 @@ export function MassUploadWizard({ isOpen, onClose, existingFolders, inline = fa
                                   <th className="px-3 py-2.5 text-left min-w-[200px]">{t('ged.dataRoom.massUpload.wizard.tableFolder')}</th>
                                   <th className="px-3 py-2.5 text-left min-w-[280px]">{t('ged.dataRoom.massUpload.wizard.tableTargeting')}</th>
                                   <th className="px-3 py-2.5 text-left min-w-[220px]">{t('ged.dataRoom.massUpload.wizard.tableNotification')}</th>
-                                  <th className="px-3 py-2.5 text-left min-w-[200px]">{t('ged.dataRoom.massUpload.wizard.tableValidationTeams')}</th>
+                                  {teamsEnabled && (
+                                    <th className="px-3 py-2.5 text-left min-w-[200px]">{t('ged.dataRoom.massUpload.wizard.tableValidationTeams')}</th>
+                                  )}
                                 </tr>
                               </thead>
                               <tbody className="divide-y divide-gray-100">

@@ -6,10 +6,21 @@ interface Module {
   status: 'active' | 'inactive';
 }
 
+export type AggregationCriterion = 'investor' | 'subscription' | 'fund';
+export type AggregationScope = 'generic' | 'nominative' | 'both';
+
+export interface PublicationCenterSettings {
+  teamsEnabled: boolean;
+  aggregationCriteria: AggregationCriterion[];
+  aggregationScope: AggregationScope;
+}
+
 interface AppStoreContextType {
   modules: Module[];
   isModuleActive: (moduleName: string) => boolean;
   toggleModule: (moduleId: string) => void;
+  publicationCenterSettings: PublicationCenterSettings;
+  updatePublicationCenterSettings: (patch: Partial<PublicationCenterSettings>) => void;
 }
 
 const AppStoreContext = createContext<AppStoreContextType | undefined>(undefined);
@@ -28,8 +39,16 @@ const defaultModules: Module[] = [
   { id: '11', name: 'Centre de Publication', status: 'active' }
 ];
 
+const defaultPublicationCenterSettings: PublicationCenterSettings = {
+  teamsEnabled: true,
+  aggregationCriteria: ['investor'],
+  aggregationScope: 'nominative',
+};
+
 export function AppStoreProvider({ children }: { children: ReactNode }) {
   const [modules, setModules] = useState<Module[]>(defaultModules);
+  const [publicationCenterSettings, setPublicationCenterSettings] =
+    useState<PublicationCenterSettings>(defaultPublicationCenterSettings);
 
   const isModuleActive = (moduleName: string): boolean => {
     const module = modules.find(m => m.name === moduleName);
@@ -46,8 +65,20 @@ export function AppStoreProvider({ children }: { children: ReactNode }) {
     );
   };
 
+  const updatePublicationCenterSettings = (patch: Partial<PublicationCenterSettings>) => {
+    setPublicationCenterSettings(prev => ({ ...prev, ...patch }));
+  };
+
   return (
-    <AppStoreContext.Provider value={{ modules, isModuleActive, toggleModule }}>
+    <AppStoreContext.Provider
+      value={{
+        modules,
+        isModuleActive,
+        toggleModule,
+        publicationCenterSettings,
+        updatePublicationCenterSettings,
+      }}
+    >
       {children}
     </AppStoreContext.Provider>
   );
