@@ -7,7 +7,7 @@ interface Module {
 }
 
 export type AggregationCriterion = 'investor' | 'subscription' | 'fund';
-export type AggregationScope = 'generic' | 'nominative' | 'both';
+export type AggregationScope = 'none' | 'generic' | 'nominative' | 'both';
 
 export interface PublicationCenterSettings {
   teamsEnabled: boolean;

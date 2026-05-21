@@ -253,7 +253,7 @@ function buildDisplayRows(
       scope === 'both' ||
       (scope === 'nominative' && docIsNominative) ||
       (scope === 'generic' && !docIsNominative);
-    if (!scopeOk) {
+    if (scope === 'none' || !scopeOk) {
       standalones.push(d);
       return;
     }
