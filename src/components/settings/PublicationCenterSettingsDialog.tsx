@@ -98,6 +98,32 @@ export function PublicationCenterSettingsDialog({
         <div className="flex-1 overflow-y-auto px-6 py-5 space-y-4">
           <Card>
             <CardHeader className="px-5 pt-5 pb-3">
+              <div className="flex items-start justify-between gap-4">
+                <div className="flex items-start gap-3">
+                  <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-md bg-gray-100 text-gray-700">
+                    <Users className="h-4 w-4" />
+                  </div>
+                  <div>
+                    <CardTitle className="text-sm">Notion d'équipe</CardTitle>
+                    <CardDescription className="mt-1 text-xs">
+                      Permet d'assigner une équipe de validation (Compliance, Legal, Middle Office…)
+                      à chaque document à publier.
+                    </CardDescription>
+                  </div>
+                </div>
+                <Switch
+                  id="teams-enabled"
+                  checked={publicationCenterSettings.teamsEnabled}
+                  onCheckedChange={(checked) =>
+                    updatePublicationCenterSettings({ teamsEnabled: checked === true })
+                  }
+                />
+              </div>
+            </CardHeader>
+          </Card>
+
+          <Card>
+            <CardHeader className="px-5 pt-5 pb-3">
               <div className="flex items-start gap-3">
                 <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-md bg-gray-100 text-gray-700">
                   <Layers className="h-4 w-4" />
@@ -105,8 +131,10 @@ export function PublicationCenterSettingsDialog({
                 <div>
                   <CardTitle className="text-sm">Portée du regroupement</CardTitle>
                   <CardDescription className="mt-1 text-xs">
-                    Choisissez quels types de documents sont concernés par l'agrégation.
-                    Aucune case cochée : aucun regroupement n'est appliqué.
+                    Le regroupement permet d'envoyer <strong>une seule notification</strong> couvrant
+                    plusieurs documents au lieu d'une notification par document. Choisissez les
+                    types de documents auxquels appliquer ce regroupement. Sans case cochée, chaque
+                    document déclenche sa propre notification.
                   </CardDescription>
                 </div>
               </div>
@@ -187,32 +215,6 @@ export function PublicationCenterSettingsDialog({
               </CardContent>
             </Card>
           )}
-
-          <Card>
-            <CardHeader className="px-5 pt-5 pb-3">
-              <div className="flex items-start justify-between gap-4">
-                <div className="flex items-start gap-3">
-                  <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-md bg-gray-100 text-gray-700">
-                    <Users className="h-4 w-4" />
-                  </div>
-                  <div>
-                    <CardTitle className="text-sm">Notion d'équipe</CardTitle>
-                    <CardDescription className="mt-1 text-xs">
-                      Permet d'assigner une équipe de validation (Compliance, Legal, Middle Office…)
-                      à chaque document à publier.
-                    </CardDescription>
-                  </div>
-                </div>
-                <Switch
-                  id="teams-enabled"
-                  checked={publicationCenterSettings.teamsEnabled}
-                  onCheckedChange={(checked) =>
-                    updatePublicationCenterSettings({ teamsEnabled: checked === true })
-                  }
-                />
-              </div>
-            </CardHeader>
-          </Card>
         </div>
 
         <DialogFooter className="border-t border-gray-200 px-6 py-4">
