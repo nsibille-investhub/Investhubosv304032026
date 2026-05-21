@@ -1244,6 +1244,16 @@ function NotificationBadge({
     );
   }
   const recipientCount = notification.recipients.length;
+  const firstRecipient = notification.recipients[0];
+  const firstRecipientName = firstRecipient
+    ? typeof firstRecipient.name === 'string'
+      ? firstRecipient.name
+      : t(firstRecipient.name.key, firstRecipient.name.vars)
+    : '';
+  const recipientLabel =
+    recipientCount === 1
+      ? firstRecipientName
+      : t('validation.notificationLine.investorsMany', { count: recipientCount });
   return (
     <span className="inline-flex items-center gap-1.5 rounded-full border border-blue-200 bg-blue-50 px-2 py-0.5 text-[11px] font-medium text-blue-800 hover:border-blue-300 hover:bg-blue-100 dark:border-blue-900/40 dark:bg-blue-950/30 dark:text-blue-200">
       <Bell className="h-3 w-3" />
@@ -1253,13 +1263,11 @@ function NotificationBadge({
         </span>
       )}
       <span aria-hidden className="text-blue-300">·</span>
-      <span className="text-blue-700/80 dark:text-blue-300/80">
-        {t(
-          recipientCount > 1
-            ? 'validation.notificationLine.recipientsMany'
-            : 'validation.notificationLine.recipientsOne',
-          { count: recipientCount },
-        )}
+      <span
+        className="max-w-[200px] truncate text-blue-700/80 dark:text-blue-300/80"
+        title={recipientLabel}
+      >
+        {recipientLabel}
       </span>
     </span>
   );

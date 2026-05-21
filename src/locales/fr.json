@@ -2359,6 +2359,7 @@
       "templateLabel": "Modèle",
       "recipientsOne": "{{count}} destinataire",
       "recipientsMany": "{{count}} destinataires",
+      "investorsMany": "{{count}} investisseurs",
       "channelEmail": "Email",
       "channelPortal": "Portail LP",
       "channelBoth": "Email + Portail",
