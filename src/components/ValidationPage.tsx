@@ -22,7 +22,6 @@ import {
   Package,
   type LucideIcon,
 } from 'lucide-react';
-import { Checkbox } from './ui/checkbox';
 import { toast } from 'sonner@2.0.3';
 import { Button } from './ui/button';
 import {
@@ -347,8 +346,6 @@ export function ValidationPage(_props: ValidationPageProps) {
   const [pageSize, setPageSize] = useState(10);
   const [previewDocument, setPreviewDocument] =
     useState<ValidationDocument | null>(null);
-  // Multi-select state for bulk publish/reject.
-  const [selectedIds, setSelectedIds] = useState<Set<number>>(new Set());
   // Active confirmation dialog (null when no dialog open).
   const [confirmDialog, setConfirmDialog] = useState<
     | { kind: 'publish'; docs: ValidationDocument[] }
@@ -554,20 +551,6 @@ export function ValidationPage(_props: ValidationPageProps) {
     setPage(1);
   }, [activeStatus, activeFilters, searchTerm, pageSize]);
 
-  // Drop selections that are no longer visible (e.g. after status flip).
-  useEffect(() => {
-    setSelectedIds((prev) => {
-      const visibleIds = new Set(flatDocs.map((d) => d.id));
-      let changed = false;
-      const next = new Set<number>();
-      prev.forEach((id) => {
-        if (visibleIds.has(id)) next.add(id);
-        else changed = true;
-      });
-      return changed ? next : prev;
-    });
-  }, [flatDocs]);
-
   const handleFilterChange = (
     filterId: string,
     value: string | string[] | null,
@@ -633,52 +616,11 @@ export function ValidationPage(_props: ValidationPageProps) {
     toast.info(t('validation.toast.docPending'), { description: doc.name });
   };
 
-  // ---------------------------------------------------------------------------
-  // Multi-select + bulk actions
-  // ---------------------------------------------------------------------------
-
-  const toggleRowSelected = (docId: number) => {
-    setSelectedIds((prev) => {
-      const next = new Set(prev);
-      if (next.has(docId)) next.delete(docId);
-      else next.add(docId);
-      return next;
-    });
-  };
-
-  const togglePageSelection = (checked: boolean) => {
-    setSelectedIds((prev) => {
-      const next = new Set(prev);
-      pageDocs.forEach((doc) => {
-        if (checked) next.add(doc.id);
-        else next.delete(doc.id);
-      });
-      return next;
-    });
-  };
-
-  const selectedDocs = useMemo(
-    () => flatDocs.filter((d) => selectedIds.has(d.id)),
-    [flatDocs, selectedIds],
-  );
-
   const toggleBatchExpand = (batchId: string) => {
     setExpandedBatchIds((prev) => {
       const next = new Set(prev);
       if (next.has(batchId)) next.delete(batchId);
       else next.add(batchId);
-      return next;
-    });
-  };
-
-  const toggleBatchSelected = (batch: DynamicBatch) => {
-    setSelectedIds((prev) => {
-      const next = new Set(prev);
-      const allSelected = batch.docs.every((d) => next.has(d.id));
-      batch.docs.forEach((d) => {
-        if (allSelected) next.delete(d.id);
-        else next.add(d.id);
-      });
       return next;
     });
   };
@@ -708,7 +650,6 @@ export function ValidationPage(_props: ValidationPageProps) {
       if (isDynamicDoc(d.id)) setDynamicDocumentStatus(d.id, 'validated');
     });
     promoteToGed(docs, 'validated');
-    setSelectedIds(new Set());
     // Count notification groups for the toast.
     const sigs = new Set<string>();
     docs.forEach((d) => {
@@ -739,7 +680,6 @@ export function ValidationPage(_props: ValidationPageProps) {
       if (isDynamicDoc(d.id)) setDynamicDocumentStatus(d.id, 'rejected');
     });
     promoteToGed(docs, 'rejected');
-    setSelectedIds(new Set());
     toast.error(t('validation.toast.bulkRejected', { count: docs.length }));
   };
 
@@ -885,77 +825,6 @@ export function ValidationPage(_props: ValidationPageProps) {
             />
           </div>
 
-          {/* Bulk action bar */}
-          {selectedDocs.length > 0 && (
-            <div className="flex flex-wrap items-center justify-between gap-3 border-b border-blue-100 bg-blue-50/60 px-4 py-2 dark:border-blue-900/30 dark:bg-blue-950/20">
-              <div className="flex items-baseline gap-2">
-                <span className="text-sm font-medium text-blue-900 dark:text-blue-200">
-                  {t(
-                    selectedDocs.length > 1
-                      ? 'validation.bulk.selectionMany'
-                      : 'validation.bulk.selectionOne',
-                    { count: selectedDocs.length },
-                  )}
-                </span>
-                {(() => {
-                  const allOnPageSelected =
-                    pageDocs.length > 0 &&
-                    pageDocs.every((d) => selectedIds.has(d.id));
-                  const hasMore = flatDocs.length > selectedDocs.length;
-                  if (selectedDocs.length === flatDocs.length && flatDocs.length > pageDocs.length) {
-                    return (
-                      <span className="text-xs text-blue-800/80">
-                        {t('validation.bulk.allMatchingSelected', { count: flatDocs.length })}
-                      </span>
-                    );
-                  }
-                  if (allOnPageSelected && hasMore) {
-                    return (
-                      <button
-                        type="button"
-                        onClick={() =>
-                          setSelectedIds(new Set(flatDocs.map((d) => d.id)))
-                        }
-                        className="text-xs font-medium text-blue-700 underline-offset-2 hover:underline dark:text-blue-300"
-                      >
-                        {t('validation.bulk.selectAllMatching', { count: flatDocs.length })}
-                      </button>
-                    );
-                  }
-                  return null;
-                })()}
-              </div>
-              <div className="flex items-center gap-1.5">
-                <Button
-                  variant="outline"
-                  size="sm"
-                  className="h-8 gap-1.5 text-red-600 hover:bg-red-50 hover:text-red-700 dark:hover:bg-red-950"
-                  onClick={() => openRejectConfirm(selectedDocs)}
-                >
-                  <X className="h-3.5 w-3.5" />
-                  {t('validation.bulk.reject')}
-                </Button>
-                <Button
-                  size="sm"
-                  className="h-8 gap-1.5 bg-emerald-600 text-white hover:bg-emerald-700"
-                  onClick={() => openPublishConfirm(selectedDocs)}
-                >
-                  <Check className="h-3.5 w-3.5" />
-                  {t('validation.bulk.publish')}
-                </Button>
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  className="h-8 gap-1.5 text-xs text-gray-600 hover:text-gray-900"
-                  onClick={() => setSelectedIds(new Set())}
-                >
-                  <X className="h-3 w-3" />
-                  {t('validation.bulk.clear')}
-                </Button>
-              </div>
-            </div>
-          )}
-
           {/* Table */}
           <div className="flex-1">
             {isLoading ? (
@@ -982,18 +851,6 @@ export function ValidationPage(_props: ValidationPageProps) {
                 <table className="w-full">
                   <thead>
                     <tr className="border-b border-border bg-muted/40 backdrop-blur-sm">
-                      <th className="w-10 px-3 py-4 text-left">
-                        <Checkbox
-                          checked={
-                            pageDocs.length > 0 &&
-                            pageDocs.every((d) => selectedIds.has(d.id))
-                          }
-                          onCheckedChange={(checked) =>
-                            togglePageSelection(checked === true)
-                          }
-                          aria-label="select-all"
-                        />
-                      </th>
                       <th className="px-4 py-3 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider max-w-[320px]">
                         {t('validation.table.document')}
                       </th>
@@ -1033,8 +890,6 @@ export function ValidationPage(_props: ValidationPageProps) {
                             doc={row.doc}
                             notification={notification}
                             templateLabel={templateLabel}
-                            selected={selectedIds.has(row.doc.id)}
-                            onToggleSelect={() => toggleRowSelected(row.doc.id)}
                             onPreview={() => setPreviewDocument(row.doc)}
                             onValidate={() => openPublishConfirm([row.doc])}
                             onReject={() => openRejectConfirm([row.doc])}
@@ -1049,12 +904,6 @@ export function ValidationPage(_props: ValidationPageProps) {
                       }
                       const batch = row.batch;
                       const batchExpanded = expandedBatchIds.has(batch.id);
-                      const batchAllSelected = batch.docs.every((d) =>
-                        selectedIds.has(d.id),
-                      );
-                      const batchSomeSelected = batch.docs.some((d) =>
-                        selectedIds.has(d.id),
-                      );
                       const batchStatus = deriveBatchStatus(batch.docs);
                       return (
                         <DynamicBatchRow
@@ -1062,10 +911,7 @@ export function ValidationPage(_props: ValidationPageProps) {
                           batch={batch}
                           expanded={batchExpanded}
                           status={batchStatus}
-                          allSelected={batchAllSelected}
-                          someSelected={batchSomeSelected}
                           onToggleExpand={() => toggleBatchExpand(batch.id)}
-                          onToggleSelect={() => toggleBatchSelected(batch)}
                           onPreviewNotification={() =>
                             setPreviewNotificationDocId(batch.docs[0].id)
                           }
@@ -1074,7 +920,6 @@ export function ValidationPage(_props: ValidationPageProps) {
                           onReset={() =>
                             batch.docs.forEach((d) => handleResetToPending(d))
                           }
-                          selectedIds={selectedIds}
                           onPreviewChild={(d) => setPreviewDocument(d)}
                           stickyClass={stickyBodyActionsClass()}
                         />
@@ -1189,15 +1034,13 @@ export function ValidationPage(_props: ValidationPageProps) {
 }
 
 // ---------------------------------------------------------------------------
-// Row sub-component — flat document row with checkbox + notification badge
+// Row sub-component — flat document row with notification badge
 // ---------------------------------------------------------------------------
 
 interface DocumentRowProps {
   doc: ValidationDocument;
   notification?: ValidationDocument['notification'];
   templateLabel?: string;
-  selected: boolean;
-  onToggleSelect: () => void;
   onPreview: () => void;
   onValidate: () => void;
   onReject: () => void;
@@ -1214,8 +1057,6 @@ function DocumentRow({
   doc,
   notification,
   templateLabel,
-  selected,
-  onToggleSelect,
   onPreview,
   onValidate,
   onReject,
@@ -1242,22 +1083,9 @@ function DocumentRow({
   const commentText = doc.comment ? t(doc.comment.key, doc.comment.vars) : '';
   return (
     <tr
-      className={cn(
-        'border-b border-border/70 transition-colors cursor-pointer',
-        selected ? 'bg-blue-50/40 hover:bg-blue-50 dark:bg-blue-950/20' : 'hover:bg-muted/50',
-      )}
+      className="border-b border-border/70 transition-colors cursor-pointer hover:bg-muted/50"
       onClick={onPreview}
     >
-      <td
-        className="w-10 px-3 py-4 align-top"
-        onClick={(e) => e.stopPropagation()}
-      >
-        <Checkbox
-          checked={selected}
-          onCheckedChange={() => onToggleSelect()}
-          aria-label={`select-${doc.id}`}
-        />
-      </td>
       <td className="px-4 py-2.5 align-top max-w-[320px]">
         {doc.kindKey && (
           <div className="mb-0.5 text-[10px] font-semibold uppercase tracking-wide text-gray-500 dark:text-gray-400">
@@ -1756,15 +1584,11 @@ interface DynamicBatchRowProps {
   batch: DynamicBatch;
   expanded: boolean;
   status: ValidationStatus;
-  allSelected: boolean;
-  someSelected: boolean;
   onToggleExpand: () => void;
-  onToggleSelect: () => void;
   onPreviewNotification: () => void;
   onValidate: () => void;
   onReject: () => void;
   onReset: () => void;
-  selectedIds: Set<number>;
   onPreviewChild: (doc: ValidationDocument) => void;
   stickyClass: string;
 }
@@ -1773,15 +1597,11 @@ function DynamicBatchRow({
   batch,
   expanded,
   status,
-  allSelected,
-  someSelected,
   onToggleExpand,
-  onToggleSelect,
   onPreviewNotification,
   onValidate,
   onReject,
   onReset,
-  selectedIds,
   onPreviewChild,
   stickyClass,
 }: DynamicBatchRowProps) {
@@ -1808,16 +1628,6 @@ function DynamicBatchRow({
   return (
     <>
       <tr className="border-b border-blue-100 bg-blue-50/40 hover:bg-blue-50/60 dark:border-blue-900/30 dark:bg-blue-950/15">
-        <td
-          className="w-10 px-3 py-2.5 align-top"
-          onClick={(e) => e.stopPropagation()}
-        >
-          <Checkbox
-            checked={allSelected ? true : someSelected ? 'indeterminate' : false}
-            onCheckedChange={() => onToggleSelect()}
-            aria-label={`select-batch-${batch.id}`}
-          />
-        </td>
         <td className="px-4 py-2.5 align-top max-w-[320px]">
           <div className="flex items-start gap-2">
             <button
@@ -1945,17 +1755,9 @@ function DynamicBatchRow({
         batch.docs.map((d) => (
           <tr
             key={`batch-${batch.id}-child-${d.id}`}
-            className={cn(
-              'border-b border-border/40 cursor-pointer transition-colors',
-              selectedIds.has(d.id)
-                ? 'bg-blue-50/30 hover:bg-blue-50/50 dark:bg-blue-950/15'
-                : 'bg-blue-50/10 hover:bg-blue-50/30 dark:bg-blue-950/5',
-            )}
+            className="border-b border-border/40 cursor-pointer transition-colors bg-blue-50/10 hover:bg-blue-50/30 dark:bg-blue-950/5"
             onClick={() => onPreviewChild(d)}
           >
-            <td className="w-10 px-3 py-2 align-top">
-              <span aria-hidden className="text-gray-300">└</span>
-            </td>
             <td className="px-4 py-2 align-top max-w-[320px] pl-8">
               {d.kindKey && (
                 <div className="mb-0.5 text-[10px] font-semibold uppercase tracking-wide text-gray-500 dark:text-gray-400">
