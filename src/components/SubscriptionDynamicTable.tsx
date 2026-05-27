@@ -561,18 +561,24 @@ export function SubscriptionDynamicTable({
           </div>
         );
 
-      case 'pendingCalls':
-        return row.pendingCalls ? (
+      case 'pendingCalls': {
+        const pendingCallsCount = row.pendingCalls ?? 0;
+        return pendingCallsCount > 0 ? (
           <div className="flex justify-center">
-            <Badge className="bg-orange-100 dark:bg-orange-950/50 text-orange-700 dark:text-orange-300 border-orange-200 dark:border-orange-800">
-              {t('subscriptions.table.yes')}
+            <Badge className={cn(
+              pendingCallsCount > 2
+                ? "bg-red-100 dark:bg-red-950/50 text-red-700 dark:text-red-300 border-red-200 dark:border-red-800"
+                : "bg-orange-100 dark:bg-orange-950/50 text-orange-700 dark:text-orange-300 border-orange-200 dark:border-orange-800"
+            )}>
+              {pendingCallsCount}
             </Badge>
           </div>
         ) : (
           <div className="flex justify-center">
-            <span className="text-sm text-gray-400 dark:text-gray-600">-</span>
+            <span className="text-sm text-gray-500 dark:text-gray-400">0</span>
           </div>
         );
+      }
 
       case 'onboardingReopened':
         return row.onboardingReopened > 0 ? (

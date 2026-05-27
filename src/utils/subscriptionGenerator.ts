@@ -261,7 +261,7 @@ export interface Subscription {
   subscriptionPremium?: number | null; // Prime de souscription (montant additionnel saisi à la création)
   language?: 'fr' | 'en' | 'de' | 'it' | 'es'; // Langue de la souscription
   sepaEnabled?: boolean; // Prélèvement SEPA activé
-  pendingCalls?: boolean; // Appels en attente
+  pendingCalls?: number; // Nombre d'appels de fonds en attente de versement
   onboardingReopened?: number; // Nombre de réouvertures de l'onboarding
 }
 
@@ -552,8 +552,8 @@ export function generateSubscriptions(count: number): Subscription[] {
     // SEPA activé (70% activé)
     const sepaEnabled = Math.random() > 0.3;
     
-    // Appels en attente (uniquement pour les souscriptions actives, 30% de chances)
-    const pendingCalls = status === 'Active' && Math.random() > 0.7;
+    // Nombre d'appels de fonds en attente de versement (uniquement souscriptions actives)
+    const pendingCalls = status === 'Active' && Math.random() > 0.6 ? randomNumber(1, 5) : 0;
     
     // Nombre de réouvertures de l'onboarding (0-3)
     const onboardingReopened = Math.random() > 0.8 ? randomNumber(1, 3) : 0;

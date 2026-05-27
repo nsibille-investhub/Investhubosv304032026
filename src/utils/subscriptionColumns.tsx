@@ -77,6 +77,7 @@ const ACTIVE_COLUMNS: ColumnConfig[] = [
   COL('calledAmount', 'subscriptions.columns.calledAmount', { width: '150px', sortable: true, align: 'right' }),
   COL('remainingAmount', 'subscriptions.columns.remainingAmount', { width: '150px', sortable: true, align: 'right' }),
   COL('distributedAmount', 'subscriptions.columns.distributedAmount', { width: '150px', sortable: true, align: 'right' }),
+  COL('pendingCalls', 'subscriptions.columns.pendingCalls', { width: '140px', sortable: true, align: 'center' }),
   COL('entryFees', 'subscriptions.columns.entryFees', { width: '140px', sortable: true, align: 'right' }),
   COL('entryFeesAmount', 'subscriptions.columns.entryFeesAmount', { width: '180px', sortable: true, align: 'right' }),
   COL('subscriptionPremium', 'subscriptions.columns.subscriptionPremium', { width: '180px', sortable: true, align: 'right' }),
