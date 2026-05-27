@@ -258,6 +258,7 @@ export interface Subscription {
   activatedAt?: Date | null; // Date d'activation
   notes?: string | null; // Notes supplémentaires
   entryFees?: number; // Frais d'entrée en %
+  subscriptionPremium?: number | null; // Prime de souscription (montant additionnel saisi à la création)
   language?: 'fr' | 'en' | 'de' | 'it' | 'es'; // Langue de la souscription
   sepaEnabled?: boolean; // Prélèvement SEPA activé
   pendingCalls?: boolean; // Appels en attente
@@ -540,6 +541,9 @@ export function generateSubscriptions(count: number): Subscription[] {
     // Frais d'entrée (0%, 2%, 3%, 5%)
     const entryFeesOptions = [0, 2, 3, 5];
     const entryFees = randomElement(entryFeesOptions);
+
+    // Prime de souscription : montant additionnel saisi à la création (~30% des souscriptions)
+    const subscriptionPremium = Math.random() > 0.7 ? randomNumber(100, 5000) : null;
     
     // Langue de la souscription
     const languages = ['fr', 'en', 'de', 'it', 'es'];
@@ -616,6 +620,7 @@ export function generateSubscriptions(count: number): Subscription[] {
       activatedAt,
       notes,
       entryFees,
+      subscriptionPremium,
       language,
       sepaEnabled,
       pendingCalls,

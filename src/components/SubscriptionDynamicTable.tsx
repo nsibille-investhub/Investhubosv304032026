@@ -509,20 +509,28 @@ export function SubscriptionDynamicTable({
         );
 
       case 'entryFees':
-        return row.entryFees ? (
-          <span className="text-sm font-medium text-gray-900 dark:text-gray-100">{row.entryFees}%</span>
-        ) : (
-          <span className="text-sm text-gray-400 dark:text-gray-600">-</span>
+        return (
+          <span className="text-sm font-medium text-gray-900 dark:text-gray-100">
+            {(row.entryFees ?? 0)}%
+          </span>
         );
 
-      case 'entryFeesAmount':
+      case 'entryFeesAmount': {
         const entryFeesAmount = row.entryFees && row.amount ? (row.amount * row.entryFees) / 100 : 0;
-        return entryFeesAmount > 0 ? (
+        return (
           <span className="text-sm font-semibold text-gray-900 dark:text-gray-100">
             {formatCurrency(entryFeesAmount)}
           </span>
+        );
+      }
+
+      case 'subscriptionPremium':
+        return row.subscriptionPremium ? (
+          <span className="text-sm font-semibold text-gray-900 dark:text-gray-100">
+            {formatCurrency(row.subscriptionPremium)}
+          </span>
         ) : (
-          <span className="text-sm text-gray-400 dark:text-gray-600">-</span>
+          <span className="text-sm text-gray-400 dark:text-gray-600"></span>
         );
 
       case 'language':

@@ -79,6 +79,7 @@ const ACTIVE_COLUMNS: ColumnConfig[] = [
   COL('distributedAmount', 'subscriptions.columns.distributedAmount', { width: '150px', sortable: true, align: 'right' }),
   COL('entryFees', 'subscriptions.columns.entryFees', { width: '140px', sortable: true, align: 'right' }),
   COL('entryFeesAmount', 'subscriptions.columns.entryFeesAmount', { width: '180px', sortable: true, align: 'right' }),
+  COL('subscriptionPremium', 'subscriptions.columns.subscriptionPremium', { width: '180px', sortable: true, align: 'right' }),
   COL('depositary', 'subscriptions.columns.depositary', { width: '120px', sortable: true, align: 'center' }),
   COL('activatedAt', 'subscriptions.columns.activatedAt', { width: '140px', sortable: true }),
 ];
@@ -96,6 +97,7 @@ const ALL_COLUMNS: ColumnConfig[] = [
   COL('distributedAmount', 'subscriptions.columns.distributedAmount', { width: '150px', sortable: true, align: 'right' }),
   COL('entryFees', 'subscriptions.columns.entryFees', { width: '140px', sortable: true, align: 'right' }),
   COL('entryFeesAmount', 'subscriptions.columns.entryFeesAmount', { width: '180px', sortable: true, align: 'right' }),
+  COL('subscriptionPremium', 'subscriptions.columns.subscriptionPremium', { width: '180px', sortable: true, align: 'right' }),
   COL('fund', 'subscriptions.columns.fund', { sortable: true, width: 'auto' }),
   COL('compartment', 'subscriptions.columns.compartment', { sortable: false, width: 'auto' }),
 
