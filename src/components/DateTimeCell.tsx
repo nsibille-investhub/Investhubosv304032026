@@ -14,8 +14,8 @@ export function DateTimeCell({ date }: DateTimeCellProps) {
 
   const locale = lang === 'en' ? 'en-US' : 'fr-FR';
   const dateLabel = dateObj.toLocaleDateString(locale, {
-    day: 'numeric',
-    month: 'short',
+    day: '2-digit',
+    month: '2-digit',
     year: 'numeric',
   });
   const timeLabel = dateObj.toLocaleTimeString(locale, {
