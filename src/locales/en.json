@@ -2404,6 +2404,23 @@
       "moreRecipientsMany": "+ {{count}} others",
       "moreDocsOne": "+ {{count}} more document",
       "moreDocsMany": "+ {{count}} more documents",
+      "previewGroupAria": "Preview this group",
+      "previewGroupTooltip": "Preview",
+      "focused": "Filtered to this group.",
+      "clearFocus": "Show all groups",
+      "tabs": {
+        "recap": "Summary",
+        "comms": "Communications preview",
+        "docs": "Documents preview"
+      },
+      "comms": {
+        "noneTitle": "No communication will be sent",
+        "noneBody": "This publication doesn't send any notification — documents will simply be published to the portal.",
+        "from": "From:",
+        "to": "To:",
+        "subject": "Subject:",
+        "attachments": "Attachments"
+      },
       "cancel": "Cancel",
       "confirm": "Confirm publication"
     },

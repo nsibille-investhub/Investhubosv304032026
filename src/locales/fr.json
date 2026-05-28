@@ -2404,6 +2404,23 @@
       "moreRecipientsMany": "+ {{count}} autres",
       "moreDocsOne": "+ {{count}} document supplémentaire",
       "moreDocsMany": "+ {{count}} documents supplémentaires",
+      "previewGroupAria": "Aperçu de ce groupe",
+      "previewGroupTooltip": "Aperçu",
+      "focused": "Affichage filtré sur ce groupe.",
+      "clearFocus": "Voir tous les groupes",
+      "tabs": {
+        "recap": "Récapitulatif",
+        "comms": "Aperçu des communications",
+        "docs": "Aperçu des documents"
+      },
+      "comms": {
+        "noneTitle": "Aucune communication à envoyer",
+        "noneBody": "Cette publication n'envoie aucune notification — les documents seront simplement publiés dans le portail.",
+        "from": "De :",
+        "to": "À :",
+        "subject": "Objet :",
+        "attachments": "Pièces jointes"
+      },
       "cancel": "Annuler",
       "confirm": "Confirmer la publication"
     },
