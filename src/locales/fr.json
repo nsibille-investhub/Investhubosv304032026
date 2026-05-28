@@ -2646,5 +2646,84 @@
     "csv": {
       "filename": "historique-sms-{{date}}.csv"
     }
+  },
+  "complianceAlerts": {
+    "table": {
+      "name": "Nom",
+      "nameAlertLabel": "Nom alerte",
+      "changes": "Changement",
+      "match": "Score",
+      "list": "Liste",
+      "status": "Statut",
+      "date": "Date",
+      "actions": "Actions"
+    },
+    "changes": {
+      "new": "Nouveau",
+      "modified": "Modifié"
+    },
+    "status": {
+      "pending": "En attente",
+      "confirmed": "Confirmée",
+      "rejected": "Rejetée"
+    },
+    "list": {
+      "pep": "PPE",
+      "watchList": "Liste de surveillance",
+      "sanctions": "Sanctions",
+      "adverseMedia": "Presse négative",
+      "crime": "Criminalité",
+      "financialWarning": "Alerte financière"
+    },
+    "tooltip": {
+      "view": "Voir le détail",
+      "confirm": "Confirmer (True Hit)",
+      "reject": "Rejeter (False Hit)"
+    },
+    "drawer": {
+      "analyst": "Analyste",
+      "assignAnalyst": "Assigner un analyste",
+      "clickToSelect": "Cliquer pour sélectionner",
+      "monitoring": "Monitoring",
+      "active": "Actif",
+      "inactive": "Inactif",
+      "aiAnalysis": "Analyse IA",
+      "aiToastTitle": "Analyse IA lancée",
+      "aiToastBody": "Des recommandations sont générées pour {{name}}",
+      "commentPlaceholder": "Le commentaire est obligatoire pour vos décisions",
+      "decisionUnsure": "Incertain",
+      "decisionFalseHit": "False Hit",
+      "decisionTrueHit": "True Hit",
+      "confirm": "Confirmer",
+      "details": "Détails de l'alerte",
+      "alertDetails": "Détails de l'alerte",
+      "context": "Contexte",
+      "nameAlert": "Nom de l'alerte",
+      "alertTypes": "Type(s) d'alerte",
+      "attachedInvestors": "Investisseurs rattachés",
+      "noAttachedInvestors": "Aucun investisseur rattaché",
+      "previousFindings": "Listes déjà qualifiées",
+      "noPreviousFindings": "Aucune liste déjà qualifiée",
+      "keywords": "Mots-clés",
+      "identification": "Identification",
+      "sources": "Sources",
+      "alertList": "Liste d'alerte",
+      "missingComment": "Veuillez ajouter un commentaire avant de confirmer",
+      "missingDecision": "Veuillez sélectionner une décision"
+    },
+    "investorRole": {
+      "source": "Source",
+      "beneficiary": "Bénéficiaire effectif",
+      "coInvestor": "Co-investisseur",
+      "legalRep": "Représentant légal",
+      "proxy": "Mandataire"
+    },
+    "toast": {
+      "confirmedTitle": "Alerte confirmée",
+      "rejectedTitle": "Alerte rejetée",
+      "decisionBody": "L'alerte pour {{name}} a été {{action}}",
+      "actionConfirmed": "confirmée",
+      "actionRejected": "rejetée"
+    }
   }
 }
