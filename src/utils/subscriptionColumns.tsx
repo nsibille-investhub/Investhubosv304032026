@@ -14,12 +14,13 @@ export interface ColumnConfig {
 const COL = (id: string, label: string, rest: Partial<ColumnConfig> = {}): ColumnConfig => ({ id, label, ...rest });
 
 const CREATED_COLUMNS: ColumnConfig[] = [
-  COL('name', 'subscriptions.columns.name', { width: '300px', sortable: true }),
+  COL('name', 'subscriptions.columns.name', { width: '320px', sortable: true }),
   COL('investor', 'subscriptions.columns.investor', { width: '250px', sortable: true }),
   COL('amount', 'subscriptions.columns.amount', { width: '150px', sortable: true, align: 'right' }),
   COL('quantity', 'subscriptions.columns.quantity', { width: '120px', sortable: true, align: 'right' }),
+  COL('subscriptionPremium', 'subscriptions.columns.subscriptionPremium', { width: '160px', sortable: true, align: 'right' }),
+  COL('documents', 'subscriptions.columns.documents', { width: '180px', sortable: false, align: 'center' }),
   COL('fundShare', 'subscriptions.columns.fundShare', { sortable: true, width: 'auto' }),
-  COL('language', 'subscriptions.columns.language', { width: '100px', sortable: true, align: 'center' }),
   COL('partner', 'subscriptions.columns.partner', { sortable: false, width: 'auto' }),
   COL('createdAt', 'subscriptions.columns.createdAt', { width: '140px', sortable: true }),
   COL('source', 'subscriptions.columns.source', { width: '140px', sortable: true }),
@@ -27,12 +28,13 @@ const CREATED_COLUMNS: ColumnConfig[] = [
 ];
 
 const ONBOARDING_COLUMNS: ColumnConfig[] = [
-  COL('name', 'subscriptions.columns.name', { width: '300px', sortable: true }),
+  COL('name', 'subscriptions.columns.name', { width: '320px', sortable: true }),
   COL('investor', 'subscriptions.columns.investor', { width: '250px', sortable: true }),
   COL('amount', 'subscriptions.columns.amount', { width: '150px', sortable: true, align: 'right' }),
   COL('quantity', 'subscriptions.columns.quantity', { width: '120px', sortable: true, align: 'right' }),
+  COL('subscriptionPremium', 'subscriptions.columns.subscriptionPremium', { width: '160px', sortable: true, align: 'right' }),
+  COL('documents', 'subscriptions.columns.documents', { width: '180px', sortable: false, align: 'center' }),
   COL('fundShare', 'subscriptions.columns.fundShare', { sortable: true, width: 'auto' }),
-  COL('language', 'subscriptions.columns.language', { width: '100px', sortable: true, align: 'center' }),
   COL('onboardingStatus', 'subscriptions.columns.onboardingStatus', { width: '180px', sortable: true }),
   COL('blockageReason', 'subscriptions.columns.blockageReason', { width: '200px', sortable: false }),
   COL('completionRate', 'subscriptions.columns.completionRate', { width: '130px', sortable: true, align: 'center' }),
@@ -41,12 +43,13 @@ const ONBOARDING_COLUMNS: ColumnConfig[] = [
 ];
 
 const SIGNATURE_COLUMNS: ColumnConfig[] = [
-  COL('name', 'subscriptions.columns.name', { width: '300px', sortable: true }),
+  COL('name', 'subscriptions.columns.name', { width: '320px', sortable: true }),
   COL('investor', 'subscriptions.columns.investor', { width: '250px', sortable: true }),
   COL('amount', 'subscriptions.columns.amount', { width: '150px', sortable: true, align: 'right' }),
   COL('quantity', 'subscriptions.columns.quantity', { width: '120px', sortable: true, align: 'right' }),
+  COL('subscriptionPremium', 'subscriptions.columns.subscriptionPremium', { width: '160px', sortable: true, align: 'right' }),
+  COL('documents', 'subscriptions.columns.documents', { width: '180px', sortable: false, align: 'center' }),
   COL('fundShare', 'subscriptions.columns.fundShare', { sortable: true, width: 'auto' }),
-  COL('language', 'subscriptions.columns.language', { width: '100px', sortable: true, align: 'center' }),
   COL('statut', 'subscriptions.columns.statut', { width: '140px', sortable: true }),
   COL('signatures', 'subscriptions.columns.signatures', { width: '180px', sortable: false }),
   COL('sentAt', 'subscriptions.columns.sentAt', { width: '140px', sortable: true }),
@@ -60,7 +63,8 @@ const COUNTER_SIGNATURE_COLUMNS: ColumnConfig[] = [
   COL('quantity', 'subscriptions.columns.quantity', { width: '120px', sortable: true, align: 'right' }),
   COL('fund', 'subscriptions.columns.fund', { sortable: true, width: 'auto' }),
   COL('compartment', 'subscriptions.columns.compartment', { sortable: false, width: 'auto' }),
-  COL('language', 'subscriptions.columns.language', { width: '100px', sortable: true, align: 'center' }),
+  COL('subscriptionPremium', 'subscriptions.columns.subscriptionPremium', { width: '160px', sortable: true, align: 'right' }),
+  COL('documents', 'subscriptions.columns.documents', { width: '180px', sortable: false, align: 'center' }),
   COL('counterSignatureStatus', 'subscriptions.columns.counterSignatureStatus', { width: '180px', sortable: true }),
   COL('counterSignatureOwner', 'subscriptions.columns.counterSignatureOwner', { width: '160px', sortable: true }),
   COL('investorSignedAt', 'subscriptions.columns.investorSignedAt', { width: '160px', sortable: true }),
@@ -73,29 +77,30 @@ const ACTIVE_COLUMNS: ColumnConfig[] = [
   COL('compartment', 'subscriptions.columns.compartment', { sortable: false, width: 'auto' }),
   COL('amount', 'subscriptions.columns.amount', { width: '150px', sortable: true, align: 'right' }),
   COL('quantity', 'subscriptions.columns.quantity', { width: '120px', sortable: true, align: 'right' }),
-  COL('language', 'subscriptions.columns.language', { width: '100px', sortable: true, align: 'center' }),
+  COL('subscriptionPremium', 'subscriptions.columns.subscriptionPremium', { width: '160px', sortable: true, align: 'right' }),
+  COL('documents', 'subscriptions.columns.documents', { width: '180px', sortable: false, align: 'center' }),
   COL('calledAmount', 'subscriptions.columns.calledAmount', { width: '150px', sortable: true, align: 'right' }),
   COL('remainingAmount', 'subscriptions.columns.remainingAmount', { width: '150px', sortable: true, align: 'right' }),
   COL('distributedAmount', 'subscriptions.columns.distributedAmount', { width: '150px', sortable: true, align: 'right' }),
-  COL('entryFees', 'subscriptions.columns.entryFees', { width: '140px', sortable: true, align: 'right' }),
-  COL('entryFeesAmount', 'subscriptions.columns.entryFeesAmount', { width: '180px', sortable: true, align: 'right' }),
+  COL('entryFees', 'subscriptions.columns.entryFees', { width: '160px', sortable: true, align: 'right' }),
   COL('depositary', 'subscriptions.columns.depositary', { width: '120px', sortable: true, align: 'center' }),
   COL('activatedAt', 'subscriptions.columns.activatedAt', { width: '140px', sortable: true }),
 ];
 
 const ALL_COLUMNS: ColumnConfig[] = [
   // Identification
-  COL('name', 'subscriptions.columns.name', { width: '300px', sortable: true }),
+  COL('name', 'subscriptions.columns.name', { width: '320px', sortable: true }),
   COL('investor', 'subscriptions.columns.investor', { width: '250px', sortable: true }),
 
   // Amounts & products
   COL('amount', 'subscriptions.columns.amount', { width: '150px', sortable: true, align: 'right' }),
   COL('quantity', 'subscriptions.columns.quantity', { width: '120px', sortable: true, align: 'right' }),
+  COL('subscriptionPremium', 'subscriptions.columns.subscriptionPremium', { width: '160px', sortable: true, align: 'right' }),
+  COL('documents', 'subscriptions.columns.documents', { width: '180px', sortable: false, align: 'center' }),
   COL('calledAmount', 'subscriptions.columns.calledAmount', { width: '150px', sortable: true, align: 'right' }),
   COL('remainingAmount', 'subscriptions.columns.remainingAmount', { width: '150px', sortable: true, align: 'right' }),
   COL('distributedAmount', 'subscriptions.columns.distributedAmount', { width: '150px', sortable: true, align: 'right' }),
-  COL('entryFees', 'subscriptions.columns.entryFees', { width: '140px', sortable: true, align: 'right' }),
-  COL('entryFeesAmount', 'subscriptions.columns.entryFeesAmount', { width: '180px', sortable: true, align: 'right' }),
+  COL('entryFees', 'subscriptions.columns.entryFees', { width: '160px', sortable: true, align: 'right' }),
   COL('fund', 'subscriptions.columns.fund', { sortable: true, width: 'auto' }),
   COL('compartment', 'subscriptions.columns.compartment', { sortable: false, width: 'auto' }),
 
@@ -105,7 +110,6 @@ const ALL_COLUMNS: ColumnConfig[] = [
   COL('depositary', 'subscriptions.columns.depositary', { width: '140px', sortable: true }),
 
   // Config & settings
-  COL('language', 'subscriptions.columns.language', { width: '120px', sortable: true }),
   COL('sepaEnabled', 'subscriptions.columns.sepaEnabled', { width: '120px', sortable: true, align: 'center' }),
   COL('pendingCalls', 'subscriptions.columns.pendingCalls', { width: '140px', sortable: true, align: 'center' }),
 

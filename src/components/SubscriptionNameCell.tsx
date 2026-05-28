@@ -5,15 +5,17 @@ import { toast } from 'sonner@2.0.3';
 import { HighlightText } from './HighlightText';
 import { copyToClipboard } from '../utils/clipboard';
 import { ClickableName } from './ClickableName';
+import { LanguageFlag } from './LanguageFlag';
 import { useTranslation } from '../utils/languageContext';
 
 interface SubscriptionNameCellProps {
   name: string;
   id: number;
   searchTerm?: string;
+  language?: 'fr' | 'en' | 'de' | 'it' | 'es';
 }
 
-export function SubscriptionNameCell({ name, id, searchTerm = '' }: SubscriptionNameCellProps) {
+export function SubscriptionNameCell({ name, id, searchTerm = '', language }: SubscriptionNameCellProps) {
   const { t } = useTranslation();
   const [copied, setCopied] = useState(false);
 
@@ -33,15 +35,22 @@ export function SubscriptionNameCell({ name, id, searchTerm = '' }: Subscription
 
   return (
     <div className="flex flex-col gap-1 max-w-[350px]">
-      {/* Nom de la souscription */}
-      <motion.span
-        whileHover={{ x: 2 }}
-        className="truncate"
-      >
-        <ClickableName>
-          <HighlightText text={name} searchTerm={searchTerm} />
-        </ClickableName>
-      </motion.span>
+      {/* Drapeau langue + Nom de la souscription */}
+      <div className="flex items-center gap-2 min-w-0">
+        {language && (
+          <span onClick={(e) => e.stopPropagation()} className="flex-shrink-0">
+            <LanguageFlag language={language} size="sm" showTooltip />
+          </span>
+        )}
+        <motion.span
+          whileHover={{ x: 2 }}
+          className="truncate min-w-0"
+        >
+          <ClickableName>
+            <HighlightText text={name} searchTerm={searchTerm} />
+          </ClickableName>
+        </motion.span>
+      </div>
 
       {/* ID avec bouton de copie */}
       <div className="flex items-center gap-1.5 group">

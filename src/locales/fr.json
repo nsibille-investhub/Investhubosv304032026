@@ -332,8 +332,10 @@
       "calledAmount": "Montant appelé",
       "remainingAmount": "Restant à appeler",
       "distributedAmount": "Montant distribué",
-      "entryFees": "Frais d'entrée (%)",
+      "entryFees": "Frais d'entrée",
       "entryFeesAmount": "Frais d'entrée (montant)",
+      "subscriptionPremium": "Prime de souscription",
+      "documents": "Dossier",
       "depositary": "Dépositaire",
       "activatedAt": "Date d'activation",
       "sourceAll": "Source",
@@ -360,10 +362,20 @@
       "status": "Statut",
       "partner": "Partenaire",
       "noPartner": "Sans partenaire",
+      "subscriber": "Souscripteur",
+      "subscriberPlaceholder": "Investisseur ou structure",
       "fund": "Fonds",
       "shareClass": "Classe de part",
       "type": "Type",
       "manager": "Gestionnaire"
+    },
+    "documents": {
+      "tooltipTitle": "Dossier de souscription",
+      "validatedCount": "{{count}} validé(s)",
+      "pendingCount": "{{count}} en attente",
+      "rejectedCount": "{{count}} rejeté(s)",
+      "progress": "{{handled}} sur {{total}} documents traités",
+      "counterAria": "{{handled}} sur {{total}} documents traités"
     },
     "detail": {
       "monitoringFor": "pour {{name}}",

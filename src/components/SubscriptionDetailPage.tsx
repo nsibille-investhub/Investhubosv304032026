@@ -51,6 +51,7 @@ import { Button } from './ui/button';
 import { Separator } from './ui/separator';
 import { Textarea } from './ui/textarea';
 import { Input } from './ui/input';
+import { ClickableText } from './ClickableText';
 import { toast } from 'sonner';
 import { getStatusColor } from '../utils/subscriptionGenerator';
 import { SubscriptionInfoPopover } from './SubscriptionInfoPopover';
@@ -609,6 +610,8 @@ const mockCapitalCalls = [
     amount: 10000.00,
     subscription: 0.00,
     entryFees: 3000.00,
+    entryFeesRate: 3,
+    subscriptionPremium: 500.00,
     percentage: 10,
     status: 'paid'
   }
@@ -2227,13 +2230,24 @@ export function SubscriptionDetailPage({ subscription, onBack }: SubscriptionDet
                               <span className="font-semibold text-gray-900">500 000,00 €</span>
                             </div>
                             <div className="flex justify-between items-center mb-2">
-                              <span className="text-sm text-gray-600">Frais d'entrée (0.75%)</span>
-                              <span className="font-semibold text-gray-900">3 750,00 €</span>
+                              <span className="text-sm text-gray-600">Prime de souscription</span>
+                              <span className="font-semibold text-gray-900">2 500,00 €</span>
+                            </div>
+                            <div className="flex justify-between items-start mb-2">
+                              <span className="text-sm text-gray-600">Frais d'entrée</span>
+                              <div className="flex flex-col items-end leading-tight">
+                                <ClickableText variant="notClickable" className="font-semibold">
+                                  3 750,00 €
+                                </ClickableText>
+                                <ClickableText variant="notClickable" className="text-xs text-muted-foreground">
+                                  0,75%
+                                </ClickableText>
+                              </div>
                             </div>
                             <Separator className="my-3" />
                             <div className="flex justify-between items-center">
                               <span className="font-semibold text-gray-900">Total à payer</span>
-                              <span className="text-xl font-bold text-blue-600">503 750,00 €</span>
+                              <span className="text-xl font-bold text-blue-600">506 250,00 €</span>
                             </div>
                           </div>
 
@@ -2414,12 +2428,28 @@ export function SubscriptionDetailPage({ subscription, onBack }: SubscriptionDet
           <TabsContent value="capital-calls" className="mt-0">
             <div className="px-8 py-6">
               {/* Summary Cards */}
-              <div className="grid grid-cols-2 gap-4 mb-6">
+              <div className="grid grid-cols-4 gap-4 mb-6">
                 {/* Montant Total Card */}
                 <div className="bg-white border border-gray-200 rounded-xl p-5">
                   <div className="text-xs text-blue-600 mb-2">Montant total appelé</div>
                   <div className="text-2xl font-semibold text-gray-900">
-                    {mockCapitalCalls.reduce((sum, call) => sum + call.amount + call.entryFees, 0).toLocaleString('fr-FR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} €
+                    {mockCapitalCalls.reduce((sum, call) => sum + call.amount + call.entryFees + (call.subscriptionPremium ?? 0), 0).toLocaleString('fr-FR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} €
+                  </div>
+                </div>
+
+                {/* Prime totale */}
+                <div className="bg-white border border-gray-200 rounded-xl p-5">
+                  <div className="text-xs text-emerald-600 mb-2">Prime de souscription totale</div>
+                  <div className="text-2xl font-semibold text-gray-900">
+                    {mockCapitalCalls.reduce((sum, call) => sum + (call.subscriptionPremium ?? 0), 0).toLocaleString('fr-FR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} €
+                  </div>
+                </div>
+
+                {/* Frais d'entrée totaux */}
+                <div className="bg-white border border-gray-200 rounded-xl p-5">
+                  <div className="text-xs text-orange-600 mb-2">Frais d'entrée totaux</div>
+                  <div className="text-2xl font-semibold text-gray-900">
+                    {mockCapitalCalls.reduce((sum, call) => sum + call.entryFees, 0).toLocaleString('fr-FR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} €
                   </div>
                 </div>
 
@@ -2439,13 +2469,14 @@ export function SubscriptionDetailPage({ subscription, onBack }: SubscriptionDet
                   className="gap-2 border-gray-300 hover:bg-gray-50"
                   onClick={() => {
                     // Generate CSV content
-                    const headers = ['Date', 'Appel de fonds', 'Montant', 'Souscription', 'Frais d\'entrée', 'Pourcentage', 'Statut'];
+                    const headers = ['Date', 'Appel de fonds', 'Montant', 'Souscription', 'Prime de souscription', 'Frais d\'entrée', 'Pourcentage', 'Statut'];
                     const rows = mockCapitalCalls.map(call => [
                       call.date,
                       call.call,
                       call.amount.toLocaleString('fr-FR', { minimumFractionDigits: 2 }) + ' €',
                       call.subscription.toLocaleString('fr-FR', { minimumFractionDigits: 2 }) + ' €',
-                      call.entryFees.toLocaleString('fr-FR', { minimumFractionDigits: 2 }) + ' €',
+                      (call.subscriptionPremium ?? 0).toLocaleString('fr-FR', { minimumFractionDigits: 2 }) + ' €',
+                      call.entryFees.toLocaleString('fr-FR', { minimumFractionDigits: 2 }) + ' € (' + (call.entryFeesRate ?? 0) + '%)',
                       call.percentage + '%',
                       call.status === 'paid' ? 'Payé' : call.status === 'pending' ? 'En attente' : 'Rejeté'
                     ]);
@@ -2482,7 +2513,10 @@ export function SubscriptionDetailPage({ subscription, onBack }: SubscriptionDet
                         <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                           Souscription
                         </th>
-                        <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                        <th className="px-4 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
+                          Prime de souscription
+                        </th>
+                        <th className="px-4 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
                           Frais d'entrée
                         </th>
                         <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
@@ -2508,8 +2542,28 @@ export function SubscriptionDetailPage({ subscription, onBack }: SubscriptionDet
                           <td className="px-4 py-3 text-sm text-gray-700">
                             {capitalCall.subscription.toLocaleString('fr-FR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} €
                           </td>
-                          <td className="px-4 py-3 text-sm text-gray-700">
-                            {capitalCall.entryFees.toLocaleString('fr-FR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} €
+                          <td className="px-4 py-3 text-sm text-right">
+                            {capitalCall.subscriptionPremium && capitalCall.subscriptionPremium > 0 ? (
+                              <ClickableText variant="notClickable" className="font-medium">
+                                {capitalCall.subscriptionPremium.toLocaleString('fr-FR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} €
+                              </ClickableText>
+                            ) : (
+                              <span className="text-gray-400">-</span>
+                            )}
+                          </td>
+                          <td className="px-4 py-3 text-sm">
+                            {capitalCall.entryFees > 0 ? (
+                              <div className="flex flex-col items-end leading-tight">
+                                <ClickableText variant="notClickable" className="font-semibold">
+                                  {capitalCall.entryFees.toLocaleString('fr-FR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} €
+                                </ClickableText>
+                                <ClickableText variant="notClickable" className="text-xs text-muted-foreground">
+                                  {(capitalCall.entryFeesRate ?? 0)}%
+                                </ClickableText>
+                              </div>
+                            ) : (
+                              <span className="text-gray-400">-</span>
+                            )}
                           </td>
                           <td className="px-4 py-3 text-sm text-gray-700">
                             {capitalCall.percentage}%

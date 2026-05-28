@@ -332,8 +332,10 @@
       "calledAmount": "Called amount",
       "remainingAmount": "Remaining to call",
       "distributedAmount": "Distributed amount",
-      "entryFees": "Entry fees (%)",
+      "entryFees": "Entry fees",
       "entryFeesAmount": "Entry fees (amount)",
+      "subscriptionPremium": "Subscription premium",
+      "documents": "Documents",
       "depositary": "Depositary",
       "activatedAt": "Activation date",
       "sourceAll": "Source",
@@ -360,10 +362,20 @@
       "status": "Status",
       "partner": "Partner",
       "noPartner": "No partner",
+      "subscriber": "Subscriber",
+      "subscriberPlaceholder": "Investor or structure",
       "fund": "Fund",
       "shareClass": "Share class",
       "type": "Type",
       "manager": "Manager"
+    },
+    "documents": {
+      "tooltipTitle": "Subscription file",
+      "validatedCount": "{{count}} validated",
+      "pendingCount": "{{count}} pending",
+      "rejectedCount": "{{count}} rejected",
+      "progress": "{{handled}} out of {{total}} documents handled",
+      "counterAria": "{{handled}} out of {{total}} documents handled"
     },
     "detail": {
       "monitoringFor": "for {{name}}",

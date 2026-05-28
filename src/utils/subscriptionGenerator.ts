@@ -258,6 +258,13 @@ export interface Subscription {
   activatedAt?: Date | null; // Date d'activation
   notes?: string | null; // Notes supplémentaires
   entryFees?: number; // Frais d'entrée en %
+  subscriptionPremium?: number; // Prime de souscription (montant en €) payée par le LP
+  documents?: {
+    total: number;
+    validated: number;
+    pending: number;
+    rejected: number;
+  };
   language?: 'fr' | 'en' | 'de' | 'it' | 'es'; // Langue de la souscription
   sepaEnabled?: boolean; // Prélèvement SEPA activé
   pendingCalls?: boolean; // Appels en attente
@@ -540,7 +547,33 @@ export function generateSubscriptions(count: number): Subscription[] {
     // Frais d'entrée (0%, 2%, 3%, 5%)
     const entryFeesOptions = [0, 2, 3, 5];
     const entryFees = randomElement(entryFeesOptions);
-    
+
+    // Prime de souscription (montant en €) payée par le LP en plus du montant engagé.
+    // Présente dans ~40% des souscriptions, sinon 0.
+    const subscriptionPremium = Math.random() > 0.6
+      ? randomNumber(500, Math.max(500, Math.round(amount * 0.02)))
+      : 0;
+
+    // Compteur de documents (X reçus sur Y, avec ventilation)
+    const totalDocs = randomNumber(6, 14);
+    let validatedDocs = 0;
+    let pendingDocs = 0;
+    let rejectedDocs = 0;
+    if (completionOnboarding === 100) {
+      validatedDocs = totalDocs;
+    } else {
+      validatedDocs = Math.floor((completionOnboarding / 100) * totalDocs);
+      const remaining = totalDocs - validatedDocs;
+      pendingDocs = Math.max(0, remaining - (Math.random() > 0.7 ? randomNumber(1, Math.min(2, remaining)) : 0));
+      rejectedDocs = Math.max(0, remaining - pendingDocs);
+    }
+    const documents = {
+      total: totalDocs,
+      validated: validatedDocs,
+      pending: pendingDocs,
+      rejected: rejectedDocs,
+    };
+
     // Langue de la souscription
     const languages = ['fr', 'en', 'de', 'it', 'es'];
     const language = randomElement(languages);
@@ -616,6 +649,8 @@ export function generateSubscriptions(count: number): Subscription[] {
       activatedAt,
       notes,
       entryFees,
+      subscriptionPremium,
+      documents,
       language,
       sepaEnabled,
       pendingCalls,

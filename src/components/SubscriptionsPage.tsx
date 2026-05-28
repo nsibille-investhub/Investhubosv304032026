@@ -115,6 +115,25 @@ export function SubscriptionsPage({ data, isLoading, allData, setAllData, onSubs
       ],
     },
     {
+      id: 'subscriber',
+      label: t('subscriptions.filters.subscriber'),
+      type: 'select',
+      isPrimary: true,
+      placeholder: t('subscriptions.filters.subscriberPlaceholder'),
+      options: Array.from(
+        new Set(
+          normalizedData.flatMap((sub) => {
+            const values: string[] = [];
+            if (sub.contrepartie?.name) values.push(sub.contrepartie.name);
+            if (sub.contrepartie?.structure) values.push(sub.contrepartie.structure);
+            return values;
+          })
+        )
+      )
+        .sort()
+        .map((value) => ({ value, label: value })),
+    },
+    {
       id: 'fund',
       label: t('subscriptions.filters.fund'),
       type: 'select',
@@ -179,6 +198,17 @@ export function SubscriptionsPage({ data, isLoading, allData, setAllData, onSubs
         if (partnerFilter === 'Sans partenaire') {
           if (subscription.partenaire?.name) return false;
         } else if (subscription.partenaire?.name !== partnerFilter) {
+          return false;
+        }
+      }
+
+      if (activeFilters.subscriber) {
+        const subscriber = activeFilters.subscriber as string;
+        const contrepartie = subscription.contrepartie;
+        if (
+          contrepartie?.name !== subscriber &&
+          contrepartie?.structure !== subscriber
+        ) {
           return false;
         }
       }

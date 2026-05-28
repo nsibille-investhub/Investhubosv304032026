@@ -43,6 +43,7 @@ import { SubscriptionNameCell } from './SubscriptionNameCell';
 import { DateTimeCell } from './DateTimeCell';
 import { CalledAmountCell } from './CalledAmountCell';
 import { ClickableText } from './ClickableText';
+import { DocumentCounter } from './DocumentCounter';
 import { Tag } from './Tag';
 import { CheckIndicator } from './CheckIndicator';
 import { StatusBadge } from './StatusBadge';
@@ -224,10 +225,11 @@ export function SubscriptionDynamicTable({
     switch (columnId) {
       case 'name':
         return (
-          <SubscriptionNameCell 
+          <SubscriptionNameCell
             name={row.name}
             id={row.id}
             searchTerm={searchTerm}
+            language={row.language}
           />
         );
 
@@ -508,19 +510,48 @@ export function SubscriptionDynamicTable({
           <span className="text-sm text-gray-400 dark:text-gray-600">-</span>
         );
 
-      case 'entryFees':
-        return row.entryFees ? (
-          <span className="text-sm font-medium text-gray-900 dark:text-gray-100">{row.entryFees}%</span>
+      case 'entryFees': {
+        const entryFeesAmount = row.entryFees && row.amount ? (row.amount * row.entryFees) / 100 : 0;
+        if (!row.entryFees || entryFeesAmount <= 0) {
+          return <span className="text-sm text-gray-400 dark:text-gray-600">-</span>;
+        }
+        return (
+          <div className="flex flex-col items-end leading-tight">
+            <ClickableText variant="notClickable" className="text-sm font-semibold">
+              {formatCurrency(entryFeesAmount)}
+            </ClickableText>
+            <ClickableText variant="notClickable" className="text-xs text-muted-foreground">
+              {row.entryFees}%
+            </ClickableText>
+          </div>
+        );
+      }
+
+      case 'entryFeesAmount': {
+        const entryFeesAmountLegacy = row.entryFees && row.amount ? (row.amount * row.entryFees) / 100 : 0;
+        return entryFeesAmountLegacy > 0 ? (
+          <span className="text-sm font-semibold text-gray-900 dark:text-gray-100">
+            {formatCurrency(entryFeesAmountLegacy)}
+          </span>
+        ) : (
+          <span className="text-sm text-gray-400 dark:text-gray-600">-</span>
+        );
+      }
+
+      case 'subscriptionPremium':
+        return row.subscriptionPremium && row.subscriptionPremium > 0 ? (
+          <span className="text-sm font-semibold text-gray-900 dark:text-gray-100">
+            {formatCurrency(row.subscriptionPremium)}
+          </span>
         ) : (
           <span className="text-sm text-gray-400 dark:text-gray-600">-</span>
         );
 
-      case 'entryFeesAmount':
-        const entryFeesAmount = row.entryFees && row.amount ? (row.amount * row.entryFees) / 100 : 0;
-        return entryFeesAmount > 0 ? (
-          <span className="text-sm font-semibold text-gray-900 dark:text-gray-100">
-            {formatCurrency(entryFeesAmount)}
-          </span>
+      case 'documents':
+        return row.documents ? (
+          <div className="flex justify-center">
+            <DocumentCounter data={row.documents} />
+          </div>
         ) : (
           <span className="text-sm text-gray-400 dark:text-gray-600">-</span>
         );
