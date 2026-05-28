@@ -161,9 +161,14 @@ export function AlertDataTable({
               <td className="px-6 py-4">
                 <div>
                   <div className="text-sm text-blue-600 hover:text-blue-800 font-medium">
+                    {alert.entityName}
+                  </div>
+                  <div className="text-xs text-gray-500">
+                    <span className="font-medium text-gray-400">
+                      {t('complianceAlerts.table.nameAlertLabel')}:
+                    </span>{' '}
                     {alert.name}
                   </div>
-                  <div className="text-xs text-gray-500">{alert.entityName}</div>
                 </div>
               </td>
               <td className="px-6 py-4">{renderChanges(alert.changes)}</td>

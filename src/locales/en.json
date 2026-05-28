@@ -2629,6 +2629,7 @@
   "complianceAlerts": {
     "table": {
       "name": "Name",
+      "nameAlertLabel": "Alert name",
       "changes": "Changes",
       "match": "Match",
       "list": "Alert List",
@@ -2666,17 +2667,35 @@
       "active": "Active",
       "inactive": "Inactive",
       "aiAnalysis": "AI Analysis",
+      "aiToastTitle": "AI analysis launched",
+      "aiToastBody": "Smart recommendations are being generated for {{name}}",
       "commentPlaceholder": "Comment is mandatory for your decisions",
       "decisionUnsure": "Unsure",
       "decisionFalseHit": "False Hit",
       "decisionTrueHit": "True Hit",
       "confirm": "Confirm",
-      "details": "Details",
-      "alertDetails": "Alert Details",
+      "details": "Alert details",
+      "alertDetails": "Alert details",
+      "context": "Context",
+      "nameAlert": "Alert name",
+      "alertTypes": "Alert type(s)",
+      "attachedInvestors": "Attached investors",
+      "noAttachedInvestors": "No attached investor",
+      "previousFindings": "Previously qualified lists",
+      "noPreviousFindings": "No previously qualified list",
       "keywords": "Keywords",
       "identification": "Identification",
       "sources": "Sources",
-      "alertList": "Alert List"
+      "alertList": "Alert List",
+      "missingComment": "Please add a comment before confirming",
+      "missingDecision": "Please select a decision"
+    },
+    "investorRole": {
+      "source": "Source",
+      "beneficiary": "Beneficial owner",
+      "coInvestor": "Co-investor",
+      "legalRep": "Legal representative",
+      "proxy": "Proxy"
     },
     "toast": {
       "confirmedTitle": "Alert confirmed",

@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from 'react';
 import { motion } from 'motion/react';
-import { Calendar, Eye, EyeOff, ExternalLink, Sparkles } from 'lucide-react';
+import { Calendar, Eye, EyeOff, ExternalLink, Sparkles, Users } from 'lucide-react';
 import { toast } from 'sonner@2.0.3';
 
 import {
@@ -8,18 +8,17 @@ import {
   SheetContent,
   SheetHeader,
   SheetTitle,
-  SheetDescription,
 } from './ui/sheet';
 import { Badge } from './ui/badge';
 import { Button } from './ui/button';
+import { Card, CardContent, CardHeader, CardTitle } from './ui/card';
 import { Switch } from './ui/switch';
 import { Textarea } from './ui/textarea';
 import { ScrollArea } from './ui/scroll-area';
-import { Separator } from './ui/separator';
 import { Tooltip, TooltipContent, TooltipTrigger } from './ui/tooltip';
 import { StatusBadge } from './StatusBadge';
 import { AnalystSelector } from './AnalystSelector';
-import { AlertItem, AlertListCategory } from '../utils/alertsGenerator';
+import { AlertItem, AlertListCategory, InvestorRole } from '../utils/alertsGenerator';
 import { useTranslation } from '../utils/languageContext';
 
 type Decision = 'unsure' | 'false_hit' | 'true_hit';
@@ -55,6 +54,14 @@ const ALERT_LIST_LABEL_KEY: Record<AlertListCategory, string> = {
   'Financial Warning': 'complianceAlerts.list.financialWarning',
 };
 
+const ROLE_LABEL_KEY: Record<InvestorRole, string> = {
+  source: 'complianceAlerts.investorRole.source',
+  beneficiary: 'complianceAlerts.investorRole.beneficiary',
+  coInvestor: 'complianceAlerts.investorRole.coInvestor',
+  legalRep: 'complianceAlerts.investorRole.legalRep',
+  proxy: 'complianceAlerts.investorRole.proxy',
+};
+
 export function AlertDetailDrawer({
   alert,
   isOpen,
@@ -64,7 +71,7 @@ export function AlertDetailDrawer({
   const { t } = useTranslation();
   const [decision, setDecision] = useState<Decision | null>(null);
   const [comment, setComment] = useState('');
-  const [monitoring, setMonitoring] = useState(false);
+  const [monitoring, setMonitoring] = useState(true);
   const [analyst, setAnalyst] = useState<string | null>(null);
 
   useEffect(() => {
@@ -77,8 +84,8 @@ export function AlertDetailDrawer({
             : null;
       setDecision(initial);
       setComment(alert.alert?.comment ?? '');
-      setMonitoring(false);
-      setAnalyst(alert.alert?.analyst || null);
+      setMonitoring(alert.monitoring);
+      setAnalyst(alert.analyst);
     }
   }, [alert?.id]);
 
@@ -91,243 +98,342 @@ export function AlertDetailDrawer({
 
   const handleConfirm = () => {
     if (!decision) {
-      toast.error(t('complianceAlerts.drawer.commentPlaceholder'));
+      toast.error(t('complianceAlerts.drawer.missingDecision'));
       return;
     }
     if (!comment.trim()) {
-      toast.error(t('complianceAlerts.drawer.commentPlaceholder'));
+      toast.error(t('complianceAlerts.drawer.missingComment'));
       return;
     }
     if (decision === 'true_hit' || decision === 'false_hit') {
       onDecision?.(alert.id, decision);
     } else {
       toast.success(t('complianceAlerts.drawer.confirm'));
+      onClose();
     }
+  };
+
+  const handleAiAnalysis = () => {
+    toast.success(t('complianceAlerts.drawer.aiToastTitle'), {
+      description: t('complianceAlerts.drawer.aiToastBody', { name: alert.entityName }),
+    });
   };
 
   const statusLabel = t(STATUS_LABEL_KEY[alert.status]);
   const statusVariant = STATUS_VARIANT[alert.status];
-  const alertListLabel = t(ALERT_LIST_LABEL_KEY[alert.alertList]);
-
   const isPending = alert.status === 'Pending';
 
   return (
     <Sheet open={isOpen} onOpenChange={(open) => !open && onClose()}>
       <SheetContent
         side="right"
-        className="!w-[92vw] sm:!w-[640px] lg:!w-[720px] !max-w-none p-0 flex flex-col gap-0"
+        className="!w-[92vw] sm:!w-[60vw] lg:!w-[35vw] !max-w-none p-0 flex flex-col gap-0"
       >
         {/* Header */}
-        <SheetHeader className="border-b border-border bg-white px-6 py-5 dark:bg-gray-950">
-          <div className="flex items-center gap-3 flex-wrap">
-            <SheetTitle className="text-lg leading-snug">{alert.name}</SheetTitle>
+        <SheetHeader className="shrink-0 border-b border-border bg-white px-6 py-5 dark:bg-gray-950">
+          <div className="flex items-center gap-2 flex-wrap pr-8">
+            <SheetTitle className="text-lg leading-snug">{alert.entityName}</SheetTitle>
             <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md bg-muted text-xs font-medium tabular-nums">
               <Sparkles className="w-3 h-3" />
               {alert.match}%
             </span>
             <StatusBadge label={statusLabel} variant={statusVariant} />
-            <Badge variant="outline" className="text-[11px] font-medium">
-              {alertListLabel}
-            </Badge>
           </div>
-          <SheetDescription className="text-xs text-muted-foreground">
-            {alert.entityName} · {alert.source}
-          </SheetDescription>
+          <div className="text-xs text-muted-foreground">
+            <span className="font-medium text-foreground/70">
+              {t('complianceAlerts.drawer.nameAlert')}:
+            </span>{' '}
+            {alert.name} · {alert.source}
+          </div>
         </SheetHeader>
 
-        {/* Decision panel */}
-        <div className="border-b border-border bg-gray-50/60 px-6 py-4 dark:bg-gray-900/40">
-          <div className="mb-3 space-y-3">
-            <div>
-              <div className="mb-1.5 text-[10px] font-semibold uppercase tracking-widest text-muted-foreground">
-                {t('complianceAlerts.drawer.analyst')}
-              </div>
-              <AnalystSelector
-                currentAnalyst={analyst}
-                onAnalystChange={(name) => setAnalyst(name)}
-              />
-            </div>
+        {/* Scrollable body */}
+        <div className="flex-1 min-h-0 overflow-hidden">
+          <ScrollArea className="h-full">
+            <div className="px-6 py-5 space-y-5">
 
-            <div className="flex items-center gap-3">
-              <span className="text-sm text-muted-foreground">
-                {t('complianceAlerts.drawer.monitoring')}:
-              </span>
-              <Tooltip>
-                <TooltipTrigger asChild>
-                  <div className="flex items-center gap-2">
-                    <Switch checked={monitoring} onCheckedChange={setMonitoring} />
-                    <span
-                      className={`text-sm font-medium ${
-                        monitoring ? 'text-blue-600' : 'text-muted-foreground'
-                      }`}
-                    >
-                      {monitoring
-                        ? t('complianceAlerts.drawer.active')
-                        : t('complianceAlerts.drawer.inactive')}
+              {/* Context Card */}
+              <Card className="gap-4 py-5">
+                <CardHeader className="px-5 pt-0 pb-0">
+                  <CardTitle className="text-xs font-semibold uppercase tracking-widest text-muted-foreground">
+                    {t('complianceAlerts.drawer.context')}
+                  </CardTitle>
+                </CardHeader>
+                <CardContent className="px-5 space-y-4">
+                  <div>
+                    <div className="mb-1.5 text-[10px] font-semibold uppercase tracking-widest text-muted-foreground">
+                      {t('complianceAlerts.drawer.analyst')}
+                    </div>
+                    <AnalystSelector
+                      currentAnalyst={analyst}
+                      onAnalystChange={(name) => setAnalyst(name)}
+                    />
+                  </div>
+
+                  <div className="flex items-center gap-3">
+                    <span className="text-sm text-muted-foreground">
+                      {t('complianceAlerts.drawer.monitoring')}:
                     </span>
-                    {monitoring ? (
-                      <Eye className="w-4 h-4 text-blue-600" />
+                    <Tooltip>
+                      <TooltipTrigger asChild>
+                        <div className="flex items-center gap-2">
+                          <Switch checked={monitoring} onCheckedChange={setMonitoring} />
+                          <span
+                            className={`text-sm font-medium ${
+                              monitoring ? 'text-blue-600' : 'text-muted-foreground'
+                            }`}
+                          >
+                            {monitoring
+                              ? t('complianceAlerts.drawer.active')
+                              : t('complianceAlerts.drawer.inactive')}
+                          </span>
+                          {monitoring ? (
+                            <Eye className="w-4 h-4 text-blue-600" />
+                          ) : (
+                            <EyeOff className="w-4 h-4 text-muted-foreground" />
+                          )}
+                        </div>
+                      </TooltipTrigger>
+                      <TooltipContent>
+                        {monitoring
+                          ? t('complianceAlerts.drawer.active')
+                          : t('complianceAlerts.drawer.inactive')}
+                      </TooltipContent>
+                    </Tooltip>
+                  </div>
+
+                  <div>
+                    <div className="mb-2 flex items-center gap-1.5 text-[10px] font-semibold uppercase tracking-widest text-muted-foreground">
+                      <Users className="w-3 h-3" />
+                      {t('complianceAlerts.drawer.attachedInvestors')}
+                    </div>
+                    {alert.attachedInvestors.length === 0 ? (
+                      <p className="text-xs text-muted-foreground">
+                        {t('complianceAlerts.drawer.noAttachedInvestors')}
+                      </p>
                     ) : (
-                      <EyeOff className="w-4 h-4 text-muted-foreground" />
+                      <ul className="space-y-1.5">
+                        {alert.attachedInvestors.map((inv, idx) => (
+                          <li
+                            key={`${inv.name}-${idx}`}
+                            className="flex items-center justify-between gap-2 rounded-md border border-border bg-muted/30 px-2.5 py-1.5 text-xs"
+                          >
+                            <span className="font-medium text-foreground truncate">
+                              {inv.name}
+                            </span>
+                            <Badge variant="outline" className="text-[10px] font-medium shrink-0">
+                              {t(ROLE_LABEL_KEY[inv.role])}
+                            </Badge>
+                          </li>
+                        ))}
+                      </ul>
                     )}
                   </div>
-                </TooltipTrigger>
-                <TooltipContent>
-                  {monitoring
-                    ? t('complianceAlerts.drawer.active')
-                    : t('complianceAlerts.drawer.inactive')}
-                </TooltipContent>
-              </Tooltip>
-            </div>
-          </div>
 
-          <div className="mb-3 flex items-center justify-between text-xs text-muted-foreground">
-            <div className="flex items-center gap-1.5">
-              <Calendar className="w-3.5 h-3.5" />
-              <span>{alert.date}</span>
-            </div>
-            <Button
-              size="sm"
-              variant="default"
-              className="h-7 gap-1.5 text-xs"
-            >
-              <Sparkles className="w-3 h-3" />
-              {t('complianceAlerts.drawer.aiAnalysis')}
-            </Button>
-          </div>
-
-          <Textarea
-            value={comment}
-            onChange={(e) => setComment(e.target.value)}
-            placeholder={t('complianceAlerts.drawer.commentPlaceholder')}
-            className="min-h-[72px] resize-none bg-white"
-          />
-          <div className="mt-1 flex justify-end">
-            <span className="text-[11px] text-muted-foreground">
-              {comment.length} / 1,234
-            </span>
-          </div>
-
-          <div className="mt-3 flex items-center gap-2 flex-wrap">
-            <DecisionPill
-              label={t('complianceAlerts.drawer.decisionUnsure')}
-              active={decision === 'unsure'}
-              tone="warning"
-              onClick={() => setDecision('unsure')}
-            />
-            <DecisionPill
-              label={t('complianceAlerts.drawer.decisionFalseHit')}
-              active={decision === 'false_hit'}
-              tone="neutral"
-              onClick={() => setDecision('false_hit')}
-            />
-            <DecisionPill
-              label={t('complianceAlerts.drawer.decisionTrueHit')}
-              active={decision === 'true_hit'}
-              tone="danger"
-              onClick={() => setDecision('true_hit')}
-            />
-            <div className="flex-1" />
-            <Button
-              size="sm"
-              disabled={!isPending}
-              onClick={handleConfirm}
-              className="h-8 px-4"
-            >
-              {t('complianceAlerts.drawer.confirm')}
-            </Button>
-          </div>
-        </div>
-
-        {/* Details body */}
-        <ScrollArea className="flex-1">
-          <div className="px-6 py-5 space-y-5">
-            <h3 className="text-sm font-semibold text-foreground">
-              {t('complianceAlerts.drawer.details')}
-            </h3>
-
-            {enrichedDescription && (
-              <motion.div
-                initial={{ opacity: 0, y: 8 }}
-                animate={{ opacity: 1, y: 0 }}
-                className="rounded-lg border border-amber-200 bg-amber-50/60 p-4"
-              >
-                <div className="mb-2 text-[10px] font-bold uppercase tracking-widest text-amber-900">
-                  {t('complianceAlerts.drawer.alertDetails')}
-                </div>
-                <pre className="whitespace-pre-wrap break-words font-mono text-xs text-foreground leading-relaxed">
-                  {enrichedDescription}
-                </pre>
-              </motion.div>
-            )}
-
-            {alert.alert?.details?.keywords?.length ? (
-              <>
-                <Separator />
-                <div>
-                  <h4 className="mb-2 text-[10px] font-semibold uppercase tracking-widest text-muted-foreground">
-                    {t('complianceAlerts.drawer.keywords')}
-                  </h4>
-                  <div className="flex flex-wrap gap-2">
-                    {alert.alert.details.keywords.map((keyword, idx) => (
-                      <Badge
-                        key={idx}
-                        variant="outline"
-                        className="text-[11px] font-medium"
-                      >
-                        {keyword}
-                      </Badge>
-                    ))}
-                  </div>
-                </div>
-              </>
-            ) : null}
-
-            {alert.alert?.details?.identification?.length ? (
-              <>
-                <Separator />
-                <div>
-                  <h4 className="mb-3 text-[10px] font-semibold uppercase tracking-widest text-muted-foreground">
-                    {t('complianceAlerts.drawer.identification')}
-                  </h4>
-                  <dl className="space-y-2">
-                    {alert.alert.details.identification.map((item, idx) => (
-                      <div key={idx} className="flex items-start gap-3 text-sm">
-                        <dt className="min-w-[200px] text-muted-foreground">
-                          {item.label}
-                        </dt>
-                        <dd className="font-medium text-foreground">{item.value}</dd>
+                  <div>
+                    <div className="mb-2 text-[10px] font-semibold uppercase tracking-widest text-muted-foreground">
+                      {t('complianceAlerts.drawer.previousFindings')}
+                    </div>
+                    {alert.previousFindings.length === 0 ? (
+                      <p className="text-xs text-muted-foreground">
+                        {t('complianceAlerts.drawer.noPreviousFindings')}
+                      </p>
+                    ) : (
+                      <div className="flex flex-wrap gap-1.5">
+                        {alert.previousFindings.map((cat, idx) => (
+                          <Badge
+                            key={`${cat}-${idx}`}
+                            variant="outline"
+                            className="text-[11px] font-medium"
+                          >
+                            {t(ALERT_LIST_LABEL_KEY[cat])}
+                          </Badge>
+                        ))}
                       </div>
-                    ))}
-                  </dl>
-                </div>
-              </>
-            ) : null}
-
-            {alert.alert?.details?.sources?.length ? (
-              <>
-                <Separator />
-                <div>
-                  <h4 className="mb-3 text-[10px] font-semibold uppercase tracking-widest text-muted-foreground">
-                    {t('complianceAlerts.drawer.sources')}
-                  </h4>
-                  <div className="space-y-2">
-                    {alert.alert.details.sources.map((source, idx) => (
-                      <a
-                        key={idx}
-                        href={source.url}
-                        className="flex items-center gap-2 text-sm text-blue-600 hover:text-blue-700 hover:underline"
-                      >
-                        <ExternalLink className="w-3.5 h-3.5 opacity-60" />
-                        <span>{source.label}</span>
-                      </a>
-                    ))}
+                    )}
                   </div>
-                </div>
-              </>
-            ) : null}
-          </div>
-        </ScrollArea>
+                </CardContent>
+              </Card>
+
+              {/* Decision Card */}
+              <Card className="gap-3 py-5">
+                <CardContent className="px-5 space-y-3">
+                  <div className="flex items-center justify-between text-xs text-muted-foreground">
+                    <div className="flex items-center gap-1.5">
+                      <Calendar className="w-3.5 h-3.5" />
+                      <span>{alert.date}</span>
+                    </div>
+                    <Button
+                      size="sm"
+                      type="button"
+                      onClick={handleAiAnalysis}
+                      className="h-7 gap-1.5 text-xs"
+                    >
+                      <Sparkles className="w-3 h-3" />
+                      {t('complianceAlerts.drawer.aiAnalysis')}
+                    </Button>
+                  </div>
+
+                  <Textarea
+                    value={comment}
+                    onChange={(e) => setComment(e.target.value)}
+                    placeholder={t('complianceAlerts.drawer.commentPlaceholder')}
+                    className="min-h-[72px] resize-none bg-white"
+                  />
+                  <div className="-mt-2 flex justify-end">
+                    <span className="text-[11px] text-muted-foreground">
+                      {comment.length} / 1,234
+                    </span>
+                  </div>
+
+                  <div className="flex items-center gap-2 flex-wrap">
+                    <DecisionPill
+                      label={t('complianceAlerts.drawer.decisionUnsure')}
+                      active={decision === 'unsure'}
+                      tone="warning"
+                      onClick={() => setDecision('unsure')}
+                    />
+                    <DecisionPill
+                      label={t('complianceAlerts.drawer.decisionFalseHit')}
+                      active={decision === 'false_hit'}
+                      tone="neutral"
+                      onClick={() => setDecision('false_hit')}
+                    />
+                    <DecisionPill
+                      label={t('complianceAlerts.drawer.decisionTrueHit')}
+                      active={decision === 'true_hit'}
+                      tone="danger"
+                      onClick={() => setDecision('true_hit')}
+                    />
+                    <div className="flex-1" />
+                    <Button
+                      size="sm"
+                      type="button"
+                      disabled={!isPending}
+                      onClick={handleConfirm}
+                      className="h-8 px-4"
+                    >
+                      {t('complianceAlerts.drawer.confirm')}
+                    </Button>
+                  </div>
+                </CardContent>
+              </Card>
+
+              {/* Alert Details Card */}
+              <Card className="gap-3 py-5 border-amber-200 bg-amber-50/40 dark:bg-amber-950/10">
+                <CardHeader className="px-5 pt-0 pb-0">
+                  <CardTitle className="text-xs font-semibold uppercase tracking-widest text-amber-900 dark:text-amber-200">
+                    {t('complianceAlerts.drawer.alertDetails')}
+                  </CardTitle>
+                </CardHeader>
+                <CardContent className="px-5 space-y-3">
+                  <div>
+                    <div className="mb-2 text-[10px] font-semibold uppercase tracking-widest text-amber-900/80 dark:text-amber-200/80">
+                      {t('complianceAlerts.drawer.alertTypes')}
+                    </div>
+                    <div className="flex flex-wrap gap-1.5">
+                      {alert.alertTypes.map((cat) => (
+                        <span
+                          key={cat}
+                          className="inline-flex items-center gap-1 rounded-md border border-amber-300 bg-amber-100 px-2.5 py-1 text-xs font-semibold text-amber-900 dark:border-amber-700 dark:bg-amber-950/40 dark:text-amber-200"
+                        >
+                          {t(ALERT_LIST_LABEL_KEY[cat])}
+                        </span>
+                      ))}
+                    </div>
+                  </div>
+
+                  {enrichedDescription && (
+                    <motion.div
+                      initial={{ opacity: 0, y: 8 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      className="rounded-md border border-amber-200 bg-white/70 p-3 dark:bg-gray-950/40"
+                    >
+                      <pre className="whitespace-pre-wrap break-words font-mono text-xs leading-relaxed text-foreground">
+                        {enrichedDescription}
+                      </pre>
+                    </motion.div>
+                  )}
+                </CardContent>
+              </Card>
+
+              {/* Keywords */}
+              {alert.alert?.details?.keywords?.length ? (
+                <Card className="gap-3 py-5">
+                  <CardHeader className="px-5 pt-0 pb-0">
+                    <CardTitle className="text-xs font-semibold uppercase tracking-widest text-muted-foreground">
+                      {t('complianceAlerts.drawer.keywords')}
+                    </CardTitle>
+                  </CardHeader>
+                  <CardContent className="px-5">
+                    <div className="flex flex-wrap gap-2">
+                      {alert.alert.details.keywords.map((keyword, idx) => (
+                        <Badge
+                          key={idx}
+                          variant="outline"
+                          className="text-[11px] font-medium"
+                        >
+                          {keyword}
+                        </Badge>
+                      ))}
+                    </div>
+                  </CardContent>
+                </Card>
+              ) : null}
+
+              {/* Identification */}
+              {alert.alert?.details?.identification?.length ? (
+                <Card className="gap-3 py-5">
+                  <CardHeader className="px-5 pt-0 pb-0">
+                    <CardTitle className="text-xs font-semibold uppercase tracking-widest text-muted-foreground">
+                      {t('complianceAlerts.drawer.identification')}
+                    </CardTitle>
+                  </CardHeader>
+                  <CardContent className="px-5">
+                    <dl className="space-y-2">
+                      {alert.alert.details.identification.map((item, idx) => (
+                        <div key={idx} className="flex items-start gap-3 text-sm">
+                          <dt className="min-w-[180px] text-muted-foreground">
+                            {item.label}
+                          </dt>
+                          <dd className="font-medium text-foreground break-all">
+                            {item.value}
+                          </dd>
+                        </div>
+                      ))}
+                    </dl>
+                  </CardContent>
+                </Card>
+              ) : null}
+
+              {/* Sources */}
+              {alert.alert?.details?.sources?.length ? (
+                <Card className="gap-3 py-5">
+                  <CardHeader className="px-5 pt-0 pb-0">
+                    <CardTitle className="text-xs font-semibold uppercase tracking-widest text-muted-foreground">
+                      {t('complianceAlerts.drawer.sources')}
+                    </CardTitle>
+                  </CardHeader>
+                  <CardContent className="px-5">
+                    <div className="space-y-2">
+                      {alert.alert.details.sources.map((source, idx) => (
+                        <a
+                          key={idx}
+                          href={source.url}
+                          className="flex items-center gap-2 text-sm text-blue-600 hover:text-blue-700 hover:underline"
+                        >
+                          <ExternalLink className="w-3.5 h-3.5 opacity-60" />
+                          <span>{source.label}</span>
+                        </a>
+                      ))}
+                    </div>
+                  </CardContent>
+                </Card>
+              ) : null}
+
+            </div>
+          </ScrollArea>
+        </div>
       </SheetContent>
     </Sheet>
   );

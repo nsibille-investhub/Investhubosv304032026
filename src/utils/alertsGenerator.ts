@@ -8,6 +8,18 @@ export type AlertListCategory =
   | 'Crime'
   | 'Financial Warning';
 
+export type InvestorRole =
+  | 'source'
+  | 'beneficiary'
+  | 'coInvestor'
+  | 'legalRep'
+  | 'proxy';
+
+export interface AttachedInvestor {
+  name: string;
+  role: InvestorRole;
+}
+
 export interface AlertItem {
   id: string;
   name: string;
@@ -20,6 +32,11 @@ export interface AlertItem {
   source: 'Membercheck' | 'ORIAS';
   daysAgo: number;
   alertList: AlertListCategory;
+  alertTypes: AlertListCategory[];
+  attachedInvestors: AttachedInvestor[];
+  previousFindings: AlertListCategory[];
+  monitoring: boolean;
+  analyst: string | null;
 }
 
 const individualNames: Array<{ firstName: string; lastName: string }> = [
@@ -75,6 +92,36 @@ const ALERT_LISTS: AlertListCategory[] = [
   'Adverse Media',
   'Crime',
   'Financial Warning',
+];
+
+const INVESTOR_NAMES: string[] = [
+  'Lombard SCS Fund I',
+  'ABC Family Office',
+  'Meridian Wealth Partners',
+  'Atlantis Private Equity',
+  'Crescent Capital Trust',
+  'Nordic Pension Fund',
+  'Helios Endowment',
+  'BlueRock Holdings',
+  'Lighthouse Investments',
+  'Orion Asset Management',
+];
+
+const INVESTOR_ROLES: InvestorRole[] = [
+  'source',
+  'beneficiary',
+  'coInvestor',
+  'legalRep',
+  'proxy',
+];
+
+const ANALYSTS: string[] = [
+  'Sophie Martin',
+  'Marc Dubois',
+  'Claire Rousseau',
+  'Thomas Bernard',
+  'Emma Leroy',
+  'Jean Dault',
 ];
 
 function randomElement<T>(arr: T[]): T {
@@ -182,6 +229,41 @@ export function generateAlerts(count: number = 100): AlertItem[] {
     const entityDetails = generateEntityDetails(detailStatusHint, alertName, 1);
     const fullAlert = entityDetails.alerts[0];
 
+    const attachedInvestorCount = randomNumber(1, 3);
+    const attachedInvestors: AttachedInvestor[] = Array.from(
+      { length: attachedInvestorCount },
+      (_, k) => ({
+        name: INVESTOR_NAMES[(i + k) % INVESTOR_NAMES.length],
+        role: INVESTOR_ROLES[(i + k) % INVESTOR_ROLES.length],
+      }),
+    );
+
+    const extraTypes: AlertListCategory[] =
+      i % 4 === 0
+        ? [ALERT_LISTS[(i + 1) % ALERT_LISTS.length]]
+        : i % 6 === 0
+          ? [
+              ALERT_LISTS[(i + 1) % ALERT_LISTS.length],
+              ALERT_LISTS[(i + 3) % ALERT_LISTS.length],
+            ]
+          : [];
+    const alertTypes = Array.from(new Set([alertList, ...extraTypes]));
+
+    const previousFindings: AlertListCategory[] =
+      i % 5 === 0
+        ? [ALERT_LISTS[(i + 2) % ALERT_LISTS.length]]
+        : i % 7 === 0
+          ? [
+              ALERT_LISTS[(i + 2) % ALERT_LISTS.length],
+              ALERT_LISTS[(i + 4) % ALERT_LISTS.length],
+            ]
+          : [];
+
+    const analyst =
+      status === 'Pending'
+        ? null
+        : ANALYSTS[i % ANALYSTS.length];
+
     alerts.push({
       id: `ALERT-${1000 + i}`,
       name: alertName,
@@ -194,6 +276,11 @@ export function generateAlerts(count: number = 100): AlertItem[] {
       source,
       daysAgo,
       alertList,
+      alertTypes,
+      attachedInvestors,
+      previousFindings,
+      monitoring: true,
+      analyst,
     });
   }
 
