@@ -2678,7 +2678,42 @@
     "tooltip": {
       "view": "Voir le détail",
       "confirm": "Confirmer (True Hit)",
-      "reject": "Rejeter (False Hit)"
+      "reject": "Rejeter (False Hit)",
+      "unsure": "Marquer comme incertain"
+    },
+    "selection": {
+      "selectRow": "Sélectionner cette alerte",
+      "selectAll": "Sélectionner toutes les alertes en attente",
+      "deselectAll": "Désélectionner toutes les alertes",
+      "selectedOne": "alerte sélectionnée",
+      "selectedMany": "alertes sélectionnées",
+      "clear": "Annuler la sélection",
+      "actionConfirm": "Valider",
+      "actionReject": "Rejeter",
+      "actionUnsure": "Incertain",
+      "onlyPendingTip": "Seules les alertes en attente peuvent être qualifiées"
+    },
+    "bulkDialog": {
+      "titleConfirm": "Valider {{count}} alerte(s)",
+      "titleReject": "Rejeter {{count}} alerte(s)",
+      "titleUnsure": "Marquer {{count}} alerte(s) comme incertaines",
+      "description": "Un commentaire est obligatoire pour qualifier ces alertes.",
+      "modeLabel": "Mode de commentaire",
+      "modeSame": "Même commentaire pour toutes",
+      "modeSameHint": "Appliquer le commentaire ci-dessous à toutes les alertes sélectionnées",
+      "modeIndividual": "Commentaire individuel",
+      "modeIndividualHint": "Saisir un commentaire spécifique pour chaque alerte, l'une après l'autre",
+      "commentLabel": "Commentaire",
+      "commentPlaceholder": "Saisissez votre commentaire…",
+      "missingComment": "Veuillez saisir un commentaire",
+      "progress": "Alerte {{current}} sur {{total}}",
+      "currentAlert": "Alerte en cours",
+      "cancel": "Annuler",
+      "applyToAll": "Valider et tout traiter",
+      "nextAlert": "Valider et passer à la suivante",
+      "finish": "Terminer",
+      "doneTitle": "Qualification terminée",
+      "doneBody": "{{count}} alerte(s) qualifiée(s)"
     },
     "drawer": {
       "analyst": "Analyste",

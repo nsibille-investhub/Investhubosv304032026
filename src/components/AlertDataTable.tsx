@@ -1,11 +1,14 @@
 import { motion } from 'motion/react';
-import { ArrowUpDown, ArrowUp, ArrowDown, Clock } from 'lucide-react';
+import { ArrowUpDown, ArrowUp, ArrowDown, Clock, Eye, HelpCircle } from 'lucide-react';
 import { Badge } from './ui/badge';
-import { RowActions } from './ui/row-actions';
+import { RowActionButton, RowActions } from './ui/row-actions';
+import { Checkbox } from './ui/checkbox';
 import { StatusBadge } from './StatusBadge';
 import { Tooltip, TooltipContent, TooltipTrigger } from './ui/tooltip';
 import { AlertItem, AlertListCategory } from '../utils/alertsGenerator';
 import { useTranslation } from '../utils/languageContext';
+
+export type AlertBulkAction = 'true_hit' | 'false_hit' | 'unsure';
 
 interface AlertDataTableProps {
   data: AlertItem[];
@@ -14,7 +17,12 @@ interface AlertDataTableProps {
   onRowClick: (row: AlertItem) => void;
   sortConfig: { key: string; direction: 'asc' | 'desc' } | null;
   onSort: (key: string) => void;
-  onDecision?: (alertId: string, decision: 'true_hit' | 'false_hit') => void;
+  onDecision?: (alertId: string, decision: AlertBulkAction) => void;
+  selectedIds?: Set<string>;
+  onToggleSelectRow?: (id: string) => void;
+  onToggleSelectAll?: () => void;
+  allPendingSelected?: boolean;
+  somePendingSelected?: boolean;
 }
 
 const STATUS_VARIANT: Record<
@@ -49,8 +57,15 @@ export function AlertDataTable({
   sortConfig,
   onSort,
   onDecision,
+  selectedIds,
+  onToggleSelectRow,
+  onToggleSelectAll,
+  allPendingSelected,
+  somePendingSelected,
 }: AlertDataTableProps) {
   const { t } = useTranslation();
+  const selectionEnabled = !!onToggleSelectRow && !!selectedIds;
+  const hasPendingRow = data.some((a) => a.status === 'Pending');
 
   const getSortIcon = (key: string) => {
     if (sortConfig?.key !== key) {
@@ -97,6 +112,33 @@ export function AlertDataTable({
       <table className="w-full">
         <thead className="bg-gray-50 border-b border-gray-200 sticky top-0 z-10">
           <tr>
+            {selectionEnabled && (
+              <th className="px-4 py-3 w-10">
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <span className="inline-flex">
+                      <Checkbox
+                        checked={
+                          allPendingSelected
+                            ? true
+                            : somePendingSelected
+                              ? 'indeterminate'
+                              : false
+                        }
+                        disabled={!hasPendingRow}
+                        onCheckedChange={() => onToggleSelectAll?.()}
+                        aria-label={t('complianceAlerts.selection.selectAll')}
+                      />
+                    </span>
+                  </TooltipTrigger>
+                  <TooltipContent>
+                    {allPendingSelected
+                      ? t('complianceAlerts.selection.deselectAll')
+                      : t('complianceAlerts.selection.selectAll')}
+                  </TooltipContent>
+                </Tooltip>
+              </th>
+            )}
             <th
               className="px-6 py-3 text-left text-xs text-gray-600 uppercase tracking-wider cursor-pointer hover:bg-gray-100 transition-colors"
               onClick={() => onSort('name')}
@@ -158,6 +200,35 @@ export function AlertDataTable({
               animate={{ opacity: 1 }}
               transition={{ duration: 0.2 }}
             >
+              {selectionEnabled && (
+                <td
+                  className="px-4 py-4 w-10"
+                  onClick={(e) => e.stopPropagation()}
+                >
+                  {alert.status === 'Pending' ? (
+                    <Checkbox
+                      checked={selectedIds?.has(alert.id) ?? false}
+                      onCheckedChange={() => onToggleSelectRow?.(alert.id)}
+                      aria-label={t('complianceAlerts.selection.selectRow')}
+                    />
+                  ) : (
+                    <Tooltip>
+                      <TooltipTrigger asChild>
+                        <span className="inline-flex">
+                          <Checkbox
+                            checked={false}
+                            disabled
+                            aria-label={t('complianceAlerts.selection.onlyPendingTip')}
+                          />
+                        </span>
+                      </TooltipTrigger>
+                      <TooltipContent>
+                        {t('complianceAlerts.selection.onlyPendingTip')}
+                      </TooltipContent>
+                    </Tooltip>
+                  )}
+                </td>
+              )}
               <td className="px-6 py-4">
                 <div>
                   <div className="text-sm text-blue-600 hover:text-blue-800 font-medium">
@@ -200,24 +271,45 @@ export function AlertDataTable({
                 </Tooltip>
               </td>
               <td className="px-6 py-4">
-                <RowActions
-                  previewLabel={t('complianceAlerts.tooltip.view')}
-                  acceptLabel={t('complianceAlerts.tooltip.confirm')}
-                  rejectLabel={t('complianceAlerts.tooltip.reject')}
-                  onPreview={() => onRowClick(alert)}
-                  onAccept={
-                    alert.status === 'Pending' && onDecision
-                      ? () => onDecision(alert.id, 'true_hit')
-                      : undefined
-                  }
-                  onReject={
-                    alert.status === 'Pending' && onDecision
-                      ? () => onDecision(alert.id, 'false_hit')
-                      : undefined
-                  }
-                  showAccept={alert.status === 'Pending' && !!onDecision}
-                  showReject={alert.status === 'Pending' && !!onDecision}
-                />
+                <div
+                  className="flex items-center justify-end gap-1"
+                  onClick={(e) => e.stopPropagation()}
+                >
+                  <RowActionButton
+                    icon={Eye}
+                    tooltip={t('complianceAlerts.tooltip.view')}
+                    intent="neutral"
+                    onClick={() => onRowClick(alert)}
+                    ariaLabel={t('complianceAlerts.tooltip.view')}
+                  />
+                  {alert.status === 'Pending' && onDecision && (
+                    <RowActionButton
+                      icon={HelpCircle}
+                      tooltip={t('complianceAlerts.tooltip.unsure')}
+                      intent="warning"
+                      onClick={() => onDecision(alert.id, 'unsure')}
+                      ariaLabel={t('complianceAlerts.tooltip.unsure')}
+                    />
+                  )}
+                  <RowActions
+                    previewLabel={t('complianceAlerts.tooltip.view')}
+                    acceptLabel={t('complianceAlerts.tooltip.confirm')}
+                    rejectLabel={t('complianceAlerts.tooltip.reject')}
+                    showPreview={false}
+                    onAccept={
+                      alert.status === 'Pending' && onDecision
+                        ? () => onDecision(alert.id, 'true_hit')
+                        : undefined
+                    }
+                    onReject={
+                      alert.status === 'Pending' && onDecision
+                        ? () => onDecision(alert.id, 'false_hit')
+                        : undefined
+                    }
+                    showAccept={alert.status === 'Pending' && !!onDecision}
+                    showReject={alert.status === 'Pending' && !!onDecision}
+                  />
+                </div>
               </td>
             </motion.tr>
           ))}

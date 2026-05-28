@@ -1,6 +1,15 @@
 import { useState, useMemo, useEffect } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
-import { AlertCircle, CheckCircle2, Download, List, X, XCircle } from 'lucide-react';
+import {
+  AlertCircle,
+  Check,
+  CheckCircle2,
+  Download,
+  HelpCircle,
+  List,
+  X,
+  XCircle,
+} from 'lucide-react';
 import { toast } from 'sonner@2.0.3';
 
 import { generateAlerts, AlertItem } from '../utils/alertsGenerator';
@@ -8,14 +17,17 @@ import { useTableSearch } from '../utils/useTableSearch';
 import { ALERT_SEARCH_FIELDS } from '../utils/searchConfig';
 import { analyzeQuery } from '../utils/aiAnalyzer';
 import { useAppStore } from '../utils/appStoreContext';
+import { useTranslation } from '../utils/languageContext';
 
 import { AlertsLandingPage } from './AlertsLandingPage';
-import { AlertDataTable } from './AlertDataTable';
+import { AlertDataTable, type AlertBulkAction } from './AlertDataTable';
 import { AIInsightBanner } from './AIInsightBanner';
 import { AskAIDialog } from './AskAIDialog';
 import { AlertDetailDrawer } from './AlertDetailDrawer';
+import { AlertBulkActionDialog } from './AlertBulkActionDialog';
 
 import { Badge } from './ui/badge';
+import { Button } from './ui/button';
 import { Card, CardContent } from './ui/card';
 import { DataPagination } from './ui/data-pagination';
 import { FilterCard } from './ui/filter-card';
@@ -104,6 +116,7 @@ const STATUS_GROUPS: Record<AlertStatus, AlertItem['status'] | null> = {
 
 export function AlertsPage({ onEnableModule, alerts }: AlertsPageProps) {
   const { isModuleActive } = useAppStore();
+  const { t } = useTranslation();
   const isCompliancePlusActive = isModuleActive('Compliance Plus');
 
   if (!isCompliancePlusActive) {
@@ -122,6 +135,9 @@ export function AlertsPage({ onEnableModule, alerts }: AlertsPageProps) {
 
   const [askAIDialogOpen, setAskAIDialogOpen] = useState(false);
   const [aiInsight, setAiInsight] = useState<any>(null);
+
+  const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
+  const [bulkAction, setBulkAction] = useState<AlertBulkAction | null>(null);
 
   const alertsBySource = useMemo(
     () => allAlerts.filter((alert) => alert.source === activeTab),
@@ -264,16 +280,91 @@ export function AlertsPage({ onEnableModule, alerts }: AlertsPageProps) {
     setActiveStatus('all');
   };
 
-  const handleDecision = (alertId: string, decision: 'true_hit' | 'false_hit') => {
+  const handleDecision = (alertId: string, decision: AlertBulkAction) => {
     const alertItem = sortedAlerts.find((a) => a.id === alertId);
     if (alertItem) {
-      const action = decision === 'true_hit' ? 'confirmée' : 'rejetée';
-      toast.success(`Alerte ${action}`, {
-        description: `L'alerte pour ${alertItem.name} a été ${action}`,
-      });
+      const actionLabel =
+        decision === 'true_hit'
+          ? t('complianceAlerts.toast.actionConfirmed')
+          : decision === 'false_hit'
+            ? t('complianceAlerts.toast.actionRejected')
+            : t('complianceAlerts.drawer.decisionUnsure');
+      toast.success(
+        decision === 'true_hit'
+          ? t('complianceAlerts.toast.confirmedTitle')
+          : decision === 'false_hit'
+            ? t('complianceAlerts.toast.rejectedTitle')
+            : t('complianceAlerts.drawer.decisionUnsure'),
+        {
+          description: t('complianceAlerts.toast.decisionBody', {
+            name: alertItem.name,
+            action: actionLabel,
+          }),
+        },
+      );
       setSelectedAlert(null);
     }
   };
+
+  const pendingPageIds = useMemo(
+    () =>
+      paginatedAlerts
+        .filter((a) => a.status === 'Pending')
+        .map((a) => a.id),
+    [paginatedAlerts],
+  );
+
+  const allPendingSelected =
+    pendingPageIds.length > 0 &&
+    pendingPageIds.every((id) => selectedIds.has(id));
+  const somePendingSelected =
+    !allPendingSelected && pendingPageIds.some((id) => selectedIds.has(id));
+
+  const selectedAlertItems = useMemo(
+    () => sortedAlerts.filter((a) => selectedIds.has(a.id)),
+    [sortedAlerts, selectedIds],
+  );
+
+  const handleToggleSelectRow = (id: string) => {
+    setSelectedIds((current) => {
+      const next = new Set(current);
+      if (next.has(id)) next.delete(id);
+      else next.add(id);
+      return next;
+    });
+  };
+
+  const handleToggleSelectAll = () => {
+    setSelectedIds((current) => {
+      if (allPendingSelected) {
+        const next = new Set(current);
+        pendingPageIds.forEach((id) => next.delete(id));
+        return next;
+      }
+      const next = new Set(current);
+      pendingPageIds.forEach((id) => next.add(id));
+      return next;
+    });
+  };
+
+  const handleClearSelection = () => setSelectedIds(new Set());
+
+  const handleBulkConfirm = (
+    alertIds: string[],
+    _action: AlertBulkAction,
+    _comments: Record<string, string>,
+  ) => {
+    setSelectedIds((current) => {
+      const next = new Set(current);
+      alertIds.forEach((id) => next.delete(id));
+      return next;
+    });
+    setBulkAction(null);
+  };
+
+  useEffect(() => {
+    setSelectedIds(new Set());
+  }, [activeTab, activeStatus]);
 
   const handleExportAlerts = () => {
     const csvHeaders = ['ID', 'Name', 'Entity', 'Source', 'Match', 'Status', 'Changes', 'Date'];
@@ -446,6 +537,63 @@ export function AlertsPage({ onEnableModule, alerts }: AlertsPageProps) {
             </div>
 
             <CardContent className="p-0 flex flex-col">
+              <AnimatePresence>
+                {selectedIds.size > 0 && (
+                  <motion.div
+                    initial={{ height: 0, opacity: 0 }}
+                    animate={{ height: 'auto', opacity: 1 }}
+                    exit={{ height: 0, opacity: 0 }}
+                    className="bg-blue-50/60 border-b border-blue-100 overflow-hidden"
+                  >
+                    <div className="px-6 py-3 flex items-center justify-between flex-wrap gap-3">
+                      <div className="flex items-center gap-3">
+                        <Badge className="bg-primary text-primary-foreground px-3 py-1">
+                          {selectedIds.size}{' '}
+                          {selectedIds.size === 1
+                            ? t('complianceAlerts.selection.selectedOne')
+                            : t('complianceAlerts.selection.selectedMany')}
+                        </Badge>
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          onClick={handleClearSelection}
+                          className="text-muted-foreground hover:text-foreground h-8"
+                        >
+                          <X className="w-4 h-4 mr-1" />
+                          {t('complianceAlerts.selection.clear')}
+                        </Button>
+                      </div>
+                      <div className="flex items-center gap-2">
+                        <Button
+                          size="sm"
+                          onClick={() => setBulkAction('true_hit')}
+                          className="h-8 bg-emerald-600 hover:bg-emerald-700 text-white"
+                        >
+                          <Check className="w-4 h-4 mr-1.5" />
+                          {t('complianceAlerts.selection.actionConfirm')}
+                        </Button>
+                        <Button
+                          size="sm"
+                          onClick={() => setBulkAction('unsure')}
+                          className="h-8 bg-amber-500 hover:bg-amber-600 text-white"
+                        >
+                          <HelpCircle className="w-4 h-4 mr-1.5" />
+                          {t('complianceAlerts.selection.actionUnsure')}
+                        </Button>
+                        <Button
+                          size="sm"
+                          onClick={() => setBulkAction('false_hit')}
+                          className="h-8 bg-red-600 hover:bg-red-700 text-white"
+                        >
+                          <X className="w-4 h-4 mr-1.5" />
+                          {t('complianceAlerts.selection.actionReject')}
+                        </Button>
+                      </div>
+                    </div>
+                  </motion.div>
+                )}
+              </AnimatePresence>
+
               <div className="flex-1 overflow-auto">
                 {paginatedAlerts.length === 0 ? (
                   <div className="py-16 text-center">
@@ -465,6 +613,11 @@ export function AlertsPage({ onEnableModule, alerts }: AlertsPageProps) {
                     sortConfig={sortConfig}
                     onSort={handleSort}
                     onDecision={handleDecision}
+                    selectedIds={selectedIds}
+                    onToggleSelectRow={handleToggleSelectRow}
+                    onToggleSelectAll={handleToggleSelectAll}
+                    allPendingSelected={allPendingSelected}
+                    somePendingSelected={somePendingSelected}
                   />
                 )}
               </div>
@@ -493,6 +646,14 @@ export function AlertsPage({ onEnableModule, alerts }: AlertsPageProps) {
         isOpen={!!selectedAlert}
         onClose={() => setSelectedAlert(null)}
         onDecision={handleDecision}
+      />
+
+      <AlertBulkActionDialog
+        open={bulkAction !== null}
+        alerts={selectedAlertItems}
+        action={bulkAction}
+        onClose={() => setBulkAction(null)}
+        onConfirm={handleBulkConfirm}
       />
 
       <AskAIDialog

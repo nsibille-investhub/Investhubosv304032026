@@ -2678,7 +2678,42 @@
     "tooltip": {
       "view": "View details",
       "confirm": "Confirm (True Hit)",
-      "reject": "Reject (False Hit)"
+      "reject": "Reject (False Hit)",
+      "unsure": "Mark as unsure"
+    },
+    "selection": {
+      "selectRow": "Select this alert",
+      "selectAll": "Select all pending alerts",
+      "deselectAll": "Deselect all alerts",
+      "selectedOne": "alert selected",
+      "selectedMany": "alerts selected",
+      "clear": "Clear selection",
+      "actionConfirm": "Confirm",
+      "actionReject": "Reject",
+      "actionUnsure": "Unsure",
+      "onlyPendingTip": "Only pending alerts can be qualified"
+    },
+    "bulkDialog": {
+      "titleConfirm": "Confirm {{count}} alert(s)",
+      "titleReject": "Reject {{count}} alert(s)",
+      "titleUnsure": "Mark {{count}} alert(s) as unsure",
+      "description": "A comment is required to qualify these alerts.",
+      "modeLabel": "Comment mode",
+      "modeSame": "Same comment for all",
+      "modeSameHint": "Apply the comment below to every selected alert",
+      "modeIndividual": "Individual comment",
+      "modeIndividualHint": "Enter a specific comment for each alert, one after the other",
+      "commentLabel": "Comment",
+      "commentPlaceholder": "Type your comment…",
+      "missingComment": "Please enter a comment",
+      "progress": "Alert {{current}} of {{total}}",
+      "currentAlert": "Current alert",
+      "cancel": "Cancel",
+      "applyToAll": "Submit and process all",
+      "nextAlert": "Submit and move to next",
+      "finish": "Finish",
+      "doneTitle": "Qualification complete",
+      "doneBody": "{{count}} alert(s) qualified"
     },
     "drawer": {
       "analyst": "Analyst",

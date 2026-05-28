@@ -38,7 +38,10 @@ interface AlertDetailDrawerProps {
   alert: AlertItem | null;
   isOpen: boolean;
   onClose: () => void;
-  onDecision?: (alertId: string, decision: 'true_hit' | 'false_hit') => void;
+  onDecision?: (
+    alertId: string,
+    decision: 'true_hit' | 'false_hit' | 'unsure',
+  ) => void;
 }
 
 const STATUS_VARIANT: Record<
@@ -124,12 +127,7 @@ export function AlertDetailDrawer({
       toast.error(t('complianceAlerts.drawer.missingComment'));
       return;
     }
-    if (decision === 'true_hit' || decision === 'false_hit') {
-      onDecision?.(alert.id, decision);
-    } else {
-      toast.success(t('complianceAlerts.drawer.confirm'));
-      onClose();
-    }
+    onDecision?.(alert.id, decision);
   };
 
   const handleAiAnalysis = () => {
