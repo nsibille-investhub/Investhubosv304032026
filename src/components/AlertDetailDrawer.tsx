@@ -114,9 +114,8 @@ export function AlertDetailDrawer({
     [alert],
   );
 
-  if (!alert) return null;
-
   const handleConfirm = () => {
+    if (!alert) return;
     if (!decision) {
       toast.error(t('complianceAlerts.drawer.missingDecision'));
       return;
@@ -134,21 +133,25 @@ export function AlertDetailDrawer({
   };
 
   const handleAiAnalysis = () => {
+    if (!alert) return;
     toast.success(t('complianceAlerts.drawer.aiToastTitle'), {
       description: t('complianceAlerts.drawer.aiToastBody', { name: alert.entityName }),
     });
   };
 
-  const statusLabel = t(STATUS_LABEL_KEY[alert.status]);
-  const statusVariant = STATUS_VARIANT[alert.status];
-  const isPending = alert.status === 'Pending';
+  const statusLabel = alert ? t(STATUS_LABEL_KEY[alert.status]) : '';
+  const statusVariant = alert ? STATUS_VARIANT[alert.status] : 'neutral';
+  const isPending = alert?.status === 'Pending';
 
   return (
-    <Sheet open={isOpen} onOpenChange={(open) => !open && onClose()}>
+    <Sheet open={isOpen && !!alert} onOpenChange={(open) => !open && onClose()}>
       <SheetContent
         side="right"
-        className="!w-[92vw] sm:!w-[60vw] lg:!w-[40vw] !max-w-none h-full p-0 gap-0"
+        style={{ width: 'min(40vw, 100vw)', maxWidth: 'none' }}
+        className="h-full p-0 gap-0 sm:!max-w-none"
       >
+        {alert ? (
+        <>
         {/* Header */}
         <SheetHeader className="px-6 py-5 border-b bg-white">
           <div className="pr-8">
@@ -522,6 +525,8 @@ export function AlertDetailDrawer({
           ) : null}
 
         </div>
+        </>
+        ) : null}
       </SheetContent>
     </Sheet>
   );
