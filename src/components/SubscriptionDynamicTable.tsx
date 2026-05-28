@@ -509,20 +509,28 @@ export function SubscriptionDynamicTable({
         );
 
       case 'entryFees':
-        return row.entryFees ? (
-          <span className="text-sm font-medium text-gray-900 dark:text-gray-100">{row.entryFees}%</span>
-        ) : (
-          <span className="text-sm text-gray-400 dark:text-gray-600">-</span>
+        return (
+          <span className="text-sm font-medium text-gray-900 dark:text-gray-100">
+            {(row.entryFees ?? 0)}%
+          </span>
         );
 
-      case 'entryFeesAmount':
+      case 'entryFeesAmount': {
         const entryFeesAmount = row.entryFees && row.amount ? (row.amount * row.entryFees) / 100 : 0;
-        return entryFeesAmount > 0 ? (
+        return (
           <span className="text-sm font-semibold text-gray-900 dark:text-gray-100">
             {formatCurrency(entryFeesAmount)}
           </span>
+        );
+      }
+
+      case 'subscriptionPremium':
+        return row.subscriptionPremium ? (
+          <span className="text-sm font-semibold text-gray-900 dark:text-gray-100">
+            {formatCurrency(row.subscriptionPremium)}
+          </span>
         ) : (
-          <span className="text-sm text-gray-400 dark:text-gray-600">-</span>
+          <span className="text-sm text-gray-400 dark:text-gray-600"></span>
         );
 
       case 'language':
@@ -553,18 +561,24 @@ export function SubscriptionDynamicTable({
           </div>
         );
 
-      case 'pendingCalls':
-        return row.pendingCalls ? (
+      case 'pendingCalls': {
+        const pendingCallsCount = row.pendingCalls ?? 0;
+        return pendingCallsCount > 0 ? (
           <div className="flex justify-center">
-            <Badge className="bg-orange-100 dark:bg-orange-950/50 text-orange-700 dark:text-orange-300 border-orange-200 dark:border-orange-800">
-              {t('subscriptions.table.yes')}
+            <Badge className={cn(
+              pendingCallsCount > 2
+                ? "bg-red-100 dark:bg-red-950/50 text-red-700 dark:text-red-300 border-red-200 dark:border-red-800"
+                : "bg-orange-100 dark:bg-orange-950/50 text-orange-700 dark:text-orange-300 border-orange-200 dark:border-orange-800"
+            )}>
+              {pendingCallsCount}
             </Badge>
           </div>
         ) : (
           <div className="flex justify-center">
-            <span className="text-sm text-gray-400 dark:text-gray-600">-</span>
+            <span className="text-sm text-gray-500 dark:text-gray-400">0</span>
           </div>
         );
+      }
 
       case 'onboardingReopened':
         return row.onboardingReopened > 0 ? (

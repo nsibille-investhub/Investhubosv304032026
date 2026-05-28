@@ -334,6 +334,7 @@
       "distributedAmount": "Montant distribué",
       "entryFees": "Frais d'entrée (%)",
       "entryFeesAmount": "Frais d'entrée (montant)",
+      "subscriptionPremium": "Prime de souscription",
       "depositary": "Dépositaire",
       "activatedAt": "Date d'activation",
       "sourceAll": "Source",

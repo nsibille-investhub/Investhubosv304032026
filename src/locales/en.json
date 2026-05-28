@@ -334,6 +334,7 @@
       "distributedAmount": "Distributed amount",
       "entryFees": "Entry fees (%)",
       "entryFeesAmount": "Entry fees (amount)",
+      "subscriptionPremium": "Subscription premium",
       "depositary": "Depositary",
       "activatedAt": "Activation date",
       "sourceAll": "Source",
