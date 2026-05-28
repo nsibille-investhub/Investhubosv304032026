@@ -29,6 +29,16 @@ import {
   TooltipContent,
   TooltipTrigger,
 } from './ui/tooltip';
+import {
+  Sheet,
+  SheetContent,
+  SheetHeader,
+  SheetTitle,
+  SheetDescription,
+  SheetFooter,
+} from './ui/sheet';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from './ui/tabs';
+import { ScrollArea } from './ui/scroll-area';
 import { FilterCard } from './ui/filter-card';
 import { FilterBar, FilterConfig } from './FilterBar';
 import { DataPagination } from './ui/data-pagination';
@@ -48,6 +58,7 @@ import {
   ValidationBatch,
   ValidationDocument,
   ValidationStatus,
+  I18nRef,
 } from '../utils/validationDocumentsGenerator';
 import {
   COMMITMENTS,
@@ -1394,6 +1405,7 @@ function PublicationConfirmDialog({
 
   const notificationGroups = groups.filter((g) => g.sig !== 'silent');
   const totalDocs = docs.length;
+  const totalNotifs = notificationGroups.length;
 
   if (mode === 'reject') {
     return (
@@ -1435,51 +1447,421 @@ function PublicationConfirmDialog({
   }
 
   return (
-    <ConfirmShell
-      title={t('validation.confirm.title')}
-      subtitle={t(
-        totalDocs > 1
-          ? 'validation.confirm.subtitleMany'
-          : 'validation.confirm.subtitleOne',
-        { docs: totalDocs, notifs: notificationGroups.length },
-      )}
-      reassurance={t('validation.confirm.reassurance')}
+    <PublicationConfirmDrawer
+      groups={groups}
+      notificationGroups={notificationGroups}
+      totalDocs={totalDocs}
+      totalNotifs={totalNotifs}
       onCancel={onCancel}
       onConfirm={onConfirm}
-      confirmLabel={t('validation.confirm.confirm')}
-      confirmIntent="primary"
-    >
-      <div className="space-y-3">
-        <p className="text-xs font-semibold uppercase tracking-wide text-gray-500 dark:text-gray-400">
-          {t('validation.confirm.groupsTitle')}
+    />
+  );
+}
+
+// ---------------------------------------------------------------------------
+// Publication confirm drawer — side panel with three tabs: recap, comms
+// preview and documents preview. Side-by-side reading without obscuring the
+// page's table actions/filters (replaces the old centered modal).
+// ---------------------------------------------------------------------------
+
+interface PublicationGroup {
+  sig: string;
+  docs: ValidationDocument[];
+  notification?: ValidationDocument['notification'];
+  templateKey?: string;
+}
+
+interface PublicationConfirmDrawerProps {
+  groups: PublicationGroup[];
+  notificationGroups: PublicationGroup[];
+  totalDocs: number;
+  totalNotifs: number;
+  onCancel: () => void;
+  onConfirm: () => void;
+}
+
+function PublicationConfirmDrawer({
+  groups,
+  notificationGroups,
+  totalDocs,
+  totalNotifs,
+  onCancel,
+  onConfirm,
+}: PublicationConfirmDrawerProps) {
+  const { t } = useTranslation();
+  const [tab, setTab] = useState<'recap' | 'comms' | 'docs'>('recap');
+  const [focusedSig, setFocusedSig] = useState<string | null>(null);
+  const [previewDoc, setPreviewDoc] = useState<ValidationDocument | null>(null);
+
+  const subtitleDocs = t(
+    totalDocs > 1
+      ? 'validation.confirm.subtitleDocsMany'
+      : 'validation.confirm.subtitleDocsOne',
+    { count: totalDocs },
+  );
+  const subtitleNotifs =
+    totalNotifs === 0
+      ? t('validation.confirm.subtitleNotifsNone')
+      : t(
+          totalNotifs > 1
+            ? 'validation.confirm.subtitleNotifsMany'
+            : 'validation.confirm.subtitleNotifsOne',
+          { count: totalNotifs },
+        );
+  const reassurance =
+    totalNotifs === 0
+      ? t('validation.confirm.reassurancePure')
+      : t('validation.confirm.reassuranceWithNotifs');
+
+  const allDocs = useMemo(
+    () => groups.flatMap((g) => g.docs),
+    [groups],
+  );
+
+  const handlePreviewGroup = (sig: string, target: 'comms' | 'docs') => {
+    setFocusedSig(sig);
+    setTab(target);
+  };
+
+  return (
+    <>
+      <Sheet open onOpenChange={(open) => !open && onCancel()}>
+        <SheetContent
+          side="right"
+          className="!w-[95vw] sm:!w-[680px] lg:!w-[820px] !max-w-none p-0 flex flex-col gap-0"
+        >
+          <SheetHeader className="border-b border-gray-200 bg-white px-6 py-4 dark:border-gray-800 dark:bg-gray-950">
+            <SheetTitle className="text-base">
+              {t('validation.confirm.title')}
+            </SheetTitle>
+            <SheetDescription className="text-xs">
+              {`${subtitleDocs} · ${subtitleNotifs}`}
+            </SheetDescription>
+            <div className="mt-2 flex items-start gap-2 rounded-md border border-amber-200 bg-amber-50/60 px-3 py-2 text-xs text-amber-900 dark:border-amber-900/40 dark:bg-amber-950/30 dark:text-amber-200">
+              <AlertCircle className="mt-0.5 h-3.5 w-3.5 shrink-0" />
+              <span>{reassurance}</span>
+            </div>
+          </SheetHeader>
+
+          <div className="flex-1 overflow-hidden">
+            <Tabs
+              value={tab}
+              onValueChange={(v) => setTab(v as typeof tab)}
+              className="flex h-full flex-col"
+            >
+              <TabsList className="mx-6 mt-4 grid w-fit grid-cols-3 gap-1">
+                <TabsTrigger value="recap" className="gap-1.5">
+                  <ShieldCheck className="h-3.5 w-3.5" />
+                  {t('validation.confirm.tabs.recap')}
+                </TabsTrigger>
+                <TabsTrigger
+                  value="comms"
+                  disabled={totalNotifs === 0}
+                  className="gap-1.5"
+                >
+                  <Bell className="h-3.5 w-3.5" />
+                  {t('validation.confirm.tabs.comms')}
+                  {totalNotifs > 0 && (
+                    <span className="ml-1 rounded-full bg-gray-200 px-1.5 text-[10px] font-semibold text-gray-700 dark:bg-gray-800 dark:text-gray-300">
+                      {totalNotifs}
+                    </span>
+                  )}
+                </TabsTrigger>
+                <TabsTrigger value="docs" className="gap-1.5">
+                  <FileText className="h-3.5 w-3.5" />
+                  {t('validation.confirm.tabs.docs')}
+                  <span className="ml-1 rounded-full bg-gray-200 px-1.5 text-[10px] font-semibold text-gray-700 dark:bg-gray-800 dark:text-gray-300">
+                    {totalDocs}
+                  </span>
+                </TabsTrigger>
+              </TabsList>
+
+              <ScrollArea className="flex-1 px-6 py-4">
+                <TabsContent value="recap" className="m-0 mt-0">
+                  <div className="space-y-3">
+                    <p className="text-xs font-semibold uppercase tracking-wide text-gray-500 dark:text-gray-400">
+                      {t('validation.confirm.groupsTitle')}
+                    </p>
+                    <ul className="space-y-2.5">
+                      {groups.map((g, idx) => (
+                        <GroupRow
+                          key={g.sig}
+                          group={g}
+                          index={notificationGroups.findIndex(
+                            (ng) => ng.sig === g.sig,
+                          )}
+                          fallbackIdx={idx}
+                          onPreview={() =>
+                            handlePreviewGroup(
+                              g.sig,
+                              g.notification ? 'comms' : 'docs',
+                            )
+                          }
+                        />
+                      ))}
+                    </ul>
+                  </div>
+                </TabsContent>
+
+                <TabsContent value="comms" className="m-0 mt-0">
+                  <CommunicationsTab
+                    notificationGroups={notificationGroups}
+                    focusedSig={focusedSig}
+                    onClearFocus={() => setFocusedSig(null)}
+                  />
+                </TabsContent>
+
+                <TabsContent value="docs" className="m-0 mt-0">
+                  <DocumentsTab
+                    groups={groups}
+                    allDocs={allDocs}
+                    focusedSig={focusedSig}
+                    onClearFocus={() => setFocusedSig(null)}
+                    onPreviewDoc={(d) => setPreviewDoc(d)}
+                  />
+                </TabsContent>
+              </ScrollArea>
+            </Tabs>
+          </div>
+
+          <SheetFooter className="border-t border-gray-200 bg-white px-6 py-3 dark:border-gray-800 dark:bg-gray-950 mt-0">
+            <div className="flex w-full items-center justify-end gap-2">
+              <Button variant="outline" onClick={onCancel} className="h-9">
+                {t('validation.confirm.cancel')}
+              </Button>
+              <Button
+                onClick={onConfirm}
+                className="h-9 gap-2 bg-emerald-600 text-white hover:bg-emerald-700"
+              >
+                <Check className="h-4 w-4" />
+                {t('validation.confirm.confirm')}
+              </Button>
+            </div>
+          </SheetFooter>
+        </SheetContent>
+      </Sheet>
+
+      <DocumentPreviewDrawer
+        isOpen={!!previewDoc}
+        onClose={() => setPreviewDoc(null)}
+        documentId={previewDoc ? String(previewDoc.id) : ''}
+        documentName={previewDoc?.name ?? ''}
+        format={previewDoc?.format}
+        size={previewDoc?.size}
+      />
+    </>
+  );
+}
+
+function CommunicationsTab({
+  notificationGroups,
+  focusedSig,
+  onClearFocus,
+}: {
+  notificationGroups: PublicationGroup[];
+  focusedSig: string | null;
+  onClearFocus: () => void;
+}) {
+  const { t } = useTranslation();
+  const resolveRef = (ref: I18nRef) => t(ref.key, ref.vars);
+
+  if (notificationGroups.length === 0) {
+    return (
+      <div className="flex flex-col items-center justify-center gap-2 rounded-xl border border-dashed border-gray-200 bg-gray-50 px-6 py-10 text-center dark:border-gray-800 dark:bg-gray-900/40">
+        <BellOff className="h-8 w-8 text-gray-400" />
+        <p className="text-sm font-medium text-gray-700 dark:text-gray-300">
+          {t('validation.confirm.comms.noneTitle')}
         </p>
-        <ul className="space-y-2.5">
-          {groups.map((g, idx) => (
-            <GroupRow
-              key={g.sig}
-              group={g}
-              index={notificationGroups.findIndex((ng) => ng.sig === g.sig)}
-              fallbackIdx={idx}
-            />
-          ))}
-        </ul>
+        <p className="max-w-xs text-xs text-gray-500">
+          {t('validation.confirm.comms.noneBody')}
+        </p>
       </div>
-    </ConfirmShell>
+    );
+  }
+
+  const visible = focusedSig
+    ? notificationGroups.filter((g) => g.sig === focusedSig)
+    : notificationGroups;
+
+  return (
+    <div className="space-y-4">
+      {focusedSig && (
+        <div className="flex items-center justify-between gap-2 rounded-md border border-blue-200 bg-blue-50/60 px-3 py-1.5 text-xs text-blue-900 dark:border-blue-900/40 dark:bg-blue-950/20 dark:text-blue-200">
+          <span>{t('validation.confirm.focused')}</span>
+          <button
+            type="button"
+            onClick={onClearFocus}
+            className="font-medium underline-offset-2 hover:underline"
+          >
+            {t('validation.confirm.clearFocus')}
+          </button>
+        </div>
+      )}
+      {visible.map((g) => {
+        const idx = notificationGroups.findIndex((ng) => ng.sig === g.sig);
+        const n = g.notification!;
+        const recipientPreview = n.recipients
+          .slice(0, 2)
+          .map((r) => (typeof r.name === 'string' ? r.name : resolveRef(r.name)))
+          .join(', ');
+        const extra = n.recipients.length - 2;
+        return (
+          <div
+            key={g.sig}
+            className="overflow-hidden rounded-xl border border-gray-200 bg-white dark:border-gray-800 dark:bg-gray-950"
+          >
+            <div className="flex items-center justify-between gap-2 border-b border-gray-100 bg-blue-50/40 px-4 py-2 dark:border-gray-900 dark:bg-blue-950/20">
+              <div className="flex items-center gap-2 text-xs font-semibold text-blue-900 dark:text-blue-200">
+                <Bell className="h-3.5 w-3.5" />
+                {t('validation.confirm.groupLabel', { n: idx + 1 })}
+              </div>
+              <span className="text-[11px] text-gray-500">
+                {t(
+                  g.docs.length > 1
+                    ? 'validation.confirm.groupDocsMany'
+                    : 'validation.confirm.groupDocsOne',
+                  { count: g.docs.length },
+                )}
+              </span>
+            </div>
+            <div className="space-y-1 border-b border-gray-100 bg-gray-50 px-5 py-3 text-xs dark:border-gray-900 dark:bg-gray-900/40">
+              <div className="flex items-baseline gap-2">
+                <span className="w-16 shrink-0 font-medium text-gray-500">
+                  {t('validation.confirm.comms.from')}
+                </span>
+                <span className="text-gray-900 dark:text-gray-100">
+                  InvestHub &lt;no-reply@investhub.io&gt;
+                </span>
+              </div>
+              <div className="flex items-baseline gap-2">
+                <span className="w-16 shrink-0 font-medium text-gray-500">
+                  {t('validation.confirm.comms.to')}
+                </span>
+                <span className="text-gray-900 dark:text-gray-100">
+                  {recipientPreview}
+                  {extra > 0 &&
+                    ` · ${t(
+                      extra > 1
+                        ? 'validation.confirm.moreRecipientsMany'
+                        : 'validation.confirm.moreRecipientsOne',
+                      { count: extra },
+                    )}`}
+                </span>
+              </div>
+              <div className="flex items-baseline gap-2">
+                <span className="w-16 shrink-0 font-medium text-gray-500">
+                  {t('validation.confirm.comms.subject')}
+                </span>
+                <span className="font-semibold text-gray-900 dark:text-gray-100">
+                  {resolveRef(n.subject)}
+                </span>
+              </div>
+            </div>
+            <div className="space-y-3 px-5 py-4 text-sm text-gray-700 dark:text-gray-300">
+              <p>{resolveRef(n.greeting)}</p>
+              {n.paragraphs.map((p, i) => (
+                <p key={i} className="leading-relaxed">
+                  {resolveRef(p)}
+                </p>
+              ))}
+              {g.docs.length > 0 && (
+                <div className="rounded-lg border border-gray-200 bg-gray-50 p-3 dark:border-gray-800 dark:bg-gray-900/40">
+                  <div className="mb-1.5 text-[11px] font-semibold uppercase tracking-wide text-gray-500">
+                    {t('validation.confirm.comms.attachments')}
+                  </div>
+                  <ul className="space-y-1">
+                    {g.docs.map((d) => (
+                      <li
+                        key={d.id}
+                        className="truncate text-xs text-gray-700 dark:text-gray-300"
+                        title={d.name}
+                      >
+                        • {d.name}
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+              )}
+              <p className="pt-1 text-gray-600 dark:text-gray-400">
+                {resolveRef(n.signature)}
+              </p>
+            </div>
+          </div>
+        );
+      })}
+    </div>
+  );
+}
+
+function DocumentsTab({
+  groups,
+  allDocs,
+  focusedSig,
+  onClearFocus,
+  onPreviewDoc,
+}: {
+  groups: PublicationGroup[];
+  allDocs: ValidationDocument[];
+  focusedSig: string | null;
+  onClearFocus: () => void;
+  onPreviewDoc: (d: ValidationDocument) => void;
+}) {
+  const { t } = useTranslation();
+  const focusedGroup = focusedSig
+    ? groups.find((g) => g.sig === focusedSig)
+    : null;
+  const visibleDocs = focusedGroup ? focusedGroup.docs : allDocs;
+  return (
+    <div className="space-y-3">
+      {focusedSig && focusedGroup && (
+        <div className="flex items-center justify-between gap-2 rounded-md border border-blue-200 bg-blue-50/60 px-3 py-1.5 text-xs text-blue-900 dark:border-blue-900/40 dark:bg-blue-950/20 dark:text-blue-200">
+          <span>{t('validation.confirm.focused')}</span>
+          <button
+            type="button"
+            onClick={onClearFocus}
+            className="font-medium underline-offset-2 hover:underline"
+          >
+            {t('validation.confirm.clearFocus')}
+          </button>
+        </div>
+      )}
+      <ul className="space-y-2">
+        {visibleDocs.map((d) => (
+          <li key={d.id}>
+            <button
+              type="button"
+              onClick={() => onPreviewDoc(d)}
+              className="group flex w-full items-center gap-3 rounded-lg border border-gray-200 bg-white px-3 py-2.5 text-left transition-colors hover:border-blue-300 hover:bg-blue-50/40 dark:border-gray-800 dark:bg-gray-950 dark:hover:bg-gray-900"
+            >
+              <div className="min-w-0 flex-1">
+                <DocumentNameCell
+                  name={d.name}
+                  pathSegments={d.pathSegments}
+                />
+              </div>
+              <span className="hidden text-xs text-gray-400 sm:inline">
+                {d.size ?? '—'}
+              </span>
+              <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-md text-gray-500 group-hover:bg-blue-100 group-hover:text-blue-600 dark:group-hover:bg-blue-950">
+                <Eye className="h-4 w-4" />
+              </span>
+            </button>
+          </li>
+        ))}
+      </ul>
+    </div>
   );
 }
 
 function GroupRow({
   group,
   index,
+  onPreview,
 }: {
-  group: {
-    sig: string;
-    docs: ValidationDocument[];
-    notification?: ValidationDocument['notification'];
-    templateKey?: string;
-  };
+  group: PublicationGroup;
   index: number;
   fallbackIdx: number;
+  onPreview?: () => void;
 }) {
   const { t } = useTranslation();
   const isSilent = group.sig === 'silent' || !group.notification;
@@ -1491,14 +1873,33 @@ function GroupRow({
             <BellOff className="h-3.5 w-3.5 text-gray-500" />
             {t('validation.confirm.silentGroupLabel')}
           </div>
-          <span className="rounded-full bg-white px-2 py-0.5 text-[11px] font-medium text-gray-700 dark:bg-gray-800 dark:text-gray-300">
-            {t(
-              group.docs.length > 1
-                ? 'validation.confirm.groupDocsMany'
-                : 'validation.confirm.groupDocsOne',
-              { count: group.docs.length },
+          <div className="flex items-center gap-1.5">
+            <span className="rounded-full bg-white px-2 py-0.5 text-[11px] font-medium text-gray-700 dark:bg-gray-800 dark:text-gray-300">
+              {t(
+                group.docs.length > 1
+                  ? 'validation.confirm.groupDocsMany'
+                  : 'validation.confirm.groupDocsOne',
+                { count: group.docs.length },
+              )}
+            </span>
+            {onPreview && (
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <button
+                    type="button"
+                    onClick={onPreview}
+                    aria-label={t('validation.confirm.previewGroupAria')}
+                    className="flex h-6 w-6 items-center justify-center rounded-md text-gray-500 hover:bg-white hover:text-gray-900 dark:hover:bg-gray-800 dark:hover:text-gray-100"
+                  >
+                    <Eye className="h-3.5 w-3.5" />
+                  </button>
+                </TooltipTrigger>
+                <TooltipContent>
+                  {t('validation.confirm.previewGroupTooltip')}
+                </TooltipContent>
+              </Tooltip>
             )}
-          </span>
+          </div>
         </div>
         <p className="mt-1 text-[11px] text-gray-500">
           {t('validation.confirm.silentGroupHelp')}
@@ -1538,6 +1939,23 @@ function GroupRow({
               { count: group.docs.length },
             )}
           </span>
+          {onPreview && (
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <button
+                  type="button"
+                  onClick={onPreview}
+                  aria-label={t('validation.confirm.previewGroupAria')}
+                  className="flex h-6 w-6 items-center justify-center rounded-md text-blue-700 hover:bg-white hover:text-blue-900 dark:text-blue-300 dark:hover:bg-blue-900 dark:hover:text-blue-100"
+                >
+                  <Eye className="h-3.5 w-3.5" />
+                </button>
+              </TooltipTrigger>
+              <TooltipContent>
+                {t('validation.confirm.previewGroupTooltip')}
+              </TooltipContent>
+            </Tooltip>
+          )}
         </div>
       </div>
       <dl className="mt-1.5 grid grid-cols-1 gap-x-3 gap-y-0.5 text-[11px] text-gray-700 dark:text-gray-300 sm:grid-cols-2">
