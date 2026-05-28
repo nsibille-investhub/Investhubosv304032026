@@ -2625,5 +2625,65 @@
     "csv": {
       "filename": "sms-history-{{date}}.csv"
     }
+  },
+  "complianceAlerts": {
+    "table": {
+      "name": "Name",
+      "changes": "Changes",
+      "match": "Match",
+      "list": "Alert List",
+      "status": "Status",
+      "date": "Date",
+      "actions": "Actions"
+    },
+    "changes": {
+      "new": "New",
+      "modified": "Modified"
+    },
+    "status": {
+      "pending": "Pending",
+      "confirmed": "Confirmed",
+      "rejected": "Rejected"
+    },
+    "list": {
+      "pep": "PEP",
+      "watchList": "Watch List",
+      "sanctions": "Sanctions",
+      "adverseMedia": "Adverse Media",
+      "crime": "Crime",
+      "financialWarning": "Financial Warning"
+    },
+    "tooltip": {
+      "view": "View details",
+      "confirm": "Confirm (True Hit)",
+      "reject": "Reject (False Hit)"
+    },
+    "drawer": {
+      "analyst": "Analyst",
+      "assignAnalyst": "Assign Analyst",
+      "clickToSelect": "Click to select",
+      "monitoring": "Monitoring",
+      "active": "Active",
+      "inactive": "Inactive",
+      "aiAnalysis": "AI Analysis",
+      "commentPlaceholder": "Comment is mandatory for your decisions",
+      "decisionUnsure": "Unsure",
+      "decisionFalseHit": "False Hit",
+      "decisionTrueHit": "True Hit",
+      "confirm": "Confirm",
+      "details": "Details",
+      "alertDetails": "Alert Details",
+      "keywords": "Keywords",
+      "identification": "Identification",
+      "sources": "Sources",
+      "alertList": "Alert List"
+    },
+    "toast": {
+      "confirmedTitle": "Alert confirmed",
+      "rejectedTitle": "Alert rejected",
+      "decisionBody": "Alert for {{name}} has been {{action}}",
+      "actionConfirmed": "confirmed",
+      "actionRejected": "rejected"
+    }
   }
 }

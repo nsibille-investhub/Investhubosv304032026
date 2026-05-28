@@ -13,7 +13,7 @@ import { AlertsLandingPage } from './AlertsLandingPage';
 import { AlertDataTable } from './AlertDataTable';
 import { AIInsightBanner } from './AIInsightBanner';
 import { AskAIDialog } from './AskAIDialog';
-import { DecisionPanel } from './DecisionPanel';
+import { AlertDetailDrawer } from './AlertDetailDrawer';
 
 import { Badge } from './ui/badge';
 import { Card, CardContent } from './ui/card';
@@ -22,7 +22,6 @@ import { FilterCard } from './ui/filter-card';
 import { PageHeader } from './ui/page-header';
 import { Tabs, TabsList, TabsTrigger } from './ui/tabs';
 import { FilterBar, type FilterConfig } from './FilterBar';
-import { cn } from './ui/utils';
 
 type TabType = 'Membercheck' | 'ORIAS';
 type AlertStatus = 'pending' | 'confirmed' | 'rejected' | 'all';
@@ -69,6 +68,21 @@ const ALERT_FILTER_CONFIGS: FilterConfig[] = [
       { value: 'Pending', label: 'En attente' },
       { value: 'Confirmed', label: 'Confirmée' },
       { value: 'Rejected', label: 'Rejetée' },
+    ],
+  },
+  {
+    id: 'alertList',
+    label: 'Liste',
+    type: 'select',
+    isPrimary: true,
+    placeholder: 'Liste d\'alerte',
+    options: [
+      { value: 'PEP', label: 'PPE' },
+      { value: 'Watch List', label: 'Liste de surveillance' },
+      { value: 'Sanctions', label: 'Sanctions' },
+      { value: 'Adverse Media', label: 'Presse négative' },
+      { value: 'Crime', label: 'Criminalité' },
+      { value: 'Financial Warning', label: 'Alerte financière' },
     ],
   },
   {
@@ -165,6 +179,7 @@ export function AlertsPage({ onEnableModule, alerts }: AlertsPageProps) {
     return alertsByStatus.filter((alert) => {
       if (activeFilters.status && alert.status !== activeFilters.status) return false;
       if (activeFilters.entity && alert.entityName !== activeFilters.entity) return false;
+      if (activeFilters.alertList && alert.alertList !== activeFilters.alertList) return false;
       if (activeFilters.changes) {
         if (activeFilters.changes === 'none' && alert.changes != null) return false;
         if (activeFilters.changes !== 'none' && alert.changes !== activeFilters.changes)
@@ -414,13 +429,8 @@ export function AlertsPage({ onEnableModule, alerts }: AlertsPageProps) {
 
         <motion.div
           initial={{ opacity: 0, y: 20 }}
-          animate={{
-            opacity: 1,
-            y: 0,
-            width: selectedAlert ? '60%' : '100%',
-          }}
+          animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.2, type: 'spring', stiffness: 200, damping: 25 }}
-          className={cn(selectedAlert && 'min-w-0')}
         >
           <Card className="overflow-hidden p-0 gap-0 hover:shadow-lg transition-shadow duration-500">
             <div className="px-6 py-4 border-b border-border bg-card">
@@ -478,21 +488,12 @@ export function AlertsPage({ onEnableModule, alerts }: AlertsPageProps) {
         </motion.div>
       </div>
 
-      <AnimatePresence>
-        {selectedAlert && (
-          <DecisionPanel
-            entity={{
-              id: selectedAlert.id,
-              name: selectedAlert.entityName,
-              details: {
-                alerts: [selectedAlert.alert],
-                auditTrail: [],
-              },
-            }}
-            onClose={() => setSelectedAlert(null)}
-          />
-        )}
-      </AnimatePresence>
+      <AlertDetailDrawer
+        alert={selectedAlert}
+        isOpen={!!selectedAlert}
+        onClose={() => setSelectedAlert(null)}
+        onDecision={handleDecision}
+      />
 
       <AskAIDialog
         open={askAIDialogOpen}

@@ -4,10 +4,8 @@ import {
   Clock,
   CheckCircle2,
   XCircle,
-  Eye,
   Check,
   X,
-  RotateCcw,
   ShieldCheck,
   FileText,
   Tag as TagIcon,
@@ -24,6 +22,7 @@ import {
 } from 'lucide-react';
 import { toast } from 'sonner@2.0.3';
 import { Button } from './ui/button';
+import { RowActions } from './ui/row-actions';
 import {
   Tooltip,
   TooltipContent,
@@ -1222,73 +1221,23 @@ function DocumentRow({
         <StatusBadge label={statusLabel} variant={conf.variant} />
       </td>
       <td className={cn('px-4 py-2.5 align-top', stickyClass)}>
-        <div
-          className="flex items-center justify-end gap-1"
-          onClick={(e) => e.stopPropagation()}
-        >
-          <Tooltip>
-            <TooltipTrigger asChild>
-              <Button
-                variant="ghost"
-                size="sm"
-                className="h-8 w-8 p-0"
-                onClick={onPreview}
-              >
-                <Eye className="h-4 w-4" />
-              </Button>
-            </TooltipTrigger>
-            <TooltipContent>{t('validation.tooltip.previewDoc')}</TooltipContent>
-          </Tooltip>
-          {doc.status === 'validated' && (
-            <Tooltip>
-              <TooltipTrigger asChild>
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  className="h-8 w-8 p-0 text-amber-600 hover:bg-amber-50 hover:text-amber-700 dark:hover:bg-amber-950"
-                  onClick={onResetToPending}
-                >
-                  <RotateCcw className="h-4 w-4" />
-                </Button>
-              </TooltipTrigger>
-              <TooltipContent>{t('validation.tooltip.resetPending')}</TooltipContent>
-            </Tooltip>
-          )}
-          {doc.status !== 'validated' && (
-            <Tooltip>
-              <TooltipTrigger asChild>
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  className="h-8 w-8 p-0 text-emerald-600 hover:bg-emerald-50 hover:text-emerald-700 dark:hover:bg-emerald-950"
-                  onClick={onValidate}
-                >
-                  <Check className="h-4 w-4" />
-                </Button>
-              </TooltipTrigger>
-              <TooltipContent>
-                {notification
-                  ? t('validation.tooltip.validateAndSend')
-                  : t('validation.tooltip.validate')}
-              </TooltipContent>
-            </Tooltip>
-          )}
-          {doc.status !== 'rejected' && (
-            <Tooltip>
-              <TooltipTrigger asChild>
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  className="h-8 w-8 p-0 text-red-600 hover:bg-red-50 hover:text-red-700 dark:hover:bg-red-950"
-                  onClick={onReject}
-                >
-                  <X className="h-4 w-4" />
-                </Button>
-              </TooltipTrigger>
-              <TooltipContent>{t('validation.tooltip.reject')}</TooltipContent>
-            </Tooltip>
-          )}
-        </div>
+        <RowActions
+          previewLabel={t('validation.tooltip.previewDoc')}
+          acceptLabel={
+            notification
+              ? t('validation.tooltip.validateAndSend')
+              : t('validation.tooltip.validate')
+          }
+          rejectLabel={t('validation.tooltip.reject')}
+          resetLabel={t('validation.tooltip.resetPending')}
+          onPreview={onPreview}
+          onAccept={onValidate}
+          onReject={onReject}
+          onReset={onResetToPending}
+          showAccept={doc.status !== 'validated'}
+          showReject={doc.status !== 'rejected'}
+          showReset={doc.status === 'validated'}
+        />
       </td>
     </tr>
   );
@@ -1799,58 +1748,19 @@ function DynamicBatchRow({
           <StatusBadge label={statusLabel} variant={conf.variant} />
         </td>
         <td className={cn('px-4 py-2.5 align-top', stickyClass)}>
-          <div
-            className="flex items-center justify-end gap-1"
-            onClick={(e) => e.stopPropagation()}
-          >
-            {status === 'validated' && (
-              <Tooltip>
-                <TooltipTrigger asChild>
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    className="h-8 w-8 p-0 text-amber-600 hover:bg-amber-50 hover:text-amber-700 dark:hover:bg-amber-950"
-                    onClick={onReset}
-                  >
-                    <RotateCcw className="h-4 w-4" />
-                  </Button>
-                </TooltipTrigger>
-                <TooltipContent>{t('validation.tooltip.resetPending')}</TooltipContent>
-              </Tooltip>
-            )}
-            {status !== 'validated' && (
-              <Tooltip>
-                <TooltipTrigger asChild>
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    className="h-8 w-8 p-0 text-emerald-600 hover:bg-emerald-50 hover:text-emerald-700 dark:hover:bg-emerald-950"
-                    onClick={onValidate}
-                  >
-                    <Check className="h-4 w-4" />
-                  </Button>
-                </TooltipTrigger>
-                <TooltipContent>
-                  {t('validation.tooltip.validateAndSend')}
-                </TooltipContent>
-              </Tooltip>
-            )}
-            {status !== 'rejected' && (
-              <Tooltip>
-                <TooltipTrigger asChild>
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    className="h-8 w-8 p-0 text-red-600 hover:bg-red-50 hover:text-red-700 dark:hover:bg-red-950"
-                    onClick={onReject}
-                  >
-                    <X className="h-4 w-4" />
-                  </Button>
-                </TooltipTrigger>
-                <TooltipContent>{t('validation.tooltip.reject')}</TooltipContent>
-              </Tooltip>
-            )}
-          </div>
+          <RowActions
+            previewLabel={t('validation.tooltip.previewDoc')}
+            acceptLabel={t('validation.tooltip.validateAndSend')}
+            rejectLabel={t('validation.tooltip.reject')}
+            resetLabel={t('validation.tooltip.resetPending')}
+            onAccept={onValidate}
+            onReject={onReject}
+            onReset={onReset}
+            showPreview={false}
+            showAccept={status !== 'validated'}
+            showReject={status !== 'rejected'}
+            showReset={status === 'validated'}
+          />
         </td>
       </tr>
       {expanded &&
@@ -1903,26 +1813,12 @@ function DynamicBatchRow({
               —
             </td>
             <td className={cn('px-4 py-2 align-top', stickyClass)}>
-              <div
-                className="flex items-center justify-end gap-1"
-                onClick={(e) => e.stopPropagation()}
-              >
-                <Tooltip>
-                  <TooltipTrigger asChild>
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      className="h-8 w-8 p-0"
-                      onClick={() => onPreviewChild(d)}
-                    >
-                      <Eye className="h-4 w-4" />
-                    </Button>
-                  </TooltipTrigger>
-                  <TooltipContent>
-                    {t('validation.tooltip.previewDoc')}
-                  </TooltipContent>
-                </Tooltip>
-              </div>
+              <RowActions
+                previewLabel={t('validation.tooltip.previewDoc')}
+                onPreview={() => onPreviewChild(d)}
+                showAccept={false}
+                showReject={false}
+              />
             </td>
           </tr>
         ))}

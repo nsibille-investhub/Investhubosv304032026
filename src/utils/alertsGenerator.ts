@@ -1,5 +1,13 @@
 import { Alert, generateEntityDetails } from './mockData';
 
+export type AlertListCategory =
+  | 'PEP'
+  | 'Watch List'
+  | 'Sanctions'
+  | 'Adverse Media'
+  | 'Crime'
+  | 'Financial Warning';
+
 export interface AlertItem {
   id: string;
   name: string;
@@ -11,9 +19,10 @@ export interface AlertItem {
   alert: Alert;
   source: 'Membercheck' | 'ORIAS';
   daysAgo: number;
+  alertList: AlertListCategory;
 }
 
-const individualNames = [
+const individualNames: Array<{ firstName: string; lastName: string }> = [
   { firstName: 'John', lastName: 'Smith' },
   { firstName: 'Sarah', lastName: 'Connor' },
   { firstName: 'Michael', lastName: 'Chen' },
@@ -23,10 +32,20 @@ const individualNames = [
   { firstName: 'James', lastName: 'Wilson' },
   { firstName: 'Maria', lastName: 'Garcia' },
   { firstName: 'Robert', lastName: 'Taylor' },
-  { firstName: 'Jennifer', lastName: 'Martinez' }
+  { firstName: 'Jennifer', lastName: 'Martinez' },
+  { firstName: 'Vladimir', lastName: 'Petrov' },
+  { firstName: 'Sergei', lastName: 'Ivanov' },
+  { firstName: 'Aïcha', lastName: 'Diallo' },
+  { firstName: 'Hiroshi', lastName: 'Tanaka' },
+  { firstName: 'Carlos', lastName: 'Mendoza' },
+  { firstName: 'Fatima', lastName: 'Al-Hassan' },
+  { firstName: 'Liang', lastName: 'Zhao' },
+  { firstName: 'Olena', lastName: 'Kovalenko' },
+  { firstName: 'Marco', lastName: 'Rossi' },
+  { firstName: 'Sofia', lastName: 'Lindberg' },
 ];
 
-const corporateNames = [
+const corporateNames: string[] = [
   'Lombard International Assurance',
   'LS HOLDING',
   'FMI Corporation',
@@ -36,7 +55,26 @@ const corporateNames = [
   'Horizon Investments',
   'Meridian Finance',
   'Vertex Holdings',
-  'Pinnacle Enterprises'
+  'Pinnacle Enterprises',
+  'Eastbridge Trust',
+  'Cayman Offshore Holdings',
+  'Atlas Resources SA',
+  'Northstar Energy Trading',
+  'Silver Crescent Logistics',
+  'Black Sea Shipping Co',
+  'Nordic Petroleum AB',
+  'Dubai Gold Refinery LLC',
+  'Hong Kong Diamond Exchange',
+  'Geneva Private Bank',
+];
+
+const ALERT_LISTS: AlertListCategory[] = [
+  'PEP',
+  'Watch List',
+  'Sanctions',
+  'Adverse Media',
+  'Crime',
+  'Financial Warning',
 ];
 
 function randomElement<T>(arr: T[]): T {
@@ -57,59 +95,93 @@ function formatDate(date: Date): string {
   return date.toISOString().split('T')[0];
 }
 
+function buildAlertName(
+  isIndividual: boolean,
+  entityName: string,
+  individual?: { firstName: string; lastName: string },
+): string {
+  if (isIndividual && individual) {
+    const aliasLastNames = ['Smith', 'Johnson', 'Brown', 'Davis', 'Miller', 'Petrov', 'Khan', 'Müller'];
+    return `${individual.firstName} ${individual.lastName.charAt(0)}. ${randomElement(aliasLastNames)}`;
+  }
+  return entityName;
+}
+
 /**
- * Génère des alertes mockées pour la page Alerts
+ * Generate a varied set of mock alerts for the Compliance Alerts page.
+ *
+ * We force a wide distribution across:
+ *  - status (Pending / Confirmed / Rejected)
+ *  - source (Membercheck / ORIAS)
+ *  - alert list (PEP / Watch List / Sanctions / Adverse Media / Crime / Financial Warning)
+ *  - entity kind (individual / corporate)
+ *  - changes (New / Modified / none)
+ *  - match score and date range
  */
-export function generateAlerts(count: number = 50): AlertItem[] {
+export function generateAlerts(count: number = 100): AlertItem[] {
   const alerts: AlertItem[] = [];
-  
+
+  // Deterministic-ish distribution so each batch reliably covers the matrix.
+  const statusCycle: Array<'Pending' | 'Confirmed' | 'Rejected'> = [
+    'Pending',
+    'Pending',
+    'Pending',
+    'Confirmed',
+    'Confirmed',
+    'Rejected',
+    'Rejected',
+    'Rejected',
+    'Rejected',
+    'Rejected',
+  ];
+
   for (let i = 0; i < count; i++) {
-    const isIndividual = Math.random() > 0.3;
-    const source: 'Membercheck' | 'ORIAS' = Math.random() > 0.5 ? 'ORIAS' : 'Membercheck';
-    
-    let entityName: string;
-    let alertName: string;
-    
-    if (isIndividual) {
-      const person = randomElement(individualNames);
-      entityName = `${person.firstName} ${person.lastName}`;
-      // Pour l'alerte, on utilise une variation du nom
-      alertName = `${person.firstName} ${person.lastName.charAt(0)}. ${randomElement(['Smith', 'Johnson', 'Brown', 'Davis'])}`;
+    const isIndividual = i % 3 !== 0;
+    const source: 'Membercheck' | 'ORIAS' = i % 2 === 0 ? 'Membercheck' : 'ORIAS';
+    const alertList = ALERT_LISTS[i % ALERT_LISTS.length];
+    const status = statusCycle[i % statusCycle.length];
+
+    const individual = isIndividual
+      ? individualNames[i % individualNames.length]
+      : undefined;
+    const entityName = isIndividual && individual
+      ? `${individual.firstName} ${individual.lastName}`
+      : corporateNames[i % corporateNames.length];
+    const alertName = buildAlertName(isIndividual, entityName, individual);
+
+    const changes: 'New' | 'Modified' | null =
+      status === 'Pending'
+        ? i % 2 === 0
+          ? 'New'
+          : 'Modified'
+        : i % 7 === 0
+          ? 'Modified'
+          : null;
+
+    let match: number;
+    if (status === 'Confirmed') {
+      match = randomNumber(75, 99);
+    } else if (status === 'Rejected') {
+      match = randomNumber(20, 70);
     } else {
-      entityName = randomElement(corporateNames);
-      alertName = entityName;
+      match = randomNumber(40, 95);
     }
-    
-    // Générer le statut avec distribution réaliste
-    const rand = Math.random();
-    let status: 'Pending' | 'Confirmed' | 'Rejected';
-    if (rand < 0.15) {
-      status = 'Pending'; // 15% Pending (plus visible pour la démo)
-    } else if (rand < 0.40) {
-      status = 'Confirmed'; // 25% Confirmed
-    } else {
-      status = 'Rejected'; // 60% Rejected
-    }
-    
-    const changes: 'New' | 'Modified' | null = 
-      status === 'Pending' 
-        ? (Math.random() > 0.5 ? 'New' : 'Modified')
-        : null;
-    
-    const match = status === 'Pending' 
-      ? randomNumber(20, 97)
-      : randomNumber(40, 95);
-    
-    const daysAgo = status === 'Pending'
-      ? randomNumber(1, 30)
-      : randomNumber(10, 180);
-    
+
+    const daysAgo =
+      status === 'Pending'
+        ? randomNumber(0, 21)
+        : status === 'Confirmed'
+          ? randomNumber(5, 90)
+          : randomNumber(15, 240);
+
     const date = randomDate(daysAgo);
-    
-    // Générer une alerte complète avec détails enrichis
-    const entityDetails = generateEntityDetails('Pending', alertName, 1);
+
+    // Enriched alert detail used by the drawer body.
+    const detailStatusHint =
+      status === 'Confirmed' ? 'True Hit' : status === 'Rejected' ? 'Clear' : 'Pending';
+    const entityDetails = generateEntityDetails(detailStatusHint, alertName, 1);
     const fullAlert = entityDetails.alerts[0];
-    
+
     alerts.push({
       id: `ALERT-${1000 + i}`,
       name: alertName,
@@ -120,25 +192,23 @@ export function generateAlerts(count: number = 50): AlertItem[] {
       date: formatDate(date),
       alert: fullAlert,
       source,
-      daysAgo
+      daysAgo,
+      alertList,
     });
   }
-  
+
   return alerts.sort((a, b) => {
-    // Trier par statut (Pending d'abord) puis par date
+    // Pending first, then by date desc
     if (a.status === 'Pending' && b.status !== 'Pending') return -1;
     if (a.status !== 'Pending' && b.status === 'Pending') return 1;
     return new Date(b.date).getTime() - new Date(a.date).getTime();
   });
 }
 
-/**
- * Obtenir les statistiques des alertes
- */
 export function getAlertsStats(alerts: AlertItem[]) {
   return {
-    pending: alerts.filter(a => a.status === 'Pending').length,
-    confirmed: alerts.filter(a => a.status === 'Confirmed').length,
-    rejected: alerts.filter(a => a.status === 'Rejected').length
+    pending: alerts.filter((a) => a.status === 'Pending').length,
+    confirmed: alerts.filter((a) => a.status === 'Confirmed').length,
+    rejected: alerts.filter((a) => a.status === 'Rejected').length,
   };
 }
