@@ -1394,6 +1394,7 @@ function PublicationConfirmDialog({
 
   const notificationGroups = groups.filter((g) => g.sig !== 'silent');
   const totalDocs = docs.length;
+  const totalNotifs = notificationGroups.length;
 
   if (mode === 'reject') {
     return (
@@ -1434,16 +1435,31 @@ function PublicationConfirmDialog({
     );
   }
 
+  const subtitleDocs = t(
+    totalDocs > 1
+      ? 'validation.confirm.subtitleDocsMany'
+      : 'validation.confirm.subtitleDocsOne',
+    { count: totalDocs },
+  );
+  const subtitleNotifs =
+    totalNotifs === 0
+      ? t('validation.confirm.subtitleNotifsNone')
+      : t(
+          totalNotifs > 1
+            ? 'validation.confirm.subtitleNotifsMany'
+            : 'validation.confirm.subtitleNotifsOne',
+          { count: totalNotifs },
+        );
+  const reassurance =
+    totalNotifs === 0
+      ? t('validation.confirm.reassurancePure')
+      : t('validation.confirm.reassuranceWithNotifs');
+
   return (
     <ConfirmShell
       title={t('validation.confirm.title')}
-      subtitle={t(
-        totalDocs > 1
-          ? 'validation.confirm.subtitleMany'
-          : 'validation.confirm.subtitleOne',
-        { docs: totalDocs, notifs: notificationGroups.length },
-      )}
-      reassurance={t('validation.confirm.reassurance')}
+      subtitle={`${subtitleDocs} · ${subtitleNotifs}`}
+      reassurance={reassurance}
       onCancel={onCancel}
       onConfirm={onConfirm}
       confirmLabel={t('validation.confirm.confirm')}
