@@ -147,8 +147,7 @@ export function AlertDetailDrawer({
     <Sheet open={isOpen && !!alert} onOpenChange={(open) => !open && onClose()}>
       <SheetContent
         side="right"
-        style={{ width: 'min(40vw, 100vw)', maxWidth: 'none' }}
-        className="h-full p-0 gap-0 sm:!max-w-none"
+        className="!w-[92vw] sm:!w-[640px] lg:!w-[40vw] !max-w-none h-full p-0 gap-0"
       >
         {alert ? (
         <>
