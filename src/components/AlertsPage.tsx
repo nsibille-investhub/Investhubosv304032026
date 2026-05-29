@@ -140,6 +140,10 @@ export function AlertsPage({ onEnableModule, alerts }: AlertsPageProps) {
 
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
   const [bulkAction, setBulkAction] = useState<AlertBulkAction | null>(null);
+  const [singleQualify, setSingleQualify] = useState<{
+    alertId: string;
+    action: AlertBulkAction;
+  } | null>(null);
 
   const alertsBySource = useMemo(
     () => allAlerts.filter((alert) => alert.source === activeTab),
@@ -307,6 +311,16 @@ export function AlertsPage({ onEnableModule, alerts }: AlertsPageProps) {
       setSelectedAlert(null);
     }
   };
+
+  const handleRowQualify = (alertId: string, action: AlertBulkAction) => {
+    setSingleQualify({ alertId, action });
+  };
+
+  const singleQualifyAlerts = useMemo(() => {
+    if (!singleQualify) return [];
+    const a = sortedAlerts.find((x) => x.id === singleQualify.alertId);
+    return a ? [a] : [];
+  }, [singleQualify, sortedAlerts]);
 
   const pendingPageIds = useMemo(
     () =>
@@ -638,7 +652,7 @@ export function AlertsPage({ onEnableModule, alerts }: AlertsPageProps) {
                     onRowClick={setSelectedAlert}
                     sortConfig={sortConfig}
                     onSort={handleSort}
-                    onDecision={handleDecision}
+                    onDecision={handleRowQualify}
                     selectedIds={selectedIds}
                     onToggleSelectRow={handleToggleSelectRow}
                     onToggleSelectAll={handleToggleSelectAll}
@@ -680,6 +694,14 @@ export function AlertsPage({ onEnableModule, alerts }: AlertsPageProps) {
         action={bulkAction}
         onClose={() => setBulkAction(null)}
         onConfirm={handleBulkConfirm}
+      />
+
+      <AlertBulkActionDialog
+        open={singleQualify !== null && singleQualifyAlerts.length === 1}
+        alerts={singleQualifyAlerts}
+        action={singleQualify?.action ?? null}
+        onClose={() => setSingleQualify(null)}
+        onConfirm={() => setSingleQualify(null)}
       />
 
       <AskAIDialog

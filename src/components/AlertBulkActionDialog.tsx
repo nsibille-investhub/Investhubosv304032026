@@ -40,6 +40,18 @@ const ACTION_TITLE_KEY: Record<AlertBulkAction, string> = {
   unsure: 'complianceAlerts.bulkDialog.titleUnsure',
 };
 
+const ACTION_TITLE_SINGLE_KEY: Record<AlertBulkAction, string> = {
+  true_hit: 'complianceAlerts.bulkDialog.titleSingleConfirm',
+  false_hit: 'complianceAlerts.bulkDialog.titleSingleReject',
+  unsure: 'complianceAlerts.bulkDialog.titleSingleUnsure',
+};
+
+const ACTION_SUBMIT_SINGLE_KEY: Record<AlertBulkAction, string> = {
+  true_hit: 'complianceAlerts.bulkDialog.submitSingleConfirm',
+  false_hit: 'complianceAlerts.bulkDialog.submitSingleReject',
+  unsure: 'complianceAlerts.bulkDialog.submitSingleUnsure',
+};
+
 const ACTION_ICON: Record<AlertBulkAction, typeof Check> = {
   true_hit: Check,
   false_hit: X,
@@ -80,7 +92,12 @@ export function AlertBulkActionDialog({
 
   if (!action || total === 0) return null;
 
-  const title = t(ACTION_TITLE_KEY[action], { count: total });
+  const isSingle = total === 1;
+  const single = alerts[0];
+
+  const title = isSingle
+    ? t(ACTION_TITLE_SINGLE_KEY[action], { name: single.entityName })
+    : t(ACTION_TITLE_KEY[action], { count: total });
 
   const handleApplyToAll = () => {
     if (!sharedComment.trim()) {
@@ -96,9 +113,19 @@ export function AlertBulkActionDialog({
       action,
       allComments,
     );
-    toast.success(t('complianceAlerts.bulkDialog.doneTitle'), {
-      description: t('complianceAlerts.bulkDialog.doneBody', { count: total }),
-    });
+    const isSingleSubmit = total === 1;
+    toast.success(
+      isSingleSubmit
+        ? t('complianceAlerts.bulkDialog.doneSingleTitle')
+        : t('complianceAlerts.bulkDialog.doneTitle'),
+      {
+        description: isSingleSubmit
+          ? t('complianceAlerts.bulkDialog.doneSingleBody', {
+              name: alerts[0].entityName,
+            })
+          : t('complianceAlerts.bulkDialog.doneBody', { count: total }),
+      },
+    );
     onClose();
   };
 
@@ -144,29 +171,45 @@ export function AlertBulkActionDialog({
             <div>
               <DialogTitle>{title}</DialogTitle>
               <DialogDescription>
-                {t('complianceAlerts.bulkDialog.description')}
+                {isSingle
+                  ? t('complianceAlerts.bulkDialog.descriptionSingle')
+                  : t('complianceAlerts.bulkDialog.description')}
               </DialogDescription>
             </div>
           </div>
         </DialogHeader>
 
         <div className="flex-1 overflow-y-auto p-6 space-y-6">
-          {/* Selection summary */}
+          {/* Summary card */}
           <div className="space-y-3 p-4 bg-gray-50 rounded-lg border border-gray-200">
             <div className="flex items-center justify-between gap-4">
-              <div>
-                <span className="text-sm text-gray-900 font-medium block">
-                  {total}{' '}
-                  {total === 1
-                    ? t('complianceAlerts.selection.selectedOne')
-                    : t('complianceAlerts.selection.selectedMany')}
-                </span>
-                <p className="text-xs text-gray-500 mt-0.5">
-                  {t('complianceAlerts.bulkDialog.description')}
-                </p>
+              <div className="min-w-0">
+                {isSingle ? (
+                  <>
+                    <span
+                      className="text-sm font-medium block truncate"
+                      style={{ color: BRAND_BLUE }}
+                    >
+                      {single.entityName}
+                    </span>
+                    <p className="text-xs text-gray-500 mt-0.5 truncate">
+                      {single.name} · {single.source} · {single.match}%
+                    </p>
+                  </>
+                ) : (
+                  <>
+                    <span className="text-sm text-gray-900 font-medium block">
+                      {total}{' '}
+                      {t('complianceAlerts.selection.selectedMany')}
+                    </span>
+                    <p className="text-xs text-gray-500 mt-0.5">
+                      {t('complianceAlerts.bulkDialog.summaryHint')}
+                    </p>
+                  </>
+                )}
               </div>
               <div
-                className="inline-flex items-center justify-center w-9 h-9 rounded-lg"
+                className="inline-flex items-center justify-center w-9 h-9 rounded-lg shrink-0"
                 style={{ backgroundColor: BRAND_BLUE }}
               >
                 <ActionIcon className="w-4 h-4 text-white" />
@@ -174,28 +217,30 @@ export function AlertBulkActionDialog({
             </div>
           </div>
 
-          {/* Mode toggle */}
-          <div className="space-y-2">
-            <Label>{t('complianceAlerts.bulkDialog.modeLabel')}</Label>
-            <Tabs value={mode} onValueChange={(v) => setMode(v as Mode)}>
-              <TabsList className="grid grid-cols-2 w-full">
-                <TabsTrigger value="same">
-                  {t('complianceAlerts.bulkDialog.modeSame')}
-                </TabsTrigger>
-                <TabsTrigger value="individual">
-                  {t('complianceAlerts.bulkDialog.modeIndividual')}
-                </TabsTrigger>
-              </TabsList>
-            </Tabs>
-            <p className="text-xs text-gray-500">
-              {mode === 'same'
-                ? t('complianceAlerts.bulkDialog.modeSameHint')
-                : t('complianceAlerts.bulkDialog.modeIndividualHint')}
-            </p>
-          </div>
+          {/* Mode toggle — bulk only */}
+          {!isSingle && (
+            <div className="space-y-2">
+              <Label>{t('complianceAlerts.bulkDialog.modeLabel')}</Label>
+              <Tabs value={mode} onValueChange={(v) => setMode(v as Mode)}>
+                <TabsList className="grid grid-cols-2 w-full">
+                  <TabsTrigger value="same">
+                    {t('complianceAlerts.bulkDialog.modeSame')}
+                  </TabsTrigger>
+                  <TabsTrigger value="individual">
+                    {t('complianceAlerts.bulkDialog.modeIndividual')}
+                  </TabsTrigger>
+                </TabsList>
+              </Tabs>
+              <p className="text-xs text-gray-500">
+                {mode === 'same'
+                  ? t('complianceAlerts.bulkDialog.modeSameHint')
+                  : t('complianceAlerts.bulkDialog.modeIndividualHint')}
+              </p>
+            </div>
+          )}
 
           {/* Comment input */}
-          {mode === 'same' ? (
+          {isSingle || mode === 'same' ? (
             <div className="space-y-2">
               <Label htmlFor="ds-bulk-shared-comment">
                 {t('complianceAlerts.bulkDialog.commentLabel')}
@@ -285,14 +330,16 @@ export function AlertBulkActionDialog({
           <Button variant="outline" onClick={onClose}>
             {t('complianceAlerts.bulkDialog.cancel')}
           </Button>
-          {mode === 'same' ? (
+          {isSingle || mode === 'same' ? (
             <Button
               onClick={handleApplyToAll}
               className="text-white"
               style={{ backgroundColor: BRAND_BLUE }}
             >
               <ActionIcon className="w-4 h-4 mr-2" />
-              {t('complianceAlerts.bulkDialog.applyToAll')}
+              {isSingle
+                ? t(ACTION_SUBMIT_SINGLE_KEY[action])
+                : t('complianceAlerts.bulkDialog.applyToAll')}
             </Button>
           ) : (
             <Button
