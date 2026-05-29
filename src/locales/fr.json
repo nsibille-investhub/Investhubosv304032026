@@ -2331,9 +2331,18 @@
       "date": "Date",
       "targeting": "Ciblage",
       "notification": "Notification",
+      "cible": "Cible",
+      "fonds": "Fonds",
       "comm": "Comm.",
       "status": "Statut",
       "actions": "Actions"
+    },
+    "cible": {
+      "investorsOne": "{{count}} investisseur",
+      "investorsMany": "{{count}} investisseurs"
+    },
+    "fonds": {
+      "all": "Tous les fonds"
     },
     "empty": "Aucun document à afficher",
     "resetFilters": "Réinitialiser les filtres",
