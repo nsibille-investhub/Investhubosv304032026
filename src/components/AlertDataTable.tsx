@@ -231,7 +231,10 @@ export function AlertDataTable({
               )}
               <td className="px-6 py-4">
                 <div>
-                  <div className="text-sm text-blue-600 hover:text-blue-800 font-medium">
+                  <div
+                    className="text-sm font-medium"
+                    style={{ color: '#000E2B' }}
+                  >
                     {alert.entityName}
                   </div>
                   <div className="text-xs text-gray-500">

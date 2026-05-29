@@ -2650,7 +2650,7 @@
   "complianceAlerts": {
     "table": {
       "name": "Nom",
-      "nameAlertLabel": "Nom alerte",
+      "nameAlertLabel": "Hit",
       "changes": "Changement",
       "match": "Score",
       "list": "Liste",
@@ -2733,7 +2733,7 @@
       "details": "Détails de l'alerte",
       "alertDetails": "Détails de l'alerte",
       "context": "Contexte",
-      "nameAlert": "Nom de l'alerte",
+      "nameAlert": "Hit",
       "alertTypes": "Type(s) d'alerte",
       "attachedInvestors": "Investisseurs rattachés",
       "noAttachedInvestors": "Aucun investisseur rattaché",
