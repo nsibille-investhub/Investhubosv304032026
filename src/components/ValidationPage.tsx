@@ -1286,7 +1286,7 @@ function DocumentRow({
       </td>
       <td className="px-4 py-2.5 align-top">
         <div className="flex flex-col gap-0.5">
-          <UserCell name={doc.createdBy.name} sublabel={doc.createdBy.role} />
+          <UserCell name={doc.createdBy.name} />
           <span className="text-[11px] text-gray-500 whitespace-nowrap">
             {formatDate(doc.createdAt)}
           </span>
@@ -2285,10 +2285,7 @@ function DynamicBatchRow({
         </td>
         <td className="px-4 py-2.5 align-top">
           <div className="flex flex-col gap-0.5">
-            <UserCell
-              name={earliestDoc.createdBy.name}
-              sublabel={earliestDoc.createdBy.role}
-            />
+            <UserCell name={earliestDoc.createdBy.name} />
             <span className="text-[11px] text-gray-500 whitespace-nowrap">
               {formatDate(earliestDoc.createdAt)}
             </span>
