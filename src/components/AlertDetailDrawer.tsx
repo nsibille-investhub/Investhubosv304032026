@@ -2,16 +2,19 @@ import { useEffect, useMemo, useState } from 'react';
 import {
   AlertTriangle,
   Calendar,
+  CheckCircle2,
   ExternalLink,
   Eye,
   EyeOff,
   FileText,
   Hash,
+  HelpCircle,
   KeyRound,
   Link2,
   ShieldCheck,
   Sparkles,
   Users,
+  XCircle,
 } from 'lucide-react';
 import { toast } from 'sonner@2.0.3';
 
@@ -30,6 +33,12 @@ import { Tooltip, TooltipContent, TooltipTrigger } from './ui/tooltip';
 import { StatusBadge } from './StatusBadge';
 import { AnalystSelector } from './AnalystSelector';
 import { AlertItem, AlertListCategory, InvestorRole } from '../utils/alertsGenerator';
+import {
+  generateAiAnalysis,
+  proposalToDecision,
+  type AiScreeningAnalysis,
+  type AiProposal,
+} from '../utils/aiComplianceScreening';
 import { useTranslation } from '../utils/languageContext';
 
 type Decision = 'unsure' | 'false_hit' | 'true_hit';
@@ -38,7 +47,10 @@ interface AlertDetailDrawerProps {
   alert: AlertItem | null;
   isOpen: boolean;
   onClose: () => void;
-  onDecision?: (alertId: string, decision: 'true_hit' | 'false_hit') => void;
+  onDecision?: (
+    alertId: string,
+    decision: 'true_hit' | 'false_hit' | 'unsure',
+  ) => void;
 }
 
 const STATUS_VARIANT: Record<
@@ -93,6 +105,8 @@ export function AlertDetailDrawer({
   const [comment, setComment] = useState('');
   const [monitoring, setMonitoring] = useState(true);
   const [analyst, setAnalyst] = useState<string | null>(null);
+  const [aiAnalysis, setAiAnalysis] = useState<AiScreeningAnalysis | null>(null);
+  const [aiLoading, setAiLoading] = useState(false);
 
   useEffect(() => {
     if (alert) {
@@ -106,6 +120,8 @@ export function AlertDetailDrawer({
       setComment(alert.alert?.comment ?? '');
       setMonitoring(alert.monitoring);
       setAnalyst(alert.analyst);
+      setAiAnalysis(null);
+      setAiLoading(false);
     }
   }, [alert?.id]);
 
@@ -124,19 +140,24 @@ export function AlertDetailDrawer({
       toast.error(t('complianceAlerts.drawer.missingComment'));
       return;
     }
-    if (decision === 'true_hit' || decision === 'false_hit') {
-      onDecision?.(alert.id, decision);
-    } else {
-      toast.success(t('complianceAlerts.drawer.confirm'));
-      onClose();
-    }
+    onDecision?.(alert.id, decision);
   };
 
   const handleAiAnalysis = () => {
     if (!alert) return;
-    toast.success(t('complianceAlerts.drawer.aiToastTitle'), {
-      description: t('complianceAlerts.drawer.aiToastBody', { name: alert.entityName }),
-    });
+    setAiLoading(true);
+    window.setTimeout(() => {
+      const analysis = generateAiAnalysis(alert);
+      setAiAnalysis(analysis);
+      setDecision(proposalToDecision(analysis.proposal));
+      setComment(analysis.proposedComment);
+      setAiLoading(false);
+      toast.success(t('complianceAlerts.aiPanel.appliedTitle'), {
+        description: t('complianceAlerts.aiPanel.appliedBody', {
+          confidence: Math.round(analysis.confidence * 100),
+        }),
+      });
+    }, 700);
   };
 
   const statusLabel = alert ? t(STATUS_LABEL_KEY[alert.status]) : '';
@@ -335,16 +356,32 @@ export function AlertDetailDrawer({
                   size="sm"
                   type="button"
                   onClick={handleAiAnalysis}
+                  disabled={aiLoading}
                   className="h-7 gap-1.5 text-xs"
                 >
                   <Sparkles className="w-3 h-3" />
-                  {t('complianceAlerts.drawer.aiAnalysis')}
+                  {aiLoading
+                    ? t('complianceAlerts.aiPanel.analyzing')
+                    : t('complianceAlerts.drawer.aiAnalysis')}
                 </Button>
               </div>
 
+              {(aiLoading || aiAnalysis) && (
+                <AiInlineBadge
+                  loading={aiLoading}
+                  analysis={aiAnalysis}
+                  onClear={() => setAiAnalysis(null)}
+                />
+              )}
+
               <Textarea
                 value={comment}
-                onChange={(e) => setComment(e.target.value)}
+                onChange={(e) => {
+                  setComment(e.target.value);
+                  if (aiAnalysis && e.target.value !== aiAnalysis.proposedComment) {
+                    setAiAnalysis(null);
+                  }
+                }}
                 placeholder={t('complianceAlerts.drawer.commentPlaceholder')}
                 className="min-h-[80px] resize-none"
               />
@@ -573,5 +610,95 @@ function DecisionPill({
       <span className={`w-2 h-2 rounded-full ${dotColor}`} />
       <span>{label}</span>
     </button>
+  );
+}
+
+const PROPOSAL_META: Record<
+  AiProposal,
+  {
+    labelKey: string;
+    icon: typeof CheckCircle2;
+    colorVar: string;
+    softVar: string;
+  }
+> = {
+  ACCEPT: {
+    labelKey: 'complianceAlerts.aiPanel.proposalAccept',
+    icon: CheckCircle2,
+    colorVar: 'var(--success)',
+    softVar: 'var(--success-soft)',
+  },
+  REJECT: {
+    labelKey: 'complianceAlerts.aiPanel.proposalReject',
+    icon: XCircle,
+    colorVar: 'var(--danger)',
+    softVar: 'var(--danger-soft)',
+  },
+  UNSURE: {
+    labelKey: 'complianceAlerts.aiPanel.proposalUnsure',
+    icon: HelpCircle,
+    colorVar: 'var(--warning)',
+    softVar: 'var(--warning-soft)',
+  },
+};
+
+function AiInlineBadge({
+  loading,
+  analysis,
+  onClear,
+}: {
+  loading: boolean;
+  analysis: AiScreeningAnalysis | null;
+  onClear: () => void;
+}) {
+  const { t } = useTranslation();
+
+  if (loading) {
+    return (
+      <div
+        className="inline-flex items-center gap-2 px-2.5 py-1 rounded-md border text-xs"
+        style={{
+          borderColor: 'color-mix(in oklab, #000E2B 18%, transparent)',
+          backgroundColor: '#F5F7FB',
+          color: '#000E2B',
+        }}
+      >
+        <Sparkles className="w-3 h-3 animate-pulse" />
+        <span>{t('complianceAlerts.aiPanel.analyzing')}</span>
+      </div>
+    );
+  }
+
+  if (!analysis) return null;
+
+  const meta = PROPOSAL_META[analysis.proposal];
+  const ProposalIcon = meta.icon;
+  const confidencePct = Math.round(analysis.confidence * 100);
+
+  return (
+    <div className="flex items-center gap-2 flex-wrap">
+      <span
+        className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md border text-[11px] font-semibold"
+        style={{
+          color: meta.colorVar,
+          backgroundColor: meta.softVar,
+          borderColor: `color-mix(in oklab, ${meta.colorVar} 35%, transparent)`,
+        }}
+      >
+        <Sparkles className="w-3 h-3" />
+        {t('complianceAlerts.aiPanel.prefilledBy')}
+        <ProposalIcon className="w-3 h-3" />
+        {t(meta.labelKey)}
+        <span className="opacity-70">·</span>
+        <span className="tabular-nums">{confidencePct}%</span>
+      </span>
+      <button
+        type="button"
+        onClick={onClear}
+        className="text-[11px] text-slate-500 hover:text-slate-700 underline underline-offset-2"
+      >
+        {t('complianceAlerts.aiPanel.dismiss')}
+      </button>
+    </div>
   );
 }
