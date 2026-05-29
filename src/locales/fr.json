@@ -2761,19 +2761,14 @@
       "actionRejected": "rejetée"
     },
     "aiPanel": {
-      "title": "Analyse IA",
       "analyzing": "Analyse en cours…",
-      "proposalAccept": "Accepter (True Hit)",
-      "proposalReject": "Rejeter (False Hit)",
+      "proposalAccept": "True Hit",
+      "proposalReject": "False Hit",
       "proposalUnsure": "Incertain",
-      "confidence": "Confiance",
-      "rationale": "Justification",
-      "matches": "Correspondances utilisées",
-      "proposedComment": "Commentaire proposé",
-      "dismiss": "Ignorer",
-      "apply": "Appliquer la proposition",
-      "appliedTitle": "Proposition appliquée",
-      "appliedBody": "Le commentaire et la décision ont été pré-remplis. Vous pouvez les éditer avant validation."
+      "prefilledBy": "Pré-rempli par l'IA",
+      "dismiss": "Effacer",
+      "appliedTitle": "Proposition IA appliquée",
+      "appliedBody": "Commentaire et décision pré-remplis ({{confidence}}% de confiance). Cliquez sur Confirmer ou éditez avant."
     }
   }
 }

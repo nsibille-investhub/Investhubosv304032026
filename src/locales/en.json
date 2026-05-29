@@ -2761,19 +2761,14 @@
       "actionRejected": "rejected"
     },
     "aiPanel": {
-      "title": "AI Analysis",
       "analyzing": "Analyzing…",
-      "proposalAccept": "Accept (True Hit)",
-      "proposalReject": "Reject (False Hit)",
+      "proposalAccept": "True Hit",
+      "proposalReject": "False Hit",
       "proposalUnsure": "Unsure",
-      "confidence": "Confidence",
-      "rationale": "Rationale",
-      "matches": "Matches used",
-      "proposedComment": "Proposed comment",
-      "dismiss": "Dismiss",
-      "apply": "Apply proposal",
-      "appliedTitle": "Proposal applied",
-      "appliedBody": "The comment and decision were pre-filled. You can edit them before confirming."
+      "prefilledBy": "Pre-filled by AI",
+      "dismiss": "Clear",
+      "appliedTitle": "AI proposal applied",
+      "appliedBody": "Comment and decision pre-filled ({{confidence}}% confidence). Click Confirm or edit first."
     }
   }
 }
