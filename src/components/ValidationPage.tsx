@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from 'react';
-import { motion } from 'motion/react';
+import { motion, AnimatePresence } from 'motion/react';
 import {
   Clock,
   CheckCircle2,
@@ -18,10 +18,12 @@ import {
   AlertCircle,
   ChevronRight,
   Package,
+  RotateCcw,
   type LucideIcon,
 } from 'lucide-react';
 import { toast } from 'sonner@2.0.3';
 import { Button } from './ui/button';
+import { Checkbox } from './ui/checkbox';
 import { RowActions } from './ui/row-actions';
 import {
   Tooltip,
@@ -66,6 +68,10 @@ import {
 } from '../utils/gedFixtures';
 import { useTranslation } from '../utils/languageContext';
 import { useValidationStore } from '../utils/validationStoreContext';
+import {
+  PublicationBulkActionDialog,
+  type PublicationBulkAction,
+} from './PublicationBulkActionDialog';
 import {
   useAppStore,
   type AggregationCriterion,
@@ -415,6 +421,10 @@ export function ValidationPage(_props: ValidationPageProps) {
   const [expandedBatchIds, setExpandedBatchIds] = useState<Set<string>>(
     new Set(),
   );
+  const [selectedDocIds, setSelectedDocIds] = useState<Set<number>>(new Set());
+  const [bulkAction, setBulkAction] = useState<PublicationBulkAction | null>(
+    null,
+  );
 
   const batchById = useMemo(() => {
     const map = new Map<string, ValidationBatch>();
@@ -748,6 +758,76 @@ export function ValidationPage(_props: ValidationPageProps) {
     toast.error(t('validation.toast.bulkRejected', { count: docs.length }));
   };
 
+  const applyBulkRevision = (docs: ValidationDocument[]) => {
+    // "Demander révision" keeps the doc pending and just attaches a note
+    // (mirrors the alerts "unsure" semantics — no status change).
+    toast.info(t('validation.toast.bulkRevision', { count: docs.length }));
+  };
+
+  // -------- Multi-select handlers --------
+  const pageSelectablePendingIds = useMemo(
+    () =>
+      pageDocs.filter((d) => d.status === 'pending').map((d) => d.id),
+    [pageDocs],
+  );
+
+  const allPagePendingSelected =
+    pageSelectablePendingIds.length > 0 &&
+    pageSelectablePendingIds.every((id) => selectedDocIds.has(id));
+  const somePagePendingSelected =
+    !allPagePendingSelected &&
+    pageSelectablePendingIds.some((id) => selectedDocIds.has(id));
+
+  const handleToggleSelectRow = (docId: number) => {
+    setSelectedDocIds((current) => {
+      const next = new Set(current);
+      if (next.has(docId)) next.delete(docId);
+      else next.add(docId);
+      return next;
+    });
+  };
+
+  const handleToggleSelectAll = () => {
+    setSelectedDocIds((current) => {
+      if (allPagePendingSelected) {
+        const next = new Set(current);
+        pageSelectablePendingIds.forEach((id) => next.delete(id));
+        return next;
+      }
+      const next = new Set(current);
+      pageSelectablePendingIds.forEach((id) => next.add(id));
+      return next;
+    });
+  };
+
+  const handleClearSelection = () => setSelectedDocIds(new Set());
+
+  const selectedDocs = useMemo(
+    () => documents.filter((d) => selectedDocIds.has(d.id)),
+    [documents, selectedDocIds],
+  );
+
+  const handleBulkConfirm = (
+    docIds: number[],
+    action: PublicationBulkAction,
+    _comments: Record<number, string>,
+  ) => {
+    const targetDocs = documents.filter((d) => docIds.includes(d.id));
+    if (action === 'validate') applyBulkValidate(targetDocs);
+    else if (action === 'reject') applyBulkReject(targetDocs);
+    else applyBulkRevision(targetDocs);
+    setSelectedDocIds((current) => {
+      const next = new Set(current);
+      docIds.forEach((id) => next.delete(id));
+      return next;
+    });
+    setBulkAction(null);
+  };
+
+  useEffect(() => {
+    setSelectedDocIds(new Set());
+  }, [activeStatus]);
+
   const stickyHeadActionsClass =
     'sticky right-0 z-20 bg-white dark:bg-gray-950 border-l border-gray-200 dark:border-gray-800';
   const stickyBodyActionsClass = () =>
@@ -908,6 +988,91 @@ export function ValidationPage(_props: ValidationPageProps) {
             />
           </div>
 
+          {/* Bulk action bar */}
+          <AnimatePresence>
+            {selectedDocIds.size > 0 && (
+              <motion.div
+                initial={{ height: 0, opacity: 0 }}
+                animate={{ height: 'auto', opacity: 1 }}
+                exit={{ height: 0, opacity: 0 }}
+                className="border-b border-gray-200 bg-gray-50 overflow-hidden"
+              >
+                <div className="px-6 py-3 flex items-center justify-between flex-wrap gap-3">
+                  <div className="flex items-center gap-3">
+                    <span
+                      className="inline-flex items-center rounded-full border px-2.5 py-1 text-xs leading-none font-medium text-white"
+                      style={{
+                        backgroundColor: '#000E2B',
+                        borderColor: '#000E2B',
+                      }}
+                    >
+                      {selectedDocIds.size}{' '}
+                      {selectedDocIds.size === 1
+                        ? t('validation.selection.selectedOne')
+                        : t('validation.selection.selectedMany')}
+                    </span>
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      onClick={handleClearSelection}
+                      className="h-8"
+                    >
+                      <X className="w-4 h-4 mr-1" />
+                      {t('validation.selection.clear')}
+                    </Button>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => setBulkAction('validate')}
+                      className="h-8"
+                      style={{
+                        color: 'var(--success)',
+                        borderColor:
+                          'color-mix(in oklab, var(--success) 35%, transparent)',
+                        backgroundColor: 'var(--success-soft)',
+                      }}
+                    >
+                      <Check className="w-4 h-4 mr-1.5" />
+                      {t('validation.selection.actionValidate')}
+                    </Button>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => setBulkAction('revision')}
+                      className="h-8"
+                      style={{
+                        color: 'var(--warning)',
+                        borderColor:
+                          'color-mix(in oklab, var(--warning) 35%, transparent)',
+                        backgroundColor: 'var(--warning-soft)',
+                      }}
+                    >
+                      <RotateCcw className="w-4 h-4 mr-1.5" />
+                      {t('validation.selection.actionRevision')}
+                    </Button>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => setBulkAction('reject')}
+                      className="h-8"
+                      style={{
+                        color: 'var(--danger)',
+                        borderColor:
+                          'color-mix(in oklab, var(--danger) 35%, transparent)',
+                        backgroundColor: 'var(--danger-soft)',
+                      }}
+                    >
+                      <X className="w-4 h-4 mr-1.5" />
+                      {t('validation.selection.actionReject')}
+                    </Button>
+                  </div>
+                </div>
+              </motion.div>
+            )}
+          </AnimatePresence>
+
           {/* Table */}
           <div className="flex-1">
             {isLoading ? (
@@ -934,6 +1099,31 @@ export function ValidationPage(_props: ValidationPageProps) {
                 <table className="w-full">
                   <thead>
                     <tr className="border-b border-border bg-muted/40 backdrop-blur-sm">
+                      <th className="px-4 py-3 w-10">
+                        <Tooltip>
+                          <TooltipTrigger asChild>
+                            <span className="inline-flex">
+                              <Checkbox
+                                checked={
+                                  allPagePendingSelected
+                                    ? true
+                                    : somePagePendingSelected
+                                      ? 'indeterminate'
+                                      : false
+                                }
+                                disabled={pageSelectablePendingIds.length === 0}
+                                onCheckedChange={handleToggleSelectAll}
+                                aria-label={t('validation.selection.selectAll')}
+                              />
+                            </span>
+                          </TooltipTrigger>
+                          <TooltipContent>
+                            {allPagePendingSelected
+                              ? t('validation.selection.deselectAll')
+                              : t('validation.selection.selectAll')}
+                          </TooltipContent>
+                        </Tooltip>
+                      </th>
                       <th className="px-4 py-3 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider max-w-[320px]">
                         {t('validation.table.document')}
                       </th>
@@ -982,12 +1172,25 @@ export function ValidationPage(_props: ValidationPageProps) {
                             }
                             renderTargeting={renderTargetingTags}
                             stickyClass={stickyBodyActionsClass()}
+                            selected={selectedDocIds.has(row.doc.id)}
+                            onToggleSelect={() =>
+                              handleToggleSelectRow(row.doc.id)
+                            }
                           />
                         );
                       }
                       const batch = row.batch;
                       const batchExpanded = expandedBatchIds.has(batch.id);
                       const batchStatus = deriveBatchStatus(batch.docs);
+                      const batchPendingIds = batch.docs
+                        .filter((d) => d.status === 'pending')
+                        .map((d) => d.id);
+                      const batchSelected =
+                        batchPendingIds.length > 0 &&
+                        batchPendingIds.every((id) => selectedDocIds.has(id));
+                      const batchSomeSelected =
+                        !batchSelected &&
+                        batchPendingIds.some((id) => selectedDocIds.has(id));
                       return (
                         <DynamicBatchRow
                           key={batch.id}
@@ -1006,6 +1209,22 @@ export function ValidationPage(_props: ValidationPageProps) {
                           onPreviewChild={(d) => setPreviewDocument(d)}
                           renderTargeting={renderTargetingTags}
                           stickyClass={stickyBodyActionsClass()}
+                          selectedDocIds={selectedDocIds}
+                          onToggleSelectDoc={handleToggleSelectRow}
+                          batchSelected={batchSelected}
+                          batchSomeSelected={batchSomeSelected}
+                          batchHasPending={batchPendingIds.length > 0}
+                          onToggleBatchSelect={() => {
+                            setSelectedDocIds((current) => {
+                              const next = new Set(current);
+                              if (batchSelected) {
+                                batchPendingIds.forEach((id) => next.delete(id));
+                              } else {
+                                batchPendingIds.forEach((id) => next.add(id));
+                              }
+                              return next;
+                            });
+                          }}
                         />
                       );
                     })}
@@ -1113,6 +1332,14 @@ export function ValidationPage(_props: ValidationPageProps) {
           }}
         />
       )}
+
+      <PublicationBulkActionDialog
+        open={bulkAction !== null}
+        docs={selectedDocs}
+        action={bulkAction}
+        onClose={() => setBulkAction(null)}
+        onConfirm={handleBulkConfirm}
+      />
     </div>
   );
 }
@@ -1135,6 +1362,8 @@ interface DocumentRowProps {
     maxVisible?: number,
   ) => JSX.Element;
   stickyClass: string;
+  selected?: boolean;
+  onToggleSelect?: () => void;
 }
 
 function DocumentRow({
@@ -1148,6 +1377,8 @@ function DocumentRow({
   onPreviewNotification,
   renderTargeting,
   stickyClass,
+  selected,
+  onToggleSelect,
 }: DocumentRowProps) {
   const { t, lang } = useTranslation();
   const dateFormatter = useMemo(
@@ -1165,11 +1396,32 @@ function DocumentRow({
   const conf = STATUS_VARIANT[doc.status];
   const statusLabel = t(STATUS_LABEL_KEY[doc.status]);
   const commentText = doc.comment ? t(doc.comment.key, doc.comment.vars) : '';
+  const isSelectable = doc.status === 'pending';
   return (
     <tr
       className="border-b border-border/70 transition-colors cursor-pointer hover:bg-muted/50"
       onClick={onPreview}
     >
+      <td className="px-4 py-2.5 w-10" onClick={(e) => e.stopPropagation()}>
+        {isSelectable ? (
+          <Checkbox
+            checked={selected ?? false}
+            onCheckedChange={() => onToggleSelect?.()}
+            aria-label={t('validation.selection.selectRow')}
+          />
+        ) : (
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <span className="inline-flex">
+                <Checkbox checked={false} disabled />
+              </span>
+            </TooltipTrigger>
+            <TooltipContent>
+              {t('validation.selection.onlyPendingTip')}
+            </TooltipContent>
+          </Tooltip>
+        )}
+      </td>
       <td className="px-4 py-2.5 align-top max-w-[320px]">
         {doc.kindKey && (
           <div className="mb-0.5 text-[10px] font-semibold uppercase tracking-wide text-gray-500 dark:text-gray-400">
@@ -2044,6 +2296,12 @@ interface DynamicBatchRowProps {
     maxVisible?: number,
   ) => JSX.Element;
   stickyClass: string;
+  selectedDocIds?: Set<number>;
+  onToggleSelectDoc?: (docId: number) => void;
+  batchSelected?: boolean;
+  batchSomeSelected?: boolean;
+  batchHasPending?: boolean;
+  onToggleBatchSelect?: () => void;
 }
 
 function DynamicBatchRow({
@@ -2058,6 +2316,12 @@ function DynamicBatchRow({
   onPreviewChild,
   renderTargeting,
   stickyClass,
+  selectedDocIds,
+  onToggleSelectDoc,
+  batchSelected,
+  batchSomeSelected,
+  batchHasPending,
+  onToggleBatchSelect,
 }: DynamicBatchRowProps) {
   const { t, lang } = useTranslation();
   const dateFormatter = useMemo(
@@ -2092,6 +2356,32 @@ function DynamicBatchRow({
   return (
     <>
       <tr className="border-b border-blue-100 bg-blue-50/40 hover:bg-blue-50/60 dark:border-blue-900/30 dark:bg-blue-950/15">
+        <td className="px-4 py-2.5 w-10" onClick={(e) => e.stopPropagation()}>
+          {batchHasPending ? (
+            <Checkbox
+              checked={
+                batchSelected
+                  ? true
+                  : batchSomeSelected
+                    ? 'indeterminate'
+                    : false
+              }
+              onCheckedChange={() => onToggleBatchSelect?.()}
+              aria-label={t('validation.selection.selectRow')}
+            />
+          ) : (
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <span className="inline-flex">
+                  <Checkbox checked={false} disabled />
+                </span>
+              </TooltipTrigger>
+              <TooltipContent>
+                {t('validation.selection.onlyPendingTip')}
+              </TooltipContent>
+            </Tooltip>
+          )}
+        </td>
         <td className="px-4 py-2.5 align-top max-w-[320px]">
           <div className="flex items-start gap-2">
             <button
@@ -2188,6 +2478,17 @@ function DynamicBatchRow({
             className="border-b border-border/40 cursor-pointer transition-colors bg-blue-50/10 hover:bg-blue-50/30 dark:bg-blue-950/5"
             onClick={() => onPreviewChild(d)}
           >
+            <td className="px-4 py-2 w-10" onClick={(e) => e.stopPropagation()}>
+              {d.status === 'pending' && onToggleSelectDoc ? (
+                <Checkbox
+                  checked={selectedDocIds?.has(d.id) ?? false}
+                  onCheckedChange={() => onToggleSelectDoc(d.id)}
+                  aria-label={t('validation.selection.selectRow')}
+                />
+              ) : (
+                <Checkbox checked={false} disabled />
+              )}
+            </td>
             <td className="px-4 py-2 align-top max-w-[320px] pl-8">
               {d.kindKey && (
                 <div className="mb-0.5 text-[10px] font-semibold uppercase tracking-wide text-gray-500 dark:text-gray-400">
