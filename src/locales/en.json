@@ -2299,6 +2299,8 @@
     "back": "Back to spaces",
     "title": "Publication Center",
     "subtitle": "Review, approve and publish documents",
+    "statusSectionTitle": "Document status",
+    "export": "Export ({{count}})",
     "searchPlaceholder": "Search a document, author, targeting...",
     "moduleDisabled": {
       "title": "Publication Center disabled",
@@ -2448,7 +2450,8 @@
       "batchValidated": "Publication confirmed",
       "bulkValidated": "{{count}} document(s) published",
       "bulkRejected": "{{count}} document(s) rejected",
-      "bulkNotifications": "{{count}} notification(s) sent"
+      "bulkNotifications": "{{count}} notification(s) sent",
+      "exported": "{{count}} document(s) exported"
     },
     "you": "You",
     "drawer": {

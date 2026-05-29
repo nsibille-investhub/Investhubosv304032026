@@ -18,10 +18,13 @@ import {
   AlertCircle,
   ChevronRight,
   Users,
+  Download,
   type LucideIcon,
 } from 'lucide-react';
 import { toast } from 'sonner@2.0.3';
 import { Button } from './ui/button';
+import { Card, CardContent } from './ui/card';
+import { PageHeader } from './ui/page-header';
 import { RowActions } from './ui/row-actions';
 import {
   Tooltip,
@@ -867,6 +870,55 @@ export function ValidationPage(_props: ValidationPageProps) {
     toast.error(t('validation.toast.bulkRejected', { count: docs.length }));
   };
 
+  const handleExport = () => {
+    const headers = [
+      t('validation.table.document'),
+      t('validation.table.cible'),
+      t('validation.table.fonds'),
+      t('validation.table.createdBy'),
+      t('validation.table.status'),
+      t('validation.table.date'),
+    ];
+    const rows = flatDocs.map((doc) => {
+      const cible = resolveCible(doc.targeting);
+      const cibleLabel =
+        cible.investorName ??
+        cible.segmentLabel ??
+        (cible.investorCount != null
+          ? t(
+              cible.investorCount > 1
+                ? 'validation.cible.investorsMany'
+                : 'validation.cible.investorsOne',
+              { count: cible.investorCount },
+            )
+          : '');
+      const funds = resolveFundsForDoc(doc);
+      const fondsLabel =
+        funds.length === 1
+          ? funds[0]
+          : funds.length > 1
+            ? t('validation.fonds.all')
+            : '';
+      return [
+        doc.name,
+        cibleLabel,
+        fondsLabel,
+        doc.createdBy.name,
+        t(STATUS_LABEL_KEY[doc.status]),
+        formatDate(doc.createdAt),
+      ];
+    });
+    const csv = [headers, ...rows]
+      .map((row) => row.map((cell) => `"${String(cell).replace(/"/g, '""')}"`).join(','))
+      .join('\n');
+    const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+    const link = document.createElement('a');
+    link.href = URL.createObjectURL(blob);
+    link.download = `publication-center_${new Date().toISOString().split('T')[0]}.csv`;
+    link.click();
+    toast.success(t('validation.toast.exported', { count: flatDocs.length }));
+  };
+
   const stickyHeadActionsClass =
     'sticky right-0 z-20 bg-white dark:bg-gray-950 border-l border-gray-200 dark:border-gray-800';
   const stickyBodyActionsClass = () =>
@@ -893,17 +945,25 @@ export function ValidationPage(_props: ValidationPageProps) {
   }
 
   return (
-    <div className="flex-1 flex flex-col bg-gray-50 dark:bg-black overflow-hidden">
-      {/* Header */}
-      <div className="bg-white dark:bg-gray-950 border-b border-gray-200 dark:border-gray-800 px-6 py-4">
-        {/* Filtering KPI cards */}
-        <motion.div
-          initial={{ opacity: 0, y: -10 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.3 }}
-          className="bg-primary/5 pb-2 rounded-lg p-2"
-        >
-          <div className="grid grid-cols-4 gap-1.5 items-center">
+    <div className="flex-1 flex flex-col overflow-hidden">
+      <PageHeader
+        title={t('validation.title')}
+        subtitle={t('validation.subtitle')}
+        primaryAction={{
+          label: t('validation.export', { count: totalItems }),
+          icon: <Download className="w-4 h-4" />,
+          onClick: handleExport,
+        }}
+      />
+
+      {/* Body */}
+      <div className="flex-1 overflow-auto px-6 pt-6 pb-6 flex flex-col gap-4">
+        {/* Status filtering KPI cards */}
+        <section aria-label={t('validation.statusSectionTitle')}>
+          <h3 className="text-xs font-semibold uppercase tracking-wide text-muted-foreground mb-3">
+            {t('validation.statusSectionTitle')}
+          </h3>
+          <div className="grid grid-cols-4 gap-1.5">
             <FilterCard
               status="pending"
               activeStatus={activeStatus}
@@ -958,54 +1018,52 @@ export function ValidationPage(_props: ValidationPageProps) {
               averageValue="100%"
             />
           </div>
-        </motion.div>
-      </div>
+        </section>
 
-      {/* Body */}
-      <div className="flex-1 overflow-auto px-6 py-4">
         <motion.div
-          initial={{ opacity: 0, y: 12 }}
+          initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.35 }}
-          className="bg-white dark:bg-gray-950 rounded-2xl shadow-sm border border-gray-200 dark:border-gray-800 flex flex-col overflow-hidden"
+          transition={{ delay: 0.2, type: 'spring', stiffness: 200, damping: 25 }}
         >
-          {/* Filter bar */}
-          <div className="relative z-10 p-4 border-b border-gray-100 dark:border-gray-800">
-            <FilterBar
-              searchValue={searchTerm}
-              onSearchChange={setSearchTerm}
-              searchPlaceholder={t('validation.searchPlaceholder')}
-              filters={filterConfigs}
-              activeFilters={activeFilters}
-              onFilterChange={handleFilterChange}
-              onClearAll={handleClearAll}
-            />
-          </div>
+          <Card className="overflow-hidden p-0 gap-0 hover:shadow-lg transition-shadow duration-500">
+            {/* Filter bar */}
+            <div className="px-6 py-4 border-b border-border bg-card">
+              <FilterBar
+                searchValue={searchTerm}
+                onSearchChange={setSearchTerm}
+                searchPlaceholder={t('validation.searchPlaceholder')}
+                filters={filterConfigs}
+                activeFilters={activeFilters}
+                onFilterChange={handleFilterChange}
+                onClearAll={handleClearAll}
+              />
+            </div>
 
-          {/* Table */}
-          <div className="flex-1">
-            {isLoading ? (
-              <TableSkeleton />
-            ) : flatDocs.length === 0 ? (
-              <div className="py-16 text-center">
-                <ShieldCheck className="mx-auto h-10 w-10 text-gray-300" />
-                <p className="mt-3 text-sm text-gray-500">
-                  {t('validation.empty')}
-                </p>
-                {hasActiveFilters && (
-                  <Button
-                    variant="link"
-                    size="sm"
-                    onClick={handleClearAll}
-                    className="mt-1"
-                  >
-                    {t('validation.resetFilters')}
-                  </Button>
-                )}
-              </div>
-            ) : (
-              <div className="overflow-x-auto relative">
-                <table className="w-full">
+            <CardContent className="p-0 flex flex-col">
+              {/* Table */}
+              <div className="flex-1 overflow-auto">
+                {isLoading ? (
+                  <TableSkeleton />
+                ) : flatDocs.length === 0 ? (
+                  <div className="py-16 text-center">
+                    <ShieldCheck className="mx-auto h-10 w-10 text-gray-300" />
+                    <p className="mt-3 text-sm text-gray-500">
+                      {t('validation.empty')}
+                    </p>
+                    {hasActiveFilters && (
+                      <Button
+                        variant="link"
+                        size="sm"
+                        onClick={handleClearAll}
+                        className="mt-1"
+                      >
+                        {t('validation.resetFilters')}
+                      </Button>
+                    )}
+                  </div>
+                ) : (
+                  <div className="overflow-x-auto relative">
+                    <table className="w-full">
                   <thead>
                     <tr className="border-b border-border bg-muted/40 backdrop-blur-sm">
                       <th className="px-4 py-3 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider max-w-[320px]">
@@ -1087,20 +1145,22 @@ export function ValidationPage(_props: ValidationPageProps) {
                   </tbody>
                 </table>
               </div>
-            )}
-          </div>
+                )}
+              </div>
 
-          {/* Pagination */}
-          {!isLoading && flatDocs.length > 0 && (
-            <DataPagination
-              currentPage={safePage}
-              totalPages={totalPages}
-              pageSize={pageSize}
-              totalItems={totalItems}
-              onPageChange={setPage}
-              onPageSizeChange={setPageSize}
-            />
-          )}
+              {/* Pagination */}
+              {!isLoading && flatDocs.length > 0 && (
+                <DataPagination
+                  currentPage={safePage}
+                  totalPages={totalPages}
+                  pageSize={pageSize}
+                  totalItems={totalItems}
+                  onPageChange={setPage}
+                  onPageSizeChange={setPageSize}
+                />
+              )}
+            </CardContent>
+          </Card>
         </motion.div>
       </div>
 

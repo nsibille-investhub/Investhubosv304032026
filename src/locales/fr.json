@@ -2299,6 +2299,8 @@
     "back": "Retour aux espaces",
     "title": "Centre de Publication",
     "subtitle": "Revue, approbation et publication des documents",
+    "statusSectionTitle": "Statut des documents",
+    "export": "Exporter ({{count}})",
     "searchPlaceholder": "Rechercher un document, auteur, ciblage...",
     "moduleDisabled": {
       "title": "Centre de Publication désactivé",
@@ -2448,7 +2450,8 @@
       "batchValidated": "Publication confirmée",
       "bulkValidated": "{{count}} document(s) publié(s)",
       "bulkRejected": "{{count}} document(s) rejeté(s)",
-      "bulkNotifications": "{{count}} notification(s) envoyée(s)"
+      "bulkNotifications": "{{count}} notification(s) envoyée(s)",
+      "exported": "{{count}} document(s) exporté(s)"
     },
     "you": "Vous",
     "drawer": {
