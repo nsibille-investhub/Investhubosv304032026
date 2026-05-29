@@ -2,16 +2,19 @@ import { useEffect, useMemo, useState } from 'react';
 import {
   AlertTriangle,
   Calendar,
+  CheckCircle2,
   ExternalLink,
   Eye,
   EyeOff,
   FileText,
   Hash,
+  HelpCircle,
   KeyRound,
   Link2,
   ShieldCheck,
   Sparkles,
   Users,
+  XCircle,
 } from 'lucide-react';
 import { toast } from 'sonner@2.0.3';
 
@@ -30,6 +33,12 @@ import { Tooltip, TooltipContent, TooltipTrigger } from './ui/tooltip';
 import { StatusBadge } from './StatusBadge';
 import { AnalystSelector } from './AnalystSelector';
 import { AlertItem, AlertListCategory, InvestorRole } from '../utils/alertsGenerator';
+import {
+  generateAiAnalysis,
+  proposalToDecision,
+  type AiScreeningAnalysis,
+  type AiProposal,
+} from '../utils/aiComplianceScreening';
 import { useTranslation } from '../utils/languageContext';
 
 type Decision = 'unsure' | 'false_hit' | 'true_hit';
@@ -96,6 +105,8 @@ export function AlertDetailDrawer({
   const [comment, setComment] = useState('');
   const [monitoring, setMonitoring] = useState(true);
   const [analyst, setAnalyst] = useState<string | null>(null);
+  const [aiAnalysis, setAiAnalysis] = useState<AiScreeningAnalysis | null>(null);
+  const [aiLoading, setAiLoading] = useState(false);
 
   useEffect(() => {
     if (alert) {
@@ -109,6 +120,8 @@ export function AlertDetailDrawer({
       setComment(alert.alert?.comment ?? '');
       setMonitoring(alert.monitoring);
       setAnalyst(alert.analyst);
+      setAiAnalysis(null);
+      setAiLoading(false);
     }
   }, [alert?.id]);
 
@@ -132,8 +145,26 @@ export function AlertDetailDrawer({
 
   const handleAiAnalysis = () => {
     if (!alert) return;
+    setAiLoading(true);
+    setAiAnalysis(null);
     toast.success(t('complianceAlerts.drawer.aiToastTitle'), {
-      description: t('complianceAlerts.drawer.aiToastBody', { name: alert.entityName }),
+      description: t('complianceAlerts.drawer.aiToastBody', {
+        name: alert.entityName,
+      }),
+    });
+    window.setTimeout(() => {
+      const analysis = generateAiAnalysis(alert);
+      setAiAnalysis(analysis);
+      setAiLoading(false);
+    }, 900);
+  };
+
+  const handleApplyAi = () => {
+    if (!aiAnalysis) return;
+    setDecision(proposalToDecision(aiAnalysis.proposal));
+    setComment(aiAnalysis.proposedComment);
+    toast.success(t('complianceAlerts.aiPanel.appliedTitle'), {
+      description: t('complianceAlerts.aiPanel.appliedBody'),
     });
   };
 
@@ -333,12 +364,24 @@ export function AlertDetailDrawer({
                   size="sm"
                   type="button"
                   onClick={handleAiAnalysis}
+                  disabled={aiLoading}
                   className="h-7 gap-1.5 text-xs"
                 >
                   <Sparkles className="w-3 h-3" />
-                  {t('complianceAlerts.drawer.aiAnalysis')}
+                  {aiLoading
+                    ? t('complianceAlerts.aiPanel.analyzing')
+                    : t('complianceAlerts.drawer.aiAnalysis')}
                 </Button>
               </div>
+
+              {(aiLoading || aiAnalysis) && (
+                <AiAnalysisPanel
+                  loading={aiLoading}
+                  analysis={aiAnalysis}
+                  onApply={handleApplyAi}
+                  onDismiss={() => setAiAnalysis(null)}
+                />
+              )}
 
               <Textarea
                 value={comment}
@@ -571,5 +614,218 @@ function DecisionPill({
       <span className={`w-2 h-2 rounded-full ${dotColor}`} />
       <span>{label}</span>
     </button>
+  );
+}
+
+const PROPOSAL_META: Record<
+  AiProposal,
+  {
+    labelKey: string;
+    icon: typeof CheckCircle2;
+    colorVar: string;
+    softVar: string;
+  }
+> = {
+  ACCEPT: {
+    labelKey: 'complianceAlerts.aiPanel.proposalAccept',
+    icon: CheckCircle2,
+    colorVar: 'var(--success)',
+    softVar: 'var(--success-soft)',
+  },
+  REJECT: {
+    labelKey: 'complianceAlerts.aiPanel.proposalReject',
+    icon: XCircle,
+    colorVar: 'var(--danger)',
+    softVar: 'var(--danger-soft)',
+  },
+  UNSURE: {
+    labelKey: 'complianceAlerts.aiPanel.proposalUnsure',
+    icon: HelpCircle,
+    colorVar: 'var(--warning)',
+    softVar: 'var(--warning-soft)',
+  },
+};
+
+function AiAnalysisPanel({
+  loading,
+  analysis,
+  onApply,
+  onDismiss,
+}: {
+  loading: boolean;
+  analysis: AiScreeningAnalysis | null;
+  onApply: () => void;
+  onDismiss: () => void;
+}) {
+  const { t } = useTranslation();
+
+  if (loading) {
+    return (
+      <div
+        className="rounded-xl border p-3 flex items-center gap-3"
+        style={{
+          borderColor: 'color-mix(in oklab, #000E2B 18%, transparent)',
+          backgroundColor: '#F5F7FB',
+        }}
+      >
+        <Sparkles className="w-4 h-4 animate-pulse" style={{ color: '#000E2B' }} />
+        <div className="text-sm text-slate-700">
+          {t('complianceAlerts.aiPanel.analyzing')}
+        </div>
+        <div className="flex-1" />
+        <div className="flex items-center gap-1">
+          <span
+            className="block w-1.5 h-1.5 rounded-full animate-bounce"
+            style={{ backgroundColor: '#000E2B', animationDelay: '0ms' }}
+          />
+          <span
+            className="block w-1.5 h-1.5 rounded-full animate-bounce"
+            style={{ backgroundColor: '#000E2B', animationDelay: '120ms' }}
+          />
+          <span
+            className="block w-1.5 h-1.5 rounded-full animate-bounce"
+            style={{ backgroundColor: '#000E2B', animationDelay: '240ms' }}
+          />
+        </div>
+      </div>
+    );
+  }
+
+  if (!analysis) return null;
+
+  const meta = PROPOSAL_META[analysis.proposal];
+  const ProposalIcon = meta.icon;
+  const confidencePct = Math.round(analysis.confidence * 100);
+
+  return (
+    <div
+      className="rounded-xl border p-4 space-y-3"
+      style={{
+        borderColor: 'color-mix(in oklab, #000E2B 18%, transparent)',
+        backgroundColor: '#F5F7FB',
+      }}
+    >
+      <div className="flex items-center justify-between gap-2 flex-wrap">
+        <div className="flex items-center gap-2">
+          <Sparkles className="w-4 h-4" style={{ color: '#000E2B' }} />
+          <span
+            className="text-[11px] font-semibold uppercase tracking-wider"
+            style={{ color: '#000E2B' }}
+          >
+            {t('complianceAlerts.aiPanel.title')}
+          </span>
+          <span
+            className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md text-[11px] font-semibold border"
+            style={{
+              color: meta.colorVar,
+              backgroundColor: meta.softVar,
+              borderColor: `color-mix(in oklab, ${meta.colorVar} 35%, transparent)`,
+            }}
+          >
+            <ProposalIcon className="w-3 h-3" />
+            {t(meta.labelKey)}
+          </span>
+        </div>
+        <div className="flex items-center gap-2">
+          <span className="text-[11px] text-slate-500 font-medium">
+            {t('complianceAlerts.aiPanel.confidence')}
+          </span>
+          <div className="w-24 h-1.5 rounded-full bg-slate-200 overflow-hidden">
+            <div
+              className="h-full rounded-full transition-all"
+              style={{
+                width: `${confidencePct}%`,
+                backgroundColor: meta.colorVar,
+              }}
+            />
+          </div>
+          <span
+            className="text-xs font-semibold tabular-nums"
+            style={{ color: meta.colorVar }}
+          >
+            {confidencePct}%
+          </span>
+        </div>
+      </div>
+
+      <div className="rounded-lg bg-white border border-slate-200 p-3 space-y-2">
+        <div className="text-[10px] font-semibold uppercase tracking-wider text-slate-500">
+          {t('complianceAlerts.aiPanel.rationale')}
+        </div>
+        <ul className="space-y-1.5 text-xs text-slate-700">
+          {analysis.rationale.map((line, idx) => (
+            <li key={idx} className="flex gap-2">
+              <span
+                className="mt-1.5 block w-1 h-1 rounded-full shrink-0"
+                style={{ backgroundColor: meta.colorVar }}
+              />
+              <span className="leading-relaxed">{line}</span>
+            </li>
+          ))}
+        </ul>
+      </div>
+
+      {analysis.matchesUsed.length > 0 && (
+        <div className="rounded-lg bg-white border border-slate-200 p-3 space-y-2">
+          <div className="text-[10px] font-semibold uppercase tracking-wider text-slate-500">
+            {t('complianceAlerts.aiPanel.matches')}
+          </div>
+          <div className="space-y-1.5">
+            {analysis.matchesUsed.map((m, idx) => (
+              <div
+                key={idx}
+                className="flex items-center justify-between gap-2 text-xs"
+              >
+                <div className="flex items-center gap-1.5 min-w-0">
+                  <span className="font-medium text-slate-900 truncate">
+                    {m.name}
+                  </span>
+                  <Badge
+                    variant="outline"
+                    className="text-[10px] font-medium shrink-0"
+                  >
+                    {m.listType}
+                  </Badge>
+                </div>
+                <span className="text-slate-500 tabular-nums shrink-0">
+                  {m.jurisdiction} · {m.date}
+                </span>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+
+      <div className="rounded-lg bg-white border border-slate-200 p-3 space-y-1">
+        <div className="text-[10px] font-semibold uppercase tracking-wider text-slate-500">
+          {t('complianceAlerts.aiPanel.proposedComment')}
+        </div>
+        <p className="text-xs text-slate-700 leading-relaxed">
+          {analysis.proposedComment}
+        </p>
+      </div>
+
+      <div className="flex items-center justify-end gap-2 pt-1">
+        <Button
+          variant="ghost"
+          size="sm"
+          type="button"
+          onClick={onDismiss}
+          className="h-7 text-xs"
+        >
+          {t('complianceAlerts.aiPanel.dismiss')}
+        </Button>
+        <Button
+          size="sm"
+          type="button"
+          onClick={onApply}
+          className="h-7 text-xs text-white"
+          style={{ backgroundColor: '#000E2B' }}
+        >
+          <Sparkles className="w-3 h-3 mr-1" />
+          {t('complianceAlerts.aiPanel.apply')}
+        </Button>
+      </div>
+    </div>
   );
 }

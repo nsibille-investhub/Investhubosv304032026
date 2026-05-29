@@ -2759,6 +2759,21 @@
       "decisionBody": "L'alerte pour {{name}} a été {{action}}",
       "actionConfirmed": "confirmée",
       "actionRejected": "rejetée"
+    },
+    "aiPanel": {
+      "title": "Analyse IA",
+      "analyzing": "Analyse en cours…",
+      "proposalAccept": "Accepter (True Hit)",
+      "proposalReject": "Rejeter (False Hit)",
+      "proposalUnsure": "Incertain",
+      "confidence": "Confiance",
+      "rationale": "Justification",
+      "matches": "Correspondances utilisées",
+      "proposedComment": "Commentaire proposé",
+      "dismiss": "Ignorer",
+      "apply": "Appliquer la proposition",
+      "appliedTitle": "Proposition appliquée",
+      "appliedBody": "Le commentaire et la décision ont été pré-remplis. Vous pouvez les éditer avant validation."
     }
   }
 }
