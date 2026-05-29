@@ -2331,9 +2331,18 @@
       "date": "Date",
       "targeting": "Targeting",
       "notification": "Notification",
+      "cible": "Target",
+      "fonds": "Fund",
       "comm": "Comm.",
       "status": "Status",
       "actions": "Actions"
+    },
+    "cible": {
+      "investorsOne": "{{count}} investor",
+      "investorsMany": "{{count}} investors"
+    },
+    "fonds": {
+      "all": "All funds"
     },
     "empty": "No document to display",
     "resetFilters": "Reset filters",
