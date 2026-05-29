@@ -35,6 +35,8 @@ import { PageHeader } from './ui/page-header';
 import { Tabs, TabsList, TabsTrigger } from './ui/tabs';
 import { FilterBar, type FilterConfig } from './FilterBar';
 
+const BRAND_BLUE = '#000E2B';
+
 type TabType = 'Membercheck' | 'ORIAS';
 type AlertStatus = 'pending' | 'confirmed' | 'rejected' | 'all';
 
@@ -543,21 +545,24 @@ export function AlertsPage({ onEnableModule, alerts }: AlertsPageProps) {
                     initial={{ height: 0, opacity: 0 }}
                     animate={{ height: 'auto', opacity: 1 }}
                     exit={{ height: 0, opacity: 0 }}
-                    className="bg-blue-50/60 border-b border-blue-100 overflow-hidden"
+                    className="border-b border-gray-200 bg-gray-50 overflow-hidden"
                   >
                     <div className="px-6 py-3 flex items-center justify-between flex-wrap gap-3">
                       <div className="flex items-center gap-3">
-                        <Badge className="bg-primary text-primary-foreground px-3 py-1">
+                        <span
+                          className="inline-flex items-center rounded-full border px-2.5 py-1 text-xs leading-none font-medium text-white"
+                          style={{ backgroundColor: BRAND_BLUE, borderColor: BRAND_BLUE }}
+                        >
                           {selectedIds.size}{' '}
                           {selectedIds.size === 1
                             ? t('complianceAlerts.selection.selectedOne')
                             : t('complianceAlerts.selection.selectedMany')}
-                        </Badge>
+                        </span>
                         <Button
                           variant="ghost"
                           size="sm"
                           onClick={handleClearSelection}
-                          className="text-muted-foreground hover:text-foreground h-8"
+                          className="h-8"
                         >
                           <X className="w-4 h-4 mr-1" />
                           {t('complianceAlerts.selection.clear')}
@@ -565,25 +570,46 @@ export function AlertsPage({ onEnableModule, alerts }: AlertsPageProps) {
                       </div>
                       <div className="flex items-center gap-2">
                         <Button
+                          variant="outline"
                           size="sm"
                           onClick={() => setBulkAction('true_hit')}
-                          className="h-8 bg-emerald-600 hover:bg-emerald-700 text-white"
+                          className="h-8"
+                          style={{
+                            color: 'var(--success)',
+                            borderColor:
+                              'color-mix(in oklab, var(--success) 35%, transparent)',
+                            backgroundColor: 'var(--success-soft)',
+                          }}
                         >
                           <Check className="w-4 h-4 mr-1.5" />
                           {t('complianceAlerts.selection.actionConfirm')}
                         </Button>
                         <Button
+                          variant="outline"
                           size="sm"
                           onClick={() => setBulkAction('unsure')}
-                          className="h-8 bg-amber-500 hover:bg-amber-600 text-white"
+                          className="h-8"
+                          style={{
+                            color: 'var(--warning)',
+                            borderColor:
+                              'color-mix(in oklab, var(--warning) 35%, transparent)',
+                            backgroundColor: 'var(--warning-soft)',
+                          }}
                         >
                           <HelpCircle className="w-4 h-4 mr-1.5" />
                           {t('complianceAlerts.selection.actionUnsure')}
                         </Button>
                         <Button
+                          variant="outline"
                           size="sm"
                           onClick={() => setBulkAction('false_hit')}
-                          className="h-8 bg-red-600 hover:bg-red-700 text-white"
+                          className="h-8"
+                          style={{
+                            color: 'var(--danger)',
+                            borderColor:
+                              'color-mix(in oklab, var(--danger) 35%, transparent)',
+                            backgroundColor: 'var(--danger-soft)',
+                          }}
                         >
                           <X className="w-4 h-4 mr-1.5" />
                           {t('complianceAlerts.selection.actionReject')}

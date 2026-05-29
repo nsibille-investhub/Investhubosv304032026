@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from 'react';
-import { ArrowRight, Check, HelpCircle, X } from 'lucide-react';
+import { ArrowRight, Check, HelpCircle, ShieldCheck, X } from 'lucide-react';
 import { toast } from 'sonner@2.0.3';
 
 import {
@@ -12,7 +12,6 @@ import {
 } from './ui/dialog';
 import { Button } from './ui/button';
 import { Textarea } from './ui/textarea';
-import { Badge } from './ui/badge';
 import { Label } from './ui/label';
 import { Tabs, TabsList, TabsTrigger } from './ui/tabs';
 import { AlertItem } from '../utils/alertsGenerator';
@@ -33,6 +32,8 @@ interface AlertBulkActionDialogProps {
 
 type Mode = 'same' | 'individual';
 
+const BRAND_BLUE = '#000E2B';
+
 const ACTION_TITLE_KEY: Record<AlertBulkAction, string> = {
   true_hit: 'complianceAlerts.bulkDialog.titleConfirm',
   false_hit: 'complianceAlerts.bulkDialog.titleReject',
@@ -43,12 +44,6 @@ const ACTION_ICON: Record<AlertBulkAction, typeof Check> = {
   true_hit: Check,
   false_hit: X,
   unsure: HelpCircle,
-};
-
-const ACTION_INTENT: Record<AlertBulkAction, string> = {
-  true_hit: 'bg-emerald-600 hover:bg-emerald-700 text-white',
-  false_hit: 'bg-red-600 hover:bg-red-700 text-white',
-  unsure: 'bg-amber-500 hover:bg-amber-600 text-white',
 };
 
 export function AlertBulkActionDialog({
@@ -137,148 +132,183 @@ export function AlertBulkActionDialog({
 
   return (
     <Dialog open={open} onOpenChange={(o) => !o && onClose()}>
-      <DialogContent className="sm:max-w-[560px] p-0 overflow-hidden">
-        <DialogHeader className="px-6 pt-6 pb-3 border-b">
-          <DialogTitle className="flex items-center gap-2">
-            <span
-              className={`inline-flex items-center justify-center w-7 h-7 rounded-md ${ACTION_INTENT[action]}`}
+      <DialogContent className="!max-w-[50vw] !w-[50vw] max-h-[90vh] overflow-hidden flex flex-col p-0 gap-0 bg-white">
+        <DialogHeader className="px-6 py-4 border-b border-gray-200">
+          <div className="flex items-center gap-3">
+            <div
+              className="w-10 h-10 rounded-lg flex items-center justify-center"
+              style={{ backgroundColor: BRAND_BLUE }}
             >
-              <ActionIcon className="w-4 h-4" />
-            </span>
-            {title}
-          </DialogTitle>
-          <DialogDescription>
-            {t('complianceAlerts.bulkDialog.description')}
-          </DialogDescription>
+              <ShieldCheck className="w-5 h-5 text-white" />
+            </div>
+            <div>
+              <DialogTitle>{title}</DialogTitle>
+              <DialogDescription>
+                {t('complianceAlerts.bulkDialog.description')}
+              </DialogDescription>
+            </div>
+          </div>
         </DialogHeader>
 
-        <div className="px-6 py-4 space-y-4">
-          <Tabs value={mode} onValueChange={(v) => setMode(v as Mode)}>
-            <TabsList className="grid grid-cols-2 w-full">
-              <TabsTrigger value="same">
-                {t('complianceAlerts.bulkDialog.modeSame')}
-              </TabsTrigger>
-              <TabsTrigger value="individual">
-                {t('complianceAlerts.bulkDialog.modeIndividual')}
-              </TabsTrigger>
-            </TabsList>
-          </Tabs>
-
-          {mode === 'same' ? (
-            <div className="space-y-2">
-              <p className="text-xs text-muted-foreground">
-                {t('complianceAlerts.bulkDialog.modeSameHint')}
-              </p>
-              <Label htmlFor="bulk-shared-comment" className="text-sm">
-                {t('complianceAlerts.bulkDialog.commentLabel')}
-              </Label>
-              <Textarea
-                id="bulk-shared-comment"
-                value={sharedComment}
-                onChange={(e) => setSharedComment(e.target.value)}
-                placeholder={t('complianceAlerts.bulkDialog.commentPlaceholder')}
-                className="min-h-[110px] resize-none"
-                autoFocus
-              />
-              <div className="flex items-center justify-between text-xs text-muted-foreground">
-                <span>
-                  <Badge variant="outline" className="text-[11px]">
-                    {total}
-                  </Badge>{' '}
+        <div className="flex-1 overflow-y-auto p-6 space-y-6">
+          {/* Selection summary */}
+          <div className="space-y-3 p-4 bg-gray-50 rounded-lg border border-gray-200">
+            <div className="flex items-center justify-between gap-4">
+              <div>
+                <span className="text-sm text-gray-900 font-medium block">
+                  {total}{' '}
                   {total === 1
                     ? t('complianceAlerts.selection.selectedOne')
                     : t('complianceAlerts.selection.selectedMany')}
                 </span>
-                <span>{sharedComment.length} / 1234</span>
+                <p className="text-xs text-gray-500 mt-0.5">
+                  {t('complianceAlerts.bulkDialog.description')}
+                </p>
+              </div>
+              <div
+                className="inline-flex items-center justify-center w-9 h-9 rounded-lg"
+                style={{ backgroundColor: BRAND_BLUE }}
+              >
+                <ActionIcon className="w-4 h-4 text-white" />
+              </div>
+            </div>
+          </div>
+
+          {/* Mode toggle */}
+          <div className="space-y-2">
+            <Label>{t('complianceAlerts.bulkDialog.modeLabel')}</Label>
+            <Tabs value={mode} onValueChange={(v) => setMode(v as Mode)}>
+              <TabsList className="grid grid-cols-2 w-full">
+                <TabsTrigger value="same">
+                  {t('complianceAlerts.bulkDialog.modeSame')}
+                </TabsTrigger>
+                <TabsTrigger value="individual">
+                  {t('complianceAlerts.bulkDialog.modeIndividual')}
+                </TabsTrigger>
+              </TabsList>
+            </Tabs>
+            <p className="text-xs text-gray-500">
+              {mode === 'same'
+                ? t('complianceAlerts.bulkDialog.modeSameHint')
+                : t('complianceAlerts.bulkDialog.modeIndividualHint')}
+            </p>
+          </div>
+
+          {/* Comment input */}
+          {mode === 'same' ? (
+            <div className="space-y-2">
+              <Label htmlFor="ds-bulk-shared-comment">
+                {t('complianceAlerts.bulkDialog.commentLabel')}
+              </Label>
+              <Textarea
+                id="ds-bulk-shared-comment"
+                value={sharedComment}
+                onChange={(e) => setSharedComment(e.target.value)}
+                placeholder={t('complianceAlerts.bulkDialog.commentPlaceholder')}
+                className="min-h-[120px] resize-none"
+                autoFocus
+              />
+              <div className="flex justify-end">
+                <span className="text-xs text-gray-500">
+                  {sharedComment.length} / 1234
+                </span>
               </div>
             </div>
           ) : (
-            <div className="space-y-3">
-              <p className="text-xs text-muted-foreground">
-                {t('complianceAlerts.bulkDialog.modeIndividualHint')}
-              </p>
-
+            <div className="space-y-4">
+              {/* Progress + stepper */}
               <div className="flex items-center justify-between">
-                <Badge variant="outline" className="text-[11px]">
+                <span className="text-sm font-medium text-gray-900">
                   {t('complianceAlerts.bulkDialog.progress', {
                     current: currentIndex + 1,
                     total,
                   })}
-                </Badge>
+                </span>
                 <div className="flex items-center gap-1">
                   {alerts.map((_, idx) => (
                     <span
                       key={idx}
-                      className={`block w-1.5 h-1.5 rounded-full ${
-                        idx < currentIndex
-                          ? 'bg-emerald-500'
-                          : idx === currentIndex
-                            ? 'bg-blue-600'
-                            : 'bg-slate-200'
-                      }`}
+                      className="block h-1.5 rounded-full transition-all"
+                      style={{
+                        width: idx === currentIndex ? '20px' : '8px',
+                        backgroundColor:
+                          idx < currentIndex
+                            ? 'var(--success)'
+                            : idx === currentIndex
+                              ? BRAND_BLUE
+                              : '#E5E7EB',
+                      }}
                     />
                   ))}
                 </div>
               </div>
 
-              <div className="rounded-lg border bg-muted/30 p-3">
-                <div className="text-[10px] uppercase tracking-wider text-muted-foreground font-semibold mb-1">
+              {/* Current alert card */}
+              <div className="p-4 bg-gray-50 rounded-lg border border-gray-200">
+                <div className="text-[10px] uppercase tracking-wider text-gray-500 font-semibold mb-2">
                   {t('complianceAlerts.bulkDialog.currentAlert')}
                 </div>
-                <div className="font-medium text-sm">
+                <div className="font-medium text-sm text-gray-900">
                   {currentAlert?.entityName}
                 </div>
-                <div className="text-xs text-muted-foreground">
+                <div className="text-xs text-gray-500 mt-0.5">
                   {currentAlert?.name} · {currentAlert?.source} ·{' '}
                   {currentAlert?.match}%
                 </div>
               </div>
 
               <div className="space-y-2">
-                <Label htmlFor="bulk-individual-comment" className="text-sm">
+                <Label htmlFor="ds-bulk-individual-comment">
                   {t('complianceAlerts.bulkDialog.commentLabel')}
                 </Label>
                 <Textarea
-                  id="bulk-individual-comment"
+                  id="ds-bulk-individual-comment"
                   value={currentComment}
                   onChange={(e) => setCurrentComment(e.target.value)}
                   placeholder={t(
                     'complianceAlerts.bulkDialog.commentPlaceholder',
                   )}
-                  className="min-h-[100px] resize-none"
+                  className="min-h-[120px] resize-none"
                   autoFocus
                 />
+                <div className="flex justify-end">
+                  <span className="text-xs text-gray-500">
+                    {currentComment.length} / 1234
+                  </span>
+                </div>
               </div>
             </div>
           )}
         </div>
 
-        <DialogFooter className="px-6 py-4 border-t bg-muted/20">
-          <Button variant="ghost" onClick={onClose}>
+        <DialogFooter className="px-6 py-4 border-t border-gray-200 bg-gray-50 flex items-center justify-end gap-2">
+          <Button variant="outline" onClick={onClose}>
             {t('complianceAlerts.bulkDialog.cancel')}
           </Button>
           {mode === 'same' ? (
             <Button
               onClick={handleApplyToAll}
-              className={ACTION_INTENT[action]}
+              className="text-white"
+              style={{ backgroundColor: BRAND_BLUE }}
             >
-              <ActionIcon className="w-4 h-4 mr-1.5" />
+              <ActionIcon className="w-4 h-4 mr-2" />
               {t('complianceAlerts.bulkDialog.applyToAll')}
             </Button>
           ) : (
             <Button
               onClick={handleNextIndividual}
-              className={ACTION_INTENT[action]}
+              className="text-white"
+              style={{ backgroundColor: BRAND_BLUE }}
             >
               {isLast ? (
                 <>
-                  <Check className="w-4 h-4 mr-1.5" />
+                  <Check className="w-4 h-4 mr-2" />
                   {t('complianceAlerts.bulkDialog.finish')}
                 </>
               ) : (
                 <>
                   {t('complianceAlerts.bulkDialog.nextAlert')}
-                  <ArrowRight className="w-4 h-4 ml-1.5" />
+                  <ArrowRight className="w-4 h-4 ml-2" />
                 </>
               )}
             </Button>
@@ -288,4 +318,3 @@ export function AlertBulkActionDialog({
     </Dialog>
   );
 }
-
