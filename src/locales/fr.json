@@ -343,7 +343,9 @@
       "globalStatus": "Statut global",
       "onboardingReopened": "Nb réouvertures",
       "notes": "Notes",
-      "updatedAt": "Dernière MAJ"
+      "updatedAt": "Dernière MAJ",
+      "documents": "Dossier",
+      "entryFeesComposite": "Frais d'entrée"
     },
     "page": {
       "searchPlaceholder": "Rechercher une souscription...",
@@ -364,7 +366,8 @@
       "fund": "Fonds",
       "shareClass": "Classe de part",
       "type": "Type",
-      "manager": "Gestionnaire"
+      "manager": "Gestionnaire",
+      "subscriber": "Souscripteur"
     },
     "detail": {
       "monitoringFor": "pour {{name}}",
@@ -414,6 +417,12 @@
       "de": "Allemand",
       "it": "Italien",
       "es": "Espagnol"
+    },
+    "documents": {
+      "title": "{{received}}/{{total}} documents reçus",
+      "validated": "{{count}} validé(s)",
+      "pending": "{{count}} en attente",
+      "rejected": "{{count}} rejeté(s)"
     },
     "infoPopover": {
       "individual": "Personne physique",

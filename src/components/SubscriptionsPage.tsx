@@ -91,6 +91,16 @@ export function SubscriptionsPage({ data, isLoading, allData, setAllData, onSubs
     }
   }, [searchTerm, searchFilteredData, normalizedData.length, hasActiveSearch]);
 
+  const subscriberOptions = useMemo(() => {
+    const names = new Set<string>();
+    normalizedData.forEach((sub) => {
+      if (sub.contrepartie?.name) names.add(sub.contrepartie.name);
+      if (sub.contrepartie?.structure) names.add(sub.contrepartie.structure);
+      if (sub.contrepartie?.investor) names.add(sub.contrepartie.investor);
+    });
+    return Array.from(names).sort().map((n) => ({ value: n, label: n }));
+  }, [normalizedData]);
+
   const filterConfigs: FilterConfig[] = useMemo(() => [
     {
       id: 'status',
@@ -103,10 +113,17 @@ export function SubscriptionsPage({ data, isLoading, allData, setAllData, onSubs
         .map((status) => ({ value: status, label: status })),
     },
     {
+      id: 'subscriber',
+      label: t('subscriptions.filters.subscriber'),
+      type: 'select',
+      isPrimary: true,
+      options: subscriberOptions,
+    },
+    {
       id: 'partner',
       label: t('subscriptions.filters.partner'),
       type: 'select',
-      isPrimary: true,
+      isPrimary: false,
       options: [
         { value: 'Sans partenaire', label: t('subscriptions.filters.noPartner') },
         ...Array.from(new Set(normalizedData.map((sub) => sub.partenaire?.name).filter(Boolean) as string[]))
@@ -152,7 +169,7 @@ export function SubscriptionsPage({ data, isLoading, allData, setAllData, onSubs
         .sort()
         .map((analyst) => ({ value: analyst, label: analyst })),
     },
-  ], [normalizedData, t]);
+  ], [normalizedData, subscriberOptions, t]);
 
   const handleClearAllFilters = () => {
     setActiveFilters({});
@@ -173,6 +190,14 @@ export function SubscriptionsPage({ data, isLoading, allData, setAllData, onSubs
 
     return baseData.filter((subscription) => {
       if (activeFilters.status && subscription.status !== activeFilters.status) return false;
+
+      if (activeFilters.subscriber) {
+        const q = (activeFilters.subscriber as string).toLowerCase();
+        const nameMatch = subscription.contrepartie?.name?.toLowerCase().includes(q);
+        const structureMatch = subscription.contrepartie?.structure?.toLowerCase().includes(q);
+        const investorMatch = subscription.contrepartie?.investor?.toLowerCase().includes(q);
+        if (!nameMatch && !structureMatch && !investorMatch) return false;
+      }
 
       if (activeFilters.partner) {
         const partnerFilter = activeFilters.partner as string;

@@ -47,6 +47,8 @@ import { Tag } from './Tag';
 import { CheckIndicator } from './CheckIndicator';
 import { StatusBadge } from './StatusBadge';
 import { InternalResponsibleSelector } from './InternalResponsibleSelector';
+import { LanguageFlagInline } from './LanguageFlagInline';
+import { DocumentStatusCounter } from './DocumentStatusCounter';
 
 // Raw status → variant used for the global status badge
 const getGlobalStatusVariantFromRaw = (raw: string): 'success' | 'warning' | 'danger' | 'neutral' => {
@@ -224,11 +226,18 @@ export function SubscriptionDynamicTable({
     switch (columnId) {
       case 'name':
         return (
-          <SubscriptionNameCell 
-            name={row.name}
-            id={row.id}
-            searchTerm={searchTerm}
-          />
+          <div className="flex items-start gap-2">
+            {row.language && (
+              <span className="mt-0.5 shrink-0">
+                <LanguageFlagInline language={row.language} />
+              </span>
+            )}
+            <SubscriptionNameCell
+              name={row.name}
+              id={row.id}
+              searchTerm={searchTerm}
+            />
+          </div>
         );
 
       case 'investor':
@@ -521,6 +530,33 @@ export function SubscriptionDynamicTable({
           <span className="text-sm font-semibold text-gray-900 dark:text-gray-100">
             {formatCurrency(entryFeesAmount)}
           </span>
+        );
+      }
+
+      case 'entryFeesComposite': {
+        const feesAmount = row.entryFees && row.amount ? (row.amount * row.entryFees) / 100 : 0;
+        return (
+          <div className="flex flex-col">
+            <ClickableText variant="notClickable" className="text-sm font-semibold">
+              {formatCurrency(feesAmount)}
+            </ClickableText>
+            <ClickableText variant="notClickable" className="text-xs text-muted-foreground">
+              {(row.entryFees ?? 0)}%
+            </ClickableText>
+          </div>
+        );
+      }
+
+      case 'documents': {
+        const docs = row.documents;
+        if (!docs) return <span className="text-sm text-gray-400 dark:text-gray-600">-</span>;
+        return (
+          <DocumentStatusCounter
+            total={docs.total}
+            validated={docs.validated}
+            pending={docs.pending}
+            rejected={docs.rejected}
+          />
         );
       }
 

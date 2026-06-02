@@ -263,6 +263,12 @@ export interface Subscription {
   sepaEnabled?: boolean; // Prélèvement SEPA activé
   pendingCalls?: number; // Nombre d'appels de fonds en attente de versement
   onboardingReopened?: number; // Nombre de réouvertures de l'onboarding
+  documents?: {
+    total: number;
+    validated: number;
+    pending: number;
+    rejected: number;
+  };
 }
 
 export function generateSubscriptions(count: number): Subscription[] {
@@ -557,6 +563,13 @@ export function generateSubscriptions(count: number): Subscription[] {
     
     // Nombre de réouvertures de l'onboarding (0-3)
     const onboardingReopened = Math.random() > 0.8 ? randomNumber(1, 3) : 0;
+
+    // Documents du dossier
+    const docTotal = randomNumber(4, 12);
+    const docValidated = randomNumber(0, docTotal);
+    const docRemaining = docTotal - docValidated;
+    const docRejected = randomNumber(0, Math.min(docRemaining, 2));
+    const docPending = docRemaining - docRejected;
     
     const subscription: Subscription = {
       id: i + 1,
@@ -624,7 +637,13 @@ export function generateSubscriptions(count: number): Subscription[] {
       language,
       sepaEnabled,
       pendingCalls,
-      onboardingReopened
+      onboardingReopened,
+      documents: {
+        total: docTotal,
+        validated: docValidated,
+        pending: docPending,
+        rejected: docRejected,
+      },
     };
     
     subscriptions.push(subscription);
