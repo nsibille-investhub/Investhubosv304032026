@@ -2816,5 +2816,45 @@
       "appliedTitle": "Proposition IA appliquée",
       "appliedBody": "Commentaire et décision pré-remplis ({{confidence}}% de confiance). Cliquez sur Confirmer ou éditez avant."
     }
+  },
+  "compliance": {
+    "relations": {
+      "tabTitle": "Relations",
+      "expand": "Explorer les connexions",
+      "details": "Informations",
+      "address": "Adresse",
+      "capital": "Capital social",
+      "revenue": "Chiffre d'affaires",
+      "incorporationDate": "Immatriculation",
+      "birthYear": "Année de naissance",
+      "nationality": "Nationalité",
+      "riskLevel": "Niveau de risque",
+      "status": "Statut",
+      "relationships": "Relations",
+      "directionTo": "vers",
+      "directionFrom": "de",
+      "exploreFrom": "Explorer depuis cette entité",
+      "searchPlaceholder": "Rechercher une entité…",
+      "showAll": "Tout afficher",
+      "legend": "Légende",
+      "nodeCount": "{{count}} entités",
+      "edgeCount": "{{count}} liens",
+      "entityTypes": {
+        "person": "Personne physique",
+        "company": "Entreprise",
+        "holding": "Holding",
+        "fund": "Fonds"
+      },
+      "risk": {
+        "low": "Faible",
+        "medium": "Moyen",
+        "high": "Élevé"
+      },
+      "statuses": {
+        "active": "Active",
+        "inactive": "Inactive",
+        "dissolved": "Dissoute"
+      }
+    }
   }
 }

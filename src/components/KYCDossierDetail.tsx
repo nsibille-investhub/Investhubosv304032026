@@ -1,7 +1,7 @@
 /**
  * Layout choisi pour le compliance officer : header sticky (statut + risque +
  * actions) toujours visible, deux colonnes en dessous — corps tabulé à gauche
- * (Identité / Documents / UBO / Risque / Audit / Notes) et un rail droit
+ * (Identité / Documents / UBO / Relations / Risque / Audit / Notes) et un rail droit
  * permanent (score de risque, workflow, assignée) pour garder la décision et
  * l'audit en contexte sans devoir naviguer entre onglets.
  */
@@ -26,6 +26,7 @@ import {
   Mail,
   MapPin,
   MessageSquare,
+  Network,
   Phone,
   Pin,
   RefreshCw,
@@ -69,6 +70,7 @@ import {
   type TimelineEvent,
   type TimelineTypeMap,
 } from './ui/timeline';
+import { RelationsGraph } from './RelationsGraph';
 import { StatusBadge } from './StatusBadge';
 import { UserCell } from './UserCell';
 import { cn } from './ui/utils';
@@ -532,6 +534,9 @@ export function KYCDossierDetail(props: KYCDossierDetailProps) {
                       <Users className="w-4 h-4" /> UBO
                     </TabsTrigger>
                   )}
+                  <TabsTrigger value="relations" className="gap-2">
+                    <Network className="w-4 h-4" /> Relations
+                  </TabsTrigger>
                   <TabsTrigger value="risk" className="gap-2">
                     <ShieldAlert className="w-4 h-4" /> Risque
                   </TabsTrigger>
@@ -662,6 +667,11 @@ export function KYCDossierDetail(props: KYCDossierDetailProps) {
                     </Card>
                   </TabsContent>
                 )}
+
+                {/* Relations */}
+                <TabsContent value="relations" className="mt-4">
+                  <RelationsGraph />
+                </TabsContent>
 
                 {/* Risk */}
                 <TabsContent value="risk" className="mt-4 space-y-4">
