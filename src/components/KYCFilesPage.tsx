@@ -209,7 +209,11 @@ const PROGRESS_CONFIG: Record<
   },
 };
 
-export function KYCFilesPage() {
+interface KYCFilesPageProps {
+  onDossierDetailChange?: (open: boolean) => void;
+}
+
+export function KYCFilesPage({ onDossierDetailChange }: KYCFilesPageProps = {}) {
   const { t } = useTranslation();
   const [paginationPage, setPaginationPage] = useState(1);
   const [itemsPerPage, setItemsPerPage] = useState(20);
@@ -379,10 +383,12 @@ export function KYCFilesPage() {
   const handleRowClick = (row: KYCFile) => {
     setSelectedFile(row);
     setOpenedDossier(row);
+    onDossierDetailChange?.(true);
   };
 
   const handleBackToList = () => {
     setOpenedDossier(null);
+    onDossierDetailChange?.(false);
   };
 
   const handleDossierAction = (action: string) => {

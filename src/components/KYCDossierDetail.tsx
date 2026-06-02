@@ -8,6 +8,7 @@
 
 import * as React from 'react';
 import { motion } from 'motion/react';
+import { useTranslation } from '../utils/languageContext';
 import {
   AlertTriangle,
   ArrowLeft,
@@ -379,6 +380,7 @@ export function KYCDossierDetail(props: KYCDossierDetailProps) {
     onCommentSubmit,
   } = props;
 
+  const { t } = useTranslation();
   const [commentDraft, setCommentDraft] = React.useState('');
 
   const isEntity = subjectType === 'entity';
@@ -432,17 +434,17 @@ export function KYCDossierDetail(props: KYCDossierDetailProps) {
               className="inline-flex items-center gap-1 text-muted-foreground hover:text-foreground transition-colors"
             >
               <ArrowLeft className="w-4 h-4" />
-              Retour
+              {t('breadcrumb.back')}
             </button>
             <span className="text-muted-foreground/60">/</span>
-            <span className="text-muted-foreground">Conformité</span>
+            <span className="text-muted-foreground">{t('breadcrumb.compliance')}</span>
             <span className="text-muted-foreground/60">/</span>
             <button
               type="button"
               onClick={onBack}
               className="text-muted-foreground hover:text-foreground transition-colors"
             >
-              Dossiers
+              {t('breadcrumb.dossiers')}
             </button>
             <span className="text-muted-foreground/60">/</span>
             <span className="font-medium text-foreground truncate">{displayName}</span>

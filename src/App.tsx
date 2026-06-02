@@ -148,6 +148,7 @@ export default function App() {
   const [selectedDataRoomSpace, setSelectedDataRoomSpace] = useState<any | null>(null);
   const [dataRoomMassUploadOpen, setDataRoomMassUploadOpen] = useState(false);
   const [dataRoomBackSignal, setDataRoomBackSignal] = useState(0);
+  const [dossierDetailOpen, setDossierDetailOpen] = useState(false);
   const [selectedFundContextId, setSelectedFundContextId] = useState<number | null>(null);
   
   // Debug: Log when selectedSubscriptionDetail changes
@@ -253,6 +254,10 @@ export default function App() {
       }
     }
   }, []); // Run only once on mount
+
+  useEffect(() => {
+    if (currentPage !== 'dossiers') setDossierDetailOpen(false);
+  }, [currentPage]);
 
   // Listen to hash changes (back/forward browser buttons)
   useEffect(() => {
@@ -678,7 +683,7 @@ export default function App() {
           </motion.header>
 
           {/* Breadcrumb (datahub and whats-new render their own PageHeader with breadcrumb) */}
-          {currentPage !== 'datahub' && currentPage !== 'whats-new' && (
+          {currentPage !== 'datahub' && currentPage !== 'whats-new' && !(currentPage === 'dossiers' && dossierDetailOpen) && (
           <motion.div
             initial={{ opacity: 0, y: -10 }}
             animate={{ opacity: 1, y: 0 }}
@@ -1698,13 +1703,14 @@ export default function App() {
           )}
           
           {currentPage === 'dossiers' && (
-            <CompliancePlusPage 
+            <CompliancePlusPage
               onEnableModule={() => {
                 setEntitiesManagementEnabled(true);
                 toast.success(t('toast.moduleActivated'), {
                   description: 'Le module Compliance+ est maintenant actif'
                 });
               }}
+              onDossierDetailChange={setDossierDetailOpen}
             />
           )}
           

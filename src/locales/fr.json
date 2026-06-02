@@ -164,7 +164,8 @@
     "whatsNew": "Nouveautés",
     "administration": "Administration",
     "spaces": "Espaces",
-    "settings": "Paramètres"
+    "settings": "Paramètres",
+    "back": "Retour"
   },
   "search": {
     "placeholder": "Rechercher... Posez votre question à votre Hub.",

@@ -28,15 +28,15 @@ import { CollaborationIllustration } from './illustrations/CollaborationIllustra
 
 interface CompliancePlusPageProps {
   onEnableModule?: () => void;
+  onDossierDetailChange?: (open: boolean) => void;
 }
 
-export function CompliancePlusPage({ onEnableModule }: CompliancePlusPageProps = {}) {
+export function CompliancePlusPage({ onEnableModule, onDossierDetailChange }: CompliancePlusPageProps = {}) {
   const { isModuleActive } = useAppStore();
   const isComplianceActive = isModuleActive('Compliance Plus');
-  
-  // Show KYC Files page if Compliance Plus is active
+
   if (isComplianceActive) {
-    return <KYCFilesPage />;
+    return <KYCFilesPage onDossierDetailChange={onDossierDetailChange} />;
   }
 
   const features = [
