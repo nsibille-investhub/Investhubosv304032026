@@ -2816,5 +2816,45 @@
       "appliedTitle": "AI proposal applied",
       "appliedBody": "Comment and decision pre-filled ({{confidence}}% confidence). Click Confirm or edit first."
     }
+  },
+  "compliance": {
+    "relations": {
+      "tabTitle": "Relations",
+      "expand": "Explore connections",
+      "details": "Details",
+      "address": "Address",
+      "capital": "Share capital",
+      "revenue": "Revenue",
+      "incorporationDate": "Incorporation",
+      "birthYear": "Birth year",
+      "nationality": "Nationality",
+      "riskLevel": "Risk level",
+      "status": "Status",
+      "relationships": "Relationships",
+      "directionTo": "to",
+      "directionFrom": "from",
+      "exploreFrom": "Explore from this entity",
+      "searchPlaceholder": "Search entity…",
+      "showAll": "Show all",
+      "legend": "Legend",
+      "nodeCount": "{{count}} entities",
+      "edgeCount": "{{count}} links",
+      "entityTypes": {
+        "person": "Individual",
+        "company": "Company",
+        "holding": "Holding",
+        "fund": "Fund"
+      },
+      "risk": {
+        "low": "Low",
+        "medium": "Medium",
+        "high": "High"
+      },
+      "statuses": {
+        "active": "Active",
+        "inactive": "Inactive",
+        "dissolved": "Dissolved"
+      }
+    }
   }
 }
