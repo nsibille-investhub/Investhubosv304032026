@@ -609,6 +609,7 @@ const mockCapitalCalls = [
     amount: 10000.00,
     subscription: 0.00,
     entryFees: 3000.00,
+    subscriptionPremium: 1500.00,
     percentage: 10,
     status: 'paid'
   }
@@ -2419,7 +2420,7 @@ export function SubscriptionDetailPage({ subscription, onBack }: SubscriptionDet
                 <div className="bg-white border border-gray-200 rounded-xl p-5">
                   <div className="text-xs text-blue-600 mb-2">Montant total appelé</div>
                   <div className="text-2xl font-semibold text-gray-900">
-                    {mockCapitalCalls.reduce((sum, call) => sum + call.amount + call.entryFees, 0).toLocaleString('fr-FR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} €
+                    {mockCapitalCalls.reduce((sum, call) => sum + call.amount + call.entryFees + call.subscriptionPremium, 0).toLocaleString('fr-FR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} €
                   </div>
                 </div>
 
@@ -2439,13 +2440,14 @@ export function SubscriptionDetailPage({ subscription, onBack }: SubscriptionDet
                   className="gap-2 border-gray-300 hover:bg-gray-50"
                   onClick={() => {
                     // Generate CSV content
-                    const headers = ['Date', 'Appel de fonds', 'Montant', 'Souscription', 'Frais d\'entrée', 'Pourcentage', 'Statut'];
+                    const headers = ['Date', 'Appel de fonds', 'Montant', 'Souscription', 'Frais d\'entrée', 'Prime de souscription', 'Pourcentage', 'Statut'];
                     const rows = mockCapitalCalls.map(call => [
                       call.date,
                       call.call,
                       call.amount.toLocaleString('fr-FR', { minimumFractionDigits: 2 }) + ' €',
                       call.subscription.toLocaleString('fr-FR', { minimumFractionDigits: 2 }) + ' €',
                       call.entryFees.toLocaleString('fr-FR', { minimumFractionDigits: 2 }) + ' €',
+                      call.subscriptionPremium.toLocaleString('fr-FR', { minimumFractionDigits: 2 }) + ' €',
                       call.percentage + '%',
                       call.status === 'paid' ? 'Payé' : call.status === 'pending' ? 'En attente' : 'Rejeté'
                     ]);
@@ -2486,6 +2488,9 @@ export function SubscriptionDetailPage({ subscription, onBack }: SubscriptionDet
                           Frais d'entrée
                         </th>
                         <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                          Prime de souscription
+                        </th>
+                        <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                           Pourcentage
                         </th>
                         <th className="px-4 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider w-24">
@@ -2510,6 +2515,9 @@ export function SubscriptionDetailPage({ subscription, onBack }: SubscriptionDet
                           </td>
                           <td className="px-4 py-3 text-sm text-gray-700">
                             {capitalCall.entryFees.toLocaleString('fr-FR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} €
+                          </td>
+                          <td className="px-4 py-3 text-sm text-gray-700">
+                            {capitalCall.subscriptionPremium.toLocaleString('fr-FR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} €
                           </td>
                           <td className="px-4 py-3 text-sm text-gray-700">
                             {capitalCall.percentage}%

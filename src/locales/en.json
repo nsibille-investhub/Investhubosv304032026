@@ -343,7 +343,9 @@
       "globalStatus": "Global status",
       "onboardingReopened": "Reopens",
       "notes": "Notes",
-      "updatedAt": "Last update"
+      "updatedAt": "Last update",
+      "documents": "Documents",
+      "entryFeesComposite": "Entry fees"
     },
     "page": {
       "searchPlaceholder": "Search a subscription...",
@@ -364,7 +366,8 @@
       "fund": "Fund",
       "shareClass": "Share class",
       "type": "Type",
-      "manager": "Manager"
+      "manager": "Manager",
+      "subscriber": "Subscriber"
     },
     "detail": {
       "monitoringFor": "for {{name}}",
@@ -414,6 +417,12 @@
       "de": "German",
       "it": "Italian",
       "es": "Spanish"
+    },
+    "documents": {
+      "title": "{{received}}/{{total}} documents received",
+      "validated": "{{count}} validated",
+      "pending": "{{count}} pending",
+      "rejected": "{{count}} rejected"
     },
     "infoPopover": {
       "individual": "Individual",
