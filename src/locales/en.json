@@ -2299,7 +2299,32 @@
     "back": "Back to spaces",
     "title": "Publication Center",
     "subtitle": "Review, approve and publish documents",
+    "statusSectionTitle": "Document status",
+    "export": "Export ({{count}})",
     "searchPlaceholder": "Search a document, author, targeting...",
+    "bulkDialog": {
+      "titlePublish": "Publish {{count}} documents",
+      "titlePublishSingle": "Publish \"{{name}}\"",
+      "titleReject": "Reject {{count}} documents",
+      "titleRejectSingle": "Reject \"{{name}}\"",
+      "titleUnpublish": "Unpublish {{count}} documents",
+      "titleUnpublishSingle": "Unpublish \"{{name}}\"",
+      "descPublish": "Confirm publication and, if applicable, send the related communications.",
+      "descReject": "These documents will be marked as rejected.",
+      "descUnpublish": "These documents will go back to pending and be withdrawn from publication.",
+      "docsSelected": "{{count}} documents selected",
+      "summaryHint": "The action below applies to all selected documents.",
+      "commsRecapLabel": "Communications to be sent",
+      "commsRecapHint": "{{count}} notification(s) will be sent on publication.",
+      "noComms": "No notification will be sent for this publication.",
+      "docsListLabel": "Documents concerned",
+      "commentLabel": "Comment (optional)",
+      "commentPlaceholder": "Add a note for the audit trail (optional)…",
+      "cancel": "Cancel",
+      "submitPublish": "Publish",
+      "submitReject": "Reject",
+      "submitUnpublish": "Unpublish"
+    },
     "moduleDisabled": {
       "title": "Publication Center disabled",
       "description": "This module is disabled. Enable \"Centre de Publication\" in the App Store to access the validation workflow."
@@ -2448,7 +2473,9 @@
       "batchValidated": "Publication confirmed",
       "bulkValidated": "{{count}} document(s) published",
       "bulkRejected": "{{count}} document(s) rejected",
-      "bulkNotifications": "{{count}} notification(s) sent"
+      "bulkNotifications": "{{count}} notification(s) sent",
+      "exported": "{{count}} document(s) exported",
+      "bulkUnpublished": "{{count}} document(s) unpublished"
     },
     "you": "You",
     "drawer": {

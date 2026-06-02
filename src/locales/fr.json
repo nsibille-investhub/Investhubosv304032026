@@ -2299,7 +2299,32 @@
     "back": "Retour aux espaces",
     "title": "Centre de Publication",
     "subtitle": "Revue, approbation et publication des documents",
+    "statusSectionTitle": "Statut des documents",
+    "export": "Exporter ({{count}})",
     "searchPlaceholder": "Rechercher un document, auteur, ciblage...",
+    "bulkDialog": {
+      "titlePublish": "Publier {{count}} documents",
+      "titlePublishSingle": "Publier « {{name}} »",
+      "titleReject": "Rejeter {{count}} documents",
+      "titleRejectSingle": "Rejeter « {{name}} »",
+      "titleUnpublish": "Dépublier {{count}} documents",
+      "titleUnpublishSingle": "Dépublier « {{name}} »",
+      "descPublish": "Confirmez la publication et, le cas échéant, l'envoi des communications associées.",
+      "descReject": "Ces documents seront marqués comme rejetés.",
+      "descUnpublish": "Ces documents repasseront en attente et seront retirés de la publication.",
+      "docsSelected": "{{count}} documents sélectionnés",
+      "summaryHint": "L'action ci-dessous s'applique à tous les documents sélectionnés.",
+      "commsRecapLabel": "Communications qui seront envoyées",
+      "commsRecapHint": "{{count}} notification(s) seront envoyée(s) à la publication.",
+      "noComms": "Aucune notification ne sera envoyée pour cette publication.",
+      "docsListLabel": "Documents concernés",
+      "commentLabel": "Commentaire (optionnel)",
+      "commentPlaceholder": "Ajoutez une note pour la piste d'audit (optionnel)…",
+      "cancel": "Annuler",
+      "submitPublish": "Publier",
+      "submitReject": "Rejeter",
+      "submitUnpublish": "Dépublier"
+    },
     "moduleDisabled": {
       "title": "Centre de Publication désactivé",
       "description": "Ce module est désactivé. Activez « Centre de Publication » dans l'App Store pour accéder au workflow de validation."
@@ -2448,7 +2473,9 @@
       "batchValidated": "Publication confirmée",
       "bulkValidated": "{{count}} document(s) publié(s)",
       "bulkRejected": "{{count}} document(s) rejeté(s)",
-      "bulkNotifications": "{{count}} notification(s) envoyée(s)"
+      "bulkNotifications": "{{count}} notification(s) envoyée(s)",
+      "exported": "{{count}} document(s) exporté(s)",
+      "bulkUnpublished": "{{count}} document(s) dépublié(s)"
     },
     "you": "Vous",
     "drawer": {
