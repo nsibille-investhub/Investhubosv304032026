@@ -59,6 +59,24 @@ export interface IdentityEntity {
   legalRepresentatives: LegalRepresentative[];
 }
 
+export type DocumentSourceType = 'subscription' | 'kyc_refresh';
+
+export interface DocumentSource {
+  type: DocumentSourceType;
+  label: string;
+  date: string;
+  riskLevel?: RiskLevel;
+}
+
+export interface DocumentHistoryEntry {
+  id: string;
+  uploadedAt: string;
+  status: DocumentStatus;
+  uploader: { name: string; sublabel?: string };
+  fileSize?: string;
+  source?: DocumentSource;
+}
+
 export interface DocumentItem {
   id: string;
   type: string;
@@ -67,6 +85,8 @@ export interface DocumentItem {
   status: DocumentStatus;
   uploader: { name: string; sublabel?: string };
   fileSize?: string;
+  source?: DocumentSource;
+  history?: DocumentHistoryEntry[];
 }
 
 export interface UBO {

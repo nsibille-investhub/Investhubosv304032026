@@ -16,6 +16,7 @@ import {
   Calendar,
   Check,
   CheckCircle2,
+  ChevronDown,
   ChevronRight,
   Clock,
   Download,
@@ -24,6 +25,7 @@ import {
   FileText,
   Flag,
   Globe,
+  History,
   Mail,
   MapPin,
   MessageSquare,
@@ -77,7 +79,9 @@ import { UserCell } from './UserCell';
 import { cn } from './ui/utils';
 import type {
   AuditEventType,
+  DocumentHistoryEntry,
   DocumentItem,
+  DocumentSourceType,
   DocumentStatus,
   DossierComment,
   DossierStatus,
@@ -600,9 +604,9 @@ export function KYCDossierDetail(props: KYCDossierDetailProps) {
                     <CardHeader>
                       <div className="flex items-center justify-between gap-4 flex-wrap">
                         <div>
-                          <CardTitle className="text-base">Documents justificatifs</CardTitle>
+                          <CardTitle className="text-base">{t('ged.dossierDetail.documents.title')}</CardTitle>
                           <CardDescription>
-                            {verifiedDocs} sur {docsTotal} vérifié{docsTotal > 1 ? 's' : ''}
+                            {t(docsTotal > 1 ? 'ged.dossierDetail.documents.verifiedCount' : 'ged.dossierDetail.documents.verifiedCount', { verified: verifiedDocs, total: docsTotal })}
                           </CardDescription>
                         </div>
                         <div className="w-48">
@@ -614,12 +618,13 @@ export function KYCDossierDetail(props: KYCDossierDetailProps) {
                       <Table>
                         <TableHeader>
                           <TableRow>
-                            <TableHead>Type</TableHead>
-                            <TableHead>Statut</TableHead>
-                            <TableHead>Déposé le</TableHead>
-                            <TableHead>Expire le</TableHead>
-                            <TableHead>Déposé par</TableHead>
-                            <TableHead className="text-right">Actions</TableHead>
+                            <TableHead>{t('ged.dossierDetail.documents.tableType')}</TableHead>
+                            <TableHead>{t('ged.dossierDetail.documents.tableSource')}</TableHead>
+                            <TableHead>{t('ged.dossierDetail.documents.tableStatus')}</TableHead>
+                            <TableHead>{t('ged.dossierDetail.documents.tableUploadedAt')}</TableHead>
+                            <TableHead>{t('ged.dossierDetail.documents.tableExpiresAt')}</TableHead>
+                            <TableHead>{t('ged.dossierDetail.documents.tableUploadedBy')}</TableHead>
+                            <TableHead className="text-right">{t('ged.dossierDetail.documents.tableActions')}</TableHead>
                           </TableRow>
                         </TableHeader>
                         <TableBody>
@@ -961,6 +966,33 @@ function EntityIdentityFields({ identity }: { identity: IdentityEntity }) {
   );
 }
 
+const SOURCE_TYPE_KEY: Record<DocumentSourceType, string> = {
+  subscription: 'ged.dossierDetail.documents.sourceSubscription',
+  kyc_refresh: 'ged.dossierDetail.documents.sourceKycRefresh',
+};
+
+function DocumentSourceBadge({ source, t: translate }: { source: DocumentItem['source']; t: (key: string, vars?: Record<string, string | number>) => string }) {
+  if (!source) return <span className="text-sm text-muted-foreground">—</span>;
+  const isRefresh = source.type === 'kyc_refresh';
+  return (
+    <div className="flex flex-col gap-0.5">
+      <div className="flex items-center gap-1.5">
+        {isRefresh ? (
+          <RefreshCw className="w-3 h-3 text-purple-500 shrink-0" />
+        ) : (
+          <FileText className="w-3 h-3 text-blue-500 shrink-0" />
+        )}
+        <span className="text-xs font-medium text-foreground truncate max-w-[180px]">
+          {source.label}
+        </span>
+      </div>
+      <span className="text-[10px] text-muted-foreground pl-[18px]">
+        {translate(SOURCE_TYPE_KEY[source.type])} · {formatDate(source.date)}
+      </span>
+    </div>
+  );
+}
+
 function DocumentRow({
   doc,
   onPreview,
@@ -970,85 +1002,148 @@ function DocumentRow({
   onPreview?: (doc: DocumentItem) => void;
   onDownload?: (doc: DocumentItem) => void;
 }) {
+  const { t } = useTranslation();
+  const [expanded, setExpanded] = React.useState(false);
+  const historyCount = doc.history?.length ?? 0;
   const isExpiringSoon =
     doc.expiresAt &&
     new Date(doc.expiresAt).getTime() - Date.now() < 1000 * 60 * 60 * 24 * 30;
   return (
-    <TableRow>
-      <TableCell>
+    <>
+      <TableRow className={historyCount > 0 ? 'cursor-pointer' : undefined} onClick={historyCount > 0 ? () => setExpanded(!expanded) : undefined}>
+        <TableCell>
+          <div className="flex items-center gap-2 min-w-0">
+            {historyCount > 0 ? (
+              <button type="button" className="inline-flex items-center justify-center rounded-md size-8 bg-muted text-muted-foreground shrink-0 hover:bg-muted/80 transition-colors">
+                {expanded ? <ChevronDown className="w-4 h-4" /> : <ChevronRight className="w-4 h-4" />}
+              </button>
+            ) : (
+              <span className="inline-flex items-center justify-center rounded-md size-8 bg-muted text-muted-foreground shrink-0">
+                <FileText className="w-4 h-4" />
+              </span>
+            )}
+            <div className="min-w-0">
+              <p className="text-sm font-medium text-foreground truncate">{doc.type}</p>
+              <div className="flex items-center gap-2">
+                {doc.fileSize ? (
+                  <p className="text-xs text-muted-foreground">{doc.fileSize}</p>
+                ) : null}
+                {historyCount > 0 && (
+                  <span className="inline-flex items-center gap-1 text-[10px] text-muted-foreground">
+                    <History className="w-3 h-3" />
+                    {t(historyCount > 1 ? 'ged.dossierDetail.documents.historyToggleMany' : 'ged.dossierDetail.documents.historyToggle', { count: historyCount })}
+                  </span>
+                )}
+              </div>
+            </div>
+          </div>
+        </TableCell>
+        <TableCell>
+          <DocumentSourceBadge source={doc.source} t={t} />
+        </TableCell>
+        <TableCell>
+          <StatusBadge
+            label={DOC_STATUS_LABEL[doc.status]}
+            variant={DOC_STATUS_VARIANT[doc.status]}
+          />
+        </TableCell>
+        <TableCell className="text-sm text-foreground whitespace-nowrap">
+          {formatDate(doc.uploadedAt)}
+        </TableCell>
+        <TableCell className="whitespace-nowrap">
+          {doc.expiresAt ? (
+            <span
+              className={cn(
+                'text-sm inline-flex items-center gap-1.5',
+                isExpiringSoon ? 'text-foreground' : 'text-muted-foreground',
+              )}
+            >
+              {formatDate(doc.expiresAt)}
+              {isExpiringSoon && (
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <span className="inline-flex">
+                      <AlertTriangle
+                        className="w-3.5 h-3.5"
+                        style={{ color: 'var(--warning)' }}
+                      />
+                    </span>
+                  </TooltipTrigger>
+                  <TooltipContent>{t('ged.dossierDetail.documents.expiringSoon')}</TooltipContent>
+                </Tooltip>
+              )}
+            </span>
+          ) : (
+            <span className="text-sm text-muted-foreground">{t('ged.dossierDetail.documents.noExpiry')}</span>
+          )}
+        </TableCell>
+        <TableCell>
+          <UserCell name={doc.uploader.name} sublabel={doc.uploader.sublabel} size="sm" />
+        </TableCell>
+        <TableCell className="text-right">
+          <div className="inline-flex items-center gap-1">
+            <Button
+              variant="ghost"
+              size="icon"
+              className="size-8"
+              onClick={(e) => { e.stopPropagation(); onPreview?.(doc); }}
+              aria-label={t('ged.dossierDetail.documents.previewAriaLabel')}
+            >
+              <Eye className="w-4 h-4" />
+            </Button>
+            <Button
+              variant="ghost"
+              size="icon"
+              className="size-8"
+              onClick={(e) => { e.stopPropagation(); onDownload?.(doc); }}
+              aria-label={t('ged.dossierDetail.documents.downloadAriaLabel')}
+            >
+              <Download className="w-4 h-4" />
+            </Button>
+          </div>
+        </TableCell>
+      </TableRow>
+      {expanded && doc.history?.map((entry) => (
+        <DocumentHistoryRow key={entry.id} entry={entry} t={t} />
+      ))}
+    </>
+  );
+}
+
+function DocumentHistoryRow({ entry, t: translate }: { entry: DocumentHistoryEntry; t: (key: string, vars?: Record<string, string | number>) => string }) {
+  return (
+    <TableRow className="bg-muted/30">
+      <TableCell className="pl-14">
         <div className="flex items-center gap-2 min-w-0">
-          <span className="inline-flex items-center justify-center rounded-md size-8 bg-muted text-muted-foreground shrink-0">
-            <FileText className="w-4 h-4" />
+          <span className="inline-flex items-center justify-center rounded-md size-6 bg-muted text-muted-foreground shrink-0">
+            <History className="w-3 h-3" />
           </span>
           <div className="min-w-0">
-            <p className="text-sm font-medium text-foreground truncate">{doc.type}</p>
-            {doc.fileSize ? (
-              <p className="text-xs text-muted-foreground">{doc.fileSize}</p>
+            {entry.fileSize ? (
+              <p className="text-xs text-muted-foreground">{entry.fileSize}</p>
             ) : null}
           </div>
         </div>
       </TableCell>
       <TableCell>
-        <StatusBadge
-          label={DOC_STATUS_LABEL[doc.status]}
-          variant={DOC_STATUS_VARIANT[doc.status]}
-        />
-      </TableCell>
-      <TableCell className="text-sm text-foreground whitespace-nowrap">
-        {formatDate(doc.uploadedAt)}
-      </TableCell>
-      <TableCell className="whitespace-nowrap">
-        {doc.expiresAt ? (
-          <span
-            className={cn(
-              'text-sm inline-flex items-center gap-1.5',
-              isExpiringSoon ? 'text-foreground' : 'text-muted-foreground',
-            )}
-          >
-            {formatDate(doc.expiresAt)}
-            {isExpiringSoon && (
-              <Tooltip>
-                <TooltipTrigger asChild>
-                  <span className="inline-flex">
-                    <AlertTriangle
-                      className="w-3.5 h-3.5"
-                      style={{ color: 'var(--warning)' }}
-                    />
-                  </span>
-                </TooltipTrigger>
-                <TooltipContent>Expire bientôt</TooltipContent>
-              </Tooltip>
-            )}
-          </span>
-        ) : (
-          <span className="text-sm text-muted-foreground">—</span>
-        )}
+        <DocumentSourceBadge source={entry.source} t={translate} />
       </TableCell>
       <TableCell>
-        <UserCell name={doc.uploader.name} sublabel={doc.uploader.sublabel} size="sm" />
+        <StatusBadge
+          label={DOC_STATUS_LABEL[entry.status]}
+          variant={DOC_STATUS_VARIANT[entry.status]}
+        />
       </TableCell>
-      <TableCell className="text-right">
-        <div className="inline-flex items-center gap-1">
-          <Button
-            variant="ghost"
-            size="icon"
-            className="size-8"
-            onClick={() => onPreview?.(doc)}
-            aria-label="Aperçu"
-          >
-            <Eye className="w-4 h-4" />
-          </Button>
-          <Button
-            variant="ghost"
-            size="icon"
-            className="size-8"
-            onClick={() => onDownload?.(doc)}
-            aria-label="Télécharger"
-          >
-            <Download className="w-4 h-4" />
-          </Button>
-        </div>
+      <TableCell className="text-sm text-muted-foreground whitespace-nowrap">
+        {formatDate(entry.uploadedAt)}
       </TableCell>
+      <TableCell>
+        <span className="text-sm text-muted-foreground">—</span>
+      </TableCell>
+      <TableCell>
+        <UserCell name={entry.uploader.name} sublabel={entry.uploader.sublabel} size="sm" />
+      </TableCell>
+      <TableCell />
     </TableRow>
   );
 }

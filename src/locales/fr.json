@@ -1807,6 +1807,32 @@
         "legal": "Juridique"
       }
     },
+    "dossierDetail": {
+      "documents": {
+        "title": "Documents justificatifs",
+        "verifiedCount": "{{verified}} sur {{total}} vérifiés",
+        "tableType": "Type",
+        "tableStatus": "Statut",
+        "tableUploadedAt": "Déposé le",
+        "tableExpiresAt": "Expire le",
+        "tableUploadedBy": "Déposé par",
+        "tableSource": "Source",
+        "tableActions": "Actions",
+        "noExpiry": "—",
+        "expiringSoon": "Expire bientôt",
+        "previewAriaLabel": "Aperçu",
+        "downloadAriaLabel": "Télécharger",
+        "sourceSubscription": "Souscription",
+        "sourceKycRefresh": "Refresh KYC",
+        "historyToggle": "{{count}} version précédente",
+        "historyToggleMany": "{{count}} versions précédentes",
+        "statusVerified": "Vérifié",
+        "statusPending": "En attente",
+        "statusExpired": "Expiré",
+        "statusRejected": "Rejeté",
+        "riskAtCollection": "Risque à la collecte"
+      }
+    },
     "explorer": {
       "openedAllToast": "Tous les dossiers sont ouverts",
       "openedAllDesc": "{{count}} dossier déployé à tous les niveaux",

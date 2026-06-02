@@ -160,6 +160,17 @@ const entityDocuments: DocumentItem[] = [
     status: 'verified',
     uploader: { name: 'Olivier Pomel', sublabel: 'Président' },
     fileSize: '880 KB',
+    source: { type: 'subscription', label: 'Souscription FCPR Innov 2026', date: '2026-04-20', riskLevel: 'medium' },
+    history: [
+      {
+        id: 'doc-1-h1',
+        uploadedAt: '2025-10-14T09:30:00Z',
+        status: 'expired',
+        uploader: { name: 'Olivier Pomel', sublabel: 'Président' },
+        fileSize: '740 KB',
+        source: { type: 'subscription', label: 'Souscription FPCI Alpha 2025', date: '2025-10-10', riskLevel: 'low' },
+      },
+    ],
   },
   {
     id: 'doc-2',
@@ -168,6 +179,7 @@ const entityDocuments: DocumentItem[] = [
     status: 'verified',
     uploader: { name: 'Olivier Pomel', sublabel: 'Président' },
     fileSize: '3.4 MB',
+    source: { type: 'subscription', label: 'Souscription FCPR Innov 2026', date: '2026-04-20', riskLevel: 'medium' },
   },
   {
     id: 'doc-3',
@@ -177,6 +189,25 @@ const entityDocuments: DocumentItem[] = [
     status: 'expired',
     uploader: { name: 'Marie Bernard', sublabel: 'Directrice générale' },
     fileSize: '610 KB',
+    source: { type: 'kyc_refresh', label: 'Campagne Refresh Q2 2026', date: '2026-04-15', riskLevel: 'high' },
+    history: [
+      {
+        id: 'doc-3-h1',
+        uploadedAt: '2025-10-15T11:00:00Z',
+        status: 'verified',
+        uploader: { name: 'Marie Bernard', sublabel: 'Directrice générale' },
+        fileSize: '580 KB',
+        source: { type: 'subscription', label: 'Souscription FPCI Alpha 2025', date: '2025-10-10', riskLevel: 'low' },
+      },
+      {
+        id: 'doc-3-h2',
+        uploadedAt: '2025-04-12T14:22:00Z',
+        status: 'expired',
+        uploader: { name: 'Marie Bernard', sublabel: 'Directrice générale' },
+        fileSize: '520 KB',
+        source: { type: 'subscription', label: 'Souscription FPS Beta 2025', date: '2025-04-01', riskLevel: 'low' },
+      },
+    ],
   },
   {
     id: 'doc-4',
@@ -186,6 +217,7 @@ const entityDocuments: DocumentItem[] = [
     status: 'verified',
     uploader: { name: 'Olivier Pomel', sublabel: 'Président' },
     fileSize: '1.2 MB',
+    source: { type: 'subscription', label: 'Souscription FCPR Innov 2026', date: '2026-04-20', riskLevel: 'medium' },
   },
   {
     id: 'doc-5',
@@ -194,6 +226,7 @@ const entityDocuments: DocumentItem[] = [
     status: 'verified',
     uploader: { name: 'Marie Bernard', sublabel: 'Directrice générale' },
     fileSize: '290 KB',
+    source: { type: 'subscription', label: 'Souscription FCPR Innov 2026', date: '2026-04-20', riskLevel: 'medium' },
   },
   {
     id: 'doc-6',
@@ -202,6 +235,17 @@ const entityDocuments: DocumentItem[] = [
     status: 'rejected',
     uploader: { name: 'Marie Bernard', sublabel: 'Directrice générale' },
     fileSize: '5.6 MB',
+    source: { type: 'kyc_refresh', label: 'Campagne Refresh Q2 2026', date: '2026-04-15', riskLevel: 'high' },
+    history: [
+      {
+        id: 'doc-6-h1',
+        uploadedAt: '2025-04-30T09:45:00Z',
+        status: 'verified',
+        uploader: { name: 'Marie Bernard', sublabel: 'Directrice générale' },
+        fileSize: '4.8 MB',
+        source: { type: 'subscription', label: 'Souscription FPS Beta 2025', date: '2025-04-01', riskLevel: 'low' },
+      },
+    ],
   },
 ];
 

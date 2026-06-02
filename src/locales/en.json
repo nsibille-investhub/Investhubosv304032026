@@ -1807,6 +1807,32 @@
         "legal": "Legal"
       }
     },
+    "dossierDetail": {
+      "documents": {
+        "title": "Supporting documents",
+        "verifiedCount": "{{verified}} of {{total}} verified",
+        "tableType": "Type",
+        "tableStatus": "Status",
+        "tableUploadedAt": "Uploaded on",
+        "tableExpiresAt": "Expires on",
+        "tableUploadedBy": "Uploaded by",
+        "tableSource": "Source",
+        "tableActions": "Actions",
+        "noExpiry": "—",
+        "expiringSoon": "Expiring soon",
+        "previewAriaLabel": "Preview",
+        "downloadAriaLabel": "Download",
+        "sourceSubscription": "Subscription",
+        "sourceKycRefresh": "KYC Refresh",
+        "historyToggle": "{{count}} previous version",
+        "historyToggleMany": "{{count}} previous versions",
+        "statusVerified": "Verified",
+        "statusPending": "Pending",
+        "statusExpired": "Expired",
+        "statusRejected": "Rejected",
+        "riskAtCollection": "Risk at collection"
+      }
+    },
     "explorer": {
       "openedAllToast": "All folders expanded",
       "openedAllDesc": "{{count}} folder expanded across all levels",
