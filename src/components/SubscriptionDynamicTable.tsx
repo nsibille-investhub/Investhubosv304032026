@@ -11,7 +11,8 @@ import {
   X,
   AlertTriangle,
   Eye,
-  Trash2
+  Trash2,
+  UserPlus
 } from 'lucide-react';
 import { toast } from 'sonner@2.0.3';
 import { cn } from './ui/utils';
@@ -264,24 +265,17 @@ export function SubscriptionDynamicTable({
                 });
               }}
             />
-            {row.coInvestors && row.coInvestors.length > 0 && (
-              <div className="flex flex-col gap-0.5 mt-1 pt-1 border-t border-border/50">
-                <span className="text-[10px] uppercase tracking-wider text-muted-foreground font-medium">
-                  {row.coInvestors.length === 1
-                    ? t('subscriptions.table.coInvestorOne')
-                    : t('subscriptions.table.coInvestorMany')}
+            {row.coInvestors && row.coInvestors.length > 0 && row.coInvestors.map((coInv: { name: string; id: string; type: string }) => (
+              <div key={coInv.id} className="flex items-center gap-1.5 max-w-[180px]">
+                <UserPlus className="w-3.5 h-3.5 text-blue-400 dark:text-blue-500 flex-shrink-0" />
+                <span
+                  className="text-xs text-gray-600 dark:text-gray-400 truncate"
+                  title={coInv.name}
+                >
+                  {coInv.name}
                 </span>
-                {row.coInvestors.map((coInv: { name: string; id: string; type: string }) => (
-                  <span
-                    key={coInv.id}
-                    className="text-xs text-muted-foreground truncate"
-                    title={coInv.name}
-                  >
-                    {coInv.name}
-                  </span>
-                ))}
               </div>
-            )}
+            ))}
           </div>
         );
 

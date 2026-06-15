@@ -304,7 +304,7 @@
     },
     "columns": {
       "name": "Name",
-      "investor": "Investor",
+      "investor": "Subscriber",
       "amount": "Committed amount",
       "quantity": "Quantity",
       "fundShare": "Fund / Share",

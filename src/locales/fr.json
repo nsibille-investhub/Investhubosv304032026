@@ -304,7 +304,7 @@
     },
     "columns": {
       "name": "Nom",
-      "investor": "Investisseur",
+      "investor": "Souscripteur",
       "amount": "Montant engagé",
       "quantity": "Quantité",
       "fundShare": "Fonds / Part",
