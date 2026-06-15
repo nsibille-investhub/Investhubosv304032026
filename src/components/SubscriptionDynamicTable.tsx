@@ -249,8 +249,8 @@ export function SubscriptionDynamicTable({
               className="text-sm font-medium cursor-pointer transition-all truncate"
             >
               <ClickableText>
-                <HighlightText 
-                  text={row.contrepartie.name} 
+                <HighlightText
+                  text={row.contrepartie.name}
                   searchTerm={searchTerm}
                 />
               </ClickableText>
@@ -262,9 +262,26 @@ export function SubscriptionDynamicTable({
                 toast.info(t('subscriptions.table.navigateToStructure'), {
                   description: t('subscriptions.table.navigateToStructureDesc', { name: structureName }),
                 });
-                // TODO: Implémenter la navigation vers la structure
               }}
             />
+            {row.coInvestors && row.coInvestors.length > 0 && (
+              <div className="flex flex-col gap-0.5 mt-1 pt-1 border-t border-border/50">
+                <span className="text-[10px] uppercase tracking-wider text-muted-foreground font-medium">
+                  {row.coInvestors.length === 1
+                    ? t('subscriptions.table.coInvestorOne')
+                    : t('subscriptions.table.coInvestorMany')}
+                </span>
+                {row.coInvestors.map((coInv: { name: string; id: string; type: string }) => (
+                  <span
+                    key={coInv.id}
+                    className="text-xs text-muted-foreground truncate"
+                    title={coInv.name}
+                  >
+                    {coInv.name}
+                  </span>
+                ))}
+              </div>
+            )}
           </div>
         );
 

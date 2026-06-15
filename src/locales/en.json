@@ -381,6 +381,8 @@
       "selectionCancelledDesc": "All subscriptions have been deselected",
       "selectedCount": "{{count}} subscriptions selected",
       "selectedCountDesc": "All pages are selected ({{count}} subscriptions in total)",
+      "coInvestorOne": "Co-investor",
+      "coInvestorMany": "Co-investors",
       "navigateToStructure": "Navigate to structure",
       "navigateToStructureDesc": "Redirecting to {{name}}...",
       "navigateToPartner": "Navigate to partner",
