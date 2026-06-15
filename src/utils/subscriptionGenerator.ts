@@ -63,6 +63,16 @@ const coInvestorIndividualNames = [
   { firstName: 'Catherine', lastName: 'Renaud' },
   { firstName: 'Stéphane', lastName: 'Muller' },
   { firstName: 'Valérie', lastName: 'Perrin' },
+  { firstName: 'Julien', lastName: 'Marchand' },
+  { firstName: 'Nadia', lastName: 'Bertrand' },
+  { firstName: 'Thierry', lastName: 'Gauthier' },
+  { firstName: 'Sandrine', lastName: 'Lemoine' },
+  { firstName: 'Frédéric', lastName: 'Barbier' },
+  { firstName: 'Aurélie', lastName: 'Caron' },
+  { firstName: 'Damien', lastName: 'Picard' },
+  { firstName: 'Virginie', lastName: 'Rolland' },
+  { firstName: 'Sébastien', lastName: 'Noel' },
+  { firstName: 'Mélanie', lastName: 'Fleury' },
 ];
 
 const coInvestorCorporateNames = [
@@ -593,22 +603,22 @@ export function generateSubscriptions(count: number): Subscription[] {
     const docRejected = randomNumber(0, Math.min(docRemaining, 2));
     const docPending = docRemaining - docRejected;
     
-    // ~25% des souscriptions ont des co-investisseurs (1 ou 2)
+    // ~40% des souscriptions ont des co-investisseurs (1 ou 2), majoritairement personnes physiques
     let coInvestors: { name: string; id: string; type: 'individual' | 'corporate' }[] | undefined;
     const coInvestorRoll = Math.random();
-    if (coInvestorRoll > 0.75) {
-      const numCoInvestors = coInvestorRoll > 0.9 ? 2 : 1;
+    if (coInvestorRoll > 0.6) {
+      const numCoInvestors = coInvestorRoll > 0.85 ? 2 : 1;
       coInvestors = [];
       for (let ci = 0; ci < numCoInvestors; ci++) {
-        const isCorporate = Math.random() > 0.5;
+        const isCorporate = Math.random() > 0.8;
         if (isCorporate) {
           coInvestors.push({
-            name: coInvestorCorporateNames[ci % coInvestorCorporateNames.length],
+            name: randomElement(coInvestorCorporateNames),
             id: `INV-${randomNumber(1000, 9999)}`,
             type: 'corporate',
           });
         } else {
-          const coInv = coInvestorIndividualNames[ci % coInvestorIndividualNames.length];
+          const coInv = randomElement(coInvestorIndividualNames);
           coInvestors.push({
             name: `${coInv.firstName} ${coInv.lastName}`,
             id: `INV-${randomNumber(1000, 9999)}`,
