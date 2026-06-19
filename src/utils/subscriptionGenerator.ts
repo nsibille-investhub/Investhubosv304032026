@@ -56,6 +56,33 @@ const contactNames = [
   { firstName: 'Julie', lastName: 'André' }
 ];
 
+// Noms de co-investisseurs
+const coInvestorIndividualNames = [
+  { firstName: 'Hélène', lastName: 'Dupont' },
+  { firstName: 'Benoît', lastName: 'Leroy' },
+  { firstName: 'Catherine', lastName: 'Renaud' },
+  { firstName: 'Stéphane', lastName: 'Muller' },
+  { firstName: 'Valérie', lastName: 'Perrin' },
+  { firstName: 'Julien', lastName: 'Marchand' },
+  { firstName: 'Nadia', lastName: 'Bertrand' },
+  { firstName: 'Thierry', lastName: 'Gauthier' },
+  { firstName: 'Sandrine', lastName: 'Lemoine' },
+  { firstName: 'Frédéric', lastName: 'Barbier' },
+  { firstName: 'Aurélie', lastName: 'Caron' },
+  { firstName: 'Damien', lastName: 'Picard' },
+  { firstName: 'Virginie', lastName: 'Rolland' },
+  { firstName: 'Sébastien', lastName: 'Noel' },
+  { firstName: 'Mélanie', lastName: 'Fleury' },
+];
+
+const coInvestorCorporateNames = [
+  'Omega Patrimoine SAS',
+  'Nova Capital Partners',
+  'Aurelia Investissement',
+  'Prestige Holding SA',
+  'Sapphire Ventures SARL',
+];
+
 // Signataires possibles avec leurs rôles
 const signatoriesPool = [
   { firstName: 'Jacques', lastName: 'Durand', role: 'Directeur Général' },
@@ -269,6 +296,11 @@ export interface Subscription {
     pending: number;
     rejected: number;
   };
+  coInvestors?: {
+    name: string;
+    id: string;
+    type: 'individual' | 'corporate';
+  }[];
 }
 
 export function generateSubscriptions(count: number): Subscription[] {
@@ -571,6 +603,31 @@ export function generateSubscriptions(count: number): Subscription[] {
     const docRejected = randomNumber(0, Math.min(docRemaining, 2));
     const docPending = docRemaining - docRejected;
     
+    // ~40% des souscriptions ont des co-investisseurs (1 ou 2), majoritairement personnes physiques
+    let coInvestors: { name: string; id: string; type: 'individual' | 'corporate' }[] | undefined;
+    const coInvestorRoll = Math.random();
+    if (coInvestorRoll > 0.6) {
+      const numCoInvestors = coInvestorRoll > 0.85 ? 2 : 1;
+      coInvestors = [];
+      for (let ci = 0; ci < numCoInvestors; ci++) {
+        const isCorporate = Math.random() > 0.8;
+        if (isCorporate) {
+          coInvestors.push({
+            name: randomElement(coInvestorCorporateNames),
+            id: `INV-${randomNumber(1000, 9999)}`,
+            type: 'corporate',
+          });
+        } else {
+          const coInv = randomElement(coInvestorIndividualNames);
+          coInvestors.push({
+            name: `${coInv.firstName} ${coInv.lastName}`,
+            id: `INV-${randomNumber(1000, 9999)}`,
+            type: 'individual',
+          });
+        }
+      }
+    }
+
     const subscription: Subscription = {
       id: i + 1,
       name: subscriptionName,
@@ -644,6 +701,7 @@ export function generateSubscriptions(count: number): Subscription[] {
         pending: docPending,
         rejected: docRejected,
       },
+      coInvestors,
     };
     
     subscriptions.push(subscription);

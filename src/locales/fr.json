@@ -304,7 +304,7 @@
     },
     "columns": {
       "name": "Nom",
-      "investor": "Investisseur",
+      "investor": "Souscripteur",
       "amount": "Montant engagé",
       "quantity": "Quantité",
       "fundShare": "Fonds / Part",
@@ -381,6 +381,8 @@
       "selectionCancelledDesc": "Toutes les souscriptions ont été désélectionnées",
       "selectedCount": "{{count}} souscriptions sélectionnées",
       "selectedCountDesc": "Toutes les pages sont sélectionnées ({{count}} souscriptions au total)",
+      "coInvestorOne": "Co-investisseur",
+      "coInvestorMany": "Co-investisseurs",
       "navigateToStructure": "Navigation vers la structure",
       "navigateToStructureDesc": "Redirection vers {{name}}...",
       "navigateToPartner": "Navigation vers le partenaire",

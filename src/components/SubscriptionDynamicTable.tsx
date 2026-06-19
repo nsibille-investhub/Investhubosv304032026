@@ -11,7 +11,8 @@ import {
   X,
   AlertTriangle,
   Eye,
-  Trash2
+  Trash2,
+  Users
 } from 'lucide-react';
 import { toast } from 'sonner@2.0.3';
 import { cn } from './ui/utils';
@@ -249,8 +250,8 @@ export function SubscriptionDynamicTable({
               className="text-sm font-medium cursor-pointer transition-all truncate"
             >
               <ClickableText>
-                <HighlightText 
-                  text={row.contrepartie.name} 
+                <HighlightText
+                  text={row.contrepartie.name}
                   searchTerm={searchTerm}
                 />
               </ClickableText>
@@ -262,9 +263,19 @@ export function SubscriptionDynamicTable({
                 toast.info(t('subscriptions.table.navigateToStructure'), {
                   description: t('subscriptions.table.navigateToStructureDesc', { name: structureName }),
                 });
-                // TODO: Implémenter la navigation vers la structure
               }}
             />
+            {row.coInvestors && row.coInvestors.length > 0 && row.coInvestors.map((coInv: { name: string; id: string; type: string }) => (
+              <div key={coInv.id} className="flex items-center gap-1.5 max-w-[180px]">
+                <Users className="w-3.5 h-3.5 text-gray-400 dark:text-gray-500 flex-shrink-0" />
+                <span
+                  className="text-xs text-gray-500 dark:text-gray-400 truncate"
+                  title={coInv.name}
+                >
+                  {coInv.name}
+                </span>
+              </div>
+            ))}
           </div>
         );
 
