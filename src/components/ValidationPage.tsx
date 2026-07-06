@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useState, useCallback } from 'react';
 import { motion } from 'motion/react';
 import {
   Clock,
@@ -25,8 +25,10 @@ import {
 import { toast } from 'sonner@2.0.3';
 import { Button } from './ui/button';
 import { Card, CardContent } from './ui/card';
+import { Checkbox } from './ui/checkbox';
 import { PageHeader } from './ui/page-header';
 import { RowActions } from './ui/row-actions';
+import { BulkActionBar } from './ui/bulk-action-bar';
 import {
   Tooltip,
   TooltipContent,
@@ -52,6 +54,7 @@ import { UserCell } from './UserCell';
 import { CommentIndicator } from './CommentIndicator';
 import { NotificationPreviewDrawer } from './NotificationPreviewDrawer';
 import { useTableSearch } from '../utils/useTableSearch';
+import { useBulkSelection } from '../hooks/useBulkSelection';
 import {
   generateValidationDocuments,
   getValidationBatches,
@@ -735,6 +738,56 @@ export function ValidationPage(_props: ValidationPageProps) {
     return out;
   }, [pageRows]);
 
+  const getDocId = useCallback((d: ValidationDocument) => String(d.id), []);
+
+  const {
+    selectedIds: validationSelectedIds,
+    selectAllFiltered: validationSelectAllFiltered,
+    toggleRow: validationToggleRow,
+    setRowsSelected: validationSetRowsSelected,
+    togglePageAll: validationTogglePageAll,
+    selectAllFilteredItems: validationSelectAllFiltered_fn,
+    clearSelection: validationClearSelection,
+    allPageSelected: validationAllPageSelected,
+    somePageSelected: validationSomePageSelected,
+    selectedCount: validationSelectedCount,
+    selectedItems: validationSelectedItems,
+  } = useBulkSelection({
+    allFilteredItems: flatDocs,
+    pageItems: pageDocs,
+    getId: getDocId,
+  });
+
+  const validationBulkActions = useMemo(
+    () => [
+      {
+        labelKey: 'validation.selection.actionPublish',
+        icon: <Check className="w-4 h-4" />,
+        onClick: () => openPublishConfirm(validationSelectedItems),
+        color: 'var(--success)',
+        borderColor: 'color-mix(in oklab, var(--success) 35%, transparent)',
+        bgColor: 'var(--success-soft)',
+      },
+      {
+        labelKey: 'validation.selection.actionReject',
+        icon: <X className="w-4 h-4" />,
+        onClick: () => openRejectConfirm(validationSelectedItems),
+        color: 'var(--danger)',
+        borderColor: 'color-mix(in oklab, var(--danger) 35%, transparent)',
+        bgColor: 'var(--danger-soft)',
+      },
+      {
+        labelKey: 'validation.selection.actionUnpublish',
+        icon: <RotateCcw className="w-4 h-4" />,
+        onClick: () => openUnpublishConfirm(validationSelectedItems),
+        color: 'var(--warning)',
+        borderColor: 'color-mix(in oklab, var(--warning) 35%, transparent)',
+        bgColor: 'var(--warning-soft)',
+      },
+    ],
+    [validationSelectedItems],
+  );
+
   const hasActiveFilters =
     hasActiveSearch || Object.keys(activeFilters).length > 0;
 
@@ -1084,6 +1137,16 @@ export function ValidationPage(_props: ValidationPageProps) {
             </div>
 
             <CardContent className="p-0 flex flex-col">
+              <BulkActionBar
+                selectedCount={validationSelectedCount}
+                totalFilteredCount={flatDocs.length}
+                selectAllFiltered={validationSelectAllFiltered}
+                onSelectAllFiltered={validationSelectAllFiltered_fn}
+                onClearSelection={validationClearSelection}
+                actions={validationBulkActions}
+                unitOneKey="validation.selection.selectedOne"
+                unitManyKey="validation.selection.selectedMany"
+              />
               {/* Table */}
               <div className="flex-1 overflow-auto">
                 {isLoading ? (
@@ -1110,6 +1173,34 @@ export function ValidationPage(_props: ValidationPageProps) {
                     <table className="w-full">
                   <thead>
                     <tr className="border-b border-border bg-muted/40 backdrop-blur-sm">
+                      <th className="px-4 py-3 w-10">
+                        <Tooltip>
+                          <TooltipTrigger asChild>
+                            <span className="inline-flex">
+                              <Checkbox
+                                checked={
+                                  validationAllPageSelected
+                                    ? true
+                                    : validationSomePageSelected
+                                      ? 'indeterminate'
+                                      : false
+                                }
+                                onCheckedChange={() => validationTogglePageAll()}
+                                aria-label={
+                                  validationAllPageSelected
+                                    ? t('validation.selection.deselectAll')
+                                    : t('validation.selection.selectAll')
+                                }
+                              />
+                            </span>
+                          </TooltipTrigger>
+                          <TooltipContent>
+                            {validationAllPageSelected
+                              ? t('validation.selection.deselectAll')
+                              : t('validation.selection.selectAll')}
+                          </TooltipContent>
+                        </Tooltip>
+                      </th>
                       <th className="px-4 py-3 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider max-w-[320px]">
                         {t('validation.table.document')}
                       </th>
@@ -1160,6 +1251,8 @@ export function ValidationPage(_props: ValidationPageProps) {
                               setPreviewNotificationDocId(row.doc.id)
                             }
                             stickyClass={stickyBodyActionsClass()}
+                            selected={validationSelectedIds.has(String(row.doc.id))}
+                            onToggleSelect={() => validationToggleRow(String(row.doc.id))}
                           />
                         );
                       }
@@ -1181,6 +1274,9 @@ export function ValidationPage(_props: ValidationPageProps) {
                           onReset={() => openUnpublishConfirm(batch.docs)}
                           onPreviewChild={(d) => setPreviewDocument(d)}
                           stickyClass={stickyBodyActionsClass()}
+                          selectedIds={validationSelectedIds}
+                          onToggleSelect={validationToggleRow}
+                          onSetRowsSelected={validationSetRowsSelected}
                         />
                       );
                     })}
@@ -1289,6 +1385,7 @@ export function ValidationPage(_props: ValidationPageProps) {
               applyUnpublish(confirmDialog.docs, comment);
             }
             setConfirmDialog(null);
+            validationClearSelection();
           }}
         />
       )}
@@ -1310,6 +1407,8 @@ interface DocumentRowProps {
   onResetToPending: () => void;
   onPreviewNotification: () => void;
   stickyClass: string;
+  selected?: boolean;
+  onToggleSelect?: () => void;
 }
 
 function DocumentRow({
@@ -1322,6 +1421,8 @@ function DocumentRow({
   onResetToPending,
   onPreviewNotification,
   stickyClass,
+  selected,
+  onToggleSelect,
 }: DocumentRowProps) {
   const { t, lang } = useTranslation();
   const dateFormatter = useMemo(
@@ -1344,6 +1445,18 @@ function DocumentRow({
       className="border-b border-border/70 transition-colors cursor-pointer hover:bg-muted/50"
       onClick={onPreview}
     >
+      {onToggleSelect && (
+        <td
+          className="px-4 py-2.5 w-10 align-top"
+          onClick={(e) => e.stopPropagation()}
+        >
+          <Checkbox
+            checked={selected ?? false}
+            onCheckedChange={onToggleSelect}
+            aria-label={t('validation.selection.selectRow')}
+          />
+        </td>
+      )}
       <td className="px-4 py-2.5 align-top max-w-[320px]">
         {doc.kindKey && (
           <div className="mb-0.5 text-[10px] font-semibold uppercase tracking-wide text-gray-500 dark:text-gray-400">
@@ -1840,6 +1953,9 @@ interface DynamicBatchRowProps {
   onReset: () => void;
   onPreviewChild: (doc: ValidationDocument) => void;
   stickyClass: string;
+  selectedIds?: Set<string>;
+  onToggleSelect?: (id: string) => void;
+  onSetRowsSelected?: (ids: string[], selected: boolean) => void;
 }
 
 function DynamicBatchRow({
@@ -1853,6 +1969,9 @@ function DynamicBatchRow({
   onReset,
   onPreviewChild,
   stickyClass,
+  selectedIds,
+  onToggleSelect,
+  onSetRowsSelected,
 }: DynamicBatchRowProps) {
   const { t, lang } = useTranslation();
   const dateFormatter = useMemo(
@@ -1879,6 +1998,28 @@ function DynamicBatchRow({
   return (
     <>
       <tr className="border-b border-blue-100 bg-blue-50/40 hover:bg-blue-50/60 dark:border-blue-900/30 dark:bg-blue-950/15">
+        {onToggleSelect && selectedIds && (
+          <td className="px-4 py-2.5 w-10 align-top">
+            {(() => {
+              const batchDocIds = batch.docs.map((d) => String(d.id));
+              const allSelected = batchDocIds.every((id) => selectedIds.has(id));
+              const someSelected = !allSelected && batchDocIds.some((id) => selectedIds.has(id));
+              return (
+                <Checkbox
+                  checked={allSelected ? true : someSelected ? 'indeterminate' : false}
+                  onCheckedChange={() => {
+                    if (onSetRowsSelected) {
+                      onSetRowsSelected(batchDocIds, !allSelected);
+                    } else {
+                      batchDocIds.forEach((id) => onToggleSelect(id));
+                    }
+                  }}
+                  aria-label={t('validation.selection.selectRow')}
+                />
+              );
+            })()}
+          </td>
+        )}
         <td className="px-4 py-2.5 align-top max-w-[320px]">
           <div className="flex items-start gap-2">
             <button
@@ -1969,6 +2110,18 @@ function DynamicBatchRow({
             className="border-b border-border/40 cursor-pointer transition-colors bg-blue-50/10 hover:bg-blue-50/30 dark:bg-blue-950/5"
             onClick={() => onPreviewChild(d)}
           >
+            {onToggleSelect && selectedIds && (
+              <td
+                className="px-4 py-2 w-10 align-top"
+                onClick={(e) => e.stopPropagation()}
+              >
+                <Checkbox
+                  checked={selectedIds.has(String(d.id))}
+                  onCheckedChange={() => onToggleSelect(String(d.id))}
+                  aria-label={t('validation.selection.selectRow')}
+                />
+              </td>
+            )}
             <td className="px-4 py-2 align-top max-w-[320px] pl-8">
               {d.kindKey && (
                 <div className="mb-0.5 text-[10px] font-semibold uppercase tracking-wide text-gray-500 dark:text-gray-400">

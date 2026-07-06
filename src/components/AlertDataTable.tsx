@@ -1,5 +1,5 @@
 import { motion } from 'motion/react';
-import { ArrowUpDown, ArrowUp, ArrowDown, Clock, Eye, HelpCircle } from 'lucide-react';
+import { ArrowUpDown, ArrowUp, ArrowDown, ChevronUp, Clock, Eye } from 'lucide-react';
 import { Badge } from './ui/badge';
 import { RowActionButton, RowActions } from './ui/row-actions';
 import { Checkbox } from './ui/checkbox';
@@ -8,7 +8,7 @@ import { Tooltip, TooltipContent, TooltipTrigger } from './ui/tooltip';
 import { AlertItem, AlertListCategory } from '../utils/alertsGenerator';
 import { useTranslation } from '../utils/languageContext';
 
-export type AlertBulkAction = 'true_hit' | 'false_hit' | 'unsure';
+export type AlertBulkAction = 'true_hit' | 'false_hit' | 'unsure' | 'escalate';
 
 interface AlertDataTableProps {
   data: AlertItem[];
@@ -287,11 +287,11 @@ export function AlertDataTable({
                   />
                   {alert.status === 'Pending' && onDecision && (
                     <RowActionButton
-                      icon={HelpCircle}
-                      tooltip={t('complianceAlerts.tooltip.unsure')}
+                      icon={ChevronUp}
+                      tooltip={t('complianceAlerts.tooltip.escalate')}
                       intent="warning"
-                      onClick={() => onDecision(alert.id, 'unsure')}
-                      ariaLabel={t('complianceAlerts.tooltip.unsure')}
+                      onClick={() => onDecision(alert.id, 'escalate')}
+                      ariaLabel={t('complianceAlerts.tooltip.escalate')}
                     />
                   )}
                   <RowActions
