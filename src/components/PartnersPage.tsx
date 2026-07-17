@@ -1,6 +1,6 @@
 import { useState, useMemo } from 'react';
 import { motion } from 'motion/react';
-import { ChevronLeft, ChevronRight, ChevronDown, Handshake, Copy, Check, Eye, X, User, Mail, Phone, Briefcase, FileText, Users, TrendingUp, Building2, ExternalLink, MoreVertical, LogIn } from 'lucide-react';
+import { ChevronLeft, ChevronRight, ChevronDown, Copy, Check, Eye, X, User, Mail, Phone, Briefcase, FileText, Users, TrendingUp, Building2, ExternalLink, MoreVertical, LogIn } from 'lucide-react';
 import { Badge } from './ui/badge';
 import {
   Dialog,
@@ -35,7 +35,7 @@ import { AIAnalysis } from '../utils/aiAnalyzer';
 import { getSegmentConfig } from '../utils/segmentConfig';
 import { cn } from './ui/utils';
 import { ColumnConfig, DataTable } from './DataTable';
-import { PartnerFilterBar } from './PartnerFilterBar';
+import { FilterBar, FilterConfig } from './FilterBar';
 import { StructuresCard } from './StructuresCard';
 import { DistributionRightsCard } from './DistributionRightsCard';
 import { AdvisorsCard } from './AdvisorsCard';
@@ -43,7 +43,7 @@ import { ChildPartnersCell } from './ChildPartnersCell';
 import { HighlightText } from './HighlightText';
 import { AIInsightBanner } from './AIInsightBanner';
 import { LastActivityCard } from './LastActivityCard';
-import { EmptyState } from './EmptyState';
+import { InvestorEmptyState } from './InvestorEmptyState';
 import { TableSkeleton } from './TableSkeleton';
 
 interface PartnersPageProps {
@@ -62,11 +62,58 @@ export function PartnersPage({ data, isLoading, allData, setAllData, onPartnerCl
   const [activeFilters, setActiveFilters] = useState<any>({});
   const [aiAnalysis, setAiAnalysis] = useState<AIAnalysis | null>(null);
   const [aiFilteredData, setAiFilteredData] = useState<Partner[] | null>(null);
-  const [filterResetTrigger, setFilterResetTrigger] = useState(0);
   const [copiedId, setCopiedId] = useState<string | null>(null);
   const [selectedPartnerFunds, setSelectedPartnerFunds] = useState<Partner | null>(null);
   const [selectedPartnerContacts, setSelectedPartnerContacts] = useState<Partner | null>(null);
   const [showAllContacts, setShowAllContacts] = useState<Record<number, boolean>>({});
+
+  const filterConfigs: FilterConfig[] = useMemo(() => [
+    {
+      id: 'parentGroups',
+      label: 'Groupe parent',
+      type: 'select',
+      isPrimary: true,
+      options: Array.from(new Set(allData.map(partner => partner.parentGroup).filter(Boolean)))
+        .sort()
+        .map(group => ({ value: group!, label: group! }))
+    },
+    {
+      id: 'statuses',
+      label: 'Statut',
+      type: 'select',
+      isPrimary: true,
+      options: Array.from(new Set(allData.map(partner => partner.status).filter(Boolean)))
+        .sort()
+        .map(status => ({ value: status!, label: status! }))
+    },
+    {
+      id: 'analysts',
+      label: 'Responsable',
+      type: 'select',
+      isPrimary: false,
+      options: Array.from(new Set(allData.map(partner => partner.analyst).filter(Boolean)))
+        .sort()
+        .map(analyst => ({ value: analyst!, label: analyst! }))
+    },
+    {
+      id: 'segments',
+      label: 'Segment',
+      type: 'select',
+      isPrimary: false,
+      options: Array.from(new Set(allData.flatMap(partner => partner.segments || []).filter(Boolean)))
+        .sort()
+        .map(segment => ({ value: segment, label: segment }))
+    },
+    {
+      id: 'contractStatuses',
+      label: 'Convention',
+      type: 'select',
+      isPrimary: false,
+      options: Array.from(new Set(allData.map(partner => partner.contractStatus).filter(Boolean)))
+        .sort()
+        .map(status => ({ value: status!, label: status! }))
+    }
+  ], [allData]);
 
   // Hook de recherche multi-champs
   const {
@@ -431,8 +478,16 @@ export function PartnersPage({ data, isLoading, allData, setAllData, onPartnerCl
     },
   ];
 
-  const handleFilterChange = (filters: any) => {
-    setActiveFilters(filters);
+  const handleFilterChange = (filterId: string, value: string | string[] | null) => {
+    setActiveFilters((prev: Record<string, string | string[]>) => {
+      const nextFilters = { ...prev };
+      if (value === null || value === '' || (Array.isArray(value) && value.length === 0)) {
+        delete nextFilters[filterId];
+      } else {
+        nextFilters[filterId] = value;
+      }
+      return nextFilters;
+    });
     setPaginationPage(1);
   };
 
@@ -453,35 +508,35 @@ export function PartnersPage({ data, isLoading, allData, setAllData, onPartnerCl
     
     return baseData.filter(partner => {
       // Filtre sur le partenaire parent
-      if (activeFilters.parentGroups && activeFilters.parentGroups.length > 0) {
-        if (!partner.parentGroup || !activeFilters.parentGroups.includes(partner.parentGroup)) {
+      if (activeFilters.parentGroups) {
+        if (!partner.parentGroup || activeFilters.parentGroups !== partner.parentGroup) {
           return false;
         }
       }
 
       // Filtre sur le responsable/analyste
-      if (activeFilters.analysts && activeFilters.analysts.length > 0) {
-        if (!activeFilters.analysts.includes(partner.analyst)) {
+      if (activeFilters.analysts) {
+        if (activeFilters.analysts !== partner.analyst) {
           return false;
         }
       }
 
       // Filtre sur les segments (match si au moins un segment correspond)
-      if (activeFilters.segments && activeFilters.segments.length > 0) {
-        const hasSegment = partner.segments?.some(seg => activeFilters.segments.includes(seg));
+      if (activeFilters.segments) {
+        const hasSegment = partner.segments?.some(seg => seg === activeFilters.segments);
         if (!hasSegment) return false;
       }
 
       // Filtre sur le statut de convention
-      if (activeFilters.contractStatuses && activeFilters.contractStatuses.length > 0) {
-        if (!partner.contractStatus || !activeFilters.contractStatuses.includes(partner.contractStatus)) {
+      if (activeFilters.contractStatuses) {
+        if (!partner.contractStatus || activeFilters.contractStatuses !== partner.contractStatus) {
           return false;
         }
       }
 
       // Filtre sur le statut (conservé pour compatibilité)
-      if (activeFilters.statuses && activeFilters.statuses.length > 0) {
-        if (!activeFilters.statuses.includes(partner.status)) return false;
+      if (activeFilters.statuses) {
+        if (activeFilters.statuses !== partner.status) return false;
       }
 
       return true;
@@ -560,7 +615,6 @@ export function PartnersPage({ data, isLoading, allData, setAllData, onPartnerCl
     setAiFilteredData(null);
     setPaginationPage(1);
     toast.success('Filtres réinitialisés');
-    setFilterResetTrigger(filterResetTrigger + 1);
   };
 
   const handleInsightClick = (index: number) => {
@@ -615,12 +669,14 @@ export function PartnersPage({ data, isLoading, allData, setAllData, onPartnerCl
       >
         {/* Filter Bar */}
         <div className="relative z-10">
-          <PartnerFilterBar 
-            onFilterChange={handleFilterChange} 
-            onSearchChange={handleSearchChange}
+          <FilterBar
             searchValue={searchTerm}
-            resetTrigger={filterResetTrigger}
-            allData={allData}
+            onSearchChange={handleSearchChange}
+            searchPlaceholder="Rechercher un partenaire, un SIRET, une ville..."
+            filters={filterConfigs}
+            activeFilters={activeFilters}
+            onFilterChange={handleFilterChange}
+            onClearAll={handleResetFilters}
           />
         </div>
         
@@ -634,13 +690,10 @@ export function PartnersPage({ data, isLoading, allData, setAllData, onPartnerCl
           {isLoading ? (
             <TableSkeleton />
           ) : sortedData.length === 0 ? (
-            <EmptyState 
+            <InvestorEmptyState
               hasFilters={Object.keys(activeFilters).length > 0}
               hasSearch={hasActiveSearch}
               onReset={handleResetFilters}
-              icon={Handshake}
-              entityName="partenaire"
-              entityNamePlural="partenaires"
             />
           ) : (
             <DataTable
