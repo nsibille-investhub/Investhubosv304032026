@@ -254,6 +254,16 @@
     "subscriptionsDisplayed": "{{count}} subscription(s) displayed"
   },
   "subscriptions": {
+    "header": {
+      "title": "Subscriptions",
+      "titleInactive": "Inactive Subscriptions",
+      "subtitle": "Manage and track all subscriptions",
+      "subtitleInactive": "View completed and archived subscriptions",
+      "newSubscription": "New Subscription",
+      "backToActive": "Back to subscriptions",
+      "inactive": "Inactive",
+      "inactiveCount": "{{count}} inactive subscriptions"
+    },
     "status": {
       "draft": "Draft",
       "onboarding": "Onboarding",
@@ -281,6 +291,7 @@
       "metricTotal": "Total"
     },
     "inactiveTabs": {
+      "sectionTitle": "Inactive subscriptions",
       "rejected": "Rejected",
       "cancelled": "Cancelled",
       "expired": "Expired",

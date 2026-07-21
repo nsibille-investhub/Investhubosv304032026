@@ -8,6 +8,7 @@ import { LanguageSwitcher } from './components/LanguageSwitcher';
 import { Search, Bell, Settings, Menu, ChevronDown, Plus, Info, MoreVertical, ArrowLeft, ChevronLeft, ChevronRight, Download, FileSpreadsheet, History, ArchiveX, Users, Palette, Sparkles } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 import { Badge } from './components/ui/badge';
+import { PageHeader } from './components/ui/page-header';
 import { Switch } from './components/ui/switch';
 import { Button } from './components/ui/button';
 import { Toaster } from 'sonner@2.0.3';
@@ -886,127 +887,39 @@ export default function App() {
 
           {/* Page Header - Subscriptions */}
           {currentPage === 'subscriptions' && !selectedSubscriptionDetail && (
-            <motion.div 
-              initial={{ opacity: 0, y: -20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: 0.2, type: 'spring', stiffness: 200, damping: 25 }}
-              className="px-6 py-5 bg-white dark:bg-black border-b border-gray-100 dark:border-gray-800"
-            >
-              <div className="flex items-center justify-between">
-                {/* Left Section - Title & Yousign Badge */}
-                <div className="flex items-center gap-4">
-                  <motion.div
-                    initial={{ scale: 0.9, opacity: 0 }}
-                    animate={{ scale: 1, opacity: 1 }}
-                    transition={{ delay: 0.3 }}
-                  >
-                    <h1 className="text-3xl font-bold text-gray-900 dark:text-gray-100 tracking-tight">
-                      {subscriptionViewMode === 'active' ? 'Souscriptions' : 'Souscriptions Inactives'}
-                    </h1>
-                    <p className="text-sm text-gray-600 dark:text-gray-400 mt-1">
-                      {subscriptionViewMode === 'active' 
-                        ? 'Gérer et suivre toutes les souscriptions' 
-                        : 'Consultez les souscriptions terminées et archivées'}
-                    </p>
-                  </motion.div>
-                </div>
-
-                {/* Right Section - Action Buttons */}
-                <motion.div 
-                  initial={{ opacity: 0, x: 20 }}
-                  animate={{ opacity: 1, x: 0 }}
-                  transition={{ delay: 0.4 }}
-                  className="flex items-center gap-3"
-                >
-                  {subscriptionViewMode === 'inactive' && (
-                    <motion.div
-                      whileHover={{ scale: 1.03, y: -1 }}
-                      whileTap={{ scale: 0.97 }}
-                    >
-                      <Button
-                        variant="outline"
-                        className="gap-2"
-                        onClick={() => {
-                          setSubscriptionViewMode('active');
-                          setActiveStatus('all');
-                          toast.info(t('toast.backToActiveSubscriptions'));
-                        }}
-                      >
-                        <ArrowLeft className="w-4 h-4" />
-                        Retour aux souscriptions
-                      </Button>
-                    </motion.div>
-                  )}
-                  
-                  {subscriptionViewMode === 'active' && (
-                    <>
-                      <motion.div
-                        whileHover={{ scale: 1.03, y: -1 }}
-                        whileTap={{ scale: 0.97 }}
-                      >
-                        <motion.div
-                          whileHover={{ scale: 1.03, y: -1 }}
-                          whileTap={{ scale: 0.97 }}
-                        >
-                          <Button
-                            onClick={() => setNewSubscriptionDialogOpen(true)}
-                            style={{ background: 'linear-gradient(62.32deg, #000000 10.53%, #0F323D 88.82%)' }}
-                            className="gap-2 hover:opacity-90 shadow-lg shadow-black/20 hover:shadow-xl hover:shadow-black/30 transition-all duration-300 group relative overflow-hidden text-white"
-                          >
-                            {/* Shimmer effect */}
-                            <motion.div
-                              className="absolute inset-0 bg-gradient-to-r from-transparent via-white/20 to-transparent"
-                              animate={{
-                                x: ['-100%', '100%']
-                              }}
-                              transition={{
-                                duration: 2,
-                                repeat: Infinity,
-                                ease: 'linear',
-                                repeatDelay: 1
-                              }}
-                            />
-                            
-                            <Plus className="w-4 h-4 group-hover:rotate-90 transition-transform duration-300" />
-                            <span className="font-semibold relative z-10">Nouvelle Souscription</span>
-                          </Button>
-                        </motion.div>
-                      </motion.div>
-                      
-                      <DropdownMenu>
-                        <DropdownMenuTrigger asChild>
-                          <Button
-                            variant="outline"
-                            size="icon"
-                            className="border-gray-300 hover:border-gray-400 hover:bg-gray-50"
-                          >
-                            <MoreVertical className="w-4 h-4" />
-                          </Button>
-                        </DropdownMenuTrigger>
-                        <DropdownMenuContent align="end">
-                          <DropdownMenuItem
-                            onClick={() => {
-                              setSubscriptionViewMode('inactive');
-                              setActiveStatus('all');
-                              toast.info(t('toast.viewInactiveSubscriptions'), {
-                                description: `${allSubscriptionsData.filter(s => ['Rejected', 'Cancelled', 'Expired', 'Archived'].includes(s.status)).length} souscriptions inactives`
-                              });
-                            }}
-                            className="cursor-pointer"
-                          >
-                            <ArchiveX className="w-4 h-4 mr-2 text-red-600" />
-                            <span>Inactives</span>
-                            <Badge className="ml-2 bg-red-100 text-red-700 border-red-300">
-                              {allSubscriptionsData.filter(s => ['Rejected', 'Cancelled', 'Expired', 'Archived'].includes(s.status)).length}
-                            </Badge>
-                          </DropdownMenuItem>
-                        </DropdownMenuContent>
-                      </DropdownMenu>
-                    </>
-                  )}
-                </motion.div>
-              </div>
-            </motion.div>
+            <PageHeader
+              title={subscriptionViewMode === 'active' ? t('subscriptions.header.title') : t('subscriptions.header.titleInactive')}
+              subtitle={subscriptionViewMode === 'active' ? t('subscriptions.header.subtitle') : t('subscriptions.header.subtitleInactive')}
+              primaryAction={subscriptionViewMode === 'active' ? {
+                label: t('subscriptions.header.newSubscription'),
+                onClick: () => setNewSubscriptionDialogOpen(true),
+              } : undefined}
+              secondaryAction={subscriptionViewMode === 'inactive' ? {
+                label: t('subscriptions.header.backToActive'),
+                icon: <ArrowLeft className="w-4 h-4" />,
+                onClick: () => {
+                  setSubscriptionViewMode('active');
+                  setActiveStatus('all');
+                  toast.info(t('toast.backToActiveSubscriptions'));
+                },
+              } : undefined}
+              tertiaryActions={subscriptionViewMode === 'active' ? [{
+                label: <span className="flex items-center gap-2">
+                  <ArchiveX className="w-4 h-4 text-red-600" />
+                  {t('subscriptions.header.inactive')}
+                  <Badge className="ml-1 bg-red-100 text-red-700 border-red-300">
+                    {allSubscriptionsData.filter(s => ['Rejected', 'Cancelled', 'Expired', 'Archived'].includes(s.status)).length}
+                  </Badge>
+                </span>,
+                onClick: () => {
+                  setSubscriptionViewMode('inactive');
+                  setActiveStatus('all');
+                  toast.info(t('toast.viewInactiveSubscriptions'), {
+                    description: t('subscriptions.header.inactiveCount', { count: allSubscriptionsData.filter(s => ['Rejected', 'Cancelled', 'Expired', 'Archived'].includes(s.status)).length })
+                  });
+                },
+              }] : undefined}
+            />
           )}
 
           {/* Page Header - Investors */}
