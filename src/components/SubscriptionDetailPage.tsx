@@ -397,6 +397,7 @@ export function SubscriptionDetailPage({ subscription, onBack }: SubscriptionDet
               <KpiCard
                 index={0}
                 icon={DollarSign}
+                variant="blue"
                 label={t('subscriptions.detail.header.subscribedAmount')}
                 value="500 000 €"
                 hint={t('subscriptions.detail.header.shares', { count: '5 000' })}
@@ -404,6 +405,7 @@ export function SubscriptionDetailPage({ subscription, onBack }: SubscriptionDet
               <KpiCard
                 index={1}
                 icon={TrendingUp}
+                variant="emerald"
                 label={t('subscriptions.detail.header.calledAmount')}
                 value="275 000 €"
                 hint="55%"
@@ -412,6 +414,7 @@ export function SubscriptionDetailPage({ subscription, onBack }: SubscriptionDet
               <KpiCard
                 index={2}
                 icon={ArrowDownCircle}
+                variant="violet"
                 label={t('subscriptions.detail.header.distributedAmount')}
                 value="42 500 €"
                 hint="8.5%"
@@ -419,6 +422,7 @@ export function SubscriptionDetailPage({ subscription, onBack }: SubscriptionDet
               <KpiCard
                 index={3}
                 icon={Wallet}
+                variant="amber"
                 label={t('subscriptions.detail.header.remainingBalance')}
                 value="225 000 €"
                 hint="45%"
