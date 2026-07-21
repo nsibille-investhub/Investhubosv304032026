@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { motion } from 'motion/react';
+import { useTranslation } from '../utils/languageContext';
 import {
   ArrowLeft,
   Building2,
@@ -68,556 +68,25 @@ import {
   TabsList,
   TabsTrigger,
 } from './ui/tabs';
+import { PRIMARY_BUTTON_GRADIENT } from './ui/page-header';
+import {
+  mockSections,
+  mockRequiredDocuments,
+  mockDocuments,
+  mockNotes,
+  mockEmails,
+  mockCapitalCalls,
+} from '../utils/subscriptionDetailMockData';
 
 interface SubscriptionDetailPageProps {
   subscription: any;
   onBack: () => void;
 }
 
-// Mock data pour les sections de questions/réponses
-const mockSections = [
-  {
-    id: 'identity',
-    title: 'Identité',
-    icon: User,
-    questions: [
-      { question: "Civilité*", response: "Madame", verified: true },
-      { question: "Nom*", response: "Wadouachi", verified: true },
-      { question: "Nom de naissance (si différent)", response: "", verified: true },
-      { question: "Prénom*", response: "Inès", verified: true },
-      { question: "L'investisseur est-il mineur ?*", response: "Non", verified: true, hasAlert: true },
-      { question: "Date de naissance*", response: "14/05/2025", verified: true },
-      { question: "Pays de naissance*", response: "France", verified: true },
-      { question: "Code postal de naissance*", response: "75008", verified: true },
-      { question: "Commune de naissance*", response: "Paris", verified: true },
-      { question: "Nationalité*", response: "France", verified: true, hasAlert: true },
-      { question: "E-mail*", response: "iwadouachi+testPM@eurazeo.com", verified: true },
-      { question: "Numéro de téléphone mobile*", response: "+33622653352", verified: true },
-      { question: "Numéro et nom de rue*", response: "66 Rue Pierre Charron", verified: true },
-      { question: "Ville*", response: "Paris", verified: true },
-      { question: "Code postal*", response: "75008", verified: true },
-      { question: "Pays*", response: "France", verified: true },
-      { question: "Mon adresse de résidence est différente de mon adresse fiscale*", response: "Non", verified: true },
-      { question: "Numéro d'identification Fiscale (NIF)*", response: "9739373633839", verified: true },
-      { question: "Je possède un deuxième Numéro d'Identification Fiscale (NIF/TIN) *", response: "Non", verified: true },
-      { question: "Citoyen(ne) et/ou résident fiscal(e) des États-Unis d'Amérique*", response: "Non", verified: true },
-      { question: "Je certifie que les informations relatives à ma résidence fiscale déclarées ci-dessus sont correctes.*", response: "Oui", verified: true },
-    ]
-  },
-  {
-    id: 'fiscal',
-    title: 'Résidence fiscale',
-    icon: Shield,
-    questions: [
-      { 
-        question: "Pays de résidence fiscale*", 
-        response: "France", 
-        verified: true 
-      },
-      { 
-        question: "Mon adresse de résidence est différente de mon adresse fiscale*", 
-        response: "Non", 
-        verified: true 
-      },
-      { 
-        question: "Numéro d'identification Fiscale (NIF)*", 
-        response: "9739373633839", 
-        verified: true 
-      },
-      { 
-        question: "Je possède un deuxième Numéro d'identification Fiscale (NIF/TIN)", 
-        response: "Non", 
-        verified: false 
-      },
-      { 
-        question: "Citoyen(ne) et/ou résident fiscal(e) des États-Unis d'Amérique*", 
-        response: "Non", 
-        verified: true 
-      },
-      { 
-        question: "Je certifie que les informations relatives à ma résidence fiscale déclarées ci-dessus sont correctes.*", 
-        response: "Oui", 
-        verified: true 
-      }
-    ]
-  },
-  {
-    id: 'banking',
-    title: 'Coordonnées bancaires',
-    icon: DollarSign,
-    questions: [
-      { 
-        question: "Type*", 
-        response: "Compte courant", 
-        verified: true 
-      },
-      { 
-        question: "Le compte bancaire utilisé pour cette souscription est-il un compte individuel ou un compte joint ?*", 
-        response: "Compte joint", 
-        verified: true 
-      },
-      { 
-        question: "Quel est le régime matrimonial des titulaires du compte joint ?*", 
-        response: "Communauté universelle", 
-        verified: false 
-      },
-      { 
-        question: "Je confirme avoir pris connaissance du fait que le versement de l'engagement n'est possible que par prélèvement automatique.*", 
-        response: "Oui", 
-        verified: true 
-      },
-      { 
-        question: "Nom de votre établissement bancaire", 
-        response: "BNP Paribas", 
-        verified: true 
-      },
-      { 
-        question: "Adresse de la banque", 
-        response: "16 Boulevard des Italiens, 75009 Paris", 
-        verified: true 
-      },
-      { 
-        question: "IBAN*", 
-        response: "FR76 4061 8803 1200 0407 6100 201", 
-        verified: true 
-      },
-      { 
-        question: "BIC*", 
-        response: "BNPAFRPPXXX", 
-        verified: true 
-      },
-      { 
-        question: "Numéro de compte", 
-        response: "00407610020", 
-        verified: true 
-      }
-    ]
-  },
-  {
-    id: 'professional',
-    title: 'Situation professionnelle',
-    icon: FileText,
-    questions: [
-      { 
-        question: "Vous êtes*", 
-        response: "Demandeur d'emploi", 
-        verified: true 
-      },
-      { 
-        question: "Catégorie socio-professionnelle", 
-        response: "Artisans", 
-        verified: true 
-      },
-      { 
-        question: "Secteur d'activité*", 
-        response: "banque", 
-        verified: true 
-      },
-      { 
-        question: "Profession*", 
-        response: "banquier", 
-        verified: false 
-      },
-      { 
-        question: "Avez vous exercé une profession financière durant plus d'un an ? *", 
-        response: "Oui", 
-        verified: true 
-      },
-      { 
-        question: "Avez vous des liens avec des société cotées ? *", 
-        response: "Oui", 
-        verified: true 
-      },
-      { 
-        question: "Pouvez-vous préciser ? *", 
-        response: "Actionnaire minoritaire", 
-        verified: true 
-      },
-      { 
-        question: "Détenez-vous des parts ou actions dans des sociétés (< de 25 %) ? *", 
-        response: "Non", 
-        verified: true 
-      },
-      { 
-        question: "Exercez-vous ou avez-vous exercé une fonction politiquement exposée ?*", 
-        response: "Non", 
-        verified: true 
-      },
-      { 
-        question: "Une personne de votre entourage exerce-t-elle ou a-t-elle exercé depuis moins d'un an une fonction politiquement exposée ?*", 
-        response: "Non", 
-        verified: true 
-      }
-    ]
-  },
-  {
-    id: 'financial',
-    title: 'Situation financière',
-    icon: TrendingUp,
-    questions: [
-      { 
-        question: "Quels sont les revenus annuels nets de votre foyer ?*", 
-        response: "800 000,00 EUR", 
-        verified: true 
-      },
-      { 
-        question: "Statut de votre résidence principale*", 
-        response: "Hébergé à titre gratuit", 
-        verified: true 
-      },
-      { 
-        question: "Avez-vous un ou plusieurs engagement(s) financier(s) régulier(s) ?*", 
-        response: "Oui", 
-        verified: false 
-      },
-      { 
-        question: "Montant*", 
-        response: "1 000,00 EUR", 
-        verified: true 
-      },
-      { 
-        question: "Fréquence*", 
-        response: "Mensuel", 
-        verified: true 
-      },
-      { 
-        question: "Quel est le montant estimé de votre patrimoine financier ?*", 
-        response: "1 999 999,00 EUR", 
-        verified: true 
-      },
-      { 
-        question: "Part du patrimoine financier dans votre patrimoine global :*", 
-        response: ">50%", 
-        verified: true 
-      },
-      { 
-        question: "Part des titres non cotés (comme les FCPi/FIP/FCPR) dans ce portefeuille financier :*", 
-        response: "<10%", 
-        verified: true 
-      },
-      { 
-        question: "Montant global du patrimoine :*", 
-        response: "200 000,00 EUR", 
-        verified: true 
-      }
-    ]
-  },
-  {
-    id: 'documents',
-    title: 'Documents justificatifs',
-    icon: FileText,
-    questions: [] // Documents section uses different structure
-  }
-];
-
-// Mock data pour les documents requis (KYC)
-const mockRequiredDocuments = [
-  {
-    name: "Passeport (en couleur, lignes MRZ lisibles et complètes, sur une seule page)",
-    dateSent: "",
-    issueDate: "",
-    expiration: "",
-    hasFile: false
-  },
-  {
-    name: "OU Carte d'identité (recto verso sur une seule page, en couleur)",
-    dateSent: "",
-    issueDate: "",
-    expiration: "",
-    hasFile: false
-  },
-  {
-    name: "OU Permis de conduire (biométrique)",
-    dateSent: "",
-    issueDate: "",
-    expiration: "",
-    hasFile: false
-  },
-  {
-    name: "OU Titre de séjour",
-    dateSent: "",
-    issueDate: "",
-    expiration: "",
-    hasFile: false
-  },
-  {
-    name: "Dernier avis d'imposition daté de moins d'un an",
-    dateSent: "",
-    issueDate: "",
-    expiration: "",
-    hasFile: false
-  },
-  {
-    name: "Justificatif de domicile",
-    dateSent: "",
-    issueDate: "",
-    expiration: "",
-    hasFile: false
-  },
-  {
-    name: "Justificatif d'origine des fonds",
-    dateSent: "",
-    issueDate: "",
-    expiration: "",
-    hasFile: false
-  },
-  {
-    name: "RIB",
-    dateSent: "",
-    issueDate: "",
-    expiration: "",
-    hasFile: false
-  }
-];
-
-// Mock data pour les documents de la souscription
-const mockDocuments = [
-  {
-    id: 1,
-    date: '26/11/2025',
-    name: 'Certificat DocuSign',
-    language: '',
-    type: '',
-    status: 'signed',
-    file: 'certificat-docusign.pdf'
-  },
-  {
-    id: 2,
-    date: '26/11/2025',
-    name: 'ESMI II - Declaration of Investment Type',
-    language: '',
-    type: 'Document contractuel',
-    status: 'signed',
-    file: 'declaration-investment-type.pdf'
-  },
-  {
-    id: 3,
-    date: '26/11/2025',
-    name: 'ESMI II - Schedule 10 BEPS questionnaire',
-    language: '',
-    type: 'Document contractuel',
-    status: 'signed',
-    file: 'schedule-10-beps.pdf'
-  },
-  {
-    id: 4,
-    date: '26/11/2025',
-    name: 'ESMI II - Schedule 9 Tax compliancy declaration',
-    language: '',
-    type: 'Document contractuel',
-    status: 'signed',
-    file: 'schedule-9-tax.pdf'
-  },
-  {
-    id: 5,
-    date: '26/11/2025',
-    name: 'ESMI II - Schedule 8 Ultimate beneficial owner',
-    language: '',
-    type: 'Document contractuel',
-    status: 'signed',
-    file: 'schedule-8-ubo.pdf'
-  },
-  {
-    id: 6,
-    date: '26/11/2025',
-    name: 'ESMI II - Schedule 7 Entity self-certification for FATCA and CRS',
-    language: '',
-    type: 'Document contractuel',
-    status: 'signed',
-    file: 'schedule-7-fatca.pdf'
-  },
-  {
-    id: 7,
-    date: '26/11/2025',
-    name: 'ESMI II - Schedule 6 Bank account details of the Investor',
-    language: '',
-    type: 'Document contractuel',
-    status: 'signed',
-    file: 'schedule-6-bank.pdf'
-  },
-  {
-    id: 8,
-    date: '26/11/2025',
-    name: 'ESMI II - Schedule 4 Professional client status',
-    language: '',
-    type: 'Document contractuel',
-    status: 'signed',
-    file: 'schedule-4-professional.pdf'
-  },
-  {
-    id: 9,
-    date: '26/11/2025',
-    name: 'ESMI II - Schedule 2 - Commitment',
-    language: '',
-    type: 'Document contractuel',
-    status: 'signed',
-    file: 'schedule-2-commitment.pdf'
-  },
-  {
-    id: 10,
-    date: '26/11/2025',
-    name: 'ESMI II - Schedule 3 Well-informed Investor',
-    language: '',
-    type: 'Document contractuel',
-    status: 'signed',
-    file: 'schedule-3-well-informed.pdf'
-  },
-  {
-    id: 11,
-    date: '26/11/2025',
-    name: 'ESMI II - Schedule 1 Identity details of the Investor',
-    language: '',
-    type: 'Document contractuel',
-    status: 'signed',
-    file: 'schedule-1-identity.pdf'
-  },
-  {
-    id: 12,
-    date: '26/11/2025',
-    name: 'ESMI II - Subscription Agreement - Non US',
-    language: '',
-    type: 'Document contractuel',
-    status: 'signed',
-    file: 'subscription-agreement.pdf'
-  }
-];
-
-// Mock data pour les notes de la souscription
-const mockNotes = [
-  {
-    id: 1,
-    type: 'field',
-    section: 'Identité',
-    field: 'Nationalité',
-    author: 'Marie Dubois',
-    date: '28/12/2025 14:32',
-    content: 'Vérifier la double nationalité mentionnée lors de l\'entretien initial',
-    status: 'open',
-    priority: 'high'
-  },
-  {
-    id: 2,
-    type: 'field',
-    section: 'Identité',
-    field: 'L\'investisseur est-il mineur ?',
-    author: 'Jean Dupont',
-    date: '27/12/2025 16:45',
-    content: 'Date de naissance proche de la majorité, vérifier la capacité juridique',
-    status: 'open',
-    priority: 'medium'
-  },
-  {
-    id: 3,
-    type: 'general',
-    section: '',
-    field: '',
-    author: 'Pierre Martin',
-    date: '26/12/2025 10:15',
-    content: 'Appel téléphonique effectué avec l\'investisseur. Confirmation de l\'intérêt pour le fonds ESMI II. RDV prévu le 05/01/2026.',
-    status: 'resolved',
-    priority: 'low'
-  },
-  {
-    id: 4,
-    type: 'field',
-    section: 'Coordonnées bancaires',
-    field: 'Quel est le régime matrimonial des titulaires du compte joint ?',
-    author: 'Sophie Laurent',
-    date: '25/12/2025 09:20',
-    content: 'Document justificatif du régime matrimonial manquant. Relance effectuée par email.',
-    status: 'open',
-    priority: 'high'
-  },
-  {
-    id: 5,
-    type: 'general',
-    section: '',
-    field: '',
-    author: 'Marie Dubois',
-    date: '24/12/2025 17:30',
-    content: 'Dossier complet reçu. Début de l\'analyse KYC le 02/01/2026.',
-    status: 'resolved',
-    priority: 'medium'
-  },
-  {
-    id: 6,
-    type: 'field',
-    section: 'Documents',
-    field: 'Justificatif d\'origine des fonds',
-    author: 'Jean Dupont',
-    date: '23/12/2025 11:00',
-    content: 'Document fourni incomplet. Demander un relevé bancaire complémentaire sur 6 mois.',
-    status: 'open',
-    priority: 'high'
-  },
-  {
-    id: 7,
-    type: 'general',
-    section: '',
-    field: '',
-    author: 'Pierre Martin',
-    date: '22/12/2025 14:45',
-    content: 'Client VIP - traitement prioritaire demandé par la direction.',
-    status: 'open',
-    priority: 'medium'
-  }
-];
-
-// Mock data pour les emails
-const mockEmails = [
-  {
-    id: 1,
-    date: '12/12/2025 11:59:45',
-    type: 'Signature documents_par',
-    recipients: 'serge.lagavennefr@gail.com',
-    cc: 'cc_grandmaisonleFR@fnac.net, benoit.beauliufr@fnac.net',
-    subject: 'Vos documents Privés Assets Convexités 2026 à signer',
-    receivedAt: '12/12/2025 11:59:46',
-    openedAt: '12/12/2025 12:05:23',
-    clickedAt: '12/12/2025 12:06:15'
-  },
-  {
-    id: 2,
-    date: '12/12/2025 11:59:45',
-    type: 'Onboarding à valider',
-    recipients: 'pasboutsupers@gailcom',
-    cc: '',
-    subject: 'Onboarding à valider pour Serge LAGAVENNE',
-    receivedAt: '12/12/2025 11:59:47',
-    openedAt: '12/12/2025 14:22:10',
-    clickedAt: ''
-  },
-  {
-    id: 3,
-    date: '12/12/2025 11:59:41',
-    type: 'Onboarding à valider',
-    recipients: 'genson_premiululFR@fnac.net',
-    cc: '',
-    subject: 'Onboarding à valider pour Serge LAGAVENNE',
-    receivedAt: '12/12/2025 11:59:42',
-    openedAt: '',
-    clickedAt: ''
-  }
-];
-
-// Mock data pour les appels de fonds
-const mockCapitalCalls = [
-  {
-    id: 1,
-    date: '31/10/2025',
-    call: 'PAC 2026 - Closing 1',
-    amount: 10000.00,
-    subscription: 0.00,
-    entryFees: 3000.00,
-    subscriptionPremium: 1500.00,
-    percentage: 10,
-    status: 'paid'
-  }
-];
 
 export function SubscriptionDetailPage({ subscription, onBack }: SubscriptionDetailPageProps) {
-  console.log('SubscriptionDetailPage - Rendering with subscription:', subscription);
-  
+  const { t } = useTranslation();
+
   const [openSections, setOpenSections] = useState<string[]>(['identity']);
   const [note, setNote] = useState('');
   const [notes, setNotes] = useState<Array<{ text: string; date: string; author: string }>>([]);
@@ -648,8 +117,8 @@ export function SubscriptionDetailPage({ subscription, onBack }: SubscriptionDet
     const now = new Date();
     setRiskValidationDate(now.toLocaleDateString('fr-FR') + ' à ' + now.toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' }));
     setRiskValidatedBy('Jean Dupont'); // In production, use actual user name
-    toast.success('Risque validé', {
-      description: 'Le profil de risque a été validé avec succès'
+    toast.success(t('subscriptions.detail.toast.riskValidated'), {
+      description: t('subscriptions.detail.toast.riskValidatedDesc')
     });
   };
 
@@ -673,42 +142,42 @@ export function SubscriptionDetailPage({ subscription, onBack }: SubscriptionDet
     });
     
     setQuestionStatuses(newStatuses);
-    
-    toast.success('Section validée', {
-      description: `${section.questions.length} questions de "${sectionTitle}" ont été validées`,
+
+    toast.success(t('subscriptions.detail.onboarding.sectionValidatedToast'), {
+      description: t('subscriptions.detail.onboarding.sectionValidatedDesc', { count: section.questions.length, title: sectionTitle }),
     });
   };
 
   const handleExportDocuments = () => {
-    toast.success('Export en cours', {
-      description: 'Les documents sont en cours de téléchargement',
+    toast.success(t('subscriptions.detail.toast.exportInProgress'), {
+      description: t('subscriptions.detail.toast.exportInProgressDesc'),
     });
   };
 
   const handleAddDocument = (docName: string) => {
-    toast.info('Ajouter un document', {
-      description: docName ? `Sélectionnez le fichier pour "${docName}"` : 'Sélectionnez un fichier',
+    toast.info(t('subscriptions.detail.toast.addDocumentToast'), {
+      description: docName ? t('subscriptions.detail.toast.selectFile', { name: docName }) : t('subscriptions.detail.toast.selectFileGeneric'),
     });
   };
 
   const handleViewDocument = (docName: string) => {
-    toast.info('Aperçu du document', {
-      description: `Ouverture de "${docName}"`,
+    toast.info(t('subscriptions.detail.toast.documentPreview'), {
+      description: t('subscriptions.detail.toast.documentPreviewDesc', { name: docName }),
     });
   };
 
   const handleAddNote = () => {
     if (!note.trim()) return;
-    
+
     const newNote = {
       text: note,
       date: new Date().toLocaleDateString('fr-FR'),
       author: 'Vous'
     };
-    
+
     setNotes([newNote, ...notes]);
     setNote('');
-    toast.success('Note ajoutée');
+    toast.success(t('subscriptions.detail.toast.noteAdded'));
   };
 
   // Question actions handlers
@@ -815,14 +284,10 @@ export function SubscriptionDetailPage({ subscription, onBack }: SubscriptionDet
     };
   };
 
-  console.log('SubscriptionDetailPage - Rendering return statement');
-  
   return (
     <div className="min-h-screen bg-gray-50">
       {/* Header - Same structure as InvestorDetailPage */}
-      <motion.div
-        initial={{ opacity: 0, y: -20 }}
-        animate={{ opacity: 1, y: 0 }}
+      <div
         className="bg-white border-b border-gray-200 sticky top-0 z-10"
       >
         {/* Main Header Content */}
@@ -832,14 +297,12 @@ export function SubscriptionDetailPage({ subscription, onBack }: SubscriptionDet
             <div className="flex-1">
               {/* Top Row - Title */}
               <div className="flex items-start gap-3 mb-10">
-                <motion.button
-                whileHover={{ scale: 1.02 }}
-                whileTap={{ scale: 0.98 }}
+                <button
                 onClick={onBack}
                 className="p-2 hover:bg-gray-100 rounded-lg transition-colors"
               >
                 <ArrowLeft className="w-5 h-5 text-gray-600" />
-              </motion.button>
+              </button>
               
               <div>
                 <div className="flex items-center gap-3 mb-1.5">
@@ -847,19 +310,19 @@ export function SubscriptionDetailPage({ subscription, onBack }: SubscriptionDet
                     {subscription.name} - €1500K - FutureInvest Fund Part A
                   </h1>
                   <Badge className="bg-green-50 text-green-700 border-green-200 font-semibold">
-                    Active
+                    {t('subscriptions.detail.header.active')}
                   </Badge>
                 </div>
-                
+
                 <div className="flex items-center gap-3 text-sm text-gray-500">
                   <div className="flex items-center gap-1.5">
                     <Hash className="w-3.5 h-3.5" />
-                    <span>ID: {subscription.id}</span>
+                    <span>{t('subscriptions.detail.header.id', { id: subscription.id })}</span>
                   </div>
                   <Separator orientation="vertical" className="h-3.5" />
                   <div className="flex items-center gap-1.5">
                     <Calendar className="w-3.5 h-3.5" />
-                    <span>Créée le {subscription.createdAt.toLocaleDateString('fr-FR', { day: '2-digit', month: 'long', year: 'numeric' })}</span>
+                    <span>{t('subscriptions.detail.header.createdOn', { date: subscription.createdAt.toLocaleDateString('fr-FR', { day: '2-digit', month: 'long', year: 'numeric' }) })}</span>
                   </div>
                 </div>
               </div>
@@ -873,11 +336,11 @@ export function SubscriptionDetailPage({ subscription, onBack }: SubscriptionDet
                 <User className="w-3.5 h-3.5 text-blue-600" />
               </div>
               <div>
-                <div className="text-xs text-gray-500 leading-none mb-0.5">Investisseur</div>
+                <div className="text-xs text-gray-500 leading-none mb-0.5">{t('subscriptions.detail.header.investor')}</div>
                 <Button
                   variant="link"
                   className="p-0 h-auto font-semibold text-blue-600 hover:text-blue-700 text-sm leading-tight -mt-0.5"
-                  onClick={() => toast.info('Navigation vers la fiche investisseur')}
+                  onClick={() => toast.info(t('subscriptions.detail.header.navigateToInvestor'))}
                 >
                   {subscription.contrepartie.investor || subscription.contrepartie.name}
                 </Button>
@@ -891,11 +354,11 @@ export function SubscriptionDetailPage({ subscription, onBack }: SubscriptionDet
                   <Building2 className="w-3.5 h-3.5 text-purple-600" />
                 </div>
                 <div>
-                  <div className="text-xs text-gray-500 leading-none mb-0.5">Structure</div>
+                  <div className="text-xs text-gray-500 leading-none mb-0.5">{t('subscriptions.detail.header.structure')}</div>
                   <Button
                     variant="link"
                     className="p-0 h-auto font-semibold text-blue-600 hover:text-blue-700 text-sm leading-tight -mt-0.5"
-                    onClick={() => toast.info('Navigation vers la fiche structure')}
+                    onClick={() => toast.info(t('subscriptions.detail.header.navigateToStructure'))}
                   >
                     Alpha Group Holdings
                   </Button>
@@ -909,9 +372,9 @@ export function SubscriptionDetailPage({ subscription, onBack }: SubscriptionDet
                 <Users className="w-3.5 h-3.5 text-emerald-600" />
               </div>
               <div>
-                <div className="text-xs text-gray-500 leading-none mb-0.5">Partenaire</div>
+                <div className="text-xs text-gray-500 leading-none mb-0.5">{t('subscriptions.detail.header.partner')}</div>
                 <div className="text-sm font-medium text-gray-900 leading-tight">UFF</div>
-                <div className="text-xs text-gray-500 leading-tight">Conseiller: Eric MAZEAU</div>
+                <div className="text-xs text-gray-500 leading-tight">{t('subscriptions.detail.header.advisor', { name: 'Eric MAZEAU' })}</div>
               </div>
             </div>
 
@@ -921,9 +384,9 @@ export function SubscriptionDetailPage({ subscription, onBack }: SubscriptionDet
                 <DollarSign className="w-3.5 h-3.5 text-amber-600" />
               </div>
               <div>
-                <div className="text-xs text-gray-500 leading-none mb-0.5">Frais</div>
-                <div className="text-xs text-gray-700 leading-tight">Frais d'entrée: 3 750,00 €</div>
-                <div className="text-xs text-gray-700 leading-tight">Prime de souscription: 84,48 €</div>
+                <div className="text-xs text-gray-500 leading-none mb-0.5">{t('subscriptions.detail.header.fees')}</div>
+                <div className="text-xs text-gray-700 leading-tight">{t('subscriptions.detail.header.entryFees', { amount: '3 750,00 €' })}</div>
+                <div className="text-xs text-gray-700 leading-tight">{t('subscriptions.detail.header.subscriptionPremium', { amount: '84,48 €' })}</div>
               </div>
             </div>
             </div>
@@ -936,10 +399,10 @@ export function SubscriptionDetailPage({ subscription, onBack }: SubscriptionDet
                   <DollarSign className="w-3 h-3 text-blue-600" />
                 </div>
                 <div>
-                  <div className="text-xs text-gray-500 leading-tight">Montant Souscrit</div>
+                  <div className="text-xs text-gray-500 leading-tight">{t('subscriptions.detail.header.subscribedAmount')}</div>
                   <div className="flex items-baseline gap-1.5">
                     <span className="font-bold text-gray-900">500 000 €</span>
-                    <span className="text-xs text-blue-600 font-medium">5 000 parts</span>
+                    <span className="text-xs text-blue-600 font-medium">{t('subscriptions.detail.header.shares', { count: '5 000' })}</span>
                   </div>
                 </div>
               </div>
@@ -950,7 +413,7 @@ export function SubscriptionDetailPage({ subscription, onBack }: SubscriptionDet
                   <TrendingUp className="w-3 h-3 text-emerald-600" />
                 </div>
                 <div>
-                  <div className="text-xs text-gray-500 leading-tight">Montant Appelé</div>
+                  <div className="text-xs text-gray-500 leading-tight">{t('subscriptions.detail.header.calledAmount')}</div>
                   <div className="flex items-baseline gap-1.5">
                     <span className="font-bold text-gray-900">275 000 €</span>
                     <span className="text-xs text-emerald-600 font-medium">55%</span>
@@ -964,7 +427,7 @@ export function SubscriptionDetailPage({ subscription, onBack }: SubscriptionDet
                   <ArrowDownCircle className="w-3 h-3 text-purple-600" />
                 </div>
                 <div>
-                  <div className="text-xs text-gray-500 leading-tight">Montant Distribué</div>
+                  <div className="text-xs text-gray-500 leading-tight">{t('subscriptions.detail.header.distributedAmount')}</div>
                   <div className="flex items-baseline gap-1.5">
                     <span className="font-bold text-gray-900">42 500 €</span>
                     <span className="text-xs text-purple-600 font-medium">8.5%</span>
@@ -978,7 +441,7 @@ export function SubscriptionDetailPage({ subscription, onBack }: SubscriptionDet
                   <Wallet className="w-3 h-3 text-orange-600" />
                 </div>
                 <div>
-                  <div className="text-xs text-gray-500 leading-tight">Solde Restant</div>
+                  <div className="text-xs text-gray-500 leading-tight">{t('subscriptions.detail.header.remainingBalance')}</div>
                   <div className="flex items-baseline gap-1.5">
                     <span className="font-bold text-gray-900">225 000 €</span>
                     <span className="text-xs text-orange-600 font-medium">45%</span>
@@ -991,12 +454,12 @@ export function SubscriptionDetailPage({ subscription, onBack }: SubscriptionDet
             {/* Right column - Risk analysis + Export button */}
             <div className="flex flex-col items-end justify-end gap-3">
               <Button
-                style={{ background: 'linear-gradient(62.32deg, #000000 10.53%, #0F323D 88.82%)' }}
+                style={{ background: PRIMARY_BUTTON_GRADIENT }}
                 className="gap-2 text-white hover:opacity-90"
-                onClick={() => toast.success('Fonctionnalité à venir')}
+                onClick={() => toast.success(t('subscriptions.detail.toast.featureComingSoon'))}
               >
                 <Download className="w-4 h-4" />
-                Exporter les données
+                {t('subscriptions.detail.header.exportData')}
               </Button>
 
               {/* Analyse de risque compacte */}
@@ -1032,7 +495,7 @@ export function SubscriptionDetailPage({ subscription, onBack }: SubscriptionDet
                       </div>
                     </div>
                     <Badge className="bg-amber-100 text-amber-700 border-amber-300 font-semibold text-[10px] mt-1.5">
-                      Risque Moyen
+                      {t('subscriptions.detail.header.riskMedium')}
                     </Badge>
                   </div>
 
@@ -1042,27 +505,27 @@ export function SubscriptionDetailPage({ subscription, onBack }: SubscriptionDet
                       <div className="flex items-center gap-1.5 mb-2 pb-2 border-b border-gray-200">
                         <CheckCircle2 className="w-3 h-3 text-green-600 flex-shrink-0" />
                         <div>
-                          <div className="text-[10px] font-semibold text-green-900">Risque validé</div>
-                          <div className="text-[9px] text-green-700">Le {riskValidationDate}</div>
+                          <div className="text-[10px] font-semibold text-green-900">{t('subscriptions.detail.header.riskValidated')}</div>
+                          <div className="text-[9px] text-green-700">{t('subscriptions.detail.header.riskValidatedOn', { date: riskValidationDate })}</div>
                         </div>
                       </div>
                     )}
                     <div className="flex items-center justify-between gap-3">
-                      <span className="text-xs text-gray-600 whitespace-nowrap">PEP détectés</span>
+                      <span className="text-xs text-gray-600 whitespace-nowrap">{t('subscriptions.detail.header.pepDetected')}</span>
                       <Badge className="bg-red-100 text-red-700 border-red-300 text-[10px] h-5">
                         <AlertCircle className="w-2.5 h-2.5 mr-1" />
                         2
                       </Badge>
                     </div>
                     <div className="flex items-center justify-between gap-3">
-                      <span className="text-xs text-gray-600 whitespace-nowrap">Sanctions</span>
+                      <span className="text-xs text-gray-600 whitespace-nowrap">{t('subscriptions.detail.header.sanctions')}</span>
                       <Badge className="bg-green-100 text-green-700 border-green-300 text-[10px] h-5">
                         <Check className="w-2.5 h-2.5 mr-1" />
                         0
                       </Badge>
                     </div>
                     <div className="flex items-center justify-between gap-3">
-                      <span className="text-xs text-gray-600 whitespace-nowrap">Médias adverses</span>
+                      <span className="text-xs text-gray-600 whitespace-nowrap">{t('subscriptions.detail.header.adverseMedia')}</span>
                       <Badge className="bg-amber-100 text-amber-700 border-amber-300 text-[10px] h-5">
                         <AlertCircle className="w-2.5 h-2.5 mr-1" />
                         1
@@ -1074,7 +537,7 @@ export function SubscriptionDetailPage({ subscription, onBack }: SubscriptionDet
             </div>
           </div>
         </div>
-      </motion.div>
+      </div>
 
       {/* Tabs - Same structure as InvestorDetailPage */}
       <div className="px-8 -mt-px bg-white border-b border-gray-200">
@@ -1085,14 +548,14 @@ export function SubscriptionDetailPage({ subscription, onBack }: SubscriptionDet
               className="data-[state=active]:bg-transparent data-[state=active]:shadow-none data-[state=active]:border-b-2 data-[state=active]:border-blue-600 data-[state=active]:text-blue-600 rounded-none pb-3 pt-4 px-0 text-gray-600 font-medium"
             >
               <FileText className="w-4 h-4 mr-2" />
-              Détail
+              {t('subscriptions.detail.tabs.detail')}
             </TabsTrigger>
             <TabsTrigger 
               value="emails" 
               className="data-[state=active]:bg-transparent data-[state=active]:shadow-none data-[state=active]:border-b-2 data-[state=active]:border-blue-600 data-[state=active]:text-blue-600 rounded-none pb-3 pt-4 px-0 text-gray-600 font-medium"
             >
               <Mail className="w-4 h-4 mr-2" />
-              Mails
+              {t('subscriptions.detail.tabs.emails')}
               <Badge className="ml-2 bg-indigo-50 text-indigo-700 border-indigo-200 text-xs">
                 {mockEmails.length}
               </Badge>
@@ -1102,7 +565,7 @@ export function SubscriptionDetailPage({ subscription, onBack }: SubscriptionDet
               className="data-[state=active]:bg-transparent data-[state=active]:shadow-none data-[state=active]:border-b-2 data-[state=active]:border-blue-600 data-[state=active]:text-blue-600 rounded-none pb-3 pt-4 px-0 text-gray-600 font-medium"
             >
               <DollarSign className="w-4 h-4 mr-2" />
-              Appels de fonds
+              {t('subscriptions.detail.tabs.capitalCalls')}
               <Badge className="ml-2 bg-emerald-50 text-emerald-700 border-emerald-200 text-xs">
                 {mockCapitalCalls.length}
               </Badge>
@@ -1112,7 +575,7 @@ export function SubscriptionDetailPage({ subscription, onBack }: SubscriptionDet
               className="data-[state=active]:bg-transparent data-[state=active]:shadow-none data-[state=active]:border-b-2 data-[state=active]:border-blue-600 data-[state=active]:text-blue-600 rounded-none pb-3 pt-4 px-0 text-gray-600 font-medium"
             >
               <ShieldAlert className="w-4 h-4 mr-2" />
-              Risque
+              {t('subscriptions.detail.tabs.risk')}
               <Badge className="ml-2 bg-red-50 text-red-700 border-red-200 text-xs">
                 3
               </Badge>
@@ -1122,7 +585,7 @@ export function SubscriptionDetailPage({ subscription, onBack }: SubscriptionDet
               className="data-[state=active]:bg-transparent data-[state=active]:shadow-none data-[state=active]:border-b-2 data-[state=active]:border-blue-600 data-[state=active]:text-blue-600 rounded-none pb-3 pt-4 px-0 text-gray-600 font-medium"
             >
               <FolderOpen className="w-4 h-4 mr-2" />
-              Documents
+              {t('subscriptions.detail.tabs.documents')}
               <Badge className="ml-2 bg-gray-50 text-gray-700 border-gray-200 text-xs">
                 {mockDocuments.length}
               </Badge>
@@ -1132,7 +595,7 @@ export function SubscriptionDetailPage({ subscription, onBack }: SubscriptionDet
               className="data-[state=active]:bg-transparent data-[state=active]:shadow-none data-[state=active]:border-b-2 data-[state=active]:border-blue-600 data-[state=active]:text-blue-600 rounded-none pb-3 pt-4 px-0 text-gray-600 font-medium"
             >
               <Database className="w-4 h-4 mr-2" />
-              Integrations
+              {t('subscriptions.detail.tabs.integrations')}
               <Badge className="ml-2 bg-cyan-50 text-cyan-700 border-cyan-200 text-xs">
                 5
               </Badge>
@@ -1142,7 +605,7 @@ export function SubscriptionDetailPage({ subscription, onBack }: SubscriptionDet
               className="data-[state=active]:bg-transparent data-[state=active]:shadow-none data-[state=active]:border-b-2 data-[state=active]:border-blue-600 data-[state=active]:text-blue-600 rounded-none pb-3 pt-4 px-0 text-gray-600 font-medium"
             >
               <MessageSquare className="w-4 h-4 mr-2" />
-              Notes
+              {t('subscriptions.detail.tabs.notes')}
               <Badge className="ml-2 bg-purple-50 text-purple-700 border-purple-200 text-xs">
                 {mockNotes.length}
               </Badge>
@@ -1159,26 +622,26 @@ export function SubscriptionDetailPage({ subscription, onBack }: SubscriptionDet
                     // Initialisation de la souscription
                     <div className="space-y-6">
                       <div className="bg-white rounded-xl border border-gray-200 p-6 shadow-sm">
-                        <h2 className="text-xl font-bold text-gray-900 mb-6">Initialisation de la souscription</h2>
-                        
+                        <h2 className="text-xl font-bold text-gray-900 mb-6">{t('subscriptions.detail.init.title')}</h2>
+
                         <div className="space-y-6">
                           {/* Investisseur */}
                           <div>
-                            <label className="block text-sm font-semibold text-gray-700 mb-2">Investisseur *</label>
+                            <label className="block text-sm font-semibold text-gray-700 mb-2">{t('subscriptions.detail.init.investorLabel')}</label>
                             <Input
-                              placeholder="Sélectionner un investisseur"
+                              placeholder={t('subscriptions.detail.init.investorPlaceholder')}
                               defaultValue={initData.investorName ?? ''}
                             />
                           </div>
 
                           {/* Structure */}
                           <div>
-                            <label className="block text-sm font-semibold text-gray-700 mb-2">Structure</label>
+                            <label className="block text-sm font-semibold text-gray-700 mb-2">{t('subscriptions.detail.init.structureLabel')}</label>
                             <Input
-                              placeholder="Sélectionner une structure"
+                              placeholder={t('subscriptions.detail.init.structurePlaceholder')}
                               defaultValue={
                                 initData.isDirect
-                                  ? 'Investissement en direct (sans structure)'
+                                  ? t('subscriptions.detail.init.directInvestment')
                                   : initData.structureName ?? ''
                               }
                             />
@@ -1186,20 +649,20 @@ export function SubscriptionDetailPage({ subscription, onBack }: SubscriptionDet
 
                           {/* Fonds */}
                           <div>
-                            <label className="block text-sm font-semibold text-gray-700 mb-2">Fonds *</label>
+                            <label className="block text-sm font-semibold text-gray-700 mb-2">{t('subscriptions.detail.init.fundLabel')}</label>
                             <Input
-                              placeholder="Sélectionner un fonds"
+                              placeholder={t('subscriptions.detail.init.fundPlaceholder')}
                               defaultValue={initData.fundName ?? ''}
                             />
                           </div>
 
                           {/* Part */}
                           <div>
-                            <label className="block text-sm font-semibold text-gray-700 mb-2">Part *</label>
+                            <label className="block text-sm font-semibold text-gray-700 mb-2">{t('subscriptions.detail.init.shareLabel')}</label>
                             <Input
-                              placeholder="Sélectionner une part"
+                              placeholder={t('subscriptions.detail.init.sharePlaceholder')}
                               defaultValue={
-                                initData.shareClass ? `Part ${initData.shareClass}` : ''
+                                initData.shareClass ? t('subscriptions.detail.init.sharePrefix', { name: initData.shareClass }) : ''
                               }
                             />
                           </div>
@@ -1207,7 +670,7 @@ export function SubscriptionDetailPage({ subscription, onBack }: SubscriptionDet
                           {/* Nombre de parts */}
                           <div className="grid grid-cols-2 gap-4">
                             <div>
-                              <label className="block text-sm font-semibold text-gray-700 mb-2">Nombre de parts *</label>
+                              <label className="block text-sm font-semibold text-gray-700 mb-2">{t('subscriptions.detail.init.numberOfSharesLabel')}</label>
                               <Input
                                 type="number"
                                 placeholder="0"
@@ -1215,7 +678,7 @@ export function SubscriptionDetailPage({ subscription, onBack }: SubscriptionDet
                               />
                             </div>
                             <div>
-                              <label className="block text-sm font-semibold text-gray-700 mb-2">Montant total *</label>
+                              <label className="block text-sm font-semibold text-gray-700 mb-2">{t('subscriptions.detail.init.totalAmountLabel')}</label>
                               <Input
                                 placeholder="0 €"
                                 defaultValue={
@@ -1229,9 +692,9 @@ export function SubscriptionDetailPage({ subscription, onBack }: SubscriptionDet
 
                           {/* Partenaire */}
                           <div>
-                            <label className="block text-sm font-semibold text-gray-700 mb-2">Partenaire en charge</label>
+                            <label className="block text-sm font-semibold text-gray-700 mb-2">{t('subscriptions.detail.init.partnerLabel')}</label>
                             <Input
-                              placeholder="Sélectionner un partenaire"
+                              placeholder={t('subscriptions.detail.init.partnerPlaceholder')}
                               defaultValue={initData.distributorName ?? ''}
                             />
                           </div>
@@ -1239,15 +702,16 @@ export function SubscriptionDetailPage({ subscription, onBack }: SubscriptionDet
                           <Separator />
 
                           <div className="flex justify-end gap-3">
-                            <Button variant="outline" onClick={onBack}>Annuler</Button>
-                            <Button 
-                              className="bg-gradient-to-r from-black to-[#0F323D] hover:opacity-90"
+                            <Button variant="outline" onClick={onBack}>{t('subscriptions.detail.init.cancel')}</Button>
+                            <Button
+                              className="hover:opacity-90"
+                              style={{ background: PRIMARY_BUTTON_GRADIENT }}
                               onClick={() => {
                                 setCurrentStep(1);
-                                toast.success('Souscription initialisée');
+                                toast.success(t('subscriptions.detail.init.subscriptionInitialized'));
                               }}
                             >
-                              Créer la souscription
+                              {t('subscriptions.detail.init.createSubscription')}
                             </Button>
                           </div>
                         </div>
@@ -1270,9 +734,7 @@ export function SubscriptionDetailPage({ subscription, onBack }: SubscriptionDet
                     open={isOpen}
                     onOpenChange={() => toggleSection(section.id)}
                   >
-                    <motion.div
-                      initial={{ opacity: 0, y: 10 }}
-                      animate={{ opacity: 1, y: 0 }}
+                    <div
                       className="bg-white rounded-xl border border-gray-200 overflow-hidden hover:shadow-md transition-shadow"
                     >
                       <CollapsibleTrigger className="w-full">
@@ -1290,22 +752,21 @@ export function SubscriptionDetailPage({ subscription, onBack }: SubscriptionDet
                               }`} />
                             </div>
                             <div className="text-left">
-                              <h3 className="font-semibold text-gray-900 text-lg mb-1">{section.title}</h3>
+                              <h3 className="font-semibold text-gray-900 text-lg mb-1">{t(section.titleKey)}</h3>
                               {stats && (
                                 <div className="flex items-center gap-3 text-xs">
-                                  <span className="text-gray-600">
-                                    <span className="font-semibold text-gray-900">{stats.answered}</span>
-                                    /{stats.total} répondues
+                                  <span className="text-gray-600 font-semibold text-gray-900">
+                                    {t('subscriptions.detail.onboarding.answeredOf', { answered: stats.answered, total: stats.total })}
                                   </span>
                                   <span className="w-1 h-1 rounded-full bg-gray-300" />
-                                  <span className="text-emerald-600">
-                                    <span className="font-semibold">{stats.approved}</span> validées
+                                  <span className="text-emerald-600 font-semibold">
+                                    {t('subscriptions.detail.onboarding.validated', { count: stats.approved })}
                                   </span>
                                   {stats.rejected > 0 && (
                                     <>
                                       <span className="w-1 h-1 rounded-full bg-gray-300" />
-                                      <span className="text-red-600">
-                                        <span className="font-semibold">{stats.rejected}</span> refusées
+                                      <span className="text-red-600 font-semibold">
+                                        {t('subscriptions.detail.onboarding.rejected', { count: stats.rejected })}
                                       </span>
                                     </>
                                   )}
@@ -1313,7 +774,7 @@ export function SubscriptionDetailPage({ subscription, onBack }: SubscriptionDet
                               )}
                               {section.id === 'documents' && (
                                 <p className="text-xs text-gray-500">
-                                  {mockRequiredDocuments.length} documents requis
+                                  {t('subscriptions.detail.onboarding.requiredDocuments', { count: mockRequiredDocuments.length })}
                                 </p>
                               )}
                             </div>
@@ -1323,17 +784,17 @@ export function SubscriptionDetailPage({ subscription, onBack }: SubscriptionDet
                             {stats && stats.approved === stats.total && stats.total > 0 ? (
                               <Badge className="bg-emerald-100 text-emerald-700 border-emerald-200">
                                 <CheckCircle2 className="w-3.5 h-3.5 mr-1.5" />
-                                Section validée
+                                {t('subscriptions.detail.onboarding.sectionValidated')}
                               </Badge>
                             ) : stats && stats.rejected > 0 ? (
                               <Badge className="bg-red-100 text-red-700 border-red-200">
                                 <AlertCircle className="w-3.5 h-3.5 mr-1.5" />
-                                {stats.rejected} rejetée{stats.rejected > 1 ? 's' : ''}
+                                {t('subscriptions.detail.onboarding.rejectedCount', { count: stats.rejected })}
                               </Badge>
                             ) : (
                               <Badge className="bg-amber-100 text-amber-700 border-amber-200">
                                 <AlertCircle className="w-3.5 h-3.5 mr-1.5" />
-                                En cours
+                                {t('subscriptions.detail.onboarding.inProgress')}
                               </Badge>
                             )}
                             {isOpen ? (
@@ -1354,7 +815,7 @@ export function SubscriptionDetailPage({ subscription, onBack }: SubscriptionDet
                               <div className="px-4 py-3 bg-gray-50 border-b border-gray-200 flex items-center justify-between">
                                 <div className="flex items-center gap-2 text-sm text-gray-700">
                                   <FileText className="w-4 h-4" />
-                                  <span>Gérer les documents justificatifs</span>
+                                  <span>{t('subscriptions.detail.onboarding.manageDocuments')}</span>
                                 </div>
                                 <div className="flex items-center gap-2">
                                   <Button
@@ -1364,7 +825,7 @@ export function SubscriptionDetailPage({ subscription, onBack }: SubscriptionDet
                                     className="gap-2 text-xs"
                                   >
                                     <Download className="w-3.5 h-3.5" />
-                                    Exporter les documents
+                                    {t('subscriptions.detail.onboarding.exportDocuments')}
                                   </Button>
                                   <Button
                                     variant="outline"
@@ -1373,15 +834,15 @@ export function SubscriptionDetailPage({ subscription, onBack }: SubscriptionDet
                                     className="gap-2 text-xs"
                                   >
                                     <Upload className="w-3.5 h-3.5" />
-                                    Ajouter un document
+                                    {t('subscriptions.detail.onboarding.addDocument')}
                                   </Button>
                                   <Button
                                     size="sm"
-                                    onClick={() => handleValidateSection(section.id)}
+                                    onClick={() => handleValidateSection(section.id, t(section.titleKey))}
                                     className="gap-2 text-xs bg-blue-600 hover:bg-blue-700 text-white"
                                   >
                                     <CheckCircle2 className="w-3.5 h-3.5" />
-                                    Valider toute la section
+                                    {t('subscriptions.detail.onboarding.validateSection')}
                                   </Button>
                                 </div>
                               </div>
@@ -1392,22 +853,22 @@ export function SubscriptionDetailPage({ subscription, onBack }: SubscriptionDet
                                   <thead className="bg-gray-50 border-b border-gray-200">
                                     <tr>
                                       <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                                        Document
+                                        {t('subscriptions.detail.docsTable.document')}
                                       </th>
                                       <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider w-32">
-                                        Date d'envoi
+                                        {t('subscriptions.detail.docsTable.dateSent')}
                                       </th>
                                       <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider w-32">
-                                        Émis le
+                                        {t('subscriptions.detail.docsTable.issuedOn')}
                                       </th>
                                       <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider w-32">
-                                        Expiration
+                                        {t('subscriptions.detail.docsTable.expiration')}
                                       </th>
                                       <th className="px-4 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider w-20">
-                                        Voir
+                                        {t('subscriptions.detail.docsTable.view')}
                                       </th>
                                       <th className="px-4 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider w-28">
-                                        Action
+                                        {t('subscriptions.detail.docsTable.action')}
                                       </th>
                                     </tr>
                                   </thead>
@@ -1415,7 +876,7 @@ export function SubscriptionDetailPage({ subscription, onBack }: SubscriptionDet
                                     {mockRequiredDocuments.map((doc, idx) => (
                                       <tr key={idx} className="hover:bg-gray-50 transition-colors group">
                                         <td className="px-4 py-3 text-sm text-gray-700">
-                                          {doc.name}
+                                          {t(doc.nameKey)}
                                         </td>
                                         <td className="px-4 py-3 text-sm text-gray-500">
                                           {doc.dateSent || <span className="text-gray-400">-</span>}
@@ -1431,7 +892,7 @@ export function SubscriptionDetailPage({ subscription, onBack }: SubscriptionDet
                                             <Button
                                               variant="ghost"
                                               size="sm"
-                                              onClick={() => handleViewDocument(doc.name)}
+                                              onClick={() => handleViewDocument(t(doc.nameKey))}
                                               className="h-7 text-blue-600 hover:text-blue-700 hover:bg-blue-50"
                                             >
                                               <Eye className="w-3.5 h-3.5" />
@@ -1444,11 +905,11 @@ export function SubscriptionDetailPage({ subscription, onBack }: SubscriptionDet
                                           <Button
                                             variant="outline"
                                             size="sm"
-                                            onClick={() => handleAddDocument(doc.name)}
+                                            onClick={() => handleAddDocument(t(doc.nameKey))}
                                             className="gap-1.5 text-xs h-7"
                                           >
                                             <Upload className="w-3 h-3" />
-                                            Ajouter
+                                            {t('subscriptions.detail.docsTable.add')}
                                           </Button>
                                         </td>
                                       </tr>
@@ -1465,14 +926,14 @@ export function SubscriptionDetailPage({ subscription, onBack }: SubscriptionDet
                                 <div className="px-4 py-3 bg-blue-50 border-b border-blue-100 flex items-center justify-between">
                                   <div className="flex items-center gap-2 text-xs text-blue-700">
                                     <CheckCircle2 className="w-4 h-4" />
-                                    <span>Vérifier toutes les réponses de cette section</span>
+                                    <span>{t('subscriptions.detail.onboarding.verifyAllResponses')}</span>
                                   </div>
                                   <Button
                                     size="sm"
-                                    onClick={() => handleValidateSection(section.id, section.title)}
+                                    onClick={() => handleValidateSection(section.id, t(section.titleKey))}
                                     className="bg-blue-600 hover:bg-blue-700 text-white"
                                   >
-                                    Valider toute la section
+                                    {t('subscriptions.detail.onboarding.validateSection')}
                                   </Button>
                                 </div>
                               )}
@@ -1497,7 +958,7 @@ export function SubscriptionDetailPage({ subscription, onBack }: SubscriptionDet
                                           <span className={status === 'rejected' ? 'text-red-700' : ''}>{item.question}</span>
                                         </div>
                                         <div className="col-span-3 text-sm font-medium text-gray-900">
-                                          {response || <span className="text-gray-400 italic">Non renseigné</span>}
+                                          {response || <span className="text-gray-400 italic">{t('subscriptions.detail.onboarding.notProvided')}</span>}
                                         </div>
                                         <div className="col-span-5 flex items-center justify-end">
                                           <QuestionActions
@@ -1533,7 +994,7 @@ export function SubscriptionDetailPage({ subscription, onBack }: SubscriptionDet
                           )}
                         </div>
                       </CollapsibleContent>
-                    </motion.div>
+                    </div>
                   </Collapsible>
                 );
               })}
@@ -1548,16 +1009,16 @@ export function SubscriptionDetailPage({ subscription, onBack }: SubscriptionDet
                         {/* Onboarding */}
                         <div className="bg-white rounded-xl border border-gray-200 p-6 shadow-sm">
                           <div className="flex items-center justify-between mb-4">
-                            <h3 className="font-semibold text-gray-900">Onboarding</h3>
+                            <h3 className="font-semibold text-gray-900">{t('subscriptions.detail.validation.onboarding')}</h3>
                             <Badge className="bg-green-100 text-green-700 border-green-300">
                               <CheckCircle2 className="w-3 h-3 mr-1" />
-                              Complet
+                              {t('subscriptions.detail.validation.complete')}
                             </Badge>
                           </div>
                           <div className="space-y-3">
                             <div>
                               <div className="flex justify-between text-sm mb-1">
-                                <span className="text-gray-600">Questions répondues</span>
+                                <span className="text-gray-600">{t('subscriptions.detail.validation.questionsAnswered')}</span>
                                 <span className="font-semibold text-gray-900">142/142</span>
                               </div>
                               <div className="w-full bg-gray-200 rounded-full h-2">
@@ -1566,7 +1027,7 @@ export function SubscriptionDetailPage({ subscription, onBack }: SubscriptionDet
                             </div>
                             <div>
                               <div className="flex justify-between text-sm mb-1">
-                                <span className="text-gray-600">Questions validées</span>
+                                <span className="text-gray-600">{t('subscriptions.detail.validation.questionsValidated')}</span>
                                 <span className="font-semibold text-gray-900">138/142</span>
                               </div>
                               <div className="w-full bg-gray-200 rounded-full h-2">
@@ -1579,16 +1040,16 @@ export function SubscriptionDetailPage({ subscription, onBack }: SubscriptionDet
                         {/* Documents */}
                         <div className="bg-white rounded-xl border border-gray-200 p-6 shadow-sm">
                           <div className="flex items-center justify-between mb-4">
-                            <h3 className="font-semibold text-gray-900">Documents</h3>
+                            <h3 className="font-semibold text-gray-900">{t('subscriptions.detail.validation.documentsTab')}</h3>
                             <Badge className="bg-green-100 text-green-700 border-green-300">
                               <CheckCircle2 className="w-3 h-3 mr-1" />
-                              Validés
+                              {t('subscriptions.detail.validation.documentsValidated')}
                             </Badge>
                           </div>
                           <div className="space-y-3">
                             <div>
                               <div className="flex justify-between text-sm mb-1">
-                                <span className="text-gray-600">Documents fournis</span>
+                                <span className="text-gray-600">{t('subscriptions.detail.validation.documentsProvided')}</span>
                                 <span className="font-semibold text-gray-900">8/8</span>
                               </div>
                               <div className="w-full bg-gray-200 rounded-full h-2">
@@ -1597,7 +1058,7 @@ export function SubscriptionDetailPage({ subscription, onBack }: SubscriptionDet
                             </div>
                             <div>
                               <div className="flex justify-between text-sm mb-1">
-                                <span className="text-gray-600">Documents validés</span>
+                                <span className="text-gray-600">{t('subscriptions.detail.validation.documentsValidatedLabel')}</span>
                                 <span className="font-semibold text-gray-900">8/8</span>
                               </div>
                               <div className="w-full bg-gray-200 rounded-full h-2">
@@ -1611,55 +1072,55 @@ export function SubscriptionDetailPage({ subscription, onBack }: SubscriptionDet
                       {/* Niveau de risque */}
                       <div className="bg-white rounded-xl border border-gray-200 p-6 shadow-sm">
                         <div className="flex items-center justify-between mb-4">
-                          <h3 className="font-semibold text-gray-900">Niveau de risque</h3>
+                          <h3 className="font-semibold text-gray-900">{t('subscriptions.detail.validation.riskLevel')}</h3>
                           <Badge className="bg-amber-100 text-amber-700 border-amber-300">
-                            Moyen
+                            {t('subscriptions.detail.validation.medium')}
                           </Badge>
                         </div>
                         
                         <div className="space-y-4">
                           {/* Détail du calcul */}
                           <div className="bg-gray-50 rounded-lg p-4">
-                            <h4 className="text-sm font-semibold text-gray-900 mb-3">Détail du calcul de risque</h4>
+                            <h4 className="text-sm font-semibold text-gray-900 mb-3">{t('subscriptions.detail.validation.riskDetailTitle')}</h4>
                             <div className="space-y-2">
                               <div className="flex justify-between items-center">
                                 <div className="flex items-center gap-2">
                                   <Globe className="w-4 h-4 text-gray-600" />
-                                  <span className="text-sm text-gray-700">Pays de résidence</span>
+                                  <span className="text-sm text-gray-700">{t('subscriptions.detail.validation.residenceCountry')}</span>
                                 </div>
                                 <div className="flex items-center gap-2">
                                   <span className="text-sm font-medium text-gray-900">France</span>
-                                  <Badge className="bg-green-100 text-green-700 border-green-300 text-xs">Faible</Badge>
+                                  <Badge className="bg-green-100 text-green-700 border-green-300 text-xs">{t('subscriptions.detail.validation.low')}</Badge>
                                 </div>
                               </div>
                               <div className="flex justify-between items-center">
                                 <div className="flex items-center gap-2">
                                   <Users className="w-4 h-4 text-gray-600" />
-                                  <span className="text-sm text-gray-700">Profil investisseur</span>
+                                  <span className="text-sm text-gray-700">{t('subscriptions.detail.validation.investorProfile')}</span>
                                 </div>
                                 <div className="flex items-center gap-2">
                                   <span className="text-sm font-medium text-gray-900">HNWI</span>
-                                  <Badge className="bg-amber-100 text-amber-700 border-amber-300 text-xs">Moyen</Badge>
+                                  <Badge className="bg-amber-100 text-amber-700 border-amber-300 text-xs">{t('subscriptions.detail.validation.medium')}</Badge>
                                 </div>
                               </div>
                               <div className="flex justify-between items-center">
                                 <div className="flex items-center gap-2">
                                   <DollarSign className="w-4 h-4 text-gray-600" />
-                                  <span className="text-sm text-gray-700">Montant souscription</span>
+                                  <span className="text-sm text-gray-700">{t('subscriptions.detail.validation.subscriptionAmount')}</span>
                                 </div>
                                 <div className="flex items-center gap-2">
                                   <span className="text-sm font-medium text-gray-900">500 000 €</span>
-                                  <Badge className="bg-amber-100 text-amber-700 border-amber-300 text-xs">Moyen</Badge>
+                                  <Badge className="bg-amber-100 text-amber-700 border-amber-300 text-xs">{t('subscriptions.detail.validation.medium')}</Badge>
                                 </div>
                               </div>
                               <div className="flex justify-between items-center">
                                 <div className="flex items-center gap-2">
                                   <Scale className="w-4 h-4 text-gray-600" />
-                                  <span className="text-sm text-gray-700">Origine des fonds</span>
+                                  <span className="text-sm text-gray-700">{t('subscriptions.detail.validation.fundsOrigin')}</span>
                                 </div>
                                 <div className="flex items-center gap-2">
                                   <span className="text-sm font-medium text-gray-900">Salaires</span>
-                                  <Badge className="bg-green-100 text-green-700 border-green-300 text-xs">Faible</Badge>
+                                  <Badge className="bg-green-100 text-green-700 border-green-300 text-xs">{t('subscriptions.detail.validation.low')}</Badge>
                                 </div>
                               </div>
                             </div>
@@ -1670,17 +1131,17 @@ export function SubscriptionDetailPage({ subscription, onBack }: SubscriptionDet
                             <div className="flex items-center gap-3">
                               <AlertTriangle className="w-5 h-5 text-amber-600" />
                               <div>
-                                <div className="font-medium text-gray-900">Validation du risque requise</div>
-                                <div className="text-sm text-gray-600">Un niveau de risque moyen nécessite une validation manuelle</div>
+                                <div className="font-medium text-gray-900">{t('subscriptions.detail.validation.riskValidationRequired')}</div>
+                                <div className="text-sm text-gray-600">{t('subscriptions.detail.validation.riskValidationDesc')}</div>
                               </div>
                             </div>
                             <Button 
                               size="sm"
                               variant="outline"
-                              onClick={() => toast.success('Risque validé')}
+                              onClick={() => toast.success(t('subscriptions.detail.toast.riskValidated'))}
                             >
                               <Check className="w-4 h-4 mr-2" />
-                              Valider
+                              {t('subscriptions.detail.validation.validate')}
                             </Button>
                           </div>
                         </div>
@@ -1689,9 +1150,9 @@ export function SubscriptionDetailPage({ subscription, onBack }: SubscriptionDet
                       {/* Niveau KYC */}
                       <div className="bg-white rounded-xl border border-gray-200 p-6 shadow-sm">
                         <div className="flex items-center justify-between mb-4">
-                          <h3 className="font-semibold text-gray-900">Niveau KYC</h3>
+                          <h3 className="font-semibold text-gray-900">{t('subscriptions.detail.validation.kycLevel')}</h3>
                           <Badge className="bg-blue-100 text-blue-700 border-blue-300">
-                            Avancé
+                            {t('subscriptions.detail.validation.advanced')}
                           </Badge>
                         </div>
                         
@@ -1700,20 +1161,20 @@ export function SubscriptionDetailPage({ subscription, onBack }: SubscriptionDet
                             <div className="flex items-center gap-3 mb-3">
                               <ShieldAlert className="w-5 h-5 text-blue-600" />
                               <div>
-                                <div className="font-medium text-gray-900">Contrôles avancés requis</div>
-                                <div className="text-sm text-gray-600">Ce dossier nécessite des vérifications approfondies</div>
+                                <div className="font-medium text-gray-900">{t('subscriptions.detail.validation.advancedControlsRequired')}</div>
+                                <div className="text-sm text-gray-600">{t('subscriptions.detail.validation.advancedControlsDesc')}</div>
                               </div>
                             </div>
                             <div className="grid grid-cols-2 gap-3">
                               <div className="bg-white rounded-lg p-3">
-                                <div className="text-xs text-gray-600 mb-1">Contrôles effectués</div>
+                                <div className="text-xs text-gray-600 mb-1">{t('subscriptions.detail.validation.controlsCompleted')}</div>
                                 <div className="font-semibold text-gray-900">12/12</div>
                               </div>
                               <div className="bg-white rounded-lg p-3">
-                                <div className="text-xs text-gray-600 mb-1">Statut</div>
+                                <div className="text-xs text-gray-600 mb-1">{t('subscriptions.detail.validation.statusLabel')}</div>
                                 <div className="flex items-center gap-1">
                                   <CheckCircle2 className="w-4 h-4 text-green-600" />
-                                  <span className="font-semibold text-gray-900">Conforme</span>
+                                  <span className="font-semibold text-gray-900">{t('subscriptions.detail.validation.compliant')}</span>
                                 </div>
                               </div>
                             </div>
@@ -1724,9 +1185,9 @@ export function SubscriptionDetailPage({ subscription, onBack }: SubscriptionDet
                       {/* Analyses Screening */}
                       <div className="bg-white rounded-xl border border-gray-200 p-6 shadow-sm">
                         <div className="flex items-center justify-between mb-4">
-                          <h3 className="font-semibold text-gray-900">Analyses Screening</h3>
+                          <h3 className="font-semibold text-gray-900">{t('subscriptions.detail.validation.screeningAnalysis')}</h3>
                           <Badge className="bg-amber-100 text-amber-700 border-amber-300">
-                            2 décisions en attente
+                            {t('subscriptions.detail.validation.pendingDecisions', { count: 2 })}
                           </Badge>
                         </div>
                         
@@ -1740,26 +1201,26 @@ export function SubscriptionDetailPage({ subscription, onBack }: SubscriptionDet
                                 </div>
                                 <div>
                                   <div className="font-semibold text-gray-900">Inès Wadouachi</div>
-                                  <div className="text-sm text-gray-600">Investisseur principal</div>
+                                  <div className="text-sm text-gray-600">{t('subscriptions.detail.validation.mainInvestor')}</div>
                                 </div>
                               </div>
                               <Badge className="bg-green-100 text-green-700 border-green-300">
                                 <CheckCircle2 className="w-3 h-3 mr-1" />
-                                Validé
+                                {t('subscriptions.detail.validation.validatedStatus')}
                               </Badge>
                             </div>
                             <div className="grid grid-cols-3 gap-2 text-sm">
                               <div className="flex items-center gap-1">
                                 <Check className="w-3 h-3 text-green-600" />
-                                <span className="text-gray-700">PEP: Négatif</span>
+                                <span className="text-gray-700">{t('subscriptions.detail.validation.pepNegative')}</span>
                               </div>
                               <div className="flex items-center gap-1">
                                 <Check className="w-3 h-3 text-green-600" />
-                                <span className="text-gray-700">Sanctions: Négatif</span>
+                                <span className="text-gray-700">{t('subscriptions.detail.validation.sanctionsNegative')}</span>
                               </div>
                               <div className="flex items-center gap-1">
                                 <Check className="w-3 h-3 text-green-600" />
-                                <span className="text-gray-700">Médias: Négatif</span>
+                                <span className="text-gray-700">{t('subscriptions.detail.validation.mediaNegative')}</span>
                               </div>
                             </div>
                           </div>
@@ -1773,22 +1234,22 @@ export function SubscriptionDetailPage({ subscription, onBack }: SubscriptionDet
                                 </div>
                                 <div>
                                   <div className="font-semibold text-gray-900">Jean Dupont</div>
-                                  <div className="text-sm text-gray-600">Bénéficiaire effectif (35%)</div>
+                                  <div className="text-sm text-gray-600">{t('subscriptions.detail.validation.beneficialOwner', { pct: 35 })}</div>
                                 </div>
                               </div>
                               <Badge className="bg-amber-100 text-amber-700 border-amber-300">
                                 <AlertCircle className="w-3 h-3 mr-1" />
-                                En attente
+                                {t('subscriptions.detail.validation.pendingStatus')}
                               </Badge>
                             </div>
                             <div className="space-y-3">
                               <div className="bg-white rounded-lg p-3">
                                 <div className="flex items-center gap-2 mb-2">
                                   <AlertTriangle className="w-4 h-4 text-amber-600" />
-                                  <span className="text-sm font-medium text-gray-900">1 alerte média détectée</span>
+                                  <span className="text-sm font-medium text-gray-900">{t('subscriptions.detail.validation.mediaAlertDetected', { count: 1 })}</span>
                                 </div>
                                 <div className="text-sm text-gray-700 mb-3">
-                                  Article mentionnant un litige commercial en 2023 (résolu à l'amiable)
+                                  {t('subscriptions.detail.validation.mediaAlertDesc')}
                                 </div>
                                 <div className="flex gap-2">
                                   <Button 
@@ -1798,7 +1259,7 @@ export function SubscriptionDetailPage({ subscription, onBack }: SubscriptionDet
                                     className="flex-1"
                                   >
                                     <Check className="w-3 h-3 mr-1" />
-                                    Accepter avec réserve
+                                    {t('subscriptions.detail.validation.acceptWithReserve')}
                                   </Button>
                                   <Button 
                                     size="sm" 
@@ -1807,22 +1268,22 @@ export function SubscriptionDetailPage({ subscription, onBack }: SubscriptionDet
                                     className="flex-1"
                                   >
                                     <X className="w-3 h-3 mr-1" />
-                                    Rejeter
+                                    {t('subscriptions.detail.validation.reject')}
                                   </Button>
                                 </div>
                               </div>
                               <div className="grid grid-cols-3 gap-2 text-sm">
                                 <div className="flex items-center gap-1">
                                   <Check className="w-3 h-3 text-green-600" />
-                                  <span className="text-gray-700">PEP: Négatif</span>
+                                  <span className="text-gray-700">{t('subscriptions.detail.validation.pepNegative')}</span>
                                 </div>
                                 <div className="flex items-center gap-1">
                                   <Check className="w-3 h-3 text-green-600" />
-                                  <span className="text-gray-700">Sanctions: Négatif</span>
+                                  <span className="text-gray-700">{t('subscriptions.detail.validation.sanctionsNegative')}</span>
                                 </div>
                                 <div className="flex items-center gap-1">
                                   <AlertCircle className="w-3 h-3 text-amber-600" />
-                                  <span className="text-gray-700">Médias: 1 alerte</span>
+                                  <span className="text-gray-700">{t('subscriptions.detail.validation.mediaAlert', { count: 1 })}</span>
                                 </div>
                               </div>
                             </div>
@@ -1837,22 +1298,22 @@ export function SubscriptionDetailPage({ subscription, onBack }: SubscriptionDet
                                 </div>
                                 <div>
                                   <div className="font-semibold text-gray-900">Marie Martin</div>
-                                  <div className="text-sm text-gray-600">Bénéficiaire effectif (25%)</div>
+                                  <div className="text-sm text-gray-600">{t('subscriptions.detail.validation.beneficialOwner', { pct: 25 })}</div>
                                 </div>
                               </div>
                               <Badge className="bg-red-100 text-red-700 border-red-300">
                                 <X className="w-3 h-3 mr-1" />
-                                Décision requise
+                                {t('subscriptions.detail.validation.decisionRequired')}
                               </Badge>
                             </div>
                             <div className="space-y-3">
                               <div className="bg-white rounded-lg p-3">
                                 <div className="flex items-center gap-2 mb-2">
                                   <ShieldAlert className="w-4 h-4 text-red-600" />
-                                  <span className="text-sm font-medium text-gray-900">Personne Politiquement Exposée (PEP)</span>
+                                  <span className="text-sm font-medium text-gray-900">{t('subscriptions.detail.validation.pepPerson')}</span>
                                 </div>
                                 <div className="text-sm text-gray-700 mb-3">
-                                  Ancienne conseillère municipale (2015-2020) - Statut PEP expiré depuis 2023
+                                  {t('subscriptions.detail.validation.pepDesc')}
                                 </div>
                                 <div className="flex gap-2">
                                   <Button 
@@ -1862,7 +1323,7 @@ export function SubscriptionDetailPage({ subscription, onBack }: SubscriptionDet
                                     className="flex-1"
                                   >
                                     <Check className="w-3 h-3 mr-1" />
-                                    Accepter après DD
+                                    {t('subscriptions.detail.validation.acceptAfterDD')}
                                   </Button>
                                   <Button 
                                     size="sm" 
@@ -1871,31 +1332,31 @@ export function SubscriptionDetailPage({ subscription, onBack }: SubscriptionDet
                                     className="flex-1"
                                   >
                                     <Flag className="w-3 h-3 mr-1" />
-                                    Escalader
+                                    {t('subscriptions.detail.validation.escalate')}
                                   </Button>
                                   <Button 
                                     size="sm" 
                                     variant="outline"
-                                    onClick={() => toast.error('Décision: Rejeter la souscription')}
+                                    onClick={() => toast.error(t('subscriptions.detail.validation.rejectSubscription'))}
                                     className="flex-1"
                                   >
                                     <X className="w-3 h-3 mr-1" />
-                                    Rejeter
+                                    {t('subscriptions.detail.validation.reject')}
                                   </Button>
                                 </div>
                               </div>
                               <div className="grid grid-cols-3 gap-2 text-sm">
                                 <div className="flex items-center gap-1">
                                   <AlertCircle className="w-3 h-3 text-red-600" />
-                                  <span className="text-gray-700">PEP: Positif</span>
+                                  <span className="text-gray-700">{t('subscriptions.detail.validation.pepPositive')}</span>
                                 </div>
                                 <div className="flex items-center gap-1">
                                   <Check className="w-3 h-3 text-green-600" />
-                                  <span className="text-gray-700">Sanctions: Négatif</span>
+                                  <span className="text-gray-700">{t('subscriptions.detail.validation.sanctionsNegative')}</span>
                                 </div>
                                 <div className="flex items-center gap-1">
                                   <Check className="w-3 h-3 text-green-600" />
-                                  <span className="text-gray-700">Médias: Négatif</span>
+                                  <span className="text-gray-700">{t('subscriptions.detail.validation.mediaNegative')}</span>
                                 </div>
                               </div>
                             </div>
@@ -1910,26 +1371,26 @@ export function SubscriptionDetailPage({ subscription, onBack }: SubscriptionDet
                                 </div>
                                 <div>
                                   <div className="font-semibold text-gray-900">Holding Familiale SAS</div>
-                                  <div className="text-sm text-gray-600">Entité liée</div>
+                                  <div className="text-sm text-gray-600">{t('subscriptions.detail.validation.linkedEntity')}</div>
                                 </div>
                               </div>
                               <Badge className="bg-green-100 text-green-700 border-green-300">
                                 <CheckCircle2 className="w-3 h-3 mr-1" />
-                                Validé
+                                {t('subscriptions.detail.validation.validatedStatus')}
                               </Badge>
                             </div>
                             <div className="grid grid-cols-3 gap-2 text-sm">
                               <div className="flex items-center gap-1">
                                 <Check className="w-3 h-3 text-green-600" />
-                                <span className="text-gray-700">Sanctions: Négatif</span>
+                                <span className="text-gray-700">{t('subscriptions.detail.validation.sanctionsNegative')}</span>
                               </div>
                               <div className="flex items-center gap-1">
                                 <Check className="w-3 h-3 text-green-600" />
-                                <span className="text-gray-700">Médias: Négatif</span>
+                                <span className="text-gray-700">{t('subscriptions.detail.validation.mediaNegative')}</span>
                               </div>
                               <div className="flex items-center gap-1">
                                 <Check className="w-3 h-3 text-green-600" />
-                                <span className="text-gray-700">Juridique: OK</span>
+                                <span className="text-gray-700">{t('subscriptions.detail.validation.legalOk')}</span>
                               </div>
                             </div>
                           </div>
@@ -1943,19 +1404,20 @@ export function SubscriptionDetailPage({ subscription, onBack }: SubscriptionDet
                             <CheckCircle2 className="w-6 h-6 text-white" />
                           </div>
                           <div className="flex-1">
-                            <h3 className="font-bold text-gray-900 mb-2">Prêt pour validation</h3>
+                            <h3 className="font-bold text-gray-900 mb-2">{t('subscriptions.detail.validation.readyForValidation')}</h3>
                             <p className="text-sm text-gray-700 mb-4">
-                              L'onboarding est complet. Vérifiez les informations et validez la souscription.
+                              {t('subscriptions.detail.validation.readyForValidationDesc')}
                             </p>
                             <Button 
-                              className="bg-gradient-to-r from-black to-[#0F323D] hover:opacity-90"
+                              className="hover:opacity-90"
+                              style={{ background: PRIMARY_BUTTON_GRADIENT }}
                               onClick={() => {
                                 setCurrentStep(3);
-                                toast.success('Souscription validée');
+                                toast.success(t('subscriptions.detail.validation.subscriptionValidated'));
                               }}
                             >
                               <CheckCircle2 className="w-4 h-4 mr-2" />
-                              Valider la souscription
+                              {t('subscriptions.detail.validation.validateSubscription')}
                             </Button>
                           </div>
                         </div>
@@ -1967,12 +1429,12 @@ export function SubscriptionDetailPage({ subscription, onBack }: SubscriptionDet
                     // Envoyer en signature
                     <div className="space-y-6">
                       <div className="bg-white rounded-xl border border-gray-200 p-6 shadow-sm">
-                        <h2 className="text-xl font-bold text-gray-900 mb-6">Envoyer en signature</h2>
+                        <h2 className="text-xl font-bold text-gray-900 mb-6">{t('subscriptions.detail.signature.title')}</h2>
                         
                         <div className="space-y-6">
                           {/* Signataires */}
                           <div>
-                            <h3 className="font-semibold text-gray-900 mb-3">Signataires</h3>
+                            <h3 className="font-semibold text-gray-900 mb-3">{t('subscriptions.detail.signature.signatories')}</h3>
                             <div className="space-y-3">
                               <div className="flex items-center gap-3 p-3 bg-gray-50 rounded-lg">
                                 <input type="checkbox" defaultChecked className="w-4 h-4" />
@@ -1980,10 +1442,10 @@ export function SubscriptionDetailPage({ subscription, onBack }: SubscriptionDet
                                   <div className="font-medium text-gray-900">Inès Wadouachi</div>
                                   <div className="text-sm text-gray-600">iwadouachi+testPM@eurazeo.com</div>
                                 </div>
-                                <Badge className="bg-blue-100 text-blue-700 border-blue-300">Investisseur</Badge>
+                                <Badge className="bg-blue-100 text-blue-700 border-blue-300">{t('subscriptions.detail.signature.investorRole')}</Badge>
                               </div>
                               <Button variant="outline" size="sm" className="w-full">
-                                + Ajouter un signataire
+                                {t('subscriptions.detail.signature.addSignatory')}
                               </Button>
                             </div>
                           </div>
@@ -1993,14 +1455,14 @@ export function SubscriptionDetailPage({ subscription, onBack }: SubscriptionDet
                           {/* Documents à signer */}
                           <div>
                             <div className="flex items-center justify-between mb-3">
-                              <h3 className="font-semibold text-gray-900">Documents à signer</h3>
+                              <h3 className="font-semibold text-gray-900">{t('subscriptions.detail.signature.documentsToSign')}</h3>
                               <Button 
                                 variant="outline" 
                                 size="sm"
-                                onClick={() => toast.info('Upload de document')}
+                                onClick={() => toast.info(t('subscriptions.detail.signature.uploadToast'))}
                               >
                                 <Upload className="w-4 h-4 mr-2" />
-                                Uploader un document
+                                {t('subscriptions.detail.signature.uploadDocument')}
                               </Button>
                             </div>
                             <div className="space-y-2">
@@ -2012,23 +1474,23 @@ export function SubscriptionDetailPage({ subscription, onBack }: SubscriptionDet
                                   
                                   {/* Type de document */}
                                   <select className="text-xs border border-gray-300 rounded px-2 py-1 bg-white">
-                                    <option value="signature">À signer</option>
-                                    <option value="annexe">Annexe</option>
+                                    <option value="signature">{t('subscriptions.detail.signature.toSign')}</option>
+                                    <option value="annexe">{t('subscriptions.detail.signature.annex')}</option>
                                   </select>
                                   
                                   {/* Actions */}
                                   <div className="flex items-center gap-1">
                                     <button
-                                      onClick={() => toast.info('Aperçu du document')}
+                                      onClick={() => toast.info(t('subscriptions.detail.signature.previewToast'))}
                                       className="p-1.5 hover:bg-gray-200 rounded transition-colors"
-                                      title="Aperçu"
+                                      title={t('subscriptions.detail.signature.preview')}
                                     >
                                       <Eye className="w-4 h-4 text-gray-600" />
                                     </button>
                                     <button
-                                      onClick={() => toast.success('Document supprimé')}
+                                      onClick={() => toast.success(t('subscriptions.detail.signature.documentDeletedToast'))}
                                       className="p-1.5 hover:bg-red-100 rounded transition-colors"
-                                      title="Supprimer"
+                                      title={t('subscriptions.detail.signature.delete')}
                                     >
                                       <Trash2 className="w-4 h-4 text-red-600" />
                                     </button>
@@ -2042,9 +1504,9 @@ export function SubscriptionDetailPage({ subscription, onBack }: SubscriptionDet
 
                           {/* Catégorisation investisseur */}
                           <div>
-                            <h3 className="font-semibold text-gray-900 mb-3">Catégorisation de l'investisseur</h3>
+                            <h3 className="font-semibold text-gray-900 mb-3">{t('subscriptions.detail.signature.investorCategorization')}</h3>
                             <div className="grid grid-cols-3 gap-3">
-                              {['Professionnel', 'Non-Professionnel', 'Pro sur option'].map((cat, idx) => (
+                              {[t('subscriptions.detail.signature.professional'), t('subscriptions.detail.signature.nonProfessional'), t('subscriptions.detail.signature.proOnOption')].map((cat, idx) => (
                                 <div key={idx} className={`p-4 border-2 rounded-lg cursor-pointer transition-all ${idx === 1 ? 'border-blue-500 bg-blue-50' : 'border-gray-200 hover:border-gray-300'}`}>
                                   <div className="font-medium text-sm text-gray-900 text-center">{cat}</div>
                                 </div>
@@ -2055,16 +1517,17 @@ export function SubscriptionDetailPage({ subscription, onBack }: SubscriptionDet
                           <Separator />
 
                           <div className="flex justify-end gap-3">
-                            <Button variant="outline">Enregistrer le brouillon</Button>
+                            <Button variant="outline">{t('subscriptions.detail.signature.saveDraft')}</Button>
                             <Button 
-                              className="bg-gradient-to-r from-black to-[#0F323D] hover:opacity-90"
+                              className="hover:opacity-90"
+                              style={{ background: PRIMARY_BUTTON_GRADIENT }}
                               onClick={() => {
                                 setCurrentStep(4);
-                                toast.success('Documents envoyés en signature');
+                                toast.success(t('subscriptions.detail.signature.documentsSentForSignature'));
                               }}
                             >
                               <Mail className="w-4 h-4 mr-2" />
-                              Envoyer en signature
+                              {t('subscriptions.detail.signature.sendForSignature')}
                             </Button>
                           </div>
                         </div>
@@ -2076,7 +1539,7 @@ export function SubscriptionDetailPage({ subscription, onBack }: SubscriptionDet
                     // Signatures
                     <div className="space-y-6">
                       <div className="bg-white rounded-xl border border-gray-200 p-6 shadow-sm">
-                        <h2 className="text-xl font-bold text-gray-900 mb-6">Suivi des signatures</h2>
+                        <h2 className="text-xl font-bold text-gray-900 mb-6">{t('subscriptions.detail.signatures.title')}</h2>
                         
                         <div className="space-y-4">
                           {/* Signataire 1 */}
@@ -2093,21 +1556,21 @@ export function SubscriptionDetailPage({ subscription, onBack }: SubscriptionDet
                               </div>
                               <Badge className="bg-green-100 text-green-700 border-green-300">
                                 <CheckCircle2 className="w-3 h-3 mr-1" />
-                                Signé
+                                {t('subscriptions.detail.signatures.signed')}
                               </Badge>
                             </div>
-                            <div className="text-xs text-gray-500">Signé le 29/12/2025 à 14:32</div>
+                            <div className="text-xs text-gray-500">{t('subscriptions.detail.signatures.signedOn', { date: '29/12/2025 à 14:32' })}</div>
                           </div>
 
                           {/* Actions */}
                           <div className="flex gap-3">
                             <Button variant="outline" className="flex-1">
                               <Mail className="w-4 h-4 mr-2" />
-                              Relancer les signataires
+                              {t('subscriptions.detail.signatures.resendToSignatories')}
                             </Button>
                             <Button variant="outline" className="flex-1">
                               <FileText className="w-4 h-4 mr-2" />
-                              Régénérer les liens
+                              {t('subscriptions.detail.signatures.regenerateLinks')}
                             </Button>
                           </div>
 
@@ -2115,13 +1578,14 @@ export function SubscriptionDetailPage({ subscription, onBack }: SubscriptionDet
 
                           <div className="flex justify-end">
                             <Button 
-                              className="bg-gradient-to-r from-black to-[#0F323D] hover:opacity-90"
+                              className="hover:opacity-90"
+                              style={{ background: PRIMARY_BUTTON_GRADIENT }}
                               onClick={() => {
                                 setCurrentStep(6);
-                                toast.success('Passage à la contre-signature');
+                                toast.success(t('subscriptions.detail.signatures.toCounterSignature'));
                               }}
                             >
-                              Continuer vers la contre-signature
+                              {t('subscriptions.detail.signatures.continueToCounterSignature')}
                             </Button>
                           </div>
                         </div>
@@ -2133,7 +1597,7 @@ export function SubscriptionDetailPage({ subscription, onBack }: SubscriptionDet
                     // Contre-signature
                     <div className="space-y-6">
                       <div className="bg-white rounded-xl border border-gray-200 p-6 shadow-sm">
-                        <h2 className="text-xl font-bold text-gray-900 mb-6">Suivi de la contre-signature</h2>
+                        <h2 className="text-xl font-bold text-gray-900 mb-6">{t('subscriptions.detail.counterSignature.title')}</h2>
                         
                         <div className="space-y-4">
                           {/* Gérant du fonds */}
@@ -2146,26 +1610,26 @@ export function SubscriptionDetailPage({ subscription, onBack }: SubscriptionDet
                                 <div>
                                   <div className="font-semibold text-gray-900">Laurent Dupuis</div>
                                   <div className="text-sm text-gray-600">laurent.dupuis@investhub.com</div>
-                                  <div className="text-xs text-gray-500 mt-1">Gérant du fonds</div>
+                                  <div className="text-xs text-gray-500 mt-1">{t('subscriptions.detail.counterSignature.fundManager')}</div>
                                 </div>
                               </div>
                               <Badge className="bg-amber-100 text-amber-700 border-amber-300">
                                 <Clock className="w-3 h-3 mr-1" />
-                                En attente
+                                {t('subscriptions.detail.counterSignature.pending')}
                               </Badge>
                             </div>
-                            <div className="text-xs text-gray-500">Lien envoyé le 29/12/2025 à 15:45</div>
+                            <div className="text-xs text-gray-500">{t('subscriptions.detail.counterSignature.linkSentOn', { date: '29/12/2025 à 15:45' })}</div>
                           </div>
 
                           {/* Actions */}
                           <div className="flex gap-3">
                             <Button variant="outline" className="flex-1">
                               <Mail className="w-4 h-4 mr-2" />
-                              Renvoyer le mail
+                              {t('subscriptions.detail.counterSignature.resendEmail')}
                             </Button>
                             <Button variant="outline" className="flex-1">
                               <FileText className="w-4 h-4 mr-2" />
-                              Régénérer le lien
+                              {t('subscriptions.detail.counterSignature.regenerateLink')}
                             </Button>
                           </div>
 
@@ -2173,13 +1637,14 @@ export function SubscriptionDetailPage({ subscription, onBack }: SubscriptionDet
 
                           <div className="flex justify-end">
                             <Button 
-                              className="bg-gradient-to-r from-black to-[#0F323D] hover:opacity-90"
+                              className="hover:opacity-90"
+                              style={{ background: PRIMARY_BUTTON_GRADIENT }}
                               onClick={() => {
                                 setCurrentStep(7);
-                                toast.success('Passage à l\'étape de paiement');
+                                toast.success(t('subscriptions.detail.counterSignature.toPayment'));
                               }}
                             >
-                              Continuer vers le paiement
+                              {t('subscriptions.detail.counterSignature.continueToPayment')}
                             </Button>
                           </div>
                         </div>
@@ -2191,14 +1656,14 @@ export function SubscriptionDetailPage({ subscription, onBack }: SubscriptionDet
                     // Paiement
                     <div className="space-y-6">
                       <div className="bg-white rounded-xl border border-gray-200 p-6 shadow-sm">
-                        <h2 className="text-xl font-bold text-gray-900 mb-6">Paiement</h2>
+                        <h2 className="text-xl font-bold text-gray-900 mb-6">{t('subscriptions.detail.paymentStep.title')}</h2>
                         
                         <div className="space-y-6">
                           {/* Type de paiement */}
                           <div>
-                            <label className="block text-sm font-semibold text-gray-700 mb-2">Type de paiement *</label>
+                            <label className="block text-sm font-semibold text-gray-700 mb-2">{t('subscriptions.detail.paymentStep.paymentTypeLabel')}</label>
                             <div className="grid grid-cols-3 gap-3">
-                              {['Virement', 'Chèque', 'Prélèvement'].map((type, idx) => (
+                              {[t('subscriptions.detail.paymentStep.wireTransfer'), t('subscriptions.detail.paymentStep.check'), t('subscriptions.detail.paymentStep.directDebit')].map((type, idx) => (
                                 <div key={idx} className={`p-4 border-2 rounded-lg cursor-pointer transition-all ${idx === 0 ? 'border-blue-500 bg-blue-50' : 'border-gray-200 hover:border-gray-300'}`}>
                                   <div className="font-medium text-sm text-gray-900 text-center">{type}</div>
                                 </div>
@@ -2208,59 +1673,60 @@ export function SubscriptionDetailPage({ subscription, onBack }: SubscriptionDet
 
                           {/* Mandat */}
                           <div>
-                            <label className="block text-sm font-semibold text-gray-700 mb-2">Mandat de prélèvement</label>
+                            <label className="block text-sm font-semibold text-gray-700 mb-2">{t('subscriptions.detail.paymentStep.sepaMandate')}</label>
                             <div className="flex items-center gap-3">
                               <input type="checkbox" className="w-4 h-4" />
-                              <span className="text-sm text-gray-700">Mandat SEPA actif</span>
+                              <span className="text-sm text-gray-700">{t('subscriptions.detail.paymentStep.sepaActive')}</span>
                             </div>
                           </div>
 
                           {/* Date de valeur liquidative */}
                           <div>
-                            <label className="block text-sm font-semibold text-gray-700 mb-2">Date de valeur liquidative *</label>
+                            <label className="block text-sm font-semibold text-gray-700 mb-2">{t('subscriptions.detail.paymentStep.navDateLabel')}</label>
                             <Input type="date" />
                           </div>
 
                           {/* Montant */}
                           <div className="bg-gray-50 rounded-lg p-4">
                             <div className="flex justify-between items-center mb-2">
-                              <span className="text-sm text-gray-600">Montant de la souscription</span>
+                              <span className="text-sm text-gray-600">{t('subscriptions.detail.paymentStep.subscriptionAmount')}</span>
                               <span className="font-semibold text-gray-900">500 000,00 €</span>
                             </div>
                             <div className="flex justify-between items-center mb-2">
-                              <span className="text-sm text-gray-600">Frais d'entrée (0.75%)</span>
+                              <span className="text-sm text-gray-600">{t('subscriptions.detail.paymentStep.entryFees', { pct: '0.75' })}</span>
                               <span className="font-semibold text-gray-900">3 750,00 €</span>
                             </div>
                             <Separator className="my-3" />
                             <div className="flex justify-between items-center">
-                              <span className="font-semibold text-gray-900">Total à payer</span>
+                              <span className="font-semibold text-gray-900">{t('subscriptions.detail.paymentStep.totalToPay')}</span>
                               <span className="text-xl font-bold text-blue-600">503 750,00 €</span>
                             </div>
                           </div>
 
                           {/* Statut du paiement */}
                           <div>
-                            <h3 className="font-semibold text-gray-900 mb-3">Statut du paiement</h3>
+                            <h3 className="font-semibold text-gray-900 mb-3">{t('subscriptions.detail.paymentStep.paymentStatus')}</h3>
                             <div className="flex items-center gap-3 p-4 bg-amber-50 border border-amber-200 rounded-lg">
                               <Clock className="w-5 h-5 text-amber-600" />
                               <div className="flex-1">
-                                <div className="font-medium text-gray-900">En attente de réception</div>
-                                <div className="text-sm text-gray-600">Le paiement n'a pas encore été reçu</div>
+                                <div className="font-medium text-gray-900">{t('subscriptions.detail.paymentStep.awaitingReceipt')}</div>
+                                <div className="text-sm text-gray-600">{t('subscriptions.detail.paymentStep.awaitingReceiptDesc')}</div>
                               </div>
-                              <Badge className="bg-amber-100 text-amber-700 border-amber-300">En attente</Badge>
+                              <Badge className="bg-amber-100 text-amber-700 border-amber-300">{t('subscriptions.detail.paymentStep.pendingLabel')}</Badge>
                             </div>
                           </div>
 
                           <Separator />
 
                           <div className="flex justify-end gap-3">
-                            <Button variant="outline">Enregistrer</Button>
+                            <Button variant="outline">{t('subscriptions.detail.paymentStep.save')}</Button>
                             <Button 
-                              className="bg-gradient-to-r from-black to-[#0F323D] hover:opacity-90"
-                              onClick={() => toast.success('Paiement confirmé')}
+                              className="hover:opacity-90"
+                              style={{ background: PRIMARY_BUTTON_GRADIENT }}
+                              onClick={() => toast.success(t('subscriptions.detail.paymentStep.paymentConfirmed'))}
                             >
                               <CheckCircle2 className="w-4 h-4 mr-2" />
-                              Confirmer le paiement
+                              {t('subscriptions.detail.paymentStep.confirmPayment')}
                             </Button>
                           </div>
                         </div>
@@ -2273,32 +1739,33 @@ export function SubscriptionDetailPage({ subscription, onBack }: SubscriptionDet
                 <div className="w-80 flex-shrink-0">
                   {/* Stepper */}
                   <div className="sticky top-32 bg-white rounded-xl border border-gray-200 p-6 shadow-sm">
-                    <h3 className="font-bold text-gray-900 mb-6">Étapes de la souscription</h3>
-                    
+                    <h3 className="font-bold text-gray-900 mb-6">{t('subscriptions.detail.stepper.title')}</h3>
+
                     <div className="space-y-1">
                       {[
-                        { id: 0, label: 'Initialisation', icon: Settings },
-                        { id: 1, label: 'Onboarding en cours', icon: FileText },
-                        { id: 2, label: 'Validation', icon: CheckCircle2 },
-                        { id: 3, label: 'Envoyer en signature', icon: Mail },
-                        { id: 4, label: 'Signatures', icon: FileCheck },
-                        { id: 5, label: 'Contre-signature', icon: PenTool },
-                        { id: 6, label: 'Paiement', icon: Wallet },
+                        { id: 0, labelKey: 'subscriptions.detail.stepper.initialization', icon: Settings },
+                        { id: 1, labelKey: 'subscriptions.detail.stepper.onboarding', icon: FileText },
+                        { id: 2, labelKey: 'subscriptions.detail.stepper.validation', icon: CheckCircle2 },
+                        { id: 3, labelKey: 'subscriptions.detail.stepper.sendToSignature', icon: Mail },
+                        { id: 4, labelKey: 'subscriptions.detail.stepper.signatures', icon: FileCheck },
+                        { id: 5, labelKey: 'subscriptions.detail.stepper.counterSignature', icon: PenTool },
+                        { id: 6, labelKey: 'subscriptions.detail.stepper.payment', icon: Wallet },
                       ].map((step, index) => {
                         const StepIcon = step.icon;
                         const isActive = currentStep === step.id;
                         const isCompleted = currentStep > step.id;
                         const isAccessible = step.id <= currentStep + 1; // Can go to current or next step
-                        
+
                         return (
                           <div key={step.id}>
                             <button
                               onClick={() => isAccessible && setCurrentStep(step.id)}
                               disabled={!isAccessible}
+                              style={isActive ? { background: PRIMARY_BUTTON_GRADIENT } : undefined}
                               className={`w-full flex items-start gap-3 p-3 rounded-lg transition-all text-left ${
-                                isActive 
-                                  ? 'bg-gradient-to-r from-black to-[#0F323D] text-white shadow-md' 
-                                  : isCompleted 
+                                isActive
+                                  ? 'text-white shadow-md'
+                                  : isCompleted
                                     ? 'bg-green-50 hover:bg-green-100 text-green-900'
                                     : isAccessible
                                       ? 'hover:bg-gray-50 text-gray-900'
@@ -2320,10 +1787,10 @@ export function SubscriptionDetailPage({ subscription, onBack }: SubscriptionDet
                               </div>
                               <div className="flex-1 min-w-0">
                                 <div className={`text-sm font-semibold ${isActive ? 'text-white' : ''}`}>
-                                  {step.label}
+                                  {t(step.labelKey)}
                                 </div>
                                 <div className={`text-xs ${isActive ? 'text-white/80' : 'text-gray-500'}`}>
-                                  Étape {step.id + 1}/7
+                                  {t('subscriptions.detail.stepper.stepOf', { current: step.id + 1, total: 7 })}
                                 </div>
                               </div>
                             </button>
@@ -2348,28 +1815,28 @@ export function SubscriptionDetailPage({ subscription, onBack }: SubscriptionDet
                     <thead className="bg-gray-50 border-b border-gray-200">
                       <tr>
                         <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider w-40">
-                          Date
+                          {t('subscriptions.detail.emailsTab.date')}
                         </th>
                         <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider w-48">
-                          Type de mail
+                          {t('subscriptions.detail.emailsTab.emailType')}
                         </th>
                         <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                          Destinataire
+                          {t('subscriptions.detail.emailsTab.recipient')}
                         </th>
                         <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                          Destinataire en copie
+                          {t('subscriptions.detail.emailsTab.recipientCc')}
                         </th>
                         <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                          Sujet
+                          {t('subscriptions.detail.emailsTab.subject')}
                         </th>
                         <th className="px-4 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider w-40">
-                          Reçu
+                          {t('subscriptions.detail.emailsTab.received')}
                         </th>
                         <th className="px-4 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider w-40">
-                          Ouvert
+                          {t('subscriptions.detail.emailsTab.opened')}
                         </th>
                         <th className="px-4 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider w-40">
-                          Cliqué
+                          {t('subscriptions.detail.emailsTab.clicked')}
                         </th>
                       </tr>
                     </thead>
@@ -2418,7 +1885,7 @@ export function SubscriptionDetailPage({ subscription, onBack }: SubscriptionDet
               <div className="grid grid-cols-2 gap-4 mb-6">
                 {/* Montant Total Card */}
                 <div className="bg-white border border-gray-200 rounded-xl p-5">
-                  <div className="text-xs text-blue-600 mb-2">Montant total appelé</div>
+                  <div className="text-xs text-blue-600 mb-2">{t('subscriptions.detail.capitalCallsTab.totalCalledAmount')}</div>
                   <div className="text-2xl font-semibold text-gray-900">
                     {mockCapitalCalls.reduce((sum, call) => sum + call.amount + call.entryFees + call.subscriptionPremium, 0).toLocaleString('fr-FR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} €
                   </div>
@@ -2426,7 +1893,7 @@ export function SubscriptionDetailPage({ subscription, onBack }: SubscriptionDet
 
                 {/* Pourcentage Total Card */}
                 <div className="bg-white border border-gray-200 rounded-xl p-5">
-                  <div className="text-xs text-purple-600 mb-2">Pourcentage total appelé</div>
+                  <div className="text-xs text-purple-600 mb-2">{t('subscriptions.detail.capitalCallsTab.totalCalledPercentage')}</div>
                   <div className="text-2xl font-semibold text-gray-900">
                     {mockCapitalCalls.reduce((sum, call) => sum + call.percentage, 0)}%
                   </div>
@@ -2440,7 +1907,16 @@ export function SubscriptionDetailPage({ subscription, onBack }: SubscriptionDet
                   className="gap-2 border-gray-300 hover:bg-gray-50"
                   onClick={() => {
                     // Generate CSV content
-                    const headers = ['Date', 'Appel de fonds', 'Montant', 'Souscription', 'Frais d\'entrée', 'Prime de souscription', 'Pourcentage', 'Statut'];
+                    const headers = [
+                      t('subscriptions.detail.capitalCallsTab.date'),
+                      t('subscriptions.detail.capitalCallsTab.capitalCall'),
+                      t('subscriptions.detail.capitalCallsTab.amount'),
+                      t('subscriptions.detail.capitalCallsTab.subscription'),
+                      t('subscriptions.detail.capitalCallsTab.entryFees'),
+                      t('subscriptions.detail.capitalCallsTab.subscriptionPremium'),
+                      t('subscriptions.detail.capitalCallsTab.percentage'),
+                      t('subscriptions.detail.capitalCallsTab.status'),
+                    ];
                     const rows = mockCapitalCalls.map(call => [
                       call.date,
                       call.call,
@@ -2449,21 +1925,25 @@ export function SubscriptionDetailPage({ subscription, onBack }: SubscriptionDet
                       call.entryFees.toLocaleString('fr-FR', { minimumFractionDigits: 2 }) + ' €',
                       call.subscriptionPremium.toLocaleString('fr-FR', { minimumFractionDigits: 2 }) + ' €',
                       call.percentage + '%',
-                      call.status === 'paid' ? 'Payé' : call.status === 'pending' ? 'En attente' : 'Rejeté'
+                      call.status === 'paid'
+                        ? t('subscriptions.detail.capitalCallsTab.paid')
+                        : call.status === 'pending'
+                          ? t('subscriptions.detail.capitalCallsTab.pendingStatus')
+                          : t('subscriptions.detail.capitalCallsTab.rejectedStatus')
                     ]);
-                    
+
                     const csvContent = [headers, ...rows].map(row => row.join(';')).join('\n');
                     const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
                     const link = document.createElement('a');
                     link.href = URL.createObjectURL(blob);
                     link.download = `appels_de_fonds_${subscription.id}.csv`;
                     link.click();
-                    
-                    toast.success('Export réussi', { description: 'Le fichier CSV a été téléchargé' });
+
+                    toast.success(t('subscriptions.detail.capitalCallsTab.exportSuccess'), { description: t('subscriptions.detail.capitalCallsTab.exportSuccessDesc') });
                   }}
                 >
                   <Download className="w-4 h-4" />
-                  Exporter en CSV
+                  {t('subscriptions.detail.capitalCallsTab.exportCsv')}
                 </Button>
               </div>
 
@@ -2473,28 +1953,28 @@ export function SubscriptionDetailPage({ subscription, onBack }: SubscriptionDet
                     <thead className="bg-gray-50 border-b border-gray-200">
                       <tr>
                         <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider w-40">
-                          Date
+                          {t('subscriptions.detail.capitalCallsTab.date')}
                         </th>
                         <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider w-48">
-                          Appel de fonds
+                          {t('subscriptions.detail.capitalCallsTab.capitalCall')}
                         </th>
                         <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                          Montant
+                          {t('subscriptions.detail.capitalCallsTab.amount')}
                         </th>
                         <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                          Souscription
+                          {t('subscriptions.detail.capitalCallsTab.subscription')}
                         </th>
                         <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                          Frais d'entrée
+                          {t('subscriptions.detail.capitalCallsTab.entryFees')}
                         </th>
                         <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                          Prime de souscription
+                          {t('subscriptions.detail.capitalCallsTab.subscriptionPremium')}
                         </th>
                         <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                          Pourcentage
+                          {t('subscriptions.detail.capitalCallsTab.percentage')}
                         </th>
                         <th className="px-4 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider w-24">
-                          Statut
+                          {t('subscriptions.detail.capitalCallsTab.status')}
                         </th>
                       </tr>
                     </thead>
@@ -2525,17 +2005,17 @@ export function SubscriptionDetailPage({ subscription, onBack }: SubscriptionDet
                           <td className="px-4 py-3">
                             <div className="flex items-center justify-center gap-1.5">
                               {capitalCall.status === 'paid' && (
-                                <div className="w-5 h-5 rounded-full bg-emerald-100 flex items-center justify-center" title="Payé">
+                                <div className="w-5 h-5 rounded-full bg-emerald-100 flex items-center justify-center" title={t('subscriptions.detail.capitalCallsTab.paid')}>
                                   <Check className="w-3 h-3 text-emerald-600" />
                                 </div>
                               )}
                               {capitalCall.status === 'pending' && (
-                                <div className="w-5 h-5 rounded-full bg-amber-100 flex items-center justify-center" title="En attente">
+                                <div className="w-5 h-5 rounded-full bg-amber-100 flex items-center justify-center" title={t('subscriptions.detail.capitalCallsTab.pendingStatus')}>
                                   <AlertCircle className="w-3 h-3 text-amber-600" />
                                 </div>
                               )}
                               {capitalCall.status === 'rejected' && (
-                                <div className="w-5 h-5 rounded-full bg-red-100 flex items-center justify-center" title="Rejeté">
+                                <div className="w-5 h-5 rounded-full bg-red-100 flex items-center justify-center" title={t('subscriptions.detail.capitalCallsTab.rejectedStatus')}>
                                   <X className="w-3 h-3 text-red-600" />
                                 </div>
                               )}
@@ -2559,43 +2039,38 @@ export function SubscriptionDetailPage({ subscription, onBack }: SubscriptionDet
                   <div className="col-span-1 bg-gradient-to-br from-red-50 via-orange-50 to-amber-50 border border-red-200 rounded-xl p-6 shadow-sm">
                     <div className="flex flex-col items-center text-center">
                       <div className="relative mb-4">
-                        <motion.div
-                          initial={{ scale: 0 }}
-                          animate={{ scale: 1 }}
-                          transition={{ type: "spring", stiffness: 200 }}
+                        <div
                           className="w-24 h-24 rounded-full bg-gradient-to-br from-red-500 to-orange-600 flex items-center justify-center shadow-lg"
                         >
                           <span className="text-3xl font-bold text-white">72</span>
-                        </motion.div>
-                        <motion.div
-                          animate={{ scale: [1, 1.1, 1] }}
-                          transition={{ duration: 2, repeat: Infinity }}
+                        </div>
+                        <div
                           className="absolute inset-0 rounded-full bg-red-400/20 blur-md"
                         />
                       </div>
-                      <h3 className="font-bold text-gray-900 mb-1">Score de Risque</h3>
+                      <h3 className="font-bold text-gray-900 mb-1">{t('subscriptions.detail.riskTab.overallRiskScore')}</h3>
                       <Badge className="bg-red-100 text-red-700 border-red-300 font-semibold">
-                        Risque Élevé
+                        {t('subscriptions.detail.header.riskHigh')}
                       </Badge>
                       <p className="text-xs text-gray-600 mt-2">
-                        3 alertes actives
+                        {t('subscriptions.detail.riskTab.activeAlerts', { count: 3 })}
                       </p>
                       <Separator className="my-3" />
                       {riskValidated ? (
                         <div className="space-y-2">
                           <Badge className="bg-green-100 text-green-700 border-green-300 font-semibold">
                             <CheckCircle2 className="w-3 h-3 mr-1" />
-                            Validé
+                            {t('subscriptions.detail.validation.validatedStatus')}
                           </Badge>
                           <div className="text-xs text-gray-600">
-                            <div>Par {riskValidatedBy}</div>
+                            <div>{t('subscriptions.detail.header.validatedByLabel', { name: riskValidatedBy })}</div>
                             <div className="text-xs text-gray-500 mt-0.5">{riskValidationDate}</div>
                           </div>
                         </div>
                       ) : (
                         <Badge className="bg-amber-100 text-amber-700 border-amber-300 font-semibold">
                           <AlertCircle className="w-3 h-3 mr-1" />
-                          Non validé
+                          {t('subscriptions.detail.header.riskNotValidated')}
                         </Badge>
                       )}
                     </div>
@@ -2610,14 +2085,14 @@ export function SubscriptionDetailPage({ subscription, onBack }: SubscriptionDet
                           <Users className="w-5 h-5 text-orange-600" />
                         </div>
                         <Badge className="bg-orange-100 text-orange-700 border-orange-300 text-xs">
-                          Actif
+                          {t('subscriptions.detail.riskTab.active')}
                         </Badge>
                       </div>
-                      <h4 className="font-semibold text-gray-900 mb-1">PEP</h4>
-                      <p className="text-xs text-gray-600 mb-2">Personne Politiquement Exposée</p>
+                      <h4 className="font-semibold text-gray-900 mb-1">{t('subscriptions.detail.riskTab.pep')}</h4>
+                      <p className="text-xs text-gray-600 mb-2">{t('subscriptions.detail.riskTab.pepDesc')}</p>
                       <div className="flex items-baseline gap-1">
                         <span className="text-2xl font-bold text-orange-600">1</span>
-                        <span className="text-xs text-gray-500">match</span>
+                        <span className="text-xs text-gray-500">{t('subscriptions.detail.riskTab.match')}</span>
                       </div>
                     </div>
 
@@ -2628,14 +2103,14 @@ export function SubscriptionDetailPage({ subscription, onBack }: SubscriptionDet
                           <Scale className="w-5 h-5 text-red-600" />
                         </div>
                         <Badge className="bg-red-100 text-red-700 border-red-300 text-xs">
-                          Actif
+                          {t('subscriptions.detail.riskTab.active')}
                         </Badge>
                       </div>
-                      <h4 className="font-semibold text-gray-900 mb-1">Sanctions</h4>
-                      <p className="text-xs text-gray-600 mb-2">Listes de sanctions internationales</p>
+                      <h4 className="font-semibold text-gray-900 mb-1">{t('subscriptions.detail.riskTab.sanctionsTitle')}</h4>
+                      <p className="text-xs text-gray-600 mb-2">{t('subscriptions.detail.riskTab.sanctionsDesc')}</p>
                       <div className="flex items-baseline gap-1">
                         <span className="text-2xl font-bold text-red-600">1</span>
-                        <span className="text-xs text-gray-500">match</span>
+                        <span className="text-xs text-gray-500">{t('subscriptions.detail.riskTab.match')}</span>
                       </div>
                     </div>
 
@@ -2646,14 +2121,14 @@ export function SubscriptionDetailPage({ subscription, onBack }: SubscriptionDet
                           <Newspaper className="w-5 h-5 text-amber-600" />
                         </div>
                         <Badge className="bg-amber-100 text-amber-700 border-amber-300 text-xs">
-                          Actif
+                          {t('subscriptions.detail.riskTab.active')}
                         </Badge>
                       </div>
-                      <h4 className="font-semibold text-gray-900 mb-1">Adverse Media</h4>
-                      <p className="text-xs text-gray-600 mb-2">Médias défavorables</p>
+                      <h4 className="font-semibold text-gray-900 mb-1">{t('subscriptions.detail.riskTab.adverseMediaTitle')}</h4>
+                      <p className="text-xs text-gray-600 mb-2">{t('subscriptions.detail.riskTab.adverseMediaDesc')}</p>
                       <div className="flex items-baseline gap-1">
                         <span className="text-2xl font-bold text-amber-600">1</span>
-                        <span className="text-xs text-gray-500">article</span>
+                        <span className="text-xs text-gray-500">{t('subscriptions.detail.riskTab.article')}</span>
                       </div>
                     </div>
                   </div>
@@ -2668,8 +2143,8 @@ export function SubscriptionDetailPage({ subscription, onBack }: SubscriptionDet
                           <Scale className="w-5 h-5 text-indigo-600" />
                         </div>
                         <div>
-                          <h3 className="font-bold text-gray-900">Matrice de Risque Détaillée</h3>
-                          <p className="text-sm text-gray-600">Profil de risque - Calcul du score global</p>
+                          <h3 className="font-bold text-gray-900">{t('subscriptions.detail.riskTab.riskMatrix')}</h3>
+                          <p className="text-sm text-gray-600">{t('subscriptions.detail.riskTab.riskMatrixDesc')}</p>
                         </div>
                       </div>
                       <div className="flex items-center gap-3">
@@ -2677,7 +2152,7 @@ export function SubscriptionDetailPage({ subscription, onBack }: SubscriptionDet
                           <div className="text-2xl font-bold bg-gradient-to-r from-red-600 to-orange-600 bg-clip-text text-transparent">
                             72.00
                           </div>
-                          <div className="text-xs text-gray-500">/ 100 points</div>
+                          <div className="text-xs text-gray-500">{t('subscriptions.detail.riskTab.points')}</div>
                         </div>
                         {!riskValidated && (
                           <Button
@@ -2686,7 +2161,7 @@ export function SubscriptionDetailPage({ subscription, onBack }: SubscriptionDet
                             style={{ background: 'linear-gradient(135deg, #10b981 0%, #059669 100%)' }}
                           >
                             <CheckCircle2 className="w-4 h-4" />
-                            Valider le scoring
+                            {t('subscriptions.detail.riskTab.validateScoring')}
                           </Button>
                         )}
                       </div>
@@ -2699,92 +2174,92 @@ export function SubscriptionDetailPage({ subscription, onBack }: SubscriptionDet
                       <div className="space-y-3">
                         <div className="flex items-center gap-2 mb-4">
                           <User className="w-5 h-5 text-indigo-600" />
-                          <h4 className="font-bold text-gray-900">Personne Physique</h4>
+                          <h4 className="font-bold text-gray-900">{t('subscriptions.detail.riskTab.naturalPerson')}</h4>
                         </div>
                         
                         <div className="space-y-2">
                           <div className="flex justify-between items-center py-2 border-b border-gray-100">
-                            <span className="text-sm text-gray-700">Typologie du souscripteur</span>
+                            <span className="text-sm text-gray-700">{t('subscriptions.detail.riskTab.subscriberType')}</span>
                             <div className="flex items-center gap-2">
                               <span className="text-sm font-semibold text-gray-900">0.00</span>
                             </div>
                           </div>
                           <div className="flex justify-between items-center py-2 border-b border-gray-100">
-                            <span className="text-sm text-gray-700">Décision Conformité</span>
+                            <span className="text-sm text-gray-700">{t('subscriptions.detail.riskTab.complianceDecision')}</span>
                             <div className="flex items-center gap-2">
                               <span className="text-sm font-semibold text-gray-900">0.00</span>
                             </div>
                           </div>
                           <div className="flex justify-between items-center py-2 border-b border-gray-100">
-                            <span className="text-sm text-gray-700">Secteur d'activité</span>
+                            <span className="text-sm text-gray-700">{t('subscriptions.detail.riskTab.activitySector')}</span>
                             <div className="flex items-center gap-2">
                               <span className="text-sm font-semibold text-gray-900">0.00</span>
                             </div>
                           </div>
                           <div className="flex justify-between items-center py-2 border-b border-gray-100">
-                            <span className="text-sm text-gray-700">Origine de la relation</span>
+                            <span className="text-sm text-gray-700">{t('subscriptions.detail.riskTab.relationOrigin')}</span>
                             <div className="flex items-center gap-2">
                               <span className="text-sm font-semibold text-gray-900">0.00</span>
                             </div>
                           </div>
                           <div className="flex justify-between items-center py-2 border-b border-gray-100">
-                            <span className="text-sm text-gray-700">Nationalité</span>
+                            <span className="text-sm text-gray-700">{t('subscriptions.detail.riskTab.nationality')}</span>
                             <div className="flex items-center gap-2">
                               <span className="text-sm font-semibold text-gray-900">0.00</span>
                             </div>
                           </div>
                           <div className="flex justify-between items-center py-2 border-b border-gray-100 bg-orange-50">
-                            <span className="text-sm text-gray-700 font-medium">PEP souscripteur</span>
+                            <span className="text-sm text-gray-700 font-medium">{t('subscriptions.detail.riskTab.pepSubscriber')}</span>
                             <div className="flex items-center gap-2">
                               <AlertCircle className="w-4 h-4 text-orange-600" />
                               <span className="text-sm font-bold text-orange-700">15.00</span>
                             </div>
                           </div>
                           <div className="flex justify-between items-center py-2 border-b border-gray-100">
-                            <span className="text-sm text-gray-700">Pays de résidence fiscale</span>
+                            <span className="text-sm text-gray-700">{t('subscriptions.detail.riskTab.taxResidenceCountry')}</span>
                             <div className="flex items-center gap-2">
                               <span className="text-sm font-semibold text-gray-900">0.00</span>
                             </div>
                           </div>
                           <div className="flex justify-between items-center py-2 border-b border-gray-100 bg-amber-50">
-                            <span className="text-sm text-gray-700 font-medium">Pays de résidence si différent</span>
+                            <span className="text-sm text-gray-700 font-medium">{t('subscriptions.detail.riskTab.residenceCountryDiff')}</span>
                             <div className="flex items-center gap-2">
                               <AlertCircle className="w-4 h-4 text-amber-600" />
                               <span className="text-sm font-bold text-amber-700">5.00</span>
                             </div>
                           </div>
                           <div className="flex justify-between items-center py-2 border-b border-gray-100">
-                            <span className="text-sm text-gray-700">Nationalité du co-souscripteur</span>
+                            <span className="text-sm text-gray-700">{t('subscriptions.detail.riskTab.coSubscriberNationality')}</span>
                             <div className="flex items-center gap-2">
                               <span className="text-sm font-semibold text-gray-900">0.00</span>
                             </div>
                           </div>
                           <div className="flex justify-between items-center py-2 border-b border-gray-100">
-                            <span className="text-sm text-gray-700">Origine de la relation co-souscripteur</span>
+                            <span className="text-sm text-gray-700">{t('subscriptions.detail.riskTab.coSubscriberRelationOrigin')}</span>
                             <div className="flex items-center gap-2">
                               <span className="text-sm font-semibold text-gray-900">0.00</span>
                             </div>
                           </div>
                           <div className="flex justify-between items-center py-2 border-b border-gray-100">
-                            <span className="text-sm text-gray-700">PEP co-souscripteur</span>
+                            <span className="text-sm text-gray-700">{t('subscriptions.detail.riskTab.pepCoSubscriber')}</span>
                             <div className="flex items-center gap-2">
                               <span className="text-sm font-semibold text-gray-900">0.00</span>
                             </div>
                           </div>
                           <div className="flex justify-between items-center py-2 border-b border-gray-100">
-                            <span className="text-sm text-gray-700">Pays de résidence fiscale co-souscripteur</span>
+                            <span className="text-sm text-gray-700">{t('subscriptions.detail.riskTab.coSubscriberTaxResidence')}</span>
                             <div className="flex items-center gap-2">
                               <span className="text-sm font-semibold text-gray-900">0.00</span>
                             </div>
                           </div>
                           <div className="flex justify-between items-center py-2 border-b border-gray-100">
-                            <span className="text-sm text-gray-700">Secteur d'activité co-sous/ripteur</span>
+                            <span className="text-sm text-gray-700">{t('subscriptions.detail.riskTab.coSubscriberActivitySector')}</span>
                             <div className="flex items-center gap-2">
                               <span className="text-sm font-semibold text-gray-900">0.00</span>
                             </div>
                           </div>
                           <div className="flex justify-between items-center py-2 border-b border-gray-100">
-                            <span className="text-sm text-gray-700">Pays de résidence co-souscripteur si différent</span>
+                            <span className="text-sm text-gray-700">{t('subscriptions.detail.riskTab.coSubscriberResidenceDiff')}</span>
                             <div className="flex items-center gap-2">
                               <span className="text-sm font-semibold text-gray-900">0.00</span>
                             </div>
@@ -2796,100 +2271,100 @@ export function SubscriptionDetailPage({ subscription, onBack }: SubscriptionDet
                       <div className="space-y-3">
                         <div className="flex items-center gap-2 mb-4">
                           <Building2 className="w-5 h-5 text-purple-600" />
-                          <h4 className="font-bold text-gray-900">Personne Morale</h4>
+                          <h4 className="font-bold text-gray-900">{t('subscriptions.detail.riskTab.legalEntity')}</h4>
                         </div>
                         
                         <div className="space-y-2">
                           <div className="flex justify-between items-center py-2 border-b border-gray-100 bg-red-50">
-                            <span className="text-sm text-gray-700 font-medium">Origine de la relation</span>
+                            <span className="text-sm text-gray-700 font-medium">{t('subscriptions.detail.riskTab.relationOrigin')}</span>
                             <div className="flex items-center gap-2">
                               <AlertTriangle className="w-4 h-4 text-red-600" />
                               <span className="text-sm font-bold text-red-700">20.00</span>
                             </div>
                           </div>
                           <div className="flex justify-between items-center py-2 border-b border-gray-100">
-                            <span className="text-sm text-gray-700">Décision Conformité</span>
+                            <span className="text-sm text-gray-700">{t('subscriptions.detail.riskTab.complianceDecision')}</span>
                             <div className="flex items-center gap-2">
                               <span className="text-sm font-semibold text-gray-900">0.00</span>
                             </div>
                           </div>
                           <div className="flex justify-between items-center py-2 border-b border-gray-100">
-                            <span className="text-sm text-gray-700">Secteur d'activité</span>
+                            <span className="text-sm text-gray-700">{t('subscriptions.detail.riskTab.activitySector')}</span>
                             <div className="flex items-center gap-2">
                               <span className="text-sm font-semibold text-gray-900">4.00</span>
                             </div>
                           </div>
                           <div className="flex justify-between items-center py-2 border-b border-gray-100">
-                            <span className="text-sm text-gray-700">PEP RL</span>
+                            <span className="text-sm text-gray-700">{t('subscriptions.detail.riskTab.pepRL')}</span>
                             <div className="flex items-center gap-2">
                               <span className="text-sm font-semibold text-gray-900">0.00</span>
                             </div>
                           </div>
                           <div className="flex justify-between items-center py-2 border-b border-gray-100 bg-red-50">
-                            <span className="text-sm text-gray-700 font-medium">PEP Structure</span>
+                            <span className="text-sm text-gray-700 font-medium">{t('subscriptions.detail.riskTab.pepStructure')}</span>
                             <div className="flex items-center gap-2">
                               <AlertTriangle className="w-4 h-4 text-red-600" />
                               <span className="text-sm font-bold text-red-700">18.00</span>
                             </div>
                           </div>
                           <div className="flex justify-between items-center py-2 border-b border-gray-100">
-                            <span className="text-sm text-gray-700">Pays d'immatriculation</span>
+                            <span className="text-sm text-gray-700">{t('subscriptions.detail.riskTab.registrationCountry')}</span>
                             <div className="flex items-center gap-2">
                               <span className="text-sm font-semibold text-gray-900">0.00</span>
                             </div>
                           </div>
                           <div className="flex justify-between items-center py-2 border-b border-gray-100">
-                            <span className="text-sm text-gray-700">FATCA</span>
+                            <span className="text-sm text-gray-700">{t('subscriptions.detail.riskTab.fatca')}</span>
                             <div className="flex items-center gap-2">
                               <span className="text-sm font-semibold text-gray-900">0.00</span>
                             </div>
                           </div>
                           <div className="flex justify-between items-center py-2 border-b border-gray-100 bg-amber-50">
-                            <span className="text-sm text-gray-700 font-medium">Entité régulée</span>
+                            <span className="text-sm text-gray-700 font-medium">{t('subscriptions.detail.riskTab.regulatedEntity')}</span>
                             <div className="flex items-center gap-2">
                               <AlertCircle className="w-4 h-4 text-amber-600" />
                               <span className="text-sm font-bold text-amber-700">6.00</span>
                             </div>
                           </div>
                           <div className="flex justify-between items-center py-2 border-b border-gray-100">
-                            <span className="text-sm text-gray-700">Domiciliation du RIB</span>
+                            <span className="text-sm text-gray-700">{t('subscriptions.detail.riskTab.ribDomiciliation')}</span>
                             <div className="flex items-center gap-2">
                               <span className="text-sm font-semibold text-gray-900">0.00</span>
                             </div>
                           </div>
                           <div className="flex justify-between items-center py-2 border-b border-gray-100">
-                            <span className="text-sm text-gray-700">Contrôle PEP RL 2</span>
+                            <span className="text-sm text-gray-700">{t('subscriptions.detail.riskTab.pepRL2')}</span>
                             <div className="flex items-center gap-2">
                               <span className="text-sm font-semibold text-gray-900">0.00</span>
                             </div>
                           </div>
                           <div className="flex justify-between items-center py-2 border-b border-gray-100">
-                            <span className="text-sm text-gray-700">Contrôle PEP RL 3</span>
+                            <span className="text-sm text-gray-700">{t('subscriptions.detail.riskTab.pepRL3')}</span>
                             <div className="flex items-center gap-2">
                               <span className="text-sm font-semibold text-gray-900">0.00</span>
                             </div>
                           </div>
                           <div className="flex justify-between items-center py-2 border-b border-gray-100">
-                            <span className="text-sm text-gray-700">Contrôle PEP RL 4</span>
+                            <span className="text-sm text-gray-700">{t('subscriptions.detail.riskTab.pepRL4')}</span>
                             <div className="flex items-center gap-2">
                               <span className="text-sm font-semibold text-gray-900">0.00</span>
                             </div>
                           </div>
                           <div className="flex justify-between items-center py-2 border-b border-gray-100 bg-amber-50">
-                            <span className="text-sm text-gray-700 font-medium">Contrôle PEP BE 1</span>
+                            <span className="text-sm text-gray-700 font-medium">{t('subscriptions.detail.riskTab.pepBE1')}</span>
                             <div className="flex items-center gap-2">
                               <AlertCircle className="w-4 h-4 text-amber-600" />
                               <span className="text-sm font-bold text-amber-700">5.00</span>
                             </div>
                           </div>
                           <div className="flex justify-between items-center py-2 border-b border-gray-100">
-                            <span className="text-sm text-gray-700">Contrôle PEP BE 2</span>
+                            <span className="text-sm text-gray-700">{t('subscriptions.detail.riskTab.pepBE2')}</span>
                             <div className="flex items-center gap-2">
                               <span className="text-sm font-semibold text-gray-900">0.00</span>
                             </div>
                           </div>
                           <div className="flex justify-between items-center py-2 border-b border-gray-100 bg-amber-50">
-                            <span className="text-sm text-gray-700 font-medium">Contrôle PEP BE 3</span>
+                            <span className="text-sm text-gray-700 font-medium">{t('subscriptions.detail.riskTab.pepBE3')}</span>
                             <div className="flex items-center gap-2">
                               <AlertCircle className="w-4 h-4 text-amber-600" />
                               <span className="text-sm font-bold text-amber-700">4.00</span>
@@ -2907,7 +2382,7 @@ export function SubscriptionDetailPage({ subscription, onBack }: SubscriptionDet
                             <TrendingUp className="w-6 h-6 text-white" />
                           </div>
                           <div>
-                            <div className="text-sm text-gray-600 mb-1">Score Global de Risque</div>
+                            <div className="text-sm text-gray-600 mb-1">{t('subscriptions.detail.riskTab.globalRiskScore')}</div>
                             <div className="text-3xl font-bold bg-gradient-to-r from-red-600 to-orange-600 bg-clip-text text-transparent">
                               72.00 / 100
                             </div>
@@ -2915,10 +2390,10 @@ export function SubscriptionDetailPage({ subscription, onBack }: SubscriptionDet
                         </div>
                         <div className="text-right">
                           <Badge className="bg-red-100 text-red-700 border-red-300 font-bold text-lg px-4 py-2">
-                            Risque Élevé
+                            {t('subscriptions.detail.header.riskHigh')}
                           </Badge>
                           <div className="text-xs text-gray-600 mt-2">
-                            Basé sur {15} critères actifs
+                            {t('subscriptions.detail.riskTab.basedOnCriteria', { count: 15 })}
                           </div>
                         </div>
                       </div>
@@ -2935,18 +2410,18 @@ export function SubscriptionDetailPage({ subscription, onBack }: SubscriptionDet
                           <AlertTriangle className="w-5 h-5 text-red-600" />
                         </div>
                         <div>
-                          <h3 className="font-bold text-gray-900">Alertes de Risque Détaillées</h3>
-                          <p className="text-sm text-gray-600">Analyse complète des facteurs de risque</p>
+                          <h3 className="font-bold text-gray-900">{t('subscriptions.detail.riskTab.alertDetails')}</h3>
+                          <p className="text-sm text-gray-600">{t('subscriptions.detail.riskTab.alertDetailsDesc')}</p>
                         </div>
                       </div>
                       <Button
                         variant="outline"
                         size="sm"
                         className="gap-2"
-                        onClick={() => toast.info('Export des alertes', { description: 'Rapport de risque en cours de génération' })}
+                        onClick={() => toast.info(t('subscriptions.detail.riskTab.exportAlerts'), { description: t('subscriptions.detail.riskTab.exportAlertsDesc') })}
                       >
                         <Download className="w-4 h-4" />
-                        Exporter
+                        {t('subscriptions.detail.riskTab.export')}
                       </Button>
                     </div>
                   </div>
@@ -2956,22 +2431,22 @@ export function SubscriptionDetailPage({ subscription, onBack }: SubscriptionDet
                       <thead>
                         <tr className="bg-gray-50">
                           <th className="px-6 py-3 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">
-                            Type d'Alerte
+                            {t('subscriptions.detail.riskTab.alertType')}
                           </th>
                           <th className="px-6 py-3 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">
-                            Détails
+                            {t('subscriptions.detail.riskTab.details')}
                           </th>
                           <th className="px-6 py-3 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">
-                            Niveau de Risque
+                            {t('subscriptions.detail.riskTab.riskLevel')}
                           </th>
                           <th className="px-6 py-3 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">
-                            Statut
+                            {t('subscriptions.detail.riskTab.statusCol')}
                           </th>
                           <th className="px-6 py-3 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">
-                            Date de Détection
+                            {t('subscriptions.detail.riskTab.detectionDate')}
                           </th>
                           <th className="px-6 py-3 text-center text-xs font-semibold text-gray-600 uppercase tracking-wider">
-                            Actions
+                            {t('subscriptions.detail.riskTab.actions')}
                           </th>
                         </tr>
                       </thead>
@@ -2984,19 +2459,19 @@ export function SubscriptionDetailPage({ subscription, onBack }: SubscriptionDet
                                 <Users className="w-4 h-4 text-orange-600" />
                               </div>
                               <div>
-                                <div className="font-semibold text-gray-900">PEP - Niveau 1</div>
-                                <div className="text-xs text-gray-500">Personne Politiquement Exposée</div>
+                                <div className="font-semibold text-gray-900">{t('subscriptions.detail.riskTab.pepLevel1')}</div>
+                                <div className="text-xs text-gray-500">{t('subscriptions.detail.riskTab.pepLevel1Desc')}</div>
                               </div>
                             </div>
                           </td>
                           <td className="px-6 py-4">
                             <div className="text-sm text-gray-700">
-                              <div className="font-medium mb-1">Fonction ministérielle identifiée</div>
+                              <div className="font-medium mb-1">{t('subscriptions.detail.riskTab.ministerialFunction')}</div>
                               <div className="text-xs text-gray-600">
-                                Ancien ministre des finances (2018-2022)
+                                {t('subscriptions.detail.riskTab.ministerialFunctionDesc')}
                               </div>
                               <div className="text-xs text-gray-500 mt-1">
-                                Source: Base de données ACPR
+                                {t('subscriptions.detail.riskTab.sourceACPR')}
                               </div>
                             </div>
                           </td>
@@ -3004,14 +2479,14 @@ export function SubscriptionDetailPage({ subscription, onBack }: SubscriptionDet
                             <div className="flex items-center gap-2">
                               <div className="w-2 h-2 rounded-full bg-orange-500"></div>
                               <Badge className="bg-orange-100 text-orange-700 border-orange-300 font-semibold">
-                                Élevé
+                                {t('subscriptions.detail.riskTab.highLevel')}
                               </Badge>
                             </div>
                             <div className="text-xs text-gray-500 mt-1">Score: 85/100</div>
                           </td>
                           <td className="px-6 py-4">
                             <Badge className="bg-yellow-100 text-yellow-700 border-yellow-300">
-                              En Révision
+                              {t('subscriptions.detail.riskTab.inReview')}
                             </Badge>
                           </td>
                           <td className="px-6 py-4">
@@ -3026,7 +2501,7 @@ export function SubscriptionDetailPage({ subscription, onBack }: SubscriptionDet
                               <Button
                                 variant="ghost"
                                 size="sm"
-                                onClick={() => toast.info('Détails PEP', { description: 'Affichage des détails de l\'alerte PEP' })}
+                                onClick={() => toast.info(t('subscriptions.detail.riskTab.pepDetails'), { description: t('subscriptions.detail.riskTab.pepDetailsDesc') })}
                               >
                                 <Eye className="w-4 h-4" />
                               </Button>
@@ -3042,19 +2517,19 @@ export function SubscriptionDetailPage({ subscription, onBack }: SubscriptionDet
                                 <Scale className="w-4 h-4 text-red-600" />
                               </div>
                               <div>
-                                <div className="font-semibold text-gray-900">Liste de Sanctions</div>
-                                <div className="text-xs text-gray-500">OFAC - EU Sanctions</div>
+                                <div className="font-semibold text-gray-900">{t('subscriptions.detail.riskTab.sanctionsList')}</div>
+                                <div className="text-xs text-gray-500">{t('subscriptions.detail.riskTab.ofacEu')}</div>
                               </div>
                             </div>
                           </td>
                           <td className="px-6 py-4">
                             <div className="text-sm text-gray-700">
-                              <div className="font-medium mb-1">Match partiel détecté</div>
+                              <div className="font-medium mb-1">{t('subscriptions.detail.riskTab.partialMatchDetected')}</div>
                               <div className="text-xs text-gray-600">
-                                Similitude de nom: 87% - Vérification requise
+                                {t('subscriptions.detail.riskTab.partialMatchDesc', { pct: 87 })}
                               </div>
                               <div className="text-xs text-gray-500 mt-1">
-                                Source: OFAC SDN List, EU Consolidated List
+                                {t('subscriptions.detail.riskTab.sourceOFAC')}
                               </div>
                             </div>
                           </td>
@@ -3062,14 +2537,14 @@ export function SubscriptionDetailPage({ subscription, onBack }: SubscriptionDet
                             <div className="flex items-center gap-2">
                               <div className="w-2 h-2 rounded-full bg-red-500"></div>
                               <Badge className="bg-red-100 text-red-700 border-red-300 font-semibold">
-                                Critique
+                                {t('subscriptions.detail.riskTab.critical')}
                               </Badge>
                             </div>
                             <div className="text-xs text-gray-500 mt-1">Score: 92/100</div>
                           </td>
                           <td className="px-6 py-4">
                             <Badge className="bg-red-100 text-red-700 border-red-300">
-                              Action Requise
+                              {t('subscriptions.detail.riskTab.actionRequired')}
                             </Badge>
                           </td>
                           <td className="px-6 py-4">
@@ -3084,7 +2559,7 @@ export function SubscriptionDetailPage({ subscription, onBack }: SubscriptionDet
                               <Button
                                 variant="ghost"
                                 size="sm"
-                                onClick={() => toast.info('Détails Sanctions', { description: 'Affichage des détails de l\'alerte sanctions' })}
+                                onClick={() => toast.info(t('subscriptions.detail.riskTab.sanctionsDetails'), { description: t('subscriptions.detail.riskTab.sanctionsDetailsDesc') })}
                               >
                                 <Eye className="w-4 h-4" />
                               </Button>
@@ -3100,19 +2575,19 @@ export function SubscriptionDetailPage({ subscription, onBack }: SubscriptionDet
                                 <Newspaper className="w-4 h-4 text-amber-600" />
                               </div>
                               <div>
-                                <div className="font-semibold text-gray-900">Adverse Media</div>
-                                <div className="text-xs text-gray-500">Presse défavorable</div>
+                                <div className="font-semibold text-gray-900">{t('subscriptions.detail.riskTab.adverseMediaAlert')}</div>
+                                <div className="text-xs text-gray-500">{t('subscriptions.detail.riskTab.adverseMediaAlertDesc')}</div>
                               </div>
                             </div>
                           </td>
                           <td className="px-6 py-4">
                             <div className="text-sm text-gray-700">
-                              <div className="font-medium mb-1">Article de presse identifié</div>
+                              <div className="font-medium mb-1">{t('subscriptions.detail.riskTab.pressArticle')}</div>
                               <div className="text-xs text-gray-600">
-                                "Enquête sur des soupçons de fraude fiscale" - Le Monde
+                                {t('subscriptions.detail.riskTab.pressArticleDesc')}
                               </div>
                               <div className="text-xs text-gray-500 mt-1">
-                                Source: Analyse automatisée de la presse
+                                {t('subscriptions.detail.riskTab.sourceAutomated')}
                               </div>
                             </div>
                           </td>
@@ -3120,14 +2595,14 @@ export function SubscriptionDetailPage({ subscription, onBack }: SubscriptionDet
                             <div className="flex items-center gap-2">
                               <div className="w-2 h-2 rounded-full bg-amber-500"></div>
                               <Badge className="bg-amber-100 text-amber-700 border-amber-300 font-semibold">
-                                Moyen
+                                {t('subscriptions.detail.riskTab.mediumLevel')}
                               </Badge>
                             </div>
                             <div className="text-xs text-gray-500 mt-1">Score: 68/100</div>
                           </td>
                           <td className="px-6 py-4">
                             <Badge className="bg-blue-100 text-blue-700 border-blue-300">
-                              En Analyse
+                              {t('subscriptions.detail.riskTab.inAnalysis')}
                             </Badge>
                           </td>
                           <td className="px-6 py-4">
@@ -3142,7 +2617,7 @@ export function SubscriptionDetailPage({ subscription, onBack }: SubscriptionDet
                               <Button
                                 variant="ghost"
                                 size="sm"
-                                onClick={() => toast.info('Détails Médias', { description: 'Affichage de l\'article identifié' })}
+                                onClick={() => toast.info(t('subscriptions.detail.riskTab.mediaDetails'), { description: t('subscriptions.detail.riskTab.mediaDetailsDesc') })}
                               >
                                 <Eye className="w-4 h-4" />
                               </Button>
@@ -3162,7 +2637,7 @@ export function SubscriptionDetailPage({ subscription, onBack }: SubscriptionDet
                       <div className="p-2 bg-blue-100 rounded-lg">
                         <Clock className="w-5 h-5 text-blue-600" />
                       </div>
-                      <h3 className="font-bold text-gray-900">Historique des Risques</h3>
+                      <h3 className="font-bold text-gray-900">{t('subscriptions.detail.riskTab.riskTimeline')}</h3>
                     </div>
                     
                     <div className="space-y-4">
@@ -3173,8 +2648,8 @@ export function SubscriptionDetailPage({ subscription, onBack }: SubscriptionDet
                         </div>
                         <div className="flex-1 pb-4">
                           <div className="text-xs text-gray-500 mb-1">29/12/2025 - 09:15</div>
-                          <div className="font-medium text-gray-900">Alerte Sanctions détectée</div>
-                          <div className="text-sm text-gray-600 mt-1">Match partiel OFAC - Score 92/100</div>
+                          <div className="font-medium text-gray-900">{t('subscriptions.detail.riskTab.sanctionsAlertDetected')}</div>
+                          <div className="text-sm text-gray-600 mt-1">{t('subscriptions.detail.riskTab.sanctionsAlertDesc')}</div>
                         </div>
                       </div>
 
@@ -3185,8 +2660,8 @@ export function SubscriptionDetailPage({ subscription, onBack }: SubscriptionDet
                         </div>
                         <div className="flex-1 pb-4">
                           <div className="text-xs text-gray-500 mb-1">28/12/2025 - 14:32</div>
-                          <div className="font-medium text-gray-900">Identification PEP</div>
-                          <div className="text-sm text-gray-600 mt-1">Fonction ministérielle confirmée</div>
+                          <div className="font-medium text-gray-900">{t('subscriptions.detail.riskTab.pepIdentification')}</div>
+                          <div className="text-sm text-gray-600 mt-1">{t('subscriptions.detail.riskTab.pepIdentificationDesc')}</div>
                         </div>
                       </div>
 
@@ -3197,8 +2672,8 @@ export function SubscriptionDetailPage({ subscription, onBack }: SubscriptionDet
                         </div>
                         <div className="flex-1 pb-4">
                           <div className="text-xs text-gray-500 mb-1">27/12/2025 - 16:48</div>
-                          <div className="font-medium text-gray-900">Adverse Media trouvé</div>
-                          <div className="text-sm text-gray-600 mt-1">Article Le Monde - Enquête fiscale</div>
+                          <div className="font-medium text-gray-900">{t('subscriptions.detail.riskTab.adverseMediaFound')}</div>
+                          <div className="text-sm text-gray-600 mt-1">{t('subscriptions.detail.riskTab.adverseMediaFoundDesc')}</div>
                         </div>
                       </div>
 
@@ -3208,8 +2683,8 @@ export function SubscriptionDetailPage({ subscription, onBack }: SubscriptionDet
                         </div>
                         <div className="flex-1">
                           <div className="text-xs text-gray-500 mb-1">25/12/2025 - 10:00</div>
-                          <div className="font-medium text-gray-900">Screening initial complété</div>
-                          <div className="text-sm text-gray-600 mt-1">Aucune alerte détectée initialement</div>
+                          <div className="font-medium text-gray-900">{t('subscriptions.detail.riskTab.initialScreening')}</div>
+                          <div className="text-sm text-gray-600 mt-1">{t('subscriptions.detail.riskTab.initialScreeningDesc')}</div>
                         </div>
                       </div>
                     </div>
@@ -3221,7 +2696,7 @@ export function SubscriptionDetailPage({ subscription, onBack }: SubscriptionDet
                       <div className="p-2 bg-green-100 rounded-lg">
                         <Shield className="w-5 h-5 text-green-600" />
                       </div>
-                      <h3 className="font-bold text-gray-900">Actions de Mitigation</h3>
+                      <h3 className="font-bold text-gray-900">{t('subscriptions.detail.riskTab.mitigationActions')}</h3>
                     </div>
                     
                     <div className="space-y-3">
@@ -3229,11 +2704,11 @@ export function SubscriptionDetailPage({ subscription, onBack }: SubscriptionDet
                         <div className="flex items-start gap-3">
                           <CheckCircle2 className="w-5 h-5 text-green-600 mt-0.5" />
                           <div className="flex-1">
-                            <div className="font-medium text-gray-900 mb-1">Diligence renforcée activée</div>
+                            <div className="font-medium text-gray-900 mb-1">{t('subscriptions.detail.riskTab.eddActivated')}</div>
                             <div className="text-sm text-gray-600">
-                              Procédure EDD (Enhanced Due Diligence) en cours
+                              {t('subscriptions.detail.riskTab.eddDesc')}
                             </div>
-                            <div className="text-xs text-gray-500 mt-2">Complétée à 65%</div>
+                            <div className="text-xs text-gray-500 mt-2">{t('subscriptions.detail.riskTab.completedAt', { pct: 65 })}</div>
                             <div className="w-full bg-gray-200 rounded-full h-1.5 mt-2">
                               <div className="bg-green-600 h-1.5 rounded-full" style={{ width: '65%' }}></div>
                             </div>
@@ -3245,17 +2720,17 @@ export function SubscriptionDetailPage({ subscription, onBack }: SubscriptionDet
                         <div className="flex items-start gap-3">
                           <FileText className="w-5 h-5 text-blue-600 mt-0.5" />
                           <div className="flex-1">
-                            <div className="font-medium text-gray-900 mb-1">Documentation supplémentaire requise</div>
+                            <div className="font-medium text-gray-900 mb-1">{t('subscriptions.detail.riskTab.additionalDocs')}</div>
                             <div className="text-sm text-gray-600">
-                              Justificatifs de revenus détaillés et source de fonds
+                              {t('subscriptions.detail.riskTab.additionalDocsDesc')}
                             </div>
                             <Button
                               size="sm"
                               variant="outline"
                               className="mt-3 w-full"
-                              onClick={() => toast.info('Demande envoyée', { description: 'Email de demande de documents envoyé' })}
+                              onClick={() => toast.info(t('subscriptions.detail.riskTab.requestSent'), { description: t('subscriptions.detail.riskTab.requestSentDesc') })}
                             >
-                              Demander les documents
+                              {t('subscriptions.detail.riskTab.requestDocuments')}
                             </Button>
                           </div>
                         </div>
@@ -3265,12 +2740,12 @@ export function SubscriptionDetailPage({ subscription, onBack }: SubscriptionDet
                         <div className="flex items-start gap-3">
                           <Users className="w-5 h-5 text-purple-600 mt-0.5" />
                           <div className="flex-1">
-                            <div className="font-medium text-gray-900 mb-1">Validation hiérarchique</div>
+                            <div className="font-medium text-gray-900 mb-1">{t('subscriptions.detail.riskTab.hierarchicalValidation')}</div>
                             <div className="text-sm text-gray-600">
-                              Approbation du Responsable Compliance requise
+                              {t('subscriptions.detail.riskTab.hierarchicalValidationDesc')}
                             </div>
                             <Badge className="bg-yellow-100 text-yellow-700 border-yellow-300 mt-2">
-                              En Attente
+                              {t('subscriptions.detail.riskTab.pendingStatus')}
                             </Badge>
                           </div>
                         </div>
@@ -3286,8 +2761,8 @@ export function SubscriptionDetailPage({ subscription, onBack }: SubscriptionDet
                       <Globe className="w-5 h-5 text-indigo-600" />
                     </div>
                     <div>
-                      <h3 className="font-bold text-gray-900">Analyse Géographique du Risque</h3>
-                      <p className="text-sm text-gray-600">Évaluation par pays et juridiction</p>
+                      <h3 className="font-bold text-gray-900">{t('subscriptions.detail.riskTab.geoRiskAnalysis')}</h3>
+                      <p className="text-sm text-gray-600">{t('subscriptions.detail.riskTab.geoRiskAnalysisDesc')}</p>
                     </div>
                   </div>
 
@@ -3296,11 +2771,11 @@ export function SubscriptionDetailPage({ subscription, onBack }: SubscriptionDet
                       <div className="flex items-center justify-between mb-3">
                         <div className="text-2xl">🇫🇷</div>
                         <Badge className="bg-green-100 text-green-700 border-green-300 text-xs">
-                          Faible
+                          {t('subscriptions.detail.validation.low')}
                         </Badge>
                       </div>
-                      <div className="font-semibold text-gray-900 mb-1">France</div>
-                      <div className="text-xs text-gray-600">Pays de résidence</div>
+                      <div className="font-semibold text-gray-900 mb-1">{t('subscriptions.detail.riskTab.france')}</div>
+                      <div className="text-xs text-gray-600">{t('subscriptions.detail.riskTab.residenceCountryLabel')}</div>
                       <div className="flex items-center gap-1 mt-2">
                         <div className="text-sm font-bold text-green-700">2.1</div>
                         <div className="text-xs text-gray-500">/10</div>
@@ -3311,11 +2786,11 @@ export function SubscriptionDetailPage({ subscription, onBack }: SubscriptionDet
                       <div className="flex items-center justify-between mb-3">
                         <div className="text-2xl">🇨🇭</div>
                         <Badge className="bg-amber-100 text-amber-700 border-amber-300 text-xs">
-                          Moyen
+                          {t('subscriptions.detail.validation.medium')}
                         </Badge>
                       </div>
-                      <div className="font-semibold text-gray-900 mb-1">Suisse</div>
-                      <div className="text-xs text-gray-600">Compte bancaire</div>
+                      <div className="font-semibold text-gray-900 mb-1">{t('subscriptions.detail.riskTab.switzerland')}</div>
+                      <div className="text-xs text-gray-600">{t('subscriptions.detail.riskTab.bankAccount')}</div>
                       <div className="flex items-center gap-1 mt-2">
                         <div className="text-sm font-bold text-amber-700">4.8</div>
                         <div className="text-xs text-gray-500">/10</div>
@@ -3326,11 +2801,11 @@ export function SubscriptionDetailPage({ subscription, onBack }: SubscriptionDet
                       <div className="flex items-center justify-between mb-3">
                         <div className="text-2xl">🇵🇦</div>
                         <Badge className="bg-orange-100 text-orange-700 border-orange-300 text-xs">
-                          Élevé
+                          {t('subscriptions.detail.riskTab.highLevel')}
                         </Badge>
                       </div>
-                      <div className="font-semibold text-gray-900 mb-1">Panama</div>
-                      <div className="text-xs text-gray-600">Structure offshore</div>
+                      <div className="font-semibold text-gray-900 mb-1">{t('subscriptions.detail.riskTab.panama')}</div>
+                      <div className="text-xs text-gray-600">{t('subscriptions.detail.riskTab.offshoreStructure')}</div>
                       <div className="flex items-center gap-1 mt-2">
                         <div className="text-sm font-bold text-orange-700">7.5</div>
                         <div className="text-xs text-gray-500">/10</div>
@@ -3348,14 +2823,14 @@ export function SubscriptionDetailPage({ subscription, onBack }: SubscriptionDet
               <div className="bg-white rounded-xl border border-gray-200 overflow-hidden shadow-sm">
                 {/* Header */}
                 <div className="px-6 py-4 border-b border-gray-200 flex items-center justify-between">
-                  <h2 className="font-semibold text-gray-900">Documents de la souscription</h2>
+                  <h2 className="font-semibold text-gray-900">{t('subscriptions.detail.documentsTab.title')}</h2>
                   <Button
                     variant="outline"
                     className="gap-2"
-                    onClick={() => toast.info('Ajout de document')}
+                    onClick={() => toast.info(t('subscriptions.detail.toast.addDocumentToast'))}
                   >
                     <Upload className="w-4 h-4" />
-                    Ajouter un document
+                    {t('subscriptions.detail.documentsTab.addDocument')}
                   </Button>
                 </div>
 
@@ -3364,19 +2839,19 @@ export function SubscriptionDetailPage({ subscription, onBack }: SubscriptionDet
                   <thead className="bg-gray-50 border-b border-gray-200">
                     <tr>
                       <th className="px-6 py-3 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">
-                        Date
+                        {t('subscriptions.detail.documentsTab.date')}
                       </th>
                       <th className="px-6 py-3 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">
-                        Nom
+                        {t('subscriptions.detail.documentsTab.name')}
                       </th>
                       <th className="px-6 py-3 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">
-                        Langue
+                        {t('subscriptions.detail.documentsTab.language')}
                       </th>
                       <th className="px-6 py-3 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">
-                        Type
+                        {t('subscriptions.detail.documentsTab.type')}
                       </th>
                       <th className="px-6 py-3 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">
-                        Fichier
+                        {t('subscriptions.detail.documentsTab.file')}
                       </th>
                     </tr>
                   </thead>
@@ -3400,14 +2875,14 @@ export function SubscriptionDetailPage({ subscription, onBack }: SubscriptionDet
                             {doc.status === 'signed' && (
                               <Badge className="bg-green-50 text-green-700 border-green-200 font-medium gap-1.5">
                                 <CheckCircle2 className="w-3 h-3" />
-                                Document signé
+                                {t('subscriptions.detail.documentsTab.documentSigned')}
                               </Badge>
                             )}
                             <Button
                               variant="ghost"
                               size="sm"
                               className="h-8 w-8 p-0 text-red-600 hover:text-red-700 hover:bg-red-50"
-                              onClick={() => toast.info(`Suppression de ${doc.name}`)}
+                              onClick={() => toast.info(t('subscriptions.detail.documentsTab.deleteDocument', { name: doc.name }))}
                             >
                               <Trash2 className="w-4 h-4" />
                             </Button>
@@ -3422,10 +2897,10 @@ export function SubscriptionDetailPage({ subscription, onBack }: SubscriptionDet
                 <div className="px-6 py-4 bg-gray-50 border-t border-gray-200">
                   <Button
                     className="w-full gap-2 bg-emerald-600 hover:bg-emerald-700 text-white"
-                    onClick={() => toast.success('Export du pack documentaire')}
+                    onClick={() => toast.success(t('subscriptions.detail.documentsTab.exportPackToast'))}
                   >
                     <Download className="w-4 h-4" />
-                    Export pack documentaire
+                    {t('subscriptions.detail.documentsTab.exportPack')}
                   </Button>
                 </div>
               </div>
@@ -3448,29 +2923,29 @@ export function SubscriptionDetailPage({ subscription, onBack }: SubscriptionDet
                       size="sm"
                       className="gap-2"
                     >
-                      Toutes ({mockNotes.length})
+                      {t('subscriptions.detail.notesTab.all', { count: mockNotes.length })}
                     </Button>
                     <Button
                       variant="outline"
                       size="sm"
                       className="gap-2"
                     >
-                      Ouvertes ({mockNotes.filter(n => n.status === 'open').length})
+                      {t('subscriptions.detail.notesTab.open', { count: mockNotes.filter(n => n.status === 'open').length })}
                     </Button>
                     <Button
                       variant="outline"
                       size="sm"
                       className="gap-2"
                     >
-                      Résolues ({mockNotes.filter(n => n.status === 'resolved').length})
+                      {t('subscriptions.detail.notesTab.resolved', { count: mockNotes.filter(n => n.status === 'resolved').length })}
                     </Button>
                     <div className="ml-auto">
                       <Button
                         className="gap-2"
-                        style={{ background: 'linear-gradient(62.32deg, #000000 10.53%, #0F323D 88.82%)' }}
+                        style={{ background: PRIMARY_BUTTON_GRADIENT }}
                       >
                         <MessageSquare className="w-4 h-4" />
-                        Nouvelle note
+                        {t('subscriptions.detail.notesTab.newNote')}
                       </Button>
                     </div>
                   </div>
@@ -3479,10 +2954,8 @@ export function SubscriptionDetailPage({ subscription, onBack }: SubscriptionDet
                 {/* Notes List */}
                 <div className="space-y-3">
                   {mockNotes.map((note) => (
-                    <motion.div
+                    <div
                       key={note.id}
-                      initial={{ opacity: 0, y: 10 }}
-                      animate={{ opacity: 1, y: 0 }}
                       className="bg-white rounded-xl border border-gray-200 p-5 shadow-sm hover:shadow-md transition-shadow"
                     >
                       <div className="flex items-start gap-4">
@@ -3507,50 +2980,50 @@ export function SubscriptionDetailPage({ subscription, onBack }: SubscriptionDet
                               {note.type === 'field' ? (
                                 <>
                                   <Badge variant="outline" className="text-xs font-medium">
-                                    Champ
+                                    {t('subscriptions.detail.notesTab.fieldType')}
                                   </Badge>
                                   <span className="text-xs text-gray-500">•</span>
-                                  <span className="text-xs font-medium text-gray-700">{note.section}</span>
+                                  <span className="text-xs font-medium text-gray-700">{t(note.sectionKey)}</span>
                                   <span className="text-xs text-gray-500">›</span>
-                                  <span className="text-xs text-gray-600">{note.field}</span>
+                                  <span className="text-xs text-gray-600">{note.fieldKey}</span>
                                 </>
                               ) : (
                                 <Badge variant="outline" className="text-xs font-medium">
-                                  Note générale
+                                  {t('subscriptions.detail.notesTab.generalType')}
                                 </Badge>
                               )}
                               {note.priority === 'high' && (
                                 <Badge className="bg-red-100 text-red-700 border-red-200 text-xs">
-                                  Priorité haute
+                                  {t('subscriptions.detail.notesTab.highPriority')}
                                 </Badge>
                               )}
                               {note.priority === 'medium' && (
                                 <Badge className="bg-orange-100 text-orange-700 border-orange-200 text-xs">
-                                  Priorité moyenne
+                                  {t('subscriptions.detail.notesTab.mediumPriority')}
                                 </Badge>
                               )}
                             </div>
                             {note.status === 'resolved' ? (
                               <Badge className="bg-green-100 text-green-700 border-green-200 gap-1.5">
                                 <CheckCircle2 className="w-3 h-3" />
-                                Résolue
+                                {t('subscriptions.detail.notesTab.resolvedStatus')}
                               </Badge>
                             ) : (
                               <Button
                                 size="sm"
                                 variant="outline"
                                 className="gap-2"
-                                onClick={() => toast.success('Note résolue')}
+                                onClick={() => toast.success(t('subscriptions.detail.notesTab.noteResolved'))}
                               >
                                 <CheckCircle2 className="w-4 h-4" />
-                                Résoudre
+                                {t('subscriptions.detail.notesTab.resolve')}
                               </Button>
                             )}
                           </div>
 
                           {/* Note Content */}
                           <p className="text-sm text-gray-700 mb-3">
-                            {note.content}
+                            {t(note.contentKey)}
                           </p>
 
                           {/* Footer */}
@@ -3572,12 +3045,12 @@ export function SubscriptionDetailPage({ subscription, onBack }: SubscriptionDet
                           variant="ghost"
                           size="sm"
                           className="h-8 w-8 p-0 text-red-600 hover:text-red-700 hover:bg-red-50"
-                          onClick={() => toast.info('Suppression de la note')}
+                          onClick={() => toast.info(t('subscriptions.detail.notesTab.deleteNote'))}
                         >
                           <Trash2 className="w-4 h-4" />
                         </Button>
                       </div>
-                    </motion.div>
+                    </div>
                   ))}
                 </div>
               </div>

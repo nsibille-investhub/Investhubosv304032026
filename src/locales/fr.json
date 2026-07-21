@@ -414,6 +414,7 @@
         "riskValidated": "Risque validé",
         "riskNotValidated": "Non validé",
         "riskValidatedOn": "Le {{date}}",
+        "validatedByLabel": "Par {{name}}",
         "pepDetected": "PPE détectée",
         "sanctions": "Sanctions",
         "adverseMedia": "Médias négatifs",
@@ -539,7 +540,11 @@
         "readyForValidation": "Prête pour validation",
         "readyForValidationDesc": "L'onboarding est terminé. Vérifiez les informations et validez la souscription.",
         "validateSubscription": "Valider la souscription",
-        "subscriptionValidated": "Souscription validée"
+        "subscriptionValidated": "Souscription validée",
+        "decisionAcceptedReserve": "Décision : Accepté avec réserve",
+        "decisionRejectedToast": "Décision : Rejeter",
+        "decisionAcceptedAfterDD": "Décision : Accepter après due diligence",
+        "decisionEscalated": "Décision : Escalader"
       },
       "signature": {
         "title": "Envoi en signature",

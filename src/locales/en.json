@@ -414,6 +414,7 @@
         "riskValidated": "Risk validated",
         "riskNotValidated": "Not validated",
         "riskValidatedOn": "On {{date}}",
+        "validatedByLabel": "By {{name}}",
         "pepDetected": "PEP detected",
         "sanctions": "Sanctions",
         "adverseMedia": "Adverse media",
@@ -539,7 +540,11 @@
         "readyForValidation": "Ready for validation",
         "readyForValidationDesc": "Onboarding is complete. Review the information and validate the subscription.",
         "validateSubscription": "Validate subscription",
-        "subscriptionValidated": "Subscription validated"
+        "subscriptionValidated": "Subscription validated",
+        "decisionAcceptedReserve": "Decision: Accepted with reserve",
+        "decisionRejectedToast": "Decision: Reject",
+        "decisionAcceptedAfterDD": "Decision: Accept after due diligence",
+        "decisionEscalated": "Decision: Escalate"
       },
       "signature": {
         "title": "Send for signature",
