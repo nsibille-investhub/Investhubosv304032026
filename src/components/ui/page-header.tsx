@@ -116,7 +116,7 @@ function PageHeaderBreadcrumb({
   );
 }
 
-const PRIMARY_BUTTON_GRADIENT =
+export const PRIMARY_BUTTON_GRADIENT =
   'linear-gradient(62.32deg, #000000 10.53%, #0F323D 88.82%)';
 
 function PageHeader({
