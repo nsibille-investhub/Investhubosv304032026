@@ -112,12 +112,12 @@ export function InvestorDetailPage({ investor: initialInvestor, onBack, initialT
       whileHover={{ scale: 1.1 }}
       whileTap={{ scale: 0.9 }}
       onClick={() => handleCopy(text, field)}
-      className="p-1.5 hover:bg-gray-100 rounded-lg transition-colors"
+      className="p-1.5 hover:bg-muted rounded-lg transition-colors"
     >
       {copiedField === field ? (
         <Check className="w-3.5 h-3.5 text-emerald-600" />
       ) : (
-        <Copy className="w-3.5 h-3.5 text-gray-400" />
+        <Copy className="w-3.5 h-3.5 text-muted-foreground/60" />
       )}
     </motion.button>
   );
@@ -144,8 +144,8 @@ export function InvestorDetailPage({ investor: initialInvestor, onBack, initialT
       case 'Prospect': return 'bg-blue-50 text-blue-600 border-blue-200';
       case 'En discussion': return 'bg-purple-50 text-purple-600 border-purple-200';
       case 'En relation': return 'bg-emerald-50 text-emerald-600 border-emerald-200';
-      case 'Archivé': return 'bg-gray-50 text-gray-500 border-gray-200';
-      default: return 'bg-gray-100 text-gray-600 border-gray-300';
+      case 'Archivé': return 'bg-muted text-muted-foreground border-border';
+      default: return 'bg-muted text-muted-foreground border-border';
     }
   };
 
@@ -156,7 +156,7 @@ export function InvestorDetailPage({ investor: initialInvestor, onBack, initialT
       case 'En revue': return 'bg-amber-50 text-amber-700 border-amber-200';
       case 'À revoir': return 'bg-orange-50 text-orange-700 border-orange-200';
       case 'Expiré': return 'bg-red-50 text-red-700 border-red-200';
-      default: return 'bg-gray-50 text-gray-600 border-gray-200';
+      default: return 'bg-muted text-muted-foreground border-border';
     }
   };
 
@@ -170,12 +170,12 @@ export function InvestorDetailPage({ investor: initialInvestor, onBack, initialT
 
   const getNoteTypeColor = (type: string) => {
     switch (type) {
-      case 'General': return 'bg-gray-100 text-gray-700';
+      case 'General': return 'bg-muted text-foreground';
       case 'KYC': return 'bg-blue-100 text-blue-700';
       case 'Risk': return 'bg-red-100 text-red-700';
       case 'Commercial': return 'bg-purple-100 text-purple-700';
       case 'Legal': return 'bg-amber-100 text-amber-700';
-      default: return 'bg-gray-100 text-gray-700';
+      default: return 'bg-muted text-foreground';
     }
   };
 
@@ -297,11 +297,11 @@ export function InvestorDetailPage({ investor: initialInvestor, onBack, initialT
     if (!isEditing || disabled) {
       return (
         <div>
-          <label className="text-xs text-gray-500 mb-1 block">{label}</label>
+          <label className="text-xs text-muted-foreground mb-1 block">{label}</label>
           <div className="flex items-center gap-2">
             {icon}
-            <span className="text-sm text-gray-900">
-              {value || <span className="text-gray-400 italic">{t('investors.detail.actions.notProvided')}</span>}
+            <span className="text-sm text-foreground">
+              {value || <span className="text-muted-foreground/60 italic">{t('investors.detail.actions.notProvided')}</span>}
             </span>
           </div>
         </div>
@@ -310,7 +310,7 @@ export function InvestorDetailPage({ investor: initialInvestor, onBack, initialT
 
     return (
       <div>
-        <label className="text-xs text-gray-500 mb-1 block">{label}</label>
+        <label className="text-xs text-muted-foreground mb-1 block">{label}</label>
         {type === 'select' && options ? (
           <Select
             value={editValue as string}
@@ -354,40 +354,40 @@ export function InvestorDetailPage({ investor: initialInvestor, onBack, initialT
 
   const getEmailStatusIcon = (status: string) => {
     switch (status) {
-      case 'Sent': return <Send className="w-4 h-4 text-gray-500" />;
+      case 'Sent': return <Send className="w-4 h-4 text-muted-foreground" />;
       case 'Delivered': return <CheckCircle className="w-4 h-4 text-blue-500" />;
       case 'Opened': return <Eye className="w-4 h-4 text-purple-500" />;
       case 'Replied': return <Reply className="w-4 h-4 text-emerald-500" />;
-      default: return <Mail className="w-4 h-4 text-gray-500" />;
+      default: return <Mail className="w-4 h-4 text-muted-foreground" />;
     }
   };
 
   return (
-    <div className="flex-1 bg-gray-50">
+    <div className="flex-1 bg-muted">
       {/* Header */}
-      <motion.div 
+      <motion.div
         initial={{ opacity: 0, y: -20 }}
         animate={{ opacity: 1, y: 0 }}
-        className="bg-white border-b border-gray-200"
+        className="bg-card border-b border-border"
       >
         {/* Breadcrumb */}
         <div className="px-8 pt-5 pb-3">
-          <div className="flex items-center gap-2 text-sm text-gray-500">
+          <div className="flex items-center gap-2 text-sm text-muted-foreground">
             <button
               onClick={onBack}
-              className="hover:text-gray-900 transition-colors"
+              className="hover:text-foreground transition-colors"
             >
               {t('breadcrumb.investhubOs')}
             </button>
             <ChevronRight className="w-4 h-4" />
             <button
               onClick={onBack}
-              className="hover:text-gray-900 transition-colors"
+              className="hover:text-foreground transition-colors"
             >
               {t('breadcrumb.investors')}
             </button>
             <ChevronRight className="w-4 h-4" />
-            <span className="text-gray-900 font-medium">{t('breadcrumb.investors')}</span>
+            <span className="text-foreground font-medium">{t('breadcrumb.investors')}</span>
           </div>
         </div>
 
@@ -400,31 +400,31 @@ export function InvestorDetailPage({ investor: initialInvestor, onBack, initialT
                 whileHover={{ scale: 1.02 }}
                 whileTap={{ scale: 0.98 }}
                 onClick={onBack}
-                className="p-2 hover:bg-gray-100 rounded-lg transition-colors"
+                className="p-2 hover:bg-muted rounded-lg transition-colors"
               >
-                <ArrowLeft className="w-5 h-5 text-gray-600" />
+                <ArrowLeft className="w-5 h-5 text-muted-foreground" />
               </motion.button>
-              
-              <div className="w-16 h-16 rounded-2xl bg-gradient-to-br from-blue-500 to-cyan-500 flex items-center justify-center shadow-sm">
-                <span className="text-white text-xl font-semibold">
+
+              <div className="w-16 h-16 rounded-2xl bg-muted border border-border flex items-center justify-center">
+                <span className="text-foreground text-xl font-semibold">
                   {investor.name.split(' ').map(n => n[0]).join('').substring(0, 2)}
                 </span>
               </div>
-              
+
               <div>
                 <div className="flex items-center gap-3 mb-1">
-                  <h1 className="text-2xl font-semibold text-gray-900">{investor.name}</h1>
+                  <h1 className="text-2xl font-semibold text-foreground">{investor.name}</h1>
                   <Badge
                     variant="outline"
-                    className={`text-xs px-2.5 py-0.5 ${investor.status === 'En relation' ? 'bg-purple-50 text-purple-700 border-purple-200' : 'bg-gray-100 text-gray-700 border-gray-200'}`}
+                    className={`text-xs px-2.5 py-0.5 ${investor.status === 'En relation' ? 'bg-purple-50 text-purple-700 border-purple-200' : 'bg-muted text-muted-foreground border-border'}`}
                   >
                     {t(`investors.status.${investor.status}`)}
                   </Badge>
-                  <Badge variant="outline" className="text-xs px-2.5 py-0.5 bg-gray-100 text-gray-700 border-gray-200">
+                  <Badge variant="outline" className="text-xs px-2.5 py-0.5 bg-muted text-muted-foreground border-border">
                     {t(`investors.type.${investor.type}`)}
                   </Badge>
                 </div>
-                <div className="flex items-center gap-3 text-sm text-gray-500">
+                <div className="flex items-center gap-3 text-sm text-muted-foreground">
                   <div className="flex items-center gap-1.5">
                     <Hash className="w-3.5 h-3.5" />
                     <span>ID: {investor.id}</span>
@@ -441,7 +441,7 @@ export function InvestorDetailPage({ investor: initialInvestor, onBack, initialT
             <div className="flex items-center gap-3">
               <Button
                 variant="outline"
-                className="gap-2 border-gray-300 hover:bg-gray-50"
+                className="gap-2 border-border hover:bg-muted"
                 onClick={() => toast.success(t('investors.detail.actions.comingSoon'))}
               >
                 <Mail className="w-4 h-4" />
@@ -463,110 +463,110 @@ export function InvestorDetailPage({ investor: initialInvestor, onBack, initialT
         {/* Investment Statistics */}
         <div className="px-8 pb-6">
           <div className="flex items-center gap-2 mb-4">
-            <TrendingUp className="w-4 h-4 text-gray-500" />
-            <span className="text-xs text-gray-600 font-medium">{t('investors.detail.stats.title')}</span>
+            <TrendingUp className="w-4 h-4 text-muted-foreground" />
+            <span className="text-xs text-muted-foreground font-medium">{t('investors.detail.stats.title')}</span>
           </div>
           <div className="grid grid-cols-4 gap-4">
-            <div className="bg-white border border-gray-200 rounded-xl p-5">
-              <div className="text-xs text-blue-600 mb-2">{t('investors.detail.stats.totalCapital')}</div>
-              <div className="text-2xl font-semibold text-gray-900">{formatCurrency(investor.totalInvested)}</div>
+            <div className="bg-card border border-border rounded-xl p-5">
+              <div className="text-xs text-muted-foreground mb-2">{t('investors.detail.stats.totalCapital')}</div>
+              <div className="text-2xl font-semibold text-foreground">{formatCurrency(investor.totalInvested)}</div>
             </div>
 
-            <div className="bg-white border border-gray-200 rounded-xl p-5">
-              <div className="text-xs text-purple-600 mb-2">{t('investors.detail.stats.subscriptionsCount')}</div>
-              <div className="text-2xl font-semibold text-gray-900">{investor.subscriptionsCount}</div>
+            <div className="bg-card border border-border rounded-xl p-5">
+              <div className="text-xs text-muted-foreground mb-2">{t('investors.detail.stats.subscriptionsCount')}</div>
+              <div className="text-2xl font-semibold text-foreground">{investor.subscriptionsCount}</div>
             </div>
 
-            <div className="bg-white border border-gray-200 rounded-xl p-5">
-              <div className="text-xs text-green-600 mb-2">{t('investors.detail.stats.averageTicket')}</div>
-              <div className="text-2xl font-semibold text-gray-900">
+            <div className="bg-card border border-border rounded-xl p-5">
+              <div className="text-xs text-muted-foreground mb-2">{t('investors.detail.stats.averageTicket')}</div>
+              <div className="text-2xl font-semibold text-foreground">
                 {formatCurrency(investor.totalInvested / investor.subscriptionsCount)}
               </div>
             </div>
 
-            <div className="bg-white border border-gray-200 rounded-xl p-5">
-              <div className="text-xs text-amber-600 mb-2">{t('investors.detail.stats.lastActivity')}</div>
-              <div className="text-sm font-semibold text-gray-900 mt-1">{formatDate(investor.lastActivity)}</div>
+            <div className="bg-card border border-border rounded-xl p-5">
+              <div className="text-xs text-muted-foreground mb-2">{t('investors.detail.stats.lastActivity')}</div>
+              <div className="text-sm font-semibold text-foreground mt-1">{formatDate(investor.lastActivity)}</div>
             </div>
           </div>
         </div>
       </motion.div>
 
       {/* Tabs */}
-      <div className="px-8 -mt-px">
+      <div className="px-8 -mt-px bg-card border-b border-border">
         <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-          <TabsList className="bg-transparent border-b border-gray-200 rounded-none w-full justify-start h-auto p-0 gap-6">
-            <TabsTrigger 
-              value="profil" 
-              className="data-[state=active]:bg-transparent data-[state=active]:shadow-none data-[state=active]:border-b-2 data-[state=active]:border-blue-600 data-[state=active]:text-blue-600 rounded-none pb-3 pt-4 px-0 text-gray-600 font-medium"
+          <TabsList className="bg-transparent border-b border-border rounded-none w-full justify-start h-auto p-0 gap-6">
+            <TabsTrigger
+              value="profil"
+              className="data-[state=active]:bg-transparent data-[state=active]:shadow-none data-[state=active]:border-b-2 data-[state=active]:border-primary data-[state=active]:text-primary rounded-none pb-3 pt-4 px-0 text-muted-foreground font-medium"
             >
               <User className="w-4 h-4 mr-2" />
               {t('investors.detail.tabs.profile')}
             </TabsTrigger>
-            <TabsTrigger 
-              value="contacts" 
-              className="data-[state=active]:bg-transparent data-[state=active]:shadow-none data-[state=active]:border-b-2 data-[state=active]:border-blue-600 data-[state=active]:text-blue-600 rounded-none pb-3 pt-4 px-0 text-gray-600 font-medium"
+            <TabsTrigger
+              value="contacts"
+              className="data-[state=active]:bg-transparent data-[state=active]:shadow-none data-[state=active]:border-b-2 data-[state=active]:border-primary data-[state=active]:text-primary rounded-none pb-3 pt-4 px-0 text-muted-foreground font-medium"
             >
               <Users className="w-4 h-4 mr-2" />
               {t('investors.detail.tabs.contacts')}
-              <Badge className="ml-2 bg-blue-50 text-blue-700 border-blue-200 text-xs">
+              <Badge className="ml-2 bg-muted text-muted-foreground border-border text-xs">
                 {investor.contacts.length}
               </Badge>
             </TabsTrigger>
-            <TabsTrigger 
-              value="signataires" 
-              className="data-[state=active]:bg-transparent data-[state=active]:shadow-none data-[state=active]:border-b-2 data-[state=active]:border-blue-600 data-[state=active]:text-blue-600 rounded-none pb-3 pt-4 px-0 text-gray-600 font-medium"
+            <TabsTrigger
+              value="signataires"
+              className="data-[state=active]:bg-transparent data-[state=active]:shadow-none data-[state=active]:border-b-2 data-[state=active]:border-primary data-[state=active]:text-primary rounded-none pb-3 pt-4 px-0 text-muted-foreground font-medium"
             >
               <PenTool className="w-4 h-4 mr-2" />
               {t('investors.detail.tabs.signatories')}
-              <Badge className="ml-2 bg-purple-50 text-purple-700 border-purple-200 text-xs">
+              <Badge className="ml-2 bg-muted text-muted-foreground border-border text-xs">
                 {investor.signatories.length}
               </Badge>
             </TabsTrigger>
-            <TabsTrigger 
-              value="structures" 
-              className="data-[state=active]:bg-transparent data-[state=active]:shadow-none data-[state=active]:border-b-2 data-[state=active]:border-blue-600 data-[state=active]:text-blue-600 rounded-none pb-3 pt-4 px-0 text-gray-600 font-medium"
+            <TabsTrigger
+              value="structures"
+              className="data-[state=active]:bg-transparent data-[state=active]:shadow-none data-[state=active]:border-b-2 data-[state=active]:border-primary data-[state=active]:text-primary rounded-none pb-3 pt-4 px-0 text-muted-foreground font-medium"
             >
               <Building2 className="w-4 h-4 mr-2" />
               {t('investors.detail.tabs.structures')}
-              <Badge className="ml-2 bg-cyan-50 text-cyan-700 border-cyan-200 text-xs">
+              <Badge className="ml-2 bg-muted text-muted-foreground border-border text-xs">
                 {investor.structures.length}
               </Badge>
             </TabsTrigger>
-            <TabsTrigger 
-              value="notes" 
-              className="data-[state=active]:bg-transparent data-[state=active]:shadow-none data-[state=active]:border-b-2 data-[state=active]:border-blue-600 data-[state=active]:text-blue-600 rounded-none pb-3 pt-4 px-0 text-gray-600 font-medium"
+            <TabsTrigger
+              value="notes"
+              className="data-[state=active]:bg-transparent data-[state=active]:shadow-none data-[state=active]:border-b-2 data-[state=active]:border-primary data-[state=active]:text-primary rounded-none pb-3 pt-4 px-0 text-muted-foreground font-medium"
             >
               <FileText className="w-4 h-4 mr-2" />
               {t('investors.detail.tabs.notes')}
-              <Badge className="ml-2 bg-amber-50 text-amber-700 border-amber-200 text-xs">
+              <Badge className="ml-2 bg-muted text-muted-foreground border-border text-xs">
                 {investor.notes.length}
               </Badge>
             </TabsTrigger>
-            <TabsTrigger 
-              value="souscriptions" 
-              className="data-[state=active]:bg-transparent data-[state=active]:shadow-none data-[state=active]:border-b-2 data-[state=active]:border-blue-600 data-[state=active]:text-blue-600 rounded-none pb-3 pt-4 px-0 text-gray-600 font-medium"
+            <TabsTrigger
+              value="souscriptions"
+              className="data-[state=active]:bg-transparent data-[state=active]:shadow-none data-[state=active]:border-b-2 data-[state=active]:border-primary data-[state=active]:text-primary rounded-none pb-3 pt-4 px-0 text-muted-foreground font-medium"
             >
               <Briefcase className="w-4 h-4 mr-2" />
               {t('investors.detail.tabs.subscriptions')}
-              <Badge className="ml-2 bg-emerald-50 text-emerald-700 border-emerald-200 text-xs">
+              <Badge className="ml-2 bg-muted text-muted-foreground border-border text-xs">
                 {investor.subscriptionsCount}
               </Badge>
             </TabsTrigger>
-            <TabsTrigger 
-              value="fiscal" 
-              className="data-[state=active]:bg-transparent data-[state=active]:shadow-none data-[state=active]:border-b-2 data-[state=active]:border-blue-600 data-[state=active]:text-blue-600 rounded-none pb-3 pt-4 px-0 text-gray-600 font-medium"
+            <TabsTrigger
+              value="fiscal"
+              className="data-[state=active]:bg-transparent data-[state=active]:shadow-none data-[state=active]:border-b-2 data-[state=active]:border-primary data-[state=active]:text-primary rounded-none pb-3 pt-4 px-0 text-muted-foreground font-medium"
             >
               <Landmark className="w-4 h-4 mr-2" />
               {t('investors.detail.tabs.fiscal')}
             </TabsTrigger>
-            <TabsTrigger 
-              value="emails" 
-              className="data-[state=active]:bg-transparent data-[state=active]:shadow-none data-[state=active]:border-b-2 data-[state=active]:border-blue-600 data-[state=active]:text-blue-600 rounded-none pb-3 pt-4 px-0 text-gray-600 font-medium"
+            <TabsTrigger
+              value="emails"
+              className="data-[state=active]:bg-transparent data-[state=active]:shadow-none data-[state=active]:border-b-2 data-[state=active]:border-primary data-[state=active]:text-primary rounded-none pb-3 pt-4 px-0 text-muted-foreground font-medium"
             >
               <MessageSquare className="w-4 h-4 mr-2" />
               {t('investors.detail.tabs.emails')}
-              <Badge className="ml-2 bg-indigo-50 text-indigo-700 border-indigo-200 text-xs">
+              <Badge className="ml-2 bg-muted text-muted-foreground border-border text-xs">
                 {investor.emails.length}
               </Badge>
             </TabsTrigger>
@@ -579,10 +579,10 @@ export function InvestorDetailPage({ investor: initialInvestor, onBack, initialT
               <motion.div
                 initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: 1, y: 0 }}
-                className="col-span-2 bg-white rounded-xl border border-gray-200 p-6"
+                className="col-span-2 bg-card rounded-xl border border-border p-6"
               >
                 <div className="flex items-center justify-between mb-4">
-                  <h2 className="font-semibold text-gray-900 flex items-center gap-2">
+                  <h2 className="font-semibold text-foreground flex items-center gap-2">
                     <User className="w-5 h-5 text-blue-600" />
                     {t('investors.detail.general.title')}
                   </h2>
@@ -639,8 +639,8 @@ export function InvestorDetailPage({ investor: initialInvestor, onBack, initialT
                   />
 
                   <div>
-                    <label className="text-xs text-gray-500 mb-1 block">{t('investors.detail.general.investorType')}</label>
-                    <Badge variant="outline" className="border-gray-300">
+                    <label className="text-xs text-muted-foreground mb-1 block">{t('investors.detail.general.investorType')}</label>
+                    <Badge variant="outline" className="border-border">
                       {t(`investors.type.${investor.type}`)}
                     </Badge>
                   </div>
@@ -669,7 +669,7 @@ export function InvestorDetailPage({ investor: initialInvestor, onBack, initialT
                         field="siren"
                         value={investor.siren}
                         type="text"
-                        icon={<Building2 className="w-4 h-4 text-gray-400" />}
+                        icon={<Building2 className="w-4 h-4 text-muted-foreground/60" />}
                       />
                       <EditableField
                         label={t('investors.detail.general.company')}
@@ -685,7 +685,7 @@ export function InvestorDetailPage({ investor: initialInvestor, onBack, initialT
                     field="email"
                     value={investor.email}
                     type="email"
-                    icon={<Mail className="w-4 h-4 text-gray-400" />}
+                    icon={<Mail className="w-4 h-4 text-muted-foreground/60" />}
                   />
 
                   <EditableField
@@ -693,7 +693,7 @@ export function InvestorDetailPage({ investor: initialInvestor, onBack, initialT
                     field="phone"
                     value={investor.phone}
                     type="tel"
-                    icon={<Phone className="w-4 h-4 text-gray-400" />}
+                    icon={<Phone className="w-4 h-4 text-muted-foreground/60" />}
                   />
 
                   <div className="col-span-2">
@@ -702,7 +702,7 @@ export function InvestorDetailPage({ investor: initialInvestor, onBack, initialT
                       field="address"
                       value={investor.address}
                       type="text"
-                      icon={<MapPin className="w-4 h-4 text-gray-400" />}
+                      icon={<MapPin className="w-4 h-4 text-muted-foreground/60" />}
                     />
                   </div>
 
@@ -735,7 +735,7 @@ export function InvestorDetailPage({ investor: initialInvestor, onBack, initialT
                       { value: 'Spain', label: t('investors.detail.countryOptions.Spain') },
                       { value: 'Italy', label: t('investors.detail.countryOptions.Italy') }
                     ]}
-                    icon={<Globe className="w-4 h-4 text-gray-400" />}
+                    icon={<Globe className="w-4 h-4 text-muted-foreground/60" />}
                   />
 
                   <EditableField
@@ -764,7 +764,7 @@ export function InvestorDetailPage({ investor: initialInvestor, onBack, initialT
                       { value: 'Pierre Laurent', label: 'Pierre Laurent' },
                       { value: 'Julie Moreau', label: 'Julie Moreau' }
                     ]}
-                    icon={<User className="w-4 h-4 text-gray-400" />}
+                    icon={<User className="w-4 h-4 text-muted-foreground/60" />}
                   />
 
                   <EditableField
@@ -795,16 +795,16 @@ export function InvestorDetailPage({ investor: initialInvestor, onBack, initialT
                 initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ delay: 0.1 }}
-                className="bg-white rounded-xl border border-gray-200 p-6"
+                className="bg-card rounded-xl border border-border p-6"
               >
-                <h2 className="font-semibold text-gray-900 mb-4 flex items-center gap-2">
+                <h2 className="font-semibold text-foreground mb-4 flex items-center gap-2">
                   <Shield className="w-5 h-5 text-blue-600" />
                   {t('investors.detail.kyc.title')}
                 </h2>
 
                 <div className="space-y-4">
                   <div>
-                    <label className="text-xs text-gray-500 mb-2 block">{t('investors.detail.kyc.kycStatus')}</label>
+                    <label className="text-xs text-muted-foreground mb-2 block">{t('investors.detail.kyc.kycStatus')}</label>
                     <Badge variant="outline" className={`border ${getKycStatusColor(investor.kycStatus)} w-full justify-center`}>
                       {t(`investors.detail.kycStatus.${investor.kycStatus}`)}
                     </Badge>
@@ -812,37 +812,37 @@ export function InvestorDetailPage({ investor: initialInvestor, onBack, initialT
 
                   {investor.kycExpiryDate && (
                     <div>
-                      <label className="text-xs text-gray-500 mb-1 block">{t('investors.detail.kyc.kycExpiry')}</label>
+                      <label className="text-xs text-muted-foreground mb-1 block">{t('investors.detail.kyc.kycExpiry')}</label>
                       <div className="flex items-center gap-2 text-sm">
-                        <Calendar className="w-4 h-4 text-gray-400" />
-                        <span className="text-gray-900">{formatDate(investor.kycExpiryDate)}</span>
+                        <Calendar className="w-4 h-4 text-muted-foreground/60" />
+                        <span className="text-foreground">{formatDate(investor.kycExpiryDate)}</span>
                       </div>
                     </div>
                   )}
 
                   <div>
-                    <label className="text-xs text-gray-500 mb-2 block">{t('investors.detail.kyc.riskLevel')}</label>
+                    <label className="text-xs text-muted-foreground mb-2 block">{t('investors.detail.kyc.riskLevel')}</label>
                     <Badge variant="outline" className={`border ${getRiskColor(investor.riskLevel)} w-full justify-center`}>
                       {t(`investors.detail.riskLevel.${investor.riskLevel}`)}
                     </Badge>
                   </div>
 
                   <div>
-                    <label className="text-xs text-gray-500 mb-1 block">{t('investors.detail.kyc.amlScore')}</label>
+                    <label className="text-xs text-muted-foreground mb-1 block">{t('investors.detail.kyc.amlScore')}</label>
                     <div className="flex items-center gap-2">
-                      <div className="flex-1 h-2 bg-gray-200 rounded-full overflow-hidden">
+                      <div className="flex-1 h-2 bg-border rounded-full overflow-hidden">
                         <div
                           className={`h-full ${investor.amlScore > 70 ? 'bg-red-500' : investor.amlScore > 40 ? 'bg-amber-500' : 'bg-emerald-500'}`}
                           style={{ width: `${investor.amlScore}%` }}
                         />
                       </div>
-                      <span className="text-sm font-semibold text-gray-900">{investor.amlScore}/100</span>
+                      <span className="text-sm font-semibold text-foreground">{investor.amlScore}/100</span>
                     </div>
                   </div>
 
                   <div>
-                    <label className="text-xs text-gray-500 mb-2 block">{t('investors.detail.kyc.monitoringActive')}</label>
-                    <Badge variant="outline" className={`border w-full justify-center ${investor.monitoring ? 'bg-emerald-50 text-emerald-700 border-emerald-200' : 'bg-gray-50 text-gray-700 border-gray-200'}`}>
+                    <label className="text-xs text-muted-foreground mb-2 block">{t('investors.detail.kyc.monitoringActive')}</label>
+                    <Badge variant="outline" className={`border w-full justify-center ${investor.monitoring ? 'bg-emerald-50 text-emerald-700 border-emerald-200' : 'bg-muted text-foreground border-border'}`}>
                       {investor.monitoring ? t('investors.detail.kyc.monitoringEnabled') : t('investors.detail.kyc.monitoringDisabled')}
                     </Badge>
                   </div>
@@ -854,10 +854,10 @@ export function InvestorDetailPage({ investor: initialInvestor, onBack, initialT
                 initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ delay: 0.3 }}
-                className="col-span-2 bg-white rounded-xl border border-gray-200 p-6"
+                className="col-span-2 bg-card rounded-xl border border-border p-6"
               >
                 <div className="flex items-center justify-between mb-4">
-                  <h2 className="font-semibold text-gray-900 flex items-center gap-2">
+                  <h2 className="font-semibold text-foreground flex items-center gap-2">
                     <UserCheck className="w-5 h-5 text-emerald-600" />
                     {t('investors.detail.relationship.title')}
                   </h2>
@@ -924,7 +924,7 @@ export function InvestorDetailPage({ investor: initialInvestor, onBack, initialT
                     field="relationshipStartDate"
                     value={investor.relationshipStartDate ? new Date(investor.relationshipStartDate).toISOString().split('T')[0] : ''}
                     type="date"
-                    icon={<Calendar className="w-4 h-4 text-gray-400" />}
+                    icon={<Calendar className="w-4 h-4 text-muted-foreground/60" />}
                   />
 
                   <div className="col-span-2">
@@ -964,10 +964,10 @@ export function InvestorDetailPage({ investor: initialInvestor, onBack, initialT
                   initial={{ opacity: 0, y: 20 }}
                   animate={{ opacity: 1, y: 0 }}
                   transition={{ delay: 0.4 }}
-                  className="bg-white rounded-xl border border-gray-200 p-6"
+                  className="bg-card rounded-xl border border-border p-6"
                 >
                   <div className="flex items-center justify-between mb-4">
-                    <h2 className="font-semibold text-gray-900 flex items-center gap-2">
+                    <h2 className="font-semibold text-foreground flex items-center gap-2">
                       <Heart className="w-5 h-5 text-pink-600" />
                       {t('investors.detail.personal.title')}
                     </h2>
@@ -1021,7 +1021,7 @@ export function InvestorDetailPage({ investor: initialInvestor, onBack, initialT
                       field="birthDate"
                       value={investor.birthDate ? new Date(investor.birthDate).toISOString().split('T')[0] : ''}
                       type="date"
-                      icon={<Calendar className="w-4 h-4 text-gray-400" />}
+                      icon={<Calendar className="w-4 h-4 text-muted-foreground/60" />}
                     />
 
                     <EditableField
@@ -1043,7 +1043,7 @@ export function InvestorDetailPage({ investor: initialInvestor, onBack, initialT
                         { value: 'Luxembourg', label: t('investors.detail.countryOptions.Luxembourg') },
                         { value: 'Germany', label: t('investors.detail.countryOptions.Germany') }
                       ]}
-                      icon={<Globe className="w-4 h-4 text-gray-400" />}
+                      icon={<Globe className="w-4 h-4 text-muted-foreground/60" />}
                     />
 
                     <EditableField
@@ -1112,9 +1112,9 @@ export function InvestorDetailPage({ investor: initialInvestor, onBack, initialT
                   initial={{ opacity: 0, y: 20 }}
                   animate={{ opacity: 1, y: 0 }}
                   transition={{ delay: 0.5 }}
-                  className="col-span-3 bg-white rounded-xl border border-gray-200 p-6"
+                  className="col-span-3 bg-card rounded-xl border border-border p-6"
                 >
-                  <h2 className="font-semibold text-gray-900 mb-4">{t('investors.detail.tags')}</h2>
+                  <h2 className="font-semibold text-foreground mb-4">{t('investors.detail.tags')}</h2>
                   <div className="flex flex-wrap gap-2">
                     {investor.tags.map((tag, idx) => (
                       <Badge key={idx} variant="outline" className="border-blue-200 bg-blue-50 text-blue-700">
@@ -1134,10 +1134,10 @@ export function InvestorDetailPage({ investor: initialInvestor, onBack, initialT
 
           {/* Signataires Tab */}
           <TabsContent value="signataires" className="mt-6">
-            <div className="bg-white rounded-xl border border-gray-200">
-              <div className="p-6 border-b border-gray-200">
+            <div className="bg-card rounded-xl border border-border">
+              <div className="p-6 border-b border-border">
                 <div className="flex items-center justify-between">
-                  <h2 className="font-semibold text-gray-900 flex items-center gap-2">
+                  <h2 className="font-semibold text-foreground flex items-center gap-2">
                     <PenTool className="w-5 h-5 text-purple-600" />
                     {t('investors.detail.signatories.title', { count: investor.signatories.length })}
                   </h2>
@@ -1153,14 +1153,14 @@ export function InvestorDetailPage({ investor: initialInvestor, onBack, initialT
                 </div>
               </div>
               
-              <div className="divide-y divide-gray-100">
+              <div className="divide-y divide-border">
                 {investor.signatories.map((signatory, idx) => (
                   <motion.div
                     key={signatory.id}
                     initial={{ opacity: 0, x: -20 }}
                     animate={{ opacity: 1, x: 0 }}
                     transition={{ delay: idx * 0.05 }}
-                    className="p-6 hover:bg-gray-50 transition-colors"
+                    className="p-6 hover:bg-muted transition-colors"
                   >
                     <div className="flex items-start justify-between">
                       <div className="flex-1">
@@ -1172,7 +1172,7 @@ export function InvestorDetailPage({ investor: initialInvestor, onBack, initialT
                           </div>
                           <div>
                             <div className="flex items-center gap-2">
-                              <span className="font-semibold text-gray-900">
+                              <span className="font-semibold text-foreground">
                                 {signatory.firstName} {signatory.lastName}
                               </span>
                               {signatory.isPrimary && (
@@ -1182,7 +1182,7 @@ export function InvestorDetailPage({ investor: initialInvestor, onBack, initialT
                                 </Badge>
                               )}
                             </div>
-                            <div className="text-sm text-gray-600 flex items-center gap-1.5">
+                            <div className="text-sm text-muted-foreground flex items-center gap-1.5">
                               <Briefcase className="w-3.5 h-3.5" />
                               {signatory.function}
                             </div>
@@ -1191,14 +1191,14 @@ export function InvestorDetailPage({ investor: initialInvestor, onBack, initialT
                         
                         <div className="ml-13 space-y-2">
                           <div className="flex items-center gap-2">
-                            <Mail className="w-4 h-4 text-gray-400" />
-                            <span className="text-sm text-gray-700">{signatory.email}</span>
+                            <Mail className="w-4 h-4 text-muted-foreground/60" />
+                            <span className="text-sm text-foreground">{signatory.email}</span>
                             <CopyButton text={signatory.email} field={`sig-${signatory.id}-email`} />
                           </div>
                           
                           <div className="flex items-center gap-2">
-                            <Phone className="w-4 h-4 text-gray-400" />
-                            <span className="text-sm text-gray-700">{signatory.phone}</span>
+                            <Phone className="w-4 h-4 text-muted-foreground/60" />
+                            <span className="text-sm text-foreground">{signatory.phone}</span>
                             <CopyButton text={signatory.phone} field={`sig-${signatory.id}-phone`} />
                           </div>
                         </div>
@@ -1228,9 +1228,9 @@ export function InvestorDetailPage({ investor: initialInvestor, onBack, initialT
 
           {/* Structures Tab */}
           <TabsContent value="structures" className="mt-6">
-            <div className="bg-white rounded-xl border border-gray-200">
-              <div className="p-6 border-b border-gray-200">
-                <h2 className="font-semibold text-gray-900 flex items-center gap-2">
+            <div className="bg-card rounded-xl border border-border">
+              <div className="p-6 border-b border-border">
+                <h2 className="font-semibold text-foreground flex items-center gap-2">
                   <Building2 className="w-5 h-5 text-cyan-600" />
                   {t('investors.detail.structuresList.title', { count: investor.structures.length })}
                 </h2>
@@ -1244,14 +1244,14 @@ export function InvestorDetailPage({ investor: initialInvestor, onBack, initialT
                       initial={{ opacity: 0, y: 10 }}
                       animate={{ opacity: 1, y: 0 }}
                       transition={{ delay: idx * 0.05 }}
-                      className="p-5 rounded-lg border border-gray-200 hover:border-blue-300 hover:bg-blue-50/30 transition-all"
+                      className="p-5 rounded-lg border border-border hover:border-blue-300 hover:bg-blue-50/30 transition-all"
                     >
                       <div className="space-y-3">
                         {/* En-tête avec nom et type */}
                         <div className="flex items-start justify-between">
                           <div className="flex items-center gap-2">
-                            <Building2 className="w-5 h-5 text-gray-400" />
-                            <span className="font-semibold text-gray-900">{structure.name}</span>
+                            <Building2 className="w-5 h-5 text-muted-foreground/60" />
+                            <span className="font-semibold text-foreground">{structure.name}</span>
                           </div>
                           <Badge 
                             variant="outline" 
@@ -1275,7 +1275,7 @@ export function InvestorDetailPage({ investor: initialInvestor, onBack, initialT
                           {structure.legalRepresentative && (
                             <div className="flex items-center gap-2 col-span-2">
                               <User className="w-4 h-4 text-blue-600" />
-                              <span className="text-sm font-medium text-gray-900">
+                              <span className="text-sm font-medium text-foreground">
                                 {structure.legalRepresentative}
                               </span>
                             </div>
@@ -1283,8 +1283,8 @@ export function InvestorDetailPage({ investor: initialInvestor, onBack, initialT
 
                           {/* Contacts */}
                           <div className="flex items-center gap-2">
-                            <Users className="w-4 h-4 text-gray-400" />
-                            <span className="text-sm text-gray-600">
+                            <Users className="w-4 h-4 text-muted-foreground/60" />
+                            <span className="text-sm text-muted-foreground">
                               {(structure.contactsCount || 0) > 1
                                 ? t('investors.detail.structuresList.contactsCountMany', { count: structure.contactsCount || 0 })
                                 : t('investors.detail.structuresList.contactsCountOne', { count: structure.contactsCount || 0 })}
@@ -1293,8 +1293,8 @@ export function InvestorDetailPage({ investor: initialInvestor, onBack, initialT
 
                           {/* Souscriptions */}
                           <div className="flex items-center gap-2">
-                            <FileText className="w-4 h-4 text-gray-400" />
-                            <span className="text-sm text-gray-600">
+                            <FileText className="w-4 h-4 text-muted-foreground/60" />
+                            <span className="text-sm text-muted-foreground">
                               {(structure.subscriptionsCount || 0) > 1
                                 ? t('investors.detail.structuresList.subscriptionsCountMany', { count: structure.subscriptionsCount || 0 })
                                 : t('investors.detail.structuresList.subscriptionsCountOne', { count: structure.subscriptionsCount || 0 })}
@@ -1304,7 +1304,7 @@ export function InvestorDetailPage({ investor: initialInvestor, onBack, initialT
                           {/* Montant total investi */}
                           <div className="flex items-center gap-2 col-span-2">
                             <TrendingUp className="w-4 h-4 text-emerald-600" />
-                            <span className="text-sm font-semibold text-gray-900">
+                            <span className="text-sm font-semibold text-foreground">
                               {t('investors.detail.structuresList.investedAmount', {
                                 amount: structure.totalInvested ? `${(structure.totalInvested / 1000000).toFixed(2)} M€` : '0 €'
                               })}
@@ -1319,7 +1319,7 @@ export function InvestorDetailPage({ investor: initialInvestor, onBack, initialT
                                 structure.kycStatus === 'Validé' ? 'bg-emerald-50 text-emerald-700 border-emerald-200' :
                                 structure.kycStatus === 'En cours' ? 'bg-blue-50 text-blue-700 border-blue-200' :
                                 structure.kycStatus === 'À revoir' ? 'bg-amber-50 text-amber-700 border-amber-200' :
-                                'bg-gray-50 text-gray-700 border-gray-200'
+                                'bg-muted text-foreground border-border'
                               }`}
                             >
                               {t('investors.detail.structuresList.kycLabel', {
@@ -1360,10 +1360,10 @@ export function InvestorDetailPage({ investor: initialInvestor, onBack, initialT
 
           {/* Notes Tab */}
           <TabsContent value="notes" className="mt-6">
-            <div className="bg-white rounded-xl border border-gray-200">
-              <div className="p-6 border-b border-gray-200">
+            <div className="bg-card rounded-xl border border-border">
+              <div className="p-6 border-b border-border">
                 <div className="flex items-center justify-between">
-                  <h2 className="font-semibold text-gray-900 flex items-center gap-2">
+                  <h2 className="font-semibold text-foreground flex items-center gap-2">
                     <FileText className="w-5 h-5 text-amber-600" />
                     {t('investors.detail.notes.title', { count: investor.notes.length })}
                   </h2>
@@ -1390,14 +1390,14 @@ export function InvestorDetailPage({ investor: initialInvestor, onBack, initialT
                 </div>
               </div>
               
-              <div className="divide-y divide-gray-100">
+              <div className="divide-y divide-border">
                 {investor.notes.map((note, idx) => (
                   <motion.div
                     key={note.id}
                     initial={{ opacity: 0, y: 10 }}
                     animate={{ opacity: 1, y: 0 }}
                     transition={{ delay: idx * 0.03 }}
-                    className={`p-6 hover:bg-gray-50 transition-colors ${note.isImportant ? 'bg-amber-50/30' : ''}`}
+                    className={`p-6 hover:bg-muted transition-colors ${note.isImportant ? 'bg-amber-50/30' : ''}`}
                   >
                     <div className="flex items-start gap-4">
                       <div className="w-8 h-8 rounded-full bg-gradient-to-br from-amber-500 to-orange-500 flex items-center justify-center flex-shrink-0">
@@ -1415,13 +1415,13 @@ export function InvestorDetailPage({ investor: initialInvestor, onBack, initialT
                               {t('investors.detail.notes.important')}
                             </Badge>
                           )}
-                          <span className="text-xs text-gray-500">•</span>
-                          <span className="text-xs text-gray-500">{formatDate(note.date)}</span>
-                          <span className="text-xs text-gray-500">•</span>
-                          <span className="text-xs text-gray-500">{t('investors.detail.notes.byAuthor', { author: note.author })}</span>
+                          <span className="text-xs text-muted-foreground">•</span>
+                          <span className="text-xs text-muted-foreground">{formatDate(note.date)}</span>
+                          <span className="text-xs text-muted-foreground">•</span>
+                          <span className="text-xs text-muted-foreground">{t('investors.detail.notes.byAuthor', { author: note.author })}</span>
                         </div>
                         
-                        <p className="text-sm text-gray-700 leading-relaxed">{note.content}</p>
+                        <p className="text-sm text-foreground leading-relaxed">{note.content}</p>
                       </div>
                     </div>
                   </motion.div>
@@ -1432,9 +1432,9 @@ export function InvestorDetailPage({ investor: initialInvestor, onBack, initialT
 
           {/* Souscriptions Tab */}
           <TabsContent value="souscriptions" className="mt-6">
-            <div className="bg-white rounded-xl border border-gray-200">
-              <div className="p-6 border-b border-gray-200">
-                <h2 className="font-semibold text-gray-900 flex items-center gap-2">
+            <div className="bg-card rounded-xl border border-border">
+              <div className="p-6 border-b border-border">
+                <h2 className="font-semibold text-foreground flex items-center gap-2">
                   <Briefcase className="w-5 h-5 text-emerald-600" />
                   {t('investors.detail.subscriptions.title', { count: investor.subscriptionsCount })}
                 </h2>
@@ -1442,8 +1442,8 @@ export function InvestorDetailPage({ investor: initialInvestor, onBack, initialT
 
               <div className="p-6">
                 <div className="text-center py-12">
-                  <Briefcase className="w-12 h-12 text-gray-300 mx-auto mb-3" />
-                  <p className="text-gray-500 mb-4">{t('investors.detail.subscriptions.comingSoon')}</p>
+                  <Briefcase className="w-12 h-12 text-border mx-auto mb-3" />
+                  <p className="text-muted-foreground mb-4">{t('investors.detail.subscriptions.comingSoon')}</p>
                   <Button
                     variant="outline"
                     onClick={() => toast.info(t('investors.detail.actions.comingSoon'))}
@@ -1458,9 +1458,9 @@ export function InvestorDetailPage({ investor: initialInvestor, onBack, initialT
           {/* Fiscal & Bancaire Tab */}
           <TabsContent value="fiscal" className="mt-6 space-y-6">
             {/* Informations fiscales */}
-            <div className="bg-white rounded-xl border border-gray-200 p-6">
+            <div className="bg-card rounded-xl border border-border p-6">
               <div className="flex items-center justify-between mb-4">
-                <h2 className="font-semibold text-gray-900 flex items-center gap-2">
+                <h2 className="font-semibold text-foreground flex items-center gap-2">
                   <FileCheck className="w-5 h-5 text-amber-600" />
                   {t('investors.detail.fiscal.title')}
                 </h2>
@@ -1520,7 +1520,7 @@ export function InvestorDetailPage({ investor: initialInvestor, onBack, initialT
                     { value: 'Switzerland', label: t('investors.detail.countryOptions.Switzerland') },
                     { value: 'Luxembourg', label: t('investors.detail.countryOptions.Luxembourg') }
                   ]}
-                  icon={<Globe className="w-4 h-4 text-gray-400" />}
+                  icon={<Globe className="w-4 h-4 text-muted-foreground/60" />}
                 />
 
                 <div className="col-span-2">
@@ -1557,7 +1557,7 @@ export function InvestorDetailPage({ investor: initialInvestor, onBack, initialT
                     { value: 'Switzerland', label: t('investors.detail.countryOptions.Switzerland') },
                     { value: 'Luxembourg', label: t('investors.detail.countryOptions.Luxembourg') }
                   ]}
-                  icon={<MapPin className="w-4 h-4 text-gray-400" />}
+                  icon={<MapPin className="w-4 h-4 text-muted-foreground/60" />}
                 />
 
                 <EditableField
@@ -1570,9 +1570,9 @@ export function InvestorDetailPage({ investor: initialInvestor, onBack, initialT
             </div>
             
             {/* Informations bancaires */}
-            <div className="bg-white rounded-xl border border-gray-200 p-6">
+            <div className="bg-card rounded-xl border border-border p-6">
               <div className="flex items-center justify-between mb-4">
-                <h2 className="font-semibold text-gray-900 flex items-center gap-2">
+                <h2 className="font-semibold text-foreground flex items-center gap-2">
                   <CreditCard className="w-5 h-5 text-green-600" />
                   {t('investors.detail.bank.title')}
                 </h2>
@@ -1626,7 +1626,7 @@ export function InvestorDetailPage({ investor: initialInvestor, onBack, initialT
                   field="iban"
                   value={investor.iban}
                   type="text"
-                  icon={<CreditCard className="w-4 h-4 text-gray-400" />}
+                  icon={<CreditCard className="w-4 h-4 text-muted-foreground/60" />}
                 />
 
                 <EditableField
@@ -1659,10 +1659,10 @@ export function InvestorDetailPage({ investor: initialInvestor, onBack, initialT
 
           {/* E-mails Tab */}
           <TabsContent value="emails" className="mt-6">
-            <div className="bg-white rounded-xl border border-gray-200">
-              <div className="p-6 border-b border-gray-200">
+            <div className="bg-card rounded-xl border border-border">
+              <div className="p-6 border-b border-border">
                 <div className="flex items-center justify-between">
-                  <h2 className="font-semibold text-gray-900 flex items-center gap-2">
+                  <h2 className="font-semibold text-foreground flex items-center gap-2">
                     <MessageSquare className="w-5 h-5 text-indigo-600" />
                     {t('investors.detail.emails.title', { count: investor.emails.length })}
                   </h2>
@@ -1678,14 +1678,14 @@ export function InvestorDetailPage({ investor: initialInvestor, onBack, initialT
                 </div>
               </div>
               
-              <div className="divide-y divide-gray-100">
+              <div className="divide-y divide-border">
                 {investor.emails.map((email, idx) => (
                   <motion.div
                     key={email.id}
                     initial={{ opacity: 0, y: 10 }}
                     animate={{ opacity: 1, y: 0 }}
                     transition={{ delay: idx * 0.03 }}
-                    className="p-6 hover:bg-gray-50 transition-colors cursor-pointer"
+                    className="p-6 hover:bg-muted transition-colors cursor-pointer"
                     onClick={() => toast.info(t('investors.detail.emails.openEmail'), { description: email.subject })}
                   >
                     <div className="flex items-start gap-4">
@@ -1695,15 +1695,15 @@ export function InvestorDetailPage({ investor: initialInvestor, onBack, initialT
                       
                       <div className="flex-1 min-w-0">
                         <div className="flex items-center justify-between mb-1">
-                          <span className="font-semibold text-gray-900 truncate">{email.subject}</span>
+                          <span className="font-semibold text-foreground truncate">{email.subject}</span>
                           <div className="flex items-center gap-2 flex-shrink-0 ml-4">
                             {email.hasAttachment && (
-                              <Paperclip className="w-4 h-4 text-gray-400" />
+                              <Paperclip className="w-4 h-4 text-muted-foreground/60" />
                             )}
                             <Badge
                               variant="outline"
                               className={`text-xs ${
-                                email.status === 'Sent' ? 'bg-gray-50 text-gray-700 border-gray-300' :
+                                email.status === 'Sent' ? 'bg-muted text-foreground border-border' :
                                 email.status === 'Delivered' ? 'bg-blue-50 text-blue-700 border-blue-200' :
                                 email.status === 'Opened' ? 'bg-purple-50 text-purple-700 border-purple-200' :
                                 'bg-emerald-50 text-emerald-700 border-emerald-200'
@@ -1714,9 +1714,9 @@ export function InvestorDetailPage({ investor: initialInvestor, onBack, initialT
                           </div>
                         </div>
                         
-                        <p className="text-sm text-gray-600 truncate mb-2">{email.preview}</p>
+                        <p className="text-sm text-muted-foreground truncate mb-2">{email.preview}</p>
                         
-                        <div className="flex items-center gap-3 text-xs text-gray-500">
+                        <div className="flex items-center gap-3 text-xs text-muted-foreground">
                           <span>{t('investors.detail.emails.from', { value: email.from })}</span>
                           <span>•</span>
                           <span>{t('investors.detail.emails.to', { value: email.to })}</span>
