@@ -423,7 +423,12 @@
       "noDepositary": "No depositary",
       "sepaEnabledLabel": "SEPA direct debit enabled",
       "sepaDisabledLabel": "SEPA direct debit disabled",
-      "daysShort": "d"
+      "daysShort": "d",
+      "viewDetail": "View details",
+      "duplicate": "Duplicate",
+      "duplicated": "Subscription duplicated",
+      "delete": "Delete",
+      "deleted": "Subscription deleted"
     },
     "counterSignatureStatus": {
       "completed": "Completed",

@@ -423,7 +423,12 @@
       "noDepositary": "Aucun dépositaire",
       "sepaEnabledLabel": "Prélèvement SEPA activé",
       "sepaDisabledLabel": "Prélèvement SEPA désactivé",
-      "daysShort": "j"
+      "daysShort": "j",
+      "viewDetail": "Voir le détail",
+      "duplicate": "Dupliquer",
+      "duplicated": "Souscription dupliquée",
+      "delete": "Supprimer",
+      "deleted": "Souscription supprimée"
     },
     "counterSignatureStatus": {
       "completed": "Complétée",
