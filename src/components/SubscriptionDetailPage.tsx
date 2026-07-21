@@ -1255,7 +1255,7 @@ export function SubscriptionDetailPage({ subscription, onBack }: SubscriptionDet
                                   <Button 
                                     size="sm" 
                                     variant="outline"
-                                    onClick={() => toast.success('Décision: Accepté avec réserve')}
+                                    onClick={() => toast.success(t('subscriptions.detail.validation.decisionAcceptedReserve'))}
                                     className="flex-1"
                                   >
                                     <Check className="w-3 h-3 mr-1" />
@@ -1264,7 +1264,7 @@ export function SubscriptionDetailPage({ subscription, onBack }: SubscriptionDet
                                   <Button 
                                     size="sm" 
                                     variant="outline"
-                                    onClick={() => toast.success('Décision: Rejeter')}
+                                    onClick={() => toast.success(t('subscriptions.detail.validation.decisionRejectedToast'))}
                                     className="flex-1"
                                   >
                                     <X className="w-3 h-3 mr-1" />
@@ -1319,7 +1319,7 @@ export function SubscriptionDetailPage({ subscription, onBack }: SubscriptionDet
                                   <Button 
                                     size="sm" 
                                     variant="outline"
-                                    onClick={() => toast.success('Décision: Accepter après due diligence')}
+                                    onClick={() => toast.success(t('subscriptions.detail.validation.decisionAcceptedAfterDD'))}
                                     className="flex-1"
                                   >
                                     <Check className="w-3 h-3 mr-1" />
@@ -1328,7 +1328,7 @@ export function SubscriptionDetailPage({ subscription, onBack }: SubscriptionDet
                                   <Button 
                                     size="sm" 
                                     variant="outline"
-                                    onClick={() => toast.success('Décision: Escalader')}
+                                    onClick={() => toast.success(t('subscriptions.detail.validation.decisionEscalated'))}
                                     className="flex-1"
                                   >
                                     <Flag className="w-3 h-3 mr-1" />
