@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from 'react';
-import { ArrowRight, Check, HelpCircle, ShieldCheck, X } from 'lucide-react';
+import { ArrowLeft, ArrowRight, Check, ChevronUp, ShieldCheck, X } from 'lucide-react';
 import { toast } from 'sonner@2.0.3';
 
 import {
@@ -38,24 +38,28 @@ const ACTION_TITLE_KEY: Record<AlertBulkAction, string> = {
   true_hit: 'complianceAlerts.bulkDialog.titleConfirm',
   false_hit: 'complianceAlerts.bulkDialog.titleReject',
   unsure: 'complianceAlerts.bulkDialog.titleUnsure',
+  escalate: 'complianceAlerts.bulkDialog.titleEscalate',
 };
 
 const ACTION_TITLE_SINGLE_KEY: Record<AlertBulkAction, string> = {
   true_hit: 'complianceAlerts.bulkDialog.titleSingleConfirm',
   false_hit: 'complianceAlerts.bulkDialog.titleSingleReject',
   unsure: 'complianceAlerts.bulkDialog.titleSingleUnsure',
+  escalate: 'complianceAlerts.bulkDialog.titleSingleEscalate',
 };
 
 const ACTION_SUBMIT_SINGLE_KEY: Record<AlertBulkAction, string> = {
   true_hit: 'complianceAlerts.bulkDialog.submitSingleConfirm',
   false_hit: 'complianceAlerts.bulkDialog.submitSingleReject',
   unsure: 'complianceAlerts.bulkDialog.submitSingleUnsure',
+  escalate: 'complianceAlerts.bulkDialog.submitSingleEscalate',
 };
 
 const ACTION_ICON: Record<AlertBulkAction, typeof Check> = {
   true_hit: Check,
   false_hit: X,
-  unsure: HelpCircle,
+  unsure: ChevronUp,
+  escalate: ChevronUp,
 };
 
 export function AlertBulkActionDialog({
@@ -99,6 +103,14 @@ export function AlertBulkActionDialog({
     ? t(ACTION_TITLE_SINGLE_KEY[action], { name: single.entityName })
     : t(ACTION_TITLE_KEY[action], { count: total });
 
+  const allIndividualCommentsFilled = () => {
+    const updatedComments = { ...comments };
+    if (currentAlert) {
+      updatedComments[currentAlert.id] = currentComment.trim();
+    }
+    return alerts.every((a) => (updatedComments[a.id] ?? '').trim().length > 0);
+  };
+
   const handleApplyToAll = () => {
     if (!sharedComment.trim()) {
       toast.error(t('complianceAlerts.bulkDialog.missingComment'));
@@ -129,33 +141,59 @@ export function AlertBulkActionDialog({
     onClose();
   };
 
-  const handleNextIndividual = () => {
+  const handleNavigateIndividual = (direction: 'prev' | 'next') => {
+    const updatedComments = {
+      ...comments,
+      ...(currentComment.trim()
+        ? { [currentAlert.id]: currentComment.trim() }
+        : {}),
+    };
+    setComments(updatedComments);
+
+    if (direction === 'next') {
+      if (currentIndex + 1 < total) {
+        const nextIdx = currentIndex + 1;
+        setCurrentIndex(nextIdx);
+        setCurrentComment(updatedComments[alerts[nextIdx].id] ?? '');
+      }
+    } else {
+      if (currentIndex > 0) {
+        const prevIdx = currentIndex - 1;
+        setCurrentIndex(prevIdx);
+        setCurrentComment(updatedComments[alerts[prevIdx].id] ?? '');
+      }
+    }
+  };
+
+  const handleFinishIndividual = () => {
     if (!currentComment.trim()) {
       toast.error(t('complianceAlerts.bulkDialog.missingComment'));
       return;
     }
-    const updatedComments = {
+    const finalComments = {
       ...comments,
       [currentAlert.id]: currentComment.trim(),
     };
-    if (currentIndex + 1 < total) {
-      setComments(updatedComments);
-      setCurrentComment('');
-      setCurrentIndex(currentIndex + 1);
-    } else {
-      onConfirm(
-        alerts.map((a) => a.id),
-        action,
-        updatedComments,
-      );
-      toast.success(t('complianceAlerts.bulkDialog.doneTitle'), {
-        description: t('complianceAlerts.bulkDialog.doneBody', { count: total }),
-      });
-      onClose();
+    const missingCount = alerts.filter(
+      (a) => !(finalComments[a.id] ?? '').trim(),
+    ).length;
+    if (missingCount > 0) {
+      toast.error(t('complianceAlerts.bulkDialog.missingComment'));
+      return;
     }
+    onConfirm(
+      alerts.map((a) => a.id),
+      action,
+      finalComments,
+    );
+    toast.success(t('complianceAlerts.bulkDialog.doneTitle'), {
+      description: t('complianceAlerts.bulkDialog.doneBody', { count: total }),
+    });
+    onClose();
   };
 
   const isLast = currentIndex + 1 === total;
+  const isFirst = currentIndex === 0;
 
   return (
     <Dialog open={open} onOpenChange={(o) => !o && onClose()}>
@@ -193,7 +231,10 @@ export function AlertBulkActionDialog({
                       {single.entityName}
                     </span>
                     <p className="text-xs text-gray-500 mt-0.5 truncate">
-                      {single.name} · {single.source} · {single.match}%
+                      {single.name} · {single.source} ·{' '}
+                      {t('complianceAlerts.bulkDialog.matchReminder', {
+                        match: single.match,
+                      })}
                     </p>
                   </>
                 ) : (
@@ -270,35 +311,49 @@ export function AlertBulkActionDialog({
                   })}
                 </span>
                 <div className="flex items-center gap-1">
-                  {alerts.map((_, idx) => (
-                    <span
-                      key={idx}
-                      className="block h-1.5 rounded-full transition-all"
-                      style={{
-                        width: idx === currentIndex ? '20px' : '8px',
-                        backgroundColor:
-                          idx < currentIndex
-                            ? 'var(--success)'
-                            : idx === currentIndex
-                              ? BRAND_BLUE
-                              : '#E5E7EB',
-                      }}
-                    />
-                  ))}
+                  {alerts.map((a, idx) => {
+                    const filled = !!(comments[a.id] ?? '').trim() ||
+                      (idx === currentIndex && currentComment.trim());
+                    return (
+                      <span
+                        key={idx}
+                        className="block h-1.5 rounded-full transition-all"
+                        style={{
+                          width: idx === currentIndex ? '20px' : '8px',
+                          backgroundColor:
+                            filled && idx !== currentIndex
+                              ? 'var(--success)'
+                              : idx === currentIndex
+                                ? BRAND_BLUE
+                                : '#E5E7EB',
+                        }}
+                      />
+                    );
+                  })}
                 </div>
               </div>
 
-              {/* Current alert card */}
+              {/* Current alert card with match reminder */}
               <div className="p-4 bg-gray-50 rounded-lg border border-gray-200">
-                <div className="text-[10px] uppercase tracking-wider text-gray-500 font-semibold mb-2">
-                  {t('complianceAlerts.bulkDialog.currentAlert')}
-                </div>
-                <div className="font-medium text-sm text-gray-900">
-                  {currentAlert?.entityName}
-                </div>
-                <div className="text-xs text-gray-500 mt-0.5">
-                  {currentAlert?.name} · {currentAlert?.source} ·{' '}
-                  {currentAlert?.match}%
+                <div className="flex items-center justify-between">
+                  <div>
+                    <div className="text-[10px] uppercase tracking-wider text-gray-500 font-semibold mb-2">
+                      {t('complianceAlerts.bulkDialog.currentAlert')}
+                    </div>
+                    <div className="font-medium text-sm text-gray-900">
+                      {currentAlert?.entityName}
+                    </div>
+                    <div className="text-xs text-gray-500 mt-0.5">
+                      {currentAlert?.name} · {currentAlert?.source}
+                    </div>
+                  </div>
+                  {currentAlert && (
+                    <span className="inline-flex items-center px-2.5 py-1 rounded-md bg-muted text-xs font-semibold text-foreground tabular-nums">
+                      {t('complianceAlerts.bulkDialog.matchReminder', {
+                        match: currentAlert.match,
+                      })}
+                    </span>
+                  )}
                 </div>
               </div>
 
@@ -326,40 +381,61 @@ export function AlertBulkActionDialog({
           )}
         </div>
 
-        <DialogFooter className="px-6 py-4 border-t border-gray-200 bg-gray-50 flex items-center justify-end gap-2">
-          <Button variant="outline" onClick={onClose}>
-            {t('complianceAlerts.bulkDialog.cancel')}
-          </Button>
-          {isSingle || mode === 'same' ? (
-            <Button
-              onClick={handleApplyToAll}
-              className="text-white"
-              style={{ backgroundColor: BRAND_BLUE }}
-            >
-              <ActionIcon className="w-4 h-4 mr-2" />
-              {isSingle
-                ? t(ACTION_SUBMIT_SINGLE_KEY[action])
-                : t('complianceAlerts.bulkDialog.applyToAll')}
+        <DialogFooter className="px-6 py-4 border-t border-gray-200 bg-gray-50 flex items-center justify-between gap-2">
+          {/* Left side: navigation arrows in individual mode */}
+          <div className="flex items-center gap-2">
+            {!isSingle && mode === 'individual' && (
+              <>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => handleNavigateIndividual('prev')}
+                  disabled={isFirst}
+                  className="h-8"
+                >
+                  <ArrowLeft className="w-4 h-4" />
+                </Button>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => handleNavigateIndividual('next')}
+                  disabled={isLast}
+                  className="h-8"
+                >
+                  <ArrowRight className="w-4 h-4" />
+                </Button>
+              </>
+            )}
+          </div>
+
+          {/* Right side: cancel + submit */}
+          <div className="flex items-center gap-2">
+            <Button variant="outline" onClick={onClose}>
+              {t('complianceAlerts.bulkDialog.cancel')}
             </Button>
-          ) : (
-            <Button
-              onClick={handleNextIndividual}
-              className="text-white"
-              style={{ backgroundColor: BRAND_BLUE }}
-            >
-              {isLast ? (
-                <>
-                  <Check className="w-4 h-4 mr-2" />
-                  {t('complianceAlerts.bulkDialog.finish')}
-                </>
-              ) : (
-                <>
-                  {t('complianceAlerts.bulkDialog.nextAlert')}
-                  <ArrowRight className="w-4 h-4 ml-2" />
-                </>
-              )}
-            </Button>
-          )}
+            {isSingle || mode === 'same' ? (
+              <Button
+                onClick={handleApplyToAll}
+                className="text-white"
+                style={{ backgroundColor: BRAND_BLUE }}
+              >
+                <ActionIcon className="w-4 h-4 mr-2" />
+                {isSingle
+                  ? t(ACTION_SUBMIT_SINGLE_KEY[action])
+                  : t('complianceAlerts.bulkDialog.applyToAll')}
+              </Button>
+            ) : (
+              <Button
+                onClick={handleFinishIndividual}
+                className="text-white"
+                disabled={!allIndividualCommentsFilled()}
+                style={{ backgroundColor: BRAND_BLUE }}
+              >
+                <Check className="w-4 h-4 mr-2" />
+                {t('complianceAlerts.bulkDialog.finish')}
+              </Button>
+            )}
+          </div>
         </DialogFooter>
       </DialogContent>
     </Dialog>

@@ -1,4 +1,11 @@
 {
+  "bulk": {
+    "selectedOne": "sélectionné",
+    "selectedMany": "sélectionnés",
+    "selectAllFiltered": "Sélectionner les {{count}} éléments (toutes les pages)",
+    "allFilteredSelected": "Les {{count}} éléments sont sélectionnés (toutes les pages)",
+    "clear": "Annuler la sélection"
+  },
   "header": {
     "designSystem": "Design System",
     "whatsNew": "Nouveautés",
@@ -2336,6 +2343,17 @@
       "submitReject": "Rejeter",
       "submitUnpublish": "Dépublier"
     },
+    "selection": {
+      "selectedOne": "document sélectionné",
+      "selectedMany": "documents sélectionnés",
+      "actionPublish": "Publier",
+      "actionReject": "Rejeter",
+      "actionUnpublish": "Dépublier",
+      "selectRow": "Sélectionner ce document",
+      "selectAll": "Sélectionner tous les documents de cette page",
+      "deselectAll": "Désélectionner tous les documents",
+      "onlyPendingTip": "Sélectionner"
+    },
     "moduleDisabled": {
       "title": "Centre de Publication désactivé",
       "description": "Ce module est désactivé. Activez « Centre de Publication » dans l'App Store pour accéder au workflow de validation."
@@ -2726,7 +2744,8 @@
       "view": "Voir le détail",
       "confirm": "Confirmer (True Hit)",
       "reject": "Rejeter (False Hit)",
-      "unsure": "Marquer comme incertain"
+      "unsure": "Marquer comme incertain",
+      "escalate": "Escalader"
     },
     "selection": {
       "selectRow": "Sélectionner cette alerte",
@@ -2735,21 +2754,26 @@
       "selectedOne": "alerte sélectionnée",
       "selectedMany": "alertes sélectionnées",
       "clear": "Annuler la sélection",
-      "actionConfirm": "Valider",
-      "actionReject": "Rejeter",
+      "actionConfirm": "True Hit",
+      "actionReject": "False Hit",
       "actionUnsure": "Incertain",
+      "actionEscalate": "Escalader",
       "onlyPendingTip": "Seules les alertes en attente peuvent être qualifiées"
     },
     "bulkDialog": {
-      "titleConfirm": "Valider {{count}} alerte(s)",
-      "titleReject": "Rejeter {{count}} alerte(s)",
+      "titleConfirm": "Valider {{count}} alerte(s) — True Hit",
+      "titleReject": "Rejeter {{count}} alerte(s) — False Hit",
       "titleUnsure": "Marquer {{count}} alerte(s) comme incertaines",
-      "titleSingleConfirm": "Valider l'alerte {{name}}",
-      "titleSingleReject": "Rejeter l'alerte {{name}}",
+      "titleEscalate": "Escalader {{count}} alerte(s)",
+      "titleSingleConfirm": "Valider l'alerte {{name}} — True Hit",
+      "titleSingleReject": "Rejeter l'alerte {{name}} — False Hit",
       "titleSingleUnsure": "Marquer l'alerte {{name}} comme incertaine",
+      "titleSingleEscalate": "Escalader l'alerte {{name}}",
       "submitSingleConfirm": "Valider l'alerte",
       "submitSingleReject": "Rejeter l'alerte",
       "submitSingleUnsure": "Marquer comme incertaine",
+      "submitSingleEscalate": "Escalader",
+      "matchReminder": "Match : {{match}} %",
       "doneSingleTitle": "Alerte qualifiée",
       "doneSingleBody": "L'alerte {{name}} a été qualifiée",
       "description": "Un commentaire est obligatoire pour qualifier ces alertes.",

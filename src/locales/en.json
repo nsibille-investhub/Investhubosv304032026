@@ -1,4 +1,11 @@
 {
+  "bulk": {
+    "selectedOne": "selected",
+    "selectedMany": "selected",
+    "selectAllFiltered": "Select all {{count}} items (all pages)",
+    "allFilteredSelected": "All {{count}} items selected (all pages)",
+    "clear": "Clear selection"
+  },
   "header": {
     "designSystem": "Design System",
     "whatsNew": "What's new",
@@ -2336,6 +2343,17 @@
       "submitReject": "Reject",
       "submitUnpublish": "Unpublish"
     },
+    "selection": {
+      "selectedOne": "document selected",
+      "selectedMany": "documents selected",
+      "actionPublish": "Publish",
+      "actionReject": "Reject",
+      "actionUnpublish": "Unpublish",
+      "selectRow": "Select this document",
+      "selectAll": "Select all documents on this page",
+      "deselectAll": "Deselect all documents",
+      "onlyPendingTip": "Select"
+    },
     "moduleDisabled": {
       "title": "Publication Center disabled",
       "description": "This module is disabled. Enable \"Centre de Publication\" in the App Store to access the validation workflow."
@@ -2726,7 +2744,8 @@
       "view": "View details",
       "confirm": "Confirm (True Hit)",
       "reject": "Reject (False Hit)",
-      "unsure": "Mark as unsure"
+      "unsure": "Mark as unsure",
+      "escalate": "Escalate"
     },
     "selection": {
       "selectRow": "Select this alert",
@@ -2735,21 +2754,26 @@
       "selectedOne": "alert selected",
       "selectedMany": "alerts selected",
       "clear": "Clear selection",
-      "actionConfirm": "Confirm",
-      "actionReject": "Reject",
+      "actionConfirm": "True Hit",
+      "actionReject": "False Hit",
       "actionUnsure": "Unsure",
+      "actionEscalate": "Escalate",
       "onlyPendingTip": "Only pending alerts can be qualified"
     },
     "bulkDialog": {
-      "titleConfirm": "Confirm {{count}} alert(s)",
-      "titleReject": "Reject {{count}} alert(s)",
+      "titleConfirm": "Confirm {{count}} alert(s) — True Hit",
+      "titleReject": "Reject {{count}} alert(s) — False Hit",
       "titleUnsure": "Mark {{count}} alert(s) as unsure",
-      "titleSingleConfirm": "Confirm alert {{name}}",
-      "titleSingleReject": "Reject alert {{name}}",
+      "titleEscalate": "Escalate {{count}} alert(s)",
+      "titleSingleConfirm": "Confirm alert {{name}} — True Hit",
+      "titleSingleReject": "Reject alert {{name}} — False Hit",
       "titleSingleUnsure": "Mark alert {{name}} as unsure",
+      "titleSingleEscalate": "Escalate alert {{name}}",
       "submitSingleConfirm": "Confirm alert",
       "submitSingleReject": "Reject alert",
       "submitSingleUnsure": "Mark as unsure",
+      "submitSingleEscalate": "Escalate",
+      "matchReminder": "Match: {{match}}%",
       "doneSingleTitle": "Alert qualified",
       "doneSingleBody": "Alert {{name}} has been qualified",
       "description": "A comment is required to qualify these alerts.",

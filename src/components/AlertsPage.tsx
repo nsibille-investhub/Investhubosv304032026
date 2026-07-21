@@ -4,8 +4,8 @@ import {
   AlertCircle,
   Check,
   CheckCircle2,
+  ChevronUp,
   Download,
-  HelpCircle,
   List,
   X,
   XCircle,
@@ -18,6 +18,7 @@ import { ALERT_SEARCH_FIELDS } from '../utils/searchConfig';
 import { analyzeQuery } from '../utils/aiAnalyzer';
 import { useAppStore } from '../utils/appStoreContext';
 import { useTranslation } from '../utils/languageContext';
+import { useBulkSelection } from '../hooks/useBulkSelection';
 
 import { AlertsLandingPage } from './AlertsLandingPage';
 import { AlertDataTable, type AlertBulkAction } from './AlertDataTable';
@@ -25,9 +26,9 @@ import { AIInsightBanner } from './AIInsightBanner';
 import { AskAIDialog } from './AskAIDialog';
 import { AlertDetailDrawer } from './AlertDetailDrawer';
 import { AlertBulkActionDialog } from './AlertBulkActionDialog';
+import { BulkActionBar } from './ui/bulk-action-bar';
 
 import { Badge } from './ui/badge';
-import { Button } from './ui/button';
 import { Card, CardContent } from './ui/card';
 import { DataPagination } from './ui/data-pagination';
 import { FilterCard } from './ui/filter-card';
@@ -116,6 +117,9 @@ const STATUS_GROUPS: Record<AlertStatus, AlertItem['status'] | null> = {
   rejected: 'Rejected',
 };
 
+const getAlertId = (a: AlertItem) => a.id;
+const canSelectAlert = (a: AlertItem) => a.status === 'Pending';
+
 export function AlertsPage({ onEnableModule, alerts }: AlertsPageProps) {
   const { isModuleActive } = useAppStore();
   const { t } = useTranslation();
@@ -138,7 +142,6 @@ export function AlertsPage({ onEnableModule, alerts }: AlertsPageProps) {
   const [askAIDialogOpen, setAskAIDialogOpen] = useState(false);
   const [aiInsight, setAiInsight] = useState<any>(null);
 
-  const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
   const [bulkAction, setBulkAction] = useState<AlertBulkAction | null>(null);
   const [singleQualify, setSingleQualify] = useState<{
     alertId: string;
@@ -248,9 +251,36 @@ export function AlertsPage({ onEnableModule, alerts }: AlertsPageProps) {
   const endIndex = Math.min(startIndex + itemsPerPage, totalItems);
   const paginatedAlerts = sortedAlerts.slice(startIndex, endIndex);
 
+  const pendingFilteredCount = useMemo(
+    () => sortedAlerts.filter((a) => a.status === 'Pending').length,
+    [sortedAlerts],
+  );
+
+  const {
+    selectedIds,
+    selectAllFiltered,
+    toggleRow,
+    togglePageAll,
+    selectAllFilteredItems,
+    clearSelection,
+    allPageSelected,
+    somePageSelected,
+    selectedCount,
+    selectedItems,
+  } = useBulkSelection({
+    allFilteredItems: sortedAlerts,
+    pageItems: paginatedAlerts,
+    getId: getAlertId,
+    canSelect: canSelectAlert,
+  });
+
   useEffect(() => {
     setPaginationPage(1);
   }, [activeTab, activeStatus, activeFilters, searchTerm]);
+
+  useEffect(() => {
+    clearSelection();
+  }, [activeTab, activeStatus]);
 
   const handleSort = (key: string) => {
     setSortConfig((current) => {
@@ -294,13 +324,17 @@ export function AlertsPage({ onEnableModule, alerts }: AlertsPageProps) {
           ? t('complianceAlerts.toast.actionConfirmed')
           : decision === 'false_hit'
             ? t('complianceAlerts.toast.actionRejected')
-            : t('complianceAlerts.drawer.decisionUnsure');
+            : decision === 'escalate'
+              ? t('complianceAlerts.tooltip.escalate')
+              : t('complianceAlerts.drawer.decisionUnsure');
       toast.success(
         decision === 'true_hit'
           ? t('complianceAlerts.toast.confirmedTitle')
           : decision === 'false_hit'
             ? t('complianceAlerts.toast.rejectedTitle')
-            : t('complianceAlerts.drawer.decisionUnsure'),
+            : decision === 'escalate'
+              ? t('complianceAlerts.tooltip.escalate')
+              : t('complianceAlerts.drawer.decisionUnsure'),
         {
           description: t('complianceAlerts.toast.decisionBody', {
             name: alertItem.name,
@@ -322,65 +356,14 @@ export function AlertsPage({ onEnableModule, alerts }: AlertsPageProps) {
     return a ? [a] : [];
   }, [singleQualify, sortedAlerts]);
 
-  const pendingPageIds = useMemo(
-    () =>
-      paginatedAlerts
-        .filter((a) => a.status === 'Pending')
-        .map((a) => a.id),
-    [paginatedAlerts],
-  );
-
-  const allPendingSelected =
-    pendingPageIds.length > 0 &&
-    pendingPageIds.every((id) => selectedIds.has(id));
-  const somePendingSelected =
-    !allPendingSelected && pendingPageIds.some((id) => selectedIds.has(id));
-
-  const selectedAlertItems = useMemo(
-    () => sortedAlerts.filter((a) => selectedIds.has(a.id)),
-    [sortedAlerts, selectedIds],
-  );
-
-  const handleToggleSelectRow = (id: string) => {
-    setSelectedIds((current) => {
-      const next = new Set(current);
-      if (next.has(id)) next.delete(id);
-      else next.add(id);
-      return next;
-    });
-  };
-
-  const handleToggleSelectAll = () => {
-    setSelectedIds((current) => {
-      if (allPendingSelected) {
-        const next = new Set(current);
-        pendingPageIds.forEach((id) => next.delete(id));
-        return next;
-      }
-      const next = new Set(current);
-      pendingPageIds.forEach((id) => next.add(id));
-      return next;
-    });
-  };
-
-  const handleClearSelection = () => setSelectedIds(new Set());
-
   const handleBulkConfirm = (
     alertIds: string[],
     _action: AlertBulkAction,
     _comments: Record<string, string>,
   ) => {
-    setSelectedIds((current) => {
-      const next = new Set(current);
-      alertIds.forEach((id) => next.delete(id));
-      return next;
-    });
+    clearSelection();
     setBulkAction(null);
   };
-
-  useEffect(() => {
-    setSelectedIds(new Set());
-  }, [activeTab, activeStatus]);
 
   const handleExportAlerts = () => {
     const csvHeaders = ['ID', 'Name', 'Entity', 'Source', 'Match', 'Status', 'Changes', 'Date'];
@@ -422,6 +405,36 @@ export function AlertsPage({ onEnableModule, alerts }: AlertsPageProps) {
 
   const ratio = (count: number, total: number) =>
     total > 0 ? `${Math.round((count / total) * 100)}%` : '0%';
+
+  const bulkActions = useMemo(
+    () => [
+      {
+        labelKey: 'complianceAlerts.selection.actionConfirm',
+        icon: <Check className="w-4 h-4" />,
+        onClick: () => setBulkAction('true_hit'),
+        color: 'var(--success)',
+        borderColor: 'color-mix(in oklab, var(--success) 35%, transparent)',
+        bgColor: 'var(--success-soft)',
+      },
+      {
+        labelKey: 'complianceAlerts.selection.actionEscalate',
+        icon: <ChevronUp className="w-4 h-4" />,
+        onClick: () => setBulkAction('escalate'),
+        color: 'var(--warning)',
+        borderColor: 'color-mix(in oklab, var(--warning) 35%, transparent)',
+        bgColor: 'var(--warning-soft)',
+      },
+      {
+        labelKey: 'complianceAlerts.selection.actionReject',
+        icon: <X className="w-4 h-4" />,
+        onClick: () => setBulkAction('false_hit'),
+        color: 'var(--danger)',
+        borderColor: 'color-mix(in oklab, var(--danger) 35%, transparent)',
+        bgColor: 'var(--danger-soft)',
+      },
+    ],
+    [],
+  );
 
   return (
     <div className="flex-1 flex flex-col">
@@ -553,86 +566,16 @@ export function AlertsPage({ onEnableModule, alerts }: AlertsPageProps) {
             </div>
 
             <CardContent className="p-0 flex flex-col">
-              <AnimatePresence>
-                {selectedIds.size > 0 && (
-                  <motion.div
-                    initial={{ height: 0, opacity: 0 }}
-                    animate={{ height: 'auto', opacity: 1 }}
-                    exit={{ height: 0, opacity: 0 }}
-                    className="border-b border-gray-200 bg-gray-50 overflow-hidden"
-                  >
-                    <div className="px-6 py-3 flex items-center justify-between flex-wrap gap-3">
-                      <div className="flex items-center gap-3">
-                        <span
-                          className="inline-flex items-center rounded-full border px-2.5 py-1 text-xs leading-none font-medium text-white"
-                          style={{ backgroundColor: BRAND_BLUE, borderColor: BRAND_BLUE }}
-                        >
-                          {selectedIds.size}{' '}
-                          {selectedIds.size === 1
-                            ? t('complianceAlerts.selection.selectedOne')
-                            : t('complianceAlerts.selection.selectedMany')}
-                        </span>
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          onClick={handleClearSelection}
-                          className="h-8"
-                        >
-                          <X className="w-4 h-4 mr-1" />
-                          {t('complianceAlerts.selection.clear')}
-                        </Button>
-                      </div>
-                      <div className="flex items-center gap-2">
-                        <Button
-                          variant="outline"
-                          size="sm"
-                          onClick={() => setBulkAction('true_hit')}
-                          className="h-8"
-                          style={{
-                            color: 'var(--success)',
-                            borderColor:
-                              'color-mix(in oklab, var(--success) 35%, transparent)',
-                            backgroundColor: 'var(--success-soft)',
-                          }}
-                        >
-                          <Check className="w-4 h-4 mr-1.5" />
-                          {t('complianceAlerts.selection.actionConfirm')}
-                        </Button>
-                        <Button
-                          variant="outline"
-                          size="sm"
-                          onClick={() => setBulkAction('unsure')}
-                          className="h-8"
-                          style={{
-                            color: 'var(--warning)',
-                            borderColor:
-                              'color-mix(in oklab, var(--warning) 35%, transparent)',
-                            backgroundColor: 'var(--warning-soft)',
-                          }}
-                        >
-                          <HelpCircle className="w-4 h-4 mr-1.5" />
-                          {t('complianceAlerts.selection.actionUnsure')}
-                        </Button>
-                        <Button
-                          variant="outline"
-                          size="sm"
-                          onClick={() => setBulkAction('false_hit')}
-                          className="h-8"
-                          style={{
-                            color: 'var(--danger)',
-                            borderColor:
-                              'color-mix(in oklab, var(--danger) 35%, transparent)',
-                            backgroundColor: 'var(--danger-soft)',
-                          }}
-                        >
-                          <X className="w-4 h-4 mr-1.5" />
-                          {t('complianceAlerts.selection.actionReject')}
-                        </Button>
-                      </div>
-                    </div>
-                  </motion.div>
-                )}
-              </AnimatePresence>
+              <BulkActionBar
+                selectedCount={selectedCount}
+                totalFilteredCount={pendingFilteredCount}
+                selectAllFiltered={selectAllFiltered}
+                onSelectAllFiltered={selectAllFilteredItems}
+                onClearSelection={clearSelection}
+                actions={bulkActions}
+                unitOneKey="complianceAlerts.selection.selectedOne"
+                unitManyKey="complianceAlerts.selection.selectedMany"
+              />
 
               <div className="flex-1 overflow-auto">
                 {paginatedAlerts.length === 0 ? (
@@ -654,10 +597,10 @@ export function AlertsPage({ onEnableModule, alerts }: AlertsPageProps) {
                     onSort={handleSort}
                     onDecision={handleRowQualify}
                     selectedIds={selectedIds}
-                    onToggleSelectRow={handleToggleSelectRow}
-                    onToggleSelectAll={handleToggleSelectAll}
-                    allPendingSelected={allPendingSelected}
-                    somePendingSelected={somePendingSelected}
+                    onToggleSelectRow={toggleRow}
+                    onToggleSelectAll={togglePageAll}
+                    allPendingSelected={allPageSelected}
+                    somePendingSelected={somePageSelected}
                   />
                 )}
               </div>
@@ -690,7 +633,7 @@ export function AlertsPage({ onEnableModule, alerts }: AlertsPageProps) {
 
       <AlertBulkActionDialog
         open={bulkAction !== null}
-        alerts={selectedAlertItems}
+        alerts={selectedItems}
         action={bulkAction}
         onClose={() => setBulkAction(null)}
         onConfirm={handleBulkConfirm}
