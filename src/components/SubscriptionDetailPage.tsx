@@ -332,14 +332,14 @@ export function SubscriptionDetailPage({ subscription, onBack }: SubscriptionDet
             <div className="flex items-center gap-8 mb-6">
             {/* Investisseur */}
             <div className="flex items-center gap-2">
-              <div className="w-7 h-7 rounded-lg bg-primary/5 border border-primary/10 flex items-center justify-center flex-shrink-0">
-                <User className="w-3.5 h-3.5 text-primary" />
+              <div className="w-7 h-7 rounded-lg bg-muted border border-border flex items-center justify-center flex-shrink-0">
+                <User className="w-3.5 h-3.5 text-muted-foreground" />
               </div>
               <div>
                 <div className="text-xs text-muted-foreground leading-none mb-0.5">{t('subscriptions.detail.header.investor')}</div>
                 <Button
                   variant="link"
-                  className="p-0 h-auto font-semibold text-primary hover:text-primary/80 text-sm leading-tight -mt-0.5"
+                  className="p-0 h-auto font-semibold text-foreground hover:text-foreground/70 text-sm leading-tight -mt-0.5"
                   onClick={() => toast.info(t('subscriptions.detail.header.navigateToInvestor'))}
                 >
                   {subscription.contrepartie.investor || subscription.contrepartie.name}
@@ -350,14 +350,14 @@ export function SubscriptionDetailPage({ subscription, onBack }: SubscriptionDet
             {/* Structure */}
             {subscription.type !== 'Personne Physique' && (
               <div className="flex items-center gap-2">
-                <div className="w-7 h-7 rounded-lg bg-purple-50 border border-purple-100 flex items-center justify-center flex-shrink-0">
-                  <Building2 className="w-3.5 h-3.5 text-purple-600" />
+                <div className="w-7 h-7 rounded-lg bg-muted border border-border flex items-center justify-center flex-shrink-0">
+                  <Building2 className="w-3.5 h-3.5 text-muted-foreground" />
                 </div>
                 <div>
                   <div className="text-xs text-muted-foreground leading-none mb-0.5">{t('subscriptions.detail.header.structure')}</div>
                   <Button
                     variant="link"
-                    className="p-0 h-auto font-semibold text-primary hover:text-primary/80 text-sm leading-tight -mt-0.5"
+                    className="p-0 h-auto font-semibold text-foreground hover:text-foreground/70 text-sm leading-tight -mt-0.5"
                     onClick={() => toast.info(t('subscriptions.detail.header.navigateToStructure'))}
                   >
                     Alpha Group Holdings
@@ -368,8 +368,8 @@ export function SubscriptionDetailPage({ subscription, onBack }: SubscriptionDet
 
             {/* Partenaire */}
             <div className="flex items-center gap-2">
-              <div className="w-7 h-7 rounded-lg bg-emerald-50 border border-emerald-100 flex items-center justify-center flex-shrink-0">
-                <Users className="w-3.5 h-3.5 text-emerald-600" />
+              <div className="w-7 h-7 rounded-lg bg-muted border border-border flex items-center justify-center flex-shrink-0">
+                <Users className="w-3.5 h-3.5 text-muted-foreground" />
               </div>
               <div>
                 <div className="text-xs text-muted-foreground leading-none mb-0.5">{t('subscriptions.detail.header.partner')}</div>
@@ -380,8 +380,8 @@ export function SubscriptionDetailPage({ subscription, onBack }: SubscriptionDet
 
             {/* Frais */}
             <div className="flex items-center gap-2">
-              <div className="w-7 h-7 rounded-lg bg-amber-50 border border-amber-100 flex items-center justify-center flex-shrink-0">
-                <DollarSign className="w-3.5 h-3.5 text-amber-600" />
+              <div className="w-7 h-7 rounded-lg bg-muted border border-border flex items-center justify-center flex-shrink-0">
+                <DollarSign className="w-3.5 h-3.5 text-muted-foreground" />
               </div>
               <div>
                 <div className="text-xs text-muted-foreground leading-none mb-0.5">{t('subscriptions.detail.header.fees')}</div>
@@ -395,56 +395,56 @@ export function SubscriptionDetailPage({ subscription, onBack }: SubscriptionDet
             <div className="flex items-center gap-8 mb-4">
               {/* Montant Souscrit */}
               <div className="flex items-center gap-2">
-                <div className="w-5 h-5 rounded bg-primary/5 flex items-center justify-center flex-shrink-0">
-                  <DollarSign className="w-3 h-3 text-primary" />
+                <div className="w-5 h-5 rounded bg-muted flex items-center justify-center flex-shrink-0">
+                  <DollarSign className="w-3 h-3 text-muted-foreground" />
                 </div>
                 <div>
                   <div className="text-xs text-muted-foreground leading-tight">{t('subscriptions.detail.header.subscribedAmount')}</div>
                   <div className="flex items-baseline gap-1.5">
                     <span className="font-bold text-foreground">500 000 €</span>
-                    <span className="text-xs text-primary font-medium">{t('subscriptions.detail.header.shares', { count: '5 000' })}</span>
+                    <span className="text-xs text-muted-foreground font-medium">{t('subscriptions.detail.header.shares', { count: '5 000' })}</span>
                   </div>
                 </div>
               </div>
 
               {/* Montant Appelé */}
               <div className="flex items-center gap-2">
-                <div className="w-5 h-5 rounded bg-emerald-50 flex items-center justify-center flex-shrink-0">
-                  <TrendingUp className="w-3 h-3 text-emerald-600" />
+                <div className="w-5 h-5 rounded bg-muted flex items-center justify-center flex-shrink-0">
+                  <TrendingUp className="w-3 h-3 text-muted-foreground" />
                 </div>
                 <div>
                   <div className="text-xs text-muted-foreground leading-tight">{t('subscriptions.detail.header.calledAmount')}</div>
                   <div className="flex items-baseline gap-1.5">
                     <span className="font-bold text-foreground">275 000 €</span>
-                    <span className="text-xs text-emerald-600 font-medium">55%</span>
+                    <span className="text-xs text-muted-foreground font-medium">55%</span>
                   </div>
                 </div>
               </div>
 
               {/* Montant Distribué */}
               <div className="flex items-center gap-2">
-                <div className="w-5 h-5 rounded bg-purple-50 flex items-center justify-center flex-shrink-0">
-                  <ArrowDownCircle className="w-3 h-3 text-purple-600" />
+                <div className="w-5 h-5 rounded bg-muted flex items-center justify-center flex-shrink-0">
+                  <ArrowDownCircle className="w-3 h-3 text-muted-foreground" />
                 </div>
                 <div>
                   <div className="text-xs text-muted-foreground leading-tight">{t('subscriptions.detail.header.distributedAmount')}</div>
                   <div className="flex items-baseline gap-1.5">
                     <span className="font-bold text-foreground">42 500 €</span>
-                    <span className="text-xs text-purple-600 font-medium">8.5%</span>
+                    <span className="text-xs text-muted-foreground font-medium">8.5%</span>
                   </div>
                 </div>
               </div>
 
               {/* Solde Restant */}
               <div className="flex items-center gap-2">
-                <div className="w-5 h-5 rounded bg-orange-50 flex items-center justify-center flex-shrink-0">
-                  <Wallet className="w-3 h-3 text-orange-600" />
+                <div className="w-5 h-5 rounded bg-muted flex items-center justify-center flex-shrink-0">
+                  <Wallet className="w-3 h-3 text-muted-foreground" />
                 </div>
                 <div>
                   <div className="text-xs text-muted-foreground leading-tight">{t('subscriptions.detail.header.remainingBalance')}</div>
                   <div className="flex items-baseline gap-1.5">
                     <span className="font-bold text-foreground">225 000 €</span>
-                    <span className="text-xs text-orange-600 font-medium">45%</span>
+                    <span className="text-xs text-muted-foreground font-medium">45%</span>
                   </div>
                 </div>
               </div>
