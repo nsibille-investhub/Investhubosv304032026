@@ -996,6 +996,21 @@ export function SubscriptionDetailPage({ subscription, onBack }: SubscriptionDet
                   </Collapsible>
                 );
               })}
+
+                      {/* Action — passer à l'étape suivante */}
+                      <div className="flex justify-end pt-4">
+                        <Button
+                          style={{ background: PRIMARY_BUTTON_GRADIENT }}
+                          className="gap-2 text-white hover:opacity-90"
+                          onClick={() => {
+                            setCurrentStep(2);
+                            toast.success(t('subscriptions.detail.onboarding.submittedForValidation'));
+                          }}
+                        >
+                          <ChevronRight className="w-4 h-4" />
+                          {t('subscriptions.detail.onboarding.proceedToValidation')}
+                        </Button>
+                      </div>
                     </div>
                   )}
 

@@ -484,7 +484,9 @@
         "sectionValidatedDesc": "{{count}} questions de « {{title}} » ont été validées",
         "manageDocuments": "Gérer les pièces justificatives",
         "exportDocuments": "Exporter les documents",
-        "addDocument": "Ajouter un document"
+        "addDocument": "Ajouter un document",
+        "proceedToValidation": "Passer à la validation",
+        "submittedForValidation": "Dossier transmis pour validation"
       },
       "validation": {
         "title": "Validation",

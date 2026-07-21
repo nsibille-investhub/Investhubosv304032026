@@ -484,7 +484,9 @@
         "sectionValidatedDesc": "{{count}} questions in \"{{title}}\" have been validated",
         "manageDocuments": "Manage supporting documents",
         "exportDocuments": "Export documents",
-        "addDocument": "Add a document"
+        "addDocument": "Add a document",
+        "proceedToValidation": "Proceed to validation",
+        "submittedForValidation": "File submitted for validation"
       },
       "validation": {
         "title": "Validation",
