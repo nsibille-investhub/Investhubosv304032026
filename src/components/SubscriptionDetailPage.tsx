@@ -70,7 +70,6 @@ import {
   TabsTrigger,
 } from './ui/tabs';
 import { PRIMARY_BUTTON_GRADIENT } from './ui/page-header';
-import { KpiCard, KpiStrip } from './ui/kpi-card';
 import {
   mockSections,
   mockRequiredDocuments,
@@ -291,7 +290,7 @@ export function SubscriptionDetailPage({ subscription, onBack }: SubscriptionDet
     <div className="min-h-screen bg-muted">
       {/* Header - Same structure as InvestorDetailPage */}
       <div
-        className="bg-gradient-to-b from-blue-50/80 to-white border-b border-blue-100 sticky top-0 z-10 dark:from-blue-950/40 dark:to-card dark:border-blue-900"
+        className="bg-card border-b border-border sticky top-0 z-10"
       >
         {/* Main Header Content */}
         <div className="px-8 pb-3 pt-5">
@@ -333,8 +332,8 @@ export function SubscriptionDetailPage({ subscription, onBack }: SubscriptionDet
             <div className="flex items-center gap-8 mb-6">
             {/* Investisseur */}
             <div className="flex items-center gap-2">
-              <div className="w-7 h-7 rounded-lg bg-blue-100 border border-blue-200 flex items-center justify-center flex-shrink-0">
-                <User className="w-3.5 h-3.5 text-blue-700" />
+              <div className="w-7 h-7 rounded-lg bg-primary/5 border border-primary/10 flex items-center justify-center flex-shrink-0">
+                <User className="w-3.5 h-3.5 text-primary" />
               </div>
               <div>
                 <div className="text-xs text-muted-foreground leading-none mb-0.5">{t('subscriptions.detail.header.investor')}</div>
@@ -393,38 +392,63 @@ export function SubscriptionDetailPage({ subscription, onBack }: SubscriptionDet
             </div>
 
             {/* Financial KPIs Row */}
-            <KpiStrip columns={4} className="mb-4">
-              <KpiCard
-                index={0}
-                icon={DollarSign}
-                label={t('subscriptions.detail.header.subscribedAmount')}
-                value="500 000 €"
-                hint={t('subscriptions.detail.header.shares', { count: '5 000' })}
-              />
-              <KpiCard
-                index={1}
-                icon={TrendingUp}
-                label={t('subscriptions.detail.header.calledAmount')}
-                value="275 000 €"
-                hint="55%"
-                progress={{ current: 275000, total: 500000 }}
-              />
-              <KpiCard
-                index={2}
-                icon={ArrowDownCircle}
-                label={t('subscriptions.detail.header.distributedAmount')}
-                value="42 500 €"
-                hint="8.5%"
-              />
-              <KpiCard
-                index={3}
-                icon={Wallet}
-                label={t('subscriptions.detail.header.remainingBalance')}
-                value="225 000 €"
-                hint="45%"
-                pulse
-              />
-            </KpiStrip>
+            <div className="flex items-center gap-8 mb-4">
+              {/* Montant Souscrit */}
+              <div className="flex items-center gap-2">
+                <div className="w-5 h-5 rounded bg-primary/5 flex items-center justify-center flex-shrink-0">
+                  <DollarSign className="w-3 h-3 text-primary" />
+                </div>
+                <div>
+                  <div className="text-xs text-muted-foreground leading-tight">{t('subscriptions.detail.header.subscribedAmount')}</div>
+                  <div className="flex items-baseline gap-1.5">
+                    <span className="font-bold text-foreground">500 000 €</span>
+                    <span className="text-xs text-primary font-medium">{t('subscriptions.detail.header.shares', { count: '5 000' })}</span>
+                  </div>
+                </div>
+              </div>
+
+              {/* Montant Appelé */}
+              <div className="flex items-center gap-2">
+                <div className="w-5 h-5 rounded bg-emerald-50 flex items-center justify-center flex-shrink-0">
+                  <TrendingUp className="w-3 h-3 text-emerald-600" />
+                </div>
+                <div>
+                  <div className="text-xs text-muted-foreground leading-tight">{t('subscriptions.detail.header.calledAmount')}</div>
+                  <div className="flex items-baseline gap-1.5">
+                    <span className="font-bold text-foreground">275 000 €</span>
+                    <span className="text-xs text-emerald-600 font-medium">55%</span>
+                  </div>
+                </div>
+              </div>
+
+              {/* Montant Distribué */}
+              <div className="flex items-center gap-2">
+                <div className="w-5 h-5 rounded bg-purple-50 flex items-center justify-center flex-shrink-0">
+                  <ArrowDownCircle className="w-3 h-3 text-purple-600" />
+                </div>
+                <div>
+                  <div className="text-xs text-muted-foreground leading-tight">{t('subscriptions.detail.header.distributedAmount')}</div>
+                  <div className="flex items-baseline gap-1.5">
+                    <span className="font-bold text-foreground">42 500 €</span>
+                    <span className="text-xs text-purple-600 font-medium">8.5%</span>
+                  </div>
+                </div>
+              </div>
+
+              {/* Solde Restant */}
+              <div className="flex items-center gap-2">
+                <div className="w-5 h-5 rounded bg-orange-50 flex items-center justify-center flex-shrink-0">
+                  <Wallet className="w-3 h-3 text-orange-600" />
+                </div>
+                <div>
+                  <div className="text-xs text-muted-foreground leading-tight">{t('subscriptions.detail.header.remainingBalance')}</div>
+                  <div className="flex items-baseline gap-1.5">
+                    <span className="font-bold text-foreground">225 000 €</span>
+                    <span className="text-xs text-orange-600 font-medium">45%</span>
+                  </div>
+                </div>
+              </div>
+            </div>
             </div>
 
             {/* Right column - Risk analysis + Export button */}
@@ -514,7 +538,7 @@ export function SubscriptionDetailPage({ subscription, onBack }: SubscriptionDet
       </div>
 
       {/* Tabs - Same structure as InvestorDetailPage */}
-      <div className="px-8 -mt-px bg-white border-b border-blue-100 dark:bg-card dark:border-blue-900">
+      <div className="px-8 -mt-px bg-card border-b border-border">
         <Tabs defaultValue="detail" className="w-full">
           <TabsList className="bg-transparent border-b border-border rounded-none w-full justify-start h-auto p-0 gap-6">
             <TabsTrigger 
