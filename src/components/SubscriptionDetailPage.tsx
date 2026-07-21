@@ -48,6 +48,7 @@ import {
 } from 'lucide-react';
 import { Badge } from './ui/badge';
 import { Button } from './ui/button';
+import { Card } from './ui/card';
 import { Separator } from './ui/separator';
 import { Textarea } from './ui/textarea';
 import { Input } from './ui/input';
@@ -77,6 +78,7 @@ import {
   mockEmails,
   mockCapitalCalls,
 } from '../utils/subscriptionDetailMockData';
+import { StatusBadge } from './StatusBadge';
 
 interface SubscriptionDetailPageProps {
   subscription: any;
@@ -285,10 +287,10 @@ export function SubscriptionDetailPage({ subscription, onBack }: SubscriptionDet
   };
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen bg-muted">
       {/* Header - Same structure as InvestorDetailPage */}
       <div
-        className="bg-white border-b border-gray-200 sticky top-0 z-10"
+        className="bg-card border-b border-border sticky top-0 z-10"
       >
         {/* Main Header Content */}
         <div className="px-8 pb-3 pt-5">
@@ -299,22 +301,20 @@ export function SubscriptionDetailPage({ subscription, onBack }: SubscriptionDet
               <div className="flex items-start gap-3 mb-10">
                 <button
                 onClick={onBack}
-                className="p-2 hover:bg-gray-100 rounded-lg transition-colors"
+                className="p-2 hover:bg-muted rounded-lg transition-colors"
               >
-                <ArrowLeft className="w-5 h-5 text-gray-600" />
+                <ArrowLeft className="w-5 h-5 text-muted-foreground" />
               </button>
               
               <div>
                 <div className="flex items-center gap-3 mb-1.5">
-                  <h1 className="text-2xl font-semibold text-gray-900">
+                  <h1 className="text-2xl font-semibold text-foreground">
                     {subscription.name} - €1500K - FutureInvest Fund Part A
                   </h1>
-                  <Badge className="bg-green-50 text-green-700 border-green-200 font-semibold">
-                    {t('subscriptions.detail.header.active')}
-                  </Badge>
+                  <StatusBadge variant="success" label={t('subscriptions.detail.header.active')} />
                 </div>
 
-                <div className="flex items-center gap-3 text-sm text-gray-500">
+                <div className="flex items-center gap-3 text-sm text-muted-foreground">
                   <div className="flex items-center gap-1.5">
                     <Hash className="w-3.5 h-3.5" />
                     <span>{t('subscriptions.detail.header.id', { id: subscription.id })}</span>
@@ -332,14 +332,14 @@ export function SubscriptionDetailPage({ subscription, onBack }: SubscriptionDet
             <div className="flex items-center gap-8 mb-6">
             {/* Investisseur */}
             <div className="flex items-center gap-2">
-              <div className="w-7 h-7 rounded-lg bg-blue-50 border border-blue-100 flex items-center justify-center flex-shrink-0">
-                <User className="w-3.5 h-3.5 text-blue-600" />
+              <div className="w-7 h-7 rounded-lg bg-primary/5 border border-primary/10 flex items-center justify-center flex-shrink-0">
+                <User className="w-3.5 h-3.5 text-primary" />
               </div>
               <div>
-                <div className="text-xs text-gray-500 leading-none mb-0.5">{t('subscriptions.detail.header.investor')}</div>
+                <div className="text-xs text-muted-foreground leading-none mb-0.5">{t('subscriptions.detail.header.investor')}</div>
                 <Button
                   variant="link"
-                  className="p-0 h-auto font-semibold text-blue-600 hover:text-blue-700 text-sm leading-tight -mt-0.5"
+                  className="p-0 h-auto font-semibold text-primary hover:text-primary/80 text-sm leading-tight -mt-0.5"
                   onClick={() => toast.info(t('subscriptions.detail.header.navigateToInvestor'))}
                 >
                   {subscription.contrepartie.investor || subscription.contrepartie.name}
@@ -354,10 +354,10 @@ export function SubscriptionDetailPage({ subscription, onBack }: SubscriptionDet
                   <Building2 className="w-3.5 h-3.5 text-purple-600" />
                 </div>
                 <div>
-                  <div className="text-xs text-gray-500 leading-none mb-0.5">{t('subscriptions.detail.header.structure')}</div>
+                  <div className="text-xs text-muted-foreground leading-none mb-0.5">{t('subscriptions.detail.header.structure')}</div>
                   <Button
                     variant="link"
-                    className="p-0 h-auto font-semibold text-blue-600 hover:text-blue-700 text-sm leading-tight -mt-0.5"
+                    className="p-0 h-auto font-semibold text-primary hover:text-primary/80 text-sm leading-tight -mt-0.5"
                     onClick={() => toast.info(t('subscriptions.detail.header.navigateToStructure'))}
                   >
                     Alpha Group Holdings
@@ -372,9 +372,9 @@ export function SubscriptionDetailPage({ subscription, onBack }: SubscriptionDet
                 <Users className="w-3.5 h-3.5 text-emerald-600" />
               </div>
               <div>
-                <div className="text-xs text-gray-500 leading-none mb-0.5">{t('subscriptions.detail.header.partner')}</div>
-                <div className="text-sm font-medium text-gray-900 leading-tight">UFF</div>
-                <div className="text-xs text-gray-500 leading-tight">{t('subscriptions.detail.header.advisor', { name: 'Eric MAZEAU' })}</div>
+                <div className="text-xs text-muted-foreground leading-none mb-0.5">{t('subscriptions.detail.header.partner')}</div>
+                <div className="text-sm font-medium text-foreground leading-tight">UFF</div>
+                <div className="text-xs text-muted-foreground leading-tight">{t('subscriptions.detail.header.advisor', { name: 'Eric MAZEAU' })}</div>
               </div>
             </div>
 
@@ -384,9 +384,9 @@ export function SubscriptionDetailPage({ subscription, onBack }: SubscriptionDet
                 <DollarSign className="w-3.5 h-3.5 text-amber-600" />
               </div>
               <div>
-                <div className="text-xs text-gray-500 leading-none mb-0.5">{t('subscriptions.detail.header.fees')}</div>
-                <div className="text-xs text-gray-700 leading-tight">{t('subscriptions.detail.header.entryFees', { amount: '3 750,00 €' })}</div>
-                <div className="text-xs text-gray-700 leading-tight">{t('subscriptions.detail.header.subscriptionPremium', { amount: '84,48 €' })}</div>
+                <div className="text-xs text-muted-foreground leading-none mb-0.5">{t('subscriptions.detail.header.fees')}</div>
+                <div className="text-xs text-foreground/80 leading-tight">{t('subscriptions.detail.header.entryFees', { amount: '3 750,00 €' })}</div>
+                <div className="text-xs text-foreground/80 leading-tight">{t('subscriptions.detail.header.subscriptionPremium', { amount: '84,48 €' })}</div>
               </div>
             </div>
             </div>
@@ -395,14 +395,14 @@ export function SubscriptionDetailPage({ subscription, onBack }: SubscriptionDet
             <div className="flex items-center gap-8 mb-4">
               {/* Montant Souscrit */}
               <div className="flex items-center gap-2">
-                <div className="w-5 h-5 rounded bg-blue-50 flex items-center justify-center flex-shrink-0">
-                  <DollarSign className="w-3 h-3 text-blue-600" />
+                <div className="w-5 h-5 rounded bg-primary/5 flex items-center justify-center flex-shrink-0">
+                  <DollarSign className="w-3 h-3 text-primary" />
                 </div>
                 <div>
-                  <div className="text-xs text-gray-500 leading-tight">{t('subscriptions.detail.header.subscribedAmount')}</div>
+                  <div className="text-xs text-muted-foreground leading-tight">{t('subscriptions.detail.header.subscribedAmount')}</div>
                   <div className="flex items-baseline gap-1.5">
-                    <span className="font-bold text-gray-900">500 000 €</span>
-                    <span className="text-xs text-blue-600 font-medium">{t('subscriptions.detail.header.shares', { count: '5 000' })}</span>
+                    <span className="font-bold text-foreground">500 000 €</span>
+                    <span className="text-xs text-primary font-medium">{t('subscriptions.detail.header.shares', { count: '5 000' })}</span>
                   </div>
                 </div>
               </div>
@@ -413,9 +413,9 @@ export function SubscriptionDetailPage({ subscription, onBack }: SubscriptionDet
                   <TrendingUp className="w-3 h-3 text-emerald-600" />
                 </div>
                 <div>
-                  <div className="text-xs text-gray-500 leading-tight">{t('subscriptions.detail.header.calledAmount')}</div>
+                  <div className="text-xs text-muted-foreground leading-tight">{t('subscriptions.detail.header.calledAmount')}</div>
                   <div className="flex items-baseline gap-1.5">
-                    <span className="font-bold text-gray-900">275 000 €</span>
+                    <span className="font-bold text-foreground">275 000 €</span>
                     <span className="text-xs text-emerald-600 font-medium">55%</span>
                   </div>
                 </div>
@@ -427,9 +427,9 @@ export function SubscriptionDetailPage({ subscription, onBack }: SubscriptionDet
                   <ArrowDownCircle className="w-3 h-3 text-purple-600" />
                 </div>
                 <div>
-                  <div className="text-xs text-gray-500 leading-tight">{t('subscriptions.detail.header.distributedAmount')}</div>
+                  <div className="text-xs text-muted-foreground leading-tight">{t('subscriptions.detail.header.distributedAmount')}</div>
                   <div className="flex items-baseline gap-1.5">
-                    <span className="font-bold text-gray-900">42 500 €</span>
+                    <span className="font-bold text-foreground">42 500 €</span>
                     <span className="text-xs text-purple-600 font-medium">8.5%</span>
                   </div>
                 </div>
@@ -441,9 +441,9 @@ export function SubscriptionDetailPage({ subscription, onBack }: SubscriptionDet
                   <Wallet className="w-3 h-3 text-orange-600" />
                 </div>
                 <div>
-                  <div className="text-xs text-gray-500 leading-tight">{t('subscriptions.detail.header.remainingBalance')}</div>
+                  <div className="text-xs text-muted-foreground leading-tight">{t('subscriptions.detail.header.remainingBalance')}</div>
                   <div className="flex items-baseline gap-1.5">
-                    <span className="font-bold text-gray-900">225 000 €</span>
+                    <span className="font-bold text-foreground">225 000 €</span>
                     <span className="text-xs text-orange-600 font-medium">45%</span>
                   </div>
                 </div>
@@ -463,7 +463,7 @@ export function SubscriptionDetailPage({ subscription, onBack }: SubscriptionDet
               </Button>
 
               {/* Analyse de risque compacte */}
-              <div className="bg-white rounded-xl border border-gray-200 p-4 shadow-sm">
+              <Card className="p-4 shadow-sm">
                 <div className="flex items-center gap-4">
                   {/* Jauge circulaire compacte */}
                   <div className="flex flex-col items-center">
@@ -490,19 +490,17 @@ export function SubscriptionDetailPage({ subscription, onBack }: SubscriptionDet
                         />
                       </svg>
                       <div className="absolute inset-0 flex flex-col items-center justify-center">
-                        <span className="text-xl font-bold text-gray-900">65</span>
-                        <span className="text-[10px] text-gray-500">/ 100</span>
+                        <span className="text-xl font-bold text-foreground">65</span>
+                        <span className="text-[10px] text-muted-foreground">/ 100</span>
                       </div>
                     </div>
-                    <Badge className="bg-amber-100 text-amber-700 border-amber-300 font-semibold text-[10px] mt-1.5">
-                      {t('subscriptions.detail.header.riskMedium')}
-                    </Badge>
+                    <StatusBadge variant="warning" label={t('subscriptions.detail.header.riskMedium')} className="text-[10px] mt-1.5" />
                   </div>
 
                   {/* Indicateurs */}
                   <div className="space-y-1.5">
                     {riskValidated && (
-                      <div className="flex items-center gap-1.5 mb-2 pb-2 border-b border-gray-200">
+                      <div className="flex items-center gap-1.5 mb-2 pb-2 border-b border-border">
                         <CheckCircle2 className="w-3 h-3 text-green-600 flex-shrink-0" />
                         <div>
                           <div className="text-[10px] font-semibold text-green-900">{t('subscriptions.detail.header.riskValidated')}</div>
@@ -511,21 +509,21 @@ export function SubscriptionDetailPage({ subscription, onBack }: SubscriptionDet
                       </div>
                     )}
                     <div className="flex items-center justify-between gap-3">
-                      <span className="text-xs text-gray-600 whitespace-nowrap">{t('subscriptions.detail.header.pepDetected')}</span>
+                      <span className="text-xs text-muted-foreground whitespace-nowrap">{t('subscriptions.detail.header.pepDetected')}</span>
                       <Badge className="bg-red-100 text-red-700 border-red-300 text-[10px] h-5">
                         <AlertCircle className="w-2.5 h-2.5 mr-1" />
                         2
                       </Badge>
                     </div>
                     <div className="flex items-center justify-between gap-3">
-                      <span className="text-xs text-gray-600 whitespace-nowrap">{t('subscriptions.detail.header.sanctions')}</span>
+                      <span className="text-xs text-muted-foreground whitespace-nowrap">{t('subscriptions.detail.header.sanctions')}</span>
                       <Badge className="bg-green-100 text-green-700 border-green-300 text-[10px] h-5">
                         <Check className="w-2.5 h-2.5 mr-1" />
                         0
                       </Badge>
                     </div>
                     <div className="flex items-center justify-between gap-3">
-                      <span className="text-xs text-gray-600 whitespace-nowrap">{t('subscriptions.detail.header.adverseMedia')}</span>
+                      <span className="text-xs text-muted-foreground whitespace-nowrap">{t('subscriptions.detail.header.adverseMedia')}</span>
                       <Badge className="bg-amber-100 text-amber-700 border-amber-300 text-[10px] h-5">
                         <AlertCircle className="w-2.5 h-2.5 mr-1" />
                         1
@@ -533,26 +531,26 @@ export function SubscriptionDetailPage({ subscription, onBack }: SubscriptionDet
                     </div>
                   </div>
                 </div>
-              </div>
+              </Card>
             </div>
           </div>
         </div>
       </div>
 
       {/* Tabs - Same structure as InvestorDetailPage */}
-      <div className="px-8 -mt-px bg-white border-b border-gray-200">
+      <div className="px-8 -mt-px bg-card border-b border-border">
         <Tabs defaultValue="detail" className="w-full">
-          <TabsList className="bg-transparent border-b border-gray-200 rounded-none w-full justify-start h-auto p-0 gap-6">
+          <TabsList className="bg-transparent border-b border-border rounded-none w-full justify-start h-auto p-0 gap-6">
             <TabsTrigger 
               value="detail" 
-              className="data-[state=active]:bg-transparent data-[state=active]:shadow-none data-[state=active]:border-b-2 data-[state=active]:border-blue-600 data-[state=active]:text-blue-600 rounded-none pb-3 pt-4 px-0 text-gray-600 font-medium"
+              className="data-[state=active]:bg-transparent data-[state=active]:shadow-none data-[state=active]:border-b-2 data-[state=active]:border-primary data-[state=active]:text-primary rounded-none pb-3 pt-4 px-0 text-muted-foreground font-medium"
             >
               <FileText className="w-4 h-4 mr-2" />
               {t('subscriptions.detail.tabs.detail')}
             </TabsTrigger>
             <TabsTrigger 
               value="emails" 
-              className="data-[state=active]:bg-transparent data-[state=active]:shadow-none data-[state=active]:border-b-2 data-[state=active]:border-blue-600 data-[state=active]:text-blue-600 rounded-none pb-3 pt-4 px-0 text-gray-600 font-medium"
+              className="data-[state=active]:bg-transparent data-[state=active]:shadow-none data-[state=active]:border-b-2 data-[state=active]:border-primary data-[state=active]:text-primary rounded-none pb-3 pt-4 px-0 text-muted-foreground font-medium"
             >
               <Mail className="w-4 h-4 mr-2" />
               {t('subscriptions.detail.tabs.emails')}
@@ -562,7 +560,7 @@ export function SubscriptionDetailPage({ subscription, onBack }: SubscriptionDet
             </TabsTrigger>
             <TabsTrigger 
               value="capital-calls" 
-              className="data-[state=active]:bg-transparent data-[state=active]:shadow-none data-[state=active]:border-b-2 data-[state=active]:border-blue-600 data-[state=active]:text-blue-600 rounded-none pb-3 pt-4 px-0 text-gray-600 font-medium"
+              className="data-[state=active]:bg-transparent data-[state=active]:shadow-none data-[state=active]:border-b-2 data-[state=active]:border-primary data-[state=active]:text-primary rounded-none pb-3 pt-4 px-0 text-muted-foreground font-medium"
             >
               <DollarSign className="w-4 h-4 mr-2" />
               {t('subscriptions.detail.tabs.capitalCalls')}
@@ -572,7 +570,7 @@ export function SubscriptionDetailPage({ subscription, onBack }: SubscriptionDet
             </TabsTrigger>
             <TabsTrigger 
               value="risk" 
-              className="data-[state=active]:bg-transparent data-[state=active]:shadow-none data-[state=active]:border-b-2 data-[state=active]:border-blue-600 data-[state=active]:text-blue-600 rounded-none pb-3 pt-4 px-0 text-gray-600 font-medium"
+              className="data-[state=active]:bg-transparent data-[state=active]:shadow-none data-[state=active]:border-b-2 data-[state=active]:border-primary data-[state=active]:text-primary rounded-none pb-3 pt-4 px-0 text-muted-foreground font-medium"
             >
               <ShieldAlert className="w-4 h-4 mr-2" />
               {t('subscriptions.detail.tabs.risk')}
@@ -582,17 +580,17 @@ export function SubscriptionDetailPage({ subscription, onBack }: SubscriptionDet
             </TabsTrigger>
             <TabsTrigger 
               value="documents" 
-              className="data-[state=active]:bg-transparent data-[state=active]:shadow-none data-[state=active]:border-b-2 data-[state=active]:border-blue-600 data-[state=active]:text-blue-600 rounded-none pb-3 pt-4 px-0 text-gray-600 font-medium"
+              className="data-[state=active]:bg-transparent data-[state=active]:shadow-none data-[state=active]:border-b-2 data-[state=active]:border-primary data-[state=active]:text-primary rounded-none pb-3 pt-4 px-0 text-muted-foreground font-medium"
             >
               <FolderOpen className="w-4 h-4 mr-2" />
               {t('subscriptions.detail.tabs.documents')}
-              <Badge className="ml-2 bg-gray-50 text-gray-700 border-gray-200 text-xs">
+              <Badge className="ml-2 bg-muted text-foreground/80 border-border text-xs">
                 {mockDocuments.length}
               </Badge>
             </TabsTrigger>
             <TabsTrigger 
               value="integrations" 
-              className="data-[state=active]:bg-transparent data-[state=active]:shadow-none data-[state=active]:border-b-2 data-[state=active]:border-blue-600 data-[state=active]:text-blue-600 rounded-none pb-3 pt-4 px-0 text-gray-600 font-medium"
+              className="data-[state=active]:bg-transparent data-[state=active]:shadow-none data-[state=active]:border-b-2 data-[state=active]:border-primary data-[state=active]:text-primary rounded-none pb-3 pt-4 px-0 text-muted-foreground font-medium"
             >
               <Database className="w-4 h-4 mr-2" />
               {t('subscriptions.detail.tabs.integrations')}
@@ -602,7 +600,7 @@ export function SubscriptionDetailPage({ subscription, onBack }: SubscriptionDet
             </TabsTrigger>
             <TabsTrigger 
               value="notes" 
-              className="data-[state=active]:bg-transparent data-[state=active]:shadow-none data-[state=active]:border-b-2 data-[state=active]:border-blue-600 data-[state=active]:text-blue-600 rounded-none pb-3 pt-4 px-0 text-gray-600 font-medium"
+              className="data-[state=active]:bg-transparent data-[state=active]:shadow-none data-[state=active]:border-b-2 data-[state=active]:border-primary data-[state=active]:text-primary rounded-none pb-3 pt-4 px-0 text-muted-foreground font-medium"
             >
               <MessageSquare className="w-4 h-4 mr-2" />
               {t('subscriptions.detail.tabs.notes')}
@@ -621,13 +619,13 @@ export function SubscriptionDetailPage({ subscription, onBack }: SubscriptionDet
                   {currentStep === 0 && (
                     // Initialisation de la souscription
                     <div className="space-y-6">
-                      <div className="bg-white rounded-xl border border-gray-200 p-6 shadow-sm">
-                        <h2 className="text-xl font-bold text-gray-900 mb-6">{t('subscriptions.detail.init.title')}</h2>
+                      <Card className="p-6 shadow-sm">
+                        <h2 className="text-xl font-bold text-foreground mb-6">{t('subscriptions.detail.init.title')}</h2>
 
                         <div className="space-y-6">
                           {/* Investisseur */}
                           <div>
-                            <label className="block text-sm font-semibold text-gray-700 mb-2">{t('subscriptions.detail.init.investorLabel')}</label>
+                            <label className="block text-sm font-semibold text-foreground/80 mb-2">{t('subscriptions.detail.init.investorLabel')}</label>
                             <Input
                               placeholder={t('subscriptions.detail.init.investorPlaceholder')}
                               defaultValue={initData.investorName ?? ''}
@@ -636,7 +634,7 @@ export function SubscriptionDetailPage({ subscription, onBack }: SubscriptionDet
 
                           {/* Structure */}
                           <div>
-                            <label className="block text-sm font-semibold text-gray-700 mb-2">{t('subscriptions.detail.init.structureLabel')}</label>
+                            <label className="block text-sm font-semibold text-foreground/80 mb-2">{t('subscriptions.detail.init.structureLabel')}</label>
                             <Input
                               placeholder={t('subscriptions.detail.init.structurePlaceholder')}
                               defaultValue={
@@ -649,7 +647,7 @@ export function SubscriptionDetailPage({ subscription, onBack }: SubscriptionDet
 
                           {/* Fonds */}
                           <div>
-                            <label className="block text-sm font-semibold text-gray-700 mb-2">{t('subscriptions.detail.init.fundLabel')}</label>
+                            <label className="block text-sm font-semibold text-foreground/80 mb-2">{t('subscriptions.detail.init.fundLabel')}</label>
                             <Input
                               placeholder={t('subscriptions.detail.init.fundPlaceholder')}
                               defaultValue={initData.fundName ?? ''}
@@ -658,7 +656,7 @@ export function SubscriptionDetailPage({ subscription, onBack }: SubscriptionDet
 
                           {/* Part */}
                           <div>
-                            <label className="block text-sm font-semibold text-gray-700 mb-2">{t('subscriptions.detail.init.shareLabel')}</label>
+                            <label className="block text-sm font-semibold text-foreground/80 mb-2">{t('subscriptions.detail.init.shareLabel')}</label>
                             <Input
                               placeholder={t('subscriptions.detail.init.sharePlaceholder')}
                               defaultValue={
@@ -670,7 +668,7 @@ export function SubscriptionDetailPage({ subscription, onBack }: SubscriptionDet
                           {/* Nombre de parts */}
                           <div className="grid grid-cols-2 gap-4">
                             <div>
-                              <label className="block text-sm font-semibold text-gray-700 mb-2">{t('subscriptions.detail.init.numberOfSharesLabel')}</label>
+                              <label className="block text-sm font-semibold text-foreground/80 mb-2">{t('subscriptions.detail.init.numberOfSharesLabel')}</label>
                               <Input
                                 type="number"
                                 placeholder="0"
@@ -678,7 +676,7 @@ export function SubscriptionDetailPage({ subscription, onBack }: SubscriptionDet
                               />
                             </div>
                             <div>
-                              <label className="block text-sm font-semibold text-gray-700 mb-2">{t('subscriptions.detail.init.totalAmountLabel')}</label>
+                              <label className="block text-sm font-semibold text-foreground/80 mb-2">{t('subscriptions.detail.init.totalAmountLabel')}</label>
                               <Input
                                 placeholder="0 €"
                                 defaultValue={
@@ -692,7 +690,7 @@ export function SubscriptionDetailPage({ subscription, onBack }: SubscriptionDet
 
                           {/* Partenaire */}
                           <div>
-                            <label className="block text-sm font-semibold text-gray-700 mb-2">{t('subscriptions.detail.init.partnerLabel')}</label>
+                            <label className="block text-sm font-semibold text-foreground/80 mb-2">{t('subscriptions.detail.init.partnerLabel')}</label>
                             <Input
                               placeholder={t('subscriptions.detail.init.partnerPlaceholder')}
                               defaultValue={initData.distributorName ?? ''}
@@ -715,7 +713,7 @@ export function SubscriptionDetailPage({ subscription, onBack }: SubscriptionDet
                             </Button>
                           </div>
                         </div>
-                      </div>
+                      </Card>
                     </div>
                   )}
 
@@ -734,37 +732,37 @@ export function SubscriptionDetailPage({ subscription, onBack }: SubscriptionDet
                     open={isOpen}
                     onOpenChange={() => toggleSection(section.id)}
                   >
-                    <div
-                      className="bg-white rounded-xl border border-gray-200 overflow-hidden hover:shadow-md transition-shadow"
+                    <Card
+                      className="overflow-hidden hover:shadow-md transition-shadow"
                     >
                       <CollapsibleTrigger className="w-full">
-                        <div className="flex items-center justify-between p-5 hover:bg-gray-50 transition-colors cursor-pointer">
+                        <div className="flex items-center justify-between p-5 hover:bg-muted transition-colors cursor-pointer">
                           <div className="flex items-center gap-4">
                             <div className={`w-12 h-12 rounded-xl flex items-center justify-center ${
-                              stats && stats.approved === stats.total 
-                                ? 'bg-gradient-to-br from-emerald-100 to-teal-100' 
-                                : 'bg-gradient-to-br from-blue-100 to-indigo-100'
+                              stats && stats.approved === stats.total
+                                ? 'bg-[var(--success-soft)]'
+                                : 'bg-primary/10'
                             }`}>
                               <Icon className={`w-6 h-6 ${
-                                stats && stats.approved === stats.total 
-                                  ? 'text-emerald-600' 
-                                  : 'text-blue-600'
+                                stats && stats.approved === stats.total
+                                  ? 'text-emerald-600'
+                                  : 'text-primary'
                               }`} />
                             </div>
                             <div className="text-left">
-                              <h3 className="font-semibold text-gray-900 text-lg mb-1">{t(section.titleKey)}</h3>
+                              <h3 className="font-semibold text-foreground text-lg mb-1">{t(section.titleKey)}</h3>
                               {stats && (
                                 <div className="flex items-center gap-3 text-xs">
-                                  <span className="text-gray-600 font-semibold text-gray-900">
+                                  <span className="text-muted-foreground font-semibold text-foreground">
                                     {t('subscriptions.detail.onboarding.answeredOf', { answered: stats.answered, total: stats.total })}
                                   </span>
-                                  <span className="w-1 h-1 rounded-full bg-gray-300" />
+                                  <span className="w-1 h-1 rounded-full bg-border" />
                                   <span className="text-emerald-600 font-semibold">
                                     {t('subscriptions.detail.onboarding.validated', { count: stats.approved })}
                                   </span>
                                   {stats.rejected > 0 && (
                                     <>
-                                      <span className="w-1 h-1 rounded-full bg-gray-300" />
+                                      <span className="w-1 h-1 rounded-full bg-border" />
                                       <span className="text-red-600 font-semibold">
                                         {t('subscriptions.detail.onboarding.rejected', { count: stats.rejected })}
                                       </span>
@@ -773,7 +771,7 @@ export function SubscriptionDetailPage({ subscription, onBack }: SubscriptionDet
                                 </div>
                               )}
                               {section.id === 'documents' && (
-                                <p className="text-xs text-gray-500">
+                                <p className="text-xs text-muted-foreground">
                                   {t('subscriptions.detail.onboarding.requiredDocuments', { count: mockRequiredDocuments.length })}
                                 </p>
                               )}
@@ -798,22 +796,22 @@ export function SubscriptionDetailPage({ subscription, onBack }: SubscriptionDet
                               </Badge>
                             )}
                             {isOpen ? (
-                              <ChevronUp className="w-5 h-5 text-gray-400" />
+                              <ChevronUp className="w-5 h-5 text-muted-foreground/60" />
                             ) : (
-                              <ChevronDown className="w-5 h-5 text-gray-400" />
+                              <ChevronDown className="w-5 h-5 text-muted-foreground/60" />
                             )}
                           </div>
                         </div>
                       </CollapsibleTrigger>
 
                       <CollapsibleContent>
-                        <div className="border-t border-gray-100">
+                        <div className="border-t border-border/50">
                           {section.id === 'documents' ? (
                             /* Documents Section - Special Layout */
                             <div>
                               {/* Documents Header with Actions */}
-                              <div className="px-4 py-3 bg-gray-50 border-b border-gray-200 flex items-center justify-between">
-                                <div className="flex items-center gap-2 text-sm text-gray-700">
+                              <div className="px-4 py-3 bg-muted border-b border-border flex items-center justify-between">
+                                <div className="flex items-center gap-2 text-sm text-foreground/80">
                                   <FileText className="w-4 h-4" />
                                   <span>{t('subscriptions.detail.onboarding.manageDocuments')}</span>
                                 </div>
@@ -839,7 +837,7 @@ export function SubscriptionDetailPage({ subscription, onBack }: SubscriptionDet
                                   <Button
                                     size="sm"
                                     onClick={() => handleValidateSection(section.id, t(section.titleKey))}
-                                    className="gap-2 text-xs bg-blue-600 hover:bg-blue-700 text-white"
+                                    className="gap-2 text-xs bg-primary hover:bg-primary/90 text-white"
                                   >
                                     <CheckCircle2 className="w-3.5 h-3.5" />
                                     {t('subscriptions.detail.onboarding.validateSection')}
@@ -850,42 +848,42 @@ export function SubscriptionDetailPage({ subscription, onBack }: SubscriptionDet
                               {/* Documents Table */}
                               <div className="overflow-hidden">
                                 <table className="w-full">
-                                  <thead className="bg-gray-50 border-b border-gray-200">
+                                  <thead className="bg-muted border-b border-border">
                                     <tr>
-                                      <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                      <th className="px-4 py-3 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider">
                                         {t('subscriptions.detail.docsTable.document')}
                                       </th>
-                                      <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider w-32">
+                                      <th className="px-4 py-3 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider w-32">
                                         {t('subscriptions.detail.docsTable.dateSent')}
                                       </th>
-                                      <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider w-32">
+                                      <th className="px-4 py-3 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider w-32">
                                         {t('subscriptions.detail.docsTable.issuedOn')}
                                       </th>
-                                      <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider w-32">
+                                      <th className="px-4 py-3 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider w-32">
                                         {t('subscriptions.detail.docsTable.expiration')}
                                       </th>
-                                      <th className="px-4 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider w-20">
+                                      <th className="px-4 py-3 text-center text-xs font-medium text-muted-foreground uppercase tracking-wider w-20">
                                         {t('subscriptions.detail.docsTable.view')}
                                       </th>
-                                      <th className="px-4 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider w-28">
+                                      <th className="px-4 py-3 text-center text-xs font-medium text-muted-foreground uppercase tracking-wider w-28">
                                         {t('subscriptions.detail.docsTable.action')}
                                       </th>
                                     </tr>
                                   </thead>
-                                  <tbody className="bg-white divide-y divide-gray-100">
+                                  <tbody className="bg-card divide-y divide-border/50">
                                     {mockRequiredDocuments.map((doc, idx) => (
-                                      <tr key={idx} className="hover:bg-gray-50 transition-colors group">
-                                        <td className="px-4 py-3 text-sm text-gray-700">
+                                      <tr key={idx} className="hover:bg-muted transition-colors group">
+                                        <td className="px-4 py-3 text-sm text-foreground/80">
                                           {t(doc.nameKey)}
                                         </td>
-                                        <td className="px-4 py-3 text-sm text-gray-500">
-                                          {doc.dateSent || <span className="text-gray-400">-</span>}
+                                        <td className="px-4 py-3 text-sm text-muted-foreground">
+                                          {doc.dateSent || <span className="text-muted-foreground/60">-</span>}
                                         </td>
-                                        <td className="px-4 py-3 text-sm text-gray-500">
-                                          {doc.issueDate || <span className="text-gray-400">-</span>}
+                                        <td className="px-4 py-3 text-sm text-muted-foreground">
+                                          {doc.issueDate || <span className="text-muted-foreground/60">-</span>}
                                         </td>
-                                        <td className="px-4 py-3 text-sm text-gray-500">
-                                          {doc.expiration || <span className="text-gray-400">-</span>}
+                                        <td className="px-4 py-3 text-sm text-muted-foreground">
+                                          {doc.expiration || <span className="text-muted-foreground/60">-</span>}
                                         </td>
                                         <td className="px-4 py-3 text-center">
                                           {doc.hasFile ? (
@@ -893,12 +891,12 @@ export function SubscriptionDetailPage({ subscription, onBack }: SubscriptionDet
                                               variant="ghost"
                                               size="sm"
                                               onClick={() => handleViewDocument(t(doc.nameKey))}
-                                              className="h-7 text-blue-600 hover:text-blue-700 hover:bg-blue-50"
+                                              className="h-7 text-primary hover:text-primary/80 hover:bg-primary/5"
                                             >
                                               <Eye className="w-3.5 h-3.5" />
                                             </Button>
                                           ) : (
-                                            <span className="text-gray-300">-</span>
+                                            <span className="text-muted-foreground/60">-</span>
                                           )}
                                         </td>
                                         <td className="px-4 py-3 text-center">
@@ -923,15 +921,15 @@ export function SubscriptionDetailPage({ subscription, onBack }: SubscriptionDet
                             <div>
                               {/* Validate All Button */}
                               {!allVerified && (
-                                <div className="px-4 py-3 bg-blue-50 border-b border-blue-100 flex items-center justify-between">
-                                  <div className="flex items-center gap-2 text-xs text-blue-700">
+                                <div className="px-4 py-3 bg-primary/5 border-b border-primary/10 flex items-center justify-between">
+                                  <div className="flex items-center gap-2 text-xs text-primary">
                                     <CheckCircle2 className="w-4 h-4" />
                                     <span>{t('subscriptions.detail.onboarding.verifyAllResponses')}</span>
                                   </div>
                                   <Button
                                     size="sm"
                                     onClick={() => handleValidateSection(section.id, t(section.titleKey))}
-                                    className="bg-blue-600 hover:bg-blue-700 text-white"
+                                    className="bg-primary hover:bg-primary/90 text-white"
                                   >
                                     {t('subscriptions.detail.onboarding.validateSection')}
                                   </Button>
@@ -939,7 +937,7 @@ export function SubscriptionDetailPage({ subscription, onBack }: SubscriptionDet
                               )}
 
                               {/* Questions Table */}
-                              <div className="divide-y divide-gray-100">
+                              <div className="divide-y divide-border/50">
                                 {section.questions.map((item, idx) => {
                                   const questionId = `${section.id}-${idx}`;
                                   const status = questionStatuses[questionId] || 'pending';
@@ -950,15 +948,15 @@ export function SubscriptionDetailPage({ subscription, onBack }: SubscriptionDet
 
                                   return (
                                     <div key={idx}>
-                                      <div className="grid grid-cols-12 gap-4 p-4 hover:bg-gray-50 transition-colors">
-                                        <div className="col-span-4 text-sm text-gray-700 flex items-center gap-2">
+                                      <div className="grid grid-cols-12 gap-4 p-4 hover:bg-muted transition-colors">
+                                        <div className="col-span-4 text-sm text-foreground/80 flex items-center gap-2">
                                           {item.hasAlert && (
                                             <AlertCircle className="w-4 h-4 text-red-500 flex-shrink-0" />
                                           )}
                                           <span className={status === 'rejected' ? 'text-red-700' : ''}>{item.question}</span>
                                         </div>
-                                        <div className="col-span-3 text-sm font-medium text-gray-900">
-                                          {response || <span className="text-gray-400 italic">{t('subscriptions.detail.onboarding.notProvided')}</span>}
+                                        <div className="col-span-3 text-sm font-medium text-foreground">
+                                          {response || <span className="text-muted-foreground/60 italic">{t('subscriptions.detail.onboarding.notProvided')}</span>}
                                         </div>
                                         <div className="col-span-5 flex items-center justify-end">
                                           <QuestionActions
@@ -994,7 +992,7 @@ export function SubscriptionDetailPage({ subscription, onBack }: SubscriptionDet
                           )}
                         </div>
                       </CollapsibleContent>
-                    </div>
+                    </Card>
                   </Collapsible>
                 );
               })}
@@ -1007,9 +1005,9 @@ export function SubscriptionDetailPage({ subscription, onBack }: SubscriptionDet
                       {/* Statistiques de complétion */}
                       <div className="grid grid-cols-2 gap-4">
                         {/* Onboarding */}
-                        <div className="bg-white rounded-xl border border-gray-200 p-6 shadow-sm">
+                        <Card className="p-6 shadow-sm">
                           <div className="flex items-center justify-between mb-4">
-                            <h3 className="font-semibold text-gray-900">{t('subscriptions.detail.validation.onboarding')}</h3>
+                            <h3 className="font-semibold text-foreground">{t('subscriptions.detail.validation.onboarding')}</h3>
                             <Badge className="bg-green-100 text-green-700 border-green-300">
                               <CheckCircle2 className="w-3 h-3 mr-1" />
                               {t('subscriptions.detail.validation.complete')}
@@ -1018,29 +1016,29 @@ export function SubscriptionDetailPage({ subscription, onBack }: SubscriptionDet
                           <div className="space-y-3">
                             <div>
                               <div className="flex justify-between text-sm mb-1">
-                                <span className="text-gray-600">{t('subscriptions.detail.validation.questionsAnswered')}</span>
-                                <span className="font-semibold text-gray-900">142/142</span>
+                                <span className="text-muted-foreground">{t('subscriptions.detail.validation.questionsAnswered')}</span>
+                                <span className="font-semibold text-foreground">142/142</span>
                               </div>
-                              <div className="w-full bg-gray-200 rounded-full h-2">
-                                <div className="bg-green-500 h-2 rounded-full" style={{ width: '100%' }}></div>
+                              <div className="w-full bg-muted rounded-full h-2">
+                                <div className="bg-[var(--success)] h-2 rounded-full" style={{ width: '100%' }}></div>
                               </div>
                             </div>
                             <div>
                               <div className="flex justify-between text-sm mb-1">
-                                <span className="text-gray-600">{t('subscriptions.detail.validation.questionsValidated')}</span>
-                                <span className="font-semibold text-gray-900">138/142</span>
+                                <span className="text-muted-foreground">{t('subscriptions.detail.validation.questionsValidated')}</span>
+                                <span className="font-semibold text-foreground">138/142</span>
                               </div>
-                              <div className="w-full bg-gray-200 rounded-full h-2">
-                                <div className="bg-blue-500 h-2 rounded-full" style={{ width: '97%' }}></div>
+                              <div className="w-full bg-muted rounded-full h-2">
+                                <div className="bg-primary h-2 rounded-full" style={{ width: '97%' }}></div>
                               </div>
                             </div>
                           </div>
-                        </div>
+                        </Card>
 
                         {/* Documents */}
-                        <div className="bg-white rounded-xl border border-gray-200 p-6 shadow-sm">
+                        <Card className="p-6 shadow-sm">
                           <div className="flex items-center justify-between mb-4">
-                            <h3 className="font-semibold text-gray-900">{t('subscriptions.detail.validation.documentsTab')}</h3>
+                            <h3 className="font-semibold text-foreground">{t('subscriptions.detail.validation.documentsTab')}</h3>
                             <Badge className="bg-green-100 text-green-700 border-green-300">
                               <CheckCircle2 className="w-3 h-3 mr-1" />
                               {t('subscriptions.detail.validation.documentsValidated')}
@@ -1049,30 +1047,30 @@ export function SubscriptionDetailPage({ subscription, onBack }: SubscriptionDet
                           <div className="space-y-3">
                             <div>
                               <div className="flex justify-between text-sm mb-1">
-                                <span className="text-gray-600">{t('subscriptions.detail.validation.documentsProvided')}</span>
-                                <span className="font-semibold text-gray-900">8/8</span>
+                                <span className="text-muted-foreground">{t('subscriptions.detail.validation.documentsProvided')}</span>
+                                <span className="font-semibold text-foreground">8/8</span>
                               </div>
-                              <div className="w-full bg-gray-200 rounded-full h-2">
-                                <div className="bg-green-500 h-2 rounded-full" style={{ width: '100%' }}></div>
+                              <div className="w-full bg-muted rounded-full h-2">
+                                <div className="bg-[var(--success)] h-2 rounded-full" style={{ width: '100%' }}></div>
                               </div>
                             </div>
                             <div>
                               <div className="flex justify-between text-sm mb-1">
-                                <span className="text-gray-600">{t('subscriptions.detail.validation.documentsValidatedLabel')}</span>
-                                <span className="font-semibold text-gray-900">8/8</span>
+                                <span className="text-muted-foreground">{t('subscriptions.detail.validation.documentsValidatedLabel')}</span>
+                                <span className="font-semibold text-foreground">8/8</span>
                               </div>
-                              <div className="w-full bg-gray-200 rounded-full h-2">
-                                <div className="bg-green-500 h-2 rounded-full" style={{ width: '100%' }}></div>
+                              <div className="w-full bg-muted rounded-full h-2">
+                                <div className="bg-[var(--success)] h-2 rounded-full" style={{ width: '100%' }}></div>
                               </div>
                             </div>
                           </div>
-                        </div>
+                        </Card>
                       </div>
 
                       {/* Niveau de risque */}
-                      <div className="bg-white rounded-xl border border-gray-200 p-6 shadow-sm">
+                      <Card className="p-6 shadow-sm">
                         <div className="flex items-center justify-between mb-4">
-                          <h3 className="font-semibold text-gray-900">{t('subscriptions.detail.validation.riskLevel')}</h3>
+                          <h3 className="font-semibold text-foreground">{t('subscriptions.detail.validation.riskLevel')}</h3>
                           <Badge className="bg-amber-100 text-amber-700 border-amber-300">
                             {t('subscriptions.detail.validation.medium')}
                           </Badge>
@@ -1080,46 +1078,46 @@ export function SubscriptionDetailPage({ subscription, onBack }: SubscriptionDet
                         
                         <div className="space-y-4">
                           {/* Détail du calcul */}
-                          <div className="bg-gray-50 rounded-lg p-4">
-                            <h4 className="text-sm font-semibold text-gray-900 mb-3">{t('subscriptions.detail.validation.riskDetailTitle')}</h4>
+                          <div className="bg-muted rounded-lg p-4">
+                            <h4 className="text-sm font-semibold text-foreground mb-3">{t('subscriptions.detail.validation.riskDetailTitle')}</h4>
                             <div className="space-y-2">
                               <div className="flex justify-between items-center">
                                 <div className="flex items-center gap-2">
-                                  <Globe className="w-4 h-4 text-gray-600" />
-                                  <span className="text-sm text-gray-700">{t('subscriptions.detail.validation.residenceCountry')}</span>
+                                  <Globe className="w-4 h-4 text-muted-foreground" />
+                                  <span className="text-sm text-foreground/80">{t('subscriptions.detail.validation.residenceCountry')}</span>
                                 </div>
                                 <div className="flex items-center gap-2">
-                                  <span className="text-sm font-medium text-gray-900">France</span>
+                                  <span className="text-sm font-medium text-foreground">France</span>
                                   <Badge className="bg-green-100 text-green-700 border-green-300 text-xs">{t('subscriptions.detail.validation.low')}</Badge>
                                 </div>
                               </div>
                               <div className="flex justify-between items-center">
                                 <div className="flex items-center gap-2">
-                                  <Users className="w-4 h-4 text-gray-600" />
-                                  <span className="text-sm text-gray-700">{t('subscriptions.detail.validation.investorProfile')}</span>
+                                  <Users className="w-4 h-4 text-muted-foreground" />
+                                  <span className="text-sm text-foreground/80">{t('subscriptions.detail.validation.investorProfile')}</span>
                                 </div>
                                 <div className="flex items-center gap-2">
-                                  <span className="text-sm font-medium text-gray-900">HNWI</span>
+                                  <span className="text-sm font-medium text-foreground">HNWI</span>
                                   <Badge className="bg-amber-100 text-amber-700 border-amber-300 text-xs">{t('subscriptions.detail.validation.medium')}</Badge>
                                 </div>
                               </div>
                               <div className="flex justify-between items-center">
                                 <div className="flex items-center gap-2">
-                                  <DollarSign className="w-4 h-4 text-gray-600" />
-                                  <span className="text-sm text-gray-700">{t('subscriptions.detail.validation.subscriptionAmount')}</span>
+                                  <DollarSign className="w-4 h-4 text-muted-foreground" />
+                                  <span className="text-sm text-foreground/80">{t('subscriptions.detail.validation.subscriptionAmount')}</span>
                                 </div>
                                 <div className="flex items-center gap-2">
-                                  <span className="text-sm font-medium text-gray-900">500 000 €</span>
+                                  <span className="text-sm font-medium text-foreground">500 000 €</span>
                                   <Badge className="bg-amber-100 text-amber-700 border-amber-300 text-xs">{t('subscriptions.detail.validation.medium')}</Badge>
                                 </div>
                               </div>
                               <div className="flex justify-between items-center">
                                 <div className="flex items-center gap-2">
-                                  <Scale className="w-4 h-4 text-gray-600" />
-                                  <span className="text-sm text-gray-700">{t('subscriptions.detail.validation.fundsOrigin')}</span>
+                                  <Scale className="w-4 h-4 text-muted-foreground" />
+                                  <span className="text-sm text-foreground/80">{t('subscriptions.detail.validation.fundsOrigin')}</span>
                                 </div>
                                 <div className="flex items-center gap-2">
-                                  <span className="text-sm font-medium text-gray-900">Salaires</span>
+                                  <span className="text-sm font-medium text-foreground">Salaires</span>
                                   <Badge className="bg-green-100 text-green-700 border-green-300 text-xs">{t('subscriptions.detail.validation.low')}</Badge>
                                 </div>
                               </div>
@@ -1131,8 +1129,8 @@ export function SubscriptionDetailPage({ subscription, onBack }: SubscriptionDet
                             <div className="flex items-center gap-3">
                               <AlertTriangle className="w-5 h-5 text-amber-600" />
                               <div>
-                                <div className="font-medium text-gray-900">{t('subscriptions.detail.validation.riskValidationRequired')}</div>
-                                <div className="text-sm text-gray-600">{t('subscriptions.detail.validation.riskValidationDesc')}</div>
+                                <div className="font-medium text-foreground">{t('subscriptions.detail.validation.riskValidationRequired')}</div>
+                                <div className="text-sm text-muted-foreground">{t('subscriptions.detail.validation.riskValidationDesc')}</div>
                               </div>
                             </div>
                             <Button 
@@ -1145,47 +1143,47 @@ export function SubscriptionDetailPage({ subscription, onBack }: SubscriptionDet
                             </Button>
                           </div>
                         </div>
-                      </div>
+                      </Card>
 
                       {/* Niveau KYC */}
-                      <div className="bg-white rounded-xl border border-gray-200 p-6 shadow-sm">
+                      <Card className="p-6 shadow-sm">
                         <div className="flex items-center justify-between mb-4">
-                          <h3 className="font-semibold text-gray-900">{t('subscriptions.detail.validation.kycLevel')}</h3>
-                          <Badge className="bg-blue-100 text-blue-700 border-blue-300">
+                          <h3 className="font-semibold text-foreground">{t('subscriptions.detail.validation.kycLevel')}</h3>
+                          <Badge className="bg-primary/10 text-primary border-primary/30">
                             {t('subscriptions.detail.validation.advanced')}
                           </Badge>
                         </div>
                         
                         <div className="space-y-4">
-                          <div className="bg-blue-50 rounded-lg p-4">
+                          <div className="bg-primary/5 rounded-lg p-4">
                             <div className="flex items-center gap-3 mb-3">
-                              <ShieldAlert className="w-5 h-5 text-blue-600" />
+                              <ShieldAlert className="w-5 h-5 text-primary" />
                               <div>
-                                <div className="font-medium text-gray-900">{t('subscriptions.detail.validation.advancedControlsRequired')}</div>
-                                <div className="text-sm text-gray-600">{t('subscriptions.detail.validation.advancedControlsDesc')}</div>
+                                <div className="font-medium text-foreground">{t('subscriptions.detail.validation.advancedControlsRequired')}</div>
+                                <div className="text-sm text-muted-foreground">{t('subscriptions.detail.validation.advancedControlsDesc')}</div>
                               </div>
                             </div>
                             <div className="grid grid-cols-2 gap-3">
-                              <div className="bg-white rounded-lg p-3">
-                                <div className="text-xs text-gray-600 mb-1">{t('subscriptions.detail.validation.controlsCompleted')}</div>
-                                <div className="font-semibold text-gray-900">12/12</div>
+                              <div className="bg-card rounded-lg p-3">
+                                <div className="text-xs text-muted-foreground mb-1">{t('subscriptions.detail.validation.controlsCompleted')}</div>
+                                <div className="font-semibold text-foreground">12/12</div>
                               </div>
-                              <div className="bg-white rounded-lg p-3">
-                                <div className="text-xs text-gray-600 mb-1">{t('subscriptions.detail.validation.statusLabel')}</div>
+                              <div className="bg-card rounded-lg p-3">
+                                <div className="text-xs text-muted-foreground mb-1">{t('subscriptions.detail.validation.statusLabel')}</div>
                                 <div className="flex items-center gap-1">
                                   <CheckCircle2 className="w-4 h-4 text-green-600" />
-                                  <span className="font-semibold text-gray-900">{t('subscriptions.detail.validation.compliant')}</span>
+                                  <span className="font-semibold text-foreground">{t('subscriptions.detail.validation.compliant')}</span>
                                 </div>
                               </div>
                             </div>
                           </div>
                         </div>
-                      </div>
+                      </Card>
 
                       {/* Analyses Screening */}
-                      <div className="bg-white rounded-xl border border-gray-200 p-6 shadow-sm">
+                      <Card className="p-6 shadow-sm">
                         <div className="flex items-center justify-between mb-4">
-                          <h3 className="font-semibold text-gray-900">{t('subscriptions.detail.validation.screeningAnalysis')}</h3>
+                          <h3 className="font-semibold text-foreground">{t('subscriptions.detail.validation.screeningAnalysis')}</h3>
                           <Badge className="bg-amber-100 text-amber-700 border-amber-300">
                             {t('subscriptions.detail.validation.pendingDecisions', { count: 2 })}
                           </Badge>
@@ -1193,15 +1191,15 @@ export function SubscriptionDetailPage({ subscription, onBack }: SubscriptionDet
                         
                         <div className="space-y-4">
                           {/* Investisseur principal */}
-                          <div className="border border-gray-200 rounded-lg p-4">
+                          <div className="border border-border rounded-lg p-4">
                             <div className="flex items-center justify-between mb-3">
                               <div className="flex items-center gap-3">
-                                <div className="p-2 bg-blue-100 rounded-lg">
-                                  <User className="w-5 h-5 text-blue-600" />
+                                <div className="p-2 bg-primary/10 rounded-lg">
+                                  <User className="w-5 h-5 text-primary" />
                                 </div>
                                 <div>
-                                  <div className="font-semibold text-gray-900">Inès Wadouachi</div>
-                                  <div className="text-sm text-gray-600">{t('subscriptions.detail.validation.mainInvestor')}</div>
+                                  <div className="font-semibold text-foreground">Inès Wadouachi</div>
+                                  <div className="text-sm text-muted-foreground">{t('subscriptions.detail.validation.mainInvestor')}</div>
                                 </div>
                               </div>
                               <Badge className="bg-green-100 text-green-700 border-green-300">
@@ -1212,15 +1210,15 @@ export function SubscriptionDetailPage({ subscription, onBack }: SubscriptionDet
                             <div className="grid grid-cols-3 gap-2 text-sm">
                               <div className="flex items-center gap-1">
                                 <Check className="w-3 h-3 text-green-600" />
-                                <span className="text-gray-700">{t('subscriptions.detail.validation.pepNegative')}</span>
+                                <span className="text-foreground/80">{t('subscriptions.detail.validation.pepNegative')}</span>
                               </div>
                               <div className="flex items-center gap-1">
                                 <Check className="w-3 h-3 text-green-600" />
-                                <span className="text-gray-700">{t('subscriptions.detail.validation.sanctionsNegative')}</span>
+                                <span className="text-foreground/80">{t('subscriptions.detail.validation.sanctionsNegative')}</span>
                               </div>
                               <div className="flex items-center gap-1">
                                 <Check className="w-3 h-3 text-green-600" />
-                                <span className="text-gray-700">{t('subscriptions.detail.validation.mediaNegative')}</span>
+                                <span className="text-foreground/80">{t('subscriptions.detail.validation.mediaNegative')}</span>
                               </div>
                             </div>
                           </div>
@@ -1233,8 +1231,8 @@ export function SubscriptionDetailPage({ subscription, onBack }: SubscriptionDet
                                   <Users className="w-5 h-5 text-amber-600" />
                                 </div>
                                 <div>
-                                  <div className="font-semibold text-gray-900">Jean Dupont</div>
-                                  <div className="text-sm text-gray-600">{t('subscriptions.detail.validation.beneficialOwner', { pct: 35 })}</div>
+                                  <div className="font-semibold text-foreground">Jean Dupont</div>
+                                  <div className="text-sm text-muted-foreground">{t('subscriptions.detail.validation.beneficialOwner', { pct: 35 })}</div>
                                 </div>
                               </div>
                               <Badge className="bg-amber-100 text-amber-700 border-amber-300">
@@ -1243,12 +1241,12 @@ export function SubscriptionDetailPage({ subscription, onBack }: SubscriptionDet
                               </Badge>
                             </div>
                             <div className="space-y-3">
-                              <div className="bg-white rounded-lg p-3">
+                              <div className="bg-card rounded-lg p-3">
                                 <div className="flex items-center gap-2 mb-2">
                                   <AlertTriangle className="w-4 h-4 text-amber-600" />
-                                  <span className="text-sm font-medium text-gray-900">{t('subscriptions.detail.validation.mediaAlertDetected', { count: 1 })}</span>
+                                  <span className="text-sm font-medium text-foreground">{t('subscriptions.detail.validation.mediaAlertDetected', { count: 1 })}</span>
                                 </div>
-                                <div className="text-sm text-gray-700 mb-3">
+                                <div className="text-sm text-foreground/80 mb-3">
                                   {t('subscriptions.detail.validation.mediaAlertDesc')}
                                 </div>
                                 <div className="flex gap-2">
@@ -1275,15 +1273,15 @@ export function SubscriptionDetailPage({ subscription, onBack }: SubscriptionDet
                               <div className="grid grid-cols-3 gap-2 text-sm">
                                 <div className="flex items-center gap-1">
                                   <Check className="w-3 h-3 text-green-600" />
-                                  <span className="text-gray-700">{t('subscriptions.detail.validation.pepNegative')}</span>
+                                  <span className="text-foreground/80">{t('subscriptions.detail.validation.pepNegative')}</span>
                                 </div>
                                 <div className="flex items-center gap-1">
                                   <Check className="w-3 h-3 text-green-600" />
-                                  <span className="text-gray-700">{t('subscriptions.detail.validation.sanctionsNegative')}</span>
+                                  <span className="text-foreground/80">{t('subscriptions.detail.validation.sanctionsNegative')}</span>
                                 </div>
                                 <div className="flex items-center gap-1">
                                   <AlertCircle className="w-3 h-3 text-amber-600" />
-                                  <span className="text-gray-700">{t('subscriptions.detail.validation.mediaAlert', { count: 1 })}</span>
+                                  <span className="text-foreground/80">{t('subscriptions.detail.validation.mediaAlert', { count: 1 })}</span>
                                 </div>
                               </div>
                             </div>
@@ -1297,8 +1295,8 @@ export function SubscriptionDetailPage({ subscription, onBack }: SubscriptionDet
                                   <Users className="w-5 h-5 text-red-600" />
                                 </div>
                                 <div>
-                                  <div className="font-semibold text-gray-900">Marie Martin</div>
-                                  <div className="text-sm text-gray-600">{t('subscriptions.detail.validation.beneficialOwner', { pct: 25 })}</div>
+                                  <div className="font-semibold text-foreground">Marie Martin</div>
+                                  <div className="text-sm text-muted-foreground">{t('subscriptions.detail.validation.beneficialOwner', { pct: 25 })}</div>
                                 </div>
                               </div>
                               <Badge className="bg-red-100 text-red-700 border-red-300">
@@ -1307,12 +1305,12 @@ export function SubscriptionDetailPage({ subscription, onBack }: SubscriptionDet
                               </Badge>
                             </div>
                             <div className="space-y-3">
-                              <div className="bg-white rounded-lg p-3">
+                              <div className="bg-card rounded-lg p-3">
                                 <div className="flex items-center gap-2 mb-2">
                                   <ShieldAlert className="w-4 h-4 text-red-600" />
-                                  <span className="text-sm font-medium text-gray-900">{t('subscriptions.detail.validation.pepPerson')}</span>
+                                  <span className="text-sm font-medium text-foreground">{t('subscriptions.detail.validation.pepPerson')}</span>
                                 </div>
-                                <div className="text-sm text-gray-700 mb-3">
+                                <div className="text-sm text-foreground/80 mb-3">
                                   {t('subscriptions.detail.validation.pepDesc')}
                                 </div>
                                 <div className="flex gap-2">
@@ -1348,30 +1346,30 @@ export function SubscriptionDetailPage({ subscription, onBack }: SubscriptionDet
                               <div className="grid grid-cols-3 gap-2 text-sm">
                                 <div className="flex items-center gap-1">
                                   <AlertCircle className="w-3 h-3 text-red-600" />
-                                  <span className="text-gray-700">{t('subscriptions.detail.validation.pepPositive')}</span>
+                                  <span className="text-foreground/80">{t('subscriptions.detail.validation.pepPositive')}</span>
                                 </div>
                                 <div className="flex items-center gap-1">
                                   <Check className="w-3 h-3 text-green-600" />
-                                  <span className="text-gray-700">{t('subscriptions.detail.validation.sanctionsNegative')}</span>
+                                  <span className="text-foreground/80">{t('subscriptions.detail.validation.sanctionsNegative')}</span>
                                 </div>
                                 <div className="flex items-center gap-1">
                                   <Check className="w-3 h-3 text-green-600" />
-                                  <span className="text-gray-700">{t('subscriptions.detail.validation.mediaNegative')}</span>
+                                  <span className="text-foreground/80">{t('subscriptions.detail.validation.mediaNegative')}</span>
                                 </div>
                               </div>
                             </div>
                           </div>
 
                           {/* Entité liée */}
-                          <div className="border border-gray-200 rounded-lg p-4">
+                          <div className="border border-border rounded-lg p-4">
                             <div className="flex items-center justify-between mb-3">
                               <div className="flex items-center gap-3">
-                                <div className="p-2 bg-gray-100 rounded-lg">
-                                  <Building2 className="w-5 h-5 text-gray-600" />
+                                <div className="p-2 bg-muted rounded-lg">
+                                  <Building2 className="w-5 h-5 text-muted-foreground" />
                                 </div>
                                 <div>
-                                  <div className="font-semibold text-gray-900">Holding Familiale SAS</div>
-                                  <div className="text-sm text-gray-600">{t('subscriptions.detail.validation.linkedEntity')}</div>
+                                  <div className="font-semibold text-foreground">Holding Familiale SAS</div>
+                                  <div className="text-sm text-muted-foreground">{t('subscriptions.detail.validation.linkedEntity')}</div>
                                 </div>
                               </div>
                               <Badge className="bg-green-100 text-green-700 border-green-300">
@@ -1382,20 +1380,20 @@ export function SubscriptionDetailPage({ subscription, onBack }: SubscriptionDet
                             <div className="grid grid-cols-3 gap-2 text-sm">
                               <div className="flex items-center gap-1">
                                 <Check className="w-3 h-3 text-green-600" />
-                                <span className="text-gray-700">{t('subscriptions.detail.validation.sanctionsNegative')}</span>
+                                <span className="text-foreground/80">{t('subscriptions.detail.validation.sanctionsNegative')}</span>
                               </div>
                               <div className="flex items-center gap-1">
                                 <Check className="w-3 h-3 text-green-600" />
-                                <span className="text-gray-700">{t('subscriptions.detail.validation.mediaNegative')}</span>
+                                <span className="text-foreground/80">{t('subscriptions.detail.validation.mediaNegative')}</span>
                               </div>
                               <div className="flex items-center gap-1">
                                 <Check className="w-3 h-3 text-green-600" />
-                                <span className="text-gray-700">{t('subscriptions.detail.validation.legalOk')}</span>
+                                <span className="text-foreground/80">{t('subscriptions.detail.validation.legalOk')}</span>
                               </div>
                             </div>
                           </div>
                         </div>
-                      </div>
+                      </Card>
 
                       {/* Validation finale */}
                       <div className="bg-gradient-to-r from-green-50 to-emerald-50 border-2 border-green-200 rounded-xl p-6">
@@ -1404,8 +1402,8 @@ export function SubscriptionDetailPage({ subscription, onBack }: SubscriptionDet
                             <CheckCircle2 className="w-6 h-6 text-white" />
                           </div>
                           <div className="flex-1">
-                            <h3 className="font-bold text-gray-900 mb-2">{t('subscriptions.detail.validation.readyForValidation')}</h3>
-                            <p className="text-sm text-gray-700 mb-4">
+                            <h3 className="font-bold text-foreground mb-2">{t('subscriptions.detail.validation.readyForValidation')}</h3>
+                            <p className="text-sm text-foreground/80 mb-4">
                               {t('subscriptions.detail.validation.readyForValidationDesc')}
                             </p>
                             <Button 
@@ -1428,21 +1426,21 @@ export function SubscriptionDetailPage({ subscription, onBack }: SubscriptionDet
                   {currentStep === 3 && (
                     // Envoyer en signature
                     <div className="space-y-6">
-                      <div className="bg-white rounded-xl border border-gray-200 p-6 shadow-sm">
-                        <h2 className="text-xl font-bold text-gray-900 mb-6">{t('subscriptions.detail.signature.title')}</h2>
-                        
+                      <Card className="p-6 shadow-sm">
+                        <h2 className="text-xl font-bold text-foreground mb-6">{t('subscriptions.detail.signature.title')}</h2>
+
                         <div className="space-y-6">
                           {/* Signataires */}
                           <div>
-                            <h3 className="font-semibold text-gray-900 mb-3">{t('subscriptions.detail.signature.signatories')}</h3>
+                            <h3 className="font-semibold text-foreground mb-3">{t('subscriptions.detail.signature.signatories')}</h3>
                             <div className="space-y-3">
-                              <div className="flex items-center gap-3 p-3 bg-gray-50 rounded-lg">
+                              <div className="flex items-center gap-3 p-3 bg-muted rounded-lg">
                                 <input type="checkbox" defaultChecked className="w-4 h-4" />
                                 <div className="flex-1">
-                                  <div className="font-medium text-gray-900">Inès Wadouachi</div>
-                                  <div className="text-sm text-gray-600">iwadouachi+testPM@eurazeo.com</div>
+                                  <div className="font-medium text-foreground">Inès Wadouachi</div>
+                                  <div className="text-sm text-muted-foreground">iwadouachi+testPM@eurazeo.com</div>
                                 </div>
-                                <Badge className="bg-blue-100 text-blue-700 border-blue-300">{t('subscriptions.detail.signature.investorRole')}</Badge>
+                                <Badge className="bg-primary/10 text-primary border-primary/30">{t('subscriptions.detail.signature.investorRole')}</Badge>
                               </div>
                               <Button variant="outline" size="sm" className="w-full">
                                 {t('subscriptions.detail.signature.addSignatory')}
@@ -1455,7 +1453,7 @@ export function SubscriptionDetailPage({ subscription, onBack }: SubscriptionDet
                           {/* Documents à signer */}
                           <div>
                             <div className="flex items-center justify-between mb-3">
-                              <h3 className="font-semibold text-gray-900">{t('subscriptions.detail.signature.documentsToSign')}</h3>
+                              <h3 className="font-semibold text-foreground">{t('subscriptions.detail.signature.documentsToSign')}</h3>
                               <Button 
                                 variant="outline" 
                                 size="sm"
@@ -1467,13 +1465,13 @@ export function SubscriptionDetailPage({ subscription, onBack }: SubscriptionDet
                             </div>
                             <div className="space-y-2">
                               {['Bulletin de souscription', 'DICI', 'Statuts', 'Side letter'].map((doc, idx) => (
-                                <div key={idx} className="flex items-center gap-3 p-3 bg-gray-50 rounded-lg border border-gray-200">
+                                <div key={idx} className="flex items-center gap-3 p-3 bg-muted rounded-lg border border-border">
                                   <input type="checkbox" defaultChecked className="w-4 h-4" />
-                                  <FileText className="w-4 h-4 text-gray-600" />
-                                  <span className="flex-1 text-sm text-gray-900">{doc}</span>
+                                  <FileText className="w-4 h-4 text-muted-foreground" />
+                                  <span className="flex-1 text-sm text-foreground">{doc}</span>
                                   
                                   {/* Type de document */}
-                                  <select className="text-xs border border-gray-300 rounded px-2 py-1 bg-white">
+                                  <select className="text-xs border border-border rounded px-2 py-1 bg-card">
                                     <option value="signature">{t('subscriptions.detail.signature.toSign')}</option>
                                     <option value="annexe">{t('subscriptions.detail.signature.annex')}</option>
                                   </select>
@@ -1482,10 +1480,10 @@ export function SubscriptionDetailPage({ subscription, onBack }: SubscriptionDet
                                   <div className="flex items-center gap-1">
                                     <button
                                       onClick={() => toast.info(t('subscriptions.detail.signature.previewToast'))}
-                                      className="p-1.5 hover:bg-gray-200 rounded transition-colors"
+                                      className="p-1.5 hover:bg-muted rounded transition-colors"
                                       title={t('subscriptions.detail.signature.preview')}
                                     >
-                                      <Eye className="w-4 h-4 text-gray-600" />
+                                      <Eye className="w-4 h-4 text-muted-foreground" />
                                     </button>
                                     <button
                                       onClick={() => toast.success(t('subscriptions.detail.signature.documentDeletedToast'))}
@@ -1504,11 +1502,11 @@ export function SubscriptionDetailPage({ subscription, onBack }: SubscriptionDet
 
                           {/* Catégorisation investisseur */}
                           <div>
-                            <h3 className="font-semibold text-gray-900 mb-3">{t('subscriptions.detail.signature.investorCategorization')}</h3>
+                            <h3 className="font-semibold text-foreground mb-3">{t('subscriptions.detail.signature.investorCategorization')}</h3>
                             <div className="grid grid-cols-3 gap-3">
                               {[t('subscriptions.detail.signature.professional'), t('subscriptions.detail.signature.nonProfessional'), t('subscriptions.detail.signature.proOnOption')].map((cat, idx) => (
-                                <div key={idx} className={`p-4 border-2 rounded-lg cursor-pointer transition-all ${idx === 1 ? 'border-blue-500 bg-blue-50' : 'border-gray-200 hover:border-gray-300'}`}>
-                                  <div className="font-medium text-sm text-gray-900 text-center">{cat}</div>
+                                <div key={idx} className={`p-4 border-2 rounded-lg cursor-pointer transition-all ${idx === 1 ? 'border-primary bg-primary/5' : 'border-border hover:border-border'}`}>
+                                  <div className="font-medium text-sm text-foreground text-center">{cat}</div>
                                 </div>
                               ))}
                             </div>
@@ -1531,15 +1529,15 @@ export function SubscriptionDetailPage({ subscription, onBack }: SubscriptionDet
                             </Button>
                           </div>
                         </div>
-                      </div>
+                      </Card>
                     </div>
                   )}
 
                   {currentStep === 4 && (
                     // Signatures
                     <div className="space-y-6">
-                      <div className="bg-white rounded-xl border border-gray-200 p-6 shadow-sm">
-                        <h2 className="text-xl font-bold text-gray-900 mb-6">{t('subscriptions.detail.signatures.title')}</h2>
+                      <Card className="p-6 shadow-sm">
+                        <h2 className="text-xl font-bold text-foreground mb-6">{t('subscriptions.detail.signatures.title')}</h2>
                         
                         <div className="space-y-4">
                           {/* Signataire 1 */}
@@ -1550,8 +1548,8 @@ export function SubscriptionDetailPage({ subscription, onBack }: SubscriptionDet
                                   <User className="w-5 h-5 text-green-600" />
                                 </div>
                                 <div>
-                                  <div className="font-semibold text-gray-900">Inès Wadouachi</div>
-                                  <div className="text-sm text-gray-600">iwadouachi+testPM@eurazeo.com</div>
+                                  <div className="font-semibold text-foreground">Inès Wadouachi</div>
+                                  <div className="text-sm text-muted-foreground">iwadouachi+testPM@eurazeo.com</div>
                                 </div>
                               </div>
                               <Badge className="bg-green-100 text-green-700 border-green-300">
@@ -1559,7 +1557,7 @@ export function SubscriptionDetailPage({ subscription, onBack }: SubscriptionDet
                                 {t('subscriptions.detail.signatures.signed')}
                               </Badge>
                             </div>
-                            <div className="text-xs text-gray-500">{t('subscriptions.detail.signatures.signedOn', { date: '29/12/2025 à 14:32' })}</div>
+                            <div className="text-xs text-muted-foreground">{t('subscriptions.detail.signatures.signedOn', { date: '29/12/2025 à 14:32' })}</div>
                           </div>
 
                           {/* Actions */}
@@ -1589,28 +1587,28 @@ export function SubscriptionDetailPage({ subscription, onBack }: SubscriptionDet
                             </Button>
                           </div>
                         </div>
-                      </div>
+                      </Card>
                     </div>
                   )}
 
                   {currentStep === 5 && (
                     // Contre-signature
                     <div className="space-y-6">
-                      <div className="bg-white rounded-xl border border-gray-200 p-6 shadow-sm">
-                        <h2 className="text-xl font-bold text-gray-900 mb-6">{t('subscriptions.detail.counterSignature.title')}</h2>
+                      <Card className="p-6 shadow-sm">
+                        <h2 className="text-xl font-bold text-foreground mb-6">{t('subscriptions.detail.counterSignature.title')}</h2>
                         
                         <div className="space-y-4">
                           {/* Gérant du fonds */}
-                          <div className="bg-blue-50 border-2 border-blue-200 rounded-lg p-4">
+                          <div className="bg-primary/5 border-2 border-primary/20 rounded-lg p-4">
                             <div className="flex items-start justify-between mb-3">
                               <div className="flex items-center gap-3">
-                                <div className="p-2 bg-blue-100 rounded-lg">
-                                  <User className="w-5 h-5 text-blue-600" />
+                                <div className="p-2 bg-primary/10 rounded-lg">
+                                  <User className="w-5 h-5 text-primary" />
                                 </div>
                                 <div>
-                                  <div className="font-semibold text-gray-900">Laurent Dupuis</div>
-                                  <div className="text-sm text-gray-600">laurent.dupuis@investhub.com</div>
-                                  <div className="text-xs text-gray-500 mt-1">{t('subscriptions.detail.counterSignature.fundManager')}</div>
+                                  <div className="font-semibold text-foreground">Laurent Dupuis</div>
+                                  <div className="text-sm text-muted-foreground">laurent.dupuis@investhub.com</div>
+                                  <div className="text-xs text-muted-foreground mt-1">{t('subscriptions.detail.counterSignature.fundManager')}</div>
                                 </div>
                               </div>
                               <Badge className="bg-amber-100 text-amber-700 border-amber-300">
@@ -1618,7 +1616,7 @@ export function SubscriptionDetailPage({ subscription, onBack }: SubscriptionDet
                                 {t('subscriptions.detail.counterSignature.pending')}
                               </Badge>
                             </div>
-                            <div className="text-xs text-gray-500">{t('subscriptions.detail.counterSignature.linkSentOn', { date: '29/12/2025 à 15:45' })}</div>
+                            <div className="text-xs text-muted-foreground">{t('subscriptions.detail.counterSignature.linkSentOn', { date: '29/12/2025 à 15:45' })}</div>
                           </div>
 
                           {/* Actions */}
@@ -1648,24 +1646,24 @@ export function SubscriptionDetailPage({ subscription, onBack }: SubscriptionDet
                             </Button>
                           </div>
                         </div>
-                      </div>
+                      </Card>
                     </div>
                   )}
 
                   {currentStep === 6 && (
                     // Paiement
                     <div className="space-y-6">
-                      <div className="bg-white rounded-xl border border-gray-200 p-6 shadow-sm">
-                        <h2 className="text-xl font-bold text-gray-900 mb-6">{t('subscriptions.detail.paymentStep.title')}</h2>
+                      <Card className="p-6 shadow-sm">
+                        <h2 className="text-xl font-bold text-foreground mb-6">{t('subscriptions.detail.paymentStep.title')}</h2>
                         
                         <div className="space-y-6">
                           {/* Type de paiement */}
                           <div>
-                            <label className="block text-sm font-semibold text-gray-700 mb-2">{t('subscriptions.detail.paymentStep.paymentTypeLabel')}</label>
+                            <label className="block text-sm font-semibold text-foreground/80 mb-2">{t('subscriptions.detail.paymentStep.paymentTypeLabel')}</label>
                             <div className="grid grid-cols-3 gap-3">
                               {[t('subscriptions.detail.paymentStep.wireTransfer'), t('subscriptions.detail.paymentStep.check'), t('subscriptions.detail.paymentStep.directDebit')].map((type, idx) => (
-                                <div key={idx} className={`p-4 border-2 rounded-lg cursor-pointer transition-all ${idx === 0 ? 'border-blue-500 bg-blue-50' : 'border-gray-200 hover:border-gray-300'}`}>
-                                  <div className="font-medium text-sm text-gray-900 text-center">{type}</div>
+                                <div key={idx} className={`p-4 border-2 rounded-lg cursor-pointer transition-all ${idx === 0 ? 'border-primary bg-primary/5' : 'border-border hover:border-border'}`}>
+                                  <div className="font-medium text-sm text-foreground text-center">{type}</div>
                                 </div>
                               ))}
                             </div>
@@ -1673,44 +1671,44 @@ export function SubscriptionDetailPage({ subscription, onBack }: SubscriptionDet
 
                           {/* Mandat */}
                           <div>
-                            <label className="block text-sm font-semibold text-gray-700 mb-2">{t('subscriptions.detail.paymentStep.sepaMandate')}</label>
+                            <label className="block text-sm font-semibold text-foreground/80 mb-2">{t('subscriptions.detail.paymentStep.sepaMandate')}</label>
                             <div className="flex items-center gap-3">
                               <input type="checkbox" className="w-4 h-4" />
-                              <span className="text-sm text-gray-700">{t('subscriptions.detail.paymentStep.sepaActive')}</span>
+                              <span className="text-sm text-foreground/80">{t('subscriptions.detail.paymentStep.sepaActive')}</span>
                             </div>
                           </div>
 
                           {/* Date de valeur liquidative */}
                           <div>
-                            <label className="block text-sm font-semibold text-gray-700 mb-2">{t('subscriptions.detail.paymentStep.navDateLabel')}</label>
+                            <label className="block text-sm font-semibold text-foreground/80 mb-2">{t('subscriptions.detail.paymentStep.navDateLabel')}</label>
                             <Input type="date" />
                           </div>
 
                           {/* Montant */}
-                          <div className="bg-gray-50 rounded-lg p-4">
+                          <div className="bg-muted rounded-lg p-4">
                             <div className="flex justify-between items-center mb-2">
-                              <span className="text-sm text-gray-600">{t('subscriptions.detail.paymentStep.subscriptionAmount')}</span>
-                              <span className="font-semibold text-gray-900">500 000,00 €</span>
+                              <span className="text-sm text-muted-foreground">{t('subscriptions.detail.paymentStep.subscriptionAmount')}</span>
+                              <span className="font-semibold text-foreground">500 000,00 €</span>
                             </div>
                             <div className="flex justify-between items-center mb-2">
-                              <span className="text-sm text-gray-600">{t('subscriptions.detail.paymentStep.entryFees', { pct: '0.75' })}</span>
-                              <span className="font-semibold text-gray-900">3 750,00 €</span>
+                              <span className="text-sm text-muted-foreground">{t('subscriptions.detail.paymentStep.entryFees', { pct: '0.75' })}</span>
+                              <span className="font-semibold text-foreground">3 750,00 €</span>
                             </div>
                             <Separator className="my-3" />
                             <div className="flex justify-between items-center">
-                              <span className="font-semibold text-gray-900">{t('subscriptions.detail.paymentStep.totalToPay')}</span>
-                              <span className="text-xl font-bold text-blue-600">503 750,00 €</span>
+                              <span className="font-semibold text-foreground">{t('subscriptions.detail.paymentStep.totalToPay')}</span>
+                              <span className="text-xl font-bold text-primary">503 750,00 €</span>
                             </div>
                           </div>
 
                           {/* Statut du paiement */}
                           <div>
-                            <h3 className="font-semibold text-gray-900 mb-3">{t('subscriptions.detail.paymentStep.paymentStatus')}</h3>
+                            <h3 className="font-semibold text-foreground mb-3">{t('subscriptions.detail.paymentStep.paymentStatus')}</h3>
                             <div className="flex items-center gap-3 p-4 bg-amber-50 border border-amber-200 rounded-lg">
                               <Clock className="w-5 h-5 text-amber-600" />
                               <div className="flex-1">
-                                <div className="font-medium text-gray-900">{t('subscriptions.detail.paymentStep.awaitingReceipt')}</div>
-                                <div className="text-sm text-gray-600">{t('subscriptions.detail.paymentStep.awaitingReceiptDesc')}</div>
+                                <div className="font-medium text-foreground">{t('subscriptions.detail.paymentStep.awaitingReceipt')}</div>
+                                <div className="text-sm text-muted-foreground">{t('subscriptions.detail.paymentStep.awaitingReceiptDesc')}</div>
                               </div>
                               <Badge className="bg-amber-100 text-amber-700 border-amber-300">{t('subscriptions.detail.paymentStep.pendingLabel')}</Badge>
                             </div>
@@ -1730,7 +1728,7 @@ export function SubscriptionDetailPage({ subscription, onBack }: SubscriptionDet
                             </Button>
                           </div>
                         </div>
-                      </div>
+                      </Card>
                     </div>
                   )}
                 </div>
@@ -1738,8 +1736,8 @@ export function SubscriptionDetailPage({ subscription, onBack }: SubscriptionDet
                 {/* Stepper Sidebar */}
                 <div className="w-80 flex-shrink-0">
                   {/* Stepper */}
-                  <div className="sticky top-32 bg-white rounded-xl border border-gray-200 p-6 shadow-sm">
-                    <h3 className="font-bold text-gray-900 mb-6">{t('subscriptions.detail.stepper.title')}</h3>
+                  <Card className="sticky top-32 p-6 shadow-sm">
+                    <h3 className="font-bold text-foreground mb-6">{t('subscriptions.detail.stepper.title')}</h3>
 
                     <div className="space-y-1">
                       {[
@@ -1768,40 +1766,40 @@ export function SubscriptionDetailPage({ subscription, onBack }: SubscriptionDet
                                   : isCompleted
                                     ? 'bg-green-50 hover:bg-green-100 text-green-900'
                                     : isAccessible
-                                      ? 'hover:bg-gray-50 text-gray-900'
-                                      : 'opacity-40 cursor-not-allowed text-gray-400'
+                                      ? 'hover:bg-muted text-foreground'
+                                      : 'opacity-40 cursor-not-allowed text-muted-foreground/60'
                               }`}
                             >
                               <div className={`flex-shrink-0 w-8 h-8 rounded-lg flex items-center justify-center ${
                                 isActive 
-                                  ? 'bg-white/20' 
+                                  ? 'bg-white/20'
                                   : isCompleted 
                                     ? 'bg-green-200'
-                                    : 'bg-gray-100'
+                                    : 'bg-muted'
                               }`}>
                                 {isCompleted ? (
                                   <Check className={`w-4 h-4 ${isActive ? 'text-white' : 'text-green-600'}`} />
                                 ) : (
-                                  <StepIcon className={`w-4 h-4 ${isActive ? 'text-white' : 'text-gray-600'}`} />
+                                  <StepIcon className={`w-4 h-4 ${isActive ? 'text-white' : 'text-muted-foreground'}`} />
                                 )}
                               </div>
                               <div className="flex-1 min-w-0">
                                 <div className={`text-sm font-semibold ${isActive ? 'text-white' : ''}`}>
                                   {t(step.labelKey)}
                                 </div>
-                                <div className={`text-xs ${isActive ? 'text-white/80' : 'text-gray-500'}`}>
+                                <div className={`text-xs ${isActive ? 'text-white/80' : 'text-muted-foreground'}`}>
                                   {t('subscriptions.detail.stepper.stepOf', { current: step.id + 1, total: 7 })}
                                 </div>
                               </div>
                             </button>
                             {index < 6 && (
-                              <div className={`w-px h-4 ml-7 ${isCompleted ? 'bg-green-300' : 'bg-gray-200'}`}></div>
+                              <div className={`w-px h-4 ml-7 ${isCompleted ? 'bg-green-300' : 'bg-border'}`}></div>
                             )}
                           </div>
                         );
                       })}
                     </div>
-                  </div>
+                  </Card>
                 </div>
               </div>
             </div>
@@ -1810,71 +1808,71 @@ export function SubscriptionDetailPage({ subscription, onBack }: SubscriptionDet
           {/* Emails Tab Content */}
           <TabsContent value="emails" className="mt-0">
             <div className="px-8 py-6">
-              <div className="bg-white rounded-xl border border-gray-200 overflow-hidden shadow-sm">
+              <Card className="overflow-hidden shadow-sm">
                   <table className="w-full">
-                    <thead className="bg-gray-50 border-b border-gray-200">
+                    <thead className="bg-muted border-b border-border">
                       <tr>
-                        <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider w-40">
+                        <th className="px-4 py-3 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider w-40">
                           {t('subscriptions.detail.emailsTab.date')}
                         </th>
-                        <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider w-48">
+                        <th className="px-4 py-3 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider w-48">
                           {t('subscriptions.detail.emailsTab.emailType')}
                         </th>
-                        <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                        <th className="px-4 py-3 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider">
                           {t('subscriptions.detail.emailsTab.recipient')}
                         </th>
-                        <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                        <th className="px-4 py-3 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider">
                           {t('subscriptions.detail.emailsTab.recipientCc')}
                         </th>
-                        <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                        <th className="px-4 py-3 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider">
                           {t('subscriptions.detail.emailsTab.subject')}
                         </th>
-                        <th className="px-4 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider w-40">
+                        <th className="px-4 py-3 text-center text-xs font-medium text-muted-foreground uppercase tracking-wider w-40">
                           {t('subscriptions.detail.emailsTab.received')}
                         </th>
-                        <th className="px-4 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider w-40">
+                        <th className="px-4 py-3 text-center text-xs font-medium text-muted-foreground uppercase tracking-wider w-40">
                           {t('subscriptions.detail.emailsTab.opened')}
                         </th>
-                        <th className="px-4 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider w-40">
+                        <th className="px-4 py-3 text-center text-xs font-medium text-muted-foreground uppercase tracking-wider w-40">
                           {t('subscriptions.detail.emailsTab.clicked')}
                         </th>
                       </tr>
                     </thead>
-                    <tbody className="bg-white divide-y divide-gray-100">
+                    <tbody className="bg-card divide-y divide-border/50">
                       {mockEmails.map((email) => (
-                        <tr key={email.id} className="hover:bg-gray-50 transition-colors">
-                          <td className="px-4 py-3 text-sm text-gray-500">
+                        <tr key={email.id} className="hover:bg-muted transition-colors">
+                          <td className="px-4 py-3 text-sm text-muted-foreground">
                             {email.date}
                           </td>
                           <td className="px-4 py-3">
                             <div className="flex items-center gap-2">
-                              <Flag className="w-4 h-4 text-blue-600" />
-                              <span className="text-sm text-gray-700">{email.type}</span>
+                              <Flag className="w-4 h-4 text-primary" />
+                              <span className="text-sm text-foreground/80">{email.type}</span>
                             </div>
                           </td>
-                          <td className="px-4 py-3 text-sm text-gray-700">
+                          <td className="px-4 py-3 text-sm text-foreground/80">
                             {email.recipients}
                           </td>
-                          <td className="px-4 py-3 text-sm text-gray-500">
-                            {email.cc || <span className="text-gray-400">-</span>}
+                          <td className="px-4 py-3 text-sm text-muted-foreground">
+                            {email.cc || <span className="text-muted-foreground/60">-</span>}
                           </td>
-                          <td className="px-4 py-3 text-sm text-gray-700">
+                          <td className="px-4 py-3 text-sm text-foreground/80">
                             {email.subject}
                           </td>
-                          <td className="px-4 py-3 text-center text-xs text-gray-500">
-                            {email.receivedAt || <span className="text-gray-400">-</span>}
+                          <td className="px-4 py-3 text-center text-xs text-muted-foreground">
+                            {email.receivedAt || <span className="text-muted-foreground/60">-</span>}
                           </td>
-                          <td className="px-4 py-3 text-center text-xs text-gray-500">
-                            {email.openedAt || <span className="text-gray-400">-</span>}
+                          <td className="px-4 py-3 text-center text-xs text-muted-foreground">
+                            {email.openedAt || <span className="text-muted-foreground/60">-</span>}
                           </td>
-                          <td className="px-4 py-3 text-center text-xs text-gray-500">
-                            {email.clickedAt || <span className="text-gray-400">-</span>}
+                          <td className="px-4 py-3 text-center text-xs text-muted-foreground">
+                            {email.clickedAt || <span className="text-muted-foreground/60">-</span>}
                           </td>
                         </tr>
                       ))}
                     </tbody>
                   </table>
-              </div>
+              </Card>
             </div>
           </TabsContent>
 
@@ -1884,27 +1882,27 @@ export function SubscriptionDetailPage({ subscription, onBack }: SubscriptionDet
               {/* Summary Cards */}
               <div className="grid grid-cols-2 gap-4 mb-6">
                 {/* Montant Total Card */}
-                <div className="bg-white border border-gray-200 rounded-xl p-5">
-                  <div className="text-xs text-blue-600 mb-2">{t('subscriptions.detail.capitalCallsTab.totalCalledAmount')}</div>
-                  <div className="text-2xl font-semibold text-gray-900">
+                <Card className="p-5">
+                  <div className="text-xs text-primary mb-2">{t('subscriptions.detail.capitalCallsTab.totalCalledAmount')}</div>
+                  <div className="text-2xl font-semibold text-foreground">
                     {mockCapitalCalls.reduce((sum, call) => sum + call.amount + call.entryFees + call.subscriptionPremium, 0).toLocaleString('fr-FR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} €
                   </div>
-                </div>
+                </Card>
 
                 {/* Pourcentage Total Card */}
-                <div className="bg-white border border-gray-200 rounded-xl p-5">
+                <Card className="p-5">
                   <div className="text-xs text-purple-600 mb-2">{t('subscriptions.detail.capitalCallsTab.totalCalledPercentage')}</div>
-                  <div className="text-2xl font-semibold text-gray-900">
+                  <div className="text-2xl font-semibold text-foreground">
                     {mockCapitalCalls.reduce((sum, call) => sum + call.percentage, 0)}%
                   </div>
-                </div>
+                </Card>
               </div>
 
               {/* Export Button */}
               <div className="mb-4 flex justify-end">
                 <Button
                   variant="outline"
-                  className="gap-2 border-gray-300 hover:bg-gray-50"
+                  className="gap-2 border-border hover:bg-muted"
                   onClick={() => {
                     // Generate CSV content
                     const headers = [
@@ -1948,58 +1946,58 @@ export function SubscriptionDetailPage({ subscription, onBack }: SubscriptionDet
               </div>
 
               {/* Table */}
-              <div className="bg-white rounded-xl border border-gray-200 overflow-hidden shadow-sm">
+              <Card className="overflow-hidden shadow-sm">
                   <table className="w-full">
-                    <thead className="bg-gray-50 border-b border-gray-200">
+                    <thead className="bg-muted border-b border-border">
                       <tr>
-                        <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider w-40">
+                        <th className="px-4 py-3 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider w-40">
                           {t('subscriptions.detail.capitalCallsTab.date')}
                         </th>
-                        <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider w-48">
+                        <th className="px-4 py-3 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider w-48">
                           {t('subscriptions.detail.capitalCallsTab.capitalCall')}
                         </th>
-                        <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                        <th className="px-4 py-3 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider">
                           {t('subscriptions.detail.capitalCallsTab.amount')}
                         </th>
-                        <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                        <th className="px-4 py-3 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider">
                           {t('subscriptions.detail.capitalCallsTab.subscription')}
                         </th>
-                        <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                        <th className="px-4 py-3 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider">
                           {t('subscriptions.detail.capitalCallsTab.entryFees')}
                         </th>
-                        <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                        <th className="px-4 py-3 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider">
                           {t('subscriptions.detail.capitalCallsTab.subscriptionPremium')}
                         </th>
-                        <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                        <th className="px-4 py-3 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider">
                           {t('subscriptions.detail.capitalCallsTab.percentage')}
                         </th>
-                        <th className="px-4 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider w-24">
+                        <th className="px-4 py-3 text-center text-xs font-medium text-muted-foreground uppercase tracking-wider w-24">
                           {t('subscriptions.detail.capitalCallsTab.status')}
                         </th>
                       </tr>
                     </thead>
-                    <tbody className="bg-white divide-y divide-gray-100">
+                    <tbody className="divide-y divide-border/50">
                       {mockCapitalCalls.map((capitalCall) => (
-                        <tr key={capitalCall.id} className="hover:bg-gray-50 transition-colors">
-                          <td className="px-4 py-3 text-sm text-gray-500">
+                        <tr key={capitalCall.id} className="hover:bg-muted transition-colors">
+                          <td className="px-4 py-3 text-sm text-muted-foreground">
                             {capitalCall.date}
                           </td>
-                          <td className="px-4 py-3 text-sm text-gray-700">
+                          <td className="px-4 py-3 text-sm text-foreground/80">
                             {capitalCall.call}
                           </td>
-                          <td className="px-4 py-3 text-sm text-gray-700">
+                          <td className="px-4 py-3 text-sm text-foreground/80">
                             {capitalCall.amount.toLocaleString('fr-FR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} €
                           </td>
-                          <td className="px-4 py-3 text-sm text-gray-700">
+                          <td className="px-4 py-3 text-sm text-foreground/80">
                             {capitalCall.subscription.toLocaleString('fr-FR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} €
                           </td>
-                          <td className="px-4 py-3 text-sm text-gray-700">
+                          <td className="px-4 py-3 text-sm text-foreground/80">
                             {capitalCall.entryFees.toLocaleString('fr-FR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} €
                           </td>
-                          <td className="px-4 py-3 text-sm text-gray-700">
+                          <td className="px-4 py-3 text-sm text-foreground/80">
                             {capitalCall.subscriptionPremium.toLocaleString('fr-FR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} €
                           </td>
-                          <td className="px-4 py-3 text-sm text-gray-700">
+                          <td className="px-4 py-3 text-sm text-foreground/80">
                             {capitalCall.percentage}%
                           </td>
                           <td className="px-4 py-3">
@@ -2025,7 +2023,7 @@ export function SubscriptionDetailPage({ subscription, onBack }: SubscriptionDet
                       ))}
                     </tbody>
                   </table>
-              </div>
+              </Card>
             </div>
           </TabsContent>
 
@@ -2048,11 +2046,11 @@ export function SubscriptionDetailPage({ subscription, onBack }: SubscriptionDet
                           className="absolute inset-0 rounded-full bg-red-400/20 blur-md"
                         />
                       </div>
-                      <h3 className="font-bold text-gray-900 mb-1">{t('subscriptions.detail.riskTab.overallRiskScore')}</h3>
+                      <h3 className="font-bold text-foreground mb-1">{t('subscriptions.detail.riskTab.overallRiskScore')}</h3>
                       <Badge className="bg-red-100 text-red-700 border-red-300 font-semibold">
                         {t('subscriptions.detail.header.riskHigh')}
                       </Badge>
-                      <p className="text-xs text-gray-600 mt-2">
+                      <p className="text-xs text-muted-foreground mt-2">
                         {t('subscriptions.detail.riskTab.activeAlerts', { count: 3 })}
                       </p>
                       <Separator className="my-3" />
@@ -2062,9 +2060,9 @@ export function SubscriptionDetailPage({ subscription, onBack }: SubscriptionDet
                             <CheckCircle2 className="w-3 h-3 mr-1" />
                             {t('subscriptions.detail.validation.validatedStatus')}
                           </Badge>
-                          <div className="text-xs text-gray-600">
+                          <div className="text-xs text-muted-foreground">
                             <div>{t('subscriptions.detail.header.validatedByLabel', { name: riskValidatedBy })}</div>
-                            <div className="text-xs text-gray-500 mt-0.5">{riskValidationDate}</div>
+                            <div className="text-xs text-muted-foreground mt-0.5">{riskValidationDate}</div>
                           </div>
                         </div>
                       ) : (
@@ -2079,7 +2077,7 @@ export function SubscriptionDetailPage({ subscription, onBack }: SubscriptionDet
                   {/* Risk Categories */}
                   <div className="col-span-3 grid grid-cols-3 gap-4">
                     {/* PEP Risk */}
-                    <div className="bg-white border border-orange-200 rounded-xl p-5">
+                    <div className="bg-card border border-orange-200 rounded-xl p-5">
                       <div className="flex items-start justify-between mb-3">
                         <div className="p-2 bg-orange-100 rounded-lg">
                           <Users className="w-5 h-5 text-orange-600" />
@@ -2088,16 +2086,16 @@ export function SubscriptionDetailPage({ subscription, onBack }: SubscriptionDet
                           {t('subscriptions.detail.riskTab.active')}
                         </Badge>
                       </div>
-                      <h4 className="font-semibold text-gray-900 mb-1">{t('subscriptions.detail.riskTab.pep')}</h4>
-                      <p className="text-xs text-gray-600 mb-2">{t('subscriptions.detail.riskTab.pepDesc')}</p>
+                      <h4 className="font-semibold text-foreground mb-1">{t('subscriptions.detail.riskTab.pep')}</h4>
+                      <p className="text-xs text-muted-foreground mb-2">{t('subscriptions.detail.riskTab.pepDesc')}</p>
                       <div className="flex items-baseline gap-1">
                         <span className="text-2xl font-bold text-orange-600">1</span>
-                        <span className="text-xs text-gray-500">{t('subscriptions.detail.riskTab.match')}</span>
+                        <span className="text-xs text-muted-foreground">{t('subscriptions.detail.riskTab.match')}</span>
                       </div>
                     </div>
 
                     {/* Sanctions Risk */}
-                    <div className="bg-white border border-red-200 rounded-xl p-5">
+                    <div className="bg-card border border-red-200 rounded-xl p-5">
                       <div className="flex items-start justify-between mb-3">
                         <div className="p-2 bg-red-100 rounded-lg">
                           <Scale className="w-5 h-5 text-red-600" />
@@ -2106,16 +2104,16 @@ export function SubscriptionDetailPage({ subscription, onBack }: SubscriptionDet
                           {t('subscriptions.detail.riskTab.active')}
                         </Badge>
                       </div>
-                      <h4 className="font-semibold text-gray-900 mb-1">{t('subscriptions.detail.riskTab.sanctionsTitle')}</h4>
-                      <p className="text-xs text-gray-600 mb-2">{t('subscriptions.detail.riskTab.sanctionsDesc')}</p>
+                      <h4 className="font-semibold text-foreground mb-1">{t('subscriptions.detail.riskTab.sanctionsTitle')}</h4>
+                      <p className="text-xs text-muted-foreground mb-2">{t('subscriptions.detail.riskTab.sanctionsDesc')}</p>
                       <div className="flex items-baseline gap-1">
                         <span className="text-2xl font-bold text-red-600">1</span>
-                        <span className="text-xs text-gray-500">{t('subscriptions.detail.riskTab.match')}</span>
+                        <span className="text-xs text-muted-foreground">{t('subscriptions.detail.riskTab.match')}</span>
                       </div>
                     </div>
 
                     {/* Adverse Media Risk */}
-                    <div className="bg-white border border-amber-200 rounded-xl p-5">
+                    <div className="bg-card border border-amber-200 rounded-xl p-5">
                       <div className="flex items-start justify-between mb-3">
                         <div className="p-2 bg-amber-100 rounded-lg">
                           <Newspaper className="w-5 h-5 text-amber-600" />
@@ -2124,27 +2122,27 @@ export function SubscriptionDetailPage({ subscription, onBack }: SubscriptionDet
                           {t('subscriptions.detail.riskTab.active')}
                         </Badge>
                       </div>
-                      <h4 className="font-semibold text-gray-900 mb-1">{t('subscriptions.detail.riskTab.adverseMediaTitle')}</h4>
-                      <p className="text-xs text-gray-600 mb-2">{t('subscriptions.detail.riskTab.adverseMediaDesc')}</p>
+                      <h4 className="font-semibold text-foreground mb-1">{t('subscriptions.detail.riskTab.adverseMediaTitle')}</h4>
+                      <p className="text-xs text-muted-foreground mb-2">{t('subscriptions.detail.riskTab.adverseMediaDesc')}</p>
                       <div className="flex items-baseline gap-1">
                         <span className="text-2xl font-bold text-amber-600">1</span>
-                        <span className="text-xs text-gray-500">{t('subscriptions.detail.riskTab.article')}</span>
+                        <span className="text-xs text-muted-foreground">{t('subscriptions.detail.riskTab.article')}</span>
                       </div>
                     </div>
                   </div>
                 </div>
 
                 {/* Risk Matrix Detail */}
-                <div className="bg-white border border-gray-200 rounded-xl overflow-hidden shadow-sm">
-                  <div className="px-6 py-4 bg-gradient-to-r from-indigo-50 to-purple-50 border-b border-gray-200">
+                <Card className="overflow-hidden shadow-sm">
+                  <div className="px-6 py-4 bg-gradient-to-r from-indigo-50 to-purple-50 border-b border-border">
                     <div className="flex items-center justify-between">
                       <div className="flex items-center gap-3">
                         <div className="p-2 bg-indigo-100 rounded-lg">
                           <Scale className="w-5 h-5 text-indigo-600" />
                         </div>
                         <div>
-                          <h3 className="font-bold text-gray-900">{t('subscriptions.detail.riskTab.riskMatrix')}</h3>
-                          <p className="text-sm text-gray-600">{t('subscriptions.detail.riskTab.riskMatrixDesc')}</p>
+                          <h3 className="font-bold text-foreground">{t('subscriptions.detail.riskTab.riskMatrix')}</h3>
+                          <p className="text-sm text-muted-foreground">{t('subscriptions.detail.riskTab.riskMatrixDesc')}</p>
                         </div>
                       </div>
                       <div className="flex items-center gap-3">
@@ -2152,7 +2150,7 @@ export function SubscriptionDetailPage({ subscription, onBack }: SubscriptionDet
                           <div className="text-2xl font-bold bg-gradient-to-r from-red-600 to-orange-600 bg-clip-text text-transparent">
                             72.00
                           </div>
-                          <div className="text-xs text-gray-500">{t('subscriptions.detail.riskTab.points')}</div>
+                          <div className="text-xs text-muted-foreground">{t('subscriptions.detail.riskTab.points')}</div>
                         </div>
                         {!riskValidated && (
                           <Button
@@ -2174,94 +2172,94 @@ export function SubscriptionDetailPage({ subscription, onBack }: SubscriptionDet
                       <div className="space-y-3">
                         <div className="flex items-center gap-2 mb-4">
                           <User className="w-5 h-5 text-indigo-600" />
-                          <h4 className="font-bold text-gray-900">{t('subscriptions.detail.riskTab.naturalPerson')}</h4>
+                          <h4 className="font-bold text-foreground">{t('subscriptions.detail.riskTab.naturalPerson')}</h4>
                         </div>
                         
                         <div className="space-y-2">
-                          <div className="flex justify-between items-center py-2 border-b border-gray-100">
-                            <span className="text-sm text-gray-700">{t('subscriptions.detail.riskTab.subscriberType')}</span>
+                          <div className="flex justify-between items-center py-2 border-b border-border/50">
+                            <span className="text-sm text-foreground/80">{t('subscriptions.detail.riskTab.subscriberType')}</span>
                             <div className="flex items-center gap-2">
-                              <span className="text-sm font-semibold text-gray-900">0.00</span>
+                              <span className="text-sm font-semibold text-foreground">0.00</span>
                             </div>
                           </div>
-                          <div className="flex justify-between items-center py-2 border-b border-gray-100">
-                            <span className="text-sm text-gray-700">{t('subscriptions.detail.riskTab.complianceDecision')}</span>
+                          <div className="flex justify-between items-center py-2 border-b border-border/50">
+                            <span className="text-sm text-foreground/80">{t('subscriptions.detail.riskTab.complianceDecision')}</span>
                             <div className="flex items-center gap-2">
-                              <span className="text-sm font-semibold text-gray-900">0.00</span>
+                              <span className="text-sm font-semibold text-foreground">0.00</span>
                             </div>
                           </div>
-                          <div className="flex justify-between items-center py-2 border-b border-gray-100">
-                            <span className="text-sm text-gray-700">{t('subscriptions.detail.riskTab.activitySector')}</span>
+                          <div className="flex justify-between items-center py-2 border-b border-border/50">
+                            <span className="text-sm text-foreground/80">{t('subscriptions.detail.riskTab.activitySector')}</span>
                             <div className="flex items-center gap-2">
-                              <span className="text-sm font-semibold text-gray-900">0.00</span>
+                              <span className="text-sm font-semibold text-foreground">0.00</span>
                             </div>
                           </div>
-                          <div className="flex justify-between items-center py-2 border-b border-gray-100">
-                            <span className="text-sm text-gray-700">{t('subscriptions.detail.riskTab.relationOrigin')}</span>
+                          <div className="flex justify-between items-center py-2 border-b border-border/50">
+                            <span className="text-sm text-foreground/80">{t('subscriptions.detail.riskTab.relationOrigin')}</span>
                             <div className="flex items-center gap-2">
-                              <span className="text-sm font-semibold text-gray-900">0.00</span>
+                              <span className="text-sm font-semibold text-foreground">0.00</span>
                             </div>
                           </div>
-                          <div className="flex justify-between items-center py-2 border-b border-gray-100">
-                            <span className="text-sm text-gray-700">{t('subscriptions.detail.riskTab.nationality')}</span>
+                          <div className="flex justify-between items-center py-2 border-b border-border/50">
+                            <span className="text-sm text-foreground/80">{t('subscriptions.detail.riskTab.nationality')}</span>
                             <div className="flex items-center gap-2">
-                              <span className="text-sm font-semibold text-gray-900">0.00</span>
+                              <span className="text-sm font-semibold text-foreground">0.00</span>
                             </div>
                           </div>
-                          <div className="flex justify-between items-center py-2 border-b border-gray-100 bg-orange-50">
-                            <span className="text-sm text-gray-700 font-medium">{t('subscriptions.detail.riskTab.pepSubscriber')}</span>
+                          <div className="flex justify-between items-center py-2 border-b border-border/50 bg-orange-50">
+                            <span className="text-sm text-foreground/80 font-medium">{t('subscriptions.detail.riskTab.pepSubscriber')}</span>
                             <div className="flex items-center gap-2">
                               <AlertCircle className="w-4 h-4 text-orange-600" />
                               <span className="text-sm font-bold text-orange-700">15.00</span>
                             </div>
                           </div>
-                          <div className="flex justify-between items-center py-2 border-b border-gray-100">
-                            <span className="text-sm text-gray-700">{t('subscriptions.detail.riskTab.taxResidenceCountry')}</span>
+                          <div className="flex justify-between items-center py-2 border-b border-border/50">
+                            <span className="text-sm text-foreground/80">{t('subscriptions.detail.riskTab.taxResidenceCountry')}</span>
                             <div className="flex items-center gap-2">
-                              <span className="text-sm font-semibold text-gray-900">0.00</span>
+                              <span className="text-sm font-semibold text-foreground">0.00</span>
                             </div>
                           </div>
-                          <div className="flex justify-between items-center py-2 border-b border-gray-100 bg-amber-50">
-                            <span className="text-sm text-gray-700 font-medium">{t('subscriptions.detail.riskTab.residenceCountryDiff')}</span>
+                          <div className="flex justify-between items-center py-2 border-b border-border/50 bg-amber-50">
+                            <span className="text-sm text-foreground/80 font-medium">{t('subscriptions.detail.riskTab.residenceCountryDiff')}</span>
                             <div className="flex items-center gap-2">
                               <AlertCircle className="w-4 h-4 text-amber-600" />
                               <span className="text-sm font-bold text-amber-700">5.00</span>
                             </div>
                           </div>
-                          <div className="flex justify-between items-center py-2 border-b border-gray-100">
-                            <span className="text-sm text-gray-700">{t('subscriptions.detail.riskTab.coSubscriberNationality')}</span>
+                          <div className="flex justify-between items-center py-2 border-b border-border/50">
+                            <span className="text-sm text-foreground/80">{t('subscriptions.detail.riskTab.coSubscriberNationality')}</span>
                             <div className="flex items-center gap-2">
-                              <span className="text-sm font-semibold text-gray-900">0.00</span>
+                              <span className="text-sm font-semibold text-foreground">0.00</span>
                             </div>
                           </div>
-                          <div className="flex justify-between items-center py-2 border-b border-gray-100">
-                            <span className="text-sm text-gray-700">{t('subscriptions.detail.riskTab.coSubscriberRelationOrigin')}</span>
+                          <div className="flex justify-between items-center py-2 border-b border-border/50">
+                            <span className="text-sm text-foreground/80">{t('subscriptions.detail.riskTab.coSubscriberRelationOrigin')}</span>
                             <div className="flex items-center gap-2">
-                              <span className="text-sm font-semibold text-gray-900">0.00</span>
+                              <span className="text-sm font-semibold text-foreground">0.00</span>
                             </div>
                           </div>
-                          <div className="flex justify-between items-center py-2 border-b border-gray-100">
-                            <span className="text-sm text-gray-700">{t('subscriptions.detail.riskTab.pepCoSubscriber')}</span>
+                          <div className="flex justify-between items-center py-2 border-b border-border/50">
+                            <span className="text-sm text-foreground/80">{t('subscriptions.detail.riskTab.pepCoSubscriber')}</span>
                             <div className="flex items-center gap-2">
-                              <span className="text-sm font-semibold text-gray-900">0.00</span>
+                              <span className="text-sm font-semibold text-foreground">0.00</span>
                             </div>
                           </div>
-                          <div className="flex justify-between items-center py-2 border-b border-gray-100">
-                            <span className="text-sm text-gray-700">{t('subscriptions.detail.riskTab.coSubscriberTaxResidence')}</span>
+                          <div className="flex justify-between items-center py-2 border-b border-border/50">
+                            <span className="text-sm text-foreground/80">{t('subscriptions.detail.riskTab.coSubscriberTaxResidence')}</span>
                             <div className="flex items-center gap-2">
-                              <span className="text-sm font-semibold text-gray-900">0.00</span>
+                              <span className="text-sm font-semibold text-foreground">0.00</span>
                             </div>
                           </div>
-                          <div className="flex justify-between items-center py-2 border-b border-gray-100">
-                            <span className="text-sm text-gray-700">{t('subscriptions.detail.riskTab.coSubscriberActivitySector')}</span>
+                          <div className="flex justify-between items-center py-2 border-b border-border/50">
+                            <span className="text-sm text-foreground/80">{t('subscriptions.detail.riskTab.coSubscriberActivitySector')}</span>
                             <div className="flex items-center gap-2">
-                              <span className="text-sm font-semibold text-gray-900">0.00</span>
+                              <span className="text-sm font-semibold text-foreground">0.00</span>
                             </div>
                           </div>
-                          <div className="flex justify-between items-center py-2 border-b border-gray-100">
-                            <span className="text-sm text-gray-700">{t('subscriptions.detail.riskTab.coSubscriberResidenceDiff')}</span>
+                          <div className="flex justify-between items-center py-2 border-b border-border/50">
+                            <span className="text-sm text-foreground/80">{t('subscriptions.detail.riskTab.coSubscriberResidenceDiff')}</span>
                             <div className="flex items-center gap-2">
-                              <span className="text-sm font-semibold text-gray-900">0.00</span>
+                              <span className="text-sm font-semibold text-foreground">0.00</span>
                             </div>
                           </div>
                         </div>
@@ -2271,100 +2269,100 @@ export function SubscriptionDetailPage({ subscription, onBack }: SubscriptionDet
                       <div className="space-y-3">
                         <div className="flex items-center gap-2 mb-4">
                           <Building2 className="w-5 h-5 text-purple-600" />
-                          <h4 className="font-bold text-gray-900">{t('subscriptions.detail.riskTab.legalEntity')}</h4>
+                          <h4 className="font-bold text-foreground">{t('subscriptions.detail.riskTab.legalEntity')}</h4>
                         </div>
                         
                         <div className="space-y-2">
-                          <div className="flex justify-between items-center py-2 border-b border-gray-100 bg-red-50">
-                            <span className="text-sm text-gray-700 font-medium">{t('subscriptions.detail.riskTab.relationOrigin')}</span>
+                          <div className="flex justify-between items-center py-2 border-b border-border/50 bg-red-50">
+                            <span className="text-sm text-foreground/80 font-medium">{t('subscriptions.detail.riskTab.relationOrigin')}</span>
                             <div className="flex items-center gap-2">
                               <AlertTriangle className="w-4 h-4 text-red-600" />
                               <span className="text-sm font-bold text-red-700">20.00</span>
                             </div>
                           </div>
-                          <div className="flex justify-between items-center py-2 border-b border-gray-100">
-                            <span className="text-sm text-gray-700">{t('subscriptions.detail.riskTab.complianceDecision')}</span>
+                          <div className="flex justify-between items-center py-2 border-b border-border/50">
+                            <span className="text-sm text-foreground/80">{t('subscriptions.detail.riskTab.complianceDecision')}</span>
                             <div className="flex items-center gap-2">
-                              <span className="text-sm font-semibold text-gray-900">0.00</span>
+                              <span className="text-sm font-semibold text-foreground">0.00</span>
                             </div>
                           </div>
-                          <div className="flex justify-between items-center py-2 border-b border-gray-100">
-                            <span className="text-sm text-gray-700">{t('subscriptions.detail.riskTab.activitySector')}</span>
+                          <div className="flex justify-between items-center py-2 border-b border-border/50">
+                            <span className="text-sm text-foreground/80">{t('subscriptions.detail.riskTab.activitySector')}</span>
                             <div className="flex items-center gap-2">
-                              <span className="text-sm font-semibold text-gray-900">4.00</span>
+                              <span className="text-sm font-semibold text-foreground">4.00</span>
                             </div>
                           </div>
-                          <div className="flex justify-between items-center py-2 border-b border-gray-100">
-                            <span className="text-sm text-gray-700">{t('subscriptions.detail.riskTab.pepRL')}</span>
+                          <div className="flex justify-between items-center py-2 border-b border-border/50">
+                            <span className="text-sm text-foreground/80">{t('subscriptions.detail.riskTab.pepRL')}</span>
                             <div className="flex items-center gap-2">
-                              <span className="text-sm font-semibold text-gray-900">0.00</span>
+                              <span className="text-sm font-semibold text-foreground">0.00</span>
                             </div>
                           </div>
-                          <div className="flex justify-between items-center py-2 border-b border-gray-100 bg-red-50">
-                            <span className="text-sm text-gray-700 font-medium">{t('subscriptions.detail.riskTab.pepStructure')}</span>
+                          <div className="flex justify-between items-center py-2 border-b border-border/50 bg-red-50">
+                            <span className="text-sm text-foreground/80 font-medium">{t('subscriptions.detail.riskTab.pepStructure')}</span>
                             <div className="flex items-center gap-2">
                               <AlertTriangle className="w-4 h-4 text-red-600" />
                               <span className="text-sm font-bold text-red-700">18.00</span>
                             </div>
                           </div>
-                          <div className="flex justify-between items-center py-2 border-b border-gray-100">
-                            <span className="text-sm text-gray-700">{t('subscriptions.detail.riskTab.registrationCountry')}</span>
+                          <div className="flex justify-between items-center py-2 border-b border-border/50">
+                            <span className="text-sm text-foreground/80">{t('subscriptions.detail.riskTab.registrationCountry')}</span>
                             <div className="flex items-center gap-2">
-                              <span className="text-sm font-semibold text-gray-900">0.00</span>
+                              <span className="text-sm font-semibold text-foreground">0.00</span>
                             </div>
                           </div>
-                          <div className="flex justify-between items-center py-2 border-b border-gray-100">
-                            <span className="text-sm text-gray-700">{t('subscriptions.detail.riskTab.fatca')}</span>
+                          <div className="flex justify-between items-center py-2 border-b border-border/50">
+                            <span className="text-sm text-foreground/80">{t('subscriptions.detail.riskTab.fatca')}</span>
                             <div className="flex items-center gap-2">
-                              <span className="text-sm font-semibold text-gray-900">0.00</span>
+                              <span className="text-sm font-semibold text-foreground">0.00</span>
                             </div>
                           </div>
-                          <div className="flex justify-between items-center py-2 border-b border-gray-100 bg-amber-50">
-                            <span className="text-sm text-gray-700 font-medium">{t('subscriptions.detail.riskTab.regulatedEntity')}</span>
+                          <div className="flex justify-between items-center py-2 border-b border-border/50 bg-amber-50">
+                            <span className="text-sm text-foreground/80 font-medium">{t('subscriptions.detail.riskTab.regulatedEntity')}</span>
                             <div className="flex items-center gap-2">
                               <AlertCircle className="w-4 h-4 text-amber-600" />
                               <span className="text-sm font-bold text-amber-700">6.00</span>
                             </div>
                           </div>
-                          <div className="flex justify-between items-center py-2 border-b border-gray-100">
-                            <span className="text-sm text-gray-700">{t('subscriptions.detail.riskTab.ribDomiciliation')}</span>
+                          <div className="flex justify-between items-center py-2 border-b border-border/50">
+                            <span className="text-sm text-foreground/80">{t('subscriptions.detail.riskTab.ribDomiciliation')}</span>
                             <div className="flex items-center gap-2">
-                              <span className="text-sm font-semibold text-gray-900">0.00</span>
+                              <span className="text-sm font-semibold text-foreground">0.00</span>
                             </div>
                           </div>
-                          <div className="flex justify-between items-center py-2 border-b border-gray-100">
-                            <span className="text-sm text-gray-700">{t('subscriptions.detail.riskTab.pepRL2')}</span>
+                          <div className="flex justify-between items-center py-2 border-b border-border/50">
+                            <span className="text-sm text-foreground/80">{t('subscriptions.detail.riskTab.pepRL2')}</span>
                             <div className="flex items-center gap-2">
-                              <span className="text-sm font-semibold text-gray-900">0.00</span>
+                              <span className="text-sm font-semibold text-foreground">0.00</span>
                             </div>
                           </div>
-                          <div className="flex justify-between items-center py-2 border-b border-gray-100">
-                            <span className="text-sm text-gray-700">{t('subscriptions.detail.riskTab.pepRL3')}</span>
+                          <div className="flex justify-between items-center py-2 border-b border-border/50">
+                            <span className="text-sm text-foreground/80">{t('subscriptions.detail.riskTab.pepRL3')}</span>
                             <div className="flex items-center gap-2">
-                              <span className="text-sm font-semibold text-gray-900">0.00</span>
+                              <span className="text-sm font-semibold text-foreground">0.00</span>
                             </div>
                           </div>
-                          <div className="flex justify-between items-center py-2 border-b border-gray-100">
-                            <span className="text-sm text-gray-700">{t('subscriptions.detail.riskTab.pepRL4')}</span>
+                          <div className="flex justify-between items-center py-2 border-b border-border/50">
+                            <span className="text-sm text-foreground/80">{t('subscriptions.detail.riskTab.pepRL4')}</span>
                             <div className="flex items-center gap-2">
-                              <span className="text-sm font-semibold text-gray-900">0.00</span>
+                              <span className="text-sm font-semibold text-foreground">0.00</span>
                             </div>
                           </div>
-                          <div className="flex justify-between items-center py-2 border-b border-gray-100 bg-amber-50">
-                            <span className="text-sm text-gray-700 font-medium">{t('subscriptions.detail.riskTab.pepBE1')}</span>
+                          <div className="flex justify-between items-center py-2 border-b border-border/50 bg-amber-50">
+                            <span className="text-sm text-foreground/80 font-medium">{t('subscriptions.detail.riskTab.pepBE1')}</span>
                             <div className="flex items-center gap-2">
                               <AlertCircle className="w-4 h-4 text-amber-600" />
                               <span className="text-sm font-bold text-amber-700">5.00</span>
                             </div>
                           </div>
-                          <div className="flex justify-between items-center py-2 border-b border-gray-100">
-                            <span className="text-sm text-gray-700">{t('subscriptions.detail.riskTab.pepBE2')}</span>
+                          <div className="flex justify-between items-center py-2 border-b border-border/50">
+                            <span className="text-sm text-foreground/80">{t('subscriptions.detail.riskTab.pepBE2')}</span>
                             <div className="flex items-center gap-2">
-                              <span className="text-sm font-semibold text-gray-900">0.00</span>
+                              <span className="text-sm font-semibold text-foreground">0.00</span>
                             </div>
                           </div>
-                          <div className="flex justify-between items-center py-2 border-b border-gray-100 bg-amber-50">
-                            <span className="text-sm text-gray-700 font-medium">{t('subscriptions.detail.riskTab.pepBE3')}</span>
+                          <div className="flex justify-between items-center py-2 border-b border-border/50 bg-amber-50">
+                            <span className="text-sm text-foreground/80 font-medium">{t('subscriptions.detail.riskTab.pepBE3')}</span>
                             <div className="flex items-center gap-2">
                               <AlertCircle className="w-4 h-4 text-amber-600" />
                               <span className="text-sm font-bold text-amber-700">4.00</span>
@@ -2375,14 +2373,14 @@ export function SubscriptionDetailPage({ subscription, onBack }: SubscriptionDet
                     </div>
 
                     {/* Total Summary */}
-                    <div className="mt-6 pt-6 border-t-2 border-gray-300">
+                    <div className="mt-6 pt-6 border-t-2 border-border">
                       <div className="flex items-center justify-between bg-gradient-to-r from-red-50 to-orange-50 rounded-xl p-5 border-2 border-red-200">
                         <div className="flex items-center gap-4">
                           <div className="p-3 bg-gradient-to-br from-red-500 to-orange-600 rounded-xl shadow-lg">
                             <TrendingUp className="w-6 h-6 text-white" />
                           </div>
                           <div>
-                            <div className="text-sm text-gray-600 mb-1">{t('subscriptions.detail.riskTab.globalRiskScore')}</div>
+                            <div className="text-sm text-muted-foreground mb-1">{t('subscriptions.detail.riskTab.globalRiskScore')}</div>
                             <div className="text-3xl font-bold bg-gradient-to-r from-red-600 to-orange-600 bg-clip-text text-transparent">
                               72.00 / 100
                             </div>
@@ -2392,26 +2390,26 @@ export function SubscriptionDetailPage({ subscription, onBack }: SubscriptionDet
                           <Badge className="bg-red-100 text-red-700 border-red-300 font-bold text-lg px-4 py-2">
                             {t('subscriptions.detail.header.riskHigh')}
                           </Badge>
-                          <div className="text-xs text-gray-600 mt-2">
+                          <div className="text-xs text-muted-foreground mt-2">
                             {t('subscriptions.detail.riskTab.basedOnCriteria', { count: 15 })}
                           </div>
                         </div>
                       </div>
                     </div>
                   </div>
-                </div>
+                </Card>
 
                 {/* Risk Details Table */}
-                <div className="bg-white border border-gray-200 rounded-xl overflow-hidden shadow-sm">
-                  <div className="px-6 py-4 bg-gradient-to-r from-gray-50 to-white border-b border-gray-200">
+                <Card className="overflow-hidden shadow-sm">
+                  <div className="px-6 py-4 bg-gradient-to-r from-muted to-card border-b border-border">
                     <div className="flex items-center justify-between">
                       <div className="flex items-center gap-3">
                         <div className="p-2 bg-red-100 rounded-lg">
                           <AlertTriangle className="w-5 h-5 text-red-600" />
                         </div>
                         <div>
-                          <h3 className="font-bold text-gray-900">{t('subscriptions.detail.riskTab.alertDetails')}</h3>
-                          <p className="text-sm text-gray-600">{t('subscriptions.detail.riskTab.alertDetailsDesc')}</p>
+                          <h3 className="font-bold text-foreground">{t('subscriptions.detail.riskTab.alertDetails')}</h3>
+                          <p className="text-sm text-muted-foreground">{t('subscriptions.detail.riskTab.alertDetailsDesc')}</p>
                         </div>
                       </div>
                       <Button
@@ -2429,28 +2427,28 @@ export function SubscriptionDetailPage({ subscription, onBack }: SubscriptionDet
                   <div className="overflow-x-auto">
                     <table className="w-full">
                       <thead>
-                        <tr className="bg-gray-50">
-                          <th className="px-6 py-3 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">
+                        <tr className="bg-muted">
+                          <th className="px-6 py-3 text-left text-xs font-semibold text-muted-foreground uppercase tracking-wider">
                             {t('subscriptions.detail.riskTab.alertType')}
                           </th>
-                          <th className="px-6 py-3 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">
+                          <th className="px-6 py-3 text-left text-xs font-semibold text-muted-foreground uppercase tracking-wider">
                             {t('subscriptions.detail.riskTab.details')}
                           </th>
-                          <th className="px-6 py-3 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">
+                          <th className="px-6 py-3 text-left text-xs font-semibold text-muted-foreground uppercase tracking-wider">
                             {t('subscriptions.detail.riskTab.riskLevel')}
                           </th>
-                          <th className="px-6 py-3 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">
+                          <th className="px-6 py-3 text-left text-xs font-semibold text-muted-foreground uppercase tracking-wider">
                             {t('subscriptions.detail.riskTab.statusCol')}
                           </th>
-                          <th className="px-6 py-3 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">
+                          <th className="px-6 py-3 text-left text-xs font-semibold text-muted-foreground uppercase tracking-wider">
                             {t('subscriptions.detail.riskTab.detectionDate')}
                           </th>
-                          <th className="px-6 py-3 text-center text-xs font-semibold text-gray-600 uppercase tracking-wider">
+                          <th className="px-6 py-3 text-center text-xs font-semibold text-muted-foreground uppercase tracking-wider">
                             {t('subscriptions.detail.riskTab.actions')}
                           </th>
                         </tr>
                       </thead>
-                      <tbody className="divide-y divide-gray-200">
+                      <tbody className="divide-y divide-border">
                         {/* PEP Alert */}
                         <tr className="hover:bg-orange-50/50 transition-colors">
                           <td className="px-6 py-4">
@@ -2459,18 +2457,18 @@ export function SubscriptionDetailPage({ subscription, onBack }: SubscriptionDet
                                 <Users className="w-4 h-4 text-orange-600" />
                               </div>
                               <div>
-                                <div className="font-semibold text-gray-900">{t('subscriptions.detail.riskTab.pepLevel1')}</div>
-                                <div className="text-xs text-gray-500">{t('subscriptions.detail.riskTab.pepLevel1Desc')}</div>
+                                <div className="font-semibold text-foreground">{t('subscriptions.detail.riskTab.pepLevel1')}</div>
+                                <div className="text-xs text-muted-foreground">{t('subscriptions.detail.riskTab.pepLevel1Desc')}</div>
                               </div>
                             </div>
                           </td>
                           <td className="px-6 py-4">
-                            <div className="text-sm text-gray-700">
+                            <div className="text-sm text-foreground/80">
                               <div className="font-medium mb-1">{t('subscriptions.detail.riskTab.ministerialFunction')}</div>
-                              <div className="text-xs text-gray-600">
+                              <div className="text-xs text-muted-foreground">
                                 {t('subscriptions.detail.riskTab.ministerialFunctionDesc')}
                               </div>
-                              <div className="text-xs text-gray-500 mt-1">
+                              <div className="text-xs text-muted-foreground mt-1">
                                 {t('subscriptions.detail.riskTab.sourceACPR')}
                               </div>
                             </div>
@@ -2482,7 +2480,7 @@ export function SubscriptionDetailPage({ subscription, onBack }: SubscriptionDet
                                 {t('subscriptions.detail.riskTab.highLevel')}
                               </Badge>
                             </div>
-                            <div className="text-xs text-gray-500 mt-1">Score: 85/100</div>
+                            <div className="text-xs text-muted-foreground mt-1">Score: 85/100</div>
                           </td>
                           <td className="px-6 py-4">
                             <Badge className="bg-yellow-100 text-yellow-700 border-yellow-300">
@@ -2490,11 +2488,11 @@ export function SubscriptionDetailPage({ subscription, onBack }: SubscriptionDet
                             </Badge>
                           </td>
                           <td className="px-6 py-4">
-                            <div className="flex items-center gap-2 text-sm text-gray-600">
+                            <div className="flex items-center gap-2 text-sm text-muted-foreground">
                               <Clock className="w-3.5 h-3.5" />
                               <span>28/12/2025</span>
                             </div>
-                            <div className="text-xs text-gray-500 mt-1">14:32</div>
+                            <div className="text-xs text-muted-foreground mt-1">14:32</div>
                           </td>
                           <td className="px-6 py-4">
                             <div className="flex items-center justify-center gap-2">
@@ -2517,18 +2515,18 @@ export function SubscriptionDetailPage({ subscription, onBack }: SubscriptionDet
                                 <Scale className="w-4 h-4 text-red-600" />
                               </div>
                               <div>
-                                <div className="font-semibold text-gray-900">{t('subscriptions.detail.riskTab.sanctionsList')}</div>
-                                <div className="text-xs text-gray-500">{t('subscriptions.detail.riskTab.ofacEu')}</div>
+                                <div className="font-semibold text-foreground">{t('subscriptions.detail.riskTab.sanctionsList')}</div>
+                                <div className="text-xs text-muted-foreground">{t('subscriptions.detail.riskTab.ofacEu')}</div>
                               </div>
                             </div>
                           </td>
                           <td className="px-6 py-4">
-                            <div className="text-sm text-gray-700">
+                            <div className="text-sm text-foreground/80">
                               <div className="font-medium mb-1">{t('subscriptions.detail.riskTab.partialMatchDetected')}</div>
-                              <div className="text-xs text-gray-600">
+                              <div className="text-xs text-muted-foreground">
                                 {t('subscriptions.detail.riskTab.partialMatchDesc', { pct: 87 })}
                               </div>
-                              <div className="text-xs text-gray-500 mt-1">
+                              <div className="text-xs text-muted-foreground mt-1">
                                 {t('subscriptions.detail.riskTab.sourceOFAC')}
                               </div>
                             </div>
@@ -2540,7 +2538,7 @@ export function SubscriptionDetailPage({ subscription, onBack }: SubscriptionDet
                                 {t('subscriptions.detail.riskTab.critical')}
                               </Badge>
                             </div>
-                            <div className="text-xs text-gray-500 mt-1">Score: 92/100</div>
+                            <div className="text-xs text-muted-foreground mt-1">Score: 92/100</div>
                           </td>
                           <td className="px-6 py-4">
                             <Badge className="bg-red-100 text-red-700 border-red-300">
@@ -2548,11 +2546,11 @@ export function SubscriptionDetailPage({ subscription, onBack }: SubscriptionDet
                             </Badge>
                           </td>
                           <td className="px-6 py-4">
-                            <div className="flex items-center gap-2 text-sm text-gray-600">
+                            <div className="flex items-center gap-2 text-sm text-muted-foreground">
                               <Clock className="w-3.5 h-3.5" />
                               <span>29/12/2025</span>
                             </div>
-                            <div className="text-xs text-gray-500 mt-1">09:15</div>
+                            <div className="text-xs text-muted-foreground mt-1">09:15</div>
                           </td>
                           <td className="px-6 py-4">
                             <div className="flex items-center justify-center gap-2">
@@ -2575,18 +2573,18 @@ export function SubscriptionDetailPage({ subscription, onBack }: SubscriptionDet
                                 <Newspaper className="w-4 h-4 text-amber-600" />
                               </div>
                               <div>
-                                <div className="font-semibold text-gray-900">{t('subscriptions.detail.riskTab.adverseMediaAlert')}</div>
-                                <div className="text-xs text-gray-500">{t('subscriptions.detail.riskTab.adverseMediaAlertDesc')}</div>
+                                <div className="font-semibold text-foreground">{t('subscriptions.detail.riskTab.adverseMediaAlert')}</div>
+                                <div className="text-xs text-muted-foreground">{t('subscriptions.detail.riskTab.adverseMediaAlertDesc')}</div>
                               </div>
                             </div>
                           </td>
                           <td className="px-6 py-4">
-                            <div className="text-sm text-gray-700">
+                            <div className="text-sm text-foreground/80">
                               <div className="font-medium mb-1">{t('subscriptions.detail.riskTab.pressArticle')}</div>
-                              <div className="text-xs text-gray-600">
+                              <div className="text-xs text-muted-foreground">
                                 {t('subscriptions.detail.riskTab.pressArticleDesc')}
                               </div>
-                              <div className="text-xs text-gray-500 mt-1">
+                              <div className="text-xs text-muted-foreground mt-1">
                                 {t('subscriptions.detail.riskTab.sourceAutomated')}
                               </div>
                             </div>
@@ -2598,19 +2596,19 @@ export function SubscriptionDetailPage({ subscription, onBack }: SubscriptionDet
                                 {t('subscriptions.detail.riskTab.mediumLevel')}
                               </Badge>
                             </div>
-                            <div className="text-xs text-gray-500 mt-1">Score: 68/100</div>
+                            <div className="text-xs text-muted-foreground mt-1">Score: 68/100</div>
                           </td>
                           <td className="px-6 py-4">
-                            <Badge className="bg-blue-100 text-blue-700 border-blue-300">
+                            <Badge className="bg-primary/10 text-primary border-primary/30">
                               {t('subscriptions.detail.riskTab.inAnalysis')}
                             </Badge>
                           </td>
                           <td className="px-6 py-4">
-                            <div className="flex items-center gap-2 text-sm text-gray-600">
+                            <div className="flex items-center gap-2 text-sm text-muted-foreground">
                               <Clock className="w-3.5 h-3.5" />
                               <span>27/12/2025</span>
                             </div>
-                            <div className="text-xs text-gray-500 mt-1">16:48</div>
+                            <div className="text-xs text-muted-foreground mt-1">16:48</div>
                           </td>
                           <td className="px-6 py-4">
                             <div className="flex items-center justify-center gap-2">
@@ -2627,53 +2625,53 @@ export function SubscriptionDetailPage({ subscription, onBack }: SubscriptionDet
                       </tbody>
                     </table>
                   </div>
-                </div>
+                </Card>
 
                 {/* Additional Risk Information */}
                 <div className="grid grid-cols-2 gap-6">
                   {/* Risk Timeline */}
-                  <div className="bg-white border border-gray-200 rounded-xl p-6 shadow-sm">
+                  <Card className="p-6 shadow-sm">
                     <div className="flex items-center gap-3 mb-4">
-                      <div className="p-2 bg-blue-100 rounded-lg">
-                        <Clock className="w-5 h-5 text-blue-600" />
+                      <div className="p-2 bg-primary/10 rounded-lg">
+                        <Clock className="w-5 h-5 text-primary" />
                       </div>
-                      <h3 className="font-bold text-gray-900">{t('subscriptions.detail.riskTab.riskTimeline')}</h3>
+                      <h3 className="font-bold text-foreground">{t('subscriptions.detail.riskTab.riskTimeline')}</h3>
                     </div>
                     
                     <div className="space-y-4">
                       <div className="flex gap-3">
                         <div className="flex flex-col items-center">
                           <div className="w-2 h-2 rounded-full bg-red-500 mt-2"></div>
-                          <div className="w-px h-full bg-gray-200 mt-1"></div>
+                          <div className="w-px h-full bg-border mt-1"></div>
                         </div>
                         <div className="flex-1 pb-4">
-                          <div className="text-xs text-gray-500 mb-1">29/12/2025 - 09:15</div>
-                          <div className="font-medium text-gray-900">{t('subscriptions.detail.riskTab.sanctionsAlertDetected')}</div>
-                          <div className="text-sm text-gray-600 mt-1">{t('subscriptions.detail.riskTab.sanctionsAlertDesc')}</div>
+                          <div className="text-xs text-muted-foreground mb-1">29/12/2025 - 09:15</div>
+                          <div className="font-medium text-foreground">{t('subscriptions.detail.riskTab.sanctionsAlertDetected')}</div>
+                          <div className="text-sm text-muted-foreground mt-1">{t('subscriptions.detail.riskTab.sanctionsAlertDesc')}</div>
                         </div>
                       </div>
 
                       <div className="flex gap-3">
                         <div className="flex flex-col items-center">
                           <div className="w-2 h-2 rounded-full bg-orange-500 mt-2"></div>
-                          <div className="w-px h-full bg-gray-200 mt-1"></div>
+                          <div className="w-px h-full bg-border mt-1"></div>
                         </div>
                         <div className="flex-1 pb-4">
-                          <div className="text-xs text-gray-500 mb-1">28/12/2025 - 14:32</div>
-                          <div className="font-medium text-gray-900">{t('subscriptions.detail.riskTab.pepIdentification')}</div>
-                          <div className="text-sm text-gray-600 mt-1">{t('subscriptions.detail.riskTab.pepIdentificationDesc')}</div>
+                          <div className="text-xs text-muted-foreground mb-1">28/12/2025 - 14:32</div>
+                          <div className="font-medium text-foreground">{t('subscriptions.detail.riskTab.pepIdentification')}</div>
+                          <div className="text-sm text-muted-foreground mt-1">{t('subscriptions.detail.riskTab.pepIdentificationDesc')}</div>
                         </div>
                       </div>
 
                       <div className="flex gap-3">
                         <div className="flex flex-col items-center">
                           <div className="w-2 h-2 rounded-full bg-amber-500 mt-2"></div>
-                          <div className="w-px h-full bg-gray-200 mt-1"></div>
+                          <div className="w-px h-full bg-border mt-1"></div>
                         </div>
                         <div className="flex-1 pb-4">
-                          <div className="text-xs text-gray-500 mb-1">27/12/2025 - 16:48</div>
-                          <div className="font-medium text-gray-900">{t('subscriptions.detail.riskTab.adverseMediaFound')}</div>
-                          <div className="text-sm text-gray-600 mt-1">{t('subscriptions.detail.riskTab.adverseMediaFoundDesc')}</div>
+                          <div className="text-xs text-muted-foreground mb-1">27/12/2025 - 16:48</div>
+                          <div className="font-medium text-foreground">{t('subscriptions.detail.riskTab.adverseMediaFound')}</div>
+                          <div className="text-sm text-muted-foreground mt-1">{t('subscriptions.detail.riskTab.adverseMediaFoundDesc')}</div>
                         </div>
                       </div>
 
@@ -2682,21 +2680,21 @@ export function SubscriptionDetailPage({ subscription, onBack }: SubscriptionDet
                           <div className="w-2 h-2 rounded-full bg-green-500 mt-2"></div>
                         </div>
                         <div className="flex-1">
-                          <div className="text-xs text-gray-500 mb-1">25/12/2025 - 10:00</div>
-                          <div className="font-medium text-gray-900">{t('subscriptions.detail.riskTab.initialScreening')}</div>
-                          <div className="text-sm text-gray-600 mt-1">{t('subscriptions.detail.riskTab.initialScreeningDesc')}</div>
+                          <div className="text-xs text-muted-foreground mb-1">25/12/2025 - 10:00</div>
+                          <div className="font-medium text-foreground">{t('subscriptions.detail.riskTab.initialScreening')}</div>
+                          <div className="text-sm text-muted-foreground mt-1">{t('subscriptions.detail.riskTab.initialScreeningDesc')}</div>
                         </div>
                       </div>
                     </div>
-                  </div>
+                  </Card>
 
                   {/* Risk Mitigation Actions */}
-                  <div className="bg-white border border-gray-200 rounded-xl p-6 shadow-sm">
+                  <Card className="p-6 shadow-sm">
                     <div className="flex items-center gap-3 mb-4">
                       <div className="p-2 bg-green-100 rounded-lg">
                         <Shield className="w-5 h-5 text-green-600" />
                       </div>
-                      <h3 className="font-bold text-gray-900">{t('subscriptions.detail.riskTab.mitigationActions')}</h3>
+                      <h3 className="font-bold text-foreground">{t('subscriptions.detail.riskTab.mitigationActions')}</h3>
                     </div>
                     
                     <div className="space-y-3">
@@ -2704,24 +2702,24 @@ export function SubscriptionDetailPage({ subscription, onBack }: SubscriptionDet
                         <div className="flex items-start gap-3">
                           <CheckCircle2 className="w-5 h-5 text-green-600 mt-0.5" />
                           <div className="flex-1">
-                            <div className="font-medium text-gray-900 mb-1">{t('subscriptions.detail.riskTab.eddActivated')}</div>
-                            <div className="text-sm text-gray-600">
+                            <div className="font-medium text-foreground mb-1">{t('subscriptions.detail.riskTab.eddActivated')}</div>
+                            <div className="text-sm text-muted-foreground">
                               {t('subscriptions.detail.riskTab.eddDesc')}
                             </div>
-                            <div className="text-xs text-gray-500 mt-2">{t('subscriptions.detail.riskTab.completedAt', { pct: 65 })}</div>
-                            <div className="w-full bg-gray-200 rounded-full h-1.5 mt-2">
-                              <div className="bg-green-600 h-1.5 rounded-full" style={{ width: '65%' }}></div>
+                            <div className="text-xs text-muted-foreground mt-2">{t('subscriptions.detail.riskTab.completedAt', { pct: 65 })}</div>
+                            <div className="w-full bg-muted rounded-full h-1.5 mt-2">
+                              <div className="bg-[var(--success)] h-1.5 rounded-full" style={{ width: '65%' }}></div>
                             </div>
                           </div>
                         </div>
                       </div>
 
-                      <div className="bg-gradient-to-r from-blue-50 to-indigo-50 border border-blue-200 rounded-lg p-4">
+                      <div className="bg-gradient-to-r from-primary/5 to-primary/10 border border-primary/20 rounded-lg p-4">
                         <div className="flex items-start gap-3">
-                          <FileText className="w-5 h-5 text-blue-600 mt-0.5" />
+                          <FileText className="w-5 h-5 text-primary mt-0.5" />
                           <div className="flex-1">
-                            <div className="font-medium text-gray-900 mb-1">{t('subscriptions.detail.riskTab.additionalDocs')}</div>
-                            <div className="text-sm text-gray-600">
+                            <div className="font-medium text-foreground mb-1">{t('subscriptions.detail.riskTab.additionalDocs')}</div>
+                            <div className="text-sm text-muted-foreground">
                               {t('subscriptions.detail.riskTab.additionalDocsDesc')}
                             </div>
                             <Button
@@ -2740,8 +2738,8 @@ export function SubscriptionDetailPage({ subscription, onBack }: SubscriptionDet
                         <div className="flex items-start gap-3">
                           <Users className="w-5 h-5 text-purple-600 mt-0.5" />
                           <div className="flex-1">
-                            <div className="font-medium text-gray-900 mb-1">{t('subscriptions.detail.riskTab.hierarchicalValidation')}</div>
-                            <div className="text-sm text-gray-600">
+                            <div className="font-medium text-foreground mb-1">{t('subscriptions.detail.riskTab.hierarchicalValidation')}</div>
+                            <div className="text-sm text-muted-foreground">
                               {t('subscriptions.detail.riskTab.hierarchicalValidationDesc')}
                             </div>
                             <Badge className="bg-yellow-100 text-yellow-700 border-yellow-300 mt-2">
@@ -2751,18 +2749,18 @@ export function SubscriptionDetailPage({ subscription, onBack }: SubscriptionDet
                         </div>
                       </div>
                     </div>
-                  </div>
+                  </Card>
                 </div>
 
                 {/* Country Risk Assessment */}
-                <div className="bg-white border border-gray-200 rounded-xl p-6 shadow-sm">
+                <Card className="p-6 shadow-sm">
                   <div className="flex items-center gap-3 mb-4">
                     <div className="p-2 bg-indigo-100 rounded-lg">
                       <Globe className="w-5 h-5 text-indigo-600" />
                     </div>
                     <div>
-                      <h3 className="font-bold text-gray-900">{t('subscriptions.detail.riskTab.geoRiskAnalysis')}</h3>
-                      <p className="text-sm text-gray-600">{t('subscriptions.detail.riskTab.geoRiskAnalysisDesc')}</p>
+                      <h3 className="font-bold text-foreground">{t('subscriptions.detail.riskTab.geoRiskAnalysis')}</h3>
+                      <p className="text-sm text-muted-foreground">{t('subscriptions.detail.riskTab.geoRiskAnalysisDesc')}</p>
                     </div>
                   </div>
 
@@ -2774,11 +2772,11 @@ export function SubscriptionDetailPage({ subscription, onBack }: SubscriptionDet
                           {t('subscriptions.detail.validation.low')}
                         </Badge>
                       </div>
-                      <div className="font-semibold text-gray-900 mb-1">{t('subscriptions.detail.riskTab.france')}</div>
-                      <div className="text-xs text-gray-600">{t('subscriptions.detail.riskTab.residenceCountryLabel')}</div>
+                      <div className="font-semibold text-foreground mb-1">{t('subscriptions.detail.riskTab.france')}</div>
+                      <div className="text-xs text-muted-foreground">{t('subscriptions.detail.riskTab.residenceCountryLabel')}</div>
                       <div className="flex items-center gap-1 mt-2">
                         <div className="text-sm font-bold text-green-700">2.1</div>
-                        <div className="text-xs text-gray-500">/10</div>
+                        <div className="text-xs text-muted-foreground">/10</div>
                       </div>
                     </div>
 
@@ -2789,11 +2787,11 @@ export function SubscriptionDetailPage({ subscription, onBack }: SubscriptionDet
                           {t('subscriptions.detail.validation.medium')}
                         </Badge>
                       </div>
-                      <div className="font-semibold text-gray-900 mb-1">{t('subscriptions.detail.riskTab.switzerland')}</div>
-                      <div className="text-xs text-gray-600">{t('subscriptions.detail.riskTab.bankAccount')}</div>
+                      <div className="font-semibold text-foreground mb-1">{t('subscriptions.detail.riskTab.switzerland')}</div>
+                      <div className="text-xs text-muted-foreground">{t('subscriptions.detail.riskTab.bankAccount')}</div>
                       <div className="flex items-center gap-1 mt-2">
                         <div className="text-sm font-bold text-amber-700">4.8</div>
-                        <div className="text-xs text-gray-500">/10</div>
+                        <div className="text-xs text-muted-foreground">/10</div>
                       </div>
                     </div>
 
@@ -2804,15 +2802,15 @@ export function SubscriptionDetailPage({ subscription, onBack }: SubscriptionDet
                           {t('subscriptions.detail.riskTab.highLevel')}
                         </Badge>
                       </div>
-                      <div className="font-semibold text-gray-900 mb-1">{t('subscriptions.detail.riskTab.panama')}</div>
-                      <div className="text-xs text-gray-600">{t('subscriptions.detail.riskTab.offshoreStructure')}</div>
+                      <div className="font-semibold text-foreground mb-1">{t('subscriptions.detail.riskTab.panama')}</div>
+                      <div className="text-xs text-muted-foreground">{t('subscriptions.detail.riskTab.offshoreStructure')}</div>
                       <div className="flex items-center gap-1 mt-2">
                         <div className="text-sm font-bold text-orange-700">7.5</div>
-                        <div className="text-xs text-gray-500">/10</div>
+                        <div className="text-xs text-muted-foreground">/10</div>
                       </div>
                     </div>
                   </div>
-                </div>
+                </Card>
               </div>
             </div>
           </TabsContent>
@@ -2820,10 +2818,10 @@ export function SubscriptionDetailPage({ subscription, onBack }: SubscriptionDet
           {/* Documents Tab Content */}
           <TabsContent value="documents" className="mt-0">
             <div className="px-8 py-6">
-              <div className="bg-white rounded-xl border border-gray-200 overflow-hidden shadow-sm">
+              <Card className="overflow-hidden shadow-sm">
                 {/* Header */}
-                <div className="px-6 py-4 border-b border-gray-200 flex items-center justify-between">
-                  <h2 className="font-semibold text-gray-900">{t('subscriptions.detail.documentsTab.title')}</h2>
+                <div className="px-6 py-4 border-b border-border flex items-center justify-between">
+                  <h2 className="font-semibold text-foreground">{t('subscriptions.detail.documentsTab.title')}</h2>
                   <Button
                     variant="outline"
                     className="gap-2"
@@ -2836,38 +2834,38 @@ export function SubscriptionDetailPage({ subscription, onBack }: SubscriptionDet
 
                 {/* Table */}
                 <table className="w-full">
-                  <thead className="bg-gray-50 border-b border-gray-200">
+                  <thead className="bg-muted border-b border-border">
                     <tr>
-                      <th className="px-6 py-3 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">
+                      <th className="px-6 py-3 text-left text-xs font-semibold text-muted-foreground uppercase tracking-wider">
                         {t('subscriptions.detail.documentsTab.date')}
                       </th>
-                      <th className="px-6 py-3 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">
+                      <th className="px-6 py-3 text-left text-xs font-semibold text-muted-foreground uppercase tracking-wider">
                         {t('subscriptions.detail.documentsTab.name')}
                       </th>
-                      <th className="px-6 py-3 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">
+                      <th className="px-6 py-3 text-left text-xs font-semibold text-muted-foreground uppercase tracking-wider">
                         {t('subscriptions.detail.documentsTab.language')}
                       </th>
-                      <th className="px-6 py-3 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">
+                      <th className="px-6 py-3 text-left text-xs font-semibold text-muted-foreground uppercase tracking-wider">
                         {t('subscriptions.detail.documentsTab.type')}
                       </th>
-                      <th className="px-6 py-3 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">
+                      <th className="px-6 py-3 text-left text-xs font-semibold text-muted-foreground uppercase tracking-wider">
                         {t('subscriptions.detail.documentsTab.file')}
                       </th>
                     </tr>
                   </thead>
-                  <tbody className="bg-white divide-y divide-gray-200">
+                  <tbody className="divide-y divide-border">
                     {mockDocuments.map((doc) => (
-                      <tr key={doc.id} className="hover:bg-gray-50 transition-colors">
-                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                      <tr key={doc.id} className="hover:bg-muted transition-colors">
+                        <td className="px-6 py-4 whitespace-nowrap text-sm text-foreground">
                           {doc.date}
                         </td>
-                        <td className="px-6 py-4 text-sm text-gray-900">
+                        <td className="px-6 py-4 text-sm text-foreground">
                           {doc.name}
                         </td>
-                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                        <td className="px-6 py-4 whitespace-nowrap text-sm text-muted-foreground">
                           {doc.language}
                         </td>
-                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                        <td className="px-6 py-4 whitespace-nowrap text-sm text-muted-foreground">
                           {doc.type}
                         </td>
                         <td className="px-6 py-4 whitespace-nowrap text-sm">
@@ -2894,16 +2892,17 @@ export function SubscriptionDetailPage({ subscription, onBack }: SubscriptionDet
                 </table>
 
                 {/* Footer */}
-                <div className="px-6 py-4 bg-gray-50 border-t border-gray-200">
+                <div className="px-6 py-4 bg-muted border-t border-border">
                   <Button
-                    className="w-full gap-2 bg-emerald-600 hover:bg-emerald-700 text-white"
+                    className="w-full gap-2 text-white hover:opacity-90"
+                    style={{ background: PRIMARY_BUTTON_GRADIENT }}
                     onClick={() => toast.success(t('subscriptions.detail.documentsTab.exportPackToast'))}
                   >
                     <Download className="w-4 h-4" />
                     {t('subscriptions.detail.documentsTab.exportPack')}
                   </Button>
                 </div>
-              </div>
+              </Card>
             </div>
           </TabsContent>
 
@@ -2916,7 +2915,7 @@ export function SubscriptionDetailPage({ subscription, onBack }: SubscriptionDet
             <div className="px-8 py-6">
               <div className="space-y-4">
                 {/* Filters */}
-                <div className="bg-white rounded-xl border border-gray-200 p-4 shadow-sm">
+                <Card className="p-4 shadow-sm">
                   <div className="flex items-center gap-3">
                     <Button
                       variant="outline"
@@ -2949,26 +2948,26 @@ export function SubscriptionDetailPage({ subscription, onBack }: SubscriptionDet
                       </Button>
                     </div>
                   </div>
-                </div>
+                </Card>
 
                 {/* Notes List */}
                 <div className="space-y-3">
                   {mockNotes.map((note) => (
-                    <div
+                    <Card
                       key={note.id}
-                      className="bg-white rounded-xl border border-gray-200 p-5 shadow-sm hover:shadow-md transition-shadow"
+                      className="p-5 shadow-sm hover:shadow-md transition-shadow"
                     >
                       <div className="flex items-start gap-4">
                         {/* Icon and Priority */}
                         <div className={`w-10 h-10 rounded-lg flex items-center justify-center flex-shrink-0 ${
                           note.priority === 'high' ? 'bg-red-50' :
                           note.priority === 'medium' ? 'bg-orange-50' :
-                          'bg-gray-50'
+                          'bg-muted'
                         }`}>
                           <MessageSquare className={`w-5 h-5 ${
                             note.priority === 'high' ? 'text-red-600' :
                             note.priority === 'medium' ? 'text-orange-600' :
-                            'text-gray-600'
+                            'text-muted-foreground'
                           }`} />
                         </div>
 
@@ -2982,10 +2981,10 @@ export function SubscriptionDetailPage({ subscription, onBack }: SubscriptionDet
                                   <Badge variant="outline" className="text-xs font-medium">
                                     {t('subscriptions.detail.notesTab.fieldType')}
                                   </Badge>
-                                  <span className="text-xs text-gray-500">•</span>
-                                  <span className="text-xs font-medium text-gray-700">{t(note.sectionKey)}</span>
-                                  <span className="text-xs text-gray-500">›</span>
-                                  <span className="text-xs text-gray-600">{note.fieldKey}</span>
+                                  <span className="text-xs text-muted-foreground">•</span>
+                                  <span className="text-xs font-medium text-foreground/80">{t(note.sectionKey)}</span>
+                                  <span className="text-xs text-muted-foreground">›</span>
+                                  <span className="text-xs text-muted-foreground">{note.fieldKey}</span>
                                 </>
                               ) : (
                                 <Badge variant="outline" className="text-xs font-medium">
@@ -3022,12 +3021,12 @@ export function SubscriptionDetailPage({ subscription, onBack }: SubscriptionDet
                           </div>
 
                           {/* Note Content */}
-                          <p className="text-sm text-gray-700 mb-3">
+                          <p className="text-sm text-foreground/80 mb-3">
                             {t(note.contentKey)}
                           </p>
 
                           {/* Footer */}
-                          <div className="flex items-center gap-3 text-xs text-gray-500">
+                          <div className="flex items-center gap-3 text-xs text-muted-foreground">
                             <div className="flex items-center gap-1.5">
                               <User className="w-3.5 h-3.5" />
                               <span>{note.author}</span>
@@ -3050,7 +3049,7 @@ export function SubscriptionDetailPage({ subscription, onBack }: SubscriptionDet
                           <Trash2 className="w-4 h-4" />
                         </Button>
                       </div>
-                    </div>
+                    </Card>
                   ))}
                 </div>
               </div>
