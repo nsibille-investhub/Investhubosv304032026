@@ -4,32 +4,8 @@ import type { LucideIcon } from 'lucide-react';
 
 import { cn } from './utils';
 
+const BRAND_DARK = '#000E2B';
 const nf = new Intl.NumberFormat('fr-FR');
-
-export type KpiCardVariant = 'blue' | 'emerald' | 'violet' | 'amber';
-
-const VARIANT_STYLES: Record<KpiCardVariant, { card: string; icon: string; progress: string }> = {
-  blue: {
-    card: 'border-blue-100 bg-blue-50 hover:border-blue-200 dark:border-blue-900 dark:bg-blue-950',
-    icon: 'text-blue-700 dark:text-blue-300',
-    progress: 'bg-blue-500',
-  },
-  emerald: {
-    card: 'border-emerald-100 bg-emerald-50 hover:border-emerald-200 dark:border-emerald-900 dark:bg-emerald-950',
-    icon: 'text-emerald-700 dark:text-emerald-300',
-    progress: 'bg-emerald-500',
-  },
-  violet: {
-    card: 'border-violet-100 bg-violet-50 hover:border-violet-200 dark:border-violet-900 dark:bg-violet-950',
-    icon: 'text-violet-700 dark:text-violet-300',
-    progress: 'bg-violet-500',
-  },
-  amber: {
-    card: 'border-amber-100 bg-amber-50 hover:border-amber-200 dark:border-amber-900 dark:bg-amber-950',
-    icon: 'text-amber-700 dark:text-amber-300',
-    progress: 'bg-amber-500',
-  },
-};
 
 export type KpiCardProgress = {
   current: number;
@@ -48,8 +24,6 @@ export type KpiCardProps = {
   hint?: string;
   /** Position in a strip, used to stagger the mount animation. */
   index?: number;
-  /** Color variant — defaults to 'blue'. */
-  variant?: KpiCardVariant;
   className?: string;
 };
 
@@ -61,14 +35,12 @@ function KpiCard({
   pulse,
   hint,
   index = 0,
-  variant = 'blue',
   className,
 }: KpiCardProps) {
   const ratio =
     progress && progress.total > 0 ? progress.current / progress.total : 0;
   const formattedValue =
     typeof value === 'number' ? nf.format(value) : value;
-  const styles = VARIANT_STYLES[variant];
 
   return (
     <motion.div
@@ -82,18 +54,19 @@ function KpiCard({
       }}
       whileHover={{ y: -2 }}
       className={cn(
-        'min-w-0 rounded-lg border p-4 transition-colors',
-        styles.card,
+        'min-w-0 rounded-lg border border-blue-100 bg-blue-50 p-4 transition-colors hover:border-blue-200 dark:border-blue-900 dark:bg-blue-950',
         className,
       )}
     >
       <div className="flex items-center gap-2">
         <Icon
-          className={cn('size-4 shrink-0', styles.icon)}
+          className="size-4 shrink-0"
+          style={{ color: BRAND_DARK }}
           strokeWidth={2.25}
         />
         <span
-          className="truncate text-xs font-semibold uppercase tracking-[0.08em] text-foreground"
+          className="truncate text-xs font-semibold uppercase tracking-[0.08em]"
+          style={{ color: BRAND_DARK }}
         >
           {label}
         </span>
@@ -110,13 +83,15 @@ function KpiCard({
           initial={{ opacity: 0, y: 4 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.18 + index * 0.06, duration: 0.3 }}
-          className="text-3xl font-bold leading-none tracking-tight tabular-nums text-foreground"
+          className="text-3xl font-bold leading-none tracking-tight tabular-nums"
+          style={{ color: BRAND_DARK }}
         >
           {formattedValue}
         </motion.span>
         {hint ? (
           <span
-            className={cn('truncate text-xs font-medium', styles.icon)}
+            className="truncate text-xs font-medium opacity-70"
+            style={{ color: BRAND_DARK }}
           >
             {hint}
           </span>
@@ -125,9 +100,9 @@ function KpiCard({
 
       {progress ? (
         <div className="mt-3 flex items-center gap-2">
-          <div className="h-1 flex-1 overflow-hidden rounded-full bg-white/60 dark:bg-white/10">
+          <div className="h-1 flex-1 overflow-hidden rounded-full bg-white/60 dark:bg-blue-900/60">
             <motion.div
-              className={cn('h-full rounded-full', styles.progress)}
+              className="h-full rounded-full bg-emerald-500"
               initial={{ width: 0 }}
               animate={{ width: `${Math.round(ratio * 100)}%` }}
               transition={{
@@ -138,7 +113,8 @@ function KpiCard({
             />
           </div>
           <span
-            className="text-[10px] font-semibold tabular-nums text-foreground/70"
+            className="text-[10px] font-semibold tabular-nums opacity-80"
+            style={{ color: BRAND_DARK }}
           >
             {Math.round(ratio * 100)}%
           </span>
