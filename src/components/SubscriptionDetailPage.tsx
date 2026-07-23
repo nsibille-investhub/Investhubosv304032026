@@ -44,8 +44,10 @@ import {
   Trash2,
   FolderOpen,
   MessageSquare,
-  PenTool
+  PenTool,
+  Copy
 } from 'lucide-react';
+import { motion } from 'motion/react';
 import { Badge } from './ui/badge';
 import { Button } from './ui/button';
 import { Card } from './ui/card';
@@ -54,6 +56,7 @@ import { Textarea } from './ui/textarea';
 import { Input } from './ui/input';
 import { toast } from 'sonner';
 import { getStatusColor } from '../utils/subscriptionGenerator';
+import { copyToClipboard } from '../utils/clipboard';
 import { SubscriptionInfoPopover } from './SubscriptionInfoPopover';
 import { QuestionActions, QuestionStatus } from './QuestionActions';
 import { QuestionCommentThread } from './QuestionCommentThread';
@@ -90,6 +93,7 @@ interface SubscriptionDetailPageProps {
 export function SubscriptionDetailPage({ subscription, onBack }: SubscriptionDetailPageProps) {
   const { t } = useTranslation();
 
+  const [idCopied, setIdCopied] = useState(false);
   const [openSections, setOpenSections] = useState<string[]>(['identity']);
   const [note, setNote] = useState('');
   const [notes, setNotes] = useState<Array<{ text: string; date: string; author: string }>>([]);
@@ -308,17 +312,31 @@ export function SubscriptionDetailPage({ subscription, onBack }: SubscriptionDet
                 </div>
 
                 <div className="flex items-center gap-3 text-sm text-muted-foreground">
-                  <button
-                    className="flex items-center gap-1.5 hover:text-foreground transition-colors cursor-pointer"
-                    onClick={() => {
-                      navigator.clipboard.writeText(String(subscription.id));
-                      toast.success(t('subscriptions.detail.toast.idCopied'));
-                    }}
-                    title={t('subscriptions.detail.header.copyId')}
-                  >
+                  <div className="flex items-center gap-1.5 group">
                     <Hash className="w-3.5 h-3.5" />
                     <span>{t('subscriptions.detail.header.id', { id: subscription.id })}</span>
-                  </button>
+                    <motion.button
+                      whileHover={{ scale: 1.1 }}
+                      whileTap={{ scale: 0.9 }}
+                      onClick={async () => {
+                        const idText = `SUB-${subscription.id}`;
+                        const success = await copyToClipboard(idText);
+                        if (success) {
+                          setIdCopied(true);
+                          toast.success(t('subscriptions.detail.toast.idCopied'), { description: idText });
+                          setTimeout(() => setIdCopied(false), 2000);
+                        }
+                      }}
+                      className="opacity-0 group-hover:opacity-100 transition-opacity p-0.5 hover:bg-muted rounded"
+                      title={t('subscriptions.detail.header.copyId')}
+                    >
+                      {idCopied ? (
+                        <Check className="w-3.5 h-3.5 text-green-600" />
+                      ) : (
+                        <Copy className="w-3.5 h-3.5 text-muted-foreground hover:text-foreground" />
+                      )}
+                    </motion.button>
+                  </div>
                   <Separator orientation="vertical" className="h-3.5" />
                   <div className="flex items-center gap-1.5">
                     <Calendar className="w-3.5 h-3.5" />

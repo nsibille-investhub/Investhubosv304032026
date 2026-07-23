@@ -703,6 +703,11 @@ export default function App() {
               ) : (
                 <motion.button
                   whileHover={{ x: -2 }}
+                  onClick={() => {
+                    if (selectedSubscriptionDetail) {
+                      setSelectedSubscriptionDetail(null);
+                    }
+                  }}
                   className="text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-100 transition-colors p-1.5 hover:bg-gray-100 dark:hover:bg-gray-900 rounded-lg"
                 >
                   <ArrowLeft className="w-4 h-4" />
