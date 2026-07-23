@@ -46,7 +46,8 @@ import {
   FolderOpen,
   MessageSquare,
   PenTool,
-  Copy
+  Copy,
+  Save,
 } from 'lucide-react';
 import { motion } from 'motion/react';
 import { Badge } from './ui/badge';
@@ -55,6 +56,8 @@ import { Card } from './ui/card';
 import { Separator } from './ui/separator';
 import { Textarea } from './ui/textarea';
 import { Input } from './ui/input';
+import { Switch } from './ui/switch';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from './ui/select';
 import { toast } from 'sonner';
 import { getStatusColor } from '../utils/subscriptionGenerator';
 import { copyToClipboard } from '../utils/clipboard';
@@ -708,438 +711,324 @@ export function SubscriptionDetailPage({ subscription, onBack }: SubscriptionDet
           </TabsList>
 
           {/* Tab Content - Detail */}
-          <TabsContent value="detail" className="mt-0">
-            <div className="px-8 py-6">
-              <div className="flex gap-6">
-                {/* Main Content Area */}
-                <div className="flex-1">
-                  {/* Subscription parameters - read-only / edit mode */}
-                  <div className="space-y-6 mb-6">
-                    <Card className="p-6 shadow-sm">
-                      <div className="flex items-center justify-between mb-6">
-                        <h2 className="text-lg font-semibold text-foreground">{t('subscriptions.detail.form.title')}</h2>
-                        {!isEditing ? (
-                          <Button
-                            variant="outline"
-                            size="sm"
-                            className="gap-1.5 text-primary border-primary/30 hover:bg-primary/5 hover:text-primary"
-                            onClick={() => setIsEditing(true)}
-                          >
-                            <Edit2 className="w-3.5 h-3.5" />
-                            {t('subscriptions.detail.editButton')}
-                          </Button>
-                        ) : (
-                          <Badge className="bg-primary/10 text-primary border-primary/30">
-                            <Edit2 className="w-3 h-3 mr-1" />
-                            {t('subscriptions.detail.form.editMode')}
-                          </Badge>
-                        )}
-                      </div>
-
-                      {!isEditing ? (
-                        <div className="space-y-8">
-                          {/* Section: Investor & Structure */}
-                          <div>
-                            <h3 className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-4">{t('subscriptions.detail.form.sectionInvestor')}</h3>
-                            <div className="grid grid-cols-3 gap-x-12 gap-y-5">
-                              <div>
-                                <div className="text-xs text-muted-foreground mb-1">{t('subscriptions.detail.form.investor')}</div>
-                                <div className="text-sm font-medium text-foreground">{subscription.contrepartie.investor || subscription.contrepartie.name}</div>
-                              </div>
-                              <div>
-                                <div className="text-xs text-muted-foreground mb-1">{t('subscriptions.detail.form.structure')}</div>
-                                <div className="text-sm font-medium text-foreground">{subscription.contrepartie.structure || t('subscriptions.detail.form.noStructure')}</div>
-                              </div>
-                              <div>
-                                <div className="text-xs text-muted-foreground mb-1">{t('subscriptions.detail.form.investorType')}</div>
-                                <div className="text-sm font-medium text-foreground capitalize">{subscription.contrepartie.type}</div>
-                              </div>
-                              {subscription.contrepartie.mainContact && (
-                                <div>
-                                  <div className="text-xs text-muted-foreground mb-1">{t('subscriptions.detail.form.mainContact')}</div>
-                                  <div className="text-sm font-medium text-foreground">{subscription.contrepartie.mainContact}</div>
-                                </div>
-                              )}
-                              <div>
-                                <div className="text-xs text-muted-foreground mb-1">{t('subscriptions.detail.form.country')}</div>
-                                <div className="text-sm font-medium text-foreground">{subscription.contrepartie.country || '-'}</div>
-                              </div>
-                              <div>
-                                <div className="text-xs text-muted-foreground mb-1">{t('subscriptions.detail.form.kycStatus')}</div>
-                                <div className="text-sm font-medium text-foreground capitalize">{subscription.contrepartie.kycStatus}</div>
-                              </div>
-                            </div>
-                          </div>
-                          <Separator />
-
-                          {/* Section: Fund & Amounts */}
-                          <div>
-                            <h3 className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-4">{t('subscriptions.detail.form.sectionFund')}</h3>
-                            <div className="grid grid-cols-3 gap-x-12 gap-y-5">
-                              <div>
-                                <div className="text-xs text-muted-foreground mb-1">{t('subscriptions.detail.form.fund')}</div>
-                                <div className="text-sm font-medium text-foreground">{subscription.fund.name}</div>
-                              </div>
-                              <div>
-                                <div className="text-xs text-muted-foreground mb-1">{t('subscriptions.detail.form.shareClass')}</div>
-                                <div className="text-sm font-medium text-foreground">{subscription.fund.shareClass}</div>
-                              </div>
-                              <div>
-                                <div className="text-xs text-muted-foreground mb-1">{t('subscriptions.detail.form.sharePrice')}</div>
-                                <div className="text-sm font-medium text-foreground">{subscription.quantity ? `${((subscription.amount ?? 0) / subscription.quantity).toLocaleString('fr-FR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} €` : '-'}</div>
-                              </div>
-                              <div>
-                                <div className="text-xs text-muted-foreground mb-1">{t('subscriptions.detail.form.quantity')}</div>
-                                <div className="text-sm font-medium text-foreground">{(subscription.quantity ?? 0).toLocaleString('fr-FR')}</div>
-                              </div>
-                              <div>
-                                <div className="text-xs text-muted-foreground mb-1">{t('subscriptions.detail.form.subscribedAmount')}</div>
-                                <div className="text-sm font-medium text-foreground">{(subscription.amount ?? 0).toLocaleString('fr-FR')} &euro;</div>
-                              </div>
-                              <div>
-                                <div className="text-xs text-muted-foreground mb-1">{t('subscriptions.detail.form.totalOperationAmount')}</div>
-                                <div className="text-sm font-medium text-foreground">{((subscription.amount ?? 0) + (subscription.subscriptionPremium ?? 0) + ((subscription.amount ?? 0) * (subscription.entryFees ?? 0) / 100)).toLocaleString('fr-FR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} &euro;</div>
-                              </div>
-                              <div>
-                                <div className="text-xs text-muted-foreground mb-1">{t('subscriptions.detail.form.calledAmount')}</div>
-                                <div className="text-sm font-medium text-foreground">{(subscription.calledAmount ?? 0).toLocaleString('fr-FR')} &euro;</div>
-                              </div>
-                              <div>
-                                <div className="text-xs text-muted-foreground mb-1">{t('subscriptions.detail.form.remainingAmount')}</div>
-                                <div className="text-sm font-medium text-foreground">{(subscription.remainingAmount ?? 0).toLocaleString('fr-FR')} &euro;</div>
-                              </div>
-                              <div>
-                                <div className="text-xs text-muted-foreground mb-1">{t('subscriptions.detail.form.distributedAmount')}</div>
-                                <div className="text-sm font-medium text-foreground">{(subscription.distributedAmount ?? 0).toLocaleString('fr-FR')} &euro;</div>
-                              </div>
-                            </div>
-                          </div>
-                          <Separator />
-
-                          {/* Section: Distribution */}
-                          <div>
-                            <h3 className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-4">{t('subscriptions.detail.form.sectionDistribution')}</h3>
-                            <div className="grid grid-cols-3 gap-x-12 gap-y-5">
-                              <div>
-                                <div className="text-xs text-muted-foreground mb-1">{t('subscriptions.detail.form.partner')}</div>
-                                <div className="text-sm font-medium text-foreground">{subscription.partenaire?.name || t('subscriptions.detail.form.noPartner')}</div>
-                              </div>
-                              <div>
-                                <div className="text-xs text-muted-foreground mb-1">{t('subscriptions.detail.form.advisor')}</div>
-                                <div className="text-sm font-medium text-foreground">{subscription.advisor || t('subscriptions.detail.form.noAdvisor')}</div>
-                              </div>
-                              <div>
-                                <div className="text-xs text-muted-foreground mb-1">{t('subscriptions.detail.form.analyst')}</div>
-                                <div className="text-sm font-medium text-foreground">{subscription.analyst}</div>
-                              </div>
-                            </div>
-                          </div>
-                          <Separator />
-
-                          {/* Section: Fees & Conditions */}
-                          <div>
-                            <h3 className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-4">{t('subscriptions.detail.form.sectionFees')}</h3>
-                            <div className="grid grid-cols-3 gap-x-12 gap-y-5">
-                              <div>
-                                <div className="text-xs text-muted-foreground mb-1">{t('subscriptions.detail.form.entryFees')}</div>
-                                <div className="text-sm font-medium text-foreground">{(subscription.entryFees ?? 0).toFixed(2)} %</div>
-                              </div>
-                              <div>
-                                <div className="text-xs text-muted-foreground mb-1">{t('subscriptions.detail.form.entryFeesAmount')}</div>
-                                <div className="text-sm font-medium text-foreground">{((subscription.amount ?? 0) * (subscription.entryFees ?? 0) / 100).toLocaleString('fr-FR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} &euro;</div>
-                              </div>
-                              <div>
-                                <div className="text-xs text-muted-foreground mb-1">{t('subscriptions.detail.form.subscriptionPremium')}</div>
-                                <div className="text-sm font-medium text-foreground">{subscription.subscriptionPremium != null ? `${subscription.subscriptionPremium.toLocaleString('fr-FR')} €` : '-'}</div>
-                              </div>
-                            </div>
-                          </div>
-                          <Separator />
-
-                          {/* Section: Signature & Dates */}
-                          <div>
-                            <h3 className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-4">{t('subscriptions.detail.form.sectionSignature')}</h3>
-                            <div className="grid grid-cols-3 gap-x-12 gap-y-5">
-                              <div>
-                                <div className="text-xs text-muted-foreground mb-1">{t('subscriptions.detail.form.signatureChannel')}</div>
-                                <div className="text-sm font-medium text-foreground">{subscription.signatureChannel === 'papier' ? t('subscriptions.detail.form.paper') : t('subscriptions.detail.form.eSignature')}</div>
-                              </div>
-                              <div>
-                                <div className="text-xs text-muted-foreground mb-1">{t('subscriptions.detail.form.signatureStatus')}</div>
-                                <div className="text-sm font-medium text-foreground">{subscription.signatures ? `${subscription.signatures.completed}/${subscription.signatures.required}` : '-'}</div>
-                              </div>
-                              {subscription.sentToSignatureAt && (
-                                <div>
-                                  <div className="text-xs text-muted-foreground mb-1">{t('subscriptions.detail.form.sentToSignatureAt')}</div>
-                                  <div className="text-sm font-medium text-foreground">{subscription.sentToSignatureAt.toLocaleDateString('fr-FR')}</div>
-                                </div>
-                              )}
-                              {subscription.investorSignedAt && (
-                                <div>
-                                  <div className="text-xs text-muted-foreground mb-1">{t('subscriptions.detail.form.investorSignedAt')}</div>
-                                  <div className="text-sm font-medium text-foreground">{subscription.investorSignedAt.toLocaleDateString('fr-FR')}</div>
-                                </div>
-                              )}
-                              {subscription.counterSignatureStatus && (
-                                <div>
-                                  <div className="text-xs text-muted-foreground mb-1">{t('subscriptions.detail.form.counterSignatureStatus')}</div>
-                                  <div className="text-sm font-medium text-foreground capitalize">{subscription.counterSignatureStatus}</div>
-                                </div>
-                              )}
-                              {subscription.counterSignatureOwner && (
-                                <div>
-                                  <div className="text-xs text-muted-foreground mb-1">{t('subscriptions.detail.form.counterSignatureOwner')}</div>
-                                  <div className="text-sm font-medium text-foreground">{subscription.counterSignatureOwner}</div>
-                                </div>
-                              )}
-                            </div>
-                          </div>
-                          <Separator />
-
-                          {/* Section: Settings & Custom */}
-                          <div>
-                            <h3 className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-4">{t('subscriptions.detail.form.sectionSettings')}</h3>
-                            <div className="grid grid-cols-3 gap-x-12 gap-y-5">
-                              <div>
-                                <div className="text-xs text-muted-foreground mb-1">{t('subscriptions.detail.form.language')}</div>
-                                <div className="text-sm font-medium text-foreground">{(subscription.language || 'fr').toUpperCase()}</div>
-                              </div>
-                              <div>
-                                <div className="text-xs text-muted-foreground mb-1">{t('subscriptions.detail.form.source')}</div>
-                                <div className="text-sm font-medium text-foreground capitalize">{subscription.source || 'manuel'}</div>
-                              </div>
-                              <div>
-                                <div className="text-xs text-muted-foreground mb-1">{t('subscriptions.detail.form.sepa')}</div>
-                                <div className="text-sm font-medium text-foreground">{subscription.sepaEnabled ? t('subscriptions.detail.form.yes') : t('subscriptions.detail.form.no')}</div>
-                              </div>
-                              <div>
-                                <div className="text-xs text-muted-foreground mb-1">{t('subscriptions.detail.form.depositary')}</div>
-                                <div className="text-sm font-medium text-foreground">{subscription.hasDepositary ? t('subscriptions.detail.form.yes') : t('subscriptions.detail.form.no')}</div>
-                              </div>
-                              <div>
-                                <div className="text-xs text-muted-foreground mb-1">{t('subscriptions.detail.form.riskLevel')}</div>
-                                <div className="text-sm font-medium text-foreground">{subscription.riskLevel}</div>
-                              </div>
-                              <div>
-                                <div className="text-xs text-muted-foreground mb-1">{t('subscriptions.detail.form.status')}</div>
-                                <div className="text-sm font-medium text-foreground">{subscription.status}</div>
-                              </div>
-                            </div>
-                          </div>
-                          <Separator />
-
-                          {/* Section: Dates */}
-                          <div>
-                            <h3 className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-4">{t('subscriptions.detail.form.sectionDates')}</h3>
-                            <div className="grid grid-cols-3 gap-x-12 gap-y-5">
-                              <div>
-                                <div className="text-xs text-muted-foreground mb-1">{t('subscriptions.detail.form.createdAt')}</div>
-                                <div className="text-sm font-medium text-foreground">{subscription.createdAt?.toLocaleDateString('fr-FR') || '-'}</div>
-                              </div>
-                              <div>
-                                <div className="text-xs text-muted-foreground mb-1">{t('subscriptions.detail.form.updatedAt')}</div>
-                                <div className="text-sm font-medium text-foreground">{subscription.updatedAt?.toLocaleDateString('fr-FR') || '-'}</div>
-                              </div>
-                              {subscription.activatedAt && (
-                                <div>
-                                  <div className="text-xs text-muted-foreground mb-1">{t('subscriptions.detail.form.activatedAt')}</div>
-                                  <div className="text-sm font-medium text-foreground">{subscription.activatedAt.toLocaleDateString('fr-FR')}</div>
-                                </div>
-                              )}
-                              {subscription.lastActionDate && (
-                                <div>
-                                  <div className="text-xs text-muted-foreground mb-1">{t('subscriptions.detail.form.lastActionDate')}</div>
-                                  <div className="text-sm font-medium text-foreground">{subscription.lastActionDate.toLocaleDateString('fr-FR')}</div>
-                                </div>
-                              )}
-                            </div>
-                          </div>
-                          <Separator />
-
-                          {/* Section: Additional info */}
-                          <div>
-                            <h3 className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-4">{t('subscriptions.detail.form.sectionAdditional')}</h3>
-                            <div className="grid grid-cols-3 gap-x-12 gap-y-5">
-                              <div className="col-span-2">
-                                <div className="text-xs text-muted-foreground mb-1">{t('subscriptions.detail.form.subscriptionName')}</div>
-                                <div className="text-sm font-medium text-foreground">{subscription.name}</div>
-                              </div>
-                              <div>
-                                <div className="text-xs text-muted-foreground mb-1">{t('subscriptions.detail.form.pendingCalls')}</div>
-                                <div className="text-sm font-medium text-foreground">{subscription.pendingCalls ?? 0}</div>
-                              </div>
-                              {subscription.coInvestors && subscription.coInvestors.length > 0 && (
-                                <div className="col-span-3">
-                                  <div className="text-xs text-muted-foreground mb-1">{t('subscriptions.detail.form.coInvestors')}</div>
-                                  <div className="text-sm font-medium text-foreground">{subscription.coInvestors.map((c: { name: string }) => c.name).join(', ')}</div>
-                                </div>
-                              )}
-                              <div className="col-span-3">
-                                <div className="text-xs text-muted-foreground mb-1">{t('subscriptions.detail.form.notes')}</div>
-                                <div className="text-sm font-medium text-foreground whitespace-pre-wrap">{subscription.notes || '-'}</div>
-                              </div>
-                            </div>
-                          </div>
-                        </div>
-                      ) : (
-                        <div className="space-y-8">
-                          {/* Edit mode - Section: Investor & Structure */}
-                          <div>
-                            <h3 className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-4">{t('subscriptions.detail.form.sectionInvestor')}</h3>
-                            <div className="grid grid-cols-3 gap-x-6 gap-y-4">
-                              <div>
-                                <label className="block text-xs font-medium text-foreground/70 mb-1.5">{t('subscriptions.detail.form.investor')}</label>
-                                <Input value={editForm.investorName} onChange={e => setEditForm(f => ({ ...f, investorName: e.target.value }))} />
-                              </div>
-                              <div>
-                                <label className="block text-xs font-medium text-foreground/70 mb-1.5">{t('subscriptions.detail.form.structure')}</label>
-                                <Input value={editForm.structure} onChange={e => setEditForm(f => ({ ...f, structure: e.target.value }))} placeholder={t('subscriptions.detail.form.noStructure')} />
-                              </div>
-                              <div>
-                                <label className="block text-xs font-medium text-foreground/70 mb-1.5">{t('subscriptions.detail.form.mainContact')}</label>
-                                <Input value={editForm.mainContact} onChange={e => setEditForm(f => ({ ...f, mainContact: e.target.value }))} />
-                              </div>
-                              <div>
-                                <label className="block text-xs font-medium text-foreground/70 mb-1.5">{t('subscriptions.detail.form.country')}</label>
-                                <Input value={editForm.country} onChange={e => setEditForm(f => ({ ...f, country: e.target.value }))} />
-                              </div>
-                            </div>
-                          </div>
-                          <Separator />
-
-                          {/* Edit mode - Section: Fund & Amounts */}
-                          <div>
-                            <h3 className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-4">{t('subscriptions.detail.form.sectionFund')}</h3>
-                            <div className="grid grid-cols-3 gap-x-6 gap-y-4">
-                              <div>
-                                <label className="block text-xs font-medium text-foreground/70 mb-1.5">{t('subscriptions.detail.form.fund')}</label>
-                                <Input value={editForm.fundName} onChange={e => setEditForm(f => ({ ...f, fundName: e.target.value }))} />
-                              </div>
-                              <div>
-                                <label className="block text-xs font-medium text-foreground/70 mb-1.5">{t('subscriptions.detail.form.shareClass')}</label>
-                                <Input value={editForm.shareClass} onChange={e => setEditForm(f => ({ ...f, shareClass: e.target.value }))} />
-                              </div>
-                              <div>
-                                <label className="block text-xs font-medium text-foreground/70 mb-1.5">{t('subscriptions.detail.form.quantity')}</label>
-                                <Input type="number" value={editForm.quantity} onChange={e => setEditForm(f => ({ ...f, quantity: Number(e.target.value) }))} />
-                              </div>
-                              <div>
-                                <label className="block text-xs font-medium text-foreground/70 mb-1.5">{t('subscriptions.detail.form.subscribedAmount')}</label>
-                                <Input type="number" value={editForm.amount} onChange={e => setEditForm(f => ({ ...f, amount: Number(e.target.value) }))} />
-                              </div>
-                            </div>
-                          </div>
-                          <Separator />
-
-                          {/* Edit mode - Section: Distribution */}
-                          <div>
-                            <h3 className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-4">{t('subscriptions.detail.form.sectionDistribution')}</h3>
-                            <div className="grid grid-cols-3 gap-x-6 gap-y-4">
-                              <div>
-                                <label className="block text-xs font-medium text-foreground/70 mb-1.5">{t('subscriptions.detail.form.partner')}</label>
-                                <Input value={editForm.partner} onChange={e => setEditForm(f => ({ ...f, partner: e.target.value }))} placeholder={t('subscriptions.detail.form.noPartner')} />
-                              </div>
-                              <div>
-                                <label className="block text-xs font-medium text-foreground/70 mb-1.5">{t('subscriptions.detail.form.advisor')}</label>
-                                <Input value={editForm.advisor} onChange={e => setEditForm(f => ({ ...f, advisor: e.target.value }))} placeholder={t('subscriptions.detail.form.noAdvisor')} />
-                              </div>
-                              <div>
-                                <label className="block text-xs font-medium text-foreground/70 mb-1.5">{t('subscriptions.detail.form.analyst')}</label>
-                                <Input value={editForm.analyst} onChange={e => setEditForm(f => ({ ...f, analyst: e.target.value }))} />
-                              </div>
-                            </div>
-                          </div>
-                          <Separator />
-
-                          {/* Edit mode - Section: Fees */}
-                          <div>
-                            <h3 className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-4">{t('subscriptions.detail.form.sectionFees')}</h3>
-                            <div className="grid grid-cols-3 gap-x-6 gap-y-4">
-                              <div>
-                                <label className="block text-xs font-medium text-foreground/70 mb-1.5">{t('subscriptions.detail.form.entryFees')}</label>
-                                <Input type="number" step="0.01" value={editForm.entryFees} onChange={e => setEditForm(f => ({ ...f, entryFees: Number(e.target.value) }))} />
-                              </div>
-                              <div>
-                                <label className="block text-xs font-medium text-foreground/70 mb-1.5">{t('subscriptions.detail.form.subscriptionPremium')}</label>
-                                <Input type="number" value={editForm.subscriptionPremium} onChange={e => setEditForm(f => ({ ...f, subscriptionPremium: Number(e.target.value) }))} />
-                              </div>
-                            </div>
-                          </div>
-                          <Separator />
-
-                          {/* Edit mode - Section: Signature */}
-                          <div>
-                            <h3 className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-4">{t('subscriptions.detail.form.sectionSignature')}</h3>
-                            <div className="grid grid-cols-3 gap-x-6 gap-y-4">
-                              <div>
-                                <label className="block text-xs font-medium text-foreground/70 mb-1.5">{t('subscriptions.detail.form.signatureChannel')}</label>
-                                <Input value={editForm.signatureChannel} onChange={e => setEditForm(f => ({ ...f, signatureChannel: e.target.value as 'e-signature' | 'papier' }))} />
-                              </div>
-                            </div>
-                          </div>
-                          <Separator />
-
-                          {/* Edit mode - Section: Settings */}
-                          <div>
-                            <h3 className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-4">{t('subscriptions.detail.form.sectionSettings')}</h3>
-                            <div className="grid grid-cols-3 gap-x-6 gap-y-4">
-                              <div>
-                                <label className="block text-xs font-medium text-foreground/70 mb-1.5">{t('subscriptions.detail.form.language')}</label>
-                                <Input value={editForm.language} onChange={e => setEditForm(f => ({ ...f, language: e.target.value as 'fr' | 'en' | 'de' | 'it' | 'es' }))} />
-                              </div>
-                              <div>
-                                <label className="block text-xs font-medium text-foreground/70 mb-1.5">{t('subscriptions.detail.form.source')}</label>
-                                <Input value={editForm.source} onChange={e => setEditForm(f => ({ ...f, source: e.target.value as 'campagne' | 'manuel' | 'import' | 'api' }))} />
-                              </div>
-                            </div>
-                          </div>
-                          <Separator />
-
-                          {/* Edit mode - Section: Additional */}
-                          <div>
-                            <h3 className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-4">{t('subscriptions.detail.form.sectionAdditional')}</h3>
-                            <div className="grid grid-cols-1 gap-y-4">
-                              <div>
-                                <label className="block text-xs font-medium text-foreground/70 mb-1.5">{t('subscriptions.detail.form.subscriptionName')}</label>
-                                <Input value={editForm.subscriptionName} onChange={e => setEditForm(f => ({ ...f, subscriptionName: e.target.value }))} placeholder={t('subscriptions.detail.form.subscriptionNamePlaceholder')} />
-                              </div>
-                              <div>
-                                <label className="block text-xs font-medium text-foreground/70 mb-1.5">{t('subscriptions.detail.form.notes')}</label>
-                                <Textarea value={editForm.notes} onChange={e => setEditForm(f => ({ ...f, notes: e.target.value }))} rows={3} placeholder={t('subscriptions.detail.form.notesPlaceholder')} />
-                              </div>
-                            </div>
-                          </div>
-
-                          <Separator />
-                          <div className="flex justify-end gap-3">
-                            <Button
-                              variant="outline"
-                              onClick={() => {
-                                setEditForm(buildEditForm());
-                                setIsEditing(false);
-                              }}
-                            >
-                              {t('subscriptions.detail.form.cancel')}
-                            </Button>
-                            <Button
-                              className="hover:opacity-90"
-                              style={{ background: PRIMARY_BUTTON_GRADIENT }}
-                              onClick={() => {
-                                setIsEditing(false);
-                                toast.success(t('subscriptions.detail.form.saved'));
-                              }}
-                            >
-                              <Check className="w-4 h-4 mr-2" />
-                              {t('subscriptions.detail.form.save')}
-                            </Button>
-                          </div>
-                        </div>
-                      )}
-                    </Card>
-                  </div>
-
+          <TabsContent value="detail" className="mt-6 space-y-6">
+            <div className="px-8">
+              {/* Investisseur */}
+              <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="bg-card rounded-xl border border-border p-6 mb-6">
+                <div className="flex items-center justify-between mb-4">
+                  <h2 className="font-semibold text-foreground flex items-center gap-2">
+                    <User className="w-5 h-5 text-primary" />
+                    {t('subscriptions.detail.form.sectionInvestor')}
+                  </h2>
+                  {!isEditing && (
+                    <motion.button whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }} onClick={() => setIsEditing(true)} className="flex items-center gap-1.5 px-3 py-1.5 text-sm text-primary hover:bg-primary/5 rounded-lg transition-colors">
+                      <Edit2 className="w-4 h-4" />
+                      {t('subscriptions.detail.editButton')}
+                    </motion.button>
+                  )}
+                  {isEditing && (
+                    <div className="flex items-center gap-2">
+                      <Button size="sm" onClick={() => { setIsEditing(false); toast.success(t('subscriptions.detail.form.saved')); }} style={{ background: PRIMARY_BUTTON_GRADIENT }} className="gap-1.5 text-white">
+                        <Save className="w-4 h-4" />
+                        {t('subscriptions.detail.form.save')}
+                      </Button>
+                      <Button size="sm" variant="outline" onClick={() => { setEditForm(buildEditForm()); setIsEditing(false); }} className="gap-1.5">
+                        <X className="w-4 h-4" />
+                        {t('subscriptions.detail.form.cancel')}
+                      </Button>
+                    </div>
+                  )}
                 </div>
-              </div>
+                <div className="grid grid-cols-2 gap-6">
+                  <div>
+                    <label className="text-xs text-muted-foreground mb-1 block">{t('subscriptions.detail.form.investor')}</label>
+                    {isEditing ? <Input value={editForm.investorName} onChange={e => setEditForm(f => ({ ...f, investorName: e.target.value }))} className="w-full text-sm" /> : (
+                      <span className="text-sm text-foreground">{subscription.contrepartie.investor || subscription.contrepartie.name}</span>
+                    )}
+                  </div>
+                  <div>
+                    <label className="text-xs text-muted-foreground mb-1 block">{t('subscriptions.detail.form.structure')}</label>
+                    {isEditing ? <Input value={editForm.structure} onChange={e => setEditForm(f => ({ ...f, structure: e.target.value }))} placeholder={t('subscriptions.detail.form.noStructure')} className="w-full text-sm" /> : (
+                      <span className="text-sm text-foreground">{subscription.contrepartie.structure || <span className="text-muted-foreground/60 italic">{t('subscriptions.detail.form.noStructure')}</span>}</span>
+                    )}
+                  </div>
+                  <div>
+                    <label className="text-xs text-muted-foreground mb-1 block">{t('subscriptions.detail.form.mainContact')}</label>
+                    {isEditing ? <Input value={editForm.mainContact} onChange={e => setEditForm(f => ({ ...f, mainContact: e.target.value }))} className="w-full text-sm" /> : (
+                      <span className="text-sm text-foreground">{subscription.contrepartie.mainContact || <span className="text-muted-foreground/60 italic">{t('subscriptions.detail.form.notProvided')}</span>}</span>
+                    )}
+                  </div>
+                  <div>
+                    <label className="text-xs text-muted-foreground mb-1 block">{t('subscriptions.detail.form.investorType')}</label>
+                    <Badge variant="outline" className="border-border capitalize">{subscription.contrepartie.type}</Badge>
+                  </div>
+                  <div>
+                    <label className="text-xs text-muted-foreground mb-1 block">{t('subscriptions.detail.form.country')}</label>
+                    {isEditing ? <Input value={editForm.country} onChange={e => setEditForm(f => ({ ...f, country: e.target.value }))} className="w-full text-sm" /> : (
+                      <span className="text-sm text-foreground">{subscription.contrepartie.country || <span className="text-muted-foreground/60 italic">{t('subscriptions.detail.form.notProvided')}</span>}</span>
+                    )}
+                  </div>
+                  <div>
+                    <label className="text-xs text-muted-foreground mb-1 block">{t('subscriptions.detail.form.kycStatus')}</label>
+                    <Badge variant="outline" className="border-border capitalize">{subscription.contrepartie.kycStatus}</Badge>
+                  </div>
+                </div>
+              </motion.div>
+
+              {/* Fonds & montants */}
+              <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.05 }} className="bg-card rounded-xl border border-border p-6 mb-6">
+                <h2 className="font-semibold text-foreground flex items-center gap-2 mb-4">
+                  <DollarSign className="w-5 h-5 text-primary" />
+                  {t('subscriptions.detail.form.sectionFund')}
+                </h2>
+                <div className="grid grid-cols-2 gap-6">
+                  <div>
+                    <label className="text-xs text-muted-foreground mb-1 block">{t('subscriptions.detail.form.fund')}</label>
+                    {isEditing ? <Input value={editForm.fundName} onChange={e => setEditForm(f => ({ ...f, fundName: e.target.value }))} className="w-full text-sm" /> : (
+                      <span className="text-sm text-foreground">{subscription.fund.name}</span>
+                    )}
+                  </div>
+                  <div>
+                    <label className="text-xs text-muted-foreground mb-1 block">{t('subscriptions.detail.form.shareClass')}</label>
+                    {isEditing ? <Input value={editForm.shareClass} onChange={e => setEditForm(f => ({ ...f, shareClass: e.target.value }))} className="w-full text-sm" /> : (
+                      <span className="text-sm text-foreground">{subscription.fund.shareClass}</span>
+                    )}
+                  </div>
+                  <div>
+                    <label className="text-xs text-muted-foreground mb-1 block">{t('subscriptions.detail.form.sharePrice')}</label>
+                    <span className="text-sm text-foreground">{subscription.quantity ? `${((subscription.amount ?? 0) / subscription.quantity).toLocaleString('fr-FR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} €` : '-'}</span>
+                  </div>
+                  <div>
+                    <label className="text-xs text-muted-foreground mb-1 block">{t('subscriptions.detail.form.quantity')}</label>
+                    {isEditing ? <Input type="number" value={editForm.quantity} onChange={e => setEditForm(f => ({ ...f, quantity: Number(e.target.value) }))} className="w-full text-sm" /> : (
+                      <span className="text-sm text-foreground">{(subscription.quantity ?? 0).toLocaleString('fr-FR')}</span>
+                    )}
+                  </div>
+                  <div>
+                    <label className="text-xs text-muted-foreground mb-1 block">{t('subscriptions.detail.form.subscribedAmount')}</label>
+                    {isEditing ? <Input type="number" value={editForm.amount} onChange={e => setEditForm(f => ({ ...f, amount: Number(e.target.value) }))} className="w-full text-sm" /> : (
+                      <span className="text-sm text-foreground">{(subscription.amount ?? 0).toLocaleString('fr-FR')} €</span>
+                    )}
+                  </div>
+                  <div>
+                    <label className="text-xs text-muted-foreground mb-1 block">{t('subscriptions.detail.form.totalOperationAmount')}</label>
+                    <span className="text-sm text-foreground font-medium">{((subscription.amount ?? 0) + (subscription.subscriptionPremium ?? 0) + ((subscription.amount ?? 0) * (subscription.entryFees ?? 0) / 100)).toLocaleString('fr-FR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} €</span>
+                  </div>
+                  <div>
+                    <label className="text-xs text-muted-foreground mb-1 block">{t('subscriptions.detail.form.calledAmount')}</label>
+                    <span className="text-sm text-foreground">{(subscription.calledAmount ?? 0).toLocaleString('fr-FR')} €</span>
+                  </div>
+                  <div>
+                    <label className="text-xs text-muted-foreground mb-1 block">{t('subscriptions.detail.form.remainingAmount')}</label>
+                    <span className="text-sm text-foreground">{(subscription.remainingAmount ?? 0).toLocaleString('fr-FR')} €</span>
+                  </div>
+                  <div>
+                    <label className="text-xs text-muted-foreground mb-1 block">{t('subscriptions.detail.form.distributedAmount')}</label>
+                    <span className="text-sm text-foreground">{(subscription.distributedAmount ?? 0).toLocaleString('fr-FR')} €</span>
+                  </div>
+                  <div>
+                    <label className="text-xs text-muted-foreground mb-1 block">{t('subscriptions.detail.form.pendingCalls')}</label>
+                    <span className="text-sm text-foreground">{subscription.pendingCalls ?? 0}</span>
+                  </div>
+                </div>
+              </motion.div>
+
+              {/* Distribution */}
+              <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.1 }} className="bg-card rounded-xl border border-border p-6 mb-6">
+                <h2 className="font-semibold text-foreground flex items-center gap-2 mb-4">
+                  <Store className="w-5 h-5 text-primary" />
+                  {t('subscriptions.detail.form.sectionDistribution')}
+                </h2>
+                <div className="grid grid-cols-2 gap-6">
+                  <div>
+                    <label className="text-xs text-muted-foreground mb-1 block">{t('subscriptions.detail.form.partner')}</label>
+                    {isEditing ? <Input value={editForm.partner} onChange={e => setEditForm(f => ({ ...f, partner: e.target.value }))} placeholder={t('subscriptions.detail.form.noPartner')} className="w-full text-sm" /> : (
+                      <span className="text-sm text-foreground">{subscription.partenaire?.name || <span className="text-muted-foreground/60 italic">{t('subscriptions.detail.form.noPartner')}</span>}</span>
+                    )}
+                  </div>
+                  <div>
+                    <label className="text-xs text-muted-foreground mb-1 block">{t('subscriptions.detail.form.advisor')}</label>
+                    {isEditing ? <Input value={editForm.advisor} onChange={e => setEditForm(f => ({ ...f, advisor: e.target.value }))} placeholder={t('subscriptions.detail.form.noAdvisor')} className="w-full text-sm" /> : (
+                      <span className="text-sm text-foreground">{subscription.advisor || <span className="text-muted-foreground/60 italic">{t('subscriptions.detail.form.noAdvisor')}</span>}</span>
+                    )}
+                  </div>
+                  <div>
+                    <label className="text-xs text-muted-foreground mb-1 block">{t('subscriptions.detail.form.entryFees')}</label>
+                    {isEditing ? <Input type="number" step="0.01" value={editForm.entryFees} onChange={e => setEditForm(f => ({ ...f, entryFees: Number(e.target.value) }))} className="w-full text-sm" /> : (
+                      <span className="text-sm text-foreground">{(subscription.entryFees ?? 0).toFixed(2)} %</span>
+                    )}
+                  </div>
+                  <div>
+                    <label className="text-xs text-muted-foreground mb-1 block">{t('subscriptions.detail.form.subscriptionPremium')}</label>
+                    {isEditing ? <Input type="number" value={editForm.subscriptionPremium} onChange={e => setEditForm(f => ({ ...f, subscriptionPremium: Number(e.target.value) }))} className="w-full text-sm" /> : (
+                      <span className="text-sm text-foreground">{subscription.subscriptionPremium != null ? `${subscription.subscriptionPremium.toLocaleString('fr-FR')} €` : '-'}</span>
+                    )}
+                  </div>
+                  <div>
+                    <label className="text-xs text-muted-foreground mb-1 block">{t('subscriptions.detail.form.analyst')}</label>
+                    {isEditing ? <Input value={editForm.analyst} onChange={e => setEditForm(f => ({ ...f, analyst: e.target.value }))} className="w-full text-sm" /> : (
+                      <span className="text-sm text-foreground">{subscription.analyst}</span>
+                    )}
+                  </div>
+                  <div>
+                    <label className="text-xs text-muted-foreground mb-1 block">{t('subscriptions.detail.form.sepa')}</label>
+                    {isEditing ? <div className="flex items-center gap-2 pt-1"><Switch checked={editForm.sepaEnabled} onCheckedChange={v => setEditForm(f => ({ ...f, sepaEnabled: v }))} /></div> : (
+                      <span className="text-sm text-foreground">{subscription.sepaEnabled ? t('subscriptions.detail.form.yes') : t('subscriptions.detail.form.no')}</span>
+                    )}
+                  </div>
+                </div>
+              </motion.div>
+
+              {/* Signature */}
+              <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.15 }} className="bg-card rounded-xl border border-border p-6 mb-6">
+                <h2 className="font-semibold text-foreground flex items-center gap-2 mb-4">
+                  <FileCheck className="w-5 h-5 text-primary" />
+                  {t('subscriptions.detail.form.sectionSignature')}
+                </h2>
+                <div className="grid grid-cols-2 gap-6">
+                  <div>
+                    <label className="text-xs text-muted-foreground mb-1 block">{t('subscriptions.detail.form.signatureChannel')}</label>
+                    {isEditing ? (
+                      <Select value={editForm.signatureChannel} onValueChange={v => setEditForm(f => ({ ...f, signatureChannel: v as 'e-signature' | 'papier' }))}>
+                        <SelectTrigger className="w-full"><SelectValue /></SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="e-signature">{t('subscriptions.detail.form.eSignature')}</SelectItem>
+                          <SelectItem value="papier">{t('subscriptions.detail.form.paper')}</SelectItem>
+                        </SelectContent>
+                      </Select>
+                    ) : (
+                      <span className="text-sm text-foreground">{subscription.signatureChannel === 'papier' ? t('subscriptions.detail.form.paper') : t('subscriptions.detail.form.eSignature')}</span>
+                    )}
+                  </div>
+                  <div>
+                    <label className="text-xs text-muted-foreground mb-1 block">{t('subscriptions.detail.form.signatureStatus')}</label>
+                    <span className="text-sm text-foreground">{subscription.signatures ? `${subscription.signatures.completed}/${subscription.signatures.required}` : '-'}</span>
+                  </div>
+                  {subscription.sentToSignatureAt && (
+                    <div>
+                      <label className="text-xs text-muted-foreground mb-1 block">{t('subscriptions.detail.form.sentToSignatureAt')}</label>
+                      <span className="text-sm text-foreground">{subscription.sentToSignatureAt.toLocaleDateString('fr-FR')}</span>
+                    </div>
+                  )}
+                  {subscription.investorSignedAt && (
+                    <div>
+                      <label className="text-xs text-muted-foreground mb-1 block">{t('subscriptions.detail.form.investorSignedAt')}</label>
+                      <span className="text-sm text-foreground">{subscription.investorSignedAt.toLocaleDateString('fr-FR')}</span>
+                    </div>
+                  )}
+                  {subscription.counterSignatureStatus && (
+                    <div>
+                      <label className="text-xs text-muted-foreground mb-1 block">{t('subscriptions.detail.form.counterSignatureStatus')}</label>
+                      <span className="text-sm text-foreground capitalize">{subscription.counterSignatureStatus}</span>
+                    </div>
+                  )}
+                  {subscription.counterSignatureOwner && (
+                    <div>
+                      <label className="text-xs text-muted-foreground mb-1 block">{t('subscriptions.detail.form.counterSignatureOwner')}</label>
+                      <span className="text-sm text-foreground">{subscription.counterSignatureOwner}</span>
+                    </div>
+                  )}
+                </div>
+              </motion.div>
+
+              {/* Parametres */}
+              <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.2 }} className="bg-card rounded-xl border border-border p-6 mb-6">
+                <h2 className="font-semibold text-foreground flex items-center gap-2 mb-4">
+                  <Settings className="w-5 h-5 text-primary" />
+                  {t('subscriptions.detail.form.sectionSettings')}
+                </h2>
+                <div className="grid grid-cols-2 gap-6">
+                  <div>
+                    <label className="text-xs text-muted-foreground mb-1 block">{t('subscriptions.detail.form.language')}</label>
+                    {isEditing ? (
+                      <Select value={editForm.language} onValueChange={v => setEditForm(f => ({ ...f, language: v as 'fr' | 'en' | 'de' | 'it' | 'es' }))}>
+                        <SelectTrigger className="w-full"><SelectValue /></SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="fr">FR</SelectItem>
+                          <SelectItem value="en">EN</SelectItem>
+                          <SelectItem value="de">DE</SelectItem>
+                          <SelectItem value="it">IT</SelectItem>
+                          <SelectItem value="es">ES</SelectItem>
+                        </SelectContent>
+                      </Select>
+                    ) : (
+                      <span className="text-sm text-foreground">{(subscription.language || 'fr').toUpperCase()}</span>
+                    )}
+                  </div>
+                  <div>
+                    <label className="text-xs text-muted-foreground mb-1 block">{t('subscriptions.detail.form.source')}</label>
+                    {isEditing ? (
+                      <Select value={editForm.source} onValueChange={v => setEditForm(f => ({ ...f, source: v as 'campagne' | 'manuel' | 'import' | 'api' }))}>
+                        <SelectTrigger className="w-full"><SelectValue /></SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="manuel">Manuel</SelectItem>
+                          <SelectItem value="campagne">Campagne</SelectItem>
+                          <SelectItem value="import">Import</SelectItem>
+                          <SelectItem value="api">API</SelectItem>
+                        </SelectContent>
+                      </Select>
+                    ) : (
+                      <span className="text-sm text-foreground capitalize">{subscription.source || 'manuel'}</span>
+                    )}
+                  </div>
+                  <div>
+                    <label className="text-xs text-muted-foreground mb-1 block">{t('subscriptions.detail.form.depositary')}</label>
+                    {isEditing ? <div className="flex items-center gap-2 pt-1"><Switch checked={editForm.hasDepositary} onCheckedChange={v => setEditForm(f => ({ ...f, hasDepositary: v }))} /></div> : (
+                      <span className="text-sm text-foreground">{subscription.hasDepositary ? t('subscriptions.detail.form.yes') : t('subscriptions.detail.form.no')}</span>
+                    )}
+                  </div>
+                  <div>
+                    <label className="text-xs text-muted-foreground mb-1 block">{t('subscriptions.detail.form.riskLevel')}</label>
+                    <span className="text-sm text-foreground">{subscription.riskLevel}</span>
+                  </div>
+                  <div>
+                    <label className="text-xs text-muted-foreground mb-1 block">{t('subscriptions.detail.form.status')}</label>
+                    <SubscriptionStatusBadge status={subscription.status} />
+                  </div>
+                  <div>
+                    <label className="text-xs text-muted-foreground mb-1 block">{t('subscriptions.detail.form.createdAt')}</label>
+                    <span className="text-sm text-foreground">{subscription.createdAt?.toLocaleDateString('fr-FR') || '-'}</span>
+                  </div>
+                  <div>
+                    <label className="text-xs text-muted-foreground mb-1 block">{t('subscriptions.detail.form.updatedAt')}</label>
+                    <span className="text-sm text-foreground">{subscription.updatedAt?.toLocaleDateString('fr-FR') || '-'}</span>
+                  </div>
+                  {subscription.activatedAt && (
+                    <div>
+                      <label className="text-xs text-muted-foreground mb-1 block">{t('subscriptions.detail.form.activatedAt')}</label>
+                      <span className="text-sm text-foreground">{subscription.activatedAt.toLocaleDateString('fr-FR')}</span>
+                    </div>
+                  )}
+                </div>
+              </motion.div>
+
+              {/* Informations complementaires */}
+              <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.25 }} className="bg-card rounded-xl border border-border p-6 mb-6">
+                <h2 className="font-semibold text-foreground flex items-center gap-2 mb-4">
+                  <FileText className="w-5 h-5 text-primary" />
+                  {t('subscriptions.detail.form.sectionAdditional')}
+                </h2>
+                <div className="grid grid-cols-2 gap-6">
+                  <div className="col-span-2">
+                    <label className="text-xs text-muted-foreground mb-1 block">{t('subscriptions.detail.form.subscriptionName')}</label>
+                    {isEditing ? <Input value={editForm.subscriptionName} onChange={e => setEditForm(f => ({ ...f, subscriptionName: e.target.value }))} placeholder={t('subscriptions.detail.form.subscriptionNamePlaceholder')} className="w-full text-sm" /> : (
+                      <span className="text-sm text-foreground">{subscription.name}</span>
+                    )}
+                  </div>
+                  {subscription.coInvestors && subscription.coInvestors.length > 0 && (
+                    <div className="col-span-2">
+                      <label className="text-xs text-muted-foreground mb-1 block">{t('subscriptions.detail.form.coInvestors')}</label>
+                      <span className="text-sm text-foreground">{subscription.coInvestors.map((c: { name: string }) => c.name).join(', ')}</span>
+                    </div>
+                  )}
+                  <div className="col-span-2">
+                    <label className="text-xs text-muted-foreground mb-1 block">{t('subscriptions.detail.form.notes')}</label>
+                    {isEditing ? <Textarea value={editForm.notes} onChange={e => setEditForm(f => ({ ...f, notes: e.target.value }))} rows={3} placeholder={t('subscriptions.detail.form.notesPlaceholder')} className="w-full text-sm" /> : (
+                      <span className="text-sm text-foreground whitespace-pre-wrap">{subscription.notes || <span className="text-muted-foreground/60 italic">{t('subscriptions.detail.form.notProvided')}</span>}</span>
+                    )}
+                  </div>
+                </div>
+              </motion.div>
             </div>
           </TabsContent>
 
