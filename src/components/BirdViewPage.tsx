@@ -48,7 +48,7 @@ import type { DocumentCategory } from '../utils/documentMockData';
 import { Tooltip, TooltipContent, TooltipTrigger } from './ui/tooltip';
 import { SegmentsMultiSelect, FundSingleSelect } from './ui/targeting-selects';
 import { AutocompleteSingleSelect } from './ui/autocomplete-select';
-import { DatePicker } from './ui/date-picker';
+import { DateRangePicker, type DateRangePreset } from './ui/date-range-picker';
 import { useTranslation } from '../utils/languageContext';
 import {
   COMMITMENTS,
@@ -278,6 +278,41 @@ export function BirdViewPage({ onBack }: BirdViewPageProps) {
     collect(documentTree);
     return Array.from(segments).sort();
   }, [documentTree]);
+
+  const datePresets = useMemo((): DateRangePreset[] => {
+    const now = new Date();
+    const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+
+    const yesterday = new Date(today);
+    yesterday.setDate(yesterday.getDate() - 1);
+
+    const weekStart = new Date(today);
+    weekStart.setDate(weekStart.getDate() - ((weekStart.getDay() + 6) % 7));
+
+    const last7 = new Date(today);
+    last7.setDate(last7.getDate() - 6);
+
+    const monthStart = new Date(today.getFullYear(), today.getMonth(), 1);
+
+    const last30 = new Date(today);
+    last30.setDate(last30.getDate() - 29);
+
+    const quarterMonth = Math.floor(today.getMonth() / 3) * 3;
+    const quarterStart = new Date(today.getFullYear(), quarterMonth, 1);
+
+    const yearStart = new Date(today.getFullYear(), 0, 1);
+
+    return [
+      { label: t('ged.birdview.filters.dateRange.today'), from: today, to: today },
+      { label: t('ged.birdview.filters.dateRange.yesterday'), from: yesterday, to: yesterday },
+      { label: t('ged.birdview.filters.dateRange.thisWeek'), from: weekStart, to: today },
+      { label: t('ged.birdview.filters.dateRange.last7Days'), from: last7, to: today },
+      { label: t('ged.birdview.filters.dateRange.thisMonth'), from: monthStart, to: today },
+      { label: t('ged.birdview.filters.dateRange.last30Days'), from: last30, to: today },
+      { label: t('ged.birdview.filters.dateRange.thisQuarter'), from: quarterStart, to: today },
+      { label: t('ged.birdview.filters.dateRange.thisYear'), from: yearStart, to: today },
+    ];
+  }, [t]);
 
   // Contacts disponibles
   const availableContacts = useMemo(() => {
@@ -1446,20 +1481,17 @@ export function BirdViewPage({ onBack }: BirdViewPageProps) {
           </div>
 
           {/* Filtre Date d'ajout (plage) */}
-          <div className="min-w-[170px]">
-            <DatePicker
-              date={dateFrom}
-              onDateChange={setDateFrom}
-              placeholder={t('ged.birdview.filters.dateFrom')}
-              maxDate={dateTo}
-            />
-          </div>
-          <div className="min-w-[170px]">
-            <DatePicker
-              date={dateTo}
-              onDateChange={setDateTo}
-              placeholder={t('ged.birdview.filters.dateTo')}
-              minDate={dateFrom}
+          <div className="min-w-[220px]">
+            <DateRangePicker
+              from={dateFrom}
+              to={dateTo}
+              onRangeChange={(from, to) => {
+                setDateFrom(from);
+                setDateTo(to);
+              }}
+              placeholder={t('ged.birdview.filters.dateRange.placeholder')}
+              clearLabel={t('ged.birdview.filters.dateRange.clear')}
+              presets={datePresets}
             />
           </div>
 
