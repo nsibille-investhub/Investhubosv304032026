@@ -97,7 +97,25 @@ export function SubscriptionDetailPage({ subscription, onBack }: SubscriptionDet
   const [openSections, setOpenSections] = useState<string[]>(['identity']);
   const [note, setNote] = useState('');
   const [notes, setNotes] = useState<Array<{ text: string; date: string; author: string }>>([]);
-  
+  const [activeTab, setActiveTab] = useState('detail');
+  const [isEditing, setIsEditing] = useState(false);
+  const [editForm, setEditForm] = useState({
+    investorName: subscription.contrepartie.investor || subscription.contrepartie.name || '',
+    structure: subscription.contrepartie.structure || '',
+    fundName: subscription.fund.name || '',
+    shareClass: subscription.fund.shareClass || '',
+    quantity: subscription.quantity ?? 0,
+    amount: subscription.amount ?? 0,
+    partner: subscription.partenaire?.name || '',
+    advisor: subscription.advisor || '',
+    entryFees: subscription.entryFees ?? 0,
+    subscriptionPremium: subscription.subscriptionPremium ?? 0,
+    language: subscription.language || 'fr',
+    sepaEnabled: subscription.sepaEnabled ?? false,
+    source: subscription.source || 'manuel',
+    analyst: subscription.analyst || '',
+  });
+
   // Stepper state — newly created subscriptions carry initialStep=0 so they
   // land on the Initialisation step (the wizard's data is pre-filled below).
   const [currentStep, setCurrentStep] = useState(
@@ -309,6 +327,18 @@ export function SubscriptionDetailPage({ subscription, onBack }: SubscriptionDet
                     {subscription.name}
                   </h1>
                   <SubscriptionStatusBadge status={subscription.status} />
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    className="gap-1.5 text-primary border-primary/30 hover:bg-primary/5 hover:text-primary"
+                    onClick={() => {
+                      setActiveTab('detail');
+                      setIsEditing(true);
+                    }}
+                  >
+                    <Edit2 className="w-3.5 h-3.5" />
+                    {t('subscriptions.detail.editButton')}
+                  </Button>
                 </div>
 
                 <div className="flex items-center gap-3 text-sm text-muted-foreground">
@@ -586,7 +616,7 @@ export function SubscriptionDetailPage({ subscription, onBack }: SubscriptionDet
 
       {/* Tabs - Same structure as InvestorDetailPage */}
       <div className="px-8 -mt-px bg-card border-b border-border">
-        <Tabs defaultValue="detail" className="w-full">
+        <Tabs value={activeTab} onValueChange={(v) => { setActiveTab(v); if (v !== 'detail') setIsEditing(false); }} className="w-full">
           <TabsList className="bg-transparent border-b border-border rounded-none w-full justify-start h-auto p-0 gap-6">
             <TabsTrigger 
               value="detail" 
@@ -663,14 +693,256 @@ export function SubscriptionDetailPage({ subscription, onBack }: SubscriptionDet
               <div className="flex gap-6">
                 {/* Main Content Area */}
                 <div className="flex-1">
+                  {/* Subscription parameters - read-only / edit mode */}
+                  <div className="space-y-6 mb-6">
+                    <Card className="p-6 shadow-sm">
+                      <div className="flex items-center justify-between mb-6">
+                        <h2 className="text-lg font-semibold text-foreground">{t('subscriptions.detail.form.title')}</h2>
+                        {!isEditing ? (
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            className="gap-1.5 text-primary border-primary/30 hover:bg-primary/5 hover:text-primary"
+                            onClick={() => setIsEditing(true)}
+                          >
+                            <Edit2 className="w-3.5 h-3.5" />
+                            {t('subscriptions.detail.editButton')}
+                          </Button>
+                        ) : (
+                          <Badge className="bg-primary/10 text-primary border-primary/30">
+                            <Edit2 className="w-3 h-3 mr-1" />
+                            {t('subscriptions.detail.form.editMode')}
+                          </Badge>
+                        )}
+                      </div>
+
+                      {!isEditing ? (
+                        <div className="space-y-8">
+                          {/* Section: Investor & Structure */}
+                          <div>
+                            <h3 className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-4">{t('subscriptions.detail.form.sectionInvestor')}</h3>
+                            <div className="grid grid-cols-2 gap-x-12 gap-y-5">
+                              <div>
+                                <div className="text-xs text-muted-foreground mb-1">{t('subscriptions.detail.form.investor')}</div>
+                                <div className="text-sm font-medium text-foreground">{subscription.contrepartie.investor || subscription.contrepartie.name}</div>
+                              </div>
+                              <div>
+                                <div className="text-xs text-muted-foreground mb-1">{t('subscriptions.detail.form.structure')}</div>
+                                <div className="text-sm font-medium text-foreground">{subscription.contrepartie.structure || t('subscriptions.detail.form.noStructure')}</div>
+                              </div>
+                              <div>
+                                <div className="text-xs text-muted-foreground mb-1">{t('subscriptions.detail.form.investorType')}</div>
+                                <div className="text-sm font-medium text-foreground capitalize">{subscription.contrepartie.type}</div>
+                              </div>
+                              <div>
+                                <div className="text-xs text-muted-foreground mb-1">{t('subscriptions.detail.form.analyst')}</div>
+                                <div className="text-sm font-medium text-foreground">{subscription.analyst}</div>
+                              </div>
+                            </div>
+                          </div>
+                          <Separator />
+
+                          {/* Section: Fund & Product */}
+                          <div>
+                            <h3 className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-4">{t('subscriptions.detail.form.sectionFund')}</h3>
+                            <div className="grid grid-cols-2 gap-x-12 gap-y-5">
+                              <div>
+                                <div className="text-xs text-muted-foreground mb-1">{t('subscriptions.detail.form.fund')}</div>
+                                <div className="text-sm font-medium text-foreground">{subscription.fund.name}</div>
+                              </div>
+                              <div>
+                                <div className="text-xs text-muted-foreground mb-1">{t('subscriptions.detail.form.shareClass')}</div>
+                                <div className="text-sm font-medium text-foreground">{subscription.fund.shareClass}</div>
+                              </div>
+                              <div>
+                                <div className="text-xs text-muted-foreground mb-1">{t('subscriptions.detail.form.quantity')}</div>
+                                <div className="text-sm font-medium text-foreground">{(subscription.quantity ?? 0).toLocaleString('fr-FR')}</div>
+                              </div>
+                              <div>
+                                <div className="text-xs text-muted-foreground mb-1">{t('subscriptions.detail.form.amount')}</div>
+                                <div className="text-sm font-medium text-foreground">{(subscription.amount ?? 0).toLocaleString('fr-FR')} &euro;</div>
+                              </div>
+                            </div>
+                          </div>
+                          <Separator />
+
+                          {/* Section: Distribution */}
+                          <div>
+                            <h3 className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-4">{t('subscriptions.detail.form.sectionDistribution')}</h3>
+                            <div className="grid grid-cols-2 gap-x-12 gap-y-5">
+                              <div>
+                                <div className="text-xs text-muted-foreground mb-1">{t('subscriptions.detail.form.partner')}</div>
+                                <div className="text-sm font-medium text-foreground">{subscription.partenaire?.name || t('subscriptions.detail.form.noPartner')}</div>
+                              </div>
+                              <div>
+                                <div className="text-xs text-muted-foreground mb-1">{t('subscriptions.detail.form.advisor')}</div>
+                                <div className="text-sm font-medium text-foreground">{subscription.advisor || t('subscriptions.detail.form.noAdvisor')}</div>
+                              </div>
+                            </div>
+                          </div>
+                          <Separator />
+
+                          {/* Section: Fees & Conditions */}
+                          <div>
+                            <h3 className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-4">{t('subscriptions.detail.form.sectionFees')}</h3>
+                            <div className="grid grid-cols-2 gap-x-12 gap-y-5">
+                              <div>
+                                <div className="text-xs text-muted-foreground mb-1">{t('subscriptions.detail.form.entryFees')}</div>
+                                <div className="text-sm font-medium text-foreground">{(subscription.entryFees ?? 0).toFixed(2)} %</div>
+                              </div>
+                              <div>
+                                <div className="text-xs text-muted-foreground mb-1">{t('subscriptions.detail.form.subscriptionPremium')}</div>
+                                <div className="text-sm font-medium text-foreground">{subscription.subscriptionPremium != null ? `${subscription.subscriptionPremium.toLocaleString('fr-FR')} €` : '-'}</div>
+                              </div>
+                              <div>
+                                <div className="text-xs text-muted-foreground mb-1">{t('subscriptions.detail.form.language')}</div>
+                                <div className="text-sm font-medium text-foreground">{(subscription.language || 'fr').toUpperCase()}</div>
+                              </div>
+                              <div>
+                                <div className="text-xs text-muted-foreground mb-1">{t('subscriptions.detail.form.source')}</div>
+                                <div className="text-sm font-medium text-foreground capitalize">{subscription.source || 'manuel'}</div>
+                              </div>
+                              <div>
+                                <div className="text-xs text-muted-foreground mb-1">{t('subscriptions.detail.form.sepa')}</div>
+                                <div className="text-sm font-medium text-foreground">{subscription.sepaEnabled ? t('subscriptions.detail.form.yes') : t('subscriptions.detail.form.no')}</div>
+                              </div>
+                            </div>
+                          </div>
+                        </div>
+                      ) : (
+                        <div className="space-y-8">
+                          {/* Edit mode - Section: Investor & Structure */}
+                          <div>
+                            <h3 className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-4">{t('subscriptions.detail.form.sectionInvestor')}</h3>
+                            <div className="grid grid-cols-2 gap-x-6 gap-y-4">
+                              <div>
+                                <label className="block text-xs font-medium text-foreground/70 mb-1.5">{t('subscriptions.detail.form.investor')}</label>
+                                <Input value={editForm.investorName} onChange={e => setEditForm(f => ({ ...f, investorName: e.target.value }))} />
+                              </div>
+                              <div>
+                                <label className="block text-xs font-medium text-foreground/70 mb-1.5">{t('subscriptions.detail.form.structure')}</label>
+                                <Input value={editForm.structure} onChange={e => setEditForm(f => ({ ...f, structure: e.target.value }))} placeholder={t('subscriptions.detail.form.noStructure')} />
+                              </div>
+                              <div>
+                                <label className="block text-xs font-medium text-foreground/70 mb-1.5">{t('subscriptions.detail.form.analyst')}</label>
+                                <Input value={editForm.analyst} onChange={e => setEditForm(f => ({ ...f, analyst: e.target.value }))} />
+                              </div>
+                            </div>
+                          </div>
+                          <Separator />
+
+                          {/* Edit mode - Section: Fund & Product */}
+                          <div>
+                            <h3 className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-4">{t('subscriptions.detail.form.sectionFund')}</h3>
+                            <div className="grid grid-cols-2 gap-x-6 gap-y-4">
+                              <div>
+                                <label className="block text-xs font-medium text-foreground/70 mb-1.5">{t('subscriptions.detail.form.fund')}</label>
+                                <Input value={editForm.fundName} onChange={e => setEditForm(f => ({ ...f, fundName: e.target.value }))} />
+                              </div>
+                              <div>
+                                <label className="block text-xs font-medium text-foreground/70 mb-1.5">{t('subscriptions.detail.form.shareClass')}</label>
+                                <Input value={editForm.shareClass} onChange={e => setEditForm(f => ({ ...f, shareClass: e.target.value }))} />
+                              </div>
+                              <div>
+                                <label className="block text-xs font-medium text-foreground/70 mb-1.5">{t('subscriptions.detail.form.quantity')}</label>
+                                <Input type="number" value={editForm.quantity} onChange={e => setEditForm(f => ({ ...f, quantity: Number(e.target.value) }))} />
+                              </div>
+                              <div>
+                                <label className="block text-xs font-medium text-foreground/70 mb-1.5">{t('subscriptions.detail.form.amount')}</label>
+                                <Input type="number" value={editForm.amount} onChange={e => setEditForm(f => ({ ...f, amount: Number(e.target.value) }))} />
+                              </div>
+                            </div>
+                          </div>
+                          <Separator />
+
+                          {/* Edit mode - Section: Distribution */}
+                          <div>
+                            <h3 className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-4">{t('subscriptions.detail.form.sectionDistribution')}</h3>
+                            <div className="grid grid-cols-2 gap-x-6 gap-y-4">
+                              <div>
+                                <label className="block text-xs font-medium text-foreground/70 mb-1.5">{t('subscriptions.detail.form.partner')}</label>
+                                <Input value={editForm.partner} onChange={e => setEditForm(f => ({ ...f, partner: e.target.value }))} placeholder={t('subscriptions.detail.form.noPartner')} />
+                              </div>
+                              <div>
+                                <label className="block text-xs font-medium text-foreground/70 mb-1.5">{t('subscriptions.detail.form.advisor')}</label>
+                                <Input value={editForm.advisor} onChange={e => setEditForm(f => ({ ...f, advisor: e.target.value }))} placeholder={t('subscriptions.detail.form.noAdvisor')} />
+                              </div>
+                            </div>
+                          </div>
+                          <Separator />
+
+                          {/* Edit mode - Section: Fees & Conditions */}
+                          <div>
+                            <h3 className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-4">{t('subscriptions.detail.form.sectionFees')}</h3>
+                            <div className="grid grid-cols-2 gap-x-6 gap-y-4">
+                              <div>
+                                <label className="block text-xs font-medium text-foreground/70 mb-1.5">{t('subscriptions.detail.form.entryFees')}</label>
+                                <Input type="number" step="0.01" value={editForm.entryFees} onChange={e => setEditForm(f => ({ ...f, entryFees: Number(e.target.value) }))} />
+                              </div>
+                              <div>
+                                <label className="block text-xs font-medium text-foreground/70 mb-1.5">{t('subscriptions.detail.form.subscriptionPremium')}</label>
+                                <Input type="number" value={editForm.subscriptionPremium} onChange={e => setEditForm(f => ({ ...f, subscriptionPremium: Number(e.target.value) }))} />
+                              </div>
+                              <div>
+                                <label className="block text-xs font-medium text-foreground/70 mb-1.5">{t('subscriptions.detail.form.language')}</label>
+                                <Input value={editForm.language} onChange={e => setEditForm(f => ({ ...f, language: e.target.value as 'fr' | 'en' | 'de' | 'it' | 'es' }))} />
+                              </div>
+                              <div>
+                                <label className="block text-xs font-medium text-foreground/70 mb-1.5">{t('subscriptions.detail.form.source')}</label>
+                                <Input value={editForm.source} onChange={e => setEditForm(f => ({ ...f, source: e.target.value as 'campagne' | 'manuel' | 'import' | 'api' }))} />
+                              </div>
+                            </div>
+                          </div>
+
+                          <Separator />
+                          <div className="flex justify-end gap-3">
+                            <Button
+                              variant="outline"
+                              onClick={() => {
+                                setEditForm({
+                                  investorName: subscription.contrepartie.investor || subscription.contrepartie.name || '',
+                                  structure: subscription.contrepartie.structure || '',
+                                  fundName: subscription.fund.name || '',
+                                  shareClass: subscription.fund.shareClass || '',
+                                  quantity: subscription.quantity ?? 0,
+                                  amount: subscription.amount ?? 0,
+                                  partner: subscription.partenaire?.name || '',
+                                  advisor: subscription.advisor || '',
+                                  entryFees: subscription.entryFees ?? 0,
+                                  subscriptionPremium: subscription.subscriptionPremium ?? 0,
+                                  language: subscription.language || 'fr',
+                                  sepaEnabled: subscription.sepaEnabled ?? false,
+                                  source: subscription.source || 'manuel',
+                                  analyst: subscription.analyst || '',
+                                });
+                                setIsEditing(false);
+                              }}
+                            >
+                              {t('subscriptions.detail.form.cancel')}
+                            </Button>
+                            <Button
+                              className="hover:opacity-90"
+                              style={{ background: PRIMARY_BUTTON_GRADIENT }}
+                              onClick={() => {
+                                setIsEditing(false);
+                                toast.success(t('subscriptions.detail.form.saved'));
+                              }}
+                            >
+                              <Check className="w-4 h-4 mr-2" />
+                              {t('subscriptions.detail.form.save')}
+                            </Button>
+                          </div>
+                        </div>
+                      )}
+                    </Card>
+                  </div>
+
                   {currentStep === 0 && (
-                    // Initialisation de la souscription
                     <div className="space-y-6">
                       <Card className="p-6 shadow-sm">
                         <h2 className="text-xl font-bold text-foreground mb-6">{t('subscriptions.detail.init.title')}</h2>
 
                         <div className="space-y-6">
-                          {/* Investisseur */}
                           <div>
                             <label className="block text-sm font-semibold text-foreground/80 mb-2">{t('subscriptions.detail.init.investorLabel')}</label>
                             <Input
@@ -679,7 +951,6 @@ export function SubscriptionDetailPage({ subscription, onBack }: SubscriptionDet
                             />
                           </div>
 
-                          {/* Structure */}
                           <div>
                             <label className="block text-sm font-semibold text-foreground/80 mb-2">{t('subscriptions.detail.init.structureLabel')}</label>
                             <Input
@@ -692,7 +963,6 @@ export function SubscriptionDetailPage({ subscription, onBack }: SubscriptionDet
                             />
                           </div>
 
-                          {/* Fonds */}
                           <div>
                             <label className="block text-sm font-semibold text-foreground/80 mb-2">{t('subscriptions.detail.init.fundLabel')}</label>
                             <Input
@@ -701,7 +971,6 @@ export function SubscriptionDetailPage({ subscription, onBack }: SubscriptionDet
                             />
                           </div>
 
-                          {/* Part */}
                           <div>
                             <label className="block text-sm font-semibold text-foreground/80 mb-2">{t('subscriptions.detail.init.shareLabel')}</label>
                             <Input
@@ -712,7 +981,6 @@ export function SubscriptionDetailPage({ subscription, onBack }: SubscriptionDet
                             />
                           </div>
 
-                          {/* Nombre de parts */}
                           <div className="grid grid-cols-2 gap-4">
                             <div>
                               <label className="block text-sm font-semibold text-foreground/80 mb-2">{t('subscriptions.detail.init.numberOfSharesLabel')}</label>
@@ -735,7 +1003,6 @@ export function SubscriptionDetailPage({ subscription, onBack }: SubscriptionDet
                             </div>
                           </div>
 
-                          {/* Partenaire */}
                           <div>
                             <label className="block text-sm font-semibold text-foreground/80 mb-2">{t('subscriptions.detail.init.partnerLabel')}</label>
                             <Input
