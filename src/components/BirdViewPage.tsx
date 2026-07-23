@@ -21,7 +21,8 @@ import {
   FileType,
   Users,
   Globe,
-  Ban
+  Ban,
+  CalendarDays
 } from 'lucide-react';
 import { toast } from 'sonner@2.0.3';
 import {
@@ -47,6 +48,7 @@ import type { DocumentCategory } from '../utils/documentMockData';
 import { Tooltip, TooltipContent, TooltipTrigger } from './ui/tooltip';
 import { SegmentsMultiSelect, FundSingleSelect } from './ui/targeting-selects';
 import { AutocompleteSingleSelect } from './ui/autocomplete-select';
+import { DatePicker } from './ui/date-picker';
 import { useTranslation } from '../utils/languageContext';
 import {
   COMMITMENTS,
@@ -141,6 +143,8 @@ export function BirdViewPage({ onBack }: BirdViewPageProps) {
   const [selectedFund, setSelectedFund] = useState<string | null>(null);
   const [selectedSegments, setSelectedSegments] = useState<string[]>([]);
   const [selectedSubscription, setSelectedSubscription] = useState<string | null>(null);
+  const [dateFrom, setDateFrom] = useState<Date | undefined>(undefined);
+  const [dateTo, setDateTo] = useState<Date | undefined>(undefined);
 
   // Filtre dossier (Bird View scoped to a specific folder branch)
   const [selectedFolderId, setSelectedFolderId] = useState<string | null>(null);
@@ -439,6 +443,15 @@ export function BirdViewPage({ onBack }: BirdViewPageProps) {
     [],
   );
 
+  const parseDateDDMMYYYY = useCallback((str?: string): Date | null => {
+    if (!str) return null;
+    const parts = str.split('/');
+    if (parts.length !== 3) return null;
+    const [d, m, y] = parts.map(Number);
+    if (!d || !m || !y) return null;
+    return new Date(y, m - 1, d);
+  }, []);
+
   // Arbre affiché (filtré ou complet)
   const displayedTree = useMemo(() => {
     let tree = documentTree;
@@ -490,6 +503,21 @@ export function BirdViewPage({ onBack }: BirdViewPageProps) {
               }
             }
 
+            // Filtre date d'ajout (plage from/to)
+            if (dateFrom || dateTo) {
+              const docDate = parseDateDDMMYYYY(node.date);
+              if (docDate) {
+                if (dateFrom && docDate < dateFrom) matches = false;
+                if (dateTo) {
+                  const endOfDay = new Date(dateTo);
+                  endOfDay.setHours(23, 59, 59, 999);
+                  if (docDate > endOfDay) matches = false;
+                }
+              } else {
+                matches = false;
+              }
+            }
+
             return matches ? node : null;
           }
 
@@ -531,7 +559,7 @@ export function BirdViewPage({ onBack }: BirdViewPageProps) {
     };
 
     // Appliquer les filtres avancés si au moins un est actif
-    const hasActiveFilters = !!documentNameFilter || !!selectedDocumentCategory || !!selectedFund || selectedSegments.length > 0 || !!selectedSubscription;
+    const hasActiveFilters = !!documentNameFilter || !!selectedDocumentCategory || !!selectedFund || selectedSegments.length > 0 || !!selectedSubscription || !!dateFrom || !!dateTo;
 
     if (hasActiveFilters) {
       tree = filterTree(tree);
@@ -582,7 +610,7 @@ export function BirdViewPage({ onBack }: BirdViewPageProps) {
     return tree;
   }, [
     documentTree, showOnlyIncomplete,
-    documentNameFilter, selectedDocumentCategory, selectedFund, selectedSegments, selectedSubscription,
+    documentNameFilter, selectedDocumentCategory, selectedFund, selectedSegments, selectedSubscription, dateFrom, dateTo, parseDateDDMMYYYY,
     selectedInvestor, selectedContactData, isAccessibleForInvestor, isAccessibleForContact,
     selectedFolderId, reduceTreeToFolder,
   ]);
@@ -980,7 +1008,10 @@ export function BirdViewPage({ onBack }: BirdViewPageProps) {
 
             {/* Metadata */}
             <div className="flex items-center gap-3 text-xs text-gray-500">
-              <span>{node.date}</span>
+              <span className="flex items-center gap-1">
+                <CalendarDays className="w-3.5 h-3.5" />
+                {node.date}
+              </span>
               <span className="uppercase font-medium">{node.format}</span>
             </div>
 
@@ -1414,8 +1445,26 @@ export function BirdViewPage({ onBack }: BirdViewPageProps) {
             />
           </div>
 
+          {/* Filtre Date d'ajout (plage) */}
+          <div className="min-w-[170px]">
+            <DatePicker
+              date={dateFrom}
+              onDateChange={setDateFrom}
+              placeholder={t('ged.birdview.filters.dateFrom')}
+              maxDate={dateTo}
+            />
+          </div>
+          <div className="min-w-[170px]">
+            <DatePicker
+              date={dateTo}
+              onDateChange={setDateTo}
+              placeholder={t('ged.birdview.filters.dateTo')}
+              minDate={dateFrom}
+            />
+          </div>
+
           {/* Réinitialiser les filtres */}
-          {(documentNameFilter || selectedDocumentCategory || selectedFund || selectedSegments.length > 0 || selectedSubscription) && (
+          {(documentNameFilter || selectedDocumentCategory || selectedFund || selectedSegments.length > 0 || selectedSubscription || dateFrom || dateTo) && (
             <button
               onClick={() => {
                 setDocumentNameFilter('');
@@ -1423,6 +1472,8 @@ export function BirdViewPage({ onBack }: BirdViewPageProps) {
                 setSelectedFund(null);
                 setSelectedSegments([]);
                 setSelectedSubscription(null);
+                setDateFrom(undefined);
+                setDateTo(undefined);
               }}
               className="h-10 px-3 text-sm text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-100 flex items-center gap-2"
             >

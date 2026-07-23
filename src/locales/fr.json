@@ -1950,6 +1950,8 @@
         "fund": "Fonds",
         "segment": "Segment",
         "subscription": "Souscription",
+        "dateFrom": "Ajouté depuis le...",
+        "dateTo": "Ajouté jusqu'au...",
         "reset": "Réinitialiser les filtres",
         "expandAll": "Tout ouvrir",
         "collapseAll": "Tout fermer",
