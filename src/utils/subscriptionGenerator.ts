@@ -290,6 +290,7 @@ export interface Subscription {
   sepaEnabled?: boolean; // Prélèvement SEPA activé
   pendingCalls?: number; // Nombre d'appels de fonds en attente de versement
   onboardingReopened?: number; // Nombre de réouvertures de l'onboarding
+  advisor?: string; // Nom du conseiller partenaire
   documents?: {
     total: number;
     validated: number;
@@ -496,6 +497,8 @@ export function generateSubscriptions(count: number): Subscription[] {
     // 30% de souscriptions directes (sans partenaire), 70% via partenaire
     const isDirect = Math.random() > 0.7;
     const partnerName = isDirect ? null : randomElement(partnerNames);
+    const advisorContact = isDirect ? undefined : randomElement(contactNames);
+    const advisor = advisorContact ? `${advisorContact.firstName} ${advisorContact.lastName}` : undefined;
     
     // 🆕 Générer les nouveaux champs selon le statut
     const source = randomElement(['campagne', 'manuel', 'import', 'api'] as const);
@@ -695,6 +698,7 @@ export function generateSubscriptions(count: number): Subscription[] {
       sepaEnabled,
       pendingCalls,
       onboardingReopened,
+      advisor,
       documents: {
         total: docTotal,
         validated: docValidated,

@@ -409,6 +409,7 @@
         "exportData": "Export data",
         "riskAnalysis": "Risk Analysis",
         "riskScore": "Risk Score",
+        "riskLow": "Low Risk",
         "riskMedium": "Medium Risk",
         "riskHigh": "High Risk",
         "riskValidated": "Risk validated",

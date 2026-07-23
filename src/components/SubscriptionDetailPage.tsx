@@ -79,6 +79,7 @@ import {
   mockCapitalCalls,
 } from '../utils/subscriptionDetailMockData';
 import { StatusBadge } from './StatusBadge';
+import { SubscriptionStatusBadge } from './SubscriptionStatusBadge';
 
 interface SubscriptionDetailPageProps {
   subscription: any;
@@ -309,9 +310,9 @@ export function SubscriptionDetailPage({ subscription, onBack }: SubscriptionDet
               <div>
                 <div className="flex items-center gap-3 mb-1.5">
                   <h1 className="text-2xl font-semibold text-foreground">
-                    {subscription.name} - €1500K - FutureInvest Fund Part A
+                    {subscription.name}
                   </h1>
-                  <StatusBadge variant="success" label={t('subscriptions.detail.header.active')} />
+                  <SubscriptionStatusBadge status={subscription.status} />
                 </div>
 
                 <div className="flex items-center gap-3 text-sm text-muted-foreground">
@@ -348,7 +349,7 @@ export function SubscriptionDetailPage({ subscription, onBack }: SubscriptionDet
             </div>
 
             {/* Structure */}
-            {subscription.type !== 'Personne Physique' && (
+            {subscription.contrepartie.structure && (
               <div className="flex items-center gap-2">
                 <div className="w-7 h-7 rounded-lg bg-muted border border-border flex items-center justify-center flex-shrink-0">
                   <Building2 className="w-3.5 h-3.5 text-muted-foreground" />
@@ -360,23 +361,27 @@ export function SubscriptionDetailPage({ subscription, onBack }: SubscriptionDet
                     className="p-0 h-auto font-semibold text-foreground hover:text-foreground/70 text-sm leading-tight -mt-0.5"
                     onClick={() => toast.info(t('subscriptions.detail.header.navigateToStructure'))}
                   >
-                    Alpha Group Holdings
+                    {subscription.contrepartie.structure}
                   </Button>
                 </div>
               </div>
             )}
 
             {/* Partenaire */}
-            <div className="flex items-center gap-2">
-              <div className="w-7 h-7 rounded-lg bg-muted border border-border flex items-center justify-center flex-shrink-0">
-                <Users className="w-3.5 h-3.5 text-muted-foreground" />
+            {subscription.partenaire && (
+              <div className="flex items-center gap-2">
+                <div className="w-7 h-7 rounded-lg bg-muted border border-border flex items-center justify-center flex-shrink-0">
+                  <Users className="w-3.5 h-3.5 text-muted-foreground" />
+                </div>
+                <div>
+                  <div className="text-xs text-muted-foreground leading-none mb-0.5">{t('subscriptions.detail.header.partner')}</div>
+                  <div className="text-sm font-medium text-foreground leading-tight">{subscription.partenaire.name}</div>
+                  {subscription.advisor && (
+                    <div className="text-xs text-muted-foreground leading-tight">{t('subscriptions.detail.header.advisor', { name: subscription.advisor })}</div>
+                  )}
+                </div>
               </div>
-              <div>
-                <div className="text-xs text-muted-foreground leading-none mb-0.5">{t('subscriptions.detail.header.partner')}</div>
-                <div className="text-sm font-medium text-foreground leading-tight">UFF</div>
-                <div className="text-xs text-muted-foreground leading-tight">{t('subscriptions.detail.header.advisor', { name: 'Eric MAZEAU' })}</div>
-              </div>
-            </div>
+            )}
 
             {/* Frais */}
             <div className="flex items-center gap-2">
@@ -385,8 +390,20 @@ export function SubscriptionDetailPage({ subscription, onBack }: SubscriptionDet
               </div>
               <div>
                 <div className="text-xs text-muted-foreground leading-none mb-0.5">{t('subscriptions.detail.header.fees')}</div>
-                <div className="text-xs text-foreground/80 leading-tight">{t('subscriptions.detail.header.entryFees', { amount: '3 750,00 €' })}</div>
-                <div className="text-xs text-foreground/80 leading-tight">{t('subscriptions.detail.header.subscriptionPremium', { amount: '84,48 €' })}</div>
+                <div className="text-xs text-foreground/80 leading-tight">
+                  {t('subscriptions.detail.header.entryFees', {
+                    amount: subscription.entryFees != null
+                      ? `${((subscription.amount * subscription.entryFees) / 100).toLocaleString('fr-FR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} €`
+                      : '0,00 €'
+                  })}
+                </div>
+                <div className="text-xs text-foreground/80 leading-tight">
+                  {t('subscriptions.detail.header.subscriptionPremium', {
+                    amount: subscription.subscriptionPremium != null
+                      ? `${subscription.subscriptionPremium.toLocaleString('fr-FR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} €`
+                      : '0,00 €'
+                  })}
+                </div>
               </div>
             </div>
             </div>
@@ -401,8 +418,8 @@ export function SubscriptionDetailPage({ subscription, onBack }: SubscriptionDet
                 <div>
                   <div className="text-xs text-muted-foreground leading-tight">{t('subscriptions.detail.header.subscribedAmount')}</div>
                   <div className="flex items-baseline gap-1.5">
-                    <span className="font-bold text-foreground">500 000 €</span>
-                    <span className="text-xs text-muted-foreground font-medium">{t('subscriptions.detail.header.shares', { count: '5 000' })}</span>
+                    <span className="font-bold text-foreground">{subscription.amount.toLocaleString('fr-FR')} €</span>
+                    <span className="text-xs text-muted-foreground font-medium">{t('subscriptions.detail.header.shares', { count: subscription.quantity.toLocaleString('fr-FR') })}</span>
                   </div>
                 </div>
               </div>
@@ -415,8 +432,10 @@ export function SubscriptionDetailPage({ subscription, onBack }: SubscriptionDet
                 <div>
                   <div className="text-xs text-muted-foreground leading-tight">{t('subscriptions.detail.header.calledAmount')}</div>
                   <div className="flex items-baseline gap-1.5">
-                    <span className="font-bold text-foreground">275 000 €</span>
-                    <span className="text-xs text-muted-foreground font-medium">55%</span>
+                    <span className="font-bold text-foreground">{(subscription.calledAmount ?? 0).toLocaleString('fr-FR')} €</span>
+                    <span className="text-xs text-muted-foreground font-medium">
+                      {subscription.amount > 0 ? `${Math.round(((subscription.calledAmount ?? 0) / subscription.amount) * 100)}%` : '0%'}
+                    </span>
                   </div>
                 </div>
               </div>
@@ -429,8 +448,10 @@ export function SubscriptionDetailPage({ subscription, onBack }: SubscriptionDet
                 <div>
                   <div className="text-xs text-muted-foreground leading-tight">{t('subscriptions.detail.header.distributedAmount')}</div>
                   <div className="flex items-baseline gap-1.5">
-                    <span className="font-bold text-foreground">42 500 €</span>
-                    <span className="text-xs text-muted-foreground font-medium">8.5%</span>
+                    <span className="font-bold text-foreground">{(subscription.distributedAmount ?? 0).toLocaleString('fr-FR')} €</span>
+                    <span className="text-xs text-muted-foreground font-medium">
+                      {subscription.amount > 0 ? `${Math.round(((subscription.distributedAmount ?? 0) / subscription.amount) * 100)}%` : '0%'}
+                    </span>
                   </div>
                 </div>
               </div>
@@ -443,8 +464,10 @@ export function SubscriptionDetailPage({ subscription, onBack }: SubscriptionDet
                 <div>
                   <div className="text-xs text-muted-foreground leading-tight">{t('subscriptions.detail.header.remainingBalance')}</div>
                   <div className="flex items-baseline gap-1.5">
-                    <span className="font-bold text-foreground">225 000 €</span>
-                    <span className="text-xs text-muted-foreground font-medium">45%</span>
+                    <span className="font-bold text-foreground">{(subscription.remainingAmount ?? subscription.amount).toLocaleString('fr-FR')} €</span>
+                    <span className="text-xs text-muted-foreground font-medium">
+                      {subscription.amount > 0 ? `${Math.round(((subscription.remainingAmount ?? subscription.amount) / subscription.amount) * 100)}%` : '0%'}
+                    </span>
                   </div>
                 </div>
               </div>
@@ -467,34 +490,36 @@ export function SubscriptionDetailPage({ subscription, onBack }: SubscriptionDet
                 <div className="flex items-center gap-4">
                   {/* Jauge circulaire compacte */}
                   <div className="flex flex-col items-center">
-                    <div className="relative w-20 h-20">
-                      <svg className="w-20 h-20 -rotate-90">
-                        <circle
-                          cx="40"
-                          cy="40"
-                          r="34"
-                          stroke="#E5E7EB"
-                          strokeWidth="6"
-                          fill="none"
-                        />
-                        <circle
-                          cx="40"
-                          cy="40"
-                          r="34"
-                          stroke="#F59E0B"
-                          strokeWidth="6"
-                          fill="none"
-                          strokeDasharray={`${2 * Math.PI * 34}`}
-                          strokeDashoffset={`${2 * Math.PI * 34 * (1 - 0.65)}`}
-                          strokeLinecap="round"
-                        />
-                      </svg>
-                      <div className="absolute inset-0 flex flex-col items-center justify-center">
-                        <span className="text-xl font-bold text-foreground">65</span>
-                        <span className="text-[10px] text-muted-foreground">/ 100</span>
-                      </div>
-                    </div>
-                    <StatusBadge variant="warning" label={t('subscriptions.detail.header.riskMedium')} className="text-[10px] mt-1.5" />
+                    {(() => {
+                      const riskConfig = subscription.riskLevel === 'High'
+                        ? { score: 82, color: '#EF4444', variant: 'danger' as const, labelKey: 'subscriptions.detail.header.riskHigh' }
+                        : subscription.riskLevel === 'Low'
+                        ? { score: 28, color: '#10B981', variant: 'success' as const, labelKey: 'subscriptions.detail.header.riskLow' }
+                        : { score: 65, color: '#F59E0B', variant: 'warning' as const, labelKey: 'subscriptions.detail.header.riskMedium' };
+                      return (
+                        <>
+                          <div className="relative w-20 h-20">
+                            <svg className="w-20 h-20 -rotate-90">
+                              <circle cx="40" cy="40" r="34" stroke="#E5E7EB" strokeWidth="6" fill="none" />
+                              <circle
+                                cx="40" cy="40" r="34"
+                                stroke={riskConfig.color}
+                                strokeWidth="6"
+                                fill="none"
+                                strokeDasharray={`${2 * Math.PI * 34}`}
+                                strokeDashoffset={`${2 * Math.PI * 34 * (1 - riskConfig.score / 100)}`}
+                                strokeLinecap="round"
+                              />
+                            </svg>
+                            <div className="absolute inset-0 flex flex-col items-center justify-center">
+                              <span className="text-xl font-bold text-foreground">{riskConfig.score}</span>
+                              <span className="text-[10px] text-muted-foreground">/ 100</span>
+                            </div>
+                          </div>
+                          <StatusBadge variant={riskConfig.variant} label={t(riskConfig.labelKey)} className="text-[10px] mt-1.5" />
+                        </>
+                      );
+                    })()}
                   </div>
 
                   {/* Indicateurs */}
