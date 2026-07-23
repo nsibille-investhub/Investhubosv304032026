@@ -421,7 +421,8 @@
         "adverseMedia": "Médias négatifs",
         "navigateToInvestor": "Aller au profil investisseur",
         "navigateToStructure": "Aller au profil structure",
-        "navigateToPartner": "Aller au profil partenaire"
+        "navigateToPartner": "Aller au profil partenaire",
+        "copyId": "Cliquer pour copier l'ID"
       },
       "tabs": {
         "detail": "Détail",
@@ -819,7 +820,8 @@
         "documentPreview": "Aperçu du document",
         "documentPreviewDesc": "Ouverture de « {{name}} »",
         "noteAdded": "Note ajoutée",
-        "addDocumentToast": "Ajouter un document"
+        "addDocumentToast": "Ajouter un document",
+        "idCopied": "ID copié dans le presse-papier"
       }
     },
     "table": {

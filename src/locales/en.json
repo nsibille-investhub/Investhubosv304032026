@@ -421,7 +421,8 @@
         "adverseMedia": "Adverse media",
         "navigateToInvestor": "Navigate to investor profile",
         "navigateToStructure": "Navigate to structure profile",
-        "navigateToPartner": "Navigate to partner profile"
+        "navigateToPartner": "Navigate to partner profile",
+        "copyId": "Click to copy ID"
       },
       "tabs": {
         "detail": "Detail",
@@ -819,7 +820,8 @@
         "documentPreview": "Document preview",
         "documentPreviewDesc": "Opening \"{{name}}\"",
         "noteAdded": "Note added",
-        "addDocumentToast": "Add a document"
+        "addDocumentToast": "Add a document",
+        "idCopied": "ID copied to clipboard"
       }
     },
     "table": {

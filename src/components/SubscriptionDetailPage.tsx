@@ -299,16 +299,8 @@ export function SubscriptionDetailPage({ subscription, onBack }: SubscriptionDet
             {/* Left column */}
             <div className="flex-1">
               {/* Top Row - Title */}
-              <div className="flex items-start gap-3 mb-10">
-                <button
-                onClick={onBack}
-                className="p-2 hover:bg-muted rounded-lg transition-colors"
-              >
-                <ArrowLeft className="w-5 h-5 text-muted-foreground" />
-              </button>
-              
-              <div>
-                <div className="flex items-center gap-3 mb-1.5">
+              <div className="mb-10">
+              <div className="flex items-center gap-3 mb-1.5">
                   <h1 className="text-2xl font-semibold text-foreground">
                     {subscription.name}
                   </h1>
@@ -316,10 +308,17 @@ export function SubscriptionDetailPage({ subscription, onBack }: SubscriptionDet
                 </div>
 
                 <div className="flex items-center gap-3 text-sm text-muted-foreground">
-                  <div className="flex items-center gap-1.5">
+                  <button
+                    className="flex items-center gap-1.5 hover:text-foreground transition-colors cursor-pointer"
+                    onClick={() => {
+                      navigator.clipboard.writeText(String(subscription.id));
+                      toast.success(t('subscriptions.detail.toast.idCopied'));
+                    }}
+                    title={t('subscriptions.detail.header.copyId')}
+                  >
                     <Hash className="w-3.5 h-3.5" />
                     <span>{t('subscriptions.detail.header.id', { id: subscription.id })}</span>
-                  </div>
+                  </button>
                   <Separator orientation="vertical" className="h-3.5" />
                   <div className="flex items-center gap-1.5">
                     <Calendar className="w-3.5 h-3.5" />
@@ -327,7 +326,6 @@ export function SubscriptionDetailPage({ subscription, onBack }: SubscriptionDet
                   </div>
                 </div>
               </div>
-            </div>
 
             {/* Middle Row - Actors */}
             <div className="flex items-center gap-8 mb-6">
