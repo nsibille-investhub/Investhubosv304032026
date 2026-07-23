@@ -746,11 +746,11 @@ export default function App() {
                     <>
                       <span className="text-gray-400 dark:text-gray-500">{t('breadcrumb.subscriptions')}</span>
                       <span className="text-gray-300 dark:text-gray-700">/</span>
-                      <Badge className="bg-blue-50 text-blue-700 border-blue-200 font-medium">
+                      <Badge className="bg-gray-100 text-gray-700 border-gray-200 dark:bg-gray-800 dark:text-gray-300 dark:border-gray-700 font-medium">
                         {selectedSubscriptionDetail.fund.name}
                       </Badge>
                       <span className="text-gray-300 dark:text-gray-700">/</span>
-                      <Badge className="bg-purple-50 text-purple-700 border-purple-200 font-medium">
+                      <Badge className="bg-gray-100 text-gray-700 border-gray-200 dark:bg-gray-800 dark:text-gray-300 dark:border-gray-700 font-medium">
                         {t('subscriptions.detail.init.sharePrefix', { name: selectedSubscriptionDetail.fund.shareClass })}
                       </Badge>
                       <span className="text-gray-300 dark:text-gray-700">/</span>
