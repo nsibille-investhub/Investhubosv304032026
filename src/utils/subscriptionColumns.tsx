@@ -2,7 +2,7 @@ import { ReactNode } from 'react';
 
 export type SubscriptionWorkflowStatus = 'created' | 'onboarding' | 'signature' | 'counter_signature' | 'active' | 'all';
 
-export interface ColumnConfig {
+export interface SubscriptionColumnDef {
   id: string;
   /** Translation key resolved at render time via t() */
   label: string;
@@ -11,9 +11,9 @@ export interface ColumnConfig {
   align?: 'left' | 'center' | 'right';
 }
 
-const COL = (id: string, label: string, rest: Partial<ColumnConfig> = {}): ColumnConfig => ({ id, label, ...rest });
+const COL = (id: string, label: string, rest: Partial<SubscriptionColumnDef> = {}): SubscriptionColumnDef => ({ id, label, ...rest });
 
-const CREATED_COLUMNS: ColumnConfig[] = [
+const CREATED_COLUMNS: SubscriptionColumnDef[] = [
   COL('name', 'subscriptions.columns.name', { width: '300px', sortable: true }),
   COL('investor', 'subscriptions.columns.investor', { width: '250px', sortable: true }),
   COL('amount', 'subscriptions.columns.amount', { width: '150px', sortable: true, align: 'right' }),
@@ -27,7 +27,7 @@ const CREATED_COLUMNS: ColumnConfig[] = [
   COL('analyst', 'subscriptions.columns.analyst', { width: '140px', sortable: true }),
 ];
 
-const ONBOARDING_COLUMNS: ColumnConfig[] = [
+const ONBOARDING_COLUMNS: SubscriptionColumnDef[] = [
   COL('name', 'subscriptions.columns.name', { width: '300px', sortable: true }),
   COL('investor', 'subscriptions.columns.investor', { width: '250px', sortable: true }),
   COL('amount', 'subscriptions.columns.amount', { width: '150px', sortable: true, align: 'right' }),
@@ -42,7 +42,7 @@ const ONBOARDING_COLUMNS: ColumnConfig[] = [
   COL('analyst', 'subscriptions.columns.analyst', { width: '140px', sortable: true }),
 ];
 
-const SIGNATURE_COLUMNS: ColumnConfig[] = [
+const SIGNATURE_COLUMNS: SubscriptionColumnDef[] = [
   COL('name', 'subscriptions.columns.name', { width: '300px', sortable: true }),
   COL('investor', 'subscriptions.columns.investor', { width: '250px', sortable: true }),
   COL('amount', 'subscriptions.columns.amount', { width: '150px', sortable: true, align: 'right' }),
@@ -57,7 +57,7 @@ const SIGNATURE_COLUMNS: ColumnConfig[] = [
   COL('signatureChannel', 'subscriptions.columns.signatureChannel', { width: '120px', sortable: true }),
 ];
 
-const COUNTER_SIGNATURE_COLUMNS: ColumnConfig[] = [
+const COUNTER_SIGNATURE_COLUMNS: SubscriptionColumnDef[] = [
   COL('name', 'subscriptions.columns.name', { width: '300px', sortable: true }),
   COL('investor', 'subscriptions.columns.investor', { width: '250px', sortable: true }),
   COL('amount', 'subscriptions.columns.amount', { width: '150px', sortable: true, align: 'right' }),
@@ -72,7 +72,7 @@ const COUNTER_SIGNATURE_COLUMNS: ColumnConfig[] = [
   COL('daysSinceSignature', 'subscriptions.columns.daysSinceSignature', { width: '130px', sortable: true, align: 'center' }),
 ];
 
-const ACTIVE_COLUMNS: ColumnConfig[] = [
+const ACTIVE_COLUMNS: SubscriptionColumnDef[] = [
   COL('name', 'subscriptions.columns.name', { width: '300px', sortable: true }),
   COL('investor', 'subscriptions.columns.investor', { width: '250px', sortable: true }),
   COL('fund', 'subscriptions.columns.fund', { sortable: true, width: 'auto' }),
@@ -90,7 +90,7 @@ const ACTIVE_COLUMNS: ColumnConfig[] = [
   COL('activatedAt', 'subscriptions.columns.activatedAt', { width: '140px', sortable: true }),
 ];
 
-const ALL_COLUMNS: ColumnConfig[] = [
+const ALL_COLUMNS: SubscriptionColumnDef[] = [
   // Identification
   COL('name', 'subscriptions.columns.name', { width: '300px', sortable: true }),
   COL('investor', 'subscriptions.columns.investor', { width: '250px', sortable: true }),
@@ -146,7 +146,7 @@ const ALL_COLUMNS: ColumnConfig[] = [
 ];
 
 // Mapping des colonnes par statut
-export const COLUMNS_BY_STATUS: Record<SubscriptionWorkflowStatus, ColumnConfig[]> = {
+export const COLUMNS_BY_STATUS: Record<SubscriptionWorkflowStatus, SubscriptionColumnDef[]> = {
   created: CREATED_COLUMNS,
   onboarding: ONBOARDING_COLUMNS,
   signature: SIGNATURE_COLUMNS,
@@ -155,7 +155,7 @@ export const COLUMNS_BY_STATUS: Record<SubscriptionWorkflowStatus, ColumnConfig[
   all: ALL_COLUMNS,
 };
 
-export function getColumnsForStatus(status: SubscriptionWorkflowStatus): ColumnConfig[] {
+export function getColumnsForStatus(status: SubscriptionWorkflowStatus): SubscriptionColumnDef[] {
   return COLUMNS_BY_STATUS[status] || ALL_COLUMNS;
 }
 

@@ -1,18 +1,10 @@
-import { useState, useMemo, useEffect } from 'react';
-import { motion, AnimatePresence } from 'motion/react';
-import { ChevronLeft, ChevronRight, ChevronDown } from 'lucide-react';
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuTrigger,
-} from "./ui/dropdown-menu";
+import { useState, useMemo } from 'react';
 import { Subscription } from '../utils/subscriptionGenerator';
 import { toast } from 'sonner';
 import { SubscriptionDynamicTable } from './SubscriptionDynamicTable';
 import { TableSkeleton } from './TableSkeleton';
-import { DecisionPanel } from './DecisionPanel';
 import { FilterBar, FilterConfig } from './FilterBar';
+import { DataPagination } from './ui/data-pagination';
 import { useTableSearch } from '../utils/useTableSearch';
 import { SUBSCRIPTION_SEARCH_FIELDS } from '../utils/searchConfig';
 import { AskAIDialog } from './AskAIDialog';
@@ -35,8 +27,6 @@ export function SubscriptionsPage({ data, isLoading, allData, setAllData, onSubs
   const [paginationPage, setPaginationPage] = useState(1);
   const [itemsPerPage, setItemsPerPage] = useState(20);
   const [sortConfig, setSortConfig] = useState<{ key: string; direction: 'asc' | 'desc' } | null>(null);
-  const [hoveredRow, setHoveredRow] = useState<number | null>(null);
-  const [selectedSubscription, setSelectedSubscription] = useState<any | null>(null);
   const [activeFilters, setActiveFilters] = useState<Record<string, string | string[]>>({});
   const [showAIDialog, setShowAIDialog] = useState(false);
   const [aiAnalysis, setAiAnalysis] = useState<AIAnalysis | null>(null);
@@ -59,7 +49,6 @@ export function SubscriptionsPage({ data, isLoading, allData, setAllData, onSubs
     searchTerm,
     setSearchTerm,
     filteredData: searchFilteredData,
-    searchMatches,
     hasActiveSearch,
   } = useTableSearch(normalizedData, SUBSCRIPTION_SEARCH_FIELDS);
 
@@ -80,16 +69,6 @@ export function SubscriptionsPage({ data, isLoading, allData, setAllData, onSubs
     setSearchTerm(value);
     setPaginationPage(1); // Réinitialiser à la page 1 lors d'une recherche
   };
-
-  // Debug: Log search results
-  useEffect(() => {
-    if (hasActiveSearch) {
-      console.log('🔍 Search term:', searchTerm);
-      console.log('📊 Filtered data count:', searchFilteredData.length);
-      console.log('📊 Total data count:', normalizedData.length);
-      console.log('📋 Sample filtered item:', searchFilteredData[0]);
-    }
-  }, [searchTerm, searchFilteredData, normalizedData.length, hasActiveSearch]);
 
   const subscriberOptions = useMemo(() => {
     const names = new Set<string>();
@@ -275,23 +254,15 @@ export function SubscriptionsPage({ data, isLoading, allData, setAllData, onSubs
   const handlePageChange = (page: number) => {
     if (page >= 1 && page <= totalPages) {
       setPaginationPage(page);
-      setSelectedSubscription(null);
-      toast.info(t('toast.pageChanged'), {
-        description: t('subscriptions.page.pageOf', { page, total: totalPages }),
-      });
     }
   };
 
   const handleItemsPerPageChange = (newItemsPerPage: number) => {
     setItemsPerPage(newItemsPerPage);
     setPaginationPage(1);
-    toast.success(t('toast.displayUpdated'), {
-      description: t('subscriptions.page.itemsPerPageApplied', { count: newItemsPerPage }),
-    });
   };
 
-  const handleRowClick = (row: any) => {
-    console.log('Row clicked:', row);
+  const handleRowClick = (row: Subscription) => {
     if (onSubscriptionClick) {
       onSubscriptionClick(row);
     }
@@ -383,41 +354,6 @@ export function SubscriptionsPage({ data, isLoading, allData, setAllData, onSubs
     }
   };
 
-  const getPageNumbers = () => {
-    const pages: (number | string)[] = [];
-    const maxPagesToShow = 7;
-    
-    if (totalPages <= maxPagesToShow) {
-      for (let i = 1; i <= totalPages; i++) {
-        pages.push(i);
-      }
-    } else {
-      if (paginationPage <= 3) {
-        for (let i = 1; i <= 5; i++) {
-          pages.push(i);
-        }
-        pages.push('...');
-        pages.push(totalPages);
-      } else if (paginationPage >= totalPages - 2) {
-        pages.push(1);
-        pages.push('...');
-        for (let i = totalPages - 4; i <= totalPages; i++) {
-          pages.push(i);
-        }
-      } else {
-        pages.push(1);
-        pages.push('...');
-        for (let i = paginationPage - 1; i <= paginationPage + 1; i++) {
-          pages.push(i);
-        }
-        pages.push('...');
-        pages.push(totalPages);
-      }
-    }
-    
-    return pages;
-  };
-
   if (isLoading) {
     return (
       <div className="bg-white dark:bg-gray-950 rounded-2xl shadow-sm border border-gray-200 dark:border-gray-800 overflow-hidden">
@@ -428,16 +364,7 @@ export function SubscriptionsPage({ data, isLoading, allData, setAllData, onSubs
 
   return (
     <div className="flex gap-4">
-      <motion.div 
-        initial={{ opacity: 0, y: 20 }}
-        animate={{ 
-          opacity: 1, 
-          y: 0,
-          width: '100%'
-        }}
-        transition={{ delay: 0.4, type: 'spring', stiffness: 200, damping: 25 }}
-        className="bg-white dark:bg-gray-950 rounded-2xl shadow-sm border border-gray-200 dark:border-gray-800 hover:shadow-lg dark:hover:shadow-gray-900 transition-shadow duration-500 flex flex-col"
-      >
+      <div className="w-full bg-white dark:bg-gray-950 rounded-2xl shadow-sm border border-gray-200 dark:border-gray-800 flex flex-col">
         {/* Filter Bar */}
         <div className="relative z-10 p-4 border-b border-gray-100 dark:border-gray-800">
           <FilterBar
@@ -480,83 +407,17 @@ export function SubscriptionsPage({ data, isLoading, allData, setAllData, onSubs
 
         {/* Pagination */}
         {sortedData.length > 0 && (
-          <motion.div 
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            transition={{ delay: 0.6 }}
-            className="px-6 py-4 border-t border-gray-100 dark:border-gray-800 flex items-center justify-between bg-gray-50/50 dark:bg-gray-900/50"
-          >
-            <div className="text-sm text-gray-600 dark:text-gray-400">
-              {t('subscriptions.page.itemsRange', { start: startIndex + 1, end: endIndex, total: totalItems })}
-              {(hasActiveSearch || Object.keys(activeFilters).length > 0) && (
-                <span className="ml-2 text-blue-600 dark:text-blue-400">
-                  ({totalItems !== data.length ? t('subscriptions.page.filteredOf', { count: data.length }) : t('subscriptions.page.filtered')})
-                </span>
-              )}
-            </div>
-            <div className="flex items-center gap-2">
-              <motion.button
-                whileHover={{ scale: paginationPage > 1 ? 1.05 : 1, x: paginationPage > 1 ? -2 : 0 }}
-                whileTap={{ scale: paginationPage > 1 ? 0.95 : 1 }}
-                onClick={() => handlePageChange(paginationPage - 1)}
-                disabled={paginationPage === 1}
-                className={`p-2 hover:bg-white dark:hover:bg-gray-800 rounded-lg transition-all duration-200 border border-transparent hover:border-gray-200 dark:hover:border-gray-700 hover:shadow-sm ${
-                  paginationPage === 1 ? 'opacity-40 cursor-not-allowed' : ''
-                }`}
-              >
-                <ChevronLeft className="w-4 h-4 text-gray-600 dark:text-gray-400" />
-              </motion.button>
-              
-              {getPageNumbers().map((page, idx) => (
-                <motion.button
-                  key={idx}
-                  whileHover={{ scale: page !== '...' ? 1.1 : 1, y: page !== '...' ? -2 : 0 }}
-                  whileTap={{ scale: page !== '...' ? 0.95 : 1 }}
-                  onClick={() => typeof page === 'number' && handlePageChange(page)}
-                  className={`min-w-[36px] h-9 px-3 rounded-lg transition-all duration-300 ${
-                    page === paginationPage
-                      ? 'bg-primary text-primary-foreground shadow-md'
-                      : page === '...'
-                      ? 'text-gray-400 dark:text-gray-600 cursor-default'
-                      : 'hover:bg-white dark:hover:bg-gray-800 text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-100 border border-transparent hover:border-gray-200 dark:hover:border-gray-700 hover:shadow-sm'
-                  }`}
-                  disabled={page === '...'}
-                >
-                  {page}
-                </motion.button>
-              ))}
-              
-              <motion.button
-                whileHover={{ scale: paginationPage < totalPages ? 1.05 : 1, x: paginationPage < totalPages ? 2 : 0 }}
-                whileTap={{ scale: paginationPage < totalPages ? 0.95 : 1 }}
-                onClick={() => handlePageChange(paginationPage + 1)}
-                disabled={paginationPage === totalPages}
-                className={`p-2 hover:bg-white dark:hover:bg-gray-800 rounded-lg transition-all duration-200 border border-transparent hover:border-gray-200 dark:hover:border-gray-700 hover:shadow-sm ${
-                  paginationPage === totalPages ? 'opacity-40 cursor-not-allowed' : ''
-                }`}
-              >
-                <ChevronRight className="w-4 h-4 text-gray-600 dark:text-gray-400" />
-              </motion.button>
-              
-              <div className="ml-2 flex items-center gap-2">
-                <DropdownMenu>
-                  <DropdownMenuTrigger className="flex items-center gap-1 px-2 py-1 hover:bg-white dark:hover:bg-gray-800 rounded-lg transition-all duration-200 outline-none">
-                    <span className="text-sm text-gray-600 dark:text-gray-400">{t('subscriptions.page.itemsPerPage', { count: itemsPerPage })}</span>
-                    <ChevronDown className="w-4 h-4 text-gray-600 dark:text-gray-400" />
-                  </DropdownMenuTrigger>
-                  <DropdownMenuContent align="end">
-                    {[10, 20, 50, 100].map((n) => (
-                      <DropdownMenuItem key={n} onClick={() => handleItemsPerPageChange(n)} className="cursor-pointer">
-                        {t('subscriptions.page.itemsPerPageOption', { count: n })}
-                      </DropdownMenuItem>
-                    ))}
-                  </DropdownMenuContent>
-                </DropdownMenu>
-              </div>
-            </div>
-          </motion.div>
+          <DataPagination
+            currentPage={paginationPage}
+            totalPages={totalPages}
+            pageSize={itemsPerPage}
+            totalItems={totalItems}
+            onPageChange={handlePageChange}
+            onPageSizeChange={handleItemsPerPageChange}
+            pageSizeOptions={[10, 20, 50, 100]}
+          />
         )}
-      </motion.div>
+      </div>
 
       {/* AI Dialog */}
       <AskAIDialog
