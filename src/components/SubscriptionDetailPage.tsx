@@ -333,14 +333,14 @@ export function SubscriptionDetailPage({ subscription, onBack }: SubscriptionDet
             <div className="flex items-center gap-8 mb-6">
             {/* Investisseur */}
             <div className="flex items-center gap-2">
-              <div className="w-7 h-7 rounded-lg bg-muted border border-border flex items-center justify-center flex-shrink-0">
-                <User className="w-3.5 h-3.5 text-muted-foreground" />
+              <div className="w-5 h-5 rounded bg-muted flex items-center justify-center flex-shrink-0">
+                <User className="w-3 h-3 text-muted-foreground" />
               </div>
               <div>
                 <div className="text-xs text-muted-foreground leading-none mb-0.5">{t('subscriptions.detail.header.investor')}</div>
                 <Button
                   variant="link"
-                  className="p-0 h-auto font-semibold text-foreground hover:text-foreground/70 text-sm leading-tight -mt-0.5"
+                  className="p-0 h-auto font-semibold text-primary hover:text-primary/70 text-sm leading-tight -mt-0.5"
                   onClick={() => toast.info(t('subscriptions.detail.header.navigateToInvestor'))}
                 >
                   {subscription.contrepartie.investor || subscription.contrepartie.name}
@@ -351,14 +351,14 @@ export function SubscriptionDetailPage({ subscription, onBack }: SubscriptionDet
             {/* Structure */}
             {subscription.contrepartie.structure && (
               <div className="flex items-center gap-2">
-                <div className="w-7 h-7 rounded-lg bg-muted border border-border flex items-center justify-center flex-shrink-0">
-                  <Building2 className="w-3.5 h-3.5 text-muted-foreground" />
+                <div className="w-5 h-5 rounded bg-muted flex items-center justify-center flex-shrink-0">
+                  <Building2 className="w-3 h-3 text-muted-foreground" />
                 </div>
                 <div>
                   <div className="text-xs text-muted-foreground leading-none mb-0.5">{t('subscriptions.detail.header.structure')}</div>
                   <Button
                     variant="link"
-                    className="p-0 h-auto font-semibold text-foreground hover:text-foreground/70 text-sm leading-tight -mt-0.5"
+                    className="p-0 h-auto font-semibold text-primary hover:text-primary/70 text-sm leading-tight -mt-0.5"
                     onClick={() => toast.info(t('subscriptions.detail.header.navigateToStructure'))}
                   >
                     {subscription.contrepartie.structure}
@@ -370,12 +370,18 @@ export function SubscriptionDetailPage({ subscription, onBack }: SubscriptionDet
             {/* Partenaire */}
             {subscription.partenaire && (
               <div className="flex items-center gap-2">
-                <div className="w-7 h-7 rounded-lg bg-muted border border-border flex items-center justify-center flex-shrink-0">
-                  <Users className="w-3.5 h-3.5 text-muted-foreground" />
+                <div className="w-5 h-5 rounded bg-muted flex items-center justify-center flex-shrink-0">
+                  <Users className="w-3 h-3 text-muted-foreground" />
                 </div>
                 <div>
                   <div className="text-xs text-muted-foreground leading-none mb-0.5">{t('subscriptions.detail.header.partner')}</div>
-                  <div className="text-sm font-medium text-foreground leading-tight">{subscription.partenaire.name}</div>
+                  <Button
+                    variant="link"
+                    className="p-0 h-auto font-semibold text-primary hover:text-primary/70 text-sm leading-tight -mt-0.5"
+                    onClick={() => toast.info(t('subscriptions.detail.header.navigateToPartner'))}
+                  >
+                    {subscription.partenaire.name}
+                  </Button>
                   {subscription.advisor && (
                     <div className="text-xs text-muted-foreground leading-tight">{t('subscriptions.detail.header.advisor', { name: subscription.advisor })}</div>
                   )}
@@ -385,8 +391,8 @@ export function SubscriptionDetailPage({ subscription, onBack }: SubscriptionDet
 
             {/* Frais */}
             <div className="flex items-center gap-2">
-              <div className="w-7 h-7 rounded-lg bg-muted border border-border flex items-center justify-center flex-shrink-0">
-                <DollarSign className="w-3.5 h-3.5 text-muted-foreground" />
+              <div className="w-5 h-5 rounded bg-muted flex items-center justify-center flex-shrink-0">
+                <DollarSign className="w-3 h-3 text-muted-foreground" />
               </div>
               <div>
                 <div className="text-xs text-muted-foreground leading-none mb-0.5">{t('subscriptions.detail.header.fees')}</div>

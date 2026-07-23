@@ -420,7 +420,8 @@
         "sanctions": "Sanctions",
         "adverseMedia": "Médias négatifs",
         "navigateToInvestor": "Aller au profil investisseur",
-        "navigateToStructure": "Aller au profil structure"
+        "navigateToStructure": "Aller au profil structure",
+        "navigateToPartner": "Aller au profil partenaire"
       },
       "tabs": {
         "detail": "Détail",
