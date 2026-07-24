@@ -752,7 +752,7 @@ export function SubscriptionDetailPage({ subscription, onBack }: SubscriptionDet
                     <span className="text-red-500">*</span>
                   </Label>
                   <div className="flex h-10 w-full items-center gap-2 rounded-md border border-input bg-white px-3 py-2 text-sm">
-                    <PartyTypeBadge label={subscription.contrepartie.type === 'Corporate' ? t('subscriptions.newDialog.shortCorporate') : t('subscriptions.newDialog.shortIndividual')} />
+                    <PartyTypeBadge type={subscription.contrepartie.type === 'corporate' ? 'corporate' : 'individual'} label={subscription.contrepartie.type === 'corporate' ? t('subscriptions.newDialog.shortCorporate') : t('subscriptions.newDialog.shortIndividual')} />
                     <span className="font-medium text-foreground">{subscription.contrepartie.investor || subscription.contrepartie.name}</span>
                     <span className="text-xs text-muted-foreground hidden sm:inline">{subscription.email || subscription.contrepartie.mainContact}</span>
                   </div>
