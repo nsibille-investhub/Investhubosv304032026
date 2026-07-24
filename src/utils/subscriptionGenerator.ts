@@ -302,6 +302,27 @@ export interface Subscription {
     id: string;
     type: 'individual' | 'corporate';
   }[];
+  // Champs complementaires edition
+  holdingMode?: 'pur' | 'administre' | 'nominatif'; // Mode de detention
+  externalId?: string; // Identifiant externe
+  subscriptionType?: string; // Type de souscription (montant libre, etc.)
+  subscriberTitle?: 'mr' | 'mme' | 'societe'; // Civilite du souscripteur
+  legalName?: string; // Raison sociale
+  firstName?: string;
+  lastName?: string;
+  email?: string;
+  phone?: string;
+  address1?: string;
+  address2?: string;
+  postalCode?: string;
+  city?: string;
+  birthDate?: Date | null;
+  nationality?: string;
+  iban?: string;
+  bic?: string;
+  commissionRate?: number; // Taux de commission partenaire
+  excludeRetrocessions?: boolean;
+  sideLetter?: string; // Champ personnalise
 }
 
 export function generateSubscriptions(count: number): Subscription[] {
@@ -631,6 +652,33 @@ export function generateSubscriptions(count: number): Subscription[] {
       }
     }
 
+    // Champs complementaires edition
+    const holdingModes = ['pur', 'administre', 'nominatif'] as const;
+    const holdingMode = randomElement([...holdingModes]);
+    const externalId = Math.random() > 0.5 ? `EXT-${randomNumber(10000, 99999)}` : undefined;
+    const subscriptionTypeOptions = ['Montant libre', 'Engagement', 'Appel de fonds'];
+    const subscriptionType = randomElement(subscriptionTypeOptions);
+    const subscriberTitles = ['mr', 'mme', 'societe'] as const;
+    const subscriberTitle = type === 'Corporate' ? 'societe' as const : randomElement([...subscriberTitles].slice(0, 2));
+    const investorParts = (contrepartie.investor || contrepartie.name).split(' ');
+    const firstName = type === 'Individual' ? investorParts[0] : undefined;
+    const lastName = type === 'Individual' ? investorParts.slice(1).join(' ') : undefined;
+    const legalName = type === 'Corporate' ? (contrepartie.structure || contrepartie.name) : undefined;
+    const email = `${(contrepartie.investor || contrepartie.name).toLowerCase().replace(/\s+/g, '.')}@example.com`;
+    const phone = `+33 6 ${randomNumber(10, 99)} ${randomNumber(10, 99)} ${randomNumber(10, 99)} ${randomNumber(10, 99)}`;
+    const cities = ['Paris', 'Lyon', 'Marseille', 'Bordeaux', 'Nice', 'Luxembourg', 'Geneve'];
+    const subCity = randomElement(cities);
+    const address1 = `${randomNumber(1, 200)} ${randomElement(['Rue de Rivoli', 'Avenue des Champs-Elysees', 'Boulevard Haussmann', 'Rue du Faubourg Saint-Honore'])}`;
+    const postalCode = `${randomNumber(10, 99)}${randomNumber(100, 999)}`;
+    const birthDate = type === 'Individual' ? new Date(randomNumber(1950, 1995), randomNumber(0, 11), randomNumber(1, 28)) : null;
+    const nationalities = ['Francaise', 'Suisse', 'Luxembourgeoise', 'Belge', 'Monegasque'];
+    const nationality = type === 'Individual' ? randomElement(nationalities) : undefined;
+    const iban = Math.random() > 0.3 ? `FR76${randomNumber(10000, 99999)}${randomNumber(10000, 99999)}${randomNumber(10000, 99999)}${randomNumber(10, 99)}` : undefined;
+    const bic = iban ? randomElement(['CRLYFRPP', 'BNPAFRPP', 'SOGEFRPP', 'AGRIFRPP']) : undefined;
+    const commissionRate = !isDirect ? randomNumber(0, 5) : 0;
+    const excludeRetrocessions = Math.random() > 0.8;
+    const sideLetter = Math.random() > 0.8 ? 'Conditions particulieres applicables' : undefined;
+
     const subscription: Subscription = {
       id: i + 1,
       name: subscriptionName,
@@ -706,8 +754,28 @@ export function generateSubscriptions(count: number): Subscription[] {
         rejected: docRejected,
       },
       coInvestors,
+      holdingMode,
+      externalId,
+      subscriptionType,
+      subscriberTitle,
+      legalName,
+      firstName,
+      lastName,
+      email,
+      phone,
+      address1,
+      address2: undefined,
+      postalCode,
+      city: subCity,
+      birthDate,
+      nationality,
+      iban,
+      bic,
+      commissionRate,
+      excludeRetrocessions,
+      sideLetter,
     };
-    
+
     subscriptions.push(subscription);
   }
   
