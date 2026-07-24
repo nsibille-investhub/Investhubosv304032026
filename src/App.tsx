@@ -27,6 +27,7 @@ import {
   DropdownMenuTrigger,
 } from "./components/ui/dropdown-menu";
 import { ModernSidebar } from './components/ModernSidebar';
+import { MailRedirectBanner } from './components/MailRedirectBanner';
 import { EntityCard } from './components/EntityCard';
 import { DataTable } from './components/DataTable';
 import { DecisionPanel } from './components/DecisionPanel';
@@ -558,11 +559,15 @@ export default function App() {
       <AppStoreProvider>
         <ValidationStoreProvider>
         <TooltipProvider delayDuration={200}>
-          <div className="min-h-screen bg-background flex">
+          <div className="min-h-screen bg-background flex flex-col">
           <Toaster position="top-right" richColors />
-        
+
+          <MailRedirectBanner />
+
+          <div className="flex flex-1 min-h-0">
+
         {/* Sidebar */}
-        <ModernSidebar 
+        <ModernSidebar
           expanded={sidebarExpanded} 
           onToggle={() => setSidebarExpanded(!sidebarExpanded)}
           currentPage={currentPage}
@@ -1870,6 +1875,8 @@ export default function App() {
             </div>
           )}
         </div>
+      </div>
+
       </div>
 
       {/* Settings Dialog */}

@@ -16,6 +16,10 @@
     "toggleDarkMode": "Activer le mode sombre",
     "toggleLightMode": "Activer le mode clair"
   },
+  "mailRedirect": {
+    "label": "Redirection active",
+    "disable": "Désactiver"
+  },
   "whatsNew": {
     "title": "Nouveautés",
     "subtitle": "Retrouvez ici les newsletters mensuelles et l’historique des releases produit.",

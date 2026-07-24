@@ -16,6 +16,10 @@
     "toggleDarkMode": "Switch to dark mode",
     "toggleLightMode": "Switch to light mode"
   },
+  "mailRedirect": {
+    "label": "Redirect active",
+    "disable": "Disable"
+  },
   "whatsNew": {
     "title": "What's new",
     "subtitle": "Monthly newsletters and the full product release history in one place.",

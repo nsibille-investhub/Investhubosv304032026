@@ -15,12 +15,19 @@ export interface PublicationCenterSettings {
   aggregationScope: AggregationScope;
 }
 
+export interface MailRedirectState {
+  enabled: boolean;
+  emails: string[];
+}
+
 interface AppStoreContextType {
   modules: Module[];
   isModuleActive: (moduleName: string) => boolean;
   toggleModule: (moduleId: string) => void;
   publicationCenterSettings: PublicationCenterSettings;
   updatePublicationCenterSettings: (patch: Partial<PublicationCenterSettings>) => void;
+  mailRedirect: MailRedirectState;
+  setMailRedirect: (state: MailRedirectState) => void;
 }
 
 const AppStoreContext = createContext<AppStoreContextType | undefined>(undefined);
@@ -45,10 +52,17 @@ const defaultPublicationCenterSettings: PublicationCenterSettings = {
   aggregationScope: 'nominative',
 };
 
+const defaultMailRedirect: MailRedirectState = {
+  enabled: true,
+  emails: ['test@investhub.cloud'],
+};
+
 export function AppStoreProvider({ children }: { children: ReactNode }) {
   const [modules, setModules] = useState<Module[]>(defaultModules);
   const [publicationCenterSettings, setPublicationCenterSettings] =
     useState<PublicationCenterSettings>(defaultPublicationCenterSettings);
+  const [mailRedirect, setMailRedirect] =
+    useState<MailRedirectState>(defaultMailRedirect);
 
   const isModuleActive = (moduleName: string): boolean => {
     const module = modules.find(m => m.name === moduleName);
@@ -77,6 +91,8 @@ export function AppStoreProvider({ children }: { children: ReactNode }) {
         toggleModule,
         publicationCenterSettings,
         updatePublicationCenterSettings,
+        mailRedirect,
+        setMailRedirect,
       }}
     >
       {children}
