@@ -106,6 +106,7 @@ import { QueriesSettings } from './components/settings/QueriesSettings';
 import { VariableFormattingSettings } from './components/settings/VariableFormattingSettings';
 import { ToolsSettings } from './components/settings/ToolsSettings';
 import { ConventionsSettings } from './components/settings/ConventionsSettings';
+import { MailRedirectBanner } from './components/MailRedirectBanner';
 
 import { Page, getPageFromHash, navigateToPage, onHashChange } from './utils/routing';
 import './utils/hashPreserver'; // Import to execute hash preservation logic
@@ -677,6 +678,8 @@ export default function App() {
               <LanguageSwitcher />
             </div>
           </motion.header>
+
+          <MailRedirectBanner />
 
           {/* Breadcrumb (datahub and whats-new render their own PageHeader with breadcrumb) */}
           {currentPage !== 'datahub' && currentPage !== 'whats-new' && (
