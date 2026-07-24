@@ -422,6 +422,8 @@
         "navigateToInvestor": "Aller au profil investisseur",
         "navigateToStructure": "Aller au profil structure",
         "navigateToPartner": "Aller au profil partenaire",
+        "navigateToFund": "Aller au fonds",
+        "navigateToShareClass": "Aller a la part",
         "copyId": "Cliquer pour copier l'ID"
       },
       "tabs": {

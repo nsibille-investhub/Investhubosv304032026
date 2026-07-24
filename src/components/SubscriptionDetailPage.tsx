@@ -411,6 +411,19 @@ export function SubscriptionDetailPage({ subscription, onBack }: SubscriptionDet
                     <Calendar className="w-3.5 h-3.5" />
                     <span>{t('subscriptions.detail.header.createdOn', { date: subscription.createdAt.toLocaleDateString('fr-FR', { day: '2-digit', month: 'long', year: 'numeric' }) })}</span>
                   </div>
+                  <Separator orientation="vertical" className="h-3.5" />
+                  <Badge
+                    className="bg-gray-100 text-gray-700 border-gray-200 dark:bg-gray-800 dark:text-gray-300 dark:border-gray-700 font-medium cursor-pointer hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors"
+                    onClick={() => toast.info(t('subscriptions.detail.header.navigateToFund'))}
+                  >
+                    {subscription.fund.name}
+                  </Badge>
+                  <Badge
+                    className="bg-gray-100 text-gray-700 border-gray-200 dark:bg-gray-800 dark:text-gray-300 dark:border-gray-700 font-medium cursor-pointer hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors"
+                    onClick={() => toast.info(t('subscriptions.detail.header.navigateToShareClass'))}
+                  >
+                    {t('subscriptions.detail.init.sharePrefix', { name: subscription.fund.shareClass })}
+                  </Badge>
                 </div>
               </div>
 
