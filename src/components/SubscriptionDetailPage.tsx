@@ -54,6 +54,8 @@ import {
   Handshake,
   ShieldCheck,
   Info,
+  Sparkles,
+  Briefcase,
 } from 'lucide-react';
 import { motion } from 'motion/react';
 import { Badge } from './ui/badge';
@@ -69,6 +71,7 @@ import { toast } from 'sonner';
 import { getStatusColor } from '../utils/subscriptionGenerator';
 import { copyToClipboard } from '../utils/clipboard';
 import { SubscriptionInfoPopover } from './SubscriptionInfoPopover';
+import { PartyTypeBadge } from './ui/party-type-badge';
 import { QuestionActions, QuestionStatus } from './QuestionActions';
 import { QuestionCommentThread } from './QuestionCommentThread';
 import { IntegrationsTab } from './IntegrationsTab';
@@ -669,84 +672,36 @@ export function SubscriptionDetailPage({ subscription, onBack }: SubscriptionDet
       {/* Tabs - Same structure as InvestorDetailPage */}
       <div className="px-8 -mt-px bg-card border-b border-border">
         <Tabs value={activeTab} onValueChange={(v) => { setActiveTab(v); if (v !== 'detail') setIsEditing(false); }} className="w-full">
-          <TabsList className="bg-transparent border-b border-border rounded-none w-full justify-start h-auto p-0 gap-6">
-            <TabsTrigger 
-              value="detail" 
-              className="data-[state=active]:bg-transparent data-[state=active]:shadow-none data-[state=active]:border-b-2 data-[state=active]:border-primary data-[state=active]:text-primary rounded-none pb-3 pt-4 px-0 text-muted-foreground font-medium"
-            >
-              <FileText className="w-4 h-4 mr-2" />
-              {t('subscriptions.detail.tabs.detail')}
-            </TabsTrigger>
-            <TabsTrigger
-              value="onboarding"
-              className="data-[state=active]:bg-transparent data-[state=active]:shadow-none data-[state=active]:border-b-2 data-[state=active]:border-primary data-[state=active]:text-primary rounded-none pb-3 pt-4 px-0 text-muted-foreground font-medium"
-            >
-              <ClipboardList className="w-4 h-4 mr-2" />
-              {t('subscriptions.detail.tabs.onboarding')}
-              <Badge className="ml-2 bg-amber-50 text-amber-700 border-amber-200 text-xs">
-                {Math.round(subscription.completionOnboarding)}%
-              </Badge>
-            </TabsTrigger>
-            <TabsTrigger
-              value="emails"
-              className="data-[state=active]:bg-transparent data-[state=active]:shadow-none data-[state=active]:border-b-2 data-[state=active]:border-primary data-[state=active]:text-primary rounded-none pb-3 pt-4 px-0 text-muted-foreground font-medium"
-            >
-              <Mail className="w-4 h-4 mr-2" />
-              {t('subscriptions.detail.tabs.emails')}
-              <Badge className="ml-2 bg-indigo-50 text-indigo-700 border-indigo-200 text-xs">
-                {mockEmails.length}
-              </Badge>
-            </TabsTrigger>
-            <TabsTrigger 
-              value="capital-calls" 
-              className="data-[state=active]:bg-transparent data-[state=active]:shadow-none data-[state=active]:border-b-2 data-[state=active]:border-primary data-[state=active]:text-primary rounded-none pb-3 pt-4 px-0 text-muted-foreground font-medium"
-            >
-              <DollarSign className="w-4 h-4 mr-2" />
-              {t('subscriptions.detail.tabs.capitalCalls')}
-              <Badge className="ml-2 bg-emerald-50 text-emerald-700 border-emerald-200 text-xs">
-                {mockCapitalCalls.length}
-              </Badge>
-            </TabsTrigger>
-            <TabsTrigger 
-              value="risk" 
-              className="data-[state=active]:bg-transparent data-[state=active]:shadow-none data-[state=active]:border-b-2 data-[state=active]:border-primary data-[state=active]:text-primary rounded-none pb-3 pt-4 px-0 text-muted-foreground font-medium"
-            >
-              <ShieldAlert className="w-4 h-4 mr-2" />
-              {t('subscriptions.detail.tabs.risk')}
-              <Badge className="ml-2 bg-red-50 text-red-700 border-red-200 text-xs">
-                3
-              </Badge>
-            </TabsTrigger>
-            <TabsTrigger 
-              value="documents" 
-              className="data-[state=active]:bg-transparent data-[state=active]:shadow-none data-[state=active]:border-b-2 data-[state=active]:border-primary data-[state=active]:text-primary rounded-none pb-3 pt-4 px-0 text-muted-foreground font-medium"
-            >
-              <FolderOpen className="w-4 h-4 mr-2" />
-              {t('subscriptions.detail.tabs.documents')}
-              <Badge className="ml-2 bg-muted text-foreground/80 border-border text-xs">
-                {mockDocuments.length}
-              </Badge>
-            </TabsTrigger>
-            <TabsTrigger 
-              value="integrations" 
-              className="data-[state=active]:bg-transparent data-[state=active]:shadow-none data-[state=active]:border-b-2 data-[state=active]:border-primary data-[state=active]:text-primary rounded-none pb-3 pt-4 px-0 text-muted-foreground font-medium"
-            >
-              <Database className="w-4 h-4 mr-2" />
-              {t('subscriptions.detail.tabs.integrations')}
-              <Badge className="ml-2 bg-cyan-50 text-cyan-700 border-cyan-200 text-xs">
-                5
-              </Badge>
-            </TabsTrigger>
-            <TabsTrigger 
-              value="notes" 
-              className="data-[state=active]:bg-transparent data-[state=active]:shadow-none data-[state=active]:border-b-2 data-[state=active]:border-primary data-[state=active]:text-primary rounded-none pb-3 pt-4 px-0 text-muted-foreground font-medium"
-            >
-              <MessageSquare className="w-4 h-4 mr-2" />
-              {t('subscriptions.detail.tabs.notes')}
-              <Badge className="ml-2 bg-purple-50 text-purple-700 border-purple-200 text-xs">
-                {mockNotes.length}
-              </Badge>
-            </TabsTrigger>
+          <TabsList className="!bg-transparent rounded-none w-full justify-start h-auto p-0 gap-0">
+            {[
+              { value: 'detail', icon: FileText, labelKey: 'subscriptions.detail.tabs.detail' },
+              { value: 'onboarding', icon: ClipboardList, labelKey: 'subscriptions.detail.tabs.onboarding', badge: `${Math.round(subscription.completionOnboarding)}%`, badgeClass: 'bg-amber-50 text-amber-700 border-amber-200' },
+              { value: 'emails', icon: Mail, labelKey: 'subscriptions.detail.tabs.emails', badge: String(mockEmails.length), badgeClass: 'bg-indigo-50 text-indigo-700 border-indigo-200' },
+              { value: 'capital-calls', icon: DollarSign, labelKey: 'subscriptions.detail.tabs.capitalCalls', badge: String(mockCapitalCalls.length), badgeClass: 'bg-emerald-50 text-emerald-700 border-emerald-200' },
+              { value: 'risk', icon: ShieldAlert, labelKey: 'subscriptions.detail.tabs.risk', badge: '3', badgeClass: 'bg-red-50 text-red-700 border-red-200' },
+              { value: 'documents', icon: FolderOpen, labelKey: 'subscriptions.detail.tabs.documents', badge: String(mockDocuments.length), badgeClass: 'bg-muted text-foreground/80 border-border' },
+              { value: 'integrations', icon: Database, labelKey: 'subscriptions.detail.tabs.integrations', badge: '5', badgeClass: 'bg-cyan-50 text-cyan-700 border-cyan-200' },
+              { value: 'notes', icon: MessageSquare, labelKey: 'subscriptions.detail.tabs.notes', badge: String(mockNotes.length), badgeClass: 'bg-purple-50 text-purple-700 border-purple-200' },
+            ].map(tab => {
+              const Icon = tab.icon;
+              const isActive = activeTab === tab.value;
+              return (
+                <TabsTrigger
+                  key={tab.value}
+                  value={tab.value}
+                  className="!bg-transparent !rounded-none !border-0 !shadow-none px-4 pb-3 pt-4 font-medium text-muted-foreground data-[state=active]:text-primary"
+                  style={isActive ? { boxShadow: 'inset 0 -2px 0 0 var(--color-primary)' } : undefined}
+                >
+                  <Icon className="w-4 h-4 mr-2" />
+                  {t(tab.labelKey)}
+                  {tab.badge && (
+                    <Badge className={`ml-2 text-xs ${tab.badgeClass}`}>
+                      {tab.badge}
+                    </Badge>
+                  )}
+                </TabsTrigger>
+              );
+            })}
           </TabsList>
 
           {/* Tab Content - Detail */}
@@ -789,747 +744,278 @@ export function SubscriptionDetailPage({ subscription, onBack }: SubscriptionDet
                   )}
                 </div>
 
-                {/* SOUSCRIPTION */}
-                <div className="space-y-2">
-                  <Label className="text-xs uppercase tracking-wide font-semibold text-muted-foreground flex items-center gap-1.5">
-                    <FileText className="w-3.5 h-3.5" />
-                    {t('subscriptions.detail.form.subscriptionName')}
-                  </Label>
-
-                  <div className="space-y-1.5">
-                    <Label className="text-xs">{t('subscriptions.detail.form.subscriptionName')}</Label>
-                    {isEditing ? (
-                      <Input value={editForm.subscriptionName} onChange={e => setEditForm(f => ({ ...f, subscriptionName: e.target.value }))} placeholder={t('subscriptions.detail.form.subscriptionNamePlaceholder')} className="h-10" />
-                    ) : (
-                      <div className="flex h-10 w-full items-center rounded-md border border-input bg-white px-3 py-2 text-sm">
-                        <span className="text-foreground truncate">{subscription.name}</span>
-                      </div>
-                    )}
-                  </div>
-
-                  <div className="grid gap-3" style={{ gridTemplateColumns: '1fr 1fr 1fr' }}>
-                    <div className="space-y-1.5">
-                      <Label className="text-xs flex items-center gap-1.5">
-                        <Globe className="w-3.5 h-3.5" />
-                        {t('subscriptions.detail.form.language')}
-                      </Label>
-                      {isEditing ? (
-                        <Select value={editForm.language} onValueChange={v => setEditForm(f => ({ ...f, language: v as 'fr' | 'en' | 'de' | 'it' | 'es' }))}>
-                          <SelectTrigger className="h-10"><SelectValue /></SelectTrigger>
-                          <SelectContent>
-                            <SelectItem value="fr">FR</SelectItem>
-                            <SelectItem value="en">EN</SelectItem>
-                            <SelectItem value="de">DE</SelectItem>
-                            <SelectItem value="it">IT</SelectItem>
-                            <SelectItem value="es">ES</SelectItem>
-                          </SelectContent>
-                        </Select>
-                      ) : (
-                        <div className="flex h-10 w-full items-center rounded-md border border-input bg-white px-3 py-2 text-sm">
-                          <span className="text-foreground">{(subscription.language || 'fr').toUpperCase()}</span>
-                        </div>
-                      )}
-                    </div>
-                    <div className="space-y-1.5">
-                      <Label className="text-xs">{t('subscriptions.detail.form.holdingMode')}</Label>
-                      {isEditing ? (
-                        <Select value={editForm.holdingMode} onValueChange={v => setEditForm(f => ({ ...f, holdingMode: v as 'pur' | 'administre' | 'nominatif' }))}>
-                          <SelectTrigger className="h-10"><SelectValue /></SelectTrigger>
-                          <SelectContent>
-                            <SelectItem value="pur">{t('subscriptions.detail.form.holdingModePur')}</SelectItem>
-                            <SelectItem value="administre">{t('subscriptions.detail.form.holdingModeAdministre')}</SelectItem>
-                            <SelectItem value="nominatif">{t('subscriptions.detail.form.holdingModeNominatif')}</SelectItem>
-                          </SelectContent>
-                        </Select>
-                      ) : (
-                        <div className="flex h-10 w-full items-center rounded-md border border-input bg-white px-3 py-2 text-sm">
-                          <span className="text-foreground capitalize">{subscription.holdingMode === 'pur' ? t('subscriptions.detail.form.holdingModePur') : subscription.holdingMode === 'administre' ? t('subscriptions.detail.form.holdingModeAdministre') : t('subscriptions.detail.form.holdingModeNominatif')}</span>
-                        </div>
-                      )}
-                    </div>
-                    <div className="space-y-1.5">
-                      <Label className="text-xs">{t('subscriptions.detail.form.externalId')}</Label>
-                      {isEditing ? (
-                        <Input value={editForm.externalId} onChange={e => setEditForm(f => ({ ...f, externalId: e.target.value }))} placeholder={t('subscriptions.detail.form.externalIdPlaceholder')} className="h-10" />
-                      ) : (
-                        <div className="flex h-10 w-full items-center rounded-md border border-input bg-white px-3 py-2 text-sm">
-                          <span className="text-foreground truncate">{subscription.externalId || <span className="text-muted-foreground italic">{t('subscriptions.detail.form.notProvided')}</span>}</span>
-                        </div>
-                      )}
-                    </div>
-                  </div>
-                </div>
-
-                {/* PART (FONDS & MONTANTS) */}
-                <Separator />
-                <div className="space-y-2">
-                  <Label className="text-xs uppercase tracking-wide font-semibold text-muted-foreground flex items-center gap-1.5">
-                    <Landmark className="w-3.5 h-3.5" />
-                    {t('subscriptions.detail.form.sectionFund')}
-                  </Label>
-
-                  <div className="grid gap-3" style={{ gridTemplateColumns: '1.6fr 1fr' }}>
-                    <div className="space-y-1.5">
-                      <Label className="text-xs flex items-center gap-1.5">
-                        <Landmark className="w-3.5 h-3.5" />
-                        {t('subscriptions.detail.form.fund')}
-                      </Label>
-                      {isEditing ? (
-                        <Input value={editForm.fundName} onChange={e => setEditForm(f => ({ ...f, fundName: e.target.value }))} className="h-10" />
-                      ) : (
-                        <div className="flex h-10 w-full items-center rounded-md border border-input bg-white px-3 py-2 text-sm">
-                          <span className="font-medium text-foreground truncate">{subscription.fund.name}</span>
-                        </div>
-                      )}
-                    </div>
-                    <div className="space-y-1.5">
-                      <Label className="text-xs flex items-center gap-1.5">
-                        <Layers3 className="w-3.5 h-3.5" />
-                        {t('subscriptions.detail.form.shareClass')}
-                      </Label>
-                      {isEditing ? (
-                        <Input value={editForm.shareClass} onChange={e => setEditForm(f => ({ ...f, shareClass: e.target.value }))} className="h-10" />
-                      ) : (
-                        <div className="flex h-10 w-full items-center rounded-md border border-input bg-white px-3 py-2 text-sm">
-                          <span className="text-foreground">{subscription.fund.shareClass}</span>
-                        </div>
-                      )}
-                    </div>
-                  </div>
-
-                  <div className="grid gap-3" style={{ gridTemplateColumns: '1fr 1fr' }}>
-                    <div className="space-y-1.5">
-                      <Label className="text-xs">{t('subscriptions.detail.form.subscriptionType')}</Label>
-                      <div className="flex h-10 w-full items-center rounded-md border border-input bg-white px-3 py-2 text-sm">
-                        <span className="text-foreground">{subscription.subscriptionType || <span className="text-muted-foreground italic">{t('subscriptions.detail.form.notProvided')}</span>}</span>
-                      </div>
-                    </div>
-                    <div className="space-y-1.5">
-                      <Label className="text-xs">{t('subscriptions.detail.form.sharePrice')}</Label>
-                      <div className="flex h-10 w-full items-center justify-end rounded-md border border-input bg-white px-3 py-2 text-sm">
-                        <span className="font-semibold text-foreground">{subscription.quantity ? `${((subscription.amount ?? 0) / subscription.quantity).toLocaleString('fr-FR', { minimumFractionDigits: 2, maximumFractionDigits: 6 })} €` : '-'}</span>
-                      </div>
-                    </div>
-                  </div>
-
-                  <div className="grid gap-3" style={{ gridTemplateColumns: '1fr 1fr 1fr' }}>
-                    <div className="space-y-1.5">
-                      <Label className="text-xs flex items-center gap-1.5">
-                        <Euro className="w-3.5 h-3.5" />
-                        {t('subscriptions.detail.form.subscribedAmount')}
-                      </Label>
-                      {isEditing ? (
-                        <Input type="number" value={editForm.amount} onChange={e => setEditForm(f => ({ ...f, amount: Number(e.target.value) }))} className="h-10 font-semibold text-right" />
-                      ) : (
-                        <div className="flex h-10 w-full items-center justify-end rounded-md border border-input bg-white px-3 py-2 text-sm">
-                          <span className="font-semibold text-foreground">{(subscription.amount ?? 0).toLocaleString('fr-FR', { minimumFractionDigits: 2 })} €</span>
-                        </div>
-                      )}
-                    </div>
-                    <div className="space-y-1.5">
-                      <Label className="text-xs flex items-center gap-1.5">
-                        <Hash className="w-3.5 h-3.5" />
-                        {t('subscriptions.detail.form.quantity')}
-                      </Label>
-                      {isEditing ? (
-                        <Input type="number" value={editForm.quantity} onChange={e => setEditForm(f => ({ ...f, quantity: Number(e.target.value) }))} className="h-10 font-semibold text-right" />
-                      ) : (
-                        <div className="flex h-10 w-full items-center justify-end rounded-md border border-input bg-white px-3 py-2 text-sm">
-                          <span className="font-semibold text-foreground">{(subscription.quantity ?? 0).toLocaleString('fr-FR', { minimumFractionDigits: 6 })}</span>
-                        </div>
-                      )}
-                    </div>
-                    <div className="space-y-1.5">
-                      <Label className="text-xs flex items-center gap-1.5">
-                        <ShieldCheck className="w-3.5 h-3.5" />
-                        {t('subscriptions.detail.form.depositary')}
-                      </Label>
-                      {isEditing ? (
-                        <label
-                          htmlFor="detail-depositary-switch"
-                          className="flex h-10 w-full items-center justify-between gap-3 rounded-md border border-input bg-white px-3 py-2 text-sm cursor-pointer hover:bg-muted/40 transition-colors"
-                        >
-                          <span className="text-foreground truncate">
-                            {editForm.hasDepositary ? t('subscriptions.detail.form.yes') : t('subscriptions.detail.form.no')}
-                          </span>
-                          <Switch
-                            id="detail-depositary-switch"
-                            checked={editForm.hasDepositary}
-                            onCheckedChange={v => setEditForm(f => ({ ...f, hasDepositary: v }))}
-                          />
-                        </label>
-                      ) : (
-                        <div className="flex h-10 w-full items-center justify-between rounded-md border border-input bg-white px-3 py-2 text-sm">
-                          <span className="text-foreground">{subscription.hasDepositary ? t('subscriptions.detail.form.yes') : t('subscriptions.detail.form.no')}</span>
-                          <Switch checked={subscription.hasDepositary ?? false} disabled />
-                        </div>
-                      )}
-                    </div>
-                  </div>
-
-                  <div className="grid gap-3" style={{ gridTemplateColumns: '1fr 1fr' }}>
-                    <div className="space-y-1.5">
-                      <Label className="text-xs flex items-center gap-1.5">
-                        {t('subscriptions.detail.form.entryFees')}
-                      </Label>
-                      {isEditing ? (
-                        <div className="flex h-10 w-full items-center rounded-md border border-input bg-white pr-3 focus-within:ring-2 focus-within:ring-ring/40">
-                          <Input
-                            type="number"
-                            step="0.01"
-                            value={editForm.entryFees}
-                            onChange={e => setEditForm(f => ({ ...f, entryFees: Number(e.target.value) }))}
-                            className="h-full border-0 bg-transparent font-semibold text-right shadow-none focus-visible:ring-0 focus-visible:ring-offset-0"
-                          />
-                          <span className="ml-1 text-sm text-muted-foreground select-none">%</span>
-                        </div>
-                      ) : (
-                        <div className="flex h-10 w-full items-center justify-end rounded-md border border-input bg-white px-3 py-2 text-sm">
-                          <span className="font-semibold text-foreground">{(subscription.entryFees ?? 0).toFixed(2)} %</span>
-                        </div>
-                      )}
-                    </div>
-                    <div className="space-y-1.5">
-                      <Label className="text-xs flex items-center gap-1.5">
-                        {t('subscriptions.detail.form.subscriptionPremium')}
-                      </Label>
-                      {isEditing ? (
-                        <div className="flex h-10 w-full items-center rounded-md border border-input bg-white pr-3 focus-within:ring-2 focus-within:ring-ring/40">
-                          <Input
-                            type="number"
-                            value={editForm.subscriptionPremium}
-                            onChange={e => setEditForm(f => ({ ...f, subscriptionPremium: Number(e.target.value) }))}
-                            className="h-full border-0 bg-transparent font-semibold text-right shadow-none focus-visible:ring-0 focus-visible:ring-offset-0"
-                          />
-                          <span className="ml-1 text-sm text-muted-foreground select-none">€</span>
-                        </div>
-                      ) : (
-                        <div className="flex h-10 w-full items-center justify-end rounded-md border border-input bg-white px-3 py-2 text-sm">
-                          <span className="font-semibold text-foreground">{(subscription.subscriptionPremium ?? 0).toLocaleString('fr-FR', { minimumFractionDigits: 4 })} €</span>
-                        </div>
-                      )}
-                    </div>
-                  </div>
-
-                  <div className="grid gap-3" style={{ gridTemplateColumns: '1fr 1fr' }}>
-                    <div className="space-y-1.5">
-                      <Label className="text-xs">{t('subscriptions.detail.form.sepa')}</Label>
-                      {isEditing ? (
-                        <label
-                          htmlFor="detail-sepa-switch"
-                          className="flex h-10 w-full items-center justify-between gap-3 rounded-md border border-input bg-white px-3 py-2 text-sm cursor-pointer hover:bg-muted/40 transition-colors"
-                        >
-                          <span className="text-foreground truncate">
-                            {editForm.sepaEnabled ? t('subscriptions.detail.form.yes') : t('subscriptions.detail.form.no')}
-                          </span>
-                          <Switch
-                            id="detail-sepa-switch"
-                            checked={editForm.sepaEnabled}
-                            onCheckedChange={v => setEditForm(f => ({ ...f, sepaEnabled: v }))}
-                          />
-                        </label>
-                      ) : (
-                        <div className="flex h-10 w-full items-center justify-between rounded-md border border-input bg-white px-3 py-2 text-sm">
-                          <span className="text-foreground">{subscription.sepaEnabled ? t('subscriptions.detail.form.yes') : t('subscriptions.detail.form.no')}</span>
-                          <Switch checked={subscription.sepaEnabled ?? false} disabled />
-                        </div>
-                      )}
-                    </div>
-                    <div className="space-y-1.5">
-                      <Label className="text-xs">{t('subscriptions.detail.form.source')}</Label>
-                      {isEditing ? (
-                        <Select value={editForm.source} onValueChange={v => setEditForm(f => ({ ...f, source: v as 'campagne' | 'manuel' | 'import' | 'api' }))}>
-                          <SelectTrigger className="h-10"><SelectValue /></SelectTrigger>
-                          <SelectContent>
-                            <SelectItem value="manuel">Manuel</SelectItem>
-                            <SelectItem value="campagne">Campagne</SelectItem>
-                            <SelectItem value="import">Import</SelectItem>
-                            <SelectItem value="api">API</SelectItem>
-                          </SelectContent>
-                        </Select>
-                      ) : (
-                        <div className="flex h-10 w-full items-center rounded-md border border-input bg-white px-3 py-2 text-sm">
-                          <span className="text-foreground capitalize">{subscription.source || 'manuel'}</span>
-                        </div>
-                      )}
-                    </div>
-                  </div>
-
-                  {/* Amount summary */}
-                  {(subscription.amount ?? 0) > 0 && (
-                    <div className="p-2 bg-primary/5 rounded-lg border border-primary/30">
-                      <div className="space-y-1">
-                        <div className="flex justify-between text-xs">
-                          <span className="text-muted-foreground">{t('subscriptions.detail.form.subscribedAmount')}</span>
-                          <span className="font-medium text-foreground">{(subscription.amount ?? 0).toLocaleString('fr-FR')} €</span>
-                        </div>
-                        <div className="flex justify-between text-xs">
-                          <span className="text-muted-foreground">{t('subscriptions.detail.form.calledAmount')}</span>
-                          <span className="font-medium text-foreground">{(subscription.calledAmount ?? 0).toLocaleString('fr-FR')} €</span>
-                        </div>
-                        <div className="flex justify-between text-xs">
-                          <span className="text-muted-foreground">{t('subscriptions.detail.form.remainingAmount')}</span>
-                          <span className="font-medium text-foreground">{(subscription.remainingAmount ?? 0).toLocaleString('fr-FR')} €</span>
-                        </div>
-                        <div className="flex justify-between text-xs">
-                          <span className="text-muted-foreground">{t('subscriptions.detail.form.distributedAmount')}</span>
-                          <span className="font-medium text-foreground">{(subscription.distributedAmount ?? 0).toLocaleString('fr-FR')} €</span>
-                        </div>
-                        <Separator />
-                        <div className="flex justify-between">
-                          <span className="text-xs font-semibold text-foreground">{t('subscriptions.detail.form.totalOperationAmount')}</span>
-                          <span className="font-bold text-primary">
-                            {((subscription.amount ?? 0) + (subscription.subscriptionPremium ?? 0) + ((subscription.amount ?? 0) * (subscription.entryFees ?? 0) / 100)).toLocaleString('fr-FR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} €
-                          </span>
-                        </div>
-                      </div>
-                    </div>
-                  )}
-                </div>
-
-                {/* SOUSCRIPTEUR */}
-                <Separator />
+                {/* INVESTISSEUR */}
                 <div className="space-y-2">
                   <Label className="text-xs uppercase tracking-wide font-semibold text-muted-foreground flex items-center gap-1.5">
                     <User className="w-3.5 h-3.5" />
-                    {t('subscriptions.detail.form.sectionSubscriber')}
+                    {t('subscriptions.newDialog.investorLabel')}
+                    <span className="text-red-500">*</span>
                   </Label>
-
-                  <div className="grid gap-3" style={{ gridTemplateColumns: '1fr 1fr 1fr' }}>
-                    <div className="space-y-1.5">
-                      <Label className="text-xs">{t('subscriptions.detail.form.subscriberTitle')}</Label>
-                      {isEditing ? (
-                        <Select value={editForm.subscriberTitle} onValueChange={v => setEditForm(f => ({ ...f, subscriberTitle: v as 'mr' | 'mme' | 'societe' }))}>
-                          <SelectTrigger className="h-10"><SelectValue /></SelectTrigger>
-                          <SelectContent>
-                            <SelectItem value="mr">{t('subscriptions.detail.form.titleMr')}</SelectItem>
-                            <SelectItem value="mme">{t('subscriptions.detail.form.titleMme')}</SelectItem>
-                            <SelectItem value="societe">{t('subscriptions.detail.form.titleSociete')}</SelectItem>
-                          </SelectContent>
-                        </Select>
-                      ) : (
-                        <div className="flex h-10 w-full items-center rounded-md border border-input bg-white px-3 py-2 text-sm">
-                          <span className="text-foreground">{subscription.subscriberTitle === 'mr' ? t('subscriptions.detail.form.titleMr') : subscription.subscriberTitle === 'mme' ? t('subscriptions.detail.form.titleMme') : t('subscriptions.detail.form.titleSociete')}</span>
-                        </div>
-                      )}
-                    </div>
-                    <div className="space-y-1.5">
-                      <Label className="text-xs">{t('subscriptions.detail.form.structure')}</Label>
-                      {isEditing ? (
-                        <Input value={editForm.structure} onChange={e => setEditForm(f => ({ ...f, structure: e.target.value }))} placeholder={t('subscriptions.detail.form.noStructure')} className="h-10" />
-                      ) : (
-                        <div className="flex h-10 w-full items-center rounded-md border border-input bg-white px-3 py-2 text-sm">
-                          <span className="text-foreground truncate">{subscription.contrepartie.structure || <span className="text-muted-foreground italic">{t('subscriptions.detail.form.noStructure')}</span>}</span>
-                        </div>
-                      )}
-                    </div>
-                    <div className="space-y-1.5">
-                      <Label className="text-xs">{t('subscriptions.detail.form.investorType')}</Label>
-                      <div className="flex h-10 w-full items-center rounded-md border border-input bg-white px-3 py-2 text-sm">
-                        <Badge variant="outline" className="border-border capitalize">{subscription.contrepartie.type}</Badge>
-                      </div>
-                    </div>
-                  </div>
-
-                  {subscription.legalName && (
-                    <div className="space-y-1.5">
-                      <Label className="text-xs">{t('subscriptions.detail.form.legalName')}</Label>
-                      {isEditing ? (
-                        <Input value={editForm.legalName} onChange={e => setEditForm(f => ({ ...f, legalName: e.target.value }))} className="h-10" />
-                      ) : (
-                        <div className="flex h-10 w-full items-center rounded-md border border-input bg-white px-3 py-2 text-sm">
-                          <span className="text-foreground">{subscription.legalName}</span>
-                        </div>
-                      )}
-                    </div>
-                  )}
-
-                  <div className="grid gap-3" style={{ gridTemplateColumns: '1fr 1fr' }}>
-                    <div className="space-y-1.5">
-                      <Label className="text-xs">{t('subscriptions.detail.form.lastNameField')}</Label>
-                      {isEditing ? (
-                        <Input value={editForm.lastName} onChange={e => setEditForm(f => ({ ...f, lastName: e.target.value }))} className="h-10" />
-                      ) : (
-                        <div className="flex h-10 w-full items-center rounded-md border border-input bg-white px-3 py-2 text-sm">
-                          <span className="font-medium text-foreground">{subscription.lastName || (subscription.contrepartie.investor || subscription.contrepartie.name)}</span>
-                        </div>
-                      )}
-                    </div>
-                    <div className="space-y-1.5">
-                      <Label className="text-xs">{t('subscriptions.detail.form.firstNameField')}</Label>
-                      {isEditing ? (
-                        <Input value={editForm.firstName} onChange={e => setEditForm(f => ({ ...f, firstName: e.target.value }))} className="h-10" />
-                      ) : (
-                        <div className="flex h-10 w-full items-center rounded-md border border-input bg-white px-3 py-2 text-sm">
-                          <span className="text-foreground">{subscription.firstName || <span className="text-muted-foreground italic">{t('subscriptions.detail.form.notProvided')}</span>}</span>
-                        </div>
-                      )}
-                    </div>
-                  </div>
-
-                  <div className="grid gap-3" style={{ gridTemplateColumns: '1fr 1fr' }}>
-                    <div className="space-y-1.5">
-                      <Label className="text-xs">{t('subscriptions.detail.form.emailField')}</Label>
-                      {isEditing ? (
-                        <Input type="email" value={editForm.email} onChange={e => setEditForm(f => ({ ...f, email: e.target.value }))} className="h-10" />
-                      ) : (
-                        <div className="flex h-10 w-full items-center rounded-md border border-input bg-white px-3 py-2 text-sm">
-                          <span className="text-foreground truncate">{subscription.email || subscription.contrepartie.mainContact || <span className="text-muted-foreground italic">{t('subscriptions.detail.form.notProvided')}</span>}</span>
-                        </div>
-                      )}
-                    </div>
-                    <div className="space-y-1.5">
-                      <Label className="text-xs">{t('subscriptions.detail.form.phoneField')}</Label>
-                      {isEditing ? (
-                        <Input value={editForm.phone} onChange={e => setEditForm(f => ({ ...f, phone: e.target.value }))} className="h-10" />
-                      ) : (
-                        <div className="flex h-10 w-full items-center rounded-md border border-input bg-white px-3 py-2 text-sm">
-                          <span className="text-foreground">{subscription.phone || <span className="text-muted-foreground italic">{t('subscriptions.detail.form.notProvided')}</span>}</span>
-                        </div>
-                      )}
-                    </div>
-                  </div>
-
-                  <div className="grid gap-3" style={{ gridTemplateColumns: '1fr 1fr' }}>
-                    <div className="space-y-1.5">
-                      <Label className="text-xs">{t('subscriptions.detail.form.address1')}</Label>
-                      {isEditing ? (
-                        <Input value={editForm.address1} onChange={e => setEditForm(f => ({ ...f, address1: e.target.value }))} className="h-10" />
-                      ) : (
-                        <div className="flex h-10 w-full items-center rounded-md border border-input bg-white px-3 py-2 text-sm">
-                          <span className="text-foreground truncate">{subscription.address1 || <span className="text-muted-foreground italic">{t('subscriptions.detail.form.notProvided')}</span>}</span>
-                        </div>
-                      )}
-                    </div>
-                    <div className="space-y-1.5">
-                      <Label className="text-xs">{t('subscriptions.detail.form.address2')}</Label>
-                      {isEditing ? (
-                        <Input value={editForm.address2} onChange={e => setEditForm(f => ({ ...f, address2: e.target.value }))} className="h-10" />
-                      ) : (
-                        <div className="flex h-10 w-full items-center rounded-md border border-input bg-white px-3 py-2 text-sm">
-                          <span className="text-foreground truncate">{subscription.address2 || <span className="text-muted-foreground italic">{t('subscriptions.detail.form.notProvided')}</span>}</span>
-                        </div>
-                      )}
-                    </div>
-                  </div>
-
-                  <div className="grid gap-3" style={{ gridTemplateColumns: '1fr 1fr 1fr' }}>
-                    <div className="space-y-1.5">
-                      <Label className="text-xs">{t('subscriptions.detail.form.postalCodeField')}</Label>
-                      {isEditing ? (
-                        <Input value={editForm.postalCode} onChange={e => setEditForm(f => ({ ...f, postalCode: e.target.value }))} className="h-10" />
-                      ) : (
-                        <div className="flex h-10 w-full items-center rounded-md border border-input bg-white px-3 py-2 text-sm">
-                          <span className="text-foreground">{subscription.postalCode || <span className="text-muted-foreground italic">{t('subscriptions.detail.form.notProvided')}</span>}</span>
-                        </div>
-                      )}
-                    </div>
-                    <div className="space-y-1.5">
-                      <Label className="text-xs">{t('subscriptions.detail.form.cityField')}</Label>
-                      {isEditing ? (
-                        <Input value={editForm.city} onChange={e => setEditForm(f => ({ ...f, city: e.target.value }))} className="h-10" />
-                      ) : (
-                        <div className="flex h-10 w-full items-center rounded-md border border-input bg-white px-3 py-2 text-sm">
-                          <span className="text-foreground">{subscription.city || <span className="text-muted-foreground italic">{t('subscriptions.detail.form.notProvided')}</span>}</span>
-                        </div>
-                      )}
-                    </div>
-                    <div className="space-y-1.5">
-                      <Label className="text-xs">{t('subscriptions.detail.form.country')}</Label>
-                      {isEditing ? (
-                        <Input value={editForm.country} onChange={e => setEditForm(f => ({ ...f, country: e.target.value }))} className="h-10" />
-                      ) : (
-                        <div className="flex h-10 w-full items-center rounded-md border border-input bg-white px-3 py-2 text-sm">
-                          <span className="text-foreground">{subscription.contrepartie.country || <span className="text-muted-foreground italic">{t('subscriptions.detail.form.notProvided')}</span>}</span>
-                        </div>
-                      )}
-                    </div>
-                  </div>
-
-                  <div className="grid gap-3" style={{ gridTemplateColumns: '1fr 1fr' }}>
-                    <div className="space-y-1.5">
-                      <Label className="text-xs">{t('subscriptions.detail.form.birthDate')}</Label>
-                      <div className="flex h-10 w-full items-center rounded-md border border-input bg-white px-3 py-2 text-sm">
-                        <span className="text-foreground">{subscription.birthDate ? subscription.birthDate.toLocaleDateString('fr-FR') : <span className="text-muted-foreground italic">{t('subscriptions.detail.form.notProvided')}</span>}</span>
-                      </div>
-                    </div>
-                    <div className="space-y-1.5">
-                      <Label className="text-xs">{t('subscriptions.detail.form.nationalityField')}</Label>
-                      {isEditing ? (
-                        <Input value={editForm.nationality} onChange={e => setEditForm(f => ({ ...f, nationality: e.target.value }))} className="h-10" />
-                      ) : (
-                        <div className="flex h-10 w-full items-center rounded-md border border-input bg-white px-3 py-2 text-sm">
-                          <span className="text-foreground">{subscription.nationality || <span className="text-muted-foreground italic">{t('subscriptions.detail.form.notProvided')}</span>}</span>
-                        </div>
-                      )}
-                    </div>
+                  <div className="flex h-10 w-full items-center gap-2 rounded-md border border-input bg-white px-3 py-2 text-sm">
+                    <PartyTypeBadge label={subscription.contrepartie.type === 'Corporate' ? t('subscriptions.newDialog.shortCorporate') : t('subscriptions.newDialog.shortIndividual')} />
+                    <span className="font-medium text-foreground">{subscription.contrepartie.investor || subscription.contrepartie.name}</span>
+                    <span className="text-xs text-muted-foreground hidden sm:inline">{subscription.email || subscription.contrepartie.mainContact}</span>
                   </div>
                 </div>
 
-                {/* COORDONNEES BANCAIRES */}
-                <Separator />
+                {/* STRUCTURE */}
                 <div className="space-y-2">
                   <Label className="text-xs uppercase tracking-wide font-semibold text-muted-foreground flex items-center gap-1.5">
-                    <Wallet className="w-3.5 h-3.5" />
-                    {t('subscriptions.detail.form.sectionBanking')}
+                    <Building2 className="w-3.5 h-3.5" />
+                    {t('subscriptions.newDialog.structureLabel')}
                   </Label>
-
-                  <div className="grid gap-3" style={{ gridTemplateColumns: '2fr 1fr' }}>
-                    <div className="space-y-1.5">
-                      <Label className="text-xs">{t('subscriptions.detail.form.ibanField')}</Label>
-                      {isEditing ? (
-                        <Input value={editForm.iban} onChange={e => setEditForm(f => ({ ...f, iban: e.target.value }))} className="h-10 font-mono" />
-                      ) : (
-                        <div className="flex h-10 w-full items-center rounded-md border border-input bg-white px-3 py-2 text-sm">
-                          <span className="text-foreground font-mono">{subscription.iban || <span className="text-muted-foreground italic font-sans">{t('subscriptions.detail.form.notProvided')}</span>}</span>
-                        </div>
-                      )}
-                    </div>
-                    <div className="space-y-1.5">
-                      <Label className="text-xs">{t('subscriptions.detail.form.bicField')}</Label>
-                      {isEditing ? (
-                        <Input value={editForm.bic} onChange={e => setEditForm(f => ({ ...f, bic: e.target.value }))} className="h-10 font-mono" />
-                      ) : (
-                        <div className="flex h-10 w-full items-center rounded-md border border-input bg-white px-3 py-2 text-sm">
-                          <span className="text-foreground font-mono">{subscription.bic || <span className="text-muted-foreground italic font-sans">{t('subscriptions.detail.form.notProvided')}</span>}</span>
-                        </div>
-                      )}
-                    </div>
+                  <div className="flex h-10 w-full items-center gap-2 rounded-md border border-input bg-white px-3 py-2 text-sm">
+                    {subscription.contrepartie.structure ? (
+                      <>
+                        <Building2 className="w-4 h-4 text-muted-foreground flex-shrink-0" />
+                        <span className="font-medium text-foreground">{subscription.contrepartie.structure}</span>
+                        {subscription.contrepartie.country && (
+                          <Badge variant="outline" className="ml-auto text-xs">{subscription.contrepartie.country}</Badge>
+                        )}
+                      </>
+                    ) : (
+                      <>
+                        <User className="w-4 h-4 text-green-600 flex-shrink-0" />
+                        <span className="font-medium text-foreground">{t('subscriptions.newDialog.directInvestmentTitle')}</span>
+                        <span className="text-xs text-muted-foreground">{t('subscriptions.newDialog.directInvestorDesc', { name: subscription.contrepartie.investor || subscription.contrepartie.name })}</span>
+                      </>
+                    )}
                   </div>
                 </div>
 
-                {/* PARTENAIRE */}
-                <Separator />
-                <div className="space-y-2">
-                  <Label className="text-xs uppercase tracking-wide font-semibold text-muted-foreground flex items-center gap-1.5">
-                    <Handshake className="w-3.5 h-3.5" />
-                    {t('subscriptions.detail.form.sectionDistribution')}
-                  </Label>
-
+                {/* FONDS + PART */}
+                <div className="grid gap-3" style={{ gridTemplateColumns: '1.6fr 1fr' }}>
                   <div className="space-y-1.5">
-                    <Label className="text-xs">{t('subscriptions.detail.form.partner')}</Label>
+                    <Label className="text-xs flex items-center gap-1.5">
+                      <Landmark className="w-3.5 h-3.5" />
+                      {t('subscriptions.newDialog.fundLabel')}
+                      <span className="text-red-500">*</span>
+                    </Label>
                     {isEditing ? (
-                      <Input value={editForm.partner} onChange={e => setEditForm(f => ({ ...f, partner: e.target.value }))} placeholder={t('subscriptions.detail.form.noPartner')} className="h-10" />
+                      <Input value={editForm.fundName} onChange={e => setEditForm(f => ({ ...f, fundName: e.target.value }))} className="h-10" />
                     ) : (
                       <div className="flex h-10 w-full items-center rounded-md border border-input bg-white px-3 py-2 text-sm">
-                        <span className="text-foreground truncate">{subscription.partenaire?.name || <span className="text-muted-foreground italic">{t('subscriptions.detail.form.noPartner')}</span>}</span>
+                        <span className="font-medium text-foreground truncate">{subscription.fund.name}</span>
                       </div>
                     )}
                   </div>
-
-                  <div className="grid gap-3" style={{ gridTemplateColumns: '1fr 1fr' }}>
-                    <div className="space-y-1.5">
-                      <Label className="text-xs">{t('subscriptions.detail.form.advisor')}</Label>
-                      {isEditing ? (
-                        <Input value={editForm.advisor} onChange={e => setEditForm(f => ({ ...f, advisor: e.target.value }))} placeholder={t('subscriptions.detail.form.noAdvisor')} className="h-10" />
-                      ) : (
-                        <div className="flex h-10 w-full items-center rounded-md border border-input bg-white px-3 py-2 text-sm">
-                          <span className="text-foreground truncate">{subscription.advisor || <span className="text-muted-foreground italic">{t('subscriptions.detail.form.noAdvisor')}</span>}</span>
-                        </div>
-                      )}
-                    </div>
-                    <div className="space-y-1.5">
-                      <Label className="text-xs">{t('subscriptions.detail.form.commissionRate')}</Label>
-                      {isEditing ? (
-                        <div className="flex h-10 w-full items-center rounded-md border border-input bg-white pr-3 focus-within:ring-2 focus-within:ring-ring/40">
-                          <Input
-                            type="number"
-                            step="0.01"
-                            value={editForm.commissionRate}
-                            onChange={e => setEditForm(f => ({ ...f, commissionRate: Number(e.target.value) }))}
-                            className="h-full border-0 bg-transparent font-semibold text-right shadow-none focus-visible:ring-0 focus-visible:ring-offset-0"
-                          />
-                          <span className="ml-1 text-sm text-muted-foreground select-none">%</span>
-                        </div>
-                      ) : (
-                        <div className="flex h-10 w-full items-center justify-end rounded-md border border-input bg-white px-3 py-2 text-sm">
-                          <span className="font-semibold text-foreground">{(subscription.commissionRate ?? 0)} %</span>
-                        </div>
-                      )}
-                    </div>
-                  </div>
-
                   <div className="space-y-1.5">
-                    <Label className="text-xs">{t('subscriptions.detail.form.excludeRetrocessions')}</Label>
+                    <Label className="text-xs flex items-center gap-1.5">
+                      <Layers3 className="w-3.5 h-3.5" />
+                      {t('subscriptions.newDialog.partLabel')}
+                      <span className="text-red-500">*</span>
+                    </Label>
+                    {isEditing ? (
+                      <Input value={editForm.shareClass} onChange={e => setEditForm(f => ({ ...f, shareClass: e.target.value }))} className="h-10" />
+                    ) : (
+                      <div className="flex h-10 w-full items-center rounded-md border border-input bg-white px-3 py-2 text-sm">
+                        <span className="text-foreground">{t('subscriptions.newDialog.shareLabel', { class: subscription.fund.shareClass })}</span>
+                      </div>
+                    )}
+                  </div>
+                </div>
+
+                {/* NOMBRE DE PARTS + MONTANT + OPTION CONSERVATION */}
+                <div className="grid gap-3" style={{ gridTemplateColumns: '1fr 1.2fr 1.4fr' }}>
+                  <div className="space-y-1.5">
+                    <Label className="text-xs flex items-center gap-1.5">
+                      <Hash className="w-3.5 h-3.5" />
+                      {t('subscriptions.newDialog.numberOfShares')}
+                      <span className="text-red-500">*</span>
+                    </Label>
+                    {isEditing ? (
+                      <Input type="text" inputMode="decimal" value={editForm.quantity} onChange={e => setEditForm(f => ({ ...f, quantity: Number(e.target.value) }))} className="h-10 font-semibold text-right" />
+                    ) : (
+                      <div className="flex h-10 w-full items-center justify-end rounded-md border border-input bg-white px-3 py-2 text-sm">
+                        <span className="font-semibold text-foreground">{(subscription.quantity ?? 0).toLocaleString('fr-FR')}</span>
+                      </div>
+                    )}
+                  </div>
+                  <div className="space-y-1.5">
+                    <Label className="text-xs flex items-center gap-1.5">
+                      <Euro className="w-3.5 h-3.5" />
+                      {t('subscriptions.newDialog.amount')}
+                      <span className="text-red-500">*</span>
+                    </Label>
+                    {isEditing ? (
+                      <Input type="text" inputMode="decimal" value={editForm.amount} onChange={e => setEditForm(f => ({ ...f, amount: Number(e.target.value) }))} className="h-10 font-semibold text-right" />
+                    ) : (
+                      <div className="flex h-10 w-full items-center justify-end rounded-md border border-input bg-white px-3 py-2 text-sm">
+                        <span className="font-semibold text-foreground">{(subscription.amount ?? 0).toLocaleString('fr-FR')} €</span>
+                      </div>
+                    )}
+                    <span className="text-[11px] text-muted-foreground">
+                      {t('subscriptions.newDialog.pricePerShareHint', { price: subscription.quantity ? ((subscription.amount ?? 0) / subscription.quantity).toLocaleString('fr-FR', { minimumFractionDigits: 2, maximumFractionDigits: 6 }) : '-' })}
+                    </span>
+                  </div>
+                  <div className="space-y-1.5">
+                    <Label className="text-xs flex items-center gap-1.5">
+                      <ShieldCheck className="w-3.5 h-3.5" />
+                      {t('subscriptions.newDialog.custodyOptionLabel')}
+                    </Label>
                     {isEditing ? (
                       <label
-                        htmlFor="detail-retro-switch"
+                        htmlFor="detail-custody-switch"
                         className="flex h-10 w-full items-center justify-between gap-3 rounded-md border border-input bg-white px-3 py-2 text-sm cursor-pointer hover:bg-muted/40 transition-colors"
                       >
                         <span className="text-foreground truncate">
-                          {editForm.excludeRetrocessions ? t('subscriptions.detail.form.yes') : t('subscriptions.detail.form.no')}
+                          {editForm.hasDepositary ? t('subscriptions.newDialog.custodyOptionOn') : t('subscriptions.newDialog.custodyOptionOff')}
                         </span>
                         <Switch
-                          id="detail-retro-switch"
-                          checked={editForm.excludeRetrocessions}
-                          onCheckedChange={v => setEditForm(f => ({ ...f, excludeRetrocessions: v }))}
+                          id="detail-custody-switch"
+                          checked={editForm.hasDepositary}
+                          onCheckedChange={v => setEditForm(f => ({ ...f, hasDepositary: v }))}
                         />
                       </label>
                     ) : (
                       <div className="flex h-10 w-full items-center justify-between rounded-md border border-input bg-white px-3 py-2 text-sm">
-                        <span className="text-foreground">{subscription.excludeRetrocessions ? t('subscriptions.detail.form.yes') : t('subscriptions.detail.form.no')}</span>
-                        <Switch checked={subscription.excludeRetrocessions ?? false} disabled />
+                        <span className="text-foreground">{subscription.hasDepositary ? t('subscriptions.newDialog.custodyOptionOn') : t('subscriptions.newDialog.custodyOptionOff')}</span>
+                        <Switch checked={subscription.hasDepositary ?? false} disabled />
                       </div>
                     )}
                   </div>
                 </div>
 
-                {/* SIGNATURE */}
-                <Separator />
-                <div className="space-y-2">
+                <Separator className="my-2" />
+
+                {/* DISTRIBUTEUR */}
+                <div className="space-y-2 mb-3">
                   <Label className="text-xs uppercase tracking-wide font-semibold text-muted-foreground flex items-center gap-1.5">
-                    <FileCheck className="w-3.5 h-3.5" />
-                    {t('subscriptions.detail.form.sectionSignature')}
+                    <Handshake className="w-3.5 h-3.5" />
+                    {t('subscriptions.newDialog.distributorLabel')}
                   </Label>
-
-                  <div className="grid gap-3" style={{ gridTemplateColumns: '1fr 1fr' }}>
-                    <div className="space-y-1.5">
-                      <Label className="text-xs">{t('subscriptions.detail.form.signatureChannel')}</Label>
-                      {isEditing ? (
-                        <Select value={editForm.signatureChannel} onValueChange={v => setEditForm(f => ({ ...f, signatureChannel: v as 'e-signature' | 'papier' }))}>
-                          <SelectTrigger className="h-10"><SelectValue /></SelectTrigger>
-                          <SelectContent>
-                            <SelectItem value="e-signature">{t('subscriptions.detail.form.eSignature')}</SelectItem>
-                            <SelectItem value="papier">{t('subscriptions.detail.form.paper')}</SelectItem>
-                          </SelectContent>
-                        </Select>
-                      ) : (
-                        <div className="flex h-10 w-full items-center rounded-md border border-input bg-white px-3 py-2 text-sm">
-                          <span className="text-foreground">{subscription.signatureChannel === 'papier' ? t('subscriptions.detail.form.paper') : t('subscriptions.detail.form.eSignature')}</span>
-                        </div>
-                      )}
-                    </div>
-                    <div className="space-y-1.5">
-                      <Label className="text-xs">{t('subscriptions.detail.form.signatureStatus')}</Label>
-                      <div className="flex h-10 w-full items-center rounded-md border border-input bg-white px-3 py-2 text-sm">
-                        <span className="text-foreground">{subscription.signatures ? `${subscription.signatures.completed}/${subscription.signatures.required}` : '-'}</span>
-                      </div>
-                    </div>
-                  </div>
-
-                  <div className="grid gap-3" style={{ gridTemplateColumns: '1fr 1fr' }}>
-                    <div className="space-y-1.5">
-                      <Label className="text-xs">{t('subscriptions.detail.form.sentToSignatureAt')}</Label>
-                      <div className="flex h-10 w-full items-center rounded-md border border-input bg-white px-3 py-2 text-sm">
-                        <span className="text-foreground">{subscription.sentToSignatureAt ? subscription.sentToSignatureAt.toLocaleDateString('fr-FR') : <span className="text-muted-foreground italic">{t('subscriptions.detail.form.notProvided')}</span>}</span>
-                      </div>
-                    </div>
-                    <div className="space-y-1.5">
-                      <Label className="text-xs">{t('subscriptions.detail.form.investorSignedAt')}</Label>
-                      <div className="flex h-10 w-full items-center rounded-md border border-input bg-white px-3 py-2 text-sm">
-                        <span className="text-foreground">{subscription.investorSignedAt ? subscription.investorSignedAt.toLocaleDateString('fr-FR') : <span className="text-muted-foreground italic">{t('subscriptions.detail.form.notProvided')}</span>}</span>
-                      </div>
-                    </div>
-                  </div>
-
-                  <div className="grid gap-3" style={{ gridTemplateColumns: '1fr 1fr' }}>
-                    <div className="space-y-1.5">
-                      <Label className="text-xs">{t('subscriptions.detail.form.counterSignatureStatus')}</Label>
-                      <div className="flex h-10 w-full items-center rounded-md border border-input bg-white px-3 py-2 text-sm">
-                        <span className="text-foreground capitalize">{subscription.counterSignatureStatus || <span className="text-muted-foreground italic">{t('subscriptions.detail.form.notProvided')}</span>}</span>
-                      </div>
-                    </div>
-                    <div className="space-y-1.5">
-                      <Label className="text-xs">{t('subscriptions.detail.form.counterSignatureOwner')}</Label>
-                      <div className="flex h-10 w-full items-center rounded-md border border-input bg-white px-3 py-2 text-sm">
-                        <span className="text-foreground">{subscription.counterSignatureOwner || <span className="text-muted-foreground italic">{t('subscriptions.detail.form.notProvided')}</span>}</span>
-                      </div>
-                    </div>
+                  <div className="flex h-10 w-full items-center gap-2 rounded-md border border-input bg-white px-3 py-2 text-sm">
+                    {subscription.partenaire?.name && subscription.partenaire.name !== 'Direct' ? (
+                      <>
+                        <Handshake className="w-4 h-4 text-primary flex-shrink-0" />
+                        <span className="font-medium text-foreground">{subscription.partenaire.name}</span>
+                        {subscription.advisor && (
+                          <span className="text-xs text-muted-foreground ml-auto">{subscription.advisor}</span>
+                        )}
+                      </>
+                    ) : (
+                      <>
+                        <Briefcase className="w-4 h-4 text-green-600 flex-shrink-0" />
+                        <span className="font-medium text-foreground">{t('subscriptions.newDialog.directSubscription')}</span>
+                        <span className="text-xs text-muted-foreground">{t('subscriptions.newDialog.noEntryFees')}</span>
+                      </>
+                    )}
                   </div>
                 </div>
 
-                {/* CHAMPS PERSONNALISES */}
-                <Separator />
+                {/* FRAIS D'ENTREE + PRIME DE SOUSCRIPTION */}
+                <div className="grid gap-3" style={{ gridTemplateColumns: '1fr 1fr' }}>
+                  <div className="space-y-1.5">
+                    <Label className="text-xs flex items-center gap-1.5">
+                      <Euro className="w-3.5 h-3.5" />
+                      {t('subscriptions.newDialog.entryFeesEditableLabel')}
+                    </Label>
+                    {isEditing ? (
+                      <div className="flex h-10 w-full items-center rounded-md border border-input bg-white pr-3 focus-within:ring-2 focus-within:ring-ring/40">
+                        <Input
+                          type="text"
+                          inputMode="decimal"
+                          value={editForm.entryFees}
+                          onChange={e => setEditForm(f => ({ ...f, entryFees: Number(e.target.value) }))}
+                          className="h-full border-0 bg-transparent font-semibold text-right shadow-none focus-visible:ring-0 focus-visible:ring-offset-0"
+                        />
+                        <span className="ml-1 text-sm text-muted-foreground select-none">%</span>
+                      </div>
+                    ) : (
+                      <div className="flex h-10 w-full items-center justify-end rounded-md border border-input bg-white px-3 py-2 text-sm">
+                        <span className="font-semibold text-foreground">{(subscription.entryFees ?? 0).toFixed(2)} %</span>
+                      </div>
+                    )}
+                  </div>
+                  <div className="space-y-1.5">
+                    <Label className="text-xs flex items-center gap-1.5">
+                      <Sparkles className="w-3.5 h-3.5" />
+                      {t('subscriptions.newDialog.subscriptionPremiumLabel')}
+                    </Label>
+                    {isEditing ? (
+                      <div className="flex h-10 w-full items-center rounded-md border border-input bg-white pr-3 focus-within:ring-2 focus-within:ring-ring/40">
+                        <Input
+                          type="text"
+                          inputMode="decimal"
+                          value={editForm.subscriptionPremium}
+                          onChange={e => setEditForm(f => ({ ...f, subscriptionPremium: Number(e.target.value) }))}
+                          className="h-full border-0 bg-transparent font-semibold text-right shadow-none focus-visible:ring-0 focus-visible:ring-offset-0"
+                        />
+                        <span className="ml-1 text-sm text-muted-foreground select-none">€</span>
+                      </div>
+                    ) : (
+                      <div className="flex h-10 w-full items-center justify-end rounded-md border border-input bg-white px-3 py-2 text-sm">
+                        <span className="font-semibold text-foreground">{(subscription.subscriptionPremium ?? 0).toLocaleString('fr-FR', { minimumFractionDigits: 2 })} €</span>
+                      </div>
+                    )}
+                  </div>
+                </div>
+
+                {/* RECAPITULATIF MONTANTS */}
+                {(subscription.amount ?? 0) > 0 && (
+                  <motion.div
+                    initial={{ opacity: 0, y: -4 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    className="p-3 bg-primary/5 rounded-lg border border-primary/30"
+                  >
+                    <div className="space-y-1">
+                      <div className="flex justify-between text-xs">
+                        <span className="text-muted-foreground">{t('subscriptions.newDialog.amount')}</span>
+                        <span className="font-medium text-foreground">{(subscription.amount ?? 0).toLocaleString('fr-FR', { minimumFractionDigits: 2 })} €</span>
+                      </div>
+                      <div className="flex justify-between text-xs">
+                        <span className="text-muted-foreground">
+                          {t('subscriptions.newDialog.feesWithPercent', { percent: (subscription.entryFees ?? 0).toFixed(2) })}
+                          {(!subscription.partenaire?.name || subscription.partenaire.name === 'Direct') && (
+                            <Badge className="ml-1 bg-green-100 text-green-700 border-green-300 text-[10px]">{t('subscriptions.newDialog.direct')}</Badge>
+                          )}
+                        </span>
+                        <span className="font-medium text-foreground">{((subscription.amount ?? 0) * (subscription.entryFees ?? 0) / 100).toLocaleString('fr-FR', { minimumFractionDigits: 2 })} €</span>
+                      </div>
+                      {(subscription.subscriptionPremium ?? 0) > 0 && (
+                        <div className="flex justify-between text-xs">
+                          <span className="text-muted-foreground">{t('subscriptions.newDialog.subscriptionPremiumLabel')}</span>
+                          <span className="font-medium text-foreground">{(subscription.subscriptionPremium ?? 0).toLocaleString('fr-FR', { minimumFractionDigits: 2 })} €</span>
+                        </div>
+                      )}
+                      <Separator />
+                      <div className="flex justify-between">
+                        <span className="text-xs font-semibold text-foreground">{t('subscriptions.newDialog.total')}</span>
+                        <span className="font-bold text-primary">
+                          {((subscription.amount ?? 0) + (subscription.subscriptionPremium ?? 0) + ((subscription.amount ?? 0) * (subscription.entryFees ?? 0) / 100)).toLocaleString('fr-FR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} €
+                        </span>
+                      </div>
+                    </div>
+                  </motion.div>
+                )}
+
+                <Separator className="my-2" />
+
+                {/* NOTIFICATION & LANGUE */}
                 <div className="space-y-2">
                   <Label className="text-xs uppercase tracking-wide font-semibold text-muted-foreground flex items-center gap-1.5">
-                    <Settings className="w-3.5 h-3.5" />
-                    {t('subscriptions.detail.form.sectionCustomFields')}
+                    <Globe className="w-3.5 h-3.5" />
+                    {t('subscriptions.newDialog.notificationSection.title')}
                   </Label>
 
                   <div className="space-y-1.5">
-                    <Label className="text-xs">{t('subscriptions.detail.form.sideLetter')}</Label>
+                    <Label className="text-xs flex items-center gap-1.5">
+                      <Globe className="w-3.5 h-3.5" />
+                      {t('subscriptions.newDialog.notificationSection.languageLabel')}
+                    </Label>
                     {isEditing ? (
-                      <Textarea value={editForm.sideLetter} onChange={e => setEditForm(f => ({ ...f, sideLetter: e.target.value }))} rows={2} className="text-sm" />
+                      <Select value={editForm.language} onValueChange={v => setEditForm(f => ({ ...f, language: v }))}>
+                        <SelectTrigger className="h-10"><SelectValue /></SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="fr">{t('subscriptions.newDialog.notificationSection.languageOptions.fr')}</SelectItem>
+                          <SelectItem value="en">{t('subscriptions.newDialog.notificationSection.languageOptions.en')}</SelectItem>
+                        </SelectContent>
+                      </Select>
                     ) : (
-                      <div className="min-h-[40px] w-full rounded-md border border-input bg-white px-3 py-2 text-sm">
-                        <span className="text-foreground">{subscription.sideLetter || <span className="text-muted-foreground italic">{t('subscriptions.detail.form.notProvided')}</span>}</span>
+                      <div className="flex h-10 w-full items-center rounded-md border border-input bg-white px-3 py-2 text-sm">
+                        <span className="text-foreground">{(subscription.language || 'fr') === 'fr' ? t('subscriptions.newDialog.notificationSection.languageOptions.fr') : t('subscriptions.newDialog.notificationSection.languageOptions.en')}</span>
                       </div>
                     )}
-                  </div>
-
-                  {subscription.coInvestors && subscription.coInvestors.length > 0 && (
-                    <div className="space-y-1.5">
-                      <Label className="text-xs">{t('subscriptions.detail.form.coInvestors')}</Label>
-                      <div className="flex h-10 w-full items-center rounded-md border border-input bg-white px-3 py-2 text-sm">
-                        <span className="text-foreground truncate">{subscription.coInvestors.map((c: { name: string }) => c.name).join(', ')}</span>
-                      </div>
-                    </div>
-                  )}
-
-                  <div className="space-y-1.5">
-                    <Label className="text-xs">{t('subscriptions.detail.form.notes')}</Label>
-                    {isEditing ? (
-                      <Textarea value={editForm.notes} onChange={e => setEditForm(f => ({ ...f, notes: e.target.value }))} rows={3} placeholder={t('subscriptions.detail.form.notesPlaceholder')} className="text-sm" />
-                    ) : (
-                      <div className="min-h-[40px] w-full rounded-md border border-input bg-white px-3 py-2 text-sm">
-                        <span className="text-foreground whitespace-pre-wrap">{subscription.notes || <span className="text-muted-foreground italic">{t('subscriptions.detail.form.notProvided')}</span>}</span>
-                      </div>
-                    )}
-                  </div>
-                </div>
-
-                {/* DATES & STATUT */}
-                <Separator />
-                <div className="space-y-2">
-                  <Label className="text-xs uppercase tracking-wide font-semibold text-muted-foreground flex items-center gap-1.5">
-                    <Calendar className="w-3.5 h-3.5" />
-                    {t('subscriptions.detail.form.sectionDates')}
-                  </Label>
-
-                  <div className="grid gap-3" style={{ gridTemplateColumns: '1fr 1fr 1fr' }}>
-                    <div className="space-y-1.5">
-                      <Label className="text-xs">{t('subscriptions.detail.form.status')}</Label>
-                      <div className="flex h-10 w-full items-center rounded-md border border-input bg-white px-3 py-2 text-sm">
-                        <SubscriptionStatusBadge status={subscription.status} />
-                      </div>
-                    </div>
-                    <div className="space-y-1.5">
-                      <Label className="text-xs">{t('subscriptions.detail.form.riskLevel')}</Label>
-                      <div className="flex h-10 w-full items-center rounded-md border border-input bg-white px-3 py-2 text-sm">
-                        <span className="text-foreground">{subscription.riskLevel}</span>
-                      </div>
-                    </div>
-                    <div className="space-y-1.5">
-                      <Label className="text-xs">{t('subscriptions.detail.form.analyst')}</Label>
-                      {isEditing ? (
-                        <Input value={editForm.analyst} onChange={e => setEditForm(f => ({ ...f, analyst: e.target.value }))} className="h-10" />
-                      ) : (
-                        <div className="flex h-10 w-full items-center rounded-md border border-input bg-white px-3 py-2 text-sm">
-                          <span className="text-foreground truncate">{subscription.analyst || <span className="text-muted-foreground italic">{t('subscriptions.detail.form.notProvided')}</span>}</span>
-                        </div>
-                      )}
-                    </div>
-                  </div>
-
-                  <div className="grid gap-3" style={{ gridTemplateColumns: '1fr 1fr 1fr' }}>
-                    <div className="space-y-1.5">
-                      <Label className="text-xs">{t('subscriptions.detail.form.createdAt')}</Label>
-                      <div className="flex h-10 w-full items-center rounded-md border border-input bg-white px-3 py-2 text-sm">
-                        <span className="text-foreground">{subscription.createdAt?.toLocaleDateString('fr-FR') || '-'}</span>
-                      </div>
-                    </div>
-                    <div className="space-y-1.5">
-                      <Label className="text-xs">{t('subscriptions.detail.form.updatedAt')}</Label>
-                      <div className="flex h-10 w-full items-center rounded-md border border-input bg-white px-3 py-2 text-sm">
-                        <span className="text-foreground">{subscription.updatedAt?.toLocaleDateString('fr-FR') || '-'}</span>
-                      </div>
-                    </div>
-                    <div className="space-y-1.5">
-                      <Label className="text-xs">{t('subscriptions.detail.form.activatedAt')}</Label>
-                      <div className="flex h-10 w-full items-center rounded-md border border-input bg-white px-3 py-2 text-sm">
-                        <span className="text-foreground">{subscription.activatedAt ? subscription.activatedAt.toLocaleDateString('fr-FR') : <span className="text-muted-foreground italic">{t('subscriptions.detail.form.notProvided')}</span>}</span>
-                      </div>
-                    </div>
                   </div>
                 </div>
 
