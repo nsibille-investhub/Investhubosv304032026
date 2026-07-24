@@ -703,6 +703,11 @@ export default function App() {
               ) : (
                 <motion.button
                   whileHover={{ x: -2 }}
+                  onClick={() => {
+                    if (selectedSubscriptionDetail) {
+                      setSelectedSubscriptionDetail(null);
+                    }
+                  }}
                   className="text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-100 transition-colors p-1.5 hover:bg-gray-100 dark:hover:bg-gray-900 rounded-lg"
                 >
                   <ArrowLeft className="w-4 h-4" />
@@ -745,14 +750,6 @@ export default function App() {
                   {selectedSubscriptionDetail ? (
                     <>
                       <span className="text-gray-400 dark:text-gray-500">{t('breadcrumb.subscriptions')}</span>
-                      <span className="text-gray-300 dark:text-gray-700">/</span>
-                      <Badge className="bg-blue-50 text-blue-700 border-blue-200 font-medium">
-                        FutureInvest Fund
-                      </Badge>
-                      <span className="text-gray-300 dark:text-gray-700">/</span>
-                      <Badge className="bg-purple-50 text-purple-700 border-purple-200 font-medium">
-                        Part A
-                      </Badge>
                       <span className="text-gray-300 dark:text-gray-700">/</span>
                       <span className="text-gray-900 dark:text-gray-100 font-medium">{t('breadcrumb.subscriptionDetail')}</span>
                     </>

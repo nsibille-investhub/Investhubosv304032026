@@ -30,6 +30,7 @@ import {
   MousePointerClick,
   Hash,
   ChevronRight,
+  ClipboardList,
   AlertTriangle,
   ShieldAlert,
   Newspaper,
@@ -44,17 +45,33 @@ import {
   Trash2,
   FolderOpen,
   MessageSquare,
-  PenTool
+  PenTool,
+  Copy,
+  Save,
+  Landmark,
+  Layers3,
+  Euro,
+  Handshake,
+  ShieldCheck,
+  Info,
+  Sparkles,
+  Briefcase,
 } from 'lucide-react';
+import { motion } from 'motion/react';
 import { Badge } from './ui/badge';
 import { Button } from './ui/button';
 import { Card } from './ui/card';
+import { Label } from './ui/label';
 import { Separator } from './ui/separator';
 import { Textarea } from './ui/textarea';
 import { Input } from './ui/input';
+import { Switch } from './ui/switch';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from './ui/select';
 import { toast } from 'sonner';
 import { getStatusColor } from '../utils/subscriptionGenerator';
+import { copyToClipboard } from '../utils/clipboard';
 import { SubscriptionInfoPopover } from './SubscriptionInfoPopover';
+import { PartyTypeBadge } from './ui/party-type-badge';
 import { QuestionActions, QuestionStatus } from './QuestionActions';
 import { QuestionCommentThread } from './QuestionCommentThread';
 import { IntegrationsTab } from './IntegrationsTab';
@@ -79,6 +96,7 @@ import {
   mockCapitalCalls,
 } from '../utils/subscriptionDetailMockData';
 import { StatusBadge } from './StatusBadge';
+import { SubscriptionStatusBadge } from './SubscriptionStatusBadge';
 
 interface SubscriptionDetailPageProps {
   subscription: any;
@@ -89,10 +107,57 @@ interface SubscriptionDetailPageProps {
 export function SubscriptionDetailPage({ subscription, onBack }: SubscriptionDetailPageProps) {
   const { t } = useTranslation();
 
+  const [idCopied, setIdCopied] = useState(false);
   const [openSections, setOpenSections] = useState<string[]>(['identity']);
   const [note, setNote] = useState('');
   const [notes, setNotes] = useState<Array<{ text: string; date: string; author: string }>>([]);
-  
+  const [activeTab, setActiveTab] = useState('detail');
+  const [isEditing, setIsEditing] = useState(false);
+
+  const buildEditForm = () => ({
+    subscriptionName: subscription.name || '',
+    investorName: subscription.contrepartie.investor || subscription.contrepartie.name || '',
+    structure: subscription.contrepartie.structure || '',
+    mainContact: subscription.contrepartie.mainContact || '',
+    country: subscription.contrepartie.country || '',
+    fundName: subscription.fund.name || '',
+    shareClass: subscription.fund.shareClass || '',
+    quantity: subscription.quantity ?? 0,
+    amount: subscription.amount ?? 0,
+    partner: subscription.partenaire?.name || '',
+    advisor: subscription.advisor || '',
+    entryFees: subscription.entryFees ?? 0,
+    subscriptionPremium: subscription.subscriptionPremium ?? 0,
+    language: subscription.language || 'fr',
+    sepaEnabled: subscription.sepaEnabled ?? false,
+    hasDepositary: subscription.hasDepositary ?? false,
+    source: subscription.source || 'manuel',
+    analyst: subscription.analyst || '',
+    signatureChannel: subscription.signatureChannel || 'e-signature',
+    notes: subscription.notes || '',
+    holdingMode: subscription.holdingMode || 'pur',
+    externalId: subscription.externalId || '',
+    subscriptionType: subscription.subscriptionType || '',
+    subscriberTitle: subscription.subscriberTitle || 'mr',
+    legalName: subscription.legalName || '',
+    firstName: subscription.firstName || '',
+    lastName: subscription.lastName || '',
+    email: subscription.email || '',
+    phone: subscription.phone || '',
+    address1: subscription.address1 || '',
+    address2: subscription.address2 || '',
+    postalCode: subscription.postalCode || '',
+    city: subscription.city || '',
+    nationality: subscription.nationality || '',
+    iban: subscription.iban || '',
+    bic: subscription.bic || '',
+    commissionRate: subscription.commissionRate ?? 0,
+    excludeRetrocessions: subscription.excludeRetrocessions ?? false,
+    sideLetter: subscription.sideLetter || '',
+  });
+
+  const [editForm, setEditForm] = useState(buildEditForm);
+
   // Stepper state — newly created subscriptions carry initialStep=0 so they
   // land on the Initialisation step (the wizard's data is pre-filled below).
   const [currentStep, setCurrentStep] = useState(
@@ -298,48 +363,85 @@ export function SubscriptionDetailPage({ subscription, onBack }: SubscriptionDet
             {/* Left column */}
             <div className="flex-1">
               {/* Top Row - Title */}
-              <div className="flex items-start gap-3 mb-10">
-                <button
-                onClick={onBack}
-                className="p-2 hover:bg-muted rounded-lg transition-colors"
-              >
-                <ArrowLeft className="w-5 h-5 text-muted-foreground" />
-              </button>
-              
-              <div>
-                <div className="flex items-center gap-3 mb-1.5">
+              <div className="mb-10">
+              <div className="flex items-center gap-3 mb-1.5">
                   <h1 className="text-2xl font-semibold text-foreground">
-                    {subscription.name} - €1500K - FutureInvest Fund Part A
+                    {subscription.name}
                   </h1>
-                  <StatusBadge variant="success" label={t('subscriptions.detail.header.active')} />
+                  <SubscriptionStatusBadge status={subscription.status} />
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    className="gap-1.5 text-primary border-primary/30 hover:bg-primary/5 hover:text-primary"
+                    onClick={() => {
+                      setActiveTab('detail');
+                      setIsEditing(true);
+                    }}
+                  >
+                    <Edit2 className="w-3.5 h-3.5" />
+                    {t('subscriptions.detail.editButton')}
+                  </Button>
                 </div>
 
                 <div className="flex items-center gap-3 text-sm text-muted-foreground">
-                  <div className="flex items-center gap-1.5">
+                  <div className="flex items-center gap-1.5 group">
                     <Hash className="w-3.5 h-3.5" />
                     <span>{t('subscriptions.detail.header.id', { id: subscription.id })}</span>
+                    <motion.button
+                      whileHover={{ scale: 1.1 }}
+                      whileTap={{ scale: 0.9 }}
+                      onClick={async () => {
+                        const idText = `SUB-${subscription.id}`;
+                        const success = await copyToClipboard(idText);
+                        if (success) {
+                          setIdCopied(true);
+                          toast.success(t('subscriptions.detail.toast.idCopied'), { description: idText });
+                          setTimeout(() => setIdCopied(false), 2000);
+                        }
+                      }}
+                      className="opacity-0 group-hover:opacity-100 transition-opacity p-0.5 hover:bg-muted rounded"
+                      title={t('subscriptions.detail.header.copyId')}
+                    >
+                      {idCopied ? (
+                        <Check className="w-3.5 h-3.5 text-green-600" />
+                      ) : (
+                        <Copy className="w-3.5 h-3.5 text-muted-foreground hover:text-foreground" />
+                      )}
+                    </motion.button>
                   </div>
                   <Separator orientation="vertical" className="h-3.5" />
                   <div className="flex items-center gap-1.5">
                     <Calendar className="w-3.5 h-3.5" />
                     <span>{t('subscriptions.detail.header.createdOn', { date: subscription.createdAt.toLocaleDateString('fr-FR', { day: '2-digit', month: 'long', year: 'numeric' }) })}</span>
                   </div>
+                  <Separator orientation="vertical" className="h-3.5" />
+                  <Badge
+                    className="bg-gray-100 text-gray-700 border-gray-200 dark:bg-gray-800 dark:text-gray-300 dark:border-gray-700 font-medium cursor-pointer hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors"
+                    onClick={() => toast.info(t('subscriptions.detail.header.navigateToFund'))}
+                  >
+                    {subscription.fund.name}
+                  </Badge>
+                  <Badge
+                    className="bg-gray-100 text-gray-700 border-gray-200 dark:bg-gray-800 dark:text-gray-300 dark:border-gray-700 font-medium cursor-pointer hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors"
+                    onClick={() => toast.info(t('subscriptions.detail.header.navigateToShareClass'))}
+                  >
+                    {t('subscriptions.detail.init.sharePrefix', { name: subscription.fund.shareClass })}
+                  </Badge>
                 </div>
               </div>
-            </div>
 
             {/* Middle Row - Actors */}
             <div className="flex items-center gap-8 mb-6">
             {/* Investisseur */}
             <div className="flex items-center gap-2">
-              <div className="w-7 h-7 rounded-lg bg-muted border border-border flex items-center justify-center flex-shrink-0">
-                <User className="w-3.5 h-3.5 text-muted-foreground" />
+              <div className="w-5 h-5 rounded bg-muted flex items-center justify-center flex-shrink-0">
+                <User className="w-3 h-3 text-muted-foreground" />
               </div>
               <div>
                 <div className="text-xs text-muted-foreground leading-none mb-0.5">{t('subscriptions.detail.header.investor')}</div>
                 <Button
                   variant="link"
-                  className="p-0 h-auto font-semibold text-foreground hover:text-foreground/70 text-sm leading-tight -mt-0.5"
+                  className="p-0 h-auto font-semibold text-primary hover:text-primary/70 text-sm leading-tight -mt-0.5"
                   onClick={() => toast.info(t('subscriptions.detail.header.navigateToInvestor'))}
                 >
                   {subscription.contrepartie.investor || subscription.contrepartie.name}
@@ -348,45 +450,67 @@ export function SubscriptionDetailPage({ subscription, onBack }: SubscriptionDet
             </div>
 
             {/* Structure */}
-            {subscription.type !== 'Personne Physique' && (
+            {subscription.contrepartie.structure && (
               <div className="flex items-center gap-2">
-                <div className="w-7 h-7 rounded-lg bg-muted border border-border flex items-center justify-center flex-shrink-0">
-                  <Building2 className="w-3.5 h-3.5 text-muted-foreground" />
+                <div className="w-5 h-5 rounded bg-muted flex items-center justify-center flex-shrink-0">
+                  <Building2 className="w-3 h-3 text-muted-foreground" />
                 </div>
                 <div>
                   <div className="text-xs text-muted-foreground leading-none mb-0.5">{t('subscriptions.detail.header.structure')}</div>
                   <Button
                     variant="link"
-                    className="p-0 h-auto font-semibold text-foreground hover:text-foreground/70 text-sm leading-tight -mt-0.5"
+                    className="p-0 h-auto font-semibold text-primary hover:text-primary/70 text-sm leading-tight -mt-0.5"
                     onClick={() => toast.info(t('subscriptions.detail.header.navigateToStructure'))}
                   >
-                    Alpha Group Holdings
+                    {subscription.contrepartie.structure}
                   </Button>
                 </div>
               </div>
             )}
 
             {/* Partenaire */}
-            <div className="flex items-center gap-2">
-              <div className="w-7 h-7 rounded-lg bg-muted border border-border flex items-center justify-center flex-shrink-0">
-                <Users className="w-3.5 h-3.5 text-muted-foreground" />
+            {subscription.partenaire && (
+              <div className="flex items-center gap-2">
+                <div className="w-5 h-5 rounded bg-muted flex items-center justify-center flex-shrink-0">
+                  <Users className="w-3 h-3 text-muted-foreground" />
+                </div>
+                <div>
+                  <div className="text-xs text-muted-foreground leading-none mb-0.5">{t('subscriptions.detail.header.partner')}</div>
+                  <Button
+                    variant="link"
+                    className="p-0 h-auto font-semibold text-primary hover:text-primary/70 text-sm leading-tight -mt-0.5"
+                    onClick={() => toast.info(t('subscriptions.detail.header.navigateToPartner'))}
+                  >
+                    {subscription.partenaire.name}
+                  </Button>
+                  {subscription.advisor && (
+                    <div className="text-xs text-muted-foreground leading-tight">{t('subscriptions.detail.header.advisor', { name: subscription.advisor })}</div>
+                  )}
+                </div>
               </div>
-              <div>
-                <div className="text-xs text-muted-foreground leading-none mb-0.5">{t('subscriptions.detail.header.partner')}</div>
-                <div className="text-sm font-medium text-foreground leading-tight">UFF</div>
-                <div className="text-xs text-muted-foreground leading-tight">{t('subscriptions.detail.header.advisor', { name: 'Eric MAZEAU' })}</div>
-              </div>
-            </div>
+            )}
 
             {/* Frais */}
             <div className="flex items-center gap-2">
-              <div className="w-7 h-7 rounded-lg bg-muted border border-border flex items-center justify-center flex-shrink-0">
-                <DollarSign className="w-3.5 h-3.5 text-muted-foreground" />
+              <div className="w-5 h-5 rounded bg-muted flex items-center justify-center flex-shrink-0">
+                <DollarSign className="w-3 h-3 text-muted-foreground" />
               </div>
               <div>
                 <div className="text-xs text-muted-foreground leading-none mb-0.5">{t('subscriptions.detail.header.fees')}</div>
-                <div className="text-xs text-foreground/80 leading-tight">{t('subscriptions.detail.header.entryFees', { amount: '3 750,00 €' })}</div>
-                <div className="text-xs text-foreground/80 leading-tight">{t('subscriptions.detail.header.subscriptionPremium', { amount: '84,48 €' })}</div>
+                <div className="text-xs text-foreground/80 leading-tight">
+                  {t('subscriptions.detail.header.entryFees', {
+                    amount: subscription.entryFees != null
+                      ? `${((subscription.amount * subscription.entryFees) / 100).toLocaleString('fr-FR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} €`
+                      : '0,00 €'
+                  })}
+                </div>
+                <div className="text-xs text-foreground/80 leading-tight">
+                  {t('subscriptions.detail.header.subscriptionPremium', {
+                    amount: subscription.subscriptionPremium != null
+                      ? `${subscription.subscriptionPremium.toLocaleString('fr-FR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} €`
+                      : '0,00 €'
+                  })}
+                </div>
               </div>
             </div>
             </div>
@@ -401,8 +525,8 @@ export function SubscriptionDetailPage({ subscription, onBack }: SubscriptionDet
                 <div>
                   <div className="text-xs text-muted-foreground leading-tight">{t('subscriptions.detail.header.subscribedAmount')}</div>
                   <div className="flex items-baseline gap-1.5">
-                    <span className="font-bold text-foreground">500 000 €</span>
-                    <span className="text-xs text-muted-foreground font-medium">{t('subscriptions.detail.header.shares', { count: '5 000' })}</span>
+                    <span className="font-bold text-foreground">{subscription.amount.toLocaleString('fr-FR')} €</span>
+                    <span className="text-xs text-muted-foreground font-medium">{t('subscriptions.detail.header.shares', { count: subscription.quantity.toLocaleString('fr-FR') })}</span>
                   </div>
                 </div>
               </div>
@@ -415,8 +539,10 @@ export function SubscriptionDetailPage({ subscription, onBack }: SubscriptionDet
                 <div>
                   <div className="text-xs text-muted-foreground leading-tight">{t('subscriptions.detail.header.calledAmount')}</div>
                   <div className="flex items-baseline gap-1.5">
-                    <span className="font-bold text-foreground">275 000 €</span>
-                    <span className="text-xs text-muted-foreground font-medium">55%</span>
+                    <span className="font-bold text-foreground">{(subscription.calledAmount ?? 0).toLocaleString('fr-FR')} €</span>
+                    <span className="text-xs text-muted-foreground font-medium">
+                      {subscription.amount > 0 ? `${Math.round(((subscription.calledAmount ?? 0) / subscription.amount) * 100)}%` : '0%'}
+                    </span>
                   </div>
                 </div>
               </div>
@@ -429,8 +555,10 @@ export function SubscriptionDetailPage({ subscription, onBack }: SubscriptionDet
                 <div>
                   <div className="text-xs text-muted-foreground leading-tight">{t('subscriptions.detail.header.distributedAmount')}</div>
                   <div className="flex items-baseline gap-1.5">
-                    <span className="font-bold text-foreground">42 500 €</span>
-                    <span className="text-xs text-muted-foreground font-medium">8.5%</span>
+                    <span className="font-bold text-foreground">{(subscription.distributedAmount ?? 0).toLocaleString('fr-FR')} €</span>
+                    <span className="text-xs text-muted-foreground font-medium">
+                      {subscription.amount > 0 ? `${Math.round(((subscription.distributedAmount ?? 0) / subscription.amount) * 100)}%` : '0%'}
+                    </span>
                   </div>
                 </div>
               </div>
@@ -443,8 +571,10 @@ export function SubscriptionDetailPage({ subscription, onBack }: SubscriptionDet
                 <div>
                   <div className="text-xs text-muted-foreground leading-tight">{t('subscriptions.detail.header.remainingBalance')}</div>
                   <div className="flex items-baseline gap-1.5">
-                    <span className="font-bold text-foreground">225 000 €</span>
-                    <span className="text-xs text-muted-foreground font-medium">45%</span>
+                    <span className="font-bold text-foreground">{(subscription.remainingAmount ?? subscription.amount).toLocaleString('fr-FR')} €</span>
+                    <span className="text-xs text-muted-foreground font-medium">
+                      {subscription.amount > 0 ? `${Math.round(((subscription.remainingAmount ?? subscription.amount) / subscription.amount) * 100)}%` : '0%'}
+                    </span>
                   </div>
                 </div>
               </div>
@@ -467,34 +597,36 @@ export function SubscriptionDetailPage({ subscription, onBack }: SubscriptionDet
                 <div className="flex items-center gap-4">
                   {/* Jauge circulaire compacte */}
                   <div className="flex flex-col items-center">
-                    <div className="relative w-20 h-20">
-                      <svg className="w-20 h-20 -rotate-90">
-                        <circle
-                          cx="40"
-                          cy="40"
-                          r="34"
-                          stroke="#E5E7EB"
-                          strokeWidth="6"
-                          fill="none"
-                        />
-                        <circle
-                          cx="40"
-                          cy="40"
-                          r="34"
-                          stroke="#F59E0B"
-                          strokeWidth="6"
-                          fill="none"
-                          strokeDasharray={`${2 * Math.PI * 34}`}
-                          strokeDashoffset={`${2 * Math.PI * 34 * (1 - 0.65)}`}
-                          strokeLinecap="round"
-                        />
-                      </svg>
-                      <div className="absolute inset-0 flex flex-col items-center justify-center">
-                        <span className="text-xl font-bold text-foreground">65</span>
-                        <span className="text-[10px] text-muted-foreground">/ 100</span>
-                      </div>
-                    </div>
-                    <StatusBadge variant="warning" label={t('subscriptions.detail.header.riskMedium')} className="text-[10px] mt-1.5" />
+                    {(() => {
+                      const riskConfig = subscription.riskLevel === 'High'
+                        ? { score: 82, color: '#EF4444', variant: 'danger' as const, labelKey: 'subscriptions.detail.header.riskHigh' }
+                        : subscription.riskLevel === 'Low'
+                        ? { score: 28, color: '#10B981', variant: 'success' as const, labelKey: 'subscriptions.detail.header.riskLow' }
+                        : { score: 65, color: '#F59E0B', variant: 'warning' as const, labelKey: 'subscriptions.detail.header.riskMedium' };
+                      return (
+                        <>
+                          <div className="relative w-20 h-20">
+                            <svg className="w-20 h-20 -rotate-90">
+                              <circle cx="40" cy="40" r="34" stroke="#E5E7EB" strokeWidth="6" fill="none" />
+                              <circle
+                                cx="40" cy="40" r="34"
+                                stroke={riskConfig.color}
+                                strokeWidth="6"
+                                fill="none"
+                                strokeDasharray={`${2 * Math.PI * 34}`}
+                                strokeDashoffset={`${2 * Math.PI * 34 * (1 - riskConfig.score / 100)}`}
+                                strokeLinecap="round"
+                              />
+                            </svg>
+                            <div className="absolute inset-0 flex flex-col items-center justify-center">
+                              <span className="text-xl font-bold text-foreground">{riskConfig.score}</span>
+                              <span className="text-[10px] text-muted-foreground">/ 100</span>
+                            </div>
+                          </div>
+                          <StatusBadge variant={riskConfig.variant} label={t(riskConfig.labelKey)} className="text-[10px] mt-1.5" />
+                        </>
+                      );
+                    })()}
                   </div>
 
                   {/* Indicateurs */}
@@ -539,91 +671,369 @@ export function SubscriptionDetailPage({ subscription, onBack }: SubscriptionDet
 
       {/* Tabs - Same structure as InvestorDetailPage */}
       <div className="px-8 -mt-px bg-card border-b border-border">
-        <Tabs defaultValue="detail" className="w-full">
-          <TabsList className="bg-transparent border-b border-border rounded-none w-full justify-start h-auto p-0 gap-6">
-            <TabsTrigger 
-              value="detail" 
-              className="data-[state=active]:bg-transparent data-[state=active]:shadow-none data-[state=active]:border-b-2 data-[state=active]:border-primary data-[state=active]:text-primary rounded-none pb-3 pt-4 px-0 text-muted-foreground font-medium"
-            >
-              <FileText className="w-4 h-4 mr-2" />
-              {t('subscriptions.detail.tabs.detail')}
-            </TabsTrigger>
-            <TabsTrigger 
-              value="emails" 
-              className="data-[state=active]:bg-transparent data-[state=active]:shadow-none data-[state=active]:border-b-2 data-[state=active]:border-primary data-[state=active]:text-primary rounded-none pb-3 pt-4 px-0 text-muted-foreground font-medium"
-            >
-              <Mail className="w-4 h-4 mr-2" />
-              {t('subscriptions.detail.tabs.emails')}
-              <Badge className="ml-2 bg-indigo-50 text-indigo-700 border-indigo-200 text-xs">
-                {mockEmails.length}
-              </Badge>
-            </TabsTrigger>
-            <TabsTrigger 
-              value="capital-calls" 
-              className="data-[state=active]:bg-transparent data-[state=active]:shadow-none data-[state=active]:border-b-2 data-[state=active]:border-primary data-[state=active]:text-primary rounded-none pb-3 pt-4 px-0 text-muted-foreground font-medium"
-            >
-              <DollarSign className="w-4 h-4 mr-2" />
-              {t('subscriptions.detail.tabs.capitalCalls')}
-              <Badge className="ml-2 bg-emerald-50 text-emerald-700 border-emerald-200 text-xs">
-                {mockCapitalCalls.length}
-              </Badge>
-            </TabsTrigger>
-            <TabsTrigger 
-              value="risk" 
-              className="data-[state=active]:bg-transparent data-[state=active]:shadow-none data-[state=active]:border-b-2 data-[state=active]:border-primary data-[state=active]:text-primary rounded-none pb-3 pt-4 px-0 text-muted-foreground font-medium"
-            >
-              <ShieldAlert className="w-4 h-4 mr-2" />
-              {t('subscriptions.detail.tabs.risk')}
-              <Badge className="ml-2 bg-red-50 text-red-700 border-red-200 text-xs">
-                3
-              </Badge>
-            </TabsTrigger>
-            <TabsTrigger 
-              value="documents" 
-              className="data-[state=active]:bg-transparent data-[state=active]:shadow-none data-[state=active]:border-b-2 data-[state=active]:border-primary data-[state=active]:text-primary rounded-none pb-3 pt-4 px-0 text-muted-foreground font-medium"
-            >
-              <FolderOpen className="w-4 h-4 mr-2" />
-              {t('subscriptions.detail.tabs.documents')}
-              <Badge className="ml-2 bg-muted text-foreground/80 border-border text-xs">
-                {mockDocuments.length}
-              </Badge>
-            </TabsTrigger>
-            <TabsTrigger 
-              value="integrations" 
-              className="data-[state=active]:bg-transparent data-[state=active]:shadow-none data-[state=active]:border-b-2 data-[state=active]:border-primary data-[state=active]:text-primary rounded-none pb-3 pt-4 px-0 text-muted-foreground font-medium"
-            >
-              <Database className="w-4 h-4 mr-2" />
-              {t('subscriptions.detail.tabs.integrations')}
-              <Badge className="ml-2 bg-cyan-50 text-cyan-700 border-cyan-200 text-xs">
-                5
-              </Badge>
-            </TabsTrigger>
-            <TabsTrigger 
-              value="notes" 
-              className="data-[state=active]:bg-transparent data-[state=active]:shadow-none data-[state=active]:border-b-2 data-[state=active]:border-primary data-[state=active]:text-primary rounded-none pb-3 pt-4 px-0 text-muted-foreground font-medium"
-            >
-              <MessageSquare className="w-4 h-4 mr-2" />
-              {t('subscriptions.detail.tabs.notes')}
-              <Badge className="ml-2 bg-purple-50 text-purple-700 border-purple-200 text-xs">
-                {mockNotes.length}
-              </Badge>
-            </TabsTrigger>
+        <Tabs value={activeTab} onValueChange={(v) => { setActiveTab(v); if (v !== 'detail') setIsEditing(false); }} className="w-full">
+          <TabsList className="!bg-transparent rounded-none w-full justify-start h-auto p-0 gap-0">
+            {[
+              { value: 'detail', icon: FileText, labelKey: 'subscriptions.detail.tabs.detail' },
+              { value: 'onboarding', icon: ClipboardList, labelKey: 'subscriptions.detail.tabs.onboarding', badge: `${Math.round(subscription.completionOnboarding)}%`, badgeClass: 'bg-amber-50 text-amber-700 border-amber-200' },
+              { value: 'emails', icon: Mail, labelKey: 'subscriptions.detail.tabs.emails', badge: String(mockEmails.length), badgeClass: 'bg-indigo-50 text-indigo-700 border-indigo-200' },
+              { value: 'capital-calls', icon: DollarSign, labelKey: 'subscriptions.detail.tabs.capitalCalls', badge: String(mockCapitalCalls.length), badgeClass: 'bg-emerald-50 text-emerald-700 border-emerald-200' },
+              { value: 'risk', icon: ShieldAlert, labelKey: 'subscriptions.detail.tabs.risk', badge: '3', badgeClass: 'bg-red-50 text-red-700 border-red-200' },
+              { value: 'documents', icon: FolderOpen, labelKey: 'subscriptions.detail.tabs.documents', badge: String(mockDocuments.length), badgeClass: 'bg-muted text-foreground/80 border-border' },
+              { value: 'integrations', icon: Database, labelKey: 'subscriptions.detail.tabs.integrations', badge: '5', badgeClass: 'bg-cyan-50 text-cyan-700 border-cyan-200' },
+              { value: 'notes', icon: MessageSquare, labelKey: 'subscriptions.detail.tabs.notes', badge: String(mockNotes.length), badgeClass: 'bg-purple-50 text-purple-700 border-purple-200' },
+            ].map(tab => {
+              const Icon = tab.icon;
+              const isActive = activeTab === tab.value;
+              return (
+                <TabsTrigger
+                  key={tab.value}
+                  value={tab.value}
+                  className="!bg-transparent !rounded-none !border-0 !shadow-none px-4 pb-3 pt-4 font-medium text-muted-foreground data-[state=active]:text-primary"
+                  style={isActive ? { boxShadow: 'inset 0 -2px 0 0 var(--color-primary)' } : undefined}
+                >
+                  <Icon className="w-4 h-4 mr-2" />
+                  {t(tab.labelKey)}
+                  {tab.badge && (
+                    <Badge className={`ml-2 text-xs ${tab.badgeClass}`}>
+                      {tab.badge}
+                    </Badge>
+                  )}
+                </TabsTrigger>
+              );
+            })}
           </TabsList>
 
           {/* Tab Content - Detail */}
           <TabsContent value="detail" className="mt-0">
             <div className="px-8 py-6">
+              <div className="flex flex-col gap-6">
+
+                {/* Edit / Save / Cancel actions */}
+                <div className="flex items-center justify-end">
+                  {!isEditing ? (
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      className="gap-1.5 text-primary border-primary/30 hover:bg-primary/5 hover:text-primary h-9"
+                      onClick={() => setIsEditing(true)}
+                    >
+                      <Edit2 className="w-3.5 h-3.5" />
+                      {t('subscriptions.detail.editButton')}
+                    </Button>
+                  ) : (
+                    <div className="flex items-center gap-2">
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        onClick={() => { setEditForm(buildEditForm()); setIsEditing(false); }}
+                        className="h-9"
+                      >
+                        <X className="w-4 h-4 mr-1" />
+                        {t('subscriptions.detail.form.cancel')}
+                      </Button>
+                      <Button
+                        size="sm"
+                        onClick={() => { setIsEditing(false); toast.success(t('subscriptions.detail.form.saved')); }}
+                        className="bg-primary text-primary-foreground h-9"
+                      >
+                        <Save className="w-4 h-4 mr-1" />
+                        {t('subscriptions.detail.form.save')}
+                      </Button>
+                    </div>
+                  )}
+                </div>
+
+                {/* INVESTISSEUR */}
+                <div className="space-y-2">
+                  <Label className="text-xs uppercase tracking-wide font-semibold text-muted-foreground flex items-center gap-1.5">
+                    <User className="w-3.5 h-3.5" />
+                    {t('subscriptions.newDialog.investorLabel')}
+                    <span className="text-red-500">*</span>
+                  </Label>
+                  <div className="flex h-10 w-full items-center gap-2 rounded-md border border-input bg-white px-3 py-2 text-sm">
+                    <PartyTypeBadge label={subscription.contrepartie.type === 'Corporate' ? t('subscriptions.newDialog.shortCorporate') : t('subscriptions.newDialog.shortIndividual')} />
+                    <span className="font-medium text-foreground">{subscription.contrepartie.investor || subscription.contrepartie.name}</span>
+                    <span className="text-xs text-muted-foreground hidden sm:inline">{subscription.email || subscription.contrepartie.mainContact}</span>
+                  </div>
+                </div>
+
+                {/* STRUCTURE */}
+                <div className="space-y-2">
+                  <Label className="text-xs uppercase tracking-wide font-semibold text-muted-foreground flex items-center gap-1.5">
+                    <Building2 className="w-3.5 h-3.5" />
+                    {t('subscriptions.newDialog.structureLabel')}
+                  </Label>
+                  <div className="flex h-10 w-full items-center gap-2 rounded-md border border-input bg-white px-3 py-2 text-sm">
+                    {subscription.contrepartie.structure ? (
+                      <>
+                        <Building2 className="w-4 h-4 text-muted-foreground flex-shrink-0" />
+                        <span className="font-medium text-foreground">{subscription.contrepartie.structure}</span>
+                        {subscription.contrepartie.country && (
+                          <Badge variant="outline" className="ml-auto text-xs">{subscription.contrepartie.country}</Badge>
+                        )}
+                      </>
+                    ) : (
+                      <>
+                        <User className="w-4 h-4 text-green-600 flex-shrink-0" />
+                        <span className="font-medium text-foreground">{t('subscriptions.newDialog.directInvestmentTitle')}</span>
+                        <span className="text-xs text-muted-foreground">{t('subscriptions.newDialog.directInvestorDesc', { name: subscription.contrepartie.investor || subscription.contrepartie.name })}</span>
+                      </>
+                    )}
+                  </div>
+                </div>
+
+                {/* FONDS + PART */}
+                <div className="grid gap-3" style={{ gridTemplateColumns: '1.6fr 1fr' }}>
+                  <div className="space-y-1.5">
+                    <Label className="text-xs flex items-center gap-1.5">
+                      <Landmark className="w-3.5 h-3.5" />
+                      {t('subscriptions.newDialog.fundLabel')}
+                      <span className="text-red-500">*</span>
+                    </Label>
+                    {isEditing ? (
+                      <Input value={editForm.fundName} onChange={e => setEditForm(f => ({ ...f, fundName: e.target.value }))} className="h-10" />
+                    ) : (
+                      <div className="flex h-10 w-full items-center rounded-md border border-input bg-white px-3 py-2 text-sm">
+                        <span className="font-medium text-foreground truncate">{subscription.fund.name}</span>
+                      </div>
+                    )}
+                  </div>
+                  <div className="space-y-1.5">
+                    <Label className="text-xs flex items-center gap-1.5">
+                      <Layers3 className="w-3.5 h-3.5" />
+                      {t('subscriptions.newDialog.partLabel')}
+                      <span className="text-red-500">*</span>
+                    </Label>
+                    {isEditing ? (
+                      <Input value={editForm.shareClass} onChange={e => setEditForm(f => ({ ...f, shareClass: e.target.value }))} className="h-10" />
+                    ) : (
+                      <div className="flex h-10 w-full items-center rounded-md border border-input bg-white px-3 py-2 text-sm">
+                        <span className="text-foreground">{t('subscriptions.newDialog.shareLabel', { class: subscription.fund.shareClass })}</span>
+                      </div>
+                    )}
+                  </div>
+                </div>
+
+                {/* NOMBRE DE PARTS + MONTANT + OPTION CONSERVATION */}
+                <div className="grid gap-3" style={{ gridTemplateColumns: '1fr 1.2fr 1.4fr' }}>
+                  <div className="space-y-1.5">
+                    <Label className="text-xs flex items-center gap-1.5">
+                      <Hash className="w-3.5 h-3.5" />
+                      {t('subscriptions.newDialog.numberOfShares')}
+                      <span className="text-red-500">*</span>
+                    </Label>
+                    {isEditing ? (
+                      <Input type="text" inputMode="decimal" value={editForm.quantity} onChange={e => setEditForm(f => ({ ...f, quantity: Number(e.target.value) }))} className="h-10 font-semibold text-right" />
+                    ) : (
+                      <div className="flex h-10 w-full items-center justify-end rounded-md border border-input bg-white px-3 py-2 text-sm">
+                        <span className="font-semibold text-foreground">{(subscription.quantity ?? 0).toLocaleString('fr-FR')}</span>
+                      </div>
+                    )}
+                  </div>
+                  <div className="space-y-1.5">
+                    <Label className="text-xs flex items-center gap-1.5">
+                      <Euro className="w-3.5 h-3.5" />
+                      {t('subscriptions.newDialog.amount')}
+                      <span className="text-red-500">*</span>
+                    </Label>
+                    {isEditing ? (
+                      <Input type="text" inputMode="decimal" value={editForm.amount} onChange={e => setEditForm(f => ({ ...f, amount: Number(e.target.value) }))} className="h-10 font-semibold text-right" />
+                    ) : (
+                      <div className="flex h-10 w-full items-center justify-end rounded-md border border-input bg-white px-3 py-2 text-sm">
+                        <span className="font-semibold text-foreground">{(subscription.amount ?? 0).toLocaleString('fr-FR')} €</span>
+                      </div>
+                    )}
+                    <span className="text-[11px] text-muted-foreground">
+                      {t('subscriptions.newDialog.pricePerShareHint', { price: subscription.quantity ? ((subscription.amount ?? 0) / subscription.quantity).toLocaleString('fr-FR', { minimumFractionDigits: 2, maximumFractionDigits: 6 }) : '-' })}
+                    </span>
+                  </div>
+                  <div className="space-y-1.5">
+                    <Label className="text-xs flex items-center gap-1.5">
+                      <ShieldCheck className="w-3.5 h-3.5" />
+                      {t('subscriptions.newDialog.custodyOptionLabel')}
+                    </Label>
+                    {isEditing ? (
+                      <label
+                        htmlFor="detail-custody-switch"
+                        className="flex h-10 w-full items-center justify-between gap-3 rounded-md border border-input bg-white px-3 py-2 text-sm cursor-pointer hover:bg-muted/40 transition-colors"
+                      >
+                        <span className="text-foreground truncate">
+                          {editForm.hasDepositary ? t('subscriptions.newDialog.custodyOptionOn') : t('subscriptions.newDialog.custodyOptionOff')}
+                        </span>
+                        <Switch
+                          id="detail-custody-switch"
+                          checked={editForm.hasDepositary}
+                          onCheckedChange={v => setEditForm(f => ({ ...f, hasDepositary: v }))}
+                        />
+                      </label>
+                    ) : (
+                      <div className="flex h-10 w-full items-center justify-between rounded-md border border-input bg-white px-3 py-2 text-sm">
+                        <span className="text-foreground">{subscription.hasDepositary ? t('subscriptions.newDialog.custodyOptionOn') : t('subscriptions.newDialog.custodyOptionOff')}</span>
+                        <Switch checked={subscription.hasDepositary ?? false} disabled />
+                      </div>
+                    )}
+                  </div>
+                </div>
+
+                <Separator className="my-2" />
+
+                {/* DISTRIBUTEUR */}
+                <div className="space-y-2 mb-3">
+                  <Label className="text-xs uppercase tracking-wide font-semibold text-muted-foreground flex items-center gap-1.5">
+                    <Handshake className="w-3.5 h-3.5" />
+                    {t('subscriptions.newDialog.distributorLabel')}
+                  </Label>
+                  <div className="flex h-10 w-full items-center gap-2 rounded-md border border-input bg-white px-3 py-2 text-sm">
+                    {subscription.partenaire?.name && subscription.partenaire.name !== 'Direct' ? (
+                      <>
+                        <Handshake className="w-4 h-4 text-primary flex-shrink-0" />
+                        <span className="font-medium text-foreground">{subscription.partenaire.name}</span>
+                        {subscription.advisor && (
+                          <span className="text-xs text-muted-foreground ml-auto">{subscription.advisor}</span>
+                        )}
+                      </>
+                    ) : (
+                      <>
+                        <Briefcase className="w-4 h-4 text-green-600 flex-shrink-0" />
+                        <span className="font-medium text-foreground">{t('subscriptions.newDialog.directSubscription')}</span>
+                        <span className="text-xs text-muted-foreground">{t('subscriptions.newDialog.noEntryFees')}</span>
+                      </>
+                    )}
+                  </div>
+                </div>
+
+                {/* FRAIS D'ENTREE + PRIME DE SOUSCRIPTION */}
+                <div className="grid gap-3" style={{ gridTemplateColumns: '1fr 1fr' }}>
+                  <div className="space-y-1.5">
+                    <Label className="text-xs flex items-center gap-1.5">
+                      <Euro className="w-3.5 h-3.5" />
+                      {t('subscriptions.newDialog.entryFeesEditableLabel')}
+                    </Label>
+                    {isEditing ? (
+                      <div className="flex h-10 w-full items-center rounded-md border border-input bg-white pr-3 focus-within:ring-2 focus-within:ring-ring/40">
+                        <Input
+                          type="text"
+                          inputMode="decimal"
+                          value={editForm.entryFees}
+                          onChange={e => setEditForm(f => ({ ...f, entryFees: Number(e.target.value) }))}
+                          className="h-full border-0 bg-transparent font-semibold text-right shadow-none focus-visible:ring-0 focus-visible:ring-offset-0"
+                        />
+                        <span className="ml-1 text-sm text-muted-foreground select-none">%</span>
+                      </div>
+                    ) : (
+                      <div className="flex h-10 w-full items-center justify-end rounded-md border border-input bg-white px-3 py-2 text-sm">
+                        <span className="font-semibold text-foreground">{(subscription.entryFees ?? 0).toFixed(2)} %</span>
+                      </div>
+                    )}
+                  </div>
+                  <div className="space-y-1.5">
+                    <Label className="text-xs flex items-center gap-1.5">
+                      <Sparkles className="w-3.5 h-3.5" />
+                      {t('subscriptions.newDialog.subscriptionPremiumLabel')}
+                    </Label>
+                    {isEditing ? (
+                      <div className="flex h-10 w-full items-center rounded-md border border-input bg-white pr-3 focus-within:ring-2 focus-within:ring-ring/40">
+                        <Input
+                          type="text"
+                          inputMode="decimal"
+                          value={editForm.subscriptionPremium}
+                          onChange={e => setEditForm(f => ({ ...f, subscriptionPremium: Number(e.target.value) }))}
+                          className="h-full border-0 bg-transparent font-semibold text-right shadow-none focus-visible:ring-0 focus-visible:ring-offset-0"
+                        />
+                        <span className="ml-1 text-sm text-muted-foreground select-none">€</span>
+                      </div>
+                    ) : (
+                      <div className="flex h-10 w-full items-center justify-end rounded-md border border-input bg-white px-3 py-2 text-sm">
+                        <span className="font-semibold text-foreground">{(subscription.subscriptionPremium ?? 0).toLocaleString('fr-FR', { minimumFractionDigits: 2 })} €</span>
+                      </div>
+                    )}
+                  </div>
+                </div>
+
+                {/* RECAPITULATIF MONTANTS */}
+                {(subscription.amount ?? 0) > 0 && (
+                  <motion.div
+                    initial={{ opacity: 0, y: -4 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    className="p-3 bg-primary/5 rounded-lg border border-primary/30"
+                  >
+                    <div className="space-y-1">
+                      <div className="flex justify-between text-xs">
+                        <span className="text-muted-foreground">{t('subscriptions.newDialog.amount')}</span>
+                        <span className="font-medium text-foreground">{(subscription.amount ?? 0).toLocaleString('fr-FR', { minimumFractionDigits: 2 })} €</span>
+                      </div>
+                      <div className="flex justify-between text-xs">
+                        <span className="text-muted-foreground">
+                          {t('subscriptions.newDialog.feesWithPercent', { percent: (subscription.entryFees ?? 0).toFixed(2) })}
+                          {(!subscription.partenaire?.name || subscription.partenaire.name === 'Direct') && (
+                            <Badge className="ml-1 bg-green-100 text-green-700 border-green-300 text-[10px]">{t('subscriptions.newDialog.direct')}</Badge>
+                          )}
+                        </span>
+                        <span className="font-medium text-foreground">{((subscription.amount ?? 0) * (subscription.entryFees ?? 0) / 100).toLocaleString('fr-FR', { minimumFractionDigits: 2 })} €</span>
+                      </div>
+                      {(subscription.subscriptionPremium ?? 0) > 0 && (
+                        <div className="flex justify-between text-xs">
+                          <span className="text-muted-foreground">{t('subscriptions.newDialog.subscriptionPremiumLabel')}</span>
+                          <span className="font-medium text-foreground">{(subscription.subscriptionPremium ?? 0).toLocaleString('fr-FR', { minimumFractionDigits: 2 })} €</span>
+                        </div>
+                      )}
+                      <Separator />
+                      <div className="flex justify-between">
+                        <span className="text-xs font-semibold text-foreground">{t('subscriptions.newDialog.total')}</span>
+                        <span className="font-bold text-primary">
+                          {((subscription.amount ?? 0) + (subscription.subscriptionPremium ?? 0) + ((subscription.amount ?? 0) * (subscription.entryFees ?? 0) / 100)).toLocaleString('fr-FR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} €
+                        </span>
+                      </div>
+                    </div>
+                  </motion.div>
+                )}
+
+                <Separator className="my-2" />
+
+                {/* NOTIFICATION & LANGUE */}
+                <div className="space-y-2">
+                  <Label className="text-xs uppercase tracking-wide font-semibold text-muted-foreground flex items-center gap-1.5">
+                    <Globe className="w-3.5 h-3.5" />
+                    {t('subscriptions.newDialog.notificationSection.title')}
+                  </Label>
+
+                  <div className="space-y-1.5">
+                    <Label className="text-xs flex items-center gap-1.5">
+                      <Globe className="w-3.5 h-3.5" />
+                      {t('subscriptions.newDialog.notificationSection.languageLabel')}
+                    </Label>
+                    {isEditing ? (
+                      <Select value={editForm.language} onValueChange={v => setEditForm(f => ({ ...f, language: v }))}>
+                        <SelectTrigger className="h-10"><SelectValue /></SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="fr">{t('subscriptions.newDialog.notificationSection.languageOptions.fr')}</SelectItem>
+                          <SelectItem value="en">{t('subscriptions.newDialog.notificationSection.languageOptions.en')}</SelectItem>
+                        </SelectContent>
+                      </Select>
+                    ) : (
+                      <div className="flex h-10 w-full items-center rounded-md border border-input bg-white px-3 py-2 text-sm">
+                        <span className="text-foreground">{(subscription.language || 'fr') === 'fr' ? t('subscriptions.newDialog.notificationSection.languageOptions.fr') : t('subscriptions.newDialog.notificationSection.languageOptions.en')}</span>
+                      </div>
+                    )}
+                  </div>
+                </div>
+
+              </div>
+            </div>
+          </TabsContent>
+
+          {/* Tab Content - Onboarding */}
+          <TabsContent value="onboarding" className="mt-0">
+            <div className="px-8 py-6">
               <div className="flex gap-6">
-                {/* Main Content Area */}
                 <div className="flex-1">
                   {currentStep === 0 && (
-                    // Initialisation de la souscription
                     <div className="space-y-6">
                       <Card className="p-6 shadow-sm">
                         <h2 className="text-xl font-bold text-foreground mb-6">{t('subscriptions.detail.init.title')}</h2>
 
                         <div className="space-y-6">
-                          {/* Investisseur */}
                           <div>
                             <label className="block text-sm font-semibold text-foreground/80 mb-2">{t('subscriptions.detail.init.investorLabel')}</label>
                             <Input
@@ -632,7 +1042,6 @@ export function SubscriptionDetailPage({ subscription, onBack }: SubscriptionDet
                             />
                           </div>
 
-                          {/* Structure */}
                           <div>
                             <label className="block text-sm font-semibold text-foreground/80 mb-2">{t('subscriptions.detail.init.structureLabel')}</label>
                             <Input
@@ -645,7 +1054,6 @@ export function SubscriptionDetailPage({ subscription, onBack }: SubscriptionDet
                             />
                           </div>
 
-                          {/* Fonds */}
                           <div>
                             <label className="block text-sm font-semibold text-foreground/80 mb-2">{t('subscriptions.detail.init.fundLabel')}</label>
                             <Input
@@ -654,7 +1062,6 @@ export function SubscriptionDetailPage({ subscription, onBack }: SubscriptionDet
                             />
                           </div>
 
-                          {/* Part */}
                           <div>
                             <label className="block text-sm font-semibold text-foreground/80 mb-2">{t('subscriptions.detail.init.shareLabel')}</label>
                             <Input
@@ -665,7 +1072,6 @@ export function SubscriptionDetailPage({ subscription, onBack }: SubscriptionDet
                             />
                           </div>
 
-                          {/* Nombre de parts */}
                           <div className="grid grid-cols-2 gap-4">
                             <div>
                               <label className="block text-sm font-semibold text-foreground/80 mb-2">{t('subscriptions.detail.init.numberOfSharesLabel')}</label>
@@ -688,7 +1094,6 @@ export function SubscriptionDetailPage({ subscription, onBack }: SubscriptionDet
                             </div>
                           </div>
 
-                          {/* Partenaire */}
                           <div>
                             <label className="block text-sm font-semibold text-foreground/80 mb-2">{t('subscriptions.detail.init.partnerLabel')}</label>
                             <Input
