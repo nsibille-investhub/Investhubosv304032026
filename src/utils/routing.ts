@@ -53,7 +53,8 @@ export type Page =
   | 'settings-queries' 
   | 'settings-variable-formatting' 
   | 'settings-tools'
-  | 'settings-conventions';
+  | 'settings-conventions'
+  | 'settings-mail-redirect';
 
 // Map internal page names to URL paths
 const PAGE_TO_PATH: Record<Page, string> = {
@@ -110,6 +111,7 @@ const PAGE_TO_PATH: Record<Page, string> = {
   'settings-variable-formatting': '/settings/variable-formatting',
   'settings-tools': '/settings/tools',
   'settings-conventions': '/settings/conventions',
+  'settings-mail-redirect': '/settings/mail-redirect',
 };
 
 // Reverse map for path to page

@@ -15,12 +15,20 @@ export interface PublicationCenterSettings {
   aggregationScope: AggregationScope;
 }
 
+export interface MailRedirectSettings {
+  active: boolean;
+  emails: string[];
+}
+
+
 interface AppStoreContextType {
   modules: Module[];
   isModuleActive: (moduleName: string) => boolean;
   toggleModule: (moduleId: string) => void;
   publicationCenterSettings: PublicationCenterSettings;
   updatePublicationCenterSettings: (patch: Partial<PublicationCenterSettings>) => void;
+  mailRedirect: MailRedirectSettings;
+  updateMailRedirect: (patch: Partial<MailRedirectSettings>) => void;
 }
 
 const AppStoreContext = createContext<AppStoreContextType | undefined>(undefined);
@@ -45,10 +53,17 @@ const defaultPublicationCenterSettings: PublicationCenterSettings = {
   aggregationScope: 'nominative',
 };
 
+const defaultMailRedirect: MailRedirectSettings = {
+  active: true,
+  emails: ['test@investhub.cloud', 'qa@investhub.cloud'],
+};
+
 export function AppStoreProvider({ children }: { children: ReactNode }) {
   const [modules, setModules] = useState<Module[]>(defaultModules);
   const [publicationCenterSettings, setPublicationCenterSettings] =
     useState<PublicationCenterSettings>(defaultPublicationCenterSettings);
+  const [mailRedirect, setMailRedirect] =
+    useState<MailRedirectSettings>(defaultMailRedirect);
 
   const isModuleActive = (moduleName: string): boolean => {
     const module = modules.find(m => m.name === moduleName);
@@ -69,6 +84,10 @@ export function AppStoreProvider({ children }: { children: ReactNode }) {
     setPublicationCenterSettings(prev => ({ ...prev, ...patch }));
   };
 
+  const updateMailRedirect = (patch: Partial<MailRedirectSettings>) => {
+    setMailRedirect(prev => ({ ...prev, ...patch }));
+  };
+
   return (
     <AppStoreContext.Provider
       value={{
@@ -77,6 +96,8 @@ export function AppStoreProvider({ children }: { children: ReactNode }) {
         toggleModule,
         publicationCenterSettings,
         updatePublicationCenterSettings,
+        mailRedirect,
+        updateMailRedirect,
       }}
     >
       {children}

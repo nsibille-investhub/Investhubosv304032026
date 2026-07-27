@@ -3452,5 +3452,10 @@
         "dissolved": "Dissolved"
       }
     }
+  },
+  "mailRedirect": {
+    "label": "Redirect active",
+    "message": "All emails are redirected to",
+    "configure": "Configure"
   }
 }
