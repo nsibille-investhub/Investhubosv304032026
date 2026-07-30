@@ -22,7 +22,6 @@ import {
   Download,
   RotateCcw,
   Eye,
-  Mail,
   Calendar,
   User,
   type LucideIcon,
@@ -49,6 +48,15 @@ import {
 } from './ui/dialog';
 import { Textarea } from './ui/textarea';
 import { Label } from './ui/label';
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from './ui/table';
+import { Badge } from './ui/badge';
 import { FilterCard } from './ui/filter-card';
 import { FilterBar, FilterConfig } from './FilterBar';
 import { DataPagination } from './ui/data-pagination';
@@ -2128,30 +2136,22 @@ function PublicationConfirmDialog({
                   </>
                 )}
               </div>
-              <div className="flex items-center gap-2 shrink-0">
-                {isSingle && onPreviewDocument && (
-                  <Tooltip>
-                    <TooltipTrigger asChild>
-                      <button
-                        type="button"
-                        className="inline-flex items-center justify-center h-9 w-9 rounded-lg border border-gray-200 bg-white text-gray-500 hover:text-gray-700 hover:bg-gray-100 transition-colors"
-                        onClick={() => onPreviewDocument(single)}
-                      >
-                        <Eye className="h-4 w-4" />
-                      </button>
-                    </TooltipTrigger>
-                    <TooltipContent side="top">
-                      <span className="text-xs">{t('validation.bulkDialog.previewDoc')}</span>
-                    </TooltipContent>
-                  </Tooltip>
-                )}
-                <div
-                  className="inline-flex items-center justify-center w-9 h-9 rounded-lg"
-                  style={{ backgroundColor: BRAND_BLUE }}
-                >
-                  <ActionIcon className="w-4 h-4 text-white" />
-                </div>
-              </div>
+              {isSingle && onPreviewDocument && (
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <button
+                      type="button"
+                      className="inline-flex items-center justify-center h-9 w-9 rounded-lg border border-gray-200 bg-white text-gray-500 hover:text-gray-700 hover:bg-gray-100 transition-colors shrink-0"
+                      onClick={() => onPreviewDocument(single)}
+                    >
+                      <Eye className="h-4 w-4" />
+                    </button>
+                  </TooltipTrigger>
+                  <TooltipContent side="top">
+                    <span className="text-xs">{t('validation.bulkDialog.previewDoc')}</span>
+                  </TooltipContent>
+                </Tooltip>
+              )}
             </div>
           </div>
 
@@ -2169,115 +2169,76 @@ function PublicationConfirmDialog({
               </button>
             </div>
 
-            <div className="rounded-lg border border-gray-200 bg-white">
-              {/* Audience summary bar */}
-              <div className="flex flex-wrap items-center gap-3 px-4 py-3 border-b border-gray-100 bg-gray-50/50 rounded-t-lg">
-                {audience.nominative ? (
-                  <>
-                    {audience.investorName && (
-                      <span className="inline-flex items-center gap-1.5 text-sm text-gray-800">
-                        <InvestorIcon className="h-3.5 w-3.5 shrink-0 text-gray-400" />
-                        <span className="font-medium">{audience.investorName}</span>
-                      </span>
-                    )}
-                    {audience.structureName && (
-                      <span className="inline-flex items-center gap-1.5 text-sm text-gray-500">
-                        <Building2 className="h-3.5 w-3.5 shrink-0 text-gray-400" />
-                        {audience.structureName}
-                      </span>
-                    )}
-                    {audience.subscriptionCode && (
-                      <span className="inline-flex items-center gap-1 rounded border border-gray-200 bg-white px-1.5 py-0.5 text-[11px] font-medium text-gray-600">
-                        <SubIcon className="h-3 w-3 shrink-0" />
-                        {audience.subscriptionFullName ?? audience.subscriptionCode}
-                      </span>
-                    )}
-                  </>
-                ) : (
-                  <>
-                    {audience.fundName && (
-                      <span className="inline-flex items-center gap-1.5 text-sm text-gray-800">
-                        <FundIcon className="h-3.5 w-3.5 shrink-0 text-gray-400" />
-                        <span className="font-medium">{audience.fundName}</span>
-                      </span>
-                    )}
-                    {audience.allFunds && !audience.fundName && (
-                      <span className="inline-flex items-center gap-1.5 text-sm text-gray-800">
-                        <FundIcon className="h-3.5 w-3.5 shrink-0 text-gray-400" />
-                        <span className="font-medium">{t('validation.fonds.all')}</span>
-                      </span>
-                    )}
-                    {audience.segmentLabel && (
-                      <span className="inline-flex items-center gap-1.5 text-sm text-gray-500">
-                        <TagIcon className="h-3.5 w-3.5 shrink-0 text-gray-400" />
-                        {audience.segmentLabel}
-                      </span>
-                    )}
-                    <span className="inline-flex items-center gap-1 rounded-full border border-gray-200 bg-white px-2 py-0.5 text-[11px] font-medium text-gray-600">
-                      <Users className="h-3 w-3 shrink-0" />
-                      {t(
-                        (audience.investorCount ?? 0) > 1
-                          ? 'validation.cible.investorsMany'
-                          : 'validation.cible.investorsOne',
-                        { count: audience.investorCount ?? 0 },
-                      )}
-                    </span>
-                  </>
-                )}
-              </div>
-
-              {/* Contacts table */}
-              {audience.contacts && audience.contacts.length > 0 && (
-                <div className="max-h-[200px] overflow-y-auto">
-                  <table className="w-full text-xs">
-                    <thead className="sticky top-0 bg-white border-b border-gray-100">
-                      <tr className="text-left text-gray-500">
-                        <th className="px-4 py-2 font-medium">{t('validation.bulkDialog.audienceName')}</th>
-                        <th className="px-4 py-2 font-medium">{t('validation.bulkDialog.audienceRole')}</th>
-                        <th className="px-4 py-2 font-medium">{t('validation.bulkDialog.audienceEmail')}</th>
-                        <th className="px-4 py-2 font-medium">{t('validation.bulkDialog.audienceAccess')}</th>
-                      </tr>
-                    </thead>
-                    <tbody className="divide-y divide-gray-50">
-                      {audience.contacts.map((c) => (
-                        <tr key={c.id} className="text-gray-700 hover:bg-gray-50/50">
-                          <td className="px-4 py-1.5 font-medium">{c.name}</td>
-                          <td className="px-4 py-1.5 text-gray-500">{c.role}</td>
-                          <td className="px-4 py-1.5">
-                            <span className="inline-flex items-center gap-1 text-gray-500">
-                              <Mail className="h-3 w-3 shrink-0" />
-                              {c.email}
-                            </span>
-                          </td>
-                          <td className="px-4 py-1.5">
-                            <span className={cn(
-                              'inline-flex items-center rounded-full px-1.5 py-0.5 text-[10px] font-medium',
-                              c.accessLevel === 'full'
-                                ? 'bg-green-50 text-green-700'
-                                : c.accessLevel === 'commercial-only'
-                                  ? 'bg-amber-50 text-amber-700'
-                                  : 'bg-red-50 text-red-600',
-                            )}>
-                              {t(`validation.bulkDialog.access_${c.accessLevel}`)}
-                            </span>
-                          </td>
-                        </tr>
-                      ))}
-                    </tbody>
-                  </table>
-                </div>
-              )}
-
-              {/* Contact count footer */}
-              <div className="px-4 py-2 border-t border-gray-100 bg-gray-50/50 rounded-b-lg">
-                <span className="inline-flex items-center gap-1 text-xs text-gray-500">
-                  <Users className="h-3 w-3 shrink-0" />
-                  {t(
-                    (audience.contactCount ?? audience.investorCount ?? 0) > 1
-                      ? 'validation.audience.contactsMany'
-                      : 'validation.audience.contactsOne',
-                    { count: audience.contactCount ?? audience.investorCount ?? 0 },
+            <div className="rounded-lg border border-border bg-white overflow-hidden">
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead className="px-3">{t('validation.bulkDialog.audienceName')}</TableHead>
+                    <TableHead className="px-3">{t('validation.bulkDialog.audienceType')}</TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {audience.contacts && audience.contacts.length > 0 ? (
+                    audience.contacts.map((c) => (
+                      <TableRow key={c.id}>
+                        <TableCell className="px-3 py-3 align-top">
+                          <div className="flex flex-col gap-0.5">
+                            <span className="text-sm font-medium text-foreground">{c.name}</span>
+                            {c.role && (
+                              <span className="text-[11px] text-muted-foreground">{c.role}</span>
+                            )}
+                          </div>
+                        </TableCell>
+                        <TableCell className="px-3">
+                          <Badge
+                            variant="outline"
+                            className="border-border bg-muted/60 text-muted-foreground font-normal"
+                          >
+                            {t('validation.bulkDialog.typeContact')}
+                          </Badge>
+                        </TableCell>
+                      </TableRow>
+                    ))
+                  ) : audience.investorName ? (
+                    <TableRow>
+                      <TableCell className="px-3 py-3 align-top">
+                        <div className="flex flex-col gap-0.5">
+                          <span className="text-sm font-medium text-foreground">{audience.investorName}</span>
+                          {audience.structureName && (
+                            <span className="text-[11px] text-muted-foreground">{audience.structureName}</span>
+                          )}
+                        </div>
+                      </TableCell>
+                      <TableCell className="px-3">
+                        <Badge
+                          variant="outline"
+                          className="border-border bg-muted/60 text-muted-foreground font-normal"
+                        >
+                          {t('validation.bulkDialog.typeInvestor')}
+                        </Badge>
+                      </TableCell>
+                    </TableRow>
+                  ) : (
+                    <TableRow>
+                      <TableCell className="px-3 py-3 text-sm text-muted-foreground" colSpan={2}>
+                        {audience.fundName ?? (audience.allFunds ? t('validation.fonds.all') : '—')}
+                        {' — '}
+                        {t(
+                          (audience.investorCount ?? 0) > 1
+                            ? 'validation.cible.investorsMany'
+                            : 'validation.cible.investorsOne',
+                          { count: audience.investorCount ?? 0 },
+                        )}
+                      </TableCell>
+                    </TableRow>
                   )}
+                </TableBody>
+              </Table>
+              <div className="px-3 py-2 border-t border-border bg-muted/30">
+                <span className="text-xs font-medium text-muted-foreground uppercase tracking-wide">
+                  {t('validation.bulkDialog.audienceCount', {
+                    count: audience.contactCount ?? audience.investorCount ?? 0,
+                  })}
                 </span>
               </div>
             </div>
@@ -2354,17 +2315,18 @@ function PublicationConfirmDialog({
             </div>
           )}
 
-          {/* ── Optional comment ── */}
+          {/* ── Comment ── */}
           <div className="space-y-2">
             <Label htmlFor="pub-confirm-comment">
-              {t('validation.bulkDialog.commentLabel')}
+              {t('validation.bulkDialog.commentLabelRequired')}
             </Label>
             <Textarea
               id="pub-confirm-comment"
               value={comment}
               onChange={(e) => setComment(e.target.value)}
-              placeholder={t('validation.bulkDialog.commentPlaceholder')}
-              className="min-h-[100px] resize-none"
+              placeholder={t('validation.bulkDialog.commentPlaceholderRequired')}
+              className="min-h-[60px] resize-none"
+              rows={3}
               autoFocus
             />
             <div className="flex justify-end">
