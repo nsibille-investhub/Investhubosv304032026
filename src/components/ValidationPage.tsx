@@ -1097,6 +1097,7 @@ export function ValidationPage(_props: ValidationPageProps) {
     const headers = [
       t('validation.table.document'),
       t('validation.table.audience'),
+      t('validation.table.notification'),
       t('validation.table.createdBy'),
       t('validation.table.status'),
       t('validation.table.date'),
@@ -1118,9 +1119,14 @@ export function ValidationPage(_props: ValidationPageProps) {
         );
         audienceLabel = [fundPart, segPart, countPart].filter(Boolean).join(' — ');
       }
+      const { notification: docNotif } = resolveNotification(doc, batchById);
+      const notifLabel = docNotif
+        ? t('validation.notificationCol.yes')
+        : t('validation.notificationCol.no');
       return [
         doc.name,
         audienceLabel,
+        notifLabel,
         doc.createdBy.name,
         t(STATUS_LABEL_KEY[doc.status]),
         formatDate(doc.createdAt),
@@ -1327,6 +1333,9 @@ export function ValidationPage(_props: ValidationPageProps) {
                       </th>
                       <th className="px-4 py-3 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider">
                         {t('validation.table.audience')}
+                      </th>
+                      <th className="px-4 py-3 text-center text-xs font-medium text-muted-foreground uppercase tracking-wider">
+                        {t('validation.table.notification')}
                       </th>
                       <th className="px-4 py-3 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider">
                         {t('validation.table.createdBy')}
@@ -1596,25 +1605,16 @@ function DocumentRow({
             {doc.pathSegments.join(' / ')}
           </div>
         )}
-        <div className="mt-1.5">
-          <span
-            className={notification ? 'inline-flex cursor-pointer' : 'inline-flex'}
-            onClick={(e) => {
-              if (notification) {
-                e.stopPropagation();
-                onPreviewNotification();
-              }
-            }}
-          >
-            <NotificationBadge
-              notification={notification}
-              templateLabel={templateLabel}
-            />
-          </span>
-        </div>
       </td>
       <td className="px-4 py-2.5 align-top">
         <AudienceCell info={resolveAudience(doc.targeting)} />
+      </td>
+      <td className="px-4 py-2.5 align-top text-center">
+        <NotificationCell
+          notification={notification}
+          templateLabel={templateLabel}
+          onPreviewNotification={onPreviewNotification}
+        />
       </td>
       <td className="px-4 py-2.5 align-top">
         <div className="flex flex-col gap-0.5">
@@ -1689,6 +1689,44 @@ function NotificationBadge({
         {label}
       </span>
     </span>
+  );
+}
+
+function NotificationCell({
+  notification,
+  templateLabel,
+  onPreviewNotification,
+}: {
+  notification?: ValidationDocument['notification'];
+  templateLabel?: string;
+  onPreviewNotification: () => void;
+}) {
+  const { t } = useTranslation();
+  if (!notification) {
+    return (
+      <span className="inline-flex items-center gap-1 text-[11px] text-gray-400 dark:text-gray-500">
+        <BellOff className="h-3 w-3 shrink-0" />
+        {t('validation.notificationCol.no')}
+      </span>
+    );
+  }
+  return (
+    <div className="flex flex-col items-center gap-1">
+      <span className="inline-flex items-center gap-1 text-[11px] font-medium text-blue-700 dark:text-blue-300">
+        <Bell className="h-3 w-3 shrink-0" />
+        {t('validation.notificationCol.yes')}
+      </span>
+      <button
+        type="button"
+        className="text-[10px] text-blue-600 underline underline-offset-2 hover:text-blue-800 dark:text-blue-400 dark:hover:text-blue-200"
+        onClick={(e) => {
+          e.stopPropagation();
+          onPreviewNotification();
+        }}
+      >
+        {t('validation.notificationCol.preview')}
+      </button>
+    </div>
   );
 }
 
@@ -2240,25 +2278,18 @@ function DynamicBatchRow({
               >
                 {batch.name}
               </div>
-              <div className="mt-1.5">
-                <span
-                  className="inline-flex cursor-pointer"
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    onPreviewNotification();
-                  }}
-                >
-                  <NotificationBadge
-                    notification={batch.notification}
-                    templateLabel={batch.templateLabel}
-                  />
-                </span>
-              </div>
             </div>
           </div>
         </td>
         <td className="px-4 py-2.5 align-top">
           <AudienceCell info={audienceInfo} />
+        </td>
+        <td className="px-4 py-2.5 align-top text-center">
+          <NotificationCell
+            notification={batch.notification}
+            templateLabel={batch.templateLabel}
+            onPreviewNotification={onPreviewNotification}
+          />
         </td>
         <td className="px-4 py-2.5 align-top">
           <div className="flex flex-col gap-0.5">
@@ -2338,6 +2369,9 @@ function DynamicBatchRow({
               )}
             </td>
             <td className="px-4 py-2 align-top text-[11px] text-gray-300">
+              —
+            </td>
+            <td className="px-4 py-2 align-top text-center text-[11px] text-gray-300">
               —
             </td>
             <td className="px-4 py-2 align-top">

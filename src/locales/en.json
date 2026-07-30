@@ -2966,6 +2966,11 @@
       "downloadTooltip": "Download full audience",
       "downloadStarted": "Audience download started"
     },
+    "notificationCol": {
+      "yes": "Yes",
+      "no": "No",
+      "preview": "Preview"
+    },
     "empty": "No document to display",
     "resetFilters": "Reset filters",
     "status": {
