@@ -2946,6 +2946,7 @@
       "date": "Date",
       "targeting": "Ciblage",
       "notification": "Notification",
+      "audience": "Audience",
       "cible": "Cible",
       "fonds": "Fonds",
       "comm": "Comm.",
@@ -2958,6 +2959,12 @@
     },
     "fonds": {
       "all": "Tous les fonds"
+    },
+    "audience": {
+      "contactsOne": "{{count}} contact",
+      "contactsMany": "{{count}} contacts",
+      "downloadTooltip": "Télécharger l'audience complète",
+      "downloadStarted": "Téléchargement de l'audience lancé"
     },
     "empty": "Aucun document à afficher",
     "resetFilters": "Réinitialiser les filtres",
