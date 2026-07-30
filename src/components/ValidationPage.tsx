@@ -2479,7 +2479,7 @@ function DynamicBatchRow({
         <td className="px-4 py-2.5 align-top">
           <AudienceCell info={audienceInfo} />
         </td>
-        <td className="px-4 py-2.5 align-top text-center">
+        <td className="px-4 py-2.5 align-top">
           <NotificationCell
             notification={batch.notification}
             templateLabel={batch.templateLabel}
