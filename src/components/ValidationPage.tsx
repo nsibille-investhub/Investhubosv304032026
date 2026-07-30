@@ -2040,7 +2040,7 @@ function PublicationConfirmDialog({
 
   return (
     <Dialog open onOpenChange={(o) => !o && onCancel()}>
-      <DialogContent className="!max-w-[75vw] !w-[75vw] max-h-[90vh] overflow-hidden flex flex-col p-0 gap-0 bg-white">
+      <DialogContent className="max-h-[90vh] overflow-hidden flex flex-col p-0 gap-0 bg-white" style={{ width: '75vw', maxWidth: '75vw' }}>
         <DialogHeader className="px-6 py-4 border-b border-gray-200">
           <div className="flex items-center gap-3">
             <div
