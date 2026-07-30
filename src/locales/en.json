@@ -12,6 +12,7 @@
     "whatsNewUnread": "Unread updates",
     "notifications": "{{count}} notifications",
     "appStore": "App Store",
+    "helpDoc": "Help center",
     "languageSwitcher": "Change language",
     "toggleDarkMode": "Switch to dark mode",
     "toggleLightMode": "Switch to light mode"
@@ -3457,5 +3458,9 @@
     "label": "Redirect active",
     "message": "All emails are redirected to",
     "configure": "Configure"
+  },
+  "environmentBanner": {
+    "label": "Staging",
+    "message": "You are on a non-production environment. Data may be reset at any time."
   }
 }
