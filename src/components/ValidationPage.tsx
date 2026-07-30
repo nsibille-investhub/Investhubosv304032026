@@ -1334,7 +1334,7 @@ export function ValidationPage(_props: ValidationPageProps) {
                       <th className="px-4 py-3 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider">
                         {t('validation.table.audience')}
                       </th>
-                      <th className="px-4 py-3 text-center text-xs font-medium text-muted-foreground uppercase tracking-wider">
+                      <th className="px-4 py-3 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider">
                         {t('validation.table.notification')}
                       </th>
                       <th className="px-4 py-3 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider">
@@ -1609,7 +1609,7 @@ function DocumentRow({
       <td className="px-4 py-2.5 align-top">
         <AudienceCell info={resolveAudience(doc.targeting)} />
       </td>
-      <td className="px-4 py-2.5 align-top text-center">
+      <td className="px-4 py-2.5 align-top">
         <NotificationCell
           notification={notification}
           templateLabel={templateLabel}
@@ -1701,32 +1701,21 @@ function NotificationCell({
   templateLabel?: string;
   onPreviewNotification: () => void;
 }) {
-  const { t } = useTranslation();
-  if (!notification) {
-    return (
-      <span className="inline-flex items-center gap-1 text-[11px] text-gray-400 dark:text-gray-500">
-        <BellOff className="h-3 w-3 shrink-0" />
-        {t('validation.notificationCol.no')}
-      </span>
-    );
-  }
   return (
-    <div className="flex flex-col items-center gap-1">
-      <span className="inline-flex items-center gap-1 text-[11px] font-medium text-blue-700 dark:text-blue-300">
-        <Bell className="h-3 w-3 shrink-0" />
-        {t('validation.notificationCol.yes')}
-      </span>
-      <button
-        type="button"
-        className="text-[10px] text-blue-600 underline underline-offset-2 hover:text-blue-800 dark:text-blue-400 dark:hover:text-blue-200"
-        onClick={(e) => {
+    <span
+      className={notification ? 'inline-flex cursor-pointer' : 'inline-flex'}
+      onClick={(e) => {
+        if (notification) {
           e.stopPropagation();
           onPreviewNotification();
-        }}
-      >
-        {t('validation.notificationCol.preview')}
-      </button>
-    </div>
+        }
+      }}
+    >
+      <NotificationBadge
+        notification={notification}
+        templateLabel={templateLabel}
+      />
+    </span>
   );
 }
 
