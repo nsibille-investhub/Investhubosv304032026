@@ -2946,6 +2946,7 @@
       "date": "Date",
       "targeting": "Targeting",
       "notification": "Notification",
+      "audience": "Audience",
       "cible": "Target",
       "fonds": "Fund",
       "comm": "Comm.",
@@ -2958,6 +2959,17 @@
     },
     "fonds": {
       "all": "All funds"
+    },
+    "audience": {
+      "contactsOne": "{{count}} contact",
+      "contactsMany": "{{count}} contacts",
+      "downloadTooltip": "Download full audience",
+      "downloadStarted": "Audience download started"
+    },
+    "notificationCol": {
+      "yes": "Yes",
+      "no": "No",
+      "preview": "Preview"
     },
     "empty": "No document to display",
     "resetFilters": "Reset filters",

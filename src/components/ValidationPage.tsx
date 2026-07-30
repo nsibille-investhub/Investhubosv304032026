@@ -18,6 +18,7 @@ import {
   AlertCircle,
   ChevronRight,
   Users,
+  Building2,
   Download,
   RotateCcw,
   type LucideIcon,
@@ -67,8 +68,11 @@ import {
 import {
   COMMITMENTS,
   FUNDS,
+  INVESTORS,
   findInvestor,
   commitmentsForFund,
+  getInvestorContacts,
+  type InvestorContact,
 } from '../utils/gedFixtures';
 import { useTranslation } from '../utils/languageContext';
 import { useValidationStore } from '../utils/validationStoreContext';
@@ -333,6 +337,128 @@ function isNominative(doc: ValidationDocument): boolean {
     (t) => t.kind === 'investor' || t.kind === 'subscription',
   );
 }
+
+// ---------------------------------------------------------------------------
+// Unified audience info — replaces CibleCell + FondsCell with a single widget
+// showing either generic (fund/segment + investor count) or nominative
+// (investor/structure/subscription + contacts) targeting.
+// ---------------------------------------------------------------------------
+
+interface AudienceInfo {
+  nominative: boolean;
+  // Generic fields
+  fundName?: string;
+  allFunds?: boolean;
+  segmentLabel?: string;
+  investorCount?: number;
+  // Nominative fields
+  investorName?: string;
+  structureName?: string;
+  subscriptionCode?: string;
+  subscriptionFullName?: string;
+  contacts?: InvestorContact[];
+  contactCount?: number;
+}
+
+function resolveAudience(
+  targeting: ValidationDocument['targeting'],
+): AudienceInfo {
+  const cible = resolveCible(targeting);
+  const fonds = resolveFonds(targeting);
+  const nominative = !!cible.investorName;
+
+  if (nominative) {
+    let contacts: InvestorContact[] = [];
+    let structureName: string | undefined;
+    const subTag = targeting.find((t) => t.kind === 'subscription');
+    const invTag = targeting.find((t) => t.kind === 'investor');
+    let investorId: string | undefined;
+    if (subTag) {
+      const commitment = SUBSCRIPTION_BY_ID.get(subTag.label);
+      if (commitment) investorId = commitment.investorId;
+    }
+    if (!investorId && invTag) {
+      const inv = INVESTORS_BY_NAME.get(invTag.label);
+      if (inv) investorId = inv.id;
+    }
+    if (investorId) {
+      const inv = findInvestor(investorId);
+      if (inv) structureName = inv.structure;
+      contacts = getInvestorContacts(investorId).filter((c) => c.canAccess);
+    }
+    return {
+      nominative: true,
+      investorName: cible.investorName,
+      structureName,
+      subscriptionCode: cible.subscriptionCode,
+      subscriptionFullName: cible.subscriptionFullName,
+      fundName: fonds.fundName,
+      allFunds: fonds.allFunds,
+      contacts,
+      contactCount: contacts.length,
+    };
+  }
+
+  return {
+    nominative: false,
+    fundName: fonds.fundName,
+    allFunds: fonds.allFunds,
+    segmentLabel: cible.segmentLabel,
+    investorCount: cible.investorCount,
+  };
+}
+
+function resolveAudienceForDocs(docs: ValidationDocument[]): AudienceInfo {
+  if (docs.length === 0) return { nominative: false };
+  const cible = resolveCibleForDocs(docs);
+  const fonds = resolveFondsForDocs(docs);
+  const nominative = !!cible.investorName;
+
+  if (nominative) {
+    let contacts: InvestorContact[] = [];
+    let structureName: string | undefined;
+    const allTargeting = docs.flatMap((d) => d.targeting);
+    const subTag = allTargeting.find((t) => t.kind === 'subscription');
+    const invTag = allTargeting.find((t) => t.kind === 'investor');
+    let investorId: string | undefined;
+    if (subTag) {
+      const commitment = SUBSCRIPTION_BY_ID.get(subTag.label);
+      if (commitment) investorId = commitment.investorId;
+    }
+    if (!investorId && invTag) {
+      const inv = INVESTORS_BY_NAME.get(invTag.label);
+      if (inv) investorId = inv.id;
+    }
+    if (investorId) {
+      const investor = findInvestor(investorId);
+      if (investor) structureName = investor.structure;
+      contacts = getInvestorContacts(investorId).filter((c) => c.canAccess);
+    }
+    return {
+      nominative: true,
+      investorName: cible.investorName,
+      structureName,
+      subscriptionCode: cible.subscriptionCode,
+      subscriptionFullName: cible.subscriptionFullName,
+      fundName: fonds.fundName,
+      allFunds: fonds.allFunds,
+      contacts,
+      contactCount: contacts.length,
+    };
+  }
+
+  return {
+    nominative: false,
+    fundName: fonds.fundName,
+    allFunds: fonds.allFunds,
+    segmentLabel: cible.segmentLabel,
+    investorCount: cible.investorCount ?? 0,
+  };
+}
+
+const INVESTORS_BY_NAME = new Map(
+  INVESTORS.map((i) => [i.name, i] as const),
+);
 
 // ---------------------------------------------------------------------------
 // Dynamic batches — when 2+ nominative documents share the same investor
@@ -970,36 +1096,37 @@ export function ValidationPage(_props: ValidationPageProps) {
   const handleExport = () => {
     const headers = [
       t('validation.table.document'),
-      t('validation.table.cible'),
-      t('validation.table.fonds'),
+      t('validation.table.audience'),
+      t('validation.table.notification'),
       t('validation.table.createdBy'),
       t('validation.table.status'),
       t('validation.table.date'),
     ];
     const rows = flatDocs.map((doc) => {
-      const cible = resolveCible(doc.targeting);
-      const cibleLabel =
-        cible.investorName ??
-        cible.segmentLabel ??
-        (cible.investorCount != null
-          ? t(
-              cible.investorCount > 1
-                ? 'validation.cible.investorsMany'
-                : 'validation.cible.investorsOne',
-              { count: cible.investorCount },
-            )
-          : '');
-      const funds = resolveFundsForDoc(doc);
-      const fondsLabel =
-        funds.length === 1
-          ? funds[0]
-          : funds.length > 1
-            ? t('validation.fonds.all')
-            : '';
+      const aud = resolveAudience(doc.targeting);
+      let audienceLabel = '';
+      if (aud.nominative) {
+        const parts = [aud.investorName, aud.structureName, aud.subscriptionCode].filter(Boolean);
+        audienceLabel = parts.join(' — ');
+      } else {
+        const fundPart = aud.fundName ?? (aud.allFunds ? t('validation.fonds.all') : '');
+        const segPart = aud.segmentLabel ?? '';
+        const countPart = t(
+          (aud.investorCount ?? 0) > 1
+            ? 'validation.cible.investorsMany'
+            : 'validation.cible.investorsOne',
+          { count: aud.investorCount ?? 0 },
+        );
+        audienceLabel = [fundPart, segPart, countPart].filter(Boolean).join(' — ');
+      }
+      const { notification: docNotif } = resolveNotification(doc, batchById);
+      const notifLabel = docNotif
+        ? t('validation.notificationCol.yes')
+        : t('validation.notificationCol.no');
       return [
         doc.name,
-        cibleLabel,
-        fondsLabel,
+        audienceLabel,
+        notifLabel,
         doc.createdBy.name,
         t(STATUS_LABEL_KEY[doc.status]),
         formatDate(doc.createdAt),
@@ -1205,10 +1332,10 @@ export function ValidationPage(_props: ValidationPageProps) {
                         {t('validation.table.document')}
                       </th>
                       <th className="px-4 py-3 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider">
-                        {t('validation.table.cible')}
+                        {t('validation.table.audience')}
                       </th>
                       <th className="px-4 py-3 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider">
-                        {t('validation.table.fonds')}
+                        {t('validation.table.notification')}
                       </th>
                       <th className="px-4 py-3 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider">
                         {t('validation.table.createdBy')}
@@ -1478,28 +1605,16 @@ function DocumentRow({
             {doc.pathSegments.join(' / ')}
           </div>
         )}
-        <div className="mt-1.5">
-          <span
-            className={notification ? 'inline-flex cursor-pointer' : 'inline-flex'}
-            onClick={(e) => {
-              if (notification) {
-                e.stopPropagation();
-                onPreviewNotification();
-              }
-            }}
-          >
-            <NotificationBadge
-              notification={notification}
-              templateLabel={templateLabel}
-            />
-          </span>
-        </div>
       </td>
       <td className="px-4 py-2.5 align-top">
-        <CibleCell info={resolveCible(doc.targeting)} />
+        <AudienceCell info={resolveAudience(doc.targeting)} />
       </td>
       <td className="px-4 py-2.5 align-top">
-        <FondsCell info={resolveFonds(doc.targeting)} />
+        <NotificationCell
+          notification={notification}
+          templateLabel={templateLabel}
+          onPreviewNotification={onPreviewNotification}
+        />
       </td>
       <td className="px-4 py-2.5 align-top">
         <div className="flex flex-col gap-0.5">
@@ -1577,55 +1692,142 @@ function NotificationBadge({
   );
 }
 
+function NotificationCell({
+  notification,
+  templateLabel,
+  onPreviewNotification,
+}: {
+  notification?: ValidationDocument['notification'];
+  templateLabel?: string;
+  onPreviewNotification: () => void;
+}) {
+  return (
+    <span
+      className={notification ? 'inline-flex cursor-pointer' : 'inline-flex'}
+      onClick={(e) => {
+        if (notification) {
+          e.stopPropagation();
+          onPreviewNotification();
+        }
+      }}
+    >
+      <NotificationBadge
+        notification={notification}
+        templateLabel={templateLabel}
+      />
+    </span>
+  );
+}
+
 // ---------------------------------------------------------------------------
-// Cible cell — who the document is targeted at: a named investor (optionally
-// with the subscription it relates to), or a generic count of investors.
+// AudienceCell — unified widget replacing CibleCell + FondsCell.
+// Generic  : Fund / Segment + audience (investor count + download)
+// Nominative: Investor / Structure / Subscription + audience (contacts hover + download)
 // ---------------------------------------------------------------------------
 
-function CibleCell({ info }: { info: CibleInfo }) {
+function AudienceCell({ info }: { info: AudienceInfo }) {
+  const { t } = useTranslation();
+
+  if (info.nominative) {
+    return <AudienceCellNominative info={info} />;
+  }
+  return <AudienceCellGeneric info={info} />;
+}
+
+function AudienceCellGeneric({ info }: { info: AudienceInfo }) {
+  const { t } = useTranslation();
+  const FundIcon = TARGETING_ICON.fund;
+  const SegmentIcon = TARGETING_ICON.segment;
+
+  const fundLabel = info.fundName
+    ? info.fundName
+    : info.allFunds
+      ? t('validation.fonds.all')
+      : undefined;
+
+  const count = info.investorCount ?? 0;
+  const countLabel = t(
+    count > 1
+      ? 'validation.cible.investorsMany'
+      : 'validation.cible.investorsOne',
+    { count },
+  );
+
+  return (
+    <div className="flex flex-col items-start gap-1.5">
+      {fundLabel && (
+        <span className="inline-flex items-center gap-1.5 text-sm text-gray-700 dark:text-gray-300">
+          <FundIcon className="h-3.5 w-3.5 shrink-0 text-gray-400" />
+          <span className="max-w-[200px] truncate" title={fundLabel}>
+            {fundLabel}
+          </span>
+        </span>
+      )}
+      {info.segmentLabel && (
+        <span className="inline-flex items-center gap-1.5 text-sm text-gray-700 dark:text-gray-300">
+          <SegmentIcon className="h-3.5 w-3.5 shrink-0 text-gray-400" />
+          <span className="max-w-[200px] truncate" title={info.segmentLabel}>
+            {info.segmentLabel}
+          </span>
+        </span>
+      )}
+      <div className="flex items-center gap-1.5 mt-0.5">
+        <span className="inline-flex items-center gap-1 rounded-full border border-gray-200 bg-gray-50 px-2 py-0.5 text-[11px] font-medium text-gray-600 dark:border-gray-700 dark:bg-gray-900 dark:text-gray-300">
+          <Users className="h-3 w-3 shrink-0" />
+          {countLabel}
+        </span>
+        <Tooltip>
+          <TooltipTrigger asChild>
+            <button
+              type="button"
+              className="inline-flex items-center justify-center h-5 w-5 rounded text-gray-400 hover:text-gray-600 hover:bg-gray-100 dark:hover:text-gray-300 dark:hover:bg-gray-800 transition-colors"
+              onClick={(e) => {
+                e.stopPropagation();
+                toast.info(t('validation.audience.downloadStarted'));
+              }}
+            >
+              <Download className="h-3 w-3" />
+            </button>
+          </TooltipTrigger>
+          <TooltipContent side="top">
+            <span className="text-xs">{t('validation.audience.downloadTooltip')}</span>
+          </TooltipContent>
+        </Tooltip>
+      </div>
+    </div>
+  );
+}
+
+function AudienceCellNominative({ info }: { info: AudienceInfo }) {
   const { t } = useTranslation();
   const InvestorIcon = TARGETING_ICON.investor;
-  const SegmentIcon = TARGETING_ICON.segment;
   const SubIcon = TARGETING_ICON.subscription;
 
-  let main: JSX.Element;
-  if (info.investorName) {
-    main = (
-      <span className="inline-flex items-center gap-1.5 text-sm text-gray-900 dark:text-gray-100">
-        <InvestorIcon className="h-3.5 w-3.5 shrink-0 text-gray-400" />
-        <span className="max-w-[180px] truncate" title={info.investorName}>
-          {info.investorName}
-        </span>
-      </span>
-    );
-  } else if (info.segmentLabel) {
-    main = (
-      <span className="inline-flex items-center gap-1.5 text-sm text-gray-700 dark:text-gray-300">
-        <SegmentIcon className="h-3.5 w-3.5 shrink-0 text-gray-400" />
-        <span className="max-w-[180px] truncate" title={info.segmentLabel}>
-          {info.segmentLabel}
-        </span>
-      </span>
-    );
-  } else {
-    const count = info.investorCount ?? 0;
-    const label = t(
-      count > 1
-        ? 'validation.cible.investorsMany'
-        : 'validation.cible.investorsOne',
-      { count },
-    );
-    main = (
-      <span className="inline-flex items-center gap-1.5 text-sm text-gray-700 dark:text-gray-300">
-        <Users className="h-3.5 w-3.5 shrink-0 text-gray-400" />
-        <span className="truncate">{label}</span>
-      </span>
-    );
-  }
+  const contacts = info.contacts ?? [];
+  const contactCount = info.contactCount ?? 0;
+  const contactLabel = t(
+    contactCount > 1
+      ? 'validation.audience.contactsMany'
+      : 'validation.audience.contactsOne',
+    { count: contactCount },
+  );
 
   return (
     <div className="flex flex-col items-start gap-1">
-      {main}
+      <span className="inline-flex items-center gap-1.5 text-sm text-gray-900 dark:text-gray-100">
+        <InvestorIcon className="h-3.5 w-3.5 shrink-0 text-gray-400" />
+        <span className="max-w-[200px] truncate" title={info.investorName}>
+          {info.investorName}
+        </span>
+      </span>
+      {info.structureName && (
+        <span className="inline-flex items-center gap-1.5 text-[12px] text-gray-500 dark:text-gray-400">
+          <Building2 className="h-3 w-3 shrink-0 text-gray-400" />
+          <span className="max-w-[200px] truncate" title={info.structureName}>
+            {info.structureName}
+          </span>
+        </span>
+      )}
       {info.subscriptionCode && (
         <Tooltip>
           <TooltipTrigger asChild>
@@ -1641,37 +1843,53 @@ function CibleCell({ info }: { info: CibleInfo }) {
           </TooltipContent>
         </Tooltip>
       )}
+      <div className="flex items-center gap-1.5 mt-0.5">
+        <Tooltip>
+          <TooltipTrigger asChild>
+            <span className="inline-flex items-center gap-1 rounded-full border border-gray-200 bg-gray-50 px-2 py-0.5 text-[11px] font-medium text-gray-600 cursor-default dark:border-gray-700 dark:bg-gray-900 dark:text-gray-300">
+              <Users className="h-3 w-3 shrink-0" />
+              {contactLabel}
+            </span>
+          </TooltipTrigger>
+          <TooltipContent side="bottom" className="max-w-xs">
+            <div className="space-y-1.5 py-1">
+              {info.investorName && (
+                <div className="flex items-center gap-1.5 text-xs font-semibold">
+                  <InvestorIcon className="h-3 w-3 shrink-0" />
+                  {info.investorName}
+                </div>
+              )}
+              <div className="border-t border-gray-200 dark:border-gray-700 pt-1.5 space-y-1">
+                {contacts.map((c) => (
+                  <div key={c.id} className="text-xs flex items-center justify-between gap-3">
+                    <span className="truncate">{c.name}</span>
+                    <span className="text-[10px] text-gray-400 shrink-0">{c.role}</span>
+                  </div>
+                ))}
+              </div>
+            </div>
+          </TooltipContent>
+        </Tooltip>
+        <Tooltip>
+          <TooltipTrigger asChild>
+            <button
+              type="button"
+              className="inline-flex items-center justify-center h-5 w-5 rounded text-gray-400 hover:text-gray-600 hover:bg-gray-100 dark:hover:text-gray-300 dark:hover:bg-gray-800 transition-colors"
+              onClick={(e) => {
+                e.stopPropagation();
+                toast.info(t('validation.audience.downloadStarted'));
+              }}
+            >
+              <Download className="h-3 w-3" />
+            </button>
+          </TooltipTrigger>
+          <TooltipContent side="top">
+            <span className="text-xs">{t('validation.audience.downloadTooltip')}</span>
+          </TooltipContent>
+        </Tooltip>
+      </div>
     </div>
   );
-}
-
-// ---------------------------------------------------------------------------
-// Fonds cell — the fund the document relates to, "Tous les fonds" for generic
-// cross-fund targets, or empty for investor-only targets.
-// ---------------------------------------------------------------------------
-
-function FondsCell({ info }: { info: FondsInfo }) {
-  const { t } = useTranslation();
-  const FundIcon = TARGETING_ICON.fund;
-  if (info.fundName) {
-    return (
-      <span className="inline-flex items-center gap-1.5 text-sm text-gray-700 dark:text-gray-300">
-        <FundIcon className="h-3.5 w-3.5 shrink-0 text-gray-400" />
-        <span className="max-w-[170px] truncate" title={info.fundName}>
-          {info.fundName}
-        </span>
-      </span>
-    );
-  }
-  if (info.allFunds) {
-    return (
-      <span className="inline-flex items-center gap-1.5 text-sm text-gray-700 dark:text-gray-300">
-        <FundIcon className="h-3.5 w-3.5 shrink-0 text-gray-400" />
-        <span>{t('validation.fonds.all')}</span>
-      </span>
-    );
-  }
-  return <span className="text-[11px] text-gray-300">—</span>;
 }
 
 // ---------------------------------------------------------------------------
@@ -1993,8 +2211,7 @@ function DynamicBatchRow({
     new Date(d.createdAt).getTime() < new Date(m.createdAt).getTime() ? d : m,
     batch.docs[0],
   );
-  const cibleInfo = useMemo(() => resolveCibleForDocs(batch.docs), [batch.docs]);
-  const fondsInfo = useMemo(() => resolveFondsForDocs(batch.docs), [batch.docs]);
+  const audienceInfo = useMemo(() => resolveAudienceForDocs(batch.docs), [batch.docs]);
   return (
     <>
       <tr className="border-b border-blue-100 bg-blue-50/40 hover:bg-blue-50/60 dark:border-blue-900/30 dark:bg-blue-950/15">
@@ -2050,28 +2267,18 @@ function DynamicBatchRow({
               >
                 {batch.name}
               </div>
-              <div className="mt-1.5">
-                <span
-                  className="inline-flex cursor-pointer"
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    onPreviewNotification();
-                  }}
-                >
-                  <NotificationBadge
-                    notification={batch.notification}
-                    templateLabel={batch.templateLabel}
-                  />
-                </span>
-              </div>
             </div>
           </div>
         </td>
         <td className="px-4 py-2.5 align-top">
-          <CibleCell info={cibleInfo} />
+          <AudienceCell info={audienceInfo} />
         </td>
-        <td className="px-4 py-2.5 align-top">
-          <FondsCell info={fondsInfo} />
+        <td className="px-4 py-2.5 align-top text-center">
+          <NotificationCell
+            notification={batch.notification}
+            templateLabel={batch.templateLabel}
+            onPreviewNotification={onPreviewNotification}
+          />
         </td>
         <td className="px-4 py-2.5 align-top">
           <div className="flex flex-col gap-0.5">
@@ -2153,7 +2360,7 @@ function DynamicBatchRow({
             <td className="px-4 py-2 align-top text-[11px] text-gray-300">
               —
             </td>
-            <td className="px-4 py-2 align-top text-[11px] text-gray-300">
+            <td className="px-4 py-2 align-top text-center text-[11px] text-gray-300">
               —
             </td>
             <td className="px-4 py-2 align-top">
