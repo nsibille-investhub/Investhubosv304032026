@@ -3460,7 +3460,6 @@
     "configure": "Configurer"
   },
   "environmentBanner": {
-    "label": "Staging",
-    "message": "Vous êtes sur un environnement hors-production. Les données peuvent être réinitialisées à tout moment."
+    "label": "Staging"
   }
 }

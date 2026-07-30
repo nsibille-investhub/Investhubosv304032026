@@ -3460,7 +3460,6 @@
     "configure": "Configure"
   },
   "environmentBanner": {
-    "label": "Staging",
-    "message": "You are on a non-production environment. Data may be reset at any time."
+    "label": "Staging"
   }
 }

@@ -12,30 +12,17 @@ export function EnvironmentBanner() {
         animate={{ opacity: 1, y: 0 }}
         exit={{ opacity: 0, y: -10 }}
         transition={{ duration: 0.2 }}
-        className="flex items-center justify-center gap-2.5 px-5 py-2 border-b border-violet-200 dark:border-violet-800 bg-violet-50 dark:bg-violet-950/40 flex-shrink-0"
+        className="flex items-center justify-center gap-2 px-5 py-1.5 border-b border-amber-200 dark:border-amber-800 bg-amber-50 dark:bg-amber-950/40 flex-shrink-0"
         style={{
-          backgroundImage: 'repeating-linear-gradient(-45deg, transparent, transparent 6px, rgba(139,92,246,0.06) 6px, rgba(139,92,246,0.06) 12px)',
+          backgroundImage: 'repeating-linear-gradient(-45deg, transparent, transparent 6px, rgba(245,158,11,0.06) 6px, rgba(245,158,11,0.06) 12px)',
         }}
         role="status"
         aria-live="polite"
       >
-        <span className="relative flex h-2 w-2 flex-shrink-0">
-          <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-violet-400 opacity-75" />
-          <span className="relative inline-flex rounded-full h-2 w-2 bg-violet-500" />
-        </span>
+        <FlaskConical className="w-3.5 h-3.5 text-amber-600 dark:text-amber-400 flex-shrink-0" />
 
-        <div className="flex items-center justify-center w-6 h-6 rounded bg-violet-500 flex-shrink-0">
-          <FlaskConical className="w-3.5 h-3.5 text-white" />
-        </div>
-
-        <span className="text-[11px] font-semibold uppercase tracking-wide text-violet-700 dark:text-violet-400 flex-shrink-0">
+        <span className="text-[11px] font-semibold uppercase tracking-wide text-amber-700 dark:text-amber-400">
           {t('environmentBanner.label')}
-        </span>
-
-        <div className="w-px h-3.5 bg-violet-300 dark:bg-violet-700 flex-shrink-0" />
-
-        <span className="text-xs text-violet-800 dark:text-violet-300">
-          {t('environmentBanner.message')}
         </span>
       </motion.div>
     </AnimatePresence>
