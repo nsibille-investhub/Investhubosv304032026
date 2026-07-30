@@ -1599,11 +1599,26 @@ function DocumentRow({
         </td>
       )}
       <td className="px-4 py-2.5 align-top max-w-[320px]">
-        {doc.kindKey && (
-          <div className="mb-0.5 text-[10px] font-semibold uppercase tracking-wide text-gray-500 dark:text-gray-400">
-            {t(doc.kindKey)}
-          </div>
-        )}
+        <div className="flex items-center gap-1.5 mb-0.5">
+          {doc.kindKey && (
+            <span className="text-[10px] font-semibold uppercase tracking-wide text-gray-500 dark:text-gray-400">
+              {t(doc.kindKey)}
+            </span>
+          )}
+          <Badge
+            variant="outline"
+            className={cn(
+              'text-[9px] px-1 py-0 leading-tight font-medium',
+              isNominative(doc)
+                ? 'border-blue-200 bg-blue-50 text-blue-700 dark:border-blue-900 dark:bg-blue-950/30 dark:text-blue-300'
+                : 'border-amber-200 bg-amber-50 text-amber-700 dark:border-amber-900 dark:bg-amber-950/30 dark:text-amber-300',
+            )}
+          >
+            {isNominative(doc)
+              ? t('validation.bulkDialog.scopeNominative')
+              : t('validation.bulkDialog.scopeGeneric')}
+          </Badge>
+        </div>
         <Tooltip>
           <TooltipTrigger asChild>
             <div className="truncate text-sm font-medium text-gray-900 dark:text-gray-100" title={doc.name}>
@@ -2042,9 +2057,41 @@ function PublicationConfirmDialog({
     toast.info(t('validation.audience.downloadStarted'));
   };
 
+  type RecipientRow = { id: string; name: string; subtitle?: string; type: 'investor' | 'contact' };
+  const recipientRows = useMemo((): RecipientRow[] => {
+    if (audience.nominative) {
+      const rows: RecipientRow[] = [];
+      if (audience.investorName) {
+        rows.push({
+          id: `inv-${audience.investorName}`,
+          name: audience.investorName,
+          subtitle: audience.structureName,
+          type: 'investor',
+        });
+      }
+      (audience.contacts ?? []).forEach((c) =>
+        rows.push({ id: c.id, name: c.name, subtitle: c.role, type: 'contact' }),
+      );
+      return rows;
+    }
+    const seen = new Set<string>();
+    const rows: RecipientRow[] = [];
+    notificationGroups.forEach((g) =>
+      g.notification?.recipients.forEach((r) => {
+        const rName = typeof r.name === 'string' ? r.name : t(r.name.key, r.name.vars);
+        const key = `${rName}-${r.email}`;
+        if (seen.has(key)) return;
+        seen.add(key);
+        const rRole = r.role
+          ? typeof r.role === 'string' ? r.role : t(r.role.key, r.role.vars)
+          : undefined;
+        rows.push({ id: key, name: rName, subtitle: rRole, type: 'investor' });
+      }),
+    );
+    return rows;
+  }, [audience, notificationGroups, t]);
+
   const FundIcon = TARGETING_ICON.fund;
-  const InvestorIcon = TARGETING_ICON.investor;
-  const SubIcon = TARGETING_ICON.subscription;
 
   return (
     <Dialog open onOpenChange={(o) => !o && onCancel()}>
@@ -2079,6 +2126,19 @@ function PublicationConfirmDialog({
                       >
                         {single.name}
                       </span>
+                      <Badge
+                        variant="outline"
+                        className={cn(
+                          'shrink-0 text-[10px] font-medium',
+                          audience.nominative
+                            ? 'border-blue-200 bg-blue-50 text-blue-700'
+                            : 'border-amber-200 bg-amber-50 text-amber-700',
+                        )}
+                      >
+                        {audience.nominative
+                          ? t('validation.bulkDialog.scopeNominative')
+                          : t('validation.bulkDialog.scopeGeneric')}
+                      </Badge>
                     </div>
                     <div className="mt-3 grid grid-cols-2 gap-x-6 gap-y-2 text-xs text-gray-600">
                       {single.kindKey && (
@@ -2156,20 +2216,32 @@ function PublicationConfirmDialog({
           </div>
 
           {/* ── Audience section ── */}
-          <div className="space-y-2">
-            <div className="flex items-center justify-between">
-              <Label>{t('validation.bulkDialog.audienceLabel')}</Label>
+          <div className="rounded-lg border border-border bg-white overflow-hidden">
+            <div className="flex items-center justify-between px-4 py-3 border-b border-border">
+              <div className="flex items-center gap-3">
+                <div className="w-10 h-10 rounded-full bg-muted flex items-center justify-center">
+                  <Users className="h-5 w-5 text-muted-foreground" />
+                </div>
+                <div>
+                  <span className="text-xl font-bold text-foreground">{recipientRows.length}</span>
+                  <span className="ml-1.5 text-sm text-muted-foreground">
+                    {t('validation.bulkDialog.audienceRecipients')}
+                  </span>
+                  <p className="text-xs text-muted-foreground">
+                    {t('validation.bulkDialog.audienceSubtitle')}
+                  </p>
+                </div>
+              </div>
               <button
                 type="button"
-                className="inline-flex items-center gap-1.5 rounded-md border border-gray-200 bg-white px-2.5 py-1 text-xs font-medium text-gray-600 hover:bg-gray-50 hover:text-gray-800 transition-colors"
+                className="inline-flex items-center gap-1.5 rounded-md border border-border bg-white px-2.5 py-1.5 text-xs font-medium text-muted-foreground hover:bg-muted/50 hover:text-foreground transition-colors"
                 onClick={handleDownloadAudience}
               >
-                <Download className="h-3 w-3" />
-                {t('validation.bulkDialog.audienceDownload')}
+                <Download className="h-3.5 w-3.5" />
+                {t('validation.bulkDialog.audienceExportCsv')}
               </button>
             </div>
-
-            <div className="rounded-lg border border-border bg-white overflow-hidden">
+            <div className="max-h-[260px] overflow-y-auto">
               <Table>
                 <TableHeader>
                   <TableRow>
@@ -2178,34 +2250,13 @@ function PublicationConfirmDialog({
                   </TableRow>
                 </TableHeader>
                 <TableBody>
-                  {audience.contacts && audience.contacts.length > 0 ? (
-                    audience.contacts.map((c) => (
-                      <TableRow key={c.id}>
-                        <TableCell className="px-3 py-3 align-top">
-                          <div className="flex flex-col gap-0.5">
-                            <span className="text-sm font-medium text-foreground">{c.name}</span>
-                            {c.role && (
-                              <span className="text-[11px] text-muted-foreground">{c.role}</span>
-                            )}
-                          </div>
-                        </TableCell>
-                        <TableCell className="px-3">
-                          <Badge
-                            variant="outline"
-                            className="border-border bg-muted/60 text-muted-foreground font-normal"
-                          >
-                            {t('validation.bulkDialog.typeContact')}
-                          </Badge>
-                        </TableCell>
-                      </TableRow>
-                    ))
-                  ) : audience.investorName ? (
-                    <TableRow>
+                  {recipientRows.map((r) => (
+                    <TableRow key={r.id}>
                       <TableCell className="px-3 py-3 align-top">
                         <div className="flex flex-col gap-0.5">
-                          <span className="text-sm font-medium text-foreground">{audience.investorName}</span>
-                          {audience.structureName && (
-                            <span className="text-[11px] text-muted-foreground">{audience.structureName}</span>
+                          <span className="text-sm font-medium text-foreground">{r.name}</span>
+                          {r.subtitle && (
+                            <span className="text-[11px] text-muted-foreground">{r.subtitle}</span>
                           )}
                         </div>
                       </TableCell>
@@ -2214,33 +2265,15 @@ function PublicationConfirmDialog({
                           variant="outline"
                           className="border-border bg-muted/60 text-muted-foreground font-normal"
                         >
-                          {t('validation.bulkDialog.typeInvestor')}
+                          {r.type === 'investor'
+                            ? t('validation.bulkDialog.typeInvestor')
+                            : t('validation.bulkDialog.typeContact')}
                         </Badge>
                       </TableCell>
                     </TableRow>
-                  ) : (
-                    <TableRow>
-                      <TableCell className="px-3 py-3 text-sm text-muted-foreground" colSpan={2}>
-                        {audience.fundName ?? (audience.allFunds ? t('validation.fonds.all') : '—')}
-                        {' — '}
-                        {t(
-                          (audience.investorCount ?? 0) > 1
-                            ? 'validation.cible.investorsMany'
-                            : 'validation.cible.investorsOne',
-                          { count: audience.investorCount ?? 0 },
-                        )}
-                      </TableCell>
-                    </TableRow>
-                  )}
+                  ))}
                 </TableBody>
               </Table>
-              <div className="px-3 py-2 border-t border-border bg-muted/30">
-                <span className="text-xs font-medium text-muted-foreground uppercase tracking-wide">
-                  {t('validation.bulkDialog.audienceCount', {
-                    count: audience.contactCount ?? audience.investorCount ?? 0,
-                  })}
-                </span>
-              </div>
             </div>
           </div>
 
