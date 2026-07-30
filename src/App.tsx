@@ -5,7 +5,7 @@ import { ValidationStoreProvider } from './utils/validationStoreContext';
 import { useTranslation } from './utils/languageContext';
 import { ThemeToggle } from './components/ThemeToggle';
 import { LanguageSwitcher } from './components/LanguageSwitcher';
-import { Search, Bell, Settings, Menu, ChevronDown, Plus, Info, MoreVertical, ArrowLeft, ChevronLeft, ChevronRight, Download, FileSpreadsheet, History, ArchiveX, Users, Palette, Sparkles } from 'lucide-react';
+import { Search, Bell, Settings, Menu, ChevronDown, Plus, Info, MoreVertical, ArrowLeft, ChevronLeft, ChevronRight, Download, FileSpreadsheet, History, ArchiveX, Users, Palette, Sparkles, CircleHelp } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 import { Badge } from './components/ui/badge';
 import { PageHeader } from './components/ui/page-header';
@@ -107,6 +107,7 @@ import { VariableFormattingSettings } from './components/settings/VariableFormat
 import { ToolsSettings } from './components/settings/ToolsSettings';
 import { ConventionsSettings } from './components/settings/ConventionsSettings';
 import { MailRedirectBanner } from './components/MailRedirectBanner';
+import { EnvironmentBanner } from './components/EnvironmentBanner';
 
 import { Page, getPageFromHash, navigateToPage, onHashChange } from './utils/routing';
 import './utils/hashPreserver'; // Import to execute hash preservation logic
@@ -663,6 +664,22 @@ export default function App() {
 
               <Tooltip>
                 <TooltipTrigger asChild>
+                  <motion.a
+                    href="https://docs.investhub.cloud"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    whileHover={{ scale: 1.05 }}
+                    whileTap={{ scale: 0.95 }}
+                    className="p-2.5 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-xl transition-all duration-300 relative group"
+                  >
+                    <CircleHelp className="w-5 h-5 text-gray-600 dark:text-gray-400 group-hover:text-gray-900 dark:group-hover:text-gray-100 transition-colors" />
+                  </motion.a>
+                </TooltipTrigger>
+                <TooltipContent>{t('header.helpDoc')}</TooltipContent>
+              </Tooltip>
+
+              <Tooltip>
+                <TooltipTrigger asChild>
                   <motion.button
                     whileHover={{ scale: 1.05 }}
                     whileTap={{ scale: 0.95, rotate: 90 }}
@@ -679,6 +696,7 @@ export default function App() {
             </div>
           </motion.header>
 
+          <EnvironmentBanner />
           <MailRedirectBanner />
 
           {/* Breadcrumb (datahub and whats-new render their own PageHeader with breadcrumb) */}

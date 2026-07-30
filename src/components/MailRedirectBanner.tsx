@@ -1,14 +1,19 @@
 import { motion, AnimatePresence } from 'motion/react';
-import { Mail, ArrowRight } from 'lucide-react';
+import { Mail } from 'lucide-react';
 import { useAppStore } from '../utils/appStoreContext';
 import { useTranslation } from '../utils/languageContext';
 import { navigateToPage } from '../utils/routing';
+
+const MAX_VISIBLE_EMAILS = 3;
 
 export function MailRedirectBanner() {
   const { mailRedirect } = useAppStore();
   const { t } = useTranslation();
 
   if (!mailRedirect.active || mailRedirect.emails.length === 0) return null;
+
+  const visibleEmails = mailRedirect.emails.slice(0, MAX_VISIBLE_EMAILS);
+  const hiddenCount = mailRedirect.emails.length - MAX_VISIBLE_EMAILS;
 
   return (
     <AnimatePresence>
@@ -43,21 +48,18 @@ export function MailRedirectBanner() {
           {t('mailRedirect.message')}
         </span>
 
-        <div className="flex items-center gap-1.5 flex-shrink-0">
-          {mailRedirect.emails.map((email) => (
-            <span
-              key={email}
-              className="inline-flex items-center gap-1 bg-amber-200 dark:bg-amber-900 text-amber-900 dark:text-amber-200 text-[11px] font-semibold font-mono px-2 py-0.5 rounded"
-            >
-              <ArrowRight className="w-3 h-3" />
-              {email}
+        <span className="text-[11px] font-semibold font-mono text-amber-900 dark:text-amber-200 flex-shrink-0">
+          {visibleEmails.join(', ')}
+          {hiddenCount > 0 && (
+            <span className="text-amber-600 dark:text-amber-400">
+              {' '}... +{hiddenCount}
             </span>
-          ))}
-        </div>
+          )}
+        </span>
 
         <button
           onClick={() => navigateToPage('settings-mail-redirect')}
-          className="ml-auto text-[11px] font-medium text-amber-700 dark:text-amber-400 underline underline-offset-2 hover:text-amber-900 dark:hover:text-amber-200 transition-colors flex-shrink-0"
+          className="text-[11px] font-medium text-amber-700 dark:text-amber-400 underline underline-offset-2 hover:text-amber-900 dark:hover:text-amber-200 transition-colors flex-shrink-0"
         >
           {t('mailRedirect.configure')}
         </button>

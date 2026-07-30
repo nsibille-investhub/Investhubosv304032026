@@ -12,6 +12,7 @@
     "whatsNewUnread": "Unread updates",
     "notifications": "{{count}} notifications",
     "appStore": "App Store",
+    "helpDoc": "Help center",
     "languageSwitcher": "Change language",
     "toggleDarkMode": "Switch to dark mode",
     "toggleLightMode": "Switch to light mode"
@@ -3469,5 +3470,8 @@
     "label": "Redirect active",
     "message": "All emails are redirected to",
     "configure": "Configure"
+  },
+  "environmentBanner": {
+    "label": "Staging"
   }
 }
