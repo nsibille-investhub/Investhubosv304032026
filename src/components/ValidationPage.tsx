@@ -353,7 +353,7 @@ interface AudienceInfo {
   investorCount?: number;
   // Nominative fields
   investorName?: string;
-  investorTypology?: string;
+  structureName?: string;
   subscriptionCode?: string;
   subscriptionFullName?: string;
   contacts?: InvestorContact[];
@@ -369,7 +369,7 @@ function resolveAudience(
 
   if (nominative) {
     let contacts: InvestorContact[] = [];
-    let investorTypology: string | undefined;
+    let structureName: string | undefined;
     const subTag = targeting.find((t) => t.kind === 'subscription');
     const invTag = targeting.find((t) => t.kind === 'investor');
     let investorId: string | undefined;
@@ -383,13 +383,13 @@ function resolveAudience(
     }
     if (investorId) {
       const inv = findInvestor(investorId);
-      if (inv) investorTypology = inv.typology;
+      if (inv) structureName = inv.structure;
       contacts = getInvestorContacts(investorId).filter((c) => c.canAccess);
     }
     return {
       nominative: true,
       investorName: cible.investorName,
-      investorTypology,
+      structureName,
       subscriptionCode: cible.subscriptionCode,
       subscriptionFullName: cible.subscriptionFullName,
       fundName: fonds.fundName,
@@ -416,7 +416,7 @@ function resolveAudienceForDocs(docs: ValidationDocument[]): AudienceInfo {
 
   if (nominative) {
     let contacts: InvestorContact[] = [];
-    let investorTypology: string | undefined;
+    let structureName: string | undefined;
     const allTargeting = docs.flatMap((d) => d.targeting);
     const subTag = allTargeting.find((t) => t.kind === 'subscription');
     const invTag = allTargeting.find((t) => t.kind === 'investor');
@@ -431,13 +431,13 @@ function resolveAudienceForDocs(docs: ValidationDocument[]): AudienceInfo {
     }
     if (investorId) {
       const investor = findInvestor(investorId);
-      if (investor) investorTypology = investor.typology;
+      if (investor) structureName = investor.structure;
       contacts = getInvestorContacts(investorId).filter((c) => c.canAccess);
     }
     return {
       nominative: true,
       investorName: cible.investorName,
-      investorTypology,
+      structureName,
       subscriptionCode: cible.subscriptionCode,
       subscriptionFullName: cible.subscriptionFullName,
       fundName: fonds.fundName,
@@ -1105,7 +1105,7 @@ export function ValidationPage(_props: ValidationPageProps) {
       const aud = resolveAudience(doc.targeting);
       let audienceLabel = '';
       if (aud.nominative) {
-        const parts = [aud.investorName, aud.investorTypology, aud.subscriptionCode].filter(Boolean);
+        const parts = [aud.investorName, aud.structureName, aud.subscriptionCode].filter(Boolean);
         audienceLabel = parts.join(' — ');
       } else {
         const fundPart = aud.fundName ?? (aud.allFunds ? t('validation.fonds.all') : '');
@@ -1793,10 +1793,12 @@ function AudienceCellNominative({ info }: { info: AudienceInfo }) {
           {info.investorName}
         </span>
       </span>
-      {info.investorTypology && (
+      {info.structureName && (
         <span className="inline-flex items-center gap-1.5 text-[12px] text-gray-500 dark:text-gray-400">
           <Building2 className="h-3 w-3 shrink-0 text-gray-400" />
-          <span>{info.investorTypology}</span>
+          <span className="max-w-[200px] truncate" title={info.structureName}>
+            {info.structureName}
+          </span>
         </span>
       )}
       {info.subscriptionCode && (

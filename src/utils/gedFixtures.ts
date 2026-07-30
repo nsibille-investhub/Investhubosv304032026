@@ -64,21 +64,23 @@ export interface InvestorProfile {
   name: string;
   typology: InvestorTypology;
   email: string;
+  /** Legal entity through which the investor subscribes (holding, SCI, etc.). */
+  structure?: string;
 }
 
 export const INVESTORS: InvestorProfile[] = [
-  // Pension funds
+  // Pension funds — invest in their own name
   { id: 'INV-001', name: 'Aldebaran Pension Fund',         typology: 'Pension Fund',  email: 'lp-relations@aldebaran-pension.eu' },
   { id: 'INV-014', name: 'Norwood Pension Trust',          typology: 'Pension Fund',  email: 'investments@norwood-pension.uk' },
   { id: 'INV-021', name: 'Hartwood Retirement Plan',       typology: 'Pension Fund',  email: 'capital@hartwood-retirement.eu' },
   { id: 'INV-031', name: 'Brentley Pension Scheme',        typology: 'Pension Fund',  email: 'lp@brentley-pension.com' },
-  // Insurance & Re
+  // Insurance & Re — invest in their own name
   { id: 'INV-003', name: 'Caledonia Insurance Group',      typology: 'Insurance',     email: 'investments@caledonia-ins.eu' },
   { id: 'INV-017', name: 'Stratton Mutual Insurance',      typology: 'Insurance',     email: 'pe@stratton-mutual.com' },
   { id: 'INV-019', name: 'Vellington Re',                  typology: 'Insurance',     email: 'capital@vellington-re.eu' },
   { id: 'INV-024', name: 'Drumhill Reinsurance',           typology: 'Insurance',     email: 'allocations@drumhill-re.lu' },
   { id: 'INV-035', name: 'Northpoint Insurance',           typology: 'Insurance',     email: 'lp-relations@northpoint-ins.com' },
-  // Sovereign
+  // Sovereign — invest in their own name
   { id: 'INV-004', name: 'Dunmore Sovereign Wealth',       typology: 'Sovereign',     email: 'capital@dunmore-swf.gov' },
   { id: 'INV-018', name: 'Tanvir Investment Authority',    typology: 'Sovereign',     email: 'lp@tanvir-ia.gov' },
   { id: 'INV-032', name: 'Suvarna Reserve Fund',           typology: 'Sovereign',     email: 'investments@suvarna-reserve.gov' },
@@ -89,19 +91,19 @@ export const INVESTORS: InvestorProfile[] = [
   { id: 'INV-022', name: 'Helmsford Foundation',           typology: 'Institutional', email: 'allocations@helmsford-foundation.org' },
   { id: 'INV-023', name: 'Camberwell Allocators',          typology: 'Institutional', email: 'pe@camberwell-allocators.com' },
   { id: 'INV-025', name: 'Saint-Gaudens Endowment',        typology: 'Institutional', email: 'investments@stgaudens-endowment.org' },
-  // Family Offices
-  { id: 'INV-002', name: 'Brunswick Family Office',        typology: 'Family Office', email: 'office@brunswick-fo.com' },
-  { id: 'INV-005', name: 'Everstone Family Trust',         typology: 'Family Office', email: 'trust@everstone-family.com' },
-  { id: 'INV-013', name: 'Marston Family Office',          typology: 'Family Office', email: 'office@marston-fo.eu' },
-  { id: 'INV-015', name: 'Pemberton House',                typology: 'Family Office', email: 'allocations@pemberton-house.com' },
+  // Family Offices — often invest via a holding or trust vehicle
+  { id: 'INV-002', name: 'Brunswick Family Office',        typology: 'Family Office', email: 'office@brunswick-fo.com',          structure: 'Brunswick Holdings Ltd' },
+  { id: 'INV-005', name: 'Everstone Family Trust',         typology: 'Family Office', email: 'trust@everstone-family.com',       structure: 'Everstone Capital SCA' },
+  { id: 'INV-013', name: 'Marston Family Office',          typology: 'Family Office', email: 'office@marston-fo.eu',             structure: 'SCI Marston Patrimoine' },
+  { id: 'INV-015', name: 'Pemberton House',                typology: 'Family Office', email: 'allocations@pemberton-house.com',  structure: 'Pemberton Invest SAS' },
   { id: 'INV-016', name: 'Rosendale Wealth Office',        typology: 'Family Office', email: 'office@rosendale-wo.com' },
-  { id: 'INV-026', name: 'Avalon Heritage Trust',          typology: 'Family Office', email: 'trust@avalon-heritage.com' },
+  { id: 'INV-026', name: 'Avalon Heritage Trust',          typology: 'Family Office', email: 'trust@avalon-heritage.com',        structure: 'Avalon Capital SA' },
   { id: 'INV-028', name: 'Stenmark Capital',               typology: 'Family Office', email: 'office@stenmark-capital.se' },
-  // HNWI / UHNWI
+  // HNWI / UHNWI — some invest via a personal holding or SCI
   { id: 'INV-007', name: 'Greycliff Wealth Partners',      typology: 'HNWI',          email: 'partners@greycliff.io' },
-  { id: 'INV-009', name: 'Ibex Mountain Holdings',         typology: 'UHNWI',         email: 'mailbox@ibex-mountain.com' },
-  { id: 'INV-020', name: 'Westbrook Investments',          typology: 'UHNWI',         email: 'office@westbrook-investments.com' },
-  { id: 'INV-027', name: 'Carrington Private Wealth',      typology: 'HNWI',          email: 'wealth@carrington-pw.com' },
+  { id: 'INV-009', name: 'Ibex Mountain Holdings',         typology: 'UHNWI',         email: 'mailbox@ibex-mountain.com',        structure: 'Ibex Capital Holding SA' },
+  { id: 'INV-020', name: 'Westbrook Investments',          typology: 'UHNWI',         email: 'office@westbrook-investments.com', structure: 'SCI Westbrook Patrimoine' },
+  { id: 'INV-027', name: 'Carrington Private Wealth',      typology: 'HNWI',          email: 'wealth@carrington-pw.com',         structure: 'Carrington Holding Ltd' },
   { id: 'INV-033', name: 'Linden Holdings',                typology: 'UHNWI',         email: 'office@linden-holdings.lu' },
   // Distributors
   { id: 'INV-011', name: 'Kensington Private Bank',        typology: 'Distributor',   email: 'fund-selection@kensington-bank.co.uk' },
