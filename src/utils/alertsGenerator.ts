@@ -37,6 +37,7 @@ export interface AlertItem {
   previousFindings: AlertListCategory[];
   monitoring: boolean;
   analyst: string | null;
+  dossier: string;
 }
 
 const individualNames: Array<{ firstName: string; lastName: string }> = [
@@ -113,6 +114,21 @@ const INVESTOR_ROLES: InvestorRole[] = [
   'coInvestor',
   'legalRep',
   'proxy',
+];
+
+const DOSSIER_NAMES: string[] = [
+  'KYC-2024-001 — VENTECH',
+  'KYC-2024-002 — KORELYA CAPITAL',
+  'KYC-2024-003 — HIGHLAND EUROPE',
+  'KYC-2024-004 — ACCEL PARTNERS',
+  'KYC-2024-005 — Jean Dault',
+  'KYC-2024-006 — Sophie Martin',
+  'KYC-2024-007 — INDEX VENTURES',
+  'KYC-2024-008 — BALDERTON CAPITAL',
+  'KYC-2024-009 — Marc Dubois',
+  'KYC-2024-010 — ATOMICO',
+  'KYC-2024-011 — PARTECH',
+  'KYC-2024-012 — Claire Rousseau',
 ];
 
 const ANALYSTS: string[] = [
@@ -264,6 +280,8 @@ export function generateAlerts(count: number = 100): AlertItem[] {
         ? null
         : ANALYSTS[i % ANALYSTS.length];
 
+    const dossier = DOSSIER_NAMES[i % DOSSIER_NAMES.length];
+
     alerts.push({
       id: `ALERT-${1000 + i}`,
       name: alertName,
@@ -281,6 +299,7 @@ export function generateAlerts(count: number = 100): AlertItem[] {
       previousFindings,
       monitoring: true,
       analyst,
+      dossier,
     });
   }
 

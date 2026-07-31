@@ -101,6 +101,14 @@ const ALERT_FILTER_CONFIGS: FilterConfig[] = [
     ],
   },
   {
+    id: 'dossier',
+    label: 'Dossier',
+    type: 'select',
+    isPrimary: false,
+    placeholder: 'Dossier',
+    options: [],
+  },
+  {
     id: 'entity',
     label: 'Entité',
     type: 'select',
@@ -181,17 +189,30 @@ export function AlertsPage({ onEnableModule, alerts }: AlertsPageProps) {
     return Array.from(set).sort();
   }, [alertsBySource]);
 
+  const availableDossiers = useMemo(() => {
+    const set = new Set<string>();
+    alertsBySource.forEach((a) => set.add(a.dossier));
+    return Array.from(set).sort();
+  }, [alertsBySource]);
+
   const filterConfigs = useMemo<FilterConfig[]>(
     () =>
-      ALERT_FILTER_CONFIGS.map((cfg) =>
-        cfg.id === 'entity'
-          ? {
-              ...cfg,
-              options: availableEntities.map((e) => ({ value: e, label: e })),
-            }
-          : cfg,
-      ),
-    [availableEntities],
+      ALERT_FILTER_CONFIGS.map((cfg) => {
+        if (cfg.id === 'entity') {
+          return {
+            ...cfg,
+            options: availableEntities.map((e) => ({ value: e, label: e })),
+          };
+        }
+        if (cfg.id === 'dossier') {
+          return {
+            ...cfg,
+            options: availableDossiers.map((d) => ({ value: d, label: d })),
+          };
+        }
+        return cfg;
+      }),
+    [availableEntities, availableDossiers],
   );
 
   const alertsByStatus = useMemo(() => {
@@ -204,6 +225,7 @@ export function AlertsPage({ onEnableModule, alerts }: AlertsPageProps) {
     return alertsByStatus.filter((alert) => {
       if (activeFilters.status && alert.status !== activeFilters.status) return false;
       if (activeFilters.entity && alert.entityName !== activeFilters.entity) return false;
+      if (activeFilters.dossier && alert.dossier !== activeFilters.dossier) return false;
       if (activeFilters.alertList && alert.alertList !== activeFilters.alertList) return false;
       if (activeFilters.changes) {
         if (activeFilters.changes === 'none' && alert.changes != null) return false;
