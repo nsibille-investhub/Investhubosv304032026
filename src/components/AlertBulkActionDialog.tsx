@@ -249,12 +249,6 @@ export function AlertBulkActionDialog({
                   </>
                 )}
               </div>
-              <div
-                className="inline-flex items-center justify-center w-9 h-9 rounded-lg shrink-0"
-                style={{ backgroundColor: BRAND_BLUE }}
-              >
-                <ActionIcon className="w-4 h-4 text-white" />
-              </div>
             </div>
           </div>
 

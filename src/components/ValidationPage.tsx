@@ -21,6 +21,9 @@ import {
   Building2,
   Download,
   RotateCcw,
+  Eye,
+  Calendar,
+  User,
   type LucideIcon,
 } from 'lucide-react';
 import { toast } from 'sonner@2.0.3';
@@ -45,6 +48,15 @@ import {
 } from './ui/dialog';
 import { Textarea } from './ui/textarea';
 import { Label } from './ui/label';
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from './ui/table';
+import { Badge } from './ui/badge';
 import { FilterCard } from './ui/filter-card';
 import { FilterBar, FilterConfig } from './FilterBar';
 import { DataPagination } from './ui/data-pagination';
@@ -1503,6 +1515,8 @@ export function ValidationPage(_props: ValidationPageProps) {
           docs={confirmDialog.docs}
           batchById={batchById}
           onCancel={() => setConfirmDialog(null)}
+          onPreviewDocument={(d) => setPreviewDocument(d)}
+          formatDate={formatDate}
           onConfirm={(comment) => {
             if (confirmDialog.kind === 'publish') {
               applyBulkValidate(confirmDialog.docs, comment);
@@ -1585,11 +1599,26 @@ function DocumentRow({
         </td>
       )}
       <td className="px-4 py-2.5 align-top max-w-[320px]">
-        {doc.kindKey && (
-          <div className="mb-0.5 text-[10px] font-semibold uppercase tracking-wide text-gray-500 dark:text-gray-400">
-            {t(doc.kindKey)}
-          </div>
-        )}
+        <div className="flex items-center gap-1.5 mb-0.5">
+          {doc.kindKey && (
+            <span className="text-[10px] font-semibold uppercase tracking-wide text-gray-500 dark:text-gray-400">
+              {t(doc.kindKey)}
+            </span>
+          )}
+          <Badge
+            variant="outline"
+            className={cn(
+              'text-[9px] px-1 py-0 leading-tight font-medium',
+              isNominative(doc)
+                ? 'border-blue-200 bg-blue-50 text-blue-700 dark:border-blue-900 dark:bg-blue-950/30 dark:text-blue-300'
+                : 'border-amber-200 bg-amber-50 text-amber-700 dark:border-amber-900 dark:bg-amber-950/30 dark:text-amber-300',
+            )}
+          >
+            {isNominative(doc)
+              ? t('validation.bulkDialog.scopeNominative')
+              : t('validation.bulkDialog.scopeGeneric')}
+          </Badge>
+        </div>
         <Tooltip>
           <TooltipTrigger asChild>
             <div className="truncate text-sm font-medium text-gray-900 dark:text-gray-100" title={doc.name}>
@@ -1908,6 +1937,8 @@ interface PublicationConfirmDialogProps {
   batchById: Map<string, ValidationBatch>;
   onCancel: () => void;
   onConfirm: (comment: string) => void;
+  onPreviewDocument?: (doc: ValidationDocument) => void;
+  formatDate?: (iso: string) => string;
 }
 
 const CONFIRM_ACTION_ICON: Record<PublicationConfirmMode, LucideIcon> = {
@@ -1946,12 +1977,12 @@ function PublicationConfirmDialog({
   batchById,
   onCancel,
   onConfirm,
+  onPreviewDocument,
+  formatDate: formatDateProp,
 }: PublicationConfirmDialogProps) {
   const { t } = useTranslation();
   const [comment, setComment] = useState('');
 
-  // Group documents by notification signature so the publish recap shows
-  // exactly which communications will go out.
   type Group = {
     sig: string;
     docs: ValidationDocument[];
@@ -1971,6 +2002,11 @@ function PublicationConfirmDialog({
     return Array.from(map.values()).sort((a, b) => b.docs.length - a.docs.length);
   }, [docs, batchById]);
 
+  const audience = useMemo(
+    () => (docs.length === 1 ? resolveAudience(docs[0].targeting) : resolveAudienceForDocs(docs)),
+    [docs],
+  );
+
   const totalDocs = docs.length;
   const totalNotifs = notificationGroups.length;
   const isSingle = totalDocs === 1;
@@ -1981,47 +2017,177 @@ function PublicationConfirmDialog({
     ? t(CONFIRM_TITLE_SINGLE_KEY[mode], { name: single.name })
     : t(CONFIRM_TITLE_KEY[mode], { count: totalDocs });
 
+  const handleDownloadAudience = () => {
+    const contacts = audience.contacts ?? [];
+    const allRecipients: { name: string; email: string; role: string }[] = [];
+
+    if (contacts.length > 0) {
+      contacts.forEach((c) =>
+        allRecipients.push({ name: c.name, email: c.email, role: c.role }),
+      );
+    } else {
+      notificationGroups.forEach((g) =>
+        g.notification?.recipients.forEach((r) =>
+          allRecipients.push({
+            name: typeof r.name === 'string' ? r.name : t(r.name.key, r.name.vars),
+            email: r.email,
+            role: r.role ? (typeof r.role === 'string' ? r.role : t(r.role.key, r.role.vars)) : '',
+          }),
+        ),
+      );
+    }
+
+    if (allRecipients.length === 0) {
+      toast.info(t('validation.audience.downloadStarted'));
+      return;
+    }
+
+    const header = `${t('validation.bulkDialog.audienceName')},${t('validation.bulkDialog.audienceEmail')},${t('validation.bulkDialog.audienceRole')}`;
+    const rows = allRecipients.map(
+      (r) => `"${r.name}","${r.email}","${r.role}"`,
+    );
+    const csv = [header, ...rows].join('\n');
+    const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.href = url;
+    link.download = `audience_${new Date().toISOString().split('T')[0]}.csv`;
+    link.click();
+    URL.revokeObjectURL(url);
+    toast.info(t('validation.audience.downloadStarted'));
+  };
+
+  type RecipientRow = { id: string; name: string; subtitle?: string; type: 'investor' | 'contact' };
+  const recipientRows = useMemo((): RecipientRow[] => {
+    if (audience.nominative) {
+      const rows: RecipientRow[] = [];
+      if (audience.investorName) {
+        rows.push({
+          id: `inv-${audience.investorName}`,
+          name: audience.investorName,
+          subtitle: audience.structureName,
+          type: 'investor',
+        });
+      }
+      (audience.contacts ?? []).forEach((c) =>
+        rows.push({ id: c.id, name: c.name, subtitle: c.role, type: 'contact' }),
+      );
+      return rows;
+    }
+    const seen = new Set<string>();
+    const rows: RecipientRow[] = [];
+    notificationGroups.forEach((g) =>
+      g.notification?.recipients.forEach((r) => {
+        const rName = typeof r.name === 'string' ? r.name : t(r.name.key, r.name.vars);
+        const key = `${rName}-${r.email}`;
+        if (seen.has(key)) return;
+        seen.add(key);
+        const rRole = r.role
+          ? typeof r.role === 'string' ? r.role : t(r.role.key, r.role.vars)
+          : undefined;
+        rows.push({ id: key, name: rName, subtitle: rRole, type: 'investor' });
+      }),
+    );
+    return rows;
+  }, [audience, notificationGroups, t]);
+
+  const FundIcon = TARGETING_ICON.fund;
+
   return (
     <Dialog open onOpenChange={(o) => !o && onCancel()}>
-      <DialogContent className="!max-w-[50vw] !w-[50vw] max-h-[90vh] overflow-hidden flex flex-col p-0 gap-0 bg-white">
+      <DialogContent className="max-h-[90vh] overflow-hidden flex flex-col p-0 gap-0 bg-white" style={{ width: '75vw', maxWidth: '75vw' }}>
         <DialogHeader className="px-6 py-4 border-b border-gray-200">
           <div className="flex items-center gap-3">
             <div
-              className="w-10 h-10 rounded-lg flex items-center justify-center"
+              className="w-10 h-10 rounded-lg flex items-center justify-center shrink-0"
               style={{ backgroundColor: BRAND_BLUE }}
             >
               <ShieldCheck className="w-5 h-5 text-white" />
             </div>
-            <div>
-              <DialogTitle>{title}</DialogTitle>
+            <div className="min-w-0 flex-1">
+              <DialogTitle className="break-words">{title}</DialogTitle>
               <DialogDescription>{t(CONFIRM_DESC_KEY[mode])}</DialogDescription>
             </div>
           </div>
         </DialogHeader>
 
-        <div className="flex-1 overflow-y-auto p-6 space-y-6">
-          {/* Summary card */}
-          <div className="space-y-3 p-4 bg-gray-50 rounded-lg border border-gray-200">
-            <div className="flex items-center justify-between gap-4">
-              <div className="min-w-0">
+        <div className="flex-1 overflow-y-auto p-6 space-y-5">
+          {/* ── Document info card ── */}
+          <div className="rounded-lg border border-gray-200 bg-gray-50 p-4">
+            <div className="flex items-start justify-between gap-4">
+              <div className="min-w-0 flex-1">
                 {isSingle ? (
                   <>
-                    <span
-                      className="text-sm font-medium block truncate"
-                      style={{ color: BRAND_BLUE }}
-                      title={single.name}
-                    >
-                      {single.name}
-                    </span>
-                    {single.kindKey && (
-                      <p className="text-xs text-gray-500 mt-0.5 truncate">
-                        {t(single.kindKey)}
-                      </p>
-                    )}
+                    <div className="flex items-start gap-2">
+                      <FileText className="h-4 w-4 shrink-0 mt-0.5 text-gray-400" />
+                      <span
+                        className="text-sm font-semibold break-words leading-snug"
+                        style={{ color: BRAND_BLUE }}
+                      >
+                        {single.name}
+                      </span>
+                      <Badge
+                        variant="outline"
+                        className={cn(
+                          'shrink-0 text-[10px] font-medium',
+                          audience.nominative
+                            ? 'border-blue-200 bg-blue-50 text-blue-700'
+                            : 'border-amber-200 bg-amber-50 text-amber-700',
+                        )}
+                      >
+                        {audience.nominative
+                          ? t('validation.bulkDialog.scopeNominative')
+                          : t('validation.bulkDialog.scopeGeneric')}
+                      </Badge>
+                    </div>
+                    <div className="mt-3 grid grid-cols-2 gap-x-6 gap-y-2 text-xs text-gray-600">
+                      {single.kindKey && (
+                        <div className="flex items-center gap-1.5">
+                          <TagIcon className="h-3 w-3 shrink-0 text-gray-400" />
+                          <span className="text-gray-500">{t('validation.bulkDialog.docKind')}</span>
+                          <span className="font-medium text-gray-700">{t(single.kindKey)}</span>
+                        </div>
+                      )}
+                      {audience.fundName && (
+                        <div className="flex items-center gap-1.5">
+                          <FundIcon className="h-3 w-3 shrink-0 text-gray-400" />
+                          <span className="text-gray-500">{t('validation.table.fonds')}</span>
+                          <span className="font-medium text-gray-700">{audience.fundName}</span>
+                        </div>
+                      )}
+                      {audience.allFunds && !audience.fundName && (
+                        <div className="flex items-center gap-1.5">
+                          <FundIcon className="h-3 w-3 shrink-0 text-gray-400" />
+                          <span className="text-gray-500">{t('validation.table.fonds')}</span>
+                          <span className="font-medium text-gray-700">{t('validation.fonds.all')}</span>
+                        </div>
+                      )}
+                      {single.format && (
+                        <div className="flex items-center gap-1.5">
+                          <FileText className="h-3 w-3 shrink-0 text-gray-400" />
+                          <span className="text-gray-500">{t('validation.bulkDialog.docFormat')}</span>
+                          <span className="font-medium text-gray-700 uppercase">{single.format}{single.size ? ` (${single.size})` : ''}</span>
+                        </div>
+                      )}
+                      {single.createdAt && formatDateProp && (
+                        <div className="flex items-center gap-1.5">
+                          <Calendar className="h-3 w-3 shrink-0 text-gray-400" />
+                          <span className="text-gray-500">{t('validation.table.date')}</span>
+                          <span className="font-medium text-gray-700">{formatDateProp(single.createdAt)}</span>
+                        </div>
+                      )}
+                      {single.createdBy && (
+                        <div className="flex items-center gap-1.5">
+                          <User className="h-3 w-3 shrink-0 text-gray-400" />
+                          <span className="text-gray-500">{t('validation.table.createdBy')}</span>
+                          <span className="font-medium text-gray-700">{single.createdBy.name}</span>
+                        </div>
+                      )}
+                    </div>
                   </>
                 ) : (
                   <>
-                    <span className="text-sm text-gray-900 font-medium block">
+                    <span className="text-sm text-gray-900 font-semibold block">
                       {t('validation.bulkDialog.docsSelected', { count: totalDocs })}
                     </span>
                     <p className="text-xs text-gray-500 mt-0.5">
@@ -2030,16 +2196,88 @@ function PublicationConfirmDialog({
                   </>
                 )}
               </div>
-              <div
-                className="inline-flex items-center justify-center w-9 h-9 rounded-lg shrink-0"
-                style={{ backgroundColor: BRAND_BLUE }}
-              >
-                <ActionIcon className="w-4 h-4 text-white" />
-              </div>
+              {isSingle && onPreviewDocument && (
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <button
+                      type="button"
+                      className="inline-flex items-center justify-center h-9 w-9 rounded-lg border border-gray-200 bg-white text-gray-500 hover:text-gray-700 hover:bg-gray-100 transition-colors shrink-0"
+                      onClick={() => onPreviewDocument(single)}
+                    >
+                      <Eye className="h-4 w-4" />
+                    </button>
+                  </TooltipTrigger>
+                  <TooltipContent side="top">
+                    <span className="text-xs">{t('validation.bulkDialog.previewDoc')}</span>
+                  </TooltipContent>
+                </Tooltip>
+              )}
             </div>
           </div>
 
-          {/* Communications recap — publish only */}
+          {/* ── Audience section ── */}
+          <div className="rounded-lg border border-border bg-white overflow-hidden">
+            <div className="flex items-center justify-between px-4 py-3 border-b border-border">
+              <div className="flex items-center gap-3">
+                <div className="w-10 h-10 rounded-full bg-muted flex items-center justify-center">
+                  <Users className="h-5 w-5 text-muted-foreground" />
+                </div>
+                <div>
+                  <span className="text-xl font-bold text-foreground">{recipientRows.length}</span>
+                  <span className="ml-1.5 text-sm text-muted-foreground">
+                    {t('validation.bulkDialog.audienceRecipients')}
+                  </span>
+                  <p className="text-xs text-muted-foreground">
+                    {t('validation.bulkDialog.audienceSubtitle')}
+                  </p>
+                </div>
+              </div>
+              <button
+                type="button"
+                className="inline-flex items-center gap-1.5 rounded-md border border-border bg-white px-2.5 py-1.5 text-xs font-medium text-muted-foreground hover:bg-muted/50 hover:text-foreground transition-colors"
+                onClick={handleDownloadAudience}
+              >
+                <Download className="h-3.5 w-3.5" />
+                {t('validation.bulkDialog.audienceExportCsv')}
+              </button>
+            </div>
+            <div className="max-h-[260px] overflow-y-auto">
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead className="px-3">{t('validation.bulkDialog.audienceName')}</TableHead>
+                    <TableHead className="px-3">{t('validation.bulkDialog.audienceType')}</TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {recipientRows.map((r) => (
+                    <TableRow key={r.id}>
+                      <TableCell className="px-3 py-3 align-top">
+                        <div className="flex flex-col gap-0.5">
+                          <span className="text-sm font-medium text-foreground">{r.name}</span>
+                          {r.subtitle && (
+                            <span className="text-[11px] text-muted-foreground">{r.subtitle}</span>
+                          )}
+                        </div>
+                      </TableCell>
+                      <TableCell className="px-3">
+                        <Badge
+                          variant="outline"
+                          className="border-border bg-muted/60 text-muted-foreground font-normal"
+                        >
+                          {r.type === 'investor'
+                            ? t('validation.bulkDialog.typeInvestor')
+                            : t('validation.bulkDialog.typeContact')}
+                        </Badge>
+                      </TableCell>
+                    </TableRow>
+                  ))}
+                </TableBody>
+              </Table>
+            </div>
+          </div>
+
+          {/* ── Communications recap — publish only ── */}
           {mode === 'publish' &&
             (totalNotifs > 0 ? (
               <div className="space-y-2">
@@ -2053,11 +2291,11 @@ function PublicationConfirmDialog({
                     return (
                       <div
                         key={g.sig}
-                        className="flex items-center justify-between gap-3 px-3 py-2"
+                        className="flex items-center justify-between gap-3 px-4 py-2.5"
                       >
                         <span className="inline-flex min-w-0 items-center gap-1.5 text-sm text-gray-800">
                           <Bell className="h-3.5 w-3.5 shrink-0 text-gray-400" />
-                          <span className="truncate" title={templateLabel}>
+                          <span className="break-words">
                             {templateLabel}
                           </span>
                         </span>
@@ -2084,14 +2322,14 @@ function PublicationConfirmDialog({
               </div>
             ))}
 
-          {/* Document list — reject / unpublish, bulk only */}
+          {/* ── Document list — reject / unpublish, bulk only ── */}
           {mode !== 'publish' && !isSingle && (
             <div className="space-y-2">
               <Label>{t('validation.bulkDialog.docsListLabel')}</Label>
               <div className="max-h-[200px] overflow-y-auto rounded-lg border border-gray-200 bg-gray-50 px-3 py-2 text-xs text-gray-700">
                 <ul className="space-y-0.5">
                   {docs.slice(0, 12).map((d) => (
-                    <li key={d.id} className="truncate" title={d.name}>
+                    <li key={d.id} className="break-words">
                       • {d.name}
                     </li>
                   ))}
@@ -2110,17 +2348,18 @@ function PublicationConfirmDialog({
             </div>
           )}
 
-          {/* Optional comment */}
+          {/* ── Comment ── */}
           <div className="space-y-2">
             <Label htmlFor="pub-confirm-comment">
-              {t('validation.bulkDialog.commentLabel')}
+              {t('validation.bulkDialog.commentLabelRequired')}
             </Label>
             <Textarea
               id="pub-confirm-comment"
               value={comment}
               onChange={(e) => setComment(e.target.value)}
-              placeholder={t('validation.bulkDialog.commentPlaceholder')}
-              className="min-h-[120px] resize-none"
+              placeholder={t('validation.bulkDialog.commentPlaceholderRequired')}
+              className="min-h-[60px] resize-none"
+              rows={3}
               autoFocus
             />
             <div className="flex justify-end">
@@ -2273,7 +2512,7 @@ function DynamicBatchRow({
         <td className="px-4 py-2.5 align-top">
           <AudienceCell info={audienceInfo} />
         </td>
-        <td className="px-4 py-2.5 align-top text-center">
+        <td className="px-4 py-2.5 align-top">
           <NotificationCell
             notification={batch.notification}
             templateLabel={batch.templateLabel}
