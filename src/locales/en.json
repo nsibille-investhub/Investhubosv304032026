@@ -3217,23 +3217,64 @@
   },
   "mailTemplates": {
     "title": "Mail templates",
-    "subtitle": "Create, review and maintain the email templates sent from InvestHub.",
+    "subtitle": "112 templates across 12 functional sections. Pick a section to narrow the list.",
     "entityName": "template",
-    "searchPlaceholder": "Search by name, subject or content…",
-    "statusTabs": {
-      "title": "Filter by template status",
-      "subtitle": "4 statuses",
-      "clickToFilter": "Click to filter",
-      "all": "All",
+    "searchPlaceholder": "Search by name, slug, subject or content…",
+    "rail": {
+      "title": "Sections",
+      "sectionCount": "12 sections",
+      "all": "All templates",
+      "countOne": "{{count}} template",
+      "countMany": "{{count}} templates"
+    },
+    "sections": {
+      "accounts": "Accounts and access",
+      "onboarding": "Onboarding and subscriptions",
+      "signature": "Electronic signature",
+      "kyc": "KYC / AML and compliance",
+      "payments": "Payments",
+      "capitalCalls": "Capital calls",
+      "distributions": "Distributions and releases",
+      "redemptions": "Redemptions",
+      "secondary": "Secondary market",
+      "documents": "Documents and data room",
+      "partners": "Distributors and retrocessions",
+      "communication": "Communication and contact requests"
+    },
+    "sectionDescriptions": {
+      "all": "The full referential, all sections combined.",
+      "accounts": "Account creation, portal invitations, login codes and credential changes.",
+      "onboarding": "The subscription journey, from opening to approval, including missing documents.",
+      "signature": "Signature requests, reminders and counter-signature of subscription documents.",
+      "kyc": "Collection of supporting documents, periodic review and compliance alerts.",
+      "payments": "The settlement cycle of a subscription: payment reminder, receipt of funds, then final documents once the net asset value is applied.",
+      "capitalCalls": "Capital call notices, reminders and settlement confirmations.",
+      "distributions": "Distribution notices, capital accounts and early release requests.",
+      "redemptions": "Redemption requests, approval, settlement and partial execution.",
+      "secondary": "Listings, offers and share transfers on the secondary market.",
+      "documents": "Publication of documents, reports and data room access.",
+      "partners": "Distributor onboarding, agreements, distribution rights and retrocessions.",
+      "communication": "Free-form messages, investor meetings, newsletters and contact requests."
+    },
+    "recipient": {
+      "investor": "Investor",
+      "partner": "Distributor",
+      "team": "Management team"
+    },
+    "trigger": {
+      "auto": "Automatic",
+      "manual": "Manual",
+      "mixed": "Manual or automatic"
+    },
+    "status": {
       "active": "Active",
       "draft": "Draft",
-      "archived": "Archived",
-      "metricShare": "Share",
-      "avgUsage": "{{count}} sends / template"
+      "archived": "Archived"
     },
     "filters": {
-      "category": "Category",
-      "group": "Mail group",
+      "status": "Status",
+      "recipient": "Recipient",
+      "trigger": "Trigger",
       "language": "Language",
       "author": "Last edited by",
       "usage": "Usage",
@@ -3244,66 +3285,51 @@
       }
     },
     "table": {
-      "name": "Name",
+      "name": "Template",
       "subject": "Subject",
-      "category": "Category",
+      "section": "Section",
+      "recipient": "Recipient",
       "status": "Status",
       "usage": "Sends",
-      "updatedAt": "Last modified",
       "actions": "Actions"
-    },
-    "category": {
-      "onboarding": "Onboarding",
-      "subscription": "Subscription",
-      "reminder": "Reminder",
-      "automatic": "Automatic",
-      "reporting": "Reporting",
-      "compliance": "Compliance"
-    },
-    "status": {
-      "active": "Active",
-      "draft": "Draft",
-      "archived": "Archived"
     },
     "usage": {
       "never": "Never sent",
       "lastSent": "Last sent on {{date}}"
     },
-    "updatedBy": "by {{name}}",
     "actions": {
       "create": "New template",
-      "createTooltip": "Create a mail template",
       "export": "Export",
-      "exportTooltip": "Download the filtered list as CSV",
-      "preview": "Preview",
       "edit": "Edit",
       "duplicate": "Duplicate",
       "delete": "Delete"
     },
     "empty": {
       "title": "No template matches your filters",
-      "body": "Adjust the category, status or clear the search to broaden the results.",
+      "body": "Adjust the filters, pick another section or clear the search to broaden the results.",
       "resetCta": "Reset filters",
-      "noDataTitle": "No mail template yet",
-      "noDataBody": "Templates created for your organisation will appear here."
+      "noDataTitle": "No template in this section",
+      "noDataBody": "Templates created for this section will appear here."
     },
     "detail": {
-      "title": "Template details",
-      "subtitle": "Content, targeting and usage",
       "close": "Close",
+      "position": "{{index}} of {{total}}",
+      "previous": "Previous template",
+      "next": "Next template",
       "subject": "Subject",
       "content": "Content",
       "variables": "Variables used",
       "noVariables": "This template uses no variable.",
-      "group": "Mail group",
-      "languages": "Languages",
+      "variablesHint": "Variables are replaced when the email is sent.",
+      "recipient": "Recipient",
+      "trigger": "Trigger",
+      "slug": "Slug",
       "sends": "Sends",
       "lastSent": "Last send",
       "updatedAt": "Last modified",
       "updatedBy": "Modified by",
-      "templateId": "Template ID",
       "copyContent": "Copy content",
-      "copyId": "Copy ID",
+      "copySlug": "Copy slug",
       "editCta": "Edit this template"
     },
     "form": {
@@ -3312,15 +3338,19 @@
       "editTitle": "Edit template",
       "editSubtitle": "Update the content of the email sent to recipients.",
       "name": "Template name",
-      "namePlaceholder": "e.g. Investor welcome",
-      "subject": "Email subject",
-      "subjectPlaceholder": "e.g. Welcome to InvestHub",
-      "category": "Category",
-      "group": "Mail group",
+      "namePlaceholder": "e.g. Payment reminder",
+      "slug": "Slug",
+      "slugPlaceholder": "e.g. payment-reminder",
+      "slugHint": "Technical identifier used by the sending engine. Lowercase, no spaces.",
+      "section": "Section",
+      "recipient": "Recipient",
       "status": "Status",
+      "trigger": "Trigger",
+      "subject": "Email subject",
+      "subjectPlaceholder": "e.g. $campaign - Your payment is pending",
       "body": "Content",
-      "bodyPlaceholder": "Write the email body. Use {{firstName}} to insert a variable.",
-      "bodyHint": "Variables written as {{firstName}} are replaced at send time.",
+      "bodyPlaceholder": "Write the email body. Use $investor.firstname to insert a variable.",
+      "bodyHint": "Variables written as $investor.firstname are replaced when the email is sent.",
       "cancel": "Cancel",
       "save": "Save",
       "createCta": "Create"

@@ -3,28 +3,51 @@ import { motion } from 'motion/react';
 import { format, parseISO } from 'date-fns';
 import { fr as frLocale, enUS as enLocale } from 'date-fns/locale';
 import {
-  Archive,
+  ArrowDownToLine,
+  ArrowLeftRight,
+  Banknote,
+  ChevronLeft,
+  ChevronRight,
+  ClipboardList,
+  Coins,
   Copy,
   Download,
-  FileEdit,
-  Layers,
-  List,
+  FolderOpen,
+  Handshake,
+  KeyRound,
+  LayoutList,
   Mail,
+  Megaphone,
+  MousePointerClick,
   Pencil,
+  PenLine,
   Plus,
-  Send,
+  ShieldCheck,
+  Shuffle,
   Trash2,
+  Undo2,
   X,
+  Zap,
 } from 'lucide-react';
 import { toast } from 'sonner';
 
 import { useTranslation, type Language } from '../../utils/languageContext';
+import {
+  MAIL_TEMPLATES,
+  SECTION_NUMBER,
+  SECTION_ORDER,
+  TEMPLATE_AUTHORS,
+  type MailTemplate,
+  type TemplateRecipient,
+  type TemplateSectionKey,
+  type TemplateStatus,
+  type TemplateTrigger,
+} from '../../utils/mailTemplatesMockData';
 import { Badge } from '../ui/badge';
 import { Button } from '../ui/button';
 import { Input } from '../ui/input';
 import { Label } from '../ui/label';
 import { Textarea } from '../ui/textarea';
-import { FilterCard } from '../ui/filter-card';
 import { PageHeader } from '../ui/page-header';
 import { DataPagination } from '../ui/data-pagination';
 import { RowActionButton } from '../ui/row-actions';
@@ -50,6 +73,7 @@ import {
   SheetHeader,
   SheetTitle,
 } from '../ui/sheet';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '../ui/tabs';
 import {
   Tooltip,
   TooltipContent,
@@ -61,44 +85,58 @@ import { FilterBar, type FilterConfig } from '../FilterBar';
 import { DataTable, type ColumnConfig } from '../DataTable';
 import { LanguageFlagInline } from '../LanguageFlagInline';
 
-type TemplateStatus = 'active' | 'draft' | 'archived';
-type StatusTab = TemplateStatus | 'all';
-type TemplateCategory =
-  | 'onboarding'
-  | 'subscription'
-  | 'reminder'
-  | 'automatic'
-  | 'reporting'
-  | 'compliance';
+type SectionFilter = TemplateSectionKey | 'all';
 type UsagePreset = 'never' | 'low' | 'high';
+type FormMode = 'create' | 'edit';
 
-interface MailTemplate {
-  id: number;
-  name: string;
-  subject: string;
-  category: TemplateCategory;
-  group: string;
-  status: TemplateStatus;
-  languages: string[];
-  usageCount: number;
-  lastSentAt: string | null;
-  updatedAt: string;
-  updatedBy: string;
-  body: string;
-}
-
-const CATEGORIES: TemplateCategory[] = [
-  'onboarding',
-  'subscription',
-  'reminder',
-  'automatic',
-  'reporting',
-  'compliance',
-];
+const CURRENT_USER = 'Jean';
 
 const STATUSES: TemplateStatus[] = ['active', 'draft', 'archived'];
+const RECIPIENTS: TemplateRecipient[] = ['investor', 'partner', 'team'];
+const TRIGGERS: TemplateTrigger[] = ['auto', 'manual', 'mixed'];
 
-const STATUS_TAB_ORDER: StatusTab[] = ['all', 'active', 'draft', 'archived'];
+const SECTION_ICON: Record<SectionFilter, React.ComponentType<{ className?: string }>> = {
+  all: LayoutList,
+  accounts: KeyRound,
+  onboarding: ClipboardList,
+  signature: PenLine,
+  kyc: ShieldCheck,
+  payments: Banknote,
+  capitalCalls: ArrowDownToLine,
+  distributions: Coins,
+  redemptions: Undo2,
+  secondary: ArrowLeftRight,
+  documents: FolderOpen,
+  partners: Handshake,
+  communication: Megaphone,
+};
+
+/** Une famille de couleur par section : la pastille reste reconnaissable dans la liste. */
+const SECTION_BADGE_STYLES: Record<TemplateSectionKey, string> = {
+  accounts:
+    'bg-blue-50 text-blue-700 border-blue-200 dark:bg-blue-950/50 dark:text-blue-300 dark:border-blue-900',
+  onboarding:
+    'bg-indigo-50 text-indigo-700 border-indigo-200 dark:bg-indigo-950/30 dark:text-indigo-300 dark:border-indigo-800',
+  signature:
+    'bg-violet-50 text-violet-700 border-violet-200 dark:bg-violet-950/30 dark:text-violet-400 dark:border-violet-800',
+  kyc: 'bg-red-50 text-red-700 border-red-200 dark:bg-red-950/30 dark:text-red-300 dark:border-red-800',
+  payments:
+    'bg-emerald-50 text-emerald-700 border-emerald-200 dark:bg-emerald-950/30 dark:text-emerald-300 dark:border-emerald-800',
+  capitalCalls:
+    'bg-amber-50 text-amber-700 border-amber-200 dark:bg-amber-950/30 dark:text-amber-400 dark:border-amber-800',
+  distributions:
+    'bg-teal-50 text-teal-700 border-teal-200 dark:bg-teal-950/30 dark:text-teal-300 dark:border-teal-800',
+  redemptions:
+    'bg-orange-50 text-orange-700 border-orange-200 dark:bg-orange-950/30 dark:text-orange-300 dark:border-orange-800',
+  secondary:
+    'bg-purple-50 text-purple-700 border-purple-200 dark:bg-purple-950/30 dark:text-purple-300 dark:border-purple-800',
+  documents:
+    'bg-slate-50 text-slate-700 border-slate-200 dark:bg-slate-900/30 dark:text-slate-300 dark:border-slate-700',
+  partners:
+    'bg-green-50 text-green-700 border-green-200 dark:bg-green-950/50 dark:text-green-300 dark:border-green-800',
+  communication:
+    'bg-gray-100 text-gray-700 border-gray-200 dark:bg-gray-800 dark:text-gray-300 dark:border-gray-700',
+};
 
 const STATUS_BADGE_STYLES: Record<TemplateStatus, string> = {
   active:
@@ -109,237 +147,24 @@ const STATUS_BADGE_STYLES: Record<TemplateStatus, string> = {
     'bg-gray-100 text-gray-600 border-gray-200 dark:bg-gray-800 dark:text-gray-300 dark:border-gray-700',
 };
 
-const STATUS_ICON: Record<TemplateStatus, React.ComponentType<{ className?: string }>> = {
-  active: Send,
-  draft: FileEdit,
-  archived: Archive,
-};
-
-const STATUS_TAB_ICON: Record<StatusTab, React.ComponentType<{ className?: string }>> = {
-  all: List,
-  active: Send,
-  draft: FileEdit,
-  archived: Archive,
-};
-
-const STATUS_TAB_ICON_CLASS: Record<StatusTab, string | undefined> = {
-  all: undefined,
-  active: 'text-emerald-600',
-  draft: 'text-amber-600',
-  archived: 'text-gray-500',
-};
-
-const CATEGORY_BADGE_STYLES: Record<TemplateCategory, string> = {
-  onboarding:
+const RECIPIENT_BADGE_STYLES: Record<TemplateRecipient, string> = {
+  investor:
     'bg-blue-50 text-blue-700 border-blue-200 dark:bg-blue-950/50 dark:text-blue-300 dark:border-blue-900',
-  subscription:
-    'bg-violet-50 text-violet-700 border-violet-200 dark:bg-violet-950/30 dark:text-violet-400 dark:border-violet-800',
-  reminder:
-    'bg-orange-50 text-orange-700 border-orange-200 dark:bg-orange-950/30 dark:text-orange-300 dark:border-orange-800',
-  automatic:
-    'bg-teal-50 text-teal-700 border-teal-200 dark:bg-teal-950/30 dark:text-teal-300 dark:border-teal-800',
-  reporting:
-    'bg-indigo-50 text-indigo-700 border-indigo-200 dark:bg-indigo-950/30 dark:text-indigo-300 dark:border-indigo-800',
-  compliance:
-    'bg-red-50 text-red-700 border-red-200 dark:bg-red-950/30 dark:text-red-300 dark:border-red-800',
+  partner:
+    'bg-purple-50 text-purple-700 border-purple-200 dark:bg-purple-950/30 dark:text-purple-300 dark:border-purple-800',
+  team: 'bg-gray-100 text-gray-700 border-gray-200 dark:bg-gray-800 dark:text-gray-300 dark:border-gray-700',
 };
 
-const MAIL_GROUPS = [
-  'Onboarding',
-  'LPs',
-  'Notices - Appels et Distributions',
-  'Reportings et AIC',
-  'Invitation aux réunions LP',
-  'Autre',
-];
+const TRIGGER_ICON: Record<TemplateTrigger, React.ComponentType<{ className?: string }>> = {
+  auto: Zap,
+  manual: MousePointerClick,
+  mixed: Shuffle,
+};
 
-const MOCK_TEMPLATES: MailTemplate[] = [
-  {
-    id: 1,
-    name: 'Bienvenue investisseur',
-    subject: 'Bienvenue chez InvestHub',
-    category: 'onboarding',
-    group: 'Onboarding',
-    status: 'active',
-    languages: ['fr', 'en'],
-    usageCount: 245,
-    lastSentAt: '2026-08-11T09:12:00Z',
-    updatedAt: '2025-10-15T14:30:00Z',
-    updatedBy: 'Camille',
-    body: 'Bonjour {{firstName}},\n\nVotre accès à votre Espace LP est désormais actif. Vous pouvez consulter vos positions, vos documents et vos appels de fonds à tout moment.\n\nConnectez-vous ici : {{loginUrl}}\n\nL’équipe InvestHub',
-  },
-  {
-    id: 2,
-    name: 'Confirmation souscription',
-    subject: 'Confirmation de votre souscription',
-    category: 'subscription',
-    group: 'LPs',
-    status: 'active',
-    languages: ['fr', 'en', 'es'],
-    usageCount: 189,
-    lastSentAt: '2026-08-12T16:40:00Z',
-    updatedAt: '2025-10-20T09:05:00Z',
-    updatedBy: 'Nicolas',
-    body: 'Bonjour {{firstName}},\n\nNous confirmons la réception de votre souscription de {{amount}} sur le fonds {{fundName}}.\n\nVotre dossier passe en revue de conformité. Vous serez notifié dès sa validation.\n\nL’équipe InvestHub',
-  },
-  {
-    id: 3,
-    name: 'Relance documents',
-    subject: 'Documents manquants pour votre dossier',
-    category: 'reminder',
-    group: 'LPs',
-    status: 'active',
-    languages: ['fr'],
-    usageCount: 156,
-    lastSentAt: '2026-08-10T08:00:00Z',
-    updatedAt: '2025-10-10T11:20:00Z',
-    updatedBy: 'Camille',
-    body: 'Bonjour {{firstName}},\n\nIl manque {{documentCount}} document(s) pour finaliser votre dossier de souscription.\n\nDéposez-les directement depuis votre Espace LP : {{dataRoomUrl}}\n\nL’équipe InvestHub',
-  },
-  {
-    id: 4,
-    name: 'Rappel automatique',
-    subject: 'Rappel : action requise',
-    category: 'automatic',
-    group: 'Autre',
-    status: 'active',
-    languages: ['fr', 'en'],
-    usageCount: 432,
-    lastSentAt: '2026-08-13T06:30:00Z',
-    updatedAt: '2025-10-25T17:45:00Z',
-    updatedBy: 'Sofia',
-    body: 'Bonjour {{firstName}},\n\nUne action reste en attente sur votre dossier {{dossierRef}}. Merci de la traiter avant le {{dueDate}}.\n\nL’équipe InvestHub',
-  },
-  {
-    id: 5,
-    name: 'Notice d’appel de fonds',
-    subject: 'Appel de fonds — {{fundName}}',
-    category: 'reporting',
-    group: 'Notices - Appels et Distributions',
-    status: 'active',
-    languages: ['fr', 'en'],
-    usageCount: 318,
-    lastSentAt: '2026-07-30T10:15:00Z',
-    updatedAt: '2026-02-04T10:10:00Z',
-    updatedBy: 'Nicolas',
-    body: 'Bonjour {{firstName}},\n\nUn appel de fonds de {{amount}} est émis sur le fonds {{fundName}}, avec une date de valeur au {{dueDate}}.\n\nLa notice détaillée est disponible dans votre Espace LP.\n\nL’équipe InvestHub',
-  },
-  {
-    id: 6,
-    name: 'Notice de distribution',
-    subject: 'Distribution — {{fundName}}',
-    category: 'reporting',
-    group: 'Notices - Appels et Distributions',
-    status: 'active',
-    languages: ['fr', 'en'],
-    usageCount: 204,
-    lastSentAt: '2026-06-28T09:00:00Z',
-    updatedAt: '2026-02-04T10:25:00Z',
-    updatedBy: 'Nicolas',
-    body: 'Bonjour {{firstName}},\n\nUne distribution de {{amount}} vous est versée au titre du fonds {{fundName}}.\n\nLe détail figure dans la notice joignable depuis votre Espace LP.\n\nL’équipe InvestHub',
-  },
-  {
-    id: 7,
-    name: 'Invitation réunion annuelle LP',
-    subject: 'Invitation — réunion annuelle des porteurs',
-    category: 'onboarding',
-    group: 'Invitation aux réunions LP',
-    status: 'draft',
-    languages: ['fr', 'en'],
-    usageCount: 0,
-    lastSentAt: null,
-    updatedAt: '2026-07-18T15:00:00Z',
-    updatedBy: 'Sofia',
-    body: 'Bonjour {{firstName}},\n\nNous avons le plaisir de vous convier à la réunion annuelle des porteurs du {{eventDate}}.\n\nMerci de confirmer votre présence via le lien suivant : {{rsvpUrl}}\n\nL’équipe InvestHub',
-  },
-  {
-    id: 8,
-    name: 'Relance KYC expiré',
-    subject: 'Vos pièces KYC arrivent à expiration',
-    category: 'compliance',
-    group: 'LPs',
-    status: 'active',
-    languages: ['fr', 'en'],
-    usageCount: 87,
-    lastSentAt: '2026-08-05T07:45:00Z',
-    updatedAt: '2026-05-12T13:35:00Z',
-    updatedBy: 'Camille',
-    body: 'Bonjour {{firstName}},\n\nVos pièces justificatives expirent le {{expiryDate}}. Merci de déposer des pièces à jour afin de maintenir votre dossier conforme.\n\nL’équipe InvestHub',
-  },
-  {
-    id: 9,
-    name: 'Reporting trimestriel disponible',
-    subject: 'Votre reporting {{quarter}} est disponible',
-    category: 'reporting',
-    group: 'Reportings et AIC',
-    status: 'active',
-    languages: ['fr', 'en', 'es'],
-    usageCount: 512,
-    lastSentAt: '2026-07-15T08:00:00Z',
-    updatedAt: '2026-06-02T09:40:00Z',
-    updatedBy: 'Sofia',
-    body: 'Bonjour {{firstName}},\n\nVotre reporting {{quarter}} pour le fonds {{fundName}} est disponible dans votre Espace LP.\n\nL’équipe InvestHub',
-  },
-  {
-    id: 10,
-    name: 'Relance signature électronique',
-    subject: 'Votre signature est attendue',
-    category: 'reminder',
-    group: 'LPs',
-    status: 'active',
-    languages: ['fr'],
-    usageCount: 143,
-    lastSentAt: '2026-08-09T14:20:00Z',
-    updatedAt: '2026-04-21T16:15:00Z',
-    updatedBy: 'Nicolas',
-    body: 'Bonjour {{firstName}},\n\nLe bulletin de souscription {{dossierRef}} attend votre signature électronique.\n\nSignez en un clic : {{signatureUrl}}\n\nL’équipe InvestHub',
-  },
-  {
-    id: 11,
-    name: 'Ancien modèle de bienvenue',
-    subject: 'Bienvenue sur la plateforme',
-    category: 'onboarding',
-    group: 'Onboarding',
-    status: 'archived',
-    languages: ['fr'],
-    usageCount: 1204,
-    lastSentAt: '2025-03-14T10:00:00Z',
-    updatedAt: '2025-03-14T10:00:00Z',
-    updatedBy: 'Camille',
-    body: 'Bonjour {{firstName}},\n\nBienvenue sur la plateforme. Votre compte a été créé.\n\nL’équipe InvestHub',
-  },
-  {
-    id: 12,
-    name: 'Notification changement de RIB',
-    subject: 'Modification de vos coordonnées bancaires',
-    category: 'compliance',
-    group: 'Autre',
-    status: 'draft',
-    languages: ['fr', 'en'],
-    usageCount: 0,
-    lastSentAt: null,
-    updatedAt: '2026-08-01T11:05:00Z',
-    updatedBy: 'Sofia',
-    body: 'Bonjour {{firstName}},\n\nUne modification de vos coordonnées bancaires a été enregistrée le {{changeDate}}. Si vous n’êtes pas à l’origine de cette demande, contactez-nous immédiatement.\n\nL’équipe InvestHub',
-  },
-];
-
-const CURRENT_USER = 'Jean';
-
-const VARIABLE_PATTERN = /\{\{(\w+)\}\}/g;
+const VARIABLE_PATTERN = /\$[a-zA-Z_][\w]*(?:\.[a-zA-Z_][\w]*)?/g;
 
 function nextTemplateId(templates: MailTemplate[]): number {
   return templates.reduce((max, tpl) => Math.max(max, tpl.id), 0) + 1;
-}
-
-function extractVariables(template: MailTemplate): string[] {
-  const found = new Set<string>();
-  for (const source of [template.subject, template.body]) {
-    for (const match of source.matchAll(VARIABLE_PATTERN)) {
-      found.add(match[1]);
-    }
-  }
-  return Array.from(found);
 }
 
 function csvEscape(value: string): string {
@@ -366,75 +191,88 @@ function highlightMatch(text: string, term: string): React.ReactNode {
 
 interface TemplateDraft {
   name: string;
-  subject: string;
-  category: TemplateCategory;
-  group: string;
+  slug: string;
+  section: TemplateSectionKey;
+  recipient: TemplateRecipient;
+  trigger: TemplateTrigger;
   status: TemplateStatus;
-  body: string;
+  subjectFr: string;
+  subjectEn: string;
+  bodyFr: string;
+  bodyEn: string;
 }
 
 const EMPTY_DRAFT: TemplateDraft = {
   name: '',
-  subject: '',
-  category: 'onboarding',
-  group: MAIL_GROUPS[0],
+  slug: '',
+  section: 'accounts',
+  recipient: 'investor',
+  trigger: 'auto',
   status: 'draft',
-  body: '',
+  subjectFr: '',
+  subjectEn: '',
+  bodyFr: '',
+  bodyEn: '',
 };
+
+function draftFrom(template: MailTemplate): TemplateDraft {
+  return {
+    name: template.name,
+    slug: template.slug,
+    section: template.section,
+    recipient: template.recipient,
+    trigger: template.trigger,
+    status: template.status,
+    subjectFr: template.subjectFr,
+    subjectEn: template.subjectEn,
+    bodyFr: template.bodyFr,
+    bodyEn: template.bodyEn,
+  };
+}
 
 export function MailTemplatesSettings() {
   const { t, lang } = useTranslation();
   const dfLocale = (lang as Language) === 'en' ? enLocale : frLocale;
 
-  const [templates, setTemplates] = useState<MailTemplate[]>(MOCK_TEMPLATES);
-  const [activeStatus, setActiveStatus] = useState<StatusTab>('all');
+  const [templates, setTemplates] = useState<MailTemplate[]>(MAIL_TEMPLATES);
+  const [activeSection, setActiveSection] = useState<SectionFilter>('all');
   const [searchTerm, setSearchTerm] = useState('');
   const [activeFilters, setActiveFilters] = useState<Record<string, string | string[]>>({});
-  const [sortConfig, setSortConfig] = useState<{ key: string; direction: 'asc' | 'desc' } | null>({
-    key: 'updatedAt',
-    direction: 'desc',
-  });
+  const [sortConfig, setSortConfig] = useState<{ key: string; direction: 'asc' | 'desc' } | null>(
+    null,
+  );
   const [hoveredRow, setHoveredRow] = useState<number | null>(null);
   const [paginationPage, setPaginationPage] = useState(1);
   const [itemsPerPage, setItemsPerPage] = useState(20);
-  const [previewTemplate, setPreviewTemplate] = useState<MailTemplate | null>(null);
-  const [editingTemplate, setEditingTemplate] = useState<MailTemplate | null>(null);
-  const [isFormOpen, setIsFormOpen] = useState(false);
+  const [previewId, setPreviewId] = useState<number | null>(null);
+  const [formMode, setFormMode] = useState<FormMode | null>(null);
+  const [editingId, setEditingId] = useState<number | null>(null);
   const [draft, setDraft] = useState<TemplateDraft>(EMPTY_DRAFT);
   const [templateToDelete, setTemplateToDelete] = useState<MailTemplate | null>(null);
 
-  const authors = useMemo(
-    () => Array.from(new Set(templates.map((tpl) => tpl.updatedBy))).sort(),
-    [templates],
-  );
+  const subjectOf = (template: MailTemplate) =>
+    (lang as Language) === 'en' ? template.subjectEn : template.subjectFr;
 
-  const groups = useMemo(
-    () => Array.from(new Set(templates.map((tpl) => tpl.group))).sort(),
-    [templates],
-  );
-
-  const searchFilteredData = useMemo(() => {
+  /** Recherche et filtres hors section : sert aussi à calculer les compteurs du rail. */
+  const dataBeforeSection = useMemo(() => {
     const term = searchTerm.trim().toLowerCase();
-    if (!term) return templates;
-    return templates.filter(
-      (tpl) =>
-        tpl.name.toLowerCase().includes(term) ||
-        tpl.subject.toLowerCase().includes(term) ||
-        tpl.body.toLowerCase().includes(term),
-    );
-  }, [templates, searchTerm]);
-
-  const filteredData = useMemo(() => {
-    const categoryValue = activeFilters.category as TemplateCategory | undefined;
-    const groupValue = activeFilters.group as string | undefined;
+    const statusValue = activeFilters.status as TemplateStatus | undefined;
+    const recipientValue = activeFilters.recipient as TemplateRecipient | undefined;
+    const triggerValue = activeFilters.trigger as TemplateTrigger | undefined;
     const languageValue = activeFilters.language as string | undefined;
     const authorValue = activeFilters.author as string | undefined;
     const usageValue = activeFilters.usage as UsagePreset | undefined;
 
-    return searchFilteredData.filter((tpl) => {
-      if (activeStatus !== 'all' && tpl.status !== activeStatus) return false;
-      if (categoryValue && tpl.category !== categoryValue) return false;
-      if (groupValue && tpl.group !== groupValue) return false;
+    return templates.filter((tpl) => {
+      if (term) {
+        const haystack = [tpl.name, tpl.slug, tpl.subjectFr, tpl.subjectEn, tpl.bodyFr, tpl.bodyEn]
+          .join(' ')
+          .toLowerCase();
+        if (!haystack.includes(term)) return false;
+      }
+      if (statusValue && tpl.status !== statusValue) return false;
+      if (recipientValue && tpl.recipient !== recipientValue) return false;
+      if (triggerValue && tpl.trigger !== triggerValue) return false;
       if (languageValue && !tpl.languages.includes(languageValue)) return false;
       if (authorValue && tpl.updatedBy !== authorValue) return false;
       if (usageValue === 'never' && tpl.usageCount > 0) return false;
@@ -442,21 +280,47 @@ export function MailTemplatesSettings() {
       if (usageValue === 'high' && tpl.usageCount < 100) return false;
       return true;
     });
-  }, [searchFilteredData, activeFilters, activeStatus]);
+  }, [templates, searchTerm, activeFilters]);
+
+  const sectionCounts = useMemo(() => {
+    const counts = { all: dataBeforeSection.length } as Record<SectionFilter, number>;
+    SECTION_ORDER.forEach((section) => {
+      counts[section] = 0;
+    });
+    dataBeforeSection.forEach((tpl) => {
+      counts[tpl.section] += 1;
+    });
+    return counts;
+  }, [dataBeforeSection]);
+
+  const filteredData = useMemo(
+    () =>
+      activeSection === 'all'
+        ? dataBeforeSection
+        : dataBeforeSection.filter((tpl) => tpl.section === activeSection),
+    [dataBeforeSection, activeSection],
+  );
 
   const sortedData = useMemo(() => {
     if (!sortConfig) return filteredData;
     const { key, direction } = sortConfig;
     const dir = direction === 'asc' ? 1 : -1;
+    const valueOf = (tpl: MailTemplate): string | number => {
+      if (key === 'subject') return subjectOf(tpl);
+      if (key === 'section') return t(`mailTemplates.sections.${tpl.section}`);
+      if (key === 'recipient') return t(`mailTemplates.recipient.${tpl.recipient}`);
+      if (key === 'status') return t(`mailTemplates.status.${tpl.status}`);
+      const raw = (tpl as unknown as Record<string, unknown>)[key];
+      return typeof raw === 'number' ? raw : String(raw ?? '');
+    };
     return [...filteredData].sort((a, b) => {
-      const av = (a as unknown as Record<string, unknown>)[key];
-      const bv = (b as unknown as Record<string, unknown>)[key];
-      if (typeof av === 'string' && typeof bv === 'string') {
-        return av.localeCompare(bv) * dir;
-      }
+      const av = valueOf(a);
+      const bv = valueOf(b);
+      if (typeof av === 'string' && typeof bv === 'string') return av.localeCompare(bv) * dir;
       return ((av as number) > (bv as number) ? 1 : -1) * dir;
     });
-  }, [filteredData, sortConfig]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [filteredData, sortConfig, lang, t]);
 
   const totalItems = sortedData.length;
   const totalPages = Math.max(1, Math.ceil(totalItems / itemsPerPage));
@@ -464,41 +328,41 @@ export function MailTemplatesSettings() {
   const startIndex = (safePage - 1) * itemsPerPage;
   const tableData = sortedData.slice(startIndex, startIndex + itemsPerPage);
 
-  const statusKpis = useMemo(() => {
-    const counts: Record<StatusTab, number> = {
-      all: searchFilteredData.length,
-      active: 0,
-      draft: 0,
-      archived: 0,
-    };
-    for (const tpl of searchFilteredData) counts[tpl.status] += 1;
-    return counts;
-  }, [searchFilteredData]);
-
-  const avgUsage = useMemo(() => {
-    if (searchFilteredData.length === 0) return 0;
-    const total = searchFilteredData.reduce((sum, tpl) => sum + tpl.usageCount, 0);
-    return Math.round(total / searchFilteredData.length);
-  }, [searchFilteredData]);
+  const previewIndex = previewId === null ? -1 : sortedData.findIndex((tpl) => tpl.id === previewId);
+  const previewTemplate = previewIndex >= 0 ? sortedData[previewIndex] : null;
+  const editingTemplate = templates.find((tpl) => tpl.id === editingId) ?? null;
 
   const filterConfigs: FilterConfig[] = useMemo(
     () => [
       {
-        id: 'category',
-        label: t('mailTemplates.filters.category'),
+        id: 'status',
+        label: t('mailTemplates.filters.status'),
         type: 'select',
         isPrimary: true,
-        options: CATEGORIES.map((category) => ({
-          value: category,
-          label: t(`mailTemplates.category.${category}`),
+        options: STATUSES.map((status) => ({
+          value: status,
+          label: t(`mailTemplates.status.${status}`),
         })),
       },
       {
-        id: 'group',
-        label: t('mailTemplates.filters.group'),
+        id: 'recipient',
+        label: t('mailTemplates.filters.recipient'),
         type: 'select',
         isPrimary: true,
-        options: groups.map((group) => ({ value: group, label: group })),
+        options: RECIPIENTS.map((recipient) => ({
+          value: recipient,
+          label: t(`mailTemplates.recipient.${recipient}`),
+        })),
+      },
+      {
+        id: 'trigger',
+        label: t('mailTemplates.filters.trigger'),
+        type: 'select',
+        isPrimary: false,
+        options: TRIGGERS.map((trigger) => ({
+          value: trigger,
+          label: t(`mailTemplates.trigger.${trigger}`),
+        })),
       },
       {
         id: 'language',
@@ -515,7 +379,7 @@ export function MailTemplatesSettings() {
         label: t('mailTemplates.filters.author'),
         type: 'select',
         isPrimary: false,
-        options: authors.map((author) => ({ value: author, label: author })),
+        options: TEMPLATE_AUTHORS.map((author) => ({ value: author, label: author })),
       },
       {
         id: 'usage',
@@ -528,7 +392,7 @@ export function MailTemplatesSettings() {
         })),
       },
     ],
-    [t, groups, authors],
+    [t],
   );
 
   const handleFilterChange = (filterId: string, value: string | string[] | null) => {
@@ -547,55 +411,50 @@ export function MailTemplatesSettings() {
   const handleClearAllFilters = () => {
     setActiveFilters({});
     setSearchTerm('');
-    setActiveStatus('all');
     setPaginationPage(1);
     toast.success(t('mailTemplates.toast.filtersResetTitle'));
   };
 
-  const handleSearchChange = (value: string) => {
-    setSearchTerm(value);
-    setPaginationPage(1);
-  };
-
-  const handleStatusChange = (status: StatusTab) => {
-    setActiveStatus(status);
+  const handleSectionChange = (section: SectionFilter) => {
+    setActiveSection(section);
     setPaginationPage(1);
   };
 
   const handleSort = (key: string) => {
     setSortConfig((prev) => {
-      if (!prev || prev.key !== key) return { key, direction: 'desc' };
+      if (!prev || prev.key !== key) return { key, direction: 'asc' };
       return { key, direction: prev.direction === 'asc' ? 'desc' : 'asc' };
     });
   };
 
   const handleOpenCreate = () => {
-    setEditingTemplate(null);
-    setDraft(EMPTY_DRAFT);
-    setPreviewTemplate(null);
-    setIsFormOpen(true);
+    setDraft({
+      ...EMPTY_DRAFT,
+      section: activeSection === 'all' ? 'accounts' : activeSection,
+    });
+    setEditingId(null);
+    setPreviewId(null);
+    setFormMode('create');
   };
 
   const handleOpenEdit = (template: MailTemplate) => {
-    setEditingTemplate(template);
-    setDraft({
-      name: template.name,
-      subject: template.subject,
-      category: template.category,
-      group: template.group,
-      status: template.status,
-      body: template.body,
-    });
-    setPreviewTemplate(null);
-    setIsFormOpen(true);
+    setDraft(draftFrom(template));
+    setEditingId(template.id);
+    setPreviewId(null);
+    setFormMode('edit');
+  };
+
+  const closeForm = () => {
+    setFormMode(null);
+    setEditingId(null);
   };
 
   const handleSubmitForm = () => {
     const nowIso = new Date().toISOString();
-    if (editingTemplate) {
+    if (formMode === 'edit' && editingId !== null) {
       setTemplates((prev) =>
         prev.map((tpl) =>
-          tpl.id === editingTemplate.id
+          tpl.id === editingId
             ? { ...tpl, ...draft, updatedAt: nowIso, updatedBy: CURRENT_USER }
             : tpl,
         ),
@@ -608,7 +467,8 @@ export function MailTemplatesSettings() {
         {
           id: nextTemplateId(prev),
           ...draft,
-          languages: ['fr'],
+          languages: draft.subjectEn.trim() ? ['fr', 'en'] : ['fr'],
+          variables: [],
           usageCount: 0,
           lastSentAt: null,
           updatedAt: nowIso,
@@ -620,17 +480,18 @@ export function MailTemplatesSettings() {
         description: t('mailTemplates.toast.createdBody', { name: draft.name }),
       });
     }
-    setIsFormOpen(false);
-    setEditingTemplate(null);
+    closeForm();
   };
 
   const handleDuplicate = (template: MailTemplate) => {
-    const copyName = `${template.name} (${t('mailTemplates.csv.suffixCopy')})`;
+    const copySuffix = t('mailTemplates.csv.suffixCopy');
+    const copyName = `${template.name} (${copySuffix})`;
     setTemplates((prev) => {
       const index = prev.findIndex((tpl) => tpl.id === template.id);
       const duplicated: MailTemplate = {
         ...template,
         id: nextTemplateId(prev),
+        slug: `${template.slug}-${copySuffix}`,
         name: copyName,
         status: 'draft',
         usageCount: 0,
@@ -648,6 +509,7 @@ export function MailTemplatesSettings() {
   const handleConfirmDelete = () => {
     if (!templateToDelete) return;
     setTemplates((prev) => prev.filter((tpl) => tpl.id !== templateToDelete.id));
+    if (previewId === templateToDelete.id) setPreviewId(null);
     toast.success(t('mailTemplates.toast.deletedTitle'), {
       description: t('mailTemplates.toast.deletedBody', { name: templateToDelete.name }),
     });
@@ -666,22 +528,24 @@ export function MailTemplatesSettings() {
 
   const handleExport = () => {
     const header = [
+      t('mailTemplates.detail.slug'),
       t('mailTemplates.table.name'),
-      t('mailTemplates.table.subject'),
-      t('mailTemplates.table.category'),
-      t('mailTemplates.filters.group'),
+      t('mailTemplates.table.section'),
+      t('mailTemplates.table.recipient'),
+      t('mailTemplates.filters.trigger'),
       t('mailTemplates.table.status'),
+      t('mailTemplates.table.subject'),
       t('mailTemplates.table.usage'),
-      t('mailTemplates.table.updatedAt'),
     ];
     const rows = sortedData.map((tpl) => [
+      tpl.slug,
       tpl.name,
-      tpl.subject,
-      t(`mailTemplates.category.${tpl.category}`),
-      tpl.group,
+      t(`mailTemplates.sections.${tpl.section}`),
+      t(`mailTemplates.recipient.${tpl.recipient}`),
+      t(`mailTemplates.trigger.${tpl.trigger}`),
       t(`mailTemplates.status.${tpl.status}`),
+      subjectOf(tpl),
       String(tpl.usageCount),
-      format(parseISO(tpl.updatedAt), 'yyyy-MM-dd HH:mm'),
     ]);
     const csv = [header, ...rows]
       .map((row) => row.map((cell) => csvEscape(String(cell))).join(','))
@@ -701,41 +565,59 @@ export function MailTemplatesSettings() {
     });
   };
 
-  const columns: ColumnConfig<MailTemplate>[] = useMemo(
-    () => [
+  const columns: ColumnConfig<MailTemplate>[] = useMemo(() => {
+    const list: ColumnConfig<MailTemplate>[] = [
       {
         key: 'name',
         label: t('mailTemplates.table.name'),
         sortable: true,
-        className: 'px-4 py-4 min-w-[200px]',
-        render: (row, term) => (
-          <div className="flex items-start gap-3">
-            <span className="mt-0.5 inline-flex items-center justify-center w-8 h-8 rounded-lg bg-gradient-to-br from-blue-50 to-indigo-50 dark:from-blue-950 dark:to-indigo-950 shrink-0">
-              <Mail className="w-4 h-4 text-blue-700 dark:text-blue-300" />
-            </span>
-            <div className="min-w-0 max-w-[200px]">
-              <p className="text-sm font-medium text-gray-900 dark:text-gray-100 truncate">
-                {highlightMatch(row.name, term)}
-              </p>
-              <div className="mt-1 flex items-center gap-1.5">
-                <Layers className="w-3 h-3 text-gray-400 dark:text-gray-500 shrink-0" />
-                <span className="text-xs text-gray-500 dark:text-gray-400 truncate">
-                  {row.group}
-                </span>
+        className: 'px-3 py-4 min-w-[180px]',
+        render: (row, term) => {
+          const TriggerIcon = TRIGGER_ICON[row.trigger];
+          return (
+            <div className="flex items-start gap-2.5">
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <span
+                    className={cn(
+                      'mt-0.5 inline-flex items-center justify-center w-7 h-7 rounded-md border shrink-0 text-[11px] font-semibold tabular-nums',
+                      SECTION_BADGE_STYLES[row.section],
+                    )}
+                  >
+                    {SECTION_NUMBER[row.section]}
+                  </span>
+                </TooltipTrigger>
+                <TooltipContent>{t(`mailTemplates.sections.${row.section}`)}</TooltipContent>
+              </Tooltip>
+              <div className="min-w-0 max-w-[200px]">
+                <div className="flex items-center gap-1.5">
+                  <p className="text-sm font-medium text-gray-900 dark:text-gray-100 truncate">
+                    {highlightMatch(row.name, term)}
+                  </p>
+                  <Tooltip>
+                    <TooltipTrigger asChild>
+                      <TriggerIcon className="w-3 h-3 text-gray-400 dark:text-gray-500 shrink-0" />
+                    </TooltipTrigger>
+                    <TooltipContent>{t(`mailTemplates.trigger.${row.trigger}`)}</TooltipContent>
+                  </Tooltip>
+                </div>
+                <code className="mt-1 block text-xs font-mono text-gray-500 dark:text-gray-400 truncate">
+                  {highlightMatch(row.slug, term)}
+                </code>
               </div>
             </div>
-          </div>
-        ),
+          );
+        },
       },
       {
         key: 'subject',
         label: t('mailTemplates.table.subject'),
         sortable: true,
-        className: 'px-4 py-4',
+        className: 'px-3 py-4',
         render: (row, term) => (
           <div className="max-w-[250px]">
             <p className="text-sm text-gray-700 dark:text-gray-300 truncate">
-              {highlightMatch(row.subject, term)}
+              {highlightMatch(subjectOf(row), term)}
             </p>
             <div className="mt-1 flex items-center gap-1">
               {row.languages.map((code) => (
@@ -745,14 +627,17 @@ export function MailTemplatesSettings() {
           </div>
         ),
       },
+    ];
+
+    list.push(
       {
-        key: 'category',
-        label: t('mailTemplates.table.category'),
+        key: 'recipient',
+        label: t('mailTemplates.table.recipient'),
         sortable: true,
-        className: 'px-4 py-4 w-[130px]',
+        className: 'px-3 py-4 w-[140px]',
         render: (row) => (
-          <Badge variant="outline" className={CATEGORY_BADGE_STYLES[row.category]}>
-            {t(`mailTemplates.category.${row.category}`)}
+          <Badge variant="outline" className={RECIPIENT_BADGE_STYLES[row.recipient]}>
+            {t(`mailTemplates.recipient.${row.recipient}`)}
           </Badge>
         ),
       },
@@ -760,50 +645,40 @@ export function MailTemplatesSettings() {
         key: 'status',
         label: t('mailTemplates.table.status'),
         sortable: true,
-        className: 'px-4 py-4 w-[130px]',
-        render: (row) => <TemplateStatusBadge status={row.status} />,
+        className: 'px-3 py-4 w-[130px]',
+        render: (row) => (
+          <Badge variant="outline" className={STATUS_BADGE_STYLES[row.status]}>
+            {t(`mailTemplates.status.${row.status}`)}
+          </Badge>
+        ),
       },
       {
         key: 'usageCount',
         label: t('mailTemplates.table.usage'),
         sortable: true,
-        className: 'px-4 py-4 w-[130px]',
+        className: 'px-3 py-4 w-[100px]',
         render: (row) => (
-          <div className="flex flex-col">
-            <span className="text-sm font-medium text-gray-900 dark:text-gray-100 tabular-nums">
-              {row.usageCount.toLocaleString(lang)}
-            </span>
-            <span className="text-xs text-gray-500 dark:text-gray-400">
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <span className="text-sm font-medium text-gray-900 dark:text-gray-100 tabular-nums cursor-default">
+                {row.usageCount.toLocaleString(lang)}
+              </span>
+            </TooltipTrigger>
+            <TooltipContent>
               {row.lastSentAt
                 ? t('mailTemplates.usage.lastSent', {
                     date: format(parseISO(row.lastSentAt), 'dd/MM/yyyy', { locale: dfLocale }),
                   })
                 : t('mailTemplates.usage.never')}
-            </span>
-          </div>
-        ),
-      },
-      {
-        key: 'updatedAt',
-        label: t('mailTemplates.table.updatedAt'),
-        sortable: true,
-        className: 'px-4 py-4 w-[130px]',
-        render: (row) => (
-          <div className="flex flex-col">
-            <span className="text-sm text-gray-900 dark:text-gray-100 tabular-nums">
-              {format(parseISO(row.updatedAt), 'dd/MM/yyyy', { locale: dfLocale })}
-            </span>
-            <span className="text-xs text-gray-500 dark:text-gray-400">
-              {t('mailTemplates.updatedBy', { name: row.updatedBy })}
-            </span>
-          </div>
+            </TooltipContent>
+          </Tooltip>
         ),
       },
       {
         key: 'actions',
         label: t('mailTemplates.table.actions'),
         sortable: false,
-        className: 'px-3 py-4 w-[130px] text-right',
+        className: 'px-2 py-4 w-[130px] text-right',
         render: (row) => (
           <div className="flex items-center justify-end gap-1" onClick={(e) => e.stopPropagation()}>
             <RowActionButton
@@ -825,13 +700,13 @@ export function MailTemplatesSettings() {
           </div>
         ),
       },
-    ],
-    [t, lang, dfLocale],
-  );
+    );
 
-  const hasActiveSearch = searchTerm.trim().length > 0;
-  const isFiltered =
-    hasActiveSearch || Object.keys(activeFilters).length > 0 || activeStatus !== 'all';
+    return list;
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [t, lang, dfLocale]);
+
+  const isFiltered = searchTerm.trim().length > 0 || Object.keys(activeFilters).length > 0;
 
   return (
     <TooltipProvider delayDuration={150}>
@@ -844,91 +719,98 @@ export function MailTemplatesSettings() {
             label: t('mailTemplates.actions.export'),
             icon: <Download className="w-4 h-4" />,
             onClick: handleExport,
-            ariaLabel: t('mailTemplates.actions.exportTooltip'),
             disabled: sortedData.length === 0,
           }}
           primaryAction={{
             label: t('mailTemplates.actions.create'),
             icon: <Plus className="w-4 h-4" />,
             onClick: handleOpenCreate,
-            ariaLabel: t('mailTemplates.actions.createTooltip'),
           }}
         />
 
-        <div className="px-6 py-6 space-y-5">
-          <TemplateStatusTabs
-            activeStatus={activeStatus}
-            onStatusChange={handleStatusChange}
-            kpis={statusKpis}
-            avgUsage={avgUsage}
-          />
+        <div className="px-6 py-6">
+          <div className="flex items-start gap-4">
+            <SectionRail
+              activeSection={activeSection}
+              onSectionChange={handleSectionChange}
+              counts={sectionCounts}
+            />
 
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0, width: '100%' }}
-            transition={{ delay: 0.2, type: 'spring', stiffness: 200, damping: 25 }}
-            className="bg-white dark:bg-gray-950 rounded-2xl shadow-sm border border-gray-200 dark:border-gray-800 flex flex-col overflow-hidden"
-          >
-            <div className="relative z-10 p-4 border-b border-gray-100 dark:border-gray-800">
-              <FilterBar
-                searchValue={searchTerm}
-                onSearchChange={handleSearchChange}
-                searchPlaceholder={t('mailTemplates.searchPlaceholder')}
-                filters={filterConfigs}
-                activeFilters={activeFilters}
-                onFilterChange={handleFilterChange}
-                onClearAll={handleClearAllFilters}
-              />
-            </div>
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.2, type: 'spring', stiffness: 200, damping: 25 }}
+              className="flex-1 min-w-0 bg-white dark:bg-gray-950 rounded-2xl shadow-sm border border-gray-200 dark:border-gray-800 flex flex-col overflow-hidden"
+            >
+              <SectionHeading section={activeSection} count={totalItems} />
 
-            <div className="flex-1 overflow-auto">
-              {sortedData.length === 0 ? (
-                <TemplatesEmptyState isFiltered={isFiltered} onReset={handleClearAllFilters} />
-              ) : (
-                <DataTable<MailTemplate>
-                  data={tableData}
-                  columns={columns}
-                  hoveredRow={hoveredRow}
-                  setHoveredRow={setHoveredRow}
-                  onRowClick={(row) => setPreviewTemplate(row)}
-                  sortConfig={sortConfig}
-                  onSort={handleSort}
-                  compactMode
-                  allFilteredData={sortedData}
-                  searchTerm={searchTerm}
-                  entityName={t('mailTemplates.entityName')}
-                  hideSelection
+              <div className="relative z-10 p-4 border-b border-gray-100 dark:border-gray-800">
+                <FilterBar
+                  searchValue={searchTerm}
+                  onSearchChange={(value) => {
+                    setSearchTerm(value);
+                    setPaginationPage(1);
+                  }}
+                  searchPlaceholder={t('mailTemplates.searchPlaceholder')}
+                  filters={filterConfigs}
+                  activeFilters={activeFilters}
+                  onFilterChange={handleFilterChange}
+                  onClearAll={handleClearAllFilters}
+                />
+              </div>
+
+              <div className="flex-1 overflow-auto">
+                {sortedData.length === 0 ? (
+                  <TemplatesEmptyState isFiltered={isFiltered} onReset={handleClearAllFilters} />
+                ) : (
+                  <DataTable<MailTemplate>
+                    data={tableData}
+                    columns={columns}
+                    hoveredRow={hoveredRow}
+                    setHoveredRow={setHoveredRow}
+                    onRowClick={(row) => setPreviewId(row.id)}
+                    sortConfig={sortConfig}
+                    onSort={handleSort}
+                    compactMode
+                    allFilteredData={sortedData}
+                    searchTerm={searchTerm}
+                    entityName={t('mailTemplates.entityName')}
+                    hideSelection
+                  />
+                )}
+              </div>
+
+              {sortedData.length > 0 && (
+                <DataPagination
+                  currentPage={safePage}
+                  totalPages={totalPages}
+                  pageSize={itemsPerPage}
+                  totalItems={totalItems}
+                  onPageChange={(page) => setPaginationPage(page)}
+                  onPageSizeChange={(size) => {
+                    setItemsPerPage(size);
+                    setPaginationPage(1);
+                  }}
+                  pageSizeOptions={[10, 20, 50, 100]}
                 />
               )}
-            </div>
-
-            {sortedData.length > 0 && (
-              <DataPagination
-                currentPage={safePage}
-                totalPages={totalPages}
-                pageSize={itemsPerPage}
-                totalItems={totalItems}
-                onPageChange={(page) => setPaginationPage(page)}
-                onPageSizeChange={(size) => {
-                  setItemsPerPage(size);
-                  setPaginationPage(1);
-                }}
-                pageSizeOptions={[10, 20, 50, 100]}
-              />
-            )}
-          </motion.div>
+            </motion.div>
+          </div>
         </div>
 
-        {/* Aperçu du gabarit */}
-        <Sheet
-          open={!!previewTemplate}
-          onOpenChange={(open) => !open && setPreviewTemplate(null)}
-        >
+        {/* Aperçu du gabarit, avec navigation dans la liste courante */}
+        <Sheet open={!!previewTemplate} onOpenChange={(open) => !open && setPreviewId(null)}>
           <SheetContent className="w-[520px] p-0 flex flex-col">
             {previewTemplate && (
               <TemplatePreview
                 template={previewTemplate}
-                onClose={() => setPreviewTemplate(null)}
+                index={previewIndex}
+                total={sortedData.length}
+                onNavigate={(offset) => {
+                  const next = sortedData[previewIndex + offset];
+                  if (next) setPreviewId(next.id);
+                }}
+                onClose={() => setPreviewId(null)}
                 onCopy={handleCopy}
                 onEdit={() => handleOpenEdit(previewTemplate)}
               />
@@ -937,25 +819,15 @@ export function MailTemplatesSettings() {
         </Sheet>
 
         {/* Création / édition */}
-        <Sheet
-          open={isFormOpen}
-          onOpenChange={(open) => {
-            setIsFormOpen(open);
-            if (!open) setEditingTemplate(null);
-          }}
-        >
-          <SheetContent className="w-[520px] p-0 flex flex-col">
+        <Sheet open={formMode !== null} onOpenChange={(open) => !open && closeForm()}>
+          <SheetContent className="w-[600px] p-0 flex flex-col">
             <TemplateForm
-              isEditing={!!editingTemplate}
-              draft={draft}
-              onDraftChange={setDraft}
-              groups={MAIL_GROUPS}
-              onCancel={() => {
-                setIsFormOpen(false);
-                setEditingTemplate(null);
-              }}
-              onSubmit={handleSubmitForm}
-            />
+                isEditing={formMode === 'edit'}
+                draft={draft}
+                onDraftChange={setDraft}
+                onCancel={closeForm}
+                onSubmit={handleSubmitForm}
+              />
           </SheetContent>
         </Sheet>
 
@@ -981,9 +853,9 @@ export function MailTemplatesSettings() {
                       <p className="text-sm font-medium text-gray-900 dark:text-gray-100">
                         {templateToDelete.name}
                       </p>
-                      <p className="text-xs text-gray-500 dark:text-gray-400 mt-0.5">
-                        {templateToDelete.subject}
-                      </p>
+                      <code className="text-xs font-mono text-gray-500 dark:text-gray-400">
+                        {templateToDelete.slug}
+                      </code>
                     </div>
                   )}
                   <p className="text-sm text-gray-600 dark:text-gray-400">
@@ -1018,76 +890,169 @@ export function MailTemplatesSettings() {
   );
 }
 
-function TemplateStatusTabs({
-  activeStatus,
-  onStatusChange,
-  kpis,
-  avgUsage,
+/** Rail de navigation : les 12 sections du référentiel, toujours visibles. */
+function SectionRail({
+  activeSection,
+  onSectionChange,
+  counts,
 }: {
-  activeStatus: StatusTab;
-  onStatusChange: (status: StatusTab) => void;
-  kpis: Record<StatusTab, number>;
-  avgUsage: number;
+  activeSection: SectionFilter;
+  onSectionChange: (section: SectionFilter) => void;
+  counts: Record<SectionFilter, number>;
 }) {
   const { t } = useTranslation();
-  const avgLabel = t('mailTemplates.statusTabs.avgUsage', { count: avgUsage });
-
-  const metricValueFor = (status: StatusTab): string => {
-    if (kpis.all === 0) return '0%';
-    if (status === 'all') return '100%';
-    return `${Math.round((kpis[status] / kpis.all) * 100)}%`;
-  };
 
   return (
-    <motion.div
-      initial={{ opacity: 0, y: -10 }}
-      animate={{ opacity: 1, y: 0 }}
-      transition={{ duration: 0.3 }}
-      className="bg-gray-50 dark:bg-gray-900/50 p-3 rounded-lg"
+    <motion.nav
+      initial={{ opacity: 0, x: -12 }}
+      animate={{ opacity: 1, x: 0 }}
+      transition={{ delay: 0.15, type: 'spring', stiffness: 200, damping: 25 }}
+      aria-label={t('mailTemplates.rail.title')}
+      className="w-[260px] shrink-0 sticky top-6 bg-white dark:bg-gray-950 rounded-2xl shadow-sm border border-gray-200 dark:border-gray-800 overflow-hidden"
     >
-      <div className="mb-3 flex items-center justify-between">
-        <div className="flex items-center gap-2">
-          <div className="w-1 h-6 bg-primary rounded-full" />
-          <h3 className="font-semibold text-gray-900 dark:text-gray-100">
-            {t('mailTemplates.statusTabs.title')}
-          </h3>
-          <Badge variant="outline" className="text-xs bg-primary/20 text-primary border-gray-200 dark:border-gray-700">
-            {t('mailTemplates.statusTabs.subtitle')}
-          </Badge>
-        </div>
-        <div className="text-xs text-gray-500 dark:text-gray-400">
-          {t('mailTemplates.statusTabs.clickToFilter')}
-        </div>
+      <div className="px-4 py-3 border-b border-gray-100 dark:border-gray-800 flex items-center justify-between">
+        <span className="text-xs font-semibold uppercase tracking-wide text-gray-500 dark:text-gray-400">
+          {t('mailTemplates.rail.title')}
+        </span>
+        <Badge variant="outline" className="text-xs border-gray-200 dark:border-gray-700">
+          {t('mailTemplates.rail.sectionCount')}
+        </Badge>
       </div>
 
-      <div className="grid grid-cols-4 gap-1.5 items-center">
-        {STATUS_TAB_ORDER.map((status) => (
-          <FilterCard
-            key={status}
-            status={status}
-            activeStatus={activeStatus}
-            onStatusChange={(s) => onStatusChange(s as StatusTab)}
-            label={t(`mailTemplates.statusTabs.${status}`)}
-            icon={STATUS_TAB_ICON[status]}
-            total={kpis[status]}
-            metricLabel={t('mailTemplates.statusTabs.metricShare')}
-            metricValue={metricValueFor(status)}
-            averageValue={avgLabel}
-            iconActiveClassName={STATUS_TAB_ICON_CLASS[status] ?? 'text-primary'}
+      <div className="p-2">
+        <RailItem
+          section="all"
+          label={t('mailTemplates.rail.all')}
+          count={counts.all}
+          isActive={activeSection === 'all'}
+          onClick={() => onSectionChange('all')}
+        />
+
+        <div className="my-2 border-t border-gray-100 dark:border-gray-800" />
+
+        {SECTION_ORDER.map((section) => (
+          <RailItem
+            key={section}
+            section={section}
+            label={t(`mailTemplates.sections.${section}`)}
+            count={counts[section]}
+            isActive={activeSection === section}
+            onClick={() => onSectionChange(section)}
           />
         ))}
       </div>
-    </motion.div>
+    </motion.nav>
   );
 }
 
-function TemplateStatusBadge({ status }: { status: TemplateStatus }) {
-  const { t } = useTranslation();
-  const Icon = STATUS_ICON[status];
+function RailItem({
+  section,
+  label,
+  count,
+  isActive,
+  onClick,
+}: {
+  section: SectionFilter;
+  label: string;
+  count: number;
+  isActive: boolean;
+  onClick: () => void;
+}) {
+  const Icon = SECTION_ICON[section];
+  const isEmpty = count === 0;
+
   return (
-    <Badge variant="outline" className={cn('gap-1.5', STATUS_BADGE_STYLES[status])}>
-      <Icon className="w-3 h-3" />
-      <span>{t(`mailTemplates.status.${status}`)}</span>
+    <button
+      type="button"
+      onClick={onClick}
+      aria-current={isActive ? 'true' : undefined}
+      className={cn(
+        'w-full text-left flex items-start gap-2.5 px-2.5 py-2 rounded-lg transition-colors',
+        isActive
+          ? 'bg-gray-100 dark:bg-gray-800'
+          : 'hover:bg-gray-50 dark:hover:bg-gray-900',
+        isEmpty && !isActive && 'opacity-50',
+      )}
+    >
+      <span
+        className={cn(
+          'inline-flex items-center justify-center w-7 h-7 rounded-md shrink-0',
+          isActive
+            ? 'bg-primary text-primary-foreground'
+            : 'bg-gray-100 text-gray-500 dark:bg-gray-800 dark:text-gray-400',
+        )}
+      >
+        {section === 'all' ? (
+          <Icon className="w-3.5 h-3.5" />
+        ) : (
+          <span className="text-[11px] font-semibold tabular-nums">
+            {SECTION_NUMBER[section as TemplateSectionKey]}
+          </span>
+        )}
+      </span>
+
+      <span
+        className={cn(
+          'min-w-0 flex-1 text-[13px] leading-tight',
+          isActive
+            ? 'font-semibold text-gray-900 dark:text-gray-100'
+            : 'text-gray-700 dark:text-gray-300',
+        )}
+      >
+        {label}
+      </span>
+
+      <span
+        className={cn(
+          'text-[11px] font-semibold tabular-nums px-1.5 py-0.5 rounded-md shrink-0',
+          isActive
+            ? 'bg-white text-gray-900 dark:bg-gray-950 dark:text-gray-100'
+            : 'bg-gray-100 text-gray-500 dark:bg-gray-800 dark:text-gray-400',
+        )}
+      >
+        {count}
+      </span>
+    </button>
+  );
+}
+
+/** Rappelle la section affichée et ce qu'elle couvre, au-dessus de la liste. */
+function SectionHeading({ section, count }: { section: SectionFilter; count: number }) {
+  const { t } = useTranslation();
+  const Icon = SECTION_ICON[section];
+
+  return (
+    <div className="px-4 py-4 border-b border-gray-100 dark:border-gray-800 flex items-start gap-3">
+      <span className="inline-flex items-center justify-center w-9 h-9 rounded-lg bg-gray-100 dark:bg-gray-800 shrink-0">
+        <Icon className="w-4 h-4 text-gray-600 dark:text-gray-400" />
+      </span>
+      <div className="min-w-0">
+        <div className="flex items-center gap-2">
+          <h2 className="text-sm font-semibold text-gray-900 dark:text-gray-100">
+            {section === 'all'
+              ? t('mailTemplates.rail.all')
+              : t(`mailTemplates.sections.${section}`)}
+          </h2>
+          <Badge variant="outline" className="text-xs border-gray-200 dark:border-gray-700">
+            {t(count === 1 ? 'mailTemplates.rail.countOne' : 'mailTemplates.rail.countMany', {
+              count,
+            })}
+          </Badge>
+        </div>
+        <p className="mt-1 text-sm text-gray-600 dark:text-gray-400">
+          {t(`mailTemplates.sectionDescriptions.${section}`)}
+        </p>
+      </div>
+    </div>
+  );
+}
+
+function SectionBadge({ section }: { section: TemplateSectionKey }) {
+  const { t } = useTranslation();
+  return (
+    <Badge variant="outline" className={cn('gap-1.5', SECTION_BADGE_STYLES[section])}>
+      <span className="text-[10px] font-semibold tabular-nums">{SECTION_NUMBER[section]}</span>
+      <span className="truncate">{t(`mailTemplates.sections.${section}`)}</span>
     </Badge>
   );
 }
@@ -1122,35 +1087,45 @@ function TemplatesEmptyState({
 
 function TemplatePreview({
   template,
+  index,
+  total,
+  onNavigate,
   onClose,
   onCopy,
   onEdit,
 }: {
   template: MailTemplate;
+  index: number;
+  total: number;
+  onNavigate: (offset: number) => void;
   onClose: () => void;
   onCopy: (value: string) => void;
   onEdit: () => void;
 }) {
   const { t, lang } = useTranslation();
   const dfLocale = (lang as Language) === 'en' ? enLocale : frLocale;
-  const variables = extractVariables(template);
-  const templateId = `tpl_${String(template.id).padStart(4, '0')}`;
+  const contentLanguages = template.languages.filter((code) => code === 'fr' || code === 'en');
+  const languages = contentLanguages.length > 0 ? contentLanguages : ['fr'];
+  const [contentLang, setContentLang] = useState(languages[0]);
+
+  // Le Sheet reste monté pendant la navigation : recaler la langue sur le gabarit courant.
+  const activeLang = languages.includes(contentLang) ? contentLang : languages[0];
+
+  const subject = activeLang === 'en' ? template.subjectEn : template.subjectFr;
+  const body = activeLang === 'en' ? template.bodyEn : template.bodyFr;
+  const variables = Array.from(new Set(`${subject} ${body}`.match(VARIABLE_PATTERN) ?? []));
 
   return (
     <>
       <SheetHeader className="px-6 py-5 border-b border-gray-100 dark:border-gray-800">
         <div className="flex items-start justify-between gap-3">
-          <div className="flex items-center gap-3">
-            <span className="inline-flex items-center justify-center w-10 h-10 rounded-lg bg-gradient-to-br from-blue-50 to-indigo-50 dark:from-blue-950 dark:to-indigo-950">
+          <div className="flex items-center gap-3 min-w-0">
+            <span className="inline-flex items-center justify-center w-10 h-10 rounded-lg bg-gradient-to-br from-blue-50 to-indigo-50 dark:from-blue-950 dark:to-indigo-950 shrink-0">
               <Mail className="w-5 h-5 text-blue-700 dark:text-blue-300" />
             </span>
             <div className="min-w-0">
-              <SheetTitle className="text-base font-semibold truncate">
-                {template.name}
-              </SheetTitle>
-              <SheetDescription className="text-xs">
-                {t('mailTemplates.detail.subtitle')}
-              </SheetDescription>
+              <SheetTitle className="text-base font-semibold truncate">{template.name}</SheetTitle>
+              <SheetDescription className="text-xs font-mono">{template.slug}</SheetDescription>
             </div>
           </div>
           <Button
@@ -1163,45 +1138,98 @@ function TemplatePreview({
             <X className="w-4 h-4" />
           </Button>
         </div>
-        <div className="mt-3 flex items-center gap-2">
-          <TemplateStatusBadge status={template.status} />
-          <Badge variant="outline" className={CATEGORY_BADGE_STYLES[template.category]}>
-            {t(`mailTemplates.category.${template.category}`)}
-          </Badge>
+
+        <div className="mt-3 flex items-center justify-between gap-2">
+          <div className="flex items-center gap-2 min-w-0">
+            <SectionBadge section={template.section} />
+            <Badge variant="outline" className={STATUS_BADGE_STYLES[template.status]}>
+              {t(`mailTemplates.status.${template.status}`)}
+            </Badge>
+          </div>
+          <div className="flex items-center gap-1 shrink-0">
+            <span className="text-xs text-gray-500 dark:text-gray-400 tabular-nums">
+              {t('mailTemplates.detail.position', { index: index + 1, total })}
+            </span>
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  disabled={index <= 0}
+                  onClick={() => onNavigate(-1)}
+                  aria-label={t('mailTemplates.detail.previous')}
+                >
+                  <ChevronLeft className="w-4 h-4" />
+                </Button>
+              </TooltipTrigger>
+              <TooltipContent>{t('mailTemplates.detail.previous')}</TooltipContent>
+            </Tooltip>
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  disabled={index >= total - 1}
+                  onClick={() => onNavigate(1)}
+                  aria-label={t('mailTemplates.detail.next')}
+                >
+                  <ChevronRight className="w-4 h-4" />
+                </Button>
+              </TooltipTrigger>
+              <TooltipContent>{t('mailTemplates.detail.next')}</TooltipContent>
+            </Tooltip>
+          </div>
         </div>
       </SheetHeader>
 
       <div className="flex-1 overflow-y-auto px-6 py-5 space-y-5">
-        <div>
-          <p className="text-xs font-medium uppercase tracking-wide text-gray-500 dark:text-gray-400 mb-2">
-            {t('mailTemplates.detail.subject')}
-          </p>
-          <p className="text-sm text-gray-900 dark:text-gray-100">{template.subject}</p>
-        </div>
+        <Tabs value={activeLang} onValueChange={setContentLang}>
+          <TabsList>
+            {languages.map((code) => (
+              <TabsTrigger key={code} value={code} className="gap-1.5">
+                <LanguageFlagInline language={code} />
+                <span>{t(`subscriptions.language.${code}`)}</span>
+              </TabsTrigger>
+            ))}
+          </TabsList>
 
-        <div>
-          <p className="text-xs font-medium uppercase tracking-wide text-gray-500 dark:text-gray-400 mb-2">
-            {t('mailTemplates.detail.content')}
-          </p>
-          <div className="relative rounded-lg border border-gray-200 bg-gray-50 dark:border-gray-800 dark:bg-gray-900/60 p-4">
-            <p className="text-sm text-gray-800 dark:text-gray-300 whitespace-pre-wrap leading-relaxed">
-              {template.body}
-            </p>
-            <Tooltip>
-              <TooltipTrigger asChild>
-                <button
-                  type="button"
-                  onClick={() => onCopy(template.body)}
-                  aria-label={t('mailTemplates.detail.copyContent')}
-                  className="absolute top-2 right-2 inline-flex items-center justify-center w-7 h-7 rounded-md text-gray-500 hover:text-gray-900 hover:bg-white dark:hover:bg-gray-800 transition"
-                >
-                  <Copy className="w-3.5 h-3.5" />
-                </button>
-              </TooltipTrigger>
-              <TooltipContent>{t('mailTemplates.detail.copyContent')}</TooltipContent>
-            </Tooltip>
-          </div>
-        </div>
+          {languages.map((code) => (
+            <TabsContent key={code} value={code} className="space-y-4 pt-3">
+              <div>
+                <p className="text-xs font-medium uppercase tracking-wide text-gray-500 dark:text-gray-400 mb-2">
+                  {t('mailTemplates.detail.subject')}
+                </p>
+                <p className="text-sm text-gray-900 dark:text-gray-100 font-mono">
+                  {code === 'en' ? template.subjectEn : template.subjectFr}
+                </p>
+              </div>
+
+              <div>
+                <p className="text-xs font-medium uppercase tracking-wide text-gray-500 dark:text-gray-400 mb-2">
+                  {t('mailTemplates.detail.content')}
+                </p>
+                <div className="relative rounded-lg border border-gray-200 bg-gray-50 dark:border-gray-800 dark:bg-gray-900/60 p-4">
+                  <p className="text-sm text-gray-800 dark:text-gray-300 whitespace-pre-wrap leading-relaxed">
+                    {code === 'en' ? template.bodyEn : template.bodyFr}
+                  </p>
+                  <Tooltip>
+                    <TooltipTrigger asChild>
+                      <button
+                        type="button"
+                        onClick={() => onCopy(code === 'en' ? template.bodyEn : template.bodyFr)}
+                        aria-label={t('mailTemplates.detail.copyContent')}
+                        className="absolute top-2 right-2 inline-flex items-center justify-center w-7 h-7 rounded-md text-gray-500 hover:text-gray-900 hover:bg-white dark:hover:bg-gray-800 transition"
+                      >
+                        <Copy className="w-3.5 h-3.5" />
+                      </button>
+                    </TooltipTrigger>
+                    <TooltipContent>{t('mailTemplates.detail.copyContent')}</TooltipContent>
+                  </Tooltip>
+                </div>
+              </div>
+            </TabsContent>
+          ))}
+        </Tabs>
 
         <div>
           <p className="text-xs font-medium uppercase tracking-wide text-gray-500 dark:text-gray-400 mb-2">
@@ -1212,33 +1240,33 @@ function TemplatePreview({
               {t('mailTemplates.detail.noVariables')}
             </p>
           ) : (
-            <div className="flex flex-wrap gap-1.5">
-              {variables.map((variable) => (
-                <Badge
-                  key={variable}
-                  variant="outline"
-                  className="font-mono text-[11px] border-gray-200 bg-gray-50 text-gray-700 dark:border-gray-700 dark:bg-gray-800 dark:text-gray-300"
-                >
-                  {`{{${variable}}}`}
-                </Badge>
-              ))}
-            </div>
+            <>
+              <div className="flex flex-wrap gap-1.5">
+                {variables.map((variable) => (
+                  <Badge
+                    key={variable}
+                    variant="outline"
+                    className="font-mono text-[11px] border-gray-200 bg-gray-50 text-gray-700 dark:border-gray-700 dark:bg-gray-800 dark:text-gray-300"
+                  >
+                    {variable}
+                  </Badge>
+                ))}
+              </div>
+              <p className="mt-2 text-xs text-gray-500 dark:text-gray-400">
+                {t('mailTemplates.detail.variablesHint')}
+              </p>
+            </>
           )}
         </div>
 
-        <PreviewRow label={t('mailTemplates.detail.group')} value={template.group} />
-
-        <div className="flex items-baseline gap-3">
-          <span className="w-[140px] shrink-0 text-xs font-medium uppercase tracking-wide text-gray-500 dark:text-gray-400">
-            {t('mailTemplates.detail.languages')}
-          </span>
-          <span className="flex items-center gap-1.5">
-            {template.languages.map((code) => (
-              <LanguageFlagInline key={code} language={code} />
-            ))}
-          </span>
-        </div>
-
+        <PreviewRow
+          label={t('mailTemplates.detail.recipient')}
+          value={t(`mailTemplates.recipient.${template.recipient}`)}
+        />
+        <PreviewRow
+          label={t('mailTemplates.detail.trigger')}
+          value={t(`mailTemplates.trigger.${template.trigger}`)}
+        />
         <PreviewRow
           label={t('mailTemplates.detail.sends')}
           value={template.usageCount.toLocaleString(lang)}
@@ -1248,36 +1276,36 @@ function TemplatePreview({
           label={t('mailTemplates.detail.lastSent')}
           value={
             template.lastSentAt
-              ? format(parseISO(template.lastSentAt), 'dd/MM/yyyy — HH:mm', { locale: dfLocale })
+              ? format(parseISO(template.lastSentAt), 'dd/MM/yyyy', { locale: dfLocale })
               : t('mailTemplates.usage.never')
           }
         />
         <PreviewRow
           label={t('mailTemplates.detail.updatedAt')}
-          value={format(parseISO(template.updatedAt), 'dd/MM/yyyy — HH:mm', { locale: dfLocale })}
+          value={format(parseISO(template.updatedAt), 'dd/MM/yyyy', { locale: dfLocale })}
         />
         <PreviewRow label={t('mailTemplates.detail.updatedBy')} value={template.updatedBy} />
 
         <div>
           <p className="text-xs font-medium uppercase tracking-wide text-gray-500 dark:text-gray-400 mb-2">
-            {t('mailTemplates.detail.templateId')}
+            {t('mailTemplates.detail.slug')}
           </p>
           <div className="flex items-center gap-2">
             <code className="flex-1 rounded-lg border border-gray-200 bg-gray-50 dark:border-gray-800 dark:bg-gray-900/60 px-3 py-2 text-xs text-gray-700 dark:text-gray-300 font-mono">
-              {templateId}
+              {template.slug}
             </code>
             <Tooltip>
               <TooltipTrigger asChild>
                 <Button
                   variant="outline"
                   size="icon"
-                  onClick={() => onCopy(templateId)}
-                  aria-label={t('mailTemplates.detail.copyId')}
+                  onClick={() => onCopy(template.slug)}
+                  aria-label={t('mailTemplates.detail.copySlug')}
                 >
                   <Copy className="w-3.5 h-3.5" />
                 </Button>
               </TooltipTrigger>
-              <TooltipContent>{t('mailTemplates.detail.copyId')}</TooltipContent>
+              <TooltipContent>{t('mailTemplates.detail.copySlug')}</TooltipContent>
             </Tooltip>
           </div>
         </div>
@@ -1320,19 +1348,20 @@ function TemplateForm({
   isEditing,
   draft,
   onDraftChange,
-  groups,
   onCancel,
   onSubmit,
 }: {
   isEditing: boolean;
   draft: TemplateDraft;
   onDraftChange: (draft: TemplateDraft) => void;
-  groups: string[];
   onCancel: () => void;
   onSubmit: () => void;
 }) {
   const { t } = useTranslation();
-  const isValid = draft.name.trim().length > 0 && draft.subject.trim().length > 0;
+  const isValid =
+    draft.name.trim().length > 0 &&
+    draft.slug.trim().length > 0 &&
+    draft.subjectFr.trim().length > 0;
 
   const update = <K extends keyof TemplateDraft>(key: K, value: TemplateDraft[K]) => {
     onDraftChange({ ...draft, [key]: value });
@@ -1376,31 +1405,73 @@ function TemplateForm({
         </div>
 
         <div className="space-y-2">
-          <Label htmlFor="template-subject" className="text-xs">
-            {t('mailTemplates.form.subject')}
+          <Label htmlFor="template-slug" className="text-xs">
+            {t('mailTemplates.form.slug')}
           </Label>
           <Input
-            id="template-subject"
-            value={draft.subject}
-            onChange={(e) => update('subject', e.target.value)}
-            placeholder={t('mailTemplates.form.subjectPlaceholder')}
+            id="template-slug"
+            value={draft.slug}
+            onChange={(e) => update('slug', e.target.value)}
+            placeholder={t('mailTemplates.form.slugPlaceholder')}
+            className="font-mono"
           />
+          <p className="text-xs text-gray-500 dark:text-gray-400">
+            {t('mailTemplates.form.slugHint')}
+          </p>
         </div>
 
-        <div className="grid grid-cols-2 gap-3">
+        <div className="space-y-2">
+          <Label className="text-xs">{t('mailTemplates.form.section')}</Label>
+          <Select
+            value={draft.section}
+            onValueChange={(value) => update('section', value as TemplateSectionKey)}
+          >
+            <SelectTrigger>
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              {SECTION_ORDER.map((section) => (
+                <SelectItem key={section} value={section}>
+                  {`${SECTION_NUMBER[section]}. ${t(`mailTemplates.sections.${section}`)}`}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        </div>
+
+        <div className="grid grid-cols-3 gap-3">
           <div className="space-y-2">
-            <Label className="text-xs">{t('mailTemplates.form.category')}</Label>
+            <Label className="text-xs">{t('mailTemplates.form.recipient')}</Label>
             <Select
-              value={draft.category}
-              onValueChange={(value) => update('category', value as TemplateCategory)}
+              value={draft.recipient}
+              onValueChange={(value) => update('recipient', value as TemplateRecipient)}
             >
               <SelectTrigger>
                 <SelectValue />
               </SelectTrigger>
               <SelectContent>
-                {CATEGORIES.map((category) => (
-                  <SelectItem key={category} value={category}>
-                    {t(`mailTemplates.category.${category}`)}
+                {RECIPIENTS.map((recipient) => (
+                  <SelectItem key={recipient} value={recipient}>
+                    {t(`mailTemplates.recipient.${recipient}`)}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+
+          <div className="space-y-2">
+            <Label className="text-xs">{t('mailTemplates.form.trigger')}</Label>
+            <Select
+              value={draft.trigger}
+              onValueChange={(value) => update('trigger', value as TemplateTrigger)}
+            >
+              <SelectTrigger>
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                {TRIGGERS.map((trigger) => (
+                  <SelectItem key={trigger} value={trigger}>
+                    {t(`mailTemplates.trigger.${trigger}`)}
                   </SelectItem>
                 ))}
               </SelectContent>
@@ -1427,37 +1498,73 @@ function TemplateForm({
           </div>
         </div>
 
-        <div className="space-y-2">
-          <Label className="text-xs">{t('mailTemplates.form.group')}</Label>
-          <Select value={draft.group} onValueChange={(value) => update('group', value)}>
-            <SelectTrigger>
-              <SelectValue />
-            </SelectTrigger>
-            <SelectContent>
-              {groups.map((group) => (
-                <SelectItem key={group} value={group}>
-                  {group}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-        </div>
+        <Tabs defaultValue="fr">
+          <TabsList>
+            <TabsTrigger value="fr" className="gap-1.5">
+              <LanguageFlagInline language="fr" />
+              <span>{t('subscriptions.language.fr')}</span>
+            </TabsTrigger>
+            <TabsTrigger value="en" className="gap-1.5">
+              <LanguageFlagInline language="en" />
+              <span>{t('subscriptions.language.en')}</span>
+            </TabsTrigger>
+          </TabsList>
 
-        <div className="space-y-2">
-          <Label htmlFor="template-body" className="text-xs">
-            {t('mailTemplates.form.body')}
-          </Label>
-          <Textarea
-            id="template-body"
-            value={draft.body}
-            onChange={(e) => update('body', e.target.value)}
-            placeholder={t('mailTemplates.form.bodyPlaceholder')}
-            className="min-h-[200px]"
-          />
-          <p className="text-xs text-gray-500 dark:text-gray-400">
-            {t('mailTemplates.form.bodyHint')}
-          </p>
-        </div>
+          <TabsContent value="fr" className="space-y-4 pt-3">
+            <div className="space-y-2">
+              <Label htmlFor="subject-fr" className="text-xs">
+                {t('mailTemplates.form.subject')}
+              </Label>
+              <Input
+                id="subject-fr"
+                value={draft.subjectFr}
+                onChange={(e) => update('subjectFr', e.target.value)}
+                placeholder={t('mailTemplates.form.subjectPlaceholder')}
+              />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="body-fr" className="text-xs">
+                {t('mailTemplates.form.body')}
+              </Label>
+              <Textarea
+                id="body-fr"
+                value={draft.bodyFr}
+                onChange={(e) => update('bodyFr', e.target.value)}
+                placeholder={t('mailTemplates.form.bodyPlaceholder')}
+                className="min-h-[200px] font-mono"
+              />
+              <p className="text-xs text-gray-500 dark:text-gray-400">
+                {t('mailTemplates.form.bodyHint')}
+              </p>
+            </div>
+          </TabsContent>
+
+          <TabsContent value="en" className="space-y-4 pt-3">
+            <div className="space-y-2">
+              <Label htmlFor="subject-en" className="text-xs">
+                {t('mailTemplates.form.subject')}
+              </Label>
+              <Input
+                id="subject-en"
+                value={draft.subjectEn}
+                onChange={(e) => update('subjectEn', e.target.value)}
+                placeholder={t('mailTemplates.form.subjectPlaceholder')}
+              />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="body-en" className="text-xs">
+                {t('mailTemplates.form.body')}
+              </Label>
+              <Textarea
+                id="body-en"
+                value={draft.bodyEn}
+                onChange={(e) => update('bodyEn', e.target.value)}
+                placeholder={t('mailTemplates.form.bodyPlaceholder')}
+                className="min-h-[200px] font-mono"
+              />
+            </div>
+          </TabsContent>
+        </Tabs>
       </div>
 
       <div className="px-6 py-4 border-t border-gray-100 dark:border-gray-800 flex items-center gap-3">
