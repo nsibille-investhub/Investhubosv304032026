@@ -8,6 +8,7 @@ import {
   ChevronRight,
   Code2,
   Copy,
+  Eye,
   Monitor,
   RotateCcw,
   Smartphone,
@@ -45,11 +46,20 @@ import { MailTemplateWysiwyg } from './MailTemplateWysiwyg';
 
 type ContentLang = 'fr' | 'en';
 type PreviewWidth = 'desktop' | 'mobile';
-type EditorMode = 'visual' | 'source';
+
+/** Les trois façons de travailler un gabarit, exclusives. */
+type ViewMode = 'visual' | 'preview' | 'source';
 
 const PREVIEW_WIDTH_PX: Record<PreviewWidth, number> = {
   desktop: 640,
   mobile: 375,
+};
+
+/** Intitulé de la surface affichée, sous la barre de modes. */
+const SURFACE_LABEL_KEY: Record<ViewMode, string> = {
+  visual: 'visualLabel',
+  preview: 'previewLabel',
+  source: 'htmlLabel',
 };
 
 /** Logo d'exemple embarqué : l'aperçu ne dépend d'aucun appel réseau. */
@@ -139,7 +149,7 @@ export function MailTemplateDetailPage({
   const dfLocale = (lang as Language) === 'en' ? enLocale : frLocale;
 
   const [contentLang, setContentLang] = useState<ContentLang>('fr');
-  const [editorMode, setEditorMode] = useState<EditorMode>('visual');
+  const [viewMode, setViewMode] = useState<ViewMode>('visual');
   const [previewWidth, setPreviewWidth] = useState<PreviewWidth>('desktop');
   const [draft, setDraft] = useState(() => baselineOf(template));
   const editorRef = useRef<HTMLTextAreaElement | null>(null);
@@ -183,6 +193,12 @@ export function MailTemplateDetailPage({
   };
 
   const insertVariable = (variable: string) => {
+    // Insérer depuis l'aperçu n'a pas de sens : on repasse à l'éditeur visuel.
+    if (viewMode === 'preview') {
+      setViewMode('visual');
+      updateContent({ html: `${current.html}${variable}` });
+      return;
+    }
     const textarea = editorRef.current;
     if (!textarea) {
       updateContent({ html: `${current.html}${variable}` });
@@ -343,24 +359,59 @@ export function MailTemplateDetailPage({
                 </TabsList>
               </Tabs>
 
-              <SegmentedControl
-                size="sm"
-                value={editorMode}
-                onValueChange={(value) => setEditorMode(value as EditorMode)}
-                aria-label={t('mailTemplates.editor.editorMode')}
-                options={[
-                  {
-                    value: 'visual',
-                    label: t('mailTemplates.editor.modeVisual'),
-                    icon: <Wand2 className="w-3.5 h-3.5" />,
-                  },
-                  {
-                    value: 'source',
-                    label: t('mailTemplates.editor.modeSource'),
-                    icon: <Code2 className="w-3.5 h-3.5" />,
-                  },
-                ]}
-              />
+              {/* Mode d'affichage, et largeur de rendu quand elle s'applique */}
+              <div className="flex items-center gap-3">
+                <SegmentedControl
+                  size="sm"
+                  value={viewMode}
+                  onValueChange={(value) => setViewMode(value as ViewMode)}
+                  aria-label={t('mailTemplates.editor.viewMode')}
+                  options={[
+                    {
+                      value: 'visual',
+                      label: t('mailTemplates.editor.modeVisual'),
+                      icon: <Wand2 className="w-3.5 h-3.5" />,
+                    },
+                    {
+                      value: 'preview',
+                      label: t('mailTemplates.editor.modePreview'),
+                      icon: <Eye className="w-3.5 h-3.5" />,
+                    },
+                    {
+                      value: 'source',
+                      label: t('mailTemplates.editor.modeSource'),
+                      icon: <Code2 className="w-3.5 h-3.5" />,
+                    },
+                  ]}
+                />
+
+                {viewMode !== 'source' && (
+                  <>
+                    <span
+                      className="w-px h-6 bg-gray-200 dark:bg-gray-800"
+                      aria-hidden
+                    />
+                    <SegmentedControl
+                      size="sm"
+                      value={previewWidth}
+                      onValueChange={(value) => setPreviewWidth(value as PreviewWidth)}
+                      aria-label={t('mailTemplates.editor.previewWidth')}
+                      options={[
+                        {
+                          value: 'desktop',
+                          label: t('mailTemplates.editor.widthDesktop'),
+                          icon: <Monitor className="w-3.5 h-3.5" />,
+                        },
+                        {
+                          value: 'mobile',
+                          label: t('mailTemplates.editor.widthMobile'),
+                          icon: <Smartphone className="w-3.5 h-3.5" />,
+                        },
+                      ]}
+                    />
+                  </>
+                )}
+              </div>
             </div>
 
             <div className="px-4 py-3 border-b border-gray-100 dark:border-gray-800">
@@ -376,54 +427,38 @@ export function MailTemplateDetailPage({
             </div>
 
             <div className="flex">
-              {/* Éditeur : source colorée ou mode visuel */}
+              {/* Surface de travail : éditeur visuel, aperçu rendu ou source */}
               <div className="flex-1 min-w-0 border-r border-gray-100 dark:border-gray-800">
-                <div className="px-4 py-2 border-b border-gray-100 dark:border-gray-800 flex items-center justify-between">
+                <div className="px-4 py-2 border-b border-gray-100 dark:border-gray-800 flex items-center justify-between gap-3">
                   <span className="text-xs font-semibold uppercase tracking-wide text-gray-500 dark:text-gray-400">
-                    {editorMode === 'source'
-                      ? t('mailTemplates.editor.htmlLabel')
-                      : t('mailTemplates.editor.visualLabel')}
+                    {t(`mailTemplates.editor.${SURFACE_LABEL_KEY[viewMode]}`)}
                   </span>
                   <div className="flex items-center gap-2">
-                    {editorMode === 'visual' ? (
-                      <SegmentedControl
-                        size="sm"
-                        value={previewWidth}
-                        onValueChange={(value) => setPreviewWidth(value as PreviewWidth)}
-                        aria-label={t('mailTemplates.editor.previewWidth')}
-                        options={[
-                          {
-                            value: 'desktop',
-                            label: t('mailTemplates.editor.widthDesktop'),
-                            icon: <Monitor className="w-3.5 h-3.5" />,
-                          },
-                          {
-                            value: 'mobile',
-                            label: t('mailTemplates.editor.widthMobile'),
-                            icon: <Smartphone className="w-3.5 h-3.5" />,
-                          },
-                        ]}
-                      />
-                    ) : (
-                      <span className="text-xs text-gray-400 dark:text-gray-500 tabular-nums">
-                        {t('mailTemplates.editor.charCount', { count: current.html.length })}
+                    {viewMode === 'preview' && (
+                      <span className="text-xs text-gray-400 dark:text-gray-500">
+                        {t('mailTemplates.editor.previewHint')}
                       </span>
                     )}
-                    {editorMode === 'source' && (
-                      <Tooltip>
-                        <TooltipTrigger asChild>
-                          <Button
-                            variant="ghost"
-                            size="sm"
-                            onClick={handleFormat}
-                            className="h-8 gap-1.5 text-xs"
-                          >
-                            <Wand2 className="w-3.5 h-3.5" />
-                            {t('mailTemplates.editor.format')}
-                          </Button>
-                        </TooltipTrigger>
-                        <TooltipContent>{t('mailTemplates.editor.formatHint')}</TooltipContent>
-                      </Tooltip>
+                    {viewMode === 'source' && (
+                      <>
+                        <span className="text-xs text-gray-400 dark:text-gray-500 tabular-nums">
+                          {t('mailTemplates.editor.charCount', { count: current.html.length })}
+                        </span>
+                        <Tooltip>
+                          <TooltipTrigger asChild>
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              onClick={handleFormat}
+                              className="h-8 gap-1.5 text-xs"
+                            >
+                              <Wand2 className="w-3.5 h-3.5" />
+                              {t('mailTemplates.editor.format')}
+                            </Button>
+                          </TooltipTrigger>
+                          <TooltipContent>{t('mailTemplates.editor.formatHint')}</TooltipContent>
+                        </Tooltip>
+                      </>
                     )}
                     <Tooltip>
                       <TooltipTrigger asChild>
@@ -441,20 +476,38 @@ export function MailTemplateDetailPage({
                   </div>
                 </div>
 
-                {editorMode === 'source' ? (
+                {viewMode === 'source' && (
                   <MailTemplateSourceEditor
                     value={current.html}
                     onChange={(html) => updateContent({ html })}
                     ariaLabel={t('mailTemplates.editor.htmlLabel')}
                     editorRef={editorRef}
                   />
-                ) : (
+                )}
+
+                {viewMode === 'visual' && (
                   <MailTemplateWysiwyg
                     value={current.html}
                     onChange={(html) => updateContent({ html })}
                     ariaLabel={t('mailTemplates.editor.visualLabel')}
                     width={PREVIEW_WIDTH_PX[previewWidth]}
                   />
+                )}
+
+                {viewMode === 'preview' && (
+                  <div className="h-[600px] overflow-auto bg-gray-100 dark:bg-gray-900 p-4">
+                    <div
+                      className="mx-auto bg-white shadow-sm"
+                      style={{ width: PREVIEW_WIDTH_PX[previewWidth], maxWidth: '100%' }}
+                    >
+                      <iframe
+                        title={t('mailTemplates.editor.previewLabel')}
+                        srcDoc={previewDoc}
+                        sandbox=""
+                        className="w-full h-[520px] border-0 block"
+                      />
+                    </div>
+                  </div>
                 )}
               </div>
 
@@ -474,59 +527,13 @@ export function MailTemplateDetailPage({
               </div>
             </div>
 
-            {/* Aperçu rendu, avec les valeurs d'exemple choisies dans le panneau */}
-            <div className="border-t border-gray-100 dark:border-gray-800">
-              <div className="px-4 py-2 border-b border-gray-100 dark:border-gray-800 flex items-center justify-between gap-3">
-                <span className="text-xs font-semibold uppercase tracking-wide text-gray-500 dark:text-gray-400">
-                  {t('mailTemplates.editor.previewLabel')}
-                </span>
-                <div className="flex items-center gap-3">
-                  <span className="text-xs text-gray-400 dark:text-gray-500">
-                    {t('mailTemplates.editor.previewHint')}
-                  </span>
-                  <SegmentedControl
-                    size="sm"
-                    value={previewWidth}
-                    onValueChange={(value) => setPreviewWidth(value as PreviewWidth)}
-                    aria-label={t('mailTemplates.editor.previewWidth')}
-                    options={[
-                      {
-                        value: 'desktop',
-                        label: t('mailTemplates.editor.widthDesktop'),
-                        icon: <Monitor className="w-3.5 h-3.5" />,
-                      },
-                      {
-                        value: 'mobile',
-                        label: t('mailTemplates.editor.widthMobile'),
-                        icon: <Smartphone className="w-3.5 h-3.5" />,
-                      },
-                    ]}
-                  />
-                </div>
-              </div>
-
-              <div className="overflow-auto bg-gray-100 dark:bg-gray-900 p-4">
-                <div
-                  className="mx-auto bg-white shadow-sm"
-                  style={{ width: PREVIEW_WIDTH_PX[previewWidth], maxWidth: '100%' }}
-                >
-                  <iframe
-                    title={t('mailTemplates.editor.previewLabel')}
-                    srcDoc={previewDoc}
-                    sandbox=""
-                    className="w-full h-[600px] border-0 block"
-                  />
-                </div>
-              </div>
-
-              {unknownVariables.length > 0 && (
-                <p className="px-4 py-3 border-t border-gray-100 dark:border-gray-800 text-xs text-red-600 dark:text-red-400">
-                  {t('mailTemplates.editor.unknownVariables', {
-                    list: unknownVariables.join(', '),
-                  })}
-                </p>
-              )}
-            </div>
+            {unknownVariables.length > 0 && (
+              <p className="px-4 py-3 border-t border-gray-100 dark:border-gray-800 text-xs text-red-600 dark:text-red-400">
+                {t('mailTemplates.editor.unknownVariables', {
+                  list: unknownVariables.join(', '),
+                })}
+              </p>
+            )}
           </motion.div>
 
           {/* Suivi */}
