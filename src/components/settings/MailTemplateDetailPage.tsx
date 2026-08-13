@@ -30,7 +30,6 @@ import { Button } from '../ui/button';
 import { Input } from '../ui/input';
 import { Label } from '../ui/label';
 import { PageHeader } from '../ui/page-header';
-import { SegmentedControl } from '../ui/segmented-control';
 import { Tabs, TabsList, TabsTrigger } from '../ui/tabs';
 import {
   Tooltip,
@@ -61,6 +60,25 @@ const SURFACE_LABEL_KEY: Record<ViewMode, string> = {
   preview: 'previewLabel',
   source: 'htmlLabel',
 };
+
+const VIEW_MODES: Array<{
+  value: ViewMode;
+  labelKey: string;
+  Icon: typeof Wand2;
+}> = [
+  { value: 'visual', labelKey: 'modeVisual', Icon: Wand2 },
+  { value: 'preview', labelKey: 'modePreview', Icon: Eye },
+  { value: 'source', labelKey: 'modeSource', Icon: Code2 },
+];
+
+const PREVIEW_WIDTHS: Array<{
+  value: PreviewWidth;
+  labelKey: string;
+  Icon: typeof Monitor;
+}> = [
+  { value: 'desktop', labelKey: 'widthDesktop', Icon: Monitor },
+  { value: 'mobile', labelKey: 'widthMobile', Icon: Smartphone },
+];
 
 /** Logo d'exemple embarqué : l'aperçu ne dépend d'aucun appel réseau. */
 const SAMPLE_LOGO =
@@ -359,59 +377,17 @@ export function MailTemplateDetailPage({
                 </TabsList>
               </Tabs>
 
-              {/* Mode d'affichage, et largeur de rendu quand elle s'applique */}
-              <div className="flex items-center gap-3">
-                <SegmentedControl
-                  size="sm"
-                  value={viewMode}
-                  onValueChange={(value) => setViewMode(value as ViewMode)}
-                  aria-label={t('mailTemplates.editor.viewMode')}
-                  options={[
-                    {
-                      value: 'visual',
-                      label: t('mailTemplates.editor.modeVisual'),
-                      icon: <Wand2 className="w-3.5 h-3.5" />,
-                    },
-                    {
-                      value: 'preview',
-                      label: t('mailTemplates.editor.modePreview'),
-                      icon: <Eye className="w-3.5 h-3.5" />,
-                    },
-                    {
-                      value: 'source',
-                      label: t('mailTemplates.editor.modeSource'),
-                      icon: <Code2 className="w-3.5 h-3.5" />,
-                    },
-                  ]}
-                />
-
-                {viewMode !== 'source' && (
-                  <>
-                    <span
-                      className="w-px h-6 bg-gray-200 dark:bg-gray-800"
-                      aria-hidden
-                    />
-                    <SegmentedControl
-                      size="sm"
-                      value={previewWidth}
-                      onValueChange={(value) => setPreviewWidth(value as PreviewWidth)}
-                      aria-label={t('mailTemplates.editor.previewWidth')}
-                      options={[
-                        {
-                          value: 'desktop',
-                          label: t('mailTemplates.editor.widthDesktop'),
-                          icon: <Monitor className="w-3.5 h-3.5" />,
-                        },
-                        {
-                          value: 'mobile',
-                          label: t('mailTemplates.editor.widthMobile'),
-                          icon: <Smartphone className="w-3.5 h-3.5" />,
-                        },
-                      ]}
-                    />
-                  </>
-                )}
-              </div>
+              {/* Mode d'affichage : même bascule que le choix de langue */}
+              <Tabs value={viewMode} onValueChange={(value) => setViewMode(value as ViewMode)}>
+                <TabsList aria-label={t('mailTemplates.editor.viewMode')}>
+                  {VIEW_MODES.map(({ value, labelKey, Icon }) => (
+                    <TabsTrigger key={value} value={value} className="gap-1.5">
+                      <Icon className="w-3.5 h-3.5" />
+                      <span>{t(`mailTemplates.editor.${labelKey}`)}</span>
+                    </TabsTrigger>
+                  ))}
+                </TabsList>
+              </Tabs>
             </div>
 
             <div className="px-4 py-3 border-b border-gray-100 dark:border-gray-800">
@@ -438,6 +414,25 @@ export function MailTemplateDetailPage({
                       <span className="text-xs text-gray-400 dark:text-gray-500">
                         {t('mailTemplates.editor.previewHint')}
                       </span>
+                    )}
+                    {/* Largeur de rendu : rattachée à la surface qu'elle règle */}
+                    {viewMode !== 'source' && (
+                      <Tabs
+                        value={previewWidth}
+                        onValueChange={(value) => setPreviewWidth(value as PreviewWidth)}
+                      >
+                        <TabsList
+                          aria-label={t('mailTemplates.editor.previewWidth')}
+                          className="h-8"
+                        >
+                          {PREVIEW_WIDTHS.map(({ value, labelKey, Icon }) => (
+                            <TabsTrigger key={value} value={value} className="gap-1.5 text-xs">
+                              <Icon className="w-3.5 h-3.5" />
+                              <span>{t(`mailTemplates.editor.${labelKey}`)}</span>
+                            </TabsTrigger>
+                          ))}
+                        </TabsList>
+                      </Tabs>
                     )}
                     {viewMode === 'source' && (
                       <>
