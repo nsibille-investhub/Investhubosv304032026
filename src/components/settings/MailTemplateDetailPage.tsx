@@ -10,24 +10,30 @@ import {
   Copy,
   Eye,
   Monitor,
+  MousePointer2,
   RotateCcw,
   Smartphone,
+  Wand2,
 } from 'lucide-react';
 import { toast } from 'sonner';
 
 import { useTranslation, type Language } from '../../utils/languageContext';
-import {
-  PREVIEW_VALUES,
-  SECTION_NUMBER,
-  type MailTemplate,
-} from '../../utils/mailTemplatesMockData';
+import { SECTION_NUMBER, type MailTemplate } from '../../utils/mailTemplatesMockData';
+import { contextsFor, type PreviewContext } from '../../utils/mailTemplateVariables';
+import { formatHtml } from '../../utils/htmlFormat';
 import { Badge } from '../ui/badge';
 import { Button } from '../ui/button';
 import { Input } from '../ui/input';
 import { Label } from '../ui/label';
-import { Textarea } from '../ui/textarea';
 import { PageHeader } from '../ui/page-header';
 import { SegmentedControl } from '../ui/segmented-control';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '../ui/select';
 import { Tabs, TabsList, TabsTrigger } from '../ui/tabs';
 import {
   Tooltip,
@@ -37,10 +43,14 @@ import {
 } from '../ui/tooltip';
 import { cn } from '../ui/utils';
 import { LanguageFlagInline } from '../LanguageFlagInline';
+import { MailTemplateSourceEditor } from './MailTemplateSourceEditor';
+import { MailTemplateVariablePanel } from './MailTemplateVariablePanel';
+import { MailTemplateWysiwyg } from './MailTemplateWysiwyg';
 
 type ContentLang = 'fr' | 'en';
 type PreviewMode = 'resolved' | 'raw';
 type PreviewWidth = 'desktop' | 'mobile';
+type EditorMode = 'source' | 'visual';
 
 const PREVIEW_WIDTH_PX: Record<PreviewWidth, number> = {
   desktop: 640,
@@ -71,8 +81,8 @@ function variableMatcher(): RegExp {
  * transformerait $amount_final en valeur de $amount suivie de "_final". Une
  * variable sans valeur d'exemple reste affichée telle quelle.
  */
-function resolveVariables(html: string): string {
-  const values: Record<string, string> = { ...PREVIEW_VALUES, $logo: SAMPLE_LOGO };
+function resolveVariables(html: string, context: PreviewContext): string {
+  const values: Record<string, string> = { ...context.values, $logo: SAMPLE_LOGO };
   return html.replace(variableMatcher(), (token) => values[token] ?? token);
 }
 
@@ -85,8 +95,12 @@ function highlightRawVariables(html: string): string {
   );
 }
 
-function buildPreviewDocument(html: string, mode: PreviewMode): string {
-  const body = mode === 'resolved' ? resolveVariables(html) : highlightRawVariables(html);
+function buildPreviewDocument(
+  html: string,
+  mode: PreviewMode,
+  context: PreviewContext,
+): string {
+  const body = mode === 'resolved' ? resolveVariables(html, context) : highlightRawVariables(html);
   return `<!doctype html>
 <html>
 <head>
@@ -109,6 +123,14 @@ function buildPreviewDocument(html: string, mode: PreviewMode): string {
 </head>
 <body>${body}</body>
 </html>`;
+}
+
+/** Contenu de référence, source mise en forme : ouvrir un gabarit ne le marque pas modifié. */
+function baselineOf(template: MailTemplate) {
+  return {
+    fr: { subject: template.fr.subject, html: formatHtml(template.fr.html) },
+    en: { subject: template.en.subject, html: formatHtml(template.en.html) },
+  };
 }
 
 export interface MailTemplateDetailPageProps {
@@ -135,31 +157,36 @@ export function MailTemplateDetailPage({
   const dfLocale = (lang as Language) === 'en' ? enLocale : frLocale;
 
   const [contentLang, setContentLang] = useState<ContentLang>('fr');
+  const [editorMode, setEditorMode] = useState<EditorMode>('source');
   const [previewMode, setPreviewMode] = useState<PreviewMode>('resolved');
   const [previewWidth, setPreviewWidth] = useState<PreviewWidth>('desktop');
-  const [draft, setDraft] = useState({
-    fr: { ...template.fr },
-    en: { ...template.en },
-  });
+  const [draft, setDraft] = useState(() => baselineOf(template));
   const editorRef = useRef<HTMLTextAreaElement | null>(null);
+
+  // Contextes cohérents avec le destinataire, le premier servant de défaut.
+  const contexts = useMemo(() => contextsFor(template.recipient), [template.recipient]);
+  const [contextId, setContextId] = useState(contexts[0].id);
+  const context = contexts.find((item) => item.id === contextId) ?? contexts[0];
 
   // Le gabarit change sous le composant lors d'une navigation précédent / suivant.
   const [loadedSlug, setLoadedSlug] = useState(template.slug);
   if (loadedSlug !== template.slug) {
     setLoadedSlug(template.slug);
-    setDraft({ fr: { ...template.fr }, en: { ...template.en } });
+    setDraft(baselineOf(template));
+    setContextId(contextsFor(template.recipient)[0].id);
   }
 
+  const baseline = useMemo(() => baselineOf(template), [template]);
   const current = draft[contentLang];
   const isDirty =
-    draft.fr.subject !== template.fr.subject ||
-    draft.fr.html !== template.fr.html ||
-    draft.en.subject !== template.en.subject ||
-    draft.en.html !== template.en.html;
+    draft.fr.subject !== baseline.fr.subject ||
+    draft.fr.html !== baseline.fr.html ||
+    draft.en.subject !== baseline.en.subject ||
+    draft.en.html !== baseline.en.html;
 
   const previewDoc = useMemo(
-    () => buildPreviewDocument(current.html, previewMode),
-    [current.html, previewMode],
+    () => buildPreviewDocument(current.html, previewMode, context),
+    [current.html, previewMode, context],
   );
 
   const usedVariables = useMemo(
@@ -194,8 +221,13 @@ export function MailTemplateDetailPage({
   };
 
   const handleReset = () => {
-    setDraft({ fr: { ...template.fr }, en: { ...template.en } });
+    setDraft(baselineOf(template));
     toast.info(t('mailTemplates.editor.resetDone'));
+  };
+
+  const handleFormat = () => {
+    updateContent({ html: formatHtml(current.html) });
+    toast.success(t('mailTemplates.editor.formatDone'));
   };
 
   const handleCopyHtml = () => {
@@ -335,6 +367,24 @@ export function MailTemplateDetailPage({
               <div className="flex items-center gap-2">
                 <SegmentedControl
                   size="sm"
+                  value={editorMode}
+                  onValueChange={(value) => setEditorMode(value as EditorMode)}
+                  aria-label={t('mailTemplates.editor.editorMode')}
+                  options={[
+                    {
+                      value: 'source',
+                      label: t('mailTemplates.editor.modeSource'),
+                      icon: <Code2 className="w-3.5 h-3.5" />,
+                    },
+                    {
+                      value: 'visual',
+                      label: t('mailTemplates.editor.modeVisual'),
+                      icon: <Wand2 className="w-3.5 h-3.5" />,
+                    },
+                  ]}
+                />
+                <SegmentedControl
+                  size="sm"
                   value={previewMode}
                   onValueChange={(value) => setPreviewMode(value as PreviewMode)}
                   aria-label={t('mailTemplates.editor.previewMode')}
@@ -385,16 +435,34 @@ export function MailTemplateDetailPage({
             </div>
 
             <div className="flex">
-              {/* Éditeur HTML */}
+              {/* Éditeur : source colorée ou mode visuel */}
               <div className="flex-1 min-w-0 border-r border-gray-100 dark:border-gray-800">
                 <div className="px-4 py-2 border-b border-gray-100 dark:border-gray-800 flex items-center justify-between">
                   <span className="text-xs font-semibold uppercase tracking-wide text-gray-500 dark:text-gray-400">
-                    {t('mailTemplates.editor.htmlLabel')}
+                    {editorMode === 'source'
+                      ? t('mailTemplates.editor.htmlLabel')
+                      : t('mailTemplates.editor.visualLabel')}
                   </span>
                   <div className="flex items-center gap-2">
                     <span className="text-xs text-gray-400 dark:text-gray-500 tabular-nums">
                       {t('mailTemplates.editor.charCount', { count: current.html.length })}
                     </span>
+                    {editorMode === 'source' && (
+                      <Tooltip>
+                        <TooltipTrigger asChild>
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            onClick={handleFormat}
+                            className="h-8 gap-1.5 text-xs"
+                          >
+                            <Wand2 className="w-3.5 h-3.5" />
+                            {t('mailTemplates.editor.format')}
+                          </Button>
+                        </TooltipTrigger>
+                        <TooltipContent>{t('mailTemplates.editor.formatHint')}</TooltipContent>
+                      </Tooltip>
+                    )}
                     <Tooltip>
                       <TooltipTrigger asChild>
                         <Button
@@ -410,75 +478,87 @@ export function MailTemplateDetailPage({
                     </Tooltip>
                   </div>
                 </div>
-                <Textarea
-                  ref={editorRef}
-                  value={current.html}
-                  onChange={(e) => updateContent({ html: e.target.value })}
-                  spellCheck={false}
-                  aria-label={t('mailTemplates.editor.htmlLabel')}
-                  className="h-[600px] rounded-none border-0 font-mono text-[12px] bg-gray-50 dark:bg-gray-900/60"
-                />
+
+                {editorMode === 'source' ? (
+                  <MailTemplateSourceEditor
+                    value={current.html}
+                    onChange={(html) => updateContent({ html })}
+                    ariaLabel={t('mailTemplates.editor.htmlLabel')}
+                    editorRef={editorRef}
+                  />
+                ) : (
+                  <MailTemplateWysiwyg
+                    value={current.html}
+                    onChange={(html) => updateContent({ html })}
+                    ariaLabel={t('mailTemplates.editor.visualLabel')}
+                  />
+                )}
               </div>
 
-              {/* Aperçu rendu */}
-              <div className="flex-1 min-w-0">
-                <div className="px-4 py-2 border-b border-gray-100 dark:border-gray-800 flex items-center justify-between">
-                  <span className="text-xs font-semibold uppercase tracking-wide text-gray-500 dark:text-gray-400">
-                    {t('mailTemplates.editor.previewLabel')}
-                  </span>
+              {/* Variables : recherche, familles, glisser-déposer */}
+              <div className="w-[280px] shrink-0">
+                <MailTemplateVariablePanel
+                  templateVariables={template.variables}
+                  proposedVariables={proposedNames}
+                  usedVariables={usedVariables}
+                  onInsert={insertVariable}
+                />
+              </div>
+            </div>
+
+            {/* Aperçu rendu, sur un objet de contexte */}
+            <div className="border-t border-gray-100 dark:border-gray-800">
+              <div className="px-4 py-2 border-b border-gray-100 dark:border-gray-800 flex items-center justify-between gap-3">
+                <span className="text-xs font-semibold uppercase tracking-wide text-gray-500 dark:text-gray-400">
+                  {t('mailTemplates.editor.previewLabel')}
+                </span>
+                <div className="flex items-center gap-3">
+                  <div className="flex items-center gap-2">
+                    <MousePointer2 className="w-3.5 h-3.5 text-gray-400" aria-hidden />
+                    <Label htmlFor="preview-context" className="text-xs whitespace-nowrap">
+                      {t('mailTemplates.editor.contextLabel')}
+                    </Label>
+                    <Select value={context.id} onValueChange={setContextId}>
+                      <SelectTrigger id="preview-context" className="h-8 w-[280px] text-xs">
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {contexts.map((item) => (
+                          <SelectItem key={item.id} value={item.id}>
+                            {`${t(`mailTemplates.recipient.${item.kind}`)} · ${item.label}`}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
                   <span className="text-xs text-gray-400 dark:text-gray-500 tabular-nums">
                     {t('mailTemplates.editor.previewWidthValue', {
                       width: PREVIEW_WIDTH_PX[previewWidth],
                     })}
                   </span>
                 </div>
-                <div className="h-[600px] overflow-auto bg-gray-100 dark:bg-gray-900 p-4">
-                  <div
-                    className="mx-auto bg-white shadow-sm"
-                    style={{ width: PREVIEW_WIDTH_PX[previewWidth], maxWidth: '100%' }}
-                  >
-                    <iframe
-                      title={t('mailTemplates.editor.previewLabel')}
-                      srcDoc={previewDoc}
-                      sandbox=""
-                      className="w-full h-[520px] border-0 block"
-                    />
-                  </div>
+              </div>
+
+              <p className="px-4 pt-2 text-xs text-gray-500 dark:text-gray-400">
+                {context.sublabel}
+              </p>
+
+              <div className="overflow-auto bg-gray-100 dark:bg-gray-900 p-4">
+                <div
+                  className="mx-auto bg-white shadow-sm"
+                  style={{ width: PREVIEW_WIDTH_PX[previewWidth], maxWidth: '100%' }}
+                >
+                  <iframe
+                    title={t('mailTemplates.editor.previewLabel')}
+                    srcDoc={previewDoc}
+                    sandbox=""
+                    className="w-full h-[600px] border-0 block"
+                  />
                 </div>
               </div>
-            </div>
 
-            {/* Variables */}
-            <div className="px-4 py-3 border-t border-gray-100 dark:border-gray-800">
-              <div className="flex items-center justify-between gap-3 mb-2">
-                <span className="text-xs font-semibold uppercase tracking-wide text-gray-500 dark:text-gray-400">
-                  {t('mailTemplates.editor.variablesLabel')}
-                </span>
-                <span className="text-xs text-gray-400 dark:text-gray-500">
-                  {t('mailTemplates.editor.variablesHint')}
-                </span>
-              </div>
-              <div className="flex flex-wrap gap-1.5">
-                {template.variables.map((variable) => (
-                  <VariableChip
-                    key={variable}
-                    variable={variable}
-                    used={usedVariables.includes(variable)}
-                    onInsert={() => insertVariable(variable)}
-                  />
-                ))}
-                {template.proposedVariables.map((variable) => (
-                  <VariableChip
-                    key={variable.name}
-                    variable={variable.name}
-                    used={usedVariables.includes(variable.name)}
-                    proposed
-                    onInsert={() => insertVariable(variable.name)}
-                  />
-                ))}
-              </div>
               {unknownVariables.length > 0 && (
-                <p className="mt-2 text-xs text-red-600 dark:text-red-400">
+                <p className="px-4 py-3 border-t border-gray-100 dark:border-gray-800 text-xs text-red-600 dark:text-red-400">
                   {t('mailTemplates.editor.unknownVariables', {
                     list: unknownVariables.join(', '),
                   })}
@@ -510,47 +590,6 @@ export function MailTemplateDetailPage({
         </div>
       </div>
     </TooltipProvider>
-  );
-}
-
-function VariableChip({
-  variable,
-  used,
-  proposed,
-  onInsert,
-}: {
-  variable: string;
-  used: boolean;
-  proposed?: boolean;
-  onInsert: () => void;
-}) {
-  const { t } = useTranslation();
-  return (
-    <Tooltip>
-      <TooltipTrigger asChild>
-        <button
-          type="button"
-          onClick={onInsert}
-          className={cn(
-            'font-mono text-[11px] px-2 py-1 rounded-md border transition-colors',
-            proposed
-              ? 'border-amber-200 bg-amber-50 text-amber-800 dark:border-amber-800 dark:bg-amber-950/30 dark:text-amber-100'
-              : used
-                ? 'border-emerald-200 bg-emerald-50 text-emerald-700 dark:border-emerald-800 dark:bg-emerald-950/30 dark:text-emerald-300'
-                : 'border-gray-200 bg-gray-50 text-gray-600 dark:border-gray-700 dark:bg-gray-800 dark:text-gray-300',
-          )}
-        >
-          {variable}
-        </button>
-      </TooltipTrigger>
-      <TooltipContent>
-        {proposed
-          ? t('mailTemplates.editor.chipProposed')
-          : used
-            ? t('mailTemplates.editor.chipUsed')
-            : t('mailTemplates.editor.chipInsert')}
-      </TooltipContent>
-    </Tooltip>
   );
 }
 
