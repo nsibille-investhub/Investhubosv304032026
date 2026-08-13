@@ -27,13 +27,19 @@ l'écran Gabarits des mails affiche dans l'éditeur et l'aperçu.
 | `section-11-partners.ts` | 11 Partenaires et rétrocessions | 930217986 | 12 |
 | `section-12-communication.ts` | 12 Communication et demandes de contact | 931135490 | 9 |
 
-Total attendu : 112 gabarits. `index.ts` assemble les sections et vérifie ce
-total au chargement.
+Total attendu : 112 gabarits, tous transcrits. `starterPackGaps()` compare la
+volumétrie annoncée section par section et renvoie une liste vide quand le
+référentiel est complet.
 
-## Reprendre une extraction interrompue
+## Ajouter ou reprendre une section
 
-Les fichiers de section absents sont ceux qui restent à extraire. Pour chacun :
-récupérer la page Confluence correspondante au format markdown, puis
-transcrire chaque ligne du tableau en entrée `StarterPackTemplate`. Le HTML doit
-être copié caractère pour caractère, y compris les styles inline et les
-entités (`&copy;`, `&middot;`, `&nbsp;`).
+Récupérer la page Confluence correspondante au format markdown, puis transcrire
+chaque ligne du tableau en entrée `StarterPackTemplate`. Le HTML doit être copié
+caractère pour caractère, y compris les styles inline et les entités
+(`&copy;`, `&middot;`, `&nbsp;`) ; l'enveloppe commune (logo, signature, pied)
+passe par `html()` et les motifs récurrents par les fabriques de `blocks.ts`.
+
+Toute variable nouvellement introduite doit recevoir sa description et sa
+famille dans `mailTemplateVariables.ts`, et une valeur d'exemple : dans
+`PLATFORM_VALUES` si elle ne dépend d'aucun objet, sinon dans chacune des
+options de `CONTEXT_SOURCES` de sa famille.

@@ -70,6 +70,27 @@ ${body}
 </table>`;
 }
 
+/**
+ * Récapitulatif chiffré : libellé à gauche, valeur alignée à droite, filet
+ * entre les lignes. La dernière ligne n'a pas de filet bas.
+ */
+export function recap(rows: Array<[string, string]>): string {
+  const body = rows
+    .map(([label, value], index) => {
+      const rule = index === rows.length - 1 ? '' : ';border-bottom:1px solid #e0e0e0';
+      return `<tr><td style="padding:6px 12px${rule}">${label}</td><td style="padding:6px 12px${rule};text-align:right">${value}</td></tr>`;
+    })
+    .join('\n');
+  return `<table style="width:100%;border-collapse:collapse;margin:20px 0">
+${body}
+</table>`;
+}
+
+/** Motif saisi par l'opérateur, mis en avant par un filet accentué. */
+export function reason(content: string): string {
+  return `<p style="margin:20px 0;padding:12px 16px;border-left:3px solid #1a1a2e"><strong>${content}</strong></p>`;
+}
+
 /** Encadré gris, utilisé pour reprendre un motif saisi par le gestionnaire. */
 export function note(content: string): string {
   return `<p style="background:#f5f5f5;padding:12px 16px;border-radius:4px">${content}</p>`;

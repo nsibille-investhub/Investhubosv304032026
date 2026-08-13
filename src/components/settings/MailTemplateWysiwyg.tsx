@@ -15,7 +15,7 @@ import { Button } from '../ui/button';
 import { Tooltip, TooltipContent, TooltipTrigger } from '../ui/tooltip';
 import { VARIABLE_DND_TYPE } from './MailTemplateVariablePanel';
 
-const VARIABLE_RE = /\$[a-zA-Z_][\w]*(?:\.[a-zA-Z_][\w]*)?/g;
+const VARIABLE_RE = /\$[a-zA-Z_][\w]*(?:\.[a-zA-Z_][\w]*)*/g;
 
 /**
  * Logo d'affichage : $logo n'est pas une URL, une image cassée dans l'éditeur

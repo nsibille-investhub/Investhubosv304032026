@@ -62,7 +62,7 @@ const SAMPLE_LOGO =
       'fill="#ffffff" text-anchor="middle">InvestHub</text></svg>',
   );
 
-const VARIABLE_PATTERN = /\$[a-zA-Z_][\w]*(?:\.[a-zA-Z_][\w]*)?/g;
+const VARIABLE_PATTERN = /\$[a-zA-Z_][\w]*(?:\.[a-zA-Z_][\w]*)*/g;
 
 /** Nouvelle instance à chaque appel : un littéral global garde son lastIndex. */
 function variableMatcher(): RegExp {

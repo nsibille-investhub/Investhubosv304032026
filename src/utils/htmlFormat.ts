@@ -158,7 +158,7 @@ export interface Token {
   value: string;
 }
 
-const VARIABLE_RE = /\$[a-zA-Z_][\w]*(?:\.[a-zA-Z_][\w]*)?/g;
+const VARIABLE_RE = /\$[a-zA-Z_][\w]*(?:\.[a-zA-Z_][\w]*)*/g;
 const ENTITY_RE = /&[a-zA-Z]+;|&#\d+;/g;
 
 /** Découpe une portion de texte en variables, entités et texte brut. */

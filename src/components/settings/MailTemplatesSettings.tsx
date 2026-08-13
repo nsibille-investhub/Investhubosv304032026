@@ -159,7 +159,7 @@ const TRIGGER_ICON: Record<TemplateTrigger, React.ComponentType<{ className?: st
   mixed: Shuffle,
 };
 
-const VARIABLE_PATTERN = /\$[a-zA-Z_][\w]*(?:\.[a-zA-Z_][\w]*)?/g;
+const VARIABLE_PATTERN = /\$[a-zA-Z_][\w]*(?:\.[a-zA-Z_][\w]*)*/g;
 
 function nextTemplateId(templates: MailTemplate[]): number {
   return templates.reduce((max, tpl) => Math.max(max, tpl.id), 0) + 1;
