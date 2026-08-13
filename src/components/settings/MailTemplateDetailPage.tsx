@@ -59,12 +59,21 @@ const SAMPLE_LOGO =
 
 const VARIABLE_PATTERN = /\$[a-zA-Z_][\w]*(?:\.[a-zA-Z_][\w]*)?/g;
 
-/** Remplace les variables par les valeurs d'exemple, de la plus longue à la plus courte. */
+/** Nouvelle instance à chaque appel : un littéral global garde son lastIndex. */
+function variableMatcher(): RegExp {
+  return new RegExp(VARIABLE_PATTERN.source, 'g');
+}
+
+/**
+ * Remplace les variables par les valeurs d'exemple.
+ *
+ * La substitution passe par les jetons complets : remplacer par sous-chaîne
+ * transformerait $amount_final en valeur de $amount suivie de "_final". Une
+ * variable sans valeur d'exemple reste affichée telle quelle.
+ */
 function resolveVariables(html: string): string {
   const values: Record<string, string> = { ...PREVIEW_VALUES, $logo: SAMPLE_LOGO };
-  return Object.keys(values)
-    .sort((a, b) => b.length - a.length)
-    .reduce((acc, key) => acc.split(key).join(values[key]), html);
+  return html.replace(variableMatcher(), (token) => values[token] ?? token);
 }
 
 /** Met en évidence les variables non résolues sans toucher au balisage. */
@@ -154,7 +163,7 @@ export function MailTemplateDetailPage({
   );
 
   const usedVariables = useMemo(
-    () => Array.from(new Set(`${current.subject} ${current.html}`.match(VARIABLE_PATTERN) ?? [])),
+    () => Array.from(new Set(`${current.subject} ${current.html}`.match(variableMatcher()) ?? [])),
     [current.subject, current.html],
   );
 
