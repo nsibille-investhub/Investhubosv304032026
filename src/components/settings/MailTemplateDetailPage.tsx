@@ -8,9 +8,7 @@ import {
   ChevronRight,
   Code2,
   Copy,
-  Eye,
   Monitor,
-  MousePointer2,
   RotateCcw,
   Smartphone,
   Wand2,
@@ -19,7 +17,12 @@ import { toast } from 'sonner';
 
 import { useTranslation, type Language } from '../../utils/languageContext';
 import { SECTION_NUMBER, type MailTemplate } from '../../utils/mailTemplatesMockData';
-import { contextsFor, type PreviewContext } from '../../utils/mailTemplateVariables';
+import {
+  defaultSelection,
+  resolveValues,
+  type ContextSelection,
+  type SelectableFamily,
+} from '../../utils/mailTemplateVariables';
 import { formatHtml } from '../../utils/htmlFormat';
 import { Badge } from '../ui/badge';
 import { Button } from '../ui/button';
@@ -27,13 +30,6 @@ import { Input } from '../ui/input';
 import { Label } from '../ui/label';
 import { PageHeader } from '../ui/page-header';
 import { SegmentedControl } from '../ui/segmented-control';
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from '../ui/select';
 import { Tabs, TabsList, TabsTrigger } from '../ui/tabs';
 import {
   Tooltip,
@@ -48,9 +44,8 @@ import { MailTemplateVariablePanel } from './MailTemplateVariablePanel';
 import { MailTemplateWysiwyg } from './MailTemplateWysiwyg';
 
 type ContentLang = 'fr' | 'en';
-type PreviewMode = 'resolved' | 'raw';
 type PreviewWidth = 'desktop' | 'mobile';
-type EditorMode = 'source' | 'visual';
+type EditorMode = 'visual' | 'source';
 
 const PREVIEW_WIDTH_PX: Record<PreviewWidth, number> = {
   desktop: 640,
@@ -81,26 +76,13 @@ function variableMatcher(): RegExp {
  * transformerait $amount_final en valeur de $amount suivie de "_final". Une
  * variable sans valeur d'exemple reste affichée telle quelle.
  */
-function resolveVariables(html: string, context: PreviewContext): string {
-  const values: Record<string, string> = { ...context.values, $logo: SAMPLE_LOGO };
-  return html.replace(variableMatcher(), (token) => values[token] ?? token);
+function resolveVariables(html: string, values: Record<string, string>): string {
+  const resolved: Record<string, string> = { ...values, $logo: SAMPLE_LOGO };
+  return html.replace(variableMatcher(), (token) => resolved[token] ?? token);
 }
 
-/** Met en évidence les variables non résolues sans toucher au balisage. */
-function highlightRawVariables(html: string): string {
-  return html.replace(
-    /(?<!["'\w])\$[a-zA-Z_][\w]*(?:\.[a-zA-Z_][\w]*)?/g,
-    (match) =>
-      `<span style="background:#fff3c4;border:1px solid #e8c547;border-radius:3px;padding:0 3px;font-family:monospace;font-size:.9em">${match}</span>`,
-  );
-}
-
-function buildPreviewDocument(
-  html: string,
-  mode: PreviewMode,
-  context: PreviewContext,
-): string {
-  const body = mode === 'resolved' ? resolveVariables(html, context) : highlightRawVariables(html);
+function buildPreviewDocument(html: string, values: Record<string, string>): string {
+  const body = resolveVariables(html, values);
   return `<!doctype html>
 <html>
 <head>
@@ -157,23 +139,20 @@ export function MailTemplateDetailPage({
   const dfLocale = (lang as Language) === 'en' ? enLocale : frLocale;
 
   const [contentLang, setContentLang] = useState<ContentLang>('fr');
-  const [editorMode, setEditorMode] = useState<EditorMode>('source');
-  const [previewMode, setPreviewMode] = useState<PreviewMode>('resolved');
+  const [editorMode, setEditorMode] = useState<EditorMode>('visual');
   const [previewWidth, setPreviewWidth] = useState<PreviewWidth>('desktop');
   const [draft, setDraft] = useState(() => baselineOf(template));
   const editorRef = useRef<HTMLTextAreaElement | null>(null);
 
-  // Contextes cohérents avec le destinataire, le premier servant de défaut.
-  const contexts = useMemo(() => contextsFor(template.recipient), [template.recipient]);
-  const [contextId, setContextId] = useState(contexts[0].id);
-  const context = contexts.find((item) => item.id === contextId) ?? contexts[0];
+  // Élément retenu par famille pour les valeurs d'exemple.
+  const [selection, setSelection] = useState<ContextSelection>(defaultSelection);
+  const values = useMemo(() => resolveValues(selection), [selection]);
 
   // Le gabarit change sous le composant lors d'une navigation précédent / suivant.
   const [loadedSlug, setLoadedSlug] = useState(template.slug);
   if (loadedSlug !== template.slug) {
     setLoadedSlug(template.slug);
     setDraft(baselineOf(template));
-    setContextId(contextsFor(template.recipient)[0].id);
   }
 
   const baseline = useMemo(() => baselineOf(template), [template]);
@@ -185,8 +164,8 @@ export function MailTemplateDetailPage({
     draft.en.html !== baseline.en.html;
 
   const previewDoc = useMemo(
-    () => buildPreviewDocument(current.html, previewMode, context),
-    [current.html, previewMode, context],
+    () => buildPreviewDocument(current.html, values),
+    [current.html, values],
   );
 
   const usedVariables = useMemo(
@@ -364,62 +343,24 @@ export function MailTemplateDetailPage({
                 </TabsList>
               </Tabs>
 
-              <div className="flex items-center gap-2">
-                <SegmentedControl
-                  size="sm"
-                  value={editorMode}
-                  onValueChange={(value) => setEditorMode(value as EditorMode)}
-                  aria-label={t('mailTemplates.editor.editorMode')}
-                  options={[
-                    {
-                      value: 'source',
-                      label: t('mailTemplates.editor.modeSource'),
-                      icon: <Code2 className="w-3.5 h-3.5" />,
-                    },
-                    {
-                      value: 'visual',
-                      label: t('mailTemplates.editor.modeVisual'),
-                      icon: <Wand2 className="w-3.5 h-3.5" />,
-                    },
-                  ]}
-                />
-                <SegmentedControl
-                  size="sm"
-                  value={previewMode}
-                  onValueChange={(value) => setPreviewMode(value as PreviewMode)}
-                  aria-label={t('mailTemplates.editor.previewMode')}
-                  options={[
-                    {
-                      value: 'resolved',
-                      label: t('mailTemplates.editor.modeResolved'),
-                      icon: <Eye className="w-3.5 h-3.5" />,
-                    },
-                    {
-                      value: 'raw',
-                      label: t('mailTemplates.editor.modeRaw'),
-                      icon: <Code2 className="w-3.5 h-3.5" />,
-                    },
-                  ]}
-                />
-                <SegmentedControl
-                  size="sm"
-                  value={previewWidth}
-                  onValueChange={(value) => setPreviewWidth(value as PreviewWidth)}
-                  aria-label={t('mailTemplates.editor.previewWidth')}
-                  options={[
-                    {
-                      value: 'desktop',
-                      label: t('mailTemplates.editor.widthDesktop'),
-                      icon: <Monitor className="w-3.5 h-3.5" />,
-                    },
-                    {
-                      value: 'mobile',
-                      label: t('mailTemplates.editor.widthMobile'),
-                      icon: <Smartphone className="w-3.5 h-3.5" />,
-                    },
-                  ]}
-                />
-              </div>
+              <SegmentedControl
+                size="sm"
+                value={editorMode}
+                onValueChange={(value) => setEditorMode(value as EditorMode)}
+                aria-label={t('mailTemplates.editor.editorMode')}
+                options={[
+                  {
+                    value: 'visual',
+                    label: t('mailTemplates.editor.modeVisual'),
+                    icon: <Wand2 className="w-3.5 h-3.5" />,
+                  },
+                  {
+                    value: 'source',
+                    label: t('mailTemplates.editor.modeSource'),
+                    icon: <Code2 className="w-3.5 h-3.5" />,
+                  },
+                ]}
+              />
             </div>
 
             <div className="px-4 py-3 border-b border-gray-100 dark:border-gray-800">
@@ -444,9 +385,30 @@ export function MailTemplateDetailPage({
                       : t('mailTemplates.editor.visualLabel')}
                   </span>
                   <div className="flex items-center gap-2">
-                    <span className="text-xs text-gray-400 dark:text-gray-500 tabular-nums">
-                      {t('mailTemplates.editor.charCount', { count: current.html.length })}
-                    </span>
+                    {editorMode === 'visual' ? (
+                      <SegmentedControl
+                        size="sm"
+                        value={previewWidth}
+                        onValueChange={(value) => setPreviewWidth(value as PreviewWidth)}
+                        aria-label={t('mailTemplates.editor.previewWidth')}
+                        options={[
+                          {
+                            value: 'desktop',
+                            label: t('mailTemplates.editor.widthDesktop'),
+                            icon: <Monitor className="w-3.5 h-3.5" />,
+                          },
+                          {
+                            value: 'mobile',
+                            label: t('mailTemplates.editor.widthMobile'),
+                            icon: <Smartphone className="w-3.5 h-3.5" />,
+                          },
+                        ]}
+                      />
+                    ) : (
+                      <span className="text-xs text-gray-400 dark:text-gray-500 tabular-nums">
+                        {t('mailTemplates.editor.charCount', { count: current.html.length })}
+                      </span>
+                    )}
                     {editorMode === 'source' && (
                       <Tooltip>
                         <TooltipTrigger asChild>
@@ -491,6 +453,7 @@ export function MailTemplateDetailPage({
                     value={current.html}
                     onChange={(html) => updateContent({ html })}
                     ariaLabel={t('mailTemplates.editor.visualLabel')}
+                    width={PREVIEW_WIDTH_PX[previewWidth]}
                   />
                 )}
               </div>
@@ -501,47 +464,46 @@ export function MailTemplateDetailPage({
                   templateVariables={template.variables}
                   proposedVariables={proposedNames}
                   usedVariables={usedVariables}
+                  values={values}
+                  selection={selection}
+                  onSelectionChange={(family: SelectableFamily, optionId: string) =>
+                    setSelection((prev) => ({ ...prev, [family]: optionId }))
+                  }
                   onInsert={insertVariable}
                 />
               </div>
             </div>
 
-            {/* Aperçu rendu, sur un objet de contexte */}
+            {/* Aperçu rendu, avec les valeurs d'exemple choisies dans le panneau */}
             <div className="border-t border-gray-100 dark:border-gray-800">
               <div className="px-4 py-2 border-b border-gray-100 dark:border-gray-800 flex items-center justify-between gap-3">
                 <span className="text-xs font-semibold uppercase tracking-wide text-gray-500 dark:text-gray-400">
                   {t('mailTemplates.editor.previewLabel')}
                 </span>
                 <div className="flex items-center gap-3">
-                  <div className="flex items-center gap-2">
-                    <MousePointer2 className="w-3.5 h-3.5 text-gray-400" aria-hidden />
-                    <Label htmlFor="preview-context" className="text-xs whitespace-nowrap">
-                      {t('mailTemplates.editor.contextLabel')}
-                    </Label>
-                    <Select value={context.id} onValueChange={setContextId}>
-                      <SelectTrigger id="preview-context" className="h-8 w-[280px] text-xs">
-                        <SelectValue />
-                      </SelectTrigger>
-                      <SelectContent>
-                        {contexts.map((item) => (
-                          <SelectItem key={item.id} value={item.id}>
-                            {`${t(`mailTemplates.recipient.${item.kind}`)} · ${item.label}`}
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                  </div>
-                  <span className="text-xs text-gray-400 dark:text-gray-500 tabular-nums">
-                    {t('mailTemplates.editor.previewWidthValue', {
-                      width: PREVIEW_WIDTH_PX[previewWidth],
-                    })}
+                  <span className="text-xs text-gray-400 dark:text-gray-500">
+                    {t('mailTemplates.editor.previewHint')}
                   </span>
+                  <SegmentedControl
+                    size="sm"
+                    value={previewWidth}
+                    onValueChange={(value) => setPreviewWidth(value as PreviewWidth)}
+                    aria-label={t('mailTemplates.editor.previewWidth')}
+                    options={[
+                      {
+                        value: 'desktop',
+                        label: t('mailTemplates.editor.widthDesktop'),
+                        icon: <Monitor className="w-3.5 h-3.5" />,
+                      },
+                      {
+                        value: 'mobile',
+                        label: t('mailTemplates.editor.widthMobile'),
+                        icon: <Smartphone className="w-3.5 h-3.5" />,
+                      },
+                    ]}
+                  />
                 </div>
               </div>
-
-              <p className="px-4 pt-2 text-xs text-gray-500 dark:text-gray-400">
-                {context.sublabel}
-              </p>
 
               <div className="overflow-auto bg-gray-100 dark:bg-gray-900 p-4">
                 <div

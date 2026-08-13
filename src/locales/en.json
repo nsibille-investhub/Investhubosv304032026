@@ -3375,16 +3375,11 @@
       "subject": "Email subject",
       "htmlLabel": "HTML source",
       "previewLabel": "Preview",
-      "previewMode": "Preview mode",
-      "modeResolved": "Sample values",
-      "modeRaw": "Variables",
       "previewWidth": "Preview width",
       "widthDesktop": "Desktop",
       "widthMobile": "Mobile",
-      "previewWidthValue": "{{width}} px",
       "charCount": "{{count}} characters",
       "copyHtml": "Copy the HTML",
-      "variablesLabel": "Available variables",
       "chipInsert": "Insert at cursor",
       "chipUsed": "Already used in this content",
       "chipProposed": "Proposed variable: not replaced yet",
@@ -3398,7 +3393,6 @@
       "format": "Format",
       "formatHint": "Reindent the markup",
       "formatDone": "Markup reindented",
-      "contextLabel": "Preview for",
       "scopeLabel": "Variable scope",
       "scopeTemplate": "This template",
       "scopeAll": "All",
@@ -3424,7 +3418,10 @@
         "document": "Document",
         "security": "Access and security",
         "core": "Platform"
-      }
+      },
+      "sampleFor": "Sample element for {{family}}",
+      "emptyValue": "(empty)",
+      "previewHint": "Sample values chosen in the variables panel"
     }
   },
   "smsLog": {

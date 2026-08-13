@@ -3375,16 +3375,11 @@
       "subject": "Sujet du mail",
       "htmlLabel": "Source HTML",
       "previewLabel": "Aperçu",
-      "previewMode": "Mode d'aperçu",
-      "modeResolved": "Valeurs d'exemple",
-      "modeRaw": "Variables",
       "previewWidth": "Largeur d'aperçu",
       "widthDesktop": "Bureau",
       "widthMobile": "Mobile",
-      "previewWidthValue": "{{width}} px",
       "charCount": "{{count}} caractères",
       "copyHtml": "Copier le HTML",
-      "variablesLabel": "Variables disponibles",
       "chipInsert": "Insérer au curseur",
       "chipUsed": "Déjà utilisée dans ce contenu",
       "chipProposed": "Variable proposée : pas encore remplacée à l'envoi",
@@ -3398,7 +3393,6 @@
       "format": "Formater",
       "formatHint": "Réindenter le balisage",
       "formatDone": "Balisage réindenté",
-      "contextLabel": "Aperçu pour",
       "scopeLabel": "Périmètre des variables",
       "scopeTemplate": "Ce gabarit",
       "scopeAll": "Toutes",
@@ -3424,7 +3418,10 @@
         "document": "Document",
         "security": "Accès et sécurité",
         "core": "Plateforme"
-      }
+      },
+      "sampleFor": "Élément d'exemple pour {{family}}",
+      "emptyValue": "(vide)",
+      "previewHint": "Valeurs d'exemple choisies dans le panneau des variables"
     }
   },
   "smsLog": {

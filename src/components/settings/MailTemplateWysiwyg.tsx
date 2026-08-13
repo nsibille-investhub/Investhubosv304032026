@@ -70,9 +70,16 @@ export interface MailTemplateWysiwygProps {
   value: string;
   onChange: (value: string) => void;
   ariaLabel: string;
+  /** Largeur de la surface d'édition, pour juger le rendu bureau ou mobile. */
+  width: number;
 }
 
-export function MailTemplateWysiwyg({ value, onChange, ariaLabel }: MailTemplateWysiwygProps) {
+export function MailTemplateWysiwyg({
+  value,
+  onChange,
+  ariaLabel,
+  width,
+}: MailTemplateWysiwygProps) {
   const { t } = useTranslation();
   const ref = useRef<HTMLDivElement | null>(null);
   // Dernière valeur émise : évite de réécrire le DOM sous le curseur à chaque frappe.
@@ -151,6 +158,7 @@ export function MailTemplateWysiwyg({ value, onChange, ariaLabel }: MailTemplate
         />
       </div>
 
+      <div className="flex-1 overflow-y-auto bg-gray-100 dark:bg-gray-900">
       <div
         ref={ref}
         contentEditable
@@ -184,8 +192,10 @@ export function MailTemplateWysiwyg({ value, onChange, ariaLabel }: MailTemplate
             onChange(next);
           });
         }}
-        className="flex-1 overflow-y-auto px-6 py-5 text-sm leading-relaxed text-gray-900 dark:text-gray-100 outline-none"
+        style={{ width, maxWidth: '100%' }}
+        className="mx-auto mt-4 mb-4 bg-white px-6 py-5 text-sm leading-relaxed text-gray-900 shadow-sm outline-none"
       />
+      </div>
     </div>
   );
 }
