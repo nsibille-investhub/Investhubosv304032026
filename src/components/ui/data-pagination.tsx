@@ -2,6 +2,7 @@ import React from 'react';
 import { ChevronLeft, ChevronRight } from 'lucide-react';
 import { Button } from './button';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from './select';
+import { useTranslation } from '../../utils/languageContext';
 
 interface DataPaginationProps {
   currentPage: number;
@@ -24,6 +25,8 @@ export function DataPagination({
   pageSizeOptions = [5, 10, 20, 50],
   showPageSizeSelector = true
 }: DataPaginationProps) {
+  const { t } = useTranslation();
+
   // Protéger contre les valeurs invalides
   const safeTotalPages = isNaN(totalPages) || totalPages < 1 ? 1 : totalPages;
   const safeTotalItems = isNaN(totalItems) || totalItems < 0 ? 0 : totalItems;
@@ -71,15 +74,17 @@ export function DataPagination({
       <div className="flex items-center gap-6">
         {/* Informations sur les éléments affichés */}
         <div className="text-sm text-gray-600">
-          Affichage de <span className="font-medium text-gray-900">{startItem}</span> à{' '}
-          <span className="font-medium text-gray-900">{endItem}</span> sur{' '}
-          <span className="font-medium text-gray-900">{safeTotalItems}</span> résultat{safeTotalItems > 1 ? 's' : ''}
+          {t(safeTotalItems > 1 ? 'common.pagination.showingMany' : 'common.pagination.showingOne', {
+            start: startItem,
+            end: endItem,
+            total: safeTotalItems,
+          })}
         </div>
 
         {/* Sélecteur de taille de page */}
         {showPageSizeSelector && onPageSizeChange && (
           <div className="flex items-center gap-2">
-            <span className="text-sm text-gray-600">Afficher</span>
+            <span className="text-sm text-gray-600">{t('common.pagination.show')}</span>
             <Select
               value={safePageSize.toString()}
               onValueChange={(value) => onPageSizeChange(parseInt(value))}
@@ -95,7 +100,7 @@ export function DataPagination({
                 ))}
               </SelectContent>
             </Select>
-            <span className="text-sm text-gray-600">par page</span>
+            <span className="text-sm text-gray-600">{t('common.pagination.perPage')}</span>
           </div>
         )}
       </div>
@@ -111,7 +116,7 @@ export function DataPagination({
           className="h-8 px-3 gap-1"
         >
           <ChevronLeft className="w-4 h-4" />
-          <span className="hidden sm:inline">Précédent</span>
+          <span className="hidden sm:inline">{t('common.pagination.previous')}</span>
         </Button>
 
         {/* Numéros de page */}
@@ -156,7 +161,7 @@ export function DataPagination({
 
         {/* Indicateur mobile */}
         <div className="md:hidden text-sm text-gray-600">
-          Page {safeCurrentPage} / {safeTotalPages}
+          {t('common.pagination.pageOf', { page: safeCurrentPage, total: safeTotalPages })}
         </div>
 
         {/* Bouton Suivant */}
@@ -167,7 +172,7 @@ export function DataPagination({
           disabled={safeCurrentPage === safeTotalPages}
           className="h-8 px-3 gap-1"
         >
-          <span className="hidden sm:inline">Suivant</span>
+          <span className="hidden sm:inline">{t('common.pagination.next')}</span>
           <ChevronRight className="w-4 h-4" />
         </Button>
       </div>

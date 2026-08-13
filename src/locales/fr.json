@@ -1625,6 +1625,15 @@
     }
   },
   "common": {
+    "pagination": {
+      "showingOne": "Affichage de {{start}} à {{end}} sur {{total}} résultat",
+      "showingMany": "Affichage de {{start}} à {{end}} sur {{total}} résultats",
+      "show": "Afficher",
+      "perPage": "par page",
+      "previous": "Précédent",
+      "next": "Suivant",
+      "pageOf": "Page {{page}} / {{total}}"
+    },
     "average": "Moy",
     "filterBar": {
       "additionalFilters": "Filtres supplémentaires",
@@ -3204,6 +3213,216 @@
         "p1": "Notre information SFDR Article 9 pour {{fund}} est désormais disponible sur le Portail LP, aux côtés du rapport ESG 2025.",
         "signature": "Mathilde Garcia — Responsable ESG"
       }
+    }
+  },
+  "mailTemplates": {
+    "title": "Gabarits des mails",
+    "subtitle": "112 gabarits répartis en 12 sections fonctionnelles. Choisissez une section pour cibler la liste.",
+    "entityName": "gabarit",
+    "searchPlaceholder": "Rechercher par nom, slug, sujet ou contenu...",
+    "rail": {
+      "title": "Sections",
+      "sectionCount": "12 sections",
+      "all": "Tous les gabarits",
+      "countOne": "{{count}} gabarit",
+      "countMany": "{{count}} gabarits"
+    },
+    "sections": {
+      "accounts": "Comptes et accès",
+      "onboarding": "Onboarding et souscriptions",
+      "signature": "Signature électronique",
+      "kyc": "KYC / AML et conformité",
+      "payments": "Paiements",
+      "capitalCalls": "Appels de fonds",
+      "distributions": "Distributions et déblocages",
+      "redemptions": "Rachats",
+      "secondary": "Marché secondaire",
+      "documents": "Documents et data room",
+      "partners": "Distributeurs et rétrocessions",
+      "communication": "Communication et demandes de contact"
+    },
+    "sectionDescriptions": {
+      "all": "L'intégralité du référentiel, toutes sections confondues.",
+      "accounts": "Création de compte, invitation à l'espace, codes de connexion et changements d'identifiants.",
+      "onboarding": "Le parcours de souscription, de l'ouverture à la validation, y compris les pièces manquantes.",
+      "signature": "Demandes de signature, relances et contre-signature des documents de souscription.",
+      "kyc": "Collecte des pièces justificatives, revue périodique et alertes de conformité.",
+      "payments": "Mails du cycle de règlement d'une souscription : relance du versement attendu, confirmation de la réception des fonds, puis envoi des documents définitifs une fois la valeur liquidative appliquée.",
+      "capitalCalls": "Notices d'appel de fonds, relances et confirmations de règlement.",
+      "distributions": "Notices de distribution, capital accounts et demandes de déblocage anticipé.",
+      "redemptions": "Demandes de rachat, validation, règlement et service partiel.",
+      "secondary": "Annonces, offres et transferts de parts sur le marché secondaire.",
+      "documents": "Publication de documents, reportings et accès à la data room.",
+      "partners": "Arrivée du distributeur, conventions, droits de distribution et rétrocessions.",
+      "communication": "Messages libres, réunions de porteurs, lettres d'information et demandes de contact."
+    },
+    "recipient": {
+      "investor": "Investisseur",
+      "partner": "Distributeur",
+      "team": "Équipe de gestion"
+    },
+    "trigger": {
+      "auto": "Automatique",
+      "manual": "Manuel",
+      "mixed": "Manuel ou automatique"
+    },
+    "status": {
+      "active": "Actif",
+      "draft": "Brouillon",
+      "archived": "Archivé"
+    },
+    "filters": {
+      "status": "Statut",
+      "recipient": "Destinataire",
+      "trigger": "Déclencheur",
+      "language": "Langue",
+      "author": "Dernière modif. par",
+      "usage": "Utilisation",
+      "usagePresets": {
+        "never": "Jamais utilisé",
+        "low": "Moins de 100 envois",
+        "high": "100 envois ou plus"
+      }
+    },
+    "table": {
+      "name": "Gabarit",
+      "subject": "Sujet",
+      "section": "Section",
+      "recipient": "Destinataire",
+      "status": "Statut",
+      "usage": "Envois",
+      "actions": "Actions"
+    },
+    "usage": {
+      "never": "Jamais envoyé",
+      "lastSent": "Dernier envoi le {{date}}"
+    },
+    "actions": {
+      "create": "Créer un gabarit",
+      "export": "Exporter",
+      "edit": "Modifier",
+      "duplicate": "Dupliquer",
+      "delete": "Supprimer"
+    },
+    "empty": {
+      "title": "Aucun gabarit ne correspond aux filtres",
+      "body": "Ajustez les filtres, changez de section ou effacez la recherche pour élargir les résultats.",
+      "resetCta": "Réinitialiser les filtres",
+      "noDataTitle": "Aucun gabarit dans cette section",
+      "noDataBody": "Les gabarits créés pour cette section apparaîtront ici."
+    },
+    "detail": {
+      "position": "{{index}} sur {{total}}",
+      "previous": "Gabarit précédent",
+      "next": "Gabarit suivant",
+      "recipient": "Destinataire",
+      "trigger": "Déclencheur",
+      "sends": "Envois",
+      "lastSent": "Dernier envoi",
+      "updatedAt": "Dernière modification",
+      "updatedBy": "Modifié par"
+    },
+    "form": {
+      "createTitle": "Nouveau gabarit",
+      "createSubtitle": "Définissez le contenu du mail envoyé aux destinataires.",
+      "editTitle": "Modifier le gabarit",
+      "editSubtitle": "Mettez à jour le contenu du mail envoyé aux destinataires.",
+      "name": "Nom du gabarit",
+      "namePlaceholder": "Ex. : Relance de versement",
+      "slug": "Slug",
+      "slugPlaceholder": "Ex. : relance-versement",
+      "slugHint": "Identifiant technique utilisé par le moteur d'envoi. En minuscules, sans espace.",
+      "section": "Section",
+      "recipient": "Destinataire",
+      "status": "Statut",
+      "trigger": "Déclencheur",
+      "cancel": "Annuler",
+      "save": "Enregistrer",
+      "createCta": "Créer",
+      "contentInEditorCreate": "Le sujet et le contenu HTML se saisissent dans l'éditeur, juste après la création.",
+      "contentInEditorEdit": "Le sujet et le contenu HTML se modifient dans l'éditeur du gabarit."
+    },
+    "delete": {
+      "title": "Supprimer ce gabarit de mail ?",
+      "body": "Le gabarit ne sera plus disponible à l'envoi. Cette action est irréversible.",
+      "usageWarning": "Ce gabarit a déjà été utilisé {{count}} fois. L'historique des envois est conservé.",
+      "cancel": "Annuler",
+      "confirm": "Supprimer définitivement"
+    },
+    "toast": {
+      "filtersResetTitle": "Filtres réinitialisés",
+      "createdTitle": "Gabarit créé",
+      "createdBody": "\"{{name}}\" a été ajouté à vos gabarits.",
+      "updatedTitle": "Gabarit mis à jour",
+      "updatedBody": "\"{{name}}\" a été enregistré.",
+      "duplicatedTitle": "Gabarit dupliqué",
+      "duplicatedBody": "\"{{name}}\" est prêt à être modifié.",
+      "deletedTitle": "Gabarit supprimé",
+      "deletedBody": "\"{{name}}\" a été supprimé.",
+      "copySuccessTitle": "Copié",
+      "copySuccessBody": "Contenu copié dans le presse-papiers.",
+      "exportStartedTitle": "Export lancé",
+      "exportStartedBody": "{{count}} gabarits exportés au format CSV."
+    },
+    "csv": {
+      "filename": "gabarits-mails-{{date}}.csv",
+      "suffixCopy": "copie"
+    },
+    "editor": {
+      "save": "Enregistrer",
+      "reset": "Annuler les modifications",
+      "resetDone": "Modifications annulées",
+      "subject": "Sujet du mail",
+      "htmlLabel": "Source HTML",
+      "previewLabel": "Aperçu",
+      "previewWidth": "Largeur d'aperçu",
+      "widthDesktop": "Bureau",
+      "widthMobile": "Mobile",
+      "charCount": "{{count}} caractères",
+      "copyHtml": "Copier le HTML",
+      "chipInsert": "Insérer au curseur",
+      "chipUsed": "Déjà utilisée dans ce contenu",
+      "chipProposed": "Variable proposée : pas encore remplacée à l'envoi",
+      "unknownVariables": "Variables non listées pour ce gabarit : {{list}}",
+      "proposedTitle": "Variables proposées",
+      "proposedBody": "Ces variables n'existent pas encore au point d'appel. Ne mettez pas ce contenu en production avant leur création.",
+      "viewMode": "Mode d'affichage",
+      "modeSource": "Source",
+      "modePreview": "Aperçu",
+      "modeVisual": "Visuel",
+      "visualLabel": "Éditeur visuel",
+      "format": "Formater",
+      "formatHint": "Réindenter le balisage",
+      "formatDone": "Balisage réindenté",
+      "scopeLabel": "Périmètre des variables",
+      "scopeTemplate": "Ce gabarit",
+      "scopeAll": "Toutes",
+      "variableSearchPlaceholder": "Rechercher une variable...",
+      "clearSearch": "Effacer la recherche",
+      "variableHelp": "Cliquez pour insérer au curseur, ou glissez dans l'éditeur.",
+      "noVariableFound": "Aucune variable ne correspond à cette recherche.",
+      "chipForeign": "Non déclarée pour ce gabarit",
+      "bold": "Gras",
+      "italic": "Italique",
+      "underline": "Souligné",
+      "alignLeft": "Aligner à gauche",
+      "alignCenter": "Centrer",
+      "alignRight": "Aligner à droite",
+      "insertLink": "Insérer un lien",
+      "linkPrompt": "Adresse du lien",
+      "families": {
+        "investor": "Investisseur",
+        "partner": "Distributeur",
+        "campaign": "Fonds et part",
+        "subscription": "Souscription",
+        "operation": "Opération",
+        "document": "Document",
+        "security": "Accès et sécurité",
+        "core": "Plateforme"
+      },
+      "sampleFor": "Élément d'exemple pour {{family}}",
+      "emptyValue": "(vide)",
+      "previewHint": "Valeurs d'exemple choisies dans le panneau des variables"
     }
   },
   "smsLog": {
