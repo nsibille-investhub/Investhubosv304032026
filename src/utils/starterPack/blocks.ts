@@ -47,6 +47,16 @@ export function quote(content: string): string {
   return `<p style="margin:16px 0;padding:12px 16px;border-left:3px solid #e0e0e0;color:#555555">${content}</p>`;
 }
 
+/** Reprise d'une question ou d'un message entrant, filet à gauche. */
+export function quoteLeft(content: string): string {
+  return `<p style="border-left:3px solid #e0e0e0;padding-left:12px;margin:20px 0">${content}</p>`;
+}
+
+/** Bloc centré à taille de police imposée, sans mise en gras automatique. */
+export function centeredSize(content: string, fontSize: number): string {
+  return `<p style="text-align:center;font-size:${fontSize}px;margin:20px 0">${content}</p>`;
+}
+
 /** Tableau récapitulatif libellé / valeur. */
 export function table(rows: Array<[string, string]>): string {
   const body = rows
@@ -65,9 +75,20 @@ export function note(content: string): string {
   return `<p style="background:#f5f5f5;padding:12px 16px;border-radius:4px">${content}</p>`;
 }
 
-/** Assemble logo, corps, signature et pied dans l'ordre du référentiel. */
-export function html(lang: 'fr' | 'en', body: string[]): string {
-  return [LOGO, ...body, lang === 'fr' ? SIGN_FR : SIGN_EN, lang === 'fr' ? FOOTER_FR : FOOTER_EN].join(
-    '\n',
-  );
+/**
+ * Assemble logo, corps, signature et pied dans l'ordre du référentiel.
+ *
+ * Quelques gabarits de diffusion, comme la newsletter, n'ont pas de signature
+ * d'équipe : le contenu porte déjà la sienne. `signature: false` les couvre.
+ */
+export function html(
+  lang: 'fr' | 'en',
+  body: string[],
+  options: { signature?: boolean } = {},
+): string {
+  const { signature = true } = options;
+  const parts = [LOGO, ...body];
+  if (signature) parts.push(lang === 'fr' ? SIGN_FR : SIGN_EN);
+  parts.push(lang === 'fr' ? FOOTER_FR : FOOTER_EN);
+  return parts.join('\n');
 }
