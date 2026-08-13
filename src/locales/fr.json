@@ -3312,25 +3312,15 @@
       "noDataBody": "Les gabarits créés pour cette section apparaîtront ici."
     },
     "detail": {
-      "close": "Fermer",
       "position": "{{index}} sur {{total}}",
       "previous": "Gabarit précédent",
       "next": "Gabarit suivant",
-      "subject": "Sujet",
-      "content": "Contenu",
-      "variables": "Variables utilisées",
-      "noVariables": "Ce gabarit n'utilise aucune variable.",
-      "variablesHint": "Les variables sont remplacées à l'envoi du mail.",
       "recipient": "Destinataire",
       "trigger": "Déclencheur",
-      "slug": "Slug",
       "sends": "Envois",
       "lastSent": "Dernier envoi",
       "updatedAt": "Dernière modification",
-      "updatedBy": "Modifié par",
-      "copyContent": "Copier le contenu",
-      "copySlug": "Copier le slug",
-      "editCta": "Modifier ce gabarit"
+      "updatedBy": "Modifié par"
     },
     "form": {
       "createTitle": "Nouveau gabarit",
@@ -3346,14 +3336,11 @@
       "recipient": "Destinataire",
       "status": "Statut",
       "trigger": "Déclencheur",
-      "subject": "Sujet du mail",
-      "subjectPlaceholder": "Ex. : $campaign - Votre versement est attendu",
-      "body": "Contenu",
-      "bodyPlaceholder": "Rédigez le corps du mail. Utilisez $investor.firstname pour insérer une variable.",
-      "bodyHint": "Les variables écrites $investor.firstname sont remplacées à l'envoi.",
       "cancel": "Annuler",
       "save": "Enregistrer",
-      "createCta": "Créer"
+      "createCta": "Créer",
+      "contentInEditorCreate": "Le sujet et le contenu HTML se saisissent dans l'éditeur, juste après la création.",
+      "contentInEditorEdit": "Le sujet et le contenu HTML se modifient dans l'éditeur du gabarit."
     },
     "delete": {
       "title": "Supprimer ce gabarit de mail ?",
@@ -3380,6 +3367,31 @@
     "csv": {
       "filename": "gabarits-mails-{{date}}.csv",
       "suffixCopy": "copie"
+    },
+    "editor": {
+      "save": "Enregistrer",
+      "reset": "Annuler les modifications",
+      "resetDone": "Modifications annulées",
+      "subject": "Sujet du mail",
+      "htmlLabel": "Source HTML",
+      "previewLabel": "Aperçu",
+      "previewMode": "Mode d'aperçu",
+      "modeResolved": "Valeurs d'exemple",
+      "modeRaw": "Variables",
+      "previewWidth": "Largeur d'aperçu",
+      "widthDesktop": "Bureau",
+      "widthMobile": "Mobile",
+      "previewWidthValue": "{{width}} px",
+      "charCount": "{{count}} caractères",
+      "copyHtml": "Copier le HTML",
+      "variablesLabel": "Variables disponibles",
+      "variablesHint": "Cliquez une variable pour l'insérer au curseur",
+      "chipInsert": "Insérer au curseur",
+      "chipUsed": "Déjà utilisée dans ce contenu",
+      "chipProposed": "Variable proposée : pas encore remplacée à l'envoi",
+      "unknownVariables": "Variables non listées pour ce gabarit : {{list}}",
+      "proposedTitle": "Variables proposées",
+      "proposedBody": "Ces variables n'existent pas encore au point d'appel. Ne mettez pas ce contenu en production avant leur création."
     }
   },
   "smsLog": {

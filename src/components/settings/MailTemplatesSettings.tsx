@@ -26,7 +26,6 @@ import {
   Shuffle,
   Trash2,
   Undo2,
-  X,
   Zap,
 } from 'lucide-react';
 import { toast } from 'sonner';
@@ -47,7 +46,6 @@ import { Badge } from '../ui/badge';
 import { Button } from '../ui/button';
 import { Input } from '../ui/input';
 import { Label } from '../ui/label';
-import { Textarea } from '../ui/textarea';
 import { PageHeader } from '../ui/page-header';
 import { DataPagination } from '../ui/data-pagination';
 import { RowActionButton } from '../ui/row-actions';
@@ -73,7 +71,6 @@ import {
   SheetHeader,
   SheetTitle,
 } from '../ui/sheet';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '../ui/tabs';
 import {
   Tooltip,
   TooltipContent,
@@ -84,6 +81,7 @@ import { cn } from '../ui/utils';
 import { FilterBar, type FilterConfig } from '../FilterBar';
 import { DataTable, type ColumnConfig } from '../DataTable';
 import { LanguageFlagInline } from '../LanguageFlagInline';
+import { MailTemplateDetailPage } from './MailTemplateDetailPage';
 
 type SectionFilter = TemplateSectionKey | 'all';
 type UsagePreset = 'never' | 'low' | 'high';
@@ -196,10 +194,6 @@ interface TemplateDraft {
   recipient: TemplateRecipient;
   trigger: TemplateTrigger;
   status: TemplateStatus;
-  subjectFr: string;
-  subjectEn: string;
-  bodyFr: string;
-  bodyEn: string;
 }
 
 const EMPTY_DRAFT: TemplateDraft = {
@@ -209,10 +203,6 @@ const EMPTY_DRAFT: TemplateDraft = {
   recipient: 'investor',
   trigger: 'auto',
   status: 'draft',
-  subjectFr: '',
-  subjectEn: '',
-  bodyFr: '',
-  bodyEn: '',
 };
 
 function draftFrom(template: MailTemplate): TemplateDraft {
@@ -223,10 +213,6 @@ function draftFrom(template: MailTemplate): TemplateDraft {
     recipient: template.recipient,
     trigger: template.trigger,
     status: template.status,
-    subjectFr: template.subjectFr,
-    subjectEn: template.subjectEn,
-    bodyFr: template.bodyFr,
-    bodyEn: template.bodyEn,
   };
 }
 
@@ -244,14 +230,14 @@ export function MailTemplatesSettings() {
   const [hoveredRow, setHoveredRow] = useState<number | null>(null);
   const [paginationPage, setPaginationPage] = useState(1);
   const [itemsPerPage, setItemsPerPage] = useState(20);
-  const [previewId, setPreviewId] = useState<number | null>(null);
+  const [detailId, setDetailId] = useState<number | null>(null);
   const [formMode, setFormMode] = useState<FormMode | null>(null);
   const [editingId, setEditingId] = useState<number | null>(null);
   const [draft, setDraft] = useState<TemplateDraft>(EMPTY_DRAFT);
   const [templateToDelete, setTemplateToDelete] = useState<MailTemplate | null>(null);
 
   const subjectOf = (template: MailTemplate) =>
-    (lang as Language) === 'en' ? template.subjectEn : template.subjectFr;
+    (lang as Language) === 'en' ? template.en.subject : template.fr.subject;
 
   /** Recherche et filtres hors section : sert aussi à calculer les compteurs du rail. */
   const dataBeforeSection = useMemo(() => {
@@ -265,7 +251,14 @@ export function MailTemplatesSettings() {
 
     return templates.filter((tpl) => {
       if (term) {
-        const haystack = [tpl.name, tpl.slug, tpl.subjectFr, tpl.subjectEn, tpl.bodyFr, tpl.bodyEn]
+        const haystack = [
+          tpl.name,
+          tpl.slug,
+          tpl.fr.subject,
+          tpl.en.subject,
+          tpl.fr.html,
+          tpl.en.html,
+        ]
           .join(' ')
           .toLowerCase();
         if (!haystack.includes(term)) return false;
@@ -328,8 +321,8 @@ export function MailTemplatesSettings() {
   const startIndex = (safePage - 1) * itemsPerPage;
   const tableData = sortedData.slice(startIndex, startIndex + itemsPerPage);
 
-  const previewIndex = previewId === null ? -1 : sortedData.findIndex((tpl) => tpl.id === previewId);
-  const previewTemplate = previewIndex >= 0 ? sortedData[previewIndex] : null;
+  const detailIndex = detailId === null ? -1 : sortedData.findIndex((tpl) => tpl.id === detailId);
+  const detailTemplate = detailIndex >= 0 ? sortedData[detailIndex] : null;
   const editingTemplate = templates.find((tpl) => tpl.id === editingId) ?? null;
 
   const filterConfigs: FilterConfig[] = useMemo(
@@ -433,14 +426,12 @@ export function MailTemplatesSettings() {
       section: activeSection === 'all' ? 'accounts' : activeSection,
     });
     setEditingId(null);
-    setPreviewId(null);
     setFormMode('create');
   };
 
   const handleOpenEdit = (template: MailTemplate) => {
     setDraft(draftFrom(template));
     setEditingId(template.id);
-    setPreviewId(null);
     setFormMode('edit');
   };
 
@@ -463,22 +454,26 @@ export function MailTemplatesSettings() {
         description: t('mailTemplates.toast.updatedBody', { name: draft.name }),
       });
     } else {
-      setTemplates((prev) => [
-        {
-          id: nextTemplateId(prev),
-          ...draft,
-          languages: draft.subjectEn.trim() ? ['fr', 'en'] : ['fr'],
-          variables: [],
-          usageCount: 0,
-          lastSentAt: null,
-          updatedAt: nowIso,
-          updatedBy: CURRENT_USER,
-        },
-        ...prev,
-      ]);
+      const created: MailTemplate = {
+        ...draft,
+        id: nextTemplateId(templates),
+        origin: '',
+        variables: [],
+        proposedVariables: [],
+        fr: { subject: '', html: '' },
+        en: { subject: '', html: '' },
+        languages: ['fr'],
+        usageCount: 0,
+        lastSentAt: null,
+        updatedAt: nowIso,
+        updatedBy: CURRENT_USER,
+      };
+      setTemplates((prev) => [created, ...prev]);
       toast.success(t('mailTemplates.toast.createdTitle'), {
         description: t('mailTemplates.toast.createdBody', { name: draft.name }),
       });
+      // Enchaîner sur l'éditeur : un gabarit sans contenu n'est pas envoyable.
+      setDetailId(created.id);
     }
     closeForm();
   };
@@ -509,21 +504,35 @@ export function MailTemplatesSettings() {
   const handleConfirmDelete = () => {
     if (!templateToDelete) return;
     setTemplates((prev) => prev.filter((tpl) => tpl.id !== templateToDelete.id));
-    if (previewId === templateToDelete.id) setPreviewId(null);
+    if (detailId === templateToDelete.id) setDetailId(null);
     toast.success(t('mailTemplates.toast.deletedTitle'), {
       description: t('mailTemplates.toast.deletedBody', { name: templateToDelete.name }),
     });
     setTemplateToDelete(null);
   };
 
-  const handleCopy = (value: string) => {
-    navigator.clipboard.writeText(value).then(
-      () =>
-        toast.success(t('mailTemplates.toast.copySuccessTitle'), {
-          description: t('mailTemplates.toast.copySuccessBody'),
-        }),
-      () => {},
+  const handleSaveContent = (
+    id: number,
+    patch: { fr: { subject: string; html: string }; en: { subject: string; html: string } },
+  ) => {
+    const target = templates.find((tpl) => tpl.id === id);
+    setTemplates((prev) =>
+      prev.map((tpl) =>
+        tpl.id === id
+          ? {
+              ...tpl,
+              fr: patch.fr,
+              en: patch.en,
+              languages: patch.en.html.trim() ? ['fr', 'en'] : ['fr'],
+              updatedAt: new Date().toISOString(),
+              updatedBy: CURRENT_USER,
+            }
+          : tpl,
+      ),
     );
+    toast.success(t('mailTemplates.toast.updatedTitle'), {
+      description: t('mailTemplates.toast.updatedBody', { name: target?.name ?? '' }),
+    });
   };
 
   const handleExport = () => {
@@ -708,6 +717,22 @@ export function MailTemplatesSettings() {
 
   const isFiltered = searchTerm.trim().length > 0 || Object.keys(activeFilters).length > 0;
 
+  if (detailTemplate) {
+    return (
+      <MailTemplateDetailPage
+        template={detailTemplate}
+        index={detailIndex}
+        total={sortedData.length}
+        onBack={() => setDetailId(null)}
+        onNavigate={(offset) => {
+          const next = sortedData[detailIndex + offset];
+          if (next) setDetailId(next.id);
+        }}
+        onSave={(patch) => handleSaveContent(detailTemplate.id, patch)}
+      />
+    );
+  }
+
   return (
     <TooltipProvider delayDuration={150}>
       <div className="flex flex-col bg-gray-50 dark:bg-gray-950 h-full">
@@ -768,7 +793,7 @@ export function MailTemplatesSettings() {
                     columns={columns}
                     hoveredRow={hoveredRow}
                     setHoveredRow={setHoveredRow}
-                    onRowClick={(row) => setPreviewId(row.id)}
+                    onRowClick={(row) => setDetailId(row.id)}
                     sortConfig={sortConfig}
                     onSort={handleSort}
                     compactMode
@@ -797,26 +822,6 @@ export function MailTemplatesSettings() {
             </motion.div>
           </div>
         </div>
-
-        {/* Aperçu du gabarit, avec navigation dans la liste courante */}
-        <Sheet open={!!previewTemplate} onOpenChange={(open) => !open && setPreviewId(null)}>
-          <SheetContent className="w-[520px] p-0 flex flex-col">
-            {previewTemplate && (
-              <TemplatePreview
-                template={previewTemplate}
-                index={previewIndex}
-                total={sortedData.length}
-                onNavigate={(offset) => {
-                  const next = sortedData[previewIndex + offset];
-                  if (next) setPreviewId(next.id);
-                }}
-                onClose={() => setPreviewId(null)}
-                onCopy={handleCopy}
-                onEdit={() => handleOpenEdit(previewTemplate)}
-              />
-            )}
-          </SheetContent>
-        </Sheet>
 
         {/* Création / édition */}
         <Sheet open={formMode !== null} onOpenChange={(open) => !open && closeForm()}>
@@ -1047,16 +1052,6 @@ function SectionHeading({ section, count }: { section: SectionFilter; count: num
   );
 }
 
-function SectionBadge({ section }: { section: TemplateSectionKey }) {
-  const { t } = useTranslation();
-  return (
-    <Badge variant="outline" className={cn('gap-1.5', SECTION_BADGE_STYLES[section])}>
-      <span className="text-[10px] font-semibold tabular-nums">{SECTION_NUMBER[section]}</span>
-      <span className="truncate">{t(`mailTemplates.sections.${section}`)}</span>
-    </Badge>
-  );
-}
-
 function TemplatesEmptyState({
   isFiltered,
   onReset,
@@ -1085,265 +1080,6 @@ function TemplatesEmptyState({
   );
 }
 
-function TemplatePreview({
-  template,
-  index,
-  total,
-  onNavigate,
-  onClose,
-  onCopy,
-  onEdit,
-}: {
-  template: MailTemplate;
-  index: number;
-  total: number;
-  onNavigate: (offset: number) => void;
-  onClose: () => void;
-  onCopy: (value: string) => void;
-  onEdit: () => void;
-}) {
-  const { t, lang } = useTranslation();
-  const dfLocale = (lang as Language) === 'en' ? enLocale : frLocale;
-  const contentLanguages = template.languages.filter((code) => code === 'fr' || code === 'en');
-  const languages = contentLanguages.length > 0 ? contentLanguages : ['fr'];
-  const [contentLang, setContentLang] = useState(languages[0]);
-
-  // Le Sheet reste monté pendant la navigation : recaler la langue sur le gabarit courant.
-  const activeLang = languages.includes(contentLang) ? contentLang : languages[0];
-
-  const subject = activeLang === 'en' ? template.subjectEn : template.subjectFr;
-  const body = activeLang === 'en' ? template.bodyEn : template.bodyFr;
-  const variables = Array.from(new Set(`${subject} ${body}`.match(VARIABLE_PATTERN) ?? []));
-
-  return (
-    <>
-      <SheetHeader className="px-6 py-5 border-b border-gray-100 dark:border-gray-800">
-        <div className="flex items-start justify-between gap-3">
-          <div className="flex items-center gap-3 min-w-0">
-            <span className="inline-flex items-center justify-center w-10 h-10 rounded-lg bg-gradient-to-br from-blue-50 to-indigo-50 dark:from-blue-950 dark:to-indigo-950 shrink-0">
-              <Mail className="w-5 h-5 text-blue-700 dark:text-blue-300" />
-            </span>
-            <div className="min-w-0">
-              <SheetTitle className="text-base font-semibold truncate">{template.name}</SheetTitle>
-              <SheetDescription className="text-xs font-mono">{template.slug}</SheetDescription>
-            </div>
-          </div>
-          <Button
-            variant="ghost"
-            size="icon"
-            onClick={onClose}
-            aria-label={t('mailTemplates.detail.close')}
-            className="shrink-0"
-          >
-            <X className="w-4 h-4" />
-          </Button>
-        </div>
-
-        <div className="mt-3 flex items-center justify-between gap-2">
-          <div className="flex items-center gap-2 min-w-0">
-            <SectionBadge section={template.section} />
-            <Badge variant="outline" className={STATUS_BADGE_STYLES[template.status]}>
-              {t(`mailTemplates.status.${template.status}`)}
-            </Badge>
-          </div>
-          <div className="flex items-center gap-1 shrink-0">
-            <span className="text-xs text-gray-500 dark:text-gray-400 tabular-nums">
-              {t('mailTemplates.detail.position', { index: index + 1, total })}
-            </span>
-            <Tooltip>
-              <TooltipTrigger asChild>
-                <Button
-                  variant="ghost"
-                  size="icon"
-                  disabled={index <= 0}
-                  onClick={() => onNavigate(-1)}
-                  aria-label={t('mailTemplates.detail.previous')}
-                >
-                  <ChevronLeft className="w-4 h-4" />
-                </Button>
-              </TooltipTrigger>
-              <TooltipContent>{t('mailTemplates.detail.previous')}</TooltipContent>
-            </Tooltip>
-            <Tooltip>
-              <TooltipTrigger asChild>
-                <Button
-                  variant="ghost"
-                  size="icon"
-                  disabled={index >= total - 1}
-                  onClick={() => onNavigate(1)}
-                  aria-label={t('mailTemplates.detail.next')}
-                >
-                  <ChevronRight className="w-4 h-4" />
-                </Button>
-              </TooltipTrigger>
-              <TooltipContent>{t('mailTemplates.detail.next')}</TooltipContent>
-            </Tooltip>
-          </div>
-        </div>
-      </SheetHeader>
-
-      <div className="flex-1 overflow-y-auto px-6 py-5 space-y-5">
-        <Tabs value={activeLang} onValueChange={setContentLang}>
-          <TabsList>
-            {languages.map((code) => (
-              <TabsTrigger key={code} value={code} className="gap-1.5">
-                <LanguageFlagInline language={code} />
-                <span>{t(`subscriptions.language.${code}`)}</span>
-              </TabsTrigger>
-            ))}
-          </TabsList>
-
-          {languages.map((code) => (
-            <TabsContent key={code} value={code} className="space-y-4 pt-3">
-              <div>
-                <p className="text-xs font-medium uppercase tracking-wide text-gray-500 dark:text-gray-400 mb-2">
-                  {t('mailTemplates.detail.subject')}
-                </p>
-                <p className="text-sm text-gray-900 dark:text-gray-100 font-mono">
-                  {code === 'en' ? template.subjectEn : template.subjectFr}
-                </p>
-              </div>
-
-              <div>
-                <p className="text-xs font-medium uppercase tracking-wide text-gray-500 dark:text-gray-400 mb-2">
-                  {t('mailTemplates.detail.content')}
-                </p>
-                <div className="relative rounded-lg border border-gray-200 bg-gray-50 dark:border-gray-800 dark:bg-gray-900/60 p-4">
-                  <p className="text-sm text-gray-800 dark:text-gray-300 whitespace-pre-wrap leading-relaxed">
-                    {code === 'en' ? template.bodyEn : template.bodyFr}
-                  </p>
-                  <Tooltip>
-                    <TooltipTrigger asChild>
-                      <button
-                        type="button"
-                        onClick={() => onCopy(code === 'en' ? template.bodyEn : template.bodyFr)}
-                        aria-label={t('mailTemplates.detail.copyContent')}
-                        className="absolute top-2 right-2 inline-flex items-center justify-center w-7 h-7 rounded-md text-gray-500 hover:text-gray-900 hover:bg-white dark:hover:bg-gray-800 transition"
-                      >
-                        <Copy className="w-3.5 h-3.5" />
-                      </button>
-                    </TooltipTrigger>
-                    <TooltipContent>{t('mailTemplates.detail.copyContent')}</TooltipContent>
-                  </Tooltip>
-                </div>
-              </div>
-            </TabsContent>
-          ))}
-        </Tabs>
-
-        <div>
-          <p className="text-xs font-medium uppercase tracking-wide text-gray-500 dark:text-gray-400 mb-2">
-            {t('mailTemplates.detail.variables')}
-          </p>
-          {variables.length === 0 ? (
-            <p className="text-sm text-gray-500 dark:text-gray-400">
-              {t('mailTemplates.detail.noVariables')}
-            </p>
-          ) : (
-            <>
-              <div className="flex flex-wrap gap-1.5">
-                {variables.map((variable) => (
-                  <Badge
-                    key={variable}
-                    variant="outline"
-                    className="font-mono text-[11px] border-gray-200 bg-gray-50 text-gray-700 dark:border-gray-700 dark:bg-gray-800 dark:text-gray-300"
-                  >
-                    {variable}
-                  </Badge>
-                ))}
-              </div>
-              <p className="mt-2 text-xs text-gray-500 dark:text-gray-400">
-                {t('mailTemplates.detail.variablesHint')}
-              </p>
-            </>
-          )}
-        </div>
-
-        <PreviewRow
-          label={t('mailTemplates.detail.recipient')}
-          value={t(`mailTemplates.recipient.${template.recipient}`)}
-        />
-        <PreviewRow
-          label={t('mailTemplates.detail.trigger')}
-          value={t(`mailTemplates.trigger.${template.trigger}`)}
-        />
-        <PreviewRow
-          label={t('mailTemplates.detail.sends')}
-          value={template.usageCount.toLocaleString(lang)}
-          mono
-        />
-        <PreviewRow
-          label={t('mailTemplates.detail.lastSent')}
-          value={
-            template.lastSentAt
-              ? format(parseISO(template.lastSentAt), 'dd/MM/yyyy', { locale: dfLocale })
-              : t('mailTemplates.usage.never')
-          }
-        />
-        <PreviewRow
-          label={t('mailTemplates.detail.updatedAt')}
-          value={format(parseISO(template.updatedAt), 'dd/MM/yyyy', { locale: dfLocale })}
-        />
-        <PreviewRow label={t('mailTemplates.detail.updatedBy')} value={template.updatedBy} />
-
-        <div>
-          <p className="text-xs font-medium uppercase tracking-wide text-gray-500 dark:text-gray-400 mb-2">
-            {t('mailTemplates.detail.slug')}
-          </p>
-          <div className="flex items-center gap-2">
-            <code className="flex-1 rounded-lg border border-gray-200 bg-gray-50 dark:border-gray-800 dark:bg-gray-900/60 px-3 py-2 text-xs text-gray-700 dark:text-gray-300 font-mono">
-              {template.slug}
-            </code>
-            <Tooltip>
-              <TooltipTrigger asChild>
-                <Button
-                  variant="outline"
-                  size="icon"
-                  onClick={() => onCopy(template.slug)}
-                  aria-label={t('mailTemplates.detail.copySlug')}
-                >
-                  <Copy className="w-3.5 h-3.5" />
-                </Button>
-              </TooltipTrigger>
-              <TooltipContent>{t('mailTemplates.detail.copySlug')}</TooltipContent>
-            </Tooltip>
-          </div>
-        </div>
-      </div>
-
-      <div className="px-6 py-4 border-t border-gray-100 dark:border-gray-800">
-        <Button variant="outline" onClick={onEdit} className="w-full gap-2">
-          <Pencil className="w-4 h-4" />
-          {t('mailTemplates.detail.editCta')}
-        </Button>
-      </div>
-    </>
-  );
-}
-
-function PreviewRow({
-  label,
-  value,
-  mono,
-}: {
-  label: string;
-  value: string;
-  mono?: boolean;
-}) {
-  return (
-    <div className="flex items-baseline gap-3">
-      <span className="w-[140px] shrink-0 text-xs font-medium uppercase tracking-wide text-gray-500 dark:text-gray-400">
-        {label}
-      </span>
-      <span
-        className={cn('text-sm text-gray-900 dark:text-gray-100', mono && 'font-mono tabular-nums')}
-      >
-        {value}
-      </span>
-    </div>
-  );
-}
-
 function TemplateForm({
   isEditing,
   draft,
@@ -1358,10 +1094,7 @@ function TemplateForm({
   onSubmit: () => void;
 }) {
   const { t } = useTranslation();
-  const isValid =
-    draft.name.trim().length > 0 &&
-    draft.slug.trim().length > 0 &&
-    draft.subjectFr.trim().length > 0;
+  const isValid = draft.name.trim().length > 0 && draft.slug.trim().length > 0;
 
   const update = <K extends keyof TemplateDraft>(key: K, value: TemplateDraft[K]) => {
     onDraftChange({ ...draft, [key]: value });
@@ -1498,73 +1231,11 @@ function TemplateForm({
           </div>
         </div>
 
-        <Tabs defaultValue="fr">
-          <TabsList>
-            <TabsTrigger value="fr" className="gap-1.5">
-              <LanguageFlagInline language="fr" />
-              <span>{t('subscriptions.language.fr')}</span>
-            </TabsTrigger>
-            <TabsTrigger value="en" className="gap-1.5">
-              <LanguageFlagInline language="en" />
-              <span>{t('subscriptions.language.en')}</span>
-            </TabsTrigger>
-          </TabsList>
-
-          <TabsContent value="fr" className="space-y-4 pt-3">
-            <div className="space-y-2">
-              <Label htmlFor="subject-fr" className="text-xs">
-                {t('mailTemplates.form.subject')}
-              </Label>
-              <Input
-                id="subject-fr"
-                value={draft.subjectFr}
-                onChange={(e) => update('subjectFr', e.target.value)}
-                placeholder={t('mailTemplates.form.subjectPlaceholder')}
-              />
-            </div>
-            <div className="space-y-2">
-              <Label htmlFor="body-fr" className="text-xs">
-                {t('mailTemplates.form.body')}
-              </Label>
-              <Textarea
-                id="body-fr"
-                value={draft.bodyFr}
-                onChange={(e) => update('bodyFr', e.target.value)}
-                placeholder={t('mailTemplates.form.bodyPlaceholder')}
-                className="min-h-[200px] font-mono"
-              />
-              <p className="text-xs text-gray-500 dark:text-gray-400">
-                {t('mailTemplates.form.bodyHint')}
-              </p>
-            </div>
-          </TabsContent>
-
-          <TabsContent value="en" className="space-y-4 pt-3">
-            <div className="space-y-2">
-              <Label htmlFor="subject-en" className="text-xs">
-                {t('mailTemplates.form.subject')}
-              </Label>
-              <Input
-                id="subject-en"
-                value={draft.subjectEn}
-                onChange={(e) => update('subjectEn', e.target.value)}
-                placeholder={t('mailTemplates.form.subjectPlaceholder')}
-              />
-            </div>
-            <div className="space-y-2">
-              <Label htmlFor="body-en" className="text-xs">
-                {t('mailTemplates.form.body')}
-              </Label>
-              <Textarea
-                id="body-en"
-                value={draft.bodyEn}
-                onChange={(e) => update('bodyEn', e.target.value)}
-                placeholder={t('mailTemplates.form.bodyPlaceholder')}
-                className="min-h-[200px] font-mono"
-              />
-            </div>
-          </TabsContent>
-        </Tabs>
+        <p className="rounded-lg border border-gray-200 bg-gray-50 dark:border-gray-800 dark:bg-gray-900/60 px-3 py-2 text-xs text-gray-600 dark:text-gray-400">
+          {isEditing
+            ? t('mailTemplates.form.contentInEditorEdit')
+            : t('mailTemplates.form.contentInEditorCreate')}
+        </p>
       </div>
 
       <div className="px-6 py-4 border-t border-gray-100 dark:border-gray-800 flex items-center gap-3">

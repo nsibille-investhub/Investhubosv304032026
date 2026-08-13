@@ -3312,25 +3312,15 @@
       "noDataBody": "Templates created for this section will appear here."
     },
     "detail": {
-      "close": "Close",
       "position": "{{index}} of {{total}}",
       "previous": "Previous template",
       "next": "Next template",
-      "subject": "Subject",
-      "content": "Content",
-      "variables": "Variables used",
-      "noVariables": "This template uses no variable.",
-      "variablesHint": "Variables are replaced when the email is sent.",
       "recipient": "Recipient",
       "trigger": "Trigger",
-      "slug": "Slug",
       "sends": "Sends",
       "lastSent": "Last send",
       "updatedAt": "Last modified",
-      "updatedBy": "Modified by",
-      "copyContent": "Copy content",
-      "copySlug": "Copy slug",
-      "editCta": "Edit this template"
+      "updatedBy": "Modified by"
     },
     "form": {
       "createTitle": "New template",
@@ -3346,14 +3336,11 @@
       "recipient": "Recipient",
       "status": "Status",
       "trigger": "Trigger",
-      "subject": "Email subject",
-      "subjectPlaceholder": "e.g. $campaign - Your payment is pending",
-      "body": "Content",
-      "bodyPlaceholder": "Write the email body. Use $investor.firstname to insert a variable.",
-      "bodyHint": "Variables written as $investor.firstname are replaced when the email is sent.",
       "cancel": "Cancel",
       "save": "Save",
-      "createCta": "Create"
+      "createCta": "Create",
+      "contentInEditorCreate": "The subject and HTML content are written in the editor, right after creation.",
+      "contentInEditorEdit": "The subject and HTML content are edited in the template editor."
     },
     "delete": {
       "title": "Delete this mail template?",
@@ -3380,6 +3367,31 @@
     "csv": {
       "filename": "mail-templates-{{date}}.csv",
       "suffixCopy": "copy"
+    },
+    "editor": {
+      "save": "Save",
+      "reset": "Discard changes",
+      "resetDone": "Changes discarded",
+      "subject": "Email subject",
+      "htmlLabel": "HTML source",
+      "previewLabel": "Preview",
+      "previewMode": "Preview mode",
+      "modeResolved": "Sample values",
+      "modeRaw": "Variables",
+      "previewWidth": "Preview width",
+      "widthDesktop": "Desktop",
+      "widthMobile": "Mobile",
+      "previewWidthValue": "{{width}} px",
+      "charCount": "{{count}} characters",
+      "copyHtml": "Copy the HTML",
+      "variablesLabel": "Available variables",
+      "variablesHint": "Click a variable to insert it at the cursor",
+      "chipInsert": "Insert at cursor",
+      "chipUsed": "Already used in this content",
+      "chipProposed": "Proposed variable: not replaced yet",
+      "unknownVariables": "Variables not listed for this template: {{list}}",
+      "proposedTitle": "Proposed variables",
+      "proposedBody": "These variables do not exist yet at the sending point. Do not push this content to production before they are created."
     }
   },
   "smsLog": {
