@@ -1625,6 +1625,15 @@
     }
   },
   "common": {
+    "pagination": {
+      "showingOne": "Showing {{start}} to {{end}} of {{total}} result",
+      "showingMany": "Showing {{start}} to {{end}} of {{total}} results",
+      "show": "Show",
+      "perPage": "per page",
+      "previous": "Previous",
+      "next": "Next",
+      "pageOf": "Page {{page}} / {{total}}"
+    },
     "average": "Avg",
     "filterBar": {
       "additionalFilters": "Additional filters",
@@ -3204,6 +3213,143 @@
         "p1": "Our SFDR Article 9 disclosure for {{fund}} is now available on the LP Portal alongside the 2025 ESG report.",
         "signature": "Mathilde Garcia — ESG Officer"
       }
+    }
+  },
+  "mailTemplates": {
+    "title": "Mail templates",
+    "subtitle": "Create, review and maintain the email templates sent from InvestHub.",
+    "entityName": "template",
+    "searchPlaceholder": "Search by name, subject or content…",
+    "statusTabs": {
+      "title": "Filter by template status",
+      "subtitle": "4 statuses",
+      "clickToFilter": "Click to filter",
+      "all": "All",
+      "active": "Active",
+      "draft": "Draft",
+      "archived": "Archived",
+      "metricShare": "Share",
+      "avgUsage": "{{count}} sends / template"
+    },
+    "filters": {
+      "category": "Category",
+      "group": "Mail group",
+      "language": "Language",
+      "author": "Last edited by",
+      "usage": "Usage",
+      "usagePresets": {
+        "never": "Never used",
+        "low": "Fewer than 100 sends",
+        "high": "100 sends or more"
+      }
+    },
+    "table": {
+      "name": "Name",
+      "subject": "Subject",
+      "category": "Category",
+      "status": "Status",
+      "usage": "Sends",
+      "updatedAt": "Last modified",
+      "actions": "Actions"
+    },
+    "category": {
+      "onboarding": "Onboarding",
+      "subscription": "Subscription",
+      "reminder": "Reminder",
+      "automatic": "Automatic",
+      "reporting": "Reporting",
+      "compliance": "Compliance"
+    },
+    "status": {
+      "active": "Active",
+      "draft": "Draft",
+      "archived": "Archived"
+    },
+    "usage": {
+      "never": "Never sent",
+      "lastSent": "Last sent on {{date}}"
+    },
+    "updatedBy": "by {{name}}",
+    "actions": {
+      "create": "New template",
+      "createTooltip": "Create a mail template",
+      "export": "Export",
+      "exportTooltip": "Download the filtered list as CSV",
+      "preview": "Preview",
+      "edit": "Edit",
+      "duplicate": "Duplicate",
+      "delete": "Delete"
+    },
+    "empty": {
+      "title": "No template matches your filters",
+      "body": "Adjust the category, status or clear the search to broaden the results.",
+      "resetCta": "Reset filters",
+      "noDataTitle": "No mail template yet",
+      "noDataBody": "Templates created for your organisation will appear here."
+    },
+    "detail": {
+      "title": "Template details",
+      "subtitle": "Content, targeting and usage",
+      "close": "Close",
+      "subject": "Subject",
+      "content": "Content",
+      "variables": "Variables used",
+      "noVariables": "This template uses no variable.",
+      "group": "Mail group",
+      "languages": "Languages",
+      "sends": "Sends",
+      "lastSent": "Last send",
+      "updatedAt": "Last modified",
+      "updatedBy": "Modified by",
+      "templateId": "Template ID",
+      "copyContent": "Copy content",
+      "copyId": "Copy ID",
+      "editCta": "Edit this template"
+    },
+    "form": {
+      "createTitle": "New template",
+      "createSubtitle": "Define the content of the email sent to recipients.",
+      "editTitle": "Edit template",
+      "editSubtitle": "Update the content of the email sent to recipients.",
+      "name": "Template name",
+      "namePlaceholder": "e.g. Investor welcome",
+      "subject": "Email subject",
+      "subjectPlaceholder": "e.g. Welcome to InvestHub",
+      "category": "Category",
+      "group": "Mail group",
+      "status": "Status",
+      "body": "Content",
+      "bodyPlaceholder": "Write the email body. Use {{firstName}} to insert a variable.",
+      "bodyHint": "Variables written as {{firstName}} are replaced at send time.",
+      "cancel": "Cancel",
+      "save": "Save",
+      "createCta": "Create"
+    },
+    "delete": {
+      "title": "Delete this mail template?",
+      "body": "The template will no longer be available for sending. This action cannot be undone.",
+      "usageWarning": "This template has already been used {{count}} times. Its send history is kept.",
+      "cancel": "Cancel",
+      "confirm": "Delete permanently"
+    },
+    "toast": {
+      "filtersResetTitle": "Filters reset",
+      "createdTitle": "Template created",
+      "createdBody": "\"{{name}}\" has been added to your templates.",
+      "updatedTitle": "Template updated",
+      "updatedBody": "\"{{name}}\" has been saved.",
+      "duplicatedTitle": "Template duplicated",
+      "duplicatedBody": "\"{{name}}\" is ready to be edited.",
+      "deletedTitle": "Template deleted",
+      "deletedBody": "\"{{name}}\" has been removed.",
+      "copySuccessTitle": "Copied",
+      "copySuccessBody": "Content copied to clipboard.",
+      "exportStartedTitle": "Export started",
+      "exportStartedBody": "{{count}} templates exported to CSV."
+    },
+    "csv": {
+      "filename": "mail-templates-{{date}}.csv",
+      "suffixCopy": "copy"
     }
   },
   "smsLog": {

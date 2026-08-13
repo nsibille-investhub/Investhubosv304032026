@@ -1625,6 +1625,15 @@
     }
   },
   "common": {
+    "pagination": {
+      "showingOne": "Affichage de {{start}} à {{end}} sur {{total}} résultat",
+      "showingMany": "Affichage de {{start}} à {{end}} sur {{total}} résultats",
+      "show": "Afficher",
+      "perPage": "par page",
+      "previous": "Précédent",
+      "next": "Suivant",
+      "pageOf": "Page {{page}} / {{total}}"
+    },
     "average": "Moy",
     "filterBar": {
       "additionalFilters": "Filtres supplémentaires",
@@ -3204,6 +3213,143 @@
         "p1": "Notre information SFDR Article 9 pour {{fund}} est désormais disponible sur le Portail LP, aux côtés du rapport ESG 2025.",
         "signature": "Mathilde Garcia — Responsable ESG"
       }
+    }
+  },
+  "mailTemplates": {
+    "title": "Gabarits des mails",
+    "subtitle": "Créez, contrôlez et maintenez les modèles d'emails envoyés depuis InvestHub.",
+    "entityName": "gabarit",
+    "searchPlaceholder": "Rechercher par nom, sujet ou contenu…",
+    "statusTabs": {
+      "title": "Filtrer par statut de gabarit",
+      "subtitle": "4 statuts",
+      "clickToFilter": "Cliquez pour filtrer",
+      "all": "Tous",
+      "active": "Actifs",
+      "draft": "Brouillons",
+      "archived": "Archivés",
+      "metricShare": "Part",
+      "avgUsage": "{{count}} envois / gabarit"
+    },
+    "filters": {
+      "category": "Catégorie",
+      "group": "Groupe de mails",
+      "language": "Langue",
+      "author": "Dernière modif. par",
+      "usage": "Utilisation",
+      "usagePresets": {
+        "never": "Jamais utilisé",
+        "low": "Moins de 100 envois",
+        "high": "100 envois ou plus"
+      }
+    },
+    "table": {
+      "name": "Nom",
+      "subject": "Sujet",
+      "category": "Catégorie",
+      "status": "Statut",
+      "usage": "Envois",
+      "updatedAt": "Dernière modif.",
+      "actions": "Actions"
+    },
+    "category": {
+      "onboarding": "Onboarding",
+      "subscription": "Souscription",
+      "reminder": "Relance",
+      "automatic": "Automatique",
+      "reporting": "Reporting",
+      "compliance": "Conformité"
+    },
+    "status": {
+      "active": "Actif",
+      "draft": "Brouillon",
+      "archived": "Archivé"
+    },
+    "usage": {
+      "never": "Jamais envoyé",
+      "lastSent": "Dernier envoi le {{date}}"
+    },
+    "updatedBy": "par {{name}}",
+    "actions": {
+      "create": "Créer un gabarit",
+      "createTooltip": "Créer un gabarit de mail",
+      "export": "Exporter",
+      "exportTooltip": "Télécharger la liste filtrée au format CSV",
+      "preview": "Aperçu",
+      "edit": "Modifier",
+      "duplicate": "Dupliquer",
+      "delete": "Supprimer"
+    },
+    "empty": {
+      "title": "Aucun gabarit ne correspond aux filtres",
+      "body": "Ajustez la catégorie, le statut ou effacez la recherche pour élargir les résultats.",
+      "resetCta": "Réinitialiser les filtres",
+      "noDataTitle": "Aucun gabarit de mail",
+      "noDataBody": "Les gabarits créés pour votre organisation apparaîtront ici."
+    },
+    "detail": {
+      "title": "Détail du gabarit",
+      "subtitle": "Contenu, ciblage et utilisation",
+      "close": "Fermer",
+      "subject": "Sujet",
+      "content": "Contenu",
+      "variables": "Variables utilisées",
+      "noVariables": "Ce gabarit n'utilise aucune variable.",
+      "group": "Groupe de mails",
+      "languages": "Langues",
+      "sends": "Envois",
+      "lastSent": "Dernier envoi",
+      "updatedAt": "Dernière modification",
+      "updatedBy": "Modifié par",
+      "templateId": "Identifiant du gabarit",
+      "copyContent": "Copier le contenu",
+      "copyId": "Copier l'identifiant",
+      "editCta": "Modifier ce gabarit"
+    },
+    "form": {
+      "createTitle": "Nouveau gabarit",
+      "createSubtitle": "Définissez le contenu du mail envoyé aux destinataires.",
+      "editTitle": "Modifier le gabarit",
+      "editSubtitle": "Mettez à jour le contenu du mail envoyé aux destinataires.",
+      "name": "Nom du gabarit",
+      "namePlaceholder": "Ex. : Bienvenue investisseur",
+      "subject": "Sujet du mail",
+      "subjectPlaceholder": "Ex. : Bienvenue chez InvestHub",
+      "category": "Catégorie",
+      "group": "Groupe de mails",
+      "status": "Statut",
+      "body": "Contenu",
+      "bodyPlaceholder": "Rédigez le corps du mail. Utilisez {{firstName}} pour insérer une variable.",
+      "bodyHint": "Les variables écrites {{firstName}} sont remplacées à l'envoi.",
+      "cancel": "Annuler",
+      "save": "Enregistrer",
+      "createCta": "Créer"
+    },
+    "delete": {
+      "title": "Supprimer ce gabarit de mail ?",
+      "body": "Le gabarit ne sera plus disponible à l'envoi. Cette action est irréversible.",
+      "usageWarning": "Ce gabarit a déjà été utilisé {{count}} fois. L'historique des envois est conservé.",
+      "cancel": "Annuler",
+      "confirm": "Supprimer définitivement"
+    },
+    "toast": {
+      "filtersResetTitle": "Filtres réinitialisés",
+      "createdTitle": "Gabarit créé",
+      "createdBody": "« {{name}} » a été ajouté à vos gabarits.",
+      "updatedTitle": "Gabarit mis à jour",
+      "updatedBody": "« {{name}} » a été enregistré.",
+      "duplicatedTitle": "Gabarit dupliqué",
+      "duplicatedBody": "« {{name}} » est prêt à être modifié.",
+      "deletedTitle": "Gabarit supprimé",
+      "deletedBody": "« {{name}} » a été supprimé.",
+      "copySuccessTitle": "Copié",
+      "copySuccessBody": "Contenu copié dans le presse-papiers.",
+      "exportStartedTitle": "Export lancé",
+      "exportStartedBody": "{{count}} gabarits exportés au format CSV."
+    },
+    "csv": {
+      "filename": "gabarits-mails-{{date}}.csv",
+      "suffixCopy": "copie"
     }
   },
   "smsLog": {
