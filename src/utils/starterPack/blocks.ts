@@ -47,6 +47,24 @@ export function quote(content: string): string {
   return `<p style="margin:16px 0;padding:12px 16px;border-left:3px solid #e0e0e0;color:#555555">${content}</p>`;
 }
 
+/** Tableau récapitulatif libellé / valeur. */
+export function table(rows: Array<[string, string]>): string {
+  const body = rows
+    .map(
+      ([label, value]) =>
+        `<tr><td style="padding:6px 12px;color:#888888">${label}</td><td style="padding:6px 12px">${value}</td></tr>`,
+    )
+    .join('\n');
+  return `<table style="width:100%;border-collapse:collapse;margin:20px 0">
+${body}
+</table>`;
+}
+
+/** Encadré gris, utilisé pour reprendre un motif saisi par le gestionnaire. */
+export function note(content: string): string {
+  return `<p style="background:#f5f5f5;padding:12px 16px;border-radius:4px">${content}</p>`;
+}
+
 /** Assemble logo, corps, signature et pied dans l'ordre du référentiel. */
 export function html(lang: 'fr' | 'en', body: string[]): string {
   return [LOGO, ...body, lang === 'fr' ? SIGN_FR : SIGN_EN, lang === 'fr' ? FOOTER_FR : FOOTER_EN].join(
