@@ -148,6 +148,14 @@ const inactiveStatuses = [
 
 const allStatuses = [...activeStatuses, ...inactiveStatuses];
 
+// Statuts pour lesquels la souscription est active : la date d'activation existe
+const ACTIVATED_STATUSES = [
+  'Exécuté',
+  'En attente de fonds',
+  'En attente de paiement',
+  'Active'
+];
+
 const analysts = ['Thomas', 'Sophie Martin', 'Marc Dubois', 'Claire Bernard', 'Alex Chen'];
 
 const kycStatuses = ['in progress', 'in review', 'to review', 'validated'];
@@ -585,7 +593,9 @@ export function generateSubscriptions(count: number): Subscription[] {
     const remainingAmount = status === 'Active' ? amount - calledAmount - pendingCallAmount : amount;
     const distributedAmount = status === 'Active' && Math.random() > 0.3 ? Math.floor(calledAmount * (randomNumber(10, 40) / 100)) : 0;
     const hasDepositary = Math.random() > 0.5;
-    const activatedAt = status === 'Active' ? randomDate(30) : null;
+    const activatedAt = ACTIVATED_STATUSES.includes(status)
+      ? new Date(createdDate.getTime() + Math.random() * (Date.now() - createdDate.getTime()))
+      : null;
     
     // Notes
     const possibleNotes = [
