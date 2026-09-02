@@ -441,7 +441,7 @@
       "initStep": {
         "invitation": {
           "title": "Onboarding invitation",
-          "subtitle": "The onboarding link goes to the investor audience, resolved below.",
+          "subtitle": "The onboarding link goes to the recipient resolved for the investor.",
           "sent": "Invitation sent",
           "notSent": "Invitation not sent",
           "effectiveRecipient": "Effective recipient",
@@ -456,42 +456,9 @@
           "opened": "Opened on",
           "clicked": "Clicked on"
         },
-        "recipients": {
-          "title": "Resolved recipients",
-          "subtitle": "An audience that resolves to no address sends nothing and raises an anomaly.",
-          "audience": "Audience",
-          "address": "Address",
-          "rule": "Applied rule",
-          "role": "Role"
-        },
-        "audiences": {
-          "investor": "Investor",
-          "partner": "Partner",
-          "advisor": "Advisor",
-          "manager": "Case manager"
-        },
         "rules": {
           "investorContact": "Linked contact, takes priority over the investor's address",
-          "investorAddress": "Investor's address, no linked contact on the case",
-          "partnerPreferences": "Notification preferences from the partner record",
-          "advisorAdded": "The advisor is added to the partner, not a replacement",
-          "managerIntermediated": "Notified on creation for an intermediated subscription",
-          "managerDirect": "Direct subscription: the case manager is not notified"
-        },
-        "roles": {
-          "recipient": "Recipient",
-          "copy": "In copy",
-          "none": "Not notified",
-          "unresolved": "No address resolved"
-        },
-        "emails": {
-          "title": "Initialisation emails",
-          "template": "Template",
-          "recipient": "Recipient",
-          "action": "Action",
-          "resendAction": "Resend",
-          "resent": "Resent",
-          "notSent": "Not sent"
+          "investorAddress": "Investor's address, no linked contact on the case"
         },
         "templates": {
           "onboardingLink": "Onboarding start link",
