@@ -317,6 +317,165 @@ export function SubscriptionDetailPage({ subscription: subscriptionProp, onBack 
   const partnerUrl = getShareableUrl('partners');
   const fundUrl = getShareableUrl('allfunds');
 
+  const detailSummary = (
+    <DetailSummary
+      newTabTitle={openInNewTab}
+      actions={
+        <Button
+          variant="outline"
+          size="sm"
+          className="gap-1.5 text-primary border-primary/30 hover:bg-primary/5 hover:text-primary h-9"
+          onClick={() => setIsEditDialogOpen(true)}
+        >
+          <Edit2 className="w-3.5 h-3.5" />
+          {t('subscriptions.detail.editButton')}
+        </Button>
+      }
+      attributes={[
+        {
+          id: 'investor',
+          label: t('subscriptions.detail.header.investor'),
+          value: subscription.contrepartie.investor || subscription.contrepartie.name,
+          icon: User,
+          href: investorUrl,
+        },
+        {
+          id: 'structure',
+          label: t('subscriptions.detail.header.structure'),
+          value: subscription.contrepartie.structure,
+          icon: Building2,
+          href: structureUrl,
+        },
+        {
+          id: 'partner',
+          label: t('subscriptions.detail.header.partner'),
+          value: subscription.partenaire?.name ?? t('subscriptions.detail.header.directInvestment'),
+          secondaryValue: subscription.advisor
+            ? t('subscriptions.detail.header.advisor', { name: subscription.advisor })
+            : undefined,
+          icon: Users,
+          href: subscription.partenaire ? partnerUrl : undefined,
+        },
+        {
+          id: 'fees',
+          label: t('subscriptions.detail.header.fees'),
+          value: t('subscriptions.detail.header.entryFees', {
+            amount: formatAmount(((subscription.amount * (subscription.entryFees ?? 0)) / 100)),
+          }),
+          secondaryValue: t('subscriptions.detail.header.subscriptionPremium', {
+            amount: formatAmount(subscription.subscriptionPremium ?? 0),
+          }),
+          icon: DollarSign,
+        },
+      ]}
+      metrics={[
+        {
+          id: 'subscribed',
+          label: t('subscriptions.detail.header.subscribedAmount'),
+          value: `${subscription.amount.toLocaleString('fr-FR')} €`,
+          secondaryValue: t('subscriptions.detail.header.shares', {
+            count: subscription.quantity.toLocaleString('fr-FR'),
+          }),
+          icon: DollarSign,
+        },
+        {
+          id: 'called',
+          label: t('subscriptions.detail.header.calledAmount'),
+          value: `${(subscription.calledAmount ?? 0).toLocaleString('fr-FR')} €`,
+          secondaryValue: formatRatio(subscription.calledAmount ?? 0),
+          icon: TrendingUp,
+        },
+        {
+          id: 'distributed',
+          label: t('subscriptions.detail.header.distributedAmount'),
+          value: `${(subscription.distributedAmount ?? 0).toLocaleString('fr-FR')} €`,
+          secondaryValue: formatRatio(subscription.distributedAmount ?? 0),
+          icon: ArrowDownCircle,
+        },
+        {
+          id: 'remaining',
+          label: t('subscriptions.detail.header.remainingBalance'),
+          value: `${(subscription.remainingAmount ?? subscription.amount).toLocaleString('fr-FR')} €`,
+          secondaryValue: formatRatio(subscription.remainingAmount ?? subscription.amount),
+          icon: Wallet,
+        },
+      ]}
+      aside={
+        <Card className="p-4 shadow-sm">
+          <div className="flex items-center gap-4">
+            {/* Jauge circulaire compacte */}
+            <div className="flex flex-col items-center">
+              {(() => {
+                const riskConfig = subscription.riskLevel === 'High'
+                  ? { score: 82, color: '#EF4444', variant: 'danger' as const, labelKey: 'subscriptions.detail.header.riskHigh' }
+                  : subscription.riskLevel === 'Low'
+                  ? { score: 28, color: '#10B981', variant: 'success' as const, labelKey: 'subscriptions.detail.header.riskLow' }
+                  : { score: 65, color: '#F59E0B', variant: 'warning' as const, labelKey: 'subscriptions.detail.header.riskMedium' };
+                return (
+                  <>
+                    <div className="relative w-20 h-20">
+                      <svg className="w-20 h-20 -rotate-90">
+                        <circle cx="40" cy="40" r="34" stroke="#E5E7EB" strokeWidth="6" fill="none" />
+                        <circle
+                          cx="40" cy="40" r="34"
+                          stroke={riskConfig.color}
+                          strokeWidth="6"
+                          fill="none"
+                          strokeDasharray={`${2 * Math.PI * 34}`}
+                          strokeDashoffset={`${2 * Math.PI * 34 * (1 - riskConfig.score / 100)}`}
+                          strokeLinecap="round"
+                        />
+                      </svg>
+                      <div className="absolute inset-0 flex flex-col items-center justify-center">
+                        <span className="text-xl font-bold text-foreground">{riskConfig.score}</span>
+                        <span className="text-[10px] text-muted-foreground">/ 100</span>
+                      </div>
+                    </div>
+                    <StatusBadge variant={riskConfig.variant} label={t(riskConfig.labelKey)} className="text-[10px] mt-1.5" />
+                  </>
+                );
+              })()}
+            </div>
+
+            {/* Indicateurs */}
+            <div className="space-y-1.5">
+              {riskValidated && (
+                <div className="flex items-center gap-1.5 mb-2 pb-2 border-b border-border">
+                  <CheckCircle2 className="w-3 h-3 text-green-600 flex-shrink-0" />
+                  <div>
+                    <div className="text-[10px] font-semibold text-green-900">{t('subscriptions.detail.header.riskValidated')}</div>
+                    <div className="text-[9px] text-green-700">{t('subscriptions.detail.header.riskValidatedOn', { date: riskValidationDate })}</div>
+                  </div>
+                </div>
+              )}
+              <div className="flex items-center justify-between gap-3">
+                <span className="text-xs text-muted-foreground whitespace-nowrap">{t('subscriptions.detail.header.pepDetected')}</span>
+                <Badge className="bg-red-100 text-red-700 border-red-300 text-[10px] h-5">
+                  <AlertCircle className="w-2.5 h-2.5 mr-1" />
+                  2
+                </Badge>
+              </div>
+              <div className="flex items-center justify-between gap-3">
+                <span className="text-xs text-muted-foreground whitespace-nowrap">{t('subscriptions.detail.header.sanctions')}</span>
+                <Badge className="bg-green-100 text-green-700 border-green-300 text-[10px] h-5">
+                  <Check className="w-2.5 h-2.5 mr-1" />
+                  0
+                </Badge>
+              </div>
+              <div className="flex items-center justify-between gap-3">
+                <span className="text-xs text-muted-foreground whitespace-nowrap">{t('subscriptions.detail.header.adverseMedia')}</span>
+                <Badge className="bg-amber-100 text-amber-700 border-amber-300 text-[10px] h-5">
+                  <AlertCircle className="w-2.5 h-2.5 mr-1" />
+                  1
+                </Badge>
+              </div>
+            </div>
+          </div>
+        </Card>
+      }
+    />
+  );
+
   return (
     <div className="min-h-screen bg-muted">
       <PageHeader
@@ -431,162 +590,7 @@ export function SubscriptionDetailPage({ subscription: subscriptionProp, onBack 
             <div className="px-8 py-6">
               <div className="flex flex-col gap-6">
 
-                <DetailSummary
-                  newTabTitle={openInNewTab}
-                  actions={
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      className="gap-1.5 text-primary border-primary/30 hover:bg-primary/5 hover:text-primary h-9"
-                      onClick={() => setIsEditDialogOpen(true)}
-                    >
-                      <Edit2 className="w-3.5 h-3.5" />
-                      {t('subscriptions.detail.editButton')}
-                    </Button>
-                  }
-                  attributes={[
-                    {
-                      id: 'investor',
-                      label: t('subscriptions.detail.header.investor'),
-                      value: subscription.contrepartie.investor || subscription.contrepartie.name,
-                      icon: User,
-                      href: investorUrl,
-                    },
-                    {
-                      id: 'structure',
-                      label: t('subscriptions.detail.header.structure'),
-                      value: subscription.contrepartie.structure,
-                      icon: Building2,
-                      href: structureUrl,
-                    },
-                    {
-                      id: 'partner',
-                      label: t('subscriptions.detail.header.partner'),
-                      value: subscription.partenaire?.name ?? t('subscriptions.detail.header.directInvestment'),
-                      secondaryValue: subscription.advisor
-                        ? t('subscriptions.detail.header.advisor', { name: subscription.advisor })
-                        : undefined,
-                      icon: Users,
-                      href: subscription.partenaire ? partnerUrl : undefined,
-                    },
-                    {
-                      id: 'fees',
-                      label: t('subscriptions.detail.header.fees'),
-                      value: t('subscriptions.detail.header.entryFees', {
-                        amount: formatAmount(((subscription.amount * (subscription.entryFees ?? 0)) / 100)),
-                      }),
-                      secondaryValue: t('subscriptions.detail.header.subscriptionPremium', {
-                        amount: formatAmount(subscription.subscriptionPremium ?? 0),
-                      }),
-                      icon: DollarSign,
-                    },
-                  ]}
-                  metrics={[
-                    {
-                      id: 'subscribed',
-                      label: t('subscriptions.detail.header.subscribedAmount'),
-                      value: `${subscription.amount.toLocaleString('fr-FR')} €`,
-                      secondaryValue: t('subscriptions.detail.header.shares', {
-                        count: subscription.quantity.toLocaleString('fr-FR'),
-                      }),
-                      icon: DollarSign,
-                    },
-                    {
-                      id: 'called',
-                      label: t('subscriptions.detail.header.calledAmount'),
-                      value: `${(subscription.calledAmount ?? 0).toLocaleString('fr-FR')} €`,
-                      secondaryValue: formatRatio(subscription.calledAmount ?? 0),
-                      icon: TrendingUp,
-                    },
-                    {
-                      id: 'distributed',
-                      label: t('subscriptions.detail.header.distributedAmount'),
-                      value: `${(subscription.distributedAmount ?? 0).toLocaleString('fr-FR')} €`,
-                      secondaryValue: formatRatio(subscription.distributedAmount ?? 0),
-                      icon: ArrowDownCircle,
-                    },
-                    {
-                      id: 'remaining',
-                      label: t('subscriptions.detail.header.remainingBalance'),
-                      value: `${(subscription.remainingAmount ?? subscription.amount).toLocaleString('fr-FR')} €`,
-                      secondaryValue: formatRatio(subscription.remainingAmount ?? subscription.amount),
-                      icon: Wallet,
-                    },
-                  ]}
-                  aside={
-                    <Card className="p-4 shadow-sm">
-                      <div className="flex items-center gap-4">
-                        {/* Jauge circulaire compacte */}
-                        <div className="flex flex-col items-center">
-                          {(() => {
-                            const riskConfig = subscription.riskLevel === 'High'
-                              ? { score: 82, color: '#EF4444', variant: 'danger' as const, labelKey: 'subscriptions.detail.header.riskHigh' }
-                              : subscription.riskLevel === 'Low'
-                              ? { score: 28, color: '#10B981', variant: 'success' as const, labelKey: 'subscriptions.detail.header.riskLow' }
-                              : { score: 65, color: '#F59E0B', variant: 'warning' as const, labelKey: 'subscriptions.detail.header.riskMedium' };
-                            return (
-                              <>
-                                <div className="relative w-20 h-20">
-                                  <svg className="w-20 h-20 -rotate-90">
-                                    <circle cx="40" cy="40" r="34" stroke="#E5E7EB" strokeWidth="6" fill="none" />
-                                    <circle
-                                      cx="40" cy="40" r="34"
-                                      stroke={riskConfig.color}
-                                      strokeWidth="6"
-                                      fill="none"
-                                      strokeDasharray={`${2 * Math.PI * 34}`}
-                                      strokeDashoffset={`${2 * Math.PI * 34 * (1 - riskConfig.score / 100)}`}
-                                      strokeLinecap="round"
-                                    />
-                                  </svg>
-                                  <div className="absolute inset-0 flex flex-col items-center justify-center">
-                                    <span className="text-xl font-bold text-foreground">{riskConfig.score}</span>
-                                    <span className="text-[10px] text-muted-foreground">/ 100</span>
-                                  </div>
-                                </div>
-                                <StatusBadge variant={riskConfig.variant} label={t(riskConfig.labelKey)} className="text-[10px] mt-1.5" />
-                              </>
-                            );
-                          })()}
-                        </div>
-
-                        {/* Indicateurs */}
-                        <div className="space-y-1.5">
-                          {riskValidated && (
-                            <div className="flex items-center gap-1.5 mb-2 pb-2 border-b border-border">
-                              <CheckCircle2 className="w-3 h-3 text-green-600 flex-shrink-0" />
-                              <div>
-                                <div className="text-[10px] font-semibold text-green-900">{t('subscriptions.detail.header.riskValidated')}</div>
-                                <div className="text-[9px] text-green-700">{t('subscriptions.detail.header.riskValidatedOn', { date: riskValidationDate })}</div>
-                              </div>
-                            </div>
-                          )}
-                          <div className="flex items-center justify-between gap-3">
-                            <span className="text-xs text-muted-foreground whitespace-nowrap">{t('subscriptions.detail.header.pepDetected')}</span>
-                            <Badge className="bg-red-100 text-red-700 border-red-300 text-[10px] h-5">
-                              <AlertCircle className="w-2.5 h-2.5 mr-1" />
-                              2
-                            </Badge>
-                          </div>
-                          <div className="flex items-center justify-between gap-3">
-                            <span className="text-xs text-muted-foreground whitespace-nowrap">{t('subscriptions.detail.header.sanctions')}</span>
-                            <Badge className="bg-green-100 text-green-700 border-green-300 text-[10px] h-5">
-                              <Check className="w-2.5 h-2.5 mr-1" />
-                              0
-                            </Badge>
-                          </div>
-                          <div className="flex items-center justify-between gap-3">
-                            <span className="text-xs text-muted-foreground whitespace-nowrap">{t('subscriptions.detail.header.adverseMedia')}</span>
-                            <Badge className="bg-amber-100 text-amber-700 border-amber-300 text-[10px] h-5">
-                              <AlertCircle className="w-2.5 h-2.5 mr-1" />
-                              1
-                            </Badge>
-                          </div>
-                        </div>
-                      </div>
-                    </Card>
-                  }
-                />
+                {detailSummary}
 
               </div>
             </div>
@@ -595,6 +599,10 @@ export function SubscriptionDetailPage({ subscription: subscriptionProp, onBack 
           {/* Tab Content - Onboarding */}
           <TabsContent value="onboarding" className="mt-0">
             <div className="px-8 py-6">
+              <div className="mb-6">
+                {detailSummary}
+              </div>
+
               <div className="flex gap-6">
                 <div className="flex-1">
                   {currentStep === 0 && (
