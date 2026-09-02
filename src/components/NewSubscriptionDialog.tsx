@@ -23,6 +23,7 @@ import {
   CloudUpload,
   FileText,
   Trash2,
+  Pencil,
 } from 'lucide-react';
 import { BigModal, BigModalContent, BigModalTitle, BigModalDescription } from './ui/big-modal';
 import { Input } from './ui/input';
@@ -41,6 +42,11 @@ interface NewSubscriptionDialogProps {
   open: boolean;
   onClose: () => void;
   onSubscriptionCreated?: (subscription: any) => void;
+  /** 'edit' reuses the same form to update an existing subscription. */
+  mode?: 'create' | 'edit';
+  /** Subscription to prefill the form with, in edit mode. */
+  subscription?: any;
+  onSubscriptionUpdated?: (subscription: any) => void;
 }
 
 interface Structure {
@@ -179,6 +185,12 @@ const shareClasses: { id: string; minAmount: number }[] = [
 // Demo-only pricing — real apps fetch this per fund / share class.
 const SHARE_PRICE = 100;
 
+// Identifiers given to the fund and the distributor of an edited subscription
+// when they are absent from the demo lists.
+const EDITED_FUND_ID = 'edited-fund';
+const EDITED_DISTRIBUTOR_ID = 'edited-distributor';
+const DIRECT_DISTRIBUTOR_NAMES = ['Souscription Directe', 'Direct Subscription'];
+
 interface StructureWithOwner extends Structure {
   owner: Investor;
 }
@@ -189,8 +201,16 @@ function findInvestorOfStructure(structureId: string): Investor | null {
   ) ?? null;
 }
 
-export function NewSubscriptionDialog({ open, onClose, onSubscriptionCreated }: NewSubscriptionDialogProps) {
+export function NewSubscriptionDialog({
+  open,
+  onClose,
+  onSubscriptionCreated,
+  mode = 'create',
+  subscription,
+  onSubscriptionUpdated,
+}: NewSubscriptionDialogProps) {
   const { t } = useTranslation();
+  const isEditMode = mode === 'edit' && !!subscription;
   const [searchQuery, setSearchQuery] = useState('');
   const [structureFilter, setStructureFilter] = useState('');
   const [structurePickerOpen, setStructurePickerOpen] = useState(false);
@@ -242,6 +262,105 @@ export function NewSubscriptionDialog({ open, onClose, onSubscriptionCreated }: 
     address: '',
   });
 
+  // The fund, the share and the distributor carried by an edited subscription
+  // do not necessarily belong to the demo lists: they are merged in so the form
+  // shows what the subscription actually holds.
+  const editedFundName = isEditMode ? subscription.fund?.name ?? '' : '';
+  const editedShareClass = isEditMode ? subscription.fund?.shareClass ?? '' : '';
+  const editedDistributorName =
+    isEditMode && subscription.partenaire?.name && !DIRECT_DISTRIBUTOR_NAMES.includes(subscription.partenaire.name)
+      ? subscription.partenaire.name
+      : '';
+  const editedEntryFeePercent = isEditMode ? Number(subscription.entryFees ?? 0) : 0;
+
+  const fundOptions = useMemo(() => {
+    if (!editedFundName || funds.some((f) => f.name === editedFundName)) return funds;
+    return [{ id: EDITED_FUND_ID, name: editedFundName, aum: '', category: '' }, ...funds];
+  }, [editedFundName]);
+
+  const shareClassOptions = useMemo(() => {
+    if (!editedShareClass || shareClasses.some((sc) => sc.id === editedShareClass)) return shareClasses;
+    return [{ id: editedShareClass, minAmount: 0 }, ...shareClasses];
+  }, [editedShareClass]);
+
+  const distributorOptions = useMemo(() => {
+    if (!editedDistributorName || mockDistributors.some((d) => d.name === editedDistributorName)) {
+      return mockDistributors;
+    }
+    const fundId = fundOptions.find((f) => f.name === editedFundName)?.id ?? '';
+    return [
+      {
+        id: EDITED_DISTRIBUTOR_ID,
+        name: editedDistributorName,
+        code: '',
+        fees: [
+          {
+            fundId,
+            shareClass: editedShareClass,
+            entryFeePercent: editedEntryFeePercent,
+            managementFeePercent: 0,
+          },
+        ],
+      },
+      ...mockDistributors,
+    ];
+  }, [editedDistributorName, editedFundName, editedShareClass, editedEntryFeePercent, fundOptions]);
+
+  // An edited subscription carries its own share price, frozen at creation.
+  const sharePrice = useMemo(() => {
+    if (isEditMode && subscription.quantity > 0 && subscription.amount > 0) {
+      return subscription.amount / subscription.quantity;
+    }
+    return SHARE_PRICE;
+  }, [isEditMode, subscription]);
+
+  // Hydrate the form with the subscription being edited, each time it opens.
+  useEffect(() => {
+    if (!open || !isEditMode) return;
+    const investorName = subscription.contrepartie?.investor || subscription.contrepartie?.name || '';
+    const structureName = subscription.contrepartie?.structure;
+    const editedStructure: Structure | null = structureName
+      ? {
+          id: 'edited-structure',
+          name: structureName,
+          siret: '',
+          country: subscription.contrepartie?.country ?? '',
+          address: '',
+        }
+      : null;
+    const distributorId = editedDistributorName
+      ? distributorOptions.find((d) => d.name === editedDistributorName)?.id ?? 'direct'
+      : 'direct';
+
+    setFormData({
+      investor: {
+        id: String(subscription.contrepartie?.id ?? subscription.id),
+        name: investorName,
+        type: subscription.contrepartie?.investorType === 'corporate' || subscription.contrepartie?.type === 'corporate'
+          ? 'corporate'
+          : 'individual',
+        email: subscription.email || subscription.contrepartie?.mainContact || '',
+        structures: editedStructure ? [editedStructure] : [],
+        distributorId: distributorId === 'direct' ? null : distributorId,
+        preferredLanguage: subscription.language === 'en' ? 'en' : 'fr',
+      },
+      structure: editedStructure ?? 'direct',
+      fund: fundOptions.find((f) => f.name === editedFundName)?.id ?? '',
+      shareClass: editedShareClass,
+      numberOfShares: subscription.quantity ? String(subscription.quantity) : '',
+      entryFees: String(subscription.entryFees ?? 0),
+      subscriptionPremium: String(subscription.subscriptionPremium ?? 0),
+      distributor: distributorId,
+      hasCustodyOption: !!subscription.hasDepositary,
+      notifyOnCreation: false,
+      language: subscription.language === 'en' ? 'en' : 'fr',
+    });
+    setStep('init');
+    setSearchQuery('');
+    setShowNewInvestorForm(false);
+    setShowNewStructureForm(false);
+  }, [open, isEditMode, subscription]);
+
   // Reset form when dialog closes
   useEffect(() => {
     if (!open) {
@@ -282,7 +401,7 @@ export function NewSubscriptionDialog({ open, onClose, onSubscriptionCreated }: 
       next = attitledId || 'direct';
     } else {
       const attitledAuthorized =
-        attitledId && mockDistributors.some(
+        attitledId && distributorOptions.some(
           (d) =>
             d.id === attitledId &&
             d.fees.some(
@@ -345,7 +464,7 @@ export function NewSubscriptionDialog({ open, onClose, onSubscriptionCreated }: 
   // Get authorized distributors for selected fund and share class
   const authorizedDistributors = useMemo(() => {
     if (!formData.fund || !formData.shareClass) return [];
-    return mockDistributors.filter(dist =>
+    return distributorOptions.filter(dist =>
       dist.fees.some(f => f.fundId === formData.fund && f.shareClass === formData.shareClass)
     );
   }, [formData.fund, formData.shareClass]);
@@ -354,7 +473,7 @@ export function NewSubscriptionDialog({ open, onClose, onSubscriptionCreated }: 
   // selected fund/share class. Direct investments have no entry fees.
   const defaultEntryFeePercent = useMemo(() => {
     if (formData.distributor === 'direct') return 0;
-    const distributor = mockDistributors.find((d) => d.id === formData.distributor);
+    const distributor = distributorOptions.find((d) => d.id === formData.distributor);
     if (!distributor || !formData.fund || !formData.shareClass) return 0;
     const feeConfig = distributor.fees.find(
       (f) => f.fundId === formData.fund && f.shareClass === formData.shareClass,
@@ -385,16 +504,16 @@ export function NewSubscriptionDialog({ open, onClose, onSubscriptionCreated }: 
   // Calculate total amount (price per share is fixed for the demo).
   const calculatedAmount = useMemo(() => {
     const shares = parseFloat(formData.numberOfShares) || 0;
-    return shares * SHARE_PRICE;
+    return shares * sharePrice;
   }, [formData.numberOfShares]);
 
   // Minimum subscription amount/shares from the selected share class.
   const selectedShareClass = useMemo(
-    () => shareClasses.find((sc) => sc.id === formData.shareClass),
+    () => shareClassOptions.find((sc) => sc.id === formData.shareClass),
     [formData.shareClass],
   );
   const minAmount = selectedShareClass?.minAmount;
-  const minShares = minAmount !== undefined ? minAmount / SHARE_PRICE : undefined;
+  const minShares = minAmount !== undefined ? minAmount / sharePrice : undefined;
 
   // Bidirectional binding: typing into Montant infers the number of shares.
   // Decimal and sub-1 values are accepted (any positive amount works).
@@ -405,7 +524,7 @@ export function NewSubscriptionDialog({ open, onClose, onSubscriptionCreated }: 
       setFormData({ ...formData, numberOfShares: '' });
       return;
     }
-    const shares = amount / SHARE_PRICE;
+    const shares = amount / sharePrice;
     // Strip trailing zeros from a max-4-decimal representation
     const formatted = parseFloat(shares.toFixed(4)).toString();
     setFormData({ ...formData, numberOfShares: formatted });
@@ -545,15 +664,62 @@ export function NewSubscriptionDialog({ open, onClose, onSubscriptionCreated }: 
     setIsSubmitting(true);
     await new Promise(resolve => setTimeout(resolve, 1500));
 
-    const fundName = funds.find((f) => f.id === formData.fund)?.name ?? '';
+    const fundName = fundOptions.find((f) => f.id === formData.fund)?.name ?? '';
     const distributorName =
       formData.distributor === 'direct'
         ? 'Souscription Directe'
-        : mockDistributors.find((d) => d.id === formData.distributor)?.name ?? 'N/A';
+        : distributorOptions.find((d) => d.id === formData.distributor)?.name ?? 'N/A';
     const structureName =
       typeof formData.structure === 'object' && formData.structure
         ? formData.structure.name
         : '';
+
+    if (isEditMode) {
+      const updatedSubscription = {
+        ...subscription,
+        contrepartie: {
+          ...subscription.contrepartie,
+          investor: formData.investor.name,
+          name: formData.investor.name,
+          structure: structureName || undefined,
+          mainContact: formData.investor.email,
+        },
+        email: formData.investor.email,
+        fund: {
+          ...subscription.fund,
+          name: fundName,
+          shareClass: formData.shareClass,
+        },
+        amount: calculatedAmount,
+        quantity: parseFloat(formData.numberOfShares) || 0,
+        entryFees: entryFeePercent,
+        subscriptionPremium: subscriptionPremiumAmount,
+        partenaire:
+          formData.distributor === 'direct'
+            ? null
+            : {
+                ...(subscription.partenaire ?? { id: `PART-${Math.floor(100 + Math.random() * 900)}`, type: 'corporate' as const }),
+                name: distributorName,
+              },
+        hasDepositary: formData.hasCustodyOption,
+        language: formData.language,
+        updatedAt: new Date(),
+      };
+
+      if (onSubscriptionUpdated) {
+        onSubscriptionUpdated(updatedSubscription);
+      }
+
+      toast.success(t('subscriptions.editDialog.toast.subscriptionUpdated'), {
+        description: t('subscriptions.editDialog.toast.subscriptionUpdatedDesc', {
+          investor: formData.investor.name,
+          amount: calculatedAmount.toLocaleString('fr-FR'),
+        }),
+      });
+      setIsSubmitting(false);
+      onClose();
+      return;
+    }
 
     // Créer la nouvelle souscription
     const newSubscription: any = {
@@ -638,7 +804,7 @@ export function NewSubscriptionDialog({ open, onClose, onSubscriptionCreated }: 
         distributor:
           formData.distributor === 'direct'
             ? 'direct'
-            : mockDistributors.find((d) => d.id === formData.distributor),
+            : distributorOptions.find((d) => d.id === formData.distributor),
         entryFees: entryFeePercent,
         subscriptionPremium: subscriptionPremiumAmount,
         totalFees: calculatedFees,
@@ -682,9 +848,13 @@ export function NewSubscriptionDialog({ open, onClose, onSubscriptionCreated }: 
   return (
     <BigModal open={open} onOpenChange={onClose}>
       <BigModalContent className="p-0 gap-0">
-        <BigModalTitle className="sr-only">{t('subscriptions.newDialog.srTitle')}</BigModalTitle>
+        <BigModalTitle className="sr-only">
+          {isEditMode ? t('subscriptions.editDialog.title') : t('subscriptions.newDialog.srTitle')}
+        </BigModalTitle>
         <BigModalDescription className="sr-only">
-          {t('subscriptions.newDialog.srDescription')}
+          {isEditMode
+            ? t('subscriptions.editDialog.subtitle')
+            : t('subscriptions.newDialog.srDescription')}
         </BigModalDescription>
         
         <div className="flex flex-col h-full overflow-hidden rounded-3xl">
@@ -693,12 +863,16 @@ export function NewSubscriptionDialog({ open, onClose, onSubscriptionCreated }: 
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-3">
                 <div className="size-10 rounded-xl bg-primary text-primary-foreground flex items-center justify-center shadow-sm">
-                  <Plus className="w-5 h-5" />
+                  {isEditMode ? <Pencil className="w-5 h-5" /> : <Plus className="w-5 h-5" />}
                 </div>
                 <div>
-                  <h2 className="text-xl font-bold text-foreground">{t('subscriptions.newDialog.title')}</h2>
+                  <h2 className="text-xl font-bold text-foreground">
+                    {isEditMode ? t('subscriptions.editDialog.title') : t('subscriptions.newDialog.title')}
+                  </h2>
                   <p className="text-xs text-muted-foreground">
-                    {t('subscriptions.newDialog.singleStepSubtitle')}
+                    {isEditMode
+                      ? t('subscriptions.editDialog.subtitle')
+                      : t('subscriptions.newDialog.singleStepSubtitle')}
                   </p>
                 </div>
               </div>
@@ -1372,7 +1546,7 @@ export function NewSubscriptionDialog({ open, onClose, onSubscriptionCreated }: 
                           <SelectValue placeholder={t('subscriptions.newDialog.selectFund')} />
                         </SelectTrigger>
                         <SelectContent>
-                          {funds.map((fund) => (
+                          {fundOptions.map((fund) => (
                             <SelectItem key={fund.id} value={fund.id}>
                               <span className="font-medium truncate">{fund.name}</span>
                             </SelectItem>
@@ -1395,7 +1569,7 @@ export function NewSubscriptionDialog({ open, onClose, onSubscriptionCreated }: 
                           <SelectValue placeholder={t('subscriptions.newDialog.selectShareClass')} />
                         </SelectTrigger>
                         <SelectContent>
-                          {shareClasses.map((sc) => (
+                          {shareClassOptions.map((sc) => (
                             <SelectItem key={sc.id} value={sc.id}>
                               {t('subscriptions.newDialog.shareLabel', { class: sc.id })}
                             </SelectItem>
@@ -1459,11 +1633,11 @@ export function NewSubscriptionDialog({ open, onClose, onSubscriptionCreated }: 
                       <p className="text-[10px] text-muted-foreground">
                         {minAmount !== undefined
                           ? t('subscriptions.newDialog.pricePerShareAndMinHint', {
-                              price: SHARE_PRICE.toLocaleString('fr-FR'),
+                              price: sharePrice.toLocaleString('fr-FR'),
                               min: minAmount.toLocaleString('fr-FR'),
                             })
                           : t('subscriptions.newDialog.pricePerShareHint', {
-                              price: SHARE_PRICE.toLocaleString('fr-FR'),
+                              price: sharePrice.toLocaleString('fr-FR'),
                             })}
                       </p>
                     </div>
@@ -1873,35 +2047,58 @@ export function NewSubscriptionDialog({ open, onClose, onSubscriptionCreated }: 
                   </Button>
 
                   <div className="flex items-center gap-2">
-                    <Button
-                      onClick={handleSubmit}
-                      disabled={!isFormValid || isSubmitting}
-                      variant="outline"
-                      size="sm"
-                      className="min-w-[160px] h-9"
-                    >
-                      {isSubmitting ? (
-                        <>
-                          <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-                          {t('subscriptions.newDialog.creating')}
-                        </>
-                      ) : (
-                        <>
-                          <Check className="w-4 h-4 mr-2" />
-                          {t('subscriptions.newDialog.create')}
-                        </>
-                      )}
-                    </Button>
+                    {isEditMode ? (
+                      <Button
+                        onClick={handleSubmit}
+                        disabled={!isFormValid || isSubmitting}
+                        size="sm"
+                        className="bg-primary text-primary-foreground min-w-[200px] h-9"
+                      >
+                        {isSubmitting ? (
+                          <>
+                            <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                            {t('subscriptions.editDialog.saving')}
+                          </>
+                        ) : (
+                          <>
+                            <Check className="w-4 h-4 mr-2" />
+                            {t('subscriptions.editDialog.save')}
+                          </>
+                        )}
+                      </Button>
+                    ) : (
+                      <>
+                        <Button
+                          onClick={handleSubmit}
+                          disabled={!isFormValid || isSubmitting}
+                          variant="outline"
+                          size="sm"
+                          className="min-w-[160px] h-9"
+                        >
+                          {isSubmitting ? (
+                            <>
+                              <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                              {t('subscriptions.newDialog.creating')}
+                            </>
+                          ) : (
+                            <>
+                              <Check className="w-4 h-4 mr-2" />
+                              {t('subscriptions.newDialog.create')}
+                            </>
+                          )}
+                        </Button>
 
-                    <Button
-                      onClick={handleProceedToDocuments}
-                      disabled={!isFormValid || isSubmitting}
-                      size="sm"
-                      className="bg-primary text-primary-foreground min-w-[180px] h-9"
-                    >
-                      <Check className="w-4 h-4 mr-2" />
-                      {t('subscriptions.newDialog.createAndValidate')}
-                    </Button>
+                        <Button
+                          onClick={handleProceedToDocuments}
+                          disabled={!isFormValid || isSubmitting}
+                          size="sm"
+                          className="bg-primary text-primary-foreground min-w-[180px] h-9"
+                        >
+                          <Check className="w-4 h-4 mr-2" />
+                          {t('subscriptions.newDialog.createAndValidate')}
+                        </Button>
+                      </>
+                    )}
                   </div>
                 </>
               ) : (

@@ -592,7 +592,7 @@ export default function App() {
             animate={{ y: 0, opacity: 1 }}
             className="bg-white dark:bg-black border-b border-gray-200 dark:border-gray-800 px-6 py-4 flex items-center justify-between sticky top-0 z-40 backdrop-blur-sm bg-white/95 dark:bg-black/95"
           >
-            <div className="flex items-center gap-4">
+            <div className="flex items-center gap-4 min-w-0 flex-1">
               <motion.button 
                 whileHover={{ scale: 1.05 }}
                 whileTap={{ scale: 0.95 }}
@@ -605,7 +605,7 @@ export default function App() {
               <SearchDropdown />
             </div>
             
-            <div className="flex items-center gap-3">
+            <div className="flex items-center gap-3 shrink-0">
               <Button
                 variant="outline"
                 size="sm"
@@ -770,7 +770,13 @@ export default function App() {
                   <span className="text-gray-300 dark:text-gray-700">/</span>
                   {selectedSubscriptionDetail ? (
                     <>
-                      <span className="text-gray-400 dark:text-gray-500">{t('breadcrumb.subscriptions')}</span>
+                      <button
+                        type="button"
+                        onClick={() => setSelectedSubscriptionDetail(null)}
+                        className="text-gray-400 dark:text-gray-500 hover:text-gray-900 dark:hover:text-gray-100 transition-colors"
+                      >
+                        {t('breadcrumb.subscriptions')}
+                      </button>
                       <span className="text-gray-300 dark:text-gray-700">/</span>
                       <span className="text-gray-900 dark:text-gray-100 font-medium">{t('breadcrumb.subscriptionDetail')}</span>
                     </>
