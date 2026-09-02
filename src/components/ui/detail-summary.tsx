@@ -103,19 +103,21 @@ function AttributeItem({
   const value = hasValue ? attribute.value : emptyValue;
 
   return (
-    <div className="flex items-center gap-2">
+    <div className="flex items-center gap-2 min-w-0">
       <SummaryIcon icon={attribute.icon} />
-      <div>
+      <div className="min-w-0">
         <div className="text-xs text-muted-foreground leading-none mb-0.5">{attribute.label}</div>
         {attribute.href && hasValue ? (
-          <DetailLink href={attribute.href} title={newTabTitle} className="text-sm leading-tight">
+          <DetailLink href={attribute.href} title={newTabTitle} className="text-sm leading-tight break-words">
             {value}
           </DetailLink>
         ) : (
-          <div className="text-sm text-foreground/80 leading-tight">{value}</div>
+          <div className="text-sm text-foreground/80 leading-tight break-words">{value}</div>
         )}
         {!isBlank(attribute.secondaryValue) && (
-          <div className="text-xs text-muted-foreground leading-tight">{attribute.secondaryValue}</div>
+          <div className="text-xs text-muted-foreground leading-tight break-words">
+            {attribute.secondaryValue}
+          </div>
         )}
       </div>
     </div>
@@ -124,11 +126,11 @@ function AttributeItem({
 
 function MetricItem({ metric, emptyValue }: { metric: DetailSummaryMetric; emptyValue: string }) {
   return (
-    <div className="flex items-center gap-2">
+    <div className="flex items-center gap-2 min-w-0">
       <SummaryIcon icon={metric.icon} />
-      <div>
+      <div className="min-w-0">
         <div className="text-xs text-muted-foreground leading-tight">{metric.label}</div>
-        <div className="flex items-baseline gap-1.5">
+        <div className="flex items-baseline gap-1.5 flex-wrap">
           <span className="font-bold text-foreground">
             {isBlank(metric.value) ? emptyValue : metric.value}
           </span>
@@ -155,15 +157,16 @@ export function DetailSummary({
 
   if (!hasAttributes && !hasMetrics && !aside && !actions) return null;
 
-  const columns = Math.max(attributes?.length ?? 0, metrics?.length ?? 0, 1);
-  const gridStyle = { gridTemplateColumns: `repeat(${columns}, minmax(0, 1fr))` };
+  // Les colonnes se répartissent la largeur disponible et repassent à la ligne
+  // dès qu'elles descendent sous leur largeur minimale.
+  const gridStyle = { gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))' };
 
   return (
     <Card
       data-slot="detail-summary"
       className={cn('p-5 shadow-sm', className)}
     >
-      <div className="flex justify-between gap-6">
+      <div className="flex items-start justify-between gap-8">
         <div className="flex-1 flex flex-col gap-5 min-w-0">
           {hasAttributes && (
             <div className="grid gap-x-6 gap-y-4" style={gridStyle}>

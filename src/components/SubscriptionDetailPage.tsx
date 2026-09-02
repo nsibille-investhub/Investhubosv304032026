@@ -87,6 +87,16 @@ import {
 import { SubscriptionStatusBadge } from './SubscriptionStatusBadge';
 import { NewSubscriptionDialog } from './NewSubscriptionDialog';
 
+const SUBSCRIPTION_STEPS = [
+  { id: 0, labelKey: 'subscriptions.detail.stepper.initialization', icon: Settings },
+  { id: 1, labelKey: 'subscriptions.detail.stepper.onboarding', icon: FileText },
+  { id: 2, labelKey: 'subscriptions.detail.stepper.validation', icon: CheckCircle2 },
+  { id: 3, labelKey: 'subscriptions.detail.stepper.sendToSignature', icon: Mail },
+  { id: 4, labelKey: 'subscriptions.detail.stepper.signatures', icon: FileCheck },
+  { id: 5, labelKey: 'subscriptions.detail.stepper.counterSignature', icon: PenTool },
+  { id: 6, labelKey: 'subscriptions.detail.stepper.payment', icon: Wallet },
+];
+
 interface SubscriptionDetailPageProps {
   subscription: any;
   onBack: () => void;
@@ -517,8 +527,87 @@ export function SubscriptionDetailPage({ subscription: subscriptionProp, onBack 
                 {detailSummary}
               </div>
 
-              <div className="flex gap-6">
-                <div className="flex-1">
+              {/* Étapes de la souscription — parcours horizontal */}
+              <Card className="p-4 shadow-sm mb-6">
+                <div className="flex items-baseline justify-between gap-3 mb-3">
+                  <h3 className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+                    {t('subscriptions.detail.stepper.title')}
+                  </h3>
+                  <span className="text-xs text-muted-foreground whitespace-nowrap">
+                    {t('subscriptions.detail.stepper.stepOf', {
+                      current: currentStep + 1,
+                      total: SUBSCRIPTION_STEPS.length,
+                    })}
+                  </span>
+                </div>
+
+                <ol className="flex items-start overflow-x-auto pb-1">
+                  {SUBSCRIPTION_STEPS.map((step, index) => {
+                    const StepIcon = step.icon;
+                    const isActive = currentStep === step.id;
+                    const isCompleted = currentStep > step.id;
+                    const isAccessible = step.id <= currentStep + 1;
+                    const isFirst = index === 0;
+                    const isLast = index === SUBSCRIPTION_STEPS.length - 1;
+                    const connectorBefore = isCompleted || isActive ? 'bg-green-300' : 'bg-border';
+                    const connectorAfter = isCompleted ? 'bg-green-300' : 'bg-border';
+
+                    return (
+                      <li key={step.id} className="flex-1 min-w-[96px]">
+                        <button
+                          type="button"
+                          onClick={() => isAccessible && setCurrentStep(step.id)}
+                          disabled={!isAccessible}
+                          aria-current={isActive ? 'step' : undefined}
+                          className={`w-full flex flex-col items-center gap-2 py-1.5 transition-opacity ${
+                            isAccessible ? 'hover:opacity-80' : 'opacity-40 cursor-not-allowed'
+                          }`}
+                        >
+                          <span className="flex w-full items-center">
+                            <span
+                              aria-hidden
+                              className={`h-0.5 flex-1 rounded-full ${isFirst ? 'opacity-0' : connectorBefore}`}
+                            />
+                            <span
+                              style={isActive ? { background: PRIMARY_BUTTON_GRADIENT } : undefined}
+                              className={`mx-2 flex w-8 h-8 shrink-0 items-center justify-center rounded-full ${
+                                isActive
+                                  ? 'text-white shadow-md'
+                                  : isCompleted
+                                    ? 'bg-green-100'
+                                    : 'bg-muted'
+                              }`}
+                            >
+                              {isCompleted ? (
+                                <Check className="w-4 h-4 text-green-600" />
+                              ) : (
+                                <StepIcon className={`w-4 h-4 ${isActive ? 'text-white' : 'text-muted-foreground'}`} />
+                              )}
+                            </span>
+                            <span
+                              aria-hidden
+                              className={`h-0.5 flex-1 rounded-full ${isLast ? 'opacity-0' : connectorAfter}`}
+                            />
+                          </span>
+                          <span
+                            className={`text-xs leading-tight text-center px-1 ${
+                              isActive
+                                ? 'font-semibold text-foreground'
+                                : isCompleted
+                                  ? 'text-foreground/80'
+                                  : 'text-muted-foreground'
+                            }`}
+                          >
+                            {t(step.labelKey)}
+                          </span>
+                        </button>
+                      </li>
+                    );
+                  })}
+                </ol>
+              </Card>
+
+                <div>
                   {currentStep === 0 && (
                     <div className="space-y-6">
                       <Card className="p-6 shadow-sm">
@@ -1643,76 +1732,6 @@ export function SubscriptionDetailPage({ subscription: subscriptionProp, onBack 
                     </div>
                   )}
                 </div>
-
-                {/* Stepper Sidebar */}
-                <div className="w-80 flex-shrink-0">
-                  {/* Stepper */}
-                  <Card className="sticky top-32 p-6 shadow-sm">
-                    <h3 className="font-bold text-foreground mb-6">{t('subscriptions.detail.stepper.title')}</h3>
-
-                    <div className="space-y-1">
-                      {[
-                        { id: 0, labelKey: 'subscriptions.detail.stepper.initialization', icon: Settings },
-                        { id: 1, labelKey: 'subscriptions.detail.stepper.onboarding', icon: FileText },
-                        { id: 2, labelKey: 'subscriptions.detail.stepper.validation', icon: CheckCircle2 },
-                        { id: 3, labelKey: 'subscriptions.detail.stepper.sendToSignature', icon: Mail },
-                        { id: 4, labelKey: 'subscriptions.detail.stepper.signatures', icon: FileCheck },
-                        { id: 5, labelKey: 'subscriptions.detail.stepper.counterSignature', icon: PenTool },
-                        { id: 6, labelKey: 'subscriptions.detail.stepper.payment', icon: Wallet },
-                      ].map((step, index) => {
-                        const StepIcon = step.icon;
-                        const isActive = currentStep === step.id;
-                        const isCompleted = currentStep > step.id;
-                        const isAccessible = step.id <= currentStep + 1; // Can go to current or next step
-
-                        return (
-                          <div key={step.id}>
-                            <button
-                              onClick={() => isAccessible && setCurrentStep(step.id)}
-                              disabled={!isAccessible}
-                              style={isActive ? { background: PRIMARY_BUTTON_GRADIENT } : undefined}
-                              className={`w-full flex items-start gap-3 p-3 rounded-lg transition-all text-left ${
-                                isActive
-                                  ? 'text-white shadow-md'
-                                  : isCompleted
-                                    ? 'bg-green-50 hover:bg-green-100 text-green-900'
-                                    : isAccessible
-                                      ? 'hover:bg-muted text-foreground'
-                                      : 'opacity-40 cursor-not-allowed text-muted-foreground/60'
-                              }`}
-                            >
-                              <div className={`flex-shrink-0 w-8 h-8 rounded-lg flex items-center justify-center ${
-                                isActive 
-                                  ? 'bg-white/20'
-                                  : isCompleted 
-                                    ? 'bg-green-200'
-                                    : 'bg-muted'
-                              }`}>
-                                {isCompleted ? (
-                                  <Check className={`w-4 h-4 ${isActive ? 'text-white' : 'text-green-600'}`} />
-                                ) : (
-                                  <StepIcon className={`w-4 h-4 ${isActive ? 'text-white' : 'text-muted-foreground'}`} />
-                                )}
-                              </div>
-                              <div className="flex-1 min-w-0">
-                                <div className={`text-sm font-semibold ${isActive ? 'text-white' : ''}`}>
-                                  {t(step.labelKey)}
-                                </div>
-                                <div className={`text-xs ${isActive ? 'text-white/80' : 'text-muted-foreground'}`}>
-                                  {t('subscriptions.detail.stepper.stepOf', { current: step.id + 1, total: 7 })}
-                                </div>
-                              </div>
-                            </button>
-                            {index < 6 && (
-                              <div className={`w-px h-4 ml-7 ${isCompleted ? 'bg-green-300' : 'bg-border'}`}></div>
-                            )}
-                          </div>
-                        );
-                      })}
-                    </div>
-                  </Card>
-                </div>
-              </div>
             </div>
           </TabsContent>
 
