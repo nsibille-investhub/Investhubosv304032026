@@ -1180,6 +1180,16 @@
           "en": "Anglais"
         }
       }
+    },
+    "editDialog": {
+      "title": "Modifier la souscription",
+      "subtitle": "Mettez à jour les informations de la souscription",
+      "save": "Enregistrer les modifications",
+      "saving": "Enregistrement...",
+      "toast": {
+        "subscriptionUpdated": "Souscription mise à jour",
+        "subscriptionUpdatedDesc": "{{investor}} - {{amount}} €"
+      }
     }
   },
   "investors": {

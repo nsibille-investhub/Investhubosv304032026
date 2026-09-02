@@ -11,7 +11,6 @@ import {
   X,
   Edit2,
   Eye,
-  EyeOff,
   FileText,
   Calendar,
   DollarSign,
@@ -46,26 +45,15 @@ import {
   MessageSquare,
   PenTool,
   Copy,
-  Save,
   Landmark,
   Layers3,
-  Euro,
-  Handshake,
-  ShieldCheck,
-  Info,
-  Sparkles,
-  Briefcase,
 } from 'lucide-react';
 import { motion } from 'motion/react';
 import { Badge } from './ui/badge';
 import { Button } from './ui/button';
 import { Card } from './ui/card';
-import { Label } from './ui/label';
 import { Separator } from './ui/separator';
-import { Textarea } from './ui/textarea';
 import { Input } from './ui/input';
-import { Switch } from './ui/switch';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from './ui/select';
 import { toast } from 'sonner';
 import { getStatusColor } from '../utils/subscriptionGenerator';
 import { copyToClipboard } from '../utils/clipboard';
@@ -98,6 +86,7 @@ import {
 } from '../utils/subscriptionDetailMockData';
 import { StatusBadge } from './StatusBadge';
 import { SubscriptionStatusBadge } from './SubscriptionStatusBadge';
+import { NewSubscriptionDialog } from './NewSubscriptionDialog';
 
 interface SubscriptionDetailPageProps {
   subscription: any;
@@ -105,59 +94,20 @@ interface SubscriptionDetailPageProps {
 }
 
 
-export function SubscriptionDetailPage({ subscription, onBack }: SubscriptionDetailPageProps) {
+export function SubscriptionDetailPage({ subscription: subscriptionProp, onBack }: SubscriptionDetailPageProps) {
   const { t } = useTranslation();
 
+  // Les modifications faites depuis la modale restent locales : la donnée
+  // amont de la maquette n'est pas réécrite.
+  const [editedSubscription, setEditedSubscription] = useState<any>(null);
+  const subscription = editedSubscription ?? subscriptionProp;
+
+  const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
   const [idCopied, setIdCopied] = useState(false);
   const [openSections, setOpenSections] = useState<string[]>(['identity']);
   const [note, setNote] = useState('');
   const [notes, setNotes] = useState<Array<{ text: string; date: string; author: string }>>([]);
   const [activeTab, setActiveTab] = useState('detail');
-  const [isEditing, setIsEditing] = useState(false);
-
-  const buildEditForm = () => ({
-    subscriptionName: subscription.name || '',
-    investorName: subscription.contrepartie.investor || subscription.contrepartie.name || '',
-    structure: subscription.contrepartie.structure || '',
-    mainContact: subscription.contrepartie.mainContact || '',
-    country: subscription.contrepartie.country || '',
-    fundName: subscription.fund.name || '',
-    shareClass: subscription.fund.shareClass || '',
-    quantity: subscription.quantity ?? 0,
-    amount: subscription.amount ?? 0,
-    partner: subscription.partenaire?.name || '',
-    advisor: subscription.advisor || '',
-    entryFees: subscription.entryFees ?? 0,
-    subscriptionPremium: subscription.subscriptionPremium ?? 0,
-    language: subscription.language || 'fr',
-    sepaEnabled: subscription.sepaEnabled ?? false,
-    hasDepositary: subscription.hasDepositary ?? false,
-    source: subscription.source || 'manuel',
-    analyst: subscription.analyst || '',
-    signatureChannel: subscription.signatureChannel || 'e-signature',
-    notes: subscription.notes || '',
-    holdingMode: subscription.holdingMode || 'pur',
-    externalId: subscription.externalId || '',
-    subscriptionType: subscription.subscriptionType || '',
-    subscriberTitle: subscription.subscriberTitle || 'mr',
-    legalName: subscription.legalName || '',
-    firstName: subscription.firstName || '',
-    lastName: subscription.lastName || '',
-    email: subscription.email || '',
-    phone: subscription.phone || '',
-    address1: subscription.address1 || '',
-    address2: subscription.address2 || '',
-    postalCode: subscription.postalCode || '',
-    city: subscription.city || '',
-    nationality: subscription.nationality || '',
-    iban: subscription.iban || '',
-    bic: subscription.bic || '',
-    commissionRate: subscription.commissionRate ?? 0,
-    excludeRetrocessions: subscription.excludeRetrocessions ?? false,
-    sideLetter: subscription.sideLetter || '',
-  });
-
-  const [editForm, setEditForm] = useState(buildEditForm);
 
   // Stepper state — newly created subscriptions carry initialStep=0 so they
   // land on the Initialisation step (the wizard's data is pre-filled below).
@@ -443,7 +393,7 @@ export function SubscriptionDetailPage({ subscription, onBack }: SubscriptionDet
 
       {/* Tabs - Same structure as InvestorDetailPage */}
       <div className="px-8 bg-card border-b border-border">
-        <Tabs value={activeTab} onValueChange={(v) => { setActiveTab(v); if (v !== 'detail') setIsEditing(false); }} className="w-full">
+        <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
           <TabsList className="!bg-transparent rounded-none w-full justify-start h-auto p-0 gap-0">
             {[
               { value: 'detail', icon: FileText, labelKey: 'subscriptions.detail.tabs.detail' },
@@ -483,6 +433,17 @@ export function SubscriptionDetailPage({ subscription, onBack }: SubscriptionDet
 
                 <DetailSummary
                   newTabTitle={openInNewTab}
+                  actions={
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      className="gap-1.5 text-primary border-primary/30 hover:bg-primary/5 hover:text-primary h-9"
+                      onClick={() => setIsEditDialogOpen(true)}
+                    >
+                      <Edit2 className="w-3.5 h-3.5" />
+                      {t('subscriptions.detail.editButton')}
+                    </Button>
+                  }
                   attributes={[
                     {
                       id: 'investor',
@@ -626,316 +587,6 @@ export function SubscriptionDetailPage({ subscription, onBack }: SubscriptionDet
                     </Card>
                   }
                 />
-
-                {/* Edit / Save / Cancel actions */}
-                <div className="flex items-center justify-end">
-                  {!isEditing ? (
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      className="gap-1.5 text-primary border-primary/30 hover:bg-primary/5 hover:text-primary h-9"
-                      onClick={() => setIsEditing(true)}
-                    >
-                      <Edit2 className="w-3.5 h-3.5" />
-                      {t('subscriptions.detail.editButton')}
-                    </Button>
-                  ) : (
-                    <div className="flex items-center gap-2">
-                      <Button
-                        size="sm"
-                        variant="outline"
-                        onClick={() => { setEditForm(buildEditForm()); setIsEditing(false); }}
-                        className="h-9"
-                      >
-                        <X className="w-4 h-4 mr-1" />
-                        {t('subscriptions.detail.form.cancel')}
-                      </Button>
-                      <Button
-                        size="sm"
-                        onClick={() => { setIsEditing(false); toast.success(t('subscriptions.detail.form.saved')); }}
-                        className="bg-primary text-primary-foreground h-9"
-                      >
-                        <Save className="w-4 h-4 mr-1" />
-                        {t('subscriptions.detail.form.save')}
-                      </Button>
-                    </div>
-                  )}
-                </div>
-
-                {/* INVESTISSEUR */}
-                <div className="space-y-2">
-                  <Label className="text-xs uppercase tracking-wide font-semibold text-muted-foreground flex items-center gap-1.5">
-                    <User className="w-3.5 h-3.5" />
-                    {t('subscriptions.newDialog.investorLabel')}
-                    <span className="text-red-500">*</span>
-                  </Label>
-                  <div className="flex h-10 w-full items-center gap-2 rounded-md border border-input bg-white px-3 py-2 text-sm">
-                    <PartyTypeBadge type={subscription.contrepartie.type === 'corporate' ? 'corporate' : 'individual'} label={subscription.contrepartie.type === 'corporate' ? t('subscriptions.newDialog.shortCorporate') : t('subscriptions.newDialog.shortIndividual')} />
-                    <span className="font-medium text-foreground">{subscription.contrepartie.investor || subscription.contrepartie.name}</span>
-                    <span className="text-xs text-muted-foreground hidden sm:inline">{subscription.email || subscription.contrepartie.mainContact}</span>
-                  </div>
-                </div>
-
-                {/* STRUCTURE */}
-                <div className="space-y-2">
-                  <Label className="text-xs uppercase tracking-wide font-semibold text-muted-foreground flex items-center gap-1.5">
-                    <Building2 className="w-3.5 h-3.5" />
-                    {t('subscriptions.newDialog.structureLabel')}
-                  </Label>
-                  <div className="flex h-10 w-full items-center gap-2 rounded-md border border-input bg-white px-3 py-2 text-sm">
-                    {subscription.contrepartie.structure ? (
-                      <>
-                        <Building2 className="w-4 h-4 text-muted-foreground flex-shrink-0" />
-                        <span className="font-medium text-foreground">{subscription.contrepartie.structure}</span>
-                        {subscription.contrepartie.country && (
-                          <Badge variant="outline" className="ml-auto text-xs">{subscription.contrepartie.country}</Badge>
-                        )}
-                      </>
-                    ) : (
-                      <>
-                        <User className="w-4 h-4 text-green-600 flex-shrink-0" />
-                        <span className="font-medium text-foreground">{t('subscriptions.newDialog.directInvestmentTitle')}</span>
-                        <span className="text-xs text-muted-foreground">{t('subscriptions.newDialog.directInvestorDesc', { name: subscription.contrepartie.investor || subscription.contrepartie.name })}</span>
-                      </>
-                    )}
-                  </div>
-                </div>
-
-                {/* FONDS + PART */}
-                <div className="grid gap-3" style={{ gridTemplateColumns: '1.6fr 1fr' }}>
-                  <div className="space-y-1.5">
-                    <Label className="text-xs flex items-center gap-1.5">
-                      <Landmark className="w-3.5 h-3.5" />
-                      {t('subscriptions.newDialog.fundLabel')}
-                      <span className="text-red-500">*</span>
-                    </Label>
-                    {isEditing ? (
-                      <Input value={editForm.fundName} onChange={e => setEditForm(f => ({ ...f, fundName: e.target.value }))} className="h-10" />
-                    ) : (
-                      <div className="flex h-10 w-full items-center rounded-md border border-input bg-white px-3 py-2 text-sm">
-                        <span className="font-medium text-foreground truncate">{subscription.fund.name}</span>
-                      </div>
-                    )}
-                  </div>
-                  <div className="space-y-1.5">
-                    <Label className="text-xs flex items-center gap-1.5">
-                      <Layers3 className="w-3.5 h-3.5" />
-                      {t('subscriptions.newDialog.partLabel')}
-                      <span className="text-red-500">*</span>
-                    </Label>
-                    {isEditing ? (
-                      <Input value={editForm.shareClass} onChange={e => setEditForm(f => ({ ...f, shareClass: e.target.value }))} className="h-10" />
-                    ) : (
-                      <div className="flex h-10 w-full items-center rounded-md border border-input bg-white px-3 py-2 text-sm">
-                        <span className="text-foreground">{t('subscriptions.newDialog.shareLabel', { class: subscription.fund.shareClass })}</span>
-                      </div>
-                    )}
-                  </div>
-                </div>
-
-                {/* NOMBRE DE PARTS + MONTANT + OPTION CONSERVATION */}
-                <div className="grid gap-3" style={{ gridTemplateColumns: '1fr 1.2fr 1.4fr' }}>
-                  <div className="space-y-1.5">
-                    <Label className="text-xs flex items-center gap-1.5">
-                      <Hash className="w-3.5 h-3.5" />
-                      {t('subscriptions.newDialog.numberOfShares')}
-                      <span className="text-red-500">*</span>
-                    </Label>
-                    {isEditing ? (
-                      <Input type="text" inputMode="decimal" value={editForm.quantity} onChange={e => setEditForm(f => ({ ...f, quantity: Number(e.target.value) }))} className="h-10 font-semibold text-right" />
-                    ) : (
-                      <div className="flex h-10 w-full items-center justify-end rounded-md border border-input bg-white px-3 py-2 text-sm">
-                        <span className="font-semibold text-foreground">{(subscription.quantity ?? 0).toLocaleString('fr-FR')}</span>
-                      </div>
-                    )}
-                  </div>
-                  <div className="space-y-1.5">
-                    <Label className="text-xs flex items-center gap-1.5">
-                      <Euro className="w-3.5 h-3.5" />
-                      {t('subscriptions.newDialog.amount')}
-                      <span className="text-red-500">*</span>
-                    </Label>
-                    {isEditing ? (
-                      <Input type="text" inputMode="decimal" value={editForm.amount} onChange={e => setEditForm(f => ({ ...f, amount: Number(e.target.value) }))} className="h-10 font-semibold text-right" />
-                    ) : (
-                      <div className="flex h-10 w-full items-center justify-end rounded-md border border-input bg-white px-3 py-2 text-sm">
-                        <span className="font-semibold text-foreground">{(subscription.amount ?? 0).toLocaleString('fr-FR')} €</span>
-                      </div>
-                    )}
-                    <span className="text-[11px] text-muted-foreground">
-                      {t('subscriptions.newDialog.pricePerShareHint', { price: subscription.quantity ? ((subscription.amount ?? 0) / subscription.quantity).toLocaleString('fr-FR', { minimumFractionDigits: 2, maximumFractionDigits: 6 }) : '-' })}
-                    </span>
-                  </div>
-                  <div className="space-y-1.5">
-                    <Label className="text-xs flex items-center gap-1.5">
-                      <ShieldCheck className="w-3.5 h-3.5" />
-                      {t('subscriptions.newDialog.custodyOptionLabel')}
-                    </Label>
-                    {isEditing ? (
-                      <label
-                        htmlFor="detail-custody-switch"
-                        className="flex h-10 w-full items-center justify-between gap-3 rounded-md border border-input bg-white px-3 py-2 text-sm cursor-pointer hover:bg-muted/40 transition-colors"
-                      >
-                        <span className="text-foreground truncate">
-                          {editForm.hasDepositary ? t('subscriptions.newDialog.custodyOptionOn') : t('subscriptions.newDialog.custodyOptionOff')}
-                        </span>
-                        <Switch
-                          id="detail-custody-switch"
-                          checked={editForm.hasDepositary}
-                          onCheckedChange={v => setEditForm(f => ({ ...f, hasDepositary: v }))}
-                        />
-                      </label>
-                    ) : (
-                      <div className="flex h-10 w-full items-center justify-between rounded-md border border-input bg-white px-3 py-2 text-sm">
-                        <span className="text-foreground">{subscription.hasDepositary ? t('subscriptions.newDialog.custodyOptionOn') : t('subscriptions.newDialog.custodyOptionOff')}</span>
-                        <Switch checked={subscription.hasDepositary ?? false} disabled />
-                      </div>
-                    )}
-                  </div>
-                </div>
-
-                <Separator className="my-2" />
-
-                {/* DISTRIBUTEUR */}
-                <div className="space-y-2 mb-3">
-                  <Label className="text-xs uppercase tracking-wide font-semibold text-muted-foreground flex items-center gap-1.5">
-                    <Handshake className="w-3.5 h-3.5" />
-                    {t('subscriptions.newDialog.distributorLabel')}
-                  </Label>
-                  <div className="flex h-10 w-full items-center gap-2 rounded-md border border-input bg-white px-3 py-2 text-sm">
-                    {subscription.partenaire?.name && subscription.partenaire.name !== 'Direct' ? (
-                      <>
-                        <Handshake className="w-4 h-4 text-primary flex-shrink-0" />
-                        <span className="font-medium text-foreground">{subscription.partenaire.name}</span>
-                        {subscription.advisor && (
-                          <span className="text-xs text-muted-foreground ml-auto">{subscription.advisor}</span>
-                        )}
-                      </>
-                    ) : (
-                      <>
-                        <Briefcase className="w-4 h-4 text-green-600 flex-shrink-0" />
-                        <span className="font-medium text-foreground">{t('subscriptions.newDialog.directSubscription')}</span>
-                        <span className="text-xs text-muted-foreground">{t('subscriptions.newDialog.noEntryFees')}</span>
-                      </>
-                    )}
-                  </div>
-                </div>
-
-                {/* FRAIS D'ENTREE + PRIME DE SOUSCRIPTION */}
-                <div className="grid gap-3" style={{ gridTemplateColumns: '1fr 1fr' }}>
-                  <div className="space-y-1.5">
-                    <Label className="text-xs flex items-center gap-1.5">
-                      <Euro className="w-3.5 h-3.5" />
-                      {t('subscriptions.newDialog.entryFeesEditableLabel')}
-                    </Label>
-                    {isEditing ? (
-                      <div className="flex h-10 w-full items-center rounded-md border border-input bg-white pr-3 focus-within:ring-2 focus-within:ring-ring/40">
-                        <Input
-                          type="text"
-                          inputMode="decimal"
-                          value={editForm.entryFees}
-                          onChange={e => setEditForm(f => ({ ...f, entryFees: Number(e.target.value) }))}
-                          className="h-full border-0 bg-transparent font-semibold text-right shadow-none focus-visible:ring-0 focus-visible:ring-offset-0"
-                        />
-                        <span className="ml-1 text-sm text-muted-foreground select-none">%</span>
-                      </div>
-                    ) : (
-                      <div className="flex h-10 w-full items-center justify-end rounded-md border border-input bg-white px-3 py-2 text-sm">
-                        <span className="font-semibold text-foreground">{(subscription.entryFees ?? 0).toFixed(2)} %</span>
-                      </div>
-                    )}
-                  </div>
-                  <div className="space-y-1.5">
-                    <Label className="text-xs flex items-center gap-1.5">
-                      <Sparkles className="w-3.5 h-3.5" />
-                      {t('subscriptions.newDialog.subscriptionPremiumLabel')}
-                    </Label>
-                    {isEditing ? (
-                      <div className="flex h-10 w-full items-center rounded-md border border-input bg-white pr-3 focus-within:ring-2 focus-within:ring-ring/40">
-                        <Input
-                          type="text"
-                          inputMode="decimal"
-                          value={editForm.subscriptionPremium}
-                          onChange={e => setEditForm(f => ({ ...f, subscriptionPremium: Number(e.target.value) }))}
-                          className="h-full border-0 bg-transparent font-semibold text-right shadow-none focus-visible:ring-0 focus-visible:ring-offset-0"
-                        />
-                        <span className="ml-1 text-sm text-muted-foreground select-none">€</span>
-                      </div>
-                    ) : (
-                      <div className="flex h-10 w-full items-center justify-end rounded-md border border-input bg-white px-3 py-2 text-sm">
-                        <span className="font-semibold text-foreground">{(subscription.subscriptionPremium ?? 0).toLocaleString('fr-FR', { minimumFractionDigits: 2 })} €</span>
-                      </div>
-                    )}
-                  </div>
-                </div>
-
-                {/* RECAPITULATIF MONTANTS */}
-                {(subscription.amount ?? 0) > 0 && (
-                  <motion.div
-                    initial={{ opacity: 0, y: -4 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    className="p-3 bg-primary/5 rounded-lg border border-primary/30"
-                  >
-                    <div className="space-y-1">
-                      <div className="flex justify-between text-xs">
-                        <span className="text-muted-foreground">{t('subscriptions.newDialog.amount')}</span>
-                        <span className="font-medium text-foreground">{(subscription.amount ?? 0).toLocaleString('fr-FR', { minimumFractionDigits: 2 })} €</span>
-                      </div>
-                      <div className="flex justify-between text-xs">
-                        <span className="text-muted-foreground">
-                          {t('subscriptions.newDialog.feesWithPercent', { percent: (subscription.entryFees ?? 0).toFixed(2) })}
-                          {(!subscription.partenaire?.name || subscription.partenaire.name === 'Direct') && (
-                            <Badge className="ml-1 bg-green-100 text-green-700 border-green-300 text-[10px]">{t('subscriptions.newDialog.direct')}</Badge>
-                          )}
-                        </span>
-                        <span className="font-medium text-foreground">{((subscription.amount ?? 0) * (subscription.entryFees ?? 0) / 100).toLocaleString('fr-FR', { minimumFractionDigits: 2 })} €</span>
-                      </div>
-                      {(subscription.subscriptionPremium ?? 0) > 0 && (
-                        <div className="flex justify-between text-xs">
-                          <span className="text-muted-foreground">{t('subscriptions.newDialog.subscriptionPremiumLabel')}</span>
-                          <span className="font-medium text-foreground">{(subscription.subscriptionPremium ?? 0).toLocaleString('fr-FR', { minimumFractionDigits: 2 })} €</span>
-                        </div>
-                      )}
-                      <Separator />
-                      <div className="flex justify-between">
-                        <span className="text-xs font-semibold text-foreground">{t('subscriptions.newDialog.total')}</span>
-                        <span className="font-bold text-primary">
-                          {((subscription.amount ?? 0) + (subscription.subscriptionPremium ?? 0) + ((subscription.amount ?? 0) * (subscription.entryFees ?? 0) / 100)).toLocaleString('fr-FR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} €
-                        </span>
-                      </div>
-                    </div>
-                  </motion.div>
-                )}
-
-                <Separator className="my-2" />
-
-                {/* NOTIFICATION & LANGUE */}
-                <div className="space-y-2">
-                  <Label className="text-xs uppercase tracking-wide font-semibold text-muted-foreground flex items-center gap-1.5">
-                    <Globe className="w-3.5 h-3.5" />
-                    {t('subscriptions.newDialog.notificationSection.title')}
-                  </Label>
-
-                  <div className="space-y-1.5">
-                    <Label className="text-xs flex items-center gap-1.5">
-                      <Globe className="w-3.5 h-3.5" />
-                      {t('subscriptions.newDialog.notificationSection.languageLabel')}
-                    </Label>
-                    {isEditing ? (
-                      <Select value={editForm.language} onValueChange={v => setEditForm(f => ({ ...f, language: v }))}>
-                        <SelectTrigger className="h-10"><SelectValue /></SelectTrigger>
-                        <SelectContent>
-                          <SelectItem value="fr">{t('subscriptions.newDialog.notificationSection.languageOptions.fr')}</SelectItem>
-                          <SelectItem value="en">{t('subscriptions.newDialog.notificationSection.languageOptions.en')}</SelectItem>
-                        </SelectContent>
-                      </Select>
-                    ) : (
-                      <div className="flex h-10 w-full items-center rounded-md border border-input bg-white px-3 py-2 text-sm">
-                        <span className="text-foreground">{(subscription.language || 'fr') === 'fr' ? t('subscriptions.newDialog.notificationSection.languageOptions.fr') : t('subscriptions.newDialog.notificationSection.languageOptions.en')}</span>
-                      </div>
-                    )}
-                  </div>
-                </div>
 
               </div>
             </div>
@@ -3395,6 +3046,14 @@ export function SubscriptionDetailPage({ subscription, onBack }: SubscriptionDet
           </TabsContent>
         </Tabs>
       </div>
+
+      <NewSubscriptionDialog
+        open={isEditDialogOpen}
+        mode="edit"
+        subscription={subscription}
+        onClose={() => setIsEditDialogOpen(false)}
+        onSubscriptionUpdated={updated => setEditedSubscription(updated)}
+      />
     </div>
   );
 }

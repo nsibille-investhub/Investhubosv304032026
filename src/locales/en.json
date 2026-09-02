@@ -1180,6 +1180,16 @@
           "en": "English"
         }
       }
+    },
+    "editDialog": {
+      "title": "Edit subscription",
+      "subtitle": "Update the subscription information",
+      "save": "Save changes",
+      "saving": "Saving...",
+      "toast": {
+        "subscriptionUpdated": "Subscription updated",
+        "subscriptionUpdatedDesc": "{{investor}} - €{{amount}}"
+      }
     }
   },
   "investors": {

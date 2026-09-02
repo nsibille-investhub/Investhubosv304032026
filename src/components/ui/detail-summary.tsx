@@ -69,6 +69,8 @@ export type DetailSummaryMetric = {
 export type DetailSummaryProps = {
   attributes?: DetailSummaryAttribute[];
   metrics?: DetailSummaryMetric[];
+  /** Actions shown at the top right of the block, above the contextual slot. */
+  actions?: React.ReactNode;
   aside?: React.ReactNode;
   emptyValue?: string;
   newTabTitle?: string;
@@ -142,6 +144,7 @@ function MetricItem({ metric, emptyValue }: { metric: DetailSummaryMetric; empty
 export function DetailSummary({
   attributes,
   metrics,
+  actions,
   aside,
   emptyValue = '-',
   newTabTitle,
@@ -150,7 +153,7 @@ export function DetailSummary({
   const hasAttributes = !!attributes && attributes.length > 0;
   const hasMetrics = !!metrics && metrics.length > 0;
 
-  if (!hasAttributes && !hasMetrics && !aside) return null;
+  if (!hasAttributes && !hasMetrics && !aside && !actions) return null;
 
   const columns = Math.max(attributes?.length ?? 0, metrics?.length ?? 0, 1);
   const gridStyle = { gridTemplateColumns: `repeat(${columns}, minmax(0, 1fr))` };
@@ -184,7 +187,12 @@ export function DetailSummary({
           )}
         </div>
 
-        {aside && <div className="flex-shrink-0">{aside}</div>}
+        {(actions || aside) && (
+          <div className="flex-shrink-0 flex flex-col items-end gap-3">
+            {actions && <div className="flex items-center gap-2">{actions}</div>}
+            {aside}
+          </div>
+        )}
       </div>
     </Card>
   );
