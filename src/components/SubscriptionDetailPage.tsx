@@ -489,7 +489,7 @@ export function SubscriptionDetailPage({ subscription: subscriptionProp, onBack 
       {/* Tabs - Same structure as InvestorDetailPage */}
       <div className="px-8 bg-card border-b border-border">
         <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-          <TabsList className="!bg-transparent rounded-none w-full justify-start h-auto p-0 gap-0">
+          <TabsList className="!bg-transparent rounded-none w-full max-w-full justify-start h-auto p-0 gap-0 overflow-hidden">
             {[
               { value: 'onboarding', icon: ClipboardList, labelKey: 'subscriptions.detail.tabs.onboarding', badge: `${Math.round(subscription.completionOnboarding)}%`, badgeClass: 'bg-amber-50 text-amber-700 border-amber-200' },
               { value: 'emails', icon: Mail, labelKey: 'subscriptions.detail.tabs.emails', badge: String(mockEmails.length), badgeClass: 'bg-indigo-50 text-indigo-700 border-indigo-200' },
@@ -505,13 +505,14 @@ export function SubscriptionDetailPage({ subscription: subscriptionProp, onBack 
                 <TabsTrigger
                   key={tab.value}
                   value={tab.value}
-                  className="!bg-transparent !rounded-none !border-0 !shadow-none px-4 pb-3 pt-4 font-medium text-muted-foreground data-[state=active]:text-primary"
+                  title={t(tab.labelKey)}
+                  className="!bg-transparent !rounded-none !border-0 !shadow-none basis-auto min-w-0 px-2 xl:px-4 pb-3 pt-4 font-medium text-muted-foreground data-[state=active]:text-primary"
                   style={isActive ? { boxShadow: 'inset 0 -2px 0 0 var(--color-primary)' } : undefined}
                 >
-                  <Icon className="w-4 h-4 mr-2" />
-                  {t(tab.labelKey)}
+                  <Icon className="w-4 h-4 mr-2 shrink-0" />
+                  <span className="truncate">{t(tab.labelKey)}</span>
                   {tab.badge && (
-                    <Badge className={`ml-2 text-xs ${tab.badgeClass}`}>
+                    <Badge className={`ml-2 text-xs shrink-0 ${tab.badgeClass}`}>
                       {tab.badge}
                     </Badge>
                   )}
