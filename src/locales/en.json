@@ -395,9 +395,11 @@
         "active": "Active",
         "id": "ID: {{id}}",
         "createdOn": "Created on {{date}}",
+        "activatedOn": "Activated on {{date}}",
         "investor": "Investor",
         "structure": "Structure",
         "partner": "Partner",
+        "directInvestment": "Direct",
         "advisor": "Advisor: {{name}}",
         "fees": "Fees",
         "entryFees": "Entry fees: {{amount}}",
@@ -420,12 +422,8 @@
         "pepDetected": "PEP detected",
         "sanctions": "Sanctions",
         "adverseMedia": "Adverse media",
-        "navigateToInvestor": "Navigate to investor profile",
-        "navigateToStructure": "Navigate to structure profile",
-        "navigateToPartner": "Navigate to partner profile",
-        "navigateToFund": "Navigate to fund",
-        "navigateToShareClass": "Navigate to share class",
-        "copyId": "Click to copy ID"
+        "copyId": "Click to copy ID",
+        "openInNewTab": "Open in a new tab"
       },
       "tabs": {
         "detail": "Detail",

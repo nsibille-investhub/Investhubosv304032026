@@ -1,7 +1,6 @@
 import { useState } from 'react';
 import { useTranslation } from '../utils/languageContext';
 import {
-  ArrowLeft,
   Building2,
   User,
   Store,
@@ -70,6 +69,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '.
 import { toast } from 'sonner';
 import { getStatusColor } from '../utils/subscriptionGenerator';
 import { copyToClipboard } from '../utils/clipboard';
+import { getShareableUrl } from '../utils/routing';
 import { SubscriptionInfoPopover } from './SubscriptionInfoPopover';
 import { PartyTypeBadge } from './ui/party-type-badge';
 import { QuestionActions, QuestionStatus } from './QuestionActions';
@@ -86,7 +86,8 @@ import {
   TabsList,
   TabsTrigger,
 } from './ui/tabs';
-import { PRIMARY_BUTTON_GRADIENT } from './ui/page-header';
+import { PageHeader, PRIMARY_BUTTON_GRADIENT } from './ui/page-header';
+import { DetailLink, DetailSummary } from './ui/detail-summary';
 import {
   mockSections,
   mockRequiredDocuments,
@@ -351,326 +352,245 @@ export function SubscriptionDetailPage({ subscription, onBack }: SubscriptionDet
     };
   };
 
+  const formatLongDate = (date: Date) =>
+    date.toLocaleDateString('fr-FR', { day: '2-digit', month: 'long', year: 'numeric' });
+
+  const formatAmount = (value: number) =>
+    `${value.toLocaleString('fr-FR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} €`;
+
+  const formatRatio = (value: number) =>
+    subscription.amount > 0 ? `${Math.round((value / subscription.amount) * 100)}%` : '0%';
+
+  const openInNewTab = t('subscriptions.detail.header.openInNewTab');
+  const investorUrl = getShareableUrl('investors');
+  const structureUrl = getShareableUrl('entities');
+  const partnerUrl = getShareableUrl('partners');
+  const fundUrl = getShareableUrl('allfunds');
+
   return (
     <div className="min-h-screen bg-muted">
-      {/* Header - Same structure as InvestorDetailPage */}
-      <div
-        className="bg-card border-b border-border sticky top-0 z-10"
-      >
-        {/* Main Header Content */}
-        <div className="px-8 pb-3 pt-5">
-          <div className="flex justify-between gap-6">
-            {/* Left column */}
-            <div className="flex-1">
-              {/* Top Row - Title */}
-              <div className="mb-10">
-              <div className="flex items-center gap-3 mb-1.5">
-                  <h1 className="text-2xl font-semibold text-foreground">
-                    {subscription.name}
-                  </h1>
-                  <SubscriptionStatusBadge status={subscription.status} />
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    className="gap-1.5 text-primary border-primary/30 hover:bg-primary/5 hover:text-primary"
-                    onClick={() => {
-                      setActiveTab('detail');
-                      setIsEditing(true);
-                    }}
-                  >
-                    <Edit2 className="w-3.5 h-3.5" />
-                    {t('subscriptions.detail.editButton')}
-                  </Button>
-                </div>
-
-                <div className="flex items-center gap-3 text-sm text-muted-foreground">
-                  <div className="flex items-center gap-1.5 group">
-                    <Hash className="w-3.5 h-3.5" />
-                    <span>{t('subscriptions.detail.header.id', { id: subscription.id })}</span>
-                    <motion.button
-                      whileHover={{ scale: 1.1 }}
-                      whileTap={{ scale: 0.9 }}
-                      onClick={async () => {
-                        const idText = `SUB-${subscription.id}`;
-                        const success = await copyToClipboard(idText);
-                        if (success) {
-                          setIdCopied(true);
-                          toast.success(t('subscriptions.detail.toast.idCopied'), { description: idText });
-                          setTimeout(() => setIdCopied(false), 2000);
-                        }
-                      }}
-                      className="opacity-0 group-hover:opacity-100 transition-opacity p-0.5 hover:bg-muted rounded"
-                      title={t('subscriptions.detail.header.copyId')}
-                    >
-                      {idCopied ? (
-                        <Check className="w-3.5 h-3.5 text-green-600" />
-                      ) : (
-                        <Copy className="w-3.5 h-3.5 text-muted-foreground hover:text-foreground" />
-                      )}
-                    </motion.button>
-                  </div>
-                  <Separator orientation="vertical" className="h-3.5" />
-                  <div className="flex items-center gap-1.5">
-                    <Calendar className="w-3.5 h-3.5" />
-                    <span>{t('subscriptions.detail.header.createdOn', { date: subscription.createdAt.toLocaleDateString('fr-FR', { day: '2-digit', month: 'long', year: 'numeric' }) })}</span>
-                  </div>
-                  <Separator orientation="vertical" className="h-3.5" />
-                  <Badge
-                    className="bg-gray-100 text-gray-700 border-gray-200 dark:bg-gray-800 dark:text-gray-300 dark:border-gray-700 font-medium cursor-pointer hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors"
-                    onClick={() => toast.info(t('subscriptions.detail.header.navigateToFund'))}
-                  >
-                    {subscription.fund.name}
-                  </Badge>
-                  <Badge
-                    className="bg-gray-100 text-gray-700 border-gray-200 dark:bg-gray-800 dark:text-gray-300 dark:border-gray-700 font-medium cursor-pointer hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors"
-                    onClick={() => toast.info(t('subscriptions.detail.header.navigateToShareClass'))}
-                  >
-                    {t('subscriptions.detail.init.sharePrefix', { name: subscription.fund.shareClass })}
-                  </Badge>
-                </div>
-              </div>
-
-            {/* Middle Row - Actors */}
-            <div className="flex items-center gap-8 mb-6">
-            {/* Investisseur */}
-            <div className="flex items-center gap-2">
-              <div className="w-5 h-5 rounded bg-muted flex items-center justify-center flex-shrink-0">
-                <User className="w-3 h-3 text-muted-foreground" />
-              </div>
-              <div>
-                <div className="text-xs text-muted-foreground leading-none mb-0.5">{t('subscriptions.detail.header.investor')}</div>
-                <Button
-                  variant="link"
-                  className="p-0 h-auto font-semibold text-primary hover:text-primary/70 text-sm leading-tight -mt-0.5"
-                  onClick={() => toast.info(t('subscriptions.detail.header.navigateToInvestor'))}
-                >
-                  {subscription.contrepartie.investor || subscription.contrepartie.name}
-                </Button>
-              </div>
-            </div>
-
-            {/* Structure */}
-            {subscription.contrepartie.structure && (
-              <div className="flex items-center gap-2">
-                <div className="w-5 h-5 rounded bg-muted flex items-center justify-center flex-shrink-0">
-                  <Building2 className="w-3 h-3 text-muted-foreground" />
-                </div>
-                <div>
-                  <div className="text-xs text-muted-foreground leading-none mb-0.5">{t('subscriptions.detail.header.structure')}</div>
-                  <Button
-                    variant="link"
-                    className="p-0 h-auto font-semibold text-primary hover:text-primary/70 text-sm leading-tight -mt-0.5"
-                    onClick={() => toast.info(t('subscriptions.detail.header.navigateToStructure'))}
-                  >
-                    {subscription.contrepartie.structure}
-                  </Button>
-                </div>
-              </div>
-            )}
-
-            {/* Partenaire */}
-            {subscription.partenaire && (
-              <div className="flex items-center gap-2">
-                <div className="w-5 h-5 rounded bg-muted flex items-center justify-center flex-shrink-0">
-                  <Users className="w-3 h-3 text-muted-foreground" />
-                </div>
-                <div>
-                  <div className="text-xs text-muted-foreground leading-none mb-0.5">{t('subscriptions.detail.header.partner')}</div>
-                  <Button
-                    variant="link"
-                    className="p-0 h-auto font-semibold text-primary hover:text-primary/70 text-sm leading-tight -mt-0.5"
-                    onClick={() => toast.info(t('subscriptions.detail.header.navigateToPartner'))}
-                  >
-                    {subscription.partenaire.name}
-                  </Button>
-                  {subscription.advisor && (
-                    <div className="text-xs text-muted-foreground leading-tight">{t('subscriptions.detail.header.advisor', { name: subscription.advisor })}</div>
-                  )}
-                </div>
-              </div>
-            )}
-
-            {/* Frais */}
-            <div className="flex items-center gap-2">
-              <div className="w-5 h-5 rounded bg-muted flex items-center justify-center flex-shrink-0">
-                <DollarSign className="w-3 h-3 text-muted-foreground" />
-              </div>
-              <div>
-                <div className="text-xs text-muted-foreground leading-none mb-0.5">{t('subscriptions.detail.header.fees')}</div>
-                <div className="text-xs text-foreground/80 leading-tight">
-                  {t('subscriptions.detail.header.entryFees', {
-                    amount: subscription.entryFees != null
-                      ? `${((subscription.amount * subscription.entryFees) / 100).toLocaleString('fr-FR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} €`
-                      : '0,00 €'
-                  })}
-                </div>
-                <div className="text-xs text-foreground/80 leading-tight">
-                  {t('subscriptions.detail.header.subscriptionPremium', {
-                    amount: subscription.subscriptionPremium != null
-                      ? `${subscription.subscriptionPremium.toLocaleString('fr-FR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} €`
-                      : '0,00 €'
-                  })}
-                </div>
-              </div>
-            </div>
-            </div>
-
-            {/* Financial KPIs Row */}
-            <div className="flex items-center gap-8 mb-4">
-              {/* Montant Souscrit */}
-              <div className="flex items-center gap-2">
-                <div className="w-5 h-5 rounded bg-muted flex items-center justify-center flex-shrink-0">
-                  <DollarSign className="w-3 h-3 text-muted-foreground" />
-                </div>
-                <div>
-                  <div className="text-xs text-muted-foreground leading-tight">{t('subscriptions.detail.header.subscribedAmount')}</div>
-                  <div className="flex items-baseline gap-1.5">
-                    <span className="font-bold text-foreground">{subscription.amount.toLocaleString('fr-FR')} €</span>
-                    <span className="text-xs text-muted-foreground font-medium">{t('subscriptions.detail.header.shares', { count: subscription.quantity.toLocaleString('fr-FR') })}</span>
-                  </div>
-                </div>
-              </div>
-
-              {/* Montant Appelé */}
-              <div className="flex items-center gap-2">
-                <div className="w-5 h-5 rounded bg-muted flex items-center justify-center flex-shrink-0">
-                  <TrendingUp className="w-3 h-3 text-muted-foreground" />
-                </div>
-                <div>
-                  <div className="text-xs text-muted-foreground leading-tight">{t('subscriptions.detail.header.calledAmount')}</div>
-                  <div className="flex items-baseline gap-1.5">
-                    <span className="font-bold text-foreground">{(subscription.calledAmount ?? 0).toLocaleString('fr-FR')} €</span>
-                    <span className="text-xs text-muted-foreground font-medium">
-                      {subscription.amount > 0 ? `${Math.round(((subscription.calledAmount ?? 0) / subscription.amount) * 100)}%` : '0%'}
-                    </span>
-                  </div>
-                </div>
-              </div>
-
-              {/* Montant Distribué */}
-              <div className="flex items-center gap-2">
-                <div className="w-5 h-5 rounded bg-muted flex items-center justify-center flex-shrink-0">
-                  <ArrowDownCircle className="w-3 h-3 text-muted-foreground" />
-                </div>
-                <div>
-                  <div className="text-xs text-muted-foreground leading-tight">{t('subscriptions.detail.header.distributedAmount')}</div>
-                  <div className="flex items-baseline gap-1.5">
-                    <span className="font-bold text-foreground">{(subscription.distributedAmount ?? 0).toLocaleString('fr-FR')} €</span>
-                    <span className="text-xs text-muted-foreground font-medium">
-                      {subscription.amount > 0 ? `${Math.round(((subscription.distributedAmount ?? 0) / subscription.amount) * 100)}%` : '0%'}
-                    </span>
-                  </div>
-                </div>
-              </div>
-
-              {/* Solde Restant */}
-              <div className="flex items-center gap-2">
-                <div className="w-5 h-5 rounded bg-muted flex items-center justify-center flex-shrink-0">
-                  <Wallet className="w-3 h-3 text-muted-foreground" />
-                </div>
-                <div>
-                  <div className="text-xs text-muted-foreground leading-tight">{t('subscriptions.detail.header.remainingBalance')}</div>
-                  <div className="flex items-baseline gap-1.5">
-                    <span className="font-bold text-foreground">{(subscription.remainingAmount ?? subscription.amount).toLocaleString('fr-FR')} €</span>
-                    <span className="text-xs text-muted-foreground font-medium">
-                      {subscription.amount > 0 ? `${Math.round(((subscription.remainingAmount ?? subscription.amount) / subscription.amount) * 100)}%` : '0%'}
-                    </span>
-                  </div>
-                </div>
-              </div>
-            </div>
-            </div>
-
-            {/* Right column - Risk analysis + Export button */}
-            <div className="flex flex-col items-end justify-end gap-3">
-              <Button
-                style={{ background: PRIMARY_BUTTON_GRADIENT }}
-                className="gap-2 text-white hover:opacity-90"
-                onClick={() => toast.success(t('subscriptions.detail.toast.featureComingSoon'))}
+      <PageHeader
+        title={
+          <span className="inline-flex items-center gap-3">
+            {subscription.name}
+            <SubscriptionStatusBadge status={subscription.status} />
+          </span>
+        }
+        subtitle={
+          <span className="flex items-center flex-wrap gap-3">
+            <span className="inline-flex items-center gap-1.5 group">
+              <Hash className="w-3.5 h-3.5" />
+              <span>{t('subscriptions.detail.header.id', { id: subscription.id })}</span>
+              <motion.button
+                type="button"
+                whileHover={{ scale: 1.1 }}
+                whileTap={{ scale: 0.9 }}
+                onClick={async () => {
+                  const idText = `SUB-${subscription.id}`;
+                  const success = await copyToClipboard(idText);
+                  if (success) {
+                    setIdCopied(true);
+                    toast.success(t('subscriptions.detail.toast.idCopied'), { description: idText });
+                    setTimeout(() => setIdCopied(false), 2000);
+                  }
+                }}
+                className="opacity-0 group-hover:opacity-100 transition-opacity p-0.5 hover:bg-muted rounded"
+                title={t('subscriptions.detail.header.copyId')}
               >
-                <Download className="w-4 h-4" />
-                {t('subscriptions.detail.header.exportData')}
-              </Button>
+                {idCopied ? (
+                  <Check className="w-3.5 h-3.5 text-green-600" />
+                ) : (
+                  <Copy className="w-3.5 h-3.5 text-muted-foreground hover:text-foreground" />
+                )}
+              </motion.button>
+            </span>
 
-              {/* Analyse de risque compacte */}
-              <Card className="p-4 shadow-sm">
-                <div className="flex items-center gap-4">
-                  {/* Jauge circulaire compacte */}
-                  <div className="flex flex-col items-center">
-                    {(() => {
-                      const riskConfig = subscription.riskLevel === 'High'
-                        ? { score: 82, color: '#EF4444', variant: 'danger' as const, labelKey: 'subscriptions.detail.header.riskHigh' }
-                        : subscription.riskLevel === 'Low'
-                        ? { score: 28, color: '#10B981', variant: 'success' as const, labelKey: 'subscriptions.detail.header.riskLow' }
-                        : { score: 65, color: '#F59E0B', variant: 'warning' as const, labelKey: 'subscriptions.detail.header.riskMedium' };
-                      return (
-                        <>
-                          <div className="relative w-20 h-20">
-                            <svg className="w-20 h-20 -rotate-90">
-                              <circle cx="40" cy="40" r="34" stroke="#E5E7EB" strokeWidth="6" fill="none" />
-                              <circle
-                                cx="40" cy="40" r="34"
-                                stroke={riskConfig.color}
-                                strokeWidth="6"
-                                fill="none"
-                                strokeDasharray={`${2 * Math.PI * 34}`}
-                                strokeDashoffset={`${2 * Math.PI * 34 * (1 - riskConfig.score / 100)}`}
-                                strokeLinecap="round"
-                              />
-                            </svg>
-                            <div className="absolute inset-0 flex flex-col items-center justify-center">
-                              <span className="text-xl font-bold text-foreground">{riskConfig.score}</span>
-                              <span className="text-[10px] text-muted-foreground">/ 100</span>
-                            </div>
+            <span aria-hidden className="h-3.5 w-px bg-border" />
+
+            <span className="inline-flex items-center gap-1.5">
+              <Calendar className="w-3.5 h-3.5" />
+              {t('subscriptions.detail.header.createdOn', { date: formatLongDate(subscription.createdAt) })}
+            </span>
+
+            {subscription.activatedAt && (
+              <>
+                <span aria-hidden className="h-3.5 w-px bg-border" />
+                <span className="inline-flex items-center gap-1.5">
+                  <CheckCircle2 className="w-3.5 h-3.5" />
+                  {t('subscriptions.detail.header.activatedOn', { date: formatLongDate(subscription.activatedAt) })}
+                </span>
+              </>
+            )}
+
+            <span aria-hidden className="h-3.5 w-px bg-border" />
+
+            <DetailLink href={fundUrl} icon={Landmark} title={openInNewTab} className="text-sm">
+              {subscription.fund.name}
+            </DetailLink>
+
+            <DetailLink href={fundUrl} icon={Layers3} title={openInNewTab} className="text-sm">
+              {t('subscriptions.detail.init.sharePrefix', { name: subscription.fund.shareClass })}
+            </DetailLink>
+          </span>
+        }
+        primaryAction={{
+          label: t('subscriptions.detail.header.exportData'),
+          icon: <Download className="w-4 h-4" />,
+          onClick: () => toast.success(t('subscriptions.detail.toast.featureComingSoon')),
+        }}
+      />
+
+      <div className="px-8 pt-6">
+        <DetailSummary
+          newTabTitle={openInNewTab}
+          attributes={[
+            {
+              id: 'investor',
+              label: t('subscriptions.detail.header.investor'),
+              value: subscription.contrepartie.investor || subscription.contrepartie.name,
+              icon: User,
+              href: investorUrl,
+            },
+            {
+              id: 'structure',
+              label: t('subscriptions.detail.header.structure'),
+              value: subscription.contrepartie.structure,
+              icon: Building2,
+              href: structureUrl,
+            },
+            {
+              id: 'partner',
+              label: t('subscriptions.detail.header.partner'),
+              value: subscription.partenaire?.name ?? t('subscriptions.detail.header.directInvestment'),
+              secondaryValue: subscription.advisor
+                ? t('subscriptions.detail.header.advisor', { name: subscription.advisor })
+                : undefined,
+              icon: Users,
+              href: subscription.partenaire ? partnerUrl : undefined,
+            },
+            {
+              id: 'fees',
+              label: t('subscriptions.detail.header.fees'),
+              value: t('subscriptions.detail.header.entryFees', {
+                amount: formatAmount(((subscription.amount * (subscription.entryFees ?? 0)) / 100)),
+              }),
+              secondaryValue: t('subscriptions.detail.header.subscriptionPremium', {
+                amount: formatAmount(subscription.subscriptionPremium ?? 0),
+              }),
+              icon: DollarSign,
+            },
+          ]}
+          metrics={[
+            {
+              id: 'subscribed',
+              label: t('subscriptions.detail.header.subscribedAmount'),
+              value: `${subscription.amount.toLocaleString('fr-FR')} €`,
+              secondaryValue: t('subscriptions.detail.header.shares', {
+                count: subscription.quantity.toLocaleString('fr-FR'),
+              }),
+              icon: DollarSign,
+            },
+            {
+              id: 'called',
+              label: t('subscriptions.detail.header.calledAmount'),
+              value: `${(subscription.calledAmount ?? 0).toLocaleString('fr-FR')} €`,
+              secondaryValue: formatRatio(subscription.calledAmount ?? 0),
+              icon: TrendingUp,
+            },
+            {
+              id: 'distributed',
+              label: t('subscriptions.detail.header.distributedAmount'),
+              value: `${(subscription.distributedAmount ?? 0).toLocaleString('fr-FR')} €`,
+              secondaryValue: formatRatio(subscription.distributedAmount ?? 0),
+              icon: ArrowDownCircle,
+            },
+            {
+              id: 'remaining',
+              label: t('subscriptions.detail.header.remainingBalance'),
+              value: `${(subscription.remainingAmount ?? subscription.amount).toLocaleString('fr-FR')} €`,
+              secondaryValue: formatRatio(subscription.remainingAmount ?? subscription.amount),
+              icon: Wallet,
+            },
+          ]}
+          aside={
+            <Card className="p-4 shadow-sm">
+              <div className="flex items-center gap-4">
+                {/* Jauge circulaire compacte */}
+                <div className="flex flex-col items-center">
+                  {(() => {
+                    const riskConfig = subscription.riskLevel === 'High'
+                      ? { score: 82, color: '#EF4444', variant: 'danger' as const, labelKey: 'subscriptions.detail.header.riskHigh' }
+                      : subscription.riskLevel === 'Low'
+                      ? { score: 28, color: '#10B981', variant: 'success' as const, labelKey: 'subscriptions.detail.header.riskLow' }
+                      : { score: 65, color: '#F59E0B', variant: 'warning' as const, labelKey: 'subscriptions.detail.header.riskMedium' };
+                    return (
+                      <>
+                        <div className="relative w-20 h-20">
+                          <svg className="w-20 h-20 -rotate-90">
+                            <circle cx="40" cy="40" r="34" stroke="#E5E7EB" strokeWidth="6" fill="none" />
+                            <circle
+                              cx="40" cy="40" r="34"
+                              stroke={riskConfig.color}
+                              strokeWidth="6"
+                              fill="none"
+                              strokeDasharray={`${2 * Math.PI * 34}`}
+                              strokeDashoffset={`${2 * Math.PI * 34 * (1 - riskConfig.score / 100)}`}
+                              strokeLinecap="round"
+                            />
+                          </svg>
+                          <div className="absolute inset-0 flex flex-col items-center justify-center">
+                            <span className="text-xl font-bold text-foreground">{riskConfig.score}</span>
+                            <span className="text-[10px] text-muted-foreground">/ 100</span>
                           </div>
-                          <StatusBadge variant={riskConfig.variant} label={t(riskConfig.labelKey)} className="text-[10px] mt-1.5" />
-                        </>
-                      );
-                    })()}
-                  </div>
-
-                  {/* Indicateurs */}
-                  <div className="space-y-1.5">
-                    {riskValidated && (
-                      <div className="flex items-center gap-1.5 mb-2 pb-2 border-b border-border">
-                        <CheckCircle2 className="w-3 h-3 text-green-600 flex-shrink-0" />
-                        <div>
-                          <div className="text-[10px] font-semibold text-green-900">{t('subscriptions.detail.header.riskValidated')}</div>
-                          <div className="text-[9px] text-green-700">{t('subscriptions.detail.header.riskValidatedOn', { date: riskValidationDate })}</div>
                         </div>
+                        <StatusBadge variant={riskConfig.variant} label={t(riskConfig.labelKey)} className="text-[10px] mt-1.5" />
+                      </>
+                    );
+                  })()}
+                </div>
+
+                {/* Indicateurs */}
+                <div className="space-y-1.5">
+                  {riskValidated && (
+                    <div className="flex items-center gap-1.5 mb-2 pb-2 border-b border-border">
+                      <CheckCircle2 className="w-3 h-3 text-green-600 flex-shrink-0" />
+                      <div>
+                        <div className="text-[10px] font-semibold text-green-900">{t('subscriptions.detail.header.riskValidated')}</div>
+                        <div className="text-[9px] text-green-700">{t('subscriptions.detail.header.riskValidatedOn', { date: riskValidationDate })}</div>
                       </div>
-                    )}
-                    <div className="flex items-center justify-between gap-3">
-                      <span className="text-xs text-muted-foreground whitespace-nowrap">{t('subscriptions.detail.header.pepDetected')}</span>
-                      <Badge className="bg-red-100 text-red-700 border-red-300 text-[10px] h-5">
-                        <AlertCircle className="w-2.5 h-2.5 mr-1" />
-                        2
-                      </Badge>
                     </div>
-                    <div className="flex items-center justify-between gap-3">
-                      <span className="text-xs text-muted-foreground whitespace-nowrap">{t('subscriptions.detail.header.sanctions')}</span>
-                      <Badge className="bg-green-100 text-green-700 border-green-300 text-[10px] h-5">
-                        <Check className="w-2.5 h-2.5 mr-1" />
-                        0
-                      </Badge>
-                    </div>
-                    <div className="flex items-center justify-between gap-3">
-                      <span className="text-xs text-muted-foreground whitespace-nowrap">{t('subscriptions.detail.header.adverseMedia')}</span>
-                      <Badge className="bg-amber-100 text-amber-700 border-amber-300 text-[10px] h-5">
-                        <AlertCircle className="w-2.5 h-2.5 mr-1" />
-                        1
-                      </Badge>
-                    </div>
+                  )}
+                  <div className="flex items-center justify-between gap-3">
+                    <span className="text-xs text-muted-foreground whitespace-nowrap">{t('subscriptions.detail.header.pepDetected')}</span>
+                    <Badge className="bg-red-100 text-red-700 border-red-300 text-[10px] h-5">
+                      <AlertCircle className="w-2.5 h-2.5 mr-1" />
+                      2
+                    </Badge>
+                  </div>
+                  <div className="flex items-center justify-between gap-3">
+                    <span className="text-xs text-muted-foreground whitespace-nowrap">{t('subscriptions.detail.header.sanctions')}</span>
+                    <Badge className="bg-green-100 text-green-700 border-green-300 text-[10px] h-5">
+                      <Check className="w-2.5 h-2.5 mr-1" />
+                      0
+                    </Badge>
+                  </div>
+                  <div className="flex items-center justify-between gap-3">
+                    <span className="text-xs text-muted-foreground whitespace-nowrap">{t('subscriptions.detail.header.adverseMedia')}</span>
+                    <Badge className="bg-amber-100 text-amber-700 border-amber-300 text-[10px] h-5">
+                      <AlertCircle className="w-2.5 h-2.5 mr-1" />
+                      1
+                    </Badge>
                   </div>
                 </div>
-              </Card>
-            </div>
-          </div>
-        </div>
+              </div>
+            </Card>
+          }
+        />
       </div>
 
+
       {/* Tabs - Same structure as InvestorDetailPage */}
-      <div className="px-8 -mt-px bg-card border-b border-border">
+      <div className="px-8 mt-6 bg-card border-y border-border">
         <Tabs value={activeTab} onValueChange={(v) => { setActiveTab(v); if (v !== 'detail') setIsEditing(false); }} className="w-full">
           <TabsList className="!bg-transparent rounded-none w-full justify-start h-auto p-0 gap-0">
             {[
