@@ -218,3 +218,47 @@ export const mockEmails: MockEmail[] = [
 export const mockCapitalCalls: MockCapitalCall[] = [
   { id: 1, date: '31/10/2025', call: 'PAC 2026 - Closing 1', amount: 10000.00, subscription: 0.00, entryFees: 3000.00, subscriptionPremium: 1500.00, percentage: 10, status: 'paid' }
 ];
+
+export interface MockInitEmail {
+  id: string;
+  slug: string;
+  templateKey: string;
+  audience: 'investor' | 'partner' | 'manager';
+  sentAt: string | null;
+  receivedAt: string | null;
+  openedAt: string | null;
+  clickedAt: string | null;
+}
+
+export const mockInitEmails: MockInitEmail[] = [
+  {
+    id: 'onboarding-link',
+    slug: 'onboarding-link',
+    templateKey: 'subscriptions.detail.initStep.templates.onboardingLink',
+    audience: 'investor',
+    sentAt: '12/12/2025 09:14',
+    receivedAt: '12/12/2025 09:14',
+    openedAt: '12/12/2025 09:41',
+    clickedAt: '12/12/2025 09:42',
+  },
+  {
+    id: 'invitation',
+    slug: 'invitation',
+    templateKey: 'subscriptions.detail.initStep.templates.invitation',
+    audience: 'investor',
+    sentAt: '12/12/2025 09:15',
+    receivedAt: '12/12/2025 09:15',
+    openedAt: null,
+    clickedAt: null,
+  },
+  {
+    id: 'new-subscription-notification',
+    slug: 'new-subscription-notification',
+    templateKey: 'subscriptions.detail.initStep.templates.newSubscription',
+    audience: 'manager',
+    sentAt: '12/12/2025 09:14',
+    receivedAt: '12/12/2025 09:14',
+    openedAt: '12/12/2025 10:02',
+    clickedAt: null,
+  },
+];

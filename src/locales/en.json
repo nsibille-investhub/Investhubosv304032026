@@ -436,24 +436,72 @@
         "payment": "Payment"
       },
       "init": {
-        "title": "Subscription initialization",
-        "investorLabel": "Investor *",
-        "investorPlaceholder": "Select an investor",
-        "structureLabel": "Structure",
-        "structurePlaceholder": "Select a structure",
-        "directInvestment": "Direct investment (no structure)",
-        "fundLabel": "Fund *",
-        "fundPlaceholder": "Select a fund",
-        "shareLabel": "Share *",
-        "sharePlaceholder": "Select a share",
-        "sharePrefix": "Share {{name}}",
-        "numberOfSharesLabel": "Number of shares *",
-        "totalAmountLabel": "Total amount *",
-        "partnerLabel": "Partner in charge",
-        "partnerPlaceholder": "Select a partner",
-        "cancel": "Cancel",
-        "createSubscription": "Create subscription",
-        "subscriptionInitialized": "Subscription initialized"
+        "sharePrefix": "Share {{name}}"
+      },
+      "initStep": {
+        "invitation": {
+          "title": "Onboarding invitation",
+          "subtitle": "The onboarding link goes to the investor audience, resolved below.",
+          "sent": "Invitation sent",
+          "notSent": "Invitation not sent",
+          "effectiveRecipient": "Effective recipient",
+          "unresolved": "No address resolved for the investor",
+          "resend": "Resend invitation",
+          "send": "Send invitation",
+          "resendHint": "Resending regenerates the onboarding link and goes to the recipient shown above."
+        },
+        "tracking": {
+          "sent": "Sent on",
+          "received": "Received on",
+          "opened": "Opened on",
+          "clicked": "Clicked on"
+        },
+        "recipients": {
+          "title": "Resolved recipients",
+          "subtitle": "An audience that resolves to no address sends nothing and raises an anomaly.",
+          "audience": "Audience",
+          "address": "Address",
+          "rule": "Applied rule",
+          "role": "Role"
+        },
+        "audiences": {
+          "investor": "Investor",
+          "partner": "Partner",
+          "advisor": "Advisor",
+          "manager": "Case manager"
+        },
+        "rules": {
+          "investorContact": "Linked contact, takes priority over the investor's address",
+          "investorAddress": "Investor's address, no linked contact on the case",
+          "partnerPreferences": "Notification preferences from the partner record",
+          "advisorAdded": "The advisor is added to the partner, not a replacement",
+          "managerIntermediated": "Notified on creation for an intermediated subscription",
+          "managerDirect": "Direct subscription: the case manager is not notified"
+        },
+        "roles": {
+          "recipient": "Recipient",
+          "copy": "In copy",
+          "none": "Not notified",
+          "unresolved": "No address resolved"
+        },
+        "emails": {
+          "title": "Initialisation emails",
+          "template": "Template",
+          "recipient": "Recipient",
+          "action": "Action",
+          "resendAction": "Resend",
+          "resent": "Resent",
+          "notSent": "Not sent"
+        },
+        "templates": {
+          "onboardingLink": "Onboarding start link",
+          "invitation": "Invitation to subscribe",
+          "newSubscription": "New subscription, internal alert"
+        },
+        "toast": {
+          "emailResent": "{{template}} resent",
+          "emailResentDesc": "Recipient: {{recipient}}"
+        }
       },
       "editButton": "Edit",
       "form": {

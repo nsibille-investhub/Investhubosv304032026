@@ -436,24 +436,72 @@
         "payment": "Paiement"
       },
       "init": {
-        "title": "Initialisation de la souscription",
-        "investorLabel": "Investisseur *",
-        "investorPlaceholder": "Sélectionner un investisseur",
-        "structureLabel": "Structure",
-        "structurePlaceholder": "Sélectionner une structure",
-        "directInvestment": "Investissement direct (sans structure)",
-        "fundLabel": "Fonds *",
-        "fundPlaceholder": "Sélectionner un fonds",
-        "shareLabel": "Part *",
-        "sharePlaceholder": "Sélectionner une part",
-        "sharePrefix": "Part {{name}}",
-        "numberOfSharesLabel": "Nombre de parts *",
-        "totalAmountLabel": "Montant total *",
-        "partnerLabel": "Partenaire en charge",
-        "partnerPlaceholder": "Sélectionner un partenaire",
-        "cancel": "Annuler",
-        "createSubscription": "Créer la souscription",
-        "subscriptionInitialized": "Souscription initialisée"
+        "sharePrefix": "Part {{name}}"
+      },
+      "initStep": {
+        "invitation": {
+          "title": "Invitation à l'onboarding",
+          "subtitle": "Le lien de parcours part vers l'audience investisseur, résolue ci-dessous.",
+          "sent": "Invitation envoyée",
+          "notSent": "Invitation non envoyée",
+          "effectiveRecipient": "Destinataire effectif",
+          "unresolved": "Aucune adresse résolue pour l'investisseur",
+          "resend": "Renvoyer l'invitation",
+          "send": "Envoyer l'invitation",
+          "resendHint": "Le renvoi régénère le lien de parcours et repart vers le destinataire affiché."
+        },
+        "tracking": {
+          "sent": "Envoyé le",
+          "received": "Reçu le",
+          "opened": "Ouvert le",
+          "clicked": "Cliqué le"
+        },
+        "recipients": {
+          "title": "Destinataires résolus",
+          "subtitle": "Une audience qui ne résout aucune adresse ne déclenche aucun envoi et signale une anomalie.",
+          "audience": "Audience",
+          "address": "Adresse",
+          "rule": "Règle appliquée",
+          "role": "Rôle"
+        },
+        "audiences": {
+          "investor": "Investisseur",
+          "partner": "Partenaire",
+          "advisor": "Conseiller",
+          "manager": "Gestionnaire du dossier"
+        },
+        "rules": {
+          "investorContact": "Contact rattaché au dossier, prioritaire sur l'adresse de l'investisseur",
+          "investorAddress": "Adresse de l'investisseur, aucun contact rattaché au dossier",
+          "partnerPreferences": "Préférences de notification de la fiche du partenaire",
+          "advisorAdded": "Le conseiller s'ajoute au partenaire, il ne le remplace pas",
+          "managerIntermediated": "Notifié à la création pour une souscription intermédiée",
+          "managerDirect": "Souscription directe : le gestionnaire n'est pas notifié"
+        },
+        "roles": {
+          "recipient": "Destinataire",
+          "copy": "En copie",
+          "none": "Non notifié",
+          "unresolved": "Aucune adresse résolue"
+        },
+        "emails": {
+          "title": "Envois de l'initialisation",
+          "template": "Gabarit",
+          "recipient": "Destinataire",
+          "action": "Action",
+          "resendAction": "Renvoyer",
+          "resent": "Renvoyé",
+          "notSent": "Non envoyé"
+        },
+        "templates": {
+          "onboardingLink": "Lien de démarrage d'onboarding",
+          "invitation": "Invitation à souscrire",
+          "newSubscription": "Nouvelle souscription, alerte interne"
+        },
+        "toast": {
+          "emailResent": "{{template}} renvoyé",
+          "emailResentDesc": "Destinataire : {{recipient}}"
+        }
       },
       "editButton": "Modifier",
       "form": {
