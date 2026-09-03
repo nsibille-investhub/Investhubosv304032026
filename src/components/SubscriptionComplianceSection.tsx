@@ -162,30 +162,44 @@ function ToneBadge({ tone, label, className }: { tone: RiskTone; label: string; 
 }
 
 /** Jauge circulaire du score, sur l'echelle 0-100 du profil. */
-function ScoreDonut({ score, tone, label }: { score: number | null; tone: RiskTone; label: string }) {
-  const radius = 52;
+function ScoreDonut({
+  score,
+  tone,
+  label,
+  size = 96,
+}: {
+  score: number | null;
+  tone: RiskTone;
+  label: string;
+  size?: number;
+}) {
+  const stroke = size >= 120 ? 12 : 9;
+  const radius = size / 2 - stroke;
   const circumference = 2 * Math.PI * radius;
   const ratio = score === null ? 0 : Math.min(Math.max(score, 0), 100) / 100;
 
   return (
-    <div className="relative flex w-32 items-center justify-center" style={{ height: '8rem' }}>
-      <svg width="128" height="128" viewBox="0 0 128 128" className="absolute">
-        <circle cx="64" cy="64" r={radius} fill="none" stroke="var(--border)" strokeWidth="12" />
+    <div
+      className="relative flex shrink-0 items-center justify-center"
+      style={{ height: size, width: size }}
+    >
+      <svg width={size} height={size} viewBox={`0 0 ${size} ${size}`} className="absolute">
+        <circle cx={size / 2} cy={size / 2} r={radius} fill="none" stroke="var(--border)" strokeWidth={stroke} />
         <circle
-          cx="64"
-          cy="64"
+          cx={size / 2}
+          cy={size / 2}
           r={radius}
           fill="none"
           stroke={TONE_STYLES[tone].stroke}
-          strokeWidth="12"
+          strokeWidth={stroke}
           strokeLinecap="round"
           strokeDasharray={`${circumference * ratio} ${circumference}`}
-          transform="rotate(-90 64 64)"
+          transform={`rotate(-90 ${size / 2} ${size / 2})`}
         />
       </svg>
       <div className="relative text-center">
-        <div className="text-3xl font-bold text-foreground tabular-nums">{score ?? '—'}</div>
-        <div className={cn('text-xs font-semibold', TONE_STYLES[tone].text)}>{label}</div>
+        <div className="text-2xl font-bold text-foreground tabular-nums leading-none">{score ?? '—'}</div>
+        <div className={cn('mt-0.5 text-[11px] font-semibold', TONE_STYLES[tone].text)}>{label}</div>
       </div>
     </div>
   );
@@ -251,18 +265,49 @@ export function RiskProfileWidget({
 
   return (
     <Card className="shadow-sm overflow-hidden">
-      <div className="px-6 py-4 border-b flex flex-wrap items-start justify-between gap-3">
+      <div className="px-4 py-3 border-b flex items-start justify-between gap-2">
         <div className="min-w-0">
-          <h3 className="font-semibold text-foreground">
+          <h3 className="font-semibold text-foreground truncate">
             {t('subscriptions.detail.compliance.profile.widgetTitle', { name: mockRiskProfile.name })}
           </h3>
-          <p className="text-sm text-muted-foreground">
+          <p className="text-xs text-muted-foreground truncate">
             {t('subscriptions.detail.compliance.score.origin', {
               onboarding: mockRiskProfile.originOnboarding,
             })}
           </p>
         </div>
-        <div className="flex flex-wrap items-center gap-2">
+        <div className="flex items-center gap-1 shrink-0">
+          <Button
+            variant="ghost"
+            size="sm"
+            className="h-8 w-8 p-0 text-muted-foreground"
+            title={t('subscriptions.detail.compliance.profile.showScale')}
+            aria-label={t('subscriptions.detail.compliance.profile.showScale')}
+            onClick={() => setScaleVisible(prev => !prev)}
+          >
+            <ListChecks className="w-4 h-4" />
+          </Button>
+          <Button
+            variant="ghost"
+            size="sm"
+            className="h-8 w-8 p-0 text-muted-foreground"
+            title={t('subscriptions.detail.compliance.score.recompute')}
+            aria-label={t('subscriptions.detail.compliance.score.recompute')}
+            onClick={onRecompute}
+          >
+            <RefreshCw className="w-4 h-4" />
+          </Button>
+        </div>
+      </div>
+
+      <div className="flex flex-wrap items-center gap-4 px-4 py-3 border-b">
+        <ScoreDonut
+          score={profileScore}
+          tone={tone}
+          label={profileTier ? t(profileTier.labelKey) : t('subscriptions.detail.compliance.score.unavailable')}
+        />
+
+        <div className="min-w-0 flex-1 space-y-1">
           <Badge
             className={
               mockRiskProfile.formulaKind === 'custom'
@@ -272,226 +317,191 @@ export function RiskProfileWidget({
           >
             {t(`subscriptions.detail.compliance.profile.formulaKind.${mockRiskProfile.formulaKind}`)}
           </Badge>
-          <Button
-            variant="outline"
-            size="sm"
-            className="gap-1.5 text-xs h-8"
-            onClick={() => setScaleVisible(prev => !prev)}
-          >
-            <ListChecks className="w-3.5 h-3.5" />
-            {t('subscriptions.detail.compliance.profile.showScale')}
-          </Button>
-          <Button variant="outline" size="sm" className="gap-1.5 text-xs h-8" onClick={onRecompute}>
-            <RefreshCw className="w-3.5 h-3.5" />
-            {t('subscriptions.detail.compliance.score.recompute')}
-          </Button>
-        </div>
-      </div>
-
-      <div className="grid items-start gap-6 p-6" style={{ gridTemplateColumns: 'minmax(0, 240px) minmax(0, 1fr)' }}>
-        <div className="flex flex-col items-center gap-3">
-          <ScoreDonut
-            score={profileScore}
-            tone={tone}
-            label={profileTier ? t(profileTier.labelKey) : t('subscriptions.detail.compliance.score.unavailable')}
-          />
-          <p className="text-xs text-muted-foreground text-center">
+          <p className="text-xs text-muted-foreground">{mockRiskProfile.formula}</p>
+          <p className="text-xs text-muted-foreground">
             {t('subscriptions.detail.compliance.score.computedAt', { date: computedAt })}
           </p>
-          <p className="text-xs text-muted-foreground text-center">{mockRiskProfile.formula}</p>
-
-          <Separator />
 
           {validationRequired ? (
             scoreValidated ? (
-              <div className="flex items-start gap-2 text-xs text-muted-foreground">
-                <CheckCircle2 className="w-4 h-4 text-emerald-600 shrink-0 mt-0.5" />
-                <div>
-                  <div className="font-medium text-foreground">
-                    {t('subscriptions.detail.compliance.score.validated')}
-                  </div>
-                  <div>{scoreValidatedBy}</div>
-                  <div>{scoreValidatedAt}</div>
-                </div>
-              </div>
+              <p className="flex items-start gap-1.5 text-xs text-muted-foreground">
+                <CheckCircle2 className="w-3.5 h-3.5 text-emerald-600 shrink-0 mt-0.5" />
+                <span>
+                  {t('subscriptions.detail.compliance.score.validated')} · {scoreValidatedBy} ·{' '}
+                  {scoreValidatedAt}
+                </span>
+              </p>
             ) : (
-              <div className="w-full space-y-2">
-                <div className="flex items-start gap-2 text-xs text-amber-700">
-                  <AlertTriangle className="w-4 h-4 shrink-0 mt-0.5" />
-                  <span>{t('subscriptions.detail.compliance.score.validationRequired')}</span>
-                </div>
+              <div className="flex flex-wrap items-center gap-2">
+                <span className="flex items-start gap-1.5 text-xs text-amber-700">
+                  <AlertTriangle className="w-3.5 h-3.5 shrink-0 mt-0.5" />
+                  {t('subscriptions.detail.compliance.score.validationRequired')}
+                </span>
                 <Button
                   size="sm"
-                  className="w-full gap-2 text-white hover:opacity-90"
+                  className="gap-1.5 text-xs h-7 text-white hover:opacity-90"
                   style={{ background: PRIMARY_BUTTON_GRADIENT }}
                   onClick={onValidateScore}
                 >
-                  <ShieldCheck className="w-3.5 h-3.5" />
+                  <ShieldCheck className="w-3 h-3" />
                   {t('subscriptions.detail.compliance.score.validate')}
                 </Button>
               </div>
             )
           ) : (
-            <p className="text-xs text-muted-foreground text-center">
+            <p className="text-xs text-muted-foreground">
               {t('subscriptions.detail.compliance.score.noValidationNeeded')}
             </p>
           )}
         </div>
-
-        <div className="grid gap-6 md:grid-cols-2">
-          {classScores.map(({ riskClass, score, unevaluated }) => {
-            const tier = findRiskTier(riskClass.scaleId, score);
-            return (
-              <div key={riskClass.id} className="min-w-0">
-                <div className="flex flex-wrap items-baseline justify-between gap-2 pb-2 border-b">
-                  <div className="min-w-0">
-                    <div className="font-semibold text-foreground">{t(riskClass.labelKey)}</div>
-                    <div className="text-xs text-muted-foreground truncate">{riskClass.formula}</div>
-                  </div>
-                  <div className="flex items-center gap-2 shrink-0">
-                    <span className="text-xs text-muted-foreground">
-                      {t('subscriptions.detail.compliance.profile.weight', { weight: riskClass.weight })}
-                    </span>
-                    <span className="text-lg font-bold text-foreground tabular-nums">
-                      {score === null ? '—' : score.toFixed(2)}
-                    </span>
-                    {tier ? (
-                      <ToneBadge tone={tier.tone} label={t(tier.labelKey)} className="text-xs" />
-                    ) : (
-                      <Badge className="bg-muted text-muted-foreground text-xs">
-                        {t('subscriptions.detail.compliance.score.unavailable')}
-                      </Badge>
-                    )}
-                  </div>
-                </div>
-
-                {unevaluated > 0 && (
-                  <div className="pt-2 text-xs text-muted-foreground">
-                    {tc('subscriptions.detail.compliance.profile.unevaluated', unevaluated)}
-                  </div>
-                )}
-
-                <ul className="divide-y">
-                  {riskClass.components.map(component => {
-                    const SourceIcon = SOURCE_ICONS[component.source];
-                    const shown = componentScore(component, manualScores);
-                    const manual =
-                      typeof manualScores[component.id] === 'number' ||
-                      typeof component.manualScore === 'number';
-                    const isEditing = editingComponent === component.id;
-
-                    return (
-                      <li key={component.id} className="flex items-center justify-between gap-3 py-2">
-                        <div className="min-w-0">
-                          <div className="text-sm text-foreground truncate">{t(component.labelKey)}</div>
-                          <div className="flex items-center gap-1.5 text-xs text-muted-foreground">
-                            <SourceIcon className="w-3 h-3 shrink-0" />
-                            <span className="truncate">{component.value}</span>
-                          </div>
-                        </div>
-
-                        <div className="flex items-center gap-2 shrink-0">
-                          {manual && (
-                            <Tooltip>
-                              <TooltipTrigger asChild>
-                                <Badge className="bg-amber-50 text-amber-700 border-amber-200 text-xs">
-                                  <Pencil className="w-3 h-3 mr-1" />
-                                  {t('subscriptions.detail.compliance.profile.manual')}
-                                </Badge>
-                              </TooltipTrigger>
-                              <TooltipContent>
-                                <span className="text-xs">
-                                  {t('subscriptions.detail.compliance.profile.manualBy', {
-                                    name: component.manualBy ?? CURRENT_OPERATOR,
-                                    date: component.manualAt ?? computedAt,
-                                  })}
-                                </span>
-                              </TooltipContent>
-                            </Tooltip>
-                          )}
-
-                          {isEditing ? (
-                            <div className="flex items-center gap-1">
-                              <Input
-                                value={editingValue}
-                                onChange={event => setEditingValue(event.target.value)}
-                                className="h-7 w-16 text-right text-sm"
-                              />
-                              <Button
-                                size="sm"
-                                className="h-7 w-7 p-0"
-                                onClick={() => handleSave(component.id, component.min, component.max)}
-                              >
-                                <Check className="w-3.5 h-3.5" />
-                              </Button>
-                            </div>
-                          ) : (
-                            <>
-                              <span className="text-sm font-semibold text-foreground tabular-nums">
-                                {shown === null ? '—' : shown.toFixed(2)}
-                              </span>
-                              {component.manualAllowed && (
-                                <Button
-                                  variant="ghost"
-                                  size="sm"
-                                  className="h-7 w-7 p-0 text-muted-foreground"
-                                  title={t('subscriptions.detail.compliance.profile.setScore')}
-                                  aria-label={t('subscriptions.detail.compliance.profile.setScore')}
-                                  onClick={() => {
-                                    setEditingComponent(component.id);
-                                    setEditingValue(shown === null ? '' : String(shown));
-                                  }}
-                                >
-                                  <Pencil className="w-3 h-3" />
-                                </Button>
-                              )}
-                            </>
-                          )}
-                        </div>
-                      </li>
-                    );
-                  })}
-                </ul>
-              </div>
-            );
-          })}
-        </div>
       </div>
 
       {scaleVisible && (
-        <div className="px-6 pb-6">
-          <div className="text-xs font-semibold uppercase tracking-wide text-muted-foreground mb-2">
-            {t('subscriptions.detail.compliance.profile.scaleTitle')}
-          </div>
-          <div className="grid grid-cols-4 gap-2">
+        <div className="px-4 py-3 border-b">
+          <div className="grid grid-cols-4 gap-1.5">
             {mockRiskScales
               .find(scale => scale.id === mockRiskProfile.scaleId)
               ?.tiers.map(tier => (
                 <div
                   key={tier.labelKey}
-                  className={cn(
-                    'rounded-lg border p-3',
-                    TONE_STYLES[tier.tone].soft,
-                    profileTier === tier && 'shadow-sm',
-                  )}
+                  className={cn('rounded-lg border p-2', TONE_STYLES[tier.tone].soft)}
                 >
-                  <div className={cn('text-sm font-semibold', TONE_STYLES[tier.tone].text)}>
+                  <div className={cn('text-xs font-semibold', TONE_STYLES[tier.tone].text)}>
                     {t(tier.labelKey)}
                   </div>
-                  <div className="text-xs text-muted-foreground tabular-nums">
+                  <div className="text-[11px] text-muted-foreground tabular-nums">
                     {tier.min} – {tier.max}
                   </div>
                   {tier.requiresValidation && (
-                    <div className="flex items-center gap-1 mt-1.5 text-xs text-muted-foreground">
-                      <ShieldCheck className="w-3 h-3" />
-                      {t('subscriptions.detail.compliance.profile.tierRequiresValidation')}
-                    </div>
+                    <ShieldCheck className="w-3 h-3 mt-1 text-muted-foreground" />
                   )}
                 </div>
               ))}
           </div>
         </div>
       )}
+
+      <ul className="divide-y">
+        {classScores.map(({ riskClass, score, unevaluated }) => {
+          const tier = findRiskTier(riskClass.scaleId, score);
+          return (
+            <li key={riskClass.id} className="px-4 py-2.5">
+              <div className="flex items-start justify-between gap-2">
+                <div className="min-w-0">
+                  <div className="flex items-center gap-2">
+                    <span className="text-sm font-semibold text-foreground">{t(riskClass.labelKey)}</span>
+                    <span className="text-[11px] text-muted-foreground">
+                      {t('subscriptions.detail.compliance.profile.weight', { weight: riskClass.weight })}
+                    </span>
+                  </div>
+                  <div className="text-[11px] text-muted-foreground truncate">{riskClass.formula}</div>
+                </div>
+                <div className="flex items-center gap-2 shrink-0">
+                  {unevaluated > 0 && (
+                    <Tooltip>
+                      <TooltipTrigger asChild>
+                        <AlertTriangle className="w-3.5 h-3.5 text-amber-600" />
+                      </TooltipTrigger>
+                      <TooltipContent>
+                        <span className="text-xs">
+                          {tc('subscriptions.detail.compliance.profile.unevaluated', unevaluated)}
+                        </span>
+                      </TooltipContent>
+                    </Tooltip>
+                  )}
+                  <span className="text-sm font-bold text-foreground tabular-nums">
+                    {score === null ? '—' : score.toFixed(2)}
+                  </span>
+                  {tier ? (
+                    <ToneBadge tone={tier.tone} label={t(tier.labelKey)} className="text-xs" />
+                  ) : (
+                    <Badge className="bg-muted text-muted-foreground text-xs">
+                      {t('subscriptions.detail.compliance.score.unavailable')}
+                    </Badge>
+                  )}
+                </div>
+              </div>
+
+              <ul className="mt-1.5 space-y-1">
+                {riskClass.components.map(component => {
+                  const SourceIcon = SOURCE_ICONS[component.source];
+                  const shown = componentScore(component, manualScores);
+                  const manual =
+                    typeof manualScores[component.id] === 'number' ||
+                    typeof component.manualScore === 'number';
+                  const isEditing = editingComponent === component.id;
+
+                  return (
+                    <li key={component.id} className="flex items-center justify-between gap-2">
+                      <span className="flex min-w-0 items-center gap-1.5 text-xs">
+                        <SourceIcon className="w-3 h-3 shrink-0 text-muted-foreground" />
+                        <span className="truncate text-foreground">{t(component.labelKey)}</span>
+                        <span className="truncate text-muted-foreground">{component.value}</span>
+                      </span>
+
+                      <span className="flex items-center gap-1 shrink-0">
+                        {manual && (
+                          <Tooltip>
+                            <TooltipTrigger asChild>
+                              <Pencil className="w-3 h-3 text-amber-600" />
+                            </TooltipTrigger>
+                            <TooltipContent>
+                              <span className="text-xs">
+                                {t('subscriptions.detail.compliance.profile.manualBy', {
+                                  name: component.manualBy ?? CURRENT_OPERATOR,
+                                  date: component.manualAt ?? computedAt,
+                                })}
+                              </span>
+                            </TooltipContent>
+                          </Tooltip>
+                        )}
+
+                        {isEditing ? (
+                          <>
+                            <Input
+                              value={editingValue}
+                              onChange={event => setEditingValue(event.target.value)}
+                              className="h-6 w-14 text-right text-xs"
+                            />
+                            <Button
+                              size="sm"
+                              className="h-6 w-6 p-0"
+                              onClick={() => handleSave(component.id, component.min, component.max)}
+                            >
+                              <Check className="w-3 h-3" />
+                            </Button>
+                          </>
+                        ) : (
+                          <>
+                            <span className="text-xs font-semibold text-foreground tabular-nums">
+                              {shown === null ? '—' : shown.toFixed(2)}
+                            </span>
+                            {component.manualAllowed && (
+                              <Button
+                                variant="ghost"
+                                size="sm"
+                                className="h-6 w-6 p-0 text-muted-foreground"
+                                title={t('subscriptions.detail.compliance.profile.setScore')}
+                                aria-label={t('subscriptions.detail.compliance.profile.setScore')}
+                                onClick={() => {
+                                  setEditingComponent(component.id);
+                                  setEditingValue(shown === null ? '' : String(shown));
+                                }}
+                              >
+                                <Pencil className="w-3 h-3" />
+                              </Button>
+                            )}
+                          </>
+                        )}
+                      </span>
+                    </li>
+                  );
+                })}
+              </ul>
+            </li>
+          );
+        })}
+      </ul>
     </Card>
   );
 }
@@ -542,54 +552,55 @@ export function ScreeningWidget({
 
   return (
     <Card className="shadow-sm overflow-hidden">
-      <div className="px-6 py-4 border-b flex flex-wrap items-start justify-between gap-3">
+      <div className="px-4 py-3 border-b flex items-start justify-between gap-2">
         <div className="min-w-0">
-          <h3 className="font-semibold text-foreground">
+          <h3 className="font-semibold text-foreground truncate">
             {t('subscriptions.detail.compliance.screening.title')}
           </h3>
-          <p className="text-sm text-muted-foreground">
+          <p className="text-xs text-muted-foreground truncate">
             {t('subscriptions.detail.compliance.screening.subtitle')}
           </p>
         </div>
-        <div className="flex flex-wrap items-center gap-2">
+        <div className="flex items-center gap-1.5 shrink-0">
           <Badge
             className={
               untreated > 0
-                ? 'bg-amber-50 text-amber-700 border-amber-200'
-                : 'bg-emerald-50 text-emerald-700 border-emerald-200'
+                ? 'bg-amber-50 text-amber-700 border-amber-200 text-xs'
+                : 'bg-emerald-50 text-emerald-700 border-emerald-200 text-xs'
             }
           >
             {tc('subscriptions.detail.compliance.screening.untreated', untreated)}
           </Badge>
           {accepted > 0 && (
-            <Badge className="bg-red-50 text-red-700 border-red-200">
+            <Badge className="bg-red-50 text-red-700 border-red-200 text-xs">
               {tc('subscriptions.detail.compliance.screening.accepted', accepted)}
             </Badge>
           )}
           <Button
-            variant="outline"
+            variant="ghost"
             size="sm"
-            className="gap-1.5 text-xs h-8"
+            className="h-8 w-8 p-0 text-muted-foreground"
+            title={t('subscriptions.detail.compliance.screening.exportPdf')}
+            aria-label={t('subscriptions.detail.compliance.screening.exportPdf')}
             onClick={() =>
               toast.success(t('subscriptions.detail.compliance.toast.exportScreening'), {
                 description: t('subscriptions.detail.compliance.toast.exportScreeningDesc'),
               })
             }
           >
-            <FileText className="w-3.5 h-3.5" />
-            {t('subscriptions.detail.compliance.screening.exportPdf')}
+            <FileText className="w-4 h-4" />
           </Button>
         </div>
       </div>
 
       {pendingUpdates.length > 0 && (
-        <div className="px-6 py-3 bg-amber-50 border-b border-amber-200 space-y-2">
+        <div className="px-4 py-2 bg-amber-50 border-b border-amber-200 space-y-1.5">
           {pendingUpdates.map(update => {
             const entity = entities.find(item => item.id === update.entityId);
             return (
-              <div key={update.id} className="flex flex-wrap items-center justify-between gap-2">
-                <div className="flex items-start gap-2 text-sm text-amber-700 min-w-0">
-                  <Radar className="w-4 h-4 shrink-0 mt-0.5" />
+              <div key={update.id} className="flex items-start justify-between gap-2">
+                <span className="flex items-start gap-1.5 text-xs text-amber-700 min-w-0">
+                  <Radar className="w-3.5 h-3.5 shrink-0 mt-0.5" />
                   <span>
                     {t('subscriptions.detail.compliance.monitoring.updateLine', {
                       name: entity?.name ?? '',
@@ -597,11 +608,11 @@ export function ScreeningWidget({
                     })}{' '}
                     {t(update.labelKey)}
                   </span>
-                </div>
+                </span>
                 <Button
                   variant="outline"
                   size="sm"
-                  className="gap-1.5 text-xs h-7"
+                  className="gap-1 text-xs h-6 shrink-0"
                   onClick={() => onAcknowledge(update.id)}
                 >
                   <Check className="w-3 h-3" />
@@ -613,7 +624,7 @@ export function ScreeningWidget({
         </div>
       )}
 
-      <div className="divide-y">
+      <ul className="divide-y">
         {entities.map(entity => {
           const EntityIcon = entity.kind === 'company' ? Building2 : User;
           const runs = [
@@ -627,65 +638,85 @@ export function ScreeningWidget({
           const historyOpen = openHistory.includes(entity.id);
 
           return (
-            <div key={entity.id} className="px-6 py-4">
-              <div className="flex flex-wrap items-start justify-between gap-3">
-                <div className="flex items-start gap-3 min-w-0">
-                  <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-muted">
-                    <EntityIcon className="w-4 h-4 text-muted-foreground" />
+            <li key={entity.id} className="px-4 py-3">
+              <div className="flex items-start justify-between gap-2">
+                <div className="flex items-start gap-2 min-w-0">
+                  <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-lg bg-muted">
+                    <EntityIcon className="w-3.5 h-3.5 text-muted-foreground" />
                   </span>
                   <div className="min-w-0">
-                    <div className="flex flex-wrap items-center gap-2">
-                      <span className="text-sm text-muted-foreground">
+                    <div className="text-sm truncate">
+                      <span className="text-muted-foreground">
                         {t(
                           entity.kind === 'company'
                             ? 'subscriptions.detail.compliance.screening.entityChecked'
                             : 'subscriptions.detail.compliance.screening.individualChecked',
                         )}
-                      </span>
+                      </span>{' '}
                       <span className="font-semibold text-foreground">{entity.name}</span>
-                      <span className="text-xs text-muted-foreground">({entity.providerRef})</span>
                     </div>
-                    <div className="flex flex-wrap items-center gap-x-2 gap-y-0.5 text-xs text-muted-foreground">
-                      <span>{t(`subscriptions.detail.compliance.purposes.${entity.purpose}`)}</span>
-                      <span className="h-1 w-1 rounded-full bg-border" />
-                      <span>{t(`subscriptions.detail.compliance.providers.${entity.provider}`)}</span>
-                      <span className="h-1 w-1 rounded-full bg-border" />
-                      <span>
-                        {t('subscriptions.detail.compliance.screening.lastRun', {
-                          date: runs[0]?.at ?? '',
-                        })}
-                      </span>
+                    <div className="text-[11px] text-muted-foreground truncate">
+                      {t(`subscriptions.detail.compliance.purposes.${entity.purpose}`)} ·{' '}
+                      {t(`subscriptions.detail.compliance.providers.${entity.provider}`)} ·{' '}
+                      {entity.providerRef}
                     </div>
                   </div>
                 </div>
 
-                <div className="flex flex-wrap items-center gap-3 shrink-0">
-                  <div className="flex items-center gap-2">
-                    <span className="text-xs text-muted-foreground">
-                      {t('subscriptions.detail.compliance.screening.monitoring')}
-                    </span>
-                    <Switch
-                      checked={monitoring[entity.id]}
-                      onCheckedChange={next => onToggleMonitoring(entity, next)}
-                    />
-                  </div>
+                <div className="flex items-center gap-1 shrink-0">
+                  <Tooltip>
+                    <TooltipTrigger asChild>
+                      <span className="flex items-center">
+                        <Switch
+                          checked={monitoring[entity.id]}
+                          onCheckedChange={next => onToggleMonitoring(entity, next)}
+                        />
+                      </span>
+                    </TooltipTrigger>
+                    <TooltipContent>
+                      <span className="text-xs">
+                        {t('subscriptions.detail.compliance.screening.monitoring')}
+                      </span>
+                    </TooltipContent>
+                  </Tooltip>
                   <Button
-                    variant="outline"
+                    variant="ghost"
                     size="sm"
-                    className="gap-1.5 text-xs h-8"
+                    className="h-7 w-7 p-0 text-muted-foreground"
+                    title={t('subscriptions.detail.compliance.screening.rerun')}
+                    aria-label={t('subscriptions.detail.compliance.screening.rerun')}
                     onClick={() => onRerun(entity)}
                   >
-                    <RefreshCw className="w-3 h-3" />
-                    {t('subscriptions.detail.compliance.screening.rerun')}
+                    <RefreshCw className="w-3.5 h-3.5" />
+                  </Button>
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    className="h-7 w-7 p-0 text-muted-foreground"
+                    title={t('subscriptions.detail.compliance.screening.history')}
+                    aria-label={t('subscriptions.detail.compliance.screening.history')}
+                    onClick={() =>
+                      setOpenHistory(prev =>
+                        prev.includes(entity.id)
+                          ? prev.filter(item => item !== entity.id)
+                          : [...prev, entity.id],
+                      )
+                    }
+                  >
+                    {historyOpen ? (
+                      <ChevronUp className="w-3.5 h-3.5" />
+                    ) : (
+                      <ChevronDown className="w-3.5 h-3.5" />
+                    )}
                   </Button>
                 </div>
               </div>
 
-              <div className="mt-3 flex items-center gap-2">
+              <div className="mt-1.5 flex items-center gap-1.5">
                 {entity.hits.length === 0 ? (
                   <>
-                    <CheckCircle2 className="w-4 h-4 text-emerald-600 shrink-0" />
-                    <span className="text-sm text-foreground">
+                    <CheckCircle2 className="w-3.5 h-3.5 text-emerald-600 shrink-0" />
+                    <span className="text-xs text-foreground">
                       {t('subscriptions.detail.compliance.screening.noMatchWithList', {
                         list: entity.screeningList,
                       })}
@@ -693,8 +724,8 @@ export function ScreeningWidget({
                   </>
                 ) : (
                   <>
-                    <AlertCircle className="w-4 h-4 text-red-600 shrink-0" />
-                    <span className="text-sm font-medium text-foreground">
+                    <AlertCircle className="w-3.5 h-3.5 text-red-600 shrink-0" />
+                    <span className="text-xs font-medium text-foreground">
                       {t(
                         `subscriptions.detail.compliance.screening.resultsWithList${
                           entity.hits.length === 1 ? 'One' : 'Many'
@@ -706,248 +737,196 @@ export function ScreeningWidget({
                 )}
               </div>
 
-              {entity.hits.length > 0 && (
-                <div className="mt-3 rounded-lg border overflow-hidden">
-                  <table className="w-full">
-                    <thead className="bg-muted">
-                      <tr>
-                        <th className="px-3 py-2 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider w-20">
-                          {t('subscriptions.detail.compliance.screening.colType')}
-                        </th>
-                        <th className="px-3 py-2 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider">
-                          {t('subscriptions.detail.compliance.screening.colName')}
-                        </th>
-                        <th className="px-3 py-2 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider w-56">
-                          {t('subscriptions.detail.compliance.screening.colLists')}
-                        </th>
-                        <th className="px-3 py-2 text-right text-xs font-medium text-muted-foreground uppercase tracking-wider w-72">
-                          {t('subscriptions.detail.compliance.screening.colDecision')}
-                        </th>
-                      </tr>
-                    </thead>
-                    <tbody className="divide-y">
-                      {entity.hits.map(hit => {
-                        const decision = hitDecisions[hit.id] ?? {};
-                        const CategoryIcon = CATEGORY_ICONS[hit.category];
-                        const isCommentOpen = openCommentFor === hit.id;
-                        const treated = Boolean(decision.discarded || decision.accepted);
+              {entity.hits.map(hit => {
+                const decision = hitDecisions[hit.id] ?? {};
+                const CategoryIcon = CATEGORY_ICONS[hit.category];
+                const isCommentOpen = openCommentFor === hit.id;
+                const treated = Boolean(decision.discarded || decision.accepted);
 
-                        return (
-                          <tr
-                            key={hit.id}
-                            className={
-                              decision.accepted
-                                ? 'bg-red-50'
-                                : decision.discarded
-                                  ? 'bg-muted'
-                                  : 'bg-amber-50'
-                            }
-                          >
-                            <td className="px-3 py-3" style={{ verticalAlign: 'top' }}>
-                              <Badge className="bg-card text-foreground text-xs">
-                                {t(
-                                  `subscriptions.detail.compliance.screening.match${
-                                    hit.matchType === 'exact' ? 'Exact' : 'Partial'
-                                  }`,
-                                )}
-                              </Badge>
-                              <div className="mt-1 text-xs text-muted-foreground tabular-nums">
-                                {t('subscriptions.detail.compliance.screening.matchRate', {
-                                  rate: hit.matchRate,
-                                })}
-                              </div>
-                            </td>
+                return (
+                  <div
+                    key={hit.id}
+                    className={cn(
+                      'mt-2 rounded-lg border p-2.5',
+                      decision.accepted
+                        ? 'bg-red-50 border-red-200'
+                        : decision.discarded
+                          ? 'bg-muted'
+                          : 'bg-amber-50 border-amber-200',
+                    )}
+                  >
+                    <div className="flex items-start justify-between gap-2">
+                      <div className="min-w-0">
+                        <div className="flex flex-wrap items-center gap-1.5">
+                          <Badge className="bg-card text-foreground text-[11px]">
+                            {t(
+                              `subscriptions.detail.compliance.screening.match${
+                                hit.matchType === 'exact' ? 'Exact' : 'Partial'
+                              }`,
+                            )}
+                          </Badge>
+                          <span className="text-sm font-medium text-foreground truncate">{hit.name}</span>
+                          <span className="text-[11px] text-muted-foreground tabular-nums">
+                            {t('subscriptions.detail.compliance.screening.matchRate', {
+                              rate: hit.matchRate,
+                            })}
+                          </span>
+                        </div>
 
-                            <td className="px-3 py-3" style={{ verticalAlign: 'top' }}>
-                              <div className="font-medium text-foreground">{hit.name}</div>
-                              <p className="text-sm text-foreground">{t(hit.summaryKey)}</p>
-                              <div className="flex flex-wrap items-center gap-x-3 gap-y-1 text-xs text-muted-foreground mt-1">
-                                <span>{hit.country}</span>
-                                {hit.birthYear && (
-                                  <span>
-                                    {t('subscriptions.detail.compliance.screening.birthYear', {
-                                      year: hit.birthYear,
-                                    })}
-                                  </span>
-                                )}
-                                <span>{t(hit.sourceKey)}</span>
-                              </div>
-
-                              {decision.comment && (
-                                <div className="mt-2 rounded-lg bg-card p-2">
-                                  <p className="text-sm text-foreground">{decision.comment.text}</p>
-                                  <p className="text-xs text-muted-foreground mt-0.5">
-                                    {t('subscriptions.detail.compliance.screening.commentBy', {
-                                      name: decision.comment.by,
-                                      date: decision.comment.at,
-                                    })}
-                                  </p>
-                                </div>
-                              )}
-
-                              {isCommentOpen && (
-                                <div className="mt-2 space-y-1">
-                                  <Textarea
-                                    value={commentDrafts[hit.id] ?? ''}
-                                    onChange={event =>
-                                      setCommentDrafts(prev => ({
-                                        ...prev,
-                                        [hit.id]: event.target.value,
-                                      }))
-                                    }
-                                    placeholder={t(
-                                      'subscriptions.detail.compliance.screening.commentPlaceholder',
-                                    )}
-                                    className="text-sm"
-                                  />
-                                  <p className="text-xs text-muted-foreground">
-                                    {t('subscriptions.detail.compliance.screening.commentMandatory')}
-                                  </p>
-                                </div>
-                              )}
-                            </td>
-
-                            <td className="px-3 py-3" style={{ verticalAlign: 'top' }}>
-                              <span className="inline-flex items-center gap-1.5 text-sm text-foreground">
-                                <CategoryIcon className="w-3.5 h-3.5 text-muted-foreground shrink-0" />
-                                {t(`subscriptions.detail.compliance.hitCategories.${hit.category}`)}
-                              </span>
-                            </td>
-
-                            <td className="px-3 py-3" style={{ verticalAlign: 'top' }}>
-                              <div className="flex flex-wrap items-center justify-end gap-1.5">
-                                {decision.discarded && (
-                                  <Tooltip>
-                                    <TooltipTrigger asChild>
-                                      <Badge className="bg-card text-muted-foreground text-xs">
-                                        {t('subscriptions.detail.compliance.screening.discarded')}
-                                      </Badge>
-                                    </TooltipTrigger>
-                                    <TooltipContent>
-                                      <span className="text-xs">
-                                        {t('subscriptions.detail.compliance.screening.decisionBy', {
-                                          name: decision.discarded.by,
-                                          date: decision.discarded.at,
-                                        })}
-                                      </span>
-                                    </TooltipContent>
-                                  </Tooltip>
-                                )}
-                                {decision.accepted && (
-                                  <Tooltip>
-                                    <TooltipTrigger asChild>
-                                      <Badge className="bg-red-100 text-red-700 border-red-300 text-xs">
-                                        {t('subscriptions.detail.compliance.screening.acceptedTag')}
-                                      </Badge>
-                                    </TooltipTrigger>
-                                    <TooltipContent>
-                                      <span className="text-xs">
-                                        {t('subscriptions.detail.compliance.screening.decisionBy', {
-                                          name: decision.accepted.by,
-                                          date: decision.accepted.at,
-                                        })}
-                                      </span>
-                                    </TooltipContent>
-                                  </Tooltip>
-                                )}
-                                {!treated && (
-                                  <Badge className="bg-card text-amber-700 border-amber-300 text-xs">
-                                    <Clock className="w-3 h-3 mr-1" />
-                                    {t('subscriptions.detail.compliance.screening.toTreatShort')}
-                                  </Badge>
-                                )}
-
-                                <Button
-                                  variant="ghost"
-                                  size="sm"
-                                  className="h-7 w-7 p-0 text-muted-foreground"
-                                  title={t('subscriptions.detail.compliance.screening.comment')}
-                                  aria-label={t('subscriptions.detail.compliance.screening.comment')}
-                                  onClick={() => setOpenCommentFor(isCommentOpen ? null : hit.id)}
-                                >
-                                  <MessageSquare className="w-3.5 h-3.5" />
-                                </Button>
-                                <Button
-                                  variant="outline"
-                                  size="sm"
-                                  className="gap-1.5 text-xs h-7"
-                                  onClick={() => {
-                                    const ok = onDiscard(hit, (commentDrafts[hit.id] ?? '').trim());
-                                    if (!ok) setOpenCommentFor(hit.id);
-                                    else setOpenCommentFor(null);
-                                  }}
-                                >
-                                  <X className="w-3 h-3" />
-                                  {t('subscriptions.detail.compliance.screening.discard')}
-                                </Button>
-                                <Button
-                                  size="sm"
-                                  className="gap-1.5 text-xs h-7 bg-red-600 text-white hover:opacity-90"
-                                  onClick={() => {
-                                    onAccept(hit, (commentDrafts[hit.id] ?? '').trim());
-                                    setOpenCommentFor(null);
-                                  }}
-                                >
-                                  <AlertCircle className="w-3 h-3" />
-                                  {t('subscriptions.detail.compliance.screening.accept')}
-                                </Button>
-                              </div>
-                            </td>
-                          </tr>
-                        );
-                      })}
-                    </tbody>
-                  </table>
-                </div>
-              )}
-
-              <div className="mt-2">
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  className="h-7 gap-1.5 text-xs text-muted-foreground"
-                  onClick={() =>
-                    setOpenHistory(prev =>
-                      prev.includes(entity.id)
-                        ? prev.filter(item => item !== entity.id)
-                        : [...prev, entity.id],
-                    )
-                  }
-                >
-                  {historyOpen ? (
-                    <ChevronUp className="w-3.5 h-3.5" />
-                  ) : (
-                    <ChevronDown className="w-3.5 h-3.5" />
-                  )}
-                  {t('subscriptions.detail.compliance.screening.history')}
-                </Button>
-
-                {historyOpen && (
-                  <ul className="mt-1 space-y-1 pl-2">
-                    {runs.map((run, index) => (
-                      <li
-                        key={`${entity.id}-run-${index}`}
-                        className="flex flex-wrap items-center gap-x-3 text-xs text-muted-foreground"
-                      >
-                        <span className="text-foreground">{run.at}</span>
-                        <span>{run.by}</span>
-                        <span>
-                          {t(
-                            `subscriptions.detail.compliance.screening.historyHits${
-                              run.hitCount === 1 ? 'One' : 'Many'
-                            }`,
-                            { count: run.hitCount },
+                        <div className="mt-0.5 flex flex-wrap items-center gap-x-2 gap-y-0.5 text-xs">
+                          <span className="inline-flex items-center gap-1 text-foreground">
+                            <CategoryIcon className="w-3 h-3 text-muted-foreground shrink-0" />
+                            {t(`subscriptions.detail.compliance.hitCategories.${hit.category}`)}
+                          </span>
+                          <span className="text-muted-foreground">{hit.country}</span>
+                          {hit.birthYear && (
+                            <span className="text-muted-foreground">
+                              {t('subscriptions.detail.compliance.screening.birthYear', {
+                                year: hit.birthYear,
+                              })}
+                            </span>
                           )}
-                        </span>
-                      </li>
-                    ))}
-                  </ul>
-                )}
-              </div>
-            </div>
+                          <span className="text-muted-foreground">{t(hit.sourceKey)}</span>
+                        </div>
+
+                        <p className="mt-0.5 text-xs text-muted-foreground">{t(hit.summaryKey)}</p>
+
+                        {decision.comment && (
+                          <div className="mt-1.5 rounded-lg bg-card p-2">
+                            <p className="text-xs text-foreground">{decision.comment.text}</p>
+                            <p className="text-[11px] text-muted-foreground mt-0.5">
+                              {t('subscriptions.detail.compliance.screening.commentBy', {
+                                name: decision.comment.by,
+                                date: decision.comment.at,
+                              })}
+                            </p>
+                          </div>
+                        )}
+
+                        {isCommentOpen && (
+                          <div className="mt-1.5 space-y-1">
+                            <Textarea
+                              value={commentDrafts[hit.id] ?? ''}
+                              onChange={event =>
+                                setCommentDrafts(prev => ({ ...prev, [hit.id]: event.target.value }))
+                              }
+                              placeholder={t('subscriptions.detail.compliance.screening.commentPlaceholder')}
+                              className="text-xs"
+                            />
+                            <p className="text-[11px] text-muted-foreground">
+                              {t('subscriptions.detail.compliance.screening.commentMandatory')}
+                            </p>
+                          </div>
+                        )}
+                      </div>
+
+                      <div className="flex flex-col items-end gap-1.5 shrink-0">
+                        {decision.accepted ? (
+                          <Tooltip>
+                            <TooltipTrigger asChild>
+                              <Badge className="bg-red-100 text-red-700 border-red-300 text-[11px]">
+                                {t('subscriptions.detail.compliance.screening.acceptedTag')}
+                              </Badge>
+                            </TooltipTrigger>
+                            <TooltipContent>
+                              <span className="text-xs">
+                                {t('subscriptions.detail.compliance.screening.decisionBy', {
+                                  name: decision.accepted.by,
+                                  date: decision.accepted.at,
+                                })}
+                              </span>
+                            </TooltipContent>
+                          </Tooltip>
+                        ) : decision.discarded ? (
+                          <Tooltip>
+                            <TooltipTrigger asChild>
+                              <Badge className="bg-card text-muted-foreground text-[11px]">
+                                {t('subscriptions.detail.compliance.screening.discarded')}
+                              </Badge>
+                            </TooltipTrigger>
+                            <TooltipContent>
+                              <span className="text-xs">
+                                {t('subscriptions.detail.compliance.screening.decisionBy', {
+                                  name: decision.discarded.by,
+                                  date: decision.discarded.at,
+                                })}
+                              </span>
+                            </TooltipContent>
+                          </Tooltip>
+                        ) : (
+                          <Badge className="bg-card text-amber-700 border-amber-300 text-[11px]">
+                            <Clock className="w-3 h-3 mr-1" />
+                            {t('subscriptions.detail.compliance.screening.toTreatShort')}
+                          </Badge>
+                        )}
+
+                        <div className="flex items-center gap-1">
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            className="h-7 w-7 p-0 text-muted-foreground"
+                            title={t('subscriptions.detail.compliance.screening.comment')}
+                            aria-label={t('subscriptions.detail.compliance.screening.comment')}
+                            onClick={() => setOpenCommentFor(isCommentOpen ? null : hit.id)}
+                          >
+                            <MessageSquare className="w-3.5 h-3.5" />
+                          </Button>
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            className="gap-1 text-xs h-7"
+                            onClick={() => {
+                              const ok = onDiscard(hit, (commentDrafts[hit.id] ?? '').trim());
+                              if (!ok) setOpenCommentFor(hit.id);
+                              else setOpenCommentFor(null);
+                            }}
+                          >
+                            <X className="w-3 h-3" />
+                            {t('subscriptions.detail.compliance.screening.discard')}
+                          </Button>
+                          <Button
+                            size="sm"
+                            className="gap-1 text-xs h-7 bg-red-600 text-white hover:opacity-90"
+                            onClick={() => {
+                              onAccept(hit, (commentDrafts[hit.id] ?? '').trim());
+                              setOpenCommentFor(null);
+                            }}
+                          >
+                            <AlertCircle className="w-3 h-3" />
+                            {t('subscriptions.detail.compliance.screening.accept')}
+                          </Button>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                );
+              })}
+
+              {historyOpen && (
+                <ul className="mt-2 space-y-0.5 rounded-lg bg-muted p-2">
+                  {runs.map((run, index) => (
+                    <li
+                      key={`${entity.id}-run-${index}`}
+                      className="flex flex-wrap items-center gap-x-2 text-[11px] text-muted-foreground"
+                    >
+                      <span className="text-foreground">{run.at}</span>
+                      <span>{run.by}</span>
+                      <span>
+                        {t(
+                          `subscriptions.detail.compliance.screening.historyHits${
+                            run.hitCount === 1 ? 'One' : 'Many'
+                          }`,
+                          { count: run.hitCount },
+                        )}
+                      </span>
+                    </li>
+                  ))}
+                </ul>
+              )}
+            </li>
           );
         })}
-      </div>
+      </ul>
     </Card>
   );
 }
@@ -1386,28 +1365,33 @@ export function SubscriptionComplianceSection({
         </Card>
       </div>
 
-      <RiskProfileWidget
-        manualScores={manualScores}
-        onManualScore={handleManualScore}
-        computedAt={computedAt}
-        onRecompute={handleRecompute}
-        scoreValidated={scoreValidated}
-        scoreValidatedBy={scoreValidatedBy}
-        scoreValidatedAt={scoreValidatedAt}
-        onValidateScore={onValidateScore}
-      />
+      <div
+        className="grid items-start gap-4"
+        style={{ gridTemplateColumns: 'repeat(auto-fit, minmax(520px, 1fr))' }}
+      >
+        <RiskProfileWidget
+          manualScores={manualScores}
+          onManualScore={handleManualScore}
+          computedAt={computedAt}
+          onRecompute={handleRecompute}
+          scoreValidated={scoreValidated}
+          scoreValidatedBy={scoreValidatedBy}
+          scoreValidatedAt={scoreValidatedAt}
+          onValidateScore={onValidateScore}
+        />
 
-      <ScreeningWidget
-        hitDecisions={hitDecisions}
-        onDiscard={handleDiscardHit}
-        onAccept={handleAcceptHit}
-        monitoring={monitoring}
-        onToggleMonitoring={handleToggleMonitoring}
-        extraRuns={extraRuns}
-        onRerun={handleRerun}
-        acknowledgedUpdates={acknowledgedUpdates}
-        onAcknowledge={updateId => setAcknowledgedUpdates(prev => [...prev, updateId])}
-      />
+        <ScreeningWidget
+          hitDecisions={hitDecisions}
+          onDiscard={handleDiscardHit}
+          onAccept={handleAcceptHit}
+          monitoring={monitoring}
+          onToggleMonitoring={handleToggleMonitoring}
+          extraRuns={extraRuns}
+          onRerun={handleRerun}
+          acknowledgedUpdates={acknowledgedUpdates}
+          onAcknowledge={updateId => setAcknowledgedUpdates(prev => [...prev, updateId])}
+        />
+      </div>
 
       {/* Widget validation finale */}
       <Card className="shadow-sm overflow-hidden">
