@@ -656,90 +656,80 @@ export function SubscriptionDetailPage({ subscription: subscriptionProp, onBack 
 
           {/* Tab Content - Onboarding */}
           <TabsContent value="onboarding" className="mt-0">
+            {/* Étapes de la souscription — bandeau fin dans le prolongement des onglets */}
+            <div
+              className="px-8 py-3 bg-card border-b border-border"
+              style={{ marginLeft: '-2rem', marginRight: '-2rem' }}
+            >
+              <ol className="flex items-center gap-1 overflow-x-auto">
+                {SUBSCRIPTION_STEPS.map((step, index) => {
+                  const StepIcon = step.icon;
+                  const isActive = currentStep === step.id;
+                  const isCompleted = currentStep > step.id;
+                  const isAccessible = step.id <= currentStep + 1;
+
+                  return (
+                    <li key={step.id} className="flex items-center gap-1 shrink-0">
+                      {index > 0 && (
+                        <span
+                          aria-hidden
+                          className={`h-px w-5 ${
+                            isCompleted || isActive ? 'bg-green-300' : 'bg-border'
+                          }`}
+                        />
+                      )}
+                      <button
+                        type="button"
+                        onClick={() => isAccessible && setCurrentStep(step.id)}
+                        disabled={!isAccessible}
+                        aria-current={isActive ? 'step' : undefined}
+                        title={t(step.labelKey)}
+                        className={`flex items-center gap-1.5 rounded-full px-2 py-1 transition-colors ${
+                          isAccessible ? 'hover:bg-accent' : 'opacity-40 cursor-not-allowed'
+                        }`}
+                      >
+                        <span
+                          style={isActive ? { background: PRIMARY_BUTTON_GRADIENT } : undefined}
+                          className={`flex h-5 w-5 shrink-0 items-center justify-center rounded-full ${
+                            isActive ? 'text-white' : isCompleted ? 'bg-emerald-100' : 'bg-muted'
+                          }`}
+                        >
+                          {isCompleted ? (
+                            <Check className="w-3 h-3 text-emerald-600" />
+                          ) : (
+                            <StepIcon
+                              className={`w-3 h-3 ${isActive ? 'text-white' : 'text-muted-foreground'}`}
+                            />
+                          )}
+                        </span>
+                        <span
+                          className={`text-xs whitespace-nowrap ${
+                            isActive
+                              ? 'font-semibold text-foreground'
+                              : isCompleted
+                                ? 'text-foreground'
+                                : 'text-muted-foreground'
+                          }`}
+                        >
+                          {t(step.labelKey)}
+                        </span>
+                      </button>
+                    </li>
+                  );
+                })}
+                <li className="ml-auto pl-3 shrink-0 text-[11px] text-muted-foreground whitespace-nowrap">
+                  {t('subscriptions.detail.stepper.stepOf', {
+                    current: currentStep + 1,
+                    total: SUBSCRIPTION_STEPS.length,
+                  })}
+                </li>
+              </ol>
+            </div>
+
             <div className="px-8 py-6">
               <div className="mb-6">
                 {detailSummary}
               </div>
-
-              {/* Étapes de la souscription — parcours horizontal */}
-              <Card className="p-4 shadow-sm mb-6">
-                <div className="flex items-baseline justify-between gap-3 mb-3">
-                  <h3 className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
-                    {t('subscriptions.detail.stepper.title')}
-                  </h3>
-                  <span className="text-xs text-muted-foreground whitespace-nowrap">
-                    {t('subscriptions.detail.stepper.stepOf', {
-                      current: currentStep + 1,
-                      total: SUBSCRIPTION_STEPS.length,
-                    })}
-                  </span>
-                </div>
-
-                <ol className="flex items-start overflow-x-auto pb-1">
-                  {SUBSCRIPTION_STEPS.map((step, index) => {
-                    const StepIcon = step.icon;
-                    const isActive = currentStep === step.id;
-                    const isCompleted = currentStep > step.id;
-                    const isAccessible = step.id <= currentStep + 1;
-                    const isFirst = index === 0;
-                    const isLast = index === SUBSCRIPTION_STEPS.length - 1;
-                    const connectorBefore = isCompleted || isActive ? 'bg-green-300' : 'bg-border';
-                    const connectorAfter = isCompleted ? 'bg-green-300' : 'bg-border';
-
-                    return (
-                      <li key={step.id} className="flex-1 min-w-[96px]">
-                        <button
-                          type="button"
-                          onClick={() => isAccessible && setCurrentStep(step.id)}
-                          disabled={!isAccessible}
-                          aria-current={isActive ? 'step' : undefined}
-                          className={`w-full flex flex-col items-center gap-2 py-1.5 transition-opacity ${
-                            isAccessible ? 'hover:opacity-80' : 'opacity-40 cursor-not-allowed'
-                          }`}
-                        >
-                          <span className="flex w-full items-center">
-                            <span
-                              aria-hidden
-                              className={`h-0.5 flex-1 rounded-full ${isFirst ? 'opacity-0' : connectorBefore}`}
-                            />
-                            <span
-                              style={isActive ? { background: PRIMARY_BUTTON_GRADIENT } : undefined}
-                              className={`mx-2 flex w-8 h-8 shrink-0 items-center justify-center rounded-full ${
-                                isActive
-                                  ? 'text-white shadow-md'
-                                  : isCompleted
-                                    ? 'bg-green-100'
-                                    : 'bg-muted'
-                              }`}
-                            >
-                              {isCompleted ? (
-                                <Check className="w-4 h-4 text-green-600" />
-                              ) : (
-                                <StepIcon className={`w-4 h-4 ${isActive ? 'text-white' : 'text-muted-foreground'}`} />
-                              )}
-                            </span>
-                            <span
-                              aria-hidden
-                              className={`h-0.5 flex-1 rounded-full ${isLast ? 'opacity-0' : connectorAfter}`}
-                            />
-                          </span>
-                          <span
-                            className={`text-xs leading-tight text-center px-1 ${
-                              isActive
-                                ? 'font-semibold text-foreground'
-                                : isCompleted
-                                  ? 'text-foreground/80'
-                                  : 'text-muted-foreground'
-                            }`}
-                          >
-                            {t(step.labelKey)}
-                          </span>
-                        </button>
-                      </li>
-                    );
-                  })}
-                </ol>
-              </Card>
 
                 <div>
                   {currentStep === 0 && (

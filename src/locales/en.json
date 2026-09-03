@@ -425,7 +425,6 @@
         "notes": "Notes"
       },
       "stepper": {
-        "title": "Subscription steps",
         "stepOf": "Step {{current}}/{{total}}",
         "initialization": "Initialization",
         "onboarding": "Onboarding in progress",
