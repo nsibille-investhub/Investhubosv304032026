@@ -191,7 +191,7 @@ export function OnboardingCompletionCard({ questions, documents }: OnboardingCom
           const RowIcon = row.icon;
           return (
             <div key={row.id} className="flex items-center gap-3">
-              <span className="flex w-52 shrink-0 items-center gap-2">
+              <span className="flex w-48 shrink-0 items-center gap-2">
                 <RowIcon className="w-4 h-4 shrink-0 text-muted-foreground" />
                 <span className="truncate text-sm font-medium text-foreground">{row.label}</span>
               </span>

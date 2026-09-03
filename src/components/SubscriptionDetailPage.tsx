@@ -168,6 +168,13 @@ export function SubscriptionDetailPage({ subscription: subscriptionProp, onBack 
   const [riskValidationDate, setRiskValidationDate] = useState<string | null>(null);
   const [riskValidatedBy, setRiskValidatedBy] = useState<string | null>(null);
 
+  const handleInvalidateRisk = () => {
+    setRiskValidated(false);
+    setRiskValidationDate(null);
+    setRiskValidatedBy(null);
+    toast.info(t('subscriptions.detail.compliance.toast.scoreInvalidated'));
+  };
+
   const handleValidateRisk = () => {
     setRiskValidated(true);
     const now = new Date();
@@ -1230,6 +1237,7 @@ export function SubscriptionDetailPage({ subscription: subscriptionProp, onBack 
                       scoreValidatedBy={riskValidatedBy}
                       scoreValidatedAt={riskValidationDate}
                       onValidateScore={handleValidateRisk}
+                      onInvalidateScore={handleInvalidateRisk}
                       onSubscriptionValidated={() => setCurrentStep(3)}
                     />
                   )}

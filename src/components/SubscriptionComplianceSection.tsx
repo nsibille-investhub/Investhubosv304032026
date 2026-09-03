@@ -6,6 +6,7 @@ import {
   Check,
   CheckCircle2,
   ChevronDown,
+  ChevronRight,
   ChevronUp,
   Clock,
   FileCheck,
@@ -203,6 +204,8 @@ function ScoreDonut({
 }
 
 interface RiskProfileWidgetProps {
+  /** Dossier valide : les decisions ne sont plus modifiables. */
+  locked: boolean;
   manualScores: Record<string, number>;
   onManualScore: (componentId: string, value: number) => void;
   computedAt: string;
@@ -214,6 +217,7 @@ interface RiskProfileWidgetProps {
 
 /** Widget Risque : score, echelle et detail du calcul classe par classe. */
 export function RiskProfileWidget({
+  locked,
   manualScores,
   onManualScore,
   computedAt,
@@ -283,16 +287,18 @@ export function RiskProfileWidget({
           >
             <ListChecks className="w-4 h-4" />
           </Button>
-          <Button
-            variant="ghost"
-            size="sm"
-            className="h-8 w-8 p-0 text-muted-foreground"
-            title={t('subscriptions.detail.compliance.score.recompute')}
-            aria-label={t('subscriptions.detail.compliance.score.recompute')}
-            onClick={onRecompute}
-          >
-            <RefreshCw className="w-4 h-4" />
-          </Button>
+          {!locked && (
+            <Button
+              variant="ghost"
+              size="sm"
+              className="h-8 w-8 p-0 text-muted-foreground"
+              title={t('subscriptions.detail.compliance.score.recompute')}
+              aria-label={t('subscriptions.detail.compliance.score.recompute')}
+              onClick={onRecompute}
+            >
+              <RefreshCw className="w-4 h-4" />
+            </Button>
+          )}
         </div>
       </div>
 
@@ -461,7 +467,7 @@ export function RiskProfileWidget({
                             <span className="text-xs font-semibold text-foreground tabular-nums">
                               {shown === null ? '—' : shown.toFixed(2)}
                             </span>
-                            {component.manualAllowed && (
+                            {component.manualAllowed && !locked && (
                               <Button
                                 variant="ghost"
                                 size="sm"
@@ -492,6 +498,8 @@ export function RiskProfileWidget({
 }
 
 interface ScreeningWidgetProps {
+  /** Dossier valide : les decisions ne sont plus modifiables. */
+  locked: boolean;
   hitDecisions: Record<string, HitDecisionState>;
   onDiscard: (hit: ScreeningHit, comment: string) => boolean;
   onAccept: (hit: ScreeningHit, comment: string) => void;
@@ -505,6 +513,7 @@ interface ScreeningWidgetProps {
 
 /** Widget Screening : entites controlees, listes detectees et decision par correspondance. */
 export function ScreeningWidget({
+  locked,
   hitDecisions,
   onDiscard,
   onAccept,
@@ -597,7 +606,7 @@ export function ScreeningWidget({
                 <Button
                   variant="outline"
                   size="sm"
-                  className="gap-1 text-xs h-6 shrink-0"
+                  className={cn('gap-1 text-xs h-6 shrink-0', locked && 'hidden')}
                   onClick={() => onAcknowledge(update.id)}
                 >
                   <Check className="w-3 h-3" />
@@ -654,6 +663,7 @@ export function ScreeningWidget({
                       <span className="flex items-center">
                         <Switch
                           checked={monitoring[entity.id]}
+                          disabled={locked}
                           onCheckedChange={next => onToggleMonitoring(entity, next)}
                         />
                       </span>
@@ -664,16 +674,18 @@ export function ScreeningWidget({
                       </span>
                     </TooltipContent>
                   </Tooltip>
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    className="h-7 w-7 p-0 text-muted-foreground"
-                    title={t('subscriptions.detail.compliance.screening.rerun')}
-                    aria-label={t('subscriptions.detail.compliance.screening.rerun')}
-                    onClick={() => onRerun(entity)}
-                  >
-                    <RefreshCw className="w-3.5 h-3.5" />
-                  </Button>
+                  {!locked && (
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      className="h-7 w-7 p-0 text-muted-foreground"
+                      title={t('subscriptions.detail.compliance.screening.rerun')}
+                      aria-label={t('subscriptions.detail.compliance.screening.rerun')}
+                      onClick={() => onRerun(entity)}
+                    >
+                      <RefreshCw className="w-3.5 h-3.5" />
+                    </Button>
+                  )}
                   <Button
                     variant="ghost"
                     size="sm"
@@ -845,7 +857,7 @@ export function ScreeningWidget({
                           </Badge>
                         )}
 
-                        <div className="flex items-center gap-1">
+                        <div className={cn('flex items-center gap-1', locked && 'hidden')}>
                           <Button
                             variant="ghost"
                             size="sm"
@@ -923,6 +935,7 @@ interface SubscriptionComplianceSectionProps {
   scoreValidatedBy: string | null;
   scoreValidatedAt: string | null;
   onValidateScore: () => void;
+  onInvalidateScore: () => void;
   onSubscriptionValidated: () => void;
 }
 
@@ -934,6 +947,7 @@ export function SubscriptionComplianceSection({
   scoreValidatedBy,
   scoreValidatedAt,
   onValidateScore,
+  onInvalidateScore,
   onSubscriptionValidated,
 }: SubscriptionComplianceSectionProps) {
   const { t } = useTranslation();
@@ -968,6 +982,7 @@ export function SubscriptionComplianceSection({
   const [statusBy, setStatusBy] = useState<string | null>(null);
   const [statusAt, setStatusAt] = useState<string | null>(null);
   const [overrideRequested, setOverrideRequested] = useState(false);
+  const [reopenedAt, setReopenedAt] = useState<string | null>(null);
   const [note, setNote] = useState('');
   const [journalNotes, setJournalNotes] = useState<
     { id: string; at: string; by: string; text: string }[]
@@ -990,6 +1005,8 @@ export function SubscriptionComplianceSection({
   const entitiesWithoutMatch = mockScreenedEntities.length - entitiesWithMatch.length;
   const treatedHits = allHits.length - untreatedHits;
   const acceptedHits = allHits.filter(hit => hitDecisions[hit.id]?.accepted).length;
+
+  const locked = status === 'validated';
 
   const blockers = [
     ...(untreatedHits > 0
@@ -1083,20 +1100,24 @@ export function SubscriptionComplianceSection({
     setStatus('validated');
     setStatusBy(CURRENT_OPERATOR);
     setStatusAt(stamp);
+    setReopenedAt(null);
     toast.success(t('subscriptions.detail.compliance.toast.complianceValidated'), {
       description: overrideRequested
         ? t('subscriptions.detail.compliance.toast.complianceValidatedOverride')
         : t('subscriptions.detail.compliance.toast.complianceValidatedDesc'),
     });
-    onSubscriptionValidated();
   };
 
   const handleReopen = () => {
-    setStatus('pending');
+    const stamp = now();
+    setStatus('awaitingValidation');
     setStatusBy(CURRENT_OPERATOR);
-    setStatusAt(now());
+    setStatusAt(stamp);
+    setReopenedAt(stamp);
     setOverrideRequested(false);
-    toast.info(t('subscriptions.detail.compliance.toast.complianceReopened'));
+    toast.info(t('subscriptions.detail.compliance.toast.complianceReopened'), {
+      description: t('subscriptions.detail.compliance.toast.complianceReopenedDesc'),
+    });
   };
 
   const handleSubmitToCompliance = () => {
@@ -1120,25 +1141,25 @@ export function SubscriptionComplianceSection({
     <div className="space-y-4">
       <OnboardingCompletionCard questions={questions} documents={documents} />
 
-      {/* Validation du dossier : score, parties tierces, catégorisation et décision */}
+      {/* Conformité : score, parties tierces, catégorisation et décision */}
       <Card className="shadow-sm overflow-hidden">
-        <div className="flex flex-wrap items-start justify-between gap-3 px-4 py-3 border-b">
+        <div className="flex flex-wrap items-center justify-between gap-3 px-4 py-3">
           <div className="min-w-0">
             <h3 className={WIDGET_TITLE_CLASS}>
               {t('subscriptions.detail.compliance.final.title')}
             </h3>
-            <p className={WIDGET_SUBTITLE_CLASS}>
-              {statusAt
-                ? t('subscriptions.detail.compliance.status.lastAction', {
-                    name: statusBy ?? '',
-                    date: statusAt,
-                  })
-                : t('subscriptions.detail.compliance.final.subtitle')}
-            </p>
+            {statusAt && (
+              <p className={WIDGET_SUBTITLE_CLASS}>
+                {t('subscriptions.detail.compliance.status.lastAction', {
+                  name: statusBy ?? '',
+                  date: statusAt,
+                })}
+              </p>
+            )}
           </div>
 
           <div className="flex flex-wrap items-center gap-2 shrink-0">
-            {status === 'validated' ? (
+            {locked ? (
               <Badge className="bg-emerald-100 text-emerald-700 border-emerald-200">
                 <CheckCircle2 className="w-3.5 h-3.5 mr-1.5" />
                 {t('subscriptions.detail.compliance.status.validated')}
@@ -1150,108 +1171,136 @@ export function SubscriptionComplianceSection({
               </Badge>
             )}
 
-            {status === 'pending' && (
-              <Button
-                variant="outline"
-                size="sm"
-                className="gap-1.5 text-xs h-9"
-                onClick={handleSubmitToCompliance}
-              >
-                <ShieldAlert className="w-3.5 h-3.5" />
-                {t('subscriptions.detail.compliance.status.submit')}
-              </Button>
-            )}
-
-            {status === 'validated' ? (
-              <Button variant="outline" className="gap-2" onClick={handleReopen}>
-                <RotateCcw className="w-4 h-4" />
-                {t('subscriptions.detail.compliance.status.reopen')}
-              </Button>
+            {locked ? (
+              <>
+                <Button variant="outline" size="sm" className="gap-1.5 text-xs h-9" onClick={handleReopen}>
+                  <RotateCcw className="w-3.5 h-3.5" />
+                  {t('subscriptions.detail.compliance.status.reopen')}
+                </Button>
+                <Button
+                  className="gap-2 text-white hover:opacity-90"
+                  style={{ background: PRIMARY_BUTTON_GRADIENT }}
+                  onClick={onSubscriptionValidated}
+                >
+                  <ChevronRight className="w-4 h-4" />
+                  {t('subscriptions.detail.compliance.final.toSignature')}
+                </Button>
+              </>
             ) : (
-              <Button
-                size="lg"
-                className="gap-2 px-6 text-white hover:opacity-90"
-                style={{ background: PRIMARY_BUTTON_GRADIENT }}
-                disabled={!canValidate}
-                onClick={handleValidateCompliance}
-              >
-                <ShieldCheck className="w-4 h-4" />
-                {t('subscriptions.detail.compliance.final.validate')}
-              </Button>
+              <>
+                {status === 'pending' && (
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    className="gap-1.5 text-xs h-9"
+                    onClick={handleSubmitToCompliance}
+                  >
+                    <ShieldAlert className="w-3.5 h-3.5" />
+                    {t('subscriptions.detail.compliance.status.submit')}
+                  </Button>
+                )}
+                <Button
+                  size="lg"
+                  className="gap-2 px-6 text-white hover:opacity-90"
+                  style={{ background: PRIMARY_BUTTON_GRADIENT }}
+                  disabled={!canValidate}
+                  onClick={handleValidateCompliance}
+                >
+                  <ShieldCheck className="w-4 h-4" />
+                  {t('subscriptions.detail.compliance.final.validate')}
+                </Button>
+              </>
             )}
           </div>
         </div>
 
-        <div className="grid grid-cols-3">
+        <div className="space-y-2 border-t px-4 py-3">
           {/* Score de risque */}
-          <div className="px-4 py-3">
-            <div className={WIDGET_LABEL_CLASS}>
-              {t('subscriptions.detail.compliance.score.title')}
-            </div>
-            <div className="mt-2 flex items-baseline gap-2">
-              <span className="text-2xl font-bold text-foreground tabular-nums leading-none">
+          <div className="flex flex-wrap items-center gap-3">
+            <span className="flex w-48 shrink-0 items-center gap-2">
+              <Radar className="w-4 h-4 shrink-0 text-muted-foreground" />
+              <span className="truncate text-sm font-medium text-foreground">
+                {t('subscriptions.detail.compliance.score.title')}
+              </span>
+            </span>
+
+            <span className="flex flex-wrap items-center gap-2 min-w-0 flex-1">
+              <span className="text-lg font-bold text-foreground tabular-nums leading-none">
                 {profileScore ?? '—'}
               </span>
-              {profileTier && <ToneBadge tone={profileTier.tone} label={t(profileTier.labelKey)} />}
-            </div>
-            <div className="mt-2">
+              {profileTier && (
+                <ToneBadge tone={profileTier.tone} label={t(profileTier.labelKey)} className="text-xs" />
+              )}
+
               {!validationRequired ? (
-                <span className="flex items-start gap-1.5 text-xs text-muted-foreground">
-                  <CheckCircle2 className="w-3.5 h-3.5 text-emerald-600 shrink-0 mt-0.5" />
+                <span className="flex items-center gap-1.5 text-xs text-muted-foreground">
+                  <CheckCircle2 className="w-3.5 h-3.5 text-emerald-600 shrink-0" />
                   {t('subscriptions.detail.compliance.score.noValidationNeeded')}
                 </span>
               ) : scoreValidated ? (
-                <span className="flex items-start gap-1.5 text-xs text-muted-foreground">
-                  <CheckCircle2 className="w-3.5 h-3.5 text-emerald-600 shrink-0 mt-0.5" />
-                  <span>
-                    {t('subscriptions.detail.compliance.final.scoreValidatedBy', {
-                      name: scoreValidatedBy ?? '',
-                      date: scoreValidatedAt ?? '',
-                    })}
-                  </span>
+                <span className="flex items-center gap-1.5 text-xs text-muted-foreground">
+                  <CheckCircle2 className="w-3.5 h-3.5 text-emerald-600 shrink-0" />
+                  {t('subscriptions.detail.compliance.final.scoreValidatedBy', {
+                    name: scoreValidatedBy ?? '',
+                    date: scoreValidatedAt ?? '',
+                  })}
                 </span>
               ) : (
-                <div className="space-y-2">
-                  <span className="flex items-start gap-1.5 text-xs text-amber-700">
-                    <AlertCircle className="w-3.5 h-3.5 shrink-0 mt-0.5" />
-                    {t('subscriptions.detail.compliance.score.validationRequired')}
-                  </span>
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    className="gap-1.5 text-xs h-7"
-                    onClick={onValidateScore}
-                  >
+                <span className="flex items-center gap-1.5 text-xs text-amber-700">
+                  <AlertCircle className="w-3.5 h-3.5 shrink-0" />
+                  {t('subscriptions.detail.compliance.score.validationRequired')}
+                </span>
+              )}
+            </span>
+
+            {!locked && validationRequired && (
+              <Button
+                variant="outline"
+                size="sm"
+                className="gap-1.5 text-xs h-7 shrink-0"
+                onClick={scoreValidated ? onInvalidateScore : onValidateScore}
+              >
+                {scoreValidated ? (
+                  <>
+                    <RotateCcw className="w-3 h-3" />
+                    {t('subscriptions.detail.compliance.score.invalidate')}
+                  </>
+                ) : (
+                  <>
                     <ShieldCheck className="w-3 h-3" />
                     {t('subscriptions.detail.compliance.score.validate')}
-                  </Button>
-                </div>
-              )}
-            </div>
+                  </>
+                )}
+              </Button>
+            )}
           </div>
 
-          {/* Parties tierces et correspondances */}
-          <div className="border-l px-4 py-3">
-            <div className={WIDGET_LABEL_CLASS}>
-              {t('subscriptions.detail.compliance.final.thirdParties')}
-            </div>
-            {entitiesWithMatch.length === 0 ? (
-              <div className="mt-2 flex items-start gap-1.5 text-sm text-foreground">
-                <CheckCircle2 className="w-4 h-4 text-emerald-600 shrink-0 mt-0.5" />
-                {t('subscriptions.detail.compliance.final.noThirdPartyMatch')}
-              </div>
-            ) : (
-              <>
-                <p className="mt-2 text-sm text-foreground">
-                  {tc(
-                    'subscriptions.detail.compliance.final.thirdPartiesConcerned',
-                    entitiesWithMatch.length,
-                  )}{' '}
-                  <span className="text-muted-foreground">
+          {/* Parties tierces */}
+          <div className="flex flex-wrap items-center gap-3">
+            <span className="flex w-48 shrink-0 items-center gap-2">
+              <Users className="w-4 h-4 shrink-0 text-muted-foreground" />
+              <span className="truncate text-sm font-medium text-foreground">
+                {t('subscriptions.detail.compliance.final.thirdParties')}
+              </span>
+            </span>
+
+            <span className="flex flex-wrap items-center gap-2 min-w-0 flex-1">
+              {entitiesWithMatch.length === 0 ? (
+                <span className="flex items-center gap-1.5 text-sm text-foreground">
+                  <CheckCircle2 className="w-4 h-4 text-emerald-600 shrink-0" />
+                  {t('subscriptions.detail.compliance.final.noThirdPartyMatch')}
+                </span>
+              ) : (
+                <>
+                  <span className="text-sm text-foreground">
+                    {tc(
+                      'subscriptions.detail.compliance.final.thirdPartiesConcerned',
+                      entitiesWithMatch.length,
+                    )}
+                  </span>
+                  <span className="text-xs text-muted-foreground">
                     {tc('subscriptions.detail.compliance.final.matchCount', allHits.length)}
                   </span>
-                </p>
-                <div className="mt-2 flex flex-wrap items-center gap-1.5">
                   {untreatedHits > 0 && (
                     <Badge className="bg-amber-50 text-amber-700 border-amber-200 text-xs">
                       <Clock className="w-3 h-3 mr-1" />
@@ -1270,28 +1319,29 @@ export function SubscriptionComplianceSection({
                       {tc('subscriptions.detail.compliance.final.matchesAccepted', acceptedHits)}
                     </Badge>
                   )}
-                </div>
-                {entitiesWithoutMatch > 0 && (
-                  <p className="mt-2 text-xs text-muted-foreground">
-                    {tc(
-                      'subscriptions.detail.compliance.final.thirdPartiesClear',
-                      entitiesWithoutMatch,
-                    )}
-                  </p>
-                )}
-              </>
-            )}
+                </>
+              )}
+              {entitiesWithoutMatch > 0 && (
+                <span className="text-xs text-muted-foreground">
+                  {tc('subscriptions.detail.compliance.final.thirdPartiesClear', entitiesWithoutMatch)}
+                </span>
+              )}
+            </span>
           </div>
 
           {/* Catégorisation investisseur */}
-          <div className="border-l px-4 py-3">
-            <div className="flex items-start justify-between gap-2">
-              <div className={WIDGET_LABEL_CLASS}>
-                {t('subscriptions.detail.compliance.categorisation.title')}
-              </div>
+          <div className="flex flex-wrap items-center gap-3">
+            <span className="flex w-48 shrink-0 items-center gap-2">
+              <UserCheck className="w-4 h-4 shrink-0 text-muted-foreground" />
+              <span className="truncate text-sm font-medium text-foreground">
+                {t('subscriptions.detail.compliance.categorisation.shortTitle')}
+              </span>
+            </span>
+
+            <span className="flex flex-wrap items-center gap-2 min-w-0 flex-1">
               <Tooltip>
                 <TooltipTrigger asChild>
-                  <Badge className="bg-muted text-muted-foreground text-xs shrink-0">
+                  <Badge className="bg-muted text-muted-foreground text-[11px] shrink-0">
                     {t('subscriptions.detail.compliance.categorisation.mifid')}
                   </Badge>
                 </TooltipTrigger>
@@ -1301,36 +1351,60 @@ export function SubscriptionComplianceSection({
                   </span>
                 </TooltipContent>
               </Tooltip>
-            </div>
-
-            <div className="mt-2">
-              <Select
-                value={category}
-                onValueChange={value => handleCategoryChange(value as InvestorCategory)}
-              >
-                <SelectTrigger className="h-9 text-sm">
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  {INVESTOR_CATEGORIES.map(item => (
-                    <SelectItem key={item} value={item}>
-                      {t(`subscriptions.detail.compliance.categories.${item}`)}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
-
-            <p className="mt-2 text-xs text-muted-foreground">
-              {t('subscriptions.detail.compliance.categorisation.decidedBy', {
-                name: categoryDecidedBy,
-                date: categoryDecidedAt,
-              })}
-            </p>
+              <span className="w-64 shrink-0">
+                <Select
+                  value={category}
+                  disabled={locked}
+                  onValueChange={value => handleCategoryChange(value as InvestorCategory)}
+                >
+                  <SelectTrigger className="h-8 text-sm">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {INVESTOR_CATEGORIES.map(item => (
+                      <SelectItem key={item} value={item}>
+                        {t(`subscriptions.detail.compliance.categories.${item}`)}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </span>
+              <span className="text-xs text-muted-foreground truncate">
+                {t('subscriptions.detail.compliance.categorisation.decidedBy', {
+                  name: categoryDecidedBy,
+                  date: categoryDecidedAt,
+                })}
+              </span>
+            </span>
           </div>
         </div>
 
-        {status !== 'validated' && blockers.length > 0 && (
+        {locked && (
+          <div className="flex items-start gap-2 border-t bg-emerald-50 px-4 py-2 text-xs text-emerald-700">
+            <ShieldCheck className="w-3.5 h-3.5 shrink-0 mt-0.5" />
+            <span>
+              {t('subscriptions.detail.compliance.final.validatedBy', {
+                name: statusBy ?? '',
+                date: statusAt ?? '',
+              })}{' '}
+              {t('subscriptions.detail.compliance.final.lockedNotice')}
+            </span>
+          </div>
+        )}
+
+        {!locked && reopenedAt && (
+          <div className="flex items-start gap-2 border-t bg-amber-50 px-4 py-2 text-xs text-amber-700">
+            <RotateCcw className="w-3.5 h-3.5 shrink-0 mt-0.5" />
+            <span>
+              {t('subscriptions.detail.compliance.final.reopenedNotice', {
+                name: statusBy ?? '',
+                date: reopenedAt,
+              })}
+            </span>
+          </div>
+        )}
+
+        {!locked && blockers.length > 0 && (
           <div className="flex flex-wrap items-center justify-between gap-3 border-t bg-red-50 px-4 py-2">
             <span className="flex items-start gap-2 text-xs text-red-700 min-w-0">
               <AlertCircle className="w-3.5 h-3.5 shrink-0 mt-0.5" />
@@ -1350,18 +1424,6 @@ export function SubscriptionComplianceSection({
             </label>
           </div>
         )}
-
-        {status === 'validated' && (
-          <div className="flex items-start gap-2 border-t px-4 py-2 text-xs text-muted-foreground">
-            <ShieldCheck className="w-3.5 h-3.5 text-emerald-600 shrink-0 mt-0.5" />
-            <span>
-              {t('subscriptions.detail.compliance.final.validatedBy', {
-                name: statusBy ?? '',
-                date: statusAt ?? '',
-              })}
-            </span>
-          </div>
-        )}
       </Card>
 
       <div
@@ -1369,6 +1431,7 @@ export function SubscriptionComplianceSection({
         style={{ gridTemplateColumns: 'repeat(auto-fit, minmax(520px, 1fr))' }}
       >
         <RiskProfileWidget
+          locked={locked}
           manualScores={manualScores}
           onManualScore={handleManualScore}
           computedAt={computedAt}
@@ -1379,6 +1442,7 @@ export function SubscriptionComplianceSection({
         />
 
         <ScreeningWidget
+          locked={locked}
           hitDecisions={hitDecisions}
           onDiscard={handleDiscardHit}
           onAccept={handleAcceptHit}

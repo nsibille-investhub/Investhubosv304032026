@@ -803,14 +803,15 @@
           "validationRequired": "Le palier atteint impose une validation par la conformité.",
           "validate": "Valider le score",
           "validated": "Score validé",
-          "noValidationNeeded": "Le palier atteint ne demande pas de validation manuelle."
+          "noValidationNeeded": "Le palier atteint ne demande pas de validation manuelle.",
+          "invalidate": "Invalider le score"
         },
         "status": {
           "pending": "En attente",
           "awaitingValidation": "En attente de validation conformité",
           "validated": "Validé",
           "submit": "Soumettre à la conformité",
-          "reopen": "Rouvrir le dossier",
+          "reopen": "Rouvrir le KYC",
           "lastAction": "Dernière action : {{name}}, {{date}}"
         },
         "categorisation": {
@@ -819,7 +820,8 @@
           "mifidHint": "La catégorisation conditionne le niveau de protection et l'accès aux produits.",
           "decidedBy": "Décidée par {{name}}, le {{date}}",
           "reviewDue": "Prochaine revue : {{date}}",
-          "justificationFinancialInstitution": "Société de gestion agréée, professionnelle par nature au sens de MIF II."
+          "justificationFinancialInstitution": "Société de gestion agréée, professionnelle par nature au sens de MIF II.",
+          "shortTitle": "Catégorisation"
         },
         "categories": {
           "nonProfessional": "Non professionnel",
@@ -979,7 +981,7 @@
           "pendingValidation": "Dossier passé en attente de validation par la conformité."
         },
         "final": {
-          "title": "Validation du dossier",
+          "title": "Conformité",
           "validate": "Valider le dossier",
           "validatedBy": "Validé par {{name}}, le {{date}}",
           "override": "Valider malgré les contrôles bloquants, sous ma responsabilité. La dérogation est tracée dans le journal.",
@@ -1002,7 +1004,10 @@
           "thirdPartiesClearOne": "{{count}} autre partie tierce sans correspondance",
           "thirdPartiesClearMany": "{{count}} autres parties tierces sans correspondance",
           "blockerHits": "correspondances à traiter",
-          "blockerScore": "score de risque à valider"
+          "blockerScore": "score de risque à valider",
+          "toSignature": "Passer à l'envoi en signature",
+          "lockedNotice": "Les décisions sont verrouillées, rouvrez le KYC pour les modifier.",
+          "reopenedNotice": "KYC rouvert par {{name}}, le {{date}}. Les décisions sont modifiables."
         },
         "toast": {
           "recomputed": "Score recalculé",
@@ -1022,11 +1027,13 @@
           "complianceValidated": "Conformité validée",
           "complianceValidatedDesc": "Le dossier peut passer en signature.",
           "complianceValidatedOverride": "Dérogation enregistrée dans le journal de conformité.",
-          "complianceReopened": "Dossier de conformité rouvert",
+          "complianceReopened": "KYC rouvert",
           "submittedToCompliance": "Dossier transmis à la conformité",
           "exportScreening": "Export en cours",
           "exportScreeningDesc": "Les contrôles et les décisions sont exportés.",
-          "noteAdded": "Note ajoutée au journal"
+          "noteAdded": "Note ajoutée au journal",
+          "complianceReopenedDesc": "Score, correspondances et catégorisation sont de nouveau modifiables.",
+          "scoreInvalidated": "Validation du score retirée"
         }
       }
     },

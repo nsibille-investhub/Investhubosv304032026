@@ -803,14 +803,15 @@
           "validationRequired": "The tier reached requires compliance validation.",
           "validate": "Validate score",
           "validated": "Score validated",
-          "noValidationNeeded": "The tier reached does not require manual validation."
+          "noValidationNeeded": "The tier reached does not require manual validation.",
+          "invalidate": "Invalidate score"
         },
         "status": {
           "pending": "Pending",
           "awaitingValidation": "Awaiting compliance validation",
           "validated": "Validated",
           "submit": "Submit to compliance",
-          "reopen": "Reopen file",
+          "reopen": "Reopen KYC",
           "lastAction": "Last action: {{name}}, {{date}}"
         },
         "categorisation": {
@@ -819,7 +820,8 @@
           "mifidHint": "Categorisation drives the protection level and product access.",
           "decidedBy": "Decided by {{name}} on {{date}}",
           "reviewDue": "Next review: {{date}}",
-          "justificationFinancialInstitution": "Licensed management company, professional by nature under MiFID II."
+          "justificationFinancialInstitution": "Licensed management company, professional by nature under MiFID II.",
+          "shortTitle": "Categorisation"
         },
         "categories": {
           "nonProfessional": "Non-professional",
@@ -979,7 +981,7 @@
           "pendingValidation": "File moved to awaiting compliance validation."
         },
         "final": {
-          "title": "File validation",
+          "title": "Compliance",
           "validate": "Validate file",
           "validatedBy": "Validated by {{name}} on {{date}}",
           "override": "Validate despite the blocking controls, under my responsibility. The override is recorded in the log.",
@@ -1002,7 +1004,10 @@
           "thirdPartiesClearOne": "{{count}} other third party without a match",
           "thirdPartiesClearMany": "{{count}} other third parties without a match",
           "blockerHits": "matches to review",
-          "blockerScore": "risk score to validate"
+          "blockerScore": "risk score to validate",
+          "toSignature": "Move to signature",
+          "lockedNotice": "Decisions are locked, reopen the KYC to change them.",
+          "reopenedNotice": "KYC reopened by {{name}} on {{date}}. Decisions can be changed."
         },
         "toast": {
           "recomputed": "Score recomputed",
@@ -1022,11 +1027,13 @@
           "complianceValidated": "Compliance validated",
           "complianceValidatedDesc": "The file can move to signature.",
           "complianceValidatedOverride": "Override recorded in the compliance log.",
-          "complianceReopened": "Compliance file reopened",
+          "complianceReopened": "KYC reopened",
           "submittedToCompliance": "File submitted to compliance",
           "exportScreening": "Export in progress",
           "exportScreeningDesc": "Screenings and decisions are being exported.",
-          "noteAdded": "Note added to the log"
+          "noteAdded": "Note added to the log",
+          "complianceReopenedDesc": "Score, matches and categorisation can be changed again.",
+          "scoreInvalidated": "Score validation removed"
         }
       }
     },
