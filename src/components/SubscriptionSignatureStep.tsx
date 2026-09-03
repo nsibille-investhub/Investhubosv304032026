@@ -445,7 +445,7 @@ export function SubscriptionSignatureStep({
   return (
     <div className="space-y-4">
       <div
-        className="grid items-start gap-4"
+        className="grid gap-4"
         style={{ gridTemplateColumns: 'repeat(auto-fit, minmax(440px, 1fr))' }}
       >
         <OnboardingCompletionCard questions={questions} documents={documents} />
@@ -721,97 +721,104 @@ interface ComplianceStatusCardProps {
   onOpen: () => void;
 }
 
-/** Rappel de l'etat de conformite, en lecture seule, avec renvoi vers l'etape Conformite. */
+/** Rappel de l'etat de conformite, en lecture seule, cale sur la hauteur du bandeau de completion. */
 function ComplianceStatusCard({ compliance, onOpen }: ComplianceStatusCardProps) {
   const { t } = useTranslation();
   const tc = (key: string, count: number) => t(`${key}${count === 1 ? 'One' : 'Many'}`, { count });
   const snapshot = computeComplianceSnapshot();
   const validated = compliance.status === 'validated';
+  const categoryLabel = t(`subscriptions.detail.compliance.categories.${snapshot.category}`);
 
   return (
-    <Card className="p-4 shadow-sm">
+    <Card className="flex flex-col justify-between p-4 shadow-sm">
       <div className="mb-3 flex flex-wrap items-center justify-between gap-3">
-        <div className="min-w-0">
-          <h3 className={WIDGET_TITLE_CLASS}>{t('subscriptions.detail.compliance.final.title')}</h3>
-          <p className={WIDGET_SUBTITLE_CLASS}>
-            {validated
-              ? t('subscriptions.detail.compliance.final.validatedBy', {
-                  name: compliance.by ?? '',
-                  date: compliance.at ?? '',
-                })
-              : t(`${KEY}.compliance.notValidatedHint`)}
-          </p>
-        </div>
-        <div className="flex items-center gap-2 shrink-0">
+        <h3 className={WIDGET_TITLE_CLASS}>{t('subscriptions.detail.compliance.final.title')}</h3>
+        <div className="flex flex-wrap items-center gap-2">
           {validated ? (
-            <Badge className="bg-emerald-100 text-emerald-700 border-emerald-200">
-              <ShieldCheck className="w-3.5 h-3.5 mr-1.5" />
-              {t('subscriptions.detail.compliance.status.validated')}
-            </Badge>
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <Badge className="bg-emerald-100 text-emerald-700 border-emerald-200 cursor-default">
+                  <ShieldCheck className="w-3.5 h-3.5 mr-1.5" />
+                  {t('subscriptions.detail.compliance.status.validated')}
+                </Badge>
+              </TooltipTrigger>
+              <TooltipContent>
+                <span className="text-xs">
+                  {t('subscriptions.detail.compliance.final.validatedBy', {
+                    name: compliance.by ?? '',
+                    date: compliance.at ?? '',
+                  })}
+                </span>
+              </TooltipContent>
+            </Tooltip>
           ) : (
             <Badge className="bg-amber-100 text-amber-700 border-amber-300">
               <Clock className="w-3.5 h-3.5 mr-1.5" />
               {t(`subscriptions.detail.compliance.status.${compliance.status}`)}
             </Badge>
           )}
-          <Button variant="outline" size="sm" className="gap-1.5 text-xs h-8" onClick={onOpen}>
+          <Button variant="outline" size="sm" className="h-7 gap-1 text-xs" onClick={onOpen}>
             <ChevronRight className="w-3.5 h-3.5" />
             {t(`${KEY}.compliance.view`)}
           </Button>
         </div>
       </div>
 
-      <div className="grid grid-cols-3 gap-3">
-        <div className="rounded-lg border p-3">
+      <div className="grid gap-6" style={{ gridTemplateColumns: 'auto auto minmax(0, 1fr)' }}>
+        <div className="min-w-0">
           <span className={cn(WIDGET_LABEL_CLASS, 'flex items-center gap-1.5')}>
             <Radar className="w-3.5 h-3.5" />
             {t('subscriptions.detail.compliance.score.title')}
           </span>
-          <div className="mt-2 flex items-center gap-2">
-            <span className="text-xl font-bold text-foreground tabular-nums leading-none">
+          <div className="mt-1 flex items-center gap-2">
+            <span className="text-sm font-semibold text-foreground tabular-nums">
               {snapshot.score ?? '-'}
             </span>
             {snapshot.tier && (
-              <ToneBadge tone={snapshot.tier.tone} label={t(snapshot.tier.labelKey)} className="text-xs" />
+              <ToneBadge
+                tone={snapshot.tier.tone}
+                label={t(snapshot.tier.labelKey)}
+                className="text-[11px]"
+              />
             )}
           </div>
         </div>
 
-        <div className="rounded-lg border p-3">
+        <div className="min-w-0">
           <span className={cn(WIDGET_LABEL_CLASS, 'flex items-center gap-1.5')}>
             <Users className="w-3.5 h-3.5" />
             {t('subscriptions.detail.compliance.final.thirdParties')}
           </span>
-          <div className="mt-2">
+          <div className="mt-1 flex flex-wrap items-center gap-1.5">
             {snapshot.untreatedHits > 0 ? (
-              <Badge className="bg-amber-50 text-amber-700 border-amber-200 text-xs">
+              <Badge className="bg-amber-50 text-amber-700 border-amber-200 text-[11px]">
                 <Clock className="w-3 h-3 mr-1" />
                 {tc('subscriptions.detail.compliance.final.matchesToTreat', snapshot.untreatedHits)}
               </Badge>
             ) : (
-              <p className="flex items-start gap-1.5 text-xs text-foreground">
-                <CheckCircle2 className="w-3.5 h-3.5 text-emerald-600 shrink-0 mt-0.5" />
+              <span className="inline-flex items-center gap-1 text-xs text-foreground">
+                <CheckCircle2 className="w-3.5 h-3.5 text-emerald-600" />
                 {t(`${KEY}.compliance.noPendingMatch`)}
-              </p>
+              </span>
             )}
             {snapshot.acceptedHits > 0 && (
-              <p className="mt-1.5 text-xs text-red-700">
+              <Badge className="bg-red-50 text-red-700 border-red-200 text-[11px]">
                 {tc('subscriptions.detail.compliance.final.matchesAccepted', snapshot.acceptedHits)}
-              </p>
+              </Badge>
             )}
           </div>
         </div>
 
-        <div className="rounded-lg border p-3">
+        <div className="min-w-0">
           <span className={cn(WIDGET_LABEL_CLASS, 'flex items-center gap-1.5')}>
             <UserCheck className="w-3.5 h-3.5" />
             {t('subscriptions.detail.compliance.categorisation.shortTitle')}
           </span>
-          <p className="mt-2 text-sm font-medium text-foreground">
-            {t(`subscriptions.detail.compliance.categories.${snapshot.category}`)}
-          </p>
-          <p className="mt-1 text-xs text-muted-foreground">
-            {t('subscriptions.detail.compliance.categorisation.mifid')}
+          <p
+            className="mt-1 truncate text-sm font-medium text-foreground"
+            title={`${categoryLabel} · ${t('subscriptions.detail.compliance.categorisation.mifid')}`}
+          >
+            {categoryLabel}
           </p>
         </div>
       </div>
