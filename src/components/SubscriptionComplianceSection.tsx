@@ -1214,93 +1214,90 @@ export function SubscriptionComplianceSection({
           </div>
         </div>
 
-        <div className="space-y-2 border-t px-4 py-3">
-          {/* Score de risque */}
-          <div className="flex flex-wrap items-center gap-3">
-            <span className="flex w-48 shrink-0 items-center gap-2">
-              <Radar className="w-4 h-4 shrink-0 text-muted-foreground" />
-              <span className="truncate text-sm font-medium text-foreground">
+        <div className="grid grid-cols-3 gap-3 border-t px-4 py-3">
+          {/* Sous-widget score de risque */}
+          <div className="rounded-lg border p-3">
+            <div className="flex items-start justify-between gap-2">
+              <span className={cn(WIDGET_LABEL_CLASS, 'flex items-center gap-1.5')}>
+                <Radar className="w-3.5 h-3.5" />
                 {t('subscriptions.detail.compliance.score.title')}
               </span>
-            </span>
+              {!locked && validationRequired && (
+                <Button
+                  variant="outline"
+                  size="sm"
+                  className="gap-1 text-[11px] h-6 shrink-0"
+                  onClick={scoreValidated ? onInvalidateScore : onValidateScore}
+                >
+                  {scoreValidated ? (
+                    <>
+                      <RotateCcw className="w-3 h-3" />
+                      {t('subscriptions.detail.compliance.score.invalidate')}
+                    </>
+                  ) : (
+                    <>
+                      <ShieldCheck className="w-3 h-3" />
+                      {t('subscriptions.detail.compliance.score.validate')}
+                    </>
+                  )}
+                </Button>
+              )}
+            </div>
 
-            <span className="flex flex-wrap items-center gap-2 min-w-0 flex-1">
-              <span className="text-lg font-bold text-foreground tabular-nums leading-none">
+            <div className="mt-2 flex items-center gap-2">
+              <span className="text-xl font-bold text-foreground tabular-nums leading-none">
                 {profileScore ?? '—'}
               </span>
               {profileTier && (
                 <ToneBadge tone={profileTier.tone} label={t(profileTier.labelKey)} className="text-xs" />
               )}
+            </div>
 
-              {!validationRequired ? (
-                <span className="flex items-center gap-1.5 text-xs text-muted-foreground">
-                  <CheckCircle2 className="w-3.5 h-3.5 text-emerald-600 shrink-0" />
-                  {t('subscriptions.detail.compliance.score.noValidationNeeded')}
-                </span>
-              ) : scoreValidated ? (
-                <span className="flex items-center gap-1.5 text-xs text-muted-foreground">
-                  <CheckCircle2 className="w-3.5 h-3.5 text-emerald-600 shrink-0" />
-                  {t('subscriptions.detail.compliance.final.scoreValidatedBy', {
-                    name: scoreValidatedBy ?? '',
-                    date: scoreValidatedAt ?? '',
-                  })}
-                </span>
-              ) : (
-                <span className="flex items-center gap-1.5 text-xs text-amber-700">
-                  <AlertCircle className="w-3.5 h-3.5 shrink-0" />
-                  {t('subscriptions.detail.compliance.score.validationRequired')}
-                </span>
-              )}
-            </span>
-
-            {!locked && validationRequired && (
-              <Button
-                variant="outline"
-                size="sm"
-                className="gap-1.5 text-xs h-7 shrink-0"
-                onClick={scoreValidated ? onInvalidateScore : onValidateScore}
-              >
-                {scoreValidated ? (
-                  <>
-                    <RotateCcw className="w-3 h-3" />
-                    {t('subscriptions.detail.compliance.score.invalidate')}
-                  </>
-                ) : (
-                  <>
-                    <ShieldCheck className="w-3 h-3" />
-                    {t('subscriptions.detail.compliance.score.validate')}
-                  </>
-                )}
-              </Button>
+            {!validationRequired ? (
+              <p className="mt-1.5 flex items-start gap-1.5 text-xs text-muted-foreground">
+                <CheckCircle2 className="w-3.5 h-3.5 text-emerald-600 shrink-0 mt-0.5" />
+                {t('subscriptions.detail.compliance.score.noValidationNeeded')}
+              </p>
+            ) : scoreValidated ? (
+              <p className="mt-1.5 flex items-start gap-1.5 text-xs text-muted-foreground">
+                <CheckCircle2 className="w-3.5 h-3.5 text-emerald-600 shrink-0 mt-0.5" />
+                {t('subscriptions.detail.compliance.final.scoreValidatedBy', {
+                  name: scoreValidatedBy ?? '',
+                  date: scoreValidatedAt ?? '',
+                })}
+              </p>
+            ) : (
+              <p className="mt-1.5 flex items-start gap-1.5 text-xs text-amber-700">
+                <AlertCircle className="w-3.5 h-3.5 shrink-0 mt-0.5" />
+                {t('subscriptions.detail.compliance.score.validationRequired')}
+              </p>
             )}
           </div>
 
-          {/* Parties tierces */}
-          <div className="flex flex-wrap items-center gap-3">
-            <span className="flex w-48 shrink-0 items-center gap-2">
-              <Users className="w-4 h-4 shrink-0 text-muted-foreground" />
-              <span className="truncate text-sm font-medium text-foreground">
-                {t('subscriptions.detail.compliance.final.thirdParties')}
-              </span>
+          {/* Sous-widget parties tierces */}
+          <div className="rounded-lg border p-3">
+            <span className={cn(WIDGET_LABEL_CLASS, 'flex items-center gap-1.5')}>
+              <Users className="w-3.5 h-3.5" />
+              {t('subscriptions.detail.compliance.final.thirdParties')}
             </span>
 
-            <span className="flex flex-wrap items-center gap-2 min-w-0 flex-1">
-              {entitiesWithMatch.length === 0 ? (
-                <span className="flex items-center gap-1.5 text-sm text-foreground">
-                  <CheckCircle2 className="w-4 h-4 text-emerald-600 shrink-0" />
-                  {t('subscriptions.detail.compliance.final.noThirdPartyMatch')}
-                </span>
-              ) : (
-                <>
-                  <span className="text-sm text-foreground">
-                    {tc(
-                      'subscriptions.detail.compliance.final.thirdPartiesConcerned',
-                      entitiesWithMatch.length,
-                    )}
-                  </span>
+            {entitiesWithMatch.length === 0 ? (
+              <p className="mt-2 flex items-start gap-1.5 text-sm text-foreground">
+                <CheckCircle2 className="w-4 h-4 text-emerald-600 shrink-0 mt-0.5" />
+                {t('subscriptions.detail.compliance.final.noThirdPartyMatch')}
+              </p>
+            ) : (
+              <>
+                <p className="mt-2 text-sm text-foreground">
+                  {tc(
+                    'subscriptions.detail.compliance.final.thirdPartiesConcerned',
+                    entitiesWithMatch.length,
+                  )}{' '}
                   <span className="text-xs text-muted-foreground">
                     {tc('subscriptions.detail.compliance.final.matchCount', allHits.length)}
                   </span>
+                </p>
+                <div className="mt-1.5 flex flex-wrap items-center gap-1.5">
                   {untreatedHits > 0 && (
                     <Badge className="bg-amber-50 text-amber-700 border-amber-200 text-xs">
                       <Clock className="w-3 h-3 mr-1" />
@@ -1319,26 +1316,24 @@ export function SubscriptionComplianceSection({
                       {tc('subscriptions.detail.compliance.final.matchesAccepted', acceptedHits)}
                     </Badge>
                   )}
-                </>
-              )}
-              {entitiesWithoutMatch > 0 && (
-                <span className="text-xs text-muted-foreground">
-                  {tc('subscriptions.detail.compliance.final.thirdPartiesClear', entitiesWithoutMatch)}
-                </span>
-              )}
-            </span>
+                </div>
+              </>
+            )}
+
+            {entitiesWithoutMatch > 0 && (
+              <p className="mt-1.5 text-xs text-muted-foreground">
+                {tc('subscriptions.detail.compliance.final.thirdPartiesClear', entitiesWithoutMatch)}
+              </p>
+            )}
           </div>
 
-          {/* Catégorisation investisseur */}
-          <div className="flex flex-wrap items-center gap-3">
-            <span className="flex w-48 shrink-0 items-center gap-2">
-              <UserCheck className="w-4 h-4 shrink-0 text-muted-foreground" />
-              <span className="truncate text-sm font-medium text-foreground">
-                {t('subscriptions.detail.compliance.categorisation.shortTitle')}
+          {/* Sous-widget catégorisation investisseur */}
+          <div className="rounded-lg border p-3">
+            <div className="flex items-start justify-between gap-2">
+              <span className={cn(WIDGET_LABEL_CLASS, 'flex items-center gap-1.5')}>
+                <UserCheck className="w-3.5 h-3.5" />
+                {t('subscriptions.detail.compliance.categorisation.title')}
               </span>
-            </span>
-
-            <span className="flex flex-wrap items-center gap-2 min-w-0 flex-1">
               <Tooltip>
                 <TooltipTrigger asChild>
                   <Badge className="bg-muted text-muted-foreground text-[11px] shrink-0">
@@ -1351,31 +1346,33 @@ export function SubscriptionComplianceSection({
                   </span>
                 </TooltipContent>
               </Tooltip>
-              <span className="w-64 shrink-0">
-                <Select
-                  value={category}
-                  disabled={locked}
-                  onValueChange={value => handleCategoryChange(value as InvestorCategory)}
-                >
-                  <SelectTrigger className="h-8 text-sm">
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {INVESTOR_CATEGORIES.map(item => (
-                      <SelectItem key={item} value={item}>
-                        {t(`subscriptions.detail.compliance.categories.${item}`)}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </span>
-              <span className="text-xs text-muted-foreground truncate">
-                {t('subscriptions.detail.compliance.categorisation.decidedBy', {
-                  name: categoryDecidedBy,
-                  date: categoryDecidedAt,
-                })}
-              </span>
-            </span>
+            </div>
+
+            <div className="mt-2">
+              <Select
+                value={category}
+                disabled={locked}
+                onValueChange={value => handleCategoryChange(value as InvestorCategory)}
+              >
+                <SelectTrigger className="h-8 text-sm">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  {INVESTOR_CATEGORIES.map(item => (
+                    <SelectItem key={item} value={item}>
+                      {t(`subscriptions.detail.compliance.categories.${item}`)}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+
+            <p className="mt-1.5 text-xs text-muted-foreground truncate">
+              {t('subscriptions.detail.compliance.categorisation.decidedBy', {
+                name: categoryDecidedBy,
+                date: categoryDecidedAt,
+              })}
+            </p>
           </div>
         </div>
 
