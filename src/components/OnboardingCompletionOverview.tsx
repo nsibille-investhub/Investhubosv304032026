@@ -227,14 +227,14 @@ function BucketBlock({
 interface OnboardingCompletionCardProps {
   questions: OnboardingBucketStats;
   documents: OnboardingBucketStats;
-  /** Ouvre la carte en version repliee, une ligne par famille. */
+  /** Affichage replie, une ligne par famille. Vrai par defaut. */
   defaultMinimized?: boolean;
 }
 
 export function OnboardingCompletionCard({
   questions,
   documents,
-  defaultMinimized = false,
+  defaultMinimized = true,
 }: OnboardingCompletionCardProps) {
   const { t } = useTranslation();
   const [minimized, setMinimized] = useState(defaultMinimized);

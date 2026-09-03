@@ -1232,13 +1232,10 @@ export function SubscriptionDetailPage({ subscription: subscriptionProp, onBack 
                   {currentStep === 2 && (
                     // Validation - même contenu que onboarding avec action de validation
                     <div className="space-y-4">
-                      {/* Complétion du dossier — repliée quand tout est renseigné */}
+                      {/* Avancement du dossier */}
                       <OnboardingCompletionCard
                         questions={questionBuckets}
                         documents={documentBuckets}
-                        defaultMinimized={
-                          questionBuckets.pending === 0 && documentBuckets.pending === 0
-                        }
                       />
 
                       {/* Rappel de conformité — le détail vit dans l'onglet Risque */}

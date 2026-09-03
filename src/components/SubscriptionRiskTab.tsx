@@ -1444,7 +1444,7 @@ export function SubscriptionRiskTab({
         </div>
 
         <div className="px-6 py-4">
-          <OnboardingCompletionCard questions={questions} documents={documents} defaultMinimized />
+          <OnboardingCompletionCard questions={questions} documents={documents} />
         </div>
 
         <div className="px-6 pb-4 space-y-2">
