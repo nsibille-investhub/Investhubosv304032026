@@ -290,6 +290,8 @@ export interface ScreeningHit {
   id: string;
   name: string;
   category: ScreeningCategory;
+  /** Type de rapprochement renvoye par le prestataire. */
+  matchType: 'exact' | 'partial';
   /** Taux de correspondance renvoye par le prestataire. */
   matchRate: number;
   country: string;
@@ -314,6 +316,10 @@ export interface ScreenedEntity {
   kind: 'person' | 'company';
   purpose: ScreeningPurpose;
   provider: 'worldcheck' | 'membercheck' | 'orias';
+  /** Reference du dossier chez le prestataire. */
+  providerRef: string;
+  /** Perimetre interroge, tel que renvoye par le prestataire. */
+  screeningList: string;
   monitoring: boolean;
   runs: ScreeningRun[];
   hits: ScreeningHit[];
@@ -326,6 +332,8 @@ export const mockScreenedEntities: ScreenedEntity[] = [
     kind: 'person',
     purpose: 'subscriber',
     provider: 'worldcheck',
+    providerRef: '5jb6y2oyuii91jokrw6nvf1ml',
+    screeningList: 'WATCHLIST',
     monitoring: true,
     runs: [
       { at: '19/05/2026 16:10', by: 'Automatique', hitCount: 2, origin: 'automatic' },
@@ -336,6 +344,7 @@ export const mockScreenedEntities: ScreenedEntity[] = [
         id: 'hit-1',
         name: 'Jean-Pierre DURAND',
         category: 'pep',
+        matchType: 'exact',
         matchRate: 92,
         country: 'France',
         birthYear: '1968',
@@ -346,6 +355,7 @@ export const mockScreenedEntities: ScreenedEntity[] = [
         id: 'hit-2',
         name: 'J.P. Durand',
         category: 'adverseMedia',
+        matchType: 'partial',
         matchRate: 64,
         country: 'Belgique',
         birthYear: '1971',
@@ -366,6 +376,8 @@ export const mockScreenedEntities: ScreenedEntity[] = [
     kind: 'company',
     purpose: 'representative',
     provider: 'worldcheck',
+    providerRef: '5jb6p90zpoey1jokrw8mq6sch',
+    screeningList: 'WATCHLIST',
     monitoring: false,
     runs: [{ at: '19/05/2026 16:10', by: 'Automatique', hitCount: 1, origin: 'automatic' }],
     hits: [
@@ -373,6 +385,7 @@ export const mockScreenedEntities: ScreenedEntity[] = [
         id: 'hit-3',
         name: 'DURAND PATRIMOINE',
         category: 'regulatoryEnforcement',
+        matchType: 'partial',
         matchRate: 78,
         country: 'France',
         sourceKey: 'subscriptions.detail.compliance.sources.amf',
@@ -386,6 +399,8 @@ export const mockScreenedEntities: ScreenedEntity[] = [
     kind: 'person',
     purpose: 'beneficialOwner',
     provider: 'worldcheck',
+    providerRef: '5jb7ghm7am7f1j5k9d5t19g22',
+    screeningList: 'WATCHLIST',
     monitoring: true,
     runs: [{ at: '19/05/2026 16:10', by: 'Automatique', hitCount: 0, origin: 'automatic' }],
     hits: [],
@@ -396,6 +411,8 @@ export const mockScreenedEntities: ScreenedEntity[] = [
     kind: 'person',
     purpose: 'signatory',
     provider: 'membercheck',
+    providerRef: '66305218',
+    screeningList: 'WATCHLIST',
     monitoring: false,
     runs: [{ at: '19/05/2026 16:10', by: 'Automatique', hitCount: 0, origin: 'automatic' }],
     hits: [],

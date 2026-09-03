@@ -419,7 +419,6 @@
         "onboarding": "Onboarding",
         "emails": "Emails",
         "capitalCalls": "Appels de fonds",
-        "risk": "Risque",
         "documents": "Documents",
         "integrations": "Intégrations",
         "notes": "Notes"
@@ -901,7 +900,8 @@
           "setScore": "Saisir un score",
           "computed": "Calculé",
           "unevaluatedOne": "{{count}} composante non évaluée",
-          "unevaluatedMany": "{{count}} composantes non évaluées"
+          "unevaluatedMany": "{{count}} composantes non évaluées",
+          "widgetTitle": "Profil de risque {{name}}"
         },
         "screening": {
           "title": "Screening et surveillance continue",
@@ -935,7 +935,19 @@
           "toTreatOne": "{{count}} à traiter",
           "toTreatMany": "{{count}} à traiter",
           "historyHitsOne": "{{count}} correspondance",
-          "historyHitsMany": "{{count}} correspondances"
+          "historyHitsMany": "{{count}} correspondances",
+          "exportPdf": "Export PDF",
+          "individualChecked": "Individu contrôlé :",
+          "entityChecked": "Entité contrôlée :",
+          "noMatchWithList": "Aucune correspondance ({{list}})",
+          "resultsWithListOne": "{{count}} résultat ({{list}})",
+          "resultsWithListMany": "{{count}} résultats ({{list}})",
+          "colType": "Type",
+          "colName": "Nom",
+          "colLists": "Listes",
+          "colDecision": "Décision",
+          "matchExact": "EXACT",
+          "matchPartial": "PARTIEL"
         },
         "purposes": {
           "subscriber": "Souscripteur",
@@ -1044,11 +1056,6 @@
           "adequacyGenerated": "Document d'adéquation généré",
           "adequacyGeneratedDesc": "Il est ajouté aux documents de la souscription.",
           "noteAdded": "Note ajoutée au journal"
-        },
-        "recap": {
-          "title": "Conformité du dossier",
-          "subtitle": "Score, screening, catégorisation et adéquation. Le détail est dans l'onglet Risque.",
-          "open": "Ouvrir l'onglet Risque"
         }
       }
     },

@@ -30,13 +30,8 @@ import {
   ChevronRight,
   ClipboardList,
   AlertTriangle,
-  ShieldAlert,
-  Newspaper,
-  Globe,
-  Scale,
   Users,
   Clock,
-  TrendingDown,
   ArrowDownCircle,
   FileCheck,
   Wallet,
@@ -96,8 +91,7 @@ import {
   type OnboardingItemState,
   type OnboardingNavSection,
 } from './OnboardingCompletionOverview';
-import { ComplianceRecapCard, SubscriptionRiskTab } from './SubscriptionRiskTab';
-import { countUntreatedScreeningHits } from '../utils/subscriptionRiskMockData';
+import { SubscriptionComplianceSection } from './SubscriptionComplianceSection';
 import { SubscriptionStatusBadge } from './SubscriptionStatusBadge';
 import { NewSubscriptionDialog } from './NewSubscriptionDialog';
 
@@ -335,7 +329,6 @@ export function SubscriptionDetailPage({ subscription: subscriptionProp, onBack 
 
   const documentBuckets = getDocumentBuckets();
 
-  const untreatedScreeningHits = countUntreatedScreeningHits();
 
   const onboardingNavSections: OnboardingNavSection[] = mockSections.map((section, idx) => ({
     id: section.id,
@@ -631,7 +624,6 @@ export function SubscriptionDetailPage({ subscription: subscriptionProp, onBack 
               { value: 'onboarding', icon: ClipboardList, labelKey: 'subscriptions.detail.tabs.onboarding', badge: `${Math.round(subscription.completionOnboarding)}%`, badgeClass: 'bg-amber-50 text-amber-700 border-amber-200' },
               { value: 'emails', icon: Mail, labelKey: 'subscriptions.detail.tabs.emails', badge: String(mockEmails.length), badgeClass: 'bg-indigo-50 text-indigo-700 border-indigo-200' },
               { value: 'capital-calls', icon: DollarSign, labelKey: 'subscriptions.detail.tabs.capitalCalls', badge: String(mockCapitalCalls.length), badgeClass: 'bg-emerald-50 text-emerald-700 border-emerald-200' },
-              { value: 'risk', icon: ShieldAlert, labelKey: 'subscriptions.detail.tabs.risk', badge: String(untreatedScreeningHits), badgeClass: untreatedScreeningHits > 0 ? 'bg-red-50 text-red-700 border-red-200' : 'bg-emerald-50 text-emerald-700 border-emerald-200' },
               { value: 'documents', icon: FolderOpen, labelKey: 'subscriptions.detail.tabs.documents', badge: String(mockDocuments.length), badgeClass: 'bg-muted text-foreground/80 border-border' },
               { value: 'integrations', icon: Database, labelKey: 'subscriptions.detail.tabs.integrations', badge: '5', badgeClass: 'bg-cyan-50 text-cyan-700 border-cyan-200' },
               { value: 'notes', icon: MessageSquare, labelKey: 'subscriptions.detail.tabs.notes', badge: String(mockNotes.length), badgeClass: 'bg-purple-50 text-purple-700 border-purple-200' },
@@ -1230,43 +1222,16 @@ export function SubscriptionDetailPage({ subscription: subscriptionProp, onBack 
                   )}
 
                   {currentStep === 2 && (
-                    // Validation - même contenu que onboarding avec action de validation
-                    <div className="space-y-4">
-                      {/* Avancement du dossier */}
-                      <OnboardingCompletionCard
-                        questions={questionBuckets}
-                        documents={documentBuckets}
-                      />
-
-                      {/* Rappel de conformité — le détail vit dans l'onglet Risque */}
-                      <ComplianceRecapCard onOpenRiskTab={() => setActiveTab('risk')} />
-
-                      {/* Validation finale */}
-                      <div className="bg-gradient-to-r from-green-50 to-emerald-50 border-2 border-green-200 rounded-xl p-6">
-                        <div className="flex items-start gap-4">
-                          <div className="p-3 bg-green-500 rounded-xl">
-                            <CheckCircle2 className="w-6 h-6 text-white" />
-                          </div>
-                          <div className="flex-1">
-                            <h3 className="font-bold text-foreground mb-2">{t('subscriptions.detail.validation.readyForValidation')}</h3>
-                            <p className="text-sm text-foreground/80 mb-4">
-                              {t('subscriptions.detail.validation.readyForValidationDesc')}
-                            </p>
-                            <Button 
-                              className="hover:opacity-90"
-                              style={{ background: PRIMARY_BUTTON_GRADIENT }}
-                              onClick={() => {
-                                setCurrentStep(3);
-                                toast.success(t('subscriptions.detail.validation.subscriptionValidated'));
-                              }}
-                            >
-                              <CheckCircle2 className="w-4 h-4 mr-2" />
-                              {t('subscriptions.detail.validation.validateSubscription')}
-                            </Button>
-                          </div>
-                        </div>
-                      </div>
-                    </div>
+                    // Validation / Conformité — widgets risque, screening et validation
+                    <SubscriptionComplianceSection
+                      questions={questionBuckets}
+                      documents={documentBuckets}
+                      scoreValidated={riskValidated}
+                      scoreValidatedBy={riskValidatedBy}
+                      scoreValidatedAt={riskValidationDate}
+                      onValidateScore={handleValidateRisk}
+                      onSubscriptionValidated={() => setCurrentStep(3)}
+                    />
                   )}
 
                   {currentStep === 3 && (
@@ -1804,19 +1769,6 @@ export function SubscriptionDetailPage({ subscription: subscriptionProp, onBack 
           </TabsContent>
 
           {/* Risk Tab Content */}
-          <TabsContent value="risk" className="mt-0">
-            <div className="px-8 py-6">
-              <SubscriptionRiskTab
-                questions={questionBuckets}
-                documents={documentBuckets}
-                scoreValidated={riskValidated}
-                scoreValidatedBy={riskValidatedBy}
-                scoreValidatedAt={riskValidationDate}
-                onValidateScore={handleValidateRisk}
-              />
-            </div>
-          </TabsContent>
-
           {/* Documents Tab Content */}
           <TabsContent value="documents" className="mt-0">
             <div className="px-8 py-6">

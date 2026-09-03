@@ -419,7 +419,6 @@
         "onboarding": "Onboarding",
         "emails": "Emails",
         "capitalCalls": "Capital calls",
-        "risk": "Risk",
         "documents": "Documents",
         "integrations": "Integrations",
         "notes": "Notes"
@@ -901,7 +900,8 @@
           "setScore": "Set a score",
           "computed": "Computed",
           "unevaluatedOne": "{{count}} component not evaluated",
-          "unevaluatedMany": "{{count}} components not evaluated"
+          "unevaluatedMany": "{{count}} components not evaluated",
+          "widgetTitle": "Risk profile {{name}}"
         },
         "screening": {
           "title": "Screening and ongoing monitoring",
@@ -935,7 +935,19 @@
           "toTreatOne": "{{count}} to review",
           "toTreatMany": "{{count}} to review",
           "historyHitsOne": "{{count}} match",
-          "historyHitsMany": "{{count}} matches"
+          "historyHitsMany": "{{count}} matches",
+          "exportPdf": "PDF export",
+          "individualChecked": "Individual screened:",
+          "entityChecked": "Entity screened:",
+          "noMatchWithList": "No match ({{list}})",
+          "resultsWithListOne": "{{count}} result ({{list}})",
+          "resultsWithListMany": "{{count}} results ({{list}})",
+          "colType": "Type",
+          "colName": "Name",
+          "colLists": "Lists",
+          "colDecision": "Decision",
+          "matchExact": "EXACT",
+          "matchPartial": "PARTIAL"
         },
         "purposes": {
           "subscriber": "Subscriber",
@@ -1044,11 +1056,6 @@
           "adequacyGenerated": "Suitability document generated",
           "adequacyGeneratedDesc": "It is added to the subscription documents.",
           "noteAdded": "Note added to the log"
-        },
-        "recap": {
-          "title": "File compliance",
-          "subtitle": "Score, screening, categorisation and suitability. Details live in the Risk tab.",
-          "open": "Open the Risk tab"
         }
       }
     },
