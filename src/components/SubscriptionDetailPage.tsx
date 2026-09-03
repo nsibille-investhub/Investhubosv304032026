@@ -1,4 +1,4 @@
-import { Fragment, useState } from 'react';
+import { Fragment, useRef, useState } from 'react';
 import { useTranslation } from '../utils/languageContext';
 import {
   Building2,
@@ -30,13 +30,8 @@ import {
   ChevronRight,
   ClipboardList,
   AlertTriangle,
-  ShieldAlert,
-  Newspaper,
-  Globe,
-  Scale,
   Users,
   Clock,
-  TrendingDown,
   ArrowDownCircle,
   FileCheck,
   Wallet,
@@ -85,6 +80,18 @@ import {
   mockCapitalCalls,
   mockInitEmails,
 } from '../utils/subscriptionDetailMockData';
+import {
+  OnboardingCompletionCard,
+  OnboardingSectionNav,
+  OnboardingStateCounter,
+  addToBucketStats,
+  emptyBucketStats,
+  mergeBucketStats,
+  type OnboardingBucketStats,
+  type OnboardingItemState,
+  type OnboardingNavSection,
+} from './OnboardingCompletionOverview';
+import { SubscriptionComplianceSection } from './SubscriptionComplianceSection';
 import { SubscriptionStatusBadge } from './SubscriptionStatusBadge';
 import { NewSubscriptionDialog } from './NewSubscriptionDialog';
 
@@ -97,6 +104,21 @@ const SUBSCRIPTION_STEPS = [
   { id: 5, labelKey: 'subscriptions.detail.stepper.counterSignature', icon: PenTool },
   { id: 6, labelKey: 'subscriptions.detail.stepper.payment', icon: Wallet },
 ];
+
+// Etat de depart de la maquette : une partie du dossier est deja verifiee, une
+// reponse et une piece ont ete retoquees.
+const INITIAL_QUESTION_STATUSES: Record<string, QuestionStatus> = {
+  'identity-0': 'approved',
+  'identity-1': 'approved',
+  'identity-3': 'approved',
+  'identity-9': 'rejected',
+  'fiscal-0': 'approved',
+};
+
+const INITIAL_DOCUMENT_STATUSES: Record<string, QuestionStatus> = {
+  'document-0': 'approved',
+  'document-4': 'rejected',
+};
 
 interface SubscriptionDetailPageProps {
   subscription: any;
@@ -131,15 +153,27 @@ export function SubscriptionDetailPage({ subscription: subscriptionProp, onBack 
   const initData = (subscription as any).initData ?? {};
   
   // Question states management
-  const [questionStatuses, setQuestionStatuses] = useState<Record<string, QuestionStatus>>({});
+  const [questionStatuses, setQuestionStatuses] = useState<Record<string, QuestionStatus>>(INITIAL_QUESTION_STATUSES);
   const [questionResponses, setQuestionResponses] = useState<Record<string, string>>({});
   const [activeCommentThread, setActiveCommentThread] = useState<string | null>(null);
   const [questionComments, setQuestionComments] = useState<Record<string, any[]>>({});
+
+  // Verification des pieces justificatives (meme cycle de vie que les reponses)
+  const [documentStatuses, setDocumentStatuses] = useState<Record<string, QuestionStatus>>(INITIAL_DOCUMENT_STATUSES);
+  const [activeOnboardingSection, setActiveOnboardingSection] = useState<string>(mockSections[0].id);
+  const onboardingSectionRefs = useRef<Record<string, HTMLDivElement | null>>({});
 
   // Risk validation state
   const [riskValidated, setRiskValidated] = useState(false);
   const [riskValidationDate, setRiskValidationDate] = useState<string | null>(null);
   const [riskValidatedBy, setRiskValidatedBy] = useState<string | null>(null);
+
+  const handleInvalidateRisk = () => {
+    setRiskValidated(false);
+    setRiskValidationDate(null);
+    setRiskValidatedBy(null);
+    toast.info(t('subscriptions.detail.compliance.toast.scoreInvalidated'));
+  };
 
   const handleValidateRisk = () => {
     setRiskValidated(true);
@@ -251,66 +285,100 @@ export function SubscriptionDetailPage({ subscription: subscriptionProp, onBack 
     }));
   };
 
-  // Calculate section statistics
-  const getSectionStats = (sectionId: string) => {
-    const section = mockSections.find(s => s.id === sectionId);
-    if (!section || section.id === 'documents') return null;
-
-    const total = section.questions.length;
-    const answered = section.questions.filter(q => q.response).length;
-    const approved = section.questions.filter((q, idx) => 
-      questionStatuses[`${sectionId}-${idx}`] === 'approved'
-    ).length;
-    const rejected = section.questions.filter((q, idx) => 
-      questionStatuses[`${sectionId}-${idx}`] === 'rejected'
-    ).length;
-    const pending = total - approved - rejected;
-
-    return { total, answered, approved, rejected, pending };
+  // Etat d'une reponse : non remplie, en attente de validation, a corriger ou validee
+  const getQuestionState = (
+    sectionId: string,
+    idx: number,
+    question: { response: string },
+  ): OnboardingItemState => {
+    const questionId = `${sectionId}-${idx}`;
+    const status = questionStatuses[questionId];
+    if (status === 'approved') return 'validated';
+    if (status === 'rejected') return 'awaitingCorrection';
+    const response = questionResponses[questionId] ?? question.response;
+    return response ? 'awaitingValidation' : 'pending';
   };
 
-  // Calculate global stats for all sections
-  const getGlobalStats = () => {
-    let totalQuestions = 0;
-    let totalAnswered = 0;
-    let totalApproved = 0;
-    let totalRejected = 0;
+  const getDocumentState = (idx: number, doc: { hasFile: boolean }): OnboardingItemState => {
+    const status = documentStatuses[`document-${idx}`];
+    if (status === 'approved') return 'validated';
+    if (status === 'rejected') return 'awaitingCorrection';
+    return doc.hasFile ? 'awaitingValidation' : 'pending';
+  };
 
-    mockSections.forEach(section => {
-      if (section.id !== 'documents') {
-        const stats = getSectionStats(section.id);
-        if (stats) {
-          totalQuestions += stats.total;
-          totalAnswered += stats.answered;
-          totalApproved += stats.approved;
-          totalRejected += stats.rejected;
-        }
+  const getQuestionSectionBuckets = (sectionId: string): OnboardingBucketStats => {
+    const stats = emptyBucketStats();
+    const section = mockSections.find(s => s.id === sectionId);
+    if (!section) return stats;
+    section.questions.forEach((question, idx) => {
+      addToBucketStats(stats, getQuestionState(sectionId, idx, question));
+    });
+    return stats;
+  };
+
+  const getDocumentBuckets = (): OnboardingBucketStats => {
+    const stats = emptyBucketStats();
+    mockRequiredDocuments.forEach((doc, idx) => {
+      addToBucketStats(stats, getDocumentState(idx, doc));
+    });
+    return stats;
+  };
+
+  const getSectionBuckets = (sectionId: string): OnboardingBucketStats =>
+    sectionId === 'documents' ? getDocumentBuckets() : getQuestionSectionBuckets(sectionId);
+
+  const questionBuckets = mockSections.reduce((acc, section) => {
+    if (section.id !== 'documents') {
+      mergeBucketStats(acc, getQuestionSectionBuckets(section.id));
+    }
+    return acc;
+  }, emptyBucketStats());
+
+  const documentBuckets = getDocumentBuckets();
+
+
+  const onboardingNavSections: OnboardingNavSection[] = mockSections.map((section, idx) => ({
+    id: section.id,
+    titleKey: section.titleKey,
+    icon: section.icon,
+    position: idx + 1,
+    kind: section.id === 'documents' ? 'documents' : 'questions',
+    stats: getSectionBuckets(section.id),
+  }));
+
+  const handleSelectOnboardingSection = (sectionId: string) => {
+    setActiveOnboardingSection(sectionId);
+    setOpenSections(prev => (prev.includes(sectionId) ? prev : [...prev, sectionId]));
+    onboardingSectionRefs.current[sectionId]?.scrollIntoView({
+      behavior: 'smooth',
+      block: 'start',
+    });
+  };
+
+  const handleApproveDocument = (idx: number) => {
+    setDocumentStatuses(prev => ({ ...prev, [`document-${idx}`]: 'approved' }));
+  };
+
+  const handleRejectDocument = (idx: number) => {
+    setDocumentStatuses(prev => ({ ...prev, [`document-${idx}`]: 'rejected' }));
+  };
+
+  const handleValidateDocuments = (sectionTitle: string) => {
+    const next: Record<string, QuestionStatus> = { ...documentStatuses };
+    let validated = 0;
+    mockRequiredDocuments.forEach((doc, idx) => {
+      if (doc.hasFile) {
+        next[`document-${idx}`] = 'approved';
+        validated += 1;
       }
     });
-
-    return {
-      total: totalQuestions,
-      answered: totalAnswered,
-      approved: totalApproved,
-      rejected: totalRejected,
-      pending: totalQuestions - totalApproved - totalRejected
-    };
-  };
-
-  // Calculate document stats (mock data for now)
-  const getDocumentStats = () => {
-    const totalRequired = mockRequiredDocuments.length;
-    const submitted = mockRequiredDocuments.filter(d => d.hasFile).length;
-    // Mock validation data - in real app this would come from state
-    const validated = Math.floor(submitted * 0.7); // 70% validated
-    const rejected = Math.floor(submitted * 0.1); // 10% rejected
-
-    return {
-      totalRequired,
-      submitted,
-      validated,
-      rejected
-    };
+    setDocumentStatuses(next);
+    toast.success(t('subscriptions.detail.onboarding.sectionValidatedToast'), {
+      description: t('subscriptions.detail.onboarding.completion.documentsValidatedDesc', {
+        count: validated,
+        title: sectionTitle,
+      }),
+    });
   };
 
   const formatLongDate = (date: Date) =>
@@ -563,7 +631,6 @@ export function SubscriptionDetailPage({ subscription: subscriptionProp, onBack 
               { value: 'onboarding', icon: ClipboardList, labelKey: 'subscriptions.detail.tabs.onboarding', badge: `${Math.round(subscription.completionOnboarding)}%`, badgeClass: 'bg-amber-50 text-amber-700 border-amber-200' },
               { value: 'emails', icon: Mail, labelKey: 'subscriptions.detail.tabs.emails', badge: String(mockEmails.length), badgeClass: 'bg-indigo-50 text-indigo-700 border-indigo-200' },
               { value: 'capital-calls', icon: DollarSign, labelKey: 'subscriptions.detail.tabs.capitalCalls', badge: String(mockCapitalCalls.length), badgeClass: 'bg-emerald-50 text-emerald-700 border-emerald-200' },
-              { value: 'risk', icon: ShieldAlert, labelKey: 'subscriptions.detail.tabs.risk', badge: '3', badgeClass: 'bg-red-50 text-red-700 border-red-200' },
               { value: 'documents', icon: FolderOpen, labelKey: 'subscriptions.detail.tabs.documents', badge: String(mockDocuments.length), badgeClass: 'bg-muted text-foreground/80 border-border' },
               { value: 'integrations', icon: Database, labelKey: 'subscriptions.detail.tabs.integrations', badge: '5', badgeClass: 'bg-cyan-50 text-cyan-700 border-cyan-200' },
               { value: 'notes', icon: MessageSquare, labelKey: 'subscriptions.detail.tabs.notes', badge: String(mockNotes.length), badgeClass: 'bg-purple-50 text-purple-700 border-purple-200' },
@@ -592,90 +659,80 @@ export function SubscriptionDetailPage({ subscription: subscriptionProp, onBack 
 
           {/* Tab Content - Onboarding */}
           <TabsContent value="onboarding" className="mt-0">
+            {/* Étapes de la souscription — bandeau fin dans le prolongement des onglets */}
+            <div
+              className="px-8 py-3 bg-card border-b border-border"
+              style={{ marginLeft: '-2rem', marginRight: '-2rem' }}
+            >
+              <ol className="flex items-center gap-1 overflow-x-auto">
+                {SUBSCRIPTION_STEPS.map((step, index) => {
+                  const StepIcon = step.icon;
+                  const isActive = currentStep === step.id;
+                  const isCompleted = currentStep > step.id;
+                  const isAccessible = step.id <= currentStep + 1;
+
+                  return (
+                    <li key={step.id} className="flex items-center gap-1 shrink-0">
+                      {index > 0 && (
+                        <span
+                          aria-hidden
+                          className={`h-px w-5 ${
+                            isCompleted || isActive ? 'bg-green-300' : 'bg-border'
+                          }`}
+                        />
+                      )}
+                      <button
+                        type="button"
+                        onClick={() => isAccessible && setCurrentStep(step.id)}
+                        disabled={!isAccessible}
+                        aria-current={isActive ? 'step' : undefined}
+                        title={t(step.labelKey)}
+                        className={`flex items-center gap-1.5 rounded-full px-2 py-1 transition-colors ${
+                          isAccessible ? 'hover:bg-accent' : 'opacity-40 cursor-not-allowed'
+                        }`}
+                      >
+                        <span
+                          style={isActive ? { background: PRIMARY_BUTTON_GRADIENT } : undefined}
+                          className={`flex h-5 w-5 shrink-0 items-center justify-center rounded-full ${
+                            isActive ? 'text-white' : isCompleted ? 'bg-emerald-100' : 'bg-muted'
+                          }`}
+                        >
+                          {isCompleted ? (
+                            <Check className="w-3 h-3 text-emerald-600" />
+                          ) : (
+                            <StepIcon
+                              className={`w-3 h-3 ${isActive ? 'text-white' : 'text-muted-foreground'}`}
+                            />
+                          )}
+                        </span>
+                        <span
+                          className={`text-xs whitespace-nowrap ${
+                            isActive
+                              ? 'font-semibold text-foreground'
+                              : isCompleted
+                                ? 'text-foreground'
+                                : 'text-muted-foreground'
+                          }`}
+                        >
+                          {t(step.labelKey)}
+                        </span>
+                      </button>
+                    </li>
+                  );
+                })}
+                <li className="ml-auto pl-3 shrink-0 text-[11px] text-muted-foreground whitespace-nowrap">
+                  {t('subscriptions.detail.stepper.stepOf', {
+                    current: currentStep + 1,
+                    total: SUBSCRIPTION_STEPS.length,
+                  })}
+                </li>
+              </ol>
+            </div>
+
             <div className="px-8 py-6">
               <div className="mb-6">
                 {detailSummary}
               </div>
-
-              {/* Étapes de la souscription — parcours horizontal */}
-              <Card className="p-4 shadow-sm mb-6">
-                <div className="flex items-baseline justify-between gap-3 mb-3">
-                  <h3 className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
-                    {t('subscriptions.detail.stepper.title')}
-                  </h3>
-                  <span className="text-xs text-muted-foreground whitespace-nowrap">
-                    {t('subscriptions.detail.stepper.stepOf', {
-                      current: currentStep + 1,
-                      total: SUBSCRIPTION_STEPS.length,
-                    })}
-                  </span>
-                </div>
-
-                <ol className="flex items-start overflow-x-auto pb-1">
-                  {SUBSCRIPTION_STEPS.map((step, index) => {
-                    const StepIcon = step.icon;
-                    const isActive = currentStep === step.id;
-                    const isCompleted = currentStep > step.id;
-                    const isAccessible = step.id <= currentStep + 1;
-                    const isFirst = index === 0;
-                    const isLast = index === SUBSCRIPTION_STEPS.length - 1;
-                    const connectorBefore = isCompleted || isActive ? 'bg-green-300' : 'bg-border';
-                    const connectorAfter = isCompleted ? 'bg-green-300' : 'bg-border';
-
-                    return (
-                      <li key={step.id} className="flex-1 min-w-[96px]">
-                        <button
-                          type="button"
-                          onClick={() => isAccessible && setCurrentStep(step.id)}
-                          disabled={!isAccessible}
-                          aria-current={isActive ? 'step' : undefined}
-                          className={`w-full flex flex-col items-center gap-2 py-1.5 transition-opacity ${
-                            isAccessible ? 'hover:opacity-80' : 'opacity-40 cursor-not-allowed'
-                          }`}
-                        >
-                          <span className="flex w-full items-center">
-                            <span
-                              aria-hidden
-                              className={`h-0.5 flex-1 rounded-full ${isFirst ? 'opacity-0' : connectorBefore}`}
-                            />
-                            <span
-                              style={isActive ? { background: PRIMARY_BUTTON_GRADIENT } : undefined}
-                              className={`mx-2 flex w-8 h-8 shrink-0 items-center justify-center rounded-full ${
-                                isActive
-                                  ? 'text-white shadow-md'
-                                  : isCompleted
-                                    ? 'bg-green-100'
-                                    : 'bg-muted'
-                              }`}
-                            >
-                              {isCompleted ? (
-                                <Check className="w-4 h-4 text-green-600" />
-                              ) : (
-                                <StepIcon className={`w-4 h-4 ${isActive ? 'text-white' : 'text-muted-foreground'}`} />
-                              )}
-                            </span>
-                            <span
-                              aria-hidden
-                              className={`h-0.5 flex-1 rounded-full ${isLast ? 'opacity-0' : connectorAfter}`}
-                            />
-                          </span>
-                          <span
-                            className={`text-xs leading-tight text-center px-1 ${
-                              isActive
-                                ? 'font-semibold text-foreground'
-                                : isCompleted
-                                  ? 'text-foreground/80'
-                                  : 'text-muted-foreground'
-                            }`}
-                          >
-                            {t(step.labelKey)}
-                          </span>
-                        </button>
-                      </li>
-                    );
-                  })}
-                </ol>
-              </Card>
 
                 <div>
                   {currentStep === 0 && (
@@ -809,76 +866,91 @@ export function SubscriptionDetailPage({ subscription: subscriptionProp, onBack 
                   )}
 
                   {currentStep === 1 && (
-                    // Onboarding en cours - contenu actuel
-                    <div className="space-y-4">
+                    // Onboarding en cours — KPI de completion, navigation par section, sections
+                    <div className="space-y-6">
+                      <OnboardingCompletionCard
+                        questions={questionBuckets}
+                        documents={documentBuckets}
+                      />
+
+                      <div
+                        className="grid items-start gap-6"
+                        style={{ gridTemplateColumns: 'minmax(0, 300px) minmax(0, 1fr)' }}
+                      >
+                          <OnboardingSectionNav
+                            sections={onboardingNavSections}
+                            activeSectionId={activeOnboardingSection}
+                            onSelect={handleSelectOnboardingSection}
+                          />
+
+                          <div className="space-y-4">
               {mockSections.map((section) => {
                 const Icon = section.icon;
                 const isOpen = openSections.includes(section.id);
-                const stats = section.id !== 'documents' ? getSectionStats(section.id) : null;
-                const allVerified = stats ? stats.approved === stats.total && stats.total > 0 : false;
+                const buckets = getSectionBuckets(section.id);
+                const isDocuments = section.id === 'documents';
+                const allVerified = buckets.total > 0 && buckets.validated === buckets.total;
 
                 return (
-                  <Collapsible
+                  <div
                     key={section.id}
+                    ref={el => {
+                      onboardingSectionRefs.current[section.id] = el;
+                    }}
+                    style={{ scrollMarginTop: '1rem' }}
+                  >
+                  <Collapsible
                     open={isOpen}
-                    onOpenChange={() => toggleSection(section.id)}
+                    onOpenChange={() => {
+                      toggleSection(section.id);
+                      setActiveOnboardingSection(section.id);
+                    }}
                   >
                     <Card
                       className="overflow-hidden hover:shadow-md transition-shadow"
+                      style={
+                        activeOnboardingSection === section.id
+                          ? { boxShadow: '0 0 0 1px var(--color-primary)' }
+                          : undefined
+                      }
                     >
                       <CollapsibleTrigger className="w-full">
                         <div className="flex items-center justify-between p-5 hover:bg-muted transition-colors cursor-pointer">
                           <div className="flex items-center gap-4">
                             <div className={`w-12 h-12 rounded-xl flex items-center justify-center ${
-                              stats && stats.approved === stats.total
-                                ? 'bg-[var(--success-soft)]'
-                                : 'bg-primary/10'
+                              allVerified ? 'bg-[var(--success-soft)]' : 'bg-primary/10'
                             }`}>
                               <Icon className={`w-6 h-6 ${
-                                stats && stats.approved === stats.total
-                                  ? 'text-emerald-600'
-                                  : 'text-primary'
+                                allVerified ? 'text-emerald-600' : 'text-primary'
                               }`} />
                             </div>
                             <div className="text-left">
                               <h3 className="font-semibold text-foreground text-lg mb-1">{t(section.titleKey)}</h3>
-                              {stats && (
-                                <div className="flex items-center gap-3 text-xs">
-                                  <span className="text-muted-foreground font-semibold text-foreground">
-                                    {t('subscriptions.detail.onboarding.answeredOf', { answered: stats.answered, total: stats.total })}
-                                  </span>
-                                  <span className="w-1 h-1 rounded-full bg-border" />
-                                  <span className="text-emerald-600 font-semibold">
-                                    {t('subscriptions.detail.onboarding.validated', { count: stats.approved })}
-                                  </span>
-                                  {stats.rejected > 0 && (
-                                    <>
-                                      <span className="w-1 h-1 rounded-full bg-border" />
-                                      <span className="text-red-600 font-semibold">
-                                        {t('subscriptions.detail.onboarding.rejected', { count: stats.rejected })}
-                                      </span>
-                                    </>
-                                  )}
-                                </div>
-                              )}
-                              {section.id === 'documents' && (
-                                <p className="text-xs text-muted-foreground">
-                                  {t('subscriptions.detail.onboarding.requiredDocuments', { count: mockRequiredDocuments.length })}
-                                </p>
-                              )}
+                              <div className="flex flex-wrap items-center gap-x-3 gap-y-1 text-xs">
+                                <span className="font-semibold text-foreground">
+                                  {isDocuments
+                                    ? t('subscriptions.detail.onboarding.requiredDocuments', { count: buckets.total })
+                                    : t('subscriptions.detail.onboarding.answeredOf', {
+                                        answered: buckets.total - buckets.pending,
+                                        total: buckets.total,
+                                      })}
+                                </span>
+                                <span className="w-1 h-1 rounded-full bg-border" />
+                                <OnboardingStateCounter stats={buckets} compact />
+                              </div>
                             </div>
                           </div>
 
                           <div className="flex items-center gap-3">
-                            {stats && stats.approved === stats.total && stats.total > 0 ? (
+                            {allVerified ? (
                               <Badge className="bg-emerald-100 text-emerald-700 border-emerald-200">
                                 <CheckCircle2 className="w-3.5 h-3.5 mr-1.5" />
                                 {t('subscriptions.detail.onboarding.sectionValidated')}
                               </Badge>
-                            ) : stats && stats.rejected > 0 ? (
+                            ) : buckets.awaitingCorrection > 0 ? (
                               <Badge className="bg-red-100 text-red-700 border-red-200">
                                 <AlertCircle className="w-3.5 h-3.5 mr-1.5" />
-                                {t('subscriptions.detail.onboarding.rejectedCount', { count: stats.rejected })}
+                                {t('subscriptions.detail.onboarding.completion.awaitingCorrectionCount', { count: buckets.awaitingCorrection })}
                               </Badge>
                             ) : (
                               <Badge className="bg-amber-100 text-amber-700 border-amber-200">
@@ -927,7 +999,7 @@ export function SubscriptionDetailPage({ subscription: subscriptionProp, onBack 
                                   </Button>
                                   <Button
                                     size="sm"
-                                    onClick={() => handleValidateSection(section.id, t(section.titleKey))}
+                                    onClick={() => handleValidateDocuments(t(section.titleKey))}
                                     className="gap-2 text-xs bg-primary hover:bg-primary/90 text-white"
                                   >
                                     <CheckCircle2 className="w-3.5 h-3.5" />
@@ -959,10 +1031,15 @@ export function SubscriptionDetailPage({ subscription: subscriptionProp, onBack 
                                       <th className="px-4 py-3 text-center text-xs font-medium text-muted-foreground uppercase tracking-wider w-28">
                                         {t('subscriptions.detail.docsTable.action')}
                                       </th>
+                                      <th className="px-4 py-3 text-center text-xs font-medium text-muted-foreground uppercase tracking-wider w-28">
+                                        {t('subscriptions.detail.docsTable.verification')}
+                                      </th>
                                     </tr>
                                   </thead>
                                   <tbody className="bg-card divide-y divide-border/50">
-                                    {mockRequiredDocuments.map((doc, idx) => (
+                                    {mockRequiredDocuments.map((doc, idx) => {
+                                      const docState = getDocumentState(idx, doc);
+                                      return (
                                       <tr key={idx} className="hover:bg-muted transition-colors group">
                                         <td className="px-4 py-3 text-sm text-foreground/80">
                                           {t(doc.nameKey)}
@@ -998,11 +1075,54 @@ export function SubscriptionDetailPage({ subscription: subscriptionProp, onBack 
                                             className="gap-1.5 text-xs h-7"
                                           >
                                             <Upload className="w-3 h-3" />
-                                            {t('subscriptions.detail.docsTable.add')}
+                                            {doc.hasFile
+                                              ? t('subscriptions.detail.docsTable.replace')
+                                              : t('subscriptions.detail.docsTable.add')}
                                           </Button>
                                         </td>
+                                        <td className="px-4 py-3">
+                                          {docState === 'pending' ? (
+                                            <div className="flex justify-center">
+                                              <Badge className="bg-muted text-muted-foreground text-xs">
+                                                {t('subscriptions.detail.onboarding.completion.state.pending')}
+                                              </Badge>
+                                            </div>
+                                          ) : (
+                                            <div className="flex items-center justify-center gap-1">
+                                              <Button
+                                                variant="ghost"
+                                                size="sm"
+                                                title={t('subscriptions.detail.docsTable.validateDocument')}
+                                                aria-label={t('subscriptions.detail.docsTable.validateDocument')}
+                                                onClick={() => handleApproveDocument(idx)}
+                                                className={`h-7 w-7 p-0 hover:bg-emerald-50 ${
+                                                  docState === 'validated'
+                                                    ? 'bg-emerald-50 text-emerald-600'
+                                                    : 'text-muted-foreground'
+                                                }`}
+                                              >
+                                                <Check className="w-3.5 h-3.5" />
+                                              </Button>
+                                              <Button
+                                                variant="ghost"
+                                                size="sm"
+                                                title={t('subscriptions.detail.docsTable.rejectDocument')}
+                                                aria-label={t('subscriptions.detail.docsTable.rejectDocument')}
+                                                onClick={() => handleRejectDocument(idx)}
+                                                className={`h-7 w-7 p-0 hover:bg-red-50 ${
+                                                  docState === 'awaitingCorrection'
+                                                    ? 'bg-red-50 text-red-600'
+                                                    : 'text-muted-foreground'
+                                                }`}
+                                              >
+                                                <X className="w-3.5 h-3.5" />
+                                              </Button>
+                                            </div>
+                                          )}
+                                        </td>
                                       </tr>
-                                    ))}
+                                      );
+                                    })}
                                   </tbody>
                                 </table>
                               </div>
@@ -1085,448 +1205,41 @@ export function SubscriptionDetailPage({ subscription: subscriptionProp, onBack 
                       </CollapsibleContent>
                     </Card>
                   </Collapsible>
+                  </div>
                 );
               })}
 
-                      {/* Action — passer à l'étape suivante */}
-                      <div className="flex justify-end pt-4">
-                        <Button
-                          style={{ background: PRIMARY_BUTTON_GRADIENT }}
-                          className="gap-2 text-white hover:opacity-90"
-                          onClick={() => {
-                            setCurrentStep(2);
-                            toast.success(t('subscriptions.detail.onboarding.submittedForValidation'));
-                          }}
-                        >
-                          <ChevronRight className="w-4 h-4" />
-                          {t('subscriptions.detail.onboarding.proceedToValidation')}
-                        </Button>
+                            {/* Action — passer à l'étape suivante */}
+                            <div className="flex justify-end pt-4">
+                              <Button
+                                style={{ background: PRIMARY_BUTTON_GRADIENT }}
+                                className="gap-2 text-white hover:opacity-90"
+                                onClick={() => {
+                                  setCurrentStep(2);
+                                  toast.success(t('subscriptions.detail.onboarding.submittedForValidation'));
+                                }}
+                              >
+                                <ChevronRight className="w-4 h-4" />
+                                {t('subscriptions.detail.onboarding.proceedToValidation')}
+                              </Button>
+                            </div>
+                          </div>
+                        </div>
                       </div>
-                    </div>
                   )}
 
                   {currentStep === 2 && (
-                    // Validation - même contenu que onboarding avec action de validation
-                    <div className="space-y-4">
-                      {/* Statistiques de complétion */}
-                      <div className="grid grid-cols-2 gap-4">
-                        {/* Onboarding */}
-                        <Card className="p-6 shadow-sm">
-                          <div className="flex items-center justify-between mb-4">
-                            <h3 className="font-semibold text-foreground">{t('subscriptions.detail.validation.onboarding')}</h3>
-                            <Badge className="bg-green-100 text-green-700 border-green-300">
-                              <CheckCircle2 className="w-3 h-3 mr-1" />
-                              {t('subscriptions.detail.validation.complete')}
-                            </Badge>
-                          </div>
-                          <div className="space-y-3">
-                            <div>
-                              <div className="flex justify-between text-sm mb-1">
-                                <span className="text-muted-foreground">{t('subscriptions.detail.validation.questionsAnswered')}</span>
-                                <span className="font-semibold text-foreground">142/142</span>
-                              </div>
-                              <div className="w-full bg-muted rounded-full h-2">
-                                <div className="bg-[var(--success)] h-2 rounded-full" style={{ width: '100%' }}></div>
-                              </div>
-                            </div>
-                            <div>
-                              <div className="flex justify-between text-sm mb-1">
-                                <span className="text-muted-foreground">{t('subscriptions.detail.validation.questionsValidated')}</span>
-                                <span className="font-semibold text-foreground">138/142</span>
-                              </div>
-                              <div className="w-full bg-muted rounded-full h-2">
-                                <div className="bg-primary h-2 rounded-full" style={{ width: '97%' }}></div>
-                              </div>
-                            </div>
-                          </div>
-                        </Card>
-
-                        {/* Documents */}
-                        <Card className="p-6 shadow-sm">
-                          <div className="flex items-center justify-between mb-4">
-                            <h3 className="font-semibold text-foreground">{t('subscriptions.detail.validation.documentsTab')}</h3>
-                            <Badge className="bg-green-100 text-green-700 border-green-300">
-                              <CheckCircle2 className="w-3 h-3 mr-1" />
-                              {t('subscriptions.detail.validation.documentsValidated')}
-                            </Badge>
-                          </div>
-                          <div className="space-y-3">
-                            <div>
-                              <div className="flex justify-between text-sm mb-1">
-                                <span className="text-muted-foreground">{t('subscriptions.detail.validation.documentsProvided')}</span>
-                                <span className="font-semibold text-foreground">8/8</span>
-                              </div>
-                              <div className="w-full bg-muted rounded-full h-2">
-                                <div className="bg-[var(--success)] h-2 rounded-full" style={{ width: '100%' }}></div>
-                              </div>
-                            </div>
-                            <div>
-                              <div className="flex justify-between text-sm mb-1">
-                                <span className="text-muted-foreground">{t('subscriptions.detail.validation.documentsValidatedLabel')}</span>
-                                <span className="font-semibold text-foreground">8/8</span>
-                              </div>
-                              <div className="w-full bg-muted rounded-full h-2">
-                                <div className="bg-[var(--success)] h-2 rounded-full" style={{ width: '100%' }}></div>
-                              </div>
-                            </div>
-                          </div>
-                        </Card>
-                      </div>
-
-                      {/* Niveau de risque */}
-                      <Card className="p-6 shadow-sm">
-                        <div className="flex items-center justify-between mb-4">
-                          <h3 className="font-semibold text-foreground">{t('subscriptions.detail.validation.riskLevel')}</h3>
-                          <Badge className="bg-amber-100 text-amber-700 border-amber-300">
-                            {t('subscriptions.detail.validation.medium')}
-                          </Badge>
-                        </div>
-                        
-                        <div className="space-y-4">
-                          {/* Détail du calcul */}
-                          <div className="bg-muted rounded-lg p-4">
-                            <h4 className="text-sm font-semibold text-foreground mb-3">{t('subscriptions.detail.validation.riskDetailTitle')}</h4>
-                            <div className="space-y-2">
-                              <div className="flex justify-between items-center">
-                                <div className="flex items-center gap-2">
-                                  <Globe className="w-4 h-4 text-muted-foreground" />
-                                  <span className="text-sm text-foreground/80">{t('subscriptions.detail.validation.residenceCountry')}</span>
-                                </div>
-                                <div className="flex items-center gap-2">
-                                  <span className="text-sm font-medium text-foreground">France</span>
-                                  <Badge className="bg-green-100 text-green-700 border-green-300 text-xs">{t('subscriptions.detail.validation.low')}</Badge>
-                                </div>
-                              </div>
-                              <div className="flex justify-between items-center">
-                                <div className="flex items-center gap-2">
-                                  <Users className="w-4 h-4 text-muted-foreground" />
-                                  <span className="text-sm text-foreground/80">{t('subscriptions.detail.validation.investorProfile')}</span>
-                                </div>
-                                <div className="flex items-center gap-2">
-                                  <span className="text-sm font-medium text-foreground">HNWI</span>
-                                  <Badge className="bg-amber-100 text-amber-700 border-amber-300 text-xs">{t('subscriptions.detail.validation.medium')}</Badge>
-                                </div>
-                              </div>
-                              <div className="flex justify-between items-center">
-                                <div className="flex items-center gap-2">
-                                  <DollarSign className="w-4 h-4 text-muted-foreground" />
-                                  <span className="text-sm text-foreground/80">{t('subscriptions.detail.validation.subscriptionAmount')}</span>
-                                </div>
-                                <div className="flex items-center gap-2">
-                                  <span className="text-sm font-medium text-foreground">500 000 €</span>
-                                  <Badge className="bg-amber-100 text-amber-700 border-amber-300 text-xs">{t('subscriptions.detail.validation.medium')}</Badge>
-                                </div>
-                              </div>
-                              <div className="flex justify-between items-center">
-                                <div className="flex items-center gap-2">
-                                  <Scale className="w-4 h-4 text-muted-foreground" />
-                                  <span className="text-sm text-foreground/80">{t('subscriptions.detail.validation.fundsOrigin')}</span>
-                                </div>
-                                <div className="flex items-center gap-2">
-                                  <span className="text-sm font-medium text-foreground">Salaires</span>
-                                  <Badge className="bg-green-100 text-green-700 border-green-300 text-xs">{t('subscriptions.detail.validation.low')}</Badge>
-                                </div>
-                              </div>
-                            </div>
-                          </div>
-
-                          {/* Validation du risque */}
-                          <div className="flex items-center justify-between p-4 bg-amber-50 border border-amber-200 rounded-lg">
-                            <div className="flex items-center gap-3">
-                              <AlertTriangle className="w-5 h-5 text-amber-600" />
-                              <div>
-                                <div className="font-medium text-foreground">{t('subscriptions.detail.validation.riskValidationRequired')}</div>
-                                <div className="text-sm text-muted-foreground">{t('subscriptions.detail.validation.riskValidationDesc')}</div>
-                              </div>
-                            </div>
-                            <Button 
-                              size="sm"
-                              variant="outline"
-                              onClick={() => toast.success(t('subscriptions.detail.toast.riskValidated'))}
-                            >
-                              <Check className="w-4 h-4 mr-2" />
-                              {t('subscriptions.detail.validation.validate')}
-                            </Button>
-                          </div>
-                        </div>
-                      </Card>
-
-                      {/* Niveau KYC */}
-                      <Card className="p-6 shadow-sm">
-                        <div className="flex items-center justify-between mb-4">
-                          <h3 className="font-semibold text-foreground">{t('subscriptions.detail.validation.kycLevel')}</h3>
-                          <Badge className="bg-primary/10 text-primary border-primary/30">
-                            {t('subscriptions.detail.validation.advanced')}
-                          </Badge>
-                        </div>
-                        
-                        <div className="space-y-4">
-                          <div className="bg-primary/5 rounded-lg p-4">
-                            <div className="flex items-center gap-3 mb-3">
-                              <ShieldAlert className="w-5 h-5 text-primary" />
-                              <div>
-                                <div className="font-medium text-foreground">{t('subscriptions.detail.validation.advancedControlsRequired')}</div>
-                                <div className="text-sm text-muted-foreground">{t('subscriptions.detail.validation.advancedControlsDesc')}</div>
-                              </div>
-                            </div>
-                            <div className="grid grid-cols-2 gap-3">
-                              <div className="bg-card rounded-lg p-3">
-                                <div className="text-xs text-muted-foreground mb-1">{t('subscriptions.detail.validation.controlsCompleted')}</div>
-                                <div className="font-semibold text-foreground">12/12</div>
-                              </div>
-                              <div className="bg-card rounded-lg p-3">
-                                <div className="text-xs text-muted-foreground mb-1">{t('subscriptions.detail.validation.statusLabel')}</div>
-                                <div className="flex items-center gap-1">
-                                  <CheckCircle2 className="w-4 h-4 text-green-600" />
-                                  <span className="font-semibold text-foreground">{t('subscriptions.detail.validation.compliant')}</span>
-                                </div>
-                              </div>
-                            </div>
-                          </div>
-                        </div>
-                      </Card>
-
-                      {/* Analyses Screening */}
-                      <Card className="p-6 shadow-sm">
-                        <div className="flex items-center justify-between mb-4">
-                          <h3 className="font-semibold text-foreground">{t('subscriptions.detail.validation.screeningAnalysis')}</h3>
-                          <Badge className="bg-amber-100 text-amber-700 border-amber-300">
-                            {t('subscriptions.detail.validation.pendingDecisions', { count: 2 })}
-                          </Badge>
-                        </div>
-                        
-                        <div className="space-y-4">
-                          {/* Investisseur principal */}
-                          <div className="border border-border rounded-lg p-4">
-                            <div className="flex items-center justify-between mb-3">
-                              <div className="flex items-center gap-3">
-                                <div className="p-2 bg-primary/10 rounded-lg">
-                                  <User className="w-5 h-5 text-primary" />
-                                </div>
-                                <div>
-                                  <div className="font-semibold text-foreground">Inès Wadouachi</div>
-                                  <div className="text-sm text-muted-foreground">{t('subscriptions.detail.validation.mainInvestor')}</div>
-                                </div>
-                              </div>
-                              <Badge className="bg-green-100 text-green-700 border-green-300">
-                                <CheckCircle2 className="w-3 h-3 mr-1" />
-                                {t('subscriptions.detail.validation.validatedStatus')}
-                              </Badge>
-                            </div>
-                            <div className="grid grid-cols-3 gap-2 text-sm">
-                              <div className="flex items-center gap-1">
-                                <Check className="w-3 h-3 text-green-600" />
-                                <span className="text-foreground/80">{t('subscriptions.detail.validation.pepNegative')}</span>
-                              </div>
-                              <div className="flex items-center gap-1">
-                                <Check className="w-3 h-3 text-green-600" />
-                                <span className="text-foreground/80">{t('subscriptions.detail.validation.sanctionsNegative')}</span>
-                              </div>
-                              <div className="flex items-center gap-1">
-                                <Check className="w-3 h-3 text-green-600" />
-                                <span className="text-foreground/80">{t('subscriptions.detail.validation.mediaNegative')}</span>
-                              </div>
-                            </div>
-                          </div>
-
-                          {/* Bénéficiaire effectif 1 */}
-                          <div className="border-2 border-amber-200 bg-amber-50 rounded-lg p-4">
-                            <div className="flex items-center justify-between mb-3">
-                              <div className="flex items-center gap-3">
-                                <div className="p-2 bg-amber-100 rounded-lg">
-                                  <Users className="w-5 h-5 text-amber-600" />
-                                </div>
-                                <div>
-                                  <div className="font-semibold text-foreground">Jean Dupont</div>
-                                  <div className="text-sm text-muted-foreground">{t('subscriptions.detail.validation.beneficialOwner', { pct: 35 })}</div>
-                                </div>
-                              </div>
-                              <Badge className="bg-amber-100 text-amber-700 border-amber-300">
-                                <AlertCircle className="w-3 h-3 mr-1" />
-                                {t('subscriptions.detail.validation.pendingStatus')}
-                              </Badge>
-                            </div>
-                            <div className="space-y-3">
-                              <div className="bg-card rounded-lg p-3">
-                                <div className="flex items-center gap-2 mb-2">
-                                  <AlertTriangle className="w-4 h-4 text-amber-600" />
-                                  <span className="text-sm font-medium text-foreground">{t('subscriptions.detail.validation.mediaAlertDetected', { count: 1 })}</span>
-                                </div>
-                                <div className="text-sm text-foreground/80 mb-3">
-                                  {t('subscriptions.detail.validation.mediaAlertDesc')}
-                                </div>
-                                <div className="flex gap-2">
-                                  <Button 
-                                    size="sm" 
-                                    variant="outline"
-                                    onClick={() => toast.success(t('subscriptions.detail.validation.decisionAcceptedReserve'))}
-                                    className="flex-1"
-                                  >
-                                    <Check className="w-3 h-3 mr-1" />
-                                    {t('subscriptions.detail.validation.acceptWithReserve')}
-                                  </Button>
-                                  <Button 
-                                    size="sm" 
-                                    variant="outline"
-                                    onClick={() => toast.success(t('subscriptions.detail.validation.decisionRejectedToast'))}
-                                    className="flex-1"
-                                  >
-                                    <X className="w-3 h-3 mr-1" />
-                                    {t('subscriptions.detail.validation.reject')}
-                                  </Button>
-                                </div>
-                              </div>
-                              <div className="grid grid-cols-3 gap-2 text-sm">
-                                <div className="flex items-center gap-1">
-                                  <Check className="w-3 h-3 text-green-600" />
-                                  <span className="text-foreground/80">{t('subscriptions.detail.validation.pepNegative')}</span>
-                                </div>
-                                <div className="flex items-center gap-1">
-                                  <Check className="w-3 h-3 text-green-600" />
-                                  <span className="text-foreground/80">{t('subscriptions.detail.validation.sanctionsNegative')}</span>
-                                </div>
-                                <div className="flex items-center gap-1">
-                                  <AlertCircle className="w-3 h-3 text-amber-600" />
-                                  <span className="text-foreground/80">{t('subscriptions.detail.validation.mediaAlert', { count: 1 })}</span>
-                                </div>
-                              </div>
-                            </div>
-                          </div>
-
-                          {/* Bénéficiaire effectif 2 */}
-                          <div className="border-2 border-red-200 bg-red-50 rounded-lg p-4">
-                            <div className="flex items-center justify-between mb-3">
-                              <div className="flex items-center gap-3">
-                                <div className="p-2 bg-red-100 rounded-lg">
-                                  <Users className="w-5 h-5 text-red-600" />
-                                </div>
-                                <div>
-                                  <div className="font-semibold text-foreground">Marie Martin</div>
-                                  <div className="text-sm text-muted-foreground">{t('subscriptions.detail.validation.beneficialOwner', { pct: 25 })}</div>
-                                </div>
-                              </div>
-                              <Badge className="bg-red-100 text-red-700 border-red-300">
-                                <X className="w-3 h-3 mr-1" />
-                                {t('subscriptions.detail.validation.decisionRequired')}
-                              </Badge>
-                            </div>
-                            <div className="space-y-3">
-                              <div className="bg-card rounded-lg p-3">
-                                <div className="flex items-center gap-2 mb-2">
-                                  <ShieldAlert className="w-4 h-4 text-red-600" />
-                                  <span className="text-sm font-medium text-foreground">{t('subscriptions.detail.validation.pepPerson')}</span>
-                                </div>
-                                <div className="text-sm text-foreground/80 mb-3">
-                                  {t('subscriptions.detail.validation.pepDesc')}
-                                </div>
-                                <div className="flex gap-2">
-                                  <Button 
-                                    size="sm" 
-                                    variant="outline"
-                                    onClick={() => toast.success(t('subscriptions.detail.validation.decisionAcceptedAfterDD'))}
-                                    className="flex-1"
-                                  >
-                                    <Check className="w-3 h-3 mr-1" />
-                                    {t('subscriptions.detail.validation.acceptAfterDD')}
-                                  </Button>
-                                  <Button 
-                                    size="sm" 
-                                    variant="outline"
-                                    onClick={() => toast.success(t('subscriptions.detail.validation.decisionEscalated'))}
-                                    className="flex-1"
-                                  >
-                                    <Flag className="w-3 h-3 mr-1" />
-                                    {t('subscriptions.detail.validation.escalate')}
-                                  </Button>
-                                  <Button 
-                                    size="sm" 
-                                    variant="outline"
-                                    onClick={() => toast.error(t('subscriptions.detail.validation.rejectSubscription'))}
-                                    className="flex-1"
-                                  >
-                                    <X className="w-3 h-3 mr-1" />
-                                    {t('subscriptions.detail.validation.reject')}
-                                  </Button>
-                                </div>
-                              </div>
-                              <div className="grid grid-cols-3 gap-2 text-sm">
-                                <div className="flex items-center gap-1">
-                                  <AlertCircle className="w-3 h-3 text-red-600" />
-                                  <span className="text-foreground/80">{t('subscriptions.detail.validation.pepPositive')}</span>
-                                </div>
-                                <div className="flex items-center gap-1">
-                                  <Check className="w-3 h-3 text-green-600" />
-                                  <span className="text-foreground/80">{t('subscriptions.detail.validation.sanctionsNegative')}</span>
-                                </div>
-                                <div className="flex items-center gap-1">
-                                  <Check className="w-3 h-3 text-green-600" />
-                                  <span className="text-foreground/80">{t('subscriptions.detail.validation.mediaNegative')}</span>
-                                </div>
-                              </div>
-                            </div>
-                          </div>
-
-                          {/* Entité liée */}
-                          <div className="border border-border rounded-lg p-4">
-                            <div className="flex items-center justify-between mb-3">
-                              <div className="flex items-center gap-3">
-                                <div className="p-2 bg-muted rounded-lg">
-                                  <Building2 className="w-5 h-5 text-muted-foreground" />
-                                </div>
-                                <div>
-                                  <div className="font-semibold text-foreground">Holding Familiale SAS</div>
-                                  <div className="text-sm text-muted-foreground">{t('subscriptions.detail.validation.linkedEntity')}</div>
-                                </div>
-                              </div>
-                              <Badge className="bg-green-100 text-green-700 border-green-300">
-                                <CheckCircle2 className="w-3 h-3 mr-1" />
-                                {t('subscriptions.detail.validation.validatedStatus')}
-                              </Badge>
-                            </div>
-                            <div className="grid grid-cols-3 gap-2 text-sm">
-                              <div className="flex items-center gap-1">
-                                <Check className="w-3 h-3 text-green-600" />
-                                <span className="text-foreground/80">{t('subscriptions.detail.validation.sanctionsNegative')}</span>
-                              </div>
-                              <div className="flex items-center gap-1">
-                                <Check className="w-3 h-3 text-green-600" />
-                                <span className="text-foreground/80">{t('subscriptions.detail.validation.mediaNegative')}</span>
-                              </div>
-                              <div className="flex items-center gap-1">
-                                <Check className="w-3 h-3 text-green-600" />
-                                <span className="text-foreground/80">{t('subscriptions.detail.validation.legalOk')}</span>
-                              </div>
-                            </div>
-                          </div>
-                        </div>
-                      </Card>
-
-                      {/* Validation finale */}
-                      <div className="bg-gradient-to-r from-green-50 to-emerald-50 border-2 border-green-200 rounded-xl p-6">
-                        <div className="flex items-start gap-4">
-                          <div className="p-3 bg-green-500 rounded-xl">
-                            <CheckCircle2 className="w-6 h-6 text-white" />
-                          </div>
-                          <div className="flex-1">
-                            <h3 className="font-bold text-foreground mb-2">{t('subscriptions.detail.validation.readyForValidation')}</h3>
-                            <p className="text-sm text-foreground/80 mb-4">
-                              {t('subscriptions.detail.validation.readyForValidationDesc')}
-                            </p>
-                            <Button 
-                              className="hover:opacity-90"
-                              style={{ background: PRIMARY_BUTTON_GRADIENT }}
-                              onClick={() => {
-                                setCurrentStep(3);
-                                toast.success(t('subscriptions.detail.validation.subscriptionValidated'));
-                              }}
-                            >
-                              <CheckCircle2 className="w-4 h-4 mr-2" />
-                              {t('subscriptions.detail.validation.validateSubscription')}
-                            </Button>
-                          </div>
-                        </div>
-                      </div>
-                    </div>
+                    // Validation / Conformité — widgets risque, screening et validation
+                    <SubscriptionComplianceSection
+                      questions={questionBuckets}
+                      documents={documentBuckets}
+                      scoreValidated={riskValidated}
+                      scoreValidatedBy={riskValidatedBy}
+                      scoreValidatedAt={riskValidationDate}
+                      onValidateScore={handleValidateRisk}
+                      onInvalidateScore={handleInvalidateRisk}
+                      onSubscriptionValidated={() => setCurrentStep(3)}
+                    />
                   )}
 
                   {currentStep === 3 && (
@@ -2064,793 +1777,6 @@ export function SubscriptionDetailPage({ subscription: subscriptionProp, onBack 
           </TabsContent>
 
           {/* Risk Tab Content */}
-          <TabsContent value="risk" className="mt-0">
-            <div className="px-8 py-6">
-              <div className="space-y-6">
-                {/* Risk Overview Header */}
-                <div className="grid grid-cols-4 gap-4">
-                  {/* Overall Risk Score Card */}
-                  <div className="col-span-1 bg-gradient-to-br from-red-50 via-orange-50 to-amber-50 border border-red-200 rounded-xl p-6 shadow-sm">
-                    <div className="flex flex-col items-center text-center">
-                      <div className="relative mb-4">
-                        <div
-                          className="w-24 h-24 rounded-full bg-gradient-to-br from-red-500 to-orange-600 flex items-center justify-center shadow-lg"
-                        >
-                          <span className="text-3xl font-bold text-white">72</span>
-                        </div>
-                        <div
-                          className="absolute inset-0 rounded-full bg-red-400/20 blur-md"
-                        />
-                      </div>
-                      <h3 className="font-bold text-foreground mb-1">{t('subscriptions.detail.riskTab.overallRiskScore')}</h3>
-                      <Badge className="bg-red-100 text-red-700 border-red-300 font-semibold">
-                        {t('subscriptions.detail.header.riskHigh')}
-                      </Badge>
-                      <p className="text-xs text-muted-foreground mt-2">
-                        {t('subscriptions.detail.riskTab.activeAlerts', { count: 3 })}
-                      </p>
-                      <Separator className="my-3" />
-                      {riskValidated ? (
-                        <div className="space-y-2">
-                          <Badge className="bg-green-100 text-green-700 border-green-300 font-semibold">
-                            <CheckCircle2 className="w-3 h-3 mr-1" />
-                            {t('subscriptions.detail.validation.validatedStatus')}
-                          </Badge>
-                          <div className="text-xs text-muted-foreground">
-                            <div>{t('subscriptions.detail.header.validatedByLabel', { name: riskValidatedBy })}</div>
-                            <div className="text-xs text-muted-foreground mt-0.5">{riskValidationDate}</div>
-                          </div>
-                        </div>
-                      ) : (
-                        <Badge className="bg-amber-100 text-amber-700 border-amber-300 font-semibold">
-                          <AlertCircle className="w-3 h-3 mr-1" />
-                          {t('subscriptions.detail.header.riskNotValidated')}
-                        </Badge>
-                      )}
-                    </div>
-                  </div>
-
-                  {/* Risk Categories */}
-                  <div className="col-span-3 grid grid-cols-3 gap-4">
-                    {/* PEP Risk */}
-                    <div className="bg-card border border-orange-200 rounded-xl p-5">
-                      <div className="flex items-start justify-between mb-3">
-                        <div className="p-2 bg-orange-100 rounded-lg">
-                          <Users className="w-5 h-5 text-orange-600" />
-                        </div>
-                        <Badge className="bg-orange-100 text-orange-700 border-orange-300 text-xs">
-                          {t('subscriptions.detail.riskTab.active')}
-                        </Badge>
-                      </div>
-                      <h4 className="font-semibold text-foreground mb-1">{t('subscriptions.detail.riskTab.pep')}</h4>
-                      <p className="text-xs text-muted-foreground mb-2">{t('subscriptions.detail.riskTab.pepDesc')}</p>
-                      <div className="flex items-baseline gap-1">
-                        <span className="text-2xl font-bold text-orange-600">1</span>
-                        <span className="text-xs text-muted-foreground">{t('subscriptions.detail.riskTab.match')}</span>
-                      </div>
-                    </div>
-
-                    {/* Sanctions Risk */}
-                    <div className="bg-card border border-red-200 rounded-xl p-5">
-                      <div className="flex items-start justify-between mb-3">
-                        <div className="p-2 bg-red-100 rounded-lg">
-                          <Scale className="w-5 h-5 text-red-600" />
-                        </div>
-                        <Badge className="bg-red-100 text-red-700 border-red-300 text-xs">
-                          {t('subscriptions.detail.riskTab.active')}
-                        </Badge>
-                      </div>
-                      <h4 className="font-semibold text-foreground mb-1">{t('subscriptions.detail.riskTab.sanctionsTitle')}</h4>
-                      <p className="text-xs text-muted-foreground mb-2">{t('subscriptions.detail.riskTab.sanctionsDesc')}</p>
-                      <div className="flex items-baseline gap-1">
-                        <span className="text-2xl font-bold text-red-600">1</span>
-                        <span className="text-xs text-muted-foreground">{t('subscriptions.detail.riskTab.match')}</span>
-                      </div>
-                    </div>
-
-                    {/* Adverse Media Risk */}
-                    <div className="bg-card border border-amber-200 rounded-xl p-5">
-                      <div className="flex items-start justify-between mb-3">
-                        <div className="p-2 bg-amber-100 rounded-lg">
-                          <Newspaper className="w-5 h-5 text-amber-600" />
-                        </div>
-                        <Badge className="bg-amber-100 text-amber-700 border-amber-300 text-xs">
-                          {t('subscriptions.detail.riskTab.active')}
-                        </Badge>
-                      </div>
-                      <h4 className="font-semibold text-foreground mb-1">{t('subscriptions.detail.riskTab.adverseMediaTitle')}</h4>
-                      <p className="text-xs text-muted-foreground mb-2">{t('subscriptions.detail.riskTab.adverseMediaDesc')}</p>
-                      <div className="flex items-baseline gap-1">
-                        <span className="text-2xl font-bold text-amber-600">1</span>
-                        <span className="text-xs text-muted-foreground">{t('subscriptions.detail.riskTab.article')}</span>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-
-                {/* Risk Matrix Detail */}
-                <Card className="overflow-hidden shadow-sm">
-                  <div className="px-6 py-4 bg-gradient-to-r from-indigo-50 to-purple-50 border-b border-border">
-                    <div className="flex items-center justify-between">
-                      <div className="flex items-center gap-3">
-                        <div className="p-2 bg-indigo-100 rounded-lg">
-                          <Scale className="w-5 h-5 text-indigo-600" />
-                        </div>
-                        <div>
-                          <h3 className="font-bold text-foreground">{t('subscriptions.detail.riskTab.riskMatrix')}</h3>
-                          <p className="text-sm text-muted-foreground">{t('subscriptions.detail.riskTab.riskMatrixDesc')}</p>
-                        </div>
-                      </div>
-                      <div className="flex items-center gap-3">
-                        <div className="text-right">
-                          <div className="text-2xl font-bold bg-gradient-to-r from-red-600 to-orange-600 bg-clip-text text-transparent">
-                            72.00
-                          </div>
-                          <div className="text-xs text-muted-foreground">{t('subscriptions.detail.riskTab.points')}</div>
-                        </div>
-                        {!riskValidated && (
-                          <Button
-                            onClick={handleValidateRisk}
-                            className="gap-2 shadow-lg"
-                            style={{ background: 'linear-gradient(135deg, #10b981 0%, #059669 100%)' }}
-                          >
-                            <CheckCircle2 className="w-4 h-4" />
-                            {t('subscriptions.detail.riskTab.validateScoring')}
-                          </Button>
-                        )}
-                      </div>
-                    </div>
-                  </div>
-
-                  <div className="p-6">
-                    <div className="grid grid-cols-2 gap-6">
-                      {/* Personne Physique */}
-                      <div className="space-y-3">
-                        <div className="flex items-center gap-2 mb-4">
-                          <User className="w-5 h-5 text-indigo-600" />
-                          <h4 className="font-bold text-foreground">{t('subscriptions.detail.riskTab.naturalPerson')}</h4>
-                        </div>
-                        
-                        <div className="space-y-2">
-                          <div className="flex justify-between items-center py-2 border-b border-border/50">
-                            <span className="text-sm text-foreground/80">{t('subscriptions.detail.riskTab.subscriberType')}</span>
-                            <div className="flex items-center gap-2">
-                              <span className="text-sm font-semibold text-foreground">0.00</span>
-                            </div>
-                          </div>
-                          <div className="flex justify-between items-center py-2 border-b border-border/50">
-                            <span className="text-sm text-foreground/80">{t('subscriptions.detail.riskTab.complianceDecision')}</span>
-                            <div className="flex items-center gap-2">
-                              <span className="text-sm font-semibold text-foreground">0.00</span>
-                            </div>
-                          </div>
-                          <div className="flex justify-between items-center py-2 border-b border-border/50">
-                            <span className="text-sm text-foreground/80">{t('subscriptions.detail.riskTab.activitySector')}</span>
-                            <div className="flex items-center gap-2">
-                              <span className="text-sm font-semibold text-foreground">0.00</span>
-                            </div>
-                          </div>
-                          <div className="flex justify-between items-center py-2 border-b border-border/50">
-                            <span className="text-sm text-foreground/80">{t('subscriptions.detail.riskTab.relationOrigin')}</span>
-                            <div className="flex items-center gap-2">
-                              <span className="text-sm font-semibold text-foreground">0.00</span>
-                            </div>
-                          </div>
-                          <div className="flex justify-between items-center py-2 border-b border-border/50">
-                            <span className="text-sm text-foreground/80">{t('subscriptions.detail.riskTab.nationality')}</span>
-                            <div className="flex items-center gap-2">
-                              <span className="text-sm font-semibold text-foreground">0.00</span>
-                            </div>
-                          </div>
-                          <div className="flex justify-between items-center py-2 border-b border-border/50 bg-orange-50">
-                            <span className="text-sm text-foreground/80 font-medium">{t('subscriptions.detail.riskTab.pepSubscriber')}</span>
-                            <div className="flex items-center gap-2">
-                              <AlertCircle className="w-4 h-4 text-orange-600" />
-                              <span className="text-sm font-bold text-orange-700">15.00</span>
-                            </div>
-                          </div>
-                          <div className="flex justify-between items-center py-2 border-b border-border/50">
-                            <span className="text-sm text-foreground/80">{t('subscriptions.detail.riskTab.taxResidenceCountry')}</span>
-                            <div className="flex items-center gap-2">
-                              <span className="text-sm font-semibold text-foreground">0.00</span>
-                            </div>
-                          </div>
-                          <div className="flex justify-between items-center py-2 border-b border-border/50 bg-amber-50">
-                            <span className="text-sm text-foreground/80 font-medium">{t('subscriptions.detail.riskTab.residenceCountryDiff')}</span>
-                            <div className="flex items-center gap-2">
-                              <AlertCircle className="w-4 h-4 text-amber-600" />
-                              <span className="text-sm font-bold text-amber-700">5.00</span>
-                            </div>
-                          </div>
-                          <div className="flex justify-between items-center py-2 border-b border-border/50">
-                            <span className="text-sm text-foreground/80">{t('subscriptions.detail.riskTab.coSubscriberNationality')}</span>
-                            <div className="flex items-center gap-2">
-                              <span className="text-sm font-semibold text-foreground">0.00</span>
-                            </div>
-                          </div>
-                          <div className="flex justify-between items-center py-2 border-b border-border/50">
-                            <span className="text-sm text-foreground/80">{t('subscriptions.detail.riskTab.coSubscriberRelationOrigin')}</span>
-                            <div className="flex items-center gap-2">
-                              <span className="text-sm font-semibold text-foreground">0.00</span>
-                            </div>
-                          </div>
-                          <div className="flex justify-between items-center py-2 border-b border-border/50">
-                            <span className="text-sm text-foreground/80">{t('subscriptions.detail.riskTab.pepCoSubscriber')}</span>
-                            <div className="flex items-center gap-2">
-                              <span className="text-sm font-semibold text-foreground">0.00</span>
-                            </div>
-                          </div>
-                          <div className="flex justify-between items-center py-2 border-b border-border/50">
-                            <span className="text-sm text-foreground/80">{t('subscriptions.detail.riskTab.coSubscriberTaxResidence')}</span>
-                            <div className="flex items-center gap-2">
-                              <span className="text-sm font-semibold text-foreground">0.00</span>
-                            </div>
-                          </div>
-                          <div className="flex justify-between items-center py-2 border-b border-border/50">
-                            <span className="text-sm text-foreground/80">{t('subscriptions.detail.riskTab.coSubscriberActivitySector')}</span>
-                            <div className="flex items-center gap-2">
-                              <span className="text-sm font-semibold text-foreground">0.00</span>
-                            </div>
-                          </div>
-                          <div className="flex justify-between items-center py-2 border-b border-border/50">
-                            <span className="text-sm text-foreground/80">{t('subscriptions.detail.riskTab.coSubscriberResidenceDiff')}</span>
-                            <div className="flex items-center gap-2">
-                              <span className="text-sm font-semibold text-foreground">0.00</span>
-                            </div>
-                          </div>
-                        </div>
-                      </div>
-
-                      {/* Personne Morale */}
-                      <div className="space-y-3">
-                        <div className="flex items-center gap-2 mb-4">
-                          <Building2 className="w-5 h-5 text-purple-600" />
-                          <h4 className="font-bold text-foreground">{t('subscriptions.detail.riskTab.legalEntity')}</h4>
-                        </div>
-                        
-                        <div className="space-y-2">
-                          <div className="flex justify-between items-center py-2 border-b border-border/50 bg-red-50">
-                            <span className="text-sm text-foreground/80 font-medium">{t('subscriptions.detail.riskTab.relationOrigin')}</span>
-                            <div className="flex items-center gap-2">
-                              <AlertTriangle className="w-4 h-4 text-red-600" />
-                              <span className="text-sm font-bold text-red-700">20.00</span>
-                            </div>
-                          </div>
-                          <div className="flex justify-between items-center py-2 border-b border-border/50">
-                            <span className="text-sm text-foreground/80">{t('subscriptions.detail.riskTab.complianceDecision')}</span>
-                            <div className="flex items-center gap-2">
-                              <span className="text-sm font-semibold text-foreground">0.00</span>
-                            </div>
-                          </div>
-                          <div className="flex justify-between items-center py-2 border-b border-border/50">
-                            <span className="text-sm text-foreground/80">{t('subscriptions.detail.riskTab.activitySector')}</span>
-                            <div className="flex items-center gap-2">
-                              <span className="text-sm font-semibold text-foreground">4.00</span>
-                            </div>
-                          </div>
-                          <div className="flex justify-between items-center py-2 border-b border-border/50">
-                            <span className="text-sm text-foreground/80">{t('subscriptions.detail.riskTab.pepRL')}</span>
-                            <div className="flex items-center gap-2">
-                              <span className="text-sm font-semibold text-foreground">0.00</span>
-                            </div>
-                          </div>
-                          <div className="flex justify-between items-center py-2 border-b border-border/50 bg-red-50">
-                            <span className="text-sm text-foreground/80 font-medium">{t('subscriptions.detail.riskTab.pepStructure')}</span>
-                            <div className="flex items-center gap-2">
-                              <AlertTriangle className="w-4 h-4 text-red-600" />
-                              <span className="text-sm font-bold text-red-700">18.00</span>
-                            </div>
-                          </div>
-                          <div className="flex justify-between items-center py-2 border-b border-border/50">
-                            <span className="text-sm text-foreground/80">{t('subscriptions.detail.riskTab.registrationCountry')}</span>
-                            <div className="flex items-center gap-2">
-                              <span className="text-sm font-semibold text-foreground">0.00</span>
-                            </div>
-                          </div>
-                          <div className="flex justify-between items-center py-2 border-b border-border/50">
-                            <span className="text-sm text-foreground/80">{t('subscriptions.detail.riskTab.fatca')}</span>
-                            <div className="flex items-center gap-2">
-                              <span className="text-sm font-semibold text-foreground">0.00</span>
-                            </div>
-                          </div>
-                          <div className="flex justify-between items-center py-2 border-b border-border/50 bg-amber-50">
-                            <span className="text-sm text-foreground/80 font-medium">{t('subscriptions.detail.riskTab.regulatedEntity')}</span>
-                            <div className="flex items-center gap-2">
-                              <AlertCircle className="w-4 h-4 text-amber-600" />
-                              <span className="text-sm font-bold text-amber-700">6.00</span>
-                            </div>
-                          </div>
-                          <div className="flex justify-between items-center py-2 border-b border-border/50">
-                            <span className="text-sm text-foreground/80">{t('subscriptions.detail.riskTab.ribDomiciliation')}</span>
-                            <div className="flex items-center gap-2">
-                              <span className="text-sm font-semibold text-foreground">0.00</span>
-                            </div>
-                          </div>
-                          <div className="flex justify-between items-center py-2 border-b border-border/50">
-                            <span className="text-sm text-foreground/80">{t('subscriptions.detail.riskTab.pepRL2')}</span>
-                            <div className="flex items-center gap-2">
-                              <span className="text-sm font-semibold text-foreground">0.00</span>
-                            </div>
-                          </div>
-                          <div className="flex justify-between items-center py-2 border-b border-border/50">
-                            <span className="text-sm text-foreground/80">{t('subscriptions.detail.riskTab.pepRL3')}</span>
-                            <div className="flex items-center gap-2">
-                              <span className="text-sm font-semibold text-foreground">0.00</span>
-                            </div>
-                          </div>
-                          <div className="flex justify-between items-center py-2 border-b border-border/50">
-                            <span className="text-sm text-foreground/80">{t('subscriptions.detail.riskTab.pepRL4')}</span>
-                            <div className="flex items-center gap-2">
-                              <span className="text-sm font-semibold text-foreground">0.00</span>
-                            </div>
-                          </div>
-                          <div className="flex justify-between items-center py-2 border-b border-border/50 bg-amber-50">
-                            <span className="text-sm text-foreground/80 font-medium">{t('subscriptions.detail.riskTab.pepBE1')}</span>
-                            <div className="flex items-center gap-2">
-                              <AlertCircle className="w-4 h-4 text-amber-600" />
-                              <span className="text-sm font-bold text-amber-700">5.00</span>
-                            </div>
-                          </div>
-                          <div className="flex justify-between items-center py-2 border-b border-border/50">
-                            <span className="text-sm text-foreground/80">{t('subscriptions.detail.riskTab.pepBE2')}</span>
-                            <div className="flex items-center gap-2">
-                              <span className="text-sm font-semibold text-foreground">0.00</span>
-                            </div>
-                          </div>
-                          <div className="flex justify-between items-center py-2 border-b border-border/50 bg-amber-50">
-                            <span className="text-sm text-foreground/80 font-medium">{t('subscriptions.detail.riskTab.pepBE3')}</span>
-                            <div className="flex items-center gap-2">
-                              <AlertCircle className="w-4 h-4 text-amber-600" />
-                              <span className="text-sm font-bold text-amber-700">4.00</span>
-                            </div>
-                          </div>
-                        </div>
-                      </div>
-                    </div>
-
-                    {/* Total Summary */}
-                    <div className="mt-6 pt-6 border-t-2 border-border">
-                      <div className="flex items-center justify-between bg-gradient-to-r from-red-50 to-orange-50 rounded-xl p-5 border-2 border-red-200">
-                        <div className="flex items-center gap-4">
-                          <div className="p-3 bg-gradient-to-br from-red-500 to-orange-600 rounded-xl shadow-lg">
-                            <TrendingUp className="w-6 h-6 text-white" />
-                          </div>
-                          <div>
-                            <div className="text-sm text-muted-foreground mb-1">{t('subscriptions.detail.riskTab.globalRiskScore')}</div>
-                            <div className="text-3xl font-bold bg-gradient-to-r from-red-600 to-orange-600 bg-clip-text text-transparent">
-                              72.00 / 100
-                            </div>
-                          </div>
-                        </div>
-                        <div className="text-right">
-                          <Badge className="bg-red-100 text-red-700 border-red-300 font-bold text-lg px-4 py-2">
-                            {t('subscriptions.detail.header.riskHigh')}
-                          </Badge>
-                          <div className="text-xs text-muted-foreground mt-2">
-                            {t('subscriptions.detail.riskTab.basedOnCriteria', { count: 15 })}
-                          </div>
-                        </div>
-                      </div>
-                    </div>
-                  </div>
-                </Card>
-
-                {/* Risk Details Table */}
-                <Card className="overflow-hidden shadow-sm">
-                  <div className="px-6 py-4 bg-gradient-to-r from-muted to-card border-b border-border">
-                    <div className="flex items-center justify-between">
-                      <div className="flex items-center gap-3">
-                        <div className="p-2 bg-red-100 rounded-lg">
-                          <AlertTriangle className="w-5 h-5 text-red-600" />
-                        </div>
-                        <div>
-                          <h3 className="font-bold text-foreground">{t('subscriptions.detail.riskTab.alertDetails')}</h3>
-                          <p className="text-sm text-muted-foreground">{t('subscriptions.detail.riskTab.alertDetailsDesc')}</p>
-                        </div>
-                      </div>
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        className="gap-2"
-                        onClick={() => toast.info(t('subscriptions.detail.riskTab.exportAlerts'), { description: t('subscriptions.detail.riskTab.exportAlertsDesc') })}
-                      >
-                        <Download className="w-4 h-4" />
-                        {t('subscriptions.detail.riskTab.export')}
-                      </Button>
-                    </div>
-                  </div>
-
-                  <div className="overflow-x-auto">
-                    <table className="w-full">
-                      <thead>
-                        <tr className="bg-muted">
-                          <th className="px-6 py-3 text-left text-xs font-semibold text-muted-foreground uppercase tracking-wider">
-                            {t('subscriptions.detail.riskTab.alertType')}
-                          </th>
-                          <th className="px-6 py-3 text-left text-xs font-semibold text-muted-foreground uppercase tracking-wider">
-                            {t('subscriptions.detail.riskTab.details')}
-                          </th>
-                          <th className="px-6 py-3 text-left text-xs font-semibold text-muted-foreground uppercase tracking-wider">
-                            {t('subscriptions.detail.riskTab.riskLevel')}
-                          </th>
-                          <th className="px-6 py-3 text-left text-xs font-semibold text-muted-foreground uppercase tracking-wider">
-                            {t('subscriptions.detail.riskTab.statusCol')}
-                          </th>
-                          <th className="px-6 py-3 text-left text-xs font-semibold text-muted-foreground uppercase tracking-wider">
-                            {t('subscriptions.detail.riskTab.detectionDate')}
-                          </th>
-                          <th className="px-6 py-3 text-center text-xs font-semibold text-muted-foreground uppercase tracking-wider">
-                            {t('subscriptions.detail.riskTab.actions')}
-                          </th>
-                        </tr>
-                      </thead>
-                      <tbody className="divide-y divide-border">
-                        {/* PEP Alert */}
-                        <tr className="hover:bg-orange-50/50 transition-colors">
-                          <td className="px-6 py-4">
-                            <div className="flex items-center gap-3">
-                              <div className="p-2 bg-orange-100 rounded-lg">
-                                <Users className="w-4 h-4 text-orange-600" />
-                              </div>
-                              <div>
-                                <div className="font-semibold text-foreground">{t('subscriptions.detail.riskTab.pepLevel1')}</div>
-                                <div className="text-xs text-muted-foreground">{t('subscriptions.detail.riskTab.pepLevel1Desc')}</div>
-                              </div>
-                            </div>
-                          </td>
-                          <td className="px-6 py-4">
-                            <div className="text-sm text-foreground/80">
-                              <div className="font-medium mb-1">{t('subscriptions.detail.riskTab.ministerialFunction')}</div>
-                              <div className="text-xs text-muted-foreground">
-                                {t('subscriptions.detail.riskTab.ministerialFunctionDesc')}
-                              </div>
-                              <div className="text-xs text-muted-foreground mt-1">
-                                {t('subscriptions.detail.riskTab.sourceACPR')}
-                              </div>
-                            </div>
-                          </td>
-                          <td className="px-6 py-4">
-                            <div className="flex items-center gap-2">
-                              <div className="w-2 h-2 rounded-full bg-orange-500"></div>
-                              <Badge className="bg-orange-100 text-orange-700 border-orange-300 font-semibold">
-                                {t('subscriptions.detail.riskTab.highLevel')}
-                              </Badge>
-                            </div>
-                            <div className="text-xs text-muted-foreground mt-1">Score: 85/100</div>
-                          </td>
-                          <td className="px-6 py-4">
-                            <Badge className="bg-yellow-100 text-yellow-700 border-yellow-300">
-                              {t('subscriptions.detail.riskTab.inReview')}
-                            </Badge>
-                          </td>
-                          <td className="px-6 py-4">
-                            <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                              <Clock className="w-3.5 h-3.5" />
-                              <span>28/12/2025</span>
-                            </div>
-                            <div className="text-xs text-muted-foreground mt-1">14:32</div>
-                          </td>
-                          <td className="px-6 py-4">
-                            <div className="flex items-center justify-center gap-2">
-                              <Button
-                                variant="ghost"
-                                size="sm"
-                                onClick={() => toast.info(t('subscriptions.detail.riskTab.pepDetails'), { description: t('subscriptions.detail.riskTab.pepDetailsDesc') })}
-                              >
-                                <Eye className="w-4 h-4" />
-                              </Button>
-                            </div>
-                          </td>
-                        </tr>
-
-                        {/* Sanctions Alert */}
-                        <tr className="hover:bg-red-50/50 transition-colors">
-                          <td className="px-6 py-4">
-                            <div className="flex items-center gap-3">
-                              <div className="p-2 bg-red-100 rounded-lg">
-                                <Scale className="w-4 h-4 text-red-600" />
-                              </div>
-                              <div>
-                                <div className="font-semibold text-foreground">{t('subscriptions.detail.riskTab.sanctionsList')}</div>
-                                <div className="text-xs text-muted-foreground">{t('subscriptions.detail.riskTab.ofacEu')}</div>
-                              </div>
-                            </div>
-                          </td>
-                          <td className="px-6 py-4">
-                            <div className="text-sm text-foreground/80">
-                              <div className="font-medium mb-1">{t('subscriptions.detail.riskTab.partialMatchDetected')}</div>
-                              <div className="text-xs text-muted-foreground">
-                                {t('subscriptions.detail.riskTab.partialMatchDesc', { pct: 87 })}
-                              </div>
-                              <div className="text-xs text-muted-foreground mt-1">
-                                {t('subscriptions.detail.riskTab.sourceOFAC')}
-                              </div>
-                            </div>
-                          </td>
-                          <td className="px-6 py-4">
-                            <div className="flex items-center gap-2">
-                              <div className="w-2 h-2 rounded-full bg-red-500"></div>
-                              <Badge className="bg-red-100 text-red-700 border-red-300 font-semibold">
-                                {t('subscriptions.detail.riskTab.critical')}
-                              </Badge>
-                            </div>
-                            <div className="text-xs text-muted-foreground mt-1">Score: 92/100</div>
-                          </td>
-                          <td className="px-6 py-4">
-                            <Badge className="bg-red-100 text-red-700 border-red-300">
-                              {t('subscriptions.detail.riskTab.actionRequired')}
-                            </Badge>
-                          </td>
-                          <td className="px-6 py-4">
-                            <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                              <Clock className="w-3.5 h-3.5" />
-                              <span>29/12/2025</span>
-                            </div>
-                            <div className="text-xs text-muted-foreground mt-1">09:15</div>
-                          </td>
-                          <td className="px-6 py-4">
-                            <div className="flex items-center justify-center gap-2">
-                              <Button
-                                variant="ghost"
-                                size="sm"
-                                onClick={() => toast.info(t('subscriptions.detail.riskTab.sanctionsDetails'), { description: t('subscriptions.detail.riskTab.sanctionsDetailsDesc') })}
-                              >
-                                <Eye className="w-4 h-4" />
-                              </Button>
-                            </div>
-                          </td>
-                        </tr>
-
-                        {/* Adverse Media Alert */}
-                        <tr className="hover:bg-amber-50/50 transition-colors">
-                          <td className="px-6 py-4">
-                            <div className="flex items-center gap-3">
-                              <div className="p-2 bg-amber-100 rounded-lg">
-                                <Newspaper className="w-4 h-4 text-amber-600" />
-                              </div>
-                              <div>
-                                <div className="font-semibold text-foreground">{t('subscriptions.detail.riskTab.adverseMediaAlert')}</div>
-                                <div className="text-xs text-muted-foreground">{t('subscriptions.detail.riskTab.adverseMediaAlertDesc')}</div>
-                              </div>
-                            </div>
-                          </td>
-                          <td className="px-6 py-4">
-                            <div className="text-sm text-foreground/80">
-                              <div className="font-medium mb-1">{t('subscriptions.detail.riskTab.pressArticle')}</div>
-                              <div className="text-xs text-muted-foreground">
-                                {t('subscriptions.detail.riskTab.pressArticleDesc')}
-                              </div>
-                              <div className="text-xs text-muted-foreground mt-1">
-                                {t('subscriptions.detail.riskTab.sourceAutomated')}
-                              </div>
-                            </div>
-                          </td>
-                          <td className="px-6 py-4">
-                            <div className="flex items-center gap-2">
-                              <div className="w-2 h-2 rounded-full bg-amber-500"></div>
-                              <Badge className="bg-amber-100 text-amber-700 border-amber-300 font-semibold">
-                                {t('subscriptions.detail.riskTab.mediumLevel')}
-                              </Badge>
-                            </div>
-                            <div className="text-xs text-muted-foreground mt-1">Score: 68/100</div>
-                          </td>
-                          <td className="px-6 py-4">
-                            <Badge className="bg-primary/10 text-primary border-primary/30">
-                              {t('subscriptions.detail.riskTab.inAnalysis')}
-                            </Badge>
-                          </td>
-                          <td className="px-6 py-4">
-                            <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                              <Clock className="w-3.5 h-3.5" />
-                              <span>27/12/2025</span>
-                            </div>
-                            <div className="text-xs text-muted-foreground mt-1">16:48</div>
-                          </td>
-                          <td className="px-6 py-4">
-                            <div className="flex items-center justify-center gap-2">
-                              <Button
-                                variant="ghost"
-                                size="sm"
-                                onClick={() => toast.info(t('subscriptions.detail.riskTab.mediaDetails'), { description: t('subscriptions.detail.riskTab.mediaDetailsDesc') })}
-                              >
-                                <Eye className="w-4 h-4" />
-                              </Button>
-                            </div>
-                          </td>
-                        </tr>
-                      </tbody>
-                    </table>
-                  </div>
-                </Card>
-
-                {/* Additional Risk Information */}
-                <div className="grid grid-cols-2 gap-6">
-                  {/* Risk Timeline */}
-                  <Card className="p-6 shadow-sm">
-                    <div className="flex items-center gap-3 mb-4">
-                      <div className="p-2 bg-primary/10 rounded-lg">
-                        <Clock className="w-5 h-5 text-primary" />
-                      </div>
-                      <h3 className="font-bold text-foreground">{t('subscriptions.detail.riskTab.riskTimeline')}</h3>
-                    </div>
-                    
-                    <div className="space-y-4">
-                      <div className="flex gap-3">
-                        <div className="flex flex-col items-center">
-                          <div className="w-2 h-2 rounded-full bg-red-500 mt-2"></div>
-                          <div className="w-px h-full bg-border mt-1"></div>
-                        </div>
-                        <div className="flex-1 pb-4">
-                          <div className="text-xs text-muted-foreground mb-1">29/12/2025 - 09:15</div>
-                          <div className="font-medium text-foreground">{t('subscriptions.detail.riskTab.sanctionsAlertDetected')}</div>
-                          <div className="text-sm text-muted-foreground mt-1">{t('subscriptions.detail.riskTab.sanctionsAlertDesc')}</div>
-                        </div>
-                      </div>
-
-                      <div className="flex gap-3">
-                        <div className="flex flex-col items-center">
-                          <div className="w-2 h-2 rounded-full bg-orange-500 mt-2"></div>
-                          <div className="w-px h-full bg-border mt-1"></div>
-                        </div>
-                        <div className="flex-1 pb-4">
-                          <div className="text-xs text-muted-foreground mb-1">28/12/2025 - 14:32</div>
-                          <div className="font-medium text-foreground">{t('subscriptions.detail.riskTab.pepIdentification')}</div>
-                          <div className="text-sm text-muted-foreground mt-1">{t('subscriptions.detail.riskTab.pepIdentificationDesc')}</div>
-                        </div>
-                      </div>
-
-                      <div className="flex gap-3">
-                        <div className="flex flex-col items-center">
-                          <div className="w-2 h-2 rounded-full bg-amber-500 mt-2"></div>
-                          <div className="w-px h-full bg-border mt-1"></div>
-                        </div>
-                        <div className="flex-1 pb-4">
-                          <div className="text-xs text-muted-foreground mb-1">27/12/2025 - 16:48</div>
-                          <div className="font-medium text-foreground">{t('subscriptions.detail.riskTab.adverseMediaFound')}</div>
-                          <div className="text-sm text-muted-foreground mt-1">{t('subscriptions.detail.riskTab.adverseMediaFoundDesc')}</div>
-                        </div>
-                      </div>
-
-                      <div className="flex gap-3">
-                        <div className="flex flex-col items-center">
-                          <div className="w-2 h-2 rounded-full bg-green-500 mt-2"></div>
-                        </div>
-                        <div className="flex-1">
-                          <div className="text-xs text-muted-foreground mb-1">25/12/2025 - 10:00</div>
-                          <div className="font-medium text-foreground">{t('subscriptions.detail.riskTab.initialScreening')}</div>
-                          <div className="text-sm text-muted-foreground mt-1">{t('subscriptions.detail.riskTab.initialScreeningDesc')}</div>
-                        </div>
-                      </div>
-                    </div>
-                  </Card>
-
-                  {/* Risk Mitigation Actions */}
-                  <Card className="p-6 shadow-sm">
-                    <div className="flex items-center gap-3 mb-4">
-                      <div className="p-2 bg-green-100 rounded-lg">
-                        <Shield className="w-5 h-5 text-green-600" />
-                      </div>
-                      <h3 className="font-bold text-foreground">{t('subscriptions.detail.riskTab.mitigationActions')}</h3>
-                    </div>
-                    
-                    <div className="space-y-3">
-                      <div className="bg-gradient-to-r from-green-50 to-emerald-50 border border-green-200 rounded-lg p-4">
-                        <div className="flex items-start gap-3">
-                          <CheckCircle2 className="w-5 h-5 text-green-600 mt-0.5" />
-                          <div className="flex-1">
-                            <div className="font-medium text-foreground mb-1">{t('subscriptions.detail.riskTab.eddActivated')}</div>
-                            <div className="text-sm text-muted-foreground">
-                              {t('subscriptions.detail.riskTab.eddDesc')}
-                            </div>
-                            <div className="text-xs text-muted-foreground mt-2">{t('subscriptions.detail.riskTab.completedAt', { pct: 65 })}</div>
-                            <div className="w-full bg-muted rounded-full h-1.5 mt-2">
-                              <div className="bg-[var(--success)] h-1.5 rounded-full" style={{ width: '65%' }}></div>
-                            </div>
-                          </div>
-                        </div>
-                      </div>
-
-                      <div className="bg-gradient-to-r from-primary/5 to-primary/10 border border-primary/20 rounded-lg p-4">
-                        <div className="flex items-start gap-3">
-                          <FileText className="w-5 h-5 text-primary mt-0.5" />
-                          <div className="flex-1">
-                            <div className="font-medium text-foreground mb-1">{t('subscriptions.detail.riskTab.additionalDocs')}</div>
-                            <div className="text-sm text-muted-foreground">
-                              {t('subscriptions.detail.riskTab.additionalDocsDesc')}
-                            </div>
-                            <Button
-                              size="sm"
-                              variant="outline"
-                              className="mt-3 w-full"
-                              onClick={() => toast.info(t('subscriptions.detail.riskTab.requestSent'), { description: t('subscriptions.detail.riskTab.requestSentDesc') })}
-                            >
-                              {t('subscriptions.detail.riskTab.requestDocuments')}
-                            </Button>
-                          </div>
-                        </div>
-                      </div>
-
-                      <div className="bg-gradient-to-r from-purple-50 to-pink-50 border border-purple-200 rounded-lg p-4">
-                        <div className="flex items-start gap-3">
-                          <Users className="w-5 h-5 text-purple-600 mt-0.5" />
-                          <div className="flex-1">
-                            <div className="font-medium text-foreground mb-1">{t('subscriptions.detail.riskTab.hierarchicalValidation')}</div>
-                            <div className="text-sm text-muted-foreground">
-                              {t('subscriptions.detail.riskTab.hierarchicalValidationDesc')}
-                            </div>
-                            <Badge className="bg-yellow-100 text-yellow-700 border-yellow-300 mt-2">
-                              {t('subscriptions.detail.riskTab.pendingStatus')}
-                            </Badge>
-                          </div>
-                        </div>
-                      </div>
-                    </div>
-                  </Card>
-                </div>
-
-                {/* Country Risk Assessment */}
-                <Card className="p-6 shadow-sm">
-                  <div className="flex items-center gap-3 mb-4">
-                    <div className="p-2 bg-indigo-100 rounded-lg">
-                      <Globe className="w-5 h-5 text-indigo-600" />
-                    </div>
-                    <div>
-                      <h3 className="font-bold text-foreground">{t('subscriptions.detail.riskTab.geoRiskAnalysis')}</h3>
-                      <p className="text-sm text-muted-foreground">{t('subscriptions.detail.riskTab.geoRiskAnalysisDesc')}</p>
-                    </div>
-                  </div>
-
-                  <div className="grid grid-cols-3 gap-4">
-                    <div className="bg-gradient-to-br from-green-50 to-emerald-50 border border-green-200 rounded-lg p-4">
-                      <div className="flex items-center justify-between mb-3">
-                        <div className="text-2xl">🇫🇷</div>
-                        <Badge className="bg-green-100 text-green-700 border-green-300 text-xs">
-                          {t('subscriptions.detail.validation.low')}
-                        </Badge>
-                      </div>
-                      <div className="font-semibold text-foreground mb-1">{t('subscriptions.detail.riskTab.france')}</div>
-                      <div className="text-xs text-muted-foreground">{t('subscriptions.detail.riskTab.residenceCountryLabel')}</div>
-                      <div className="flex items-center gap-1 mt-2">
-                        <div className="text-sm font-bold text-green-700">2.1</div>
-                        <div className="text-xs text-muted-foreground">/10</div>
-                      </div>
-                    </div>
-
-                    <div className="bg-gradient-to-br from-amber-50 to-yellow-50 border border-amber-200 rounded-lg p-4">
-                      <div className="flex items-center justify-between mb-3">
-                        <div className="text-2xl">🇨🇭</div>
-                        <Badge className="bg-amber-100 text-amber-700 border-amber-300 text-xs">
-                          {t('subscriptions.detail.validation.medium')}
-                        </Badge>
-                      </div>
-                      <div className="font-semibold text-foreground mb-1">{t('subscriptions.detail.riskTab.switzerland')}</div>
-                      <div className="text-xs text-muted-foreground">{t('subscriptions.detail.riskTab.bankAccount')}</div>
-                      <div className="flex items-center gap-1 mt-2">
-                        <div className="text-sm font-bold text-amber-700">4.8</div>
-                        <div className="text-xs text-muted-foreground">/10</div>
-                      </div>
-                    </div>
-
-                    <div className="bg-gradient-to-br from-orange-50 to-red-50 border border-orange-200 rounded-lg p-4">
-                      <div className="flex items-center justify-between mb-3">
-                        <div className="text-2xl">🇵🇦</div>
-                        <Badge className="bg-orange-100 text-orange-700 border-orange-300 text-xs">
-                          {t('subscriptions.detail.riskTab.highLevel')}
-                        </Badge>
-                      </div>
-                      <div className="font-semibold text-foreground mb-1">{t('subscriptions.detail.riskTab.panama')}</div>
-                      <div className="text-xs text-muted-foreground">{t('subscriptions.detail.riskTab.offshoreStructure')}</div>
-                      <div className="flex items-center gap-1 mt-2">
-                        <div className="text-sm font-bold text-orange-700">7.5</div>
-                        <div className="text-xs text-muted-foreground">/10</div>
-                      </div>
-                    </div>
-                  </div>
-                </Card>
-              </div>
-            </div>
-          </TabsContent>
-
           {/* Documents Tab Content */}
           <TabsContent value="documents" className="mt-0">
             <div className="px-8 py-6">
