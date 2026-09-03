@@ -1,10 +1,7 @@
-import { useState } from 'react';
 import type { LucideIcon } from 'lucide-react';
 import {
   AlertCircle,
   CheckCircle2,
-  ChevronDown,
-  ChevronUp,
   CircleDashed,
   ClipboardList,
   Clock,
@@ -12,7 +9,6 @@ import {
 } from 'lucide-react';
 import { useTranslation } from '../utils/languageContext';
 import { Badge } from './ui/badge';
-import { Button } from './ui/button';
 import { Card } from './ui/card';
 import { Tooltip, TooltipContent, TooltipTrigger } from './ui/tooltip';
 import { cn } from './ui/utils';
@@ -139,122 +135,43 @@ function StackedBar({ stats }: { stats: OnboardingBucketStats }) {
   );
 }
 
-function StateTile({
-  state,
-  count,
-  hint,
-}: {
-  state: OnboardingItemState;
-  count: number;
-  hint: string;
-}) {
-  const { t } = useTranslation();
-  const style = STATE_STYLES[state];
-  const Icon = style.icon;
-
-  return (
-    <Tooltip>
-      <TooltipTrigger asChild>
-        <div
-          className={cn(
-            'min-w-0 rounded-lg border px-3 py-2.5',
-            style.tile,
-            count === 0 && 'opacity-60',
-          )}
-        >
-          <div className="flex items-center gap-1.5">
-            <Icon className={cn('w-3.5 h-3.5 shrink-0', style.text)} />
-            <span className={cn('text-[11px] font-medium leading-tight', style.text)}>
-              {t(`subscriptions.detail.onboarding.completion.state.${state}`)}
-            </span>
-          </div>
-          <div className={cn('mt-1 text-2xl font-bold leading-none tabular-nums', style.text)}>
-            {count}
-          </div>
-        </div>
-      </TooltipTrigger>
-      <TooltipContent>
-        <span className="text-xs">{hint}</span>
-      </TooltipContent>
-    </Tooltip>
-  );
-}
-
-function BucketBlock({
-  icon: Icon,
-  label,
-  stats,
-  hintPrefix,
-}: {
-  icon: LucideIcon;
-  label: string;
-  stats: OnboardingBucketStats;
-  hintPrefix: string;
-}) {
-  const { t } = useTranslation();
-
-  return (
-    <div className="min-w-0">
-      <div className="mb-2 flex items-baseline justify-between gap-3">
-        <div className="flex items-center gap-2 min-w-0">
-          <Icon className="w-4 h-4 shrink-0 text-muted-foreground" />
-          <span className="truncate text-sm font-semibold text-foreground">{label}</span>
-        </div>
-        <span className="whitespace-nowrap text-xs text-muted-foreground tabular-nums">
-          {t('subscriptions.detail.onboarding.completion.validatedOf', {
-            validated: stats.validated,
-            total: stats.total,
-          })}
-        </span>
-      </div>
-
-      <StackedBar stats={stats} />
-
-      <div className="mt-3 grid grid-cols-2 gap-2">
-        {STATE_ORDER.map(state => (
-          <StateTile
-            key={state}
-            state={state}
-            count={stats[state]}
-            hint={t(`${hintPrefix}.${state}`)}
-          />
-        ))}
-      </div>
-    </div>
-  );
-}
-
 interface OnboardingCompletionCardProps {
   questions: OnboardingBucketStats;
   documents: OnboardingBucketStats;
-  /** Affichage replie, une ligne par famille. Vrai par defaut. */
-  defaultMinimized?: boolean;
 }
 
-export function OnboardingCompletionCard({
-  questions,
-  documents,
-  defaultMinimized = true,
-}: OnboardingCompletionCardProps) {
+/** Bandeau d'avancement du dossier : une ligne par famille. */
+export function OnboardingCompletionCard({ questions, documents }: OnboardingCompletionCardProps) {
   const { t } = useTranslation();
-  const [minimized, setMinimized] = useState(defaultMinimized);
 
   const total = questions.total + documents.total;
   const validated = questions.validated + documents.validated;
   const globalPercent = percent(validated, total);
 
+  const rows = [
+    {
+      id: 'questions',
+      icon: ClipboardList,
+      label: t('subscriptions.detail.onboarding.completion.questions'),
+      stats: questions,
+    },
+    {
+      id: 'documents',
+      icon: FolderOpen,
+      label: t('subscriptions.detail.onboarding.completion.documents'),
+      stats: documents,
+    },
+  ];
+
   return (
-    <Card className="p-5 shadow-sm">
-      <div className={cn('flex flex-wrap items-center justify-between gap-3', minimized ? 'mb-3' : 'mb-4')}>
+    <Card className="p-4 shadow-sm">
+      <div className="mb-3 flex flex-wrap items-center justify-between gap-3">
         <h3 className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
           {t('subscriptions.detail.onboarding.completion.title')}
         </h3>
         <div className="flex items-center gap-3">
           <span className="text-xs text-muted-foreground tabular-nums">
-            {t('subscriptions.detail.onboarding.completion.validatedItems', {
-              validated,
-              total,
-            })}
+            {t('subscriptions.detail.onboarding.completion.validatedItems', { validated, total })}
           </span>
           <Badge
             className={cn(
@@ -266,77 +183,29 @@ export function OnboardingCompletionCard({
           >
             {globalPercent}%
           </Badge>
-          <Button
-            variant="ghost"
-            size="sm"
-            className="h-7 gap-1.5 text-xs text-muted-foreground"
-            onClick={() => setMinimized(prev => !prev)}
-          >
-            {minimized ? (
-              <>
-                <ChevronDown className="w-3.5 h-3.5" />
-                {t('subscriptions.detail.onboarding.completion.expand')}
-              </>
-            ) : (
-              <>
-                <ChevronUp className="w-3.5 h-3.5" />
-                {t('subscriptions.detail.onboarding.completion.collapse')}
-              </>
-            )}
-          </Button>
         </div>
       </div>
 
-      {minimized ? (
-        <div className="space-y-2">
-          {[
-            {
-              id: 'questions',
-              icon: ClipboardList,
-              label: t('subscriptions.detail.onboarding.completion.questions'),
-              stats: questions,
-            },
-            {
-              id: 'documents',
-              icon: FolderOpen,
-              label: t('subscriptions.detail.onboarding.completion.documents'),
-              stats: documents,
-            },
-          ].map(row => {
-            const RowIcon = row.icon;
-            return (
-              <div key={row.id} className="flex items-center gap-3">
-                <span className="flex w-52 shrink-0 items-center gap-2">
-                  <RowIcon className="w-4 h-4 shrink-0 text-muted-foreground" />
-                  <span className="truncate text-sm font-medium text-foreground">{row.label}</span>
-                </span>
-                <span className="min-w-0 flex-1">
-                  <StackedBar stats={row.stats} />
-                </span>
-                <OnboardingStateCounter stats={row.stats} compact className="shrink-0" />
-                <span className="w-20 shrink-0 text-right text-xs text-muted-foreground tabular-nums">
-                  {row.stats.validated}/{row.stats.total}
-                </span>
-              </div>
-            );
-          })}
-        </div>
-      ) : (
-      <div className="grid gap-6 lg:grid-cols-2">
-        <BucketBlock
-          icon={ClipboardList}
-          label={t('subscriptions.detail.onboarding.completion.questions')}
-          stats={questions}
-          hintPrefix="subscriptions.detail.onboarding.completion.questionsHint"
-        />
-        <BucketBlock
-          icon={FolderOpen}
-          label={t('subscriptions.detail.onboarding.completion.documents')}
-          stats={documents}
-          hintPrefix="subscriptions.detail.onboarding.completion.documentsHint"
-        />
+      <div className="space-y-2">
+        {rows.map(row => {
+          const RowIcon = row.icon;
+          return (
+            <div key={row.id} className="flex items-center gap-3">
+              <span className="flex w-52 shrink-0 items-center gap-2">
+                <RowIcon className="w-4 h-4 shrink-0 text-muted-foreground" />
+                <span className="truncate text-sm font-medium text-foreground">{row.label}</span>
+              </span>
+              <span className="min-w-0 flex-1">
+                <StackedBar stats={row.stats} />
+              </span>
+              <OnboardingStateCounter stats={row.stats} compact className="shrink-0" />
+              <span className="w-20 shrink-0 text-right text-xs text-muted-foreground tabular-nums">
+                {row.stats.validated}/{row.stats.total}
+              </span>
+            </div>
+          );
+        })}
       </div>
-      )}
     </Card>
   );
 }

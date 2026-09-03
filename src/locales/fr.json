@@ -601,7 +601,6 @@
           "sectionPosition": "Section {{position}}/{{total}}",
           "questions": "Questions",
           "documents": "Pièces justificatives",
-          "validatedOf": "{{validated}}/{{total}} validées",
           "validatedItems": "{{validated}}/{{total}} éléments validés",
           "awaitingCorrectionCount": "{{count}} à corriger",
           "documentsValidatedDesc": "{{count}} documents de \"{{title}}\" ont été validés",
@@ -611,20 +610,6 @@
             "awaitingCorrection": "En attente de correction",
             "validated": "Validé"
           },
-          "questionsHint": {
-            "pending": "Questions non remplies par l'investisseur",
-            "awaitingValidation": "Réponses fournies, en attente de vérification",
-            "awaitingCorrection": "Réponses retoquées, en attente de correction par l'investisseur",
-            "validated": "Réponses vérifiées et validées"
-          },
-          "documentsHint": {
-            "pending": "Documents non encore déposés",
-            "awaitingValidation": "Documents déposés, en attente de vérification",
-            "awaitingCorrection": "Documents refusés, en attente d'un nouveau dépôt",
-            "validated": "Documents vérifiés et validés"
-          },
-          "expand": "Détail",
-          "collapse": "Replier",
           "documentsCountOne": "{{count}} document",
           "documentsCountMany": "{{count}} documents"
         }
@@ -821,7 +806,6 @@
           "noValidationNeeded": "Le palier atteint ne demande pas de validation manuelle."
         },
         "status": {
-          "title": "Dossier de conformité",
           "pending": "En attente",
           "awaitingValidation": "En attente de validation conformité",
           "validated": "Validé",
@@ -1022,14 +1006,13 @@
           "monitoringDetailMany": "{{count}} mises à jour non prises en compte"
         },
         "final": {
-          "title": "Validation finale du dossier",
-          "subtitle": "La conformité valide le dossier une fois les contrôles levés.",
-          "validate": "Valider la conformité",
+          "title": "Validation du dossier",
+          "validate": "Valider le dossier",
           "validatedBy": "Validé par {{name}}, le {{date}}",
           "override": "Valider malgré les contrôles bloquants, sous ma responsabilité. La dérogation est tracée dans le journal.",
-          "nonBlocking": "Non bloquant",
           "blockedOne": "{{count}} contrôle bloquant reste à lever",
-          "blockedMany": "{{count}} contrôles bloquants restent à lever"
+          "blockedMany": "{{count}} contrôles bloquants restent à lever",
+          "scorePending": "validation requise"
         },
         "toast": {
           "recomputed": "Score recalculé",

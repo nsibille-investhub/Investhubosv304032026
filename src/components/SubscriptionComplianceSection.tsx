@@ -34,7 +34,6 @@ import { Badge } from './ui/badge';
 import { Button } from './ui/button';
 import { Card } from './ui/card';
 import { Input } from './ui/input';
-import { Separator } from './ui/separator';
 import { Switch } from './ui/switch';
 import { Textarea } from './ui/textarea';
 import {
@@ -1180,77 +1179,143 @@ export function SubscriptionComplianceSection({
     toast.success(t('subscriptions.detail.compliance.toast.noteAdded'));
   };
 
-  const statusSteps: ComplianceStatus[] = ['pending', 'awaitingValidation', 'validated'];
-  const statusIndex = statusSteps.indexOf(status);
+  const summaryItems = [
+    ...checklist.slice(0, 2),
+    {
+      id: 'score',
+      labelKey: 'subscriptions.detail.compliance.score.title',
+      done: !validationRequired || scoreValidated,
+      blocking: true,
+      detail: `${profileScore ?? '—'} · ${
+        profileTier ? t(profileTier.labelKey) : t('subscriptions.detail.compliance.score.unavailable')
+      }${
+        validationRequired && !scoreValidated
+          ? ` · ${t('subscriptions.detail.compliance.final.scorePending')}`
+          : ''
+      }`,
+    },
+    ...checklist.slice(3),
+  ];
 
   return (
     <div className="space-y-4">
-      <OnboardingCompletionCard questions={questions} documents={documents} />
+      {/* Validation du dossier : résumé de la page et action principale */}
+      <Card className="shadow-sm overflow-hidden">
+        <div className="flex flex-wrap items-center justify-between gap-3 px-4 py-3">
+          <div className="min-w-0">
+            <h3 className="font-semibold text-foreground">
+              {t('subscriptions.detail.compliance.final.title')}
+            </h3>
+            <div className="flex flex-wrap items-center gap-2 mt-1">
+              {status === 'validated' ? (
+                <Badge className="bg-emerald-100 text-emerald-700 border-emerald-200 text-xs">
+                  <CheckCircle2 className="w-3 h-3 mr-1" />
+                  {t('subscriptions.detail.compliance.status.validated')}
+                </Badge>
+              ) : (
+                <Badge className="bg-amber-100 text-amber-700 border-amber-300 text-xs">
+                  <Clock className="w-3 h-3 mr-1" />
+                  {t(`subscriptions.detail.compliance.status.${status}`)}
+                </Badge>
+              )}
+              {statusAt && (
+                <span className="text-xs text-muted-foreground">
+                  {t('subscriptions.detail.compliance.status.lastAction', {
+                    name: statusBy ?? '',
+                    date: statusAt,
+                  })}
+                </span>
+              )}
+            </div>
+          </div>
 
-      <div className="grid grid-cols-3 gap-4">
-        {/* Widget statut du dossier de conformite */}
-        <Card className="p-5 shadow-sm">
-          <h3 className="text-xs font-semibold uppercase tracking-wide text-muted-foreground mb-4">
-            {t('subscriptions.detail.compliance.status.title')}
-          </h3>
-
-          <ol className="space-y-2 mb-4">
-            {statusSteps.map((step, index) => {
-              const isDone = index < statusIndex;
-              const isCurrent = index === statusIndex;
-              return (
-                <li key={step} className="flex items-center gap-2">
-                  <span
-                    className={cn(
-                      'flex h-5 w-5 shrink-0 items-center justify-center rounded-full',
-                      isDone ? 'bg-emerald-100' : isCurrent ? 'bg-primary' : 'bg-muted',
-                    )}
-                  >
-                    {isDone ? (
-                      <Check className="w-3 h-3 text-emerald-600" />
-                    ) : (
-                      <span
-                        className={cn('h-1.5 w-1.5 rounded-full', isCurrent ? 'bg-white' : 'bg-gray-300')}
-                      />
-                    )}
-                  </span>
-                  <span
-                    className={cn(
-                      'text-sm',
-                      isCurrent ? 'font-semibold text-foreground' : 'text-muted-foreground',
-                    )}
-                  >
-                    {t(`subscriptions.detail.compliance.status.${step}`)}
-                  </span>
-                </li>
-              );
-            })}
-          </ol>
-
-          {statusAt && (
-            <p className="text-xs text-muted-foreground mb-3">
-              {t('subscriptions.detail.compliance.status.lastAction', {
-                name: statusBy ?? '',
-                date: statusAt,
-              })}
-            </p>
-          )}
-
-          <div className="flex flex-wrap gap-2">
-            {status === 'pending' ? (
-              <Button size="sm" variant="outline" className="gap-1.5 text-xs h-8" onClick={handleSubmitToCompliance}>
+          <div className="flex flex-wrap items-center gap-2 shrink-0">
+            {status === 'pending' && (
+              <Button
+                variant="outline"
+                size="sm"
+                className="gap-1.5 text-xs h-9"
+                onClick={handleSubmitToCompliance}
+              >
                 <ShieldAlert className="w-3.5 h-3.5" />
                 {t('subscriptions.detail.compliance.status.submit')}
               </Button>
-            ) : (
-              <Button size="sm" variant="outline" className="gap-1.5 text-xs h-8" onClick={handleReopen}>
-                <RotateCcw className="w-3.5 h-3.5" />
+            )}
+            {status === 'validated' ? (
+              <Button variant="outline" className="gap-2" onClick={handleReopen}>
+                <RotateCcw className="w-4 h-4" />
                 {t('subscriptions.detail.compliance.status.reopen')}
+              </Button>
+            ) : (
+              <Button
+                size="lg"
+                className="gap-2 px-6 text-white hover:opacity-90"
+                style={{ background: PRIMARY_BUTTON_GRADIENT }}
+                disabled={!canValidate}
+                onClick={handleValidateCompliance}
+              >
+                <ShieldCheck className="w-4 h-4" />
+                {t('subscriptions.detail.compliance.final.validate')}
               </Button>
             )}
           </div>
-        </Card>
+        </div>
 
+        <div className="grid grid-cols-3 gap-x-4 gap-y-1.5 border-t px-4 py-3">
+          {summaryItems.map(item => (
+            <div key={item.id} className="flex items-start gap-2 min-w-0">
+              {item.done ? (
+                <CheckCircle2 className="w-3.5 h-3.5 text-emerald-600 shrink-0 mt-0.5" />
+              ) : item.blocking ? (
+                <AlertCircle className="w-3.5 h-3.5 text-red-600 shrink-0 mt-0.5" />
+              ) : (
+                <AlertTriangle className="w-3.5 h-3.5 text-amber-600 shrink-0 mt-0.5" />
+              )}
+              <span className="min-w-0 text-xs">
+                <span className="font-medium text-foreground">{t(item.labelKey)}</span>{' '}
+                <span className="text-muted-foreground">{item.detail}</span>
+              </span>
+            </div>
+          ))}
+        </div>
+
+        {status !== 'validated' && blockingLeft.length > 0 && (
+          <div className="flex flex-wrap items-center justify-between gap-3 border-t bg-red-50 px-4 py-2">
+            <span className="flex items-start gap-2 text-xs text-red-700 min-w-0">
+              <AlertCircle className="w-3.5 h-3.5 shrink-0 mt-0.5" />
+              <span>
+                {tc('subscriptions.detail.compliance.final.blocked', blockingLeft.length)} :{' '}
+                {blockingLeft.map(item => t(item.labelKey)).join(', ')}
+              </span>
+            </span>
+            <label className="flex items-start gap-2 text-xs text-red-700 shrink-0">
+              <input
+                type="checkbox"
+                checked={overrideRequested}
+                onChange={event => setOverrideRequested(event.target.checked)}
+                className="mt-0.5"
+              />
+              <span>{t('subscriptions.detail.compliance.final.override')}</span>
+            </label>
+          </div>
+        )}
+
+        {status === 'validated' && (
+          <div className="flex items-start gap-2 border-t px-4 py-2 text-xs text-muted-foreground">
+            <ShieldCheck className="w-3.5 h-3.5 text-emerald-600 shrink-0 mt-0.5" />
+            <span>
+              {t('subscriptions.detail.compliance.final.validatedBy', {
+                name: statusBy ?? '',
+                date: statusAt ?? '',
+              })}
+            </span>
+          </div>
+        )}
+      </Card>
+
+      <OnboardingCompletionCard questions={questions} documents={documents} />
+
+      <div className="grid grid-cols-2 gap-4">
         {/* Widget categorisation investisseur */}
         <Card className="p-5 shadow-sm">
           <div className="flex items-start justify-between gap-3 mb-4">
@@ -1392,119 +1457,6 @@ export function SubscriptionComplianceSection({
           onAcknowledge={updateId => setAcknowledgedUpdates(prev => [...prev, updateId])}
         />
       </div>
-
-      {/* Widget validation finale */}
-      <Card className="shadow-sm overflow-hidden">
-        <div className="px-6 py-4 border-b flex flex-wrap items-start justify-between gap-3">
-          <div>
-            <h3 className="font-semibold text-foreground">
-              {t('subscriptions.detail.compliance.final.title')}
-            </h3>
-            <p className="text-sm text-muted-foreground">
-              {t('subscriptions.detail.compliance.final.subtitle')}
-            </p>
-          </div>
-          {status === 'validated' ? (
-            <Badge className="bg-emerald-100 text-emerald-700 border-emerald-200">
-              <CheckCircle2 className="w-3.5 h-3.5 mr-1.5" />
-              {t('subscriptions.detail.compliance.status.validated')}
-            </Badge>
-          ) : (
-            <Badge className="bg-amber-100 text-amber-700 border-amber-300">
-              <Clock className="w-3.5 h-3.5 mr-1.5" />
-              {t(`subscriptions.detail.compliance.status.${status}`)}
-            </Badge>
-          )}
-        </div>
-
-        <div className="grid grid-cols-2 gap-2 px-6 py-4">
-          {checklist.map(item => (
-            <div key={item.id} className="flex flex-wrap items-center justify-between gap-3 rounded-lg border p-3">
-              <div className="flex items-center gap-3 min-w-0">
-                {item.done ? (
-                  <CheckCircle2 className="w-4 h-4 text-emerald-600 shrink-0" />
-                ) : item.blocking ? (
-                  <AlertCircle className="w-4 h-4 text-red-600 shrink-0" />
-                ) : (
-                  <AlertTriangle className="w-4 h-4 text-amber-600 shrink-0" />
-                )}
-                <div className="min-w-0">
-                  <div className="text-sm font-medium text-foreground">{t(item.labelKey)}</div>
-                  <div className="text-xs text-muted-foreground">{item.detail}</div>
-                </div>
-              </div>
-              {!item.done && !item.blocking && (
-                <Badge className="bg-muted text-muted-foreground text-xs">
-                  {t('subscriptions.detail.compliance.final.nonBlocking')}
-                </Badge>
-              )}
-            </div>
-          ))}
-        </div>
-
-        <div className="px-6 py-4 border-t">
-          {status === 'validated' ? (
-            <div className="flex flex-wrap items-center justify-between gap-3">
-              <div className="flex items-start gap-2 text-sm text-muted-foreground">
-                <ShieldCheck className="w-4 h-4 text-emerald-600 shrink-0 mt-0.5" />
-                <span>
-                  {t('subscriptions.detail.compliance.final.validatedBy', {
-                    name: statusBy ?? '',
-                    date: statusAt ?? '',
-                  })}
-                </span>
-              </div>
-              <Button variant="outline" size="sm" className="gap-1.5 text-xs h-8" onClick={handleReopen}>
-                <RotateCcw className="w-3.5 h-3.5" />
-                {t('subscriptions.detail.compliance.status.reopen')}
-              </Button>
-            </div>
-          ) : (
-            <div className="space-y-3">
-              {blockingLeft.length > 0 && (
-                <div className="rounded-lg bg-red-50 border border-red-200 p-3">
-                  <div className="flex items-start gap-2 text-sm text-red-700">
-                    <AlertCircle className="w-4 h-4 shrink-0 mt-0.5" />
-                    <div>
-                      <div className="font-medium">
-                        {tc('subscriptions.detail.compliance.final.blocked', blockingLeft.length)}
-                      </div>
-                      <ul className="mt-1 space-y-0.5">
-                        {blockingLeft.map(item => (
-                          <li key={item.id} className="text-xs">
-                            {t(item.labelKey)}
-                          </li>
-                        ))}
-                      </ul>
-                    </div>
-                  </div>
-                  <label className="mt-3 flex items-start gap-2 text-xs text-red-700">
-                    <input
-                      type="checkbox"
-                      checked={overrideRequested}
-                      onChange={event => setOverrideRequested(event.target.checked)}
-                      className="mt-0.5"
-                    />
-                    <span>{t('subscriptions.detail.compliance.final.override')}</span>
-                  </label>
-                </div>
-              )}
-
-              <div className="flex flex-wrap items-center justify-end gap-2">
-                <Button
-                  className="gap-2 text-white hover:opacity-90"
-                  style={{ background: PRIMARY_BUTTON_GRADIENT }}
-                  disabled={!canValidate}
-                  onClick={handleValidateCompliance}
-                >
-                  <ShieldCheck className="w-4 h-4" />
-                  {t('subscriptions.detail.compliance.final.validate')}
-                </Button>
-              </div>
-            </div>
-          )}
-        </div>
-      </Card>
 
       {/* Widget journal de conformite */}
       <Card className="shadow-sm overflow-hidden">

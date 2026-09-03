@@ -601,7 +601,6 @@
           "sectionPosition": "Section {{position}}/{{total}}",
           "questions": "Questions",
           "documents": "Supporting documents",
-          "validatedOf": "{{validated}}/{{total}} validated",
           "validatedItems": "{{validated}}/{{total}} items validated",
           "awaitingCorrectionCount": "{{count}} to correct",
           "documentsValidatedDesc": "{{count}} documents in \"{{title}}\" have been validated",
@@ -611,20 +610,6 @@
             "awaitingCorrection": "Awaiting correction",
             "validated": "Validated"
           },
-          "questionsHint": {
-            "pending": "Questions not yet answered by the investor",
-            "awaitingValidation": "Answers provided, awaiting review",
-            "awaitingCorrection": "Answers rejected, awaiting correction by the investor",
-            "validated": "Answers reviewed and validated"
-          },
-          "documentsHint": {
-            "pending": "Documents not uploaded yet",
-            "awaitingValidation": "Documents uploaded, awaiting review",
-            "awaitingCorrection": "Documents rejected, awaiting a new upload",
-            "validated": "Documents reviewed and validated"
-          },
-          "expand": "Details",
-          "collapse": "Collapse",
           "documentsCountOne": "{{count}} document",
           "documentsCountMany": "{{count}} documents"
         }
@@ -821,7 +806,6 @@
           "noValidationNeeded": "The tier reached does not require manual validation."
         },
         "status": {
-          "title": "Compliance file",
           "pending": "Pending",
           "awaitingValidation": "Awaiting compliance validation",
           "validated": "Validated",
@@ -1022,14 +1006,13 @@
           "monitoringDetailMany": "{{count}} updates not acknowledged"
         },
         "final": {
-          "title": "Final validation of the file",
-          "subtitle": "Compliance validates the file once the controls are cleared.",
-          "validate": "Validate compliance",
+          "title": "File validation",
+          "validate": "Validate file",
           "validatedBy": "Validated by {{name}} on {{date}}",
           "override": "Validate despite the blocking controls, under my responsibility. The override is recorded in the log.",
-          "nonBlocking": "Non-blocking",
           "blockedOne": "{{count}} blocking control still to clear",
-          "blockedMany": "{{count}} blocking controls still to clear"
+          "blockedMany": "{{count}} blocking controls still to clear",
+          "scorePending": "validation required"
         },
         "toast": {
           "recomputed": "Score recomputed",
