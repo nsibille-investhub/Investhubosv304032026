@@ -1,7 +1,10 @@
+import { useState } from 'react';
 import type { LucideIcon } from 'lucide-react';
 import {
   AlertCircle,
   CheckCircle2,
+  ChevronDown,
+  ChevronUp,
   CircleDashed,
   ClipboardList,
   Clock,
@@ -9,6 +12,7 @@ import {
 } from 'lucide-react';
 import { useTranslation } from '../utils/languageContext';
 import { Badge } from './ui/badge';
+import { Button } from './ui/button';
 import { Card } from './ui/card';
 import { Tooltip, TooltipContent, TooltipTrigger } from './ui/tooltip';
 import { cn } from './ui/utils';
@@ -223,13 +227,17 @@ function BucketBlock({
 interface OnboardingCompletionCardProps {
   questions: OnboardingBucketStats;
   documents: OnboardingBucketStats;
+  /** Ouvre la carte en version repliee, une ligne par famille. */
+  defaultMinimized?: boolean;
 }
 
 export function OnboardingCompletionCard({
   questions,
   documents,
+  defaultMinimized = false,
 }: OnboardingCompletionCardProps) {
   const { t } = useTranslation();
+  const [minimized, setMinimized] = useState(defaultMinimized);
 
   const total = questions.total + documents.total;
   const validated = questions.validated + documents.validated;
@@ -237,7 +245,7 @@ export function OnboardingCompletionCard({
 
   return (
     <Card className="p-5 shadow-sm">
-      <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
+      <div className={cn('flex flex-wrap items-center justify-between gap-3', minimized ? 'mb-3' : 'mb-4')}>
         <h3 className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
           {t('subscriptions.detail.onboarding.completion.title')}
         </h3>
@@ -258,9 +266,62 @@ export function OnboardingCompletionCard({
           >
             {globalPercent}%
           </Badge>
+          <Button
+            variant="ghost"
+            size="sm"
+            className="h-7 gap-1.5 text-xs text-muted-foreground"
+            onClick={() => setMinimized(prev => !prev)}
+          >
+            {minimized ? (
+              <>
+                <ChevronDown className="w-3.5 h-3.5" />
+                {t('subscriptions.detail.onboarding.completion.expand')}
+              </>
+            ) : (
+              <>
+                <ChevronUp className="w-3.5 h-3.5" />
+                {t('subscriptions.detail.onboarding.completion.collapse')}
+              </>
+            )}
+          </Button>
         </div>
       </div>
 
+      {minimized ? (
+        <div className="space-y-2">
+          {[
+            {
+              id: 'questions',
+              icon: ClipboardList,
+              label: t('subscriptions.detail.onboarding.completion.questions'),
+              stats: questions,
+            },
+            {
+              id: 'documents',
+              icon: FolderOpen,
+              label: t('subscriptions.detail.onboarding.completion.documents'),
+              stats: documents,
+            },
+          ].map(row => {
+            const RowIcon = row.icon;
+            return (
+              <div key={row.id} className="flex items-center gap-3">
+                <span className="flex w-52 shrink-0 items-center gap-2">
+                  <RowIcon className="w-4 h-4 shrink-0 text-muted-foreground" />
+                  <span className="truncate text-sm font-medium text-foreground">{row.label}</span>
+                </span>
+                <span className="min-w-0 flex-1">
+                  <StackedBar stats={row.stats} />
+                </span>
+                <OnboardingStateCounter stats={row.stats} compact className="shrink-0" />
+                <span className="w-20 shrink-0 text-right text-xs text-muted-foreground tabular-nums">
+                  {row.stats.validated}/{row.stats.total}
+                </span>
+              </div>
+            );
+          })}
+        </div>
+      ) : (
       <div className="grid gap-6 lg:grid-cols-2">
         <BucketBlock
           icon={ClipboardList}
@@ -275,6 +336,7 @@ export function OnboardingCompletionCard({
           hintPrefix="subscriptions.detail.onboarding.completion.documentsHint"
         />
       </div>
+      )}
     </Card>
   );
 }
@@ -399,9 +461,12 @@ export function OnboardingSectionNav({
                 </span>
                 <span className="block truncate text-xs text-muted-foreground">
                   {section.kind === 'documents'
-                    ? t('subscriptions.detail.onboarding.completion.documentsCount', {
-                        count: section.stats.total,
-                      })
+                    ? t(
+                        `subscriptions.detail.onboarding.completion.documentsCount${
+                          section.stats.total === 1 ? 'One' : 'Many'
+                        }`,
+                        { count: section.stats.total },
+                      )
                     : t('subscriptions.detail.onboarding.completion.sectionPosition', {
                         position: section.position,
                         total: sections.length,
