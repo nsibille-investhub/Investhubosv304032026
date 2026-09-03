@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { Fragment, useState } from 'react';
 import { useTranslation } from '../utils/languageContext';
 import {
   Building2,
@@ -328,8 +328,6 @@ export function SubscriptionDetailPage({ subscription: subscriptionProp, onBack 
   const partnerUrl = getShareableUrl('partners');
   const fundUrl = getShareableUrl('allfunds');
 
-  // Résolution des destinataires : contact rattaché d'abord côté investisseur,
-  // partenaire selon sa fiche, conseiller en copie. Aucune adresse de repli.
   const toEmail = (name: string | undefined, domain: string) =>
     name
       ? `${name
@@ -361,73 +359,29 @@ export function SubscriptionDetailPage({ subscription: subscriptionProp, onBack 
   const advisorEmail = subscription.advisor && partnerDomain
     ? toEmail(subscription.advisor, partnerDomain)
     : '';
-  const managerEmail = toEmail(subscription.analyst, 'investhub.cloud');
-
-  type AudienceRole = 'recipient' | 'copy' | 'none' | 'unresolved';
 
   const invitationRecipient = investorContactEmail || investorEmail;
+  const invitationRecipientLabelKey = investorContactEmail
+    ? 'subscriptions.detail.initStep.audiences.contact'
+    : 'subscriptions.detail.initStep.audiences.investor';
 
-  const audiences: Array<{
-    id: string;
-    labelKey: string;
-    name?: string;
-    email: string;
-    ruleKey: string;
-    role: AudienceRole;
-  }> = [
+  const invitationCopies: Array<{ id: string; labelKey: string; email: string }> = [
     {
       id: 'investor',
       labelKey: 'subscriptions.detail.initStep.audiences.investor',
-      name: subscription.contrepartie.mainContact || subscription.contrepartie.investor || subscription.contrepartie.name,
-      email: invitationRecipient,
-      ruleKey: investorContactEmail
-        ? 'subscriptions.detail.initStep.rules.investorContact'
-        : 'subscriptions.detail.initStep.rules.investorAddress',
-      role: invitationRecipient ? 'recipient' : 'unresolved',
+      email: investorContactEmail ? investorEmail : '',
     },
-  ];
-
-  if (partnerName) {
-    audiences.push({
+    {
       id: 'partner',
       labelKey: 'subscriptions.detail.initStep.audiences.partner',
-      name: partnerName,
       email: partnerEmail,
-      ruleKey: 'subscriptions.detail.initStep.rules.partnerPreferences',
-      role: partnerEmail ? 'recipient' : 'unresolved',
-    });
-  }
-
-  if (subscription.advisor) {
-    audiences.push({
+    },
+    {
       id: 'advisor',
       labelKey: 'subscriptions.detail.initStep.audiences.advisor',
-      name: subscription.advisor,
       email: advisorEmail,
-      ruleKey: 'subscriptions.detail.initStep.rules.advisorAdded',
-      role: advisorEmail ? 'copy' : 'unresolved',
-    });
-  }
-
-  audiences.push({
-    id: 'manager',
-    labelKey: 'subscriptions.detail.initStep.audiences.manager',
-    name: subscription.analyst,
-    email: partnerName ? managerEmail : '',
-    ruleKey: partnerName
-      ? 'subscriptions.detail.initStep.rules.managerIntermediated'
-      : 'subscriptions.detail.initStep.rules.managerDirect',
-    role: partnerName ? (managerEmail ? 'recipient' : 'unresolved') : 'none',
-  });
-
-  // Le tableau des envois lit la même résolution que le tableau des audiences :
-  // une audience non notifiée ne peut pas porter d'envoi.
-  const audienceEmail = (audienceId: string) => {
-    const audience = audiences.find(item => item.id === audienceId);
-    return audience && (audience.role === 'recipient' || audience.role === 'copy') ? audience.email : '';
-  };
-
-  const initEmails = mockInitEmails.filter(mail => audienceEmail(mail.audience));
+    },
+  ].filter(copy => copy.email && copy.email !== invitationRecipient);
 
   const invitationEmail = mockInitEmails.find(mail => mail.id === 'invitation');
   const invitationSentAt = resentEmails.invitation ?? invitationEmail?.sentAt ?? null;
@@ -439,13 +393,6 @@ export function SubscriptionDetailPage({ subscription: subscriptionProp, onBack 
     toast.success(t('subscriptions.detail.initStep.toast.emailResent', { template: t(templateKey) }), {
       description: t('subscriptions.detail.initStep.toast.emailResentDesc', { recipient }),
     });
-  };
-
-  const roleBadgeClass: Record<AudienceRole, string> = {
-    recipient: 'bg-green-50 text-green-700 border-green-200',
-    copy: 'bg-blue-50 text-blue-700 border-blue-200',
-    none: 'bg-muted text-muted-foreground border-border',
-    unresolved: 'bg-amber-50 text-amber-700 border-amber-200',
   };
 
   const detailSummary = (
@@ -758,29 +705,49 @@ export function SubscriptionDetailPage({ subscription: subscriptionProp, onBack 
                         </div>
 
                         <div className="rounded-lg border border-border bg-muted/40 p-4 mb-5">
-                          <div className="text-xs text-muted-foreground mb-1">
-                            {t('subscriptions.detail.initStep.invitation.effectiveRecipient')}
-                          </div>
-                          {invitationRecipient ? (
-                            <>
-                              <div className="flex items-center gap-2 text-sm font-semibold text-foreground">
-                                <Mail className="w-3.5 h-3.5 text-muted-foreground" />
-                                {invitationRecipient}
-                              </div>
-                              <div className="text-xs text-muted-foreground mt-1">
-                                {t(
-                                  investorContactEmail
-                                    ? 'subscriptions.detail.initStep.rules.investorContact'
-                                    : 'subscriptions.detail.initStep.rules.investorAddress',
-                                )}
-                              </div>
-                            </>
-                          ) : (
-                            <div className="flex items-center gap-2 text-sm font-semibold text-amber-700">
-                              <AlertTriangle className="w-3.5 h-3.5" />
-                              {t('subscriptions.detail.initStep.invitation.unresolved')}
+                          <div
+                            className="grid items-center gap-x-3 gap-y-2"
+                            style={{ gridTemplateColumns: 'max-content minmax(0, 1fr)' }}
+                          >
+                            <div className="col-span-2 text-xs text-muted-foreground">
+                              {t('subscriptions.detail.initStep.invitation.effectiveRecipient')}
                             </div>
-                          )}
+                            {invitationRecipient ? (
+                              <>
+                                <Badge className="bg-green-50 text-green-700 border-green-200">
+                                  {t(invitationRecipientLabelKey)}
+                                </Badge>
+                                <span className="text-sm font-semibold text-foreground break-all">
+                                  {invitationRecipient}
+                                </span>
+                              </>
+                            ) : (
+                              <div className="col-span-2 flex items-center gap-2 text-sm font-semibold text-amber-700">
+                                <AlertTriangle className="w-3.5 h-3.5" />
+                                {t('subscriptions.detail.initStep.invitation.unresolved')}
+                              </div>
+                            )}
+
+                            <div className="col-span-2 h-px bg-border my-2" />
+
+                            <div className="col-span-2 text-xs text-muted-foreground">
+                              {t('subscriptions.detail.initStep.invitation.copies')}
+                            </div>
+                            {invitationCopies.length > 0 ? (
+                              invitationCopies.map(copy => (
+                                <Fragment key={copy.id}>
+                                  <Badge className="bg-blue-50 text-blue-700 border-blue-200">
+                                    {t(copy.labelKey)}
+                                  </Badge>
+                                  <span className="text-sm text-foreground/90 break-all">{copy.email}</span>
+                                </Fragment>
+                              ))
+                            ) : (
+                              <p className="col-span-2 text-sm text-muted-foreground">
+                                {t('subscriptions.detail.initStep.invitation.noCopies')}
+                              </p>
+                            )}
+                          </div>
                         </div>
 
                         <div className="grid gap-4 mb-5" style={{ gridTemplateColumns: 'repeat(auto-fit, minmax(150px, 1fr))' }}>
@@ -836,145 +803,6 @@ export function SubscriptionDetailPage({ subscription: subscriptionProp, onBack 
                               ? t('subscriptions.detail.initStep.invitation.resend')
                               : t('subscriptions.detail.initStep.invitation.send')}
                           </Button>
-                        </div>
-                      </Card>
-
-                      {/* Destinataires résolus */}
-                      <Card className="p-6 shadow-sm">
-                        <h2 className="text-lg font-bold text-foreground">
-                          {t('subscriptions.detail.initStep.recipients.title')}
-                        </h2>
-                        <p className="text-sm text-muted-foreground mt-1 mb-4">
-                          {t('subscriptions.detail.initStep.recipients.subtitle')}
-                        </p>
-
-                        <div className="overflow-hidden rounded-lg border border-border">
-                          <table className="w-full">
-                            <thead className="bg-muted border-b border-border">
-                              <tr>
-                                <th className="px-4 py-2.5 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider">
-                                  {t('subscriptions.detail.initStep.recipients.audience')}
-                                </th>
-                                <th className="px-4 py-2.5 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider">
-                                  {t('subscriptions.detail.initStep.recipients.address')}
-                                </th>
-                                <th className="px-4 py-2.5 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider">
-                                  {t('subscriptions.detail.initStep.recipients.rule')}
-                                </th>
-                                <th className="px-4 py-2.5 text-right text-xs font-medium text-muted-foreground uppercase tracking-wider">
-                                  {t('subscriptions.detail.initStep.recipients.role')}
-                                </th>
-                              </tr>
-                            </thead>
-                            <tbody className="bg-card divide-y divide-border/50">
-                              {audiences.map(audience => (
-                                <tr key={audience.id} className="hover:bg-muted/50 transition-colors">
-                                  <td className="px-4 py-3 align-top">
-                                    <div className="text-sm font-medium text-foreground">{t(audience.labelKey)}</div>
-                                    {audience.name && (
-                                      <div className="text-xs text-muted-foreground">{audience.name}</div>
-                                    )}
-                                  </td>
-                                  <td className="px-4 py-3 align-top text-sm text-foreground/80 break-all">
-                                    {audience.email || (
-                                      <span className="text-muted-foreground/70">-</span>
-                                    )}
-                                  </td>
-                                  <td className="px-4 py-3 align-top text-xs text-muted-foreground">
-                                    {t(audience.ruleKey)}
-                                  </td>
-                                  <td className="px-4 py-3 align-top text-right">
-                                    <Badge className={`text-xs ${roleBadgeClass[audience.role]}`}>
-                                      {t(`subscriptions.detail.initStep.roles.${audience.role}`)}
-                                    </Badge>
-                                  </td>
-                                </tr>
-                              ))}
-                            </tbody>
-                          </table>
-                        </div>
-                      </Card>
-
-                      {/* Envois de l'initialisation */}
-                      <Card className="p-6 shadow-sm">
-                        <h2 className="text-lg font-bold text-foreground mb-4">
-                          {t('subscriptions.detail.initStep.emails.title')}
-                        </h2>
-
-                        <div className="overflow-hidden rounded-lg border border-border">
-                          <table className="w-full">
-                            <thead className="bg-muted border-b border-border">
-                              <tr>
-                                <th className="px-4 py-2.5 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider">
-                                  {t('subscriptions.detail.initStep.emails.template')}
-                                </th>
-                                <th className="px-4 py-2.5 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider">
-                                  {t('subscriptions.detail.initStep.emails.recipient')}
-                                </th>
-                                <th className="px-4 py-2.5 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider">
-                                  {t('subscriptions.detail.initStep.tracking.sent')}
-                                </th>
-                                <th className="px-4 py-2.5 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider">
-                                  {t('subscriptions.detail.initStep.tracking.received')}
-                                </th>
-                                <th className="px-4 py-2.5 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider">
-                                  {t('subscriptions.detail.initStep.tracking.opened')}
-                                </th>
-                                <th className="px-4 py-2.5 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider">
-                                  {t('subscriptions.detail.initStep.tracking.clicked')}
-                                </th>
-                                <th className="px-4 py-2.5 text-right text-xs font-medium text-muted-foreground uppercase tracking-wider">
-                                  {t('subscriptions.detail.initStep.emails.action')}
-                                </th>
-                              </tr>
-                            </thead>
-                            <tbody className="bg-card divide-y divide-border/50">
-                              {initEmails.map(mail => {
-                                const recipient = audienceEmail(mail.audience);
-                                const sentAt = resentEmails[mail.id] ?? mail.sentAt;
-                                return (
-                                  <tr key={mail.id} className="hover:bg-muted/50 transition-colors">
-                                    <td className="px-4 py-3">
-                                      <div className="text-sm font-medium text-foreground">{t(mail.templateKey)}</div>
-                                      <code className="text-[11px] text-muted-foreground">{mail.slug}</code>
-                                    </td>
-                                    <td className="px-4 py-3 text-sm text-foreground/80 break-all">
-                                      {recipient || <span className="text-muted-foreground/70">-</span>}
-                                    </td>
-                                    <td className="px-4 py-3 text-xs text-muted-foreground">
-                                      {sentAt ?? t('subscriptions.detail.initStep.emails.notSent')}
-                                      {resentEmails[mail.id] && (
-                                        <div className="text-[11px] text-green-700">
-                                          {t('subscriptions.detail.initStep.emails.resent')}
-                                        </div>
-                                      )}
-                                    </td>
-                                    <td className="px-4 py-3 text-xs text-muted-foreground">
-                                      {mail.receivedAt ?? '-'}
-                                    </td>
-                                    <td className="px-4 py-3 text-xs text-muted-foreground">
-                                      {mail.openedAt ?? '-'}
-                                    </td>
-                                    <td className="px-4 py-3 text-xs text-muted-foreground">
-                                      {mail.clickedAt ?? '-'}
-                                    </td>
-                                    <td className="px-4 py-3 text-right">
-                                      <Button
-                                        variant="outline"
-                                        size="sm"
-                                        className="h-8 gap-1.5"
-                                        disabled={!recipient}
-                                        onClick={() => handleResendEmail(mail.id, mail.templateKey, recipient)}
-                                      >
-                                        <Mail className="w-3.5 h-3.5" />
-                                        {t('subscriptions.detail.initStep.emails.resendAction')}
-                                      </Button>
-                                    </td>
-                                  </tr>
-                                );
-                              })}
-                            </tbody>
-                          </table>
                         </div>
                       </Card>
                     </div>
