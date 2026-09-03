@@ -426,7 +426,7 @@
       "stepper": {
         "stepOf": "Étape {{current}}/{{total}}",
         "initialization": "Initialisation",
-        "onboarding": "Onboarding en cours",
+        "onboarding": "Onboarding",
         "validation": "Conformité",
         "sendToSignature": "Envoi en signature",
         "signatures": "Signatures",
@@ -965,20 +965,6 @@
           "noChange": "Aucun changement depuis le dernier contrôle.",
           "acknowledge": "Prendre en compte"
         },
-        "adequacy": {
-          "title": "Adéquation de l'investissement",
-          "subtitle": "Calcul MIF II à partir des réponses du dossier.",
-          "verdictOk": "Adéquat",
-          "verdictWarning": "Adéquat avec réserve",
-          "verdictKo": "Non adéquat",
-          "knowledge": "Expérience en investissement",
-          "horizon": "Horizon de placement",
-          "liquidity": "Besoin de liquidité",
-          "lossCapacity": "Capacité de perte",
-          "concentration": "Concentration après souscription",
-          "documentHint": "Le document d'adéquation est joint au pack de souscription.",
-          "generate": "Générer le document"
-        },
         "journal": {
           "title": "Journal de conformité",
           "subtitle": "Décisions, calculs et notes, avec leur auteur.",
@@ -991,20 +977,6 @@
           "categorisationSet": "Catégorisation MIF II enregistrée.",
           "pendingValidation": "Dossier passé en attente de validation par la conformité."
         },
-        "checklist": {
-          "completion": "Dossier contrôlé",
-          "completionDetail": "{{validated}}/{{total}} éléments validés",
-          "hits": "Correspondances traitées",
-          "hitsDetail": "{{untreated}} à traiter sur {{total}}",
-          "score": "Score de risque validé",
-          "scoreDetailRequired": "Le palier atteint impose une validation.",
-          "scoreDetailOptional": "Aucune validation manuelle requise.",
-          "categorisation": "Catégorisation investisseur",
-          "adequacy": "Adéquation de l'investissement",
-          "monitoring": "Alertes de surveillance",
-          "monitoringDetailOne": "{{count}} mise à jour non prise en compte",
-          "monitoringDetailMany": "{{count}} mises à jour non prises en compte"
-        },
         "final": {
           "title": "Validation du dossier",
           "validate": "Valider le dossier",
@@ -1012,7 +984,24 @@
           "override": "Valider malgré les contrôles bloquants, sous ma responsabilité. La dérogation est tracée dans le journal.",
           "blockedOne": "{{count}} contrôle bloquant reste à lever",
           "blockedMany": "{{count}} contrôles bloquants restent à lever",
-          "scorePending": "validation requise"
+          "subtitle": "Score, parties tierces et catégorisation avant décision.",
+          "scoreValidatedBy": "Validé par {{name}}, le {{date}}",
+          "thirdParties": "Parties tierces",
+          "noThirdPartyMatch": "Aucune partie tierce concernée par une correspondance",
+          "thirdPartiesConcernedOne": "{{count}} partie tierce concernée",
+          "thirdPartiesConcernedMany": "{{count}} parties tierces concernées",
+          "matchCountOne": "{{count}} correspondance",
+          "matchCountMany": "{{count}} correspondances",
+          "matchesToTreatOne": "{{count}} à traiter",
+          "matchesToTreatMany": "{{count}} à traiter",
+          "matchesTreatedOne": "{{count}} traitée",
+          "matchesTreatedMany": "{{count}} traitées",
+          "matchesAcceptedOne": "{{count}} avérée",
+          "matchesAcceptedMany": "{{count}} avérées",
+          "thirdPartiesClearOne": "{{count}} autre partie tierce sans correspondance",
+          "thirdPartiesClearMany": "{{count}} autres parties tierces sans correspondance",
+          "blockerHits": "correspondances à traiter",
+          "blockerScore": "score de risque à valider"
         },
         "toast": {
           "recomputed": "Score recalculé",
@@ -1036,8 +1025,6 @@
           "submittedToCompliance": "Dossier transmis à la conformité",
           "exportScreening": "Export en cours",
           "exportScreeningDesc": "Les contrôles et les décisions sont exportés.",
-          "adequacyGenerated": "Document d'adéquation généré",
-          "adequacyGeneratedDesc": "Il est ajouté aux documents de la souscription.",
           "noteAdded": "Note ajoutée au journal"
         }
       }

@@ -467,46 +467,6 @@ export const mockCategorisation: InvestorCategorisation = {
   reviewDueAt: '19/05/2028',
 };
 
-export interface AdequacyCriterion {
-  id: string;
-  labelKey: string;
-  answer: string;
-  verdict: 'ok' | 'warning' | 'ko';
-}
-
-export const mockAdequacyCriteria: AdequacyCriterion[] = [
-  {
-    id: 'adequacy-knowledge',
-    labelKey: 'subscriptions.detail.compliance.adequacy.knowledge',
-    answer: 'Plus de 5 ans',
-    verdict: 'ok',
-  },
-  {
-    id: 'adequacy-horizon',
-    labelKey: 'subscriptions.detail.compliance.adequacy.horizon',
-    answer: '10 ans',
-    verdict: 'ok',
-  },
-  {
-    id: 'adequacy-liquidity',
-    labelKey: 'subscriptions.detail.compliance.adequacy.liquidity',
-    answer: 'Aucun besoin de liquidite',
-    verdict: 'ok',
-  },
-  {
-    id: 'adequacy-lossCapacity',
-    labelKey: 'subscriptions.detail.compliance.adequacy.lossCapacity',
-    answer: '25 % du patrimoine',
-    verdict: 'warning',
-  },
-  {
-    id: 'adequacy-concentration',
-    labelKey: 'subscriptions.detail.compliance.adequacy.concentration',
-    answer: '12 % du patrimoine financier',
-    verdict: 'ok',
-  },
-];
-
 export interface ComplianceJournalEntry {
   id: string;
   at: string;
@@ -616,14 +576,6 @@ export function computeProfileScore(overrides: Record<string, number> = {}): num
   return Math.round((weighted.sum / weighted.weight) * 10);
 }
 
-export type AdequacyVerdict = 'ok' | 'warning' | 'ko';
-
-export function adequacyVerdict(): AdequacyVerdict {
-  if (mockAdequacyCriteria.some(criterion => criterion.verdict === 'ko')) return 'ko';
-  if (mockAdequacyCriteria.some(criterion => criterion.verdict === 'warning')) return 'warning';
-  return 'ok';
-}
-
 /** Instantane du dispositif de conformite, pour les recapitulatifs hors onglet Risque. */
 export function computeComplianceSnapshot() {
   const score = computeProfileScore();
@@ -638,7 +590,6 @@ export function computeComplianceSnapshot() {
       0,
     ),
     category: mockCategorisation.category,
-    adequacy: adequacyVerdict(),
     monitoringPending: mockMonitoringUpdates.filter(update => !update.acknowledged).length,
   };
 }

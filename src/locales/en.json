@@ -426,7 +426,7 @@
       "stepper": {
         "stepOf": "Step {{current}}/{{total}}",
         "initialization": "Initialization",
-        "onboarding": "Onboarding in progress",
+        "onboarding": "Onboarding",
         "validation": "Compliance",
         "sendToSignature": "Send for signature",
         "signatures": "Signatures",
@@ -965,20 +965,6 @@
           "noChange": "No change since the last run.",
           "acknowledge": "Acknowledge"
         },
-        "adequacy": {
-          "title": "Investment suitability",
-          "subtitle": "MiFID II calculation based on the file answers.",
-          "verdictOk": "Suitable",
-          "verdictWarning": "Suitable with reservation",
-          "verdictKo": "Not suitable",
-          "knowledge": "Investment experience",
-          "horizon": "Investment horizon",
-          "liquidity": "Liquidity needs",
-          "lossCapacity": "Loss capacity",
-          "concentration": "Concentration after subscription",
-          "documentHint": "The suitability document is attached to the subscription pack.",
-          "generate": "Generate document"
-        },
         "journal": {
           "title": "Compliance log",
           "subtitle": "Decisions, calculations and notes, with their author.",
@@ -991,20 +977,6 @@
           "categorisationSet": "MiFID II categorisation recorded.",
           "pendingValidation": "File moved to awaiting compliance validation."
         },
-        "checklist": {
-          "completion": "File reviewed",
-          "completionDetail": "{{validated}}/{{total}} items validated",
-          "hits": "Matches reviewed",
-          "hitsDetail": "{{untreated}} to review out of {{total}}",
-          "score": "Risk score validated",
-          "scoreDetailRequired": "The tier reached requires validation.",
-          "scoreDetailOptional": "No manual validation required.",
-          "categorisation": "Investor categorisation",
-          "adequacy": "Investment suitability",
-          "monitoring": "Monitoring alerts",
-          "monitoringDetailOne": "{{count}} update not acknowledged",
-          "monitoringDetailMany": "{{count}} updates not acknowledged"
-        },
         "final": {
           "title": "File validation",
           "validate": "Validate file",
@@ -1012,7 +984,24 @@
           "override": "Validate despite the blocking controls, under my responsibility. The override is recorded in the log.",
           "blockedOne": "{{count}} blocking control still to clear",
           "blockedMany": "{{count}} blocking controls still to clear",
-          "scorePending": "validation required"
+          "subtitle": "Score, third parties and categorisation before the decision.",
+          "scoreValidatedBy": "Validated by {{name}} on {{date}}",
+          "thirdParties": "Third parties",
+          "noThirdPartyMatch": "No third party with a match",
+          "thirdPartiesConcernedOne": "{{count}} third party concerned",
+          "thirdPartiesConcernedMany": "{{count}} third parties concerned",
+          "matchCountOne": "{{count}} match",
+          "matchCountMany": "{{count}} matches",
+          "matchesToTreatOne": "{{count}} to review",
+          "matchesToTreatMany": "{{count}} to review",
+          "matchesTreatedOne": "{{count}} reviewed",
+          "matchesTreatedMany": "{{count}} reviewed",
+          "matchesAcceptedOne": "{{count}} confirmed",
+          "matchesAcceptedMany": "{{count}} confirmed",
+          "thirdPartiesClearOne": "{{count}} other third party without a match",
+          "thirdPartiesClearMany": "{{count}} other third parties without a match",
+          "blockerHits": "matches to review",
+          "blockerScore": "risk score to validate"
         },
         "toast": {
           "recomputed": "Score recomputed",
@@ -1036,8 +1025,6 @@
           "submittedToCompliance": "File submitted to compliance",
           "exportScreening": "Export in progress",
           "exportScreeningDesc": "Screenings and decisions are being exported.",
-          "adequacyGenerated": "Suitability document generated",
-          "adequacyGeneratedDesc": "It is added to the subscription documents.",
           "noteAdded": "Note added to the log"
         }
       }
