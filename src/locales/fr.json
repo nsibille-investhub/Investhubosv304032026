@@ -656,6 +656,9 @@
           "noDocument": "aucun document à signer",
           "noSignatory": "aucun signataire sélectionné"
         },
+        "completion": {
+          "view": "Voir l'onboarding"
+        },
         "compliance": {
           "view": "Voir la conformité",
           "noPendingMatch": "Aucune correspondance à traiter"

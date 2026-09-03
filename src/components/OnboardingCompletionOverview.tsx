@@ -1,3 +1,4 @@
+import type { ReactNode } from 'react';
 import type { LucideIcon } from 'lucide-react';
 import {
   AlertCircle,
@@ -11,7 +12,7 @@ import { useTranslation } from '../utils/languageContext';
 import { Badge } from './ui/badge';
 import { Card } from './ui/card';
 import { Tooltip, TooltipContent, TooltipTrigger } from './ui/tooltip';
-import { cn, WIDGET_TITLE_CLASS } from './ui/utils';
+import { cn, WIDGET_SUBTITLE_CLASS, WIDGET_TITLE_CLASS } from './ui/utils';
 
 export type OnboardingItemState =
   | 'pending'
@@ -138,10 +139,16 @@ function StackedBar({ stats }: { stats: OnboardingBucketStats }) {
 interface OnboardingCompletionCardProps {
   questions: OnboardingBucketStats;
   documents: OnboardingBucketStats;
+  /** Action affichee a droite de l'en-tete, par exemple un renvoi vers l'onboarding. */
+  action?: ReactNode;
 }
 
 /** Bandeau d'avancement du dossier : une ligne par famille. */
-export function OnboardingCompletionCard({ questions, documents }: OnboardingCompletionCardProps) {
+export function OnboardingCompletionCard({
+  questions,
+  documents,
+  action,
+}: OnboardingCompletionCardProps) {
   const { t } = useTranslation();
 
   const total = questions.total + documents.total;
@@ -165,14 +172,16 @@ export function OnboardingCompletionCard({ questions, documents }: OnboardingCom
 
   return (
     <Card className="p-4 shadow-sm">
-      <div className="mb-3 flex flex-wrap items-center justify-between gap-3">
-        <h3 className={WIDGET_TITLE_CLASS}>
-          {t('subscriptions.detail.onboarding.completion.title')}
-        </h3>
-        <div className="flex items-center gap-3">
-          <span className="text-xs text-muted-foreground tabular-nums">
+      <div className="mb-3 flex flex-wrap items-start justify-between gap-3">
+        <div className="min-w-0">
+          <h3 className={WIDGET_TITLE_CLASS}>
+            {t('subscriptions.detail.onboarding.completion.title')}
+          </h3>
+          <p className={cn(WIDGET_SUBTITLE_CLASS, 'tabular-nums')}>
             {t('subscriptions.detail.onboarding.completion.validatedItems', { validated, total })}
-          </span>
+          </p>
+        </div>
+        <div className="flex items-center gap-2">
           <Badge
             className={cn(
               'tabular-nums',
@@ -183,6 +192,7 @@ export function OnboardingCompletionCard({ questions, documents }: OnboardingCom
           >
             {globalPercent}%
           </Badge>
+          {action}
         </div>
       </div>
 

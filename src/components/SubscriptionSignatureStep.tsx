@@ -86,6 +86,7 @@ interface SubscriptionSignatureStepProps {
   questions: OnboardingBucketStats;
   documents: OnboardingBucketStats;
   compliance: ComplianceSummary;
+  onOpenOnboarding: () => void;
   onOpenCompliance: () => void;
   onProceedToPayment: () => void;
 }
@@ -185,6 +186,7 @@ export function SubscriptionSignatureStep({
   questions,
   documents,
   compliance,
+  onOpenOnboarding,
   onOpenCompliance,
   onProceedToPayment,
 }: SubscriptionSignatureStepProps) {
@@ -448,7 +450,16 @@ export function SubscriptionSignatureStep({
         className="grid gap-4"
         style={{ gridTemplateColumns: 'repeat(auto-fit, minmax(440px, 1fr))' }}
       >
-        <OnboardingCompletionCard questions={questions} documents={documents} />
+        <OnboardingCompletionCard
+          questions={questions}
+          documents={documents}
+          action={
+            <Button variant="outline" size="sm" className="h-7 gap-1 text-xs" onClick={onOpenOnboarding}>
+              <ChevronRight className="w-3.5 h-3.5" />
+              {t(`${KEY}.completion.view`)}
+            </Button>
+          }
+        />
         <ComplianceStatusCard compliance={compliance} onOpen={onOpenCompliance} />
       </div>
 

@@ -1259,6 +1259,7 @@ export function SubscriptionDetailPage({ subscription: subscriptionProp, onBack 
                       questions={questionBuckets}
                       documents={documentBuckets}
                       compliance={complianceStatus}
+                      onOpenOnboarding={() => setCurrentStep(1)}
                       onOpenCompliance={() => setCurrentStep(2)}
                       onProceedToPayment={() => {
                         setCurrentStep(4);
