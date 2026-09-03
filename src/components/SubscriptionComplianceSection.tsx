@@ -1199,6 +1199,8 @@ export function SubscriptionComplianceSection({
 
   return (
     <div className="space-y-4">
+      <OnboardingCompletionCard questions={questions} documents={documents} />
+
       {/* Validation du dossier : résumé de la page et action principale */}
       <Card className="shadow-sm overflow-hidden">
         <div className="flex flex-wrap items-center justify-between gap-3 px-4 py-3">
@@ -1312,8 +1314,6 @@ export function SubscriptionComplianceSection({
           </div>
         )}
       </Card>
-
-      <OnboardingCompletionCard questions={questions} documents={documents} />
 
       <div className="grid grid-cols-2 gap-4">
         {/* Widget categorisation investisseur */}

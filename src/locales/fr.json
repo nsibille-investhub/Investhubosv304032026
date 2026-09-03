@@ -427,7 +427,7 @@
         "stepOf": "Étape {{current}}/{{total}}",
         "initialization": "Initialisation",
         "onboarding": "Onboarding en cours",
-        "validation": "Validation",
+        "validation": "Conformité",
         "sendToSignature": "Envoi en signature",
         "signatures": "Signatures",
         "counterSignature": "Contre-signature",
