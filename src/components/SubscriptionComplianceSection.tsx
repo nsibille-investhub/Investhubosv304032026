@@ -44,7 +44,7 @@ import {
   SelectValue,
 } from './ui/select';
 import { Tooltip, TooltipContent, TooltipTrigger } from './ui/tooltip';
-import { cn } from './ui/utils';
+import { cn, WIDGET_LABEL_CLASS, WIDGET_SUBTITLE_CLASS, WIDGET_TITLE_CLASS } from './ui/utils';
 import { PRIMARY_BUTTON_GRADIENT } from './ui/page-header';
 import {
   OnboardingCompletionCard,
@@ -210,7 +210,6 @@ interface RiskProfileWidgetProps {
   scoreValidated: boolean;
   scoreValidatedBy: string | null;
   scoreValidatedAt: string | null;
-  onValidateScore: () => void;
 }
 
 /** Widget Risque : score, echelle et detail du calcul classe par classe. */
@@ -222,7 +221,6 @@ export function RiskProfileWidget({
   scoreValidated,
   scoreValidatedBy,
   scoreValidatedAt,
-  onValidateScore,
 }: RiskProfileWidgetProps) {
   const { t } = useTranslation();
   const [scaleVisible, setScaleVisible] = useState(false);
@@ -264,11 +262,12 @@ export function RiskProfileWidget({
     <Card className="shadow-sm overflow-hidden">
       <div className="px-4 py-3 border-b flex items-start justify-between gap-2">
         <div className="min-w-0">
-          <h3 className="font-semibold text-foreground truncate">
-            {t('subscriptions.detail.compliance.profile.widgetTitle', { name: mockRiskProfile.name })}
+          <h3 className={cn(WIDGET_TITLE_CLASS, 'truncate')}>
+            {t('subscriptions.detail.compliance.profile.widgetTitle')}
           </h3>
-          <p className="text-xs text-muted-foreground truncate">
-            {t('subscriptions.detail.compliance.score.origin', {
+          <p className={cn(WIDGET_SUBTITLE_CLASS, 'truncate')}>
+            {t('subscriptions.detail.compliance.profile.widgetSubtitle', {
+              name: mockRiskProfile.name,
               onboarding: mockRiskProfile.originOnboarding,
             })}
           </p>
@@ -329,21 +328,10 @@ export function RiskProfileWidget({
                 </span>
               </p>
             ) : (
-              <div className="flex flex-wrap items-center gap-2">
-                <span className="flex items-start gap-1.5 text-xs text-amber-700">
-                  <AlertTriangle className="w-3.5 h-3.5 shrink-0 mt-0.5" />
-                  {t('subscriptions.detail.compliance.score.validationRequired')}
-                </span>
-                <Button
-                  size="sm"
-                  className="gap-1.5 text-xs h-7 text-white hover:opacity-90"
-                  style={{ background: PRIMARY_BUTTON_GRADIENT }}
-                  onClick={onValidateScore}
-                >
-                  <ShieldCheck className="w-3 h-3" />
-                  {t('subscriptions.detail.compliance.score.validate')}
-                </Button>
-              </div>
+              <p className="flex items-start gap-1.5 text-xs text-amber-700">
+                <AlertTriangle className="w-3.5 h-3.5 shrink-0 mt-0.5" />
+                {t('subscriptions.detail.compliance.score.validationRequired')}
+              </p>
             )
           ) : (
             <p className="text-xs text-muted-foreground">
@@ -551,10 +539,10 @@ export function ScreeningWidget({
     <Card className="shadow-sm overflow-hidden">
       <div className="px-4 py-3 border-b flex items-start justify-between gap-2">
         <div className="min-w-0">
-          <h3 className="font-semibold text-foreground truncate">
+          <h3 className={cn(WIDGET_TITLE_CLASS, 'truncate')}>
             {t('subscriptions.detail.compliance.screening.title')}
           </h3>
-          <p className="text-xs text-muted-foreground truncate">
+          <p className={cn(WIDGET_SUBTITLE_CLASS, 'truncate')}>
             {t('subscriptions.detail.compliance.screening.subtitle')}
           </p>
         </div>
@@ -1136,10 +1124,10 @@ export function SubscriptionComplianceSection({
       <Card className="shadow-sm overflow-hidden">
         <div className="flex flex-wrap items-start justify-between gap-3 px-4 py-3 border-b">
           <div className="min-w-0">
-            <h3 className="font-semibold text-foreground">
+            <h3 className={WIDGET_TITLE_CLASS}>
               {t('subscriptions.detail.compliance.final.title')}
             </h3>
-            <p className="text-xs text-muted-foreground">
+            <p className={WIDGET_SUBTITLE_CLASS}>
               {statusAt
                 ? t('subscriptions.detail.compliance.status.lastAction', {
                     name: statusBy ?? '',
@@ -1194,10 +1182,10 @@ export function SubscriptionComplianceSection({
           </div>
         </div>
 
-        <div className="grid grid-cols-3 divide-x">
+        <div className="grid grid-cols-3">
           {/* Score de risque */}
           <div className="px-4 py-3">
-            <div className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+            <div className={WIDGET_LABEL_CLASS}>
               {t('subscriptions.detail.compliance.score.title')}
             </div>
             <div className="mt-2 flex items-baseline gap-2">
@@ -1243,8 +1231,8 @@ export function SubscriptionComplianceSection({
           </div>
 
           {/* Parties tierces et correspondances */}
-          <div className="px-4 py-3">
-            <div className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+          <div className="border-l px-4 py-3">
+            <div className={WIDGET_LABEL_CLASS}>
               {t('subscriptions.detail.compliance.final.thirdParties')}
             </div>
             {entitiesWithMatch.length === 0 ? (
@@ -1296,9 +1284,9 @@ export function SubscriptionComplianceSection({
           </div>
 
           {/* Catégorisation investisseur */}
-          <div className="px-4 py-3">
+          <div className="border-l px-4 py-3">
             <div className="flex items-start justify-between gap-2">
-              <div className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+              <div className={WIDGET_LABEL_CLASS}>
                 {t('subscriptions.detail.compliance.categorisation.title')}
               </div>
               <Tooltip>
@@ -1388,7 +1376,6 @@ export function SubscriptionComplianceSection({
           scoreValidated={scoreValidated}
           scoreValidatedBy={scoreValidatedBy}
           scoreValidatedAt={scoreValidatedAt}
-          onValidateScore={onValidateScore}
         />
 
         <ScreeningWidget
@@ -1407,10 +1394,10 @@ export function SubscriptionComplianceSection({
       {/* Widget journal de conformite */}
       <Card className="shadow-sm overflow-hidden">
         <div className="px-6 py-4 border-b">
-          <h3 className="font-semibold text-foreground">
+          <h3 className={WIDGET_TITLE_CLASS}>
             {t('subscriptions.detail.compliance.journal.title')}
           </h3>
-          <p className="text-sm text-muted-foreground">
+          <p className={WIDGET_SUBTITLE_CLASS}>
             {t('subscriptions.detail.compliance.journal.subtitle')}
           </p>
         </div>

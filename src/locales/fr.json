@@ -885,7 +885,8 @@
           "computed": "Calculé",
           "unevaluatedOne": "{{count}} composante non évaluée",
           "unevaluatedMany": "{{count}} composantes non évaluées",
-          "widgetTitle": "Profil de risque {{name}}"
+          "widgetTitle": "Profil de risque",
+          "widgetSubtitle": "{{name}} · profil issu de {{onboarding}}"
         },
         "screening": {
           "title": "Screening et surveillance continue",

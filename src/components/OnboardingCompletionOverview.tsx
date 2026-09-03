@@ -11,7 +11,7 @@ import { useTranslation } from '../utils/languageContext';
 import { Badge } from './ui/badge';
 import { Card } from './ui/card';
 import { Tooltip, TooltipContent, TooltipTrigger } from './ui/tooltip';
-import { cn } from './ui/utils';
+import { cn, WIDGET_TITLE_CLASS } from './ui/utils';
 
 export type OnboardingItemState =
   | 'pending'
@@ -166,7 +166,7 @@ export function OnboardingCompletionCard({ questions, documents }: OnboardingCom
   return (
     <Card className="p-4 shadow-sm">
       <div className="mb-3 flex flex-wrap items-center justify-between gap-3">
-        <h3 className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+        <h3 className={WIDGET_TITLE_CLASS}>
           {t('subscriptions.detail.onboarding.completion.title')}
         </h3>
         <div className="flex items-center gap-3">
@@ -283,7 +283,7 @@ export function OnboardingSectionNav({
 
   return (
     <Card className="p-3 shadow-sm sticky top-4">
-      <h3 className="px-2 pb-2 pt-1 text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+      <h3 className={cn('px-2 pb-2 pt-1', WIDGET_TITLE_CLASS)}>
         {t('subscriptions.detail.onboarding.completion.sectionsTitle')}
       </h3>
 
