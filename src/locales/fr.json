@@ -607,7 +607,7 @@
           "validatedOf": "{{validated}}/{{total}} validées",
           "validatedItems": "{{validated}}/{{total}} éléments validés",
           "awaitingCorrectionCount": "{{count}} à corriger",
-          "documentsValidatedDesc": "{{count}} documents de « {{title}} » ont été validés",
+          "documentsValidatedDesc": "{{count}} documents de \"{{title}}\" ont été validés",
           "state": {
             "pending": "En attente",
             "awaitingValidation": "En attente de validation",
