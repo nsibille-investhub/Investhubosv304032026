@@ -596,7 +596,37 @@
         "exportDocuments": "Exporter les documents",
         "addDocument": "Ajouter un document",
         "proceedToValidation": "Passer à la validation",
-        "submittedForValidation": "Dossier transmis pour validation"
+        "submittedForValidation": "Dossier transmis pour validation",
+        "completion": {
+          "title": "Complétion du dossier",
+          "sectionsTitle": "Sections de l'onboarding",
+          "sectionPosition": "Section {{position}}/{{total}}",
+          "documentsCount": "{{count}} documents",
+          "questions": "Questions",
+          "documents": "Pièces justificatives",
+          "validatedOf": "{{validated}}/{{total}} validées",
+          "validatedItems": "{{validated}}/{{total}} éléments validés",
+          "awaitingCorrectionCount": "{{count}} à corriger",
+          "documentsValidatedDesc": "{{count}} documents de « {{title}} » ont été validés",
+          "state": {
+            "pending": "En attente",
+            "awaitingValidation": "En attente de validation",
+            "awaitingCorrection": "En attente de correction",
+            "validated": "Validé"
+          },
+          "questionsHint": {
+            "pending": "Questions non remplies par l'investisseur",
+            "awaitingValidation": "Réponses fournies, en attente de vérification",
+            "awaitingCorrection": "Réponses retoquées, en attente de correction par l'investisseur",
+            "validated": "Réponses vérifiées et validées"
+          },
+          "documentsHint": {
+            "pending": "Documents non encore déposés",
+            "awaitingValidation": "Documents déposés, en attente de vérification",
+            "awaitingCorrection": "Documents refusés, en attente d'un nouveau dépôt",
+            "validated": "Documents vérifiés et validés"
+          }
+        }
       },
       "validation": {
         "title": "Validation",
@@ -905,7 +935,11 @@
         "expiration": "Expiration",
         "view": "Voir",
         "action": "Action",
-        "add": "Ajouter"
+        "add": "Ajouter",
+        "replace": "Remplacer",
+        "verification": "Vérification",
+        "validateDocument": "Valider le document",
+        "rejectDocument": "Demander une correction"
       },
       "notes": {
         "mock1": "Vérifier la double nationalité mentionnée lors de l'entretien initial",

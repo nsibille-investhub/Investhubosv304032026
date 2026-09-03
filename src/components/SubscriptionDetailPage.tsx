@@ -1,4 +1,4 @@
-import { Fragment, useState } from 'react';
+import { Fragment, useRef, useState } from 'react';
 import { useTranslation } from '../utils/languageContext';
 import {
   Building2,
@@ -85,6 +85,17 @@ import {
   mockCapitalCalls,
   mockInitEmails,
 } from '../utils/subscriptionDetailMockData';
+import {
+  OnboardingCompletionCard,
+  OnboardingSectionNav,
+  OnboardingStateCounter,
+  addToBucketStats,
+  emptyBucketStats,
+  mergeBucketStats,
+  type OnboardingBucketStats,
+  type OnboardingItemState,
+  type OnboardingNavSection,
+} from './OnboardingCompletionOverview';
 import { SubscriptionStatusBadge } from './SubscriptionStatusBadge';
 import { NewSubscriptionDialog } from './NewSubscriptionDialog';
 
@@ -97,6 +108,21 @@ const SUBSCRIPTION_STEPS = [
   { id: 5, labelKey: 'subscriptions.detail.stepper.counterSignature', icon: PenTool },
   { id: 6, labelKey: 'subscriptions.detail.stepper.payment', icon: Wallet },
 ];
+
+// Etat de depart de la maquette : une partie du dossier est deja verifiee, une
+// reponse et une piece ont ete retoquees.
+const INITIAL_QUESTION_STATUSES: Record<string, QuestionStatus> = {
+  'identity-0': 'approved',
+  'identity-1': 'approved',
+  'identity-3': 'approved',
+  'identity-9': 'rejected',
+  'fiscal-0': 'approved',
+};
+
+const INITIAL_DOCUMENT_STATUSES: Record<string, QuestionStatus> = {
+  'document-0': 'approved',
+  'document-4': 'rejected',
+};
 
 interface SubscriptionDetailPageProps {
   subscription: any;
@@ -131,10 +157,15 @@ export function SubscriptionDetailPage({ subscription: subscriptionProp, onBack 
   const initData = (subscription as any).initData ?? {};
   
   // Question states management
-  const [questionStatuses, setQuestionStatuses] = useState<Record<string, QuestionStatus>>({});
+  const [questionStatuses, setQuestionStatuses] = useState<Record<string, QuestionStatus>>(INITIAL_QUESTION_STATUSES);
   const [questionResponses, setQuestionResponses] = useState<Record<string, string>>({});
   const [activeCommentThread, setActiveCommentThread] = useState<string | null>(null);
   const [questionComments, setQuestionComments] = useState<Record<string, any[]>>({});
+
+  // Verification des pieces justificatives (meme cycle de vie que les reponses)
+  const [documentStatuses, setDocumentStatuses] = useState<Record<string, QuestionStatus>>(INITIAL_DOCUMENT_STATUSES);
+  const [activeOnboardingSection, setActiveOnboardingSection] = useState<string>(mockSections[0].id);
+  const onboardingSectionRefs = useRef<Record<string, HTMLDivElement | null>>({});
 
   // Risk validation state
   const [riskValidated, setRiskValidated] = useState(false);
@@ -251,66 +282,99 @@ export function SubscriptionDetailPage({ subscription: subscriptionProp, onBack 
     }));
   };
 
-  // Calculate section statistics
-  const getSectionStats = (sectionId: string) => {
-    const section = mockSections.find(s => s.id === sectionId);
-    if (!section || section.id === 'documents') return null;
-
-    const total = section.questions.length;
-    const answered = section.questions.filter(q => q.response).length;
-    const approved = section.questions.filter((q, idx) => 
-      questionStatuses[`${sectionId}-${idx}`] === 'approved'
-    ).length;
-    const rejected = section.questions.filter((q, idx) => 
-      questionStatuses[`${sectionId}-${idx}`] === 'rejected'
-    ).length;
-    const pending = total - approved - rejected;
-
-    return { total, answered, approved, rejected, pending };
+  // Etat d'une reponse : non remplie, en attente de validation, a corriger ou validee
+  const getQuestionState = (
+    sectionId: string,
+    idx: number,
+    question: { response: string },
+  ): OnboardingItemState => {
+    const questionId = `${sectionId}-${idx}`;
+    const status = questionStatuses[questionId];
+    if (status === 'approved') return 'validated';
+    if (status === 'rejected') return 'awaitingCorrection';
+    const response = questionResponses[questionId] ?? question.response;
+    return response ? 'awaitingValidation' : 'pending';
   };
 
-  // Calculate global stats for all sections
-  const getGlobalStats = () => {
-    let totalQuestions = 0;
-    let totalAnswered = 0;
-    let totalApproved = 0;
-    let totalRejected = 0;
+  const getDocumentState = (idx: number, doc: { hasFile: boolean }): OnboardingItemState => {
+    const status = documentStatuses[`document-${idx}`];
+    if (status === 'approved') return 'validated';
+    if (status === 'rejected') return 'awaitingCorrection';
+    return doc.hasFile ? 'awaitingValidation' : 'pending';
+  };
 
-    mockSections.forEach(section => {
-      if (section.id !== 'documents') {
-        const stats = getSectionStats(section.id);
-        if (stats) {
-          totalQuestions += stats.total;
-          totalAnswered += stats.answered;
-          totalApproved += stats.approved;
-          totalRejected += stats.rejected;
-        }
+  const getQuestionSectionBuckets = (sectionId: string): OnboardingBucketStats => {
+    const stats = emptyBucketStats();
+    const section = mockSections.find(s => s.id === sectionId);
+    if (!section) return stats;
+    section.questions.forEach((question, idx) => {
+      addToBucketStats(stats, getQuestionState(sectionId, idx, question));
+    });
+    return stats;
+  };
+
+  const getDocumentBuckets = (): OnboardingBucketStats => {
+    const stats = emptyBucketStats();
+    mockRequiredDocuments.forEach((doc, idx) => {
+      addToBucketStats(stats, getDocumentState(idx, doc));
+    });
+    return stats;
+  };
+
+  const getSectionBuckets = (sectionId: string): OnboardingBucketStats =>
+    sectionId === 'documents' ? getDocumentBuckets() : getQuestionSectionBuckets(sectionId);
+
+  const questionBuckets = mockSections.reduce((acc, section) => {
+    if (section.id !== 'documents') {
+      mergeBucketStats(acc, getQuestionSectionBuckets(section.id));
+    }
+    return acc;
+  }, emptyBucketStats());
+
+  const documentBuckets = getDocumentBuckets();
+
+  const onboardingNavSections: OnboardingNavSection[] = mockSections.map((section, idx) => ({
+    id: section.id,
+    titleKey: section.titleKey,
+    icon: section.icon,
+    position: idx + 1,
+    kind: section.id === 'documents' ? 'documents' : 'questions',
+    stats: getSectionBuckets(section.id),
+  }));
+
+  const handleSelectOnboardingSection = (sectionId: string) => {
+    setActiveOnboardingSection(sectionId);
+    setOpenSections(prev => (prev.includes(sectionId) ? prev : [...prev, sectionId]));
+    onboardingSectionRefs.current[sectionId]?.scrollIntoView({
+      behavior: 'smooth',
+      block: 'start',
+    });
+  };
+
+  const handleApproveDocument = (idx: number) => {
+    setDocumentStatuses(prev => ({ ...prev, [`document-${idx}`]: 'approved' }));
+  };
+
+  const handleRejectDocument = (idx: number) => {
+    setDocumentStatuses(prev => ({ ...prev, [`document-${idx}`]: 'rejected' }));
+  };
+
+  const handleValidateDocuments = (sectionTitle: string) => {
+    const next: Record<string, QuestionStatus> = { ...documentStatuses };
+    let validated = 0;
+    mockRequiredDocuments.forEach((doc, idx) => {
+      if (doc.hasFile) {
+        next[`document-${idx}`] = 'approved';
+        validated += 1;
       }
     });
-
-    return {
-      total: totalQuestions,
-      answered: totalAnswered,
-      approved: totalApproved,
-      rejected: totalRejected,
-      pending: totalQuestions - totalApproved - totalRejected
-    };
-  };
-
-  // Calculate document stats (mock data for now)
-  const getDocumentStats = () => {
-    const totalRequired = mockRequiredDocuments.length;
-    const submitted = mockRequiredDocuments.filter(d => d.hasFile).length;
-    // Mock validation data - in real app this would come from state
-    const validated = Math.floor(submitted * 0.7); // 70% validated
-    const rejected = Math.floor(submitted * 0.1); // 10% rejected
-
-    return {
-      totalRequired,
-      submitted,
-      validated,
-      rejected
-    };
+    setDocumentStatuses(next);
+    toast.success(t('subscriptions.detail.onboarding.sectionValidatedToast'), {
+      description: t('subscriptions.detail.onboarding.completion.documentsValidatedDesc', {
+        count: validated,
+        title: sectionTitle,
+      }),
+    });
   };
 
   const formatLongDate = (date: Date) =>
@@ -809,76 +873,91 @@ export function SubscriptionDetailPage({ subscription: subscriptionProp, onBack 
                   )}
 
                   {currentStep === 1 && (
-                    // Onboarding en cours - contenu actuel
-                    <div className="space-y-4">
+                    // Onboarding en cours — KPI de completion, navigation par section, sections
+                    <div className="space-y-6">
+                      <OnboardingCompletionCard
+                        questions={questionBuckets}
+                        documents={documentBuckets}
+                      />
+
+                      <div
+                        className="grid items-start gap-6"
+                        style={{ gridTemplateColumns: 'minmax(0, 300px) minmax(0, 1fr)' }}
+                      >
+                          <OnboardingSectionNav
+                            sections={onboardingNavSections}
+                            activeSectionId={activeOnboardingSection}
+                            onSelect={handleSelectOnboardingSection}
+                          />
+
+                          <div className="space-y-4">
               {mockSections.map((section) => {
                 const Icon = section.icon;
                 const isOpen = openSections.includes(section.id);
-                const stats = section.id !== 'documents' ? getSectionStats(section.id) : null;
-                const allVerified = stats ? stats.approved === stats.total && stats.total > 0 : false;
+                const buckets = getSectionBuckets(section.id);
+                const isDocuments = section.id === 'documents';
+                const allVerified = buckets.total > 0 && buckets.validated === buckets.total;
 
                 return (
-                  <Collapsible
+                  <div
                     key={section.id}
+                    ref={el => {
+                      onboardingSectionRefs.current[section.id] = el;
+                    }}
+                    style={{ scrollMarginTop: '1rem' }}
+                  >
+                  <Collapsible
                     open={isOpen}
-                    onOpenChange={() => toggleSection(section.id)}
+                    onOpenChange={() => {
+                      toggleSection(section.id);
+                      setActiveOnboardingSection(section.id);
+                    }}
                   >
                     <Card
                       className="overflow-hidden hover:shadow-md transition-shadow"
+                      style={
+                        activeOnboardingSection === section.id
+                          ? { boxShadow: '0 0 0 1px var(--color-primary)' }
+                          : undefined
+                      }
                     >
                       <CollapsibleTrigger className="w-full">
                         <div className="flex items-center justify-between p-5 hover:bg-muted transition-colors cursor-pointer">
                           <div className="flex items-center gap-4">
                             <div className={`w-12 h-12 rounded-xl flex items-center justify-center ${
-                              stats && stats.approved === stats.total
-                                ? 'bg-[var(--success-soft)]'
-                                : 'bg-primary/10'
+                              allVerified ? 'bg-[var(--success-soft)]' : 'bg-primary/10'
                             }`}>
                               <Icon className={`w-6 h-6 ${
-                                stats && stats.approved === stats.total
-                                  ? 'text-emerald-600'
-                                  : 'text-primary'
+                                allVerified ? 'text-emerald-600' : 'text-primary'
                               }`} />
                             </div>
                             <div className="text-left">
                               <h3 className="font-semibold text-foreground text-lg mb-1">{t(section.titleKey)}</h3>
-                              {stats && (
-                                <div className="flex items-center gap-3 text-xs">
-                                  <span className="text-muted-foreground font-semibold text-foreground">
-                                    {t('subscriptions.detail.onboarding.answeredOf', { answered: stats.answered, total: stats.total })}
-                                  </span>
-                                  <span className="w-1 h-1 rounded-full bg-border" />
-                                  <span className="text-emerald-600 font-semibold">
-                                    {t('subscriptions.detail.onboarding.validated', { count: stats.approved })}
-                                  </span>
-                                  {stats.rejected > 0 && (
-                                    <>
-                                      <span className="w-1 h-1 rounded-full bg-border" />
-                                      <span className="text-red-600 font-semibold">
-                                        {t('subscriptions.detail.onboarding.rejected', { count: stats.rejected })}
-                                      </span>
-                                    </>
-                                  )}
-                                </div>
-                              )}
-                              {section.id === 'documents' && (
-                                <p className="text-xs text-muted-foreground">
-                                  {t('subscriptions.detail.onboarding.requiredDocuments', { count: mockRequiredDocuments.length })}
-                                </p>
-                              )}
+                              <div className="flex flex-wrap items-center gap-x-3 gap-y-1 text-xs">
+                                <span className="font-semibold text-foreground">
+                                  {isDocuments
+                                    ? t('subscriptions.detail.onboarding.requiredDocuments', { count: buckets.total })
+                                    : t('subscriptions.detail.onboarding.answeredOf', {
+                                        answered: buckets.total - buckets.pending,
+                                        total: buckets.total,
+                                      })}
+                                </span>
+                                <span className="w-1 h-1 rounded-full bg-border" />
+                                <OnboardingStateCounter stats={buckets} compact />
+                              </div>
                             </div>
                           </div>
 
                           <div className="flex items-center gap-3">
-                            {stats && stats.approved === stats.total && stats.total > 0 ? (
+                            {allVerified ? (
                               <Badge className="bg-emerald-100 text-emerald-700 border-emerald-200">
                                 <CheckCircle2 className="w-3.5 h-3.5 mr-1.5" />
                                 {t('subscriptions.detail.onboarding.sectionValidated')}
                               </Badge>
-                            ) : stats && stats.rejected > 0 ? (
+                            ) : buckets.awaitingCorrection > 0 ? (
                               <Badge className="bg-red-100 text-red-700 border-red-200">
                                 <AlertCircle className="w-3.5 h-3.5 mr-1.5" />
-                                {t('subscriptions.detail.onboarding.rejectedCount', { count: stats.rejected })}
+                                {t('subscriptions.detail.onboarding.completion.awaitingCorrectionCount', { count: buckets.awaitingCorrection })}
                               </Badge>
                             ) : (
                               <Badge className="bg-amber-100 text-amber-700 border-amber-200">
@@ -927,7 +1006,7 @@ export function SubscriptionDetailPage({ subscription: subscriptionProp, onBack 
                                   </Button>
                                   <Button
                                     size="sm"
-                                    onClick={() => handleValidateSection(section.id, t(section.titleKey))}
+                                    onClick={() => handleValidateDocuments(t(section.titleKey))}
                                     className="gap-2 text-xs bg-primary hover:bg-primary/90 text-white"
                                   >
                                     <CheckCircle2 className="w-3.5 h-3.5" />
@@ -959,10 +1038,15 @@ export function SubscriptionDetailPage({ subscription: subscriptionProp, onBack 
                                       <th className="px-4 py-3 text-center text-xs font-medium text-muted-foreground uppercase tracking-wider w-28">
                                         {t('subscriptions.detail.docsTable.action')}
                                       </th>
+                                      <th className="px-4 py-3 text-center text-xs font-medium text-muted-foreground uppercase tracking-wider w-28">
+                                        {t('subscriptions.detail.docsTable.verification')}
+                                      </th>
                                     </tr>
                                   </thead>
                                   <tbody className="bg-card divide-y divide-border/50">
-                                    {mockRequiredDocuments.map((doc, idx) => (
+                                    {mockRequiredDocuments.map((doc, idx) => {
+                                      const docState = getDocumentState(idx, doc);
+                                      return (
                                       <tr key={idx} className="hover:bg-muted transition-colors group">
                                         <td className="px-4 py-3 text-sm text-foreground/80">
                                           {t(doc.nameKey)}
@@ -998,11 +1082,54 @@ export function SubscriptionDetailPage({ subscription: subscriptionProp, onBack 
                                             className="gap-1.5 text-xs h-7"
                                           >
                                             <Upload className="w-3 h-3" />
-                                            {t('subscriptions.detail.docsTable.add')}
+                                            {doc.hasFile
+                                              ? t('subscriptions.detail.docsTable.replace')
+                                              : t('subscriptions.detail.docsTable.add')}
                                           </Button>
                                         </td>
+                                        <td className="px-4 py-3">
+                                          {docState === 'pending' ? (
+                                            <div className="flex justify-center">
+                                              <Badge className="bg-muted text-muted-foreground text-xs">
+                                                {t('subscriptions.detail.onboarding.completion.state.pending')}
+                                              </Badge>
+                                            </div>
+                                          ) : (
+                                            <div className="flex items-center justify-center gap-1">
+                                              <Button
+                                                variant="ghost"
+                                                size="sm"
+                                                title={t('subscriptions.detail.docsTable.validateDocument')}
+                                                aria-label={t('subscriptions.detail.docsTable.validateDocument')}
+                                                onClick={() => handleApproveDocument(idx)}
+                                                className={`h-7 w-7 p-0 hover:bg-emerald-50 ${
+                                                  docState === 'validated'
+                                                    ? 'bg-emerald-50 text-emerald-600'
+                                                    : 'text-muted-foreground'
+                                                }`}
+                                              >
+                                                <Check className="w-3.5 h-3.5" />
+                                              </Button>
+                                              <Button
+                                                variant="ghost"
+                                                size="sm"
+                                                title={t('subscriptions.detail.docsTable.rejectDocument')}
+                                                aria-label={t('subscriptions.detail.docsTable.rejectDocument')}
+                                                onClick={() => handleRejectDocument(idx)}
+                                                className={`h-7 w-7 p-0 hover:bg-red-50 ${
+                                                  docState === 'awaitingCorrection'
+                                                    ? 'bg-red-50 text-red-600'
+                                                    : 'text-muted-foreground'
+                                                }`}
+                                              >
+                                                <X className="w-3.5 h-3.5" />
+                                              </Button>
+                                            </div>
+                                          )}
+                                        </td>
                                       </tr>
-                                    ))}
+                                      );
+                                    })}
                                   </tbody>
                                 </table>
                               </div>
@@ -1085,24 +1212,27 @@ export function SubscriptionDetailPage({ subscription: subscriptionProp, onBack 
                       </CollapsibleContent>
                     </Card>
                   </Collapsible>
+                  </div>
                 );
               })}
 
-                      {/* Action — passer à l'étape suivante */}
-                      <div className="flex justify-end pt-4">
-                        <Button
-                          style={{ background: PRIMARY_BUTTON_GRADIENT }}
-                          className="gap-2 text-white hover:opacity-90"
-                          onClick={() => {
-                            setCurrentStep(2);
-                            toast.success(t('subscriptions.detail.onboarding.submittedForValidation'));
-                          }}
-                        >
-                          <ChevronRight className="w-4 h-4" />
-                          {t('subscriptions.detail.onboarding.proceedToValidation')}
-                        </Button>
+                            {/* Action — passer à l'étape suivante */}
+                            <div className="flex justify-end pt-4">
+                              <Button
+                                style={{ background: PRIMARY_BUTTON_GRADIENT }}
+                                className="gap-2 text-white hover:opacity-90"
+                                onClick={() => {
+                                  setCurrentStep(2);
+                                  toast.success(t('subscriptions.detail.onboarding.submittedForValidation'));
+                                }}
+                              >
+                                <ChevronRight className="w-4 h-4" />
+                                {t('subscriptions.detail.onboarding.proceedToValidation')}
+                              </Button>
+                            </div>
+                          </div>
+                        </div>
                       </div>
-                    </div>
                   )}
 
                   {currentStep === 2 && (

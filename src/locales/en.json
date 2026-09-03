@@ -596,7 +596,37 @@
         "exportDocuments": "Export documents",
         "addDocument": "Add a document",
         "proceedToValidation": "Proceed to validation",
-        "submittedForValidation": "File submitted for validation"
+        "submittedForValidation": "File submitted for validation",
+        "completion": {
+          "title": "File completion",
+          "sectionsTitle": "Onboarding sections",
+          "sectionPosition": "Section {{position}}/{{total}}",
+          "documentsCount": "{{count}} documents",
+          "questions": "Questions",
+          "documents": "Supporting documents",
+          "validatedOf": "{{validated}}/{{total}} validated",
+          "validatedItems": "{{validated}}/{{total}} items validated",
+          "awaitingCorrectionCount": "{{count}} to correct",
+          "documentsValidatedDesc": "{{count}} documents in \"{{title}}\" have been validated",
+          "state": {
+            "pending": "Pending",
+            "awaitingValidation": "Awaiting validation",
+            "awaitingCorrection": "Awaiting correction",
+            "validated": "Validated"
+          },
+          "questionsHint": {
+            "pending": "Questions not yet answered by the investor",
+            "awaitingValidation": "Answers provided, awaiting review",
+            "awaitingCorrection": "Answers rejected, awaiting correction by the investor",
+            "validated": "Answers reviewed and validated"
+          },
+          "documentsHint": {
+            "pending": "Documents not uploaded yet",
+            "awaitingValidation": "Documents uploaded, awaiting review",
+            "awaitingCorrection": "Documents rejected, awaiting a new upload",
+            "validated": "Documents reviewed and validated"
+          }
+        }
       },
       "validation": {
         "title": "Validation",
@@ -905,7 +935,11 @@
         "expiration": "Expiration",
         "view": "View",
         "action": "Action",
-        "add": "Add"
+        "add": "Add",
+        "replace": "Replace",
+        "verification": "Verification",
+        "validateDocument": "Validate document",
+        "rejectDocument": "Request a correction"
       },
       "notes": {
         "mock1": "Verify the dual nationality mentioned during the initial interview",
