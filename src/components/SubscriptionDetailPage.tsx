@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { Fragment, useState } from 'react';
 import { useTranslation } from '../utils/languageContext';
 import {
   Building2,
@@ -328,8 +328,6 @@ export function SubscriptionDetailPage({ subscription: subscriptionProp, onBack 
   const partnerUrl = getShareableUrl('partners');
   const fundUrl = getShareableUrl('allfunds');
 
-  // Résolution des destinataires de l'invitation : contact rattaché d'abord
-  // côté investisseur, le reste en copie. Aucune adresse de repli.
   const toEmail = (name: string | undefined, domain: string) =>
     name
       ? `${name
@@ -361,39 +359,27 @@ export function SubscriptionDetailPage({ subscription: subscriptionProp, onBack 
   const advisorEmail = subscription.advisor && partnerDomain
     ? toEmail(subscription.advisor, partnerDomain)
     : '';
-  const managerEmail = partnerName ? toEmail(subscription.analyst, 'investhub.cloud') : '';
 
   const invitationRecipient = investorContactEmail || investorEmail;
+  const invitationRecipientLabelKey = investorContactEmail
+    ? 'subscriptions.detail.initStep.audiences.contact'
+    : 'subscriptions.detail.initStep.audiences.investor';
 
-  // Une audience sans adresse résolue ne part pas en copie, elle n'apparaît pas.
-  const invitationCopies: Array<{ id: string; labelKey: string; name?: string; email: string; ruleKey: string }> = [
+  const invitationCopies: Array<{ id: string; labelKey: string; email: string }> = [
     {
-      id: 'investorAddress',
+      id: 'investor',
       labelKey: 'subscriptions.detail.initStep.audiences.investor',
-      name: subscription.contrepartie.investor || subscription.contrepartie.name,
       email: investorContactEmail ? investorEmail : '',
-      ruleKey: 'subscriptions.detail.initStep.rules.investorAddressCopy',
     },
     {
       id: 'partner',
       labelKey: 'subscriptions.detail.initStep.audiences.partner',
-      name: partnerName,
       email: partnerEmail,
-      ruleKey: 'subscriptions.detail.initStep.rules.partnerPreferences',
     },
     {
       id: 'advisor',
       labelKey: 'subscriptions.detail.initStep.audiences.advisor',
-      name: subscription.advisor,
       email: advisorEmail,
-      ruleKey: 'subscriptions.detail.initStep.rules.advisorAdded',
-    },
-    {
-      id: 'manager',
-      labelKey: 'subscriptions.detail.initStep.audiences.manager',
-      name: subscription.analyst,
-      email: managerEmail,
-      ruleKey: 'subscriptions.detail.initStep.rules.managerIntermediated',
     },
   ].filter(copy => copy.email && copy.email !== invitationRecipient);
 
@@ -719,53 +705,45 @@ export function SubscriptionDetailPage({ subscription: subscriptionProp, onBack 
                         </div>
 
                         <div className="rounded-lg border border-border bg-muted/40 p-4 mb-5">
-                          <div className="text-xs text-muted-foreground mb-1">
-                            {t('subscriptions.detail.initStep.invitation.effectiveRecipient')}
-                          </div>
-                          {invitationRecipient ? (
-                            <>
-                              <div className="flex items-center gap-2 text-sm font-semibold text-foreground">
-                                <Mail className="w-3.5 h-3.5 text-muted-foreground" />
-                                {invitationRecipient}
-                              </div>
-                              <div className="text-xs text-muted-foreground mt-1">
-                                {t(
-                                  investorContactEmail
-                                    ? 'subscriptions.detail.initStep.rules.investorContact'
-                                    : 'subscriptions.detail.initStep.rules.investorAddress',
-                                )}
-                              </div>
-                            </>
-                          ) : (
-                            <div className="flex items-center gap-2 text-sm font-semibold text-amber-700">
-                              <AlertTriangle className="w-3.5 h-3.5" />
-                              {t('subscriptions.detail.initStep.invitation.unresolved')}
+                          <div
+                            className="grid items-center gap-x-3 gap-y-2"
+                            style={{ gridTemplateColumns: 'max-content minmax(0, 1fr)' }}
+                          >
+                            <div className="col-span-2 text-xs text-muted-foreground">
+                              {t('subscriptions.detail.initStep.invitation.effectiveRecipient')}
                             </div>
-                          )}
+                            {invitationRecipient ? (
+                              <>
+                                <Badge className="bg-green-50 text-green-700 border-green-200">
+                                  {t(invitationRecipientLabelKey)}
+                                </Badge>
+                                <span className="text-sm font-semibold text-foreground break-all">
+                                  {invitationRecipient}
+                                </span>
+                              </>
+                            ) : (
+                              <div className="col-span-2 flex items-center gap-2 text-sm font-semibold text-amber-700">
+                                <AlertTriangle className="w-3.5 h-3.5" />
+                                {t('subscriptions.detail.initStep.invitation.unresolved')}
+                              </div>
+                            )}
 
-                          <div className="mt-4 pt-3 border-t border-border/60">
-                            <div className="text-xs text-muted-foreground mb-2">
+                            <div className="col-span-2 h-px bg-border my-2" />
+
+                            <div className="col-span-2 text-xs text-muted-foreground">
                               {t('subscriptions.detail.initStep.invitation.copies')}
                             </div>
                             {invitationCopies.length > 0 ? (
-                              <ul className="space-y-2">
-                                {invitationCopies.map(copy => (
-                                  <li key={copy.id} className="flex flex-wrap items-baseline gap-x-2 gap-y-0.5">
-                                    <Badge className="bg-blue-50 text-blue-700 border-blue-200 text-[11px]">
-                                      {t(copy.labelKey)}
-                                    </Badge>
-                                    <span className="text-sm text-foreground/90 break-all">{copy.email}</span>
-                                    {copy.name && (
-                                      <span className="text-xs text-muted-foreground">{copy.name}</span>
-                                    )}
-                                    <span className="text-xs text-muted-foreground basis-full">
-                                      {t(copy.ruleKey)}
-                                    </span>
-                                  </li>
-                                ))}
-                              </ul>
+                              invitationCopies.map(copy => (
+                                <Fragment key={copy.id}>
+                                  <Badge className="bg-blue-50 text-blue-700 border-blue-200">
+                                    {t(copy.labelKey)}
+                                  </Badge>
+                                  <span className="text-sm text-foreground/90 break-all">{copy.email}</span>
+                                </Fragment>
+                              ))
                             ) : (
-                              <p className="text-sm text-muted-foreground">
+                              <p className="col-span-2 text-sm text-muted-foreground">
                                 {t('subscriptions.detail.initStep.invitation.noCopies')}
                               </p>
                             )}
