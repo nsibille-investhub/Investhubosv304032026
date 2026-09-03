@@ -262,3 +262,48 @@ export const mockInitEmails: MockInitEmail[] = [
     clickedAt: null,
   },
 ];
+
+export type SignaturePackDocumentKind = 'toSign' | 'annex';
+
+export interface MockSignaturePackDocument {
+  id: string;
+  name: string;
+  file: string;
+  kind: SignaturePackDocumentKind;
+  /** 'bulletin' : prevu par le bulletin de souscription, non retirable. 'manual' : ajoute par l'operateur. */
+  source: 'bulletin' | 'manual';
+}
+
+/** Pack de signature propose par defaut : documents du bulletin a signer, annexes du fonds. */
+export const mockSignaturePack: MockSignaturePackDocument[] = [
+  { id: 'pack-bs', name: 'Bulletin de souscription', file: 'bulletin-souscription.pdf', kind: 'toSign', source: 'bulletin' },
+  { id: 'pack-declaration', name: 'Déclaration de statut professionnel', file: 'declaration-statut-professionnel.pdf', kind: 'toSign', source: 'bulletin' },
+  { id: 'pack-fatca', name: 'Auto-certification FATCA / CRS', file: 'auto-certification-fatca-crs.pdf', kind: 'toSign', source: 'bulletin' },
+  { id: 'pack-side-letter', name: 'Side letter', file: 'side-letter.pdf', kind: 'toSign', source: 'manual' },
+  { id: 'pack-dici', name: 'DICI', file: 'dici.pdf', kind: 'annex', source: 'bulletin' },
+  { id: 'pack-statuts', name: 'Statuts du fonds', file: 'statuts.pdf', kind: 'annex', source: 'bulletin' },
+  { id: 'pack-reglement', name: 'Règlement du fonds', file: 'reglement.pdf', kind: 'annex', source: 'manual' },
+];
+
+export interface MockCounterSignatory {
+  id: string;
+  name: string;
+  roleKey: string;
+  email: string;
+}
+
+/** Contre-signataires definis au niveau du fonds (societe de gestion). */
+export const mockFundCounterSignatories: MockCounterSignatory[] = [
+  {
+    id: 'fund-cs-1',
+    name: 'Laurent Dupuis',
+    roleKey: 'subscriptions.detail.signatureStep.roles.managingDirector',
+    email: 'laurent.dupuis@example.com',
+  },
+  {
+    id: 'fund-cs-2',
+    name: 'Claire Moreau',
+    roleKey: 'subscriptions.detail.signatureStep.roles.middleOffice',
+    email: 'claire.moreau@example.com',
+  },
+];

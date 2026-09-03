@@ -428,9 +428,7 @@
         "initialization": "Initialization",
         "onboarding": "Onboarding",
         "validation": "Compliance",
-        "sendToSignature": "Send for signature",
         "signatures": "Signatures",
-        "counterSignature": "Counter-signature",
         "payment": "Payment"
       },
       "init": {
@@ -621,46 +619,146 @@
         "validateSubscription": "Validate subscription",
         "subscriptionValidated": "Subscription validated"
       },
-      "signature": {
-        "title": "Send for signature",
-        "signatories": "Signatories",
-        "investorRole": "Investor",
-        "addSignatory": "+ Add a signatory",
-        "documentsToSign": "Documents to sign",
-        "uploadDocument": "Upload a document",
-        "toSign": "To sign",
-        "annex": "Annex",
-        "preview": "Preview",
-        "delete": "Delete",
-        "investorCategorization": "Investor categorization",
-        "professional": "Professional",
-        "nonProfessional": "Non-Professional",
-        "proOnOption": "Pro on option",
-        "saveDraft": "Save draft",
-        "sendForSignature": "Send for signature",
-        "documentsSentForSignature": "Documents sent for signature",
-        "uploadToast": "Document upload",
-        "documentDeletedToast": "Document deleted",
-        "previewToast": "Document preview"
-      },
-      "signatures": {
-        "title": "Signature tracking",
-        "signed": "Signed",
-        "signedOn": "Signed on {{date}}",
-        "resendToSignatories": "Resend to signatories",
-        "regenerateLinks": "Regenerate links",
-        "continueToCounterSignature": "Continue to counter-signature",
-        "toCounterSignature": "Proceeding to counter-signature"
-      },
-      "counterSignature": {
-        "title": "Counter-signature tracking",
-        "fundManager": "Fund manager",
-        "pending": "Pending",
-        "linkSentOn": "Link sent on {{date}}",
-        "resendEmail": "Resend email",
-        "regenerateLink": "Regenerate link",
-        "continueToPayment": "Continue to payment",
-        "toPayment": "Proceeding to payment step"
+      "signatureStep": {
+        "stage": {
+          "draft": "Draft",
+          "signing": "Being signed",
+          "counterSigning": "Being counter-signed",
+          "completed": "Signed"
+        },
+        "substeps": {
+          "send": "Sending",
+          "signatures": "Signatures",
+          "counterSignature": "Counter-signature"
+        },
+        "tracking": {
+          "title": "Signature tracking",
+          "notSent": "Pack not sent",
+          "sentOn": "Sent on {{date}}",
+          "draftSavedOn": "Draft saved on {{date}}",
+          "lastReminder": "Last reminder on {{date}}",
+          "remindersOne": "{{count}} reminder",
+          "remindersMany": "{{count}} reminders",
+          "progress": "{{signed}}/{{total}} signed",
+          "noCounterSignatory": "No counter-signatory"
+        },
+        "actions": {
+          "saveDraft": "Save draft",
+          "send": "Send for signature",
+          "remindSignatories": "Remind signatories",
+          "remindCounterSignatories": "Remind counter-signatories",
+          "regenerateLinks": "Regenerate links",
+          "toPayment": "Continue to payment"
+        },
+        "blockers": {
+          "title": "Cannot send",
+          "compliance": "compliance is not validated",
+          "noDocument": "no document to sign",
+          "noSignatory": "no signatory selected"
+        },
+        "compliance": {
+          "view": "View compliance",
+          "notValidatedHint": "Compliance must be validated before sending for signature.",
+          "noPendingMatch": "No match left to review"
+        },
+        "pack": {
+          "title": "Signature pack",
+          "subtitle": "Documents planned by the subscription form, plus any document to sign or to attach.",
+          "locked": "Pack locked since it was sent for signature.",
+          "documentsCountOne": "{{count}} document",
+          "documentsCountMany": "{{count}} documents",
+          "addToSign": "Add a document to sign",
+          "addAnnex": "Add an annex",
+          "toSign": "Documents to sign",
+          "toSignHint": "Signed by the signatories, then counter-signed",
+          "annexes": "Annexes",
+          "annexesHint": "Attached to the pack, not signed",
+          "emptyToSign": "No document to sign. Add at least one document.",
+          "emptyAnnexes": "No annex attached to the pack.",
+          "sourceBulletin": "From the subscription form",
+          "sourceAdded": "Added",
+          "signed": "Signed",
+          "kind": {
+            "toSign": "To sign",
+            "annex": "Annex"
+          },
+          "preview": "Preview",
+          "remove": "Remove from pack",
+          "newDocumentName": "Additional document {{index}}",
+          "toast": {
+            "added": "Document added to the pack",
+            "removed": "Document removed from the pack",
+            "preview": "Document preview"
+          }
+        },
+        "parties": {
+          "signatories": {
+            "title": "Signatories",
+            "subtitle": "By default, the investor's authorized signatories. Edit the list or add a signatory.",
+            "add": "Add a signatory",
+            "empty": "No signatory. Add at least one signatory."
+          },
+          "counterSignatories": {
+            "title": "Counter-signatories",
+            "subtitle": "By default, the counter-signatories defined at the {{fund}} fund level.",
+            "add": "Add a counter-signatory",
+            "empty": "No counter-signatory. The pack is considered signed after the last investor signature."
+          },
+          "includedCount": "{{count}} included in the sending",
+          "include": "Include in the sending",
+          "sourceInvestor": "Investor",
+          "sourceFund": "Fund",
+          "sourceAdded": "Added",
+          "edit": "Edit",
+          "remove": "Remove",
+          "remind": "Remind",
+          "regenerateLink": "Regenerate link",
+          "markSigned": "Record a manual signature",
+          "form": {
+            "name": "Full name",
+            "role": "Role",
+            "email": "Email",
+            "save": "Save",
+            "cancel": "Cancel"
+          },
+          "status": {
+            "notSent": "Not sent",
+            "pending": "Pending",
+            "signed": "Signed",
+            "linkSentOn": "Link sent on {{date}}",
+            "signedOn": "Signed on {{date}}",
+            "remindedOn": "Reminded on {{date}} ({{count}})",
+            "waitingSignatories": "Waiting for signatories"
+          },
+          "toast": {
+            "added": "Signatory added",
+            "removed": "Signatory removed",
+            "updated": "Signatory updated",
+            "invalid": "Enter a name and an email.",
+            "reminded": "Reminder sent",
+            "remindedDesc": "A reminder was sent to {{names}}.",
+            "linkRegenerated": "Link regenerated",
+            "linkRegeneratedDesc": "The previous link is disabled, the new one has been sent.",
+            "markedSigned": "Signature recorded"
+          }
+        },
+        "roles": {
+          "investor": "Investor",
+          "managingDirector": "Managing director",
+          "middleOffice": "Middle-office manager"
+        },
+        "toast": {
+          "draftSaved": "Draft saved",
+          "sent": "Pack sent for signature",
+          "sentDescOne": "Signing link sent to {{count}} signatory",
+          "sentDescMany": "Signing link sent to {{count}} signatories",
+          "counterSignatureStarted": "Counter-signature started",
+          "counterSignatureStartedDescOne": "{{count}} counter-signatory received the signing link.",
+          "counterSignatureStartedDescMany": "{{count}} counter-signatories received the signing link.",
+          "fullySigned": "Pack fully signed",
+          "fullySignedDesc": "You can continue to payment.",
+          "toPayment": "Proceeding to payment step"
+        }
       },
       "paymentStep": {
         "title": "Payment",
@@ -1005,7 +1103,7 @@
           "thirdPartiesClearMany": "{{count}} other third parties without a match",
           "blockerHits": "matches to review",
           "blockerScore": "risk score to validate",
-          "toSignature": "Move to signature",
+          "toSignature": "Continue to signatures",
           "lockedNotice": "Decisions are locked, reopen the KYC to change them.",
           "reopenedNotice": "KYC reopened by {{name}} on {{date}}. Decisions can be changed."
         },
@@ -1025,7 +1123,7 @@
           "monitoringOff": "Ongoing monitoring disabled",
           "categorySaved": "Categorisation saved",
           "complianceValidated": "Compliance validated",
-          "complianceValidatedDesc": "The file can move to signature.",
+          "complianceValidatedDesc": "The file can move to signatures.",
           "complianceValidatedOverride": "Override recorded in the compliance log.",
           "complianceReopened": "KYC reopened",
           "submittedToCompliance": "File submitted to compliance",

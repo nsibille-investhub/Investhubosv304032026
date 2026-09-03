@@ -428,9 +428,7 @@
         "initialization": "Initialisation",
         "onboarding": "Onboarding",
         "validation": "Conformité",
-        "sendToSignature": "Envoi en signature",
         "signatures": "Signatures",
-        "counterSignature": "Contre-signature",
         "payment": "Paiement"
       },
       "init": {
@@ -621,46 +619,146 @@
         "validateSubscription": "Valider la souscription",
         "subscriptionValidated": "Souscription validée"
       },
-      "signature": {
-        "title": "Envoi en signature",
-        "signatories": "Signataires",
-        "investorRole": "Investisseur",
-        "addSignatory": "+ Ajouter un signataire",
-        "documentsToSign": "Documents à signer",
-        "uploadDocument": "Déposer un document",
-        "toSign": "À signer",
-        "annex": "Annexe",
-        "preview": "Aperçu",
-        "delete": "Supprimer",
-        "investorCategorization": "Catégorisation de l'investisseur",
-        "professional": "Professionnel",
-        "nonProfessional": "Non professionnel",
-        "proOnOption": "Pro sur option",
-        "saveDraft": "Enregistrer le brouillon",
-        "sendForSignature": "Envoyer en signature",
-        "documentsSentForSignature": "Documents envoyés en signature",
-        "uploadToast": "Dépôt du document",
-        "documentDeletedToast": "Document supprimé",
-        "previewToast": "Aperçu du document"
-      },
-      "signatures": {
-        "title": "Suivi des signatures",
-        "signed": "Signé",
-        "signedOn": "Signé le {{date}}",
-        "resendToSignatories": "Relancer les signataires",
-        "regenerateLinks": "Régénérer les liens",
-        "continueToCounterSignature": "Passer à la contre-signature",
-        "toCounterSignature": "Passage à la contre-signature"
-      },
-      "counterSignature": {
-        "title": "Suivi de la contre-signature",
-        "fundManager": "Société de gestion",
-        "pending": "En attente",
-        "linkSentOn": "Lien envoyé le {{date}}",
-        "resendEmail": "Renvoyer l'email",
-        "regenerateLink": "Régénérer le lien",
-        "continueToPayment": "Passer au paiement",
-        "toPayment": "Passage à l'étape de paiement"
+      "signatureStep": {
+        "stage": {
+          "draft": "Brouillon",
+          "signing": "En signature",
+          "counterSigning": "En contre-signature",
+          "completed": "Signée"
+        },
+        "substeps": {
+          "send": "Envoi",
+          "signatures": "Signatures",
+          "counterSignature": "Contre-signature"
+        },
+        "tracking": {
+          "title": "Suivi des signatures",
+          "notSent": "Pack non envoyé",
+          "sentOn": "Envoyé le {{date}}",
+          "draftSavedOn": "Brouillon enregistré le {{date}}",
+          "lastReminder": "Dernière relance le {{date}}",
+          "remindersOne": "{{count}} relance",
+          "remindersMany": "{{count}} relances",
+          "progress": "{{signed}}/{{total}} signés",
+          "noCounterSignatory": "Aucun contre-signataire"
+        },
+        "actions": {
+          "saveDraft": "Enregistrer le brouillon",
+          "send": "Envoyer en signature",
+          "remindSignatories": "Relancer les signataires",
+          "remindCounterSignatories": "Relancer les contre-signataires",
+          "regenerateLinks": "Régénérer les liens",
+          "toPayment": "Passer au paiement"
+        },
+        "blockers": {
+          "title": "Envoi impossible",
+          "compliance": "la conformité n'est pas validée",
+          "noDocument": "aucun document à signer",
+          "noSignatory": "aucun signataire sélectionné"
+        },
+        "compliance": {
+          "view": "Voir la conformité",
+          "notValidatedHint": "La validation de la conformité est requise avant l'envoi en signature.",
+          "noPendingMatch": "Aucune correspondance à traiter"
+        },
+        "pack": {
+          "title": "Pack de signature",
+          "subtitle": "Documents prévus par le bulletin de souscription, complétés des pièces à signer ou à joindre.",
+          "locked": "Pack verrouillé depuis l'envoi en signature.",
+          "documentsCountOne": "{{count}} document",
+          "documentsCountMany": "{{count}} documents",
+          "addToSign": "Ajouter un document à signer",
+          "addAnnex": "Ajouter une annexe",
+          "toSign": "Documents à signer",
+          "toSignHint": "Signés par les signataires puis contre-signés",
+          "annexes": "Annexes",
+          "annexesHint": "Jointes au pack, sans signature",
+          "emptyToSign": "Aucun document à signer. Ajoutez au moins un document.",
+          "emptyAnnexes": "Aucune annexe jointe au pack.",
+          "sourceBulletin": "Prévu par le bulletin",
+          "sourceAdded": "Ajouté",
+          "signed": "Signé",
+          "kind": {
+            "toSign": "À signer",
+            "annex": "Annexe"
+          },
+          "preview": "Aperçu",
+          "remove": "Retirer du pack",
+          "newDocumentName": "Document complémentaire {{index}}",
+          "toast": {
+            "added": "Document ajouté au pack",
+            "removed": "Document retiré du pack",
+            "preview": "Aperçu du document"
+          }
+        },
+        "parties": {
+          "signatories": {
+            "title": "Signataires",
+            "subtitle": "Par défaut, les signataires autorisés de l'investisseur. Modifiez la liste ou ajoutez un signataire.",
+            "add": "Ajouter un signataire",
+            "empty": "Aucun signataire. Ajoutez au moins un signataire."
+          },
+          "counterSignatories": {
+            "title": "Contre-signataires",
+            "subtitle": "Par défaut, les contre-signataires définis au niveau du fonds {{fund}}.",
+            "add": "Ajouter un contre-signataire",
+            "empty": "Aucun contre-signataire. Le pack sera considéré signé dès la dernière signature investisseur."
+          },
+          "includedCount": "{{count}} inclus dans l'envoi",
+          "include": "Inclure dans l'envoi",
+          "sourceInvestor": "Investisseur",
+          "sourceFund": "Fonds",
+          "sourceAdded": "Ajouté",
+          "edit": "Modifier",
+          "remove": "Retirer",
+          "remind": "Relancer",
+          "regenerateLink": "Régénérer le lien",
+          "markSigned": "Enregistrer une signature manuelle",
+          "form": {
+            "name": "Nom complet",
+            "role": "Fonction",
+            "email": "Email",
+            "save": "Enregistrer",
+            "cancel": "Annuler"
+          },
+          "status": {
+            "notSent": "Non envoyé",
+            "pending": "En attente",
+            "signed": "Signé",
+            "linkSentOn": "Lien envoyé le {{date}}",
+            "signedOn": "Signé le {{date}}",
+            "remindedOn": "Relancé le {{date}} ({{count}})",
+            "waitingSignatories": "En attente des signataires"
+          },
+          "toast": {
+            "added": "Signataire ajouté",
+            "removed": "Signataire retiré",
+            "updated": "Signataire mis à jour",
+            "invalid": "Renseignez un nom et un email.",
+            "reminded": "Relance envoyée",
+            "remindedDesc": "Un rappel a été envoyé à {{names}}.",
+            "linkRegenerated": "Lien régénéré",
+            "linkRegeneratedDesc": "L'ancien lien est désactivé, le nouveau a été envoyé.",
+            "markedSigned": "Signature enregistrée"
+          }
+        },
+        "roles": {
+          "investor": "Investisseur",
+          "managingDirector": "Directeur général",
+          "middleOffice": "Responsable middle-office"
+        },
+        "toast": {
+          "draftSaved": "Brouillon enregistré",
+          "sent": "Pack envoyé en signature",
+          "sentDescOne": "Lien de signature envoyé à {{count}} signataire",
+          "sentDescMany": "Lien de signature envoyé à {{count}} signataires",
+          "counterSignatureStarted": "Contre-signature lancée",
+          "counterSignatureStartedDescOne": "{{count}} contre-signataire a reçu le lien de signature.",
+          "counterSignatureStartedDescMany": "{{count}} contre-signataires ont reçu le lien de signature.",
+          "fullySigned": "Pack entièrement signé",
+          "fullySignedDesc": "Vous pouvez passer au paiement.",
+          "toPayment": "Passage à l'étape de paiement"
+        }
       },
       "paymentStep": {
         "title": "Paiement",
@@ -1005,7 +1103,7 @@
           "thirdPartiesClearMany": "{{count}} autres parties tierces sans correspondance",
           "blockerHits": "correspondances à traiter",
           "blockerScore": "score de risque à valider",
-          "toSignature": "Passer à l'envoi en signature",
+          "toSignature": "Passer aux signatures",
           "lockedNotice": "Les décisions sont verrouillées, rouvrez le KYC pour les modifier.",
           "reopenedNotice": "KYC rouvert par {{name}}, le {{date}}. Les décisions sont modifiables."
         },
@@ -1025,7 +1123,7 @@
           "monitoringOff": "Surveillance continue désactivée",
           "categorySaved": "Catégorisation enregistrée",
           "complianceValidated": "Conformité validée",
-          "complianceValidatedDesc": "Le dossier peut passer en signature.",
+          "complianceValidatedDesc": "Le dossier peut passer aux signatures.",
           "complianceValidatedOverride": "Dérogation enregistrée dans le journal de conformité.",
           "complianceReopened": "KYC rouvert",
           "submittedToCompliance": "Dossier transmis à la conformité",

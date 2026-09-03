@@ -33,7 +33,6 @@ import {
   Users,
   Clock,
   ArrowDownCircle,
-  FileCheck,
   Wallet,
   Trash2,
   FolderOpen,
@@ -91,7 +90,11 @@ import {
   type OnboardingItemState,
   type OnboardingNavSection,
 } from './OnboardingCompletionOverview';
-import { SubscriptionComplianceSection } from './SubscriptionComplianceSection';
+import {
+  SubscriptionComplianceSection,
+  type ComplianceStatusSnapshot,
+} from './SubscriptionComplianceSection';
+import { SubscriptionSignatureStep } from './SubscriptionSignatureStep';
 import { SubscriptionStatusBadge } from './SubscriptionStatusBadge';
 import { NewSubscriptionDialog } from './NewSubscriptionDialog';
 
@@ -99,10 +102,8 @@ const SUBSCRIPTION_STEPS = [
   { id: 0, labelKey: 'subscriptions.detail.stepper.initialization', icon: Settings },
   { id: 1, labelKey: 'subscriptions.detail.stepper.onboarding', icon: FileText },
   { id: 2, labelKey: 'subscriptions.detail.stepper.validation', icon: CheckCircle2 },
-  { id: 3, labelKey: 'subscriptions.detail.stepper.sendToSignature', icon: Mail },
-  { id: 4, labelKey: 'subscriptions.detail.stepper.signatures', icon: FileCheck },
-  { id: 5, labelKey: 'subscriptions.detail.stepper.counterSignature', icon: PenTool },
-  { id: 6, labelKey: 'subscriptions.detail.stepper.payment', icon: Wallet },
+  { id: 3, labelKey: 'subscriptions.detail.stepper.signatures', icon: PenTool },
+  { id: 4, labelKey: 'subscriptions.detail.stepper.payment', icon: Wallet },
 ];
 
 // Etat de depart de la maquette : une partie du dossier est deja verifiee, une
@@ -148,7 +149,14 @@ export function SubscriptionDetailPage({ subscription: subscriptionProp, onBack 
     typeof (subscription as any).initialStep === 'number'
       ? (subscription as any).initialStep
       : 1,
-  ); // 0: Initialisation, 1: Onboarding, 2: Validation, etc.
+  ); // 0: Initialisation, 1: Onboarding, 2: Conformité, 3: Signatures, 4: Paiement
+
+  // Décision de conformité, conservée ici pour rester visible depuis l'étape Signatures.
+  const [complianceStatus, setComplianceStatus] = useState<ComplianceStatusSnapshot>({
+    status: 'awaitingValidation',
+    by: null,
+    at: null,
+  });
 
   const initData = (subscription as any).initData ?? {};
   
@@ -1238,238 +1246,28 @@ export function SubscriptionDetailPage({ subscription: subscriptionProp, onBack 
                       scoreValidatedAt={riskValidationDate}
                       onValidateScore={handleValidateRisk}
                       onInvalidateScore={handleInvalidateRisk}
+                      initialStatus={complianceStatus}
+                      onStatusChange={setComplianceStatus}
                       onSubscriptionValidated={() => setCurrentStep(3)}
                     />
                   )}
 
                   {currentStep === 3 && (
-                    // Envoyer en signature
-                    <div className="space-y-6">
-                      <Card className="p-6 shadow-sm">
-                        <h2 className="text-xl font-bold text-foreground mb-6">{t('subscriptions.detail.signature.title')}</h2>
-
-                        <div className="space-y-6">
-                          {/* Signataires */}
-                          <div>
-                            <h3 className="font-semibold text-foreground mb-3">{t('subscriptions.detail.signature.signatories')}</h3>
-                            <div className="space-y-3">
-                              <div className="flex items-center gap-3 p-3 bg-muted rounded-lg">
-                                <input type="checkbox" defaultChecked className="w-4 h-4" />
-                                <div className="flex-1">
-                                  <div className="font-medium text-foreground">Inès Wadouachi</div>
-                                  <div className="text-sm text-muted-foreground">iwadouachi+testPM@eurazeo.com</div>
-                                </div>
-                                <Badge className="bg-primary/10 text-primary border-primary/30">{t('subscriptions.detail.signature.investorRole')}</Badge>
-                              </div>
-                              <Button variant="outline" size="sm" className="w-full">
-                                {t('subscriptions.detail.signature.addSignatory')}
-                              </Button>
-                            </div>
-                          </div>
-
-                          <Separator />
-
-                          {/* Documents à signer */}
-                          <div>
-                            <div className="flex items-center justify-between mb-3">
-                              <h3 className="font-semibold text-foreground">{t('subscriptions.detail.signature.documentsToSign')}</h3>
-                              <Button 
-                                variant="outline" 
-                                size="sm"
-                                onClick={() => toast.info(t('subscriptions.detail.signature.uploadToast'))}
-                              >
-                                <Upload className="w-4 h-4 mr-2" />
-                                {t('subscriptions.detail.signature.uploadDocument')}
-                              </Button>
-                            </div>
-                            <div className="space-y-2">
-                              {['Bulletin de souscription', 'DICI', 'Statuts', 'Side letter'].map((doc, idx) => (
-                                <div key={idx} className="flex items-center gap-3 p-3 bg-muted rounded-lg border border-border">
-                                  <input type="checkbox" defaultChecked className="w-4 h-4" />
-                                  <FileText className="w-4 h-4 text-muted-foreground" />
-                                  <span className="flex-1 text-sm text-foreground">{doc}</span>
-                                  
-                                  {/* Type de document */}
-                                  <select className="text-xs border border-border rounded px-2 py-1 bg-card">
-                                    <option value="signature">{t('subscriptions.detail.signature.toSign')}</option>
-                                    <option value="annexe">{t('subscriptions.detail.signature.annex')}</option>
-                                  </select>
-                                  
-                                  {/* Actions */}
-                                  <div className="flex items-center gap-1">
-                                    <button
-                                      onClick={() => toast.info(t('subscriptions.detail.signature.previewToast'))}
-                                      className="p-1.5 hover:bg-muted rounded transition-colors"
-                                      title={t('subscriptions.detail.signature.preview')}
-                                    >
-                                      <Eye className="w-4 h-4 text-muted-foreground" />
-                                    </button>
-                                    <button
-                                      onClick={() => toast.success(t('subscriptions.detail.signature.documentDeletedToast'))}
-                                      className="p-1.5 hover:bg-red-100 rounded transition-colors"
-                                      title={t('subscriptions.detail.signature.delete')}
-                                    >
-                                      <Trash2 className="w-4 h-4 text-red-600" />
-                                    </button>
-                                  </div>
-                                </div>
-                              ))}
-                            </div>
-                          </div>
-
-                          <Separator />
-
-                          {/* Catégorisation investisseur */}
-                          <div>
-                            <h3 className="font-semibold text-foreground mb-3">{t('subscriptions.detail.signature.investorCategorization')}</h3>
-                            <div className="grid grid-cols-3 gap-3">
-                              {[t('subscriptions.detail.signature.professional'), t('subscriptions.detail.signature.nonProfessional'), t('subscriptions.detail.signature.proOnOption')].map((cat, idx) => (
-                                <div key={idx} className={`p-4 border-2 rounded-lg cursor-pointer transition-all ${idx === 1 ? 'border-primary bg-primary/5' : 'border-border hover:border-border'}`}>
-                                  <div className="font-medium text-sm text-foreground text-center">{cat}</div>
-                                </div>
-                              ))}
-                            </div>
-                          </div>
-
-                          <Separator />
-
-                          <div className="flex justify-end gap-3">
-                            <Button variant="outline">{t('subscriptions.detail.signature.saveDraft')}</Button>
-                            <Button 
-                              className="hover:opacity-90"
-                              style={{ background: PRIMARY_BUTTON_GRADIENT }}
-                              onClick={() => {
-                                setCurrentStep(4);
-                                toast.success(t('subscriptions.detail.signature.documentsSentForSignature'));
-                              }}
-                            >
-                              <Mail className="w-4 h-4 mr-2" />
-                              {t('subscriptions.detail.signature.sendForSignature')}
-                            </Button>
-                          </div>
-                        </div>
-                      </Card>
-                    </div>
+                    // Signatures : pack, signataires, contre-signataires et suivi
+                    <SubscriptionSignatureStep
+                      subscription={subscription}
+                      questions={questionBuckets}
+                      documents={documentBuckets}
+                      compliance={complianceStatus}
+                      onOpenCompliance={() => setCurrentStep(2)}
+                      onProceedToPayment={() => {
+                        setCurrentStep(4);
+                        toast.success(t('subscriptions.detail.signatureStep.toast.toPayment'));
+                      }}
+                    />
                   )}
 
                   {currentStep === 4 && (
-                    // Signatures
-                    <div className="space-y-6">
-                      <Card className="p-6 shadow-sm">
-                        <h2 className="text-xl font-bold text-foreground mb-6">{t('subscriptions.detail.signatures.title')}</h2>
-                        
-                        <div className="space-y-4">
-                          {/* Signataire 1 */}
-                          <div className="bg-green-50 border-2 border-green-200 rounded-lg p-4">
-                            <div className="flex items-start justify-between mb-3">
-                              <div className="flex items-center gap-3">
-                                <div className="p-2 bg-green-100 rounded-lg">
-                                  <User className="w-5 h-5 text-green-600" />
-                                </div>
-                                <div>
-                                  <div className="font-semibold text-foreground">Inès Wadouachi</div>
-                                  <div className="text-sm text-muted-foreground">iwadouachi+testPM@eurazeo.com</div>
-                                </div>
-                              </div>
-                              <Badge className="bg-green-100 text-green-700 border-green-300">
-                                <CheckCircle2 className="w-3 h-3 mr-1" />
-                                {t('subscriptions.detail.signatures.signed')}
-                              </Badge>
-                            </div>
-                            <div className="text-xs text-muted-foreground">{t('subscriptions.detail.signatures.signedOn', { date: '29/12/2025 à 14:32' })}</div>
-                          </div>
-
-                          {/* Actions */}
-                          <div className="flex gap-3">
-                            <Button variant="outline" className="flex-1">
-                              <Mail className="w-4 h-4 mr-2" />
-                              {t('subscriptions.detail.signatures.resendToSignatories')}
-                            </Button>
-                            <Button variant="outline" className="flex-1">
-                              <FileText className="w-4 h-4 mr-2" />
-                              {t('subscriptions.detail.signatures.regenerateLinks')}
-                            </Button>
-                          </div>
-
-                          <Separator />
-
-                          <div className="flex justify-end">
-                            <Button 
-                              className="hover:opacity-90"
-                              style={{ background: PRIMARY_BUTTON_GRADIENT }}
-                              onClick={() => {
-                                setCurrentStep(6);
-                                toast.success(t('subscriptions.detail.signatures.toCounterSignature'));
-                              }}
-                            >
-                              {t('subscriptions.detail.signatures.continueToCounterSignature')}
-                            </Button>
-                          </div>
-                        </div>
-                      </Card>
-                    </div>
-                  )}
-
-                  {currentStep === 5 && (
-                    // Contre-signature
-                    <div className="space-y-6">
-                      <Card className="p-6 shadow-sm">
-                        <h2 className="text-xl font-bold text-foreground mb-6">{t('subscriptions.detail.counterSignature.title')}</h2>
-                        
-                        <div className="space-y-4">
-                          {/* Gérant du fonds */}
-                          <div className="bg-primary/5 border-2 border-primary/20 rounded-lg p-4">
-                            <div className="flex items-start justify-between mb-3">
-                              <div className="flex items-center gap-3">
-                                <div className="p-2 bg-primary/10 rounded-lg">
-                                  <User className="w-5 h-5 text-primary" />
-                                </div>
-                                <div>
-                                  <div className="font-semibold text-foreground">Laurent Dupuis</div>
-                                  <div className="text-sm text-muted-foreground">laurent.dupuis@investhub.com</div>
-                                  <div className="text-xs text-muted-foreground mt-1">{t('subscriptions.detail.counterSignature.fundManager')}</div>
-                                </div>
-                              </div>
-                              <Badge className="bg-amber-100 text-amber-700 border-amber-300">
-                                <Clock className="w-3 h-3 mr-1" />
-                                {t('subscriptions.detail.counterSignature.pending')}
-                              </Badge>
-                            </div>
-                            <div className="text-xs text-muted-foreground">{t('subscriptions.detail.counterSignature.linkSentOn', { date: '29/12/2025 à 15:45' })}</div>
-                          </div>
-
-                          {/* Actions */}
-                          <div className="flex gap-3">
-                            <Button variant="outline" className="flex-1">
-                              <Mail className="w-4 h-4 mr-2" />
-                              {t('subscriptions.detail.counterSignature.resendEmail')}
-                            </Button>
-                            <Button variant="outline" className="flex-1">
-                              <FileText className="w-4 h-4 mr-2" />
-                              {t('subscriptions.detail.counterSignature.regenerateLink')}
-                            </Button>
-                          </div>
-
-                          <Separator />
-
-                          <div className="flex justify-end">
-                            <Button 
-                              className="hover:opacity-90"
-                              style={{ background: PRIMARY_BUTTON_GRADIENT }}
-                              onClick={() => {
-                                setCurrentStep(7);
-                                toast.success(t('subscriptions.detail.counterSignature.toPayment'));
-                              }}
-                            >
-                              {t('subscriptions.detail.counterSignature.continueToPayment')}
-                            </Button>
-                          </div>
-                        </div>
-                      </Card>
-                    </div>
-                  )}
-
-                  {currentStep === 6 && (
                     // Paiement
                     <div className="space-y-6">
                       <Card className="p-6 shadow-sm">
