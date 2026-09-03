@@ -441,14 +441,16 @@
       "initStep": {
         "invitation": {
           "title": "Invitation à l'onboarding",
-          "subtitle": "Le lien de parcours part vers le destinataire résolu pour l'investisseur.",
+          "subtitle": "Le lien de parcours part vers le destinataire résolu pour l'investisseur, les autres audiences reçoivent une copie.",
           "sent": "Invitation envoyée",
           "notSent": "Invitation non envoyée",
           "effectiveRecipient": "Destinataire effectif",
           "unresolved": "Aucune adresse résolue pour l'investisseur",
           "resend": "Renvoyer l'invitation",
           "send": "Envoyer l'invitation",
-          "resendHint": "Le renvoi régénère le lien de parcours et repart vers le destinataire affiché."
+          "resendHint": "Le renvoi régénère le lien de parcours et repart vers le destinataire affiché.",
+          "copies": "En copie",
+          "noCopies": "Aucune copie résolue sur cette invitation"
         },
         "tracking": {
           "sent": "Envoyé le",
@@ -456,9 +458,19 @@
           "opened": "Ouvert le",
           "clicked": "Cliqué le"
         },
+        "audiences": {
+          "investor": "Investisseur",
+          "partner": "Partenaire",
+          "advisor": "Conseiller",
+          "manager": "Gestionnaire du dossier"
+        },
         "rules": {
           "investorContact": "Contact rattaché au dossier, prioritaire sur l'adresse de l'investisseur",
-          "investorAddress": "Adresse de l'investisseur, aucun contact rattaché au dossier"
+          "investorAddress": "Adresse de l'investisseur, aucun contact rattaché au dossier",
+          "investorAddressCopy": "Adresse de l'investisseur, en copie du contact rattaché",
+          "partnerPreferences": "Préférences de notification de la fiche du partenaire",
+          "advisorAdded": "Le conseiller s'ajoute au partenaire, il ne le remplace pas",
+          "managerIntermediated": "Notifié pour une souscription intermédiée"
         },
         "templates": {
           "onboardingLink": "Lien de démarrage d'onboarding",

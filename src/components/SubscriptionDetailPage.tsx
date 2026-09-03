@@ -328,8 +328,8 @@ export function SubscriptionDetailPage({ subscription: subscriptionProp, onBack 
   const partnerUrl = getShareableUrl('partners');
   const fundUrl = getShareableUrl('allfunds');
 
-  // Résolution du destinataire : contact rattaché d'abord, puis adresse de
-  // l'investisseur. Aucune adresse de repli.
+  // Résolution des destinataires de l'invitation : contact rattaché d'abord
+  // côté investisseur, le reste en copie. Aucune adresse de repli.
   const toEmail = (name: string | undefined, domain: string) =>
     name
       ? `${name
@@ -341,13 +341,61 @@ export function SubscriptionDetailPage({ subscription: subscriptionProp, onBack 
           .replace(/\s+/g, '.')}@${domain}`
       : '';
 
+  const partnerName = subscription.partenaire?.name as string | undefined;
+  const partnerDomain = partnerName
+    ? `${partnerName
+        .toLowerCase()
+        .normalize('NFD')
+        .replace(/[\u0300-\u036f]/g, '')
+        .replace(/[^a-z0-9]+/g, '-')
+        .replace(/^-|-$/g, '')}.fr`
+    : '';
+
   const investorEmail =
     subscription.email ||
     toEmail(subscription.contrepartie.investor || subscription.contrepartie.name, 'example.com');
   const investorContactEmail = subscription.contrepartie.mainContact
     ? toEmail(subscription.contrepartie.mainContact, 'example.com')
     : '';
+  const partnerEmail = partnerDomain ? `contact@${partnerDomain}` : '';
+  const advisorEmail = subscription.advisor && partnerDomain
+    ? toEmail(subscription.advisor, partnerDomain)
+    : '';
+  const managerEmail = partnerName ? toEmail(subscription.analyst, 'investhub.cloud') : '';
+
   const invitationRecipient = investorContactEmail || investorEmail;
+
+  // Une audience sans adresse résolue ne part pas en copie, elle n'apparaît pas.
+  const invitationCopies: Array<{ id: string; labelKey: string; name?: string; email: string; ruleKey: string }> = [
+    {
+      id: 'investorAddress',
+      labelKey: 'subscriptions.detail.initStep.audiences.investor',
+      name: subscription.contrepartie.investor || subscription.contrepartie.name,
+      email: investorContactEmail ? investorEmail : '',
+      ruleKey: 'subscriptions.detail.initStep.rules.investorAddressCopy',
+    },
+    {
+      id: 'partner',
+      labelKey: 'subscriptions.detail.initStep.audiences.partner',
+      name: partnerName,
+      email: partnerEmail,
+      ruleKey: 'subscriptions.detail.initStep.rules.partnerPreferences',
+    },
+    {
+      id: 'advisor',
+      labelKey: 'subscriptions.detail.initStep.audiences.advisor',
+      name: subscription.advisor,
+      email: advisorEmail,
+      ruleKey: 'subscriptions.detail.initStep.rules.advisorAdded',
+    },
+    {
+      id: 'manager',
+      labelKey: 'subscriptions.detail.initStep.audiences.manager',
+      name: subscription.analyst,
+      email: managerEmail,
+      ruleKey: 'subscriptions.detail.initStep.rules.managerIntermediated',
+    },
+  ].filter(copy => copy.email && copy.email !== invitationRecipient);
 
   const invitationEmail = mockInitEmails.find(mail => mail.id === 'invitation');
   const invitationSentAt = resentEmails.invitation ?? invitationEmail?.sentAt ?? null;
@@ -694,6 +742,34 @@ export function SubscriptionDetailPage({ subscription: subscriptionProp, onBack 
                               {t('subscriptions.detail.initStep.invitation.unresolved')}
                             </div>
                           )}
+
+                          <div className="mt-4 pt-3 border-t border-border/60">
+                            <div className="text-xs text-muted-foreground mb-2">
+                              {t('subscriptions.detail.initStep.invitation.copies')}
+                            </div>
+                            {invitationCopies.length > 0 ? (
+                              <ul className="space-y-2">
+                                {invitationCopies.map(copy => (
+                                  <li key={copy.id} className="flex flex-wrap items-baseline gap-x-2 gap-y-0.5">
+                                    <Badge className="bg-blue-50 text-blue-700 border-blue-200 text-[11px]">
+                                      {t(copy.labelKey)}
+                                    </Badge>
+                                    <span className="text-sm text-foreground/90 break-all">{copy.email}</span>
+                                    {copy.name && (
+                                      <span className="text-xs text-muted-foreground">{copy.name}</span>
+                                    )}
+                                    <span className="text-xs text-muted-foreground basis-full">
+                                      {t(copy.ruleKey)}
+                                    </span>
+                                  </li>
+                                ))}
+                              </ul>
+                            ) : (
+                              <p className="text-sm text-muted-foreground">
+                                {t('subscriptions.detail.initStep.invitation.noCopies')}
+                              </p>
+                            )}
+                          </div>
                         </div>
 
                         <div className="grid gap-4 mb-5" style={{ gridTemplateColumns: 'repeat(auto-fit, minmax(150px, 1fr))' }}>

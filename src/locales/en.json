@@ -441,14 +441,16 @@
       "initStep": {
         "invitation": {
           "title": "Onboarding invitation",
-          "subtitle": "The onboarding link goes to the recipient resolved for the investor.",
+          "subtitle": "The onboarding link goes to the recipient resolved for the investor, the other audiences receive a copy.",
           "sent": "Invitation sent",
           "notSent": "Invitation not sent",
           "effectiveRecipient": "Effective recipient",
           "unresolved": "No address resolved for the investor",
           "resend": "Resend invitation",
           "send": "Send invitation",
-          "resendHint": "Resending regenerates the onboarding link and goes to the recipient shown above."
+          "resendHint": "Resending regenerates the onboarding link and goes to the recipient shown above.",
+          "copies": "In copy",
+          "noCopies": "No copy resolved for this invitation"
         },
         "tracking": {
           "sent": "Sent on",
@@ -456,9 +458,19 @@
           "opened": "Opened on",
           "clicked": "Clicked on"
         },
+        "audiences": {
+          "investor": "Investor",
+          "partner": "Partner",
+          "advisor": "Advisor",
+          "manager": "Case manager"
+        },
         "rules": {
           "investorContact": "Linked contact, takes priority over the investor's address",
-          "investorAddress": "Investor's address, no linked contact on the case"
+          "investorAddress": "Investor's address, no linked contact on the case",
+          "investorAddressCopy": "Investor's address, in copy of the linked contact",
+          "partnerPreferences": "Notification preferences from the partner record",
+          "advisorAdded": "The advisor is added to the partner, not a replacement",
+          "managerIntermediated": "Notified for an intermediated subscription"
         },
         "templates": {
           "onboardingLink": "Onboarding start link",
