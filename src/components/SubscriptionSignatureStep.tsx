@@ -569,7 +569,7 @@ export function SubscriptionSignatureStep({
                   'flex items-center gap-3 rounded-lg border p-3',
                   step.state === 'done' && 'border-emerald-200 bg-emerald-50/60',
                   step.state === 'current' && 'border-primary/40 bg-primary/5',
-                  step.state === 'pending' && 'opacity-70',
+                  step.state === 'pending' && 'border-border bg-muted/40',
                 )}
               >
                 <span
@@ -579,7 +579,7 @@ export function SubscriptionSignatureStep({
                       ? 'bg-emerald-100 text-emerald-600'
                       : step.state === 'current'
                         ? 'bg-primary/10 text-primary'
-                        : 'bg-muted text-muted-foreground',
+                        : 'border border-border bg-card text-foreground/70',
                   )}
                 >
                   {step.state === 'done' ? <Check className="w-4 h-4" /> : <Icon className="w-4 h-4" />}
@@ -878,14 +878,19 @@ function PackGroup({
       </div>
 
       {documents.length === 0 ? (
-        <p className="rounded-lg border border-dashed p-4 text-center text-xs text-muted-foreground">
+        <p className="rounded-lg border border-dashed border-border bg-muted/40 p-4 text-center text-xs text-muted-foreground">
           {emptyLabel}
         </p>
       ) : (
         <ul className="space-y-2">
           {documents.map(doc => (
-            <li key={doc.id} className="flex items-center gap-3 rounded-lg border bg-card p-3">
-              <FileText className="w-4 h-4 shrink-0 text-muted-foreground" />
+            <li
+              key={doc.id}
+              className="flex items-center gap-3 rounded-lg border border-border bg-muted p-3"
+            >
+              <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg border border-border bg-card">
+                <FileText className="w-4 h-4 text-primary" />
+              </span>
               <div className="min-w-0 flex-1">
                 <span className="block truncate text-sm font-medium text-foreground" title={doc.name}>
                   {doc.name}
@@ -896,7 +901,7 @@ function PackGroup({
                       'text-[11px]',
                       doc.source === 'bulletin'
                         ? 'bg-primary/10 text-primary border-primary/30'
-                        : 'bg-muted text-muted-foreground border-border',
+                        : 'bg-card text-foreground/80 border-border',
                     )}
                   >
                     {doc.source === 'bulletin'
@@ -909,7 +914,7 @@ function PackGroup({
                       {t(`${KEY}.pack.signed`)}
                     </Badge>
                   )}
-                  <span className="truncate text-xs text-muted-foreground">{doc.file}</span>
+                  <span className="truncate text-xs text-foreground/70">{doc.file}</span>
                 </div>
               </div>
 
@@ -940,7 +945,7 @@ function PackGroup({
                         toast.info(t(`${KEY}.pack.toast.preview`), { description: doc.name })
                       }
                     >
-                      <Eye className="w-4 h-4 text-muted-foreground" />
+                      <Eye className="w-4 h-4 text-foreground/70" />
                     </Button>
                   </TooltipTrigger>
                   <TooltipContent>{t(`${KEY}.pack.preview`)}</TooltipContent>
@@ -1130,7 +1135,7 @@ function PartyCard({
 
       <ul className="space-y-2 border-t px-4 py-4">
         {visible.length === 0 && !adding && (
-          <li className="rounded-lg border border-dashed p-4 text-center text-xs text-muted-foreground">
+          <li className="rounded-lg border border-dashed border-border bg-muted/40 p-4 text-center text-xs text-muted-foreground">
             {t(`${KEY}.parties.${groupKey}.empty`)}
           </li>
         )}
@@ -1146,7 +1151,7 @@ function PartyCard({
             <li
               key={party.id}
               className={cn(
-                'flex items-start gap-3 rounded-lg border bg-card p-3',
+                'flex items-start gap-3 rounded-lg border border-border bg-muted p-3',
                 !party.included && 'opacity-60',
                 party.status === 'signed' && 'border-emerald-200 bg-emerald-50/50',
               )}
@@ -1178,14 +1183,14 @@ function PartyCard({
                     className={cn(
                       'text-[11px]',
                       party.source === 'manual'
-                        ? 'bg-muted text-muted-foreground border-border'
+                        ? 'bg-card text-foreground/80 border-border'
                         : 'bg-primary/10 text-primary border-primary/30',
                     )}
                   >
                     {sourceLabel(party)}
                   </Badge>
                 </div>
-                <span className="block truncate text-xs text-muted-foreground">
+                <span className="block truncate text-xs text-foreground/70">
                   {roleLabel ? `${roleLabel} · ${party.email}` : party.email}
                 </span>
 
@@ -1198,7 +1203,7 @@ function PartyCard({
                       </span>
                     )}
                     {party.status === 'sent' && party.sentAt && (
-                      <span className="inline-flex items-center gap-1 text-muted-foreground">
+                      <span className="inline-flex items-center gap-1 text-foreground/70">
                         <Mail className="w-3.5 h-3.5" />
                         {t(`${KEY}.parties.status.linkSentOn`, { date: party.sentAt })}
                       </span>
@@ -1213,7 +1218,7 @@ function PartyCard({
                       </span>
                     )}
                     {party.status === 'notSent' && (
-                      <span className="inline-flex items-center gap-1 text-muted-foreground">
+                      <span className="inline-flex items-center gap-1 text-foreground/70">
                         <Clock className="w-3.5 h-3.5" />
                         {t(`${KEY}.parties.status.waitingSignatories`)}
                       </span>
@@ -1234,7 +1239,7 @@ function PartyCard({
                           aria-label={t(`${KEY}.parties.edit`)}
                           onClick={() => startEdit(party)}
                         >
-                          <Pencil className="w-4 h-4 text-muted-foreground" />
+                          <Pencil className="w-4 h-4 text-foreground/70" />
                         </Button>
                       </TooltipTrigger>
                       <TooltipContent>{t(`${KEY}.parties.edit`)}</TooltipContent>
@@ -1280,7 +1285,7 @@ function PartyCard({
                           aria-label={t(`${KEY}.parties.remind`)}
                           onClick={() => onRemind(party.id)}
                         >
-                          <Mail className="w-4 h-4 text-muted-foreground" />
+                          <Mail className="w-4 h-4 text-foreground/70" />
                         </Button>
                       </TooltipTrigger>
                       <TooltipContent>{t(`${KEY}.parties.remind`)}</TooltipContent>
@@ -1294,7 +1299,7 @@ function PartyCard({
                           aria-label={t(`${KEY}.parties.regenerateLink`)}
                           onClick={() => onRegenerate(party.id)}
                         >
-                          <RefreshCw className="w-4 h-4 text-muted-foreground" />
+                          <RefreshCw className="w-4 h-4 text-foreground/70" />
                         </Button>
                       </TooltipTrigger>
                       <TooltipContent>{t(`${KEY}.parties.regenerateLink`)}</TooltipContent>
@@ -1317,7 +1322,7 @@ function PartyCard({
                 )}
 
                 {locked && party.status === 'notSent' && (
-                  <Badge className="bg-muted text-muted-foreground border-border">
+                  <Badge className="bg-card text-foreground/70 border-border">
                     {t(`${KEY}.parties.status.notSent`)}
                   </Badge>
                 )}
