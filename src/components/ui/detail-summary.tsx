@@ -72,7 +72,7 @@ export type DetailSummaryMetric = {
 
 /**
  * Group of complementary attributes, hidden while the block is folded and
- * revealed by the "more" button.
+ * revealed by the "more" button sitting under the actions, bottom right.
  */
 export type DetailSummarySection = {
   id: string;
@@ -87,7 +87,7 @@ export type DetailSummaryProps = {
   /** Actions shown at the top right of the block, above the contextual slot. */
   actions?: React.ReactNode;
   aside?: React.ReactNode;
-  /** Complementary sections, folded by default. The block grows a "more" button when provided. */
+  /** Complementary sections, folded by default. A "more" button appears under the actions when provided. */
   sections?: DetailSummarySection[];
   /** Controlled fold state. Leave undefined to let the block manage it. */
   expanded?: boolean;
@@ -237,8 +237,9 @@ export function DetailSummary({
   const hasAttributes = !!attributes && attributes.length > 0;
   const hasMetrics = !!metrics && metrics.length > 0;
   const hasSections = !!sections && sections.some(section => section.items.length > 0);
+  const hasSideColumn = !!actions || !!aside || hasSections;
 
-  if (!hasAttributes && !hasMetrics && !aside && !actions && !hasSections) return null;
+  if (!hasAttributes && !hasMetrics && !hasSideColumn) return null;
 
   const toggleLabel = isExpanded
     ? collapseLabel ?? t('common.showLess')
@@ -251,7 +252,7 @@ export function DetailSummary({
       data-state={hasSections ? (isExpanded ? 'expanded' : 'collapsed') : undefined}
       className={cn('p-5 shadow-sm', className)}
     >
-      <div className="flex items-start justify-between gap-8">
+      <div className="flex items-stretch justify-between gap-8">
         <div className="flex-1 flex flex-col gap-5 min-w-0">
           {hasAttributes && (
             <div className="grid gap-x-6 gap-y-4" style={GRID_STYLE}>
@@ -275,10 +276,26 @@ export function DetailSummary({
           )}
         </div>
 
-        {(actions || aside) && (
+        {hasSideColumn && (
           <div className="flex-shrink-0 flex flex-col items-end gap-3">
             {actions && <div className="flex items-center gap-2">{actions}</div>}
             {aside}
+            {/* Le bouton de repli reste dans la colonne des actions pour ne pas
+                allonger le bloc replié. */}
+            {hasSections && (
+              <Button
+                type="button"
+                variant="ghost"
+                size="sm"
+                aria-expanded={isExpanded}
+                aria-controls={contentId}
+                onClick={() => setExpanded(!isExpanded)}
+                className="mt-auto -mb-1 -mr-2 gap-1 text-xs text-muted-foreground hover:text-foreground"
+              >
+                {toggleLabel}
+                <ToggleIcon className="w-3.5 h-3.5" />
+              </Button>
+            )}
           </div>
         )}
       </div>
@@ -299,21 +316,6 @@ export function DetailSummary({
                 ))}
             </div>
           </CollapsibleContent>
-
-          <div className="mt-4 -mb-2 flex justify-center">
-            <Button
-              type="button"
-              variant="ghost"
-              size="sm"
-              aria-expanded={isExpanded}
-              aria-controls={contentId}
-              onClick={() => setExpanded(!isExpanded)}
-              className="gap-1 text-xs text-muted-foreground hover:text-foreground"
-            >
-              {toggleLabel}
-              <ToggleIcon className="w-3.5 h-3.5" />
-            </Button>
-          </div>
         </Collapsible>
       )}
     </Card>

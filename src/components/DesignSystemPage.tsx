@@ -1626,8 +1626,9 @@ export function DesignSystemPage() {
             Bloc de synthèse placé en tête d&apos;une page de détail (souscription, investisseur, fonds).
             Deux niveaux de lecture&nbsp;: les attributs clés et les indicateurs restent toujours visibles,
             les sections complémentaires (souscripteur, coordonnées bancaires, partenaire, champs personnalisés)
-            se déplient avec le bouton <strong>Plus</strong> au bas du bloc et se replient avec <strong>Moins</strong>.
-            Les actions contextuelles (Modifier, etc.) se placent en haut à droite.
+            se déplient avec le bouton <strong>Plus</strong> et se replient avec <strong>Moins</strong>.
+            Les actions contextuelles (Modifier, etc.) se placent en haut à droite, le bouton Plus juste en dessous,
+            en bas à droite : le bloc replié conserve ainsi sa hauteur.
           </p>
           <p className="text-xs text-[#4F6166] dark:text-[#9DB2AE] leading-relaxed">
             Identifiant&nbsp;: <code className="text-xs px-1 py-0.5 rounded bg-[#F1F5F4] dark:bg-[#1C2624] font-semibold">ds-detail-summary</code> - Import&nbsp;:
@@ -1649,7 +1650,7 @@ export function DesignSystemPage() {
                 Replié (par défaut)
               </span>
               <span className="text-xs text-[#4F6166] dark:text-[#9DB2AE]">
-                attributs + indicateurs + action, bouton Plus en pied de bloc
+                attributs + indicateurs + action, bouton Plus sous l'action à droite
               </span>
             </div>
             <div className="overflow-hidden rounded-xl border border-[#D7E0DD] dark:border-[#1F2D2A] bg-[#F8FAFA] dark:bg-[#0B0D0D] p-4 md:p-6">
