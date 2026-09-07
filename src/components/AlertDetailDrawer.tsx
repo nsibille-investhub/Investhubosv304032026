@@ -50,7 +50,9 @@ interface AlertDetailDrawerProps {
   onDecision?: (
     alertId: string,
     decision: 'true_hit' | 'false_hit' | 'unsure',
+    comment?: string,
   ) => void;
+  onEntityClick?: (alert: AlertItem) => void;
 }
 
 const STATUS_VARIANT: Record<
@@ -99,6 +101,7 @@ export function AlertDetailDrawer({
   isOpen,
   onClose,
   onDecision,
+  onEntityClick,
 }: AlertDetailDrawerProps) {
   const { t } = useTranslation();
   const [decision, setDecision] = useState<Decision | null>(null);
@@ -140,7 +143,7 @@ export function AlertDetailDrawer({
       toast.error(t('complianceAlerts.drawer.missingComment'));
       return;
     }
-    onDecision?.(alert.id, decision);
+    onDecision?.(alert.id, decision, comment.trim());
   };
 
   const handleAiAnalysis = () => {
@@ -183,7 +186,19 @@ export function AlertDetailDrawer({
           <div className="pr-8">
             <div className="flex items-center gap-2 flex-wrap">
               <SheetTitle className="text-[22px] leading-7">
-                {alert.entityName}
+                {onEntityClick ? (
+                  <button
+                    type="button"
+                    onClick={() => onEntityClick(alert)}
+                    title={t('complianceAlerts.table.openEntity')}
+                    className="inline-flex items-center gap-1.5 text-left hover:underline underline-offset-4"
+                  >
+                    {alert.entityName}
+                    <ExternalLink className="w-4 h-4 opacity-50" />
+                  </button>
+                ) : (
+                  alert.entityName
+                )}
               </SheetTitle>
               <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md bg-muted text-xs font-medium tabular-nums">
                 <Sparkles className="w-3 h-3" />

@@ -18,6 +18,7 @@ interface AlertDataTableProps {
   sortConfig: { key: string; direction: 'asc' | 'desc' } | null;
   onSort: (key: string) => void;
   onDecision?: (alertId: string, decision: AlertBulkAction) => void;
+  onEntityClick?: (row: AlertItem) => void;
   selectedIds?: Set<string>;
   onToggleSelectRow?: (id: string) => void;
   onToggleSelectAll?: () => void;
@@ -57,6 +58,7 @@ export function AlertDataTable({
   sortConfig,
   onSort,
   onDecision,
+  onEntityClick,
   selectedIds,
   onToggleSelectRow,
   onToggleSelectAll,
@@ -78,10 +80,14 @@ export function AlertDataTable({
     );
   };
 
-  const renderChanges = (changes: 'New' | 'Modified' | null) => {
+  const renderChanges = (changes: AlertItem['changes']) => {
     if (!changes) return null;
     const labelKey =
-      changes === 'New' ? 'complianceAlerts.changes.new' : 'complianceAlerts.changes.modified';
+      changes === 'New'
+        ? 'complianceAlerts.changes.new'
+        : changes === 'Reopened'
+          ? 'complianceAlerts.changes.reopened'
+          : 'complianceAlerts.changes.modified';
     return (
       <Badge variant="outline" className="text-[11px] font-medium">
         {t(labelKey)}
@@ -231,12 +237,27 @@ export function AlertDataTable({
               )}
               <td className="px-6 py-4">
                 <div>
-                  <div
-                    className="text-sm font-medium"
-                    style={{ color: '#000E2B' }}
-                  >
-                    {alert.entityName}
-                  </div>
+                  {onEntityClick ? (
+                    <button
+                      type="button"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        onEntityClick(alert);
+                      }}
+                      title={t('complianceAlerts.table.openEntity')}
+                      className="text-sm font-medium text-left hover:underline underline-offset-2"
+                      style={{ color: '#000E2B' }}
+                    >
+                      {alert.entityName}
+                    </button>
+                  ) : (
+                    <div
+                      className="text-sm font-medium"
+                      style={{ color: '#000E2B' }}
+                    >
+                      {alert.entityName}
+                    </div>
+                  )}
                   <div className="text-xs text-gray-500">
                     <span className="font-medium text-gray-400">
                       {t('complianceAlerts.table.nameAlertLabel')}:

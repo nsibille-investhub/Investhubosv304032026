@@ -172,7 +172,8 @@
     "whatsNew": "What's new",
     "administration": "Administration",
     "spaces": "Spaces",
-    "settings": "Settings"
+    "settings": "Settings",
+    "entityDetail": "Entity detail"
   },
   "search": {
     "placeholder": "Search... Ask anything to your Hub.",
@@ -1593,7 +1594,9 @@
         "amlScore": "AML score",
         "monitoringActive": "Active monitoring",
         "monitoringEnabled": "Enabled",
-        "monitoringDisabled": "Disabled"
+        "monitoringDisabled": "Disabled",
+        "screenedEntities": "Screened entities",
+        "openEntity": "Open entity record"
       },
       "kycStatus": {
         "Validé": "Validated",
@@ -3753,11 +3756,13 @@
       "list": "Alert List",
       "status": "Status",
       "date": "Date",
-      "actions": "Actions"
+      "actions": "Actions",
+      "openEntity": "Open entity record"
     },
     "changes": {
       "new": "New",
-      "modified": "Modified"
+      "modified": "Modified",
+      "reopened": "Reopened"
     },
     "status": {
       "pending": "Pending",
@@ -3922,6 +3927,403 @@
         "inactive": "Inactive",
         "dissolved": "Dissolved"
       }
+    }
+  },
+  "complianceEntities": {
+    "list": {
+      "title": "Entities",
+      "subtitle": "Manage screening, monitoring and decisions across all entities",
+      "export": "Export",
+      "statusSection": "Entity status",
+      "entityUnit": "entity",
+      "cards": {
+        "needReview": "Need review",
+        "needReviewMetric": "To review",
+        "reviewed": "Reviewed",
+        "reviewedMetric": "Reviewed",
+        "all": "All entities",
+        "allMetric": "Total"
+      },
+      "searchPlaceholder": "Search an entity...",
+      "empty": "No entity matches the current filters.",
+      "noMatches": "No match",
+      "idLabel": "ID",
+      "copyId": "Copy identifier",
+      "columns": {
+        "entity": "Entity",
+        "type": "Type",
+        "status": "Status",
+        "risk": "Risk",
+        "matches": "Matches",
+        "hits": "Hits",
+        "decisions": "Decisions",
+        "parent": "Parent",
+        "monitoring": "Monitoring",
+        "updated": "Updated"
+      },
+      "filters": {
+        "type": "Type",
+        "risk": "Risk",
+        "status": "Status",
+        "analyst": "Analyst",
+        "monitoring": "Monitoring",
+        "monitored": "Monitoring enabled",
+        "notMonitored": "Monitoring disabled"
+      },
+      "toast": {
+        "idCopied": "ID copied",
+        "copyError": "Copy failed",
+        "copyErrorBody": "Unable to copy to the clipboard",
+        "exported": "CSV export generated",
+        "exportedBody": "{{count}} entities exported"
+      }
+    },
+    "type": {
+      "individual": "Individual",
+      "corporate": "Legal entity"
+    },
+    "status": {
+      "pending": "Pending",
+      "newHit": "New hit",
+      "trueHit": "True Hit",
+      "clear": "Clear",
+      "validated": "Validated",
+      "closed": "Closed"
+    },
+    "risk": {
+      "low": "Low",
+      "medium": "Medium",
+      "high": "High",
+      "pending": "Pending"
+    },
+    "parentType": {
+      "investor": "Investor",
+      "partner": "Partner",
+      "participation": "Portfolio company"
+    },
+    "relative": {
+      "minutes": "{{count}} min ago",
+      "hours": "{{count}} h ago",
+      "yesterday": "Yesterday",
+      "days": "{{count}} d ago",
+      "weeks": "{{count}} wk ago",
+      "months": "{{count}} mo ago",
+      "years": "{{count}} yr ago"
+    },
+    "detail": {
+      "back": "Back",
+      "notFound": "Entity not found",
+      "notFoundBody": "This entity does not exist or has been removed.",
+      "backToList": "Back to the list",
+      "providerRef": "Provider ref.",
+      "createdAt": "Created on",
+      "dossier": "KYC file",
+      "actions": {
+        "rerun": "Re-run screening",
+        "rerunning": "Screening in progress...",
+        "reassign": "Reassign",
+        "close": "Close entity",
+        "reopen": "Reopen entity",
+        "export": "Export",
+        "exportReport": "Entity report (PDF)",
+        "exportAudit": "Audit trail (CSV)",
+        "exportMatches": "Matches (CSV)",
+        "treatPending": "Handle alerts ({{count}})",
+        "viewMatches": "View all matches"
+      },
+      "closeDialog": {
+        "title": "Close this entity?",
+        "body": "The relationship has ended: monitoring stops and the entity moves to the Closed status. Matches and the audit trail remain available.",
+        "confirm": "Close",
+        "cancel": "Cancel"
+      },
+      "banner": {
+        "title": "{{count}} matches are awaiting a decision",
+        "titleOne": "1 match is awaiting a decision",
+        "body": "Qualify each match (True Hit, False Hit or Unsure) with a mandatory comment.",
+        "cta": "Handle now"
+      },
+      "closedBanner": {
+        "title": "Entity closed",
+        "body": "Monitoring is stopped. No new screening runs on this entity."
+      },
+      "tabs": {
+        "summary": "Summary",
+        "matches": "Matches and alerts",
+        "relations": "Relations",
+        "audit": "Audit trail"
+      },
+      "rail": {
+        "decisions": "Decisions",
+        "todo": "To review",
+        "unsure": "Unsure",
+        "confirmed": "Confirmed",
+        "rejected": "Rejected",
+        "risk": "Risk level",
+        "riskHint": "From the KYC file risk matrix",
+        "riskLink": "View scoring in the KYC file",
+        "tracking": "Tracking",
+        "monitoring": "Monitoring",
+        "monitoringOn": "Active",
+        "monitoringOff": "Inactive",
+        "analyst": "Analyst",
+        "provider": "Provider",
+        "source": "Sources",
+        "lastScreening": "Last screening",
+        "quickActions": "Quick actions"
+      },
+      "summary": {
+        "identity": "Identity",
+        "identityHint": "Data used for screening",
+        "individual": {
+          "firstName": "First name",
+          "lastName": "Last name",
+          "birthDate": "Date of birth",
+          "birthPlace": "Place of birth",
+          "nationality": "Nationality",
+          "residence": "Country of residence"
+        },
+        "corporate": {
+          "legalName": "Legal name",
+          "legalForm": "Legal form",
+          "registration": "Registration number",
+          "incorporation": "Incorporation date",
+          "country": "Country",
+          "headOffice": "Head office"
+        },
+        "relation": "Business attachment",
+        "relationHint": "Parent, entity role and KYC file",
+        "screening": "Screening",
+        "screeningHint": "History of scans run with the provider",
+        "runs": {
+          "initial": "Initial screening",
+          "manual": "Manual re-run",
+          "ongoing": "Monitoring update",
+          "matchesFound": "{{count}} match(es)",
+          "newMatches": "{{count}} new"
+        },
+        "exposure": "Exposure by list",
+        "exposureHint": "Number of matches per category",
+        "noExposure": "No match detected for this entity.",
+        "recentActivity": "Recent activity",
+        "seeAll": "See all",
+        "links": "Business links",
+        "noLinks": "No link"
+      }
+    },
+    "matches": {
+      "cards": {
+        "todo": "To review",
+        "todoMetric": "Undecided",
+        "unsure": "Unsure",
+        "unsureMetric": "To investigate",
+        "confirmed": "Confirmed",
+        "confirmedMetric": "True hits",
+        "rejected": "Rejected",
+        "rejectedMetric": "False hits",
+        "all": "All",
+        "allMetric": "Total"
+      },
+      "search": "Search a match (hit name)...",
+      "filters": {
+        "source": "Source",
+        "category": "List",
+        "change": "Change",
+        "changeNone": "None"
+      },
+      "empty": "No match fits the filters.",
+      "emptyNoMatch": "No match detected",
+      "emptyNoMatchBody": "Screening returned no profile for this entity. Status: Clear.",
+      "hit": "Hit",
+      "firstSeen": "Detected on",
+      "lastUpdate": "Updated",
+      "decidedBy": "Decision by {{name}}",
+      "decidedOn": "on {{date}}",
+      "revision": "Revision {{n}}",
+      "status": {
+        "todo": "To review",
+        "unsure": "Unsure",
+        "confirmed": "True Hit",
+        "rejected": "False Hit"
+      },
+      "actions": {
+        "view": "View details",
+        "confirm": "True Hit",
+        "reject": "False Hit",
+        "unsure": "Unsure",
+        "revise": "Change decision",
+        "history": "Show history",
+        "hideHistory": "Hide history"
+      },
+      "history": {
+        "alerts": "Alerts",
+        "decisions": "Decisions",
+        "noDecision": "No decision recorded",
+        "new": "New match",
+        "change": "Data changed",
+        "reopened": "Match reopened",
+        "scoreAt": "score {{score}}%"
+      },
+      "suggestion": {
+        "title": "True Hit confirmed on {{name}}",
+        "body": "{{count}} other match(es) remain to review. If the right profile is identified, you can reject them at once.",
+        "cta": "Mark the others as False Hit",
+        "dismiss": "Dismiss"
+      },
+      "selection": {
+        "one": "match selected",
+        "many": "matches selected",
+        "onlyPending": "Only matches to review can be selected"
+      },
+      "toast": {
+        "qualified": "{{count}} match(es) qualified",
+        "revised": "Decision changed",
+        "revisedBody": "{{name}}: {{decision}}"
+      }
+    },
+    "revise": {
+      "title": "Change decision",
+      "body": "A new decision replaces the previous one. The history is kept in the audit trail.",
+      "current": "Current decision",
+      "newDecision": "New decision",
+      "comment": "Justification",
+      "commentPlaceholder": "Explain why the decision changes...",
+      "missingComment": "A justification is required",
+      "missingDecision": "Choose a new decision",
+      "cancel": "Cancel",
+      "confirm": "Save decision"
+    },
+    "relations": {
+      "title": "Attachments",
+      "hint": "Business parent, role and KYC file",
+      "parent": "Parent",
+      "dossier": "KYC file",
+      "openDossier": "Open the file",
+      "openParent": "Open the record",
+      "openEntity": "View entity record",
+      "graph": "Relations graph",
+      "graphHint": "Explore the entity's connections"
+    },
+    "audit": {
+      "title": "Audit trail",
+      "hint": "Every event is timestamped and attributed. CSV export available.",
+      "types": {
+        "screening_run": "Screening",
+        "match_created": "New match",
+        "match_changed": "Match changed",
+        "match_reopened": "Match reopened",
+        "decision": "Decision",
+        "decision_revised": "Decision changed",
+        "comment": "Comment",
+        "assignment": "Assignment",
+        "monitoring": "Monitoring",
+        "status": "Status",
+        "report": "Report",
+        "export": "Export",
+        "closed": "Closure"
+      },
+      "desc": {
+        "entity_created": "Entity created from {{parent}}",
+        "run_initial": "Initial screening run: {{count}} match(es)",
+        "run_manual": "Screening re-run manually: {{count}} match(es)",
+        "run_ongoing": "Monitoring update: {{count}} match(es)",
+        "assigned": "Analyst assigned: {{after}}",
+        "reassigned": "Analyst changed: {{before}} to {{after}}",
+        "monitoring_on": "Monitoring enabled",
+        "monitoring_off": "Monitoring disabled",
+        "new": "New match {{match}} ({{score}})",
+        "change": "Data changed on {{match}} ({{score}})",
+        "reopened": "Match {{match}} reopened ({{score}})",
+        "decision": "{{match}} qualified {{decision}}",
+        "decision_revised": "{{match}}: decision changed from {{before}} to {{after}}",
+        "comment": "Comment on {{match}}",
+        "report": "Entity report generated ({{after}})",
+        "export": "Export downloaded: {{after}}",
+        "closed": "Entity closed",
+        "reopened_entity": "Entity reopened"
+      }
+    },
+    "report": {
+      "title": "KYC / AML entity report",
+      "subtitle": "Screening, decisions and audit trail",
+      "generatedOn": "Generated on",
+      "generatedBy": "by",
+      "reference": "Reference",
+      "confidential": "Confidential. For authorised personnel only.",
+      "print": "Print / Save as PDF",
+      "noMatches": "No match detected for this entity.",
+      "noDecision": "No decision recorded",
+      "noAudit": "No event recorded.",
+      "sections": {
+        "summary": "Summary",
+        "identity": "Identity",
+        "screening": "Screening",
+        "matches": "Matches and decisions",
+        "matchDetail": "Profile details",
+        "audit": "Audit trail"
+      },
+      "labels": {
+        "status": "Status",
+        "risk": "Risk level",
+        "monitoring": "Monitoring",
+        "provider": "Provider",
+        "analyst": "Analyst",
+        "parent": "Attachment",
+        "relation": "Relation",
+        "dossier": "KYC file",
+        "createdAt": "Created on",
+        "lastScreening": "Last screening",
+        "totalMatches": "Matches",
+        "todo": "To review",
+        "unsure": "Unsure",
+        "confirmed": "Confirmed",
+        "rejected": "Rejected",
+        "runKind": "Screening type",
+        "runBy": "Run by"
+      },
+      "table": {
+        "hit": "Hit",
+        "score": "Score",
+        "categories": "Lists",
+        "source": "Source",
+        "decision": "Decision",
+        "analyst": "Analyst",
+        "date": "Date",
+        "comment": "Comment"
+      },
+      "profile": {
+        "biography": "Biography",
+        "warnings": "Warning",
+        "identification": "Identification",
+        "names": "Names and aliases",
+        "sources": "Sources",
+        "reports": "Reports"
+      },
+      "auditCols": {
+        "date": "Date",
+        "actor": "Actor",
+        "role": "Role",
+        "type": "Type",
+        "description": "Description"
+      },
+      "toast": {
+        "generated": "Report generated",
+        "generatedBody": "The report opens in a new tab. Use Print to save it as PDF.",
+        "popupBlocked": "Popup blocked",
+        "popupBlockedBody": "Allow popups to display the report.",
+        "auditExported": "Audit trail exported",
+        "matchesExported": "Matches exported"
+      }
+    },
+    "toast": {
+      "monitoringOn": "Monitoring enabled",
+      "monitoringOff": "Monitoring disabled",
+      "analystAssigned": "Analyst changed",
+      "analystAssignedBody": "Assigned to {{name}}",
+      "rerun": "Screening re-run",
+      "rerunBody": "{{count}} known match(es), no new profile",
+      "closed": "Entity closed",
+      "reopened": "Entity reopened"
     }
   },
   "mailRedirect": {

@@ -1,21 +1,17 @@
 import React from 'react';
 import { motion } from 'motion/react';
 import { Building2, User } from 'lucide-react';
-import { toast } from 'sonner';
 
-interface Parent {
-  type: 'Investor' | 'Partner' | 'Participation';
-  name: string;
-  entityType: 'Individual' | 'Corporate';
-}
+import { useTranslation } from '../utils/languageContext';
+import type { EntityParent } from '../utils/screeningMock';
+import { openParentPage } from './entity-detail/entityDetailShared';
 
-export function ParentCell({ parent }: { parent: Parent }) {
+export function ParentCell({ parent }: { parent: EntityParent }) {
+  const { t } = useTranslation();
+
   const handleParentClick = (e: React.MouseEvent) => {
     e.stopPropagation();
-    toast.info('Redirection vers la fiche parent', {
-      description: `${parent.name}`,
-    });
-    // TODO: Navigation vers la fiche du parent
+    openParentPage(parent, t);
   };
 
   return (
@@ -23,6 +19,7 @@ export function ParentCell({ parent }: { parent: Parent }) {
       whileHover={{ x: 2 }}
       whileTap={{ scale: 0.98 }}
       onClick={handleParentClick}
+      title={t('complianceEntities.relations.openParent')}
       className="inline-flex items-center gap-1.5 text-xs group"
     >
       <span className="text-gray-400 group-hover:text-blue-500 transition-colors flex-shrink-0">

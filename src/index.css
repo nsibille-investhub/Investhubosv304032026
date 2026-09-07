@@ -11058,3 +11058,206 @@ html {
   color: rgb(107 114 128);
 }
 .newsletter-content hr { border: none; border-top: 1px solid #E5E5E5; margin: 20px 0; }
+
+/* Utilitaires absents du CSS précompilé, employés par le détail d'entité compliance
+   (et par le détail de dossier KYC pour la grille deux colonnes). */
+@layer utilities {
+  .border-border {
+    border-color: var(--border);
+  }
+
+  :where(.divide-border > :not(:last-child)) {
+    border-color: var(--border);
+  }
+
+  .bg-muted\/30 {
+    background-color: color-mix(in oklab, var(--muted) 30%, transparent);
+  }
+
+  .bg-muted\/40 {
+    background-color: color-mix(in oklab, var(--muted) 40%, transparent);
+  }
+
+  .bg-primary\/5 {
+    background-color: color-mix(in oklab, var(--primary) 5%, transparent);
+  }
+
+  .bg-primary\/10 {
+    background-color: color-mix(in oklab, var(--primary) 10%, transparent);
+  }
+
+  .bg-card\/95 {
+    background-color: color-mix(in oklab, var(--card) 95%, transparent);
+  }
+
+  .bg-destructive\/10 {
+    background-color: color-mix(in oklab, var(--destructive) 10%, transparent);
+  }
+
+  .bg-slate-300 {
+    background-color: var(--color-slate-300);
+  }
+
+  .text-slate-400 {
+    color: oklch(.704 .04 256.788);
+  }
+
+  .text-slate-500 {
+    color: var(--color-slate-500);
+  }
+
+  .text-slate-800 {
+    color: oklch(.279 .041 260.031);
+  }
+
+  .text-foreground\/70 {
+    color: color-mix(in oklab, var(--foreground) 70%, transparent);
+  }
+
+  .text-foreground\/80 {
+    color: color-mix(in oklab, var(--foreground) 80%, transparent);
+  }
+
+  .text-muted-foreground\/50 {
+    color: color-mix(in oklab, var(--muted-foreground) 50%, transparent);
+  }
+
+  .text-muted-foreground\/60 {
+    color: color-mix(in oklab, var(--muted-foreground) 60%, transparent);
+  }
+
+  .text-\[22px\] {
+    font-size: 22px;
+  }
+
+  .leading-7 {
+    --tw-leading: calc(var(--spacing) * 7);
+    line-height: calc(var(--spacing) * 7);
+  }
+
+  .underline-offset-2 {
+    text-underline-offset: 2px;
+  }
+
+  .gap-y-3 {
+    row-gap: calc(var(--spacing) * 3);
+  }
+
+  .p-10 {
+    padding: calc(var(--spacing) * 10);
+  }
+
+  .py-10 {
+    padding-block: calc(var(--spacing) * 10);
+  }
+
+  .py-14 {
+    padding-block: calc(var(--spacing) * 14);
+  }
+
+  .inset-1\.5 {
+    inset: calc(var(--spacing) * 1.5);
+  }
+
+  .self-center {
+    align-self: center;
+  }
+
+  .size-12 {
+    width: calc(var(--spacing) * 12);
+    height: calc(var(--spacing) * 12);
+  }
+
+  .size-20 {
+    width: calc(var(--spacing) * 20);
+    height: calc(var(--spacing) * 20);
+  }
+
+  .max-w-\[280px\] {
+    max-width: 280px;
+  }
+
+  .min-h-\[90px\] {
+    min-height: 90px;
+  }
+
+  .disabled\:opacity-40:disabled {
+    opacity: .4;
+  }
+
+  @media (hover: hover) {
+    .hover\:bg-muted:hover {
+      background-color: var(--muted);
+    }
+
+    .hover\:bg-muted\/30:hover {
+      background-color: color-mix(in oklab, var(--muted) 30%, transparent);
+    }
+
+    .hover\:bg-muted\/40:hover {
+      background-color: color-mix(in oklab, var(--muted) 40%, transparent);
+    }
+
+    .hover\:bg-muted\/50:hover {
+      background-color: color-mix(in oklab, var(--muted) 50%, transparent);
+    }
+
+    .hover\:bg-muted\/60:hover {
+      background-color: color-mix(in oklab, var(--muted) 60%, transparent);
+    }
+
+    .hover\:bg-slate-50:hover {
+      background-color: var(--color-slate-50);
+    }
+
+    .hover\:opacity-80:hover {
+      opacity: .8;
+    }
+
+    .hover\:text-foreground:hover {
+      color: var(--foreground);
+    }
+
+    .hover\:text-primary\/80:hover {
+      color: color-mix(in oklab, var(--primary) 80%, transparent);
+    }
+
+    .hover\:text-slate-700:hover {
+      color: var(--color-slate-700);
+    }
+  }
+
+  @media (width >= 40rem) {
+    .sm\:grid-cols-2 {
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+  }
+
+  @media (width >= 48rem) {
+    .md\:p-5 {
+      padding: calc(var(--spacing) * 5);
+    }
+  }
+
+  @media (width >= 64rem) {
+    .lg\:grid-cols-\[minmax\(0\,1fr\)_340px\] {
+      grid-template-columns: minmax(0, 1fr) 340px;
+    }
+
+    .lg\:grid-cols-\[minmax\(0\,1fr\)_360px\] {
+      grid-template-columns: minmax(0, 1fr) 360px;
+    }
+
+    .lg\:sticky {
+      position: sticky;
+    }
+
+    .lg\:top-6 {
+      top: calc(var(--spacing) * 6);
+    }
+
+    .lg\:self-start {
+      align-self: flex-start;
+    }
+  }
+}

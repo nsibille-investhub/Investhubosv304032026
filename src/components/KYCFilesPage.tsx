@@ -42,6 +42,8 @@ import { mockEntityDossier, mockIndividualDossier } from '../utils/kycDossierMoc
 import { copyToClipboard } from '../utils/clipboard';
 import { cn } from './ui/utils';
 import { useTranslation } from '../utils/languageContext';
+import { useCompliance } from '../utils/complianceContext';
+import { navigateToDetail } from '../utils/routing';
 
 const LISTING_STATUS_TO_DETAIL: Record<KYCFile['status'], DossierStatus> = {
   Rejeté: 'rejected',
@@ -211,6 +213,7 @@ const PROGRESS_CONFIG: Record<
 
 export function KYCFilesPage() {
   const { t } = useTranslation();
+  const { entities: complianceEntities } = useCompliance();
   const [paginationPage, setPaginationPage] = useState(1);
   const [itemsPerPage, setItemsPerPage] = useState(20);
   const [hoveredRow, setHoveredRow] = useState<number | null>(null);
@@ -650,10 +653,15 @@ export function KYCFilesPage() {
 
   if (openedDossier) {
     const dossier = buildDossierFromRow(openedDossier);
+    const linkedEntity =
+      complianceEntities.find((e) => e.name === dossier.displayName) ??
+      complianceEntities.find((e) => e.parent.name === dossier.displayName) ??
+      complianceEntities[0];
     return (
       <KYCDossierDetail
         {...dossier}
         onBack={handleBackToList}
+        onOpenEntity={linkedEntity ? () => navigateToDetail('entity', linkedEntity.uid) : undefined}
         onValidate={() => handleDossierAction('Dossier validé')}
         onReject={() => handleDossierAction('Dossier rejeté')}
         onRequestComplement={() => handleDossierAction('Demande de complément envoyée')}
