@@ -423,16 +423,18 @@ def check_elements(raw: str, elements: list[dict], report: Report, fragment: boo
 
 
 def load_variable_catalog(start_dir: str, explicit: str | None) -> tuple[set[str], str | None]:
+    """Cherche mailTemplateVariables.ts : chemin explicite, puis en remontant depuis le fichier, puis depuis le dossier courant."""
     candidates = []
     if explicit:
         candidates.append(explicit)
-    cur = os.path.abspath(start_dir)
-    for _ in range(8):
-        candidates.append(os.path.join(cur, "src", "utils", "mailTemplateVariables.ts"))
-        parent = os.path.dirname(cur)
-        if parent == cur:
-            break
-        cur = parent
+    for root in (start_dir, os.getcwd()):
+        cur = os.path.abspath(root)
+        for _ in range(8):
+            candidates.append(os.path.join(cur, "src", "utils", "mailTemplateVariables.ts"))
+            parent = os.path.dirname(cur)
+            if parent == cur:
+                break
+            cur = parent
     for path in candidates:
         if path and os.path.isfile(path):
             content = open(path, encoding="utf-8").read()
@@ -440,6 +442,26 @@ def load_variable_catalog(start_dir: str, explicit: str | None) -> tuple[set[str
             if names:
                 return names, path
     return set(), None
+
+
+def load_starter_pack_usage(catalog_path: str | None) -> tuple[set[str], set[str]]:
+    """Variables réellement passées à un point d'envoi (verified) et variables seulement proposées, d'après le Starter Pack."""
+    verified: set[str] = set()
+    proposed: set[str] = set()
+    if not catalog_path:
+        return verified, proposed
+    folder = os.path.join(os.path.dirname(catalog_path), "starterPack")
+    if not os.path.isdir(folder):
+        return verified, proposed
+    for name in os.listdir(folder):
+        if not name.startswith("section-") or not name.endswith(".ts"):
+            continue
+        content = open(os.path.join(folder, name), encoding="utf-8").read()
+        for block in re.findall(r"(?<![A-Za-z])variables:\s*\[(.*?)\]", content, re.S):
+            verified.update(re.findall(r"\$[A-Za-z_][A-Za-z0-9_.]*", block))
+        for block in re.findall(r"proposedVariables:\s*\[(.*?)\]", content, re.S):
+            proposed.update(re.findall(r"name:\s*'(\$[A-Za-z_][A-Za-z0-9_.]*)'", block))
+    return verified, proposed
 
 
 def check_variables(raw: str, report: Report, catalog: set[str], catalog_path: str | None) -> None:
@@ -454,6 +476,12 @@ def check_variables(raw: str, report: Report, catalog: set[str], catalog_path: s
     unknown = sorted(v for v in used if v not in catalog)
     for v in unknown:
         report.error("VARIABLE-INCONNUE", f"{v} n'existe pas dans le catalogue ({os.path.relpath(catalog_path)}). Ne jamais inventer une variable : elle ne serait pas remplacée à l'envoi.")
+    verified, proposed = load_starter_pack_usage(catalog_path)
+    if verified:
+        for v in sorted(used - set(unknown)):
+            if v not in verified:
+                note = "proposée dans le Starter Pack mais pas encore passée par le back" if v in proposed else "jamais vérifiée à un point d'envoi du Starter Pack"
+                report.warn("VARIABLE-NON-VERIFIEE", f"{v} : {note}. Confirmer avec l'équipe back qu'elle est injectée sur ce gabarit, sinon le destinataire verra le jeton en clair.")
 
 
 # --------------------------------------------------------------------------- #

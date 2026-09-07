@@ -41,6 +41,8 @@ Structure type : surtitre facultatif, un seul `<h1>`, paragraphes à 16 px, un C
 
 Mode B : vérifier chaque variable dans `src/utils/mailTemplateVariables.ts` (clés de l'objet `DESCRIPTIONS`). Une variable absente du catalogue n'est pas remplacée à l'envoi : le destinataire verrait `$montant` en clair. Ne jamais en inventer. Si une donnée manque, la proposer comme variable à créer dans le récap, pas dans le HTML.
 
+Le catalogue ne dit pas ce qui est réellement injecté à chaque point d'envoi. Cette information est dans `src/utils/starterPack/section-*.ts` : le tableau `variables` d'un gabarit liste ce que le back passe vraiment, `proposedVariables` ce qui manque encore côté code. Avant d'utiliser une variable, regarder les gabarits voisins de la même section. Une variable présente au catalogue mais jamais dans un tableau `variables` de la section (le script la signale en alerte `VARIABLE-NON-VERIFIEE`) doit être confirmée avec l'équipe back et listée dans le récap comme point à vérifier.
+
 ### Étape 2 : intégration
 
 Partir toujours d'un asset, jamais d'une page blanche :
