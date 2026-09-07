@@ -1,7 +1,11 @@
 import * as React from 'react';
 import type { LucideIcon } from 'lucide-react';
+import { ChevronDown, ChevronUp } from 'lucide-react';
 
+import { useTranslation } from '../../utils/languageContext';
+import { Button } from './button';
 import { Card } from './card';
+import { Collapsible, CollapsibleContent } from './collapsible';
 import { cn } from './utils';
 
 export type DetailLinkProps = {
@@ -66,12 +70,32 @@ export type DetailSummaryMetric = {
   icon?: LucideIcon;
 };
 
+/**
+ * Group of complementary attributes, hidden while the block is folded and
+ * revealed by the "more" button sitting under the actions, bottom right.
+ */
+export type DetailSummarySection = {
+  id: string;
+  title: string;
+  icon?: LucideIcon;
+  items: DetailSummaryAttribute[];
+};
+
 export type DetailSummaryProps = {
   attributes?: DetailSummaryAttribute[];
   metrics?: DetailSummaryMetric[];
   /** Actions shown at the top right of the block, above the contextual slot. */
   actions?: React.ReactNode;
   aside?: React.ReactNode;
+  /** Complementary sections, folded by default. A "more" button appears under the actions when provided. */
+  sections?: DetailSummarySection[];
+  /** Controlled fold state. Leave undefined to let the block manage it. */
+  expanded?: boolean;
+  defaultExpanded?: boolean;
+  onExpandedChange?: (expanded: boolean) => void;
+  /** Captions of the fold button. Default to the shared "more" / "less" strings. */
+  expandLabel?: string;
+  collapseLabel?: string;
   emptyValue?: string;
   newTabTitle?: string;
   className?: string;
@@ -143,33 +167,95 @@ function MetricItem({ metric, emptyValue }: { metric: DetailSummaryMetric; empty
   );
 }
 
+// Les colonnes se répartissent la largeur disponible et repassent à la ligne
+// dès qu'elles descendent sous leur largeur minimale.
+const GRID_STYLE: React.CSSProperties = { gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))' };
+
+function SectionBlock({
+  section,
+  emptyValue,
+  newTabTitle,
+}: {
+  section: DetailSummarySection;
+  emptyValue: string;
+  newTabTitle?: string;
+}) {
+  const Icon = section.icon;
+  const headingId = React.useId();
+
+  return (
+    <section aria-labelledby={headingId} className="flex flex-col gap-3">
+      <div className="flex items-center gap-2">
+        {Icon && <Icon className="w-3.5 h-3.5 text-muted-foreground" />}
+        <h3
+          id={headingId}
+          className="text-[11px] font-semibold uppercase tracking-wide text-muted-foreground"
+        >
+          {section.title}
+        </h3>
+        <span aria-hidden className="flex-1 h-px bg-border" />
+      </div>
+      <div className="grid gap-x-6 gap-y-4" style={GRID_STYLE}>
+        {section.items.map(item => (
+          <AttributeItem
+            key={item.id}
+            attribute={item}
+            emptyValue={emptyValue}
+            newTabTitle={newTabTitle}
+          />
+        ))}
+      </div>
+    </section>
+  );
+}
+
 export function DetailSummary({
   attributes,
   metrics,
   actions,
   aside,
+  sections,
+  expanded,
+  defaultExpanded = false,
+  onExpandedChange,
+  expandLabel,
+  collapseLabel,
   emptyValue = '-',
   newTabTitle,
   className,
 }: DetailSummaryProps) {
+  const { t } = useTranslation();
+  const contentId = React.useId();
+
+  const [internalExpanded, setInternalExpanded] = React.useState(defaultExpanded);
+  const isExpanded = expanded ?? internalExpanded;
+  const setExpanded = (next: boolean) => {
+    if (expanded === undefined) setInternalExpanded(next);
+    onExpandedChange?.(next);
+  };
+
   const hasAttributes = !!attributes && attributes.length > 0;
   const hasMetrics = !!metrics && metrics.length > 0;
+  const hasSections = !!sections && sections.some(section => section.items.length > 0);
+  const hasSideColumn = !!actions || !!aside || hasSections;
 
-  if (!hasAttributes && !hasMetrics && !aside && !actions) return null;
+  if (!hasAttributes && !hasMetrics && !hasSideColumn) return null;
 
-  // Les colonnes se répartissent la largeur disponible et repassent à la ligne
-  // dès qu'elles descendent sous leur largeur minimale.
-  const gridStyle = { gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))' };
+  const toggleLabel = isExpanded
+    ? collapseLabel ?? t('common.showLess')
+    : expandLabel ?? t('common.showMore');
+  const ToggleIcon = isExpanded ? ChevronUp : ChevronDown;
 
   return (
     <Card
       data-slot="detail-summary"
+      data-state={hasSections ? (isExpanded ? 'expanded' : 'collapsed') : undefined}
       className={cn('p-5 shadow-sm', className)}
     >
-      <div className="flex items-start justify-between gap-8">
+      <div className="flex items-stretch justify-between gap-8">
         <div className="flex-1 flex flex-col gap-5 min-w-0">
           {hasAttributes && (
-            <div className="grid gap-x-6 gap-y-4" style={gridStyle}>
+            <div className="grid gap-x-6 gap-y-4" style={GRID_STYLE}>
               {attributes.map(attribute => (
                 <AttributeItem
                   key={attribute.id}
@@ -182,7 +268,7 @@ export function DetailSummary({
           )}
 
           {hasMetrics && (
-            <div className="grid gap-x-6 gap-y-4" style={gridStyle}>
+            <div className="grid gap-x-6 gap-y-4" style={GRID_STYLE}>
               {metrics.map(metric => (
                 <MetricItem key={metric.id} metric={metric} emptyValue={emptyValue} />
               ))}
@@ -190,13 +276,48 @@ export function DetailSummary({
           )}
         </div>
 
-        {(actions || aside) && (
+        {hasSideColumn && (
           <div className="flex-shrink-0 flex flex-col items-end gap-3">
             {actions && <div className="flex items-center gap-2">{actions}</div>}
             {aside}
+            {/* Le bouton de repli reste dans la colonne des actions pour ne pas
+                allonger le bloc replié. */}
+            {hasSections && (
+              <Button
+                type="button"
+                variant="ghost"
+                size="sm"
+                aria-expanded={isExpanded}
+                aria-controls={contentId}
+                onClick={() => setExpanded(!isExpanded)}
+                className="mt-auto -mb-1 -mr-2 gap-1 text-xs text-muted-foreground hover:text-foreground"
+              >
+                {toggleLabel}
+                <ToggleIcon className="w-3.5 h-3.5" />
+              </Button>
+            )}
           </div>
         )}
       </div>
+
+      {hasSections && (
+        <Collapsible open={isExpanded} onOpenChange={setExpanded}>
+          <CollapsibleContent id={contentId}>
+            <div className="mt-5 pt-5 border-t border-border flex flex-col gap-6">
+              {sections
+                .filter(section => section.items.length > 0)
+                .map(section => (
+                  <SectionBlock
+                    key={section.id}
+                    section={section}
+                    emptyValue={emptyValue}
+                    newTabTitle={newTabTitle}
+                  />
+                ))}
+            </div>
+          </CollapsibleContent>
+        </Collapsible>
+      )}
     </Card>
   );
 }
