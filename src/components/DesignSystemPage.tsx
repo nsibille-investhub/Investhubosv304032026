@@ -56,6 +56,19 @@ import {
   CheckCircle2,
   FileEdit,
   UploadCloud,
+  Building2,
+  Percent,
+  Layers3,
+  Hash,
+  MapPin,
+  TrendingUp,
+  ArrowDownCircle,
+  DollarSign,
+  Edit2,
+  Flag,
+  CreditCard,
+  Tag as TagIcon,
+  ShieldCheck,
   Server as ServerIcon,
   type LucideIcon,
 } from 'lucide-react';
@@ -90,6 +103,8 @@ import { SpecificAudience } from './SpecificAudience';
 import { FolderSpaceDialogPreview } from './ui/folder-space-dialog';
 import { KpiCard, KpiStrip } from './ui/kpi-card';
 import { PageHeader } from './ui/page-header';
+import { Button } from './ui/button';
+import { DetailSummary } from './ui/detail-summary';
 import { SearchInput } from './ui/search-input';
 import { SegmentedControl } from './ui/segmented-control';
 import {
@@ -860,6 +875,112 @@ function renderInvestorColumnPreview(column: string) {
   }
 }
 
+function DetailSummaryPreview({ expanded = false }: { expanded?: boolean }) {
+  return (
+    <DetailSummary
+      newTabTitle="Ouvrir dans un nouvel onglet"
+      defaultExpanded={expanded}
+      actions={
+        <Button
+          variant="outline"
+          size="sm"
+          className="gap-1.5 text-primary border-primary/30 hover:bg-primary/5 hover:text-primary h-9"
+        >
+          <Edit2 className="w-3.5 h-3.5" />
+          Modifier
+        </Button>
+      }
+      attributes={[
+        { id: 'investor', label: 'Investisseur', value: 'Camille Durand', icon: User, href: '#' },
+        { id: 'structure', label: 'Structure', value: 'Durand Family Office SAS', icon: Building2, href: '#' },
+        {
+          id: 'partner',
+          label: 'Partenaire',
+          value: 'Alpha Partners',
+          secondaryValue: 'Conseiller : Julien',
+          icon: Users,
+          href: '#',
+        },
+        {
+          id: 'fees',
+          label: 'Frais',
+          value: "Frais d'entrée : 3 750,00 €",
+          secondaryValue: 'Prime de souscription : 0,00 €',
+          icon: DollarSign,
+        },
+      ]}
+      metrics={[
+        { id: 'subscribed', label: 'Montant souscrit', value: '150 000 €', secondaryValue: '150 parts', icon: DollarSign },
+        { id: 'called', label: 'Montant appelé', value: '60 000 €', secondaryValue: '40%', icon: TrendingUp },
+        { id: 'distributed', label: 'Montant distribué', value: '0 €', secondaryValue: '0%', icon: ArrowDownCircle },
+        { id: 'remaining', label: 'Solde restant', value: '90 000 €', secondaryValue: '60%', icon: Wallet },
+      ]}
+      sections={[
+        {
+          id: 'subscription',
+          title: 'Souscription',
+          icon: FileText,
+          items: [
+            { id: 'language', label: 'Langue', value: 'Français', icon: Globe },
+            { id: 'holdingMode', label: 'Mode de détention', value: 'Nominatif', icon: Wallet },
+            { id: 'externalId', label: 'Identifiant externe', value: 'EXT-48213', icon: Hash },
+            { id: 'subscriptionType', label: 'Type de souscription', value: 'Engagement', icon: TagIcon },
+            { id: 'share', label: 'Part', value: 'Part A', icon: Layers3, href: '#' },
+            { id: 'sharePrice', label: 'Montant de la part', value: '1 000,00 €', icon: DollarSign },
+            { id: 'entryFees', label: "Frais d'entrée (%)", value: '2,5 %', icon: Percent },
+            { id: 'depositary', label: 'Dépositaire', value: 'Oui', icon: ShieldCheck },
+            { id: 'sepa', label: 'Prélèvement SEPA', value: 'Non', icon: Banknote },
+          ],
+        },
+        {
+          id: 'subscriber',
+          title: 'Souscripteur',
+          icon: User,
+          items: [
+            { id: 'title', label: 'Civilité', value: 'Mme', icon: User },
+            { id: 'lastName', label: 'Nom', value: 'Durand', icon: User },
+            { id: 'firstName', label: 'Prénom', value: 'Camille', icon: User },
+            { id: 'email', label: 'Email', value: 'camille.durand@example.com', icon: Mail },
+            { id: 'phone', label: 'Téléphone', value: '+33 6 00 00 00 00', icon: Phone },
+            { id: 'address1', label: 'Adresse 1', value: '12 rue de Rivoli', icon: MapPin },
+            { id: 'postalCode', label: 'Code postal', value: '75001', icon: Hash },
+            { id: 'city', label: 'Ville', value: 'Paris', icon: MapPin },
+            { id: 'country', label: 'Pays', value: 'France', icon: Globe },
+            { id: 'birthDate', label: 'Date de naissance', value: '14/03/1978', icon: Calendar },
+            { id: 'nationality', label: 'Nationalité', value: 'Française', icon: Flag },
+          ],
+        },
+        {
+          id: 'banking',
+          title: 'Coordonnées bancaires',
+          icon: Landmark,
+          items: [
+            { id: 'iban', label: 'IBAN', value: 'FR76 3000 6000 0112 3456 7890 189', icon: CreditCard },
+            { id: 'bic', label: 'BIC', value: 'AGRIFRPP', icon: Landmark },
+          ],
+        },
+        {
+          id: 'partner',
+          title: 'Partenaire',
+          icon: Handshake,
+          items: [
+            { id: 'partnerName', label: 'Distributeur', value: 'Alpha Partners', icon: Handshake, href: '#' },
+            { id: 'advisor', label: 'Conseiller', value: 'Julien', icon: Users },
+            { id: 'commissionRate', label: 'Taux de commission', value: '1 %', icon: Percent },
+            { id: 'excludeRetrocessions', label: 'Exclure des rétrocessions', value: 'Non', icon: ArrowDownCircle },
+          ],
+        },
+        {
+          id: 'customFields',
+          title: 'Champs personnalisés',
+          icon: FileText,
+          items: [{ id: 'sideLetter', label: 'Side letter', icon: FileText }],
+        },
+      ]}
+    />
+  );
+}
+
 function ItemSelectorPreview() {
   const [responsible, setResponsible] = React.useState('Jean Dault');
 
@@ -1490,6 +1611,100 @@ export function DesignSystemPage() {
     { label: 'Télécharger .csv', onClick: () => ..., icon: <FileSpreadsheet /> },
     { label: 'Archiver', onClick: () => ..., destructive: true, separatorBefore: true },
   ]}
+/>`}
+            </pre>
+          </div>
+        </div>
+      </section>
+
+      <section className="rounded-2xl border border-[#D7E0DD] dark:border-[#1F2D2A] bg-white dark:bg-[#101615] p-8 md:p-10">
+        <header className="mb-8 space-y-3">
+          <h2 className="text-lg font-semibold text-[#1F3137] dark:text-[#E8F0EE]">
+            Composant Détail - ds-detail-summary
+          </h2>
+          <p className="text-sm text-[#4F6166] dark:text-[#9DB2AE] max-w-3xl leading-relaxed">
+            Bloc de synthèse placé en tête d&apos;une page de détail (souscription, investisseur, fonds).
+            Deux niveaux de lecture&nbsp;: les attributs clés et les indicateurs restent toujours visibles,
+            les sections complémentaires (souscripteur, coordonnées bancaires, partenaire, champs personnalisés)
+            se déplient avec le bouton <strong>Plus</strong> au bas du bloc et se replient avec <strong>Moins</strong>.
+            Les actions contextuelles (Modifier, etc.) se placent en haut à droite.
+          </p>
+          <p className="text-xs text-[#4F6166] dark:text-[#9DB2AE] leading-relaxed">
+            Identifiant&nbsp;: <code className="text-xs px-1 py-0.5 rounded bg-[#F1F5F4] dark:bg-[#1C2624] font-semibold">ds-detail-summary</code> - Import&nbsp;:
+            <code className="text-xs px-1 py-0.5 rounded bg-[#F1F5F4] dark:bg-[#1C2624] ml-1">{`import { DetailSummary } from '@/components/ui/detail-summary'`}</code>
+          </p>
+          <p className="text-xs text-[#4F6166] dark:text-[#9DB2AE] leading-relaxed max-w-3xl">
+            Le bouton Plus n&apos;apparaît que si <code className="text-xs px-1 py-0.5 rounded bg-[#F1F5F4] dark:bg-[#1C2624]">sections</code> est renseigné.
+            L&apos;état replié / déplié est géré par le composant (<code className="text-xs px-1 py-0.5 rounded bg-[#F1F5F4] dark:bg-[#1C2624]">defaultExpanded</code>)
+            ou piloté par le parent (<code className="text-xs px-1 py-0.5 rounded bg-[#F1F5F4] dark:bg-[#1C2624]">expanded</code> +
+            <code className="text-xs px-1 py-0.5 rounded bg-[#F1F5F4] dark:bg-[#1C2624] ml-1">onExpandedChange</code>).
+            Les valeurs vides s&apos;affichent avec <code className="text-xs px-1 py-0.5 rounded bg-[#F1F5F4] dark:bg-[#1C2624]">emptyValue</code> (tiret par défaut).
+          </p>
+        </header>
+
+        <div className="space-y-16">
+          <div className="space-y-4">
+            <div className="flex items-baseline gap-3">
+              <span className="text-[11px] font-semibold uppercase tracking-[0.14em] text-[#456B6C]">
+                Replié (par défaut)
+              </span>
+              <span className="text-xs text-[#4F6166] dark:text-[#9DB2AE]">
+                attributs + indicateurs + action, bouton Plus en pied de bloc
+              </span>
+            </div>
+            <div className="overflow-hidden rounded-xl border border-[#D7E0DD] dark:border-[#1F2D2A] bg-[#F8FAFA] dark:bg-[#0B0D0D] p-4 md:p-6">
+              <DetailSummaryPreview />
+            </div>
+          </div>
+
+          <div className="space-y-4">
+            <div className="flex items-baseline gap-3">
+              <span className="text-[11px] font-semibold uppercase tracking-[0.14em] text-[#456B6C]">
+                Déplié
+              </span>
+              <span className="text-xs text-[#4F6166] dark:text-[#9DB2AE]">
+                sections complémentaires en grille, bouton Moins pour replier
+              </span>
+            </div>
+            <div className="overflow-hidden rounded-xl border border-[#D7E0DD] dark:border-[#1F2D2A] bg-[#F8FAFA] dark:bg-[#0B0D0D] p-4 md:p-6">
+              <DetailSummaryPreview expanded />
+            </div>
+          </div>
+
+          <div className="space-y-4">
+            <div className="flex items-baseline gap-3">
+              <span className="text-[11px] font-semibold uppercase tracking-[0.14em] text-[#456B6C]">
+                Usage
+              </span>
+              <span className="text-xs text-[#4F6166] dark:text-[#9DB2AE]">
+                signature typique de la prop
+              </span>
+            </div>
+            <pre className="text-xs bg-[#F8FAFA] dark:bg-[#0B0D0D] border border-[#D7E0DD] dark:border-[#1F2D2A] p-5 rounded-xl overflow-x-auto leading-relaxed">
+{`<DetailSummary
+  actions={<Button variant="outline" size="sm">Modifier</Button>}   // optionnel
+  attributes={[                                                      // toujours visibles
+    { id: 'investor', label: 'Investisseur', value: 'Camille Durand', icon: User, href: investorUrl },
+    { id: 'partner', label: 'Partenaire', value: 'Alpha Partners', secondaryValue: 'Conseiller : Julien', icon: Users },
+  ]}
+  metrics={[                                                         // toujours visibles
+    { id: 'subscribed', label: 'Montant souscrit', value: '150 000 €', secondaryValue: '150 parts', icon: DollarSign },
+  ]}
+  sections={[                                                        // repliées, bouton Plus / Moins
+    {
+      id: 'subscriber',
+      title: 'Souscripteur',
+      icon: User,
+      items: [
+        { id: 'lastName', label: 'Nom', value: 'Durand', icon: User },
+        { id: 'iban', label: 'IBAN', value: undefined, icon: CreditCard },   // affiche emptyValue
+      ],
+    },
+  ]}
+  // defaultExpanded                                                 // déplié à l'ouverture
+  // expanded={isOpen} onExpandedChange={setIsOpen}                 // mode piloté
+  // expandLabel="Plus" collapseLabel="Moins"                        // par défaut : common.showMore / showLess
+  emptyValue="-"
 />`}
             </pre>
           </div>

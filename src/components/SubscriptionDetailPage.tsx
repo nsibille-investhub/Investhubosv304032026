@@ -41,6 +41,15 @@ import {
   Copy,
   Landmark,
   Layers3,
+  Globe,
+  Tag,
+  ShieldCheck,
+  Banknote,
+  Phone,
+  MapPin,
+  CreditCard,
+  Percent,
+  Handshake,
 } from 'lucide-react';
 import { motion } from 'motion/react';
 import { Badge } from './ui/badge';
@@ -49,7 +58,17 @@ import { Card } from './ui/card';
 import { Separator } from './ui/separator';
 import { Input } from './ui/input';
 import { toast } from 'sonner';
-import { getStatusColor } from '../utils/subscriptionGenerator';
+import {
+  getStatusColor,
+  HOLDING_MODE_LABEL_KEYS,
+  SUBSCRIBER_TITLE_LABEL_KEYS,
+  SUBSCRIPTION_LANGUAGE_LABEL_KEYS,
+  SUBSCRIPTION_TYPE_LABEL_KEYS,
+  type HoldingMode,
+  type SubscriberTitle,
+  type SubscriptionLanguageCode,
+  type SubscriptionType,
+} from '../utils/subscriptionGenerator';
 import { copyToClipboard } from '../utils/clipboard';
 import { getShareableUrl } from '../utils/routing';
 import { SubscriptionInfoPopover } from './SubscriptionInfoPopover';
@@ -471,6 +490,30 @@ export function SubscriptionDetailPage({ subscription: subscriptionProp, onBack 
     });
   };
 
+  // Libellés des valeurs techniques du détail complet (repli "Plus" du bloc).
+  const yesNo = (value: boolean | undefined) =>
+    t(value ? 'subscriptions.detail.form.yes' : 'subscriptions.detail.form.no');
+  const formatPercent = (value: number | null | undefined) =>
+    value === undefined || value === null ? undefined : `${value.toLocaleString('fr-FR')} %`;
+  const formatShortDate = (value: Date | string | null | undefined) => {
+    if (!value) return undefined;
+    const date = value instanceof Date ? value : new Date(value);
+    return Number.isNaN(date.getTime()) ? undefined : date.toLocaleDateString('fr-FR');
+  };
+  const sharePrice = subscription.quantity > 0 ? subscription.amount / subscription.quantity : undefined;
+  const holdingModeLabel = subscription.holdingMode
+    ? t(HOLDING_MODE_LABEL_KEYS[subscription.holdingMode as HoldingMode] ?? subscription.holdingMode)
+    : undefined;
+  const subscriptionTypeLabel = subscription.subscriptionType
+    ? t(SUBSCRIPTION_TYPE_LABEL_KEYS[subscription.subscriptionType as SubscriptionType] ?? subscription.subscriptionType)
+    : undefined;
+  const subscriberTitleLabel = subscription.subscriberTitle
+    ? t(SUBSCRIBER_TITLE_LABEL_KEYS[subscription.subscriberTitle as SubscriberTitle] ?? subscription.subscriberTitle)
+    : undefined;
+  const languageLabel = subscription.language
+    ? t(SUBSCRIPTION_LANGUAGE_LABEL_KEYS[subscription.language as SubscriptionLanguageCode] ?? subscription.language)
+    : undefined;
+
   const detailSummary = (
     <DetailSummary
       newTabTitle={openInNewTab}
@@ -552,6 +595,219 @@ export function SubscriptionDetailPage({ subscription: subscriptionProp, onBack 
           value: `${(subscription.remainingAmount ?? subscription.amount).toLocaleString('fr-FR')} €`,
           secondaryValue: formatRatio(subscription.remainingAmount ?? subscription.amount),
           icon: Wallet,
+        },
+      ]}
+      sections={[
+        {
+          id: 'subscription',
+          title: t('subscriptions.detail.form.sectionSubscription'),
+          icon: FileText,
+          items: [
+            {
+              id: 'language',
+              label: t('subscriptions.detail.form.language'),
+              value: languageLabel,
+              icon: Globe,
+            },
+            {
+              id: 'holdingMode',
+              label: t('subscriptions.detail.form.holdingMode'),
+              value: holdingModeLabel,
+              icon: Wallet,
+            },
+            {
+              id: 'externalId',
+              label: t('subscriptions.detail.form.externalId'),
+              value: subscription.externalId,
+              icon: Hash,
+            },
+            {
+              id: 'subscriptionType',
+              label: t('subscriptions.detail.form.subscriptionType'),
+              value: subscriptionTypeLabel,
+              icon: Tag,
+            },
+            {
+              id: 'share',
+              label: t('subscriptions.detail.form.shareClass'),
+              value: t('subscriptions.detail.init.sharePrefix', { name: subscription.fund.shareClass }),
+              icon: Layers3,
+              href: fundUrl,
+            },
+            {
+              id: 'sharePrice',
+              label: t('subscriptions.detail.form.sharePrice'),
+              value: sharePrice !== undefined ? formatAmount(sharePrice) : undefined,
+              icon: DollarSign,
+            },
+            {
+              id: 'entryFeesRate',
+              label: t('subscriptions.detail.form.entryFees'),
+              value: formatPercent(subscription.entryFees ?? 0),
+              icon: Percent,
+            },
+            {
+              id: 'depositary',
+              label: t('subscriptions.detail.form.depositary'),
+              value: yesNo(subscription.hasDepositary),
+              icon: ShieldCheck,
+            },
+            {
+              id: 'sepa',
+              label: t('subscriptions.detail.form.sepa'),
+              value: yesNo(subscription.sepaEnabled),
+              icon: Banknote,
+            },
+          ],
+        },
+        {
+          id: 'subscriber',
+          title: t('subscriptions.detail.form.sectionSubscriber'),
+          icon: User,
+          items: [
+            {
+              id: 'subscriberTitle',
+              label: t('subscriptions.detail.form.subscriberTitle'),
+              value: subscriberTitleLabel,
+              icon: User,
+            },
+            {
+              id: 'legalName',
+              label: t('subscriptions.detail.form.legalName'),
+              value: subscription.legalName,
+              icon: Building2,
+            },
+            {
+              id: 'lastName',
+              label: t('subscriptions.detail.form.lastNameField'),
+              value: subscription.lastName,
+              icon: User,
+            },
+            {
+              id: 'firstName',
+              label: t('subscriptions.detail.form.firstNameField'),
+              value: subscription.firstName,
+              icon: User,
+            },
+            {
+              id: 'email',
+              label: t('subscriptions.detail.form.emailField'),
+              value: subscription.email,
+              icon: Mail,
+            },
+            {
+              id: 'phone',
+              label: t('subscriptions.detail.form.phoneField'),
+              value: subscription.phone,
+              icon: Phone,
+            },
+            {
+              id: 'address1',
+              label: t('subscriptions.detail.form.address1'),
+              value: subscription.address1,
+              icon: MapPin,
+            },
+            {
+              id: 'address2',
+              label: t('subscriptions.detail.form.address2'),
+              value: subscription.address2,
+              icon: MapPin,
+            },
+            {
+              id: 'postalCode',
+              label: t('subscriptions.detail.form.postalCodeField'),
+              value: subscription.postalCode,
+              icon: Hash,
+            },
+            {
+              id: 'city',
+              label: t('subscriptions.detail.form.cityField'),
+              value: subscription.city,
+              icon: MapPin,
+            },
+            {
+              id: 'country',
+              label: t('subscriptions.detail.form.country'),
+              value: subscription.contrepartie.country,
+              icon: Globe,
+            },
+            {
+              id: 'birthDate',
+              label: t('subscriptions.detail.form.birthDate'),
+              value: formatShortDate(subscription.birthDate),
+              icon: Calendar,
+            },
+            {
+              id: 'nationality',
+              label: t('subscriptions.detail.form.nationalityField'),
+              value: subscription.nationality,
+              icon: Flag,
+            },
+          ],
+        },
+        {
+          id: 'banking',
+          title: t('subscriptions.detail.form.sectionBanking'),
+          icon: Landmark,
+          items: [
+            {
+              id: 'iban',
+              label: t('subscriptions.detail.form.ibanField'),
+              value: subscription.iban,
+              icon: CreditCard,
+            },
+            {
+              id: 'bic',
+              label: t('subscriptions.detail.form.bicField'),
+              value: subscription.bic,
+              icon: Landmark,
+            },
+          ],
+        },
+        {
+          id: 'partner',
+          title: t('subscriptions.detail.form.sectionPartner'),
+          icon: Handshake,
+          items: [
+            {
+              id: 'partnerName',
+              label: t('subscriptions.detail.form.partner'),
+              value: subscription.partenaire?.name ?? t('subscriptions.detail.form.noPartner'),
+              icon: Handshake,
+              href: subscription.partenaire ? partnerUrl : undefined,
+            },
+            {
+              id: 'advisor',
+              label: t('subscriptions.detail.form.advisor'),
+              value: subscription.advisor,
+              icon: Users,
+            },
+            {
+              id: 'commissionRate',
+              label: t('subscriptions.detail.form.commissionRate'),
+              value: formatPercent(subscription.commissionRate),
+              icon: Percent,
+            },
+            {
+              id: 'excludeRetrocessions',
+              label: t('subscriptions.detail.form.excludeRetrocessions'),
+              value: yesNo(subscription.excludeRetrocessions),
+              icon: ArrowDownCircle,
+            },
+          ],
+        },
+        {
+          id: 'customFields',
+          title: t('subscriptions.detail.form.sectionCustomFields'),
+          icon: ClipboardList,
+          items: [
+            {
+              id: 'sideLetter',
+              label: t('subscriptions.detail.form.sideLetter'),
+              value: subscription.sideLetter,
+              icon: FileText,
+            },
+          ],
         },
       ]}
     />

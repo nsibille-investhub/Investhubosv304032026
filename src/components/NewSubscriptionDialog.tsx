@@ -1,4 +1,4 @@
-import { useState, useEffect, useMemo, useRef } from 'react';
+import { useState, useEffect, useMemo, useRef, type ReactNode } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
 import {
   X,
@@ -24,6 +24,19 @@ import {
   FileText,
   Trash2,
   Pencil,
+  Mail,
+  Phone,
+  MapPin,
+  CreditCard,
+  Percent,
+  Tag,
+  Wallet,
+  Calendar,
+  Flag,
+  Banknote,
+  Users,
+  ArrowDownCircle,
+  type LucideIcon,
 } from 'lucide-react';
 import { BigModal, BigModalContent, BigModalTitle, BigModalDescription } from './ui/big-modal';
 import { Input } from './ui/input';
@@ -35,6 +48,16 @@ import { PartyTypeBadge } from './ui/party-type-badge';
 import { Popover, PopoverContent, PopoverTrigger } from './ui/popover';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from './ui/select';
 import { Switch } from './ui/switch';
+import { Textarea } from './ui/textarea';
+import { cn } from './ui/utils';
+import {
+  HOLDING_MODE_LABEL_KEYS,
+  SUBSCRIBER_TITLE_LABEL_KEYS,
+  SUBSCRIPTION_TYPE_LABEL_KEYS,
+  type HoldingMode,
+  type SubscriberTitle,
+  type SubscriptionType,
+} from '../utils/subscriptionGenerator';
 import { toast } from 'sonner';
 import { useTranslation } from '../utils/languageContext';
 
@@ -85,6 +108,132 @@ type SubscriptionLanguage = 'fr' | 'en';
 
 const SUBSCRIPTION_LANGUAGES: SubscriptionLanguage[] = ['fr', 'en'];
 const DEFAULT_SUBSCRIPTION_LANGUAGE: SubscriptionLanguage = 'fr';
+
+const HOLDING_MODE_OPTIONS = Object.entries(HOLDING_MODE_LABEL_KEYS) as [HoldingMode, string][];
+const SUBSCRIPTION_TYPE_OPTIONS = Object.entries(SUBSCRIPTION_TYPE_LABEL_KEYS) as [SubscriptionType, string][];
+const SUBSCRIBER_TITLE_OPTIONS = Object.entries(SUBSCRIBER_TITLE_LABEL_KEYS) as [SubscriberTitle, string][];
+
+/**
+ * Complementary fields, only exposed in edit mode: they mirror the folded
+ * sections of the detail summary block.
+ */
+interface ExtendedFormData {
+  holdingMode: HoldingMode | '';
+  externalId: string;
+  subscriptionType: SubscriptionType | '';
+  sepaEnabled: boolean;
+  subscriberTitle: SubscriberTitle | '';
+  legalName: string;
+  lastName: string;
+  firstName: string;
+  email: string;
+  phone: string;
+  address1: string;
+  address2: string;
+  postalCode: string;
+  city: string;
+  country: string;
+  birthDate: string;
+  nationality: string;
+  iban: string;
+  bic: string;
+  advisor: string;
+  commissionRate: string;
+  excludeRetrocessions: boolean;
+  sideLetter: string;
+}
+
+const EMPTY_EXTENDED_FORM: ExtendedFormData = {
+  holdingMode: '',
+  externalId: '',
+  subscriptionType: '',
+  sepaEnabled: false,
+  subscriberTitle: '',
+  legalName: '',
+  lastName: '',
+  firstName: '',
+  email: '',
+  phone: '',
+  address1: '',
+  address2: '',
+  postalCode: '',
+  city: '',
+  country: '',
+  birthDate: '',
+  nationality: '',
+  iban: '',
+  bic: '',
+  advisor: '',
+  commissionRate: '',
+  excludeRetrocessions: false,
+  sideLetter: '',
+};
+
+function toDateInputValue(value: unknown): string {
+  const date =
+    value instanceof Date ? value : typeof value === 'string' && value ? new Date(value) : null;
+  if (!date || Number.isNaN(date.getTime())) return '';
+  const pad = (n: number) => String(n).padStart(2, '0');
+  return `${date.getFullYear()}-${pad(date.getMonth() + 1)}-${pad(date.getDate())}`;
+}
+
+function fromDateInputValue(value: string): Date | null {
+  if (!value) return null;
+  const [year, month, day] = value.split('-').map(Number);
+  if (!year || !month || !day) return null;
+  return new Date(year, month - 1, day);
+}
+
+function EditField({
+  label,
+  icon: Icon,
+  className,
+  children,
+}: {
+  label: string;
+  icon?: LucideIcon;
+  className?: string;
+  children: ReactNode;
+}) {
+  return (
+    <div className={cn('space-y-1.5 min-w-0', className)}>
+      <Label className="text-xs flex items-center gap-1.5">
+        {Icon && <Icon className="w-3.5 h-3.5" />}
+        {label}
+      </Label>
+      {children}
+    </div>
+  );
+}
+
+function SwitchField({
+  id,
+  checked,
+  onCheckedChange,
+  onLabel,
+  offLabel,
+  disabled,
+}: {
+  id: string;
+  checked: boolean;
+  onCheckedChange: (checked: boolean) => void;
+  onLabel: string;
+  offLabel: string;
+  disabled?: boolean;
+}) {
+  return (
+    <label
+      htmlFor={id}
+      className={cn(
+        'flex h-10 w-full items-center justify-between gap-3 rounded-md border border-input bg-white px-3 py-2 text-sm transition-colors',
+        disabled ? 'opacity-50 cursor-not-allowed' : 'cursor-pointer hover:bg-muted/40',
+      )}
+    >
+      <span className="text-foreground truncate">{checked ? onLabel : offLabel}</span>
+      <Switch id={id} checked={checked} onCheckedChange={onCheckedChange} disabled={disabled} />
+    </label>
+  );
+}
 
 interface FormData {
   investor: Investor | null;
@@ -225,6 +374,10 @@ export function NewSubscriptionDialog({
   const [step, setStep] = useState<'init' | 'documents'>('init');
   const [uploadedDocuments, setUploadedDocuments] = useState<File[]>([]);
 
+  const [extended, setExtended] = useState<ExtendedFormData>(EMPTY_EXTENDED_FORM);
+  const updateExtended = <K extends keyof ExtendedFormData>(key: K, value: ExtendedFormData[K]) =>
+    setExtended((prev) => ({ ...prev, [key]: value }));
+
   const [newInvestor, setNewInvestor] = useState({
     type: 'individual' as 'individual' | 'corporate',
     firstName: '',
@@ -355,6 +508,34 @@ export function NewSubscriptionDialog({
       notifyOnCreation: false,
       language: subscription.language === 'en' ? 'en' : 'fr',
     });
+    setExtended({
+      holdingMode: subscription.holdingMode ?? '',
+      externalId: subscription.externalId ?? '',
+      subscriptionType: subscription.subscriptionType ?? '',
+      sepaEnabled: !!subscription.sepaEnabled,
+      subscriberTitle: subscription.subscriberTitle ?? '',
+      legalName: subscription.legalName ?? '',
+      lastName: subscription.lastName ?? '',
+      firstName: subscription.firstName ?? '',
+      email: subscription.email ?? '',
+      phone: subscription.phone ?? '',
+      address1: subscription.address1 ?? '',
+      address2: subscription.address2 ?? '',
+      postalCode: subscription.postalCode ?? '',
+      city: subscription.city ?? '',
+      country: subscription.contrepartie?.country ?? '',
+      birthDate: toDateInputValue(subscription.birthDate),
+      nationality: subscription.nationality ?? '',
+      iban: subscription.iban ?? '',
+      bic: subscription.bic ?? '',
+      advisor: subscription.advisor ?? '',
+      commissionRate:
+        subscription.commissionRate === undefined || subscription.commissionRate === null
+          ? ''
+          : String(subscription.commissionRate),
+      excludeRetrocessions: !!subscription.excludeRetrocessions,
+      sideLetter: subscription.sideLetter ?? '',
+    });
     setStep('init');
     setSearchQuery('');
     setShowNewInvestorForm(false);
@@ -386,6 +567,7 @@ export function NewSubscriptionDialog({
         setShowAutocomplete(false);
         setStep('init');
         setUploadedDocuments([]);
+        setExtended(EMPTY_EXTENDED_FORM);
       }, 300);
     }
   }, [open]);
@@ -675,6 +857,9 @@ export function NewSubscriptionDialog({
         : '';
 
     if (isEditMode) {
+      const isDirect = formData.distributor === 'direct';
+      const subscriberEmail = extended.email.trim() || formData.investor.email || '';
+      const commissionRateValue = parseFloat(extended.commissionRate.replace(',', '.'));
       const updatedSubscription = {
         ...subscription,
         contrepartie: {
@@ -683,8 +868,9 @@ export function NewSubscriptionDialog({
           name: formData.investor.name,
           structure: structureName || undefined,
           mainContact: formData.investor.email,
+          country: extended.country.trim() || subscription.contrepartie?.country,
         },
-        email: formData.investor.email,
+        email: subscriberEmail,
         fund: {
           ...subscription.fund,
           name: fundName,
@@ -703,6 +889,27 @@ export function NewSubscriptionDialog({
               },
         hasDepositary: formData.hasCustodyOption,
         language: formData.language,
+        holdingMode: extended.holdingMode || undefined,
+        externalId: extended.externalId.trim() || undefined,
+        subscriptionType: extended.subscriptionType || undefined,
+        sepaEnabled: extended.sepaEnabled,
+        subscriberTitle: extended.subscriberTitle || undefined,
+        legalName: extended.legalName.trim() || undefined,
+        lastName: extended.lastName.trim() || undefined,
+        firstName: extended.firstName.trim() || undefined,
+        phone: extended.phone.trim() || undefined,
+        address1: extended.address1.trim() || undefined,
+        address2: extended.address2.trim() || undefined,
+        postalCode: extended.postalCode.trim() || undefined,
+        city: extended.city.trim() || undefined,
+        birthDate: fromDateInputValue(extended.birthDate),
+        nationality: extended.nationality.trim() || undefined,
+        iban: extended.iban.replace(/\s+/g, '').toUpperCase() || undefined,
+        bic: extended.bic.trim().toUpperCase() || undefined,
+        advisor: isDirect ? undefined : extended.advisor.trim() || undefined,
+        commissionRate: isDirect || !Number.isFinite(commissionRateValue) ? 0 : commissionRateValue,
+        excludeRetrocessions: extended.excludeRetrocessions,
+        sideLetter: extended.sideLetter.trim() || undefined,
         updatedAt: new Date(),
       };
 
@@ -1667,6 +1874,70 @@ export function NewSubscriptionDialog({
                     </div>
                   </div>
 
+                  {isEditMode && (
+                    <div
+                      className="grid gap-3"
+                      style={{ gridTemplateColumns: '1fr 1fr 1fr 1.2fr' }}
+                    >
+                      <EditField label={t('subscriptions.detail.form.holdingMode')} icon={Wallet}>
+                        <Select
+                          value={extended.holdingMode}
+                          onValueChange={(value) => updateExtended('holdingMode', value as HoldingMode)}
+                        >
+                          <SelectTrigger className="h-10">
+                            <SelectValue placeholder={t('subscriptions.detail.form.selectPlaceholder')} />
+                          </SelectTrigger>
+                          <SelectContent>
+                            {HOLDING_MODE_OPTIONS.map(([value, labelKey]) => (
+                              <SelectItem key={value} value={value}>
+                                {t(labelKey)}
+                              </SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
+                      </EditField>
+
+                      <EditField label={t('subscriptions.detail.form.externalId')} icon={Hash}>
+                        <Input
+                          value={extended.externalId}
+                          onChange={(e) => updateExtended('externalId', e.target.value)}
+                          placeholder={t('subscriptions.detail.form.externalIdPlaceholder')}
+                          className="h-10"
+                        />
+                      </EditField>
+
+                      <EditField label={t('subscriptions.detail.form.subscriptionType')} icon={Tag}>
+                        <Select
+                          value={extended.subscriptionType}
+                          onValueChange={(value) =>
+                            updateExtended('subscriptionType', value as SubscriptionType)
+                          }
+                        >
+                          <SelectTrigger className="h-10">
+                            <SelectValue placeholder={t('subscriptions.detail.form.selectPlaceholder')} />
+                          </SelectTrigger>
+                          <SelectContent>
+                            {SUBSCRIPTION_TYPE_OPTIONS.map(([value, labelKey]) => (
+                              <SelectItem key={value} value={value}>
+                                {t(labelKey)}
+                              </SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
+                      </EditField>
+
+                      <EditField label={t('subscriptions.detail.form.sepa')} icon={Banknote}>
+                        <SwitchField
+                          id="sepa-enabled-switch"
+                          checked={extended.sepaEnabled}
+                          onCheckedChange={(checked) => updateExtended('sepaEnabled', checked)}
+                          onLabel={t('subscriptions.detail.form.yes')}
+                          offLabel={t('subscriptions.detail.form.no')}
+                        />
+                      </EditField>
+                    </div>
+                  )}
+
                   <Separator className="my-2" />
 
                   {/* Distributor Selection - Dropdown */}
@@ -1815,6 +2086,64 @@ export function NewSubscriptionDialog({
                     </div>
                   </div>
 
+                  {isEditMode && (() => {
+                    const isDirect = formData.distributor === 'direct';
+                    return (
+                      <div
+                        className="grid gap-3"
+                        style={{ gridTemplateColumns: '1.4fr 1fr 1.4fr' }}
+                      >
+                        <EditField label={t('subscriptions.detail.form.advisor')} icon={Users}>
+                          <Input
+                            value={extended.advisor}
+                            onChange={(e) => updateExtended('advisor', e.target.value)}
+                            disabled={isDirect}
+                            className="h-10"
+                          />
+                        </EditField>
+
+                        <EditField label={t('subscriptions.detail.form.commissionRate')} icon={Percent}>
+                          <div
+                            className={cn(
+                              'flex h-10 w-full items-center rounded-md border border-input bg-white pr-3 focus-within:ring-2 focus-within:ring-ring/40',
+                              isDirect && 'opacity-50',
+                            )}
+                          >
+                            <Input
+                              type="text"
+                              inputMode="decimal"
+                              value={extended.commissionRate}
+                              onChange={(e) =>
+                                updateExtended(
+                                  'commissionRate',
+                                  e.target.value.replace(/[^0-9.,]/g, '').replace(',', '.'),
+                                )
+                              }
+                              disabled={isDirect}
+                              placeholder="0"
+                              className="h-full border-0 bg-transparent font-semibold text-right shadow-none focus-visible:ring-0 focus-visible:ring-offset-0"
+                            />
+                            <span className="ml-1 text-sm text-muted-foreground select-none">%</span>
+                          </div>
+                        </EditField>
+
+                        <EditField
+                          label={t('subscriptions.detail.form.excludeRetrocessions')}
+                          icon={ArrowDownCircle}
+                        >
+                          <SwitchField
+                            id="exclude-retrocessions-switch"
+                            checked={extended.excludeRetrocessions}
+                            onCheckedChange={(checked) => updateExtended('excludeRetrocessions', checked)}
+                            onLabel={t('subscriptions.detail.form.yes')}
+                            offLabel={t('subscriptions.detail.form.no')}
+                            disabled={isDirect}
+                          />
+                        </EditField>
+                      </div>
+                    );
+                  })()}
+
                   {/* Amount Summary */}
                   {calculatedAmount > 0 && (
                     <motion.div
@@ -1863,6 +2192,203 @@ export function NewSubscriptionDialog({
                         </div>
                       </div>
                     </motion.div>
+                  )}
+
+                  {isEditMode && (
+                    <>
+                      {/* SUBSCRIBER SECTION */}
+                      <Separator className="my-2" />
+                      <div className="space-y-3">
+                        <Label className="text-xs uppercase tracking-wide font-semibold text-muted-foreground flex items-center gap-1.5">
+                          <User className="w-3.5 h-3.5" />
+                          {t('subscriptions.detail.form.sectionSubscriber')}
+                        </Label>
+
+                        <div className="grid grid-cols-3 gap-3">
+                          <EditField label={t('subscriptions.detail.form.subscriberTitle')} icon={User}>
+                            <Select
+                              value={extended.subscriberTitle}
+                              onValueChange={(value) =>
+                                updateExtended('subscriberTitle', value as SubscriberTitle)
+                              }
+                            >
+                              <SelectTrigger className="h-10">
+                                <SelectValue placeholder={t('subscriptions.detail.form.selectPlaceholder')} />
+                              </SelectTrigger>
+                              <SelectContent>
+                                {SUBSCRIBER_TITLE_OPTIONS.map(([value, labelKey]) => (
+                                  <SelectItem key={value} value={value}>
+                                    {t(labelKey)}
+                                  </SelectItem>
+                                ))}
+                              </SelectContent>
+                            </Select>
+                          </EditField>
+
+                          <EditField
+                            label={t('subscriptions.detail.form.legalName')}
+                            icon={Building2}
+                            className="col-span-2"
+                          >
+                            <Input
+                              value={extended.legalName}
+                              onChange={(e) => updateExtended('legalName', e.target.value)}
+                              className="h-10"
+                            />
+                          </EditField>
+
+                          <EditField label={t('subscriptions.detail.form.lastNameField')} icon={User}>
+                            <Input
+                              value={extended.lastName}
+                              onChange={(e) => updateExtended('lastName', e.target.value)}
+                              className="h-10"
+                            />
+                          </EditField>
+
+                          <EditField label={t('subscriptions.detail.form.firstNameField')} icon={User}>
+                            <Input
+                              value={extended.firstName}
+                              onChange={(e) => updateExtended('firstName', e.target.value)}
+                              className="h-10"
+                            />
+                          </EditField>
+
+                          <EditField label={t('subscriptions.detail.form.emailField')} icon={Mail}>
+                            <Input
+                              type="email"
+                              value={extended.email}
+                              onChange={(e) => updateExtended('email', e.target.value)}
+                              className="h-10"
+                            />
+                          </EditField>
+
+                          <EditField label={t('subscriptions.detail.form.phoneField')} icon={Phone}>
+                            <Input
+                              type="tel"
+                              value={extended.phone}
+                              onChange={(e) => updateExtended('phone', e.target.value)}
+                              className="h-10"
+                            />
+                          </EditField>
+
+                          <EditField
+                            label={t('subscriptions.detail.form.address1')}
+                            icon={MapPin}
+                            className="col-span-2"
+                          >
+                            <Input
+                              value={extended.address1}
+                              onChange={(e) => updateExtended('address1', e.target.value)}
+                              className="h-10"
+                            />
+                          </EditField>
+
+                          <EditField
+                            label={t('subscriptions.detail.form.address2')}
+                            icon={MapPin}
+                            className="col-span-2"
+                          >
+                            <Input
+                              value={extended.address2}
+                              onChange={(e) => updateExtended('address2', e.target.value)}
+                              className="h-10"
+                            />
+                          </EditField>
+
+                          <EditField label={t('subscriptions.detail.form.postalCodeField')} icon={Hash}>
+                            <Input
+                              value={extended.postalCode}
+                              onChange={(e) => updateExtended('postalCode', e.target.value)}
+                              className="h-10"
+                            />
+                          </EditField>
+
+                          <EditField label={t('subscriptions.detail.form.cityField')} icon={MapPin}>
+                            <Input
+                              value={extended.city}
+                              onChange={(e) => updateExtended('city', e.target.value)}
+                              className="h-10"
+                            />
+                          </EditField>
+
+                          <EditField label={t('subscriptions.detail.form.country')} icon={Globe}>
+                            <Input
+                              value={extended.country}
+                              onChange={(e) => updateExtended('country', e.target.value)}
+                              className="h-10"
+                            />
+                          </EditField>
+
+                          <EditField label={t('subscriptions.detail.form.birthDate')} icon={Calendar}>
+                            <Input
+                              type="date"
+                              value={extended.birthDate}
+                              onChange={(e) => updateExtended('birthDate', e.target.value)}
+                              className="h-10"
+                            />
+                          </EditField>
+
+                          <EditField label={t('subscriptions.detail.form.nationalityField')} icon={Flag}>
+                            <Input
+                              value={extended.nationality}
+                              onChange={(e) => updateExtended('nationality', e.target.value)}
+                              className="h-10"
+                            />
+                          </EditField>
+                        </div>
+                      </div>
+
+                      {/* BANKING SECTION */}
+                      <Separator className="my-2" />
+                      <div className="space-y-3">
+                        <Label className="text-xs uppercase tracking-wide font-semibold text-muted-foreground flex items-center gap-1.5">
+                          <Landmark className="w-3.5 h-3.5" />
+                          {t('subscriptions.detail.form.sectionBanking')}
+                        </Label>
+
+                        <div className="grid grid-cols-3 gap-3">
+                          <EditField
+                            label={t('subscriptions.detail.form.ibanField')}
+                            icon={CreditCard}
+                            className="col-span-2"
+                          >
+                            <Input
+                              value={extended.iban}
+                              onChange={(e) => updateExtended('iban', e.target.value)}
+                              placeholder="FR76 0000 0000 0000 0000 0000 000"
+                              className="h-10 font-mono uppercase"
+                            />
+                          </EditField>
+
+                          <EditField label={t('subscriptions.detail.form.bicField')} icon={Landmark}>
+                            <Input
+                              value={extended.bic}
+                              onChange={(e) => updateExtended('bic', e.target.value)}
+                              placeholder="XXXXFRPP"
+                              className="h-10 font-mono uppercase"
+                            />
+                          </EditField>
+                        </div>
+                      </div>
+
+                      {/* CUSTOM FIELDS SECTION */}
+                      <Separator className="my-2" />
+                      <div className="space-y-3">
+                        <Label className="text-xs uppercase tracking-wide font-semibold text-muted-foreground flex items-center gap-1.5">
+                          <FileText className="w-3.5 h-3.5" />
+                          {t('subscriptions.detail.form.sectionCustomFields')}
+                        </Label>
+
+                        <EditField label={t('subscriptions.detail.form.sideLetter')} icon={FileText}>
+                          <Textarea
+                            value={extended.sideLetter}
+                            onChange={(e) => updateExtended('sideLetter', e.target.value)}
+                            placeholder={t('subscriptions.detail.form.sideLetterPlaceholder')}
+                            className="min-h-20"
+                          />
+                        </EditField>
+                      </div>
+                    </>
                   )}
 
                   {/* NOTIFICATION & LANGUAGE SECTION */}

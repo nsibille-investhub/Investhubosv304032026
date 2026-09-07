@@ -565,7 +565,23 @@
         "bicField": "BIC",
         "commissionRate": "Commission rate",
         "excludeRetrocessions": "Exclude from retrocessions",
-        "sideLetter": "Side letter"
+        "sideLetter": "Side letter",
+        "sideLetterPlaceholder": "Specific conditions granted to the subscriber",
+        "sectionSubscription": "Subscription",
+        "sectionPartner": "Partner",
+        "selectPlaceholder": "Select...",
+        "subscriptionTypeOptions": {
+          "free": "Free amount",
+          "commitment": "Commitment",
+          "capitalCall": "Capital call"
+        },
+        "languageOptions": {
+          "fr": "French",
+          "en": "English",
+          "de": "German",
+          "it": "Italian",
+          "es": "Spanish"
+        }
       },
       "sections": {
         "identity": "Identity",
@@ -1847,6 +1863,8 @@
     }
   },
   "common": {
+    "showMore": "More",
+    "showLess": "Less",
     "pagination": {
       "showingOne": "Showing {{start}} to {{end}} of {{total}} result",
       "showingMany": "Showing {{start}} to {{end}} of {{total}} results",

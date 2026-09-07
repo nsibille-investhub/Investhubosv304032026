@@ -204,6 +204,11 @@ function getRelativeTime(date: Date): string {
   return date.toLocaleDateString('en-GB');
 }
 
+export type HoldingMode = 'pur' | 'administre' | 'nominatif';
+export type SubscriptionType = 'free' | 'commitment' | 'capitalCall';
+export type SubscriberTitle = 'mr' | 'mme' | 'societe';
+export type SubscriptionLanguageCode = 'fr' | 'en' | 'de' | 'it' | 'es';
+
 export interface Subscription {
   id: number;
   name: string;
@@ -294,7 +299,7 @@ export interface Subscription {
   notes?: string | null; // Notes supplémentaires
   entryFees?: number; // Frais d'entrée en %
   subscriptionPremium?: number | null; // Prime de souscription (montant additionnel saisi à la création)
-  language?: 'fr' | 'en' | 'de' | 'it' | 'es'; // Langue de la souscription
+  language?: SubscriptionLanguageCode; // Langue de la souscription
   sepaEnabled?: boolean; // Prélèvement SEPA activé
   pendingCalls?: number; // Nombre d'appels de fonds en attente de versement
   onboardingReopened?: number; // Nombre de réouvertures de l'onboarding
@@ -311,10 +316,10 @@ export interface Subscription {
     type: 'individual' | 'corporate';
   }[];
   // Champs complementaires edition
-  holdingMode?: 'pur' | 'administre' | 'nominatif'; // Mode de detention
+  holdingMode?: HoldingMode; // Mode de détention
   externalId?: string; // Identifiant externe
-  subscriptionType?: string; // Type de souscription (montant libre, etc.)
-  subscriberTitle?: 'mr' | 'mme' | 'societe'; // Civilite du souscripteur
+  subscriptionType?: SubscriptionType; // Type de souscription
+  subscriberTitle?: SubscriberTitle; // Civilité du souscripteur
   legalName?: string; // Raison sociale
   firstName?: string;
   lastName?: string;
@@ -330,8 +335,35 @@ export interface Subscription {
   bic?: string;
   commissionRate?: number; // Taux de commission partenaire
   excludeRetrocessions?: boolean;
-  sideLetter?: string; // Champ personnalise
+  sideLetter?: string; // Champ personnalisé
 }
+
+// Clés de traduction des valeurs techniques, résolues à l'affichage.
+export const HOLDING_MODE_LABEL_KEYS: Record<HoldingMode, string> = {
+  pur: 'subscriptions.detail.form.holdingModePur',
+  administre: 'subscriptions.detail.form.holdingModeAdministre',
+  nominatif: 'subscriptions.detail.form.holdingModeNominatif',
+};
+
+export const SUBSCRIPTION_TYPE_LABEL_KEYS: Record<SubscriptionType, string> = {
+  free: 'subscriptions.detail.form.subscriptionTypeOptions.free',
+  commitment: 'subscriptions.detail.form.subscriptionTypeOptions.commitment',
+  capitalCall: 'subscriptions.detail.form.subscriptionTypeOptions.capitalCall',
+};
+
+export const SUBSCRIBER_TITLE_LABEL_KEYS: Record<SubscriberTitle, string> = {
+  mr: 'subscriptions.detail.form.titleMr',
+  mme: 'subscriptions.detail.form.titleMme',
+  societe: 'subscriptions.detail.form.titleSociete',
+};
+
+export const SUBSCRIPTION_LANGUAGE_LABEL_KEYS: Record<SubscriptionLanguageCode, string> = {
+  fr: 'subscriptions.detail.form.languageOptions.fr',
+  en: 'subscriptions.detail.form.languageOptions.en',
+  de: 'subscriptions.detail.form.languageOptions.de',
+  it: 'subscriptions.detail.form.languageOptions.it',
+  es: 'subscriptions.detail.form.languageOptions.es',
+};
 
 export function generateSubscriptions(count: number): Subscription[] {
   const subscriptions: Subscription[] = [];
@@ -618,7 +650,7 @@ export function generateSubscriptions(count: number): Subscription[] {
     const subscriptionPremium = Math.random() > 0.7 ? randomNumber(100, 5000) : null;
     
     // Langue de la souscription
-    const languages = ['fr', 'en', 'de', 'it', 'es'];
+    const languages: SubscriptionLanguageCode[] = ['fr', 'en', 'de', 'it', 'es'];
     const language = randomElement(languages);
     
     // SEPA activé (70% activé)
@@ -662,32 +694,32 @@ export function generateSubscriptions(count: number): Subscription[] {
       }
     }
 
-    // Champs complementaires edition
-    const holdingModes = ['pur', 'administre', 'nominatif'] as const;
-    const holdingMode = randomElement([...holdingModes]);
+    // Champs complémentaires édition
+    const holdingModes: HoldingMode[] = ['pur', 'administre', 'nominatif'];
+    const holdingMode = randomElement(holdingModes);
     const externalId = Math.random() > 0.5 ? `EXT-${randomNumber(10000, 99999)}` : undefined;
-    const subscriptionTypeOptions = ['Montant libre', 'Engagement', 'Appel de fonds'];
+    const subscriptionTypeOptions: SubscriptionType[] = ['free', 'commitment', 'capitalCall'];
     const subscriptionType = randomElement(subscriptionTypeOptions);
-    const subscriberTitles = ['mr', 'mme', 'societe'] as const;
-    const subscriberTitle = type === 'Corporate' ? 'societe' as const : randomElement([...subscriberTitles].slice(0, 2));
+    const individualTitles: SubscriberTitle[] = ['mr', 'mme'];
+    const subscriberTitle: SubscriberTitle = type === 'Corporate' ? 'societe' : randomElement(individualTitles);
     const investorParts = (contrepartie.investor || contrepartie.name).split(' ');
     const firstName = type === 'Individual' ? investorParts[0] : undefined;
     const lastName = type === 'Individual' ? investorParts.slice(1).join(' ') : undefined;
     const legalName = type === 'Corporate' ? (contrepartie.structure || contrepartie.name) : undefined;
     const email = `${(contrepartie.investor || contrepartie.name).toLowerCase().replace(/\s+/g, '.')}@example.com`;
     const phone = `+33 6 ${randomNumber(10, 99)} ${randomNumber(10, 99)} ${randomNumber(10, 99)} ${randomNumber(10, 99)}`;
-    const cities = ['Paris', 'Lyon', 'Marseille', 'Bordeaux', 'Nice', 'Luxembourg', 'Geneve'];
+    const cities = ['Paris', 'Lyon', 'Marseille', 'Bordeaux', 'Nice', 'Luxembourg', 'Genève'];
     const subCity = randomElement(cities);
-    const address1 = `${randomNumber(1, 200)} ${randomElement(['Rue de Rivoli', 'Avenue des Champs-Elysees', 'Boulevard Haussmann', 'Rue du Faubourg Saint-Honore'])}`;
+    const address1 = `${randomNumber(1, 200)} ${randomElement(['Rue de Rivoli', 'Avenue des Champs-Élysées', 'Boulevard Haussmann', 'Rue du Faubourg Saint-Honoré'])}`;
     const postalCode = `${randomNumber(10, 99)}${randomNumber(100, 999)}`;
     const birthDate = type === 'Individual' ? new Date(randomNumber(1950, 1995), randomNumber(0, 11), randomNumber(1, 28)) : null;
-    const nationalities = ['Francaise', 'Suisse', 'Luxembourgeoise', 'Belge', 'Monegasque'];
+    const nationalities = ['Française', 'Suisse', 'Luxembourgeoise', 'Belge', 'Monégasque'];
     const nationality = type === 'Individual' ? randomElement(nationalities) : undefined;
     const iban = Math.random() > 0.3 ? `FR76${randomNumber(10000, 99999)}${randomNumber(10000, 99999)}${randomNumber(10000, 99999)}${randomNumber(10, 99)}` : undefined;
     const bic = iban ? randomElement(['CRLYFRPP', 'BNPAFRPP', 'SOGEFRPP', 'AGRIFRPP']) : undefined;
     const commissionRate = !isDirect ? randomNumber(0, 5) : 0;
     const excludeRetrocessions = Math.random() > 0.8;
-    const sideLetter = Math.random() > 0.8 ? 'Conditions particulieres applicables' : undefined;
+    const sideLetter = Math.random() > 0.8 ? 'Conditions particulières applicables' : undefined;
 
     const subscription: Subscription = {
       id: i + 1,
