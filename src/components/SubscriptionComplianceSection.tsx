@@ -71,7 +71,13 @@ import {
   type ScreeningPurpose,
 } from '../utils/subscriptionRiskMockData';
 
-type ComplianceStatus = 'pending' | 'awaitingValidation' | 'validated';
+export type ComplianceStatus = 'pending' | 'awaitingValidation' | 'validated';
+
+export interface ComplianceStatusSnapshot {
+  status: ComplianceStatus;
+  by: string | null;
+  at: string | null;
+}
 
 interface HitDecisionState {
   discarded?: { by: string; at: string };
@@ -155,7 +161,7 @@ const now = () => {
 
 const round1 = (value: number) => Math.round(value * 10) / 10;
 
-function ToneBadge({ tone, label, className }: { tone: RiskTone; label: string; className?: string }) {
+export function ToneBadge({ tone, label, className }: { tone: RiskTone; label: string; className?: string }) {
   return <Badge className={cn(TONE_STYLES[tone].badge, className)}>{label}</Badge>;
 }
 
@@ -937,6 +943,9 @@ interface SubscriptionComplianceSectionProps {
   onValidateScore: () => void;
   onInvalidateScore: () => void;
   onSubscriptionValidated: () => void;
+  /** Etat de la decision de conformite conserve par le parent entre deux affichages de l'etape. */
+  initialStatus?: ComplianceStatusSnapshot;
+  onStatusChange?: (next: ComplianceStatusSnapshot) => void;
 }
 
 /** Espace Validation / Conformite : widgets risque, screening, categorisation et validation. */
@@ -949,6 +958,8 @@ export function SubscriptionComplianceSection({
   onValidateScore,
   onInvalidateScore,
   onSubscriptionValidated,
+  initialStatus,
+  onStatusChange,
 }: SubscriptionComplianceSectionProps) {
   const { t } = useTranslation();
 
@@ -978,9 +989,11 @@ export function SubscriptionComplianceSection({
   const [categoryDecidedBy, setCategoryDecidedBy] = useState(mockCategorisation.decidedBy);
   const [categoryDecidedAt, setCategoryDecidedAt] = useState(mockCategorisation.decidedAt);
 
-  const [status, setStatus] = useState<ComplianceStatus>('awaitingValidation');
-  const [statusBy, setStatusBy] = useState<string | null>(null);
-  const [statusAt, setStatusAt] = useState<string | null>(null);
+  const [status, setStatus] = useState<ComplianceStatus>(
+    initialStatus?.status ?? 'awaitingValidation',
+  );
+  const [statusBy, setStatusBy] = useState<string | null>(initialStatus?.by ?? null);
+  const [statusAt, setStatusAt] = useState<string | null>(initialStatus?.at ?? null);
   const [overrideRequested, setOverrideRequested] = useState(false);
   const [reopenedAt, setReopenedAt] = useState<string | null>(null);
   const [note, setNote] = useState('');
@@ -1101,6 +1114,7 @@ export function SubscriptionComplianceSection({
     setStatusBy(CURRENT_OPERATOR);
     setStatusAt(stamp);
     setReopenedAt(null);
+    onStatusChange?.({ status: 'validated', by: CURRENT_OPERATOR, at: stamp });
     toast.success(t('subscriptions.detail.compliance.toast.complianceValidated'), {
       description: overrideRequested
         ? t('subscriptions.detail.compliance.toast.complianceValidatedOverride')
@@ -1115,15 +1129,18 @@ export function SubscriptionComplianceSection({
     setStatusAt(stamp);
     setReopenedAt(stamp);
     setOverrideRequested(false);
+    onStatusChange?.({ status: 'awaitingValidation', by: CURRENT_OPERATOR, at: stamp });
     toast.info(t('subscriptions.detail.compliance.toast.complianceReopened'), {
       description: t('subscriptions.detail.compliance.toast.complianceReopenedDesc'),
     });
   };
 
   const handleSubmitToCompliance = () => {
+    const stamp = now();
     setStatus('awaitingValidation');
     setStatusBy(CURRENT_OPERATOR);
-    setStatusAt(now());
+    setStatusAt(stamp);
+    onStatusChange?.({ status: 'awaitingValidation', by: CURRENT_OPERATOR, at: stamp });
     toast.success(t('subscriptions.detail.compliance.toast.submittedToCompliance'));
   };
 
