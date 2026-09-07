@@ -69,9 +69,11 @@ Règles d'or pendant l'assemblage. Le détail, client par client, et les arbitra
 Lancer le script avant toute livraison :
 
 ```
-python3 .claude/skills/email-html-investhub/scripts/lint_email_html.py email.html --text-out email.txt
-python3 .claude/skills/email-html-investhub/scripts/lint_email_html.py gabarit.html --fragment
+python3 <dossier-du-skill>/scripts/lint_email_html.py email.html --text-out email.txt
+python3 <dossier-du-skill>/scripts/lint_email_html.py gabarit.html --fragment
 ```
+
+Dans ce dépôt, le dossier du skill est `.claude/skills/email-html-investhub`. Le script n'a aucune dépendance hors bibliothèque standard Python.
 
 Zéro erreur est la condition de livraison. Chaque alerte restante est corrigée ou justifiée en une ligne dans le récap. En mode fragment, le script vérifie aussi que chaque variable `$` existe dans le catalogue de la plateforme. L'option `--text-out` produit la version texte brut à joindre à l'envoi.
 

@@ -464,9 +464,9 @@ def html_to_text(raw: str) -> str:
     s = re.sub(r"<!--.*?-->", "", raw, flags=re.S)
     s = re.sub(r"<(head|style|script|title)\b.*?</\1>", "", s, flags=re.S | re.I)
     s = re.sub(r"<(span|div)[^>]*(display\s*:\s*none|mso-hide)[^>]*>.*?</\1>", "", s, flags=re.S | re.I)
+    s = re.sub(r"<img\b[^>]*alt\s*=\s*[\"']([^\"']*)[\"'][^>]*>", lambda m: m.group(1).strip(), s, flags=re.I)
     s = re.sub(r"<a\b[^>]*href\s*=\s*[\"']([^\"']+)[\"'][^>]*>(.*?)</a>",
                lambda m: f"{re.sub('<[^>]+>', '', m.group(2)).strip()} ({m.group(1)})", s, flags=re.S | re.I)
-    s = re.sub(r"<img\b[^>]*alt\s*=\s*[\"']([^\"']*)[\"'][^>]*>", lambda m: f"[{m.group(1)}]" if m.group(1).strip() else "", s, flags=re.I)
     s = re.sub(r"<li\b[^>]*>", "\n- ", s, flags=re.I)
     s = re.sub(r"<(h[1-6])\b[^>]*>", "\n\n", s, flags=re.I)
     s = re.sub(r"</(p|h[1-6]|tr|table|ul|ol|li)>", "\n\n", s, flags=re.I)
