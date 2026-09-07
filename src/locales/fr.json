@@ -172,7 +172,8 @@
     "whatsNew": "Nouveautés",
     "administration": "Administration",
     "spaces": "Espaces",
-    "settings": "Paramètres"
+    "settings": "Paramètres",
+    "entityDetail": "Détail de l'entité"
   },
   "search": {
     "placeholder": "Rechercher... Posez votre question à votre Hub.",
@@ -1593,7 +1594,9 @@
         "amlScore": "Score AML",
         "monitoringActive": "Monitoring actif",
         "monitoringEnabled": "Activé",
-        "monitoringDisabled": "Désactivé"
+        "monitoringDisabled": "Désactivé",
+        "screenedEntities": "Entités screenées",
+        "openEntity": "Ouvrir la fiche entité"
       },
       "kycStatus": {
         "Validé": "Validé",
@@ -3753,11 +3756,13 @@
       "list": "Liste",
       "status": "Statut",
       "date": "Date",
-      "actions": "Actions"
+      "actions": "Actions",
+      "openEntity": "Ouvrir la fiche entité"
     },
     "changes": {
       "new": "Nouveau",
-      "modified": "Modifié"
+      "modified": "Modifié",
+      "reopened": "Réouvert"
     },
     "status": {
       "pending": "En attente",
@@ -3922,6 +3927,403 @@
         "inactive": "Inactive",
         "dissolved": "Dissoute"
       }
+    }
+  },
+  "complianceEntities": {
+    "list": {
+      "title": "Entités",
+      "subtitle": "Gérez le screening, le monitoring et les décisions sur l'ensemble des entités",
+      "export": "Exporter",
+      "statusSection": "Statut des entités",
+      "entityUnit": "entité",
+      "cards": {
+        "needReview": "À examiner",
+        "needReviewMetric": "À traiter",
+        "reviewed": "Examinées",
+        "reviewedMetric": "Examinées",
+        "all": "Toutes les entités",
+        "allMetric": "Total"
+      },
+      "searchPlaceholder": "Rechercher une entité...",
+      "empty": "Aucune entité ne correspond aux filtres actuels.",
+      "noMatches": "Aucun match",
+      "idLabel": "ID",
+      "copyId": "Copier l'identifiant",
+      "columns": {
+        "entity": "Entité",
+        "type": "Type",
+        "status": "Statut",
+        "risk": "Risque",
+        "matches": "Matches",
+        "hits": "Hits",
+        "decisions": "Décisions",
+        "parent": "Parent",
+        "monitoring": "Monitoring",
+        "updated": "Maj."
+      },
+      "filters": {
+        "type": "Type",
+        "risk": "Risque",
+        "status": "Statut",
+        "analyst": "Analyste",
+        "monitoring": "Monitoring",
+        "monitored": "Monitoring activé",
+        "notMonitored": "Monitoring désactivé"
+      },
+      "toast": {
+        "idCopied": "ID copié",
+        "copyError": "Erreur de copie",
+        "copyErrorBody": "Impossible de copier dans le presse-papier",
+        "exported": "Export CSV généré",
+        "exportedBody": "{{count}} entités exportées"
+      }
+    },
+    "type": {
+      "individual": "Personne physique",
+      "corporate": "Personne morale"
+    },
+    "status": {
+      "pending": "En attente",
+      "newHit": "Nouveau hit",
+      "trueHit": "True Hit",
+      "clear": "Clear",
+      "validated": "Validée",
+      "closed": "Clôturée"
+    },
+    "risk": {
+      "low": "Faible",
+      "medium": "Moyen",
+      "high": "Élevé",
+      "pending": "En attente"
+    },
+    "parentType": {
+      "investor": "Investisseur",
+      "partner": "Partenaire",
+      "participation": "Participation"
+    },
+    "relative": {
+      "minutes": "Il y a {{count}} min",
+      "hours": "Il y a {{count}} h",
+      "yesterday": "Hier",
+      "days": "Il y a {{count}} j",
+      "weeks": "Il y a {{count}} sem.",
+      "months": "Il y a {{count}} mois",
+      "years": "Il y a {{count}} an(s)"
+    },
+    "detail": {
+      "back": "Retour",
+      "notFound": "Entité introuvable",
+      "notFoundBody": "Cette entité n'existe pas ou a été supprimée.",
+      "backToList": "Retour à la liste",
+      "providerRef": "Réf. fournisseur",
+      "createdAt": "Créée le",
+      "dossier": "Dossier KYC",
+      "actions": {
+        "rerun": "Relancer le screening",
+        "rerunning": "Screening en cours...",
+        "reassign": "Réassigner",
+        "close": "Clôturer l'entité",
+        "reopen": "Rouvrir l'entité",
+        "export": "Exporter",
+        "exportReport": "Rapport d'entité (PDF)",
+        "exportAudit": "Piste d'audit (CSV)",
+        "exportMatches": "Matches (CSV)",
+        "treatPending": "Traiter les alertes ({{count}})",
+        "viewMatches": "Voir tous les matches"
+      },
+      "closeDialog": {
+        "title": "Clôturer l'entité ?",
+        "body": "La relation est terminée : le monitoring est arrêté et l'entité passe au statut Clôturée. Les matches et la piste d'audit restent consultables.",
+        "confirm": "Clôturer",
+        "cancel": "Annuler"
+      },
+      "banner": {
+        "title": "{{count}} matches attendent une décision",
+        "titleOne": "1 match attend une décision",
+        "body": "Qualifiez chaque match (True Hit, False Hit ou Incertain) avec un commentaire obligatoire.",
+        "cta": "Traiter maintenant"
+      },
+      "closedBanner": {
+        "title": "Entité clôturée",
+        "body": "Le monitoring est arrêté. Aucun nouveau screening n'est lancé sur cette entité."
+      },
+      "tabs": {
+        "summary": "Synthèse",
+        "matches": "Matches et alertes",
+        "relations": "Relations",
+        "audit": "Piste d'audit"
+      },
+      "rail": {
+        "decisions": "Décisions",
+        "todo": "À traiter",
+        "unsure": "Incertains",
+        "confirmed": "Confirmés",
+        "rejected": "Rejetés",
+        "risk": "Niveau de risque",
+        "riskHint": "Issu de la matrice de risque du dossier KYC",
+        "riskLink": "Voir le scoring dans le dossier",
+        "tracking": "Suivi",
+        "monitoring": "Monitoring",
+        "monitoringOn": "Actif",
+        "monitoringOff": "Inactif",
+        "analyst": "Analyste",
+        "provider": "Fournisseur",
+        "source": "Sources",
+        "lastScreening": "Dernier screening",
+        "quickActions": "Actions rapides"
+      },
+      "summary": {
+        "identity": "Identité",
+        "identityHint": "Données utilisées pour le screening",
+        "individual": {
+          "firstName": "Prénom",
+          "lastName": "Nom",
+          "birthDate": "Date de naissance",
+          "birthPlace": "Lieu de naissance",
+          "nationality": "Nationalité",
+          "residence": "Pays de résidence"
+        },
+        "corporate": {
+          "legalName": "Raison sociale",
+          "legalForm": "Forme juridique",
+          "registration": "Immatriculation",
+          "incorporation": "Date d'immatriculation",
+          "country": "Pays",
+          "headOffice": "Siège"
+        },
+        "relation": "Rattachement métier",
+        "relationHint": "Parent, rôle de l'entité et dossier KYC",
+        "screening": "Screening",
+        "screeningHint": "Historique des scans exécutés auprès du fournisseur",
+        "runs": {
+          "initial": "Screening initial",
+          "manual": "Relance manuelle",
+          "ongoing": "Mise à jour monitoring",
+          "matchesFound": "{{count}} match(s)",
+          "newMatches": "{{count}} nouveau(x)"
+        },
+        "exposure": "Exposition par liste",
+        "exposureHint": "Nombre de matches par catégorie",
+        "noExposure": "Aucun match détecté pour cette entité.",
+        "recentActivity": "Activité récente",
+        "seeAll": "Tout voir",
+        "links": "Liens métier",
+        "noLinks": "Aucun lien"
+      }
+    },
+    "matches": {
+      "cards": {
+        "todo": "À traiter",
+        "todoMetric": "Sans décision",
+        "unsure": "Incertains",
+        "unsureMetric": "À investiguer",
+        "confirmed": "Confirmés",
+        "confirmedMetric": "True hits",
+        "rejected": "Rejetés",
+        "rejectedMetric": "False hits",
+        "all": "Tous",
+        "allMetric": "Total"
+      },
+      "search": "Rechercher un match (nom du hit)...",
+      "filters": {
+        "source": "Source",
+        "category": "Liste",
+        "change": "Changement",
+        "changeNone": "Aucun"
+      },
+      "empty": "Aucun match ne correspond aux filtres.",
+      "emptyNoMatch": "Aucun match détecté",
+      "emptyNoMatchBody": "Le screening n'a remonté aucun profil pour cette entité. Statut : Clear.",
+      "hit": "Hit",
+      "firstSeen": "Détecté le",
+      "lastUpdate": "Maj.",
+      "decidedBy": "Décision par {{name}}",
+      "decidedOn": "le {{date}}",
+      "revision": "Révision {{n}}",
+      "status": {
+        "todo": "À traiter",
+        "unsure": "Incertain",
+        "confirmed": "True Hit",
+        "rejected": "False Hit"
+      },
+      "actions": {
+        "view": "Voir le détail",
+        "confirm": "True Hit",
+        "reject": "False Hit",
+        "unsure": "Incertain",
+        "revise": "Modifier la décision",
+        "history": "Afficher l'historique",
+        "hideHistory": "Masquer l'historique"
+      },
+      "history": {
+        "alerts": "Alertes",
+        "decisions": "Décisions",
+        "noDecision": "Aucune décision enregistrée",
+        "new": "Nouveau match",
+        "change": "Données modifiées",
+        "reopened": "Match réouvert",
+        "scoreAt": "score {{score}} %"
+      },
+      "suggestion": {
+        "title": "True Hit confirmé sur {{name}}",
+        "body": "{{count}} autre(s) match(s) restent à traiter. Si le bon profil est identifié, vous pouvez les rejeter en une fois.",
+        "cta": "Marquer les autres en False Hit",
+        "dismiss": "Ignorer"
+      },
+      "selection": {
+        "one": "match sélectionné",
+        "many": "matches sélectionnés",
+        "onlyPending": "Seuls les matches à traiter peuvent être sélectionnés"
+      },
+      "toast": {
+        "qualified": "{{count}} match(s) qualifié(s)",
+        "revised": "Décision modifiée",
+        "revisedBody": "{{name}} : {{decision}}"
+      }
+    },
+    "revise": {
+      "title": "Modifier la décision",
+      "body": "Une nouvelle décision remplace la précédente. L'historique est conservé dans la piste d'audit.",
+      "current": "Décision actuelle",
+      "newDecision": "Nouvelle décision",
+      "comment": "Justification",
+      "commentPlaceholder": "Expliquez la raison du changement...",
+      "missingComment": "La justification est obligatoire",
+      "missingDecision": "Choisissez une nouvelle décision",
+      "cancel": "Annuler",
+      "confirm": "Enregistrer la décision"
+    },
+    "relations": {
+      "title": "Rattachements",
+      "hint": "Parent métier, rôle et dossier KYC",
+      "parent": "Parent",
+      "dossier": "Dossier KYC",
+      "openDossier": "Ouvrir le dossier",
+      "openParent": "Ouvrir la fiche",
+      "openEntity": "Voir la fiche entité",
+      "graph": "Graphe des relations",
+      "graphHint": "Explorez les connexions de l'entité"
+    },
+    "audit": {
+      "title": "Piste d'audit",
+      "hint": "Chaque événement est horodaté et attribué. Export CSV disponible.",
+      "types": {
+        "screening_run": "Screening",
+        "match_created": "Nouveau match",
+        "match_changed": "Match modifié",
+        "match_reopened": "Match réouvert",
+        "decision": "Décision",
+        "decision_revised": "Décision modifiée",
+        "comment": "Commentaire",
+        "assignment": "Assignation",
+        "monitoring": "Monitoring",
+        "status": "Statut",
+        "report": "Rapport",
+        "export": "Export",
+        "closed": "Clôture"
+      },
+      "desc": {
+        "entity_created": "Entité créée depuis {{parent}}",
+        "run_initial": "Screening initial exécuté : {{count}} match(s)",
+        "run_manual": "Screening relancé manuellement : {{count}} match(s)",
+        "run_ongoing": "Mise à jour du monitoring : {{count}} match(s)",
+        "assigned": "Analyste assigné : {{after}}",
+        "reassigned": "Analyste modifié : {{before}} vers {{after}}",
+        "monitoring_on": "Monitoring activé",
+        "monitoring_off": "Monitoring désactivé",
+        "new": "Nouveau match {{match}} ({{score}})",
+        "change": "Données modifiées sur {{match}} ({{score}})",
+        "reopened": "Match {{match}} réouvert ({{score}})",
+        "decision": "{{match}} qualifié {{decision}}",
+        "decision_revised": "{{match}} : décision modifiée de {{before}} vers {{after}}",
+        "comment": "Commentaire sur {{match}}",
+        "report": "Rapport d'entité généré ({{after}})",
+        "export": "Export téléchargé : {{after}}",
+        "closed": "Entité clôturée",
+        "reopened_entity": "Entité rouverte"
+      }
+    },
+    "report": {
+      "title": "Rapport d'entité KYC / AML",
+      "subtitle": "Screening, décisions et piste d'audit",
+      "generatedOn": "Généré le",
+      "generatedBy": "par",
+      "reference": "Référence",
+      "confidential": "Confidentiel. Document réservé aux personnes habilitées.",
+      "print": "Imprimer / Enregistrer en PDF",
+      "noMatches": "Aucun match détecté pour cette entité.",
+      "noDecision": "Aucune décision enregistrée",
+      "noAudit": "Aucun événement enregistré.",
+      "sections": {
+        "summary": "Synthèse",
+        "identity": "Identité",
+        "screening": "Screening",
+        "matches": "Matches et décisions",
+        "matchDetail": "Détail des profils",
+        "audit": "Piste d'audit"
+      },
+      "labels": {
+        "status": "Statut",
+        "risk": "Niveau de risque",
+        "monitoring": "Monitoring",
+        "provider": "Fournisseur",
+        "analyst": "Analyste",
+        "parent": "Rattachement",
+        "relation": "Relation",
+        "dossier": "Dossier KYC",
+        "createdAt": "Créée le",
+        "lastScreening": "Dernier screening",
+        "totalMatches": "Matches",
+        "todo": "À traiter",
+        "unsure": "Incertains",
+        "confirmed": "Confirmés",
+        "rejected": "Rejetés",
+        "runKind": "Type de screening",
+        "runBy": "Exécuté par"
+      },
+      "table": {
+        "hit": "Hit",
+        "score": "Score",
+        "categories": "Listes",
+        "source": "Source",
+        "decision": "Décision",
+        "analyst": "Analyste",
+        "date": "Date",
+        "comment": "Commentaire"
+      },
+      "profile": {
+        "biography": "Biographie",
+        "warnings": "Avertissement",
+        "identification": "Identification",
+        "names": "Noms et alias",
+        "sources": "Sources",
+        "reports": "Rapports"
+      },
+      "auditCols": {
+        "date": "Date",
+        "actor": "Acteur",
+        "role": "Rôle",
+        "type": "Type",
+        "description": "Description"
+      },
+      "toast": {
+        "generated": "Rapport généré",
+        "generatedBody": "Le rapport s'ouvre dans un nouvel onglet. Utilisez Imprimer pour l'enregistrer en PDF.",
+        "popupBlocked": "Fenêtre bloquée",
+        "popupBlockedBody": "Autorisez l'ouverture de fenêtres pour afficher le rapport.",
+        "auditExported": "Piste d'audit exportée",
+        "matchesExported": "Matches exportés"
+      }
+    },
+    "toast": {
+      "monitoringOn": "Monitoring activé",
+      "monitoringOff": "Monitoring désactivé",
+      "analystAssigned": "Analyste modifié",
+      "analystAssignedBody": "Assigné à {{name}}",
+      "rerun": "Screening relancé",
+      "rerunBody": "{{count}} match(s) connus, aucun nouveau profil",
+      "closed": "Entité clôturée",
+      "reopened": "Entité rouverte"
     }
   },
   "mailRedirect": {

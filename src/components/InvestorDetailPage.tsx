@@ -53,6 +53,10 @@ import { Input } from './ui/input';
 import { Textarea } from './ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from './ui/select';
 import { EditableSection } from './EditableSection';
+import { useCompliance } from '../utils/complianceContext';
+import { navigateToDetail } from '../utils/routing';
+import { ENTITY_STATUS_KEY, ENTITY_STATUS_VARIANT } from './entity-detail/entityDetailShared';
+import { StatusBadge } from './StatusBadge';
 import {
   validateEmail,
   validatePhone,
@@ -80,7 +84,13 @@ interface InvestorDetailPageProps {
 
 export function InvestorDetailPage({ investor: initialInvestor, onBack, initialTab = 'profil' }: InvestorDetailPageProps) {
   const { t, lang } = useTranslation();
+  const { entityRows: complianceEntities } = useCompliance();
   const [investor, setInvestor] = useState(initialInvestor);
+  const screenedEntities = (() => {
+    const own = complianceEntities.filter((e) => e.parent.name === initialInvestor.name);
+    if (own.length > 0) return own.slice(0, 4);
+    return complianceEntities.filter((e) => e.parent.type === 'Investor').slice(0, 3);
+  })();
   const [copiedField, setCopiedField] = useState<string | null>(null);
   const [activeTab, setActiveTab] = useState(initialTab);
   
@@ -846,6 +856,36 @@ export function InvestorDetailPage({ investor: initialInvestor, onBack, initialT
                       {investor.monitoring ? t('investors.detail.kyc.monitoringEnabled') : t('investors.detail.kyc.monitoringDisabled')}
                     </Badge>
                   </div>
+
+                  {screenedEntities.length > 0 && (
+                    <div>
+                      <label className="text-xs text-muted-foreground mb-2 block">{t('investors.detail.kyc.screenedEntities')}</label>
+                      <ul className="space-y-1.5">
+                        {screenedEntities.map((entity) => (
+                          <li key={entity.uid}>
+                            <button
+                              type="button"
+                              onClick={() => navigateToDetail('entity', entity.uid)}
+                              title={t('investors.detail.kyc.openEntity')}
+                              className="w-full flex items-center justify-between gap-2 rounded-lg border border-border px-2.5 py-1.5 text-left hover:bg-muted/50 transition-colors group"
+                            >
+                              <span className="flex items-center gap-2 min-w-0">
+                                <ShieldCheck className="w-3.5 h-3.5 text-muted-foreground shrink-0" />
+                                <span className="text-sm text-foreground truncate group-hover:underline">{entity.name}</span>
+                              </span>
+                              <span className="flex items-center gap-1.5 shrink-0">
+                                {entity.pendingMatches > 0 && (
+                                  <Badge variant="outline" className="text-[10px]">{entity.pendingMatches}</Badge>
+                                )}
+                                <StatusBadge label={t(ENTITY_STATUS_KEY[entity.status])} variant={ENTITY_STATUS_VARIANT[entity.status]} />
+                                <ChevronRight className="w-3.5 h-3.5 text-muted-foreground" />
+                              </span>
+                            </button>
+                          </li>
+                        ))}
+                      </ul>
+                    </div>
+                  )}
                 </div>
               </motion.div>
 

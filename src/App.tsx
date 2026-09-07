@@ -29,7 +29,6 @@ import {
 import { ModernSidebar } from './components/ModernSidebar';
 import { EntityCard } from './components/EntityCard';
 import { DataTable } from './components/DataTable';
-import { DecisionPanel } from './components/DecisionPanel';
 import { TableSkeleton } from './components/TableSkeleton';
 import { FilterBar } from './components/FilterBar';
 import { StatusTabs } from './components/StatusTabs';
@@ -49,10 +48,9 @@ import { SearchDropdown } from './components/SearchDropdown';
 import { SettingsDialog } from './components/SettingsDialog';
 import { NewSubscriptionDialog } from './components/NewSubscriptionDialog';
 import { generateEntityDetails } from './utils/mockData';
-import { generateEntities } from './utils/entityGenerator';
+import { useCompliance } from './utils/complianceContext';
 import { generateSubscriptions } from './utils/subscriptionGenerator';
 import { Subscription } from './utils/subscriptionGenerator';
-import { generateAlerts, getAlertsStats } from './utils/alertsGenerator';
 import { generateInvestors, Investor } from './utils/investorGenerator';
 import { generatePartners, Partner } from './utils/partnerGenerator';
 import { InvestorsPage } from './components/InvestorsPage';
@@ -109,7 +107,7 @@ import { ConventionsSettings } from './components/settings/ConventionsSettings';
 import { MailRedirectBanner } from './components/MailRedirectBanner';
 import { EnvironmentBanner } from './components/EnvironmentBanner';
 
-import { Page, getPageFromHash, navigateToPage, onHashChange } from './utils/routing';
+import { Page, getDetailIdFromHash, getPageFromHash, navigateToPage, onHashChange } from './utils/routing';
 import './utils/hashPreserver'; // Import to execute hash preservation logic
 
 type StatusType = 'need_review' | 'reviewed' | 'all' | 'rejected' | 'archived' | 'deleted' | 'flagged' | 'created' | 'onboarding' | 'signature' | 'counter_signature' | 'active' | 'prospect' | 'en_discussion' | 'en_relation';
@@ -158,9 +156,16 @@ export default function App() {
     console.log('App.tsx - selectedSubscriptionDetail changed:', selectedSubscriptionDetail);
   }, [selectedSubscriptionDetail]);
 
-  // Générer 100 entités pour la démo - useState pour permettre les modifications
-  // Only generate entities if entity management is enabled
-  const [allTableData, setAllTableData] = useState<any[]>([]);
+  // Entités, matches et alertes viennent du contexte compliance partagé
+  const {
+    entityRows: allTableData,
+    alertItems: allAlerts,
+    pendingAlertsCount,
+    getEntityByUid,
+    toggleMonitoring: complianceToggleMonitoring,
+    assignAnalyst: complianceAssignAnalyst,
+  } = useCompliance();
+  const [entityDetailUid, setEntityDetailUid] = useState<string | null>(() => getDetailIdFromHash());
   
   // Générer 247 souscriptions pour la démo
   const [allSubscriptionsData, setAllSubscriptionsData] = useState(() => generateSubscriptions(247));
@@ -184,9 +189,6 @@ export default function App() {
   // Gérer la sélection d'un investisseur pour la page de détail
   const [selectedInvestorDetail, setSelectedInvestorDetail] = useState<Investor | null>(null);
   const [investorDetailTab, setInvestorDetailTab] = useState<string>('profil');
-
-  // Générer les alertes pour la démo
-  const [allAlerts] = useState(() => generateAlerts(100));
 
   // Handler pour créer une nouvelle souscription
   const handleSubscriptionCreated = (newSubscription: any) => {
@@ -229,22 +231,6 @@ export default function App() {
     return allInvestorsData.filter(inv => investorIdsInFund.has(inv.name));
   }, [allInvestorsData, selectedFundContextId, allFundsData, allSubscriptionsData]);
   
-  // Generate entities on mount
-  useEffect(() => {
-    if (allTableData.length === 0) {
-      setIsLoading(true);
-      // Simulate API call
-      setTimeout(() => {
-        const generatedData = generateEntities(100);
-        setAllTableData(generatedData);
-        setIsLoading(false);
-        toast.success(t('toast.dataLoaded'), {
-          description: `${generatedData.length} entités chargées`,
-        });
-      }, 800);
-    }
-  }, []);
-
   // Ensure the hash is respected on mount
   useEffect(() => {
     const hash = window.location.hash;
@@ -254,6 +240,7 @@ export default function App() {
       if (currentPage !== pageFromHash) {
         setCurrentPage(pageFromHash);
       }
+      setEntityDetailUid(getDetailIdFromHash());
     }
   }, []); // Run only once on mount
 
@@ -263,6 +250,7 @@ export default function App() {
       const newPage = getPageFromHash();
       console.log('[App] Hash changed, setting page to:', newPage);
       setCurrentPage(newPage);
+      setEntityDetailUid(newPage === 'entities' ? getDetailIdFromHash() : null);
     });
     
     return cleanup;
@@ -338,17 +326,6 @@ export default function App() {
     allTableData.filter(e => e.status === 'Pending').length, 
     [allTableData]
   );
-
-  // Calculer le nombre d'alertes pending pour le badge (Membercheck + ORIAS uniquement)
-  const pendingAlertsCount = useMemo(() => {
-    const pending = allAlerts.filter(a => a.status === 'Pending');
-    console.log('Total pending alerts:', pending.length);
-    console.log('Pending by source:', {
-      membercheck: pending.filter(a => a.source === 'Membercheck').length,
-      orias: pending.filter(a => a.source === 'ORIAS').length
-    });
-    return pending.length;
-  }, [allAlerts]);
 
   // Simulate loading - réinitialiser lors du changement de page
   useEffect(() => {
@@ -477,13 +454,7 @@ export default function App() {
   };
 
   const handleMonitoringChange = (entityId: number, newMonitoringState: boolean) => {
-    setAllTableData(prevData => 
-      prevData.map(entity => 
-        entity.id === entityId 
-          ? { ...entity, monitoring: newMonitoringState }
-          : entity
-      )
-    );
+    complianceToggleMonitoring(entityId, newMonitoringState);
     
     // Mettre à jour l'entité sélectionnée si c'est celle qui a changé
     if (selectedEntity && selectedEntity.id === entityId) {
@@ -496,13 +467,7 @@ export default function App() {
   };
 
   const handleAnalystChange = (entityId: number, newAnalyst: string) => {
-    setAllTableData(prevData => 
-      prevData.map(entity => 
-        entity.id === entityId 
-          ? { ...entity, analyst: newAnalyst }
-          : entity
-      )
-    );
+    complianceAssignAnalyst(entityId, newAnalyst);
     
     // Mettre à jour l'entité sélectionnée si c'est celle qui a changé
     if (selectedEntity && selectedEntity.id === entityId) {
@@ -728,6 +693,9 @@ export default function App() {
                     if (selectedSubscriptionDetail) {
                       setSelectedSubscriptionDetail(null);
                     }
+                    if (currentPage === 'entities' && entityDetailUid) {
+                      navigateToPage('entities');
+                    }
                   }}
                   className="text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-100 transition-colors p-1.5 hover:bg-gray-100 dark:hover:bg-gray-900 rounded-lg"
                 >
@@ -740,7 +708,23 @@ export default function App() {
                 <>
                   <span className="text-gray-400 dark:text-gray-500">{t('breadcrumb.compliance')}</span>
                   <span className="text-gray-300 dark:text-gray-700">/</span>
-                  <span className="text-gray-900 dark:text-gray-100 font-medium">{t('breadcrumb.entities')}</span>
+                  {entityDetailUid ? (
+                    <>
+                      <button
+                        type="button"
+                        onClick={() => navigateToPage('entities')}
+                        className="text-gray-400 dark:text-gray-500 hover:text-gray-900 dark:hover:text-gray-100 transition-colors"
+                      >
+                        {t('breadcrumb.entities')}
+                      </button>
+                      <span className="text-gray-300 dark:text-gray-700">/</span>
+                      <span className="text-gray-900 dark:text-gray-100 font-medium truncate max-w-[280px]">
+                        {getEntityByUid(entityDetailUid)?.name ?? t('breadcrumb.entityDetail')}
+                      </span>
+                    </>
+                  ) : (
+                    <span className="text-gray-900 dark:text-gray-100 font-medium">{t('breadcrumb.entities')}</span>
+                  )}
                 </>
               ) : currentPage === 'investors' ? (
                 <>

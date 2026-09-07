@@ -1,5 +1,5 @@
-import { useState, useMemo, useEffect } from 'react';
-import { motion, AnimatePresence } from 'motion/react';
+import { useEffect, useMemo, useState } from 'react';
+import { motion } from 'motion/react';
 import {
   AlertCircle,
   Building2,
@@ -13,10 +13,25 @@ import {
 import { toast } from 'sonner@2.0.3';
 
 import { useAppStore } from '../utils/appStoreContext';
+import { useTranslation } from '../utils/languageContext';
+import { useCompliance } from '../utils/complianceContext';
+import { getDetailIdFromHash, navigateToDetail, navigateToPage, onHashChange } from '../utils/routing';
+import { copyToClipboard } from '../utils/clipboard';
+import { exportTableToCSV } from '../utils/exportUtils';
+import { ANALYSTS, type EntityRow, type EntityStatus } from '../utils/screeningMock';
+
 import { EntitiesLandingPage } from './EntitiesLandingPage';
-import { generateEntities } from '../utils/entityGenerator';
+import { EntityDetailPage } from './entity-detail/EntityDetailPage';
+import {
+  CATEGORY_KEY,
+  ENTITY_STATUS_KEY,
+  ENTITY_STATUS_VARIANT,
+  ENTITY_TYPE_KEY,
+  RISK_KEY,
+  RISK_VARIANT,
+  formatRelativeTime,
+} from './entity-detail/entityDetailShared';
 import { DataTable, ColumnConfig } from './DataTable';
-import { DecisionPanel } from './DecisionPanel';
 import { TableSkeleton } from './TableSkeleton';
 import { ParentCell } from './ParentCell';
 import { StatusBadge } from './StatusBadge';
@@ -29,208 +44,121 @@ import { FilterCard } from './ui/filter-card';
 import { PageHeader } from './ui/page-header';
 import { Switch } from './ui/switch';
 import { FilterBar, type FilterConfig } from './FilterBar';
-import { cn } from './ui/utils';
-
-import { copyToClipboard } from '../utils/clipboard';
-import { EntityDetails } from '../utils/mockData';
-import { EntityLink } from './EntityLinks';
 
 type StatusType = 'all' | 'need_review' | 'reviewed';
 
-interface Entity {
-  id: number;
-  uid: string;
-  name: string;
-  type: 'Individual' | 'Corporate';
-  links: EntityLink[];
-  status: string;
-  secondaryStatus: string | null;
-  exposure: string | null;
-  riskLevel: string;
-  matchTypes: ('PEP' | 'Sanctions' | 'Media')[];
-  monitoring: boolean;
-  hits: number;
-  decisions: number;
-  pendingMatches: number;
-  analyst: string;
-  parent: {
-    type: 'Investor' | 'Partner' | 'Participation';
-    name: string;
-    entityType: 'Individual' | 'Corporate';
-  };
-  lastUpdate: {
-    fullDate: string;
-    relativeTime: string;
-    timestamp: number;
-  };
-  details: EntityDetails;
-}
-
-type StatusBadgeVariant = 'success' | 'warning' | 'danger' | 'neutral';
-
-const ENTITY_STATUS_VARIANT: Record<string, StatusBadgeVariant> = {
-  Clear: 'success',
-  Validated: 'success',
-  Pending: 'warning',
-  'New Hit': 'warning',
-  'To Review': 'warning',
-  Risk: 'danger',
-  'True Hit': 'danger',
-};
-
-const RISK_LEVEL_VARIANT: Record<string, StatusBadgeVariant> = {
-  Low: 'success',
-  Medium: 'warning',
-  High: 'danger',
-  Pending: 'neutral',
-};
-
-const ENTITY_FILTER_CONFIGS: FilterConfig[] = [
-  {
-    id: 'type',
-    label: 'Type',
-    type: 'select',
-    isPrimary: true,
-    placeholder: 'Type',
-    options: [
-      { value: 'Individual', label: 'Individual' },
-      { value: 'Corporate', label: 'Corporate' },
-    ],
-  },
-  {
-    id: 'riskLevel',
-    label: 'Risque',
-    type: 'select',
-    isPrimary: true,
-    placeholder: 'Risque',
-    options: [
-      { value: 'Low', label: 'Low' },
-      { value: 'Medium', label: 'Medium' },
-      { value: 'High', label: 'High' },
-      { value: 'Pending', label: 'Pending' },
-    ],
-  },
-  {
-    id: 'status',
-    label: 'Statut',
-    type: 'select',
-    isPrimary: false,
-    placeholder: 'Statut',
-    options: [
-      { value: 'Clear', label: 'Clear' },
-      { value: 'Pending', label: 'Pending' },
-      { value: 'True Hit', label: 'True Hit' },
-      { value: 'New Hit', label: 'New Hit' },
-      { value: 'Validated', label: 'Validated' },
-    ],
-  },
-  {
-    id: 'analyst',
-    label: 'Analyste',
-    type: 'select',
-    isPrimary: false,
-    placeholder: 'Analyste',
-    options: [
-      'Jean Dault',
-      'Sophie Martin',
-      'Marc Dubois',
-      'Claire Rousseau',
-      'Thomas Bernard',
-      'Emma Leroy',
-    ].map((a) => ({ value: a, label: a })),
-  },
-  {
-    id: 'monitoring',
-    label: 'Monitoring',
-    type: 'select',
-    isPrimary: false,
-    placeholder: 'Monitoring',
-    options: [
-      { value: 'monitored', label: 'Monitoring activé' },
-      { value: 'not-monitored', label: 'Monitoring désactivé' },
-    ],
-  },
-];
-
-const STATUS_GROUPS: Record<StatusType, string[]> = {
+const STATUS_GROUPS: Record<StatusType, EntityStatus[]> = {
   all: [],
   need_review: ['Pending', 'New Hit'],
-  reviewed: ['Clear', 'True Hit', 'Validated'],
+  reviewed: ['Clear', 'True Hit', 'Validated', 'Closed'],
 };
+
+const STATUS_FILTER_VALUES: EntityStatus[] = ['Pending', 'New Hit', 'True Hit', 'Clear', 'Validated', 'Closed'];
+const RISK_FILTER_VALUES = ['Low', 'Medium', 'High', 'Pending'] as const;
+const MAX_VISIBLE_TAGS = 3;
 
 export function EntitiesPage() {
   const { isModuleActive } = useAppStore();
+  const { t } = useTranslation();
+  const { entityRows, isLoading, toggleMonitoring } = useCompliance();
   const isCompliancePlusActive = isModuleActive('Compliance Plus');
 
+  const [detailUid, setDetailUid] = useState<string | null>(() => getDetailIdFromHash());
   const [paginationPage, setPaginationPage] = useState(1);
   const [itemsPerPage, setItemsPerPage] = useState(20);
   const [hoveredRow, setHoveredRow] = useState<number | null>(null);
-  const [selectedEntity, setSelectedEntity] = useState<Entity | null>(null);
-  const [isLoading, setIsLoading] = useState(true);
   const [sortConfig, setSortConfig] = useState<{ key: string; direction: 'asc' | 'desc' } | null>(null);
   const [activeFilters, setActiveFilters] = useState<Record<string, string>>({});
   const [searchTerm, setSearchTerm] = useState('');
   const [activeStatus, setActiveStatus] = useState<StatusType>('all');
-  const [allTableData, setAllTableData] = useState<Entity[]>([]);
   const [copiedId, setCopiedId] = useState<number | null>(null);
 
-  if (!isCompliancePlusActive) {
-    return <EntitiesLandingPage />;
-  }
-
   useEffect(() => {
-    if (allTableData.length === 0) {
-      setIsLoading(true);
-      setTimeout(() => {
-        const generatedData = generateEntities(100);
-        setAllTableData(generatedData as Entity[]);
-        setIsLoading(false);
-        toast.success('Données chargées avec succès', {
-          description: `${generatedData.length} entités chargées`,
-        });
-      }, 800);
-    }
+    const cleanup = onHashChange(() => setDetailUid(getDetailIdFromHash()));
+    return cleanup;
   }, []);
 
+  const filterConfigs = useMemo<FilterConfig[]>(
+    () => [
+      {
+        id: 'type',
+        label: t('complianceEntities.list.filters.type'),
+        type: 'select',
+        isPrimary: true,
+        placeholder: t('complianceEntities.list.filters.type'),
+        options: [
+          { value: 'Individual', label: t(ENTITY_TYPE_KEY.Individual) },
+          { value: 'Corporate', label: t(ENTITY_TYPE_KEY.Corporate) },
+        ],
+      },
+      {
+        id: 'riskLevel',
+        label: t('complianceEntities.list.filters.risk'),
+        type: 'select',
+        isPrimary: true,
+        placeholder: t('complianceEntities.list.filters.risk'),
+        options: RISK_FILTER_VALUES.map((value) => ({ value, label: t(RISK_KEY[value]) })),
+      },
+      {
+        id: 'status',
+        label: t('complianceEntities.list.filters.status'),
+        type: 'select',
+        isPrimary: false,
+        placeholder: t('complianceEntities.list.filters.status'),
+        options: STATUS_FILTER_VALUES.map((value) => ({ value, label: t(ENTITY_STATUS_KEY[value]) })),
+      },
+      {
+        id: 'analyst',
+        label: t('complianceEntities.list.filters.analyst'),
+        type: 'select',
+        isPrimary: false,
+        placeholder: t('complianceEntities.list.filters.analyst'),
+        options: ANALYSTS.map((a) => ({ value: a, label: a })),
+      },
+      {
+        id: 'monitoring',
+        label: t('complianceEntities.list.filters.monitoring'),
+        type: 'select',
+        isPrimary: false,
+        placeholder: t('complianceEntities.list.filters.monitoring'),
+        options: [
+          { value: 'monitored', label: t('complianceEntities.list.filters.monitored') },
+          { value: 'not-monitored', label: t('complianceEntities.list.filters.notMonitored') },
+        ],
+      },
+    ],
+    [t],
+  );
+
   const statusCounts = useMemo(() => {
-    const total = allTableData.length;
-    const needReview = allTableData.filter((e) =>
-      STATUS_GROUPS.need_review.includes(e.status),
-    ).length;
-    const reviewed = allTableData.filter((e) =>
-      STATUS_GROUPS.reviewed.includes(e.status),
-    ).length;
+    const total = entityRows.length;
+    const needReview = entityRows.filter((e) => STATUS_GROUPS.need_review.includes(e.status)).length;
+    const reviewed = entityRows.filter((e) => STATUS_GROUPS.reviewed.includes(e.status)).length;
     return { total, needReview, reviewed };
-  }, [allTableData]);
+  }, [entityRows]);
 
   const filteredData = useMemo(() => {
     const search = searchTerm.trim().toLowerCase();
-    return allTableData.filter((entity) => {
-      if (
-        activeStatus !== 'all' &&
-        !STATUS_GROUPS[activeStatus].includes(entity.status)
-      )
-        return false;
-      if (search && !entity.name.toLowerCase().includes(search)) return false;
+    return entityRows.filter((entity) => {
+      if (activeStatus !== 'all' && !STATUS_GROUPS[activeStatus].includes(entity.status)) return false;
+      if (search && !entity.name.toLowerCase().includes(search) && !entity.uid.includes(search)) return false;
       if (activeFilters.type && entity.type !== activeFilters.type) return false;
       if (activeFilters.status && entity.status !== activeFilters.status) return false;
-      if (activeFilters.riskLevel && entity.riskLevel !== activeFilters.riskLevel)
-        return false;
-      if (activeFilters.analyst && entity.analyst !== activeFilters.analyst)
-        return false;
+      if (activeFilters.riskLevel && entity.riskLevel !== activeFilters.riskLevel) return false;
+      if (activeFilters.analyst && entity.analyst !== activeFilters.analyst) return false;
       if (activeFilters.monitoring) {
         if (activeFilters.monitoring === 'monitored' && !entity.monitoring) return false;
         if (activeFilters.monitoring === 'not-monitored' && entity.monitoring) return false;
       }
       return true;
     });
-  }, [allTableData, searchTerm, activeFilters, activeStatus]);
+  }, [entityRows, searchTerm, activeFilters, activeStatus]);
 
   const sortedData = useMemo(() => {
     if (!sortConfig) return filteredData;
     const sorted = [...filteredData].sort((a, b) => {
-      let aVal: unknown = a[sortConfig.key as keyof Entity];
-      let bVal: unknown = b[sortConfig.key as keyof Entity];
+      let aVal: unknown = a[sortConfig.key as keyof EntityRow];
+      let bVal: unknown = b[sortConfig.key as keyof EntityRow];
       if (sortConfig.key === 'lastUpdate') {
         aVal = a.lastUpdate.timestamp;
         bVal = b.lastUpdate.timestamp;
@@ -255,17 +183,19 @@ export function EntitiesPage() {
     setPaginationPage(1);
   }, [searchTerm, activeFilters, activeStatus]);
 
+  if (!isCompliancePlusActive) {
+    return <EntitiesLandingPage />;
+  }
+
+  if (detailUid) {
+    return <EntityDetailPage uid={detailUid} onBack={() => navigateToPage('entities')} />;
+  }
+
   const handleStatusChange = (next: string) => {
-    setActiveStatus((current) =>
-      current === (next as StatusType) ? 'all' : (next as StatusType),
-    );
-    setSelectedEntity(null);
+    setActiveStatus((current) => (current === (next as StatusType) ? 'all' : (next as StatusType)));
   };
 
-  const handleFilterChange = (
-    filterId: string,
-    value: string | string[] | null,
-  ) => {
+  const handleFilterChange = (filterId: string, value: string | string[] | null) => {
     setActiveFilters((prev) => {
       const next = { ...prev };
       const v = value === null ? null : Array.isArray(value) ? value[0] ?? null : value;
@@ -289,32 +219,13 @@ export function EntitiesPage() {
     });
   };
 
-  const handleRowClick = (row: Entity) => {
-    setSelectedEntity(row);
+  const handleRowClick = (row: EntityRow) => {
+    navigateToDetail('entity', row.uid);
   };
 
   const handleMonitoringChange = (entityId: number, newValue: boolean) => {
-    setAllTableData((prev) =>
-      prev.map((item) =>
-        item.id === entityId ? { ...item, monitoring: newValue } : item,
-      ),
-    );
-    if (selectedEntity?.id === entityId) {
-      setSelectedEntity((prev) => (prev ? { ...prev, monitoring: newValue } : prev));
-    }
-    toast.success(newValue ? 'Monitoring activé' : 'Monitoring désactivé');
-  };
-
-  const handleAnalystChange = (entityId: number, newAnalyst: string) => {
-    setAllTableData((prev) =>
-      prev.map((item) =>
-        item.id === entityId ? { ...item, analyst: newAnalyst } : item,
-      ),
-    );
-    if (selectedEntity?.id === entityId) {
-      setSelectedEntity((prev) => (prev ? { ...prev, analyst: newAnalyst } : prev));
-    }
-    toast.success('Analyste modifié', { description: `Assigné à ${newAnalyst}` });
+    toggleMonitoring(entityId, newValue);
+    toast.success(newValue ? t('complianceEntities.toast.monitoringOn') : t('complianceEntities.toast.monitoringOff'));
   };
 
   const handleCopyId = async (uid: string, entityId: number, e: React.MouseEvent) => {
@@ -322,19 +233,26 @@ export function EntitiesPage() {
     const success = await copyToClipboard(uid);
     if (success) {
       setCopiedId(entityId);
-      toast.success('ID copié !', { description: uid });
+      toast.success(t('complianceEntities.list.toast.idCopied'), { description: uid });
       setTimeout(() => setCopiedId(null), 2000);
     } else {
-      toast.error('Erreur de copie', {
-        description: 'Impossible de copier dans le presse-papier',
+      toast.error(t('complianceEntities.list.toast.copyError'), {
+        description: t('complianceEntities.list.toast.copyErrorBody'),
       });
     }
   };
 
-  const columns: ColumnConfig<Entity>[] = [
+  const handleExport = () => {
+    exportTableToCSV(sortedData);
+    toast.success(t('complianceEntities.list.toast.exported'), {
+      description: t('complianceEntities.list.toast.exportedBody', { count: sortedData.length }),
+    });
+  };
+
+  const columns: ColumnConfig<EntityRow>[] = [
     {
       key: 'name',
-      label: 'Entité',
+      label: t('complianceEntities.list.columns.entity'),
       sortable: true,
       render: (entity) => (
         <div className="flex flex-col gap-1 max-w-[300px]">
@@ -345,11 +263,15 @@ export function EntitiesPage() {
             {entity.name}
           </motion.span>
           <div className="flex items-center gap-1.5">
-            <span className="text-xs text-muted-foreground">ID: {entity.uid}</span>
+            <span className="text-xs text-muted-foreground">
+              {t('complianceEntities.list.idLabel')} {entity.uid}
+            </span>
             <motion.button
               whileHover={{ scale: 1.1 }}
               whileTap={{ scale: 0.9 }}
               onClick={(e) => handleCopyId(entity.uid, entity.id, e)}
+              title={t('complianceEntities.list.copyId')}
+              aria-label={t('complianceEntities.list.copyId')}
               className="p-0.5 hover:bg-muted rounded transition-colors"
             >
               {copiedId === entity.id ? (
@@ -364,7 +286,7 @@ export function EntitiesPage() {
     },
     {
       key: 'type',
-      label: 'Type',
+      label: t('complianceEntities.list.columns.type'),
       sortable: true,
       render: (entity) => {
         const isIndividual = entity.type === 'Individual';
@@ -376,7 +298,7 @@ export function EntitiesPage() {
               <Building2 className="w-4 h-4 text-muted-foreground" />
             )}
             <Badge variant="secondary" className="text-xs font-medium">
-              {entity.type}
+              {t(ENTITY_TYPE_KEY[entity.type])}
             </Badge>
           </div>
         );
@@ -384,15 +306,12 @@ export function EntitiesPage() {
     },
     {
       key: 'status',
-      label: 'Statut',
+      label: t('complianceEntities.list.columns.status'),
       sortable: true,
       render: (entity) => (
         <div className="flex items-center gap-1.5">
-          <StatusBadge
-            label={entity.status}
-            variant={ENTITY_STATUS_VARIANT[entity.status] ?? 'neutral'}
-          />
-          {entity.status === 'Pending' && entity.pendingMatches > 0 && (
+          <StatusBadge label={t(ENTITY_STATUS_KEY[entity.status])} variant={ENTITY_STATUS_VARIANT[entity.status]} />
+          {entity.pendingMatches > 0 && (
             <Badge variant="outline" className="text-xs">
               {entity.pendingMatches}
             </Badge>
@@ -402,78 +321,73 @@ export function EntitiesPage() {
     },
     {
       key: 'riskLevel',
-      label: 'Risque',
+      label: t('complianceEntities.list.columns.risk'),
       sortable: true,
       render: (entity) => (
-        <StatusBadge
-          label={entity.riskLevel}
-          variant={RISK_LEVEL_VARIANT[entity.riskLevel] ?? 'neutral'}
-        />
+        <StatusBadge label={t(RISK_KEY[entity.riskLevel])} variant={RISK_VARIANT[entity.riskLevel]} />
       ),
     },
     {
       key: 'matchTypes',
-      label: 'Matches',
+      label: t('complianceEntities.list.columns.matches'),
       sortable: false,
       render: (entity) => {
         if (entity.matchTypes.length === 0) {
-          return (
-            <span className="text-xs text-muted-foreground italic">No matches</span>
-          );
+          return <span className="text-xs text-muted-foreground italic">{t('complianceEntities.list.noMatches')}</span>;
         }
+        const visible = entity.matchTypes.slice(0, MAX_VISIBLE_TAGS);
+        const remaining = entity.matchTypes.length - visible.length;
         return (
           <div className="flex flex-wrap gap-1">
-            {entity.matchTypes.map((m) => (
-              <Tag key={m} label={m} />
+            {visible.map((m) => (
+              <Tag key={m} label={t(CATEGORY_KEY[m])} />
             ))}
+            {remaining > 0 && <span className="text-xs text-muted-foreground self-center">+{remaining}</span>}
           </div>
         );
       },
     },
     {
       key: 'hits',
-      label: 'Hits',
+      label: t('complianceEntities.list.columns.hits'),
       sortable: true,
       render: (entity) => (
-        <span className="text-sm font-semibold text-foreground tabular-nums">
-          {entity.hits}
-        </span>
+        <span className="text-sm font-semibold text-foreground tabular-nums">{entity.hits}</span>
       ),
     },
     {
       key: 'decisions',
-      label: 'Décisions',
+      label: t('complianceEntities.list.columns.decisions'),
       sortable: true,
       render: (entity) => (
-        <span className="text-sm font-semibold text-foreground tabular-nums">
-          {entity.decisions}
-        </span>
+        <span className="text-sm font-semibold text-foreground tabular-nums">{entity.decisions}</span>
       ),
     },
     {
       key: 'parent',
-      label: 'Parent',
+      label: t('complianceEntities.list.columns.parent'),
       sortable: false,
       render: (entity) => <ParentCell parent={entity.parent} />,
     },
     {
       key: 'monitoring',
-      label: 'Monitoring',
+      label: t('complianceEntities.list.columns.monitoring'),
       render: (entity) => (
-        <Switch
-          checked={entity.monitoring}
-          onCheckedChange={(checked) => handleMonitoringChange(entity.id, checked)}
-        />
+        <div onClick={(e) => e.stopPropagation()}>
+          <Switch
+            checked={entity.monitoring}
+            disabled={entity.closed}
+            onCheckedChange={(checked) => handleMonitoringChange(entity.id, checked)}
+          />
+        </div>
       ),
     },
     {
       key: 'lastUpdate',
-      label: 'Maj.',
+      label: t('complianceEntities.list.columns.updated'),
       sortable: true,
       render: (entity) => (
-        <span className="text-sm text-muted-foreground">
-          {entity.lastUpdate.relativeTime}
-        </span>
+        <span className="text-sm text-muted-foreground">{formatRelativeTime(entity.lastUpdate.timestamp, t)}</span>
       ),
     },
   ];
@@ -481,34 +395,32 @@ export function EntitiesPage() {
   return (
     <div className="flex-1 flex flex-col">
       <PageHeader
-        title="Entités"
-        subtitle="Gérez le screening, le monitoring et les décisions sur l'ensemble des entités"
+        title={t('complianceEntities.list.title')}
+        subtitle={t('complianceEntities.list.subtitle')}
         primaryAction={{
-          label: 'Exporter',
+          label: t('complianceEntities.list.export'),
           icon: <Download className="w-4 h-4" />,
-          onClick: () => undefined,
+          onClick: handleExport,
         }}
       />
 
       <div className="flex-1 px-6 pt-6 pb-6 flex flex-col gap-4">
-        <section aria-label="Statut des entités">
+        <section aria-label={t('complianceEntities.list.statusSection')}>
           <h3 className="text-xs font-semibold uppercase tracking-wide text-muted-foreground mb-3">
-            Statut des entités
+            {t('complianceEntities.list.statusSection')}
           </h3>
           <div className="grid grid-cols-3 gap-1.5">
             <FilterCard
               status="need_review"
               activeStatus={activeStatus}
               onStatusChange={handleStatusChange}
-              label="À examiner"
+              label={t('complianceEntities.list.cards.needReview')}
               icon={AlertCircle}
               total={statusCounts.needReview}
-              metricLabel="Need review"
+              metricLabel={t('complianceEntities.list.cards.needReviewMetric')}
               metricValue={`${statusCounts.needReview}`}
               averageValue={
-                statusCounts.total > 0
-                  ? `${Math.round((statusCounts.needReview / statusCounts.total) * 100)}%`
-                  : '0%'
+                statusCounts.total > 0 ? `${Math.round((statusCounts.needReview / statusCounts.total) * 100)}%` : '0%'
               }
               iconActiveClassName="text-amber-600"
             />
@@ -516,15 +428,13 @@ export function EntitiesPage() {
               status="reviewed"
               activeStatus={activeStatus}
               onStatusChange={handleStatusChange}
-              label="Examinées"
+              label={t('complianceEntities.list.cards.reviewed')}
               icon={CheckCircle2}
               total={statusCounts.reviewed}
-              metricLabel="Reviewed"
+              metricLabel={t('complianceEntities.list.cards.reviewedMetric')}
               metricValue={`${statusCounts.reviewed}`}
               averageValue={
-                statusCounts.total > 0
-                  ? `${Math.round((statusCounts.reviewed / statusCounts.total) * 100)}%`
-                  : '0%'
+                statusCounts.total > 0 ? `${Math.round((statusCounts.reviewed / statusCounts.total) * 100)}%` : '0%'
               }
               iconActiveClassName="text-emerald-600"
             />
@@ -532,10 +442,10 @@ export function EntitiesPage() {
               status="all"
               activeStatus={activeStatus}
               onStatusChange={handleStatusChange}
-              label="Toutes les entités"
+              label={t('complianceEntities.list.cards.all')}
               icon={List}
               total={statusCounts.total}
-              metricLabel="Total"
+              metricLabel={t('complianceEntities.list.cards.allMetric')}
               metricValue={`${statusCounts.total}`}
               averageValue="100%"
             />
@@ -544,21 +454,16 @@ export function EntitiesPage() {
 
         <motion.div
           initial={{ opacity: 0, y: 20 }}
-          animate={{
-            opacity: 1,
-            y: 0,
-            width: selectedEntity ? '60%' : '100%',
-          }}
+          animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.2, type: 'spring', stiffness: 200, damping: 25 }}
-          className={cn(selectedEntity && 'min-w-0')}
         >
           <Card className="overflow-hidden p-0 gap-0 hover:shadow-lg transition-shadow duration-500">
             <div className="px-6 py-4 border-b border-border bg-card">
               <FilterBar
                 searchValue={searchTerm}
                 onSearchChange={setSearchTerm}
-                searchPlaceholder="Rechercher une entité…"
-                filters={ENTITY_FILTER_CONFIGS}
+                searchPlaceholder={t('complianceEntities.list.searchPlaceholder')}
+                filters={filterConfigs}
                 activeFilters={activeFilters}
                 onFilterChange={handleFilterChange}
                 onClearAll={handleClearAll}
@@ -571,9 +476,7 @@ export function EntitiesPage() {
                   <TableSkeleton />
                 ) : tableData.length === 0 ? (
                   <div className="py-16 text-center">
-                    <p className="text-sm text-muted-foreground">
-                      Aucune entité ne correspond aux filtres actuels.
-                    </p>
+                    <p className="text-sm text-muted-foreground">{t('complianceEntities.list.empty')}</p>
                   </div>
                 ) : (
                   <DataTable
@@ -583,9 +486,9 @@ export function EntitiesPage() {
                     onRowClick={handleRowClick}
                     sortConfig={sortConfig}
                     onSort={handleSort}
-                    compactMode={!!selectedEntity}
                     allFilteredData={filteredData}
                     columns={columns}
+                    entityName={t('complianceEntities.list.entityUnit')}
                   />
                 )}
               </div>
@@ -608,17 +511,6 @@ export function EntitiesPage() {
           </Card>
         </motion.div>
       </div>
-
-      <AnimatePresence>
-        {selectedEntity && (
-          <DecisionPanel
-            entity={selectedEntity}
-            onClose={() => setSelectedEntity(null)}
-            onMonitoringChange={handleMonitoringChange}
-            onAnalystChange={handleAnalystChange}
-          />
-        )}
-      </AnimatePresence>
     </div>
   );
 }

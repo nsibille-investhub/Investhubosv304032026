@@ -24,7 +24,8 @@ export interface AlertItem {
   id: string;
   name: string;
   entityName: string;
-  changes: 'New' | 'Modified' | null;
+  entityUid?: string;
+  changes: 'New' | 'Modified' | 'Reopened' | null;
   match: number;
   status: 'Pending' | 'Confirmed' | 'Rejected';
   date: string;

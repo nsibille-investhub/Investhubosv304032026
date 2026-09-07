@@ -12,7 +12,10 @@ import {
 } from 'lucide-react';
 import { toast } from 'sonner@2.0.3';
 
-import { generateAlerts, AlertItem } from '../utils/alertsGenerator';
+import { AlertItem } from '../utils/alertsGenerator';
+import { useCompliance } from '../utils/complianceContext';
+import { navigateToDetail } from '../utils/routing';
+import type { MatchDecisionValue } from '../utils/screeningMock';
 import { useTableSearch } from '../utils/useTableSearch';
 import { ALERT_SEARCH_FIELDS } from '../utils/searchConfig';
 import { analyzeQuery } from '../utils/aiAnalyzer';
@@ -131,13 +134,14 @@ const canSelectAlert = (a: AlertItem) => a.status === 'Pending';
 export function AlertsPage({ onEnableModule, alerts }: AlertsPageProps) {
   const { isModuleActive } = useAppStore();
   const { t } = useTranslation();
+  const { alertItems, qualifyMatches } = useCompliance();
   const isCompliancePlusActive = isModuleActive('Compliance Plus');
 
   if (!isCompliancePlusActive) {
     return <AlertsLandingPage onEnableModule={onEnableModule || (() => {})} />;
   }
 
-  const [allAlerts] = useState<AlertItem[]>(() => alerts || generateAlerts(100));
+  const allAlerts: AlertItem[] = alerts ?? alertItems;
   const [activeTab, setActiveTab] = useState<TabType>('Membercheck');
   const [selectedAlert, setSelectedAlert] = useState<AlertItem | null>(null);
   const [activeStatus, setActiveStatus] = useState<AlertStatus>('all');
@@ -338,9 +342,19 @@ export function AlertsPage({ onEnableModule, alerts }: AlertsPageProps) {
     setActiveStatus('all');
   };
 
-  const handleDecision = (alertId: string, decision: AlertBulkAction) => {
+  const toDecision = (action: AlertBulkAction): MatchDecisionValue =>
+    action === 'escalate' ? 'unsure' : action;
+
+  const handleOpenEntity = (alert: AlertItem) => {
+    if (alert.entityUid) {
+      navigateToDetail('entity', alert.entityUid);
+    }
+  };
+
+  const handleDecision = (alertId: string, decision: AlertBulkAction, comment?: string) => {
     const alertItem = sortedAlerts.find((a) => a.id === alertId);
     if (alertItem) {
+      qualifyMatches([alertId], toDecision(decision), { [alertId]: comment ?? '' });
       const actionLabel =
         decision === 'true_hit'
           ? t('complianceAlerts.toast.actionConfirmed')
@@ -380,11 +394,13 @@ export function AlertsPage({ onEnableModule, alerts }: AlertsPageProps) {
 
   const handleBulkConfirm = (
     alertIds: string[],
-    _action: AlertBulkAction,
-    _comments: Record<string, string>,
+    action: AlertBulkAction,
+    comments: Record<string, string>,
   ) => {
+    qualifyMatches(alertIds, toDecision(action), comments);
     clearSelection();
     setBulkAction(null);
+    setSingleQualify(null);
   };
 
   const handleExportAlerts = () => {
@@ -618,6 +634,7 @@ export function AlertsPage({ onEnableModule, alerts }: AlertsPageProps) {
                     sortConfig={sortConfig}
                     onSort={handleSort}
                     onDecision={handleRowQualify}
+                    onEntityClick={handleOpenEntity}
                     selectedIds={selectedIds}
                     onToggleSelectRow={toggleRow}
                     onToggleSelectAll={togglePageAll}
@@ -651,6 +668,7 @@ export function AlertsPage({ onEnableModule, alerts }: AlertsPageProps) {
         isOpen={!!selectedAlert}
         onClose={() => setSelectedAlert(null)}
         onDecision={handleDecision}
+        onEntityClick={handleOpenEntity}
       />
 
       <AlertBulkActionDialog
@@ -666,7 +684,7 @@ export function AlertsPage({ onEnableModule, alerts }: AlertsPageProps) {
         alerts={singleQualifyAlerts}
         action={singleQualify?.action ?? null}
         onClose={() => setSingleQualify(null)}
-        onConfirm={() => setSingleQualify(null)}
+        onConfirm={handleBulkConfirm}
       />
 
       <AskAIDialog

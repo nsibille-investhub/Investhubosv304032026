@@ -143,6 +143,12 @@ export function getPageFromHash(): Page {
     return 'datahub';
   }
 
+  // Entity detail (/entities/:uid) stays on the entities page; the page reads
+  // the uid from the hash itself.
+  if (path === '/entities' || path.startsWith('/entities/')) {
+    return 'entities';
+  }
+
   // Return the page or default to 'investors'
   const page = PATH_TO_PAGE[path];
   if (!page) {

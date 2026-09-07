@@ -71,6 +71,7 @@ import {
   type TimelineTypeMap,
 } from './ui/timeline';
 import { RelationsGraph } from './RelationsGraph';
+import { useTranslation } from '../utils/languageContext';
 import { StatusBadge } from './StatusBadge';
 import { UserCell } from './UserCell';
 import { cn } from './ui/utils';
@@ -347,6 +348,7 @@ interface KYCDossierDetailProps extends KYCDossierDetailModel {
   onRequestComplement?: () => void;
   onReassign?: () => void;
   onRunScreening?: () => void;
+  onOpenEntity?: () => void;
   onDocumentDownload?: (doc: DocumentItem) => void;
   onDocumentPreview?: (doc: DocumentItem) => void;
   onCommentSubmit?: (body: string) => void;
@@ -374,11 +376,13 @@ export function KYCDossierDetail(props: KYCDossierDetailProps) {
     onRequestComplement,
     onReassign,
     onRunScreening,
+    onOpenEntity,
     onDocumentDownload,
     onDocumentPreview,
     onCommentSubmit,
   } = props;
 
+  const { t } = useTranslation();
   const [commentDraft, setCommentDraft] = React.useState('');
 
   const isEntity = subjectType === 'entity';
@@ -721,15 +725,28 @@ export function KYCDossierDetail(props: KYCDossierDetailProps) {
                             PEP, listes de sanctions et médias négatifs.
                           </CardDescription>
                         </div>
-                        <Button
-                          variant="outline"
-                          size="sm"
-                          onClick={onRunScreening}
-                          className="gap-2"
-                        >
-                          <RefreshCw className="w-4 h-4" />
-                          Relancer le screening
-                        </Button>
+                        <div className="flex items-center gap-2 flex-wrap">
+                          {onOpenEntity && (
+                            <Button
+                              variant="outline"
+                              size="sm"
+                              onClick={onOpenEntity}
+                              className="gap-2"
+                            >
+                              <ExternalLink className="w-4 h-4" />
+                              {t('complianceEntities.relations.openEntity')}
+                            </Button>
+                          )}
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={onRunScreening}
+                            className="gap-2"
+                          >
+                            <RefreshCw className="w-4 h-4" />
+                            Relancer le screening
+                          </Button>
+                        </div>
                       </div>
                     </CardHeader>
                     <CardContent>
