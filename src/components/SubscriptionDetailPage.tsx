@@ -640,12 +640,6 @@ export function SubscriptionDetailPage({ subscription: subscriptionProp, onBack 
           }),
           icon: DollarSign,
         },
-        {
-          id: 'holdingMode',
-          label: t('subscriptions.detail.form.holdingMode'),
-          value: holdingModeLabel,
-          icon: Landmark,
-        },
       ]}
       metrics={[
         {
@@ -690,6 +684,12 @@ export function SubscriptionDetailPage({ subscription: subscriptionProp, onBack 
               label: t('subscriptions.detail.form.language'),
               value: languageLabel,
               icon: Globe,
+            },
+            {
+              id: 'holdingMode',
+              label: t('subscriptions.detail.form.holdingMode'),
+              value: holdingModeLabel,
+              icon: Wallet,
             },
             {
               id: 'externalId',
