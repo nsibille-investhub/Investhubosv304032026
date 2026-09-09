@@ -147,7 +147,7 @@ interface SubscriptionDetailPageProps {
 
 
 export function SubscriptionDetailPage({ subscription: subscriptionProp, onBack }: SubscriptionDetailPageProps) {
-  const { t } = useTranslation();
+  const { t, lang } = useTranslation();
 
   // Les modifications faites depuis la modale restent locales : la donnée
   // amont de la maquette n'est pas réécrite.
@@ -410,6 +410,37 @@ export function SubscriptionDetailPage({ subscription: subscriptionProp, onBack 
 
   const formatLongDate = (date: Date) =>
     date.toLocaleDateString('fr-FR', { day: '2-digit', month: 'long', year: 'numeric' });
+
+  const formatStepDate = (date: Date) =>
+    date.toLocaleDateString(lang === 'en' ? 'en-GB' : 'fr-FR', {
+      day: '2-digit',
+      month: '2-digit',
+      year: 'numeric',
+    });
+
+  // Jalons du bandeau d'etapes : chaine chronologique tiree des dates reelles de
+  // la souscription, un jalon ne pouvant jamais preceder le precedent.
+  const stepMilestones: Array<Date | null> = (() => {
+    const toDate = (value: Date | string | null | undefined) => {
+      if (!value) return null;
+      const date = value instanceof Date ? value : new Date(value);
+      return Number.isNaN(date.getTime()) ? null : date;
+    };
+    let previous: Date | null = null;
+    return [
+      subscription.createdAt,
+      subscription.lastActionDate,
+      subscription.sentToSignatureAt,
+      subscription.investorSignedAt,
+      subscription.activatedAt,
+    ].map(raw => {
+      const date = toDate(raw);
+      if (!date) return null;
+      const milestone = previous && date < previous ? previous : date;
+      previous = milestone;
+      return milestone;
+    });
+  })();
 
   const formatAmount = (value: number) =>
     `${value.toLocaleString('fr-FR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} €`;
@@ -934,6 +965,7 @@ export function SubscriptionDetailPage({ subscription: subscriptionProp, onBack 
                   const isActive = currentStep === step.id;
                   const isCompleted = currentStep > step.id;
                   const isAccessible = step.id <= currentStep + 1;
+                  const stepDate = step.id <= currentStep ? stepMilestones[step.id] : null;
 
                   return (
                     <li key={step.id} className="flex items-center gap-1 shrink-0">
@@ -969,16 +1001,23 @@ export function SubscriptionDetailPage({ subscription: subscriptionProp, onBack 
                             />
                           )}
                         </span>
-                        <span
-                          className={`text-xs whitespace-nowrap ${
-                            isActive
-                              ? 'font-semibold text-foreground'
-                              : isCompleted
-                                ? 'text-foreground'
-                                : 'text-muted-foreground'
-                          }`}
-                        >
-                          {t(step.labelKey)}
+                        <span className="flex flex-col items-start leading-tight">
+                          <span
+                            className={`text-xs whitespace-nowrap ${
+                              isActive
+                                ? 'font-semibold text-foreground'
+                                : isCompleted
+                                  ? 'text-foreground'
+                                  : 'text-muted-foreground'
+                            }`}
+                          >
+                            {t(step.labelKey)}
+                          </span>
+                          {stepDate && (
+                            <span className="text-[10px] tabular-nums whitespace-nowrap text-muted-foreground/70">
+                              {formatStepDate(stepDate)}
+                            </span>
+                          )}
                         </span>
                       </button>
                     </li>
