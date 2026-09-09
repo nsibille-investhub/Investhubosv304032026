@@ -1,0 +1,50 @@
+{
+  "skill_name": "email-html-investhub",
+  "evals": [
+    {
+      "id": 1,
+      "prompt": "Prépare-moi l'email HTML d'invitation au webinar InvestHub du 15 octobre à 11h sur la digitalisation des appels de fonds. Deux intervenantes, Camille (Product) et Sofia (Customer Success), un paragraphe d'intro, un bouton d'inscription vers https://www.investhub.cloud/webinar-appels-de-fonds et un rappel que le replay sera envoyé. Je le colle dans Brevo, donc j'ai besoin du HTML complet avec le pied de page et le désabonnement. Le logo est ici : https://a-remplacer.investhub.cloud/logo-investhub-blanc.png",
+      "expected_output": "Un fichier .html complet (doctype XHTML transitional, meta color-scheme, MSO PixelsPerInch, tables role=presentation, CSS inline, bouton VML, dark mode, pied avec désabonnement) et sa version .txt, plus un récap avec objet, preheader et résultat du contrôle.",
+      "files": [],
+      "expectations": [
+        "Le script lint_email_html.py renvoie 0 erreur sur le HTML produit",
+        "Le doctype est XHTML 1.0 Transitional ou HTML 4.01 Transitional",
+        "Toutes les tables portent role=presentation, cellpadding=0, cellspacing=0, border=0 et un attribut width",
+        "Le bouton d'inscription a une version VML v:roundrect dans un conditionnel MSO",
+        "Les deux meta color-scheme et supported-color-schemes sont présentes et une media query prefers-color-scheme dark existe",
+        "Aucune taille de police sous 14px hors preheader et espaceurs",
+        "Un lien de désabonnement visible figure dans le pied de page",
+        "Le contenu vouvoie et aucun lien n'a pour libellé cliquez ici",
+        "Une version texte brut a été produite"
+      ]
+    },
+    {
+      "id": 2,
+      "prompt": "Crée le gabarit de mail de la plateforme pour le rappel d'appel de fonds à J-5 envoyé à l'investisseur : nom de l'appel, nom du fonds, montant appelé, date limite de règlement, référence de virement à indiquer, et un bouton vers l'espace investisseur. Version française uniquement pour l'instant, je ferai l'anglais après. C'est pour l'écran Gabarits des mails.",
+      "expected_output": "Un fragment HTML (sans doctype ni head) en tables avec CSS inline, l'enveloppe Starter Pack (logo $logo, signature, pied $year $appname $mirror), un tableau récapitulatif, un bouton VML, et uniquement des variables présentes dans src/utils/mailTemplateVariables.ts ($callname, $fundname ou $fund, $investamount, $duedate, $call_reference, $link ou $lurl...).",
+      "files": [],
+      "expectations": [
+        "Le script lint_email_html.py --fragment renvoie 0 erreur",
+        "Aucune variable $ utilisée n'est absente du catalogue mailTemplateVariables.ts",
+        "Le fragment ne contient ni doctype, ni head, ni bloc style",
+        "Le fragment commence par le logo $logo et se termine par le pied avec $year, $appname et $mirror",
+        "Le montant appelé et la date limite sont dans un tableau récapitulatif en texte, pas dans une image",
+        "Le bouton a une version VML pour Outlook et un lien texte de secours",
+        "Le contenu vouvoie l'investisseur"
+      ]
+    },
+    {
+      "id": 3,
+      "prompt": "La newsletter public/newsletters/2026-03-mars.html s'affiche mal chez un client sous Outlook et le dark mode Apple Mail est bizarre. Audite-la et corrige-la pour qu'elle passe partout, sans toucher aux textes.",
+      "expected_output": "Un diagnostic listant les problèmes (doctype HTML5, image de fond CSS dans le header, SVG inline, tailles 11-13px, pas de meta color-scheme, pas de fallback Arial MSO, max-width sans ghost table, !important avec espace) et un fichier corrigé qui passe le script sans erreur, textes inchangés.",
+      "files": ["public/newsletters/2026-03-mars.html"],
+      "expectations": [
+        "Le diagnostic cite au moins l'image de fond CSS, le SVG inline, les tailles sous 14px et l'absence des meta color-scheme",
+        "Le fichier corrigé passe lint_email_html.py avec 0 erreur",
+        "Les textes visibles du fichier corrigé sont identiques à ceux de l'original",
+        "L'en-tête utilise un aplat #000E2B sans background-image",
+        "Un bloc <!--[if mso]> force Arial ou Helvetica"
+      ]
+    }
+  ]
+}
