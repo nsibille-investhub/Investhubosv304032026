@@ -472,6 +472,10 @@
         }
       },
       "editButton": "Edit",
+      "refreshButton": "Refresh",
+      "refreshingButton": "Refreshing…",
+      "refreshHint": "Reload the subscription data from the register",
+      "lastRefresh": "Synced at {{time}}",
       "form": {
         "title": "Subscription parameters",
         "editMode": "Edit mode",
@@ -898,7 +902,9 @@
         "documentPreviewDesc": "Opening \"{{name}}\"",
         "noteAdded": "Note added",
         "addDocumentToast": "Add a document",
-        "idCopied": "ID copied to clipboard"
+        "idCopied": "ID copied to clipboard",
+        "refreshed": "Subscription refreshed",
+        "refreshedDesc": "Data synced at {{time}}"
       },
       "compliance": {
         "tone": {

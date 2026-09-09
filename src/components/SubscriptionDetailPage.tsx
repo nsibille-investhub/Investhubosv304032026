@@ -50,6 +50,7 @@ import {
   CreditCard,
   Percent,
   Handshake,
+  RefreshCw,
 } from 'lucide-react';
 import { motion } from 'motion/react';
 import { Badge } from './ui/badge';
@@ -157,6 +158,8 @@ export function SubscriptionDetailPage({ subscription: subscriptionProp, onBack 
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
   const [resentEmails, setResentEmails] = useState<Record<string, string>>({});
   const [idCopied, setIdCopied] = useState(false);
+  const [isRefreshing, setIsRefreshing] = useState(false);
+  const [lastRefreshAt, setLastRefreshAt] = useState<string | null>(null);
   const [openSections, setOpenSections] = useState<string[]>(['identity']);
   const [note, setNote] = useState('');
   const [notes, setNotes] = useState<Array<{ text: string; date: string; author: string }>>([]);
@@ -443,7 +446,7 @@ export function SubscriptionDetailPage({ subscription: subscriptionProp, onBack 
   })();
 
   const formatAmount = (value: number) =>
-    `${value.toLocaleString('fr-FR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} €`;
+    `${value.toLocaleString('fr-FR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}\u00a0€`;
 
   const formatRatio = (value: number) =>
     subscription.amount > 0 ? `${Math.round((value / subscription.amount) * 100)}%` : '0%';
@@ -545,19 +548,61 @@ export function SubscriptionDetailPage({ subscription: subscriptionProp, onBack 
     ? t(SUBSCRIPTION_LANGUAGE_LABEL_KEYS[subscription.language as SubscriptionLanguageCode] ?? subscription.language)
     : undefined;
 
+  // Rafraichissement de la souscription : la maquette n'a pas de backend, le
+  // bouton simule l'aller-retour et horodate la derniere synchronisation.
+  const handleRefreshSubscription = () => {
+    if (isRefreshing) return;
+    setIsRefreshing(true);
+    window.setTimeout(() => {
+      const stamp = new Date().toLocaleTimeString(lang === 'en' ? 'en-GB' : 'fr-FR', {
+        hour: '2-digit',
+        minute: '2-digit',
+      });
+      setIsRefreshing(false);
+      setLastRefreshAt(stamp);
+      toast.success(t('subscriptions.detail.toast.refreshed'), {
+        description: t('subscriptions.detail.toast.refreshedDesc', { time: stamp }),
+      });
+    }, 900);
+  };
+
   const detailSummary = (
     <DetailSummary
       newTabTitle={openInNewTab}
       actions={
-        <Button
-          variant="outline"
-          size="sm"
-          className="gap-1.5 text-primary border-primary/30 hover:bg-primary/5 hover:text-primary h-9"
-          onClick={() => setIsEditDialogOpen(true)}
-        >
-          <Edit2 className="w-3.5 h-3.5" />
-          {t('subscriptions.detail.editButton')}
-        </Button>
+        <>
+          <Button
+            variant="outline"
+            size="icon"
+            className="h-9 w-9"
+            onClick={handleRefreshSubscription}
+            disabled={isRefreshing}
+            title={t('subscriptions.detail.refreshHint')}
+            aria-label={t(
+              isRefreshing
+                ? 'subscriptions.detail.refreshingButton'
+                : 'subscriptions.detail.refreshButton',
+            )}
+          >
+            <RefreshCw className={`w-3.5 h-3.5 ${isRefreshing ? 'animate-spin' : ''}`} />
+          </Button>
+          <Button
+            variant="outline"
+            size="sm"
+            className="gap-1.5 text-primary border-primary/30 hover:bg-primary/5 hover:text-primary h-9"
+            onClick={() => setIsEditDialogOpen(true)}
+          >
+            <Edit2 className="w-3.5 h-3.5" />
+            {t('subscriptions.detail.editButton')}
+          </Button>
+        </>
+      }
+      aside={
+        lastRefreshAt ? (
+          <span className="text-[11px] text-muted-foreground whitespace-nowrap">
+            {t('subscriptions.detail.lastRefresh', { time: lastRefreshAt })}
+          </span>
+        ) : undefined
       }
       attributes={[
         {
@@ -594,6 +639,12 @@ export function SubscriptionDetailPage({ subscription: subscriptionProp, onBack 
             amount: formatAmount(subscription.subscriptionPremium ?? 0),
           }),
           icon: DollarSign,
+        },
+        {
+          id: 'holdingMode',
+          label: t('subscriptions.detail.form.holdingMode'),
+          value: holdingModeLabel,
+          icon: Landmark,
         },
       ]}
       metrics={[
@@ -639,12 +690,6 @@ export function SubscriptionDetailPage({ subscription: subscriptionProp, onBack 
               label: t('subscriptions.detail.form.language'),
               value: languageLabel,
               icon: Globe,
-            },
-            {
-              id: 'holdingMode',
-              label: t('subscriptions.detail.form.holdingMode'),
-              value: holdingModeLabel,
-              icon: Wallet,
             },
             {
               id: 'externalId',

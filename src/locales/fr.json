@@ -472,6 +472,10 @@
         }
       },
       "editButton": "Modifier",
+      "refreshButton": "Rafraîchir",
+      "refreshingButton": "Rafraîchissement…",
+      "refreshHint": "Recharger les données de la souscription depuis le registre",
+      "lastRefresh": "Synchronisé à {{time}}",
       "form": {
         "title": "Paramètres de la souscription",
         "editMode": "Mode modification",
@@ -898,7 +902,9 @@
         "documentPreviewDesc": "Ouverture de « {{name}} »",
         "noteAdded": "Note ajoutée",
         "addDocumentToast": "Ajouter un document",
-        "idCopied": "ID copié dans le presse-papier"
+        "idCopied": "ID copié dans le presse-papier",
+        "refreshed": "Souscription rafraîchie",
+        "refreshedDesc": "Données synchronisées à {{time}}"
       },
       "compliance": {
         "tone": {
