@@ -893,12 +893,9 @@ export function SubscriptionComplianceSection({
         )}
       </Card>
 
-      <SubscriptionScreeningWidget screening={screening} locked={locked} />
+      <div className="grid grid-cols-1 items-start gap-4 lg:grid-cols-2">
+        <SubscriptionScreeningWidget screening={screening} locked={locked} />
 
-      <div
-        className="grid items-start gap-4"
-        style={{ gridTemplateColumns: 'repeat(auto-fit, minmax(520px, 1fr))' }}
-      >
         <RiskProfileWidget
           locked={locked}
           manualScores={manualScores}

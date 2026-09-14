@@ -389,6 +389,7 @@ function EntityAlertGroup({ party, locked, onOpenAlert, onQualify }: EntityAlert
         <AlertDataTable
           data={sortedAlerts}
           showEntityName={false}
+          compact
           hoveredRow={hoveredRow}
           setHoveredRow={setHoveredRow}
           onRowClick={onOpenAlert}
