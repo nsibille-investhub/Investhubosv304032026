@@ -894,8 +894,6 @@ export function SubscriptionComplianceSection({
       </Card>
 
       <div className="grid grid-cols-1 items-start gap-4 lg:grid-cols-2">
-        <SubscriptionScreeningWidget screening={screening} locked={locked} />
-
         <RiskProfileWidget
           locked={locked}
           manualScores={manualScores}
@@ -906,6 +904,8 @@ export function SubscriptionComplianceSection({
           scoreValidatedBy={scoreValidatedBy}
           scoreValidatedAt={scoreValidatedAt}
         />
+
+        <SubscriptionScreeningWidget screening={screening} locked={locked} />
       </div>
 
       {/* Widget journal de conformite */}
