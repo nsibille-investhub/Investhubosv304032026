@@ -1051,7 +1051,11 @@
           "colLists": "Listes",
           "colDecision": "Décision",
           "matchExact": "EXACT",
-          "matchPartial": "PARTIEL"
+          "matchPartial": "PARTIEL",
+          "allTreated": "Aucune correspondance à traiter",
+          "openAlerts": "Toutes les alertes",
+          "partiesScreenedOne": "{{count}} tiers contrôlé :",
+          "partiesScreenedMany": "{{count}} tiers contrôlés :"
         },
         "purposes": {
           "subscriber": "Souscripteur",

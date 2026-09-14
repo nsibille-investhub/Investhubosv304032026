@@ -34,6 +34,7 @@ import { AlertDetailDrawer } from '../AlertDetailDrawer';
 import { AlertBulkActionDialog } from '../AlertBulkActionDialog';
 import type { AlertBulkAction } from '../AlertDataTable';
 import { DecisionRevisionDialog } from './DecisionRevisionDialog';
+import { MatchQuickAction } from './MatchQuickAction';
 import { useBulkSelection } from '../../hooks/useBulkSelection';
 import { useTranslation } from '../../utils/languageContext';
 import { useCompliance } from '../../utils/complianceContext';
@@ -625,19 +626,19 @@ function MatchRow({
         <div className="flex items-center gap-1 shrink-0">
           {needsAction ? (
             <>
-              <QuickAction
+              <MatchQuickAction
                 label={t('complianceEntities.matches.actions.confirm')}
                 icon={Check}
                 tone="danger"
                 onClick={() => onQuickAction('true_hit')}
               />
-              <QuickAction
+              <MatchQuickAction
                 label={t('complianceEntities.matches.actions.unsure')}
                 icon={HelpCircle}
                 tone="warning"
                 onClick={() => onQuickAction('unsure')}
               />
-              <QuickAction
+              <MatchQuickAction
                 label={t('complianceEntities.matches.actions.reject')}
                 icon={X}
                 tone="success"
@@ -689,32 +690,6 @@ function MatchRow({
         )}
       </AnimatePresence>
     </li>
-  );
-}
-
-function QuickAction({
-  label,
-  icon: Icon,
-  tone,
-  onClick,
-}: {
-  label: string;
-  icon: typeof Check;
-  tone: 'danger' | 'warning' | 'success';
-  onClick: () => void;
-}) {
-  const color = tone === 'danger' ? 'var(--danger)' : tone === 'warning' ? 'var(--warning)' : 'var(--success)';
-  const soft = tone === 'danger' ? 'var(--danger-soft)' : tone === 'warning' ? 'var(--warning-soft)' : 'var(--success-soft)';
-  return (
-    <button
-      type="button"
-      onClick={onClick}
-      className="inline-flex items-center gap-1 rounded-md border px-2 py-1 text-xs font-semibold transition-colors hover:opacity-80"
-      style={{ color, backgroundColor: soft, borderColor: `color-mix(in oklab, ${color} 35%, transparent)` }}
-    >
-      <Icon className="w-3.5 h-3.5" />
-      {label}
-    </button>
   );
 }
 

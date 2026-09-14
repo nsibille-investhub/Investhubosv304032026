@@ -1051,7 +1051,11 @@
           "colLists": "Lists",
           "colDecision": "Decision",
           "matchExact": "EXACT",
-          "matchPartial": "PARTIAL"
+          "matchPartial": "PARTIAL",
+          "allTreated": "No match to review",
+          "openAlerts": "All alerts",
+          "partiesScreenedOne": "{{count}} screened party:",
+          "partiesScreenedMany": "{{count}} screened parties:"
         },
         "purposes": {
           "subscriber": "Subscriber",

@@ -1503,6 +1503,7 @@ export function SubscriptionDetailPage({ subscription: subscriptionProp, onBack 
                       onValidateScore={handleValidateRisk}
                       onInvalidateScore={handleInvalidateRisk}
                       initialStatus={complianceStatus}
+                      screeningSeed={String(subscription.id ?? subscription.contrepartie?.name ?? 'subscription')}
                       onStatusChange={setComplianceStatus}
                       onSubscriptionValidated={() => setCurrentStep(3)}
                     />
