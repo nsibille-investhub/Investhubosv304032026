@@ -1054,8 +1054,8 @@
           "matchPartial": "PARTIAL",
           "allTreated": "No match to review",
           "openAlerts": "All alerts",
-          "partiesScreenedOne": "{{count}} screened party:",
-          "partiesScreenedMany": "{{count}} screened parties:"
+          "expandGroup": "Expand {{name}}",
+          "collapseGroup": "Collapse {{name}}"
         },
         "purposes": {
           "subscriber": "Subscriber",
@@ -4024,6 +4024,7 @@
       "participation": "Portfolio company"
     },
     "relative": {
+      "today": "Today",
       "minutes": "{{count}} min ago",
       "hours": "{{count}} h ago",
       "yesterday": "Yesterday",

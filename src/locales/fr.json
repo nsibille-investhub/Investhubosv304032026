@@ -1054,8 +1054,8 @@
           "matchPartial": "PARTIEL",
           "allTreated": "Aucune correspondance à traiter",
           "openAlerts": "Toutes les alertes",
-          "partiesScreenedOne": "{{count}} tiers contrôlé :",
-          "partiesScreenedMany": "{{count}} tiers contrôlés :"
+          "expandGroup": "Déplier {{name}}",
+          "collapseGroup": "Replier {{name}}"
         },
         "purposes": {
           "subscriber": "Souscripteur",
@@ -4024,6 +4024,7 @@
       "participation": "Participation"
     },
     "relative": {
+      "today": "Aujourd'hui",
       "minutes": "Il y a {{count}} min",
       "hours": "Il y a {{count}} h",
       "yesterday": "Hier",

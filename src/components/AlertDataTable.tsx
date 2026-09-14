@@ -12,6 +12,8 @@ export type AlertBulkAction = 'true_hit' | 'false_hit' | 'unsure' | 'escalate';
 
 interface AlertDataTableProps {
   data: AlertItem[];
+  /** Masque le nom de l'entité quand le tableau est déjà groupé par entité. */
+  showEntityName?: boolean;
   hoveredRow: string | null;
   setHoveredRow: (id: string | null) => void;
   onRowClick: (row: AlertItem) => void;
@@ -52,6 +54,7 @@ const ALERT_LIST_LABEL_KEY: Record<AlertListCategory, string> = {
 
 export function AlertDataTable({
   data,
+  showEntityName = true,
   hoveredRow,
   setHoveredRow,
   onRowClick,
@@ -67,6 +70,8 @@ export function AlertDataTable({
 }: AlertDataTableProps) {
   const { t } = useTranslation();
   const selectionEnabled = !!onToggleSelectRow && !!selectedIds;
+  // Groupé par entité : largeurs figées pour que les tableaux restent alignés.
+  const colWidth = (width: string) => (showEntityName ? '' : ` ${width}`);
   const hasPendingRow = data.some((a) => a.status === 'Pending');
 
   const getSortIcon = (key: string) => {
@@ -102,20 +107,17 @@ export function AlertDataTable({
   );
 
   const formatDaysAgo = (daysAgo: number) => {
-    if (daysAgo === 0) return 'Today';
-    if (daysAgo === 1) return '1 day ago';
-    if (daysAgo < 7) return `${daysAgo} days ago`;
-    if (daysAgo < 30) {
-      const weeks = Math.floor(daysAgo / 7);
-      return `${weeks} week${weeks > 1 ? 's' : ''} ago`;
-    }
-    const months = Math.floor(daysAgo / 30);
-    return `${months} month${months > 1 ? 's' : ''} ago`;
+    if (daysAgo === 0) return t('complianceEntities.relative.today');
+    if (daysAgo === 1) return t('complianceEntities.relative.yesterday');
+    if (daysAgo < 7) return t('complianceEntities.relative.days', { count: daysAgo });
+    if (daysAgo < 30) return t('complianceEntities.relative.weeks', { count: Math.floor(daysAgo / 7) });
+    if (daysAgo < 365) return t('complianceEntities.relative.months', { count: Math.floor(daysAgo / 30) });
+    return t('complianceEntities.relative.years', { count: Math.floor(daysAgo / 365) });
   };
 
   return (
     <div className="overflow-x-auto">
-      <table className="w-full">
+      <table className={`w-full${showEntityName ? '' : ' table-fixed'}`}>
         <thead className="bg-gray-50 border-b border-gray-200 sticky top-0 z-10">
           <tr>
             {selectionEnabled && (
@@ -146,7 +148,7 @@ export function AlertDataTable({
               </th>
             )}
             <th
-              className="px-6 py-3 text-left text-xs text-gray-600 uppercase tracking-wider cursor-pointer hover:bg-gray-100 transition-colors"
+              className={`px-6 py-3 text-left text-xs text-gray-600 uppercase tracking-wider cursor-pointer hover:bg-gray-100 transition-colors${colWidth('w-[26%]')}`}
               onClick={() => onSort('name')}
             >
               <div className="flex items-center gap-2">
@@ -154,11 +156,11 @@ export function AlertDataTable({
                 {getSortIcon('name')}
               </div>
             </th>
-            <th className="px-6 py-3 text-left text-xs text-gray-600 uppercase tracking-wider">
+            <th className={`px-6 py-3 text-left text-xs text-gray-600 uppercase tracking-wider${colWidth('w-[13%]')}`}>
               {t('complianceAlerts.table.changes')}
             </th>
             <th
-              className="px-6 py-3 text-left text-xs text-gray-600 uppercase tracking-wider cursor-pointer hover:bg-gray-100 transition-colors"
+              className={`px-6 py-3 text-left text-xs text-gray-600 uppercase tracking-wider cursor-pointer hover:bg-gray-100 transition-colors${colWidth('w-[10%]')}`}
               onClick={() => onSort('match')}
             >
               <div className="flex items-center gap-2">
@@ -166,11 +168,11 @@ export function AlertDataTable({
                 {getSortIcon('match')}
               </div>
             </th>
-            <th className="px-6 py-3 text-left text-xs text-gray-600 uppercase tracking-wider">
+            <th className={`px-6 py-3 text-left text-xs text-gray-600 uppercase tracking-wider${colWidth('w-[17%]')}`}>
               {t('complianceAlerts.table.list')}
             </th>
             <th
-              className="px-6 py-3 text-left text-xs text-gray-600 uppercase tracking-wider cursor-pointer hover:bg-gray-100 transition-colors"
+              className={`px-6 py-3 text-left text-xs text-gray-600 uppercase tracking-wider cursor-pointer hover:bg-gray-100 transition-colors${colWidth('w-[12%]')}`}
               onClick={() => onSort('status')}
             >
               <div className="flex items-center gap-2">
@@ -179,7 +181,7 @@ export function AlertDataTable({
               </div>
             </th>
             <th
-              className="px-6 py-3 text-left text-xs text-gray-600 uppercase tracking-wider cursor-pointer hover:bg-gray-100 transition-colors"
+              className={`px-6 py-3 text-left text-xs text-gray-600 uppercase tracking-wider cursor-pointer hover:bg-gray-100 transition-colors${colWidth('w-[12%]')}`}
               onClick={() => onSort('daysAgo')}
             >
               <div className="flex items-center gap-2">
@@ -187,7 +189,7 @@ export function AlertDataTable({
                 {getSortIcon('daysAgo')}
               </div>
             </th>
-            <th className="px-6 py-3 text-right text-xs text-gray-600 uppercase tracking-wider">
+            <th className={`px-6 py-3 text-right text-xs text-gray-600 uppercase tracking-wider${colWidth('w-[10%]')}`}>
               {t('complianceAlerts.table.actions')}
             </th>
           </tr>
@@ -236,35 +238,41 @@ export function AlertDataTable({
                 </td>
               )}
               <td className="px-6 py-4">
-                <div>
-                  {onEntityClick ? (
-                    <button
-                      type="button"
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        onEntityClick(alert);
-                      }}
-                      title={t('complianceAlerts.table.openEntity')}
-                      className="text-sm font-medium text-left hover:underline underline-offset-2"
-                      style={{ color: '#000E2B' }}
-                    >
-                      {alert.entityName}
-                    </button>
-                  ) : (
-                    <div
-                      className="text-sm font-medium"
-                      style={{ color: '#000E2B' }}
-                    >
-                      {alert.entityName}
+                {showEntityName ? (
+                  <div>
+                    {onEntityClick ? (
+                      <button
+                        type="button"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          onEntityClick(alert);
+                        }}
+                        title={t('complianceAlerts.table.openEntity')}
+                        className="text-sm font-medium text-left hover:underline underline-offset-2"
+                        style={{ color: '#000E2B' }}
+                      >
+                        {alert.entityName}
+                      </button>
+                    ) : (
+                      <div
+                        className="text-sm font-medium"
+                        style={{ color: '#000E2B' }}
+                      >
+                        {alert.entityName}
+                      </div>
+                    )}
+                    <div className="text-xs text-gray-500">
+                      <span className="font-medium text-gray-400">
+                        {t('complianceAlerts.table.nameAlertLabel')}:
+                      </span>{' '}
+                      {alert.name}
                     </div>
-                  )}
-                  <div className="text-xs text-gray-500">
-                    <span className="font-medium text-gray-400">
-                      {t('complianceAlerts.table.nameAlertLabel')}:
-                    </span>{' '}
+                  </div>
+                ) : (
+                  <div className="text-sm font-medium" style={{ color: '#000E2B' }}>
                     {alert.name}
                   </div>
-                </div>
+                )}
               </td>
               <td className="px-6 py-4">{renderChanges(alert.changes)}</td>
               <td className="px-6 py-4">{renderMatch(alert.match)}</td>
