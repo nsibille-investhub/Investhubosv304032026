@@ -660,41 +660,6 @@ export function DocumentRelaunchModal({
                 </span>
               </div>
 
-              {/* Modèle de mail */}
-              <div className="space-y-2">
-                <label className="text-xs font-medium text-muted-foreground uppercase tracking-wide">
-                  {t('ged.relaunchModal.templateFieldLabel')}
-                </label>
-                <Popover open={templatePopoverOpen} onOpenChange={setTemplatePopoverOpen}>
-                  <PopoverTrigger asChild>
-                    <button
-                      type="button"
-                      className={cn(
-                        'w-full flex items-center gap-2.5 px-3 py-2.5 rounded-md border border-border bg-white text-left transition-colors',
-                        'hover:bg-muted/40 hover:border-primary/40',
-                        'focus-visible:outline-none focus-visible:ring-[3px] focus-visible:ring-ring/50',
-                      )}
-                    >
-                      <div className="w-7 h-7 rounded-full bg-primary text-primary-foreground flex items-center justify-center flex-shrink-0">
-                        <Mail className="w-3.5 h-3.5" />
-                      </div>
-                      <div className="flex-1 min-w-0">
-                        <div className="text-sm font-medium text-foreground truncate">
-                          {selectedTemplate.name}
-                        </div>
-                        <div className="text-xs text-muted-foreground truncate">
-                          {selectedTemplate.description}
-                        </div>
-                      </div>
-                      <ChevronDown className="w-4 h-4 text-muted-foreground flex-shrink-0" />
-                    </button>
-                  </PopoverTrigger>
-                  <PopoverContent className="w-[var(--radix-popover-trigger-width)] p-1" align="start">
-                    {renderTemplateOptions(() => setTemplatePopoverOpen(false))}
-                  </PopoverContent>
-                </Popover>
-              </div>
-
               {/* Critère */}
               <div className="space-y-2">
                 <label className="text-xs font-medium text-muted-foreground uppercase tracking-wide">
@@ -1035,6 +1000,43 @@ export function DocumentRelaunchModal({
                   </div>
                 </div>
               )}
+
+              <Separator />
+
+              {/* Modèle de mail */}
+              <div className="space-y-2">
+                <label className="text-xs font-medium text-muted-foreground uppercase tracking-wide">
+                  {t('ged.relaunchModal.templateFieldLabel')}
+                </label>
+                <Popover open={templatePopoverOpen} onOpenChange={setTemplatePopoverOpen}>
+                  <PopoverTrigger asChild>
+                    <button
+                      type="button"
+                      className={cn(
+                        'w-full flex items-center gap-2.5 px-3 py-2.5 rounded-md border border-border bg-white text-left transition-colors',
+                        'hover:bg-muted/40 hover:border-primary/40',
+                        'focus-visible:outline-none focus-visible:ring-[3px] focus-visible:ring-ring/50',
+                      )}
+                    >
+                      <div className="w-7 h-7 rounded-full bg-primary text-primary-foreground flex items-center justify-center flex-shrink-0">
+                        <Mail className="w-3.5 h-3.5" />
+                      </div>
+                      <div className="flex-1 min-w-0">
+                        <div className="text-sm font-medium text-foreground truncate">
+                          {selectedTemplate.name}
+                        </div>
+                        <div className="text-xs text-muted-foreground truncate">
+                          {selectedTemplate.description}
+                        </div>
+                      </div>
+                      <ChevronDown className="w-4 h-4 text-muted-foreground flex-shrink-0" />
+                    </button>
+                  </PopoverTrigger>
+                  <PopoverContent className="w-[var(--radix-popover-trigger-width)] p-1" align="start">
+                    {renderTemplateOptions(() => setTemplatePopoverOpen(false))}
+                  </PopoverContent>
+                </Popover>
+              </div>
             </div>
           </div>
 
