@@ -316,7 +316,6 @@ export function DocumentRelaunchModal({
   const selectedTemplate =
     emailTemplates.find((tpl) => tpl.id === templateId) ?? emailTemplates[0];
   const [templatePopoverOpen, setTemplatePopoverOpen] = useState(false);
-  const [footerTemplateOpen, setFooterTemplateOpen] = useState(false);
   const [isPreviewOpen, setIsPreviewOpen] = useState(false);
 
   const investorRecipients = useMemo(
@@ -1041,53 +1040,31 @@ export function DocumentRelaunchModal({
           </div>
 
           {/* Footer */}
-          <div className="px-6 py-4 border-t border-border bg-white flex flex-col gap-3" style={{ backgroundColor: '#FFFFFF' }}>
-            <div className="flex items-center gap-2 flex-wrap text-xs">
-              <Mail className="w-3.5 h-3.5 text-muted-foreground flex-shrink-0" />
-              <span className="text-muted-foreground">
-                {t('ged.relaunchModal.templateFooterLabel')}
-              </span>
-              <span className="font-medium text-foreground">
-                {selectedTemplate.name}
-              </span>
-              <Popover open={footerTemplateOpen} onOpenChange={setFooterTemplateOpen}>
-                <PopoverTrigger asChild>
-                  <Button variant="link" size="sm" className="h-auto p-0 text-xs">
-                    {t('ged.relaunchModal.templateChange')}
-                  </Button>
-                </PopoverTrigger>
-                <PopoverContent className="w-80 p-1" align="start" side="top">
-                  {renderTemplateOptions(() => setFooterTemplateOpen(false))}
-                </PopoverContent>
-              </Popover>
-            </div>
-
-            <div className="flex items-center justify-between gap-2">
-              <Button variant="outline" onClick={onClose}>
-                {t('ged.relaunchModal.back')}
-              </Button>
-              <Button
-                onClick={handleSend}
-                disabled={notifiableCount === 0}
-                className={cn(
-                  'gap-2 text-white border-0',
-                  notifiableCount === 0 && 'opacity-60',
-                )}
-                style={
-                  notifiableCount > 0
-                    ? {
-                        background:
-                          'linear-gradient(135deg, var(--brand-primary) 0%, var(--brand-accent) 100%)',
-                      }
-                    : undefined
-                }
-              >
-                <Send className="w-4 h-4" />
-                {notifiableCount > 0
-                  ? t(notifiableCount > 1 ? 'ged.relaunchModal.sendMany' : 'ged.relaunchModal.sendOne', { count: notifiableCount })
-                  : t('ged.relaunchModal.sendNotifications')}
-              </Button>
-            </div>
+          <div className="px-6 py-4 border-t border-border bg-white flex items-center justify-between gap-2" style={{ backgroundColor: '#FFFFFF' }}>
+            <Button variant="outline" onClick={onClose}>
+              {t('ged.relaunchModal.back')}
+            </Button>
+            <Button
+              onClick={handleSend}
+              disabled={notifiableCount === 0}
+              className={cn(
+                'gap-2 text-white border-0',
+                notifiableCount === 0 && 'opacity-60',
+              )}
+              style={
+                notifiableCount > 0
+                  ? {
+                      background:
+                        'linear-gradient(135deg, var(--brand-primary) 0%, var(--brand-accent) 100%)',
+                    }
+                  : undefined
+              }
+            >
+              <Send className="w-4 h-4" />
+              {notifiableCount > 0
+                ? t(notifiableCount > 1 ? 'ged.relaunchModal.sendMany' : 'ged.relaunchModal.sendOne', { count: notifiableCount })
+                : t('ged.relaunchModal.sendNotifications')}
+            </Button>
           </div>
         </AlertDialogContent>
       </AlertDialog>
