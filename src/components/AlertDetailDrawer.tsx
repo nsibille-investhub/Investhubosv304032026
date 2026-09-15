@@ -1,11 +1,9 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useState, type ReactNode } from 'react';
 import {
   AlertTriangle,
   Calendar,
   CheckCircle2,
   ExternalLink,
-  Eye,
-  EyeOff,
   FileText,
   Hash,
   HelpCircle,
@@ -13,7 +11,6 @@ import {
   Link2,
   ShieldCheck,
   Sparkles,
-  Users,
   XCircle,
 } from 'lucide-react';
 import { toast } from 'sonner@2.0.3';
@@ -27,12 +24,9 @@ import {
 } from './ui/sheet';
 import { Badge } from './ui/badge';
 import { Button } from './ui/button';
-import { Switch } from './ui/switch';
 import { Textarea } from './ui/textarea';
-import { Tooltip, TooltipContent, TooltipTrigger } from './ui/tooltip';
 import { StatusBadge } from './StatusBadge';
-import { AnalystSelector } from './AnalystSelector';
-import { AlertItem, AlertListCategory, InvestorRole } from '../utils/alertsGenerator';
+import { AlertItem, AlertListCategory } from '../utils/alertsGenerator';
 import {
   generateAiAnalysis,
   proposalToDecision,
@@ -79,12 +73,13 @@ const ALERT_LIST_LABEL_KEY: Record<AlertListCategory, string> = {
   'Financial Warning': 'complianceAlerts.list.financialWarning',
 };
 
-const ROLE_LABEL_KEY: Record<InvestorRole, string> = {
-  source: 'complianceAlerts.investorRole.source',
-  beneficiary: 'complianceAlerts.investorRole.beneficiary',
-  coInvestor: 'complianceAlerts.investorRole.coInvestor',
-  legalRep: 'complianceAlerts.investorRole.legalRep',
-  proxy: 'complianceAlerts.investorRole.proxy',
+const CHANGE_LABEL_KEY: Record<
+  NonNullable<AlertItem['changes']>,
+  string
+> = {
+  New: 'complianceAlerts.changes.new',
+  Modified: 'complianceAlerts.changes.modified',
+  Reopened: 'complianceAlerts.changes.reopened',
 };
 
 const SECTION_STYLE = {
@@ -106,8 +101,6 @@ export function AlertDetailDrawer({
   const { t } = useTranslation();
   const [decision, setDecision] = useState<Decision | null>(null);
   const [comment, setComment] = useState('');
-  const [monitoring, setMonitoring] = useState(true);
-  const [analyst, setAnalyst] = useState<string | null>(null);
   const [aiAnalysis, setAiAnalysis] = useState<AiScreeningAnalysis | null>(null);
   const [aiLoading, setAiLoading] = useState(false);
 
@@ -121,8 +114,6 @@ export function AlertDetailDrawer({
             : null;
       setDecision(initial);
       setComment(alert.alert?.comment ?? '');
-      setMonitoring(alert.monitoring);
-      setAnalyst(alert.analyst);
       setAiAnalysis(null);
       setAiLoading(false);
     }
@@ -183,36 +174,15 @@ export function AlertDetailDrawer({
         <>
         {/* Header */}
         <SheetHeader className="px-6 py-5 border-b bg-white">
-          <div className="pr-8">
-            <div className="flex items-center gap-2 flex-wrap">
-              <SheetTitle className="text-[22px] leading-7">
-                {onEntityClick ? (
-                  <button
-                    type="button"
-                    onClick={() => onEntityClick(alert)}
-                    title={t('complianceAlerts.table.openEntity')}
-                    className="inline-flex items-center gap-1.5 text-left hover:underline underline-offset-4"
-                  >
-                    {alert.entityName}
-                    <ExternalLink className="w-4 h-4 opacity-50" />
-                  </button>
-                ) : (
-                  alert.entityName
-                )}
-              </SheetTitle>
-              <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md bg-muted text-xs font-medium tabular-nums">
-                <Sparkles className="w-3 h-3" />
-                {alert.match}%
-              </span>
-              <StatusBadge label={statusLabel} variant={statusVariant} />
-            </div>
-            <SheetDescription className="mt-1 text-sm">
-              <span className="font-medium text-foreground/70">
-                {t('complianceAlerts.drawer.nameAlert')}:
-              </span>{' '}
-              {alert.name} · {alert.source}
-            </SheetDescription>
+          <div className="pr-8 flex items-center gap-2 flex-wrap">
+            <SheetTitle className="text-[22px] leading-7">
+              {t('complianceAlerts.drawer.title')}
+            </SheetTitle>
+            <StatusBadge label={statusLabel} variant={statusVariant} />
           </div>
+          <SheetDescription className="sr-only">
+            {t('complianceAlerts.drawer.titleHint')}
+          </SheetDescription>
         </SheetHeader>
 
         {/* Scrollable body */}
@@ -223,121 +193,50 @@ export function AlertDetailDrawer({
             className="space-y-3 rounded-2xl p-4 border"
             style={SECTION_STYLE}
           >
-            <div>
-              <p
-                className="font-semibold flex items-center gap-2"
-                style={{ color: ACCENT_COLOR }}
-              >
-                <ShieldCheck className="w-5 h-5" style={{ color: ACCENT_COLOR }} />
-                {t('complianceAlerts.drawer.context')}
-              </p>
-              <p className="text-sm text-slate-600">
-                {alert.entityName} · {alert.source}
-              </p>
-            </div>
+            <p
+              className="font-semibold flex items-center gap-2"
+              style={{ color: ACCENT_COLOR }}
+            >
+              <ShieldCheck className="w-5 h-5" style={{ color: ACCENT_COLOR }} />
+              {t('complianceAlerts.drawer.context')}
+            </p>
 
             <div
-              className="rounded-2xl border bg-white p-4 md:p-5 space-y-4"
+              className="rounded-2xl border bg-white p-4 md:p-5"
               style={INNER_CARD_STYLE}
             >
-              <div>
-                <div className="mb-1.5 text-[10px] font-semibold uppercase tracking-widest text-slate-500">
-                  {t('complianceAlerts.drawer.analyst')}
-                </div>
-                <AnalystSelector
-                  currentAnalyst={analyst}
-                  onAnalystChange={(name) => setAnalyst(name)}
-                />
-              </div>
-
-              <div className="flex items-center gap-3">
-                <span className="text-sm text-slate-600">
-                  {t('complianceAlerts.drawer.monitoring')}:
-                </span>
-                <Tooltip>
-                  <TooltipTrigger asChild>
-                    <div className="flex items-center gap-2">
-                      <Switch
-                        checked={monitoring}
-                        onCheckedChange={setMonitoring}
-                      />
-                      <span
-                        className={`text-sm font-medium ${
-                          monitoring ? 'text-blue-600' : 'text-slate-500'
-                        }`}
-                      >
-                        {monitoring
-                          ? t('complianceAlerts.drawer.active')
-                          : t('complianceAlerts.drawer.inactive')}
-                      </span>
-                      {monitoring ? (
-                        <Eye className="w-4 h-4 text-blue-600" />
-                      ) : (
-                        <EyeOff className="w-4 h-4 text-slate-400" />
-                      )}
-                    </div>
-                  </TooltipTrigger>
-                  <TooltipContent>
-                    {monitoring
-                      ? t('complianceAlerts.drawer.active')
-                      : t('complianceAlerts.drawer.inactive')}
-                  </TooltipContent>
-                </Tooltip>
-              </div>
-
-              <div>
-                <div className="mb-2 flex items-center gap-1.5 text-[10px] font-semibold uppercase tracking-widest text-slate-500">
-                  <Users className="w-3 h-3" />
-                  {t('complianceAlerts.drawer.attachedInvestors')}
-                </div>
-                {alert.attachedInvestors.length === 0 ? (
-                  <p className="text-xs text-slate-500">
-                    {t('complianceAlerts.drawer.noAttachedInvestors')}
-                  </p>
-                ) : (
-                  <ul className="space-y-1.5">
-                    {alert.attachedInvestors.map((inv, idx) => (
-                      <li
-                        key={`${inv.name}-${idx}`}
-                        className="flex items-center justify-between gap-2 rounded-md border border-slate-200 bg-slate-50 px-2.5 py-1.5 text-xs"
-                      >
-                        <span className="font-medium text-slate-900 truncate">
-                          {inv.name}
-                        </span>
-                        <Badge
-                          variant="outline"
-                          className="text-[10px] font-medium shrink-0 bg-white"
-                        >
-                          {t(ROLE_LABEL_KEY[inv.role])}
-                        </Badge>
-                      </li>
-                    ))}
-                  </ul>
-                )}
-              </div>
-
-              <div>
-                <div className="mb-2 text-[10px] font-semibold uppercase tracking-widest text-slate-500">
-                  {t('complianceAlerts.drawer.previousFindings')}
-                </div>
-                {alert.previousFindings.length === 0 ? (
-                  <p className="text-xs text-slate-500">
-                    {t('complianceAlerts.drawer.noPreviousFindings')}
-                  </p>
-                ) : (
-                  <div className="flex flex-wrap gap-1.5">
-                    {alert.previousFindings.map((cat, idx) => (
-                      <Badge
-                        key={`${cat}-${idx}`}
-                        variant="outline"
-                        className="text-[11px] font-medium bg-white"
-                      >
-                        {t(ALERT_LIST_LABEL_KEY[cat])}
-                      </Badge>
-                    ))}
-                  </div>
-                )}
-              </div>
+              <dl className="grid gap-x-6 gap-y-4 sm:grid-cols-2">
+                <ContextField label={t('complianceAlerts.drawer.attachedDossier')}>
+                  {alert.dossier}
+                </ContextField>
+                <ContextField label={t('complianceAlerts.drawer.screenedEntity')}>
+                  {onEntityClick ? (
+                    <button
+                      type="button"
+                      onClick={() => onEntityClick(alert)}
+                      title={t('complianceAlerts.table.openEntity')}
+                      className="inline-flex items-center gap-1.5 text-left hover:underline underline-offset-4"
+                    >
+                      {alert.entityName}
+                      <ExternalLink className="w-3.5 h-3.5 opacity-50" />
+                    </button>
+                  ) : (
+                    alert.entityName
+                  )}
+                </ContextField>
+                <ContextField label={t('complianceAlerts.drawer.matchedHit')}>
+                  {alert.name}
+                </ContextField>
+                <ContextField label={t('complianceAlerts.drawer.matchScore')}>
+                  <span className="tabular-nums">{alert.match}%</span>
+                </ContextField>
+                <ContextField label={t('complianceAlerts.drawer.alertType')}>
+                  {alert.changes ? t(CHANGE_LABEL_KEY[alert.changes]) : '—'}
+                </ContextField>
+                <ContextField label={t('complianceAlerts.drawer.screeningSource')}>
+                  {alert.source}
+                </ContextField>
+              </dl>
             </div>
           </section>
 
@@ -586,6 +485,25 @@ export function AlertDetailDrawer({
         ) : null}
       </SheetContent>
     </Sheet>
+  );
+}
+
+function ContextField({
+  label,
+  children,
+}: {
+  label: string;
+  children: ReactNode;
+}) {
+  return (
+    <div className="min-w-0">
+      <dt className="mb-1 text-[10px] font-semibold uppercase tracking-widest text-slate-500">
+        {label}
+      </dt>
+      <dd className="text-sm font-medium text-slate-900 break-words">
+        {children}
+      </dd>
+    </div>
   );
 }
 
