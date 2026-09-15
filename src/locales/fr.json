@@ -2683,7 +2683,7 @@
       "previewHint": "Cliquer pour afficher l'aperçu du document",
       "previewBadge": "Aperçu",
       "recapTitle": "Récapitulatif de l'envoi",
-      "templateLabel": "Modèle",
+      "templateFieldLabel": "Modèle de mail",
       "criteriaLabel": "Critère",
       "allRecipients": "Tous les destinataires",
       "notConsulted": "N'ont pas consulté le document",

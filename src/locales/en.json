@@ -2683,7 +2683,7 @@
       "previewHint": "Click to display the document preview",
       "previewBadge": "Preview",
       "recapTitle": "Send recap",
-      "templateLabel": "Template",
+      "templateFieldLabel": "Email template",
       "criteriaLabel": "Criterion",
       "allRecipients": "All recipients",
       "notConsulted": "Haven't consulted the document",
