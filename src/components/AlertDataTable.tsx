@@ -12,6 +12,10 @@ export type AlertBulkAction = 'true_hit' | 'false_hit' | 'unsure' | 'escalate';
 
 interface AlertDataTableProps {
   data: AlertItem[];
+  /** Masque le nom de l'entité quand le tableau est déjà groupé par entité. */
+  showEntityName?: boolean;
+  /** Affichage resserré : masque les colonnes changement, score et date. */
+  compact?: boolean;
   hoveredRow: string | null;
   setHoveredRow: (id: string | null) => void;
   onRowClick: (row: AlertItem) => void;
@@ -52,6 +56,8 @@ const ALERT_LIST_LABEL_KEY: Record<AlertListCategory, string> = {
 
 export function AlertDataTable({
   data,
+  showEntityName = true,
+  compact = false,
   hoveredRow,
   setHoveredRow,
   onRowClick,
@@ -67,6 +73,14 @@ export function AlertDataTable({
 }: AlertDataTableProps) {
   const { t } = useTranslation();
   const selectionEnabled = !!onToggleSelectRow && !!selectedIds;
+  // Le CSS Tailwind du projet est précompilé : les largeurs passent par des
+  // styles inline pour que les tableaux groupés restent alignés entre eux.
+  const colWidth = (width: string, compactWidth?: string) =>
+    showEntityName ? undefined : { width: compact ? compactWidth ?? width : width };
+  const headPad = compact ? 'px-3 py-2' : 'px-6 py-3';
+  const cellPad = compact ? 'px-3 py-2.5' : 'px-6 py-4';
+  const checkPad = compact ? 'px-2 py-2' : 'px-4 py-3';
+  const checkWidth = { width: compact ? '2rem' : '2.5rem' };
   const hasPendingRow = data.some((a) => a.status === 'Pending');
 
   const getSortIcon = (key: string) => {
@@ -102,24 +116,21 @@ export function AlertDataTable({
   );
 
   const formatDaysAgo = (daysAgo: number) => {
-    if (daysAgo === 0) return 'Today';
-    if (daysAgo === 1) return '1 day ago';
-    if (daysAgo < 7) return `${daysAgo} days ago`;
-    if (daysAgo < 30) {
-      const weeks = Math.floor(daysAgo / 7);
-      return `${weeks} week${weeks > 1 ? 's' : ''} ago`;
-    }
-    const months = Math.floor(daysAgo / 30);
-    return `${months} month${months > 1 ? 's' : ''} ago`;
+    if (daysAgo === 0) return t('complianceEntities.relative.today');
+    if (daysAgo === 1) return t('complianceEntities.relative.yesterday');
+    if (daysAgo < 7) return t('complianceEntities.relative.days', { count: daysAgo });
+    if (daysAgo < 30) return t('complianceEntities.relative.weeks', { count: Math.floor(daysAgo / 7) });
+    if (daysAgo < 365) return t('complianceEntities.relative.months', { count: Math.floor(daysAgo / 30) });
+    return t('complianceEntities.relative.years', { count: Math.floor(daysAgo / 365) });
   };
 
   return (
     <div className="overflow-x-auto">
-      <table className="w-full">
+      <table className="w-full" style={showEntityName ? undefined : { tableLayout: 'fixed' }}>
         <thead className="bg-gray-50 border-b border-gray-200 sticky top-0 z-10">
           <tr>
             {selectionEnabled && (
-              <th className="px-4 py-3 w-10">
+              <th className={checkPad} style={checkWidth}>
                 <Tooltip>
                   <TooltipTrigger asChild>
                     <span className="inline-flex">
@@ -146,7 +157,8 @@ export function AlertDataTable({
               </th>
             )}
             <th
-              className="px-6 py-3 text-left text-xs text-gray-600 uppercase tracking-wider cursor-pointer hover:bg-gray-100 transition-colors"
+              className={`${headPad} text-left text-xs text-gray-600 uppercase tracking-wider cursor-pointer hover:bg-gray-100 transition-colors`}
+              style={colWidth('26%', '25%')}
               onClick={() => onSort('name')}
             >
               <div className="flex items-center gap-2">
@@ -154,23 +166,29 @@ export function AlertDataTable({
                 {getSortIcon('name')}
               </div>
             </th>
-            <th className="px-6 py-3 text-left text-xs text-gray-600 uppercase tracking-wider">
-              {t('complianceAlerts.table.changes')}
-            </th>
-            <th
-              className="px-6 py-3 text-left text-xs text-gray-600 uppercase tracking-wider cursor-pointer hover:bg-gray-100 transition-colors"
-              onClick={() => onSort('match')}
-            >
-              <div className="flex items-center gap-2">
-                {t('complianceAlerts.table.match')}
-                {getSortIcon('match')}
-              </div>
-            </th>
-            <th className="px-6 py-3 text-left text-xs text-gray-600 uppercase tracking-wider">
+            {!compact && (
+              <th className={`${headPad} text-left text-xs text-gray-600 uppercase tracking-wider`} style={colWidth('13%')}>
+                {t('complianceAlerts.table.changes')}
+              </th>
+            )}
+            {!compact && (
+              <th
+                className={`${headPad} text-left text-xs text-gray-600 uppercase tracking-wider cursor-pointer hover:bg-gray-100 transition-colors`}
+                style={colWidth('10%')}
+                onClick={() => onSort('match')}
+              >
+                <div className="flex items-center gap-2">
+                  {t('complianceAlerts.table.match')}
+                  {getSortIcon('match')}
+                </div>
+              </th>
+            )}
+            <th className={`${headPad} text-left text-xs text-gray-600 uppercase tracking-wider`} style={colWidth('17%', '26%')}>
               {t('complianceAlerts.table.list')}
             </th>
             <th
-              className="px-6 py-3 text-left text-xs text-gray-600 uppercase tracking-wider cursor-pointer hover:bg-gray-100 transition-colors"
+              className={`${headPad} text-left text-xs text-gray-600 uppercase tracking-wider cursor-pointer hover:bg-gray-100 transition-colors`}
+              style={colWidth('12%', '20%')}
               onClick={() => onSort('status')}
             >
               <div className="flex items-center gap-2">
@@ -178,16 +196,19 @@ export function AlertDataTable({
                 {getSortIcon('status')}
               </div>
             </th>
-            <th
-              className="px-6 py-3 text-left text-xs text-gray-600 uppercase tracking-wider cursor-pointer hover:bg-gray-100 transition-colors"
-              onClick={() => onSort('daysAgo')}
-            >
-              <div className="flex items-center gap-2">
-                {t('complianceAlerts.table.date')}
-                {getSortIcon('daysAgo')}
-              </div>
-            </th>
-            <th className="px-6 py-3 text-right text-xs text-gray-600 uppercase tracking-wider">
+            {!compact && (
+              <th
+                className={`${headPad} text-left text-xs text-gray-600 uppercase tracking-wider cursor-pointer hover:bg-gray-100 transition-colors`}
+                style={colWidth('12%')}
+                onClick={() => onSort('daysAgo')}
+              >
+                <div className="flex items-center gap-2">
+                  {t('complianceAlerts.table.date')}
+                  {getSortIcon('daysAgo')}
+                </div>
+              </th>
+            )}
+            <th className={`${headPad} text-right text-xs text-gray-600 uppercase tracking-wider`} style={colWidth('10%', '29%')}>
               {t('complianceAlerts.table.actions')}
             </th>
           </tr>
@@ -207,10 +228,7 @@ export function AlertDataTable({
               transition={{ duration: 0.2 }}
             >
               {selectionEnabled && (
-                <td
-                  className="px-4 py-4 w-10"
-                  onClick={(e) => e.stopPropagation()}
-                >
+                <td className={checkPad} style={checkWidth} onClick={(e) => e.stopPropagation()}>
                   {alert.status === 'Pending' ? (
                     <Checkbox
                       checked={selectedIds?.has(alert.id) ?? false}
@@ -235,66 +253,81 @@ export function AlertDataTable({
                   )}
                 </td>
               )}
-              <td className="px-6 py-4">
-                <div>
-                  {onEntityClick ? (
-                    <button
-                      type="button"
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        onEntityClick(alert);
-                      }}
-                      title={t('complianceAlerts.table.openEntity')}
-                      className="text-sm font-medium text-left hover:underline underline-offset-2"
-                      style={{ color: '#000E2B' }}
-                    >
-                      {alert.entityName}
-                    </button>
-                  ) : (
-                    <div
-                      className="text-sm font-medium"
-                      style={{ color: '#000E2B' }}
-                    >
-                      {alert.entityName}
+              <td className={cellPad}>
+                {showEntityName ? (
+                  <div>
+                    {onEntityClick ? (
+                      <button
+                        type="button"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          onEntityClick(alert);
+                        }}
+                        title={t('complianceAlerts.table.openEntity')}
+                        className="text-sm font-medium text-left hover:underline underline-offset-2"
+                        style={{ color: '#000E2B' }}
+                      >
+                        {alert.entityName}
+                      </button>
+                    ) : (
+                      <div
+                        className="text-sm font-medium"
+                        style={{ color: '#000E2B' }}
+                      >
+                        {alert.entityName}
+                      </div>
+                    )}
+                    <div className="text-xs text-gray-500">
+                      <span className="font-medium text-gray-400">
+                        {t('complianceAlerts.table.nameAlertLabel')}:
+                      </span>{' '}
+                      {alert.name}
                     </div>
-                  )}
-                  <div className="text-xs text-gray-500">
-                    <span className="font-medium text-gray-400">
-                      {t('complianceAlerts.table.nameAlertLabel')}:
-                    </span>{' '}
+                  </div>
+                ) : (
+                  <div
+                    className={`text-sm font-medium${compact ? ' truncate' : ''}`}
+                    style={{ color: '#000E2B' }}
+                    title={alert.name}
+                  >
                     {alert.name}
                   </div>
-                </div>
+                )}
               </td>
-              <td className="px-6 py-4">{renderChanges(alert.changes)}</td>
-              <td className="px-6 py-4">{renderMatch(alert.match)}</td>
-              <td className="px-6 py-4">
-                <Badge variant="outline" className="text-[11px] font-medium">
-                  {t(ALERT_LIST_LABEL_KEY[alert.alertList])}
+              {!compact && <td className={cellPad}>{renderChanges(alert.changes)}</td>}
+              {!compact && <td className={cellPad}>{renderMatch(alert.match)}</td>}
+              <td className={cellPad}>
+                <Badge
+                  variant="outline"
+                  className="text-[11px] font-medium"
+                  style={{ maxWidth: '100%' }}
+                  title={t(ALERT_LIST_LABEL_KEY[alert.alertList])}
+                >
+                  <span className="min-w-0 truncate">{t(ALERT_LIST_LABEL_KEY[alert.alertList])}</span>
                 </Badge>
               </td>
-              <td className="px-6 py-4">
+              <td className={cellPad}>
                 <StatusBadge
                   label={t(STATUS_LABEL_KEY[alert.status])}
                   variant={STATUS_VARIANT[alert.status]}
                 />
               </td>
-              <td className="px-6 py-4">
-                <Tooltip>
-                  <TooltipTrigger asChild>
-                    <div className="flex items-center gap-2 text-sm text-gray-600 cursor-help">
-                      <Clock className="w-3.5 h-3.5" />
-                      <span>{formatDaysAgo(alert.daysAgo)}</span>
-                    </div>
-                  </TooltipTrigger>
-                  <TooltipContent>
-                    <div className="text-xs">
-                      <div>Date: {alert.date}</div>
-                    </div>
-                  </TooltipContent>
-                </Tooltip>
-              </td>
-              <td className="px-6 py-4">
+              {!compact && (
+                <td className={cellPad}>
+                  <Tooltip>
+                    <TooltipTrigger asChild>
+                      <div className="flex items-center gap-2 text-sm text-gray-600 cursor-help">
+                        <Clock className="w-3.5 h-3.5" />
+                        <span>{formatDaysAgo(alert.daysAgo)}</span>
+                      </div>
+                    </TooltipTrigger>
+                    <TooltipContent>
+                      <div className="text-xs">{alert.date}</div>
+                    </TooltipContent>
+                  </Tooltip>
+                </td>
+              )}
+              <td className={cellPad}>
                 <div
                   className="flex items-center justify-end gap-1"
                   onClick={(e) => e.stopPropagation()}
