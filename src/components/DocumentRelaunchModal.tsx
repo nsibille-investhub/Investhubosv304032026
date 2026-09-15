@@ -312,8 +312,11 @@ export function DocumentRelaunchModal({
   const isConsolidated = !!(consolidatedDocs && consolidatedDocs.length > 0);
   const { t } = useTranslation();
   const emailTemplates = useMemo(() => buildEmailTemplates(t), [t]);
-  const [model, setModel] = useState(emailTemplates[0].name);
+  const [templateId, setTemplateId] = useState(emailTemplates[0].id);
+  const selectedTemplate =
+    emailTemplates.find((tpl) => tpl.id === templateId) ?? emailTemplates[0];
   const [templatePopoverOpen, setTemplatePopoverOpen] = useState(false);
+  const [footerTemplateOpen, setFooterTemplateOpen] = useState(false);
   const [isPreviewOpen, setIsPreviewOpen] = useState(false);
 
   const investorRecipients = useMemo(
@@ -513,6 +516,47 @@ export function DocumentRelaunchModal({
     );
   };
 
+  const renderTemplateOptions = (onPicked: () => void) => (
+    <div className="space-y-0.5">
+      {emailTemplates.map((template) => (
+        <button
+          key={template.id}
+          type="button"
+          onClick={() => {
+            setTemplateId(template.id);
+            onPicked();
+          }}
+          className={cn(
+            'w-full text-left px-2.5 py-2 rounded-md transition-colors',
+            templateId === template.id
+              ? 'bg-accent text-accent-foreground'
+              : 'hover:bg-muted',
+          )}
+        >
+          <div className="flex items-center gap-2">
+            <Mail
+              className={cn(
+                'w-3.5 h-3.5',
+                templateId === template.id
+                  ? 'text-primary'
+                  : 'text-muted-foreground',
+              )}
+            />
+            <span className="text-sm font-medium text-foreground">
+              {template.name}
+            </span>
+            {templateId === template.id && (
+              <CheckCircle2 className="w-3.5 h-3.5 text-primary ml-auto" />
+            )}
+          </div>
+          <p className="text-xs text-muted-foreground ml-6 mt-0.5">
+            {template.description}
+          </p>
+        </button>
+      ))}
+    </div>
+  );
+
   return (
     <>
       <AlertDialog open={isOpen} onOpenChange={onClose}>
@@ -608,69 +652,47 @@ export function DocumentRelaunchModal({
                 <ChevronRight className="w-4 h-4 text-muted-foreground group-hover:text-foreground transition-colors" />
               </button>
 
-              {/* Recap header + template selector */}
-              <div className="flex items-center justify-between gap-3">
-                <div className="flex items-center gap-2">
-                  <Zap className="w-4 h-4 text-primary" />
-                  <span className="text-sm font-medium text-foreground">
-                    {t('ged.relaunchModal.recapTitle')}
-                  </span>
-                </div>
-                <div className="flex items-center gap-2">
-                  <span className="text-xs text-muted-foreground">{t('ged.relaunchModal.templateLabel')}</span>
-                  <Popover open={templatePopoverOpen} onOpenChange={setTemplatePopoverOpen}>
-                    <PopoverTrigger asChild>
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        className="h-8 gap-2 font-normal"
-                      >
-                        <Mail className="w-3.5 h-3.5 text-muted-foreground" />
-                        {model}
-                        <ChevronDown className="w-3.5 h-3.5 text-muted-foreground" />
-                      </Button>
-                    </PopoverTrigger>
-                    <PopoverContent className="w-80 p-1" align="end">
-                      <div className="space-y-0.5">
-                        {emailTemplates.map((template) => (
-                          <button
-                            key={template.id}
-                            onClick={() => {
-                              setModel(template.name);
-                              setTemplatePopoverOpen(false);
-                            }}
-                            className={cn(
-                              'w-full text-left px-2.5 py-2 rounded-md transition-colors',
-                              model === template.name
-                                ? 'bg-accent text-accent-foreground'
-                                : 'hover:bg-muted',
-                            )}
-                          >
-                            <div className="flex items-center gap-2">
-                              <Mail
-                                className={cn(
-                                  'w-3.5 h-3.5',
-                                  model === template.name
-                                    ? 'text-primary'
-                                    : 'text-muted-foreground',
-                                )}
-                              />
-                              <span className="text-sm font-medium text-foreground">
-                                {template.name}
-                              </span>
-                              {model === template.name && (
-                                <CheckCircle2 className="w-3.5 h-3.5 text-primary ml-auto" />
-                              )}
-                            </div>
-                            <p className="text-xs text-muted-foreground ml-6 mt-0.5">
-                              {template.description}
-                            </p>
-                          </button>
-                        ))}
+              {/* Recap header */}
+              <div className="flex items-center gap-2">
+                <Zap className="w-4 h-4 text-primary" />
+                <span className="text-sm font-medium text-foreground">
+                  {t('ged.relaunchModal.recapTitle')}
+                </span>
+              </div>
+
+              {/* Modèle de mail */}
+              <div className="space-y-2">
+                <label className="text-xs font-medium text-muted-foreground uppercase tracking-wide">
+                  {t('ged.relaunchModal.templateFieldLabel')}
+                </label>
+                <Popover open={templatePopoverOpen} onOpenChange={setTemplatePopoverOpen}>
+                  <PopoverTrigger asChild>
+                    <button
+                      type="button"
+                      className={cn(
+                        'w-full flex items-center gap-2.5 px-3 py-2.5 rounded-md border border-border bg-white text-left transition-colors',
+                        'hover:bg-muted/40 hover:border-primary/40',
+                        'focus-visible:outline-none focus-visible:ring-[3px] focus-visible:ring-ring/50',
+                      )}
+                    >
+                      <div className="w-7 h-7 rounded-full bg-primary text-primary-foreground flex items-center justify-center flex-shrink-0">
+                        <Mail className="w-3.5 h-3.5" />
                       </div>
-                    </PopoverContent>
-                  </Popover>
-                </div>
+                      <div className="flex-1 min-w-0">
+                        <div className="text-sm font-medium text-foreground truncate">
+                          {selectedTemplate.name}
+                        </div>
+                        <div className="text-xs text-muted-foreground truncate">
+                          {selectedTemplate.description}
+                        </div>
+                      </div>
+                      <ChevronDown className="w-4 h-4 text-muted-foreground flex-shrink-0" />
+                    </button>
+                  </PopoverTrigger>
+                  <PopoverContent className="w-[var(--radix-popover-trigger-width)] p-1" align="start">
+                    {renderTemplateOptions(() => setTemplatePopoverOpen(false))}
+                  </PopoverContent>
+                </Popover>
               </div>
 
               {/* Critère */}
@@ -1017,31 +1039,53 @@ export function DocumentRelaunchModal({
           </div>
 
           {/* Footer */}
-          <div className="px-6 py-4 border-t border-border bg-white flex items-center justify-between gap-2" style={{ backgroundColor: '#FFFFFF' }}>
-            <Button variant="outline" onClick={onClose}>
-              {t('ged.relaunchModal.back')}
-            </Button>
-            <Button
-              onClick={handleSend}
-              disabled={notifiableCount === 0}
-              className={cn(
-                'gap-2 text-white border-0',
-                notifiableCount === 0 && 'opacity-60',
-              )}
-              style={
-                notifiableCount > 0
-                  ? {
-                      background:
-                        'linear-gradient(135deg, var(--brand-primary) 0%, var(--brand-accent) 100%)',
-                    }
-                  : undefined
-              }
-            >
-              <Send className="w-4 h-4" />
-              {notifiableCount > 0
-                ? t(notifiableCount > 1 ? 'ged.relaunchModal.sendMany' : 'ged.relaunchModal.sendOne', { count: notifiableCount })
-                : t('ged.relaunchModal.sendNotifications')}
-            </Button>
+          <div className="px-6 py-4 border-t border-border bg-white flex flex-col gap-3" style={{ backgroundColor: '#FFFFFF' }}>
+            <div className="flex items-center gap-2 flex-wrap text-xs">
+              <Mail className="w-3.5 h-3.5 text-muted-foreground flex-shrink-0" />
+              <span className="text-muted-foreground">
+                {t('ged.relaunchModal.templateFooterLabel')}
+              </span>
+              <span className="font-medium text-foreground">
+                {selectedTemplate.name}
+              </span>
+              <Popover open={footerTemplateOpen} onOpenChange={setFooterTemplateOpen}>
+                <PopoverTrigger asChild>
+                  <Button variant="link" size="sm" className="h-auto p-0 text-xs">
+                    {t('ged.relaunchModal.templateChange')}
+                  </Button>
+                </PopoverTrigger>
+                <PopoverContent className="w-80 p-1" align="start" side="top">
+                  {renderTemplateOptions(() => setFooterTemplateOpen(false))}
+                </PopoverContent>
+              </Popover>
+            </div>
+
+            <div className="flex items-center justify-between gap-2">
+              <Button variant="outline" onClick={onClose}>
+                {t('ged.relaunchModal.back')}
+              </Button>
+              <Button
+                onClick={handleSend}
+                disabled={notifiableCount === 0}
+                className={cn(
+                  'gap-2 text-white border-0',
+                  notifiableCount === 0 && 'opacity-60',
+                )}
+                style={
+                  notifiableCount > 0
+                    ? {
+                        background:
+                          'linear-gradient(135deg, var(--brand-primary) 0%, var(--brand-accent) 100%)',
+                      }
+                    : undefined
+                }
+              >
+                <Send className="w-4 h-4" />
+                {notifiableCount > 0
+                  ? t(notifiableCount > 1 ? 'ged.relaunchModal.sendMany' : 'ged.relaunchModal.sendOne', { count: notifiableCount })
+                  : t('ged.relaunchModal.sendNotifications')}
+              </Button>
+            </div>
           </div>
         </AlertDialogContent>
       </AlertDialog>
