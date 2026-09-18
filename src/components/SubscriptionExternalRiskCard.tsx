@@ -47,8 +47,8 @@ const LINES: ExternalRiskLine[] = [
 ];
 
 /**
- * Analyse de risque externe : panneau distinct du moteur interne, affiche
- * seulement quand le controle externe est active pour le client.
+ * Analyse de risque externe : panneau distinct du moteur interne, affiché
+ * seulement quand le contrôle externe est activé pour le client.
  */
 export function SubscriptionExternalRiskCard({ locked }: { locked: boolean }) {
   const { t } = useTranslation();

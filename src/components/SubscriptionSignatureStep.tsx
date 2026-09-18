@@ -66,13 +66,13 @@ type PartyKind = 'signatory' | 'counterSignatory';
 interface SignatureParty {
   id: string;
   name: string;
-  /** Civilite du signataire. */
+  /** Civilité du signataire. */
   title?: string;
-  /** Telephone, controle a la saisie. */
+  /** Téléphone, contrôlé à la saisie. */
   phone?: string;
   /** Ordre de signature dans le groupe. */
   order: number;
-  /** Contre-signataire designe mais pas encore valide. */
+  /** Contre-signataire désigné mais pas encore validé. */
   pendingValidation?: boolean;
   /** Fonction issue de la fiche investisseur (donnee), ou cle de traduction pour les defauts du fonds. */
   role?: string;
@@ -176,7 +176,7 @@ function buildDefaultCounterSignatories(): SignatureParty[] {
     roleKey: item.roleKey,
     email: item.email,
     order: idx + 1,
-    // Le second contre-signataire attend encore la validation de la societe de gestion.
+    // Le second contre-signataire attend encore la validation de la société de gestion.
     pendingValidation: idx > 0,
     source: 'fund',
     included: true,
@@ -344,7 +344,7 @@ export function SubscriptionSignatureStep({
     toast.success(t(`${KEY}.parties.toast.added`), { description: values.name });
   };
 
-  /** Lignes de la fenetre "Liste des signataires" : les deux groupes reunis. */
+  /** Lignes de la fenêtre "Liste des signataires" : les deux groupes réunis. */
   const signatoryRows: SignatoryRow[] = [
     ...signatories.map(party => ({
       id: party.id,
@@ -367,7 +367,7 @@ export function SubscriptionSignatureStep({
     })),
   ];
 
-  /** Deplacement d'un signataire dans l'ordre de signature. */
+  /** Déplacement d'un signataire dans l'ordre de signature. */
   const handleReorder = (kind: PartyKind, id: string, direction: -1 | 1) => {
     setterFor(kind)(prev => {
       const sorted = [...prev].sort((a, b) => a.order - b.order);

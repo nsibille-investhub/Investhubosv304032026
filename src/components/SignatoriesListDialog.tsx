@@ -10,15 +10,15 @@ import {
 } from './ui/dialog';
 import { useTranslation } from '../utils/languageContext';
 
-/** Ligne de la fenetre "Liste des signataires". */
+/** Ligne de la fenêtre "Liste des signataires". */
 export interface SignatoryRow {
   id: string;
   name: string;
   email: string;
-  /** Ordre de signature ; les contre-signataires signent apres les signataires. */
+  /** Ordre de signature ; les contre-signataires signent après les signataires. */
   order: number;
   counterSignatory: boolean;
-  /** Contre-signataire designe mais pas encore valide cote societe de gestion. */
+  /** Contre-signataire désigné mais pas encore validé côté société de gestion. */
   pendingValidation?: boolean;
   role?: string;
   phone?: string;
@@ -30,7 +30,7 @@ interface SignatoriesListDialogProps {
   rows: SignatoryRow[];
 }
 
-/** Fenetre de consultation : signataires, contre-signataires et ordre de signature. */
+/** Fenêtre de consultation : signataires, contre-signataires et ordre de signature. */
 export function SignatoriesListDialog({ open, onOpenChange, rows }: SignatoriesListDialogProps) {
   const { t } = useTranslation();
   const sorted = [...rows].sort((a, b) => a.order - b.order);

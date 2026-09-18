@@ -11,7 +11,7 @@ export interface MockQuestion {
   response: string;
   verified: boolean;
   hasAlert?: boolean;
-  /** Piece jointe a la reponse, consultable depuis la ligne. */
+  /** Pièce jointe à la réponse, consultable depuis la ligne. */
   documentKey?: string;
 }
 
@@ -23,7 +23,7 @@ export interface MockSection {
   /** Section conditionnelle : elle n'est rendue que si elle s'applique au dossier. */
   conditional?: boolean;
   applicable?: boolean;
-  /** Section interne : visible du back-office seul, rendue en fin d'ecran. */
+  /** Section interne : visible du back-office seul, rendue en fin d'écran. */
   internal?: boolean;
 }
 
@@ -33,9 +33,9 @@ export interface MockRequiredDocument {
   issueDate: string;
   expiration: string;
   hasFile: boolean;
-  /** La piece exige une date d'emission : son absence bloque la validation. */
+  /** La pièce exige une date d'émission : son absence bloque la validation. */
   requiresIssueDate?: boolean;
-  /** Marqueurs V1 conserves a l'ecran. */
+  /** Marqueurs V1 conservés à l'écran. */
   certified?: boolean;
   forced?: boolean;
   internal?: boolean;
@@ -54,11 +54,11 @@ export interface MockDocument {
   status: string;
   file: string;
   family: MockDocumentFamily;
-  /** Version a signer, disponible avant le retour de signature. */
+  /** Version à signer, disponible avant le retour de signature. */
   unsignedFile?: string;
 }
 
-/** Document specifique ajoute au dossier, avec ses coordonnees de signature. */
+/** Document spécifique ajouté au dossier, avec ses coordonnées de signature. */
 export interface MockSpecificDocument {
   id: string;
   name: string;

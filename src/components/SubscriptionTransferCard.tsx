@@ -24,11 +24,11 @@ const MOCK_TRANSFER_TARGETS: TransferTarget[] = [
 interface SubscriptionTransferCardProps {
   /** Souscription issue d'un transfert : la fiche affiche son origine. */
   origin: boolean;
-  /** Souscription transferee : la fiche affiche la date et l'auteur du transfert. */
+  /** Souscription transférée : la fiche affiche la date et l'auteur du transfert. */
   transferred: boolean;
 }
 
-/** Panneau Transfert : origine, souscriptions issues du transfert et acces au suivi. */
+/** Panneau Transfert : origine, souscriptions issues du transfert et accès au suivi. */
 export function SubscriptionTransferCard({ origin, transferred }: SubscriptionTransferCardProps) {
   const { t } = useTranslation();
 

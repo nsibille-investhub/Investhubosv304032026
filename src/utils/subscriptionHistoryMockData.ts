@@ -1,7 +1,7 @@
 /**
- * Donnees de maquette des panneaux d'historique et des changements de donnees
- * de la fiche souscription. Les libelles sont des cles de traduction : ces
- * tableaux vivent au niveau module, ou le hook de traduction n'existe pas.
+ * Données de maquette des panneaux d'historique et des changements de données
+ * de la fiche souscription. Les libellés sont des clés de traduction : ces
+ * tableaux vivent au niveau module, où le hook de traduction n'existe pas.
  */
 
 export type HistoryAuthorType = 'backoffice' | 'partner' | 'investor';

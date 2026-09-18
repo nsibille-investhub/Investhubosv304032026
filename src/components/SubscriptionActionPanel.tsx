@@ -65,9 +65,9 @@ type InternalValidation = 'none' | 'requested' | 'refused' | 'granted';
 
 interface SubscriptionActionPanelProps {
   subscription: any;
-  /** Reponses refusees au controle : premier garde-fou avant validation. */
+  /** Réponses refusées au contrôle : premier garde-fou avant validation. */
   invalidQuestions: number;
-  /** Pieces sans date d'emission alors qu'elle est exigee. */
+  /** Pièces sans date d'émission alors qu'elle est exigée. */
   missingIssueDates: number;
   investorEmail: string;
   onOpenSignature: () => void;
@@ -139,8 +139,8 @@ function Mention({
 
 /**
  * Panneau Action de la fiche : le type de souscription commande l'ouverture des
- * actions, puis l'etat du dossier, le parametrage et les droits commandent les
- * boutons proposes. Une action indisponible reste affichee, desactivee avec son
+ * actions, puis l'état du dossier, le paramétrage et les droits commandent les
+ * boutons proposés. Une action indisponible reste affichée, désactivée avec son
  * motif.
  */
 export function SubscriptionActionPanel({
@@ -198,7 +198,7 @@ export function SubscriptionActionPanel({
     [subscription, counterSignatoryId],
   );
 
-  /** Les trois garde-fous de la V1, evalues avant toute validation. */
+  /** Les trois garde-fous de la V1, évalués avant toute validation. */
   const guardReasons = (target: 'validation' | 'signature'): string[] => {
     const reasons: string[] = [];
     if (missingIssueDates > 0) {

@@ -71,8 +71,8 @@ const EMPTY_FORM: SpecificFormValues = {
 };
 
 /**
- * Documents de la souscription regroupes par famille, avec les documents
- * specifiques a signer et leurs coordonnees de signature.
+ * Documents de la souscription regroupés par famille, avec les documents
+ * spécifiques à signer et leurs coordonnées de signature.
  */
 export function SubscriptionDocumentsPanel() {
   const { t } = useTranslation();

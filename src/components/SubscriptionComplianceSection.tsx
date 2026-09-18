@@ -72,7 +72,7 @@ import {
 
 export type ComplianceStatus = 'pending' | 'awaitingValidation' | 'validated';
 
-/** Statut du scoring : les memes trois etats que la decision de conformite. */
+/** Statut du scoring : les mêmes trois états que la décision de conformité. */
 export type ScoreStatus = 'awaitingValidation' | 'awaitingCompliance' | 'validated';
 
 export interface ComplianceStatusSnapshot {
@@ -215,7 +215,7 @@ export function RiskProfileWidget({
   const [scaleVisible, setScaleVisible] = useState(false);
   const [editingComponent, setEditingComponent] = useState<string | null>(null);
   const [editingValue, setEditingValue] = useState('');
-  // Forcage d'un composant : la V1 exige un motif, trace ensuite a l'ecran.
+  // Forçage d'un composant : la V1 exige un motif, tracé ensuite à l'écran.
   const [forcing, setForcing] = useState<{ id: string; min: number; max: number } | null>(null);
   const [forcedValue, setForcedValue] = useState('');
   const [forcedReason, setForcedReason] = useState('');
@@ -503,7 +503,7 @@ export function RiskProfileWidget({
         })}
       </ul>
 
-      {/* Forcage du score d'un composant : le motif est obligatoire */}
+      {/* Forçage du score d'un composant : le motif est obligatoire */}
       <Dialog open={forcing !== null} onOpenChange={open => !open && setForcing(null)}>
         <DialogContent className="sm:max-w-[420px]">
           <DialogHeader>
@@ -659,7 +659,7 @@ export function SubscriptionComplianceSection({
     });
   };
 
-  /** Validation du scoring : le palier decide si la conformite doit trancher. */
+  /** Validation du scoring : le palier décide si la conformité doit trancher. */
   const handleValidateScoring = () => {
     if (validationRequired) {
       setScoreStatus('awaitingCompliance');
@@ -1129,7 +1129,7 @@ export function SubscriptionComplianceSection({
         {demo.settings.externalRiskAnalysis && <SubscriptionExternalRiskCard locked={locked} />}
       </div>
 
-      {/* Refus du scoring par la conformite : motif obligatoire */}
+      {/* Refus du scoring par la conformité : motif obligatoire */}
       <Dialog open={scoreRefusalOpen} onOpenChange={setScoreRefusalOpen}>
         <DialogContent className="sm:max-w-[440px]">
           <DialogHeader>

@@ -143,7 +143,7 @@ import {
   AlertDialogTitle,
 } from './ui/alert-dialog';
 
-/** Drapeau de la langue du dossier, affiche dans le bandeau d'identite. */
+/** Drapeau de la langue du dossier, affiché dans le bandeau d'identité. */
 const LANGUAGE_FLAGS: Record<string, string> = {
   fr: '🇫🇷',
   en: '🇬🇧',
@@ -181,8 +181,8 @@ interface SubscriptionDetailPageProps {
 }
 
 /**
- * La fiche entiere depend de l'etat de demonstration : etat du dossier,
- * parametrage client / fonds et droits back-office sont fournis par le
+ * La fiche entière dépend de l'état de démonstration : état du dossier,
+ * paramétrage client / fonds et droits back-office sont fournis par le
  * provider et lus par chaque panneau.
  */
 export function SubscriptionDetailPage(props: SubscriptionDetailPageProps) {
@@ -241,7 +241,7 @@ function SubscriptionDetailPageContent({ subscription: subscriptionProp, onBack 
   // Verification des pieces justificatives (meme cycle de vie que les reponses)
   const [documentStatuses, setDocumentStatuses] = useState<Record<string, QuestionStatus>>(INITIAL_DOCUMENT_STATUSES);
 
-  // Dates d'emission et d'expiration saisies depuis le tableau des pieces.
+  // Dates d'émission et d'expiration saisies depuis le tableau des pièces.
   const [documentDates, setDocumentDates] = useState<
     Record<number, { issueDate?: string; expiration?: string }>
   >({});
@@ -418,7 +418,7 @@ function SubscriptionDetailPageContent({ subscription: subscriptionProp, onBack 
     sectionId === 'documents' ? getDocumentBuckets() : getQuestionSectionBuckets(sectionId);
 
   // Les sections conditionnelles sans objet ne sont pas rendues ; les sections
-  // internes le sont a part, en fin d'ecran.
+  // internes le sont à part, en fin d'écran.
   const visibleSections = mockSections.filter(
     section => !(section.conditional && !section.applicable),
   );
@@ -435,8 +435,8 @@ function SubscriptionDetailPageContent({ subscription: subscriptionProp, onBack 
 
   const documentBuckets = getDocumentBuckets();
 
-  // Garde-fous du panneau Action : reponses refusees et pieces sans date
-  // d'emission alors que le document l'exige.
+  // Garde-fous du panneau Action : réponses refusées et pièces sans date
+  // d'émission alors que le document l'exige.
   const invalidQuestionsCount = Object.values(questionStatuses).filter(
     status => status === 'rejected',
   ).length;
@@ -513,7 +513,7 @@ function SubscriptionDetailPageContent({ subscription: subscriptionProp, onBack 
     );
   };
 
-  /** Cellule de date d'une piece : lecture, puis saisie au format JJ/MM/AAAA. */
+  /** Cellule de date d'une pièce : lecture, puis saisie au format JJ/MM/AAAA. */
   const renderDocumentDateCell = (
     index: number,
     field: 'issueDate' | 'expiration',
@@ -571,7 +571,7 @@ function SubscriptionDetailPageContent({ subscription: subscriptionProp, onBack 
     );
   };
 
-  /** Marqueurs V1 d'une piece justificative. */
+  /** Marqueurs V1 d'une pièce justificative. */
   const renderDocumentMarkers = (doc: (typeof mockRequiredDocuments)[number]) => {
     const markers: Array<{ id: string; labelKey: string; className: string }> = [];
     if (doc.certified) {
@@ -1281,7 +1281,7 @@ function SubscriptionDetailPageContent({ subscription: subscriptionProp, onBack 
 
       <SubscriptionDemoBar />
 
-      {/* Bandeaux conditionnels : traitement differe et souscription administree */}
+      {/* Bandeaux conditionnels : traitement différé et souscription administrée */}
       {(demo.flags.deferredProcessing || demo.flags.administered) && (
         <div className="space-y-2 px-8 pt-4">
           {demo.flags.deferredProcessing && (
@@ -1475,7 +1475,7 @@ function SubscriptionDetailPageContent({ subscription: subscriptionProp, onBack 
 
               <div className="mb-6">
                 <SubscriptionActionPanel
-                  // Changer d'etat de demonstration repart d'un panneau neuf.
+                  // Changer d'état de démonstration repart d'un panneau neuf.
                   key={demo.state}
                   subscription={subscription}
                   invalidQuestions={invalidQuestionsCount}

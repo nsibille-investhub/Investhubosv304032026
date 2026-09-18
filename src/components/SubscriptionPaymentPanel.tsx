@@ -23,7 +23,7 @@ import { useTranslation } from '../utils/languageContext';
 
 const KEY = 'subscriptions.detail.paymentStep';
 
-/** Les trois etats de paiement suivis par la V1. */
+/** Les trois états de paiement suivis par la V1. */
 type PaymentState = 'awaitingDirectDebit' | 'paidAwaitingNav' | 'confirmed';
 
 const STATE_STYLES: Record<PaymentState, { badge: string; box: string; icon: typeof Clock }> = {
@@ -59,7 +59,7 @@ interface SubscriptionPaymentPanelProps {
 
 /**
  * Confirmation du paiement : date du versement, valeur liquidative et sa date,
- * puis parts et montant estimes recalcules a la saisie.
+ * puis parts et montant estimés recalculés à la saisie.
  */
 export function SubscriptionPaymentPanel({
   subscribedAmount,

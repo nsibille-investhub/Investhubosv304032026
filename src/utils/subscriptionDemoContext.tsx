@@ -1,12 +1,12 @@
 import React, { createContext, useContext, useMemo, useState } from 'react';
 
 /**
- * Etat de demonstration de la fiche souscription.
+ * État de démonstration de la fiche souscription.
  *
- * La V1 fait dependre l'ecran de trois familles de conditions : l'etat du
- * dossier, le parametrage client / fonds et les droits back-office. La maquette
- * n'a pas de backend : ces conditions sont exposees ici pour rester lisibles,
- * un panneau masque le restant a travers le selecteur au lieu de disparaitre du
+ * La V1 fait dépendre l'écran de trois familles de conditions : l'état du
+ * dossier, le paramétrage client / fonds et les droits back-office. La maquette
+ * n'a pas de backend : ces conditions sont exposées ici pour rester lisibles,
+ * un panneau masqué le reste visible à travers le sélecteur au lieu de disparaître du
  * code.
  */
 export type SubscriptionDemoStateId =
@@ -36,7 +36,7 @@ export const INTEGRATION_KEYS: IntegrationKey[] = [
   'lemonway',
 ];
 
-/** Parametrage client / fonds : chaque drapeau masque un panneau entier. */
+/** Paramétrage client / fonds : chaque drapeau masque un panneau entier. */
 export interface SubscriptionDemoSettings {
   internalValidation: boolean;
   riskEngine: boolean;
@@ -50,14 +50,14 @@ export interface SubscriptionDemoSettings {
   integrations: Record<IntegrationKey, boolean>;
 }
 
-/** Droits back-office de l'utilisateur connecte. */
+/** Droits back-office de l'utilisateur connecté. */
 export interface SubscriptionDemoRights {
   validateFund: boolean;
   validateCompliance: boolean;
   screening: boolean;
 }
 
-/** Contexte du dossier lui-meme, hors etat d'avancement. */
+/** Contexte du dossier lui-même, hors état d'avancement. */
 export interface SubscriptionDemoContextFlags {
   deferredProcessing: boolean;
   administered: boolean;
@@ -122,7 +122,7 @@ export const INTEGRATION_LABELS: Record<IntegrationKey, string> = {
   lemonway: 'Lemonway',
 };
 
-/** Le type de souscription est pose d'office des que le dossier a avance. */
+/** Le type de souscription est posé d'office dès que le dossier a avancé. */
 export function isSubscriptionTypeSet(config: SubscriptionDemoConfig): boolean {
   return config.flags.subscriptionTypeSet || config.state !== 'inProgress';
 }

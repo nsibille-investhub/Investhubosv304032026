@@ -69,7 +69,7 @@ export interface SubscriptionScreening {
   clearParties: number;
 }
 
-/** Niveaux de risque attribuables a un tiers controle. */
+/** Niveaux de risque attribuables à un tiers contrôlé. */
 export type EntityRiskLevel = 'none' | 'low' | 'medium' | 'high';
 
 const ENTITY_RISK_LEVELS: EntityRiskLevel[] = ['none', 'low', 'medium', 'high'];
@@ -168,12 +168,12 @@ export function SubscriptionScreeningWidget({ screening, locked }: SubscriptionS
   const [dialog, setDialog] = useState<{ alerts: AlertItem[]; action: AlertBulkAction } | null>(null);
   const [rescanning, setRescanning] = useState(false);
   const [lastScanAt, setLastScanAt] = useState('19/05/2026 16:10');
-  // Niveau de risque attribue a un tiers controle.
+  // Niveau de risque attribué à un tiers contrôlé.
   const [riskDialogEntity, setRiskDialogEntity] = useState<EntityRow | null>(null);
   const [entityRiskLevels, setEntityRiskLevels] = useState<Record<number, EntityRiskLevel>>({});
   const [riskDraft, setRiskDraft] = useState<EntityRiskLevel>('none');
 
-  /** Un rescan conserve les qualifications deja prises. */
+  /** Un rescan conserve les qualifications déjà prises. */
   const handleRescan = () => {
     if (rescanning || locked) return;
     setRescanning(true);
@@ -304,7 +304,7 @@ export function SubscriptionScreeningWidget({ screening, locked }: SubscriptionS
         }}
       />
 
-      {/* Niveau de risque attribue a un tiers */}
+      {/* Niveau de risque attribué à un tiers */}
       <Dialog
         open={riskDialogEntity !== null}
         onOpenChange={open => !open && setRiskDialogEntity(null)}

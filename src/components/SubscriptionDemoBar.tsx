@@ -67,8 +67,8 @@ function ToggleRow({
 }
 
 /**
- * Selecteur d'etat de demonstration : rend lisibles les conditions qui, en V1,
- * font apparaitre ou disparaitre des panneaux entiers de la fiche.
+ * Sélecteur d'état de démonstration : rend lisibles les conditions qui, en V1,
+ * font apparaître ou disparaître des panneaux entiers de la fiche.
  */
 export function SubscriptionDemoBar() {
   const { t } = useTranslation();

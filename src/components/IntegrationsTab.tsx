@@ -203,7 +203,7 @@ const formatDateTime = (date?: Date) => (date ? new Intl.DateTimeFormat('fr-FR',
 
 const INTEGRATION_KEY = 'subscriptions.detail.integrations';
 
-/** Donnees propres a chaque integration, telles que la V1 les expose. */
+/** Données propres à chaque intégration, telles que la V1 les expose. */
 const INTEGRATION_DETAILS: Record<IntegrationKey, Array<{ labelKey: string; value: string }>> = {
   dotfile: [
     { labelKey: `${INTEGRATION_KEY}.dotfile.caseName`, value: 'KYC Epsilon Fund' },
@@ -236,7 +236,7 @@ const DETAIL_VALUE_KEYS: Record<string, string> = {
 };
 
 /**
- * Actions propres a une integration : la V1 en propose un jeu different pour
+ * Actions propres à une intégration : la V1 en propose un jeu différent pour
  * chacune, en plus du rejeu et des journaux communs.
  */
 function IntegrationSpecifics({ integration }: { integration: IntegrationSync }) {

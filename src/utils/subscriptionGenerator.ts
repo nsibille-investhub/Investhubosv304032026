@@ -327,7 +327,7 @@ export interface Subscription {
     email: string;
     phone: string;
   };
-  partnerAgreementSigned?: boolean; // Convention de distribution signee
+  partnerAgreementSigned?: boolean; // Convention de distribution signée
   subscriptionType?: SubscriptionType; // Type de souscription
   subscriberTitle?: SubscriberTitle; // Civilité du souscripteur
   legalName?: string; // Raison sociale

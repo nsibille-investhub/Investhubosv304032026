@@ -28,7 +28,7 @@ interface AlertBulkActionDialogProps {
     action: AlertBulkAction,
     comments: Record<string, string>,
   ) => void;
-  /** Le parametrage client peut rendre le commentaire facultatif. */
+  /** Le paramétrage client peut rendre le commentaire facultatif. */
   commentRequired?: boolean;
 }
 

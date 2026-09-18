@@ -60,9 +60,9 @@ const STATUS_STYLES: Record<DataChangeStatus, string> = {
 };
 
 /**
- * Historiques de la fiche : actions du dossier, decisions de conformite,
+ * Historiques de la fiche : actions du dossier, décisions de conformité,
  * documents fournis par l'investisseur tous dossiers confondus, et demandes de
- * modification de donnees deposees depuis l'exterieur.
+ * modification de données déposées depuis l'extérieur.
  */
 export function SubscriptionHistoryTab() {
   const { t } = useTranslation();
