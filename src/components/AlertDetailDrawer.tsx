@@ -1,21 +1,24 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useState, type ReactNode } from 'react';
 import {
   AlertTriangle,
+  Building2,
   Calendar,
   CheckCircle2,
   ExternalLink,
-  Eye,
-  EyeOff,
   FileText,
+  Fingerprint,
+  Gauge,
   Hash,
   HelpCircle,
+  History,
+  Info,
   KeyRound,
   Link2,
   ShieldCheck,
   Sparkles,
-  Users,
   XCircle,
 } from 'lucide-react';
+import type { LucideIcon } from 'lucide-react';
 import { toast } from 'sonner@2.0.3';
 
 import {
@@ -27,12 +30,16 @@ import {
 } from './ui/sheet';
 import { Badge } from './ui/badge';
 import { Button } from './ui/button';
-import { Switch } from './ui/switch';
 import { Textarea } from './ui/textarea';
-import { Tooltip, TooltipContent, TooltipTrigger } from './ui/tooltip';
 import { StatusBadge } from './StatusBadge';
-import { AnalystSelector } from './AnalystSelector';
-import { AlertItem, AlertListCategory, InvestorRole } from '../utils/alertsGenerator';
+import {
+  DECISION_KEY,
+  DECISION_VARIANT,
+  formatDateTime,
+} from './entity-detail/entityDetailShared';
+import { useCompliance } from '../utils/complianceContext';
+import type { MatchDecisionValue } from '../utils/screeningMock';
+import { AlertItem, AlertListCategory } from '../utils/alertsGenerator';
 import {
   generateAiAnalysis,
   proposalToDecision,
@@ -79,13 +86,57 @@ const ALERT_LIST_LABEL_KEY: Record<AlertListCategory, string> = {
   'Financial Warning': 'complianceAlerts.list.financialWarning',
 };
 
-const ROLE_LABEL_KEY: Record<InvestorRole, string> = {
-  source: 'complianceAlerts.investorRole.source',
-  beneficiary: 'complianceAlerts.investorRole.beneficiary',
-  coInvestor: 'complianceAlerts.investorRole.coInvestor',
-  legalRep: 'complianceAlerts.investorRole.legalRep',
-  proxy: 'complianceAlerts.investorRole.proxy',
+const CHANGE_LABEL_KEY: Record<
+  NonNullable<AlertItem['changes']>,
+  string
+> = {
+  New: 'complianceAlerts.changes.new',
+  Modified: 'complianceAlerts.changes.modified',
+  Reopened: 'complianceAlerts.changes.reopened',
 };
+
+type Strength = 'low' | 'medium' | 'high';
+
+const STRENGTH_LABEL_KEY: Record<Strength, string> = {
+  low: 'complianceAlerts.drawer.strengthLow',
+  medium: 'complianceAlerts.drawer.strengthMedium',
+  high: 'complianceAlerts.drawer.strengthHigh',
+};
+
+const STRENGTH_TEXT: Record<Strength, string> = {
+  low: 'text-slate-600',
+  medium: 'text-amber-600',
+  high: 'text-rose-600',
+};
+
+const STRENGTH_FILL: Record<Strength, string> = {
+  low: 'bg-gray-400',
+  medium: 'bg-amber-500',
+  high: 'bg-red-500',
+};
+
+const STRENGTH_STEPS: Record<Strength, number> = { low: 1, medium: 2, high: 3 };
+
+const DECISION_DOT: Record<MatchDecisionValue, string> = {
+  true_hit: 'bg-red-500',
+  false_hit: 'bg-gray-400',
+  unsure: 'bg-amber-500',
+};
+
+function strengthFromScore(score: number): Strength {
+  if (score >= 90) return 'high';
+  if (score >= 80) return 'medium';
+  return 'low';
+}
+
+function initials(name: string): string {
+  return name
+    .split(/\s+/)
+    .filter(Boolean)
+    .slice(0, 2)
+    .map((part) => part[0]?.toUpperCase() ?? '')
+    .join('');
+}
 
 const SECTION_STYLE = {
   backgroundColor: '#EEF1F7',
@@ -103,11 +154,10 @@ export function AlertDetailDrawer({
   onDecision,
   onEntityClick,
 }: AlertDetailDrawerProps) {
-  const { t } = useTranslation();
+  const { t, lang } = useTranslation();
+  const { getMatch } = useCompliance();
   const [decision, setDecision] = useState<Decision | null>(null);
   const [comment, setComment] = useState('');
-  const [monitoring, setMonitoring] = useState(true);
-  const [analyst, setAnalyst] = useState<string | null>(null);
   const [aiAnalysis, setAiAnalysis] = useState<AiScreeningAnalysis | null>(null);
   const [aiLoading, setAiLoading] = useState(false);
 
@@ -121,12 +171,19 @@ export function AlertDetailDrawer({
             : null;
       setDecision(initial);
       setComment(alert.alert?.comment ?? '');
-      setMonitoring(alert.monitoring);
-      setAnalyst(alert.analyst);
       setAiAnalysis(null);
       setAiLoading(false);
     }
   }, [alert?.id]);
+
+  const match = alert ? getMatch(alert.id) : undefined;
+
+  const decisionHistory = useMemo(
+    () => [...(match?.decisions ?? [])].sort((a, b) => b.revision - a.revision),
+    [match],
+  );
+
+  const strength = strengthFromScore(alert?.match ?? 0);
 
   const enrichedDescription = useMemo(
     () => alert?.alert?.enrichedDetails?.fullDescription ?? '',
@@ -183,36 +240,15 @@ export function AlertDetailDrawer({
         <>
         {/* Header */}
         <SheetHeader className="px-6 py-5 border-b bg-white">
-          <div className="pr-8">
-            <div className="flex items-center gap-2 flex-wrap">
-              <SheetTitle className="text-[22px] leading-7">
-                {onEntityClick ? (
-                  <button
-                    type="button"
-                    onClick={() => onEntityClick(alert)}
-                    title={t('complianceAlerts.table.openEntity')}
-                    className="inline-flex items-center gap-1.5 text-left hover:underline underline-offset-4"
-                  >
-                    {alert.entityName}
-                    <ExternalLink className="w-4 h-4 opacity-50" />
-                  </button>
-                ) : (
-                  alert.entityName
-                )}
-              </SheetTitle>
-              <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md bg-muted text-xs font-medium tabular-nums">
-                <Sparkles className="w-3 h-3" />
-                {alert.match}%
-              </span>
-              <StatusBadge label={statusLabel} variant={statusVariant} />
-            </div>
-            <SheetDescription className="mt-1 text-sm">
-              <span className="font-medium text-foreground/70">
-                {t('complianceAlerts.drawer.nameAlert')}:
-              </span>{' '}
-              {alert.name} · {alert.source}
-            </SheetDescription>
+          <div className="pr-8 flex items-center gap-2 flex-wrap">
+            <SheetTitle className="text-[22px] leading-7">
+              {t('complianceAlerts.drawer.title')}
+            </SheetTitle>
+            <StatusBadge label={statusLabel} variant={statusVariant} />
           </div>
+          <SheetDescription className="sr-only">
+            {t('complianceAlerts.drawer.titleHint')}
+          </SheetDescription>
         </SheetHeader>
 
         {/* Scrollable body */}
@@ -223,121 +259,47 @@ export function AlertDetailDrawer({
             className="space-y-3 rounded-2xl p-4 border"
             style={SECTION_STYLE}
           >
-            <div>
-              <p
-                className="font-semibold flex items-center gap-2"
-                style={{ color: ACCENT_COLOR }}
-              >
-                <ShieldCheck className="w-5 h-5" style={{ color: ACCENT_COLOR }} />
-                {t('complianceAlerts.drawer.context')}
-              </p>
-              <p className="text-sm text-slate-600">
-                {alert.entityName} · {alert.source}
-              </p>
-            </div>
+            <p
+              className="font-semibold flex items-center gap-2"
+              style={{ color: ACCENT_COLOR }}
+            >
+              <ShieldCheck className="w-5 h-5" style={{ color: ACCENT_COLOR }} />
+              {t('complianceAlerts.drawer.context')}
+            </p>
 
             <div
-              className="rounded-2xl border bg-white p-4 md:p-5 space-y-4"
+              className="rounded-2xl border bg-white p-4 md:p-5"
               style={INNER_CARD_STYLE}
             >
-              <div>
-                <div className="mb-1.5 text-[10px] font-semibold uppercase tracking-widest text-slate-500">
-                  {t('complianceAlerts.drawer.analyst')}
-                </div>
-                <AnalystSelector
-                  currentAnalyst={analyst}
-                  onAnalystChange={(name) => setAnalyst(name)}
-                />
-              </div>
-
-              <div className="flex items-center gap-3">
-                <span className="text-sm text-slate-600">
-                  {t('complianceAlerts.drawer.monitoring')}:
-                </span>
-                <Tooltip>
-                  <TooltipTrigger asChild>
-                    <div className="flex items-center gap-2">
-                      <Switch
-                        checked={monitoring}
-                        onCheckedChange={setMonitoring}
-                      />
-                      <span
-                        className={`text-sm font-medium ${
-                          monitoring ? 'text-blue-600' : 'text-slate-500'
-                        }`}
-                      >
-                        {monitoring
-                          ? t('complianceAlerts.drawer.active')
-                          : t('complianceAlerts.drawer.inactive')}
-                      </span>
-                      {monitoring ? (
-                        <Eye className="w-4 h-4 text-blue-600" />
-                      ) : (
-                        <EyeOff className="w-4 h-4 text-slate-400" />
-                      )}
-                    </div>
-                  </TooltipTrigger>
-                  <TooltipContent>
-                    {monitoring
-                      ? t('complianceAlerts.drawer.active')
-                      : t('complianceAlerts.drawer.inactive')}
-                  </TooltipContent>
-                </Tooltip>
-              </div>
-
-              <div>
-                <div className="mb-2 flex items-center gap-1.5 text-[10px] font-semibold uppercase tracking-widest text-slate-500">
-                  <Users className="w-3 h-3" />
-                  {t('complianceAlerts.drawer.attachedInvestors')}
-                </div>
-                {alert.attachedInvestors.length === 0 ? (
-                  <p className="text-xs text-slate-500">
-                    {t('complianceAlerts.drawer.noAttachedInvestors')}
-                  </p>
-                ) : (
-                  <ul className="space-y-1.5">
-                    {alert.attachedInvestors.map((inv, idx) => (
-                      <li
-                        key={`${inv.name}-${idx}`}
-                        className="flex items-center justify-between gap-2 rounded-md border border-slate-200 bg-slate-50 px-2.5 py-1.5 text-xs"
-                      >
-                        <span className="font-medium text-slate-900 truncate">
-                          {inv.name}
-                        </span>
-                        <Badge
-                          variant="outline"
-                          className="text-[10px] font-medium shrink-0 bg-white"
-                        >
-                          {t(ROLE_LABEL_KEY[inv.role])}
-                        </Badge>
-                      </li>
-                    ))}
-                  </ul>
-                )}
-              </div>
-
-              <div>
-                <div className="mb-2 text-[10px] font-semibold uppercase tracking-widest text-slate-500">
-                  {t('complianceAlerts.drawer.previousFindings')}
-                </div>
-                {alert.previousFindings.length === 0 ? (
-                  <p className="text-xs text-slate-500">
-                    {t('complianceAlerts.drawer.noPreviousFindings')}
-                  </p>
-                ) : (
-                  <div className="flex flex-wrap gap-1.5">
-                    {alert.previousFindings.map((cat, idx) => (
-                      <Badge
-                        key={`${cat}-${idx}`}
-                        variant="outline"
-                        className="text-[11px] font-medium bg-white"
-                      >
-                        {t(ALERT_LIST_LABEL_KEY[cat])}
-                      </Badge>
-                    ))}
-                  </div>
-                )}
-              </div>
+              <dl className="grid gap-x-6 gap-y-4 sm:grid-cols-2">
+                <ContextField label={t('complianceAlerts.drawer.attachedDossier')}>
+                  {alert.dossier}
+                </ContextField>
+                <ContextField label={t('complianceAlerts.drawer.screenedEntity')}>
+                  {onEntityClick ? (
+                    <button
+                      type="button"
+                      onClick={() => onEntityClick(alert)}
+                      title={t('complianceAlerts.table.openEntity')}
+                      className="inline-flex items-center gap-1.5 text-left hover:underline underline-offset-4"
+                    >
+                      {alert.entityName}
+                      <ExternalLink className="w-3.5 h-3.5 opacity-50" />
+                    </button>
+                  ) : (
+                    alert.entityName
+                  )}
+                </ContextField>
+                <ContextField label={t('complianceAlerts.drawer.matchedHit')}>
+                  {alert.name}
+                </ContextField>
+                <ContextField label={t('complianceAlerts.drawer.matchScore')}>
+                  <span className="tabular-nums">{alert.match}%</span>
+                </ContextField>
+                <ContextField label={t('complianceAlerts.drawer.alertType')}>
+                  {alert.changes ? t(CHANGE_LABEL_KEY[alert.changes]) : '—'}
+                </ContextField>
+              </dl>
             </div>
           </section>
 
@@ -444,107 +406,78 @@ export function AlertDetailDrawer({
             className="space-y-3 rounded-2xl p-4 border"
             style={SECTION_STYLE}
           >
-            <div>
-              <p
-                className="font-semibold flex items-center gap-2"
-                style={{ color: ACCENT_COLOR }}
-              >
-                <AlertTriangle className="w-5 h-5" style={{ color: ACCENT_COLOR }} />
-                {t('complianceAlerts.drawer.alertDetails')}
-              </p>
-              <p className="text-sm text-slate-600">
-                {t('complianceAlerts.drawer.alertTypes')}
-              </p>
-            </div>
+            <p
+              className="font-semibold flex items-center gap-2"
+              style={{ color: ACCENT_COLOR }}
+            >
+              <AlertTriangle className="w-5 h-5" style={{ color: ACCENT_COLOR }} />
+              {t('complianceAlerts.drawer.alertDetails')}
+            </p>
+
             <div
-              className="rounded-2xl border bg-white p-4 md:p-5 space-y-3"
+              className="rounded-2xl border bg-white px-4 divide-y divide-gray-200"
               style={INNER_CARD_STYLE}
             >
-              <div className="flex flex-wrap gap-1.5">
-                {alert.alertTypes.map((cat) => (
-                  <span
-                    key={cat}
-                    className="inline-flex items-center gap-1 rounded-md border border-amber-300 bg-amber-100 px-2.5 py-1 text-xs font-semibold text-amber-900"
-                  >
-                    {t(ALERT_LIST_LABEL_KEY[cat])}
-                  </span>
-                ))}
-              </div>
-
-              {enrichedDescription && (
-                <pre className="whitespace-pre-wrap break-words font-mono text-xs leading-relaxed text-slate-800 bg-slate-50 border border-slate-200 rounded-md p-3">
-                  {enrichedDescription}
-                </pre>
-              )}
-            </div>
-          </section>
-
-          {/* KEYWORDS */}
-          {alert.alert?.details?.keywords?.length ? (
-            <section
-              className="space-y-3 rounded-2xl p-4 border"
-              style={SECTION_STYLE}
-            >
-              <div>
-                <p
-                  className="font-semibold flex items-center gap-2"
-                  style={{ color: ACCENT_COLOR }}
-                >
-                  <KeyRound className="w-5 h-5" style={{ color: ACCENT_COLOR }} />
-                  {t('complianceAlerts.drawer.keywords')}
-                </p>
-              </div>
-              <div
-                className="rounded-2xl border bg-white p-4 md:p-5"
-                style={INNER_CARD_STYLE}
+              <DetailBlock
+                icon={AlertTriangle}
+                label={t('complianceAlerts.drawer.alertTypes')}
               >
-                <div className="flex flex-wrap gap-2">
-                  {alert.alert.details.keywords.map((keyword, idx) => (
-                    <Badge
-                      key={idx}
-                      variant="outline"
-                      className="text-[11px] font-medium"
+                <div className="flex flex-wrap gap-1.5">
+                  {alert.alertTypes.map((cat) => (
+                    <span
+                      key={cat}
+                      className="inline-flex items-center gap-1 rounded-md border border-amber-300 bg-amber-100 px-2.5 py-1 text-xs font-semibold text-amber-900"
                     >
-                      {keyword}
-                    </Badge>
+                      {t(ALERT_LIST_LABEL_KEY[cat])}
+                    </span>
                   ))}
                 </div>
-              </div>
-            </section>
-          ) : null}
 
-          {/* IDENTIFICATION */}
-          {alert.alert?.details?.identification?.length ? (
-            <section
-              className="space-y-3 rounded-2xl p-4 border"
-              style={SECTION_STYLE}
-            >
-              <div>
-                <p
-                  className="font-semibold flex items-center gap-2"
-                  style={{ color: ACCENT_COLOR }}
+                {enrichedDescription && (
+                  <pre className="whitespace-pre-wrap break-words font-mono text-xs leading-relaxed text-slate-800 bg-slate-50 border border-slate-200 rounded-md p-3">
+                    {enrichedDescription}
+                  </pre>
+                )}
+              </DetailBlock>
+
+              {alert.alert?.details?.keywords?.length ? (
+                <DetailBlock
+                  icon={KeyRound}
+                  label={t('complianceAlerts.drawer.keywords')}
                 >
-                  <Hash className="w-5 h-5" style={{ color: ACCENT_COLOR }} />
-                  {t('complianceAlerts.drawer.identification')}
-                </p>
-              </div>
-              <div
-                className="rounded-2xl border bg-white p-4 md:p-5"
-                style={INNER_CARD_STYLE}
-              >
-                <dl className="space-y-2">
-                  {alert.alert.details.identification.map((item, idx) => (
-                    <div key={idx} className="flex items-start gap-3 text-sm">
-                      <dt className="min-w-[180px] text-slate-500">{item.label}</dt>
-                      <dd className="font-medium text-slate-900 break-all">
-                        {item.value}
-                      </dd>
-                    </div>
-                  ))}
-                </dl>
-              </div>
-            </section>
-          ) : null}
+                  <div className="flex flex-wrap gap-2">
+                    {alert.alert.details.keywords.map((keyword, idx) => (
+                      <Badge
+                        key={idx}
+                        variant="outline"
+                        className="text-[11px] font-medium"
+                      >
+                        {keyword}
+                      </Badge>
+                    ))}
+                  </div>
+                </DetailBlock>
+              ) : null}
+
+              {alert.alert?.details?.identification?.length ? (
+                <DetailBlock
+                  icon={Hash}
+                  label={t('complianceAlerts.drawer.identification')}
+                >
+                  <dl className="grid gap-x-6 gap-y-3 sm:grid-cols-2">
+                    {alert.alert.details.identification.map((item, idx) => (
+                      <div key={idx} className="min-w-0">
+                        <dt className="text-xs text-slate-500">{item.label}</dt>
+                        <dd className="text-sm font-medium text-slate-900 break-all">
+                          {item.value}
+                        </dd>
+                      </div>
+                    ))}
+                  </dl>
+                </DetailBlock>
+              ) : null}
+            </div>
+          </section>
 
           {/* SOURCES */}
           {alert.alert?.details?.sources?.length ? (
@@ -581,11 +514,218 @@ export function AlertDetailDrawer({
             </section>
           ) : null}
 
+          {/* INFORMATION SECTION */}
+          <section
+            className="space-y-3 rounded-2xl p-4 border"
+            style={SECTION_STYLE}
+          >
+            <p
+              className="font-semibold flex items-center gap-2"
+              style={{ color: ACCENT_COLOR }}
+            >
+              <Info className="w-5 h-5" style={{ color: ACCENT_COLOR }} />
+              {t('complianceAlerts.drawer.information')}
+            </p>
+
+            <div className="grid gap-3 sm:grid-cols-2">
+              <InfoTile
+                icon={Building2}
+                label={t('complianceAlerts.drawer.provider')}
+                value={alert.source}
+              />
+              <InfoTile
+                icon={Fingerprint}
+                label={t('complianceAlerts.drawer.reference')}
+                value={<span className="font-mono text-[13px]">{alert.id}</span>}
+              />
+              <InfoTile
+                icon={Gauge}
+                label={t('complianceAlerts.drawer.strength')}
+                value={
+                  <span className="flex items-center gap-2">
+                    <span className={`text-sm font-semibold ${STRENGTH_TEXT[strength]}`}>
+                      {t(STRENGTH_LABEL_KEY[strength])}
+                    </span>
+                    <StrengthMeter level={strength} />
+                  </span>
+                }
+              />
+              <InfoTile
+                icon={Calendar}
+                label={t('complianceAlerts.drawer.createdAt')}
+                value={formatDateTime(match?.firstSeen ?? alert.date, lang)}
+              />
+            </div>
+          </section>
+
+          {/* DECISION HISTORY SECTION */}
+          <section
+            className="space-y-3 rounded-2xl p-4 border"
+            style={SECTION_STYLE}
+          >
+            <p
+              className="font-semibold flex items-center gap-2"
+              style={{ color: ACCENT_COLOR }}
+            >
+              <History className="w-5 h-5" style={{ color: ACCENT_COLOR }} />
+              {t('complianceAlerts.drawer.decisionHistory')}
+            </p>
+
+            <div
+              className="rounded-2xl border bg-white p-4 md:p-5"
+              style={INNER_CARD_STYLE}
+            >
+              {decisionHistory.length === 0 ? (
+                <p className="text-sm text-slate-500">
+                  {t('complianceAlerts.drawer.noDecisionYet')}
+                </p>
+              ) : (
+                <div className="relative">
+                  <span
+                    aria-hidden
+                    className="absolute left-2 top-3 bottom-0 w-px bg-gray-200"
+                  />
+                  <ol className="space-y-4">
+                    {decisionHistory.map((entry, idx) => (
+                      <li key={entry.id} className="relative pl-7">
+                        <span
+                          aria-hidden
+                          className={`absolute left-1 top-1.5 w-2 h-2 rounded-full ring-2 ring-white ${
+                            DECISION_DOT[entry.decision]
+                          }`}
+                        />
+                        <div className="flex items-center gap-2 flex-wrap">
+                          <StatusBadge
+                            label={t(DECISION_KEY[entry.decision])}
+                            variant={DECISION_VARIANT[entry.decision]}
+                          />
+                          {idx === 0 && (
+                            <span className="rounded-full bg-gray-900 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-white">
+                              {t('complianceAlerts.drawer.currentDecision')}
+                            </span>
+                          )}
+                          <span className="text-xs text-slate-500">
+                            {t('complianceEntities.matches.revision', {
+                              n: entry.revision,
+                            })}
+                          </span>
+                          <span className="flex-1" />
+                          <span className="text-xs text-slate-500 tabular-nums">
+                            {formatDateTime(entry.date, lang)}
+                          </span>
+                        </div>
+
+                        <div className="mt-1.5 flex items-center gap-2 text-xs text-slate-600">
+                          <span className="inline-flex h-5 w-5 items-center justify-center rounded-full bg-slate-100 text-[9px] font-semibold text-slate-600">
+                            {initials(entry.analyst)}
+                          </span>
+                          <span className="font-medium text-slate-700">
+                            {entry.analyst}
+                          </span>
+                        </div>
+
+                        {entry.comment && (
+                          <p className="mt-2 rounded-lg border-l-2 border-slate-300 bg-slate-50 px-3 py-2 text-sm text-slate-700">
+                            {entry.comment}
+                          </p>
+                        )}
+                      </li>
+                    ))}
+                  </ol>
+                </div>
+              )}
+            </div>
+          </section>
+
         </div>
         </>
         ) : null}
       </SheetContent>
     </Sheet>
+  );
+}
+
+function ContextField({
+  label,
+  children,
+}: {
+  label: string;
+  children: ReactNode;
+}) {
+  return (
+    <div className="min-w-0">
+      <dt className="mb-1 text-[10px] font-semibold uppercase tracking-widest text-slate-500">
+        {label}
+      </dt>
+      <dd className="text-sm font-medium text-slate-900 break-words">
+        {children}
+      </dd>
+    </div>
+  );
+}
+
+function InfoTile({
+  icon: Icon,
+  label,
+  value,
+}: {
+  icon: LucideIcon;
+  label: string;
+  value: ReactNode;
+}) {
+  return (
+    <div
+      className="flex items-start gap-3 rounded-xl border bg-white px-3 py-3"
+      style={INNER_CARD_STYLE}
+    >
+      <span className="mt-0.5 inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-slate-100">
+        <Icon className="h-4 w-4 text-slate-600" />
+      </span>
+      <div className="min-w-0">
+        <div className="text-[10px] font-semibold uppercase tracking-widest text-slate-500">
+          {label}
+        </div>
+        <div className="mt-0.5 text-sm font-medium text-slate-900 break-words">
+          {value}
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function StrengthMeter({ level }: { level: Strength }) {
+  const steps = STRENGTH_STEPS[level];
+  return (
+    <span aria-hidden className="inline-flex items-center gap-0.5">
+      {[1, 2, 3].map((step) => (
+        <span
+          key={step}
+          className={`h-3 w-1 rounded-full ${
+            step <= steps ? STRENGTH_FILL[level] : 'bg-gray-200'
+          }`}
+        />
+      ))}
+    </span>
+  );
+}
+
+function DetailBlock({
+  icon: Icon,
+  label,
+  children,
+}: {
+  icon: LucideIcon;
+  label: string;
+  children: ReactNode;
+}) {
+  return (
+    <div className="py-4 space-y-2.5">
+      <div className="flex items-center gap-1.5 text-[10px] font-semibold uppercase tracking-widest text-slate-500">
+        <Icon className="w-3 h-3" />
+        {label}
+      </div>
+      {children}
+    </div>
   );
 }
 
