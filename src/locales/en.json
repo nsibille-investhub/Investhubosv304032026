@@ -414,7 +414,12 @@
         "riskNotValidated": "Not validated",
         "validatedByLabel": "By {{name}}",
         "copyId": "Click to copy ID",
-        "openInNewTab": "Open in a new tab"
+        "openInNewTab": "Open in a new tab",
+        "naturalPerson": "Natural person",
+        "legalPerson": "Legal entity",
+        "fileLanguage": "File language",
+        "directSubscription": "Direct subscription",
+        "directSubscriptionHint": "Subscription made without a distributor"
       },
       "tabs": {
         "onboarding": "Onboarding",
@@ -422,7 +427,8 @@
         "capitalCalls": "Capital calls",
         "documents": "Documents",
         "integrations": "Integrations",
-        "notes": "Notes"
+        "notes": "Notes",
+        "history": "History"
       },
       "stepper": {
         "stepOf": "Step {{current}}/{{total}}",
@@ -586,7 +592,13 @@
           "de": "German",
           "it": "Italian",
           "es": "Spanish"
-        }
+        },
+        "crmId": "CRM identifier",
+        "sectionCoSubscriber": "Co-subscriber",
+        "noCoSubscriber": "No co-subscriber",
+        "partnerAgreement": "Distribution agreement",
+        "partnerAgreementSigned": "Signed",
+        "partnerAgreementUnsigned": "Not signed"
       },
       "sections": {
         "identity": "Identity",
@@ -594,7 +606,9 @@
         "banking": "Banking details",
         "professional": "Professional situation",
         "financial": "Financial situation",
-        "documents": "Supporting documents"
+        "documents": "Supporting documents",
+        "usPerson": "US Person",
+        "internalReview": "Internal review"
       },
       "onboarding": {
         "answeredOf": "{{answered}}/{{total}} answered",
@@ -631,6 +645,16 @@
           },
           "documentsCountOne": "{{count}} document",
           "documentsCountMany": "{{count}} documents"
+        },
+        "columns": {
+          "question": "Question",
+          "response": "Answer",
+          "document": "Document",
+          "verification": "Review"
+        },
+        "internalSections": {
+          "title": "Internal sections",
+          "subtitle": "Questions filled in by the back-office, never visible to the investor."
         }
       },
       "validation": {
@@ -742,7 +766,9 @@
             "role": "Role",
             "email": "Email",
             "save": "Save",
-            "cancel": "Cancel"
+            "cancel": "Cancel",
+            "title": "Title",
+            "phone": "Phone"
           },
           "status": {
             "notSent": "Not sent",
@@ -762,8 +788,14 @@
             "remindedDesc": "A reminder was sent to {{names}}.",
             "linkRegenerated": "Link regenerated",
             "linkRegeneratedDesc": "The previous link is disabled, the new one has been sent.",
-            "markedSigned": "Signature recorded"
-          }
+            "markedSigned": "Signature recorded",
+            "invalidEmail": "Invalid email address.",
+            "invalidPhone": "Invalid phone number."
+          },
+          "order": "No. {{position}}",
+          "orderHint": "Signing order",
+          "moveUp": "Move up in signing order",
+          "moveDown": "Move down in signing order"
         },
         "roles": {
           "investor": "Investor",
@@ -801,7 +833,31 @@
         "pendingLabel": "Pending",
         "save": "Save",
         "confirmPayment": "Confirm payment",
-        "paymentConfirmed": "Payment confirmed"
+        "paymentConfirmed": "Payment confirmed",
+        "confirmationTitle": "Payment confirmation",
+        "confirmationSubtitle": "Payment date, net asset value and estimated shares.",
+        "paymentDateLabel": "Payment date",
+        "paymentDateRequired": "The payment date is required.",
+        "navValueLabel": "Net asset value",
+        "estimatedShares": "Estimated number of shares",
+        "estimatedAmount": "Estimated amount",
+        "saved": "Confirmation saved",
+        "remind": "Send reminder",
+        "reminderTitle": "Send a reminder to the subscriber?",
+        "reminderFirst": "A reminder email will be sent to the subscriber.",
+        "reminderAgain": "A reminder was already sent on {{date}}. Send another one?",
+        "reminderSent": "Reminder sent",
+        "lastReminder": "Last reminder on {{date}}",
+        "states": {
+          "awaitingDirectDebit": "Awaiting direct debit validation",
+          "paidAwaitingNav": "Payment confirmed, net asset value to confirm",
+          "confirmed": "Payment and net asset value confirmed"
+        },
+        "statesDesc": {
+          "awaitingDirectDebit": "The mandate is registered, the direct debit still has to be validated.",
+          "paidAwaitingNav": "The payment was received, the net asset value is not confirmed yet.",
+          "confirmed": "The file can move to active subscription."
+        }
       },
       "emailsTab": {
         "date": "Date",
@@ -842,7 +898,40 @@
         "documentSigned": "Document signed",
         "deleteDocument": "Delete {{name}}",
         "exportPack": "Export document pack",
-        "exportPackToast": "Document pack exported"
+        "exportPackToast": "Document pack exported",
+        "subtitle": "File documents, grouped by family.",
+        "families": {
+          "toSign": "Documents to sign",
+          "postSubscription": "Post-subscription documents",
+          "other": "Other documents",
+          "specific": "Specific documents to sign"
+        },
+        "emptyFamily": "No document in this family.",
+        "preview": "Preview",
+        "downloadSigned": "Download signed document",
+        "downloadSignedToast": "Signed document downloaded",
+        "downloadToSign": "Download document to sign",
+        "downloadToSignToast": "Document to sign downloaded",
+        "delete": "Delete",
+        "deleted": "Document deleted",
+        "deleteTitle": "Delete this document?",
+        "deleteDescription": "{{name}} will be removed from the file.",
+        "specific": {
+          "add": "Add specific document",
+          "addTitle": "Add specific document",
+          "editTitle": "Edit specific document",
+          "subtitle": "Name, file and signature coordinates.",
+          "name": "Document name",
+          "file": "File",
+          "signatureCoordinates": "Signature coordinates",
+          "counterSignatureCoordinates": "Counter-signature coordinates",
+          "signaturePages": "Signature pages",
+          "counterSignaturePages": "Counter-signature pages",
+          "nameRequired": "The document name is required.",
+          "added": "Specific document added",
+          "updated": "Specific document updated",
+          "edit": "Edit"
+        }
       },
       "notesTab": {
         "all": "All ({{count}})",
@@ -856,7 +945,12 @@
         "resolvedStatus": "Resolved",
         "resolve": "Resolve",
         "noteResolved": "Note resolved",
-        "deleteNote": "Delete note"
+        "deleteNote": "Delete note",
+        "sendReminder": "Send reminder",
+        "reminderSent": "Reminder sent",
+        "attachmentDownloaded": "Attachment downloaded",
+        "deleteTitle": "Delete this note?",
+        "deleteDescription": "The note and its attachment will be removed from the file."
       },
       "docs": {
         "passport": "Passport (in color, MRZ lines readable and complete, on a single page)",
@@ -879,7 +973,23 @@
         "replace": "Replace",
         "verification": "Verification",
         "validateDocument": "Validate document",
-        "rejectDocument": "Request a correction"
+        "rejectDocument": "Request a correction",
+        "download": "Download",
+        "downloadToast": "Download started",
+        "editIssueDate": "Edit issue date",
+        "editExpiration": "Edit expiry date",
+        "issueDateSaved": "Issue date saved",
+        "expirationSaved": "Expiry date saved",
+        "issueDateRequired": "Issue date required",
+        "invalidDate": "Invalid date. Expected format: DD/MM/YYYY.",
+        "markers": {
+          "certified": "Certified",
+          "forced": "Forced",
+          "internal": "Internal",
+          "additional": "Additional",
+          "replacedByPartner": "Replaced by the partner",
+          "replacedByAdmin": "Replaced by the administrator"
+        }
       },
       "notes": {
         "mock1": "Verify the dual nationality mentioned during the initial interview",
@@ -927,7 +1037,15 @@
           "validate": "Validate score",
           "validated": "Score validated",
           "noValidationNeeded": "The tier reached does not require manual validation.",
-          "invalidate": "Invalidate score"
+          "invalidate": "Invalidate score",
+          "awaitingCompliance": "Awaiting compliance validation",
+          "complianceValidate": "Validate as compliance",
+          "complianceRefuse": "Reject",
+          "noComplianceRight": "You do not have compliance validation rights.",
+          "refuseTitle": "Reject scoring",
+          "refuseSubtitle": "The scoring goes back to awaiting validation.",
+          "refusePlaceholder": "Rejection reason",
+          "refuseConfirm": "Reject scoring"
         },
         "status": {
           "pending": "Pending",
@@ -1011,7 +1129,15 @@
           "unevaluatedOne": "{{count}} component not evaluated",
           "unevaluatedMany": "{{count}} components not evaluated",
           "widgetTitle": "Risk profile",
-          "widgetSubtitle": "{{name}} · profile from {{onboarding}}"
+          "widgetSubtitle": "{{name}} · profile from {{onboarding}}",
+          "forceScore": "Force score",
+          "forceTitle": "Force component score",
+          "forceSubtitle": "A reason is required and stays visible on the component.",
+          "forceValue": "Forced score",
+          "forceReason": "Reason for forcing",
+          "forceReasonPlaceholder": "Reason for forcing",
+          "forceConfirm": "Force score",
+          "engineOff": "The risk engine is disabled for this client."
         },
         "screening": {
           "title": "Screening and ongoing monitoring",
@@ -1061,7 +1187,24 @@
           "allTreated": "No match to review",
           "openAlerts": "All alerts",
           "expandGroup": "Expand {{name}}",
-          "collapseGroup": "Collapse {{name}}"
+          "collapseGroup": "Collapse {{name}}",
+          "rescan": "Run screening again",
+          "rescanDone": "Screening re-run",
+          "rescanKeepsDecisions": "Existing qualifications are kept.",
+          "exportDone": "Screening results exported",
+          "exportDoneDesc": "{{count}} match(es) exported",
+          "lastScan": "Last screening on {{date}}",
+          "setRiskLevel": "Assign a risk level",
+          "riskLevelTitle": "Third-party risk level",
+          "riskLevelSubtitle": "Level assigned to {{name}}.",
+          "riskLevelSaved": "Risk level saved",
+          "riskLevels": {
+            "none": "No risk",
+            "low": "Low",
+            "medium": "Medium",
+            "high": "High"
+          },
+          "noRight": "You do not have access to the screening module."
         },
         "purposes": {
           "subscriber": "Subscriber",
@@ -1160,7 +1303,347 @@
           "exportScreeningDesc": "Screenings and decisions are being exported.",
           "noteAdded": "Note added to the log",
           "complianceReopenedDesc": "Score, matches and categorisation can be changed again.",
-          "scoreInvalidated": "Score validation removed"
+          "scoreInvalidated": "Score validation removed",
+          "scoreForced": "Score forced",
+          "scoreSubmittedToCompliance": "Scoring sent for compliance validation",
+          "scoreRefused": "Scoring rejected"
+        }
+      },
+      "action": {
+        "title": "File actions",
+        "subtitle": "Available actions depend on the file status, the configuration and your rights.",
+        "common": {
+          "cancel": "Cancel",
+          "confirm": "Confirm",
+          "save": "Save"
+        },
+        "subscriptionType": {
+          "label": "Subscription type",
+          "validate": "Validate subscription type",
+          "validated": "Type validated",
+          "gate": "Validation actions open once the subscription type is validated."
+        },
+        "buttons": {
+          "sendToValidation": "Send file for validation",
+          "validateFile": "Validate file",
+          "refuseFile": "Reject file",
+          "validateKyc": "Validate KYC",
+          "validateKycAndSign": "Validate KYC and send for signature",
+          "viewSignatories": "View signatories",
+          "reopenKyc": "Reopen KYC",
+          "sign": "Send for signature",
+          "preparePartnerSignature": "Prepare partner signature",
+          "validateWithoutSignature": "Validate without signature",
+          "remindPayment": "Send payment reminder"
+        },
+        "mentions": {
+          "internalRefused": "Internal validation rejected by {{name}}",
+          "validationRequested": "Validation requested on {{date}} by {{name}}",
+          "internalValidated": "Validated on {{date}} by {{name}}",
+          "directSignaturePartner": "Direct-signature partner: the distributor signs directly.",
+          "signatureRequested": "Signature requested on {{date}}",
+          "preSignature": "Pre-signature in progress since {{date}}",
+          "reopened": "File reopened on {{date}}",
+          "paymentReminder": "Payment reminder sent on {{date}}",
+          "activeSubscription": "Active subscription: follow-up happens in capital calls and payment.",
+          "transferred": "Transferred subscription: validation actions are closed."
+        },
+        "guards": {
+          "title": "Checks before validation",
+          "question": "Do you want to validate anyway?",
+          "confirm": "Validate anyway",
+          "missingIssueDates": "{{count}} document(s) require an issue date that is missing.",
+          "invalidQuestions": "{{count}} answer(s) were rejected during the review.",
+          "signatureAlreadyRequested": "Signature was already requested on {{date}}.",
+          "noInvestorEmail": "The investor has no email address."
+        },
+        "confirm": {
+          "validateFile": "Validate this file?",
+          "subtitle": "This decision is recorded in the file history."
+        },
+        "refuse": {
+          "title": "Reject file",
+          "subtitle": "The explanation is sent back to the requester.",
+          "placeholder": "Rejection explanation",
+          "confirm": "Reject file"
+        },
+        "withoutSignature": {
+          "title": "Validate without signature",
+          "subtitle": "Enter the validation date.",
+          "dateLabel": "Validation date (DD/MM/YYYY)",
+          "invalidDate": "Invalid date. Expected format: DD/MM/YYYY.",
+          "confirm": "Validate without signature"
+        },
+        "counterSignatory": {
+          "label": "Choose signatory",
+          "placeholder": "Counter-signatory on the management company side"
+        },
+        "disabled": {
+          "noFundRight": "You do not have validation rights on this fund.",
+          "partnerSignatureOff": "Partner signature is disabled by configuration.",
+          "kycNotValidated": "KYC is not validated."
+        },
+        "toast": {
+          "typeValidated": "Subscription type validated",
+          "validationRequested": "File sent for validation",
+          "fileValidated": "File validated",
+          "fileRefused": "File rejected",
+          "refusalReasonRequired": "A rejection explanation is required.",
+          "kycValidated": "KYC validated",
+          "kycValidatedAndSent": "KYC validated and signature requested",
+          "kycReopened": "KYC reopened",
+          "signatureRequested": "Signature requested",
+          "partnerSignaturePrepared": "Partner signature prepared",
+          "validatedWithoutSignature": "File validated without signature",
+          "paymentReminderSent": "Payment reminder sent"
+        }
+      },
+      "banners": {
+        "deferredProcessing": "Deferred processing: {{date}}",
+        "administered": "Administered subscription: it goes through an account keeper."
+      },
+      "demo": {
+        "title": "Demo state",
+        "stateLabel": "File status",
+        "configure": "Configuration and rights",
+        "reset": "Reset to initial state",
+        "hiddenPanels": "Hidden panels: {{list}}",
+        "states": {
+          "inProgress": "File in progress",
+          "awaitingInternalValidation": "Awaiting internal validation",
+          "validatedAwaitingSignature": "Validated, awaiting signature",
+          "signing": "Signature in progress",
+          "active": "Active subscription",
+          "transferred": "Transferred subscription"
+        },
+        "sections": {
+          "settings": "Client and fund configuration",
+          "integrations": "Enabled integrations",
+          "rights": "Back-office rights",
+          "flags": "File context"
+        },
+        "settings": {
+          "internalValidation": "Internal validation",
+          "riskEngine": "Risk engine",
+          "externalRiskAnalysis": "External risk analysis",
+          "signatoriesPanel": "Signatories panel",
+          "partnerSignature": "Partner signature",
+          "directSignaturePartner": "Direct-signature partner",
+          "counterSignatoryChoice": "Counter-signatory choice",
+          "screeningComment": "Comment required when dismissing a match",
+          "scoreRefresh": "Score refresh"
+        },
+        "rights": {
+          "validateFund": "Validation on this fund",
+          "validateCompliance": "Compliance validation",
+          "screening": "Screening access"
+        },
+        "flags": {
+          "deferredProcessing": "Deferred processing",
+          "administered": "Administered subscription",
+          "subscriptionTypeSet": "Subscription type already set",
+          "transferOrigin": "Resulting from a transfer"
+        }
+      },
+      "duplicate": {
+        "action": "Duplicate subscription",
+        "title": "Duplicate this subscription?",
+        "description": "A new subscription will be created from {{name}}.",
+        "confirm": "Duplicate",
+        "toast": "Subscription duplicated"
+      },
+      "externalRisk": {
+        "title": "External risk analysis",
+        "country": "Country risk",
+        "countryDetail": "Tax residence, nationality and bank domiciliation",
+        "counterparty": "Counterparty risk",
+        "counterpartyDetail": "Subscriber, legal representative and beneficial owners",
+        "levels": {
+          "low": "Low",
+          "medium": "Medium",
+          "high": "High",
+          "critical": "Critical"
+        },
+        "launch": "Run analysis",
+        "relaunch": "Run analysis again",
+        "lastRun": "Last run on {{date}}",
+        "neverRun": "Analysis never run",
+        "lockedHint": "File validated: the analysis can no longer be changed.",
+        "toast": {
+          "done": "External risk analysis completed"
+        }
+      },
+      "history": {
+        "investor": {
+          "title": "Investor history",
+          "subtitle": "Every action on the file, with its author."
+        },
+        "compliance": {
+          "title": "Compliance history",
+          "subtitle": "Compliance decisions taken on this file.",
+          "exportPdf": "Export PDF",
+          "exportToast": "Compliance sheet exported"
+        },
+        "documents": {
+          "title": "Investor documents history",
+          "scopeNotice": "This list goes beyond this subscription: it covers every file of the investor.",
+          "providedAt": "Provided on",
+          "name": "Document",
+          "subscription": "Subscription",
+          "fund": "Fund",
+          "action": "Action",
+          "download": "Download",
+          "downloadToast": "Download started"
+        },
+        "authors": {
+          "backoffice": "Back-office",
+          "partner": "Distributor",
+          "investor": "Investor"
+        },
+        "events": {
+          "created": "Subscription created",
+          "invitationSent": "Onboarding invitation sent",
+          "onboardingStarted": "Onboarding started",
+          "documentUploaded": "Supporting document uploaded",
+          "onboardingSubmitted": "File submitted by the investor",
+          "answerRejected": "Answer rejected during review",
+          "dataChangeRequested": "Data change request submitted"
+        },
+        "complianceEvents": {
+          "screeningRun": "Screening run on the file entities",
+          "matchDismissed": "Match dismissed as a namesake",
+          "scoreComputed": "Risk score computed from the answers",
+          "componentForced": "Score forced on the Source of funds component",
+          "categorisationSaved": "MiFID II categorisation saved"
+        }
+      },
+      "dataChanges": {
+        "title": "Data changes",
+        "subtitle": "Requests submitted by the investor or the distributor on an already submitted file.",
+        "columns": {
+          "date": "Date",
+          "field": "Field",
+          "newValue": "New value",
+          "info": "Details",
+          "status": "Status",
+          "actions": "Actions"
+        },
+        "status": {
+          "toValidate": "To validate",
+          "validated": "Validated",
+          "refused": "Rejected"
+        },
+        "origin": {
+          "investor": "Submitted by the investor",
+          "partner": "Submitted by the distributor"
+        },
+        "actions": {
+          "validate": "Validate request",
+          "refuse": "Reject request"
+        },
+        "fields": {
+          "address": "Address",
+          "phone": "Phone",
+          "bankAccount": "Bank details",
+          "email": "Email"
+        },
+        "info": {
+          "movedIn": "Declared move",
+          "newNumber": "New mobile number",
+          "bankChange": "Bank change",
+          "typo": "Typo correction"
+        },
+        "refuse": {
+          "title": "Reject request",
+          "subtitle": "State the reason for rejecting {{field}}.",
+          "placeholder": "Rejection reason",
+          "confirm": "Reject"
+        },
+        "toast": {
+          "validated": "Request validated",
+          "refused": "Request rejected"
+        }
+      },
+      "signatories": {
+        "open": "Signatories list",
+        "dialogTitle": "Signatories list",
+        "dialogSubtitle": "Signatories and counter-signatories, in signing order.",
+        "signatories": "Signatories",
+        "counterSignatories": "Counter-signatories",
+        "counterSignatory": "Counter-signatory",
+        "pendingValidation": "Awaiting validation",
+        "emptySignatories": "No signatory",
+        "emptyCounterSignatories": "No counter-signatory",
+        "panelOff": "The signatories panel is hidden by the fund configuration."
+      },
+      "transfer": {
+        "title": "Transfer",
+        "fromSubscription": "This subscription results from a transfer from subscription {{ref}}.",
+        "transferredOn": "This subscription was transferred on {{date}} by {{name}}.",
+        "viewTransfers": "View transfers"
+      },
+      "integrations": {
+        "title": "Subscription integrations",
+        "subtitle": "Outbound calls and inbound callbacks, integration by integration.",
+        "count": "{{count}} integrations",
+        "lastSync": "Last sync:",
+        "summary": "Summary:",
+        "noMessage": "No message yet.",
+        "viewDetails": "View details",
+        "viewLogs": "View logs",
+        "retrySync": "Retry sync",
+        "forceSync": "Force sync",
+        "status": {
+          "success": "Success",
+          "pending": "Pending",
+          "inProgress": "In progress",
+          "failed": "Failed",
+          "notTriggered": "Not triggered"
+        },
+        "direction": {
+          "incoming": "Incoming",
+          "outgoing": "Outgoing",
+          "bidirectional": "Bidirectional"
+        },
+        "values": {
+          "rejected": "Rejected",
+          "accountToCreate": "Investor Account to create",
+          "accountCreated": "Investor Account created",
+          "sddSent": "SDD request sent",
+          "pending": "Pending"
+        },
+        "dotfile": {
+          "caseName": "Case name",
+          "caseId": "Case identifier",
+          "caseStatus": "Case status",
+          "attach": "Attach case",
+          "changeId": "Change identifier",
+          "recreate": "Delete and recreate case",
+          "updateDocuments": "Update documents"
+        },
+        "dynamo": {
+          "accountStatus": "Investor Account",
+          "resend": "Resend to Dynamo",
+          "resendWarning": "Resending may create a duplicate in Dynamo if the account already exists.",
+          "resent": "Resend to Dynamo triggered"
+        },
+        "flaminem": {
+          "open": "Open in Flaminem",
+          "logs": "Flaminem logs"
+        },
+        "dealfabric": {
+          "refresh": "Refresh"
+        },
+        "lemonway": {
+          "accountId": "Account identifier",
+          "walletId": "Wallet identifier",
+          "mandate": "Mandate",
+          "rum": "UMR",
+          "paymentStatus": "Payment status",
+          "iban": "IBAN",
+          "bic": "BIC",
+          "reference": "Transfer reference",
+          "openBanking": "Open banking"
         }
       }
     },

@@ -1,5 +1,15 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
-import { Check, ChevronDown, ChevronRight, ExternalLink, HelpCircle, X } from 'lucide-react';
+import {
+  Check,
+  ChevronDown,
+  ChevronRight,
+  Download,
+  ExternalLink,
+  HelpCircle,
+  RefreshCw,
+  ShieldAlert,
+  X,
+} from 'lucide-react';
 import { toast } from 'sonner@2.0.3';
 
 import { Button } from './ui/button';
@@ -15,6 +25,22 @@ import { DECISION_KEY, ROLE_KEY, openEntityDetail } from './entity-detail/entity
 import { useBulkSelection } from '../hooks/useBulkSelection';
 import { useCompliance } from '../utils/complianceContext';
 import { useTranslation } from '../utils/languageContext';
+import { useSubscriptionDemo } from '../utils/subscriptionDemoContext';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from './ui/select';
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from './ui/dialog';
 import { navigateToPage } from '../utils/routing';
 import type { AlertItem } from '../utils/alertsGenerator';
 import {
@@ -42,6 +68,11 @@ export interface SubscriptionScreening {
   partiesWithMatch: number;
   clearParties: number;
 }
+
+/** Niveaux de risque attribuables a un tiers controle. */
+export type EntityRiskLevel = 'none' | 'low' | 'medium' | 'high';
+
+const ENTITY_RISK_LEVELS: EntityRiskLevel[] = ['none', 'low', 'medium', 'high'];
 
 const PARTIES_WITH_PENDING = 2;
 const PARTIES_DECIDED = 1;
@@ -131,9 +162,42 @@ interface SubscriptionScreeningWidgetProps {
 export function SubscriptionScreeningWidget({ screening, locked }: SubscriptionScreeningWidgetProps) {
   const { t } = useTranslation();
   const { qualifyMatches } = useCompliance();
+  const { config: demo } = useSubscriptionDemo();
 
   const [drawerAlert, setDrawerAlert] = useState<AlertItem | null>(null);
   const [dialog, setDialog] = useState<{ alerts: AlertItem[]; action: AlertBulkAction } | null>(null);
+  const [rescanning, setRescanning] = useState(false);
+  const [lastScanAt, setLastScanAt] = useState('19/05/2026 16:10');
+  // Niveau de risque attribue a un tiers controle.
+  const [riskDialogEntity, setRiskDialogEntity] = useState<EntityRow | null>(null);
+  const [entityRiskLevels, setEntityRiskLevels] = useState<Record<number, EntityRiskLevel>>({});
+  const [riskDraft, setRiskDraft] = useState<EntityRiskLevel>('none');
+
+  /** Un rescan conserve les qualifications deja prises. */
+  const handleRescan = () => {
+    if (rescanning || locked) return;
+    setRescanning(true);
+    window.setTimeout(() => {
+      const date = new Date();
+      const at = `${date.toLocaleDateString('fr-FR')} ${date.toLocaleTimeString('fr-FR', {
+        hour: '2-digit',
+        minute: '2-digit',
+      })}`;
+      setLastScanAt(at);
+      setRescanning(false);
+      toast.success(t('subscriptions.detail.compliance.screening.rescanDone'), {
+        description: t('subscriptions.detail.compliance.screening.rescanKeepsDecisions'),
+      });
+    }, 900);
+  };
+
+  const handleExport = () => {
+    toast.success(t('subscriptions.detail.compliance.screening.exportDone'), {
+      description: t('subscriptions.detail.compliance.screening.exportDoneDesc', {
+        count: screening.matches.length,
+      }),
+    });
+  };
 
   const applyDecision = (ids: string[], decision: MatchDecisionValue, comments: Record<string, string>) => {
     const result = qualifyMatches(ids, decision, comments);
@@ -162,6 +226,27 @@ export function SubscriptionScreeningWidget({ screening, locked }: SubscriptionS
           <Button
             variant="ghost"
             size="sm"
+            className="h-8 w-8 p-0 text-muted-foreground"
+            title={t('subscriptions.detail.compliance.screening.rescan')}
+            aria-label={t('subscriptions.detail.compliance.screening.rescan')}
+            disabled={locked || rescanning}
+            onClick={handleRescan}
+          >
+            <RefreshCw className={`w-3.5 h-3.5 ${rescanning ? 'animate-spin' : ''}`} />
+          </Button>
+          <Button
+            variant="ghost"
+            size="sm"
+            className="h-8 w-8 p-0 text-muted-foreground"
+            title={t('subscriptions.detail.compliance.screening.export')}
+            aria-label={t('subscriptions.detail.compliance.screening.export')}
+            onClick={handleExport}
+          >
+            <Download className="w-3.5 h-3.5" />
+          </Button>
+          <Button
+            variant="ghost"
+            size="sm"
             className="gap-1.5 text-xs text-muted-foreground"
             onClick={() => navigateToPage('monitoring')}
           >
@@ -171,12 +256,21 @@ export function SubscriptionScreeningWidget({ screening, locked }: SubscriptionS
         </div>
       </div>
 
+      <p className="border-b px-4 py-1.5 text-[11px] text-muted-foreground">
+        {t('subscriptions.detail.compliance.screening.lastScan', { date: lastScanAt })}
+      </p>
+
       <div className="divide-y divide-border">
         {screening.parties.map(party => (
           <EntityAlertGroup
             key={party.entity.id}
             party={party}
             locked={locked}
+            riskLevel={entityRiskLevels[party.entity.id] ?? 'none'}
+            onOpenRiskDialog={entity => {
+              setRiskDialogEntity(entity);
+              setRiskDraft(entityRiskLevels[entity.id] ?? 'none');
+            }}
             onOpenAlert={setDrawerAlert}
             onQualify={(alerts, action) => setDialog({ alerts, action })}
           />
@@ -202,12 +296,65 @@ export function SubscriptionScreeningWidget({ screening, locked }: SubscriptionS
         open={dialog !== null}
         alerts={dialog?.alerts ?? []}
         action={dialog?.action ?? null}
+        commentRequired={demo.settings.screeningCommentRequired}
         onClose={() => setDialog(null)}
         onConfirm={(alertIds, action, comments) => {
           applyDecision(alertIds, toDecision(action), comments);
           setDialog(null);
         }}
       />
+
+      {/* Niveau de risque attribue a un tiers */}
+      <Dialog
+        open={riskDialogEntity !== null}
+        onOpenChange={open => !open && setRiskDialogEntity(null)}
+      >
+        <DialogContent className="sm:max-w-[420px]">
+          <DialogHeader>
+            <DialogTitle>{t('subscriptions.detail.compliance.screening.riskLevelTitle')}</DialogTitle>
+            <DialogDescription>
+              {t('subscriptions.detail.compliance.screening.riskLevelSubtitle', {
+                name: riskDialogEntity?.name ?? '',
+              })}
+            </DialogDescription>
+          </DialogHeader>
+
+          <Select value={riskDraft} onValueChange={value => setRiskDraft(value as EntityRiskLevel)}>
+            <SelectTrigger className="h-9 text-sm">
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              {ENTITY_RISK_LEVELS.map(level => (
+                <SelectItem key={level} value={level}>
+                  {t(`subscriptions.detail.compliance.screening.riskLevels.${level}`)}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+
+          <DialogFooter>
+            <Button variant="outline" size="sm" onClick={() => setRiskDialogEntity(null)}>
+              {t('subscriptions.detail.action.common.cancel')}
+            </Button>
+            <Button
+              size="sm"
+              className="text-white"
+              onClick={() => {
+                if (!riskDialogEntity) return;
+                setEntityRiskLevels(prev => ({ ...prev, [riskDialogEntity.id]: riskDraft }));
+                toast.success(t('subscriptions.detail.compliance.screening.riskLevelSaved'), {
+                  description: t(
+                    `subscriptions.detail.compliance.screening.riskLevels.${riskDraft}`,
+                  ),
+                });
+                setRiskDialogEntity(null);
+              }}
+            >
+              {t('subscriptions.detail.action.common.save')}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </Card>
   );
 }
@@ -215,12 +362,21 @@ export function SubscriptionScreeningWidget({ screening, locked }: SubscriptionS
 interface EntityAlertGroupProps {
   party: ScreeningParty;
   locked: boolean;
+  riskLevel: EntityRiskLevel;
+  onOpenRiskDialog: (entity: EntityRow) => void;
   onOpenAlert: (alert: AlertItem) => void;
   onQualify: (alerts: AlertItem[], action: AlertBulkAction) => void;
 }
 
 /** Groupe repliable : un tiers contrôlé et le tableau de ses alertes. */
-function EntityAlertGroup({ party, locked, onOpenAlert, onQualify }: EntityAlertGroupProps) {
+function EntityAlertGroup({
+  party,
+  locked,
+  riskLevel,
+  onOpenRiskDialog,
+  onOpenAlert,
+  onQualify,
+}: EntityAlertGroupProps) {
   const { t } = useTranslation();
   const { entity, matches } = party;
 
@@ -352,6 +508,26 @@ function EntityAlertGroup({ party, locked, onOpenAlert, onQualify }: EntityAlert
         <span className="text-xs text-muted-foreground">{t(ROLE_KEY[entity.relation])}</span>
 
         <div className="ml-auto flex items-center gap-1.5 shrink-0">
+          {riskLevel !== 'none' && (
+            <StatusBadge
+              label={t(`subscriptions.detail.compliance.screening.riskLevels.${riskLevel}`)}
+              variant={riskLevel === 'high' ? 'danger' : riskLevel === 'medium' ? 'warning' : 'success'}
+            />
+          )}
+          <Button
+            variant="ghost"
+            size="sm"
+            className="h-7 w-7 p-0 text-muted-foreground"
+            title={t('subscriptions.detail.compliance.screening.setRiskLevel')}
+            aria-label={t('subscriptions.detail.compliance.screening.setRiskLevel')}
+            disabled={locked}
+            onClick={event => {
+              event.stopPropagation();
+              onOpenRiskDialog(entity);
+            }}
+          >
+            <ShieldAlert className="w-3.5 h-3.5" />
+          </Button>
           {!hasMatches ? (
             <StatusBadge label={t('subscriptions.detail.compliance.screening.noHit')} variant="success" />
           ) : pending > 0 ? (

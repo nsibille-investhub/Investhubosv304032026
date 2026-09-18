@@ -3,7 +3,9 @@ import {
   AlertCircle,
   Check,
   CheckCircle2,
+  ChevronDown,
   ChevronRight,
+  ChevronUp,
   Clock,
   Eye,
   FileText,
@@ -53,6 +55,8 @@ import {
   type SignaturePackDocumentKind,
 } from '../utils/subscriptionDetailMockData';
 import { computeComplianceSnapshot } from '../utils/subscriptionRiskMockData';
+import { useSubscriptionDemo } from '../utils/subscriptionDemoContext';
+import { SignatoriesListDialog, type SignatoryRow } from './SignatoriesListDialog';
 
 export type SignatureStage = 'draft' | 'signing' | 'counterSigning' | 'completed';
 
@@ -62,6 +66,14 @@ type PartyKind = 'signatory' | 'counterSignatory';
 interface SignatureParty {
   id: string;
   name: string;
+  /** Civilite du signataire. */
+  title?: string;
+  /** Telephone, controle a la saisie. */
+  phone?: string;
+  /** Ordre de signature dans le groupe. */
+  order: number;
+  /** Contre-signataire designe mais pas encore valide. */
+  pendingValidation?: boolean;
   /** Fonction issue de la fiche investisseur (donnee), ou cle de traduction pour les defauts du fonds. */
   role?: string;
   roleKey?: string;
@@ -128,6 +140,7 @@ function buildDefaultSignatories(subscription: any): SignatureParty[] {
       name: signatory.name,
       role: signatory.role,
       email: toMockEmail(signatory.name),
+      order: idx + 1,
       source: 'investor',
       included: true,
       status: 'notSent',
@@ -147,6 +160,7 @@ function buildDefaultSignatories(subscription: any): SignatureParty[] {
       name: fallbackName,
       roleKey: `${KEY}.roles.investor`,
       email: toMockEmail(fallbackName),
+      order: 1,
       source: 'investor',
       included: true,
       status: 'notSent',
@@ -156,11 +170,14 @@ function buildDefaultSignatories(subscription: any): SignatureParty[] {
 }
 
 function buildDefaultCounterSignatories(): SignatureParty[] {
-  return mockFundCounterSignatories.map(item => ({
+  return mockFundCounterSignatories.map((item, idx) => ({
     id: item.id,
     name: item.name,
     roleKey: item.roleKey,
     email: item.email,
+    order: idx + 1,
+    // Le second contre-signataire attend encore la validation de la societe de gestion.
+    pendingValidation: idx > 0,
     source: 'fund',
     included: true,
     status: 'notSent',
@@ -191,6 +208,7 @@ export function SubscriptionSignatureStep({
   onProceedToPayment,
 }: SubscriptionSignatureStepProps) {
   const { t } = useTranslation();
+  const { config: demo } = useSubscriptionDemo();
   const tc = (key: string, count: number) => t(`${key}${count === 1 ? 'One' : 'Many'}`, { count });
 
   const [stage, setStage] = useState<SignatureStage>('draft');
@@ -201,6 +219,7 @@ export function SubscriptionSignatureStep({
   const [signatories, setSignatories] = useState<SignatureParty[]>(() =>
     buildDefaultSignatories(subscription),
   );
+  const [signatoriesListOpen, setSignatoriesListOpen] = useState(false);
   const [counterSignatories, setCounterSignatories] = useState<SignatureParty[]>(
     buildDefaultCounterSignatories,
   );
@@ -281,27 +300,41 @@ export function SubscriptionSignatureStep({
   const handleUpdate = (
     kind: PartyKind,
     id: string,
-    patch: Pick<SignatureParty, 'name' | 'email'> & { role: string },
+    patch: Pick<SignatureParty, 'name' | 'email' | 'title' | 'phone'> & { role: string },
   ) => {
     setterFor(kind)(prev =>
       prev.map(party =>
         party.id === id
-          ? { ...party, name: patch.name, email: patch.email, role: patch.role, roleKey: undefined }
+          ? {
+              ...party,
+              name: patch.name,
+              email: patch.email,
+              title: patch.title,
+              phone: patch.phone,
+              role: patch.role,
+              roleKey: undefined,
+            }
           : party,
       ),
     );
     toast.success(t(`${KEY}.parties.toast.updated`));
   };
 
-  const handleAdd = (kind: PartyKind, values: { name: string; email: string; role: string }) => {
+  const handleAdd = (
+    kind: PartyKind,
+    values: { name: string; email: string; role: string; title: string; phone: string },
+  ) => {
     const id = `${kind}-manual-${Date.now()}`;
     setterFor(kind)(prev => [
       ...prev,
       {
         id,
         name: values.name,
+        title: values.title,
+        phone: values.phone,
         role: values.role,
         email: values.email,
+        order: prev.length + 1,
         source: 'manual',
         included: true,
         status: 'notSent',
@@ -309,6 +342,42 @@ export function SubscriptionSignatureStep({
       },
     ]);
     toast.success(t(`${KEY}.parties.toast.added`), { description: values.name });
+  };
+
+  /** Lignes de la fenetre "Liste des signataires" : les deux groupes reunis. */
+  const signatoryRows: SignatoryRow[] = [
+    ...signatories.map(party => ({
+      id: party.id,
+      name: party.name,
+      email: party.email,
+      phone: party.phone,
+      order: party.order,
+      counterSignatory: false,
+      role: party.roleKey ? t(party.roleKey) : party.role,
+    })),
+    ...counterSignatories.map(party => ({
+      id: party.id,
+      name: party.name,
+      email: party.email,
+      phone: party.phone,
+      order: signatories.length + party.order,
+      counterSignatory: true,
+      pendingValidation: party.pendingValidation,
+      role: party.roleKey ? t(party.roleKey) : party.role,
+    })),
+  ];
+
+  /** Deplacement d'un signataire dans l'ordre de signature. */
+  const handleReorder = (kind: PartyKind, id: string, direction: -1 | 1) => {
+    setterFor(kind)(prev => {
+      const sorted = [...prev].sort((a, b) => a.order - b.order);
+      const index = sorted.findIndex(party => party.id === id);
+      const target = index + direction;
+      if (index < 0 || target < 0 || target >= sorted.length) return prev;
+      const swapped = [...sorted];
+      [swapped[index], swapped[target]] = [swapped[target], swapped[index]];
+      return swapped.map((party, idx) => ({ ...party, order: idx + 1 }));
+    });
   };
 
   const handleRemove = (kind: PartyKind, id: string) => {
@@ -688,9 +757,36 @@ export function SubscriptionSignatureStep({
       </Card>
 
       {/* Signataires et contre-signataires */}
+      <div className="flex items-center justify-between gap-2">
+        {!demo.settings.signatoriesPanel && (
+          <p className="flex items-start gap-1.5 text-xs text-muted-foreground">
+            <AlertCircle className="w-3.5 h-3.5 shrink-0 mt-0.5" />
+            {t('subscriptions.detail.signatories.panelOff')}
+          </p>
+        )}
+        <Button
+          variant="outline"
+          size="sm"
+          className="ml-auto h-8 gap-1.5 text-xs"
+          onClick={() => setSignatoriesListOpen(true)}
+        >
+          <Users className="w-3.5 h-3.5" />
+          {t('subscriptions.detail.signatories.open')}
+        </Button>
+      </div>
+
+      <SignatoriesListDialog
+        open={signatoriesListOpen}
+        onOpenChange={setSignatoriesListOpen}
+        rows={signatoryRows}
+      />
+
       <div
-        className="grid items-start gap-4"
-        style={{ gridTemplateColumns: 'repeat(auto-fit, minmax(440px, 1fr))' }}
+        className="items-start gap-4"
+        style={{
+          display: demo.settings.signatoriesPanel ? 'grid' : 'none',
+          gridTemplateColumns: 'repeat(auto-fit, minmax(440px, 1fr))',
+        }}
       >
         <PartyCard
           kind="signatory"
@@ -701,6 +797,7 @@ export function SubscriptionSignatureStep({
           onToggle={(id, included) => handleToggle('signatory', id, included)}
           onUpdate={(id, patch) => handleUpdate('signatory', id, patch)}
           onAdd={values => handleAdd('signatory', values)}
+          onReorder={(id, direction) => handleReorder('signatory', id, direction)}
           onRemove={id => handleRemove('signatory', id)}
           onRemind={id => handleRemind('signatory', [id])}
           onRegenerate={id => handleRegenerate('signatory', [id])}
@@ -717,6 +814,7 @@ export function SubscriptionSignatureStep({
           onToggle={(id, included) => handleToggle('counterSignatory', id, included)}
           onUpdate={(id, patch) => handleUpdate('counterSignatory', id, patch)}
           onAdd={values => handleAdd('counterSignatory', values)}
+          onReorder={(id, direction) => handleReorder('counterSignatory', id, direction)}
           onRemove={id => handleRemove('counterSignatory', id)}
           onRemind={id => handleRemind('counterSignatory', [id])}
           onRegenerate={id => handleRegenerate('counterSignatory', [id])}
@@ -976,6 +1074,8 @@ function PackGroup({
 }
 
 interface PartyFormValues {
+  title: string;
+  phone: string;
   name: string;
   role: string;
   email: string;
@@ -991,6 +1091,7 @@ interface PartyCardProps {
   onToggle: (id: string, included: boolean) => void;
   onUpdate: (id: string, patch: PartyFormValues) => void;
   onAdd: (values: PartyFormValues) => void;
+  onReorder: (id: string, direction: -1 | 1) => void;
   onRemove: (id: string) => void;
   onRemind: (id: string) => void;
   onRegenerate: (id: string) => void;
@@ -1006,6 +1107,7 @@ function PartyCard({
   onToggle,
   onUpdate,
   onAdd,
+  onReorder,
   onRemove,
   onRemind,
   onRegenerate,
@@ -1017,9 +1119,16 @@ function PartyCard({
 
   const [editingId, setEditingId] = useState<string | null>(null);
   const [adding, setAdding] = useState(false);
-  const [form, setForm] = useState<PartyFormValues>({ name: '', role: '', email: '' });
+  const [form, setForm] = useState<PartyFormValues>({
+    title: '',
+    name: '',
+    role: '',
+    email: '',
+    phone: '',
+  });
 
-  const visible = locked ? parties.filter(party => party.included) : parties;
+  const ordered = [...parties].sort((a, b) => a.order - b.order);
+  const visible = locked ? ordered.filter(party => party.included) : ordered;
   const includedCount = parties.filter(party => party.included).length;
   const signedCount = parties.filter(party => party.included && party.status === 'signed').length;
 
@@ -1027,16 +1136,18 @@ function PartyCard({
     setAdding(false);
     setEditingId(party.id);
     setForm({
+      title: party.title ?? '',
       name: party.name,
       role: party.roleKey ? t(party.roleKey) : party.role ?? '',
       email: party.email,
+      phone: party.phone ?? '',
     });
   };
 
   const startAdd = () => {
     setEditingId(null);
     setAdding(true);
-    setForm({ name: '', role: '', email: '' });
+    setForm({ title: '', name: '', role: '', email: '', phone: '' });
   };
 
   const cancelForm = () => {
@@ -1049,7 +1160,21 @@ function PartyCard({
       toast.error(t(`${KEY}.parties.toast.invalid`));
       return;
     }
-    const values = { name: form.name.trim(), role: form.role.trim(), email: form.email.trim() };
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/.test(form.email.trim())) {
+      toast.error(t(`${KEY}.parties.toast.invalidEmail`));
+      return;
+    }
+    if (form.phone.trim() && !/^\+?[0-9 ().-]{6,20}$/.test(form.phone.trim())) {
+      toast.error(t(`${KEY}.parties.toast.invalidPhone`));
+      return;
+    }
+    const values = {
+      title: form.title.trim(),
+      name: form.name.trim(),
+      role: form.role.trim(),
+      email: form.email.trim(),
+      phone: form.phone.trim(),
+    };
     if (editingId) onUpdate(editingId, values);
     else onAdd(values);
     cancelForm();
@@ -1064,6 +1189,20 @@ function PartyCard({
 
   const renderForm = () => (
     <div className="grid gap-2 rounded-lg border border-primary/30 bg-primary/5 p-3">
+      <div className="grid grid-cols-2 gap-2">
+        <Input
+          value={form.title}
+          onChange={event => setForm(prev => ({ ...prev, title: event.target.value }))}
+          placeholder={t(`${KEY}.parties.form.title`)}
+          className="h-8 text-sm"
+        />
+        <Input
+          value={form.phone}
+          onChange={event => setForm(prev => ({ ...prev, phone: event.target.value }))}
+          placeholder={t(`${KEY}.parties.form.phone`)}
+          className="h-8 text-sm"
+        />
+      </div>
       <div className="grid grid-cols-2 gap-2">
         <Input
           value={form.name}
@@ -1165,15 +1304,23 @@ function PartyCard({
                 />
               )}
 
-              <span
-                className={cn(
-                  'flex h-9 w-9 shrink-0 items-center justify-center rounded-full text-xs font-semibold',
-                  party.status === 'signed'
-                    ? 'bg-emerald-100 text-emerald-700'
-                    : 'bg-primary/10 text-primary',
-                )}
-              >
-                {initials(party.name) || '?'}
+              <span className="flex shrink-0 flex-col items-center gap-1">
+                <span
+                  className={cn(
+                    'flex h-9 w-9 items-center justify-center rounded-full text-xs font-semibold',
+                    party.status === 'signed'
+                      ? 'bg-emerald-100 text-emerald-700'
+                      : 'bg-primary/10 text-primary',
+                  )}
+                >
+                  {initials(party.name) || '?'}
+                </span>
+                <span
+                  className="text-[10px] tabular-nums text-muted-foreground"
+                  title={t(`${KEY}.parties.orderHint`)}
+                >
+                  {t(`${KEY}.parties.order`, { position: party.order })}
+                </span>
               </span>
 
               <div className="min-w-0 flex-1">
@@ -1189,6 +1336,12 @@ function PartyCard({
                   >
                     {sourceLabel(party)}
                   </Badge>
+                  {party.pendingValidation && (
+                    <Badge className="bg-amber-50 text-amber-700 border-amber-200 text-[11px]">
+                      <Clock className="w-3 h-3 mr-1" />
+                      {t('subscriptions.detail.signatories.pendingValidation')}
+                    </Badge>
+                  )}
                 </div>
                 <span className="block truncate text-xs text-foreground/70">
                   {roleLabel ? `${roleLabel} · ${party.email}` : party.email}
@@ -1230,6 +1383,26 @@ function PartyCard({
               <div className="flex shrink-0 items-center gap-1">
                 {!locked && (
                   <>
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      className="h-8 w-8 p-0"
+                      aria-label={t(`${KEY}.parties.moveUp`)}
+                      title={t(`${KEY}.parties.moveUp`)}
+                      onClick={() => onReorder(party.id, -1)}
+                    >
+                      <ChevronUp className="w-4 h-4 text-foreground/70" />
+                    </Button>
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      className="h-8 w-8 p-0"
+                      aria-label={t(`${KEY}.parties.moveDown`)}
+                      title={t(`${KEY}.parties.moveDown`)}
+                      onClick={() => onReorder(party.id, 1)}
+                    >
+                      <ChevronDown className="w-4 h-4 text-foreground/70" />
+                    </Button>
                     <Tooltip>
                       <TooltipTrigger asChild>
                         <Button

@@ -318,6 +318,16 @@ export interface Subscription {
   // Champs complementaires edition
   holdingMode?: HoldingMode; // Mode de détention
   externalId?: string; // Identifiant externe
+  crmId?: string; // Identifiant CRM
+  coSubscriber?: {
+    title: SubscriberTitle;
+    firstName?: string;
+    lastName?: string;
+    legalName?: string;
+    email: string;
+    phone: string;
+  };
+  partnerAgreementSigned?: boolean; // Convention de distribution signee
   subscriptionType?: SubscriptionType; // Type de souscription
   subscriberTitle?: SubscriberTitle; // Civilité du souscripteur
   legalName?: string; // Raison sociale
@@ -698,6 +708,8 @@ export function generateSubscriptions(count: number): Subscription[] {
     const holdingModes: HoldingMode[] = ['pur', 'administre', 'nominatif'];
     const holdingMode = randomElement(holdingModes);
     const externalId = Math.random() > 0.5 ? `EXT-${randomNumber(10000, 99999)}` : undefined;
+    const crmId = Math.random() > 0.4 ? `CRM-${randomNumber(100000, 999999)}` : undefined;
+    const partnerAgreementSigned = !isDirect ? Math.random() > 0.25 : undefined;
     const subscriptionTypeOptions: SubscriptionType[] = ['free', 'commitment', 'capitalCall'];
     const subscriptionType = randomElement(subscriptionTypeOptions);
     const individualTitles: SubscriberTitle[] = ['mr', 'mme'];
@@ -798,6 +810,8 @@ export function generateSubscriptions(count: number): Subscription[] {
       coInvestors,
       holdingMode,
       externalId,
+      crmId,
+      partnerAgreementSigned,
       subscriptionType,
       subscriberTitle,
       legalName,
@@ -816,6 +830,16 @@ export function generateSubscriptions(count: number): Subscription[] {
       commissionRate,
       excludeRetrocessions,
       sideLetter,
+      coSubscriber:
+        type === 'Individual' && Math.random() > 0.6
+          ? {
+              title: 'mme',
+              firstName: 'Camille',
+              lastName: lastName ?? 'Martin',
+              email: `camille.${(lastName ?? 'martin').toLowerCase().replace(/\s+/g, '.')}@example.com`,
+              phone: `+33 6 ${randomNumber(10, 99)} ${randomNumber(10, 99)} ${randomNumber(10, 99)} ${randomNumber(10, 99)}`,
+            }
+          : undefined,
     };
 
     subscriptions.push(subscription);

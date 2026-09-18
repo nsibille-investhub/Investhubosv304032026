@@ -414,7 +414,12 @@
         "riskNotValidated": "Non validé",
         "validatedByLabel": "Par {{name}}",
         "copyId": "Cliquer pour copier l'ID",
-        "openInNewTab": "Ouvrir dans un nouvel onglet"
+        "openInNewTab": "Ouvrir dans un nouvel onglet",
+        "naturalPerson": "Personne physique",
+        "legalPerson": "Personne morale",
+        "fileLanguage": "Langue du dossier",
+        "directSubscription": "Souscription directe",
+        "directSubscriptionHint": "Souscription réalisée sans distributeur"
       },
       "tabs": {
         "onboarding": "Onboarding",
@@ -422,7 +427,8 @@
         "capitalCalls": "Appels de fonds",
         "documents": "Documents",
         "integrations": "Intégrations",
-        "notes": "Notes"
+        "notes": "Notes",
+        "history": "Historique"
       },
       "stepper": {
         "stepOf": "Étape {{current}}/{{total}}",
@@ -586,7 +592,13 @@
           "de": "Allemand",
           "it": "Italien",
           "es": "Espagnol"
-        }
+        },
+        "crmId": "Identifiant CRM",
+        "sectionCoSubscriber": "Co-souscripteur",
+        "noCoSubscriber": "Aucun co-souscripteur",
+        "partnerAgreement": "Convention de distribution",
+        "partnerAgreementSigned": "Signée",
+        "partnerAgreementUnsigned": "Non signée"
       },
       "sections": {
         "identity": "Identité",
@@ -594,7 +606,9 @@
         "banking": "Coordonnées bancaires",
         "professional": "Situation professionnelle",
         "financial": "Situation financière",
-        "documents": "Pièces justificatives"
+        "documents": "Pièces justificatives",
+        "usPerson": "US Person",
+        "internalReview": "Contrôle interne"
       },
       "onboarding": {
         "answeredOf": "{{answered}}/{{total}} répondues",
@@ -631,6 +645,16 @@
           },
           "documentsCountOne": "{{count}} document",
           "documentsCountMany": "{{count}} documents"
+        },
+        "columns": {
+          "question": "Question",
+          "response": "Réponse",
+          "document": "Document",
+          "verification": "Vérification"
+        },
+        "internalSections": {
+          "title": "Sections internes",
+          "subtitle": "Questions remplies par le back-office, jamais visibles par l'investisseur."
         }
       },
       "validation": {
@@ -742,7 +766,9 @@
             "role": "Fonction",
             "email": "Email",
             "save": "Enregistrer",
-            "cancel": "Annuler"
+            "cancel": "Annuler",
+            "title": "Civilité",
+            "phone": "Téléphone"
           },
           "status": {
             "notSent": "Non envoyé",
@@ -762,8 +788,14 @@
             "remindedDesc": "Un rappel a été envoyé à {{names}}.",
             "linkRegenerated": "Lien régénéré",
             "linkRegeneratedDesc": "L'ancien lien est désactivé, le nouveau a été envoyé.",
-            "markedSigned": "Signature enregistrée"
-          }
+            "markedSigned": "Signature enregistrée",
+            "invalidEmail": "Adresse email invalide.",
+            "invalidPhone": "Numéro de téléphone invalide."
+          },
+          "order": "N° {{position}}",
+          "orderHint": "Ordre de signature",
+          "moveUp": "Monter dans l'ordre de signature",
+          "moveDown": "Descendre dans l'ordre de signature"
         },
         "roles": {
           "investor": "Investisseur",
@@ -801,7 +833,31 @@
         "pendingLabel": "En attente",
         "save": "Enregistrer",
         "confirmPayment": "Confirmer le paiement",
-        "paymentConfirmed": "Paiement confirmé"
+        "paymentConfirmed": "Paiement confirmé",
+        "confirmationTitle": "Confirmation paiement",
+        "confirmationSubtitle": "Date du versement, valeur liquidative et estimation des parts.",
+        "paymentDateLabel": "Date du paiement",
+        "paymentDateRequired": "La date du paiement est obligatoire.",
+        "navValueLabel": "Valeur liquidative",
+        "estimatedShares": "Nombre de parts estimé",
+        "estimatedAmount": "Montant estimé",
+        "saved": "Confirmation enregistrée",
+        "remind": "Relancer",
+        "reminderTitle": "Relancer le souscripteur ?",
+        "reminderFirst": "Un email de relance sera envoyé au souscripteur.",
+        "reminderAgain": "Une relance a déjà été envoyée le {{date}}. Confirmer une nouvelle relance ?",
+        "reminderSent": "Relance envoyée",
+        "lastReminder": "Dernière relance le {{date}}",
+        "states": {
+          "awaitingDirectDebit": "En attente de validation du prélèvement",
+          "paidAwaitingNav": "Paiement confirmé, valeur liquidative à confirmer",
+          "confirmed": "Paiement et valeur liquidative confirmés"
+        },
+        "statesDesc": {
+          "awaitingDirectDebit": "Le mandat est enregistré, le prélèvement reste à valider.",
+          "paidAwaitingNav": "Le versement est reçu, la valeur liquidative n'est pas encore confirmée.",
+          "confirmed": "Le dossier peut passer en souscription active."
+        }
       },
       "emailsTab": {
         "date": "Date",
@@ -842,7 +898,40 @@
         "documentSigned": "Document signé",
         "deleteDocument": "Supprimer {{name}}",
         "exportPack": "Exporter le pack documentaire",
-        "exportPackToast": "Pack documentaire exporté"
+        "exportPackToast": "Pack documentaire exporté",
+        "subtitle": "Documents du dossier, regroupés par famille.",
+        "families": {
+          "toSign": "Documents à signer",
+          "postSubscription": "Documents post-souscription",
+          "other": "Autres documents",
+          "specific": "Documents spécifiques à signer"
+        },
+        "emptyFamily": "Aucun document dans cette famille.",
+        "preview": "Aperçu",
+        "downloadSigned": "Télécharger le document signé",
+        "downloadSignedToast": "Document signé téléchargé",
+        "downloadToSign": "Télécharger le document à signer",
+        "downloadToSignToast": "Document à signer téléchargé",
+        "delete": "Supprimer",
+        "deleted": "Document supprimé",
+        "deleteTitle": "Supprimer le document ?",
+        "deleteDescription": "{{name}} sera retiré du dossier.",
+        "specific": {
+          "add": "Ajouter un document spécifique",
+          "addTitle": "Ajouter un document spécifique",
+          "editTitle": "Modifier le document spécifique",
+          "subtitle": "Nom, fichier et coordonnées de signature.",
+          "name": "Nom du document",
+          "file": "Fichier",
+          "signatureCoordinates": "Coordonnées de signature",
+          "counterSignatureCoordinates": "Coordonnées de contresignature",
+          "signaturePages": "Pages de signature",
+          "counterSignaturePages": "Pages de contresignature",
+          "nameRequired": "Le nom du document est obligatoire.",
+          "added": "Document spécifique ajouté",
+          "updated": "Document spécifique modifié",
+          "edit": "Modifier"
+        }
       },
       "notesTab": {
         "all": "Toutes ({{count}})",
@@ -856,7 +945,12 @@
         "resolvedStatus": "Résolue",
         "resolve": "Résoudre",
         "noteResolved": "Note résolue",
-        "deleteNote": "Supprimer la note"
+        "deleteNote": "Supprimer la note",
+        "sendReminder": "Envoyer un rappel",
+        "reminderSent": "Rappel envoyé",
+        "attachmentDownloaded": "Pièce jointe téléchargée",
+        "deleteTitle": "Supprimer la note ?",
+        "deleteDescription": "La note et sa pièce jointe seront retirées du dossier."
       },
       "docs": {
         "passport": "Passeport (en couleur, lignes MRZ lisibles et complètes, sur une seule page)",
@@ -879,7 +973,23 @@
         "replace": "Remplacer",
         "verification": "Vérification",
         "validateDocument": "Valider le document",
-        "rejectDocument": "Demander une correction"
+        "rejectDocument": "Demander une correction",
+        "download": "Télécharger",
+        "downloadToast": "Téléchargement lancé",
+        "editIssueDate": "Modifier la date d'émission",
+        "editExpiration": "Modifier la date d'expiration",
+        "issueDateSaved": "Date d'émission enregistrée",
+        "expirationSaved": "Date d'expiration enregistrée",
+        "issueDateRequired": "Date d'émission exigée",
+        "invalidDate": "Date invalide. Format attendu : JJ/MM/AAAA.",
+        "markers": {
+          "certified": "Certifié",
+          "forced": "Forcé",
+          "internal": "Interne",
+          "additional": "Additionnel",
+          "replacedByPartner": "Remplacé par le partenaire",
+          "replacedByAdmin": "Remplacé par l'administrateur"
+        }
       },
       "notes": {
         "mock1": "Vérifier la double nationalité mentionnée lors de l'entretien initial",
@@ -927,7 +1037,15 @@
           "validate": "Valider le score",
           "validated": "Score validé",
           "noValidationNeeded": "Le palier atteint ne demande pas de validation manuelle.",
-          "invalidate": "Invalider le score"
+          "invalidate": "Invalider le score",
+          "awaitingCompliance": "En attente de validation par la conformité",
+          "complianceValidate": "Valider la conformité",
+          "complianceRefuse": "Refuser",
+          "noComplianceRight": "Vous n'avez pas le droit de validation conformité.",
+          "refuseTitle": "Refuser le scoring",
+          "refuseSubtitle": "Le scoring repart en attente de validation.",
+          "refusePlaceholder": "Motif du refus",
+          "refuseConfirm": "Refuser le scoring"
         },
         "status": {
           "pending": "En attente",
@@ -1011,7 +1129,15 @@
           "unevaluatedOne": "{{count}} composante non évaluée",
           "unevaluatedMany": "{{count}} composantes non évaluées",
           "widgetTitle": "Profil de risque",
-          "widgetSubtitle": "{{name}} · profil issu de {{onboarding}}"
+          "widgetSubtitle": "{{name}} · profil issu de {{onboarding}}",
+          "forceScore": "Forcer le score",
+          "forceTitle": "Forcer le score du composant",
+          "forceSubtitle": "Le motif est obligatoire et reste affiché sur le composant.",
+          "forceValue": "Score forcé",
+          "forceReason": "Motif du forçage",
+          "forceReasonPlaceholder": "Motif du forçage",
+          "forceConfirm": "Forcer le score",
+          "engineOff": "Le moteur de risque est désactivé pour ce client."
         },
         "screening": {
           "title": "Screening et surveillance continue",
@@ -1061,7 +1187,24 @@
           "allTreated": "Aucune correspondance à traiter",
           "openAlerts": "Toutes les alertes",
           "expandGroup": "Déplier {{name}}",
-          "collapseGroup": "Replier {{name}}"
+          "collapseGroup": "Replier {{name}}",
+          "rescan": "Relancer le screening",
+          "rescanDone": "Screening relancé",
+          "rescanKeepsDecisions": "Les qualifications déjà faites sont conservées.",
+          "exportDone": "Résultats de screening exportés",
+          "exportDoneDesc": "{{count}} correspondance(s) exportée(s)",
+          "lastScan": "Dernier screening le {{date}}",
+          "setRiskLevel": "Attribuer un niveau de risque",
+          "riskLevelTitle": "Niveau de risque du tiers",
+          "riskLevelSubtitle": "Niveau attribué à {{name}}.",
+          "riskLevelSaved": "Niveau de risque enregistré",
+          "riskLevels": {
+            "none": "Aucun risque",
+            "low": "Faible",
+            "medium": "Moyen",
+            "high": "Élevé"
+          },
+          "noRight": "Vous n'avez pas accès au module screening."
         },
         "purposes": {
           "subscriber": "Souscripteur",
@@ -1160,7 +1303,347 @@
           "exportScreeningDesc": "Les contrôles et les décisions sont exportés.",
           "noteAdded": "Note ajoutée au journal",
           "complianceReopenedDesc": "Score, correspondances et catégorisation sont de nouveau modifiables.",
-          "scoreInvalidated": "Validation du score retirée"
+          "scoreInvalidated": "Validation du score retirée",
+          "scoreForced": "Score forcé",
+          "scoreSubmittedToCompliance": "Scoring envoyé en validation conformité",
+          "scoreRefused": "Scoring refusé"
+        }
+      },
+      "action": {
+        "title": "Actions du dossier",
+        "subtitle": "Les actions proposées dépendent de l'état du dossier, du paramétrage et de vos droits.",
+        "common": {
+          "cancel": "Annuler",
+          "confirm": "Confirmer",
+          "save": "Enregistrer"
+        },
+        "subscriptionType": {
+          "label": "Type de souscription",
+          "validate": "Valider le type de souscription",
+          "validated": "Type validé",
+          "gate": "Les actions de validation s'ouvrent une fois le type de souscription validé."
+        },
+        "buttons": {
+          "sendToValidation": "Envoyer le dossier en validation",
+          "validateFile": "Valider le dossier",
+          "refuseFile": "Refuser le dossier",
+          "validateKyc": "Valider le KYC",
+          "validateKycAndSign": "Valider le KYC et faire signer",
+          "viewSignatories": "Voir les signataires",
+          "reopenKyc": "Rouvrir le KYC",
+          "sign": "Faire signer",
+          "preparePartnerSignature": "Préparer la signature partenaire",
+          "validateWithoutSignature": "Valider sans signature",
+          "remindPayment": "Relancer le versement"
+        },
+        "mentions": {
+          "internalRefused": "Validation interne refusée par {{name}}",
+          "validationRequested": "Validation demandée le {{date}} par {{name}}",
+          "internalValidated": "Validé le {{date}} par {{name}}",
+          "directSignaturePartner": "Partenaire à signature directe : le distributeur signe lui-même.",
+          "signatureRequested": "Signature demandée le {{date}}",
+          "preSignature": "Pré-signature en cours depuis le {{date}}",
+          "reopened": "Dossier réouvert le {{date}}",
+          "paymentReminder": "Relance de versement le {{date}}",
+          "activeSubscription": "Souscription active : le suivi se fait depuis les appels de fonds et le paiement.",
+          "transferred": "Souscription transférée : les actions de validation sont closes."
+        },
+        "guards": {
+          "title": "Contrôles avant validation",
+          "question": "Souhaitez-vous le valider malgré tout ?",
+          "confirm": "Valider malgré tout",
+          "missingIssueDates": "{{count}} pièce(s) exigent une date d'émission qui manque.",
+          "invalidQuestions": "{{count}} réponse(s) sont refusées au contrôle.",
+          "signatureAlreadyRequested": "La signature a déjà été demandée le {{date}}.",
+          "noInvestorEmail": "L'investisseur n'a pas d'adresse email."
+        },
+        "confirm": {
+          "validateFile": "Valider le dossier ?",
+          "subtitle": "Cette décision est tracée dans l'historique du dossier."
+        },
+        "refuse": {
+          "title": "Refuser le dossier",
+          "subtitle": "Les explications sont transmises au demandeur.",
+          "placeholder": "Explications du refus",
+          "confirm": "Refuser le dossier"
+        },
+        "withoutSignature": {
+          "title": "Valider sans signature",
+          "subtitle": "Indiquez la date de validation retenue.",
+          "dateLabel": "Date de validation (JJ/MM/AAAA)",
+          "invalidDate": "Date invalide. Format attendu : JJ/MM/AAAA.",
+          "confirm": "Valider sans signature"
+        },
+        "counterSignatory": {
+          "label": "Choisir le signataire",
+          "placeholder": "Contresignataire côté société de gestion"
+        },
+        "disabled": {
+          "noFundRight": "Vous n'avez pas le droit de validation sur ce fonds.",
+          "partnerSignatureOff": "La signature partenaire est désactivée par le paramétrage.",
+          "kycNotValidated": "Le KYC n'est pas validé."
+        },
+        "toast": {
+          "typeValidated": "Type de souscription validé",
+          "validationRequested": "Dossier envoyé en validation",
+          "fileValidated": "Dossier validé",
+          "fileRefused": "Dossier refusé",
+          "refusalReasonRequired": "Les explications du refus sont obligatoires.",
+          "kycValidated": "KYC validé",
+          "kycValidatedAndSent": "KYC validé et signature demandée",
+          "kycReopened": "KYC réouvert",
+          "signatureRequested": "Signature demandée",
+          "partnerSignaturePrepared": "Signature partenaire préparée",
+          "validatedWithoutSignature": "Dossier validé sans signature",
+          "paymentReminderSent": "Relance de versement envoyée"
+        }
+      },
+      "banners": {
+        "deferredProcessing": "Traitement différé : {{date}}",
+        "administered": "Souscription administrée : elle passe par un teneur de compte."
+      },
+      "demo": {
+        "title": "État de démonstration",
+        "stateLabel": "État du dossier",
+        "configure": "Paramétrage et droits",
+        "reset": "Revenir à l'état initial",
+        "hiddenPanels": "Panneaux masqués : {{list}}",
+        "states": {
+          "inProgress": "Dossier en cours",
+          "awaitingInternalValidation": "En attente de validation interne",
+          "validatedAwaitingSignature": "Validé, en attente de signature",
+          "signing": "Signature en cours",
+          "active": "Souscription active",
+          "transferred": "Souscription transférée"
+        },
+        "sections": {
+          "settings": "Paramétrage client et fonds",
+          "integrations": "Intégrations activées",
+          "rights": "Droits back-office",
+          "flags": "Contexte du dossier"
+        },
+        "settings": {
+          "internalValidation": "Validation interne",
+          "riskEngine": "Moteur de risque",
+          "externalRiskAnalysis": "Analyse de risque externe",
+          "signatoriesPanel": "Bloc signataires",
+          "partnerSignature": "Signature partenaire",
+          "directSignaturePartner": "Partenaire à signature directe",
+          "counterSignatoryChoice": "Choix du contresignataire",
+          "screeningComment": "Commentaire obligatoire à l'écartement",
+          "scoreRefresh": "Rafraîchissement du score"
+        },
+        "rights": {
+          "validateFund": "Validation sur ce fonds",
+          "validateCompliance": "Validation conformité",
+          "screening": "Accès au screening"
+        },
+        "flags": {
+          "deferredProcessing": "Traitement différé",
+          "administered": "Souscription administrée",
+          "subscriptionTypeSet": "Type de souscription déjà posé",
+          "transferOrigin": "Issue d'un transfert"
+        }
+      },
+      "duplicate": {
+        "action": "Dupliquer la souscription",
+        "title": "Dupliquer la souscription ?",
+        "description": "Une nouvelle souscription sera créée à partir de {{name}}.",
+        "confirm": "Dupliquer",
+        "toast": "Souscription dupliquée"
+      },
+      "externalRisk": {
+        "title": "Analyse des risques externe",
+        "country": "Risque pays",
+        "countryDetail": "Résidence fiscale, nationalité et domiciliation bancaire",
+        "counterparty": "Risque contrepartie",
+        "counterpartyDetail": "Souscripteur, représentant légal et bénéficiaires effectifs",
+        "levels": {
+          "low": "Faible",
+          "medium": "Moyen",
+          "high": "Élevé",
+          "critical": "Critique"
+        },
+        "launch": "Lancer l'analyse",
+        "relaunch": "Relancer l'analyse",
+        "lastRun": "Dernière analyse le {{date}}",
+        "neverRun": "Analyse jamais lancée",
+        "lockedHint": "Dossier validé : l'analyse n'est plus modifiable.",
+        "toast": {
+          "done": "Analyse de risque externe terminée"
+        }
+      },
+      "history": {
+        "investor": {
+          "title": "Historique investisseur",
+          "subtitle": "Toutes les actions du dossier, avec leur auteur."
+        },
+        "compliance": {
+          "title": "Historique compliance",
+          "subtitle": "Décisions de conformité prises sur le dossier.",
+          "exportPdf": "Export PDF",
+          "exportToast": "Fiche compliance exportée"
+        },
+        "documents": {
+          "title": "Historique documents investisseurs",
+          "scopeNotice": "Cette liste dépasse le périmètre de cette souscription : elle couvre tous les dossiers de l'investisseur.",
+          "providedAt": "Fourni le",
+          "name": "Document",
+          "subscription": "Souscription",
+          "fund": "Fonds",
+          "action": "Action",
+          "download": "Télécharger",
+          "downloadToast": "Téléchargement lancé"
+        },
+        "authors": {
+          "backoffice": "Back-office",
+          "partner": "Distributeur",
+          "investor": "Investisseur"
+        },
+        "events": {
+          "created": "Souscription créée",
+          "invitationSent": "Invitation à l'onboarding envoyée",
+          "onboardingStarted": "Onboarding démarré",
+          "documentUploaded": "Pièce justificative déposée",
+          "onboardingSubmitted": "Dossier soumis par l'investisseur",
+          "answerRejected": "Réponse refusée au contrôle",
+          "dataChangeRequested": "Demande de modification de données déposée"
+        },
+        "complianceEvents": {
+          "screeningRun": "Screening lancé sur les entités du dossier",
+          "matchDismissed": "Correspondance écartée pour homonymie",
+          "scoreComputed": "Score de risque calculé à partir des réponses",
+          "componentForced": "Score forcé sur la composante Origine des fonds",
+          "categorisationSaved": "Catégorisation MIF II enregistrée"
+        }
+      },
+      "dataChanges": {
+        "title": "Changements de données",
+        "subtitle": "Demandes déposées par l'investisseur ou le distributeur sur un dossier déjà soumis.",
+        "columns": {
+          "date": "Date",
+          "field": "Donnée",
+          "newValue": "Nouvelle donnée",
+          "info": "Informations",
+          "status": "Statut",
+          "actions": "Actions"
+        },
+        "status": {
+          "toValidate": "À valider",
+          "validated": "Validée",
+          "refused": "Refusée"
+        },
+        "origin": {
+          "investor": "Déposée par l'investisseur",
+          "partner": "Déposée par le distributeur"
+        },
+        "actions": {
+          "validate": "Valider la demande",
+          "refuse": "Refuser la demande"
+        },
+        "fields": {
+          "address": "Adresse",
+          "phone": "Téléphone",
+          "bankAccount": "Coordonnées bancaires",
+          "email": "Email"
+        },
+        "info": {
+          "movedIn": "Déménagement déclaré",
+          "newNumber": "Nouveau numéro mobile",
+          "bankChange": "Changement de banque",
+          "typo": "Correction d'une faute de saisie"
+        },
+        "refuse": {
+          "title": "Refuser la demande",
+          "subtitle": "Indiquez la raison du refus pour {{field}}.",
+          "placeholder": "Raison du refus",
+          "confirm": "Refuser"
+        },
+        "toast": {
+          "validated": "Demande validée",
+          "refused": "Demande refusée"
+        }
+      },
+      "signatories": {
+        "open": "Liste des signataires",
+        "dialogTitle": "Liste des signataires",
+        "dialogSubtitle": "Signataires et contresignataires, dans leur ordre de signature.",
+        "signatories": "Signataires",
+        "counterSignatories": "Contresignataires",
+        "counterSignatory": "Contresignataire",
+        "pendingValidation": "En attente de validation",
+        "emptySignatories": "Aucun signataire",
+        "emptyCounterSignatories": "Aucun contresignataire",
+        "panelOff": "Le bloc signataires est masqué par le paramétrage du fonds."
+      },
+      "transfer": {
+        "title": "Transfert",
+        "fromSubscription": "Cette souscription résulte d'un transfert à partir de la souscription {{ref}}.",
+        "transferredOn": "Cette souscription a été transférée le {{date}} par {{name}}.",
+        "viewTransfers": "Voir les transferts"
+      },
+      "integrations": {
+        "title": "Intégrations de la souscription",
+        "subtitle": "Appels sortants et retours entrants, intégration par intégration.",
+        "count": "{{count}} intégrations",
+        "lastSync": "Dernière synchronisation :",
+        "summary": "Résumé :",
+        "noMessage": "Aucun message pour l'instant.",
+        "viewDetails": "Voir le détail",
+        "viewLogs": "Voir les journaux",
+        "retrySync": "Rejouer",
+        "forceSync": "Forcer la synchronisation",
+        "status": {
+          "success": "Succès",
+          "pending": "En attente",
+          "inProgress": "En cours",
+          "failed": "En échec",
+          "notTriggered": "Non déclenchée"
+        },
+        "direction": {
+          "incoming": "Entrante",
+          "outgoing": "Sortante",
+          "bidirectional": "Bidirectionnelle"
+        },
+        "values": {
+          "rejected": "Refusé",
+          "accountToCreate": "Investor Account à créer",
+          "accountCreated": "Investor Account créé",
+          "sddSent": "Requête SDD envoyée",
+          "pending": "En attente"
+        },
+        "dotfile": {
+          "caseName": "Nom du cas",
+          "caseId": "Identifiant du cas",
+          "caseStatus": "Statut du cas",
+          "attach": "Rattacher le cas",
+          "changeId": "Changer l'identifiant",
+          "recreate": "Supprimer et recréer le cas",
+          "updateDocuments": "Mettre à jour les documents"
+        },
+        "dynamo": {
+          "accountStatus": "Investor Account",
+          "resend": "Renvoyer à Dynamo",
+          "resendWarning": "Un renvoi peut créer un doublon côté Dynamo si le compte existe déjà.",
+          "resent": "Envoi relancé vers Dynamo"
+        },
+        "flaminem": {
+          "open": "Voir sur Flaminem",
+          "logs": "Journaux Flaminem"
+        },
+        "dealfabric": {
+          "refresh": "Rafraîchir"
+        },
+        "lemonway": {
+          "accountId": "Identifiant du compte",
+          "walletId": "Identifiant du wallet",
+          "mandate": "Mandat",
+          "rum": "RUM",
+          "paymentStatus": "Statut de paiement",
+          "iban": "IBAN",
+          "bic": "BIC",
+          "reference": "Référence du virement",
+          "openBanking": "Open banking"
         }
       }
     },

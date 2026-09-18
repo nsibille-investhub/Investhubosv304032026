@@ -11,6 +11,8 @@ export interface MockQuestion {
   response: string;
   verified: boolean;
   hasAlert?: boolean;
+  /** Piece jointe a la reponse, consultable depuis la ligne. */
+  documentKey?: string;
 }
 
 export interface MockSection {
@@ -18,6 +20,11 @@ export interface MockSection {
   titleKey: string;
   icon: any;
   questions: MockQuestion[];
+  /** Section conditionnelle : elle n'est rendue que si elle s'applique au dossier. */
+  conditional?: boolean;
+  applicable?: boolean;
+  /** Section interne : visible du back-office seul, rendue en fin d'ecran. */
+  internal?: boolean;
 }
 
 export interface MockRequiredDocument {
@@ -26,7 +33,17 @@ export interface MockRequiredDocument {
   issueDate: string;
   expiration: string;
   hasFile: boolean;
+  /** La piece exige une date d'emission : son absence bloque la validation. */
+  requiresIssueDate?: boolean;
+  /** Marqueurs V1 conserves a l'ecran. */
+  certified?: boolean;
+  forced?: boolean;
+  internal?: boolean;
+  additional?: boolean;
+  replacedBy?: 'partner' | 'admin';
 }
+
+export type MockDocumentFamily = 'toSign' | 'postSubscription' | 'other' | 'specific';
 
 export interface MockDocument {
   id: number;
@@ -36,10 +53,25 @@ export interface MockDocument {
   type: string;
   status: string;
   file: string;
+  family: MockDocumentFamily;
+  /** Version a signer, disponible avant le retour de signature. */
+  unsignedFile?: string;
+}
+
+/** Document specifique ajoute au dossier, avec ses coordonnees de signature. */
+export interface MockSpecificDocument {
+  id: string;
+  name: string;
+  file: string;
+  signatureCoordinates: string;
+  counterSignatureCoordinates: string;
+  signaturePages: string;
+  counterSignaturePages: string;
 }
 
 export interface MockNote {
   id: number;
+  attachment?: string;
   type: string;
   sectionKey: string;
   fieldKey: string;
@@ -85,7 +117,7 @@ export const mockSections: MockSection[] = [
       { question: "Nom de naissance (si différent)", response: "", verified: true },
       { question: "Prénom*", response: "Inès", verified: true },
       { question: "L'investisseur est-il mineur ?*", response: "Non", verified: true, hasAlert: true },
-      { question: "Date de naissance*", response: "14/05/2025", verified: true },
+      { question: "Date de naissance*", response: "14/05/2025", verified: true, documentKey: 'subscriptions.detail.docs.idCard' },
       { question: "Pays de naissance*", response: "France", verified: true },
       { question: "Code postal de naissance*", response: "75008", verified: true },
       { question: "Commune de naissance*", response: "Paris", verified: true },
@@ -97,7 +129,7 @@ export const mockSections: MockSection[] = [
       { question: "Code postal*", response: "75008", verified: true },
       { question: "Pays*", response: "France", verified: true },
       { question: "Mon adresse de résidence est différente de mon adresse fiscale*", response: "Non", verified: true },
-      { question: "Numéro d'identification Fiscale (NIF)*", response: "9739373633839", verified: true },
+      { question: "Numéro d'identification Fiscale (NIF)*", response: "9739373633839", verified: true, documentKey: 'subscriptions.detail.docs.taxNotice' },
       { question: "Je possède un deuxième Numéro d'Identification Fiscale (NIF/TIN) *", response: "Non", verified: true },
       { question: "Citoyen(ne) et/ou résident fiscal(e) des États-Unis d'Amérique*", response: "Non", verified: true },
       { question: "Je certifie que les informations relatives à ma résidence fiscale déclarées ci-dessus sont correctes.*", response: "Oui", verified: true },
@@ -166,6 +198,28 @@ export const mockSections: MockSection[] = [
     ]
   },
   {
+    id: 'usPerson',
+    titleKey: 'subscriptions.detail.sections.usPerson',
+    icon: Shield,
+    conditional: true,
+    applicable: false,
+    questions: [
+      { question: "Numéro de sécurité sociale américain (SSN)*", response: "", verified: false },
+      { question: "Formulaire W-9 signé*", response: "", verified: false },
+    ],
+  },
+  {
+    id: 'internalReview',
+    titleKey: 'subscriptions.detail.sections.internalReview',
+    icon: Shield,
+    internal: true,
+    questions: [
+      { question: "Origine du dossier vérifiée par le middle office*", response: "Oui", verified: true },
+      { question: "Dossier soumis à vigilance renforcée*", response: "Non", verified: true },
+      { question: "Commentaire interne", response: "", verified: false },
+    ],
+  },
+  {
     id: 'documents',
     titleKey: 'subscriptions.detail.sections.documents',
     icon: FileText,
@@ -174,33 +228,48 @@ export const mockSections: MockSection[] = [
 ];
 
 export const mockRequiredDocuments: MockRequiredDocument[] = [
-  { nameKey: 'subscriptions.detail.docs.passport', dateSent: "19/05/2026 16:10", issueDate: "12/03/2019", expiration: "12/03/2029", hasFile: true },
-  { nameKey: 'subscriptions.detail.docs.idCard', dateSent: "19/05/2026 16:10", issueDate: "04/07/2021", expiration: "04/07/2031", hasFile: true },
+  { nameKey: 'subscriptions.detail.docs.passport', dateSent: "19/05/2026 16:10", issueDate: "12/03/2019", expiration: "12/03/2029", hasFile: true, requiresIssueDate: true, certified: true },
+  { nameKey: 'subscriptions.detail.docs.idCard', dateSent: "19/05/2026 16:10", issueDate: "04/07/2021", expiration: "04/07/2031", hasFile: true, requiresIssueDate: true, replacedBy: 'partner' },
   { nameKey: 'subscriptions.detail.docs.driverLicense', dateSent: "", issueDate: "", expiration: "", hasFile: false },
   { nameKey: 'subscriptions.detail.docs.residencePermit', dateSent: "", issueDate: "", expiration: "", hasFile: false },
-  { nameKey: 'subscriptions.detail.docs.taxNotice', dateSent: "19/05/2026 16:10", issueDate: "15/09/2025", expiration: "", hasFile: true },
-  { nameKey: 'subscriptions.detail.docs.addressProof', dateSent: "19/05/2026 16:10", issueDate: "02/04/2026", expiration: "", hasFile: true },
-  { nameKey: 'subscriptions.detail.docs.fundsOrigin', dateSent: "", issueDate: "", expiration: "", hasFile: false },
-  { nameKey: 'subscriptions.detail.docs.rib', dateSent: "19/05/2026 16:10", issueDate: "", expiration: "", hasFile: true }
+  { nameKey: 'subscriptions.detail.docs.taxNotice', dateSent: "19/05/2026 16:10", issueDate: "15/09/2025", expiration: "", hasFile: true, requiresIssueDate: true, forced: true },
+  { nameKey: 'subscriptions.detail.docs.addressProof', dateSent: "19/05/2026 16:10", issueDate: "02/04/2026", expiration: "", hasFile: true, requiresIssueDate: true, replacedBy: 'admin' },
+  { nameKey: 'subscriptions.detail.docs.fundsOrigin', dateSent: "", issueDate: "", expiration: "", hasFile: false, internal: true },
+  { nameKey: 'subscriptions.detail.docs.rib', dateSent: "19/05/2026 16:10", issueDate: "", expiration: "", hasFile: true, requiresIssueDate: true, additional: true }
 ];
 
 export const mockDocuments: MockDocument[] = [
-  { id: 1, date: '26/11/2025', name: 'Certificat DocuSign', language: '', type: '', status: 'signed', file: 'certificat-docusign.pdf' },
-  { id: 2, date: '26/11/2025', name: 'ESMI II - Declaration of Investment Type', language: '', type: 'Document contractuel', status: 'signed', file: 'declaration-investment-type.pdf' },
-  { id: 3, date: '26/11/2025', name: 'ESMI II - Schedule 10 BEPS questionnaire', language: '', type: 'Document contractuel', status: 'signed', file: 'schedule-10-beps.pdf' },
-  { id: 4, date: '26/11/2025', name: 'ESMI II - Schedule 9 Tax compliancy declaration', language: '', type: 'Document contractuel', status: 'signed', file: 'schedule-9-tax.pdf' },
-  { id: 5, date: '26/11/2025', name: 'ESMI II - Schedule 8 Ultimate beneficial owner', language: '', type: 'Document contractuel', status: 'signed', file: 'schedule-8-ubo.pdf' },
-  { id: 6, date: '26/11/2025', name: 'ESMI II - Schedule 7 Entity self-certification for FATCA and CRS', language: '', type: 'Document contractuel', status: 'signed', file: 'schedule-7-fatca.pdf' },
-  { id: 7, date: '26/11/2025', name: 'ESMI II - Schedule 6 Bank account details of the Investor', language: '', type: 'Document contractuel', status: 'signed', file: 'schedule-6-bank.pdf' },
-  { id: 8, date: '26/11/2025', name: 'ESMI II - Schedule 4 Professional client status', language: '', type: 'Document contractuel', status: 'signed', file: 'schedule-4-professional.pdf' },
-  { id: 9, date: '26/11/2025', name: 'ESMI II - Schedule 2 - Commitment', language: '', type: 'Document contractuel', status: 'signed', file: 'schedule-2-commitment.pdf' },
-  { id: 10, date: '26/11/2025', name: 'ESMI II - Schedule 3 Well-informed Investor', language: '', type: 'Document contractuel', status: 'signed', file: 'schedule-3-well-informed.pdf' },
-  { id: 11, date: '26/11/2025', name: 'ESMI II - Schedule 1 Identity details of the Investor', language: '', type: 'Document contractuel', status: 'signed', file: 'schedule-1-identity.pdf' },
-  { id: 12, date: '26/11/2025', name: 'ESMI II - Subscription Agreement - Non US', language: '', type: 'Document contractuel', status: 'signed', file: 'subscription-agreement.pdf' }
+  { id: 1, date: '26/11/2025', name: 'Certificat DocuSign', language: '', type: '', status: 'signed', file: 'certificat-docusign.pdf' , family: 'other' },
+  { id: 2, date: '26/11/2025', name: 'ESMI II - Declaration of Investment Type', language: '', type: 'Document contractuel', status: 'signed', file: 'declaration-investment-type.pdf' , family: 'other' },
+  { id: 3, date: '26/11/2025', name: 'ESMI II - Schedule 10 BEPS questionnaire', language: '', type: 'Document contractuel', status: 'signed', file: 'schedule-10-beps.pdf' , family: 'toSign' },
+  { id: 4, date: '26/11/2025', name: 'ESMI II - Schedule 9 Tax compliancy declaration', language: '', type: 'Document contractuel', status: 'signed', file: 'schedule-9-tax.pdf' , family: 'toSign' },
+  { id: 5, date: '26/11/2025', name: 'ESMI II - Schedule 8 Ultimate beneficial owner', language: '', type: 'Document contractuel', status: 'signed', file: 'schedule-8-ubo.pdf' , family: 'toSign' },
+  { id: 6, date: '26/11/2025', name: 'ESMI II - Schedule 7 Entity self-certification for FATCA and CRS', language: '', type: 'Document contractuel', status: 'signed', file: 'schedule-7-fatca.pdf' , family: 'toSign' },
+  { id: 7, date: '26/11/2025', name: 'ESMI II - Schedule 6 Bank account details of the Investor', language: '', type: 'Document contractuel', status: 'signed', file: 'schedule-6-bank.pdf' , family: 'toSign' },
+  { id: 8, date: '26/11/2025', name: 'ESMI II - Schedule 4 Professional client status', language: '', type: 'Document contractuel', status: 'signed', file: 'schedule-4-professional.pdf' , family: 'toSign' },
+  { id: 9, date: '26/11/2025', name: 'ESMI II - Schedule 2 - Commitment', language: '', type: 'Document contractuel', status: 'signed', file: 'schedule-2-commitment.pdf' , family: 'toSign' },
+  { id: 10, date: '26/11/2025', name: 'ESMI II - Schedule 3 Well-informed Investor', language: '', type: 'Document contractuel', status: 'signed', file: 'schedule-3-well-informed.pdf' , family: 'toSign' },
+  { id: 11, date: '26/11/2025', name: 'ESMI II - Schedule 1 Identity details of the Investor', language: '', type: 'Document contractuel', status: 'signed', file: 'schedule-1-identity.pdf' , family: 'toSign' },
+  { id: 12, date: '26/11/2025', name: 'ESMI II - Subscription Agreement - Non US', language: '', type: 'Document contractuel', status: 'signed', file: 'subscription-agreement.pdf', family: 'toSign', unsignedFile: 'subscription-agreement-a-signer.pdf' },
+  { id: 13, date: '04/12/2025', name: 'Attestation de souscription', language: 'FR', type: 'Document post-souscription', status: 'available', file: 'attestation-souscription.pdf', family: 'postSubscription' },
+  { id: 14, date: '04/12/2025', name: 'Reçu de versement', language: 'FR', type: 'Document post-souscription', status: 'available', file: 'recu-versement.pdf', family: 'postSubscription' },
+  { id: 15, date: '08/12/2025', name: 'Avenant de co-investissement', language: 'FR', type: 'Document spécifique', status: 'toSign', file: 'avenant-co-investissement.pdf', family: 'specific', unsignedFile: 'avenant-co-investissement-a-signer.pdf' }
+];
+
+export const mockSpecificDocuments: MockSpecificDocument[] = [
+  {
+    id: 'spec-1',
+    name: 'Avenant de co-investissement',
+    file: 'avenant-co-investissement.pdf',
+    signatureCoordinates: 'x: 120 / y: 640',
+    counterSignatureCoordinates: 'x: 360 / y: 640',
+    signaturePages: '3',
+    counterSignaturePages: '3',
+  },
 ];
 
 export const mockNotes: MockNote[] = [
-  { id: 1, type: 'field', sectionKey: 'subscriptions.detail.sections.identity', fieldKey: 'Nationalité', author: 'Marie Dubois', date: '28/12/2025 14:32', contentKey: 'subscriptions.detail.notes.mock1', status: 'open', priority: 'high' },
+  { id: 1, type: 'field', sectionKey: 'subscriptions.detail.sections.identity', fieldKey: 'Nationalité', author: 'Marie Dubois', date: '28/12/2025 14:32', contentKey: 'subscriptions.detail.notes.mock1', status: 'open', priority: 'high', attachment: 'note-nationalite.pdf' },
   { id: 2, type: 'field', sectionKey: 'subscriptions.detail.sections.identity', fieldKey: "L'investisseur est-il mineur ?", author: 'Jean Dupont', date: '27/12/2025 16:45', contentKey: 'subscriptions.detail.notes.mock2', status: 'open', priority: 'medium' },
   { id: 3, type: 'general', sectionKey: '', fieldKey: '', author: 'Pierre Martin', date: '26/12/2025 10:15', contentKey: 'subscriptions.detail.notes.mock3', status: 'resolved', priority: 'low' },
   { id: 4, type: 'field', sectionKey: 'subscriptions.detail.sections.banking', fieldKey: 'Quel est le régime matrimonial des titulaires du compte joint ?', author: 'Sophie Laurent', date: '25/12/2025 09:20', contentKey: 'subscriptions.detail.notes.mock4', status: 'open', priority: 'high' },

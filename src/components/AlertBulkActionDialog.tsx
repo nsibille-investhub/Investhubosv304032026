@@ -28,6 +28,8 @@ interface AlertBulkActionDialogProps {
     action: AlertBulkAction,
     comments: Record<string, string>,
   ) => void;
+  /** Le parametrage client peut rendre le commentaire facultatif. */
+  commentRequired?: boolean;
 }
 
 type Mode = 'same' | 'individual';
@@ -68,6 +70,7 @@ export function AlertBulkActionDialog({
   action,
   onClose,
   onConfirm,
+  commentRequired = true,
 }: AlertBulkActionDialogProps) {
   const { t } = useTranslation();
   const [mode, setMode] = useState<Mode>('same');
@@ -104,6 +107,7 @@ export function AlertBulkActionDialog({
     : t(ACTION_TITLE_KEY[action], { count: total });
 
   const allIndividualCommentsFilled = () => {
+    if (!commentRequired) return true;
     const updatedComments = { ...comments };
     if (currentAlert) {
       updatedComments[currentAlert.id] = currentComment.trim();
@@ -112,7 +116,7 @@ export function AlertBulkActionDialog({
   };
 
   const handleApplyToAll = () => {
-    if (!sharedComment.trim()) {
+    if (commentRequired && !sharedComment.trim()) {
       toast.error(t('complianceAlerts.bulkDialog.missingComment'));
       return;
     }

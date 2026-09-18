@@ -51,6 +51,10 @@ import {
   Percent,
   Handshake,
   RefreshCw,
+  History,
+  Paperclip,
+  Bell,
+  IdCard,
 } from 'lucide-react';
 import { motion } from 'motion/react';
 import { Badge } from './ui/badge';
@@ -90,6 +94,7 @@ import {
 } from './ui/tabs';
 import { PageHeader, PRIMARY_BUTTON_GRADIENT } from './ui/page-header';
 import { DetailLink, DetailSummary } from './ui/detail-summary';
+import { mockDataChanges } from '../utils/subscriptionHistoryMockData';
 import {
   mockSections,
   mockRequiredDocuments,
@@ -117,6 +122,35 @@ import {
 import { SubscriptionSignatureStep } from './SubscriptionSignatureStep';
 import { SubscriptionStatusBadge } from './SubscriptionStatusBadge';
 import { NewSubscriptionDialog } from './NewSubscriptionDialog';
+import { SubscriptionDemoBar } from './SubscriptionDemoBar';
+import { SubscriptionActionPanel } from './SubscriptionActionPanel';
+import { SubscriptionTransferCard } from './SubscriptionTransferCard';
+import { SubscriptionHistoryTab } from './SubscriptionHistoryTab';
+import { SubscriptionDocumentsPanel } from './SubscriptionDocumentsPanel';
+import { SubscriptionPaymentPanel } from './SubscriptionPaymentPanel';
+import {
+  SubscriptionDemoProvider,
+  useSubscriptionDemo,
+} from '../utils/subscriptionDemoContext';
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from './ui/alert-dialog';
+
+/** Drapeau de la langue du dossier, affiche dans le bandeau d'identite. */
+const LANGUAGE_FLAGS: Record<string, string> = {
+  fr: '🇫🇷',
+  en: '🇬🇧',
+  de: '🇩🇪',
+  it: '🇮🇹',
+  es: '🇪🇸',
+};
 
 const SUBSCRIPTION_STEPS = [
   { id: 0, labelKey: 'subscriptions.detail.stepper.initialization', icon: Settings },
@@ -146,9 +180,25 @@ interface SubscriptionDetailPageProps {
   onBack: () => void;
 }
 
+/**
+ * La fiche entiere depend de l'etat de demonstration : etat du dossier,
+ * parametrage client / fonds et droits back-office sont fournis par le
+ * provider et lus par chaque panneau.
+ */
+export function SubscriptionDetailPage(props: SubscriptionDetailPageProps) {
+  return (
+    <SubscriptionDemoProvider>
+      <SubscriptionDetailPageContent {...props} />
+    </SubscriptionDemoProvider>
+  );
+}
 
-export function SubscriptionDetailPage({ subscription: subscriptionProp, onBack }: SubscriptionDetailPageProps) {
+function SubscriptionDetailPageContent({ subscription: subscriptionProp, onBack }: SubscriptionDetailPageProps) {
   const { t, lang } = useTranslation();
+  const { config: demo } = useSubscriptionDemo();
+  const [duplicateOpen, setDuplicateOpen] = useState(false);
+  const [notesList, setNotesList] = useState(mockNotes);
+  const [deletingNote, setDeletingNote] = useState<(typeof mockNotes)[number] | null>(null);
 
   // Les modifications faites depuis la modale restent locales : la donnée
   // amont de la maquette n'est pas réécrite.
@@ -190,6 +240,16 @@ export function SubscriptionDetailPage({ subscription: subscriptionProp, onBack 
 
   // Verification des pieces justificatives (meme cycle de vie que les reponses)
   const [documentStatuses, setDocumentStatuses] = useState<Record<string, QuestionStatus>>(INITIAL_DOCUMENT_STATUSES);
+
+  // Dates d'emission et d'expiration saisies depuis le tableau des pieces.
+  const [documentDates, setDocumentDates] = useState<
+    Record<number, { issueDate?: string; expiration?: string }>
+  >({});
+  const [editingDocumentDate, setEditingDocumentDate] = useState<{
+    index: number;
+    field: 'issueDate' | 'expiration';
+  } | null>(null);
+  const [documentDateDraft, setDocumentDateDraft] = useState('');
   const [activeOnboardingSection, setActiveOnboardingSection] = useState<string>(mockSections[0].id);
   const onboardingSectionRefs = useRef<Record<string, HTMLDivElement | null>>({});
 
@@ -357,7 +417,16 @@ export function SubscriptionDetailPage({ subscription: subscriptionProp, onBack 
   const getSectionBuckets = (sectionId: string): OnboardingBucketStats =>
     sectionId === 'documents' ? getDocumentBuckets() : getQuestionSectionBuckets(sectionId);
 
-  const questionBuckets = mockSections.reduce((acc, section) => {
+  // Les sections conditionnelles sans objet ne sont pas rendues ; les sections
+  // internes le sont a part, en fin d'ecran.
+  const visibleSections = mockSections.filter(
+    section => !(section.conditional && !section.applicable),
+  );
+  const standardSections = visibleSections.filter(section => !section.internal);
+  const internalSections = visibleSections.filter(section => section.internal);
+  const orderedSections = [...standardSections, ...internalSections];
+
+  const questionBuckets = visibleSections.reduce((acc, section) => {
     if (section.id !== 'documents') {
       mergeBucketStats(acc, getQuestionSectionBuckets(section.id));
     }
@@ -366,8 +435,21 @@ export function SubscriptionDetailPage({ subscription: subscriptionProp, onBack 
 
   const documentBuckets = getDocumentBuckets();
 
+  // Garde-fous du panneau Action : reponses refusees et pieces sans date
+  // d'emission alors que le document l'exige.
+  const invalidQuestionsCount = Object.values(questionStatuses).filter(
+    status => status === 'rejected',
+  ).length;
 
-  const onboardingNavSections: OnboardingNavSection[] = mockSections.map((section, idx) => ({
+  const missingIssueDatesCount = mockRequiredDocuments.filter(
+    (doc, idx) =>
+      doc.hasFile &&
+      doc.requiresIssueDate &&
+      !(documentDates[idx]?.issueDate ?? doc.issueDate),
+  ).length;
+
+
+  const onboardingNavSections: OnboardingNavSection[] = orderedSections.map((section, idx) => ({
     id: section.id,
     titleKey: section.titleKey,
     icon: section.icon,
@@ -409,6 +491,143 @@ export function SubscriptionDetailPage({ subscription: subscriptionProp, onBack 
         title: sectionTitle,
       }),
     });
+  };
+
+  const handleSaveDocumentDate = (index: number, field: 'issueDate' | 'expiration') => {
+    if (!/^\d{2}\/\d{2}\/\d{4}$/.test(documentDateDraft)) {
+      toast.error(t('subscriptions.detail.docsTable.invalidDate'));
+      return;
+    }
+    setDocumentDates(prev => ({
+      ...prev,
+      [index]: { ...prev[index], [field]: documentDateDraft },
+    }));
+    setEditingDocumentDate(null);
+    setDocumentDateDraft('');
+    toast.success(
+      t(
+        field === 'issueDate'
+          ? 'subscriptions.detail.docsTable.issueDateSaved'
+          : 'subscriptions.detail.docsTable.expirationSaved',
+      ),
+    );
+  };
+
+  /** Cellule de date d'une piece : lecture, puis saisie au format JJ/MM/AAAA. */
+  const renderDocumentDateCell = (
+    index: number,
+    field: 'issueDate' | 'expiration',
+    fallback: string,
+  ) => {
+    const value = documentDates[index]?.[field] ?? fallback;
+    const isEditing =
+      editingDocumentDate?.index === index && editingDocumentDate?.field === field;
+
+    if (isEditing) {
+      return (
+        <div className="flex items-center gap-1">
+          <Input
+            value={documentDateDraft}
+            onChange={event => setDocumentDateDraft(event.target.value)}
+            placeholder="JJ/MM/AAAA"
+            className="h-7 w-24 text-xs"
+          />
+          <Button
+            size="sm"
+            className="h-7 w-7 p-0"
+            onClick={() => handleSaveDocumentDate(index, field)}
+          >
+            <Check className="w-3 h-3" />
+          </Button>
+        </div>
+      );
+    }
+
+    return (
+      <div className="flex items-center gap-1">
+        <span className={value ? '' : 'text-muted-foreground/60'}>{value || '-'}</span>
+        <Button
+          variant="ghost"
+          size="sm"
+          className="h-6 w-6 p-0 text-muted-foreground opacity-0 group-hover:opacity-100"
+          title={t(
+            field === 'issueDate'
+              ? 'subscriptions.detail.docsTable.editIssueDate'
+              : 'subscriptions.detail.docsTable.editExpiration',
+          )}
+          aria-label={t(
+            field === 'issueDate'
+              ? 'subscriptions.detail.docsTable.editIssueDate'
+              : 'subscriptions.detail.docsTable.editExpiration',
+          )}
+          onClick={() => {
+            setEditingDocumentDate({ index, field });
+            setDocumentDateDraft(value ?? '');
+          }}
+        >
+          <Edit2 className="w-3 h-3" />
+        </Button>
+      </div>
+    );
+  };
+
+  /** Marqueurs V1 d'une piece justificative. */
+  const renderDocumentMarkers = (doc: (typeof mockRequiredDocuments)[number]) => {
+    const markers: Array<{ id: string; labelKey: string; className: string }> = [];
+    if (doc.certified) {
+      markers.push({
+        id: 'certified',
+        labelKey: 'subscriptions.detail.docsTable.markers.certified',
+        className: 'bg-emerald-50 text-emerald-700 border-emerald-200',
+      });
+    }
+    if (doc.forced) {
+      markers.push({
+        id: 'forced',
+        labelKey: 'subscriptions.detail.docsTable.markers.forced',
+        className: 'bg-amber-50 text-amber-700 border-amber-200',
+      });
+    }
+    if (doc.internal) {
+      markers.push({
+        id: 'internal',
+        labelKey: 'subscriptions.detail.docsTable.markers.internal',
+        className: 'bg-slate-100 text-slate-700 border-slate-200',
+      });
+    }
+    if (doc.additional) {
+      markers.push({
+        id: 'additional',
+        labelKey: 'subscriptions.detail.docsTable.markers.additional',
+        className: 'bg-blue-50 text-blue-700 border-blue-200',
+      });
+    }
+    if (doc.replacedBy === 'partner') {
+      markers.push({
+        id: 'replacedPartner',
+        labelKey: 'subscriptions.detail.docsTable.markers.replacedByPartner',
+        className: 'bg-purple-50 text-purple-700 border-purple-200',
+      });
+    }
+    if (doc.replacedBy === 'admin') {
+      markers.push({
+        id: 'replacedAdmin',
+        labelKey: 'subscriptions.detail.docsTable.markers.replacedByAdmin',
+        className: 'bg-indigo-50 text-indigo-700 border-indigo-200',
+      });
+    }
+
+    if (markers.length === 0) return null;
+
+    return (
+      <div className="mt-1 flex flex-wrap gap-1">
+        {markers.map(marker => (
+          <Badge key={marker.id} className={`${marker.className} text-[10px]`}>
+            {t(marker.labelKey)}
+          </Badge>
+        ))}
+      </div>
+    );
   };
 
   const formatLongDate = (date: Date) =>
@@ -698,6 +917,12 @@ export function SubscriptionDetailPage({ subscription: subscriptionProp, onBack 
               icon: Hash,
             },
             {
+              id: 'crmId',
+              label: t('subscriptions.detail.form.crmId'),
+              value: subscription.crmId,
+              icon: Database,
+            },
+            {
               id: 'subscriptionType',
               label: t('subscriptions.detail.form.subscriptionType'),
               value: subscriptionTypeLabel,
@@ -870,6 +1095,57 @@ export function SubscriptionDetailPage({ subscription: subscriptionProp, onBack 
               value: yesNo(subscription.excludeRetrocessions),
               icon: ArrowDownCircle,
             },
+            {
+              id: 'partnerAgreement',
+              label: t('subscriptions.detail.form.partnerAgreement'),
+              value: subscription.partenaire
+                ? t(
+                    subscription.partnerAgreementSigned
+                      ? 'subscriptions.detail.form.partnerAgreementSigned'
+                      : 'subscriptions.detail.form.partnerAgreementUnsigned',
+                  )
+                : undefined,
+              icon: FileText,
+            },
+          ],
+        },
+        {
+          id: 'coSubscriber',
+          title: t('subscriptions.detail.form.sectionCoSubscriber'),
+          icon: Users,
+          items: [
+            {
+              id: 'coSubscriberTitle',
+              label: t('subscriptions.detail.form.subscriberTitle'),
+              value: subscription.coSubscriber
+                ? t(
+                    SUBSCRIBER_TITLE_LABEL_KEYS[
+                      subscription.coSubscriber.title as SubscriberTitle
+                    ],
+                  )
+                : t('subscriptions.detail.form.noCoSubscriber'),
+              icon: User,
+            },
+            {
+              id: 'coSubscriberName',
+              label: t('subscriptions.detail.form.lastNameField'),
+              value: subscription.coSubscriber
+                ? `${subscription.coSubscriber.firstName ?? ''} ${subscription.coSubscriber.lastName ?? subscription.coSubscriber.legalName ?? ''}`.trim()
+                : undefined,
+              icon: User,
+            },
+            {
+              id: 'coSubscriberEmail',
+              label: t('subscriptions.detail.form.emailField'),
+              value: subscription.coSubscriber?.email,
+              icon: Mail,
+            },
+            {
+              id: 'coSubscriberPhone',
+              label: t('subscriptions.detail.form.phoneField'),
+              value: subscription.coSubscriber?.phone,
+              icon: Phone,
+            },
           ],
         },
         {
@@ -946,6 +1222,40 @@ export function SubscriptionDetailPage({ subscription: subscriptionProp, onBack 
 
             <span aria-hidden className="h-3.5 w-px bg-border" />
 
+            <span className="inline-flex items-center gap-1.5">
+              <IdCard className="w-3.5 h-3.5" />
+              {t(
+                subscription.contrepartie.type === 'corporate'
+                  ? 'subscriptions.detail.header.legalPerson'
+                  : 'subscriptions.detail.header.naturalPerson',
+              )}
+            </span>
+
+            <span aria-hidden className="h-3.5 w-px bg-border" />
+
+            <span
+              className="inline-flex items-center gap-1.5"
+              title={t('subscriptions.detail.header.fileLanguage')}
+            >
+              <span aria-hidden>{LANGUAGE_FLAGS[subscription.language as string] ?? '🏳️'}</span>
+              <span className="uppercase">{subscription.language ?? 'fr'}</span>
+            </span>
+
+            {!subscription.partenaire && (
+              <>
+                <span aria-hidden className="h-3.5 w-px bg-border" />
+                <span
+                  className="inline-flex items-center gap-1.5 text-primary"
+                  title={t('subscriptions.detail.header.directSubscriptionHint')}
+                >
+                  <Zap className="w-3.5 h-3.5" />
+                  {t('subscriptions.detail.header.directSubscription')}
+                </span>
+              </>
+            )}
+
+            <span aria-hidden className="h-3.5 w-px bg-border" />
+
             <DetailLink href={fundUrl} icon={Landmark} title={openInNewTab} className="text-sm">
               {subscription.fund.name}
             </DetailLink>
@@ -960,8 +1270,79 @@ export function SubscriptionDetailPage({ subscription: subscriptionProp, onBack 
           icon: <Download className="w-4 h-4" />,
           onClick: () => toast.success(t('subscriptions.detail.toast.featureComingSoon')),
         }}
+        tertiaryActions={[
+          {
+            label: t('subscriptions.detail.duplicate.action'),
+            icon: <Copy className="w-4 h-4" />,
+            onClick: () => setDuplicateOpen(true),
+          },
+        ]}
       />
 
+      <SubscriptionDemoBar />
+
+      {/* Bandeaux conditionnels : traitement differe et souscription administree */}
+      {(demo.flags.deferredProcessing || demo.flags.administered) && (
+        <div className="space-y-2 px-8 pt-4">
+          {demo.flags.deferredProcessing && (
+            <div className="flex items-start gap-2 rounded-lg border border-amber-200 bg-amber-50 px-4 py-2 text-sm text-amber-800">
+              <Clock className="mt-0.5 w-4 h-4 shrink-0" />
+              <span>{t('subscriptions.detail.banners.deferredProcessing', { date: '15/10/2026' })}</span>
+            </div>
+          )}
+          {demo.flags.administered && (
+            <div className="flex items-start gap-2 rounded-lg border border-blue-200 bg-blue-50 px-4 py-2 text-sm text-blue-800">
+              <Landmark className="mt-0.5 w-4 h-4 shrink-0" />
+              <span>{t('subscriptions.detail.banners.administered')}</span>
+            </div>
+          )}
+        </div>
+      )}
+
+      {/* Duplication de la souscription */}
+      <AlertDialog open={duplicateOpen} onOpenChange={setDuplicateOpen}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>{t('subscriptions.detail.duplicate.title')}</AlertDialogTitle>
+            <AlertDialogDescription>
+              {t('subscriptions.detail.duplicate.description', { name: subscription.name })}
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>{t('subscriptions.detail.action.common.cancel')}</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={() => toast.success(t('subscriptions.detail.duplicate.toast'))}
+            >
+              {t('subscriptions.detail.duplicate.confirm')}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
+      {/* Suppression d'une note */}
+      <AlertDialog open={deletingNote !== null} onOpenChange={open => !open && setDeletingNote(null)}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>{t('subscriptions.detail.notesTab.deleteTitle')}</AlertDialogTitle>
+            <AlertDialogDescription>
+              {t('subscriptions.detail.notesTab.deleteDescription')}
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>{t('subscriptions.detail.action.common.cancel')}</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={() => {
+                if (!deletingNote) return;
+                setNotesList(prev => prev.filter(item => item.id !== deletingNote.id));
+                toast.info(t('subscriptions.detail.notesTab.deleteNote'));
+                setDeletingNote(null);
+              }}
+            >
+              {t('subscriptions.detail.action.common.confirm')}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
 
       {/* Tabs - Same structure as InvestorDetailPage */}
       <div className="px-8 bg-card border-b border-border">
@@ -974,6 +1355,7 @@ export function SubscriptionDetailPage({ subscription: subscriptionProp, onBack 
               { value: 'documents', icon: FolderOpen, labelKey: 'subscriptions.detail.tabs.documents', badge: String(mockDocuments.length), badgeClass: 'bg-muted text-foreground/80 border-border' },
               { value: 'integrations', icon: Database, labelKey: 'subscriptions.detail.tabs.integrations', badge: '5', badgeClass: 'bg-cyan-50 text-cyan-700 border-cyan-200' },
               { value: 'notes', icon: MessageSquare, labelKey: 'subscriptions.detail.tabs.notes', badge: String(mockNotes.length), badgeClass: 'bg-purple-50 text-purple-700 border-purple-200' },
+              { value: 'history', icon: History, labelKey: 'subscriptions.detail.tabs.history', badge: String(mockDataChanges.filter(change => change.status === 'toValidate').length), badgeClass: 'bg-rose-50 text-rose-700 border-rose-200' },
             ].map(tab => {
               const Icon = tab.icon;
               const isActive = activeTab === tab.value;
@@ -1080,6 +1462,27 @@ export function SubscriptionDetailPage({ subscription: subscriptionProp, onBack 
             <div className="px-8 py-6">
               <div className="mb-6">
                 {detailSummary}
+              </div>
+
+              {(demo.flags.transferOrigin || demo.state === 'transferred') && (
+                <div className="mb-6">
+                  <SubscriptionTransferCard
+                    origin={demo.flags.transferOrigin}
+                    transferred={demo.state === 'transferred'}
+                  />
+                </div>
+              )}
+
+              <div className="mb-6">
+                <SubscriptionActionPanel
+                  // Changer d'etat de demonstration repart d'un panneau neuf.
+                  key={demo.state}
+                  subscription={subscription}
+                  invalidQuestions={invalidQuestionsCount}
+                  missingIssueDates={missingIssueDatesCount}
+                  investorEmail={investorEmail}
+                  onOpenSignature={() => setCurrentStep(3)}
+                />
               </div>
 
                 <div>
@@ -1232,16 +1635,31 @@ export function SubscriptionDetailPage({ subscription: subscriptionProp, onBack 
                           />
 
                           <div className="space-y-4">
-              {mockSections.map((section) => {
+              {orderedSections.map((section, sectionIndex) => {
                 const Icon = section.icon;
+                const startsInternalGroup =
+                  Boolean(section.internal) && !orderedSections[sectionIndex - 1]?.internal;
                 const isOpen = openSections.includes(section.id);
                 const buckets = getSectionBuckets(section.id);
                 const isDocuments = section.id === 'documents';
                 const allVerified = buckets.total > 0 && buckets.validated === buckets.total;
 
                 return (
+                  <Fragment key={section.id}>
+                  {startsInternalGroup && (
+                    <div className="flex items-start gap-2 rounded-lg border border-dashed border-border bg-muted/50 px-4 py-2">
+                      <Shield className="mt-0.5 w-4 h-4 shrink-0 text-muted-foreground" />
+                      <div>
+                        <p className="text-sm font-semibold text-foreground">
+                          {t('subscriptions.detail.onboarding.internalSections.title')}
+                        </p>
+                        <p className="text-xs text-muted-foreground">
+                          {t('subscriptions.detail.onboarding.internalSections.subtitle')}
+                        </p>
+                      </div>
+                    </div>
+                  )}
                   <div
-                    key={section.id}
                     ref={el => {
                       onboardingSectionRefs.current[section.id] = el;
                     }}
@@ -1391,28 +1809,54 @@ export function SubscriptionDetailPage({ subscription: subscriptionProp, onBack 
                                       <tr key={idx} className="hover:bg-muted transition-colors group">
                                         <td className="px-4 py-3 text-sm text-foreground/80">
                                           {t(doc.nameKey)}
+                                          {renderDocumentMarkers(doc)}
                                         </td>
                                         <td className="px-4 py-3 text-sm text-muted-foreground">
                                           {doc.dateSent || <span className="text-muted-foreground/60">-</span>}
                                         </td>
                                         <td className="px-4 py-3 text-sm text-muted-foreground">
-                                          {doc.issueDate || <span className="text-muted-foreground/60">-</span>}
+                                          {renderDocumentDateCell(idx, 'issueDate', doc.issueDate)}
+                                          {doc.requiresIssueDate &&
+                                            !(documentDates[idx]?.issueDate ?? doc.issueDate) && (
+                                              <span className="mt-0.5 block text-[10px] text-amber-700">
+                                                {t('subscriptions.detail.docsTable.issueDateRequired')}
+                                              </span>
+                                            )}
                                         </td>
                                         <td className="px-4 py-3 text-sm text-muted-foreground">
-                                          {doc.expiration || <span className="text-muted-foreground/60">-</span>}
+                                          {renderDocumentDateCell(idx, 'expiration', doc.expiration)}
                                         </td>
-                                        <td className="px-4 py-3 text-center">
+                                        <td className="px-4 py-3">
                                           {doc.hasFile ? (
-                                            <Button
-                                              variant="ghost"
-                                              size="sm"
-                                              onClick={() => handleViewDocument(t(doc.nameKey))}
-                                              className="h-7 text-primary hover:text-primary/80 hover:bg-primary/5"
-                                            >
-                                              <Eye className="w-3.5 h-3.5" />
-                                            </Button>
+                                            <div className="flex items-center justify-center gap-1">
+                                              <Button
+                                                variant="ghost"
+                                                size="sm"
+                                                title={t('subscriptions.detail.docsTable.view')}
+                                                aria-label={t('subscriptions.detail.docsTable.view')}
+                                                onClick={() => handleViewDocument(t(doc.nameKey))}
+                                                className="h-7 w-7 p-0 text-primary hover:text-primary/80 hover:bg-primary/5"
+                                              >
+                                                <Eye className="w-3.5 h-3.5" />
+                                              </Button>
+                                              <Button
+                                                variant="ghost"
+                                                size="sm"
+                                                title={t('subscriptions.detail.docsTable.download')}
+                                                aria-label={t('subscriptions.detail.docsTable.download')}
+                                                onClick={() =>
+                                                  toast.success(
+                                                    t('subscriptions.detail.docsTable.downloadToast'),
+                                                    { description: t(doc.nameKey) },
+                                                  )
+                                                }
+                                                className="h-7 w-7 p-0 text-muted-foreground"
+                                              >
+                                                <Download className="w-3.5 h-3.5" />
+                                              </Button>
+                                            </div>
                                           ) : (
-                                            <span className="text-muted-foreground/60">-</span>
+                                            <span className="block text-center text-muted-foreground/60">-</span>
                                           )}
                                         </td>
                                         <td className="px-4 py-3 text-center">
@@ -1496,6 +1940,20 @@ export function SubscriptionDetailPage({ subscription: subscriptionProp, onBack 
                               )}
 
                               {/* Questions Table */}
+                              <div className="grid grid-cols-12 gap-4 border-b border-border bg-muted px-4 py-2 text-xs font-medium uppercase tracking-wider text-muted-foreground">
+                                <span className="col-span-4">
+                                  {t('subscriptions.detail.onboarding.columns.question')}
+                                </span>
+                                <span className="col-span-3">
+                                  {t('subscriptions.detail.onboarding.columns.response')}
+                                </span>
+                                <span className="col-span-2">
+                                  {t('subscriptions.detail.onboarding.columns.document')}
+                                </span>
+                                <span className="col-span-3 text-right">
+                                  {t('subscriptions.detail.onboarding.columns.verification')}
+                                </span>
+                              </div>
                               <div className="divide-y divide-border/50">
                                 {section.questions.map((item, idx) => {
                                   const questionId = `${section.id}-${idx}`;
@@ -1517,7 +1975,24 @@ export function SubscriptionDetailPage({ subscription: subscriptionProp, onBack 
                                         <div className="col-span-3 text-sm font-medium text-foreground">
                                           {response || <span className="text-muted-foreground/60 italic">{t('subscriptions.detail.onboarding.notProvided')}</span>}
                                         </div>
-                                        <div className="col-span-5 flex items-center justify-end">
+                                        <div className="col-span-2 flex items-center">
+                                          {item.documentKey ? (
+                                            <span className="flex min-w-0 items-center gap-1">
+                                              <FileText className="w-3.5 h-3.5 shrink-0 text-muted-foreground" />
+                                              <button
+                                                type="button"
+                                                className="truncate text-xs text-primary hover:underline"
+                                                title={t(item.documentKey)}
+                                                onClick={() => handleViewDocument(t(item.documentKey as string))}
+                                              >
+                                                {t(item.documentKey)}
+                                              </button>
+                                            </span>
+                                          ) : (
+                                            <span className="text-xs text-muted-foreground/60">—</span>
+                                          )}
+                                        </div>
+                                        <div className="col-span-3 flex items-center justify-end">
                                           <QuestionActions
                                             questionId={questionId}
                                             currentResponse={response || ''}
@@ -1554,6 +2029,7 @@ export function SubscriptionDetailPage({ subscription: subscriptionProp, onBack 
                     </Card>
                   </Collapsible>
                   </div>
+                  </Fragment>
                 );
               })}
 
@@ -1688,6 +2164,11 @@ export function SubscriptionDetailPage({ subscription: subscriptionProp, onBack 
                           </div>
                         </div>
                       </Card>
+
+                      <SubscriptionPaymentPanel
+                        subscribedAmount={subscription.amount}
+                        entryFeesRate={subscription.entryFees ?? 0}
+                      />
                     </div>
                   )}
                 </div>
@@ -1919,93 +2400,7 @@ export function SubscriptionDetailPage({ subscription: subscriptionProp, onBack 
           {/* Risk Tab Content */}
           {/* Documents Tab Content */}
           <TabsContent value="documents" className="mt-0">
-            <div className="px-8 py-6">
-              <Card className="overflow-hidden shadow-sm">
-                {/* Header */}
-                <div className="px-6 py-4 border-b border-border flex items-center justify-between">
-                  <h2 className="font-semibold text-foreground">{t('subscriptions.detail.documentsTab.title')}</h2>
-                  <Button
-                    variant="outline"
-                    className="gap-2"
-                    onClick={() => toast.info(t('subscriptions.detail.toast.addDocumentToast'))}
-                  >
-                    <Upload className="w-4 h-4" />
-                    {t('subscriptions.detail.documentsTab.addDocument')}
-                  </Button>
-                </div>
-
-                {/* Table */}
-                <table className="w-full">
-                  <thead className="bg-muted border-b border-border">
-                    <tr>
-                      <th className="px-6 py-3 text-left text-xs font-semibold text-muted-foreground uppercase tracking-wider">
-                        {t('subscriptions.detail.documentsTab.date')}
-                      </th>
-                      <th className="px-6 py-3 text-left text-xs font-semibold text-muted-foreground uppercase tracking-wider">
-                        {t('subscriptions.detail.documentsTab.name')}
-                      </th>
-                      <th className="px-6 py-3 text-left text-xs font-semibold text-muted-foreground uppercase tracking-wider">
-                        {t('subscriptions.detail.documentsTab.language')}
-                      </th>
-                      <th className="px-6 py-3 text-left text-xs font-semibold text-muted-foreground uppercase tracking-wider">
-                        {t('subscriptions.detail.documentsTab.type')}
-                      </th>
-                      <th className="px-6 py-3 text-left text-xs font-semibold text-muted-foreground uppercase tracking-wider">
-                        {t('subscriptions.detail.documentsTab.file')}
-                      </th>
-                    </tr>
-                  </thead>
-                  <tbody className="divide-y divide-border">
-                    {mockDocuments.map((doc) => (
-                      <tr key={doc.id} className="hover:bg-muted transition-colors">
-                        <td className="px-6 py-4 whitespace-nowrap text-sm text-foreground">
-                          {doc.date}
-                        </td>
-                        <td className="px-6 py-4 text-sm text-foreground">
-                          {doc.name}
-                        </td>
-                        <td className="px-6 py-4 whitespace-nowrap text-sm text-muted-foreground">
-                          {doc.language}
-                        </td>
-                        <td className="px-6 py-4 whitespace-nowrap text-sm text-muted-foreground">
-                          {doc.type}
-                        </td>
-                        <td className="px-6 py-4 whitespace-nowrap text-sm">
-                          <div className="flex items-center gap-2">
-                            {doc.status === 'signed' && (
-                              <Badge className="bg-green-50 text-green-700 border-green-200 font-medium gap-1.5">
-                                <CheckCircle2 className="w-3 h-3" />
-                                {t('subscriptions.detail.documentsTab.documentSigned')}
-                              </Badge>
-                            )}
-                            <Button
-                              variant="ghost"
-                              size="sm"
-                              className="h-8 w-8 p-0 text-red-600 hover:text-red-700 hover:bg-red-50"
-                              onClick={() => toast.info(t('subscriptions.detail.documentsTab.deleteDocument', { name: doc.name }))}
-                            >
-                              <Trash2 className="w-4 h-4" />
-                            </Button>
-                          </div>
-                        </td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
-
-                {/* Footer */}
-                <div className="px-6 py-4 bg-muted border-t border-border">
-                  <Button
-                    className="w-full gap-2 text-white hover:opacity-90"
-                    style={{ background: PRIMARY_BUTTON_GRADIENT }}
-                    onClick={() => toast.success(t('subscriptions.detail.documentsTab.exportPackToast'))}
-                  >
-                    <Download className="w-4 h-4" />
-                    {t('subscriptions.detail.documentsTab.exportPack')}
-                  </Button>
-                </div>
-              </Card>
-            </div>
+            <SubscriptionDocumentsPanel />
           </TabsContent>
 
           <TabsContent value="integrations" className="mt-0">
@@ -2024,21 +2419,21 @@ export function SubscriptionDetailPage({ subscription: subscriptionProp, onBack 
                       size="sm"
                       className="gap-2"
                     >
-                      {t('subscriptions.detail.notesTab.all', { count: mockNotes.length })}
+                      {t('subscriptions.detail.notesTab.all', { count: notesList.length })}
                     </Button>
                     <Button
                       variant="outline"
                       size="sm"
                       className="gap-2"
                     >
-                      {t('subscriptions.detail.notesTab.open', { count: mockNotes.filter(n => n.status === 'open').length })}
+                      {t('subscriptions.detail.notesTab.open', { count: notesList.filter(n => n.status === 'open').length })}
                     </Button>
                     <Button
                       variant="outline"
                       size="sm"
                       className="gap-2"
                     >
-                      {t('subscriptions.detail.notesTab.resolved', { count: mockNotes.filter(n => n.status === 'resolved').length })}
+                      {t('subscriptions.detail.notesTab.resolved', { count: notesList.filter(n => n.status === 'resolved').length })}
                     </Button>
                     <div className="ml-auto">
                       <Button
@@ -2054,7 +2449,7 @@ export function SubscriptionDetailPage({ subscription: subscriptionProp, onBack 
 
                 {/* Notes List */}
                 <div className="space-y-3">
-                  {mockNotes.map((note) => (
+                  {notesList.map((note) => (
                     <Card
                       key={note.id}
                       className="p-5 shadow-sm hover:shadow-md transition-shadow"
@@ -2128,7 +2523,7 @@ export function SubscriptionDetailPage({ subscription: subscriptionProp, onBack 
                           </p>
 
                           {/* Footer */}
-                          <div className="flex items-center gap-3 text-xs text-muted-foreground">
+                          <div className="flex flex-wrap items-center gap-3 text-xs text-muted-foreground">
                             <div className="flex items-center gap-1.5">
                               <User className="w-3.5 h-3.5" />
                               <span>{note.author}</span>
@@ -2138,6 +2533,36 @@ export function SubscriptionDetailPage({ subscription: subscriptionProp, onBack 
                               <Clock className="w-3.5 h-3.5" />
                               <span>{note.date}</span>
                             </div>
+                            {note.attachment && (
+                              <>
+                                <span>•</span>
+                                <button
+                                  type="button"
+                                  className="inline-flex items-center gap-1.5 text-primary hover:underline"
+                                  onClick={() =>
+                                    toast.success(t('subscriptions.detail.notesTab.attachmentDownloaded'), {
+                                      description: note.attachment,
+                                    })
+                                  }
+                                >
+                                  <Paperclip className="w-3.5 h-3.5" />
+                                  {note.attachment}
+                                </button>
+                              </>
+                            )}
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              className="ml-auto h-7 gap-1.5 text-xs"
+                              onClick={() =>
+                                toast.success(t('subscriptions.detail.notesTab.reminderSent'), {
+                                  description: note.author,
+                                })
+                              }
+                            >
+                              <Bell className="w-3.5 h-3.5" />
+                              {t('subscriptions.detail.notesTab.sendReminder')}
+                            </Button>
                           </div>
                         </div>
 
@@ -2146,7 +2571,7 @@ export function SubscriptionDetailPage({ subscription: subscriptionProp, onBack 
                           variant="ghost"
                           size="sm"
                           className="h-8 w-8 p-0 text-red-600 hover:text-red-700 hover:bg-red-50"
-                          onClick={() => toast.info(t('subscriptions.detail.notesTab.deleteNote'))}
+                          onClick={() => setDeletingNote(note)}
                         >
                           <Trash2 className="w-4 h-4" />
                         </Button>
@@ -2156,6 +2581,11 @@ export function SubscriptionDetailPage({ subscription: subscriptionProp, onBack 
                 </div>
               </div>
             </div>
+          </TabsContent>
+
+          {/* History Tab Content */}
+          <TabsContent value="history" className="mt-0">
+            <SubscriptionHistoryTab />
           </TabsContent>
         </Tabs>
       </div>

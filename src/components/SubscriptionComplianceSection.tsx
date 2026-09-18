@@ -19,6 +19,7 @@ import {
   ShieldCheck,
   UserCheck,
   Users,
+  X,
 } from 'lucide-react';
 import { toast } from 'sonner';
 import { useTranslation } from '../utils/languageContext';
@@ -33,7 +34,18 @@ import {
   SelectTrigger,
   SelectValue,
 } from './ui/select';
+import { Textarea } from './ui/textarea';
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from './ui/dialog';
 import { Tooltip, TooltipContent, TooltipTrigger } from './ui/tooltip';
+import { SubscriptionExternalRiskCard } from './SubscriptionExternalRiskCard';
+import { useSubscriptionDemo } from '../utils/subscriptionDemoContext';
 import { cn, WIDGET_LABEL_CLASS, WIDGET_SUBTITLE_CLASS, WIDGET_TITLE_CLASS } from './ui/utils';
 import { PRIMARY_BUTTON_GRADIENT } from './ui/page-header';
 import {
@@ -59,6 +71,9 @@ import {
 } from './SubscriptionScreeningWidget';
 
 export type ComplianceStatus = 'pending' | 'awaitingValidation' | 'validated';
+
+/** Statut du scoring : les memes trois etats que la decision de conformite. */
+export type ScoreStatus = 'awaitingValidation' | 'awaitingCompliance' | 'validated';
 
 export interface ComplianceStatusSnapshot {
   status: ComplianceStatus;
@@ -196,9 +211,14 @@ export function RiskProfileWidget({
   scoreValidatedAt,
 }: RiskProfileWidgetProps) {
   const { t } = useTranslation();
+  const { config: demo } = useSubscriptionDemo();
   const [scaleVisible, setScaleVisible] = useState(false);
   const [editingComponent, setEditingComponent] = useState<string | null>(null);
   const [editingValue, setEditingValue] = useState('');
+  // Forcage d'un composant : la V1 exige un motif, trace ensuite a l'ecran.
+  const [forcing, setForcing] = useState<{ id: string; min: number; max: number } | null>(null);
+  const [forcedValue, setForcedValue] = useState('');
+  const [forcedReason, setForcedReason] = useState('');
 
   const tc = (key: string, count: number) => t(`${key}${count === 1 ? 'One' : 'Many'}`, { count });
 
@@ -256,7 +276,7 @@ export function RiskProfileWidget({
           >
             <ListChecks className="w-4 h-4" />
           </Button>
-          {!locked && (
+          {!locked && demo.settings.scoreRefresh && (
             <Button
               variant="ghost"
               size="sm"
@@ -451,6 +471,26 @@ export function RiskProfileWidget({
                                 <Pencil className="w-3 h-3" />
                               </Button>
                             )}
+                            {!locked && (
+                              <Button
+                                variant="ghost"
+                                size="sm"
+                                className="h-6 w-6 p-0 text-muted-foreground"
+                                title={t('subscriptions.detail.compliance.profile.forceScore')}
+                                aria-label={t('subscriptions.detail.compliance.profile.forceScore')}
+                                onClick={() => {
+                                  setForcing({
+                                    id: component.id,
+                                    min: component.min,
+                                    max: component.max,
+                                  });
+                                  setForcedValue(shown === null ? '' : String(shown));
+                                  setForcedReason('');
+                                }}
+                              >
+                                <ShieldCheck className="w-3 h-3" />
+                              </Button>
+                            )}
                           </>
                         )}
                       </span>
@@ -462,6 +502,73 @@ export function RiskProfileWidget({
           );
         })}
       </ul>
+
+      {/* Forcage du score d'un composant : le motif est obligatoire */}
+      <Dialog open={forcing !== null} onOpenChange={open => !open && setForcing(null)}>
+        <DialogContent className="sm:max-w-[420px]">
+          <DialogHeader>
+            <DialogTitle>{t('subscriptions.detail.compliance.profile.forceTitle')}</DialogTitle>
+            <DialogDescription>
+              {t('subscriptions.detail.compliance.profile.forceSubtitle')}
+            </DialogDescription>
+          </DialogHeader>
+
+          <div className="space-y-3">
+            <div>
+              <label className="text-xs text-muted-foreground">
+                {t('subscriptions.detail.compliance.profile.forceValue')}
+              </label>
+              <Input
+                value={forcedValue}
+                onChange={event => setForcedValue(event.target.value)}
+                className="mt-1 h-9"
+              />
+            </div>
+            <div>
+              <label className="text-xs text-muted-foreground">
+                {t('subscriptions.detail.compliance.profile.forceReason')}
+              </label>
+              <Textarea
+                value={forcedReason}
+                onChange={event => setForcedReason(event.target.value)}
+                placeholder={t('subscriptions.detail.compliance.profile.forceReasonPlaceholder')}
+                className="mt-1 min-h-[80px]"
+              />
+            </div>
+          </div>
+
+          <DialogFooter>
+            <Button variant="outline" size="sm" onClick={() => setForcing(null)}>
+              {t('subscriptions.detail.action.common.cancel')}
+            </Button>
+            <Button
+              size="sm"
+              className="text-white"
+              disabled={!forcedReason.trim()}
+              onClick={() => {
+                if (!forcing) return;
+                const parsed = Number(forcedValue.replace(',', '.'));
+                if (Number.isNaN(parsed) || parsed < forcing.min || parsed > forcing.max) {
+                  toast.error(t('subscriptions.detail.compliance.toast.invalidScore'), {
+                    description: t('subscriptions.detail.compliance.toast.invalidScoreDesc', {
+                      min: forcing.min,
+                      max: forcing.max,
+                    }),
+                  });
+                  return;
+                }
+                onManualScore(forcing.id, round1(parsed));
+                toast.success(t('subscriptions.detail.compliance.toast.scoreForced'), {
+                  description: forcedReason.trim(),
+                });
+                setForcing(null);
+              }}
+            >
+              {t('subscriptions.detail.compliance.profile.forceConfirm')}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </Card>
   );
 }
@@ -497,10 +604,17 @@ export function SubscriptionComplianceSection({
   onStatusChange,
 }: SubscriptionComplianceSectionProps) {
   const { t } = useTranslation();
+  const { config: demo } = useSubscriptionDemo();
 
   const tc = (key: string, count: number) => t(`${key}${count === 1 ? 'One' : 'Many'}`, { count });
 
   const [manualScores, setManualScores] = useState<Record<string, number>>({});
+  // Scoring : en attente de validation, en attente de conformite, valide.
+  const [scoreStatus, setScoreStatus] = useState<ScoreStatus>(
+    scoreValidated ? 'validated' : 'awaitingValidation',
+  );
+  const [scoreRefusalOpen, setScoreRefusalOpen] = useState(false);
+  const [scoreRefusalReason, setScoreRefusalReason] = useState('');
   const [computedAt, setComputedAt] = useState(mockRiskProfile.computedAt);
 
   const [category, setCategory] = useState<InvestorCategory>(mockCategorisation.category);
@@ -543,6 +657,38 @@ export function SubscriptionComplianceSection({
     toast.success(t('subscriptions.detail.compliance.toast.manualScoreSaved'), {
       description: t('subscriptions.detail.compliance.toast.manualScoreSavedDesc'),
     });
+  };
+
+  /** Validation du scoring : le palier decide si la conformite doit trancher. */
+  const handleValidateScoring = () => {
+    if (validationRequired) {
+      setScoreStatus('awaitingCompliance');
+      toast.info(t('subscriptions.detail.compliance.toast.scoreSubmittedToCompliance'));
+      return;
+    }
+    setScoreStatus('validated');
+    onValidateScore();
+  };
+
+  const handleComplianceValidateScore = () => {
+    setScoreStatus('validated');
+    onValidateScore();
+  };
+
+  const handleRefuseScoring = () => {
+    if (!scoreRefusalReason.trim()) return;
+    setScoreStatus('awaitingValidation');
+    onInvalidateScore();
+    toast.info(t('subscriptions.detail.compliance.toast.scoreRefused'), {
+      description: scoreRefusalReason.trim(),
+    });
+    setScoreRefusalOpen(false);
+    setScoreRefusalReason('');
+  };
+
+  const handleReopenScore = () => {
+    setScoreStatus('awaitingValidation');
+    onInvalidateScore();
   };
 
   const handleRecompute = () => {
@@ -692,25 +838,69 @@ export function SubscriptionComplianceSection({
                 <Radar className="w-3.5 h-3.5" />
                 {t('subscriptions.detail.compliance.score.title')}
               </span>
-              {!locked && validationRequired && (
-                <Button
-                  variant="outline"
-                  size="sm"
-                  className="gap-1 text-[11px] h-6 shrink-0"
-                  onClick={scoreValidated ? onInvalidateScore : onValidateScore}
-                >
-                  {scoreValidated ? (
-                    <>
+              {!locked && (
+                <div className="flex shrink-0 items-center gap-1">
+                  {scoreStatus === 'validated' ? (
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      className="gap-1 text-[11px] h-6"
+                      onClick={handleReopenScore}
+                    >
                       <RotateCcw className="w-3 h-3" />
                       {t('subscriptions.detail.compliance.score.invalidate')}
-                    </>
+                    </Button>
+                  ) : scoreStatus === 'awaitingCompliance' ? (
+                    demo.rights.validateCompliance ? (
+                      <>
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          className="gap-1 text-[11px] h-6"
+                          onClick={handleComplianceValidateScore}
+                        >
+                          <ShieldCheck className="w-3 h-3" />
+                          {t('subscriptions.detail.compliance.score.complianceValidate')}
+                        </Button>
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          className="gap-1 text-[11px] h-6 text-red-600"
+                          onClick={() => setScoreRefusalOpen(true)}
+                        >
+                          <X className="w-3 h-3" />
+                          {t('subscriptions.detail.compliance.score.complianceRefuse')}
+                        </Button>
+                      </>
+                    ) : (
+                      <Tooltip>
+                        <TooltipTrigger asChild>
+                          <span>
+                            <Button variant="outline" size="sm" className="gap-1 text-[11px] h-6" disabled>
+                              <ShieldCheck className="w-3 h-3" />
+                              {t('subscriptions.detail.compliance.score.complianceValidate')}
+                            </Button>
+                          </span>
+                        </TooltipTrigger>
+                        <TooltipContent>
+                          <span className="text-xs">
+                            {t('subscriptions.detail.compliance.score.noComplianceRight')}
+                          </span>
+                        </TooltipContent>
+                      </Tooltip>
+                    )
                   ) : (
-                    <>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      className="gap-1 text-[11px] h-6"
+                      onClick={handleValidateScoring}
+                    >
                       <ShieldCheck className="w-3 h-3" />
                       {t('subscriptions.detail.compliance.score.validate')}
-                    </>
+                    </Button>
                   )}
-                </Button>
+                </div>
               )}
             </div>
 
@@ -723,7 +913,12 @@ export function SubscriptionComplianceSection({
               )}
             </div>
 
-            {!validationRequired ? (
+            {scoreStatus === 'awaitingCompliance' ? (
+              <p className="mt-1.5 flex items-start gap-1.5 text-xs text-amber-700">
+                <Clock className="w-3.5 h-3.5 shrink-0 mt-0.5" />
+                {t('subscriptions.detail.compliance.score.awaitingCompliance')}
+              </p>
+            ) : !validationRequired ? (
               <p className="mt-1.5 flex items-start gap-1.5 text-xs text-muted-foreground">
                 <CheckCircle2 className="w-3.5 h-3.5 text-emerald-600 shrink-0 mt-0.5" />
                 {t('subscriptions.detail.compliance.score.noValidationNeeded')}
@@ -894,19 +1089,76 @@ export function SubscriptionComplianceSection({
       </Card>
 
       <div className="grid grid-cols-1 items-start gap-4 lg:grid-cols-2">
-        <RiskProfileWidget
-          locked={locked}
-          manualScores={manualScores}
-          onManualScore={handleManualScore}
-          computedAt={computedAt}
-          onRecompute={handleRecompute}
-          scoreValidated={scoreValidated}
-          scoreValidatedBy={scoreValidatedBy}
-          scoreValidatedAt={scoreValidatedAt}
-        />
+        {demo.settings.riskEngine ? (
+          <RiskProfileWidget
+            locked={locked}
+            manualScores={manualScores}
+            onManualScore={handleManualScore}
+            computedAt={computedAt}
+            onRecompute={handleRecompute}
+            scoreValidated={scoreValidated}
+            scoreValidatedBy={scoreValidatedBy}
+            scoreValidatedAt={scoreValidatedAt}
+          />
+        ) : (
+          <Card className="shadow-sm p-4">
+            <h3 className={WIDGET_TITLE_CLASS}>
+              {t('subscriptions.detail.compliance.profile.widgetTitle')}
+            </h3>
+            <p className="mt-1 flex items-start gap-1.5 text-xs text-muted-foreground">
+              <AlertCircle className="w-3.5 h-3.5 shrink-0 mt-0.5" />
+              {t('subscriptions.detail.compliance.profile.engineOff')}
+            </p>
+          </Card>
+        )}
 
-        <SubscriptionScreeningWidget screening={screening} locked={locked} />
+        {demo.rights.screening ? (
+          <SubscriptionScreeningWidget screening={screening} locked={locked} />
+        ) : (
+          <Card className="shadow-sm p-4">
+            <h3 className={WIDGET_TITLE_CLASS}>
+              {t('subscriptions.detail.compliance.screening.title')}
+            </h3>
+            <p className="mt-1 flex items-start gap-1.5 text-xs text-muted-foreground">
+              <AlertCircle className="w-3.5 h-3.5 shrink-0 mt-0.5" />
+              {t('subscriptions.detail.compliance.screening.noRight')}
+            </p>
+          </Card>
+        )}
+
+        {demo.settings.externalRiskAnalysis && <SubscriptionExternalRiskCard locked={locked} />}
       </div>
+
+      {/* Refus du scoring par la conformite : motif obligatoire */}
+      <Dialog open={scoreRefusalOpen} onOpenChange={setScoreRefusalOpen}>
+        <DialogContent className="sm:max-w-[440px]">
+          <DialogHeader>
+            <DialogTitle>{t('subscriptions.detail.compliance.score.refuseTitle')}</DialogTitle>
+            <DialogDescription>
+              {t('subscriptions.detail.compliance.score.refuseSubtitle')}
+            </DialogDescription>
+          </DialogHeader>
+          <Textarea
+            value={scoreRefusalReason}
+            onChange={event => setScoreRefusalReason(event.target.value)}
+            placeholder={t('subscriptions.detail.compliance.score.refusePlaceholder')}
+            className="min-h-[90px]"
+          />
+          <DialogFooter>
+            <Button variant="outline" size="sm" onClick={() => setScoreRefusalOpen(false)}>
+              {t('subscriptions.detail.action.common.cancel')}
+            </Button>
+            <Button
+              size="sm"
+              className="text-white"
+              disabled={!scoreRefusalReason.trim()}
+              onClick={handleRefuseScoring}
+            >
+              {t('subscriptions.detail.compliance.score.refuseConfirm')}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
 
       {/* Widget journal de conformite */}
       <Card className="shadow-sm overflow-hidden">
