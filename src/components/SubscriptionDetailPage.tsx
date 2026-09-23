@@ -1,4 +1,4 @@
-import { Fragment, useEffect, useRef, useState } from 'react';
+import { Fragment, useState } from 'react';
 import { useTranslation } from '../utils/languageContext';
 import {
   Building2,
@@ -51,7 +51,6 @@ import {
   Percent,
   Handshake,
   RefreshCw,
-  EyeOff,
 } from 'lucide-react';
 import { motion } from 'motion/react';
 import { Badge } from './ui/badge';
@@ -75,13 +74,7 @@ import { copyToClipboard } from '../utils/clipboard';
 import { getShareableUrl } from '../utils/routing';
 import { SubscriptionInfoPopover } from './SubscriptionInfoPopover';
 import { PartyTypeBadge } from './ui/party-type-badge';
-import { QuestionActions, QuestionStatus } from './QuestionActions';
-import { QuestionCommentThread } from './QuestionCommentThread';
-import {
-  QuestionDependencyBadge,
-  QuestionDependentsBadge,
-  type DependentQuestionEntry,
-} from './QuestionDependencyBadges';
+import { OnboardingQuestionnaireBlock, useOnboardingQuestionnaire } from './OnboardingQuestionnaire';
 import { IntegrationsTab } from './IntegrationsTab';
 import {
   Collapsible,
@@ -97,28 +90,15 @@ import {
 import { PageHeader, PRIMARY_BUTTON_GRADIENT } from './ui/page-header';
 import { DetailLink, DetailSummary } from './ui/detail-summary';
 import {
-  mockSections,
-  mockRequiredDocuments,
   mockDocuments,
   mockNotes,
   mockEmails,
   mockCapitalCalls,
   mockInitEmails,
-  findMockQuestion,
-  getHidingAnswers,
-  getMockQuestionDependents,
-  getMockQuestionId,
 } from '../utils/subscriptionDetailMockData';
 import {
   OnboardingCompletionCard,
   OnboardingSectionNav,
-  OnboardingStateCounter,
-  addToBucketStats,
-  emptyBucketStats,
-  mergeBucketStats,
-  type OnboardingBucketStats,
-  type OnboardingItemState,
-  type OnboardingNavSection,
 } from './OnboardingCompletionOverview';
 import {
   SubscriptionComplianceSection,
@@ -135,21 +115,6 @@ const SUBSCRIPTION_STEPS = [
   { id: 3, labelKey: 'subscriptions.detail.stepper.signatures', icon: PenTool },
   { id: 4, labelKey: 'subscriptions.detail.stepper.payment', icon: Wallet },
 ];
-
-// Etat de depart de la maquette : une partie du dossier est deja verifiee, une
-// reponse et une piece ont ete retoquees.
-const INITIAL_QUESTION_STATUSES: Record<string, QuestionStatus> = {
-  'identity-0': 'approved',
-  'identity-1': 'approved',
-  'identity-3': 'approved',
-  'identity-9': 'rejected',
-  'fiscal-0': 'approved',
-};
-
-const INITIAL_DOCUMENT_STATUSES: Record<string, QuestionStatus> = {
-  'document-0': 'approved',
-  'document-4': 'rejected',
-};
 
 interface SubscriptionDetailPageProps {
   subscription: any;
@@ -170,7 +135,6 @@ export function SubscriptionDetailPage({ subscription: subscriptionProp, onBack 
   const [idCopied, setIdCopied] = useState(false);
   const [isRefreshing, setIsRefreshing] = useState(false);
   const [lastRefreshAt, setLastRefreshAt] = useState<string | null>(null);
-  const [openSections, setOpenSections] = useState<string[]>(['identity']);
   const [note, setNote] = useState('');
   const [notes, setNotes] = useState<Array<{ text: string; date: string; author: string }>>([]);
   const [activeTab, setActiveTab] = useState('onboarding');
@@ -192,27 +156,9 @@ export function SubscriptionDetailPage({ subscription: subscriptionProp, onBack 
 
   const initData = (subscription as any).initData ?? {};
   
-  // Question states management
-  const [questionStatuses, setQuestionStatuses] = useState<Record<string, QuestionStatus>>(INITIAL_QUESTION_STATUSES);
-  const [questionResponses, setQuestionResponses] = useState<Record<string, string>>({});
-  const [activeCommentThread, setActiveCommentThread] = useState<string | null>(null);
-  const [questionComments, setQuestionComments] = useState<Record<string, any[]>>({});
-
-  // Verification des pieces justificatives (meme cycle de vie que les reponses)
-  const [documentStatuses, setDocumentStatuses] = useState<Record<string, QuestionStatus>>(INITIAL_DOCUMENT_STATUSES);
-  const [activeOnboardingSection, setActiveOnboardingSection] = useState<string>(mockSections[0].id);
-  const onboardingSectionRefs = useRef<Record<string, HTMLDivElement | null>>({});
-
-  // Navigation entre questions liées : la ligne cible est mise en évidence quelques secondes.
-  const questionRowRefs = useRef<Record<string, HTMLDivElement | null>>({});
-  const [highlightedQuestionId, setHighlightedQuestionId] = useState<string | null>(null);
-  const highlightTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
-  useEffect(
-    () => () => {
-      if (highlightTimeoutRef.current) clearTimeout(highlightTimeoutRef.current);
-    },
-    [],
-  );
+  // Questionnaire d'onboarding : dossier de démonstration, résolution et actions opérateur
+  const onboarding = useOnboardingQuestionnaire(subscription);
+  const { questionBuckets, documentBuckets } = onboarding;
 
   // Risk validation state
   const [riskValidated, setRiskValidated] = useState(false);
@@ -236,53 +182,6 @@ export function SubscriptionDetailPage({ subscription: subscriptionProp, onBack 
     });
   };
 
-  const toggleSection = (sectionId: string) => {
-    setOpenSections(prev =>
-      prev.includes(sectionId)
-        ? prev.filter(id => id !== sectionId)
-        : [...prev, sectionId]
-    );
-  };
-
-  const handleValidateSection = (sectionId: string, sectionTitle: string) => {
-    const section = mockSections.find(s => s.id === sectionId);
-    if (!section) return;
-
-    // Approve all questions in the section (hidden conditional questions are left untouched)
-    const newStatuses = { ...questionStatuses };
-    let approved = 0;
-    section.questions.forEach((_, idx) => {
-      const questionId = getMockQuestionId(sectionId, idx);
-      if (!isQuestionActive(questionId)) return;
-      newStatuses[questionId] = 'approved';
-      approved += 1;
-    });
-
-    setQuestionStatuses(newStatuses);
-
-    toast.success(t('subscriptions.detail.onboarding.sectionValidatedToast'), {
-      description: t('subscriptions.detail.onboarding.sectionValidatedDesc', { count: approved, title: sectionTitle }),
-    });
-  };
-
-  const handleExportDocuments = () => {
-    toast.success(t('subscriptions.detail.toast.exportInProgress'), {
-      description: t('subscriptions.detail.toast.exportInProgressDesc'),
-    });
-  };
-
-  const handleAddDocument = (docName: string) => {
-    toast.info(t('subscriptions.detail.toast.addDocumentToast'), {
-      description: docName ? t('subscriptions.detail.toast.selectFile', { name: docName }) : t('subscriptions.detail.toast.selectFileGeneric'),
-    });
-  };
-
-  const handleViewDocument = (docName: string) => {
-    toast.info(t('subscriptions.detail.toast.documentPreview'), {
-      description: t('subscriptions.detail.toast.documentPreviewDesc', { name: docName }),
-    });
-  };
-
   const handleAddNote = () => {
     if (!note.trim()) return;
 
@@ -295,183 +194,6 @@ export function SubscriptionDetailPage({ subscription: subscriptionProp, onBack 
     setNotes([newNote, ...notes]);
     setNote('');
     toast.success(t('subscriptions.detail.toast.noteAdded'));
-  };
-
-  // Question actions handlers
-  const handleApproveQuestion = (questionId: string) => {
-    setQuestionStatuses(prev => ({ ...prev, [questionId]: 'approved' }));
-  };
-
-  const handleRejectQuestion = (questionId: string) => {
-    setQuestionStatuses(prev => ({ ...prev, [questionId]: 'rejected' }));
-  };
-
-  const handleModifyQuestion = (questionId: string, newValue: string) => {
-    setQuestionResponses(prev => ({ ...prev, [questionId]: newValue }));
-    setQuestionStatuses(prev => ({ ...prev, [questionId]: 'modified' }));
-  };
-
-  const handleToggleComment = (questionId: string) => {
-    setActiveCommentThread(activeCommentThread === questionId ? null : questionId);
-  };
-
-  // Comment management handlers
-  const handleAddComment = (questionId: string, comment: any) => {
-    setQuestionComments(prev => ({
-      ...prev,
-      [questionId]: [...(prev[questionId] || []), comment]
-    }));
-  };
-
-  const handleResolveComment = (questionId: string, commentId: string) => {
-    setQuestionComments(prev => ({
-      ...prev,
-      [questionId]: (prev[questionId] || []).map(c =>
-        c.id === commentId ? { ...c, resolved: true } : c
-      )
-    }));
-  };
-
-  const handleDeleteComment = (questionId: string, commentId: string) => {
-    setQuestionComments(prev => ({
-      ...prev,
-      [questionId]: (prev[questionId] || []).filter(c => c.id !== commentId)
-    }));
-  };
-
-  // Réponse courante d'une question : modification locale sinon donnée de la maquette
-  const resolveQuestionResponse = (questionId: string): string =>
-    questionResponses[questionId] || findMockQuestion(questionId)?.question.response || '';
-
-  // Une question conditionnelle n'est affichée à l'investisseur que si sa question
-  // pilote est elle-même affichée et porte une réponse activante.
-  const isQuestionActive = (questionId: string, depth = 0): boolean => {
-    const ref = findMockQuestion(questionId);
-    const dependency = ref?.question.dependsOn;
-    if (!ref || !dependency || depth > 10) return true;
-    if (!isQuestionActive(dependency.parentId, depth + 1)) return false;
-    return dependency.showWhen.includes(resolveQuestionResponse(dependency.parentId));
-  };
-
-  const getDependentEntries = (questionId: string): DependentQuestionEntry[] =>
-    getMockQuestionDependents(questionId).map(dependent => ({
-      id: dependent.id,
-      label: dependent.question.question,
-      sectionTitleKey: dependent.sectionTitleKey,
-      response: resolveQuestionResponse(dependent.id),
-      showWhen: dependent.question.dependsOn?.showWhen ?? [],
-      isActive: isQuestionActive(dependent.id),
-    }));
-
-  const handleNavigateToQuestion = (questionId: string) => {
-    const target = findMockQuestion(questionId);
-    if (!target) return;
-    setActiveOnboardingSection(target.sectionId);
-    setOpenSections(prev => (prev.includes(target.sectionId) ? prev : [...prev, target.sectionId]));
-    setHighlightedQuestionId(questionId);
-    if (highlightTimeoutRef.current) clearTimeout(highlightTimeoutRef.current);
-    highlightTimeoutRef.current = setTimeout(() => setHighlightedQuestionId(null), 2500);
-    // La section peut être en cours d'ouverture : on attend son rendu avant de défiler.
-    setTimeout(() => {
-      questionRowRefs.current[questionId]?.scrollIntoView({ behavior: 'smooth', block: 'center' });
-    }, 80);
-  };
-
-  // Etat d'une reponse : non remplie, en attente de validation, a corriger ou validee
-  const getQuestionState = (
-    sectionId: string,
-    idx: number,
-    question: { response: string },
-  ): OnboardingItemState => {
-    const questionId = `${sectionId}-${idx}`;
-    const status = questionStatuses[questionId];
-    if (status === 'approved') return 'validated';
-    if (status === 'rejected') return 'awaitingCorrection';
-    const response = questionResponses[questionId] ?? question.response;
-    return response ? 'awaitingValidation' : 'pending';
-  };
-
-  const getDocumentState = (idx: number, doc: { hasFile: boolean }): OnboardingItemState => {
-    const status = documentStatuses[`document-${idx}`];
-    if (status === 'approved') return 'validated';
-    if (status === 'rejected') return 'awaitingCorrection';
-    return doc.hasFile ? 'awaitingValidation' : 'pending';
-  };
-
-  const getQuestionSectionBuckets = (sectionId: string): OnboardingBucketStats => {
-    const stats = emptyBucketStats();
-    const section = mockSections.find(s => s.id === sectionId);
-    if (!section) return stats;
-    section.questions.forEach((question, idx) => {
-      if (!isQuestionActive(getMockQuestionId(sectionId, idx))) return;
-      addToBucketStats(stats, getQuestionState(sectionId, idx, question));
-    });
-    return stats;
-  };
-
-  const getDocumentBuckets = (): OnboardingBucketStats => {
-    const stats = emptyBucketStats();
-    mockRequiredDocuments.forEach((doc, idx) => {
-      addToBucketStats(stats, getDocumentState(idx, doc));
-    });
-    return stats;
-  };
-
-  const getSectionBuckets = (sectionId: string): OnboardingBucketStats =>
-    sectionId === 'documents' ? getDocumentBuckets() : getQuestionSectionBuckets(sectionId);
-
-  const questionBuckets = mockSections.reduce((acc, section) => {
-    if (section.id !== 'documents') {
-      mergeBucketStats(acc, getQuestionSectionBuckets(section.id));
-    }
-    return acc;
-  }, emptyBucketStats());
-
-  const documentBuckets = getDocumentBuckets();
-
-
-  const onboardingNavSections: OnboardingNavSection[] = mockSections.map((section, idx) => ({
-    id: section.id,
-    titleKey: section.titleKey,
-    icon: section.icon,
-    position: idx + 1,
-    kind: section.id === 'documents' ? 'documents' : 'questions',
-    stats: getSectionBuckets(section.id),
-  }));
-
-  const handleSelectOnboardingSection = (sectionId: string) => {
-    setActiveOnboardingSection(sectionId);
-    setOpenSections(prev => (prev.includes(sectionId) ? prev : [...prev, sectionId]));
-    onboardingSectionRefs.current[sectionId]?.scrollIntoView({
-      behavior: 'smooth',
-      block: 'start',
-    });
-  };
-
-  const handleApproveDocument = (idx: number) => {
-    setDocumentStatuses(prev => ({ ...prev, [`document-${idx}`]: 'approved' }));
-  };
-
-  const handleRejectDocument = (idx: number) => {
-    setDocumentStatuses(prev => ({ ...prev, [`document-${idx}`]: 'rejected' }));
-  };
-
-  const handleValidateDocuments = (sectionTitle: string) => {
-    const next: Record<string, QuestionStatus> = { ...documentStatuses };
-    let validated = 0;
-    mockRequiredDocuments.forEach((doc, idx) => {
-      if (doc.hasFile) {
-        next[`document-${idx}`] = 'approved';
-        validated += 1;
-      }
-    });
-    setDocumentStatuses(next);
-    toast.success(t('subscriptions.detail.onboarding.sectionValidatedToast'), {
-      description: t('subscriptions.detail.onboarding.completion.documentsValidatedDesc', {
-        count: validated,
-        title: sectionTitle,
-      }),
-    });
   };
 
   const formatLongDate = (date: Date) =>
@@ -1289,407 +1011,13 @@ export function SubscriptionDetailPage({ subscription: subscriptionProp, onBack 
                         style={{ gridTemplateColumns: 'minmax(0, 300px) minmax(0, 1fr)' }}
                       >
                           <OnboardingSectionNav
-                            sections={onboardingNavSections}
-                            activeSectionId={activeOnboardingSection}
-                            onSelect={handleSelectOnboardingSection}
+                            sections={onboarding.navSections}
+                            activeSectionId={onboarding.activeSectionId}
+                            onSelect={onboarding.navigateToSection}
                           />
 
                           <div className="space-y-4">
-              {mockSections.map((section) => {
-                const Icon = section.icon;
-                const isOpen = openSections.includes(section.id);
-                const buckets = getSectionBuckets(section.id);
-                const isDocuments = section.id === 'documents';
-                const allVerified = buckets.total > 0 && buckets.validated === buckets.total;
-
-                return (
-                  <div
-                    key={section.id}
-                    ref={el => {
-                      onboardingSectionRefs.current[section.id] = el;
-                    }}
-                    style={{ scrollMarginTop: '1rem' }}
-                  >
-                  <Collapsible
-                    open={isOpen}
-                    onOpenChange={() => {
-                      toggleSection(section.id);
-                      setActiveOnboardingSection(section.id);
-                    }}
-                  >
-                    <Card
-                      className="overflow-hidden hover:shadow-md transition-shadow"
-                      style={
-                        activeOnboardingSection === section.id
-                          ? { boxShadow: '0 0 0 1px var(--color-primary)' }
-                          : undefined
-                      }
-                    >
-                      <CollapsibleTrigger className="w-full">
-                        <div className="flex items-center justify-between p-5 hover:bg-muted transition-colors cursor-pointer">
-                          <div className="flex items-center gap-4">
-                            <div className={`w-12 h-12 rounded-xl flex items-center justify-center ${
-                              allVerified ? 'bg-[var(--success-soft)]' : 'bg-primary/10'
-                            }`}>
-                              <Icon className={`w-6 h-6 ${
-                                allVerified ? 'text-emerald-600' : 'text-primary'
-                              }`} />
-                            </div>
-                            <div className="text-left">
-                              <h3 className="font-semibold text-foreground text-lg mb-1">{t(section.titleKey)}</h3>
-                              <div className="flex flex-wrap items-center gap-x-3 gap-y-1 text-xs">
-                                <span className="font-semibold text-foreground">
-                                  {isDocuments
-                                    ? t('subscriptions.detail.onboarding.requiredDocuments', { count: buckets.total })
-                                    : t('subscriptions.detail.onboarding.answeredOf', {
-                                        answered: buckets.total - buckets.pending,
-                                        total: buckets.total,
-                                      })}
-                                </span>
-                                <span className="w-1 h-1 rounded-full bg-border" />
-                                <OnboardingStateCounter stats={buckets} compact />
-                              </div>
-                            </div>
-                          </div>
-
-                          <div className="flex items-center gap-3">
-                            {allVerified ? (
-                              <Badge className="bg-emerald-100 text-emerald-700 border-emerald-200">
-                                <CheckCircle2 className="w-3.5 h-3.5 mr-1.5" />
-                                {t('subscriptions.detail.onboarding.sectionValidated')}
-                              </Badge>
-                            ) : buckets.awaitingCorrection > 0 ? (
-                              <Badge className="bg-red-100 text-red-700 border-red-200">
-                                <AlertCircle className="w-3.5 h-3.5 mr-1.5" />
-                                {t('subscriptions.detail.onboarding.completion.awaitingCorrectionCount', { count: buckets.awaitingCorrection })}
-                              </Badge>
-                            ) : (
-                              <Badge className="bg-amber-100 text-amber-700 border-amber-200">
-                                <AlertCircle className="w-3.5 h-3.5 mr-1.5" />
-                                {t('subscriptions.detail.onboarding.inProgress')}
-                              </Badge>
-                            )}
-                            {isOpen ? (
-                              <ChevronUp className="w-5 h-5 text-muted-foreground/60" />
-                            ) : (
-                              <ChevronDown className="w-5 h-5 text-muted-foreground/60" />
-                            )}
-                          </div>
-                        </div>
-                      </CollapsibleTrigger>
-
-                      <CollapsibleContent>
-                        <div className="border-t border-border/50">
-                          {section.id === 'documents' ? (
-                            /* Documents Section - Special Layout */
-                            <div>
-                              {/* Documents Header with Actions */}
-                              <div className="px-4 py-3 bg-muted border-b border-border flex items-center justify-between">
-                                <div className="flex items-center gap-2 text-sm text-foreground/80">
-                                  <FileText className="w-4 h-4" />
-                                  <span>{t('subscriptions.detail.onboarding.manageDocuments')}</span>
-                                </div>
-                                <div className="flex items-center gap-2">
-                                  <Button
-                                    variant="outline"
-                                    size="sm"
-                                    onClick={handleExportDocuments}
-                                    className="gap-2 text-xs"
-                                  >
-                                    <Download className="w-3.5 h-3.5" />
-                                    {t('subscriptions.detail.onboarding.exportDocuments')}
-                                  </Button>
-                                  <Button
-                                    variant="outline"
-                                    size="sm"
-                                    onClick={() => handleAddDocument('')}
-                                    className="gap-2 text-xs"
-                                  >
-                                    <Upload className="w-3.5 h-3.5" />
-                                    {t('subscriptions.detail.onboarding.addDocument')}
-                                  </Button>
-                                  <Button
-                                    size="sm"
-                                    onClick={() => handleValidateDocuments(t(section.titleKey))}
-                                    className="gap-2 text-xs bg-primary hover:bg-primary/90 text-white"
-                                  >
-                                    <CheckCircle2 className="w-3.5 h-3.5" />
-                                    {t('subscriptions.detail.onboarding.validateSection')}
-                                  </Button>
-                                </div>
-                              </div>
-
-                              {/* Documents Table */}
-                              <div className="overflow-hidden">
-                                <table className="w-full">
-                                  <thead className="bg-muted border-b border-border">
-                                    <tr>
-                                      <th className="px-4 py-3 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider">
-                                        {t('subscriptions.detail.docsTable.document')}
-                                      </th>
-                                      <th className="px-4 py-3 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider w-32">
-                                        {t('subscriptions.detail.docsTable.dateSent')}
-                                      </th>
-                                      <th className="px-4 py-3 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider w-32">
-                                        {t('subscriptions.detail.docsTable.issuedOn')}
-                                      </th>
-                                      <th className="px-4 py-3 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider w-32">
-                                        {t('subscriptions.detail.docsTable.expiration')}
-                                      </th>
-                                      <th className="px-4 py-3 text-center text-xs font-medium text-muted-foreground uppercase tracking-wider w-20">
-                                        {t('subscriptions.detail.docsTable.view')}
-                                      </th>
-                                      <th className="px-4 py-3 text-center text-xs font-medium text-muted-foreground uppercase tracking-wider w-28">
-                                        {t('subscriptions.detail.docsTable.action')}
-                                      </th>
-                                      <th className="px-4 py-3 text-center text-xs font-medium text-muted-foreground uppercase tracking-wider w-28">
-                                        {t('subscriptions.detail.docsTable.verification')}
-                                      </th>
-                                    </tr>
-                                  </thead>
-                                  <tbody className="bg-card divide-y divide-border/50">
-                                    {mockRequiredDocuments.map((doc, idx) => {
-                                      const docState = getDocumentState(idx, doc);
-                                      return (
-                                      <tr key={idx} className="hover:bg-muted transition-colors group">
-                                        <td className="px-4 py-3 text-sm text-foreground/80">
-                                          {t(doc.nameKey)}
-                                        </td>
-                                        <td className="px-4 py-3 text-sm text-muted-foreground">
-                                          {doc.dateSent || <span className="text-muted-foreground/60">-</span>}
-                                        </td>
-                                        <td className="px-4 py-3 text-sm text-muted-foreground">
-                                          {doc.issueDate || <span className="text-muted-foreground/60">-</span>}
-                                        </td>
-                                        <td className="px-4 py-3 text-sm text-muted-foreground">
-                                          {doc.expiration || <span className="text-muted-foreground/60">-</span>}
-                                        </td>
-                                        <td className="px-4 py-3 text-center">
-                                          {doc.hasFile ? (
-                                            <Button
-                                              variant="ghost"
-                                              size="sm"
-                                              onClick={() => handleViewDocument(t(doc.nameKey))}
-                                              className="h-7 text-primary hover:text-primary/80 hover:bg-primary/5"
-                                            >
-                                              <Eye className="w-3.5 h-3.5" />
-                                            </Button>
-                                          ) : (
-                                            <span className="text-muted-foreground/60">-</span>
-                                          )}
-                                        </td>
-                                        <td className="px-4 py-3 text-center">
-                                          <Button
-                                            variant="outline"
-                                            size="sm"
-                                            onClick={() => handleAddDocument(t(doc.nameKey))}
-                                            className="gap-1.5 text-xs h-7"
-                                          >
-                                            <Upload className="w-3 h-3" />
-                                            {doc.hasFile
-                                              ? t('subscriptions.detail.docsTable.replace')
-                                              : t('subscriptions.detail.docsTable.add')}
-                                          </Button>
-                                        </td>
-                                        <td className="px-4 py-3">
-                                          {docState === 'pending' ? (
-                                            <div className="flex justify-center">
-                                              <Badge className="bg-muted text-muted-foreground text-xs">
-                                                {t('subscriptions.detail.onboarding.completion.state.pending')}
-                                              </Badge>
-                                            </div>
-                                          ) : (
-                                            <div className="flex items-center justify-center gap-1">
-                                              <Button
-                                                variant="ghost"
-                                                size="sm"
-                                                title={t('subscriptions.detail.docsTable.validateDocument')}
-                                                aria-label={t('subscriptions.detail.docsTable.validateDocument')}
-                                                onClick={() => handleApproveDocument(idx)}
-                                                className={`h-7 w-7 p-0 hover:bg-emerald-50 ${
-                                                  docState === 'validated'
-                                                    ? 'bg-emerald-50 text-emerald-600'
-                                                    : 'text-muted-foreground'
-                                                }`}
-                                              >
-                                                <Check className="w-3.5 h-3.5" />
-                                              </Button>
-                                              <Button
-                                                variant="ghost"
-                                                size="sm"
-                                                title={t('subscriptions.detail.docsTable.rejectDocument')}
-                                                aria-label={t('subscriptions.detail.docsTable.rejectDocument')}
-                                                onClick={() => handleRejectDocument(idx)}
-                                                className={`h-7 w-7 p-0 hover:bg-red-50 ${
-                                                  docState === 'awaitingCorrection'
-                                                    ? 'bg-red-50 text-red-600'
-                                                    : 'text-muted-foreground'
-                                                }`}
-                                              >
-                                                <X className="w-3.5 h-3.5" />
-                                              </Button>
-                                            </div>
-                                          )}
-                                        </td>
-                                      </tr>
-                                      );
-                                    })}
-                                  </tbody>
-                                </table>
-                              </div>
-                            </div>
-                          ) : (
-                            /* Regular Questions Section */
-                            <div>
-                              {/* Validate All Button */}
-                              {!allVerified && (
-                                <div className="px-4 py-3 bg-primary/5 border-b border-primary/10 flex items-center justify-between">
-                                  <div className="flex items-center gap-2 text-xs text-primary">
-                                    <CheckCircle2 className="w-4 h-4" />
-                                    <span>{t('subscriptions.detail.onboarding.verifyAllResponses')}</span>
-                                  </div>
-                                  <Button
-                                    size="sm"
-                                    onClick={() => handleValidateSection(section.id, t(section.titleKey))}
-                                    className="bg-primary hover:bg-primary/90 text-white"
-                                  >
-                                    {t('subscriptions.detail.onboarding.validateSection')}
-                                  </Button>
-                                </div>
-                              )}
-
-                              {/* Questions Table */}
-                              <div className="divide-y divide-border/50">
-                                {section.questions.map((item, idx) => {
-                                  const questionId = getMockQuestionId(section.id, idx);
-                                  const status = questionStatuses[questionId] || 'pending';
-                                  const response = questionResponses[questionId] || item.response;
-                                  const comments = questionComments[questionId] || [];
-                                  const hasUnresolved = comments.some((c: any) => !c.resolved);
-                                  const isCommentOpen = activeCommentThread === questionId;
-
-                                  // Liens conditionnels : questions pilotées par celle-ci, et question pilote de celle-ci
-                                  const dependents = getDependentEntries(questionId);
-                                  const parentRef = item.dependsOn ? findMockQuestion(item.dependsOn.parentId) : undefined;
-                                  const isActive = isQuestionActive(questionId);
-                                  const isHighlighted = highlightedQuestionId === questionId;
-
-                                  return (
-                                    <div
-                                      key={idx}
-                                      ref={el => {
-                                        questionRowRefs.current[questionId] = el;
-                                      }}
-                                      style={{ scrollMarginTop: '5rem' }}
-                                    >
-                                      <div
-                                        className={`grid grid-cols-12 gap-4 p-4 transition-colors ${
-                                          isHighlighted
-                                            ? 'bg-primary/5 ring-1 ring-inset ring-primary/50'
-                                            : 'hover:bg-muted'
-                                        } ${isActive ? '' : 'bg-muted/30'}`}
-                                      >
-                                        <div className="col-span-4 min-w-0 text-sm text-foreground/80 flex flex-col justify-center gap-1.5">
-                                          <div className="flex items-center gap-2">
-                                            {item.hasAlert && (
-                                              <AlertCircle className="w-4 h-4 text-red-500 flex-shrink-0" />
-                                            )}
-                                            <span
-                                              className={
-                                                status === 'rejected'
-                                                  ? 'text-red-700'
-                                                  : isActive
-                                                    ? ''
-                                                    : 'text-muted-foreground'
-                                              }
-                                            >
-                                              {item.question}
-                                            </span>
-                                          </div>
-                                          {(dependents.length > 0 || (item.dependsOn && parentRef)) && (
-                                            <div className="flex flex-wrap items-center gap-1.5">
-                                              {dependents.length > 0 && (
-                                                <QuestionDependentsBadge
-                                                  currentResponse={response || ''}
-                                                  dependents={dependents}
-                                                  onNavigate={handleNavigateToQuestion}
-                                                />
-                                              )}
-                                              {item.dependsOn && parentRef && (
-                                                <QuestionDependencyBadge
-                                                  parent={{
-                                                    id: parentRef.id,
-                                                    label: parentRef.question.question,
-                                                    sectionTitleKey: parentRef.sectionTitleKey,
-                                                    response: resolveQuestionResponse(parentRef.id),
-                                                  }}
-                                                  showWhen={item.dependsOn.showWhen}
-                                                  hideWhen={getHidingAnswers(parentRef.question, item.dependsOn.showWhen)}
-                                                  isActive={isActive}
-                                                  onNavigate={handleNavigateToQuestion}
-                                                />
-                                              )}
-                                            </div>
-                                          )}
-                                        </div>
-                                        <div className="col-span-3 text-sm font-medium text-foreground">
-                                          {!isActive ? (
-                                            <span className="text-muted-foreground/60 italic">
-                                              {t('subscriptions.detail.onboarding.dependencies.notApplicable')}
-                                            </span>
-                                          ) : (
-                                            response || <span className="text-muted-foreground/60 italic">{t('subscriptions.detail.onboarding.notProvided')}</span>
-                                          )}
-                                        </div>
-                                        <div className="col-span-5 flex items-center justify-end">
-                                          {isActive ? (
-                                            <QuestionActions
-                                              questionId={questionId}
-                                              currentResponse={response || ''}
-                                              currentStatus={status}
-                                              commentCount={comments.length}
-                                              hasUnresolvedComments={hasUnresolved}
-                                              onApprove={() => handleApproveQuestion(questionId)}
-                                              onReject={() => handleRejectQuestion(questionId)}
-                                              onModify={(newValue) => handleModifyQuestion(questionId, newValue)}
-                                              onComment={() => handleToggleComment(questionId)}
-                                            />
-                                          ) : (
-                                            <div
-                                              className="flex items-center gap-1.5 text-xs text-muted-foreground"
-                                              title={t('subscriptions.detail.onboarding.dependencies.notCounted')}
-                                            >
-                                              <EyeOff className="w-3.5 h-3.5" />
-                                              <span>{t('subscriptions.detail.onboarding.dependencies.hiddenForInvestor')}</span>
-                                            </div>
-                                          )}
-                                        </div>
-                                      </div>
-                                      
-                                      {/* Comment thread */}
-                                      <QuestionCommentThread
-                                        questionId={questionId}
-                                        questionText={item.question}
-                                        isOpen={isCommentOpen}
-                                        onClose={() => setActiveCommentThread(null)}
-                                        comments={comments}
-                                        onAddComment={(comment) => handleAddComment(questionId, comment)}
-                                        onResolveComment={(commentId) => handleResolveComment(questionId, commentId)}
-                                        onDeleteComment={(commentId) => handleDeleteComment(questionId, commentId)}
-                                      />
-                                    </div>
-                                  );
-                                })}
-                              </div>
-                            </div>
-                          )}
-                        </div>
-                      </CollapsibleContent>
-                    </Card>
-                  </Collapsible>
-                  </div>
-                );
-              })}
+                            <OnboardingQuestionnaireBlock state={onboarding} />
 
                             {/* Action — passer à l'étape suivante */}
                             <div className="flex justify-end pt-4">
