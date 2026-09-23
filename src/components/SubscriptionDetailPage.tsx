@@ -1,4 +1,4 @@
-import { Fragment, useRef, useState } from 'react';
+import { Fragment, useEffect, useRef, useState } from 'react';
 import { useTranslation } from '../utils/languageContext';
 import {
   Building2,
@@ -51,6 +51,7 @@ import {
   Percent,
   Handshake,
   RefreshCw,
+  EyeOff,
 } from 'lucide-react';
 import { motion } from 'motion/react';
 import { Badge } from './ui/badge';
@@ -76,6 +77,11 @@ import { SubscriptionInfoPopover } from './SubscriptionInfoPopover';
 import { PartyTypeBadge } from './ui/party-type-badge';
 import { QuestionActions, QuestionStatus } from './QuestionActions';
 import { QuestionCommentThread } from './QuestionCommentThread';
+import {
+  QuestionDependencyBadge,
+  QuestionDependentsBadge,
+  type DependentQuestionEntry,
+} from './QuestionDependencyBadges';
 import { IntegrationsTab } from './IntegrationsTab';
 import {
   Collapsible,
@@ -98,6 +104,10 @@ import {
   mockEmails,
   mockCapitalCalls,
   mockInitEmails,
+  findMockQuestion,
+  getHidingAnswers,
+  getMockQuestionDependents,
+  getMockQuestionId,
 } from '../utils/subscriptionDetailMockData';
 import {
   OnboardingCompletionCard,
@@ -193,6 +203,17 @@ export function SubscriptionDetailPage({ subscription: subscriptionProp, onBack 
   const [activeOnboardingSection, setActiveOnboardingSection] = useState<string>(mockSections[0].id);
   const onboardingSectionRefs = useRef<Record<string, HTMLDivElement | null>>({});
 
+  // Navigation entre questions liées : la ligne cible est mise en évidence quelques secondes.
+  const questionRowRefs = useRef<Record<string, HTMLDivElement | null>>({});
+  const [highlightedQuestionId, setHighlightedQuestionId] = useState<string | null>(null);
+  const highlightTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  useEffect(
+    () => () => {
+      if (highlightTimeoutRef.current) clearTimeout(highlightTimeoutRef.current);
+    },
+    [],
+  );
+
   // Risk validation state
   const [riskValidated, setRiskValidated] = useState(false);
   const [riskValidationDate, setRiskValidationDate] = useState<string | null>(null);
@@ -227,17 +248,20 @@ export function SubscriptionDetailPage({ subscription: subscriptionProp, onBack 
     const section = mockSections.find(s => s.id === sectionId);
     if (!section) return;
 
-    // Approve all questions in the section
+    // Approve all questions in the section (hidden conditional questions are left untouched)
     const newStatuses = { ...questionStatuses };
+    let approved = 0;
     section.questions.forEach((_, idx) => {
-      const questionId = `${sectionId}-${idx}`;
+      const questionId = getMockQuestionId(sectionId, idx);
+      if (!isQuestionActive(questionId)) return;
       newStatuses[questionId] = 'approved';
+      approved += 1;
     });
-    
+
     setQuestionStatuses(newStatuses);
 
     toast.success(t('subscriptions.detail.onboarding.sectionValidatedToast'), {
-      description: t('subscriptions.detail.onboarding.sectionValidatedDesc', { count: section.questions.length, title: sectionTitle }),
+      description: t('subscriptions.detail.onboarding.sectionValidatedDesc', { count: approved, title: sectionTitle }),
     });
   };
 
@@ -315,6 +339,44 @@ export function SubscriptionDetailPage({ subscription: subscriptionProp, onBack 
     }));
   };
 
+  // Réponse courante d'une question : modification locale sinon donnée de la maquette
+  const resolveQuestionResponse = (questionId: string): string =>
+    questionResponses[questionId] || findMockQuestion(questionId)?.question.response || '';
+
+  // Une question conditionnelle n'est affichée à l'investisseur que si sa question
+  // pilote est elle-même affichée et porte une réponse activante.
+  const isQuestionActive = (questionId: string, depth = 0): boolean => {
+    const ref = findMockQuestion(questionId);
+    const dependency = ref?.question.dependsOn;
+    if (!ref || !dependency || depth > 10) return true;
+    if (!isQuestionActive(dependency.parentId, depth + 1)) return false;
+    return dependency.showWhen.includes(resolveQuestionResponse(dependency.parentId));
+  };
+
+  const getDependentEntries = (questionId: string): DependentQuestionEntry[] =>
+    getMockQuestionDependents(questionId).map(dependent => ({
+      id: dependent.id,
+      label: dependent.question.question,
+      sectionTitleKey: dependent.sectionTitleKey,
+      response: resolveQuestionResponse(dependent.id),
+      showWhen: dependent.question.dependsOn?.showWhen ?? [],
+      isActive: isQuestionActive(dependent.id),
+    }));
+
+  const handleNavigateToQuestion = (questionId: string) => {
+    const target = findMockQuestion(questionId);
+    if (!target) return;
+    setActiveOnboardingSection(target.sectionId);
+    setOpenSections(prev => (prev.includes(target.sectionId) ? prev : [...prev, target.sectionId]));
+    setHighlightedQuestionId(questionId);
+    if (highlightTimeoutRef.current) clearTimeout(highlightTimeoutRef.current);
+    highlightTimeoutRef.current = setTimeout(() => setHighlightedQuestionId(null), 2500);
+    // La section peut être en cours d'ouverture : on attend son rendu avant de défiler.
+    setTimeout(() => {
+      questionRowRefs.current[questionId]?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    }, 80);
+  };
+
   // Etat d'une reponse : non remplie, en attente de validation, a corriger ou validee
   const getQuestionState = (
     sectionId: string,
@@ -341,6 +403,7 @@ export function SubscriptionDetailPage({ subscription: subscriptionProp, onBack 
     const section = mockSections.find(s => s.id === sectionId);
     if (!section) return stats;
     section.questions.forEach((question, idx) => {
+      if (!isQuestionActive(getMockQuestionId(sectionId, idx))) return;
       addToBucketStats(stats, getQuestionState(sectionId, idx, question));
     });
     return stats;
@@ -1498,37 +1561,108 @@ export function SubscriptionDetailPage({ subscription: subscriptionProp, onBack 
                               {/* Questions Table */}
                               <div className="divide-y divide-border/50">
                                 {section.questions.map((item, idx) => {
-                                  const questionId = `${section.id}-${idx}`;
+                                  const questionId = getMockQuestionId(section.id, idx);
                                   const status = questionStatuses[questionId] || 'pending';
                                   const response = questionResponses[questionId] || item.response;
                                   const comments = questionComments[questionId] || [];
                                   const hasUnresolved = comments.some((c: any) => !c.resolved);
                                   const isCommentOpen = activeCommentThread === questionId;
 
+                                  // Liens conditionnels : questions pilotées par celle-ci, et question pilote de celle-ci
+                                  const dependents = getDependentEntries(questionId);
+                                  const parentRef = item.dependsOn ? findMockQuestion(item.dependsOn.parentId) : undefined;
+                                  const isActive = isQuestionActive(questionId);
+                                  const isHighlighted = highlightedQuestionId === questionId;
+
                                   return (
-                                    <div key={idx}>
-                                      <div className="grid grid-cols-12 gap-4 p-4 hover:bg-muted transition-colors">
-                                        <div className="col-span-4 text-sm text-foreground/80 flex items-center gap-2">
-                                          {item.hasAlert && (
-                                            <AlertCircle className="w-4 h-4 text-red-500 flex-shrink-0" />
+                                    <div
+                                      key={idx}
+                                      ref={el => {
+                                        questionRowRefs.current[questionId] = el;
+                                      }}
+                                      style={{ scrollMarginTop: '5rem' }}
+                                    >
+                                      <div
+                                        className={`grid grid-cols-12 gap-4 p-4 transition-colors ${
+                                          isHighlighted
+                                            ? 'bg-primary/5 ring-1 ring-inset ring-primary/50'
+                                            : 'hover:bg-muted'
+                                        } ${isActive ? '' : 'bg-muted/30'}`}
+                                      >
+                                        <div className="col-span-4 min-w-0 text-sm text-foreground/80 flex flex-col justify-center gap-1.5">
+                                          <div className="flex items-center gap-2">
+                                            {item.hasAlert && (
+                                              <AlertCircle className="w-4 h-4 text-red-500 flex-shrink-0" />
+                                            )}
+                                            <span
+                                              className={
+                                                status === 'rejected'
+                                                  ? 'text-red-700'
+                                                  : isActive
+                                                    ? ''
+                                                    : 'text-muted-foreground'
+                                              }
+                                            >
+                                              {item.question}
+                                            </span>
+                                          </div>
+                                          {(dependents.length > 0 || (item.dependsOn && parentRef)) && (
+                                            <div className="flex flex-wrap items-center gap-1.5">
+                                              {dependents.length > 0 && (
+                                                <QuestionDependentsBadge
+                                                  currentResponse={response || ''}
+                                                  dependents={dependents}
+                                                  onNavigate={handleNavigateToQuestion}
+                                                />
+                                              )}
+                                              {item.dependsOn && parentRef && (
+                                                <QuestionDependencyBadge
+                                                  parent={{
+                                                    id: parentRef.id,
+                                                    label: parentRef.question.question,
+                                                    sectionTitleKey: parentRef.sectionTitleKey,
+                                                    response: resolveQuestionResponse(parentRef.id),
+                                                  }}
+                                                  showWhen={item.dependsOn.showWhen}
+                                                  hideWhen={getHidingAnswers(parentRef.question, item.dependsOn.showWhen)}
+                                                  isActive={isActive}
+                                                  onNavigate={handleNavigateToQuestion}
+                                                />
+                                              )}
+                                            </div>
                                           )}
-                                          <span className={status === 'rejected' ? 'text-red-700' : ''}>{item.question}</span>
                                         </div>
                                         <div className="col-span-3 text-sm font-medium text-foreground">
-                                          {response || <span className="text-muted-foreground/60 italic">{t('subscriptions.detail.onboarding.notProvided')}</span>}
+                                          {!isActive ? (
+                                            <span className="text-muted-foreground/60 italic">
+                                              {t('subscriptions.detail.onboarding.dependencies.notApplicable')}
+                                            </span>
+                                          ) : (
+                                            response || <span className="text-muted-foreground/60 italic">{t('subscriptions.detail.onboarding.notProvided')}</span>
+                                          )}
                                         </div>
                                         <div className="col-span-5 flex items-center justify-end">
-                                          <QuestionActions
-                                            questionId={questionId}
-                                            currentResponse={response || ''}
-                                            currentStatus={status}
-                                            commentCount={comments.length}
-                                            hasUnresolvedComments={hasUnresolved}
-                                            onApprove={() => handleApproveQuestion(questionId)}
-                                            onReject={() => handleRejectQuestion(questionId)}
-                                            onModify={(newValue) => handleModifyQuestion(questionId, newValue)}
-                                            onComment={() => handleToggleComment(questionId)}
-                                          />
+                                          {isActive ? (
+                                            <QuestionActions
+                                              questionId={questionId}
+                                              currentResponse={response || ''}
+                                              currentStatus={status}
+                                              commentCount={comments.length}
+                                              hasUnresolvedComments={hasUnresolved}
+                                              onApprove={() => handleApproveQuestion(questionId)}
+                                              onReject={() => handleRejectQuestion(questionId)}
+                                              onModify={(newValue) => handleModifyQuestion(questionId, newValue)}
+                                              onComment={() => handleToggleComment(questionId)}
+                                            />
+                                          ) : (
+                                            <div
+                                              className="flex items-center gap-1.5 text-xs text-muted-foreground"
+                                              title={t('subscriptions.detail.onboarding.dependencies.notCounted')}
+                                            >
+                                              <EyeOff className="w-3.5 h-3.5" />
+                                              <span>{t('subscriptions.detail.onboarding.dependencies.hiddenForInvestor')}</span>
+                                            </div>
+                                          )}
                                         </div>
                                       </div>
                                       

@@ -631,6 +631,29 @@
           },
           "documentsCountOne": "{{count}} document",
           "documentsCountMany": "{{count}} documents"
+        },
+        "dependencies": {
+          "pilotBadgeOne": "Drives 1 question",
+          "pilotBadgeMany": "Drives {{count}} questions",
+          "pilotTitle": "Dependent questions",
+          "pilotHint": "Answers to this question show or hide the questions below.",
+          "currentAnswer": "Current answer",
+          "shownIf": "Shown if",
+          "hiddenIf": "Hidden if",
+          "shown": "Shown",
+          "hidden": "Hidden",
+          "anyOtherAnswer": "Any other answer",
+          "dependentBadge": "Conditional",
+          "dependentTooltip": "Depends on the answer to: {{question}}",
+          "dependentTitle": "Conditional question",
+          "dependentHint": "Whether this question is shown depends on the answer to the driving question below.",
+          "currentlyShown": "Currently shown to the investor",
+          "currentlyHidden": "Currently hidden: the driving answer does not enable it",
+          "viewQuestion": "View question",
+          "viewPilotQuestion": "View driving question",
+          "hiddenForInvestor": "Hidden from the investor",
+          "notApplicable": "Not applicable",
+          "notCounted": "Not counted in file completion"
         }
       },
       "validation": {

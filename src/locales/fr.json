@@ -631,6 +631,29 @@
           },
           "documentsCountOne": "{{count}} document",
           "documentsCountMany": "{{count}} documents"
+        },
+        "dependencies": {
+          "pilotBadgeOne": "Conditionne 1 question",
+          "pilotBadgeMany": "Conditionne {{count}} questions",
+          "pilotTitle": "Questions conditionnées",
+          "pilotHint": "Les réponses à cette question affichent ou masquent les questions ci-dessous.",
+          "currentAnswer": "Réponse actuelle",
+          "shownIf": "Affichée si",
+          "hiddenIf": "Masquée si",
+          "shown": "Affichée",
+          "hidden": "Masquée",
+          "anyOtherAnswer": "Toute autre réponse",
+          "dependentBadge": "Conditionnelle",
+          "dependentTooltip": "Dépend de la réponse à : {{question}}",
+          "dependentTitle": "Question conditionnelle",
+          "dependentHint": "L'affichage de cette question dépend de la réponse à la question pilote ci-dessous.",
+          "currentlyShown": "Actuellement affichée à l'investisseur",
+          "currentlyHidden": "Actuellement masquée : la réponse pilote ne l'active pas",
+          "viewQuestion": "Voir la question",
+          "viewPilotQuestion": "Voir la question pilote",
+          "hiddenForInvestor": "Masquée pour l'investisseur",
+          "notApplicable": "Sans objet",
+          "notCounted": "Non comptabilisée dans la complétion du dossier"
         }
       },
       "validation": {

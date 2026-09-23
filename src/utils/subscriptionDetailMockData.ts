@@ -6,11 +6,21 @@ import {
   TrendingUp,
 } from 'lucide-react';
 
+export interface MockQuestionDependency {
+  /** Question pilote, identifiée par `${sectionId}-${index}` comme dans la page de détail. */
+  parentId: string;
+  /** Réponses de la question pilote qui affichent cette question. */
+  showWhen: string[];
+}
+
 export interface MockQuestion {
   question: string;
   response: string;
   verified: boolean;
   hasAlert?: boolean;
+  /** Réponses possibles, renseignées pour les questions à choix qui pilotent d'autres questions. */
+  options?: string[];
+  dependsOn?: MockQuestionDependency;
 }
 
 export interface MockSection {
@@ -74,6 +84,14 @@ export interface MockCapitalCall {
   status: string;
 }
 
+// Réponses à "Vous êtes" qui déclenchent les questions sur l'activité professionnelle.
+const PROFESSIONAL_ACTIVITY_ANSWERS = [
+  "Salarié(e)",
+  "Indépendant(e)",
+  "Chef d'entreprise",
+  "Demandeur d'emploi",
+];
+
 export const mockSections: MockSection[] = [
   {
     id: 'identity',
@@ -98,7 +116,13 @@ export const mockSections: MockSection[] = [
       { question: "Pays*", response: "France", verified: true },
       { question: "Mon adresse de résidence est différente de mon adresse fiscale*", response: "Non", verified: true },
       { question: "Numéro d'identification Fiscale (NIF)*", response: "9739373633839", verified: true },
-      { question: "Je possède un deuxième Numéro d'Identification Fiscale (NIF/TIN) *", response: "Non", verified: true },
+      { question: "Je possède un deuxième Numéro d'Identification Fiscale (NIF/TIN) *", response: "Non", verified: true, options: ["Oui", "Non"] },
+      {
+        question: "Deuxième Numéro d'Identification Fiscale (NIF/TIN)*",
+        response: "",
+        verified: false,
+        dependsOn: { parentId: 'identity-18', showWhen: ['Oui'] },
+      },
       { question: "Citoyen(ne) et/ou résident fiscal(e) des États-Unis d'Amérique*", response: "Non", verified: true },
       { question: "Je certifie que les informations relatives à ma résidence fiscale déclarées ci-dessus sont correctes.*", response: "Oui", verified: true },
     ]
@@ -122,8 +146,18 @@ export const mockSections: MockSection[] = [
     icon: DollarSign,
     questions: [
       { question: "Type*", response: "Compte courant", verified: true },
-      { question: "Le compte bancaire utilisé pour cette souscription est-il un compte individuel ou un compte joint ?*", response: "Compte joint", verified: true },
-      { question: "Quel est le régime matrimonial des titulaires du compte joint ?*", response: "Communauté universelle", verified: false },
+      {
+        question: "Le compte bancaire utilisé pour cette souscription est-il un compte individuel ou un compte joint ?*",
+        response: "Compte joint",
+        verified: true,
+        options: ["Compte individuel", "Compte joint"],
+      },
+      {
+        question: "Quel est le régime matrimonial des titulaires du compte joint ?*",
+        response: "Communauté universelle",
+        verified: false,
+        dependsOn: { parentId: 'banking-1', showWhen: ['Compte joint'] },
+      },
       { question: "Je confirme avoir pris connaissance du fait que le versement de l'engagement n'est possible que par prélèvement automatique.*", response: "Oui", verified: true },
       { question: "Nom de votre établissement bancaire", response: "BNP Paribas", verified: true },
       { question: "Adresse de la banque", response: "16 Boulevard des Italiens, 75009 Paris", verified: true },
@@ -137,15 +171,54 @@ export const mockSections: MockSection[] = [
     titleKey: 'subscriptions.detail.sections.professional',
     icon: FileText,
     questions: [
-      { question: "Vous êtes*", response: "Demandeur d'emploi", verified: true },
-      { question: "Catégorie socio-professionnelle", response: "Artisans", verified: true },
-      { question: "Secteur d'activité*", response: "banque", verified: true },
-      { question: "Profession*", response: "banquier", verified: false },
+      {
+        question: "Vous êtes*",
+        response: "Demandeur d'emploi",
+        verified: true,
+        options: [
+          "Salarié(e)",
+          "Indépendant(e)",
+          "Chef d'entreprise",
+          "Demandeur d'emploi",
+          "Retraité(e)",
+          "Étudiant(e)",
+          "Sans activité professionnelle",
+        ],
+      },
+      {
+        question: "Catégorie socio-professionnelle",
+        response: "Artisans",
+        verified: true,
+        dependsOn: { parentId: 'professional-0', showWhen: PROFESSIONAL_ACTIVITY_ANSWERS },
+      },
+      {
+        question: "Secteur d'activité*",
+        response: "banque",
+        verified: true,
+        dependsOn: { parentId: 'professional-0', showWhen: PROFESSIONAL_ACTIVITY_ANSWERS },
+      },
+      {
+        question: "Profession*",
+        response: "banquier",
+        verified: false,
+        dependsOn: { parentId: 'professional-0', showWhen: PROFESSIONAL_ACTIVITY_ANSWERS },
+      },
       { question: "Avez vous exercé une profession financière durant plus d'un an ? *", response: "Oui", verified: true },
-      { question: "Avez vous des liens avec des société cotées ? *", response: "Oui", verified: true },
-      { question: "Pouvez-vous préciser ? *", response: "Actionnaire minoritaire", verified: true },
+      { question: "Avez vous des liens avec des société cotées ? *", response: "Oui", verified: true, options: ["Oui", "Non"] },
+      {
+        question: "Pouvez-vous préciser ? *",
+        response: "Actionnaire minoritaire",
+        verified: true,
+        dependsOn: { parentId: 'professional-5', showWhen: ['Oui'] },
+      },
       { question: "Détenez-vous des parts ou actions dans des sociétés (< de 25 %) ? *", response: "Non", verified: true },
-      { question: "Exercez-vous ou avez-vous exercé une fonction politiquement exposée ?*", response: "Non", verified: true },
+      { question: "Exercez-vous ou avez-vous exercé une fonction politiquement exposée ?*", response: "Non", verified: true, options: ["Oui", "Non"] },
+      {
+        question: "Précisez la fonction politiquement exposée et la période d'exercice*",
+        response: "",
+        verified: false,
+        dependsOn: { parentId: 'professional-8', showWhen: ['Oui'] },
+      },
       { question: "Une personne de votre entourage exerce-t-elle ou a-t-elle exercé depuis moins d'un an une fonction politiquement exposée ?*", response: "Non", verified: true }
     ]
   },
@@ -156,9 +229,19 @@ export const mockSections: MockSection[] = [
     questions: [
       { question: "Quels sont les revenus annuels nets de votre foyer ?*", response: "800 000,00 EUR", verified: true },
       { question: "Statut de votre résidence principale*", response: "Hébergé à titre gratuit", verified: true },
-      { question: "Avez-vous un ou plusieurs engagement(s) financier(s) régulier(s) ?*", response: "Oui", verified: false },
-      { question: "Montant*", response: "1 000,00 EUR", verified: true },
-      { question: "Fréquence*", response: "Mensuel", verified: true },
+      { question: "Avez-vous un ou plusieurs engagement(s) financier(s) régulier(s) ?*", response: "Oui", verified: false, options: ["Oui", "Non"] },
+      {
+        question: "Montant*",
+        response: "1 000,00 EUR",
+        verified: true,
+        dependsOn: { parentId: 'financial-2', showWhen: ['Oui'] },
+      },
+      {
+        question: "Fréquence*",
+        response: "Mensuel",
+        verified: true,
+        dependsOn: { parentId: 'financial-2', showWhen: ['Oui'] },
+      },
       { question: "Quel est le montant estimé de votre patrimoine financier ?*", response: "1 999 999,00 EUR", verified: true },
       { question: "Part du patrimoine financier dans votre patrimoine global :*", response: ">50%", verified: true },
       { question: "Part des titres non cotés (comme les FCPi/FIP/FCPR) dans ce portefeuille financier :*", response: "<10%", verified: true },
@@ -172,6 +255,58 @@ export const mockSections: MockSection[] = [
     questions: []
   }
 ];
+
+export interface MockQuestionRef {
+  id: string;
+  sectionId: string;
+  sectionTitleKey: string;
+  index: number;
+  question: MockQuestion;
+}
+
+export const getMockQuestionId = (sectionId: string, index: number) => `${sectionId}-${index}`;
+
+export function findMockQuestion(questionId: string): MockQuestionRef | undefined {
+  for (const section of mockSections) {
+    const index = section.questions.findIndex(
+      (_, idx) => getMockQuestionId(section.id, idx) === questionId,
+    );
+    if (index >= 0) {
+      return {
+        id: questionId,
+        sectionId: section.id,
+        sectionTitleKey: section.titleKey,
+        index,
+        question: section.questions[index],
+      };
+    }
+  }
+  return undefined;
+}
+
+/** Questions dont l'affichage dépend de la réponse à `questionId`, dans l'ordre du questionnaire. */
+export function getMockQuestionDependents(questionId: string): MockQuestionRef[] {
+  const dependents: MockQuestionRef[] = [];
+  mockSections.forEach(section => {
+    section.questions.forEach((question, idx) => {
+      if (question.dependsOn?.parentId === questionId) {
+        dependents.push({
+          id: getMockQuestionId(section.id, idx),
+          sectionId: section.id,
+          sectionTitleKey: section.titleKey,
+          index: idx,
+          question,
+        });
+      }
+    });
+  });
+  return dependents;
+}
+
+/** Réponses de la question pilote qui masquent la question dépendante (les options hors `showWhen`). */
+export function getHidingAnswers(parent: MockQuestion, showWhen: string[]): string[] {
+  return (parent.options ?? []).filter(option => !showWhen.includes(option));
+}
 
 export const mockRequiredDocuments: MockRequiredDocument[] = [
   { nameKey: 'subscriptions.detail.docs.passport', dateSent: "19/05/2026 16:10", issueDate: "12/03/2019", expiration: "12/03/2029", hasFile: true },
