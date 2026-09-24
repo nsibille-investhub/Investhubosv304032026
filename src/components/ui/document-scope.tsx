@@ -273,9 +273,6 @@ function buildTags(
         hint: [subscription.fund, subscription.shareClass].filter(Boolean).join(' · ') || subscription.label,
       });
     }
-    if (scope.structure) {
-      tags.push({ key: 'structure', icon: Building2, label: scope.structure, typeKey: 'ged.scope.types.structure' });
-    }
     if (isSpecific(scope.fund, ALL_FUNDS_LABELS)) {
       tags.push({ key: 'fund', icon: Landmark, label: scope.fund!, typeKey: 'ged.scope.types.fund' });
     }
@@ -356,16 +353,44 @@ export function ScopeInvestorLink({
           )}
         >
           <Icon className="h-3 w-3 shrink-0 text-gray-400 transition-colors group-hover:text-blue-500" />
-          <span className="max-w-[200px] truncate group-hover:underline">{scope.investor}</span>
+          <span
+            className={cn(
+              'min-w-0 truncate group-hover:underline',
+              scope.structure ? 'max-w-[140px]' : 'max-w-[200px]',
+            )}
+          >
+            {scope.investor}
+          </span>
+          {scope.structure && (
+            <>
+              <span className="shrink-0 text-gray-300 dark:text-gray-600">/</span>
+              <Building2 className="h-3 w-3 shrink-0 text-gray-400 transition-colors group-hover:text-blue-500" />
+              <span className="min-w-0 max-w-[140px] truncate group-hover:underline">
+                {scope.structure}
+              </span>
+            </>
+          )}
           <ChevronRight className="h-3 w-3 shrink-0 opacity-50 transition-opacity group-hover:opacity-100" />
         </button>
       </TooltipTrigger>
       <TooltipContent side="top">
-        <span className="text-xs">
-          {kind === 'corporate' ? t('ged.scope.investorCorporate') : t('ged.scope.investorIndividual')}
-          {' · '}
-          {t('ged.scope.openInvestor')}
-        </span>
+        <div className="space-y-0.5 text-xs">
+          <div>
+            <span className="opacity-70">
+              {kind === 'corporate' ? t('ged.scope.investorCorporate') : t('ged.scope.investorIndividual')}
+            </span>
+            {' · '}
+            {scope.investor}
+          </div>
+          {scope.structure && (
+            <div>
+              <span className="opacity-70">{t('ged.scope.types.structure')}</span>
+              {' · '}
+              {scope.structure}
+            </div>
+          )}
+          <div className="opacity-70">{t('ged.scope.openInvestor')}</div>
+        </div>
       </TooltipContent>
     </Tooltip>
   );
