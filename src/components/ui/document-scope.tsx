@@ -1,5 +1,5 @@
 /**
- * Document scope — Design System component
+ * Document scope - Design System component
  * Key: ds-document-scope
  *
  * Single source of truth for "where does this document live and who can see
