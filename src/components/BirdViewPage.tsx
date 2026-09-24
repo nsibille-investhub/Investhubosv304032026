@@ -1039,8 +1039,26 @@ export function BirdViewPage({ onBack }: BirdViewPageProps) {
               <FileText className="w-4 h-4 text-gray-400" />
             </div>
 
-            {/* Name */}
-            <span className="min-w-[10rem] flex-1 text-sm text-gray-900 dark:text-gray-100">{node.name}</span>
+            {/* Name + scope */}
+            <div className="flex min-w-0 flex-1 flex-col gap-1">
+              <span className="text-sm text-gray-900 dark:text-gray-100">{node.name}</span>
+              <DocumentScope
+                layout="inline"
+                className="flex-wrap"
+                scope={{
+                  nature: node.isNominatif ? 'nominative' : 'generic',
+                  folderPath: parentPath,
+                  investor: node.investorRestriction,
+                  subscription: node.subscriptionRestriction,
+                  fund: node.fundRestriction || inheritedContext.fund,
+                  shareClass: node.shareClassRestriction || inheritedContext.shareClass,
+                  segments:
+                    node.segmentRestrictions && node.segmentRestrictions.length > 0
+                      ? node.segmentRestrictions
+                      : inheritedContext.segments,
+                }}
+              />
+            </div>
             <DocumentCategoryBadge category={node.documentCategory} />
 
             {/* Metadata */}
@@ -1051,23 +1069,6 @@ export function BirdViewPage({ onBack }: BirdViewPageProps) {
               </span>
               <span className="uppercase font-medium">{node.format}</span>
             </div>
-
-            <DocumentScope
-              layout="inline"
-              className="shrink"
-              scope={{
-                nature: node.isNominatif ? 'nominative' : 'generic',
-                folderPath: parentPath,
-                investor: node.investorRestriction,
-                subscription: node.subscriptionRestriction,
-                fund: node.fundRestriction || inheritedContext.fund,
-                shareClass: node.shareClassRestriction || inheritedContext.shareClass,
-                segments:
-                  node.segmentRestrictions && node.segmentRestrictions.length > 0
-                    ? node.segmentRestrictions
-                    : inheritedContext.segments,
-              }}
-            />
 
             {/* Statut selon le type de document */}
             {(() => {

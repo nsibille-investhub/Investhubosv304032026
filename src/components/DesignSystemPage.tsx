@@ -1756,8 +1756,8 @@ export function DesignSystemPage() {
         <p className="text-sm text-[#4F6166] dark:text-[#9DB2AE] mb-1">
           Périmètre d&apos;un document, identique dans l&apos;explorer documentaire, la Bird View et le centre de publication :
           type (générique ou nominatif), investisseur hors tag avec lien vers sa fiche (icône PP ou PM), suivi de sa structure (investisseur / structure), puis tags de ciblage.
-          La souscription est une étiquette carrée. Le bouton <strong className="font-semibold">i</strong> ouvre au clic le détail :
-          emplacement, identification complète de la souscription, ciblage, audience et téléchargement de l&apos;audience en CSV.
+          La souscription est une étiquette carrée, placée après le fonds. Le bouton <strong className="font-semibold">i</strong> ouvre au clic le détail :
+          identification complète de la souscription, ciblage et téléchargement de l&apos;audience en CSV.
         </p>
         <p className="text-xs text-[#4F6166] dark:text-[#9DB2AE] mb-4">
           Identifiant&nbsp;: <code className="text-xs px-1 py-0.5 rounded bg-[#F1F5F4] dark:bg-[#1C2624] font-semibold">ds-document-scope</code> - Import&nbsp;:

@@ -7,10 +7,10 @@
  * publication center (validation page).
  *
  *  - Nature badge (generic / nominative)
- *  - Investor as a link (PP / PM icon), outside of the tags
- *  - Targeting tags (subscription as a square chip, structure, fund, share, segments)
- *  - "i" button opening, on click, the full scope: location, subscription
- *    identification, targeting, audience and the audience CSV download
+ *  - Investor / structure as a link (PP / PM icons), outside of the tags
+ *  - Targeting tags (fund then subscription as a square chip, share, segments)
+ *  - "i" button opening, on click, the full scope: investor, subscription
+ *    identification, targeting and the audience CSV download
  *
  * Exports:
  *  - <DocumentScope>          the widget (layout "stacked" or "inline")
@@ -25,7 +25,6 @@ import {
   ChevronRight,
   Download,
   FileText,
-  Folder,
   Globe,
   Info,
   Landmark,
@@ -244,6 +243,18 @@ export function resolveScopeSubscription(scope: DocumentScopeData): ScopeSubscri
   };
 }
 
+function withSubscriptionInvestor(
+  scope: DocumentScopeData,
+  subscription: ScopeSubscriptionInfo | null,
+): DocumentScopeData {
+  if (!subscription) return scope;
+  return {
+    ...scope,
+    investor: scope.investor ?? subscription.investor,
+    structure: scope.structure ?? subscription.structure,
+  };
+}
+
 export type ScopeInvestorKind = 'individual' | 'corporate';
 
 const CORPORATE_MARKERS =
@@ -263,6 +274,10 @@ function buildTags(
 ): ScopeTagItem[] {
   const tags: ScopeTagItem[] = [];
   if (scope.nature === 'nominative') {
+    const fund = isSpecific(scope.fund, ALL_FUNDS_LABELS) ? scope.fund : subscription?.fund;
+    if (fund) {
+      tags.push({ key: 'fund', icon: Landmark, label: fund, typeKey: 'ged.scope.types.fund' });
+    }
     if (subscription) {
       tags.push({
         key: 'subscription',
@@ -270,11 +285,8 @@ function buildTags(
         label: subscription.code,
         typeKey: 'ged.scope.types.subscription',
         square: true,
-        hint: [subscription.fund, subscription.shareClass].filter(Boolean).join(' · ') || subscription.label,
+        hint: subscription.shareClass || subscription.label,
       });
-    }
-    if (isSpecific(scope.fund, ALL_FUNDS_LABELS)) {
-      tags.push({ key: 'fund', icon: Landmark, label: scope.fund!, typeKey: 'ged.scope.types.fund' });
     }
     return tags;
   }
@@ -441,7 +453,8 @@ export function DocumentScope({
   const { t } = useTranslation();
   const subscription = useMemo(() => resolveScopeSubscription(scope), [scope]);
   const tags = buildTags(scope, subscription, t('ged.scope.allFunds'));
-  const showInvestor = scope.nature === 'nominative' && !!scope.investor;
+  const investorScope = withSubscriptionInvestor(scope, subscription);
+  const showInvestor = scope.nature === 'nominative' && !!investorScope.investor;
 
   const infoButton = (
     <Popover>
@@ -476,26 +489,14 @@ export function DocumentScope({
   const tagList = tags.map((tag) => <ScopeTag key={tag.key} tag={tag} />);
 
   if (layout === 'inline') {
-    const inlineTags = subscription
-      ? tags.filter((tag) => tag.key === 'subscription')
-      : tags;
     return (
       <div className={cn('flex min-w-0 items-center gap-1.5', className)}>
         {showNature && <DocumentNatureBadge nature={scope.nature} />}
         {showInvestor && (
-          <ScopeInvestorLink scope={scope} onClick={onInvestorClick} className="min-w-[6rem] shrink" />
+          <ScopeInvestorLink scope={investorScope} onClick={onInvestorClick} className="min-w-[6rem] shrink" />
         )}
-        {inlineTags.length > 0 && (
-          <div
-            className={cn(
-              'flex items-center gap-1',
-              subscription ? 'shrink-0' : 'min-w-0 overflow-hidden',
-            )}
-          >
-            {inlineTags.map((tag) => (
-              <ScopeTag key={tag.key} tag={tag} />
-            ))}
-          </div>
+        {tags.length > 0 && (
+          <div className="flex min-w-0 max-w-full items-center gap-1 overflow-hidden">{tagList}</div>
         )}
         {infoButton}
       </div>
@@ -510,7 +511,7 @@ export function DocumentScope({
           {infoButton}
         </div>
       )}
-      {showInvestor && <ScopeInvestorLink scope={scope} onClick={onInvestorClick} />}
+      {showInvestor && <ScopeInvestorLink scope={investorScope} onClick={onInvestorClick} />}
       {tags.length > 0 && (
         <div className="flex max-w-full flex-wrap items-center gap-1">
           {tagList}
@@ -520,8 +521,6 @@ export function DocumentScope({
     </div>
   );
 }
-
-const DETAIL_PREVIEW_LIMIT = 5;
 
 function DetailRow({
   icon: Icon,
@@ -541,11 +540,10 @@ function DetailRow({
   );
 }
 
-function SectionTitle({ children, aside }: { children: ReactNode; aside?: ReactNode }) {
+function SectionTitle({ children }: { children: ReactNode }) {
   return (
-    <div className="mb-1 flex items-center justify-between text-[11px] font-semibold uppercase tracking-wide text-gray-500">
-      <span>{children}</span>
-      {aside && <span className="font-medium normal-case tracking-normal">{aside}</span>}
+    <div className="mb-1 text-[11px] font-semibold uppercase tracking-wide text-gray-500">
+      {children}
     </div>
   );
 }
@@ -564,11 +562,11 @@ function ScopeDetails({
   const { t, lang } = useTranslation();
   const audience = useMemo(() => resolveScopeAudience(scope), [scope]);
   const isNominative = scope.nature === 'nominative';
+  const investorScope = withSubscriptionInvestor(scope, subscription);
   const path = scope.folderPath ?? [];
-  const contacts = audience.investors.flatMap((i) => i.contacts);
-  const previewInvestors = audience.investors.slice(0, DETAIL_PREVIEW_LIMIT);
-  const remaining = audience.investors.length - previewInvestors.length;
-  const targetingTags = tags.filter((tag) => !subscription || tag.key !== 'subscription');
+  const targetingTags = subscription
+    ? tags.filter((tag) => tag.key !== 'subscription' && tag.key !== 'fund')
+    : tags;
   const amountFormatter = new Intl.NumberFormat(lang === 'en' ? 'en-GB' : 'fr-FR', {
     style: 'currency',
     currency: 'EUR',
@@ -601,25 +599,10 @@ function ScopeDetails({
       </div>
 
       <div className="max-h-[60vh] space-y-3 overflow-y-auto px-4 py-3">
-        {path.length > 0 && (
-          <section>
-            <SectionTitle>{t('ged.scope.location')}</SectionTitle>
-            <div className="flex flex-wrap items-center gap-0.5 text-xs text-gray-700 dark:text-gray-300">
-              {path.map((segment, i) => (
-                <span key={`${segment}-${i}`} className="inline-flex items-center gap-0.5">
-                  {i > 0 && <ChevronRight className="h-3 w-3 text-gray-400" />}
-                  {i === path.length - 1 && <Folder className="h-3 w-3 text-amber-500" />}
-                  <span className={cn(i === path.length - 1 && 'font-medium')}>{segment}</span>
-                </span>
-              ))}
-            </div>
-          </section>
-        )}
-
-        {isNominative && scope.investor && (
+        {isNominative && investorScope.investor && (
           <section>
             <SectionTitle>{t('ged.scope.types.investor')}</SectionTitle>
-            <ScopeInvestorLink scope={scope} onClick={onInvestorClick} />
+            <ScopeInvestorLink scope={investorScope} onClick={onInvestorClick} />
           </section>
         )}
 
@@ -630,16 +613,6 @@ function ScopeDetails({
               <DetailRow icon={FileText} label={t('ged.scope.subscription.code')}>
                 <span className="font-medium">{subscription.code}</span>
               </DetailRow>
-              {subscription.investor && (
-                <DetailRow icon={resolveInvestorKind(scope) === 'corporate' ? Building2 : UserRound} label={t('ged.scope.types.investor')}>
-                  {subscription.investor}
-                </DetailRow>
-              )}
-              {subscription.structure && (
-                <DetailRow icon={Building2} label={t('ged.scope.types.structure')}>
-                  {subscription.structure}
-                </DetailRow>
-              )}
               {subscription.fund && (
                 <DetailRow icon={Landmark} label={t('ged.scope.types.fund')}>
                   {subscription.fund}
@@ -681,59 +654,6 @@ function ScopeDetails({
           </section>
         )}
 
-        <section>
-          <SectionTitle
-            aside={
-              <>
-                {t(audience.investorCount > 1 ? 'ged.scope.investorsMany' : 'ged.scope.investorsOne', {
-                  count: audience.investorCount,
-                })}
-                {' · '}
-                {t(audience.contactCount > 1 ? 'ged.scope.contactsMany' : 'ged.scope.contactsOne', {
-                  count: audience.contactCount,
-                })}
-              </>
-            }
-          >
-            {t('ged.scope.audience')}
-          </SectionTitle>
-          {isNominative ? (
-            contacts.length > 0 ? (
-              <ul className="space-y-0.5">
-                {contacts.map((c) => (
-                  <li key={c.id} className="flex items-center justify-between gap-3 text-xs">
-                    <span className="truncate text-gray-800 dark:text-gray-200">{c.name}</span>
-                    {c.role && <span className="shrink-0 text-[10px] text-gray-400">{c.role}</span>}
-                  </li>
-                ))}
-              </ul>
-            ) : (
-              <div className="text-xs text-gray-400">{t('ged.scope.noContact')}</div>
-            )
-          ) : previewInvestors.length > 0 ? (
-            <ul className="space-y-0.5">
-              {previewInvestors.map((inv) => (
-                <li key={inv.id} className="flex items-center justify-between gap-3 text-xs">
-                  <span className="truncate text-gray-800 dark:text-gray-200">{inv.name}</span>
-                  <span className="shrink-0 text-[10px] text-gray-400">
-                    {t(inv.contacts.length > 1 ? 'ged.scope.contactsMany' : 'ged.scope.contactsOne', {
-                      count: inv.contacts.length,
-                    })}
-                  </span>
-                </li>
-              ))}
-              {remaining > 0 && (
-                <li className="text-[11px] text-gray-500">
-                  {t(remaining > 1 ? 'ged.scope.moreInvestorsMany' : 'ged.scope.moreInvestorsOne', {
-                    count: remaining,
-                  })}
-                </li>
-              )}
-            </ul>
-          ) : (
-            <div className="text-xs text-gray-400">{t('ged.scope.noInvestor')}</div>
-          )}
-        </section>
       </div>
 
       <div className="border-t px-4 py-2.5">
