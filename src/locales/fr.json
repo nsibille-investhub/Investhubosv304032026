@@ -3150,7 +3150,6 @@
         "subscription": "Souscription"
       },
       "allFunds": "Tous les fonds",
-      "fullPath": "Chemin complet",
       "detailsTitle": "Périmètre du document",
       "location": "Emplacement",
       "targeting": "Ciblage",
@@ -3173,6 +3172,14 @@
         "contact": "Contact",
         "role": "Rôle",
         "fileName": "audience"
+      },
+      "investorCorporate": "Personne morale",
+      "investorIndividual": "Personne physique",
+      "openInvestor": "Ouvrir la fiche investisseur",
+      "subscription": {
+        "code": "Référence",
+        "commitment": "Montant engagé",
+        "label": "Libellé"
       }
     }
   },

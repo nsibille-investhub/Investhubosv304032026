@@ -3150,7 +3150,6 @@
         "subscription": "Subscription"
       },
       "allFunds": "All funds",
-      "fullPath": "Full path",
       "detailsTitle": "Document scope",
       "location": "Location",
       "targeting": "Targeting",
@@ -3173,6 +3172,14 @@
         "contact": "Contact",
         "role": "Role",
         "fileName": "audience"
+      },
+      "investorCorporate": "Legal entity",
+      "investorIndividual": "Individual",
+      "openInvestor": "Open investor record",
+      "subscription": {
+        "code": "Reference",
+        "commitment": "Commitment",
+        "label": "Label"
       }
     }
   },

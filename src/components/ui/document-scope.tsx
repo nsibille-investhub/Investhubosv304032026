@@ -7,19 +7,19 @@
  * publication center (validation page).
  *
  *  - Nature badge (generic / nominative)
- *  - Folder (last segment) with the full path on hover
- *  - Targeting tags (fund, share, segments, investor, structure, subscription)
- *  - Audience chip (investors or contacts)
- *  - "Full scope" popover, opened on hover or on click (pinned)
- *  - Download audience (CSV)
+ *  - Investor as a link (PP / PM icon), outside of the tags
+ *  - Targeting tags (subscription as a square chip, structure, fund, share, segments)
+ *  - "i" button opening, on click, the full scope: location, subscription
+ *    identification, targeting, audience and the audience CSV download
  *
  * Exports:
  *  - <DocumentScope>          the widget (layout "stacked" or "inline")
  *  - resolveScopeAudience()   audience computed from the GED fixtures
+ *  - resolveScopeSubscription() subscription identification from the fixtures
  *  - downloadScopeAudience()  CSV export of the audience
  */
 
-import { useMemo, useRef, useState, type MouseEvent } from 'react';
+import { useMemo, type MouseEvent, type ReactNode } from 'react';
 import {
   Building2,
   ChevronRight,
@@ -27,12 +27,12 @@ import {
   FileText,
   Folder,
   Globe,
+  Info,
   Landmark,
   Layers3,
-  ScanEye,
   Tag as TagIcon,
   UserRound,
-  Users,
+  Wallet,
   type LucideIcon,
 } from 'lucide-react';
 import { toast } from 'sonner@2.0.3';
@@ -42,6 +42,7 @@ import { Popover, PopoverContent, PopoverTrigger } from './popover';
 import { Tooltip, TooltipContent, TooltipTrigger } from './tooltip';
 import { cn } from './utils';
 import { useTranslation } from '../../utils/languageContext';
+import { navigateToPage } from '../../utils/routing';
 import {
   COMMITMENTS,
   FUNDS,
@@ -72,6 +73,8 @@ export interface DocumentScopeData {
   subscription?: string;
   /** Long subscription label shown on hover (investor, fund, share). */
   subscriptionLabel?: string;
+  /** PP / PM. Inferred from the GED fixtures or the name when omitted. */
+  investorKind?: 'individual' | 'corporate';
   /** Overrides for the computed audience, when the caller knows better. */
   investorCount?: number;
   contacts?: DocumentScopeContact[];
@@ -200,26 +203,78 @@ interface ScopeTagItem {
   icon: LucideIcon;
   label: string;
   typeKey: string;
+  square?: boolean;
   hint?: string;
 }
 
-function buildTags(scope: DocumentScopeData, allFundsLabel: string): ScopeTagItem[] {
+export interface ScopeSubscriptionInfo {
+  code: string;
+  investor?: string;
+  structure?: string;
+  fund?: string;
+  shareClass?: string;
+  commitmentEur?: number;
+  label?: string;
+}
+
+const COMMITMENT_BY_ID = new Map(COMMITMENTS.map((c) => [c.subscriptionId, c] as const));
+
+export function resolveScopeSubscription(scope: DocumentScopeData): ScopeSubscriptionInfo | null {
+  if (!scope.subscription) return null;
+  const commitment = COMMITMENT_BY_ID.get(scope.subscription);
+  if (!commitment) {
+    return {
+      code: scope.subscription,
+      investor: scope.investor,
+      structure: scope.structure,
+      fund: isSpecific(scope.fund, ALL_FUNDS_LABELS) ? scope.fund : undefined,
+      shareClass: scope.shareClass,
+      label: scope.subscriptionLabel,
+    };
+  }
+  const investor = INVESTORS.find((i) => i.id === commitment.investorId);
+  const fund = FUNDS.find((f) => f.code === commitment.fundCode);
+  return {
+    code: commitment.subscriptionId,
+    investor: investor?.name ?? scope.investor,
+    structure: investor?.structure ?? scope.structure,
+    fund: fund?.name ?? commitment.fundCode,
+    shareClass: commitment.shareClass,
+    commitmentEur: commitment.commitmentEur,
+  };
+}
+
+export type ScopeInvestorKind = 'individual' | 'corporate';
+
+const CORPORATE_MARKERS =
+  /\b(holdings?|sas|sa|sarl|sci|scpi|ltd|llc|lp|plc|gmbh|inc|fund|trust|capital|office|group|groupe|partners|pension|insurance|assurances?|bank|banque|foundation|fondation|société|societe|invest|management|plan|scheme)\b/i;
+
+export function resolveInvestorKind(scope: DocumentScopeData): ScopeInvestorKind {
+  if (scope.investorKind) return scope.investorKind;
+  const inv = scope.investor ? INVESTORS_BY_NAME.get(scope.investor) : undefined;
+  if (inv) return inv.typology === 'HNWI' || inv.typology === 'UHNWI' ? 'individual' : 'corporate';
+  return scope.investor && CORPORATE_MARKERS.test(scope.investor) ? 'corporate' : 'individual';
+}
+
+function buildTags(
+  scope: DocumentScopeData,
+  subscription: ScopeSubscriptionInfo | null,
+  allFundsLabel: string,
+): ScopeTagItem[] {
   const tags: ScopeTagItem[] = [];
   if (scope.nature === 'nominative') {
-    if (scope.investor) {
-      tags.push({ key: 'investor', icon: UserRound, label: scope.investor, typeKey: 'ged.scope.types.investor' });
-    }
-    if (scope.structure) {
-      tags.push({ key: 'structure', icon: Building2, label: scope.structure, typeKey: 'ged.scope.types.structure' });
-    }
-    if (scope.subscription) {
+    if (subscription) {
       tags.push({
         key: 'subscription',
         icon: FileText,
-        label: scope.subscription,
+        label: subscription.code,
         typeKey: 'ged.scope.types.subscription',
-        hint: scope.subscriptionLabel,
+        square: true,
+        hint: [subscription.fund, subscription.shareClass].filter(Boolean).join(' · ') || subscription.label,
       });
+    }
+    if (scope.structure) {
+      tags.push({ key: 'structure', icon: Building2, label: scope.structure, typeKey: 'ged.scope.types.structure' });
     }
     if (isSpecific(scope.fund, ALL_FUNDS_LABELS)) {
       tags.push({ key: 'fund', icon: Landmark, label: scope.fund!, typeKey: 'ged.scope.types.fund' });
@@ -269,22 +324,74 @@ export function DocumentNatureBadge({
   );
 }
 
-function FolderLocation({ path }: { path: string[] }) {
+function openInvestor(scope: DocumentScopeData) {
+  const inv = scope.investor ? INVESTORS_BY_NAME.get(scope.investor) : undefined;
+  navigateToPage('investors', inv ? { investor: inv.id } : { search: scope.investor ?? '' });
+}
+
+export function ScopeInvestorLink({
+  scope,
+  onClick,
+  className,
+}: {
+  scope: DocumentScopeData;
+  onClick?: () => void;
+  className?: string;
+}) {
   const { t } = useTranslation();
-  const folderName = path[path.length - 1];
+  const kind = resolveInvestorKind(scope);
+  const Icon = kind === 'corporate' ? Building2 : UserRound;
   return (
     <Tooltip>
       <TooltipTrigger asChild>
-        <span className="inline-flex min-w-0 items-center gap-1 text-xs text-gray-500 dark:text-gray-400">
-          <Folder className="h-3.5 w-3.5 shrink-0 text-amber-500" />
-          <span className="truncate max-w-[200px]">{folderName}</span>
-        </span>
+        <button
+          type="button"
+          onClick={(e) => {
+            e.stopPropagation();
+            (onClick ?? (() => openInvestor(scope)))();
+          }}
+          className={cn(
+            'group inline-flex min-w-0 items-center gap-1.5 text-xs text-gray-600 transition-colors hover:text-blue-600 dark:text-gray-300',
+            className,
+          )}
+        >
+          <Icon className="h-3 w-3 shrink-0 text-gray-400 transition-colors group-hover:text-blue-500" />
+          <span className="max-w-[200px] truncate group-hover:underline">{scope.investor}</span>
+          <ChevronRight className="h-3 w-3 shrink-0 opacity-50 transition-opacity group-hover:opacity-100" />
+        </button>
       </TooltipTrigger>
-      <TooltipContent side="top" className="max-w-sm">
-        <div className="text-[11px] font-semibold uppercase tracking-wide opacity-70">
-          {t('ged.scope.fullPath')}
-        </div>
-        <div className="text-xs">{path.join(' / ')}</div>
+      <TooltipContent side="top">
+        <span className="text-xs">
+          {kind === 'corporate' ? t('ged.scope.investorCorporate') : t('ged.scope.investorIndividual')}
+          {' · '}
+          {t('ged.scope.openInvestor')}
+        </span>
+      </TooltipContent>
+    </Tooltip>
+  );
+}
+
+function ScopeTag({ tag }: { tag: ScopeTagItem }) {
+  const { t } = useTranslation();
+  const Icon = tag.icon;
+  const chip = tag.square ? (
+    <span className="inline-flex w-fit shrink-0 items-center gap-1 whitespace-nowrap rounded border border-gray-200 bg-gray-50 px-1.5 py-0.5 text-[11px] font-medium text-gray-600 dark:border-gray-700 dark:bg-gray-900 dark:text-gray-300">
+      <Icon className="h-3 w-3 shrink-0" />
+      {tag.label}
+    </span>
+  ) : (
+    <Tag icon={Icon} label={tag.label} className="px-2 py-0.5 text-[11px]" />
+  );
+  return (
+    <Tooltip>
+      <TooltipTrigger asChild>
+        <span className={tag.square ? 'shrink-0' : 'min-w-0'}>{chip}</span>
+      </TooltipTrigger>
+      <TooltipContent side="top">
+        <span className="text-xs">
+          {t(tag.typeKey)}
+          {tag.hint ? ` · ${tag.hint}` : ''}
+        </span>
       </TooltipContent>
     </Tooltip>
   );
@@ -295,8 +402,7 @@ interface DocumentScopeProps {
   /** "stacked" for table cells, "inline" for tree rows. */
   layout?: 'stacked' | 'inline';
   showNature?: boolean;
-  showFolder?: boolean;
-  showAudience?: boolean;
+  onInvestorClick?: () => void;
   className?: string;
 }
 
@@ -304,47 +410,149 @@ export function DocumentScope({
   scope,
   layout = 'stacked',
   showNature = true,
-  showFolder = true,
-  showAudience = true,
+  onInvestorClick,
   className,
 }: DocumentScopeProps) {
   const { t } = useTranslation();
-  const [open, setOpen] = useState(false);
-  const [pinned, setPinned] = useState(false);
-  const closeTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
-  const openTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const subscription = useMemo(() => resolveScopeSubscription(scope), [scope]);
+  const tags = buildTags(scope, subscription, t('ged.scope.allFunds'));
+  const showInvestor = scope.nature === 'nominative' && !!scope.investor;
 
+  const infoButton = (
+    <Popover>
+      <Tooltip>
+        <TooltipTrigger asChild>
+          <PopoverTrigger asChild>
+            <button
+              type="button"
+              onClick={stop}
+              aria-label={t('ged.scope.viewFullScope')}
+              className="inline-flex h-5 w-5 shrink-0 items-center justify-center rounded-full text-gray-400 transition-colors hover:bg-gray-100 hover:text-gray-700 data-[state=open]:bg-gray-100 data-[state=open]:text-gray-700 dark:hover:bg-gray-800 dark:hover:text-gray-200 dark:data-[state=open]:bg-gray-800"
+            >
+              <Info className="h-3.5 w-3.5" />
+            </button>
+          </PopoverTrigger>
+        </TooltipTrigger>
+        <TooltipContent side="top">
+          <span className="text-xs">{t('ged.scope.viewFullScope')}</span>
+        </TooltipContent>
+      </Tooltip>
+      <PopoverContent align="start" className="w-80 p-0" onClick={stop}>
+        <ScopeDetails
+          scope={scope}
+          tags={tags}
+          subscription={subscription}
+          onInvestorClick={onInvestorClick}
+        />
+      </PopoverContent>
+    </Popover>
+  );
+
+  const tagList = tags.map((tag) => <ScopeTag key={tag.key} tag={tag} />);
+
+  if (layout === 'inline') {
+    const inlineTags = subscription
+      ? tags.filter((tag) => tag.key === 'subscription')
+      : tags;
+    return (
+      <div className={cn('flex min-w-0 items-center gap-1.5', className)}>
+        {showNature && <DocumentNatureBadge nature={scope.nature} />}
+        {showInvestor && (
+          <ScopeInvestorLink scope={scope} onClick={onInvestorClick} className="min-w-[6rem] shrink" />
+        )}
+        {inlineTags.length > 0 && (
+          <div
+            className={cn(
+              'flex items-center gap-1',
+              subscription ? 'shrink-0' : 'min-w-0 overflow-hidden',
+            )}
+          >
+            {inlineTags.map((tag) => (
+              <ScopeTag key={tag.key} tag={tag} />
+            ))}
+          </div>
+        )}
+        {infoButton}
+      </div>
+    );
+  }
+
+  return (
+    <div className={cn('flex min-w-0 flex-col items-start gap-1.5', className)}>
+      {showNature && (
+        <div className="flex items-center gap-1.5">
+          <DocumentNatureBadge nature={scope.nature} />
+          {infoButton}
+        </div>
+      )}
+      {showInvestor && <ScopeInvestorLink scope={scope} onClick={onInvestorClick} />}
+      {tags.length > 0 && (
+        <div className="flex max-w-full flex-wrap items-center gap-1">
+          {tagList}
+          {!showNature && infoButton}
+        </div>
+      )}
+    </div>
+  );
+}
+
+const DETAIL_PREVIEW_LIMIT = 5;
+
+function DetailRow({
+  icon: Icon,
+  label,
+  children,
+}: {
+  icon: LucideIcon;
+  label: string;
+  children: ReactNode;
+}) {
+  return (
+    <div className="flex items-start gap-2 text-xs">
+      <Icon className="mt-0.5 h-3.5 w-3.5 shrink-0 text-gray-400" />
+      <dt className="w-24 shrink-0 text-gray-500">{label}</dt>
+      <dd className="min-w-0 break-words text-gray-900 dark:text-gray-100">{children}</dd>
+    </div>
+  );
+}
+
+function SectionTitle({ children, aside }: { children: ReactNode; aside?: ReactNode }) {
+  return (
+    <div className="mb-1 flex items-center justify-between text-[11px] font-semibold uppercase tracking-wide text-gray-500">
+      <span>{children}</span>
+      {aside && <span className="font-medium normal-case tracking-normal">{aside}</span>}
+    </div>
+  );
+}
+
+function ScopeDetails({
+  scope,
+  tags,
+  subscription,
+  onInvestorClick,
+}: {
+  scope: DocumentScopeData;
+  tags: ScopeTagItem[];
+  subscription: ScopeSubscriptionInfo | null;
+  onInvestorClick?: () => void;
+}) {
+  const { t, lang } = useTranslation();
   const audience = useMemo(() => resolveScopeAudience(scope), [scope]);
-  const tags = buildTags(scope, t('ged.scope.allFunds'));
-  const hasPath = !!scope.folderPath && scope.folderPath.length > 0;
   const isNominative = scope.nature === 'nominative';
-
-  const audienceLabel = isNominative
-    ? t(audience.contactCount > 1 ? 'ged.scope.contactsMany' : 'ged.scope.contactsOne', {
-        count: audience.contactCount,
-      })
-    : t(audience.investorCount > 1 ? 'ged.scope.investorsMany' : 'ged.scope.investorsOne', {
-        count: audience.investorCount,
-      });
-
-  const clearTimers = () => {
-    if (closeTimer.current) clearTimeout(closeTimer.current);
-    if (openTimer.current) clearTimeout(openTimer.current);
-  };
-  const hoverOpen = () => {
-    clearTimers();
-    openTimer.current = setTimeout(() => setOpen(true), 250);
-  };
-  const hoverClose = () => {
-    clearTimers();
-    if (pinned) return;
-    closeTimer.current = setTimeout(() => setOpen(false), 150);
-  };
+  const path = scope.folderPath ?? [];
+  const contacts = audience.investors.flatMap((i) => i.contacts);
+  const previewInvestors = audience.investors.slice(0, DETAIL_PREVIEW_LIMIT);
+  const remaining = audience.investors.length - previewInvestors.length;
+  const targetingTags = tags.filter((tag) => !subscription || tag.key !== 'subscription');
+  const amountFormatter = new Intl.NumberFormat(lang === 'en' ? 'en-GB' : 'fr-FR', {
+    style: 'currency',
+    currency: 'EUR',
+    maximumFractionDigits: 0,
+  });
 
   const handleDownload = (e: MouseEvent) => {
     e.stopPropagation();
-    const base = (scope.folderPath?.[scope.folderPath.length - 1] ?? 'audience')
-      .replace(/[^\w-]+/g, '_');
+    const base = (path[path.length - 1] ?? scope.investor ?? 'audience').replace(/[^\w-]+/g, '_');
     downloadScopeAudience(
       audience,
       [
@@ -358,150 +566,6 @@ export function DocumentScope({
     toast.success(t('ged.scope.downloadStarted'));
   };
 
-  const iconButton =
-    'inline-flex h-6 w-6 items-center justify-center rounded-md text-gray-400 transition-colors hover:bg-gray-100 hover:text-gray-700 dark:hover:bg-gray-800 dark:hover:text-gray-200';
-
-  const actions = (
-    <div className="flex items-center gap-0.5" onClick={stop}>
-      <Popover
-        open={open}
-        onOpenChange={(next) => {
-          setOpen(next);
-          if (!next) setPinned(false);
-        }}
-      >
-        <PopoverTrigger asChild>
-          <button
-            type="button"
-            className={cn(iconButton, open && 'bg-gray-100 text-gray-700 dark:bg-gray-800')}
-            aria-label={t('ged.scope.viewFullScope')}
-            onMouseEnter={hoverOpen}
-            onMouseLeave={hoverClose}
-            onClick={(e) => {
-              e.stopPropagation();
-              clearTimers();
-              if (pinned) {
-                setPinned(false);
-                setOpen(false);
-              } else {
-                setPinned(true);
-                setOpen(true);
-              }
-            }}
-          >
-            <ScanEye className="h-3.5 w-3.5" />
-          </button>
-        </PopoverTrigger>
-        <PopoverContent
-          align="start"
-          className="w-80 p-0"
-          onClick={stop}
-          onMouseEnter={clearTimers}
-          onMouseLeave={hoverClose}
-          onOpenAutoFocus={(e) => e.preventDefault()}
-        >
-          <ScopeDetails
-            scope={scope}
-            tags={tags}
-            audience={audience}
-            onDownload={handleDownload}
-          />
-        </PopoverContent>
-      </Popover>
-      <Tooltip>
-        <TooltipTrigger asChild>
-          <button
-            type="button"
-            className={iconButton}
-            aria-label={t('ged.scope.downloadAudience')}
-            onClick={handleDownload}
-          >
-            <Download className="h-3.5 w-3.5" />
-          </button>
-        </TooltipTrigger>
-        <TooltipContent side="top">
-          <span className="text-xs">{t('ged.scope.downloadAudience')}</span>
-        </TooltipContent>
-      </Tooltip>
-    </div>
-  );
-
-  const tagList = tags.map((tag) => (
-    <Tooltip key={tag.key}>
-      <TooltipTrigger asChild>
-        <span className="min-w-0">
-          <Tag icon={tag.icon} label={tag.label} className="px-2 py-0.5 text-[11px]" />
-        </span>
-      </TooltipTrigger>
-      <TooltipContent side="top">
-        <span className="text-xs">
-          {t(tag.typeKey)}
-          {tag.hint ? ` · ${tag.hint}` : ''}
-        </span>
-      </TooltipContent>
-    </Tooltip>
-  ));
-
-  const audienceChip = (
-    <span className="inline-flex shrink-0 items-center gap-1 whitespace-nowrap text-[11px] font-medium text-gray-500 dark:text-gray-400">
-      <Users className="h-3 w-3" />
-      {audienceLabel}
-    </span>
-  );
-
-  if (layout === 'inline') {
-    return (
-      <div className={cn('flex min-w-0 items-center gap-1.5', className)}>
-        {showNature && <DocumentNatureBadge nature={scope.nature} />}
-        {showFolder && hasPath && <FolderLocation path={scope.folderPath!} />}
-        {tags.length > 0 && (
-          <div className="flex min-w-0 items-center gap-1 overflow-hidden">{tagList}</div>
-        )}
-        {showAudience && audienceChip}
-        {actions}
-      </div>
-    );
-  }
-
-  return (
-    <div className={cn('flex min-w-0 flex-col items-start gap-1.5', className)}>
-      {(showNature || (showFolder && hasPath)) && (
-        <div className="flex min-w-0 max-w-full items-center gap-2">
-          {showNature && <DocumentNatureBadge nature={scope.nature} />}
-          {showFolder && hasPath && <FolderLocation path={scope.folderPath!} />}
-        </div>
-      )}
-      {tags.length > 0 && (
-        <div className="flex max-w-full flex-wrap items-center gap-1">{tagList}</div>
-      )}
-      <div className="flex items-center gap-1.5">
-        {showAudience && audienceChip}
-        {actions}
-      </div>
-    </div>
-  );
-}
-
-const DETAIL_PREVIEW_LIMIT = 5;
-
-function ScopeDetails({
-  scope,
-  tags,
-  audience,
-  onDownload,
-}: {
-  scope: DocumentScopeData;
-  tags: ScopeTagItem[];
-  audience: ScopeAudience;
-  onDownload: (e: MouseEvent) => void;
-}) {
-  const { t } = useTranslation();
-  const isNominative = scope.nature === 'nominative';
-  const path = scope.folderPath ?? [];
-  const contacts = audience.investors.flatMap((i) => i.contacts);
-  const previewInvestors = audience.investors.slice(0, DETAIL_PREVIEW_LIMIT);
-  const remaining = audience.investors.length - previewInvestors.length;
-
   return (
     <div className="text-sm">
       <div className="flex items-center justify-between gap-2 border-b px-4 py-3">
@@ -511,12 +575,10 @@ function ScopeDetails({
         <DocumentNatureBadge nature={scope.nature} />
       </div>
 
-      <div className="space-y-3 px-4 py-3">
+      <div className="max-h-[60vh] space-y-3 overflow-y-auto px-4 py-3">
         {path.length > 0 && (
           <section>
-            <div className="mb-1 text-[11px] font-semibold uppercase tracking-wide text-gray-500">
-              {t('ged.scope.location')}
-            </div>
+            <SectionTitle>{t('ged.scope.location')}</SectionTitle>
             <div className="flex flex-wrap items-center gap-0.5 text-xs text-gray-700 dark:text-gray-300">
               {path.map((segment, i) => (
                 <span key={`${segment}-${i}`} className="inline-flex items-center gap-0.5">
@@ -529,44 +591,87 @@ function ScopeDetails({
           </section>
         )}
 
-        <section>
-          <div className="mb-1 text-[11px] font-semibold uppercase tracking-wide text-gray-500">
-            {t('ged.scope.targeting')}
-          </div>
-          {tags.length > 0 ? (
+        {isNominative && scope.investor && (
+          <section>
+            <SectionTitle>{t('ged.scope.types.investor')}</SectionTitle>
+            <ScopeInvestorLink scope={scope} onClick={onInvestorClick} />
+          </section>
+        )}
+
+        {subscription && (
+          <section>
+            <SectionTitle>{t('ged.scope.types.subscription')}</SectionTitle>
             <dl className="space-y-1">
-              {tags.map((tag) => {
-                const Icon = tag.icon;
-                return (
-                  <div key={tag.key} className="flex items-start gap-2 text-xs">
-                    <Icon className="mt-0.5 h-3.5 w-3.5 shrink-0 text-gray-400" />
-                    <dt className="w-24 shrink-0 text-gray-500">{t(tag.typeKey)}</dt>
-                    <dd className="min-w-0 break-words text-gray-900 dark:text-gray-100">
-                      {tag.label}
-                      {tag.hint && <div className="text-[11px] text-gray-500">{tag.hint}</div>}
-                    </dd>
-                  </div>
-                );
-              })}
+              <DetailRow icon={FileText} label={t('ged.scope.subscription.code')}>
+                <span className="font-medium">{subscription.code}</span>
+              </DetailRow>
+              {subscription.investor && (
+                <DetailRow icon={resolveInvestorKind(scope) === 'corporate' ? Building2 : UserRound} label={t('ged.scope.types.investor')}>
+                  {subscription.investor}
+                </DetailRow>
+              )}
+              {subscription.structure && (
+                <DetailRow icon={Building2} label={t('ged.scope.types.structure')}>
+                  {subscription.structure}
+                </DetailRow>
+              )}
+              {subscription.fund && (
+                <DetailRow icon={Landmark} label={t('ged.scope.types.fund')}>
+                  {subscription.fund}
+                </DetailRow>
+              )}
+              {subscription.shareClass && (
+                <DetailRow icon={Layers3} label={t('ged.scope.types.share')}>
+                  {subscription.shareClass}
+                </DetailRow>
+              )}
+              {subscription.commitmentEur !== undefined && (
+                <DetailRow icon={Wallet} label={t('ged.scope.subscription.commitment')}>
+                  {amountFormatter.format(subscription.commitmentEur)}
+                </DetailRow>
+              )}
+              {!subscription.fund && subscription.label && (
+                <DetailRow icon={Info} label={t('ged.scope.subscription.label')}>
+                  {subscription.label}
+                </DetailRow>
+              )}
             </dl>
-          ) : (
-            <div className="text-xs text-gray-500">{t('ged.scope.noRestriction')}</div>
-          )}
-        </section>
+          </section>
+        )}
+
+        {(!subscription || targetingTags.length > 0) && (
+          <section>
+            <SectionTitle>{t('ged.scope.targeting')}</SectionTitle>
+            {targetingTags.length > 0 ? (
+              <dl className="space-y-1">
+                {targetingTags.map((tag) => (
+                  <DetailRow key={tag.key} icon={tag.icon} label={t(tag.typeKey)}>
+                    {tag.label}
+                  </DetailRow>
+                ))}
+              </dl>
+            ) : (
+              <div className="text-xs text-gray-500">{t('ged.scope.noRestriction')}</div>
+            )}
+          </section>
+        )}
 
         <section>
-          <div className="mb-1 flex items-center justify-between text-[11px] font-semibold uppercase tracking-wide text-gray-500">
-            <span>{t('ged.scope.audience')}</span>
-            <span className="normal-case tracking-normal font-medium">
-              {t(audience.investorCount > 1 ? 'ged.scope.investorsMany' : 'ged.scope.investorsOne', {
-                count: audience.investorCount,
-              })}
-              {' · '}
-              {t(audience.contactCount > 1 ? 'ged.scope.contactsMany' : 'ged.scope.contactsOne', {
-                count: audience.contactCount,
-              })}
-            </span>
-          </div>
+          <SectionTitle
+            aside={
+              <>
+                {t(audience.investorCount > 1 ? 'ged.scope.investorsMany' : 'ged.scope.investorsOne', {
+                  count: audience.investorCount,
+                })}
+                {' · '}
+                {t(audience.contactCount > 1 ? 'ged.scope.contactsMany' : 'ged.scope.contactsOne', {
+                  count: audience.contactCount,
+                })}
+              </>
+            }
+          >
+            {t('ged.scope.audience')}
+          </SectionTitle>
           {isNominative ? (
             contacts.length > 0 ? (
               <ul className="space-y-0.5">
@@ -609,7 +714,7 @@ function ScopeDetails({
       <div className="border-t px-4 py-2.5">
         <button
           type="button"
-          onClick={onDownload}
+          onClick={handleDownload}
           className="inline-flex w-full items-center justify-center gap-1.5 rounded-md border border-gray-200 bg-white px-3 py-1.5 text-xs font-medium text-gray-700 transition-colors hover:bg-gray-50 dark:border-gray-700 dark:bg-gray-900 dark:text-gray-200 dark:hover:bg-gray-800"
         >
           <Download className="h-3.5 w-3.5" />

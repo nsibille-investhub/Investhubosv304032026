@@ -1755,9 +1755,9 @@ export function DesignSystemPage() {
         <h2 className="text-lg font-semibold text-[#1F3137] dark:text-[#E8F0EE] mb-2">Composant GED - ds-document-scope</h2>
         <p className="text-sm text-[#4F6166] dark:text-[#9DB2AE] mb-1">
           Périmètre d&apos;un document, identique dans l&apos;explorer documentaire, la Bird View et le centre de publication :
-          type (générique ou nominatif), dossier avec chemin complet au survol, tags de ciblage et audience.
-          Le bouton <strong className="font-semibold">périmètre complet</strong> s&apos;ouvre au survol et reste épinglé au clic ;
-          le bouton de téléchargement exporte l&apos;audience en CSV (investisseur, structure, contact, rôle).
+          type (générique ou nominatif), investisseur hors tag avec lien vers sa fiche (icône PP ou PM), puis tags de ciblage.
+          La souscription est une étiquette carrée. Le bouton <strong className="font-semibold">i</strong> ouvre au clic le détail :
+          emplacement, identification complète de la souscription, ciblage, audience et téléchargement de l&apos;audience en CSV.
         </p>
         <p className="text-xs text-[#4F6166] dark:text-[#9DB2AE] mb-4">
           Identifiant&nbsp;: <code className="text-xs px-1 py-0.5 rounded bg-[#F1F5F4] dark:bg-[#1C2624] font-semibold">ds-document-scope</code> - Import&nbsp;:
@@ -1794,12 +1794,10 @@ export function DesignSystemPage() {
           </div>
           <div className="md:col-span-2 rounded-xl border border-[#D7E0DD] dark:border-[#1F2D2A] p-4 bg-[#F8FAFA] dark:bg-[#0F1716]">
             <span className="mb-3 block text-[11px] font-semibold uppercase tracking-[0.14em] text-[#456B6C]">
-              Layout inline - ligne d&apos;arbre (Bird View, sans compteur d&apos;audience)
+              Layout inline - ligne d&apos;arbre (Bird View)
             </span>
             <DocumentScope
               layout="inline"
-              showFolder={false}
-              showAudience={false}
               scope={{
                 nature: 'nominative',
                 folderPath: ['Espace Fonds', 'Appels de fonds', 'Appel n°3'],

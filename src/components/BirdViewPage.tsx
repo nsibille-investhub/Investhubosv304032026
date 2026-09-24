@@ -1040,7 +1040,7 @@ export function BirdViewPage({ onBack }: BirdViewPageProps) {
             </div>
 
             {/* Name */}
-            <span className="text-sm text-gray-900 dark:text-gray-100">{node.name}</span>
+            <span className="min-w-[10rem] flex-1 text-sm text-gray-900 dark:text-gray-100">{node.name}</span>
             <DocumentCategoryBadge category={node.documentCategory} />
 
             {/* Metadata */}
@@ -1054,8 +1054,6 @@ export function BirdViewPage({ onBack }: BirdViewPageProps) {
 
             <DocumentScope
               layout="inline"
-              showFolder={false}
-              showAudience={false}
               className="shrink"
               scope={{
                 nature: node.isNominatif ? 'nominative' : 'generic',
