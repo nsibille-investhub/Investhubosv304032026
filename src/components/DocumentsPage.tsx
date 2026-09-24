@@ -753,6 +753,7 @@ export function DocumentsPage({ selectedSpace, navigationTarget, onNavigationHan
               onDeleteFolder={handleDeleteFolder}
               folderInheritedRestrictions={folderInheritedRestrictions}
               folderOptions={folderOptions}
+              rootLabel={selectedSpace.name}
             />
           </div>
         </div>

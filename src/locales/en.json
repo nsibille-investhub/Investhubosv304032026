@@ -3135,6 +3135,45 @@
           }
         }
       }
+    },
+    "scope": {
+      "nature": {
+        "generic": "Generic",
+        "nominative": "Nominative"
+      },
+      "types": {
+        "fund": "Fund",
+        "share": "Share",
+        "segment": "Segment",
+        "investor": "Investor",
+        "structure": "Structure",
+        "subscription": "Subscription"
+      },
+      "allFunds": "All funds",
+      "fullPath": "Full path",
+      "detailsTitle": "Document scope",
+      "location": "Location",
+      "targeting": "Targeting",
+      "audience": "Audience",
+      "noRestriction": "No restriction: visible to every investor of the space",
+      "noContact": "No contact with access",
+      "noInvestor": "No investor in this scope",
+      "investorsOne": "{{count}} investor",
+      "investorsMany": "{{count}} investors",
+      "contactsOne": "{{count}} contact",
+      "contactsMany": "{{count}} contacts",
+      "moreInvestorsOne": "+ {{count}} other investor",
+      "moreInvestorsMany": "+ {{count}} other investors",
+      "viewFullScope": "View full scope",
+      "downloadAudience": "Download audience",
+      "downloadStarted": "Audience downloaded",
+      "csv": {
+        "investor": "Investor",
+        "structure": "Structure",
+        "contact": "Contact",
+        "role": "Role",
+        "fileName": "audience"
+      }
     }
   },
   "validation": {

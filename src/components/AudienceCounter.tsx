@@ -96,7 +96,7 @@ export interface AudienceInvestor {
 // Map GED investor typologies to the audience segments exposed in the
 // folder/space targeting UI (HNWI / UHNWI / Retail / Professional /
 // Institutional).
-const TYPOLOGY_TO_SEGMENT: Record<InvestorTypology, string> = {
+export const TYPOLOGY_TO_SEGMENT: Record<InvestorTypology, string> = {
   'Family Office': 'UHNWI',
   HNWI: 'HNWI',
   UHNWI: 'UHNWI',

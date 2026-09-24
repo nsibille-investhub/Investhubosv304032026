@@ -100,6 +100,8 @@ import { UserCell } from './UserCell';
 import { CommentIndicator } from './CommentIndicator';
 import { GenericAudienceCard } from './GenericAudienceCard';
 import { SpecificAudience } from './SpecificAudience';
+import { DocumentScope } from './ui/document-scope';
+import { FUNDS, INVESTORS } from '../utils/gedFixtures';
 import { FolderSpaceDialogPreview } from './ui/folder-space-dialog';
 import { KpiCard, KpiStrip } from './ui/kpi-card';
 import { PageHeader } from './ui/page-header';
@@ -1746,6 +1748,67 @@ export function DesignSystemPage() {
             subscription="SUB-002"
             className="text-sm"
           />
+        </div>
+      </section>
+
+      <section className="rounded-2xl border border-[#D7E0DD] dark:border-[#1F2D2A] bg-white dark:bg-[#101615] p-6">
+        <h2 className="text-lg font-semibold text-[#1F3137] dark:text-[#E8F0EE] mb-2">Composant GED - ds-document-scope</h2>
+        <p className="text-sm text-[#4F6166] dark:text-[#9DB2AE] mb-1">
+          Périmètre d&apos;un document, identique dans l&apos;explorer documentaire, la Bird View et le centre de publication :
+          type (générique ou nominatif), dossier avec chemin complet au survol, tags de ciblage et audience.
+          Le bouton <strong className="font-semibold">périmètre complet</strong> s&apos;ouvre au survol et reste épinglé au clic ;
+          le bouton de téléchargement exporte l&apos;audience en CSV (investisseur, structure, contact, rôle).
+        </p>
+        <p className="text-xs text-[#4F6166] dark:text-[#9DB2AE] mb-4">
+          Identifiant&nbsp;: <code className="text-xs px-1 py-0.5 rounded bg-[#F1F5F4] dark:bg-[#1C2624] font-semibold">ds-document-scope</code> - Import&nbsp;:
+          <code className="text-xs px-1 py-0.5 rounded bg-[#F1F5F4] dark:bg-[#1C2624] ml-1">{`import { DocumentScope } from '@/components/ui/document-scope'`}</code>
+        </p>
+        <div className="grid gap-4 md:grid-cols-2">
+          <div className="rounded-xl border border-[#D7E0DD] dark:border-[#1F2D2A] p-4 bg-[#F8FAFA] dark:bg-[#0F1716]">
+            <span className="mb-3 block text-[11px] font-semibold uppercase tracking-[0.14em] text-[#456B6C]">
+              Layout stacked - générique
+            </span>
+            <DocumentScope
+              scope={{
+                nature: 'generic',
+                folderPath: ['Espace Fonds', 'Reporting', 'T1 2026'],
+                fund: FUNDS[0]?.name,
+                segments: ['Institutional'],
+              }}
+            />
+          </div>
+          <div className="rounded-xl border border-[#D7E0DD] dark:border-[#1F2D2A] p-4 bg-[#F8FAFA] dark:bg-[#0F1716]">
+            <span className="mb-3 block text-[11px] font-semibold uppercase tracking-[0.14em] text-[#456B6C]">
+              Layout stacked - nominatif
+            </span>
+            <DocumentScope
+              scope={{
+                nature: 'nominative',
+                folderPath: ['Espace Fonds', 'Souscriptions', 'Bulletins'],
+                investor: INVESTORS[0]?.name,
+                structure: INVESTORS[0]?.structure,
+                subscription: 'SUB-NWGC2-001',
+                fund: FUNDS[0]?.name,
+              }}
+            />
+          </div>
+          <div className="md:col-span-2 rounded-xl border border-[#D7E0DD] dark:border-[#1F2D2A] p-4 bg-[#F8FAFA] dark:bg-[#0F1716]">
+            <span className="mb-3 block text-[11px] font-semibold uppercase tracking-[0.14em] text-[#456B6C]">
+              Layout inline - ligne d&apos;arbre (Bird View, sans compteur d&apos;audience)
+            </span>
+            <DocumentScope
+              layout="inline"
+              showFolder={false}
+              showAudience={false}
+              scope={{
+                nature: 'nominative',
+                folderPath: ['Espace Fonds', 'Appels de fonds', 'Appel n°3'],
+                investor: INVESTORS[1]?.name,
+                subscription: 'SUB-NWGC2-002',
+                fund: FUNDS[0]?.name,
+              }}
+            />
+          </div>
         </div>
       </section>
 

@@ -3135,6 +3135,45 @@
           }
         }
       }
+    },
+    "scope": {
+      "nature": {
+        "generic": "Générique",
+        "nominative": "Nominatif"
+      },
+      "types": {
+        "fund": "Fonds",
+        "share": "Part",
+        "segment": "Segment",
+        "investor": "Investisseur",
+        "structure": "Structure",
+        "subscription": "Souscription"
+      },
+      "allFunds": "Tous les fonds",
+      "fullPath": "Chemin complet",
+      "detailsTitle": "Périmètre du document",
+      "location": "Emplacement",
+      "targeting": "Ciblage",
+      "audience": "Audience",
+      "noRestriction": "Aucune restriction : visible par tous les investisseurs de l'espace",
+      "noContact": "Aucun contact avec accès",
+      "noInvestor": "Aucun investisseur dans ce périmètre",
+      "investorsOne": "{{count}} investisseur",
+      "investorsMany": "{{count}} investisseurs",
+      "contactsOne": "{{count}} contact",
+      "contactsMany": "{{count}} contacts",
+      "moreInvestorsOne": "+ {{count}} autre investisseur",
+      "moreInvestorsMany": "+ {{count}} autres investisseurs",
+      "viewFullScope": "Voir le périmètre complet",
+      "downloadAudience": "Télécharger l'audience",
+      "downloadStarted": "Audience téléchargée",
+      "csv": {
+        "investor": "Investisseur",
+        "structure": "Structure",
+        "contact": "Contact",
+        "role": "Rôle",
+        "fileName": "audience"
+      }
     }
   },
   "validation": {

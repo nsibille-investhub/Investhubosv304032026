@@ -40,6 +40,7 @@ import {
 import { filterTreeForIncomplete } from '../utils/birdviewFilters';
 import { Button } from './ui/button';
 import { Tag } from './Tag';
+import { DocumentScope } from './ui/document-scope';
 import { cn } from './ui/utils';
 import { DocumentActivityPanel } from './DocumentActivityPanel';
 import { DocumentCategoryBadge } from './DocumentCategoryBadge';
@@ -848,7 +849,8 @@ export function BirdViewPage({ onBack }: BirdViewPageProps) {
   const renderNode = (
     node: DocumentNode,
     level: number = 0,
-    inheritedContext: AccessContext = {}
+    inheritedContext: AccessContext = {},
+    parentPath: string[] = []
   ) => {
     const isExpanded = expandedNodes.has(node.id);
     const hasChildren = node.children && node.children.length > 0;
@@ -1050,41 +1052,24 @@ export function BirdViewPage({ onBack }: BirdViewPageProps) {
               <span className="uppercase font-medium">{node.format}</span>
             </div>
 
-            {/* Restrictions du document */}
-            <div className="flex items-center gap-1.5">
-              {node.investorRestriction && (
-                <Tooltip>
-                  <TooltipTrigger asChild>
-                    <span><Tag icon={UserRound} label={node.investorRestriction} /></span>
-                  </TooltipTrigger>
-                  <TooltipContent side="top"><span className="text-xs">{t('ged.birdview.tooltips.targetInvestor')}</span></TooltipContent>
-                </Tooltip>
-              )}
-              {node.subscriptionRestriction && (
-                <Tooltip>
-                  <TooltipTrigger asChild>
-                    <span><Tag icon={FileText} label={node.subscriptionRestriction} /></span>
-                  </TooltipTrigger>
-                  <TooltipContent side="top"><span className="text-xs">{t('ged.birdview.tooltips.targetSubscription')}</span></TooltipContent>
-                </Tooltip>
-              )}
-              {node.fundRestriction && (
-                <Tooltip>
-                  <TooltipTrigger asChild>
-                    <span><Tag icon={Landmark} label={node.fundRestriction} /></span>
-                  </TooltipTrigger>
-                  <TooltipContent side="top"><span className="text-xs">{t('ged.birdview.tooltips.targetFund')}</span></TooltipContent>
-                </Tooltip>
-              )}
-              {node.segmentRestrictions && node.segmentRestrictions.map(seg => (
-                <Tooltip key={seg}>
-                  <TooltipTrigger asChild>
-                    <span><Tag icon={TagIcon} label={seg} /></span>
-                  </TooltipTrigger>
-                  <TooltipContent side="top"><span className="text-xs">{t('ged.birdview.tooltips.targetSegment')}</span></TooltipContent>
-                </Tooltip>
-              ))}
-            </div>
+            <DocumentScope
+              layout="inline"
+              showFolder={false}
+              showAudience={false}
+              className="shrink"
+              scope={{
+                nature: node.isNominatif ? 'nominative' : 'generic',
+                folderPath: parentPath,
+                investor: node.investorRestriction,
+                subscription: node.subscriptionRestriction,
+                fund: node.fundRestriction || inheritedContext.fund,
+                shareClass: node.shareClassRestriction || inheritedContext.shareClass,
+                segments:
+                  node.segmentRestrictions && node.segmentRestrictions.length > 0
+                    ? node.segmentRestrictions
+                    : inheritedContext.segments,
+              }}
+            />
 
             {/* Statut selon le type de document */}
             {(() => {
@@ -1240,7 +1225,7 @@ export function BirdViewPage({ onBack }: BirdViewPageProps) {
         {/* Children */}
         {isExpanded && hasChildren && (
           <div className="mt-1">
-            {node.children!.map(child => renderNode(child, level + 1, childContext))}
+            {node.children!.map(child => renderNode(child, level + 1, childContext, [...parentPath, node.name]))}
           </div>
         )}
       </div>

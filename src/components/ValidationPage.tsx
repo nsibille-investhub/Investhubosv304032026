@@ -18,7 +18,6 @@ import {
   AlertCircle,
   ChevronRight,
   Users,
-  Building2,
   Download,
   RotateCcw,
   Eye,
@@ -57,6 +56,7 @@ import {
   TableRow,
 } from './ui/table';
 import { Badge } from './ui/badge';
+import { DocumentScope, type DocumentScopeData } from './ui/document-scope';
 import { FilterCard } from './ui/filter-card';
 import { FilterBar, FilterConfig } from './FilterBar';
 import { DataPagination } from './ui/data-pagination';
@@ -1605,19 +1605,6 @@ function DocumentRow({
               {t(doc.kindKey)}
             </span>
           )}
-          <Badge
-            variant="outline"
-            className={cn(
-              'text-[9px] px-1 py-0 leading-tight font-medium',
-              isNominative(doc)
-                ? 'border-blue-200 bg-blue-50 text-blue-700 dark:border-blue-900 dark:bg-blue-950/30 dark:text-blue-300'
-                : 'border-amber-200 bg-amber-50 text-amber-700 dark:border-amber-900 dark:bg-amber-950/30 dark:text-amber-300',
-            )}
-          >
-            {isNominative(doc)
-              ? t('validation.bulkDialog.scopeNominative')
-              : t('validation.bulkDialog.scopeGeneric')}
-          </Badge>
         </div>
         <Tooltip>
           <TooltipTrigger asChild>
@@ -1629,14 +1616,13 @@ function DocumentRow({
             <span className="text-xs">{doc.name}</span>
           </TooltipContent>
         </Tooltip>
-        {doc.pathSegments.length > 0 && (
-          <div className="mt-0.5 truncate text-[11px] text-gray-500" title={doc.pathSegments.join(' / ')}>
-            {doc.pathSegments.join(' / ')}
-          </div>
-        )}
       </td>
       <td className="px-4 py-2.5 align-top">
-        <AudienceCell info={resolveAudience(doc.targeting)} />
+        <AudienceCell
+          info={resolveAudience(doc.targeting)}
+          targeting={doc.targeting}
+          folderPath={doc.pathSegments}
+        />
       </td>
       <td className="px-4 py-2.5 align-top">
         <NotificationCell
@@ -1754,171 +1740,50 @@ function NotificationCell({
 // Nominative: Investor / Structure / Subscription + audience (contacts hover + download)
 // ---------------------------------------------------------------------------
 
-function AudienceCell({ info }: { info: AudienceInfo }) {
-  const { t } = useTranslation();
-
-  if (info.nominative) {
-    return <AudienceCellNominative info={info} />;
-  }
-  return <AudienceCellGeneric info={info} />;
+function AudienceCell({
+  info,
+  targeting,
+  folderPath,
+}: {
+  info: AudienceInfo;
+  targeting: ValidationDocument['targeting'];
+  folderPath?: string[];
+}) {
+  const scope: DocumentScopeData = info.nominative
+    ? {
+        nature: 'nominative',
+        folderPath,
+        investor: info.investorName,
+        structure: info.structureName,
+        subscription: info.subscriptionCode,
+        subscriptionLabel: info.subscriptionFullName,
+        fund: info.fundName,
+        contacts: info.contacts?.map((c) => ({ id: c.id, name: c.name, role: c.role })),
+      }
+    : {
+        nature: 'generic',
+        folderPath,
+        fund: info.fundName,
+        allFunds: info.allFunds,
+        shareClass: targeting.find((tag) => tag.kind === 'shareClass')?.label,
+        segments: Array.from(
+          new Set(targeting.filter((tag) => tag.kind === 'segment').map((tag) => tag.label)),
+        ),
+        investorCount: info.investorCount,
+      };
+  return <DocumentScope scope={scope} />;
 }
 
-function AudienceCellGeneric({ info }: { info: AudienceInfo }) {
-  const { t } = useTranslation();
-  const FundIcon = TARGETING_ICON.fund;
-  const SegmentIcon = TARGETING_ICON.segment;
-
-  const fundLabel = info.fundName
-    ? info.fundName
-    : info.allFunds
-      ? t('validation.fonds.all')
-      : undefined;
-
-  const count = info.investorCount ?? 0;
-  const countLabel = t(
-    count > 1
-      ? 'validation.cible.investorsMany'
-      : 'validation.cible.investorsOne',
-    { count },
-  );
-
-  return (
-    <div className="flex flex-col items-start gap-1.5">
-      {fundLabel && (
-        <span className="inline-flex items-center gap-1.5 text-sm text-gray-700 dark:text-gray-300">
-          <FundIcon className="h-3.5 w-3.5 shrink-0 text-gray-400" />
-          <span className="max-w-[200px] truncate" title={fundLabel}>
-            {fundLabel}
-          </span>
-        </span>
-      )}
-      {info.segmentLabel && (
-        <span className="inline-flex items-center gap-1.5 text-sm text-gray-700 dark:text-gray-300">
-          <SegmentIcon className="h-3.5 w-3.5 shrink-0 text-gray-400" />
-          <span className="max-w-[200px] truncate" title={info.segmentLabel}>
-            {info.segmentLabel}
-          </span>
-        </span>
-      )}
-      <div className="flex items-center gap-1.5 mt-0.5">
-        <span className="inline-flex items-center gap-1 rounded-full border border-gray-200 bg-gray-50 px-2 py-0.5 text-[11px] font-medium text-gray-600 dark:border-gray-700 dark:bg-gray-900 dark:text-gray-300">
-          <Users className="h-3 w-3 shrink-0" />
-          {countLabel}
-        </span>
-        <Tooltip>
-          <TooltipTrigger asChild>
-            <button
-              type="button"
-              className="inline-flex items-center justify-center h-5 w-5 rounded text-gray-400 hover:text-gray-600 hover:bg-gray-100 dark:hover:text-gray-300 dark:hover:bg-gray-800 transition-colors"
-              onClick={(e) => {
-                e.stopPropagation();
-                toast.info(t('validation.audience.downloadStarted'));
-              }}
-            >
-              <Download className="h-3 w-3" />
-            </button>
-          </TooltipTrigger>
-          <TooltipContent side="top">
-            <span className="text-xs">{t('validation.audience.downloadTooltip')}</span>
-          </TooltipContent>
-        </Tooltip>
-      </div>
-    </div>
-  );
-}
-
-function AudienceCellNominative({ info }: { info: AudienceInfo }) {
-  const { t } = useTranslation();
-  const InvestorIcon = TARGETING_ICON.investor;
-  const SubIcon = TARGETING_ICON.subscription;
-
-  const contacts = info.contacts ?? [];
-  const contactCount = info.contactCount ?? 0;
-  const contactLabel = t(
-    contactCount > 1
-      ? 'validation.audience.contactsMany'
-      : 'validation.audience.contactsOne',
-    { count: contactCount },
-  );
-
-  return (
-    <div className="flex flex-col items-start gap-1">
-      <span className="inline-flex items-center gap-1.5 text-sm text-gray-900 dark:text-gray-100">
-        <InvestorIcon className="h-3.5 w-3.5 shrink-0 text-gray-400" />
-        <span className="max-w-[200px] truncate" title={info.investorName}>
-          {info.investorName}
-        </span>
-      </span>
-      {info.structureName && (
-        <span className="inline-flex items-center gap-1.5 text-[12px] text-gray-500 dark:text-gray-400">
-          <Building2 className="h-3 w-3 shrink-0 text-gray-400" />
-          <span className="max-w-[200px] truncate" title={info.structureName}>
-            {info.structureName}
-          </span>
-        </span>
-      )}
-      {info.subscriptionCode && (
-        <Tooltip>
-          <TooltipTrigger asChild>
-            <span className="inline-flex w-fit items-center gap-1 rounded border border-gray-200 bg-gray-50 px-1.5 py-0.5 text-[11px] font-medium text-gray-600 dark:border-gray-700 dark:bg-gray-900 dark:text-gray-300">
-              <SubIcon className="h-3 w-3 shrink-0" />
-              {info.subscriptionCode}
-            </span>
-          </TooltipTrigger>
-          <TooltipContent side="top">
-            <span className="text-xs">
-              {info.subscriptionFullName ?? info.subscriptionCode}
-            </span>
-          </TooltipContent>
-        </Tooltip>
-      )}
-      <div className="flex items-center gap-1.5 mt-0.5">
-        <Tooltip>
-          <TooltipTrigger asChild>
-            <span className="inline-flex items-center gap-1 rounded-full border border-gray-200 bg-gray-50 px-2 py-0.5 text-[11px] font-medium text-gray-600 cursor-default dark:border-gray-700 dark:bg-gray-900 dark:text-gray-300">
-              <Users className="h-3 w-3 shrink-0" />
-              {contactLabel}
-            </span>
-          </TooltipTrigger>
-          <TooltipContent side="bottom" className="max-w-xs">
-            <div className="space-y-1.5 py-1">
-              {info.investorName && (
-                <div className="flex items-center gap-1.5 text-xs font-semibold">
-                  <InvestorIcon className="h-3 w-3 shrink-0" />
-                  {info.investorName}
-                </div>
-              )}
-              <div className="border-t border-gray-200 dark:border-gray-700 pt-1.5 space-y-1">
-                {contacts.map((c) => (
-                  <div key={c.id} className="text-xs flex items-center justify-between gap-3">
-                    <span className="truncate">{c.name}</span>
-                    <span className="text-[10px] text-gray-400 shrink-0">{c.role}</span>
-                  </div>
-                ))}
-              </div>
-            </div>
-          </TooltipContent>
-        </Tooltip>
-        <Tooltip>
-          <TooltipTrigger asChild>
-            <button
-              type="button"
-              className="inline-flex items-center justify-center h-5 w-5 rounded text-gray-400 hover:text-gray-600 hover:bg-gray-100 dark:hover:text-gray-300 dark:hover:bg-gray-800 transition-colors"
-              onClick={(e) => {
-                e.stopPropagation();
-                toast.info(t('validation.audience.downloadStarted'));
-              }}
-            >
-              <Download className="h-3 w-3" />
-            </button>
-          </TooltipTrigger>
-          <TooltipContent side="top">
-            <span className="text-xs">{t('validation.audience.downloadTooltip')}</span>
-          </TooltipContent>
-        </Tooltip>
-      </div>
-    </div>
-  );
+function commonPath(paths: string[][]): string[] {
+  if (paths.length === 0) return [];
+  const [first, ...rest] = paths;
+  let length = first.length;
+  rest.forEach((p) => {
+    let i = 0;
+    while (i < length && i < p.length && p[i] === first[i]) i += 1;
+    length = i;
+  });
+  return first.slice(0, length);
 }
 
 // ---------------------------------------------------------------------------
@@ -2451,6 +2316,10 @@ function DynamicBatchRow({
     batch.docs[0],
   );
   const audienceInfo = useMemo(() => resolveAudienceForDocs(batch.docs), [batch.docs]);
+  const batchFolderPath = useMemo(() => {
+    const path = commonPath(batch.docs.map((d) => d.pathSegments));
+    return path.length > 0 ? path : undefined;
+  }, [batch.docs]);
   return (
     <>
       <tr className="border-b border-blue-100 bg-blue-50/40 hover:bg-blue-50/60 dark:border-blue-900/30 dark:bg-blue-950/15">
@@ -2510,7 +2379,11 @@ function DynamicBatchRow({
           </div>
         </td>
         <td className="px-4 py-2.5 align-top">
-          <AudienceCell info={audienceInfo} />
+          <AudienceCell
+            info={audienceInfo}
+            targeting={batch.docs.flatMap((d) => d.targeting)}
+            folderPath={batchFolderPath}
+          />
         </td>
         <td className="px-4 py-2.5 align-top">
           <NotificationCell

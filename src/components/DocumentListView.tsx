@@ -74,6 +74,7 @@ interface DocumentListViewProps {
   onDuplicateDocument?: (doc: Document) => void;
   folderInheritedRestrictions?: RestrictionsMap;
   folderOptions?: FolderOption[];
+  rootLabel?: string;
 }
 
 export function DocumentListView({
@@ -98,6 +99,7 @@ export function DocumentListView({
   onDuplicateDocument,
   folderInheritedRestrictions,
   folderOptions,
+  rootLabel,
 }: DocumentListViewProps) {
   const { t } = useTranslation();
   const tableGridClassName = 'document-list-grid';
@@ -183,6 +185,12 @@ export function DocumentListView({
   const itemsToRender = hasActiveSearch
     ? searchResults.map((result) => ({ ...result.item, __path: result.path } as Document & { __path: string[] }))
     : currentItems;
+
+  const locationOf = (item: Document) => {
+    const searchPath = (item as Document & { __path?: string[] }).__path;
+    const parents = hasActiveSearch && searchPath ? searchPath.slice(0, -1) : currentPath;
+    return rootLabel ? [rootLabel, ...parents] : parents;
+  };
 
   const searchFolders = itemsToRender.filter(item => item.type === 'folder');
   const searchFiles = itemsToRender.filter(item => item.type !== 'folder');
@@ -324,9 +332,6 @@ export function DocumentListView({
                         >
                           {folder.name}
                         </p>
-                        {hasActiveSearch && (folder as any).__path && (
-                          <p className="text-xs text-gray-400 truncate">{(folder as any).__path.slice(0, -1).join(' / ') || t('ged.listView.root')}</p>
-                        )}
                         <div className="mt-1 flex items-center gap-1.5 flex-wrap">
                           <span className="text-xs text-gray-500">
                             {t((folder.children?.length || 0) > 1 ? 'ged.listView.folderCount' : 'ged.listView.folderCountOne', { count: folder.children?.length || 0 })}
@@ -337,7 +342,7 @@ export function DocumentListView({
 
                     <div>
                       {folder.navigatorTargeting ? (
-                        <DocumentTargetingMarker document={folder} mode="details" />
+                        <DocumentTargetingMarker document={folder} folderPath={locationOf(folder)} />
                       ) : (
                         <p className="text-xs text-gray-400">—</p>
                       )}
@@ -500,18 +505,14 @@ export function DocumentListView({
                         >
                           {file.name}
                         </p>
-                        {hasActiveSearch && (file as any).__path && (
-                          <p className="text-xs text-gray-400 truncate">{(file as any).__path.slice(0, -1).join(' / ') || t('ged.listView.root')}</p>
-                        )}
                         <div className="mt-1 flex items-center gap-1.5 flex-wrap">
                           <DocumentCategoryBadge category={file.documentCategory} />
-                          <DocumentTargetingMarker document={file} mode="tag" />
                         </div>
                       </div>
                     </div>
 
                     <div className="min-w-0">
-                      <DocumentTargetingMarker document={file} mode="details" />
+                      <DocumentTargetingMarker document={file} folderPath={locationOf(file)} />
                     </div>
                     
                     <div>
