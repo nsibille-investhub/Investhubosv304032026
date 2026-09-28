@@ -465,9 +465,9 @@ export function DocumentScope({
               type="button"
               onClick={stop}
               aria-label={t('ged.scope.viewFullScope')}
-              className="inline-flex h-5 w-5 shrink-0 items-center justify-center rounded-full text-gray-400 transition-colors hover:bg-gray-100 hover:text-gray-700 data-[state=open]:bg-gray-100 data-[state=open]:text-gray-700 dark:hover:bg-gray-800 dark:hover:text-gray-200 dark:data-[state=open]:bg-gray-800"
+              className="inline-flex h-7 w-7 shrink-0 items-center justify-center rounded-md border border-gray-200 bg-white text-blue-600 shadow-sm transition-colors hover:border-blue-300 hover:bg-blue-50 data-[state=open]:border-blue-400 data-[state=open]:bg-blue-50 data-[state=open]:ring-2 data-[state=open]:ring-blue-100 dark:border-gray-700 dark:bg-gray-900 dark:text-blue-400 dark:hover:bg-blue-950/40 dark:data-[state=open]:bg-blue-950/40 dark:data-[state=open]:ring-blue-900/50"
             >
-              <Info className="h-3.5 w-3.5" />
+              <Info className="h-4 w-4" />
             </button>
           </PopoverTrigger>
         </TooltipTrigger>
@@ -475,7 +475,7 @@ export function DocumentScope({
           <span className="text-xs">{t('ged.scope.viewFullScope')}</span>
         </TooltipContent>
       </Tooltip>
-      <PopoverContent align="start" className="w-80 p-0" onClick={stop}>
+      <PopoverContent align="end" className="w-80 p-0" onClick={stop}>
         <ScopeDetails
           scope={scope}
           tags={tags}
@@ -498,26 +498,21 @@ export function DocumentScope({
         {tags.length > 0 && (
           <div className="flex min-w-0 max-w-full items-center gap-1 overflow-hidden">{tagList}</div>
         )}
-        {infoButton}
+        <div className="ml-auto shrink-0">{infoButton}</div>
       </div>
     );
   }
 
   return (
-    <div className={cn('flex min-w-0 flex-col items-start gap-1.5', className)}>
-      {showNature && (
-        <div className="flex items-center gap-1.5">
-          <DocumentNatureBadge nature={scope.nature} />
-          {infoButton}
-        </div>
-      )}
-      {showInvestor && <ScopeInvestorLink scope={investorScope} onClick={onInvestorClick} />}
-      {tags.length > 0 && (
-        <div className="flex max-w-full flex-wrap items-center gap-1">
-          {tagList}
-          {!showNature && infoButton}
-        </div>
-      )}
+    <div className={cn('flex min-w-0 items-end gap-2', className)}>
+      <div className="flex min-w-0 flex-1 flex-col items-start gap-1.5">
+        {showNature && <DocumentNatureBadge nature={scope.nature} />}
+        {showInvestor && <ScopeInvestorLink scope={investorScope} onClick={onInvestorClick} />}
+        {tags.length > 0 && (
+          <div className="flex max-w-full flex-wrap items-center gap-1">{tagList}</div>
+        )}
+      </div>
+      {infoButton}
     </div>
   );
 }
