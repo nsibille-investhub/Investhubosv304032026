@@ -3170,7 +3170,8 @@
         "code": "Reference",
         "commitment": "Commitment",
         "label": "Label"
-      }
+      },
+      "openSubscription": "Open subscription"
     }
   },
   "validation": {

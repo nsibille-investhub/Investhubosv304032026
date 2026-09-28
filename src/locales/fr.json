@@ -3170,7 +3170,8 @@
         "code": "Référence",
         "commitment": "Montant engagé",
         "label": "Libellé"
-      }
+      },
+      "openSubscription": "Ouvrir la souscription"
     }
   },
   "validation": {

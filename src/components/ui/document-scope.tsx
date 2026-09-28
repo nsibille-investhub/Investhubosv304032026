@@ -6,7 +6,7 @@
  * it". Used in the document explorer (list view), the Bird View tree and the
  * publication center (validation page).
  *
- *  - Nature badge (generic / nominative)
+ *  - Nature badge (generic / nominative), shown in the details header only by default
  *  - Investor / structure as a link (PP / PM icons), outside of the tags
  *  - Targeting tags (fund then subscription as a square chip, share, segments)
  *  - "i" button opening, on click, the full scope: investor, subscription
@@ -333,6 +333,30 @@ export function DocumentNatureBadge({
   );
 }
 
+export function ScopeSubscriptionLink({ code }: { code: string }) {
+  const { t } = useTranslation();
+  return (
+    <Tooltip>
+      <TooltipTrigger asChild>
+        <button
+          type="button"
+          onClick={(e) => {
+            e.stopPropagation();
+            navigateToPage('subscriptions', { subscription: code });
+          }}
+          className="group inline-flex items-center gap-1 font-medium text-gray-900 transition-colors hover:text-blue-600 dark:text-gray-100"
+        >
+          <span className="group-hover:underline">{code}</span>
+          <ChevronRight className="h-3 w-3 shrink-0 opacity-50 transition-opacity group-hover:opacity-100" />
+        </button>
+      </TooltipTrigger>
+      <TooltipContent side="top">
+        <span className="text-xs">{t('ged.scope.openSubscription')}</span>
+      </TooltipContent>
+    </Tooltip>
+  );
+}
+
 function openInvestor(scope: DocumentScopeData) {
   const inv = scope.investor ? INVESTORS_BY_NAME.get(scope.investor) : undefined;
   navigateToPage('investors', inv ? { investor: inv.id } : { search: scope.investor ?? '' });
@@ -446,7 +470,7 @@ interface DocumentScopeProps {
 export function DocumentScope({
   scope,
   layout = 'stacked',
-  showNature = true,
+  showNature = false,
   onInvestorClick,
   className,
 }: DocumentScopeProps) {
@@ -606,7 +630,7 @@ function ScopeDetails({
             <SectionTitle>{t('ged.scope.types.subscription')}</SectionTitle>
             <dl className="space-y-1">
               <DetailRow icon={FileText} label={t('ged.scope.subscription.code')}>
-                <span className="font-medium">{subscription.code}</span>
+                <ScopeSubscriptionLink code={subscription.code} />
               </DetailRow>
               {subscription.fund && (
                 <DetailRow icon={Landmark} label={t('ged.scope.types.fund')}>
