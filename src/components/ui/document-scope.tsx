@@ -560,10 +560,7 @@ export function DocumentScope({
           <div className="flex min-w-0 items-center gap-1 overflow-hidden" style={{ maxWidth: '100%' }}>{tagList}</div>
         )}
         {segmentTags.length > 0 && (
-          <>
-            <div aria-hidden style={{ flexBasis: '100%', height: 0, margin: '-3px 0' }} />
-            <div className="flex min-w-0 items-center gap-1 overflow-hidden" style={{ maxWidth: '100%' }}>{segmentList}</div>
-          </>
+          <div className="flex min-w-0 items-center gap-1 overflow-hidden">{segmentList}</div>
         )}
         <div className="ml-auto shrink-0">{infoButton}</div>
       </div>

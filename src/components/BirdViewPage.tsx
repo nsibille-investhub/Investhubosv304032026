@@ -1039,12 +1039,18 @@ export function BirdViewPage({ onBack }: BirdViewPageProps) {
               <FileText className="w-4 h-4 text-gray-400" />
             </div>
 
-            {/* Name + scope */}
-            <div className="flex min-w-0 flex-1 flex-col gap-1">
-              <span className="text-sm text-gray-900 dark:text-gray-100">{node.name}</span>
+            {/* Name */}
+            <span
+              className="min-w-0 flex-1 truncate text-sm text-gray-900 dark:text-gray-100"
+              title={node.name}
+            >
+              {node.name}
+            </span>
+
+            {/* Audience */}
+            <div className="flex-shrink-0" style={{ width: '22rem' }}>
               <DocumentScope
                 layout="inline"
-                className="flex-wrap"
                 scope={{
                   nature: node.isNominatif ? 'nominative' : 'generic',
                   folderPath: parentPath,
@@ -1063,10 +1069,13 @@ export function BirdViewPage({ onBack }: BirdViewPageProps) {
                 }}
               />
             </div>
-            <DocumentCategoryBadge category={node.documentCategory} />
+
+            <div className="flex-shrink-0" style={{ width: '7rem' }}>
+              <DocumentCategoryBadge category={node.documentCategory} />
+            </div>
 
             {/* Metadata */}
-            <div className="flex items-center gap-3 text-xs text-gray-500">
+            <div className="flex flex-shrink-0 items-center gap-3 text-xs text-gray-500" style={{ width: '8.5rem' }}>
               <span className="flex items-center gap-1">
                 <CalendarDays className="w-3.5 h-3.5" />
                 {node.date}
@@ -1075,6 +1084,7 @@ export function BirdViewPage({ onBack }: BirdViewPageProps) {
             </div>
 
             {/* Statut selon le type de document */}
+            <div className="flex-shrink-0" style={{ width: '8.5rem' }}>
             {(() => {
               const access = buildAccessMessage(node, inheritedContext);
               const headerColorClass =
@@ -1086,7 +1096,7 @@ export function BirdViewPage({ onBack }: BirdViewPageProps) {
                 return (
                   <Tooltip>
                     <TooltipTrigger asChild>
-                      <div className="flex items-center gap-1.5 ml-4 cursor-help">
+                      <div className="flex items-center gap-1.5 cursor-help">
                         <Ban className="w-4 h-4 text-gray-400" />
                         <span className="text-xs font-medium text-gray-500">
                           {t('ged.birdview.node.inaccessibleToViewer')}
@@ -1108,7 +1118,7 @@ export function BirdViewPage({ onBack }: BirdViewPageProps) {
                 return (
                   <Tooltip>
                     <TooltipTrigger asChild>
-                      <div className="flex items-center gap-1.5 ml-4 cursor-help">
+                      <div className="flex items-center gap-1.5 cursor-help">
                         <Ban className="w-4 h-4 text-gray-400" />
                         <span className="text-xs font-medium text-gray-500">
                           {t('ged.birdview.node.inaccessibleToContact')}
@@ -1134,7 +1144,7 @@ export function BirdViewPage({ onBack }: BirdViewPageProps) {
                 return (
                   <Tooltip>
                     <TooltipTrigger asChild>
-                      <div className="flex items-center gap-1.5 ml-4 cursor-help">
+                      <div className="flex items-center gap-1.5 cursor-help">
                         {consulted ? (
                           <>
                             <CheckCircle2 className="w-4 h-4 text-green-500" />
@@ -1162,7 +1172,7 @@ export function BirdViewPage({ onBack }: BirdViewPageProps) {
               return (
                 <Tooltip>
                   <TooltipTrigger asChild>
-                    <div className="flex items-center gap-1 ml-4 text-gray-400 dark:text-gray-500 cursor-help">
+                    <div className="flex items-center gap-1 text-gray-400 dark:text-gray-500 cursor-help">
                       <Globe className="w-3.5 h-3.5" />
                       <span className="text-xs">
                         {node.engagement?.totalViewers ?? 0}
@@ -1179,9 +1189,10 @@ export function BirdViewPage({ onBack }: BirdViewPageProps) {
                 </Tooltip>
               );
             })()}
+            </div>
 
             {/* Actions */}
-            <div className="ml-auto flex items-center gap-1">
+            <div className="flex flex-shrink-0 items-center gap-1">
               {/* Preview button (icon-only, like in the arbo) */}
               <button
                 className="p-1.5 hover:bg-gray-200 dark:hover:bg-gray-800 rounded transition-colors"
