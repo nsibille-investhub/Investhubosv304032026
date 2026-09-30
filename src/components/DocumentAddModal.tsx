@@ -89,6 +89,7 @@ interface DocumentAddModalProps {
   document?: Document | null;
   initialFolderPickerOpen?: boolean;
   folderInheritedRestrictions?: Record<string, FolderInheritedRestrictions>;
+  onCreated?: (created: { name: string; folderId: string; category?: DocumentCategory }) => void;
 }
 
 interface FolderTreeNode {
@@ -461,7 +462,7 @@ export function FolderSelectionTreeviewDropdown({
   );
 }
 
-export function DocumentAddModal({ isOpen, onClose, folderOptions, defaultFolderId, document, initialFolderPickerOpen = false, folderInheritedRestrictions }: DocumentAddModalProps) {
+export function DocumentAddModal({ isOpen, onClose, folderOptions, defaultFolderId, document, initialFolderPickerOpen = false, folderInheritedRestrictions, onCreated }: DocumentAddModalProps) {
   const { t } = useTranslation();
   const isDetailMode = !!document;
   const [versions, setVersions] = useState<DocumentVersion[]>(defaultVersions);
@@ -661,6 +662,17 @@ export function DocumentAddModal({ isOpen, onClose, folderOptions, defaultFolder
 
     if (validationTeams.length === 0) {
       toast.error(t('ged.addModal.errors.pickTeam'));
+      return;
+    }
+
+    if (!document && onCreated) {
+      const version = versions.find((v) => v.name.trim() && v.fileName.trim());
+      onCreated({
+        name: version?.name.trim() || version?.fileName || '',
+        folderId: parentFolderId,
+        category: documentCategory || undefined,
+      });
+      onClose();
       return;
     }
 

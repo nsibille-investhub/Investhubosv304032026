@@ -3,7 +3,7 @@ import { motion, AnimatePresence } from 'motion/react';
 import { DocumentExplorer } from './DocumentExplorer';
 import { FolderDetailPanel } from './FolderDetailPanel';
 import { DocumentFilterBar } from './DocumentFilterBar';
-import { DocumentTreeSidebar } from './DocumentTreeSidebar';
+import { DocumentTreeSidebar, type TreeHighlight } from './DocumentTreeSidebar';
 import { DocumentListView } from './DocumentListView';
 import { DocumentAddModal } from './DocumentAddModal';
 import { AddFolderPopup } from './AddFolderPopup';
@@ -20,6 +20,26 @@ import {
 } from '../utils/folderDeletion';
 import { useTranslation } from '../utils/languageContext';
 import { GedExtraDocument, useValidationStore } from '../utils/validationStoreContext';
+import {
+  findItem,
+  insertAtTop,
+  moveWithinKind,
+  sortFromDefault,
+  type GedDefaultSort,
+  type GedSort,
+} from '../utils/documentRank';
+
+const DEFAULT_SORT_STORAGE_KEY = 'investhub.ged.defaultSort';
+
+function readDefaultSort(): GedDefaultSort {
+  try {
+    const value = window.localStorage.getItem(DEFAULT_SORT_STORAGE_KEY);
+    if (value === 'rank' || value === 'name' || value === 'added') return value;
+  } catch {
+    // storage unavailable: fall back to the defined order
+  }
+  return 'rank';
+}
 
 type ViewMode = 'list' | 'grid';
 
@@ -116,6 +136,10 @@ export function DocumentsPage({ selectedSpace, navigationTarget, onNavigationHan
   const [addFolderPopupOpen, setAddFolderPopupOpen] = useState(false);
   const [addFolderDefaultParentId, setAddFolderDefaultParentId] = useState<string>('root');
   const [folderBeingEdited, setFolderBeingEdited] = useState<Document | null>(null);
+  const [defaultSort, setDefaultSort] = useState<GedDefaultSort>(readDefaultSort);
+  const [sort, setSort] = useState<GedSort>(() => sortFromDefault(readDefaultSort()));
+  const [highlight, setHighlight] = useState<TreeHighlight | null>(null);
+  const [newItemIds, setNewItemIds] = useState<Set<string>>(() => new Set());
 
   const investorProfiles = [
     {
@@ -385,12 +409,130 @@ export function DocumentsPage({ selectedSpace, navigationTarget, onNavigationHan
     return gedExtrasForSpace.map((extra) => extraToDocument(extra, t));
   }, [gedExtrasForSpace, t]);
 
-  const mergedSpaceDocuments: Document[] = useMemo(() => {
-    if (dynamicSpaceDocuments.length === 0) return spaceDocuments;
-    const existingIds = new Set(spaceDocuments.map((d) => d.id));
-    const additions = dynamicSpaceDocuments.filter((d) => !existingIds.has(d.id));
-    return [...additions, ...spaceDocuments];
-  }, [dynamicSpaceDocuments, spaceDocuments]);
+  // Promoted documents join the rank model at rank 1 of the root documents;
+  // later updates (validation state) replace them in place.
+  useEffect(() => {
+    if (dynamicSpaceDocuments.length === 0) return;
+    setSpaceDocuments((prev) => {
+      const byId = new Map(dynamicSpaceDocuments.map((d) => [d.id, d] as const));
+      const existingIds = new Set(prev.map((d) => d.id));
+      let next = prev.map((d) => byId.get(d.id) ?? d);
+      dynamicSpaceDocuments
+        .filter((d) => !existingIds.has(d.id))
+        .reverse()
+        .forEach((d) => {
+          next = insertAtTop(next, null, d);
+        });
+      return next;
+    });
+  }, [dynamicSpaceDocuments]);
+
+  const mergedSpaceDocuments = spaceDocuments;
+
+  const flashItem = (id: string) => setHighlight({ id, token: Date.now() });
+
+  useEffect(() => {
+    if (!highlight) return;
+    const timer = window.setTimeout(() => setHighlight(null), 1400);
+    return () => window.clearTimeout(timer);
+  }, [highlight]);
+
+  const handleDefaultSortChange = (value: GedDefaultSort) => {
+    setDefaultSort(value);
+    setSort(sortFromDefault(value));
+    try {
+      window.localStorage.setItem(DEFAULT_SORT_STORAGE_KEY, value);
+    } catch {
+      // storage unavailable: the choice lasts for the session only
+    }
+  };
+
+  const confirmWithUndo = (message: string, previous: Document[], id: string) => {
+    toast(message, {
+      id: 'ged-rank',
+      duration: 6000,
+      action: {
+        label: t('ged.rank.toast.undo'),
+        onClick: () => {
+          setSpaceDocuments(previous);
+          flashItem(id);
+        },
+      },
+    });
+  };
+
+  const handleMoveItem = (id: string, toIndex: number) => {
+    const previous = spaceDocuments;
+    const result = moveWithinKind(previous, id, toIndex);
+    if (!result) return;
+    setSpaceDocuments(result.tree);
+    flashItem(id);
+    confirmWithUndo(
+      t('ged.rank.toast.moved', { name: result.item.name, rank: result.rank }),
+      previous,
+      id,
+    );
+  };
+
+  const parentTargeting = (parentId: string | null): Document['navigatorTargeting'] => {
+    const parent = parentId ? findItem(spaceDocuments, parentId) : null;
+    if (parent?.navigatorTargeting?.mode === 'generic') return { ...parent.navigatorTargeting };
+    return { mode: 'generic', fund: selectedSpace.targeting.funds[0] };
+  };
+
+  const buildNewItem = (
+    kind: 'folder' | 'file',
+    name: string,
+    parentId: string | null,
+    category?: DocumentCategory,
+  ): Document => {
+    const now = new Date();
+    const parent = parentId ? findItem(spaceDocuments, parentId) : null;
+    return {
+      id: `new-${kind}-${now.getTime()}`,
+      name,
+      type: kind === 'folder' ? 'folder' : 'pdf',
+      status: kind === 'folder' ? 'published' : 'draft',
+      size: kind === 'folder' ? undefined : '0 KB',
+      date: now.toLocaleDateString('fr-FR'),
+      path: `${parent?.path ?? ''}/${name}`,
+      children: kind === 'folder' ? [] : undefined,
+      uploadedBy: t('ged.documents.ownerSystem'),
+      uploadedAt: now.toISOString(),
+      updatedAt: now.toISOString(),
+      version: 1,
+      target: { type: 'all', segments: [], investors: [], subscriptions: [], participations: [] },
+      access: { level: 'view', watermark: false, downloadable: true, printable: true },
+      isNew: true,
+      notifyOnUpload: false,
+      reporting: false,
+      views: 0,
+      downloads: 0,
+      documentCategory: kind === 'folder' ? undefined : category,
+      navigatorTargeting: parentTargeting(parentId),
+    } as Document;
+  };
+
+  const handleItemCreated = (
+    kind: 'folder' | 'file',
+    name: string,
+    parentKey: string,
+    category?: DocumentCategory,
+  ) => {
+    const parentId = parentKey === 'root' ? null : parentKey;
+    const previous = spaceDocuments;
+    const item = buildNewItem(kind, name, parentId, category);
+    setSpaceDocuments(insertAtTop(previous, parentId, item));
+    setNewItemIds((prev) => new Set(prev).add(item.id));
+    flashItem(item.id);
+    confirmWithUndo(
+      kind === 'folder'
+        ? t('ged.rank.toast.folderAdded', { name })
+        : t('ged.rank.toast.docAdded', { name }),
+      previous,
+      item.id,
+    );
+  };
 
   const handleDeleteFolder = (folder: Document, migrateToFolderId: string | null) => {
     const docCount = countDescendantDocuments(folder);
@@ -727,6 +869,7 @@ export function DocumentsPage({ selectedSpace, navigationTarget, onNavigationHan
               currentFolderId={currentFolderId}
               onFolderSelect={handleFolderSelect}
               searchTerm={searchTerm}
+              highlight={highlight}
             />
           </div>
 
@@ -754,6 +897,13 @@ export function DocumentsPage({ selectedSpace, navigationTarget, onNavigationHan
               folderInheritedRestrictions={folderInheritedRestrictions}
               folderOptions={folderOptions}
               rootLabel={selectedSpace.name}
+              sort={sort}
+              onSortChange={setSort}
+              defaultSort={defaultSort}
+              onDefaultSortChange={handleDefaultSortChange}
+              onMoveItem={handleMoveItem}
+              highlight={highlight}
+              newItemIds={newItemIds}
             />
           </div>
         </div>
@@ -785,6 +935,7 @@ export function DocumentsPage({ selectedSpace, navigationTarget, onNavigationHan
         defaultFolderId={addDocumentDefaultFolderId}
         document={selectedDocument}
         folderInheritedRestrictions={folderInheritedRestrictions}
+        onCreated={({ name, folderId, category }) => handleItemCreated('file', name, folderId, category)}
       />
       <AddFolderPopup
         isOpen={addFolderPopupOpen}
@@ -797,6 +948,7 @@ export function DocumentsPage({ selectedSpace, navigationTarget, onNavigationHan
         inheritedTargeting={selectedSpace.targeting}
         mode={folderBeingEdited ? 'edit' : 'create'}
         folderToEdit={folderBeingEdited ? { id: folderBeingEdited.id, name: folderBeingEdited.name } : null}
+        onCreated={({ name, parentId }) => handleItemCreated('folder', name, parentId)}
         onDeleteFolder={(folderId, migrateToFolderId) => {
           const migrationTarget = folderOptions.find((folder) => folder.id === migrateToFolderId)?.label || t('ged.dataRoom.folderDefaults.targetFolder');
           toast.success(t('ged.toast.deletionSimulated'), {

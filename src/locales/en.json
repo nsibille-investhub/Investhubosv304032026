@@ -2441,7 +2441,12 @@
       "deleteFolderNoCompatible": "No destination folder is compatible with the documents' restrictions (fund, share class, segment). Update the documents' targeting or create a compatible folder.",
       "deleteFolderReassignCta": "Reassign and delete",
       "cancel": "Cancel",
-      "delete": "Delete"
+      "delete": "Delete",
+      "batch": {
+        "defaultName": "Document batch",
+        "summaryOne": "{{count}} document · 1 consolidated notification",
+        "summaryMany": "{{count}} documents · 1 consolidated notification"
+      }
     },
     "preview": {
       "title": "Document preview",
@@ -3172,6 +3177,65 @@
         "label": "Label"
       },
       "openSubscription": "Open subscription"
+    },
+    "rank": {
+      "sortLabel": {
+        "rank": "Defined order",
+        "sorted": "Sorted by {{criterion}} {{direction}}"
+      },
+      "criterion": {
+        "name": "name",
+        "added": "date added"
+      },
+      "direction": {
+        "asc": "ascending",
+        "desc": "descending"
+      },
+      "chip": {
+        "sorted": "Personal sort active, the defined order is unchanged",
+        "leftDefault": "You left the application default order",
+        "back": "Back to the default order"
+      },
+      "hint": "Drag the handle to change the rank · click a header to sort",
+      "footer": {
+        "rank": "Defined order view · dragging enabled",
+        "sorted": "Sorted by {{criterion}} ({{direction}}) · dragging disabled, defined order unchanged",
+        "search": "Search results · dragging disabled"
+      },
+      "handle": {
+        "drag": "Drag to change the rank",
+        "lockedSort": "Go back to the defined order to reorganize this folder.",
+        "lockedSearch": "Clear the search to reorganize this folder.",
+        "aria": "Change the rank of {{name}}"
+      },
+      "menu": {
+        "up": "Move up",
+        "down": "Move down",
+        "top": "Move to top",
+        "bottom": "Move to bottom",
+        "target": "rank {{rank}}",
+        "unlock": "Go back to the defined order to reorganize"
+      },
+      "subtitleRank": "rank {{rank}}",
+      "sortAria": "Sort by {{column}}",
+      "newBadge": "New",
+      "toast": {
+        "moved": "Order saved · {{name}} moves to rank {{rank}}",
+        "undo": "Undo",
+        "docAdded": "{{name}} added at rank 1, pending validation",
+        "folderAdded": "{{name}} added at rank 1 of folders"
+      },
+      "defaultSetting": {
+        "label": "Application default order",
+        "hint": "Simulated application setting: it sets the starting view",
+        "rank": "Defined order",
+        "name": "Name",
+        "added": "Date added"
+      },
+      "tree": {
+        "expand": "Expand",
+        "collapse": "Collapse"
+      }
     }
   },
   "validation": {

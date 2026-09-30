@@ -19,7 +19,7 @@
  *  - downloadScopeAudience()  CSV export of the audience
  */
 
-import { useMemo, type MouseEvent, type ReactNode } from 'react';
+import { useMemo, type CSSProperties, type MouseEvent, type ReactNode } from 'react';
 import {
   Building2,
   ChevronRight,
@@ -366,10 +366,12 @@ export function ScopeInvestorLink({
   scope,
   onClick,
   className,
+  style,
 }: {
   scope: DocumentScopeData;
   onClick?: () => void;
   className?: string;
+  style?: CSSProperties;
 }) {
   const { t } = useTranslation();
   const kind = resolveInvestorKind(scope);
@@ -387,13 +389,12 @@ export function ScopeInvestorLink({
             'group inline-flex min-w-0 items-center gap-1.5 text-xs text-gray-600 transition-colors hover:text-blue-600 dark:text-gray-300',
             className,
           )}
+          style={style}
         >
           <Icon className="h-3 w-3 shrink-0 text-gray-400 transition-colors group-hover:text-blue-500" />
           <span
-            className={cn(
-              'min-w-0 truncate group-hover:underline',
-              scope.structure ? 'max-w-[140px]' : 'max-w-[200px]',
-            )}
+            className="min-w-0 truncate group-hover:underline"
+            style={{ maxWidth: scope.structure ? 140 : 200 }}
           >
             {scope.investor}
           </span>
@@ -401,7 +402,7 @@ export function ScopeInvestorLink({
             <>
               <span className="shrink-0 text-gray-300 dark:text-gray-600">/</span>
               <Building2 className="h-3 w-3 shrink-0 text-gray-400 transition-colors group-hover:text-blue-500" />
-              <span className="min-w-0 max-w-[140px] truncate group-hover:underline">
+              <span className="min-w-0 truncate group-hover:underline" style={{ maxWidth: 140 }}>
                 {scope.structure}
               </span>
             </>
@@ -489,7 +490,7 @@ export function DocumentScope({
               type="button"
               onClick={stop}
               aria-label={t('ged.scope.viewFullScope')}
-              className="inline-flex h-7 w-7 shrink-0 items-center justify-center rounded-md border border-gray-200 bg-white text-blue-600 shadow-sm transition-colors hover:border-blue-300 hover:bg-blue-50 data-[state=open]:border-blue-400 data-[state=open]:bg-blue-50 data-[state=open]:ring-2 data-[state=open]:ring-blue-100 dark:border-gray-700 dark:bg-gray-900 dark:text-blue-400 dark:hover:bg-blue-950/40 dark:data-[state=open]:bg-blue-950/40 dark:data-[state=open]:ring-blue-900/50"
+              className="inline-flex h-7 w-7 shrink-0 items-center justify-center rounded-md border border-gray-200 bg-white text-blue-600 shadow-sm transition-colors hover:border-blue-300 hover:bg-blue-50 ds-scope-info"
             >
               <Info className="h-4 w-4" />
             </button>
@@ -517,10 +518,10 @@ export function DocumentScope({
       <div className={cn('flex min-w-0 items-center gap-1.5', className)}>
         {showNature && <DocumentNatureBadge nature={scope.nature} />}
         {showInvestor && (
-          <ScopeInvestorLink scope={investorScope} onClick={onInvestorClick} className="min-w-[6rem] shrink" />
+          <ScopeInvestorLink scope={investorScope} onClick={onInvestorClick} className="shrink" style={{ minWidth: 96 }} />
         )}
         {tags.length > 0 && (
-          <div className="flex min-w-0 max-w-full items-center gap-1 overflow-hidden">{tagList}</div>
+          <div className="flex min-w-0 items-center gap-1 overflow-hidden" style={{ maxWidth: '100%' }}>{tagList}</div>
         )}
         <div className="ml-auto shrink-0">{infoButton}</div>
       </div>
@@ -533,7 +534,7 @@ export function DocumentScope({
         {showNature && <DocumentNatureBadge nature={scope.nature} />}
         {showInvestor && <ScopeInvestorLink scope={investorScope} onClick={onInvestorClick} />}
         {tags.length > 0 && (
-          <div className="flex max-w-full flex-wrap items-center gap-1">{tagList}</div>
+          <div className="flex flex-wrap items-center gap-1" style={{ maxWidth: '100%' }}>{tagList}</div>
         )}
       </div>
       {infoButton}
@@ -617,7 +618,7 @@ function ScopeDetails({
         <DocumentNatureBadge nature={scope.nature} />
       </div>
 
-      <div className="max-h-[60vh] space-y-3 overflow-y-auto px-4 py-3">
+      <div className="space-y-3 overflow-y-auto px-4 py-3" style={{ maxHeight: '60vh' }}>
         {isNominative && investorScope.investor && (
           <section>
             <SectionTitle>{t('ged.scope.types.investor')}</SectionTitle>

@@ -17,6 +17,7 @@ interface AddFolderPopupProps {
   mode?: 'create' | 'edit';
   folderToEdit?: { id: string; name: string } | null;
   onDeleteFolder?: (folderId: string, migrateToFolderId: string) => void;
+  onCreated?: (folder: { name: string; parentId: string }) => void;
 }
 
 export function AddFolderPopup({
@@ -28,6 +29,7 @@ export function AddFolderPopup({
   mode = 'create',
   folderToEdit = null,
   onDeleteFolder,
+  onCreated,
 }: AddFolderPopupProps) {
   const { t } = useTranslation();
   const selectedParentLabel = (parentId: string) =>
@@ -45,6 +47,10 @@ export function AddFolderPopup({
       folderToEdit={folderToEdit}
       onDeleteFolder={onDeleteFolder}
       onSave={({ name, parentId, targeting }) => {
+        if (mode === 'create' && onCreated) {
+          onCreated({ name, parentId });
+          return;
+        }
         const segmentsInfo = targeting.segments.length > 0 ? ` · ${targeting.segments.length} segment(s)` : '';
         const fundInfo = targeting.funds.length > 0 ? ` · ${targeting.funds[0]}` : '';
         toast.success(mode === 'edit' ? t('ged.toast.folderUpdated') : t('ged.toast.folderCreated'), {
