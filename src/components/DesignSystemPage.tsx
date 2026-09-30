@@ -1794,7 +1794,7 @@ export function DesignSystemPage() {
           </div>
           <div className="md:col-span-2 rounded-xl border border-[#D7E0DD] dark:border-[#1F2D2A] p-4 bg-[#F8FAFA] dark:bg-[#0F1716]">
             <span className="mb-3 block text-[11px] font-semibold uppercase tracking-[0.14em] text-[#456B6C]">
-              Layout inline - ligne d&apos;arbre (Bird View)
+              Layout inline - ligne d&apos;arbre (Bird View), deux lignes maximum
             </span>
             <DocumentScope
               layout="inline"

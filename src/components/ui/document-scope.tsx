@@ -13,7 +13,9 @@
  *    identification, targeting and the audience CSV download
  *
  * Exports:
- *  - <DocumentScope>          the widget (layout "stacked" or "inline")
+ *  - <DocumentScope>          the widget: layout "stacked" (rows wrap freely, "i" at the
+ *                             bottom right) or "inline" (two lines max, no wrapping: investor
+ *                             then targeting tags, or targeting tags then segments; "i" centered)
  *  - resolveScopeAudience()   audience computed from the GED fixtures
  *  - resolveScopeSubscription() subscription identification from the fixtures
  *  - downloadScopeAudience()  CSV export of the audience
@@ -309,6 +311,9 @@ function buildTags(
 
 const stop = (e: MouseEvent) => e.stopPropagation();
 
+/** The precompiled Tailwind sheet has no max-w-full, so the cap is inlined. */
+const FULL_WIDTH: CSSProperties = { maxWidth: '100%' };
+
 export function DocumentNatureBadge({
   nature,
   className,
@@ -550,19 +555,28 @@ export function DocumentScope({
   const segmentList = segmentTags.map((tag) => <ScopeTag key={tag.key} tag={tag} />);
 
   if (layout === 'inline') {
+    const firstLineTags = showInvestor ? [] : tagList;
+    const secondLineTags = showInvestor ? [...tagList, ...segmentList] : segmentList;
+    const hasFirstLine = showNature || showInvestor || firstLineTags.length > 0;
     return (
-      <div className={cn('flex min-w-0 items-center gap-1.5', className)}>
-        {showNature && <DocumentNatureBadge nature={scope.nature} />}
-        {showInvestor && (
-          <ScopeInvestorLink scope={investorScope} onClick={onInvestorClick} className="shrink" style={{ minWidth: 96 }} />
-        )}
-        {targetingTags.length > 0 && (
-          <div className="flex min-w-0 items-center gap-1 overflow-hidden" style={{ maxWidth: '100%' }}>{tagList}</div>
-        )}
-        {segmentTags.length > 0 && (
-          <div className="flex min-w-0 items-center gap-1 overflow-hidden">{segmentList}</div>
-        )}
-        <div className="ml-auto shrink-0">{infoButton}</div>
+      <div className={cn('flex min-w-0 items-center gap-2', className)}>
+        <div className="flex min-w-0 flex-1 flex-col items-start gap-1">
+          {hasFirstLine && (
+            <div className="flex min-w-0 items-center gap-1.5 overflow-hidden" style={FULL_WIDTH}>
+              {showNature && <DocumentNatureBadge nature={scope.nature} />}
+              {showInvestor && (
+                <ScopeInvestorLink scope={investorScope} onClick={onInvestorClick} style={FULL_WIDTH} />
+              )}
+              {firstLineTags}
+            </div>
+          )}
+          {secondLineTags.length > 0 && (
+            <div className="flex min-w-0 items-center gap-1 overflow-hidden" style={FULL_WIDTH}>
+              {secondLineTags}
+            </div>
+          )}
+        </div>
+        <div className="shrink-0">{infoButton}</div>
       </div>
     );
   }
