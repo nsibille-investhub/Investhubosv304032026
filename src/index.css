@@ -11084,8 +11084,6 @@ html {
 .ged-rank-dragging { opacity: .4; }
 .ged-rank-drop-before { box-shadow: inset 0 3px 0 0 #2563eb; }
 .ged-rank-drop-after { box-shadow: inset 0 -3px 0 0 #2563eb; }
-.ged-rank-drop-left { box-shadow: -6px 0 0 -2px #2563eb; }
-.ged-rank-drop-right { box-shadow: 6px 0 0 -2px #2563eb; }
 @keyframes ged-rank-flash {
   from { background-color: #EDFBE0; }
   to { background-color: transparent; }

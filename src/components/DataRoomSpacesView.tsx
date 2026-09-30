@@ -1,5 +1,6 @@
-import { useMemo, useState, type DragEvent } from 'react';
-import { motion } from 'motion/react';
+import { useEffect, useLayoutEffect, useMemo, useRef, useState, type PointerEvent as ReactPointerEvent } from 'react';
+import { createPortal } from 'react-dom';
+import { animate, motion } from 'motion/react';
 import { Plus, Folder, Settings, Users, Handshake, TrendingUp, Target, ArrowRight, Search, FileText, FileUp, FolderOpen, Landmark, Tag as TagIcon, MoreVertical, Presentation, GripVertical } from 'lucide-react';
 import { Button } from './ui/button';
 import { Badge } from './ui/badge';
@@ -37,7 +38,26 @@ interface DataRoomSpacesViewProps {
   onReorderSpace?: (spaceId: string, sectionIds: string[], toIndex: number) => void;
 }
 
-type SpaceDropTarget = { id: string; position: 'before' | 'after' };
+type Box = { left: number; top: number; width: number; height: number };
+
+type InsertMarker = { anchorId: string; side: 'before' | 'after' };
+
+interface SpaceDrag {
+  id: string;
+  sectionIds: string[];
+  pointer: { x: number; y: number };
+  offset: { x: number; y: number };
+  origin: Box;
+  insert: InsertMarker | null;
+  returning: boolean;
+}
+
+/** Share of a card width, on each side, that means "insert here"; the centre means "drop on the space". */
+const EDGE_ZONE = 0.3;
+/** How far the neighbour on the right slides to open the insertion gap. */
+const GAP_SHIFT = 18;
+
+const toBox = (rect: DOMRect): Box => ({ left: rect.left, top: rect.top, width: rect.width, height: rect.height });
 
 export function DataRoomSpacesView({
   spaces,
@@ -50,9 +70,11 @@ export function DataRoomSpacesView({
 }: DataRoomSpacesViewProps) {
   const { t } = useTranslation();
   const [globalSearch, setGlobalSearch] = useState('');
-  const [armedId, setArmedId] = useState<string | null>(null);
-  const [dragId, setDragId] = useState<string | null>(null);
-  const [dropTarget, setDropTarget] = useState<SpaceDropTarget | null>(null);
+  const [drag, setDrag] = useState<SpaceDrag | null>(null);
+  const [landing, setLanding] = useState<{ id: string; from: Box } | null>(null);
+  const dragRef = useRef<SpaceDrag | null>(null);
+  const cardRefs = useRef<Record<string, HTMLDivElement | null>>({});
+  const rectsRef = useRef<Record<string, Box>>({});
 
   const getTargetIcon = (userTypes: string[]) => {
     if (userTypes.includes('Investisseur')) return Users;
@@ -112,56 +134,247 @@ export function DataRoomSpacesView({
 
   const dragDisabledReason = normalizedQuery ? t('ged.rank.handle.lockedSearchSpaces') : null;
 
-  const resetDrag = () => {
-    setArmedId(null);
-    setDragId(null);
-    setDropTarget(null);
+  const updateDrag = (next: SpaceDrag | null) => {
+    dragRef.current = next;
+    setDrag(next);
   };
 
-  const spaceDragProps = (space: DataRoomSpace, sectionIds: string[]) => ({
-    draggable: armedId === space.id && !dragDisabledReason,
-    onDragStart: (event: DragEvent<HTMLDivElement>) => {
-      if (armedId !== space.id || dragDisabledReason) {
-        event.preventDefault();
+  /** Final 0-based index of the dragged space, or null when it keeps its place. */
+  const targetIndex = (d: SpaceDrag, insert: InsertMarker | null): number | null => {
+    if (!insert) return null;
+    const base = d.sectionIds.filter((id) => id !== d.id);
+    const anchor = base.indexOf(insert.anchorId);
+    if (anchor < 0) return null;
+    const to = insert.side === 'before' ? anchor : anchor + 1;
+    return to === d.sectionIds.indexOf(d.id) ? null : to;
+  };
+
+  const hitTest = (d: SpaceDrag, x: number, y: number): InsertMarker | null => {
+    const others = d.sectionIds.filter((id) => id !== d.id);
+    let nearest: { id: string; box: Box; dist: number } | null = null;
+    for (const id of others) {
+      const box = rectsRef.current[id];
+      if (!box) continue;
+      const inside = x >= box.left && x <= box.left + box.width && y >= box.top && y <= box.top + box.height;
+      if (inside) {
+        const rel = (x - box.left) / box.width;
+        if (rel < EDGE_ZONE) return { anchorId: id, side: 'before' };
+        if (rel > 1 - EDGE_ZONE) return { anchorId: id, side: 'after' };
+        return null;
+      }
+      const dx = Math.max(box.left - x, 0, x - (box.left + box.width));
+      const dy = Math.max(box.top - y, 0, y - (box.top + box.height));
+      const dist = Math.hypot(dx, dy);
+      if (!nearest || dist < nearest.dist) nearest = { id, box, dist };
+    }
+    const own = d.origin;
+    const onOwnPlace = x >= own.left && x <= own.left + own.width && y >= own.top && y <= own.top + own.height;
+    if (onOwnPlace || !nearest || nearest.dist > 64) return null;
+    return { anchorId: nearest.id, side: x < nearest.box.left + nearest.box.width / 2 ? 'before' : 'after' };
+  };
+
+  const startSpaceDrag = (event: ReactPointerEvent, space: DataRoomSpace, sectionIds: string[]) => {
+    if (dragDisabledReason || event.button !== 0) return;
+    const card = cardRefs.current[space.id];
+    if (!card) return;
+    event.preventDefault();
+    event.stopPropagation();
+    const origin = toBox(card.getBoundingClientRect());
+    rectsRef.current = {};
+    sectionIds.forEach((id) => {
+      const el = cardRefs.current[id];
+      if (el) rectsRef.current[id] = toBox(el.getBoundingClientRect());
+    });
+    updateDrag({
+      id: space.id,
+      sectionIds,
+      pointer: { x: event.clientX, y: event.clientY },
+      offset: { x: event.clientX - origin.left, y: event.clientY - origin.top },
+      origin,
+      insert: null,
+      returning: false,
+    });
+  };
+
+  useEffect(() => {
+    if (!drag || drag.returning) return;
+    const onMove = (e: PointerEvent) => {
+      const d = dragRef.current;
+      if (!d || d.returning) return;
+      const hit = hitTest(d, e.clientX, e.clientY);
+      const insert = targetIndex(d, hit) === null ? null : hit;
+      updateDrag({ ...d, pointer: { x: e.clientX, y: e.clientY }, insert });
+    };
+    const finish = (cancel: boolean) => {
+      const d = dragRef.current;
+      if (!d || d.returning) return;
+      const to = cancel ? null : targetIndex(d, d.insert);
+      if (to === null) {
+        updateDrag({ ...d, insert: null, returning: true });
         return;
       }
-      setDragId(space.id);
-      event.dataTransfer.effectAllowed = 'move';
-      event.dataTransfer.setData('text/plain', space.id);
-    },
-    onDragOver: (event: DragEvent<HTMLDivElement>) => {
-      if (!dragId) return;
-      if (!sectionIds.includes(dragId)) {
-        event.dataTransfer.dropEffect = 'none';
-        if (dropTarget) setDropTarget(null);
-        return;
-      }
-      event.preventDefault();
-      event.dataTransfer.dropEffect = 'move';
-      if (space.id === dragId) {
-        if (dropTarget) setDropTarget(null);
-        return;
-      }
-      const rect = event.currentTarget.getBoundingClientRect();
-      const position = event.clientX > rect.left + rect.width / 2 ? 'after' : 'before';
-      if (dropTarget?.id !== space.id || dropTarget.position !== position) {
-        setDropTarget({ id: space.id, position });
-      }
-    },
-    onDrop: (event: DragEvent<HTMLDivElement>) => {
-      event.preventDefault();
-      const sourceId = dragId;
-      const target = dropTarget;
-      resetDrag();
-      if (!sourceId || !target || !sectionIds.includes(sourceId)) return;
-      const from = sectionIds.indexOf(sourceId);
-      let to = sectionIds.indexOf(target.id);
-      if (target.position === 'after') to += 1;
-      if (from < to) to -= 1;
-      if (from !== to) onReorderSpace?.(sourceId, sectionIds, to);
-    },
-    onDragEnd: resetDrag,
-  });
+      const from = { ...d.origin, left: d.pointer.x - d.offset.x, top: d.pointer.y - d.offset.y };
+      updateDrag(null);
+      setLanding({ id: d.id, from });
+      onReorderSpace?.(d.id, d.sectionIds, to);
+    };
+    const onUp = () => finish(false);
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') finish(true);
+    };
+    document.body.style.userSelect = 'none';
+    document.body.style.cursor = 'grabbing';
+    window.addEventListener('pointermove', onMove);
+    window.addEventListener('pointerup', onUp);
+    window.addEventListener('keydown', onKey);
+    return () => {
+      document.body.style.userSelect = '';
+      document.body.style.cursor = '';
+      window.removeEventListener('pointermove', onMove);
+      window.removeEventListener('pointerup', onUp);
+      window.removeEventListener('keydown', onKey);
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [drag?.id, drag?.returning]);
+
+  // The dropped card glides from where it was released to its new slot.
+  useLayoutEffect(() => {
+    if (!landing) return;
+    const el = cardRefs.current[landing.id];
+    if (!el) return;
+    const rect = el.getBoundingClientRect();
+    const dx = landing.from.left - rect.left;
+    const dy = landing.from.top - rect.top;
+    const controls = animate(el, { x: [dx, 0], y: [dy, 0] }, { type: 'spring', stiffness: 320, damping: 32 });
+    controls.then(() => setLanding(null));
+    return () => controls.stop();
+  }, [landing]);
+
+  const shiftedIdFor = (d: SpaceDrag | null): string | null => {
+    if (!d?.insert) return null;
+    if (d.insert.side === 'before') return d.insert.anchorId;
+    const base = d.sectionIds.filter((id) => id !== d.id);
+    const next = base[base.indexOf(d.insert.anchorId) + 1];
+    if (!next) return null;
+    const anchorBox = rectsRef.current[d.insert.anchorId];
+    const nextBox = rectsRef.current[next];
+    return anchorBox && nextBox && Math.abs(anchorBox.top - nextBox.top) < 4 ? next : null;
+  };
+
+  const renderSpaceCard = (space: DataRoomSpace, index: number, sectionIds: string[], isClone = false) => {
+    const TargetIcon = getTargetIcon(space.targeting.userTypes);
+    return (
+      <motion.div
+        initial={isClone ? false : { opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ delay: isClone ? 0 : index * 0.05 }}
+        whileHover={drag || isClone ? undefined : { scale: 1.02, y: -4 }}
+        whileTap={drag || isClone ? undefined : { scale: 0.98 }}
+        className="group relative h-full bg-white rounded-2xl border-2 border-gray-200 hover:border-[#0D2F39] shadow-sm hover:shadow-lg transition-all cursor-pointer overflow-hidden flex flex-col"
+      >
+        <div className="h-24 bg-gray-100 transition-all relative overflow-hidden">
+          <div className="absolute inset-0 bg-gradient-to-br from-transparent to-black/[0.02]" />
+          {onReorderSpace && (
+            <div className="absolute top-3 left-3" onClick={(e) => e.stopPropagation()}>
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <span className="inline-flex rounded-lg bg-white/80 shadow-sm">
+                    <button
+                      type="button"
+                      className="ged-rank-handle"
+                      style={{ touchAction: 'none' }}
+                      disabled={!!dragDisabledReason}
+                      aria-label={t('ged.rank.handle.aria', { name: space.name })}
+                      onPointerDown={(event) => startSpaceDrag(event, space, sectionIds)}
+                    >
+                      <GripVertical className="w-4 h-4" />
+                    </button>
+                  </span>
+                </TooltipTrigger>
+                {!drag && (
+                  <TooltipContent side="right">
+                    <span className="text-xs">{dragDisabledReason ?? t('ged.rank.handle.dragSpace')}</span>
+                  </TooltipContent>
+                )}
+              </Tooltip>
+            </div>
+          )}
+          <button
+            onClick={(e) => {
+              e.stopPropagation();
+              onConfigureSpace(space);
+            }}
+            className="absolute top-3 right-3 p-2 rounded-lg bg-white/80 hover:bg-white shadow-sm opacity-0 group-hover:opacity-100 transition-all"
+          >
+            <Settings className="w-4 h-4 text-gray-600" />
+          </button>
+        </div>
+
+        <div className="p-6 -mt-10 relative flex-1 flex flex-col">
+          <div
+            className="w-16 h-16 rounded-xl bg-financial-blue flex items-center justify-center shadow-lg mb-4 border border-financial-blue"
+            style={{ backgroundColor: '#060D19' }}
+          >
+            <Folder className="w-8 h-8 text-white" />
+          </div>
+
+          <h3 className="font-semibold text-lg text-gray-900 mb-2 line-clamp-1">
+            {space.name}
+          </h3>
+
+          <div className="flex items-center gap-2 text-sm text-gray-600 mb-4">
+            <TargetIcon className="w-4 h-4 flex-shrink-0" />
+            <span className="line-clamp-2 text-xs">
+              {(() => {
+                const userType = space.targeting.userTypes[0];
+                if (!userType) return t('ged.dataRoom.spacesView.noUserType');
+                const translated = t(`ged.dataRoom.spacesView.userTypeLabels.${userType}`);
+                return translated.startsWith('ged.dataRoom.spacesView.userTypeLabels.')
+                  ? userType
+                  : translated;
+              })()}
+            </span>
+          </div>
+          <div className="space-y-1.5 mb-4">
+            {space.targeting.segments.length > 0 && (
+              <div className="flex items-start gap-2 text-xs text-gray-600">
+                <TagIcon className="w-3.5 h-3.5 mt-0.5 flex-shrink-0" />
+                <span className="line-clamp-1" title={space.targeting.segments.join(', ')}>
+                  <span className="font-medium text-gray-700">{t('ged.dataRoom.spacesView.segmentsPrefix')}</span> {space.targeting.segments.join(', ')}
+                </span>
+              </div>
+            )}
+            <div className="flex items-start gap-2 text-xs text-gray-600">
+              <Landmark className="w-3.5 h-3.5 mt-0.5 flex-shrink-0" />
+              <span className="line-clamp-1" title={space.targeting.funds.join(', ') || t('ged.dataRoom.spacesView.allFunds')}>
+                <span className="font-medium text-gray-700">{t('ged.dataRoom.spacesView.fundsPrefix')}</span> {space.targeting.funds.join(', ') || t('ged.dataRoom.spacesView.allFunds')}
+              </span>
+            </div>
+          </div>
+
+          <div className="flex items-center gap-4 text-sm text-gray-500 mb-4 pb-4 border-b border-gray-200">
+            <div className="flex items-center gap-1.5">
+              <div className="w-1.5 h-1.5 rounded-full" style={{ backgroundColor: '#000E2B' }} />
+              <span>{t('ged.dataRoom.spacesView.documentsCount', { count: space.documentCount })}</span>
+            </div>
+            <div className="flex items-center gap-1.5">
+              <div className="w-1.5 h-1.5 rounded-full" style={{ backgroundColor: '#000E2B' }} />
+              <span>{t('ged.dataRoom.spacesView.foldersCount', { count: space.folderCount })}</span>
+            </div>
+          </div>
+
+          <button
+            onClick={() => onSpaceSelect(space)}
+            className="mt-auto w-full flex items-center justify-center gap-2 py-2.5 px-4 rounded-lg bg-financial-blue border border-financial-blue text-white transition-all group/btn"
+            style={{ backgroundColor: '#060D19' }}
+          >
+            <span className="font-medium">{t('ged.dataRoom.spacesView.openSpace')}</span>
+            <ArrowRight className="w-4 h-4 group-hover/btn:translate-x-1 transition-transform" />
+          </button>
+        </div>
+      </motion.div>
+    );
+  };
 
   return (
     <div className="flex-1 flex flex-col px-6 pb-6 bg-white">
@@ -292,7 +505,10 @@ export function DataRoomSpacesView({
       {[
         { title: t('ged.dataRoom.spacesView.investorSpaces'), spaces: investorSpaces },
         { title: t('ged.dataRoom.spacesView.partnerSpaces'), spaces: partnerSpaces },
-      ].map((section) => (
+      ].map((section) => {
+        const sectionIds = section.spaces.map((s) => s.id);
+        const shiftedId = drag && sectionIds.includes(drag.id) ? shiftedIdFor(drag) : null;
+        return (
         <div key={section.title} className="mb-8 last:mb-0">
           {section.spaces.length > 0 && (
             <>
@@ -301,136 +517,72 @@ export function DataRoomSpacesView({
               </div>
               <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-4 gap-6">
                 {section.spaces.map((space, index) => {
-                  const TargetIcon = getTargetIcon(space.targeting.userTypes);
-                  const sectionIds = section.spaces.map((s) => s.id);
-
+                  const isDragged = drag?.id === space.id;
+                  const marker = drag?.insert?.anchorId === space.id ? drag.insert.side : null;
                   return (
-                    <div
-                      key={space.id}
-                      {...spaceDragProps(space, sectionIds)}
-                      className={[
-                        'rounded-2xl',
-                        dragId === space.id ? 'ged-rank-dragging' : '',
-                        dropTarget?.id === space.id
-                          ? dropTarget.position === 'after' ? 'ged-rank-drop-right' : 'ged-rank-drop-left'
-                          : '',
-                      ].filter(Boolean).join(' ')}
-                    >
                     <motion.div
-                      initial={{ opacity: 0, y: 20 }}
-                      animate={{ opacity: 1, y: 0 }}
-                      transition={{ delay: index * 0.05 }}
-                      whileHover={{ scale: 1.02, y: -4 }}
-                      whileTap={{ scale: 0.98 }}
-                      className="group relative bg-white rounded-2xl border-2 border-gray-200 hover:border-[#0D2F39] shadow-sm hover:shadow-lg transition-all cursor-pointer overflow-hidden flex flex-col"
+                      key={space.id}
+                      layout={landing?.id !== space.id}
+                      animate={{ x: shiftedId === space.id ? GAP_SHIFT : 0 }}
+                      transition={{ type: 'spring', stiffness: 380, damping: 34 }}
+                      className="relative"
                     >
-                      <div className="h-24 bg-gray-100 transition-all relative overflow-hidden">
-                        <div className="absolute inset-0 bg-gradient-to-br from-transparent to-black/[0.02]" />
-                        {onReorderSpace && (
-                          <div className="absolute top-3 left-3" onClick={(e) => e.stopPropagation()}>
-                            <Tooltip>
-                              <TooltipTrigger asChild>
-                                <span className="inline-flex rounded-lg bg-white/80 shadow-sm">
-                                  <button
-                                    type="button"
-                                    className="ged-rank-handle"
-                                    disabled={!!dragDisabledReason}
-                                    aria-label={t('ged.rank.handle.aria', { name: space.name })}
-                                    onMouseDown={() => setArmedId(space.id)}
-                                    onMouseUp={() => setArmedId(null)}
-                                  >
-                                    <GripVertical className="w-4 h-4" />
-                                  </button>
-                                </span>
-                              </TooltipTrigger>
-                              <TooltipContent side="right">
-                                <span className="text-xs">{dragDisabledReason ?? t('ged.rank.handle.dragSpace')}</span>
-                              </TooltipContent>
-                            </Tooltip>
-                          </div>
-                        )}
-                        <button
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            onConfigureSpace(space);
+                      {marker && (
+                        <motion.div
+                          aria-hidden
+                          initial={{ opacity: 0, scaleY: 0.7 }}
+                          animate={{ opacity: 1, scaleY: 1 }}
+                          className="pointer-events-none absolute rounded-lg"
+                          style={{
+                            top: 8,
+                            bottom: 8,
+                            width: 10,
+                            [marker === 'before' ? 'left' : 'right']: -17,
+                            border: '2px dashed #2563eb',
+                            backgroundColor: 'rgba(37, 99, 235, 0.06)',
                           }}
-                          className="absolute top-3 right-3 p-2 rounded-lg bg-white/80 hover:bg-white shadow-sm opacity-0 group-hover:opacity-100 transition-all"
-                        >
-                          <Settings className="w-4 h-4 text-gray-600" />
-                        </button>
-                      </div>
-
-                      <div className="p-6 -mt-10 relative flex-1 flex flex-col">
-                        <div
-                          className="w-16 h-16 rounded-xl bg-financial-blue flex items-center justify-center shadow-lg mb-4 border border-financial-blue"
-                          style={{ backgroundColor: '#060D19' }}
-                        >
-                          <Folder className="w-8 h-8 text-white" />
-                        </div>
-
-                        <h3 className="font-semibold text-lg text-gray-900 mb-2 line-clamp-1">
-                          {space.name}
-                        </h3>
-
-                        <div className="flex items-center gap-2 text-sm text-gray-600 mb-4">
-                          <TargetIcon className="w-4 h-4 flex-shrink-0" />
-                          <span className="line-clamp-2 text-xs">
-                            {(() => {
-                              const userType = space.targeting.userTypes[0];
-                              if (!userType) return t('ged.dataRoom.spacesView.noUserType');
-                              const translated = t(`ged.dataRoom.spacesView.userTypeLabels.${userType}`);
-                              return translated.startsWith('ged.dataRoom.spacesView.userTypeLabels.')
-                                ? userType
-                                : translated;
-                            })()}
-                          </span>
-                        </div>
-                        <div className="space-y-1.5 mb-4">
-                          {space.targeting.segments.length > 0 && (
-                            <div className="flex items-start gap-2 text-xs text-gray-600">
-                              <TagIcon className="w-3.5 h-3.5 mt-0.5 flex-shrink-0" />
-                              <span className="line-clamp-1" title={space.targeting.segments.join(', ')}>
-                                <span className="font-medium text-gray-700">{t('ged.dataRoom.spacesView.segmentsPrefix')}</span> {space.targeting.segments.join(', ')}
-                              </span>
-                            </div>
-                          )}
-                          <div className="flex items-start gap-2 text-xs text-gray-600">
-                            <Landmark className="w-3.5 h-3.5 mt-0.5 flex-shrink-0" />
-                            <span className="line-clamp-1" title={space.targeting.funds.join(', ') || t('ged.dataRoom.spacesView.allFunds')}>
-                              <span className="font-medium text-gray-700">{t('ged.dataRoom.spacesView.fundsPrefix')}</span> {space.targeting.funds.join(', ') || t('ged.dataRoom.spacesView.allFunds')}
-                            </span>
-                          </div>
-                        </div>
-
-                        <div className="flex items-center gap-4 text-sm text-gray-500 mb-4 pb-4 border-b border-gray-200">
-                          <div className="flex items-center gap-1.5">
-                            <div className="w-1.5 h-1.5 rounded-full" style={{ backgroundColor: '#000E2B' }} />
-                            <span>{t('ged.dataRoom.spacesView.documentsCount', { count: space.documentCount })}</span>
-                          </div>
-                          <div className="flex items-center gap-1.5">
-                            <div className="w-1.5 h-1.5 rounded-full" style={{ backgroundColor: '#000E2B' }} />
-                            <span>{t('ged.dataRoom.spacesView.foldersCount', { count: space.folderCount })}</span>
-                          </div>
-                        </div>
-
-                        <button
-                          onClick={() => onSpaceSelect(space)}
-                          className="mt-auto w-full flex items-center justify-center gap-2 py-2.5 px-4 rounded-lg bg-financial-blue border border-financial-blue text-white transition-all group/btn"
-                          style={{ backgroundColor: '#060D19' }}
-                        >
-                          <span className="font-medium">{t('ged.dataRoom.spacesView.openSpace')}</span>
-                          <ArrowRight className="w-4 h-4 group-hover/btn:translate-x-1 transition-transform" />
-                        </button>
+                        />
+                      )}
+                      <div
+                        ref={(el) => { cardRefs.current[space.id] = el; }}
+                        className="h-full"
+                        style={isDragged ? { opacity: 0.35 } : undefined}
+                      >
+                        {renderSpaceCard(space, index, sectionIds)}
                       </div>
                     </motion.div>
-                    </div>
                   );
                 })}
               </div>
             </>
           )}
         </div>
-      ))}
+        );
+      })}
+
+      {drag && typeof document !== 'undefined' && createPortal(
+        (() => {
+          const space = spaces.find((s) => s.id === drag.id);
+          if (!space) return null;
+          const left = drag.returning ? drag.origin.left : drag.pointer.x - drag.offset.x;
+          const top = drag.returning ? drag.origin.top : drag.pointer.y - drag.offset.y;
+          return (
+            <motion.div
+              className="pointer-events-none fixed z-50"
+              style={{ width: drag.origin.width, height: drag.origin.height }}
+              initial={false}
+              animate={{ left, top, rotate: drag.returning ? 0 : 1.5, scale: drag.returning ? 1 : 1.02 }}
+              transition={drag.returning ? { type: 'spring', stiffness: 300, damping: 30 } : { duration: 0 }}
+              onAnimationComplete={() => {
+                if (dragRef.current?.returning) updateDrag(null);
+              }}
+            >
+              <div className="h-full rounded-2xl shadow-2xl">{renderSpaceCard(space, 0, [], true)}</div>
+            </motion.div>
+          );
+        })(),
+        document.body,
+      )}
 
       {/* Empty State */}
       {visibleSpaces.length === 0 && (
