@@ -1,6 +1,6 @@
-import { useMemo, useState } from 'react';
+import { useMemo, useState, type DragEvent } from 'react';
 import { motion } from 'motion/react';
-import { Plus, Folder, Settings, Users, Handshake, TrendingUp, Target, ArrowRight, Search, FileText, FileUp, FolderOpen, Landmark, Tag as TagIcon, MoreVertical, Presentation } from 'lucide-react';
+import { Plus, Folder, Settings, Users, Handshake, TrendingUp, Target, ArrowRight, Search, FileText, FileUp, FolderOpen, Landmark, Tag as TagIcon, MoreVertical, Presentation, GripVertical } from 'lucide-react';
 import { Button } from './ui/button';
 import { Badge } from './ui/badge';
 import { DataRoomSpace } from '../utils/dataRoomSpacesData';
@@ -14,6 +14,7 @@ import {
   DropdownMenuTrigger,
 } from './ui/dropdown-menu';
 import { navigateToPage } from '../utils/routing';
+import { Tooltip, TooltipContent, TooltipTrigger } from './ui/tooltip';
 
 export interface GlobalSearchHit {
   id: string;
@@ -32,7 +33,11 @@ interface DataRoomSpacesViewProps {
   onMassUpload: () => void;
   onConfigureSpace: (space: DataRoomSpace) => void;
   onSearchResultSelect?: (result: GlobalSearchHit) => void;
+  /** Move a space to a 0-based position among the spaces of the same section. */
+  onReorderSpace?: (spaceId: string, sectionIds: string[], toIndex: number) => void;
 }
+
+type SpaceDropTarget = { id: string; position: 'before' | 'after' };
 
 export function DataRoomSpacesView({
   spaces,
@@ -40,10 +45,14 @@ export function DataRoomSpacesView({
   onAddSpace,
   onMassUpload,
   onConfigureSpace,
-  onSearchResultSelect
+  onSearchResultSelect,
+  onReorderSpace,
 }: DataRoomSpacesViewProps) {
   const { t } = useTranslation();
   const [globalSearch, setGlobalSearch] = useState('');
+  const [armedId, setArmedId] = useState<string | null>(null);
+  const [dragId, setDragId] = useState<string | null>(null);
+  const [dropTarget, setDropTarget] = useState<SpaceDropTarget | null>(null);
 
   const getTargetIcon = (userTypes: string[]) => {
     if (userTypes.includes('Investisseur')) return Users;
@@ -100,6 +109,59 @@ export function DataRoomSpacesView({
 
   const investorSpaces = visibleSpaces.filter((space) => space.targeting.userTypes[0] === 'Investisseur');
   const partnerSpaces = visibleSpaces.filter((space) => space.targeting.userTypes[0] !== 'Investisseur');
+
+  const dragDisabledReason = normalizedQuery ? t('ged.rank.handle.lockedSearchSpaces') : null;
+
+  const resetDrag = () => {
+    setArmedId(null);
+    setDragId(null);
+    setDropTarget(null);
+  };
+
+  const spaceDragProps = (space: DataRoomSpace, sectionIds: string[]) => ({
+    draggable: armedId === space.id && !dragDisabledReason,
+    onDragStart: (event: DragEvent<HTMLDivElement>) => {
+      if (armedId !== space.id || dragDisabledReason) {
+        event.preventDefault();
+        return;
+      }
+      setDragId(space.id);
+      event.dataTransfer.effectAllowed = 'move';
+      event.dataTransfer.setData('text/plain', space.id);
+    },
+    onDragOver: (event: DragEvent<HTMLDivElement>) => {
+      if (!dragId) return;
+      if (!sectionIds.includes(dragId)) {
+        event.dataTransfer.dropEffect = 'none';
+        if (dropTarget) setDropTarget(null);
+        return;
+      }
+      event.preventDefault();
+      event.dataTransfer.dropEffect = 'move';
+      if (space.id === dragId) {
+        if (dropTarget) setDropTarget(null);
+        return;
+      }
+      const rect = event.currentTarget.getBoundingClientRect();
+      const position = event.clientX > rect.left + rect.width / 2 ? 'after' : 'before';
+      if (dropTarget?.id !== space.id || dropTarget.position !== position) {
+        setDropTarget({ id: space.id, position });
+      }
+    },
+    onDrop: (event: DragEvent<HTMLDivElement>) => {
+      event.preventDefault();
+      const sourceId = dragId;
+      const target = dropTarget;
+      resetDrag();
+      if (!sourceId || !target || !sectionIds.includes(sourceId)) return;
+      const from = sectionIds.indexOf(sourceId);
+      let to = sectionIds.indexOf(target.id);
+      if (target.position === 'after') to += 1;
+      if (from < to) to -= 1;
+      if (from !== to) onReorderSpace?.(sourceId, sectionIds, to);
+    },
+    onDragEnd: resetDrag,
+  });
 
   return (
     <div className="flex-1 flex flex-col px-6 pb-6 bg-white">
@@ -240,10 +302,21 @@ export function DataRoomSpacesView({
               <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-4 gap-6">
                 {section.spaces.map((space, index) => {
                   const TargetIcon = getTargetIcon(space.targeting.userTypes);
+                  const sectionIds = section.spaces.map((s) => s.id);
 
                   return (
-                    <motion.div
+                    <div
                       key={space.id}
+                      {...spaceDragProps(space, sectionIds)}
+                      className={[
+                        'rounded-2xl',
+                        dragId === space.id ? 'ged-rank-dragging' : '',
+                        dropTarget?.id === space.id
+                          ? dropTarget.position === 'after' ? 'ged-rank-drop-right' : 'ged-rank-drop-left'
+                          : '',
+                      ].filter(Boolean).join(' ')}
+                    >
+                    <motion.div
                       initial={{ opacity: 0, y: 20 }}
                       animate={{ opacity: 1, y: 0 }}
                       transition={{ delay: index * 0.05 }}
@@ -253,6 +326,29 @@ export function DataRoomSpacesView({
                     >
                       <div className="h-24 bg-gray-100 transition-all relative overflow-hidden">
                         <div className="absolute inset-0 bg-gradient-to-br from-transparent to-black/[0.02]" />
+                        {onReorderSpace && (
+                          <div className="absolute top-3 left-3" onClick={(e) => e.stopPropagation()}>
+                            <Tooltip>
+                              <TooltipTrigger asChild>
+                                <span className="inline-flex rounded-lg bg-white/80 shadow-sm">
+                                  <button
+                                    type="button"
+                                    className="ged-rank-handle"
+                                    disabled={!!dragDisabledReason}
+                                    aria-label={t('ged.rank.handle.aria', { name: space.name })}
+                                    onMouseDown={() => setArmedId(space.id)}
+                                    onMouseUp={() => setArmedId(null)}
+                                  >
+                                    <GripVertical className="w-4 h-4" />
+                                  </button>
+                                </span>
+                              </TooltipTrigger>
+                              <TooltipContent side="right">
+                                <span className="text-xs">{dragDisabledReason ?? t('ged.rank.handle.dragSpace')}</span>
+                              </TooltipContent>
+                            </Tooltip>
+                          </div>
+                        )}
                         <button
                           onClick={(e) => {
                             e.stopPropagation();
@@ -327,6 +423,7 @@ export function DataRoomSpacesView({
                         </button>
                       </div>
                     </motion.div>
+                    </div>
                   );
                 })}
               </div>

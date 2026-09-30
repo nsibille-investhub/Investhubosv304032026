@@ -2379,7 +2379,9 @@
       }
     },
     "tree": {
-      "allDocuments": "Tous les documents"
+      "allDocuments": "Tous les documents",
+      "resizeAria": "Redimensionner l'arborescence",
+      "resizeHint": "Glissez pour ajuster la largeur, double-cliquez pour revenir à la largeur par défaut"
     },
     "listView": {
       "breadcrumbRoot": "Documents",
@@ -3201,7 +3203,9 @@
         "drag": "Glissez pour changer le rang",
         "lockedSort": "Revenez à l'ordre défini pour réorganiser ce dossier.",
         "lockedSearch": "Videz la recherche pour réorganiser ce dossier.",
-        "aria": "Changer le rang de {{name}}"
+        "aria": "Changer le rang de {{name}}",
+        "dragSpace": "Glissez pour changer l'ordre des espaces",
+        "lockedSearchSpaces": "Videz la recherche pour réorganiser les espaces."
       },
       "menu": {
         "top": "Placer en tête",

@@ -1,4 +1,4 @@
-import { useState, useMemo, useEffect } from 'react';
+import { useState, useMemo, useEffect, type KeyboardEvent as ReactKeyboardEvent, type MouseEvent as ReactMouseEvent } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
 import { DocumentExplorer } from './DocumentExplorer';
 import { FolderDetailPanel } from './FolderDetailPanel';
@@ -30,6 +30,22 @@ import {
 } from '../utils/documentRank';
 
 const DEFAULT_SORT_STORAGE_KEY = 'investhub.ged.defaultSort';
+const TREE_WIDTH_STORAGE_KEY = 'investhub.ged.treeWidth';
+const TREE_WIDTH_DEFAULT = 256;
+const TREE_WIDTH_MIN = 200;
+const TREE_WIDTH_MAX = 400;
+
+const clampTreeWidth = (value: number) => Math.min(TREE_WIDTH_MAX, Math.max(TREE_WIDTH_MIN, value));
+
+function readTreeWidth(): number {
+  try {
+    const value = Number(window.localStorage.getItem(TREE_WIDTH_STORAGE_KEY));
+    if (value) return clampTreeWidth(value);
+  } catch {
+    // storage unavailable: default width
+  }
+  return TREE_WIDTH_DEFAULT;
+}
 
 function readDefaultSort(): GedDefaultSort {
   try {
@@ -140,6 +156,54 @@ export function DocumentsPage({ selectedSpace, navigationTarget, onNavigationHan
   const [sort, setSort] = useState<GedSort>(() => sortFromDefault(readDefaultSort()));
   const [highlight, setHighlight] = useState<TreeHighlight | null>(null);
   const [newItemIds, setNewItemIds] = useState<Set<string>>(() => new Set());
+  const [treeWidth, setTreeWidth] = useState<number>(readTreeWidth);
+  const [isResizingTree, setIsResizingTree] = useState(false);
+
+  const saveTreeWidth = (value: number) => {
+    try {
+      window.localStorage.setItem(TREE_WIDTH_STORAGE_KEY, String(value));
+    } catch {
+      // storage unavailable: the width lasts for the session only
+    }
+  };
+
+  const startTreeResize = (event: ReactMouseEvent) => {
+    event.preventDefault();
+    const startX = event.clientX;
+    const startWidth = treeWidth;
+    let latest = startWidth;
+    setIsResizingTree(true);
+    const onMove = (e: MouseEvent) => {
+      latest = clampTreeWidth(startWidth + e.clientX - startX);
+      setTreeWidth(latest);
+    };
+    const onUp = () => {
+      window.removeEventListener('mousemove', onMove);
+      window.removeEventListener('mouseup', onUp);
+      document.body.style.cursor = '';
+      document.body.style.userSelect = '';
+      setIsResizingTree(false);
+      saveTreeWidth(latest);
+    };
+    document.body.style.cursor = 'col-resize';
+    document.body.style.userSelect = 'none';
+    window.addEventListener('mousemove', onMove);
+    window.addEventListener('mouseup', onUp);
+  };
+
+  const handleTreeResizeKey = (event: ReactKeyboardEvent) => {
+    const step = event.shiftKey ? 48 : 16;
+    let next: number | null = null;
+    if (event.key === 'ArrowLeft') next = treeWidth - step;
+    if (event.key === 'ArrowRight') next = treeWidth + step;
+    if (event.key === 'Home') next = TREE_WIDTH_MIN;
+    if (event.key === 'End') next = TREE_WIDTH_MAX;
+    if (next === null) return;
+    event.preventDefault();
+    const clamped = clampTreeWidth(next);
+    setTreeWidth(clamped);
+    saveTreeWidth(clamped);
+  };
 
   const investorProfiles = [
     {
@@ -854,7 +918,7 @@ export function DocumentsPage({ selectedSpace, navigationTarget, onNavigationHan
         {/* Double Navigation Layout */}
         <div className="flex-1 flex min-h-0">
           {/* Left: Tree Navigation */}
-          <div className="w-64 flex-shrink-0">
+          <div className="flex-shrink-0" style={{ width: treeWidth }}>
             <DocumentTreeSidebar
               documents={filteredDocuments}
               currentFolderId={currentFolderId}
@@ -863,6 +927,23 @@ export function DocumentsPage({ selectedSpace, navigationTarget, onNavigationHan
               highlight={highlight}
             />
           </div>
+          <div
+            role="separator"
+            aria-orientation="vertical"
+            aria-label={t('ged.tree.resizeAria')}
+            aria-valuemin={TREE_WIDTH_MIN}
+            aria-valuemax={TREE_WIDTH_MAX}
+            aria-valuenow={treeWidth}
+            tabIndex={0}
+            title={t('ged.tree.resizeHint')}
+            onMouseDown={startTreeResize}
+            onDoubleClick={() => {
+              setTreeWidth(TREE_WIDTH_DEFAULT);
+              saveTreeWidth(TREE_WIDTH_DEFAULT);
+            }}
+            onKeyDown={handleTreeResizeKey}
+            className={`ged-tree-resizer ${isResizingTree ? 'is-active' : ''}`}
+          />
 
           {/* Right: Document List */}
           <div className="flex-1 flex flex-col min-w-0">

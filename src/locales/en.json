@@ -2379,7 +2379,9 @@
       }
     },
     "tree": {
-      "allDocuments": "All documents"
+      "allDocuments": "All documents",
+      "resizeAria": "Resize the folder tree",
+      "resizeHint": "Drag to adjust the width, double-click to reset it"
     },
     "listView": {
       "breadcrumbRoot": "Documents",
@@ -3201,7 +3203,9 @@
         "drag": "Drag to change the rank",
         "lockedSort": "Go back to the defined order to reorganize this folder.",
         "lockedSearch": "Clear the search to reorganize this folder.",
-        "aria": "Change the rank of {{name}}"
+        "aria": "Change the rank of {{name}}",
+        "dragSpace": "Drag to change the order of spaces",
+        "lockedSearchSpaces": "Clear the search to reorganize the spaces."
       },
       "menu": {
         "top": "Move to top",

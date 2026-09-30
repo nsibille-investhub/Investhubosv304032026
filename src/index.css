@@ -11025,8 +11025,33 @@ html {
 }
 
 .document-list-grid {
-  grid-template-columns: 2rem minmax(0, 3fr) minmax(0, 2.8fr) minmax(0, 1fr) minmax(0, 0.8fr) minmax(0, 1.4fr);
+  grid-template-columns: 2rem minmax(0, 1fr) 15.5rem 7.5rem 6.5rem 7.5rem;
 }
+
+/* GED+ tree/list splitter: only the name column absorbs the width change */
+.ged-tree-resizer {
+  position: relative;
+  flex-shrink: 0;
+  width: 6px;
+  margin-left: -3px;
+  margin-right: -3px;
+  z-index: 1;
+  cursor: col-resize;
+  outline: none;
+}
+.ged-tree-resizer::after {
+  content: '';
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  left: 2px;
+  width: 2px;
+  background-color: transparent;
+  transition: background-color .12s;
+}
+.ged-tree-resizer:hover::after,
+.ged-tree-resizer:focus-visible::after,
+.ged-tree-resizer.is-active::after { background-color: #2563eb; }
 
 /* Document scope: "i" button open state */
 .ds-scope-info[data-state="open"] {
@@ -11059,6 +11084,8 @@ html {
 .ged-rank-dragging { opacity: .4; }
 .ged-rank-drop-before { box-shadow: inset 0 3px 0 0 #2563eb; }
 .ged-rank-drop-after { box-shadow: inset 0 -3px 0 0 #2563eb; }
+.ged-rank-drop-left { box-shadow: -6px 0 0 -2px #2563eb; }
+.ged-rank-drop-right { box-shadow: 6px 0 0 -2px #2563eb; }
 @keyframes ged-rank-flash {
   from { background-color: #EDFBE0; }
   to { background-color: transparent; }
