@@ -434,10 +434,11 @@ export function ScopeInvestorLink({
   );
 }
 
-/** Segments are an audience parameter: violet chip, distinct from the neutral targeting tags. */
+/** Segments are an audience parameter: square violet chip with a dashed border, on its own line. */
 const SEGMENT_CHIP_STYLE: CSSProperties = {
   backgroundColor: '#F5F3FF',
-  borderColor: '#DDD6FE',
+  borderColor: '#C4B5FD',
+  borderStyle: 'dashed',
   color: '#6D28D9',
 };
 
@@ -467,7 +468,7 @@ function ScopeTag({ tag }: { tag: ScopeTagItem }) {
   ) : tag.segment ? (
     <span
       title={tag.label}
-      className="inline-flex min-w-0 shrink items-center gap-1 whitespace-nowrap rounded-full border px-2 py-0.5 text-[11px] font-medium"
+      className="inline-flex min-w-0 shrink items-center gap-1 whitespace-nowrap rounded border px-1.5 py-0.5 text-[11px] font-medium"
       style={SEGMENT_CHIP_STYLE}
     >
       <Icon className="h-3 w-3 shrink-0" />
@@ -543,7 +544,10 @@ export function DocumentScope({
     </Popover>
   );
 
-  const tagList = tags.map((tag) => <ScopeTag key={tag.key} tag={tag} />);
+  const targetingTags = tags.filter((tag) => !tag.segment);
+  const segmentTags = tags.filter((tag) => tag.segment);
+  const tagList = targetingTags.map((tag) => <ScopeTag key={tag.key} tag={tag} />);
+  const segmentList = segmentTags.map((tag) => <ScopeTag key={tag.key} tag={tag} />);
 
   if (layout === 'inline') {
     return (
@@ -552,8 +556,14 @@ export function DocumentScope({
         {showInvestor && (
           <ScopeInvestorLink scope={investorScope} onClick={onInvestorClick} className="shrink" style={{ minWidth: 96 }} />
         )}
-        {tags.length > 0 && (
+        {targetingTags.length > 0 && (
           <div className="flex min-w-0 items-center gap-1 overflow-hidden" style={{ maxWidth: '100%' }}>{tagList}</div>
+        )}
+        {segmentTags.length > 0 && (
+          <>
+            <div aria-hidden style={{ flexBasis: '100%', height: 0, margin: '-3px 0' }} />
+            <div className="flex min-w-0 items-center gap-1 overflow-hidden" style={{ maxWidth: '100%' }}>{segmentList}</div>
+          </>
         )}
         <div className="ml-auto shrink-0">{infoButton}</div>
       </div>
@@ -565,8 +575,11 @@ export function DocumentScope({
       <div className="flex min-w-0 flex-1 flex-col items-start gap-1.5">
         {showNature && <DocumentNatureBadge nature={scope.nature} />}
         {showInvestor && <ScopeInvestorLink scope={investorScope} onClick={onInvestorClick} />}
-        {tags.length > 0 && (
+        {targetingTags.length > 0 && (
           <div className="flex flex-wrap items-center gap-1" style={{ maxWidth: '100%' }}>{tagList}</div>
+        )}
+        {segmentTags.length > 0 && (
+          <div className="flex flex-wrap items-center gap-1" style={{ maxWidth: '100%' }}>{segmentList}</div>
         )}
       </div>
       {infoButton}
