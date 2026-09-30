@@ -2379,7 +2379,9 @@
       }
     },
     "tree": {
-      "allDocuments": "All documents"
+      "allDocuments": "All documents",
+      "resizeAria": "Resize the folder tree",
+      "resizeHint": "Drag to adjust the width, double-click to reset it"
     },
     "listView": {
       "breadcrumbRoot": "Documents",
@@ -2441,7 +2443,12 @@
       "deleteFolderNoCompatible": "No destination folder is compatible with the documents' restrictions (fund, share class, segment). Update the documents' targeting or create a compatible folder.",
       "deleteFolderReassignCta": "Reassign and delete",
       "cancel": "Cancel",
-      "delete": "Delete"
+      "delete": "Delete",
+      "batch": {
+        "defaultName": "Document batch",
+        "summaryOne": "{{count}} document · 1 consolidated notification",
+        "summaryMany": "{{count}} documents · 1 consolidated notification"
+      }
     },
     "preview": {
       "title": "Document preview",
@@ -3134,6 +3141,88 @@
             }
           }
         }
+      }
+    },
+    "scope": {
+      "nature": {
+        "generic": "Generic",
+        "nominative": "Nominative"
+      },
+      "types": {
+        "fund": "Fund",
+        "share": "Share",
+        "segment": "Segment",
+        "investor": "Investor",
+        "structure": "Structure",
+        "subscription": "Subscription"
+      },
+      "allFunds": "All funds",
+      "detailsTitle": "Document scope",
+      "targeting": "Targeting",
+      "noRestriction": "No restriction: visible to every investor of the space",
+      "viewFullScope": "View full scope",
+      "downloadAudience": "Download audience",
+      "downloadStarted": "Audience downloaded",
+      "csv": {
+        "investor": "Investor",
+        "structure": "Structure",
+        "contact": "Contact",
+        "role": "Role",
+        "fileName": "audience"
+      },
+      "investorCorporate": "Legal entity",
+      "investorIndividual": "Individual",
+      "openInvestor": "Open investor record",
+      "subscription": {
+        "code": "Reference",
+        "commitment": "Commitment",
+        "label": "Label"
+      },
+      "openSubscription": "Open subscription"
+    },
+    "rank": {
+      "criterion": {
+        "name": "name",
+        "added": "date added"
+      },
+      "direction": {
+        "asc": "ascending",
+        "desc": "descending"
+      },
+      "chip": {
+        "sorted": "Personal sort active, the defined order is unchanged",
+        "leftDefault": "You left the application default order",
+        "back": "Back to the default order"
+      },
+      "footer": {
+        "rank": "Defined order view · dragging enabled",
+        "sorted": "Sorted by {{criterion}} ({{direction}}) · dragging disabled, defined order unchanged",
+        "search": "Search results · dragging disabled"
+      },
+      "handle": {
+        "drag": "Drag to change the rank",
+        "lockedSort": "Go back to the defined order to reorganize this folder.",
+        "lockedSearch": "Clear the search to reorganize this folder.",
+        "aria": "Change the rank of {{name}}",
+        "dragSpace": "Drag to change the order of spaces",
+        "lockedSearchSpaces": "Clear the search to reorganize the spaces."
+      },
+      "menu": {
+        "top": "Move to top",
+        "bottom": "Move to bottom",
+        "unlock": "Go back to the defined order to reorganize"
+      },
+      "sortAria": "Sort by {{column}}",
+      "newBadge": "New",
+      "toast": {
+        "moved": "Order saved · {{name}} moves to rank {{rank}}",
+        "undo": "Undo",
+        "docAdded": "{{name}} added at rank 1, pending validation",
+        "folderAdded": "{{name}} added at rank 1 of folders"
+      },
+      "tree": {
+        "expand": "Expand",
+        "collapse": "Collapse"
       }
     }
   },

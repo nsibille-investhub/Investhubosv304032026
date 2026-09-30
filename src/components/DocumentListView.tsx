@@ -1,4 +1,4 @@
-import { Fragment, useEffect, useMemo, useRef, useState } from 'react';
+import { Fragment, useEffect, useMemo, useRef, useState, type DragEvent } from 'react';
 import { AnimatePresence, motion } from 'motion/react';
 import {
   FileText,
@@ -17,6 +17,13 @@ import {
   ShieldAlert,
   FileUp,
   Layers3,
+  GripVertical,
+  ArrowUp,
+  ArrowDown,
+  ArrowUpDown,
+  ChevronsUp,
+  ChevronsDown,
+  RotateCcw,
 } from 'lucide-react';
 import { Document } from '../utils/documentMockData';
 import { Button } from './ui/button';
@@ -26,8 +33,21 @@ import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
+  DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from './ui/dropdown-menu';
+import { Tooltip, TooltipContent, TooltipTrigger } from './ui/tooltip';
+import {
+  RANK_SORT,
+  buildRankIndex,
+  isSameSort,
+  nextSort,
+  orderLevel,
+  sortFromDefault,
+  type GedDefaultSort,
+  type GedSort,
+} from '../utils/documentRank';
+import type { TreeHighlight } from './DocumentTreeSidebar';
 import { Input } from './ui/input';
 import {
   AlertDialog,
@@ -74,7 +94,18 @@ interface DocumentListViewProps {
   onDuplicateDocument?: (doc: Document) => void;
   folderInheritedRestrictions?: RestrictionsMap;
   folderOptions?: FolderOption[];
+  rootLabel?: string;
+  sort: GedSort;
+  onSortChange: (sort: GedSort) => void;
+  defaultSort: GedDefaultSort;
+  onMoveItem?: (id: string, toIndex: number) => void;
+  highlight?: TreeHighlight | null;
+  newItemIds?: Set<string>;
 }
+
+
+type DropTarget = { id: string; position: 'before' | 'after' };
+
 
 export function DocumentListView({
   documents, 
@@ -98,6 +129,13 @@ export function DocumentListView({
   onDuplicateDocument,
   folderInheritedRestrictions,
   folderOptions,
+  rootLabel,
+  sort,
+  onSortChange,
+  defaultSort,
+  onMoveItem,
+  highlight,
+  newItemIds,
 }: DocumentListViewProps) {
   const { t } = useTranslation();
   const tableGridClassName = 'document-list-grid';
@@ -108,6 +146,9 @@ export function DocumentListView({
   const [deleteFolderTarget, setDeleteFolderTarget] = useState<Document | null>(null);
   const [migrationDestId, setMigrationDestId] = useState<string>('');
   const itemRefs = useRef<Record<string, HTMLDivElement | null>>({});
+  const [armedId, setArmedId] = useState<string | null>(null);
+  const [dragId, setDragId] = useState<string | null>(null);
+  const [dropTarget, setDropTarget] = useState<DropTarget | null>(null);
 
   useEffect(() => {
     if (!deleteFolderTarget) setMigrationDestId('');
@@ -134,9 +175,10 @@ export function DocumentListView({
   // Get current level items
   const currentItems = currentFolder?.children || documents;
   
-  // Separate folders and files
-  const folders = currentItems.filter(item => item.type === 'folder');
-  const files = currentItems.filter(item => item.type !== 'folder');
+  const rankIndex = useMemo(() => buildRankIndex(documents), [documents]);
+
+  // Folders always above documents, each nature ordered by rank or by the active sort
+  const { folders, files } = orderLevel(currentItems, sort);
 
   const formatFileSize = (size: string) => {
     return size;
@@ -184,8 +226,183 @@ export function DocumentListView({
     ? searchResults.map((result) => ({ ...result.item, __path: result.path } as Document & { __path: string[] }))
     : currentItems;
 
-  const searchFolders = itemsToRender.filter(item => item.type === 'folder');
-  const searchFiles = itemsToRender.filter(item => item.type !== 'folder');
+  const locationOf = (item: Document) => {
+    const searchPath = (item as Document & { __path?: string[] }).__path;
+    const parents = hasActiveSearch && searchPath ? searchPath.slice(0, -1) : currentPath;
+    return rootLabel ? [rootLabel, ...parents] : parents;
+  };
+
+  const { folders: searchFolders, files: searchFiles } = orderLevel(itemsToRender, sort);
+
+  const isSorted = sort.key !== 'rank';
+  const offDefault = !isSameSort(sort, sortFromDefault(defaultSort));
+  const dragDisabledReason = isSorted
+    ? t('ged.rank.handle.lockedSort')
+    : hasActiveSearch
+      ? t('ged.rank.handle.lockedSearch')
+      : null;
+  const sortCriterion = sort.key === 'name' ? t('ged.rank.criterion.name') : t('ged.rank.criterion.added');
+  const sortDirection = sort.dir === 1 ? t('ged.rank.direction.asc') : t('ged.rank.direction.desc');
+
+  const resetDrag = () => {
+    setArmedId(null);
+    setDragId(null);
+    setDropTarget(null);
+  };
+
+  const sameGroup = (a: string, b: string) => {
+    const ea = rankIndex.get(a);
+    const eb = rankIndex.get(b);
+    return !!ea && !!eb && ea.kind === eb.kind && ea.parentId === eb.parentId;
+  };
+
+  const dragProps = (item: Document) => ({
+    draggable: armedId === item.id && !dragDisabledReason,
+    onDragStart: (event: DragEvent<HTMLDivElement>) => {
+      if (armedId !== item.id || dragDisabledReason) {
+        event.preventDefault();
+        return;
+      }
+      setDragId(item.id);
+      event.dataTransfer.effectAllowed = 'move';
+      event.dataTransfer.setData('text/plain', item.id);
+    },
+    onDragOver: (event: DragEvent<HTMLDivElement>) => {
+      if (!dragId) return;
+      if (!sameGroup(dragId, item.id)) {
+        event.dataTransfer.dropEffect = 'none';
+        if (dropTarget) setDropTarget(null);
+        return;
+      }
+      event.preventDefault();
+      event.dataTransfer.dropEffect = 'move';
+      if (item.id === dragId) {
+        if (dropTarget) setDropTarget(null);
+        return;
+      }
+      const rect = event.currentTarget.getBoundingClientRect();
+      const position = event.clientY > rect.top + rect.height / 2 ? 'after' : 'before';
+      if (dropTarget?.id !== item.id || dropTarget.position !== position) {
+        setDropTarget({ id: item.id, position });
+      }
+    },
+    onDrop: (event: DragEvent<HTMLDivElement>) => {
+      event.preventDefault();
+      const sourceId = dragId;
+      const target = dropTarget;
+      resetDrag();
+      if (!sourceId || !target || !sameGroup(sourceId, target.id)) return;
+      const from = (rankIndex.get(sourceId)?.rank ?? 1) - 1;
+      let to = (rankIndex.get(target.id)?.rank ?? 1) - 1;
+      if (target.position === 'after') to += 1;
+      if (from < to) to -= 1;
+      onMoveItem?.(sourceId, to);
+    },
+    onDragEnd: resetDrag,
+  });
+
+  const rowClassName = (item: Document, extra = '') =>
+    [
+      'px-6 py-3 border-b border-gray-100 cursor-pointer transition-colors hover:bg-gray-50',
+      focusedItemId === item.id ? 'bg-blue-50 ring-1 ring-inset ring-blue-300' : '',
+      dragId === item.id ? 'ged-rank-dragging' : '',
+      dropTarget?.id === item.id ? (dropTarget.position === 'after' ? 'ged-rank-drop-after' : 'ged-rank-drop-before') : '',
+      highlight?.id === item.id ? 'ged-rank-flash' : '',
+      extra,
+    ]
+      .filter(Boolean)
+      .join(' ');
+
+  const rowKey = (item: Document) =>
+    highlight?.id === item.id ? `${item.id}-flash-${highlight.token}` : item.id;
+
+  const renderHandle = (item: Document) => (
+    <div className="flex justify-center" onClick={(event) => event.stopPropagation()}>
+      <Tooltip>
+        <TooltipTrigger asChild>
+          <span className="inline-flex">
+            <button
+              type="button"
+              className="ged-rank-handle"
+              disabled={!!dragDisabledReason}
+              aria-label={t('ged.rank.handle.aria', { name: item.name })}
+              onMouseDown={() => setArmedId(item.id)}
+              onMouseUp={() => setArmedId(null)}
+            >
+              <GripVertical className="w-4 h-4" />
+            </button>
+          </span>
+        </TooltipTrigger>
+        <TooltipContent side="right">
+          <span className="text-xs">{dragDisabledReason ?? t('ged.rank.handle.drag')}</span>
+        </TooltipContent>
+      </Tooltip>
+    </div>
+  );
+
+  const renderRankMenuItems = (item: Document) => {
+    if (isSorted) {
+      return (
+        <>
+          <DropdownMenuItem
+            onClick={(event) => {
+              event.stopPropagation();
+              onSortChange(RANK_SORT);
+            }}
+          >
+            <RotateCcw className="w-4 h-4 mr-2" />
+            {t('ged.rank.menu.unlock')}
+          </DropdownMenuItem>
+          <DropdownMenuSeparator />
+        </>
+      );
+    }
+    const entry = rankIndex.get(item.id);
+    if (!entry || !onMoveItem) return null;
+    const index = entry.rank - 1;
+    const last = entry.total - 1;
+    const entries = [
+      { key: 'top', icon: ChevronsUp, label: t('ged.rank.menu.top'), to: 0, disabled: index === 0 },
+      { key: 'bottom', icon: ChevronsDown, label: t('ged.rank.menu.bottom'), to: last, disabled: index === last },
+    ];
+    return (
+      <>
+        {entries.map((action) => {
+          const Icon = action.icon;
+          return (
+            <DropdownMenuItem
+              key={action.key}
+              disabled={action.disabled}
+              onClick={(event) => {
+                event.stopPropagation();
+                onMoveItem(item.id, action.to);
+              }}
+            >
+              <Icon className="w-4 h-4 mr-2" />
+              {action.label}
+            </DropdownMenuItem>
+          );
+        })}
+        <DropdownMenuSeparator />
+      </>
+    );
+  };
+
+  const renderSortHeader = (key: 'name' | 'added', label: string) => {
+    const active = sort.key === key;
+    const Icon = !active ? ArrowUpDown : sort.dir === 1 ? ArrowUp : ArrowDown;
+    return (
+      <button
+        type="button"
+        onClick={() => onSortChange(nextSort(sort, key))}
+        aria-label={t('ged.rank.sortAria', { column: label })}
+        className={`inline-flex items-center gap-1.5 whitespace-nowrap text-xs font-medium uppercase tracking-wide transition-colors hover:text-gray-900 ${active ? 'text-gray-900' : ''}`}
+      >
+        {label}
+        <Icon className={`w-3.5 h-3.5 ${active ? 'text-blue-600' : 'opacity-50'}`} />
+      </button>
+    );
+  };
 
   const defaultPreviewUrl = 'https://www.osureunion.fr/wp-content/uploads/2022/03/pdf-exemple.pdf#zoom=page-width';
 
@@ -205,13 +422,13 @@ export function DocumentListView({
   return (
     <div className="flex flex-col h-full">
       {/* Breadcrumb */}
-      <div className="px-6 py-3 border-b border-gray-200 bg-gray-50/50">
+      <div className="px-6 py-3 border-b border-gray-200 bg-gray-50/50 flex flex-wrap items-center gap-x-3 gap-y-2">
         <div className="flex items-center gap-2 text-sm">
           <button
             onClick={() => onFolderNavigate(null, [])}
             className={`${currentPath.length === 0 ? 'text-gray-900 font-medium' : 'text-gray-600 hover:text-gray-900'} transition-colors`}
           >
-            {t('ged.listView.breadcrumbRoot')}
+            {rootLabel ?? t('ged.listView.breadcrumbRoot')}
           </button>
           {currentPath.map((folder, index) => (
             <div key={index} className="flex items-center gap-2">
@@ -233,6 +450,18 @@ export function DocumentListView({
             </div>
           ))}
         </div>
+        {offDefault && (
+          <span className="ml-auto inline-flex items-center gap-2 rounded-full border border-amber-200 bg-amber-50 px-3 py-1 text-xs text-amber-700">
+            {isSorted ? t('ged.rank.chip.sorted') : t('ged.rank.chip.leftDefault')}
+            <button
+              type="button"
+              onClick={() => onSortChange(sortFromDefault(defaultSort))}
+              className="font-semibold underline"
+            >
+              {t('ged.rank.chip.back')}
+            </button>
+          </span>
+        )}
       </div>
 
       {/* Search below breadcrumb */}
@@ -280,9 +509,10 @@ export function DocumentListView({
       {/* Table Header */}
       <div className="px-6 py-3 border-b border-gray-200 bg-gray-50/30">
         <div className={`grid ${tableGridClassName} gap-4 text-xs font-medium text-gray-500 uppercase tracking-wide`}>
-          <div>{t('ged.listView.headers.name')}</div>
+          <div aria-hidden />
+          <div>{renderSortHeader('name', t('ged.listView.headers.name'))}</div>
           <div>{t('ged.listView.headers.audience')}</div>
-          <div>{t('ged.listView.headers.addedOn')}</div>
+          <div>{renderSortHeader('added', t('ged.listView.headers.addedOn'))}</div>
           <div>{t('ged.listView.headers.status')}</div>
           <div className="text-right">{t('ged.listView.headers.actions')}</div>
         </div>
@@ -303,30 +533,33 @@ export function DocumentListView({
               const isHovered = hoveredId === folder.id;
               
               return (
-                <motion.div
-                  key={folder.id}
+                <div
+                  key={rowKey(folder)}
                   ref={(el) => { itemRefs.current[folder.id] = el; }}
                   onMouseEnter={() => setHoveredId(folder.id)}
                   onMouseLeave={() => setHoveredId(null)}
-                  whileHover={{ backgroundColor: 'rgba(0, 0, 0, 0.02)' }}
                   onClick={() => handleRowClick(folder)}
-                  className={`px-6 py-3 border-b border-gray-100 cursor-pointer transition-colors ${focusedItemId === folder.id ? 'bg-blue-50 ring-1 ring-inset ring-blue-300' : ''}`}
+                  {...dragProps(folder)}
+                  className={rowClassName(folder)}
                 >
                   <div className={`grid ${tableGridClassName} gap-4 items-center`}>
+                    {renderHandle(folder)}
                     <div className="flex items-center gap-3">
                       <div className="w-8 h-8 rounded-lg bg-amber-50 flex items-center justify-center flex-shrink-0">
                         <Icon className="w-4 h-4 text-amber-600" />
                       </div>
                       <div className="flex-1 min-w-0">
-                        <p
-                          className="text-sm font-medium text-gray-900 truncate"
-                          title={folder.name}
-                        >
-                          {folder.name}
-                        </p>
-                        {hasActiveSearch && (folder as any).__path && (
-                          <p className="text-xs text-gray-400 truncate">{(folder as any).__path.slice(0, -1).join(' / ') || t('ged.listView.root')}</p>
-                        )}
+                        <div className="flex items-center gap-2 min-w-0">
+                          <p
+                            className="text-sm font-medium text-gray-900 truncate"
+                            title={folder.name}
+                          >
+                            {folder.name}
+                          </p>
+                          {newItemIds?.has(folder.id) && (
+                            <span className="ged-rank-new">{t('ged.rank.newBadge')}</span>
+                          )}
+                        </div>
                         <div className="mt-1 flex items-center gap-1.5 flex-wrap">
                           <span className="text-xs text-gray-500">
                             {t((folder.children?.length || 0) > 1 ? 'ged.listView.folderCount' : 'ged.listView.folderCountOne', { count: folder.children?.length || 0 })}
@@ -337,7 +570,7 @@ export function DocumentListView({
 
                     <div>
                       {folder.navigatorTargeting ? (
-                        <DocumentTargetingMarker document={folder} mode="details" />
+                        <DocumentTargetingMarker document={folder} folderPath={locationOf(folder)} />
                       ) : (
                         <p className="text-xs text-gray-400">—</p>
                       )}
@@ -373,7 +606,8 @@ export function DocumentListView({
                             <MoreVertical className="w-4 h-4 text-gray-600" />
                           </button>
                         </DropdownMenuTrigger>
-                        <DropdownMenuContent align="end">
+                        <DropdownMenuContent align="end" onClick={(event) => event.stopPropagation()}>
+                          {renderRankMenuItems(folder)}
                           <DropdownMenuItem
                             onClick={(event) => {
                               event.stopPropagation();
@@ -428,7 +662,7 @@ export function DocumentListView({
                       </DropdownMenu>
                     </div>
                   </div>
-                </motion.div>
+                </div>
               );
             })}
 
@@ -469,23 +703,25 @@ export function DocumentListView({
                         <Layers3 className="h-4 w-4 text-blue-700" />
                       </div>
                       <div className="min-w-0 flex-1">
-                        <p className="text-sm font-medium text-blue-900 truncate">{file.batchName ?? 'Lot de documents'}</p>
+                        <p className="text-sm font-medium text-blue-900 truncate">{file.batchName ?? t('ged.listView.batch.defaultName')}</p>
                         <p className="text-[11px] text-blue-700/80">
-                          {batchCount} document{batchCount > 1 ? 's' : ''} · 1 notification consolidée
+                          {t(batchCount > 1 ? 'ged.listView.batch.summaryMany' : 'ged.listView.batch.summaryOne', { count: batchCount })}
                         </p>
                       </div>
                     </div>
                   </div>
                 )}
-                <motion.div
+                <div
+                  key={rowKey(file)}
                   ref={(el) => { itemRefs.current[file.id] = el; }}
                   onMouseEnter={() => setHoveredId(file.id)}
                   onMouseLeave={() => setHoveredId(null)}
-                  whileHover={{ backgroundColor: 'rgba(0, 0, 0, 0.02)' }}
                   onClick={() => handleRowClick(file)}
-                  className={`px-6 py-3 border-b border-gray-100 cursor-pointer transition-colors ${focusedItemId === file.id ? 'bg-blue-50 ring-1 ring-inset ring-blue-300' : ''} ${inBatch ? 'bg-blue-50/20' : ''}`}
+                  {...dragProps(file)}
+                  className={rowClassName(file, inBatch ? 'bg-blue-50/20' : '')}
                 >
                   <div className={`grid ${tableGridClassName} gap-4 items-center`}>
+                    {renderHandle(file)}
                     <div className="flex items-center gap-3">
                       {inBatch && (
                         <span className="text-blue-300 select-none" aria-hidden>└</span>
@@ -494,24 +730,25 @@ export function DocumentListView({
                         <Icon className="w-4 h-4" style={{ color: '#000E2B' }} />
                       </div>
                       <div className="flex-1 min-w-0">
-                        <p
-                          className="text-sm font-medium text-gray-900 truncate"
-                          title={file.name}
-                        >
-                          {file.name}
-                        </p>
-                        {hasActiveSearch && (file as any).__path && (
-                          <p className="text-xs text-gray-400 truncate">{(file as any).__path.slice(0, -1).join(' / ') || t('ged.listView.root')}</p>
-                        )}
+                        <div className="flex items-center gap-2 min-w-0">
+                          <p
+                            className="text-sm font-medium text-gray-900 truncate"
+                            title={file.name}
+                          >
+                            {file.name}
+                          </p>
+                          {newItemIds?.has(file.id) && (
+                            <span className="ged-rank-new">{t('ged.rank.newBadge')}</span>
+                          )}
+                        </div>
                         <div className="mt-1 flex items-center gap-1.5 flex-wrap">
                           <DocumentCategoryBadge category={file.documentCategory} />
-                          <DocumentTargetingMarker document={file} mode="tag" />
                         </div>
                       </div>
                     </div>
 
                     <div className="min-w-0">
-                      <DocumentTargetingMarker document={file} mode="details" />
+                      <DocumentTargetingMarker document={file} folderPath={locationOf(file)} />
                     </div>
                     
                     <div>
@@ -564,7 +801,8 @@ export function DocumentListView({
                             <MoreVertical className="w-4 h-4 text-gray-600" />
                           </button>
                         </DropdownMenuTrigger>
-                        <DropdownMenuContent align="end">
+                        <DropdownMenuContent align="end" onClick={(event) => event.stopPropagation()}>
+                          {renderRankMenuItems(file)}
                           <DropdownMenuItem
                             onClick={(event) => {
                               event.stopPropagation();
@@ -592,7 +830,7 @@ export function DocumentListView({
                       </DropdownMenu>
                     </div>
                   </div>
-                </motion.div>
+                </div>
                 </Fragment>
               );
               });
@@ -606,6 +844,13 @@ export function DocumentListView({
         <div className="flex items-center justify-between text-xs text-gray-500">
           <span>
             {t((hasActiveSearch ? searchFolders.length : folders.length) > 1 ? 'ged.listView.footerFolders' : 'ged.listView.footerFoldersOne', { count: hasActiveSearch ? searchFolders.length : folders.length })} · {t((hasActiveSearch ? searchFiles.length : files.length) > 1 ? 'ged.listView.footerDocuments' : 'ged.listView.footerDocumentsOne', { count: hasActiveSearch ? searchFiles.length : files.length })}
+          </span>
+          <span>
+            {isSorted
+              ? t('ged.rank.footer.sorted', { criterion: sortCriterion, direction: sortDirection })
+              : hasActiveSearch
+                ? t('ged.rank.footer.search')
+                : t('ged.rank.footer.rank')}
           </span>
         </div>
       </div>

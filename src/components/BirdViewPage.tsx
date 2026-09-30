@@ -40,6 +40,7 @@ import {
 import { filterTreeForIncomplete } from '../utils/birdviewFilters';
 import { Button } from './ui/button';
 import { Tag } from './Tag';
+import { DocumentScope, exampleSegmentsFor } from './ui/document-scope';
 import { cn } from './ui/utils';
 import { DocumentActivityPanel } from './DocumentActivityPanel';
 import { DocumentCategoryBadge } from './DocumentCategoryBadge';
@@ -848,7 +849,8 @@ export function BirdViewPage({ onBack }: BirdViewPageProps) {
   const renderNode = (
     node: DocumentNode,
     level: number = 0,
-    inheritedContext: AccessContext = {}
+    inheritedContext: AccessContext = {},
+    parentPath: string[] = []
   ) => {
     const isExpanded = expandedNodes.has(node.id);
     const hasChildren = node.children && node.children.length > 0;
@@ -1038,11 +1040,42 @@ export function BirdViewPage({ onBack }: BirdViewPageProps) {
             </div>
 
             {/* Name */}
-            <span className="text-sm text-gray-900 dark:text-gray-100">{node.name}</span>
-            <DocumentCategoryBadge category={node.documentCategory} />
+            <span
+              className="min-w-0 flex-1 truncate text-sm text-gray-900 dark:text-gray-100"
+              title={node.name}
+            >
+              {node.name}
+            </span>
+
+            {/* Audience */}
+            <div className="flex-shrink-0" style={{ width: '22rem' }}>
+              <DocumentScope
+                layout="inline"
+                scope={{
+                  nature: node.isNominatif ? 'nominative' : 'generic',
+                  folderPath: parentPath,
+                  investor: node.investorRestriction,
+                  subscription: node.subscriptionRestriction,
+                  fund: node.fundRestriction || inheritedContext.fund,
+                  shareClass: node.shareClassRestriction || inheritedContext.shareClass,
+                  segments:
+                    node.segmentRestrictions && node.segmentRestrictions.length > 0
+                      ? node.segmentRestrictions
+                      : inheritedContext.segments && inheritedContext.segments.length > 0
+                        ? inheritedContext.segments
+                        : node.isNominatif
+                          ? undefined
+                          : exampleSegmentsFor(node.id),
+                }}
+              />
+            </div>
+
+            <div className="flex-shrink-0" style={{ width: '7rem' }}>
+              <DocumentCategoryBadge category={node.documentCategory} />
+            </div>
 
             {/* Metadata */}
-            <div className="flex items-center gap-3 text-xs text-gray-500">
+            <div className="flex flex-shrink-0 items-center gap-3 text-xs text-gray-500" style={{ width: '8.5rem' }}>
               <span className="flex items-center gap-1">
                 <CalendarDays className="w-3.5 h-3.5" />
                 {node.date}
@@ -1050,43 +1083,8 @@ export function BirdViewPage({ onBack }: BirdViewPageProps) {
               <span className="uppercase font-medium">{node.format}</span>
             </div>
 
-            {/* Restrictions du document */}
-            <div className="flex items-center gap-1.5">
-              {node.investorRestriction && (
-                <Tooltip>
-                  <TooltipTrigger asChild>
-                    <span><Tag icon={UserRound} label={node.investorRestriction} /></span>
-                  </TooltipTrigger>
-                  <TooltipContent side="top"><span className="text-xs">{t('ged.birdview.tooltips.targetInvestor')}</span></TooltipContent>
-                </Tooltip>
-              )}
-              {node.subscriptionRestriction && (
-                <Tooltip>
-                  <TooltipTrigger asChild>
-                    <span><Tag icon={FileText} label={node.subscriptionRestriction} /></span>
-                  </TooltipTrigger>
-                  <TooltipContent side="top"><span className="text-xs">{t('ged.birdview.tooltips.targetSubscription')}</span></TooltipContent>
-                </Tooltip>
-              )}
-              {node.fundRestriction && (
-                <Tooltip>
-                  <TooltipTrigger asChild>
-                    <span><Tag icon={Landmark} label={node.fundRestriction} /></span>
-                  </TooltipTrigger>
-                  <TooltipContent side="top"><span className="text-xs">{t('ged.birdview.tooltips.targetFund')}</span></TooltipContent>
-                </Tooltip>
-              )}
-              {node.segmentRestrictions && node.segmentRestrictions.map(seg => (
-                <Tooltip key={seg}>
-                  <TooltipTrigger asChild>
-                    <span><Tag icon={TagIcon} label={seg} /></span>
-                  </TooltipTrigger>
-                  <TooltipContent side="top"><span className="text-xs">{t('ged.birdview.tooltips.targetSegment')}</span></TooltipContent>
-                </Tooltip>
-              ))}
-            </div>
-
             {/* Statut selon le type de document */}
+            <div className="flex-shrink-0" style={{ width: '8.5rem' }}>
             {(() => {
               const access = buildAccessMessage(node, inheritedContext);
               const headerColorClass =
@@ -1098,7 +1096,7 @@ export function BirdViewPage({ onBack }: BirdViewPageProps) {
                 return (
                   <Tooltip>
                     <TooltipTrigger asChild>
-                      <div className="flex items-center gap-1.5 ml-4 cursor-help">
+                      <div className="flex items-center gap-1.5 cursor-help">
                         <Ban className="w-4 h-4 text-gray-400" />
                         <span className="text-xs font-medium text-gray-500">
                           {t('ged.birdview.node.inaccessibleToViewer')}
@@ -1120,7 +1118,7 @@ export function BirdViewPage({ onBack }: BirdViewPageProps) {
                 return (
                   <Tooltip>
                     <TooltipTrigger asChild>
-                      <div className="flex items-center gap-1.5 ml-4 cursor-help">
+                      <div className="flex items-center gap-1.5 cursor-help">
                         <Ban className="w-4 h-4 text-gray-400" />
                         <span className="text-xs font-medium text-gray-500">
                           {t('ged.birdview.node.inaccessibleToContact')}
@@ -1146,7 +1144,7 @@ export function BirdViewPage({ onBack }: BirdViewPageProps) {
                 return (
                   <Tooltip>
                     <TooltipTrigger asChild>
-                      <div className="flex items-center gap-1.5 ml-4 cursor-help">
+                      <div className="flex items-center gap-1.5 cursor-help">
                         {consulted ? (
                           <>
                             <CheckCircle2 className="w-4 h-4 text-green-500" />
@@ -1174,7 +1172,7 @@ export function BirdViewPage({ onBack }: BirdViewPageProps) {
               return (
                 <Tooltip>
                   <TooltipTrigger asChild>
-                    <div className="flex items-center gap-1 ml-4 text-gray-400 dark:text-gray-500 cursor-help">
+                    <div className="flex items-center gap-1 text-gray-400 dark:text-gray-500 cursor-help">
                       <Globe className="w-3.5 h-3.5" />
                       <span className="text-xs">
                         {node.engagement?.totalViewers ?? 0}
@@ -1191,9 +1189,10 @@ export function BirdViewPage({ onBack }: BirdViewPageProps) {
                 </Tooltip>
               );
             })()}
+            </div>
 
             {/* Actions */}
-            <div className="ml-auto flex items-center gap-1">
+            <div className="flex flex-shrink-0 items-center gap-1">
               {/* Preview button (icon-only, like in the arbo) */}
               <button
                 className="p-1.5 hover:bg-gray-200 dark:hover:bg-gray-800 rounded transition-colors"
@@ -1240,7 +1239,7 @@ export function BirdViewPage({ onBack }: BirdViewPageProps) {
         {/* Children */}
         {isExpanded && hasChildren && (
           <div className="mt-1">
-            {node.children!.map(child => renderNode(child, level + 1, childContext))}
+            {node.children!.map(child => renderNode(child, level + 1, childContext, [...parentPath, node.name]))}
           </div>
         )}
       </div>

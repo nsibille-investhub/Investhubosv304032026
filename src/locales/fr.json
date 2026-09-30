@@ -2379,7 +2379,9 @@
       }
     },
     "tree": {
-      "allDocuments": "Tous les documents"
+      "allDocuments": "Tous les documents",
+      "resizeAria": "Redimensionner l'arborescence",
+      "resizeHint": "Glissez pour ajuster la largeur, double-cliquez pour revenir à la largeur par défaut"
     },
     "listView": {
       "breadcrumbRoot": "Documents",
@@ -2405,7 +2407,7 @@
       "emptyFolder": "Ce dossier est vide",
       "status": {
         "published": "Publié",
-        "pending": "En Attente"
+        "pending": "En attente"
       },
       "actions": {
         "editFolderAria": "Modifier le dossier {{name}}",
@@ -2441,7 +2443,12 @@
       "deleteFolderNoCompatible": "Aucun dossier de destination compatible avec les restrictions des documents (fonds, part, segment). Modifiez le ciblage des documents ou créez un dossier compatible.",
       "deleteFolderReassignCta": "Réaffecter et supprimer",
       "cancel": "Annuler",
-      "delete": "Supprimer"
+      "delete": "Supprimer",
+      "batch": {
+        "defaultName": "Lot de documents",
+        "summaryOne": "{{count}} document · 1 notification consolidée",
+        "summaryMany": "{{count}} documents · 1 notification consolidée"
+      }
     },
     "preview": {
       "title": "Aperçu du document",
@@ -3134,6 +3141,88 @@
             }
           }
         }
+      }
+    },
+    "scope": {
+      "nature": {
+        "generic": "Générique",
+        "nominative": "Nominatif"
+      },
+      "types": {
+        "fund": "Fonds",
+        "share": "Part",
+        "segment": "Segment",
+        "investor": "Investisseur",
+        "structure": "Structure",
+        "subscription": "Souscription"
+      },
+      "allFunds": "Tous les fonds",
+      "detailsTitle": "Périmètre du document",
+      "targeting": "Ciblage",
+      "noRestriction": "Aucune restriction : visible par tous les investisseurs de l'espace",
+      "viewFullScope": "Voir le périmètre complet",
+      "downloadAudience": "Télécharger l'audience",
+      "downloadStarted": "Audience téléchargée",
+      "csv": {
+        "investor": "Investisseur",
+        "structure": "Structure",
+        "contact": "Contact",
+        "role": "Rôle",
+        "fileName": "audience"
+      },
+      "investorCorporate": "Personne morale",
+      "investorIndividual": "Personne physique",
+      "openInvestor": "Ouvrir la fiche investisseur",
+      "subscription": {
+        "code": "Référence",
+        "commitment": "Montant engagé",
+        "label": "Libellé"
+      },
+      "openSubscription": "Ouvrir la souscription"
+    },
+    "rank": {
+      "criterion": {
+        "name": "nom",
+        "added": "date d'ajout"
+      },
+      "direction": {
+        "asc": "croissant",
+        "desc": "décroissant"
+      },
+      "chip": {
+        "sorted": "Tri personnel actif, l'ordre défini n'est pas modifié",
+        "leftDefault": "Vous avez quitté l'ordre par défaut de l'application",
+        "back": "Revenir à l'ordre par défaut"
+      },
+      "footer": {
+        "rank": "Vue dans l'ordre défini · glisser actif",
+        "sorted": "Vue triée par {{criterion}} ({{direction}}) · glisser désactivé, ordre défini inchangé",
+        "search": "Résultats de recherche · glisser désactivé"
+      },
+      "handle": {
+        "drag": "Glissez pour changer le rang",
+        "lockedSort": "Revenez à l'ordre défini pour réorganiser ce dossier.",
+        "lockedSearch": "Videz la recherche pour réorganiser ce dossier.",
+        "aria": "Changer le rang de {{name}}",
+        "dragSpace": "Glissez pour changer l'ordre des espaces",
+        "lockedSearchSpaces": "Videz la recherche pour réorganiser les espaces."
+      },
+      "menu": {
+        "top": "Placer en tête",
+        "bottom": "Placer en fin",
+        "unlock": "Revenir à l'ordre défini pour réorganiser"
+      },
+      "sortAria": "Trier par {{column}}",
+      "newBadge": "Nouveau",
+      "toast": {
+        "moved": "Ordre enregistré · {{name}} passe au rang {{rank}}",
+        "undo": "Annuler",
+        "docAdded": "{{name}} ajouté au rang 1, en attente de validation",
+        "folderAdded": "{{name}} ajouté au rang 1 des dossiers"
+      },
+      "tree": {
+        "expand": "Déplier",
+        "collapse": "Replier"
       }
     }
   },

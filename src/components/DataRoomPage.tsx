@@ -23,7 +23,28 @@ interface DataRoomPageProps {
 
 export function DataRoomPage({ onSpaceChange, onMassUploadChange, backToSpacesSignal }: DataRoomPageProps) {
   const { t } = useTranslation();
+
   const [dataRoomSpaces, setDataRoomSpaces] = useState<DataRoomSpace[]>(mockDataRoomSpaces);
+
+  const handleReorderSpace = (spaceId: string, sectionIds: string[], toIndex: number) => {
+    const previous = dataRoomSpaces;
+    const moved = previous.find((s) => s.id === spaceId);
+    if (!moved) return;
+    const reordered = sectionIds.filter((id) => id !== spaceId);
+    reordered.splice(toIndex, 0, spaceId);
+    const byId = new Map(previous.map((s) => [s.id, s] as const));
+    let cursor = 0;
+    const next = previous.map((space) =>
+      sectionIds.includes(space.id) ? byId.get(reordered[cursor++])! : space,
+    );
+    setDataRoomSpaces(next);
+    toast(t('ged.rank.toast.moved', { name: moved.name, rank: toIndex + 1 }), {
+      id: 'ged-rank',
+      duration: 6000,
+      action: { label: t('ged.rank.toast.undo'), onClick: () => setDataRoomSpaces(previous) },
+    });
+  };
+
   const [selectedSpace, setSelectedSpace] = useState<DataRoomSpace | null>(null);
   const [spaceConfigDialogOpen, setSpaceConfigDialogOpen] = useState(false);
   const [editingSpace, setEditingSpace] = useState<DataRoomSpace | null>(null);
@@ -250,6 +271,7 @@ export function DataRoomPage({ onSpaceChange, onMassUploadChange, backToSpacesSi
               onAddSpace={handleAddSpace}
               onMassUpload={handleOpenMassUpload}
               onConfigureSpace={handleConfigureSpace}
+              onReorderSpace={handleReorderSpace}
             />
           </motion.div>
         ) : (
