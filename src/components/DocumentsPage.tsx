@@ -136,7 +136,7 @@ export function DocumentsPage({ selectedSpace, navigationTarget, onNavigationHan
   const [addFolderPopupOpen, setAddFolderPopupOpen] = useState(false);
   const [addFolderDefaultParentId, setAddFolderDefaultParentId] = useState<string>('root');
   const [folderBeingEdited, setFolderBeingEdited] = useState<Document | null>(null);
-  const [defaultSort, setDefaultSort] = useState<GedDefaultSort>(readDefaultSort);
+  const [defaultSort] = useState<GedDefaultSort>(readDefaultSort);
   const [sort, setSort] = useState<GedSort>(() => sortFromDefault(readDefaultSort()));
   const [highlight, setHighlight] = useState<TreeHighlight | null>(null);
   const [newItemIds, setNewItemIds] = useState<Set<string>>(() => new Set());
@@ -437,15 +437,6 @@ export function DocumentsPage({ selectedSpace, navigationTarget, onNavigationHan
     return () => window.clearTimeout(timer);
   }, [highlight]);
 
-  const handleDefaultSortChange = (value: GedDefaultSort) => {
-    setDefaultSort(value);
-    setSort(sortFromDefault(value));
-    try {
-      window.localStorage.setItem(DEFAULT_SORT_STORAGE_KEY, value);
-    } catch {
-      // storage unavailable: the choice lasts for the session only
-    }
-  };
 
   const confirmWithUndo = (message: string, previous: Document[], id: string) => {
     toast(message, {
@@ -900,7 +891,6 @@ export function DocumentsPage({ selectedSpace, navigationTarget, onNavigationHan
               sort={sort}
               onSortChange={setSort}
               defaultSort={defaultSort}
-              onDefaultSortChange={handleDefaultSortChange}
               onMoveItem={handleMoveItem}
               highlight={highlight}
               newItemIds={newItemIds}

@@ -11077,20 +11077,6 @@ html {
   letter-spacing: .08em;
   text-transform: uppercase;
 }
-.ged-rank-label {
-  font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
-  font-size: 11px;
-  letter-spacing: .12em;
-  text-transform: uppercase;
-  color: #6b7280;
-}
-.ged-rank-target {
-  margin-left: auto;
-  padding-left: 12px;
-  font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
-  font-size: 11px;
-  color: #9ca3af;
-}
 @media (prefers-reduced-motion: reduce) {
   .ged-rank-flash { animation: none; }
 }

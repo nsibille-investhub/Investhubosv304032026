@@ -37,7 +37,6 @@ import {
   DropdownMenuTrigger,
 } from './ui/dropdown-menu';
 import { Tooltip, TooltipContent, TooltipTrigger } from './ui/tooltip';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from './ui/select';
 import {
   RANK_SORT,
   buildRankIndex,
@@ -99,29 +98,14 @@ interface DocumentListViewProps {
   sort: GedSort;
   onSortChange: (sort: GedSort) => void;
   defaultSort: GedDefaultSort;
-  onDefaultSortChange: (value: GedDefaultSort) => void;
   onMoveItem?: (id: string, toIndex: number) => void;
   highlight?: TreeHighlight | null;
   newItemIds?: Set<string>;
 }
 
-const DEFAULT_SORT_OPTIONS: GedDefaultSort[] = ['rank', 'name', 'added'];
-
-const FORMAT_LABEL: Record<string, string> = {
-  pdf: 'PDF',
-  excel: 'XLSX',
-  word: 'DOCX',
-  image: 'IMG',
-  video: 'MP4',
-};
 
 type DropTarget = { id: string; position: 'before' | 'after' };
 
-const formatLabel = (file: Document) => {
-  const extension = file.name.match(/\.([a-z0-9]{2,5})$/i)?.[1];
-  if (extension) return extension.toUpperCase();
-  return FORMAT_LABEL[file.type] ?? 'PDF';
-};
 
 export function DocumentListView({
   documents, 
@@ -149,7 +133,6 @@ export function DocumentListView({
   sort,
   onSortChange,
   defaultSort,
-  onDefaultSortChange,
   onMoveItem,
   highlight,
   newItemIds,
@@ -379,31 +362,25 @@ export function DocumentListView({
     const index = entry.rank - 1;
     const last = entry.total - 1;
     const entries = [
-      { key: 'up', icon: ArrowUp, label: t('ged.rank.menu.up'), to: index - 1, disabled: index === 0 },
-      { key: 'down', icon: ArrowDown, label: t('ged.rank.menu.down'), to: index + 1, disabled: index === last },
       { key: 'top', icon: ChevronsUp, label: t('ged.rank.menu.top'), to: 0, disabled: index === 0 },
       { key: 'bottom', icon: ChevronsDown, label: t('ged.rank.menu.bottom'), to: last, disabled: index === last },
     ];
     return (
       <>
-        {entries.map((action, i) => {
+        {entries.map((action) => {
           const Icon = action.icon;
-          const target = Math.max(0, Math.min(last, action.to)) + 1;
           return (
-            <Fragment key={action.key}>
-              {i === 2 && <DropdownMenuSeparator />}
-              <DropdownMenuItem
-                disabled={action.disabled}
-                onClick={(event) => {
-                  event.stopPropagation();
-                  onMoveItem(item.id, action.to);
-                }}
-              >
-                <Icon className="w-4 h-4 mr-2" />
-                {action.label}
-                <span className="ged-rank-target">{t('ged.rank.menu.target', { rank: target })}</span>
-              </DropdownMenuItem>
-            </Fragment>
+            <DropdownMenuItem
+              key={action.key}
+              disabled={action.disabled}
+              onClick={(event) => {
+                event.stopPropagation();
+                onMoveItem(item.id, action.to);
+              }}
+            >
+              <Icon className="w-4 h-4 mr-2" />
+              {action.label}
+            </DropdownMenuItem>
           );
         })}
         <DropdownMenuSeparator />
@@ -427,9 +404,6 @@ export function DocumentListView({
     );
   };
 
-  const rankSubtitle = (item: Document) =>
-    t('ged.rank.subtitleRank', { rank: rankIndex.get(item.id)?.rank ?? 1 });
-
   const defaultPreviewUrl = 'https://www.osureunion.fr/wp-content/uploads/2022/03/pdf-exemple.pdf#zoom=page-width';
 
   const openViewer = (file: Document) => {
@@ -448,7 +422,7 @@ export function DocumentListView({
   return (
     <div className="flex flex-col h-full">
       {/* Breadcrumb */}
-      <div className="px-6 py-3 border-b border-gray-200 bg-gray-50/50">
+      <div className="px-6 py-3 border-b border-gray-200 bg-gray-50/50 flex flex-wrap items-center gap-x-3 gap-y-2">
         <div className="flex items-center gap-2 text-sm">
           <button
             onClick={() => onFolderNavigate(null, [])}
@@ -476,6 +450,18 @@ export function DocumentListView({
             </div>
           ))}
         </div>
+        {offDefault && (
+          <span className="ml-auto inline-flex items-center gap-2 rounded-full border border-amber-200 bg-amber-50 px-3 py-1 text-xs text-amber-700">
+            {isSorted ? t('ged.rank.chip.sorted') : t('ged.rank.chip.leftDefault')}
+            <button
+              type="button"
+              onClick={() => onSortChange(sortFromDefault(defaultSort))}
+              className="font-semibold underline"
+            >
+              {t('ged.rank.chip.back')}
+            </button>
+          </span>
+        )}
       </div>
 
       {/* Search below breadcrumb */}
@@ -518,45 +504,6 @@ export function DocumentListView({
             {t(itemsToRender.length > 1 ? 'ged.listView.resultsCountMany' : 'ged.listView.resultsCountOne', { count: itemsToRender.length, path: currentPath.length > 0 ? currentPath.join(' / ') : t('ged.listView.breadcrumbRoot') })}
           </p>
         )}
-      </div>
-
-      {/* Order bar: current order, personal sort chip, application default */}
-      <div className="px-6 py-2.5 border-b border-gray-200 bg-gray-50/50 flex flex-wrap items-center gap-x-3 gap-y-2">
-        <span className="ged-rank-label">
-          {isSorted
-            ? t('ged.rank.sortLabel.sorted', { criterion: sortCriterion, direction: sortDirection })
-            : t('ged.rank.sortLabel.rank')}
-        </span>
-        {offDefault && (
-          <span className="inline-flex items-center gap-2 rounded-full border border-amber-200 bg-amber-50 px-3 py-1 text-xs text-amber-700">
-            {isSorted ? t('ged.rank.chip.sorted') : t('ged.rank.chip.leftDefault')}
-            <button
-              type="button"
-              onClick={() => onSortChange(sortFromDefault(defaultSort))}
-              className="font-semibold underline"
-            >
-              {t('ged.rank.chip.back')}
-            </button>
-          </span>
-        )}
-        {!dragDisabledReason && (
-          <span className="text-xs text-gray-500">{t('ged.rank.hint')}</span>
-        )}
-        <div className="ml-auto flex items-center gap-2" title={t('ged.rank.defaultSetting.hint')}>
-          <span className="text-xs text-gray-500">{t('ged.rank.defaultSetting.label')}</span>
-          <Select value={defaultSort} onValueChange={(value) => onDefaultSortChange(value as GedDefaultSort)}>
-            <SelectTrigger className="h-8 text-xs bg-white" style={{ width: 150 }}>
-              <SelectValue />
-            </SelectTrigger>
-            <SelectContent>
-              {DEFAULT_SORT_OPTIONS.map((option) => (
-                <SelectItem key={option} value={option} className="text-xs">
-                  {t(`ged.rank.defaultSetting.${option}`)}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-        </div>
       </div>
 
       {/* Table Header */}
@@ -616,8 +563,6 @@ export function DocumentListView({
                         <div className="mt-1 flex items-center gap-1.5 flex-wrap">
                           <span className="text-xs text-gray-500">
                             {t((folder.children?.length || 0) > 1 ? 'ged.listView.folderCount' : 'ged.listView.folderCountOne', { count: folder.children?.length || 0 })}
-                            {' · '}
-                            {rankSubtitle(folder)}
                           </span>
                         </div>
                       </div>
@@ -797,11 +742,6 @@ export function DocumentListView({
                           )}
                         </div>
                         <div className="mt-1 flex items-center gap-1.5 flex-wrap">
-                          <span className="text-xs text-gray-500">
-                            {formatLabel(file)}
-                            {' · '}
-                            {rankSubtitle(file)}
-                          </span>
                           <DocumentCategoryBadge category={file.documentCategory} />
                         </div>
                       </div>

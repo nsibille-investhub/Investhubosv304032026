@@ -3179,10 +3179,6 @@
       "openSubscription": "Ouvrir la souscription"
     },
     "rank": {
-      "sortLabel": {
-        "rank": "Ordre défini",
-        "sorted": "Tri par {{criterion}} {{direction}}"
-      },
       "criterion": {
         "name": "nom",
         "added": "date d'ajout"
@@ -3196,7 +3192,6 @@
         "leftDefault": "Vous avez quitté l'ordre par défaut de l'application",
         "back": "Revenir à l'ordre par défaut"
       },
-      "hint": "Glissez la poignée pour changer le rang · cliquez un en-tête pour trier",
       "footer": {
         "rank": "Vue dans l'ordre défini · glisser actif",
         "sorted": "Vue triée par {{criterion}} ({{direction}}) · glisser désactivé, ordre défini inchangé",
@@ -3209,14 +3204,10 @@
         "aria": "Changer le rang de {{name}}"
       },
       "menu": {
-        "up": "Monter",
-        "down": "Descendre",
         "top": "Placer en tête",
         "bottom": "Placer en fin",
-        "target": "rang {{rank}}",
         "unlock": "Revenir à l'ordre défini pour réorganiser"
       },
-      "subtitleRank": "rang {{rank}}",
       "sortAria": "Trier par {{column}}",
       "newBadge": "Nouveau",
       "toast": {
@@ -3224,13 +3215,6 @@
         "undo": "Annuler",
         "docAdded": "{{name}} ajouté au rang 1, en attente de validation",
         "folderAdded": "{{name}} ajouté au rang 1 des dossiers"
-      },
-      "defaultSetting": {
-        "label": "Ordre par défaut de l'application",
-        "hint": "Paramètre d'application simulé : il fixe la vue de départ",
-        "rank": "Ordre défini",
-        "name": "Nom",
-        "added": "Date d'ajout"
       },
       "tree": {
         "expand": "Déplier",

@@ -3179,10 +3179,6 @@
       "openSubscription": "Open subscription"
     },
     "rank": {
-      "sortLabel": {
-        "rank": "Defined order",
-        "sorted": "Sorted by {{criterion}} {{direction}}"
-      },
       "criterion": {
         "name": "name",
         "added": "date added"
@@ -3196,7 +3192,6 @@
         "leftDefault": "You left the application default order",
         "back": "Back to the default order"
       },
-      "hint": "Drag the handle to change the rank · click a header to sort",
       "footer": {
         "rank": "Defined order view · dragging enabled",
         "sorted": "Sorted by {{criterion}} ({{direction}}) · dragging disabled, defined order unchanged",
@@ -3209,14 +3204,10 @@
         "aria": "Change the rank of {{name}}"
       },
       "menu": {
-        "up": "Move up",
-        "down": "Move down",
         "top": "Move to top",
         "bottom": "Move to bottom",
-        "target": "rank {{rank}}",
         "unlock": "Go back to the defined order to reorganize"
       },
-      "subtitleRank": "rank {{rank}}",
       "sortAria": "Sort by {{column}}",
       "newBadge": "New",
       "toast": {
@@ -3224,13 +3215,6 @@
         "undo": "Undo",
         "docAdded": "{{name}} added at rank 1, pending validation",
         "folderAdded": "{{name}} added at rank 1 of folders"
-      },
-      "defaultSetting": {
-        "label": "Application default order",
-        "hint": "Simulated application setting: it sets the starting view",
-        "rank": "Defined order",
-        "name": "Name",
-        "added": "Date added"
       },
       "tree": {
         "expand": "Expand",
