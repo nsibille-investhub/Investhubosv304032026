@@ -1756,7 +1756,7 @@ export function DesignSystemPage() {
         <p className="text-sm text-[#4F6166] dark:text-[#9DB2AE] mb-1">
           Périmètre d&apos;un document, identique dans l&apos;explorer documentaire, la Bird View et le centre de publication :
           investisseur hors tag avec lien vers sa fiche (icône PP ou PM), suivi de sa structure (investisseur / structure), puis tags de ciblage.
-          La souscription est une étiquette carrée, placée après le fonds. Le bouton <strong className="font-semibold">i</strong>, placé en bas à droite, ouvre au clic le détail (avec le type générique ou nominatif) :
+          La souscription est une étiquette carrée, placée après le fonds. Les segments, paramètre d&apos;audience des éléments génériques, ont une étiquette violette avec une icône de groupe. Le bouton <strong className="font-semibold">i</strong>, placé en bas à droite, ouvre au clic le détail (avec le type générique ou nominatif) :
           identification complète de la souscription, ciblage et téléchargement de l&apos;audience en CSV.
         </p>
         <p className="text-xs text-[#4F6166] dark:text-[#9DB2AE] mb-4">

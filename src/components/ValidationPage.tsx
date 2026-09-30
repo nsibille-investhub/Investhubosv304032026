@@ -56,7 +56,7 @@ import {
   TableRow,
 } from './ui/table';
 import { Badge } from './ui/badge';
-import { DocumentScope, type DocumentScopeData } from './ui/document-scope';
+import { DocumentScope, exampleSegmentsFor, type DocumentScopeData } from './ui/document-scope';
 import { FilterCard } from './ui/filter-card';
 import { FilterBar, FilterConfig } from './FilterBar';
 import { DataPagination } from './ui/data-pagination';
@@ -1622,6 +1622,7 @@ function DocumentRow({
           info={resolveAudience(doc.targeting)}
           targeting={doc.targeting}
           folderPath={doc.pathSegments}
+          seedId={String(doc.id)}
         />
       </td>
       <td className="px-4 py-2.5 align-top">
@@ -1744,11 +1745,16 @@ function AudienceCell({
   info,
   targeting,
   folderPath,
+  seedId,
 }: {
   info: AudienceInfo;
   targeting: ValidationDocument['targeting'];
   folderPath?: string[];
+  seedId: string;
 }) {
+  const segmentTags = Array.from(
+    new Set(targeting.filter((tag) => tag.kind === 'segment').map((tag) => tag.label)),
+  );
   const scope: DocumentScopeData = info.nominative
     ? {
         nature: 'nominative',
@@ -1766,9 +1772,7 @@ function AudienceCell({
         fund: info.fundName,
         allFunds: info.allFunds,
         shareClass: targeting.find((tag) => tag.kind === 'shareClass')?.label,
-        segments: Array.from(
-          new Set(targeting.filter((tag) => tag.kind === 'segment').map((tag) => tag.label)),
-        ),
+        segments: segmentTags.length > 0 ? segmentTags : exampleSegmentsFor(seedId),
         investorCount: info.investorCount,
       };
   return <DocumentScope scope={scope} />;
@@ -2383,6 +2387,7 @@ function DynamicBatchRow({
             info={audienceInfo}
             targeting={batch.docs.flatMap((d) => d.targeting)}
             folderPath={batchFolderPath}
+            seedId={batch.id}
           />
         </td>
         <td className="px-4 py-2.5 align-top">

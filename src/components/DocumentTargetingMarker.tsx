@@ -1,5 +1,5 @@
 import { Document } from '../utils/documentMockData';
-import { DocumentScope, type DocumentScopeData } from './ui/document-scope';
+import { DocumentScope, exampleSegmentsFor, type DocumentScopeData } from './ui/document-scope';
 
 interface DocumentTargetingMarkerProps {
   document: Document;
@@ -28,7 +28,7 @@ export function scopeFromDocument(
     folderPath,
     fund: targeting.fund,
     shareClass: targeting.shareClass,
-    segments: targeting.segment ? [targeting.segment] : undefined,
+    segments: targeting.segment ? [targeting.segment] : exampleSegmentsFor(document.id),
   };
 }
 

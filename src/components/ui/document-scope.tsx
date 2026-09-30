@@ -29,8 +29,8 @@ import {
   Info,
   Landmark,
   Layers3,
-  Tag as TagIcon,
   UserRound,
+  UsersRound,
   Wallet,
   type LucideIcon,
 } from 'lucide-react';
@@ -203,6 +203,7 @@ interface ScopeTagItem {
   label: string;
   typeKey: string;
   square?: boolean;
+  segment?: boolean;
   hint?: string;
 }
 
@@ -301,7 +302,7 @@ function buildTags(
   (scope.segments ?? [])
     .filter((s) => isSpecific(s, ALL_SEGMENTS_LABELS))
     .forEach((seg) =>
-      tags.push({ key: `segment-${seg}`, icon: TagIcon, label: seg, typeKey: 'ged.scope.types.segment' }),
+      tags.push({ key: `segment-${seg}`, icon: UsersRound, label: seg, typeKey: 'ged.scope.types.segment', segment: true }),
     );
   return tags;
 }
@@ -433,6 +434,28 @@ export function ScopeInvestorLink({
   );
 }
 
+/** Segments are an audience parameter: violet chip, distinct from the neutral targeting tags. */
+const SEGMENT_CHIP_STYLE: CSSProperties = {
+  backgroundColor: '#F5F3FF',
+  borderColor: '#DDD6FE',
+  color: '#6D28D9',
+};
+
+const EXAMPLE_SEGMENTS: string[][] = [
+  [],
+  ['Institutional'],
+  ['Family Office', 'UHNWI'],
+  ['HNWI'],
+  ['Pension Fund', 'Insurance'],
+  ['Distributor'],
+];
+
+/** Deterministic sample segments for mock generic items that carry none. */
+export function exampleSegmentsFor(id: string): string[] {
+  const seed = id.split('').reduce((acc, char) => acc + char.charCodeAt(0), 0);
+  return EXAMPLE_SEGMENTS[seed % EXAMPLE_SEGMENTS.length];
+}
+
 function ScopeTag({ tag }: { tag: ScopeTagItem }) {
   const { t } = useTranslation();
   const Icon = tag.icon;
@@ -440,6 +463,15 @@ function ScopeTag({ tag }: { tag: ScopeTagItem }) {
     <span className="inline-flex w-fit shrink-0 items-center gap-1 whitespace-nowrap rounded border border-gray-200 bg-gray-50 px-1.5 py-0.5 text-[11px] font-medium text-gray-600 dark:border-gray-700 dark:bg-gray-900 dark:text-gray-300">
       <Icon className="h-3 w-3 shrink-0" />
       {tag.label}
+    </span>
+  ) : tag.segment ? (
+    <span
+      title={tag.label}
+      className="inline-flex min-w-0 shrink items-center gap-1 whitespace-nowrap rounded-full border px-2 py-0.5 text-[11px] font-medium"
+      style={SEGMENT_CHIP_STYLE}
+    >
+      <Icon className="h-3 w-3 shrink-0" />
+      <span className="min-w-0 truncate">{tag.label}</span>
     </span>
   ) : (
     <Tag icon={Icon} label={tag.label} className="px-2 py-0.5 text-[11px]" />

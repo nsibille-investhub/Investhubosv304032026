@@ -40,7 +40,7 @@ import {
 import { filterTreeForIncomplete } from '../utils/birdviewFilters';
 import { Button } from './ui/button';
 import { Tag } from './Tag';
-import { DocumentScope } from './ui/document-scope';
+import { DocumentScope, exampleSegmentsFor } from './ui/document-scope';
 import { cn } from './ui/utils';
 import { DocumentActivityPanel } from './DocumentActivityPanel';
 import { DocumentCategoryBadge } from './DocumentCategoryBadge';
@@ -1055,7 +1055,11 @@ export function BirdViewPage({ onBack }: BirdViewPageProps) {
                   segments:
                     node.segmentRestrictions && node.segmentRestrictions.length > 0
                       ? node.segmentRestrictions
-                      : inheritedContext.segments,
+                      : inheritedContext.segments && inheritedContext.segments.length > 0
+                        ? inheritedContext.segments
+                        : node.isNominatif
+                          ? undefined
+                          : exampleSegmentsFor(node.id),
                 }}
               />
             </div>
