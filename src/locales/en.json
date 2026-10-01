@@ -3173,6 +3173,7 @@
       "investorCorporate": "Legal entity",
       "investorIndividual": "Individual",
       "openInvestor": "Open investor record",
+      "openStructure": "Open structure",
       "subscription": {
         "code": "Reference",
         "commitment": "Commitment",
