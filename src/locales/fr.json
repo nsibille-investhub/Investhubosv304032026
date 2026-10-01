@@ -3173,6 +3173,7 @@
       "investorCorporate": "Personne morale",
       "investorIndividual": "Personne physique",
       "openInvestor": "Ouvrir la fiche investisseur",
+      "openStructure": "Ouvrir la structure",
       "subscription": {
         "code": "Référence",
         "commitment": "Montant engagé",
