@@ -1608,7 +1608,7 @@ function DocumentRow({
         </div>
         <Tooltip>
           <TooltipTrigger asChild>
-            <div className="truncate text-sm font-medium text-gray-900 dark:text-gray-100" title={doc.name}>
+            <div className="line-clamp-2 break-words text-sm font-medium text-gray-900 dark:text-gray-100" title={doc.name}>
               {doc.name}
             </div>
           </TooltipTrigger>
@@ -2374,7 +2374,7 @@ function DynamicBatchRow({
                 )}
               </div>
               <div
-                className="truncate text-sm font-semibold text-gray-900 dark:text-gray-100"
+                className="line-clamp-2 break-words text-sm font-semibold text-gray-900 dark:text-gray-100"
                 title={batch.name}
               >
                 {batch.name}
@@ -2455,7 +2455,7 @@ function DynamicBatchRow({
               <Tooltip>
                 <TooltipTrigger asChild>
                   <div
-                    className="truncate text-sm font-medium text-gray-900 dark:text-gray-100"
+                    className="line-clamp-2 break-words text-sm font-medium text-gray-900 dark:text-gray-100"
                     title={d.name}
                   >
                     {d.name}
