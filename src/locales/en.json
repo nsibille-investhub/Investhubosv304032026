@@ -1105,7 +1105,8 @@
           "scoreComputed": "Risk score computed from the file answers.",
           "manualScore": "Score set manually on the Source of funds component.",
           "categorisationSet": "MiFID II categorisation recorded.",
-          "pendingValidation": "File moved to awaiting compliance validation."
+          "pendingValidation": "File moved to awaiting compliance validation.",
+          "reportDownloaded": "Provider report downloaded - {{name}}"
         },
         "final": {
           "title": "Compliance",
@@ -4452,6 +4453,52 @@
       "rerunBody": "{{count}} known match(es), no new profile",
       "closed": "Entity closed",
       "reopened": "Entity reopened"
+    },
+    "downloads": {
+      "menuLabel": "More actions for {{name}}",
+      "actionsColumn": "Actions",
+      "downloadReport": "Download report",
+      "downloadAuditTrail": "Download audit trail",
+      "reportUnavailable": "The report is not available from the provider for this entity.",
+      "csv": {
+        "columns": {
+          "date": "Event date",
+          "eventType": "Event type",
+          "status": "Status",
+          "qualification": "Qualification",
+          "comment": "Comment",
+          "author": "Author",
+          "alertRef": "Alert reference",
+          "entity": "Screened entity",
+          "score": "Match score",
+          "lists": "Lists",
+          "changeType": "Change type",
+          "provider": "Provider",
+          "providerRef": "Provider reference"
+        },
+        "eventTypes": {
+          "creation": "Alert created",
+          "decision": "Decision",
+          "requalification": "Requalification",
+          "escalation": "Escalation",
+          "commentEdit": "Comment edited"
+        },
+        "providerAuthor": "Provider",
+        "changeDeleted": "Deleted"
+      },
+      "pdf": {
+        "title": "{{provider}} report - {{name}}",
+        "subtitle": "Screening report provided by {{provider}}",
+        "entity": "Screened entity",
+        "entityRef": "Entity reference",
+        "provider": "Provider",
+        "providerRef": "Provider reference",
+        "controlDate": "Last screening date",
+        "generatedOn": "Report generated on",
+        "matchesTitle": "Matches returned ({{count}})",
+        "noMatch": "No match returned by the provider.",
+        "footer": "Demo document. All data is fictitious."
+      }
     }
   },
   "mailRedirect": {

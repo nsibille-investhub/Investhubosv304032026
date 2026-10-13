@@ -22,6 +22,7 @@ import { ANALYSTS, type EntityRow, type EntityStatus } from '../utils/screeningM
 
 import { EntitiesLandingPage } from './EntitiesLandingPage';
 import { EntityDetailPage } from './entity-detail/EntityDetailPage';
+import { EntityDownloadMenu } from './entity-detail/EntityDownloadMenu';
 import {
   CATEGORY_KEY,
   ENTITY_STATUS_KEY,
@@ -60,7 +61,7 @@ const MAX_VISIBLE_TAGS = 3;
 export function EntitiesPage() {
   const { isModuleActive } = useAppStore();
   const { t } = useTranslation();
-  const { entityRows, isLoading, toggleMonitoring } = useCompliance();
+  const { entityRows, isLoading, toggleMonitoring, canViewScreening } = useCompliance();
   const isCompliancePlusActive = isModuleActive('Compliance Plus');
 
   const [detailUid, setDetailUid] = useState<string | null>(() => getDetailIdFromHash());
@@ -390,6 +391,16 @@ export function EntitiesPage() {
         <span className="text-sm text-muted-foreground">{formatRelativeTime(entity.lastUpdate.timestamp, t)}</span>
       ),
     },
+    ...(canViewScreening
+      ? [
+          {
+            key: 'actions',
+            label: t('complianceEntities.downloads.actionsColumn'),
+            sortable: false,
+            render: (entity: EntityRow) => <EntityDownloadMenu entity={entity} />,
+          },
+        ]
+      : []),
   ];
 
   return (

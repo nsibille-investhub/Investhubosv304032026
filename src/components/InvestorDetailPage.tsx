@@ -54,6 +54,7 @@ import { Textarea } from './ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from './ui/select';
 import { EditableSection } from './EditableSection';
 import { useCompliance } from '../utils/complianceContext';
+import { EntityDownloadMenu } from './entity-detail/EntityDownloadMenu';
 import { navigateToDetail } from '../utils/routing';
 import { ENTITY_STATUS_KEY, ENTITY_STATUS_VARIANT } from './entity-detail/entityDetailShared';
 import { StatusBadge } from './StatusBadge';
@@ -862,12 +863,12 @@ export function InvestorDetailPage({ investor: initialInvestor, onBack, initialT
                       <label className="text-xs text-muted-foreground mb-2 block">{t('investors.detail.kyc.screenedEntities')}</label>
                       <ul className="space-y-1.5">
                         {screenedEntities.map((entity) => (
-                          <li key={entity.uid}>
+                          <li key={entity.uid} className="flex items-center gap-1">
                             <button
                               type="button"
                               onClick={() => navigateToDetail('entity', entity.uid)}
                               title={t('investors.detail.kyc.openEntity')}
-                              className="w-full flex items-center justify-between gap-2 rounded-lg border border-border px-2.5 py-1.5 text-left hover:bg-muted/50 transition-colors group"
+                              className="flex-1 min-w-0 flex items-center justify-between gap-2 rounded-lg border border-border px-2.5 py-1.5 text-left hover:bg-muted/50 transition-colors group"
                             >
                               <span className="flex items-center gap-2 min-w-0">
                                 <ShieldCheck className="w-3.5 h-3.5 text-muted-foreground shrink-0" />
@@ -881,6 +882,7 @@ export function InvestorDetailPage({ investor: initialInvestor, onBack, initialT
                                 <ChevronRight className="w-3.5 h-3.5 text-muted-foreground" />
                               </span>
                             </button>
+                            <EntityDownloadMenu entity={entity} />
                           </li>
                         ))}
                       </ul>

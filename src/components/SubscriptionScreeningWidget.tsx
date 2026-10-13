@@ -12,17 +12,22 @@ import { AlertDetailDrawer } from './AlertDetailDrawer';
 import { AlertBulkActionDialog } from './AlertBulkActionDialog';
 import { AlertDataTable, type AlertBulkAction } from './AlertDataTable';
 import { DECISION_KEY, ROLE_KEY, openEntityDetail } from './entity-detail/entityDetailShared';
+import { EntityDownloadMenu } from './entity-detail/EntityDownloadMenu';
 import { useBulkSelection } from '../hooks/useBulkSelection';
 import { useCompliance } from '../utils/complianceContext';
 import { useTranslation } from '../utils/languageContext';
 import { navigateToPage } from '../utils/routing';
 import type { AlertItem } from '../utils/alertsGenerator';
 import {
+  DEMO_MEMBERCHECK_ENTITY,
+  DEMO_REPORT_UNAVAILABLE_ENTITY,
+  DEMO_WORLDCHECK_ENTITY,
   matchNeedsAction,
   matchOpenStatus,
   matchToAlertItem,
   type EntityRow,
   type MatchDecisionValue,
+  type ScreeningEntity,
   type ScreeningMatch,
 } from '../utils/screeningMock';
 
@@ -70,12 +75,18 @@ function pick(rows: EntityRow[], count: number, offset: number): EntityRow[] {
 function pickPartyIds(entityRows: EntityRow[], seed: string): number[] {
   const open = entityRows.filter(row => !row.closed);
   const offset = seedOffset(seed);
+  const demoNames = [DEMO_MEMBERCHECK_ENTITY, DEMO_WORLDCHECK_ENTITY, DEMO_REPORT_UNAVAILABLE_ENTITY];
+  const demo = [
+    ...open.filter(row => demoNames.includes(row.name)),
+    ...open.filter(row => !row.controlCompleted).slice(0, 1),
+  ];
   const selection = [
+    ...demo,
     ...pick(open.filter(row => row.counters.pending > 0), PARTIES_WITH_PENDING, offset),
     ...pick(open.filter(row => row.counters.pending === 0 && row.hits > 0), PARTIES_DECIDED, offset),
     ...pick(open.filter(row => row.hits === 0), PARTIES_CLEAR, offset),
   ];
-  return Array.from(new Set(selection.map(row => row.id)));
+  return Array.from(new Set(selection.map(row => row.id))).slice(0, demo.length + 2);
 }
 
 /**
@@ -121,6 +132,7 @@ interface SubscriptionScreeningWidgetProps {
   screening: SubscriptionScreening;
   /** Dossier validé : les décisions ne sont plus modifiables. */
   locked: boolean;
+  onReportDownloaded?: (entity: ScreeningEntity) => void;
 }
 
 /**
@@ -128,7 +140,7 @@ interface SubscriptionScreeningWidgetProps {
  * chacun gérant ses alertes avec le tableau, les dialogues de décision et le
  * panneau latéral des sections Entités / Alertes.
  */
-export function SubscriptionScreeningWidget({ screening, locked }: SubscriptionScreeningWidgetProps) {
+export function SubscriptionScreeningWidget({ screening, locked, onReportDownloaded }: SubscriptionScreeningWidgetProps) {
   const { t } = useTranslation();
   const { qualifyMatches } = useCompliance();
 
@@ -177,6 +189,7 @@ export function SubscriptionScreeningWidget({ screening, locked }: SubscriptionS
             key={party.entity.id}
             party={party}
             locked={locked}
+            onReportDownloaded={onReportDownloaded}
             onOpenAlert={setDrawerAlert}
             onQualify={(alerts, action) => setDialog({ alerts, action })}
           />
@@ -215,12 +228,13 @@ export function SubscriptionScreeningWidget({ screening, locked }: SubscriptionS
 interface EntityAlertGroupProps {
   party: ScreeningParty;
   locked: boolean;
+  onReportDownloaded?: (entity: ScreeningEntity) => void;
   onOpenAlert: (alert: AlertItem) => void;
   onQualify: (alerts: AlertItem[], action: AlertBulkAction) => void;
 }
 
 /** Groupe repliable : un tiers contrôlé et le tableau de ses alertes. */
-function EntityAlertGroup({ party, locked, onOpenAlert, onQualify }: EntityAlertGroupProps) {
+function EntityAlertGroup({ party, locked, onReportDownloaded, onOpenAlert, onQualify }: EntityAlertGroupProps) {
   const { t } = useTranslation();
   const { entity, matches } = party;
 
@@ -371,6 +385,7 @@ function EntityAlertGroup({ party, locked, onOpenAlert, onQualify }: EntityAlert
               variant="success"
             />
           )}
+          <EntityDownloadMenu entity={entity} onReportDownloaded={onReportDownloaded} />
         </div>
       </div>
 
