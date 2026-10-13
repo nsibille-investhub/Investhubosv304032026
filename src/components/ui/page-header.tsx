@@ -1,8 +1,10 @@
 import * as React from 'react';
 import { motion } from 'motion/react';
-import { ArrowLeft, MoreVertical, Plus } from 'lucide-react';
+import { ArrowLeft, ChevronDown, Loader2, MoreVertical, Plus } from 'lucide-react';
 
+import { useTranslation } from '../../utils/languageContext';
 import { Button } from './button';
+import { DisabledReason } from './disabled-reason';
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -23,6 +25,10 @@ export type PageHeaderAction = {
   icon?: React.ReactNode;
   ariaLabel?: string;
   disabled?: boolean;
+  /** Action indisponible : reste visible, désactivée, motif au survol. */
+  disabledReason?: string;
+  /** Enregistrement en cours : bouton désactivé avec indicateur de chargement. */
+  loading?: boolean;
 };
 
 export type PageHeaderTertiaryAction = {
@@ -32,6 +38,8 @@ export type PageHeaderTertiaryAction = {
   destructive?: boolean;
   separatorBefore?: boolean;
   disabled?: boolean;
+  /** Motif affiché sous le libellé quand l'entrée est désactivée. */
+  disabledReason?: string;
 };
 
 export type PageHeaderProps = {
@@ -40,10 +48,18 @@ export type PageHeaderProps = {
   hideBackButton?: boolean;
   title: React.ReactNode;
   subtitle?: React.ReactNode;
+  /** Élément à gauche du titre : logo, avatar. */
+  leading?: React.ReactNode;
+  /** Ligne d'informations sous le sous-titre. */
+  meta?: React.ReactNode;
   primaryAction?: PageHeaderAction;
   secondaryAction?: PageHeaderAction;
+  /** Actions secondaires supplémentaires, affichées avant secondaryAction. */
+  extraActions?: PageHeaderAction[];
   tertiaryActions?: PageHeaderTertiaryAction[];
   tertiaryMenuAriaLabel?: string;
+  /** Libellé du menu d'actions tertiaires. Sans libellé : icône seule. */
+  tertiaryLabel?: string;
   className?: string;
 };
 
@@ -62,9 +78,10 @@ function PageHeaderBreadcrumb({
   onBack: () => void;
   showBack: boolean;
 }) {
+  const { t } = useTranslation();
   return (
     <motion.nav
-      aria-label="Fil d'Ariane"
+      aria-label={t('common.pageHeader.breadcrumb')}
       initial={{ opacity: 0, y: -10 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ delay: 0.1 }}
@@ -76,7 +93,7 @@ function PageHeaderBreadcrumb({
             type="button"
             onClick={onBack}
             whileHover={{ x: -2 }}
-            aria-label="Retour"
+            aria-label={t('common.pageHeader.back')}
             className="text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-100 transition-colors p-1.5 hover:bg-gray-100 dark:hover:bg-gray-900 rounded-lg"
           >
             <ArrowLeft className="w-4 h-4" />
@@ -119,19 +136,43 @@ function PageHeaderBreadcrumb({
 export const PRIMARY_BUTTON_GRADIENT =
   'linear-gradient(62.32deg, #000000 10.53%, #0F323D 88.82%)';
 
+function OutlineAction({ action }: { action: PageHeaderAction }) {
+  return (
+    <DisabledReason reason={action.disabledReason}>
+      <Button
+        variant="outline"
+        onClick={action.onClick}
+        disabled={action.disabled || action.loading || Boolean(action.disabledReason)}
+        aria-label={action.ariaLabel}
+        className="gap-2"
+      >
+        {action.loading ? <Loader2 className="w-4 h-4 animate-spin" /> : action.icon}
+        <span className="font-medium">{action.label}</span>
+      </Button>
+    </DisabledReason>
+  );
+}
+
 function PageHeader({
   breadcrumb,
   onBack,
   hideBackButton,
   title,
   subtitle,
+  leading,
+  meta,
   primaryAction,
   secondaryAction,
+  extraActions,
   tertiaryActions,
-  tertiaryMenuAriaLabel = 'Plus d’actions',
+  tertiaryMenuAriaLabel,
+  tertiaryLabel,
   className,
 }: PageHeaderProps) {
+  const { t } = useTranslation();
   const hasTertiary = !!tertiaryActions && tertiaryActions.length > 0;
+  const hasExtra = !!extraActions && extraActions.length > 0;
+  const menuAriaLabel = tertiaryMenuAriaLabel ?? t('common.pageHeader.moreActions');
 
   return (
     <div data-slot="page-header" className={cn('flex flex-col', className)}>
@@ -154,8 +195,10 @@ function PageHeader({
             initial={{ scale: 0.9, opacity: 0 }}
             animate={{ scale: 1, opacity: 1 }}
             transition={{ delay: 0.3 }}
-            className="min-w-0"
+            className="flex min-w-0 items-start gap-4"
           >
+            {leading}
+            <div className="min-w-0">
             <h1 className="text-3xl font-bold text-gray-900 dark:text-gray-100 tracking-tight">
               {title}
             </h1>
@@ -164,16 +207,23 @@ function PageHeader({
                 {subtitle}
               </p>
             ) : null}
+            {meta ? <div className="mt-2">{meta}</div> : null}
+            </div>
           </motion.div>
 
-          {(primaryAction || secondaryAction || hasTertiary) && (
+          {(primaryAction || secondaryAction || hasExtra || hasTertiary) && (
             <motion.div
               initial={{ opacity: 0, x: 20 }}
               animate={{ opacity: 1, x: 0 }}
               transition={{ delay: 0.4 }}
-              className="flex items-center gap-3 shrink-0"
+              className="flex flex-wrap items-center justify-end gap-3 shrink-0"
             >
-              {secondaryAction ? (
+              {extraActions?.map((action, index) => (
+                <OutlineAction key={index} action={action} />
+              ))}
+              {secondaryAction?.disabledReason || secondaryAction?.loading ? (
+                <OutlineAction action={secondaryAction} />
+              ) : secondaryAction ? (
                 <motion.div whileHover={{ scale: 1.03, y: -1 }} whileTap={{ scale: 0.97 }}>
                   <Button
                     variant="outline"
@@ -189,10 +239,11 @@ function PageHeader({
               ) : null}
 
               {primaryAction ? (
+                <DisabledReason reason={primaryAction.disabledReason}>
                 <motion.div whileHover={{ scale: 1.03, y: -1 }} whileTap={{ scale: 0.97 }}>
                   <Button
                     onClick={primaryAction.onClick}
-                    disabled={primaryAction.disabled}
+                    disabled={primaryAction.disabled || primaryAction.loading || Boolean(primaryAction.disabledReason)}
                     aria-label={primaryAction.ariaLabel}
                     style={{ background: PRIMARY_BUTTON_GRADIENT }}
                     className="gap-2 hover:opacity-90 shadow-lg shadow-black/20 hover:shadow-xl hover:shadow-black/30 transition-all duration-300 group relative overflow-hidden text-white"
@@ -209,26 +260,38 @@ function PageHeader({
                       }}
                     />
                     <span className="relative z-10 inline-flex items-center gap-2">
-                      {primaryAction.icon ?? (
-                        <Plus className="w-4 h-4 group-hover:rotate-90 transition-transform duration-300" />
+                      {primaryAction.loading ? (
+                        <Loader2 className="w-4 h-4 animate-spin" />
+                      ) : (
+                        primaryAction.icon ?? (
+                          <Plus className="w-4 h-4 group-hover:rotate-90 transition-transform duration-300" />
+                        )
                       )}
                       <span className="font-semibold">{primaryAction.label}</span>
                     </span>
                   </Button>
                 </motion.div>
+                </DisabledReason>
               ) : null}
 
               {hasTertiary ? (
                 <DropdownMenu>
                   <DropdownMenuTrigger asChild>
-                    <Button
-                      variant="outline"
-                      size="icon"
-                      aria-label={tertiaryMenuAriaLabel}
-                      className="border-gray-300 hover:border-gray-400 hover:bg-gray-50 dark:border-gray-700 dark:hover:border-gray-600 dark:hover:bg-gray-900"
-                    >
-                      <MoreVertical className="w-4 h-4" />
-                    </Button>
+                    {tertiaryLabel ? (
+                      <Button variant="outline" aria-label={menuAriaLabel} className="gap-2">
+                        <span className="font-medium">{tertiaryLabel}</span>
+                        <ChevronDown className="w-4 h-4" />
+                      </Button>
+                    ) : (
+                      <Button
+                        variant="outline"
+                        size="icon"
+                        aria-label={menuAriaLabel}
+                        className="border-gray-300 hover:border-gray-400 hover:bg-gray-50 dark:border-gray-700 dark:hover:border-gray-600 dark:hover:bg-gray-900"
+                      >
+                        <MoreVertical className="w-4 h-4" />
+                      </Button>
+                    )}
                   </DropdownMenuTrigger>
                   <DropdownMenuContent align="end">
                     {tertiaryActions!.map((action, index) => (
@@ -238,7 +301,7 @@ function PageHeader({
                         ) : null}
                         <DropdownMenuItem
                           onClick={action.onClick}
-                          disabled={action.disabled}
+                          disabled={action.disabled || Boolean(action.disabledReason)}
                           className={cn(
                             'cursor-pointer',
                             action.destructive && 'text-destructive focus:text-destructive',
@@ -249,7 +312,12 @@ function PageHeader({
                               {action.icon}
                             </span>
                           ) : null}
-                          <span>{action.label}</span>
+                          <span className="flex flex-col">
+                            <span>{action.label}</span>
+                            {action.disabledReason ? (
+                              <span className="text-xs text-muted-foreground">{action.disabledReason}</span>
+                            ) : null}
+                          </span>
                         </DropdownMenuItem>
                       </React.Fragment>
                     ))}

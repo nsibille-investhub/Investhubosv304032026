@@ -64,3 +64,50 @@ function TabsContent({
 }
 
 export { Tabs, TabsList, TabsTrigger, TabsContent };
+
+interface PageTabsTriggerProps {
+  value: string;
+  label: string;
+  icon?: React.ComponentType<{ className?: string }>;
+  /** Compteur affiché après le libellé. */
+  count?: number;
+  isActive?: boolean;
+}
+
+/** Barre d'onglets principale d'une page de détail : soulignement primaire, compteurs. */
+function PageTabsList({ className, ...props }: React.ComponentProps<typeof TabsPrimitive.List>) {
+  return (
+    <TabsPrimitive.List
+      data-slot="page-tabs-list"
+      className={cn("flex w-full flex-wrap items-end gap-0", className)}
+      {...props}
+    />
+  );
+}
+
+function PageTabsTrigger({
+  value,
+  label,
+  icon: Icon,
+  count,
+  isActive,
+}: PageTabsTriggerProps) {
+  return (
+    <TabsPrimitive.Trigger
+      value={value}
+      data-slot="page-tabs-trigger"
+      className="inline-flex shrink-0 items-center gap-2 whitespace-nowrap px-3 pb-3 pt-4 text-sm font-medium text-muted-foreground outline-none transition-colors hover:text-foreground focus-visible:ring-[3px] focus-visible:ring-ring/50"
+      style={isActive ? { boxShadow: "inset 0 -2px 0 0 var(--color-primary)", color: "var(--color-primary)" } : undefined}
+    >
+      {Icon && <Icon className="w-4 h-4 shrink-0" />}
+      <span>{label}</span>
+      {count !== undefined && (
+        <span className="rounded-full border border-border bg-muted px-2 py-0.5 text-xs font-semibold tabular-nums text-muted-foreground">
+          {count}
+        </span>
+      )}
+    </TabsPrimitive.Trigger>
+  );
+}
+
+export { PageTabsList, PageTabsTrigger };

@@ -1,0 +1,554 @@
+import { useCallback, useEffect, useMemo, useState } from 'react';
+import type { ReactNode } from 'react';
+import { toast } from 'sonner';
+import {
+  Archive,
+  ArchiveRestore,
+  ArrowUpRight,
+  BookOpen,
+  Building2,
+  Copy,
+  FileSignature,
+  FileText,
+  FlaskConical,
+  Handshake,
+  History,
+  LayoutDashboard,
+  Layers3,
+  LineChart,
+  Receipt,
+  Repeat,
+  Send,
+  Settings2,
+  ShieldCheck,
+  Trash2,
+  TrendingUp,
+} from 'lucide-react';
+import type { Fund } from '../../utils/fundGenerator';
+import { useTranslation } from '../../utils/languageContext';
+import { formatDate } from '../../utils/formatters';
+import {
+  buildFundDetail,
+  FUND_SCENARIOS,
+  type FieldTarget,
+  type FundDetail,
+  type FundScenario,
+} from '../../utils/fundDetailMock';
+import { EmptyState } from '../EmptyState';
+import { FundStatusBadge } from '../FundStatusBadge';
+import { BlockersPanel } from '../ui/blockers-panel';
+import { Button } from '../ui/button';
+import { Card } from '../ui/card';
+import { ConfirmDialog } from '../ui/confirm-dialog';
+import { DetailLink } from '../ui/detail-summary';
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from '../ui/dialog';
+import { DisabledReason } from '../ui/disabled-reason';
+import { EffectsPanel } from '../ui/effects-panel';
+import { PageHeader } from '../ui/page-header';
+import { PageStateBanner } from '../ui/page-state-banner';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../ui/select';
+import { PageTabsList, PageTabsTrigger, Tabs, TabsContent } from '../ui/tabs';
+import { toneSurface } from '../ui/tone';
+import { getFundActionStates } from './fundActions';
+import { FundNavsTab } from './FundNavsTab';
+import { FundOverviewTab } from './FundOverviewTab';
+import { FundSettingsTab } from './FundSettingsTab';
+import { FundSharesTab } from './FundSharesTab';
+
+const K = 'funds.detail';
+
+const wait = (ms: number) => new Promise(resolve => setTimeout(resolve, ms));
+
+type TabId =
+  | 'overview'
+  | 'settings'
+  | 'shares'
+  | 'navs'
+  | 'documents'
+  | 'distribution'
+  | 'contracts'
+  | 'operations'
+  | 'secondary'
+  | 'controls'
+  | 'journal';
+
+interface FundDetailPageProps {
+  fund: Fund;
+  onBack: () => void;
+  onOpenSubscriptions: (fund: Fund) => void;
+}
+
+function MetaItem({ label, children }: { label: string; children: ReactNode }) {
+  return (
+    <span className="inline-flex items-center gap-1.5 text-sm">
+      <span className="text-muted-foreground">{label}</span>
+      <span className="font-medium text-foreground">{children}</span>
+    </span>
+  );
+}
+
+function LinkedScreenTab({ titleKey, descriptionKey, icon }: { titleKey: string; descriptionKey: string; icon: typeof FileText }) {
+  const { t } = useTranslation();
+  return (
+    <Card className="shadow-sm">
+      <EmptyState
+        icon={icon}
+        title={t(titleKey)}
+        description={t(descriptionKey)}
+        action={
+          <DisabledReason reason={t(`${K}.linked.unavailable`)}>
+            <Button variant="outline" disabled>
+              {t(`${K}.linked.open`)}
+              <ArrowUpRight className="w-4 h-4" />
+            </Button>
+          </DisabledReason>
+        }
+      />
+    </Card>
+  );
+}
+
+function ComingSoonTab({ icon }: { icon: typeof FileText }) {
+  const { t } = useTranslation();
+  return (
+    <Card className="shadow-sm">
+      <EmptyState icon={icon} title={t(`${K}.comingSoon`)} description={t(`${K}.comingSoonDescription`)} />
+    </Card>
+  );
+}
+
+export function FundDetailPage({ fund, onBack, onOpenSubscriptions }: FundDetailPageProps) {
+  const { t } = useTranslation();
+  const [scenario, setScenario] = useState<FundScenario>('default');
+  const initial = useMemo(() => buildFundDetail(fund, scenario), [fund, scenario]);
+  const [detail, setDetail] = useState<FundDetail>(initial);
+  const [tab, setTab] = useState<TabId>('overview');
+  const [target, setTarget] = useState<FieldTarget | null>(null);
+  const [pending, setPending] = useState<null | 'publish' | 'duplicate' | 'archive' | 'unarchive' | 'propagate' | 'delete'>(null);
+  const [dialog, setDialog] = useState<null | 'archive' | 'propagate' | 'delete' | 'blockers'>(null);
+
+  useEffect(() => {
+    setDetail(initial);
+    setTab('overview');
+    setTarget(null);
+  }, [initial]);
+
+  const actions = getFundActionStates(detail, t);
+  const clearTarget = useCallback(() => setTarget(null), []);
+  const pendingSubscriptions = detail.pendingSubscriptions.reduce((acc, item) => acc + item.count, 0);
+  const blockersTotal = Object.values(detail.deleteBlockers).reduce((acc, value) => acc + value, 0);
+
+  const navigateTo = (next: FieldTarget) => {
+    setTab(next.tab);
+    setTarget(next);
+  };
+
+  const run = async (kind: NonNullable<typeof pending>, apply: () => void, messageKey: string) => {
+    setPending(kind);
+    await wait(1000);
+    apply();
+    setPending(null);
+    setDialog(null);
+    toast.success(t(messageKey, { name: detail.name }));
+  };
+
+  const publish = () =>
+    run(
+      'publish',
+      // Règle serveur simulée (PRD section 9.4) : la publication passe au statut calculé suivant.
+      () =>
+        setDetail(prev => ({
+          ...prev,
+          status: prev.collectionStart && prev.collectionStart > new Date() ? 'upcoming' : 'collecting',
+        })),
+      `${K}.toast.published`,
+    );
+
+  const archive = () =>
+    run(
+      'archive',
+      () =>
+        setDetail(prev => ({
+          ...prev,
+          statusBeforeArchive: prev.status,
+          status: 'archived',
+          archived: { date: new Date(), author: 'Camille' },
+        })),
+      `${K}.toast.archived`,
+    );
+
+  const unarchive = () =>
+    run(
+      'unarchive',
+      () => setDetail(prev => ({ ...prev, status: prev.statusBeforeArchive, archived: null })),
+      `${K}.toast.unarchived`,
+    );
+
+  const tabs: { id: TabId; icon: typeof FileText; count?: number; visible: boolean }[] = [
+    { id: 'overview', icon: LayoutDashboard, visible: true },
+    { id: 'settings', icon: Settings2, visible: true },
+    { id: 'shares', icon: Layers3, count: detail.shares.length, visible: true },
+    { id: 'navs', icon: LineChart, count: detail.navs.length, visible: true },
+    { id: 'documents', icon: FileText, count: detail.counts.documents, visible: true },
+    { id: 'distribution', icon: Handshake, count: detail.counts.distributors, visible: detail.modules.partners },
+    { id: 'contracts', icon: FileSignature, visible: detail.modules.contracts },
+    { id: 'operations', icon: Receipt, visible: detail.modules.operations },
+    { id: 'secondary', icon: Repeat, count: detail.counts.secondaryMarket, visible: detail.modules.secondaryMarket },
+    { id: 'controls', icon: ShieldCheck, count: detail.counts.controls, visible: detail.counts.controls > 0 },
+    { id: 'journal', icon: History, visible: true },
+  ];
+
+  const hasBanner = Boolean(
+    detail.archived || detail.locked || detail.mirrorOf || detail.sendingNotices || !detail.rights.edit,
+  );
+
+  const blockedDuringNotices = [t(`${K}.blocked.delete`), t(`${K}.blocked.archive`), t(`${K}.blocked.propagate`), t(`${K}.blocked.publish`)];
+
+  return (
+    <div className="flex flex-1 flex-col bg-background">
+      <div className="flex flex-wrap items-center justify-end gap-3 border-b border-border px-6 py-2" style={toneSurface('info')}>
+        <span className="inline-flex items-center gap-2 text-xs font-medium">
+          <FlaskConical className="w-3.5 h-3.5" aria-hidden />
+          {t(`${K}.scenario.label`)}
+        </span>
+        <Select value={scenario} onValueChange={value => setScenario(value as FundScenario)}>
+          <SelectTrigger size="sm" className="w-56 border-border bg-card" aria-label={t(`${K}.scenario.label`)}>
+            <SelectValue />
+          </SelectTrigger>
+          <SelectContent>
+            {FUND_SCENARIOS.map(item => (
+              <SelectItem key={item} value={item}>
+                {t(`${K}.scenario.options.${item}`)}
+              </SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
+      </div>
+
+      <PageHeader
+        breadcrumb={[{ label: t(`${K}.breadcrumb`), onClick: onBack }, { label: detail.name }]}
+        onBack={onBack}
+        leading={
+          <span
+            className="flex h-14 w-14 shrink-0 items-center justify-center rounded-xl text-lg font-semibold text-primary-foreground"
+            style={{ backgroundColor: detail.color }}
+            aria-label={t(`${K}.logo`, { name: detail.name })}
+            role="img"
+          >
+            {detail.initials}
+          </span>
+        }
+        title={
+          <span className="inline-flex flex-wrap items-center gap-3">
+            {detail.name}
+            <FundStatusBadge status={detail.status} />
+          </span>
+        }
+        subtitle={
+          <span className="inline-flex flex-wrap items-center gap-2">
+            <span>{detail.legalForm}</span>
+            <span aria-hidden>·</span>
+            <span>{t(`${K}.type.${detail.fundType}`)}</span>
+            {detail.parent && (
+              <>
+                <span aria-hidden>·</span>
+                <DetailLink
+                  icon={Building2}
+                  onClick={() => toast.info(t(`${K}.toast.parentNotInMockup`, { name: detail.parent!.name }))}
+                >
+                  {t(`${K}.compartmentOf`, { name: detail.parent.name })}
+                </DetailLink>
+              </>
+            )}
+            {detail.isMaster && (
+              <>
+                <span aria-hidden>·</span>
+                <span>{t(`${K}.masterOf`, { count: detail.mirrorsCount })}</span>
+              </>
+            )}
+          </span>
+        }
+        meta={
+          <span className="flex flex-wrap items-center gap-x-6 gap-y-1">
+            <MetaItem label={t(`${K}.meta.currency`)}>{detail.currency}</MetaItem>
+            <MetaItem label={t(`${K}.meta.paymentMode`)}>{t(`${K}.paymentMode.${detail.paymentMode}`)}</MetaItem>
+            <MetaItem label={t(`${K}.meta.collection`)}>
+              {detail.collectionStart && detail.collectionEnd
+                ? t(`${K}.meta.collectionRange`, {
+                    from: formatDate(detail.collectionStart),
+                    to: formatDate(detail.collectionEnd),
+                  })
+                : detail.collectionStart
+                  ? t(`${K}.meta.collectionFrom`, { from: formatDate(detail.collectionStart) })
+                  : t(`${K}.overview.noDate`)}
+            </MetaItem>
+            <MetaItem label={t(`${K}.meta.created`)}>
+              {t(`${K}.meta.createdBy`, { author: detail.createdBy, date: formatDate(detail.createdAt) })}
+            </MetaItem>
+          </span>
+        }
+        primaryAction={
+          actions.publish.visible
+            ? {
+                label: t(`${K}.actions.publish`),
+                icon: <Send className="w-4 h-4" />,
+                onClick: publish,
+                loading: pending === 'publish',
+                disabledReason: actions.publish.disabledReason,
+              }
+            : undefined
+        }
+        extraActions={[
+          {
+            label: t(`${K}.actions.duplicate`),
+            icon: <Copy className="w-4 h-4" />,
+            onClick: () => run('duplicate', () => undefined, `${K}.toast.duplicated`),
+            loading: pending === 'duplicate',
+            disabledReason: actions.duplicate.disabledReason,
+          },
+          actions.unarchive.visible
+            ? {
+                label: t(`${K}.actions.unarchive`),
+                icon: <ArchiveRestore className="w-4 h-4" />,
+                onClick: unarchive,
+                loading: pending === 'unarchive',
+                disabledReason: actions.unarchive.disabledReason,
+              }
+            : {
+                label: t(`${K}.actions.archive`),
+                icon: <Archive className="w-4 h-4" />,
+                onClick: () => setDialog('archive'),
+                disabledReason: actions.archive.disabledReason,
+              },
+          ...(actions.propagate.visible
+            ? [
+                {
+                  label: t(`${K}.actions.propagate`),
+                  icon: <TrendingUp className="w-4 h-4" />,
+                  onClick: () => setDialog('propagate'),
+                  disabledReason: actions.propagate.disabledReason,
+                },
+              ]
+            : []),
+        ]}
+        tertiaryLabel={t(`${K}.actions.more`)}
+        tertiaryActions={[
+          {
+            label: t(`${K}.actions.journal`),
+            icon: <BookOpen className="w-4 h-4" />,
+            onClick: () => setTab('journal'),
+          },
+          {
+            label: t(`${K}.actions.delete`),
+            icon: <Trash2 className="w-4 h-4" />,
+            destructive: true,
+            separatorBefore: true,
+            disabledReason: actions.delete.disabledReason,
+            // Le serveur refuse la suppression d'un fonds qui porte des objets (PRD section 9.3).
+            onClick: () => setDialog(blockersTotal > 0 ? 'blockers' : 'delete'),
+          },
+        ]}
+      />
+
+      {hasBanner && (
+      <div className="space-y-3 px-6 pt-4">
+        {detail.archived && (
+          <PageStateBanner
+            variant="archived"
+            date={formatDate(detail.archived.date)}
+            author={detail.archived.author}
+            onUnarchive={unarchive}
+            unarchiving={pending === 'unarchive'}
+            unarchiveDisabledReason={actions.unarchive.disabledReason}
+          />
+        )}
+        {detail.locked && (
+          <PageStateBanner variant="locked" date={formatDate(detail.locked.date)} reason={detail.locked.reason} />
+        )}
+        {detail.mirrorOf && (
+          <PageStateBanner
+            variant="mirror"
+            masterName={detail.mirrorOf.name}
+            onOpenMaster={() => toast.info(t(`${K}.toast.parentNotInMockup`, { name: detail.mirrorOf!.name }))}
+          />
+        )}
+        {detail.sendingNotices && <PageStateBanner variant="sendingNotices" blockedActions={blockedDuringNotices} />}
+        {!detail.rights.edit && <PageStateBanner variant="readOnly" />}
+      </div>
+      )}
+
+      <Tabs value={tab} onValueChange={value => setTab(value as TabId)} className="mt-2 gap-0">
+        <div className="border-b border-border bg-card px-6">
+          <PageTabsList>
+            {tabs
+              .filter(item => item.visible)
+              .map(item => (
+                <PageTabsTrigger
+                  key={item.id}
+                  value={item.id}
+                  icon={item.icon}
+                  label={t(`${K}.tabs.${item.id}`)}
+                  count={item.count}
+                  isActive={tab === item.id}
+                />
+              ))}
+          </PageTabsList>
+        </div>
+
+        <div className="px-6 py-6">
+          <TabsContent value="overview">
+            <FundOverviewTab
+              detail={detail}
+              onNavigate={navigateTo}
+              onOpenTab={next => setTab(next as TabId)}
+              onOpenSubscriptions={() => onOpenSubscriptions(fund)}
+            />
+          </TabsContent>
+          <TabsContent value="settings">
+            <FundSettingsTab
+              key={scenario}
+              detail={detail}
+              target={target}
+              onTargetHandled={clearTarget}
+              editReason={actions.editReason}
+              onIdentitySaved={values =>
+                setDetail(prev => ({ ...prev, name: values.name, adminName: values.adminName, color: values.color ?? prev.color }))
+              }
+            />
+          </TabsContent>
+          <TabsContent value="shares">
+            <FundSharesTab
+              detail={detail}
+              target={target}
+              onTargetHandled={clearTarget}
+              editReason={actions.editReason}
+              onOpenNavs={() => setTab('navs')}
+            />
+          </TabsContent>
+          <TabsContent value="navs">
+            <FundNavsTab detail={detail} editReason={actions.editReason} />
+          </TabsContent>
+          <TabsContent value="contracts">
+            <LinkedScreenTab icon={FileSignature} titleKey={`${K}.linked.contractsTitle`} descriptionKey={`${K}.linked.contractsDescription`} />
+          </TabsContent>
+          <TabsContent value="operations">
+            <LinkedScreenTab icon={Receipt} titleKey={`${K}.linked.operationsTitle`} descriptionKey={`${K}.linked.operationsDescription`} />
+          </TabsContent>
+          {(
+            [
+              ['documents', FileText],
+              ['distribution', Handshake],
+              ['secondary', Repeat],
+              ['controls', ShieldCheck],
+              ['journal', History],
+            ] as const
+          ).map(([id, icon]) => (
+            <TabsContent key={id} value={id}>
+              <ComingSoonTab icon={icon} />
+            </TabsContent>
+          ))}
+        </div>
+      </Tabs>
+
+      <ConfirmDialog
+        open={dialog === 'archive'}
+        onOpenChange={open => setDialog(open ? 'archive' : null)}
+        title={t(`${K}.dialogs.archive.title`, { name: detail.name })}
+        description={t(`${K}.dialogs.archive.description`, {
+          status: t(`funds.status.${detail.status}`),
+          count: pendingSubscriptions,
+        })}
+        confirmLabel={t(`${K}.actions.archive`)}
+        loading={pending === 'archive'}
+        onConfirm={archive}
+      >
+        {detail.status === 'collecting' && (
+          <div className="rounded-lg border px-3 py-2 text-sm" style={toneSurface('warning')} role="alert">
+            {t(`${K}.dialogs.archive.collectingWarning`)}
+          </div>
+        )}
+      </ConfirmDialog>
+
+      <ConfirmDialog
+        open={dialog === 'propagate'}
+        onOpenChange={open => setDialog(open ? 'propagate' : null)}
+        title={t(`${K}.dialogs.propagate.title`)}
+        description={t(`${K}.dialogs.propagate.description`, { count: detail.mirrorsCount })}
+        confirmLabel={t(`${K}.actions.propagate`)}
+        loading={pending === 'propagate'}
+        onConfirm={() => run('propagate', () => undefined, `${K}.toast.propagated`)}
+      >
+        <EffectsPanel
+          effects={[
+            {
+              id: 'mirrors',
+              icon: Copy,
+              label: t(`${K}.dialogs.propagate.effects.fields`),
+              reversible: false,
+              objects: Array.from({ length: detail.mirrorsCount }, (_, index) => ({
+                id: `mirror-${index}`,
+                label: t(`${K}.dialogs.propagate.mirrorName`, { name: detail.name, index: index + 1 }),
+              })),
+            },
+            { id: 'journal', icon: History, label: t(`${K}.dialogs.propagate.effects.journal`), reversible: true },
+          ]}
+        />
+      </ConfirmDialog>
+
+      <ConfirmDialog
+        open={dialog === 'delete'}
+        onOpenChange={open => setDialog(open ? 'delete' : null)}
+        title={t(`${K}.dialogs.delete.title`, { name: detail.name })}
+        description={t(`${K}.dialogs.delete.description`)}
+        confirmLabel={t(`${K}.actions.delete`)}
+        destructive
+        loading={pending === 'delete'}
+        onConfirm={async () => {
+          await run('delete', () => undefined, `${K}.toast.deleted`);
+          onBack();
+        }}
+      />
+
+      <Dialog open={dialog === 'blockers'} onOpenChange={open => setDialog(open ? 'blockers' : null)}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>{t(`${K}.actions.delete`)}</DialogTitle>
+            <DialogDescription>{detail.name}</DialogDescription>
+          </DialogHeader>
+          <BlockersPanel
+            title={t(`${K}.dialogs.blockers.title`)}
+            blockers={(
+              [
+                ['subscriptions', FileSignature, () => onOpenSubscriptions(fund)],
+                ['operations', Receipt, () => setTab('operations')],
+                ['navs', LineChart, () => setTab('navs')],
+                ['contracts', FileText, () => setTab('contracts')],
+              ] as const
+            )
+              .filter(([key]) => detail.deleteBlockers[key] > 0)
+              .map(([key, icon, open]) => ({
+                id: key,
+                icon,
+                label: t(`${K}.dialogs.blockers.${key}`),
+                count: detail.deleteBlockers[key],
+                onOpen: () => {
+                  setDialog(null);
+                  open();
+                },
+              }))}
+            alternative={
+              actions.archive.visible
+                ? {
+                    label: t(`${K}.actions.archiveFund`),
+                    description: t(`${K}.dialogs.blockers.archiveDescription`),
+                    disabledReason: actions.archive.disabledReason,
+                    onAction: () => setDialog('archive'),
+                  }
+                : undefined
+            }
+          />
+        </DialogContent>
+      </Dialog>
+    </div>
+  );
+}

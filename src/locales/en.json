@@ -1955,6 +1955,21 @@
         "semiannual": "Semi-annual",
         "annual": "Annual"
       }
+    },
+    "pageHeader": {
+      "breadcrumb": "Breadcrumb",
+      "back": "Back",
+      "moreActions": "More actions"
+    },
+    "emptyState": {
+      "none": "No {{entity}}",
+      "noneFound": "No {{entity}} found",
+      "filteredDescription": "The applied filters do not match any {{entity}} currently in the database.",
+      "emptyDescription": "No {{entity}} is recorded in the database.",
+      "resetFilters": "Reset filters"
+    },
+    "confirmDialog": {
+      "cancel": "Cancel"
     }
   },
   "ged": {
@@ -4599,6 +4614,346 @@
         "title": "You do not have the right to edit this fund.",
         "description": "You can view all its information. Ask an administrator for the right to edit it."
       }
+    },
+    "detail": {
+      "breadcrumb": "Funds",
+      "logo": "{{name}} logo",
+      "sharePrefix": "Share {{name}}",
+      "compartmentOf": "Compartment of {{name}}",
+      "masterOf": "Master fund of {{count}} mirror funds",
+      "type": {
+        "standalone": "Standalone fund",
+        "parent": "Parent fund",
+        "compartment": "Compartment"
+      },
+      "paymentMode": {
+        "calls": "Capital calls",
+        "direct": "Direct payment"
+      },
+      "meta": {
+        "currency": "Currency",
+        "paymentMode": "Payment",
+        "collection": "Fundraising",
+        "collectionRange": "from {{from}} to {{to}}",
+        "collectionFrom": "from {{from}}",
+        "created": "Created",
+        "createdBy": "{{author}}, on {{date}}"
+      },
+      "actions": {
+        "publish": "Publish",
+        "duplicate": "Duplicate",
+        "archive": "Archive",
+        "archiveFund": "Archive the fund",
+        "unarchive": "Unarchive",
+        "propagate": "Propagate to mirror funds",
+        "more": "More",
+        "journal": "View log",
+        "delete": "Delete"
+      },
+      "reasons": {
+        "noEditRight": "You do not have the right to edit this fund.",
+        "noPublishRight": "You do not have the right to publish this fund.",
+        "noDuplicateRight": "You do not have the right to create a fund.",
+        "noDeleteRight": "You do not have the right to delete this fund.",
+        "noArchiveRight": "You need the \"Archive a fund\" right.",
+        "locked": "Fund locked by support: all changes are blocked.",
+        "sendingNotices": "Action blocked while notices are being sent for this fund.",
+        "archived": "Archived fund: unarchive it to edit it.",
+        "configMissingOne": "Complete the configuration before publishing: {{count}} item missing.",
+        "configMissingMany": "Complete the configuration before publishing: {{count}} items missing."
+      },
+      "blocked": {
+        "delete": "deletion",
+        "archive": "archiving",
+        "propagate": "propagation",
+        "publish": "publication"
+      },
+      "tabs": {
+        "overview": "Overview",
+        "settings": "Settings",
+        "shares": "Shares",
+        "navs": "Net asset values",
+        "documents": "Documents",
+        "distribution": "Distribution",
+        "contracts": "Contracts",
+        "operations": "Operations",
+        "secondary": "Secondary market",
+        "controls": "Controls",
+        "journal": "Log"
+      },
+      "comingSoon": "Coming soon in the mockup",
+      "comingSoonDescription": "This tab will be filled in a future version of the mockup.",
+      "comingSoonToast": "Coming soon in the mockup.",
+      "linked": {
+        "open": "Open the screen filtered on this fund",
+        "unavailable": "This screen does not exist in the mockup yet.",
+        "contractsTitle": "Fund contracts",
+        "contractsDescription": "Contracts are managed in Fund Life, Contracts section. This link will open the screen filtered on this fund.",
+        "operationsTitle": "Fund operations",
+        "operationsDescription": "Calls, distributions and other operations are managed in the operations list. This link will open it filtered on this fund."
+      },
+      "scenario": {
+        "label": "Demo scenario",
+        "options": {
+          "default": "Fundraising fund",
+          "draft": "Draft to complete",
+          "compartment": "Compartment",
+          "master": "Master fund",
+          "mirror": "Mirror fund",
+          "evergreen": "Evergreen fund",
+          "archived": "Archived fund",
+          "locked": "Locked by support",
+          "sendingNotices": "Notices being sent",
+          "readOnly": "Read-only, no right"
+        }
+      },
+      "toast": {
+        "published": "{{name}} is published.",
+        "duplicated": "Copy of {{name}} created as a draft.",
+        "archived": "{{name}} is archived.",
+        "unarchived": "{{name}} is unarchived.",
+        "propagated": "{{name}} configuration propagated to mirror funds.",
+        "deleted": "{{name}} is deleted.",
+        "parentNotInMockup": "{{name}} is not available in the mockup."
+      },
+      "dialogs": {
+        "archive": {
+          "title": "Archive {{name}}?",
+          "description": "Current status: {{status}}. Subscriptions in progress: {{count}}. The fund will be hidden from portals, selection lists and the default list. Nothing is deleted.",
+          "collectingWarning": "This fund is fundraising: investors and distributors will no longer be able to subscribe."
+        },
+        "propagate": {
+          "title": "Propagate to mirror funds?",
+          "description": "This master fund configuration will be copied to {{count}} mirror funds.",
+          "mirrorName": "{{name}}, mirror {{index}}",
+          "effects": {
+            "fields": "Fields received from the master fund replaced in mirror funds",
+            "journal": "Change recorded in the log of each mirror fund"
+          }
+        },
+        "delete": {
+          "title": "Delete {{name}}?",
+          "description": "The fund holds no items. Its shares, documents and distributor openings will be deleted. This action cannot be undone."
+        },
+        "blockers": {
+          "title": "This fund cannot be deleted",
+          "subscriptions": "Subscriptions",
+          "operations": "Operations",
+          "navs": "Net asset values",
+          "contracts": "Contracts",
+          "archiveDescription": "The fund will be hidden from portals, nothing will be deleted."
+        }
+      },
+      "overview": {
+        "none": "None",
+        "noDate": "No date",
+        "amountOnDate": "{{amount}} on {{date}}",
+        "config": {
+          "title": "Configuration to complete",
+          "progress": "{{done}}/{{total}} checks passed",
+          "complete": "Configuration complete",
+          "completeDescription": "Nothing prevents subscriptions or operations on this fund.",
+          "missingOne": "{{count}} missing",
+          "missingMany": "{{count}} missing",
+          "description": "These gaps prevent subscription or an operation. Click a row to open the field.",
+          "goToSettings": "Open the setting",
+          "goToShares": "Open the share",
+          "items": {
+            "sharePrice": "Share {{name}} has no price",
+            "onboarding": "No onboarding is linked to the fund",
+            "subscriptionContract": "No subscription contract",
+            "signatory": "No signatory",
+            "iban": "Bank details missing for a capital call fund"
+          }
+        },
+        "collection": {
+          "title": "Fundraising",
+          "subscribed": "Subscribed amount",
+          "ofTarget": "{{percent}}% of the {{target}} target size",
+          "noTarget": "No target size",
+          "investors": "Investors",
+          "pending": "Subscriptions in progress: {{count}}",
+          "byStatus": "{{status}}: {{count}}",
+          "openSubscriptions": "View the fund subscriptions"
+        },
+        "subscriptionStatus": {
+          "onboarding": "Onboarding",
+          "compliance": "Compliance",
+          "signature": "Signature",
+          "payment": "Payment"
+        },
+        "calls": {
+          "title": "Calls",
+          "called": "Called",
+          "remaining": "Remaining to call",
+          "percent": "{{percent}}% of the subscribed amount called",
+          "last": "Last call"
+        },
+        "distributions": {
+          "title": "Distributions",
+          "distributed": "Distributed",
+          "last": "Last distribution"
+        },
+        "valuation": {
+          "title": "Valuation",
+          "openNavs": "View net asset values",
+          "noValue": "No value",
+          "expectedMissing": "Expected value not entered for {{date}}",
+          "netAsset": "Last net assets"
+        },
+        "calendar": {
+          "title": "Calendar",
+          "status": "Status",
+          "start": "Fundraising start",
+          "end": "Fundraising end",
+          "closing": "Fund closing date",
+          "liquidity": "Liquidity window",
+          "window": "from {{from}} to {{to}}",
+          "dayMonth": "{{month}} {{day}}",
+          "centralization": "Next centralization"
+        },
+        "access": {
+          "title": "Access",
+          "channels": "Open channels",
+          "noChannel": "No open channel",
+          "channel": {
+            "online": "Online subscription by investors",
+            "distributors": "Subscription through distributors",
+            "direct": "Direct subscription"
+          },
+          "distributors": "Distributors with access",
+          "segments": "Authorized segments",
+          "segment": {
+            "professional": "Professional investors",
+            "wellInformed": "Well-informed investors",
+            "retail": "Retail investors"
+          },
+          "openDistribution": "View distribution"
+        }
+      },
+      "settings": {
+        "navTitle": "Fund settings",
+        "toComplete": "To complete",
+        "editComingSoon": "Editing this section is coming soon in the mockup.",
+        "errors": {
+          "nameRequired": "The fund name is required."
+        },
+        "locks": {
+          "fromMaster": "Received from the master fund.",
+          "currency": "Locked after the first subscription.",
+          "typeComingSoon": "Editing coming soon in the mockup."
+        },
+        "values": {
+          "yes": "Yes",
+          "no": "No",
+          "performance": {
+            "irr": "IRR",
+            "performance": "Performance",
+            "none": "None"
+          }
+        },
+        "legacy": {
+          "performanceIndicator": "Replaces the application settings \"IRR instead of perf\" and \"No performance display\". Chooses the indicator shown on the portal and portfolio for this fund."
+        },
+        "sections": {
+          "identity": {
+            "title": "Identity",
+            "subtitle": "Name, type, color"
+          },
+          "legal": {
+            "title": "Legal structure",
+            "subtitle": "Legal form, currency, target size"
+          },
+          "subscription": {
+            "title": "Subscription",
+            "subtitle": "Payment, channels, onboarding, contract"
+          },
+          "signature": {
+            "title": "Signature and validation",
+            "subtitle": "Signatories"
+          },
+          "banking": {
+            "title": "Banking and invoicing",
+            "subtitle": "Bank details"
+          },
+          "calendar": {
+            "title": "Calendar and lifecycle",
+            "subtitle": "Fundraising, closing, liquidity"
+          },
+          "performance": {
+            "title": "Performance and valuation",
+            "subtitle": "Displayed indicator"
+          }
+        },
+        "fields": {
+          "name": "Name",
+          "adminName": "Administrative name",
+          "fundType": "Fund type",
+          "parent": "Parent fund",
+          "managementCompany": "Management company",
+          "color": "Fund color",
+          "externalId": "External ID",
+          "legalForm": "Legal form",
+          "depositary": "Depositary",
+          "currency": "Currency",
+          "countries": "Marketing countries",
+          "targetSize": "Target size",
+          "paymentMode": "Payment mode",
+          "channels": "Subscription channels",
+          "onboarding": "Onboarding",
+          "subscriptionContract": "Subscription contract",
+          "signatories": "Signatories",
+          "iban": "IBAN",
+          "collectionStart": "Fundraising start",
+          "collectionEnd": "Fundraising end",
+          "closingDate": "Fund closing date",
+          "evergreen": "Evergreen fund",
+          "liquidityWindow": "Liquidity window",
+          "navFrequency": "Valuation frequency",
+          "performanceIndicator": "Performance indicator"
+        }
+      },
+      "shares": {
+        "title": "Fund shares ({{count}})",
+        "add": "Add a share",
+        "columns": {
+          "name": "Share",
+          "isin": "ISIN code",
+          "mode": "Mode",
+          "nominal": "Nominal price",
+          "fees": "Management and entry fees",
+          "subscribed": "Subscribed amount",
+          "called": "Called amount",
+          "lastNav": "Last net asset value",
+          "actions": "Actions"
+        },
+        "restricted": "Access restricted to some operators",
+        "closed": "Closed share",
+        "mode": {
+          "perShare": "Per share",
+          "perAmount": "Per amount"
+        },
+        "priceMissing": "Price to enter",
+        "feesValue": "{{management}}% and {{entry}}%",
+        "actionsFor": "Actions on share {{name}}",
+        "actions": {
+          "open": "Open",
+          "navs": "Net asset values",
+          "duplicate": "Duplicate",
+          "close": "Close",
+          "delete": "Delete"
+        }
+      },
+      "navs": {
+        "title": "Net asset values and net assets",
+        "subtitle": "Valuation frequency: {{frequency}}",
+        "add": "Enter a net asset value",
+        "date": "Date",
+        "netAsset": "Net assets",
+        "expectedMissing": "Expected value not entered",
+        "emptyTitle": "No net asset value",
+        "emptyDescription": "Entered or imported net asset values will appear here, one row per date."
+      }
     }
   },
   "designSystem": {
@@ -4642,7 +4997,7 @@
         "title": "Section card",
         "description": "Card for a detail page section, generalized from the onboarding \"Identity\" card. Validation mode keeps the onboarding behavior; read and edit modes serve the fund settings.",
         "variants": "Validation (collapsible header, counters, \"Validate the whole section\" bar), read (label and value rows, \"Edit\" button), edit (design system fields, sticky bar). Locked row with reason, row coming from a former application setting.",
-        "states": "Empty value \"Not provided\", active (primary outline), unsaved changes, saving (buttons disabled, spinner), \"Saved\" for 3 seconds, error under the field, \"Edit\" disabled with reason.",
+        "states": "Empty value \"Not provided\", active (primary outline), unsaved changes, saving (buttons disabled, spinner), \"Saved\" for 3 seconds, error under the field, \"Edit\" disabled with reason. Row highlighted after a \"Configuration to complete\" link.",
         "validationLabel": "Validation mode",
         "validationHint": "click \"Validate the whole section\"",
         "editLabel": "Read and edit modes",
@@ -4784,6 +5139,68 @@
           "danger": "Error",
           "strong": "Strong"
         }
+      },
+      "pageHeader": {
+        "title": "Page header",
+        "description": "Header of a detail page. Evolution: logo left of the title, information line, several secondary actions, labeled \"More\" menu, spinner and reason on every action.",
+        "variants": "With or without primary action, secondary actions, tertiary menu with icon only or label, destructive entries.",
+        "states": "Action available, in progress (disabled with spinner), unavailable (disabled, reason on hover; in the menu, reason under the label).",
+        "exampleLabel": "Example: draft fund",
+        "exampleHint": "hover \"Publish\", click \"Duplicate\", open \"More\"",
+        "demo": {
+          "name": "Horizon Growth Fund III",
+          "subtitle": "FPCI · Standalone fund",
+          "meta": "Currency EUR · Capital calls · Fundraising from 01/03/2026 to 31/12/2026",
+          "publishReason": "Complete the configuration before publishing: 3 items missing."
+        }
+      },
+      "pageTabs": {
+        "title": "Page tabs",
+        "description": "Main tabs of a detail page: primary underline on the active tab, icon, counter when relevant. Replaces the three hand-made versions.",
+        "variants": "With or without icon, with or without counter.",
+        "states": "Rest, hover, active, keyboard focus. A tab conditioned by a module or a right is hidden, not disabled.",
+        "exampleLabel": "Example"
+      },
+      "widgetCard": {
+        "title": "Dashboard widget",
+        "description": "Summary card with small caps title, subtitle, action and footer. WidgetMetric shows a figure; SegmentedProgress, extracted from onboarding, shows an overall state segmented by color.",
+        "variants": "With icon, action, footer; normal or large value; bar with one or more segments, design system tones.",
+        "states": "Value filled, value missing (\"None\"), empty bar.",
+        "exampleLabel": "Examples",
+        "demo": {
+          "title": "Calls",
+          "subtitle": "Capital call fund",
+          "badge": "60%",
+          "footer": "View calls",
+          "called": "Called",
+          "calledSecondary": "of €7,000,000 subscribed",
+          "remaining": "Remaining to call"
+        }
+      },
+      "segmentedProgress": {
+        "demo": {
+          "title": "Segmented bar",
+          "subtitle": "Onboarding, configuration, calls"
+        }
+      },
+      "confirmDialog": {
+        "title": "Confirmation dialog",
+        "description": "Confirmation of an action that stays open while processing. The parent closes it on success. Free extra content: warning, effects panel.",
+        "variants": "Normal or destructive action, with or without extra content.",
+        "states": "Open, processing (buttons disabled, spinner, closing blocked), closed.",
+        "exampleLabel": "Example: archiving",
+        "exampleHint": "open then confirm",
+        "demo": {
+          "title": "Archive Horizon Growth Fund III?",
+          "description": "Current status: Closed. Subscriptions in progress: 0. Nothing is deleted."
+        }
+      },
+      "emptyState": {
+        "title": "Empty state",
+        "description": "Empty state of a table or tab. Evolution: generic mode with free title, description and action, on top of the list mode. Translated texts, token colors.",
+        "variants": "List mode (no item, no result with filter reset), generic mode.",
+        "states": "With or without action.",
+        "exampleLabel": "Example: upcoming tab"
       }
     }
   }

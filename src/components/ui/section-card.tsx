@@ -280,6 +280,10 @@ export function SectionCard({
 }
 
 interface SectionFieldRowProps {
+  /** Ancre de la ligne, cible des liens "Configuration à compléter". */
+  id?: string;
+  /** Mise en évidence temporaire après un lien vers ce champ. */
+  highlighted?: boolean;
   label: string;
   mode: 'read' | 'edit';
   /** Valeur affichée en lecture. Vide : "Non renseigné". */
@@ -301,6 +305,8 @@ const isEmptyValue = (value: ReactNode) =>
 
 /** Ligne libellé et valeur d'une SectionCard en lecture ou en édition. */
 export function SectionFieldRow({
+  id,
+  highlighted = false,
   label,
   mode,
   value,
@@ -323,7 +329,14 @@ export function SectionFieldRow({
   );
 
   return (
-    <div className="grid grid-cols-3 gap-4 px-5 py-3">
+    <div
+      id={id}
+      className="grid grid-cols-3 gap-4 px-5 py-3 transition-colors"
+      style={{
+        scrollMarginTop: '6rem',
+        ...(highlighted ? { backgroundColor: 'var(--warning-soft)' } : undefined),
+      }}
+    >
       <div className="flex flex-col gap-1">
         <label htmlFor={editable ? htmlFor : undefined} className="text-sm text-muted-foreground">
           {label}

@@ -66,6 +66,7 @@ import { useWhatsNewUnread } from './utils/useWhatsNewUnread';
 import { DataHubRouter } from './features/datahub/pages/DataHubRouter';
 import { generateFunds, Fund } from './utils/fundGenerator';
 import { AllFundsPage } from './components/AllFundsPage';
+import { FundDetailPage } from './components/fund-detail/FundDetailPage';
 import { FundStatusTabs } from './components/FundStatusTabs';
 import { RetrocessionsSettings } from './components/settings/RetrocessionsSettings';
 // Settings imports
@@ -150,6 +151,11 @@ export default function App() {
   const [dataRoomMassUploadOpen, setDataRoomMassUploadOpen] = useState(false);
   const [dataRoomBackSignal, setDataRoomBackSignal] = useState(0);
   const [selectedFundContextId, setSelectedFundContextId] = useState<number | null>(null);
+  const [selectedFundDetail, setSelectedFundDetail] = useState<Fund | null>(null);
+
+  useEffect(() => {
+    if (currentPage !== 'allfunds') setSelectedFundDetail(null);
+  }, [currentPage]);
   
   // Debug: Log when selectedSubscriptionDetail changes
   useEffect(() => {
@@ -1303,7 +1309,18 @@ export default function App() {
             </div>
           )}
 
-          {currentPage === 'allfunds' && (
+          {currentPage === 'allfunds' && selectedFundDetail && (
+            <FundDetailPage
+              fund={selectedFundDetail}
+              onBack={() => setSelectedFundDetail(null)}
+              onOpenSubscriptions={fund => {
+                setSelectedFundContextId(fund.id);
+                navigateToPage('subscriptions');
+              }}
+            />
+          )}
+
+          {currentPage === 'allfunds' && !selectedFundDetail && (
             /* All Funds Page */
             <>
               {/* Page Header - All Funds */}
@@ -1457,11 +1474,7 @@ export default function App() {
                   isLoading={false}
                   allData={allFundsData}
                   setAllData={setAllFundsData}
-                  onFundClick={(fund) => {
-                    toast.info(t('toast.fundDetails'), {
-                      description: `Ouverture des détails pour ${fund.name}`,
-                    });
-                  }}
+                  onFundClick={(fund) => setSelectedFundDetail(fund)}
                 />
               </div>
             </>

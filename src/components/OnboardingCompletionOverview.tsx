@@ -14,6 +14,7 @@ import { Card } from './ui/card';
 import { Tooltip, TooltipContent, TooltipTrigger } from './ui/tooltip';
 import { cn, WIDGET_SUBTITLE_CLASS, WIDGET_TITLE_CLASS } from './ui/utils';
 import { SectionNav, type SectionNavItem } from './ui/section-nav';
+import { SegmentedProgress } from './ui/segmented-progress';
 import type { Tone } from './ui/tone';
 
 export type OnboardingItemState =
@@ -48,32 +49,28 @@ const STATE_ORDER: OnboardingItemState[] = [
 
 const STATE_STYLES: Record<
   OnboardingItemState,
-  { icon: LucideIcon; bar: string; dot: string; text: string; tile: string }
+  { icon: LucideIcon; dot: string; text: string; tile: string }
 > = {
   pending: {
     icon: CircleDashed,
-    bar: 'bg-border',
     dot: 'bg-gray-300',
     text: 'text-muted-foreground',
     tile: 'bg-muted',
   },
   awaitingValidation: {
     icon: Clock,
-    bar: 'bg-amber-500',
     dot: 'bg-amber-500',
     text: 'text-amber-700',
     tile: 'bg-amber-50 border-amber-200',
   },
   awaitingCorrection: {
     icon: AlertCircle,
-    bar: 'bg-red-500',
     dot: 'bg-red-500',
     text: 'text-red-700',
     tile: 'bg-red-50 border-red-200',
   },
   validated: {
     icon: CheckCircle2,
-    bar: 'bg-emerald-500',
     dot: 'bg-emerald-500',
     text: 'text-emerald-700',
     tile: 'bg-emerald-50 border-emerald-200',
@@ -122,19 +119,14 @@ const percent = (value: number, total: number) =>
 
 function StackedBar({ stats }: { stats: OnboardingBucketStats }) {
   return (
-    <div className="flex h-2 w-full overflow-hidden rounded-full bg-muted">
-      {STATE_ORDER.map(state => {
-        const count = stats[state];
-        if (count === 0) return null;
-        return (
-          <div
-            key={state}
-            className={cn('h-full', STATE_STYLES[state].bar)}
-            style={{ width: `${percent(count, stats.total)}%` }}
-          />
-        );
-      })}
-    </div>
+    <SegmentedProgress
+      total={stats.total}
+      segments={STATE_ORDER.map(state => ({
+        id: state,
+        value: stats[state],
+        tone: ONBOARDING_STATE_TONE[state],
+      }))}
+    />
   );
 }
 

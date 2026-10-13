@@ -1,64 +1,73 @@
+import type { ReactNode } from 'react';
 import { LucideIcon, FilterX, RefreshCw } from 'lucide-react';
+import { useTranslation } from '../utils/languageContext';
+import { cn } from './ui/utils';
 
 interface EmptyStateProps {
-  hasFilters: boolean;
-  hasSearch: boolean;
-  onReset?: () => void;
   icon: LucideIcon;
-  entityName: string; // "investisseur", "partenaire", etc.
-  entityNamePlural: string; // "investisseurs", "partenaires", etc.
+  /** Mode listing : libellés générés à partir du nom de l'entité. */
+  hasFilters?: boolean;
+  hasSearch?: boolean;
+  onReset?: () => void;
+  entityName?: string; // "investisseur", "partenaire", etc.
+  entityNamePlural?: string; // "investisseurs", "partenaires", etc.
+  /** Mode générique : titre, description et action libres. Prioritaires sur le mode listing. */
+  title?: string;
+  description?: string;
+  action?: ReactNode;
+  className?: string;
 }
 
-export function EmptyState({ 
-  hasFilters, 
-  hasSearch, 
+export function EmptyState({
+  hasFilters = false,
+  hasSearch = false,
   onReset,
   icon: Icon,
-  entityName,
-  entityNamePlural
+  entityName = '',
+  title,
+  description,
+  action,
+  className,
 }: EmptyStateProps) {
-  const isFiltered = hasFilters || hasSearch;
+  const { t } = useTranslation();
+  const isFiltered = !title && (hasFilters || hasSearch);
+
+  const heading =
+    title ??
+    (isFiltered
+      ? t('common.emptyState.noneFound', { entity: entityName })
+      : t('common.emptyState.none', { entity: entityName }));
+  const body =
+    description ??
+    (isFiltered
+      ? t('common.emptyState.filteredDescription', { entity: entityName })
+      : t('common.emptyState.emptyDescription', { entity: entityName }));
 
   return (
-    <div className="flex items-center justify-center py-20 px-6">
+    <div className={cn('flex items-center justify-center py-20 px-6', className)}>
       <div className="max-w-md text-center">
-        {/* Icône */}
-        <div className="mb-4 inline-flex items-center justify-center w-16 h-16 rounded-full bg-gray-100 dark:bg-gray-800">
+        <div className="mb-4 inline-flex items-center justify-center w-16 h-16 rounded-full bg-muted">
           {isFiltered ? (
-            <FilterX className="w-7 h-7 text-gray-400 dark:text-gray-500" />
+            <FilterX className="w-7 h-7 text-muted-foreground" />
           ) : (
-            <Icon className="w-7 h-7 text-gray-400 dark:text-gray-500" />
+            <Icon className="w-7 h-7 text-muted-foreground" />
           )}
         </div>
 
-        {/* Titre */}
-        <h3 className="text-gray-900 dark:text-gray-100 mb-2">
-          {isFiltered ? `Aucun ${entityName} trouvé` : `Aucun ${entityName}`}
-        </h3>
+        <h3 className="text-foreground mb-2">{heading}</h3>
 
-        {/* Description */}
-        <p className="text-sm text-gray-600 dark:text-gray-400 mb-6">
-          {isFiltered ? (
-            <>
-              Les filtres appliqués ne correspondent à aucun {entityName} actuellement présent dans la base de données.
-            </>
-          ) : (
-            <>
-              Aucun {entityName} n'est enregistré dans la base de données.
-            </>
-          )}
-        </p>
+        <p className="text-sm text-muted-foreground mb-6">{body}</p>
 
-        {/* Bouton reset */}
         {isFiltered && onReset && (
           <button
             onClick={onReset}
-            className="inline-flex items-center gap-2 px-4 py-2 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 text-gray-700 dark:text-gray-300 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-750 transition-colors text-sm"
+            className="inline-flex items-center gap-2 px-4 py-2 bg-card border border-border text-foreground rounded-lg hover:bg-muted transition-colors text-sm"
           >
             <RefreshCw className="w-4 h-4" />
-            Réinitialiser les filtres
+            {t('common.emptyState.resetFilters')}
           </button>
         )}
+        {action}
       </div>
     </div>
   );

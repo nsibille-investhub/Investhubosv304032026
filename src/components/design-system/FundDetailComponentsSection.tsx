@@ -1,7 +1,14 @@
 import { useState } from 'react';
 import type { ReactNode } from 'react';
 import {
+  Archive,
   Banknote,
+  Copy,
+  LayoutDashboard,
+  Layers3,
+  LineChart,
+  Send,
+  Settings2,
   Building2,
   CalendarClock,
   FileSignature,
@@ -16,11 +23,19 @@ import {
   Tag,
   TrendingUp,
   Users,
+  Wallet,
 } from 'lucide-react';
 import { useTranslation } from '../../utils/languageContext';
 import { FUND_STATUSES, FundStatusBadge } from '../FundStatusBadge';
 import { StatusBadge } from '../StatusBadge';
+import { EmptyState } from '../EmptyState';
 import { BlockersPanel } from '../ui/blockers-panel';
+import { Button } from '../ui/button';
+import { ConfirmDialog } from '../ui/confirm-dialog';
+import { PageHeader } from '../ui/page-header';
+import { SegmentedProgress } from '../ui/segmented-progress';
+import { PageTabsList, PageTabsTrigger, Tabs } from '../ui/tabs';
+import { WidgetCard, WidgetMetric } from '../ui/widget-card';
 import { ColorPicker } from '../ui/color-picker';
 import { ComputedSummary } from '../ui/computed-summary';
 import { DayMonthPicker, type DayMonthValue } from '../ui/day-month-picker';
@@ -563,6 +578,164 @@ function InputsDemo() {
   );
 }
 
+function WidgetsDemo() {
+  const { t } = useTranslation();
+  const d = `${K}.widgetCard.demo`;
+  return (
+    <div className="grid gap-4 md:grid-cols-2">
+      <WidgetCard
+        icon={Wallet}
+        title={t(`${d}.title`)}
+        subtitle={t(`${d}.subtitle`)}
+        action={<StatusBadge label={t(`${d}.badge`)} variant="info" />}
+        footer={<span className="text-xs font-medium text-primary">{t(`${d}.footer`)}</span>}
+      >
+        <div className="grid grid-cols-2 gap-3">
+          <WidgetMetric size="lg" label={t(`${d}.called`)} value="4 200 000 €" secondary={t(`${d}.calledSecondary`)} />
+          <WidgetMetric label={t(`${d}.remaining`)} value="2 800 000 €" />
+        </div>
+      </WidgetCard>
+      <WidgetCard title={t(`${K}.segmentedProgress.demo.title`)} subtitle={t(`${K}.segmentedProgress.demo.subtitle`)}>
+        <div className="space-y-3">
+          <SegmentedProgress
+            total={10}
+            segments={[
+              { id: 'pending', value: 1, tone: 'neutral' },
+              { id: 'awaiting', value: 4, tone: 'warning' },
+              { id: 'correction', value: 1, tone: 'danger' },
+              { id: 'validated', value: 4, tone: 'success' },
+            ]}
+          />
+          <SegmentedProgress
+            total={5}
+            segments={[
+              { id: 'done', value: 3, tone: 'success' },
+              { id: 'missing', value: 2, tone: 'danger' },
+            ]}
+          />
+          <SegmentedProgress total={100} segments={[{ id: 'called', value: 60, tone: 'info' }]} />
+        </div>
+      </WidgetCard>
+    </div>
+  );
+}
+
+function PageTabsDemo() {
+  const { t } = useTranslation();
+  const [tab, setTab] = useState('overview');
+  const items = [
+    { id: 'overview', icon: LayoutDashboard },
+    { id: 'settings', icon: Settings2 },
+    { id: 'shares', icon: Layers3, count: 3 },
+    { id: 'navs', icon: LineChart, count: 6 },
+  ];
+  return (
+    <Tabs value={tab} onValueChange={setTab} className="gap-0">
+      <div className="rounded-lg border border-border bg-card px-4">
+        <PageTabsList>
+          {items.map(item => (
+            <PageTabsTrigger
+              key={item.id}
+              value={item.id}
+              icon={item.icon}
+              label={t(`funds.detail.tabs.${item.id}`)}
+              count={item.count}
+              isActive={tab === item.id}
+            />
+          ))}
+        </PageTabsList>
+      </div>
+    </Tabs>
+  );
+}
+
+function PageHeaderDemo() {
+  const { t } = useTranslation();
+  const d = `${K}.pageHeader.demo`;
+  const [loading, setLoading] = useState(false);
+  return (
+    <div className="overflow-hidden rounded-xl border border-border">
+      <PageHeader
+        hideBackButton
+        breadcrumb={[{ label: t('funds.detail.breadcrumb') }, { label: t(`${d}.name`) }]}
+        leading={
+          <span
+            className="flex h-14 w-14 shrink-0 items-center justify-center rounded-xl text-lg font-semibold text-primary-foreground"
+            style={{ backgroundColor: 'var(--chart-1)' }}
+          >
+            HC
+          </span>
+        }
+        title={
+          <span className="inline-flex flex-wrap items-center gap-3">
+            {t(`${d}.name`)}
+            <FundStatusBadge status="draft" />
+          </span>
+        }
+        subtitle={t(`${d}.subtitle`)}
+        meta={<span className="text-sm text-muted-foreground">{t(`${d}.meta`)}</span>}
+        primaryAction={{
+          label: t('funds.detail.actions.publish'),
+          icon: <Send className="w-4 h-4" />,
+          disabledReason: t(`${d}.publishReason`),
+        }}
+        extraActions={[
+          {
+            label: t('funds.detail.actions.duplicate'),
+            icon: <Copy className="w-4 h-4" />,
+            loading,
+            onClick: async () => {
+              setLoading(true);
+              await wait(1000);
+              setLoading(false);
+            },
+          },
+          { label: t('funds.detail.actions.archive'), icon: <Archive className="w-4 h-4" /> },
+        ]}
+        tertiaryLabel={t('funds.detail.actions.more')}
+        tertiaryActions={[
+          { label: t('funds.detail.actions.journal') },
+          {
+            label: t('funds.detail.actions.delete'),
+            destructive: true,
+            separatorBefore: true,
+            disabledReason: t('funds.detail.reasons.noDeleteRight'),
+          },
+        ]}
+      />
+    </div>
+  );
+}
+
+function ConfirmDialogDemo() {
+  const { t } = useTranslation();
+  const d = `${K}.confirmDialog.demo`;
+  const [open, setOpen] = useState(false);
+  const [loading, setLoading] = useState(false);
+  return (
+    <>
+      <Button variant="outline" onClick={() => setOpen(true)}>
+        <Archive className="w-4 h-4" />
+        {t('funds.detail.actions.archive')}
+      </Button>
+      <ConfirmDialog
+        open={open}
+        onOpenChange={setOpen}
+        title={t(`${d}.title`)}
+        description={t(`${d}.description`)}
+        confirmLabel={t('funds.detail.actions.archive')}
+        loading={loading}
+        onConfirm={async () => {
+          setLoading(true);
+          await wait(1000);
+          setLoading(false);
+          setOpen(false);
+        }}
+      />
+    </>
+  );
+}
+
 /** Composants du détail d'un fonds V3, documentés avec variantes, états et exemple. */
 export function FundDetailComponentsSection() {
   const { t } = useTranslation();
@@ -728,6 +901,84 @@ export function FundDetailComponentsSection() {
       >
         <Example label={t(`${K}.inputs.exampleLabel`)} hint={t(`${K}.inputs.exampleHint`)}>
           <InputsDemo />
+        </Example>
+      </DocBlock>
+
+      <DocBlock
+        id="pageHeader"
+        name="PageHeader"
+        importLine="import { PageHeader } from '@/components/ui/page-header'"
+        usage={`<PageHeader
+  breadcrumb={[...]} leading={<Logo />} title={...} subtitle={...} meta={...}
+  primaryAction={{ label, icon, onClick, loading, disabledReason }}
+  extraActions={[{ label, icon, onClick, loading, disabledReason }]}
+  tertiaryLabel={t('...')}                 // menu "Plus" libellé ; sans libellé : icône
+  tertiaryActions={[{ label, destructive, disabledReason }]}
+/>`}
+      >
+        <Example label={t(`${K}.pageHeader.exampleLabel`)} hint={t(`${K}.pageHeader.exampleHint`)}>
+          <PageHeaderDemo />
+        </Example>
+      </DocBlock>
+
+      <DocBlock
+        id="pageTabs"
+        name="PageTabsList, PageTabsTrigger"
+        importLine="import { Tabs, PageTabsList, PageTabsTrigger } from '@/components/ui/tabs'"
+        usage={`<Tabs value={tab} onValueChange={setTab}>
+  <PageTabsList>
+    <PageTabsTrigger value="shares" icon={Layers3} label={t('...')} count={3} isActive={tab === 'shares'} />
+  </PageTabsList>
+</Tabs>`}
+      >
+        <Example label={t(`${K}.pageTabs.exampleLabel`)}>
+          <PageTabsDemo />
+        </Example>
+      </DocBlock>
+
+      <DocBlock
+        id="widgetCard"
+        name="WidgetCard, WidgetMetric, SegmentedProgress"
+        importLine="import { WidgetCard, WidgetMetric } from '@/components/ui/widget-card'"
+        usage={`<WidgetCard icon={Wallet} title={t('...')} subtitle={...} action={<StatusBadge ... />} footer={...}>
+  <WidgetMetric size="lg" label={t('...')} value={money(called)} secondary={...} />
+  <SegmentedProgress total={total} segments={[{ id: 'done', value: 3, tone: 'success' }]} />
+</WidgetCard>`}
+      >
+        <Example label={t(`${K}.widgetCard.exampleLabel`)}>
+          <WidgetsDemo />
+        </Example>
+      </DocBlock>
+
+      <DocBlock
+        id="confirmDialog"
+        name="ConfirmDialog"
+        importLine="import { ConfirmDialog } from '@/components/ui/confirm-dialog'"
+        usage={`<ConfirmDialog open={open} onOpenChange={setOpen} title={t('...')} description={...}
+  confirmLabel={t('...')} destructive loading={pending} onConfirm={archive}>
+  {/* contenu complémentaire : avertissement, EffectsPanel */}
+</ConfirmDialog>`}
+      >
+        <Example label={t(`${K}.confirmDialog.exampleLabel`)} hint={t(`${K}.confirmDialog.exampleHint`)}>
+          <ConfirmDialogDemo />
+        </Example>
+      </DocBlock>
+
+      <DocBlock
+        id="emptyState"
+        name="EmptyState"
+        importLine="import { EmptyState } from '@/components/EmptyState'"
+        usage={`<EmptyState icon={FileText} title={t('...')} description={t('...')} action={<Button ... />} />
+<EmptyState icon={Users} entityName="investisseur" entityNamePlural="investisseurs" hasFilters onReset={reset} />`}
+      >
+        <Example label={t(`${K}.emptyState.exampleLabel`)}>
+          <div className="rounded-xl border border-border bg-card">
+            <EmptyState
+              icon={FileText}
+              title={t('funds.detail.comingSoon')}
+              description={t('funds.detail.comingSoonDescription')}
+            />
+          </div>
         </Example>
       </DocBlock>
 
