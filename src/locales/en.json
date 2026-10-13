@@ -1897,6 +1897,64 @@
       "selectedOne": "{{count}} selected",
       "selectedMany": "{{count}} selected",
       "searchPlaceholder": "Search..."
+    },
+    "sectionCard": {
+      "notProvided": "Not provided",
+      "edit": "Edit",
+      "saved": "Saved",
+      "cancel": "Cancel",
+      "save": "Save",
+      "saving": "Saving",
+      "unsavedChanges": "Unsaved changes",
+      "noChanges": "No changes",
+      "errorsOne": "{{count}} field to fix",
+      "errorsMany": "{{count}} fields to fix",
+      "editBarLabel": "Save section",
+      "collapse": "Collapse section",
+      "expand": "Expand section",
+      "legacySetting": "Fund setting"
+    },
+    "effectsPanel": {
+      "title": "Effects of this action",
+      "none": "This action has no other effect.",
+      "objectsOne": "{{count}} item affected",
+      "objectsMany": "{{count}} items affected",
+      "reversible": "Reversible",
+      "irreversible": "Irreversible"
+    },
+    "blockersPanel": {
+      "description": "These items prevent the action. Resolve them or choose the suggested action.",
+      "open": "View",
+      "alternative": "Possible action instead"
+    },
+    "colorPicker": {
+      "placeholder": "No color",
+      "presets": "Suggested colors",
+      "presetLabel": "Color {{index}} ({{color}})",
+      "custom": "Custom color",
+      "eyedropper": "Pick any color",
+      "invalidHex": "Expected format: # followed by 6 characters, for example #1A5666.",
+      "clear": "Remove color",
+      "hexPlaceholder": "#RRGGBB"
+    },
+    "dayMonthPicker": {
+      "day": "Day",
+      "month": "Month"
+    },
+    "frequencyDayField": {
+      "frequency": "Frequency",
+      "weekday": "Day of the week",
+      "monthDay": "Day of the month",
+      "dayOfMonth": "On the {{day}}",
+      "lastDay": "Last day of the month",
+      "frequencies": {
+        "daily": "Daily",
+        "weekly": "Weekly",
+        "monthly": "Monthly",
+        "quarterly": "Quarterly",
+        "semiannual": "Semi-annual",
+        "annual": "Annual"
+      }
     }
   },
   "ged": {
@@ -4508,5 +4566,225 @@
   },
   "environmentBanner": {
     "label": "Staging"
+  },
+  "funds": {
+    "status": {
+      "draft": "Draft",
+      "upcoming": "Upcoming",
+      "collecting": "Fundraising",
+      "collectionEnded": "Fundraising ended",
+      "closed": "Closed",
+      "archived": "Archived"
+    },
+    "stateBanner": {
+      "archived": {
+        "title": "Fund archived on {{date}} by {{author}}",
+        "description": "The fund is hidden from portals and selection lists. It remains viewable in read-only mode.",
+        "action": "Unarchive"
+      },
+      "locked": {
+        "title": "Fund locked by support since {{date}}",
+        "reason": "Reason: {{reason}}. All changes are blocked, viewing remains possible."
+      },
+      "mirror": {
+        "title": "This fund mirrors {{master}}.",
+        "description": "Fields received from the master fund are read-only.",
+        "action": "Open master fund"
+      },
+      "sendingNotices": {
+        "title": "Notices are being sent for this fund",
+        "blocked": "Actions blocked during sending: {{actions}}."
+      },
+      "readOnly": {
+        "title": "You do not have the right to edit this fund.",
+        "description": "You can view all its information. Ask an administrator for the right to edit it."
+      }
+    }
+  },
+  "designSystem": {
+    "fundDetail": {
+      "eyebrow": "Fund detail V3",
+      "title": "Fund detail components",
+      "intro": "Generic components derived from onboarding and created for the fund detail. They only use theme tokens and display server decisions without recomputing them.",
+      "import": "Import:",
+      "variantsLabel": "Variants",
+      "statesLabel": "States",
+      "usageLabel": "Usage",
+      "sectionNav": {
+        "title": "Section navigation",
+        "description": "Navigation column between the sections of a page, generalized from \"Onboarding sections\". The column title is free, each item has an icon, a title, a free subtitle and a right-hand indicator.",
+        "variants": "Colored \"n/N\" counter with dot, status dot only, \"To complete\" badge, no indicator. Optional grouping under subtitles.",
+        "states": "Rest, hover, active (accent background, primary title), disabled with reason on hover, hidden.",
+        "exampleLabel": "Example: fund settings",
+        "exampleHint": "click an item, hover \"Distribution\" to read the reason; \"Secondary market\" is hidden",
+        "demo": {
+          "title": "Fund sections",
+          "groupFund": "Fund profile",
+          "groupDiffusion": "Distribution",
+          "identity": "Identity",
+          "identitySubtitle": "Name, type, management company",
+          "legal": "Legal structure",
+          "legalSubtitle": "Legal form, currency",
+          "subscription": "Subscription",
+          "subscriptionSubtitle": "Channels, amounts, signature",
+          "toComplete": "To complete",
+          "banking": "Banking and invoicing",
+          "bankingSubtitle": "Bank details",
+          "dotError": "Bank details missing",
+          "distribution": "Distribution",
+          "distributionSubtitle": "Distributors with access",
+          "distributionDisabled": "The partners module is not active on this application.",
+          "integrations": "Integrations",
+          "secondary": "Secondary market"
+        }
+      },
+      "sectionCard": {
+        "title": "Section card",
+        "description": "Card for a detail page section, generalized from the onboarding \"Identity\" card. Validation mode keeps the onboarding behavior; read and edit modes serve the fund settings.",
+        "variants": "Validation (collapsible header, counters, \"Validate the whole section\" bar), read (label and value rows, \"Edit\" button), edit (design system fields, sticky bar). Locked row with reason, row coming from a former application setting.",
+        "states": "Empty value \"Not provided\", active (primary outline), unsaved changes, saving (buttons disabled, spinner), \"Saved\" for 3 seconds, error under the field, \"Edit\" disabled with reason.",
+        "validationLabel": "Validation mode",
+        "validationHint": "click \"Validate the whole section\"",
+        "editLabel": "Read and edit modes",
+        "editHint": "click \"Edit\", clear the name then save to see the error",
+        "lockedLabel": "Locked rows and unavailable action",
+        "lockedHint": "hover the lock and the \"Edit\" button",
+        "demo": {
+          "validationTitle": "Identity",
+          "firstName": "First name",
+          "nationality": "Nationality",
+          "nationalityValue": "French",
+          "fundName": "Horizon Growth Fund III",
+          "nameRequired": "The fund name is required.",
+          "performanceOptions": {
+            "irr": "IRR",
+            "performance": "Performance",
+            "none": "None"
+          },
+          "editTitle": "Identity",
+          "editSummary": "Fund name, currency, color and valuation",
+          "editBadge": "Standalone fund",
+          "fundNameLabel": "Fund name",
+          "adminNameLabel": "Administrative name",
+          "currencyLabel": "Currency",
+          "currencyLocked": "Locked after the first subscription.",
+          "colorLabel": "Fund color",
+          "performanceLabel": "Performance indicator",
+          "performanceLegacy": "Replaces the application settings \"IRR instead of perf\" and \"No performance display\". Chooses the indicator shown on the portal and portfolio for this fund.",
+          "valuationLabel": "Valuation frequency",
+          "mirrorTitle": "Subscription fees",
+          "mirrorSummary": "Received from the master fund",
+          "editDisabled": "You do not have the right to edit this fund.",
+          "entryFeeLabel": "Entry fee",
+          "fromMaster": "Received from the master fund. Edit it on the master fund, then propagate.",
+          "minimumLabel": "Minimum amount",
+          "decimalsLabel": "Share decimals"
+        }
+      },
+      "fundStatusBadge": {
+        "title": "Fund status badge",
+        "description": "Status computed by the server, read as is by the back office, portals, API and exports. The mockup never derives it from dates.",
+        "variants": "Draft (neutral, outline), Upcoming (blue, primary color), Fundraising (green), Fundraising ended (yellow), Closed (grey), Archived (dark grey, archive icon). \"Suspended\" does not exist.",
+        "states": "Read-only: the badge is not clickable.",
+        "exampleLabel": "The six statuses"
+      },
+      "pageStateBanner": {
+        "title": "Page state banner",
+        "description": "Banner placed under the header of a detail page to explain why the page behaves differently. Built on Alert.",
+        "variants": "Archived (\"Unarchive\" action), locked by support (date and reason), mirror fund (link to the master fund), notices being sent (blocked actions), read-only for lack of right.",
+        "states": "Action available, action in progress (button disabled with spinner), action unavailable (disabled, reason on hover).",
+        "exampleLabel": "The five variants",
+        "exampleHint": "click \"Unarchive\"; hover the second button to read the reason",
+        "demo": {
+          "reset": "Restore the archived banner",
+          "noRight": "You need the \"Archive a fund\" right.",
+          "lockReason": "share consistency check in progress",
+          "masterName": "Horizon Growth Fund III",
+          "blockedDelete": "deletion",
+          "blockedNav": "net asset value entry",
+          "blockedArchive": "archiving"
+        }
+      },
+      "effectsPanel": {
+        "title": "\"Effects of this action\" panel",
+        "description": "Lists, before validation, what an action will produce: net asset value, propagation from a master fund, deletion. The list comes from the server.",
+        "variants": "Effect with expandable items, effect with a count only, effect without a count. \"Reversible\" or \"Irreversible\" marker.",
+        "states": "List collapsed, list expanded, no effect.",
+        "exampleLabel": "Example: entering a net asset value",
+        "exampleHint": "expand the affected items",
+        "demo": {
+          "description": "Net asset value of 30/09/2026 for share A.",
+          "redemptions": "Redemptions validated on this date are valued: sale value and final number of shares",
+          "redemptionItem": "Redemption {{ref}}, {{name}}",
+          "subscriptions": "Subscriptions awaiting a value are confirmed",
+          "subscriptionItem": "Subscription {{ref}}, {{name}}",
+          "emails": "Payment confirmation emails sent with certificates",
+          "nominal": "Share nominal price replaced by this value, the previous price stays in the log"
+        }
+      },
+      "blockersPanel": {
+        "title": "\"Blockers\" panel",
+        "description": "Explains an action refused by the server: blocking items with their count and a link, and a suggested fallback action.",
+        "variants": "With or without fallback action, items with or without a link.",
+        "states": "Fallback action available, in progress (disabled with spinner), unavailable with reason.",
+        "exampleLabel": "Example: deletion refused",
+        "demo": {
+          "title": "This fund cannot be deleted",
+          "subscriptions": "Subscriptions",
+          "operations": "Operations",
+          "navs": "Net asset values",
+          "contracts": "Contracts",
+          "archive": "Archive the fund",
+          "archiveDescription": "The fund will be hidden from portals, nothing will be deleted.",
+          "archived": "Fund archived"
+        }
+      },
+      "computedSummary": {
+        "title": "Computed summary sentence",
+        "description": "Highlighted text block that sums up the effect of a configuration in one sentence, for example \"Who can subscribe to this share\". The sentence is computed by the server.",
+        "variants": "With label and note, sentence only, custom icon.",
+        "states": "Update announced to screen readers when the sentence changes.",
+        "exampleLabel": "Example: who can subscribe to this share",
+        "demo": {
+          "label": "Who can subscribe to this share",
+          "footnote": "Computed from the channels, segments and distributors below.",
+          "sentence": "This share is open to professional investors, through online subscription and 4 distributors.",
+          "closed": "This share is closed: no new subscription is possible."
+        }
+      },
+      "inputs": {
+        "title": "Input fields",
+        "description": "Color picker (fund color), day and month picker (liquidity window), compound field frequency then day (valuation, centralization).",
+        "variants": "Suggested colors from tokens or free color; day and month without year; daily, weekly (weekday), monthly to semi-annual (day of month), annual (day and month) frequency.",
+        "states": "Empty, filled, disabled, error (outline and message under the field).",
+        "exampleLabel": "Examples",
+        "exampleHint": "the second row of each column shows the disabled or error state",
+        "demo": {
+          "color": "Fund color",
+          "liquidity": "Liquidity window",
+          "from": "From",
+          "to": "To",
+          "errorState": "Error state",
+          "liquidityError": "The end date must follow the start date.",
+          "frequency": "Valuation frequency"
+        }
+      },
+      "statusBadge": {
+        "title": "Status badge",
+        "description": "Generic badge the fund status badge is built on. New info, outline and strong variants, and optional icon.",
+        "variants": "neutral, outline, info, success, warning, danger, strong; with or without icon.",
+        "states": "Read-only.",
+        "exampleLabel": "The seven tones",
+        "tones": {
+          "neutral": "Neutral",
+          "outline": "Outline",
+          "info": "Information",
+          "success": "Success",
+          "warning": "Warning",
+          "danger": "Error",
+          "strong": "Strong"
+        }
+      }
+    }
   }
 }

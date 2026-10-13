@@ -87,6 +87,7 @@ import {
 } from './ui/table';
 import { ClickableText } from './ClickableText';
 import { StatusBadge } from './StatusBadge';
+import { FundDetailComponentsSection } from './design-system/FundDetailComponentsSection';
 import { Tag } from './Tag';
 import { ContactsCard } from './ContactsCard';
 import { StructuresCell } from './StructuresCell';
@@ -1133,6 +1134,8 @@ export function DesignSystemPage() {
           Bibliothèque complète des composants. On commence par la couche tableaux (data-intensive), puis les composants coeur.
         </p>
       </section>
+
+      <FundDetailComponentsSection />
 
       <section className="rounded-2xl border border-[#D7E0DD] dark:border-[#1F2D2A] bg-white dark:bg-[#101615] p-8 md:p-10">
         <header className="mb-8 space-y-3">

@@ -1897,6 +1897,64 @@
       "selectedOne": "{{count}} sélectionné",
       "selectedMany": "{{count}} sélectionnés",
       "searchPlaceholder": "Rechercher..."
+    },
+    "sectionCard": {
+      "notProvided": "Non renseigné",
+      "edit": "Modifier",
+      "saved": "Enregistré",
+      "cancel": "Annuler",
+      "save": "Enregistrer",
+      "saving": "Enregistrement en cours",
+      "unsavedChanges": "Modifications non enregistrées",
+      "noChanges": "Aucune modification",
+      "errorsOne": "{{count}} champ à corriger",
+      "errorsMany": "{{count}} champs à corriger",
+      "editBarLabel": "Enregistrement de la section",
+      "collapse": "Replier la section",
+      "expand": "Déplier la section",
+      "legacySetting": "Paramètre du fonds"
+    },
+    "effectsPanel": {
+      "title": "Effets de cette action",
+      "none": "Cette action n'a pas d'autre effet.",
+      "objectsOne": "{{count}} objet concerné",
+      "objectsMany": "{{count}} objets concernés",
+      "reversible": "Réversible",
+      "irreversible": "Irréversible"
+    },
+    "blockersPanel": {
+      "description": "Ces éléments empêchent l'action. Traitez-les ou choisissez l'action proposée.",
+      "open": "Voir",
+      "alternative": "Action possible à la place"
+    },
+    "colorPicker": {
+      "placeholder": "Aucune couleur",
+      "presets": "Couleurs proposées",
+      "presetLabel": "Couleur {{index}} ({{color}})",
+      "custom": "Couleur personnalisée",
+      "eyedropper": "Choisir une couleur libre",
+      "invalidHex": "Format attendu : # suivi de 6 caractères, par exemple #1A5666.",
+      "clear": "Retirer la couleur",
+      "hexPlaceholder": "#RRGGBB"
+    },
+    "dayMonthPicker": {
+      "day": "Jour",
+      "month": "Mois"
+    },
+    "frequencyDayField": {
+      "frequency": "Fréquence",
+      "weekday": "Jour de la semaine",
+      "monthDay": "Jour du mois",
+      "dayOfMonth": "Le {{day}}",
+      "lastDay": "Dernier jour du mois",
+      "frequencies": {
+        "daily": "Quotidienne",
+        "weekly": "Hebdomadaire",
+        "monthly": "Mensuelle",
+        "quarterly": "Trimestrielle",
+        "semiannual": "Semestrielle",
+        "annual": "Annuelle"
+      }
     }
   },
   "ged": {
@@ -4508,5 +4566,225 @@
   },
   "environmentBanner": {
     "label": "Staging"
+  },
+  "funds": {
+    "status": {
+      "draft": "Brouillon",
+      "upcoming": "À venir",
+      "collecting": "En collecte",
+      "collectionEnded": "Collecte terminée",
+      "closed": "Clôturé",
+      "archived": "Archivé"
+    },
+    "stateBanner": {
+      "archived": {
+        "title": "Fonds archivé le {{date}} par {{author}}",
+        "description": "Le fonds est masqué des portails et des listes de sélection. Il reste consultable en lecture seule.",
+        "action": "Désarchiver"
+      },
+      "locked": {
+        "title": "Fonds verrouillé par le support depuis le {{date}}",
+        "reason": "Motif : {{reason}}. Toute modification est bloquée, la consultation reste possible."
+      },
+      "mirror": {
+        "title": "Ce fonds est le miroir de {{master}}.",
+        "description": "Les champs reçus du fonds maître sont en lecture seule.",
+        "action": "Ouvrir le fonds maître"
+      },
+      "sendingNotices": {
+        "title": "Envoi d'avis en cours sur ce fonds",
+        "blocked": "Actions bloquées pendant l'envoi : {{actions}}."
+      },
+      "readOnly": {
+        "title": "Vous n'avez pas le droit de modifier ce fonds.",
+        "description": "Vous pouvez consulter toutes ses informations. Demandez le droit à un administrateur pour le modifier."
+      }
+    }
+  },
+  "designSystem": {
+    "fundDetail": {
+      "eyebrow": "Détail d'un fonds V3",
+      "title": "Composants du détail d'un fonds",
+      "intro": "Composants génériques issus de l'onboarding et créés pour le détail d'un fonds. Ils n'utilisent que les tokens du thème et affichent les décisions du serveur sans les recalculer.",
+      "import": "Import :",
+      "variantsLabel": "Variantes",
+      "statesLabel": "États",
+      "usageLabel": "Usage",
+      "sectionNav": {
+        "title": "Navigation par sections",
+        "description": "Colonne de navigation entre les sections d'une page, généralisée depuis \"Sections de l'onboarding\". Le titre de colonne est libre, chaque élément porte une icône, un titre, un sous-titre libre et un indicateur à droite.",
+        "variants": "Indicateur compteur \"n/N\" coloré avec point, point d'état seul, pastille \"À compléter\", aucun indicateur. Regroupement optionnel en sous-titres.",
+        "states": "Repos, survol, actif (fond accentué, titre en couleur primaire), désactivé avec motif au survol, masqué.",
+        "exampleLabel": "Exemple : paramètres d'un fonds",
+        "exampleHint": "cliquez sur un élément, survolez \"Distribution\" pour lire le motif ; \"Marché secondaire\" est masqué",
+        "demo": {
+          "title": "Sections du fonds",
+          "groupFund": "Fiche du fonds",
+          "groupDiffusion": "Diffusion",
+          "identity": "Identité",
+          "identitySubtitle": "Nom, type, société de gestion",
+          "legal": "Structure juridique",
+          "legalSubtitle": "Forme juridique, devise",
+          "subscription": "Souscription",
+          "subscriptionSubtitle": "Canaux, montants, signature",
+          "toComplete": "À compléter",
+          "banking": "Banque et facturation",
+          "bankingSubtitle": "Coordonnées bancaires",
+          "dotError": "Coordonnées bancaires absentes",
+          "distribution": "Distribution",
+          "distributionSubtitle": "Distributeurs ayant accès",
+          "distributionDisabled": "Le module partenaires n'est pas actif sur cette application.",
+          "integrations": "Intégrations",
+          "secondary": "Marché secondaire"
+        }
+      },
+      "sectionCard": {
+        "title": "Carte de section",
+        "description": "Carte d'une section de page de détail, généralisée depuis la carte \"Identité\" de l'onboarding. Le mode validation reprend le comportement de l'onboarding ; les modes lecture et édition servent aux paramètres du fonds.",
+        "variants": "Validation (en-tête repliable, compteurs, barre \"Valider toute la section\"), lecture (lignes libellé et valeur, bouton \"Modifier\"), édition (champs du design system, barre collante). Ligne verrouillée avec motif, ligne issue d'un ancien paramètre d'application.",
+        "states": "Valeur vide \"Non renseigné\", active (contour primaire), modifications non enregistrées, enregistrement en cours (boutons désactivés, chargement), \"Enregistré\" pendant 3 secondes, erreur sous le champ, \"Modifier\" désactivé avec motif.",
+        "validationLabel": "Mode validation",
+        "validationHint": "cliquez sur \"Valider toute la section\"",
+        "editLabel": "Modes lecture et édition",
+        "editHint": "cliquez sur \"Modifier\", videz le nom puis enregistrez pour voir l'erreur",
+        "lockedLabel": "Lignes verrouillées et action indisponible",
+        "lockedHint": "survolez le cadenas et le bouton \"Modifier\"",
+        "demo": {
+          "validationTitle": "Identité",
+          "firstName": "Prénom",
+          "nationality": "Nationalité",
+          "nationalityValue": "Française",
+          "fundName": "Fonds Horizon Croissance III",
+          "nameRequired": "Le nom du fonds est obligatoire.",
+          "performanceOptions": {
+            "irr": "TRI",
+            "performance": "Performance",
+            "none": "Aucun"
+          },
+          "editTitle": "Identité",
+          "editSummary": "Nom, devise, couleur et valorisation du fonds",
+          "editBadge": "Fonds autonome",
+          "fundNameLabel": "Nom du fonds",
+          "adminNameLabel": "Nom administratif",
+          "currencyLabel": "Devise",
+          "currencyLocked": "Verrouillée après la première souscription.",
+          "colorLabel": "Couleur du fonds",
+          "performanceLabel": "Indicateur de performance",
+          "performanceLegacy": "Remplace les paramètres d'application \"IRR instead of perf\" et \"No performance display\". Choisit l'indicateur affiché sur le portail et le portefeuille de ce fonds.",
+          "valuationLabel": "Fréquence de valorisation",
+          "mirrorTitle": "Frais de souscription",
+          "mirrorSummary": "Reçus du fonds maître",
+          "editDisabled": "Vous n'avez pas le droit de modifier ce fonds.",
+          "entryFeeLabel": "Frais d'entrée",
+          "fromMaster": "Reçu du fonds maître. Modifiez-le depuis le fonds maître puis propagez.",
+          "minimumLabel": "Montant minimum",
+          "decimalsLabel": "Décimales des parts"
+        }
+      },
+      "fundStatusBadge": {
+        "title": "Pastille de statut de fonds",
+        "description": "Statut calculé par le serveur, lu tel quel par le back-office, les portails, l'API et les exports. La maquette ne le déduit jamais des dates.",
+        "variants": "Brouillon (neutre, contour), À venir (bleu, couleur primaire), En collecte (vert), Collecte terminée (jaune), Clôturé (gris), Archivé (gris foncé, icône archive). \"Suspendu\" n'existe pas.",
+        "states": "Lecture seule : la pastille n'est pas cliquable.",
+        "exampleLabel": "Les six statuts"
+      },
+      "pageStateBanner": {
+        "title": "Bandeau d'état de page",
+        "description": "Bandeau placé sous l'en-tête d'une page de détail pour dire pourquoi la page se comporte autrement. Construit sur Alert.",
+        "variants": "Archivé (action \"Désarchiver\"), verrouillé par le support (date et motif), fonds miroir (lien vers le fonds maître), envoi d'avis en cours (actions bloquées), lecture seule faute de droit.",
+        "states": "Action disponible, action en cours (bouton désactivé avec chargement), action indisponible (désactivée, motif au survol).",
+        "exampleLabel": "Les cinq variantes",
+        "exampleHint": "cliquez sur \"Désarchiver\" ; survolez le second bouton pour lire le motif",
+        "demo": {
+          "reset": "Rétablir le bandeau archivé",
+          "noRight": "Il vous faut le droit \"Archiver un fonds\".",
+          "lockReason": "contrôle de cohérence des parts en cours",
+          "masterName": "Fonds Horizon Croissance III",
+          "blockedDelete": "suppression",
+          "blockedNav": "saisie de valeur liquidative",
+          "blockedArchive": "archivage"
+        }
+      },
+      "effectsPanel": {
+        "title": "Panneau \"Effets de cette action\"",
+        "description": "Liste, avant validation, ce qu'une action va produire : valeur liquidative, propagation depuis un fonds maître, suppression. La liste vient du serveur.",
+        "variants": "Effet avec objets dépliables, effet avec nombre seul, effet sans nombre. Marqueur \"Réversible\" ou \"Irréversible\".",
+        "states": "Liste repliée, liste dépliée, aucun effet.",
+        "exampleLabel": "Exemple : saisie d'une valeur liquidative",
+        "exampleHint": "dépliez les objets concernés",
+        "demo": {
+          "description": "Valeur liquidative du 30/09/2026 pour la part A.",
+          "redemptions": "Rachats validés à cette date valorisés : valeur de vente et nombre de parts final",
+          "redemptionItem": "Rachat {{ref}}, {{name}}",
+          "subscriptions": "Souscriptions en attente de valeur confirmées",
+          "subscriptionItem": "Souscription {{ref}}, {{name}}",
+          "emails": "Emails de confirmation de paiement envoyés avec les attestations",
+          "nominal": "Prix nominal de la part remplacé par cette valeur, le prix précédent reste au journal"
+        }
+      },
+      "blockersPanel": {
+        "title": "Panneau \"Blocages\"",
+        "description": "Explique une action refusée par le serveur : liste des objets bloquants avec leur nombre et un lien, et action de repli proposée.",
+        "variants": "Avec ou sans action de repli, objets avec ou sans lien.",
+        "states": "Action de repli disponible, en cours (désactivée avec chargement), indisponible avec motif.",
+        "exampleLabel": "Exemple : suppression refusée",
+        "demo": {
+          "title": "Ce fonds ne peut pas être supprimé",
+          "subscriptions": "Souscriptions",
+          "operations": "Opérations",
+          "navs": "Valeurs liquidatives",
+          "contracts": "Contrats",
+          "archive": "Archiver le fonds",
+          "archiveDescription": "Le fonds sera masqué des portails, rien ne sera supprimé.",
+          "archived": "Fonds archivé"
+        }
+      },
+      "computedSummary": {
+        "title": "Phrase de synthèse calculée",
+        "description": "Bloc de texte mis en avant qui résume en une phrase l'effet d'un paramétrage, par exemple \"Qui peut souscrire cette part\". La phrase est calculée par le serveur.",
+        "variants": "Avec libellé et note, phrase seule, icône libre.",
+        "states": "Mise à jour annoncée aux lecteurs d'écran quand la phrase change.",
+        "exampleLabel": "Exemple : qui peut souscrire cette part",
+        "demo": {
+          "label": "Qui peut souscrire cette part",
+          "footnote": "Calculé à partir des canaux, des segments et des distributeurs ci-dessous.",
+          "sentence": "Cette part est ouverte aux investisseurs professionnels, en souscription en ligne et par 4 distributeurs.",
+          "closed": "Cette part est fermée : aucune nouvelle souscription n'est possible."
+        }
+      },
+      "inputs": {
+        "title": "Champs de saisie",
+        "description": "Sélecteur de couleur (couleur du fonds), sélecteur jour et mois (fenêtre de liquidité), champ composé fréquence puis jour (valorisation, centralisation).",
+        "variants": "Couleurs proposées issues des tokens ou couleur libre ; jour et mois sans année ; fréquence quotidienne, hebdomadaire (jour de la semaine), mensuelle à semestrielle (jour du mois), annuelle (jour et mois).",
+        "states": "Vide, rempli, désactivé, erreur (contour et message sous le champ).",
+        "exampleLabel": "Exemples",
+        "exampleHint": "la seconde ligne de chaque colonne montre l'état désactivé ou erreur",
+        "demo": {
+          "color": "Couleur du fonds",
+          "liquidity": "Fenêtre de liquidité",
+          "from": "Du",
+          "to": "Au",
+          "errorState": "État erreur",
+          "liquidityError": "La date de fin doit suivre la date de début.",
+          "frequency": "Fréquence de valorisation"
+        }
+      },
+      "statusBadge": {
+        "title": "Pastille de statut",
+        "description": "Pastille générique sur laquelle repose la pastille de statut de fonds. Nouvelles variantes info, outline et strong, et icône optionnelle.",
+        "variants": "neutral, outline, info, success, warning, danger, strong ; avec ou sans icône.",
+        "states": "Lecture seule.",
+        "exampleLabel": "Les sept tons",
+        "tones": {
+          "neutral": "Neutre",
+          "outline": "Contour",
+          "info": "Information",
+          "success": "Succès",
+          "warning": "Attention",
+          "danger": "Erreur",
+          "strong": "Fort"
+        }
+      }
+    }
   }
 }
