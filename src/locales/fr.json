@@ -1970,6 +1970,15 @@
     },
     "confirmDialog": {
       "cancel": "Annuler"
+    },
+    "richTextEditor": {
+      "bold": "Gras",
+      "italic": "Italique",
+      "underline": "Souligné",
+      "bulletList": "Liste à puces",
+      "numberedList": "Liste numérotée",
+      "link": "Insérer un lien",
+      "linkPrompt": "Adresse du lien"
     }
   },
   "ged": {
@@ -4756,14 +4765,17 @@
           "missingOne": "{{count}} manque",
           "missingMany": "{{count}} manques",
           "description": "Ces manques empêchent la souscription ou une opération. Cliquez sur une ligne pour ouvrir le champ concerné.",
-          "goToSettings": "Ouvrir le paramètre",
-          "goToShares": "Ouvrir la part",
           "items": {
             "sharePrice": "La part {{name}} n'a pas de prix",
             "onboarding": "Aucun onboarding n'est associé au fonds",
             "subscriptionContract": "Aucun contrat de souscription",
             "signatory": "Aucun signataire",
             "iban": "Coordonnées bancaires absentes pour un fonds à appels"
+          },
+          "goTo": {
+            "settings": "Ouvrir le paramètre",
+            "shares": "Ouvrir la part",
+            "contracts": "Ouvrir les contrats"
           }
         },
         "collection": {
@@ -4832,85 +4844,364 @@
         }
       },
       "settings": {
-        "navTitle": "Paramètres du fonds",
-        "toComplete": "À compléter",
-        "editComingSoon": "Modification de cette section bientôt disponible dans la maquette.",
-        "errors": {
-          "nameRequired": "Le nom du fonds est obligatoire."
+        "subTabsLabel": "Sous-onglets des paramètres",
+        "subTabs": {
+          "profile": "Fiche",
+          "subscription": "Souscription et distribution",
+          "management": "Gestion et opérations",
+          "integrations": "Intégrations et données"
         },
-        "locks": {
-          "fromMaster": "Reçu du fonds maître.",
-          "currency": "Verrouillée après la première souscription.",
-          "typeComingSoon": "Modification bientôt disponible dans la maquette."
+        "requiredCount": "{{filled}}/{{total}} obligatoires",
+        "languageTabs": "Langue du contenu",
+        "regenerate": "Régénérer",
+        "range": {
+          "from": "Du",
+          "to": "Au"
+        },
+        "placeholders": {
+          "emails": "adresse@exemple.fr, autre@exemple.fr",
+          "search": "Rechercher"
         },
         "values": {
           "yes": "Oui",
           "no": "Non",
+          "empty": "Aucune valeur",
           "performance": {
             "irr": "TRI",
             "performance": "Performance",
             "none": "Aucun"
           }
         },
+        "leave": {
+          "title": "Quitter sans enregistrer ?",
+          "description": "Les modifications de cette section seront perdues.",
+          "confirm": "Quitter sans enregistrer",
+          "stay": "Rester sur la section"
+        },
+        "paymentMode": {
+          "title": "Changer le mode de paiement ?",
+          "description": "Le fonds passera en mode : {{mode}}. Les appels de fonds, les échéanciers et les relances de paiement suivent ce mode.",
+          "confirm": "Changer le mode",
+          "refused": "Des opérations existent dans le mode actuel : le serveur refuse le changement."
+        },
+        "apiKey": {
+          "title": "Régénérer la clé API du fonds ?",
+          "description": "L'ancienne clé cessera de fonctionner immédiatement. Les intégrations qui l'utilisent devront être mises à jour.",
+          "done": "Nouvelle clé API générée."
+        },
+        "locks": {
+          "fromMaster": "Reçu du fonds maître : modifiez-le depuis le fonds maître puis propagez.",
+          "currencyLocked": "Verrouillée après la première souscription.",
+          "sepaRequired": "Exige un identifiant créancier SEPA."
+        },
+        "errors": {
+          "nameRequired": "Le nom du fonds est obligatoire.",
+          "bic": "Format attendu : 8 ou 11 caractères, par exemple BLUMFRPP.",
+          "iban": "Format attendu : code pays, deux chiffres de contrôle, puis le numéro de compte.",
+          "emails": "Une adresse email n'est pas valide. Séparez les adresses par des virgules.",
+          "percent": "Saisissez un pourcentage entre 0 et 100.",
+          "amount": "Saisissez un montant positif.",
+          "decimals": "Saisissez un nombre entier entre 0 et 10.",
+          "video": "Seules les vidéos YouTube et Vimeo sont acceptées.",
+          "collectionDates": "La fin de collecte doit suivre le début de collecte."
+        },
+        "hints": {
+          "video": "Lien YouTube ou Vimeo.",
+          "shareDecimals": "Source unique du nombre de décimales des parts sur tous les écrans, documents et API.",
+          "aggregation": "Regroupe les souscriptions d'un même investisseur sur une même part en une seule ligne de détention.",
+          "closingDate": "Renseignée, elle fait passer le fonds au statut Clôturé et arrête le calcul du TRI.",
+          "autoOpenNetwork": "Ouvre le fonds à tous les sous-distributeurs d'un distributeur dès que celui-ci y a accès.",
+          "sepaCreditorId": "Renseigné, il active le prélèvement sur le fonds.",
+          "paymentReminder": "La relance ne part que tant que la fin de collecte n'est pas passée, et jamais sans date de fin.",
+          "fileName": "Variables disponibles : {fund}, {share}, {investor}, {structure}, {operation}, {date}, {number}. Vide : modèle standard.",
+          "apiKey": "Masquée. La régénération invalide l'ancienne clé."
+        },
         "legacy": {
-          "performanceIndicator": "Remplace les paramètres d'application \"IRR instead of perf\" et \"No performance display\". Choisit l'indicateur affiché sur le portail et le portefeuille de ce fonds."
+          "minimumExemption": "Un investisseur déjà souscripteur échappe aux bornes de la part. Remplace \"Exemption minimum souscription si déjà souscrit\" et \"Restrict minimum exemption to same share\".",
+          "redemptionDateRecalc": "La date du rachat suit la fenêtre du fonds à la signature complète. Remplace \"Adjust rebuy date after signature\".",
+          "distributionAgreementRequired": "Oui : un distributeur ne voit une part que si sa convention est signée. Non : l'ouverture suffit. Remplace \"Open shares without signature\".",
+          "signatureProvider": "Surcharge au fonds du prestataire de l'application. Attribut lu par la V1 sans écran.",
+          "redemptionSignatureOnCreation": "Le rachat part en signature sans étape de soumission. Remplace \"Sign rebuy directly\".",
+          "directDebit": "Affiche le bouton de prélèvement SEPA sur les appels du fonds. Remplace \"Fonds > Prélèvements\" et \"SEPA for calls\".",
+          "performanceIndicator": "Indicateur affiché sur le portail et le portefeuille. Remplace \"IRR instead of perf\" et \"No performance display\".",
+          "includeDistributions": "Distributions incluses dans le suivi et le graphique de performance. Remplace \"Include distributions in performance\".",
+          "hideCurrentYear": "Masque la performance de l'année en cours. Remplace \"Hide current year performance\".",
+          "alignFirstCall": "La date du premier appel du fonds remplace celle de chaque souscription. Remplace \"Align first call dates for IRR calculation\".",
+          "valuationMethod": "Calcul de la valeur d'une position. Remplace \"Adjust NAV with calls and distributions since last NAV\".",
+          "navProrata": "Valeur par défaut des parts du fonds, fonds à appels seulement. Remplace \"Prorata for share value\".",
+          "allocationBase": "Répartition des appels, distributions et capital accounts. Remplace les trois settings \"Calculate ratio by number of shares\".",
+          "distributionSubscriptions": "Souscriptions prises en compte dans les distributions. Remplace \"Include only paid subscriptions in distribution\".",
+          "callsPerShare": "Génère les appels part par part. Remplace \"Generate call by share\".",
+          "netCashflow": "Compensation entre appel et distribution. Remplace \"Net cashflow\".",
+          "capitalInterest": "Ventilation capital et intérêts, pour les fonds de dette. Remplace \"Capital and interests for distributions\".",
+          "refundInDistributions": "Saisie et affichage du remboursement. Remplace \"Refund for distributions\".",
+          "capitalAccountsStatic": "Résultat net, plus-values réalisées et latentes. Remplace \"Fonds > Capital accounts - Données statiques\".",
+          "rebuyInDistributions": "Autorise le rachat de parts dans une distribution. Remplace \"Allow shares rebuy in distributions\".",
+          "callAmountsInMillions": "Montants des avis d'appel exprimés en millions. Remplace \"Millions for call amounts\".",
+          "combinedNotices": "Mode d'envoi des avis combinés. Remplace \"Combined notice : Enabled\" et \"Only send combined notice\".",
+          "combinedDeposit": "Documents déposés dans l'espace investisseur. Remplace \"Only copy combined notice\".",
+          "combinedGrouping": "Clé de regroupement des avis combinés. Remplace \"Group notices by structure\" et \"Group notices by share\".",
+          "fileName": "Un modèle par famille d'avis. Remplace les sept settings \"file name\".",
+          "flowForecastGrace": "Délai de grâce des prévisions de flux. Remplace \"Grace period for future flows\".",
+          "flowForecastRounding": "Arrondi des prévisions de flux. Remplace \"Round future flows\"."
+        },
+        "options": {
+          "distributorSegments": {
+            "independentAdvisors": "Conseillers indépendants",
+            "privateBanks": "Banques privées",
+            "familyOffices": "Family offices"
+          },
+          "minimumExemption": {
+            "none": "Aucune",
+            "sameFund": "Même fonds",
+            "sameShare": "Même part"
+          },
+          "signatureProvider": {
+            "application": "Celui de l'application",
+            "alternative": "Autre prestataire disponible"
+          },
+          "abandonedReminder": {
+            "none": "Aucune",
+            "12": "12 heures",
+            "24": "24 heures",
+            "48": "48 heures",
+            "72": "72 heures"
+          },
+          "performanceDisplayMode": {
+            "default": "Par défaut",
+            "annualized": "Annualisée",
+            "cumulative": "Cumulée",
+            "yearly": "Par année"
+          },
+          "valuationMethod": {
+            "lastNav": "Dernière valeur liquidative",
+            "adjusted": "Valeur ajustée des appels et distributions depuis"
+          },
+          "allocationBase": {
+            "subscribed": "Montant souscrit",
+            "shares": "Nombre de parts"
+          },
+          "distributionSubscriptions": {
+            "allActive": "Toutes les souscriptions actives",
+            "paidOnly": "Souscriptions payées seulement"
+          },
+          "combinedNotices": {
+            "disabled": "Désactivés",
+            "complement": "En complément des avis individuels",
+            "only": "Seuls"
+          },
+          "combinedDeposit": {
+            "both": "Avis combiné et avis individuels",
+            "combinedOnly": "Avis combiné seul"
+          },
+          "combinedGrouping": {
+            "investor": "Par investisseur",
+            "investorStructure": "Par investisseur et structure",
+            "investorShare": "Par investisseur et part",
+            "investorStructureShare": "Par investisseur, structure et part"
+          },
+          "flowForecastRounding": {
+            "none": "Aucun arrondi",
+            "unit": "À l'unité",
+            "thousand": "Au millier"
+          },
+          "exportData": {
+            "subscriptions": "Souscriptions",
+            "investors": "Investisseurs",
+            "shares": "Parts",
+            "navs": "Valeurs liquidatives",
+            "operations": "Opérations",
+            "capitalAccounts": "Capital accounts"
+          }
         },
         "sections": {
           "identity": {
             "title": "Identité",
-            "subtitle": "Nom, type, couleur"
+            "subtitle": "Nom, type, couleur, logo"
           },
           "legal": {
             "title": "Structure juridique",
             "subtitle": "Forme juridique, devise, taille cible"
           },
+          "portal": {
+            "title": "Présentation sur les portails",
+            "subtitle": "Textes, image, vidéo, bannière"
+          },
           "subscription": {
             "title": "Souscription",
-            "subtitle": "Paiement, canaux, onboarding, contrat"
+            "subtitle": "Onboardings, paiement, canaux, segments"
+          },
+          "calendar": {
+            "title": "Calendrier",
+            "subtitle": "Collecte, clôture, commissionnement"
+          },
+          "evergreen": {
+            "title": "Evergreen et liquidité",
+            "subtitle": "Fenêtre, centralisation, valorisation"
+          },
+          "distribution": {
+            "title": "Distribution",
+            "subtitle": "Prévalidation, convention, commissions"
           },
           "signature": {
             "title": "Signature et validation",
-            "subtitle": "Signataires"
+            "subtitle": "Prestataire, signataires, validation"
           },
           "banking": {
             "title": "Banque et facturation",
-            "subtitle": "Coordonnées bancaires"
+            "subtitle": "Coordonnées bancaires, factures"
           },
-          "calendar": {
-            "title": "Calendrier et cycle de vie",
-            "subtitle": "Collecte, clôture, liquidité"
+          "notifications": {
+            "title": "Notifications et relances",
+            "subtitle": "Emails, contacts, relances"
           },
           "performance": {
             "title": "Performance et valorisation",
-            "subtitle": "Indicateur affiché"
+            "subtitle": "Indicateur, affichage, méthode"
+          },
+          "operations": {
+            "title": "Opérations financières",
+            "subtitle": "Répartition, avis, prévisions"
+          },
+          "integrations": {
+            "title": "Intégrations",
+            "subtitle": "Lemonway, clé API, Salesforce"
+          },
+          "customFields": {
+            "title": "Champs personnalisés",
+            "subtitle": "Champs de l'objet Fonds"
+          },
+          "exports": {
+            "title": "Exports",
+            "subtitle": "Données à exporter"
           }
         },
         "fields": {
           "name": "Nom",
           "adminName": "Nom administratif",
-          "fundType": "Type de fonds",
-          "parent": "Fonds parent",
+          "subscriptionPrefix": "Préfixe des souscriptions",
           "managementCompany": "Société de gestion",
-          "color": "Couleur du fonds",
+          "fundType": "Type de fonds",
+          "parentFund": "Fonds parent",
           "externalId": "Identifiant externe",
+          "externalIdSalesforce": "Identifiant Salesforce",
+          "color": "Couleur du fonds",
+          "logo": "Logo",
+          "displayOrder": "Ordre d'affichage",
           "legalForm": "Forme juridique",
           "depositary": "Dépositaire",
           "currency": "Devise",
           "countries": "Pays de commercialisation",
           "targetSize": "Taille cible",
+          "displayedTargetSize": "Taille cible affichée",
+          "lifetime": "Durée de vie",
+          "strategy": "Stratégie",
+          "marketing": "Commercialisation",
+          "pitch": "Pitch",
+          "advantages": "Avantages",
+          "introduction": "Introduction",
+          "description": "Description détaillée",
+          "subscriptionImage": "Image de souscription",
+          "video": "Vidéo",
+          "bannerContent": "Contenu de la bannière",
+          "onboardingIndividuals": "Onboarding personnes physiques",
+          "onboardingEntities": "Onboarding personnes morales",
+          "redemptionOnboarding": "Onboarding de rachat",
           "paymentMode": "Mode de paiement",
-          "channels": "Canaux de souscription",
-          "onboarding": "Onboarding",
-          "subscriptionContract": "Contrat de souscription",
-          "signatories": "Signataires",
-          "iban": "IBAN",
+          "shareDecimals": "Décimales des parts",
+          "aggregation": "Agrégation des souscriptions",
+          "onlineInvestors": "Souscription en ligne par les investisseurs",
+          "onlineDistributors": "Souscription en ligne par les distributeurs",
+          "investorSegments": "Segments d'investisseurs autorisés",
+          "distributorSegments": "Segments de distributeurs autorisés",
+          "confirmationEmail": "Envoyer l'email de confirmation",
+          "minimumExemption": "Exemption de minimum pour un investisseur déjà présent",
           "collectionStart": "Début de collecte",
           "collectionEnd": "Fin de collecte",
+          "hideCollectionEnd": "Masquer la fin de collecte sur les portails",
           "closingDate": "Date de clôture du fonds",
+          "commissionEnd": "Fin du commissionnement",
           "evergreen": "Fonds evergreen",
           "liquidityWindow": "Fenêtre de liquidité",
-          "navFrequency": "Fréquence de valorisation",
-          "performanceIndicator": "Indicateur de performance"
+          "liquidityPercent": "Pourcentage de liquidité",
+          "centralization": "Centralisation",
+          "navFrequency": "Fréquence de calcul de la valeur liquidative",
+          "redemptionDateRecalc": "Date du rachat recalculée à la signature",
+          "preValidation": "Prévalidation par le distributeur",
+          "preValidationEmails": "Emails de notification de prévalidation",
+          "distributorSignature": "Signature du distributeur",
+          "autoOpenNetwork": "Ouvrir automatiquement le fonds au réseau",
+          "exclusiveDistributor": "Distributeur exclusif",
+          "distributionAgreementRequired": "Convention de distribution requise",
+          "commissionPeriodicity": "Périodicité des commissions de gestion",
+          "billCommissions": "Facturer les commissions de distribution",
+          "notBilledMessage": "Message aux distributeurs si non facturé",
+          "signatureProvider": "Prestataire de signature",
+          "mainSignatory": "Signataire principal",
+          "secondarySignatory": "Signataire secondaire",
+          "redemptionSignatory": "Signataire des rachats",
+          "signatoryChoice": "Choix du signataire",
+          "groupedSignature": "Signature groupée",
+          "advancedSignature": "Signature avancée",
+          "manualSignature": "Signature manuelle autorisée",
+          "preSignature": "Pré-signature",
+          "ccContacts": "Contacts en copie des signatures",
+          "internalValidation": "Validation interne",
+          "validators": "Validateurs",
+          "redemptionSignatureOnCreation": "Envoi en signature dès la création d'un rachat",
+          "iban": "IBAN",
+          "bic": "BIC",
+          "sepaCreditorId": "Identifiant créancier SEPA",
+          "directDebit": "Proposer le prélèvement aux investisseurs",
+          "entryFeeBillingAddress": "Coordonnées de facturation des droits d'entrée",
+          "feesBillingAddress": "Coordonnées de facturation des frais",
+          "vatEntryFee": "Numéro de TVA des droits d'entrée",
+          "vatFees": "Numéro de TVA des frais",
+          "invoiceFooter": "Pied de facture",
+          "feeInvoicePrefix": "Préfixe des factures de frais",
+          "billingEmailEntryFee": "Email de facturation des droits d'entrée",
+          "billingEmailFees": "Email de facturation des frais",
+          "ccEmails": "Emails en copie",
+          "validationEmailsOnboarding": "Emails de validation des onboardings",
+          "validationEmailsRedemption": "Emails de validation des rachats",
+          "validationEmailsRisk": "Emails de validation du risque",
+          "dataChangeEmails": "Email des changements de données",
+          "onboardingNotifiedContact": "Contact notifié à l'onboarding",
+          "abandonedReminder": "Relance des souscriptions abandonnées",
+          "paymentReminder": "Relance de paiement",
+          "performanceIndicator": "Indicateur de performance",
+          "performanceDisplayMode": "Mode d'affichage de la performance",
+          "includeDistributions": "Intégrer les distributions dans la performance",
+          "hideCurrentYear": "Masquer la performance de l'année en cours",
+          "alignFirstCall": "Aligner les dates de premier appel pour le TRI",
+          "valuationMethod": "Méthode de valorisation des positions",
+          "navProrata": "Valeur liquidative au prorata du montant appelé",
+          "allocationBase": "Base de répartition",
+          "distributionSubscriptions": "Souscriptions retenues dans les distributions",
+          "callsPerShare": "Appels par part",
+          "netCashflow": "Flux net",
+          "capitalInterest": "Ventilation capital et intérêts",
+          "refundInDistributions": "Remboursement dans les distributions",
+          "capitalAccountsStatic": "Données statiques des capital accounts",
+          "rebuyInDistributions": "Rachat de parts dans les distributions",
+          "callAmountsInMillions": "Montants des avis d'appel en millions",
+          "combinedNotices": "Avis combinés",
+          "combinedDeposit": "Dépôt des avis combinés",
+          "combinedGrouping": "Regroupement des avis combinés",
+          "fileNameCall": "Nom des fichiers d'avis d'appel",
+          "fileNameCombinedCall": "Nom des fichiers d'avis d'appel combinés",
+          "fileNameDistribution": "Nom des fichiers d'avis de distribution",
+          "fileNameCombinedDistribution": "Nom des fichiers d'avis de distribution combinés",
+          "fileNameCapitalAccount": "Nom des fichiers de capital account",
+          "fileNameCombinedCapitalAccount": "Nom des fichiers de capital account combinés",
+          "fileNameRelease": "Nom des fichiers d'avis de déblocage",
+          "flowForecastGrace": "Prévisions de flux : délai de grâce en jours",
+          "flowForecastRounding": "Prévisions de flux : arrondi",
+          "lemonwayWallet": "Portefeuille Lemonway",
+          "apiKey": "Clé API du fonds",
+          "salesforceSync": "Synchronisation Salesforce",
+          "salesforceLastSync": "Dernière synchronisation",
+          "exportData": "Données à exporter"
         }
       },
       "shares": {
@@ -4921,7 +5212,8 @@
           "isin": "Code ISIN",
           "mode": "Modalité",
           "nominal": "Prix nominal",
-          "fees": "Frais de gestion et d'entrée",
+          "managementFee": "Frais de gestion",
+          "entryFee": "Frais d'entrée",
           "subscribed": "Montant souscrit",
           "called": "Montant appelé",
           "lastNav": "Dernière valeur liquidative",
@@ -4934,7 +5226,6 @@
           "perAmount": "Au montant"
         },
         "priceMissing": "Prix à renseigner",
-        "feesValue": "{{management}} % et {{entry}} %",
         "actionsFor": "Actions sur la part {{name}}",
         "actions": {
           "open": "Ouvrir",
@@ -5187,7 +5478,7 @@
         "title": "Fenêtre de confirmation",
         "description": "Confirmation d'une action qui reste ouverte pendant le traitement. Le parent la ferme en cas de succès. Contenu complémentaire libre : avertissement, panneau d'effets.",
         "variants": "Action normale ou destructive, avec ou sans contenu complémentaire.",
-        "states": "Ouverte, traitement en cours (boutons désactivés, chargement, fermeture bloquée), fermée.",
+        "states": "Ouverte, traitement en cours (boutons désactivés, chargement, fermeture bloquée), fermée. Confirmation refusée par le serveur : bouton désactivé, motif au survol.",
         "exampleLabel": "Exemple : archivage",
         "exampleHint": "ouvrez puis confirmez",
         "demo": {
@@ -5201,6 +5492,13 @@
         "variants": "Mode listing (aucun élément, aucun résultat avec réinitialisation des filtres), mode générique.",
         "states": "Avec ou sans action.",
         "exampleLabel": "Exemple : onglet à venir"
+      },
+      "richTextEditor": {
+        "title": "Éditeur riche",
+        "description": "Éditeur de texte riche minimal : gras, italique, souligné, listes, lien. Sert aux champs multilingues de présentation sur les portails, avec un onglet par langue. L'éditeur des gabarits de mails garde sa version à pastilles de variables.",
+        "variants": "Avec ou sans onglets de langue (SegmentedControl au-dessus).",
+        "states": "Vide, rempli, désactivé, erreur (contour).",
+        "exampleLabel": "Exemple : description détaillée multilingue"
       }
     }
   }

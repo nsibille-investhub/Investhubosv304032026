@@ -11339,3 +11339,23 @@ html {
     }
   }
 }
+
+/* Contenu riche (éditeur et lecture) : listes et liens. Tailles dérivées du token --spacing. */
+.rich-text ul {
+  list-style: disc;
+  padding-inline-start: calc(var(--spacing) * 5);
+}
+
+.rich-text ol {
+  list-style: decimal;
+  padding-inline-start: calc(var(--spacing) * 5);
+}
+
+.rich-text a {
+  color: var(--primary);
+  text-decoration: underline;
+}
+
+.rich-text-surface {
+  min-height: calc(var(--spacing) * 32);
+}

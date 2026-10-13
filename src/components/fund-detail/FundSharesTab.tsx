@@ -30,7 +30,9 @@ interface FundSharesTabProps {
 }
 
 export function FundSharesTab({ detail, target, onTargetHandled, editReason, onOpenNavs }: FundSharesTabProps) {
-  const { t } = useTranslation();
+  const { t, lang } = useTranslation();
+  const percentFormat = new Intl.NumberFormat(lang, { style: 'percent', minimumFractionDigits: 2, maximumFractionDigits: 2 });
+  const percent = (value: number) => percentFormat.format(value / 100);
   const [highlighted, setHighlighted] = useState<string | null>(null);
   const money = (value: number) => formatCurrency(value, detail.currency);
   const comingSoon = () => toast.info(t('funds.detail.comingSoonToast'));
@@ -64,7 +66,8 @@ export function FundSharesTab({ detail, target, onTargetHandled, editReason, onO
             <TableHead>{t(`${K}.columns.isin`)}</TableHead>
             <TableHead>{t(`${K}.columns.mode`)}</TableHead>
             <TableHead className="text-right">{t(`${K}.columns.nominal`)}</TableHead>
-            <TableHead className="text-right">{t(`${K}.columns.fees`)}</TableHead>
+            <TableHead className="text-right">{t(`${K}.columns.managementFee`)}</TableHead>
+            <TableHead className="text-right">{t(`${K}.columns.entryFee`)}</TableHead>
             <TableHead className="text-right">{t(`${K}.columns.subscribed`)}</TableHead>
             {detail.paymentMode === 'calls' && (
               <TableHead className="text-right">{t(`${K}.columns.called`)}</TableHead>
@@ -111,9 +114,8 @@ export function FundSharesTab({ detail, target, onTargetHandled, editReason, onO
                     <StatusBadge label={t(`${K}.priceMissing`)} variant="danger" />
                   )}
                 </TableCell>
-                <TableCell className="text-right tabular-nums">
-                  {t(`${K}.feesValue`, { management: share.managementFee.toFixed(2), entry: share.entryFee.toFixed(1) })}
-                </TableCell>
+                <TableCell className="text-right tabular-nums">{percent(share.managementFee)}</TableCell>
+                <TableCell className="text-right tabular-nums">{percent(share.entryFee)}</TableCell>
                 <TableCell className="text-right tabular-nums">{money(share.subscribed)}</TableCell>
                 {detail.paymentMode === 'calls' && (
                   <TableCell className="text-right tabular-nums">

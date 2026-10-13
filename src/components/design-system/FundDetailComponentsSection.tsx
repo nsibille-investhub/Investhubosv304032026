@@ -33,6 +33,8 @@ import { BlockersPanel } from '../ui/blockers-panel';
 import { Button } from '../ui/button';
 import { ConfirmDialog } from '../ui/confirm-dialog';
 import { PageHeader } from '../ui/page-header';
+import { RichTextEditor } from '../ui/rich-text-editor';
+import { SegmentedControl } from '../ui/segmented-control';
 import { SegmentedProgress } from '../ui/segmented-progress';
 import { PageTabsList, PageTabsTrigger, Tabs } from '../ui/tabs';
 import { WidgetCard, WidgetMetric } from '../ui/widget-card';
@@ -736,6 +738,35 @@ function ConfirmDialogDemo() {
   );
 }
 
+function RichTextDemo() {
+  const { t } = useTranslation();
+  const [language, setLanguage] = useState('fr');
+  const [content, setContent] = useState<Record<string, string>>({
+    fr: '<p>Un fonds qui accompagne des <strong>entreprises de croissance</strong>.</p><ul><li>Équipe dédiée</li><li>Reporting trimestriel</li></ul>',
+    en: '',
+  });
+  const names = new Intl.DisplayNames(['fr'], { type: 'language' });
+  return (
+    <div className="max-w-2xl space-y-2">
+      <SegmentedControl
+        size="sm"
+        value={language}
+        onValueChange={setLanguage}
+        options={['fr', 'en'].map(code => {
+          const label = names.of(code) ?? code;
+          return { value: code, label: label.charAt(0).toUpperCase() + label.slice(1) };
+        })}
+      />
+      <RichTextEditor
+        key={language}
+        ariaLabel={t('funds.detail.settings.fields.description')}
+        value={content[language]}
+        onChange={html => setContent(prev => ({ ...prev, [language]: html }))}
+      />
+    </div>
+  );
+}
+
 /** Composants du détail d'un fonds V3, documentés avec variantes, états et exemple. */
 export function FundDetailComponentsSection() {
   const { t } = useTranslation();
@@ -961,6 +992,19 @@ export function FundDetailComponentsSection() {
       >
         <Example label={t(`${K}.confirmDialog.exampleLabel`)} hint={t(`${K}.confirmDialog.exampleHint`)}>
           <ConfirmDialogDemo />
+        </Example>
+      </DocBlock>
+
+      <DocBlock
+        id="richTextEditor"
+        name="RichTextEditor"
+        importLine="import { RichTextEditor } from '@/components/ui/rich-text-editor'"
+        usage={`<SegmentedControl size="sm" value={language} onValueChange={setLanguage} options={languages} />
+<RichTextEditor key={language} ariaLabel={t('...')} value={content[language]}
+  onChange={html => setContent({ ...content, [language]: html })} invalid={Boolean(error)} />`}
+      >
+        <Example label={t(`${K}.richTextEditor.exampleLabel`)}>
+          <RichTextDemo />
         </Example>
       </DocBlock>
 

@@ -50,6 +50,8 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '.
 import { PageTabsList, PageTabsTrigger, Tabs, TabsContent } from '../ui/tabs';
 import { toneSurface } from '../ui/tone';
 import { getFundActionStates } from './fundActions';
+import { applySettingsToDetail, buildSettingsValues } from './settings/settingsValues';
+import type { SettingsValues } from './settings/settingsSchema';
 import { FundNavsTab } from './FundNavsTab';
 import { FundOverviewTab } from './FundOverviewTab';
 import { FundSettingsTab } from './FundSettingsTab';
@@ -126,9 +128,14 @@ export function FundDetailPage({ fund, onBack, onOpenSubscriptions }: FundDetail
   const [target, setTarget] = useState<FieldTarget | null>(null);
   const [pending, setPending] = useState<null | 'publish' | 'duplicate' | 'archive' | 'unarchive' | 'propagate' | 'delete'>(null);
   const [dialog, setDialog] = useState<null | 'archive' | 'propagate' | 'delete' | 'blockers'>(null);
+  const [settingsValues, setSettingsValues] = useState<SettingsValues>(() => buildSettingsValues(initial));
+  const [settingsDirty, setSettingsDirty] = useState(false);
+  const [pendingTab, setPendingTab] = useState<TabId | null>(null);
 
   useEffect(() => {
     setDetail(initial);
+    setSettingsValues(buildSettingsValues(initial));
+    setSettingsDirty(false);
     setTab('overview');
     setTarget(null);
   }, [initial]);
@@ -138,9 +145,21 @@ export function FundDetailPage({ fund, onBack, onOpenSubscriptions }: FundDetail
   const pendingSubscriptions = detail.pendingSubscriptions.reduce((acc, item) => acc + item.count, 0);
   const blockersTotal = Object.values(detail.deleteBlockers).reduce((acc, value) => acc + value, 0);
 
+  /** Quitter l'onglet Paramètres avec une section modifiée demande confirmation. */
+  const changeTab = (next: TabId) => {
+    if (tab === 'settings' && next !== 'settings' && settingsDirty) setPendingTab(next);
+    else setTab(next);
+  };
+
   const navigateTo = (next: FieldTarget) => {
-    setTab(next.tab);
+    changeTab(next.tab);
     setTarget(next);
+  };
+
+  const saveSettings = (changes: SettingsValues) => {
+    const merged = { ...settingsValues, ...changes };
+    setSettingsValues(merged);
+    setDetail(current => applySettingsToDetail(current, merged));
   };
 
   const run = async (kind: NonNullable<typeof pending>, apply: () => void, messageKey: string) => {
@@ -199,7 +218,7 @@ export function FundDetailPage({ fund, onBack, onOpenSubscriptions }: FundDetail
   ];
 
   const hasBanner = Boolean(
-    detail.archived || detail.locked || detail.mirrorOf || detail.sendingNotices || !detail.rights.edit,
+    detail.archived || detail.locked || detail.mirrorOf || detail.sendingNotices || (!detail.rights.edit && tab !== 'settings'),
   );
 
   const blockedDuringNotices = [t(`${K}.blocked.delete`), t(`${K}.blocked.archive`), t(`${K}.blocked.propagate`), t(`${K}.blocked.publish`)];
@@ -336,7 +355,7 @@ export function FundDetailPage({ fund, onBack, onOpenSubscriptions }: FundDetail
           {
             label: t(`${K}.actions.journal`),
             icon: <BookOpen className="w-4 h-4" />,
-            onClick: () => setTab('journal'),
+            onClick: () => changeTab('journal'),
           },
           {
             label: t(`${K}.actions.delete`),
@@ -373,11 +392,11 @@ export function FundDetailPage({ fund, onBack, onOpenSubscriptions }: FundDetail
           />
         )}
         {detail.sendingNotices && <PageStateBanner variant="sendingNotices" blockedActions={blockedDuringNotices} />}
-        {!detail.rights.edit && <PageStateBanner variant="readOnly" />}
+        {!detail.rights.edit && tab !== 'settings' && <PageStateBanner variant="readOnly" />}
       </div>
       )}
 
-      <Tabs value={tab} onValueChange={value => setTab(value as TabId)} className="mt-2 gap-0">
+      <Tabs value={tab} onValueChange={value => changeTab(value as TabId)} className="mt-2 gap-0">
         <div className="border-b border-border bg-card px-6">
           <PageTabsList>
             {tabs
@@ -408,12 +427,13 @@ export function FundDetailPage({ fund, onBack, onOpenSubscriptions }: FundDetail
             <FundSettingsTab
               key={scenario}
               detail={detail}
+              values={settingsValues}
+              onValuesSaved={saveSettings}
               target={target}
               onTargetHandled={clearTarget}
-              editReason={actions.editReason}
-              onIdentitySaved={values =>
-                setDetail(prev => ({ ...prev, name: values.name, adminName: values.adminName, color: values.color ?? prev.color }))
-              }
+              canEdit={detail.rights.edit}
+              editReason={detail.rights.edit ? actions.editReason : undefined}
+              onDirtyChange={setSettingsDirty}
             />
           </TabsContent>
           <TabsContent value="shares">
@@ -449,6 +469,21 @@ export function FundDetailPage({ fund, onBack, onOpenSubscriptions }: FundDetail
           ))}
         </div>
       </Tabs>
+
+      <ConfirmDialog
+        open={pendingTab !== null}
+        onOpenChange={open => !open && setPendingTab(null)}
+        title={t(`${K}.settings.leave.title`)}
+        description={t(`${K}.settings.leave.description`)}
+        confirmLabel={t(`${K}.settings.leave.confirm`)}
+        cancelLabel={t(`${K}.settings.leave.stay`)}
+        destructive
+        onConfirm={() => {
+          setSettingsDirty(false);
+          if (pendingTab) setTab(pendingTab);
+          setPendingTab(null);
+        }}
+      />
 
       <ConfirmDialog
         open={dialog === 'archive'}
@@ -520,9 +555,9 @@ export function FundDetailPage({ fund, onBack, onOpenSubscriptions }: FundDetail
             blockers={(
               [
                 ['subscriptions', FileSignature, () => onOpenSubscriptions(fund)],
-                ['operations', Receipt, () => setTab('operations')],
-                ['navs', LineChart, () => setTab('navs')],
-                ['contracts', FileText, () => setTab('contracts')],
+                ['operations', Receipt, () => changeTab('operations')],
+                ['navs', LineChart, () => changeTab('navs')],
+                ['contracts', FileText, () => changeTab('contracts')],
               ] as const
             )
               .filter(([key]) => detail.deleteBlockers[key] > 0)

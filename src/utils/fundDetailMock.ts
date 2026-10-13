@@ -55,6 +55,7 @@ export interface FundShare {
   lastNav: { value: number; date: Date } | null;
   restricted: boolean;
   closed: boolean;
+  allowsRedemption: boolean;
 }
 
 export interface FundNavRow {
@@ -65,7 +66,7 @@ export interface FundNavRow {
 
 /** Cible d'un lien "Configuration à compléter" : onglet, section et champ. */
 export interface FieldTarget {
-  tab: 'settings' | 'shares';
+  tab: 'settings' | 'shares' | 'contracts';
   sectionId: string;
   fieldId: string;
 }
@@ -119,7 +120,18 @@ export interface FundDetail {
   sendingNotices: boolean;
   rights: FundRights;
   /** Modules et droits qui conditionnent les onglets (PRD section 6.2). */
-  modules: { partners: boolean; contracts: boolean; operations: boolean; secondaryMarket: boolean };
+  modules: {
+    partners: boolean;
+    contracts: boolean;
+    operations: boolean;
+    secondaryMarket: boolean;
+    lemonway: boolean;
+    apiKey: boolean;
+    salesforce: boolean;
+    advancedSignature: boolean;
+  };
+  /** Langues de l'application : les champs riches s'éditent par langue. */
+  languages: string[];
   // Vue d'ensemble
   subscribed: number;
   targetSize: number | null;
@@ -201,6 +213,7 @@ export function buildFundDetail(fund: Fund, scenario: FundScenario, today = new 
       lastNav: { value: round(100 * (index + 1) * (0.9 + random() * 0.4), 0.01), date: endOfQuarter(addMonths(today, -3)) },
       restricted: index === 2,
       closed: false,
+      allowsRedemption: false,
     };
   });
 
@@ -256,7 +269,17 @@ export function buildFundDetail(fund: Fund, scenario: FundScenario, today = new 
     locked: null,
     sendingNotices: false,
     rights: { edit: true, publish: true, archive: true, delete: true, duplicate: true },
-    modules: { partners: true, contracts: true, operations: true, secondaryMarket: true },
+    modules: {
+      partners: true,
+      contracts: true,
+      operations: true,
+      secondaryMarket: true,
+      lemonway: true,
+      apiKey: true,
+      salesforce: true,
+      advancedSignature: true,
+    },
+    languages: ['fr', 'en'],
     subscribed: fund.totalCommitments,
     targetSize: round(fund.totalCommitments * (1.2 + random() * 0.8), 1_000_000),
     investors: fund.investors,
@@ -280,7 +303,7 @@ export function buildFundDetail(fund: Fund, scenario: FundScenario, today = new 
     missingConfig: [
       {
         key: 'signatory',
-        target: { tab: 'settings', sectionId: 'signature', fieldId: 'signatories' },
+        target: { tab: 'settings', sectionId: 'signature', fieldId: 'mainSignatory' },
       },
     ],
     deleteBlockers: {
@@ -300,7 +323,7 @@ export function buildFundDetail(fund: Fund, scenario: FundScenario, today = new 
     settings: {
       externalId: `SF-${String(fund.id).padStart(5, '0')}`,
       countries: ['France', 'Luxembourg'],
-      onboarding: 'Onboarding investisseurs particuliers',
+      onboarding: 'Onboarding particuliers 2026',
       subscriptionContract: 'Bulletin de souscription 2026',
       signatories: [],
       iban: paymentMode === 'calls' ? null : 'FR76 •••• •••• •••• •••• •••• 042',
@@ -355,11 +378,9 @@ function applyScenario(detail: FundDetail, scenario: FundScenario, today: Date):
           target: { tab: 'shares', sectionId: 'shares', fieldId: detail.shares[detail.shares.length - 1].id },
           detail: detail.shares[detail.shares.length - 1].name,
         },
-        { key: 'onboarding', target: { tab: 'settings', sectionId: 'subscription', fieldId: 'onboarding' } },
-        {
-          key: 'subscriptionContract',
-          target: { tab: 'settings', sectionId: 'subscription', fieldId: 'subscriptionContract' },
-        },
+        { key: 'onboarding', target: { tab: 'settings', sectionId: 'subscription', fieldId: 'onboardingIndividuals' } },
+        // Le contrat de souscription se gère dans l'onglet Contrats, pas dans les paramètres.
+        { key: 'subscriptionContract', target: { tab: 'contracts', sectionId: 'contracts', fieldId: 'contracts' } },
         ...detail.missingConfig,
       ];
       detail.deleteBlockers = { subscriptions: 0, operations: 0, navs: 0, contracts: 0 };
@@ -382,6 +403,7 @@ function applyScenario(detail: FundDetail, scenario: FundScenario, today: Date):
       detail.lastCall = null;
       detail.collectionEnd = null;
       detail.liquidityWindow = { from: { day: 1, month: 6 }, to: { day: 30, month: 6 } };
+      detail.shares = detail.shares.map((share, index) => ({ ...share, allowsRedemption: index === 0 }));
       detail.nextCentralization = endOfQuarter(today);
       detail.settings.iban = 'FR76 •••• •••• •••• •••• •••• 042';
       detail.missingConfig = detail.missingConfig.filter(item => item.key !== 'iban');

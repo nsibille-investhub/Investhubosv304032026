@@ -102,7 +102,7 @@ function ConfigurationWidget({ detail, onNavigate }: Pick<FundOverviewTabProps, 
                     {t(`${K}.config.items.${item.key}`, { name: item.detail ?? '' })}
                   </span>
                   <span className="inline-flex items-center gap-1 text-xs font-medium text-primary">
-                    {item.target.tab === 'shares' ? t(`${K}.config.goToShares`) : t(`${K}.config.goToSettings`)}
+                    {t(`${K}.config.goTo.${item.target.tab}`)}
                     <ArrowRight className="w-3.5 h-3.5" />
                   </span>
                 </button>

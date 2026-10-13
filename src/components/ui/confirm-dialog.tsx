@@ -10,6 +10,7 @@ import {
   AlertDialogTitle,
 } from './alert-dialog';
 import { Button } from './button';
+import { DisabledReason } from './disabled-reason';
 
 interface ConfirmDialogProps {
   open: boolean;
@@ -23,6 +24,8 @@ interface ConfirmDialogProps {
   destructive?: boolean;
   /** Action en cours : boutons désactivés, chargement, la fenêtre reste ouverte. */
   loading?: boolean;
+  /** Confirmation refusée par le serveur : bouton désactivé, motif au survol. */
+  confirmDisabledReason?: string;
   onConfirm: () => void;
 }
 
@@ -37,6 +40,7 @@ export function ConfirmDialog({
   cancelLabel,
   destructive = false,
   loading = false,
+  confirmDisabledReason,
   onConfirm,
 }: ConfirmDialogProps) {
   const { t } = useTranslation();
@@ -53,10 +57,16 @@ export function ConfirmDialog({
           <Button variant="outline" onClick={() => onOpenChange(false)} disabled={loading}>
             {cancelLabel ?? t('common.confirmDialog.cancel')}
           </Button>
-          <Button variant={destructive ? 'danger' : 'primary'} onClick={onConfirm} disabled={loading}>
-            {loading && <Loader2 className="w-4 h-4 animate-spin" />}
-            {confirmLabel}
-          </Button>
+          <DisabledReason reason={confirmDisabledReason}>
+            <Button
+              variant={destructive ? 'danger' : 'primary'}
+              onClick={onConfirm}
+              disabled={loading || Boolean(confirmDisabledReason)}
+            >
+              {loading && <Loader2 className="w-4 h-4 animate-spin" />}
+              {confirmLabel}
+            </Button>
+          </DisabledReason>
         </AlertDialogFooter>
       </AlertDialogContent>
     </AlertDialog>
