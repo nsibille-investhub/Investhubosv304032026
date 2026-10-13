@@ -9,11 +9,14 @@
  *  - Nature badge (generic / nominative), shown in the details header only by default
  *  - Investor / structure as a link (PP / PM icons), outside of the tags
  *  - Targeting tags (fund then subscription as a square chip, share, segments)
- *  - "i" button opening, on click, the full scope: investor, subscription
- *    identification, targeting and the audience CSV download
+ *  - "i" button opening, on click, the full scope: investor and structure as
+ *    separate links, subscription identification, targeting (generic documents,
+ *    or nominative ones carrying a tag) and the audience CSV download
  *
  * Exports:
- *  - <DocumentScope>          the widget (layout "stacked" or "inline")
+ *  - <DocumentScope>          the widget: layout "stacked" (rows wrap freely, "i" at the
+ *                             bottom right) or "inline" (two lines max, no wrapping: investor
+ *                             then targeting tags, or targeting tags then segments; "i" centered)
  *  - resolveScopeAudience()   audience computed from the GED fixtures
  *  - resolveScopeSubscription() subscription identification from the fixtures
  *  - downloadScopeAudience()  CSV export of the audience
@@ -93,6 +96,8 @@ export interface ScopeAudience {
 }
 
 const INVESTORS_BY_NAME = new Map(INVESTORS.map((i) => [i.name, i] as const));
+/** The precompiled Tailwind sheet has no max-w-full, so the cap is inlined. */
+const FULL_WIDTH: CSSProperties = { maxWidth: '100%' };
 const ALL_FUNDS_LABELS = ['Tous fonds', 'Tous les fonds', 'All funds'];
 const ALL_SHARES_LABELS = ['Toutes parts', 'Toutes les parts', 'All shares'];
 const ALL_SEGMENTS_LABELS = ['Tous segments', 'Tous les segments', 'All segments'];
@@ -368,15 +373,19 @@ export function ScopeInvestorLink({
   onClick,
   className,
   style,
+  showStructure = true,
 }: {
   scope: DocumentScopeData;
   onClick?: () => void;
   className?: string;
   style?: CSSProperties;
+  /** False when the structure is shown on its own line, as in the scope details. */
+  showStructure?: boolean;
 }) {
   const { t } = useTranslation();
   const kind = resolveInvestorKind(scope);
   const Icon = kind === 'corporate' ? Building2 : UserRound;
+  const structure = showStructure ? scope.structure : undefined;
   return (
     <Tooltip>
       <TooltipTrigger asChild>
@@ -395,16 +404,16 @@ export function ScopeInvestorLink({
           <Icon className="h-3 w-3 shrink-0 text-gray-400 transition-colors group-hover:text-blue-500" />
           <span
             className="min-w-0 truncate group-hover:underline"
-            style={{ maxWidth: scope.structure ? 140 : 200 }}
+            style={{ maxWidth: structure ? 140 : 200 }}
           >
             {scope.investor}
           </span>
-          {scope.structure && (
+          {structure && (
             <>
               <span className="shrink-0 text-gray-300 dark:text-gray-600">/</span>
               <Building2 className="h-3 w-3 shrink-0 text-gray-400 transition-colors group-hover:text-blue-500" />
               <span className="min-w-0 truncate group-hover:underline" style={{ maxWidth: 140 }}>
-                {scope.structure}
+                {structure}
               </span>
             </>
           )}
@@ -420,15 +429,41 @@ export function ScopeInvestorLink({
             {' · '}
             {scope.investor}
           </div>
-          {scope.structure && (
+          {structure && (
             <div>
               <span className="opacity-70">{t('ged.scope.types.structure')}</span>
               {' · '}
-              {scope.structure}
+              {structure}
             </div>
           )}
           <div className="opacity-70">{t('ged.scope.openInvestor')}</div>
         </div>
+      </TooltipContent>
+    </Tooltip>
+  );
+}
+
+export function ScopeStructureLink({ structure }: { structure: string }) {
+  const { t } = useTranslation();
+  return (
+    <Tooltip>
+      <TooltipTrigger asChild>
+        <button
+          type="button"
+          onClick={(e) => {
+            e.stopPropagation();
+            navigateToPage('entities', { search: structure });
+          }}
+          className="group inline-flex min-w-0 items-center gap-1.5 text-xs text-gray-600 transition-colors hover:text-blue-600 dark:text-gray-300"
+          style={FULL_WIDTH}
+        >
+          <Building2 className="h-3 w-3 shrink-0 text-gray-400 transition-colors group-hover:text-blue-500" />
+          <span className="min-w-0 truncate group-hover:underline">{structure}</span>
+          <ChevronRight className="h-3 w-3 shrink-0 opacity-50 transition-opacity group-hover:opacity-100" />
+        </button>
+      </TooltipTrigger>
+      <TooltipContent side="top">
+        <span className="text-xs">{t('ged.scope.openStructure')}</span>
       </TooltipContent>
     </Tooltip>
   );
@@ -550,19 +585,28 @@ export function DocumentScope({
   const segmentList = segmentTags.map((tag) => <ScopeTag key={tag.key} tag={tag} />);
 
   if (layout === 'inline') {
+    const firstLineTags = showInvestor ? [] : tagList;
+    const secondLineTags = showInvestor ? [...tagList, ...segmentList] : segmentList;
+    const hasFirstLine = showNature || showInvestor || firstLineTags.length > 0;
     return (
-      <div className={cn('flex min-w-0 items-center gap-1.5', className)}>
-        {showNature && <DocumentNatureBadge nature={scope.nature} />}
-        {showInvestor && (
-          <ScopeInvestorLink scope={investorScope} onClick={onInvestorClick} className="shrink" style={{ minWidth: 96 }} />
-        )}
-        {targetingTags.length > 0 && (
-          <div className="flex min-w-0 items-center gap-1 overflow-hidden" style={{ maxWidth: '100%' }}>{tagList}</div>
-        )}
-        {segmentTags.length > 0 && (
-          <div className="flex min-w-0 items-center gap-1 overflow-hidden">{segmentList}</div>
-        )}
-        <div className="ml-auto shrink-0">{infoButton}</div>
+      <div className={cn('flex min-w-0 items-center gap-2', className)}>
+        <div className="flex min-w-0 flex-1 flex-col items-start gap-1">
+          {hasFirstLine && (
+            <div className="flex min-w-0 items-center gap-1.5 overflow-hidden" style={FULL_WIDTH}>
+              {showNature && <DocumentNatureBadge nature={scope.nature} />}
+              {showInvestor && (
+                <ScopeInvestorLink scope={investorScope} onClick={onInvestorClick} style={FULL_WIDTH} />
+              )}
+              {firstLineTags}
+            </div>
+          )}
+          {secondLineTags.length > 0 && (
+            <div className="flex min-w-0 items-center gap-1 overflow-hidden" style={FULL_WIDTH}>
+              {secondLineTags}
+            </div>
+          )}
+        </div>
+        <div className="shrink-0">{infoButton}</div>
       </div>
     );
   }
@@ -664,7 +708,19 @@ function ScopeDetails({
         {isNominative && investorScope.investor && (
           <section>
             <SectionTitle>{t('ged.scope.types.investor')}</SectionTitle>
-            <ScopeInvestorLink scope={investorScope} onClick={onInvestorClick} />
+            <ScopeInvestorLink
+              scope={investorScope}
+              onClick={onInvestorClick}
+              showStructure={false}
+              style={FULL_WIDTH}
+            />
+          </section>
+        )}
+
+        {isNominative && investorScope.structure && (
+          <section>
+            <SectionTitle>{t('ged.scope.types.structure')}</SectionTitle>
+            <ScopeStructureLink structure={investorScope.structure} />
           </section>
         )}
 
@@ -699,7 +755,7 @@ function ScopeDetails({
           </section>
         )}
 
-        {(!subscription || targetingTags.length > 0) && (
+        {(!isNominative || targetingTags.length > 0) && (
           <section>
             <SectionTitle>{t('ged.scope.targeting')}</SectionTitle>
             {targetingTags.length > 0 ? (

@@ -1756,7 +1756,7 @@ export function DesignSystemPage() {
         <p className="text-sm text-[#4F6166] dark:text-[#9DB2AE] mb-1">
           Périmètre d&apos;un document, identique dans l&apos;explorer documentaire, la Bird View et le centre de publication :
           investisseur hors tag avec lien vers sa fiche (icône PP ou PM), suivi de sa structure (investisseur / structure), puis tags de ciblage.
-          La souscription est une étiquette carrée, placée après le fonds. Les segments, paramètre d&apos;audience des éléments génériques, sont sur leur propre ligne, en étiquette carrée violette à bordure pointillée avec une icône de groupe. Le bouton <strong className="font-semibold">i</strong>, placé en bas à droite, ouvre au clic le détail (avec le type générique ou nominatif) :
+          La souscription est une étiquette carrée, placée après le fonds. Les segments, paramètre d&apos;audience des éléments génériques, sont sur leur propre ligne, en étiquette carrée violette à bordure pointillée avec une icône de groupe. Le bouton <strong className="font-semibold">i</strong>, placé en bas à droite, ouvre au clic le détail (avec le type générique ou nominatif) : investisseur et structure en liens séparés,
           identification complète de la souscription, ciblage et téléchargement de l&apos;audience en CSV.
         </p>
         <p className="text-xs text-[#4F6166] dark:text-[#9DB2AE] mb-4">
@@ -1794,7 +1794,7 @@ export function DesignSystemPage() {
           </div>
           <div className="md:col-span-2 rounded-xl border border-[#D7E0DD] dark:border-[#1F2D2A] p-4 bg-[#F8FAFA] dark:bg-[#0F1716]">
             <span className="mb-3 block text-[11px] font-semibold uppercase tracking-[0.14em] text-[#456B6C]">
-              Layout inline - ligne d&apos;arbre (Bird View)
+              Layout inline - ligne d&apos;arbre (Bird View), deux lignes maximum
             </span>
             <DocumentScope
               layout="inline"
