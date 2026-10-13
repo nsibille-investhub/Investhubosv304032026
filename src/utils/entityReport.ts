@@ -1,5 +1,5 @@
 import type { Language } from './languageContext';
-import type { EntityRow, ScreeningMatch } from './screeningMock';
+import type { EntityRow, ScreeningEntity, ScreeningMatch } from './screeningMock';
 import { matchOpenStatus } from './screeningMock';
 import {
   AUDIT_TYPE_KEY,
@@ -380,4 +380,309 @@ export function exportEntityAuditCsv(entity: EntityRow, t: Translate, lang: Lang
     ]),
   ];
   downloadCsv(rows, `audit_trail_${slug(entity.name)}_${today()}.csv`);
+}
+
+// ---------------------------------------------------------------------------
+// Téléchargements fournisseur : rapport PDF (IC-5557) et pistes d'audit CSV
+// (IC-5558 par alerte, IC-5559 par entité)
+// ---------------------------------------------------------------------------
+
+const d = (key: string) => `complianceEntities.downloads.${key}`;
+
+const AUDIT_CSV_COLUMNS = [
+  'date',
+  'eventType',
+  'status',
+  'qualification',
+  'comment',
+  'author',
+  'alertRef',
+  'entity',
+  'score',
+  'lists',
+  'changeType',
+  'provider',
+  'providerRef',
+] as const;
+
+type AuditEventTypeKey = 'creation' | 'decision' | 'requalification' | 'escalation' | 'commentEdit';
+type AuditStatusKey = 'pending' | 'confirmed' | 'rejected';
+type AuditChangeKey = 'new' | 'modified' | 'deleted';
+
+const AUDIT_STATUS_KEY: Record<AuditStatusKey, string> = {
+  pending: 'complianceAlerts.status.pending',
+  confirmed: 'complianceAlerts.status.confirmed',
+  rejected: 'complianceAlerts.status.rejected',
+};
+
+const AUDIT_CHANGE_KEY: Record<AuditChangeKey, string> = {
+  new: 'complianceAlerts.changes.new',
+  modified: 'complianceAlerts.changes.modified',
+  deleted: d('csv.changeDeleted'),
+};
+
+const DECISION_STATUS: Record<ScreeningMatch['decisions'][number]['decision'], AuditStatusKey> = {
+  true_hit: 'confirmed',
+  false_hit: 'rejected',
+  unsure: 'pending',
+};
+
+interface AuditCsvEvent {
+  date: string;
+  order: number;
+  cells: string[];
+}
+
+const toUtcIso = (value: string) => new Date(value).toISOString().replace(/\.\d{3}Z$/, 'Z');
+
+const csvCell = (value: string) => (/[;",\r\n]/.test(value) ? `"${value.replace(/"/g, '""')}"` : value);
+
+function alertAuditEvents(match: ScreeningMatch, entity: ScreeningEntity, t: Translate): AuditCsvEvent[] {
+  type Step =
+    | { kind: 'provider'; date: string; score: number; change: AuditChangeKey }
+    | { kind: 'decision'; date: string; decision: ScreeningMatch['decisions'][number] }
+    | { kind: 'commentEdit'; date: string; comment: string; analyst: string };
+
+  const steps: Step[] = [
+    ...match.alerts.map<Step>((al) => ({
+      kind: 'provider',
+      date: al.date,
+      score: al.score,
+      change: al.kind === 'new' ? 'new' : 'modified',
+    })),
+    ...match.decisions.map<Step>((dec) => ({ kind: 'decision', date: dec.date, decision: dec })),
+    ...(match.commentEdits ?? []).map<Step>((edit) => ({
+      kind: 'commentEdit',
+      date: edit.date,
+      comment: edit.comment,
+      analyst: edit.analyst,
+    })),
+  ].sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime());
+
+  const lists = match.categories.map((c) => t(CATEGORY_KEY[c])).join(', ');
+  let status: AuditStatusKey = 'pending';
+  let qualification = '';
+  let score = match.alerts[0]?.score ?? match.score;
+  let change: AuditChangeKey = 'new';
+
+  return steps.map((step, index) => {
+    let eventType: AuditEventTypeKey;
+    let comment = '';
+    let author = t(d('csv.providerAuthor'));
+    let rowQualification = '';
+
+    if (step.kind === 'provider') {
+      eventType = 'creation';
+      status = 'pending';
+      score = step.score;
+      change = step.change;
+    } else if (step.kind === 'decision') {
+      const dec = step.decision;
+      eventType = dec.decision === 'unsure' ? 'escalation' : dec.revision > 1 ? 'requalification' : 'decision';
+      status = DECISION_STATUS[dec.decision];
+      qualification = t(DECISION_KEY[dec.decision]);
+      rowQualification = qualification;
+      comment = dec.comment;
+      author = dec.analyst;
+    } else {
+      eventType = 'commentEdit';
+      rowQualification = qualification;
+      comment = step.comment;
+      author = step.analyst;
+    }
+
+    return {
+      date: step.date,
+      order: index,
+      cells: [
+        toUtcIso(step.date),
+        t(d(`csv.eventTypes.${eventType}`)),
+        t(AUDIT_STATUS_KEY[status]),
+        rowQualification,
+        comment,
+        author,
+        match.reference,
+        entity.name,
+        `${score} %`,
+        lists,
+        t(AUDIT_CHANGE_KEY[change]),
+        entity.provider,
+        entity.providerCaseRef,
+      ],
+    };
+  });
+}
+
+function auditCsvContent(events: AuditCsvEvent[], t: Translate): string {
+  const header = AUDIT_CSV_COLUMNS.map((col) => t(d(`csv.columns.${col}`)));
+  const rows = [...events]
+    .sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime() || a.order - b.order)
+    .map((ev) => ev.cells);
+  return [header, ...rows].map((row) => row.map(csvCell).join(';')).join('\r\n') + '\r\n';
+}
+
+function triggerDownload(blob: Blob, filename: string) {
+  const url = URL.createObjectURL(blob);
+  const link = document.createElement('a');
+  link.href = url;
+  link.download = filename;
+  document.body.appendChild(link);
+  link.click();
+  document.body.removeChild(link);
+  window.setTimeout(() => URL.revokeObjectURL(url), 1000);
+}
+
+const csvBlob = (content: string) => new Blob([`﻿${content}`], { type: 'text/csv;charset=utf-8;' });
+
+/** IC-5558 : piste d'audit d'une seule alerte. */
+export function downloadAlertAuditTrail(match: ScreeningMatch, entity: ScreeningEntity, t: Translate) {
+  const content = auditCsvContent(alertAuditEvents(match, entity, t), t);
+  triggerDownload(csvBlob(content), `piste-audit-alerte-${match.reference}-${today()}.csv`);
+}
+
+/** IC-5559 : piste d'audit de toutes les alertes de l'entité, en ordre chronologique global. */
+export function downloadEntityAuditTrail(entity: ScreeningEntity, matches: ScreeningMatch[], t: Translate) {
+  const unique = Array.from(new Map(matches.map((mt) => [mt.id, mt])).values());
+  let order = 0;
+  const events = unique
+    .flatMap((mt) => alertAuditEvents(mt, entity, t))
+    .map((ev) => ({ ...ev, order: order++ }));
+  const content = auditCsvContent(events, t);
+  triggerDownload(csvBlob(content), `audit-trail-entity-${entity.uid}-${today()}.csv`);
+}
+
+const WIN_ANSI_EXTRA: Record<string, number> = {
+  '€': 0x80, '‚': 0x82, 'ƒ': 0x83, '„': 0x84, '…': 0x85, '†': 0x86, '‡': 0x87, 'ˆ': 0x88, '‰': 0x89,
+  'Š': 0x8a, '‹': 0x8b, 'Œ': 0x8c, 'Ž': 0x8e, '‘': 0x91, '’': 0x92, '“': 0x93, '”': 0x94, '•': 0x95,
+  '–': 0x96, '—': 0x97, '˜': 0x98, '™': 0x99, 'š': 0x9a, '›': 0x9b, 'œ': 0x9c, 'ž': 0x9e, 'Ÿ': 0x9f,
+  ' ': 0x20,
+};
+
+function pdfText(value: string): string {
+  let out = '';
+  for (const ch of value) {
+    const code = ch.charCodeAt(0);
+    const byte = code < 0x80 || (code >= 0xa0 && code <= 0xff) ? code : WIN_ANSI_EXTRA[ch] ?? 0x3f;
+    const c = String.fromCharCode(byte);
+    out += c === '(' || c === ')' || c === '\\' ? `\\${c}` : c;
+  }
+  return out;
+}
+
+function wrap(value: string, maxChars: number): string[] {
+  const lines: string[] = [];
+  let current = '';
+  value.split(/\s+/).forEach((word) => {
+    if (current && (current + ' ' + word).length > maxChars) {
+      lines.push(current);
+      current = word;
+    } else {
+      current = current ? `${current} ${word}` : word;
+    }
+  });
+  if (current) lines.push(current);
+  return lines;
+}
+
+function buildSinglePagePdf(title: string, blocks: Array<{ text: string; bold?: boolean; size?: number; gap?: number }>, footer: string): Uint8Array {
+  const ops: string[] = [
+    '0.043 0.235 0.286 rg 0 772 595 70 re f',
+    `BT /F2 18 Tf 1 1 1 rg 40 800 Td (${pdfText(title)}) Tj ET`,
+  ];
+  let y = 740;
+  blocks.forEach((block) => {
+    const size = block.size ?? 10;
+    y -= block.gap ?? 0;
+    wrap(block.text, Math.floor(1000 / size)).forEach((line) => {
+      if (y < 70) return;
+      ops.push(`BT /${block.bold ? 'F2' : 'F1'} ${size} Tf 0.06 0.09 0.16 rg 40 ${y} Td (${pdfText(line)}) Tj ET`);
+      y -= size + 5;
+    });
+  });
+  ops.push('0.8 0.84 0.88 RG 0.5 w 40 60 m 555 60 l S');
+  ops.push(`BT /F1 8 Tf 0.39 0.45 0.55 rg 40 46 Td (${pdfText(footer)}) Tj ET`);
+  const stream = ops.join('\n');
+
+  const objects = [
+    '<< /Type /Catalog /Pages 2 0 R >>',
+    '<< /Type /Pages /Kids [3 0 R] /Count 1 >>',
+    '<< /Type /Page /Parent 2 0 R /MediaBox [0 0 595 842] /Resources << /Font << /F1 4 0 R /F2 5 0 R >> >> /Contents 6 0 R >>',
+    '<< /Type /Font /Subtype /Type1 /BaseFont /Helvetica /Encoding /WinAnsiEncoding >>',
+    '<< /Type /Font /Subtype /Type1 /BaseFont /Helvetica-Bold /Encoding /WinAnsiEncoding >>',
+    `<< /Length ${stream.length} >>\nstream\n${stream}\nendstream`,
+    `<< /Title (${pdfText(title)}) /Producer (InvestHub) >>`,
+  ];
+
+  let pdf = '%PDF-1.4\n%\xe2\xe3\xcf\xd3\n';
+  const offsets: number[] = [];
+  objects.forEach((obj, i) => {
+    offsets.push(pdf.length);
+    pdf += `${i + 1} 0 obj\n${obj}\nendobj\n`;
+  });
+  const xref = pdf.length;
+  pdf += `xref\n0 ${objects.length + 1}\n0000000000 65535 f \n`;
+  pdf += offsets.map((o) => `${String(o).padStart(10, '0')} 00000 n \n`).join('');
+  pdf += `trailer\n<< /Size ${objects.length + 1} /Root 1 0 R /Info 7 0 R >>\nstartxref\n${xref}\n%%EOF\n`;
+
+  const bytes = new Uint8Array(pdf.length);
+  for (let i = 0; i < pdf.length; i++) bytes[i] = pdf.charCodeAt(i) & 0xff;
+  return bytes;
+}
+
+export function buildProviderReportPdf(
+  entity: ScreeningEntity,
+  matches: ScreeningMatch[],
+  t: Translate,
+  lang: Language,
+): Uint8Array {
+  const lastRun = [...entity.runs].sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime())[0];
+  const label = (key: string, value: string) => ({ text: `${t(d(`pdf.${key}`))} : ${value}` });
+  const sorted = [...matches].sort((a, b) => new Date(a.firstSeen).getTime() - new Date(b.firstSeen).getTime());
+
+  const blocks: Array<{ text: string; bold?: boolean; size?: number; gap?: number }> = [
+    { text: t(d('pdf.subtitle'), { provider: entity.provider }), bold: true, size: 12 },
+    { ...label('entity', `${entity.name} (${t(ENTITY_TYPE_KEY[entity.type])})`), gap: 8 },
+    label('entityRef', entity.uid),
+    label('provider', entity.provider),
+    label('providerRef', entity.providerCaseRef),
+    label('controlDate', lastRun ? formatDateTime(lastRun.date, lang) : '-'),
+    label('generatedOn', formatDateTime(new Date().toISOString(), lang)),
+    { text: t(d('pdf.matchesTitle'), { count: sorted.length }), bold: true, size: 12, gap: 14 },
+    ...(sorted.length
+      ? sorted.map((mt) => ({
+          text: [
+            mt.reference,
+            mt.profileName,
+            `${mt.score} %`,
+            mt.categories.map((c) => t(CATEGORY_KEY[c])).join(', '),
+            t(OPEN_STATUS_KEY[matchOpenStatus(mt)]),
+          ].join(' · '),
+        }))
+      : [{ text: t(d('pdf.noMatch')) }]),
+  ];
+
+  return buildSinglePagePdf(
+    t(d('pdf.title'), { provider: entity.provider, name: entity.name }),
+    blocks,
+    t(d('pdf.footer')),
+  );
+}
+
+/**
+ * IC-5557 : rapport PDF du fournisseur qui a contrôlé l'entité.
+ * Renvoie false quand le fournisseur ne fournit pas de rapport (aucun fichier).
+ */
+export function downloadProviderReport(
+  entity: ScreeningEntity,
+  matches: ScreeningMatch[],
+  t: Translate,
+  lang: Language,
+): boolean {
+  if (!entity.controlCompleted || !entity.providerReportAvailable) return false;
+  const bytes = buildProviderReportPdf(entity, matches, t, lang);
+  triggerDownload(
+    new Blob([bytes], { type: 'application/pdf' }),
+    `rapport-${entity.provider.toLowerCase()}-${entity.uid}-${today()}.pdf`,
+  );
+  return true;
 }

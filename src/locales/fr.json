@@ -1105,7 +1105,8 @@
           "scoreComputed": "Score de risque calculé à partir des réponses du dossier.",
           "manualScore": "Score saisi manuellement sur la composante Origine des fonds.",
           "categorisationSet": "Catégorisation MIF II enregistrée.",
-          "pendingValidation": "Dossier passé en attente de validation par la conformité."
+          "pendingValidation": "Dossier passé en attente de validation par la conformité.",
+          "reportDownloaded": "Rapport du fournisseur téléchargé - {{name}}"
         },
         "final": {
           "title": "Conformité",
@@ -4452,6 +4453,52 @@
       "rerunBody": "{{count}} match(s) connus, aucun nouveau profil",
       "closed": "Entité clôturée",
       "reopened": "Entité rouverte"
+    },
+    "downloads": {
+      "menuLabel": "Plus d'actions sur {{name}}",
+      "actionsColumn": "Actions",
+      "downloadReport": "Télécharger le rapport",
+      "downloadAuditTrail": "Télécharger la piste d'audit",
+      "reportUnavailable": "Le rapport n'est pas disponible chez le fournisseur pour cette entité.",
+      "csv": {
+        "columns": {
+          "date": "Date de l'événement",
+          "eventType": "Type d'événement",
+          "status": "Statut",
+          "qualification": "Qualification",
+          "comment": "Commentaire",
+          "author": "Auteur",
+          "alertRef": "Référence de l'alerte",
+          "entity": "Entité contrôlée",
+          "score": "Score de correspondance",
+          "lists": "Listes",
+          "changeType": "Type de changement",
+          "provider": "Fournisseur",
+          "providerRef": "Référence fournisseur"
+        },
+        "eventTypes": {
+          "creation": "Création de l'alerte",
+          "decision": "Décision",
+          "requalification": "Requalification",
+          "escalation": "Escalade",
+          "commentEdit": "Modification du commentaire"
+        },
+        "providerAuthor": "Fournisseur",
+        "changeDeleted": "Supprimé"
+      },
+      "pdf": {
+        "title": "Rapport {{provider}} - {{name}}",
+        "subtitle": "Rapport de screening transmis par {{provider}}",
+        "entity": "Entité contrôlée",
+        "entityRef": "Référence de l'entité",
+        "provider": "Fournisseur",
+        "providerRef": "Référence fournisseur",
+        "controlDate": "Date du dernier contrôle",
+        "generatedOn": "Rapport généré le",
+        "matchesTitle": "Correspondances remontées ({{count}})",
+        "noMatch": "Aucune correspondance remontée par le fournisseur.",
+        "footer": "Document de démonstration. Toutes les données sont fictives."
+      }
     }
   },
   "mailRedirect": {

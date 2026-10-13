@@ -7,6 +7,7 @@ import {
   ChevronRight,
   Clock,
   FileCheck,
+  FileDown,
   Globe,
   ListChecks,
   MessageSquare,
@@ -516,8 +517,21 @@ export function SubscriptionComplianceSection({
   const [reopenedAt, setReopenedAt] = useState<string | null>(null);
   const [note, setNote] = useState('');
   const [journalNotes, setJournalNotes] = useState<
-    { id: string; at: string; by: string; text: string }[]
+    { id: string; at: string; by: string; text: string; kind: 'note' | 'report' }[]
   >([]);
+
+  const handleReportDownloaded = (entity: { name: string }) => {
+    setJournalNotes(prev => [
+      {
+        id: `report-${prev.length + 1}`,
+        at: now(),
+        by: CURRENT_OPERATOR,
+        text: t('subscriptions.detail.compliance.journal.reportDownloaded', { name: entity.name }),
+        kind: 'report',
+      },
+      ...prev,
+    ]);
+  };
 
   const profileScore = computeProfileScore(manualScores);
   const profileTier = findRiskTier(mockRiskProfile.scaleId, profileScore);
@@ -600,7 +614,7 @@ export function SubscriptionComplianceSection({
   const handleAddNote = () => {
     if (!note.trim()) return;
     setJournalNotes(prev => [
-      { id: `note-${prev.length + 1}`, at: now(), by: CURRENT_OPERATOR, text: note.trim() },
+      { id: `note-${prev.length + 1}`, at: now(), by: CURRENT_OPERATOR, text: note.trim(), kind: 'note' },
       ...prev,
     ]);
     setNote('');
@@ -905,7 +919,11 @@ export function SubscriptionComplianceSection({
           scoreValidatedAt={scoreValidatedAt}
         />
 
-        <SubscriptionScreeningWidget screening={screening} locked={locked} />
+        <SubscriptionScreeningWidget
+          screening={screening}
+          locked={locked}
+          onReportDownloaded={handleReportDownloaded}
+        />
       </div>
 
       {/* Widget journal de conformite */}
@@ -937,7 +955,11 @@ export function SubscriptionComplianceSection({
             {journalNotes.map(entry => (
               <li key={entry.id} className="flex items-start gap-3">
                 <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-lg bg-muted">
-                  <MessageSquare className="w-3.5 h-3.5 text-muted-foreground" />
+                  {entry.kind === 'report' ? (
+                    <FileDown className="w-3.5 h-3.5 text-muted-foreground" />
+                  ) : (
+                    <MessageSquare className="w-3.5 h-3.5 text-muted-foreground" />
+                  )}
                 </span>
                 <div className="min-w-0">
                   <p className="text-sm text-foreground">{entry.text}</p>

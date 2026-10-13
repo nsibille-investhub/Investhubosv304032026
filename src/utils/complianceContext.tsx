@@ -46,6 +46,8 @@ interface ComplianceContextValue {
   alertItems: AlertItem[];
   isLoading: boolean;
   pendingAlertsCount: number;
+  /** Droit de consultation du screening (démo : `?screeningAccess=none` le retire). */
+  canViewScreening: boolean;
   getEntityByUid: (uid: string) => ScreeningEntity | undefined;
   getEntityRow: (entityId: number) => EntityRow | undefined;
   getEntityRowByUid: (uid: string) => EntityRow | undefined;
@@ -96,7 +98,13 @@ function withAudit(entity: ScreeningEntity, events: EntityAuditEvent[]): Screeni
   return { ...entity, auditTrail: [...events, ...entity.auditTrail] };
 }
 
+function readScreeningAccess(): boolean {
+  if (typeof window === 'undefined') return true;
+  return !window.location.href.includes('screeningAccess=none');
+}
+
 export function ComplianceProvider({ children }: { children: React.ReactNode }) {
+  const [canViewScreening] = useState(readScreeningAccess);
   const [dataset, setDataset] = useState<ScreeningDataset>(() => generateScreeningDataset(100));
   const [isLoading, setIsLoading] = useState(true);
 
@@ -297,6 +305,7 @@ export function ComplianceProvider({ children }: { children: React.ReactNode }) 
       alertItems,
       isLoading,
       pendingAlertsCount,
+      canViewScreening,
       getEntityByUid,
       getEntityRow,
       getEntityRowByUid,
@@ -316,6 +325,7 @@ export function ComplianceProvider({ children }: { children: React.ReactNode }) 
       alertItems,
       isLoading,
       pendingAlertsCount,
+      canViewScreening,
       getEntityByUid,
       getEntityRow,
       getEntityRowByUid,

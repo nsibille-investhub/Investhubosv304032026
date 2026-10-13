@@ -5,6 +5,7 @@ import {
   Calendar,
   CheckCircle2,
   ExternalLink,
+  FileDown,
   FileText,
   Fingerprint,
   Gauge,
@@ -38,6 +39,7 @@ import {
   formatDateTime,
 } from './entity-detail/entityDetailShared';
 import { useCompliance } from '../utils/complianceContext';
+import { useScreeningDownloads } from './entity-detail/EntityDownloadMenu';
 import type { MatchDecisionValue } from '../utils/screeningMock';
 import { AlertItem, AlertListCategory } from '../utils/alertsGenerator';
 import {
@@ -155,7 +157,8 @@ export function AlertDetailDrawer({
   onEntityClick,
 }: AlertDetailDrawerProps) {
   const { t, lang } = useTranslation();
-  const { getMatch } = useCompliance();
+  const { getMatch, getEntityByUid } = useCompliance();
+  const { canViewScreening, downloadReport, downloadAlertTrail } = useScreeningDownloads();
   const [decision, setDecision] = useState<Decision | null>(null);
   const [comment, setComment] = useState('');
   const [aiAnalysis, setAiAnalysis] = useState<AiScreeningAnalysis | null>(null);
@@ -246,6 +249,33 @@ export function AlertDetailDrawer({
             </SheetTitle>
             <StatusBadge label={statusLabel} variant={statusVariant} />
           </div>
+          {canViewScreening && (
+            <div className="pr-8 flex items-center gap-2 flex-wrap">
+              <Button
+                variant="secondary"
+                size="sm"
+                type="button"
+                className="h-8 gap-1.5 text-xs"
+                onClick={() => {
+                  const entity = getEntityByUid(alert.entityUid);
+                  if (entity) downloadReport(entity);
+                }}
+              >
+                <FileText className="w-3.5 h-3.5" />
+                {t('complianceEntities.downloads.downloadReport')}
+              </Button>
+              <Button
+                variant="secondary"
+                size="sm"
+                type="button"
+                className="h-8 gap-1.5 text-xs"
+                onClick={() => downloadAlertTrail(alert.id)}
+              >
+                <FileDown className="w-3.5 h-3.5" />
+                {t('complianceEntities.downloads.downloadAuditTrail')}
+              </Button>
+            </div>
+          )}
           <SheetDescription className="sr-only">
             {t('complianceAlerts.drawer.titleHint')}
           </SheetDescription>

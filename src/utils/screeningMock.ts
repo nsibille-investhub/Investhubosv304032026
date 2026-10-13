@@ -58,8 +58,17 @@ export interface MatchAlertEvent {
   score: number;
 }
 
+export interface MatchCommentEdit {
+  id: string;
+  comment: string;
+  analyst: string;
+  date: string;
+}
+
 export interface ScreeningMatch {
   id: string;
+  /** Référence affichée de l'alerte (ALR-xxxx). */
+  reference: string;
   entityId: number;
   profileName: string;
   score: number;
@@ -72,6 +81,7 @@ export interface ScreeningMatch {
   firstSeen: string;
   lastUpdate: string;
   profile: MatchProfile;
+  commentEdits?: MatchCommentEdit[];
 }
 
 export interface IndividualIdentity {
@@ -136,6 +146,12 @@ export interface ScreeningEntity {
   links: EntityLink[];
   dossierRef: string;
   provider: ScreeningProvider;
+  /** Référence du dossier chez le fournisseur, reprise dans la piste d'audit. */
+  providerCaseRef: string;
+  /** Un contrôle a abouti chez le fournisseur : un rapport peut exister. */
+  controlCompleted: boolean;
+  /** Le fournisseur renvoie bien un rapport pour cette entité. */
+  providerReportAvailable: boolean;
   monitoring: boolean;
   analyst: string;
   riskLevel: EntityRiskLevel;
@@ -698,6 +714,7 @@ export function generateScreeningDataset(count = 100, seed = 20260907): Screenin
 
       const match: ScreeningMatch = {
         id: `m-${matchCounter}`,
+        reference: `ALR-${1100 + matchCounter}`,
         entityId,
         profileName,
         score: effectiveScore,
@@ -825,6 +842,9 @@ export function generateScreeningDataset(count = 100, seed = 20260907): Screenin
       links: buildLinks(name, type),
       dossierRef: `KYC-2026-${String(entityId).padStart(3, '0')}`,
       provider,
+      providerCaseRef: '',
+      controlCompleted: true,
+      providerReportAvailable: true,
       monitoring,
       analyst,
       riskLevel,
@@ -836,7 +856,237 @@ export function generateScreeningDataset(count = 100, seed = 20260907): Screenin
     });
   }
 
+  applyDemoProviderScenarios(entities, matches);
+
   return { entities, matches };
+}
+
+// ---------------------------------------------------------------------------
+// Scénarios de démo fournisseur (rapport PDF et piste d'audit)
+// ---------------------------------------------------------------------------
+
+export const DEMO_MEMBERCHECK_ENTITY = 'Crown Financial Services';
+export const DEMO_WORLDCHECK_ENTITY = 'Sterling Financial Services';
+export const DEMO_REPORT_UNAVAILABLE_ENTITY = 'Atlas Global Partners';
+
+const CROWN_ALERT_1042 = { score: 91, categories: ['Sanctions'] as AlertListCategory[] };
+const CROWN_ALERT_1057 = { score: 84, categories: ['PEP', 'Adverse Media'] as AlertListCategory[] };
+
+function providerCaseRef(provider: ScreeningProvider, entityId: number): string {
+  const digits = String(500000 + ((entityId * 7919) % 99991)).padStart(6, '0');
+  return `${provider === 'MemberCheck' ? 'MC' : 'WC'}-${digits}`;
+}
+
+function demoMatch(
+  base: ScreeningMatch,
+  overrides: Pick<ScreeningMatch, 'id' | 'reference' | 'score' | 'categories' | 'change' | 'alerts' | 'decisions' | 'firstSeen' | 'lastUpdate'> &
+    Partial<Pick<ScreeningMatch, 'commentEdits'>>,
+): ScreeningMatch {
+  const currentDecision = overrides.decisions[overrides.decisions.length - 1] ?? null;
+  return {
+    ...base,
+    ...overrides,
+    source: 'Membercheck',
+    currentDecision,
+    profile: {
+      ...base.profile,
+      id: overrides.id,
+      similarity: overrides.score,
+      decision: currentDecision?.decision ?? null,
+      comment: currentDecision?.comment ?? '',
+      analyst: currentDecision?.analyst ?? '',
+      date: overrides.lastUpdate.split('T')[0],
+    },
+  };
+}
+
+function demoMatchAudit(mt: ScreeningMatch): EntityAuditEvent[] {
+  const events: EntityAuditEvent[] = mt.alerts.map((al) => ({
+    id: `evt-${al.id}`,
+    type: al.kind === 'new' ? 'match_created' : al.kind === 'change' ? 'match_changed' : 'match_reopened',
+    timestamp: al.date,
+    actorName: SYSTEM_ACTOR.name,
+    actorSublabel: SYSTEM_ACTOR.email,
+    actorRole: SYSTEM_ACTOR.role,
+    description: al.kind,
+    matchName: mt.profileName,
+    after: `${al.score}%`,
+  }));
+  mt.decisions.forEach((dec) => {
+    const who = shortActor(dec.analyst);
+    events.push(
+      {
+        id: `evt-${dec.id}`,
+        type: dec.revision > 1 ? 'decision_revised' : 'decision',
+        timestamp: dec.date,
+        actorName: who.name,
+        actorSublabel: who.email,
+        actorRole: who.role,
+        description: dec.decision,
+        matchName: mt.profileName,
+        before: dec.supersedesId ? mt.decisions.find((d) => d.id === dec.supersedesId)?.decision : undefined,
+        after: dec.decision,
+      },
+      {
+        id: `evt-${dec.id}-comment`,
+        type: 'comment',
+        timestamp: dec.date,
+        actorName: who.name,
+        actorSublabel: who.email,
+        actorRole: who.role,
+        description: dec.comment,
+        matchName: mt.profileName,
+      },
+    );
+  });
+  (mt.commentEdits ?? []).forEach((edit) => {
+    const who = shortActor(edit.analyst);
+    events.push({
+      id: `evt-${edit.id}`,
+      type: 'comment',
+      timestamp: edit.date,
+      actorName: who.name,
+      actorSublabel: who.email,
+      actorRole: who.role,
+      description: edit.comment,
+      matchName: mt.profileName,
+    });
+  });
+  return events;
+}
+
+/**
+ * Données de démo stables pour les téléchargements fournisseur : une entité
+ * MemberCheck avec deux alertes détaillées, une entité WorldCheck, une entité
+ * sans contrôle abouti et une entité dont le rapport est indisponible.
+ */
+function applyDemoProviderScenarios(entities: ScreeningEntity[], matches: ScreeningMatch[]) {
+  entities.forEach((entity) => {
+    entity.provider = entity.id % 3 === 0 ? 'WorldCheck' : 'MemberCheck';
+    entity.providerReportAvailable = entity.id % 11 !== 4;
+  });
+
+  const entityMatchCount = (id: number) => matches.filter((mt) => mt.entityId === id).length;
+  const corporatesWithMatches = entities.filter((e) => e.type === 'Corporate' && entityMatchCount(e.id) > 0);
+  const byName = (name: string, fallbackIndex: number) =>
+    entities.find((e) => e.name === name) ?? corporatesWithMatches[fallbackIndex];
+
+  const crown = byName(DEMO_MEMBERCHECK_ENTITY, 0);
+  if (crown) {
+    crown.provider = 'MemberCheck';
+    crown.providerReportAvailable = true;
+    crown.controlCompleted = true;
+    const template = matches.find((mt) => mt.entityId === crown.id) ?? matches[0];
+    for (let i = matches.length - 1; i >= 0; i--) {
+      if (matches[i].entityId === crown.id) matches.splice(i, 1);
+    }
+    if (template) {
+      const camille = 'Camille Martin';
+      const alert1042 = demoMatch(
+        { ...template, entityId: crown.id },
+        {
+          id: 'm-crown-1042',
+          reference: 'ALR-1042',
+          score: CROWN_ALERT_1042.score,
+          categories: CROWN_ALERT_1042.categories,
+          change: null,
+          firstSeen: '2026-09-02T07:14:03Z',
+          lastUpdate: '2026-09-10T14:02:17Z',
+          alerts: [{ id: 'crown-1042-a1', kind: 'new', date: '2026-09-02T07:14:03Z', score: CROWN_ALERT_1042.score }],
+          decisions: [
+            {
+              id: 'dec-crown-1042-1',
+              decision: 'true_hit',
+              comment: 'Homonymie vérifiée, même date de naissance',
+              analyst: camille,
+              date: '2026-09-03T09:40:51Z',
+              revision: 1,
+            },
+            {
+              id: 'dec-crown-1042-2',
+              decision: 'false_hit',
+              comment: "Pièce d'identité reçue ; pays de naissance différent",
+              analyst: camille,
+              date: '2026-09-10T14:02:17Z',
+              revision: 2,
+              supersedesId: 'dec-crown-1042-1',
+            },
+          ],
+        },
+      );
+      const alert1057 = demoMatch(
+        { ...template, entityId: crown.id },
+        {
+          id: 'm-crown-1057',
+          reference: 'ALR-1057',
+          score: CROWN_ALERT_1057.score,
+          categories: CROWN_ALERT_1057.categories,
+          change: 'Modified',
+          firstSeen: '2026-09-05T06:52:40Z',
+          lastUpdate: '2026-09-29T06:31:12Z',
+          alerts: [
+            { id: 'crown-1057-a1', kind: 'new', date: '2026-09-05T06:52:40Z', score: 79 },
+            { id: 'crown-1057-a2', kind: 'change', date: '2026-09-29T06:31:12Z', score: CROWN_ALERT_1057.score },
+          ],
+          decisions: [
+            {
+              id: 'dec-crown-1057-1',
+              decision: 'unsure',
+              comment: 'Mandat politique possible, demande de justificatif envoyée',
+              analyst: 'Hugo Lefèvre',
+              date: '2026-09-08T16:21:09Z',
+              revision: 1,
+            },
+          ],
+          commentEdits: [
+            {
+              id: 'edit-crown-1057-1',
+              comment: 'Mandat politique possible, justificatif relancé le 15/09',
+              analyst: 'Hugo Lefèvre',
+              date: '2026-09-15T10:05:44Z',
+            },
+          ],
+        },
+      );
+      alert1057.profile = { ...alert1057.profile, name: 'Crown Financial Svcs Ltd' };
+      alert1057.profileName = 'Crown Financial Svcs Ltd';
+      alert1042.profile = { ...alert1042.profile, name: 'Crown Financial Services SA' };
+      alert1042.profileName = 'Crown Financial Services SA';
+      matches.push(alert1042, alert1057);
+      crown.auditTrail = [
+        ...crown.auditTrail.filter((ev) => !ev.matchName),
+        ...[alert1042, alert1057].flatMap((mt) => demoMatchAudit(mt)),
+      ].sort((a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime());
+    }
+  }
+
+  const worldcheck = byName(DEMO_WORLDCHECK_ENTITY, 1);
+  if (worldcheck) {
+    worldcheck.provider = 'WorldCheck';
+    worldcheck.providerReportAvailable = true;
+  }
+
+  const unavailable = byName(DEMO_REPORT_UNAVAILABLE_ENTITY, 2);
+  if (unavailable) unavailable.providerReportAvailable = false;
+
+  // Sans contrôle abouti : une entité sur deux parmi celles sans correspondance.
+  entities
+    .filter((e) => entityMatchCount(e.id) === 0 && e !== crown && e !== worldcheck && e !== unavailable)
+    .forEach((e, index) => {
+      if (index % 2 === 0) e.controlCompleted = false;
+    });
+
+  entities.forEach((entity) => {
+    entity.providerCaseRef = providerCaseRef(entity.provider, entity.id);
+  });
+
+  if (crown) {
+    crown.providerCaseRef = 'MC-558201';
+    crown.runs = [
+      ...crown.runs.filter((run) => run.kind !== 'ongoing'),
+      { id: `run-${crown.id}-demo`, kind: 'ongoing', date: '2026-09-29T06:31:12Z', matchesFound: 2, newMatches: 0, by: SYSTEM_ACTOR.name },
+    ];
+  }
 }
 
 // ---------------------------------------------------------------------------
