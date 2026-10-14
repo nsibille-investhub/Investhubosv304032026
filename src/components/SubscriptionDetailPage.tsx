@@ -76,13 +76,18 @@ import { QuestionActions, QuestionStatus } from './QuestionActions';
 import { QuestionCommentThread } from './QuestionCommentThread';
 import { IntegrationsTab } from './IntegrationsTab';
 import { SectionCard } from './ui/section-card';
+import { DetailTabsList } from './ui/detail-tabs';
 import {
   Tabs,
   TabsContent,
-  TabsList,
-  TabsTrigger,
 } from './ui/tabs';
-import { PageHeader, PRIMARY_BUTTON_GRADIENT } from './ui/page-header';
+import {
+  PageHeader,
+  PageHeaderSubtitle,
+  PageHeaderSubtitleItem,
+  PageHeaderSubtitleSeparator,
+  PRIMARY_BUTTON_GRADIENT,
+} from './ui/page-header';
 import { DetailLink, DetailSummary } from './ui/detail-summary';
 import {
   mockSections,
@@ -893,9 +898,8 @@ export function SubscriptionDetailPage({ subscription: subscriptionProp, onBack 
           </span>
         }
         subtitle={
-          <span className="flex items-center flex-wrap gap-3">
-            <span className="inline-flex items-center gap-1.5 group">
-              <Hash className="w-3.5 h-3.5" />
+          <PageHeaderSubtitle>
+            <PageHeaderSubtitleItem icon={Hash} className="group">
               <span>{t('subscriptions.detail.header.id', { id: subscription.id })}</span>
               <motion.button
                 type="button"
@@ -919,26 +923,24 @@ export function SubscriptionDetailPage({ subscription: subscriptionProp, onBack 
                   <Copy className="w-3.5 h-3.5 text-muted-foreground hover:text-foreground" />
                 )}
               </motion.button>
-            </span>
+            </PageHeaderSubtitleItem>
 
-            <span aria-hidden className="h-3.5 w-px bg-border" />
+            <PageHeaderSubtitleSeparator />
 
-            <span className="inline-flex items-center gap-1.5">
-              <Calendar className="w-3.5 h-3.5" />
+            <PageHeaderSubtitleItem icon={Calendar}>
               {t('subscriptions.detail.header.createdOn', { date: formatLongDate(subscription.createdAt) })}
-            </span>
+            </PageHeaderSubtitleItem>
 
             {subscription.activatedAt && (
               <>
-                <span aria-hidden className="h-3.5 w-px bg-border" />
-                <span className="inline-flex items-center gap-1.5">
-                  <CheckCircle2 className="w-3.5 h-3.5" />
+                <PageHeaderSubtitleSeparator />
+                <PageHeaderSubtitleItem icon={CheckCircle2}>
                   {t('subscriptions.detail.header.activatedOn', { date: formatLongDate(subscription.activatedAt) })}
-                </span>
+                </PageHeaderSubtitleItem>
               </>
             )}
 
-            <span aria-hidden className="h-3.5 w-px bg-border" />
+            <PageHeaderSubtitleSeparator />
 
             <DetailLink href={fundUrl} icon={Landmark} title={openInNewTab} className="text-sm">
               {subscription.fund.name}
@@ -947,7 +949,7 @@ export function SubscriptionDetailPage({ subscription: subscriptionProp, onBack 
             <DetailLink href={fundUrl} icon={Layers3} title={openInNewTab} className="text-sm">
               {t('subscriptions.detail.init.sharePrefix', { name: subscription.fund.shareClass })}
             </DetailLink>
-          </span>
+          </PageHeaderSubtitle>
         }
         primaryAction={{
           label: t('subscriptions.detail.header.exportData'),
@@ -960,36 +962,23 @@ export function SubscriptionDetailPage({ subscription: subscriptionProp, onBack 
       {/* Tabs - Same structure as InvestorDetailPage */}
       <div className="px-8 bg-card border-b border-border">
         <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-          <TabsList className="!bg-transparent rounded-none w-full max-w-full justify-start h-auto p-0 gap-0 overflow-hidden">
-            {[
+          <DetailTabsList
+            activeValue={activeTab}
+            items={[
               { value: 'onboarding', icon: ClipboardList, labelKey: 'subscriptions.detail.tabs.onboarding', badge: `${Math.round(subscription.completionOnboarding)}%`, badgeClass: 'bg-amber-50 text-amber-700 border-amber-200' },
               { value: 'emails', icon: Mail, labelKey: 'subscriptions.detail.tabs.emails', badge: String(mockEmails.length), badgeClass: 'bg-indigo-50 text-indigo-700 border-indigo-200' },
               { value: 'capital-calls', icon: DollarSign, labelKey: 'subscriptions.detail.tabs.capitalCalls', badge: String(mockCapitalCalls.length), badgeClass: 'bg-emerald-50 text-emerald-700 border-emerald-200' },
               { value: 'documents', icon: FolderOpen, labelKey: 'subscriptions.detail.tabs.documents', badge: String(mockDocuments.length), badgeClass: 'bg-muted text-foreground/80 border-border' },
               { value: 'integrations', icon: Database, labelKey: 'subscriptions.detail.tabs.integrations', badge: '5', badgeClass: 'bg-cyan-50 text-cyan-700 border-cyan-200' },
               { value: 'notes', icon: MessageSquare, labelKey: 'subscriptions.detail.tabs.notes', badge: String(mockNotes.length), badgeClass: 'bg-purple-50 text-purple-700 border-purple-200' },
-            ].map(tab => {
-              const Icon = tab.icon;
-              const isActive = activeTab === tab.value;
-              return (
-                <TabsTrigger
-                  key={tab.value}
-                  value={tab.value}
-                  title={t(tab.labelKey)}
-                  className="!bg-transparent !rounded-none !border-0 !shadow-none basis-auto min-w-0 shrink data-[state=active]:shrink-0 px-2 xl:px-4 pb-3 pt-4 font-medium text-muted-foreground data-[state=active]:text-primary"
-                  style={isActive ? { boxShadow: 'inset 0 -2px 0 0 var(--color-primary)' } : undefined}
-                >
-                  <Icon className="w-4 h-4 mr-2 shrink-0" />
-                  <span className="truncate">{t(tab.labelKey)}</span>
-                  {tab.badge && (
-                    <Badge className={`ml-2 text-xs shrink-0 ${tab.badgeClass}`}>
-                      {tab.badge}
-                    </Badge>
-                  )}
-                </TabsTrigger>
-              );
-            })}
-          </TabsList>
+            ].map(tab => ({
+              value: tab.value,
+              icon: tab.icon,
+              label: t(tab.labelKey),
+              badge: tab.badge,
+              badgeClassName: tab.badgeClass,
+            }))}
+          />
 
           {/* Tab Content - Onboarding */}
           <TabsContent value="onboarding" className="mt-0">

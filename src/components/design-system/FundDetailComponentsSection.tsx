@@ -3,6 +3,9 @@ import type { ReactNode } from 'react';
 import {
   Archive,
   Banknote,
+  Calendar,
+  CalendarRange,
+  Coins,
   Copy,
   LayoutDashboard,
   Layers3,
@@ -14,6 +17,7 @@ import {
   FileSignature,
   FileText,
   Handshake,
+  Hash,
   IdCard,
   Landmark,
   Mail,
@@ -34,12 +38,13 @@ import { EmptyState } from '../EmptyState';
 import { BlockersPanel } from '../ui/blockers-panel';
 import { Button } from '../ui/button';
 import { ConfirmDialog } from '../ui/confirm-dialog';
-import { PageHeader } from '../ui/page-header';
+import { PageHeader, PageHeaderSubtitle, PageHeaderSubtitleItem, PageHeaderSubtitleSeparator } from '../ui/page-header';
 import { RichTextEditor } from '../ui/rich-text-editor';
 import { SegmentedControl } from '../ui/segmented-control';
 import { SegmentedProgress } from '../ui/segmented-progress';
 import { Sparkline } from '../ui/sparkline';
-import { PageTabsList, PageTabsTrigger, Tabs } from '../ui/tabs';
+import { DetailTabsList } from '../ui/detail-tabs';
+import { Tabs } from '../ui/tabs';
 import { WidgetCard, WidgetMetric } from '../ui/widget-card';
 import { ColorPicker } from '../ui/color-picker';
 import { ComputedSummary } from '../ui/computed-summary';
@@ -634,30 +639,29 @@ function WidgetsDemo() {
   );
 }
 
-function PageTabsDemo() {
+function DetailTabsDemo() {
   const { t } = useTranslation();
   const [tab, setTab] = useState('overview');
-  const items = [
-    { id: 'overview', icon: LayoutDashboard },
-    { id: 'settings', icon: Settings2 },
-    { id: 'shares', icon: Layers3, count: 3 },
-    { id: 'navs', icon: LineChart, count: 6 },
-  ];
   return (
     <Tabs value={tab} onValueChange={setTab} className="gap-0">
-      <div className="rounded-lg border border-border bg-card px-4">
-        <PageTabsList>
-          {items.map(item => (
-            <PageTabsTrigger
-              key={item.id}
-              value={item.id}
-              icon={item.icon}
-              label={t(`funds.detail.tabs.${item.id}`)}
-              count={item.count}
-              isActive={tab === item.id}
-            />
-          ))}
-        </PageTabsList>
+      <div className="overflow-hidden rounded-lg border border-border">
+        <div className="px-8 bg-card">
+          <DetailTabsList
+            activeValue={tab}
+            items={[
+              { value: 'overview', icon: LayoutDashboard, label: t('funds.detail.tabs.overview') },
+              { value: 'settings', icon: Settings2, label: t('funds.detail.tabs.settings') },
+              { value: 'shares', icon: Layers3, label: t('funds.detail.tabs.shares'), badge: 3 },
+              {
+                value: 'navs',
+                icon: LineChart,
+                label: t('funds.detail.tabs.navs'),
+                badge: 6,
+                badgeClassName: 'bg-emerald-50 text-emerald-700 border-emerald-200',
+              },
+            ]}
+          />
+        </div>
       </div>
     </Tabs>
   );
@@ -671,23 +675,25 @@ function PageHeaderDemo() {
     <div className="overflow-hidden rounded-xl border border-border">
       <PageHeader
         hideBackButton
-        breadcrumb={[{ label: t('funds.detail.breadcrumb') }, { label: t(`${d}.name`) }]}
-        leading={
-          <span
-            className="flex h-14 w-14 shrink-0 items-center justify-center rounded-xl text-lg font-semibold text-primary-foreground"
-            style={{ backgroundColor: 'var(--chart-1)' }}
-          >
-            HC
-          </span>
-        }
         title={
-          <span className="inline-flex flex-wrap items-center gap-3">
+          <span className="inline-flex items-center gap-3">
             {t(`${d}.name`)}
             <FundStatusBadge status="draft" />
           </span>
         }
-        subtitle={t(`${d}.subtitle`)}
-        meta={<span className="text-sm text-muted-foreground">{t(`${d}.meta`)}</span>}
+        subtitle={
+          <PageHeaderSubtitle>
+            <PageHeaderSubtitleItem icon={Hash}>{t(`${d}.id`)}</PageHeaderSubtitleItem>
+            <PageHeaderSubtitleSeparator />
+            <PageHeaderSubtitleItem icon={Landmark}>{t(`${d}.structure`)}</PageHeaderSubtitleItem>
+            <PageHeaderSubtitleSeparator />
+            <PageHeaderSubtitleItem icon={Coins}>{t(`${d}.currency`)}</PageHeaderSubtitleItem>
+            <PageHeaderSubtitleSeparator />
+            <PageHeaderSubtitleItem icon={CalendarRange}>{t(`${d}.collection`)}</PageHeaderSubtitleItem>
+            <PageHeaderSubtitleSeparator />
+            <PageHeaderSubtitleItem icon={Calendar}>{t(`${d}.created`)}</PageHeaderSubtitleItem>
+          </PageHeaderSubtitle>
+        }
         primaryAction={{
           label: t('funds.detail.actions.publish'),
           icon: <Send className="w-4 h-4" />,
@@ -986,9 +992,16 @@ export function FundDetailComponentsSection() {
       <DocBlock
         id="pageHeader"
         name="PageHeader"
-        importLine="import { PageHeader } from '@/components/ui/page-header'"
+        importLine="import { PageHeader, PageHeaderSubtitle, PageHeaderSubtitleItem, PageHeaderSubtitleSeparator } from '@/components/ui/page-header'"
         usage={`<PageHeader
-  breadcrumb={[...]} leading={<Logo />} title={...} subtitle={...} meta={...}
+  title={<>{name}<StatusBadge /></>}
+  subtitle={
+    <PageHeaderSubtitle>
+      <PageHeaderSubtitleItem icon={Hash}>{t('...')}</PageHeaderSubtitleItem>
+      <PageHeaderSubtitleSeparator />
+      <DetailLink icon={Landmark} className="text-sm">...</DetailLink>
+    </PageHeaderSubtitle>
+  }
   primaryAction={{ label, icon, onClick, loading, disabledReason }}
   extraActions={[{ label, icon, onClick, loading, disabledReason }]}
   tertiaryLabel={t('...')}                 // menu "Plus" libellé ; sans libellé : icône
@@ -1001,17 +1014,21 @@ export function FundDetailComponentsSection() {
       </DocBlock>
 
       <DocBlock
-        id="pageTabs"
-        name="PageTabsList, PageTabsTrigger"
-        importLine="import { Tabs, PageTabsList, PageTabsTrigger } from '@/components/ui/tabs'"
+        id="detailTabs"
+        name="DetailTabsList"
+        importLine="import { DetailTabsList } from '@/components/ui/detail-tabs'"
         usage={`<Tabs value={tab} onValueChange={setTab}>
-  <PageTabsList>
-    <PageTabsTrigger value="shares" icon={Layers3} label={t('...')} count={3} isActive={tab === 'shares'} />
-  </PageTabsList>
+  <div className="px-8 bg-card border-b border-border">
+    <DetailTabsList
+      activeValue={tab}
+      items={[{ value: 'shares', icon: Layers3, label: t('...'), badge: 3, badgeClassName? }]}
+    />
+  </div>
+  <TabsContent value="shares">...</TabsContent>
 </Tabs>`}
       >
-        <Example label={t(`${K}.pageTabs.exampleLabel`)}>
-          <PageTabsDemo />
+        <Example label={t(`${K}.detailTabs.exampleLabel`)}>
+          <DetailTabsDemo />
         </Example>
       </DocBlock>
 

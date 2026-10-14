@@ -1,5 +1,4 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
-import type { ReactNode } from 'react';
 import { toast } from 'sonner';
 import {
   Archive,
@@ -7,15 +6,23 @@ import {
   ArrowUpRight,
   BookOpen,
   Building2,
+  Calendar,
+  CalendarRange,
+  Check,
+  Coins,
   Copy,
+  CreditCard,
   FileSignature,
   FileText,
   FlaskConical,
   Handshake,
+  Hash,
   History,
+  Landmark,
   LayoutDashboard,
   Layers3,
   LineChart,
+  Network,
   Receipt,
   Repeat,
   Send,
@@ -27,6 +34,7 @@ import {
 import type { Fund } from '../../utils/fundGenerator';
 import { useTranslation } from '../../utils/languageContext';
 import { formatDate } from '../../utils/formatters';
+import { copyToClipboard } from '../../utils/clipboard';
 import {
   buildFundDetail,
   FUND_SCENARIOS,
@@ -44,10 +52,11 @@ import { DetailLink } from '../ui/detail-summary';
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from '../ui/dialog';
 import { DisabledReason } from '../ui/disabled-reason';
 import { EffectsPanel } from '../ui/effects-panel';
-import { PageHeader } from '../ui/page-header';
+import { PageHeader, PageHeaderSubtitle, PageHeaderSubtitleItem, PageHeaderSubtitleSeparator } from '../ui/page-header';
 import { PageStateBanner } from '../ui/page-state-banner';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../ui/select';
-import { PageTabsList, PageTabsTrigger, Tabs, TabsContent } from '../ui/tabs';
+import { DetailTabsList } from '../ui/detail-tabs';
+import { Tabs, TabsContent } from '../ui/tabs';
 import { toneSurface } from '../ui/tone';
 import { getFundActionStates } from './fundActions';
 import { applySettingsToDetail, buildSettingsValues, computeMissingConfig } from './settings/settingsValues';
@@ -83,15 +92,6 @@ interface FundDetailPageProps {
   onOpenSubscriptions: (fund: Fund) => void;
 }
 
-function MetaItem({ label, children }: { label: string; children: ReactNode }) {
-  return (
-    <span className="inline-flex items-center gap-1.5 text-sm">
-      <span className="text-muted-foreground">{label}</span>
-      <span className="font-medium text-foreground">{children}</span>
-    </span>
-  );
-}
-
 function LinkedScreenTab({ titleKey, descriptionKey, icon }: { titleKey: string; descriptionKey: string; icon: typeof FileText }) {
   const { t } = useTranslation();
   return (
@@ -123,11 +123,12 @@ function ComingSoonTab({ icon }: { icon: typeof FileText }) {
 }
 
 export function FundDetailPage({ fund, onBack, onOpenSubscriptions }: FundDetailPageProps) {
-  const { t } = useTranslation();
+  const { t, lang } = useTranslation();
   const [scenario, setScenario] = useState<FundScenario>('default');
   const initial = useMemo(() => buildFundDetail(fund, scenario), [fund, scenario]);
   const [detail, setDetail] = useState<FundDetail>(initial);
   const [tab, setTab] = useState<TabId>('overview');
+  const [idCopied, setIdCopied] = useState(false);
   const [target, setTarget] = useState<FieldTarget | null>(null);
   const [pending, setPending] = useState<null | 'publish' | 'duplicate' | 'archive' | 'unarchive' | 'propagate' | 'delete'>(null);
   const [dialog, setDialog] = useState<null | 'archive' | 'propagate' | 'delete' | 'blockers'>(null);
@@ -214,6 +215,17 @@ export function FundDetailPage({ fund, onBack, onOpenSubscriptions }: FundDetail
     toast.success(t(messageKey, { name: detail.name }));
   };
 
+  const copyId = async () => {
+    const success = await copyToClipboard(String(detail.id));
+    if (!success) return;
+    setIdCopied(true);
+    toast.success(t(`${K}.header.idCopied`), { description: String(detail.id) });
+    setTimeout(() => setIdCopied(false), 2000);
+  };
+
+  const formatLongDate = (date: Date) =>
+    date.toLocaleDateString(lang === 'en' ? 'en-GB' : 'fr-FR', { day: '2-digit', month: 'long', year: 'numeric' });
+
   const publish = () =>
     run(
       'publish',
@@ -267,7 +279,7 @@ export function FundDetailPage({ fund, onBack, onOpenSubscriptions }: FundDetail
   const blockedDuringNotices = [t(`${K}.blocked.delete`), t(`${K}.blocked.archive`), t(`${K}.blocked.propagate`), t(`${K}.blocked.publish`)];
 
   return (
-    <div className="flex flex-1 flex-col bg-background">
+    <div className="flex flex-1 flex-col min-h-screen bg-muted">
       <div className="flex flex-wrap items-center justify-end gap-3 border-b border-border px-6 py-2" style={toneSurface('info')}>
         <span className="inline-flex items-center gap-2 text-xs font-medium">
           <FlaskConical className="w-3.5 h-3.5" aria-hidden />
@@ -288,34 +300,45 @@ export function FundDetailPage({ fund, onBack, onOpenSubscriptions }: FundDetail
       </div>
 
       <PageHeader
-        breadcrumb={[{ label: t(`${K}.breadcrumb`), onClick: onBack }, { label: detail.name }]}
-        onBack={onBack}
-        leading={
-          <span
-            className="flex h-14 w-14 shrink-0 items-center justify-center rounded-xl text-lg font-semibold text-primary-foreground"
-            style={{ backgroundColor: detail.color }}
-            aria-label={t(`${K}.logo`, { name: detail.name })}
-            role="img"
-          >
-            {detail.initials}
-          </span>
-        }
         title={
-          <span className="inline-flex flex-wrap items-center gap-3">
+          <span className="inline-flex items-center gap-3">
             {detail.name}
             <FundStatusBadge status={detail.status} />
           </span>
         }
         subtitle={
-          <span className="inline-flex flex-wrap items-center gap-2">
-            <span>{detail.legalForm}</span>
-            <span aria-hidden>·</span>
-            <span>{t(`${K}.type.${detail.fundType}`)}</span>
+          <PageHeaderSubtitle>
+            <PageHeaderSubtitleItem icon={Hash} className="group">
+              <span>{t(`${K}.header.id`, { id: detail.id })}</span>
+              <button
+                type="button"
+                onClick={copyId}
+                className="opacity-0 group-hover:opacity-100 transition-opacity p-0.5 hover:bg-muted rounded"
+                title={t(`${K}.header.copyId`)}
+                aria-label={t(`${K}.header.copyId`)}
+              >
+                {idCopied ? (
+                  <Check className="w-3.5 h-3.5" style={{ color: 'var(--success)' }} />
+                ) : (
+                  <Copy className="w-3.5 h-3.5 text-muted-foreground hover:text-foreground" />
+                )}
+              </button>
+            </PageHeaderSubtitleItem>
+
+            <PageHeaderSubtitleSeparator />
+
+            <PageHeaderSubtitleItem icon={Landmark}>
+              {detail.legalForm}
+              <span aria-hidden>·</span>
+              {t(`${K}.type.${detail.fundType}`)}
+            </PageHeaderSubtitleItem>
+
             {detail.parent && (
               <>
-                <span aria-hidden>·</span>
+                <PageHeaderSubtitleSeparator />
                 <DetailLink
                   icon={Building2}
+                  className="text-sm"
                   onClick={() => toast.info(t(`${K}.toast.parentNotInMockup`, { name: detail.parent!.name }))}
                 >
                   {t(`${K}.compartmentOf`, { name: detail.parent.name })}
@@ -324,30 +347,40 @@ export function FundDetailPage({ fund, onBack, onOpenSubscriptions }: FundDetail
             )}
             {detail.isMaster && (
               <>
-                <span aria-hidden>·</span>
-                <span>{t(`${K}.masterOf`, { count: detail.mirrorsCount })}</span>
+                <PageHeaderSubtitleSeparator />
+                <PageHeaderSubtitleItem icon={Network}>{t(`${K}.masterOf`, { count: detail.mirrorsCount })}</PageHeaderSubtitleItem>
               </>
             )}
-          </span>
-        }
-        meta={
-          <span className="flex flex-wrap items-center gap-x-6 gap-y-1">
-            <MetaItem label={t(`${K}.meta.currency`)}>{detail.currency}</MetaItem>
-            <MetaItem label={t(`${K}.meta.paymentMode`)}>{t(`${K}.paymentMode.${detail.paymentMode}`)}</MetaItem>
-            <MetaItem label={t(`${K}.meta.collection`)}>
+
+            <PageHeaderSubtitleSeparator />
+
+            <PageHeaderSubtitleItem icon={Coins}>{t(`${K}.header.currency`, { currency: detail.currency })}</PageHeaderSubtitleItem>
+
+            <PageHeaderSubtitleSeparator />
+
+            <PageHeaderSubtitleItem icon={CreditCard}>
+              {t(`${K}.header.paymentMode`, { mode: t(`${K}.paymentMode.${detail.paymentMode}`) })}
+            </PageHeaderSubtitleItem>
+
+            <PageHeaderSubtitleSeparator />
+
+            <PageHeaderSubtitleItem icon={CalendarRange}>
               {detail.collectionStart && detail.collectionEnd
-                ? t(`${K}.meta.collectionRange`, {
+                ? t(`${K}.header.collectionRange`, {
                     from: formatDate(detail.collectionStart),
                     to: formatDate(detail.collectionEnd),
                   })
                 : detail.collectionStart
-                  ? t(`${K}.meta.collectionFrom`, { from: formatDate(detail.collectionStart) })
-                  : t(`${K}.overview.noDate`)}
-            </MetaItem>
-            <MetaItem label={t(`${K}.meta.created`)}>
-              {t(`${K}.meta.createdBy`, { author: detail.createdBy, date: formatDate(detail.createdAt) })}
-            </MetaItem>
-          </span>
+                  ? t(`${K}.header.collectionFrom`, { from: formatDate(detail.collectionStart) })
+                  : t(`${K}.header.collectionNone`)}
+            </PageHeaderSubtitleItem>
+
+            <PageHeaderSubtitleSeparator />
+
+            <PageHeaderSubtitleItem icon={Calendar}>
+              {t(`${K}.header.createdOn`, { date: formatLongDate(detail.createdAt), author: detail.createdBy })}
+            </PageHeaderSubtitleItem>
+          </PageHeaderSubtitle>
         }
         primaryAction={
           actions.publish.visible
@@ -413,7 +446,7 @@ export function FundDetailPage({ fund, onBack, onOpenSubscriptions }: FundDetail
       />
 
       {hasBanner && (
-      <div className="space-y-3 px-6 pt-4">
+      <div className="space-y-3 px-8 pt-4">
         {detail.archived && (
           <PageStateBanner
             variant="archived"
@@ -439,25 +472,17 @@ export function FundDetailPage({ fund, onBack, onOpenSubscriptions }: FundDetail
       </div>
       )}
 
-      <Tabs value={tab} onValueChange={value => changeTab(value as TabId)} className="mt-2 gap-0">
-        <div className="border-b border-border bg-card px-6">
-          <PageTabsList>
-            {tabs
+      <Tabs value={tab} onValueChange={value => changeTab(value as TabId)} className="w-full gap-0">
+        <div className="px-8 bg-card border-b border-border">
+          <DetailTabsList
+            activeValue={tab}
+            overflow="scroll"
+            items={tabs
               .filter(item => item.visible)
-              .map(item => (
-                <PageTabsTrigger
-                  key={item.id}
-                  value={item.id}
-                  icon={item.icon}
-                  label={t(`${K}.tabs.${item.id}`)}
-                  count={item.count}
-                  isActive={tab === item.id}
-                />
-              ))}
-          </PageTabsList>
+              .map(item => ({ value: item.id, icon: item.icon, label: t(`${K}.tabs.${item.id}`), badge: item.count }))}
+          />
         </div>
-
-        <div className="px-6 py-6">
+        <div className="px-8 py-6">
           <TabsContent value="overview">
             <FundOverviewTab
               detail={detail}

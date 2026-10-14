@@ -4626,8 +4626,6 @@
       }
     },
     "detail": {
-      "breadcrumb": "Fonds",
-      "logo": "Logo de {{name}}",
       "sharePrefix": "Part {{name}}",
       "compartmentOf": "Compartiment de {{name}}",
       "masterOf": "Fonds maître de {{count}} fonds miroirs",
@@ -4640,14 +4638,16 @@
         "calls": "Appels de fonds",
         "direct": "Paiement direct"
       },
-      "meta": {
-        "currency": "Devise",
-        "paymentMode": "Paiement",
-        "collection": "Collecte",
-        "collectionRange": "du {{from}} au {{to}}",
-        "collectionFrom": "à partir du {{from}}",
-        "created": "Création",
-        "createdBy": "{{author}}, le {{date}}"
+      "header": {
+        "id": "ID : {{id}}",
+        "copyId": "Cliquer pour copier l'ID",
+        "idCopied": "ID copié",
+        "currency": "Devise : {{currency}}",
+        "paymentMode": "Paiement : {{mode}}",
+        "collectionRange": "Collecte du {{from}} au {{to}}",
+        "collectionFrom": "Collecte à partir du {{from}}",
+        "collectionNone": "Dates de collecte non définies",
+        "createdOn": "Créé le {{date}} par {{author}}"
       },
       "actions": {
         "publish": "Publier",
@@ -5797,22 +5797,25 @@
       },
       "pageHeader": {
         "title": "En-tête de page",
-        "description": "En-tête d'une page de détail. Évolution : logo à gauche du titre, ligne d'informations, actions secondaires multiples, menu \"Plus\" libellé, chargement et motif sur chaque action.",
+        "description": "En-tête d'une page de détail. Référence : la fiche souscription. Titre suivi du badge de statut, sous-titre en éléments icône + texte séparés par un trait vertical fin (PageHeaderSubtitle, PageHeaderSubtitleItem, PageHeaderSubtitleSeparator), actions à droite. Le fil d'Ariane est celui de l'application : la page n'en affiche pas un second.",
         "variants": "Action principale avec ou sans, actions secondaires, menu d'actions tertiaires avec icône seule ou libellé, entrées destructives.",
         "states": "Action disponible, en cours (désactivée avec chargement), indisponible (désactivée, motif au survol ; dans le menu, motif sous le libellé).",
         "exampleLabel": "Exemple : fonds en brouillon",
         "exampleHint": "survolez \"Publier\", cliquez sur \"Dupliquer\", ouvrez \"Plus\"",
         "demo": {
           "name": "Fonds Horizon Croissance III",
-          "subtitle": "FPCI · Fonds autonome",
-          "meta": "Devise EUR · Appels de fonds · Collecte du 01/03/2026 au 31/12/2026",
+          "id": "ID : 1042",
+          "structure": "FPCI · Fonds autonome",
+          "currency": "Devise : EUR",
+          "collection": "Collecte du 01/03/2026 au 31/12/2026",
+          "created": "Créé le 12 janvier 2026 par Camille",
           "publishReason": "Complétez la configuration avant de publier : 3 éléments manquants."
         }
       },
-      "pageTabs": {
-        "title": "Onglets de page",
-        "description": "Onglets principaux d'une page de détail : soulignement primaire sur l'onglet actif, icône, compteur quand il est pertinent. Remplace les trois versions faites à la main.",
-        "variants": "Avec ou sans icône, avec ou sans compteur.",
+      "detailTabs": {
+        "title": "Onglets de page de détail",
+        "description": "Onglets principaux d'une page de détail. Référence : la fiche souscription, dont le balisage est repris tel quel. Icône, libellé, pastille de compteur (neutre par défaut, teinte au choix). À placer dans un conteneur \"px-8 bg-card border-b border-border\".",
+        "variants": "Pastille neutre ou teintée, avec ou sans pastille. Avec beaucoup d'onglets, overflow=\"scroll\" garde les libellés entiers et fait défiler la barre (fiche fonds).",
         "states": "Repos, survol, actif, focus clavier. Un onglet conditionné par un module ou un droit est masqué, pas désactivé.",
         "exampleLabel": "Exemple"
       },

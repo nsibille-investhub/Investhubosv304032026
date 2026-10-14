@@ -4626,8 +4626,6 @@
       }
     },
     "detail": {
-      "breadcrumb": "Funds",
-      "logo": "{{name}} logo",
       "sharePrefix": "Share {{name}}",
       "compartmentOf": "Compartment of {{name}}",
       "masterOf": "Master fund of {{count}} mirror funds",
@@ -4640,14 +4638,16 @@
         "calls": "Capital calls",
         "direct": "Direct payment"
       },
-      "meta": {
-        "currency": "Currency",
-        "paymentMode": "Payment",
-        "collection": "Fundraising",
-        "collectionRange": "from {{from}} to {{to}}",
-        "collectionFrom": "from {{from}}",
-        "created": "Created",
-        "createdBy": "{{author}}, on {{date}}"
+      "header": {
+        "id": "ID: {{id}}",
+        "copyId": "Click to copy ID",
+        "idCopied": "ID copied",
+        "currency": "Currency: {{currency}}",
+        "paymentMode": "Payment: {{mode}}",
+        "collectionRange": "Fundraising from {{from}} to {{to}}",
+        "collectionFrom": "Fundraising from {{from}}",
+        "collectionNone": "Fundraising dates not set",
+        "createdOn": "Created on {{date}} by {{author}}"
       },
       "actions": {
         "publish": "Publish",
@@ -5797,22 +5797,25 @@
       },
       "pageHeader": {
         "title": "Page header",
-        "description": "Header of a detail page. Evolution: logo left of the title, information line, several secondary actions, labeled \"More\" menu, spinner and reason on every action.",
+        "description": "Header of a detail page. Reference: the subscription page. Title followed by the status badge, subtitle made of icon + text items separated by a thin vertical line (PageHeaderSubtitle, PageHeaderSubtitleItem, PageHeaderSubtitleSeparator), actions on the right. The breadcrumb is the application one: the page does not show a second one.",
         "variants": "With or without primary action, secondary actions, tertiary menu with icon only or label, destructive entries.",
         "states": "Action available, in progress (disabled with spinner), unavailable (disabled, reason on hover; in the menu, reason under the label).",
         "exampleLabel": "Example: draft fund",
         "exampleHint": "hover \"Publish\", click \"Duplicate\", open \"More\"",
         "demo": {
           "name": "Horizon Growth Fund III",
-          "subtitle": "FPCI · Standalone fund",
-          "meta": "Currency EUR · Capital calls · Fundraising from 01/03/2026 to 31/12/2026",
+          "id": "ID: 1042",
+          "structure": "FPCI · Standalone fund",
+          "currency": "Currency: EUR",
+          "collection": "Fundraising from 01/03/2026 to 31/12/2026",
+          "created": "Created on 12 January 2026 by Camille",
           "publishReason": "Complete the configuration before publishing: 3 items missing."
         }
       },
-      "pageTabs": {
-        "title": "Page tabs",
-        "description": "Main tabs of a detail page: primary underline on the active tab, icon, counter when relevant. Replaces the three hand-made versions.",
-        "variants": "With or without icon, with or without counter.",
+      "detailTabs": {
+        "title": "Detail page tabs",
+        "description": "Main tabs of a detail page. Reference: the subscription page, whose markup is reused as is. Icon, label, counter badge (neutral by default, tint of your choice). Place inside a \"px-8 bg-card border-b border-border\" container.",
+        "variants": "Neutral or tinted badge, with or without badge. With many tabs, overflow=\"scroll\" keeps full labels and scrolls the bar (fund page).",
         "states": "Rest, hover, active, keyboard focus. A tab conditioned by a module or a right is hidden, not disabled.",
         "exampleLabel": "Example"
       },

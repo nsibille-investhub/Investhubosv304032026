@@ -48,10 +48,6 @@ export type PageHeaderProps = {
   hideBackButton?: boolean;
   title: React.ReactNode;
   subtitle?: React.ReactNode;
-  /** Élément à gauche du titre : logo, avatar. */
-  leading?: React.ReactNode;
-  /** Ligne d'informations sous le sous-titre. */
-  meta?: React.ReactNode;
   primaryAction?: PageHeaderAction;
   secondaryAction?: PageHeaderAction;
   /** Actions secondaires supplémentaires, affichées avant secondaryAction. */
@@ -159,8 +155,6 @@ function PageHeader({
   hideBackButton,
   title,
   subtitle,
-  leading,
-  meta,
   primaryAction,
   secondaryAction,
   extraActions,
@@ -195,10 +189,7 @@ function PageHeader({
             initial={{ scale: 0.9, opacity: 0 }}
             animate={{ scale: 1, opacity: 1 }}
             transition={{ delay: 0.3 }}
-            className="flex min-w-0 items-start gap-4"
           >
-            {leading}
-            <div className="min-w-0">
             <h1 className="text-3xl font-bold text-gray-900 dark:text-gray-100 tracking-tight">
               {title}
             </h1>
@@ -207,8 +198,6 @@ function PageHeader({
                 {subtitle}
               </p>
             ) : null}
-            {meta ? <div className="mt-2">{meta}</div> : null}
-            </div>
           </motion.div>
 
           {(primaryAction || secondaryAction || hasExtra || hasTertiary) && (
@@ -332,4 +321,33 @@ function PageHeader({
   );
 }
 
-export { PageHeader };
+/**
+ * Sous-titre d'une page de détail. Référence : la fiche souscription.
+ * Éléments icône + texte séparés par un trait vertical fin.
+ */
+function PageHeaderSubtitle({ children }: { children: React.ReactNode }) {
+  return <span className="flex items-center flex-wrap gap-3">{children}</span>;
+}
+
+function PageHeaderSubtitleItem({
+  icon: Icon,
+  className,
+  children,
+}: {
+  icon?: React.ComponentType<{ className?: string }>;
+  className?: string;
+  children: React.ReactNode;
+}) {
+  return (
+    <span className={cn('inline-flex items-center gap-1.5', className)}>
+      {Icon && <Icon className="w-3.5 h-3.5" />}
+      {children}
+    </span>
+  );
+}
+
+function PageHeaderSubtitleSeparator() {
+  return <span aria-hidden className="h-3.5 w-px bg-border" />;
+}
+
+export { PageHeader, PageHeaderSubtitle, PageHeaderSubtitleItem, PageHeaderSubtitleSeparator };
