@@ -735,7 +735,7 @@ export function DocumentAddModal({ isOpen, onClose, folderOptions, defaultFolder
             </div>
             <div className="rounded-2xl border bg-white p-4 md:p-5" style={{ borderColor: '#000E2B33' }}>
               <Tabs defaultValue="fr" className="w-full">
-                <TabsList className="grid w-full grid-cols-2 h-11">
+                <TabsList className="grid w-full grid-cols-2">
                   <TabsTrigger value="fr">🇫🇷 FR</TabsTrigger>
                   <TabsTrigger value="en">🇬🇧 EN</TabsTrigger>
                 </TabsList>

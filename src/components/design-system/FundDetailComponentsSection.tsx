@@ -645,20 +645,13 @@ function DetailTabsDemo() {
   return (
     <Tabs value={tab} onValueChange={setTab} className="gap-0">
       <div className="overflow-hidden rounded-lg border border-border">
-        <div className="px-8 bg-card">
+        <div className="px-8 bg-card border-b border-border">
           <DetailTabsList
-            activeValue={tab}
             items={[
               { value: 'overview', icon: LayoutDashboard, label: t('funds.detail.tabs.overview') },
               { value: 'settings', icon: Settings2, label: t('funds.detail.tabs.settings') },
               { value: 'shares', icon: Layers3, label: t('funds.detail.tabs.shares'), badge: 3 },
-              {
-                value: 'navs',
-                icon: LineChart,
-                label: t('funds.detail.tabs.navs'),
-                badge: 6,
-                badgeClassName: 'bg-emerald-50 text-emerald-700 border-emerald-200',
-              },
+              { value: 'navs', icon: LineChart, label: t('funds.detail.tabs.navs'), badge: 6 },
             ]}
           />
         </div>
@@ -1015,13 +1008,13 @@ export function FundDetailComponentsSection() {
 
       <DocBlock
         id="detailTabs"
-        name="DetailTabsList"
-        importLine="import { DetailTabsList } from '@/components/ui/detail-tabs'"
+        name="Tabs, DetailTabsList, TabCount"
+        importLine="import { DetailTabsList, TabCount } from '@/components/ui/detail-tabs'"
         usage={`<Tabs value={tab} onValueChange={setTab}>
   <div className="px-8 bg-card border-b border-border">
     <DetailTabsList
-      activeValue={tab}
-      items={[{ value: 'shares', icon: Layers3, label: t('...'), badge: 3, badgeClassName? }]}
+      overflow="scroll"                    // "truncate" par défaut
+      items={[{ value: 'shares', icon: Layers3, label: t('...'), badge: 3 }]}
     />
   </div>
   <TabsContent value="shares">...</TabsContent>

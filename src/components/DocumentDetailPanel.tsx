@@ -180,20 +180,20 @@ export function DocumentDetailPanel({ document, onClose, defaultTab = 'details' 
       <div className="flex-1 overflow-y-auto">
         <Tabs defaultValue={defaultTab} className="w-full">
           <div className="sticky top-0 bg-white border-b border-gray-100 z-10">
-            <TabsList className="w-full justify-start rounded-none bg-transparent p-0 h-auto border-b-0">
-              <TabsTrigger value="details" className="rounded-none data-[state=active]:border-b-2 data-[state=active]:border-[#0066FF] data-[state=active]:bg-transparent">
+            <TabsList className="w-full justify-start">
+              <TabsTrigger value="details">
                 <FileText className="w-4 h-4 mr-2" />
                 Détails
               </TabsTrigger>
-              <TabsTrigger value="targeting" className="rounded-none data-[state=active]:border-b-2 data-[state=active]:border-[#0066FF] data-[state=active]:bg-transparent">
+              <TabsTrigger value="targeting">
                 <Users className="w-4 h-4 mr-2" />
                 Accès
               </TabsTrigger>
-              <TabsTrigger value="activity" className="rounded-none data-[state=active]:border-b-2 data-[state=active]:border-[#0066FF] data-[state=active]:bg-transparent">
+              <TabsTrigger value="activity">
                 <Activity className="w-4 h-4 mr-2" />
                 Activité
               </TabsTrigger>
-              <TabsTrigger value="audit" className="rounded-none data-[state=active]:border-b-2 data-[state=active]:border-[#0066FF] data-[state=active]:bg-transparent">
+              <TabsTrigger value="audit">
                 <History className="w-4 h-4 mr-2" />
                 Piste d'audit
               </TabsTrigger>

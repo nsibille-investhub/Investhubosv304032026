@@ -1115,7 +1115,7 @@ export function CollectionDetailPage({
 
         {/* Tabs */}
         <Tabs defaultValue="data" className="gap-4">
-          <TabsList className="h-10 rounded-lg p-1">
+          <TabsList>
             <TabsTrigger value="data" className="gap-2 px-4">
               <TableIcon className="size-4" />
               Données

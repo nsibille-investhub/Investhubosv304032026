@@ -649,7 +649,7 @@ function Panel({ isOpen, onClose, news, onSave, helpMode }: PanelProps) {
               {/* Traductions - Titre, Extrait, Contenu */}
               <div className="p-3 bg-gray-50 rounded-lg border border-gray-200">
                 <Tabs value={activeLanguage} onValueChange={(v) => setActiveLanguage(v as 'fr' | 'en' | 'es')} className="w-full">
-                  <TabsList className="grid w-full grid-cols-3 mb-3 h-8 bg-white">
+                  <TabsList className="grid w-full grid-cols-3 mb-3">
                     <TabsTrigger value="fr" className="text-xs py-1 relative">
                       🇫🇷 FR
                       {(!formData.titreTranslations?.fr?.trim() || !formData.extraitTranslations?.fr?.trim() || !formData.contenuTranslations?.fr?.trim()) && (

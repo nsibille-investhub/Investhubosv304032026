@@ -5813,10 +5813,10 @@
         }
       },
       "detailTabs": {
-        "title": "Detail page tabs",
-        "description": "Main tabs of a detail page. Reference: the subscription page, whose markup is reused as is. Icon, label, counter badge (neutral by default, tint of your choice). Place inside a \"px-8 bg-card border-b border-border\" container.",
-        "variants": "Neutral or tinted badge, with or without badge. With many tabs, overflow=\"scroll\" keeps full labels and scrolls the bar (fund page).",
-        "states": "Rest, hover, active, keyboard focus. A tab conditioned by a module or a right is hidden, not disabled.",
+        "title": "Tabs",
+        "description": "Single tab style across the application (Tabs, TabsList, TabsTrigger): grey labels, active tab in primary color with a 2 px underline, thin separator line, no background or colored badge. DetailTabsList builds the bar of a detail page: icon, label, neutral counter (TabCount). Place inside a \"px-8 bg-card border-b border-border\" container.",
+        "variants": "With or without icon, with or without counter. overflow=\"truncate\" (default) shortens labels, overflow=\"scroll\" keeps them whole and scrolls the bar.",
+        "states": "Rest, hover, active, keyboard focus, disabled. A tab conditioned by a module or a right is hidden, not disabled.",
         "exampleLabel": "Example"
       },
       "widgetCard": {

@@ -215,7 +215,7 @@ export function NotificationPreviewDrawer({
             onValueChange={(v) => setTab(v as typeof tab)}
             className="flex h-full flex-col"
           >
-            <TabsList className="mx-6 mt-4 grid w-fit grid-cols-3 gap-1">
+            <TabsList className="mx-6 mt-4 grid w-fit grid-cols-3">
               <TabsTrigger value="email" disabled={isSilent} className="gap-1.5">
                 <Mail className="h-3.5 w-3.5" />
                 {t('validation.drawer.tabs.email')}

@@ -88,7 +88,7 @@ export interface FundNavRow {
 
 /** Cible d'un lien "Configuration à compléter" : onglet, section et champ. */
 export interface FieldTarget {
-  tab: 'settings' | 'shares' | 'contracts';
+  tab: 'settings' | 'shares';
   sectionId: string;
   fieldId: string;
 }
@@ -422,7 +422,7 @@ function applyScenario(detail: FundDetail, scenario: FundScenario, today: Date):
         },
         { key: 'onboarding', target: { tab: 'settings', sectionId: 'subscription', fieldId: 'onboardingIndividuals' } },
         // Le contrat de souscription se gère dans l'onglet Contrats, pas dans les paramètres.
-        { key: 'subscriptionContract', target: { tab: 'contracts', sectionId: 'contracts', fieldId: 'contracts' } },
+        { key: 'subscriptionContract', target: { tab: 'settings', sectionId: 'contracts', fieldId: 'contracts' } },
         ...detail.missingConfig,
       ];
       detail.deleteBlockers = { subscriptions: 0, operations: 0, navs: 0, contracts: 0 };

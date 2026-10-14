@@ -45,7 +45,8 @@ import {
 } from 'lucide-react';
 import { Badge } from './ui/badge';
 import { Button } from './ui/button';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from './ui/tabs';
+import { DetailTabsList } from './ui/detail-tabs';
+import { Tabs, TabsContent } from './ui/tabs';
 import { Investor, Signatory, Note, Email } from '../utils/investorGenerator';
 import { toast } from 'sonner';
 import { copyToClipboard } from '../utils/clipboard';
@@ -506,82 +507,18 @@ export function InvestorDetailPage({ investor: initialInvestor, onBack, initialT
       {/* Tabs */}
       <div className="px-8 -mt-px bg-card border-b border-border">
         <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-          <TabsList className="bg-transparent border-b border-border rounded-none w-full justify-start h-auto p-0 gap-6">
-            <TabsTrigger
-              value="profil"
-              className="data-[state=active]:bg-transparent data-[state=active]:shadow-none data-[state=active]:border-b-2 data-[state=active]:border-primary data-[state=active]:text-primary rounded-none pb-3 pt-4 px-0 text-muted-foreground font-medium"
-            >
-              <User className="w-4 h-4 mr-2" />
-              {t('investors.detail.tabs.profile')}
-            </TabsTrigger>
-            <TabsTrigger
-              value="contacts"
-              className="data-[state=active]:bg-transparent data-[state=active]:shadow-none data-[state=active]:border-b-2 data-[state=active]:border-primary data-[state=active]:text-primary rounded-none pb-3 pt-4 px-0 text-muted-foreground font-medium"
-            >
-              <Users className="w-4 h-4 mr-2" />
-              {t('investors.detail.tabs.contacts')}
-              <Badge className="ml-2 bg-muted text-muted-foreground border-border text-xs">
-                {investor.contacts.length}
-              </Badge>
-            </TabsTrigger>
-            <TabsTrigger
-              value="signataires"
-              className="data-[state=active]:bg-transparent data-[state=active]:shadow-none data-[state=active]:border-b-2 data-[state=active]:border-primary data-[state=active]:text-primary rounded-none pb-3 pt-4 px-0 text-muted-foreground font-medium"
-            >
-              <PenTool className="w-4 h-4 mr-2" />
-              {t('investors.detail.tabs.signatories')}
-              <Badge className="ml-2 bg-muted text-muted-foreground border-border text-xs">
-                {investor.signatories.length}
-              </Badge>
-            </TabsTrigger>
-            <TabsTrigger
-              value="structures"
-              className="data-[state=active]:bg-transparent data-[state=active]:shadow-none data-[state=active]:border-b-2 data-[state=active]:border-primary data-[state=active]:text-primary rounded-none pb-3 pt-4 px-0 text-muted-foreground font-medium"
-            >
-              <Building2 className="w-4 h-4 mr-2" />
-              {t('investors.detail.tabs.structures')}
-              <Badge className="ml-2 bg-muted text-muted-foreground border-border text-xs">
-                {investor.structures.length}
-              </Badge>
-            </TabsTrigger>
-            <TabsTrigger
-              value="notes"
-              className="data-[state=active]:bg-transparent data-[state=active]:shadow-none data-[state=active]:border-b-2 data-[state=active]:border-primary data-[state=active]:text-primary rounded-none pb-3 pt-4 px-0 text-muted-foreground font-medium"
-            >
-              <FileText className="w-4 h-4 mr-2" />
-              {t('investors.detail.tabs.notes')}
-              <Badge className="ml-2 bg-muted text-muted-foreground border-border text-xs">
-                {investor.notes.length}
-              </Badge>
-            </TabsTrigger>
-            <TabsTrigger
-              value="souscriptions"
-              className="data-[state=active]:bg-transparent data-[state=active]:shadow-none data-[state=active]:border-b-2 data-[state=active]:border-primary data-[state=active]:text-primary rounded-none pb-3 pt-4 px-0 text-muted-foreground font-medium"
-            >
-              <Briefcase className="w-4 h-4 mr-2" />
-              {t('investors.detail.tabs.subscriptions')}
-              <Badge className="ml-2 bg-muted text-muted-foreground border-border text-xs">
-                {investor.subscriptionsCount}
-              </Badge>
-            </TabsTrigger>
-            <TabsTrigger
-              value="fiscal"
-              className="data-[state=active]:bg-transparent data-[state=active]:shadow-none data-[state=active]:border-b-2 data-[state=active]:border-primary data-[state=active]:text-primary rounded-none pb-3 pt-4 px-0 text-muted-foreground font-medium"
-            >
-              <Landmark className="w-4 h-4 mr-2" />
-              {t('investors.detail.tabs.fiscal')}
-            </TabsTrigger>
-            <TabsTrigger
-              value="emails"
-              className="data-[state=active]:bg-transparent data-[state=active]:shadow-none data-[state=active]:border-b-2 data-[state=active]:border-primary data-[state=active]:text-primary rounded-none pb-3 pt-4 px-0 text-muted-foreground font-medium"
-            >
-              <MessageSquare className="w-4 h-4 mr-2" />
-              {t('investors.detail.tabs.emails')}
-              <Badge className="ml-2 bg-muted text-muted-foreground border-border text-xs">
-                {investor.emails.length}
-              </Badge>
-            </TabsTrigger>
-          </TabsList>
+          <DetailTabsList
+            items={[
+              { value: 'profil', icon: User, label: t('investors.detail.tabs.profile') },
+              { value: 'contacts', icon: Users, label: t('investors.detail.tabs.contacts'), badge: investor.contacts.length },
+              { value: 'signataires', icon: PenTool, label: t('investors.detail.tabs.signatories'), badge: investor.signatories.length },
+              { value: 'structures', icon: Building2, label: t('investors.detail.tabs.structures'), badge: investor.structures.length },
+              { value: 'notes', icon: FileText, label: t('investors.detail.tabs.notes'), badge: investor.notes.length },
+              { value: 'souscriptions', icon: Briefcase, label: t('investors.detail.tabs.subscriptions'), badge: investor.subscriptionsCount },
+              { value: 'fiscal', icon: Landmark, label: t('investors.detail.tabs.fiscal') },
+              { value: 'emails', icon: MessageSquare, label: t('investors.detail.tabs.emails'), badge: investor.emails.length },
+            ]}
+          />
 
           {/* Profil Tab */}
           <TabsContent value="profil" className="mt-6 space-y-6">

@@ -1,10 +1,12 @@
 import { useCallback, useEffect, useState } from 'react';
+import type { ComponentType, ReactNode } from 'react';
 import { toast } from 'sonner';
 import { useTranslation } from '../../utils/languageContext';
 import type { FieldTarget, FundDetail } from '../../utils/fundDetailMock';
 import { ConfirmDialog } from '../ui/confirm-dialog';
 import { PageStateBanner } from '../ui/page-state-banner';
 import { SectionNav, type SectionNavItem } from '../ui/section-nav';
+import { TabCount } from '../ui/detail-tabs';
 import { SegmentedControl } from '../ui/segmented-control';
 import { SettingsSectionPanel, type PanelState } from './settings/SettingsSectionPanel';
 import {
@@ -15,12 +17,20 @@ import {
   SUB_TAB_ICONS,
   type SettingsContext,
   type SettingsValues,
-  type SubTabDef,
 } from './settings/settingsSchema';
 
 const S = 'funds.detail.settings';
 
 const wait = (ms: number) => new Promise(resolve => setTimeout(resolve, ms));
+
+/** Sous-onglet hors schéma de champs : marché secondaire, contrats, contrôles. */
+export interface ExtraSettingsSubTab {
+  id: string;
+  icon: ComponentType<{ className?: string }>;
+  label: string;
+  count?: number;
+  content: ReactNode;
+}
 
 interface FundSettingsTabProps {
   detail: FundDetail;
@@ -31,6 +41,7 @@ interface FundSettingsTabProps {
   canEdit: boolean;
   editReason?: string;
   onDirtyChange: (dirty: boolean) => void;
+  extraSubTabs?: ExtraSettingsSubTab[];
 }
 
 export function FundSettingsTab({
@@ -42,10 +53,11 @@ export function FundSettingsTab({
   canEdit,
   editReason,
   onDirtyChange,
+  extraSubTabs = [],
 }: FundSettingsTabProps) {
   const { t } = useTranslation();
   const ctx: SettingsContext = { detail, values };
-  const [subTab, setSubTab] = useState<SubTabDef['id']>('profile');
+  const [subTab, setSubTab] = useState<string>('profile');
   const [activeBySubTab, setActiveBySubTab] = useState<Record<string, string>>({});
   const [highlighted, setHighlighted] = useState<string | null>(null);
   const [panel, setPanel] = useState<PanelState>({ editing: false, dirty: false });
@@ -53,6 +65,7 @@ export function FundSettingsTab({
   const [paymentConfirm, setPaymentConfirm] = useState<null | { value: unknown; apply: () => void }>(null);
   const [regenerating, setRegenerating] = useState<null | 'confirm' | 'pending'>(null);
 
+  const extraSubTab = extraSubTabs.find(item => item.id === subTab) ?? null;
   const currentSubTab = SETTINGS_SCHEMA.find(item => item.id === subTab) ?? SETTINGS_SCHEMA[0];
   const sections = currentSubTab.sections.filter(section => isSectionVisible(section, ctx));
   const activeId =
@@ -75,6 +88,8 @@ export function FundSettingsTab({
     if (found) {
       setSubTab(found.subTab.id);
       setActiveBySubTab(prev => ({ ...prev, [found.subTab.id]: found.section.id }));
+    } else if (extraSubTabs.some(item => item.id === target.sectionId)) {
+      setSubTab(target.sectionId);
     }
     setHighlighted(target.fieldId);
     const frame = requestAnimationFrame(() =>
@@ -111,10 +126,25 @@ export function FundSettingsTab({
   // Règle serveur simulée (PRD section 8.2, D5) : changement refusé si des opérations existent dans l'ancien mode.
   const paymentRefused = detail.deleteBlockers.operations > 0 ? t(`${S}.paymentMode.refused`) : undefined;
 
-  const subTabOptions = SETTINGS_SCHEMA.map(item => {
-    const Icon = SUB_TAB_ICONS[item.id];
-    return { value: item.id, label: t(`${S}.subTabs.${item.id}`), icon: <Icon className="w-4 h-4" /> };
-  });
+  const subTabOptions = [
+    ...SETTINGS_SCHEMA.map(item => {
+      const Icon = SUB_TAB_ICONS[item.id];
+      return { value: item.id, label: t(`${S}.subTabs.${item.id}`), icon: <Icon className="w-4 h-4" /> };
+    }),
+    ...extraSubTabs.map(item => {
+      const Icon = item.icon;
+      return {
+        value: item.id,
+        label: (
+          <span className="inline-flex items-center gap-2">
+            {item.label}
+            {item.count !== undefined && <TabCount>{item.count}</TabCount>}
+          </span>
+        ),
+        icon: <Icon className="w-4 h-4" />,
+      };
+    }),
+  ];
 
   return (
     <div className="space-y-4">
@@ -122,14 +152,17 @@ export function FundSettingsTab({
 
       <SegmentedControl
         value={subTab}
-        onValueChange={next => guard(() => setSubTab(next as SubTabDef['id']))}
+        onValueChange={next => guard(() => setSubTab(next))}
         options={subTabOptions}
         aria-label={t(`${S}.subTabsLabel`)}
       />
 
+      {extraSubTab ? (
+        extraSubTab.content
+      ) : (
       <div className="grid items-start gap-6" style={{ gridTemplateColumns: 'minmax(0, 300px) minmax(0, 1fr)' }}>
         <SectionNav
-          title={t(`${S}.subTabs.${subTab}`)}
+          title={t(`${S}.subTabs.${currentSubTab.id}`)}
           items={navItems}
           activeId={activeId}
           onSelect={id => {
@@ -154,6 +187,7 @@ export function FundSettingsTab({
           />
         )}
       </div>
+      )}
 
       <ConfirmDialog
         open={pendingLeave !== null}

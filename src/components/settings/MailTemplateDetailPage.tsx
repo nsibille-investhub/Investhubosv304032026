@@ -423,7 +423,6 @@ export function MailTemplateDetailPage({
                       >
                         <TabsList
                           aria-label={t('mailTemplates.editor.previewWidth')}
-                          className="h-8"
                         >
                           {PREVIEW_WIDTHS.map(({ value, labelKey, Icon }) => (
                             <TabsTrigger key={value} value={value} className="gap-1.5 text-xs">

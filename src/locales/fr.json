@@ -5813,10 +5813,10 @@
         }
       },
       "detailTabs": {
-        "title": "Onglets de page de détail",
-        "description": "Onglets principaux d'une page de détail. Référence : la fiche souscription, dont le balisage est repris tel quel. Icône, libellé, pastille de compteur (neutre par défaut, teinte au choix). À placer dans un conteneur \"px-8 bg-card border-b border-border\".",
-        "variants": "Pastille neutre ou teintée, avec ou sans pastille. Avec beaucoup d'onglets, overflow=\"scroll\" garde les libellés entiers et fait défiler la barre (fiche fonds).",
-        "states": "Repos, survol, actif, focus clavier. Un onglet conditionné par un module ou un droit est masqué, pas désactivé.",
+        "title": "Onglets",
+        "description": "Style unique des onglets de l'application (Tabs, TabsList, TabsTrigger) : libellés gris, onglet actif en couleur primaire souligné de 2 px, fine ligne de séparation, sans fond ni pastille de couleur. DetailTabsList assemble la barre d'une page de détail : icône, libellé, compteur neutre (TabCount). À placer dans un conteneur \"px-8 bg-card border-b border-border\".",
+        "variants": "Avec ou sans icône, avec ou sans compteur. overflow=\"truncate\" (par défaut) réduit les libellés, overflow=\"scroll\" les garde entiers et fait défiler la barre.",
+        "states": "Repos, survol, actif, focus clavier, désactivé. Un onglet conditionné par un module ou un droit est masqué, pas désactivé.",
         "exampleLabel": "Exemple"
       },
       "widgetCard": {

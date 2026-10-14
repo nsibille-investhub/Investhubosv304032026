@@ -388,7 +388,7 @@ export function EntityDetailPage({ uid, onBack }: EntityDetailPageProps) {
         <div className="grid gap-6 grid-cols-1 lg:grid-cols-[minmax(0,1fr)_340px]">
           <div className="min-w-0">
             <Tabs value={activeTab} onValueChange={(v) => setActiveTab(v as DetailTab)}>
-              <TabsList className="h-auto p-1 flex flex-wrap gap-1 bg-muted">
+              <TabsList className="flex flex-wrap">
                 <TabsTrigger value="summary" className="gap-2">
                   <User className="w-4 h-4" /> {t('complianceEntities.detail.tabs.summary')}
                 </TabsTrigger>

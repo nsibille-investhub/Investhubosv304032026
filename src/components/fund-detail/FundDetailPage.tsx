@@ -80,10 +80,7 @@ type TabId =
   | 'navs'
   | 'documents'
   | 'distribution'
-  | 'contracts'
   | 'operations'
-  | 'secondary'
-  | 'controls'
   | 'journal';
 
 interface FundDetailPageProps {
@@ -265,10 +262,7 @@ export function FundDetailPage({ fund, onBack, onOpenSubscriptions }: FundDetail
     { id: 'navs', icon: LineChart, count: detail.navs.length, visible: true },
     { id: 'documents', icon: FileText, count: detail.counts.documents, visible: true },
     { id: 'distribution', icon: Handshake, count: detail.counts.distributors, visible: detail.modules.partners },
-    { id: 'contracts', icon: FileSignature, visible: detail.modules.contracts },
     { id: 'operations', icon: Receipt, visible: detail.modules.operations },
-    { id: 'secondary', icon: Repeat, count: detail.counts.secondaryMarket, visible: detail.modules.secondaryMarket },
-    { id: 'controls', icon: ShieldCheck, count: detail.counts.controls, visible: detail.counts.controls > 0 },
     { id: 'journal', icon: History, visible: true },
   ];
 
@@ -475,7 +469,6 @@ export function FundDetailPage({ fund, onBack, onOpenSubscriptions }: FundDetail
       <Tabs value={tab} onValueChange={value => changeTab(value as TabId)} className="w-full gap-0">
         <div className="px-8 bg-card border-b border-border">
           <DetailTabsList
-            activeValue={tab}
             overflow="scroll"
             items={tabs
               .filter(item => item.visible)
@@ -502,6 +495,46 @@ export function FundDetailPage({ fund, onBack, onOpenSubscriptions }: FundDetail
               canEdit={detail.rights.edit}
               editReason={detail.rights.edit ? actions.editReason : undefined}
               onDirtyChange={setTabDirty}
+              extraSubTabs={[
+                ...(detail.modules.secondaryMarket
+                  ? [
+                      {
+                        id: 'secondary',
+                        icon: Repeat,
+                        label: t(`${K}.tabs.secondary`),
+                        count: detail.counts.secondaryMarket,
+                        content: <ComingSoonTab icon={Repeat} />,
+                      },
+                    ]
+                  : []),
+                ...(detail.modules.contracts
+                  ? [
+                      {
+                        id: 'contracts',
+                        icon: FileSignature,
+                        label: t(`${K}.tabs.contracts`),
+                        content: (
+                          <LinkedScreenTab
+                            icon={FileSignature}
+                            titleKey={`${K}.linked.contractsTitle`}
+                            descriptionKey={`${K}.linked.contractsDescription`}
+                          />
+                        ),
+                      },
+                    ]
+                  : []),
+                ...(detail.counts.controls > 0
+                  ? [
+                      {
+                        id: 'controls',
+                        icon: ShieldCheck,
+                        label: t(`${K}.tabs.controls`),
+                        count: detail.counts.controls,
+                        content: <ComingSoonTab icon={ShieldCheck} />,
+                      },
+                    ]
+                  : []),
+              ]}
             />
           </TabsContent>
           <TabsContent value="shares">
@@ -531,9 +564,6 @@ export function FundDetailPage({ fund, onBack, onOpenSubscriptions }: FundDetail
               onNavChange={applyNavChange}
             />
           </TabsContent>
-          <TabsContent value="contracts">
-            <LinkedScreenTab icon={FileSignature} titleKey={`${K}.linked.contractsTitle`} descriptionKey={`${K}.linked.contractsDescription`} />
-          </TabsContent>
           <TabsContent value="operations">
             <LinkedScreenTab icon={Receipt} titleKey={`${K}.linked.operationsTitle`} descriptionKey={`${K}.linked.operationsDescription`} />
           </TabsContent>
@@ -541,8 +571,6 @@ export function FundDetailPage({ fund, onBack, onOpenSubscriptions }: FundDetail
             [
               ['documents', FileText],
               ['distribution', Handshake],
-              ['secondary', Repeat],
-              ['controls', ShieldCheck],
               ['journal', History],
             ] as const
           ).map(([id, icon]) => (
@@ -640,7 +668,7 @@ export function FundDetailPage({ fund, onBack, onOpenSubscriptions }: FundDetail
                 ['subscriptions', FileSignature, () => onOpenSubscriptions(fund)],
                 ['operations', Receipt, () => changeTab('operations')],
                 ['navs', LineChart, () => changeTab('navs')],
-                ['contracts', FileText, () => changeTab('contracts')],
+                ['contracts', FileText, () => navigateTo({ tab: 'settings', sectionId: 'contracts', fieldId: 'contracts' })],
               ] as const
             )
               .filter(([key]) => detail.deleteBlockers[key] > 0)

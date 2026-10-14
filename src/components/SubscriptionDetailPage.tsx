@@ -963,20 +963,18 @@ export function SubscriptionDetailPage({ subscription: subscriptionProp, onBack 
       <div className="px-8 bg-card border-b border-border">
         <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
           <DetailTabsList
-            activeValue={activeTab}
             items={[
-              { value: 'onboarding', icon: ClipboardList, labelKey: 'subscriptions.detail.tabs.onboarding', badge: `${Math.round(subscription.completionOnboarding)}%`, badgeClass: 'bg-amber-50 text-amber-700 border-amber-200' },
-              { value: 'emails', icon: Mail, labelKey: 'subscriptions.detail.tabs.emails', badge: String(mockEmails.length), badgeClass: 'bg-indigo-50 text-indigo-700 border-indigo-200' },
-              { value: 'capital-calls', icon: DollarSign, labelKey: 'subscriptions.detail.tabs.capitalCalls', badge: String(mockCapitalCalls.length), badgeClass: 'bg-emerald-50 text-emerald-700 border-emerald-200' },
-              { value: 'documents', icon: FolderOpen, labelKey: 'subscriptions.detail.tabs.documents', badge: String(mockDocuments.length), badgeClass: 'bg-muted text-foreground/80 border-border' },
-              { value: 'integrations', icon: Database, labelKey: 'subscriptions.detail.tabs.integrations', badge: '5', badgeClass: 'bg-cyan-50 text-cyan-700 border-cyan-200' },
-              { value: 'notes', icon: MessageSquare, labelKey: 'subscriptions.detail.tabs.notes', badge: String(mockNotes.length), badgeClass: 'bg-purple-50 text-purple-700 border-purple-200' },
+              { value: 'onboarding', icon: ClipboardList, labelKey: 'subscriptions.detail.tabs.onboarding', badge: `${Math.round(subscription.completionOnboarding)}%` },
+              { value: 'emails', icon: Mail, labelKey: 'subscriptions.detail.tabs.emails', badge: String(mockEmails.length) },
+              { value: 'capital-calls', icon: DollarSign, labelKey: 'subscriptions.detail.tabs.capitalCalls', badge: String(mockCapitalCalls.length) },
+              { value: 'documents', icon: FolderOpen, labelKey: 'subscriptions.detail.tabs.documents', badge: String(mockDocuments.length) },
+              { value: 'integrations', icon: Database, labelKey: 'subscriptions.detail.tabs.integrations', badge: '5' },
+              { value: 'notes', icon: MessageSquare, labelKey: 'subscriptions.detail.tabs.notes', badge: String(mockNotes.length) },
             ].map(tab => ({
               value: tab.value,
               icon: tab.icon,
               label: t(tab.labelKey),
               badge: tab.badge,
-              badgeClassName: tab.badgeClass,
             }))}
           />
 
