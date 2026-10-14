@@ -29,6 +29,8 @@ export interface ColumnConfig<T = any> {
   sortable?: boolean;
   render: (row: T, searchTerm: string) => ReactNode;
   className?: string;
+  /** Colonnes chiffrées : en-tête et cellules alignés à droite. */
+  align?: 'left' | 'right';
 }
 
 interface DataTableProps<T extends { id: number }> {
@@ -188,10 +190,11 @@ export function DataTable<T extends { id: number }>({
                     onClick={() => onSort(column.key)}
                     className={cn(
                       "px-6 py-4 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider cursor-pointer group",
+                      column.align === 'right' && 'text-right',
                       column.className
                     )}
                   >
-                    <div className="flex items-center gap-2">
+                    <div className={cn("flex items-center gap-2", column.align === 'right' && 'justify-end')}>
                       {column.label}
                       <SortIcon columnKey={column.key} />
                     </div>
@@ -201,6 +204,7 @@ export function DataTable<T extends { id: number }>({
                     key={column.key}
                     className={cn(
                       "px-6 py-4 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider",
+                      column.align === 'right' && 'text-right',
                       column.className
                     )}
                   >
@@ -248,7 +252,7 @@ export function DataTable<T extends { id: number }>({
                   {columns.map((column) => (
                     <td
                       key={column.key}
-                      className={cn('px-6 py-4', column.className)}
+                      className={cn('px-6 py-4', column.align === 'right' && 'text-right tabular-nums whitespace-nowrap', column.className)}
                     >
                       {column.render(row, searchTerm)}
                     </td>

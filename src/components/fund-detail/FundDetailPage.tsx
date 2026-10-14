@@ -130,6 +130,7 @@ export function FundDetailPage({ fund, onBack, onOpenSubscriptions }: FundDetail
   const [dialog, setDialog] = useState<null | 'archive' | 'propagate' | 'delete' | 'blockers'>(null);
   const [settingsValues, setSettingsValues] = useState<SettingsValues>(() => buildSettingsValues(initial));
   const [settingsDirty, setSettingsDirty] = useState(false);
+  const [sharesDirty, setSharesDirty] = useState(false);
   const [pendingTab, setPendingTab] = useState<TabId | null>(null);
 
   useEffect(() => {
@@ -145,9 +146,10 @@ export function FundDetailPage({ fund, onBack, onOpenSubscriptions }: FundDetail
   const pendingSubscriptions = detail.pendingSubscriptions.reduce((acc, item) => acc + item.count, 0);
   const blockersTotal = Object.values(detail.deleteBlockers).reduce((acc, value) => acc + value, 0);
 
-  /** Quitter l'onglet Paramètres avec une section modifiée demande confirmation. */
+  /** Quitter l'onglet Paramètres ou une fiche part avec une section modifiée demande confirmation. */
   const changeTab = (next: TabId) => {
-    if (tab === 'settings' && next !== 'settings' && settingsDirty) setPendingTab(next);
+    const dirty = (tab === 'settings' && settingsDirty) || (tab === 'shares' && sharesDirty);
+    if (next !== tab && dirty) setPendingTab(next);
     else setTab(next);
   };
 
@@ -438,11 +440,16 @@ export function FundDetailPage({ fund, onBack, onOpenSubscriptions }: FundDetail
           </TabsContent>
           <TabsContent value="shares">
             <FundSharesTab
+              key={scenario}
               detail={detail}
+              fundPeriodicity={String(settingsValues.commissionPeriodicity ?? 'quarterly')}
               target={target}
               onTargetHandled={clearTarget}
-              editReason={actions.editReason}
+              canEdit={detail.rights.edit}
+              editReason={detail.rights.edit ? actions.editReason : undefined}
               onOpenNavs={() => setTab('navs')}
+              onSharesChange={shares => setDetail(current => ({ ...current, shares }))}
+              onDirtyChange={setSharesDirty}
             />
           </TabsContent>
           <TabsContent value="navs">
@@ -480,6 +487,7 @@ export function FundDetailPage({ fund, onBack, onOpenSubscriptions }: FundDetail
         destructive
         onConfirm={() => {
           setSettingsDirty(false);
+          setSharesDirty(false);
           if (pendingTab) setTab(pendingTab);
           setPendingTab(null);
         }}

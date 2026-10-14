@@ -4713,7 +4713,8 @@
           "archived": "Archived fund",
           "locked": "Locked by support",
           "sendingNotices": "Notices being sent",
-          "readOnly": "Read-only, no right"
+          "readOnly": "Read-only, no right",
+          "noRestrictRight": "Without the Restrict a share right"
         }
       },
       "toast": {
@@ -5206,9 +5207,9 @@
       },
       "shares": {
         "title": "Fund shares ({{count}})",
-        "add": "Add a share",
+        "add": "New share",
         "columns": {
-          "name": "Share",
+          "name": "Name",
           "isin": "ISIN code",
           "mode": "Mode",
           "nominal": "Nominal price",
@@ -5217,7 +5218,8 @@
           "subscribed": "Subscribed amount",
           "called": "Called amount",
           "lastNav": "Last net asset value",
-          "actions": "Actions"
+          "actions": "Actions",
+          "referencePrice": "Reference price"
         },
         "restricted": "Access restricted to some operators",
         "closed": "Closed share",
@@ -5233,6 +5235,254 @@
           "duplicate": "Duplicate",
           "close": "Close",
           "delete": "Delete"
+        },
+        "flags": {
+          "restricted": "Restricted access",
+          "carried": "Carried interest share",
+          "lemonway": "Lemonway direct debit"
+        },
+        "referencePrice": {
+          "nominal": "Nominal price",
+          "lastNav": "Latest NAV"
+        },
+        "noNav": "No value",
+        "alreadyClosed": "The share is already closed.",
+        "copyName": "{{name}} (copy)",
+        "toast": {
+          "created": "Share {{name}} created. Complete its settings.",
+          "duplicated": "Share {{name}} created by duplication, without ISIN code or NAV.",
+          "closed": "Share {{name}} closed.",
+          "deleted": "Share {{name}} deleted."
+        },
+        "closeDialog": {
+          "title": "Close share {{name}}?",
+          "description": "No new subscription will be possible on this share, on any channel. Existing subscriptions are not affected.",
+          "confirm": "Close share"
+        },
+        "deleteDialog": {
+          "title": "Delete share {{name}}?",
+          "description": "The share and its settings will be permanently deleted.",
+          "confirm": "Delete share"
+        },
+        "blockers": {
+          "intro": "Deletion is refused.",
+          "title": "Blockers",
+          "description": "Other records depend on this share. It cannot be deleted.",
+          "subscriptions": "Subscriptions",
+          "navs": "Net asset values",
+          "operations": "Operations",
+          "alternative": "Close share",
+          "alternativeDescription": "The share remains visible, no new subscription is possible."
+        },
+        "page": {
+          "back": "Back to shares",
+          "noIsin": "No ISIN code",
+          "sectionsTitle": "Share settings",
+          "sections": {
+            "identification": {
+              "title": "Identification",
+              "subtitle": "Name, codes and description"
+            },
+            "pricing": {
+              "title": "Mode and price",
+              "subtitle": "Nominal price and reference price"
+            },
+            "limits": {
+              "title": "Limits",
+              "subtitle": "Subscription minimum and maximum"
+            },
+            "fees": {
+              "title": "Fees",
+              "subtitle": "Management, entry and exemptions"
+            },
+            "commissions": {
+              "title": "Distribution commissions",
+              "subtitle": "Rate and frequency"
+            },
+            "access": {
+              "title": "Access",
+              "subtitle": "Investors, channels and operators"
+            },
+            "redemptions": {
+              "title": "Redemptions",
+              "subtitle": "Redemption rules"
+            },
+            "financial": {
+              "title": "Financial mechanisms",
+              "subtitle": "Carried interest, equity and NAV"
+            },
+            "payment": {
+              "title": "Payment",
+              "subtitle": "Reminders and direct debit"
+            },
+            "emails": {
+              "title": "Emails",
+              "subtitle": "Share-specific templates"
+            }
+          },
+          "fields": {
+            "name": "Name",
+            "isin": "ISIN code",
+            "externalId": "External ID",
+            "description": "Description",
+            "mode": "Mode",
+            "nominalPrice": "Nominal price",
+            "referencePrice": "Reference price",
+            "showPriceOnPortals": "Show price on portals",
+            "minShares": "Minimum number of shares",
+            "maxShares": "Maximum number of shares",
+            "minAmount": "Minimum amount",
+            "maxAmount": "Maximum amount",
+            "managementFee": "Management fees",
+            "entryFee": "Entry fees",
+            "minEntryFee": "Minimum entry fees",
+            "feeFreeThreshold": "Fee waiver threshold",
+            "feeExemptSegments": "Fee-exempt segments",
+            "defaultCommission": "Default commission",
+            "commissionPeriodicity": "Commission frequency",
+            "investorTypes": "Investor types",
+            "segments": "Allowed segments",
+            "onlineSubscription": "Online subscription",
+            "directSubscription": "Direct subscription",
+            "distributorSubscription": "Subscription through distributors",
+            "onlineAgreementRequest": "Online agreement request",
+            "openToAllNetwork": "Open to the whole distribution network",
+            "operators": "Allowed operators",
+            "freeRedemptionOnline": "Free online redemption",
+            "forceMajeureRedemption": "Force majeure redemption",
+            "redemptionUnit": "Redemption unit",
+            "periodicRedemption": "Periodic redemption allowed",
+            "carried": "Carried interest share",
+            "equityPercent": "Equity share",
+            "navProrata": "NAV pro rata to the called amount",
+            "noPaymentReminder": "No payment reminder",
+            "lemonwayDebit": "Lemonway direct debit",
+            "email-invitation": "Invitation email",
+            "email-confirmation": "Confirmation email",
+            "email-adminConfirmation": "Administered subscription confirmation email",
+            "email-reopening": "Reopening email",
+            "email-signature": "Signature email",
+            "validationCcEmail": "Validation CC email"
+          },
+          "options": {
+            "mode": {
+              "perShare": "Per share",
+              "perAmount": "Per amount"
+            },
+            "referencePrice": {
+              "nominal": "Nominal price",
+              "lastNav": "Latest NAV"
+            },
+            "investorTypes": {
+              "individual": "Individuals",
+              "entity": "Legal entities"
+            },
+            "redemptionUnit": {
+              "shares": "Shares",
+              "amount": "Amount",
+              "choice": "Investor's choice"
+            },
+            "navProrata": {
+              "fund": "Fund value",
+              "yes": "Yes",
+              "no": "No"
+            }
+          },
+          "hints": {
+            "segments": "Leave empty to open the share to all segments.",
+            "operators": "Leave empty so that all operators see the share's subscriptions.",
+            "limitsMode": "The limits shown depend on the mode."
+          },
+          "values": {
+            "allSegments": "All segments",
+            "allOperators": "All operators",
+            "fundDefault": "Fund value",
+            "fundValue": "Fund value: {{value}}",
+            "override": "Override",
+            "defaultTemplate": "Fund default template",
+            "sharesCount": "{{count}} shares",
+            "sharesUnit": "shares"
+          },
+          "errors": {
+            "nameRequired": "Enter the share name.",
+            "isin": "An ISIN code has 12 characters: 2 country letters, 9 characters, 1 check digit.",
+            "priceRequired": "Enter a nominal price greater than zero.",
+            "positive": "Enter a positive value.",
+            "minMax": "The maximum must be greater than or equal to the minimum.",
+            "percent": "Enter a percentage between 0 and 100.",
+            "email": "Enter valid email addresses, separated by a comma."
+          },
+          "restrictWarning": {
+            "title": "You are not among the allowed operators",
+            "description": "You will no longer see the subscriptions of this share.",
+            "confirm": "Save anyway"
+          },
+          "audience": {
+            "title": "Who can subscribe to this share",
+            "goTo": "Edit",
+            "and": "and",
+            "none": "None",
+            "rows": {
+              "investorTypes": "Investor types",
+              "segments": "Segments",
+              "channels": "Channels",
+              "distributors": "Distributors",
+              "operators": "Operators"
+            },
+            "types": {
+              "individual": "individuals",
+              "entity": "legal entities",
+              "both": "individuals and legal entities"
+            },
+            "segments": {
+              "all": "in all segments",
+              "allShort": "All segments",
+              "one": "in the {{name}} segment",
+              "many": "in the {{names}} segments"
+            },
+            "channels": {
+              "online": "online",
+              "direct": "directly",
+              "distributorsSigned": "through distributors who signed their agreement",
+              "distributorsAll": "through the whole distribution network",
+              "distributorsShort": "through distributors"
+            },
+            "distributors": {
+              "noModule": "Partners module inactive",
+              "none": "No distributor",
+              "signed": "Distributors who signed their agreement",
+              "all": "Whole distribution network"
+            },
+            "operators": {
+              "all": "all operators",
+              "allShort": "All operators",
+              "one": "a single operator",
+              "many": "{{count}} operators"
+            },
+            "numbers": {
+              "1": "one",
+              "2": "two",
+              "3": "three",
+              "4": "four",
+              "5": "five",
+              "6": "six",
+              "7": "seven",
+              "8": "eight",
+              "9": "nine",
+              "10": "ten"
+            },
+            "sentence": {
+              "open": "Share open to {{types}} {{segments}}, {{channels}}.",
+              "closed": "Closed share: no new subscription is possible.",
+              "noType": "No investor type is allowed: nobody can subscribe.",
+              "noChannel": "No subscription channel is open: nobody can subscribe.",
+              "visibility": "Subscriptions visible to {{operators}}."
+            }
+          }
+        },
+        "referencePriceShort": {
+          "nominal": "Nominal price",
+          "lastNav": "NAV"
         }
       },
       "navs": {

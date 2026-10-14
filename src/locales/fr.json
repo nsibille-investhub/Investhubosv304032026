@@ -4713,7 +4713,8 @@
           "archived": "Fonds archivé",
           "locked": "Verrouillé par le support",
           "sendingNotices": "Envoi d'avis en cours",
-          "readOnly": "Lecture seule, sans droit"
+          "readOnly": "Lecture seule, sans droit",
+          "noRestrictRight": "Sans le droit Restreindre une part"
         }
       },
       "toast": {
@@ -5206,9 +5207,9 @@
       },
       "shares": {
         "title": "Parts du fonds ({{count}})",
-        "add": "Ajouter une part",
+        "add": "Nouvelle part",
         "columns": {
-          "name": "Part",
+          "name": "Nom",
           "isin": "Code ISIN",
           "mode": "Modalité",
           "nominal": "Prix nominal",
@@ -5217,7 +5218,8 @@
           "subscribed": "Montant souscrit",
           "called": "Montant appelé",
           "lastNav": "Dernière valeur liquidative",
-          "actions": "Actions"
+          "actions": "Actions",
+          "referencePrice": "Prix de référence"
         },
         "restricted": "Accès restreint à certains opérateurs",
         "closed": "Part fermée",
@@ -5233,6 +5235,254 @@
           "duplicate": "Dupliquer",
           "close": "Fermer",
           "delete": "Supprimer"
+        },
+        "flags": {
+          "restricted": "Accès restreint",
+          "carried": "Part de carried",
+          "lemonway": "Prélèvement Lemonway"
+        },
+        "referencePrice": {
+          "nominal": "Prix nominal",
+          "lastNav": "Dernière valeur liquidative"
+        },
+        "noNav": "Aucune valeur",
+        "alreadyClosed": "La part est déjà fermée.",
+        "copyName": "{{name}} (copie)",
+        "toast": {
+          "created": "Part {{name}} créée. Complétez son paramétrage.",
+          "duplicated": "Part {{name}} créée par duplication, sans code ISIN ni valeur liquidative.",
+          "closed": "Part {{name}} fermée.",
+          "deleted": "Part {{name}} supprimée."
+        },
+        "closeDialog": {
+          "title": "Fermer la part {{name}} ?",
+          "description": "Plus aucune souscription ne sera possible sur cette part, sur tous les canaux. Les souscriptions existantes ne changent pas.",
+          "confirm": "Fermer la part"
+        },
+        "deleteDialog": {
+          "title": "Supprimer la part {{name}} ?",
+          "description": "La part et son paramétrage seront supprimés définitivement.",
+          "confirm": "Supprimer la part"
+        },
+        "blockers": {
+          "intro": "La suppression est refusée.",
+          "title": "Blocages",
+          "description": "La part porte des objets qui en dépendent. Elle ne peut pas être supprimée.",
+          "subscriptions": "Souscriptions",
+          "navs": "Valeurs liquidatives",
+          "operations": "Opérations",
+          "alternative": "Fermer la part",
+          "alternativeDescription": "La part reste consultable, plus aucune souscription n'est possible."
+        },
+        "page": {
+          "back": "Retour aux parts",
+          "noIsin": "Sans code ISIN",
+          "sectionsTitle": "Paramétrage de la part",
+          "sections": {
+            "identification": {
+              "title": "Identification",
+              "subtitle": "Nom, codes et description"
+            },
+            "pricing": {
+              "title": "Modalité et prix",
+              "subtitle": "Prix nominal et prix de référence"
+            },
+            "limits": {
+              "title": "Bornes",
+              "subtitle": "Minimum et maximum de souscription"
+            },
+            "fees": {
+              "title": "Frais",
+              "subtitle": "Gestion, entrée et exonérations"
+            },
+            "commissions": {
+              "title": "Commissions de distribution",
+              "subtitle": "Taux et périodicité"
+            },
+            "access": {
+              "title": "Accès",
+              "subtitle": "Investisseurs, canaux et opérateurs"
+            },
+            "redemptions": {
+              "title": "Rachats",
+              "subtitle": "Conditions de rachat"
+            },
+            "financial": {
+              "title": "Mécanismes financiers",
+              "subtitle": "Carried, equity et valeur liquidative"
+            },
+            "payment": {
+              "title": "Paiement",
+              "subtitle": "Relances et prélèvement"
+            },
+            "emails": {
+              "title": "Emails",
+              "subtitle": "Gabarits propres à la part"
+            }
+          },
+          "fields": {
+            "name": "Nom",
+            "isin": "Code ISIN",
+            "externalId": "Identifiant externe",
+            "description": "Description",
+            "mode": "Modalité",
+            "nominalPrice": "Prix nominal",
+            "referencePrice": "Prix de référence",
+            "showPriceOnPortals": "Afficher le prix sur les portails",
+            "minShares": "Nombre minimum de parts",
+            "maxShares": "Nombre maximum de parts",
+            "minAmount": "Montant minimum",
+            "maxAmount": "Montant maximum",
+            "managementFee": "Frais de gestion",
+            "entryFee": "Frais d'entrée",
+            "minEntryFee": "Frais d'entrée minimum",
+            "feeFreeThreshold": "Seuil de gratuité",
+            "feeExemptSegments": "Segments exonérés de frais",
+            "defaultCommission": "Commission par défaut",
+            "commissionPeriodicity": "Périodicité des commissions",
+            "investorTypes": "Types d'investisseurs",
+            "segments": "Segments autorisés",
+            "onlineSubscription": "Souscription en ligne",
+            "directSubscription": "Souscription en direct",
+            "distributorSubscription": "Souscription par les distributeurs",
+            "onlineAgreementRequest": "Demande de convention en ligne",
+            "openToAllNetwork": "Ouverte à tout le réseau de distribution",
+            "operators": "Opérateurs autorisés",
+            "freeRedemptionOnline": "Rachat libre en ligne",
+            "forceMajeureRedemption": "Rachat pour force majeure",
+            "redemptionUnit": "Unité de rachat",
+            "periodicRedemption": "Rachat périodique autorisé",
+            "carried": "Part de carried",
+            "equityPercent": "Part d'equity",
+            "navProrata": "Valeur liquidative au prorata du montant appelé",
+            "noPaymentReminder": "Pas de relance de paiement",
+            "lemonwayDebit": "Prélèvement Lemonway",
+            "email-invitation": "Email d'invitation",
+            "email-confirmation": "Email de confirmation",
+            "email-adminConfirmation": "Email de confirmation des souscriptions administrées",
+            "email-reopening": "Email de réouverture",
+            "email-signature": "Email de signature",
+            "validationCcEmail": "Email en copie des validations"
+          },
+          "options": {
+            "mode": {
+              "perShare": "À la part",
+              "perAmount": "Au montant"
+            },
+            "referencePrice": {
+              "nominal": "Prix nominal",
+              "lastNav": "Dernière valeur liquidative"
+            },
+            "investorTypes": {
+              "individual": "Personnes physiques",
+              "entity": "Personnes morales"
+            },
+            "redemptionUnit": {
+              "shares": "Parts",
+              "amount": "Montant",
+              "choice": "Au choix"
+            },
+            "navProrata": {
+              "fund": "Valeur du fonds",
+              "yes": "Oui",
+              "no": "Non"
+            }
+          },
+          "hints": {
+            "segments": "Laissez vide pour ouvrir la part à tous les segments.",
+            "operators": "Laissez vide pour que tous les opérateurs voient les souscriptions de la part.",
+            "limitsMode": "Les bornes affichées dépendent de la modalité."
+          },
+          "values": {
+            "allSegments": "Tous les segments",
+            "allOperators": "Tous les opérateurs",
+            "fundDefault": "Valeur du fonds",
+            "fundValue": "Valeur du fonds : {{value}}",
+            "override": "Surcharge",
+            "defaultTemplate": "Gabarit par défaut du fonds",
+            "sharesCount": "{{count}} parts",
+            "sharesUnit": "parts"
+          },
+          "errors": {
+            "nameRequired": "Saisissez le nom de la part.",
+            "isin": "Le code ISIN compte 12 caractères : 2 lettres de pays, 9 caractères, 1 chiffre de contrôle.",
+            "priceRequired": "Saisissez un prix nominal supérieur à zéro.",
+            "positive": "Saisissez une valeur positive.",
+            "minMax": "Le maximum doit être supérieur ou égal au minimum.",
+            "percent": "Saisissez un pourcentage entre 0 et 100.",
+            "email": "Saisissez des adresses email valides, séparées par une virgule."
+          },
+          "restrictWarning": {
+            "title": "Vous ne faites pas partie des opérateurs autorisés",
+            "description": "Vous ne verrez plus les souscriptions de cette part.",
+            "confirm": "Enregistrer quand même"
+          },
+          "audience": {
+            "title": "Qui peut souscrire cette part",
+            "goTo": "Modifier",
+            "and": "et",
+            "none": "Aucun",
+            "rows": {
+              "investorTypes": "Types d'investisseurs",
+              "segments": "Segments",
+              "channels": "Canaux",
+              "distributors": "Distributeurs",
+              "operators": "Opérateurs"
+            },
+            "types": {
+              "individual": "personnes physiques",
+              "entity": "personnes morales",
+              "both": "personnes physiques et morales"
+            },
+            "segments": {
+              "all": "de tous les segments",
+              "allShort": "Tous les segments",
+              "one": "du segment {{name}}",
+              "many": "des segments {{names}}"
+            },
+            "channels": {
+              "online": "en ligne",
+              "direct": "en direct",
+              "distributorsSigned": "par les distributeurs ayant signé leur convention",
+              "distributorsAll": "par tout le réseau de distribution",
+              "distributorsShort": "par les distributeurs"
+            },
+            "distributors": {
+              "noModule": "Module Partenaires inactif",
+              "none": "Aucun distributeur",
+              "signed": "Distributeurs ayant signé leur convention",
+              "all": "Tout le réseau de distribution"
+            },
+            "operators": {
+              "all": "tous les opérateurs",
+              "allShort": "Tous les opérateurs",
+              "one": "un seul opérateur",
+              "many": "{{count}} opérateurs"
+            },
+            "numbers": {
+              "1": "un",
+              "2": "deux",
+              "3": "trois",
+              "4": "quatre",
+              "5": "cinq",
+              "6": "six",
+              "7": "sept",
+              "8": "huit",
+              "9": "neuf",
+              "10": "dix"
+            },
+            "sentence": {
+              "open": "Part ouverte aux {{types}} {{segments}}, {{channels}}.",
+              "closed": "Part fermée : plus aucune souscription n'est possible.",
+              "noType": "Aucun type d'investisseur n'est autorisé : personne ne peut souscrire.",
+              "noChannel": "Aucun canal de souscription n'est ouvert : personne ne peut souscrire.",
+              "visibility": "Souscriptions visibles par {{operators}}."
+            }
+          }
+        },
+        "referencePriceShort": {
+          "nominal": "Prix nominal",
+          "lastNav": "Valeur liquidative"
         }
       },
       "navs": {
