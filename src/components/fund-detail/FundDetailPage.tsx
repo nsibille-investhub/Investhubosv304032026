@@ -50,7 +50,9 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '.
 import { PageTabsList, PageTabsTrigger, Tabs, TabsContent } from '../ui/tabs';
 import { toneSurface } from '../ui/tone';
 import { getFundActionStates } from './fundActions';
-import { applySettingsToDetail, buildSettingsValues } from './settings/settingsValues';
+import { applySettingsToDetail, buildSettingsValues, computeMissingConfig } from './settings/settingsValues';
+import { buildShareValues } from './shares/shareValues';
+import type { FundShare } from '../../utils/fundDetailMock';
 import type { SettingsValues } from './settings/settingsSchema';
 import { FundNavsTab } from './FundNavsTab';
 import { FundOverviewTab } from './FundOverviewTab';
@@ -129,13 +131,18 @@ export function FundDetailPage({ fund, onBack, onOpenSubscriptions }: FundDetail
   const [pending, setPending] = useState<null | 'publish' | 'duplicate' | 'archive' | 'unarchive' | 'propagate' | 'delete'>(null);
   const [dialog, setDialog] = useState<null | 'archive' | 'propagate' | 'delete' | 'blockers'>(null);
   const [settingsValues, setSettingsValues] = useState<SettingsValues>(() => buildSettingsValues(initial));
-  const [settingsDirty, setSettingsDirty] = useState(false);
+  const [shareValues, setShareValues] = useState<Record<string, SettingsValues>>(() =>
+    Object.fromEntries(initial.shares.map(share => [share.id, buildShareValues(share)])),
+  );
+  /** Une section modifiée et non enregistrée dans l'onglet courant (Paramètres ou Parts). */
+  const [tabDirty, setTabDirty] = useState(false);
   const [pendingTab, setPendingTab] = useState<TabId | null>(null);
 
   useEffect(() => {
     setDetail(initial);
     setSettingsValues(buildSettingsValues(initial));
-    setSettingsDirty(false);
+    setShareValues(Object.fromEntries(initial.shares.map(share => [share.id, buildShareValues(share)])));
+    setTabDirty(false);
     setTab('overview');
     setTarget(null);
   }, [initial]);
@@ -147,13 +154,21 @@ export function FundDetailPage({ fund, onBack, onOpenSubscriptions }: FundDetail
 
   /** Quitter l'onglet Paramètres avec une section modifiée demande confirmation. */
   const changeTab = (next: TabId) => {
-    if (tab === 'settings' && next !== 'settings' && settingsDirty) setPendingTab(next);
+    if (next !== tab && tabDirty) setPendingTab(next);
     else setTab(next);
   };
 
   const navigateTo = (next: FieldTarget) => {
     changeTab(next.tab);
     setTarget(next);
+  };
+
+  const updateShares = (shares: FundShare[], values: Record<string, SettingsValues>) => {
+    setShareValues(values);
+    setDetail(current => {
+      const next = { ...current, shares };
+      return { ...next, missingConfig: computeMissingConfig(next, settingsValues) };
+    });
   };
 
   const saveSettings = (changes: SettingsValues) => {
@@ -433,16 +448,21 @@ export function FundDetailPage({ fund, onBack, onOpenSubscriptions }: FundDetail
               onTargetHandled={clearTarget}
               canEdit={detail.rights.edit}
               editReason={detail.rights.edit ? actions.editReason : undefined}
-              onDirtyChange={setSettingsDirty}
+              onDirtyChange={setTabDirty}
             />
           </TabsContent>
           <TabsContent value="shares">
             <FundSharesTab
               detail={detail}
+              shareValues={shareValues}
+              fundValues={settingsValues}
+              onSharesChange={updateShares}
               target={target}
               onTargetHandled={clearTarget}
-              editReason={actions.editReason}
-              onOpenNavs={() => setTab('navs')}
+              canEdit={detail.rights.edit}
+              editReason={detail.rights.edit ? actions.editReason : undefined}
+              onOpenNavs={() => changeTab('navs')}
+              onDirtyChange={setTabDirty}
             />
           </TabsContent>
           <TabsContent value="navs">
@@ -479,7 +499,7 @@ export function FundDetailPage({ fund, onBack, onOpenSubscriptions }: FundDetail
         cancelLabel={t(`${K}.settings.leave.stay`)}
         destructive
         onConfirm={() => {
-          setSettingsDirty(false);
+          setTabDirty(false);
           if (pendingTab) setTab(pendingTab);
           setPendingTab(null);
         }}

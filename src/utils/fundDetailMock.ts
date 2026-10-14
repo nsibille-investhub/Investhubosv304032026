@@ -48,15 +48,24 @@ export interface FundShare {
   isin: string;
   mode: 'perShare' | 'perAmount';
   nominalPrice: number | null;
+  /** Prix utilisé pour calculer la souscription (PRD section 15.3). */
+  referencePrice: 'nominal' | 'lastNav';
   managementFee: number;
   entryFee: number;
   subscribed: number;
   called: number;
   lastNav: { value: number; date: Date } | null;
   restricted: boolean;
+  carried: boolean;
+  lemonwayDebit: boolean;
   closed: boolean;
   allowsRedemption: boolean;
+  /** Objets portés par la part : ils bloquent sa suppression (calcul serveur). */
+  counts: { subscriptions: number; navs: number; operations: number };
 }
+
+/** Quatre parts de démonstration : A à la part, B au montant, C restreinte, D fermée. */
+const SHARE_NAMES = ['A', 'B', 'C', 'D'];
 
 export interface FundNavRow {
   date: Date;
@@ -84,6 +93,8 @@ export interface FundRights {
   archive: boolean;
   delete: boolean;
   duplicate: boolean;
+  /** Droit "Restreindre une part" à certains opérateurs. */
+  restrictShare: boolean;
 }
 
 export interface FundDetail {
@@ -198,22 +209,27 @@ export function buildFundDetail(fund: Fund, scenario: FundScenario, today = new 
   const pick = <T,>(items: T[]) => items[Math.floor(random() * items.length)];
   const round = (value: number, step: number) => Math.round(value / step) * step;
 
-  const shares: FundShare[] = fund.shareClasses.map((share, index) => {
-    const subscribed = round(fund.totalCommitments / fund.shareClasses.length, 1000);
+  const shares: FundShare[] = SHARE_NAMES.map((name, index) => {
+    const closed = index === 3;
+    const subscribed = closed ? round(fund.totalCommitments * 0.05, 1000) : round((fund.totalCommitments * 0.95) / 3, 1000);
     return {
       id: `share-${index}`,
-      name: share.name,
-      isin: share.isin,
-      mode: index === 0 ? 'perShare' : pick(['perShare', 'perAmount'] as const),
-      nominalPrice: 100 * (index + 1),
+      name,
+      isin: fund.shareClasses[index]?.isin ?? `FR00${String(fund.id).padStart(6, '0')}${index + 1}${index + 3}`,
+      mode: index === 1 ? 'perAmount' : 'perShare',
+      nominalPrice: index === 1 ? 1 : 100 * (index + 1),
+      referencePrice: index === 0 ? 'lastNav' : 'nominal',
       managementFee: round(1.5 + random(), 0.05),
       entryFee: round(random() * 4, 0.5),
       subscribed,
       called: round(subscribed * (0.3 + random() * 0.5), 1000),
       lastNav: { value: round(100 * (index + 1) * (0.9 + random() * 0.4), 0.01), date: endOfQuarter(addMonths(today, -3)) },
       restricted: index === 2,
-      closed: false,
+      carried: index === 2,
+      lemonwayDebit: index === 0,
+      closed,
       allowsRedemption: false,
+      counts: { subscriptions: 8 + Math.floor(random() * 30), navs: 6, operations: 2 + Math.floor(random() * 4) },
     };
   });
 
@@ -268,7 +284,7 @@ export function buildFundDetail(fund: Fund, scenario: FundScenario, today = new 
     archived: null,
     locked: null,
     sendingNotices: false,
-    rights: { edit: true, publish: true, archive: true, delete: true, duplicate: true },
+    rights: { edit: true, publish: true, archive: true, delete: true, duplicate: true, restrictShare: true },
     modules: {
       partners: true,
       contracts: true,
@@ -337,7 +353,8 @@ export function buildFundDetail(fund: Fund, scenario: FundScenario, today = new 
 
   // Valeur attendue non saisie : le serveur compare la fréquence de valorisation à la dernière date saisie.
   if (shares.length > 0) {
-    const lastShare = shares[shares.length - 1];
+    // Part B : la valeur attendue au dernier trimestre n'a pas été saisie.
+    const lastShare = shares[1];
     detail.expectedNavMissing.push({ shareId: lastShare.id, expectedDate: navs[0].date });
     navs[0].values[lastShare.id] = null;
     lastShare.lastNav = { value: navs[1].values[lastShare.id] ?? 100, date: navs[1].date };
@@ -368,15 +385,16 @@ function applyScenario(detail: FundDetail, scenario: FundScenario, today: Date):
         subscribed: 0,
         called: 0,
         lastNav: null,
-        nominalPrice: index === detail.shares.length - 1 ? null : share.nominalPrice,
+        nominalPrice: index === 1 ? null : share.nominalPrice,
+        counts: { subscriptions: 0, navs: 0, operations: 0 },
       }));
       detail.settings.onboarding = null;
       detail.settings.subscriptionContract = null;
       detail.missingConfig = [
         {
           key: 'sharePrice',
-          target: { tab: 'shares', sectionId: 'shares', fieldId: detail.shares[detail.shares.length - 1].id },
-          detail: detail.shares[detail.shares.length - 1].name,
+          target: { tab: 'shares', sectionId: 'pricing', fieldId: detail.shares[1].id },
+          detail: detail.shares[1].name,
         },
         { key: 'onboarding', target: { tab: 'settings', sectionId: 'subscription', fieldId: 'onboardingIndividuals' } },
         // Le contrat de souscription se gère dans l'onglet Contrats, pas dans les paramètres.
@@ -421,7 +439,7 @@ function applyScenario(detail: FundDetail, scenario: FundScenario, today: Date):
       detail.sendingNotices = true;
       break;
     case 'readOnly':
-      detail.rights = { edit: false, publish: false, archive: false, delete: false, duplicate: false };
+      detail.rights = { edit: false, publish: false, archive: false, delete: false, duplicate: false, restrictShare: false };
       break;
     default:
       break;

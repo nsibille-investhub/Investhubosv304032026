@@ -1912,7 +1912,8 @@
       "editBarLabel": "Save section",
       "collapse": "Collapse section",
       "expand": "Expand section",
-      "legacySetting": "Fund setting"
+      "legacySetting": "Fund setting",
+      "saveWarningTitle": "Confirm saving"
     },
     "effectsPanel": {
       "title": "Effects of this action",
@@ -5206,12 +5207,13 @@
       },
       "shares": {
         "title": "Fund shares ({{count}})",
-        "add": "Add a share",
+        "add": "New share",
         "columns": {
           "name": "Share",
           "isin": "ISIN code",
           "mode": "Mode",
           "nominal": "Nominal price",
+          "referencePrice": "Reference price",
           "managementFee": "Management fee",
           "entryFee": "Entry fee",
           "subscribed": "Subscribed amount",
@@ -5233,6 +5235,37 @@
           "duplicate": "Duplicate",
           "close": "Close",
           "delete": "Delete"
+        },
+        "copySuffix": "(copy)",
+        "newShareName": "New share",
+        "pictos": {
+          "restricted": "Access restricted to some operators",
+          "carried": "Carried share",
+          "lemonway": "Lemonway direct debit"
+        },
+        "toast": {
+          "duplicated": "{{name}} created without ISIN code or net asset value.",
+          "created": "New share created. Complete its profile.",
+          "closed": "Share {{name}} closed.",
+          "deleted": "Share {{name}} deleted."
+        },
+        "dialogs": {
+          "close": {
+            "title": "Close share {{name}}?",
+            "description": "No subscription will be possible on this share anymore, on any channel. Existing subscriptions do not change.",
+            "confirm": "Close the share"
+          },
+          "delete": {
+            "title": "Delete share {{name}}?",
+            "description": "The share holds no subscription, no net asset value and no operation. This action cannot be undone."
+          },
+          "blockers": {
+            "title": "This share cannot be deleted",
+            "subscriptions": "Subscriptions",
+            "navs": "Net asset values",
+            "operations": "Operations",
+            "closeShare": "Close the share"
+          }
         }
       },
       "navs": {
@@ -5244,6 +5277,219 @@
         "expectedMissing": "Expected value not entered",
         "emptyTitle": "No net asset value",
         "emptyDescription": "Entered or imported net asset values will appear here, one row per date."
+      },
+      "shareSheet": {
+        "back": "Shares",
+        "navTitle": "Share profile",
+        "restrictionWarning": "You will no longer see the subscriptions of this share.",
+        "reasons": {
+          "alreadyClosed": "The share is already closed."
+        },
+        "errors": {
+          "nameRequired": "The share name is required.",
+          "isin": "Expected format: 12 characters, two country letters, nine characters and a check digit.",
+          "bounds": "The maximum must be greater than or equal to the minimum."
+        },
+        "badges": {
+          "override": "Override"
+        },
+        "locks": {},
+        "who": {
+          "title": "Who can subscribe to this share",
+          "footnote": "Computed by the server from the Access section and the fund distribution agreement.",
+          "open": "View",
+          "rows": {
+            "investorTypes": "Investor types",
+            "segments": "Segments",
+            "channels": "Channels",
+            "distributors": "Distributors",
+            "operators": "Operators"
+          },
+          "sentence": "Share open {{types}}{{segments}}, {{channels}}. {{operators}}",
+          "types": {
+            "individuals": "to individuals",
+            "entities": "to legal entities",
+            "both": "to individuals and legal entities",
+            "none": "to no investor type"
+          },
+          "segments": " in the {{list}} segments",
+          "channels": {
+            "online": "online",
+            "direct": "directly",
+            "distributors": "through distributors with access",
+            "distributorsAgreement": "through distributors who signed their agreement"
+          },
+          "noChannel": "with no open subscription channel",
+          "operatorsAll": "Subscriptions visible to all fund operators.",
+          "operatorsOne": "Subscriptions visible to {{count}} operator.",
+          "operatorsMany": "Subscriptions visible to {{count}} operators.",
+          "numbers": {
+            "1": "one",
+            "2": "two",
+            "3": "three",
+            "4": "four",
+            "5": "five",
+            "6": "six",
+            "7": "seven",
+            "8": "eight",
+            "9": "nine",
+            "10": "ten"
+          },
+          "closed": "Closed share: no subscription is possible anymore, on any channel.",
+          "none": "None",
+          "allSegments": "All segments",
+          "distributorsAgreement": "{{count}} distributors with access, signed agreement required",
+          "distributorsCount": "{{count}} distributors with access",
+          "distributorsClosed": "Subscription through distributors closed",
+          "allOperators": "All fund operators",
+          "segmentsOne": " in the {{list}} segment"
+        },
+        "sections": {
+          "identification": {
+            "title": "Identification",
+            "subtitle": "Name, ISIN code, description"
+          },
+          "pricing": {
+            "title": "Mode and price",
+            "subtitle": "Mode, nominal price, reference price"
+          },
+          "bounds": {
+            "title": "Limits",
+            "subtitle": "Minimum and maximum for the mode"
+          },
+          "fees": {
+            "title": "Fees",
+            "subtitle": "Management, entry, exemptions"
+          },
+          "commissions": {
+            "title": "Distribution commissions",
+            "subtitle": "Commission, periodicity"
+          },
+          "access": {
+            "title": "Access",
+            "subtitle": "Investors, channels, operators"
+          },
+          "redemptions": {
+            "title": "Redemptions",
+            "subtitle": "Online redemption, unit, periodicity"
+          },
+          "financial": {
+            "title": "Financial mechanisms",
+            "subtitle": "Carried, equity, pro rata"
+          },
+          "payment": {
+            "title": "Payment",
+            "subtitle": "Reminder, direct debit"
+          },
+          "emails": {
+            "title": "Emails",
+            "subtitle": "Specific templates, copy"
+          }
+        },
+        "fields": {
+          "name": "Name",
+          "isin": "ISIN code",
+          "externalId": "External ID",
+          "description": "Description",
+          "mode": "Mode",
+          "nominalPrice": "Nominal price",
+          "referencePrice": "Reference price",
+          "showPrice": "Show the price on portals",
+          "minShares": "Minimum number of shares",
+          "maxShares": "Maximum number of shares",
+          "minAmount": "Minimum amount",
+          "maxAmount": "Maximum amount",
+          "managementFee": "Management fee",
+          "entryFee": "Entry fee",
+          "minEntryFee": "Minimum entry fee",
+          "freeThreshold": "Fee-free threshold",
+          "exemptSegments": "Fee-exempt segments",
+          "defaultCommission": "Default commission",
+          "shareCommissionPeriodicity": "Commission periodicity",
+          "investorTypes": "Investor types",
+          "segments": "Authorized segments",
+          "onlineSubscription": "Online subscription",
+          "directSubscription": "Direct subscription",
+          "distributorSubscription": "Subscription through distributors",
+          "onlineAgreementRequest": "Online agreement request",
+          "openToNetwork": "Open to the whole distribution network",
+          "operators": "Authorized operators",
+          "freeOnlineRedemption": "Free online redemption",
+          "forceMajeureRedemption": "Force majeure redemption",
+          "redemptionUnit": "Redemption unit",
+          "periodicRedemption": "Periodic redemption allowed",
+          "carried": "Carried share",
+          "equityShare": "Equity share",
+          "shareNavProrata": "Net asset value pro rata of called amount",
+          "noPaymentReminder": "No payment reminder",
+          "lemonwayDebit": "Lemonway direct debit",
+          "templateInvitation": "Invitation template",
+          "templateConfirmation": "Confirmation template",
+          "templateAdminConfirmation": "Administered subscriptions confirmation template",
+          "templateReopening": "Reopening template",
+          "templateSignature": "Signature template",
+          "validationCcEmail": "Email in copy of validations"
+        },
+        "options": {
+          "mode": {
+            "perShare": "Per share",
+            "perAmount": "Per amount"
+          },
+          "referencePrice": {
+            "nominal": "Nominal price",
+            "lastNav": "Last net asset value"
+          },
+          "shareCommissionPeriodicity": {
+            "fund": "Fund value",
+            "monthly": "Monthly",
+            "quarterly": "Quarterly",
+            "semiannual": "Semi-annual",
+            "annual": "Annual"
+          },
+          "investorTypes": {
+            "individuals": "Individuals",
+            "entities": "Legal entities"
+          },
+          "segments": {
+            "retail": "Retail",
+            "premium": "Premium",
+            "professional": "Professionals"
+          },
+          "exemptSegments": {
+            "retail": "Retail",
+            "premium": "Premium",
+            "professional": "Professionals",
+            "employees": "Employees"
+          },
+          "redemptionUnit": {
+            "shares": "Shares",
+            "amount": "Amount",
+            "choice": "Investor's choice"
+          },
+          "shareNavProrata": {
+            "fund": "Fund value",
+            "yes": "Yes",
+            "no": "No"
+          }
+        },
+        "hints": {
+          "freeThreshold": "Below this subscribed amount, no entry fee applies.",
+          "shareCommissionPeriodicity": "Fund value: {{value}}.",
+          "operators": "Empty: all fund operators see the subscriptions of the share.",
+          "templateInvitation": "Empty: fund default template.",
+          "templateConfirmation": "Empty: fund default template.",
+          "templateAdminConfirmation": "Empty: fund default template.",
+          "templateReopening": "Empty: fund default template.",
+          "templateSignature": "Empty: fund default template."
+        },
+        "legacy": {
+          "referencePrice": "Price used to compute the subscription and shown on portals. Replaces \"Calculate subscription amount with share nav\" and \"Nominal value instead of present value\".",
+          "showPrice": "Hides the price and value date on every channel when disabled. Replaces \"Hide share price\".",
+          "openToNetwork": "The share is visible to any distributor with access to the fund, without share-by-share opening. Replaces \"No restriction of partner shares\".",
+          "redemptionUnit": "Unit offered to the investor for a redemption. Replaces \"Rebuy by amount\" and \"Rebuy by amount or shares\".",
+          "periodicRedemption": "Offers periodic redemption on the portal. Replaces \"Allow periodic rebuy\".",
+          "shareNavProrata": "True override of the fund setting. Replaces \"Prorata for share value\" and the share attribute."
+        }
       }
     }
   },
@@ -5499,6 +5745,13 @@
         "variants": "With or without language tabs (SegmentedControl above).",
         "states": "Empty, filled, disabled, error (outline).",
         "exampleLabel": "Example: multilingual detailed description"
+      },
+      "dataTable": {
+        "title": "Data table",
+        "description": "Design system table. Evolution: align option per column. On the right, header and cells align and figures become tabular: amounts and percentages, each in its own sortable column.",
+        "variants": "Sortable or not, left or right alignment, selection can be hidden. Default or compact density.",
+        "states": "Ascending, descending or no sort; row hover; row click.",
+        "exampleLabel": "Example: fees of two shares"
       }
     }
   }

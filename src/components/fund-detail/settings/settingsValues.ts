@@ -147,12 +147,18 @@ export function buildSettingsValues(detail: FundDetail): SettingsValues {
 /**
  * Manques de configuration après un enregistrement des paramètres.
  * Règle serveur simulée (PRD section 7, widget "Configuration à compléter") :
- * aucun onboarding, aucun signataire principal, IBAN absent pour un fonds à appels.
- * Les manques portés par les parts et les contrats restent ceux du serveur.
+ * aucun onboarding, aucun signataire principal, IBAN absent pour un fonds à appels,
+ * part ouverte sans prix nominal. Le manque de contrat de souscription reste celui du serveur.
  */
 export function computeMissingConfig(detail: FundDetail, values: SettingsValues): MissingConfigItem[] {
-  const kept = detail.missingConfig.filter(item => item.key === 'sharePrice' || item.key === 'subscriptionContract');
-  const missing: MissingConfigItem[] = [...kept];
+  const missing: MissingConfigItem[] = detail.shares
+    .filter(share => !share.closed && share.nominalPrice === null)
+    .map(share => ({
+      key: 'sharePrice' as const,
+      target: { tab: 'shares' as const, sectionId: 'pricing', fieldId: share.id },
+      detail: share.name,
+    }));
+  missing.push(...detail.missingConfig.filter(item => item.key === 'subscriptionContract'));
   if (!values.onboardingIndividuals && !values.onboardingEntities) {
     missing.push({ key: 'onboarding', target: { tab: 'settings', sectionId: 'subscription', fieldId: 'onboardingIndividuals' } });
   }

@@ -28,6 +28,7 @@ import {
 import { useTranslation } from '../../utils/languageContext';
 import { FUND_STATUSES, FundStatusBadge } from '../FundStatusBadge';
 import { StatusBadge } from '../StatusBadge';
+import { DataTable } from '../DataTable';
 import { EmptyState } from '../EmptyState';
 import { BlockersPanel } from '../ui/blockers-panel';
 import { Button } from '../ui/button';
@@ -767,6 +768,42 @@ function RichTextDemo() {
   );
 }
 
+function DataTableDemo() {
+  const { t, lang } = useTranslation();
+  const [sort, setSort] = useState<{ key: string; direction: 'asc' | 'desc' } | null>(null);
+  const [hovered, setHovered] = useState<number | null>(null);
+  const format = new Intl.NumberFormat(lang, { style: 'percent', minimumFractionDigits: 2, maximumFractionDigits: 2 });
+  const base = [
+    { id: 1, name: 'A', management: 2.05, entry: 1.5 },
+    { id: 2, name: 'B', management: 1.8, entry: 3 },
+  ];
+  const rows = sort
+    ? [...base].sort((a, b) => {
+        const key = sort.key as 'management' | 'entry';
+        return sort.direction === 'asc' ? a[key] - b[key] : b[key] - a[key];
+      })
+    : base;
+  return (
+    <div className="max-w-2xl overflow-hidden rounded-xl border border-border bg-card">
+      <DataTable
+        data={rows}
+        columns={[
+          { key: 'name', label: t('funds.detail.shares.columns.name'), render: row => t('funds.detail.sharePrefix', { name: row.name }) },
+          { key: 'management', label: t('funds.detail.shares.columns.managementFee'), sortable: true, align: 'right', render: row => format.format(row.management / 100) },
+          { key: 'entry', label: t('funds.detail.shares.columns.entryFee'), sortable: true, align: 'right', render: row => format.format(row.entry / 100) },
+        ]}
+        hoveredRow={hovered}
+        setHoveredRow={setHovered}
+        onRowClick={() => undefined}
+        sortConfig={sort}
+        onSort={key => setSort(prev => (prev?.key === key && prev.direction === 'asc' ? { key, direction: 'desc' } : { key, direction: 'asc' }))}
+        compactMode
+        hideSelection
+      />
+    </div>
+  );
+}
+
 /** Composants du détail d'un fonds V3, documentés avec variantes, états et exemple. */
 export function FundDetailComponentsSection() {
   const { t } = useTranslation();
@@ -992,6 +1029,20 @@ export function FundDetailComponentsSection() {
       >
         <Example label={t(`${K}.confirmDialog.exampleLabel`)} hint={t(`${K}.confirmDialog.exampleHint`)}>
           <ConfirmDialogDemo />
+        </Example>
+      </DocBlock>
+
+      <DocBlock
+        id="dataTable"
+        name="DataTable"
+        importLine="import { DataTable } from '@/components/DataTable'"
+        usage={`columns={[
+  { key: 'managementFee', label: t('...'), sortable: true, align: 'right', render: row => percent(row.managementFee) },
+  { key: 'entryFee', label: t('...'), sortable: true, align: 'right', render: row => percent(row.entryFee) },
+]}`}
+      >
+        <Example label={t(`${K}.dataTable.exampleLabel`)}>
+          <DataTableDemo />
         </Example>
       </DocBlock>
 

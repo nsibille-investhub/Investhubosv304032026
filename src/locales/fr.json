@@ -1912,7 +1912,8 @@
       "editBarLabel": "Enregistrement de la section",
       "collapse": "Replier la section",
       "expand": "Déplier la section",
-      "legacySetting": "Paramètre du fonds"
+      "legacySetting": "Paramètre du fonds",
+      "saveWarningTitle": "Confirmer l'enregistrement"
     },
     "effectsPanel": {
       "title": "Effets de cette action",
@@ -5206,12 +5207,13 @@
       },
       "shares": {
         "title": "Parts du fonds ({{count}})",
-        "add": "Ajouter une part",
+        "add": "Nouvelle part",
         "columns": {
           "name": "Part",
           "isin": "Code ISIN",
           "mode": "Modalité",
           "nominal": "Prix nominal",
+          "referencePrice": "Prix de référence",
           "managementFee": "Frais de gestion",
           "entryFee": "Frais d'entrée",
           "subscribed": "Montant souscrit",
@@ -5233,6 +5235,37 @@
           "duplicate": "Dupliquer",
           "close": "Fermer",
           "delete": "Supprimer"
+        },
+        "copySuffix": "(copie)",
+        "newShareName": "Nouvelle part",
+        "pictos": {
+          "restricted": "Accès restreint à certains opérateurs",
+          "carried": "Part de carried",
+          "lemonway": "Prélèvement Lemonway"
+        },
+        "toast": {
+          "duplicated": "{{name}} créée sans code ISIN ni valeur liquidative.",
+          "created": "Nouvelle part créée. Complétez sa fiche.",
+          "closed": "Part {{name}} fermée.",
+          "deleted": "Part {{name}} supprimée."
+        },
+        "dialogs": {
+          "close": {
+            "title": "Fermer la part {{name}} ?",
+            "description": "Plus aucune souscription ne sera possible sur cette part, sur tous les canaux. Les souscriptions existantes ne changent pas.",
+            "confirm": "Fermer la part"
+          },
+          "delete": {
+            "title": "Supprimer la part {{name}} ?",
+            "description": "La part ne porte aucune souscription, aucune valeur liquidative et aucune opération. Cette action est irréversible."
+          },
+          "blockers": {
+            "title": "Cette part ne peut pas être supprimée",
+            "subscriptions": "Souscriptions",
+            "navs": "Valeurs liquidatives",
+            "operations": "Opérations",
+            "closeShare": "Fermer la part"
+          }
         }
       },
       "navs": {
@@ -5244,6 +5277,219 @@
         "expectedMissing": "Valeur attendue non saisie",
         "emptyTitle": "Aucune valeur liquidative",
         "emptyDescription": "Les valeurs liquidatives saisies ou importées apparaîtront ici, une ligne par date."
+      },
+      "shareSheet": {
+        "back": "Parts",
+        "navTitle": "Fiche de la part",
+        "restrictionWarning": "Vous ne verrez plus les souscriptions de cette part.",
+        "reasons": {
+          "alreadyClosed": "La part est déjà fermée."
+        },
+        "errors": {
+          "nameRequired": "Le nom de la part est obligatoire.",
+          "isin": "Format attendu : 12 caractères, deux lettres de pays puis neuf caractères et un chiffre de contrôle.",
+          "bounds": "Le maximum doit être supérieur ou égal au minimum."
+        },
+        "badges": {
+          "override": "Surcharge"
+        },
+        "locks": {},
+        "who": {
+          "title": "Qui peut souscrire cette part",
+          "footnote": "Calculé par le serveur à partir de la section Accès et de la convention de distribution du fonds.",
+          "open": "Voir",
+          "rows": {
+            "investorTypes": "Types d'investisseurs",
+            "segments": "Segments",
+            "channels": "Canaux",
+            "distributors": "Distributeurs",
+            "operators": "Opérateurs"
+          },
+          "sentence": "Part ouverte {{types}}{{segments}}, {{channels}}. {{operators}}",
+          "types": {
+            "individuals": "aux personnes physiques",
+            "entities": "aux personnes morales",
+            "both": "aux personnes physiques et morales",
+            "none": "à aucun type d'investisseur"
+          },
+          "segments": " des segments {{list}}",
+          "channels": {
+            "online": "en ligne",
+            "direct": "en direct",
+            "distributors": "par les distributeurs ayant accès",
+            "distributorsAgreement": "par les distributeurs ayant signé leur convention"
+          },
+          "noChannel": "sans canal de souscription ouvert",
+          "operatorsAll": "Souscriptions visibles par tous les opérateurs du fonds.",
+          "operatorsOne": "Souscriptions visibles par {{count}} opérateur.",
+          "operatorsMany": "Souscriptions visibles par {{count}} opérateurs.",
+          "numbers": {
+            "1": "un",
+            "2": "deux",
+            "3": "trois",
+            "4": "quatre",
+            "5": "cinq",
+            "6": "six",
+            "7": "sept",
+            "8": "huit",
+            "9": "neuf",
+            "10": "dix"
+          },
+          "closed": "Part fermée : plus aucune souscription n'est possible, sur tous les canaux.",
+          "none": "Aucun",
+          "allSegments": "Tous les segments",
+          "distributorsAgreement": "{{count}} distributeurs ayant accès, convention signée requise",
+          "distributorsCount": "{{count}} distributeurs ayant accès",
+          "distributorsClosed": "Souscription par les distributeurs fermée",
+          "allOperators": "Tous les opérateurs du fonds",
+          "segmentsOne": " du segment {{list}}"
+        },
+        "sections": {
+          "identification": {
+            "title": "Identification",
+            "subtitle": "Nom, code ISIN, description"
+          },
+          "pricing": {
+            "title": "Modalité et prix",
+            "subtitle": "Modalité, prix nominal, prix de référence"
+          },
+          "bounds": {
+            "title": "Bornes",
+            "subtitle": "Minimum et maximum de la modalité"
+          },
+          "fees": {
+            "title": "Frais",
+            "subtitle": "Gestion, entrée, exonérations"
+          },
+          "commissions": {
+            "title": "Commissions de distribution",
+            "subtitle": "Commission, périodicité"
+          },
+          "access": {
+            "title": "Accès",
+            "subtitle": "Investisseurs, canaux, opérateurs"
+          },
+          "redemptions": {
+            "title": "Rachats",
+            "subtitle": "Rachat en ligne, unité, périodicité"
+          },
+          "financial": {
+            "title": "Mécanismes financiers",
+            "subtitle": "Carried, equity, prorata"
+          },
+          "payment": {
+            "title": "Paiement",
+            "subtitle": "Relance, prélèvement"
+          },
+          "emails": {
+            "title": "Emails",
+            "subtitle": "Gabarits spécifiques, copie"
+          }
+        },
+        "fields": {
+          "name": "Nom",
+          "isin": "Code ISIN",
+          "externalId": "Identifiant externe",
+          "description": "Description",
+          "mode": "Modalité",
+          "nominalPrice": "Prix nominal",
+          "referencePrice": "Prix de référence",
+          "showPrice": "Afficher le prix sur les portails",
+          "minShares": "Nombre minimum de parts",
+          "maxShares": "Nombre maximum de parts",
+          "minAmount": "Montant minimum",
+          "maxAmount": "Montant maximum",
+          "managementFee": "Frais de gestion",
+          "entryFee": "Frais d'entrée",
+          "minEntryFee": "Frais d'entrée minimum",
+          "freeThreshold": "Seuil de gratuité",
+          "exemptSegments": "Segments exonérés de frais",
+          "defaultCommission": "Commission par défaut",
+          "shareCommissionPeriodicity": "Périodicité des commissions",
+          "investorTypes": "Types d'investisseurs",
+          "segments": "Segments autorisés",
+          "onlineSubscription": "Souscription en ligne",
+          "directSubscription": "Souscription en direct",
+          "distributorSubscription": "Souscription par les distributeurs",
+          "onlineAgreementRequest": "Demande de convention en ligne",
+          "openToNetwork": "Ouverte à tout le réseau de distribution",
+          "operators": "Opérateurs autorisés",
+          "freeOnlineRedemption": "Rachat libre en ligne",
+          "forceMajeureRedemption": "Rachat pour force majeure",
+          "redemptionUnit": "Unité de rachat",
+          "periodicRedemption": "Rachat périodique autorisé",
+          "carried": "Part de carried",
+          "equityShare": "Part d'equity",
+          "shareNavProrata": "Valeur liquidative au prorata du montant appelé",
+          "noPaymentReminder": "Pas de relance de paiement",
+          "lemonwayDebit": "Prélèvement Lemonway",
+          "templateInvitation": "Gabarit d'invitation",
+          "templateConfirmation": "Gabarit de confirmation",
+          "templateAdminConfirmation": "Gabarit de confirmation des souscriptions administrées",
+          "templateReopening": "Gabarit de réouverture",
+          "templateSignature": "Gabarit de signature",
+          "validationCcEmail": "Email en copie des validations"
+        },
+        "options": {
+          "mode": {
+            "perShare": "À la part",
+            "perAmount": "Au montant"
+          },
+          "referencePrice": {
+            "nominal": "Prix nominal",
+            "lastNav": "Dernière valeur liquidative"
+          },
+          "shareCommissionPeriodicity": {
+            "fund": "Valeur du fonds",
+            "monthly": "Mensuelle",
+            "quarterly": "Trimestrielle",
+            "semiannual": "Semestrielle",
+            "annual": "Annuelle"
+          },
+          "investorTypes": {
+            "individuals": "Personnes physiques",
+            "entities": "Personnes morales"
+          },
+          "segments": {
+            "retail": "Retail",
+            "premium": "Premium",
+            "professional": "Professionnels"
+          },
+          "exemptSegments": {
+            "retail": "Retail",
+            "premium": "Premium",
+            "professional": "Professionnels",
+            "employees": "Salariés"
+          },
+          "redemptionUnit": {
+            "shares": "Parts",
+            "amount": "Montant",
+            "choice": "Au choix de l'investisseur"
+          },
+          "shareNavProrata": {
+            "fund": "Valeur du fonds",
+            "yes": "Oui",
+            "no": "Non"
+          }
+        },
+        "hints": {
+          "freeThreshold": "En dessous de ce montant souscrit, aucun frais d'entrée n'est appliqué.",
+          "shareCommissionPeriodicity": "Valeur du fonds : {{value}}.",
+          "operators": "Vide : tous les opérateurs du fonds voient les souscriptions de la part.",
+          "templateInvitation": "Vide : gabarit par défaut du fonds.",
+          "templateConfirmation": "Vide : gabarit par défaut du fonds.",
+          "templateAdminConfirmation": "Vide : gabarit par défaut du fonds.",
+          "templateReopening": "Vide : gabarit par défaut du fonds.",
+          "templateSignature": "Vide : gabarit par défaut du fonds."
+        },
+        "legacy": {
+          "referencePrice": "Prix utilisé pour calculer la souscription et affiché sur les portails. Remplace \"Calculate subscription amount with share nav\" et \"Nominal value instead of present value\".",
+          "showPrice": "Masque le prix et la date de valeur sur tous les canaux quand il est désactivé. Remplace \"Hide share price\".",
+          "openToNetwork": "La part est visible de tout distributeur ayant accès au fonds, sans ouverture part par part. Remplace \"No restriction of partner shares\".",
+          "redemptionUnit": "Unité proposée à l'investisseur pour un rachat. Remplace \"Rebuy by amount\" et \"Rebuy by amount or shares\".",
+          "periodicRedemption": "Propose le rachat périodique sur le portail. Remplace \"Allow periodic rebuy\".",
+          "shareNavProrata": "Vraie surcharge du paramètre du fonds. Remplace \"Prorata for share value\" et l'attribut de part."
+        }
       }
     }
   },
@@ -5499,6 +5745,13 @@
         "variants": "Avec ou sans onglets de langue (SegmentedControl au-dessus).",
         "states": "Vide, rempli, désactivé, erreur (contour).",
         "exampleLabel": "Exemple : description détaillée multilingue"
+      },
+      "dataTable": {
+        "title": "Tableau de données",
+        "description": "Tableau du design system. Évolution : option align par colonne. À droite, l'en-tête et les cellules s'alignent et les chiffres passent en tabulaires : montants et pourcentages, chacun dans sa propre colonne triable.",
+        "variants": "Colonnes triables ou non, alignement à gauche ou à droite, sélection masquable. Densité par défaut ou compacte.",
+        "states": "Tri ascendant, descendant, sans tri ; survol de ligne ; clic sur la ligne.",
+        "exampleLabel": "Exemple : frais de deux parts"
       }
     }
   }

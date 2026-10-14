@@ -18,7 +18,7 @@ import {
   RefreshCcw,
   Scale,
 } from 'lucide-react';
-import type { FundDetail } from '../../../utils/fundDetailMock';
+import type { FundDetail, FundShare } from '../../../utils/fundDetailMock';
 import { mockCustomFields } from '../../../utils/customFieldsMock';
 
 /**
@@ -52,6 +52,10 @@ export type SettingsValues = Record<string, unknown>;
 export interface SettingsContext {
   detail: FundDetail;
   values: SettingsValues;
+  /** Part ouverte, pour la fiche part. */
+  share?: FundShare;
+  /** Paramètres du fonds, rappelés dans la fiche part. */
+  fundValues?: SettingsValues;
 }
 
 export interface FieldOption {
@@ -73,6 +77,10 @@ export interface FieldDef {
   fromMaster?: boolean;
   /** Aide sous le champ. */
   hint?: boolean;
+  /** Variables de l'aide, calculées à partir du contexte. */
+  hintVars?: (ctx: SettingsContext, t: (key: string) => string) => Record<string, string>;
+  /** Pastille affichée à côté de la valeur, sous forme de clé de traduction. */
+  badgeKey?: (ctx: SettingsContext) => string | undefined;
   /** Clé de libellé alternative selon le contexte. */
   labelKey?: (ctx: SettingsContext) => string | undefined;
   visible?: (ctx: SettingsContext) => boolean;

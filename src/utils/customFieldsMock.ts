@@ -144,6 +144,30 @@ export const mockCustomFields: CustomField[] = [
     obligatoireBO: false,
     cacheBO: true,
     rank: 4
+  },
+  {
+    id: '30',
+    nom: 'Code comptable',
+    objet: 'Part',
+    nomChamp: 'Code comptable de la part',
+    type: 'text',
+    visibleFO: false,
+    obligatoireFO: false,
+    obligatoireBO: true,
+    cacheBO: false,
+    rank: 0
+  },
+  {
+    id: '31',
+    nom: 'Durée de blocage',
+    objet: 'Part',
+    nomChamp: 'Durée de blocage en années',
+    type: 'number',
+    visibleFO: true,
+    obligatoireFO: false,
+    obligatoireBO: false,
+    cacheBO: false,
+    rank: 1
   }
 ];
 
@@ -154,5 +178,6 @@ export const objetOptions = [
   'Partenaire',
   'Deal',
   'Contrepartie',
-  'Fonds'
+  'Fonds',
+  'Part'
 ];

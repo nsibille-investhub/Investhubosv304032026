@@ -3,6 +3,7 @@ import type { ReactNode } from 'react';
 import { KeyRound } from 'lucide-react';
 import { useTranslation } from '../../../utils/languageContext';
 import { formatCurrency, formatDate, formatDateTime } from '../../../utils/formatters';
+import { StatusBadge } from '../../StatusBadge';
 import { Button } from '../../ui/button';
 import { ColorPicker } from '../../ui/color-picker';
 import { DayMonthPicker, useMonthLabels, type DayMonthValue } from '../../ui/day-month-picker';
@@ -47,6 +48,8 @@ interface SettingsFieldProps {
   onRegenerateKey?: () => void;
   regenerateDisabledReason?: string;
   lockedReason?: string;
+  /** Préfixe des libellés, options, aides et effets. Par défaut : paramètres du fonds. */
+  prefix?: string;
 }
 
 export function SettingsField({
@@ -62,13 +65,14 @@ export function SettingsField({
   onRegenerateKey,
   regenerateDisabledReason,
   lockedReason,
+  prefix = S,
 }: SettingsFieldProps) {
   const { t, lang } = useTranslation();
   const months = useMonthLabels();
   const [language, setLanguage] = useState(ctx.detail.languages[0] ?? 'fr');
   const inputId = `fund-setting-${field.id}`;
   const labelKey = field.labelKey?.(ctx) ?? field.id;
-  const label = field.label ?? t(`${S}.fields.${labelKey}`);
+  const label = field.label ?? t(`${prefix}.fields.${labelKey}`);
 
   const options: FieldOption[] =
     typeof field.options === 'function' ? field.options(ctx) : field.options ?? [];
@@ -76,8 +80,8 @@ export function SettingsField({
   const optionLabel = (option: FieldOption) => {
     if (option.label) return option.label;
     if (field.id === 'countries') return regionNames.of(option.value) ?? option.value;
-    const prefix = OPTION_PREFIX[field.id] ?? `${S}.options.${field.id}`;
-    return t(`${prefix}.${option.value}`);
+    const optionPrefix = OPTION_PREFIX[field.id] ?? `${prefix}.options.${field.id}`;
+    return t(`${optionPrefix}.${option.value}`);
   };
   const languageLabel = (code: string) => new Intl.DisplayNames([lang], { type: 'language' }).of(code) ?? code;
   const capitalize = (text: string) => text.charAt(0).toUpperCase() + text.slice(1);
@@ -328,7 +332,15 @@ export function SettingsField({
       </DisabledReason>
     ) : null;
 
-  const readValue = display();
+  const badgeKey = field.badgeKey?.(ctx);
+  const readValue = badgeKey ? (
+    <span className="inline-flex flex-wrap items-center gap-2">
+      {display()}
+      <StatusBadge label={t(`${prefix}.badges.${badgeKey}`)} variant="info" />
+    </span>
+  ) : (
+    display()
+  );
 
   return (
     <SectionFieldRow
@@ -349,9 +361,9 @@ export function SettingsField({
         )
       }
       lockedReason={lockedReason}
-      legacySettingEffect={field.legacy ? t(`${S}.legacy.${field.id.startsWith('fileName') ? 'fileName' : field.id}`) : undefined}
+      legacySettingEffect={field.legacy ? t(`${prefix}.legacy.${field.id.startsWith('fileName') ? 'fileName' : field.id}`) : undefined}
       error={error}
-      hint={field.hint ? t(`${S}.hints.${field.id.startsWith('fileName') ? 'fileName' : field.id}`) : undefined}
+      hint={field.hint ? t(`${prefix}.hints.${field.id.startsWith('fileName') ? 'fileName' : field.id}`, field.hintVars?.(ctx, t)) : undefined}
     >
       {input()}
     </SectionFieldRow>
