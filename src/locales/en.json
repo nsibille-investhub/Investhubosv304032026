@@ -5269,14 +5269,132 @@
         }
       },
       "navs": {
-        "title": "Net asset values and net assets",
+        "title": "Values by date",
         "subtitle": "Valuation frequency: {{frequency}}",
         "add": "Enter a net asset value",
         "date": "Date",
         "netAsset": "Net assets",
         "expectedMissing": "Expected value not entered",
         "emptyTitle": "No net asset value",
-        "emptyDescription": "Entered or imported net asset values will appear here, one row per date."
+        "emptyDescription": "Entered or imported net asset values will appear here, one row per date.",
+        "importAction": "Import",
+        "allShares": "All shares",
+        "shareTitle": "Net asset values of share {{name}}",
+        "shareSubtitle": "{{count}} dates",
+        "value": "Net asset value",
+        "proof": "Supporting document",
+        "produced": "Effects produced",
+        "actions": "Actions",
+        "noProof": "No supporting document",
+        "effectBadges": {
+          "redemptions": "Redemptions valued",
+          "subscriptions": "Subscriptions confirmed",
+          "nominal": "Nominal price replaced",
+          "secondary": "Secondary market updated"
+        },
+        "noEffect": "No effect",
+        "correct": "Correct",
+        "enter": "Enter",
+        "netAssetTitle": "Net assets",
+        "lastNetAsset": "Last net assets",
+        "onDate": "on {{date}}",
+        "netAssetHistory": "Net assets history",
+        "tableHint": "Click a share to open its full history.",
+        "proofContent": "Demo supporting document: {{name}}",
+        "toast": {
+          "saved": "Net asset value of share {{share}} on {{date}} saved.",
+          "corrected": "Net asset value of share {{share}} on {{date}} corrected.",
+          "imported": "{{count}} values imported.",
+          "deleted": "Net asset value deleted.",
+          "deletedWithEffects": "Value deleted, reversible effects cancelled."
+        },
+        "delete": {
+          "action": "Delete",
+          "title": "Delete the value of share {{share}} on {{date}}?",
+          "simple": "This value produced no effect. It will be deleted.",
+          "withEffects": "This value produced effects. Reversible effects will be cancelled, the others will stay as they are.",
+          "confirmWithEffects": "Delete and cancel reversible effects",
+          "cancelledTitle": "Will be cancelled",
+          "keptTitle": "Will stay as they are",
+          "cancel": {
+            "redemptions": "Valuation of redemptions on this date",
+            "nominal": "Nominal price replacement: the previous price is restored",
+            "secondary": "Secondary market reference value update"
+          },
+          "keep": {
+            "subscriptions": "Confirmed subscriptions and payment confirmation emails already sent"
+          }
+        },
+        "dialog": {
+          "createTitle": "Enter a net asset value",
+          "editTitle": "Correct a net asset value",
+          "step": "Step {{step}} of {{total}}",
+          "share": "Share",
+          "sharePlaceholder": "Choose a share",
+          "date": "Date",
+          "value": "Value ({{currency}})",
+          "existing": "A value already exists on {{date}}: {{value}}. It will be replaced.",
+          "current": "Current value: {{value}}",
+          "proof": "Supporting document",
+          "removeProof": "Remove the supporting document",
+          "proofDrop": "Drop the supporting document",
+          "proofHint": "PDF or image",
+          "next": "Continue",
+          "back": "Back",
+          "submit": "Validate the net asset value",
+          "submitEdit": "Validate the correction"
+        },
+        "errors": {
+          "share": "Choose a share.",
+          "date": "Enter a date.",
+          "future": "The date cannot be in the future.",
+          "value": "Enter a strictly positive value."
+        },
+        "effects": {
+          "title": "Effects of this value",
+          "description": "Share {{share}}, value of {{value}} on {{date}}.",
+          "redemptions": "Redemptions validated on this date are valued: sale value and final number of shares",
+          "redemptionItem": "Redemption {{ref}}, {{investor}}: {{amount}}, i.e. {{shares}} shares",
+          "subscriptions": "{{count}} subscriptions awaiting a value are confirmed",
+          "emails": "{{count}} payment confirmation emails will be sent",
+          "noEmails": "Unchecked: subscriptions stay pending, no email is sent.",
+          "nominal": "Share nominal price replaced by this value ({{from}} to {{to}})",
+          "nominalNote": "The previous price is kept in the log.",
+          "secondary": "Secondary market reference value updated",
+          "redemptionsRecalculated": "Redemptions revalued with the corrected value",
+          "nominalRecalculated": "Nominal price updated again: {{to}}",
+          "subscriptionsDone": "Subscriptions confirmed with the initial value",
+          "emailsSent": "Payment confirmation emails have already been sent.",
+          "recalculatedTitle": "Recomputed effects",
+          "producedTitle": "Effects already produced, cannot be undone",
+          "producedDescription": "These effects happened with the initial value and do not change."
+        },
+        "import": {
+          "title": "Import net asset values",
+          "description": "Drop a CSV or Excel file: one row per share and date.",
+          "drop": "Drop the file",
+          "hint": "Expected columns: share, date, value.",
+          "reading": "Reading {{file}}",
+          "recapDescription": "Summary of {{file}} before running.",
+          "creations": "Creations",
+          "replacements": "Replacements",
+          "columns": {
+            "share": "Share",
+            "date": "Date",
+            "value": "Value",
+            "kind": "Operation"
+          },
+          "creation": "Creation",
+          "replacement": "Replaces {{value}}",
+          "effectsTitle": "Effects by category",
+          "effects": {
+            "redemptions": "Redemptions valued",
+            "subscriptions": "Pending subscriptions confirmed",
+            "secondary": "Secondary market reference values updated",
+            "noConfirmation": "Capital call fund: the import does not confirm pending subscriptions."
+          },
+          "run": "Run the import"
+        }
       },
       "shareSheet": {
         "back": "Shares",
@@ -5600,8 +5718,8 @@
       "effectsPanel": {
         "title": "\"Effects of this action\" panel",
         "description": "Lists, before validation, what an action will produce: net asset value, propagation from a master fund, deletion. The list comes from the server.",
-        "variants": "Effect with expandable items, effect with a count only, effect without a count. \"Reversible\" or \"Irreversible\" marker.",
-        "states": "List collapsed, list expanded, no effect.",
+        "variants": "Effect with expandable items, effect with a count only, effect without a count. \"Reversible\" or \"Irreversible\" marker. Optional effect (checkbox), note under the label, markers hidden in cancellation mode.",
+        "states": "List collapsed, list expanded, no effect. Option checked or unchecked (dimmed effect).",
         "exampleLabel": "Example: entering a net asset value",
         "exampleHint": "expand the affected items",
         "demo": {
@@ -5752,6 +5870,13 @@
         "variants": "Sortable or not, left or right alignment, selection can be hidden. Default or compact density.",
         "states": "Ascending, descending or no sort; row hover; row click.",
         "exampleLabel": "Example: fees of two shares"
+      },
+      "sparkline": {
+        "title": "History sparkline",
+        "description": "A single series on ChartContainer: no axis or legend, the block title names it. 2 px line on the --chart-1 token, tooltip on hover. The nearby table is the tabular view.",
+        "variants": "Single series, values formatted by the caller.",
+        "states": "Rest, hover (active dot and tooltip).",
+        "exampleLabel": "Example: net assets"
       }
     }
   }

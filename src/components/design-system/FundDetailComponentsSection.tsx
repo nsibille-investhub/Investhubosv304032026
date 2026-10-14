@@ -26,6 +26,7 @@ import {
   Wallet,
 } from 'lucide-react';
 import { useTranslation } from '../../utils/languageContext';
+import { formatCurrency } from '../../utils/formatters';
 import { FUND_STATUSES, FundStatusBadge } from '../FundStatusBadge';
 import { StatusBadge } from '../StatusBadge';
 import { DataTable } from '../DataTable';
@@ -37,6 +38,7 @@ import { PageHeader } from '../ui/page-header';
 import { RichTextEditor } from '../ui/rich-text-editor';
 import { SegmentedControl } from '../ui/segmented-control';
 import { SegmentedProgress } from '../ui/segmented-progress';
+import { Sparkline } from '../ui/sparkline';
 import { PageTabsList, PageTabsTrigger, Tabs } from '../ui/tabs';
 import { WidgetCard, WidgetMetric } from '../ui/widget-card';
 import { ColorPicker } from '../ui/color-picker';
@@ -475,6 +477,7 @@ function PageStateBannerDemo() {
 
 function EffectsPanelDemo() {
   const { t } = useTranslation();
+  const [confirm, setConfirm] = useState(true);
   const d = `${K}.effectsPanel.demo`;
   return (
     <EffectsPanel
@@ -501,7 +504,15 @@ function EffectsPanelDemo() {
             { id: 's2', label: t(`${d}.subscriptionItem`, { ref: 'S-2043', name: 'Paul' }) },
           ],
         },
-        { id: 'emails', icon: Mail, label: t(`${d}.emails`), reversible: false, count: 2 },
+        {
+          id: 'emails',
+          icon: Mail,
+          label: t(`${d}.emails`),
+          reversible: false,
+          count: 2,
+          note: confirm ? t('funds.detail.navs.effects.emails', { count: 2 }) : t('funds.detail.navs.effects.noEmails'),
+          option: { checked: confirm, onCheckedChange: setConfirm },
+        },
         { id: 'nominal', icon: Tag, label: t(`${d}.nominal`), reversible: true },
       ]}
     />
@@ -1029,6 +1040,24 @@ export function FundDetailComponentsSection() {
       >
         <Example label={t(`${K}.confirmDialog.exampleLabel`)} hint={t(`${K}.confirmDialog.exampleHint`)}>
           <ConfirmDialogDemo />
+        </Example>
+      </DocBlock>
+
+      <DocBlock
+        id="sparkline"
+        name="Sparkline"
+        importLine="import { Sparkline } from '@/components/ui/sparkline'"
+        usage={`<Sparkline ariaLabel={t('...')} format={money}
+  points={rows.map(row => ({ label: formatDate(row.date), value: row.netAsset }))} />`}
+      >
+        <Example label={t(`${K}.sparkline.exampleLabel`)}>
+          <div className="max-w-md">
+            <Sparkline
+              ariaLabel={t(`${K}.sparkline.exampleLabel`)}
+              format={value => formatCurrency(value, 'EUR')}
+              points={[52, 54, 53, 57, 60, 63].map((value, index) => ({ label: `T${index + 1}`, value: value * 1_000_000 }))}
+            />
+          </div>
         </Example>
       </DocBlock>
 

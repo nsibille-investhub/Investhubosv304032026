@@ -2,6 +2,7 @@ import { useState } from 'react';
 import type { LucideIcon } from 'lucide-react';
 import { ChevronDown, ChevronRight, RotateCcw, TriangleAlert } from 'lucide-react';
 import { useTranslation } from '../../utils/languageContext';
+import { Checkbox } from './checkbox';
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from './collapsible';
 import { StatusBadge } from '../StatusBadge';
 import { cn, WIDGET_TITLE_CLASS } from './utils';
@@ -15,16 +16,22 @@ export interface EffectItem {
   /** Nombre d'objets quand la liste n'est pas chargée. */
   count?: number;
   reversible: boolean;
+  /** Effet optionnel : case à cocher. Décoché, l'effet ne se produira pas. */
+  option?: { checked: boolean; onCheckedChange: (checked: boolean) => void; disabled?: boolean };
+  /** Précision sous le libellé, par exemple le nombre d'emails qui partiront. */
+  note?: string;
 }
 
 interface EffectsPanelProps {
   effects: EffectItem[];
   title?: string;
   description?: string;
+  /** "none" masque les marqueurs Réversible et Irréversible, par exemple en mode annulation. */
+  marker?: 'reversibility' | 'none';
   className?: string;
 }
 
-function EffectRow({ effect }: { effect: EffectItem }) {
+function EffectRow({ effect, marker }: { effect: EffectItem; marker: 'reversibility' | 'none' }) {
   const { t } = useTranslation();
   const [open, setOpen] = useState(false);
   const Icon = effect.icon;
@@ -42,11 +49,27 @@ function EffectRow({ effect }: { effect: EffectItem }) {
     <li className="py-3">
       <Collapsible open={open} onOpenChange={setOpen}>
         <div className="flex items-start gap-3">
+          {effect.option ? (
+            <Checkbox
+              id={`effect-${effect.id}`}
+              checked={effect.option.checked}
+              onCheckedChange={checked => effect.option?.onCheckedChange(checked === true)}
+              disabled={effect.option.disabled}
+              className="mt-1.5"
+            />
+          ) : null}
           <span className="mt-0.5 flex h-7 w-7 shrink-0 items-center justify-center rounded-lg bg-muted">
             <Icon className="w-4 h-4 text-muted-foreground" aria-hidden />
           </span>
-          <div className="min-w-0 flex-1">
-            <p className="text-sm text-foreground">{effect.label}</p>
+          <div className={cn('min-w-0 flex-1', effect.option && !effect.option.checked && 'opacity-50')}>
+            {effect.option ? (
+              <label htmlFor={`effect-${effect.id}`} className="block cursor-pointer text-sm text-foreground">
+                {effect.label}
+              </label>
+            ) : (
+              <p className="text-sm text-foreground">{effect.label}</p>
+            )}
+            {effect.note && <p className="mt-0.5 text-xs text-muted-foreground">{effect.note}</p>}
             {countLabel &&
               (expandable ? (
                 <CollapsibleTrigger className="mt-1 inline-flex items-center gap-1 text-xs font-medium text-primary hover:underline">
@@ -57,6 +80,7 @@ function EffectRow({ effect }: { effect: EffectItem }) {
                 <p className="mt-1 text-xs text-muted-foreground">{countLabel}</p>
               ))}
           </div>
+          {marker === 'reversibility' && (
           <StatusBadge
             label={
               effect.reversible
@@ -66,6 +90,7 @@ function EffectRow({ effect }: { effect: EffectItem }) {
             variant={effect.reversible ? 'neutral' : 'danger'}
             icon={effect.reversible ? RotateCcw : TriangleAlert}
           />
+          )}
         </div>
         {expandable && (
           <CollapsibleContent>
@@ -87,7 +112,7 @@ function EffectRow({ effect }: { effect: EffectItem }) {
  * Annonce ce qu'une action va produire avant sa validation : valeur liquidative,
  * propagation depuis un fonds maître, suppression. La liste est fournie par le serveur.
  */
-export function EffectsPanel({ effects, title, description, className }: EffectsPanelProps) {
+export function EffectsPanel({ effects, title, description, marker = 'reversibility', className }: EffectsPanelProps) {
   const { t } = useTranslation();
 
   return (
@@ -102,7 +127,7 @@ export function EffectsPanel({ effects, title, description, className }: Effects
       ) : (
         <ul className="mt-1 divide-y divide-border">
           {effects.map(effect => (
-            <EffectRow key={effect.id} effect={effect} />
+            <EffectRow key={effect.id} effect={effect} marker={marker} />
           ))}
         </ul>
       )}

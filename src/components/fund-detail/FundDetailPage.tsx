@@ -52,6 +52,7 @@ import { toneSurface } from '../ui/tone';
 import { getFundActionStates } from './fundActions';
 import { applySettingsToDetail, buildSettingsValues, computeMissingConfig } from './settings/settingsValues';
 import { buildShareValues } from './shares/shareValues';
+import type { NavChange } from './navs/navEffects';
 import type { FundShare } from '../../utils/fundDetailMock';
 import type { SettingsValues } from './settings/settingsSchema';
 import { FundNavsTab } from './FundNavsTab';
@@ -136,6 +137,8 @@ export function FundDetailPage({ fund, onBack, onOpenSubscriptions }: FundDetail
   );
   /** Une section modifiée et non enregistrée dans l'onglet courant (Paramètres ou Parts). */
   const [tabDirty, setTabDirty] = useState(false);
+  const [navShareId, setNavShareId] = useState<string | null>(null);
+  const clearNavShare = useCallback(() => setNavShareId(null), []);
   const [pendingTab, setPendingTab] = useState<TabId | null>(null);
 
   useEffect(() => {
@@ -167,6 +170,31 @@ export function FundDetailPage({ fund, onBack, onOpenSubscriptions }: FundDetail
     setShareValues(values);
     setDetail(current => {
       const next = { ...current, shares };
+      return { ...next, missingConfig: computeMissingConfig(next, settingsValues) };
+    });
+  };
+
+  /** Valeurs liquidatives : tableau, dernière valeur des parts, alerte et prix nominaux reportés. */
+  const applyNavChange = (change: NavChange) => {
+    const nominalIds = Object.keys(change.nominalUpdates);
+    if (nominalIds.length > 0) {
+      setShareValues(prev => {
+        const next = { ...prev };
+        nominalIds.forEach(id => {
+          next[id] = { ...next[id], nominalPrice: change.nominalUpdates[id] };
+        });
+        return next;
+      });
+    }
+    setDetail(current => {
+      const latest = change.navs.find(row => row.netAsset !== null);
+      const next = {
+        ...current,
+        navs: change.navs,
+        shares: change.shares,
+        expectedNavMissing: change.expectedNavMissing,
+        netAsset: latest ? { value: latest.netAsset as number, date: latest.date } : null,
+      };
       return { ...next, missingConfig: computeMissingConfig(next, settingsValues) };
     });
   };
@@ -461,12 +489,22 @@ export function FundDetailPage({ fund, onBack, onOpenSubscriptions }: FundDetail
               onTargetHandled={clearTarget}
               canEdit={detail.rights.edit}
               editReason={detail.rights.edit ? actions.editReason : undefined}
-              onOpenNavs={() => changeTab('navs')}
+              onOpenNavs={shareId => {
+                setNavShareId(shareId ?? null);
+                changeTab('navs');
+              }}
               onDirtyChange={setTabDirty}
             />
           </TabsContent>
           <TabsContent value="navs">
-            <FundNavsTab detail={detail} editReason={actions.editReason} />
+            <FundNavsTab
+              detail={detail}
+              canEdit={detail.rights.edit}
+              editReason={detail.rights.edit ? actions.editReason : undefined}
+              initialShareId={navShareId}
+              onInitialShareHandled={clearNavShare}
+              onNavChange={applyNavChange}
+            />
           </TabsContent>
           <TabsContent value="contracts">
             <LinkedScreenTab icon={FileSignature} titleKey={`${K}.linked.contractsTitle`} descriptionKey={`${K}.linked.contractsDescription`} />

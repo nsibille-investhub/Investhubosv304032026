@@ -5269,14 +5269,132 @@
         }
       },
       "navs": {
-        "title": "Valeurs liquidatives et actif net",
+        "title": "Valeurs par date",
         "subtitle": "Fréquence de valorisation : {{frequency}}",
         "add": "Saisir une valeur liquidative",
         "date": "Date",
         "netAsset": "Actif net",
         "expectedMissing": "Valeur attendue non saisie",
         "emptyTitle": "Aucune valeur liquidative",
-        "emptyDescription": "Les valeurs liquidatives saisies ou importées apparaîtront ici, une ligne par date."
+        "emptyDescription": "Les valeurs liquidatives saisies ou importées apparaîtront ici, une ligne par date.",
+        "importAction": "Importer",
+        "allShares": "Toutes les parts",
+        "shareTitle": "Valeurs liquidatives de la part {{name}}",
+        "shareSubtitle": "{{count}} dates",
+        "value": "Valeur liquidative",
+        "proof": "Justificatif",
+        "produced": "Effets produits",
+        "actions": "Actions",
+        "noProof": "Aucun justificatif",
+        "effectBadges": {
+          "redemptions": "Rachats valorisés",
+          "subscriptions": "Souscriptions confirmées",
+          "nominal": "Prix nominal remplacé",
+          "secondary": "Marché secondaire mis à jour"
+        },
+        "noEffect": "Aucun effet",
+        "correct": "Corriger",
+        "enter": "Saisir",
+        "netAssetTitle": "Actif net",
+        "lastNetAsset": "Dernier actif net",
+        "onDate": "au {{date}}",
+        "netAssetHistory": "Historique de l'actif net",
+        "tableHint": "Cliquez sur une part pour ouvrir son historique complet.",
+        "proofContent": "Justificatif de démonstration : {{name}}",
+        "toast": {
+          "saved": "Valeur liquidative de la part {{share}} au {{date}} enregistrée.",
+          "corrected": "Valeur liquidative de la part {{share}} au {{date}} corrigée.",
+          "imported": "{{count}} valeurs importées.",
+          "deleted": "Valeur liquidative supprimée.",
+          "deletedWithEffects": "Valeur supprimée, effets réversibles annulés."
+        },
+        "delete": {
+          "action": "Supprimer",
+          "title": "Supprimer la valeur de la part {{share}} au {{date}} ?",
+          "simple": "Cette valeur n'a produit aucun effet. Elle sera supprimée.",
+          "withEffects": "Cette valeur a produit des effets. Les effets réversibles seront annulés, les autres resteront en l'état.",
+          "confirmWithEffects": "Supprimer et annuler les effets réversibles",
+          "cancelledTitle": "Seront annulés",
+          "keptTitle": "Resteront en l'état",
+          "cancel": {
+            "redemptions": "Valorisation des rachats à cette date",
+            "nominal": "Remplacement du prix nominal : l'ancien prix est rétabli",
+            "secondary": "Mise à jour de la valeur de référence du marché secondaire"
+          },
+          "keep": {
+            "subscriptions": "Souscriptions confirmées et emails de confirmation de paiement déjà envoyés"
+          }
+        },
+        "dialog": {
+          "createTitle": "Saisir une valeur liquidative",
+          "editTitle": "Corriger une valeur liquidative",
+          "step": "Étape {{step}} sur {{total}}",
+          "share": "Part",
+          "sharePlaceholder": "Choisir une part",
+          "date": "Date",
+          "value": "Valeur ({{currency}})",
+          "existing": "Une valeur existe déjà au {{date}} : {{value}}. Elle sera remplacée.",
+          "current": "Valeur actuelle : {{value}}",
+          "proof": "Justificatif",
+          "removeProof": "Retirer le justificatif",
+          "proofDrop": "Déposer le justificatif",
+          "proofHint": "PDF ou image",
+          "next": "Continuer",
+          "back": "Retour",
+          "submit": "Valider la valeur liquidative",
+          "submitEdit": "Valider la correction"
+        },
+        "errors": {
+          "share": "Choisissez une part.",
+          "date": "Saisissez une date.",
+          "future": "La date ne peut pas être dans le futur.",
+          "value": "Saisissez une valeur strictement positive."
+        },
+        "effects": {
+          "title": "Effets de cette valeur",
+          "description": "Part {{share}}, valeur de {{value}} au {{date}}.",
+          "redemptions": "Rachats validés à cette date valorisés : valeur de vente et nombre de parts final",
+          "redemptionItem": "Rachat {{ref}}, {{investor}} : {{amount}}, soit {{shares}} parts",
+          "subscriptions": "{{count}} souscriptions en attente de valeur confirmées",
+          "emails": "{{count}} emails de confirmation de paiement partiront",
+          "noEmails": "Décoché : les souscriptions restent en attente, aucun email ne part.",
+          "nominal": "Prix nominal de la part remplacé par cette valeur ({{from}} vers {{to}})",
+          "nominalNote": "Le prix précédent est conservé au journal.",
+          "secondary": "Valeur de référence du marché secondaire mise à jour",
+          "redemptionsRecalculated": "Rachats revalorisés avec la valeur corrigée",
+          "nominalRecalculated": "Prix nominal remis à jour : {{to}}",
+          "subscriptionsDone": "Souscriptions confirmées avec la valeur initiale",
+          "emailsSent": "Les emails de confirmation de paiement sont déjà partis.",
+          "recalculatedTitle": "Effets recalculés",
+          "producedTitle": "Effets déjà produits, non annulables",
+          "producedDescription": "Ces effets ont eu lieu avec la valeur initiale et ne changent pas."
+        },
+        "import": {
+          "title": "Importer des valeurs liquidatives",
+          "description": "Déposez un fichier CSV ou Excel : une ligne par part et par date.",
+          "drop": "Déposer le fichier",
+          "hint": "Colonnes attendues : part, date, valeur.",
+          "reading": "Lecture de {{file}}",
+          "recapDescription": "Récapitulatif de {{file}} avant exécution.",
+          "creations": "Créations",
+          "replacements": "Remplacements",
+          "columns": {
+            "share": "Part",
+            "date": "Date",
+            "value": "Valeur",
+            "kind": "Opération"
+          },
+          "creation": "Création",
+          "replacement": "Remplace {{value}}",
+          "effectsTitle": "Effets par catégorie",
+          "effects": {
+            "redemptions": "Rachats valorisés",
+            "subscriptions": "Souscriptions en attente confirmées",
+            "secondary": "Valeurs de référence du marché secondaire mises à jour",
+            "noConfirmation": "Fonds à appels : l'import ne confirme pas les souscriptions en attente."
+          },
+          "run": "Lancer l'import"
+        }
       },
       "shareSheet": {
         "back": "Parts",
@@ -5600,8 +5718,8 @@
       "effectsPanel": {
         "title": "Panneau \"Effets de cette action\"",
         "description": "Liste, avant validation, ce qu'une action va produire : valeur liquidative, propagation depuis un fonds maître, suppression. La liste vient du serveur.",
-        "variants": "Effet avec objets dépliables, effet avec nombre seul, effet sans nombre. Marqueur \"Réversible\" ou \"Irréversible\".",
-        "states": "Liste repliée, liste dépliée, aucun effet.",
+        "variants": "Effet avec objets dépliables, effet avec nombre seul, effet sans nombre. Marqueur \"Réversible\" ou \"Irréversible\". Effet optionnel (case à cocher), précision sous le libellé, marqueurs masqués en mode annulation.",
+        "states": "Liste repliée, liste dépliée, aucun effet. Option cochée ou décochée (effet atténué).",
         "exampleLabel": "Exemple : saisie d'une valeur liquidative",
         "exampleHint": "dépliez les objets concernés",
         "demo": {
@@ -5752,6 +5870,13 @@
         "variants": "Colonnes triables ou non, alignement à gauche ou à droite, sélection masquable. Densité par défaut ou compacte.",
         "states": "Tri ascendant, descendant, sans tri ; survol de ligne ; clic sur la ligne.",
         "exampleLabel": "Exemple : frais de deux parts"
+      },
+      "sparkline": {
+        "title": "Mini graphique d'historique",
+        "description": "Une seule série sur ChartContainer : sans axe ni légende, le titre du bloc la nomme. Ligne de 2 px au token --chart-1, info-bulle au survol. Le tableau voisin sert de vue tabulaire.",
+        "variants": "Série unique, valeurs formatées par l'appelant.",
+        "states": "Repos, survol (point actif et info-bulle).",
+        "exampleLabel": "Exemple : actif net"
       }
     }
   }

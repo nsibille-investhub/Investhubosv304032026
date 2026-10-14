@@ -47,3 +47,13 @@ export function formatCompactNumber(value: number): string {
   }
   return value.toString();
 }
+
+/** Valeur liquidative : toujours avec ses décimales (PRD Détail d'un fonds V3, section 11.2). */
+export function formatNavValue(value: number, currency: string = 'EUR', decimals = 2): string {
+  return new Intl.NumberFormat('fr-FR', {
+    style: 'currency',
+    currency,
+    minimumFractionDigits: decimals,
+    maximumFractionDigits: decimals,
+  }).format(value);
+}

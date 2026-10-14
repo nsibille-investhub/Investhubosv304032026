@@ -67,10 +67,23 @@ export interface FundShare {
 /** Quatre parts de démonstration : A à la part, B au montant, C restreinte, D fermée. */
 const SHARE_NAMES = ['A', 'B', 'C', 'D'];
 
+/** Effets déjà produits par une valeur liquidative (PRD section 11.2). */
+export type NavProducedEffect = 'redemptions' | 'subscriptions' | 'nominal' | 'secondary';
+
+export interface NavEntryMeta {
+  /** Nom du justificatif déposé, ou null. */
+  proof: string | null;
+  produced: NavProducedEffect[];
+  /** Prix nominal avant remplacement par cette valeur, pour l'annulation. */
+  previousNominal?: number | null;
+}
+
 export interface FundNavRow {
   date: Date;
   values: Record<string, number | null>;
   netAsset: number | null;
+  /** Justificatif et effets produits, par part. */
+  meta: Record<string, NavEntryMeta>;
 }
 
 /** Cible d'un lien "Configuration à compléter" : onglet, section et champ. */
@@ -240,6 +253,16 @@ export function buildFundDetail(fund: Fund, scenario: FundScenario, today = new 
       shares.map(share => [share.id, round((share.lastNav?.value ?? 100) * (1 - rowIndex * 0.015), 0.01)]),
     ),
     netAsset: round(fund.aum * (1 - rowIndex * 0.02), 1000),
+    meta: Object.fromEntries(
+      shares.map(share => [
+        share.id,
+        {
+          proof: `VL-${share.name}-${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}-${String(date.getDate()).padStart(2, '0')}.pdf`,
+          // Part C : valeurs sans effet produit (pas de rachat ni de souscription en attente).
+          produced: share.name === 'C' ? [] : rowIndex === 0 ? ['redemptions', 'subscriptions', 'secondary'] : ['redemptions', 'subscriptions'],
+        } satisfies NavEntryMeta,
+      ]),
+    ),
   }));
 
   const paymentMode: PaymentMode = random() > 0.35 ? 'calls' : 'direct';
@@ -357,6 +380,7 @@ export function buildFundDetail(fund: Fund, scenario: FundScenario, today = new 
     const lastShare = shares[1];
     detail.expectedNavMissing.push({ shareId: lastShare.id, expectedDate: navs[0].date });
     navs[0].values[lastShare.id] = null;
+    delete navs[0].meta[lastShare.id];
     lastShare.lastNav = { value: navs[1].values[lastShare.id] ?? 100, date: navs[1].date };
   }
 

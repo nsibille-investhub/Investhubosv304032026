@@ -16,7 +16,7 @@ import {
   XCircle,
 } from 'lucide-react';
 import { useTranslation } from '../../utils/languageContext';
-import { formatCurrency, formatDate } from '../../utils/formatters';
+import { formatCurrency, formatDate, formatNavValue } from '../../utils/formatters';
 import type { FieldTarget, FundDetail, FundShare } from '../../utils/fundDetailMock';
 import { DataTable, type ColumnConfig } from '../DataTable';
 import { StatusBadge } from '../StatusBadge';
@@ -55,7 +55,7 @@ interface FundSharesTabProps {
   onTargetHandled: () => void;
   canEdit: boolean;
   editReason?: string;
-  onOpenNavs: () => void;
+  onOpenNavs: (shareId?: string) => void;
   onDirtyChange: (dirty: boolean) => void;
 }
 
@@ -260,7 +260,7 @@ export function FundSharesTab({
       render: row =>
         row.lastNav ? (
           <>
-            {money(row.lastNav.value)}
+            {formatNavValue(row.lastNav.value, detail.currency)}
             <span className="block text-xs text-muted-foreground">{formatDate(row.lastNav.date)}</span>
           </>
         ) : (
@@ -284,7 +284,7 @@ export function FundSharesTab({
                 <Eye className="w-4 h-4" />
                 {t(`${K}.actions.open`)}
               </DropdownMenuItem>
-              <DropdownMenuItem onClick={onOpenNavs}>
+              <DropdownMenuItem onClick={() => onOpenNavs(row.shareId)}>
                 <LineChart className="w-4 h-4" />
                 {t(`${K}.actions.navs`)}
               </DropdownMenuItem>
@@ -338,7 +338,7 @@ export function FundSharesTab({
         }}
         onBack={() => setOpenId(null)}
         onDirtyChange={onDirtyChange}
-        onOpenNavs={onOpenNavs}
+        onOpenNavs={() => onOpenNavs(openShare.id)}
         onDuplicate={() => duplicate(openShare)}
         onClose={() => setDialog({ kind: 'close', shareId: openShare.id })}
         onDelete={() => askDelete(openShare)}
@@ -423,7 +423,7 @@ export function FundSharesTab({
                   icon,
                   label: t(`${K}.dialogs.blockers.${key}`),
                   count: dialogShare.counts[key],
-                  onOpen: key === 'navs' ? () => { setDialog(null); onOpenNavs(); } : undefined,
+                  onOpen: key === 'navs' ? () => { setDialog(null); onOpenNavs(dialogShare.id); } : undefined,
                 }))}
               alternative={{
                 label: t(`${K}.dialogs.blockers.closeShare`),

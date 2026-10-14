@@ -12,7 +12,7 @@ import {
   Wallet,
 } from 'lucide-react';
 import { useTranslation } from '../../utils/languageContext';
-import { formatCurrency, formatDate } from '../../utils/formatters';
+import { formatCurrency, formatDate, formatNavValue } from '../../utils/formatters';
 import type { FieldTarget, FundDetail } from '../../utils/fundDetailMock';
 import { FundStatusBadge } from '../FundStatusBadge';
 import { StatusBadge } from '../StatusBadge';
@@ -229,7 +229,7 @@ export function FundOverviewTab({ detail, onNavigate, onOpenTab, onOpenSubscript
                   <span className="text-muted-foreground">{t('funds.detail.sharePrefix', { name: share.name })}</span>
                   <span className="text-right font-medium text-foreground tabular-nums">
                     {share.lastNav
-                      ? t(`${K}.amountOnDate`, { amount: money(share.lastNav.value), date: formatDate(share.lastNav.date) })
+                      ? t(`${K}.amountOnDate`, { amount: formatNavValue(share.lastNav.value, detail.currency), date: formatDate(share.lastNav.date) })
                       : t(`${K}.valuation.noValue`)}
                   </span>
                 </div>
