@@ -1567,7 +1567,10 @@
       "header": {
         "registeredOn": "Registered on {{date}}",
         "sendEmail": "Send an email",
-        "newSubscription": "New subscription"
+        "newSubscription": "New subscription",
+        "id": "ID: {{id}}",
+        "copyId": "Click to copy the ID",
+        "analyst": "Analyst: {{name}}"
       },
       "stats": {
         "title": "Investment statistics",
