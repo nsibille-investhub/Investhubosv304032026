@@ -699,6 +699,10 @@ export default function App() {
                     if (selectedSubscriptionDetail) {
                       setSelectedSubscriptionDetail(null);
                     }
+                    if (selectedInvestorDetail) {
+                      setSelectedInvestorDetail(null);
+                      setInvestorDetailTab('profil');
+                    }
                     if (currentPage === 'entities' && entityDetailUid) {
                       navigateToPage('entities');
                     }
@@ -733,9 +737,24 @@ export default function App() {
                   )}
                 </>
               ) : currentPage === 'investors' ? (
-                <>
+                selectedInvestorDetail ? (
+                  <>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setSelectedInvestorDetail(null);
+                        setInvestorDetailTab('profil');
+                      }}
+                      className="text-gray-400 dark:text-gray-500 hover:text-gray-900 dark:hover:text-gray-100 transition-colors"
+                    >
+                      {t('breadcrumb.investors')}
+                    </button>
+                    <span className="text-gray-300 dark:text-gray-700">/</span>
+                    <span className="text-gray-900 dark:text-gray-100 font-medium truncate max-w-[280px]">{selectedInvestorDetail.name}</span>
+                  </>
+                ) : (
                   <span className="text-gray-900 dark:text-gray-100 font-medium">{t('breadcrumb.investors')}</span>
-                </>
+                )
               ) : currentPage === 'partners' ? (
                 <>
                   <span className="text-gray-400 dark:text-gray-500">{t('breadcrumb.partners')}</span>

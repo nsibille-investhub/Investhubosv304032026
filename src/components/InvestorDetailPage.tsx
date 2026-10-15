@@ -1,7 +1,6 @@
 import { useState } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
 import { 
-  ArrowLeft, 
   User, 
   Building2, 
   Mail, 
@@ -41,11 +40,13 @@ import {
   X,
   ShieldCheck,
   AlertTriangle,
-  ChevronRight
+  ChevronRight,
 } from 'lucide-react';
 import { Badge } from './ui/badge';
 import { Button } from './ui/button';
 import { DetailTabsList } from './ui/detail-tabs';
+import { PageHeader, PageHeaderSubtitle, PageHeaderSubtitleItem, PageHeaderSubtitleSeparator } from './ui/page-header';
+import { WidgetCard, WidgetMetric } from './ui/widget-card';
 import { Tabs, TabsContent } from './ui/tabs';
 import { Investor, Signatory, Note, Email } from '../utils/investorGenerator';
 import { toast } from 'sonner';
@@ -58,7 +59,7 @@ import { useCompliance } from '../utils/complianceContext';
 import { EntityDownloadMenu } from './entity-detail/EntityDownloadMenu';
 import { navigateToDetail } from '../utils/routing';
 import { ENTITY_STATUS_KEY, ENTITY_STATUS_VARIANT } from './entity-detail/entityDetailShared';
-import { StatusBadge } from './StatusBadge';
+import { StatusBadge, type StatusVariant } from './StatusBadge';
 import {
   validateEmail,
   validatePhone,
@@ -77,6 +78,13 @@ import {
 } from "./ui/tooltip";
 import { ContactsTab } from './investor-detail/ContactsTab';
 import { useTranslation } from '../utils/languageContext';
+
+const INVESTOR_STATUS_VARIANT: Record<string, StatusVariant> = {
+  Prospect: 'info',
+  'En discussion': 'warning',
+  'En relation': 'success',
+  Archivé: 'neutral',
+};
 
 interface InvestorDetailPageProps {
   investor: Investor;
@@ -149,16 +157,6 @@ export function InvestorDetailPage({ investor: initialInvestor, onBack, initialT
       minimumFractionDigits: 0,
       maximumFractionDigits: 0,
     }).format(amount);
-  };
-
-  const getStatusColor = (status: string) => {
-    switch (status) {
-      case 'Prospect': return 'bg-blue-50 text-blue-600 border-blue-200';
-      case 'En discussion': return 'bg-purple-50 text-purple-600 border-purple-200';
-      case 'En relation': return 'bg-emerald-50 text-emerald-600 border-emerald-200';
-      case 'Archivé': return 'bg-muted text-muted-foreground border-border';
-      default: return 'bg-muted text-muted-foreground border-border';
-    }
   };
 
   const getKycStatusColor = (status: string) => {
@@ -375,139 +373,80 @@ export function InvestorDetailPage({ investor: initialInvestor, onBack, initialT
   };
 
   return (
-    <div className="flex-1 bg-muted">
-      {/* Header */}
-      <motion.div
-        initial={{ opacity: 0, y: -20 }}
-        animate={{ opacity: 1, y: 0 }}
-        className="bg-card border-b border-border"
-      >
-        {/* Breadcrumb */}
-        <div className="px-8 pt-5 pb-3">
-          <div className="flex items-center gap-2 text-sm text-muted-foreground">
-            <button
-              onClick={onBack}
-              className="hover:text-foreground transition-colors"
-            >
-              {t('breadcrumb.investhubOs')}
-            </button>
-            <ChevronRight className="w-4 h-4" />
-            <button
-              onClick={onBack}
-              className="hover:text-foreground transition-colors"
-            >
-              {t('breadcrumb.investors')}
-            </button>
-            <ChevronRight className="w-4 h-4" />
-            <span className="text-foreground font-medium">{t('breadcrumb.investors')}</span>
-          </div>
-        </div>
-
-        {/* Main Header Content */}
-        <div className="px-8 pb-6">
-          <div className="flex items-start justify-between">
-            {/* Left Section - Avatar + Info */}
-            <div className="flex items-center gap-4">
-              <motion.button
-                whileHover={{ scale: 1.02 }}
-                whileTap={{ scale: 0.98 }}
-                onClick={onBack}
-                className="p-2 hover:bg-muted rounded-lg transition-colors"
+    <div className="flex flex-1 flex-col min-h-screen bg-muted">
+      <PageHeader
+        title={
+          <span className="inline-flex items-center gap-3">
+            {investor.name}
+            <StatusBadge label={t(`investors.status.${investor.status}`)} variant={INVESTOR_STATUS_VARIANT[investor.status] ?? 'neutral'} />
+          </span>
+        }
+        subtitle={
+          <PageHeaderSubtitle>
+            <PageHeaderSubtitleItem icon={Hash} className="group">
+              <span>{t('investors.detail.header.id', { id: investor.id })}</span>
+              <button
+                type="button"
+                onClick={() => handleCopy(String(investor.id), 'header-id')}
+                className="opacity-0 group-hover:opacity-100 transition-opacity p-0.5 hover:bg-muted rounded"
+                title={t('investors.detail.header.copyId')}
+                aria-label={t('investors.detail.header.copyId')}
               >
-                <ArrowLeft className="w-5 h-5 text-muted-foreground" />
-              </motion.button>
+                {copiedField === 'header-id' ? (
+                  <Check className="w-3.5 h-3.5" style={{ color: 'var(--success)' }} />
+                ) : (
+                  <Copy className="w-3.5 h-3.5 text-muted-foreground hover:text-foreground" />
+                )}
+              </button>
+            </PageHeaderSubtitleItem>
 
-              <div className="w-16 h-16 rounded-2xl bg-muted border border-border flex items-center justify-center">
-                <span className="text-foreground text-xl font-semibold">
-                  {investor.name.split(' ').map(n => n[0]).join('').substring(0, 2)}
-                </span>
-              </div>
+            <PageHeaderSubtitleSeparator />
 
-              <div>
-                <div className="flex items-center gap-3 mb-1">
-                  <h1 className="text-2xl font-semibold text-foreground">{investor.name}</h1>
-                  <Badge
-                    variant="outline"
-                    className={`text-xs px-2.5 py-0.5 ${investor.status === 'En relation' ? 'bg-purple-50 text-purple-700 border-purple-200' : 'bg-muted text-muted-foreground border-border'}`}
-                  >
-                    {t(`investors.status.${investor.status}`)}
-                  </Badge>
-                  <Badge variant="outline" className="text-xs px-2.5 py-0.5 bg-muted text-muted-foreground border-border">
-                    {t(`investors.type.${investor.type}`)}
-                  </Badge>
-                </div>
-                <div className="flex items-center gap-3 text-sm text-muted-foreground">
-                  <div className="flex items-center gap-1.5">
-                    <Hash className="w-3.5 h-3.5" />
-                    <span>ID: {investor.id}</span>
-                  </div>
-                  <div className="flex items-center gap-1.5">
-                    <Calendar className="w-3.5 h-3.5" />
-                    <span>{t('investors.detail.header.registeredOn', { date: formatDate(investor.registrationDate) })}</span>
-                  </div>
-                </div>
-              </div>
-            </div>
+            <PageHeaderSubtitleItem icon={investor.type === 'Company' ? Building2 : User}>
+              {t(`investors.type.${investor.type}`)}
+            </PageHeaderSubtitleItem>
 
-            {/* Right Section - Actions */}
-            <div className="flex items-center gap-3">
-              <Button
-                variant="outline"
-                className="gap-2 border-border hover:bg-muted"
-                onClick={() => toast.success(t('investors.detail.actions.comingSoon'))}
-              >
-                <Mail className="w-4 h-4" />
-                {t('investors.detail.header.sendEmail')}
-              </Button>
+            {investor.country && (
+              <>
+                <PageHeaderSubtitleSeparator />
+                <PageHeaderSubtitleItem icon={MapPin}>{investor.country}</PageHeaderSubtitleItem>
+              </>
+            )}
 
-              <Button
-                style={{ background: 'linear-gradient(62.32deg, #000000 10.53%, #0F323D 88.82%)' }}
-                className="gap-2 text-white hover:opacity-90"
-                onClick={() => toast.success(t('investors.detail.actions.comingSoon'))}
-              >
-                <Plus className="w-4 h-4" />
-                {t('investors.detail.header.newSubscription')}
-              </Button>
-            </div>
-          </div>
-        </div>
+            {investor.analyst && (
+              <>
+                <PageHeaderSubtitleSeparator />
+                <PageHeaderSubtitleItem icon={UserCheck}>
+                  {t('investors.detail.header.analyst', { name: investor.analyst })}
+                </PageHeaderSubtitleItem>
+              </>
+            )}
 
-        {/* Investment Statistics */}
-        <div className="px-8 pb-6">
-          <div className="flex items-center gap-2 mb-4">
-            <TrendingUp className="w-4 h-4 text-muted-foreground" />
-            <span className="text-xs text-muted-foreground font-medium">{t('investors.detail.stats.title')}</span>
-          </div>
-          <div className="grid grid-cols-4 gap-4">
-            <div className="bg-card border border-border rounded-xl p-5">
-              <div className="text-xs text-muted-foreground mb-2">{t('investors.detail.stats.totalCapital')}</div>
-              <div className="text-2xl font-semibold text-foreground">{formatCurrency(investor.totalInvested)}</div>
-            </div>
+            <PageHeaderSubtitleSeparator />
 
-            <div className="bg-card border border-border rounded-xl p-5">
-              <div className="text-xs text-muted-foreground mb-2">{t('investors.detail.stats.subscriptionsCount')}</div>
-              <div className="text-2xl font-semibold text-foreground">{investor.subscriptionsCount}</div>
-            </div>
+            <PageHeaderSubtitleItem icon={Calendar}>
+              {t('investors.detail.header.registeredOn', { date: formatDate(investor.registrationDate) })}
+            </PageHeaderSubtitleItem>
+          </PageHeaderSubtitle>
+        }
+        primaryAction={{
+          label: t('investors.detail.header.newSubscription'),
+          icon: <Plus className="w-4 h-4" />,
+          onClick: () => toast.success(t('investors.detail.actions.comingSoon')),
+        }}
+        extraActions={[
+          {
+            label: t('investors.detail.header.sendEmail'),
+            icon: <Mail className="w-4 h-4" />,
+            onClick: () => toast.success(t('investors.detail.actions.comingSoon')),
+          },
+        ]}
+      />
 
-            <div className="bg-card border border-border rounded-xl p-5">
-              <div className="text-xs text-muted-foreground mb-2">{t('investors.detail.stats.averageTicket')}</div>
-              <div className="text-2xl font-semibold text-foreground">
-                {formatCurrency(investor.totalInvested / investor.subscriptionsCount)}
-              </div>
-            </div>
-
-            <div className="bg-card border border-border rounded-xl p-5">
-              <div className="text-xs text-muted-foreground mb-2">{t('investors.detail.stats.lastActivity')}</div>
-              <div className="text-sm font-semibold text-foreground mt-1">{formatDate(investor.lastActivity)}</div>
-            </div>
-          </div>
-        </div>
-      </motion.div>
-
-      {/* Tabs */}
-      <div className="px-8 -mt-px bg-card border-b border-border">
-        <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
+      <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full gap-0">
+        <div className="px-8 bg-card border-b border-border">
           <DetailTabsList
+            overflow="scroll"
             items={[
               { value: 'profil', icon: User, label: t('investors.detail.tabs.profile') },
               { value: 'contacts', icon: Users, label: t('investors.detail.tabs.contacts'), badge: investor.contacts.length },
@@ -519,9 +458,23 @@ export function InvestorDetailPage({ investor: initialInvestor, onBack, initialT
               { value: 'emails', icon: MessageSquare, label: t('investors.detail.tabs.emails'), badge: investor.emails.length },
             ]}
           />
-
+        </div>
+        <div className="px-8 py-6">
           {/* Profil Tab */}
-          <TabsContent value="profil" className="mt-6 space-y-6">
+          <TabsContent value="profil" className="space-y-6">
+            <WidgetCard icon={TrendingUp} title={t('investors.detail.stats.title')}>
+              <div className="grid grid-cols-4 gap-4">
+                <WidgetMetric size="lg" label={t('investors.detail.stats.totalCapital')} value={formatCurrency(investor.totalInvested)} />
+                <WidgetMetric size="lg" label={t('investors.detail.stats.subscriptionsCount')} value={investor.subscriptionsCount} />
+                <WidgetMetric
+                  size="lg"
+                  label={t('investors.detail.stats.averageTicket')}
+                  value={investor.subscriptionsCount > 0 ? formatCurrency(investor.totalInvested / investor.subscriptionsCount) : '—'}
+                />
+                <WidgetMetric size="lg" label={t('investors.detail.stats.lastActivity')} value={formatDate(investor.lastActivity)} />
+              </div>
+            </WidgetCard>
+
             <div className="grid grid-cols-3 gap-6">
               {/* Informations générales */}
               <motion.div
@@ -1107,12 +1060,12 @@ export function InvestorDetailPage({ investor: initialInvestor, onBack, initialT
           </TabsContent>
 
           {/* Contacts & accès Tab */}
-          <TabsContent value="contacts" className="mt-6">
+          <TabsContent value="contacts">
             <ContactsTab investor={investor} />
           </TabsContent>
 
           {/* Signataires Tab */}
-          <TabsContent value="signataires" className="mt-6">
+          <TabsContent value="signataires">
             <div className="bg-card rounded-xl border border-border">
               <div className="p-6 border-b border-border">
                 <div className="flex items-center justify-between">
@@ -1206,7 +1159,7 @@ export function InvestorDetailPage({ investor: initialInvestor, onBack, initialT
           </TabsContent>
 
           {/* Structures Tab */}
-          <TabsContent value="structures" className="mt-6">
+          <TabsContent value="structures">
             <div className="bg-card rounded-xl border border-border">
               <div className="p-6 border-b border-border">
                 <h2 className="font-semibold text-foreground flex items-center gap-2">
@@ -1338,7 +1291,7 @@ export function InvestorDetailPage({ investor: initialInvestor, onBack, initialT
           </TabsContent>
 
           {/* Notes Tab */}
-          <TabsContent value="notes" className="mt-6">
+          <TabsContent value="notes">
             <div className="bg-card rounded-xl border border-border">
               <div className="p-6 border-b border-border">
                 <div className="flex items-center justify-between">
@@ -1410,7 +1363,7 @@ export function InvestorDetailPage({ investor: initialInvestor, onBack, initialT
           </TabsContent>
 
           {/* Souscriptions Tab */}
-          <TabsContent value="souscriptions" className="mt-6">
+          <TabsContent value="souscriptions">
             <div className="bg-card rounded-xl border border-border">
               <div className="p-6 border-b border-border">
                 <h2 className="font-semibold text-foreground flex items-center gap-2">
@@ -1435,7 +1388,7 @@ export function InvestorDetailPage({ investor: initialInvestor, onBack, initialT
           </TabsContent>
 
           {/* Fiscal & Bancaire Tab */}
-          <TabsContent value="fiscal" className="mt-6 space-y-6">
+          <TabsContent value="fiscal" className="space-y-6">
             {/* Informations fiscales */}
             <div className="bg-card rounded-xl border border-border p-6">
               <div className="flex items-center justify-between mb-4">
@@ -1637,7 +1590,7 @@ export function InvestorDetailPage({ investor: initialInvestor, onBack, initialT
           </TabsContent>
 
           {/* E-mails Tab */}
-          <TabsContent value="emails" className="mt-6">
+          <TabsContent value="emails">
             <div className="bg-card rounded-xl border border-border">
               <div className="p-6 border-b border-border">
                 <div className="flex items-center justify-between">
@@ -1712,8 +1665,8 @@ export function InvestorDetailPage({ investor: initialInvestor, onBack, initialT
               </div>
             </div>
           </TabsContent>
-        </Tabs>
-      </div>
+        </div>
+      </Tabs>
     </div>
   );
 }
