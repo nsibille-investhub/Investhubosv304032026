@@ -1,56 +1,41 @@
-import type React from "react";
+import type { LucideIcon } from "lucide-react";
 import { cn } from "./ui/utils";
+import { toneSurface, type Tone } from "./ui/tone";
 
-type StatusVariant = "success" | "warning" | "danger" | "neutral";
+export type StatusVariant =
+  | "success"
+  | "warning"
+  | "danger"
+  | "neutral"
+  | "info"
+  | "outline"
+  | "strong";
 
 interface StatusBadgeProps {
   label: string;
   variant?: StatusVariant;
+  icon?: LucideIcon;
   className?: string;
 }
 
-const statusBadgeClassNames: Record<StatusVariant, string> = {
-  success: "",
-  warning: "",
-  danger: "",
-  neutral: "bg-muted text-muted-foreground border-border",
-};
-
-const statusBadgeInlineStyles: Record<
-  Exclude<StatusVariant, "neutral">,
-  React.CSSProperties
-> = {
-  success: {
-    backgroundColor: "var(--success-soft)",
-    color: "var(--success)",
-    borderColor: "color-mix(in oklab, var(--success) 25%, transparent)",
-  },
-  warning: {
-    backgroundColor: "var(--warning-soft)",
-    color: "var(--warning)",
-    borderColor: "color-mix(in oklab, var(--warning) 25%, transparent)",
-  },
-  danger: {
-    backgroundColor: "var(--danger-soft)",
-    color: "var(--danger)",
-    borderColor: "color-mix(in oklab, var(--danger) 25%, transparent)",
-  },
-};
+const NEUTRAL_CLASS_NAME = "bg-muted text-muted-foreground border-border";
 
 export function StatusBadge({
   label,
   variant = "neutral",
+  icon: Icon,
   className,
 }: StatusBadgeProps) {
   return (
     <span
-      style={variant === "neutral" ? undefined : statusBadgeInlineStyles[variant]}
+      style={variant === "neutral" ? undefined : toneSurface(variant as Tone)}
       className={cn(
-        "inline-flex items-center whitespace-nowrap rounded-full border px-2.5 py-1 text-xs leading-none font-medium",
-        statusBadgeClassNames[variant],
+        "inline-flex items-center gap-1 whitespace-nowrap rounded-full border px-2.5 py-1 text-xs leading-none font-medium",
+        variant === "neutral" && NEUTRAL_CLASS_NAME,
         className,
       )}
     >
+      {Icon && <Icon className="w-3 h-3 shrink-0" aria-hidden />}
       {label}
     </span>
   );

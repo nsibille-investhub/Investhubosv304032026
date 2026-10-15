@@ -523,7 +523,7 @@ export function KYCDossierDetail(props: KYCDossierDetailProps) {
             {/* Main column */}
             <div className="min-w-0">
               <Tabs defaultValue="identity">
-                <TabsList className="h-auto p-1 flex flex-wrap gap-1 bg-muted">
+                <TabsList className="flex flex-wrap">
                   <TabsTrigger value="identity" className="gap-2">
                     <User className="w-4 h-4" /> Identité
                   </TabsTrigger>

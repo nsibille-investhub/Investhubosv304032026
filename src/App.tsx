@@ -66,6 +66,7 @@ import { useWhatsNewUnread } from './utils/useWhatsNewUnread';
 import { DataHubRouter } from './features/datahub/pages/DataHubRouter';
 import { generateFunds, Fund } from './utils/fundGenerator';
 import { AllFundsPage } from './components/AllFundsPage';
+import { FundDetailPage } from './components/fund-detail/FundDetailPage';
 import { FundStatusTabs } from './components/FundStatusTabs';
 import { RetrocessionsSettings } from './components/settings/RetrocessionsSettings';
 // Settings imports
@@ -150,6 +151,11 @@ export default function App() {
   const [dataRoomMassUploadOpen, setDataRoomMassUploadOpen] = useState(false);
   const [dataRoomBackSignal, setDataRoomBackSignal] = useState(0);
   const [selectedFundContextId, setSelectedFundContextId] = useState<number | null>(null);
+  const [selectedFundDetail, setSelectedFundDetail] = useState<Fund | null>(null);
+
+  useEffect(() => {
+    if (currentPage !== 'allfunds') setSelectedFundDetail(null);
+  }, [currentPage]);
   
   // Debug: Log when selectedSubscriptionDetail changes
   useEffect(() => {
@@ -746,7 +752,21 @@ export default function App() {
                 <>
                   <span className="text-gray-400 dark:text-gray-500">{t('breadcrumb.fundLife')}</span>
                   <span className="text-gray-300 dark:text-gray-700">/</span>
-                  <span className="text-gray-900 dark:text-gray-100 font-medium">{t('breadcrumb.allFunds')}</span>
+                  {selectedFundDetail ? (
+                    <>
+                      <button
+                        type="button"
+                        onClick={() => setSelectedFundDetail(null)}
+                        className="text-gray-400 dark:text-gray-500 hover:text-gray-900 dark:hover:text-gray-100 transition-colors"
+                      >
+                        {t('breadcrumb.allFunds')}
+                      </button>
+                      <span className="text-gray-300 dark:text-gray-700">/</span>
+                      <span className="text-gray-900 dark:text-gray-100 font-medium">{selectedFundDetail.name}</span>
+                    </>
+                  ) : (
+                    <span className="text-gray-900 dark:text-gray-100 font-medium">{t('breadcrumb.allFunds')}</span>
+                  )}
                 </>
               ) : currentPage === 'subscriptions' ? (
                 <>
@@ -1303,7 +1323,18 @@ export default function App() {
             </div>
           )}
 
-          {currentPage === 'allfunds' && (
+          {currentPage === 'allfunds' && selectedFundDetail && (
+            <FundDetailPage
+              fund={selectedFundDetail}
+              onBack={() => setSelectedFundDetail(null)}
+              onOpenSubscriptions={fund => {
+                setSelectedFundContextId(fund.id);
+                navigateToPage('subscriptions');
+              }}
+            />
+          )}
+
+          {currentPage === 'allfunds' && !selectedFundDetail && (
             /* All Funds Page */
             <>
               {/* Page Header - All Funds */}
@@ -1457,11 +1488,7 @@ export default function App() {
                   isLoading={false}
                   allData={allFundsData}
                   setAllData={setAllFundsData}
-                  onFundClick={(fund) => {
-                    toast.info(t('toast.fundDetails'), {
-                      description: `Ouverture des détails pour ${fund.name}`,
-                    });
-                  }}
+                  onFundClick={(fund) => setSelectedFundDetail(fund)}
                 />
               </div>
             </>

@@ -5,8 +5,6 @@ import {
   User,
   Store,
   TrendingUp,
-  ChevronDown,
-  ChevronUp,
   Check,
   X,
   Edit2,
@@ -77,18 +75,19 @@ import { PartyTypeBadge } from './ui/party-type-badge';
 import { QuestionActions, QuestionStatus } from './QuestionActions';
 import { QuestionCommentThread } from './QuestionCommentThread';
 import { IntegrationsTab } from './IntegrationsTab';
-import {
-  Collapsible,
-  CollapsibleContent,
-  CollapsibleTrigger,
-} from './ui/collapsible';
+import { SectionCard } from './ui/section-card';
+import { DetailTabsList } from './ui/detail-tabs';
 import {
   Tabs,
   TabsContent,
-  TabsList,
-  TabsTrigger,
 } from './ui/tabs';
-import { PageHeader, PRIMARY_BUTTON_GRADIENT } from './ui/page-header';
+import {
+  PageHeader,
+  PageHeaderSubtitle,
+  PageHeaderSubtitleItem,
+  PageHeaderSubtitleSeparator,
+  PRIMARY_BUTTON_GRADIENT,
+} from './ui/page-header';
 import { DetailLink, DetailSummary } from './ui/detail-summary';
 import {
   mockSections,
@@ -899,9 +898,8 @@ export function SubscriptionDetailPage({ subscription: subscriptionProp, onBack 
           </span>
         }
         subtitle={
-          <span className="flex items-center flex-wrap gap-3">
-            <span className="inline-flex items-center gap-1.5 group">
-              <Hash className="w-3.5 h-3.5" />
+          <PageHeaderSubtitle>
+            <PageHeaderSubtitleItem icon={Hash} className="group">
               <span>{t('subscriptions.detail.header.id', { id: subscription.id })}</span>
               <motion.button
                 type="button"
@@ -925,26 +923,24 @@ export function SubscriptionDetailPage({ subscription: subscriptionProp, onBack 
                   <Copy className="w-3.5 h-3.5 text-muted-foreground hover:text-foreground" />
                 )}
               </motion.button>
-            </span>
+            </PageHeaderSubtitleItem>
 
-            <span aria-hidden className="h-3.5 w-px bg-border" />
+            <PageHeaderSubtitleSeparator />
 
-            <span className="inline-flex items-center gap-1.5">
-              <Calendar className="w-3.5 h-3.5" />
+            <PageHeaderSubtitleItem icon={Calendar}>
               {t('subscriptions.detail.header.createdOn', { date: formatLongDate(subscription.createdAt) })}
-            </span>
+            </PageHeaderSubtitleItem>
 
             {subscription.activatedAt && (
               <>
-                <span aria-hidden className="h-3.5 w-px bg-border" />
-                <span className="inline-flex items-center gap-1.5">
-                  <CheckCircle2 className="w-3.5 h-3.5" />
+                <PageHeaderSubtitleSeparator />
+                <PageHeaderSubtitleItem icon={CheckCircle2}>
                   {t('subscriptions.detail.header.activatedOn', { date: formatLongDate(subscription.activatedAt) })}
-                </span>
+                </PageHeaderSubtitleItem>
               </>
             )}
 
-            <span aria-hidden className="h-3.5 w-px bg-border" />
+            <PageHeaderSubtitleSeparator />
 
             <DetailLink href={fundUrl} icon={Landmark} title={openInNewTab} className="text-sm">
               {subscription.fund.name}
@@ -953,7 +949,7 @@ export function SubscriptionDetailPage({ subscription: subscriptionProp, onBack 
             <DetailLink href={fundUrl} icon={Layers3} title={openInNewTab} className="text-sm">
               {t('subscriptions.detail.init.sharePrefix', { name: subscription.fund.shareClass })}
             </DetailLink>
-          </span>
+          </PageHeaderSubtitle>
         }
         primaryAction={{
           label: t('subscriptions.detail.header.exportData'),
@@ -966,36 +962,21 @@ export function SubscriptionDetailPage({ subscription: subscriptionProp, onBack 
       {/* Tabs - Same structure as InvestorDetailPage */}
       <div className="px-8 bg-card border-b border-border">
         <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-          <TabsList className="!bg-transparent rounded-none w-full max-w-full justify-start h-auto p-0 gap-0 overflow-hidden">
-            {[
-              { value: 'onboarding', icon: ClipboardList, labelKey: 'subscriptions.detail.tabs.onboarding', badge: `${Math.round(subscription.completionOnboarding)}%`, badgeClass: 'bg-amber-50 text-amber-700 border-amber-200' },
-              { value: 'emails', icon: Mail, labelKey: 'subscriptions.detail.tabs.emails', badge: String(mockEmails.length), badgeClass: 'bg-indigo-50 text-indigo-700 border-indigo-200' },
-              { value: 'capital-calls', icon: DollarSign, labelKey: 'subscriptions.detail.tabs.capitalCalls', badge: String(mockCapitalCalls.length), badgeClass: 'bg-emerald-50 text-emerald-700 border-emerald-200' },
-              { value: 'documents', icon: FolderOpen, labelKey: 'subscriptions.detail.tabs.documents', badge: String(mockDocuments.length), badgeClass: 'bg-muted text-foreground/80 border-border' },
-              { value: 'integrations', icon: Database, labelKey: 'subscriptions.detail.tabs.integrations', badge: '5', badgeClass: 'bg-cyan-50 text-cyan-700 border-cyan-200' },
-              { value: 'notes', icon: MessageSquare, labelKey: 'subscriptions.detail.tabs.notes', badge: String(mockNotes.length), badgeClass: 'bg-purple-50 text-purple-700 border-purple-200' },
-            ].map(tab => {
-              const Icon = tab.icon;
-              const isActive = activeTab === tab.value;
-              return (
-                <TabsTrigger
-                  key={tab.value}
-                  value={tab.value}
-                  title={t(tab.labelKey)}
-                  className="!bg-transparent !rounded-none !border-0 !shadow-none basis-auto min-w-0 shrink data-[state=active]:shrink-0 px-2 xl:px-4 pb-3 pt-4 font-medium text-muted-foreground data-[state=active]:text-primary"
-                  style={isActive ? { boxShadow: 'inset 0 -2px 0 0 var(--color-primary)' } : undefined}
-                >
-                  <Icon className="w-4 h-4 mr-2 shrink-0" />
-                  <span className="truncate">{t(tab.labelKey)}</span>
-                  {tab.badge && (
-                    <Badge className={`ml-2 text-xs shrink-0 ${tab.badgeClass}`}>
-                      {tab.badge}
-                    </Badge>
-                  )}
-                </TabsTrigger>
-              );
-            })}
-          </TabsList>
+          <DetailTabsList
+            items={[
+              { value: 'onboarding', icon: ClipboardList, labelKey: 'subscriptions.detail.tabs.onboarding', badge: `${Math.round(subscription.completionOnboarding)}%` },
+              { value: 'emails', icon: Mail, labelKey: 'subscriptions.detail.tabs.emails', badge: String(mockEmails.length) },
+              { value: 'capital-calls', icon: DollarSign, labelKey: 'subscriptions.detail.tabs.capitalCalls', badge: String(mockCapitalCalls.length) },
+              { value: 'documents', icon: FolderOpen, labelKey: 'subscriptions.detail.tabs.documents', badge: String(mockDocuments.length) },
+              { value: 'integrations', icon: Database, labelKey: 'subscriptions.detail.tabs.integrations', badge: '5' },
+              { value: 'notes', icon: MessageSquare, labelKey: 'subscriptions.detail.tabs.notes', badge: String(mockNotes.length) },
+            ].map(tab => ({
+              value: tab.value,
+              icon: tab.icon,
+              label: t(tab.labelKey),
+              badge: tab.badge,
+            }))}
+          />
 
           {/* Tab Content - Onboarding */}
           <TabsContent value="onboarding" className="mt-0">
@@ -1247,76 +1228,59 @@ export function SubscriptionDetailPage({ subscription: subscriptionProp, onBack 
                     }}
                     style={{ scrollMarginTop: '1rem' }}
                   >
-                  <Collapsible
+                  <SectionCard
+                    mode="validation"
+                    icon={Icon}
+                    title={t(section.titleKey)}
+                    iconTone={allVerified ? 'success' : 'info'}
+                    active={activeOnboardingSection === section.id}
                     open={isOpen}
                     onOpenChange={() => {
                       toggleSection(section.id);
                       setActiveOnboardingSection(section.id);
                     }}
+                    summary={
+                      <>
+                        <span className="font-semibold text-foreground">
+                          {isDocuments
+                            ? t('subscriptions.detail.onboarding.requiredDocuments', { count: buckets.total })
+                            : t('subscriptions.detail.onboarding.answeredOf', {
+                                answered: buckets.total - buckets.pending,
+                                total: buckets.total,
+                              })}
+                        </span>
+                        <span className="w-1 h-1 rounded-full bg-border" />
+                        <OnboardingStateCounter stats={buckets} compact />
+                      </>
+                    }
+                    badges={
+                      allVerified ? (
+                        <Badge className="bg-emerald-100 text-emerald-700 border-emerald-200">
+                          <CheckCircle2 className="w-3.5 h-3.5 mr-1.5" />
+                          {t('subscriptions.detail.onboarding.sectionValidated')}
+                        </Badge>
+                      ) : buckets.awaitingCorrection > 0 ? (
+                        <Badge className="bg-red-100 text-red-700 border-red-200">
+                          <AlertCircle className="w-3.5 h-3.5 mr-1.5" />
+                          {t('subscriptions.detail.onboarding.completion.awaitingCorrectionCount', { count: buckets.awaitingCorrection })}
+                        </Badge>
+                      ) : (
+                        <Badge className="bg-amber-100 text-amber-700 border-amber-200">
+                          <AlertCircle className="w-3.5 h-3.5 mr-1.5" />
+                          {t('subscriptions.detail.onboarding.inProgress')}
+                        </Badge>
+                      )
+                    }
+                    validationBar={
+                      !isDocuments && !allVerified
+                        ? {
+                            label: t('subscriptions.detail.onboarding.verifyAllResponses'),
+                            actionLabel: t('subscriptions.detail.onboarding.validateSection'),
+                            onAction: () => handleValidateSection(section.id, t(section.titleKey)),
+                          }
+                        : undefined
+                    }
                   >
-                    <Card
-                      className="overflow-hidden hover:shadow-md transition-shadow"
-                      style={
-                        activeOnboardingSection === section.id
-                          ? { boxShadow: '0 0 0 1px var(--color-primary)' }
-                          : undefined
-                      }
-                    >
-                      <CollapsibleTrigger className="w-full">
-                        <div className="flex items-center justify-between p-5 hover:bg-muted transition-colors cursor-pointer">
-                          <div className="flex items-center gap-4">
-                            <div className={`w-12 h-12 rounded-xl flex items-center justify-center ${
-                              allVerified ? 'bg-[var(--success-soft)]' : 'bg-primary/10'
-                            }`}>
-                              <Icon className={`w-6 h-6 ${
-                                allVerified ? 'text-emerald-600' : 'text-primary'
-                              }`} />
-                            </div>
-                            <div className="text-left">
-                              <h3 className="font-semibold text-foreground text-lg mb-1">{t(section.titleKey)}</h3>
-                              <div className="flex flex-wrap items-center gap-x-3 gap-y-1 text-xs">
-                                <span className="font-semibold text-foreground">
-                                  {isDocuments
-                                    ? t('subscriptions.detail.onboarding.requiredDocuments', { count: buckets.total })
-                                    : t('subscriptions.detail.onboarding.answeredOf', {
-                                        answered: buckets.total - buckets.pending,
-                                        total: buckets.total,
-                                      })}
-                                </span>
-                                <span className="w-1 h-1 rounded-full bg-border" />
-                                <OnboardingStateCounter stats={buckets} compact />
-                              </div>
-                            </div>
-                          </div>
-
-                          <div className="flex items-center gap-3">
-                            {allVerified ? (
-                              <Badge className="bg-emerald-100 text-emerald-700 border-emerald-200">
-                                <CheckCircle2 className="w-3.5 h-3.5 mr-1.5" />
-                                {t('subscriptions.detail.onboarding.sectionValidated')}
-                              </Badge>
-                            ) : buckets.awaitingCorrection > 0 ? (
-                              <Badge className="bg-red-100 text-red-700 border-red-200">
-                                <AlertCircle className="w-3.5 h-3.5 mr-1.5" />
-                                {t('subscriptions.detail.onboarding.completion.awaitingCorrectionCount', { count: buckets.awaitingCorrection })}
-                              </Badge>
-                            ) : (
-                              <Badge className="bg-amber-100 text-amber-700 border-amber-200">
-                                <AlertCircle className="w-3.5 h-3.5 mr-1.5" />
-                                {t('subscriptions.detail.onboarding.inProgress')}
-                              </Badge>
-                            )}
-                            {isOpen ? (
-                              <ChevronUp className="w-5 h-5 text-muted-foreground/60" />
-                            ) : (
-                              <ChevronDown className="w-5 h-5 text-muted-foreground/60" />
-                            )}
-                          </div>
-                        </div>
-                      </CollapsibleTrigger>
-
-                      <CollapsibleContent>
-                        <div className="border-t border-border/50">
                           {section.id === 'documents' ? (
                             /* Documents Section - Special Layout */
                             <div>
@@ -1478,22 +1442,6 @@ export function SubscriptionDetailPage({ subscription: subscriptionProp, onBack 
                           ) : (
                             /* Regular Questions Section */
                             <div>
-                              {/* Validate All Button */}
-                              {!allVerified && (
-                                <div className="px-4 py-3 bg-primary/5 border-b border-primary/10 flex items-center justify-between">
-                                  <div className="flex items-center gap-2 text-xs text-primary">
-                                    <CheckCircle2 className="w-4 h-4" />
-                                    <span>{t('subscriptions.detail.onboarding.verifyAllResponses')}</span>
-                                  </div>
-                                  <Button
-                                    size="sm"
-                                    onClick={() => handleValidateSection(section.id, t(section.titleKey))}
-                                    className="bg-primary hover:bg-primary/90 text-white"
-                                  >
-                                    {t('subscriptions.detail.onboarding.validateSection')}
-                                  </Button>
-                                </div>
-                              )}
 
                               {/* Questions Table */}
                               <div className="divide-y divide-border/50">
@@ -1549,10 +1497,7 @@ export function SubscriptionDetailPage({ subscription: subscriptionProp, onBack 
                               </div>
                             </div>
                           )}
-                        </div>
-                      </CollapsibleContent>
-                    </Card>
-                  </Collapsible>
+                  </SectionCard>
                   </div>
                 );
               })}

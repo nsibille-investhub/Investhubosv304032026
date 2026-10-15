@@ -29,6 +29,8 @@ export interface ColumnConfig<T = any> {
   sortable?: boolean;
   render: (row: T, searchTerm: string) => ReactNode;
   className?: string;
+  /** Alignement de l'en-tête et des cellules. Montants et pourcentages : à droite. */
+  align?: 'left' | 'right';
 }
 
 interface DataTableProps<T extends { id: number }> {
@@ -44,6 +46,8 @@ interface DataTableProps<T extends { id: number }> {
   searchTerm?: string;
   entityName?: string; // "investisseur", "partenaire", etc.
   hideSelection?: boolean;
+  /** Densité : "compact" resserre les marges pour les tableaux à nombreuses colonnes. */
+  density?: 'default' | 'compact';
 }
 
 export function DataTable<T extends { id: number }>({
@@ -57,6 +61,7 @@ export function DataTable<T extends { id: number }>({
   compactMode = false,
   allFilteredData,
   searchTerm = '',
+  density = 'default',
   entityName = 'item',
   hideSelection = false
 }: DataTableProps<T>) {
@@ -188,10 +193,12 @@ export function DataTable<T extends { id: number }>({
                     onClick={() => onSort(column.key)}
                     className={cn(
                       "px-6 py-4 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider cursor-pointer group",
+                      column.align === 'right' && 'text-right',
+                      density === 'compact' && 'px-3 py-3',
                       column.className
                     )}
                   >
-                    <div className="flex items-center gap-2">
+                    <div className={cn('flex items-center gap-2', column.align === 'right' && 'justify-end')}>
                       {column.label}
                       <SortIcon columnKey={column.key} />
                     </div>
@@ -201,6 +208,8 @@ export function DataTable<T extends { id: number }>({
                     key={column.key}
                     className={cn(
                       "px-6 py-4 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider",
+                      column.align === 'right' && 'text-right',
+                      density === 'compact' && 'px-3 py-3',
                       column.className
                     )}
                   >
@@ -248,7 +257,12 @@ export function DataTable<T extends { id: number }>({
                   {columns.map((column) => (
                     <td
                       key={column.key}
-                      className={cn('px-6 py-4', column.className)}
+                      className={cn(
+                        'px-6 py-4',
+                        column.align === 'right' && 'text-right tabular-nums',
+                        density === 'compact' && 'px-3 py-3',
+                        column.className,
+                      )}
                     >
                       {column.render(row, searchTerm)}
                     </td>

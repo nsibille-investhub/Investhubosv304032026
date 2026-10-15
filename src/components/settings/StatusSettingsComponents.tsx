@@ -236,7 +236,7 @@ export const StatusPanel: React.FC<StatusPanelProps> = ({
                 </div>
                 
                 <Tabs value={activeLanguage} onValueChange={(v) => setActiveLanguage(v as 'fr' | 'en' | 'es')} className="w-full">
-                  <TabsList className="grid w-full grid-cols-3 mb-3 h-8">
+                  <TabsList className="grid w-full grid-cols-3 mb-3">
                     <TabsTrigger value="fr" className="text-xs py-1">
                       🇫🇷 FR
                     </TabsTrigger>

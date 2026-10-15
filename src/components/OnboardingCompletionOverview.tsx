@@ -13,6 +13,9 @@ import { Badge } from './ui/badge';
 import { Card } from './ui/card';
 import { Tooltip, TooltipContent, TooltipTrigger } from './ui/tooltip';
 import { cn, WIDGET_SUBTITLE_CLASS, WIDGET_TITLE_CLASS } from './ui/utils';
+import { SectionNav, type SectionNavItem } from './ui/section-nav';
+import { SegmentedProgress } from './ui/segmented-progress';
+import type { Tone } from './ui/tone';
 
 export type OnboardingItemState =
   | 'pending'
@@ -46,32 +49,28 @@ const STATE_ORDER: OnboardingItemState[] = [
 
 const STATE_STYLES: Record<
   OnboardingItemState,
-  { icon: LucideIcon; bar: string; dot: string; text: string; tile: string }
+  { icon: LucideIcon; dot: string; text: string; tile: string }
 > = {
   pending: {
     icon: CircleDashed,
-    bar: 'bg-border',
     dot: 'bg-gray-300',
     text: 'text-muted-foreground',
     tile: 'bg-muted',
   },
   awaitingValidation: {
     icon: Clock,
-    bar: 'bg-amber-500',
     dot: 'bg-amber-500',
     text: 'text-amber-700',
     tile: 'bg-amber-50 border-amber-200',
   },
   awaitingCorrection: {
     icon: AlertCircle,
-    bar: 'bg-red-500',
     dot: 'bg-red-500',
     text: 'text-red-700',
     tile: 'bg-red-50 border-red-200',
   },
   validated: {
     icon: CheckCircle2,
-    bar: 'bg-emerald-500',
     dot: 'bg-emerald-500',
     text: 'text-emerald-700',
     tile: 'bg-emerald-50 border-emerald-200',
@@ -120,19 +119,14 @@ const percent = (value: number, total: number) =>
 
 function StackedBar({ stats }: { stats: OnboardingBucketStats }) {
   return (
-    <div className="flex h-2 w-full overflow-hidden rounded-full bg-muted">
-      {STATE_ORDER.map(state => {
-        const count = stats[state];
-        if (count === 0) return null;
-        return (
-          <div
-            key={state}
-            className={cn('h-full', STATE_STYLES[state].bar)}
-            style={{ width: `${percent(count, stats.total)}%` }}
-          />
-        );
-      })}
-    </div>
+    <SegmentedProgress
+      total={stats.total}
+      segments={STATE_ORDER.map(state => ({
+        id: state,
+        value: stats[state],
+        tone: ONBOARDING_STATE_TONE[state],
+      }))}
+    />
   );
 }
 
@@ -284,6 +278,13 @@ interface OnboardingSectionNavProps {
   onSelect: (sectionId: string) => void;
 }
 
+export const ONBOARDING_STATE_TONE: Record<OnboardingItemState, Tone> = {
+  pending: 'neutral',
+  awaitingValidation: 'warning',
+  awaitingCorrection: 'danger',
+  validated: 'success',
+};
+
 export function OnboardingSectionNav({
   sections,
   activeSectionId,
@@ -291,78 +292,40 @@ export function OnboardingSectionNav({
 }: OnboardingSectionNavProps) {
   const { t } = useTranslation();
 
+  const items: SectionNavItem[] = sections.map(section => {
+    const state = getSectionState(section.stats);
+    return {
+      id: section.id,
+      title: t(section.titleKey),
+      subtitle:
+        section.kind === 'documents'
+          ? t(
+              `subscriptions.detail.onboarding.completion.documentsCount${
+                section.stats.total === 1 ? 'One' : 'Many'
+              }`,
+              { count: section.stats.total },
+            )
+          : t('subscriptions.detail.onboarding.completion.sectionPosition', {
+              position: section.position,
+              total: sections.length,
+            }),
+      icon: section.icon,
+      iconTone: state === 'validated' ? 'success' : 'neutral',
+      indicator: {
+        kind: 'count',
+        value: section.stats.validated,
+        total: section.stats.total,
+        tone: ONBOARDING_STATE_TONE[state],
+      },
+    };
+  });
+
   return (
-    <Card className="p-3 shadow-sm sticky top-4">
-      <h3 className={cn('px-2 pb-2 pt-1', WIDGET_TITLE_CLASS)}>
-        {t('subscriptions.detail.onboarding.completion.sectionsTitle')}
-      </h3>
-
-      <nav className="flex flex-col gap-1">
-        {sections.map(section => {
-          const Icon = section.icon;
-          const isActive = activeSectionId === section.id;
-          const state = getSectionState(section.stats);
-          const style = STATE_STYLES[state];
-
-          return (
-            <button
-              key={section.id}
-              type="button"
-              onClick={() => onSelect(section.id)}
-              aria-current={isActive ? 'true' : undefined}
-              className={cn(
-                'flex items-center gap-3 rounded-lg px-2 py-2 text-left transition-colors hover:bg-accent',
-                isActive && 'bg-accent',
-              )}
-            >
-              <span
-                className={cn(
-                  'flex h-8 w-8 shrink-0 items-center justify-center rounded-lg',
-                  state === 'validated' ? 'bg-emerald-50' : 'bg-muted',
-                )}
-              >
-                <Icon
-                  className={cn(
-                    'w-4 h-4',
-                    state === 'validated' ? 'text-emerald-600' : 'text-muted-foreground',
-                  )}
-                />
-              </span>
-
-              <span className="min-w-0 flex-1">
-                <span
-                  className={cn(
-                    'block truncate text-sm',
-                    isActive ? 'font-semibold text-primary' : 'font-medium text-foreground',
-                  )}
-                >
-                  {t(section.titleKey)}
-                </span>
-                <span className="block truncate text-xs text-muted-foreground">
-                  {section.kind === 'documents'
-                    ? t(
-                        `subscriptions.detail.onboarding.completion.documentsCount${
-                          section.stats.total === 1 ? 'One' : 'Many'
-                        }`,
-                        { count: section.stats.total },
-                      )
-                    : t('subscriptions.detail.onboarding.completion.sectionPosition', {
-                        position: section.position,
-                        total: sections.length,
-                      })}
-                </span>
-              </span>
-
-              <span className="flex shrink-0 items-center gap-1.5">
-                <span className={cn('text-xs font-semibold tabular-nums', style.text)}>
-                  {section.stats.validated}/{section.stats.total}
-                </span>
-                <span className={cn('h-2 w-2 rounded-full', style.dot)} />
-              </span>
-            </button>
-          );
-        })}
-      </nav>
-    </Card>
+    <SectionNav
+      title={t('subscriptions.detail.onboarding.completion.sectionsTitle')}
+      items={items}
+      activeId={activeSectionId}
+      onSelect={onSelect}
+    />
   );
 }
