@@ -1839,12 +1839,8 @@
         "preferredContact": "Investor preference",
         "portalAccessSection": "Portal access",
         "enablePortalAccess": "Enable portal access",
-        "accessLevel": "Access level",
-        "selectAccessLevel": "Select a level",
         "password": "Password",
         "reset": "Reset",
-        "linkedStructures": "Linked structures",
-        "primaryAttachAll": "The primary contact is automatically linked to all structures",
         "notifications": "Notifications",
         "notificationsHint": "Choose which communications this contact should receive",
         "notificationsAllLabel": "All communications",
@@ -1871,27 +1867,15 @@
             "description": "Newsletters, events and announcements"
           }
         },
-        "authorizedFunds": "Authorized funds",
-        "authorizedSubscriptions": "Authorized subscriptions",
         "primaryHint": "Main point of contact for this investor",
         "preferredHint": "Preferred recipient for nominative communications",
         "portalAccessHint": "Grant access to the investor portal and configure what this contact can see.",
         "enablePortalAccessHint": "Allow this contact to log into the investor portal",
         "accessSection": "Access management",
-        "accessSectionHint": "By default this contact has access to everything. Toggle each scope to restrict it.",
         "accessRecapTitleAll": "Full access",
         "accessRecapTitleRestricted": "Restricted access",
-        "accessRecapAll": "This contact has access to all funds, subscriptions and document types.",
-        "accessRecapFundsAll": "all funds",
-        "accessRecapSubsAll": "all subscriptions",
         "accessRecapDocsAll": "all document types",
-        "accessRecapFundsRestricted": "{{count}}/{{total}} funds",
-        "accessRecapSubsRestricted": "{{count}}/{{total}} subscriptions",
         "accessRecapDocsRestricted": "{{count}}/{{total}} document types",
-        "restrictFundsLabel": "Restrict authorised funds",
-        "restrictFundsHint": "When off, the contact has access to every fund",
-        "restrictSubscriptionsLabel": "Restrict authorised subscriptions",
-        "restrictSubscriptionsHint": "When off, the contact has access to every subscription",
         "restrictDocumentTypesLabel": "Restrict authorised document types",
         "restrictDocumentTypesHint": "When off, the contact has access to every document type",
         "cancel": "Cancel",
@@ -1912,15 +1896,62 @@
           "email": "Email",
           "phone": "Phone",
           "roles": "Roles",
-          "portal": "Portal access"
+          "language": "Language",
+          "signatory": "Signatory",
+          "access": "Access"
         },
-        "portalAccessLevel": "Portal access · {{level}}",
         "entity": "contact",
         "filters": {
-          "role": "Role",
-          "signatory": "Signatory"
+          "signatoryYes": "Signatory",
+          "signatoryNo": "Not a signatory"
         },
-        "primaryPortalAccess": "The primary contact always has portal access."
+        "primaryPortalAccess": "The primary contact always has portal access.",
+        "multiSearchPlaceholder": "Search...",
+        "rolesSection": "Roles",
+        "rolesSectionHint": "The contact's roles in each of the investor's structures. A contact can hold several.",
+        "noStructure": "No structure linked to this investor.",
+        "contactRoles": {
+          "ubo": "Ultimate beneficial owner (UBO)",
+          "legalRepresentative": "Legal representative",
+          "director": "Director",
+          "accountant": "Accountant",
+          "proxy": "Proxy",
+          "shareholder": "Shareholder"
+        },
+        "signatoryGlobal": "Signatory for all structures",
+        "signatoryGlobalHint": "Off: choose the structures this contact can sign for.",
+        "signatoryStructures": "Structures concerned",
+        "signatoryAllStructures": "All structures",
+        "accessMatrixHint": "The contact's role on each fund, structure and subscription. \"No access\" hides the object on the portal.",
+        "accessRecap": {
+          "fund": "{{count}}/{{total}} funds",
+          "structure": "{{count}}/{{total}} structures",
+          "subscription": "{{count}}/{{total}} subscriptions"
+        },
+        "accessRoles": {
+          "none": "No access",
+          "readOnly": "Read only",
+          "full": "Full access",
+          "admin": "Administrator"
+        },
+        "scopeTypes": {
+          "fund": "Funds",
+          "structure": "Structures",
+          "subscription": "Subscriptions"
+        },
+        "accessRoleFor": "Access role for {{name}}",
+        "rolesCard": {
+          "title": "Roles of {{name}}",
+          "subtitle": "Roles per structure"
+        },
+        "signatoryCard": {
+          "title": "Signature of {{name}}",
+          "subtitle": "Signature type: {{level}}"
+        },
+        "accessCard": {
+          "title": "Access of {{name}}",
+          "subtitle": "Rights matrix: object × role"
+        }
       }
     }
   },
@@ -2035,7 +2066,8 @@
       "idCopied": "ID copied",
       "copyError": "Copy failed",
       "rowActions": "Actions",
-      "moreActions": "More actions"
+      "moreActions": "More actions",
+      "more": "+{{count}} more"
     }
   },
   "ged": {

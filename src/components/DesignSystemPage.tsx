@@ -74,6 +74,7 @@ import {
   LogIn,
   Bell,
   Trash2,
+  KeyRound,
   type LucideIcon,
 } from 'lucide-react';
 import * as React from 'react';
@@ -109,7 +110,7 @@ import { DocumentScope } from './ui/document-scope';
 import { FUNDS, INVESTORS } from '../utils/gedFixtures';
 import { FolderSpaceDialogPreview } from './ui/folder-space-dialog';
 import { KpiCard, KpiStrip } from './ui/kpi-card';
-import { ListingCountTag, ListingNameCell, ListingTypeTag } from './ui/listing';
+import { ListingCountTag, ListingNameCell, ListingStackCell, ListingStackRow, ListingTypeTag } from './ui/listing';
 import { TableRowActions } from './ui/row-actions';
 import { SidePanelCard, SidePanelSection, SidePanelSwitchRow } from './ui/side-panel';
 import { PageHeader } from './ui/page-header';
@@ -608,6 +609,13 @@ const investorListingColumnSpecs = [
     variants: '1 à 3 actions (boutons seuls), 4 actions et plus (3 boutons + ⋮), action indisponible avec motif, action destructive.',
   },
   {
+    column: 'CELLULE MULTIPLE',
+    component: 'ListingStackCell + ListingStackRow (ui/listing)',
+    functional: 'Afficher une donnée multiple (rôles par structure, signature, matrice des droits d’accès) : premier élément en clair, « +n autres », carte de détail au clic.',
+    guidelines: 'Même rendu que la colonne Structure : icône 12px, texte xs gris tronqué, chevron ; « +n autres » en primaire. Carte w-96, en-tête icône + titre + sous-titre, lignes ListingStackRow (intitulé à gauche, Tags à droite, passage à la ligne si besoin).',
+    variants: 'Vide (—), un élément, plusieurs éléments ; carte groupée par type (fonds, structures, souscriptions).',
+  },
+  {
     column: 'CARTE LISTING',
     component: 'ListingCard + FilterBar + DataTable',
     functional: 'Conteneur standard d’un listing : recherche et filtres en tête, tableau, pagination éventuelle. Utilisé par le listing investisseurs et par les onglets Contacts & signataires et Structures du détail investisseur.',
@@ -781,6 +789,19 @@ function renderInvestorColumnPreview(column: string) {
             { label: 'Supprimer', icon: Trash2, intent: 'danger', onClick: () => undefined },
           ]}
         />
+      );
+    case 'CELLULE MULTIPLE':
+      return (
+        <ListingStackCell icon={KeyRound} items={['IH1 · Lecture seule', 'Holding Durand · Administrateur']} title="Accès de Claire Martin" subtitle="Matrice des droits : objet × rôle">
+          <div className="space-y-2">
+            <ListingStackRow icon={Banknote} label="IH1">
+              <Tag label="Lecture seule" />
+            </ListingStackRow>
+            <ListingStackRow icon={Building2} label="Holding Durand">
+              <Tag label="Administrateur" />
+            </ListingStackRow>
+          </div>
+        </ListingStackCell>
       );
     case 'CARTE LISTING':
       return <span className="text-xs text-[#4F6166]">ListingCard</span>;

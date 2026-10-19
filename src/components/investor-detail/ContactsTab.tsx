@@ -1,5 +1,5 @@
 import { useMemo, useState } from 'react';
-import { ExternalLink, Pencil, PenTool, Plus, Star, Users } from 'lucide-react';
+import { Briefcase, Building2, ExternalLink, Globe, KeyRound, Pencil, PenTool, Plus, Star, Users } from 'lucide-react';
 import { toast } from 'sonner';
 import type { Investor } from '../../utils/investorGenerator';
 import { useTranslation } from '../../utils/languageContext';
@@ -10,13 +10,27 @@ import { EmptyState } from '../EmptyState';
 import { FilterBar, type FilterConfig } from '../FilterBar';
 import { Tag } from '../Tag';
 import { Button } from '../ui/button';
-import { ListingCard, ListingNameCell } from '../ui/listing';
+import { ListingCard, ListingNameCell, ListingStackCell, ListingStackRow } from '../ui/listing';
 import { TableRowActions } from '../ui/row-actions';
-import { ContactEditSheet, type ContactDraft, type SignatureLevel } from './ContactEditSheet';
+import {
+  ACCESS_ROLES,
+  ACCESS_SCOPE_ICON,
+  ACCESS_SCOPE_TYPES,
+  CONTACT_ROLES,
+  ContactEditSheet,
+  buildAccessScopes,
+  type AccessRight,
+  type AccessRole,
+  type ContactDraft,
+  type ContactRole,
+  type NamedOption,
+  type SignatureLevel,
+  type StructureOption,
+} from './ContactEditSheet';
 
 type Contact = ContactDraft;
 type Row = Contact & { id: number; contactId: string };
-type SortKey = 'name' | 'email' | 'phone';
+type SortKey = 'name' | 'email' | 'phone' | 'language';
 
 const K = 'investors.detail.contactsTab';
 
@@ -25,16 +39,52 @@ interface ContactsTabProps {
 }
 
 // Mock data pour les fonds
-const mockFunds = [
+const mockFunds: NamedOption[] = [
   { id: 'fund-1', name: 'IH1' },
   { id: 'fund-2', name: 'FEE2' },
   { id: 'fund-3', name: 'Fonds I' },
 ];
 
-// Mock data pour les souscriptions
-const mockSubscriptions = [
-  { id: 'sub-1', name: '12071 - IH1 - Nicolas SIRIEIX' },
-];
+const LEGACY_ACCESS_ROLE: Record<string, AccessRole> = { Admin: 'admin', 'Full Access': 'full', 'Read Only': 'readOnly' };
+
+/**
+ * Données de démo : rôles par structure, périmètre de signature et matrice d'accès,
+ * dérivés de façon stable de la position du contact.
+ */
+function withMockRights(
+  contact: Contact,
+  index: number,
+  structures: StructureOption[],
+  subscriptions: NamedOption[],
+): Contact {
+  const structureAt = (offset: number) => structures[(index + offset) % structures.length];
+  const structureRoles =
+    contact.structureRoles ??
+    (structures.length === 0
+      ? []
+      : contact.isPrimary
+        ? structures.map((structure, i) => ({
+            structureId: structure.id,
+            roles: (i === 0 ? ['ubo', 'legalRepresentative'] : ['ubo']) as ContactRole[],
+          }))
+        : [{ structureId: structureAt(0).id, roles: [CONTACT_ROLES[(index + 2) % CONTACT_ROLES.length]] }]);
+
+  const signatoryGlobal = contact.signatoryGlobal ?? (contact.isPrimarySignatory || structures.length < 2);
+  const signatoryStructureIds =
+    contact.signatoryStructureIds ?? (signatoryGlobal || structures.length === 0 ? [] : [structureAt(1).id]);
+
+  const role = LEGACY_ACCESS_ROLE[contact.accessLevel ?? ''] ?? 'readOnly';
+  const scopes = buildAccessScopes(mockFunds, structures, subscriptions);
+  const accessRights: AccessRight[] =
+    contact.accessRights ??
+    (!(contact.isPrimary || contact.hasPortalAccess)
+      ? []
+      : scopes
+          .filter((scope, i) => contact.isPrimary || (i + index) % 2 === 0)
+          .map((scope) => ({ scopeType: scope.scopeType, scopeId: scope.id, role })));
+
+  return { ...contact, structureRoles, signatoryGlobal, signatoryStructureIds, accessRights };
+}
 
 const fullName = (contact: Contact) => `${contact.firstName} ${contact.lastName}`.trim();
 
@@ -102,6 +152,15 @@ export const countContactRows = (investor: {
 
 export function ContactsTab({ investor }: ContactsTabProps) {
   const { t, lang } = useTranslation();
+  const initialStructures: StructureOption[] = investor.structures.map((structure) => ({
+    id: structure.id,
+    name: structure.name,
+    type: structure.type,
+  }));
+  const initialSubscriptions: NamedOption[] = [
+    { id: 'sub-1', name: `12071 - IH1 - ${investor.name}` },
+    { id: 'sub-2', name: `12384 - FEE2 - ${investor.name}` },
+  ];
   const [contacts, setContacts] = useState<Contact[]>(() => mergeSignatories([
     ...(hasPrincipalUserContact(investor) ? [] : [{
       id: `principal-${investor.id}`,
@@ -115,10 +174,10 @@ export function ContactsTab({ investor }: ContactsTabProps) {
       language: investor.language,
     }]),
     ...(investor.contacts || []),
-  ], investor.signatories || []).map((contact) =>
+  ], investor.signatories || [])
     // Le contact principal a toujours accès au portail.
-    contact.isPrimary ? { ...contact, hasPortalAccess: true, accessLevel: contact.accessLevel ?? 'Admin' } : contact,
-  ));
+    .map((contact) => (contact.isPrimary ? { ...contact, hasPortalAccess: true, accessLevel: contact.accessLevel ?? 'Admin' } : contact))
+    .map((contact, index) => withMockRights(contact, index, initialStructures, initialSubscriptions)));
   const [selectedContact, setSelectedContact] = useState<Contact | null>(null);
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [sortConfig, setSortConfig] = useState<{ key: string; direction: 'asc' | 'desc' } | null>(null);
@@ -126,17 +185,14 @@ export function ContactsTab({ investor }: ContactsTabProps) {
   const [search, setSearch] = useState('');
   const [filters, setFilters] = useState<Record<string, string | string[]>>({});
 
-  const structures = useMemo(
-    () => investor.structures.map((structure) => ({ id: structure.id, name: structure.name, type: structure.type })),
-    [investor.structures],
-  );
+  const [structures] = useState(initialStructures);
+  const [subscriptions] = useState(initialSubscriptions);
+  const scopes = useMemo(() => buildAccessScopes(mockFunds, structures, subscriptions), [structures, subscriptions]);
+  const structureName = (id: string) => structures.find((structure) => structure.id === id)?.name ?? id;
+  const scopeName = (right: AccessRight) => scopes.find((scope) => scope.scopeType === right.scopeType && scope.id === right.scopeId)?.name ?? right.scopeId;
 
   const handleEditContact = (contact: Contact) => {
-    // Le contact principal est rattaché à toutes les structures.
-    setSelectedContact({
-      ...contact,
-      linkedStructures: contact.isPrimary ? structures.map((s) => s.id) : contact.linkedStructures || [],
-    });
+    setSelectedContact(contact);
     setIsDialogOpen(true);
   };
 
@@ -154,11 +210,8 @@ export function ContactsTab({ investor }: ContactsTabProps) {
       isPreferredContact: false,
       notificationsAllEnabled: true,
       notificationCategories: [],
-      linkedStructures: [],
-      fundsAccessRestricted: false,
-      authorizedFunds: [],
-      subscriptionsAccessRestricted: false,
-      authorizedSubscriptions: [],
+      structureRoles: [],
+      accessRights: [],
       documentTypesAccessRestricted: false,
       authorizedDocumentTypes: [],
     });
@@ -187,39 +240,53 @@ export function ContactsTab({ investor }: ContactsTabProps) {
   const filterConfigs: FilterConfig[] = [
     {
       id: 'role',
-      label: t(`${K}.filters.role`),
+      label: t(`${K}.columns.roles`),
+      type: 'multiselect',
+      isPrimary: true,
+      options: CONTACT_ROLES.map((role) => ({ value: role, label: t(`${K}.contactRoles.${role}`) })),
+    },
+    {
+      id: 'signatory',
+      label: t(`${K}.columns.signatory`),
       type: 'select',
       isPrimary: true,
       options: [
-        { value: 'primary', label: t(`${K}.primaryBadge`) },
-        { value: 'signatory', label: t(`${K}.filters.signatory`) },
+        { value: 'yes', label: t(`${K}.filters.signatoryYes`) },
+        { value: 'no', label: t(`${K}.filters.signatoryNo`) },
       ],
     },
     {
-      id: 'portal',
-      label: t(`${K}.columns.portal`),
-      type: 'select',
+      id: 'access',
+      label: t(`${K}.columns.access`),
+      type: 'multiselect',
       isPrimary: true,
       options: [
-        { value: 'with', label: t(`${K}.portalAccessBadge`) },
-        { value: 'without', label: t(`${K}.noAccess`) },
+        ...ACCESS_ROLES.map((role) => ({ value: role, label: t(`${K}.accessRoles.${role}`) })),
+        { value: 'none', label: t(`${K}.noAccess`) },
       ],
     },
   ];
 
   const rows: Row[] = useMemo(() => {
     const term = search.trim().toLowerCase();
+    const roleFilter = (filters.role as string[] | undefined) ?? [];
+    const accessFilter = (filters.access as string[] | undefined) ?? [];
     const filtered = contacts.filter((contact) => {
       if (term && ![fullName(contact), contact.email, contact.phone, contact.function].some((v) => v?.toLowerCase().includes(term))) return false;
-      if (filters.role === 'primary' && !contact.isPrimary) return false;
-      if (filters.role === 'signatory' && !contact.isSignatory) return false;
-      if (filters.portal === 'with' && !contact.hasPortalAccess) return false;
-      if (filters.portal === 'without' && contact.hasPortalAccess) return false;
+      if (roleFilter.length > 0 && !contact.structureRoles?.some((entry) => entry.roles.some((role) => roleFilter.includes(role)))) return false;
+      if (filters.signatory === 'yes' && !contact.isSignatory) return false;
+      if (filters.signatory === 'no' && contact.isSignatory) return false;
+      if (accessFilter.length > 0) {
+        const contactRoles = contact.hasPortalAccess ? (contact.accessRights ?? []).map((right) => right.role as string) : [];
+        const matches = accessFilter.some((value) => (value === 'none' ? contactRoles.length === 0 : contactRoles.includes(value)));
+        if (!matches) return false;
+      }
       return true;
     });
     const list: Row[] = filtered.map((contact, index) => ({ ...contact, id: index + 1, contactId: contact.id }));
     if (!sortConfig) return list;
-    const valueOf = (row: Row) => (sortConfig.key as SortKey) === 'name' ? fullName(row) : row[sortConfig.key as 'email' | 'phone'] ?? '';
+    const valueOf = (row: Row) =>
+      (sortConfig.key as SortKey) === 'name' ? fullName(row) : (sortConfig.key as SortKey) === 'language' ? row.language ?? '' : row[sortConfig.key as 'email' | 'phone'] ?? '';
     return [...list].sort((a, b) => {
       const result = valueOf(a).localeCompare(valueOf(b), lang);
       return sortConfig.direction === 'asc' ? result : -result;
@@ -227,6 +294,8 @@ export function ContactsTab({ investor }: ContactsTabProps) {
   }, [contacts, sortConfig, lang, search, filters]);
 
   const toContact = (row: Row): Contact => contacts.find((contact) => contact.id === row.contactId) ?? contacts[0];
+
+  const roleTags = (roles: ContactRole[]) => roles.map((role) => <Tag key={role} label={t(`${K}.contactRoles.${role}`)} />);
 
   const columns: ColumnConfig<Row>[] = [
     {
@@ -238,46 +307,119 @@ export function ContactsTab({ investor }: ContactsTabProps) {
           name={fullName(row)}
           searchTerm={term}
           secondary={row.function}
-          adornment={row.language ? <LanguageFlag language={row.language} size="sm" showTooltip /> : undefined}
+          adornment={row.isPrimary ? <Star className="w-3.5 h-3.5 text-amber-500 fill-amber-400" aria-label={t(`${K}.primaryBadge`)} /> : undefined}
         />
       ),
     },
     { key: 'email', label: t(`${K}.columns.email`), sortable: true, render: (row) => <span className="text-sm text-gray-700">{row.email}</span> },
-    { key: 'phone', label: t(`${K}.columns.phone`), sortable: true, render: (row) => <span className="text-sm text-gray-700 tabular-nums">{row.phone}</span> },
+    { key: 'phone', label: t(`${K}.columns.phone`), sortable: true, render: (row) => <span className="text-sm text-gray-700 tabular-nums whitespace-nowrap">{row.phone}</span> },
     {
-      key: 'roles',
-      label: t(`${K}.columns.roles`),
+      key: 'language',
+      label: t(`${K}.columns.language`),
+      sortable: true,
       render: (row) =>
-        row.isPrimary || row.isSignatory ? (
-          <span className="inline-flex flex-wrap items-center gap-1.5">
-            {row.isPrimary && <Tag icon={Star} label={t(`${K}.primaryBadge`)} />}
-            {row.isSignatory && (
-              <Tag
-                icon={PenTool}
-                label={
-                  row.isPrimarySignatory
-                    ? t('investors.detail.signatories.primarySignatory')
-                    : t(`${K}.signatoryBadge`, { level: t(`investors.detail.signatureLevel.${row.signatureLevel}`) })
-                }
-              />
-            )}
+        row.language ? (
+          <span className="inline-flex items-center gap-2 text-sm text-gray-700 whitespace-nowrap">
+            <LanguageFlag language={row.language} size="sm" />
+            {row.language}
           </span>
         ) : (
           <span className="text-gray-400 text-sm">—</span>
         ),
     },
     {
-      key: 'portal',
-      label: t(`${K}.columns.portal`),
-      render: (row) =>
-        row.hasPortalAccess ? (
-          <StatusBadge
-            variant="success"
-            label={row.accessLevel ? t(`${K}.portalAccessLevel`, { level: row.accessLevel }) : t(`${K}.portalAccessBadge`)}
-          />
-        ) : (
-          <StatusBadge variant="neutral" label={t(`${K}.noAccess`)} />
-        ),
+      key: 'roles',
+      label: t(`${K}.columns.roles`),
+      render: (row) => {
+        const entries = row.structureRoles ?? [];
+        return (
+          <ListingStackCell
+            icon={Briefcase}
+            items={entries.flatMap((entry) =>
+              entry.roles.map((role) => `${t(`${K}.contactRoles.${role}`)} · ${structureName(entry.structureId)}`),
+            )}
+            title={t(`${K}.rolesCard.title`, { name: fullName(row) })}
+            subtitle={t(`${K}.rolesCard.subtitle`)}
+          >
+            <div className="space-y-2">
+              {entries.map((entry) => (
+                <ListingStackRow key={entry.structureId} icon={Building2} label={structureName(entry.structureId)}>
+                  {roleTags(entry.roles)}
+                </ListingStackRow>
+              ))}
+            </div>
+          </ListingStackCell>
+        );
+      },
+    },
+    {
+      key: 'signatory',
+      label: t(`${K}.columns.signatory`),
+      render: (row) => {
+        if (!row.isSignatory) return <span className="text-gray-400 text-sm">—</span>;
+        const global = row.signatoryGlobal !== false;
+        const level = t(`investors.detail.signatureLevel.${row.signatureLevel ?? 'Individual'}`);
+        return (
+          <ListingStackCell
+            icon={PenTool}
+            items={global ? [t(`${K}.signatoryAllStructures`)] : (row.signatoryStructureIds ?? []).map(structureName)}
+            title={t(`${K}.signatoryCard.title`, { name: fullName(row) })}
+            subtitle={
+              row.isPrimarySignatory
+                ? `${t('investors.detail.signatories.primarySignatory')} · ${level}`
+                : t(`${K}.signatoryCard.subtitle`, { level })
+            }
+          >
+            <div className="space-y-2">
+              {global ? (
+                <ListingStackRow icon={Globe} label={t(`${K}.signatoryAllStructures`)}>
+                  <Tag label={level} />
+                </ListingStackRow>
+              ) : (
+                (row.signatoryStructureIds ?? []).map((id) => (
+                  <ListingStackRow key={id} icon={Building2} label={structureName(id)}>
+                    <Tag label={level} />
+                  </ListingStackRow>
+                ))
+              )}
+            </div>
+          </ListingStackCell>
+        );
+      },
+    },
+    {
+      key: 'access',
+      label: t(`${K}.columns.access`),
+      render: (row) => {
+        const rights = row.hasPortalAccess ? row.accessRights ?? [] : [];
+        if (rights.length === 0) return <StatusBadge variant="neutral" label={t(`${K}.noAccess`)} />;
+        return (
+          <ListingStackCell
+            icon={KeyRound}
+            items={rights.map((right) => `${scopeName(right)} · ${t(`${K}.accessRoles.${right.role}`)}`)}
+            title={t(`${K}.accessCard.title`, { name: fullName(row) })}
+            subtitle={t(`${K}.accessCard.subtitle`)}
+            cardClassName="w-[420px]"
+          >
+            <div className="space-y-4">
+              {ACCESS_SCOPE_TYPES.map((type) => {
+                const ofType = rights.filter((right) => right.scopeType === type);
+                if (ofType.length === 0) return null;
+                return (
+                  <div key={type} className="space-y-2">
+                    <p className="text-xs font-semibold uppercase tracking-wide text-gray-500">{t(`${K}.scopeTypes.${type}`)}</p>
+                    {ofType.map((right) => (
+                      <ListingStackRow key={right.scopeId} icon={ACCESS_SCOPE_ICON[type]} label={scopeName(right)}>
+                        <Tag label={t(`${K}.accessRoles.${right.role}`)} />
+                      </ListingStackRow>
+                    ))}
+                  </div>
+                );
+              })}
+            </div>
+          </ListingStackCell>
+        );
+      },
     },
     {
       key: 'actions',
@@ -373,7 +515,7 @@ export function ContactsTab({ investor }: ContactsTabProps) {
         onSave={handleSaveContact}
         structures={structures}
         funds={mockFunds}
-        subscriptions={mockSubscriptions}
+        subscriptions={subscriptions}
       />
     </>
   );

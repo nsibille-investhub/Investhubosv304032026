@@ -1839,12 +1839,8 @@
         "preferredContact": "Préférence investisseur",
         "portalAccessSection": "Accès portail",
         "enablePortalAccess": "Activer l'accès portail",
-        "accessLevel": "Niveau d'accès",
-        "selectAccessLevel": "Sélectionner un niveau",
         "password": "Mot de passe",
         "reset": "Réinitialiser",
-        "linkedStructures": "Structures rattachées",
-        "primaryAttachAll": "Le contact principal est automatiquement rattaché à toutes les structures",
         "notifications": "Notifications",
         "notificationsHint": "Choisissez les communications que ce contact doit recevoir",
         "notificationsAllLabel": "Toutes les communications",
@@ -1871,27 +1867,15 @@
             "description": "Newsletters, événements et annonces"
           }
         },
-        "authorizedFunds": "Fonds autorisés",
-        "authorizedSubscriptions": "Souscriptions autorisées",
         "primaryHint": "Point de contact principal pour cet investisseur",
         "preferredHint": "Destinataire préféré pour les communications nominatives",
         "portalAccessHint": "Autorise l'accès au portail investisseur et configure ce que ce contact peut voir.",
         "enablePortalAccessHint": "Autoriser ce contact à se connecter au portail investisseur",
         "accessSection": "Gestion des accès",
-        "accessSectionHint": "Par défaut, ce contact a accès à tout. Activez chaque restriction pour limiter le périmètre.",
         "accessRecapTitleAll": "Accès complet",
         "accessRecapTitleRestricted": "Accès restreint",
-        "accessRecapAll": "Ce contact a accès à tous les fonds, souscriptions et types de documents.",
-        "accessRecapFundsAll": "tous les fonds",
-        "accessRecapSubsAll": "toutes les souscriptions",
         "accessRecapDocsAll": "tous les types de documents",
-        "accessRecapFundsRestricted": "{{count}}/{{total}} fonds",
-        "accessRecapSubsRestricted": "{{count}}/{{total}} souscriptions",
         "accessRecapDocsRestricted": "{{count}}/{{total}} types de documents",
-        "restrictFundsLabel": "Restreindre les fonds autorisés",
-        "restrictFundsHint": "Désactivé : le contact a accès à tous les fonds",
-        "restrictSubscriptionsLabel": "Restreindre les souscriptions autorisées",
-        "restrictSubscriptionsHint": "Désactivé : le contact a accès à toutes les souscriptions",
         "restrictDocumentTypesLabel": "Restreindre les types de documents autorisés",
         "restrictDocumentTypesHint": "Désactivé : le contact a accès à tous les types de documents",
         "cancel": "Annuler",
@@ -1912,15 +1896,62 @@
           "email": "Email",
           "phone": "Téléphone",
           "roles": "Rôles",
-          "portal": "Accès portail"
+          "language": "Langue",
+          "signatory": "Signataire",
+          "access": "Accès"
         },
-        "portalAccessLevel": "Accès portail · {{level}}",
         "entity": "contact",
         "filters": {
-          "role": "Rôle",
-          "signatory": "Signataire"
+          "signatoryYes": "Signataire",
+          "signatoryNo": "Non signataire"
         },
-        "primaryPortalAccess": "Le contact principal a toujours accès au portail."
+        "primaryPortalAccess": "Le contact principal a toujours accès au portail.",
+        "multiSearchPlaceholder": "Rechercher...",
+        "rolesSection": "Rôles",
+        "rolesSectionHint": "Rôles du contact pour chaque structure de l'investisseur. Un contact peut en cumuler plusieurs.",
+        "noStructure": "Aucune structure rattachée à cet investisseur.",
+        "contactRoles": {
+          "ubo": "Bénéficiaire effectif (UBO)",
+          "legalRepresentative": "Représentant légal",
+          "director": "Dirigeant",
+          "accountant": "Comptable",
+          "proxy": "Mandataire",
+          "shareholder": "Associé"
+        },
+        "signatoryGlobal": "Signataire pour toutes les structures",
+        "signatoryGlobalHint": "Désactivé : choisissez les structures pour lesquelles ce contact peut signer.",
+        "signatoryStructures": "Structures concernées",
+        "signatoryAllStructures": "Toutes les structures",
+        "accessMatrixHint": "Rôle du contact sur chaque fonds, structure et souscription. « Aucun accès » masque l'objet sur le portail.",
+        "accessRecap": {
+          "fund": "{{count}}/{{total}} fonds",
+          "structure": "{{count}}/{{total}} structures",
+          "subscription": "{{count}}/{{total}} souscriptions"
+        },
+        "accessRoles": {
+          "none": "Aucun accès",
+          "readOnly": "Lecture seule",
+          "full": "Accès complet",
+          "admin": "Administrateur"
+        },
+        "scopeTypes": {
+          "fund": "Fonds",
+          "structure": "Structures",
+          "subscription": "Souscriptions"
+        },
+        "accessRoleFor": "Rôle d'accès pour {{name}}",
+        "rolesCard": {
+          "title": "Rôles de {{name}}",
+          "subtitle": "Rôles par structure"
+        },
+        "signatoryCard": {
+          "title": "Signature de {{name}}",
+          "subtitle": "Type de signature : {{level}}"
+        },
+        "accessCard": {
+          "title": "Accès de {{name}}",
+          "subtitle": "Matrice des droits : objet × rôle"
+        }
       }
     }
   },
@@ -2035,7 +2066,8 @@
       "idCopied": "ID copié",
       "copyError": "Erreur de copie",
       "rowActions": "Actions",
-      "moreActions": "Plus d'actions"
+      "moreActions": "Plus d'actions",
+      "more": "+{{count}} autres"
     }
   },
   "ged": {
