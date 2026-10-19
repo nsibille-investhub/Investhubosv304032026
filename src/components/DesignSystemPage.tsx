@@ -2085,6 +2085,8 @@ const types: TimelineTypeMap<'created' | 'updated'> = {
           <ul className="text-sm text-[#4F6166] dark:text-[#9DB2AE] space-y-2 list-disc pl-5">
             <li>Une section par sujet ; jamais de titre de section maison ni de carte à interrupteur maison.</li>
             <li>Récapitulatif d’état : encadrés vert (emerald) ou ambre (amber) du panneau document.</li>
+            <li>Périmètre d’une dimension (fonds, structures, rôles, souscriptions) : <code className="text-xs">SidePanelScopeField</code>, tous / sélection / aucun, multisélection si « sélection ». Sert aux droits d’accès et aux liens KYC-AML d’un contact (mode « aucun » désactivable).</li>
+            <li>Listes composables (droits, liens) : une SidePanelCard par élément, titre « Droit n » + RowActionButton de suppression, bouton outline « Ajouter » pleine largeur sous la liste.</li>
             <li>Ouverture depuis un listing : clic sur la ligne ou action « Modifier » de la ligne (TableRowActions) ; bouton « Ajouter » de la barre du listing pour la création.</li>
           </ul>
         </div>

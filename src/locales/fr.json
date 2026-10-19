@@ -1837,12 +1837,9 @@
         "preferencesSection": "Préférences",
         "primaryContact": "Contact principal",
         "preferredContact": "Préférence investisseur",
-        "portalAccessSection": "Accès portail",
         "enablePortalAccess": "Activer l'accès portail",
         "password": "Mot de passe",
         "reset": "Réinitialiser",
-        "notifications": "Notifications",
-        "notificationsHint": "Choisissez les communications que ce contact doit recevoir",
         "notificationsAllLabel": "Toutes les communications",
         "notificationsAllHint": "Abonner ce contact à toutes les catégories de notifications",
         "notificationCategory": {
@@ -1869,13 +1866,9 @@
         },
         "primaryHint": "Point de contact principal pour cet investisseur",
         "preferredHint": "Destinataire préféré pour les communications nominatives",
-        "portalAccessHint": "Autorise l'accès au portail investisseur et configure ce que ce contact peut voir.",
         "enablePortalAccessHint": "Autoriser ce contact à se connecter au portail investisseur",
-        "accessSection": "Gestion des accès",
         "accessRecapTitleAll": "Accès complet",
         "accessRecapTitleRestricted": "Accès restreint",
-        "accessRecapDocsAll": "tous les types de documents",
-        "accessRecapDocsRestricted": "{{count}}/{{total}} types de documents",
         "restrictDocumentTypesLabel": "Restreindre les types de documents autorisés",
         "restrictDocumentTypesHint": "Désactivé : le contact a accès à tous les types de documents",
         "cancel": "Annuler",
@@ -1895,10 +1888,10 @@
           "name": "Nom",
           "email": "Email",
           "phone": "Téléphone",
-          "roles": "Rôles",
           "language": "Langue",
           "signatory": "Signataire",
-          "access": "Accès"
+          "access": "Accès",
+          "kyc": "KYC-AML"
         },
         "entity": "contact",
         "filters": {
@@ -1907,50 +1900,94 @@
         },
         "primaryPortalAccess": "Le contact principal a toujours accès au portail.",
         "multiSearchPlaceholder": "Rechercher...",
-        "rolesSection": "Rôles",
-        "rolesSectionHint": "Rôles du contact pour chaque structure de l'investisseur. Un contact peut en cumuler plusieurs.",
-        "noStructure": "Aucune structure rattachée à cet investisseur.",
-        "contactRoles": {
-          "ubo": "Bénéficiaire effectif (UBO)",
-          "legalRepresentative": "Représentant légal",
-          "director": "Dirigeant",
-          "accountant": "Comptable",
-          "proxy": "Mandataire",
-          "shareholder": "Associé"
-        },
         "signatoryGlobal": "Signataire pour toutes les structures",
         "signatoryGlobalHint": "Désactivé : choisissez les structures pour lesquelles ce contact peut signer.",
         "signatoryStructures": "Structures concernées",
         "signatoryAllStructures": "Toutes les structures",
-        "accessMatrixHint": "Rôle du contact sur chaque fonds, structure et souscription. « Aucun accès » masque l'objet sur le portail.",
-        "accessRecap": {
-          "fund": "{{count}}/{{total}} fonds",
-          "structure": "{{count}}/{{total}} structures",
-          "subscription": "{{count}}/{{total}} souscriptions"
-        },
-        "accessRoles": {
-          "none": "Aucun accès",
-          "readOnly": "Lecture seule",
-          "full": "Accès complet",
-          "admin": "Administrateur"
-        },
-        "scopeTypes": {
-          "fund": "Fonds",
-          "structure": "Structures",
-          "subscription": "Souscriptions"
-        },
-        "accessRoleFor": "Rôle d'accès pour {{name}}",
-        "rolesCard": {
-          "title": "Rôles de {{name}}",
-          "subtitle": "Rôles par structure"
-        },
         "signatoryCard": {
           "title": "Signature de {{name}}",
           "subtitle": "Type de signature : {{level}}"
         },
         "accessCard": {
           "title": "Accès de {{name}}",
-          "subtitle": "Matrice des droits : objet × rôle"
+          "subtitle": "Droits : fonds × structures × rôles × souscriptions"
+        },
+        "kyc": {
+          "section": "Surveillance KYC-AML",
+          "sectionHint": "Rattachez le contact au dossier KYC-AML de l'investisseur pour le surveiller (screening, contrôles).",
+          "monitor": "Surveiller ce contact",
+          "monitorHint": "Rattache le contact au dossier KYC-AML par un ou plusieurs liens.",
+          "linkTitle": "Lien {{index}}",
+          "relation": "Lien",
+          "removeLink": "Retirer le lien",
+          "lastLink": "Un contact surveillé a au moins un lien.",
+          "addLink": "Ajouter un lien",
+          "unmonitored": "Non surveillé"
+        },
+        "kycRelations": {
+          "ubo": "Bénéficiaire effectif (UBO)",
+          "legalRepresentative": "Représentant légal",
+          "director": "Dirigeant",
+          "controllingShareholder": "Actionnaire de contrôle",
+          "controllingPerson": "Personne exerçant le contrôle",
+          "trustee": "Trustee / fiduciaire",
+          "settlor": "Constituant (settlor)",
+          "trustBeneficiary": "Bénéficiaire de trust"
+        },
+        "kycCard": {
+          "title": "Surveillance KYC-AML de {{name}}",
+          "subtitle": "Liens rattachés au dossier"
+        },
+        "access": {
+          "section": "Accès",
+          "sectionHint": "Accès au portail et aux communications. Au moins un des deux canaux est nécessaire pour définir des droits.",
+          "portal": "Portail",
+          "communications": "Communications",
+          "communicationsHint": "Le contact reçoit les communications de l'investisseur (appels de fonds, reporting...).",
+          "noChannel": "Activez le portail ou les communications pour définir des droits.",
+          "recapAll": "Au moins un droit couvre tous les fonds, structures, rôles et souscriptions.",
+          "recapRestricted": "Périmètre limité aux droits définis ci-dessous.",
+          "rightTitle": "Droit {{index}}",
+          "removeRight": "Retirer le droit",
+          "addRight": "Ajouter un droit",
+          "noRight": "Aucun droit défini."
+        },
+        "accessRoles": {
+          "investor": "Investisseur",
+          "accountant": "Comptable",
+          "proxy": "Mandataire",
+          "advisor": "Conseiller",
+          "legalRepresentative": "Représentant légal",
+          "assistant": "Assistant(e)"
+        },
+        "dimensions": {
+          "funds": "Fonds",
+          "structures": "Structures",
+          "roles": "Rôles",
+          "subscriptions": "Souscriptions"
+        },
+        "scope": {
+          "selection": "Sélection",
+          "funds": {
+            "all": "Tous les fonds",
+            "none": "Aucun fonds"
+          },
+          "structures": {
+            "all": "Toutes les structures",
+            "none": "Aucune structure"
+          },
+          "roles": {
+            "all": "Tous les rôles",
+            "none": "Aucun rôle"
+          },
+          "subscriptions": {
+            "all": "Toutes les souscriptions",
+            "none": "Aucune souscription"
+          },
+          "kycStructures": {
+            "all": "Toutes les structures",
+            "none": "Aucune structure"
+          }
         }
       }
     }

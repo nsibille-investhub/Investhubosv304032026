@@ -1,6 +1,8 @@
 import type { CSSProperties, ReactNode } from 'react';
 import type { LucideIcon } from 'lucide-react';
 import { Label } from './label';
+import { ModernMultiSelect } from './modern-multiselect';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from './select';
 import { Switch } from './switch';
 import { cn } from './utils';
 
@@ -83,6 +85,75 @@ export function SidePanelSwitchRow({ id, label, description, checked, onCheckedC
         <Switch id={id} checked={checked} onCheckedChange={onCheckedChange} disabled={disabled} />
       </div>
       {description && <p className="text-xs text-slate-500">{description}</p>}
+    </div>
+  );
+}
+
+export type ScopeMode = 'all' | 'some' | 'none';
+
+/** Périmètre d'une dimension : tous, une sélection ou aucun. */
+export interface ScopeValue {
+  mode: ScopeMode;
+  ids: string[];
+}
+
+interface SidePanelScopeFieldProps {
+  id: string;
+  label: string;
+  value: ScopeValue;
+  onChange: (value: ScopeValue) => void;
+  options: { value: string; label: string; icon?: LucideIcon }[];
+  /** Libellés des modes : « Tous les fonds », « Sélection », « Aucun fonds ». */
+  modeLabels: Record<ScopeMode, string>;
+  /** Le mode « aucun » n'a pas de sens pour toutes les dimensions (lien KYC : au moins une structure). */
+  allowNone?: boolean;
+  placeholder: string;
+  searchPlaceholder: string;
+}
+
+/**
+ * Champ de périmètre d'un panneau latéral : choix tous / sélection / aucun,
+ * puis multisélection quand « sélection » est retenu.
+ */
+export function SidePanelScopeField({
+  id,
+  label,
+  value,
+  onChange,
+  options,
+  modeLabels,
+  allowNone = true,
+  placeholder,
+  searchPlaceholder,
+}: SidePanelScopeFieldProps) {
+  const modes: ScopeMode[] = allowNone ? ['all', 'some', 'none'] : ['all', 'some'];
+  return (
+    <div className="space-y-2">
+      <Label htmlFor={id}>{label}</Label>
+      <Select value={value.mode} onValueChange={(mode) => onChange({ mode: mode as ScopeMode, ids: mode === 'some' ? value.ids : [] })}>
+        <SelectTrigger id={id} className="h-11">
+          <SelectValue />
+        </SelectTrigger>
+        <SelectContent>
+          {modes.map((mode) => (
+            <SelectItem key={mode} value={mode}>
+              {modeLabels[mode]}
+            </SelectItem>
+          ))}
+        </SelectContent>
+      </Select>
+      {value.mode === 'some' && (
+        <ModernMultiSelect
+          options={options}
+          value={value.ids}
+          onChange={(ids) => onChange({ mode: 'some', ids })}
+          placeholder={placeholder}
+          searchPlaceholder={searchPlaceholder}
+          maxDisplay={3}
+          showIconInBadge
+          badgeStyle={SIDE_PANEL_BADGE_STYLE}
+        />
+      )}
     </div>
   );
 }

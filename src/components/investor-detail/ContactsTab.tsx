@@ -1,5 +1,5 @@
 import { useMemo, useState } from 'react';
-import { Briefcase, Building2, ExternalLink, Globe, KeyRound, Pencil, PenTool, Plus, Star, Users } from 'lucide-react';
+import { Bell, Building2, ExternalLink, Globe, KeyRound, Monitor, Pencil, PenTool, Plus, ShieldCheck, Star, Users } from 'lucide-react';
 import { toast } from 'sonner';
 import type { Investor } from '../../utils/investorGenerator';
 import { useTranslation } from '../../utils/languageContext';
@@ -13,20 +13,24 @@ import { Button } from '../ui/button';
 import { ListingCard, ListingNameCell, ListingStackCell, ListingStackRow } from '../ui/listing';
 import { TableRowActions } from '../ui/row-actions';
 import {
+  ACCESS_DIMENSION_ICON,
+  ACCESS_DIMENSIONS,
   ACCESS_ROLES,
-  ACCESS_SCOPE_ICON,
-  ACCESS_SCOPE_TYPES,
-  CONTACT_ROLES,
+  ALL,
   ContactEditSheet,
-  buildAccessScopes,
+  KYC_RELATIONS,
+  NONE,
+  hasAnyChannel,
+  some,
+  type AccessDimension,
   type AccessRight,
-  type AccessRole,
   type ContactDraft,
-  type ContactRole,
+  type KycLink,
   type NamedOption,
   type SignatureLevel,
   type StructureOption,
 } from './ContactEditSheet';
+import type { ScopeValue } from '../ui/side-panel';
 
 type Contact = ContactDraft;
 type Row = Contact & { id: number; contactId: string };
@@ -45,11 +49,9 @@ const mockFunds: NamedOption[] = [
   { id: 'fund-3', name: 'Fonds I' },
 ];
 
-const LEGACY_ACCESS_ROLE: Record<string, AccessRole> = { Admin: 'admin', 'Full Access': 'full', 'Read Only': 'readOnly' };
-
 /**
- * Données de démo : rôles par structure, périmètre de signature et matrice d'accès,
- * dérivés de façon stable de la position du contact.
+ * Données de démo, dérivées de façon stable de la position du contact :
+ * liens KYC-AML surveillés, périmètre de signature, canaux et droits d'accès.
  */
 function withMockRights(
   contact: Contact,
@@ -58,32 +60,46 @@ function withMockRights(
   subscriptions: NamedOption[],
 ): Contact {
   const structureAt = (offset: number) => structures[(index + offset) % structures.length];
-  const structureRoles =
-    contact.structureRoles ??
-    (structures.length === 0
+  const hasStructures = structures.length > 0;
+
+  const kycMonitored = contact.kycMonitored ?? (contact.isPrimary || index % 2 === 0);
+  const kycLinks: KycLink[] =
+    contact.kycLinks ??
+    (!kycMonitored
       ? []
-      : contact.isPrimary
-        ? structures.map((structure, i) => ({
-            structureId: structure.id,
-            roles: (i === 0 ? ['ubo', 'legalRepresentative'] : ['ubo']) as ContactRole[],
-          }))
-        : [{ structureId: structureAt(0).id, roles: [CONTACT_ROLES[(index + 2) % CONTACT_ROLES.length]] }]);
+      : contact.isPrimary || !hasStructures
+        ? [
+            { id: `kyc-${index}-1`, relation: 'ubo', structures: ALL },
+            ...(hasStructures ? [{ id: `kyc-${index}-2`, relation: 'legalRepresentative' as const, structures: some([structures[0].id]) }] : []),
+          ]
+        : [{ id: `kyc-${index}-1`, relation: KYC_RELATIONS[(index + 2) % KYC_RELATIONS.length], structures: some([structureAt(0).id]) }]);
 
   const signatoryGlobal = contact.signatoryGlobal ?? (contact.isPrimarySignatory || structures.length < 2);
   const signatoryStructureIds =
-    contact.signatoryStructureIds ?? (signatoryGlobal || structures.length === 0 ? [] : [structureAt(1).id]);
+    contact.signatoryStructureIds ?? (signatoryGlobal || !hasStructures ? [] : [structureAt(1).id]);
 
-  const role = LEGACY_ACCESS_ROLE[contact.accessLevel ?? ''] ?? 'readOnly';
-  const scopes = buildAccessScopes(mockFunds, structures, subscriptions);
+  const communicationsEnabled = contact.communicationsEnabled ?? (contact.isPrimary || index % 3 !== 2);
+  const withChannel = hasAnyChannel({ ...contact, communicationsEnabled });
   const accessRights: AccessRight[] =
     contact.accessRights ??
-    (!(contact.isPrimary || contact.hasPortalAccess)
+    (!withChannel
       ? []
-      : scopes
-          .filter((scope, i) => contact.isPrimary || (i + index) % 2 === 0)
-          .map((scope) => ({ scopeType: scope.scopeType, scopeId: scope.id, role })));
+      : contact.isPrimary
+        ? [{ id: `right-${index}-1`, funds: ALL, structures: ALL, roles: ALL, subscriptions: ALL }]
+        : [
+            {
+              id: `right-${index}-1`,
+              funds: some([mockFunds[index % mockFunds.length].id]),
+              structures: hasStructures ? some([structureAt(0).id]) : NONE,
+              roles: some([ACCESS_ROLES[(index + 1) % ACCESS_ROLES.length]]),
+              subscriptions: ALL,
+            },
+            ...(index % 2 === 1
+              ? [{ id: `right-${index}-2`, funds: ALL, structures: NONE, roles: some(['accountant']), subscriptions: subscriptions.length > 0 ? some([subscriptions[0].id]) : NONE }]
+              : []),
+          ]);
 
-  return { ...contact, structureRoles, signatoryGlobal, signatoryStructureIds, accessRights };
+  return { ...contact, kycMonitored, kycLinks, signatoryGlobal, signatoryStructureIds, communicationsEnabled, accessRights };
 }
 
 const fullName = (contact: Contact) => `${contact.firstName} ${contact.lastName}`.trim();
@@ -187,9 +203,18 @@ export function ContactsTab({ investor }: ContactsTabProps) {
 
   const [structures] = useState(initialStructures);
   const [subscriptions] = useState(initialSubscriptions);
-  const scopes = useMemo(() => buildAccessScopes(mockFunds, structures, subscriptions), [structures, subscriptions]);
   const structureName = (id: string) => structures.find((structure) => structure.id === id)?.name ?? id;
-  const scopeName = (right: AccessRight) => scopes.find((scope) => scope.scopeType === right.scopeType && scope.id === right.scopeId)?.name ?? right.scopeId;
+  const optionName: Record<AccessDimension, (id: string) => string> = {
+    funds: (id) => mockFunds.find((fund) => fund.id === id)?.name ?? id,
+    structures: structureName,
+    roles: (id) => t(`${K}.accessRoles.${id}`),
+    subscriptions: (id) => subscriptions.find((sub) => sub.id === id)?.name ?? id,
+  };
+  /** « Tous les fonds », « Aucun fonds » ou la liste des éléments retenus. */
+  const scopeLabels = (dimension: AccessDimension | 'kycStructures', value: ScopeValue): string[] =>
+    value.mode === 'some'
+      ? value.ids.map(optionName[dimension === 'kycStructures' ? 'structures' : dimension])
+      : [t(`${K}.scope.${dimension}.${value.mode}`)];
 
   const handleEditContact = (contact: Contact) => {
     setSelectedContact(contact);
@@ -210,7 +235,9 @@ export function ContactsTab({ investor }: ContactsTabProps) {
       isPreferredContact: false,
       notificationsAllEnabled: true,
       notificationCategories: [],
-      structureRoles: [],
+      kycMonitored: false,
+      kycLinks: [],
+      communicationsEnabled: true,
       accessRights: [],
       documentTypesAccessRestricted: false,
       authorizedDocumentTypes: [],
@@ -239,11 +266,14 @@ export function ContactsTab({ investor }: ContactsTabProps) {
 
   const filterConfigs: FilterConfig[] = [
     {
-      id: 'role',
-      label: t(`${K}.columns.roles`),
+      id: 'kyc',
+      label: t(`${K}.columns.kyc`),
       type: 'multiselect',
       isPrimary: true,
-      options: CONTACT_ROLES.map((role) => ({ value: role, label: t(`${K}.contactRoles.${role}`) })),
+      options: [
+        ...KYC_RELATIONS.map((relation) => ({ value: relation, label: t(`${K}.kycRelations.${relation}`) })),
+        { value: 'unmonitored', label: t(`${K}.kyc.unmonitored`) },
+      ],
     },
     {
       id: 'signatory',
@@ -261,7 +291,8 @@ export function ContactsTab({ investor }: ContactsTabProps) {
       type: 'multiselect',
       isPrimary: true,
       options: [
-        ...ACCESS_ROLES.map((role) => ({ value: role, label: t(`${K}.accessRoles.${role}`) })),
+        { value: 'portal', label: t(`${K}.access.portal`) },
+        { value: 'communications', label: t(`${K}.access.communications`) },
         { value: 'none', label: t(`${K}.noAccess`) },
       ],
     },
@@ -269,17 +300,22 @@ export function ContactsTab({ investor }: ContactsTabProps) {
 
   const rows: Row[] = useMemo(() => {
     const term = search.trim().toLowerCase();
-    const roleFilter = (filters.role as string[] | undefined) ?? [];
+    const kycFilter = (filters.kyc as string[] | undefined) ?? [];
     const accessFilter = (filters.access as string[] | undefined) ?? [];
     const filtered = contacts.filter((contact) => {
       if (term && ![fullName(contact), contact.email, contact.phone, contact.function].some((v) => v?.toLowerCase().includes(term))) return false;
-      if (roleFilter.length > 0 && !contact.structureRoles?.some((entry) => entry.roles.some((role) => roleFilter.includes(role)))) return false;
+      if (kycFilter.length > 0) {
+        const relations = contact.kycMonitored ? (contact.kycLinks ?? []).map((link) => link.relation as string) : [];
+        if (!kycFilter.some((value) => (value === 'unmonitored' ? !contact.kycMonitored : relations.includes(value)))) return false;
+      }
       if (filters.signatory === 'yes' && !contact.isSignatory) return false;
       if (filters.signatory === 'no' && contact.isSignatory) return false;
       if (accessFilter.length > 0) {
-        const contactRoles = contact.hasPortalAccess ? (contact.accessRights ?? []).map((right) => right.role as string) : [];
-        const matches = accessFilter.some((value) => (value === 'none' ? contactRoles.length === 0 : contactRoles.includes(value)));
-        if (!matches) return false;
+        const channels = [
+          ...(contact.isPrimary || contact.hasPortalAccess ? ['portal'] : []),
+          ...(contact.communicationsEnabled ? ['communications'] : []),
+        ];
+        if (!accessFilter.some((value) => (value === 'none' ? channels.length === 0 : channels.includes(value)))) return false;
       }
       return true;
     });
@@ -295,7 +331,6 @@ export function ContactsTab({ investor }: ContactsTabProps) {
 
   const toContact = (row: Row): Contact => contacts.find((contact) => contact.id === row.contactId) ?? contacts[0];
 
-  const roleTags = (roles: ContactRole[]) => roles.map((role) => <Tag key={role} label={t(`${K}.contactRoles.${role}`)} />);
 
   const columns: ColumnConfig<Row>[] = [
     {
@@ -328,23 +363,26 @@ export function ContactsTab({ investor }: ContactsTabProps) {
         ),
     },
     {
-      key: 'roles',
-      label: t(`${K}.columns.roles`),
+      key: 'kyc',
+      label: t(`${K}.columns.kyc`),
       render: (row) => {
-        const entries = row.structureRoles ?? [];
+        if (!row.kycMonitored) return <StatusBadge variant="neutral" label={t(`${K}.kyc.unmonitored`)} />;
+        const links = row.kycLinks ?? [];
         return (
           <ListingStackCell
-            icon={Briefcase}
-            items={entries.flatMap((entry) =>
-              entry.roles.map((role) => `${t(`${K}.contactRoles.${role}`)} · ${structureName(entry.structureId)}`),
+            icon={ShieldCheck}
+            items={links.map(
+              (link) => `${t(`${K}.kycRelations.${link.relation}`)} · ${scopeLabels('kycStructures', link.structures).join(', ')}`,
             )}
-            title={t(`${K}.rolesCard.title`, { name: fullName(row) })}
-            subtitle={t(`${K}.rolesCard.subtitle`)}
+            title={t(`${K}.kycCard.title`, { name: fullName(row) })}
+            subtitle={t(`${K}.kycCard.subtitle`)}
           >
             <div className="space-y-2">
-              {entries.map((entry) => (
-                <ListingStackRow key={entry.structureId} icon={Building2} label={structureName(entry.structureId)}>
-                  {roleTags(entry.roles)}
+              {links.map((link) => (
+                <ListingStackRow key={link.id} icon={ShieldCheck} label={t(`${K}.kycRelations.${link.relation}`)}>
+                  {scopeLabels('kycStructures', link.structures).map((label) => (
+                    <Tag key={label} icon={Building2} label={label} />
+                  ))}
                 </ListingStackRow>
               ))}
             </div>
@@ -391,31 +429,46 @@ export function ContactsTab({ investor }: ContactsTabProps) {
       key: 'access',
       label: t(`${K}.columns.access`),
       render: (row) => {
-        const rights = row.hasPortalAccess ? row.accessRights ?? [] : [];
-        if (rights.length === 0) return <StatusBadge variant="neutral" label={t(`${K}.noAccess`)} />;
+        const portal = row.isPrimary || row.hasPortalAccess;
+        if (!hasAnyChannel(row)) return <StatusBadge variant="neutral" label={t(`${K}.noAccess`)} />;
+        const rights = row.accessRights ?? [];
+        const rightSummary = (right: AccessRight) =>
+          `${scopeLabels('roles', right.roles).join(', ')} · ${scopeLabels('funds', right.funds).join(', ')}`;
+        const channels = [
+          ...(portal ? [t(`${K}.access.portal`)] : []),
+          ...(row.communicationsEnabled ? [t(`${K}.access.communications`)] : []),
+        ];
         return (
           <ListingStackCell
             icon={KeyRound}
-            items={rights.map((right) => `${scopeName(right)} · ${t(`${K}.accessRoles.${right.role}`)}`)}
+            items={rights.length > 0 ? rights.map(rightSummary) : [channels.join(' · ')]}
             title={t(`${K}.accessCard.title`, { name: fullName(row) })}
             subtitle={t(`${K}.accessCard.subtitle`)}
-            cardClassName="w-[420px]"
+            cardClassName="w-[440px]"
           >
             <div className="space-y-4">
-              {ACCESS_SCOPE_TYPES.map((type) => {
-                const ofType = rights.filter((right) => right.scopeType === type);
-                if (ofType.length === 0) return null;
-                return (
-                  <div key={type} className="space-y-2">
-                    <p className="text-xs font-semibold uppercase tracking-wide text-gray-500">{t(`${K}.scopeTypes.${type}`)}</p>
-                    {ofType.map((right) => (
-                      <ListingStackRow key={right.scopeId} icon={ACCESS_SCOPE_ICON[type]} label={scopeName(right)}>
-                        <Tag label={t(`${K}.accessRoles.${right.role}`)} />
+              <div className="flex flex-wrap gap-1.5">
+                {portal && <Tag icon={Monitor} label={t(`${K}.access.portal`)} />}
+                {row.communicationsEnabled && <Tag icon={Bell} label={t(`${K}.access.communications`)} />}
+              </div>
+              {rights.length === 0 ? (
+                <p className="text-sm text-gray-500">{t(`${K}.access.noRight`)}</p>
+              ) : (
+                rights.map((right, index) => (
+                  <div key={right.id} className="space-y-2">
+                    <p className="text-xs font-semibold uppercase tracking-wide text-gray-500">
+                      {t(`${K}.access.rightTitle`, { index: index + 1 })}
+                    </p>
+                    {ACCESS_DIMENSIONS.map((dimension) => (
+                      <ListingStackRow key={dimension} icon={ACCESS_DIMENSION_ICON[dimension]} label={t(`${K}.dimensions.${dimension}`)}>
+                        {scopeLabels(dimension, right[dimension]).map((label) => (
+                          <Tag key={label} label={label} />
+                        ))}
                       </ListingStackRow>
                     ))}
                   </div>
-                );
-              })}
+                ))
+              )}
             </div>
           </ListingStackCell>
         );
