@@ -1779,15 +1779,6 @@
         "validationGeneric": "Erreur de validation"
       },
       "contactsTab": {
-        "portalTitle": "Investisseur Principal - Accès Portail",
-        "accessStatus": "Statut d'accès",
-        "active": "Actif",
-        "inactive": "Inactif",
-        "lastLogin": "Dernière connexion",
-        "portalV2": "Portail V2",
-        "v2Enabled": "Activé",
-        "v2Disabled": "Désactivé",
-        "resetPassword": "Réinitialiser mot de passe",
         "resetPasswordSent": "Email de réinitialisation envoyé",
         "contactsTitle": "Contacts ({{count}})",
         "addContact": "Ajouter un contact",
@@ -1875,7 +1866,8 @@
         "cancel": "Annuler",
         "save": "Sauvegarder",
         "contactAdded": "Contact ajouté avec succès",
-        "contactUpdated": "Contact mis à jour avec succès"
+        "contactUpdated": "Contact mis à jour avec succès",
+        "principalUser": "Utilisateur principal"
       }
     }
   },

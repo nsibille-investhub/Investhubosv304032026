@@ -76,7 +76,7 @@ import {
   TooltipContent,
   TooltipTrigger,
 } from "./ui/tooltip";
-import { ContactsTab } from './investor-detail/ContactsTab';
+import { ContactsTab, hasPrincipalUserContact } from './investor-detail/ContactsTab';
 import { useTranslation } from '../utils/languageContext';
 
 const INVESTOR_STATUS_VARIANT: Record<string, StatusVariant> = {
@@ -449,7 +449,7 @@ export function InvestorDetailPage({ investor: initialInvestor, onBack, initialT
             overflow="scroll"
             items={[
               { value: 'profil', icon: User, label: t('investors.detail.tabs.profile') },
-              { value: 'contacts', icon: Users, label: t('investors.detail.tabs.contacts'), badge: investor.contacts.length },
+              { value: 'contacts', icon: Users, label: t('investors.detail.tabs.contacts'), badge: investor.contacts.length + (hasPrincipalUserContact(investor) ? 0 : 1) },
               { value: 'signataires', icon: PenTool, label: t('investors.detail.tabs.signatories'), badge: investor.signatories.length },
               { value: 'structures', icon: Building2, label: t('investors.detail.tabs.structures'), badge: investor.structures.length },
               { value: 'notes', icon: FileText, label: t('investors.detail.tabs.notes'), badge: investor.notes.length },

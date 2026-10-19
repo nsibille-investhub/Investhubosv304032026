@@ -1779,15 +1779,6 @@
         "validationGeneric": "Validation error"
       },
       "contactsTab": {
-        "portalTitle": "Primary investor — Portal access",
-        "accessStatus": "Access status",
-        "active": "Active",
-        "inactive": "Inactive",
-        "lastLogin": "Last login",
-        "portalV2": "Portal V2",
-        "v2Enabled": "Enabled",
-        "v2Disabled": "Disabled",
-        "resetPassword": "Reset password",
         "resetPasswordSent": "Reset email sent",
         "contactsTitle": "Contacts ({{count}})",
         "addContact": "Add a contact",
@@ -1875,7 +1866,8 @@
         "cancel": "Cancel",
         "save": "Save",
         "contactAdded": "Contact added successfully",
-        "contactUpdated": "Contact updated successfully"
+        "contactUpdated": "Contact updated successfully",
+        "principalUser": "Main user"
       }
     }
   },

@@ -46,9 +46,26 @@ const mockSubscriptions = [
   { id: 'sub-1', name: '12071 - IH1 - Nicolas SIRIEIX' },
 ];
 
+/** L'utilisateur principal figure déjà parmi les contacts quand l'un d'eux porte son email. */
+export const hasPrincipalUserContact = (investor: { email: string; contacts?: { email: string }[] }) =>
+  (investor.contacts ?? []).some(contact => contact.email === investor.email);
+
 export function ContactsTab({ investor }: ContactsTabProps) {
-  const { t, lang } = useTranslation();
-  const [contacts, setContacts] = useState<Contact[]>(investor.contacts || []);
+  const { t } = useTranslation();
+  const [contacts, setContacts] = useState<Contact[]>(() => [
+    ...(hasPrincipalUserContact(investor) ? [] : [{
+      id: `principal-${investor.id}`,
+      firstName: investor.firstName ?? investor.name,
+      lastName: investor.lastName ?? '',
+      function: t('investors.detail.contactsTab.principalUser'),
+      email: investor.email,
+      phone: investor.phone,
+      isPrimary: false,
+      hasPortalAccess: investor.portalActive,
+      language: investor.language,
+    }]),
+    ...(investor.contacts || []),
+  ]);
   const [selectedContact, setSelectedContact] = useState<Contact | null>(null);
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [copiedField, setCopiedField] = useState<string | null>(null);
@@ -134,75 +151,6 @@ export function ContactsTab({ investor }: ContactsTabProps) {
 
   return (
     <div className="space-y-6">
-      {/* Espace investisseur principal - Accès portail */}
-      <div className="bg-white rounded-xl border border-gray-200 p-6">
-        <div className="flex items-center justify-between mb-4">
-          <h2 className="font-semibold text-gray-900 flex items-center gap-2">
-            <Key className="w-5 h-5 text-purple-600" />
-            {t('investors.detail.contactsTab.portalTitle')}
-          </h2>
-        </div>
-
-        <div className="grid grid-cols-3 gap-6">
-          <div>
-            <label className="text-xs text-gray-500 mb-2 block">{t('investors.detail.contactsTab.accessStatus')}</label>
-            <Badge
-              variant="outline"
-              className={`border w-full justify-center ${
-                investor.portalActive
-                  ? 'bg-emerald-50 text-emerald-700 border-emerald-200'
-                  : 'bg-gray-50 text-gray-500 border-gray-300'
-              }`}
-            >
-              {investor.portalActive ? t('investors.detail.contactsTab.active') : t('investors.detail.contactsTab.inactive')}
-            </Badge>
-          </div>
-
-          {investor.lastLogin && (
-            <div>
-              <label className="text-xs text-gray-500 mb-1 block">{t('investors.detail.contactsTab.lastLogin')}</label>
-              <div className="flex items-center gap-2 text-sm">
-                <span className="text-gray-900">
-                  {new Date(investor.lastLogin).toLocaleDateString(lang === 'en' ? 'en-US' : 'fr-FR', {
-                    day: '2-digit',
-                    month: 'short',
-                    year: 'numeric'
-                  })}
-                </span>
-              </div>
-            </div>
-          )}
-
-          <div>
-            <label className="text-xs text-gray-500 mb-2 block">{t('investors.detail.contactsTab.portalV2')}</label>
-            <Badge
-              variant="outline"
-              className={`border w-full justify-center ${
-                investor.portalV2Enabled
-                  ? 'bg-blue-50 text-blue-700 border-blue-200'
-                  : 'bg-gray-50 text-gray-500 border-gray-300'
-              }`}
-            >
-              {investor.portalV2Enabled ? t('investors.detail.contactsTab.v2Enabled') : t('investors.detail.contactsTab.v2Disabled')}
-            </Badge>
-          </div>
-        </div>
-
-        {investor.portalActive && (
-          <div className="mt-4">
-            <Button
-              size="sm"
-              variant="outline"
-              className="gap-2"
-              onClick={() => toast.success(t('investors.detail.contactsTab.resetPasswordSent'))}
-            >
-              <Key className="w-4 h-4" />
-              {t('investors.detail.contactsTab.resetPassword')}
-            </Button>
-          </div>
-        )}
-      </div>
-
       {/* Liste des contacts */}
       <div className="bg-white rounded-xl border border-gray-200">
         <div className="p-6 border-b border-gray-200">
@@ -238,7 +186,12 @@ export function ContactsTab({ investor }: ContactsTabProps) {
                   <div className="flex items-center gap-3 mb-2">
                     <div className="w-10 h-10 rounded-full bg-gradient-to-br from-blue-500 to-cyan-500 flex items-center justify-center">
                       <span className="text-white text-sm font-semibold">
-                        {contact.firstName[0]}{contact.lastName[0]}
+                        {`${contact.firstName} ${contact.lastName}`
+                          .split(' ')
+                          .filter(Boolean)
+                          .map(part => part[0])
+                          .join('')
+                          .substring(0, 2)}
                       </span>
                     </div>
                     <div>
