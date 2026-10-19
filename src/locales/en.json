@@ -1900,7 +1900,14 @@
       "activeFilters": "Active filters:",
       "selectedOne": "{{count}} selected",
       "selectedMany": "{{count}} selected",
-      "searchPlaceholder": "Search..."
+      "searchPlaceholder": "Search...",
+      "dateRange": "{{from}} to {{to}}",
+      "dateFrom": "From {{from}}",
+      "dateTo": "Until {{to}}",
+      "clear": "Clear",
+      "searchOptions": "Search",
+      "noOption": "No results",
+      "clearSelection": "Clear selection"
     },
     "sectionCard": {
       "notProvided": "Not provided",
@@ -5622,19 +5629,17 @@
         "new": "New call"
       },
       "searchPlaceholder": "Search a call or a fund",
-      "sendingBadge": "Sending",
       "queues": {
         "label": "Work queues",
         "all": "All calls",
-        "sending": "Sending"
+        "sending": "Sending",
+        "fundsMetric": "Funds",
+        "perFund": "{{count}} per fund"
       },
       "filters": {
         "funds": "Funds",
-        "fundsSearch": "Search a fund",
         "duePeriod": "Due date period",
-        "clear": "Clear",
         "origin": "Origin",
-        "allOrigins": "All origins",
         "reset": "Reset filters"
       },
       "columns": {
@@ -5642,6 +5647,7 @@
         "name": "Name",
         "dueDate": "Due date",
         "calledAmount": "Called amount",
+        "state": "Status",
         "noticeDate": "Notice date",
         "origin": "Origin",
         "compensation": "Offset",
@@ -5679,6 +5685,9 @@
           "limitedScope": "Scope limited to two funds",
           "noRight": "Without the View calls right"
         }
+      },
+      "states": {
+        "sending": "Sending"
       }
     }
   },

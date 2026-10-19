@@ -1,21 +1,18 @@
 import { useEffect, useMemo, useState } from 'react';
 import { toast } from 'sonner@2.0.3';
-import { Columns3, FilterX, FlaskConical, Loader2, Plus, ShieldX, Wallet } from 'lucide-react';
+import { Columns3, FlaskConical, List, Loader2, Plus, ShieldX, Wallet } from 'lucide-react';
 
 import { useTranslation } from '../../utils/languageContext';
 import type { Fund } from '../../utils/fundGenerator';
-import {
-  CAPITAL_CALL_ORIGINS,
-  CapitalCall,
-  CapitalCallOrigin,
-  generateCapitalCalls,
-} from '../../utils/capitalCallGenerator';
+import { CAPITAL_CALL_ORIGINS, CapitalCall, generateCapitalCalls } from '../../utils/capitalCallGenerator';
 import { ColumnConfig, DataTable } from '../DataTable';
 import { EmptyState } from '../EmptyState';
+import { FilterBar, FilterConfig } from '../FilterBar';
+import { ClickableText } from '../ClickableText';
+import { HighlightText } from '../HighlightText';
+import { StatusBadge } from '../StatusBadge';
+import { FilterCard } from '../ui/filter-card';
 import { PageHeader } from '../ui/page-header';
-import { SearchInput } from '../ui/search-input';
-import { ModernMultiSelect } from '../ui/modern-multiselect';
-import { DateRangePicker } from '../ui/date-range-picker';
 import { DataPagination } from '../ui/data-pagination';
 import { Button } from '../ui/button';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../ui/select';
@@ -29,7 +26,6 @@ import {
   DropdownMenuTrigger,
 } from '../ui/dropdown-menu';
 import { toneSurface } from '../ui/tone';
-import { cn } from '../ui/utils';
 
 const K = 'funds.capitalCalls';
 
@@ -38,6 +34,7 @@ type ColumnKey =
   | 'name'
   | 'dueDate'
   | 'calledAmount'
+  | 'state'
   | 'noticeDate'
   | 'origin'
   | 'compensation'
@@ -49,21 +46,22 @@ const COLUMN_KEYS: ColumnKey[] = [
   'name',
   'dueDate',
   'calledAmount',
+  'state',
   'noticeDate',
   'origin',
   'compensation',
   'createdAt',
   'createdBy',
 ];
-const DEFAULT_COLUMNS: ColumnKey[] = ['fund', 'name', 'dueDate', 'calledAmount'];
-const COLUMNS_STORAGE_KEY = 'investhub-columns-capital-calls';
+const DEFAULT_COLUMNS: ColumnKey[] = ['fund', 'name', 'dueDate', 'calledAmount', 'state'];
+const COLUMNS_STORAGE_KEY = 'investhub-columns-capital-calls-v2';
 
 type Queue = 'all' | 'sending';
 type Scenario = 'default' | 'limitedScope' | 'noRight';
 const SCENARIOS: Scenario[] = ['default', 'limitedScope', 'noRight'];
-const ALL_ORIGINS = 'all';
 
 type SortConfig = { key: string; direction: 'asc' | 'desc' };
+type ActiveFilters = Record<string, string | string[]>;
 
 function readStoredColumns(): ColumnKey[] {
   try {
@@ -75,6 +73,16 @@ function readStoredColumns(): ColumnKey[] {
   } catch {
     return DEFAULT_COLUMNS;
   }
+}
+
+function fundFilter(fundIds: number[] | undefined): ActiveFilters {
+  return fundIds && fundIds.length > 0 ? { fund: fundIds.map(String) } : {};
+}
+
+function parseIsoDay(iso: string | undefined, endOfDay = false) {
+  if (!iso) return undefined;
+  const [year, month, day] = iso.split('-').map(Number);
+  return endOfDay ? new Date(year, month - 1, day, 23, 59, 59, 999) : new Date(year, month - 1, day);
 }
 
 function defaultCompare(a: CapitalCall, b: CapitalCall) {
@@ -114,10 +122,7 @@ export function CapitalCallsPage({ funds, initialFundIds, onOpenFund }: CapitalC
   const [scenario, setScenario] = useState<Scenario>('default');
   const [queue, setQueue] = useState<Queue>('all');
   const [search, setSearch] = useState('');
-  const [fundIds, setFundIds] = useState<string[]>(() => (initialFundIds ?? []).map(String));
-  const [dueFrom, setDueFrom] = useState<Date | undefined>();
-  const [dueTo, setDueTo] = useState<Date | undefined>();
-  const [origin, setOrigin] = useState<CapitalCallOrigin | typeof ALL_ORIGINS>(ALL_ORIGINS);
+  const [activeFilters, setActiveFilters] = useState<ActiveFilters>(() => fundFilter(initialFundIds));
   const [sortConfig, setSortConfig] = useState<SortConfig | null>(null);
   const [page, setPage] = useState(1);
   const [pageSize, setPageSize] = useState(20);
@@ -126,7 +131,7 @@ export function CapitalCallsPage({ funds, initialFundIds, onOpenFund }: CapitalC
 
   const initialFundKey = (initialFundIds ?? []).join(',');
   useEffect(() => {
-    setFundIds(initialFundKey ? initialFundKey.split(',') : []);
+    setActiveFilters(fundFilter(initialFundKey ? initialFundKey.split(',').map(Number) : []));
     setPage(1);
   }, [initialFundKey]);
 
@@ -147,32 +152,42 @@ export function CapitalCallsPage({ funds, initialFundIds, onOpenFund }: CapitalC
 
   const scopedCalls = useMemo(() => allCalls.filter(call => scopeFundIds.has(call.fundId)), [allCalls, scopeFundIds]);
 
-  const fundOptions = useMemo(() => {
+  const filterConfigs: FilterConfig[] = useMemo(() => {
     const seen = new Map<number, string>();
     scopedCalls.forEach(call => seen.set(call.fundId, call.fundName));
-    return Array.from(seen, ([id, name]) => ({ value: String(id), label: name })).sort((a, b) =>
+    const fundOptions = Array.from(seen, ([id, name]) => ({ value: String(id), label: name })).sort((a, b) =>
       a.label.localeCompare(b.label, lang),
     );
-  }, [scopedCalls, lang]);
-
-  const sendingCount = scopedCalls.filter(call => call.sending).length;
-
-  const hasFilters = fundIds.length > 0 || !!dueFrom || !!dueTo || origin !== ALL_ORIGINS;
-  const hasSearch = search.trim().length > 0;
+    return [
+      { id: 'fund', label: t(`${K}.filters.funds`), type: 'multiselect', isPrimary: true, options: fundOptions },
+      { id: 'duePeriod', label: t(`${K}.filters.duePeriod`), type: 'dateRange', isPrimary: true },
+      {
+        id: 'origin',
+        label: t(`${K}.filters.origin`),
+        type: 'select',
+        isPrimary: true,
+        options: CAPITAL_CALL_ORIGINS.map(item => ({ value: item, label: t(`${K}.origins.${item}`) })),
+      },
+    ];
+  }, [scopedCalls, lang, t]);
 
   const filteredCalls = useMemo(() => {
     const term = search.trim().toLowerCase();
-    const to = dueTo ? new Date(dueTo.getFullYear(), dueTo.getMonth(), dueTo.getDate(), 23, 59, 59, 999) : undefined;
+    const fundIds = Array.isArray(activeFilters.fund) ? activeFilters.fund : [];
+    const [fromIso, toIso] = Array.isArray(activeFilters.duePeriod) ? activeFilters.duePeriod : [];
+    const from = parseIsoDay(fromIso);
+    const to = parseIsoDay(toIso, true);
+    const origin = typeof activeFilters.origin === 'string' ? activeFilters.origin : undefined;
     return scopedCalls.filter(call => {
       if (queue === 'sending' && !call.sending) return false;
       if (term && !call.name.toLowerCase().includes(term) && !call.fundName.toLowerCase().includes(term)) return false;
       if (fundIds.length > 0 && !fundIds.includes(String(call.fundId))) return false;
-      if (dueFrom && call.dueDate < dueFrom) return false;
+      if (from && call.dueDate < from) return false;
       if (to && call.dueDate > to) return false;
-      if (origin !== ALL_ORIGINS && call.origin !== origin) return false;
+      if (origin && call.origin !== origin) return false;
       return true;
     });
-  }, [scopedCalls, queue, search, fundIds, dueFrom, dueTo, origin]);
+  }, [scopedCalls, queue, search, activeFilters]);
 
   const sortedCalls = useMemo(() => {
     if (!sortConfig) return [...filteredCalls].sort(defaultCompare);
@@ -199,16 +214,23 @@ export function CapitalCallsPage({ funds, initialFundIds, onOpenFund }: CapitalC
     );
   const empty = <span className="text-muted-foreground">-</span>;
 
-  const resetPage = () => setPage(1);
+  const hasFiltering = Object.keys(activeFilters).length > 0 || search.trim().length > 0 || queue !== 'all';
 
   const resetFilters = () => {
     setSearch('');
-    setFundIds([]);
-    setDueFrom(undefined);
-    setDueTo(undefined);
-    setOrigin(ALL_ORIGINS);
+    setActiveFilters({});
     setQueue('all');
-    resetPage();
+    setPage(1);
+  };
+
+  const handleFilterChange = (filterId: string, value: string | string[] | null) => {
+    setActiveFilters(prev => {
+      const next = { ...prev };
+      if (value === null || value === '' || (Array.isArray(value) && value.length === 0)) delete next[filterId];
+      else next[filterId] = value;
+      return next;
+    });
+    setPage(1);
   };
 
   const toggleColumn = (key: ColumnKey) => {
@@ -223,16 +245,18 @@ export function CapitalCallsPage({ funds, initialFundIds, onOpenFund }: CapitalC
       key: 'fund',
       label: t(`${K}.columns.fund`),
       sortable: true,
-      render: call => (
+      render: (call, term) => (
         <button
           type="button"
           onClick={event => {
             event.stopPropagation();
             onOpenFund(call.fundId);
           }}
-          className="text-left text-sm font-medium text-primary underline-offset-4 hover:underline"
+          className="text-left text-sm font-medium"
         >
-          {call.fundName}
+          <ClickableText>
+            <HighlightText text={call.fundName} searchTerm={term} />
+          </ClickableText>
         </button>
       ),
     },
@@ -240,19 +264,8 @@ export function CapitalCallsPage({ funds, initialFundIds, onOpenFund }: CapitalC
       key: 'name',
       label: t(`${K}.columns.name`),
       sortable: true,
-      render: call => (
-        <span className="inline-flex flex-wrap items-center gap-2">
-          <span className="text-sm font-medium text-foreground">{call.name}</span>
-          {call.sending && (
-            <span
-              className="inline-flex items-center gap-1 rounded-md border px-1.5 py-0.5 text-xs font-medium"
-              style={toneSurface('info')}
-            >
-              <Loader2 className="h-3 w-3 animate-spin" aria-hidden />
-              {t(`${K}.sendingBadge`)}
-            </span>
-          )}
-        </span>
+      render: (call, term) => (
+        <HighlightText text={call.name} searchTerm={term} className="text-sm font-medium text-foreground" />
       ),
     },
     dueDate: {
@@ -267,6 +280,12 @@ export function CapitalCallsPage({ funds, initialFundIds, onOpenFund }: CapitalC
       sortable: true,
       align: 'right',
       render: call => <span className="text-sm">{money(call)}</span>,
+    },
+    state: {
+      key: 'state',
+      label: t(`${K}.columns.state`),
+      render: call =>
+        call.sending ? <StatusBadge label={t(`${K}.states.sending`)} variant="info" icon={Loader2} /> : empty,
     },
     noticeDate: {
       key: 'noticeDate',
@@ -306,10 +325,58 @@ export function CapitalCallsPage({ funds, initialFundIds, onOpenFund }: CapitalC
 
   const columns = visibleColumns.map(key => columnDefinitions[key]);
 
-  const queues: { id: Queue; count: number }[] = [
-    { id: 'all', count: scopedCalls.length },
-    { id: 'sending', count: sendingCount },
-  ];
+  const queueCard = (id: Queue, icon: typeof List, calls: CapitalCall[]) => {
+    const fundCount = new Set(calls.map(call => call.fundId)).size;
+    const perFund = fundCount > 0 ? calls.length / fundCount : 0;
+    return (
+      <FilterCard
+        status={id}
+        activeStatus={queue}
+        onStatusChange={status => {
+          setQueue(status as Queue);
+          setPage(1);
+        }}
+        label={t(`${K}.queues.${id}`)}
+        icon={icon}
+        total={calls.length}
+        metricLabel={t(`${K}.queues.fundsMetric`)}
+        metricValue={String(fundCount)}
+        averageValue={t(`${K}.queues.perFund`, {
+          count: new Intl.NumberFormat(lang, { maximumFractionDigits: 1 }).format(perFund),
+        })}
+      />
+    );
+  };
+
+  const columnsMenu = (
+    <DropdownMenu>
+      <DropdownMenuTrigger asChild>
+        <Button variant="outline" size="sm" className="gap-1.5">
+          <Columns3 className="h-4 w-4" />
+          {t(`${K}.columnsMenu.label`)}
+        </Button>
+      </DropdownMenuTrigger>
+      <DropdownMenuContent align="end" className="w-56">
+        <DropdownMenuLabel>{t(`${K}.columnsMenu.title`)}</DropdownMenuLabel>
+        <DropdownMenuSeparator />
+        {COLUMN_KEYS.map(key => (
+          <DropdownMenuCheckboxItem
+            key={key}
+            checked={visibleColumns.includes(key)}
+            disabled={visibleColumns.length === 1 && visibleColumns.includes(key)}
+            onSelect={event => event.preventDefault()}
+            onCheckedChange={() => toggleColumn(key)}
+          >
+            {t(`${K}.columns.${key}`)}
+          </DropdownMenuCheckboxItem>
+        ))}
+        <DropdownMenuSeparator />
+        <DropdownMenuItem onClick={() => setVisibleColumns(DEFAULT_COLUMNS)}>
+          {t(`${K}.columnsMenu.reset`)}
+        </DropdownMenuItem>
+      </DropdownMenuContent>
+    </DropdownMenu>
+  );
 
   const scenarioBar = (
     <div
@@ -372,146 +439,45 @@ export function CapitalCallsPage({ funds, initialFundIds, onOpenFund }: CapitalC
       />
 
       <div className="flex flex-1 flex-col gap-4 px-6 py-6">
-        <div role="tablist" aria-label={t(`${K}.queues.label`)} className="flex flex-wrap items-center gap-2">
-          {queues.map(item => {
-            const active = queue === item.id;
-            return (
-              <button
-                key={item.id}
-                type="button"
-                role="tab"
-                aria-selected={active}
-                onClick={() => {
-                  setQueue(item.id);
-                  resetPage();
-                }}
-                className={cn(
-                  'inline-flex items-center gap-2 rounded-lg border px-3 py-1.5 text-sm font-medium transition-colors',
-                  active
-                    ? 'border-primary/40 bg-card text-foreground shadow-sm'
-                    : 'border-border bg-card/60 text-muted-foreground hover:text-foreground',
-                )}
-              >
-                {item.id === 'sending' && <Loader2 className="h-3.5 w-3.5" aria-hidden />}
-                {t(`${K}.queues.${item.id}`)}
-                <span
-                  className="rounded-md border px-1.5 text-xs tabular-nums"
-                  style={toneSurface(active ? 'info' : 'neutral')}
-                >
-                  {item.count}
-                </span>
-              </button>
-            );
-          })}
+        <div className="rounded-lg bg-primary/5 pb-2">
+          <div className="mb-3 flex items-center gap-2">
+            <div className="h-6 w-1 rounded-full bg-primary" />
+            <h3 className="font-semibold text-foreground">{t(`${K}.queues.label`)}</h3>
+          </div>
+          <div className="grid grid-cols-6 items-center gap-1.5">
+            {queueCard('all', List, scopedCalls)}
+            {queueCard(
+              'sending',
+              Loader2,
+              scopedCalls.filter(call => call.sending),
+            )}
+          </div>
         </div>
 
         <div className="flex flex-col rounded-2xl border border-border bg-card shadow-sm">
-          <div className="flex items-start gap-3 border-b border-border p-4">
-            <div className="flex flex-1 flex-wrap items-center gap-3">
-              <SearchInput
-                value={search}
-                onValueChange={value => {
-                  setSearch(value);
-                  resetPage();
-                }}
-                placeholder={t(`${K}.searchPlaceholder`)}
-                aria-label={t(`${K}.searchPlaceholder`)}
-                className="w-72"
-              />
-              <ModernMultiSelect
-                options={fundOptions}
-                value={fundIds}
-                onChange={value => {
-                  setFundIds(value);
-                  resetPage();
-                }}
-                placeholder={t(`${K}.filters.funds`)}
-                searchPlaceholder={t(`${K}.filters.fundsSearch`)}
-                maxDisplay={1}
-                className="w-56"
-              />
-              <DateRangePicker
-                from={dueFrom}
-                to={dueTo}
-                onRangeChange={(from, to) => {
-                  setDueFrom(from);
-                  setDueTo(to);
-                  resetPage();
-                }}
-                placeholder={t(`${K}.filters.duePeriod`)}
-                clearLabel={t(`${K}.filters.clear`)}
-                className="w-56"
-              />
-              <Select
-                value={origin}
-                onValueChange={value => {
-                  setOrigin(value as CapitalCallOrigin | typeof ALL_ORIGINS);
-                  resetPage();
-                }}
-              >
-                <SelectTrigger className="w-44 border-border bg-card" aria-label={t(`${K}.filters.origin`)}>
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value={ALL_ORIGINS}>{t(`${K}.filters.allOrigins`)}</SelectItem>
-                  {CAPITAL_CALL_ORIGINS.map(item => (
-                    <SelectItem key={item} value={item}>
-                      {t(`${K}.origins.${item}`)}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-              {(hasFilters || hasSearch) && (
-                <Button variant="ghost" size="sm" onClick={resetFilters} className="gap-1.5">
-                  <FilterX className="h-4 w-4" />
-                  {t(`${K}.filters.reset`)}
-                </Button>
-              )}
-            </div>
-            <div className="shrink-0">
-              <DropdownMenu>
-                <DropdownMenuTrigger asChild>
-                  <Button variant="outline" size="sm" className="gap-1.5">
-                    <Columns3 className="h-4 w-4" />
-                    {t(`${K}.columnsMenu.label`)}
-                  </Button>
-                </DropdownMenuTrigger>
-                <DropdownMenuContent align="end" className="w-56">
-                  <DropdownMenuLabel>{t(`${K}.columnsMenu.title`)}</DropdownMenuLabel>
-                  <DropdownMenuSeparator />
-                  {COLUMN_KEYS.map(key => (
-                    <DropdownMenuCheckboxItem
-                      key={key}
-                      checked={visibleColumns.includes(key)}
-                      disabled={visibleColumns.length === 1 && visibleColumns.includes(key)}
-                      onSelect={event => event.preventDefault()}
-                      onCheckedChange={() => toggleColumn(key)}
-                    >
-                      {t(`${K}.columns.${key}`)}
-                    </DropdownMenuCheckboxItem>
-                  ))}
-                  <DropdownMenuSeparator />
-                  <DropdownMenuItem onClick={() => setVisibleColumns(DEFAULT_COLUMNS)}>
-                    {t(`${K}.columnsMenu.reset`)}
-                  </DropdownMenuItem>
-                </DropdownMenuContent>
-              </DropdownMenu>
-            </div>
+          <div className="relative z-10 border-b border-border p-4">
+            <FilterBar
+              searchValue={search}
+              onSearchChange={value => {
+                setSearch(value);
+                setPage(1);
+              }}
+              searchPlaceholder={t(`${K}.searchPlaceholder`)}
+              filters={filterConfigs}
+              activeFilters={activeFilters}
+              onFilterChange={handleFilterChange}
+              onClearAll={resetFilters}
+              actions={columnsMenu}
+            />
           </div>
 
           {sortedCalls.length === 0 ? (
             <EmptyState
               icon={Wallet}
-              title={
-                hasFilters || hasSearch || queue !== 'all' ? t(`${K}.empty.filteredTitle`) : t(`${K}.empty.title`)
-              }
-              description={
-                hasFilters || hasSearch || queue !== 'all'
-                  ? t(`${K}.empty.filteredDescription`)
-                  : t(`${K}.empty.description`)
-              }
+              title={hasFiltering ? t(`${K}.empty.filteredTitle`) : t(`${K}.empty.title`)}
+              description={hasFiltering ? t(`${K}.empty.filteredDescription`) : t(`${K}.empty.description`)}
               action={
-                hasFilters || hasSearch || queue !== 'all' ? (
+                hasFiltering ? (
                   <Button variant="outline" size="sm" onClick={resetFilters}>
                     {t(`${K}.filters.reset`)}
                   </Button>
@@ -544,7 +510,7 @@ export function CapitalCallsPage({ funds, initialFundIds, onOpenFund }: CapitalC
                 onPageChange={next => setPage(Math.min(Math.max(1, next), totalPages))}
                 onPageSizeChange={size => {
                   setPageSize(size);
-                  resetPage();
+                  setPage(1);
                 }}
                 pageSizeOptions={[10, 20, 50, 100]}
               />

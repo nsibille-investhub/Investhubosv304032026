@@ -1900,7 +1900,14 @@
       "activeFilters": "Filtres actifs :",
       "selectedOne": "{{count}} sélectionné",
       "selectedMany": "{{count}} sélectionnés",
-      "searchPlaceholder": "Rechercher..."
+      "searchPlaceholder": "Rechercher...",
+      "dateRange": "Du {{from}} au {{to}}",
+      "dateFrom": "À partir du {{from}}",
+      "dateTo": "Jusqu'au {{to}}",
+      "clear": "Effacer",
+      "searchOptions": "Rechercher",
+      "noOption": "Aucun résultat",
+      "clearSelection": "Effacer la sélection"
     },
     "sectionCard": {
       "notProvided": "Non renseigné",
@@ -5622,19 +5629,17 @@
         "new": "Nouvel appel"
       },
       "searchPlaceholder": "Rechercher un appel ou un fonds",
-      "sendingBadge": "Envoi en cours",
       "queues": {
         "label": "Files de travail",
         "all": "Tous les appels",
-        "sending": "Envoi en cours"
+        "sending": "Envoi en cours",
+        "fundsMetric": "Fonds",
+        "perFund": "{{count}} par fonds"
       },
       "filters": {
         "funds": "Fonds",
-        "fundsSearch": "Rechercher un fonds",
         "duePeriod": "Période d'échéance",
-        "clear": "Effacer",
         "origin": "Origine",
-        "allOrigins": "Toutes les origines",
         "reset": "Réinitialiser les filtres"
       },
       "columns": {
@@ -5642,6 +5647,7 @@
         "name": "Nom",
         "dueDate": "Date d'échéance",
         "calledAmount": "Montant appelé",
+        "state": "État",
         "noticeDate": "Date de l'avis",
         "origin": "Origine",
         "compensation": "Compensation",
@@ -5679,6 +5685,9 @@
           "limitedScope": "Périmètre limité à deux fonds",
           "noRight": "Sans le droit Consulter les appels"
         }
+      },
+      "states": {
+        "sending": "Envoi en cours"
       }
     }
   },
