@@ -6,7 +6,6 @@ import {
   Building2,
   CheckCircle2,
   FileSignature,
-  FileType,
   Globe,
   Lock,
   PenTool,
@@ -35,7 +34,6 @@ import {
 } from '../ui/side-panel';
 import { toast } from 'sonner';
 import { useTranslation } from '../../utils/languageContext';
-import type { DocumentCategory } from '../../utils/documentMockData';
 
 const K = 'investors.detail.contactsTab';
 
@@ -108,18 +106,6 @@ const NOTIFICATION_CATEGORIES: NotificationCategory[] = [
   'marketing',
 ];
 
-const DOCUMENT_CATEGORIES: DocumentCategory[] = [
-  'capitalCall',
-  'distribution',
-  'quarterlyReport',
-  'annualReport',
-  'subscription',
-  'kyc',
-  'legal',
-  'tax',
-  'marketing',
-  'other',
-];
 
 export interface ContactDraft {
   id: string;
@@ -143,8 +129,6 @@ export interface ContactDraft {
   kycLinks?: KycLink[];
   /** Droits d'accès au portail et aux communications. */
   accessRights?: AccessRight[];
-  documentTypesAccessRestricted?: boolean;
-  authorizedDocumentTypes?: DocumentCategory[];
   isSignatory?: boolean;
   isPrimarySignatory?: boolean;
   signatureLevel?: SignatureLevel;
@@ -233,9 +217,7 @@ export function ContactEditSheet({
   const updateRight = (id: string, patch: Partial<AccessRight>) =>
     update('accessRights', rights.map((right) => (right.id === id ? { ...right, ...patch } : right)));
 
-  const fullAccess =
-    rights.some((right) => ACCESS_DIMENSIONS.every((dimension) => right[dimension].mode === 'all')) &&
-    !contact.documentTypesAccessRestricted;
+  const fullAccess = rights.some((right) => ACCESS_DIMENSIONS.every((dimension) => right[dimension].mode === 'all'));
 
   const multiSelectProps = {
     placeholder: t(`${K}.pickPlaceholder`),
@@ -591,27 +573,6 @@ export function ContactEditSheet({
                   {t(`${K}.access.addRight`)}
                 </Button>
 
-                <SidePanelCard className="space-y-2">
-                  <SidePanelSwitchRow
-                    id="documentTypesAccessRestricted"
-                    label={t(`${K}.restrictDocumentTypesLabel`)}
-                    description={t(`${K}.restrictDocumentTypesHint`)}
-                    checked={!!contact.documentTypesAccessRestricted}
-                    onCheckedChange={(value) => update('documentTypesAccessRestricted', value)}
-                  />
-                  {contact.documentTypesAccessRestricted && (
-                    <ModernMultiSelect
-                      {...multiSelectProps}
-                      options={DOCUMENT_CATEGORIES.map((category) => ({
-                        value: category,
-                        label: t(`ged.addModal.documentCategory.${category}`),
-                        icon: FileType,
-                      }))}
-                      value={contact.authorizedDocumentTypes || []}
-                      onChange={(value) => update('authorizedDocumentTypes', value as DocumentCategory[])}
-                    />
-                  )}
-                </SidePanelCard>
               </>
             )}
           </SidePanelSection>

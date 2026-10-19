@@ -239,8 +239,6 @@ export function ContactsTab({ investor }: ContactsTabProps) {
       kycLinks: [],
       communicationsEnabled: true,
       accessRights: [],
-      documentTypesAccessRestricted: false,
-      authorizedDocumentTypes: [],
     });
     setIsDialogOpen(true);
   };
