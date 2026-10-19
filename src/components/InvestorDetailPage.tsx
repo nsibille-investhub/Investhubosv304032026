@@ -404,10 +404,12 @@ export function InvestorDetailPage({ investor: initialInvestor, onBack, initialT
               {t(`investors.type.${investor.type}`)}
             </PageHeaderSubtitleItem>
 
-            {investor.country && (
+            {(investor.city || investor.country) && (
               <>
                 <PageHeaderSubtitleSeparator />
-                <PageHeaderSubtitleItem icon={MapPin}>{investor.country}</PageHeaderSubtitleItem>
+                <PageHeaderSubtitleItem icon={MapPin}>
+                  {[investor.city, investor.country].filter(Boolean).join(', ')}
+                </PageHeaderSubtitleItem>
               </>
             )}
 
