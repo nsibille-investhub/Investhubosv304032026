@@ -1,3 +1,4 @@
+import { LOCATIONS, randomStreetAddress } from './locationFixtures';
 // Générateur de données mock pour les partenaires (CGP, Distributeurs)
 
 const partnerCompanyNames = [
@@ -65,27 +66,7 @@ const fundNames = [
   'Emerging Markets Fund'
 ];
 
-const cityCountryMap: Record<string, string> = {
-  'Paris': 'France',
-  'Lyon': 'France',
-  'Marseille': 'France',
-  'Bordeaux': 'France',
-  'Toulouse': 'France',
-  'Nice': 'France',
-  'Nantes': 'France',
-  'Strasbourg': 'France',
-  'Lille': 'France',
-  'Rennes': 'France',
-  'Genève': 'Suisse',
-  'Zurich': 'Suisse',
-  'Lausanne': 'Suisse',
-  'Luxembourg': 'Luxembourg',
-  'Monaco': 'Monaco',
-  'Bruxelles': 'Belgique',
-  'Anvers': 'Belgique'
-};
-
-const cities = Object.keys(cityCountryMap);
+const partnerLocations = LOCATIONS.filter(location => location.country !== 'États-Unis');
 
 // Fonctions pour les contacts
 const contactFunctions = [
@@ -248,7 +229,8 @@ export function generatePartners(count: number = 20): Partner[] {
   ];
 
   richExamples.forEach((example, idx) => {
-    const city = cities[idx];
+    const location = partnerLocations[idx % partnerLocations.length];
+    const city = location.city;
     const funds: PartnerFund[] = [];
     
     example.fundsData.forEach((fundData, fundIdx) => {
@@ -283,13 +265,13 @@ export function generatePartners(count: number = 20): Partner[] {
       commissionRate: 2.5,
       analyst: analysts[0],
       lastActivity: new Date(),
-      country: cityCountryMap[city],
+      country: location.country,
       city,
       siret: generateSiret(),
       orias: generateOrias(),
       segments: ['HNWI', 'UHNWI', 'Professional'],
       funds,
-      address: `${Math.floor(Math.random() * 200) + 1} Avenue de la République, ${city}`,
+      address: `${randomStreetAddress(location)}, ${location.postalCode} ${city}`,
       contacts: generateContacts(2, idx + 1),
       email: generateEmail(example.name),
       phone: generatePhone(),
@@ -331,7 +313,8 @@ export function generatePartners(count: number = 20): Partner[] {
 
   // Créer les enfants pour le premier gros partenaire
   childCabinetsForParent1.forEach((childName, childIdx) => {
-    const city = cities[Math.floor(Math.random() * cities.length)];
+    const location = partnerLocations[Math.floor(Math.random() * partnerLocations.length)];
+    const city = location.city;
     const funds: PartnerFund[] = [];
     
     // 1-3 fonds par cabinet enfant
@@ -375,13 +358,13 @@ export function generatePartners(count: number = 20): Partner[] {
       commissionRate: parseFloat((Math.random() * 2 + 1.5).toFixed(2)),
       analyst: analysts[Math.floor(Math.random() * analysts.length)],
       lastActivity: randomDate(new Date(2024, 0, 1), new Date()),
-      country: cityCountryMap[city],
+      country: location.country,
       city,
       siret: generateSiret(),
       orias: Math.random() > 0.3 ? generateOrias() : undefined,
       segments: ['HNWI', 'Retail'],
       funds,
-      address: `${Math.floor(Math.random() * 200) + 1} Avenue de la République, ${city}`,
+      address: `${randomStreetAddress(location)}, ${location.postalCode} ${city}`,
       contacts: generateContacts(Math.floor(Math.random() * 2) + 1, currentId),
       email: generateEmail(childName),
       phone: generatePhone(),
@@ -393,7 +376,8 @@ export function generatePartners(count: number = 20): Partner[] {
 
   // Créer les enfants pour le deuxième gros partenaire
   childCabinetsForParent2.forEach((childName, childIdx) => {
-    const city = cities[Math.floor(Math.random() * cities.length)];
+    const location = partnerLocations[Math.floor(Math.random() * partnerLocations.length)];
+    const city = location.city;
     const funds: PartnerFund[] = [];
     
     const fundCount = Math.floor(Math.random() * 3) + 1;
@@ -436,13 +420,13 @@ export function generatePartners(count: number = 20): Partner[] {
       commissionRate: parseFloat((Math.random() * 2 + 1.5).toFixed(2)),
       analyst: analysts[Math.floor(Math.random() * analysts.length)],
       lastActivity: randomDate(new Date(2024, 0, 1), new Date()),
-      country: cityCountryMap[city],
+      country: location.country,
       city,
       siret: generateSiret(),
       orias: Math.random() > 0.3 ? generateOrias() : undefined,
       segments: ['HNWI', 'UHNWI', 'Professional'],
       funds,
-      address: `${Math.floor(Math.random() * 200) + 1} Avenue de la République, ${city}`,
+      address: `${randomStreetAddress(location)}, ${location.postalCode} ${city}`,
       contacts: generateContacts(Math.floor(Math.random() * 2) + 1, currentId),
       email: generateEmail(childName),
       phone: generatePhone(),
@@ -455,7 +439,8 @@ export function generatePartners(count: number = 20): Partner[] {
   for (let i = currentId - 1; i < count; i++) {
     const name = partnerCompanyNames[i % partnerCompanyNames.length] + (i >= partnerCompanyNames.length ? ` ${Math.floor(i / partnerCompanyNames.length) + 1}` : '');
     const registrationDate = randomDate(new Date(2018, 0, 1), new Date(2024, 10, 1));
-    const city = cities[Math.floor(Math.random() * cities.length)];
+    const location = partnerLocations[Math.floor(Math.random() * partnerLocations.length)];
+    const city = location.city;
     
     const funds: PartnerFund[] = [];
     const fundCount = Math.floor(Math.random() * 3) + 1;
@@ -511,13 +496,13 @@ export function generatePartners(count: number = 20): Partner[] {
       commissionRate: parseFloat((Math.random() * 3 + 0.5).toFixed(2)), // 0.5% à 3.5%
       analyst: analysts[Math.floor(Math.random() * analysts.length)],
       lastActivity: randomDate(new Date(2024, 0, 1), new Date()),
-      country: cityCountryMap[city],
+      country: location.country,
       city,
       siret: Math.random() > 0.2 ? generateSiret() : undefined,
       orias: Math.random() > 0.2 ? generateOrias() : undefined,
       segments: selectedSegments,
       funds,
-      address: `${Math.floor(Math.random() * 200) + 1} Avenue de la République, ${city}`,
+      address: `${randomStreetAddress(location)}, ${location.postalCode} ${city}`,
       contacts: generateContacts(Math.floor(Math.random() * 3) + 1, i + 1),
       email: generateEmail(name),
       phone: generatePhone(),

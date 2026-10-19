@@ -48,7 +48,7 @@ import { Input } from '../ui/input';
 import { Label } from '../ui/label';
 import { PageHeader } from '../ui/page-header';
 import { DataPagination } from '../ui/data-pagination';
-import { RowActionButton } from '../ui/row-actions';
+import { TableRowActions } from '../ui/row-actions';
 import {
   AlertDialog,
   AlertDialogContent,
@@ -689,24 +689,18 @@ export function MailTemplatesSettings() {
         sortable: false,
         className: 'px-2 py-4 w-[130px] text-right',
         render: (row) => (
-          <div className="flex items-center justify-end gap-1" onClick={(e) => e.stopPropagation()}>
-            <RowActionButton
-              icon={Copy}
-              tooltip={t('mailTemplates.actions.duplicate')}
-              onClick={() => handleDuplicate(row)}
-            />
-            <RowActionButton
-              icon={Pencil}
-              tooltip={t('mailTemplates.actions.edit')}
-              onClick={() => handleOpenEdit(row)}
-            />
-            <RowActionButton
-              icon={Trash2}
-              tooltip={t('mailTemplates.actions.delete')}
-              intent="danger"
-              onClick={() => setTemplateToDelete(row)}
-            />
-          </div>
+          <TableRowActions
+            actions={[
+              { label: t('mailTemplates.actions.duplicate'), icon: Copy, onClick: () => handleDuplicate(row) },
+              { label: t('mailTemplates.actions.edit'), icon: Pencil, onClick: () => handleOpenEdit(row) },
+              {
+                label: t('mailTemplates.actions.delete'),
+                icon: Trash2,
+                intent: 'danger',
+                onClick: () => setTemplateToDelete(row),
+              },
+            ]}
+          />
         ),
       },
     );

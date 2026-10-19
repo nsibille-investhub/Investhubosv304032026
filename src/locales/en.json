@@ -1202,7 +1202,9 @@
       "duplicate": "Duplicate",
       "duplicated": "Subscription duplicated",
       "delete": "Delete",
-      "deleted": "Subscription deleted"
+      "deleted": "Subscription deleted",
+      "viewAuditTrail": "View audit trail",
+      "openingDetails": "Opening subscription details..."
     },
     "counterSignatureStatus": {
       "completed": "Completed",
@@ -1613,7 +1615,8 @@
         "manager": "Manager",
         "parentInvestor": "Parent investor",
         "partner": "Partner",
-        "noPartner": "None"
+        "noPartner": "None",
+        "state": "State"
       },
       "kyc": {
         "title": "KYC & Compliance",
@@ -1696,7 +1699,10 @@
         "Germany": "Germany",
         "UnitedKingdom": "United Kingdom",
         "Spain": "Spain",
-        "Italy": "Italy"
+        "Italy": "Italy",
+        "Monaco": "Monaco",
+        "Netherlands": "Netherlands",
+        "UnitedStates": "United States"
       },
       "tags": "Tags",
       "signatories": {
@@ -1711,7 +1717,6 @@
         "title": "Legal structures ({{count}})",
         "add": "Add a structure",
         "edit": "Edit",
-        "actionsFor": "Actions for {{name}}",
         "columns": {
           "name": "Name",
           "type": "Type",
@@ -1909,13 +1914,13 @@
           "roles": "Roles",
           "portal": "Portal access"
         },
-        "actionsFor": "Actions for {{name}}",
         "portalAccessLevel": "Portal access · {{level}}",
         "entity": "contact",
         "filters": {
           "role": "Role",
           "signatory": "Signatory"
-        }
+        },
+        "primaryPortalAccess": "The primary contact always has portal access."
       }
     }
   },
@@ -2029,7 +2034,8 @@
       "copyId": "Copy ID",
       "idCopied": "ID copied",
       "copyError": "Copy failed",
-      "rowActions": "Actions"
+      "rowActions": "Actions",
+      "moreActions": "More actions"
     }
   },
   "ged": {
@@ -2554,7 +2560,10 @@
         "deleteDocument": "Delete document",
         "addDocument": "Add a document",
         "addFolder": "Add a folder",
-        "importDocuments": "Import documents"
+        "importDocuments": "Import documents",
+        "editFolder": "Edit folder",
+        "openViewer": "Open viewer",
+        "editDocument": "Edit document"
       },
       "footerFolders": "{{count}} folders",
       "footerFoldersOne": "{{count}} folder",
@@ -2812,7 +2821,11 @@
       },
       "actions": {
         "preview": "Preview",
-        "download": "Download"
+        "download": "Download",
+        "rename": "Rename",
+        "share": "Share",
+        "archive": "Archive",
+        "delete": "Delete"
       }
     },
     "relaunchModal": {
@@ -3345,7 +3358,9 @@
       "menu": {
         "top": "Move to top",
         "bottom": "Move to bottom",
-        "unlock": "Go back to the defined order to reorganize"
+        "unlock": "Go back to the defined order to reorganize",
+        "alreadyTop": "Already first",
+        "alreadyBottom": "Already last"
       },
       "sortAria": "Sort by {{column}}",
       "newBadge": "New",
@@ -5930,6 +5945,41 @@
         "variants": "Single series, values formatted by the caller.",
         "states": "Rest, hover (active dot and tooltip).",
         "exampleLabel": "Example: net assets"
+      }
+    }
+  },
+  "settings": {
+    "users": {
+      "edit": "Edit"
+    },
+    "conventions": {
+      "rowActions": {
+        "validationDetails": "Validation details",
+        "resetValidation": "Reset validation",
+        "delete": "Delete",
+        "viewOnboarding": "Go to onboarding",
+        "validate": "Validate agreement",
+        "modifyScope": "Edit scope"
+      }
+    },
+    "retrocessions": {
+      "rowActions": {
+        "downloadStatement": "Download statement",
+        "notify": "Notify",
+        "markAsPaid": "Mark as paid",
+        "comingSoon": "Statement download is coming soon"
+      }
+    }
+  },
+  "datahub": {
+    "collection": {
+      "rowActions": {
+        "editData": "Edit data",
+        "publish": "Publish",
+        "setPending": "Put on hold",
+        "markChanged": "Mark as modified",
+        "unpublish": "Unpublish",
+        "revert": "Revert changes"
       }
     }
   }

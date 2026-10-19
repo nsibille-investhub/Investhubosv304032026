@@ -9,7 +9,8 @@ import { StatusBadge, type StatusVariant } from '../StatusBadge';
 import { EmptyState } from '../EmptyState';
 import { FilterBar, type FilterConfig } from '../FilterBar';
 import { Button } from '../ui/button';
-import { ListingCard, ListingCountTag, ListingNameCell, ListingRowActions, ListingTypeTag } from '../ui/listing';
+import { ListingCard, ListingCountTag, ListingNameCell, ListingTypeTag } from '../ui/listing';
+import { TableRowActions } from '../ui/row-actions';
 import { STRUCTURE_KYC_STATUSES, STRUCTURE_TYPES, StructureEditSheet } from './StructureEditSheet';
 
 const K = 'investors.detail.structuresList';
@@ -181,8 +182,7 @@ export function StructuresTab({ structures: initialStructures, onOpenTab }: Stru
       label: '',
       align: 'right',
       render: (row) => (
-        <ListingRowActions
-          ariaLabel={t(`${K}.actionsFor`, { name: row.name })}
+        <TableRowActions
           actions={[{ label: t(`${K}.edit`), icon: Pencil, onClick: () => setSelected(toStructure(row)) }]}
         />
       ),

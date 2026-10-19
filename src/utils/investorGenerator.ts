@@ -1,3 +1,5 @@
+import { COUNTRIES, randomLocation, randomStreetAddress } from './locationFixtures';
+
 // Générateur de données mock pour les investisseurs
 
 // Noms pour Individual investors
@@ -72,16 +74,7 @@ const crmSegmentsList = [
   'Institutional'
 ];
 
-const countries = [
-  'France',
-  'Luxembourg',
-  'Suisse',
-  'Belgique',
-  'Monaco',
-  'Royaume-Uni',
-  'Allemagne',
-  'Pays-Bas'
-];
+const countries = COUNTRIES;
 
 // Fonctions pour les contacts
 const contactFunctions = [
@@ -322,7 +315,8 @@ function generateContacts(investorName: string, investorEmail: string, investorP
       ? investorPhone 
       : generatePhone();
     
-    const hasAccess = Math.random() > 0.3;
+    // Le contact principal a toujours accès au portail.
+    const hasAccess = isPrimary || Math.random() > 0.3;
     
     contacts.push({
       id: `CNT${1000 + i}`,
@@ -568,11 +562,12 @@ export function generateInvestors(count: number): Investor[] {
     // Investisseur de rattachement (20% de chance)
     const parentInvestor = Math.random() > 0.8 ? getRandomElement(individualInvestorNames).firstName + ' ' + getRandomElement(individualInvestorNames).lastName : undefined;
     
-    // Adresse
-    const cityData = getRandomElement(countries);
-    const address = `${Math.floor(Math.random() * 200) + 1} ${getRandomElement(['Rue', 'Avenue', 'Boulevard'])} ${getRandomElement(['de la République', 'Victor Hugo', 'des Champs-Élysées', 'Montaigne', 'Haussmann'])}`;
-    const postalCode = `${Math.floor(Math.random() * 90000) + 10000}`;
-    const city = getRandomElement(['Paris', 'Lyon', 'Marseille', 'Toulouse', 'Nice', 'Nantes', 'Bordeaux', 'Lille']);
+    // Adresse réelle : ville, code postal, rue et pays cohérents ; État pour les États-Unis.
+    const location = randomLocation();
+    const address = randomStreetAddress(location);
+    const postalCode = location.postalCode;
+    const city = location.city;
+    const state = location.state;
     
     // Espace investisseur
     const portalActive = Math.random() > 0.3;
@@ -589,7 +584,7 @@ export function generateInvestors(count: number): Investor[] {
     const birthDate = type === 'Individual' ? new Date(1950 + Math.floor(Math.random() * 50), Math.floor(Math.random() * 12), Math.floor(Math.random() * 28) + 1) : undefined;
     const birthPlace = type === 'Individual' ? city : undefined;
     const birthDepartment = type === 'Individual' ? `${Math.floor(Math.random() * 95) + 1}` : undefined;
-    const birthCountry = type === 'Individual' ? getRandomElement(countries) : undefined;
+    const birthCountry = type === 'Individual' ? location.country : undefined;
     const nationality = type === 'Individual' ? getRandomElement(countries) : undefined;
     const languages = ['Français', 'English', 'Español', 'Deutsch', 'Italiano'];
     const language = getRandomElement(languages);
@@ -600,7 +595,7 @@ export function generateInvestors(count: number): Investor[] {
     
     // Informations fiscales (60% complètes)
     const hasTaxInfo = Math.random() > 0.4;
-    const taxResidence = hasTaxInfo ? getRandomElement(countries) : undefined;
+    const taxResidence = hasTaxInfo ? location.country : undefined;
     const taxAddress = hasTaxInfo ? address : undefined;
     const taxPostalCode = hasTaxInfo ? postalCode : undefined;
     const taxCity = hasTaxInfo ? city : undefined;
@@ -626,7 +621,7 @@ export function generateInvestors(count: number): Investor[] {
       crmSegment,
       analyst: getRandomElement(analysts),
       partner: hasPartner ? getRandomElement(partnerNames) : null,
-      country: getRandomElement(countries),
+      country: location.country,
       email,
       phone,
       monitoring: isMonitored,
@@ -648,6 +643,7 @@ export function generateInvestors(count: number): Investor[] {
       address,
       postalCode,
       city,
+      state,
       
       // Espace investisseur
       portalActive,

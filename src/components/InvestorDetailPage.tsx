@@ -75,6 +75,7 @@ import {
 } from "./ui/tooltip";
 import { ContactsTab, countContactRows } from './investor-detail/ContactsTab';
 import { StructuresTab } from './investor-detail/StructuresTab';
+import { COUNTRIES, COUNTRY_LABEL_KEY } from '../utils/locationFixtures';
 import { useTranslation } from '../utils/languageContext';
 
 const INVESTOR_STATUS_VARIANT: Record<string, StatusVariant> = {
@@ -147,6 +148,9 @@ export function InvestorDetailPage({ investor: initialInvestor, onBack, initialT
       year: 'numeric'
     }).format(new Date(date));
   };
+
+  const countryLabel = (country: string) =>
+    COUNTRY_LABEL_KEY[country] ? t(`investors.detail.countryOptions.${COUNTRY_LABEL_KEY[country]}`) : country;
 
   const formatCurrency = (amount: number): string => {
     return new Intl.NumberFormat(lang === 'en' ? 'en-US' : 'fr-FR', {
@@ -408,7 +412,7 @@ export function InvestorDetailPage({ investor: initialInvestor, onBack, initialT
               <>
                 <PageHeaderSubtitleSeparator />
                 <PageHeaderSubtitleItem icon={MapPin}>
-                  {[investor.city, investor.state, investor.country].filter(Boolean).join(', ')}
+                  {[investor.city, investor.state, investor.country && countryLabel(investor.country)].filter(Boolean).join(', ')}
                 </PageHeaderSubtitleItem>
               </>
             )}
@@ -620,21 +624,21 @@ export function InvestorDetailPage({ investor: initialInvestor, onBack, initialT
                     type="text"
                   />
 
+                  {investor.state && (
+                    <EditableField
+                      label={t('investors.detail.general.state')}
+                      field="state"
+                      value={investor.state}
+                      type="text"
+                    />
+                  )}
+
                   <EditableField
                     label={t('investors.detail.general.country')}
                     field="country"
                     value={investor.country}
                     type="select"
-                    options={[
-                      { value: 'France', label: t('investors.detail.countryOptions.France') },
-                      { value: 'Belgium', label: t('investors.detail.countryOptions.Belgium') },
-                      { value: 'Switzerland', label: t('investors.detail.countryOptions.Switzerland') },
-                      { value: 'Luxembourg', label: t('investors.detail.countryOptions.Luxembourg') },
-                      { value: 'Germany', label: t('investors.detail.countryOptions.Germany') },
-                      { value: 'United Kingdom', label: t('investors.detail.countryOptions.UnitedKingdom') },
-                      { value: 'Spain', label: t('investors.detail.countryOptions.Spain') },
-                      { value: 'Italy', label: t('investors.detail.countryOptions.Italy') }
-                    ]}
+                    options={COUNTRIES.map((country) => ({ value: country, label: countryLabel(country) }))}
                     icon={<Globe className="w-4 h-4 text-muted-foreground/60" />}
                   />
 

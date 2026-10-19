@@ -3,20 +3,13 @@ import {
   AlertTriangle,
   Copy,
   Eye,
-  MoreVertical,
   Trash2,
   Users,
 } from 'lucide-react';
 import { toast } from 'sonner@2.0.3';
 import { cn } from './ui/utils';
 import { Badge } from './ui/badge';
-import { Button } from './ui/button';
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuTrigger,
-} from './ui/dropdown-menu';
+import { TableRowActions } from './ui/row-actions';
 import {
   Tooltip,
   TooltipContent,
@@ -401,36 +394,22 @@ export function SubscriptionDynamicTable({
       label: '',
       sortable: false,
       render: (row: any) => (
-        <DropdownMenu>
-          <DropdownMenuTrigger asChild>
-            <Button variant="ghost" size="sm" onClick={(e) => e.stopPropagation()} className="h-8 w-8 p-0">
-              <MoreVertical className="h-4 w-4" />
-            </Button>
-          </DropdownMenuTrigger>
-          <DropdownMenuContent align="end">
-            <DropdownMenuItem onClick={(e) => { e.stopPropagation(); onRowClick(row); }}>
-              <Eye className="mr-2 h-4 w-4" />
-              <span>{t('subscriptions.table.viewDetail')}</span>
-            </DropdownMenuItem>
-            <DropdownMenuItem onClick={(e) => {
-              e.stopPropagation();
-              toast.success(t('subscriptions.table.duplicated'), { description: row.name });
-            }}>
-              <Copy className="mr-2 h-4 w-4" />
-              <span>{t('subscriptions.table.duplicate')}</span>
-            </DropdownMenuItem>
-            <DropdownMenuItem
-              onClick={(e) => {
-                e.stopPropagation();
-                toast.error(t('subscriptions.table.deleted'), { description: row.name });
-              }}
-              className="text-red-600 focus:text-red-600 focus:bg-red-50"
-            >
-              <Trash2 className="mr-2 h-4 w-4" />
-              <span>{t('subscriptions.table.delete')}</span>
-            </DropdownMenuItem>
-          </DropdownMenuContent>
-        </DropdownMenu>
+        <TableRowActions
+          actions={[
+            { label: t('subscriptions.table.viewDetail'), icon: Eye, onClick: () => onRowClick(row) },
+            {
+              label: t('subscriptions.table.duplicate'),
+              icon: Copy,
+              onClick: () => toast.success(t('subscriptions.table.duplicated'), { description: row.name }),
+            },
+            {
+              label: t('subscriptions.table.delete'),
+              icon: Trash2,
+              intent: 'danger',
+              onClick: () => toast.error(t('subscriptions.table.deleted'), { description: row.name }),
+            },
+          ]}
+        />
       ),
     },
   ];

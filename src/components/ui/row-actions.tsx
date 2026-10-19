@@ -1,6 +1,14 @@
 import * as React from 'react';
-import { Check, Eye, RotateCcw, X, type LucideIcon } from 'lucide-react';
+import { Check, Eye, MoreVertical, RotateCcw, X, type LucideIcon } from 'lucide-react';
+import { useTranslation } from '../../utils/languageContext';
 import { Button } from './button';
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from './dropdown-menu';
 import { Tooltip, TooltipContent, TooltipTrigger } from './tooltip';
 import { cn } from './utils';
 
@@ -19,36 +27,137 @@ interface RowActionButtonProps {
   onClick: (e: React.MouseEvent) => void;
   intent?: Intent;
   disabled?: boolean;
+  /** Action indisponible : bouton grisé, motif ajouté à l'infobulle. */
+  disabledReason?: string;
   ariaLabel?: string;
 }
 
+/** Bouton icône d'une action de ligne, libellé de l'action au survol. */
 export function RowActionButton({
   icon: Icon,
   tooltip,
   onClick,
   intent = 'neutral',
   disabled,
+  disabledReason,
   ariaLabel,
 }: RowActionButtonProps) {
+  const isDisabled = disabled || Boolean(disabledReason);
   return (
     <Tooltip>
       <TooltipTrigger asChild>
-        <Button
-          variant="ghost"
-          size="sm"
-          disabled={disabled}
-          aria-label={ariaLabel || tooltip}
-          className={cn('h-8 w-8 p-0', INTENT_CLASS[intent])}
-          onClick={(e) => {
-            e.stopPropagation();
-            onClick(e);
-          }}
-        >
-          <Icon className="h-4 w-4" />
-        </Button>
+        {/* Le span garde l'infobulle active quand le bouton est désactivé. */}
+        <span className="inline-flex" tabIndex={isDisabled ? 0 : undefined} onClick={(e) => e.stopPropagation()}>
+          <Button
+            variant="ghost"
+            size="sm"
+            disabled={isDisabled}
+            aria-label={ariaLabel || tooltip}
+            className={cn('h-8 w-8 p-0', INTENT_CLASS[intent])}
+            onClick={(e) => {
+              e.stopPropagation();
+              onClick(e);
+            }}
+          >
+            <Icon className="h-4 w-4" />
+          </Button>
+        </span>
       </TooltipTrigger>
-      <TooltipContent>{tooltip}</TooltipContent>
+      <TooltipContent>
+        {disabledReason ? (
+          <span className="flex flex-col">
+            <span>{tooltip}</span>
+            <span className="text-xs opacity-80">{disabledReason}</span>
+          </span>
+        ) : (
+          tooltip
+        )}
+      </TooltipContent>
     </Tooltip>
+  );
+}
+
+export interface TableRowAction {
+  label: string;
+  icon: LucideIcon;
+  onClick: () => void;
+  intent?: Intent;
+  /** Action indisponible : grisée, motif au survol ou sous le libellé. */
+  disabledReason?: string;
+  /** Dans le menu ⋮ : séparateur avant l'action. */
+  separatorBefore?: boolean;
+}
+
+/** Nombre d'actions affichées en boutons avant de passer au menu ⋮. */
+export const ROW_ACTIONS_VISIBLE = 3;
+
+/**
+ * Actions d'une ligne de tableau, règle commune à toute l'application :
+ * jusqu'à 3 actions, toutes en boutons icône ; au-delà, les 3 premières en boutons
+ * et les suivantes dans un menu ⋮. Chaque bouton affiche son libellé au survol.
+ */
+export function TableRowActions({
+  actions,
+  className,
+}: {
+  actions: TableRowAction[];
+  className?: string;
+}) {
+  const { t } = useTranslation();
+  const visible = actions.slice(0, ROW_ACTIONS_VISIBLE);
+  const overflow = actions.slice(ROW_ACTIONS_VISIBLE);
+
+  return (
+    <div className={cn('flex items-center justify-end gap-1', className)} onClick={(e) => e.stopPropagation()}>
+      {visible.map((action) => (
+        <RowActionButton
+          key={action.label}
+          icon={action.icon}
+          tooltip={action.label}
+          intent={action.intent}
+          disabledReason={action.disabledReason}
+          onClick={action.onClick}
+        />
+      ))}
+      {overflow.length > 0 && (
+        <DropdownMenu>
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <DropdownMenuTrigger asChild>
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  aria-label={t('common.listing.moreActions')}
+                  className={cn('h-8 w-8 p-0', INTENT_CLASS.neutral)}
+                  onClick={(e) => e.stopPropagation()}
+                >
+                  <MoreVertical className="h-4 w-4" />
+                </Button>
+              </DropdownMenuTrigger>
+            </TooltipTrigger>
+            <TooltipContent>{t('common.listing.moreActions')}</TooltipContent>
+          </Tooltip>
+          <DropdownMenuContent align="end" onClick={(e) => e.stopPropagation()}>
+            {overflow.map((action, index) => (
+              <React.Fragment key={action.label}>
+                {action.separatorBefore && index > 0 && <DropdownMenuSeparator />}
+                <DropdownMenuItem
+                  onClick={action.onClick}
+                  disabled={Boolean(action.disabledReason)}
+                  variant={action.intent === 'danger' ? 'destructive' : 'default'}
+                >
+                  <action.icon className="h-4 w-4" />
+                  <span className="flex flex-col">
+                    <span>{action.label}</span>
+                    {action.disabledReason && <span className="text-xs text-muted-foreground">{action.disabledReason}</span>}
+                  </span>
+                </DropdownMenuItem>
+              </React.Fragment>
+            ))}
+          </DropdownMenuContent>
+        </DropdownMenu>
+      )}
+    </div>
   );
 }
 
@@ -83,43 +192,10 @@ export function RowActions({
   showReset = false,
   className,
 }: RowActionsProps) {
-  return (
-    <div
-      className={cn('flex items-center justify-end gap-1', className)}
-      onClick={(e) => e.stopPropagation()}
-    >
-      {showPreview && onPreview && (
-        <RowActionButton
-          icon={Eye}
-          tooltip={previewLabel}
-          intent="neutral"
-          onClick={onPreview}
-        />
-      )}
-      {showReset && onReset && resetLabel && (
-        <RowActionButton
-          icon={RotateCcw}
-          tooltip={resetLabel}
-          intent="warning"
-          onClick={onReset}
-        />
-      )}
-      {showAccept && onAccept && acceptLabel && (
-        <RowActionButton
-          icon={Check}
-          tooltip={acceptLabel}
-          intent="success"
-          onClick={onAccept}
-        />
-      )}
-      {showReject && onReject && rejectLabel && (
-        <RowActionButton
-          icon={X}
-          tooltip={rejectLabel}
-          intent="danger"
-          onClick={onReject}
-        />
-      )}
-    </div>
-  );
+  const actions: TableRowAction[] = [];
+  if (showPreview && onPreview) actions.push({ label: previewLabel, icon: Eye, onClick: onPreview });
+  if (showReset && onReset && resetLabel) actions.push({ label: resetLabel, icon: RotateCcw, intent: 'warning', onClick: onReset });
+  if (showAccept && onAccept && acceptLabel) actions.push({ label: acceptLabel, icon: Check, intent: 'success', onClick: onAccept });
+  if (showReject && onReject && rejectLabel) actions.push({ label: rejectLabel, icon: X, intent: 'danger', onClick: onReject });
+  return <TableRowActions actions={actions} className={className} />;
 }

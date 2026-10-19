@@ -10,7 +10,8 @@ import { EmptyState } from '../EmptyState';
 import { FilterBar, type FilterConfig } from '../FilterBar';
 import { Tag } from '../Tag';
 import { Button } from '../ui/button';
-import { ListingCard, ListingNameCell, ListingRowActions } from '../ui/listing';
+import { ListingCard, ListingNameCell } from '../ui/listing';
+import { TableRowActions } from '../ui/row-actions';
 import { ContactEditSheet, type ContactDraft, type SignatureLevel } from './ContactEditSheet';
 
 type Contact = ContactDraft;
@@ -114,7 +115,10 @@ export function ContactsTab({ investor }: ContactsTabProps) {
       language: investor.language,
     }]),
     ...(investor.contacts || []),
-  ], investor.signatories || []));
+  ], investor.signatories || []).map((contact) =>
+    // Le contact principal a toujours accès au portail.
+    contact.isPrimary ? { ...contact, hasPortalAccess: true, accessLevel: contact.accessLevel ?? 'Admin' } : contact,
+  ));
   const [selectedContact, setSelectedContact] = useState<Contact | null>(null);
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [sortConfig, setSortConfig] = useState<{ key: string; direction: 'asc' | 'desc' } | null>(null);
@@ -280,8 +284,7 @@ export function ContactsTab({ investor }: ContactsTabProps) {
       label: '',
       align: 'right',
       render: (row) => (
-        <ListingRowActions
-          ariaLabel={t(`${K}.actionsFor`, { name: fullName(row) })}
+        <TableRowActions
           actions={[
             { label: t(`${K}.edit`), icon: Pencil, onClick: () => handleEditContact(toContact(row)) },
             {

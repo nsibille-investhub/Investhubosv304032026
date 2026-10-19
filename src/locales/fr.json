@@ -1202,7 +1202,9 @@
       "duplicate": "Dupliquer",
       "duplicated": "Souscription dupliquée",
       "delete": "Supprimer",
-      "deleted": "Souscription supprimée"
+      "deleted": "Souscription supprimée",
+      "viewAuditTrail": "Voir l'historique",
+      "openingDetails": "Ouverture du détail de la souscription..."
     },
     "counterSignatureStatus": {
       "completed": "Complétée",
@@ -1613,7 +1615,8 @@
         "manager": "Gestionnaire",
         "parentInvestor": "Investisseur de rattachement",
         "partner": "Partenaire",
-        "noPartner": "Aucun"
+        "noPartner": "Aucun",
+        "state": "État"
       },
       "kyc": {
         "title": "KYC & Compliance",
@@ -1696,7 +1699,10 @@
         "Germany": "Allemagne",
         "UnitedKingdom": "Royaume-Uni",
         "Spain": "Espagne",
-        "Italy": "Italie"
+        "Italy": "Italie",
+        "Monaco": "Monaco",
+        "Netherlands": "Pays-Bas",
+        "UnitedStates": "États-Unis"
       },
       "tags": "Tags",
       "signatories": {
@@ -1711,7 +1717,6 @@
         "title": "Structures légales ({{count}})",
         "add": "Ajouter une structure",
         "edit": "Modifier",
-        "actionsFor": "Actions pour {{name}}",
         "columns": {
           "name": "Nom",
           "type": "Type",
@@ -1909,13 +1914,13 @@
           "roles": "Rôles",
           "portal": "Accès portail"
         },
-        "actionsFor": "Actions pour {{name}}",
         "portalAccessLevel": "Accès portail · {{level}}",
         "entity": "contact",
         "filters": {
           "role": "Rôle",
           "signatory": "Signataire"
-        }
+        },
+        "primaryPortalAccess": "Le contact principal a toujours accès au portail."
       }
     }
   },
@@ -2029,7 +2034,8 @@
       "copyId": "Copier l'ID",
       "idCopied": "ID copié",
       "copyError": "Erreur de copie",
-      "rowActions": "Actions"
+      "rowActions": "Actions",
+      "moreActions": "Plus d'actions"
     }
   },
   "ged": {
@@ -2554,7 +2560,10 @@
         "deleteDocument": "Supprimer le document",
         "addDocument": "Ajouter un document",
         "addFolder": "Ajouter un dossier",
-        "importDocuments": "Importer des documents"
+        "importDocuments": "Importer des documents",
+        "editFolder": "Modifier le dossier",
+        "openViewer": "Ouvrir la visionneuse",
+        "editDocument": "Modifier le document"
       },
       "footerFolders": "{{count}} dossiers",
       "footerFoldersOne": "{{count}} dossier",
@@ -2812,7 +2821,11 @@
       },
       "actions": {
         "preview": "Prévisualiser",
-        "download": "Télécharger"
+        "download": "Télécharger",
+        "rename": "Renommer",
+        "share": "Partager",
+        "archive": "Archiver",
+        "delete": "Supprimer"
       }
     },
     "relaunchModal": {
@@ -3345,7 +3358,9 @@
       "menu": {
         "top": "Placer en tête",
         "bottom": "Placer en fin",
-        "unlock": "Revenir à l'ordre défini pour réorganiser"
+        "unlock": "Revenir à l'ordre défini pour réorganiser",
+        "alreadyTop": "Déjà en tête",
+        "alreadyBottom": "Déjà en fin"
       },
       "sortAria": "Trier par {{column}}",
       "newBadge": "Nouveau",
@@ -5930,6 +5945,41 @@
         "variants": "Série unique, valeurs formatées par l'appelant.",
         "states": "Repos, survol (point actif et info-bulle).",
         "exampleLabel": "Exemple : actif net"
+      }
+    }
+  },
+  "settings": {
+    "users": {
+      "edit": "Modifier"
+    },
+    "conventions": {
+      "rowActions": {
+        "validationDetails": "Détails de la validation",
+        "resetValidation": "Réinitialiser la validation",
+        "delete": "Supprimer",
+        "viewOnboarding": "Accéder à l'onboarding",
+        "validate": "Valider la convention",
+        "modifyScope": "Modifier la portée"
+      }
+    },
+    "retrocessions": {
+      "rowActions": {
+        "downloadStatement": "Télécharger le décompte",
+        "notify": "Notifier",
+        "markAsPaid": "Marquer payé",
+        "comingSoon": "Le téléchargement du décompte sera bientôt disponible"
+      }
+    }
+  },
+  "datahub": {
+    "collection": {
+      "rowActions": {
+        "editData": "Modifier la donnée",
+        "publish": "Publier",
+        "setPending": "Mettre en attente",
+        "markChanged": "Marquer comme modifiée",
+        "unpublish": "Dépublier",
+        "revert": "Annuler les modifications"
       }
     }
   }

@@ -73,6 +73,7 @@ import {
   Pencil,
   LogIn,
   Bell,
+  Trash2,
   type LucideIcon,
 } from 'lucide-react';
 import * as React from 'react';
@@ -108,7 +109,8 @@ import { DocumentScope } from './ui/document-scope';
 import { FUNDS, INVESTORS } from '../utils/gedFixtures';
 import { FolderSpaceDialogPreview } from './ui/folder-space-dialog';
 import { KpiCard, KpiStrip } from './ui/kpi-card';
-import { ListingCountTag, ListingNameCell, ListingRowActions, ListingTypeTag } from './ui/listing';
+import { ListingCountTag, ListingNameCell, ListingTypeTag } from './ui/listing';
+import { TableRowActions } from './ui/row-actions';
 import { SidePanelCard, SidePanelSection, SidePanelSwitchRow } from './ui/side-panel';
 import { PageHeader } from './ui/page-header';
 import { Button } from './ui/button';
@@ -600,10 +602,10 @@ const investorListingColumnSpecs = [
   },
   {
     column: 'ACTIONS',
-    component: 'ListingRowActions (ui/listing)',
-    functional: 'Regrouper les actions d’une ligne (ouvrir, modifier, se connecter…) sans quitter le listing.',
-    guidelines: 'Bouton ⋮ (MoreVertical 16px) sans libellé de colonne ; menu aligné à droite, icône 16px + libellé ; motif sous le libellé si indisponible.',
-    variants: 'Action active, action indisponible avec motif, action destructive séparée.',
+    component: 'TableRowActions (ui/row-actions)',
+    functional: 'Actions d’une ligne, règle commune à tous les tableaux : jusqu’à 3 actions, toutes en boutons icône ; au-delà, les 3 premières en boutons et les suivantes dans un menu ⋮ (« Plus d’actions »).',
+    guidelines: 'Boutons ghost 32 px, icône 16 px, colonne sans libellé alignée à droite. Libellé de l’action au survol (Tooltip), obligatoire partout. Action indisponible : bouton grisé, motif dans l’infobulle (ou sous le libellé dans le menu ⋮). Intents : neutral, success, warning, danger (suppression, toujours en dernier).',
+    variants: '1 à 3 actions (boutons seuls), 4 actions et plus (3 boutons + ⋮), action indisponible avec motif, action destructive.',
   },
   {
     column: 'CARTE LISTING',
@@ -771,10 +773,12 @@ function renderInvestorColumnPreview(column: string) {
       return <ListingCountTag icon={FileText} count={0} />;
     case 'ACTIONS':
       return (
-        <ListingRowActions
+        <TableRowActions
           actions={[
+            { label: 'Voir le détail', icon: Eye, onClick: () => undefined },
             { label: 'Modifier', icon: Pencil, onClick: () => undefined },
             { label: 'Se connecter au portail', icon: LogIn, onClick: () => undefined, disabledReason: 'Accès portail non activé' },
+            { label: 'Supprimer', icon: Trash2, intent: 'danger', onClick: () => undefined },
           ]}
         />
       );
@@ -2060,7 +2064,7 @@ const types: TimelineTypeMap<'created' | 'updated'> = {
           <ul className="text-sm text-[#4F6166] dark:text-[#9DB2AE] space-y-2 list-disc pl-5">
             <li>Une section par sujet ; jamais de titre de section maison ni de carte à interrupteur maison.</li>
             <li>Récapitulatif d’état : encadrés vert (emerald) ou ambre (amber) du panneau document.</li>
-            <li>Ouverture depuis un listing : clic sur la ligne ou action « Modifier » du menu ⋮ ; bouton « Ajouter » de la barre du listing pour la création.</li>
+            <li>Ouverture depuis un listing : clic sur la ligne ou action « Modifier » de la ligne (TableRowActions) ; bouton « Ajouter » de la barre du listing pour la création.</li>
           </ul>
         </div>
       </section>

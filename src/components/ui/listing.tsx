@@ -1,23 +1,17 @@
 import { useState, type ReactNode } from 'react';
 import { motion } from 'motion/react';
-import { Check, ChevronRight, Copy, MoreVertical, type LucideIcon } from 'lucide-react';
+import { Check, ChevronRight, Copy, type LucideIcon } from 'lucide-react';
 import { toast } from 'sonner';
 import { useTranslation } from '../../utils/languageContext';
 import { copyToClipboard } from '../../utils/clipboard';
 import { ClickableText } from '../ClickableText';
 import { HighlightText } from '../HighlightText';
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuSeparator,
-  DropdownMenuTrigger,
-} from './dropdown-menu';
 import { cn } from './utils';
 
 /**
  * Briques des listings (référence : listing des investisseurs).
- * Carte du listing, cellule nom, pastille de type, compteur cliquable, menu d'actions de ligne.
+ * Carte du listing, cellule nom, pastille de type, compteur cliquable.
+ * Actions de ligne : TableRowActions (ui/row-actions).
  */
 
 interface ListingCardProps {
@@ -140,54 +134,5 @@ export function ListingCountTag({ icon: Icon, count, onClick, ariaLabel, disable
       <span className="text-sm font-medium text-muted-foreground group-hover:text-foreground tabular-nums">{count}</span>
       <ChevronRight className="w-3.5 h-3.5 text-muted-foreground group-hover:text-foreground transition-transform group-hover:translate-x-0.5" />
     </button>
-  );
-}
-
-export interface ListingRowAction {
-  label: string;
-  icon: LucideIcon;
-  onClick: () => void;
-  /** Action indisponible : grisée, motif sous le libellé. */
-  disabledReason?: string;
-  destructive?: boolean;
-  separatorBefore?: boolean;
-}
-
-/** Menu ⋮ des actions d'une ligne. */
-export function ListingRowActions({ actions, ariaLabel }: { actions: ListingRowAction[]; ariaLabel?: string }) {
-  const { t } = useTranslation();
-  return (
-    <DropdownMenu>
-      <DropdownMenuTrigger asChild>
-        <motion.button
-          type="button"
-          whileHover={{ scale: 1.1 }}
-          whileTap={{ scale: 0.9 }}
-          onClick={(event) => event.stopPropagation()}
-          aria-label={ariaLabel ?? t('common.listing.rowActions')}
-          className="p-1.5 hover:bg-gray-100 rounded-lg transition-colors"
-        >
-          <MoreVertical className="w-4 h-4 text-gray-600" />
-        </motion.button>
-      </DropdownMenuTrigger>
-      <DropdownMenuContent align="end" onClick={(event) => event.stopPropagation()}>
-        {actions.map((action, index) => (
-          <div key={action.label}>
-            {action.separatorBefore && index > 0 && <DropdownMenuSeparator />}
-            <DropdownMenuItem
-              onClick={action.onClick}
-              disabled={Boolean(action.disabledReason)}
-              variant={action.destructive ? 'destructive' : 'default'}
-            >
-              <action.icon className="w-4 h-4 mr-2" />
-              <span className="flex flex-col">
-                <span>{action.label}</span>
-                {action.disabledReason && <span className="text-xs text-muted-foreground">{action.disabledReason}</span>}
-              </span>
-            </DropdownMenuItem>
-          </div>
-        ))}
-      </DropdownMenuContent>
-    </DropdownMenu>
   );
 }

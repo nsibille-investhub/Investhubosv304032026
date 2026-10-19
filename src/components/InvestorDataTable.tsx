@@ -35,7 +35,8 @@ import { toast } from 'sonner@2.0.3';
 import { AuditLogDialog } from './AuditLogDialog';
 import { StatusBadge } from './StatusBadge';
 import { Tag } from './Tag';
-import { ListingCountTag, ListingNameCell, ListingRowActions, ListingTypeTag } from './ui/listing';
+import { ListingCountTag, ListingNameCell, ListingTypeTag } from './ui/listing';
+import { TableRowActions } from './ui/row-actions';
 import { useTranslation } from '../utils/languageContext';
 
 interface InvestorDataTableProps {
@@ -389,7 +390,7 @@ export function InvestorDataTable({
 
                   {/* Actions */}
                   <td className="px-6 py-4 sticky right-0 z-10 bg-white">
-                    <ListingRowActions
+                    <TableRowActions
                       actions={[
                         { label: t('investors.table.viewProfile'), icon: Eye, onClick: () => onRowClick(row, 'profil') },
                         { label: t('investors.table.portalConnection'), icon: LogIn, onClick: () => handlePortalConnection(row) },

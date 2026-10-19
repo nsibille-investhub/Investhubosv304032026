@@ -355,11 +355,12 @@ export function ContactEditSheet({
               <SidePanelSwitchRow
                 id="hasPortalAccess"
                 label={t(`${K}.enablePortalAccess`)}
-                description={t(`${K}.enablePortalAccessHint`)}
-                checked={contact.hasPortalAccess}
+                description={contact.isPrimary ? t(`${K}.primaryPortalAccess`) : t(`${K}.enablePortalAccessHint`)}
+                checked={contact.isPrimary || contact.hasPortalAccess}
+                disabled={contact.isPrimary}
                 onCheckedChange={(value) => update('hasPortalAccess', value)}
               />
-              {contact.hasPortalAccess && (
+              {(contact.isPrimary || contact.hasPortalAccess) && (
                 <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
                   <div className="space-y-2">
                     <Label htmlFor="accessLevel" className="flex items-center gap-1.5">
@@ -400,7 +401,7 @@ export function ContactEditSheet({
             </SidePanelCard>
           </SidePanelSection>
 
-          {contact.hasPortalAccess && (
+          {(contact.isPrimary || contact.hasPortalAccess) && (
             <SidePanelSection icon={Globe} title={t(`${K}.accessSection`)} description={t(`${K}.accessSectionHint`)}>
               {fullAccess ? (
                 <div className="rounded-xl border border-emerald-200 bg-emerald-50 p-4">
