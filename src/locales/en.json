@@ -5626,7 +5626,14 @@
       "title": "Capital calls",
       "subtitle": "Calls from every fund in your scope",
       "actions": {
-        "new": "New call"
+        "new": "New call",
+        "notify": "Notify",
+        "relaunch": "Send reminder",
+        "exportTarget": "Export recipients",
+        "exportNotices": "Export notices (ZIP)",
+        "exportLines": "Export lines (CSV)",
+        "edit": "Edit",
+        "delete": "Delete"
       },
       "searchPlaceholder": "Search a call or a fund",
       "queues": {
@@ -5652,7 +5659,8 @@
         "origin": "Origin",
         "compensation": "Offset",
         "createdAt": "Created on",
-        "createdBy": "Created by"
+        "createdBy": "Created by",
+        "actions": "Actions"
       },
       "columnsMenu": {
         "label": "Columns",
@@ -5676,18 +5684,40 @@
       },
       "toast": {
         "creationComingSoon": "Call creation comes with the creation wizard.",
-        "detailComingSoon": "The call page is coming soon in the mockup."
+        "detailComingSoon": "The call page is coming soon in the mockup.",
+        "refused": "Action refused on {{name}}",
+        "notifyStarted": "{{name}} notification is being sent.",
+        "notifyDone": "{{name}} is notified.",
+        "relaunchStarted": "{{name}} reminder: {{count}} line(s) reminded.",
+        "relaunchDone": "The {{name}} reminder is sent.",
+        "exportComingSoon": "{{action}}: coming soon in the mockup.",
+        "editComingSoon": "Editing a call comes with the creation wizard.",
+        "deleted": "{{name}} is deleted."
       },
       "scenario": {
         "label": "Demo scenario",
         "options": {
           "default": "Full scope",
           "limitedScope": "Scope limited to two funds",
+          "noNotifyRight": "Without the Notify right",
           "noRight": "Without the View calls right"
-        }
+        },
+        "simulateDirectNotify": "Notify without the menu"
       },
       "states": {
         "sending": "Sending"
+      },
+      "actionsFor": "Actions on {{name}}",
+      "blockers": {
+        "sending": "Sending in progress",
+        "alreadyNotified": "Call already notified",
+        "nothingToRelaunch": "No line to remind",
+        "missingRight": "Missing right, please contact your internal administrator"
+      },
+      "deleteDialog": {
+        "title": "Delete {{name}}?",
+        "description": "The call and its investor lines in {{fund}} will be deleted. This cannot be undone.",
+        "confirm": "Delete the call"
       }
     }
   },

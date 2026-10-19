@@ -5626,7 +5626,14 @@
       "title": "Appels de fonds",
       "subtitle": "Les appels de tous les fonds de votre périmètre",
       "actions": {
-        "new": "Nouvel appel"
+        "new": "Nouvel appel",
+        "notify": "Notifier",
+        "relaunch": "Relancer",
+        "exportTarget": "Exporter la cible",
+        "exportNotices": "Exporter les avis (ZIP)",
+        "exportLines": "Exporter les lignes (CSV)",
+        "edit": "Modifier",
+        "delete": "Supprimer"
       },
       "searchPlaceholder": "Rechercher un appel ou un fonds",
       "queues": {
@@ -5652,7 +5659,8 @@
         "origin": "Origine",
         "compensation": "Compensation",
         "createdAt": "Créé le",
-        "createdBy": "Créé par"
+        "createdBy": "Créé par",
+        "actions": "Actions"
       },
       "columnsMenu": {
         "label": "Colonnes",
@@ -5676,18 +5684,40 @@
       },
       "toast": {
         "creationComingSoon": "La création d'un appel arrive avec l'assistant de création.",
-        "detailComingSoon": "La fiche d'un appel est bientôt disponible dans la maquette."
+        "detailComingSoon": "La fiche d'un appel est bientôt disponible dans la maquette.",
+        "refused": "Action refusée sur {{name}}",
+        "notifyStarted": "Notification de {{name}} en cours d'envoi.",
+        "notifyDone": "{{name}} est notifié.",
+        "relaunchStarted": "Relance de {{name}} : {{count}} ligne(s) relancée(s).",
+        "relaunchDone": "La relance de {{name}} est envoyée.",
+        "exportComingSoon": "{{action}} : bientôt disponible dans la maquette.",
+        "editComingSoon": "La modification d'un appel arrive avec l'assistant de création.",
+        "deleted": "{{name}} est supprimé."
       },
       "scenario": {
         "label": "Scénario de démonstration",
         "options": {
           "default": "Périmètre complet",
           "limitedScope": "Périmètre limité à deux fonds",
+          "noNotifyRight": "Sans le droit Notifier",
           "noRight": "Sans le droit Consulter les appels"
-        }
+        },
+        "simulateDirectNotify": "Notifier sans passer par le menu"
       },
       "states": {
         "sending": "Envoi en cours"
+      },
+      "actionsFor": "Actions sur {{name}}",
+      "blockers": {
+        "sending": "Envoi en cours",
+        "alreadyNotified": "Appel déjà notifié",
+        "nothingToRelaunch": "Aucune ligne à relancer",
+        "missingRight": "Droit manquant, rapprochez-vous de votre administrateur interne"
+      },
+      "deleteDialog": {
+        "title": "Supprimer {{name}} ?",
+        "description": "L'appel et ses lignes investisseurs du fonds {{fund}} seront supprimés. Cette action est définitive.",
+        "confirm": "Supprimer l'appel"
       }
     }
   },

@@ -25,6 +25,11 @@ export interface CapitalCall {
   createdBy: string;
   /** Verrou d'envoi actif. */
   sending: boolean;
+  /** Nombre de lignes investisseurs. */
+  lines: number;
+  notifiedLines: number;
+  /** Lignes notifiées ni payées ni compensées : celles qu'une relance cible. */
+  linesToRelaunch: number;
 }
 
 const CREATORS = ['Camille', 'Thomas', 'Léa', 'Hugo', 'Inès', 'Julien'];
@@ -67,6 +72,13 @@ export function generateCapitalCalls(funds: Fund[], today = new Date()): Capital
       const compensations: LinkedDistribution[] =
         random() < 0.2 ? [{ id: distributionId, name: `Distribution ${distributionId++}` }] : [];
       const isUpcoming = dueDate.getTime() > today.getTime();
+      const sending = isUpcoming && random() < 0.6;
+      const lines = 4 + Math.floor(random() * 40);
+      let notifiedLines: number;
+      if (!isUpcoming) notifiedLines = lines;
+      else if (sending) notifiedLines = Math.floor(lines * random() * 0.6);
+      else notifiedLines = random() < 0.5 ? 0 : lines;
+      const linesToRelaunch = notifiedLines > 0 && random() < 0.6 ? 1 + Math.floor(random() * Math.min(5, notifiedLines)) : 0;
 
       calls.push({
         id: id++,
@@ -81,7 +93,10 @@ export function generateCapitalCalls(funds: Fund[], today = new Date()): Capital
         compensations,
         createdAt,
         createdBy: CREATORS[Math.floor(random() * CREATORS.length)],
-        sending: isUpcoming && random() < 0.6,
+        sending,
+        lines,
+        notifiedLines,
+        linesToRelaunch,
       });
     }
   });

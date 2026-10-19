@@ -1,10 +1,33 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { toast } from 'sonner@2.0.3';
-import { Columns3, FlaskConical, List, Loader2, Plus, ShieldX, Wallet } from 'lucide-react';
+import {
+  BellRing,
+  Columns3,
+  FileArchive,
+  FileSpreadsheet,
+  FlaskConical,
+  List,
+  Loader2,
+  MoreHorizontal,
+  Pencil,
+  Plus,
+  Send,
+  ShieldX,
+  Trash2,
+  Users,
+  Wallet,
+  type LucideIcon,
+} from 'lucide-react';
 
 import { useTranslation } from '../../utils/languageContext';
 import type { Fund } from '../../utils/fundGenerator';
 import { CAPITAL_CALL_ORIGINS, CapitalCall, generateCapitalCalls } from '../../utils/capitalCallGenerator';
+import {
+  CapitalCallAction,
+  CapitalCallRights,
+  FULL_RIGHTS,
+  capitalCallBlocker,
+} from '../../utils/capitalCallActions';
 import { ColumnConfig, DataTable } from '../DataTable';
 import { EmptyState } from '../EmptyState';
 import { FilterBar, FilterConfig } from '../FilterBar';
@@ -15,6 +38,7 @@ import { FilterCard } from '../ui/filter-card';
 import { PageHeader } from '../ui/page-header';
 import { DataPagination } from '../ui/data-pagination';
 import { Button } from '../ui/button';
+import { ConfirmDialog } from '../ui/confirm-dialog';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../ui/select';
 import {
   DropdownMenu,
@@ -57,8 +81,34 @@ const DEFAULT_COLUMNS: ColumnKey[] = ['fund', 'name', 'dueDate', 'calledAmount',
 const COLUMNS_STORAGE_KEY = 'investhub-columns-capital-calls-v2';
 
 type Queue = 'all' | 'sending';
-type Scenario = 'default' | 'limitedScope' | 'noRight';
-const SCENARIOS: Scenario[] = ['default', 'limitedScope', 'noRight'];
+type Scenario = 'default' | 'limitedScope' | 'noNotifyRight' | 'noRight';
+const SCENARIOS: Scenario[] = ['default', 'limitedScope', 'noNotifyRight', 'noRight'];
+
+const SCENARIO_RIGHTS: Record<Scenario, CapitalCallRights> = {
+  default: FULL_RIGHTS,
+  limitedScope: FULL_RIGHTS,
+  noNotifyRight: { ...FULL_RIGHTS, notify: false },
+  noRight: FULL_RIGHTS,
+};
+
+const MENU_GROUPS: { action: CapitalCallAction; icon: LucideIcon }[][] = [
+  [
+    { action: 'notify', icon: Send },
+    { action: 'relaunch', icon: BellRing },
+  ],
+  [
+    { action: 'exportTarget', icon: Users },
+    { action: 'exportNotices', icon: FileArchive },
+    { action: 'exportLines', icon: FileSpreadsheet },
+  ],
+  [
+    { action: 'edit', icon: Pencil },
+    { action: 'delete', icon: Trash2 },
+  ],
+];
+
+const NOTIFY_DURATION = 6000;
+const RELAUNCH_DURATION = 4000;
 
 type SortConfig = { key: string; direction: 'asc' | 'desc' };
 type ActiveFilters = Record<string, string | string[]>;
@@ -128,6 +178,12 @@ export function CapitalCallsPage({ funds, initialFundIds, onOpenFund }: CapitalC
   const [pageSize, setPageSize] = useState(20);
   const [hoveredRow, setHoveredRow] = useState<number | null>(null);
   const [visibleColumns, setVisibleColumns] = useState<ColumnKey[]>(readStoredColumns);
+  const [allCalls, setAllCalls] = useState<CapitalCall[]>(() => generateCapitalCalls(funds));
+  const [pendingDelete, setPendingDelete] = useState<CapitalCall | null>(null);
+  const timers = useRef<number[]>([]);
+  const rights = SCENARIO_RIGHTS[scenario];
+
+  useEffect(() => () => timers.current.forEach(id => window.clearTimeout(id)), []);
 
   const initialFundKey = (initialFundIds ?? []).join(',');
   useEffect(() => {
@@ -142,8 +198,6 @@ export function CapitalCallsPage({ funds, initialFundIds, onOpenFund }: CapitalC
       // Préférence de confort : sans stockage, les colonnes par défaut s'appliquent.
     }
   }, [visibleColumns]);
-
-  const allCalls = useMemo(() => generateCapitalCalls(funds), [funds]);
 
   const scopeFundIds = useMemo(() => {
     const ids = Array.from(new Set(allCalls.map(call => call.fundId)));
@@ -231,6 +285,74 @@ export function CapitalCallsPage({ funds, initialFundIds, onOpenFund }: CapitalC
       return next;
     });
     setPage(1);
+  };
+
+  const blockerReason = (call: CapitalCall, action: CapitalCallAction) => {
+    const blocker = capitalCallBlocker(call, action, rights);
+    return blocker ? t(`${K}.blockers.${blocker}`) : null;
+  };
+
+  const updateCall = (id: number, patch: (call: CapitalCall) => Partial<CapitalCall>) =>
+    setAllCalls(prev => prev.map(call => (call.id === id ? { ...call, ...patch(call) } : call)));
+
+  const later = (delay: number, run: () => void) => {
+    timers.current.push(window.setTimeout(run, delay));
+  };
+
+  /** Point d'entrée unique des actions : le contrôle serveur est refait quelle que soit l'origine du geste. */
+  const runAction = (callId: number, action: CapitalCallAction) => {
+    const call = allCalls.find(item => item.id === callId);
+    if (!call) return;
+    const reason = blockerReason(call, action);
+    if (reason) {
+      toast.error(t(`${K}.toast.refused`, { name: call.name }), { description: reason });
+      return;
+    }
+    switch (action) {
+      case 'notify':
+        updateCall(call.id, () => ({ sending: true }));
+        toast.info(t(`${K}.toast.notifyStarted`, { name: call.name }));
+        later(NOTIFY_DURATION, () => {
+          updateCall(call.id, current => ({ sending: false, notifiedLines: current.lines }));
+          toast.success(t(`${K}.toast.notifyDone`, { name: call.name }));
+        });
+        break;
+      case 'relaunch':
+        updateCall(call.id, () => ({ sending: true }));
+        toast.info(t(`${K}.toast.relaunchStarted`, { name: call.name, count: call.linesToRelaunch }));
+        later(RELAUNCH_DURATION, () => {
+          updateCall(call.id, () => ({ sending: false }));
+          toast.success(t(`${K}.toast.relaunchDone`, { name: call.name }));
+        });
+        break;
+      case 'delete':
+        setPendingDelete(call);
+        break;
+      case 'edit':
+        toast.info(t(`${K}.toast.editComingSoon`));
+        break;
+      default:
+        toast.info(t(`${K}.toast.exportComingSoon`, { action: t(`${K}.actions.${action}`) }));
+    }
+  };
+
+  const confirmDelete = () => {
+    if (!pendingDelete) return;
+    const current = allCalls.find(item => item.id === pendingDelete.id);
+    const reason = current ? blockerReason(current, 'delete') : null;
+    setPendingDelete(null);
+    if (!current) return;
+    if (reason) {
+      toast.error(t(`${K}.toast.refused`, { name: current.name }), { description: reason });
+      return;
+    }
+    setAllCalls(prev => prev.filter(item => item.id !== current.id));
+    toast.success(t(`${K}.toast.deleted`, { name: current.name }));
+  };
+
+  const simulateDirectNotify = () => {
+    const target = scopedCalls.find(call => call.notifiedLines < call.lines && !call.sending) ?? scopedCalls[0];
+    if (target) runAction(target.id, 'notify');
   };
 
   const toggleColumn = (key: ColumnKey) => {
@@ -323,7 +445,48 @@ export function CapitalCallsPage({ funds, initialFundIds, onOpenFund }: CapitalC
     },
   };
 
-  const columns = visibleColumns.map(key => columnDefinitions[key]);
+  const actionsColumn: ColumnConfig<CapitalCall> = {
+    key: 'actions',
+    label: t(`${K}.columns.actions`),
+    align: 'right',
+    render: call => (
+      <span onClick={event => event.stopPropagation()}>
+        <DropdownMenu>
+          <DropdownMenuTrigger asChild>
+            <Button variant="ghost" size="icon" aria-label={t(`${K}.actionsFor`, { name: call.name })}>
+              <MoreHorizontal className="h-4 w-4" />
+            </Button>
+          </DropdownMenuTrigger>
+          <DropdownMenuContent align="end" className="w-64">
+            {MENU_GROUPS.map((group, index) => (
+              <div key={group[0].action}>
+                {index > 0 && <DropdownMenuSeparator />}
+                {group.map(({ action, icon: Icon }) => {
+                  const reason = blockerReason(call, action);
+                  return (
+                    <DropdownMenuItem
+                      key={action}
+                      onClick={() => runAction(call.id, action)}
+                      disabled={Boolean(reason)}
+                      variant={action === 'delete' ? 'destructive' : 'default'}
+                    >
+                      <Icon className="h-4 w-4" />
+                      <span className="flex flex-col">
+                        <span>{t(`${K}.actions.${action}`)}</span>
+                        {reason && <span className="text-xs text-muted-foreground">{reason}</span>}
+                      </span>
+                    </DropdownMenuItem>
+                  );
+                })}
+              </div>
+            ))}
+          </DropdownMenuContent>
+        </DropdownMenu>
+      </span>
+    ),
+  };
+
+  const columns = [...visibleColumns.map(key => columnDefinitions[key]), actionsColumn];
 
   const queueCard = (id: Queue, icon: typeof List, calls: CapitalCall[]) => {
     const fundCount = new Set(calls.map(call => call.fundId)).size;
@@ -405,6 +568,11 @@ export function CapitalCallsPage({ funds, initialFundIds, onOpenFund }: CapitalC
           ))}
         </SelectContent>
       </Select>
+      {scenario === 'noNotifyRight' && (
+        <Button variant="outline" size="sm" className="bg-card" onClick={simulateDirectNotify}>
+          {t(`${K}.scenario.simulateDirectNotify`)}
+        </Button>
+      )}
     </div>
   );
 
@@ -436,6 +604,16 @@ export function CapitalCallsPage({ funds, initialFundIds, onOpenFund }: CapitalC
           icon: <Plus className="h-4 w-4" />,
           onClick: () => toast.info(t(`${K}.toast.creationComingSoon`)),
         }}
+      />
+
+      <ConfirmDialog
+        open={Boolean(pendingDelete)}
+        onOpenChange={open => !open && setPendingDelete(null)}
+        title={t(`${K}.deleteDialog.title`, { name: pendingDelete?.name ?? '' })}
+        description={t(`${K}.deleteDialog.description`, { fund: pendingDelete?.fundName ?? '' })}
+        confirmLabel={t(`${K}.deleteDialog.confirm`)}
+        destructive
+        onConfirm={confirmDelete}
       />
 
       <div className="flex flex-1 flex-col gap-4 px-6 py-6">
