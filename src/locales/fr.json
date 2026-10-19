@@ -1709,13 +1709,40 @@
       },
       "structuresList": {
         "title": "Structures légales ({{count}})",
-        "contactsCountOne": "{{count}} contact",
-        "contactsCountMany": "{{count}} contacts",
-        "subscriptionsCountOne": "{{count}} souscription",
-        "subscriptionsCountMany": "{{count}} souscriptions",
-        "investedAmount": "Montant investi : {{amount}}",
-        "kycLabel": "KYC : {{status}}",
-        "riskScore": "Score de risque : {{score}}/100"
+        "add": "Ajouter une structure",
+        "edit": "Modifier",
+        "actionsFor": "Actions pour {{name}}",
+        "columns": {
+          "name": "Nom",
+          "type": "Type",
+          "representative": "Représentant légal",
+          "contacts": "Contacts",
+          "subscriptions": "Souscriptions",
+          "invested": "Montant investi",
+          "kyc": "KYC",
+          "risk": "Score de risque",
+          "actions": "Actions"
+        },
+        "sheet": {
+          "addTitle": "Ajouter une structure",
+          "editTitle": "Modifier la structure",
+          "addDesc": "Renseignez les informations de la nouvelle structure légale.",
+          "editDesc": "Modifiez les informations de la structure légale.",
+          "general": "Informations générales",
+          "name": "Nom de la structure",
+          "type": "Type",
+          "participationId": "Identifiant de participation",
+          "representative": "Représentant légal",
+          "compliance": "Conformité",
+          "complianceDesc": "Statut KYC et score de risque de la structure.",
+          "kycStatus": "Statut KYC",
+          "riskScore": "Score de risque",
+          "riskScoreHint": "Calculé par le module Conformité."
+        },
+        "toast": {
+          "added": "Structure {{name}} ajoutée",
+          "updated": "Structure {{name}} mise à jour"
+        }
       },
       "notes": {
         "title": "Notes internes ({{count}})",
@@ -1782,7 +1809,6 @@
         "primaryBadge": "Principal",
         "openPortalAs": "Ouvrir le portail en tant que {{name}}",
         "openPortalToast": "Ouverture du portail en tant que {{name}}",
-        "noPortalAccess": "{{name}} n'a pas encore d'accès au portail",
         "investorPortalNoAccess": "Portail investisseur (accès non activé)",
         "portalAccessBadge": "Accès portail",
         "noAccess": "Pas d'accès",
@@ -1872,7 +1898,17 @@
         "signatureSectionHint": "Habilitation de ce contact à signer pour l'investisseur.",
         "isSignatory": "Signataire autorisé",
         "signatureLevel": "Type de signature",
-        "signatoryBadge": "Signataire · {{level}}"
+        "signatoryBadge": "Signataire · {{level}}",
+        "columns": {
+          "name": "Nom",
+          "email": "Email",
+          "phone": "Téléphone",
+          "roles": "Rôles",
+          "portal": "Accès portail",
+          "actions": "Actions"
+        },
+        "actionsFor": "Actions pour {{name}}",
+        "portalAccessLevel": "Accès portail · {{level}}"
       }
     }
   },

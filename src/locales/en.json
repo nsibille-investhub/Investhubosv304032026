@@ -1709,13 +1709,40 @@
       },
       "structuresList": {
         "title": "Legal structures ({{count}})",
-        "contactsCountOne": "{{count}} contact",
-        "contactsCountMany": "{{count}} contacts",
-        "subscriptionsCountOne": "{{count}} subscription",
-        "subscriptionsCountMany": "{{count}} subscriptions",
-        "investedAmount": "Invested amount: {{amount}}",
-        "kycLabel": "KYC: {{status}}",
-        "riskScore": "Risk score: {{score}}/100"
+        "add": "Add a structure",
+        "edit": "Edit",
+        "actionsFor": "Actions for {{name}}",
+        "columns": {
+          "name": "Name",
+          "type": "Type",
+          "representative": "Legal representative",
+          "contacts": "Contacts",
+          "subscriptions": "Subscriptions",
+          "invested": "Amount invested",
+          "kyc": "KYC",
+          "risk": "Risk score",
+          "actions": "Actions"
+        },
+        "sheet": {
+          "addTitle": "Add a structure",
+          "editTitle": "Edit structure",
+          "addDesc": "Enter the details of the new legal structure.",
+          "editDesc": "Edit the details of the legal structure.",
+          "general": "General information",
+          "name": "Structure name",
+          "type": "Type",
+          "participationId": "Participation ID",
+          "representative": "Legal representative",
+          "compliance": "Compliance",
+          "complianceDesc": "KYC status and risk score of the structure.",
+          "kycStatus": "KYC status",
+          "riskScore": "Risk score",
+          "riskScoreHint": "Computed by the Compliance module."
+        },
+        "toast": {
+          "added": "Structure {{name}} added",
+          "updated": "Structure {{name}} updated"
+        }
       },
       "notes": {
         "title": "Internal notes ({{count}})",
@@ -1782,7 +1809,6 @@
         "primaryBadge": "Primary",
         "openPortalAs": "Open portal as {{name}}",
         "openPortalToast": "Opening portal as {{name}}",
-        "noPortalAccess": "{{name}} does not have portal access yet",
         "investorPortalNoAccess": "Investor portal (access not enabled)",
         "portalAccessBadge": "Portal access",
         "noAccess": "No access",
@@ -1872,7 +1898,17 @@
         "signatureSectionHint": "Whether this contact can sign on behalf of the investor.",
         "isSignatory": "Authorised signatory",
         "signatureLevel": "Signature type",
-        "signatoryBadge": "Signatory · {{level}}"
+        "signatoryBadge": "Signatory · {{level}}",
+        "columns": {
+          "name": "Name",
+          "email": "Email",
+          "phone": "Phone",
+          "roles": "Roles",
+          "portal": "Portal access",
+          "actions": "Actions"
+        },
+        "actionsFor": "Actions for {{name}}",
+        "portalAccessLevel": "Portal access · {{level}}"
       }
     }
   },

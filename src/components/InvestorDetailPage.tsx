@@ -37,7 +37,6 @@ import {
   Save,
   X,
   ShieldCheck,
-  AlertTriangle,
   ChevronRight,
 } from 'lucide-react';
 import { Badge } from './ui/badge';
@@ -75,6 +74,7 @@ import {
   TooltipTrigger,
 } from "./ui/tooltip";
 import { ContactsTab, countContactRows } from './investor-detail/ContactsTab';
+import { StructuresTab } from './investor-detail/StructuresTab';
 import { useTranslation } from '../utils/languageContext';
 
 const INVESTOR_STATUS_VARIANT: Record<string, StatusVariant> = {
@@ -1065,134 +1065,7 @@ export function InvestorDetailPage({ investor: initialInvestor, onBack, initialT
 
           {/* Structures Tab */}
           <TabsContent value="structures">
-            <div className="bg-card rounded-xl border border-border">
-              <div className="p-6 border-b border-border">
-                <h2 className="font-semibold text-foreground flex items-center gap-2">
-                  <Building2 className="w-5 h-5 text-cyan-600" />
-                  {t('investors.detail.structuresList.title', { count: investor.structures.length })}
-                </h2>
-              </div>
-              
-              <div className="p-6">
-                <div className="grid gap-4">
-                  {investor.structures.map((structure, idx) => (
-                    <motion.div
-                      key={structure.id}
-                      initial={{ opacity: 0, y: 10 }}
-                      animate={{ opacity: 1, y: 0 }}
-                      transition={{ delay: idx * 0.05 }}
-                      className="p-5 rounded-lg border border-border hover:border-blue-300 hover:bg-blue-50/30 transition-all"
-                    >
-                      <div className="space-y-3">
-                        {/* En-tête avec nom et type */}
-                        <div className="flex items-start justify-between">
-                          <div className="flex items-center gap-2">
-                            <Building2 className="w-5 h-5 text-muted-foreground/60" />
-                            <span className="font-semibold text-foreground">{structure.name}</span>
-                          </div>
-                          <Badge 
-                            variant="outline" 
-                            className={`border text-xs ${
-                              structure.type === 'SCI' ? 'bg-blue-50 text-blue-700 border-blue-200' :
-                              structure.type === 'SARL' ? 'bg-purple-50 text-purple-700 border-purple-200' :
-                              structure.type === 'SAS' ? 'bg-indigo-50 text-indigo-700 border-indigo-200' :
-                              structure.type === 'SA' ? 'bg-violet-50 text-violet-700 border-violet-200' :
-                              structure.type === 'Trust' ? 'bg-emerald-50 text-emerald-700 border-emerald-200' :
-                              structure.type === 'Foundation' ? 'bg-amber-50 text-amber-700 border-amber-200' :
-                              'bg-cyan-50 text-cyan-700 border-cyan-200'
-                            }`}
-                          >
-                            {structure.type}
-                          </Badge>
-                        </div>
-
-                        {/* Informations détaillées */}
-                        <div className="grid grid-cols-2 gap-3 pl-7">
-                          {/* Représentant légal */}
-                          {structure.legalRepresentative && (
-                            <div className="flex items-center gap-2 col-span-2">
-                              <User className="w-4 h-4 text-blue-600" />
-                              <span className="text-sm font-medium text-foreground">
-                                {structure.legalRepresentative}
-                              </span>
-                            </div>
-                          )}
-
-                          {/* Contacts */}
-                          <div className="flex items-center gap-2">
-                            <Users className="w-4 h-4 text-muted-foreground/60" />
-                            <span className="text-sm text-muted-foreground">
-                              {(structure.contactsCount || 0) > 1
-                                ? t('investors.detail.structuresList.contactsCountMany', { count: structure.contactsCount || 0 })
-                                : t('investors.detail.structuresList.contactsCountOne', { count: structure.contactsCount || 0 })}
-                            </span>
-                          </div>
-
-                          {/* Souscriptions */}
-                          <div className="flex items-center gap-2">
-                            <FileText className="w-4 h-4 text-muted-foreground/60" />
-                            <span className="text-sm text-muted-foreground">
-                              {(structure.subscriptionsCount || 0) > 1
-                                ? t('investors.detail.structuresList.subscriptionsCountMany', { count: structure.subscriptionsCount || 0 })
-                                : t('investors.detail.structuresList.subscriptionsCountOne', { count: structure.subscriptionsCount || 0 })}
-                            </span>
-                          </div>
-
-                          {/* Montant total investi */}
-                          <div className="flex items-center gap-2 col-span-2">
-                            <TrendingUp className="w-4 h-4 text-emerald-600" />
-                            <span className="text-sm font-semibold text-foreground">
-                              {t('investors.detail.structuresList.investedAmount', {
-                                amount: structure.totalInvested ? `${(structure.totalInvested / 1000000).toFixed(2)} M€` : '0 €'
-                              })}
-                            </span>
-                          </div>
-
-                          {/* Statut KYC */}
-                          <div className="flex items-center gap-2 col-span-2">
-                            <Badge
-                              variant="outline"
-                              className={`text-xs px-2 py-1 ${
-                                structure.kycStatus === 'Validé' ? 'bg-emerald-50 text-emerald-700 border-emerald-200' :
-                                structure.kycStatus === 'En cours' ? 'bg-blue-50 text-blue-700 border-blue-200' :
-                                structure.kycStatus === 'À revoir' ? 'bg-amber-50 text-amber-700 border-amber-200' :
-                                'bg-muted text-foreground border-border'
-                              }`}
-                            >
-                              {t('investors.detail.structuresList.kycLabel', {
-                                status: structure.kycStatus
-                                  ? t(`investors.detail.kycStatus.${structure.kycStatus}`)
-                                  : t('investors.detail.kycStatus.Non commencé')
-                              })}
-                            </Badge>
-                          </div>
-
-                          {/* Risk Score */}
-                          {structure.riskScore !== undefined && (
-                            <div className="flex items-center gap-2 col-span-2">
-                              {structure.riskScore < 30 ? (
-                                <ShieldCheck className="w-4 h-4 text-emerald-600" />
-                              ) : structure.riskScore < 70 ? (
-                                <AlertTriangle className="w-4 h-4 text-amber-600" />
-                              ) : (
-                                <AlertTriangle className="w-4 h-4 text-red-600" />
-                              )}
-                              <span className={`text-sm font-medium ${
-                                structure.riskScore < 30 ? 'text-emerald-600' :
-                                structure.riskScore < 70 ? 'text-amber-600' :
-                                'text-red-600'
-                              }`}>
-                                {t('investors.detail.structuresList.riskScore', { score: structure.riskScore })}
-                              </span>
-                            </div>
-                          )}
-                        </div>
-                      </div>
-                    </motion.div>
-                  ))}
-                </div>
-              </div>
-            </div>
+            <StructuresTab structures={investor.structures} />
           </TabsContent>
 
           {/* Notes Tab */}
