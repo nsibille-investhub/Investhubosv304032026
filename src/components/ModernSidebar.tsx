@@ -35,7 +35,7 @@ export function ModernSidebar({ expanded, onToggle, currentPage = 'entities', on
     investisseurs: currentPage === 'subscriptions' || currentPage === 'investors',
     partenaires: currentPage === 'partners' || currentPage === 'settings-conventions' || currentPage === 'retrocessions',
     participations: false,
-    fundlife: false,
+    fundlife: currentPage === 'allfunds' || currentPage === 'capitalcalls',
     dataroom: currentPage === 'documents' || currentPage === 'tracking' || currentPage === 'birdview' || currentPage === 'validation',
     portails: currentPage === 'events' || currentPage === 'news' || currentPage === 'datahub',
     communications: false,
@@ -72,7 +72,7 @@ export function ModernSidebar({ expanded, onToggle, currentPage = 'entities', on
       investisseurs: currentPage === 'subscriptions' || currentPage === 'investors',
       partenaires: currentPage === 'partners' || currentPage === 'settings-conventions' || currentPage === 'retrocessions',
       participations: false,
-      fundlife: false,
+      fundlife: currentPage === 'allfunds' || currentPage === 'capitalcalls',
       dataroom: currentPage === 'documents' || currentPage === 'tracking' || currentPage === 'birdview' || currentPage === 'validation',
       portails: currentPage === 'events' || currentPage === 'news' || currentPage === 'datahub',
       communications: false,
@@ -296,7 +296,13 @@ export function ModernSidebar({ expanded, onToggle, currentPage = 'entities', on
                 onClick={() => onPageChange?.('allfunds')}
               />
               <SubMenuItem icon={icons.Settings} label={t('sidebar.submenu.settings')} expanded={expanded} />
-              <SubMenuItem icon={icons.DollarSign} label={t('sidebar.submenu.calls')} expanded={expanded} />
+              <SubMenuItem
+                icon={icons.DollarSign}
+                label={t('sidebar.submenu.calls')}
+                expanded={expanded}
+                isActive={currentPage === 'capitalcalls'}
+                onClick={() => onPageChange?.('capitalcalls')}
+              />
               <SubMenuItem icon={icons.Wallet} label={t('sidebar.submenu.capitalAccounts')} expanded={expanded} />
               <SubMenuItem icon={icons.ArrowDownCircle} label={t('sidebar.submenu.distributions')} expanded={expanded} />
               <SubMenuItem icon={icons.TrendingDown} label={t('sidebar.submenu.cashFlowForecasts')} expanded={expanded} />

@@ -13,6 +13,7 @@ export type Page =
   | 'partners'
   | 'retrocessions'
   | 'allfunds'
+  | 'capitalcalls'
   | 'events'
   | 'news'
   | 'datahub'
@@ -70,6 +71,7 @@ const PAGE_TO_PATH: Record<Page, string> = {
   'partners': '/partners',
   'retrocessions': '/retrocessions',
   'allfunds': '/allfunds',
+  'capitalcalls': '/capital-calls',
   'events': '/events',
   'news': '/news',
   'datahub': '/datahub',

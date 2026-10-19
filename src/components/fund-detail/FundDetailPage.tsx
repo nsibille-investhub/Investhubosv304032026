@@ -87,6 +87,7 @@ interface FundDetailPageProps {
   fund: Fund;
   onBack: () => void;
   onOpenSubscriptions: (fund: Fund) => void;
+  onOpenCapitalCalls: (fund: Fund) => void;
 }
 
 function LinkedScreenTab({ titleKey, descriptionKey, icon }: { titleKey: string; descriptionKey: string; icon: typeof FileText }) {
@@ -119,7 +120,7 @@ function ComingSoonTab({ icon }: { icon: typeof FileText }) {
   );
 }
 
-export function FundDetailPage({ fund, onBack, onOpenSubscriptions }: FundDetailPageProps) {
+export function FundDetailPage({ fund, onBack, onOpenSubscriptions, onOpenCapitalCalls }: FundDetailPageProps) {
   const { t, lang } = useTranslation();
   const [scenario, setScenario] = useState<FundScenario>('default');
   const initial = useMemo(() => buildFundDetail(fund, scenario), [fund, scenario]);
@@ -482,6 +483,7 @@ export function FundDetailPage({ fund, onBack, onOpenSubscriptions }: FundDetail
               onNavigate={navigateTo}
               onOpenTab={next => setTab(next as TabId)}
               onOpenSubscriptions={() => onOpenSubscriptions(fund)}
+              onOpenCapitalCalls={() => onOpenCapitalCalls(fund)}
             />
           </TabsContent>
           <TabsContent value="settings">

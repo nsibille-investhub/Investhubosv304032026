@@ -173,7 +173,8 @@
     "administration": "Administration",
     "spaces": "Spaces",
     "settings": "Settings",
-    "entityDetail": "Entity detail"
+    "entityDetail": "Entity detail",
+    "capitalCalls": "Capital calls"
   },
   "search": {
     "placeholder": "Search... Ask anything to your Hub.",
@@ -4803,7 +4804,8 @@
           "called": "Called",
           "remaining": "Remaining to call",
           "percent": "{{percent}}% of the subscribed amount called",
-          "last": "Last call"
+          "last": "Last call",
+          "openCalls": "View calls"
         },
         "distributions": {
           "title": "Distributions",
@@ -5610,6 +5612,72 @@
           "redemptionUnit": "Unit offered to the investor for a redemption. Replaces \"Rebuy by amount\" and \"Rebuy by amount or shares\".",
           "periodicRedemption": "Offers periodic redemption on the portal. Replaces \"Allow periodic rebuy\".",
           "shareNavProrata": "True override of the fund setting. Replaces \"Prorata for share value\" and the share attribute."
+        }
+      }
+    },
+    "capitalCalls": {
+      "title": "Capital calls",
+      "subtitle": "Calls from every fund in your scope",
+      "actions": {
+        "new": "New call"
+      },
+      "searchPlaceholder": "Search a call or a fund",
+      "sendingBadge": "Sending",
+      "queues": {
+        "label": "Work queues",
+        "all": "All calls",
+        "sending": "Sending"
+      },
+      "filters": {
+        "funds": "Funds",
+        "fundsSearch": "Search a fund",
+        "duePeriod": "Due date period",
+        "clear": "Clear",
+        "origin": "Origin",
+        "allOrigins": "All origins",
+        "reset": "Reset filters"
+      },
+      "columns": {
+        "fund": "Fund",
+        "name": "Name",
+        "dueDate": "Due date",
+        "calledAmount": "Called amount",
+        "noticeDate": "Notice date",
+        "origin": "Origin",
+        "compensation": "Offset",
+        "createdAt": "Created on",
+        "createdBy": "Created by"
+      },
+      "columnsMenu": {
+        "label": "Columns",
+        "title": "Displayed columns",
+        "reset": "Restore default columns"
+      },
+      "origins": {
+        "backOffice": "Back office",
+        "import": "Import",
+        "api": "API"
+      },
+      "empty": {
+        "title": "No capital calls",
+        "description": "Calls from the funds in your scope will appear here.",
+        "filteredTitle": "No matching calls",
+        "filteredDescription": "Change the search or the filters to widen the results."
+      },
+      "accessDenied": {
+        "title": "Access denied",
+        "description": "You don't have the \"View calls\" right. Please contact your internal administrator."
+      },
+      "toast": {
+        "creationComingSoon": "Call creation comes with the creation wizard.",
+        "detailComingSoon": "The call page is coming soon in the mockup."
+      },
+      "scenario": {
+        "label": "Demo scenario",
+        "options": {
+          "default": "Full scope",
+          "limitedScope": "Scope limited to two funds",
+          "noRight": "Without the View calls right"
         }
       }
     }
