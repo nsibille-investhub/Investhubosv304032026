@@ -1,20 +1,16 @@
 import { useMemo, useState } from 'react';
-import { ExternalLink, MoreHorizontal, Pencil, PenTool, Plus, Star } from 'lucide-react';
+import { ExternalLink, Pencil, PenTool, Plus, Star, Users } from 'lucide-react';
 import { toast } from 'sonner';
 import type { Investor } from '../../utils/investorGenerator';
 import { useTranslation } from '../../utils/languageContext';
 import { DataTable, type ColumnConfig } from '../DataTable';
 import { LanguageFlag } from '../LanguageFlag';
 import { StatusBadge } from '../StatusBadge';
+import { EmptyState } from '../EmptyState';
+import { FilterBar, type FilterConfig } from '../FilterBar';
+import { Tag } from '../Tag';
 import { Button } from '../ui/button';
-import { Card } from '../ui/card';
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuTrigger,
-} from '../ui/dropdown-menu';
-import { WIDGET_TITLE_CLASS } from '../ui/utils';
+import { ListingCard, ListingNameCell, ListingRowActions } from '../ui/listing';
 import { ContactEditSheet, type ContactDraft, type SignatureLevel } from './ContactEditSheet';
 
 type Contact = ContactDraft;
@@ -123,6 +119,8 @@ export function ContactsTab({ investor }: ContactsTabProps) {
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [sortConfig, setSortConfig] = useState<{ key: string; direction: 'asc' | 'desc' } | null>(null);
   const [hoveredRow, setHoveredRow] = useState<number | null>(null);
+  const [search, setSearch] = useState('');
+  const [filters, setFilters] = useState<Record<string, string | string[]>>({});
 
   const structures = useMemo(
     () => investor.structures.map((structure) => ({ id: structure.id, name: structure.name, type: structure.type })),
@@ -182,15 +180,47 @@ export function ContactsTab({ investor }: ContactsTabProps) {
     window.open(`/portal?impersonate=${contact.id}`, '_blank');
   };
 
+  const filterConfigs: FilterConfig[] = [
+    {
+      id: 'role',
+      label: t(`${K}.filters.role`),
+      type: 'select',
+      isPrimary: true,
+      options: [
+        { value: 'primary', label: t(`${K}.primaryBadge`) },
+        { value: 'signatory', label: t(`${K}.filters.signatory`) },
+      ],
+    },
+    {
+      id: 'portal',
+      label: t(`${K}.columns.portal`),
+      type: 'select',
+      isPrimary: true,
+      options: [
+        { value: 'with', label: t(`${K}.portalAccessBadge`) },
+        { value: 'without', label: t(`${K}.noAccess`) },
+      ],
+    },
+  ];
+
   const rows: Row[] = useMemo(() => {
-    const list: Row[] = contacts.map((contact, index) => ({ ...contact, id: index + 1, contactId: contact.id }));
+    const term = search.trim().toLowerCase();
+    const filtered = contacts.filter((contact) => {
+      if (term && ![fullName(contact), contact.email, contact.phone, contact.function].some((v) => v?.toLowerCase().includes(term))) return false;
+      if (filters.role === 'primary' && !contact.isPrimary) return false;
+      if (filters.role === 'signatory' && !contact.isSignatory) return false;
+      if (filters.portal === 'with' && !contact.hasPortalAccess) return false;
+      if (filters.portal === 'without' && contact.hasPortalAccess) return false;
+      return true;
+    });
+    const list: Row[] = filtered.map((contact, index) => ({ ...contact, id: index + 1, contactId: contact.id }));
     if (!sortConfig) return list;
     const valueOf = (row: Row) => (sortConfig.key as SortKey) === 'name' ? fullName(row) : row[sortConfig.key as 'email' | 'phone'] ?? '';
     return [...list].sort((a, b) => {
       const result = valueOf(a).localeCompare(valueOf(b), lang);
       return sortConfig.direction === 'asc' ? result : -result;
     });
-  }, [contacts, sortConfig, lang]);
+  }, [contacts, sortConfig, lang, search, filters]);
 
   const toContact = (row: Row): Contact => contacts.find((contact) => contact.id === row.contactId) ?? contacts[0];
 
@@ -199,37 +229,38 @@ export function ContactsTab({ investor }: ContactsTabProps) {
       key: 'name',
       label: t(`${K}.columns.name`),
       sortable: true,
-      render: (row) => (
-        <span className="flex flex-col">
-          <span className="inline-flex items-center gap-2 font-medium text-foreground">
-            {fullName(row)}
-            {row.language && <LanguageFlag language={row.language} size="sm" showTooltip />}
-          </span>
-          {row.function && <span className="text-xs text-muted-foreground">{row.function}</span>}
-        </span>
+      render: (row, term) => (
+        <ListingNameCell
+          name={fullName(row)}
+          searchTerm={term}
+          secondary={row.function}
+          adornment={row.language ? <LanguageFlag language={row.language} size="sm" showTooltip /> : undefined}
+        />
       ),
     },
-    { key: 'email', label: t(`${K}.columns.email`), sortable: true, render: (row) => row.email },
-    { key: 'phone', label: t(`${K}.columns.phone`), sortable: true, render: (row) => <span className="tabular-nums">{row.phone}</span> },
+    { key: 'email', label: t(`${K}.columns.email`), sortable: true, render: (row) => <span className="text-sm text-gray-700">{row.email}</span> },
+    { key: 'phone', label: t(`${K}.columns.phone`), sortable: true, render: (row) => <span className="text-sm text-gray-700 tabular-nums">{row.phone}</span> },
     {
       key: 'roles',
       label: t(`${K}.columns.roles`),
-      render: (row) => (
-        <span className="inline-flex flex-wrap items-center gap-1.5">
-          {row.isPrimary && <StatusBadge icon={Star} variant="info" label={t(`${K}.primaryBadge`)} />}
-          {row.isSignatory && (
-            <StatusBadge
-              icon={PenTool}
-              variant="neutral"
-              label={
-                row.isPrimarySignatory
-                  ? t('investors.detail.signatories.primarySignatory')
-                  : t(`${K}.signatoryBadge`, { level: t(`investors.detail.signatureLevel.${row.signatureLevel}`) })
-              }
-            />
-          )}
-        </span>
-      ),
+      render: (row) =>
+        row.isPrimary || row.isSignatory ? (
+          <span className="inline-flex flex-wrap items-center gap-1.5">
+            {row.isPrimary && <Tag icon={Star} label={t(`${K}.primaryBadge`)} />}
+            {row.isSignatory && (
+              <Tag
+                icon={PenTool}
+                label={
+                  row.isPrimarySignatory
+                    ? t('investors.detail.signatories.primarySignatory')
+                    : t(`${K}.signatoryBadge`, { level: t(`investors.detail.signatureLevel.${row.signatureLevel}`) })
+                }
+              />
+            )}
+          </span>
+        ) : (
+          <span className="text-gray-400 text-sm">—</span>
+        ),
     },
     {
       key: 'portal',
@@ -246,64 +277,86 @@ export function ContactsTab({ investor }: ContactsTabProps) {
     },
     {
       key: 'actions',
-      label: t(`${K}.columns.actions`),
+      label: '',
       align: 'right',
       render: (row) => (
-        <span onClick={(event) => event.stopPropagation()}>
-          <DropdownMenu>
-            <DropdownMenuTrigger asChild>
-              <Button variant="ghost" size="icon" aria-label={t(`${K}.actionsFor`, { name: fullName(row) })}>
-                <MoreHorizontal className="w-4 h-4" />
-              </Button>
-            </DropdownMenuTrigger>
-            <DropdownMenuContent align="end">
-              <DropdownMenuItem onClick={() => handleEditContact(toContact(row))}>
-                <Pencil className="w-4 h-4" />
-                {t(`${K}.edit`)}
-              </DropdownMenuItem>
-              <DropdownMenuItem disabled={!row.hasPortalAccess} onClick={() => openPortal(toContact(row))}>
-                <ExternalLink className="w-4 h-4" />
-                <span className="flex flex-col">
-                  <span>{t(`${K}.openPortalAs`, { name: row.firstName })}</span>
-                  {!row.hasPortalAccess && (
-                    <span className="text-xs text-muted-foreground">{t(`${K}.investorPortalNoAccess`)}</span>
-                  )}
-                </span>
-              </DropdownMenuItem>
-            </DropdownMenuContent>
-          </DropdownMenu>
-        </span>
+        <ListingRowActions
+          ariaLabel={t(`${K}.actionsFor`, { name: fullName(row) })}
+          actions={[
+            { label: t(`${K}.edit`), icon: Pencil, onClick: () => handleEditContact(toContact(row)) },
+            {
+              label: t(`${K}.openPortalAs`, { name: row.firstName }),
+              icon: ExternalLink,
+              onClick: () => openPortal(toContact(row)),
+              disabledReason: row.hasPortalAccess ? undefined : t(`${K}.investorPortalNoAccess`),
+            },
+          ]}
+        />
       ),
     },
   ];
 
+  const hasFilters = Object.values(filters).some((value) => (Array.isArray(value) ? value.length > 0 : Boolean(value)));
+
   return (
     <>
-      <Card className="gap-0 overflow-hidden shadow-sm">
-        <div className="flex items-center justify-between gap-3 border-b border-border px-4 py-3">
-          <h3 className={WIDGET_TITLE_CLASS}>{t(`${K}.contactsTitle`, { count: contacts.length })}</h3>
-          <Button size="sm" onClick={handleAddContact}>
-            <Plus className="w-4 h-4" />
-            {t(`${K}.addContact`)}
-          </Button>
-        </div>
-        <DataTable
-          data={rows}
-          columns={columns}
-          hoveredRow={hoveredRow}
-          setHoveredRow={setHoveredRow}
-          onRowClick={(row) => handleEditContact(toContact(row))}
-          sortConfig={sortConfig}
-          onSort={(key) =>
-            setSortConfig((prev) =>
-              prev?.key === key ? (prev.direction === 'asc' ? { key, direction: 'desc' } : null) : { key, direction: 'asc' },
-            )
-          }
-          compactMode
-          hideSelection
-          density="compact"
-        />
-      </Card>
+      <ListingCard
+        toolbar={
+          <div className="flex items-start justify-between gap-3">
+            <FilterBar
+              className="flex-1"
+              searchValue={search}
+              onSearchChange={setSearch}
+              searchPlaceholder={t(`${K}.searchPlaceholder`)}
+              filters={filterConfigs}
+              activeFilters={filters}
+              onFilterChange={(id, value) =>
+                setFilters((prev) => {
+                  const next = { ...prev };
+                  if (value === null || (Array.isArray(value) && value.length === 0)) delete next[id];
+                  else next[id] = value;
+                  return next;
+                })
+              }
+              onClearAll={() => setFilters({})}
+            />
+            <Button onClick={handleAddContact} className="shrink-0">
+              <Plus className="w-4 h-4" />
+              {t(`${K}.addContact`)}
+            </Button>
+          </div>
+        }
+      >
+        {rows.length === 0 ? (
+          <EmptyState
+            icon={Users}
+            hasFilters={hasFilters}
+            hasSearch={Boolean(search.trim())}
+            entityName={t(`${K}.entity`)}
+            onReset={() => {
+              setSearch('');
+              setFilters({});
+            }}
+          />
+        ) : (
+          <DataTable
+            data={rows}
+            columns={columns}
+            hoveredRow={hoveredRow}
+            setHoveredRow={setHoveredRow}
+            onRowClick={(row) => handleEditContact(toContact(row))}
+            sortConfig={sortConfig}
+            onSort={(key) =>
+              setSortConfig((prev) =>
+                prev?.key === key ? (prev.direction === 'asc' ? { key, direction: 'desc' } : null) : { key, direction: 'asc' },
+              )
+            }
+            compactMode
+            hideSelection
+            searchTerm={search}
+          />
+        )}
+      </ListingCard>
 
       <ContactEditSheet
         open={isDialogOpen}

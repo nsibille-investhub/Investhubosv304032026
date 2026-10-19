@@ -1720,8 +1720,7 @@
           "subscriptions": "Souscriptions",
           "invested": "Montant investi",
           "kyc": "KYC",
-          "risk": "Score de risque",
-          "actions": "Actions"
+          "risk": "Score de risque"
         },
         "sheet": {
           "addTitle": "Ajouter une structure",
@@ -1742,7 +1741,11 @@
         "toast": {
           "added": "Structure {{name}} ajoutée",
           "updated": "Structure {{name}} mise à jour"
-        }
+        },
+        "searchPlaceholder": "Rechercher une structure...",
+        "entity": "structure",
+        "openContacts": "Voir les contacts",
+        "openSubscriptions": "Voir les souscriptions"
       },
       "notes": {
         "title": "Notes internes ({{count}})",
@@ -1892,7 +1895,7 @@
         "contactUpdated": "Contact mis à jour avec succès",
         "principalUser": "Utilisateur principal",
         "pickPlaceholder": "Sélectionner...",
-        "searchPlaceholder": "Rechercher...",
+        "searchPlaceholder": "Rechercher un contact...",
         "notificationCategories": "Catégories de notifications",
         "signatureSection": "Signature",
         "signatureSectionHint": "Habilitation de ce contact à signer pour l'investisseur.",
@@ -1904,11 +1907,15 @@
           "email": "Email",
           "phone": "Téléphone",
           "roles": "Rôles",
-          "portal": "Accès portail",
-          "actions": "Actions"
+          "portal": "Accès portail"
         },
         "actionsFor": "Actions pour {{name}}",
-        "portalAccessLevel": "Accès portail · {{level}}"
+        "portalAccessLevel": "Accès portail · {{level}}",
+        "entity": "contact",
+        "filters": {
+          "role": "Rôle",
+          "signatory": "Signataire"
+        }
       }
     }
   },
@@ -2016,6 +2023,13 @@
       "numberedList": "Liste numérotée",
       "link": "Insérer un lien",
       "linkPrompt": "Adresse du lien"
+    },
+    "listing": {
+      "id": "ID : {{id}}",
+      "copyId": "Copier l'ID",
+      "idCopied": "ID copié",
+      "copyError": "Erreur de copie",
+      "rowActions": "Actions"
     }
   },
   "ged": {

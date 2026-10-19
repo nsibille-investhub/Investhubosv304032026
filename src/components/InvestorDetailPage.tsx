@@ -1065,7 +1065,7 @@ export function InvestorDetailPage({ investor: initialInvestor, onBack, initialT
 
           {/* Structures Tab */}
           <TabsContent value="structures">
-            <StructuresTab structures={investor.structures} />
+            <StructuresTab structures={investor.structures} onOpenTab={setActiveTab} />
           </TabsContent>
 
           {/* Notes Tab */}

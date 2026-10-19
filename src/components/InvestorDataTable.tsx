@@ -4,8 +4,6 @@ import {
   ArrowUpDown,
   ArrowUp,
   ArrowDown,
-  Copy,
-  Check,
   Eye,
   ChevronDown,
   History,
@@ -17,9 +15,7 @@ import {
   UserCheck,
   Archive,
   FileText,
-  MoreVertical,
   LogIn,
-  ChevronRight
 } from 'lucide-react';
 import { Badge } from './ui/badge';
 import { Button } from './ui/button';
@@ -27,16 +23,9 @@ import { Investor } from '../utils/investorGenerator';
 import { formatCurrency, formatDate } from '../utils/formatters';
 import { ContactsCard } from './ContactsCard';
 import { StructuresCell } from './StructuresCell';
-import { HighlightText } from './HighlightText';
 import { LastActivityCard } from './LastActivityCard';
 import { PartnerCard } from './PartnerCard';
 import { cn } from './ui/utils';
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuTrigger,
-} from "./ui/dropdown-menu";
 import {
   Tooltip,
   TooltipContent,
@@ -44,10 +33,9 @@ import {
 } from "./ui/tooltip";
 import { toast } from 'sonner@2.0.3';
 import { AuditLogDialog } from './AuditLogDialog';
-import { copyToClipboard } from '../utils/clipboard';
 import { StatusBadge } from './StatusBadge';
 import { Tag } from './Tag';
-import { ClickableText } from './ClickableText';
+import { ListingCountTag, ListingNameCell, ListingRowActions, ListingTypeTag } from './ui/listing';
 import { useTranslation } from '../utils/languageContext';
 
 interface InvestorDataTableProps {
@@ -80,7 +68,6 @@ export function InvestorDataTable({
   const { t } = useTranslation();
   const [auditDialogOpen, setAuditDialogOpen] = useState(false);
   const [selectedInvestorForAudit, setSelectedInvestorForAudit] = useState<Investor | null>(null);
-  const [copiedId, setCopiedId] = useState<number | null>(null);
   const [selectedIds, setSelectedIds] = useState<Set<number>>(new Set());
   const [selectAll, setSelectAll] = useState(false);
 
@@ -98,28 +85,10 @@ export function InvestorDataTable({
     setAuditDialogOpen(true);
   };
 
-  const handleViewProfile = (row: Investor, e: React.MouseEvent) => {
-    e.stopPropagation();
-    onRowClick(row, 'profil');
-  };
-
-  const handlePortalConnection = (row: Investor, e: React.MouseEvent) => {
-    e.stopPropagation();
+  const handlePortalConnection = (row: Investor) => {
     toast.info(t('investors.table.portalConnectionToast'), {
       description: t('investors.table.portalConnectionDesc', { name: row.name }),
     });
-  };
-
-  const handleCopyId = async (id: string, investorId: number, e: React.MouseEvent) => {
-    e.stopPropagation();
-    const success = await copyToClipboard(id);
-    if (success) {
-      setCopiedId(investorId);
-      toast.success(t('investors.table.idCopied'), { description: id });
-      setTimeout(() => setCopiedId(null), 2000);
-    } else {
-      toast.error(t('investors.table.copyError'), { description: t('investors.table.copyErrorDesc') });
-    }
   };
 
   const handleSelectAll = () => {
@@ -338,35 +307,7 @@ export function InvestorDataTable({
 
                   {/* Name + ID */}
                   <td className="px-6 py-4 sticky left-[64px] z-10 bg-white">
-                    <div className="flex flex-col gap-1 max-w-[300px]">
-                      <motion.div
-                        whileHover={{ x: 2 }}
-                        title={row.name}
-                        className="text-sm font-medium cursor-pointer transition-all truncate"
-                      >
-                        <ClickableText>
-                          <HighlightText
-                            text={row.name}
-                            searchTerm={searchTerm}
-                          />
-                        </ClickableText>
-                      </motion.div>
-                      <div className="flex items-center gap-1.5">
-                        <span className="text-xs text-gray-500">ID: {row.id}</span>
-                        <motion.button
-                          whileHover={{ scale: 1.1 }}
-                          whileTap={{ scale: 0.9 }}
-                          onClick={(e) => handleCopyId(row.name, row.id, e)}
-                          className="p-0.5 hover:bg-gray-100 rounded transition-colors"
-                        >
-                          {copiedId === row.id ? (
-                            <Check className="w-3 h-3 text-emerald-600" />
-                          ) : (
-                            <Copy className="w-3 h-3 text-gray-400" />
-                          )}
-                        </motion.button>
-                      </div>
-                    </div>
+                    <ListingNameCell name={row.name} id={row.id} searchTerm={searchTerm} />
                   </td>
 
                   {/* Contacts */}
@@ -390,14 +331,7 @@ export function InvestorDataTable({
 
                   {/* Type */}
                   <td className="px-6 py-4">
-                    <div className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full border text-xs font-medium transition-colors bg-muted text-muted-foreground border-border">
-                      {row.type === 'Individual' ? (
-                        <User className="w-3.5 h-3.5" />
-                      ) : (
-                        <Building2 className="w-3.5 h-3.5" />
-                      )}
-                      <span>{t(`investors.type.${row.type}`)}</span>
-                    </div>
+                    <ListingTypeTag icon={row.type === 'Individual' ? User : Building2} label={t(`investors.type.${row.type}`)} />
                   </td>
 
                   {/* Status */}
@@ -428,19 +362,7 @@ export function InvestorDataTable({
 
                   {/* Subscriptions Count - Clickable Badge */}
                   <td className="px-6 py-4">
-                    <button
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        onRowClick(row, 'souscriptions');
-                      }}
-                      className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-muted border border-border transition-all duration-200 cursor-pointer group hover:scale-[1.03] hover:shadow-md hover:border-border/80 hover:bg-white"
-                    >
-                      <FileText className="w-3.5 h-3.5 text-muted-foreground group-hover:text-foreground" />
-                      <span className="text-sm font-medium text-muted-foreground group-hover:text-foreground">
-                        {row.subscriptionsCount}
-                      </span>
-                      <ChevronRight className="w-3.5 h-3.5 text-muted-foreground group-hover:text-foreground transition-transform group-hover:translate-x-0.5" />
-                    </button>
+                    <ListingCountTag icon={FileText} count={row.subscriptionsCount} onClick={() => onRowClick(row, 'souscriptions')} />
                   </td>
 
                   {/* CRM Segment - Badge coloré professionnel */}
@@ -467,28 +389,12 @@ export function InvestorDataTable({
 
                   {/* Actions */}
                   <td className="px-6 py-4 sticky right-0 z-10 bg-white">
-                    <DropdownMenu>
-                      <DropdownMenuTrigger asChild>
-                        <motion.button
-                          whileHover={{ scale: 1.1 }}
-                          whileTap={{ scale: 0.9 }}
-                          onClick={(e) => e.stopPropagation()}
-                          className="p-1.5 hover:bg-gray-100 rounded-lg transition-colors"
-                        >
-                          <MoreVertical className="w-4 h-4 text-gray-600" />
-                        </motion.button>
-                      </DropdownMenuTrigger>
-                      <DropdownMenuContent align="end">
-                        <DropdownMenuItem onClick={(e) => handleViewProfile(row, e as any)}>
-                          <Eye className="w-4 h-4 mr-2" />
-                          {t('investors.table.viewProfile')}
-                        </DropdownMenuItem>
-                        <DropdownMenuItem onClick={(e) => handlePortalConnection(row, e as any)}>
-                          <LogIn className="w-4 h-4 mr-2" />
-                          {t('investors.table.portalConnection')}
-                        </DropdownMenuItem>
-                      </DropdownMenuContent>
-                    </DropdownMenu>
+                    <ListingRowActions
+                      actions={[
+                        { label: t('investors.table.viewProfile'), icon: Eye, onClick: () => onRowClick(row, 'profil') },
+                        { label: t('investors.table.portalConnection'), icon: LogIn, onClick: () => handlePortalConnection(row) },
+                      ]}
+                    />
                   </td>
                 </motion.tr>
               ))}

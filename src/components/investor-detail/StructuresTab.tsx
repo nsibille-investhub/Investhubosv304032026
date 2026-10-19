@@ -1,16 +1,16 @@
 import { useMemo, useState } from 'react';
-import { MoreHorizontal, Pencil, Plus } from 'lucide-react';
+import { Building2, FileText, Pencil, Plus, Users } from 'lucide-react';
 import { toast } from 'sonner';
 import type { LegalStructure } from '../../utils/investorGenerator';
 import { useTranslation } from '../../utils/languageContext';
 import { formatCurrency } from '../../utils/formatters';
 import { DataTable, type ColumnConfig } from '../DataTable';
 import { StatusBadge, type StatusVariant } from '../StatusBadge';
+import { EmptyState } from '../EmptyState';
+import { FilterBar, type FilterConfig } from '../FilterBar';
 import { Button } from '../ui/button';
-import { Card } from '../ui/card';
-import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '../ui/dropdown-menu';
-import { WIDGET_TITLE_CLASS } from '../ui/utils';
-import { StructureEditSheet } from './StructureEditSheet';
+import { ListingCard, ListingCountTag, ListingNameCell, ListingRowActions, ListingTypeTag } from '../ui/listing';
+import { STRUCTURE_KYC_STATUSES, STRUCTURE_TYPES, StructureEditSheet } from './StructureEditSheet';
 
 const K = 'investors.detail.structuresList';
 
@@ -28,14 +28,18 @@ type SortKey = 'name' | 'type' | 'legalRepresentative' | 'contactsCount' | 'subs
 
 interface StructuresTabProps {
   structures: LegalStructure[];
+  /** Ouvre un autre onglet de la fiche : contacts, souscriptions. */
+  onOpenTab: (tab: 'contacts' | 'souscriptions') => void;
 }
 
-export function StructuresTab({ structures: initialStructures }: StructuresTabProps) {
+export function StructuresTab({ structures: initialStructures, onOpenTab }: StructuresTabProps) {
   const { t, lang } = useTranslation();
   const [structures, setStructures] = useState<LegalStructure[]>(initialStructures);
   const [selected, setSelected] = useState<LegalStructure | null>(null);
   const [sortConfig, setSortConfig] = useState<{ key: string; direction: 'asc' | 'desc' } | null>(null);
   const [hoveredRow, setHoveredRow] = useState<number | null>(null);
+  const [search, setSearch] = useState('');
+  const [filters, setFilters] = useState<Record<string, string | string[]>>({});
 
   const isNew = !!selected && !structures.some((structure) => structure.id === selected.id);
 
@@ -62,8 +66,34 @@ export function StructuresTab({ structures: initialStructures }: StructuresTabPr
     setSelected(null);
   };
 
+  const filterConfigs: FilterConfig[] = [
+    {
+      id: 'type',
+      label: t(`${K}.columns.type`),
+      type: 'multiselect',
+      isPrimary: true,
+      options: STRUCTURE_TYPES.map((type) => ({ value: type, label: type })),
+    },
+    {
+      id: 'kyc',
+      label: t(`${K}.columns.kyc`),
+      type: 'multiselect',
+      isPrimary: true,
+      options: STRUCTURE_KYC_STATUSES.map((status) => ({ value: status, label: t(`investors.detail.kycStatus.${status}`) })),
+    },
+  ];
+
   const rows: Row[] = useMemo(() => {
-    const list: Row[] = structures.map((structure, index) => ({ ...structure, id: index + 1, structureId: structure.id }));
+    const term = search.trim().toLowerCase();
+    const types = (filters.type as string[] | undefined) ?? [];
+    const kyc = (filters.kyc as string[] | undefined) ?? [];
+    const filtered = structures.filter((structure) => {
+      if (term && ![structure.name, structure.legalRepresentative, structure.participationId].some((v) => v?.toLowerCase().includes(term))) return false;
+      if (types.length > 0 && !types.includes(structure.type)) return false;
+      if (kyc.length > 0 && !kyc.includes(structure.kycStatus ?? 'Non commencé')) return false;
+      return true;
+    });
+    const list: Row[] = filtered.map((structure, index) => ({ ...structure, id: index + 1, structureId: structure.id }));
     if (!sortConfig) return list;
     const key = sortConfig.key as SortKey;
     return [...list].sort((a, b) => {
@@ -75,50 +105,61 @@ export function StructuresTab({ structures: initialStructures }: StructuresTabPr
         typeof left === 'number' && typeof right === 'number' ? left - right : String(left).localeCompare(String(right), lang);
       return sortConfig.direction === 'asc' ? result : -result;
     });
-  }, [structures, sortConfig, lang]);
+  }, [structures, sortConfig, lang, search, filters]);
 
   const toStructure = (row: Row) => structures.find((structure) => structure.id === row.structureId) ?? structures[0];
-  const empty = <span className="text-muted-foreground/60 italic">{t('common.sectionCard.notProvided')}</span>;
+  const empty = <span className="text-gray-400 text-sm">—</span>;
 
   const columns: ColumnConfig<Row>[] = [
     {
       key: 'name',
       label: t(`${K}.columns.name`),
       sortable: true,
-      render: (row) => (
-        <span className="flex flex-col">
-          <span className="font-medium text-foreground">{row.name}</span>
-          {row.participationId && <span className="text-xs text-muted-foreground">{row.participationId}</span>}
-        </span>
-      ),
+      render: (row, term) => <ListingNameCell name={row.name} searchTerm={term} secondary={row.participationId} />,
     },
-    { key: 'type', label: t(`${K}.columns.type`), sortable: true, render: (row) => <StatusBadge variant="outline" label={row.type} /> },
+    {
+      key: 'type',
+      label: t(`${K}.columns.type`),
+      sortable: true,
+      render: (row) => <ListingTypeTag icon={Building2} label={row.type} />,
+    },
     {
       key: 'legalRepresentative',
       label: t(`${K}.columns.representative`),
       sortable: true,
-      render: (row) => row.legalRepresentative ?? empty,
+      render: (row) => (row.legalRepresentative ? <span className="text-sm text-gray-700">{row.legalRepresentative}</span> : empty),
     },
     {
       key: 'contactsCount',
       label: t(`${K}.columns.contacts`),
       sortable: true,
-      align: 'right',
-      render: (row) => <span className="tabular-nums">{row.contactsCount ?? 0}</span>,
+      render: (row) => (
+        <ListingCountTag
+          icon={Users}
+          count={row.contactsCount ?? 0}
+          ariaLabel={t(`${K}.openContacts`)}
+          onClick={() => onOpenTab('contacts')}
+        />
+      ),
     },
     {
       key: 'subscriptionsCount',
       label: t(`${K}.columns.subscriptions`),
       sortable: true,
-      align: 'right',
-      render: (row) => <span className="tabular-nums">{row.subscriptionsCount ?? 0}</span>,
+      render: (row) => (
+        <ListingCountTag
+          icon={FileText}
+          count={row.subscriptionsCount ?? 0}
+          ariaLabel={t(`${K}.openSubscriptions`)}
+          onClick={() => onOpenTab('souscriptions')}
+        />
+      ),
     },
     {
       key: 'totalInvested',
       label: t(`${K}.columns.invested`),
       sortable: true,
-      align: 'right',
-      render: (row) => <span className="tabular-nums">{formatCurrency(row.totalInvested ?? 0)}</span>,
+      render: (row) => <span className="text-sm font-semibold text-gray-900">{formatCurrency(row.totalInvested ?? 0)}</span>,
     },
     {
       key: 'kycStatus',
@@ -137,55 +178,78 @@ export function StructuresTab({ structures: initialStructures }: StructuresTabPr
     },
     {
       key: 'actions',
-      label: t(`${K}.columns.actions`),
+      label: '',
       align: 'right',
       render: (row) => (
-        <span onClick={(event) => event.stopPropagation()}>
-          <DropdownMenu>
-            <DropdownMenuTrigger asChild>
-              <Button variant="ghost" size="icon" aria-label={t(`${K}.actionsFor`, { name: row.name })}>
-                <MoreHorizontal className="w-4 h-4" />
-              </Button>
-            </DropdownMenuTrigger>
-            <DropdownMenuContent align="end">
-              <DropdownMenuItem onClick={() => setSelected(toStructure(row))}>
-                <Pencil className="w-4 h-4" />
-                {t(`${K}.edit`)}
-              </DropdownMenuItem>
-            </DropdownMenuContent>
-          </DropdownMenu>
-        </span>
+        <ListingRowActions
+          ariaLabel={t(`${K}.actionsFor`, { name: row.name })}
+          actions={[{ label: t(`${K}.edit`), icon: Pencil, onClick: () => setSelected(toStructure(row)) }]}
+        />
       ),
     },
   ];
 
+  const hasFilters = Object.values(filters).some((value) => (Array.isArray(value) ? value.length > 0 : Boolean(value)));
+
   return (
     <>
-      <Card className="gap-0 overflow-hidden shadow-sm">
-        <div className="flex items-center justify-between gap-3 border-b border-border px-4 py-3">
-          <h3 className={WIDGET_TITLE_CLASS}>{t(`${K}.title`, { count: structures.length })}</h3>
-          <Button size="sm" onClick={create}>
-            <Plus className="w-4 h-4" />
-            {t(`${K}.add`)}
-          </Button>
-        </div>
-        <DataTable
-          data={rows}
-          columns={columns}
-          hoveredRow={hoveredRow}
-          setHoveredRow={setHoveredRow}
-          onRowClick={(row) => setSelected(toStructure(row))}
-          sortConfig={sortConfig}
-          onSort={(key) =>
-            setSortConfig((prev) =>
-              prev?.key === key ? (prev.direction === 'asc' ? { key, direction: 'desc' } : null) : { key, direction: 'asc' },
-            )
-          }
-          compactMode
-          hideSelection
-          density="compact"
-        />
-      </Card>
+      <ListingCard
+        toolbar={
+          <div className="flex items-start justify-between gap-3">
+            <FilterBar
+              className="flex-1"
+              searchValue={search}
+              onSearchChange={setSearch}
+              searchPlaceholder={t(`${K}.searchPlaceholder`)}
+              filters={filterConfigs}
+              activeFilters={filters}
+              onFilterChange={(id, value) =>
+                setFilters((prev) => {
+                  const next = { ...prev };
+                  if (value === null || (Array.isArray(value) && value.length === 0)) delete next[id];
+                  else next[id] = value;
+                  return next;
+                })
+              }
+              onClearAll={() => setFilters({})}
+            />
+            <Button onClick={create} className="shrink-0">
+              <Plus className="w-4 h-4" />
+              {t(`${K}.add`)}
+            </Button>
+          </div>
+        }
+      >
+        {rows.length === 0 ? (
+          <EmptyState
+            icon={Building2}
+            hasFilters={hasFilters}
+            hasSearch={Boolean(search.trim())}
+            entityName={t(`${K}.entity`)}
+            onReset={() => {
+              setSearch('');
+              setFilters({});
+            }}
+          />
+        ) : (
+          <DataTable
+            data={rows}
+            columns={columns}
+            hoveredRow={hoveredRow}
+            setHoveredRow={setHoveredRow}
+            onRowClick={(row) => setSelected(toStructure(row))}
+            sortConfig={sortConfig}
+            onSort={(key) =>
+              setSortConfig((prev) =>
+                prev?.key === key ? (prev.direction === 'asc' ? { key, direction: 'desc' } : null) : { key, direction: 'asc' },
+              )
+            }
+            compactMode
+            hideSelection
+            searchTerm={search}
+          />
+        )}
+      </ListingCard>
 
       <StructureEditSheet
         open={selected !== null}

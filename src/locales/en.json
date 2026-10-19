@@ -1720,8 +1720,7 @@
           "subscriptions": "Subscriptions",
           "invested": "Amount invested",
           "kyc": "KYC",
-          "risk": "Risk score",
-          "actions": "Actions"
+          "risk": "Risk score"
         },
         "sheet": {
           "addTitle": "Add a structure",
@@ -1742,7 +1741,11 @@
         "toast": {
           "added": "Structure {{name}} added",
           "updated": "Structure {{name}} updated"
-        }
+        },
+        "searchPlaceholder": "Search a structure...",
+        "entity": "structure",
+        "openContacts": "View contacts",
+        "openSubscriptions": "View subscriptions"
       },
       "notes": {
         "title": "Internal notes ({{count}})",
@@ -1892,7 +1895,7 @@
         "contactUpdated": "Contact updated successfully",
         "principalUser": "Main user",
         "pickPlaceholder": "Select...",
-        "searchPlaceholder": "Search...",
+        "searchPlaceholder": "Search a contact...",
         "notificationCategories": "Notification categories",
         "signatureSection": "Signature",
         "signatureSectionHint": "Whether this contact can sign on behalf of the investor.",
@@ -1904,11 +1907,15 @@
           "email": "Email",
           "phone": "Phone",
           "roles": "Roles",
-          "portal": "Portal access",
-          "actions": "Actions"
+          "portal": "Portal access"
         },
         "actionsFor": "Actions for {{name}}",
-        "portalAccessLevel": "Portal access · {{level}}"
+        "portalAccessLevel": "Portal access · {{level}}",
+        "entity": "contact",
+        "filters": {
+          "role": "Role",
+          "signatory": "Signatory"
+        }
       }
     }
   },
@@ -2016,6 +2023,13 @@
       "numberedList": "Numbered list",
       "link": "Insert a link",
       "linkPrompt": "Link address"
+    },
+    "listing": {
+      "id": "ID: {{id}}",
+      "copyId": "Copy ID",
+      "idCopied": "ID copied",
+      "copyError": "Copy failed",
+      "rowActions": "Actions"
     }
   },
   "ged": {
