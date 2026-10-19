@@ -1867,7 +1867,10 @@
         "save": "Save",
         "contactAdded": "Contact added successfully",
         "contactUpdated": "Contact updated successfully",
-        "principalUser": "Main user"
+        "principalUser": "Main user",
+        "pickPlaceholder": "Select...",
+        "searchPlaceholder": "Search...",
+        "notificationCategories": "Notification categories"
       }
     }
   },

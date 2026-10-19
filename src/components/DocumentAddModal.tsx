@@ -1,10 +1,10 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetDescription } from './ui/sheet';
 import { Button } from './ui/button';
+import { SIDE_PANEL_BADGE_STYLE, SidePanelCard, SidePanelFooter, SidePanelSection, SidePanelSwitchRow } from './ui/side-panel';
 import { Input } from './ui/input';
 import { Label } from './ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from './ui/select';
-import { Switch } from './ui/switch';
 import { Tabs, TabsList, TabsTrigger, TabsContent } from './ui/tabs';
 import { Popover, PopoverContent, PopoverTrigger } from './ui/popover';
 import {
@@ -728,12 +728,8 @@ export function DocumentAddModal({ isOpen, onClose, folderOptions, defaultFolder
         </SheetHeader>
 
         <div className="flex-1 overflow-y-auto px-6 py-5 space-y-5">
-          <section className="space-y-3 rounded-2xl p-4 border" style={{ backgroundColor: '#EEF1F7', borderColor: '#000E2B1F' }}>
-            <div>
-              <p className="font-semibold flex items-center gap-2" style={{ color: '#000E2B' }}><FileText className="w-5 h-5" style={{ color: '#000E2B' }} /> {t('ged.addModal.sectionDocument')}</p>
-              <p className="text-sm text-slate-600">{t('ged.addModal.sectionDocumentDesc')}</p>
-            </div>
-            <div className="rounded-2xl border bg-white p-4 md:p-5" style={{ borderColor: '#000E2B33' }}>
+          <SidePanelSection icon={FileText} title={t('ged.addModal.sectionDocument')} description={t('ged.addModal.sectionDocumentDesc')}>
+            <SidePanelCard>
               <Tabs defaultValue="fr" className="w-full">
                 <TabsList className="grid w-full grid-cols-2">
                   <TabsTrigger value="fr">🇫🇷 FR</TabsTrigger>
@@ -844,7 +840,7 @@ export function DocumentAddModal({ isOpen, onClose, folderOptions, defaultFolder
                   );
                 })}
               </Tabs>
-            </div>
+            </SidePanelCard>
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 pt-2">
               <div className="space-y-2 lg:col-span-2">
                 <Label>
@@ -883,13 +879,9 @@ export function DocumentAddModal({ isOpen, onClose, folderOptions, defaultFolder
                 />
               </div>
             </div>
-          </section>
+          </SidePanelSection>
 
-          <section className="space-y-4 rounded-2xl p-4 border" style={{ backgroundColor: '#EEF1F7', borderColor: '#000E2B1F' }}>
-            <div>
-              <p className="font-semibold flex items-center gap-2" style={{ color: '#000E2B' }}><Users2 className="w-5 h-5" style={{ color: '#000E2B' }} /> {t('ged.addModal.sectionAudience')}</p>
-              <p className="text-sm text-slate-600">{t('ged.addModal.sectionAudienceDesc')}</p>
-            </div>
+          <SidePanelSection icon={Users2} title={t('ged.addModal.sectionAudience')} description={t('ged.addModal.sectionAudienceDesc')} className="space-y-4">
             {hasParentFolderRestrictions && (
               <div className="rounded-xl border border-amber-200 bg-amber-50 p-3 space-y-2">
                 <div className="flex items-center gap-2 text-sm font-semibold text-amber-900">
@@ -1072,13 +1064,9 @@ export function DocumentAddModal({ isOpen, onClose, folderOptions, defaultFolder
                 )}
               </div>
 
-          </section>
+          </SidePanelSection>
 
-          <section className="space-y-4 rounded-2xl p-4 border" style={{ backgroundColor: '#EEF1F7', borderColor: '#000E2B1F' }}>
-            <div>
-              <p className="font-semibold flex items-center gap-2" style={{ color: '#000E2B' }}><Bell className="w-5 h-5" style={{ color: '#000E2B' }} /> {t('ged.addModal.sectionNotification')}</p>
-              <p className="text-sm text-slate-600">{t('ged.addModal.sectionNotificationDesc')}</p>
-            </div>
+          <SidePanelSection icon={Bell} title={t('ged.addModal.sectionNotification')} description={t('ged.addModal.sectionNotificationDesc')} className="space-y-4">
             {isDetailMode ? (
               <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
                 <div className="space-y-2 border rounded-xl p-4 bg-white" style={{ borderColor: '#000E2B33' }}>
@@ -1105,10 +1093,7 @@ export function DocumentAddModal({ isOpen, onClose, folderOptions, defaultFolder
             ) : (
               <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
                 <div className="space-y-3 border rounded-xl p-4" style={{ borderColor: '#000E2B33' }}>
-                  <div className="flex items-center justify-between">
-                    <Label>{t('ged.addModal.notificationLabel')}</Label>
-                    <Switch checked={notify} onCheckedChange={setNotify} />
-                  </div>
+                  <SidePanelSwitchRow label={t('ged.addModal.notificationLabel')} checked={notify} onCheckedChange={setNotify} />
                   <Select value={notifyTemplate} onValueChange={setNotifyTemplate} disabled={!notify}>
                     <SelectTrigger><SelectValue /></SelectTrigger>
                     <SelectContent>{MAIL_TEMPLATES.map((template) => <SelectItem key={template} value={template}>{template}</SelectItem>)}</SelectContent>
@@ -1116,10 +1101,7 @@ export function DocumentAddModal({ isOpen, onClose, folderOptions, defaultFolder
                 </div>
 
                 <div className="space-y-3 border rounded-xl p-4" style={{ borderColor: '#000E2B33' }}>
-                  <div className="flex items-center justify-between">
-                    <Label>{t('ged.addModal.reminderLabel')}</Label>
-                    <Switch checked={reminder} onCheckedChange={setReminder} />
-                  </div>
+                  <SidePanelSwitchRow label={t('ged.addModal.reminderLabel')} checked={reminder} onCheckedChange={setReminder} />
                   <div className="grid grid-cols-2 gap-2">
                     <Select value={reminderDelay} onValueChange={setReminderDelay} disabled={!reminder}>
                       <SelectTrigger><SelectValue /></SelectTrigger>
@@ -1133,13 +1115,9 @@ export function DocumentAddModal({ isOpen, onClose, folderOptions, defaultFolder
                 </div>
               </div>
             )}
-          </section>
+          </SidePanelSection>
 
-          <section className="space-y-3 pb-2 rounded-2xl p-4 border" style={{ backgroundColor: '#EEF1F7', borderColor: '#000E2B1F' }}>
-            <div>
-              <p className="font-semibold flex items-center gap-2" style={{ color: '#000E2B' }}><Check className="w-5 h-5" style={{ color: '#000E2B' }} /> {t('ged.addModal.sectionValidation')}</p>
-              <p className="text-sm text-slate-600">{t('ged.addModal.sectionValidationDesc')}</p>
-            </div>
+          <SidePanelSection icon={Check} title={t('ged.addModal.sectionValidation')} description={t('ged.addModal.sectionValidationDesc')} className="pb-2">
             {isDetailMode ? (
               <>
                 {detailState?.validation.status === 'approved' ? (
@@ -1180,7 +1158,7 @@ export function DocumentAddModal({ isOpen, onClose, folderOptions, defaultFolder
                     searchPlaceholder={t('ged.addModal.searchTeam')}
                     maxDisplay={4}
                     showIconInBadge
-                    badgeStyle={{ color: '#7a7a7a', borderColor: '#ddd7cc', backgroundColor: '#f5f3ee', border: '1px solid #ddd7cc' }}
+                    badgeStyle={SIDE_PANEL_BADGE_STYLE}
                   />
                   <p className="text-xs text-slate-500">
                     {t('ged.addModal.pickTeamsHint')}
@@ -1250,13 +1228,13 @@ export function DocumentAddModal({ isOpen, onClose, folderOptions, defaultFolder
                 </div>
               </>
             )}
-          </section>
+          </SidePanelSection>
 
         </div>
-        <div className="border-t bg-white px-6 py-4 flex justify-end gap-2">
+        <SidePanelFooter>
           <Button variant="outline" onClick={onClose}>{t('ged.addModal.cancel')}</Button>
           <Button onClick={handleSubmit}>{document ? t('ged.addModal.save') : t('ged.addModal.validate')}</Button>
-        </div>
+        </SidePanelFooter>
       </SheetContent>
     </Sheet>
   );

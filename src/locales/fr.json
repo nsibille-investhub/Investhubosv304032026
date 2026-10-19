@@ -1867,7 +1867,10 @@
         "save": "Sauvegarder",
         "contactAdded": "Contact ajouté avec succès",
         "contactUpdated": "Contact mis à jour avec succès",
-        "principalUser": "Utilisateur principal"
+        "principalUser": "Utilisateur principal",
+        "pickPlaceholder": "Sélectionner...",
+        "searchPlaceholder": "Rechercher...",
+        "notificationCategories": "Catégories de notifications"
       }
     }
   },
