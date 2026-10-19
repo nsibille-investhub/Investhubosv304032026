@@ -154,6 +154,7 @@ export default function App() {
   const [selectedFundContextId, setSelectedFundContextId] = useState<number | null>(null);
   const [selectedFundDetail, setSelectedFundDetail] = useState<Fund | null>(null);
   const [capitalCallsFundIds, setCapitalCallsFundIds] = useState<number[]>([]);
+  const [selectedCapitalCallName, setSelectedCapitalCallName] = useState<string | null>(null);
 
   useEffect(() => {
     if (currentPage !== 'allfunds') setSelectedFundDetail(null);
@@ -794,7 +795,21 @@ export default function App() {
                 <>
                   <span className="text-gray-400 dark:text-gray-500">{t('breadcrumb.fundLife')}</span>
                   <span className="text-gray-300 dark:text-gray-700">/</span>
-                  <span className="text-gray-900 dark:text-gray-100 font-medium">{t('breadcrumb.capitalCalls')}</span>
+                  {selectedCapitalCallName ? (
+                    <>
+                      <button
+                        type="button"
+                        onClick={() => navigateToPage('capitalcalls')}
+                        className="text-gray-400 dark:text-gray-500 hover:text-gray-900 dark:hover:text-gray-100 transition-colors"
+                      >
+                        {t('breadcrumb.capitalCalls')}
+                      </button>
+                      <span className="text-gray-300 dark:text-gray-700">/</span>
+                      <span className="text-gray-900 dark:text-gray-100 font-medium">{selectedCapitalCallName}</span>
+                    </>
+                  ) : (
+                    <span className="text-gray-900 dark:text-gray-100 font-medium">{t('breadcrumb.capitalCalls')}</span>
+                  )}
                 </>
               ) : currentPage === 'subscriptions' ? (
                 <>
@@ -1370,6 +1385,7 @@ export default function App() {
             <CapitalCallsPage
               funds={allFundsData}
               initialFundIds={capitalCallsFundIds}
+              onSelectedCallChange={setSelectedCapitalCallName}
               onOpenFund={fundId => {
                 const fund = allFundsData.find(item => item.id === fundId);
                 if (!fund) return;

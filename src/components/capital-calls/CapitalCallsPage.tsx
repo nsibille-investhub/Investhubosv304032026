@@ -21,7 +21,13 @@ import {
 
 import { useTranslation } from '../../utils/languageContext';
 import type { Fund } from '../../utils/fundGenerator';
-import { CAPITAL_CALL_ORIGINS, CapitalCall, generateCapitalCalls } from '../../utils/capitalCallGenerator';
+import {
+  CAPITAL_CALL_ORIGINS,
+  CapitalCall,
+  distinctNoticeDate,
+  generateCapitalCalls,
+} from '../../utils/capitalCallGenerator';
+import { getDetailIdFromHash, onHashChange } from '../../utils/routing';
 import {
   CapitalCallAction,
   CapitalCallRights,
@@ -39,6 +45,7 @@ import { PageHeader } from '../ui/page-header';
 import { DataPagination } from '../ui/data-pagination';
 import { Button } from '../ui/button';
 import { ConfirmDialog } from '../ui/confirm-dialog';
+import { CapitalCallDetailPage } from './CapitalCallDetailPage';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../ui/select';
 import {
   DropdownMenu,
@@ -150,7 +157,7 @@ function sortValue(call: CapitalCall, key: string): string | number {
     case 'calledAmount':
       return call.calledAmount;
     case 'noticeDate':
-      return call.noticeDate?.getTime() ?? 0;
+      return distinctNoticeDate(call)?.getTime() ?? 0;
     case 'createdAt':
       return call.createdAt.getTime();
     case 'createdBy':
@@ -165,9 +172,11 @@ interface CapitalCallsPageProps {
   /** Filtre fonds appliqué à l'ouverture, depuis la fiche d'un fonds. */
   initialFundIds?: number[];
   onOpenFund: (fundId: number) => void;
+  /** Nom de l'appel ouvert, pour le fil d'Ariane. */
+  onSelectedCallChange?: (name: string | null) => void;
 }
 
-export function CapitalCallsPage({ funds, initialFundIds, onOpenFund }: CapitalCallsPageProps) {
+export function CapitalCallsPage({ funds, initialFundIds, onOpenFund, onSelectedCallChange }: CapitalCallsPageProps) {
   const { t, lang } = useTranslation();
   const [scenario, setScenario] = useState<Scenario>('default');
   const [queue, setQueue] = useState<Queue>('all');
@@ -183,7 +192,10 @@ export function CapitalCallsPage({ funds, initialFundIds, onOpenFund }: CapitalC
   const timers = useRef<number[]>([]);
   const rights = SCENARIO_RIGHTS[scenario];
 
+  const [selectedId, setSelectedId] = useState<string | null>(getDetailIdFromHash);
+
   useEffect(() => () => timers.current.forEach(id => window.clearTimeout(id)), []);
+  useEffect(() => onHashChange(() => setSelectedId(getDetailIdFromHash())), []);
 
   const initialFundKey = (initialFundIds ?? []).join(',');
   useEffect(() => {
@@ -242,6 +254,14 @@ export function CapitalCallsPage({ funds, initialFundIds, onOpenFund }: CapitalC
       return true;
     });
   }, [scopedCalls, queue, search, activeFilters]);
+
+  const selectedCall = selectedId ? allCalls.find(call => String(call.id) === selectedId) : undefined;
+  const selectedInScope = Boolean(selectedCall && scopeFundIds.has(selectedCall.fundId) && scenario !== 'noRight');
+  const breadcrumbName = selectedCall && selectedInScope ? selectedCall.name : null;
+  useEffect(() => {
+    onSelectedCallChange?.(breadcrumbName);
+    return () => onSelectedCallChange?.(null);
+  }, [breadcrumbName, onSelectedCallChange]);
 
   const sortedCalls = useMemo(() => {
     if (!sortConfig) return [...filteredCalls].sort(defaultCompare);
@@ -413,8 +433,10 @@ export function CapitalCallsPage({ funds, initialFundIds, onOpenFund }: CapitalC
       key: 'noticeDate',
       label: t(`${K}.columns.noticeDate`),
       sortable: true,
-      render: call =>
-        call.noticeDate ? <span className="text-sm tabular-nums">{dateFormat.format(call.noticeDate)}</span> : empty,
+      render: call => {
+        const noticeDate = distinctNoticeDate(call);
+        return noticeDate ? <span className="text-sm tabular-nums">{dateFormat.format(noticeDate)}</span> : empty;
+      },
     },
     origin: {
       key: 'origin',
@@ -576,17 +598,24 @@ export function CapitalCallsPage({ funds, initialFundIds, onOpenFund }: CapitalC
     </div>
   );
 
-  if (scenario === 'noRight') {
+  const deniedPage = (description: string, title = t(`${K}.accessDenied.title`)) => (
+    <div className="flex min-h-screen flex-1 flex-col bg-muted">
+      {scenarioBar}
+      <div className="flex flex-1 items-center justify-center p-6">
+        <EmptyState icon={ShieldX} title={title} description={description} />
+      </div>
+    </div>
+  );
+
+  if (scenario === 'noRight') return deniedPage(t(`${K}.accessDenied.description`));
+
+  if (selectedId) {
+    if (!selectedCall) return deniedPage(t(`${K}.accessDenied.notFoundDescription`), t(`${K}.accessDenied.notFoundTitle`));
+    if (!selectedInScope) return deniedPage(t(`${K}.accessDenied.outOfScopeDescription`));
     return (
       <div className="flex min-h-screen flex-1 flex-col bg-muted">
         {scenarioBar}
-        <div className="flex flex-1 items-center justify-center p-6">
-          <EmptyState
-            icon={ShieldX}
-            title={t(`${K}.accessDenied.title`)}
-            description={t(`${K}.accessDenied.description`)}
-          />
-        </div>
+        <CapitalCallDetailPage call={selectedCall} onOpenFund={onOpenFund} />
       </div>
     );
   }
@@ -669,7 +698,9 @@ export function CapitalCallsPage({ funds, initialFundIds, onOpenFund }: CapitalC
                 columns={columns}
                 hoveredRow={hoveredRow}
                 setHoveredRow={setHoveredRow}
-                onRowClick={() => toast.info(t(`${K}.toast.detailComingSoon`))}
+                onRowClick={call => {
+                  window.location.hash = `#/capital-calls/${call.id}`;
+                }}
                 sortConfig={sortConfig}
                 onSort={key =>
                   setSortConfig(prev =>

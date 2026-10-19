@@ -5680,11 +5680,13 @@
       },
       "accessDenied": {
         "title": "Accès refusé",
-        "description": "Vous n'avez pas le droit \"Consulter les appels\". Rapprochez-vous de votre administrateur interne."
+        "description": "Vous n'avez pas le droit \"Consulter les appels\". Rapprochez-vous de votre administrateur interne.",
+        "outOfScopeDescription": "Cet appel porte sur un fonds hors de votre périmètre.",
+        "notFoundTitle": "Appel introuvable",
+        "notFoundDescription": "Cet appel n'existe pas ou a été supprimé."
       },
       "toast": {
         "creationComingSoon": "La création d'un appel arrive avec l'assistant de création.",
-        "detailComingSoon": "La fiche d'un appel est bientôt disponible dans la maquette.",
         "refused": "Action refusée sur {{name}}",
         "notifyStarted": "Notification de {{name}} en cours d'envoi.",
         "notifyDone": "{{name}} est notifié.",
@@ -5718,6 +5720,59 @@
         "title": "Supprimer {{name}} ?",
         "description": "L'appel et ses lignes investisseurs du fonds {{fund}} seront supprimés. Cette action est définitive.",
         "confirm": "Supprimer l'appel"
+      },
+      "detail": {
+        "header": {
+          "dueDate": "Échéance le {{date}}",
+          "noticeDate": "Avis daté du {{date}}",
+          "calledAmount": "Montant appelé : {{amount}}",
+          "origin": "Origine : {{origin}}",
+          "compensatedBy": "Compensé par",
+          "createdOn": "Créé le {{date}} par {{author}}"
+        },
+        "tabs": {
+          "breakdown": "Ventilation par part",
+          "message": "Message et pièces jointes"
+        },
+        "breakdown": {
+          "columns": {
+            "share": "Part",
+            "mode": "Mode de saisie",
+            "value": "Montant saisi",
+            "entryFees": "Frais d'entrée",
+            "premium": "Prime",
+            "released": "Montant débloqué",
+            "restriction": "Restriction"
+          },
+          "modes": {
+            "percent": "Pourcentage du montant souscrit",
+            "totalAmount": "Montant total de la part",
+            "perUnit": "Montant par titre"
+          },
+          "perUnitValue": "{{amount}} par titre",
+          "called": "Appelés",
+          "notCalled": "Non appelés",
+          "noRestriction": "Aucune",
+          "restrictedOne": "{{count}} souscription",
+          "restrictedMany": "{{count}} souscriptions"
+        },
+        "message": {
+          "title": "Message d'accompagnement",
+          "empty": "Aucun message d'accompagnement"
+        },
+        "attachments": {
+          "title": "Pièces jointes",
+          "summary": "{{count}} sur 2",
+          "empty": "Aucune pièce jointe",
+          "size": "{{size}} {{unit}}",
+          "kb": "Ko",
+          "mb": "Mo",
+          "download": "Télécharger"
+        },
+        "toast": {
+          "notInMockup": "La fiche de {{name}} n'est pas encore dans la maquette.",
+          "download": "Téléchargement de {{name}} : bientôt disponible dans la maquette."
+        }
       }
     }
   },

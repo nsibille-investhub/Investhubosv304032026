@@ -5680,11 +5680,13 @@
       },
       "accessDenied": {
         "title": "Access denied",
-        "description": "You don't have the \"View calls\" right. Please contact your internal administrator."
+        "description": "You don't have the \"View calls\" right. Please contact your internal administrator.",
+        "outOfScopeDescription": "This call belongs to a fund outside your scope.",
+        "notFoundTitle": "Call not found",
+        "notFoundDescription": "This call does not exist or has been deleted."
       },
       "toast": {
         "creationComingSoon": "Call creation comes with the creation wizard.",
-        "detailComingSoon": "The call page is coming soon in the mockup.",
         "refused": "Action refused on {{name}}",
         "notifyStarted": "{{name}} notification is being sent.",
         "notifyDone": "{{name}} is notified.",
@@ -5718,6 +5720,59 @@
         "title": "Delete {{name}}?",
         "description": "The call and its investor lines in {{fund}} will be deleted. This cannot be undone.",
         "confirm": "Delete the call"
+      },
+      "detail": {
+        "header": {
+          "dueDate": "Due on {{date}}",
+          "noticeDate": "Notice dated {{date}}",
+          "calledAmount": "Called amount: {{amount}}",
+          "origin": "Origin: {{origin}}",
+          "compensatedBy": "Offset by",
+          "createdOn": "Created on {{date}} by {{author}}"
+        },
+        "tabs": {
+          "breakdown": "Breakdown by share",
+          "message": "Message and attachments"
+        },
+        "breakdown": {
+          "columns": {
+            "share": "Share",
+            "mode": "Entry mode",
+            "value": "Entered amount",
+            "entryFees": "Entry fees",
+            "premium": "Premium",
+            "released": "Released amount",
+            "restriction": "Restriction"
+          },
+          "modes": {
+            "percent": "Percentage of subscribed amount",
+            "totalAmount": "Total amount for the share",
+            "perUnit": "Amount per unit"
+          },
+          "perUnitValue": "{{amount}} per unit",
+          "called": "Called",
+          "notCalled": "Not called",
+          "noRestriction": "None",
+          "restrictedOne": "{{count}} subscription",
+          "restrictedMany": "{{count}} subscriptions"
+        },
+        "message": {
+          "title": "Accompanying message",
+          "empty": "No accompanying message"
+        },
+        "attachments": {
+          "title": "Attachments",
+          "summary": "{{count}} of 2",
+          "empty": "No attachments",
+          "size": "{{size}} {{unit}}",
+          "kb": "KB",
+          "mb": "MB",
+          "download": "Download"
+        },
+        "toast": {
+          "notInMockup": "The {{name}} page is not in the mockup yet.",
+          "download": "Downloading {{name}}: coming soon in the mockup."
+        }
       }
     }
   },

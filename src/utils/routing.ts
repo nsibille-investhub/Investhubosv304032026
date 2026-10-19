@@ -145,6 +145,12 @@ export function getPageFromHash(): Page {
     return 'datahub';
   }
 
+  // Capital call detail (/capital-calls/:id) stays on the listing page, which
+  // reads the id from the hash itself.
+  if (path === '/capital-calls' || path.startsWith('/capital-calls/')) {
+    return 'capitalcalls';
+  }
+
   // Entity detail (/entities/:uid) stays on the entities page; the page reads
   // the uid from the hash itself.
   if (path === '/entities' || path.startsWith('/entities/')) {
