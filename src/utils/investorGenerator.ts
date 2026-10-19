@@ -61,7 +61,7 @@ const statuses = [
   'Archivé'
 ];
 
-const analysts = ['Thomas', 'Sophie Martin', 'Marc Dubois', 'Claire Bernard', 'Alex Chen'];
+const analysts = ['Thomas Bernard', 'Sophie Martin', 'Marc Dubois', 'Claire Bernard', 'Alex Chen'];
 
 const kycStatuses = ['En cours', 'En revue', 'À revoir', 'Validé', 'Expiré'];
 const crmSegmentsList = [
@@ -368,7 +368,7 @@ function generateSignatories(investorName: string, contacts: Contact[], count: n
 
 function generateNotes(investorId: number, count: number): Note[] {
   const notes: Note[] = [];
-  const authors = ['Thomas', 'Sophie Martin', 'Marc Dubois', 'Claire Bernard', 'Alex Chen'];
+  const authors = ['Thomas Bernard', 'Sophie Martin', 'Marc Dubois', 'Claire Bernard', 'Alex Chen'];
   const noteTypes: ('General' | 'KYC' | 'Risk' | 'Commercial' | 'Legal')[] = ['General', 'KYC', 'Risk', 'Commercial', 'Legal'];
   
   const noteTemplates = {

@@ -48,7 +48,7 @@ const contractTypes = [
   'Convention de Placement'
 ];
 
-const analysts = ['Thomas', 'Sophie Martin', 'Marc Dubois', 'Claire Bernard', 'Alex Chen'];
+const analysts = ['Thomas Bernard', 'Sophie Martin', 'Marc Dubois', 'Claire Bernard', 'Alex Chen'];
 
 const segments = ['HNWI', 'UHNWI', 'Retail', 'Professional', 'Institutional'];
 

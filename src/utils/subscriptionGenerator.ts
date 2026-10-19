@@ -156,7 +156,7 @@ const ACTIVATED_STATUSES = [
   'Active'
 ];
 
-const analysts = ['Thomas', 'Sophie Martin', 'Marc Dubois', 'Claire Bernard', 'Alex Chen'];
+const analysts = ['Thomas Bernard', 'Sophie Martin', 'Marc Dubois', 'Claire Bernard', 'Alex Chen'];
 
 const kycStatuses = ['in progress', 'in review', 'to review', 'validated'];
 const crmSegmentsList = [
