@@ -1,5 +1,6 @@
-import type { CSSProperties, ReactNode } from 'react';
-import type { LucideIcon } from 'lucide-react';
+import { useRef, type CSSProperties, type ReactNode } from 'react';
+import { Eye, FileCheck2, Trash2, UploadCloud, type LucideIcon } from 'lucide-react';
+import { Button } from './button';
 import { Label } from './label';
 import { ModernMultiSelect } from './modern-multiselect';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from './select';
@@ -155,5 +156,105 @@ export function SidePanelScopeField({
         />
       )}
     </div>
+  );
+}
+
+interface SidePanelFileDropProps {
+  fileName?: string;
+  /** Aperçu image, si le fichier en a un. */
+  previewUrl?: string;
+  onSelectFile: (file: File) => void;
+  onPreview?: () => void;
+  /** Absent : le fichier ne peut pas être retiré. */
+  onRemove?: () => void;
+  /** Dépôt impossible (fichier figé). */
+  disabled?: boolean;
+  labels: { dropHint: string; dropHintDesc: string; fileReady: string; preview: string; remove: string };
+}
+
+/** Zone de dépôt d'un fichier (clic ou glisser-déposer), puis carte du fichier avec aperçu et suppression. */
+export function SidePanelFileDrop({ fileName, previewUrl, onSelectFile, onPreview, onRemove, disabled, labels }: SidePanelFileDropProps) {
+  const inputRef = useRef<HTMLInputElement | null>(null);
+  const canUpload = !disabled;
+  return (
+    <>
+      <input
+        ref={inputRef}
+        type="file"
+        className="hidden"
+        onChange={(event) => {
+          const file = event.target.files?.[0];
+          if (file) onSelectFile(file);
+          event.target.value = '';
+        }}
+      />
+      <div
+        onClick={() => canUpload && inputRef.current?.click()}
+        onDragOver={(event) => event.preventDefault()}
+        onDrop={(event) => {
+          event.preventDefault();
+          const file = event.dataTransfer.files?.[0];
+          if (canUpload && file) onSelectFile(file);
+        }}
+        className={`rounded-xl border-2 border-dashed border-slate-300 bg-white/80 transition-colors p-5 ${
+          canUpload ? 'hover:border-blue-400 cursor-pointer' : 'opacity-80'
+        }`}
+      >
+        {!fileName ? (
+          <div className="flex flex-col items-center justify-center text-center gap-2 text-slate-600">
+            <UploadCloud className="w-8 h-8 text-slate-500" />
+            <p className="font-medium">{labels.dropHint}</p>
+            <p className="text-xs text-slate-500">{labels.dropHintDesc}</p>
+          </div>
+        ) : (
+          <div className="flex items-center justify-between gap-3">
+            <div className="flex items-center gap-3">
+              {previewUrl ? (
+                <img src={previewUrl} alt={fileName} className="w-14 h-14 rounded-lg object-cover border" />
+              ) : (
+                <div className="w-14 h-14 rounded-lg bg-blue-50 border border-blue-200 flex items-center justify-center">
+                  <FileCheck2 className="w-6 h-6 text-blue-600" />
+                </div>
+              )}
+              <div>
+                <p className="font-medium text-slate-900">{fileName}</p>
+                <p className="text-xs text-slate-500">{labels.fileReady}</p>
+              </div>
+            </div>
+            <div className="flex items-center gap-2">
+              {onPreview && (
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="sm"
+                  onClick={(event) => {
+                    event.stopPropagation();
+                    onPreview();
+                  }}
+                >
+                  <Eye className="w-3.5 h-3.5 mr-1.5" />
+                  {labels.preview}
+                </Button>
+              )}
+              {onRemove && (
+                <Button
+                  type="button"
+                  variant="ghost"
+                  size="sm"
+                  className="text-red-600 hover:text-red-700"
+                  onClick={(event) => {
+                    event.stopPropagation();
+                    onRemove();
+                  }}
+                >
+                  <Trash2 className="w-3.5 h-3.5 mr-1.5" />
+                  {labels.remove}
+                </Button>
+              )}
+            </div>
+          </div>
+        )}
+      </div>
+    </>
   );
 }

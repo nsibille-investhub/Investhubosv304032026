@@ -1753,11 +1753,58 @@
         "openSubscriptions": "View subscriptions"
       },
       "notes": {
-        "title": "Internal notes ({{count}})",
-        "filter": "Filter",
         "newNote": "New note",
         "important": "Important",
-        "byAuthor": "by {{author}}"
+        "searchPlaceholder": "Search a note...",
+        "entity": "note",
+        "columns": {
+          "title": "Title",
+          "type": "Type",
+          "date": "Date",
+          "author": "Author",
+          "reminder": "Reminder",
+          "attachment": "Attachment",
+          "importance": "Importance"
+        },
+        "filters": {
+          "normal": "Normal",
+          "withReminder": "With reminder",
+          "withoutReminder": "Without reminder"
+        },
+        "actions": {
+          "edit": "Edit",
+          "download": "Download attachment",
+          "noAttachment": "No attachment",
+          "delete": "Delete"
+        },
+        "deleteDialog": {
+          "title": "Delete the note \"{{title}}\"?",
+          "description": "The note and its attachment will be permanently deleted."
+        },
+        "toast": {
+          "added": "Note \"{{title}}\" added",
+          "updated": "Note \"{{title}}\" updated",
+          "deleted": "Note \"{{title}}\" deleted"
+        },
+        "sheet": {
+          "addTitle": "New note",
+          "editTitle": "Edit note",
+          "description": "Internal note about the investor, visible to the team only.",
+          "noteSection": "Note",
+          "title": "Title",
+          "titlePlaceholder": "E.g. Call with the family office",
+          "type": "Type",
+          "content": "Text",
+          "important": "Important note",
+          "importantHint": "Highlighted in the investor's notes list.",
+          "dateSection": "Date and reminder",
+          "dateSectionHint": "Date of the note and reminder sent to its author.",
+          "date": "Note date",
+          "reminder": "Send a reminder",
+          "reminderHint": "A reminder is sent to the author of the note on the chosen date.",
+          "reminderDate": "Reminder date",
+          "attachmentSection": "Attachment"
+        }
       },
       "noteTypes": {
         "General": "General",

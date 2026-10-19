@@ -2086,6 +2086,8 @@ const types: TimelineTypeMap<'created' | 'updated'> = {
             <li>Une section par sujet ; jamais de titre de section maison ni de carte à interrupteur maison.</li>
             <li>Récapitulatif d’état : encadrés vert (emerald) ou ambre (amber) du panneau document.</li>
             <li>Périmètre d’une dimension (fonds, structures, rôles, souscriptions) : <code className="text-xs">SidePanelScopeField</code>, tous / sélection / aucun, multisélection si « sélection ». Sert aux droits d’accès et aux liens KYC-AML d’un contact (mode « aucun » désactivable).</li>
+            <li>Fichier : <code className="text-xs">SidePanelFileDrop</code>, zone de dépôt (clic ou glisser-déposer) puis carte du fichier avec Aperçu et Supprimer. Utilisée pour les versions d’un document et la pièce jointe d’une note.</li>
+            <li>Texte long : <code className="text-xs">RichTextEditor</code> ; dates : Input type date en h-11, comme le panneau document.</li>
             <li>Listes composables (droits, liens) : une SidePanelCard par élément, titre « Droit n » + RowActionButton de suppression, bouton outline « Ajouter » pleine largeur sous la liste.</li>
             <li>Ouverture depuis un listing : clic sur la ligne ou action « Modifier » de la ligne (TableRowActions) ; bouton « Ajouter » de la barre du listing pour la création.</li>
           </ul>

@@ -1753,11 +1753,58 @@
         "openSubscriptions": "Voir les souscriptions"
       },
       "notes": {
-        "title": "Notes internes ({{count}})",
-        "filter": "Filtrer",
         "newNote": "Nouvelle note",
         "important": "Important",
-        "byAuthor": "par {{author}}"
+        "searchPlaceholder": "Rechercher une note...",
+        "entity": "note",
+        "columns": {
+          "title": "Titre",
+          "type": "Type",
+          "date": "Date",
+          "author": "Auteur",
+          "reminder": "Rappel",
+          "attachment": "Pièce jointe",
+          "importance": "Importance"
+        },
+        "filters": {
+          "normal": "Normale",
+          "withReminder": "Avec rappel",
+          "withoutReminder": "Sans rappel"
+        },
+        "actions": {
+          "edit": "Modifier",
+          "download": "Télécharger la pièce jointe",
+          "noAttachment": "Aucune pièce jointe",
+          "delete": "Supprimer"
+        },
+        "deleteDialog": {
+          "title": "Supprimer la note « {{title}} » ?",
+          "description": "La note et sa pièce jointe seront supprimées définitivement."
+        },
+        "toast": {
+          "added": "Note « {{title}} » ajoutée",
+          "updated": "Note « {{title}} » mise à jour",
+          "deleted": "Note « {{title}} » supprimée"
+        },
+        "sheet": {
+          "addTitle": "Nouvelle note",
+          "editTitle": "Modifier la note",
+          "description": "Note interne sur l'investisseur, visible uniquement par l'équipe.",
+          "noteSection": "Note",
+          "title": "Titre",
+          "titlePlaceholder": "Ex. : Appel avec le family office",
+          "type": "Type",
+          "content": "Texte",
+          "important": "Note importante",
+          "importantHint": "Mise en avant dans la liste des notes de l'investisseur.",
+          "dateSection": "Date et rappel",
+          "dateSectionHint": "Date de la note et rappel envoyé à son auteur.",
+          "date": "Date de la note",
+          "reminder": "Envoyer un rappel",
+          "reminderHint": "Un rappel est envoyé à l'auteur de la note à la date choisie.",
+          "reminderDate": "Date du rappel",
+          "attachmentSection": "Pièce jointe"
+        }
       },
       "noteTypes": {
         "General": "Général",

@@ -129,11 +129,16 @@ export interface Signatory {
 
 export interface Note {
   id: string;
+  title: string;
   author: string;
   date: Date;
+  /** Contenu en HTML (éditeur de texte riche). */
   content: string;
   type: 'General' | 'KYC' | 'Risk' | 'Commercial' | 'Legal';
   isImportant: boolean;
+  /** Date de rappel envoyée à l'auteur. */
+  reminderDate?: Date;
+  attachment?: { name: string };
 }
 
 export interface Email {
@@ -398,10 +403,20 @@ function generateNotes(investorId: number, count: number): Note[] {
     ]
   };
   
+  const noteTitles = {
+    'General': ['Appel téléphonique', 'Réunion à planifier', 'Retour sur le service', 'Demande de documentation'],
+    'KYC': ['Documents KYC vérifiés', 'Mise à jour KYC à prévoir', 'Origine des fonds', 'Pièce d\'identité expirée'],
+    'Risk': ['Profil de risque confirmé', 'Score AML en hausse', 'Screening sans alerte', 'Révision du niveau de risque'],
+    'Commercial': ['Intérêt co-investissement', 'Hausse du ticket', 'Recommandations', 'Retour sur les opérations'],
+    'Legal': ['Revue des contrats', 'Procuration signée', 'Conformité réglementaire', 'Mise à jour des documents légaux'],
+  };
+  const attachments = ['compte-rendu.pdf', 'piece-identite.pdf', 'procuration-signee.pdf', 'questionnaire-kyc.pdf'];
+
   const now = new Date();
   
   for (let i = 0; i < count; i++) {
     const noteType = getRandomElement(noteTypes);
+    const templateIndex = Math.floor(Math.random() * noteTemplates[noteType].length);
     const daysAgo = Math.floor(Math.random() * 180); // Notes sur les 6 derniers mois
     const noteDate = new Date(now.getTime() - daysAgo * 24 * 60 * 60 * 1000);
     
@@ -409,9 +424,12 @@ function generateNotes(investorId: number, count: number): Note[] {
       id: `NOTE${investorId * 100 + i}`,
       author: getRandomElement(authors),
       date: noteDate,
-      content: getRandomElement(noteTemplates[noteType]),
+      title: noteTitles[noteType][templateIndex],
+      content: `<p>${noteTemplates[noteType][templateIndex]}</p>`,
       type: noteType,
-      isImportant: Math.random() > 0.7
+      isImportant: Math.random() > 0.7,
+      reminderDate: Math.random() > 0.7 ? new Date(now.getTime() + (Math.floor(Math.random() * 30) + 1) * 24 * 60 * 60 * 1000) : undefined,
+      attachment: Math.random() > 0.6 ? { name: getRandomElement(attachments) } : undefined,
     });
   }
   

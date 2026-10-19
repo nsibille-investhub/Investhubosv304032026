@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetDescription } from './ui/sheet';
 import { Button } from './ui/button';
-import { SIDE_PANEL_BADGE_STYLE, SidePanelCard, SidePanelFooter, SidePanelSection, SidePanelSwitchRow } from './ui/side-panel';
+import { SIDE_PANEL_BADGE_STYLE, SidePanelCard, SidePanelFileDrop, SidePanelFooter, SidePanelSection, SidePanelSwitchRow } from './ui/side-panel';
 import { Input } from './ui/input';
 import { Label } from './ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from './ui/select';
@@ -17,7 +17,7 @@ import { ModernMultiSelect, type MultiSelectOption } from './ui/modern-multisele
 import { Avatar, AvatarFallback } from './ui/avatar';
 import { Badge } from './ui/badge';
 import { toast } from 'sonner';
-import { ChevronDown, ChevronRight, UploadCloud, FileCheck2, Download, Users2, UserRound, Mail, Eye, Trash2, Check, Folder, FileText, Bell, ShieldCheck, Clock3, CheckCircle2, Star, Lock, TrendingUp } from 'lucide-react';
+import { ChevronDown, ChevronRight, Download, Users2, UserRound, Mail, Check, Folder, FileText, Bell, ShieldCheck, Clock3, CheckCircle2, Star, Lock, TrendingUp } from 'lucide-react';
 import { Document, DocumentCategory, mockDocuments } from '../utils/documentMockData';
 import { AudienceCounterCards } from './AudienceCounter';
 import { SegmentsMultiSelect, FundSingleSelect, ShareClassSingleSelect } from './ui/targeting-selects';
@@ -482,7 +482,6 @@ export function DocumentAddModal({ isOpen, onClose, folderOptions, defaultFolder
   const [reminderDelay, setReminderDelay] = useState(REMINDER_DELAYS[1]);
   const [reminderTemplate, setReminderTemplate] = useState(MAIL_TEMPLATES[0]);
   const [validationTeams, setValidationTeams] = useState<string[]>([]);
-  const fileInputRefs = useRef<Record<'fr' | 'en', HTMLInputElement | null>>({ fr: null, en: null });
   const [selectedContactAccess, setSelectedContactAccess] = useState<Record<string, string[]>>({});
   const detailState = document ? (documentLifecycleMock[document.id] || {
     validation: document.status === 'published'
@@ -754,80 +753,23 @@ export function DocumentAddModal({ isOpen, onClose, folderOptions, defaultFolder
                           <Label>
                             {language === 'fr' ? t('ged.addModal.addFileFr') : t('ged.addModal.addFileEn')}
                           </Label>
-                          <input
-                            ref={(el) => { fileInputRefs.current[language] = el; }}
-                            type="file"
-                            className="hidden"
-                            onChange={(event) => handleVersionFile(language, event.target.files?.[0])}
+                          <SidePanelFileDrop
+                            fileName={version.fileName}
+                            previewUrl={version.previewUrl}
+                            disabled={isDetailMode && !(language === 'en' && !version.fileName)}
+                            onSelectFile={(file) => handleVersionFile(language, file)}
+                            onPreview={() => {
+                              if (version.fileUrl) window.open(version.fileUrl, '_blank', 'noopener,noreferrer');
+                            }}
+                            onRemove={isDetailMode ? undefined : () => handleRemoveVersionFile(language)}
+                            labels={{
+                              dropHint: t('ged.addModal.dropHint'),
+                              dropHintDesc: t('ged.addModal.dropHintDesc'),
+                              fileReady: t('ged.addModal.fileReady'),
+                              preview: t('ged.addModal.preview'),
+                              remove: t('ged.addModal.delete'),
+                            }}
                           />
-                          <div
-                            onClick={() => {
-                              const canUpload = !isDetailMode || (language === 'en' && !version.fileName);
-                              if (canUpload) fileInputRefs.current[language]?.click();
-                            }}
-                            onDragOver={(event) => event.preventDefault()}
-                            onDrop={(event) => {
-                              event.preventDefault();
-                              const canUpload = !isDetailMode || (language === 'en' && !version.fileName);
-                              if (canUpload) handleVersionFile(language, event.dataTransfer.files?.[0]);
-                            }}
-                            className={`rounded-xl border-2 border-dashed border-slate-300 bg-white/80 transition-colors p-5 ${
-                              !isDetailMode || (language === 'en' && !version.fileName) ? 'hover:border-blue-400 cursor-pointer' : 'opacity-80'
-                            }`}
-                          >
-                            {!version.fileName ? (
-                              <div className="flex flex-col items-center justify-center text-center gap-2 text-slate-600">
-                                <UploadCloud className="w-8 h-8 text-slate-500" />
-                                <p className="font-medium">{t('ged.addModal.dropHint')}</p>
-                                <p className="text-xs text-slate-500">{t('ged.addModal.dropHintDesc')}</p>
-                              </div>
-                            ) : (
-                              <div className="flex items-center justify-between gap-3">
-                                <div className="flex items-center gap-3">
-                                {version.previewUrl ? (
-                                  <img src={version.previewUrl} alt={version.fileName} className="w-14 h-14 rounded-lg object-cover border" />
-                                ) : (
-                                  <div className="w-14 h-14 rounded-lg bg-blue-50 border border-blue-200 flex items-center justify-center">
-                                    <FileCheck2 className="w-6 h-6 text-blue-600" />
-                                  </div>
-                                )}
-                                <div>
-                                  <p className="font-medium text-slate-900">{version.fileName}</p>
-                                  <p className="text-xs text-slate-500">{t('ged.addModal.fileReady')}</p>
-                                </div>
-                                </div>
-                                <div className="flex items-center gap-2">
-                                  <Button
-                                    type="button"
-                                    variant="outline"
-                                    size="sm"
-                                    onClick={(event) => {
-                                      event.stopPropagation();
-                                      if (version.fileUrl) window.open(version.fileUrl, '_blank', 'noopener,noreferrer');
-                                    }}
-                                  >
-                                    <Eye className="w-3.5 h-3.5 mr-1.5" />
-                                    {t('ged.addModal.preview')}
-                                  </Button>
-                                  {!isDetailMode && (
-                                    <Button
-                                      type="button"
-                                      variant="ghost"
-                                      size="sm"
-                                      className="text-red-600 hover:text-red-700"
-                                      onClick={(event) => {
-                                        event.stopPropagation();
-                                        handleRemoveVersionFile(language);
-                                      }}
-                                    >
-                                      <Trash2 className="w-3.5 h-3.5 mr-1.5" />
-                                      {t('ged.addModal.delete')}
-                                    </Button>
-                                  )}
-                                </div>
-                              </div>
-                            )}
-                          </div>
                           {isDetailMode && language === 'fr' && (
                             <p className="text-xs text-slate-500">{t('ged.addModal.frReadonlyHint')}</p>
                           )}

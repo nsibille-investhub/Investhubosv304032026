@@ -75,6 +75,7 @@ import {
 } from "./ui/tooltip";
 import { ContactsTab, countContactRows } from './investor-detail/ContactsTab';
 import { StructuresTab } from './investor-detail/StructuresTab';
+import { NotesTab } from './investor-detail/NotesTab';
 import { COUNTRIES, COUNTRY_LABEL_KEY } from '../utils/locationFixtures';
 import { useTranslation } from '../utils/languageContext';
 
@@ -180,16 +181,6 @@ export function InvestorDetailPage({ investor: initialInvestor, onBack, initialT
     }
   };
 
-  const getNoteTypeColor = (type: string) => {
-    switch (type) {
-      case 'General': return 'bg-muted text-foreground';
-      case 'KYC': return 'bg-blue-100 text-blue-700';
-      case 'Risk': return 'bg-red-100 text-red-700';
-      case 'Commercial': return 'bg-purple-100 text-purple-700';
-      case 'Legal': return 'bg-amber-100 text-amber-700';
-      default: return 'bg-muted text-foreground';
-    }
-  };
 
   // Fonctions de gestion de l'édition
   const startEdit = (section: string) => {
@@ -1074,74 +1065,7 @@ export function InvestorDetailPage({ investor: initialInvestor, onBack, initialT
 
           {/* Notes Tab */}
           <TabsContent value="notes">
-            <div className="bg-card rounded-xl border border-border">
-              <div className="p-6 border-b border-border">
-                <div className="flex items-center justify-between">
-                  <h2 className="font-semibold text-foreground flex items-center gap-2">
-                    <FileText className="w-5 h-5 text-amber-600" />
-                    {t('investors.detail.notes.title', { count: investor.notes.length })}
-                  </h2>
-                  <div className="flex items-center gap-2">
-                    <Button
-                      size="sm"
-                      variant="outline"
-                      className="gap-2"
-                      onClick={() => toast.success(t('investors.detail.actions.comingSoon'))}
-                    >
-                      <Filter className="w-4 h-4" />
-                      {t('investors.detail.notes.filter')}
-                    </Button>
-                    <Button
-                      size="sm"
-                      style={{ background: 'linear-gradient(62.32deg, #000000 10.53%, #0F323D 88.82%)' }}
-                      className="gap-2 text-white"
-                      onClick={() => toast.success(t('investors.detail.actions.comingSoon'))}
-                    >
-                      <Plus className="w-4 h-4" />
-                      {t('investors.detail.notes.newNote')}
-                    </Button>
-                  </div>
-                </div>
-              </div>
-              
-              <div className="divide-y divide-border">
-                {investor.notes.map((note, idx) => (
-                  <motion.div
-                    key={note.id}
-                    initial={{ opacity: 0, y: 10 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    transition={{ delay: idx * 0.03 }}
-                    className={`p-6 hover:bg-muted transition-colors ${note.isImportant ? 'bg-amber-50/30' : ''}`}
-                  >
-                    <div className="flex items-start gap-4">
-                      <div className="w-8 h-8 rounded-full bg-gradient-to-br from-amber-500 to-orange-500 flex items-center justify-center flex-shrink-0">
-                        <FileText className="w-4 h-4 text-white" />
-                      </div>
-                      
-                      <div className="flex-1">
-                        <div className="flex items-center gap-2 mb-2">
-                          <Badge className={`text-xs ${getNoteTypeColor(note.type)}`}>
-                            {t(`investors.detail.noteTypes.${note.type}`)}
-                          </Badge>
-                          {note.isImportant && (
-                            <Badge className="bg-red-100 text-red-700 text-xs">
-                              <AlertCircle className="w-3 h-3 mr-1" />
-                              {t('investors.detail.notes.important')}
-                            </Badge>
-                          )}
-                          <span className="text-xs text-muted-foreground">•</span>
-                          <span className="text-xs text-muted-foreground">{formatDate(note.date)}</span>
-                          <span className="text-xs text-muted-foreground">•</span>
-                          <span className="text-xs text-muted-foreground">{t('investors.detail.notes.byAuthor', { author: note.author })}</span>
-                        </div>
-                        
-                        <p className="text-sm text-foreground leading-relaxed">{note.content}</p>
-                      </div>
-                    </div>
-                  </motion.div>
-                ))}
-              </div>
-            </div>
+            <NotesTab notes={investor.notes} />
           </TabsContent>
 
           {/* Souscriptions Tab */}
