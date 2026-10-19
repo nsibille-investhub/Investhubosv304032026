@@ -19,7 +19,7 @@ import { Button } from '../ui/button';
 import { toast } from 'sonner';
 import { LanguageFlag } from '../LanguageFlag';
 import { useTranslation } from '../../utils/languageContext';
-import { ContactEditModal, type ContactDraft, type StructureOption } from './ContactEditModal';
+import { ContactEditSheet, type ContactDraft, type StructureOption } from './ContactEditSheet';
 
 type Contact = ContactDraft;
 
@@ -293,7 +293,7 @@ export function ContactsTab({ investor }: ContactsTabProps) {
         </div>
       </div>
 
-      <ContactEditModal
+      <ContactEditSheet
         open={isDialogOpen}
         isNew={
           !!selectedContact &&
