@@ -1582,7 +1582,6 @@
       "tabs": {
         "profile": "Profile",
         "contacts": "Contacts & access",
-        "signatories": "Signatories",
         "structures": "Structures",
         "notes": "Notes",
         "subscriptions": "Subscriptions",
@@ -1701,8 +1700,6 @@
       },
       "tags": "Tags",
       "signatories": {
-        "title": "Authorized signatories ({{count}})",
-        "addSignatory": "Add a signatory",
         "primarySignatory": "Primary signatory"
       },
       "signatureLevel": {
@@ -1870,7 +1867,12 @@
         "principalUser": "Main user",
         "pickPlaceholder": "Select...",
         "searchPlaceholder": "Search...",
-        "notificationCategories": "Notification categories"
+        "notificationCategories": "Notification categories",
+        "signatureSection": "Signature",
+        "signatureSectionHint": "Whether this contact can sign on behalf of the investor.",
+        "isSignatory": "Authorised signatory",
+        "signatureLevel": "Signature type",
+        "signatoryBadge": "Signatory · {{level}}"
       }
     }
   },

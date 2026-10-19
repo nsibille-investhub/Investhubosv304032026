@@ -11,12 +11,10 @@ import {
   Shield,
   Users,
   FileText,
-  PenTool,
   Briefcase,
   MessageSquare,
   Copy,
   Check,
-  Star,
   Key,
   Globe,
   Hash,
@@ -76,7 +74,7 @@ import {
   TooltipContent,
   TooltipTrigger,
 } from "./ui/tooltip";
-import { ContactsTab, hasPrincipalUserContact } from './investor-detail/ContactsTab';
+import { ContactsTab, countContactRows } from './investor-detail/ContactsTab';
 import { useTranslation } from '../utils/languageContext';
 
 const INVESTOR_STATUS_VARIANT: Record<string, StatusVariant> = {
@@ -102,7 +100,7 @@ export function InvestorDetailPage({ investor: initialInvestor, onBack, initialT
     return complianceEntities.filter((e) => e.parent.type === 'Investor').slice(0, 3);
   })();
   const [copiedField, setCopiedField] = useState<string | null>(null);
-  const [activeTab, setActiveTab] = useState(initialTab);
+  const [activeTab, setActiveTab] = useState(initialTab === 'signataires' ? 'contacts' : initialTab);
   
   // États d'édition pour chaque section
   const [editingGeneral, setEditingGeneral] = useState(false);
@@ -449,8 +447,7 @@ export function InvestorDetailPage({ investor: initialInvestor, onBack, initialT
             overflow="scroll"
             items={[
               { value: 'profil', icon: User, label: t('investors.detail.tabs.profile') },
-              { value: 'contacts', icon: Users, label: t('investors.detail.tabs.contacts'), badge: investor.contacts.length + (hasPrincipalUserContact(investor) ? 0 : 1) },
-              { value: 'signataires', icon: PenTool, label: t('investors.detail.tabs.signatories'), badge: investor.signatories.length },
+              { value: 'contacts', icon: Users, label: t('investors.detail.tabs.contacts'), badge: countContactRows(investor) },
               { value: 'structures', icon: Building2, label: t('investors.detail.tabs.structures'), badge: investor.structures.length },
               { value: 'notes', icon: FileText, label: t('investors.detail.tabs.notes'), badge: investor.notes.length },
               { value: 'souscriptions', icon: Briefcase, label: t('investors.detail.tabs.subscriptions'), badge: investor.subscriptionsCount },
@@ -1062,100 +1059,6 @@ export function InvestorDetailPage({ investor: initialInvestor, onBack, initialT
           {/* Contacts & accès Tab */}
           <TabsContent value="contacts">
             <ContactsTab investor={investor} />
-          </TabsContent>
-
-          {/* Signataires Tab */}
-          <TabsContent value="signataires">
-            <div className="bg-card rounded-xl border border-border">
-              <div className="p-6 border-b border-border">
-                <div className="flex items-center justify-between">
-                  <h2 className="font-semibold text-foreground flex items-center gap-2">
-                    <PenTool className="w-5 h-5 text-purple-600" />
-                    {t('investors.detail.signatories.title', { count: investor.signatories.length })}
-                  </h2>
-                  <Button
-                    size="sm"
-                    variant="outline"
-                    className="gap-2"
-                    onClick={() => toast.success(t('investors.detail.actions.comingSoon'))}
-                  >
-                    <Plus className="w-4 h-4" />
-                    {t('investors.detail.signatories.addSignatory')}
-                  </Button>
-                </div>
-              </div>
-              
-              <div className="divide-y divide-border">
-                {investor.signatories.map((signatory, idx) => (
-                  <motion.div
-                    key={signatory.id}
-                    initial={{ opacity: 0, x: -20 }}
-                    animate={{ opacity: 1, x: 0 }}
-                    transition={{ delay: idx * 0.05 }}
-                    className="p-6 hover:bg-muted transition-colors"
-                  >
-                    <div className="flex items-start justify-between">
-                      <div className="flex-1">
-                        <div className="flex items-center gap-3 mb-2">
-                          <div className="w-10 h-10 rounded-full bg-gradient-to-br from-purple-500 to-pink-500 flex items-center justify-center">
-                            <span className="text-white text-sm font-semibold">
-                              {signatory.firstName[0]}{signatory.lastName[0]}
-                            </span>
-                          </div>
-                          <div>
-                            <div className="flex items-center gap-2">
-                              <span className="font-semibold text-foreground">
-                                {signatory.firstName} {signatory.lastName}
-                              </span>
-                              {signatory.isPrimary && (
-                                <Badge className="bg-purple-100 text-purple-700 border-purple-300 text-xs px-2">
-                                  <Star className="w-3 h-3 mr-1 fill-purple-700" />
-                                  {t('investors.detail.signatories.primarySignatory')}
-                                </Badge>
-                              )}
-                            </div>
-                            <div className="text-sm text-muted-foreground flex items-center gap-1.5">
-                              <Briefcase className="w-3.5 h-3.5" />
-                              {signatory.function}
-                            </div>
-                          </div>
-                        </div>
-                        
-                        <div className="ml-13 space-y-2">
-                          <div className="flex items-center gap-2">
-                            <Mail className="w-4 h-4 text-muted-foreground/60" />
-                            <span className="text-sm text-foreground">{signatory.email}</span>
-                            <CopyButton text={signatory.email} field={`sig-${signatory.id}-email`} />
-                          </div>
-                          
-                          <div className="flex items-center gap-2">
-                            <Phone className="w-4 h-4 text-muted-foreground/60" />
-                            <span className="text-sm text-foreground">{signatory.phone}</span>
-                            <CopyButton text={signatory.phone} field={`sig-${signatory.id}-phone`} />
-                          </div>
-                        </div>
-                      </div>
-                      
-                      <div className="ml-4">
-                        <Badge 
-                          variant="outline" 
-                          className={`border ${
-                            signatory.signatureLevel === 'Individual' 
-                              ? 'bg-blue-50 text-blue-700 border-blue-200' 
-                              : signatory.signatureLevel === 'Joint'
-                              ? 'bg-amber-50 text-amber-700 border-amber-200'
-                              : 'bg-emerald-50 text-emerald-700 border-emerald-200'
-                          }`}
-                        >
-                          <PenTool className="w-3 h-3 mr-1" />
-                          {t(`investors.detail.signatureLevel.${signatory.signatureLevel}`)}
-                        </Badge>
-                      </div>
-                    </div>
-                  </motion.div>
-                ))}
-              </div>
-            </div>
           </TabsContent>
 
           {/* Structures Tab */}

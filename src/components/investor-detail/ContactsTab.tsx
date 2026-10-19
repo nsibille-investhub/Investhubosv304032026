@@ -12,14 +12,16 @@ import {
   Copy,
   Check,
   ExternalLink,
-  UserCheck
+  UserCheck,
+  PenTool
 } from 'lucide-react';
 import { Badge } from '../ui/badge';
 import { Button } from '../ui/button';
 import { toast } from 'sonner';
 import { LanguageFlag } from '../LanguageFlag';
 import { useTranslation } from '../../utils/languageContext';
-import { ContactEditSheet, type ContactDraft, type StructureOption } from './ContactEditSheet';
+import { ContactEditSheet, type ContactDraft, type SignatureLevel, type StructureOption } from './ContactEditSheet';
+import { StatusBadge } from '../StatusBadge';
 
 type Contact = ContactDraft;
 
@@ -50,9 +52,67 @@ const mockSubscriptions = [
 export const hasPrincipalUserContact = (investor: { email: string; contacts?: { email: string }[] }) =>
   (investor.contacts ?? []).some(contact => contact.email === investor.email);
 
+interface SignatoryLike {
+  id: string;
+  firstName: string;
+  lastName: string;
+  function: string;
+  email: string;
+  phone: string;
+  signatureLevel: string;
+  isPrimary: boolean;
+}
+
+const toSignatureLevel = (level: string): SignatureLevel =>
+  level === 'Joint' ? 'Joint' : level === 'Individual' ? 'Individual' : 'Collective';
+
+/** Les signataires sont des contacts : on les rattache par email, les autres sont ajoutés à la liste. */
+function mergeSignatories(contacts: Contact[], signatories: SignatoryLike[]): Contact[] {
+  const merged = contacts.map((contact) => {
+    const signatory = signatories.find((item) => item.email === contact.email);
+    return signatory
+      ? {
+          ...contact,
+          isSignatory: true,
+          isPrimarySignatory: signatory.isPrimary,
+          signatureLevel: toSignatureLevel(signatory.signatureLevel),
+        }
+      : contact;
+  });
+  const orphans = signatories
+    .filter((signatory) => !contacts.some((contact) => contact.email === signatory.email))
+    .map((signatory) => ({
+      id: signatory.id,
+      firstName: signatory.firstName,
+      lastName: signatory.lastName,
+      function: signatory.function,
+      email: signatory.email,
+      phone: signatory.phone,
+      isPrimary: false,
+      hasPortalAccess: false,
+      isSignatory: true,
+      isPrimarySignatory: signatory.isPrimary,
+      signatureLevel: toSignatureLevel(signatory.signatureLevel),
+    }));
+  return [...merged, ...orphans];
+}
+
+/** Nombre de lignes de l'onglet Contacts : utilisateur principal, contacts et signataires sans contact. */
+export const countContactRows = (investor: {
+  email: string;
+  contacts?: { email: string }[];
+  signatories?: { email: string }[];
+}) => {
+  const contacts = investor.contacts ?? [];
+  const orphans = (investor.signatories ?? []).filter(
+    (signatory) => !contacts.some((contact) => contact.email === signatory.email),
+  ).length;
+  return contacts.length + orphans + (hasPrincipalUserContact(investor) ? 0 : 1);
+};
+
 export function ContactsTab({ investor }: ContactsTabProps) {
   const { t } = useTranslation();
-  const [contacts, setContacts] = useState<Contact[]>(() => [
+  const [contacts, setContacts] = useState<Contact[]>(() => mergeSignatories([
     ...(hasPrincipalUserContact(investor) ? [] : [{
       id: `principal-${investor.id}`,
       firstName: investor.firstName ?? investor.name,
@@ -65,7 +125,7 @@ export function ContactsTab({ investor }: ContactsTabProps) {
       language: investor.language,
     }]),
     ...(investor.contacts || []),
-  ]);
+  ], investor.signatories || []));
   const [selectedContact, setSelectedContact] = useState<Contact | null>(null);
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [copiedField, setCopiedField] = useState<string | null>(null);
@@ -259,6 +319,19 @@ export function ContactsTab({ investor }: ContactsTabProps) {
                 </div>
                 
                 <div className="ml-4 flex items-center gap-2">
+                  {contact.isSignatory && (
+                    <StatusBadge
+                      icon={PenTool}
+                      variant="info"
+                      label={
+                        contact.isPrimarySignatory
+                          ? t('investors.detail.signatories.primarySignatory')
+                          : t('investors.detail.contactsTab.signatoryBadge', {
+                              level: t(`investors.detail.signatureLevel.${contact.signatureLevel}`),
+                            })
+                      }
+                    />
+                  )}
                   {contact.hasPortalAccess ? (
                     <>
                       <Badge className="bg-emerald-50 text-emerald-700 border-emerald-200">

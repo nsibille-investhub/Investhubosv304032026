@@ -9,6 +9,7 @@ import {
   Globe,
   KeyRound,
   Lock,
+  PenTool,
   Shield,
   User,
 } from 'lucide-react';
@@ -32,6 +33,10 @@ import type { DocumentCategory } from '../../utils/documentMockData';
 
 const LANGUAGES = ['Français', 'English', 'Español', 'Deutsch', 'Italiano', 'Português'];
 const ACCESS_LEVELS = ['Admin', 'Full Access', 'Read Only'];
+
+export type SignatureLevel = 'Individual' | 'Joint' | 'Collective';
+
+export const SIGNATURE_LEVELS: SignatureLevel[] = ['Individual', 'Joint', 'Collective'];
 
 export type NotificationCategory =
   | 'capitalCalls'
@@ -83,6 +88,9 @@ export interface ContactDraft {
   authorizedSubscriptions?: string[];
   documentTypesAccessRestricted?: boolean;
   authorizedDocumentTypes?: DocumentCategory[];
+  isSignatory?: boolean;
+  isPrimarySignatory?: boolean;
+  signatureLevel?: SignatureLevel;
 }
 
 export interface StructureOption {
@@ -266,6 +274,52 @@ export function ContactEditSheet({
                   </Select>
                 </div>
               </div>
+            </SidePanelCard>
+          </SidePanelSection>
+
+          <SidePanelSection icon={PenTool} title={t(`${K}.signatureSection`)} description={t(`${K}.signatureSectionHint`)}>
+            <SidePanelCard className="space-y-4">
+              <SidePanelSwitchRow
+                id="isSignatory"
+                label={t(`${K}.isSignatory`)}
+                checked={!!contact.isSignatory}
+                onCheckedChange={(value) =>
+                  onChange({
+                    ...contact,
+                    isSignatory: value,
+                    signatureLevel: value ? contact.signatureLevel ?? 'Individual' : contact.signatureLevel,
+                    isPrimarySignatory: value ? contact.isPrimarySignatory : false,
+                  })
+                }
+              />
+              {contact.isSignatory && (
+                <>
+                  <div className="space-y-2">
+                    <Label htmlFor="signatureLevel">{t(`${K}.signatureLevel`)}</Label>
+                    <Select
+                      value={contact.signatureLevel}
+                      onValueChange={(value) => update('signatureLevel', value as SignatureLevel)}
+                    >
+                      <SelectTrigger id="signatureLevel" className="h-11">
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {SIGNATURE_LEVELS.map((level) => (
+                          <SelectItem key={level} value={level}>
+                            {t(`investors.detail.signatureLevel.${level}`)}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+                  <SidePanelSwitchRow
+                    id="isPrimarySignatory"
+                    label={t('investors.detail.signatories.primarySignatory')}
+                    checked={!!contact.isPrimarySignatory}
+                    onCheckedChange={(value) => update('isPrimarySignatory', value)}
+                  />
+                </>
+              )}
             </SidePanelCard>
           </SidePanelSection>
 
