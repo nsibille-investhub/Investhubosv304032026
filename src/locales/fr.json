@@ -1570,7 +1570,7 @@
         "newSubscription": "Nouvelle souscription",
         "id": "ID : {{id}}",
         "copyId": "Cliquer pour copier l'ID",
-        "analyst": "Analyste : {{name}}"
+        "manager": "Gestionnaire : {{name}}"
       },
       "stats": {
         "title": "Statistiques d'investissement",

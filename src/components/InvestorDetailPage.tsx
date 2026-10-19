@@ -404,11 +404,11 @@ export function InvestorDetailPage({ investor: initialInvestor, onBack, initialT
               {t(`investors.type.${investor.type}`)}
             </PageHeaderSubtitleItem>
 
-            {(investor.city || investor.country) && (
+            {(investor.city || investor.state || investor.country) && (
               <>
                 <PageHeaderSubtitleSeparator />
                 <PageHeaderSubtitleItem icon={MapPin}>
-                  {[investor.city, investor.country].filter(Boolean).join(', ')}
+                  {[investor.city, investor.state, investor.country].filter(Boolean).join(', ')}
                 </PageHeaderSubtitleItem>
               </>
             )}
@@ -417,7 +417,7 @@ export function InvestorDetailPage({ investor: initialInvestor, onBack, initialT
               <>
                 <PageHeaderSubtitleSeparator />
                 <PageHeaderSubtitleItem icon={UserCheck}>
-                  {t('investors.detail.header.analyst', { name: investor.analyst })}
+                  {t('investors.detail.header.manager', { name: investor.analyst })}
                 </PageHeaderSubtitleItem>
               </>
             )}

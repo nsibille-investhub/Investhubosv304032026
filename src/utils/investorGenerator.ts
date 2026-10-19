@@ -190,6 +190,8 @@ export interface Investor {
   address?: string;
   postalCode?: string;
   city?: string;
+  /** État, région ou province, quand le pays en a. */
+  state?: string;
   
   // Espace investisseur
   portalActive: boolean;
