@@ -1,12 +1,12 @@
 import { Building2, ShieldCheck } from 'lucide-react';
 import type { LegalStructure } from '../../utils/investorGenerator';
 import { useTranslation } from '../../utils/languageContext';
-import { Sheet, SheetContent, SheetDescription, SheetHeader, SheetTitle } from '../ui/sheet';
+import { Sheet, SheetContent } from '../ui/sheet';
 import { Button } from '../ui/button';
 import { Input } from '../ui/input';
 import { Label } from '../ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../ui/select';
-import { SIDE_PANEL_WIDE_STYLE, SidePanelCard, SidePanelFooter, SidePanelSection } from '../ui/side-panel';
+import { SIDE_PANEL_WIDE_STYLE, SidePanelCard, SidePanelFooter, SidePanelHeader, SidePanelSection } from '../ui/side-panel';
 
 export const STRUCTURE_TYPES: LegalStructure['type'][] = ['SCI', 'SARL', 'SAS', 'SA', 'Trust', 'Foundation', 'Holding'];
 export const STRUCTURE_KYC_STATUSES: NonNullable<LegalStructure['kycStatus']>[] = ['Validé', 'En cours', 'À revoir', 'Non commencé'];
@@ -32,22 +32,16 @@ export function StructureEditSheet({ open, isNew, structure, onChange, onClose, 
   return (
     <Sheet open={open} onOpenChange={(o) => !o && onClose()}>
       <SheetContent side="right" style={SIDE_PANEL_WIDE_STYLE} className="h-full p-0 gap-0">
-        <SheetHeader className="px-6 py-5 border-b bg-white">
-          <div>
-            <SheetTitle className="text-[26px] leading-8">
-              {isNew ? t(`${K}.sheet.addTitle`) : t(`${K}.sheet.editTitle`)}
-            </SheetTitle>
-            <SheetDescription className="mt-1 text-[15px]">
-              {isNew ? t(`${K}.sheet.addDesc`) : t(`${K}.sheet.editDesc`)}
-            </SheetDescription>
-          </div>
-        </SheetHeader>
+        <SidePanelHeader
+          title={isNew ? t(`${K}.sheet.addTitle`) : t(`${K}.sheet.editTitle`)}
+          description={isNew ? t(`${K}.sheet.addDesc`) : t(`${K}.sheet.editDesc`)}
+        />
 
         <div className="flex-1 overflow-y-auto px-6 py-5 space-y-5">
           <SidePanelSection icon={Building2} title={t(`${K}.sheet.general`)}>
             <SidePanelCard>
-              <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
-                <div className="space-y-2 lg:col-span-2">
+              <div className="space-y-4">
+                <div className="space-y-2">
                   <Label htmlFor="structureName">
                     {t(`${K}.sheet.name`)}
                     <span className="text-red-600 ml-0.5">*</span>
@@ -59,6 +53,7 @@ export function StructureEditSheet({ open, isNew, structure, onChange, onClose, 
                     onChange={(e) => update('name', e.target.value)}
                   />
                 </div>
+                <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
                 <div className="space-y-2">
                   <Label htmlFor="structureType">{t(`${K}.sheet.type`)}</Label>
                   <Select value={structure.type} onValueChange={(value) => update('type', value as LegalStructure['type'])}>
@@ -83,7 +78,8 @@ export function StructureEditSheet({ open, isNew, structure, onChange, onClose, 
                     onChange={(e) => update('participationId', e.target.value || undefined)}
                   />
                 </div>
-                <div className="space-y-2 lg:col-span-2">
+                </div>
+                <div className="space-y-2">
                   <Label htmlFor="legalRepresentative">{t(`${K}.sheet.representative`)}</Label>
                   <Input
                     id="legalRepresentative"

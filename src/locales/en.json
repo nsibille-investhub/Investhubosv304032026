@@ -2131,7 +2131,8 @@
       "resetFilters": "Reset filters"
     },
     "confirmDialog": {
-      "cancel": "Cancel"
+      "cancel": "Cancel",
+      "close": "Close"
     },
     "richTextEditor": {
       "bold": "Bold",

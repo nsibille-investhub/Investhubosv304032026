@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
-import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetDescription } from './ui/sheet';
+import { Sheet, SheetContent } from './ui/sheet';
 import { Button } from './ui/button';
-import { SIDE_PANEL_BADGE_STYLE, SidePanelCard, SidePanelFileDrop, SidePanelFooter, SidePanelSection, SidePanelSwitchRow } from './ui/side-panel';
+import { SIDE_PANEL_BADGE_STYLE, SidePanelCard, SidePanelFileDrop, SidePanelFooter, SidePanelHeader, SidePanelSection, SidePanelSwitchRow } from './ui/side-panel';
 import { Input } from './ui/input';
 import { Label } from './ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from './ui/select';
@@ -717,14 +717,10 @@ export function DocumentAddModal({ isOpen, onClose, folderOptions, defaultFolder
   return (
     <Sheet open={isOpen} onOpenChange={(open) => !open && onClose()}>
       <SheetContent side="right" className="h-full p-0 gap-0">
-        <SheetHeader className="px-6 py-5 border-b bg-white">
-          <div>
-            <SheetTitle className="text-[26px] leading-8">{document ? t('ged.addModal.detailTitle') : t('ged.addModal.addTitle')}</SheetTitle>
-          <SheetDescription className="mt-1 text-[15px]">
-            {t('ged.addModal.description')}
-          </SheetDescription>
-          </div>
-        </SheetHeader>
+        <SidePanelHeader
+          title={document ? t('ged.addModal.detailTitle') : t('ged.addModal.addTitle')}
+          description={t('ged.addModal.description')}
+        />
 
         <div className="flex-1 overflow-y-auto px-6 py-5 space-y-5">
           <SidePanelSection icon={FileText} title={t('ged.addModal.sectionDocument')} description={t('ged.addModal.sectionDocumentDesc')}>
@@ -1064,7 +1060,7 @@ export function DocumentAddModal({ isOpen, onClose, folderOptions, defaultFolder
               <>
                 {detailState?.validation.status === 'approved' ? (
                   <div className="rounded-xl border border-emerald-200 bg-emerald-50 p-4">
-                    <p className="font-semibold text-emerald-800 flex items-center gap-2"><CheckCircle2 className="h-4 w-4" /> {t('ged.addModal.docValidated')}</p>
+                    <p className="font-semibold text-emerald-900 flex items-center gap-2"><CheckCircle2 className="h-4 w-4" /> {t('ged.addModal.docValidated')}</p>
                     <p className="text-sm text-emerald-700 mt-1">{t('ged.addModal.validatedBy', { team: detailState.validation.team ?? '', validator: detailState.validation.validator ?? '' })}</p>
                     <p className="text-sm text-emerald-700">{t('ged.addModal.validatedOn', { date: formatFrenchDate(detailState.validation.validatedAt || '') })}</p>
                   </div>

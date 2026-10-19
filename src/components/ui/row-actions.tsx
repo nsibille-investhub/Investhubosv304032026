@@ -67,7 +67,7 @@ export function RowActionButton({
         {disabledReason ? (
           <span className="flex flex-col">
             <span>{tooltip}</span>
-            <span className="text-xs opacity-80">{disabledReason}</span>
+            <span className="text-xs opacity-70">{disabledReason}</span>
           </span>
         ) : (
           tooltip

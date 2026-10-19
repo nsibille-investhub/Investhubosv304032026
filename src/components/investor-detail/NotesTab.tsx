@@ -127,7 +127,7 @@ export function NotesTab({ notes: initialNotes }: NotesTabProps) {
       key: 'title',
       label: t(`${K}.columns.title`),
       sortable: true,
-      render: (row, term) => <ListingNameCell name={row.title} searchTerm={term} secondary={plainText(row.content)} className="max-w-[360px]" />,
+      render: (row, term) => <ListingNameCell name={row.title} searchTerm={term} secondary={plainText(row.content)} className="max-w-[350px]" />,
     },
     { key: 'type', label: t(`${K}.columns.type`), sortable: true, render: (row) => <Tag label={t(`investors.detail.noteTypes.${row.type}`)} /> },
     {

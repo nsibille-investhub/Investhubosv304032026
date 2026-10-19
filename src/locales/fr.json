@@ -2131,7 +2131,8 @@
       "resetFilters": "Réinitialiser les filtres"
     },
     "confirmDialog": {
-      "cancel": "Annuler"
+      "cancel": "Annuler",
+      "close": "Fermer"
     },
     "richTextEditor": {
       "bold": "Gras",

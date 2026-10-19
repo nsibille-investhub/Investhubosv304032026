@@ -7,12 +7,13 @@ import { Input } from '../ui/input';
 import { Label } from '../ui/label';
 import { RichTextEditor } from '../ui/rich-text-editor';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../ui/select';
-import { Sheet, SheetContent, SheetDescription, SheetHeader, SheetTitle } from '../ui/sheet';
+import { Sheet, SheetContent } from '../ui/sheet';
 import {
   SIDE_PANEL_WIDE_STYLE,
   SidePanelCard,
   SidePanelFileDrop,
   SidePanelFooter,
+  SidePanelHeader,
   SidePanelSection,
   SidePanelSwitchRow,
 } from '../ui/side-panel';
@@ -50,12 +51,10 @@ export function NoteEditSheet({ open, isNew, note, onChange, onClose, onSave }: 
   return (
     <Sheet open={open} onOpenChange={(o) => !o && onClose()}>
       <SheetContent side="right" style={SIDE_PANEL_WIDE_STYLE} className="h-full p-0 gap-0">
-        <SheetHeader className="px-6 py-5 border-b bg-white">
-          <div>
-            <SheetTitle className="text-[26px] leading-8">{isNew ? t(`${K}.sheet.addTitle`) : t(`${K}.sheet.editTitle`)}</SheetTitle>
-            <SheetDescription className="mt-1 text-[15px]">{t(`${K}.sheet.description`)}</SheetDescription>
-          </div>
-        </SheetHeader>
+        <SidePanelHeader
+          title={isNew ? t(`${K}.sheet.addTitle`) : t(`${K}.sheet.editTitle`)}
+          description={t(`${K}.sheet.description`)}
+        />
 
         <div className="flex-1 overflow-y-auto px-6 py-5 space-y-5">
           <SidePanelSection icon={StickyNote} title={t(`${K}.sheet.noteSection`)}>
@@ -98,7 +97,7 @@ export function NoteEditSheet({ open, isNew, note, onChange, onClose, onSave }: 
                   ariaLabel={t(`${K}.sheet.content`)}
                   value={note.content}
                   onChange={(value) => update('content', value)}
-                  className="min-h-[180px]"
+                  className="min-h-[200px]"
                 />
               </div>
               <SidePanelSwitchRow

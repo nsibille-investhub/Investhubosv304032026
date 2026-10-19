@@ -21,8 +21,9 @@
  */
 import * as React from "react"
 import * as DialogPrimitive from "@radix-ui/react-dialog"
-import { X } from "lucide-react"
+import { X, type LucideIcon } from "lucide-react"
 
+import { Button } from "./button"
 import { cn } from "./utils"
 
 const BigModal = DialogPrimitive.Root
@@ -181,7 +182,84 @@ const BigModalDescription = React.forwardRef<
 ))
 BigModalDescription.displayName = DialogPrimitive.Description.displayName
 
+/** Taille compacte : confirmations et formulaires courts, hauteur ajustée au contenu. */
+const BIG_MODAL_COMPACT = "h-auto max-w-lg"
+
+/**
+ * En-tête de modale (référence : « Nouvelle souscription ») : icône dans un carré,
+ * titre, sous-titre et bouton de fermeture.
+ */
+function BigModalPanelHeader({
+  icon: Icon,
+  title,
+  subtitle,
+  onClose,
+  closeLabel,
+  tone = "primary",
+}: {
+  icon: LucideIcon
+  title: React.ReactNode
+  subtitle?: React.ReactNode
+  onClose: () => void
+  closeLabel: string
+  /** "danger" pour une action destructive. */
+  tone?: "primary" | "danger"
+}) {
+  return (
+    <div className="px-8 py-4 bg-card border-b border-border">
+      <div className="flex items-center justify-between gap-4">
+        <div className="flex items-center gap-3 min-w-0">
+          <div
+            className={cn(
+              "size-10 shrink-0 rounded-xl flex items-center justify-center shadow-sm",
+              tone === "danger" ? "bg-red-600 text-white" : "bg-primary text-primary-foreground",
+            )}
+          >
+            <Icon className="w-5 h-5" />
+          </div>
+          <div className="min-w-0">
+            <BigModalTitle className="text-xl font-bold text-foreground leading-tight">{title}</BigModalTitle>
+            {subtitle ? (
+              <BigModalDescription className="text-xs text-muted-foreground">{subtitle}</BigModalDescription>
+            ) : null}
+          </div>
+        </div>
+        <Button
+          onClick={onClose}
+          variant="ghost"
+          size="icon"
+          aria-label={closeLabel}
+          className="hover:bg-muted rounded-full h-8 w-8 shrink-0"
+        >
+          <X className="w-4 h-4 text-muted-foreground" />
+        </Button>
+      </div>
+    </div>
+  )
+}
+
+/** Corps défilant de la modale. */
+function BigModalBody({ className, ...props }: React.HTMLAttributes<HTMLDivElement>) {
+  return <div className={cn("flex-1 overflow-y-auto px-8 py-6", className)} {...props} />
+}
+
+/** Pied de modale : action secondaire (Annuler, Retour) à gauche, actions principales à droite. */
+function BigModalPanelFooter({ start, end }: { start?: React.ReactNode; end?: React.ReactNode }) {
+  return (
+    <div className="border-t border-border px-8 py-4 bg-muted">
+      <div className="flex items-center justify-between gap-3">
+        <div>{start}</div>
+        <div className="flex items-center gap-2">{end}</div>
+      </div>
+    </div>
+  )
+}
+
 export {
+  BIG_MODAL_COMPACT,
+  BigModalPanelHeader,
+  BigModalBody,
+  BigModalPanelFooter,
   BigModal,
   BigModalPortal,
   BigModalOverlay,

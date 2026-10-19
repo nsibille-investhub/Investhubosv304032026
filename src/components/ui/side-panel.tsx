@@ -4,6 +4,7 @@ import { Button } from './button';
 import { Label } from './label';
 import { ModernMultiSelect } from './modern-multiselect';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from './select';
+import { SheetDescription, SheetHeader, SheetTitle } from './sheet';
 import { Switch } from './switch';
 import { cn } from './utils';
 
@@ -61,6 +62,19 @@ export function SidePanelCard({ flush, className, children }: { flush?: boolean;
     <div className={cn('rounded-2xl border bg-white', !flush && 'p-4 md:p-5', className)} style={CARD_STYLE}>
       {children}
     </div>
+  );
+}
+
+/** En-tête d'un panneau latéral : titre et description, éléments complémentaires dessous (statut, boutons). */
+export function SidePanelHeader({ title, description, children }: { title: ReactNode; description?: ReactNode; children?: ReactNode }) {
+  return (
+    <SheetHeader className="px-6 py-5 border-b bg-white">
+      <div className="pr-8">
+        <SheetTitle className="text-[22px] leading-7">{title}</SheetTitle>
+        {description && <SheetDescription className="mt-1 text-sm">{description}</SheetDescription>}
+      </div>
+      {children}
+    </SheetHeader>
   );
 }
 

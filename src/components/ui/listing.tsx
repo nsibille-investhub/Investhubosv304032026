@@ -129,11 +129,11 @@ export function ListingCountTag({ icon: Icon, count, onClick, ariaLabel, disable
         event.stopPropagation();
         onClick?.();
       }}
-      className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-muted border border-border transition-all duration-200 cursor-pointer group hover:scale-[1.03] hover:shadow-md hover:border-border/80 hover:bg-white disabled:pointer-events-none disabled:opacity-50"
+      className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-muted border border-border transition-all duration-200 cursor-pointer group hover:scale-105 disabled:pointer-events-none disabled:opacity-50"
     >
-      <Icon className="w-3.5 h-3.5 text-muted-foreground group-hover:text-foreground" />
-      <span className="text-sm font-medium text-muted-foreground group-hover:text-foreground tabular-nums">{count}</span>
-      <ChevronRight className="w-3.5 h-3.5 text-muted-foreground group-hover:text-foreground transition-transform group-hover:translate-x-0.5" />
+      <Icon className="w-3.5 h-3.5 text-muted-foreground group-hover:text-blue-700" />
+      <span className="text-sm font-medium text-muted-foreground group-hover:text-blue-700 tabular-nums">{count}</span>
+      <ChevronRight className="w-3.5 h-3.5 text-muted-foreground group-hover:text-blue-700 " />
     </button>
   );
 }
@@ -167,12 +167,12 @@ export function ListingStackCell({ icon: Icon, items, title, subtitle, children,
           type="button"
           whileHover={{ x: 2 }}
           whileTap={{ scale: 0.98 }}
-          className="inline-flex flex-col items-start gap-1 text-xs group max-w-full"
+          className="inline-flex flex-col items-start gap-1 text-xs group w-full"
           onClick={(event) => event.stopPropagation()}
         >
-          <span className="flex items-center gap-1.5 text-muted-foreground group-hover:text-primary transition-colors max-w-full">
-            <Icon className="w-3 h-3 shrink-0 text-gray-400 group-hover:text-primary transition-colors" />
-            <span className="truncate max-w-[160px] group-hover:underline" title={items[0]}>
+          <span className="flex items-center gap-1.5 text-muted-foreground group-hover:text-blue-700 transition-colors w-full">
+            <Icon className="w-3 h-3 shrink-0 text-gray-400 group-hover:text-blue-700 transition-colors" />
+            <span className="truncate max-w-[180px] group-hover:underline" title={items[0]}>
               {items[0]}
             </span>
             <ChevronRight className="w-3 h-3 shrink-0 opacity-50 group-hover:opacity-100 transition-all" />

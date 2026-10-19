@@ -340,7 +340,7 @@ export function ContactsTab({ investor }: ContactsTabProps) {
           name={fullName(row)}
           searchTerm={term}
           secondary={row.function}
-          adornment={row.isPrimary ? <Star className="w-3.5 h-3.5 text-amber-500 fill-amber-400" aria-label={t(`${K}.primaryBadge`)} /> : undefined}
+          adornment={row.isPrimary ? <Star className="w-3.5 h-3.5 text-amber-500 fill-current" aria-label={t(`${K}.primaryBadge`)} /> : undefined}
         />
       ),
     },

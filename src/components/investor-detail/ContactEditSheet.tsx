@@ -14,7 +14,7 @@ import {
   Trash2,
   User,
 } from 'lucide-react';
-import { Sheet, SheetContent, SheetDescription, SheetHeader, SheetTitle } from '../ui/sheet';
+import { Sheet, SheetContent } from '../ui/sheet';
 import { Button } from '../ui/button';
 import { Input } from '../ui/input';
 import { Label } from '../ui/label';
@@ -26,6 +26,7 @@ import {
   SIDE_PANEL_WIDE_STYLE,
   SidePanelCard,
   SidePanelFooter,
+  SidePanelHeader,
   SidePanelScopeField,
   SidePanelSection,
   SidePanelSwitchRow,
@@ -230,16 +231,10 @@ export function ContactEditSheet({
   return (
     <Sheet open={open} onOpenChange={(o) => !o && onClose()}>
       <SheetContent side="right" style={SIDE_PANEL_WIDE_STYLE} className="h-full p-0 gap-0">
-        <SheetHeader className="px-6 py-5 border-b bg-white">
-          <div>
-            <SheetTitle className="text-[26px] leading-8">
-              {isNew ? t(`${K}.dialogAddTitle`) : t(`${K}.dialogEditTitle`)}
-            </SheetTitle>
-            <SheetDescription className="mt-1 text-[15px]">
-              {isNew ? t(`${K}.dialogAddDesc`) : t(`${K}.dialogEditDesc`)}
-            </SheetDescription>
-          </div>
-        </SheetHeader>
+        <SidePanelHeader
+          title={isNew ? t(`${K}.dialogAddTitle`) : t(`${K}.dialogEditTitle`)}
+          description={isNew ? t(`${K}.dialogAddDesc`) : t(`${K}.dialogEditDesc`)}
+        />
 
         <div className="flex-1 overflow-y-auto px-6 py-5 space-y-5">
           <SidePanelSection icon={User} title={t(`${K}.generalSection`)}>
@@ -520,7 +515,7 @@ export function ContactEditSheet({
               <>
                 {fullAccess ? (
                   <div className="rounded-xl border border-emerald-200 bg-emerald-50 p-4">
-                    <p className="font-semibold text-emerald-800 flex items-center gap-2">
+                    <p className="font-semibold text-emerald-900 flex items-center gap-2">
                       <CheckCircle2 className="h-4 w-4" /> {t(`${K}.accessRecapTitleAll`)}
                     </p>
                     <p className="text-sm text-emerald-700 mt-1">{t(`${K}.access.recapAll`)}</p>
