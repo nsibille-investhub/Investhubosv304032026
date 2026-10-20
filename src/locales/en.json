@@ -5811,8 +5811,8 @@
           },
           "failureReasons": {
             "combinedTemplateMissing": "Combined notice template missing",
-            "templateMissing": "Notice template missing",
-            "missingAddress": "Recipient address missing"
+            "productionError": "Production error",
+            "timeout": "Production time limit exceeded"
           },
           "paymentOrigins": {
             "bankReconciliation": "bank reconciliation",
@@ -5832,6 +5832,22 @@
             "filteredTitle": "No matching lines",
             "filteredDescription": "Change the search or the filters to widen the results.",
             "reset": "Reset filters"
+          },
+          "dateTime": "{{date}} at {{time}}",
+          "noticeTooltip": {
+            "failed": "{{reason}}, on {{at}}",
+            "requested": "Requested on {{at}}",
+            "replaced": "File uploaded by the operator, never regenerated",
+            "previousFailure": "previous failure: {{reason}}",
+            "relaunchedOne": "{{count}} retry",
+            "relaunchedMany": "{{count}} retries"
+          },
+          "relaunch": {
+            "label": "Retry failed notices ({{count}})",
+            "noneFailed": "No failed notice",
+            "refused": "Retry refused",
+            "startedOne": "{{count}} failed notice retried.",
+            "startedMany": "{{count}} failed notices retried."
           }
         }
       }

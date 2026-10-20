@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { toast } from 'sonner@2.0.3';
 import {
   ArrowDownCircle,
@@ -20,6 +20,15 @@ import {
 
 import { useTranslation } from '../../utils/languageContext';
 import { CapitalCall, CapitalCallShare, distinctNoticeDate } from '../../utils/capitalCallGenerator';
+import type { CapitalCallRights } from '../../utils/capitalCallActions';
+import {
+  CapitalCallLine,
+  expireStaleNotices,
+  generateCapitalCallLines,
+  noticeAvailable,
+  noticeFailed,
+  relaunchFailedNotices,
+} from '../../utils/capitalCallLines';
 import { CheckIndicator } from '../CheckIndicator';
 import { CapitalCallLinesTab } from './CapitalCallLinesTab';
 import { ColumnConfig, DataTable } from '../DataTable';
@@ -39,13 +48,64 @@ type TabId = 'lines' | 'breakdown' | 'message';
 
 interface CapitalCallDetailPageProps {
   call: CapitalCall;
+  rights: CapitalCallRights;
   onOpenFund: (fundId: number) => void;
 }
 
-export function CapitalCallDetailPage({ call, onOpenFund }: CapitalCallDetailPageProps) {
+/** Durée simulée de production d'un avis. */
+const PRODUCTION_DELAY = 3000;
+
+export function CapitalCallDetailPage({ call, rights, onOpenFund }: CapitalCallDetailPageProps) {
   const { t, lang } = useTranslation();
   const [tab, setTab] = useState<TabId>('lines');
   const [hoveredRow, setHoveredRow] = useState<number | null>(null);
+  // Le délai maximal est contrôlé à l'ouverture de la fiche.
+  const [lines, setLines] = useState<CapitalCallLine[]>(() => expireStaleNotices(generateCapitalCallLines(call)));
+  const scheduled = useRef(new Set<string>());
+  const timers = useRef<number[]>([]);
+
+  useEffect(() => () => timers.current.forEach(id => window.clearTimeout(id)), []);
+
+  // Production simulée : chaque avis en génération aboutit à un état connu.
+  useEffect(() => {
+    lines.forEach(line => {
+      if (line.noticeState !== 'generating' || !line.noticeRequestedAt) return;
+      const key = `${line.id}-${line.noticeRequestedAt.getTime()}`;
+      if (scheduled.current.has(key)) return;
+      scheduled.current.add(key);
+      const templateMissing = line.combinedNotice && line.noticeFailureReason === 'combinedTemplateMissing';
+      const succeeds = !templateMissing && Math.random() > 0.25;
+      timers.current.push(
+        window.setTimeout(() => {
+          setLines(prev =>
+            prev.map(item => {
+              if (item.id !== line.id || item.noticeState !== 'generating') return item;
+              if (templateMissing) return noticeFailed(item, 'combinedTemplateMissing');
+              return succeeds ? noticeAvailable(item) : noticeFailed(item, 'productionError');
+            }),
+          );
+        }, PRODUCTION_DELAY + Math.random() * 2000),
+      );
+    });
+  }, [lines]);
+
+  const failedCount = lines.filter(line => line.noticeState === 'failed').length;
+  const relaunchReason = call.sending
+    ? t('funds.capitalCalls.blockers.sending')
+    : !rights.manage
+      ? t('funds.capitalCalls.blockers.missingRight')
+      : failedCount === 0
+        ? t(`${K}.lines.relaunch.noneFailed`)
+        : null;
+
+  const relaunchFailed = () => {
+    if (relaunchReason) {
+      toast.error(t(`${K}.lines.relaunch.refused`), { description: relaunchReason });
+      return;
+    }
+    setLines(prev => relaunchFailedNotices(prev));
+    toast.info(t(failedCount === 1 ? `${K}.lines.relaunch.startedOne` : `${K}.lines.relaunch.startedMany`, { count: failedCount }));
+  };
 
   const dateFormat = new Intl.DateTimeFormat(lang, { day: '2-digit', month: '2-digit', year: 'numeric' });
   const money = (value: number, digits = 0) =>
@@ -205,7 +265,13 @@ export function CapitalCallDetailPage({ call, onOpenFund }: CapitalCallDetailPag
         </div>
         <div className="px-8 py-6">
           <TabsContent value="lines">
-            <CapitalCallLinesTab call={call} />
+            <CapitalCallLinesTab
+              call={call}
+              lines={lines}
+              failedCount={failedCount}
+              relaunchDisabledReason={relaunchReason}
+              onRelaunchFailed={relaunchFailed}
+            />
           </TabsContent>
           <TabsContent value="breakdown">
             <Card className="overflow-hidden shadow-sm">

@@ -615,7 +615,7 @@ export function CapitalCallsPage({ funds, initialFundIds, onOpenFund, onSelected
     return (
       <div className="flex min-h-screen flex-1 flex-col bg-muted">
         {scenarioBar}
-        <CapitalCallDetailPage call={selectedCall} onOpenFund={onOpenFund} />
+        <CapitalCallDetailPage key={selectedCall.id} call={selectedCall} rights={rights} onOpenFund={onOpenFund} />
       </div>
     );
   }

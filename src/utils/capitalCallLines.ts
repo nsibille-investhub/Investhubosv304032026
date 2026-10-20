@@ -3,7 +3,16 @@ import type { CapitalCall } from './capitalCallGenerator';
 export type LineState = 'toNotify' | 'notified' | 'paymentDeclared' | 'paid';
 export type NoticeState = 'generating' | 'available' | 'failed' | 'replaced';
 export type PaymentOrigin = 'bankReconciliation' | 'directDebit' | 'manual';
-export type NoticeFailureReason = 'combinedTemplateMissing' | 'templateMissing' | 'missingAddress';
+export type NoticeFailureReason = 'combinedTemplateMissing' | 'productionError' | 'timeout';
+
+export interface NoticeEvent {
+  at: Date;
+  kind: 'requested' | 'failed' | 'relaunched' | 'available';
+  reason?: NoticeFailureReason;
+}
+
+/** Délai maximal de production d'un avis avant "En échec". Valeur provisoire : question ouverte d'IC-5589. */
+export const NOTICE_TIMEOUT_MINUTES = 30;
 
 export const LINE_STATES: LineState[] = ['toNotify', 'notified', 'paymentDeclared', 'paid'];
 export const NOTICE_STATES: NoticeState[] = ['generating', 'available', 'failed', 'replaced'];
@@ -24,6 +33,10 @@ export interface CapitalCallLine {
   paymentOrigin: PaymentOrigin | null;
   noticeState: NoticeState;
   noticeFailureReason: NoticeFailureReason | null;
+  /** Dernière demande de production, pour le contrôle du délai maximal. */
+  noticeRequestedAt: Date | null;
+  /** Trace des demandes, échecs et relances de l'avis. */
+  noticeEvents: NoticeEvent[];
   notifiedAt: Date | null;
   lastReminderAt: Date | null;
   paidAt: Date | null;
@@ -49,6 +62,7 @@ const INVESTORS = [
 ];
 
 const DAY = 24 * 60 * 60 * 1000;
+const MINUTE = 60 * 1000;
 const NOMINAL = 100;
 
 function seeded(seed: number) {
@@ -91,17 +105,36 @@ export function generateCapitalCallLines(call: CapitalCall): CapitalCallLine[] {
     }
 
     const combinedNotice = random() < 0.3;
+    const requestedAt = new Date(Math.min(call.createdAt.getTime() + 30 * MINUTE, now - 3 * 60 * MINUTE));
     let noticeState: NoticeState = 'available';
     let noticeFailureReason: NoticeFailureReason | null = null;
+    let noticeRequestedAt: Date | null = null;
+    const noticeEvents: NoticeEvent[] = [{ at: requestedAt, kind: 'requested' }];
+    const failedAt = new Date(requestedAt.getTime() + 2 * MINUTE);
     if (!notified) {
       const draw = random();
-      if (draw < 0.15) noticeState = 'generating';
-      else if (draw < 0.3) {
+      if (draw < 0.08) {
+        // Demande restée sans réponse : passe en échec au contrôle du délai maximal.
+        noticeState = 'generating';
+        noticeRequestedAt = requestedAt;
+      } else if (draw < 0.16) {
+        noticeState = 'generating';
+        noticeRequestedAt = new Date(now - MINUTE);
+        noticeEvents.push({ at: noticeRequestedAt, kind: 'relaunched' });
+      } else if (draw < 0.3) {
         noticeState = 'failed';
-        noticeFailureReason = combinedNotice ? 'combinedTemplateMissing' : random() < 0.5 ? 'templateMissing' : 'missingAddress';
+        noticeFailureReason = combinedNotice ? 'combinedTemplateMissing' : 'productionError';
+        noticeEvents.push({ at: failedAt, kind: 'failed', reason: noticeFailureReason });
+      } else if (draw < 0.36) {
+        noticeState = 'replaced';
+        noticeEvents.push({ at: failedAt, kind: 'failed', reason: 'productionError' });
+      } else {
+        noticeEvents.push({ at: failedAt, kind: 'available' });
       }
     } else if (random() < 0.08) {
       noticeState = 'replaced';
+    } else {
+      noticeEvents.push({ at: failedAt, kind: 'available' });
     }
 
     const paidAt =
@@ -132,6 +165,8 @@ export function generateCapitalCallLines(call: CapitalCall): CapitalCallLine[] {
       paymentOrigin,
       noticeState,
       noticeFailureReason,
+      noticeRequestedAt,
+      noticeEvents,
       notifiedAt: notified ? notifiedAt : null,
       lastReminderAt:
         toRelaunch && random() < 0.6 ? new Date(Math.min(notifiedAt.getTime() + 15 * DAY, now)) : null,
@@ -142,4 +177,56 @@ export function generateCapitalCallLines(call: CapitalCall): CapitalCallLine[] {
       hiddenOnPortal: random() < 0.05,
     };
   });
+}
+
+/** Contrôle du délai maximal : un avis encore en génération au-delà passe en échec. */
+export function expireStaleNotices(lines: CapitalCallLine[], now = new Date()): CapitalCallLine[] {
+  const limit = now.getTime() - NOTICE_TIMEOUT_MINUTES * MINUTE;
+  return lines.map(line =>
+    line.noticeState === 'generating' && line.noticeRequestedAt && line.noticeRequestedAt.getTime() < limit
+      ? noticeFailed(line, 'timeout', now)
+      : line,
+  );
+}
+
+export function noticeFailed(line: CapitalCallLine, reason: NoticeFailureReason, at = new Date()): CapitalCallLine {
+  return {
+    ...line,
+    noticeState: 'failed',
+    noticeFailureReason: reason,
+    noticeRequestedAt: null,
+    noticeEvents: [...line.noticeEvents, { at, kind: 'failed', reason }],
+  };
+}
+
+export function noticeAvailable(line: CapitalCallLine, at = new Date()): CapitalCallLine {
+  return {
+    ...line,
+    noticeState: 'available',
+    noticeFailureReason: null,
+    noticeRequestedAt: null,
+    noticeEvents: [...line.noticeEvents, { at, kind: 'available' }],
+  };
+}
+
+/** Relance ciblée : seuls les avis en échec repartent en génération. Un avis remplacé n'est jamais touché. */
+export function relaunchFailedNotices(lines: CapitalCallLine[], at = new Date()): CapitalCallLine[] {
+  return lines.map(line =>
+    line.noticeState === 'failed'
+      ? {
+          ...line,
+          noticeState: 'generating',
+          noticeRequestedAt: at,
+          noticeEvents: [...line.noticeEvents, { at, kind: 'relaunched' }],
+        }
+      : line,
+  );
+}
+
+export function lastFailure(line: CapitalCallLine): NoticeEvent | undefined {
+  return [...line.noticeEvents].reverse().find(event => event.kind === 'failed');
+}
+
+export function relaunchCount(line: CapitalCallLine): number {
+  return line.noticeEvents.filter(event => event.kind === 'relaunched').length;
 }

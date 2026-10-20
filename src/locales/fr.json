@@ -5811,8 +5811,8 @@
           },
           "failureReasons": {
             "combinedTemplateMissing": "Modèle d'avis combiné absent",
-            "templateMissing": "Modèle d'avis absent",
-            "missingAddress": "Adresse du destinataire manquante"
+            "productionError": "Erreur de production",
+            "timeout": "Délai de production dépassé"
           },
           "paymentOrigins": {
             "bankReconciliation": "rapprochement bancaire",
@@ -5832,6 +5832,22 @@
             "filteredTitle": "Aucune ligne ne correspond",
             "filteredDescription": "Modifiez la recherche ou les filtres pour élargir les résultats.",
             "reset": "Réinitialiser les filtres"
+          },
+          "dateTime": "{{date}} à {{time}}",
+          "noticeTooltip": {
+            "failed": "{{reason}}, le {{at}}",
+            "requested": "Demandé le {{at}}",
+            "replaced": "Fichier déposé par l'opérateur, jamais régénéré",
+            "previousFailure": "échec précédent : {{reason}}",
+            "relaunchedOne": "{{count}} relance",
+            "relaunchedMany": "{{count}} relances"
+          },
+          "relaunch": {
+            "label": "Relancer la génération des avis en échec ({{count}})",
+            "noneFailed": "Aucun avis en échec",
+            "refused": "Relance refusée",
+            "startedOne": "{{count}} avis en échec relancé.",
+            "startedMany": "{{count}} avis en échec relancés."
           }
         }
       }

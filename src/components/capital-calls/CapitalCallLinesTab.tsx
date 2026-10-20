@@ -1,5 +1,5 @@
 import { useMemo, useState, type ReactNode } from 'react';
-import { AlertTriangle, ArrowLeftRight, CheckCircle2, EyeOff, Layers, Loader2, Repeat, Users } from 'lucide-react';
+import { AlertTriangle, ArrowLeftRight, CheckCircle2, EyeOff, Layers, Loader2, Repeat, RotateCw, Users } from 'lucide-react';
 
 import { useTranslation } from '../../utils/languageContext';
 import type { CapitalCall } from '../../utils/capitalCallGenerator';
@@ -9,8 +9,9 @@ import {
   LineState,
   NOTICE_STATES,
   NoticeState,
-  generateCapitalCallLines,
   isPerUnitCall,
+  lastFailure,
+  relaunchCount,
 } from '../../utils/capitalCallLines';
 import { ColumnConfig, DataTable } from '../DataTable';
 import { EmptyState } from '../EmptyState';
@@ -20,6 +21,7 @@ import { StatusBadge, StatusVariant } from '../StatusBadge';
 import { Button } from '../ui/button';
 import { Card } from '../ui/card';
 import { DataPagination } from '../ui/data-pagination';
+import { DisabledReason } from '../ui/disabled-reason';
 import { Tooltip, TooltipContent, TooltipTrigger } from '../ui/tooltip';
 
 const K = 'funds.capitalCalls.detail.lines';
@@ -56,9 +58,22 @@ function WithTooltip({ content, children }: { content: string | null; children: 
   );
 }
 
-export function CapitalCallLinesTab({ call }: { call: CapitalCall }) {
+interface CapitalCallLinesTabProps {
+  call: CapitalCall;
+  lines: CapitalCallLine[];
+  failedCount: number;
+  relaunchDisabledReason: string | null;
+  onRelaunchFailed: () => void;
+}
+
+export function CapitalCallLinesTab({
+  call,
+  lines,
+  failedCount,
+  relaunchDisabledReason,
+  onRelaunchFailed,
+}: CapitalCallLinesTabProps) {
   const { t, lang } = useTranslation();
-  const lines = useMemo(() => generateCapitalCallLines(call), [call]);
   const perUnit = isPerUnitCall(call);
   const [search, setSearch] = useState('');
   const [activeFilters, setActiveFilters] = useState<ActiveFilters>({});
@@ -137,6 +152,39 @@ export function CapitalCallLinesTab({ call }: { call: CapitalCall }) {
       return next;
     });
     setPage(1);
+  };
+
+  const dateTime = (value: Date) =>
+    t(`${K}.dateTime`, {
+      date: dateFormat.format(value),
+      time: new Intl.DateTimeFormat(lang, { hour: '2-digit', minute: '2-digit' }).format(value),
+    });
+
+  const noticeTooltip = (line: CapitalCallLine) => {
+    const failure = lastFailure(line);
+    const relaunches = relaunchCount(line);
+    const parts: string[] = [];
+    if (line.noticeState === 'failed' && line.noticeFailureReason) {
+      parts.push(
+        t(`${K}.noticeTooltip.failed`, {
+          reason: t(`${K}.failureReasons.${line.noticeFailureReason}`),
+          at: failure ? dateTime(failure.at) : '',
+        }),
+      );
+    }
+    if (line.noticeState === 'generating' && line.noticeRequestedAt) {
+      parts.push(t(`${K}.noticeTooltip.requested`, { at: dateTime(line.noticeRequestedAt) }));
+    }
+    if (line.noticeState === 'replaced') {
+      parts.push(t(`${K}.noticeTooltip.replaced`));
+      if (failure?.reason) {
+        parts.push(t(`${K}.noticeTooltip.previousFailure`, { reason: t(`${K}.failureReasons.${failure.reason}`) }));
+      }
+    }
+    if (relaunches > 0 && line.noticeState !== 'available') {
+      parts.push(t(relaunches === 1 ? `${K}.noticeTooltip.relaunchedOne` : `${K}.noticeTooltip.relaunchedMany`, { count: relaunches }));
+    }
+    return parts.length > 0 ? parts.join(' · ') : null;
   };
 
   const lineStateTooltip = (line: CapitalCallLine) =>
@@ -242,9 +290,7 @@ export function CapitalCallLinesTab({ call }: { call: CapitalCall }) {
       key: 'noticeState',
       label: t(`${K}.columns.noticeState`),
       render: line => (
-        <WithTooltip
-          content={line.noticeFailureReason ? t(`${K}.failureReasons.${line.noticeFailureReason}`) : null}
-        >
+        <WithTooltip content={noticeTooltip(line)}>
           <StatusBadge
             label={t(`${K}.noticeStates.${line.noticeState}`)}
             variant={NOTICE_STATE_VARIANT[line.noticeState]}
@@ -274,6 +320,20 @@ export function CapitalCallLinesTab({ call }: { call: CapitalCall }) {
           activeFilters={activeFilters}
           onFilterChange={handleFilterChange}
           onClearAll={resetFilters}
+          actions={
+            <DisabledReason reason={relaunchDisabledReason}>
+              <Button
+                variant="outline"
+                size="sm"
+                className="gap-1.5"
+                onClick={onRelaunchFailed}
+                disabled={Boolean(relaunchDisabledReason)}
+              >
+                <RotateCw className="h-4 w-4" />
+                {t(`${K}.relaunch.label`, { count: failedCount })}
+              </Button>
+            </DisabledReason>
+          }
         />
       </div>
       {filtered.length === 0 ? (
