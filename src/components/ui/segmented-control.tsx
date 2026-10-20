@@ -63,7 +63,8 @@ function SegmentedControl<V extends string = string>({
             'hover:border-gray-300 hover:text-gray-700',
             'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-1 focus-visible:ring-[#000E2B]/30',
             'disabled:cursor-not-allowed disabled:opacity-50 disabled:hover:border-gray-200',
-            'data-[state=on]:border-[#000E2B] data-[state=on]:text-[#000E2B] data-[state=on]:shadow-sm',
+            // Option active marquée par la valeur : les variantes data-[state=on] ne sont pas compilées.
+            option.value === value && 'border-primary bg-primary/5 text-primary shadow-sm',
             'dark:border-gray-800 dark:bg-gray-950 dark:text-gray-400',
             'dark:hover:border-gray-700 dark:hover:text-gray-200',
             'dark:data-[state=on]:border-white dark:data-[state=on]:text-white',

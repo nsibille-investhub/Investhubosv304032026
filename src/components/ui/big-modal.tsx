@@ -196,6 +196,7 @@ function BigModalPanelHeader({
   onClose,
   closeLabel,
   tone = "primary",
+  children,
 }: {
   icon: LucideIcon
   title: React.ReactNode
@@ -204,6 +205,8 @@ function BigModalPanelHeader({
   closeLabel: string
   /** "danger" pour une action destructive. */
   tone?: "primary" | "danger"
+  /** Sous le titre : étapes d'un assistant (WizardSteps). */
+  children?: React.ReactNode
 }) {
   return (
     <div className="px-8 py-4 bg-card border-b border-border">
@@ -234,6 +237,7 @@ function BigModalPanelHeader({
           <X className="w-4 h-4 text-muted-foreground" />
         </Button>
       </div>
+      {children ? <div className="mt-4">{children}</div> : null}
     </div>
   )
 }

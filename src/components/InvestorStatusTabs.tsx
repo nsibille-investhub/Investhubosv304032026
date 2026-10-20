@@ -1,7 +1,5 @@
-import { motion } from 'motion/react';
-import { Badge } from './ui/badge';
 import { UserPlus, MessageCircle, UserCheck, List } from 'lucide-react';
-import { FilterCard } from './ui/filter-card';
+import { FilterCard, FilterCardGroup } from './ui/filter-card';
 import { useTranslation } from '../utils/languageContext';
 
 interface InvestorStatusTabsProps {
@@ -55,24 +53,12 @@ export function InvestorStatusTabs({ data, activeStatus, onStatusChange }: Inves
   const allKPIs = calculateKPIs(getFilteredData('all'));
 
   return (
-    <motion.div
-      initial={{ opacity: 0, y: -20 }}
-      animate={{ opacity: 1, y: 0 }}
-      transition={{ duration: 0.3 }}
-      className="bg-primary/5 pb-2 rounded-lg"
+    <FilterCardGroup
+      title={t('investors.pipeline.title')}
+      badge={t('investors.pipeline.statusBadge')}
+      hint={t('investors.pipeline.clickToFilter')}
+      columns={4}
     >
-      <div className="mb-3 flex items-center justify-between">
-        <div className="flex items-center gap-2">
-          <div className="w-1 h-6 bg-primary rounded-full" />
-          <h3 className="font-semibold text-gray-900">{t('investors.pipeline.title')}</h3>
-          <Badge variant="outline" className="text-xs bg-primary/10 text-primary border-primary/25">
-            {t('investors.pipeline.statusBadge')}
-          </Badge>
-        </div>
-        <div className="text-xs text-gray-500">{t('investors.pipeline.clickToFilter')}</div>
-      </div>
-
-      <div className="grid grid-cols-4 gap-1.5 items-center">
         <FilterCard
           status="prospect"
           activeStatus={activeStatus}
@@ -117,7 +103,6 @@ export function InvestorStatusTabs({ data, activeStatus, onStatusChange }: Inves
           metricValue={`€${formatAmount(allKPIs.totalInvested)}`}
           averageValue={`€${formatAmount(allKPIs.avgInvested)}`}
         />
-      </div>
-    </motion.div>
+    </FilterCardGroup>
   );
 }

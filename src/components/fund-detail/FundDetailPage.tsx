@@ -14,7 +14,6 @@ import {
   CreditCard,
   FileSignature,
   FileText,
-  FlaskConical,
   Handshake,
   Hash,
   History,
@@ -54,7 +53,7 @@ import { DisabledReason } from '../ui/disabled-reason';
 import { EffectsPanel } from '../ui/effects-panel';
 import { PageHeader, PageHeaderSubtitle, PageHeaderSubtitleItem, PageHeaderSubtitleSeparator } from '../ui/page-header';
 import { PageStateBanner } from '../ui/page-state-banner';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../ui/select';
+import { DemoScenarioBar } from '../ui/demo-scenario-bar';
 import { DetailTabsList } from '../ui/detail-tabs';
 import { Tabs, TabsContent } from '../ui/tabs';
 import { toneSurface } from '../ui/tone';
@@ -87,6 +86,7 @@ interface FundDetailPageProps {
   fund: Fund;
   onBack: () => void;
   onOpenSubscriptions: (fund: Fund) => void;
+  onOpenCapitalCalls: (fund: Fund) => void;
 }
 
 function LinkedScreenTab({ titleKey, descriptionKey, icon }: { titleKey: string; descriptionKey: string; icon: typeof FileText }) {
@@ -119,7 +119,7 @@ function ComingSoonTab({ icon }: { icon: typeof FileText }) {
   );
 }
 
-export function FundDetailPage({ fund, onBack, onOpenSubscriptions }: FundDetailPageProps) {
+export function FundDetailPage({ fund, onBack, onOpenSubscriptions, onOpenCapitalCalls }: FundDetailPageProps) {
   const { t, lang } = useTranslation();
   const [scenario, setScenario] = useState<FundScenario>('default');
   const initial = useMemo(() => buildFundDetail(fund, scenario), [fund, scenario]);
@@ -274,24 +274,12 @@ export function FundDetailPage({ fund, onBack, onOpenSubscriptions }: FundDetail
 
   return (
     <div className="flex flex-1 flex-col min-h-screen bg-muted">
-      <div className="flex flex-wrap items-center justify-end gap-3 border-b border-border px-6 py-2" style={toneSurface('info')}>
-        <span className="inline-flex items-center gap-2 text-xs font-medium">
-          <FlaskConical className="w-3.5 h-3.5" aria-hidden />
-          {t(`${K}.scenario.label`)}
-        </span>
-        <Select value={scenario} onValueChange={value => setScenario(value as FundScenario)}>
-          <SelectTrigger size="sm" className="w-56 border-border bg-card" aria-label={t(`${K}.scenario.label`)}>
-            <SelectValue />
-          </SelectTrigger>
-          <SelectContent>
-            {FUND_SCENARIOS.map(item => (
-              <SelectItem key={item} value={item}>
-                {t(`${K}.scenario.options.${item}`)}
-              </SelectItem>
-            ))}
-          </SelectContent>
-        </Select>
-      </div>
+      <DemoScenarioBar
+        label={t(`${K}.scenario.label`)}
+        value={scenario}
+        options={FUND_SCENARIOS.map(item => ({ value: item, label: t(`${K}.scenario.options.${item}`) }))}
+        onChange={setScenario}
+      />
 
       <PageHeader
         title={
@@ -482,6 +470,7 @@ export function FundDetailPage({ fund, onBack, onOpenSubscriptions }: FundDetail
               onNavigate={navigateTo}
               onOpenTab={next => setTab(next as TabId)}
               onOpenSubscriptions={() => onOpenSubscriptions(fund)}
+              onOpenCapitalCalls={() => onOpenCapitalCalls(fund)}
             />
           </TabsContent>
           <TabsContent value="settings">

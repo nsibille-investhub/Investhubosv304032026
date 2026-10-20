@@ -22,7 +22,7 @@ import { toast } from 'sonner';
 import { useTranslation, type Language } from '../../utils/languageContext';
 import { Button } from '../ui/button';
 import { Badge } from '../ui/badge';
-import { FilterCard } from '../ui/filter-card';
+import { FilterCard, FilterCardGroup } from '../ui/filter-card';
 import { PageHeader } from '../ui/page-header';
 import {
   Sheet,
@@ -719,28 +719,12 @@ function SmsStatusTabs({
   };
 
   return (
-    <motion.div
-      initial={{ opacity: 0, y: -10 }}
-      animate={{ opacity: 1, y: 0 }}
-      transition={{ duration: 0.3 }}
-      className="bg-primary/5 p-3 rounded-lg"
+    <FilterCardGroup
+      title={t('smsLog.statusTabs.title')}
+      badge={t('smsLog.statusTabs.subtitle')}
+      hint={t('smsLog.statusTabs.clickToFilter')}
+      columns={5} className="p-3"
     >
-      <div className="mb-3 flex items-center justify-between">
-        <div className="flex items-center gap-2">
-          <div className="w-1 h-6 bg-primary rounded-full" />
-          <h3 className="font-semibold text-gray-900 dark:text-gray-100">
-            {t('smsLog.statusTabs.title')}
-          </h3>
-          <Badge variant="outline" className="text-xs bg-primary/10 text-primary border-primary/25">
-            {t('smsLog.statusTabs.subtitle')}
-          </Badge>
-        </div>
-        <div className="text-xs text-gray-500 dark:text-gray-400">
-          {t('smsLog.statusTabs.clickToFilter')}
-        </div>
-      </div>
-
-      <div className="grid grid-cols-5 gap-1.5 items-center">
         {order.map((status) => (
           <FilterCard
             key={status}
@@ -756,8 +740,7 @@ function SmsStatusTabs({
             iconActiveClassName={STATUS_TAB_ICON_CLASS[status] ?? 'text-primary'}
           />
         ))}
-      </div>
-    </motion.div>
+    </FilterCardGroup>
   );
 }
 
