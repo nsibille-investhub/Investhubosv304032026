@@ -41,6 +41,8 @@ import { ValidationPage } from './components/ValidationPage';
 import { CompliancePlusPage } from './components/CompliancePlusPage';
 import { SubscriptionsPage } from './components/SubscriptionsPage';
 import { SubscriptionDetailPage } from './components/SubscriptionDetailPage';
+import { NotificationsPanel } from './components/NotificationsPanel';
+import { useNotifications } from './utils/notificationsContext';
 import { EntitiesPage } from './components/EntitiesPage';
 import { AlertsPage } from './components/AlertsPage';
 import { TrackingPage } from './components/TrackingPage';
@@ -148,6 +150,9 @@ export default function App() {
   const [trackingEnabled, setTrackingEnabled] = useState(false);
   const [newSubscriptionDialogOpen, setNewSubscriptionDialogOpen] = useState(false);
   const [selectedSubscriptionDetail, setSelectedSubscriptionDetail] = useState<Subscription | null>(null);
+  const { notifications, markRead, markAllRead } = useNotifications();
+  const unreadCount = notifications.filter(n => n.channel === 'backOffice' && !n.read).length;
+  const [isNotificationsOpen, setIsNotificationsOpen] = useState(false);
   const [selectedDataRoomSpace, setSelectedDataRoomSpace] = useState<any | null>(null);
   const [dataRoomMassUploadOpen, setDataRoomMassUploadOpen] = useState(false);
   const [dataRoomBackSignal, setDataRoomBackSignal] = useState(0);
@@ -614,17 +619,23 @@ export default function App() {
                   <motion.button
                     whileHover={{ scale: 1.05 }}
                     whileTap={{ scale: 0.95, rotate: -15 }}
+                    onClick={() => setIsNotificationsOpen(true)}
+                    aria-label={t('header.notifications', { count: unreadCount })}
                     className="p-2.5 hover:bg-gray-100 rounded-xl transition-all duration-300 relative group"
                   >
                     <Bell className="w-5 h-5 text-gray-600 group-hover:text-gray-900 transition-colors" />
-                    <motion.span
-                      initial={{ scale: 0 }}
-                      animate={{ scale: 1 }}
-                      className="absolute top-1.5 right-1.5 w-2 h-2 bg-red-500 rounded-full ring-2 ring-white"
-                    />
+                    {unreadCount > 0 && (
+                      <motion.span
+                        initial={{ scale: 0 }}
+                        animate={{ scale: 1 }}
+                        className="absolute -top-0.5 -right-0.5 min-w-[16px] h-4 px-1 text-[10px] font-bold rounded-full flex items-center justify-center bg-red-500 text-white ring-2 ring-white"
+                      >
+                        {unreadCount}
+                      </motion.span>
+                    )}
                   </motion.button>
                 </TooltipTrigger>
-                <TooltipContent>{t('header.notifications', { count: 11 })}</TooltipContent>
+                <TooltipContent>{t('header.notifications', { count: unreadCount })}</TooltipContent>
               </Tooltip>
 
               <motion.div 
@@ -1996,6 +2007,21 @@ export default function App() {
         onSubscriptionCreated={handleSubscriptionCreated}
       />
 
+        <NotificationsPanel
+          open={isNotificationsOpen}
+          onClose={() => setIsNotificationsOpen(false)}
+          notifications={notifications.filter(n => n.channel === 'backOffice')}
+          onMarkAllRead={markAllRead}
+          onOpenNotification={notification => {
+            markRead(notification.id);
+            setIsNotificationsOpen(false);
+            setCurrentPage('subscriptions');
+            setSelectedSubscriptionDetail({
+              ...(notification.subscription as Subscription),
+              openModifiedAnswersAt: Date.now(),
+            } as Subscription);
+          }}
+        />
         </TooltipProvider>
         </ValidationStoreProvider>
       </AppStoreProvider>

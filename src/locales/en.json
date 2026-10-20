@@ -1265,7 +1265,8 @@
           "documentDatesUpdated": "Document dates updated",
           "dataPropagated": "Linked data updated",
           "dataReset": "Linked data reset",
-          "answerReplayed": "Triggered answer changed"
+          "answerReplayed": "Triggered answer changed",
+          "notificationSent": "Alert sent"
         },
         "origin": {
           "investor": "Investor",
@@ -1276,7 +1277,8 @@
         "target": "Linked data: {{object}} · {{field}}",
         "causedBy": "Following the change of: {{label}}",
         "pendingModificationsOne": "1 change since the last validation",
-        "pendingModificationsMany": "{{count}} changes since the last validation"
+        "pendingModificationsMany": "{{count}} changes since the last validation",
+        "recipients": "Recipients: {{recipients}}"
       },
       "documentControl": {
         "rejectedToast": "Document rejected",
@@ -1420,6 +1422,32 @@
           "indicator": "Indicator"
         },
         "toast": "File export downloaded"
+      },
+      "answerAlerts": {
+        "partnerFallback": "Partner",
+        "roles": {
+          "analyst1": "analyst 1",
+          "analyst2": "analyst 2",
+          "partner": "partner",
+          "advisor": "advisor"
+        },
+        "auditSummaryOne": "Alert: 1 answer modified",
+        "auditSummaryMany": "Alert: {{count}} answers modified",
+        "sentToast": "Alert sent",
+        "sentToastDesc": "Recipients: {{recipients}}",
+        "preview": "See the preview",
+        "previewTitle": "Preview: distributor space",
+        "previewDescription": "Notification received by the partner and the advisor attached to the subscription.",
+        "noCircuitToast": "Outside four-eyes review and delegated validation: no alert, the indicator is enough.",
+        "simulate": "Simulate a change by the investor",
+        "scenario": {
+          "label": "Review circuit",
+          "options": {
+            "fourEyes": "Four-eyes review (you are analyst 1)",
+            "delegated": "KYC validation delegated to the partner",
+            "none": "No review circuit"
+          }
+        }
       }
     },
     "table": {
@@ -7114,6 +7142,22 @@
         "unpublish": "Unpublish",
         "revert": "Revert changes"
       }
+    }
+  },
+  "notifications": {
+    "panel": {
+      "title": "Notifications",
+      "description": "Alerts about the files you review.",
+      "emptyTitle": "No notification",
+      "emptyDescription": "You will be notified here when an answer changes on a file you review.",
+      "answersModifiedOne": "1 answer modified after submission",
+      "answersModifiedMany": "{{count}} answers modified after submission",
+      "moreAnswers": "and {{count}} more",
+      "meta": "{{origin}} · {{author}} · {{date}} at {{time}}",
+      "open": "See the modified answers",
+      "unread": "Unread",
+      "markAllRead": "Mark all as read",
+      "close": "Close"
     }
   }
 }

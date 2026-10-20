@@ -1,5 +1,6 @@
 import { useMemo, useState } from 'react';
 import {
+  BellRing,
   CalendarCheck,
   CheckCircle2,
   Eraser,
@@ -49,6 +50,7 @@ const AUDIT_ICONS: Record<SubscriptionAuditEventType, typeof History> = {
   dataPropagated: Share2,
   dataReset: Eraser,
   answerReplayed: Repeat,
+  notificationSent: BellRing,
   commentAdded: MessageSquare,
   dossierSubmitted: Send,
 };
@@ -133,6 +135,11 @@ function AuditTimeline({
                   <span> → </span>
                   <span className="text-foreground">{entry.newValue || t(`${T}.empty`)}</span>
                 </div>
+              ) : entry.type === 'notificationSent' ? (
+                <>
+                  <div className="text-foreground">{entry.reason}</div>
+                  <div>{t(`${T}.recipients`, { recipients: entry.newValue ?? '' })}</div>
+                </>
               ) : entry.newValue !== undefined ? (
                 <div className="text-foreground">{entry.newValue}</div>
               ) : null}
@@ -151,7 +158,9 @@ function AuditTimeline({
                   })}
                 </div>
               )}
-              {entry.reason && <div>{t(`${T}.reason`, { reason: entry.reason })}</div>}
+              {entry.reason && entry.type !== 'notificationSent' && (
+                <div>{t(`${T}.reason`, { reason: entry.reason })}</div>
+              )}
               {entry.viaSection && <div>{t(`${T}.viaSection`)}</div>}
             </div>
           ),

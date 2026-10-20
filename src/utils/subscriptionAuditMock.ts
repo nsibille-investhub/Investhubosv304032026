@@ -14,6 +14,7 @@ export type SubscriptionAuditEventType =
   | 'dataPropagated'
   | 'dataReset'
   | 'answerReplayed'
+  | 'notificationSent'
   | 'commentAdded'
   | 'dossierSubmitted';
 
@@ -31,6 +32,7 @@ export const SUBSCRIPTION_AUDIT_EVENT_TYPES: SubscriptionAuditEventType[] = [
   'dataPropagated',
   'dataReset',
   'answerReplayed',
+  'notificationSent',
   'commentAdded',
   'dossierSubmitted',
 ];

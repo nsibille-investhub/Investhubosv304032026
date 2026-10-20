@@ -1265,7 +1265,8 @@
           "documentDatesUpdated": "Dates du document modifiées",
           "dataPropagated": "Donnée liée mise à jour",
           "dataReset": "Donnée liée remise à zéro",
-          "answerReplayed": "Réponse déclenchée modifiée"
+          "answerReplayed": "Réponse déclenchée modifiée",
+          "notificationSent": "Alerte envoyée"
         },
         "origin": {
           "investor": "Investisseur",
@@ -1276,7 +1277,8 @@
         "target": "Donnée liée : {{object}} · {{field}}",
         "causedBy": "Suite à la modification de : {{label}}",
         "pendingModificationsOne": "1 modification depuis la dernière validation",
-        "pendingModificationsMany": "{{count}} modifications depuis la dernière validation"
+        "pendingModificationsMany": "{{count}} modifications depuis la dernière validation",
+        "recipients": "Destinataires : {{recipients}}"
       },
       "documentControl": {
         "rejectedToast": "Document refusé",
@@ -1420,6 +1422,32 @@
           "indicator": "Indicateur"
         },
         "toast": "Export du dossier téléchargé"
+      },
+      "answerAlerts": {
+        "partnerFallback": "Partenaire",
+        "roles": {
+          "analyst1": "analyste 1",
+          "analyst2": "analyste 2",
+          "partner": "partenaire",
+          "advisor": "conseiller"
+        },
+        "auditSummaryOne": "Alerte : 1 réponse modifiée",
+        "auditSummaryMany": "Alerte : {{count}} réponses modifiées",
+        "sentToast": "Alerte envoyée",
+        "sentToastDesc": "Destinataires : {{recipients}}",
+        "preview": "Voir l'aperçu",
+        "previewTitle": "Aperçu : espace distributeur",
+        "previewDescription": "Notification reçue par le partenaire et le conseiller rattachés à la souscription.",
+        "noCircuitToast": "Hors revue à quatre yeux et hors validation déléguée : aucune alerte, l'indicateur suffit.",
+        "simulate": "Simuler une modification par l'investisseur",
+        "scenario": {
+          "label": "Circuit de contrôle",
+          "options": {
+            "fourEyes": "Revue à quatre yeux (vous êtes analyste 1)",
+            "delegated": "Validation KYC déléguée au partenaire",
+            "none": "Sans circuit de contrôle"
+          }
+        }
       }
     },
     "table": {
@@ -7114,6 +7142,22 @@
         "unpublish": "Dépublier",
         "revert": "Annuler les modifications"
       }
+    }
+  },
+  "notifications": {
+    "panel": {
+      "title": "Notifications",
+      "description": "Les alertes qui vous concernent sur les dossiers que vous contrôlez.",
+      "emptyTitle": "Aucune notification",
+      "emptyDescription": "Vous serez prévenu ici quand une réponse change sur un dossier que vous contrôlez.",
+      "answersModifiedOne": "1 réponse modifiée après soumission",
+      "answersModifiedMany": "{{count}} réponses modifiées après soumission",
+      "moreAnswers": "et {{count}} autre(s)",
+      "meta": "{{origin}} · {{author}} · {{date}} à {{time}}",
+      "open": "Voir les réponses modifiées",
+      "unread": "Non lue",
+      "markAllRead": "Tout marquer comme lu",
+      "close": "Fermer"
     }
   }
 }

@@ -1,4 +1,4 @@
-import { Fragment, useMemo, useRef, useState } from 'react';
+import { Fragment, useEffect, useMemo, useRef, useState } from 'react';
 import { useTranslation } from '../utils/languageContext';
 import {
   Building2,
@@ -108,6 +108,7 @@ import {
 } from '../utils/subscriptionDetailMockData';
 import {
   AUDIT_DOCUMENTS_SECTION,
+  CURRENT_OPERATOR,
   buildInitialSubscriptionAudit,
   countPendingModifications,
   createLiveAuditEntry,
@@ -127,6 +128,8 @@ import { Textarea } from './ui/textarea';
 import { ManualDocumentPanel, isoToDisplayDate } from './ManualDocumentPanel';
 import { AnswerEditPanel, type AnswerEditEffects, type AnswerEditTarget, type AnswerEditTriggerChange } from './AnswerEditPanel';
 import { DemoScenarioBar } from './ui/demo-scenario-bar';
+import { NotificationsPanel } from './NotificationsPanel';
+import { useNotifications, type AnswersModifiedNotification } from '../utils/notificationsContext';
 import { Switch } from './ui/switch';
 import { StatusBadge } from './StatusBadge';
 import { Label } from './ui/label';
@@ -189,6 +192,11 @@ type EditScenario = (typeof EDIT_SCENARIOS)[number];
 /** Élément contrôlable : ni texte d'information, ni question non posée restée vide. */
 const isControllable = (question: MockQuestion, response: string) =>
   !question.info && !(question.notAsked && !response);
+
+// Circuit de contrôle du dossier, qui décide des destinataires des alertes (IC-5620).
+const REVIEW_CIRCUITS = ['fourEyes', 'delegated', 'none'] as const;
+type ReviewCircuit = (typeof REVIEW_CIRCUITS)[number];
+const SECOND_ANALYSTS = ['Paul Girard', 'Sophie Lambert'];
 
 const MODIFIED_BY_KEY: Record<SubscriptionAuditOrigin, string> = {
   operator: 'subscriptions.detail.onboarding.modified.byOperator',
@@ -301,6 +309,18 @@ export function SubscriptionDetailPage({ subscription: subscriptionProp, onBack 
   const [answerEdit, setAnswerEdit] = useState<{ sectionId: string; idx: number } | null>(null);
   const [notAskedVisible, setNotAskedVisible] = useState<string[]>([]);
   const [modifiedOnly, setModifiedOnly] = useState(false);
+  const [reviewCircuit, setReviewCircuit] = useState<ReviewCircuit>('fourEyes');
+  const { push: pushNotification } = useNotifications();
+  const [distributorPreview, setDistributorPreview] = useState<AnswersModifiedNotification | null>(null);
+
+  // Lien d'une notification : onglet Onboarding filtré sur les réponses modifiées.
+  const openModifiedAnswersAt = (subscriptionProp as { openModifiedAnswersAt?: number }).openModifiedAnswersAt;
+  useEffect(() => {
+    if (!openModifiedAnswersAt) return;
+    setActiveTab('onboarding');
+    setCurrentStep(1);
+    setModifiedOnly(true);
+  }, [openModifiedAnswersAt]);
   const responseOf = (sectionId: string, idx: number, question: MockQuestion) =>
     questionResponses[`${sectionId}-${idx}`] ?? question.response;
   // Valeurs des données liées (souscription, fiche investisseur...), modifiées par la propagation.
@@ -454,7 +474,7 @@ export function SubscriptionDetailPage({ subscription: subscriptionProp, onBack 
     });
   };
 
-  const applyAnswerEffects = (sectionId: string, idx: number, value: string, effects: AnswerEditEffects) => {
+  const applyAnswerEffects = (sectionId: string, idx: number, value: string, effects: AnswerEditEffects): string[] => {
     const questionId = `${sectionId}-${idx}`;
     const targets = editTargets(sectionId, idx).filter(target => effects.propagate.includes(target.key));
     const replayed = effects.replay
@@ -503,6 +523,117 @@ export function SubscriptionDetailPage({ subscription: subscriptionProp, onBack 
         causeElementId: questionId,
       })),
     );
+    return replayed.map(change => change.elementId);
+  };
+
+  const questionLabelOf = (questionId: string) => {
+    const sectionId = sectionOf(questionId);
+    const section = mockSections.find(sec => sec.id === sectionId);
+    const question = section?.questions[Number(questionId.slice(sectionId.length + 1))];
+    if (!section || !question) return questionId;
+    const label = question.question.replace(/\s*\*\s*$/, '');
+    return question.iteration !== undefined && section.iterationLabelKey
+      ? `${label} (${t(section.iterationLabelKey, { n: question.iteration })})`
+      : label;
+  };
+
+  /** Une alerte par enregistrement, jamais à l'auteur, selon le circuit de contrôle (IC-5620). */
+  const notifyModifiedAnswers = (questionIds: string[], origin: SubscriptionAuditOrigin, authorName: string) => {
+    if (questionIds.length === 0 || reviewCircuit === 'none') return;
+    const partner = subscription.partenaire?.name ?? t('subscriptions.detail.answerAlerts.partnerFallback');
+    const recipients = (
+      reviewCircuit === 'fourEyes'
+        ? [
+            { name: CURRENT_OPERATOR, role: t('subscriptions.detail.answerAlerts.roles.analyst1') },
+            ...SECOND_ANALYSTS.map(name => ({ name, role: t('subscriptions.detail.answerAlerts.roles.analyst2') })),
+          ]
+        : [
+            { name: partner, role: t('subscriptions.detail.answerAlerts.roles.partner') },
+            ...(subscription.advisor
+              ? [{ name: subscription.advisor as string, role: t('subscriptions.detail.answerAlerts.roles.advisor') }]
+              : []),
+          ]
+    ).filter(recipient => recipient.name !== authorName);
+    if (recipients.length === 0) return;
+
+    const notification = {
+      subscriptionName: subscription.name,
+      subscription: subscriptionProp,
+      labels: questionIds.map(questionLabelOf),
+      origin,
+      authorName,
+      channel: reviewCircuit === 'fourEyes' ? ('backOffice' as const) : ('distributor' as const),
+    };
+    if (recipients.some(recipient => recipient.name === CURRENT_OPERATOR)) pushNotification(notification);
+    const recipientLabel = recipients.map(recipient => `${recipient.name} (${recipient.role})`).join(', ');
+    logAudit({
+      type: 'notificationSent',
+      origin: 'automatic',
+      actorName: undefined,
+      newValue: recipientLabel,
+      reason: t(
+        questionIds.length === 1
+          ? 'subscriptions.detail.answerAlerts.auditSummaryOne'
+          : 'subscriptions.detail.answerAlerts.auditSummaryMany',
+        { count: questionIds.length },
+      ),
+    });
+    toast.info(t('subscriptions.detail.answerAlerts.sentToast'), {
+      description: t('subscriptions.detail.answerAlerts.sentToastDesc', { recipients: recipientLabel }),
+      action:
+        reviewCircuit === 'delegated'
+          ? {
+              label: t('subscriptions.detail.answerAlerts.preview'),
+              onClick: () =>
+                setDistributorPreview({
+                  ...notification,
+                  id: 'preview',
+                  createdAt: new Date().toISOString(),
+                  read: false,
+                }),
+            }
+          : undefined,
+    });
+  };
+
+  const handleSimulateInvestorChange = () => {
+    const investorName = subscription.contrepartie?.investor || subscription.contrepartie?.name || '';
+    const changes = [
+      { question: 'Ville*', value: 'Neuilly-sur-Seine' },
+      { question: 'Code postal*', value: '92200' },
+    ].flatMap(change => {
+      const section = mockSections.find(sec => sec.id === 'identity');
+      const idx = section?.questions.findIndex(q => q.question === change.question) ?? -1;
+      if (!section || idx < 0) return [];
+      return [{ questionId: `identity-${idx}`, previous: responseOf('identity', idx, section.questions[idx]), value: change.value }];
+    });
+    setQuestionResponses(prev => {
+      const next = { ...prev };
+      changes.forEach(change => {
+        next[change.questionId] = change.value;
+      });
+      return next;
+    });
+    setQuestionStatuses(prev => {
+      const next = { ...prev };
+      changes.forEach(change => delete next[change.questionId]);
+      return next;
+    });
+    logAudit(
+      ...changes.map(change => ({
+        type: 'answerModified' as const,
+        origin: 'investor' as const,
+        actorName: investorName,
+        elementId: change.questionId,
+        sectionId: 'identity',
+        previousValue: change.previous,
+        newValue: change.value,
+      })),
+    );
+    notifyModifiedAnswers(changes.map(change => change.questionId), 'investor', investorName);
+    if (reviewCircuit === 'none') {
+      toast.info(t('subscriptions.detail.answerAlerts.noCircuitToast'));
+    }
   };
 
   const handleToggleComment = (questionId: string) => {
@@ -1252,6 +1383,20 @@ export function SubscriptionDetailPage({ subscription: subscriptionProp, onBack 
           label: t(`subscriptions.detail.answerEdit.scenario.options.${value}`),
         }))}
         onChange={setEditScenario}
+      />
+      <DemoScenarioBar
+        label={t('subscriptions.detail.answerAlerts.scenario.label')}
+        value={reviewCircuit}
+        options={REVIEW_CIRCUITS.map(value => ({
+          value,
+          label: t(`subscriptions.detail.answerAlerts.scenario.options.${value}`),
+        }))}
+        onChange={setReviewCircuit}
+        action={
+          <Button variant="outline" size="sm" className="bg-card" onClick={handleSimulateInvestorChange}>
+            {t('subscriptions.detail.answerAlerts.simulate')}
+          </Button>
+        }
       />
       <PageHeader
         title={
@@ -2554,6 +2699,14 @@ export function SubscriptionDetailPage({ subscription: subscriptionProp, onBack 
         </div>
       </ConfirmDialog>
 
+      <NotificationsPanel
+        open={distributorPreview !== null}
+        onClose={() => setDistributorPreview(null)}
+        notifications={distributorPreview ? [distributorPreview] : []}
+        title={t('subscriptions.detail.answerAlerts.previewTitle')}
+        description={t('subscriptions.detail.answerAlerts.previewDescription')}
+      />
+
       <ManualDocumentPanel
         open={isManualDocumentOpen}
         onClose={() => setIsManualDocumentOpen(false)}
@@ -2596,7 +2749,12 @@ export function SubscriptionDetailPage({ subscription: subscriptionProp, onBack 
             responseOf(answerEdit.sectionId, answerEdit.idx, question),
             reason,
           );
-          applyAnswerEffects(answerEdit.sectionId, answerEdit.idx, value, effects);
+          const replayedIds = applyAnswerEffects(answerEdit.sectionId, answerEdit.idx, value, effects);
+          notifyModifiedAnswers(
+            [`${answerEdit.sectionId}-${answerEdit.idx}`, ...replayedIds],
+            'operator',
+            CURRENT_OPERATOR,
+          );
           setAnswerEdit(null);
         }}
       />
