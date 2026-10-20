@@ -6,6 +6,8 @@ import { Tag } from './Tag';
 import { ClickableText } from './ClickableText';
 import { OriginStructureCell } from './OriginStructureCell';
 import { PartnerCard } from './PartnerCard';
+import { TableRowActions } from './ui/row-actions';
+import { useTranslation } from '../utils/languageContext';
 
 interface SubscriptionDataTableProps {
   data: any[];
@@ -36,6 +38,7 @@ export function SubscriptionDataTable({
   searchTerm = '',
   activeStatus
 }: SubscriptionDataTableProps) {
+  const { t } = useTranslation();
   const [auditDialogOpen, setAuditDialogOpen] = useState(false);
   const [selectedSubscriptionForAudit, setSelectedSubscriptionForAudit] = useState<any>(null);
   const [copiedId, setCopiedId] = useState<number | null>(null);
@@ -52,8 +55,7 @@ export function SubscriptionDataTable({
     setSelectAll(isAllSelected);
   }, [selectedIds, totalFilteredData]);
 
-  const handleViewAudit = (row: any, e: React.MouseEvent) => {
-    e.stopPropagation();
+  const handleViewAudit = (row: any) => {
     setSelectedSubscriptionForAudit(row);
     setAuditDialogOpen(true);
   };
@@ -496,36 +498,20 @@ export function SubscriptionDataTable({
 
                   {/* Actions Menu */}
                   <td className="px-6 py-4 sticky right-0 z-10 bg-white">
-                    <DropdownMenu>
-                      <DropdownMenuTrigger asChild onClick={(e) => e.stopPropagation()}>
-                        <motion.button
-                          whileHover={{ scale: 1.1, backgroundColor: 'rgba(0,0,0,0.05)' }}
-                          whileTap={{ scale: 0.9 }}
-                          className="p-1.5 rounded-lg hover:bg-gray-100 transition-colors"
-                        >
-                          <MoreVertical className="w-4 h-4 text-gray-500" />
-                        </motion.button>
-                      </DropdownMenuTrigger>
-                      <DropdownMenuContent align="end">
-                        <DropdownMenuItem 
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            toast.success('Opening subscription details...');
-                          }}
-                          className="cursor-pointer"
-                        >
-                          <ExternalLink className="w-4 h-4 mr-2" />
-                          View Details
-                        </DropdownMenuItem>
-                        <DropdownMenuItem 
-                          onClick={(e) => handleViewAudit(row, e as any)}
-                          className="cursor-pointer"
-                        >
-                          <History className="w-4 h-4 mr-2" />
-                          View Audit Trail
-                        </DropdownMenuItem>
-                      </DropdownMenuContent>
-                    </DropdownMenu>
+                    <TableRowActions
+                      actions={[
+                        {
+                          label: t('subscriptions.table.viewDetail'),
+                          icon: ExternalLink,
+                          onClick: () => toast.success(t('subscriptions.table.openingDetails')),
+                        },
+                        {
+                          label: t('subscriptions.table.viewAuditTrail'),
+                          icon: History,
+                          onClick: () => handleViewAudit(row),
+                        },
+                      ]}
+                    />
                   </td>
                 </motion.tr>
               ))}

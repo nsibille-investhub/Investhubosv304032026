@@ -9,7 +9,6 @@ import {
   Video,
   Folder,
   FolderOpen,
-  MoreVertical,
   Eye,
   Download,
   Share2,
@@ -35,7 +34,6 @@ import {
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuTrigger,
-  DropdownMenuSeparator,
 } from './ui/dropdown-menu';
 import { AddDocumentDialog } from './AddDocumentDialog';
 import { DocumentCategoryBadge } from './DocumentCategoryBadge';
@@ -48,6 +46,7 @@ import {
   TooltipTrigger,
 } from './ui/tooltip';
 import { useTranslation } from '../utils/languageContext';
+import { TableRowActions } from './ui/row-actions';
 
 interface DocumentExplorerProps {
   documents: Document[];
@@ -579,67 +578,25 @@ export function DocumentExplorer({ documents, onDocumentClick, compactMode, onSe
           )}
 
           {/* Actions - Always visible */}
-          <div className="flex items-center gap-1 flex-shrink-0">
-            <DropdownMenu>
-              <DropdownMenuTrigger asChild>
-                <button
-                  onClick={(e) => e.stopPropagation()}
-                  className="p-1.5 rounded-lg transition-colors opacity-70 hover:opacity-100 hover:bg-gray-100"
-                >
-                  <MoreVertical className="w-4 h-4 text-gray-600" />
-                </button>
-              </DropdownMenuTrigger>
-              <DropdownMenuContent align="end" className="w-48">
-                {!isFolder && (
-                  <>
-                    <DropdownMenuItem onClick={() => onDocumentClick(doc)}>
-                      <Eye className="w-4 h-4 mr-2" />
-                      {t('ged.explorer.actions.preview')}
-                    </DropdownMenuItem>
-                    <DropdownMenuItem>
-                      <Download className="w-4 h-4 mr-2" />
-                      {t('ged.explorer.actions.download')}
-                    </DropdownMenuItem>
-                    <DropdownMenuSeparator />
-                  </>
-                )}
-                {isFolder && (
-                  <>
-                    <DropdownMenuItem>
-                      <FileText className="w-4 h-4 mr-2" />
-                      Ajouter un document
-                    </DropdownMenuItem>
-                    <DropdownMenuItem>
-                      <Folder className="w-4 h-4 mr-2" />
-                      Ajouter un dossier
-                    </DropdownMenuItem>
-                    <DropdownMenuSeparator />
-                  </>
-                )}
-                <DropdownMenuItem>
-                  <Edit className="w-4 h-4 mr-2" />
-                  Renommer
-                </DropdownMenuItem>
-                <DropdownMenuItem>
-                  <Share2 className="w-4 h-4 mr-2" />
-                  Partager
-                </DropdownMenuItem>
-                <DropdownMenuItem>
-                  <Copy className="w-4 h-4 mr-2" />
-                  Dupliquer
-                </DropdownMenuItem>
-                <DropdownMenuSeparator />
-                <DropdownMenuItem>
-                  <Archive className="w-4 h-4 mr-2" />
-                  Archiver
-                </DropdownMenuItem>
-                <DropdownMenuItem className="text-red-600">
-                  <Trash2 className="w-4 h-4 mr-2" />
-                  Supprimer
-                </DropdownMenuItem>
-              </DropdownMenuContent>
-            </DropdownMenu>
-          </div>
+          <TableRowActions
+            className="flex-shrink-0"
+            actions={[
+              ...(isFolder
+                ? [
+                    { label: t('ged.listView.actions.addDocument'), icon: FileText, onClick: () => {} },
+                    { label: t('ged.listView.actions.addFolder'), icon: Folder, onClick: () => {} },
+                  ]
+                : [
+                    { label: t('ged.explorer.actions.preview'), icon: Eye, onClick: () => onDocumentClick(doc) },
+                    { label: t('ged.explorer.actions.download'), icon: Download, onClick: () => {} },
+                  ]),
+              { label: t('ged.explorer.actions.rename'), icon: Edit, onClick: () => {}, separatorBefore: true },
+              { label: t('ged.explorer.actions.share'), icon: Share2, onClick: () => {} },
+              { label: t('ged.listView.actions.duplicate'), icon: Copy, onClick: () => {} },
+              { label: t('ged.explorer.actions.archive'), icon: Archive, onClick: () => {}, separatorBefore: true },
+              { label: t('ged.explorer.actions.delete'), icon: Trash2, intent: 'danger', onClick: () => {} },
+            ]}
+          />
         </motion.div>
 
         {/* Render Children */}

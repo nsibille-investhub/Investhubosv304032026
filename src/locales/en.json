@@ -1202,7 +1202,9 @@
       "duplicate": "Duplicate",
       "duplicated": "Subscription duplicated",
       "delete": "Delete",
-      "deleted": "Subscription deleted"
+      "deleted": "Subscription deleted",
+      "viewAuditTrail": "View audit trail",
+      "openingDetails": "Opening subscription details..."
     },
     "counterSignatureStatus": {
       "completed": "Completed",
@@ -1570,7 +1572,7 @@
         "newSubscription": "New subscription",
         "id": "ID: {{id}}",
         "copyId": "Click to copy the ID",
-        "analyst": "Analyst: {{name}}"
+        "manager": "Manager: {{name}}"
       },
       "stats": {
         "title": "Investment statistics",
@@ -1581,8 +1583,7 @@
       },
       "tabs": {
         "profile": "Profile",
-        "contacts": "Contacts & access",
-        "signatories": "Signatories",
+        "contacts": "Contacts & third parties",
         "structures": "Structures",
         "notes": "Notes",
         "subscriptions": "Subscriptions",
@@ -1614,7 +1615,8 @@
         "manager": "Manager",
         "parentInvestor": "Parent investor",
         "partner": "Partner",
-        "noPartner": "None"
+        "noPartner": "None",
+        "state": "State"
       },
       "kyc": {
         "title": "KYC & Compliance",
@@ -1697,12 +1699,13 @@
         "Germany": "Germany",
         "UnitedKingdom": "United Kingdom",
         "Spain": "Spain",
-        "Italy": "Italy"
+        "Italy": "Italy",
+        "Monaco": "Monaco",
+        "Netherlands": "Netherlands",
+        "UnitedStates": "United States"
       },
       "tags": "Tags",
       "signatories": {
-        "title": "Authorized signatories ({{count}})",
-        "addSignatory": "Add a signatory",
         "primarySignatory": "Primary signatory"
       },
       "signatureLevel": {
@@ -1712,20 +1715,96 @@
       },
       "structuresList": {
         "title": "Legal structures ({{count}})",
-        "contactsCountOne": "{{count}} contact",
-        "contactsCountMany": "{{count}} contacts",
-        "subscriptionsCountOne": "{{count}} subscription",
-        "subscriptionsCountMany": "{{count}} subscriptions",
-        "investedAmount": "Invested amount: {{amount}}",
-        "kycLabel": "KYC: {{status}}",
-        "riskScore": "Risk score: {{score}}/100"
+        "add": "Add a structure",
+        "edit": "Edit",
+        "columns": {
+          "name": "Name",
+          "type": "Type",
+          "representative": "Legal representative",
+          "contacts": "Contacts",
+          "subscriptions": "Subscriptions",
+          "invested": "Amount invested",
+          "kyc": "KYC",
+          "risk": "Risk score"
+        },
+        "sheet": {
+          "addTitle": "Add a structure",
+          "editTitle": "Edit structure",
+          "addDesc": "Enter the details of the new legal structure.",
+          "editDesc": "Edit the details of the legal structure.",
+          "general": "General information",
+          "name": "Structure name",
+          "type": "Type",
+          "participationId": "Participation ID",
+          "representative": "Legal representative",
+          "compliance": "Compliance",
+          "complianceDesc": "KYC status and risk score of the structure.",
+          "kycStatus": "KYC status",
+          "riskScore": "Risk score",
+          "riskScoreHint": "Computed by the Compliance module."
+        },
+        "toast": {
+          "added": "Structure {{name}} added",
+          "updated": "Structure {{name}} updated"
+        },
+        "searchPlaceholder": "Search a structure...",
+        "entity": "structure",
+        "openContacts": "View contacts",
+        "openSubscriptions": "View subscriptions"
       },
       "notes": {
-        "title": "Internal notes ({{count}})",
-        "filter": "Filter",
         "newNote": "New note",
         "important": "Important",
-        "byAuthor": "by {{author}}"
+        "searchPlaceholder": "Search a note...",
+        "entity": "note",
+        "columns": {
+          "title": "Title",
+          "type": "Type",
+          "date": "Date",
+          "author": "Author",
+          "reminder": "Reminder",
+          "attachment": "Attachment",
+          "importance": "Importance"
+        },
+        "filters": {
+          "normal": "Normal",
+          "withReminder": "With reminder",
+          "withoutReminder": "Without reminder"
+        },
+        "actions": {
+          "edit": "Edit",
+          "download": "Download attachment",
+          "noAttachment": "No attachment",
+          "delete": "Delete"
+        },
+        "deleteDialog": {
+          "title": "Delete the note \"{{title}}\"?",
+          "description": "The note and its attachment will be permanently deleted."
+        },
+        "toast": {
+          "added": "Note \"{{title}}\" added",
+          "updated": "Note \"{{title}}\" updated",
+          "deleted": "Note \"{{title}}\" deleted"
+        },
+        "sheet": {
+          "addTitle": "New note",
+          "editTitle": "Edit note",
+          "description": "Internal note about the investor, visible to the team only.",
+          "noteSection": "Note",
+          "title": "Title",
+          "titlePlaceholder": "E.g. Call with the family office",
+          "type": "Type",
+          "content": "Text",
+          "important": "Important note",
+          "importantHint": "Highlighted in the investor's notes list.",
+          "dateSection": "Date and reminder",
+          "dateSectionHint": "Date of the note and reminder sent to its author.",
+          "date": "Note date",
+          "reminder": "Send a reminder",
+          "reminderHint": "A reminder is sent to the author of the note on the chosen date.",
+          "reminderDate": "Reminder date",
+          "attachmentSection": "Attachment"
+        }
       },
       "noteTypes": {
         "General": "General",
@@ -1779,22 +1858,12 @@
         "validationGeneric": "Validation error"
       },
       "contactsTab": {
-        "portalTitle": "Primary investor — Portal access",
-        "accessStatus": "Access status",
-        "active": "Active",
-        "inactive": "Inactive",
-        "lastLogin": "Last login",
-        "portalV2": "Portal V2",
-        "v2Enabled": "Enabled",
-        "v2Disabled": "Disabled",
-        "resetPassword": "Reset password",
         "resetPasswordSent": "Reset email sent",
         "contactsTitle": "Contacts ({{count}})",
         "addContact": "Add a contact",
         "primaryBadge": "Primary",
         "openPortalAs": "Open portal as {{name}}",
         "openPortalToast": "Opening portal as {{name}}",
-        "noPortalAccess": "{{name}} does not have portal access yet",
         "investorPortalNoAccess": "Investor portal (access not enabled)",
         "portalAccessBadge": "Portal access",
         "noAccess": "No access",
@@ -1815,16 +1884,9 @@
         "preferencesSection": "Preferences",
         "primaryContact": "Primary contact",
         "preferredContact": "Investor preference",
-        "portalAccessSection": "Portal access",
         "enablePortalAccess": "Enable portal access",
-        "accessLevel": "Access level",
-        "selectAccessLevel": "Select a level",
         "password": "Password",
         "reset": "Reset",
-        "linkedStructures": "Linked structures",
-        "primaryAttachAll": "The primary contact is automatically linked to all structures",
-        "notifications": "Notifications",
-        "notificationsHint": "Choose which communications this contact should receive",
         "notificationsAllLabel": "All communications",
         "notificationsAllHint": "Subscribe this contact to every notification category",
         "notificationCategory": {
@@ -1849,33 +1911,129 @@
             "description": "Newsletters, events and announcements"
           }
         },
-        "authorizedFunds": "Authorized funds",
-        "authorizedSubscriptions": "Authorized subscriptions",
         "primaryHint": "Main point of contact for this investor",
         "preferredHint": "Preferred recipient for nominative communications",
-        "portalAccessHint": "Grant access to the investor portal and configure what this contact can see.",
         "enablePortalAccessHint": "Allow this contact to log into the investor portal",
-        "accessSection": "Access management",
-        "accessSectionHint": "By default this contact has access to everything. Toggle each scope to restrict it.",
         "accessRecapTitleAll": "Full access",
         "accessRecapTitleRestricted": "Restricted access",
-        "accessRecapAll": "This contact has access to all funds, subscriptions and document types.",
-        "accessRecapFundsAll": "all funds",
-        "accessRecapSubsAll": "all subscriptions",
-        "accessRecapDocsAll": "all document types",
-        "accessRecapFundsRestricted": "{{count}}/{{total}} funds",
-        "accessRecapSubsRestricted": "{{count}}/{{total}} subscriptions",
-        "accessRecapDocsRestricted": "{{count}}/{{total}} document types",
-        "restrictFundsLabel": "Restrict authorised funds",
-        "restrictFundsHint": "When off, the contact has access to every fund",
-        "restrictSubscriptionsLabel": "Restrict authorised subscriptions",
-        "restrictSubscriptionsHint": "When off, the contact has access to every subscription",
-        "restrictDocumentTypesLabel": "Restrict authorised document types",
-        "restrictDocumentTypesHint": "When off, the contact has access to every document type",
         "cancel": "Cancel",
         "save": "Save",
         "contactAdded": "Contact added successfully",
-        "contactUpdated": "Contact updated successfully"
+        "contactUpdated": "Contact updated successfully",
+        "principalUser": "Main user",
+        "pickPlaceholder": "Select...",
+        "searchPlaceholder": "Search a contact...",
+        "notificationCategories": "Notification categories",
+        "signatureSection": "Signature",
+        "signatureSectionHint": "Whether this contact can sign on behalf of the investor.",
+        "isSignatory": "Authorised signatory",
+        "signatureLevel": "Signature type",
+        "signatoryBadge": "Signatory · {{level}}",
+        "columns": {
+          "name": "Name",
+          "email": "Email",
+          "phone": "Phone",
+          "language": "Language",
+          "signatory": "Signatory",
+          "access": "Access",
+          "kyc": "KYC-AML"
+        },
+        "entity": "contact",
+        "filters": {
+          "signatoryYes": "Signatory",
+          "signatoryNo": "Not a signatory"
+        },
+        "primaryPortalAccess": "The primary contact always has portal access.",
+        "multiSearchPlaceholder": "Search...",
+        "signatoryGlobal": "Signatory for all structures",
+        "signatoryGlobalHint": "Off: choose the structures this contact can sign for.",
+        "signatoryStructures": "Structures concerned",
+        "signatoryAllStructures": "All structures",
+        "signatoryCard": {
+          "title": "Signature of {{name}}",
+          "subtitle": "Signature type: {{level}}"
+        },
+        "accessCard": {
+          "title": "Access of {{name}}",
+          "subtitle": "Rights: funds × structures × roles × subscriptions"
+        },
+        "kyc": {
+          "section": "KYC-AML monitoring",
+          "sectionHint": "Link the contact to the investor's KYC-AML file to monitor them (screening, checks).",
+          "monitor": "Monitor this contact",
+          "monitorHint": "Links the contact to the KYC-AML file through one or more relationships.",
+          "linkTitle": "Link {{index}}",
+          "relation": "Relationship",
+          "removeLink": "Remove link",
+          "lastLink": "A monitored contact has at least one link.",
+          "addLink": "Add a link",
+          "unmonitored": "Not monitored"
+        },
+        "kycRelations": {
+          "ubo": "Ultimate beneficial owner (UBO)",
+          "legalRepresentative": "Legal representative",
+          "director": "Director",
+          "controllingShareholder": "Controlling shareholder",
+          "controllingPerson": "Person exercising control",
+          "trustee": "Trustee",
+          "settlor": "Settlor",
+          "trustBeneficiary": "Trust beneficiary"
+        },
+        "kycCard": {
+          "title": "KYC-AML monitoring of {{name}}",
+          "subtitle": "Links attached to the file"
+        },
+        "access": {
+          "section": "Access",
+          "sectionHint": "Portal and communications access. At least one of the two channels is needed to define rights.",
+          "portal": "Portal",
+          "communications": "Communications",
+          "communicationsHint": "The contact receives the investor's communications (capital calls, reporting...).",
+          "noChannel": "Enable the portal or communications to define rights.",
+          "recapAll": "At least one right covers all funds, structures, roles and subscriptions. Visible documents depend on the roles assigned to each document.",
+          "recapRestricted": "Scope limited to the rights defined below.",
+          "rightTitle": "Right {{index}}",
+          "removeRight": "Remove right",
+          "addRight": "Add a right",
+          "noRight": "No right defined."
+        },
+        "accessRoles": {
+          "investor": "Investor",
+          "accountant": "Accountant",
+          "proxy": "Proxy",
+          "advisor": "Advisor",
+          "legalRepresentative": "Legal representative",
+          "assistant": "Assistant"
+        },
+        "dimensions": {
+          "funds": "Funds",
+          "structures": "Structures",
+          "roles": "Roles",
+          "subscriptions": "Subscriptions"
+        },
+        "scope": {
+          "selection": "Selection",
+          "funds": {
+            "all": "All funds",
+            "none": "No fund"
+          },
+          "structures": {
+            "all": "All structures",
+            "none": "No structure"
+          },
+          "roles": {
+            "all": "All roles",
+            "none": "No role"
+          },
+          "subscriptions": {
+            "all": "All subscriptions",
+            "none": "No subscription"
+          },
+          "kycStructures": {
+            "all": "All structures",
+            "none": "No structure"
+          }
+        }
       }
     }
   },
@@ -1973,7 +2131,8 @@
       "resetFilters": "Reset filters"
     },
     "confirmDialog": {
-      "cancel": "Cancel"
+      "cancel": "Cancel",
+      "close": "Close"
     },
     "richTextEditor": {
       "bold": "Bold",
@@ -1983,6 +2142,15 @@
       "numberedList": "Numbered list",
       "link": "Insert a link",
       "linkPrompt": "Link address"
+    },
+    "listing": {
+      "id": "ID: {{id}}",
+      "copyId": "Copy ID",
+      "idCopied": "ID copied",
+      "copyError": "Copy failed",
+      "rowActions": "Actions",
+      "moreActions": "More actions",
+      "more": "+{{count}} more"
     }
   },
   "ged": {
@@ -2507,7 +2675,10 @@
         "deleteDocument": "Delete document",
         "addDocument": "Add a document",
         "addFolder": "Add a folder",
-        "importDocuments": "Import documents"
+        "importDocuments": "Import documents",
+        "editFolder": "Edit folder",
+        "openViewer": "Open viewer",
+        "editDocument": "Edit document"
       },
       "footerFolders": "{{count}} folders",
       "footerFoldersOne": "{{count}} folder",
@@ -2765,7 +2936,11 @@
       },
       "actions": {
         "preview": "Preview",
-        "download": "Download"
+        "download": "Download",
+        "rename": "Rename",
+        "share": "Share",
+        "archive": "Archive",
+        "delete": "Delete"
       }
     },
     "relaunchModal": {
@@ -3298,7 +3473,9 @@
       "menu": {
         "top": "Move to top",
         "bottom": "Move to bottom",
-        "unlock": "Go back to the defined order to reorganize"
+        "unlock": "Go back to the defined order to reorganize",
+        "alreadyTop": "Already first",
+        "alreadyBottom": "Already last"
       },
       "sortAria": "Sort by {{column}}",
       "newBadge": "New",
@@ -5883,6 +6060,41 @@
         "variants": "Single series, values formatted by the caller.",
         "states": "Rest, hover (active dot and tooltip).",
         "exampleLabel": "Example: net assets"
+      }
+    }
+  },
+  "settings": {
+    "users": {
+      "edit": "Edit"
+    },
+    "conventions": {
+      "rowActions": {
+        "validationDetails": "Validation details",
+        "resetValidation": "Reset validation",
+        "delete": "Delete",
+        "viewOnboarding": "Go to onboarding",
+        "validate": "Validate agreement",
+        "modifyScope": "Edit scope"
+      }
+    },
+    "retrocessions": {
+      "rowActions": {
+        "downloadStatement": "Download statement",
+        "notify": "Notify",
+        "markAsPaid": "Mark as paid",
+        "comingSoon": "Statement download is coming soon"
+      }
+    }
+  },
+  "datahub": {
+    "collection": {
+      "rowActions": {
+        "editData": "Edit data",
+        "publish": "Publish",
+        "setPending": "Put on hold",
+        "markChanged": "Mark as modified",
+        "unpublish": "Unpublish",
+        "revert": "Revert changes"
       }
     }
   }

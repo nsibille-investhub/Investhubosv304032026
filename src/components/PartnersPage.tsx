@@ -1,6 +1,6 @@
 import { useState, useMemo } from 'react';
 import { motion } from 'motion/react';
-import { ChevronLeft, ChevronRight, ChevronDown, Handshake, Copy, Check, Eye, X, User, Mail, Phone, Briefcase, FileText, Users, TrendingUp, Building2, ExternalLink, MoreVertical, LogIn } from 'lucide-react';
+import { ChevronLeft, ChevronRight, ChevronDown, Handshake, Copy, Check, Eye, X, User, Mail, Phone, Briefcase, FileText, Users, TrendingUp, Building2, ExternalLink, LogIn } from 'lucide-react';
 import { Badge } from './ui/badge';
 import {
   Dialog,
@@ -45,6 +45,8 @@ import { AIInsightBanner } from './AIInsightBanner';
 import { LastActivityCard } from './LastActivityCard';
 import { EmptyState } from './EmptyState';
 import { TableSkeleton } from './TableSkeleton';
+import { TableRowActions } from './ui/row-actions';
+import { useTranslation } from '../utils/languageContext';
 
 interface PartnersPageProps {
   data: Partner[];
@@ -55,6 +57,7 @@ interface PartnersPageProps {
 }
 
 export function PartnersPage({ data, isLoading, allData, setAllData, onPartnerClick }: PartnersPageProps) {
+  const { t } = useTranslation();
   const [paginationPage, setPaginationPage] = useState(1);
   const [itemsPerPage, setItemsPerPage] = useState(20);
   const [sortConfig, setSortConfig] = useState<{ key: string; direction: 'asc' | 'desc' } | null>(null);
@@ -392,41 +395,26 @@ export function PartnersPage({ data, isLoading, allData, setAllData, onPartnerCl
     },
     {
       key: 'actions',
-      label: 'Actions',
+      label: t('common.listing.rowActions'),
       sortable: false,
       render: (partner) => (
-        <DropdownMenu>
-          <DropdownMenuTrigger asChild>
-            <motion.button
-              whileHover={{ scale: 1.1 }}
-              whileTap={{ scale: 0.9 }}
-              onClick={(e) => e.stopPropagation()}
-              className="p-1.5 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-lg transition-colors"
-            >
-              <MoreVertical className="w-4 h-4 text-gray-600 dark:text-gray-400" />
-            </motion.button>
-          </DropdownMenuTrigger>
-          <DropdownMenuContent align="end">
-            <DropdownMenuItem onClick={(e) => {
-              e.stopPropagation();
-              if (onPartnerClick) {
-                onPartnerClick(partner, 'profil');
-              }
-            }}>
-              <Eye className="w-4 h-4 mr-2" />
-              Voir la fiche
-            </DropdownMenuItem>
-            <DropdownMenuItem onClick={(e) => {
-              e.stopPropagation();
-              toast.info('Connexion au portail', {
-                description: `Redirection vers le portail pour ${partner.name}...`,
-              });
-            }}>
-              <LogIn className="w-4 h-4 mr-2" />
-              Connexion Portail
-            </DropdownMenuItem>
-          </DropdownMenuContent>
-        </DropdownMenu>
+        <TableRowActions
+          actions={[
+            {
+              label: t('investors.table.viewProfile'),
+              icon: Eye,
+              onClick: () => onPartnerClick?.(partner, 'profil'),
+            },
+            {
+              label: t('investors.table.portalConnection'),
+              icon: LogIn,
+              onClick: () =>
+                toast.info(t('investors.table.portalConnectionToast'), {
+                  description: t('investors.table.portalConnectionDesc', { name: partner.name }),
+                }),
+            },
+          ]}
+        />
       ),
     },
   ];

@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Plus, Edit2, Trash2, X, Search, HelpCircle, Eye, Copy, CheckCircle, Settings, MoreVertical, RotateCcw, ExternalLink } from 'lucide-react';
+import { Plus, Edit2, Trash2, X, Search, HelpCircle, Eye, Copy, CheckCircle, Settings, RotateCcw, ExternalLink } from 'lucide-react';
 import { Input } from '../ui/input';
 import { Label } from '../ui/label';
 import { Button } from '../ui/button';
@@ -15,12 +15,8 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from '../ui/alert-dialog';
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuTrigger,
-} from '../ui/dropdown-menu';
+import { TableRowActions, type TableRowAction } from '../ui/row-actions';
+import { useTranslation } from '../../utils/languageContext';
 import { InfoBanner } from '../InfoBanner';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../ui/select';
 import { PartenaireCard } from '../PartenaireCard';
@@ -161,6 +157,7 @@ const mockConventions: Convention[] = [
 ];
 
 export function ConventionsSettings() {
+  const { t } = useTranslation();
   const [conventions, setConventions] = useState<Convention[]>(mockConventions);
   const [searchQuery, setSearchQuery] = useState('');
   const [filters, setFilters] = useState<any>({});
@@ -278,6 +275,34 @@ export function ConventionsSettings() {
       setSelectedProduits(selectedProduits.filter(p => p !== produit));
     } else {
       setSelectedProduits([...selectedProduits, produit]);
+    }
+  };
+
+  const getConventionRowActions = (convention: Convention): TableRowAction[] => {
+    const k = 'settings.conventions.rowActions';
+    const onboarding: TableRowAction = { label: t(`${k}.viewOnboarding`), icon: ExternalLink, onClick: () => handleViewOnboarding(convention) };
+    const modifyScope: TableRowAction = { label: t(`${k}.modifyScope`), icon: Settings, onClick: () => handleModifyScope(convention) };
+    const remove: TableRowAction = { label: t(`${k}.delete`), icon: Trash2, intent: 'danger', onClick: () => handleDelete(convention) };
+    switch (convention.statut) {
+      case 'Validé':
+        return [
+          { label: t(`${k}.validationDetails`), icon: Eye, onClick: () => handleViewValidationDetails(convention) },
+          { label: t(`${k}.resetValidation`), icon: RotateCcw, intent: 'warning', onClick: () => handleResetValidation(convention) },
+          remove,
+        ];
+      case 'Réouvert':
+        return [onboarding, remove];
+      case 'À valider':
+        return [
+          onboarding,
+          { label: t(`${k}.validate`), icon: CheckCircle, intent: 'success', onClick: () => handleValidate(convention) },
+          modifyScope,
+          remove,
+        ];
+      case 'En cours':
+        return [onboarding, modifyScope, remove];
+      default:
+        return [remove];
     }
   };
 
@@ -445,87 +470,7 @@ export function ConventionsSettings() {
                           {getSignatureText(convention.signature, convention.statut)}
                         </td>
                         <td className="px-4 py-3">
-                          <div className="flex items-center justify-end">
-                            <DropdownMenu>
-                              <DropdownMenuTrigger asChild>
-                                <motion.button
-                                  whileHover={{ scale: 1.1 }}
-                                  whileTap={{ scale: 0.9 }}
-                                  className="p-1.5 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-lg transition-colors"
-                                >
-                                  <MoreVertical className="w-4 h-4 text-gray-600 dark:text-gray-400" />
-                                </motion.button>
-                              </DropdownMenuTrigger>
-                              <DropdownMenuContent align="end">
-                                {convention.statut === 'Validé' ? (
-                                  <>
-                                    <DropdownMenuItem onClick={() => handleViewValidationDetails(convention)}>
-                                      <Eye className="w-4 h-4 mr-2" />
-                                      Détails de la validation
-                                    </DropdownMenuItem>
-                                    <DropdownMenuItem onClick={() => handleResetValidation(convention)}>
-                                      <RotateCcw className="w-4 h-4 mr-2" />
-                                      Réinitialiser la validation
-                                    </DropdownMenuItem>
-                                    <DropdownMenuItem onClick={() => handleDelete(convention)}>
-                                      <Trash2 className="w-4 h-4 mr-2" />
-                                      Supprimer
-                                    </DropdownMenuItem>
-                                  </>
-                                ) : convention.statut === 'Réouvert' ? (
-                                  <>
-                                    <DropdownMenuItem onClick={() => handleViewOnboarding(convention)}>
-                                      <ExternalLink className="w-4 h-4 mr-2" />
-                                      Accéder à l'onboarding
-                                    </DropdownMenuItem>
-                                    <DropdownMenuItem onClick={() => handleDelete(convention)}>
-                                      <Trash2 className="w-4 h-4 mr-2" />
-                                      Supprimer
-                                    </DropdownMenuItem>
-                                  </>
-                                ) : convention.statut === 'À valider' ? (
-                                  <>
-                                    <DropdownMenuItem onClick={() => handleViewOnboarding(convention)}>
-                                      <ExternalLink className="w-4 h-4 mr-2" />
-                                      Accéder à l'onboarding
-                                    </DropdownMenuItem>
-                                    <DropdownMenuItem onClick={() => handleValidate(convention)}>
-                                      <CheckCircle className="w-4 h-4 mr-2" />
-                                      Valider la convention
-                                    </DropdownMenuItem>
-                                    <DropdownMenuItem onClick={() => handleModifyScope(convention)}>
-                                      <Settings className="w-4 h-4 mr-2" />
-                                      Modifier la portée
-                                    </DropdownMenuItem>
-                                    <DropdownMenuItem onClick={() => handleDelete(convention)}>
-                                      <Trash2 className="w-4 h-4 mr-2" />
-                                      Supprimer
-                                    </DropdownMenuItem>
-                                  </>
-                                ) : convention.statut === 'En cours' ? (
-                                  <>
-                                    <DropdownMenuItem onClick={() => handleViewOnboarding(convention)}>
-                                      <ExternalLink className="w-4 h-4 mr-2" />
-                                      Accéder à l'onboarding
-                                    </DropdownMenuItem>
-                                    <DropdownMenuItem onClick={() => handleModifyScope(convention)}>
-                                      <Settings className="w-4 h-4 mr-2" />
-                                      Modifier la portée
-                                    </DropdownMenuItem>
-                                    <DropdownMenuItem onClick={() => handleDelete(convention)}>
-                                      <Trash2 className="w-4 h-4 mr-2" />
-                                      Supprimer
-                                    </DropdownMenuItem>
-                                  </>
-                                ) : (
-                                  <DropdownMenuItem onClick={() => handleDelete(convention)}>
-                                    <Trash2 className="w-4 h-4 mr-2" />
-                                    Supprimer
-                                  </DropdownMenuItem>
-                                )}
-                              </DropdownMenuContent>
-                            </DropdownMenu>
-                          </div>
+                          <TableRowActions actions={getConventionRowActions(convention)} />
                         </td>
                       </tr>
                     ))

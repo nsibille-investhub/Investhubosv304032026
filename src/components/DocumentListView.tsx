@@ -5,7 +5,6 @@ import {
   Folder,
   Eye,
   Download,
-  MoreVertical,
   ChevronRight,
   Search,
   X,
@@ -29,14 +28,8 @@ import { Document } from '../utils/documentMockData';
 import { Button } from './ui/button';
 import { DocumentCategoryBadge } from './DocumentCategoryBadge';
 import { DocumentTargetingMarker } from './DocumentTargetingMarker';
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuSeparator,
-  DropdownMenuTrigger,
-} from './ui/dropdown-menu';
 import { Tooltip, TooltipContent, TooltipTrigger } from './ui/tooltip';
+import { TableRowActions, type TableRowAction } from './ui/row-actions';
 import {
   RANK_SORT,
   buildRankIndex,
@@ -139,7 +132,6 @@ export function DocumentListView({
 }: DocumentListViewProps) {
   const { t } = useTranslation();
   const tableGridClassName = 'document-list-grid';
-  const [hoveredId, setHoveredId] = useState<string | null>(null);
   const [viewerOpen, setViewerOpen] = useState(false);
   const [viewerDocument, setViewerDocument] = useState<Document | null>(null);
   const [deleteTarget, setDeleteTarget] = useState<Document | null>(null);
@@ -340,52 +332,36 @@ export function DocumentListView({
     </div>
   );
 
-  const renderRankMenuItems = (item: Document) => {
+  const rankActions = (item: Document): TableRowAction[] => {
     if (isSorted) {
-      return (
-        <>
-          <DropdownMenuItem
-            onClick={(event) => {
-              event.stopPropagation();
-              onSortChange(RANK_SORT);
-            }}
-          >
-            <RotateCcw className="w-4 h-4 mr-2" />
-            {t('ged.rank.menu.unlock')}
-          </DropdownMenuItem>
-          <DropdownMenuSeparator />
-        </>
-      );
+      return [
+        {
+          label: t('ged.rank.menu.unlock'),
+          icon: RotateCcw,
+          onClick: () => onSortChange(RANK_SORT),
+          separatorBefore: true,
+        },
+      ];
     }
     const entry = rankIndex.get(item.id);
-    if (!entry || !onMoveItem) return null;
+    if (!entry || !onMoveItem) return [];
     const index = entry.rank - 1;
     const last = entry.total - 1;
-    const entries = [
-      { key: 'top', icon: ChevronsUp, label: t('ged.rank.menu.top'), to: 0, disabled: index === 0 },
-      { key: 'bottom', icon: ChevronsDown, label: t('ged.rank.menu.bottom'), to: last, disabled: index === last },
+    return [
+      {
+        label: t('ged.rank.menu.top'),
+        icon: ChevronsUp,
+        onClick: () => onMoveItem(item.id, 0),
+        disabledReason: index === 0 ? t('ged.rank.menu.alreadyTop') : undefined,
+        separatorBefore: true,
+      },
+      {
+        label: t('ged.rank.menu.bottom'),
+        icon: ChevronsDown,
+        onClick: () => onMoveItem(item.id, last),
+        disabledReason: index === last ? t('ged.rank.menu.alreadyBottom') : undefined,
+      },
     ];
-    return (
-      <>
-        {entries.map((action) => {
-          const Icon = action.icon;
-          return (
-            <DropdownMenuItem
-              key={action.key}
-              disabled={action.disabled}
-              onClick={(event) => {
-                event.stopPropagation();
-                onMoveItem(item.id, action.to);
-              }}
-            >
-              <Icon className="w-4 h-4 mr-2" />
-              {action.label}
-            </DropdownMenuItem>
-          );
-        })}
-        <DropdownMenuSeparator />
-      </>
-    );
   };
 
   const renderSortHeader = (key: 'name' | 'added', label: string) => {
@@ -530,14 +506,11 @@ export function DocumentListView({
             {/* Folders first */}
             {(hasActiveSearch ? searchFolders : folders).map((folder) => {
               const Icon = getFileIcon(folder.type);
-              const isHovered = hoveredId === folder.id;
               
               return (
                 <div
                   key={rowKey(folder)}
                   ref={(el) => { itemRefs.current[folder.id] = el; }}
-                  onMouseEnter={() => setHoveredId(folder.id)}
-                  onMouseLeave={() => setHoveredId(null)}
                   onClick={() => handleRowClick(folder)}
                   {...dragProps(folder)}
                   className={rowClassName(folder)}
@@ -584,83 +557,24 @@ export function DocumentListView({
                       <p className="text-sm text-gray-400">—</p>
                     </div>
 
-                    <div className="flex items-center justify-end gap-2">
-                      <button
-                        type="button"
-                        onClick={(event) => {
-                          event.stopPropagation();
-                          onEditFolder?.(folder);
-                        }}
-                        className="p-2 rounded-lg transition-colors text-gray-500 hover:bg-gray-100"
-                        style={isHovered ? { backgroundColor: '#EEF1F7', color: '#000E2B' } : undefined}
-                        aria-label={t('ged.listView.actions.editFolderAria', { name: folder.name })}
-                      >
-                        <SquarePen className="w-4 h-4" />
-                      </button>
-                      <DropdownMenu>
-                        <DropdownMenuTrigger asChild>
-                          <button
-                            onClick={(e) => e.stopPropagation()}
-                            className="p-2 hover:bg-gray-100 rounded-lg transition-colors"
-                          >
-                            <MoreVertical className="w-4 h-4 text-gray-600" />
-                          </button>
-                        </DropdownMenuTrigger>
-                        <DropdownMenuContent align="end" onClick={(event) => event.stopPropagation()}>
-                          {renderRankMenuItems(folder)}
-                          <DropdownMenuItem
-                            onClick={(event) => {
-                              event.stopPropagation();
-                              onAddDocumentFromFolder?.(folder);
-                            }}
-                          >
-                            <Plus className="w-4 h-4 mr-2" />
-                            {t('ged.listView.actions.addDocument')}
-                          </DropdownMenuItem>
-                          <DropdownMenuItem
-                            onClick={(event) => {
-                              event.stopPropagation();
-                              onImportToFolder?.(folder);
-                            }}
-                          >
-                            <FileUp className="w-4 h-4 mr-2" />
-                            {t('ged.listView.actions.importDocuments')}
-                          </DropdownMenuItem>
-                          <DropdownMenuItem
-                            onClick={(event) => {
-                              event.stopPropagation();
-                              onAddFolderFromFolder?.(folder);
-                            }}
-                          >
-                            <Folder className="w-4 h-4 mr-2" />
-                            {t('ged.listView.actions.addFolder')}
-                          </DropdownMenuItem>
-                          <DropdownMenuItem
-                            onClick={(event) => {
-                              event.stopPropagation();
-                              onDuplicateFolder?.(folder);
-                            }}
-                          >
-                            <Copy className="w-4 h-4 mr-2" />
-                            {t('ged.listView.actions.duplicate')}
-                          </DropdownMenuItem>
-                          <DropdownMenuItem>
-                            <Download className="w-4 h-4 mr-2" />
-                            {t('ged.listView.actions.downloadFolder')}
-                          </DropdownMenuItem>
-                          <DropdownMenuItem
-                            className="text-red-600 focus:text-red-600"
-                            onClick={(event) => {
-                              event.stopPropagation();
-                              setDeleteFolderTarget(folder);
-                            }}
-                          >
-                            <Trash2 className="w-4 h-4 mr-2" />
-                            {t('ged.listView.actions.deleteFolder')}
-                          </DropdownMenuItem>
-                        </DropdownMenuContent>
-                      </DropdownMenu>
-                    </div>
+                    <TableRowActions
+                      actions={[
+                        { label: t('ged.listView.actions.editFolder'), icon: SquarePen, onClick: () => onEditFolder?.(folder) },
+                        { label: t('ged.listView.actions.addDocument'), icon: Plus, onClick: () => onAddDocumentFromFolder?.(folder) },
+                        { label: t('ged.listView.actions.importDocuments'), icon: FileUp, onClick: () => onImportToFolder?.(folder) },
+                        { label: t('ged.listView.actions.addFolder'), icon: Folder, onClick: () => onAddFolderFromFolder?.(folder) },
+                        { label: t('ged.listView.actions.duplicate'), icon: Copy, onClick: () => onDuplicateFolder?.(folder) },
+                        { label: t('ged.listView.actions.downloadFolder'), icon: Download, onClick: () => {} },
+                        ...rankActions(folder),
+                        {
+                          label: t('ged.listView.actions.deleteFolder'),
+                          icon: Trash2,
+                          intent: 'danger',
+                          onClick: () => setDeleteFolderTarget(folder),
+                          separatorBefore: true,
+                        },
+                      ]}
+                    />
                   </div>
                 </div>
               );
@@ -686,7 +600,6 @@ export function DocumentListView({
               let prevBatchId: string | undefined;
               return sorted.map((file) => {
               const Icon = getFileIcon(file.type);
-              const isHovered = hoveredId === file.id;
               const showBatchBanner = !!file.batchId && file.batchId !== prevBatchId;
               const batchCount = showBatchBanner
                 ? sorted.filter((x) => x.batchId === file.batchId).length
@@ -714,8 +627,6 @@ export function DocumentListView({
                 <div
                   key={rowKey(file)}
                   ref={(el) => { itemRefs.current[file.id] = el; }}
-                  onMouseEnter={() => setHoveredId(file.id)}
-                  onMouseLeave={() => setHoveredId(null)}
                   onClick={() => handleRowClick(file)}
                   {...dragProps(file)}
                   className={rowClassName(file, inBatch ? 'bg-blue-50/20' : '')}
@@ -767,68 +678,22 @@ export function DocumentListView({
                       )}
                     </div>
 
-                    <div className="flex items-center justify-end gap-2">
-                      <button
-                        type="button"
-                        onClick={(event) => {
-                          event.stopPropagation();
-                          openViewer(file);
-                        }}
-                        className="p-2 rounded-lg transition-colors text-gray-500 hover:bg-gray-100"
-                        style={isHovered ? { backgroundColor: '#EEF1F7', color: '#000E2B' } : undefined}
-                        aria-label={t('ged.listView.actions.openViewerAria', { name: file.name })}
-                      >
-                        <Eye className="w-4 h-4" />
-                      </button>
-                      <button
-                        type="button"
-                        onClick={(event) => {
-                          event.stopPropagation();
-                          onDocumentClick(file);
-                        }}
-                        className="p-2 rounded-lg transition-colors text-gray-500 hover:bg-gray-100"
-                        style={isHovered ? { backgroundColor: '#EEF1F7', color: '#000E2B' } : undefined}
-                        aria-label={t('ged.listView.actions.editDocumentAria', { name: file.name })}
-                      >
-                        <SquarePen className="w-4 h-4" />
-                      </button>
-                      <DropdownMenu>
-                        <DropdownMenuTrigger asChild>
-                          <button
-                            onClick={(e) => e.stopPropagation()}
-                            className="p-2 hover:bg-gray-100 rounded-lg transition-colors"
-                          >
-                            <MoreVertical className="w-4 h-4 text-gray-600" />
-                          </button>
-                        </DropdownMenuTrigger>
-                        <DropdownMenuContent align="end" onClick={(event) => event.stopPropagation()}>
-                          {renderRankMenuItems(file)}
-                          <DropdownMenuItem
-                            onClick={(event) => {
-                              event.stopPropagation();
-                              onDuplicateDocument?.(file);
-                            }}
-                          >
-                            <Copy className="w-4 h-4 mr-2" />
-                            {t('ged.listView.actions.duplicate')}
-                          </DropdownMenuItem>
-                          <DropdownMenuItem>
-                            <Download className="w-4 h-4 mr-2" />
-                            {t('ged.listView.actions.download')}
-                          </DropdownMenuItem>
-                          <DropdownMenuItem
-                            className="text-red-600 focus:text-red-600"
-                            onClick={(event) => {
-                              event.stopPropagation();
-                              setDeleteTarget(file);
-                            }}
-                          >
-                            <Trash2 className="w-4 h-4 mr-2" />
-                            {t('ged.listView.actions.deleteDocument')}
-                          </DropdownMenuItem>
-                        </DropdownMenuContent>
-                      </DropdownMenu>
-                    </div>
+                    <TableRowActions
+                      actions={[
+                        { label: t('ged.listView.actions.openViewer'), icon: Eye, onClick: () => openViewer(file) },
+                        { label: t('ged.listView.actions.editDocument'), icon: SquarePen, onClick: () => onDocumentClick(file) },
+                        { label: t('ged.listView.actions.duplicate'), icon: Copy, onClick: () => onDuplicateDocument?.(file) },
+                        { label: t('ged.listView.actions.download'), icon: Download, onClick: () => {} },
+                        ...rankActions(file),
+                        {
+                          label: t('ged.listView.actions.deleteDocument'),
+                          icon: Trash2,
+                          intent: 'danger',
+                          onClick: () => setDeleteTarget(file),
+                          separatorBefore: true,
+                        },
+                      ]}
+                    />
                   </div>
                 </div>
                 </Fragment>
