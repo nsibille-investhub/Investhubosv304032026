@@ -1,10 +1,10 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
-import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetDescription } from './ui/sheet';
+import { Sheet, SheetContent } from './ui/sheet';
 import { Button } from './ui/button';
+import { SIDE_PANEL_BADGE_STYLE, SidePanelCard, SidePanelFileDrop, SidePanelFooter, SidePanelHeader, SidePanelSection, SidePanelSwitchRow } from './ui/side-panel';
 import { Input } from './ui/input';
 import { Label } from './ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from './ui/select';
-import { Switch } from './ui/switch';
 import { Tabs, TabsList, TabsTrigger, TabsContent } from './ui/tabs';
 import { Popover, PopoverContent, PopoverTrigger } from './ui/popover';
 import {
@@ -17,7 +17,7 @@ import { ModernMultiSelect, type MultiSelectOption } from './ui/modern-multisele
 import { Avatar, AvatarFallback } from './ui/avatar';
 import { Badge } from './ui/badge';
 import { toast } from 'sonner';
-import { ChevronDown, ChevronRight, UploadCloud, FileCheck2, Download, Users2, UserRound, Mail, Eye, Trash2, Check, Folder, FileText, Bell, ShieldCheck, Clock3, CheckCircle2, Star, Lock, TrendingUp } from 'lucide-react';
+import { ChevronDown, ChevronRight, Download, Users2, UserRound, Mail, Check, Folder, FileText, Bell, ShieldCheck, Clock3, CheckCircle2, Star, Lock, TrendingUp } from 'lucide-react';
 import { Document, DocumentCategory, mockDocuments } from '../utils/documentMockData';
 import { AudienceCounterCards } from './AudienceCounter';
 import { SegmentsMultiSelect, FundSingleSelect, ShareClassSingleSelect } from './ui/targeting-selects';
@@ -482,7 +482,6 @@ export function DocumentAddModal({ isOpen, onClose, folderOptions, defaultFolder
   const [reminderDelay, setReminderDelay] = useState(REMINDER_DELAYS[1]);
   const [reminderTemplate, setReminderTemplate] = useState(MAIL_TEMPLATES[0]);
   const [validationTeams, setValidationTeams] = useState<string[]>([]);
-  const fileInputRefs = useRef<Record<'fr' | 'en', HTMLInputElement | null>>({ fr: null, en: null });
   const [selectedContactAccess, setSelectedContactAccess] = useState<Record<string, string[]>>({});
   const detailState = document ? (documentLifecycleMock[document.id] || {
     validation: document.status === 'published'
@@ -718,22 +717,14 @@ export function DocumentAddModal({ isOpen, onClose, folderOptions, defaultFolder
   return (
     <Sheet open={isOpen} onOpenChange={(open) => !open && onClose()}>
       <SheetContent side="right" className="h-full p-0 gap-0">
-        <SheetHeader className="px-6 py-5 border-b bg-white">
-          <div>
-            <SheetTitle className="text-[26px] leading-8">{document ? t('ged.addModal.detailTitle') : t('ged.addModal.addTitle')}</SheetTitle>
-          <SheetDescription className="mt-1 text-[15px]">
-            {t('ged.addModal.description')}
-          </SheetDescription>
-          </div>
-        </SheetHeader>
+        <SidePanelHeader
+          title={document ? t('ged.addModal.detailTitle') : t('ged.addModal.addTitle')}
+          description={t('ged.addModal.description')}
+        />
 
         <div className="flex-1 overflow-y-auto px-6 py-5 space-y-5">
-          <section className="space-y-3 rounded-2xl p-4 border" style={{ backgroundColor: '#EEF1F7', borderColor: '#000E2B1F' }}>
-            <div>
-              <p className="font-semibold flex items-center gap-2" style={{ color: '#000E2B' }}><FileText className="w-5 h-5" style={{ color: '#000E2B' }} /> {t('ged.addModal.sectionDocument')}</p>
-              <p className="text-sm text-slate-600">{t('ged.addModal.sectionDocumentDesc')}</p>
-            </div>
-            <div className="rounded-2xl border bg-white p-4 md:p-5" style={{ borderColor: '#000E2B33' }}>
+          <SidePanelSection icon={FileText} title={t('ged.addModal.sectionDocument')} description={t('ged.addModal.sectionDocumentDesc')}>
+            <SidePanelCard>
               <Tabs defaultValue="fr" className="w-full">
                 <TabsList className="grid w-full grid-cols-2">
                   <TabsTrigger value="fr">🇫🇷 FR</TabsTrigger>
@@ -758,80 +749,23 @@ export function DocumentAddModal({ isOpen, onClose, folderOptions, defaultFolder
                           <Label>
                             {language === 'fr' ? t('ged.addModal.addFileFr') : t('ged.addModal.addFileEn')}
                           </Label>
-                          <input
-                            ref={(el) => { fileInputRefs.current[language] = el; }}
-                            type="file"
-                            className="hidden"
-                            onChange={(event) => handleVersionFile(language, event.target.files?.[0])}
+                          <SidePanelFileDrop
+                            fileName={version.fileName}
+                            previewUrl={version.previewUrl}
+                            disabled={isDetailMode && !(language === 'en' && !version.fileName)}
+                            onSelectFile={(file) => handleVersionFile(language, file)}
+                            onPreview={() => {
+                              if (version.fileUrl) window.open(version.fileUrl, '_blank', 'noopener,noreferrer');
+                            }}
+                            onRemove={isDetailMode ? undefined : () => handleRemoveVersionFile(language)}
+                            labels={{
+                              dropHint: t('ged.addModal.dropHint'),
+                              dropHintDesc: t('ged.addModal.dropHintDesc'),
+                              fileReady: t('ged.addModal.fileReady'),
+                              preview: t('ged.addModal.preview'),
+                              remove: t('ged.addModal.delete'),
+                            }}
                           />
-                          <div
-                            onClick={() => {
-                              const canUpload = !isDetailMode || (language === 'en' && !version.fileName);
-                              if (canUpload) fileInputRefs.current[language]?.click();
-                            }}
-                            onDragOver={(event) => event.preventDefault()}
-                            onDrop={(event) => {
-                              event.preventDefault();
-                              const canUpload = !isDetailMode || (language === 'en' && !version.fileName);
-                              if (canUpload) handleVersionFile(language, event.dataTransfer.files?.[0]);
-                            }}
-                            className={`rounded-xl border-2 border-dashed border-slate-300 bg-white/80 transition-colors p-5 ${
-                              !isDetailMode || (language === 'en' && !version.fileName) ? 'hover:border-blue-400 cursor-pointer' : 'opacity-80'
-                            }`}
-                          >
-                            {!version.fileName ? (
-                              <div className="flex flex-col items-center justify-center text-center gap-2 text-slate-600">
-                                <UploadCloud className="w-8 h-8 text-slate-500" />
-                                <p className="font-medium">{t('ged.addModal.dropHint')}</p>
-                                <p className="text-xs text-slate-500">{t('ged.addModal.dropHintDesc')}</p>
-                              </div>
-                            ) : (
-                              <div className="flex items-center justify-between gap-3">
-                                <div className="flex items-center gap-3">
-                                {version.previewUrl ? (
-                                  <img src={version.previewUrl} alt={version.fileName} className="w-14 h-14 rounded-lg object-cover border" />
-                                ) : (
-                                  <div className="w-14 h-14 rounded-lg bg-blue-50 border border-blue-200 flex items-center justify-center">
-                                    <FileCheck2 className="w-6 h-6 text-blue-600" />
-                                  </div>
-                                )}
-                                <div>
-                                  <p className="font-medium text-slate-900">{version.fileName}</p>
-                                  <p className="text-xs text-slate-500">{t('ged.addModal.fileReady')}</p>
-                                </div>
-                                </div>
-                                <div className="flex items-center gap-2">
-                                  <Button
-                                    type="button"
-                                    variant="outline"
-                                    size="sm"
-                                    onClick={(event) => {
-                                      event.stopPropagation();
-                                      if (version.fileUrl) window.open(version.fileUrl, '_blank', 'noopener,noreferrer');
-                                    }}
-                                  >
-                                    <Eye className="w-3.5 h-3.5 mr-1.5" />
-                                    {t('ged.addModal.preview')}
-                                  </Button>
-                                  {!isDetailMode && (
-                                    <Button
-                                      type="button"
-                                      variant="ghost"
-                                      size="sm"
-                                      className="text-red-600 hover:text-red-700"
-                                      onClick={(event) => {
-                                        event.stopPropagation();
-                                        handleRemoveVersionFile(language);
-                                      }}
-                                    >
-                                      <Trash2 className="w-3.5 h-3.5 mr-1.5" />
-                                      {t('ged.addModal.delete')}
-                                    </Button>
-                                  )}
-                                </div>
-                              </div>
-                            )}
-                          </div>
                           {isDetailMode && language === 'fr' && (
                             <p className="text-xs text-slate-500">{t('ged.addModal.frReadonlyHint')}</p>
                           )}
@@ -844,7 +778,7 @@ export function DocumentAddModal({ isOpen, onClose, folderOptions, defaultFolder
                   );
                 })}
               </Tabs>
-            </div>
+            </SidePanelCard>
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 pt-2">
               <div className="space-y-2 lg:col-span-2">
                 <Label>
@@ -883,13 +817,9 @@ export function DocumentAddModal({ isOpen, onClose, folderOptions, defaultFolder
                 />
               </div>
             </div>
-          </section>
+          </SidePanelSection>
 
-          <section className="space-y-4 rounded-2xl p-4 border" style={{ backgroundColor: '#EEF1F7', borderColor: '#000E2B1F' }}>
-            <div>
-              <p className="font-semibold flex items-center gap-2" style={{ color: '#000E2B' }}><Users2 className="w-5 h-5" style={{ color: '#000E2B' }} /> {t('ged.addModal.sectionAudience')}</p>
-              <p className="text-sm text-slate-600">{t('ged.addModal.sectionAudienceDesc')}</p>
-            </div>
+          <SidePanelSection icon={Users2} title={t('ged.addModal.sectionAudience')} description={t('ged.addModal.sectionAudienceDesc')} className="space-y-4">
             {hasParentFolderRestrictions && (
               <div className="rounded-xl border border-amber-200 bg-amber-50 p-3 space-y-2">
                 <div className="flex items-center gap-2 text-sm font-semibold text-amber-900">
@@ -1072,13 +1002,9 @@ export function DocumentAddModal({ isOpen, onClose, folderOptions, defaultFolder
                 )}
               </div>
 
-          </section>
+          </SidePanelSection>
 
-          <section className="space-y-4 rounded-2xl p-4 border" style={{ backgroundColor: '#EEF1F7', borderColor: '#000E2B1F' }}>
-            <div>
-              <p className="font-semibold flex items-center gap-2" style={{ color: '#000E2B' }}><Bell className="w-5 h-5" style={{ color: '#000E2B' }} /> {t('ged.addModal.sectionNotification')}</p>
-              <p className="text-sm text-slate-600">{t('ged.addModal.sectionNotificationDesc')}</p>
-            </div>
+          <SidePanelSection icon={Bell} title={t('ged.addModal.sectionNotification')} description={t('ged.addModal.sectionNotificationDesc')} className="space-y-4">
             {isDetailMode ? (
               <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
                 <div className="space-y-2 border rounded-xl p-4 bg-white" style={{ borderColor: '#000E2B33' }}>
@@ -1105,10 +1031,7 @@ export function DocumentAddModal({ isOpen, onClose, folderOptions, defaultFolder
             ) : (
               <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
                 <div className="space-y-3 border rounded-xl p-4" style={{ borderColor: '#000E2B33' }}>
-                  <div className="flex items-center justify-between">
-                    <Label>{t('ged.addModal.notificationLabel')}</Label>
-                    <Switch checked={notify} onCheckedChange={setNotify} />
-                  </div>
+                  <SidePanelSwitchRow label={t('ged.addModal.notificationLabel')} checked={notify} onCheckedChange={setNotify} />
                   <Select value={notifyTemplate} onValueChange={setNotifyTemplate} disabled={!notify}>
                     <SelectTrigger><SelectValue /></SelectTrigger>
                     <SelectContent>{MAIL_TEMPLATES.map((template) => <SelectItem key={template} value={template}>{template}</SelectItem>)}</SelectContent>
@@ -1116,10 +1039,7 @@ export function DocumentAddModal({ isOpen, onClose, folderOptions, defaultFolder
                 </div>
 
                 <div className="space-y-3 border rounded-xl p-4" style={{ borderColor: '#000E2B33' }}>
-                  <div className="flex items-center justify-between">
-                    <Label>{t('ged.addModal.reminderLabel')}</Label>
-                    <Switch checked={reminder} onCheckedChange={setReminder} />
-                  </div>
+                  <SidePanelSwitchRow label={t('ged.addModal.reminderLabel')} checked={reminder} onCheckedChange={setReminder} />
                   <div className="grid grid-cols-2 gap-2">
                     <Select value={reminderDelay} onValueChange={setReminderDelay} disabled={!reminder}>
                       <SelectTrigger><SelectValue /></SelectTrigger>
@@ -1133,18 +1053,14 @@ export function DocumentAddModal({ isOpen, onClose, folderOptions, defaultFolder
                 </div>
               </div>
             )}
-          </section>
+          </SidePanelSection>
 
-          <section className="space-y-3 pb-2 rounded-2xl p-4 border" style={{ backgroundColor: '#EEF1F7', borderColor: '#000E2B1F' }}>
-            <div>
-              <p className="font-semibold flex items-center gap-2" style={{ color: '#000E2B' }}><Check className="w-5 h-5" style={{ color: '#000E2B' }} /> {t('ged.addModal.sectionValidation')}</p>
-              <p className="text-sm text-slate-600">{t('ged.addModal.sectionValidationDesc')}</p>
-            </div>
+          <SidePanelSection icon={Check} title={t('ged.addModal.sectionValidation')} description={t('ged.addModal.sectionValidationDesc')} className="pb-2">
             {isDetailMode ? (
               <>
                 {detailState?.validation.status === 'approved' ? (
                   <div className="rounded-xl border border-emerald-200 bg-emerald-50 p-4">
-                    <p className="font-semibold text-emerald-800 flex items-center gap-2"><CheckCircle2 className="h-4 w-4" /> {t('ged.addModal.docValidated')}</p>
+                    <p className="font-semibold text-emerald-900 flex items-center gap-2"><CheckCircle2 className="h-4 w-4" /> {t('ged.addModal.docValidated')}</p>
                     <p className="text-sm text-emerald-700 mt-1">{t('ged.addModal.validatedBy', { team: detailState.validation.team ?? '', validator: detailState.validation.validator ?? '' })}</p>
                     <p className="text-sm text-emerald-700">{t('ged.addModal.validatedOn', { date: formatFrenchDate(detailState.validation.validatedAt || '') })}</p>
                   </div>
@@ -1180,7 +1096,7 @@ export function DocumentAddModal({ isOpen, onClose, folderOptions, defaultFolder
                     searchPlaceholder={t('ged.addModal.searchTeam')}
                     maxDisplay={4}
                     showIconInBadge
-                    badgeStyle={{ color: '#7a7a7a', borderColor: '#ddd7cc', backgroundColor: '#f5f3ee', border: '1px solid #ddd7cc' }}
+                    badgeStyle={SIDE_PANEL_BADGE_STYLE}
                   />
                   <p className="text-xs text-slate-500">
                     {t('ged.addModal.pickTeamsHint')}
@@ -1250,13 +1166,13 @@ export function DocumentAddModal({ isOpen, onClose, folderOptions, defaultFolder
                 </div>
               </>
             )}
-          </section>
+          </SidePanelSection>
 
         </div>
-        <div className="border-t bg-white px-6 py-4 flex justify-end gap-2">
+        <SidePanelFooter>
           <Button variant="outline" onClick={onClose}>{t('ged.addModal.cancel')}</Button>
           <Button onClick={handleSubmit}>{document ? t('ged.addModal.save') : t('ged.addModal.validate')}</Button>
-        </div>
+        </SidePanelFooter>
       </SheetContent>
     </Sheet>
   );

@@ -1,9 +1,12 @@
 import React, { useState } from 'react';
-import { Search, Plus, Mail, Shield, MoreVertical } from 'lucide-react';
+import { Search, Plus, Mail, Shield, Pencil } from 'lucide-react';
+import { toast } from 'sonner@2.0.3';
 import { Input } from '../ui/input';
 import { Button } from '../ui/button';
 import { Badge } from '../ui/badge';
 import { Avatar, AvatarFallback } from '../ui/avatar';
+import { TableRowActions } from '../ui/row-actions';
+import { useTranslation } from '../../utils/languageContext';
 
 interface User {
   id: string;
@@ -23,6 +26,7 @@ const mockUsers: User[] = [
 ];
 
 export function UsersSettings() {
+  const { t } = useTranslation();
   const [users] = useState(mockUsers);
   const [searchQuery, setSearchQuery] = useState('');
 
@@ -100,9 +104,11 @@ export function UsersSettings() {
                     {user.lastLogin ? new Date(user.lastLogin).toLocaleDateString('fr-FR') : '-'}
                   </td>
                   <td className="p-3">
-                    <button className="text-gray-400 hover:text-gray-600">
-                      <MoreVertical className="w-4 h-4" />
-                    </button>
+                    <TableRowActions
+                      actions={[
+                        { label: t('settings.users.edit'), icon: Pencil, onClick: () => toast.info(t('toast.comingSoon')) },
+                      ]}
+                    />
                   </td>
                 </tr>
               ))}

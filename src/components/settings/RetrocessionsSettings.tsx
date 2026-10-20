@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Plus, Download, Bell, HelpCircle, Search, AlertTriangle, Euro, MoreVertical } from 'lucide-react';
+import { Plus, Download, Bell, HelpCircle, Search, AlertTriangle, Euro } from 'lucide-react';
 import { Button } from '../ui/button';
 import { Badge } from '../ui/badge';
 import { DataPagination } from '../ui/data-pagination';
@@ -19,12 +19,9 @@ import {
   DialogHeader,
   DialogTitle,
 } from '../ui/dialog';
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuTrigger,
-} from '../ui/dropdown-menu';
+import { TableRowActions } from '../ui/row-actions';
+import { useTranslation } from '../../utils/languageContext';
+import { toast } from 'sonner';
 
 interface Retrocession {
   id: string;
@@ -252,6 +249,7 @@ const mockRetrocessions: Retrocession[] = [
 ];
 
 export function RetrocessionsSettings() {
+  const { t } = useTranslation();
   const [retrocessions, setRetrocessions] = useState<Retrocession[]>(mockRetrocessions);
   const [searchQuery, setSearchQuery] = useState('');
   const [filters, setFilters] = useState<any>({});
@@ -628,33 +626,26 @@ export function RetrocessionsSettings() {
                           </div>
                         </td>
                         <td className="px-4 py-3">
-                          <div className="flex items-center justify-end">
-                            <DropdownMenu>
-                              <DropdownMenuTrigger asChild>
-                                <motion.button
-                                  whileHover={{ scale: 1.08 }}
-                                  whileTap={{ scale: 0.95 }}
-                                  className="p-1.5 rounded-lg hover:bg-gray-100 transition-all"
-                                >
-                                  <MoreVertical className="w-4 h-4 text-gray-600" />
-                                </motion.button>
-                              </DropdownMenuTrigger>
-                              <DropdownMenuContent align="end">
-                                <DropdownMenuItem>
-                                  <Download className="w-4 h-4 mr-2" />
-                                  Télécharger le décompte
-                                </DropdownMenuItem>
-                                <DropdownMenuItem onClick={() => prepareActionReview('notify', [retrocession.id])}>
-                                  <Bell className="w-4 h-4 mr-2" />
-                                  Notifier
-                                </DropdownMenuItem>
-                                <DropdownMenuItem onClick={() => prepareActionReview('markAsPaid', [retrocession.id])}>
-                                  <Euro className="w-4 h-4 mr-2" />
-                                  Marquer payé
-                                </DropdownMenuItem>
-                              </DropdownMenuContent>
-                            </DropdownMenu>
-                          </div>
+                          <TableRowActions
+                            actions={[
+                              {
+                                label: t('settings.retrocessions.rowActions.downloadStatement'),
+                                icon: Download,
+                                onClick: () => toast.info(t('settings.retrocessions.rowActions.comingSoon')),
+                              },
+                              {
+                                label: t('settings.retrocessions.rowActions.notify'),
+                                icon: Bell,
+                                onClick: () => prepareActionReview('notify', [retrocession.id]),
+                              },
+                              {
+                                label: t('settings.retrocessions.rowActions.markAsPaid'),
+                                icon: Euro,
+                                intent: 'success',
+                                onClick: () => prepareActionReview('markAsPaid', [retrocession.id]),
+                              },
+                            ]}
+                          />
                         </td>
                       </tr>
                     ))

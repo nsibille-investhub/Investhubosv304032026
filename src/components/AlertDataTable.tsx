@@ -1,7 +1,7 @@
 import { motion } from 'motion/react';
-import { ArrowUpDown, ArrowUp, ArrowDown, ChevronUp, Clock, Eye } from 'lucide-react';
+import { ArrowUpDown, ArrowUp, ArrowDown, Check, ChevronUp, Clock, Eye, X } from 'lucide-react';
 import { Badge } from './ui/badge';
-import { RowActionButton, RowActions } from './ui/row-actions';
+import { TableRowActions } from './ui/row-actions';
 import { Checkbox } from './ui/checkbox';
 import { StatusBadge } from './StatusBadge';
 import { Tooltip, TooltipContent, TooltipTrigger } from './ui/tooltip';
@@ -328,45 +328,33 @@ export function AlertDataTable({
                 </td>
               )}
               <td className={cellPad}>
-                <div
-                  className="flex items-center justify-end gap-1"
-                  onClick={(e) => e.stopPropagation()}
-                >
-                  <RowActionButton
-                    icon={Eye}
-                    tooltip={t('complianceAlerts.tooltip.view')}
-                    intent="neutral"
-                    onClick={() => onRowClick(alert)}
-                    ariaLabel={t('complianceAlerts.tooltip.view')}
-                  />
-                  {alert.status === 'Pending' && onDecision && (
-                    <RowActionButton
-                      icon={ChevronUp}
-                      tooltip={t('complianceAlerts.tooltip.escalate')}
-                      intent="warning"
-                      onClick={() => onDecision(alert.id, 'escalate')}
-                      ariaLabel={t('complianceAlerts.tooltip.escalate')}
-                    />
-                  )}
-                  <RowActions
-                    previewLabel={t('complianceAlerts.tooltip.view')}
-                    acceptLabel={t('complianceAlerts.tooltip.confirm')}
-                    rejectLabel={t('complianceAlerts.tooltip.reject')}
-                    showPreview={false}
-                    onAccept={
-                      alert.status === 'Pending' && onDecision
-                        ? () => onDecision(alert.id, 'true_hit')
-                        : undefined
-                    }
-                    onReject={
-                      alert.status === 'Pending' && onDecision
-                        ? () => onDecision(alert.id, 'false_hit')
-                        : undefined
-                    }
-                    showAccept={alert.status === 'Pending' && !!onDecision}
-                    showReject={alert.status === 'Pending' && !!onDecision}
-                  />
-                </div>
+                <TableRowActions
+                  actions={[
+                    { label: t('complianceAlerts.tooltip.view'), icon: Eye, onClick: () => onRowClick(alert) },
+                    ...(alert.status === 'Pending' && onDecision
+                      ? [
+                          {
+                            label: t('complianceAlerts.tooltip.escalate'),
+                            icon: ChevronUp,
+                            intent: 'warning' as const,
+                            onClick: () => onDecision(alert.id, 'escalate'),
+                          },
+                          {
+                            label: t('complianceAlerts.tooltip.confirm'),
+                            icon: Check,
+                            intent: 'success' as const,
+                            onClick: () => onDecision(alert.id, 'true_hit'),
+                          },
+                          {
+                            label: t('complianceAlerts.tooltip.reject'),
+                            icon: X,
+                            intent: 'danger' as const,
+                            onClick: () => onDecision(alert.id, 'false_hit'),
+                          },
+                        ]
+                      : []),
+                  ]}
+                />
               </td>
             </motion.tr>
           ))}
