@@ -13,7 +13,7 @@ import { Button } from '../ui/button';
 import { ConfirmDialog } from '../ui/confirm-dialog';
 import { ListingCard, ListingNameCell } from '../ui/listing';
 import { TableRowActions } from '../ui/row-actions';
-import { createNote, NOTE_TYPES, NoteEditSheet, type NoteScope } from './NoteEditSheet';
+import { createNote, NOTE_CURRENT_USER, NOTE_TYPES, NoteEditSheet, type NoteScope } from './NoteEditSheet';
 
 const K = 'investors.detail.notes';
 
@@ -117,6 +117,10 @@ export function NotesTab({ notes: initialNotes, scope = 'investor', onCountChang
     });
   }, [notes, sortConfig, lang, search, filters]);
 
+  // Sur une souscription, seul l'auteur d'une note peut la modifier.
+  const canEdit = (note: Note) => full || note.author === NOTE_CURRENT_USER;
+  const openNote = (note: Note) => canEdit(note) && setSelected(note);
+
   const toNote = (row: Row) => notes.find((note) => note.id === row.noteId) ?? notes[0];
   const empty = <span className="text-gray-400 text-sm">—</span>;
 
@@ -166,7 +170,12 @@ export function NotesTab({ notes: initialNotes, scope = 'investor', onCountChang
       render: (row) => (
         <TableRowActions
           actions={[
-            { label: t(`${K}.actions.edit`), icon: Pencil, onClick: () => setSelected(toNote(row)) },
+            {
+              label: t(`${K}.actions.edit`),
+              icon: Pencil,
+              onClick: () => openNote(toNote(row)),
+              disabledReason: canEdit(toNote(row)) ? undefined : t(`${K}.actions.notAuthor`),
+            },
             {
               label: t(`${K}.actions.download`),
               icon: Download,
@@ -230,7 +239,7 @@ export function NotesTab({ notes: initialNotes, scope = 'investor', onCountChang
             columns={columns}
             hoveredRow={hoveredRow}
             setHoveredRow={setHoveredRow}
-            onRowClick={(row) => setSelected(toNote(row))}
+            onRowClick={(row) => openNote(toNote(row))}
             sortConfig={sortConfig}
             onSort={(key) =>
               setSortConfig((prev) =>

@@ -1408,7 +1408,7 @@
         "belowMinimum": "Montant inférieur au minimum de la part ({{min}} €).",
         "distributorRequired": "Sélectionnez le distributeur de cette souscription intermédiée.",
         "noAuthorizedDistributor": "Aucun distributeur n'est autorisé sur ce fonds et cette part. Passez la souscription en non intermédiée ou changez de part.",
-        "noteRequired": "Saisissez le titre et le texte de la note, ou désactivez la note interne.",
+        "noteRequired": "Saisissez le titre de la note, ou désactivez la note interne.",
         "subscriptionNameRequired": "Saisissez le nom de la souscription, ou repassez en nom automatique.",
         "noAuthorizedDistributorDirectForbidden": "Aucun distributeur n'est autorisé sur ce fonds et cette part, et la part interdit la souscription directe. Choisissez un autre fonds ou une autre part."
       },
@@ -1857,7 +1857,8 @@
           "edit": "Modifier",
           "download": "Télécharger la pièce jointe",
           "noAttachment": "Aucune pièce jointe",
-          "delete": "Supprimer"
+          "delete": "Supprimer",
+          "notAuthor": "Seul l'auteur de la note peut la modifier"
         },
         "deleteDialog": {
           "title": "Supprimer la note « {{title}} » ?",

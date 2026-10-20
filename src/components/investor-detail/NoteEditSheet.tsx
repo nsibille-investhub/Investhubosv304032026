@@ -48,9 +48,8 @@ export const createNote = (): Note => ({
   isImportant: false,
 });
 
-/** Titre et texte renseignés : condition pour enregistrer une note. */
-export const isNoteComplete = (note: Pick<Note, 'title' | 'content'>) =>
-  note.title.trim().length > 0 && note.content.replace(/<[^>]*>/g, '').trim().length > 0;
+/** Le titre est le seul champ obligatoire d'une note. */
+export const isNoteComplete = (note: Pick<Note, 'title'>) => note.title.trim().length > 0;
 
 interface NoteGroupProps {
   bare: boolean;
@@ -116,10 +115,7 @@ export function NoteFormFields({ note, onChange, scope = 'investor', bare = fals
           </div>
         )}
         <div className="space-y-2">
-          <Label htmlFor="noteContent">
-            {t(`${K}.sheet.content`)}
-            <span className="text-red-600 ml-0.5">*</span>
-          </Label>
+          <Label htmlFor="noteContent">{t(`${K}.sheet.content`)}</Label>
           <RichTextEditor
             id="noteContent"
             ariaLabel={t(`${K}.sheet.content`)}

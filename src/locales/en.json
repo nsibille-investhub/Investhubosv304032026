@@ -1408,7 +1408,7 @@
         "belowMinimum": "Amount below the share minimum (€{{min}}).",
         "distributorRequired": "Select the distributor of this intermediated subscription.",
         "noAuthorizedDistributor": "No distributor is authorised on this fund and share. Switch the subscription to non-intermediated or change the share.",
-        "noteRequired": "Enter the note title and text, or turn off the internal note.",
+        "noteRequired": "Enter the note title, or turn off the internal note.",
         "subscriptionNameRequired": "Enter the subscription name, or switch back to the automatic name.",
         "noAuthorizedDistributorDirectForbidden": "No distributor is authorised on this fund and share, and the share forbids direct subscription. Choose another fund or share."
       },
@@ -1857,7 +1857,8 @@
           "edit": "Edit",
           "download": "Download attachment",
           "noAttachment": "No attachment",
-          "delete": "Delete"
+          "delete": "Delete",
+          "notAuthor": "Only the author of the note can edit it"
         },
         "deleteDialog": {
           "title": "Delete the note \"{{title}}\"?",
