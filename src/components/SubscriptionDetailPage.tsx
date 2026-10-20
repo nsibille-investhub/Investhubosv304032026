@@ -116,6 +116,7 @@ import { SubscriptionStatusBadge } from './SubscriptionStatusBadge';
 import { NewSubscriptionDialog } from './NewSubscriptionDialog';
 import { NotesTab } from './investor-detail/NotesTab';
 import { SubscriptionDocumentsTab, getSubscriptionDocumentsCount } from './SubscriptionDocumentsTab';
+import { SubscriptionCapitalCallsTab } from './SubscriptionCapitalCallsTab';
 import { createNote } from './investor-detail/NoteEditSheet';
 import type { Note } from '../utils/investorGenerator';
 
@@ -1718,154 +1719,9 @@ export function SubscriptionDetailPage({ subscription: subscriptionProp, onBack 
             </div>
           </TabsContent>
 
-          {/* Capital Calls Tab Content */}
           <TabsContent value="capital-calls" className="mt-0">
             <div className="px-8 py-6">
-              {/* Summary Cards */}
-              <div className="grid grid-cols-2 gap-4 mb-6">
-                {/* Montant Total Card */}
-                <Card className="p-5">
-                  <div className="text-xs text-primary mb-2">{t('subscriptions.detail.capitalCallsTab.totalCalledAmount')}</div>
-                  <div className="text-2xl font-semibold text-foreground">
-                    {mockCapitalCalls.reduce((sum, call) => sum + call.amount + call.entryFees + call.subscriptionPremium, 0).toLocaleString('fr-FR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} €
-                  </div>
-                </Card>
-
-                {/* Pourcentage Total Card */}
-                <Card className="p-5">
-                  <div className="text-xs text-purple-600 mb-2">{t('subscriptions.detail.capitalCallsTab.totalCalledPercentage')}</div>
-                  <div className="text-2xl font-semibold text-foreground">
-                    {mockCapitalCalls.reduce((sum, call) => sum + call.percentage, 0)}%
-                  </div>
-                </Card>
-              </div>
-
-              {/* Export Button */}
-              <div className="mb-4 flex justify-end">
-                <Button
-                  variant="outline"
-                  className="gap-2 border-border hover:bg-muted"
-                  onClick={() => {
-                    // Generate CSV content
-                    const headers = [
-                      t('subscriptions.detail.capitalCallsTab.date'),
-                      t('subscriptions.detail.capitalCallsTab.capitalCall'),
-                      t('subscriptions.detail.capitalCallsTab.amount'),
-                      t('subscriptions.detail.capitalCallsTab.subscription'),
-                      t('subscriptions.detail.capitalCallsTab.entryFees'),
-                      t('subscriptions.detail.capitalCallsTab.subscriptionPremium'),
-                      t('subscriptions.detail.capitalCallsTab.percentage'),
-                      t('subscriptions.detail.capitalCallsTab.status'),
-                    ];
-                    const rows = mockCapitalCalls.map(call => [
-                      call.date,
-                      call.call,
-                      call.amount.toLocaleString('fr-FR', { minimumFractionDigits: 2 }) + ' €',
-                      call.subscription.toLocaleString('fr-FR', { minimumFractionDigits: 2 }) + ' €',
-                      call.entryFees.toLocaleString('fr-FR', { minimumFractionDigits: 2 }) + ' €',
-                      call.subscriptionPremium.toLocaleString('fr-FR', { minimumFractionDigits: 2 }) + ' €',
-                      call.percentage + '%',
-                      call.status === 'paid'
-                        ? t('subscriptions.detail.capitalCallsTab.paid')
-                        : call.status === 'pending'
-                          ? t('subscriptions.detail.capitalCallsTab.pendingStatus')
-                          : t('subscriptions.detail.capitalCallsTab.rejectedStatus')
-                    ]);
-
-                    const csvContent = [headers, ...rows].map(row => row.join(';')).join('\n');
-                    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
-                    const link = document.createElement('a');
-                    link.href = URL.createObjectURL(blob);
-                    link.download = `appels_de_fonds_${subscription.id}.csv`;
-                    link.click();
-
-                    toast.success(t('subscriptions.detail.capitalCallsTab.exportSuccess'), { description: t('subscriptions.detail.capitalCallsTab.exportSuccessDesc') });
-                  }}
-                >
-                  <Download className="w-4 h-4" />
-                  {t('subscriptions.detail.capitalCallsTab.exportCsv')}
-                </Button>
-              </div>
-
-              {/* Table */}
-              <Card className="overflow-hidden shadow-sm">
-                  <table className="w-full">
-                    <thead className="bg-muted border-b border-border">
-                      <tr>
-                        <th className="px-4 py-3 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider w-40">
-                          {t('subscriptions.detail.capitalCallsTab.date')}
-                        </th>
-                        <th className="px-4 py-3 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider w-48">
-                          {t('subscriptions.detail.capitalCallsTab.capitalCall')}
-                        </th>
-                        <th className="px-4 py-3 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider">
-                          {t('subscriptions.detail.capitalCallsTab.amount')}
-                        </th>
-                        <th className="px-4 py-3 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider">
-                          {t('subscriptions.detail.capitalCallsTab.subscription')}
-                        </th>
-                        <th className="px-4 py-3 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider">
-                          {t('subscriptions.detail.capitalCallsTab.entryFees')}
-                        </th>
-                        <th className="px-4 py-3 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider">
-                          {t('subscriptions.detail.capitalCallsTab.subscriptionPremium')}
-                        </th>
-                        <th className="px-4 py-3 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider">
-                          {t('subscriptions.detail.capitalCallsTab.percentage')}
-                        </th>
-                        <th className="px-4 py-3 text-center text-xs font-medium text-muted-foreground uppercase tracking-wider w-24">
-                          {t('subscriptions.detail.capitalCallsTab.status')}
-                        </th>
-                      </tr>
-                    </thead>
-                    <tbody className="divide-y divide-border/50">
-                      {mockCapitalCalls.map((capitalCall) => (
-                        <tr key={capitalCall.id} className="hover:bg-muted transition-colors">
-                          <td className="px-4 py-3 text-sm text-muted-foreground">
-                            {capitalCall.date}
-                          </td>
-                          <td className="px-4 py-3 text-sm text-foreground/80">
-                            {capitalCall.call}
-                          </td>
-                          <td className="px-4 py-3 text-sm text-foreground/80">
-                            {capitalCall.amount.toLocaleString('fr-FR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} €
-                          </td>
-                          <td className="px-4 py-3 text-sm text-foreground/80">
-                            {capitalCall.subscription.toLocaleString('fr-FR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} €
-                          </td>
-                          <td className="px-4 py-3 text-sm text-foreground/80">
-                            {capitalCall.entryFees.toLocaleString('fr-FR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} €
-                          </td>
-                          <td className="px-4 py-3 text-sm text-foreground/80">
-                            {capitalCall.subscriptionPremium.toLocaleString('fr-FR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} €
-                          </td>
-                          <td className="px-4 py-3 text-sm text-foreground/80">
-                            {capitalCall.percentage}%
-                          </td>
-                          <td className="px-4 py-3">
-                            <div className="flex items-center justify-center gap-1.5">
-                              {capitalCall.status === 'paid' && (
-                                <div className="w-5 h-5 rounded-full bg-emerald-100 flex items-center justify-center" title={t('subscriptions.detail.capitalCallsTab.paid')}>
-                                  <Check className="w-3 h-3 text-emerald-600" />
-                                </div>
-                              )}
-                              {capitalCall.status === 'pending' && (
-                                <div className="w-5 h-5 rounded-full bg-amber-100 flex items-center justify-center" title={t('subscriptions.detail.capitalCallsTab.pendingStatus')}>
-                                  <AlertCircle className="w-3 h-3 text-amber-600" />
-                                </div>
-                              )}
-                              {capitalCall.status === 'rejected' && (
-                                <div className="w-5 h-5 rounded-full bg-red-100 flex items-center justify-center" title={t('subscriptions.detail.capitalCallsTab.rejectedStatus')}>
-                                  <X className="w-3 h-3 text-red-600" />
-                                </div>
-                              )}
-                            </div>
-                          </td>
-                        </tr>
-                      ))}
-                    </tbody>
-                  </table>
-              </Card>
+              <SubscriptionCapitalCallsTab subscription={subscription} />
             </div>
           </TabsContent>
 

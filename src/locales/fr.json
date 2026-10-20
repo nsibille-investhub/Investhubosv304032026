@@ -811,22 +811,49 @@
         "clicked": "Cliqué"
       },
       "capitalCallsTab": {
-        "totalCalledAmount": "Montant total appelé",
-        "totalCalledPercentage": "Pourcentage total appelé",
+        "searchPlaceholder": "Rechercher un appel, une référence…",
+        "entity": "appel de fonds",
         "exportCsv": "Exporter en CSV",
         "exportSuccess": "Export réussi",
         "exportSuccessDesc": "Le fichier CSV a été téléchargé",
-        "date": "Date",
-        "capitalCall": "Appel de fonds",
-        "amount": "Montant",
-        "subscription": "Souscription",
-        "entryFees": "Frais d'entrée",
-        "subscriptionPremium": "Prime de souscription",
-        "percentage": "Pourcentage",
-        "status": "Statut",
-        "paid": "Payé",
-        "pendingStatus": "En attente",
-        "rejectedStatus": "Rejeté"
+        "totalRow": "Total",
+        "overdue": "En retard, échu le {{date}}",
+        "lastReminder": "Dernière relance le {{date}}",
+        "remindNotNotified": "L'avis d'appel n'a pas encore été notifié",
+        "columns": {
+          "call": "Appel de fonds",
+          "dueAt": "Échéance",
+          "calledPercent": "% de l'engagement",
+          "entryFees": "Frais d'entrée",
+          "premium": "Prime de souscription"
+        },
+        "actions": {
+          "viewNotice": "Voir l'avis d'appel",
+          "downloadNotice": "Télécharger l'avis d'appel",
+          "remind": "Relancer l'investisseur",
+          "recordPayment": "Enregistrer le paiement"
+        },
+        "toast": {
+          "viewNotice": "Avis d'appel « {{name}} »",
+          "noticeDownloaded": "Avis d'appel « {{name}} » téléchargé",
+          "reminded": "Relance envoyée pour « {{name}} »",
+          "paymentRecorded": "Paiement de {{amount}} enregistré pour « {{name}} »"
+        },
+        "summary": {
+          "title": "Suivi des appels de fonds",
+          "subtitle": "{{count}} appels émis sur cette souscription",
+          "commitment": "Engagement",
+          "called": "Appelé",
+          "ofCommitment": "{{percent}} de l'engagement",
+          "paid": "Payé",
+          "paidHint": "Frais et prime inclus",
+          "awaitingPayment": "Appelé, en attente de paiement",
+          "remaining": "Reste à appeler",
+          "awaitingOne": "{{count}} appel en attente de paiement",
+          "awaitingMany": "{{count}} appels en attente de paiement",
+          "upToDate": "À jour de ses paiements",
+          "progressLabel": "{{percent}} de l'engagement appelé"
+        }
       },
       "documentsTab": {
         "viewSwitch": "Type de documents",

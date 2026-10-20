@@ -811,22 +811,49 @@
         "clicked": "Clicked"
       },
       "capitalCallsTab": {
-        "totalCalledAmount": "Total called amount",
-        "totalCalledPercentage": "Total called percentage",
+        "searchPlaceholder": "Search a call, a reference…",
+        "entity": "capital call",
         "exportCsv": "Export as CSV",
-        "exportSuccess": "Export successful",
-        "exportSuccessDesc": "CSV file has been downloaded",
-        "date": "Date",
-        "capitalCall": "Capital call",
-        "amount": "Amount",
-        "subscription": "Subscription",
-        "entryFees": "Entry fees",
-        "subscriptionPremium": "Subscription premium",
-        "percentage": "Percentage",
-        "status": "Status",
-        "paid": "Paid",
-        "pendingStatus": "Pending",
-        "rejectedStatus": "Rejected"
+        "exportSuccess": "Export complete",
+        "exportSuccessDesc": "The CSV file has been downloaded",
+        "totalRow": "Total",
+        "overdue": "Overdue, due on {{date}}",
+        "lastReminder": "Last reminder on {{date}}",
+        "remindNotNotified": "The call notice has not been sent yet",
+        "columns": {
+          "call": "Capital call",
+          "dueAt": "Due date",
+          "calledPercent": "% of commitment",
+          "entryFees": "Entry fees",
+          "premium": "Subscription premium"
+        },
+        "actions": {
+          "viewNotice": "View call notice",
+          "downloadNotice": "Download call notice",
+          "remind": "Remind investor",
+          "recordPayment": "Record payment"
+        },
+        "toast": {
+          "viewNotice": "Call notice “{{name}}”",
+          "noticeDownloaded": "Call notice “{{name}}” downloaded",
+          "reminded": "Reminder sent for “{{name}}”",
+          "paymentRecorded": "Payment of {{amount}} recorded for “{{name}}”"
+        },
+        "summary": {
+          "title": "Capital call tracking",
+          "subtitle": "{{count}} calls issued on this subscription",
+          "commitment": "Commitment",
+          "called": "Called",
+          "ofCommitment": "{{percent}} of commitment",
+          "paid": "Paid",
+          "paidHint": "Fees and premium included",
+          "awaitingPayment": "Called, awaiting payment",
+          "remaining": "Remaining to call",
+          "awaitingOne": "{{count}} call awaiting payment",
+          "awaitingMany": "{{count}} calls awaiting payment",
+          "upToDate": "Payments up to date",
+          "progressLabel": "{{percent}} of commitment called"
+        }
       },
       "documentsTab": {
         "viewSwitch": "Document type",

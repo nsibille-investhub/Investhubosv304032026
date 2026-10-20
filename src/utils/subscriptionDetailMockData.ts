@@ -101,16 +101,25 @@ export interface MockEmail {
   clickedAt: string;
 }
 
+/** États d'une ligne d'appel, alignés sur le module Appels de fonds. */
+export type CapitalCallLineState = 'toNotify' | 'notified' | 'paymentDeclared' | 'paid';
+
 export interface MockCapitalCall {
   id: number;
-  date: string;
-  call: string;
-  amount: number;
-  subscription: number;
-  entryFees: number;
-  subscriptionPremium: number;
-  percentage: number;
-  status: string;
+  /** Libellé de l'appel, saisi par la société de gestion. */
+  name: string;
+  reference: string;
+  /** Part de l'engagement appelée, en %. */
+  calledPercent: number;
+  /** Frais d'entrée et prime de souscription prélevés sur cet appel. */
+  includesEntryCosts: boolean;
+  state: CapitalCallLineState;
+  /** Décalages en jours par rapport à aujourd'hui (négatif = passé). */
+  notifiedInDays: number | null;
+  dueInDays: number;
+  paidInDays: number | null;
+  lastReminderInDays: number | null;
+  paymentOrigin: 'bankReconciliation' | 'directDebit' | 'manual' | null;
 }
 
 export const mockSections: MockSection[] = [
@@ -278,7 +287,9 @@ export const mockEmails: MockEmail[] = [
 ];
 
 export const mockCapitalCalls: MockCapitalCall[] = [
-  { id: 1, date: '31/10/2025', call: 'PAC 2026 - Closing 1', amount: 10000.00, subscription: 0.00, entryFees: 3000.00, subscriptionPremium: 1500.00, percentage: 10, status: 'paid' }
+  { id: 1, name: 'Closing 1 - Appel n°1', reference: 'AF-2026-001', calledPercent: 10, includesEntryCosts: true, state: 'paid', notifiedInDays: -120, dueInDays: -105, paidInDays: -107, lastReminderInDays: null, paymentOrigin: 'bankReconciliation' },
+  { id: 2, name: 'Appel n°2', reference: 'AF-2026-002', calledPercent: 15, includesEntryCosts: false, state: 'paid', notifiedInDays: -45, dueInDays: -30, paidInDays: -30, lastReminderInDays: null, paymentOrigin: 'directDebit' },
+  { id: 3, name: 'Appel n°3', reference: 'AF-2026-003', calledPercent: 10, includesEntryCosts: false, state: 'notified', notifiedInDays: -6, dueInDays: 12, paidInDays: null, lastReminderInDays: -2, paymentOrigin: null },
 ];
 
 export interface MockInitEmail {
