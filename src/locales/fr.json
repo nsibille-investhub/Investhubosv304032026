@@ -5686,7 +5686,6 @@
         "notFoundDescription": "Cet appel n'existe pas ou a été supprimé."
       },
       "toast": {
-        "creationComingSoon": "La création d'un appel arrive avec l'assistant de création.",
         "refused": "Action refusée sur {{name}}",
         "notifyStarted": "Notification de {{name}} en cours d'envoi.",
         "notifyDone": "{{name}} est notifié.",
@@ -5694,7 +5693,8 @@
         "relaunchDone": "La relance de {{name}} est envoyée.",
         "exportComingSoon": "{{action}} : bientôt disponible dans la maquette.",
         "editComingSoon": "La modification d'un appel arrive avec l'assistant de création.",
-        "deleted": "{{name}} est supprimé."
+        "deleted": "{{name}} est supprimé.",
+        "created": "{{name}} est créé avec {{count}} lignes. Les avis sont en génération."
       },
       "scenario": {
         "label": "Scénario de démonstration",
@@ -5702,6 +5702,7 @@
           "default": "Périmètre complet",
           "limitedScope": "Périmètre limité à deux fonds",
           "noNotifyRight": "Sans le droit Notifier",
+          "subscriptionActivated": "Souscription activée pendant la création",
           "noRight": "Sans le droit Consulter les appels"
         },
         "simulateDirectNotify": "Notifier sans passer par le menu"
@@ -5924,6 +5925,202 @@
           "empty": "Aucun événement",
           "emptyFiltered": "Aucun événement ne correspond aux filtres",
           "readOnly": "Le journal ne peut être ni modifié ni supprimé."
+        }
+      },
+      "wizard": {
+        "title": "Nouvel appel de fonds",
+        "subtitle": "Préparez l'appel, contrôlez le calcul, puis créez-le.",
+        "stepsLabel": "Étapes de l'assistant",
+        "steps": {
+          "info": "Fonds et informations",
+          "amounts": "Montants",
+          "control": "Contrôle"
+        },
+        "required": "obligatoire",
+        "close": "Fermer l'assistant",
+        "cancel": "Annuler",
+        "previous": "Précédent",
+        "next": "Suivant",
+        "create": "Créer l'appel",
+        "creating": "Création en cours",
+        "createBlocked": "Création bloquée : corrigez les points signalés à l'étape Contrôle.",
+        "nothingSaved": "Simulation : rien n'est enregistré avant la création. Total calculé : {{amount}}.",
+        "errors": {
+          "fund": "Choisissez un fonds.",
+          "name": "Saisissez un nom.",
+          "dueDate": "Saisissez la date d'échéance.",
+          "invalidNumber": "Saisissez un nombre positif.",
+          "over100": "Pourcentage refusé : le paramètre \"Limiter les appels à 100 %\" est actif.",
+          "noShare": "Saisissez un montant sur au moins une part."
+        },
+        "suspended": {
+          "title": "Création suspendue",
+          "moreOne": "Le calcul refait à la création diffère de la simulation : {{count}} ligne de plus.",
+          "moreMany": "Le calcul refait à la création diffère de la simulation : {{count}} lignes de plus.",
+          "lessOne": "Le calcul refait à la création diffère de la simulation : {{count}} ligne de moins.",
+          "lessMany": "Le calcul refait à la création diffère de la simulation : {{count}} lignes de moins.",
+          "refresh": "Mettre à jour le contrôle"
+        },
+        "abandon": {
+          "title": "Abandonner la création ?",
+          "description": "Rien n'a été enregistré. Les informations saisies seront perdues.",
+          "confirm": "Abandonner",
+          "cancel": "Continuer la saisie"
+        },
+        "info": {
+          "fund": "Fonds",
+          "fundPlaceholder": "Choisir un fonds de votre périmètre",
+          "name": "Nom de l'appel",
+          "namePlaceholder": "Exemple : Appel n°4",
+          "dueDate": "Date d'échéance",
+          "noticeDate": "Date de l'avis",
+          "noticeDateHint": "Facultative. Imprimée sur l'avis si elle diffère de l'échéance.",
+          "datePlaceholder": "Choisir une date",
+          "publication": "Publication sur le portail",
+          "publicationOptions": {
+            "onNotification": "À la notification",
+            "immediate": "Immédiate, sans email"
+          },
+          "message": "Message d'accompagnement",
+          "messagePlaceholder": "Texte envoyé avec l'avis",
+          "attachment": "Pièce jointe {{index}}",
+          "addAttachment": "Ajouter un fichier",
+          "removeAttachment": "Retirer la pièce jointe",
+          "forecast": "Flux prévisionnel à consommer",
+          "forecastNone": "Aucun",
+          "forecastOption": "{{name}} ({{amount}})",
+          "noForecast": "Aucun flux prévisionnel en attente sur ce fonds.",
+          "distributions": "Distributions à compenser",
+          "distributionOption": "{{name}} ({{amount}})",
+          "noDistribution": "Aucune distribution sur ce fonds.",
+          "chooseFundFirst": "Choisissez d'abord un fonds.",
+          "noTemplate": {
+            "title": "Aucun modèle d'avis d'appel sur ce fonds",
+            "description": "Les avis ne pourront pas être produits tant qu'un modèle n'est pas configuré. Vous pouvez continuer.",
+            "link": "Configurer le modèle d'avis",
+            "notInMockup": "La configuration des modèles d'avis n'est pas dans la maquette."
+          }
+        },
+        "amounts": {
+          "modes": {
+            "perShare": "Par part",
+            "toRaise": "Montant à lever"
+          },
+          "toRaiseUnavailable": "Indisponible : l'appel est généré par titre.",
+          "settings": {
+            "label": "Paramètres du fonds :",
+            "none": "aucun paramètre particulier",
+            "perUnit": "Générer l'appel par titre",
+            "netFlow": "Flux net",
+            "capAt100": "Limiter les appels à 100 %",
+            "combinedNotices": "Avis combinés"
+          },
+          "allocation": {
+            "perUnit": "Répartition par titre",
+            "units": "Répartition au prorata du nombre de titres",
+            "subscribedAmount": "Répartition au prorata du montant souscrit"
+          },
+          "shareSummary": "Engagement {{committed}} · {{count}} souscriptions",
+          "kinds": {
+            "percent": "Pourcentage",
+            "amount": "Montant"
+          },
+          "fields": {
+            "value": "Montant appelé",
+            "perUnit": "Montant par titre",
+            "recall": "Rappel de distributions provisoires",
+            "recallPerUnit": "Rappel par titre",
+            "netFlow": "Flux net",
+            "netFlowPerUnit": "Flux net par titre",
+            "entryFees": "Appeler les frais d'entrée",
+            "premium": "Appeler la prime"
+          },
+          "perUnitSuffix": "{{currency}}/titre",
+          "notCalledPlaceholder": "Vide : part non appelée",
+          "shareAmount": "Montant de la part :",
+          "restriction": {
+            "toggle": "Restreindre à certaines souscriptions",
+            "selected": "{{count}} sur {{total}} retenues",
+            "hint": "Seules les souscriptions cochées sont appelées sur cette part. Aucune case cochée : pas de restriction."
+          },
+          "toRaise": {
+            "label": "Montant à lever",
+            "proposal": "Pourcentage proposé : {{percent}} % de l'engagement, appliqué à toutes les parts. Vous pouvez ajuster chaque part.",
+            "gapTitle": "Écart avec le montant à lever",
+            "gapBelow": "Le total est inférieur de {{amount}} au montant à lever.",
+            "gapAbove": "Le total dépasse de {{amount}} le montant à lever."
+          },
+          "columns": {
+            "share": "Part",
+            "committed": "Engagement",
+            "called": "Déjà appelé",
+            "remainingBefore": "Reste avant",
+            "percent": "Pourcentage",
+            "amount": "Montant",
+            "remainingAfter": "Reste après",
+            "total": "Total"
+          },
+          "total": "Total de l'appel (calculé)",
+          "percentFor": "Pourcentage de la part {{share}}"
+        },
+        "control": {
+          "blocked": {
+            "title": "Création bloquée",
+            "reasons": {
+              "noLines": "Aucune ligne produite.",
+              "combinedTemplateMissing": "Modèle d'avis combiné absent : les avis combinés sont actifs sur ce fonds.",
+              "overRemainingOne": "{{count}} souscription dépasse son reste à appeler alors que \"Limiter les appels à 100 %\" est actif.",
+              "overRemainingMany": "{{count}} souscriptions dépassent leur reste à appeler alors que \"Limiter les appels à 100 %\" est actif."
+            }
+          },
+          "ready": {
+            "title": "Aucun blocage",
+            "description": "Le calcul est prêt. Rien n'est enregistré avant \"Créer l'appel\"."
+          },
+          "summary": {
+            "lines": "Lignes produites",
+            "exclusions": "Souscriptions exclues",
+            "total": "Total de l'appel"
+          },
+          "allocation": "Mode de répartition : {{mode}}.",
+          "shares": {
+            "title": "Contrôle par part",
+            "share": "Part",
+            "entered": "Montant saisi",
+            "linesTotal": "Somme des lignes",
+            "roundingGap": "Écart d'arrondi"
+          },
+          "lines": {
+            "title": "Lignes produites",
+            "summary": "{{count}} lignes",
+            "investor": "Investisseur",
+            "subscription": "Souscription",
+            "share": "Part",
+            "amount": "Montant appelé",
+            "remaining": "Reste à appeler",
+            "overRemaining": "Dépasse : reste {{amount}}",
+            "preview": "Aperçu de l'avis",
+            "empty": "Aucune ligne produite"
+          },
+          "exclusions": {
+            "title": "Souscriptions exclues",
+            "summary": "{{count}} exclusions",
+            "reason": "Motif",
+            "empty": "Aucune souscription exclue",
+            "reasons": {
+              "availableAfterDueDate": "Date de disponibilité postérieure à la date d'échéance",
+              "outsideRestriction": "Hors restriction",
+              "zeroShare": "Quote-part nulle"
+            }
+          },
+          "preview": {
+            "title": "Aperçu de l'avis",
+            "description": "Aperçu simplifié pour la ligne choisie. Rien n'est produit avant la création.",
+            "recipient": "Destinataire : {{investor}}, souscription {{subscription}}",
+            "amount": "Montant appelé : {{amount}}",
+            "dueDate": "À régler avant le {{date}}",
+            "combined": "Cette ligne sera regroupée dans un avis combiné."
+          }
         }
       }
     }

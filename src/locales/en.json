@@ -5686,7 +5686,6 @@
         "notFoundDescription": "This call does not exist or has been deleted."
       },
       "toast": {
-        "creationComingSoon": "Call creation comes with the creation wizard.",
         "refused": "Action refused on {{name}}",
         "notifyStarted": "{{name}} notification is being sent.",
         "notifyDone": "{{name}} is notified.",
@@ -5694,7 +5693,8 @@
         "relaunchDone": "The {{name}} reminder is sent.",
         "exportComingSoon": "{{action}}: coming soon in the mockup.",
         "editComingSoon": "Editing a call comes with the creation wizard.",
-        "deleted": "{{name}} is deleted."
+        "deleted": "{{name}} is deleted.",
+        "created": "{{name}} is created with {{count}} lines. Notices are being generated."
       },
       "scenario": {
         "label": "Demo scenario",
@@ -5702,6 +5702,7 @@
           "default": "Full scope",
           "limitedScope": "Scope limited to two funds",
           "noNotifyRight": "Without the Notify right",
+          "subscriptionActivated": "Subscription activated during creation",
           "noRight": "Without the View calls right"
         },
         "simulateDirectNotify": "Notify without the menu"
@@ -5924,6 +5925,202 @@
           "empty": "No events",
           "emptyFiltered": "No events match the filters",
           "readOnly": "The journal cannot be edited or deleted."
+        }
+      },
+      "wizard": {
+        "title": "New capital call",
+        "subtitle": "Prepare the call, check the calculation, then create it.",
+        "stepsLabel": "Wizard steps",
+        "steps": {
+          "info": "Fund and details",
+          "amounts": "Amounts",
+          "control": "Check"
+        },
+        "required": "required",
+        "close": "Close the wizard",
+        "cancel": "Cancel",
+        "previous": "Previous",
+        "next": "Next",
+        "create": "Create the call",
+        "creating": "Creating",
+        "createBlocked": "Creation blocked: fix the issues listed in the Check step.",
+        "nothingSaved": "Simulation: nothing is saved before creation. Calculated total: {{amount}}.",
+        "errors": {
+          "fund": "Choose a fund.",
+          "name": "Enter a name.",
+          "dueDate": "Enter the due date.",
+          "invalidNumber": "Enter a positive number.",
+          "over100": "Percentage refused: \"Limit calls to 100%\" is active.",
+          "noShare": "Enter an amount on at least one share."
+        },
+        "suspended": {
+          "title": "Creation suspended",
+          "moreOne": "The calculation redone at creation differs from the simulation: {{count}} more line.",
+          "moreMany": "The calculation redone at creation differs from the simulation: {{count}} more lines.",
+          "lessOne": "The calculation redone at creation differs from the simulation: {{count}} fewer line.",
+          "lessMany": "The calculation redone at creation differs from the simulation: {{count}} fewer lines.",
+          "refresh": "Update the check"
+        },
+        "abandon": {
+          "title": "Abandon the creation?",
+          "description": "Nothing has been saved. The details entered will be lost.",
+          "confirm": "Abandon",
+          "cancel": "Keep editing"
+        },
+        "info": {
+          "fund": "Fund",
+          "fundPlaceholder": "Choose a fund in your scope",
+          "name": "Call name",
+          "namePlaceholder": "Example: Call no. 4",
+          "dueDate": "Due date",
+          "noticeDate": "Notice date",
+          "noticeDateHint": "Optional. Printed on the notice if it differs from the due date.",
+          "datePlaceholder": "Pick a date",
+          "publication": "Portal publication",
+          "publicationOptions": {
+            "onNotification": "On notification",
+            "immediate": "Immediate, no email"
+          },
+          "message": "Accompanying message",
+          "messagePlaceholder": "Text sent with the notice",
+          "attachment": "Attachment {{index}}",
+          "addAttachment": "Add a file",
+          "removeAttachment": "Remove the attachment",
+          "forecast": "Cash flow forecast to use",
+          "forecastNone": "None",
+          "forecastOption": "{{name}} ({{amount}})",
+          "noForecast": "No pending forecast on this fund.",
+          "distributions": "Distributions to offset",
+          "distributionOption": "{{name}} ({{amount}})",
+          "noDistribution": "No distribution on this fund.",
+          "chooseFundFirst": "Choose a fund first.",
+          "noTemplate": {
+            "title": "No capital call notice template on this fund",
+            "description": "Notices cannot be produced until a template is configured. You can continue.",
+            "link": "Configure the notice template",
+            "notInMockup": "Notice template configuration is not in the mockup."
+          }
+        },
+        "amounts": {
+          "modes": {
+            "perShare": "By share",
+            "toRaise": "Amount to raise"
+          },
+          "toRaiseUnavailable": "Unavailable: the call is generated per unit.",
+          "settings": {
+            "label": "Fund settings:",
+            "none": "no specific setting",
+            "perUnit": "Generate the call per unit",
+            "netFlow": "Net flow",
+            "capAt100": "Limit calls to 100%",
+            "combinedNotices": "Combined notices"
+          },
+          "allocation": {
+            "perUnit": "Allocation per unit",
+            "units": "Allocation pro rata to the number of units",
+            "subscribedAmount": "Allocation pro rata to the subscribed amount"
+          },
+          "shareSummary": "Commitment {{committed}} · {{count}} subscriptions",
+          "kinds": {
+            "percent": "Percentage",
+            "amount": "Amount"
+          },
+          "fields": {
+            "value": "Called amount",
+            "perUnit": "Amount per unit",
+            "recall": "Recall of provisional distributions",
+            "recallPerUnit": "Recall per unit",
+            "netFlow": "Net flow",
+            "netFlowPerUnit": "Net flow per unit",
+            "entryFees": "Call entry fees",
+            "premium": "Call the premium"
+          },
+          "perUnitSuffix": "{{currency}}/unit",
+          "notCalledPlaceholder": "Empty: share not called",
+          "shareAmount": "Share amount:",
+          "restriction": {
+            "toggle": "Restrict to some subscriptions",
+            "selected": "{{count}} of {{total}} selected",
+            "hint": "Only the checked subscriptions are called on this share. Nothing checked: no restriction."
+          },
+          "toRaise": {
+            "label": "Amount to raise",
+            "proposal": "Proposed percentage: {{percent}}% of the commitment, applied to every share. You can adjust each share.",
+            "gapTitle": "Gap with the amount to raise",
+            "gapBelow": "The total is {{amount}} below the amount to raise.",
+            "gapAbove": "The total exceeds the amount to raise by {{amount}}."
+          },
+          "columns": {
+            "share": "Share",
+            "committed": "Commitment",
+            "called": "Already called",
+            "remainingBefore": "Remaining before",
+            "percent": "Percentage",
+            "amount": "Amount",
+            "remainingAfter": "Remaining after",
+            "total": "Total"
+          },
+          "total": "Call total (calculated)",
+          "percentFor": "Percentage for share {{share}}"
+        },
+        "control": {
+          "blocked": {
+            "title": "Creation blocked",
+            "reasons": {
+              "noLines": "No line produced.",
+              "combinedTemplateMissing": "Combined notice template missing: combined notices are active on this fund.",
+              "overRemainingOne": "{{count}} subscription exceeds its remaining amount while \"Limit calls to 100%\" is active.",
+              "overRemainingMany": "{{count}} subscriptions exceed their remaining amount while \"Limit calls to 100%\" is active."
+            }
+          },
+          "ready": {
+            "title": "No blocking issue",
+            "description": "The calculation is ready. Nothing is saved before \"Create the call\"."
+          },
+          "summary": {
+            "lines": "Lines produced",
+            "exclusions": "Excluded subscriptions",
+            "total": "Call total"
+          },
+          "allocation": "Allocation mode: {{mode}}.",
+          "shares": {
+            "title": "Check by share",
+            "share": "Share",
+            "entered": "Entered amount",
+            "linesTotal": "Sum of lines",
+            "roundingGap": "Rounding gap"
+          },
+          "lines": {
+            "title": "Lines produced",
+            "summary": "{{count}} lines",
+            "investor": "Investor",
+            "subscription": "Subscription",
+            "share": "Share",
+            "amount": "Called amount",
+            "remaining": "Remaining to call",
+            "overRemaining": "Exceeds: {{amount}} left",
+            "preview": "Notice preview",
+            "empty": "No line produced"
+          },
+          "exclusions": {
+            "title": "Excluded subscriptions",
+            "summary": "{{count}} exclusions",
+            "reason": "Reason",
+            "empty": "No excluded subscription",
+            "reasons": {
+              "availableAfterDueDate": "Availability date after the due date",
+              "outsideRestriction": "Outside restriction",
+              "zeroShare": "Zero share"
+            }
+          },
+          "preview": {
+            "title": "Notice preview",
+            "description": "Simplified preview for the chosen line. Nothing is produced before creation.",
+            "recipient": "Recipient: {{investor}}, subscription {{subscription}}",
+            "amount": "Called amount: {{amount}}",
+            "dueDate": "To be paid before {{date}}",
+            "combined": "This line will be grouped in a combined notice."
+          }
         }
       }
     }

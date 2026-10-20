@@ -46,6 +46,7 @@ import { DataPagination } from '../ui/data-pagination';
 import { Button } from '../ui/button';
 import { ConfirmDialog } from '../ui/confirm-dialog';
 import { CapitalCallDetailPage } from './CapitalCallDetailPage';
+import { CapitalCallDraft, CapitalCallWizard } from './wizard/CapitalCallWizard';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../ui/select';
 import {
   DropdownMenu,
@@ -88,13 +89,14 @@ const DEFAULT_COLUMNS: ColumnKey[] = ['fund', 'name', 'dueDate', 'calledAmount',
 const COLUMNS_STORAGE_KEY = 'investhub-columns-capital-calls-v2';
 
 type Queue = 'all' | 'sending';
-type Scenario = 'default' | 'limitedScope' | 'noNotifyRight' | 'noRight';
-const SCENARIOS: Scenario[] = ['default', 'limitedScope', 'noNotifyRight', 'noRight'];
+type Scenario = 'default' | 'limitedScope' | 'noNotifyRight' | 'subscriptionActivated' | 'noRight';
+const SCENARIOS: Scenario[] = ['default', 'limitedScope', 'noNotifyRight', 'subscriptionActivated', 'noRight'];
 
 const SCENARIO_RIGHTS: Record<Scenario, CapitalCallRights> = {
   default: FULL_RIGHTS,
   limitedScope: FULL_RIGHTS,
   noNotifyRight: { ...FULL_RIGHTS, notify: false },
+  subscriptionActivated: FULL_RIGHTS,
   noRight: FULL_RIGHTS,
 };
 
@@ -113,6 +115,9 @@ const MENU_GROUPS: { action: CapitalCallAction; icon: LucideIcon }[][] = [
     { action: 'delete', icon: Trash2 },
   ],
 ];
+
+/** Utilisateur connecté de la maquette, affiché dans l'en-tête. */
+const CURRENT_USER = 'Jean Dault';
 
 const NOTIFY_DURATION = 6000;
 const RELAUNCH_DURATION = 4000;
@@ -189,6 +194,7 @@ export function CapitalCallsPage({ funds, initialFundIds, onOpenFund, onSelected
   const [visibleColumns, setVisibleColumns] = useState<ColumnKey[]>(readStoredColumns);
   const [allCalls, setAllCalls] = useState<CapitalCall[]>(() => generateCapitalCalls(funds));
   const [pendingDelete, setPendingDelete] = useState<CapitalCall | null>(null);
+  const [wizardOpen, setWizardOpen] = useState(false);
   const timers = useRef<number[]>([]);
   const rights = SCENARIO_RIGHTS[scenario];
 
@@ -212,7 +218,7 @@ export function CapitalCallsPage({ funds, initialFundIds, onOpenFund, onSelected
   }, [visibleColumns]);
 
   const scopeFundIds = useMemo(() => {
-    const ids = Array.from(new Set(allCalls.map(call => call.fundId)));
+    const ids = Array.from(new Set(allCalls.map(call => call.fundId))).sort((a, b) => a - b);
     return new Set(scenario === 'limitedScope' ? ids.slice(0, 2) : ids);
   }, [allCalls, scenario]);
 
@@ -368,6 +374,36 @@ export function CapitalCallsPage({ funds, initialFundIds, onOpenFund, onSelected
     }
     setAllCalls(prev => prev.filter(item => item.id !== current.id));
     toast.success(t(`${K}.toast.deleted`, { name: current.name }));
+  };
+
+  const createCall = (draft: CapitalCallDraft) => {
+    const id = allCalls.reduce((max, call) => Math.max(max, call.id), 0) + 1;
+    const call: CapitalCall = {
+      id,
+      fundId: draft.fund.id,
+      fundName: draft.fund.name,
+      currency: draft.currency,
+      name: draft.name,
+      dueDate: draft.dueDate,
+      noticeDate: draft.noticeDate,
+      calledAmount: draft.calledAmount,
+      origin: 'backOffice',
+      compensations: draft.compensations,
+      forecast: draft.forecast,
+      shares: draft.shares,
+      message: draft.message,
+      attachments: draft.attachments,
+      createdAt: new Date(),
+      createdBy: CURRENT_USER,
+      sending: false,
+      lines: draft.lines,
+      notifiedLines: 0,
+      linesToRelaunch: 0,
+      justCreated: true,
+    };
+    setAllCalls(prev => [call, ...prev]);
+    toast.success(t(`${K}.toast.created`, { name: call.name, count: call.lines }));
+    window.location.hash = `#/capital-calls/${id}`;
   };
 
   const simulateDirectNotify = () => {
@@ -631,8 +667,17 @@ export function CapitalCallsPage({ funds, initialFundIds, onOpenFund, onSelected
         primaryAction={{
           label: t(`${K}.actions.new`),
           icon: <Plus className="h-4 w-4" />,
-          onClick: () => toast.info(t(`${K}.toast.creationComingSoon`)),
+          onClick: () => setWizardOpen(true),
+          disabledReason: rights.manage ? undefined : t(`${K}.blockers.missingRight`),
         }}
+      />
+
+      <CapitalCallWizard
+        open={wizardOpen}
+        onOpenChange={setWizardOpen}
+        funds={funds.filter(fund => scopeFundIds.has(fund.id))}
+        subscriptionActivatedMeanwhile={scenario === 'subscriptionActivated'}
+        onCreate={createCall}
       />
 
       <ConfirmDialog

@@ -152,6 +152,14 @@ export function generateCapitalCallLines(call: CapitalCall): CapitalCallLine[] {
     const paymentOrigin: PaymentOrigin | null =
       state === 'paid' ? (originDraw < 0.6 ? 'bankReconciliation' : originDraw < 0.8 ? 'directDebit' : 'manual') : null;
 
+    if (call.justCreated) {
+      state = 'toNotify';
+      noticeState = 'generating';
+      noticeFailureReason = null;
+      noticeRequestedAt = new Date(now);
+      noticeEvents.splice(0, noticeEvents.length, { at: noticeRequestedAt, kind: 'requested' });
+    }
+
     return {
       id: call.id * 1000 + index + 1,
       investor: INVESTORS[(call.id + index) % INVESTORS.length],

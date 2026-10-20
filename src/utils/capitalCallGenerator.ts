@@ -54,6 +54,8 @@ export interface CapitalCall {
   notifiedLines: number;
   /** Lignes notifiées ni payées ni compensées : celles qu'une relance cible. */
   linesToRelaunch: number;
+  /** Appel créé dans la session : lignes à notifier, avis demandés à la création. */
+  justCreated?: boolean;
 }
 
 const CREATORS = ['Camille', 'Thomas', 'Léa', 'Hugo', 'Inès', 'Julien'];

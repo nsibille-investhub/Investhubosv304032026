@@ -307,7 +307,7 @@ export function CapitalCallLinesTab({
   const hasFiltering = Object.keys(activeFilters).length > 0 || search.trim().length > 0;
 
   return (
-    <Card className="overflow-visible shadow-sm">
+    <Card className="shadow-sm">
       <div className="relative z-10 border-b border-border p-4">
         <FilterBar
           searchValue={search}
