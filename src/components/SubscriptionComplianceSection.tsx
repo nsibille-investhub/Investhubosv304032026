@@ -38,10 +38,6 @@ import { Tooltip, TooltipContent, TooltipTrigger } from './ui/tooltip';
 import { cn, WIDGET_LABEL_CLASS, WIDGET_SUBTITLE_CLASS, WIDGET_TITLE_CLASS } from './ui/utils';
 import { PRIMARY_BUTTON_GRADIENT } from './ui/page-header';
 import {
-  OnboardingCompletionCard,
-  type OnboardingBucketStats,
-} from './OnboardingCompletionOverview';
-import {
   aggregateClassScore,
   componentScore,
   computeProfileScore,
@@ -468,8 +464,6 @@ export function RiskProfileWidget({
 }
 
 interface SubscriptionComplianceSectionProps {
-  questions: OnboardingBucketStats;
-  documents: OnboardingBucketStats;
   scoreValidated: boolean;
   scoreValidatedBy: string | null;
   scoreValidatedAt: string | null;
@@ -485,8 +479,6 @@ interface SubscriptionComplianceSectionProps {
 
 /** Espace Validation / Conformite : widgets risque, screening, categorisation et validation. */
 export function SubscriptionComplianceSection({
-  questions,
-  documents,
   scoreValidated,
   scoreValidatedBy,
   scoreValidatedAt,
@@ -623,8 +615,6 @@ export function SubscriptionComplianceSection({
 
   return (
     <div className="space-y-4">
-      <OnboardingCompletionCard questions={questions} documents={documents} />
-
       {/* Conformité : score, parties tierces, catégorisation et décision */}
       <Card className="shadow-sm overflow-hidden">
         <div className="flex flex-wrap items-center justify-between gap-3 px-4 py-3">

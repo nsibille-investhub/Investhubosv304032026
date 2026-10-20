@@ -1543,8 +1543,6 @@ export function SubscriptionDetailPage({ subscription: subscriptionProp, onBack 
                   {currentStep === 2 && (
                     // Validation / Conformité — widgets risque, screening et validation
                     <SubscriptionComplianceSection
-                      questions={questionBuckets}
-                      documents={documentBuckets}
                       scoreValidated={riskValidated}
                       scoreValidatedBy={riskValidatedBy}
                       scoreValidatedAt={riskValidationDate}
@@ -1561,10 +1559,7 @@ export function SubscriptionDetailPage({ subscription: subscriptionProp, onBack 
                     // Signatures : pack, signataires, contre-signataires et suivi
                     <SubscriptionSignatureStep
                       subscription={subscription}
-                      questions={questionBuckets}
-                      documents={documentBuckets}
                       compliance={complianceStatus}
-                      onOpenOnboarding={() => setCurrentStep(1)}
                       onOpenCompliance={() => setCurrentStep(2)}
                       onProceedToPayment={() => {
                         setCurrentStep(4);
