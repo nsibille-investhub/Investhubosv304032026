@@ -5734,7 +5734,8 @@
           "lines": "Investor lines",
           "emails": "Emails",
           "breakdown": "Breakdown by share",
-          "message": "Message and attachments"
+          "message": "Message and attachments",
+          "journal": "Journal"
         },
         "breakdown": {
           "columns": {
@@ -5891,6 +5892,38 @@
             "filteredDescription": "Change the search or the filters to widen the results.",
             "reset": "Reset filters"
           }
+        },
+        "journal": {
+          "types": {
+            "created": "Creation",
+            "edited": "Edit",
+            "noticeFailed": "Notice production failed",
+            "noticeRelaunched": "Notice generation retried",
+            "notified": "Notification",
+            "reminded": "Reminder",
+            "paymentValidated": "Payment validated",
+            "paymentCancelled": "Payment cancelled",
+            "noticeReplaced": "Notice replaced",
+            "notificationCancelled": "Notification cancelled"
+          },
+          "linesOne": "{{count}} line",
+          "linesMany": "{{count}} lines",
+          "change": {
+            "dueDate": "Due date: {{from}} → {{to}}"
+          },
+          "paymentOrigin": "by {{origin}}",
+          "system": "System",
+          "roles": {
+            "user": "User",
+            "system": "System"
+          },
+          "goLive": {
+            "title": "Partial history",
+            "description": "This call was created before V3. Its history starts when V3 went live, on {{date}}."
+          },
+          "empty": "No events",
+          "emptyFiltered": "No events match the filters",
+          "readOnly": "The journal cannot be edited or deleted."
         }
       }
     }

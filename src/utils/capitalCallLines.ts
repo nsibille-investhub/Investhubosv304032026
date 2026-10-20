@@ -9,6 +9,8 @@ export interface NoticeEvent {
   at: Date;
   kind: 'requested' | 'failed' | 'relaunched' | 'available';
   reason?: NoticeFailureReason;
+  /** Auteur d'une relance. Les autres événements sont produits par le système. */
+  by?: string;
 }
 
 /** Délai maximal de production d'un avis avant "En échec". Valeur provisoire : question ouverte d'IC-5589. */
@@ -120,7 +122,7 @@ export function generateCapitalCallLines(call: CapitalCall): CapitalCallLine[] {
       } else if (draw < 0.16) {
         noticeState = 'generating';
         noticeRequestedAt = new Date(now - MINUTE);
-        noticeEvents.push({ at: noticeRequestedAt, kind: 'relaunched' });
+        noticeEvents.push({ at: noticeRequestedAt, kind: 'relaunched', by: 'Camille' });
       } else if (draw < 0.3) {
         noticeState = 'failed';
         noticeFailureReason = combinedNotice ? 'combinedTemplateMissing' : 'productionError';
@@ -210,14 +212,14 @@ export function noticeAvailable(line: CapitalCallLine, at = new Date()): Capital
 }
 
 /** Relance ciblée : seuls les avis en échec repartent en génération. Un avis remplacé n'est jamais touché. */
-export function relaunchFailedNotices(lines: CapitalCallLine[], at = new Date()): CapitalCallLine[] {
+export function relaunchFailedNotices(lines: CapitalCallLine[], by: string, at = new Date()): CapitalCallLine[] {
   return lines.map(line =>
     line.noticeState === 'failed'
       ? {
           ...line,
           noticeState: 'generating',
           noticeRequestedAt: at,
-          noticeEvents: [...line.noticeEvents, { at, kind: 'relaunched' }],
+          noticeEvents: [...line.noticeEvents, { at, kind: 'relaunched', by }],
         }
       : line,
   );

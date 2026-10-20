@@ -5734,7 +5734,8 @@
           "lines": "Lignes investisseurs",
           "emails": "Envois",
           "breakdown": "Ventilation par part",
-          "message": "Message et pièces jointes"
+          "message": "Message et pièces jointes",
+          "journal": "Journal"
         },
         "breakdown": {
           "columns": {
@@ -5891,6 +5892,38 @@
             "filteredDescription": "Modifiez la recherche ou les filtres pour élargir les résultats.",
             "reset": "Réinitialiser les filtres"
           }
+        },
+        "journal": {
+          "types": {
+            "created": "Création",
+            "edited": "Modification",
+            "noticeFailed": "Production d'avis en échec",
+            "noticeRelaunched": "Relance de la génération",
+            "notified": "Notification",
+            "reminded": "Relance",
+            "paymentValidated": "Validation de paiement",
+            "paymentCancelled": "Annulation de paiement",
+            "noticeReplaced": "Remplacement d'avis",
+            "notificationCancelled": "Annulation de notification"
+          },
+          "linesOne": "{{count}} ligne",
+          "linesMany": "{{count}} lignes",
+          "change": {
+            "dueDate": "Date d'échéance : {{from}} → {{to}}"
+          },
+          "paymentOrigin": "par {{origin}}",
+          "system": "Système",
+          "roles": {
+            "user": "Utilisateur",
+            "system": "Système"
+          },
+          "goLive": {
+            "title": "Historique partiel",
+            "description": "Cet appel a été créé avant la V3. Son historique commence à la mise en service de la V3, le {{date}}."
+          },
+          "empty": "Aucun événement",
+          "emptyFiltered": "Aucun événement ne correspond aux filtres",
+          "readOnly": "Le journal ne peut être ni modifié ni supprimé."
         }
       }
     }

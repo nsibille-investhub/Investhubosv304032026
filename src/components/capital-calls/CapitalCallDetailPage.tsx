@@ -7,6 +7,7 @@ import {
   Coins,
   Download,
   FileText,
+  History,
   Landmark,
   Layers,
   Loader2,
@@ -33,6 +34,7 @@ import {
 import { generateCapitalCallEmails } from '../../utils/capitalCallEmails';
 import { CheckIndicator } from '../CheckIndicator';
 import { CapitalCallEmailsTab } from './CapitalCallEmailsTab';
+import { CapitalCallJournalTab } from './CapitalCallJournalTab';
 import { CapitalCallLinesTab } from './CapitalCallLinesTab';
 import { ColumnConfig, DataTable } from '../DataTable';
 import { EmptyState } from '../EmptyState';
@@ -47,13 +49,16 @@ import { Tabs, TabsContent } from '../ui/tabs';
 
 const K = 'funds.capitalCalls.detail';
 
-type TabId = 'lines' | 'emails' | 'breakdown' | 'message';
+type TabId = 'lines' | 'emails' | 'breakdown' | 'message' | 'journal';
 
 interface CapitalCallDetailPageProps {
   call: CapitalCall;
   rights: CapitalCallRights;
   onOpenFund: (fundId: number) => void;
 }
+
+/** Utilisateur connecté de la maquette, affiché dans l'en-tête. */
+const CURRENT_USER = 'Jean Dault';
 
 /** Durée simulée de production d'un avis. */
 const PRODUCTION_DELAY = 3000;
@@ -109,7 +114,7 @@ export function CapitalCallDetailPage({ call, rights, onOpenFund }: CapitalCallD
       toast.error(t(`${K}.lines.relaunch.refused`), { description: relaunchReason });
       return;
     }
-    setLines(prev => relaunchFailedNotices(prev));
+    setLines(prev => relaunchFailedNotices(prev, CURRENT_USER));
     toast.info(t(failedCount === 1 ? `${K}.lines.relaunch.startedOne` : `${K}.lines.relaunch.startedMany`, { count: failedCount }));
   };
 
@@ -262,11 +267,13 @@ export function CapitalCallDetailPage({ call, rights, onOpenFund }: CapitalCallD
       <Tabs value={tab} onValueChange={value => setTab(value as TabId)} className="w-full gap-0">
         <div className="border-b border-border bg-card px-8">
           <DetailTabsList
+            overflow="scroll"
             items={[
               { value: 'lines', icon: Users, label: t(`${K}.tabs.lines`), badge: call.lines },
               ...(hasEmails ? [{ value: 'emails', icon: Send, label: t(`${K}.tabs.emails`), badge: emails.length }] : []),
               { value: 'breakdown', icon: Layers, label: t(`${K}.tabs.breakdown`), badge: call.shares.length },
               { value: 'message', icon: Mail, label: t(`${K}.tabs.message`), badge: call.attachments.length || undefined },
+              { value: 'journal', icon: History, label: t(`${K}.tabs.journal`) },
             ]}
           />
         </div>
@@ -284,6 +291,9 @@ export function CapitalCallDetailPage({ call, rights, onOpenFund }: CapitalCallD
               relaunchDisabledReason={relaunchReason}
               onRelaunchFailed={relaunchFailed}
             />
+          </TabsContent>
+          <TabsContent value="journal">
+            <CapitalCallJournalTab call={call} lines={lines} />
           </TabsContent>
           <TabsContent value="breakdown">
             <Card className="overflow-hidden shadow-sm">
