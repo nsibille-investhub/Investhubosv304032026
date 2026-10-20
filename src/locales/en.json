@@ -811,35 +811,233 @@
         "clicked": "Clicked"
       },
       "capitalCallsTab": {
-        "totalCalledAmount": "Total called amount",
-        "totalCalledPercentage": "Total called percentage",
+        "searchPlaceholder": "Search a call, a reference…",
+        "entity": "capital call",
         "exportCsv": "Export as CSV",
-        "exportSuccess": "Export successful",
-        "exportSuccessDesc": "CSV file has been downloaded",
-        "date": "Date",
-        "capitalCall": "Capital call",
-        "amount": "Amount",
-        "subscription": "Subscription",
-        "entryFees": "Entry fees",
-        "subscriptionPremium": "Subscription premium",
-        "percentage": "Percentage",
-        "status": "Status",
-        "paid": "Paid",
-        "pendingStatus": "Pending",
-        "rejectedStatus": "Rejected"
+        "exportSuccess": "Export complete",
+        "exportSuccessDesc": "The CSV file has been downloaded",
+        "totalRow": "Total",
+        "overdue": "Overdue, due on {{date}}",
+        "lastReminder": "Last reminder on {{date}}",
+        "remindNotNotified": "The call notice has not been sent yet",
+        "columns": {
+          "call": "Capital call",
+          "dueAt": "Due date",
+          "calledPercent": "% of commitment",
+          "entryFees": "Entry fees",
+          "premium": "Subscription premium"
+        },
+        "actions": {
+          "viewNotice": "View call notice",
+          "downloadNotice": "Download call notice",
+          "remind": "Remind investor",
+          "recordPayment": "Record payment"
+        },
+        "toast": {
+          "viewNotice": "Call notice “{{name}}”",
+          "noticeDownloaded": "Call notice “{{name}}” downloaded",
+          "reminded": "Reminder sent for “{{name}}”",
+          "paymentRecorded": "Payment of {{amount}} recorded for “{{name}}”"
+        },
+        "queues": {
+          "all": "All calls",
+          "awaitingPayment": "Awaiting payment",
+          "overdue": "Overdue, unpaid",
+          "paid": "Paid",
+          "amountMetric": "Amount",
+          "perCall": "{{amount}} per call",
+          "badge": "{{percent}} of commitment called · {{remaining}} left to call"
+        }
       },
       "documentsTab": {
-        "title": "Subscription documents",
-        "addDocument": "Add a document",
-        "date": "Date",
-        "name": "Name",
-        "language": "Language",
-        "type": "Type",
-        "file": "File",
-        "documentSigned": "Document signed",
-        "deleteDocument": "Delete {{name}}",
-        "exportPack": "Export document pack",
-        "exportPackToast": "Document pack exported"
+        "viewSwitch": "Document type",
+        "views": {
+          "subscription": "Subscription documents · {{count}}",
+          "kyc": "KYC documents · {{count}}"
+        },
+        "addDocument": "Add document",
+        "searchPlaceholder": "Search a document…",
+        "entity": "document",
+        "columns": {
+          "document": "Document",
+          "category": "Category",
+          "status": "Status",
+          "signers": "Signers",
+          "updatedAt": "Updated on",
+          "issuedAt": "Issued on",
+          "expiresAt": "Valid until",
+          "origin": "Source"
+        },
+        "actions": {
+          "preview": "Preview",
+          "download": "Download",
+          "remindSigners": "Remind signers",
+          "delete": "Delete",
+          "validate": "Approve",
+          "reject": "Reject",
+          "upload": "Upload document",
+          "replace": "Replace document",
+          "requestInvestor": "Request from investor"
+        },
+        "toast": {
+          "preview": "Preview of “{{name}}”",
+          "downloaded": "“{{name}}” downloaded",
+          "reminded": "Reminder sent for “{{name}}”",
+          "deleted": "“{{name}}” deleted",
+          "packExported": "Subscription file exported (ZIP)",
+          "addDocument": "Adding a document: coming soon",
+          "validated": "“{{name}}” approved",
+          "rejected": "“{{name}}” rejected, the investor will be notified",
+          "upload": "Uploading “{{name}}”: coming soon",
+          "requested": "Request sent to the investor for “{{name}}”",
+          "requestedManyOne": "Request sent for {{count}} document",
+          "requestedManyMany": "Request sent for {{count}} documents"
+        },
+        "subscription": {
+          "fileVersion": "{{category}} · v{{version}} · {{language}}",
+          "signersProgress": "{{signed}} / {{total}}",
+          "notSignable": "Provided for information",
+          "exportPack": "Export file",
+          "deleteLocked": "Document already signed or provided to the investor: it can no longer be deleted",
+          "deleteTitle": "Delete document",
+          "deleteDescription": "“{{name}}” will be removed from the subscription file. This cannot be undone.",
+          "categories": {
+            "subscriptionForm": "Subscription form",
+            "contractual": "Contractual document",
+            "regulatory": "Regulatory document",
+            "evidence": "Signature evidence"
+          },
+          "statuses": {
+            "draft": "Draft",
+            "awaitingSignature": "Awaiting signature",
+            "awaitingCounterSignature": "Awaiting countersignature",
+            "completed": "Signed",
+            "acknowledged": "Read and approved",
+            "issued": "Issued"
+          },
+          "statusHints": {
+            "draft": "Generated, not yet sent for signature",
+            "awaitingSignature": "Sent, at least one signer has not signed yet",
+            "awaitingCounterSignature": "Signed by the investor, awaiting the management company",
+            "completed": "Signed by all parties",
+            "acknowledged": "Provided to the investor, reading confirmed before signing",
+            "issued": "Generated by the e-signature platform"
+          },
+          "docs": {
+            "subscriptionForm": "Subscription form",
+            "subscriptionAgreement": "Subscription Agreement",
+            "investorStatus": "Investor status declaration (professional / well-informed)",
+            "suitability": "MiFID II suitability questionnaire",
+            "fatcaCrs": "FATCA / CRS self-certification",
+            "sepaMandate": "SEPA direct debit mandate",
+            "sideLetter": "Side letter",
+            "kid": "Key information document (PRIIPs KID)",
+            "fundRegulation": "Fund regulations",
+            "signatureCertificate": "Signature evidence certificate"
+          },
+          "queues": {
+            "all": "All documents",
+            "awaitingSignature": "To sign",
+            "awaitingCounterSignature": "To countersign",
+            "completed": "Signed",
+            "draft": "Drafts",
+            "signaturesMetric": "Signatures",
+            "perDocument": "{{count}} signer(s) per document",
+            "badge": "{{signed}} / {{total}} documents signed"
+          }
+        },
+        "kyc": {
+          "entity": "KYC document",
+          "searchPlaceholder": "Search a document, a holder…",
+          "holderWithRole": "{{role}} · {{name}}",
+          "holders": {
+            "investor": "Investor",
+            "entity": "Legal entity",
+            "legalRepresentative": "Legal representative",
+            "beneficialOwners": "Beneficial owners (> 25%)"
+          },
+          "noFile": "No file uploaded",
+          "noExpiry": "No expiry",
+          "expiredOn": "Expired on {{date}}",
+          "expiresInDaysOne": "Expires in {{count}} day",
+          "expiresInDaysMany": "Expires in {{count}} days",
+          "maxAgeHintOne": "Valid for {{count}} day after issue",
+          "maxAgeHintMany": "Valid for {{count}} days after issue",
+          "rejectedBecause": "Reason: {{reason}}",
+          "requestMissingOne": "Request {{count}} document",
+          "requestMissingMany": "Request {{count}} documents",
+          "nothingToRequest": "No missing, rejected or expired document",
+          "rejectTitle": "Reject document",
+          "rejectDescription": "Give the reason for rejecting “{{name}}”. It will be shared with the investor along with a request for a new document.",
+          "rejectReasonLabel": "Rejection reason",
+          "rejectReasonPlaceholder": "E.g. unreadable document, issued more than 3 months ago…",
+          "rejectReasonRequired": "A rejection reason is required",
+          "categories": {
+            "identity": "Identity",
+            "address": "Address",
+            "tax": "Tax",
+            "funds": "Source of funds",
+            "bank": "Bank details",
+            "company": "Company",
+            "ubo": "Beneficial owners",
+            "compliance": "Compliance"
+          },
+          "statuses": {
+            "validated": "Approved",
+            "toReview": "To review",
+            "rejected": "Rejected",
+            "missing": "Missing",
+            "expired": "Expired"
+          },
+          "origins": {
+            "investorFile": "Investor file",
+            "subscription": "This subscription"
+          },
+          "overall": {
+            "complete": "File complete",
+            "inReview": "Under review",
+            "incomplete": "File incomplete"
+          },
+          "review": {
+            "levels": {
+              "simplified": "Simplified",
+              "standard": "Standard",
+              "enhanced": "Enhanced"
+            }
+          },
+          "rejectionReasons": {
+            "unsigned": "Declaration neither dated nor signed",
+            "wrongForm": "Individual form provided instead of the entity form"
+          },
+          "docs": {
+            "idDocument": "ID document (ID card or passport)",
+            "addressProof": "Proof of address less than 3 months old",
+            "taxNotice": "Latest tax assessment",
+            "fatcaCrsIndividual": "FATCA / CRS tax self-certification",
+            "fundsOrigin": "Proof of source of funds",
+            "bankDetails": "Bank details in the investor's name",
+            "pepDeclaration": "Politically exposed person (PEP) declaration",
+            "kbis": "Certificate of incorporation less than 3 months old",
+            "articles": "Certified up-to-date articles of association",
+            "financialStatements": "Latest approved annual accounts",
+            "signatoryPowers": "Power of attorney or signing authority",
+            "legalRepId": "Legal representative's ID document",
+            "uboRegister": "Beneficial ownership register extract",
+            "uboIds": "Beneficial owners' ID documents",
+            "fatcaCrsEntity": "Entity FATCA / CRS self-certification",
+            "bankDetailsEntity": "Bank details in the company's name"
+          },
+          "queues": {
+            "all": "All documents",
+            "toReview": "To review",
+            "toRequest": "To request",
+            "expiring": "Expire within {{count}} d",
+            "validated": "Approved",
+            "holdersMetric": "Holders",
+            "perHolder": "{{count}} document(s) per holder",
+            "badge": "{{status}} · {{vigilance}} due diligence · Next review on {{date}}"
+          }
+        }
       },
       "notesTab": {
         "sheetDescription": "Internal note about the subscription, visible to the team only.",
@@ -1156,6 +1354,10 @@
           "complianceReopenedDesc": "Score, matches and categorisation can be changed again.",
           "scoreInvalidated": "Score validation removed"
         }
+      },
+      "queues": {
+        "title": "Work queues",
+        "hint": "Click a queue to filter"
       }
     },
     "table": {

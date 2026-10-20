@@ -811,35 +811,233 @@
         "clicked": "Cliqué"
       },
       "capitalCallsTab": {
-        "totalCalledAmount": "Montant total appelé",
-        "totalCalledPercentage": "Pourcentage total appelé",
+        "searchPlaceholder": "Rechercher un appel, une référence…",
+        "entity": "appel de fonds",
         "exportCsv": "Exporter en CSV",
         "exportSuccess": "Export réussi",
         "exportSuccessDesc": "Le fichier CSV a été téléchargé",
-        "date": "Date",
-        "capitalCall": "Appel de fonds",
-        "amount": "Montant",
-        "subscription": "Souscription",
-        "entryFees": "Frais d'entrée",
-        "subscriptionPremium": "Prime de souscription",
-        "percentage": "Pourcentage",
-        "status": "Statut",
-        "paid": "Payé",
-        "pendingStatus": "En attente",
-        "rejectedStatus": "Rejeté"
+        "totalRow": "Total",
+        "overdue": "En retard, échu le {{date}}",
+        "lastReminder": "Dernière relance le {{date}}",
+        "remindNotNotified": "L'avis d'appel n'a pas encore été notifié",
+        "columns": {
+          "call": "Appel de fonds",
+          "dueAt": "Échéance",
+          "calledPercent": "% de l'engagement",
+          "entryFees": "Frais d'entrée",
+          "premium": "Prime de souscription"
+        },
+        "actions": {
+          "viewNotice": "Voir l'avis d'appel",
+          "downloadNotice": "Télécharger l'avis d'appel",
+          "remind": "Relancer l'investisseur",
+          "recordPayment": "Enregistrer le paiement"
+        },
+        "toast": {
+          "viewNotice": "Avis d'appel « {{name}} »",
+          "noticeDownloaded": "Avis d'appel « {{name}} » téléchargé",
+          "reminded": "Relance envoyée pour « {{name}} »",
+          "paymentRecorded": "Paiement de {{amount}} enregistré pour « {{name}} »"
+        },
+        "queues": {
+          "all": "Tous les appels",
+          "awaitingPayment": "En attente de paiement",
+          "overdue": "Échus non soldés",
+          "paid": "Payés",
+          "amountMetric": "Montant",
+          "perCall": "{{amount}} par appel",
+          "badge": "{{percent}} de l'engagement appelé · {{remaining}} restant à appeler"
+        }
       },
       "documentsTab": {
-        "title": "Documents de la souscription",
+        "viewSwitch": "Type de documents",
+        "views": {
+          "subscription": "Documents de souscription · {{count}}",
+          "kyc": "Documents KYC · {{count}}"
+        },
         "addDocument": "Ajouter un document",
-        "date": "Date",
-        "name": "Nom",
-        "language": "Langue",
-        "type": "Type",
-        "file": "Fichier",
-        "documentSigned": "Document signé",
-        "deleteDocument": "Supprimer {{name}}",
-        "exportPack": "Exporter le pack documentaire",
-        "exportPackToast": "Pack documentaire exporté"
+        "searchPlaceholder": "Rechercher un document…",
+        "entity": "document",
+        "columns": {
+          "document": "Document",
+          "category": "Catégorie",
+          "status": "Statut",
+          "signers": "Signataires",
+          "updatedAt": "Mis à jour le",
+          "issuedAt": "Émis le",
+          "expiresAt": "Valide jusqu'au",
+          "origin": "Source"
+        },
+        "actions": {
+          "preview": "Aperçu",
+          "download": "Télécharger",
+          "remindSigners": "Relancer les signataires",
+          "delete": "Supprimer",
+          "validate": "Valider",
+          "reject": "Refuser",
+          "upload": "Déposer le document",
+          "replace": "Remplacer le document",
+          "requestInvestor": "Demander à l'investisseur"
+        },
+        "toast": {
+          "preview": "Aperçu de « {{name}} »",
+          "downloaded": "« {{name}} » téléchargé",
+          "reminded": "Relance envoyée pour « {{name}} »",
+          "deleted": "« {{name}} » supprimé",
+          "packExported": "Dossier de souscription exporté (ZIP)",
+          "addDocument": "Ajout d'un document : bientôt disponible",
+          "validated": "« {{name}} » validé",
+          "rejected": "« {{name}} » refusé, l'investisseur sera notifié",
+          "upload": "Dépôt de « {{name}} » : bientôt disponible",
+          "requested": "Demande envoyée à l'investisseur pour « {{name}} »",
+          "requestedManyOne": "Demande envoyée pour {{count}} pièce",
+          "requestedManyMany": "Demande envoyée pour {{count}} pièces"
+        },
+        "subscription": {
+          "fileVersion": "{{category}} · v{{version}} · {{language}}",
+          "signersProgress": "{{signed}} / {{total}}",
+          "notSignable": "Remis pour information",
+          "exportPack": "Exporter le dossier",
+          "deleteLocked": "Document déjà signé ou remis à l'investisseur : il ne peut plus être supprimé",
+          "deleteTitle": "Supprimer le document",
+          "deleteDescription": "« {{name}} » sera retiré du dossier de souscription. Cette action est irréversible.",
+          "categories": {
+            "subscriptionForm": "Bulletin de souscription",
+            "contractual": "Document contractuel",
+            "regulatory": "Document réglementaire",
+            "evidence": "Preuve de signature"
+          },
+          "statuses": {
+            "draft": "Brouillon",
+            "awaitingSignature": "En attente de signature",
+            "awaitingCounterSignature": "En attente de contre-signature",
+            "completed": "Signé",
+            "acknowledged": "Lu et approuvé",
+            "issued": "Émis"
+          },
+          "statusHints": {
+            "draft": "Généré, pas encore envoyé à la signature",
+            "awaitingSignature": "Envoyé, au moins un signataire n'a pas signé",
+            "awaitingCounterSignature": "Signé par l'investisseur, en attente de la société de gestion",
+            "completed": "Signé par toutes les parties",
+            "acknowledged": "Remis à l'investisseur, lecture attestée avant signature",
+            "issued": "Généré par la plateforme de signature électronique"
+          },
+          "docs": {
+            "subscriptionForm": "Bulletin de souscription",
+            "subscriptionAgreement": "Subscription Agreement",
+            "investorStatus": "Déclaration de statut d'investisseur (professionnel / averti)",
+            "suitability": "Questionnaire d'adéquation MIF II",
+            "fatcaCrs": "Auto-certification FATCA / CRS",
+            "sepaMandate": "Mandat de prélèvement SEPA",
+            "sideLetter": "Side letter",
+            "kid": "Document d'informations clés (DIC PRIIPs)",
+            "fundRegulation": "Règlement du fonds",
+            "signatureCertificate": "Certificat de preuve de signature"
+          },
+          "queues": {
+            "all": "Tous les documents",
+            "awaitingSignature": "À signer",
+            "awaitingCounterSignature": "À contre-signer",
+            "completed": "Signés",
+            "draft": "Brouillons",
+            "signaturesMetric": "Signatures",
+            "perDocument": "{{count}} signataire(s) par document",
+            "badge": "{{signed}} / {{total}} documents signés"
+          }
+        },
+        "kyc": {
+          "entity": "pièce KYC",
+          "searchPlaceholder": "Rechercher une pièce, un titulaire…",
+          "holderWithRole": "{{role}} · {{name}}",
+          "holders": {
+            "investor": "Investisseur",
+            "entity": "Personne morale",
+            "legalRepresentative": "Représentant légal",
+            "beneficialOwners": "Bénéficiaires effectifs (> 25 %)"
+          },
+          "noFile": "Aucun fichier déposé",
+          "noExpiry": "Sans expiration",
+          "expiredOn": "Expiré le {{date}}",
+          "expiresInDaysOne": "Expire dans {{count}} jour",
+          "expiresInDaysMany": "Expire dans {{count}} jours",
+          "maxAgeHintOne": "Pièce valable {{count}} jour après son émission",
+          "maxAgeHintMany": "Pièce valable {{count}} jours après son émission",
+          "rejectedBecause": "Motif : {{reason}}",
+          "requestMissingOne": "Demander {{count}} pièce",
+          "requestMissingMany": "Demander {{count}} pièces",
+          "nothingToRequest": "Aucune pièce manquante, refusée ou expirée",
+          "rejectTitle": "Refuser la pièce",
+          "rejectDescription": "Indiquez le motif du refus de « {{name}} ». Il sera communiqué à l'investisseur avec la demande d'une nouvelle pièce.",
+          "rejectReasonLabel": "Motif du refus",
+          "rejectReasonPlaceholder": "Ex. : document illisible, date d'émission supérieure à 3 mois…",
+          "rejectReasonRequired": "Le motif du refus est obligatoire",
+          "categories": {
+            "identity": "Identité",
+            "address": "Domicile",
+            "tax": "Fiscalité",
+            "funds": "Origine des fonds",
+            "bank": "Coordonnées bancaires",
+            "company": "Société",
+            "ubo": "Bénéficiaires effectifs",
+            "compliance": "Conformité"
+          },
+          "statuses": {
+            "validated": "Validé",
+            "toReview": "À valider",
+            "rejected": "Refusé",
+            "missing": "Manquant",
+            "expired": "Expiré"
+          },
+          "origins": {
+            "investorFile": "Dossier investisseur",
+            "subscription": "Cette souscription"
+          },
+          "overall": {
+            "complete": "Dossier complet",
+            "inReview": "En cours de revue",
+            "incomplete": "Dossier incomplet"
+          },
+          "review": {
+            "levels": {
+              "simplified": "simplifiée",
+              "standard": "standard",
+              "enhanced": "renforcée"
+            }
+          },
+          "rejectionReasons": {
+            "unsigned": "Déclaration non datée ni signée",
+            "wrongForm": "Formulaire personne physique fourni au lieu du formulaire entité"
+          },
+          "docs": {
+            "idDocument": "Pièce d'identité (CNI ou passeport)",
+            "addressProof": "Justificatif de domicile de moins de 3 mois",
+            "taxNotice": "Dernier avis d'imposition",
+            "fatcaCrsIndividual": "Auto-certification fiscale FATCA / CRS",
+            "fundsOrigin": "Justificatif d'origine des fonds",
+            "bankDetails": "RIB au nom de l'investisseur",
+            "pepDeclaration": "Déclaration de personne politiquement exposée (PPE)",
+            "kbis": "Extrait Kbis de moins de 3 mois",
+            "articles": "Statuts à jour certifiés conformes",
+            "financialStatements": "Derniers comptes annuels approuvés",
+            "signatoryPowers": "Pouvoir ou délégation de signature",
+            "legalRepId": "Pièce d'identité du représentant légal",
+            "uboRegister": "Extrait du registre des bénéficiaires effectifs (RBE)",
+            "uboIds": "Pièces d'identité des bénéficiaires effectifs",
+            "fatcaCrsEntity": "Auto-certification FATCA / CRS entité",
+            "bankDetailsEntity": "RIB au nom de la société"
+          },
+          "queues": {
+            "all": "Toutes les pièces",
+            "toReview": "À valider",
+            "toRequest": "À demander",
+            "expiring": "Expirent sous {{count}} j",
+            "validated": "Validées",
+            "holdersMetric": "Titulaires",
+            "perHolder": "{{count}} pièce(s) par titulaire",
+            "badge": "{{status}} · Vigilance {{vigilance}} · Prochaine revue le {{date}}"
+          }
+        }
       },
       "notesTab": {
         "sheetDescription": "Note interne sur la souscription, visible uniquement par l'équipe.",
@@ -1156,6 +1354,10 @@
           "complianceReopenedDesc": "Score, correspondances et catégorisation sont de nouveau modifiables.",
           "scoreInvalidated": "Validation du score retirée"
         }
+      },
+      "queues": {
+        "title": "Files de travail",
+        "hint": "Cliquez sur une file pour filtrer"
       }
     },
     "table": {
