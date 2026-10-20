@@ -14,14 +14,11 @@ import {
   Pencil,
   PenTool,
   Plus,
-  Radar,
   RefreshCw,
   Save,
   Send,
   ShieldCheck,
   Trash2,
-  UserCheck,
-  Users,
   X,
 } from 'lucide-react';
 import { toast } from 'sonner';
@@ -41,18 +38,13 @@ import {
 import { Tooltip, TooltipContent, TooltipTrigger } from './ui/tooltip';
 import { cn, WIDGET_LABEL_CLASS, WIDGET_SUBTITLE_CLASS, WIDGET_TITLE_CLASS } from './ui/utils';
 import { PRIMARY_BUTTON_GRADIENT } from './ui/page-header';
-import {
-  OnboardingCompletionCard,
-  type OnboardingBucketStats,
-} from './OnboardingCompletionOverview';
-import { ToneBadge, type ComplianceStatus } from './SubscriptionComplianceSection';
+import { type ComplianceStatus } from './SubscriptionComplianceSection';
 import {
   mockFundCounterSignatories,
   mockSignaturePack,
   type MockSignaturePackDocument,
   type SignaturePackDocumentKind,
 } from '../utils/subscriptionDetailMockData';
-import { computeComplianceSnapshot } from '../utils/subscriptionRiskMockData';
 
 export type SignatureStage = 'draft' | 'signing' | 'counterSigning' | 'completed';
 
@@ -83,10 +75,7 @@ export interface ComplianceSummary {
 
 interface SubscriptionSignatureStepProps {
   subscription: any;
-  questions: OnboardingBucketStats;
-  documents: OnboardingBucketStats;
   compliance: ComplianceSummary;
-  onOpenOnboarding: () => void;
   onOpenCompliance: () => void;
   onProceedToPayment: () => void;
 }
@@ -183,10 +172,7 @@ const markSent = (parties: SignatureParty[], stamp: string): SignatureParty[] =>
 /** Etat Signatures : pack de documents, signataires, contre-signataires et suivi des envois. */
 export function SubscriptionSignatureStep({
   subscription,
-  questions,
-  documents,
   compliance,
-  onOpenOnboarding,
   onOpenCompliance,
   onProceedToPayment,
 }: SubscriptionSignatureStepProps) {
@@ -446,23 +432,6 @@ export function SubscriptionSignatureStep({
 
   return (
     <div className="space-y-4">
-      <div
-        className="grid gap-4"
-        style={{ gridTemplateColumns: 'repeat(auto-fit, minmax(440px, 1fr))' }}
-      >
-        <OnboardingCompletionCard
-          questions={questions}
-          documents={documents}
-          action={
-            <Button variant="outline" size="sm" className="h-7 gap-1 text-xs" onClick={onOpenOnboarding}>
-              <ChevronRight className="w-3.5 h-3.5" />
-              {t(`${KEY}.completion.view`)}
-            </Button>
-          }
-        />
-        <ComplianceStatusCard compliance={compliance} onOpen={onOpenCompliance} />
-      </div>
-
       {/* Suivi : statut global, sous-étapes, relances et action principale */}
       <Card className="shadow-sm overflow-hidden">
         <div className="flex flex-wrap items-center justify-between gap-3 px-4 py-3">
@@ -724,116 +693,6 @@ export function SubscriptionSignatureStep({
         />
       </div>
     </div>
-  );
-}
-
-interface ComplianceStatusCardProps {
-  compliance: ComplianceSummary;
-  onOpen: () => void;
-}
-
-/** Rappel de l'etat de conformite, en lecture seule, cale sur la hauteur du bandeau de completion. */
-function ComplianceStatusCard({ compliance, onOpen }: ComplianceStatusCardProps) {
-  const { t } = useTranslation();
-  const tc = (key: string, count: number) => t(`${key}${count === 1 ? 'One' : 'Many'}`, { count });
-  const snapshot = computeComplianceSnapshot();
-  const validated = compliance.status === 'validated';
-  const categoryLabel = t(`subscriptions.detail.compliance.categories.${snapshot.category}`);
-
-  return (
-    <Card className="flex flex-col justify-between p-4 shadow-sm">
-      <div className="mb-3 flex flex-wrap items-center justify-between gap-3">
-        <h3 className={WIDGET_TITLE_CLASS}>{t('subscriptions.detail.compliance.final.title')}</h3>
-        <div className="flex flex-wrap items-center gap-2">
-          {validated ? (
-            <Tooltip>
-              <TooltipTrigger asChild>
-                <Badge className="bg-emerald-100 text-emerald-700 border-emerald-200 cursor-default">
-                  <ShieldCheck className="w-3.5 h-3.5 mr-1.5" />
-                  {t('subscriptions.detail.compliance.status.validated')}
-                </Badge>
-              </TooltipTrigger>
-              <TooltipContent>
-                <span className="text-xs">
-                  {t('subscriptions.detail.compliance.final.validatedBy', {
-                    name: compliance.by ?? '',
-                    date: compliance.at ?? '',
-                  })}
-                </span>
-              </TooltipContent>
-            </Tooltip>
-          ) : (
-            <Badge className="bg-amber-100 text-amber-700 border-amber-300">
-              <Clock className="w-3.5 h-3.5 mr-1.5" />
-              {t(`subscriptions.detail.compliance.status.${compliance.status}`)}
-            </Badge>
-          )}
-          <Button variant="outline" size="sm" className="h-7 gap-1 text-xs" onClick={onOpen}>
-            <ChevronRight className="w-3.5 h-3.5" />
-            {t(`${KEY}.compliance.view`)}
-          </Button>
-        </div>
-      </div>
-
-      <div className="grid gap-6" style={{ gridTemplateColumns: 'auto auto minmax(0, 1fr)' }}>
-        <div className="min-w-0">
-          <span className={cn(WIDGET_LABEL_CLASS, 'flex items-center gap-1.5')}>
-            <Radar className="w-3.5 h-3.5" />
-            {t('subscriptions.detail.compliance.score.title')}
-          </span>
-          <div className="mt-1 flex items-center gap-2">
-            <span className="text-sm font-semibold text-foreground tabular-nums">
-              {snapshot.score ?? '-'}
-            </span>
-            {snapshot.tier && (
-              <ToneBadge
-                tone={snapshot.tier.tone}
-                label={t(snapshot.tier.labelKey)}
-                className="text-[11px]"
-              />
-            )}
-          </div>
-        </div>
-
-        <div className="min-w-0">
-          <span className={cn(WIDGET_LABEL_CLASS, 'flex items-center gap-1.5')}>
-            <Users className="w-3.5 h-3.5" />
-            {t('subscriptions.detail.compliance.final.thirdParties')}
-          </span>
-          <div className="mt-1 flex flex-wrap items-center gap-1.5">
-            {snapshot.untreatedHits > 0 ? (
-              <Badge className="bg-amber-50 text-amber-700 border-amber-200 text-[11px]">
-                <Clock className="w-3 h-3 mr-1" />
-                {tc('subscriptions.detail.compliance.final.matchesToTreat', snapshot.untreatedHits)}
-              </Badge>
-            ) : (
-              <span className="inline-flex items-center gap-1 text-xs text-foreground">
-                <CheckCircle2 className="w-3.5 h-3.5 text-emerald-600" />
-                {t(`${KEY}.compliance.noPendingMatch`)}
-              </span>
-            )}
-            {snapshot.acceptedHits > 0 && (
-              <Badge className="bg-red-50 text-red-700 border-red-200 text-[11px]">
-                {tc('subscriptions.detail.compliance.final.matchesAccepted', snapshot.acceptedHits)}
-              </Badge>
-            )}
-          </div>
-        </div>
-
-        <div className="min-w-0">
-          <span className={cn(WIDGET_LABEL_CLASS, 'flex items-center gap-1.5')}>
-            <UserCheck className="w-3.5 h-3.5" />
-            {t('subscriptions.detail.compliance.categorisation.shortTitle')}
-          </span>
-          <p
-            className="mt-1 truncate text-sm font-medium text-foreground"
-            title={`${categoryLabel} · ${t('subscriptions.detail.compliance.categorisation.mifid')}`}
-          >
-            {categoryLabel}
-          </p>
-        </div>
-      </div>
-    </Card>
   );
 }
 

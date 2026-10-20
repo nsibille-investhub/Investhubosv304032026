@@ -32,7 +32,6 @@ import {
   Clock,
   ArrowDownCircle,
   Wallet,
-  Trash2,
   FolderOpen,
   MessageSquare,
   PenTool,
@@ -92,7 +91,6 @@ import { DetailLink, DetailSummary } from './ui/detail-summary';
 import {
   mockSections,
   mockRequiredDocuments,
-  mockDocuments,
   mockNotes,
   mockEmails,
   mockCapitalCalls,
@@ -117,6 +115,8 @@ import { SubscriptionSignatureStep } from './SubscriptionSignatureStep';
 import { SubscriptionStatusBadge } from './SubscriptionStatusBadge';
 import { NewSubscriptionDialog } from './NewSubscriptionDialog';
 import { NotesTab } from './investor-detail/NotesTab';
+import { SubscriptionDocumentsTab, getSubscriptionDocumentsCount } from './SubscriptionDocumentsTab';
+import { SubscriptionCapitalCallsTab } from './SubscriptionCapitalCallsTab';
 import { createNote } from './investor-detail/NoteEditSheet';
 import type { Note } from '../utils/investorGenerator';
 
@@ -976,7 +976,7 @@ export function SubscriptionDetailPage({ subscription: subscriptionProp, onBack 
               { value: 'onboarding', icon: ClipboardList, labelKey: 'subscriptions.detail.tabs.onboarding', badge: `${Math.round(subscription.completionOnboarding)}%` },
               { value: 'emails', icon: Mail, labelKey: 'subscriptions.detail.tabs.emails', badge: String(mockEmails.length) },
               { value: 'capital-calls', icon: DollarSign, labelKey: 'subscriptions.detail.tabs.capitalCalls', badge: String(mockCapitalCalls.length) },
-              { value: 'documents', icon: FolderOpen, labelKey: 'subscriptions.detail.tabs.documents', badge: String(mockDocuments.length) },
+              { value: 'documents', icon: FolderOpen, labelKey: 'subscriptions.detail.tabs.documents', badge: String(getSubscriptionDocumentsCount(subscription)) },
               { value: 'integrations', icon: Database, labelKey: 'subscriptions.detail.tabs.integrations', badge: '5' },
               { value: 'notes', icon: MessageSquare, labelKey: 'subscriptions.detail.tabs.notes', badge: String(notesCount) },
             ].map(tab => ({
@@ -1538,8 +1538,6 @@ export function SubscriptionDetailPage({ subscription: subscriptionProp, onBack 
                   {currentStep === 2 && (
                     // Validation / Conformité — widgets risque, screening et validation
                     <SubscriptionComplianceSection
-                      questions={questionBuckets}
-                      documents={documentBuckets}
                       scoreValidated={riskValidated}
                       scoreValidatedBy={riskValidatedBy}
                       scoreValidatedAt={riskValidationDate}
@@ -1556,10 +1554,7 @@ export function SubscriptionDetailPage({ subscription: subscriptionProp, onBack 
                     // Signatures : pack, signataires, contre-signataires et suivi
                     <SubscriptionSignatureStep
                       subscription={subscription}
-                      questions={questionBuckets}
-                      documents={documentBuckets}
                       compliance={complianceStatus}
-                      onOpenOnboarding={() => setCurrentStep(1)}
                       onOpenCompliance={() => setCurrentStep(2)}
                       onProceedToPayment={() => {
                         setCurrentStep(4);
@@ -1724,246 +1719,15 @@ export function SubscriptionDetailPage({ subscription: subscriptionProp, onBack 
             </div>
           </TabsContent>
 
-          {/* Capital Calls Tab Content */}
           <TabsContent value="capital-calls" className="mt-0">
             <div className="px-8 py-6">
-              {/* Summary Cards */}
-              <div className="grid grid-cols-2 gap-4 mb-6">
-                {/* Montant Total Card */}
-                <Card className="p-5">
-                  <div className="text-xs text-primary mb-2">{t('subscriptions.detail.capitalCallsTab.totalCalledAmount')}</div>
-                  <div className="text-2xl font-semibold text-foreground">
-                    {mockCapitalCalls.reduce((sum, call) => sum + call.amount + call.entryFees + call.subscriptionPremium, 0).toLocaleString('fr-FR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} €
-                  </div>
-                </Card>
-
-                {/* Pourcentage Total Card */}
-                <Card className="p-5">
-                  <div className="text-xs text-purple-600 mb-2">{t('subscriptions.detail.capitalCallsTab.totalCalledPercentage')}</div>
-                  <div className="text-2xl font-semibold text-foreground">
-                    {mockCapitalCalls.reduce((sum, call) => sum + call.percentage, 0)}%
-                  </div>
-                </Card>
-              </div>
-
-              {/* Export Button */}
-              <div className="mb-4 flex justify-end">
-                <Button
-                  variant="outline"
-                  className="gap-2 border-border hover:bg-muted"
-                  onClick={() => {
-                    // Generate CSV content
-                    const headers = [
-                      t('subscriptions.detail.capitalCallsTab.date'),
-                      t('subscriptions.detail.capitalCallsTab.capitalCall'),
-                      t('subscriptions.detail.capitalCallsTab.amount'),
-                      t('subscriptions.detail.capitalCallsTab.subscription'),
-                      t('subscriptions.detail.capitalCallsTab.entryFees'),
-                      t('subscriptions.detail.capitalCallsTab.subscriptionPremium'),
-                      t('subscriptions.detail.capitalCallsTab.percentage'),
-                      t('subscriptions.detail.capitalCallsTab.status'),
-                    ];
-                    const rows = mockCapitalCalls.map(call => [
-                      call.date,
-                      call.call,
-                      call.amount.toLocaleString('fr-FR', { minimumFractionDigits: 2 }) + ' €',
-                      call.subscription.toLocaleString('fr-FR', { minimumFractionDigits: 2 }) + ' €',
-                      call.entryFees.toLocaleString('fr-FR', { minimumFractionDigits: 2 }) + ' €',
-                      call.subscriptionPremium.toLocaleString('fr-FR', { minimumFractionDigits: 2 }) + ' €',
-                      call.percentage + '%',
-                      call.status === 'paid'
-                        ? t('subscriptions.detail.capitalCallsTab.paid')
-                        : call.status === 'pending'
-                          ? t('subscriptions.detail.capitalCallsTab.pendingStatus')
-                          : t('subscriptions.detail.capitalCallsTab.rejectedStatus')
-                    ]);
-
-                    const csvContent = [headers, ...rows].map(row => row.join(';')).join('\n');
-                    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
-                    const link = document.createElement('a');
-                    link.href = URL.createObjectURL(blob);
-                    link.download = `appels_de_fonds_${subscription.id}.csv`;
-                    link.click();
-
-                    toast.success(t('subscriptions.detail.capitalCallsTab.exportSuccess'), { description: t('subscriptions.detail.capitalCallsTab.exportSuccessDesc') });
-                  }}
-                >
-                  <Download className="w-4 h-4" />
-                  {t('subscriptions.detail.capitalCallsTab.exportCsv')}
-                </Button>
-              </div>
-
-              {/* Table */}
-              <Card className="overflow-hidden shadow-sm">
-                  <table className="w-full">
-                    <thead className="bg-muted border-b border-border">
-                      <tr>
-                        <th className="px-4 py-3 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider w-40">
-                          {t('subscriptions.detail.capitalCallsTab.date')}
-                        </th>
-                        <th className="px-4 py-3 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider w-48">
-                          {t('subscriptions.detail.capitalCallsTab.capitalCall')}
-                        </th>
-                        <th className="px-4 py-3 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider">
-                          {t('subscriptions.detail.capitalCallsTab.amount')}
-                        </th>
-                        <th className="px-4 py-3 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider">
-                          {t('subscriptions.detail.capitalCallsTab.subscription')}
-                        </th>
-                        <th className="px-4 py-3 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider">
-                          {t('subscriptions.detail.capitalCallsTab.entryFees')}
-                        </th>
-                        <th className="px-4 py-3 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider">
-                          {t('subscriptions.detail.capitalCallsTab.subscriptionPremium')}
-                        </th>
-                        <th className="px-4 py-3 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider">
-                          {t('subscriptions.detail.capitalCallsTab.percentage')}
-                        </th>
-                        <th className="px-4 py-3 text-center text-xs font-medium text-muted-foreground uppercase tracking-wider w-24">
-                          {t('subscriptions.detail.capitalCallsTab.status')}
-                        </th>
-                      </tr>
-                    </thead>
-                    <tbody className="divide-y divide-border/50">
-                      {mockCapitalCalls.map((capitalCall) => (
-                        <tr key={capitalCall.id} className="hover:bg-muted transition-colors">
-                          <td className="px-4 py-3 text-sm text-muted-foreground">
-                            {capitalCall.date}
-                          </td>
-                          <td className="px-4 py-3 text-sm text-foreground/80">
-                            {capitalCall.call}
-                          </td>
-                          <td className="px-4 py-3 text-sm text-foreground/80">
-                            {capitalCall.amount.toLocaleString('fr-FR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} €
-                          </td>
-                          <td className="px-4 py-3 text-sm text-foreground/80">
-                            {capitalCall.subscription.toLocaleString('fr-FR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} €
-                          </td>
-                          <td className="px-4 py-3 text-sm text-foreground/80">
-                            {capitalCall.entryFees.toLocaleString('fr-FR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} €
-                          </td>
-                          <td className="px-4 py-3 text-sm text-foreground/80">
-                            {capitalCall.subscriptionPremium.toLocaleString('fr-FR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} €
-                          </td>
-                          <td className="px-4 py-3 text-sm text-foreground/80">
-                            {capitalCall.percentage}%
-                          </td>
-                          <td className="px-4 py-3">
-                            <div className="flex items-center justify-center gap-1.5">
-                              {capitalCall.status === 'paid' && (
-                                <div className="w-5 h-5 rounded-full bg-emerald-100 flex items-center justify-center" title={t('subscriptions.detail.capitalCallsTab.paid')}>
-                                  <Check className="w-3 h-3 text-emerald-600" />
-                                </div>
-                              )}
-                              {capitalCall.status === 'pending' && (
-                                <div className="w-5 h-5 rounded-full bg-amber-100 flex items-center justify-center" title={t('subscriptions.detail.capitalCallsTab.pendingStatus')}>
-                                  <AlertCircle className="w-3 h-3 text-amber-600" />
-                                </div>
-                              )}
-                              {capitalCall.status === 'rejected' && (
-                                <div className="w-5 h-5 rounded-full bg-red-100 flex items-center justify-center" title={t('subscriptions.detail.capitalCallsTab.rejectedStatus')}>
-                                  <X className="w-3 h-3 text-red-600" />
-                                </div>
-                              )}
-                            </div>
-                          </td>
-                        </tr>
-                      ))}
-                    </tbody>
-                  </table>
-              </Card>
+              <SubscriptionCapitalCallsTab subscription={subscription} />
             </div>
           </TabsContent>
 
-          {/* Risk Tab Content */}
-          {/* Documents Tab Content */}
           <TabsContent value="documents" className="mt-0">
             <div className="px-8 py-6">
-              <Card className="overflow-hidden shadow-sm">
-                {/* Header */}
-                <div className="px-6 py-4 border-b border-border flex items-center justify-between">
-                  <h2 className="font-semibold text-foreground">{t('subscriptions.detail.documentsTab.title')}</h2>
-                  <Button
-                    variant="outline"
-                    className="gap-2"
-                    onClick={() => toast.info(t('subscriptions.detail.toast.addDocumentToast'))}
-                  >
-                    <Upload className="w-4 h-4" />
-                    {t('subscriptions.detail.documentsTab.addDocument')}
-                  </Button>
-                </div>
-
-                {/* Table */}
-                <table className="w-full">
-                  <thead className="bg-muted border-b border-border">
-                    <tr>
-                      <th className="px-6 py-3 text-left text-xs font-semibold text-muted-foreground uppercase tracking-wider">
-                        {t('subscriptions.detail.documentsTab.date')}
-                      </th>
-                      <th className="px-6 py-3 text-left text-xs font-semibold text-muted-foreground uppercase tracking-wider">
-                        {t('subscriptions.detail.documentsTab.name')}
-                      </th>
-                      <th className="px-6 py-3 text-left text-xs font-semibold text-muted-foreground uppercase tracking-wider">
-                        {t('subscriptions.detail.documentsTab.language')}
-                      </th>
-                      <th className="px-6 py-3 text-left text-xs font-semibold text-muted-foreground uppercase tracking-wider">
-                        {t('subscriptions.detail.documentsTab.type')}
-                      </th>
-                      <th className="px-6 py-3 text-left text-xs font-semibold text-muted-foreground uppercase tracking-wider">
-                        {t('subscriptions.detail.documentsTab.file')}
-                      </th>
-                    </tr>
-                  </thead>
-                  <tbody className="divide-y divide-border">
-                    {mockDocuments.map((doc) => (
-                      <tr key={doc.id} className="hover:bg-muted transition-colors">
-                        <td className="px-6 py-4 whitespace-nowrap text-sm text-foreground">
-                          {doc.date}
-                        </td>
-                        <td className="px-6 py-4 text-sm text-foreground">
-                          {doc.name}
-                        </td>
-                        <td className="px-6 py-4 whitespace-nowrap text-sm text-muted-foreground">
-                          {doc.language}
-                        </td>
-                        <td className="px-6 py-4 whitespace-nowrap text-sm text-muted-foreground">
-                          {doc.type}
-                        </td>
-                        <td className="px-6 py-4 whitespace-nowrap text-sm">
-                          <div className="flex items-center gap-2">
-                            {doc.status === 'signed' && (
-                              <Badge className="bg-green-50 text-green-700 border-green-200 font-medium gap-1.5">
-                                <CheckCircle2 className="w-3 h-3" />
-                                {t('subscriptions.detail.documentsTab.documentSigned')}
-                              </Badge>
-                            )}
-                            <Button
-                              variant="ghost"
-                              size="sm"
-                              className="h-8 w-8 p-0 text-red-600 hover:text-red-700 hover:bg-red-50"
-                              onClick={() => toast.info(t('subscriptions.detail.documentsTab.deleteDocument', { name: doc.name }))}
-                            >
-                              <Trash2 className="w-4 h-4" />
-                            </Button>
-                          </div>
-                        </td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
-
-                {/* Footer */}
-                <div className="px-6 py-4 bg-muted border-t border-border">
-                  <Button
-                    className="w-full gap-2 text-white hover:opacity-90"
-                    style={{ background: PRIMARY_BUTTON_GRADIENT }}
-                    onClick={() => toast.success(t('subscriptions.detail.documentsTab.exportPackToast'))}
-                  >
-                    <Download className="w-4 h-4" />
-                    {t('subscriptions.detail.documentsTab.exportPack')}
-                  </Button>
-                </div>
-              </Card>
+              <SubscriptionDocumentsTab subscription={subscription} />
             </div>
           </TabsContent>
 
