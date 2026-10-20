@@ -77,7 +77,7 @@ import { toast } from 'sonner';
 import { useTranslation } from '../utils/languageContext';
 import { MAIL_TEMPLATES, PREVIEW_VALUES, type MailTemplate } from '../utils/mailTemplatesMockData';
 import { buildPreviewDocument } from './settings/MailTemplateDetailPage';
-import { createNote, isNoteComplete, NoteFormFields } from './investor-detail/NoteEditSheet';
+import { createNote, isNoteComplete, isReminderInPast, NoteFormFields } from './investor-detail/NoteEditSheet';
 import type { Note } from '../utils/investorGenerator';
 
 interface NewSubscriptionDialogProps {
@@ -894,7 +894,9 @@ export function NewSubscriptionDialog({
       e.subscriptionName = t('subscriptions.newDialog.errors.subscriptionNameRequired');
     }
     if (!isEditMode && formData.internalNote.enabled && !isNoteComplete(formData.internalNote.note)) {
-      e.internalNote = t('subscriptions.newDialog.errors.noteRequired');
+      e.internalNote = isReminderInPast(formData.internalNote.note)
+        ? t('subscriptions.newDialog.errors.noteReminderPast')
+        : t('subscriptions.newDialog.errors.noteRequired');
     }
     return e;
   }, [formData, noAuthorizedDistributor, directForbidden, isEditMode, t]);

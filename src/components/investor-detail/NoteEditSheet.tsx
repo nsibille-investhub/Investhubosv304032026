@@ -48,8 +48,12 @@ export const createNote = (): Note => ({
   isImportant: false,
 });
 
+/** Un rappel ne peut pas être programmé à une date passée. */
+export const isReminderInPast = (note: Pick<Note, 'reminderDate'>) =>
+  Boolean(note.reminderDate) && toInputDate(note.reminderDate) < toInputDate(new Date());
+
 /** Le titre est le seul champ obligatoire d'une note. */
-export const isNoteComplete = (note: Pick<Note, 'title'>) => note.title.trim().length > 0;
+export const isNoteComplete = (note: Pick<Note, 'title' | 'reminderDate'>) => note.title.trim().length > 0 && !isReminderInPast(note);
 
 interface NoteGroupProps {
   bare: boolean;
@@ -170,9 +174,12 @@ export function NoteFormFields({ note, onChange, scope = 'investor', bare = fals
               id="noteReminderDate"
               type="date"
               className="h-11"
+              min={toInputDate(new Date())}
               value={toInputDate(note.reminderDate)}
               onChange={(e) => update('reminderDate', fromInputDate(e.target.value))}
+              aria-invalid={isReminderInPast(note)}
             />
+            {isReminderInPast(note) && <p className="text-xs text-destructive">{t(`${K}.sheet.reminderPast`)}</p>}
           </div>
         )}
       </NoteGroup>
