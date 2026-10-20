@@ -5732,6 +5732,7 @@
         },
         "tabs": {
           "lines": "Lignes investisseurs",
+          "emails": "Envois",
           "breakdown": "Ventilation par part",
           "message": "Message et pièces jointes"
         },
@@ -5848,6 +5849,47 @@
             "refused": "Relance refusée",
             "startedOne": "{{count}} avis en échec relancé.",
             "startedMany": "{{count}} avis en échec relancés."
+          }
+        },
+        "emails": {
+          "searchPlaceholder": "Rechercher un destinataire",
+          "filters": {
+            "type": "Type",
+            "state": "État"
+          },
+          "columns": {
+            "recipient": "Destinataire",
+            "copies": "Copies",
+            "type": "Type",
+            "notice": "Avis joint",
+            "sentAt": "Date d'envoi",
+            "state": "État"
+          },
+          "types": {
+            "notification": "Notification",
+            "reminder": "Relance"
+          },
+          "states": {
+            "sent": "Envoyé",
+            "delivered": "Délivré",
+            "opened": "Ouvert",
+            "softBounce": "Échec temporaire",
+            "failed": "Échec",
+            "spam": "Signalé comme spam",
+            "notFound": "Email introuvable"
+          },
+          "noRecipient": "Aucun email retrouvé",
+          "notice": {
+            "individual": "Avis individuel",
+            "combined": "Avis combiné",
+            "linesOne": "{{count}} ligne : {{subscriptions}}",
+            "linesMany": "{{count}} lignes : {{subscriptions}}"
+          },
+          "empty": {
+            "title": "Aucun envoi",
+            "filteredTitle": "Aucun envoi ne correspond",
+            "filteredDescription": "Modifiez la recherche ou les filtres pour élargir les résultats.",
+            "reset": "Réinitialiser les filtres"
           }
         }
       }

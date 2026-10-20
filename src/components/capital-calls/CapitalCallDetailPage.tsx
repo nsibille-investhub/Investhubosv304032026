@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { toast } from 'sonner@2.0.3';
 import {
   ArrowDownCircle,
@@ -14,6 +14,7 @@ import {
   MessageSquareText,
   Paperclip,
   Tag,
+  Send,
   TrendingDown,
   Users,
 } from 'lucide-react';
@@ -29,7 +30,9 @@ import {
   noticeFailed,
   relaunchFailedNotices,
 } from '../../utils/capitalCallLines';
+import { generateCapitalCallEmails } from '../../utils/capitalCallEmails';
 import { CheckIndicator } from '../CheckIndicator';
+import { CapitalCallEmailsTab } from './CapitalCallEmailsTab';
 import { CapitalCallLinesTab } from './CapitalCallLinesTab';
 import { ColumnConfig, DataTable } from '../DataTable';
 import { EmptyState } from '../EmptyState';
@@ -44,7 +47,7 @@ import { Tabs, TabsContent } from '../ui/tabs';
 
 const K = 'funds.capitalCalls.detail';
 
-type TabId = 'lines' | 'breakdown' | 'message';
+type TabId = 'lines' | 'emails' | 'breakdown' | 'message';
 
 interface CapitalCallDetailPageProps {
   call: CapitalCall;
@@ -90,6 +93,9 @@ export function CapitalCallDetailPage({ call, rights, onOpenFund }: CapitalCallD
   }, [lines]);
 
   const failedCount = lines.filter(line => line.noticeState === 'failed').length;
+  const emails = useMemo(() => generateCapitalCallEmails(call.id, lines), [call.id, lines]);
+  // L'onglet Envois apparaît dès le premier envoi de l'appel.
+  const hasEmails = emails.length > 0;
   const relaunchReason = call.sending
     ? t('funds.capitalCalls.blockers.sending')
     : !rights.manage
@@ -258,12 +264,18 @@ export function CapitalCallDetailPage({ call, rights, onOpenFund }: CapitalCallD
           <DetailTabsList
             items={[
               { value: 'lines', icon: Users, label: t(`${K}.tabs.lines`), badge: call.lines },
+              ...(hasEmails ? [{ value: 'emails', icon: Send, label: t(`${K}.tabs.emails`), badge: emails.length }] : []),
               { value: 'breakdown', icon: Layers, label: t(`${K}.tabs.breakdown`), badge: call.shares.length },
               { value: 'message', icon: Mail, label: t(`${K}.tabs.message`), badge: call.attachments.length || undefined },
             ]}
           />
         </div>
         <div className="px-8 py-6">
+          {hasEmails && (
+            <TabsContent value="emails">
+              <CapitalCallEmailsTab emails={emails} />
+            </TabsContent>
+          )}
           <TabsContent value="lines">
             <CapitalCallLinesTab
               call={call}

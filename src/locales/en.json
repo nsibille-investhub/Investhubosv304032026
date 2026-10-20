@@ -5732,6 +5732,7 @@
         },
         "tabs": {
           "lines": "Investor lines",
+          "emails": "Emails",
           "breakdown": "Breakdown by share",
           "message": "Message and attachments"
         },
@@ -5848,6 +5849,47 @@
             "refused": "Retry refused",
             "startedOne": "{{count}} failed notice retried.",
             "startedMany": "{{count}} failed notices retried."
+          }
+        },
+        "emails": {
+          "searchPlaceholder": "Search a recipient",
+          "filters": {
+            "type": "Type",
+            "state": "Status"
+          },
+          "columns": {
+            "recipient": "Recipient",
+            "copies": "Copies",
+            "type": "Type",
+            "notice": "Attached notice",
+            "sentAt": "Sent on",
+            "state": "Status"
+          },
+          "types": {
+            "notification": "Notification",
+            "reminder": "Reminder"
+          },
+          "states": {
+            "sent": "Sent",
+            "delivered": "Delivered",
+            "opened": "Opened",
+            "softBounce": "Temporary failure",
+            "failed": "Failed",
+            "spam": "Reported as spam",
+            "notFound": "Email not found"
+          },
+          "noRecipient": "No email found",
+          "notice": {
+            "individual": "Individual notice",
+            "combined": "Combined notice",
+            "linesOne": "{{count}} line: {{subscriptions}}",
+            "linesMany": "{{count}} lines: {{subscriptions}}"
+          },
+          "empty": {
+            "title": "No emails",
+            "filteredTitle": "No matching emails",
+            "filteredDescription": "Change the search or the filters to widen the results.",
+            "reset": "Reset filters"
           }
         }
       }
