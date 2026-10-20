@@ -1,5 +1,5 @@
 import { useMemo, useState } from 'react';
-import { Banknote, CheckCircle2, Download, Eye, Send, Wallet } from 'lucide-react';
+import { Banknote, CalendarX, CheckCircle2, Clock, Download, Eye, List, Send, Wallet, type LucideIcon } from 'lucide-react';
 import { toast } from 'sonner';
 import { useTranslation } from '../utils/languageContext';
 import { mockCapitalCalls, type CapitalCallLineState, type MockCapitalCall } from '../utils/subscriptionDetailMockData';
@@ -10,8 +10,7 @@ import { StatusBadge, type StatusVariant } from './StatusBadge';
 import { Button } from './ui/button';
 import { ListingCard, ListingNameCell } from './ui/listing';
 import { TableRowActions, type TableRowAction } from './ui/row-actions';
-import { SegmentedProgress } from './ui/segmented-progress';
-import { WidgetCard, WidgetMetric } from './ui/widget-card';
+import { FilterCard, FilterCardGroup } from './ui/filter-card';
 
 const K = 'subscriptions.detail.capitalCallsTab';
 /** Vocabulaire partagé avec le module Appels de fonds. */
@@ -35,6 +34,14 @@ interface Row extends MockCapitalCall {
 
 type Filters = Record<string, string | string[]>;
 
+type Queue = 'all' | 'awaitingPayment' | 'overdue' | 'paid';
+const inQueue = (row: MockCapitalCall, queue: Queue) => {
+  if (queue === 'all') return true;
+  if (queue === 'paid') return row.state === 'paid';
+  if (queue === 'overdue') return row.state !== 'paid' && row.dueInDays < 0;
+  return row.state !== 'paid';
+};
+
 const toRow = (call: MockCapitalCall, commitment: number, entryFeesRate: number, premium: number): Row => {
   const calledAmount = (commitment * call.calledPercent) / 100;
   const fees = call.includesEntryCosts ? (commitment * entryFeesRate) / 100 : 0;
@@ -52,6 +59,7 @@ export function SubscriptionCapitalCallsTab({ subscription }: SubscriptionCapita
   const [search, setSearch] = useState('');
   const [filters, setFilters] = useState<Filters>({});
   const [hoveredRow, setHoveredRow] = useState<number | null>(null);
+  const [queue, setQueue] = useState<Queue>('all');
 
   const commitment: number = subscription?.amount ?? 0;
   const money = (value: number) =>
@@ -70,19 +78,16 @@ export function SubscriptionCapitalCallsTab({ subscription }: SubscriptionCapita
     const term = search.trim().toLowerCase();
     const states = (filters.state as string[] | undefined) ?? [];
     return allRows.filter((row) => {
+      if (!inQueue(row, queue)) return false;
       if (term && ![row.name, row.reference].some((value) => value.toLowerCase().includes(term))) return false;
       if (states.length > 0 && !states.includes(row.state)) return false;
       return true;
     });
-  }, [allRows, search, filters]);
+  }, [allRows, queue, search, filters]);
 
   const calledNominal = allRows.reduce((sum, row) => sum + row.calledAmount, 0);
   const calledPercent = allRows.reduce((sum, row) => sum + row.calledPercent, 0);
-  const paidRows = allRows.filter((row) => row.state === 'paid');
-  const paidTotal = paidRows.reduce((sum, row) => sum + row.total, 0);
-  const paidNominal = paidRows.reduce((sum, row) => sum + row.calledAmount, 0);
   const remaining = Math.max(commitment - calledNominal, 0);
-  const awaiting = allRows.filter((row) => row.state !== 'paid');
 
   const setState = (row: Row, state: CapitalCallLineState) =>
     setCalls((prev) =>
@@ -235,55 +240,39 @@ export function SubscriptionCapitalCallsTab({ subscription }: SubscriptionCapita
     toast.success(t(`${K}.exportSuccess`), { description: t(`${K}.exportSuccessDesc`) });
   };
 
-  const hasFilters = Object.keys(filters).length > 0;
+  const hasFilters = Object.keys(filters).length > 0 || queue !== 'all';
+
+  const queueCard = (id: Queue, icon: LucideIcon) => {
+    const items = allRows.filter((row) => inQueue(row, id));
+    const amount = items.reduce((sum, row) => sum + row.total, 0);
+    return (
+      <FilterCard
+        status={id}
+        activeStatus={queue}
+        onStatusChange={(status) => setQueue(status as Queue)}
+        label={t(`${K}.queues.${id}`)}
+        icon={icon}
+        total={items.length}
+        metricLabel={t(`${K}.queues.amountMetric`)}
+        metricValue={money(amount)}
+        averageValue={t(`${K}.queues.perCall`, { amount: money(items.length > 0 ? amount / items.length : 0) })}
+      />
+    );
+  };
 
   return (
     <div className="space-y-4">
-      <WidgetCard
-        icon={Wallet}
-        title={t(`${K}.summary.title`)}
-        subtitle={t(`${K}.summary.subtitle`, { count: allRows.length })}
-        action={
-          awaiting.length > 0 ? (
-            <StatusBadge variant="info" label={t(awaiting.length === 1 ? `${K}.summary.awaitingOne` : `${K}.summary.awaitingMany`, { count: awaiting.length })} />
-          ) : (
-            <StatusBadge variant="success" icon={CheckCircle2} label={t(`${K}.summary.upToDate`)} />
-          )
-        }
-        footer={
-          <SegmentedProgress
-            total={commitment}
-            ariaLabel={t(`${K}.summary.progressLabel`, { percent: percent(calledPercent) })}
-            segments={[
-              { id: 'paid', value: paidNominal, tone: 'success', label: t(`${K}.summary.paid`) },
-              { id: 'awaiting', value: calledNominal - paidNominal, tone: 'info', label: t(`${K}.summary.awaitingPayment`) },
-            ]}
-          />
-        }
+      <FilterCardGroup
+        title={t('subscriptions.detail.queues.title')}
+        hint={t('subscriptions.detail.queues.hint')}
+        badge={t(`${K}.queues.badge`, { percent: percent(calledPercent), remaining: money(remaining) })}
+        columns={4}
       >
-        <div className="grid grid-cols-4 gap-4">
-          <WidgetMetric label={t(`${K}.summary.commitment`)} value={money(commitment)} size="lg" />
-          <WidgetMetric
-            label={t(`${K}.summary.called`)}
-            value={money(calledNominal)}
-            size="lg"
-            secondary={t(`${K}.summary.ofCommitment`, { percent: percent(calledPercent) })}
-          />
-          <WidgetMetric
-            label={t(`${K}.summary.paid`)}
-            value={money(paidTotal)}
-            size="lg"
-            tone="success"
-            secondary={t(`${K}.summary.paidHint`)}
-          />
-          <WidgetMetric
-            label={t(`${K}.summary.remaining`)}
-            value={money(remaining)}
-            size="lg"
-            secondary={t(`${K}.summary.ofCommitment`, { percent: percent(commitment > 0 ? (remaining / commitment) * 100 : 0) })}
-          />
-        </div>
-      </WidgetCard>
+        {queueCard('all', List)}
+        {queueCard('awaitingPayment', Clock)}
+        {queueCard('overdue', CalendarX)}
+        {queueCard('paid', CheckCircle2)}
+      </FilterCardGroup>
 
       <ListingCard
         toolbar={
@@ -321,6 +310,7 @@ export function SubscriptionCapitalCallsTab({ subscription }: SubscriptionCapita
             onReset={() => {
               setSearch('');
               setFilters({});
+              setQueue('all');
             }}
           />
         ) : (

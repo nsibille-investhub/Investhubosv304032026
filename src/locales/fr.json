@@ -839,20 +839,14 @@
           "reminded": "Relance envoyée pour « {{name}} »",
           "paymentRecorded": "Paiement de {{amount}} enregistré pour « {{name}} »"
         },
-        "summary": {
-          "title": "Suivi des appels de fonds",
-          "subtitle": "{{count}} appels émis sur cette souscription",
-          "commitment": "Engagement",
-          "called": "Appelé",
-          "ofCommitment": "{{percent}} de l'engagement",
-          "paid": "Payé",
-          "paidHint": "Frais et prime inclus",
-          "awaitingPayment": "Appelé, en attente de paiement",
-          "remaining": "Reste à appeler",
-          "awaitingOne": "{{count}} appel en attente de paiement",
-          "awaitingMany": "{{count}} appels en attente de paiement",
-          "upToDate": "À jour de ses paiements",
-          "progressLabel": "{{percent}} de l'engagement appelé"
+        "queues": {
+          "all": "Tous les appels",
+          "awaitingPayment": "En attente de paiement",
+          "overdue": "Échus non soldés",
+          "paid": "Payés",
+          "amountMetric": "Montant",
+          "perCall": "{{amount}} par appel",
+          "badge": "{{percent}} de l'engagement appelé · {{remaining}} restant à appeler"
         }
       },
       "documentsTab": {
@@ -864,7 +858,6 @@
         "addDocument": "Ajouter un document",
         "searchPlaceholder": "Rechercher un document…",
         "entity": "document",
-        "filterOn": "Filtrer sur : {{label}}",
         "columns": {
           "document": "Document",
           "category": "Catégorie",
@@ -930,13 +923,6 @@
             "acknowledged": "Remis à l'investisseur, lecture attestée avant signature",
             "issued": "Généré par la plateforme de signature électronique"
           },
-          "summary": {
-            "title": "Dossier de souscription",
-            "subtitle": "Documents générés, signés ou remis à l'investisseur pour cette souscription",
-            "signed": "Documents signés",
-            "acknowledged": "Documents remis",
-            "acknowledgedHint": "DIC, règlement du fonds"
-          },
           "docs": {
             "subscriptionForm": "Bulletin de souscription",
             "subscriptionAgreement": "Subscription Agreement",
@@ -948,6 +934,16 @@
             "kid": "Document d'informations clés (DIC PRIIPs)",
             "fundRegulation": "Règlement du fonds",
             "signatureCertificate": "Certificat de preuve de signature"
+          },
+          "queues": {
+            "all": "Tous les documents",
+            "awaitingSignature": "À signer",
+            "awaitingCounterSignature": "À contre-signer",
+            "completed": "Signés",
+            "draft": "Brouillons",
+            "signaturesMetric": "Signatures",
+            "perDocument": "{{count}} signataire(s) par document",
+            "badge": "{{signed}} / {{total}} documents signés"
           }
         },
         "kyc": {
@@ -1002,26 +998,11 @@
             "inReview": "En cours de revue",
             "incomplete": "Dossier incomplet"
           },
-          "summary": {
-            "title": "Dossier KYC",
-            "subtitleIndividual": "Pièces LCB-FT de l'investisseur personne physique, partagées entre ses souscriptions",
-            "subtitleCorporate": "Pièces LCB-FT de la personne morale, de son représentant et de ses bénéficiaires effectifs",
-            "missingOrRejected": "Manquants ou refusés",
-            "expiring": "Expirés ou à renouveler",
-            "expiringHint": "Sous {{count}} jours"
-          },
           "review": {
-            "title": "Revue périodique",
-            "subtitle": "Fréquence fixée par le niveau de vigilance",
-            "vigilance": "Niveau de vigilance",
-            "nextReview": "Prochaine revue",
-            "lastReview": "Dernière revue le {{date}}",
-            "periodOne": "Tous les {{count}} an",
-            "periodMany": "Tous les {{count}} ans",
             "levels": {
-              "simplified": "Simplifiée",
-              "standard": "Standard",
-              "enhanced": "Renforcée"
+              "simplified": "simplifiée",
+              "standard": "standard",
+              "enhanced": "renforcée"
             }
           },
           "rejectionReasons": {
@@ -1045,6 +1026,16 @@
             "uboIds": "Pièces d'identité des bénéficiaires effectifs",
             "fatcaCrsEntity": "Auto-certification FATCA / CRS entité",
             "bankDetailsEntity": "RIB au nom de la société"
+          },
+          "queues": {
+            "all": "Toutes les pièces",
+            "toReview": "À valider",
+            "toRequest": "À demander",
+            "expiring": "Expirent sous {{count}} j",
+            "validated": "Validées",
+            "holdersMetric": "Titulaires",
+            "perHolder": "{{count}} pièce(s) par titulaire",
+            "badge": "{{status}} · Vigilance {{vigilance}} · Prochaine revue le {{date}}"
           }
         }
       },
@@ -1363,6 +1354,10 @@
           "complianceReopenedDesc": "Score, correspondances et catégorisation sont de nouveau modifiables.",
           "scoreInvalidated": "Validation du score retirée"
         }
+      },
+      "queues": {
+        "title": "Files de travail",
+        "hint": "Cliquez sur une file pour filtrer"
       }
     },
     "table": {

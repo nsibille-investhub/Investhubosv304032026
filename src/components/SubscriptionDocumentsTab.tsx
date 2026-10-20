@@ -1,6 +1,11 @@
 import { useMemo, useState, type ReactNode } from 'react';
 import {
-  CalendarClock,
+  AlertTriangle,
+  CalendarX,
+  CheckCircle2,
+  ClipboardCheck,
+  List,
+  PenLine,
   Check,
   Download,
   Eye,
@@ -12,6 +17,7 @@ import {
   Trash2,
   Upload,
   X,
+  type LucideIcon,
 } from 'lucide-react';
 import { toast } from 'sonner';
 import { useTranslation } from '../utils/languageContext';
@@ -38,7 +44,7 @@ import { ListingCard, ListingNameCell } from './ui/listing';
 import { TableRowActions, type TableRowAction } from './ui/row-actions';
 import { SegmentedControl } from './ui/segmented-control';
 import { Textarea } from './ui/textarea';
-import { WidgetCard, WidgetMetric } from './ui/widget-card';
+import { FilterCard, FilterCardGroup } from './ui/filter-card';
 
 const K = 'subscriptions.detail.documentsTab';
 const DAY_MS = 86_400_000;
@@ -96,6 +102,21 @@ const kycDisplayStatus = (doc: MockKycDocument): KycDisplayStatus => {
   if (doc.status !== 'validated') return doc.status;
   const remaining = remainingDays(doc);
   return remaining !== undefined && remaining < 0 ? 'expired' : 'validated';
+};
+
+type SubscriptionQueue = 'all' | 'awaitingSignature' | 'awaitingCounterSignature' | 'completed' | 'draft';
+const inSubscriptionQueue = (doc: MockSubscriptionDocument, queue: SubscriptionQueue) => queue === 'all' || doc.status === queue;
+
+type KycQueue = 'all' | 'toReview' | 'toRequest' | 'expiring' | 'validated';
+const inKycQueue = (doc: MockKycDocument, queue: KycQueue) => {
+  const status = kycDisplayStatus(doc);
+  if (queue === 'all') return true;
+  if (queue === 'toRequest') return status === 'missing' || status === 'rejected' || status === 'expired';
+  if (queue === 'expiring') {
+    const remaining = remainingDays(doc);
+    return doc.file !== undefined && remaining !== undefined && remaining <= EXPIRY_WARNING_DAYS;
+  }
+  return status === queue;
 };
 
 const sortRows = <T,>(rows: T[], sortConfig: SortConfig, value: (row: T, key: string) => string | number | undefined, lang: string) => {
@@ -196,12 +217,9 @@ function SubscriptionDocumentsView() {
   const [hoveredRow, setHoveredRow] = useState<number | null>(null);
   const [toDelete, setToDelete] = useState<MockSubscriptionDocument | null>(null);
 
+  const [queue, setQueue] = useState<SubscriptionQueue>('all');
   const toSign = documents.filter((doc) => doc.signers);
   const completed = toSign.filter((doc) => doc.status === 'completed').length;
-  const awaitingSignature = documents.filter((doc) => doc.status === 'awaitingSignature').length;
-  const awaitingCounter = documents.filter((doc) => doc.status === 'awaitingCounterSignature').length;
-  const informational = documents.filter((doc) => doc.category === 'regulatory');
-  const acknowledged = informational.filter((doc) => doc.status === 'acknowledged').length;
 
   const name = (doc: MockSubscriptionDocument) => t(doc.nameKey);
 
@@ -210,6 +228,7 @@ function SubscriptionDocumentsView() {
     const categories = selected(filters, 'category');
     const statuses = selected(filters, 'status');
     const filtered = documents.filter((doc) => {
+      if (!inSubscriptionQueue(doc, queue)) return false;
       if (term && ![t(doc.nameKey), doc.file].some((value) => value.toLowerCase().includes(term))) return false;
       if (categories.length > 0 && !categories.includes(doc.category)) return false;
       if (statuses.length > 0 && !statuses.includes(doc.status)) return false;
@@ -228,7 +247,7 @@ function SubscriptionDocumentsView() {
               : undefined,
       lang,
     );
-  }, [documents, search, filters, sortConfig, lang, t]);
+  }, [documents, queue, search, filters, sortConfig, lang, t]);
 
   const actionsFor = (doc: MockSubscriptionDocument): TableRowAction[] => {
     const actions: TableRowAction[] = [
@@ -320,44 +339,41 @@ function SubscriptionDocumentsView() {
     },
   ];
 
-  const showStatus = (status: SubscriptionDocumentStatus) => setFilters({ status: [status] });
+  const number = new Intl.NumberFormat(lang, { maximumFractionDigits: 1 });
+  const queueCard = (id: SubscriptionQueue, icon: LucideIcon) => {
+    const items = documents.filter((doc) => inSubscriptionQueue(doc, id));
+    const signable = items.filter((doc) => doc.signers);
+    const signed = signable.reduce((sum, doc) => sum + (doc.signers?.signed ?? 0), 0);
+    const expected = signable.reduce((sum, doc) => sum + (doc.signers?.total ?? 0), 0);
+    return (
+      <FilterCard
+        status={id}
+        activeStatus={queue}
+        onStatusChange={(status) => setQueue(status as SubscriptionQueue)}
+        label={t(`${K}.subscription.queues.${id}`)}
+        icon={icon}
+        total={items.length}
+        metricLabel={t(`${K}.subscription.queues.signaturesMetric`)}
+        metricValue={t(`${K}.subscription.signersProgress`, { signed, total: expected })}
+        averageValue={t(`${K}.subscription.queues.perDocument`, { count: number.format(items.length > 0 ? expected / items.length : 0) })}
+      />
+    );
+  };
 
   return (
     <>
-      <WidgetCard
-        icon={FileSignature}
-        title={t(`${K}.subscription.summary.title`)}
-        subtitle={t(`${K}.subscription.summary.subtitle`)}
+      <FilterCardGroup
+        title={t('subscriptions.detail.queues.title')}
+        hint={t('subscriptions.detail.queues.hint')}
+        badge={t(`${K}.subscription.queues.badge`, { signed: completed, total: toSign.length })}
+        columns={5}
       >
-        <div className="grid grid-cols-4 gap-4">
-          <WidgetMetric
-            label={t(`${K}.subscription.summary.signed`)}
-            value={t(`${K}.subscription.signersProgress`, { signed: completed, total: toSign.length })}
-            tone={completed === toSign.length ? 'success' : undefined}
-            onClick={() => showStatus('completed')}
-            ariaLabel={t(`${K}.filterOn`, { label: t(`${K}.subscription.statuses.completed`) })}
-          />
-          <WidgetMetric
-            label={t(`${K}.subscription.statuses.awaitingSignature`)}
-            value={awaitingSignature}
-            tone={awaitingSignature > 0 ? 'warning' : undefined}
-            onClick={() => showStatus('awaitingSignature')}
-            ariaLabel={t(`${K}.filterOn`, { label: t(`${K}.subscription.statuses.awaitingSignature`) })}
-          />
-          <WidgetMetric
-            label={t(`${K}.subscription.statuses.awaitingCounterSignature`)}
-            value={awaitingCounter}
-            tone={awaitingCounter > 0 ? 'info' : undefined}
-            onClick={() => showStatus('awaitingCounterSignature')}
-            ariaLabel={t(`${K}.filterOn`, { label: t(`${K}.subscription.statuses.awaitingCounterSignature`) })}
-          />
-          <WidgetMetric
-            label={t(`${K}.subscription.summary.acknowledged`)}
-            value={t(`${K}.subscription.signersProgress`, { signed: acknowledged, total: informational.length })}
-            secondary={t(`${K}.subscription.summary.acknowledgedHint`)}
-          />
-        </div>
-      </WidgetCard>
+        {queueCard('all', List)}
+        {queueCard('awaitingSignature', PenLine)}
+        {queueCard('awaitingCounterSignature', FileSignature)}
+        {queueCard('completed', CheckCircle2)}
+        {queueCard('draft', FileText)}
+      </FilterCardGroup>
 
       <ListingCard
         toolbar={
@@ -391,12 +407,13 @@ function SubscriptionDocumentsView() {
         {rows.length === 0 ? (
           <EmptyState
             icon={FileText}
-            hasFilters={hasActiveFilters(filters)}
+            hasFilters={hasActiveFilters(filters) || queue !== 'all'}
             hasSearch={Boolean(search.trim())}
             entityName={t(`${K}.entity`)}
             onReset={() => {
               setSearch('');
               setFilters({});
+              setQueue('all');
             }}
           />
         ) : (
@@ -450,6 +467,7 @@ function KycDocumentsView({ subscription, isCorporate, documents, onChange }: Ky
   const [hoveredRow, setHoveredRow] = useState<number | null>(null);
   const [toReject, setToReject] = useState<MockKycDocument | null>(null);
   const [rejectionReason, setRejectionReason] = useState('');
+  const [queue, setQueue] = useState<KycQueue>('all');
 
   const contrepartie = subscription?.contrepartie ?? {};
   const holderName = (doc: MockKycDocument) => {
@@ -465,14 +483,7 @@ function KycDocumentsView({ subscription, isCorporate, documents, onChange }: Ky
 
   const name = (doc: MockKycDocument) => t(doc.nameKey);
   const statusOf = kycDisplayStatus;
-  const count = (status: KycDisplayStatus) => documents.filter((doc) => statusOf(doc) === status).length;
-  const validated = count('validated');
-  const toReview = count('toReview');
-  const missingOrRejected = count('missing') + count('rejected');
-  const expiringSoon = documents.filter((doc) => {
-    const remaining = remainingDays(doc);
-    return doc.file !== undefined && remaining !== undefined && remaining <= EXPIRY_WARNING_DAYS;
-  }).length;
+  const toReview = documents.filter((doc) => statusOf(doc) === 'toReview').length;
   const toRequest = documents.filter((doc) => ['missing', 'rejected', 'expired'].includes(statusOf(doc)));
 
   const vigilance = VIGILANCE_BY_RISK[contrepartie.riskLevel ?? subscription?.riskLevel] ?? VIGILANCE_BY_RISK.Medium;
@@ -489,6 +500,7 @@ function KycDocumentsView({ subscription, isCorporate, documents, onChange }: Ky
     const categories = selected(filters, 'category');
     const statuses = selected(filters, 'status');
     const filtered = documents.filter((doc) => {
+      if (!inKycQueue(doc, queue)) return false;
       if (term && ![t(doc.nameKey), holderName(doc) ?? '', doc.file ?? ''].some((value) => value.toLowerCase().includes(term))) return false;
       if (categories.length > 0 && !categories.includes(doc.category)) return false;
       if (statuses.length > 0 && !statuses.includes(statusOf(doc))) return false;
@@ -511,7 +523,7 @@ function KycDocumentsView({ subscription, isCorporate, documents, onChange }: Ky
     );
     // holderName dépend de la souscription, stable pendant la vie de l'onglet.
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [documents, search, filters, sortConfig, lang, t]);
+  }, [documents, queue, search, filters, sortConfig, lang, t]);
 
   const request = (doc: MockKycDocument) => toast.success(t(`${K}.toast.requested`, { name: name(doc) }));
 
@@ -646,64 +658,44 @@ function KycDocumentsView({ subscription, isCorporate, documents, onChange }: Ky
     },
   ];
 
-  const showStatuses = (statuses: KycDisplayStatus[]) => setFilters({ status: statuses });
   const requestDisabledReason = toRequest.length === 0 ? t(`${K}.kyc.nothingToRequest`) : undefined;
+  const number = new Intl.NumberFormat(lang, { maximumFractionDigits: 1 });
+  const queueCard = (id: KycQueue, icon: LucideIcon) => {
+    const items = documents.filter((doc) => inKycQueue(doc, id));
+    const holders = new Set(items.map((doc) => doc.holder)).size;
+    return (
+      <FilterCard
+        status={id}
+        activeStatus={queue}
+        onStatusChange={(status) => setQueue(status as KycQueue)}
+        label={id === 'expiring' ? t(`${K}.kyc.queues.expiring`, { count: EXPIRY_WARNING_DAYS }) : t(`${K}.kyc.queues.${id}`)}
+        icon={icon}
+        total={items.length}
+        metricLabel={t(`${K}.kyc.queues.holdersMetric`)}
+        metricValue={String(holders)}
+        averageValue={t(`${K}.kyc.queues.perHolder`, { count: number.format(holders > 0 ? items.length / holders : 0) })}
+      />
+    );
+  };
 
   return (
     <>
-      <div className="grid grid-cols-3 gap-4">
-        <WidgetCard
-          className="col-span-2"
-          icon={ShieldCheck}
-          title={t(`${K}.kyc.summary.title`)}
-          subtitle={t(isCorporate ? `${K}.kyc.summary.subtitleCorporate` : `${K}.kyc.summary.subtitleIndividual`)}
-          action={<StatusBadge variant={KYC_OVERALL_VARIANT[overall]} label={t(`${K}.kyc.overall.${overall}`)} />}
-        >
-          <div className="grid grid-cols-4 gap-4">
-            <WidgetMetric
-              label={t(`${K}.kyc.statuses.validated`)}
-              value={t(`${K}.subscription.signersProgress`, { signed: validated, total: documents.length })}
-              tone={validated === documents.length ? 'success' : undefined}
-              onClick={() => showStatuses(['validated'])}
-              ariaLabel={t(`${K}.filterOn`, { label: t(`${K}.kyc.statuses.validated`) })}
-            />
-            <WidgetMetric
-              label={t(`${K}.kyc.statuses.toReview`)}
-              value={toReview}
-              tone={toReview > 0 ? 'info' : undefined}
-              onClick={() => showStatuses(['toReview'])}
-              ariaLabel={t(`${K}.filterOn`, { label: t(`${K}.kyc.statuses.toReview`) })}
-            />
-            <WidgetMetric
-              label={t(`${K}.kyc.summary.missingOrRejected`)}
-              value={missingOrRejected}
-              tone={missingOrRejected > 0 ? 'warning' : undefined}
-              onClick={() => showStatuses(['missing', 'rejected'])}
-              ariaLabel={t(`${K}.filterOn`, { label: t(`${K}.kyc.summary.missingOrRejected`) })}
-            />
-            <WidgetMetric
-              label={t(`${K}.kyc.summary.expiring`)}
-              value={expiringSoon}
-              tone={expiringSoon > 0 ? 'danger' : undefined}
-              secondary={t(`${K}.kyc.summary.expiringHint`, { count: EXPIRY_WARNING_DAYS })}
-            />
-          </div>
-        </WidgetCard>
-        <WidgetCard icon={CalendarClock} title={t(`${K}.kyc.review.title`)} subtitle={t(`${K}.kyc.review.subtitle`)}>
-          <div className="grid grid-cols-2 gap-4">
-            <WidgetMetric
-              label={t(`${K}.kyc.review.vigilance`)}
-              value={t(`${K}.kyc.review.levels.${vigilance.key}`)}
-              secondary={t(`${K}.kyc.review.lastReview`, { date: formatDate(lastReview) })}
-            />
-            <WidgetMetric
-              label={t(`${K}.kyc.review.nextReview`)}
-              value={formatDate(nextReview)}
-              secondary={tc(`${K}.kyc.review.period`, vigilance.reviewYears)}
-            />
-          </div>
-        </WidgetCard>
-      </div>
+      <FilterCardGroup
+        title={t('subscriptions.detail.queues.title')}
+        hint={t('subscriptions.detail.queues.hint')}
+        badge={t(`${K}.kyc.queues.badge`, {
+          status: t(`${K}.kyc.overall.${overall}`),
+          vigilance: t(`${K}.kyc.review.levels.${vigilance.key}`),
+          date: formatDate(nextReview),
+        })}
+        columns={5}
+      >
+        {queueCard('all', List)}
+        {queueCard('toReview', ClipboardCheck)}
+        {queueCard('toRequest', AlertTriangle)}
+        {queueCard('expiring', CalendarX)}
+        {queueCard('validated', CheckCircle2)}
+      </FilterCardGroup>
 
       <ListingCard
         toolbar={
@@ -743,12 +735,13 @@ function KycDocumentsView({ subscription, isCorporate, documents, onChange }: Ky
         {rows.length === 0 ? (
           <EmptyState
             icon={ShieldCheck}
-            hasFilters={hasActiveFilters(filters)}
+            hasFilters={hasActiveFilters(filters) || queue !== 'all'}
             hasSearch={Boolean(search.trim())}
             entityName={t(`${K}.kyc.entity`)}
             onReset={() => {
               setSearch('');
               setFilters({});
+              setQueue('all');
             }}
           />
         ) : (
