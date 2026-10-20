@@ -31,8 +31,12 @@ const toInputDate = (date?: Date) => {
 
 const fromInputDate = (value: string) => (value ? new Date(`${value}T09:00:00`) : undefined);
 
+/** `subscription` : note réduite au titre, au texte, au rappel et à la pièce jointe. */
+export type NoteScope = 'investor' | 'subscription';
+
 interface NoteEditSheetProps {
   open: boolean;
+  scope?: NoteScope;
   isNew: boolean;
   note: Note | null;
   onChange: (note: Note) => void;
@@ -40,20 +44,21 @@ interface NoteEditSheetProps {
   onSave: () => void;
 }
 
-export function NoteEditSheet({ open, isNew, note, onChange, onClose, onSave }: NoteEditSheetProps) {
+export function NoteEditSheet({ open, scope = 'investor', isNew, note, onChange, onClose, onSave }: NoteEditSheetProps) {
   const { t } = useTranslation();
   if (!note) return null;
 
   const update = <F extends keyof Note>(field: F, value: Note[F]) => onChange({ ...note, [field]: value });
   const hasContent = note.content.replace(/<[^>]*>/g, '').trim().length > 0;
   const canSave = note.title.trim().length > 0 && hasContent;
+  const full = scope === 'investor';
 
   return (
     <Sheet open={open} onOpenChange={(o) => !o && onClose()}>
       <SheetContent side="right" style={SIDE_PANEL_WIDE_STYLE} className="h-full p-0 gap-0">
         <SidePanelHeader
           title={isNew ? t(`${K}.sheet.addTitle`) : t(`${K}.sheet.editTitle`)}
-          description={t(`${K}.sheet.description`)}
+          description={full ? t(`${K}.sheet.description`) : t('subscriptions.detail.notesTab.sheetDescription')}
         />
 
         <div className="flex-1 overflow-y-auto px-6 py-5 space-y-5">
@@ -72,21 +77,23 @@ export function NoteEditSheet({ open, isNew, note, onChange, onClose, onSave }: 
                   placeholder={t(`${K}.sheet.titlePlaceholder`)}
                 />
               </div>
-              <div className="space-y-2">
-                <Label htmlFor="noteType">{t(`${K}.sheet.type`)}</Label>
-                <Select value={note.type} onValueChange={(value) => update('type', value as Note['type'])}>
-                  <SelectTrigger id="noteType" className="h-11">
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {NOTE_TYPES.map((type) => (
-                      <SelectItem key={type} value={type}>
-                        {t(`investors.detail.noteTypes.${type}`)}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
+              {full && (
+                <div className="space-y-2">
+                  <Label htmlFor="noteType">{t(`${K}.sheet.type`)}</Label>
+                  <Select value={note.type} onValueChange={(value) => update('type', value as Note['type'])}>
+                    <SelectTrigger id="noteType" className="h-11">
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {NOTE_TYPES.map((type) => (
+                        <SelectItem key={type} value={type}>
+                          {t(`investors.detail.noteTypes.${type}`)}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+              )}
               <div className="space-y-2">
                 <Label htmlFor="noteContent">
                   {t(`${K}.sheet.content`)}
@@ -100,36 +107,42 @@ export function NoteEditSheet({ open, isNew, note, onChange, onClose, onSave }: 
                   className="min-h-[200px]"
                 />
               </div>
-              <SidePanelSwitchRow
-                id="noteImportant"
-                label={t(`${K}.sheet.important`)}
-                description={t(`${K}.sheet.importantHint`)}
-                checked={note.isImportant}
-                onCheckedChange={(value) => update('isImportant', value)}
-              />
+              {full && (
+                <SidePanelSwitchRow
+                  id="noteImportant"
+                  label={t(`${K}.sheet.important`)}
+                  description={t(`${K}.sheet.importantHint`)}
+                  checked={note.isImportant}
+                  onCheckedChange={(value) => update('isImportant', value)}
+                />
+              )}
             </SidePanelCard>
           </SidePanelSection>
 
-          <SidePanelSection icon={CalendarDays} title={t(`${K}.sheet.dateSection`)} description={t(`${K}.sheet.dateSectionHint`)}>
+          <SidePanelSection
+            icon={full ? CalendarDays : Bell}
+            title={full ? t(`${K}.sheet.dateSection`) : t('subscriptions.detail.notesTab.reminderSection')}
+            description={full ? t(`${K}.sheet.dateSectionHint`) : undefined}
+          >
             <SidePanelCard className="space-y-4">
-              <div className="space-y-2">
-                <Label htmlFor="noteDate">{t(`${K}.sheet.date`)}</Label>
-                <Input
-                  id="noteDate"
-                  type="date"
-                  className="h-11"
-                  value={toInputDate(note.date)}
-                  onChange={(e) => update('date', fromInputDate(e.target.value) ?? note.date)}
-                />
-              </div>
+              {full && (
+                <div className="space-y-2">
+                  <Label htmlFor="noteDate">{t(`${K}.sheet.date`)}</Label>
+                  <Input
+                    id="noteDate"
+                    type="date"
+                    className="h-11"
+                    value={toInputDate(note.date)}
+                    onChange={(e) => update('date', fromInputDate(e.target.value) ?? note.date)}
+                  />
+                </div>
+              )}
               <SidePanelSwitchRow
                 id="noteReminder"
                 label={t(`${K}.sheet.reminder`)}
                 description={t(`${K}.sheet.reminderHint`)}
                 checked={Boolean(note.reminderDate)}
-                onCheckedChange={(value) =>
-                  update('reminderDate', value ? new Date(Date.now() + 7 * 24 * 60 * 60 * 1000) : undefined)
-                }
+                onCheckedChange={(value) => update('reminderDate', value ? new Date(Date.now() + 7 * 24 * 60 * 60 * 1000) : undefined)}
               />
               {note.reminderDate && (
                 <div className="space-y-2">

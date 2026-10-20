@@ -846,18 +846,8 @@
         "exportPackToast": "Pack documentaire exporté"
       },
       "notesTab": {
-        "all": "Toutes ({{count}})",
-        "open": "Ouvertes ({{count}})",
-        "resolved": "Résolues ({{count}})",
-        "newNote": "Nouvelle note",
-        "fieldType": "Champ",
-        "generalType": "Note générale",
-        "highPriority": "Priorité haute",
-        "mediumPriority": "Priorité moyenne",
-        "resolvedStatus": "Résolue",
-        "resolve": "Résoudre",
-        "noteResolved": "Note résolue",
-        "deleteNote": "Supprimer la note"
+        "sheetDescription": "Note interne sur la souscription, visible uniquement par l'équipe.",
+        "reminderSection": "Rappel"
       },
       "docs": {
         "passport": "Passeport (en couleur, lignes MRZ lisibles et complètes, sur une seule page)",
@@ -889,7 +879,14 @@
         "mock4": "Justificatif de régime matrimonial manquant. Relance envoyée par email.",
         "mock5": "Dossier complet reçu. Analyse KYC démarrée le 01/02/2026.",
         "mock6": "Le document fourni est incomplet. Demander un relevé bancaire complémentaire de 6 mois.",
-        "mock7": "Client VIP - traitement prioritaire demandé par la direction."
+        "mock7": "Client VIP - traitement prioritaire demandé par la direction.",
+        "mockTitle1": "Double nationalité",
+        "mockTitle2": "Capacité juridique",
+        "mockTitle3": "Appel investisseur",
+        "mockTitle4": "Régime matrimonial",
+        "mockTitle5": "Dossier KYC reçu",
+        "mockTitle6": "Origine des fonds",
+        "mockTitle7": "Client prioritaire"
       },
       "toast": {
         "featureComingSoon": "Fonctionnalité à venir",
@@ -901,7 +898,6 @@
         "selectFileGeneric": "Sélectionner un fichier",
         "documentPreview": "Aperçu du document",
         "documentPreviewDesc": "Ouverture de « {{name}} »",
-        "noteAdded": "Note ajoutée",
         "addDocumentToast": "Ajouter un document",
         "idCopied": "ID copié dans le presse-papier",
         "refreshed": "Souscription rafraîchie",

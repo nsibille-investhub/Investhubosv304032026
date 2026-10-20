@@ -39,15 +39,13 @@ export interface MockDocument {
 }
 
 export interface MockNote {
-  id: number;
-  type: string;
-  sectionKey: string;
-  fieldKey: string;
+  id: string;
+  titleKey: string;
+  contentKey: string;
   author: string;
   date: string;
-  contentKey: string;
-  status: string;
-  priority: string;
+  reminderDate?: string;
+  attachment?: string;
 }
 
 export interface MockEmail {
@@ -200,13 +198,13 @@ export const mockDocuments: MockDocument[] = [
 ];
 
 export const mockNotes: MockNote[] = [
-  { id: 1, type: 'field', sectionKey: 'subscriptions.detail.sections.identity', fieldKey: 'Nationalité', author: 'Marie Dubois', date: '28/12/2025 14:32', contentKey: 'subscriptions.detail.notes.mock1', status: 'open', priority: 'high' },
-  { id: 2, type: 'field', sectionKey: 'subscriptions.detail.sections.identity', fieldKey: "L'investisseur est-il mineur ?", author: 'Jean Dupont', date: '27/12/2025 16:45', contentKey: 'subscriptions.detail.notes.mock2', status: 'open', priority: 'medium' },
-  { id: 3, type: 'general', sectionKey: '', fieldKey: '', author: 'Pierre Martin', date: '26/12/2025 10:15', contentKey: 'subscriptions.detail.notes.mock3', status: 'resolved', priority: 'low' },
-  { id: 4, type: 'field', sectionKey: 'subscriptions.detail.sections.banking', fieldKey: 'Quel est le régime matrimonial des titulaires du compte joint ?', author: 'Sophie Laurent', date: '25/12/2025 09:20', contentKey: 'subscriptions.detail.notes.mock4', status: 'open', priority: 'high' },
-  { id: 5, type: 'general', sectionKey: '', fieldKey: '', author: 'Marie Dubois', date: '24/12/2025 17:30', contentKey: 'subscriptions.detail.notes.mock5', status: 'resolved', priority: 'medium' },
-  { id: 6, type: 'field', sectionKey: 'subscriptions.detail.sections.documents', fieldKey: "Justificatif d'origine des fonds", author: 'Jean Dupont', date: '23/12/2025 11:00', contentKey: 'subscriptions.detail.notes.mock6', status: 'open', priority: 'high' },
-  { id: 7, type: 'general', sectionKey: '', fieldKey: '', author: 'Pierre Martin', date: '22/12/2025 14:45', contentKey: 'subscriptions.detail.notes.mock7', status: 'open', priority: 'medium' }
+  { id: 'sub-note-1', titleKey: 'subscriptions.detail.notes.mockTitle1', contentKey: 'subscriptions.detail.notes.mock1', author: 'Marie Dubois', date: '2025-12-28T14:32:00', reminderDate: '2026-01-05T09:00:00' },
+  { id: 'sub-note-2', titleKey: 'subscriptions.detail.notes.mockTitle2', contentKey: 'subscriptions.detail.notes.mock2', author: 'Jean Dupont', date: '2025-12-27T16:45:00' },
+  { id: 'sub-note-3', titleKey: 'subscriptions.detail.notes.mockTitle3', contentKey: 'subscriptions.detail.notes.mock3', author: 'Pierre Martin', date: '2025-12-26T10:15:00' },
+  { id: 'sub-note-4', titleKey: 'subscriptions.detail.notes.mockTitle4', contentKey: 'subscriptions.detail.notes.mock4', author: 'Sophie Laurent', date: '2025-12-25T09:20:00', reminderDate: '2026-01-02T09:00:00' },
+  { id: 'sub-note-5', titleKey: 'subscriptions.detail.notes.mockTitle5', contentKey: 'subscriptions.detail.notes.mock5', author: 'Marie Dubois', date: '2025-12-24T17:30:00', attachment: 'dossier-kyc.pdf' },
+  { id: 'sub-note-6', titleKey: 'subscriptions.detail.notes.mockTitle6', contentKey: 'subscriptions.detail.notes.mock6', author: 'Jean Dupont', date: '2025-12-23T11:00:00', attachment: 'releve-bancaire.pdf' },
+  { id: 'sub-note-7', titleKey: 'subscriptions.detail.notes.mockTitle7', contentKey: 'subscriptions.detail.notes.mock7', author: 'Pierre Martin', date: '2025-12-22T14:45:00' }
 ];
 
 export const mockEmails: MockEmail[] = [

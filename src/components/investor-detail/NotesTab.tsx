@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { Bell, Download, FileText, Paperclip, Pencil, Plus, Trash2 } from 'lucide-react';
 import { toast } from 'sonner';
 import type { Note } from '../../utils/investorGenerator';
@@ -13,7 +13,7 @@ import { Button } from '../ui/button';
 import { ConfirmDialog } from '../ui/confirm-dialog';
 import { ListingCard, ListingNameCell } from '../ui/listing';
 import { TableRowActions } from '../ui/row-actions';
-import { NOTE_TYPES, NoteEditSheet } from './NoteEditSheet';
+import { NOTE_TYPES, NoteEditSheet, type NoteScope } from './NoteEditSheet';
 
 const K = 'investors.detail.notes';
 
@@ -27,9 +27,11 @@ const plainText = (html: string) => html.replace(/<[^>]*>/g, ' ').replace(/\s+/g
 
 interface NotesTabProps {
   notes: Note[];
+  scope?: NoteScope;
+  onCountChange?: (count: number) => void;
 }
 
-export function NotesTab({ notes: initialNotes }: NotesTabProps) {
+export function NotesTab({ notes: initialNotes, scope = 'investor', onCountChange }: NotesTabProps) {
   const { t, lang } = useTranslation();
   const [notes, setNotes] = useState<Note[]>(initialNotes);
   const [selected, setSelected] = useState<Note | null>(null);
@@ -38,6 +40,12 @@ export function NotesTab({ notes: initialNotes }: NotesTabProps) {
   const [hoveredRow, setHoveredRow] = useState<number | null>(null);
   const [search, setSearch] = useState('');
   const [filters, setFilters] = useState<Record<string, string | string[]>>({});
+
+  const full = scope === 'investor';
+
+  useEffect(() => {
+    onCountChange?.(notes.length);
+  }, [notes.length, onCountChange]);
 
   const isNew = !!selected && !notes.some((note) => note.id === selected.id);
 
@@ -64,7 +72,7 @@ export function NotesTab({ notes: initialNotes }: NotesTabProps) {
     setSelected(null);
   };
 
-  const filterConfigs: FilterConfig[] = [
+  const allFilterConfigs: FilterConfig[] = [
     {
       id: 'type',
       label: t(`${K}.columns.type`),
@@ -94,6 +102,8 @@ export function NotesTab({ notes: initialNotes }: NotesTabProps) {
     },
   ];
 
+  const filterConfigs = full ? allFilterConfigs : allFilterConfigs.filter((filter) => filter.id === 'reminder');
+
   const rows: Row[] = useMemo(() => {
     const term = search.trim().toLowerCase();
     const types = (filters.type as string[] | undefined) ?? [];
@@ -122,7 +132,7 @@ export function NotesTab({ notes: initialNotes }: NotesTabProps) {
   const toNote = (row: Row) => notes.find((note) => note.id === row.noteId) ?? notes[0];
   const empty = <span className="text-gray-400 text-sm">—</span>;
 
-  const columns: ColumnConfig<Row>[] = [
+  const allColumns: ColumnConfig<Row>[] = [
     {
       key: 'title',
       label: t(`${K}.columns.title`),
@@ -181,6 +191,8 @@ export function NotesTab({ notes: initialNotes }: NotesTabProps) {
       ),
     },
   ];
+
+  const columns = full ? allColumns : allColumns.filter((column) => column.key !== 'type' && column.key !== 'importance');
 
   const hasFilters = Object.values(filters).some((value) => (Array.isArray(value) ? value.length > 0 : Boolean(value)));
 
@@ -246,6 +258,7 @@ export function NotesTab({ notes: initialNotes }: NotesTabProps) {
 
       <NoteEditSheet
         open={selected !== null}
+        scope={scope}
         isNew={isNew}
         note={selected}
         onChange={setSelected}
