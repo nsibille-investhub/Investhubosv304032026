@@ -1,4 +1,5 @@
-import { Bell, CalendarDays, Paperclip, StickyNote } from 'lucide-react';
+import type { ReactNode } from 'react';
+import { Bell, CalendarDays, Paperclip, StickyNote, type LucideIcon } from 'lucide-react';
 import { toast } from 'sonner';
 import type { Note } from '../../utils/investorGenerator';
 import { useTranslation } from '../../utils/languageContext';
@@ -34,6 +35,171 @@ const fromInputDate = (value: string) => (value ? new Date(`${value}T09:00:00`) 
 /** `subscription` : note réduite au titre, au texte, au rappel et à la pièce jointe. */
 export type NoteScope = 'investor' | 'subscription';
 
+/** Auteur des notes créées depuis la maquette : l'utilisateur connecté. */
+export const NOTE_CURRENT_USER = 'Jean Dault';
+
+export const createNote = (): Note => ({
+  id: `note-${Date.now()}`,
+  title: '',
+  author: NOTE_CURRENT_USER,
+  date: new Date(),
+  content: '',
+  type: 'General',
+  isImportant: false,
+});
+
+/** Titre et texte renseignés : condition pour enregistrer une note. */
+export const isNoteComplete = (note: Pick<Note, 'title' | 'content'>) =>
+  note.title.trim().length > 0 && note.content.replace(/<[^>]*>/g, '').trim().length > 0;
+
+interface NoteGroupProps {
+  bare: boolean;
+  icon: LucideIcon;
+  title: string;
+  description?: string;
+  children: ReactNode;
+}
+
+function NoteGroup({ bare, icon, title, description, children }: NoteGroupProps) {
+  if (bare) return <div className="space-y-4">{children}</div>;
+  return (
+    <SidePanelSection icon={icon} title={title} description={description}>
+      <SidePanelCard className="space-y-4">{children}</SidePanelCard>
+    </SidePanelSection>
+  );
+}
+
+interface NoteFormFieldsProps {
+  note: Note;
+  onChange: (note: Note) => void;
+  scope?: NoteScope;
+  /** Champs empilés sans sections ni cartes, pour un formulaire hôte (création de souscription). */
+  bare?: boolean;
+}
+
+export function NoteFormFields({ note, onChange, scope = 'investor', bare = false }: NoteFormFieldsProps) {
+  const { t } = useTranslation();
+  const update = <F extends keyof Note>(field: F, value: Note[F]) => onChange({ ...note, [field]: value });
+  const full = scope === 'investor';
+
+  return (
+    <>
+      <NoteGroup bare={bare} icon={StickyNote} title={t(`${K}.sheet.noteSection`)}>
+        <div className="space-y-2">
+          <Label htmlFor="noteTitle">
+            {t(`${K}.sheet.title`)}
+            <span className="text-red-600 ml-0.5">*</span>
+          </Label>
+          <Input
+            id="noteTitle"
+            className="h-11"
+            value={note.title}
+            onChange={(e) => update('title', e.target.value)}
+            placeholder={t(`${K}.sheet.titlePlaceholder`)}
+          />
+        </div>
+        {full && (
+          <div className="space-y-2">
+            <Label htmlFor="noteType">{t(`${K}.sheet.type`)}</Label>
+            <Select value={note.type} onValueChange={(value) => update('type', value as Note['type'])}>
+              <SelectTrigger id="noteType" className="h-11">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                {NOTE_TYPES.map((type) => (
+                  <SelectItem key={type} value={type}>
+                    {t(`investors.detail.noteTypes.${type}`)}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+        )}
+        <div className="space-y-2">
+          <Label htmlFor="noteContent">
+            {t(`${K}.sheet.content`)}
+            <span className="text-red-600 ml-0.5">*</span>
+          </Label>
+          <RichTextEditor
+            id="noteContent"
+            ariaLabel={t(`${K}.sheet.content`)}
+            value={note.content}
+            onChange={(value) => update('content', value)}
+            className="min-h-[200px]"
+          />
+        </div>
+        {full && (
+          <SidePanelSwitchRow
+            id="noteImportant"
+            label={t(`${K}.sheet.important`)}
+            description={t(`${K}.sheet.importantHint`)}
+            checked={note.isImportant}
+            onCheckedChange={(value) => update('isImportant', value)}
+          />
+        )}
+      </NoteGroup>
+
+      <NoteGroup
+        bare={bare}
+        icon={full ? CalendarDays : Bell}
+        title={full ? t(`${K}.sheet.dateSection`) : t('subscriptions.detail.notesTab.reminderSection')}
+        description={full ? t(`${K}.sheet.dateSectionHint`) : undefined}
+      >
+        {full && (
+          <div className="space-y-2">
+            <Label htmlFor="noteDate">{t(`${K}.sheet.date`)}</Label>
+            <Input
+              id="noteDate"
+              type="date"
+              className="h-11"
+              value={toInputDate(note.date)}
+              onChange={(e) => update('date', fromInputDate(e.target.value) ?? note.date)}
+            />
+          </div>
+        )}
+        <SidePanelSwitchRow
+          id="noteReminder"
+          label={t(`${K}.sheet.reminder`)}
+          description={t(`${K}.sheet.reminderHint`)}
+          checked={Boolean(note.reminderDate)}
+          onCheckedChange={(value) => update('reminderDate', value ? new Date(Date.now() + 7 * 24 * 60 * 60 * 1000) : undefined)}
+        />
+        {note.reminderDate && (
+          <div className="space-y-2">
+            <Label htmlFor="noteReminderDate" className="flex items-center gap-1.5">
+              <Bell className="w-3.5 h-3.5 text-muted-foreground" />
+              {t(`${K}.sheet.reminderDate`)}
+            </Label>
+            <Input
+              id="noteReminderDate"
+              type="date"
+              className="h-11"
+              value={toInputDate(note.reminderDate)}
+              onChange={(e) => update('reminderDate', fromInputDate(e.target.value))}
+            />
+          </div>
+        )}
+      </NoteGroup>
+
+      <NoteGroup bare={bare} icon={Paperclip} title={t(`${K}.sheet.attachmentSection`)}>
+        <SidePanelFileDrop
+          fileName={note.attachment?.name}
+          onSelectFile={(file) => update('attachment', { name: file.name })}
+          onPreview={() => toast.info(t('investors.detail.actions.comingSoon'))}
+          onRemove={() => update('attachment', undefined)}
+          labels={{
+            dropHint: t('ged.addModal.dropHint'),
+            dropHintDesc: t('ged.addModal.dropHintDesc'),
+            fileReady: t('ged.addModal.fileReady'),
+            preview: t('ged.addModal.preview'),
+            remove: t('ged.addModal.delete'),
+          }}
+        />
+      </NoteGroup>
+    </>
+  );
+}
+
 interface NoteEditSheetProps {
   open: boolean;
   scope?: NoteScope;
@@ -48,9 +214,7 @@ export function NoteEditSheet({ open, scope = 'investor', isNew, note, onChange,
   const { t } = useTranslation();
   if (!note) return null;
 
-  const update = <F extends keyof Note>(field: F, value: Note[F]) => onChange({ ...note, [field]: value });
-  const hasContent = note.content.replace(/<[^>]*>/g, '').trim().length > 0;
-  const canSave = note.title.trim().length > 0 && hasContent;
+  const canSave = isNoteComplete(note);
   const full = scope === 'investor';
 
   return (
@@ -62,123 +226,7 @@ export function NoteEditSheet({ open, scope = 'investor', isNew, note, onChange,
         />
 
         <div className="flex-1 overflow-y-auto px-6 py-5 space-y-5">
-          <SidePanelSection icon={StickyNote} title={t(`${K}.sheet.noteSection`)}>
-            <SidePanelCard className="space-y-4">
-              <div className="space-y-2">
-                <Label htmlFor="noteTitle">
-                  {t(`${K}.sheet.title`)}
-                  <span className="text-red-600 ml-0.5">*</span>
-                </Label>
-                <Input
-                  id="noteTitle"
-                  className="h-11"
-                  value={note.title}
-                  onChange={(e) => update('title', e.target.value)}
-                  placeholder={t(`${K}.sheet.titlePlaceholder`)}
-                />
-              </div>
-              {full && (
-                <div className="space-y-2">
-                  <Label htmlFor="noteType">{t(`${K}.sheet.type`)}</Label>
-                  <Select value={note.type} onValueChange={(value) => update('type', value as Note['type'])}>
-                    <SelectTrigger id="noteType" className="h-11">
-                      <SelectValue />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {NOTE_TYPES.map((type) => (
-                        <SelectItem key={type} value={type}>
-                          {t(`investors.detail.noteTypes.${type}`)}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                </div>
-              )}
-              <div className="space-y-2">
-                <Label htmlFor="noteContent">
-                  {t(`${K}.sheet.content`)}
-                  <span className="text-red-600 ml-0.5">*</span>
-                </Label>
-                <RichTextEditor
-                  id="noteContent"
-                  ariaLabel={t(`${K}.sheet.content`)}
-                  value={note.content}
-                  onChange={(value) => update('content', value)}
-                  className="min-h-[200px]"
-                />
-              </div>
-              {full && (
-                <SidePanelSwitchRow
-                  id="noteImportant"
-                  label={t(`${K}.sheet.important`)}
-                  description={t(`${K}.sheet.importantHint`)}
-                  checked={note.isImportant}
-                  onCheckedChange={(value) => update('isImportant', value)}
-                />
-              )}
-            </SidePanelCard>
-          </SidePanelSection>
-
-          <SidePanelSection
-            icon={full ? CalendarDays : Bell}
-            title={full ? t(`${K}.sheet.dateSection`) : t('subscriptions.detail.notesTab.reminderSection')}
-            description={full ? t(`${K}.sheet.dateSectionHint`) : undefined}
-          >
-            <SidePanelCard className="space-y-4">
-              {full && (
-                <div className="space-y-2">
-                  <Label htmlFor="noteDate">{t(`${K}.sheet.date`)}</Label>
-                  <Input
-                    id="noteDate"
-                    type="date"
-                    className="h-11"
-                    value={toInputDate(note.date)}
-                    onChange={(e) => update('date', fromInputDate(e.target.value) ?? note.date)}
-                  />
-                </div>
-              )}
-              <SidePanelSwitchRow
-                id="noteReminder"
-                label={t(`${K}.sheet.reminder`)}
-                description={t(`${K}.sheet.reminderHint`)}
-                checked={Boolean(note.reminderDate)}
-                onCheckedChange={(value) => update('reminderDate', value ? new Date(Date.now() + 7 * 24 * 60 * 60 * 1000) : undefined)}
-              />
-              {note.reminderDate && (
-                <div className="space-y-2">
-                  <Label htmlFor="noteReminderDate" className="flex items-center gap-1.5">
-                    <Bell className="w-3.5 h-3.5 text-muted-foreground" />
-                    {t(`${K}.sheet.reminderDate`)}
-                  </Label>
-                  <Input
-                    id="noteReminderDate"
-                    type="date"
-                    className="h-11"
-                    value={toInputDate(note.reminderDate)}
-                    onChange={(e) => update('reminderDate', fromInputDate(e.target.value))}
-                  />
-                </div>
-              )}
-            </SidePanelCard>
-          </SidePanelSection>
-
-          <SidePanelSection icon={Paperclip} title={t(`${K}.sheet.attachmentSection`)}>
-            <SidePanelCard>
-              <SidePanelFileDrop
-                fileName={note.attachment?.name}
-                onSelectFile={(file) => update('attachment', { name: file.name })}
-                onPreview={() => toast.info(t('investors.detail.actions.comingSoon'))}
-                onRemove={() => update('attachment', undefined)}
-                labels={{
-                  dropHint: t('ged.addModal.dropHint'),
-                  dropHintDesc: t('ged.addModal.dropHintDesc'),
-                  fileReady: t('ged.addModal.fileReady'),
-                  preview: t('ged.addModal.preview'),
-                  remove: t('ged.addModal.delete'),
-                }}
-              />
-            </SidePanelCard>
-          </SidePanelSection>
+          <NoteFormFields scope={scope} note={note} onChange={onChange} />
         </div>
 
         <SidePanelFooter>

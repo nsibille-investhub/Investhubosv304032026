@@ -117,6 +117,7 @@ import { SubscriptionSignatureStep } from './SubscriptionSignatureStep';
 import { SubscriptionStatusBadge } from './SubscriptionStatusBadge';
 import { NewSubscriptionDialog } from './NewSubscriptionDialog';
 import { NotesTab } from './investor-detail/NotesTab';
+import { createNote } from './investor-detail/NoteEditSheet';
 import type { Note } from '../utils/investorGenerator';
 
 const SUBSCRIPTION_STEPS = [
@@ -148,6 +149,8 @@ interface SubscriptionDetailPageProps {
 }
 
 
+const DIRECT_PARTNER_NAMES = ['Souscription Directe', 'Direct Subscription'];
+
 export function SubscriptionDetailPage({ subscription: subscriptionProp, onBack }: SubscriptionDetailPageProps) {
   const { t, lang } = useTranslation();
 
@@ -162,23 +165,6 @@ export function SubscriptionDetailPage({ subscription: subscriptionProp, onBack 
   const [isRefreshing, setIsRefreshing] = useState(false);
   const [lastRefreshAt, setLastRefreshAt] = useState<string | null>(null);
   const [openSections, setOpenSections] = useState<string[]>(['identity']);
-  const [notesCount, setNotesCount] = useState(mockNotes.length);
-  const initialNotes = useMemo<Note[]>(
-    () =>
-      mockNotes.map((mock) => ({
-        id: mock.id,
-        title: t(mock.titleKey),
-        content: `<p>${t(mock.contentKey)}</p>`,
-        author: mock.author,
-        date: new Date(mock.date),
-        type: 'General',
-        isImportant: false,
-        reminderDate: mock.reminderDate ? new Date(mock.reminderDate) : undefined,
-        attachment: mock.attachment ? { name: mock.attachment } : undefined,
-      })),
-    // Traduites une seule fois : NotesTab garde ensuite son propre état.
-    [],
-  );
   const [activeTab, setActiveTab] = useState('onboarding');
 
   // Stepper state — newly created subscriptions carry initialStep=0 so they
@@ -197,6 +183,38 @@ export function SubscriptionDetailPage({ subscription: subscriptionProp, onBack 
   });
 
   const initData = (subscription as any).initData ?? {};
+
+  // La note interne saisie à la création arrive en tête de l'onglet Notes.
+  const initialNotes = useMemo<Note[]>(() => {
+    const demo: Note[] = mockNotes.map((mock) => ({
+      id: mock.id,
+      title: t(mock.titleKey),
+      content: `<p>${t(mock.contentKey)}</p>`,
+      author: mock.author,
+      date: new Date(mock.date),
+      type: 'General',
+      isImportant: false,
+      reminderDate: mock.reminderDate ? new Date(mock.reminderDate) : undefined,
+      attachment: mock.attachment ? { name: mock.attachment } : undefined,
+    }));
+    const created = initData.internalNote;
+    if (!created?.title) return demo;
+    return [
+      {
+        ...createNote(),
+        id: 'note-creation',
+        title: created.title,
+        content: created.content,
+        date: subscription.createdAt ? new Date(subscription.createdAt) : new Date(),
+        reminderDate: created.reminderDate ? new Date(created.reminderDate) : undefined,
+        attachment: created.attachment ? { name: created.attachment } : undefined,
+      },
+      ...demo,
+    ];
+    // Construites une seule fois : NotesTab garde ensuite son propre état.
+  }, []);
+  const [notesCount, setNotesCount] = useState(initialNotes.length);
+
   
   // Question states management
   const [questionStatuses, setQuestionStatuses] = useState<Record<string, QuestionStatus>>(INITIAL_QUESTION_STATUSES);
@@ -483,36 +501,24 @@ export function SubscriptionDetailPage({ subscription: subscriptionProp, onBack 
   const investorEmail =
     subscription.email ||
     toEmail(subscription.contrepartie.investor || subscription.contrepartie.name, 'example.com');
-  const investorContactEmail = subscription.contrepartie.mainContact
-    ? toEmail(subscription.contrepartie.mainContact, 'example.com')
-    : '';
   const partnerEmail = partnerDomain ? `contact@${partnerDomain}` : '';
   const advisorEmail = subscription.advisor && partnerDomain
     ? toEmail(subscription.advisor, partnerDomain)
     : '';
 
-  const invitationRecipient = investorContactEmail || investorEmail;
-  const invitationRecipientLabelKey = investorContactEmail
-    ? 'subscriptions.detail.initStep.audiences.contact'
-    : 'subscriptions.detail.initStep.audiences.investor';
-
-  const invitationCopies: Array<{ id: string; labelKey: string; email: string }> = [
-    {
-      id: 'investor',
-      labelKey: 'subscriptions.detail.initStep.audiences.investor',
-      email: investorContactEmail ? investorEmail : '',
-    },
-    {
-      id: 'partner',
-      labelKey: 'subscriptions.detail.initStep.audiences.partner',
-      email: partnerEmail,
-    },
-    {
-      id: 'advisor',
-      labelKey: 'subscriptions.detail.initStep.audiences.advisor',
-      email: advisorEmail,
-    },
-  ].filter(copy => copy.email && copy.email !== invitationRecipient);
+  // L'invitation part toujours à l'investisseur. Sur une souscription
+  // intermédiée, le réseau qui porte la souscription (son conseiller s'il y en
+  // a un, sinon le distributeur) reçoit le même mail en copie, selon la règle
+  // de copie du réseau.
+  const isIntermediated =
+    initData.isIntermediated ?? (!!partnerName && !DIRECT_PARTNER_NAMES.includes(partnerName));
+  const invitationRecipient = investorEmail;
+  const invitationRecipientLabelKey = 'subscriptions.detail.initStep.audiences.investor';
+  const networkCopy = advisorEmail
+    ? { id: 'advisor', labelKey: 'subscriptions.detail.initStep.audiences.advisor', email: advisorEmail }
+    : { id: 'partner', labelKey: 'subscriptions.detail.initStep.audiences.partner', email: partnerEmail };
+  const invitationCopies: Array<{ id: string; labelKey: string; email: string }> =
+    isIntermediated && networkCopy.email ? [networkCopy] : [];
 
   const invitationEmail = mockInitEmails.find(mail => mail.id === 'invitation');
   const invitationSentAt = resentEmails.invitation ?? invitationEmail?.sentAt ?? null;
@@ -1134,6 +1140,11 @@ export function SubscriptionDetailPage({ subscription: subscriptionProp, onBack 
                             ) : (
                               <p className="col-span-2 text-sm text-muted-foreground">
                                 {t('subscriptions.detail.initStep.invitation.noCopies')}
+                              </p>
+                            )}
+                            {invitationCopies.length > 0 && (
+                              <p className="col-span-2 text-xs text-muted-foreground">
+                                {t('subscriptions.detail.initStep.invitation.copyRuleHint')}
                               </p>
                             )}
                           </div>

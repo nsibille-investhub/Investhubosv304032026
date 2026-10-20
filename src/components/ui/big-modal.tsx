@@ -243,9 +243,12 @@ function BigModalPanelHeader({
 }
 
 /** Corps défilant de la modale. */
-function BigModalBody({ className, ...props }: React.HTMLAttributes<HTMLDivElement>) {
-  return <div className={cn("flex-1 overflow-y-auto px-8 py-6", className)} {...props} />
-}
+const BigModalBody = React.forwardRef<HTMLDivElement, React.HTMLAttributes<HTMLDivElement>>(
+  ({ className, ...props }, ref) => (
+    <div ref={ref} className={cn("flex-1 overflow-y-auto px-8 py-6", className)} {...props} />
+  ),
+)
+BigModalBody.displayName = "BigModalBody"
 
 /** Pied de modale : action secondaire (Annuler, Retour) à gauche, actions principales à droite. */
 function BigModalPanelFooter({ start, end }: { start?: React.ReactNode; end?: React.ReactNode }) {

@@ -13,12 +13,9 @@ import { Button } from '../ui/button';
 import { ConfirmDialog } from '../ui/confirm-dialog';
 import { ListingCard, ListingNameCell } from '../ui/listing';
 import { TableRowActions } from '../ui/row-actions';
-import { NOTE_TYPES, NoteEditSheet, type NoteScope } from './NoteEditSheet';
+import { createNote, NOTE_TYPES, NoteEditSheet, type NoteScope } from './NoteEditSheet';
 
 const K = 'investors.detail.notes';
-
-/** Auteur des notes créées depuis la maquette : l'utilisateur connecté. */
-const CURRENT_USER = 'Jean Dault';
 
 type Row = Note & { id: number; noteId: string };
 type SortKey = 'title' | 'type' | 'date' | 'author' | 'reminderDate';
@@ -49,16 +46,7 @@ export function NotesTab({ notes: initialNotes, scope = 'investor', onCountChang
 
   const isNew = !!selected && !notes.some((note) => note.id === selected.id);
 
-  const create = () =>
-    setSelected({
-      id: `note-${Date.now()}`,
-      title: '',
-      author: CURRENT_USER,
-      date: new Date(),
-      content: '',
-      type: 'General',
-      isImportant: false,
-    });
+  const create = () => setSelected(createNote());
 
   const save = () => {
     if (!selected) return;
