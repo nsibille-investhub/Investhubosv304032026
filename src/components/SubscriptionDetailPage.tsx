@@ -49,6 +49,10 @@ import {
   Percent,
   Handshake,
   RefreshCw,
+  History,
+  Lock,
+  UserCheck,
+  ArrowLeft,
 } from 'lucide-react';
 import { motion } from 'motion/react';
 import { Badge } from './ui/badge';
@@ -97,7 +101,18 @@ import {
   mockEmails,
   mockCapitalCalls,
   mockInitEmails,
+  mockBeneficialOwners,
 } from '../utils/subscriptionDetailMockData';
+import {
+  AUDIT_DOCUMENTS_SECTION,
+  buildInitialSubscriptionAudit,
+  createLiveAuditEntry,
+  type SubscriptionAuditEntry,
+} from '../utils/subscriptionAuditMock';
+import { SubscriptionAuditPanel, SubscriptionAuditTab } from './SubscriptionAuditTrail';
+import { Tag as NeutralTag } from './Tag';
+import { EmptyState } from './EmptyState';
+import { RowActionButton } from './ui/row-actions';
 import {
   OnboardingCompletionCard,
   OnboardingSectionNav,
@@ -227,6 +242,21 @@ export function SubscriptionDetailPage({ subscription: subscriptionProp, onBack 
   const [activeOnboardingSection, setActiveOnboardingSection] = useState<string>(mockSections[0].id);
   const onboardingSectionRefs = useRef<Record<string, HTMLDivElement | null>>({});
 
+  // Piste d'audit : saisie, modifications, validations et commentaires de chaque élément.
+  const [auditEntries, setAuditEntries] = useState<SubscriptionAuditEntry[]>(() =>
+    buildInitialSubscriptionAudit({
+      investorName: subscriptionProp.contrepartie?.investor || subscriptionProp.contrepartie?.name || '',
+      sections: mockSections,
+      documents: mockRequiredDocuments,
+      questionStatuses: INITIAL_QUESTION_STATUSES,
+      documentStatuses: INITIAL_DOCUMENT_STATUSES,
+    }),
+  );
+  const [auditElement, setAuditElement] = useState<{ elementId: string; sectionId: string } | null>(null);
+  const logAudit = (...entries: Parameters<typeof createLiveAuditEntry>[0][]) =>
+    setAuditEntries(prev => [...prev, ...entries.map(createLiveAuditEntry)]);
+  const sectionOf = (elementId: string) => elementId.slice(0, elementId.lastIndexOf('-'));
+
   // Risk validation state
   const [riskValidated, setRiskValidated] = useState(false);
   const [riskValidationDate, setRiskValidationDate] = useState<string | null>(null);
@@ -263,12 +293,17 @@ export function SubscriptionDetailPage({ subscription: subscriptionProp, onBack 
 
     // Approve all questions in the section
     const newStatuses = { ...questionStatuses };
+    const logged: Parameters<typeof createLiveAuditEntry>[0][] = [];
     section.questions.forEach((_, idx) => {
       const questionId = `${sectionId}-${idx}`;
+      if (newStatuses[questionId] !== 'approved') {
+        logged.push({ type: 'answerValidated', elementId: questionId, sectionId, viaSection: true });
+      }
       newStatuses[questionId] = 'approved';
     });
-    
+
     setQuestionStatuses(newStatuses);
+    logAudit(...logged);
 
     toast.success(t('subscriptions.detail.onboarding.sectionValidatedToast'), {
       description: t('subscriptions.detail.onboarding.sectionValidatedDesc', { count: section.questions.length, title: sectionTitle }),
@@ -296,15 +331,24 @@ export function SubscriptionDetailPage({ subscription: subscriptionProp, onBack 
   // Question actions handlers
   const handleApproveQuestion = (questionId: string) => {
     setQuestionStatuses(prev => ({ ...prev, [questionId]: 'approved' }));
+    logAudit({ type: 'answerValidated', elementId: questionId, sectionId: sectionOf(questionId) });
   };
 
   const handleRejectQuestion = (questionId: string) => {
     setQuestionStatuses(prev => ({ ...prev, [questionId]: 'rejected' }));
+    logAudit({ type: 'answerInvalidated', elementId: questionId, sectionId: sectionOf(questionId) });
   };
 
-  const handleModifyQuestion = (questionId: string, newValue: string) => {
+  const handleModifyQuestion = (questionId: string, newValue: string, previousValue: string) => {
     setQuestionResponses(prev => ({ ...prev, [questionId]: newValue }));
     setQuestionStatuses(prev => ({ ...prev, [questionId]: 'modified' }));
+    logAudit({
+      type: 'answerModified',
+      elementId: questionId,
+      sectionId: sectionOf(questionId),
+      previousValue,
+      newValue,
+    });
   };
 
   const handleToggleComment = (questionId: string) => {
@@ -317,6 +361,12 @@ export function SubscriptionDetailPage({ subscription: subscriptionProp, onBack 
       ...prev,
       [questionId]: [...(prev[questionId] || []), comment]
     }));
+    logAudit({
+      type: 'commentAdded',
+      elementId: questionId,
+      sectionId: sectionOf(questionId),
+      newValue: typeof comment?.text === 'string' ? comment.text : undefined,
+    });
   };
 
   const handleResolveComment = (questionId: string, commentId: string) => {
@@ -387,6 +437,8 @@ export function SubscriptionDetailPage({ subscription: subscriptionProp, onBack 
   const documentBuckets = getDocumentBuckets();
 
 
+  const isCorporateInvestor = subscription.contrepartie?.type === 'corporate';
+
   const onboardingNavSections: OnboardingNavSection[] = mockSections.map((section, idx) => ({
     id: section.id,
     titleKey: section.titleKey,
@@ -394,6 +446,9 @@ export function SubscriptionDetailPage({ subscription: subscriptionProp, onBack 
     position: idx + 1,
     kind: section.id === 'documents' ? 'documents' : 'questions',
     stats: getSectionBuckets(section.id),
+    groupKey: section.preonboarding
+      ? 'subscriptions.detail.onboarding.preonboarding.group'
+      : 'subscriptions.detail.onboarding.preonboarding.dossierGroup',
   }));
 
   const handleSelectOnboardingSection = (sectionId: string) => {
@@ -407,22 +462,34 @@ export function SubscriptionDetailPage({ subscription: subscriptionProp, onBack 
 
   const handleApproveDocument = (idx: number) => {
     setDocumentStatuses(prev => ({ ...prev, [`document-${idx}`]: 'approved' }));
+    logAudit({ type: 'documentValidated', elementId: `document-${idx}`, sectionId: AUDIT_DOCUMENTS_SECTION });
   };
 
   const handleRejectDocument = (idx: number) => {
     setDocumentStatuses(prev => ({ ...prev, [`document-${idx}`]: 'rejected' }));
+    logAudit({ type: 'documentRejected', elementId: `document-${idx}`, sectionId: AUDIT_DOCUMENTS_SECTION });
   };
 
   const handleValidateDocuments = (sectionTitle: string) => {
     const next: Record<string, QuestionStatus> = { ...documentStatuses };
     let validated = 0;
+    const logged: Parameters<typeof createLiveAuditEntry>[0][] = [];
     mockRequiredDocuments.forEach((doc, idx) => {
       if (doc.hasFile) {
+        if (next[`document-${idx}`] !== 'approved') {
+          logged.push({
+            type: 'documentValidated',
+            elementId: `document-${idx}`,
+            sectionId: AUDIT_DOCUMENTS_SECTION,
+            viaSection: true,
+          });
+        }
         next[`document-${idx}`] = 'approved';
         validated += 1;
       }
     });
     setDocumentStatuses(next);
+    logAudit(...logged);
     toast.success(t('subscriptions.detail.onboarding.sectionValidatedToast'), {
       description: t('subscriptions.detail.onboarding.completion.documentsValidatedDesc', {
         count: validated,
@@ -897,6 +964,26 @@ export function SubscriptionDetailPage({ subscription: subscriptionProp, onBack 
     />
   );
 
+  if (subscription.restrictedToOtherOperators) {
+    return (
+      <div className="min-h-screen bg-muted px-8 py-6">
+        <Card>
+          <EmptyState
+            icon={Lock}
+            title={t('subscriptions.detail.accessDenied.title')}
+            description={t('subscriptions.detail.accessDenied.description')}
+            action={
+              <Button variant="outline" onClick={onBack} className="gap-2">
+                <ArrowLeft className="w-4 h-4" />
+                {t('subscriptions.detail.accessDenied.back')}
+              </Button>
+            }
+          />
+        </Card>
+      </div>
+    );
+  }
+
   return (
     <div className="min-h-screen bg-muted">
       <PageHeader
@@ -979,6 +1066,7 @@ export function SubscriptionDetailPage({ subscription: subscriptionProp, onBack 
               { value: 'documents', icon: FolderOpen, labelKey: 'subscriptions.detail.tabs.documents', badge: String(mockDocuments.length) },
               { value: 'integrations', icon: Database, labelKey: 'subscriptions.detail.tabs.integrations', badge: '5' },
               { value: 'notes', icon: MessageSquare, labelKey: 'subscriptions.detail.tabs.notes', badge: String(notesCount) },
+              { value: 'audit', icon: History, labelKey: 'subscriptions.detail.tabs.audit', badge: String(auditEntries.length) },
             ].map(tab => ({
               value: tab.value,
               icon: tab.icon,
@@ -1235,8 +1323,49 @@ export function SubscriptionDetailPage({ subscription: subscriptionProp, onBack 
                 const allVerified = buckets.total > 0 && buckets.validated === buckets.total;
 
                 return (
+                  <Fragment key={section.id}>
+                  {isDocuments && isCorporateInvestor && mockBeneficialOwners.length > 0 && (
+                    <SectionCard
+                      mode="read"
+                      icon={UserCheck}
+                      title={t('subscriptions.detail.beneficialOwners.title')}
+                      iconTone="info"
+                      summary={
+                        <span className="font-semibold text-foreground">
+                          {t(
+                            mockBeneficialOwners.length === 1
+                              ? 'subscriptions.detail.beneficialOwners.countOne'
+                              : 'subscriptions.detail.beneficialOwners.countMany',
+                            { count: mockBeneficialOwners.length },
+                          )}
+                        </span>
+                      }
+                    >
+                      <div className="divide-y divide-border">
+                        <div className="grid grid-cols-12 gap-4 px-4 py-2 bg-muted text-xs font-medium text-muted-foreground uppercase tracking-wider">
+                          <span className="col-span-3">{t('subscriptions.detail.beneficialOwners.columns.name')}</span>
+                          <span className="col-span-2">{t('subscriptions.detail.beneficialOwners.columns.ownership')}</span>
+                          <span className="col-span-3">{t('subscriptions.detail.beneficialOwners.columns.control')}</span>
+                          <span className="col-span-2">{t('subscriptions.detail.beneficialOwners.columns.nationality')}</span>
+                          <span className="col-span-2">{t('subscriptions.detail.beneficialOwners.columns.birthDate')}</span>
+                        </div>
+                        {mockBeneficialOwners.map(owner => (
+                          <div key={owner.id} className="grid grid-cols-12 gap-4 p-4 items-center text-sm">
+                            <span className="col-span-3 font-medium text-foreground">{owner.name}</span>
+                            <span className="col-span-2 text-foreground/80 tabular-nums">
+                              {owner.ownership > 0 ? `${owner.ownership} %` : '-'}
+                            </span>
+                            <span className="col-span-3">
+                              <NeutralTag label={t(owner.controlTypeKey)} />
+                            </span>
+                            <span className="col-span-2 text-foreground/80">{owner.nationality}</span>
+                            <span className="col-span-2 text-muted-foreground tabular-nums">{owner.birthDate}</span>
+                          </div>
+                        ))}
+                      </div>
+                    </SectionCard>
+                  )}
                   <div
-                    key={section.id}
                     ref={el => {
                       onboardingSectionRefs.current[section.id] = el;
                     }}
@@ -1268,7 +1397,11 @@ export function SubscriptionDetailPage({ subscription: subscriptionProp, onBack 
                       </>
                     }
                     badges={
-                      allVerified ? (
+                      <>
+                      {section.preonboarding && (
+                        <NeutralTag label={t('subscriptions.detail.onboarding.preonboarding.badge')} />
+                      )}
+                      {allVerified ? (
                         <Badge className="bg-emerald-100 text-emerald-700 border-emerald-200">
                           <CheckCircle2 className="w-3.5 h-3.5 mr-1.5" />
                           {t('subscriptions.detail.onboarding.sectionValidated')}
@@ -1283,7 +1416,8 @@ export function SubscriptionDetailPage({ subscription: subscriptionProp, onBack 
                           <AlertCircle className="w-3.5 h-3.5 mr-1.5" />
                           {t('subscriptions.detail.onboarding.inProgress')}
                         </Badge>
-                      )
+                      )}
+                      </>
                     }
                     validationBar={
                       !isDocuments && !allVerified
@@ -1394,6 +1528,14 @@ export function SubscriptionDetailPage({ subscription: subscriptionProp, onBack 
                                           )}
                                         </td>
                                         <td className="px-4 py-3 text-center">
+                                          <div className="flex items-center justify-center gap-1">
+                                          <RowActionButton
+                                            icon={History}
+                                            tooltip={t('subscriptions.detail.questionActions.timeline')}
+                                            onClick={() =>
+                                              setAuditElement({ elementId: `document-${idx}`, sectionId: AUDIT_DOCUMENTS_SECTION })
+                                            }
+                                          />
                                           <Button
                                             variant="outline"
                                             size="sm"
@@ -1405,6 +1547,7 @@ export function SubscriptionDetailPage({ subscription: subscriptionProp, onBack 
                                               ? t('subscriptions.detail.docsTable.replace')
                                               : t('subscriptions.detail.docsTable.add')}
                                           </Button>
+                                          </div>
                                         </td>
                                         <td className="px-4 py-3">
                                           {docState === 'pending' ? (
@@ -1488,8 +1631,9 @@ export function SubscriptionDetailPage({ subscription: subscriptionProp, onBack 
                                             hasUnresolvedComments={hasUnresolved}
                                             onApprove={() => handleApproveQuestion(questionId)}
                                             onReject={() => handleRejectQuestion(questionId)}
-                                            onModify={(newValue) => handleModifyQuestion(questionId, newValue)}
+                                            onModify={(newValue) => handleModifyQuestion(questionId, newValue, response || '')}
                                             onComment={() => handleToggleComment(questionId)}
+                                            onTimeline={() => setAuditElement({ elementId: questionId, sectionId: section.id })}
                                           />
                                         </div>
                                       </div>
@@ -1513,6 +1657,7 @@ export function SubscriptionDetailPage({ subscription: subscriptionProp, onBack 
                           )}
                   </SectionCard>
                   </div>
+                  </Fragment>
                 );
               })}
 
@@ -1966,6 +2111,17 @@ export function SubscriptionDetailPage({ subscription: subscriptionProp, onBack 
             <IntegrationsTab />
           </TabsContent>
 
+          <TabsContent value="audit" className="mt-0">
+            <div className="px-8 py-6">
+              <SubscriptionAuditTab
+                entries={auditEntries}
+                sections={mockSections}
+                documents={mockRequiredDocuments}
+                subscriptionName={subscription.name}
+              />
+            </div>
+          </TabsContent>
+
           <TabsContent value="notes" className="mt-0">
             <div className="px-8 py-6">
               <NotesTab notes={initialNotes} scope="subscription" onCountChange={setNotesCount} />
@@ -1973,6 +2129,19 @@ export function SubscriptionDetailPage({ subscription: subscriptionProp, onBack 
           </TabsContent>
         </Tabs>
       </div>
+
+      <SubscriptionAuditPanel
+        entries={auditEntries}
+        sections={mockSections}
+        documents={mockRequiredDocuments}
+        elementId={auditElement?.elementId ?? null}
+        sectionId={auditElement?.sectionId}
+        onClose={() => setAuditElement(null)}
+        onShowAll={() => {
+          setAuditElement(null);
+          setActiveTab('audit');
+        }}
+      />
 
       <NewSubscriptionDialog
         open={isEditDialogOpen}

@@ -423,7 +423,8 @@
         "capitalCalls": "Capital calls",
         "documents": "Documents",
         "integrations": "Integrations",
-        "notes": "Notes"
+        "notes": "Notes",
+        "audit": "Audit trail"
       },
       "stepper": {
         "stepOf": "Step {{current}}/{{total}}",
@@ -595,7 +596,8 @@
         "banking": "Banking details",
         "professional": "Professional situation",
         "financial": "Financial situation",
-        "documents": "Supporting documents"
+        "documents": "Supporting documents",
+        "investorProfile": "Investor profile"
       },
       "onboarding": {
         "answeredOf": "{{answered}}/{{total}} answered",
@@ -632,6 +634,11 @@
           },
           "documentsCountOne": "{{count}} document",
           "documentsCountMany": "{{count}} documents"
+        },
+        "preonboarding": {
+          "group": "Pre-onboarding",
+          "dossierGroup": "File onboarding",
+          "badge": "Pre-onboarding"
         }
       },
       "validation": {
@@ -1155,6 +1162,93 @@
           "noteAdded": "Note added to the log",
           "complianceReopenedDesc": "Score, matches and categorisation can be changed again.",
           "scoreInvalidated": "Score validation removed"
+        }
+      },
+      "accessDenied": {
+        "title": "Access denied",
+        "description": "This subscription holds a share restricted to other operators. You do not have the rights to view its file.",
+        "back": "Back to subscriptions"
+      },
+      "beneficialOwners": {
+        "title": "Beneficial owners",
+        "countOne": "{{count}} declared beneficial owner",
+        "countMany": "{{count}} declared beneficial owners",
+        "columns": {
+          "name": "Name",
+          "ownership": "Ownership",
+          "control": "Type of control",
+          "nationality": "Nationality",
+          "birthDate": "Birth"
+        },
+        "control": {
+          "capital": "Capital ownership",
+          "votingRights": "Voting rights",
+          "otherMeans": "Control by any other means"
+        }
+      },
+      "questionActions": {
+        "modifiedToast": "Answer modified",
+        "modifiedToastDesc": "The change has been saved",
+        "approvedToast": "Answer validated",
+        "approvedToastDesc": "The answer has been validated",
+        "rejectedToast": "Answer invalidated",
+        "rejectedToastDesc": "The answer has been invalidated",
+        "save": "Save",
+        "cancel": "Cancel",
+        "approved": "Validated",
+        "rejected": "Invalidated",
+        "modified": "Modified",
+        "approve": "Validate the answer",
+        "reject": "Invalidate the answer",
+        "modify": "Modify the answer",
+        "addComment": "Add a comment",
+        "unresolvedComments": "{{count}} unresolved comment(s)",
+        "resolvedComments": "{{count}} resolved comment(s)",
+        "timeline": "Audit trail"
+      },
+      "audit": {
+        "title": "Audit trail",
+        "hint": "Every entry, change, validation and comment on the file, with its author, origin and date.",
+        "sectionFilter": "Filter by section",
+        "allSections": "All sections",
+        "dossier": "File",
+        "empty": "(empty)",
+        "reason": "Reason: {{reason}}",
+        "viaSection": "Through the section validation",
+        "emptyTimeline": "No event for this item",
+        "panelTitle": "Audit trail",
+        "showAll": "See the full audit trail",
+        "close": "Close",
+        "columns": {
+          "date": "Date",
+          "time": "Time",
+          "event": "Event",
+          "section": "Section",
+          "element": "Item",
+          "previousValue": "Previous value",
+          "newValue": "New value",
+          "reason": "Reason",
+          "author": "Author",
+          "origin": "Origin"
+        },
+        "types": {
+          "invitationSent": "Invitation sent",
+          "answerEntered": "Answer entered",
+          "answerModified": "Answer modified",
+          "answerValidated": "Answer validated",
+          "answerInvalidated": "Answer invalidated",
+          "documentUploaded": "Document uploaded",
+          "documentReplaced": "Document replaced",
+          "documentValidated": "Document validated",
+          "documentRejected": "Document rejected",
+          "commentAdded": "Comment added",
+          "dossierSubmitted": "File submitted"
+        },
+        "origin": {
+          "investor": "Investor",
+          "operator": "Back-office operator",
+          "automatic": "Automatic",
+          "api": "API"
         }
       }
     },

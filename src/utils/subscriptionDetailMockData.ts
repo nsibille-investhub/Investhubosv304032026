@@ -4,6 +4,7 @@ import {
   DollarSign,
   FileText,
   TrendingUp,
+  Compass,
 } from 'lucide-react';
 
 export interface MockQuestion {
@@ -18,6 +19,8 @@ export interface MockSection {
   titleKey: string;
   icon: any;
   questions: MockQuestion[];
+  /** Section du préonboarding configuré au niveau de l'application, contrôlée avec le dossier. */
+  preonboarding?: boolean;
 }
 
 export interface MockRequiredDocument {
@@ -73,6 +76,18 @@ export interface MockCapitalCall {
 }
 
 export const mockSections: MockSection[] = [
+  {
+    id: 'investorProfile',
+    titleKey: 'subscriptions.detail.sections.investorProfile',
+    icon: Compass,
+    preonboarding: true,
+    questions: [
+      { question: "Êtes-vous un investisseur professionnel au sens de la directive MIF II ?*", response: "Non", verified: true },
+      { question: "Avez-vous déjà investi dans un fonds non coté ?*", response: "Oui", verified: true },
+      { question: "Horizon d'investissement envisagé*", response: "Plus de 8 ans", verified: true },
+      { question: "J'ai pris connaissance du risque de perte totale ou partielle du capital investi*", response: "Oui", verified: true },
+    ]
+  },
   {
     id: 'identity',
     titleKey: 'subscriptions.detail.sections.identity',
@@ -304,4 +319,20 @@ export const mockFundCounterSignatories: MockCounterSignatory[] = [
     roleKey: 'subscriptions.detail.signatureStep.roles.middleOffice',
     email: 'claire.moreau@example.com',
   },
+];
+
+export interface MockBeneficialOwner {
+  id: string;
+  name: string;
+  ownership: number;
+  /** Clé de traduction du type de contrôle. */
+  controlTypeKey: string;
+  nationality: string;
+  birthDate: string;
+}
+
+export const mockBeneficialOwners: MockBeneficialOwner[] = [
+  { id: 'bo-1', name: 'Hélène Marchand', ownership: 42, controlTypeKey: 'subscriptions.detail.beneficialOwners.control.capital', nationality: 'France', birthDate: '03/02/1968' },
+  { id: 'bo-2', name: 'Thomas Keller', ownership: 31, controlTypeKey: 'subscriptions.detail.beneficialOwners.control.votingRights', nationality: 'Suisse', birthDate: '21/11/1974' },
+  { id: 'bo-3', name: 'Lucie Garnier', ownership: 0, controlTypeKey: 'subscriptions.detail.beneficialOwners.control.otherMeans', nationality: 'France', birthDate: '09/06/1981' },
 ];

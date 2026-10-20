@@ -1,0 +1,208 @@
+import type { MockRequiredDocument, MockSection } from './subscriptionDetailMockData';
+
+export type SubscriptionAuditEventType =
+  | 'invitationSent'
+  | 'answerEntered'
+  | 'answerModified'
+  | 'answerValidated'
+  | 'answerInvalidated'
+  | 'documentUploaded'
+  | 'documentReplaced'
+  | 'documentValidated'
+  | 'documentRejected'
+  | 'commentAdded'
+  | 'dossierSubmitted';
+
+export const SUBSCRIPTION_AUDIT_EVENT_TYPES: SubscriptionAuditEventType[] = [
+  'invitationSent',
+  'answerEntered',
+  'answerModified',
+  'answerValidated',
+  'answerInvalidated',
+  'documentUploaded',
+  'documentReplaced',
+  'documentValidated',
+  'documentRejected',
+  'commentAdded',
+  'dossierSubmitted',
+];
+
+/** Origine d'un changement, reprise de IC-5264. */
+export type SubscriptionAuditOrigin = 'investor' | 'operator' | 'automatic' | 'api';
+
+export interface SubscriptionAuditEntry {
+  id: string;
+  type: SubscriptionAuditEventType;
+  timestamp: string;
+  origin: SubscriptionAuditOrigin;
+  /** Absent pour une action automatique ou API : le libellé de l'origine sert d'auteur. */
+  actorName?: string;
+  /** `${sectionId}-${index}` pour une réponse, `document-${index}` pour une pièce. Absent pour le dossier. */
+  elementId?: string;
+  /** Absent pour un événement qui porte sur le dossier entier. */
+  sectionId?: string;
+  previousValue?: string;
+  newValue?: string;
+  reason?: string;
+  /** Validation individuelle produite par la validation d'une section en un clic. */
+  viaSection?: boolean;
+}
+
+export const AUDIT_DOSSIER_SCOPE = 'dossier';
+export const AUDIT_DOCUMENTS_SECTION = 'documents';
+
+/** Opérateur connecté dans la maquette. */
+export const CURRENT_OPERATOR = 'Jean Dupont';
+const CONTROLLER = 'Claire Martin';
+
+let liveSequence = 0;
+
+export function createLiveAuditEntry(
+  entry: Omit<SubscriptionAuditEntry, 'id' | 'timestamp' | 'origin' | 'actorName'> &
+    Partial<Pick<SubscriptionAuditEntry, 'origin' | 'actorName'>>,
+): SubscriptionAuditEntry {
+  liveSequence += 1;
+  return {
+    origin: 'operator',
+    actorName: CURRENT_OPERATOR,
+    ...entry,
+    id: `live-${Date.now()}-${liveSequence}`,
+    timestamp: new Date().toISOString(),
+  };
+}
+
+const at = (day: string, minutes: number) => {
+  const base = new Date(`${day}:00`);
+  base.setMinutes(base.getMinutes() + minutes);
+  return base.toISOString();
+};
+
+interface BuildInitialAuditInput {
+  investorName: string;
+  sections: MockSection[];
+  documents: MockRequiredDocument[];
+  questionStatuses: Record<string, string>;
+  documentStatuses: Record<string, string>;
+}
+
+/**
+ * Piste d'audit de départ de la maquette : invitation, saisie (préremplissage
+ * compris), correction avant soumission, soumission, revue du contrôleur,
+ * corrections postérieures par le back-office et l'API.
+ */
+export function buildInitialSubscriptionAudit({
+  investorName,
+  sections,
+  documents,
+  questionStatuses,
+  documentStatuses,
+}: BuildInitialAuditInput): SubscriptionAuditEntry[] {
+  const entries: SubscriptionAuditEntry[] = [];
+  let seq = 0;
+  const push = (entry: Omit<SubscriptionAuditEntry, 'id'>) => {
+    seq += 1;
+    entries.push({ id: `audit-${seq}`, ...entry });
+  };
+
+  push({ type: 'invitationSent', timestamp: at('2026-05-12T09:00', 0), origin: 'automatic' });
+
+  const questionSections = sections.filter(s => s.id !== AUDIT_DOCUMENTS_SECTION);
+  questionSections.forEach((section, sectionIdx) => {
+    const day = section.preonboarding ? '2026-05-12T10:15' : '2026-05-18T14:00';
+    section.questions.forEach((question, idx) => {
+      if (!question.response) return;
+      const prefilled = section.id === 'identity' && idx < 4;
+      push({
+        type: 'answerEntered',
+        timestamp: at(day, sectionIdx * 25 + idx),
+        origin: prefilled ? 'automatic' : 'investor',
+        actorName: prefilled ? undefined : investorName,
+        elementId: `${section.id}-${idx}`,
+        sectionId: section.id,
+        newValue: question.response,
+      });
+    });
+  });
+
+  // Correction de l'investisseur avant la soumission : historisée, sans indicateur.
+  push({
+    type: 'answerModified',
+    timestamp: at('2026-05-19T15:50', 0),
+    origin: 'investor',
+    actorName: investorName,
+    elementId: 'financial-0',
+    sectionId: 'financial',
+    previousValue: '500 000,00 EUR',
+    newValue: '800 000,00 EUR',
+  });
+
+  documents.forEach((doc, idx) => {
+    if (!doc.hasFile) return;
+    push({
+      type: 'documentUploaded',
+      timestamp: at('2026-05-19T16:00', idx),
+      origin: 'investor',
+      actorName: investorName,
+      elementId: `document-${idx}`,
+      sectionId: AUDIT_DOCUMENTS_SECTION,
+    });
+  });
+
+  push({
+    type: 'dossierSubmitted',
+    timestamp: at('2026-05-19T16:10', 0),
+    origin: 'investor',
+    actorName: investorName,
+  });
+
+  push({
+    type: 'answerModified',
+    timestamp: at('2026-05-20T08:00', 0),
+    origin: 'api',
+    elementId: 'professional-1',
+    sectionId: 'professional',
+    previousValue: 'Cadres',
+    newValue: 'Artisans',
+  });
+
+  let reviewMinute = 0;
+  Object.entries(questionStatuses).forEach(([elementId, status]) => {
+    if (status !== 'approved' && status !== 'rejected') return;
+    reviewMinute += 2;
+    push({
+      type: status === 'approved' ? 'answerValidated' : 'answerInvalidated',
+      timestamp: at('2026-05-21T10:00', reviewMinute),
+      origin: 'operator',
+      actorName: CONTROLLER,
+      elementId,
+      sectionId: elementId.slice(0, elementId.lastIndexOf('-')),
+      reason: status === 'rejected' ? "Nationalité incohérente avec la pièce d'identité fournie" : undefined,
+    });
+  });
+
+  push({
+    type: 'answerModified',
+    timestamp: at('2026-05-21T10:30', 0),
+    origin: 'operator',
+    actorName: CONTROLLER,
+    elementId: 'banking-4',
+    sectionId: 'banking',
+    previousValue: 'BNP',
+    newValue: 'BNP Paribas',
+  });
+
+  Object.entries(documentStatuses).forEach(([elementId, status], idx) => {
+    if (status !== 'approved' && status !== 'rejected') return;
+    push({
+      type: status === 'approved' ? 'documentValidated' : 'documentRejected',
+      timestamp: at('2026-05-21T10:40', idx * 3),
+      origin: 'operator',
+      actorName: CONTROLLER,
+      elementId,
+      sectionId: AUDIT_DOCUMENTS_SECTION,
+      reason: status === 'rejected' ? 'Document illisible, merci de transmettre une copie complète' : undefined,
+    });
+  });
+
+  return entries;
+}

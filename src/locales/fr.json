@@ -423,7 +423,8 @@
         "capitalCalls": "Appels de fonds",
         "documents": "Documents",
         "integrations": "Intégrations",
-        "notes": "Notes"
+        "notes": "Notes",
+        "audit": "Piste d'audit"
       },
       "stepper": {
         "stepOf": "Étape {{current}}/{{total}}",
@@ -595,7 +596,8 @@
         "banking": "Coordonnées bancaires",
         "professional": "Situation professionnelle",
         "financial": "Situation financière",
-        "documents": "Pièces justificatives"
+        "documents": "Pièces justificatives",
+        "investorProfile": "Profil investisseur"
       },
       "onboarding": {
         "answeredOf": "{{answered}}/{{total}} répondues",
@@ -632,6 +634,11 @@
           },
           "documentsCountOne": "{{count}} document",
           "documentsCountMany": "{{count}} documents"
+        },
+        "preonboarding": {
+          "group": "Préonboarding",
+          "dossierGroup": "Onboarding du dossier",
+          "badge": "Préonboarding"
         }
       },
       "validation": {
@@ -1155,6 +1162,93 @@
           "noteAdded": "Note ajoutée au journal",
           "complianceReopenedDesc": "Score, correspondances et catégorisation sont de nouveau modifiables.",
           "scoreInvalidated": "Validation du score retirée"
+        }
+      },
+      "accessDenied": {
+        "title": "Accès refusé",
+        "description": "Cette souscription porte une part réservée à d'autres opérateurs. Vous n'avez pas les droits pour consulter son dossier.",
+        "back": "Retour aux souscriptions"
+      },
+      "beneficialOwners": {
+        "title": "Bénéficiaires effectifs",
+        "countOne": "{{count}} bénéficiaire effectif déclaré",
+        "countMany": "{{count}} bénéficiaires effectifs déclarés",
+        "columns": {
+          "name": "Nom",
+          "ownership": "Détention",
+          "control": "Type de contrôle",
+          "nationality": "Nationalité",
+          "birthDate": "Naissance"
+        },
+        "control": {
+          "capital": "Détention du capital",
+          "votingRights": "Droits de vote",
+          "otherMeans": "Contrôle par tout autre moyen"
+        }
+      },
+      "questionActions": {
+        "modifiedToast": "Réponse modifiée",
+        "modifiedToastDesc": "La modification a été enregistrée",
+        "approvedToast": "Réponse validée",
+        "approvedToastDesc": "La réponse a été validée",
+        "rejectedToast": "Réponse invalidée",
+        "rejectedToastDesc": "La réponse a été invalidée",
+        "save": "Enregistrer",
+        "cancel": "Annuler",
+        "approved": "Validée",
+        "rejected": "Invalidée",
+        "modified": "Modifiée",
+        "approve": "Valider la réponse",
+        "reject": "Invalider la réponse",
+        "modify": "Modifier la réponse",
+        "addComment": "Ajouter un commentaire",
+        "unresolvedComments": "{{count}} commentaire(s) non résolu(s)",
+        "resolvedComments": "{{count}} commentaire(s) résolu(s)",
+        "timeline": "Piste d'audit"
+      },
+      "audit": {
+        "title": "Piste d'audit",
+        "hint": "Chaque saisie, modification, validation et commentaire du dossier, avec son auteur, son origine et sa date.",
+        "sectionFilter": "Filtrer par section",
+        "allSections": "Toutes les sections",
+        "dossier": "Dossier",
+        "empty": "(vide)",
+        "reason": "Motif : {{reason}}",
+        "viaSection": "Via la validation de la section",
+        "emptyTimeline": "Aucun événement pour cet élément",
+        "panelTitle": "Piste d'audit",
+        "showAll": "Voir toute la piste d'audit",
+        "close": "Fermer",
+        "columns": {
+          "date": "Date",
+          "time": "Heure",
+          "event": "Événement",
+          "section": "Section",
+          "element": "Élément",
+          "previousValue": "Ancienne valeur",
+          "newValue": "Nouvelle valeur",
+          "reason": "Motif",
+          "author": "Auteur",
+          "origin": "Origine"
+        },
+        "types": {
+          "invitationSent": "Invitation envoyée",
+          "answerEntered": "Réponse saisie",
+          "answerModified": "Réponse modifiée",
+          "answerValidated": "Réponse validée",
+          "answerInvalidated": "Réponse invalidée",
+          "documentUploaded": "Document déposé",
+          "documentReplaced": "Document remplacé",
+          "documentValidated": "Document validé",
+          "documentRejected": "Document refusé",
+          "commentAdded": "Commentaire ajouté",
+          "dossierSubmitted": "Dossier soumis"
+        },
+        "origin": {
+          "investor": "Investisseur",
+          "operator": "Opérateur back-office",
+          "automatic": "Automatique",
+          "api": "API"
         }
       }
     },

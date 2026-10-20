@@ -38,6 +38,8 @@ export interface OnboardingNavSection {
   position: number;
   kind: 'questions' | 'documents';
   stats: OnboardingBucketStats;
+  /** Clé du libellé de groupe (préonboarding, dossier). */
+  groupKey?: string;
 }
 
 const STATE_ORDER: OnboardingItemState[] = [
@@ -311,6 +313,7 @@ export function OnboardingSectionNav({
             }),
       icon: section.icon,
       iconTone: state === 'validated' ? 'success' : 'neutral',
+      group: section.groupKey ? t(section.groupKey) : undefined,
       indicator: {
         kind: 'count',
         value: section.stats.validated,
