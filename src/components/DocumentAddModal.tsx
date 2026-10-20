@@ -3,6 +3,7 @@ import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetDescription } from '
 import { Button } from './ui/button';
 import { Input } from './ui/input';
 import { Label } from './ui/label';
+import { FormSection, FormSubsection } from './ui/form-section';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from './ui/select';
 import { Switch } from './ui/switch';
 import { Tabs, TabsList, TabsTrigger, TabsContent } from './ui/tabs';
@@ -728,12 +729,8 @@ export function DocumentAddModal({ isOpen, onClose, folderOptions, defaultFolder
         </SheetHeader>
 
         <div className="flex-1 overflow-y-auto px-6 py-5 space-y-5">
-          <section className="space-y-3 rounded-2xl p-4 border" style={{ backgroundColor: '#EEF1F7', borderColor: '#000E2B1F' }}>
-            <div>
-              <p className="font-semibold flex items-center gap-2" style={{ color: '#000E2B' }}><FileText className="w-5 h-5" style={{ color: '#000E2B' }} /> {t('ged.addModal.sectionDocument')}</p>
-              <p className="text-sm text-slate-600">{t('ged.addModal.sectionDocumentDesc')}</p>
-            </div>
-            <div className="rounded-2xl border bg-white p-4 md:p-5" style={{ borderColor: '#000E2B33' }}>
+          <FormSection icon={FileText} title={t('ged.addModal.sectionDocument')} description={t('ged.addModal.sectionDocumentDesc')}>
+            <FormSubsection>
               <Tabs defaultValue="fr" className="w-full">
                 <TabsList className="grid w-full grid-cols-2">
                   <TabsTrigger value="fr">🇫🇷 FR</TabsTrigger>
@@ -844,8 +841,9 @@ export function DocumentAddModal({ isOpen, onClose, folderOptions, defaultFolder
                   );
                 })}
               </Tabs>
-            </div>
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 pt-2">
+            </FormSubsection>
+            <FormSubsection>
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
               <div className="space-y-2 lg:col-span-2">
                 <Label>
                   {t('ged.addModal.documentCategoryLabel')}
@@ -883,13 +881,10 @@ export function DocumentAddModal({ isOpen, onClose, folderOptions, defaultFolder
                 />
               </div>
             </div>
-          </section>
+            </FormSubsection>
+          </FormSection>
 
-          <section className="space-y-4 rounded-2xl p-4 border" style={{ backgroundColor: '#EEF1F7', borderColor: '#000E2B1F' }}>
-            <div>
-              <p className="font-semibold flex items-center gap-2" style={{ color: '#000E2B' }}><Users2 className="w-5 h-5" style={{ color: '#000E2B' }} /> {t('ged.addModal.sectionAudience')}</p>
-              <p className="text-sm text-slate-600">{t('ged.addModal.sectionAudienceDesc')}</p>
-            </div>
+          <FormSection icon={Users2} title={t('ged.addModal.sectionAudience')} description={t('ged.addModal.sectionAudienceDesc')}>
             {hasParentFolderRestrictions && (
               <div className="rounded-xl border border-amber-200 bg-amber-50 p-3 space-y-2">
                 <div className="flex items-center gap-2 text-sm font-semibold text-amber-900">
@@ -923,7 +918,7 @@ export function DocumentAddModal({ isOpen, onClose, folderOptions, defaultFolder
             </div>
 
             {audienceMode === 'general' ? (
-              <div className="space-y-4 border rounded-2xl p-5 bg-white shadow-sm" style={{ borderColor: '#000E2B33' }}>
+              <FormSubsection>
                 <div className="space-y-2">
                   <Label>{t('ged.addModal.segmentsLabel')}</Label>
                   <SegmentsMultiSelect
@@ -958,9 +953,9 @@ export function DocumentAddModal({ isOpen, onClose, folderOptions, defaultFolder
                     </div>
                   )}
                 </div>
-              </div>
+              </FormSubsection>
             ) : (
-              <div className="space-y-4 border rounded-2xl p-5 bg-white" style={{ borderColor: '#000E2B1F' }}>
+              <FormSubsection>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
                   <div className="space-y-2">
                     <Label>{t('ged.addModal.investorLabel')}</Label>
@@ -1012,40 +1007,39 @@ export function DocumentAddModal({ isOpen, onClose, folderOptions, defaultFolder
                     disabled={!selectedInvestor}
                   />
                 </div>
-              </div>
+              </FormSubsection>
             )}
 
-            <div className="rounded-2xl border p-4 space-y-4" style={{ borderColor: '#000E2B1F', backgroundColor: '#EEF1F7' }}>
-                <div className="flex items-center justify-between gap-3">
-                  <div>
-                    <p className="font-semibold flex items-center gap-2" style={{ color: '#000E2B' }}><ShieldCheck className="w-5 h-5" style={{ color: '#000E2B' }} /> {t('ged.addModal.accessRights')}</p>
-                    <p className="text-sm text-slate-600">{t('ged.addModal.accessRightsDesc')}</p>
-                  </div>
-                  {audienceMode === 'general' && (
-                  <Button variant="outline" onClick={handleExportScope} style={{ borderColor: '#000E2B', color: '#000E2B' }}>
+            <FormSubsection
+                tone="muted"
+                icon={ShieldCheck}
+                title={t('ged.addModal.accessRights')}
+                description={t('ged.addModal.accessRightsDesc')}
+                action={audienceMode === 'general' ? (
+                  <Button variant="outline" onClick={handleExportScope}>
                     <Download className="w-4 h-4 mr-2" />
                     {t('ged.addModal.exportCsv')}
                   </Button>
-                  )}
-                </div>
+                ) : undefined}
+              >
                 {audienceMode === 'general' ? (
                   <AudienceCounterCards investors={audience.investors} contacts={audience.contacts} />
                 ) : (
                   selectedInvestorProfile ? (
-                    <div className="rounded-2xl border bg-white p-4 space-y-3" style={{ borderColor: '#000E2B1F' }}>
+                    <FormSubsection>
                       <div>
-                        <p className="text-xl font-semibold" style={{ color: '#000E2B' }}>{selectedInvestorProfile.name}</p>
+                        <p className="text-xl font-semibold text-foreground">{selectedInvestorProfile.name}</p>
                       </div>
                       <div className="border-t pt-3 space-y-2">
-                        <p className="text-xs uppercase tracking-wide font-semibold" style={{ color: '#000E2B' }}>{t('ged.addModal.authorizedContacts')}</p>
-                        <div className="rounded-xl border p-3 flex items-center gap-3" style={{ borderColor: '#000E2B1F', backgroundColor: '#EEF1F7' }}>
-                          <div className="w-9 h-9 rounded-full flex items-center justify-center" style={{ backgroundColor: '#EEF1F7', color: '#000E2B' }}>
+                        <p className="ds-form-subsection__title">{t('ged.addModal.authorizedContacts')}</p>
+                        <div className="rounded-xl border p-3 flex items-center gap-3" style={{ borderColor: 'color-mix(in oklab, var(--primary) 14%, transparent)', backgroundColor: 'color-mix(in oklab, var(--primary) 8%, var(--card))' }}>
+                          <div className="w-9 h-9 rounded-full flex items-center justify-center" style={{ backgroundColor: 'color-mix(in oklab, var(--primary) 8%, var(--card))', color: 'var(--primary)' }}>
                             <UserRound className="w-4 h-4" />
                           </div>
                           <div className="flex-1">
-                            <p className="font-medium flex items-center gap-2" style={{ color: '#000E2B' }}>
+                            <p className="font-medium flex items-center gap-2 text-foreground">
                               {selectedInvestorProfile.name}
-                              <span className="inline-flex items-center gap-1 rounded-full border px-2 py-0.5 text-[11px] font-medium" style={{ borderColor: '#000E2B', backgroundColor: '#EEF1F7', color: '#000E2B' }}>
+                              <span className="inline-flex items-center gap-1 rounded-full border px-2 py-0.5 text-[11px] font-medium" style={{ borderColor: 'var(--primary)', backgroundColor: 'color-mix(in oklab, var(--primary) 8%, var(--card))', color: 'var(--primary)' }}>
                                 <Star className="w-3 h-3 fill-current" />
                                 {t('ged.addModal.principalBadge')}
                               </span>
@@ -1054,34 +1048,30 @@ export function DocumentAddModal({ isOpen, onClose, folderOptions, defaultFolder
                           </div>
                         </div>
                         {selectedInvestorProfile.contacts.map((contact) => (
-                          <div key={contact.name} className="rounded-xl border bg-white p-3 flex items-center gap-3" style={{ borderColor: '#000E2B1F' }}>
-                            <div className="w-9 h-9 rounded-full flex items-center justify-center" style={{ backgroundColor: '#EEF1F7', color: '#000E2B' }}>
+                          <div key={contact.name} className="rounded-xl border bg-white p-3 flex items-center gap-3" style={{ borderColor: 'color-mix(in oklab, var(--primary) 14%, transparent)' }}>
+                            <div className="w-9 h-9 rounded-full flex items-center justify-center" style={{ backgroundColor: 'color-mix(in oklab, var(--primary) 8%, var(--card))', color: 'var(--primary)' }}>
                               <UserRound className="w-4 h-4" />
                             </div>
                             <div>
-                              <p className="font-medium" style={{ color: '#000E2B' }}>{contact.name}</p>
+                              <p className="font-medium text-foreground">{contact.name}</p>
                               <p className="text-sm text-slate-500 flex items-center gap-1"><Mail className="w-3 h-3" /> {contact.role}</p>
                             </div>
                           </div>
                         ))}
                       </div>
-                    </div>
+                    </FormSubsection>
                   ) : (
                     <p className="text-sm text-slate-600">{t('ged.addModal.pickInvestorHint')}</p>
                   )
                 )}
-              </div>
+              </FormSubsection>
 
-          </section>
+          </FormSection>
 
-          <section className="space-y-4 rounded-2xl p-4 border" style={{ backgroundColor: '#EEF1F7', borderColor: '#000E2B1F' }}>
-            <div>
-              <p className="font-semibold flex items-center gap-2" style={{ color: '#000E2B' }}><Bell className="w-5 h-5" style={{ color: '#000E2B' }} /> {t('ged.addModal.sectionNotification')}</p>
-              <p className="text-sm text-slate-600">{t('ged.addModal.sectionNotificationDesc')}</p>
-            </div>
+          <FormSection icon={Bell} title={t('ged.addModal.sectionNotification')} description={t('ged.addModal.sectionNotificationDesc')}>
             {isDetailMode ? (
               <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
-                <div className="space-y-2 border rounded-xl p-4 bg-white" style={{ borderColor: '#000E2B33' }}>
+                <FormSubsection>
                   <Label>{t('ged.addModal.notificationLabel')}</Label>
                   {detailState?.notification ? (
                     <p className="text-sm text-slate-700">
@@ -1090,8 +1080,8 @@ export function DocumentAddModal({ isOpen, onClose, folderOptions, defaultFolder
                   ) : (
                     <p className="text-sm text-slate-500">{t('ged.addModal.noNotification')}</p>
                   )}
-                </div>
-                <div className="space-y-2 border rounded-xl p-4 bg-white" style={{ borderColor: '#000E2B33' }}>
+                </FormSubsection>
+                <FormSubsection>
                   <Label>{t('ged.addModal.reminderLabel')}</Label>
                   {detailState?.reminder?.dueInDays !== undefined ? (
                     <p className="text-sm text-slate-700">{t('ged.addModal.reminderDueIn', { days: detailState.reminder.dueInDays, template: detailState.reminder.template })}</p>
@@ -1100,11 +1090,11 @@ export function DocumentAddModal({ isOpen, onClose, folderOptions, defaultFolder
                   ) : (
                     <p className="text-sm text-slate-500">{t('ged.addModal.noReminder')}</p>
                   )}
-                </div>
+                </FormSubsection>
               </div>
             ) : (
               <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
-                <div className="space-y-3 border rounded-xl p-4" style={{ borderColor: '#000E2B33' }}>
+                <FormSubsection>
                   <div className="flex items-center justify-between">
                     <Label>{t('ged.addModal.notificationLabel')}</Label>
                     <Switch checked={notify} onCheckedChange={setNotify} />
@@ -1113,9 +1103,9 @@ export function DocumentAddModal({ isOpen, onClose, folderOptions, defaultFolder
                     <SelectTrigger><SelectValue /></SelectTrigger>
                     <SelectContent>{MAIL_TEMPLATES.map((template) => <SelectItem key={template} value={template}>{template}</SelectItem>)}</SelectContent>
                   </Select>
-                </div>
+                </FormSubsection>
 
-                <div className="space-y-3 border rounded-xl p-4" style={{ borderColor: '#000E2B33' }}>
+                <FormSubsection>
                   <div className="flex items-center justify-between">
                     <Label>{t('ged.addModal.reminderLabel')}</Label>
                     <Switch checked={reminder} onCheckedChange={setReminder} />
@@ -1130,16 +1120,12 @@ export function DocumentAddModal({ isOpen, onClose, folderOptions, defaultFolder
                       <SelectContent>{MAIL_TEMPLATES.map((template) => <SelectItem key={template} value={template}>{template}</SelectItem>)}</SelectContent>
                     </Select>
                   </div>
-                </div>
+                </FormSubsection>
               </div>
             )}
-          </section>
+          </FormSection>
 
-          <section className="space-y-3 pb-2 rounded-2xl p-4 border" style={{ backgroundColor: '#EEF1F7', borderColor: '#000E2B1F' }}>
-            <div>
-              <p className="font-semibold flex items-center gap-2" style={{ color: '#000E2B' }}><Check className="w-5 h-5" style={{ color: '#000E2B' }} /> {t('ged.addModal.sectionValidation')}</p>
-              <p className="text-sm text-slate-600">{t('ged.addModal.sectionValidationDesc')}</p>
-            </div>
+          <FormSection icon={Check} title={t('ged.addModal.sectionValidation')} description={t('ged.addModal.sectionValidationDesc')}>
             {isDetailMode ? (
               <>
                 {detailState?.validation.status === 'approved' ? (
@@ -1154,17 +1140,17 @@ export function DocumentAddModal({ isOpen, onClose, folderOptions, defaultFolder
                       <p className="font-semibold text-amber-800 flex items-center gap-2"><Clock3 className="h-4 w-4" /> {t('ged.addModal.pendingValidation')}</p>
                       <p className="text-sm text-amber-700 mt-1">{t('ged.addModal.pendingValidationHint')}</p>
                     </div>
-                    <div className="rounded-xl border bg-white p-4 space-y-3" style={{ borderColor: '#000E2B33' }}>
+                    <FormSubsection>
                       <p className="font-medium text-slate-900">{t('ged.addModal.teamsAndValidators')}</p>
                       <div className="space-y-2">
                         {TEAMS.map((team) => (
-                          <div key={team.id} className="rounded-lg border p-3" style={{ borderColor: '#000E2B33' }}>
+                          <div key={team.id} className="rounded-lg border p-3" style={{ borderColor: 'color-mix(in oklab, var(--primary) 20%, transparent)' }}>
                             <p className="font-medium text-slate-800">{team.name}</p>
                             <p className="text-sm text-slate-600 mt-1">{t('ged.addModal.peoplePrefix', { list: team.validators.join(', ') })}</p>
                           </div>
                         ))}
                       </div>
-                    </div>
+                    </FormSubsection>
                   </>
                 )}
               </>
@@ -1190,7 +1176,7 @@ export function DocumentAddModal({ isOpen, onClose, folderOptions, defaultFolder
                 <div className="rounded-xl border border-slate-200 bg-white p-4 space-y-3">
                   <div className="flex items-center justify-between gap-2">
                     <div className="flex items-center gap-2">
-                      <div className="w-8 h-8 rounded-lg flex items-center justify-center" style={{ backgroundColor: '#EEF1F7', color: '#000E2B' }}>
+                      <div className="w-8 h-8 rounded-lg flex items-center justify-center" style={{ backgroundColor: 'color-mix(in oklab, var(--primary) 8%, var(--card))', color: 'var(--primary)' }}>
                         <Users2 className="w-4 h-4" />
                       </div>
                       <div>
@@ -1201,7 +1187,7 @@ export function DocumentAddModal({ isOpen, onClose, folderOptions, defaultFolder
                       </div>
                     </div>
                     {selectedTeamsDetailed.length > 0 && (
-                      <Badge variant="outline" style={{ backgroundColor: '#EEF1F7', borderColor: '#000E2B', color: '#000E2B' }}>
+                      <Badge variant="outline" style={{ backgroundColor: 'color-mix(in oklab, var(--primary) 8%, var(--card))', borderColor: 'var(--primary)', color: 'var(--primary)' }}>
                         {t(totalValidators > 1 ? 'ged.addModal.validatorsCountBadgeMany' : 'ged.addModal.validatorsCountBadgeOne', { validators: totalValidators, teams: selectedTeamsDetailed.length })}
                       </Badge>
                     )}
@@ -1250,7 +1236,7 @@ export function DocumentAddModal({ isOpen, onClose, folderOptions, defaultFolder
                 </div>
               </>
             )}
-          </section>
+          </FormSection>
 
         </div>
         <div className="border-t bg-white px-6 py-4 flex justify-end gap-2">

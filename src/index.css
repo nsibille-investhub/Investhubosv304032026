@@ -11409,3 +11409,156 @@ html {
     height: 1rem;
   }
 }
+
+/* Design system: form sections (FormSection / FormSubsection) */
+.ds-form-section {
+  --ds-form-section-bg: color-mix(in oklab, var(--primary) 6%, var(--card));
+  --ds-form-section-border: color-mix(in oklab, var(--primary) 14%, transparent);
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  padding: 16px;
+  border-radius: 16px;
+  border: 1px solid var(--ds-form-section-border);
+  background-color: var(--ds-form-section-bg);
+  scroll-margin-top: 16px;
+}
+.ds-form-section__header {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+}
+.ds-form-section__step {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  width: 26px;
+  height: 26px;
+  border-radius: 9999px;
+  border: 1px solid color-mix(in oklab, var(--primary) 30%, transparent);
+  background-color: var(--card);
+  color: var(--primary);
+  font-size: 12px;
+  font-weight: 600;
+  line-height: 1;
+}
+.ds-form-section[data-status="complete"] .ds-form-section__step {
+  border-color: var(--success);
+  background-color: var(--success);
+  color: #fff;
+}
+.ds-form-section[data-status="error"] .ds-form-section__step {
+  border-color: var(--destructive);
+  background-color: var(--destructive);
+  color: #fff;
+}
+.ds-form-section__title {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 15px;
+  font-weight: 600;
+  line-height: 26px;
+  color: var(--foreground);
+}
+.ds-form-section__title > svg {
+  width: 18px;
+  height: 18px;
+  flex-shrink: 0;
+  color: var(--primary);
+}
+.ds-form-section__description {
+  margin-top: 1px;
+  font-size: 13px;
+  line-height: 18px;
+  color: var(--muted-foreground);
+}
+.ds-form-section__body {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  min-width: 0;
+}
+.ds-form-subsection {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  min-width: 0;
+  padding: 16px;
+  border-radius: 12px;
+  border: 1px solid color-mix(in oklab, var(--primary) 16%, transparent);
+  background-color: var(--card);
+}
+.ds-form-subsection[data-tone="muted"] {
+  background-color: color-mix(in oklab, var(--primary) 6%, var(--card));
+}
+.ds-form-subsection__header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px;
+}
+.ds-form-subsection__title {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--muted-foreground);
+}
+.ds-form-subsection__title > svg {
+  width: 14px;
+  height: 14px;
+  flex-shrink: 0;
+}
+.ds-form-subsection__description {
+  margin-top: 2px;
+  font-size: 13px;
+  line-height: 18px;
+  color: var(--muted-foreground);
+}
+.ds-form-subsection__body {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  min-width: 0;
+}
+.ds-field-label {
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--foreground);
+}
+.ds-field-label > svg {
+  width: 14px;
+  height: 14px;
+  color: var(--muted-foreground);
+}
+.ds-field-hint {
+  font-size: 12px;
+  line-height: 16px;
+  color: var(--muted-foreground);
+}
+
+/* Design system: segmented control selected segment (no state variants in the prebuilt utilities) */
+.ds-segmented-item[data-state="on"] {
+  border-color: var(--primary);
+  background-color: var(--primary);
+  color: var(--primary-foreground);
+  box-shadow: 0 1px 2px rgb(0 0 0 / 0.08);
+}
+.ds-segmented-item[data-state="on"]:hover {
+  border-color: var(--primary);
+  color: var(--primary-foreground);
+}
+.ds-segmented-item[data-state="on"] .ds-segmented-icon {
+  color: currentColor;
+}
+
+/* Fields sit on a white sub-section card: the theme's borderless white inputs need the input surface token to stay visible */
+.ds-form-subsection :is([data-slot="input"], [data-slot="select-trigger"], [data-slot="textarea"], .border-input.bg-white):not(.bg-transparent) {
+  background-color: var(--input-background);
+  border-color: color-mix(in oklab, var(--primary) 12%, transparent);
+}

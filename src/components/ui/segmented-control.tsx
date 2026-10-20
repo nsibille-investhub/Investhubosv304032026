@@ -59,7 +59,7 @@ function SegmentedControl<V extends string = string>({
           value={option.value}
           disabled={option.disabled}
           className={cn(
-            'inline-flex items-center gap-2 rounded-lg border-2 border-gray-200 bg-white font-medium text-gray-500 transition-all',
+            'ds-segmented-item inline-flex items-center gap-2 rounded-lg border-2 border-gray-200 bg-white font-medium text-gray-500 transition-all',
             'hover:border-gray-300 hover:text-gray-700',
             'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-1 focus-visible:ring-[#000E2B]/30',
             'disabled:cursor-not-allowed disabled:opacity-50 disabled:hover:border-gray-200',
@@ -73,7 +73,7 @@ function SegmentedControl<V extends string = string>({
         >
           {option.icon ? (
             <span
-              className="inline-flex shrink-0 items-center text-gray-400 data-[state=on]:text-current dark:text-gray-500"
+              className="ds-segmented-icon inline-flex shrink-0 items-center text-gray-400 data-[state=on]:text-current dark:text-gray-500"
               aria-hidden
             >
               {option.icon}

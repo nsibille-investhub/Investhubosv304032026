@@ -107,9 +107,12 @@ import { FolderSpaceDialogPreview } from './ui/folder-space-dialog';
 import { KpiCard, KpiStrip } from './ui/kpi-card';
 import { PageHeader } from './ui/page-header';
 import { Button } from './ui/button';
+import { Input } from './ui/input';
+import { Label } from './ui/label';
 import { DetailSummary } from './ui/detail-summary';
 import { SearchInput } from './ui/search-input';
 import { SegmentedControl } from './ui/segmented-control';
+import { FormSection, FormSubsection, FORM_FIELD_HINT_CLASS, FORM_FIELD_LABEL_CLASS } from './ui/form-section';
 import {
   Select as UiSelect,
   SelectContent as UiSelectContent,
@@ -996,6 +999,73 @@ function ItemSelectorPreview() {
   );
 }
 
+function FormSectionStepsPreview() {
+  const [intermediated, setIntermediated] = React.useState('no');
+  return (
+    <div className="flex flex-col gap-4 max-w-2xl">
+      <FormSection step={1} status="complete" icon={User} title="Investisseur et structure" description="Qui souscrit, et à travers quelle structure.">
+        <FormSubsection icon={User} title="Investisseur">
+          <Input value="Camille Durand" readOnly className="h-10" />
+        </FormSubsection>
+      </FormSection>
+      <FormSection step={2} icon={Layers3} title="Fonds et montants" description="Fonds, part et montant souscrit.">
+        <FormSubsection icon={Layers3} title="Fonds et part">
+          <div className="grid grid-cols-2 gap-3">
+            <div className="space-y-1.5">
+              <Label className={FORM_FIELD_LABEL_CLASS}>Fonds</Label>
+              <Input placeholder="Sélectionner un fonds" className="h-10" />
+            </div>
+            <div className="space-y-1.5">
+              <Label className={FORM_FIELD_LABEL_CLASS}>Part</Label>
+              <Input placeholder="Sélectionner une part" className="h-10" />
+              <p className={FORM_FIELD_HINT_CLASS}>Prix par part : 100 €</p>
+            </div>
+          </div>
+        </FormSubsection>
+      </FormSection>
+      <FormSection step={3} status="error" icon={Handshake} title="Distribution" description="Indiquez si un distributeur apporte cette souscription.">
+        <FormSubsection>
+          <Label className={FORM_FIELD_LABEL_CLASS}>Souscription intermédiée</Label>
+          <SegmentedControl
+            size="sm"
+            aria-label="Souscription intermédiée"
+            value={intermediated}
+            onValueChange={setIntermediated}
+            options={[
+              { value: 'no', label: 'Non' },
+              { value: 'yes', label: 'Oui' },
+            ]}
+          />
+        </FormSubsection>
+      </FormSection>
+    </div>
+  );
+}
+
+function FormSectionDetailPreview() {
+  return (
+    <div className="max-w-2xl">
+      <FormSection icon={Users} title="Audience" description="Qui peut consulter ce document.">
+        <FormSubsection title="Ciblage">
+          <div className="space-y-1.5">
+            <Label className={FORM_FIELD_LABEL_CLASS}>Segments</Label>
+            <Input placeholder="Tous les segments" className="h-10" />
+          </div>
+        </FormSubsection>
+        <FormSubsection
+          tone="muted"
+          icon={ShieldCheck}
+          title="Droits d'accès"
+          description="Investisseurs et contacts habilités."
+          action={<Button variant="outline" size="sm">Exporter</Button>}
+        >
+          <p className="text-sm text-foreground">128 investisseurs, 214 contacts</p>
+        </FormSubsection>
+      </FormSection>
+    </div>
+  );
+}
+
 function SegmentedControlBasicPreview() {
   const [value, setValue] = React.useState<'all' | 'one' | 'many'>('all');
   return (
@@ -1140,14 +1210,64 @@ export function DesignSystemPage() {
       <section className="rounded-2xl border border-[#D7E0DD] dark:border-[#1F2D2A] bg-white dark:bg-[#101615] p-8 md:p-10">
         <header className="mb-8 space-y-3">
           <h2 className="text-lg font-semibold text-[#1F3137] dark:text-[#E8F0EE]">
+            Composant Formulaires, ds-form-section
+          </h2>
+          <p className="text-sm text-[#4F6166] dark:text-[#9DB2AE] max-w-3xl leading-relaxed">
+            Structure les formulaires longs et les panneaux de détail en deux niveaux. La
+            <code className="text-xs px-1 py-0.5 rounded bg-[#F1F5F4] dark:bg-[#1C2624] mx-1">FormSection</code>
+            est un bloc teinté (icône, titre, description, numéro d&apos;étape optionnel avec un état complet ou en erreur).
+            Les champs ne sont jamais posés directement dessus&nbsp;: ils vont dans des
+            <code className="text-xs px-1 py-0.5 rounded bg-[#F1F5F4] dark:bg-[#1C2624] mx-1">FormSubsection</code>,
+            cartes blanches titrées en petites capitales, où les champs prennent la surface de saisie du thème pour rester lisibles.
+            Utilisé par la fenêtre de création d&apos;une souscription et par le détail d&apos;un document.
+          </p>
+          <p className="text-xs text-[#4F6166] dark:text-[#9DB2AE] leading-relaxed">
+            Identifiant&nbsp;: <code className="text-xs px-1 py-0.5 rounded bg-[#F1F5F4] dark:bg-[#1C2624] font-semibold">ds-form-section</code>, Import&nbsp;:
+            <code className="text-xs px-1 py-0.5 rounded bg-[#F1F5F4] dark:bg-[#1C2624] ml-1">{`import { FormSection, FormSubsection } from '@/components/ui/form-section'`}</code>
+          </p>
+        </header>
+
+        <div className="space-y-16">
+          <div className="space-y-4">
+            <div className="flex items-baseline gap-3">
+              <span className="text-[11px] font-semibold uppercase tracking-[0.14em] text-[#456B6C]">
+                Variant, étapes numérotées
+              </span>
+              <span className="text-xs text-[#4F6166] dark:text-[#9DB2AE]">
+                états complet, en cours et en erreur
+              </span>
+            </div>
+            <div className="rounded-xl border border-[#D7E0DD] dark:border-[#1F2D2A] bg-[#F8FAFA] dark:bg-[#0B0D0D] p-4 md:p-6">
+              <FormSectionStepsPreview />
+            </div>
+          </div>
+
+          <div className="space-y-4">
+            <div className="flex items-baseline gap-3">
+              <span className="text-[11px] font-semibold uppercase tracking-[0.14em] text-[#456B6C]">
+                Variant, panneau de détail
+              </span>
+              <span className="text-xs text-[#4F6166] dark:text-[#9DB2AE]">
+                sans numéro, sous-section secondaire teintée avec action
+              </span>
+            </div>
+            <div className="rounded-xl border border-[#D7E0DD] dark:border-[#1F2D2A] bg-[#F8FAFA] dark:bg-[#0B0D0D] p-4 md:p-6">
+              <FormSectionDetailPreview />
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <section className="rounded-2xl border border-[#D7E0DD] dark:border-[#1F2D2A] bg-white dark:bg-[#101615] p-8 md:p-10">
+        <header className="mb-8 space-y-3">
+          <h2 className="text-lg font-semibold text-[#1F3137] dark:text-[#E8F0EE]">
             Composant Inputs — ds-segmented-control
           </h2>
           <p className="text-sm text-[#4F6166] dark:text-[#9DB2AE] max-w-3xl leading-relaxed">
             Sélection exclusive à labels courts&nbsp;: preferable à un
             <code className="text-xs px-1 py-0.5 rounded bg-[#F1F5F4] dark:bg-[#1C2624] mx-1">RadioGroup</code>
-            pour 2–5 options sans description. Bordure 2&nbsp;px neutre au repos, bordure
-            et texte en <code className="text-xs px-1 py-0.5 rounded bg-[#F1F5F4] dark:bg-[#1C2624]">#000E2B</code>
-            pour l&apos;option sélectionnée. Basé sur <code className="text-xs px-1 py-0.5 rounded bg-[#F1F5F4] dark:bg-[#1C2624]">@radix-ui/react-toggle-group</code>
+            pour 2 à 5 options sans description. Bordure 2&nbsp;px neutre au repos, segment rempli
+            en couleur primaire pour l&apos;option sélectionnée, pour qu&apos;elle se lise d&apos;un coup d&apos;œil. Basé sur <code className="text-xs px-1 py-0.5 rounded bg-[#F1F5F4] dark:bg-[#1C2624]">@radix-ui/react-toggle-group</code>
             (type=&quot;single&quot;) donc gestion clavier, aria-pressed et focus ring gérés.
           </p>
           <p className="text-xs text-[#4F6166] dark:text-[#9DB2AE] leading-relaxed">

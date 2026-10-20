@@ -56,6 +56,13 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '.
 import { Switch } from './ui/switch';
 import { Textarea } from './ui/textarea';
 import { SegmentedControl } from './ui/segmented-control';
+import {
+  FormSection,
+  FormSubsection,
+  FORM_FIELD_HINT_CLASS,
+  FORM_FIELD_LABEL_CLASS,
+  type FormSectionStatus,
+} from './ui/form-section';
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from './ui/dialog';
 import { cn } from './ui/utils';
 import {
@@ -207,7 +214,7 @@ function EditField({
 }) {
   return (
     <div className={cn('space-y-1.5 min-w-0', className)}>
-      <Label className="text-xs flex items-center gap-1.5">
+      <Label className={FORM_FIELD_LABEL_CLASS}>
         {Icon && <Icon className="w-3.5 h-3.5" />}
         {label}
       </Label>
@@ -245,35 +252,12 @@ function SwitchField({
   );
 }
 
-function FormSection({
-  index,
-  icon: Icon,
-  title,
-  description,
-  children,
-}: {
-  index: number;
-  icon: LucideIcon;
-  title: string;
-  description?: string;
-  children: ReactNode;
-}) {
+function ReviewRow({ label, children }: { label: string; children: ReactNode }) {
   return (
-    <section className="space-y-4">
-      <div className="flex items-start gap-3">
-        <span className="w-6 h-6 rounded-full bg-primary/10 text-primary text-xs font-semibold flex items-center justify-center shrink-0">
-          {index}
-        </span>
-        <div className="min-w-0">
-          <h3 className="text-sm font-semibold text-foreground flex items-center gap-1.5">
-            <Icon className="w-4 h-4 text-muted-foreground" />
-            {title}
-          </h3>
-          {description && <p className="text-xs text-muted-foreground mt-0.5">{description}</p>}
-        </div>
-      </div>
-      <div className="flex flex-col gap-4 pl-9">{children}</div>
-    </section>
+    <div className="flex items-start justify-between gap-4 py-2">
+      <dt className="text-muted-foreground shrink-0">{label}</dt>
+      <dd className="text-right min-w-0">{children}</dd>
+    </div>
   );
 }
 
@@ -283,7 +267,7 @@ function FieldMessage({ message, tone = 'error' }: { message?: string; tone?: 'e
   return (
     <p
       role={tone === 'error' ? 'alert' : undefined}
-      className="text-[11px] flex items-start gap-1"
+      className="text-xs flex items-start gap-1"
       style={{ color: tone === 'error' ? 'var(--destructive)' : 'var(--warning)' }}
     >
       <Icon className="w-3 h-3 shrink-0" style={{ marginTop: 1 }} />
@@ -908,6 +892,18 @@ export function NewSubscriptionDialog({
       ? t('subscriptions.newDialog.errors.belowMinimum', { min: minAmount.toLocaleString('fr-FR') })
       : undefined;
 
+  const sectionStatus = useMemo(() => {
+    const status = (keys: FieldKey[], complete: boolean): FormSectionStatus =>
+      keys.some((key) => fieldError(key)) ? 'error' : complete ? 'complete' : 'default';
+    const hasFundAndShare = !!formData.fund && !!formData.shareClass;
+    return {
+      investor: status(['investor', 'structure'], !!formData.investor && formData.structure !== null),
+      fund: status(['fund', 'shareClass', 'amount'], hasFundAndShare && calculatedAmount > 0),
+      distribution: status(['distributor'], hasFundAndShare && !errors.distributor),
+      additional: status(['internalNote'], !!formData.investor && !errors.internalNote),
+    };
+  }, [formData, calculatedAmount, errors, submitAttempted, noAuthorizedDistributor]);
+
   const revealErrors = () => {
     setSubmitAttempted(true);
     requestAnimationFrame(() => {
@@ -1380,20 +1376,24 @@ export function NewSubscriptionDialog({
           {/* Step content */}
           <div ref={scrollContainerRef} className="flex-1 overflow-y-auto px-8 py-6">
             {step === 'init' && (
-              <div className="flex flex-col gap-8">
+              <div className="flex flex-col" style={{ gap: 20 }}>
                   <FormSection
-                    index={1}
+                    step={1}
+                    status={sectionStatus.investor}
                     icon={User}
                     title={t('subscriptions.newDialog.sections.investor')}
                     description={t('subscriptions.newDialog.sections.investorDesc')}
                   >
-                    {/* INVESTOR */}
+                    <FormSubsection
+                      icon={User}
+                      title={
+                        <>
+                          {t('subscriptions.newDialog.investorLabel')}
+                          <span className="text-destructive">*</span>
+                        </>
+                      }
+                    >
                     <div className="space-y-2" data-field-error={!!fieldError('investor')}>
-                      <Label className="text-xs uppercase tracking-wide font-semibold text-muted-foreground flex items-center gap-1.5">
-                        <User className="w-3.5 h-3.5" />
-                        {t('subscriptions.newDialog.investorLabel')}{' '}
-                        <span className="text-destructive">*</span>
-                      </Label>
 
                       {showNewInvestorForm ? (
                         <div className="border border-border bg-card rounded-xl p-4 space-y-3">
@@ -1701,6 +1701,7 @@ export function NewSubscriptionDialog({
                       )}
                       <FieldMessage message={fieldError('investor')} />
                     </div>
+                    </FormSubsection>
 
 
                     {/* STRUCTURE */}
@@ -1719,23 +1720,22 @@ export function NewSubscriptionDialog({
                         : investorStructures;
 
                       return (
+                        <FormSubsection
+                          icon={Building2}
+                          title={
+                            <>
+                              {t('subscriptions.newDialog.structureLabel')}
+                              {isOptional ? (
+                                <span className="font-normal" style={{ textTransform: 'none', letterSpacing: 0 }}>
+                                  {t('subscriptions.newDialog.optional')}
+                                </span>
+                              ) : (
+                                <span className="text-destructive">*</span>
+                              )}
+                            </>
+                          }
+                        >
                         <div className="space-y-2" data-field-error={!!fieldError('structure')}>
-                          <Label
-                            className={cn(
-                              'text-xs uppercase tracking-wide font-semibold flex items-center gap-1.5',
-                              isOptional ? 'text-muted-foreground/70' : 'text-muted-foreground',
-                            )}
-                          >
-                            <Building2 className="w-3.5 h-3.5" />
-                            {t('subscriptions.newDialog.structureLabel')}
-                            {isOptional ? (
-                              <span className="text-muted-foreground/70 font-normal normal-case tracking-normal">
-                                {t('subscriptions.newDialog.optional')}
-                              </span>
-                            ) : (
-                              <span className="text-destructive">*</span>
-                            )}
-                          </Label>
 
                           {showNewStructureForm ? (
                             <div className="border border-border bg-card rounded-xl p-4">
@@ -1984,24 +1984,27 @@ export function NewSubscriptionDialog({
                             </Button>
                           )}
                         </div>
+                        </FormSubsection>
                       );
                     })()}
 
                   </FormSection>
 
                   <FormSection
-                    index={2}
+                    step={2}
+                    status={sectionStatus.fund}
                     icon={Landmark}
                     title={t('subscriptions.newDialog.sections.fund')}
                     description={t('subscriptions.newDialog.sections.fundDesc')}
                   >
+                    <FormSubsection icon={Layers3} title={t('subscriptions.newDialog.subsections.fundAndShare')}>
                     {/* Row 1: Fonds + Part */}
                     <div
                       className="grid gap-3"
                       style={{ gridTemplateColumns: '1.6fr 1fr' }}
                     >
                       <div className="space-y-1.5 min-w-0" data-field-error={!!fieldError('fund')}>
-                        <Label className="text-xs flex items-center gap-1.5">
+                        <Label className={FORM_FIELD_LABEL_CLASS}>
                           <Landmark className="w-3.5 h-3.5" />
                           {t('subscriptions.newDialog.fundLabel')}{' '}
                           <span className="text-destructive">*</span>
@@ -2025,7 +2028,7 @@ export function NewSubscriptionDialog({
                       </div>
 
                       <div className="space-y-1.5 min-w-0" data-field-error={!!fieldError('shareClass')}>
-                        <Label className="text-xs flex items-center gap-1.5">
+                        <Label className={FORM_FIELD_LABEL_CLASS}>
                           <Layers3 className="w-3.5 h-3.5" />
                           {t('subscriptions.newDialog.partLabel')}{' '}
                           <span className="text-destructive">*</span>
@@ -2048,14 +2051,16 @@ export function NewSubscriptionDialog({
                         <FieldMessage message={fieldError('shareClass')} />
                       </div>
                     </div>
+                    </FormSubsection>
 
-                    {/* Row 2: Nombre de parts + Montant + Option de conservation */}
+                    <FormSubsection icon={Euro} title={t('subscriptions.newDialog.subsections.quantityAndAmount')}>
+                    {/* Row 2: Nombre de parts + Montant + Prime */}
                     <div
                       className="grid gap-3"
-                      style={{ gridTemplateColumns: '1fr 1.2fr 1.4fr' }}
+                      style={{ gridTemplateColumns: '1fr 1fr 1fr' }}
                     >
                       <div className="space-y-1.5 min-w-0">
-                        <Label className="text-xs flex items-center gap-1.5">
+                        <Label className={FORM_FIELD_LABEL_CLASS}>
                           <Hash className="w-3.5 h-3.5" />
                           {t('subscriptions.newDialog.numberOfShares')}{' '}
                           <span className="text-destructive">*</span>
@@ -2074,7 +2079,7 @@ export function NewSubscriptionDialog({
                           className="h-10 font-semibold text-right"
                         />
                         {minShares !== undefined && (
-                          <p className="text-[10px] text-muted-foreground">
+                          <p className={FORM_FIELD_HINT_CLASS}>
                             {t('subscriptions.newDialog.minSharesHint', {
                               count: minShares.toLocaleString('fr-FR'),
                             })}
@@ -2083,7 +2088,7 @@ export function NewSubscriptionDialog({
                       </div>
 
                       <div className="space-y-1.5 min-w-0" data-field-error={!!fieldError('amount')}>
-                        <Label className="text-xs flex items-center gap-1.5">
+                        <Label className={FORM_FIELD_LABEL_CLASS}>
                           <Euro className="w-3.5 h-3.5" />
                           {t('subscriptions.newDialog.amount')}{' '}
                           <span className="text-destructive">*</span>
@@ -2100,7 +2105,7 @@ export function NewSubscriptionDialog({
                           placeholder="10 000"
                           className="h-10 font-semibold text-right"
                         />
-                        <p className="text-[10px] text-muted-foreground">
+                        <p className={FORM_FIELD_HINT_CLASS}>
                           {minAmount !== undefined
                             ? t('subscriptions.newDialog.pricePerShareAndMinHint', {
                                 price: sharePrice.toLocaleString('fr-FR'),
@@ -2115,7 +2120,37 @@ export function NewSubscriptionDialog({
                       </div>
 
                       <div className="space-y-1.5 min-w-0">
-                        <Label className="text-xs flex items-center gap-1.5">
+                        <Label className={FORM_FIELD_LABEL_CLASS}>
+                          <Sparkles className="w-3.5 h-3.5" />
+                          {t('subscriptions.newDialog.subscriptionPremiumLabel')}
+                        </Label>
+                        <div className="flex h-10 w-full items-center rounded-md border border-input bg-white pr-3 focus-within:ring-2 focus-within:ring-ring/40">
+                          <Input
+                            type="text"
+                            inputMode="decimal"
+                            value={formData.subscriptionPremium}
+                            onChange={(e) => {
+                              const cleaned = e.target.value
+                                .replace(/[^0-9.,]/g, '')
+                                .replace(',', '.');
+                              setFormData((prev) => ({ ...prev, subscriptionPremium: cleaned }));
+                            }}
+                            placeholder="0"
+                            className="h-full border-0 bg-transparent font-semibold text-right shadow-none focus-visible:ring-0 focus-visible:ring-offset-0"
+                          />
+                          <span className="ml-1 text-sm text-muted-foreground select-none">€</span>
+                        </div>
+                        <p className={FORM_FIELD_HINT_CLASS}>
+                          {t('subscriptions.newDialog.subscriptionPremiumHint')}
+                        </p>
+                      </div>
+                    </div>
+                    </FormSubsection>
+
+                    <FormSubsection icon={ShieldCheck} title={t('subscriptions.newDialog.subsections.options')}>
+                    <div className="grid gap-3" style={{ gridTemplateColumns: '1fr 1fr' }}>
+                      <div className="space-y-1.5 min-w-0">
+                        <Label className={FORM_FIELD_LABEL_CLASS}>
                           <ShieldCheck className="w-3.5 h-3.5" />
                           {t('subscriptions.newDialog.custodyOptionLabel')}
                         </Label>
@@ -2136,34 +2171,6 @@ export function NewSubscriptionDialog({
                             }
                           />
                         </label>
-                      </div>
-                    </div>
-
-                    <div className="grid gap-3" style={{ gridTemplateColumns: '1fr 1.2fr 1.4fr' }}>
-                      <div className="space-y-1.5 min-w-0 col-span-2">
-                        <Label className="text-xs flex items-center gap-1.5">
-                          <Sparkles className="w-3.5 h-3.5" />
-                          {t('subscriptions.newDialog.subscriptionPremiumLabel')}
-                        </Label>
-                        <div className="flex h-10 w-full items-center rounded-md border border-input bg-white pr-3 focus-within:ring-2 focus-within:ring-ring/40">
-                          <Input
-                            type="text"
-                            inputMode="decimal"
-                            value={formData.subscriptionPremium}
-                            onChange={(e) => {
-                              const cleaned = e.target.value
-                                .replace(/[^0-9.,]/g, '')
-                                .replace(',', '.');
-                              setFormData((prev) => ({ ...prev, subscriptionPremium: cleaned }));
-                            }}
-                            placeholder="0"
-                            className="h-full border-0 bg-transparent font-semibold text-right shadow-none focus-visible:ring-0 focus-visible:ring-offset-0"
-                          />
-                          <span className="ml-1 text-sm text-muted-foreground select-none">€</span>
-                        </div>
-                        <p className="text-[10px] text-muted-foreground">
-                          {t('subscriptions.newDialog.subscriptionPremiumHint')}
-                        </p>
                       </div>
                     </div>
 
@@ -2230,18 +2237,19 @@ export function NewSubscriptionDialog({
                         </EditField>
                       </div>
                     )}
-
-
+                    </FormSubsection>
                   </FormSection>
 
                   <FormSection
-                    index={3}
+                    step={3}
+                    status={sectionStatus.distribution}
                     icon={Handshake}
                     title={t('subscriptions.newDialog.sections.distribution')}
                     description={t('subscriptions.newDialog.sections.distributionDesc')}
                   >
+                    <FormSubsection>
                     <div className="space-y-1.5">
-                      <Label className="text-xs flex items-center gap-1.5">
+                      <Label className={FORM_FIELD_LABEL_CLASS}>
                         <Handshake className="w-3.5 h-3.5" />
                         {t('subscriptions.newDialog.distribution.intermediatedLabel')}
                       </Label>
@@ -2255,7 +2263,7 @@ export function NewSubscriptionDialog({
                           { value: 'yes', label: t('subscriptions.newDialog.distribution.yes') },
                         ]}
                       />
-                      <p className="text-[11px] text-muted-foreground">
+                      <p className={FORM_FIELD_HINT_CLASS}>
                         {formData.isIntermediated
                           ? t('subscriptions.newDialog.distribution.intermediatedOnHint')
                           : t('subscriptions.newDialog.distribution.intermediatedOffHint')}
@@ -2272,6 +2280,7 @@ export function NewSubscriptionDialog({
                         </p>
                       </div>
                     )}
+                    </FormSubsection>
 
                     {formData.isIntermediated && (
                       <motion.div
@@ -2279,8 +2288,10 @@ export function NewSubscriptionDialog({
                         animate={{ opacity: 1, y: 0 }}
                         className="flex flex-col gap-4"
                       >
+                        <FormSubsection icon={Briefcase} title={t('subscriptions.newDialog.subsections.distributor')}>
+                        <div className="grid gap-3" style={{ gridTemplateColumns: '1.4fr 1fr' }}>
                         <div className="space-y-1.5" data-field-error={!!fieldError('distributor')}>
-                          <Label className="text-xs flex items-center gap-1.5">
+                          <Label className={FORM_FIELD_LABEL_CLASS}>
                             <Briefcase className="w-3.5 h-3.5" />
                             {t('subscriptions.newDialog.distributorLabel')}{' '}
                             <span className="text-destructive">*</span>
@@ -2340,10 +2351,21 @@ export function NewSubscriptionDialog({
                           )}
                           <FieldMessage message={fieldError('distributor')} />
                         </div>
+                          <EditField label={t('subscriptions.detail.form.advisor')} icon={Users}>
+                            <Input
+                              value={extended.advisor}
+                              onChange={(e) => updateExtended('advisor', e.target.value)}
+                              placeholder={t('subscriptions.newDialog.distribution.advisorPlaceholder')}
+                              className="h-10"
+                            />
+                          </EditField>
+                        </div>
+                        </FormSubsection>
 
+                        <FormSubsection icon={Percent} title={t('subscriptions.newDialog.subsections.distributionTerms')}>
                         <div className="grid gap-3" style={{ gridTemplateColumns: '1fr 1fr' }}>
                           <div className="space-y-1.5 min-w-0">
-                            <Label className="text-xs flex items-center gap-1.5">
+                            <Label className={FORM_FIELD_LABEL_CLASS}>
                               <Euro className="w-3.5 h-3.5" />
                               {t('subscriptions.newDialog.entryFeesEditableLabel')}
                             </Label>
@@ -2363,21 +2385,12 @@ export function NewSubscriptionDialog({
                               />
                               <span className="ml-1 text-sm text-muted-foreground select-none">%</span>
                             </div>
-                            <p className="text-[10px] text-muted-foreground">
+                            <p className={FORM_FIELD_HINT_CLASS}>
                               {t('subscriptions.newDialog.entryFeesEditableHint', {
                                 percent: defaultEntryFeePercent,
                               })}
                             </p>
                           </div>
-
-                          <EditField label={t('subscriptions.detail.form.advisor')} icon={Users}>
-                            <Input
-                              value={extended.advisor}
-                              onChange={(e) => updateExtended('advisor', e.target.value)}
-                              placeholder={t('subscriptions.newDialog.distribution.advisorPlaceholder')}
-                              className="h-10"
-                            />
-                          </EditField>
 
                           <EditField label={t('subscriptions.detail.form.commissionRate')} icon={Percent}>
                             <div className="flex h-10 w-full items-center rounded-md border border-input bg-white pr-3 focus-within:ring-2 focus-within:ring-ring/40">
@@ -2411,20 +2424,16 @@ export function NewSubscriptionDialog({
                             />
                           </EditField>
                         </div>
+                        </FormSubsection>
                       </motion.div>
                     )}
 
                   </FormSection>
 
                   {isEditMode && (
-                    <div className="flex flex-col gap-4">
-                      {/* SUBSCRIBER SECTION */}
-                      <Separator className="my-2" />
-                      <div className="space-y-3">
-                        <Label className="text-xs uppercase tracking-wide font-semibold text-muted-foreground flex items-center gap-1.5">
-                          <User className="w-3.5 h-3.5" />
-                          {t('subscriptions.detail.form.sectionSubscriber')}
-                        </Label>
+                    <>
+                      <FormSection icon={User} title={t('subscriptions.detail.form.sectionSubscriber')}>
+                      <FormSubsection>
 
                         <div className="grid grid-cols-3 gap-3">
                           <EditField label={t('subscriptions.detail.form.subscriberTitle')} icon={User}>
@@ -2558,15 +2567,11 @@ export function NewSubscriptionDialog({
                             />
                           </EditField>
                         </div>
-                      </div>
+                      </FormSubsection>
+                      </FormSection>
 
-                      {/* BANKING SECTION */}
-                      <Separator className="my-2" />
-                      <div className="space-y-3">
-                        <Label className="text-xs uppercase tracking-wide font-semibold text-muted-foreground flex items-center gap-1.5">
-                          <Landmark className="w-3.5 h-3.5" />
-                          {t('subscriptions.detail.form.sectionBanking')}
-                        </Label>
+                      <FormSection icon={Landmark} title={t('subscriptions.detail.form.sectionBanking')}>
+                      <FormSubsection>
 
                         <div className="grid grid-cols-3 gap-3">
                           <EditField
@@ -2591,15 +2596,11 @@ export function NewSubscriptionDialog({
                             />
                           </EditField>
                         </div>
-                      </div>
+                      </FormSubsection>
+                      </FormSection>
 
-                      {/* CUSTOM FIELDS SECTION */}
-                      <Separator className="my-2" />
-                      <div className="space-y-3">
-                        <Label className="text-xs uppercase tracking-wide font-semibold text-muted-foreground flex items-center gap-1.5">
-                          <FileText className="w-3.5 h-3.5" />
-                          {t('subscriptions.detail.form.sectionCustomFields')}
-                        </Label>
+                      <FormSection icon={FileText} title={t('subscriptions.detail.form.sectionCustomFields')}>
+                      <FormSubsection>
 
                         <EditField label={t('subscriptions.detail.form.sideLetter')} icon={FileText}>
                           <Textarea
@@ -2609,19 +2610,23 @@ export function NewSubscriptionDialog({
                             className="min-h-20"
                           />
                         </EditField>
-                      </div>
+                      </FormSubsection>
+                      </FormSection>
 
-                    </div>
+                    </>
                   )}
 
                   <FormSection
-                    index={4}
+                    step={4}
+                    status={sectionStatus.additional}
                     icon={Info}
                     title={t('subscriptions.newDialog.sections.additionalInfo')}
                     description={t('subscriptions.newDialog.sections.additionalInfoDesc')}
                   >
+                    <FormSubsection icon={Tag} title={t('subscriptions.newDialog.subsections.identification')}>
+                    <div className="grid gap-3" style={{ gridTemplateColumns: '1.5fr 1fr' }}>
                     <div className="space-y-1.5">
-                      <Label className="text-xs flex items-center gap-1.5">
+                      <Label className={FORM_FIELD_LABEL_CLASS}>
                         <Tag className="w-3.5 h-3.5" />
                         {t('subscriptions.newDialog.subscriptionName.label')}
                         <span className="text-muted-foreground/60 font-normal">
@@ -2637,7 +2642,7 @@ export function NewSubscriptionDialog({
                       {!formData.subscriptionName.trim() && (
                         <div className="flex items-start gap-2 rounded-md bg-muted/40 px-3 py-2">
                           <Info className="w-3.5 h-3.5 text-muted-foreground shrink-0 mt-0.5" />
-                          <p className="text-[11px] text-muted-foreground">
+                          <p className={FORM_FIELD_HINT_CLASS}>
                             {t('subscriptions.newDialog.subscriptionName.rule')}{' '}
                             {generatedSubscriptionName
                               ? t('subscriptions.newDialog.subscriptionName.ruleExample', {
@@ -2648,9 +2653,8 @@ export function NewSubscriptionDialog({
                         </div>
                       )}
                     </div>
-
                     <div className="space-y-1.5">
-                      <Label className="text-xs flex items-center gap-1.5">
+                      <Label className={FORM_FIELD_LABEL_CLASS}>
                         <Globe className="w-3.5 h-3.5" />
                         {t('subscriptions.newDialog.notificationSection.languageLabel')}
                       </Label>
@@ -2671,16 +2675,19 @@ export function NewSubscriptionDialog({
                           ))}
                         </SelectContent>
                       </Select>
-                      <p className="text-[11px] text-muted-foreground">
+                      <p className={FORM_FIELD_HINT_CLASS}>
                         {formData.investor?.preferredLanguage
                           ? t('subscriptions.newDialog.notificationSection.languageHelper')
                           : t('subscriptions.newDialog.notificationSection.languageHelperFallback')}
                       </p>
                     </div>
+                    </div>
+                    </FormSubsection>
 
+                    <FormSubsection icon={Bell} title={t('subscriptions.newDialog.subsections.notification')}>
                     <label
                       htmlFor="notify-on-creation-switch"
-                      className="flex w-full items-start justify-between gap-3 rounded-md border border-input bg-white px-3 py-2.5 text-sm cursor-pointer hover:bg-muted/40 transition-colors"
+                      className="flex w-full items-start justify-between gap-3 text-sm cursor-pointer"
                     >
                       <div className="flex-1 min-w-0">
                         <div className="text-foreground font-medium flex items-center gap-1.5">
@@ -2701,12 +2708,14 @@ export function NewSubscriptionDialog({
                         }
                       />
                     </label>
+                    </FormSubsection>
 
                     {!isEditMode && (
+                      <FormSubsection icon={StickyNote} title={t('subscriptions.newDialog.subsections.internalNote')}>
                       <div className="space-y-3" data-field-error={!!fieldError('internalNote')}>
                         <label
                           htmlFor="internal-note-switch"
-                          className="flex w-full items-start justify-between gap-3 rounded-md border border-input bg-white px-3 py-2.5 text-sm cursor-pointer hover:bg-muted/40 transition-colors"
+                          className="flex w-full items-start justify-between gap-3 text-sm cursor-pointer"
                         >
                           <div className="flex-1 min-w-0">
                             <div className="text-foreground font-medium flex items-center gap-1.5">
@@ -2731,7 +2740,7 @@ export function NewSubscriptionDialog({
                           <motion.div
                             initial={{ opacity: 0, y: -4 }}
                             animate={{ opacity: 1, y: 0 }}
-                            className="rounded-xl border border-border bg-card p-4 space-y-3"
+                            className="space-y-3 pt-3 border-t border-border"
                           >
                             <div className="grid grid-cols-2 gap-3">
                               <EditField label={t('subscriptions.newDialog.internalNote.type')} icon={Tag}>
@@ -2779,179 +2788,164 @@ export function NewSubscriptionDialog({
                           </motion.div>
                         )}
                       </div>
+                      </FormSubsection>
                     )}
 
                   </FormSection>
 
                   {!isEditMode && (
                     <FormSection
-                      index={5}
+                      step={5}
                       icon={ClipboardCheck}
                       title={t('subscriptions.newDialog.sections.review')}
                       description={t('subscriptions.newDialog.sections.reviewDesc')}
                     >
-                    {Object.keys(errors).length > 0 && submitAttempted && (
-                      <div
-                        className="rounded-lg border px-3 py-2.5 space-y-1"
-                        style={{
-                          backgroundColor: 'color-mix(in oklab, var(--destructive) 6%, transparent)',
-                          borderColor: 'color-mix(in oklab, var(--destructive) 30%, transparent)',
-                        }}
-                      >
-                        <p className="text-xs font-semibold text-foreground">
-                          {t('subscriptions.newDialog.review.blockingTitle')}
-                        </p>
-                        <ul className="space-y-0.5">
-                          {Object.values(errors).map((message) => (
-                            <li key={message}>
-                              <FieldMessage message={message} />
-                            </li>
-                          ))}
-                        </ul>
-                      </div>
-                    )}
-
-                    <dl className="rounded-xl border border-border bg-card divide-y divide-border text-sm">
-                      <div className="flex items-start justify-between gap-4 px-4 py-2.5">
-                        <dt className="text-muted-foreground shrink-0">
-                          {t('subscriptions.newDialog.review.subscriptionName')}
-                        </dt>
-                        <dd className="text-right min-w-0">
-                          {effectiveSubscriptionName ? (
-                            <span className="font-medium text-foreground break-words">
-                              {effectiveSubscriptionName}
-                              {!formData.subscriptionName.trim() && (
-                                <Badge variant="outline" className="ml-2 text-[10px] h-4 align-middle">
-                                  {t('subscriptions.newDialog.review.generatedTag')}
-                                </Badge>
-                              )}
-                            </span>
-                          ) : (
-                            <span className="text-muted-foreground">{t('subscriptions.newDialog.review.toComplete')}</span>
-                          )}
-                        </dd>
-                      </div>
-
-                      <div className="flex items-start justify-between gap-4 px-4 py-2.5">
-                        <dt className="text-muted-foreground shrink-0">
-                          {t('subscriptions.newDialog.review.subscriptionAmount')}
-                        </dt>
-                        <dd className="font-medium text-foreground text-right">
-                          {calculatedAmount > 0
-                            ? `${calculatedAmount.toLocaleString('fr-FR')} €`
-                            : t('subscriptions.newDialog.review.toComplete')}
-                        </dd>
-                      </div>
-
-                      <div className="flex items-start justify-between gap-4 px-4 py-2.5">
-                        <dt className="text-muted-foreground shrink-0">
-                          {t('subscriptions.newDialog.review.totalAmount')}
-                        </dt>
-                        <dd className="text-right">
-                          <div className="font-bold text-primary">
-                            {(calculatedAmount + calculatedFees).toLocaleString('fr-FR')} €
-                          </div>
-                          <div className="text-[11px] text-muted-foreground">
-                            {t('subscriptions.newDialog.review.totalBreakdown', {
-                              percent: entryFeePercent,
-                              fees: calculatedEntryFees.toLocaleString('fr-FR'),
-                              premium: subscriptionPremiumAmount.toLocaleString('fr-FR'),
-                            })}
-                          </div>
-                        </dd>
-                      </div>
-
-                      <div className="flex items-start justify-between gap-4 px-4 py-2.5">
-                        <dt className="text-muted-foreground shrink-0">
-                          {t('subscriptions.newDialog.review.language')}
-                        </dt>
-                        <dd className="font-medium text-foreground text-right">
-                          {t(`subscriptions.newDialog.notificationSection.languageOptions.${formData.language}`)}
-                        </dd>
-                      </div>
-
-                      <div className="px-4 py-2.5 space-y-2">
-                        <div className="flex items-start justify-between gap-4">
-                          <dt className="text-muted-foreground shrink-0">
-                            {t('subscriptions.newDialog.review.notification')}
-                          </dt>
-                          <dd className="font-medium text-foreground text-right">
-                            {formData.notifyOnCreation
-                              ? t('subscriptions.newDialog.distribution.yes')
-                              : t('subscriptions.newDialog.review.notificationOff')}
-                          </dd>
-                        </div>
-                        {formData.notifyOnCreation && notificationRecipients.length > 0 && (
-                          <ul className="space-y-1.5">
-                            {notificationRecipients.map((recipient) => (
-                              <li
-                                key={recipient.role}
-                                className="flex items-center gap-3 rounded-md bg-muted/40 px-3 py-2"
-                              >
-                                <Mail className="w-3.5 h-3.5 text-muted-foreground shrink-0" />
-                                <div className="flex-1 min-w-0">
-                                  <div className="text-xs font-medium text-foreground truncate">
-                                    {recipient.name}
-                                    <span className="ml-1.5 font-normal text-muted-foreground">
-                                      {t(`subscriptions.newDialog.review.roles.${recipient.role}`)}
-                                    </span>
-                                  </div>
-                                  {recipient.detail && (
-                                    <div className="text-[11px] text-muted-foreground truncate">{recipient.detail}</div>
-                                  )}
-                                </div>
-                                {recipient.template ? (
-                                  <button
-                                    type="button"
-                                    onClick={() => setPreviewRecipient(recipient)}
-                                    className="inline-flex items-center gap-1 rounded-md px-2 h-7 text-xs text-primary hover:bg-muted transition-colors shrink-0"
-                                    style={{ maxWidth: '50%' }}
-                                    aria-label={t('subscriptions.newDialog.review.previewTemplate', {
-                                      name: recipient.template.name,
-                                    })}
-                                  >
-                                    <Eye className="w-3.5 h-3.5 shrink-0" />
-                                    <span className="truncate">{recipient.template.name}</span>
-                                  </button>
-                                ) : (
-                                  <span className="text-[11px] text-muted-foreground shrink-0">
-                                    {t('subscriptions.newDialog.review.templateMissing')}
-                                  </span>
-                                )}
+                      {Object.keys(errors).length > 0 && submitAttempted && (
+                        <div
+                          className="rounded-xl border px-4 py-3 space-y-1.5"
+                          style={{
+                            backgroundColor: 'color-mix(in oklab, var(--destructive) 6%, var(--card))',
+                            borderColor: 'color-mix(in oklab, var(--destructive) 30%, transparent)',
+                          }}
+                        >
+                          <p className="text-sm font-semibold text-foreground">
+                            {t('subscriptions.newDialog.review.blockingTitle')}
+                          </p>
+                          <ul className="space-y-1">
+                            {Object.values(errors).map((message) => (
+                              <li key={message}>
+                                <FieldMessage message={message} />
                               </li>
                             ))}
                           </ul>
-                        )}
-                      </div>
+                        </div>
+                      )}
 
-                      <div className="flex items-start justify-between gap-4 px-4 py-2.5">
-                        <dt className="text-muted-foreground shrink-0">
-                          {t('subscriptions.newDialog.review.internalNote')}
-                        </dt>
-                        <dd className="text-right min-w-0">
-                          {formData.internalNote.enabled && formData.internalNote.content.trim() ? (
-                            <>
-                              <div className="flex justify-end gap-1.5 mb-1">
-                                <Badge variant="outline" className="text-[10px] h-4">
-                                  {t(`subscriptions.newDialog.internalNote.types.${formData.internalNote.type}`)}
-                                </Badge>
-                                <Badge variant="outline" className="text-[10px] h-4">
-                                  {t(`subscriptions.newDialog.internalNote.priorities.${formData.internalNote.priority}`)}
-                                </Badge>
-                              </div>
-                              <p className="text-xs text-foreground line-clamp-2 break-words">
-                                {formData.internalNote.content.trim()}
-                              </p>
-                            </>
-                          ) : (
-                            <span className="text-muted-foreground">
-                              {t('subscriptions.newDialog.review.noInternalNote')}
+                      <FormSubsection icon={Tag} title={t('subscriptions.newDialog.subsections.reviewSubscription')}>
+                        <dl className="divide-y divide-border text-sm">
+                          <ReviewRow label={t('subscriptions.newDialog.review.subscriptionName')}>
+                            {effectiveSubscriptionName ? (
+                              <span className="font-medium text-foreground break-words">
+                                {effectiveSubscriptionName}
+                                {!formData.subscriptionName.trim() && (
+                                  <Badge variant="outline" className="ml-2 text-xs h-5 align-middle">
+                                    {t('subscriptions.newDialog.review.generatedTag')}
+                                  </Badge>
+                                )}
+                              </span>
+                            ) : (
+                              <span className="text-muted-foreground">{t('subscriptions.newDialog.review.toComplete')}</span>
+                            )}
+                          </ReviewRow>
+                          <ReviewRow label={t('subscriptions.newDialog.review.language')}>
+                            <span className="font-medium text-foreground">
+                              {t(`subscriptions.newDialog.notificationSection.languageOptions.${formData.language}`)}
                             </span>
-                          )}
-                        </dd>
-                      </div>
-                    </dl>
+                          </ReviewRow>
+                        </dl>
+                      </FormSubsection>
 
+                      <FormSubsection icon={Euro} title={t('subscriptions.newDialog.subsections.reviewAmounts')}>
+                        <dl className="divide-y divide-border text-sm">
+                          <ReviewRow label={t('subscriptions.newDialog.review.subscriptionAmount')}>
+                            <span className="font-medium text-foreground">
+                              {calculatedAmount > 0
+                                ? `${calculatedAmount.toLocaleString('fr-FR')} €`
+                                : t('subscriptions.newDialog.review.toComplete')}
+                            </span>
+                          </ReviewRow>
+                          <ReviewRow label={t('subscriptions.newDialog.review.totalAmount')}>
+                            <div className="text-base font-bold text-primary">
+                              {(calculatedAmount + calculatedFees).toLocaleString('fr-FR')} €
+                            </div>
+                            <div className={FORM_FIELD_HINT_CLASS}>
+                              {t('subscriptions.newDialog.review.totalBreakdown', {
+                                percent: entryFeePercent,
+                                fees: calculatedEntryFees.toLocaleString('fr-FR'),
+                                premium: subscriptionPremiumAmount.toLocaleString('fr-FR'),
+                              })}
+                            </div>
+                          </ReviewRow>
+                        </dl>
+                      </FormSubsection>
+
+                      <FormSubsection icon={Bell} title={t('subscriptions.newDialog.subsections.reviewCommunication')}>
+                        <dl className="divide-y divide-border text-sm">
+                          <ReviewRow label={t('subscriptions.newDialog.review.notification')}>
+                            <span className="font-medium text-foreground">
+                              {formData.notifyOnCreation
+                                ? t('subscriptions.newDialog.distribution.yes')
+                                : t('subscriptions.newDialog.review.notificationOff')}
+                            </span>
+                          </ReviewRow>
+                          {formData.notifyOnCreation && notificationRecipients.length > 0 && (
+                            <div className="py-2">
+                              <ul className="space-y-1.5">
+                                {notificationRecipients.map((recipient) => (
+                                  <li
+                                    key={recipient.role}
+                                    className="flex items-center gap-3 rounded-lg border border-border px-3 py-2"
+                                  >
+                                    <Mail className="w-4 h-4 text-muted-foreground shrink-0" />
+                                    <div className="flex-1 min-w-0">
+                                      <div className="text-sm font-medium text-foreground truncate">
+                                        {recipient.name}
+                                        <span className="ml-1.5 font-normal text-muted-foreground">
+                                          {t(`subscriptions.newDialog.review.roles.${recipient.role}`)}
+                                        </span>
+                                      </div>
+                                      {recipient.detail && (
+                                        <div className={cn(FORM_FIELD_HINT_CLASS, 'truncate')}>{recipient.detail}</div>
+                                      )}
+                                    </div>
+                                    {recipient.template ? (
+                                      <Button
+                                        type="button"
+                                        variant="outline"
+                                        size="sm"
+                                        onClick={() => setPreviewRecipient(recipient)}
+                                        className="h-8 shrink-0"
+                                        style={{ maxWidth: '50%' }}
+                                        aria-label={t('subscriptions.newDialog.review.previewTemplate', {
+                                          name: recipient.template.name,
+                                        })}
+                                      >
+                                        <Eye className="w-3.5 h-3.5 mr-1.5 shrink-0" />
+                                        <span className="truncate">{recipient.template.name}</span>
+                                      </Button>
+                                    ) : (
+                                      <span className={cn(FORM_FIELD_HINT_CLASS, 'shrink-0')}>
+                                        {t('subscriptions.newDialog.review.templateMissing')}
+                                      </span>
+                                    )}
+                                  </li>
+                                ))}
+                              </ul>
+                            </div>
+                          )}
+                          <ReviewRow label={t('subscriptions.newDialog.review.internalNote')}>
+                            {formData.internalNote.enabled && formData.internalNote.content.trim() ? (
+                              <>
+                                <div className="flex justify-end gap-1.5 mb-1">
+                                  <Badge variant="outline" className="text-xs h-5">
+                                    {t(`subscriptions.newDialog.internalNote.types.${formData.internalNote.type}`)}
+                                  </Badge>
+                                  <Badge variant="outline" className="text-xs h-5">
+                                    {t(`subscriptions.newDialog.internalNote.priorities.${formData.internalNote.priority}`)}
+                                  </Badge>
+                                </div>
+                                <p className="text-sm text-foreground line-clamp-2 break-words">
+                                  {formData.internalNote.content.trim()}
+                                </p>
+                              </>
+                            ) : (
+                              <span className="text-muted-foreground">
+                                {t('subscriptions.newDialog.review.noInternalNote')}
+                              </span>
+                            )}
+                          </ReviewRow>
+                        </dl>
+                      </FormSubsection>
                     </FormSection>
                   )}
               </div>

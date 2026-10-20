@@ -1346,7 +1346,7 @@
       "attitled": "Primary",
       "selectDistributor": "Select a distributor",
       "selectFund": "Select a fund",
-      "selectShareClass": "Select a share class",
+      "selectShareClass": "Select a share",
       "directSubscription": "Direct subscription",
       "noEntryFees": "No entry fees (0%)",
       "entryFeesPct": "Entry fees: {{percent}}%",
@@ -1508,6 +1508,19 @@
         "description": "Sent to {{recipient}}, in {{language}}. Preview computed with the current subscription data.",
         "subject": "Subject:",
         "frameLabel": "Notification preview"
+      },
+      "subsections": {
+        "fundAndShare": "Fund and share",
+        "quantityAndAmount": "Quantity and amount",
+        "options": "Options",
+        "distributor": "Distributor",
+        "distributionTerms": "Distribution terms",
+        "identification": "Identification",
+        "notification": "Notification",
+        "internalNote": "Internal note",
+        "reviewSubscription": "Subscription",
+        "reviewAmounts": "Amounts",
+        "reviewCommunication": "Communication"
       }
     },
     "editDialog": {

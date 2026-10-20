@@ -1346,7 +1346,7 @@
       "attitled": "Attitré",
       "selectDistributor": "Sélectionner un distributeur",
       "selectFund": "Sélectionner un fonds",
-      "selectShareClass": "Sélectionner une classe de parts",
+      "selectShareClass": "Sélectionner une part",
       "directSubscription": "Souscription Directe",
       "noEntryFees": "Sans frais d'entrée (0%)",
       "entryFeesPct": "Frais d'entrée : {{percent}}%",
@@ -1508,6 +1508,19 @@
         "description": "Envoyé à {{recipient}}, en {{language}}. Aperçu calculé avec les données de la souscription en cours.",
         "subject": "Objet :",
         "frameLabel": "Aperçu de la notification"
+      },
+      "subsections": {
+        "fundAndShare": "Fonds et part",
+        "quantityAndAmount": "Quantité et montant",
+        "options": "Options",
+        "distributor": "Distributeur",
+        "distributionTerms": "Conditions de distribution",
+        "identification": "Identification",
+        "notification": "Notification",
+        "internalNote": "Note interne",
+        "reviewSubscription": "Souscription",
+        "reviewAmounts": "Montants",
+        "reviewCommunication": "Communication"
       }
     },
     "editDialog": {
