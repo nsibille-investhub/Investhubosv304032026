@@ -1420,7 +1420,7 @@
       },
       "notificationSection": {
         "notifyInvestorDescription": "Sends the onboarding email to the investor so they can start their subscription.",
-        "notifyDistributorDescription": "Sends the onboarding email to the distributor, as the subscription is intermediated.",
+        "notifyDistributorDescription": "Sends the onboarding email to the investor, with the distributor in copy.",
         "languageLabel": "Onboarding & communication language",
         "languageHelper": "Defaults to the investor's preferred language.",
         "languageHelperFallback": "Defaults to the platform language (no preference set on the investor).",
@@ -1493,7 +1493,12 @@
         "amountsReadOnly": "Computed from the fund, share, amount and distribution entered above.",
         "templateLine": "Template: {{name}}",
         "preview": "Preview",
-        "recipientsWaiting": "Recipients will show once the investor is selected."
+        "recipientsWaiting": "Recipients will show once the investor is selected.",
+        "copyRule": "Copied when the network copy rule is active",
+        "delivery": {
+          "to": "Recipient",
+          "cc": "Copy"
+        }
       },
       "preview": {
         "title": "Preview: {{name}}",

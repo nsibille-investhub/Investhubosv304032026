@@ -1420,7 +1420,7 @@
       },
       "notificationSection": {
         "notifyInvestorDescription": "Envoie le mail d'onboarding à l'investisseur pour qu'il démarre sa souscription.",
-        "notifyDistributorDescription": "Envoie le mail d'onboarding au distributeur, la souscription étant intermédiée.",
+        "notifyDistributorDescription": "Envoie le mail d'onboarding à l'investisseur, avec le distributeur en copie.",
         "languageLabel": "Langue de l'onboarding et de la communication",
         "languageHelper": "Reprend par défaut la langue préférée de l'investisseur.",
         "languageHelperFallback": "Aucune préférence sur l'investisseur, utilise la langue de la plateforme par défaut.",
@@ -1493,7 +1493,12 @@
         "amountsReadOnly": "Calculés à partir des fonds, part, montant et distribution saisis plus haut.",
         "templateLine": "Gabarit : {{name}}",
         "preview": "Aperçu",
-        "recipientsWaiting": "Les destinataires s'afficheront dès que l'investisseur sera sélectionné."
+        "recipientsWaiting": "Les destinataires s'afficheront dès que l'investisseur sera sélectionné.",
+        "copyRule": "En copie si la règle de copie du réseau est active",
+        "delivery": {
+          "to": "Destinataire",
+          "cc": "Copie"
+        }
       },
       "preview": {
         "title": "Aperçu : {{name}}",

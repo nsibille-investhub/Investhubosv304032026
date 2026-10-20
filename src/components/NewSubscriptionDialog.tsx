@@ -308,14 +308,17 @@ type NotificationRole = 'investor' | 'partner' | 'team';
 
 interface NotificationRecipient {
   role: NotificationRole;
+  /** 'cc' : copie du mail de l'investisseur, soumise à la règle de copie du réseau. */
+  delivery: 'to' | 'cc';
   name: string;
   detail?: string;
   template?: MailTemplate;
 }
 
-// Gabarits envoyés à la création : l'onboarding part vers l'investisseur, ou
-// vers le distributeur quand la souscription est intermédiée, et l'équipe
-// interne reçoit l'alerte de nouvelle souscription.
+// Gabarits envoyés à la création : l'invitation part toujours à l'investisseur.
+// Sur une souscription intermédiée, le distributeur reçoit le même mail en
+// copie (règle de copie du réseau), il n'en est jamais le destinataire
+// principal. L'équipe interne reçoit l'alerte de nouvelle souscription.
 const CREATION_TEMPLATE_SLUGS: Record<NotificationRole, string> = {
   investor: 'invitation',
   partner: 'invitation',
@@ -933,25 +936,26 @@ export function NewSubscriptionDialog({
     if (!formData.investor) return [];
     const team: NotificationRecipient = {
       role: 'team',
+      delivery: 'to',
       name: t('subscriptions.newDialog.review.internalTeam'),
       template: findTemplate(CREATION_TEMPLATE_SLUGS.team),
     };
-    if (formData.isIntermediated) {
-      return [
-        {
-          role: 'partner',
-          name: selectedDistributorName || t('subscriptions.newDialog.review.partnerToSelect'),
-          template: findTemplate(CREATION_TEMPLATE_SLUGS.partner),
-        },
-        team,
-      ];
-    }
+    const investor: NotificationRecipient = {
+      role: 'investor',
+      delivery: 'to',
+      name: formData.investor.name,
+      detail: formData.investor.email,
+      template: findTemplate(CREATION_TEMPLATE_SLUGS.investor),
+    };
+    if (!formData.isIntermediated) return [investor, team];
     return [
+      investor,
       {
-        role: 'investor',
-        name: formData.investor.name,
-        detail: formData.investor.email,
-        template: findTemplate(CREATION_TEMPLATE_SLUGS.investor),
+        role: 'partner',
+        delivery: 'cc',
+        name: selectedDistributorName || t('subscriptions.newDialog.review.partnerToSelect'),
+        detail: t('subscriptions.newDialog.review.copyRule'),
+        template: findTemplate(CREATION_TEMPLATE_SLUGS.partner),
       },
       team,
     ];
@@ -2789,6 +2793,9 @@ export function NewSubscriptionDialog({
                                       <span className="ml-1.5 font-normal text-muted-foreground">
                                         {t(`subscriptions.newDialog.review.roles.${recipient.role}`)}
                                       </span>
+                                      <Badge variant="outline" className="ml-2 text-xs h-5 align-middle">
+                                        {t(`subscriptions.newDialog.review.delivery.${recipient.delivery}`)}
+                                      </Badge>
                                     </div>
                                     <div className={cn(FORM_FIELD_HINT_CLASS, 'truncate')}>
                                       {recipient.template
