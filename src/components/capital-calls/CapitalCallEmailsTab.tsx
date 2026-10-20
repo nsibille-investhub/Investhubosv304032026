@@ -14,7 +14,7 @@ import { FilterBar, FilterConfig } from '../FilterBar';
 import { HighlightText } from '../HighlightText';
 import { StatusBadge, StatusVariant } from '../StatusBadge';
 import { Button } from '../ui/button';
-import { Card } from '../ui/card';
+import { ListingCard } from '../ui/listing';
 import { DataPagination } from '../ui/data-pagination';
 
 const K = 'funds.capitalCalls.detail.emails';
@@ -179,8 +179,8 @@ export function CapitalCallEmailsTab({
   const hasFiltering = Object.keys(activeFilters).length > 0 || search.trim().length > 0;
 
   return (
-    <Card className="shadow-sm">
-      <div className="relative z-10 border-b border-border p-4">
+    <ListingCard
+      toolbar={
         <FilterBar
           searchValue={search}
           onSearchChange={value => {
@@ -193,7 +193,24 @@ export function CapitalCallEmailsTab({
           onFilterChange={handleFilterChange}
           onClearAll={resetFilters}
         />
-      </div>
+      }
+      footer={
+        filtered.length > 0 ? (
+          <DataPagination
+            currentPage={page}
+            totalPages={totalPages}
+            pageSize={pageSize}
+            totalItems={filtered.length}
+            onPageChange={next => setPage(Math.min(Math.max(1, next), totalPages))}
+            onPageSizeChange={size => {
+              setPageSize(size);
+              setPage(1);
+            }}
+            pageSizeOptions={[10, 20, 50]}
+          />
+        ) : undefined
+      }
+    >
       {filtered.length === 0 ? (
         <EmptyState
           icon={Mail}
@@ -222,20 +239,8 @@ export function CapitalCallEmailsTab({
             hideSelection
             density="compact"
           />
-          <DataPagination
-            currentPage={page}
-            totalPages={totalPages}
-            pageSize={pageSize}
-            totalItems={filtered.length}
-            onPageChange={next => setPage(Math.min(Math.max(1, next), totalPages))}
-            onPageSizeChange={size => {
-              setPageSize(size);
-              setPage(1);
-            }}
-            pageSizeOptions={[10, 20, 50]}
-          />
         </>
       )}
-    </Card>
+    </ListingCard>
   );
 }

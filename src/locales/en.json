@@ -2158,7 +2158,15 @@
       "copyError": "Copy failed",
       "rowActions": "Actions",
       "moreActions": "More actions",
-      "more": "+{{count}} more"
+      "more": "+{{count}} more",
+      "columns": {
+        "label": "Columns",
+        "title": "Displayed columns",
+        "reset": "Restore default columns"
+      }
+    },
+    "formField": {
+      "required": "required"
     }
   },
   "ged": {
@@ -5821,7 +5829,8 @@
         "sending": "Sending",
         "overdue": "Overdue, not settled",
         "fundsMetric": "Funds",
-        "perFund": "{{count}} per fund"
+        "perFund": "{{count}} per fund",
+        "clickToFilter": "Click a queue to filter"
       },
       "filters": {
         "funds": "Funds",
@@ -5846,11 +5855,6 @@
         "notices": "Notices",
         "notification": "Notification",
         "settlement": "Settlement"
-      },
-      "columnsMenu": {
-        "label": "Columns",
-        "title": "Displayed columns",
-        "reset": "Restore default columns"
       },
       "origins": {
         "backOffice": "Back office",
@@ -6167,7 +6171,6 @@
           "amounts": "Amounts",
           "control": "Check"
         },
-        "required": "required",
         "close": "Close the wizard",
         "cancel": "Cancel",
         "previous": "Previous",
@@ -6230,6 +6233,12 @@
             "description": "Notices cannot be produced until a template is configured. You can continue.",
             "link": "Configure the notice template",
             "notInMockup": "Notice template configuration is not in the mockup."
+          },
+          "attachmentDrop": {
+            "hint": "Drop a file or click to choose one",
+            "hintDesc": "PDF, Word or image",
+            "ready": "File ready to attach",
+            "preview": "Preview"
           }
         },
         "amounts": {
@@ -6311,7 +6320,8 @@
           "summary": {
             "lines": "Lines produced",
             "exclusions": "Excluded subscriptions",
-            "total": "Call total"
+            "total": "Call total",
+            "title": "Simulation summary"
           },
           "allocation": "Allocation mode: {{mode}}.",
           "shares": {
@@ -6545,7 +6555,7 @@
       },
       "statusBadge": {
         "title": "Status badge",
-        "description": "Generic badge the fund status badge is built on. New info, outline and strong variants, and optional icon.",
+        "description": "Generic badge the fund status badge is built on. New info, outline and strong variants, and optional icon. Optional tooltip for the reason or details.",
         "variants": "neutral, outline, info, success, warning, danger, strong; with or without icon.",
         "states": "Read-only.",
         "exampleLabel": "The seven tones",
@@ -6585,7 +6595,7 @@
       },
       "widgetCard": {
         "title": "Dashboard widget",
-        "description": "Summary card with small caps title, subtitle, action and footer. WidgetMetric shows a figure; SegmentedProgress, extracted from onboarding, shows an overall state segmented by color.",
+        "description": "Summary card with small caps title, subtitle, action and footer. WidgetMetric shows a figure; SegmentedProgress, extracted from onboarding, shows an overall state segmented by color. WidgetMetric can be clickable (onClick, ariaLabel) to open a filtered list.",
         "variants": "With icon, action, footer; normal or large value; bar with one or more segments, design system tones.",
         "states": "Value filled, value missing (\"None\"), empty bar.",
         "exampleLabel": "Examples",
@@ -6633,7 +6643,7 @@
       },
       "dataTable": {
         "title": "Data table",
-        "description": "Design system table. Evolution: align option per column. On the right, header and cells align and figures become tabular: amounts and percentages, each in its own sortable column.",
+        "description": "Design system table. Evolution: align option per column. On the right, header and cells align and figures become tabular: amounts and percentages, each in its own sortable column. Optional totals row (footer).",
         "variants": "Sortable or not, left or right alignment, selection can be hidden. Default or compact density.",
         "states": "Ascending, descending or no sort; row hover; row click.",
         "exampleLabel": "Example: fees of two shares"
@@ -6644,6 +6654,89 @@
         "variants": "Single series, values formatted by the caller.",
         "states": "Rest, hover (active dot and tooltip).",
         "exampleLabel": "Example: net assets"
+      },
+      "filterCardGroup": {
+        "title": "Filter card group",
+        "description": "Band of FilterCards above a listing: title with an accent bar, badge, hint and cards in a grid. Replaces the headers copied in the investor and subscription status tabs, SMS history and capital call queues.",
+        "variants": "4, 5 or 6 columns; with or without badge and hint.",
+        "states": "Active card, inactive card, zero total.",
+        "exampleLabel": "Work queues",
+        "demo": {
+          "title": "Work queues",
+          "hint": "Click to filter",
+          "all": "All",
+          "failed": "Failed notices",
+          "done": "Notified",
+          "metric": "Amount"
+        }
+      },
+      "listingTools": {
+        "title": "Listing tools",
+        "description": "ListingColumnsMenu picks the visible columns (the last visible one cannot be hidden); ListingIndicator flags a row specificity with an icon, label on hover. ListingCard also takes a footer (pagination) and DataTable a totals row (footer). FilterBar now handles multi-select and date range filters, and wraps when space runs out.",
+        "variants": "Columns menu with reset; one or more indicators next to the name.",
+        "states": "Hidden column, last column locked, indicator on hover.",
+        "exampleLabel": "Name with indicators and column picker",
+        "demo": {
+          "investor": "Camille R.",
+          "combined": "Combined notice",
+          "hidden": "Hidden on the portal",
+          "columns": {
+            "investor": "Investor",
+            "amount": "Amount",
+            "state": "State"
+          }
+        }
+      },
+      "wizardSteps": {
+        "title": "Wizard steps",
+        "description": "Steps of a modal wizard, placed in the BigModalPanelHeader (new area under the title). Number, check once the step is done, current step label in bold.",
+        "variants": "2 to 5 steps.",
+        "states": "Done step, current step, upcoming step.",
+        "exampleLabel": "Three-step wizard",
+        "demo": {
+          "ariaLabel": "Wizard steps",
+          "info": "Information",
+          "amounts": "Amounts",
+          "control": "Review"
+        }
+      },
+      "formField": {
+        "title": "Form field",
+        "description": "Label, asterisk when required, control, hint or error below. labelAside puts a selector to the right of the label. SuffixInput right-aligns a numeric input with its unit.",
+        "variants": "Required or not, with hint, hidden label (column header), selector next to the label; unit %, currency, currency per unit.",
+        "states": "Empty, filled, in error.",
+        "exampleLabel": "Required field and field with unit",
+        "demo": {
+          "name": "Call name",
+          "nameError": "Enter the call name.",
+          "percent": "Called percentage",
+          "percentHint": "Of the committed amount"
+        }
+      },
+      "attachmentRow": {
+        "title": "Attachment",
+        "description": "Read-only attachment row: paperclip, name, size, download button. Stack them in a divide-y container.",
+        "variants": "With or without size.",
+        "states": "Long name truncated.",
+        "exampleLabel": "Capital call attachment",
+        "demo": {
+          "name": "Investor letter.pdf",
+          "size": "284 KB",
+          "download": "Download",
+          "downloaded": "Download simulated in the mockup."
+        }
+      },
+      "demoScenarioBar": {
+        "title": "Demo scenario bar",
+        "description": "Mockup only: picks a scenario above the page header (rights, data, edge cases). Used on the fund detail and the capital calls listing.",
+        "variants": "With or without an action on the right.",
+        "states": "Default scenario, chosen scenario.",
+        "exampleLabel": "Scenario picker",
+        "demo": {
+          "label": "Demo scenario",
+          "default": "Nominal case",
+          "noRight": "No notification right"
+        }
       }
     }
   },

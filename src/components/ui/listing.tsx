@@ -1,12 +1,23 @@
 import { useState, type ReactNode } from 'react';
 import { motion } from 'motion/react';
-import { Check, ChevronDown, ChevronRight, Copy, type LucideIcon } from 'lucide-react';
+import { Check, ChevronDown, ChevronRight, Columns3, Copy, type LucideIcon } from 'lucide-react';
 import { toast } from 'sonner';
 import { useTranslation } from '../../utils/languageContext';
 import { copyToClipboard } from '../../utils/clipboard';
 import { ClickableText } from '../ClickableText';
 import { HighlightText } from '../HighlightText';
+import { Button } from './button';
+import {
+  DropdownMenu,
+  DropdownMenuCheckboxItem,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from './dropdown-menu';
 import { Popover, PopoverContent, PopoverTrigger } from './popover';
+import { Tooltip, TooltipContent, TooltipTrigger } from './tooltip';
 import { cn } from './utils';
 
 /**
@@ -220,5 +231,60 @@ export function ListingStackRow({ icon: Icon, label, children }: { icon?: Lucide
       </span>
       <span className="flex flex-wrap justify-end gap-1.5">{children}</span>
     </div>
+  );
+}
+
+interface ListingColumnsMenuProps {
+  columns: { key: string; label: string }[];
+  visible: string[];
+  onToggle: (key: string) => void;
+  onReset: () => void;
+}
+
+/** Choix des colonnes affichées d'un listing ; la dernière colonne visible ne peut pas être masquée. */
+export function ListingColumnsMenu({ columns, visible, onToggle, onReset }: ListingColumnsMenuProps) {
+  const { t } = useTranslation();
+  return (
+    <DropdownMenu>
+      <DropdownMenuTrigger asChild>
+        <Button variant="outline" size="sm" className="gap-1.5">
+          <Columns3 className="h-4 w-4" />
+          {t('common.listing.columns.label')}
+        </Button>
+      </DropdownMenuTrigger>
+      <DropdownMenuContent align="end" className="w-56">
+        <DropdownMenuLabel>{t('common.listing.columns.title')}</DropdownMenuLabel>
+        <DropdownMenuSeparator />
+        {columns.map(column => (
+          <DropdownMenuCheckboxItem
+            key={column.key}
+            checked={visible.includes(column.key)}
+            disabled={visible.length === 1 && visible.includes(column.key)}
+            onSelect={event => event.preventDefault()}
+            onCheckedChange={() => onToggle(column.key)}
+          >
+            {column.label}
+          </DropdownMenuCheckboxItem>
+        ))}
+        <DropdownMenuSeparator />
+        <DropdownMenuItem onClick={onReset}>{t('common.listing.columns.reset')}</DropdownMenuItem>
+      </DropdownMenuContent>
+    </DropdownMenu>
+  );
+}
+
+/** Indicateur d'une ligne (avis combiné, ligne masquée...) : icône discrète, libellé au survol. */
+export function ListingIndicator({ icon: Icon, label }: { icon: LucideIcon; label: string }) {
+  return (
+    <Tooltip>
+      <TooltipTrigger asChild>
+        <span tabIndex={0} className="inline-flex" aria-label={label}>
+          <Icon className="h-3.5 w-3.5 text-muted-foreground" aria-hidden />
+        </span>
+      </TooltipTrigger>
+      <TooltipContent>
+        <span className="text-xs">{label}</span>
+      </TooltipContent>
+    </Tooltip>
   );
 }

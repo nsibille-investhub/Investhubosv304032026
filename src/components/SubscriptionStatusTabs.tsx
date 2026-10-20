@@ -1,7 +1,5 @@
-import { motion } from 'motion/react';
-import { Badge } from './ui/badge';
 import { Plus, UserCheck, FileSignature, CheckCircle2, Activity, List } from 'lucide-react';
-import { FilterCard } from './ui/filter-card';
+import { FilterCard, FilterCardGroup } from './ui/filter-card';
 import { useTranslation } from '../utils/languageContext';
 
 type SubscriptionStatus = 'created' | 'onboarding' | 'signature' | 'counter_signature' | 'active' | 'all';
@@ -69,24 +67,12 @@ export function SubscriptionStatusTabs({ data, activeStatus, onStatusChange }: S
   const allKPIs = calculateKPIs(getFilteredData('all'));
 
   return (
-    <motion.div
-      initial={{ opacity: 0, y: -20 }}
-      animate={{ opacity: 1, y: 0 }}
-      transition={{ duration: 0.3 }}
-      className="bg-primary/5 pb-2 rounded-lg"
+    <FilterCardGroup
+      title={t('subscriptions.workflowTabs.title')}
+      badge={t('subscriptions.workflowTabs.stepsBadge')}
+      hint={t('subscriptions.workflowTabs.clickToFilter')}
+      columns={6}
     >
-      <div className="mb-3 flex items-center justify-between">
-        <div className="flex items-center gap-2">
-          <div className="w-1 h-6 bg-primary rounded-full" />
-          <h3 className="font-semibold text-gray-900">{t('subscriptions.workflowTabs.title')}</h3>
-          <Badge variant="outline" className="text-xs bg-primary/10 text-primary border-primary/25">
-            {t('subscriptions.workflowTabs.stepsBadge')}
-          </Badge>
-        </div>
-        <div className="text-xs text-gray-500">{t('subscriptions.workflowTabs.clickToFilter')}</div>
-      </div>
-
-      <div className="grid grid-cols-6 gap-1.5 items-center">
         <FilterCard
           status="created"
           activeStatus={activeStatus}
@@ -153,7 +139,6 @@ export function SubscriptionStatusTabs({ data, activeStatus, onStatusChange }: S
           metricValue={`€${formatAmount(allKPIs.totalAmount)}`}
           averageValue={`€${formatAmount(allKPIs.avgAmount)}`}
         />
-      </div>
-    </motion.div>
+    </FilterCardGroup>
   );
 }

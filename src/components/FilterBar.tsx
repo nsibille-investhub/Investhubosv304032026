@@ -1,4 +1,4 @@
-import { useState, type ReactNode } from 'react';
+import { useState } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
 import { Search, SlidersHorizontal, X, ChevronDown } from 'lucide-react';
 import { cn } from './ui/utils';
@@ -34,8 +34,6 @@ interface FilterBarProps {
   className?: string;
   onAskAI?: () => void;
   onAskAIDirect?: (query: string) => void;
-  /** Actions alignées à droite de la ligne de filtres (ex. choix des colonnes). */
-  actions?: ReactNode;
 }
 
 export function FilterBar({
@@ -48,8 +46,7 @@ export function FilterBar({
   onClearAll,
   className,
   onAskAI,
-  onAskAIDirect,
-  actions
+  onAskAIDirect
 }: FilterBarProps) {
   const { t, lang } = useTranslation();
   const [showAdvanced, setShowAdvanced] = useState(false);
@@ -197,8 +194,6 @@ export function FilterBar({
             <X className="w-4 h-4" />
           </motion.button>
         )}
-
-        {actions && <div className="ml-auto flex shrink-0 items-center gap-2">{actions}</div>}
       </div>
 
       {/* Chips des filtres actifs */}

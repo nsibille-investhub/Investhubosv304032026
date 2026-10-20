@@ -46,14 +46,13 @@ function Counter({
 }) {
   const { t } = useTranslation();
   return (
-    <button
-      type="button"
+    <WidgetMetric
+      label={label}
+      value={value}
+      tone={value > 0 ? tone : undefined}
       onClick={onClick}
-      aria-label={t(`${K}.openFiltered`, { label, count: value })}
-      className="rounded-lg p-1 text-left transition-colors hover:bg-muted"
-    >
-      <WidgetMetric label={label} value={value} tone={value > 0 ? tone : undefined} />
-    </button>
+      ariaLabel={t(`${K}.openFiltered`, { label, count: value })}
+    />
   );
 }
 

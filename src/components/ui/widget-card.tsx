@@ -41,13 +41,17 @@ interface WidgetMetricProps {
   secondary?: ReactNode;
   tone?: Tone;
   size?: 'md' | 'lg';
+  /** Compteur cliquable : ouvre la liste filtrée correspondante. */
+  onClick?: () => void;
+  /** Libellé accessible du compteur cliquable. */
+  ariaLabel?: string;
   className?: string;
 }
 
 /** Valeur chiffrée d'un widget : libellé, valeur, précision. */
-export function WidgetMetric({ label, value, secondary, tone, size = 'md', className }: WidgetMetricProps) {
-  return (
-    <div className={cn('min-w-0', className)}>
+export function WidgetMetric({ label, value, secondary, tone, size = 'md', onClick, ariaLabel, className }: WidgetMetricProps) {
+  const content = (
+    <>
       <p className={WIDGET_LABEL_CLASS}>{label}</p>
       <p
         className={cn(
@@ -59,6 +63,19 @@ export function WidgetMetric({ label, value, secondary, tone, size = 'md', class
         {value}
       </p>
       {secondary && <p className="text-xs text-muted-foreground tabular-nums">{secondary}</p>}
-    </div>
+    </>
   );
+  if (onClick) {
+    return (
+      <button
+        type="button"
+        onClick={onClick}
+        aria-label={ariaLabel}
+        className={cn('min-w-0 rounded-lg p-1 text-left transition-colors hover:bg-muted', className)}
+      >
+        {content}
+      </button>
+    );
+  }
+  return <div className={cn('min-w-0', className)}>{content}</div>;
 }

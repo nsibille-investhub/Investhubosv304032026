@@ -19,11 +19,11 @@ import {
   simulateCall,
 } from '../../../utils/capitalCallWizard';
 import { Alert, AlertDescription, AlertTitle } from '../../ui/alert';
-import { BigModal, BigModalContent, BigModalDescription, BigModalTitle } from '../../ui/big-modal';
+import { BigModal, BigModalBody, BigModalContent, BigModalPanelFooter, BigModalPanelHeader } from '../../ui/big-modal';
 import { Button } from '../../ui/button';
 import { ConfirmDialog } from '../../ui/confirm-dialog';
 import { DisabledReason } from '../../ui/disabled-reason';
-import { cn } from '../../ui/utils';
+import { WizardSteps } from '../../ui/wizard-steps';
 import { InfoErrors, InfoValues, WizardInfoStep } from './WizardInfoStep';
 import { AmountsMode, WizardAmountsStep } from './WizardAmountsStep';
 import { WizardControlStep } from './WizardControlStep';
@@ -254,56 +254,18 @@ export function CapitalCallWizard({ open, onOpenChange, funds, subscriptionActiv
     <>
       <BigModal open={open} onOpenChange={value => (value ? onOpenChange(true) : requestClose())}>
         <BigModalContent className="gap-0 p-0">
-          <BigModalTitle className="sr-only">{t(`${K}.title`)}</BigModalTitle>
-          <BigModalDescription className="sr-only">{t(`${K}.subtitle`)}</BigModalDescription>
           <div className="flex h-full flex-col overflow-hidden rounded-3xl">
-            <div className="border-b border-border bg-card px-8 py-4">
-              <div className="flex items-center justify-between gap-4">
-                <div className="flex items-center gap-3">
-                  <div className="flex size-10 items-center justify-center rounded-xl bg-primary text-primary-foreground shadow-sm">
-                    <Plus className="h-5 w-5" />
-                  </div>
-                  <div>
-                    <h2 className="text-xl font-bold text-foreground">{t(`${K}.title`)}</h2>
-                    <p className="text-xs text-muted-foreground">
-                      {fund ? fund.name : t(`${K}.subtitle`)}
-                    </p>
-                  </div>
-                </div>
-                <Button
-                  onClick={requestClose}
-                  variant="ghost"
-                  size="icon"
-                  aria-label={t(`${K}.close`)}
-                  className="h-8 w-8 rounded-full hover:bg-muted"
-                >
-                  <X className="h-4 w-4 text-muted-foreground" />
-                </Button>
-              </div>
-              <ol className="mt-4 flex items-center gap-2" aria-label={t(`${K}.stepsLabel`)}>
-                {STEPS.map((id, index) => (
-                  <li key={id} className="flex flex-1 items-center gap-2">
-                    <span
-                      aria-current={index === step ? 'step' : undefined}
-                      className={cn(
-                        'flex h-6 w-6 shrink-0 items-center justify-center rounded-full text-xs font-semibold',
-                        index < step && 'bg-primary text-primary-foreground',
-                        index === step && 'bg-primary text-primary-foreground ring-2 ring-offset-2',
-                        index > step && 'bg-muted text-muted-foreground',
-                      )}
-                    >
-                      {index < step ? <Check className="h-3.5 w-3.5" /> : index + 1}
-                    </span>
-                    <span className={cn('text-sm', index === step ? 'font-semibold text-foreground' : 'text-muted-foreground')}>
-                      {stepLabel(index)}
-                    </span>
-                    {index < STEPS.length - 1 && <span className="h-px flex-1 bg-border" aria-hidden />}
-                  </li>
-                ))}
-              </ol>
-            </div>
+            <BigModalPanelHeader
+              icon={Plus}
+              title={t(`${K}.title`)}
+              subtitle={fund ? fund.name : t(`${K}.subtitle`)}
+              onClose={requestClose}
+              closeLabel={t(`${K}.close`)}
+            >
+              <WizardSteps steps={STEPS.map((_, index) => stepLabel(index))} current={step} ariaLabel={t(`${K}.stepsLabel`)} />
+            </BigModalPanelHeader>
 
-            <div className="flex-1 overflow-y-auto bg-muted/40 px-8 py-6">
+            <BigModalBody className="bg-muted/40">
               {step === 0 && (
                 <WizardInfoStep
                   funds={funds}
@@ -389,15 +351,26 @@ export function CapitalCallWizard({ open, onOpenChange, funds, subscriptionActiv
                   />
                 </div>
               )}
-            </div>
+            </BigModalBody>
 
-            <div className="border-t border-border bg-muted px-8 py-4">
-              <div className="flex items-center justify-between gap-3">
+            <BigModalPanelFooter
+              start={
                 <Button variant="ghost" size="sm" className="h-9" onClick={requestClose} disabled={creating}>
                   <X className="mr-1 h-4 w-4" />
                   {t(`${K}.cancel`)}
                 </Button>
-                <div className="flex items-center gap-2">
+              }
+              end={
+                <>
+                  {step === 2 && simulation && (
+                    <span className="mr-2 text-xs text-muted-foreground">
+                      {t(`${K}.nothingSaved`, {
+                        amount: new Intl.NumberFormat(lang, { style: 'currency', currency, minimumFractionDigits: 2 }).format(
+                          simulation.total,
+                        ),
+                      })}
+                    </span>
+                  )}
                   {step > 0 && (
                     <Button variant="outline" size="sm" className="h-9" onClick={() => setStep(step - 1)} disabled={creating}>
                       <ArrowLeft className="mr-1 h-4 w-4" />
@@ -422,18 +395,9 @@ export function CapitalCallWizard({ open, onOpenChange, funds, subscriptionActiv
                       </Button>
                     </DisabledReason>
                   )}
-                </div>
-              </div>
-              {step === 2 && simulation && (
-                <p className="mt-2 text-right text-xs text-muted-foreground">
-                  {t(`${K}.nothingSaved`, {
-                    amount: new Intl.NumberFormat(lang, { style: 'currency', currency, minimumFractionDigits: 2 }).format(
-                      simulation.total,
-                    ),
-                  })}
-                </p>
-              )}
-            </div>
+                </>
+              }
+            />
           </div>
         </BigModalContent>
       </BigModal>

@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState, type ReactNode } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { AlertTriangle, ArrowLeftRight, CheckCircle2, EyeOff, Layers, Loader2, Repeat, RotateCw, Users } from 'lucide-react';
 
 import { useTranslation } from '../../utils/languageContext';
@@ -23,13 +23,11 @@ import type { LinesPreset } from './CapitalCallSummaryWidgets';
 import { ColumnConfig, DataTable } from '../DataTable';
 import { EmptyState } from '../EmptyState';
 import { FilterBar, FilterConfig } from '../FilterBar';
-import { HighlightText } from '../HighlightText';
+import { ListingCard, ListingIndicator, ListingNameCell } from '../ui/listing';
 import { StatusBadge, StatusVariant } from '../StatusBadge';
 import { Button } from '../ui/button';
-import { Card } from '../ui/card';
 import { DataPagination } from '../ui/data-pagination';
 import { DisabledReason } from '../ui/disabled-reason';
-import { Tooltip, TooltipContent, TooltipTrigger } from '../ui/tooltip';
 
 const K = 'funds.capitalCalls.detail.lines';
 
@@ -48,22 +46,6 @@ const NOTICE_STATE_VARIANT: Record<NoticeState, StatusVariant> = {
 };
 
 type ActiveFilters = Record<string, string | string[]>;
-
-function WithTooltip({ content, children }: { content: string | null; children: ReactNode }) {
-  if (!content) return <>{children}</>;
-  return (
-    <Tooltip>
-      <TooltipTrigger asChild>
-        <span tabIndex={0} className="inline-flex">
-          {children}
-        </span>
-      </TooltipTrigger>
-      <TooltipContent>
-        <span className="text-xs">{content}</span>
-      </TooltipContent>
-    </Tooltip>
-  );
-}
 
 interface CapitalCallLinesTabProps {
   call: CapitalCall;
@@ -245,14 +227,13 @@ export function CapitalCallLinesTab({
       key: 'investor',
       label: t(`${K}.columns.investor`),
       render: (line, term) => (
-        <span className="inline-flex items-center gap-2 whitespace-nowrap">
-          <HighlightText text={line.investor} searchTerm={term} className="text-sm font-medium text-foreground" />
-          {indicators(line).map(([, Icon, key]) => (
-            <WithTooltip key={key} content={t(`${K}.indicators.${key}`)}>
-              <Icon className="h-3.5 w-3.5 text-muted-foreground" aria-label={t(`${K}.indicators.${key}`)} />
-            </WithTooltip>
+        <ListingNameCell
+          name={line.investor}
+          searchTerm={term}
+          adornment={indicators(line).map(([, Icon, key]) => (
+            <ListingIndicator key={key} icon={Icon} label={t(`${K}.indicators.${key}`)} />
           ))}
-        </span>
+        />
       ),
     },
     {
@@ -312,26 +293,24 @@ export function CapitalCallLinesTab({
       key: 'state',
       label: t(`${K}.columns.state`),
       render: line => (
-        <WithTooltip content={lineStateTooltip(line)}>
-          <StatusBadge
-            label={t(`${K}.states.${line.state}`)}
-            variant={LINE_STATE_VARIANT[line.state]}
-            icon={line.state === 'paid' ? CheckCircle2 : undefined}
-          />
-        </WithTooltip>
+        <StatusBadge
+          label={t(`${K}.states.${line.state}`)}
+          variant={LINE_STATE_VARIANT[line.state]}
+          icon={line.state === 'paid' ? CheckCircle2 : undefined}
+          tooltip={lineStateTooltip(line)}
+        />
       ),
     },
     {
       key: 'noticeState',
       label: t(`${K}.columns.noticeState`),
       render: line => (
-        <WithTooltip content={noticeTooltip(line)}>
-          <StatusBadge
-            label={t(`${K}.noticeStates.${line.noticeState}`)}
-            variant={NOTICE_STATE_VARIANT[line.noticeState]}
-            icon={line.noticeState === 'failed' ? AlertTriangle : line.noticeState === 'generating' ? Loader2 : undefined}
-          />
-        </WithTooltip>
+        <StatusBadge
+          label={t(`${K}.noticeStates.${line.noticeState}`)}
+          variant={NOTICE_STATE_VARIANT[line.noticeState]}
+          icon={line.noticeState === 'failed' ? AlertTriangle : line.noticeState === 'generating' ? Loader2 : undefined}
+          tooltip={noticeTooltip(line)}
+        />
       ),
     },
     { key: 'notifiedAt', label: t(`${K}.columns.notifiedAt`), render: line => date(line.notifiedAt) },
@@ -342,35 +321,52 @@ export function CapitalCallLinesTab({
   const hasFiltering = Object.keys(activeFilters).length > 0 || search.trim().length > 0;
 
   return (
-    <Card className="shadow-sm">
-      <div className="relative z-10 border-b border-border p-4">
-        <FilterBar
-          searchValue={search}
-          onSearchChange={value => {
-            setSearch(value);
-            setPage(1);
-          }}
-          searchPlaceholder={t(`${K}.searchPlaceholder`)}
-          filters={filterConfigs}
-          activeFilters={activeFilters}
-          onFilterChange={handleFilterChange}
-          onClearAll={resetFilters}
-          actions={
-            <DisabledReason reason={relaunchDisabledReason}>
-              <Button
-                variant="outline"
-                size="sm"
-                className="gap-1.5"
-                onClick={onRelaunchFailed}
-                disabled={Boolean(relaunchDisabledReason)}
-              >
-                <RotateCw className="h-4 w-4" />
-                {t(`${K}.relaunch.label`, { count: failedCount })}
-              </Button>
-            </DisabledReason>
-          }
-        />
-      </div>
+    <ListingCard
+      toolbar={
+        <div className="flex items-start justify-between gap-3">
+          <FilterBar
+            className="flex-1"
+            searchValue={search}
+            onSearchChange={value => {
+              setSearch(value);
+              setPage(1);
+            }}
+            searchPlaceholder={t(`${K}.searchPlaceholder`)}
+            filters={filterConfigs}
+            activeFilters={activeFilters}
+            onFilterChange={handleFilterChange}
+            onClearAll={resetFilters}
+          />
+          <DisabledReason reason={relaunchDisabledReason} className="shrink-0">
+            <Button
+              variant="outline"
+              className="gap-1.5"
+              onClick={onRelaunchFailed}
+              disabled={Boolean(relaunchDisabledReason)}
+            >
+              <RotateCw className="h-4 w-4" />
+              {t(`${K}.relaunch.label`, { count: failedCount })}
+            </Button>
+          </DisabledReason>
+        </div>
+      }
+      footer={
+        filtered.length > 0 ? (
+          <DataPagination
+            currentPage={page}
+            totalPages={totalPages}
+            pageSize={pageSize}
+            totalItems={filtered.length}
+            onPageChange={next => setPage(Math.min(Math.max(1, next), totalPages))}
+            onPageSizeChange={size => {
+              setPageSize(size);
+              setPage(1);
+            }}
+            pageSizeOptions={[10, 20, 50]}
+          />
+        ) : undefined
+      }
+    >
       {filtered.length === 0 ? (
         <EmptyState
           icon={Users}
@@ -406,20 +402,8 @@ export function CapitalCallLinesTab({
               total: money(sum('total')),
             }}
           />
-          <DataPagination
-            currentPage={page}
-            totalPages={totalPages}
-            pageSize={pageSize}
-            totalItems={filtered.length}
-            onPageChange={next => setPage(Math.min(Math.max(1, next), totalPages))}
-            onPageSizeChange={size => {
-              setPageSize(size);
-              setPage(1);
-            }}
-            pageSizeOptions={[10, 20, 50]}
-          />
         </>
       )}
-    </Card>
+    </ListingCard>
   );
 }

@@ -619,7 +619,7 @@ const investorListingColumnSpecs = [
     column: 'CARTE LISTING',
     component: 'ListingCard + FilterBar + DataTable',
     functional: 'Conteneur standard d’un listing : recherche et filtres en tête, tableau, pagination éventuelle. Utilisé par le listing investisseurs et par les onglets Contacts & signataires et Structures du détail investisseur.',
-    guidelines: 'Carte blanche rounded-2xl, ombre sm, bordure gray-200 ; barre p-4 bordée en bas ; bouton d’ajout à droite de la FilterBar ; clic sur la ligne = ouverture du panneau latéral.',
+    guidelines: 'Carte blanche rounded-2xl, ombre sm, bordure gray-200 ; barre p-4 bordée en bas ; bouton d’ajout et choix des colonnes (ListingColumnsMenu) à droite de la FilterBar ; pagination en pied (prop footer) ; totaux en tfoot (DataTable footer) ; clic sur la ligne = ouverture du panneau latéral ou de la page de détail.',
     variants: 'Avec ou sans filtres, état vide (EmptyState), état filtré sans résultat.',
   },
   {

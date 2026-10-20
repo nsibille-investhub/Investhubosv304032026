@@ -2158,7 +2158,15 @@
       "copyError": "Erreur de copie",
       "rowActions": "Actions",
       "moreActions": "Plus d'actions",
-      "more": "+{{count}} autres"
+      "more": "+{{count}} autres",
+      "columns": {
+        "label": "Colonnes",
+        "title": "Colonnes affichées",
+        "reset": "Rétablir les colonnes par défaut"
+      }
+    },
+    "formField": {
+      "required": "obligatoire"
     }
   },
   "ged": {
@@ -5821,7 +5829,8 @@
         "sending": "Envoi en cours",
         "overdue": "Échus non soldés",
         "fundsMetric": "Fonds",
-        "perFund": "{{count}} par fonds"
+        "perFund": "{{count}} par fonds",
+        "clickToFilter": "Cliquez sur une file pour filtrer"
       },
       "filters": {
         "funds": "Fonds",
@@ -5846,11 +5855,6 @@
         "notices": "Avis",
         "notification": "Notification",
         "settlement": "Règlement"
-      },
-      "columnsMenu": {
-        "label": "Colonnes",
-        "title": "Colonnes affichées",
-        "reset": "Rétablir les colonnes par défaut"
       },
       "origins": {
         "backOffice": "Back-office",
@@ -6167,7 +6171,6 @@
           "amounts": "Montants",
           "control": "Contrôle"
         },
-        "required": "obligatoire",
         "close": "Fermer l'assistant",
         "cancel": "Annuler",
         "previous": "Précédent",
@@ -6230,6 +6233,12 @@
             "description": "Les avis ne pourront pas être produits tant qu'un modèle n'est pas configuré. Vous pouvez continuer.",
             "link": "Configurer le modèle d'avis",
             "notInMockup": "La configuration des modèles d'avis n'est pas dans la maquette."
+          },
+          "attachmentDrop": {
+            "hint": "Déposez un fichier ou cliquez pour le choisir",
+            "hintDesc": "PDF, Word ou image",
+            "ready": "Fichier prêt à être joint",
+            "preview": "Aperçu"
           }
         },
         "amounts": {
@@ -6311,7 +6320,8 @@
           "summary": {
             "lines": "Lignes produites",
             "exclusions": "Souscriptions exclues",
-            "total": "Total de l'appel"
+            "total": "Total de l'appel",
+            "title": "Synthèse de la simulation"
           },
           "allocation": "Mode de répartition : {{mode}}.",
           "shares": {
@@ -6545,7 +6555,7 @@
       },
       "statusBadge": {
         "title": "Pastille de statut",
-        "description": "Pastille générique sur laquelle repose la pastille de statut de fonds. Nouvelles variantes info, outline et strong, et icône optionnelle.",
+        "description": "Pastille générique sur laquelle repose la pastille de statut de fonds. Nouvelles variantes info, outline et strong, et icône optionnelle. Infobulle optionnelle (tooltip) pour le motif ou le détail.",
         "variants": "neutral, outline, info, success, warning, danger, strong ; avec ou sans icône.",
         "states": "Lecture seule.",
         "exampleLabel": "Les sept tons",
@@ -6585,7 +6595,7 @@
       },
       "widgetCard": {
         "title": "Widget de tableau de bord",
-        "description": "Carte de synthèse avec titre en petites capitales, sous-titre, action et pied. WidgetMetric affiche une valeur chiffrée ; SegmentedProgress, extraite de l'onboarding, montre un état global segmenté par couleur.",
+        "description": "Carte de synthèse avec titre en petites capitales, sous-titre, action et pied. WidgetMetric affiche une valeur chiffrée ; SegmentedProgress, extraite de l'onboarding, montre un état global segmenté par couleur. WidgetMetric devient cliquable (onClick, ariaLabel) pour ouvrir une liste filtrée.",
         "variants": "Avec icône, action, pied ; valeur normale ou grande ; barre à un ou plusieurs segments, tons du design system.",
         "states": "Valeur renseignée, valeur absente (\"Aucun\"), barre vide.",
         "exampleLabel": "Exemples",
@@ -6633,7 +6643,7 @@
       },
       "dataTable": {
         "title": "Tableau de données",
-        "description": "Tableau du design system. Évolution : option align par colonne. À droite, l'en-tête et les cellules s'alignent et les chiffres passent en tabulaires : montants et pourcentages, chacun dans sa propre colonne triable.",
+        "description": "Tableau du design system. Évolution : option align par colonne. À droite, l'en-tête et les cellules s'alignent et les chiffres passent en tabulaires : montants et pourcentages, chacun dans sa propre colonne triable. Ligne de totaux optionnelle (footer).",
         "variants": "Colonnes triables ou non, alignement à gauche ou à droite, sélection masquable. Densité par défaut ou compacte.",
         "states": "Tri ascendant, descendant, sans tri ; survol de ligne ; clic sur la ligne.",
         "exampleLabel": "Exemple : frais de deux parts"
@@ -6644,6 +6654,89 @@
         "variants": "Série unique, valeurs formatées par l'appelant.",
         "states": "Repos, survol (point actif et info-bulle).",
         "exampleLabel": "Exemple : actif net"
+      },
+      "filterCardGroup": {
+        "title": "Groupe de cartes filtres",
+        "description": "Bandeau de FilterCard au-dessus d'un listing : titre souligné d'une barre, pastille, aide et cartes en grille. Remplace les en-têtes recopiés des onglets de statut investisseurs, souscriptions, historique SMS et des files des appels de fonds.",
+        "variants": "4, 5 ou 6 colonnes ; avec ou sans pastille et aide.",
+        "states": "Carte active, carte inactive, total à zéro.",
+        "exampleLabel": "Files de travail",
+        "demo": {
+          "title": "Files de travail",
+          "hint": "Cliquez pour filtrer",
+          "all": "Tous",
+          "failed": "Avis en échec",
+          "done": "Notifiés",
+          "metric": "Montant"
+        }
+      },
+      "listingTools": {
+        "title": "Outils de listing",
+        "description": "ListingColumnsMenu choisit les colonnes affichées (la dernière visible ne peut pas être masquée) ; ListingIndicator signale une particularité de ligne par une icône, libellé au survol. ListingCard accepte aussi un pied (pagination) et DataTable une ligne de totaux (footer). La FilterBar gère maintenant les filtres multisélection et période, et passe à la ligne quand la place manque.",
+        "variants": "Menu de colonnes avec réinitialisation ; un ou plusieurs indicateurs accolés au nom.",
+        "states": "Colonne masquée, dernière colonne verrouillée, indicateur au survol.",
+        "exampleLabel": "Nom avec indicateurs et choix des colonnes",
+        "demo": {
+          "investor": "Camille R.",
+          "combined": "Avis combiné",
+          "hidden": "Masquée sur le portail",
+          "columns": {
+            "investor": "Investisseur",
+            "amount": "Montant",
+            "state": "État"
+          }
+        }
+      },
+      "wizardSteps": {
+        "title": "Étapes d'assistant",
+        "description": "Étapes d'un assistant en modale, placées dans l'en-tête BigModalPanelHeader (nouvelle zone sous le titre). Numéro, coche une fois l'étape franchie, libellé de l'étape en cours en gras.",
+        "variants": "De 2 à 5 étapes.",
+        "states": "Étape franchie, étape en cours, étape à venir.",
+        "exampleLabel": "Assistant en trois étapes",
+        "demo": {
+          "ariaLabel": "Étapes de l'assistant",
+          "info": "Informations",
+          "amounts": "Montants",
+          "control": "Contrôle"
+        }
+      },
+      "formField": {
+        "title": "Champ de formulaire",
+        "description": "Libellé, astérisque si obligatoire, contrôle, aide ou erreur dessous. labelAside place un sélecteur à droite du libellé. SuffixInput aligne une saisie numérique à droite avec son unité.",
+        "variants": "Obligatoire ou non, avec aide, libellé masqué (en-tête de colonne), sélecteur à droite du libellé ; unité %, devise, devise par titre.",
+        "states": "Vide, renseigné, en erreur.",
+        "exampleLabel": "Champ obligatoire et champ avec unité",
+        "demo": {
+          "name": "Nom de l'appel",
+          "nameError": "Renseignez le nom de l'appel.",
+          "percent": "Pourcentage appelé",
+          "percentHint": "Du montant souscrit"
+        }
+      },
+      "attachmentRow": {
+        "title": "Pièce jointe",
+        "description": "Ligne de pièce jointe en lecture : trombone, nom, taille, bouton de téléchargement. À empiler dans un conteneur divide-y.",
+        "variants": "Avec ou sans taille.",
+        "states": "Nom long tronqué.",
+        "exampleLabel": "Pièce jointe d'un appel",
+        "demo": {
+          "name": "Lettre aux investisseurs.pdf",
+          "size": "284 Ko",
+          "download": "Télécharger",
+          "downloaded": "Téléchargement simulé dans la maquette."
+        }
+      },
+      "demoScenarioBar": {
+        "title": "Bandeau de scénario de démonstration",
+        "description": "Propre à la maquette : choix d'un scénario au-dessus de l'en-tête de page (droits, données, cas limites). Utilisé sur le détail d'un fonds et le listing des appels de fonds.",
+        "variants": "Avec ou sans action à droite.",
+        "states": "Scénario par défaut, scénario choisi.",
+        "exampleLabel": "Choix du scénario",
+        "demo": {
+          "label": "Scénario de démonstration",
+          "default": "Cas nominal",
+          "noRight": "Sans droit de notification"
+        }
       }
     }
   },

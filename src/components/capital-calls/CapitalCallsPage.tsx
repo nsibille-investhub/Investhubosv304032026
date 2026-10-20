@@ -4,13 +4,10 @@ import {
   AlertTriangle,
   BellRing,
   CalendarX,
-  Columns3,
   FileArchive,
   FileSpreadsheet,
-  FlaskConical,
   List,
   Loader2,
-  MoreHorizontal,
   Pencil,
   Plus,
   Send,
@@ -43,26 +40,18 @@ import { EmptyState } from '../EmptyState';
 import { FilterBar, FilterConfig } from '../FilterBar';
 import { ClickableText } from '../ClickableText';
 import { HighlightText } from '../HighlightText';
+import { ListingCard, ListingColumnsMenu, ListingNameCell } from '../ui/listing';
+import { TableRowActions } from '../ui/row-actions';
+import { DemoScenarioBar } from '../ui/demo-scenario-bar';
 import { StatusBadge } from '../StatusBadge';
 import { CALL_STATE_VARIANT } from './CapitalCallSummaryWidgets';
-import { FilterCard } from '../ui/filter-card';
+import { FilterCard, FilterCardGroup } from '../ui/filter-card';
 import { PageHeader } from '../ui/page-header';
 import { DataPagination } from '../ui/data-pagination';
 import { Button } from '../ui/button';
 import { ConfirmDialog } from '../ui/confirm-dialog';
 import { CapitalCallDetailPage } from './CapitalCallDetailPage';
 import { CapitalCallDraft, CapitalCallWizard } from './wizard/CapitalCallWizard';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../ui/select';
-import {
-  DropdownMenu,
-  DropdownMenuCheckboxItem,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuLabel,
-  DropdownMenuSeparator,
-  DropdownMenuTrigger,
-} from '../ui/dropdown-menu';
-import { toneSurface } from '../ui/tone';
 
 const K = 'funds.capitalCalls';
 
@@ -125,20 +114,15 @@ const SCENARIO_RIGHTS: Record<Scenario, CapitalCallRights> = {
   noRight: FULL_RIGHTS,
 };
 
-const MENU_GROUPS: { action: CapitalCallAction; icon: LucideIcon }[][] = [
-  [
-    { action: 'notify', icon: Send },
-    { action: 'relaunch', icon: BellRing },
-  ],
-  [
-    { action: 'exportTarget', icon: Users },
-    { action: 'exportNotices', icon: FileArchive },
-    { action: 'exportLines', icon: FileSpreadsheet },
-  ],
-  [
-    { action: 'edit', icon: Pencil },
-    { action: 'delete', icon: Trash2 },
-  ],
+/** Ordre des actions de ligne : les trois premières en boutons, les suivantes dans le menu ⋮. */
+const ROW_ACTIONS: { action: CapitalCallAction; icon: LucideIcon; separatorBefore?: boolean }[] = [
+  { action: 'notify', icon: Send },
+  { action: 'relaunch', icon: BellRing },
+  { action: 'edit', icon: Pencil },
+  { action: 'exportTarget', icon: Users },
+  { action: 'exportNotices', icon: FileArchive },
+  { action: 'exportLines', icon: FileSpreadsheet },
+  { action: 'delete', icon: Trash2, separatorBefore: true },
 ];
 
 /** Utilisateur connecté de la maquette, affiché dans l'en-tête. */
@@ -503,9 +487,7 @@ export function CapitalCallsPage({ funds, initialFundIds, onOpenFund, onSelected
       key: 'name',
       label: t(`${K}.columns.name`),
       sortable: true,
-      render: (call, term) => (
-        <HighlightText text={call.name} searchTerm={term} className="text-sm font-medium text-foreground" />
-      ),
+      render: (call, term) => <ListingNameCell name={call.name} searchTerm={term} id={call.id} />,
     },
     dueDate: {
       key: 'dueDate',
@@ -639,39 +621,16 @@ export function CapitalCallsPage({ funds, initialFundIds, onOpenFund, onSelected
     label: t(`${K}.columns.actions`),
     align: 'right',
     render: call => (
-      <span onClick={event => event.stopPropagation()}>
-        <DropdownMenu>
-          <DropdownMenuTrigger asChild>
-            <Button variant="ghost" size="icon" aria-label={t(`${K}.actionsFor`, { name: call.name })}>
-              <MoreHorizontal className="h-4 w-4" />
-            </Button>
-          </DropdownMenuTrigger>
-          <DropdownMenuContent align="end" className="w-64">
-            {MENU_GROUPS.map((group, index) => (
-              <div key={group[0].action}>
-                {index > 0 && <DropdownMenuSeparator />}
-                {group.map(({ action, icon: Icon }) => {
-                  const reason = blockerReason(call, action);
-                  return (
-                    <DropdownMenuItem
-                      key={action}
-                      onClick={() => runAction(call.id, action)}
-                      disabled={Boolean(reason)}
-                      variant={action === 'delete' ? 'destructive' : 'default'}
-                    >
-                      <Icon className="h-4 w-4" />
-                      <span className="flex flex-col">
-                        <span>{t(`${K}.actions.${action}`)}</span>
-                        {reason && <span className="text-xs text-muted-foreground">{reason}</span>}
-                      </span>
-                    </DropdownMenuItem>
-                  );
-                })}
-              </div>
-            ))}
-          </DropdownMenuContent>
-        </DropdownMenu>
-      </span>
+      <TableRowActions
+        actions={ROW_ACTIONS.map(({ action, icon, separatorBefore }) => ({
+          label: t(`${K}.actions.${action}`),
+          icon,
+          intent: action === 'delete' ? 'danger' : 'neutral',
+          separatorBefore,
+          disabledReason: blockerReason(call, action) ?? undefined,
+          onClick: () => runAction(call.id, action),
+        }))}
+      />
     ),
   };
 
@@ -701,68 +660,31 @@ export function CapitalCallsPage({ funds, initialFundIds, onOpenFund, onSelected
   };
 
   const columnsMenu = (
-    <DropdownMenu>
-      <DropdownMenuTrigger asChild>
-        <Button variant="outline" size="sm" className="gap-1.5">
-          <Columns3 className="h-4 w-4" />
-          {t(`${K}.columnsMenu.label`)}
-        </Button>
-      </DropdownMenuTrigger>
-      <DropdownMenuContent align="end" className="w-56">
-        <DropdownMenuLabel>{t(`${K}.columnsMenu.title`)}</DropdownMenuLabel>
-        <DropdownMenuSeparator />
-        {COLUMN_KEYS.map(key => (
-          <DropdownMenuCheckboxItem
-            key={key}
-            checked={visibleColumns.includes(key)}
-            disabled={visibleColumns.length === 1 && visibleColumns.includes(key)}
-            onSelect={event => event.preventDefault()}
-            onCheckedChange={() => toggleColumn(key)}
-          >
-            {t(`${K}.columns.${key}`)}
-          </DropdownMenuCheckboxItem>
-        ))}
-        <DropdownMenuSeparator />
-        <DropdownMenuItem onClick={() => setVisibleColumns(DEFAULT_COLUMNS)}>
-          {t(`${K}.columnsMenu.reset`)}
-        </DropdownMenuItem>
-      </DropdownMenuContent>
-    </DropdownMenu>
+    <ListingColumnsMenu
+      columns={COLUMN_KEYS.map(key => ({ key, label: t(`${K}.columns.${key}`) }))}
+      visible={visibleColumns}
+      onToggle={key => toggleColumn(key as ColumnKey)}
+      onReset={() => setVisibleColumns(DEFAULT_COLUMNS)}
+    />
   );
 
   const scenarioBar = (
-    <div
-      className="flex flex-wrap items-center justify-end gap-3 border-b border-border px-6 py-2"
-      style={toneSurface('info')}
-    >
-      <span className="inline-flex items-center gap-2 text-xs font-medium">
-        <FlaskConical className="h-3.5 w-3.5" aria-hidden />
-        {t(`${K}.scenario.label`)}
-      </span>
-      <Select
-        value={scenario}
-        onValueChange={value => {
-          setScenario(value as Scenario);
-          resetFilters();
-        }}
-      >
-        <SelectTrigger size="sm" className="w-72 border-border bg-card" aria-label={t(`${K}.scenario.label`)}>
-          <SelectValue />
-        </SelectTrigger>
-        <SelectContent>
-          {SCENARIOS.map(item => (
-            <SelectItem key={item} value={item}>
-              {t(`${K}.scenario.options.${item}`)}
-            </SelectItem>
-          ))}
-        </SelectContent>
-      </Select>
-      {scenario === 'noNotifyRight' && (
-        <Button variant="outline" size="sm" className="bg-card" onClick={simulateDirectNotify}>
-          {t(`${K}.scenario.simulateDirectNotify`)}
-        </Button>
-      )}
-    </div>
+    <DemoScenarioBar
+      label={t(`${K}.scenario.label`)}
+      value={scenario}
+      options={SCENARIOS.map(item => ({ value: item, label: t(`${K}.scenario.options.${item}`) }))}
+      onChange={value => {
+        setScenario(value);
+        resetFilters();
+      }}
+      action={
+        scenario === 'noNotifyRight' ? (
+          <Button variant="outline" size="sm" className="bg-card" onClick={simulateDirectNotify}>
+            {t(`${K}.scenario.simulateDirectNotify`)}
+          </Button>
+        ) : undefined
+      }
+    />
   );
 
   const deniedPage = (description: string, title = t(`${K}.accessDenied.title`)) => (
@@ -829,37 +751,50 @@ export function CapitalCallsPage({ funds, initialFundIds, onOpenFund, onSelected
       />
 
       <div className="flex flex-1 flex-col gap-4 px-6 py-6">
-        <div className="rounded-lg bg-primary/5 pb-2">
-          <div className="mb-3 flex items-center gap-2">
-            <div className="h-6 w-1 rounded-full bg-primary" />
-            <h3 className="font-semibold text-foreground">{t(`${K}.queues.label`)}</h3>
-          </div>
-          <div className="grid grid-cols-6 items-center gap-1.5">
+        <FilterCardGroup title={t(`${K}.queues.label`)} hint={t(`${K}.queues.clickToFilter`)} columns={5}>
             {queueCard('all', List, scopedCalls)}
             {queueCard('noticesFailed', AlertTriangle, scopedCalls.filter(call => inQueue(call, 'noticesFailed')))}
             {queueCard('toNotify', Send, scopedCalls.filter(call => inQueue(call, 'toNotify')))}
             {queueCard('sending', Loader2, scopedCalls.filter(call => inQueue(call, 'sending')))}
             {queueCard('overdue', CalendarX, scopedCalls.filter(call => inQueue(call, 'overdue')))}
-          </div>
-        </div>
+        </FilterCardGroup>
 
-        <div className="flex flex-col rounded-2xl border border-border bg-card shadow-sm">
-          <div className="relative z-10 border-b border-border p-4">
-            <FilterBar
-              searchValue={search}
-              onSearchChange={value => {
-                setSearch(value);
-                setPage(1);
-              }}
-              searchPlaceholder={t(`${K}.searchPlaceholder`)}
-              filters={filterConfigs}
-              activeFilters={activeFilters}
-              onFilterChange={handleFilterChange}
-              onClearAll={resetFilters}
-              actions={columnsMenu}
-            />
-          </div>
-
+        <ListingCard
+          toolbar={
+            <div className="flex items-start justify-between gap-3">
+              <FilterBar
+                className="flex-1"
+                searchValue={search}
+                onSearchChange={value => {
+                  setSearch(value);
+                  setPage(1);
+                }}
+                searchPlaceholder={t(`${K}.searchPlaceholder`)}
+                filters={filterConfigs}
+                activeFilters={activeFilters}
+                onFilterChange={handleFilterChange}
+                onClearAll={resetFilters}
+              />
+              {columnsMenu}
+            </div>
+          }
+          footer={
+            sortedCalls.length > 0 ? (
+              <DataPagination
+                currentPage={page}
+                totalPages={totalPages}
+                pageSize={pageSize}
+                totalItems={sortedCalls.length}
+                onPageChange={next => setPage(Math.min(Math.max(1, next), totalPages))}
+                onPageSizeChange={size => {
+                  setPageSize(size);
+                  setPage(1);
+                }}
+                pageSizeOptions={[10, 20, 50, 100]}
+              />
+            ) : undefined
+          }
+        >
           {sortedCalls.length === 0 ? (
             <EmptyState
               icon={Wallet}
@@ -894,21 +829,9 @@ export function CapitalCallsPage({ funds, initialFundIds, onOpenFund, onSelected
                 hideSelection
                 density="compact"
               />
-              <DataPagination
-                currentPage={page}
-                totalPages={totalPages}
-                pageSize={pageSize}
-                totalItems={sortedCalls.length}
-                onPageChange={next => setPage(Math.min(Math.max(1, next), totalPages))}
-                onPageSizeChange={size => {
-                  setPageSize(size);
-                  setPage(1);
-                }}
-                pageSizeOptions={[10, 20, 50, 100]}
-              />
             </>
           )}
-        </div>
+        </ListingCard>
       </div>
     </div>
   );

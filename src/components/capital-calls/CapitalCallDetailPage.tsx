@@ -5,7 +5,6 @@ import {
   Calendar,
   CalendarClock,
   Coins,
-  Download,
   FileText,
   History,
   Landmark,
@@ -40,8 +39,8 @@ import { CapitalCallLinesTab } from './CapitalCallLinesTab';
 import { ColumnConfig, DataTable } from '../DataTable';
 import { EmptyState } from '../EmptyState';
 import { StatusBadge } from '../StatusBadge';
-import { Button } from '../ui/button';
-import { Card } from '../ui/card';
+import { ListingCard } from '../ui/listing';
+import { AttachmentRow } from '../ui/attachment-row';
 import { DetailLink } from '../ui/detail-summary';
 import { DetailTabsList } from '../ui/detail-tabs';
 import { PageHeader, PageHeaderSubtitle, PageHeaderSubtitleItem, PageHeaderSubtitleSeparator } from '../ui/page-header';
@@ -331,7 +330,7 @@ export function CapitalCallDetailPage({ call, initialLines, onLinesChange, right
             <CapitalCallJournalTab call={call} lines={lines} />
           </TabsContent>
           <TabsContent value="breakdown">
-            <Card className="overflow-hidden shadow-sm">
+            <ListingCard>
               <DataTable
                 data={rows}
                 columns={breakdownColumns}
@@ -343,7 +342,7 @@ export function CapitalCallDetailPage({ call, initialLines, onLinesChange, right
                 compactMode
                 hideSelection
               />
-            </Card>
+            </ListingCard>
           </TabsContent>
           <TabsContent value="message" className="space-y-4">
             <SectionCard mode="read" icon={MessageSquareText} title={t(`${K}.message.title`)}>
@@ -362,33 +361,22 @@ export function CapitalCallDetailPage({ call, initialLines, onLinesChange, right
               {call.attachments.length === 0 ? (
                 <EmptyState icon={Paperclip} title={t(`${K}.attachments.empty`)} />
               ) : (
-                <ul className="divide-y divide-border px-5">
+                <div className="divide-y divide-border px-5">
                   {call.attachments.map(file => (
-                    <li key={file.name} className="flex items-center justify-between gap-3 py-3">
-                      <span className="inline-flex min-w-0 items-center gap-2 text-sm">
-                        <Paperclip className="h-4 w-4 shrink-0 text-muted-foreground" aria-hidden />
-                        <span className="truncate font-medium">{file.name}</span>
-                        <span className="shrink-0 text-xs text-muted-foreground">
-                          {t(`${K}.attachments.size`, {
-                            size: new Intl.NumberFormat(lang, { maximumFractionDigits: 1 }).format(
-                              file.sizeKb >= 1000 ? file.sizeKb / 1000 : file.sizeKb,
-                            ),
-                            unit: file.sizeKb >= 1000 ? t(`${K}.attachments.mb`) : t(`${K}.attachments.kb`),
-                          })}
-                        </span>
-                      </span>
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        className="gap-1.5"
-                        onClick={() => toast.info(t(`${K}.toast.download`, { name: file.name }))}
-                      >
-                        <Download className="h-4 w-4" />
-                        {t(`${K}.attachments.download`)}
-                      </Button>
-                    </li>
+                    <AttachmentRow
+                      key={file.name}
+                      name={file.name}
+                      size={t(`${K}.attachments.size`, {
+                        size: new Intl.NumberFormat(lang, { maximumFractionDigits: 1 }).format(
+                          file.sizeKb >= 1000 ? file.sizeKb / 1000 : file.sizeKb,
+                        ),
+                        unit: file.sizeKb >= 1000 ? t(`${K}.attachments.mb`) : t(`${K}.attachments.kb`),
+                      })}
+                      downloadLabel={t(`${K}.attachments.download`)}
+                      onDownload={() => toast.info(t(`${K}.toast.download`, { name: file.name }))}
+                    />
                   ))}
-                </ul>
+                </div>
               )}
             </SectionCard>
           </TabsContent>

@@ -14,10 +14,10 @@ import { ColumnConfig, DataTable } from '../../DataTable';
 import { EmptyState } from '../../EmptyState';
 import { StatusBadge } from '../../StatusBadge';
 import { Alert, AlertDescription, AlertTitle } from '../../ui/alert';
-import { Button } from '../../ui/button';
-import { Card } from '../../ui/card';
-import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from '../../ui/dialog';
+import { BIG_MODAL_COMPACT, BigModal, BigModalBody, BigModalContent, BigModalPanelHeader } from '../../ui/big-modal';
+import { TableRowActions } from '../../ui/row-actions';
 import { SectionCard } from '../../ui/section-card';
+import { WidgetCard, WidgetMetric } from '../../ui/widget-card';
 
 const K = 'funds.capitalCalls.wizard.control';
 
@@ -82,10 +82,7 @@ export function WizardControlStep({ simulation, settings, currency, callName, fu
       label: '',
       align: 'right',
       render: row => (
-        <Button variant="ghost" size="sm" className="gap-1.5" onClick={() => setPreview(row)}>
-          <Eye className="h-4 w-4" />
-          {t(`${K}.lines.preview`)}
-        </Button>
+        <TableRowActions actions={[{ label: t(`${K}.lines.preview`), icon: Eye, onClick: () => setPreview(row) }]} />
       ),
     },
   ];
@@ -147,20 +144,13 @@ export function WizardControlStep({ simulation, settings, currency, callName, fu
         </Alert>
       )}
 
-      <div className="grid grid-cols-1 gap-3 md:grid-cols-3">
-        <Card className="p-4 shadow-sm">
-          <p className="text-xs text-muted-foreground">{t(`${K}.summary.lines`)}</p>
-          <p className="text-xl font-semibold tabular-nums">{simulation.lines.length}</p>
-        </Card>
-        <Card className="p-4 shadow-sm">
-          <p className="text-xs text-muted-foreground">{t(`${K}.summary.exclusions`)}</p>
-          <p className="text-xl font-semibold tabular-nums">{simulation.exclusions.length}</p>
-        </Card>
-        <Card className="p-4 shadow-sm">
-          <p className="text-xs text-muted-foreground">{t(`${K}.summary.total`)}</p>
-          <p className="text-xl font-semibold tabular-nums">{money(simulation.total)}</p>
-        </Card>
-      </div>
+      <WidgetCard title={t(`${K}.summary.title`)}>
+        <div className="grid grid-cols-1 gap-3 md:grid-cols-3">
+          <WidgetMetric label={t(`${K}.summary.lines`)} value={simulation.lines.length} size="lg" />
+          <WidgetMetric label={t(`${K}.summary.exclusions`)} value={simulation.exclusions.length} size="lg" />
+          <WidgetMetric label={t(`${K}.summary.total`)} value={money(simulation.total)} size="lg" />
+        </div>
+      </WidgetCard>
 
       <p className="text-sm text-muted-foreground">
         {t(`${K}.allocation`, {
@@ -204,24 +194,29 @@ export function WizardControlStep({ simulation, settings, currency, callName, fu
         )}
       </SectionCard>
 
-      <Dialog open={Boolean(preview)} onOpenChange={open => !open && setPreview(null)}>
-        <DialogContent className="max-w-lg">
-          <DialogHeader>
-            <DialogTitle>{t(`${K}.preview.title`)}</DialogTitle>
-            <DialogDescription>{t(`${K}.preview.description`)}</DialogDescription>
-          </DialogHeader>
-          {preview && (
-            <div className="space-y-3 rounded-lg border border-border bg-card p-5 text-sm">
-              <p className="text-xs uppercase tracking-wide text-muted-foreground">{fundName}</p>
-              <p className="text-base font-semibold">{callName}</p>
-              <p>{t(`${K}.preview.recipient`, { investor: preview.subscription.investor, subscription: preview.subscription.id })}</p>
-              <p>{t(`${K}.preview.amount`, { amount: money(preview.amount) })}</p>
-              <p>{t(`${K}.preview.dueDate`, { date: dateFormat.format(dueDate) })}</p>
-              {settings.combinedNotices && <p className="text-xs text-muted-foreground">{t(`${K}.preview.combined`)}</p>}
-            </div>
-          )}
-        </DialogContent>
-      </Dialog>
+      <BigModal open={Boolean(preview)} onOpenChange={open => !open && setPreview(null)}>
+        <BigModalContent className={`${BIG_MODAL_COMPACT} p-0 gap-0`}>
+          <div className="flex flex-col overflow-hidden rounded-3xl">
+            <BigModalPanelHeader
+              icon={FileText}
+              title={t(`${K}.preview.title`)}
+              subtitle={t(`${K}.preview.description`)}
+              onClose={() => setPreview(null)}
+              closeLabel={t('common.confirmDialog.close')}
+            />
+            {preview && (
+              <BigModalBody className="space-y-3 text-sm">
+                <p className="text-xs uppercase tracking-wide text-muted-foreground">{fundName}</p>
+                <p className="text-base font-semibold">{callName}</p>
+                <p>{t(`${K}.preview.recipient`, { investor: preview.subscription.investor, subscription: preview.subscription.id })}</p>
+                <p>{t(`${K}.preview.amount`, { amount: money(preview.amount) })}</p>
+                <p>{t(`${K}.preview.dueDate`, { date: dateFormat.format(dueDate) })}</p>
+                {settings.combinedNotices && <p className="text-xs text-muted-foreground">{t(`${K}.preview.combined`)}</p>}
+              </BigModalBody>
+            )}
+          </div>
+        </BigModalContent>
+      </BigModal>
     </div>
   );
 }

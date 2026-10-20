@@ -1,5 +1,5 @@
 import { useState, type ReactNode } from 'react';
-import { AlertTriangle, ChevronDown, ChevronRight } from 'lucide-react';
+import { AlertTriangle, ChevronDown, ChevronRight, Layers, Target } from 'lucide-react';
 
 import { useTranslation } from '../../../utils/languageContext';
 import {
@@ -15,12 +15,14 @@ import {
 import { ColumnConfig, DataTable } from '../../DataTable';
 import { StatusBadge } from '../../StatusBadge';
 import { Alert, AlertDescription, AlertTitle } from '../../ui/alert';
-import { Card } from '../../ui/card';
+import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '../../ui/collapsible';
 import { Checkbox } from '../../ui/checkbox';
 import { DisabledReason } from '../../ui/disabled-reason';
-import { Input } from '../../ui/input';
-import { Label } from '../../ui/label';
+import { FormField, SuffixInput } from '../../ui/form-field';
+import { ListingCard } from '../../ui/listing';
 import { SegmentedControl } from '../../ui/segmented-control';
+import { SidePanelSection } from '../../ui/side-panel';
+import { WidgetCard } from '../../ui/widget-card';
 
 const K = 'funds.capitalCalls.wizard.amounts';
 
@@ -40,47 +42,33 @@ interface WizardAmountsStepProps {
   onShareChange: (share: string, patch: Partial<ShareInput>) => void;
 }
 
-function NumberField({
-  id,
-  label,
-  value,
-  suffix,
-  error,
-  hideLabel = false,
-  onChange,
-}: {
+interface NumberFieldProps {
   id: string;
   label: string;
   value: string;
   suffix: string;
   error?: string;
-  /** Libellé lu par les lecteurs d'écran seulement, quand l'en-tête de colonne le donne déjà. */
+  hint?: string;
   hideLabel?: boolean;
+  labelAside?: ReactNode;
+  /** Saisie posée sur fond blanc (cellule de tableau) : contour visible. */
+  outlined?: boolean;
   onChange: (value: string) => void;
-}) {
+}
+
+function NumberField({ id, label, value, suffix, error, hint, hideLabel, labelAside, outlined, onChange }: NumberFieldProps) {
   return (
-    <div className="space-y-1.5">
-      <Label htmlFor={id} className={hideLabel ? 'sr-only' : 'text-xs font-medium text-muted-foreground'}>
-        {label}
-      </Label>
-      <div className="flex items-center gap-2">
-        <Input
-          id={id}
-          inputMode="decimal"
-          value={value}
-          onChange={event => onChange(event.target.value)}
-          aria-invalid={Boolean(error)}
-          aria-describedby={error ? `${id}-error` : undefined}
-          className="text-right tabular-nums"
-        />
-        <span className="shrink-0 text-xs text-muted-foreground">{suffix}</span>
-      </div>
-      {error && (
-        <p id={`${id}-error`} className="text-xs text-destructive">
-          {error}
-        </p>
-      )}
-    </div>
+    <FormField id={id} label={label} error={error} hint={hint} hideLabel={hideLabel} labelAside={labelAside}>
+      <SuffixInput
+        id={id}
+        suffix={suffix}
+        className={outlined ? 'border-border' : undefined}
+        value={value}
+        onChange={event => onChange(event.target.value)}
+        aria-invalid={Boolean(error)}
+        aria-describedby={error ? `${id}-error` : hint ? `${id}-hint` : undefined}
+      />
+    </FormField>
   );
 }
 
@@ -175,6 +163,7 @@ export function WizardAmountsStep({
             id={`raise-${row.share}`}
             label={t(`${K}.percentFor`, { share: row.share })}
             hideLabel
+            outlined
             value={inputs[row.share].value}
             suffix="%"
             error={errors[row.share]}
@@ -205,125 +194,103 @@ export function WizardAmountsStep({
     const restrictionOpen = openRestrictions[share] ?? input.restriction !== null;
     const unitSuffix = t(`${K}.perUnitSuffix`, { currency: currencySymbol });
     return (
-      <Card key={share} className="space-y-4 p-5 shadow-sm">
-        <div className="flex flex-wrap items-baseline justify-between gap-2">
-          <h4 className="text-sm font-semibold">{t('funds.detail.sharePrefix', { name: share })}</h4>
-          <span className="text-xs text-muted-foreground">
-            {t(`${K}.shareSummary`, {
-              committed: money(sum(items, item => item.committed)),
-              count: items.length,
-            })}
-          </span>
-        </div>
-
-        <div className="grid grid-cols-1 gap-4 md:grid-cols-3">
-          {settings.perUnit ? (
-            <NumberField
-              id={`value-${share}`}
-              label={t(`${K}.fields.perUnit`)}
-              value={input.value}
-              suffix={unitSuffix}
-              error={errors[share]}
-              onChange={value => onShareChange(share, { value })}
-            />
-          ) : (
-            <div className="space-y-1.5">
-              <div className="flex items-center justify-between gap-2">
-                <Label htmlFor={`value-${share}`} className="text-xs font-medium text-muted-foreground">
-                  {t(`${K}.fields.value`)}
-                </Label>
-                <SegmentedControl
-                  options={[
-                    { value: 'percent', label: t(`${K}.kinds.percent`) },
-                    { value: 'amount', label: t(`${K}.kinds.amount`) },
-                  ]}
-                  value={input.kind}
-                  onValueChange={kind => onShareChange(share, { kind, value: '' })}
-                  size="sm"
-                />
-              </div>
-              <div className="flex items-center gap-2">
-                <Input
-                  id={`value-${share}`}
-                  inputMode="decimal"
-                  value={input.value}
-                  onChange={event => onShareChange(share, { value: event.target.value })}
-                  aria-invalid={Boolean(errors[share])}
-                  aria-describedby={errors[share] ? `value-${share}-error` : `value-${share}-hint`}
-                  className="text-right tabular-nums"
-                />
-                <span className="shrink-0 text-xs text-muted-foreground">
-                  {input.kind === 'percent' ? '%' : currencySymbol}
-                </span>
-              </div>
-              {errors[share] ? (
-                <p id={`value-${share}-error`} className="text-xs text-destructive">
-                  {errors[share]}
-                </p>
-              ) : (
-                <p id={`value-${share}-hint`} className="text-xs text-muted-foreground">
-                  {t(`${K}.notCalledPlaceholder`)}
-                </p>
-              )}
-            </div>
-          )}
-          <NumberField
-            id={`recall-${share}`}
-            label={t(settings.perUnit ? `${K}.fields.recallPerUnit` : `${K}.fields.recall`)}
-            value={input.recall}
-            suffix={settings.perUnit ? unitSuffix : currencySymbol}
-            onChange={recall => onShareChange(share, { recall })}
-          />
-          {(settings.netFlow || settings.perUnit) && (
-            <NumberField
-              id={`net-${share}`}
-              label={t(settings.perUnit ? `${K}.fields.netFlowPerUnit` : `${K}.fields.netFlow`)}
-              value={input.netFlow}
-              suffix={settings.perUnit ? unitSuffix : currencySymbol}
-              onChange={netFlow => onShareChange(share, { netFlow })}
-            />
-          )}
-        </div>
-
-        <div className="flex flex-wrap items-center justify-between gap-4">
-          <div className="flex flex-wrap items-center gap-6">
-            <label className="flex cursor-pointer items-center gap-2 text-sm">
-              <Checkbox
-                checked={input.callEntryFees}
-                onCheckedChange={checked => onShareChange(share, { callEntryFees: checked === true })}
+      <SidePanelSection
+        key={share}
+        icon={Layers}
+        title={t('funds.detail.sharePrefix', { name: share })}
+        description={t(`${K}.shareSummary`, {
+          committed: money(sum(items, item => item.committed)),
+          count: items.length,
+        })}
+      >
+        <div className="space-y-4">
+          <div className="grid grid-cols-1 gap-4 md:grid-cols-3">
+            {settings.perUnit ? (
+              <NumberField
+                id={`value-${share}`}
+                label={t(`${K}.fields.perUnit`)}
+                value={input.value}
+                suffix={unitSuffix}
+                error={errors[share]}
+                onChange={value => onShareChange(share, { value })}
               />
-              {t(`${K}.fields.entryFees`)}
-            </label>
-            <label className="flex cursor-pointer items-center gap-2 text-sm">
-              <Checkbox
-                checked={input.callPremium}
-                onCheckedChange={checked => onShareChange(share, { callPremium: checked === true })}
+            ) : (
+              <NumberField
+                id={`value-${share}`}
+                label={t(`${K}.fields.value`)}
+                value={input.value}
+                suffix={input.kind === 'percent' ? '%' : currencySymbol}
+                error={errors[share]}
+                hint={t(`${K}.notCalledPlaceholder`)}
+                labelAside={
+                  <SegmentedControl
+                    options={[
+                      { value: 'percent', label: t(`${K}.kinds.percent`) },
+                      { value: 'amount', label: t(`${K}.kinds.amount`) },
+                    ]}
+                    value={input.kind}
+                    onValueChange={kind => onShareChange(share, { kind, value: '' })}
+                    size="sm"
+                  />
+                }
+                onChange={value => onShareChange(share, { value })}
               />
-              {t(`${K}.fields.premium`)}
-            </label>
-          </div>
-          <span className="text-sm">
-            {t(`${K}.shareAmount`)} <span className="font-semibold tabular-nums">{money(amountOf(share))}</span>
-          </span>
-        </div>
-
-        <div className="border-t border-border pt-3">
-          <button
-            type="button"
-            className="inline-flex items-center gap-1.5 text-sm font-medium text-primary"
-            aria-expanded={restrictionOpen}
-            onClick={() => setOpenRestrictions(prev => ({ ...prev, [share]: !restrictionOpen }))}
-          >
-            {restrictionOpen ? <ChevronDown className="h-4 w-4" /> : <ChevronRight className="h-4 w-4" />}
-            {t(`${K}.restriction.toggle`)}
-            {input.restriction && (
-              <span className="text-xs text-muted-foreground">
-                {t(`${K}.restriction.selected`, { count: input.restriction.length, total: items.length })}
-              </span>
             )}
-          </button>
-          {restrictionOpen && (
-            <div className="mt-3 space-y-2">
+            <NumberField
+              id={`recall-${share}`}
+              label={t(settings.perUnit ? `${K}.fields.recallPerUnit` : `${K}.fields.recall`)}
+              value={input.recall}
+              suffix={settings.perUnit ? unitSuffix : currencySymbol}
+              onChange={recall => onShareChange(share, { recall })}
+            />
+            {(settings.netFlow || settings.perUnit) && (
+              <NumberField
+                id={`net-${share}`}
+                label={t(settings.perUnit ? `${K}.fields.netFlowPerUnit` : `${K}.fields.netFlow`)}
+                value={input.netFlow}
+                suffix={settings.perUnit ? unitSuffix : currencySymbol}
+                onChange={netFlow => onShareChange(share, { netFlow })}
+              />
+            )}
+          </div>
+
+          <div className="flex flex-wrap items-center justify-between gap-4">
+            <div className="flex flex-wrap items-center gap-6">
+              <label className="flex cursor-pointer items-center gap-2 text-sm">
+                <Checkbox
+                  checked={input.callEntryFees}
+                  onCheckedChange={checked => onShareChange(share, { callEntryFees: checked === true })}
+                />
+                {t(`${K}.fields.entryFees`)}
+              </label>
+              <label className="flex cursor-pointer items-center gap-2 text-sm">
+                <Checkbox
+                  checked={input.callPremium}
+                  onCheckedChange={checked => onShareChange(share, { callPremium: checked === true })}
+                />
+                {t(`${K}.fields.premium`)}
+              </label>
+            </div>
+            <span className="text-sm">
+              {t(`${K}.shareAmount`)} <span className="font-semibold tabular-nums">{money(amountOf(share))}</span>
+            </span>
+          </div>
+
+          <Collapsible
+            open={restrictionOpen}
+            onOpenChange={open => setOpenRestrictions(prev => ({ ...prev, [share]: open }))}
+            className="border-t border-border pt-3"
+          >
+            <CollapsibleTrigger className="inline-flex items-center gap-1.5 text-sm font-medium text-primary">
+              {restrictionOpen ? <ChevronDown className="h-4 w-4" /> : <ChevronRight className="h-4 w-4" />}
+              {t(`${K}.restriction.toggle`)}
+              {input.restriction && (
+                <span className="text-xs text-muted-foreground">
+                  {t(`${K}.restriction.selected`, { count: input.restriction.length, total: items.length })}
+                </span>
+              )}
+            </CollapsibleTrigger>
+            <CollapsibleContent className="mt-3 space-y-2">
               <p className="text-xs text-muted-foreground">{t(`${K}.restriction.hint`)}</p>
               <div className="grid max-h-60 grid-cols-1 gap-1 overflow-y-auto md:grid-cols-2">
                 {items.map(item => (
@@ -341,10 +308,10 @@ export function WizardAmountsStep({
                   </label>
                 ))}
               </div>
-            </div>
-          )}
+            </CollapsibleContent>
+          </Collapsible>
         </div>
-      </Card>
+      </SidePanelSection>
     );
   };
 
@@ -368,11 +335,12 @@ export function WizardAmountsStep({
         <div className="space-y-4">{shares.map(shareCard)}</div>
       ) : (
         <div className="space-y-4">
-          <Card className="p-5 shadow-sm">
+          <SidePanelSection icon={Target} title={t(`${K}.modes.toRaise`)}>
             <div className="max-w-xs">
               <NumberField
                 id="amount-to-raise"
                 label={t(`${K}.toRaise.label`)}
+                hideLabel
                 value={amountToRaise}
                 suffix={currencySymbol}
                 onChange={onAmountToRaiseChange}
@@ -387,8 +355,8 @@ export function WizardAmountsStep({
                 })}
               </p>
             )}
-          </Card>
-          <Card className="overflow-hidden shadow-sm">
+          </SidePanelSection>
+          <ListingCard>
             <DataTable
               data={shares.map((share, index) => ({ id: index + 1, share }))}
               columns={raiseColumns}
@@ -409,7 +377,7 @@ export function WizardAmountsStep({
                 remainingAfter: money(sum(subscriptions, remainingToCall) - total),
               }}
             />
-          </Card>
+          </ListingCard>
           {toRaiseValue > 0 && Math.abs(gap) >= 0.01 && (
             <Alert>
               <AlertTriangle className="h-4 w-4" />
@@ -422,12 +390,11 @@ export function WizardAmountsStep({
         </div>
       )}
 
-      <div className="flex items-center justify-end gap-3 rounded-lg border border-border bg-card px-5 py-3">
-        <span className="text-sm text-muted-foreground">{t(`${K}.total`)}</span>
-        <span className="text-lg font-semibold tabular-nums" aria-live="polite">
+      <WidgetCard title={t(`${K}.total`)}>
+        <p className="text-right text-lg font-semibold tabular-nums" aria-live="polite">
           {money(total, 2)}
-        </span>
-      </div>
+        </p>
+      </WidgetCard>
     </div>
   );
 }
