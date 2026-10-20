@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from 'react';
-import { ArrowDown, ArrowUp, BellOff, ListChecks, PencilLine } from 'lucide-react';
+import { ArrowDown, ArrowUp, BellOff, Eraser, ListChecks, PencilLine, Repeat, Share2 } from 'lucide-react';
 import { Button } from './ui/button';
 import { Checkbox } from './ui/checkbox';
 import { Input } from './ui/input';
@@ -8,6 +8,7 @@ import { Sheet, SheetContent } from './ui/sheet';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from './ui/select';
 import { Textarea } from './ui/textarea';
 import { RowActionButton } from './ui/row-actions';
+import { EffectsPanel, type EffectItem } from './ui/effects-panel';
 import {
   SIDE_PANEL_WIDE_STYLE,
   SidePanelCard,
@@ -28,6 +29,30 @@ import {
 } from '../utils/onboardingQuestionTypes';
 
 const T = 'subscriptions.detail.answerEdit';
+const E = 'subscriptions.detail.answerEffects';
+
+/** Donnée alimentée par la question, avec sa valeur actuelle. */
+export interface AnswerEditTarget {
+  key: string;
+  object: string;
+  field: string;
+  currentValue: string;
+}
+
+/** Réponse qui changerait si les déclenchements sont rejoués. */
+export interface AnswerEditTriggerChange {
+  elementId: string;
+  label: string;
+  currentValue: string;
+  nextValue: string;
+  /** Déjà modifiée par le back-office : jamais écrasée par le rejeu. */
+  kept: boolean;
+}
+
+export interface AnswerEditEffects {
+  propagate: string[];
+  replay: boolean;
+}
 
 interface AnswerEditPanelProps {
   /** Question modifiée, absente quand le panneau est fermé. */
@@ -37,23 +62,39 @@ interface AnswerEditPanelProps {
   context: string;
   /** Après envoi en signature : motif obligatoire. */
   requiresReason: boolean;
+  targets?: AnswerEditTarget[];
+  /** Réponses déclenchées par la question ; absent si elle n'en déclenche aucune. */
+  resolveTriggers?: (nextValue: string) => AnswerEditTriggerChange[];
   onClose: () => void;
-  onSave: (value: string, reason?: string) => void;
+  onSave: (value: string, reason: string | undefined, effects: AnswerEditEffects) => void;
 }
 
 /** Modification d'une réponse d'onboarding par le back-office (IC-5616). */
-export function AnswerEditPanel({ question, currentValue, context, requiresReason, onClose, onSave }: AnswerEditPanelProps) {
+export function AnswerEditPanel({
+  question,
+  currentValue,
+  context,
+  requiresReason,
+  targets = [],
+  resolveTriggers,
+  onClose,
+  onSave,
+}: AnswerEditPanelProps) {
   const { t } = useTranslation();
   const type = question?.type ?? 'text';
   const [draft, setDraft] = useState<OnboardingDraftValue>({ text: '', items: [], currency: 'EUR' });
   const [reason, setReason] = useState('');
   const [submitted, setSubmitted] = useState(false);
+  const [propagate, setPropagate] = useState<string[]>([]);
+  const [replay, setReplay] = useState(false);
 
   useEffect(() => {
     if (!question) return;
     setDraft(toDraft(question.type ?? 'text', currentValue));
     setReason('');
     setSubmitted(false);
+    setPropagate([]);
+    setReplay(false);
   }, [question, currentValue]);
 
   const violation = question ? validateDraft(type, draft, question.constraints) : null;
@@ -65,8 +106,58 @@ export function AnswerEditPanel({ question, currentValue, context, requiresReaso
   const handleSave = () => {
     setSubmitted(true);
     if (violation || reasonMissing || unchanged) return;
-    onSave(nextValue, requiresReason ? reason.trim() : undefined);
+    onSave(nextValue, requiresReason ? reason.trim() : undefined, { propagate, replay });
   };
+
+  const emptyLabel = t(`${E}.empty`);
+  const cleared = nextValue === '';
+  const triggerChanges = resolveTriggers ? resolveTriggers(nextValue) : null;
+  const effects: EffectItem[] = [
+    ...targets.map(target => ({
+      id: target.key,
+      icon: cleared ? Eraser : Share2,
+      label: t(cleared ? `${E}.reset` : `${E}.propagate`, {
+        object: t(`${E}.objects.${target.object}`),
+        field: t(`${E}.fields.${target.field}`),
+      }),
+      note: t(`${E}.valueChange`, {
+        current: target.currentValue || emptyLabel,
+        next: cleared ? emptyLabel : unchanged ? target.currentValue || emptyLabel : nextValue,
+      }),
+      reversible: true,
+      option: {
+        checked: propagate.includes(target.key),
+        onCheckedChange: (checked: boolean) =>
+          setPropagate(prev => (checked ? [...prev, target.key] : prev.filter(key => key !== target.key))),
+      },
+    })),
+    ...(triggerChanges
+      ? [
+          {
+            id: 'replay',
+            icon: Repeat,
+            label: t(`${E}.replay`),
+            note:
+              triggerChanges.length === 0
+                ? t(`${E}.replayNone`)
+                : t(`${E}.replayNote`),
+            objects: triggerChanges.map(change => ({
+              id: change.elementId,
+              label: change.kept
+                ? t(`${E}.replayKept`, { label: change.label, current: change.currentValue || emptyLabel })
+                : t(`${E}.replayChange`, {
+                    label: change.label,
+                    current: change.currentValue || emptyLabel,
+                    next: change.nextValue || emptyLabel,
+                  }),
+            })),
+            defaultOpen: true,
+            reversible: true,
+            option: { checked: replay, onCheckedChange: setReplay },
+          },
+        ]
+      : []),
+  ];
 
   const options = type === 'country' ? COUNTRY_OPTIONS : question?.options ?? [];
   const label = question?.question.replace(/\s*\*\s*$/, '') ?? '';
@@ -252,6 +343,15 @@ export function AnswerEditPanel({ question, currentValue, context, requiresReaso
               </div>
             </SidePanelCard>
           </SidePanelSection>
+
+          {effects.length > 0 && (
+            <EffectsPanel
+              title={t(`${E}.title`)}
+              description={t(`${E}.description`)}
+              effects={effects}
+              marker="none"
+            />
+          )}
 
           {constraintHints.length > 0 && (
             <SidePanelSection icon={ListChecks} title={t(`${T}.constraintsTitle`)} description={t(`${T}.constraintsDesc`)}>

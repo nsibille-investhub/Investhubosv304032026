@@ -1215,7 +1215,9 @@
         "unresolvedComments": "{{count}} unresolved comment(s)",
         "resolvedComments": "{{count}} resolved comment(s)",
         "timeline": "Audit trail",
-        "computed": "Computed field, cannot be modified"
+        "computed": "Computed field, cannot be modified",
+        "timelineModifiedOne": "Audit trail: 1 change since the last validation",
+        "timelineModifiedMany": "Audit trail: {{count}} changes since the last validation"
       },
       "audit": {
         "title": "Audit trail",
@@ -1254,14 +1256,21 @@
           "documentRejected": "Document rejected",
           "commentAdded": "Comment added",
           "dossierSubmitted": "File submitted",
-          "documentDatesUpdated": "Document dates updated"
+          "documentDatesUpdated": "Document dates updated",
+          "dataPropagated": "Linked data updated",
+          "dataReset": "Linked data reset",
+          "answerReplayed": "Triggered answer changed"
         },
         "origin": {
           "investor": "Investor",
           "operator": "Back-office operator",
           "automatic": "Automatic",
           "api": "API"
-        }
+        },
+        "target": "Linked data: {{object}} · {{field}}",
+        "causedBy": "Following the change of: {{label}}",
+        "pendingModificationsOne": "1 change since the last validation",
+        "pendingModificationsMany": "{{count}} changes since the last validation"
       },
       "documentControl": {
         "rejectedToast": "Document rejected",
@@ -1360,6 +1369,40 @@
             "adult": "Adult",
             "integer": "Whole number"
           }
+        }
+      },
+      "answerEffects": {
+        "title": "Effects of the change",
+        "description": "Nothing is propagated unless checked. Each chosen effect is logged with the change that caused it.",
+        "propagate": "Propagate the new value: {{object}} · {{field}}",
+        "reset": "Reset the linked data: {{object}} · {{field}}",
+        "valueChange": "Current value: {{current}} → {{next}}",
+        "empty": "(empty)",
+        "replay": "Replay the triggers",
+        "replayNote": "Answers changed by the replay go back to review.",
+        "replayNone": "No triggered answer would change with this value.",
+        "replayChange": "{{label}}: {{current}} → {{next}}",
+        "replayKept": "{{label}}: {{current}}, kept (already modified by the back office)",
+        "objects": {
+          "subscription": "Subscription",
+          "investor": "Investor record",
+          "partner": "Partner",
+          "participation": "Holding"
+        },
+        "fields": {
+          "nationality": "Nationality",
+          "email": "Email",
+          "investorEmail": "Investor email",
+          "phone": "Mobile phone",
+          "address": "Address",
+          "city": "City",
+          "postalCode": "Postal code",
+          "country": "Country",
+          "taxResidence": "Tax residence",
+          "iban": "IBAN",
+          "bic": "BIC",
+          "pep": "Politically exposed person status",
+          "financialAssets": "Financial assets"
         }
       }
     },

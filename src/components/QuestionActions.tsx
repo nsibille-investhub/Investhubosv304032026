@@ -41,6 +41,8 @@ interface QuestionActionsProps {
   onComment: () => void;
   /** Ouvre la piste d'audit de la réponse. */
   onTimeline?: () => void;
+  /** Modifications depuis la soumission et la dernière validation : badge du bouton de piste d'audit. */
+  modificationCount?: number;
 }
 
 export function QuestionActions({
@@ -56,6 +58,7 @@ export function QuestionActions({
   canControl = true,
   onComment,
   onTimeline,
+  modificationCount = 0,
 }: QuestionActionsProps) {
   const { t } = useTranslation();
 
@@ -224,13 +227,32 @@ export function QuestionActions({
                       whileTap={{ scale: 0.95 }}
                       onClick={onTimeline}
                       aria-label={t(`${T}.timeline`)}
-                      className="p-1.5 rounded-md hover:bg-gray-100 transition-colors group"
+                      className="p-1.5 rounded-md hover:bg-gray-100 transition-colors group relative"
                     >
-                      <History className="w-4 h-4 text-gray-400 group-hover:text-gray-600 transition-colors" />
+                      <History
+                        className={`w-4 h-4 transition-colors ${
+                          modificationCount > 0 ? 'text-blue-600' : 'text-gray-400 group-hover:text-gray-600'
+                        }`}
+                      />
+                      {modificationCount > 0 && (
+                        <motion.span
+                          initial={{ scale: 0 }}
+                          animate={{ scale: 1 }}
+                          className="absolute -top-1 -right-1 min-w-[16px] h-4 px-1 text-[10px] font-bold rounded-full flex items-center justify-center shadow-sm bg-blue-600 text-white"
+                        >
+                          {modificationCount}
+                        </motion.span>
+                      )}
                     </motion.button>
                   </TooltipTrigger>
                   <TooltipContent>
-                    <p>{t(`${T}.timeline`)}</p>
+                    <p>
+                      {modificationCount > 0
+                        ? t(modificationCount === 1 ? `${T}.timelineModifiedOne` : `${T}.timelineModifiedMany`, {
+                            count: modificationCount,
+                          })
+                        : t(`${T}.timeline`)}
+                    </p>
                   </TooltipContent>
                 </Tooltip>
               </TooltipProvider>

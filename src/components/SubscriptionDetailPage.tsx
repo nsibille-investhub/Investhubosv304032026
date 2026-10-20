@@ -108,7 +108,9 @@ import {
 import {
   AUDIT_DOCUMENTS_SECTION,
   buildInitialSubscriptionAudit,
+  countPendingModifications,
   createLiveAuditEntry,
+  isModifiedByOperator,
   type SubscriptionAuditEntry,
 } from '../utils/subscriptionAuditMock';
 import { SubscriptionAuditPanel, SubscriptionAuditTab } from './SubscriptionAuditTrail';
@@ -120,7 +122,7 @@ import { ConfirmDialog } from './ui/confirm-dialog';
 import { DisabledReason } from './ui/disabled-reason';
 import { Textarea } from './ui/textarea';
 import { ManualDocumentPanel, isoToDisplayDate } from './ManualDocumentPanel';
-import { AnswerEditPanel } from './AnswerEditPanel';
+import { AnswerEditPanel, type AnswerEditEffects, type AnswerEditTarget, type AnswerEditTriggerChange } from './AnswerEditPanel';
 import { DemoScenarioBar } from './ui/demo-scenario-bar';
 import type { MockQuestion } from '../utils/subscriptionDetailMockData';
 import {
@@ -287,6 +289,9 @@ export function SubscriptionDetailPage({ subscription: subscriptionProp, onBack 
   const [notAskedVisible, setNotAskedVisible] = useState<string[]>([]);
   const responseOf = (sectionId: string, idx: number, question: MockQuestion) =>
     questionResponses[`${sectionId}-${idx}`] ?? question.response;
+  // Valeurs des données liées (souscription, fiche investisseur...), modifiées par la propagation.
+  const [linkedData, setLinkedData] = useState<Record<string, string>>({});
+  const linkedKey = (questionId: string, object: string, field: string) => `${questionId}:${object}.${field}`;
   const [auditElement, setAuditElement] = useState<{ elementId: string; sectionId: string } | null>(null);
   const logAudit = (...entries: Parameters<typeof createLiveAuditEntry>[0][]) =>
     setAuditEntries(prev => [...prev, ...entries.map(createLiveAuditEntry)]);
@@ -397,6 +402,93 @@ export function SubscriptionDetailPage({ subscription: subscriptionProp, onBack 
     toast.success(t('subscriptions.detail.questionActions.modifiedToast'), {
       description: t('subscriptions.detail.questionActions.modifiedToastDesc'),
     });
+  };
+
+  const editTargets = (sectionId: string, idx: number): AnswerEditTarget[] => {
+    const question = mockSections.find(sec => sec.id === sectionId)?.questions[idx];
+    const questionId = `${sectionId}-${idx}`;
+    return (question?.targets ?? []).map(target => {
+      const key = linkedKey(questionId, target.object, target.field);
+      return {
+        key,
+        object: target.object,
+        field: target.field,
+        currentValue: linkedData[key] ?? target.currentValue ?? question?.response ?? '',
+      };
+    });
+  };
+
+  const resolveTriggerChanges = (sectionId: string, idx: number, nextValue: string): AnswerEditTriggerChange[] => {
+    const section = mockSections.find(sec => sec.id === sectionId);
+    const question = section?.questions[idx];
+    if (!section || !question?.triggers) return [];
+    return question.triggers.flatMap(trigger => {
+      const targetIdx = section.questions.findIndex(q => q.question === trigger.question);
+      if (targetIdx < 0) return [];
+      const target = section.questions[targetIdx];
+      const elementId = `${sectionId}-${targetIdx}`;
+      const currentValue = responseOf(sectionId, targetIdx, target);
+      const next = trigger.values[nextValue] ?? trigger.otherwise ?? currentValue;
+      if (next === currentValue) return [];
+      return [{
+        elementId,
+        label: target.question.replace(/\s*\*\s*$/, ''),
+        currentValue,
+        nextValue: next,
+        kept: isModifiedByOperator(auditEntries, elementId),
+      }];
+    });
+  };
+
+  const applyAnswerEffects = (sectionId: string, idx: number, value: string, effects: AnswerEditEffects) => {
+    const questionId = `${sectionId}-${idx}`;
+    const targets = editTargets(sectionId, idx).filter(target => effects.propagate.includes(target.key));
+    const replayed = effects.replay
+      ? resolveTriggerChanges(sectionId, idx, value).filter(change => !change.kept)
+      : [];
+    if (targets.length > 0) {
+      setLinkedData(prev => {
+        const next = { ...prev };
+        targets.forEach(target => {
+          next[target.key] = value;
+        });
+        return next;
+      });
+    }
+    if (replayed.length > 0) {
+      setQuestionResponses(prev => {
+        const next = { ...prev };
+        replayed.forEach(change => {
+          next[change.elementId] = change.nextValue;
+        });
+        return next;
+      });
+      setQuestionStatuses(prev => {
+        const next = { ...prev };
+        replayed.forEach(change => delete next[change.elementId]);
+        return next;
+      });
+    }
+    logAudit(
+      ...targets.map(target => ({
+        type: value === '' ? ('dataReset' as const) : ('dataPropagated' as const),
+        elementId: questionId,
+        sectionId,
+        previousValue: target.currentValue,
+        newValue: value,
+        target: { object: target.object, field: target.field },
+      })),
+      ...replayed.map(change => ({
+        type: 'answerReplayed' as const,
+        origin: 'automatic' as const,
+        actorName: undefined,
+        elementId: change.elementId,
+        sectionId,
+        previousValue: change.currentValue,
+        newValue: change.nextValue,
+        causeElementId: questionId,
+      })),
+    );
   };
 
   const handleToggleComment = (questionId: string) => {
@@ -1829,6 +1921,7 @@ export function SubscriptionDetailPage({ subscription: subscriptionProp, onBack 
                                             onModify={canModifyAnswers ? () => setAnswerEdit({ sectionId: section.id, idx }) : undefined}
                                             computed={item.computed}
                                             canControl={canManage}
+                                            modificationCount={countPendingModifications(auditEntries, questionId)}
                                             onComment={() => handleToggleComment(questionId)}
                                             onTimeline={() => setAuditElement({ elementId: questionId, sectionId: section.id })}
                                           />
@@ -2405,8 +2498,15 @@ export function SubscriptionDetailPage({ subscription: subscriptionProp, onBack 
             : t(section.titleKey);
         })()}
         requiresReason={afterSignature}
+        targets={answerEdit ? editTargets(answerEdit.sectionId, answerEdit.idx) : []}
+        resolveTriggers={
+          answerEdit &&
+          mockSections.find(sec => sec.id === answerEdit.sectionId)?.questions[answerEdit.idx]?.triggers?.length
+            ? next => resolveTriggerChanges(answerEdit.sectionId, answerEdit.idx, next)
+            : undefined
+        }
         onClose={() => setAnswerEdit(null)}
-        onSave={(value, reason) => {
+        onSave={(value, reason, effects) => {
           if (!answerEdit) return;
           const section = mockSections.find(sec => sec.id === answerEdit.sectionId);
           const question = section?.questions[answerEdit.idx];
@@ -2417,6 +2517,7 @@ export function SubscriptionDetailPage({ subscription: subscriptionProp, onBack 
             responseOf(answerEdit.sectionId, answerEdit.idx, question),
             reason,
           );
+          applyAnswerEffects(answerEdit.sectionId, answerEdit.idx, value, effects);
           setAnswerEdit(null);
         }}
       />

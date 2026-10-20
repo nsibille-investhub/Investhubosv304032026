@@ -1215,7 +1215,9 @@
         "unresolvedComments": "{{count}} commentaire(s) non résolu(s)",
         "resolvedComments": "{{count}} commentaire(s) résolu(s)",
         "timeline": "Piste d'audit",
-        "computed": "Champ calculé, non modifiable"
+        "computed": "Champ calculé, non modifiable",
+        "timelineModifiedOne": "Piste d'audit : 1 modification depuis la dernière validation",
+        "timelineModifiedMany": "Piste d'audit : {{count}} modifications depuis la dernière validation"
       },
       "audit": {
         "title": "Piste d'audit",
@@ -1254,14 +1256,21 @@
           "documentRejected": "Document refusé",
           "commentAdded": "Commentaire ajouté",
           "dossierSubmitted": "Dossier soumis",
-          "documentDatesUpdated": "Dates du document modifiées"
+          "documentDatesUpdated": "Dates du document modifiées",
+          "dataPropagated": "Donnée liée mise à jour",
+          "dataReset": "Donnée liée remise à zéro",
+          "answerReplayed": "Réponse déclenchée modifiée"
         },
         "origin": {
           "investor": "Investisseur",
           "operator": "Opérateur back-office",
           "automatic": "Automatique",
           "api": "API"
-        }
+        },
+        "target": "Donnée liée : {{object}} · {{field}}",
+        "causedBy": "Suite à la modification de : {{label}}",
+        "pendingModificationsOne": "1 modification depuis la dernière validation",
+        "pendingModificationsMany": "{{count}} modifications depuis la dernière validation"
       },
       "documentControl": {
         "rejectedToast": "Document refusé",
@@ -1360,6 +1369,40 @@
             "adult": "Personne majeure",
             "integer": "Nombre entier"
           }
+        }
+      },
+      "answerEffects": {
+        "title": "Effets de la modification",
+        "description": "Rien ne se propage sans case cochée. Chaque effet choisi est historisé avec la modification qui l'a causé.",
+        "propagate": "Propager la nouvelle valeur : {{object}} · {{field}}",
+        "reset": "Remettre à zéro la donnée liée : {{object}} · {{field}}",
+        "valueChange": "Valeur actuelle : {{current}} → {{next}}",
+        "empty": "(vide)",
+        "replay": "Rejouer les déclenchements",
+        "replayNote": "Les réponses modifiées par le rejeu repassent à contrôler.",
+        "replayNone": "Aucune réponse déclenchée ne changerait avec cette valeur.",
+        "replayChange": "{{label}} : {{current}} → {{next}}",
+        "replayKept": "{{label}} : {{current}}, conservée (déjà modifiée par le back-office)",
+        "objects": {
+          "subscription": "Souscription",
+          "investor": "Fiche investisseur",
+          "partner": "Partenaire",
+          "participation": "Participation"
+        },
+        "fields": {
+          "nationality": "Nationalité",
+          "email": "E-mail",
+          "investorEmail": "E-mail de l'investisseur",
+          "phone": "Téléphone mobile",
+          "address": "Adresse",
+          "city": "Ville",
+          "postalCode": "Code postal",
+          "country": "Pays",
+          "taxResidence": "Résidence fiscale",
+          "iban": "IBAN",
+          "bic": "BIC",
+          "pep": "Statut de personne politiquement exposée",
+          "financialAssets": "Patrimoine financier"
         }
       }
     },

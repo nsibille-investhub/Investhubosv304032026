@@ -2,6 +2,9 @@ import { useMemo, useState } from 'react';
 import {
   CalendarCheck,
   CheckCircle2,
+  Eraser,
+  Repeat,
+  Share2,
   FilePlus2,
   FileCheck2,
   FileX2,
@@ -20,12 +23,14 @@ import { Sheet, SheetContent } from './ui/sheet';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from './ui/select';
 import { SidePanelFooter, SidePanelHeader, SIDE_PANEL_WIDE_STYLE } from './ui/side-panel';
 import { Timeline, type TimelineEvent, type TimelineTypeMap } from './ui/timeline';
+import { StatusBadge } from './StatusBadge';
 import { useTranslation } from '../utils/languageContext';
 import type { MockRequiredDocument, MockSection } from '../utils/subscriptionDetailMockData';
 import {
   AUDIT_DOCUMENTS_SECTION,
   AUDIT_DOSSIER_SCOPE,
   SUBSCRIPTION_AUDIT_EVENT_TYPES,
+  countPendingModifications,
   type SubscriptionAuditEntry,
   type SubscriptionAuditEventType,
 } from '../utils/subscriptionAuditMock';
@@ -41,6 +46,9 @@ const AUDIT_ICONS: Record<SubscriptionAuditEventType, typeof History> = {
   documentValidated: FileCheck2,
   documentRejected: FileX2,
   documentDatesUpdated: CalendarCheck,
+  dataPropagated: Share2,
+  dataReset: Eraser,
+  answerReplayed: Repeat,
   commentAdded: MessageSquare,
   dossierSubmitted: Send,
 };
@@ -128,6 +136,21 @@ function AuditTimeline({
               ) : entry.newValue !== undefined ? (
                 <div className="text-foreground">{entry.newValue}</div>
               ) : null}
+              {entry.target && (
+                <div>
+                  {t(`${T}.target`, {
+                    object: t(`subscriptions.detail.answerEffects.objects.${entry.target.object}`),
+                    field: t(`subscriptions.detail.answerEffects.fields.${entry.target.field}`),
+                  })}
+                </div>
+              )}
+              {entry.causeElementId && (
+                <div>
+                  {t(`${T}.causedBy`, {
+                    label: elementLabel({ ...entry, elementId: entry.causeElementId }),
+                  })}
+                </div>
+              )}
               {entry.reason && <div>{t(`${T}.reason`, { reason: entry.reason })}</div>}
               {entry.viaSection && <div>{t(`${T}.viaSection`)}</div>}
             </div>
@@ -252,7 +275,22 @@ export function SubscriptionAuditPanel({
         <SidePanelHeader
           title={t(`${T}.panelTitle`)}
           description={probe ? `${elementLabel(probe)} · ${sectionLabel(sectionId)}` : undefined}
-        />
+        >
+          {elementId && countPendingModifications(entries, elementId) > 0 && (
+            <div className="mt-2">
+              <StatusBadge
+                variant="info"
+                icon={PencilLine}
+                label={t(
+                  countPendingModifications(entries, elementId) === 1
+                    ? `${T}.pendingModificationsOne`
+                    : `${T}.pendingModificationsMany`,
+                  { count: countPendingModifications(entries, elementId) },
+                )}
+              />
+            </div>
+          )}
+        </SidePanelHeader>
         <div className="flex-1 overflow-y-auto px-6 py-2">
           {elementId && (
             <AuditTimeline

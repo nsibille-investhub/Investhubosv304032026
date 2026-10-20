@@ -11,6 +11,9 @@ export type SubscriptionAuditEventType =
   | 'documentValidated'
   | 'documentRejected'
   | 'documentDatesUpdated'
+  | 'dataPropagated'
+  | 'dataReset'
+  | 'answerReplayed'
   | 'commentAdded'
   | 'dossierSubmitted';
 
@@ -25,6 +28,9 @@ export const SUBSCRIPTION_AUDIT_EVENT_TYPES: SubscriptionAuditEventType[] = [
   'documentValidated',
   'documentRejected',
   'documentDatesUpdated',
+  'dataPropagated',
+  'dataReset',
+  'answerReplayed',
   'commentAdded',
   'dossierSubmitted',
 ];
@@ -48,6 +54,29 @@ export interface SubscriptionAuditEntry {
   reason?: string;
   /** Validation individuelle produite par la validation d'une section en un clic. */
   viaSection?: boolean;
+  /** Donnée liée touchée par une propagation ou une remise à zéro. */
+  target?: { object: string; field: string };
+  /** Réponse dont la modification a causé cet effet. */
+  causeElementId?: string;
+}
+
+/** Modifications d'une réponse depuis la soumission et sa dernière validation : compteur du bouton de piste d'audit. */
+export function countPendingModifications(entries: SubscriptionAuditEntry[], elementId: string): number {
+  const submittedAt = entries.find(e => e.type === 'dossierSubmitted')?.timestamp ?? '';
+  let count = 0;
+  [...entries]
+    .filter(e => e.elementId === elementId)
+    .sort((a, b) => a.timestamp.localeCompare(b.timestamp))
+    .forEach(e => {
+      if (e.type === 'answerValidated') count = 0;
+      else if ((e.type === 'answerModified' || e.type === 'answerReplayed') && e.timestamp > submittedAt) count += 1;
+    });
+  return count;
+}
+
+/** La réponse a déjà été modifiée par le back-office : le rejeu des déclenchements la conserve. */
+export function isModifiedByOperator(entries: SubscriptionAuditEntry[], elementId: string): boolean {
+  return entries.some(e => e.elementId === elementId && e.type === 'answerModified' && e.origin === 'operator');
 }
 
 export const AUDIT_DOSSIER_SCOPE = 'dossier';
@@ -191,6 +220,17 @@ export function buildInitialSubscriptionAudit({
     sectionId: 'banking',
     previousValue: 'BNP',
     newValue: 'BNP Paribas',
+  });
+
+  push({
+    type: 'answerModified',
+    timestamp: at('2026-05-21T10:35', 0),
+    origin: 'operator',
+    actorName: CONTROLLER,
+    elementId: 'financial-3',
+    sectionId: 'financial',
+    previousValue: '900,00 EUR',
+    newValue: '1 000,00 EUR',
   });
 
   Object.entries(documentStatuses).forEach(([elementId, status], idx) => {

@@ -26,6 +26,28 @@ export interface MockQuestion {
   notAsked?: boolean;
   /** Itération d'une section répétable, à partir de 1. */
   iteration?: number;
+  /** Données alimentées par la réponse (IC-5619). */
+  targets?: MockLinkedTarget[];
+  /** Réponses déclenchées par cette question (IC-5619). */
+  triggers?: MockTrigger[];
+}
+
+export type MockLinkedObject = 'subscription' | 'investor' | 'partner' | 'participation';
+
+export interface MockLinkedTarget {
+  object: MockLinkedObject;
+  /** Clé de traduction du champ, sous subscriptions.detail.answerEffects.fields. */
+  field: string;
+  /** Valeur actuelle de la donnée, quand elle diffère de la réponse. */
+  currentValue?: string;
+}
+
+export interface MockTrigger {
+  /** Intitulé exact de la question déclenchée, dans la même section. */
+  question: string;
+  /** Valeur posée selon la nouvelle réponse ; absente de la table : `otherwise`, sinon inchangée. */
+  values: Record<string, string>;
+  otherwise?: string;
 }
 
 export interface MockSection {
@@ -128,13 +150,13 @@ export const mockSections: MockSection[] = [
       { question: "Pays de naissance*", response: "France", verified: true, type: 'country', constraints: { required: true } },
       { question: "Code postal de naissance*", response: "75008", verified: true },
       { question: "Commune de naissance*", response: "Paris", verified: true },
-      { question: "Nationalité*", response: "France", verified: true, hasAlert: true, type: 'country', constraints: { required: true } },
-      { question: "E-mail*", response: "iwadouachi+testPM@eurazeo.com", verified: true },
-      { question: "Numéro de téléphone mobile*", response: "+33622653352", verified: true },
-      { question: "Numéro et nom de rue*", response: "66 Rue Pierre Charron", verified: true },
-      { question: "Ville*", response: "Paris", verified: true },
-      { question: "Code postal*", response: "75008", verified: true },
-      { question: "Pays*", response: "France", verified: true, type: 'country', constraints: { required: true } },
+      { question: "Nationalité*", response: "France", verified: true, hasAlert: true, type: 'country', constraints: { required: true }, targets: [{ object: 'investor', field: 'nationality' }] },
+      { question: "E-mail*", response: "iwadouachi+testPM@eurazeo.com", verified: true, targets: [{ object: 'investor', field: 'email' }, { object: 'partner', field: 'investorEmail' }] },
+      { question: "Numéro de téléphone mobile*", response: "+33622653352", verified: true, targets: [{ object: 'investor', field: 'phone' }] },
+      { question: "Numéro et nom de rue*", response: "66 Rue Pierre Charron", verified: true, targets: [{ object: 'subscription', field: 'address' }, { object: 'investor', field: 'address' }] },
+      { question: "Ville*", response: "Paris", verified: true, targets: [{ object: 'subscription', field: 'city' }, { object: 'investor', field: 'city' }] },
+      { question: "Code postal*", response: "75008", verified: true, targets: [{ object: 'subscription', field: 'postalCode' }, { object: 'investor', field: 'postalCode' }] },
+      { question: "Pays*", response: "France", verified: true, type: 'country', constraints: { required: true }, targets: [{ object: 'subscription', field: 'country' }, { object: 'investor', field: 'country' }] },
       { question: "Mon adresse de résidence est différente de mon adresse fiscale*", response: "Non", verified: true },
       { question: "Numéro d'identification Fiscale (NIF)*", response: "9739373633839", verified: true },
       { question: "Je possède un deuxième Numéro d'Identification Fiscale (NIF/TIN) *", response: "Non", verified: true },
@@ -147,7 +169,9 @@ export const mockSections: MockSection[] = [
     titleKey: 'subscriptions.detail.sections.fiscal',
     icon: Shield,
     questions: [
-      { question: "Pays de résidence fiscale*", response: "France", verified: true, type: 'country', constraints: { required: true } },
+      { question: "Pays de résidence fiscale*", response: "France", verified: true, type: 'country', constraints: { required: true },
+        targets: [{ object: 'investor', field: 'taxResidence' }, { object: 'participation', field: 'taxResidence' }],
+        triggers: [{ question: "Citoyen(ne) et/ou résident fiscal(e) des États-Unis d'Amérique*", values: { 'États-Unis': 'Oui' }, otherwise: 'Non' }] },
       { question: "Pays de votre seconde résidence fiscale", response: "", verified: true, type: 'country', notAsked: true },
       { question: "Mon adresse de résidence est différente de mon adresse fiscale*", response: "Non", verified: true },
       { question: "Numéro d'identification Fiscale (NIF)*", response: "9739373633839", verified: true },
@@ -162,13 +186,15 @@ export const mockSections: MockSection[] = [
     icon: DollarSign,
     questions: [
       { question: "Type*", response: "Compte courant", verified: true },
-      { question: "Le compte bancaire utilisé pour cette souscription est-il un compte individuel ou un compte joint ?*", response: "Compte joint", verified: true },
+      { question: "Le compte bancaire utilisé pour cette souscription est-il un compte individuel ou un compte joint ?*", response: "Compte joint", verified: true, type: 'list', options: ['Compte individuel', 'Compte joint'], constraints: { required: true },
+        triggers: [{ question: "Quel est le régime matrimonial des titulaires du compte joint ?*", values: { 'Compte individuel': '' } }] },
       { question: "Quel est le régime matrimonial des titulaires du compte joint ?*", response: "Communauté universelle", verified: false },
       { question: "Je confirme avoir pris connaissance du fait que le versement de l'engagement n'est possible que par prélèvement automatique.*", response: "Oui", verified: true },
       { question: "Nom de votre établissement bancaire", response: "BNP Paribas", verified: true },
       { question: "Adresse de la banque", response: "16 Boulevard des Italiens, 75009 Paris", verified: true },
-      { question: "IBAN*", response: "FR76 4061 8803 1200 0407 6100 201", verified: true },
-      { question: "BIC*", response: "BNPAFRPPXXX", verified: true },
+      { question: "IBAN*", response: "FR76 4061 8803 1200 0407 6100 201", verified: true, constraints: { required: true, maxLength: 34 },
+        targets: [{ object: 'subscription', field: 'iban' }, { object: 'investor', field: 'iban', currentValue: 'FR76 3000 4000 0312 3456 7890 143' }] },
+      { question: "BIC*", response: "BNPAFRPPXXX", verified: true, targets: [{ object: 'subscription', field: 'bic' }] },
       { question: "Numéro de compte", response: "00407610020", verified: true }
     ]
   },
@@ -185,7 +211,7 @@ export const mockSections: MockSection[] = [
       { question: "Avez vous des liens avec des société cotées ? *", response: "Oui", verified: true },
       { question: "Pouvez-vous préciser ? *", response: "Actionnaire minoritaire", verified: true },
       { question: "Détenez-vous des parts ou actions dans des sociétés (< de 25 %) ? *", response: "Non", verified: true },
-      { question: "Exercez-vous ou avez-vous exercé une fonction politiquement exposée ?*", response: "Non", verified: true },
+      { question: "Exercez-vous ou avez-vous exercé une fonction politiquement exposée ?*", response: "Non", verified: true, type: 'list', options: ['Oui', 'Non'], constraints: { required: true }, targets: [{ object: 'investor', field: 'pep' }] },
       { question: "Une personne de votre entourage exerce-t-elle ou a-t-elle exercé depuis moins d'un an une fonction politiquement exposée ?*", response: "Non", verified: true }
     ]
   },
@@ -196,10 +222,11 @@ export const mockSections: MockSection[] = [
     questions: [
       { question: "Quels sont les revenus annuels nets de votre foyer ?*", response: "800 000,00 EUR", verified: true, type: 'amount', constraints: { required: true, min: 0 } },
       { question: "Statut de votre résidence principale*", response: "Hébergé à titre gratuit", verified: true },
-      { question: "Avez-vous un ou plusieurs engagement(s) financier(s) régulier(s) ?*", response: "Oui", verified: false },
+      { question: "Avez-vous un ou plusieurs engagement(s) financier(s) régulier(s) ?*", response: "Oui", verified: false, type: 'list', options: ['Oui', 'Non'], constraints: { required: true },
+        triggers: [{ question: "Montant*", values: { Non: '' } }, { question: "Fréquence*", values: { Non: '' } }] },
       { question: "Montant*", response: "1 000,00 EUR", verified: true, type: 'amount', constraints: { required: true, min: 0 } },
       { question: "Fréquence*", response: "Mensuel", verified: true, type: 'list', options: ['Mensuel', 'Trimestriel', 'Annuel'], constraints: { required: true } },
-      { question: "Quel est le montant estimé de votre patrimoine financier ?*", response: "1 999 999,00 EUR", verified: true, type: 'amount', constraints: { required: true, min: 0 } },
+      { question: "Quel est le montant estimé de votre patrimoine financier ?*", response: "1 999 999,00 EUR", verified: true, type: 'amount', constraints: { required: true, min: 0 }, targets: [{ object: 'investor', field: 'financialAssets', currentValue: '1 500 000,00 EUR' }] },
       { question: "Part de votre patrimoine financier investie dans ce fonds (%)*", response: "12 %", verified: true, type: 'percentage', constraints: { required: true, min: 0, max: 100 } },
       { question: "Nombre de personnes à charge", response: "2", verified: true, type: 'number', constraints: { min: 0, max: 20, integer: true } },
       { question: "Objectifs de votre investissement*", response: "Diversification, Transmission", verified: true, type: 'multiChoice', options: ['Diversification', 'Transmission', 'Revenus complémentaires', 'Optimisation fiscale', 'Valorisation du capital'], constraints: { required: true } },

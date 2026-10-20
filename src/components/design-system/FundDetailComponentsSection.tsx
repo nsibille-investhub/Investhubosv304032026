@@ -1037,7 +1037,9 @@ export function FundDetailComponentsSection() {
         usage={`<EffectsPanel effects={[
   { id, icon: Receipt, label, reversible: false, objects: [{ id, label }] },
   { id, icon: Mail, label, reversible: false, count: 2 },
-]} />`}
+  // case à cocher et liste dépliée d'emblée
+  { id, icon: Repeat, label, reversible: true, option: { checked, onCheckedChange }, objects, defaultOpen: true },
+]} marker="none" />`}
       >
         <Example label={t(`${K}.effectsPanel.exampleLabel`)} hint={t(`${K}.effectsPanel.exampleHint`)}>
           <div className="max-w-2xl">
