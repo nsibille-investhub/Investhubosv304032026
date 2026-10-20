@@ -28,14 +28,55 @@ export interface MockRequiredDocument {
   hasFile: boolean;
 }
 
-export interface MockDocument {
+export type SubscriptionDocumentCategory = 'subscriptionForm' | 'contractual' | 'regulatory' | 'evidence';
+
+/**
+ * Cycle de signature d'un document de souscription. Les documents remis pour
+ * information (DIC, règlement) ne se signent pas : leur lecture est attestée.
+ */
+export type SubscriptionDocumentStatus =
+  | 'draft'
+  | 'awaitingSignature'
+  | 'awaitingCounterSignature'
+  | 'completed'
+  | 'acknowledged'
+  | 'issued';
+
+export interface MockSubscriptionDocument {
   id: number;
-  date: string;
-  name: string;
-  language: string;
-  type: string;
-  status: string;
+  nameKey: string;
   file: string;
+  category: SubscriptionDocumentCategory;
+  status: SubscriptionDocumentStatus;
+  language: 'FR' | 'EN';
+  version: number;
+  /** Signataires attendus sur le document ; absent pour un document non signable. */
+  signers?: { signed: number; total: number };
+  /** Dernier événement : génération, envoi, signature. Décalage en jours par rapport à aujourd'hui. */
+  updatedDaysAgo: number;
+}
+
+export type KycDocumentCategory = 'identity' | 'address' | 'tax' | 'funds' | 'bank' | 'company' | 'ubo' | 'compliance';
+export type KycDocumentStatus = 'validated' | 'toReview' | 'rejected' | 'missing';
+export type KycHolderRole = 'investor' | 'entity' | 'legalRepresentative' | 'beneficialOwners';
+
+export interface MockKycDocument {
+  id: number;
+  nameKey: string;
+  category: KycDocumentCategory;
+  holder: KycHolderRole;
+  status: KycDocumentStatus;
+  /** 'investorFile' : pièce du dossier investisseur, reprise d'une souscription à l'autre. */
+  origin: 'investorFile' | 'subscription';
+  file?: string;
+  /** Décalages en jours par rapport à aujourd'hui (négatif = passé). */
+  issuedInDays?: number;
+  expiresInDays?: number;
+  /** Validité réglementaire depuis la date d'émission (Kbis, justificatif de domicile : 3 mois). */
+  maxAgeDays?: number;
+  rejectionReasonKey?: string;
+  /** Motif saisi par l'opérateur au refus. */
+  rejectionReason?: string;
 }
 
 export interface MockNote {
@@ -182,19 +223,42 @@ export const mockRequiredDocuments: MockRequiredDocument[] = [
   { nameKey: 'subscriptions.detail.docs.rib', dateSent: "19/05/2026 16:10", issueDate: "", expiration: "", hasFile: true }
 ];
 
-export const mockDocuments: MockDocument[] = [
-  { id: 1, date: '26/11/2025', name: 'Certificat DocuSign', language: '', type: '', status: 'signed', file: 'certificat-docusign.pdf' },
-  { id: 2, date: '26/11/2025', name: 'ESMI II - Declaration of Investment Type', language: '', type: 'Document contractuel', status: 'signed', file: 'declaration-investment-type.pdf' },
-  { id: 3, date: '26/11/2025', name: 'ESMI II - Schedule 10 BEPS questionnaire', language: '', type: 'Document contractuel', status: 'signed', file: 'schedule-10-beps.pdf' },
-  { id: 4, date: '26/11/2025', name: 'ESMI II - Schedule 9 Tax compliancy declaration', language: '', type: 'Document contractuel', status: 'signed', file: 'schedule-9-tax.pdf' },
-  { id: 5, date: '26/11/2025', name: 'ESMI II - Schedule 8 Ultimate beneficial owner', language: '', type: 'Document contractuel', status: 'signed', file: 'schedule-8-ubo.pdf' },
-  { id: 6, date: '26/11/2025', name: 'ESMI II - Schedule 7 Entity self-certification for FATCA and CRS', language: '', type: 'Document contractuel', status: 'signed', file: 'schedule-7-fatca.pdf' },
-  { id: 7, date: '26/11/2025', name: 'ESMI II - Schedule 6 Bank account details of the Investor', language: '', type: 'Document contractuel', status: 'signed', file: 'schedule-6-bank.pdf' },
-  { id: 8, date: '26/11/2025', name: 'ESMI II - Schedule 4 Professional client status', language: '', type: 'Document contractuel', status: 'signed', file: 'schedule-4-professional.pdf' },
-  { id: 9, date: '26/11/2025', name: 'ESMI II - Schedule 2 - Commitment', language: '', type: 'Document contractuel', status: 'signed', file: 'schedule-2-commitment.pdf' },
-  { id: 10, date: '26/11/2025', name: 'ESMI II - Schedule 3 Well-informed Investor', language: '', type: 'Document contractuel', status: 'signed', file: 'schedule-3-well-informed.pdf' },
-  { id: 11, date: '26/11/2025', name: 'ESMI II - Schedule 1 Identity details of the Investor', language: '', type: 'Document contractuel', status: 'signed', file: 'schedule-1-identity.pdf' },
-  { id: 12, date: '26/11/2025', name: 'ESMI II - Subscription Agreement - Non US', language: '', type: 'Document contractuel', status: 'signed', file: 'subscription-agreement.pdf' }
+export const mockSubscriptionDocuments: MockSubscriptionDocument[] = [
+  { id: 1, nameKey: 'subscriptions.detail.documentsTab.subscription.docs.subscriptionForm', file: 'bulletin-souscription.pdf', category: 'subscriptionForm', status: 'completed', language: 'FR', version: 2, signers: { signed: 3, total: 3 }, updatedDaysAgo: 6 },
+  { id: 2, nameKey: 'subscriptions.detail.documentsTab.subscription.docs.subscriptionAgreement', file: 'subscription-agreement.pdf', category: 'contractual', status: 'awaitingCounterSignature', language: 'EN', version: 1, signers: { signed: 2, total: 3 }, updatedDaysAgo: 6 },
+  { id: 3, nameKey: 'subscriptions.detail.documentsTab.subscription.docs.investorStatus', file: 'declaration-statut-investisseur.pdf', category: 'contractual', status: 'completed', language: 'FR', version: 1, signers: { signed: 1, total: 1 }, updatedDaysAgo: 6 },
+  { id: 4, nameKey: 'subscriptions.detail.documentsTab.subscription.docs.suitability', file: 'questionnaire-adequation.pdf', category: 'contractual', status: 'completed', language: 'FR', version: 1, signers: { signed: 1, total: 1 }, updatedDaysAgo: 7 },
+  { id: 5, nameKey: 'subscriptions.detail.documentsTab.subscription.docs.fatcaCrs', file: 'auto-certification-fatca-crs.pdf', category: 'contractual', status: 'awaitingSignature', language: 'FR', version: 1, signers: { signed: 0, total: 1 }, updatedDaysAgo: 4 },
+  { id: 6, nameKey: 'subscriptions.detail.documentsTab.subscription.docs.sepaMandate', file: 'mandat-sepa.pdf', category: 'contractual', status: 'awaitingSignature', language: 'FR', version: 1, signers: { signed: 0, total: 1 }, updatedDaysAgo: 4 },
+  { id: 7, nameKey: 'subscriptions.detail.documentsTab.subscription.docs.sideLetter', file: 'side-letter.pdf', category: 'contractual', status: 'draft', language: 'EN', version: 1, signers: { signed: 0, total: 2 }, updatedDaysAgo: 2 },
+  { id: 8, nameKey: 'subscriptions.detail.documentsTab.subscription.docs.kid', file: 'dic-priips.pdf', category: 'regulatory', status: 'acknowledged', language: 'FR', version: 3, updatedDaysAgo: 7 },
+  { id: 9, nameKey: 'subscriptions.detail.documentsTab.subscription.docs.fundRegulation', file: 'reglement-fonds.pdf', category: 'regulatory', status: 'acknowledged', language: 'FR', version: 2, updatedDaysAgo: 7 },
+  { id: 10, nameKey: 'subscriptions.detail.documentsTab.subscription.docs.signatureCertificate', file: 'certificat-preuve-signature.pdf', category: 'evidence', status: 'issued', language: 'EN', version: 1, updatedDaysAgo: 6 },
+];
+
+/** Pièces LCB-FT attendues pour une personne physique. */
+export const mockIndividualKycDocuments: MockKycDocument[] = [
+  { id: 1, nameKey: 'subscriptions.detail.documentsTab.kyc.docs.idDocument', category: 'identity', holder: 'investor', status: 'validated', origin: 'investorFile', file: 'piece-identite.pdf', issuedInDays: -3500, expiresInDays: 45 },
+  { id: 2, nameKey: 'subscriptions.detail.documentsTab.kyc.docs.addressProof', category: 'address', holder: 'investor', status: 'toReview', origin: 'subscription', file: 'justificatif-domicile.pdf', issuedInDays: -40, maxAgeDays: 90 },
+  { id: 3, nameKey: 'subscriptions.detail.documentsTab.kyc.docs.taxNotice', category: 'tax', holder: 'investor', status: 'validated', origin: 'investorFile', file: 'avis-imposition.pdf', issuedInDays: -400 },
+  { id: 4, nameKey: 'subscriptions.detail.documentsTab.kyc.docs.fatcaCrsIndividual', category: 'tax', holder: 'investor', status: 'validated', origin: 'subscription', file: 'auto-certification-fatca-crs.pdf', issuedInDays: -7 },
+  { id: 5, nameKey: 'subscriptions.detail.documentsTab.kyc.docs.fundsOrigin', category: 'funds', holder: 'investor', status: 'missing', origin: 'subscription' },
+  { id: 6, nameKey: 'subscriptions.detail.documentsTab.kyc.docs.bankDetails', category: 'bank', holder: 'investor', status: 'validated', origin: 'investorFile', file: 'rib.pdf', issuedInDays: -200 },
+  { id: 7, nameKey: 'subscriptions.detail.documentsTab.kyc.docs.pepDeclaration', category: 'compliance', holder: 'investor', status: 'rejected', origin: 'subscription', file: 'declaration-ppe.pdf', issuedInDays: -7, rejectionReasonKey: 'subscriptions.detail.documentsTab.kyc.rejectionReasons.unsigned' },
+];
+
+/** Pièces LCB-FT attendues pour une personne morale. */
+export const mockCorporateKycDocuments: MockKycDocument[] = [
+  { id: 1, nameKey: 'subscriptions.detail.documentsTab.kyc.docs.kbis', category: 'company', holder: 'entity', status: 'validated', origin: 'subscription', file: 'extrait-kbis.pdf', issuedInDays: -30, maxAgeDays: 90 },
+  { id: 2, nameKey: 'subscriptions.detail.documentsTab.kyc.docs.articles', category: 'company', holder: 'entity', status: 'validated', origin: 'investorFile', file: 'statuts.pdf', issuedInDays: -900 },
+  { id: 3, nameKey: 'subscriptions.detail.documentsTab.kyc.docs.financialStatements', category: 'company', holder: 'entity', status: 'validated', origin: 'investorFile', file: 'comptes-annuels.pdf', issuedInDays: -180 },
+  { id: 4, nameKey: 'subscriptions.detail.documentsTab.kyc.docs.signatoryPowers', category: 'company', holder: 'legalRepresentative', status: 'validated', origin: 'subscription', file: 'pouvoir-signataire.pdf', issuedInDays: -10 },
+  { id: 5, nameKey: 'subscriptions.detail.documentsTab.kyc.docs.legalRepId', category: 'identity', holder: 'legalRepresentative', status: 'validated', origin: 'investorFile', file: 'piece-identite-representant.pdf', issuedInDays: -3400, expiresInDays: 45 },
+  { id: 6, nameKey: 'subscriptions.detail.documentsTab.kyc.docs.uboRegister', category: 'ubo', holder: 'entity', status: 'toReview', origin: 'subscription', file: 'registre-beneficiaires-effectifs.pdf', issuedInDays: -20 },
+  { id: 7, nameKey: 'subscriptions.detail.documentsTab.kyc.docs.uboIds', category: 'ubo', holder: 'beneficialOwners', status: 'missing', origin: 'subscription' },
+  { id: 8, nameKey: 'subscriptions.detail.documentsTab.kyc.docs.fatcaCrsEntity', category: 'tax', holder: 'entity', status: 'rejected', origin: 'subscription', file: 'auto-certification-fatca-crs-entite.pdf', issuedInDays: -7, rejectionReasonKey: 'subscriptions.detail.documentsTab.kyc.rejectionReasons.wrongForm' },
+  { id: 9, nameKey: 'subscriptions.detail.documentsTab.kyc.docs.fundsOrigin', category: 'funds', holder: 'entity', status: 'toReview', origin: 'subscription', file: 'origine-fonds.pdf', issuedInDays: -7 },
+  { id: 10, nameKey: 'subscriptions.detail.documentsTab.kyc.docs.bankDetailsEntity', category: 'bank', holder: 'entity', status: 'validated', origin: 'investorFile', file: 'rib-societe.pdf', issuedInDays: -300 },
 ];
 
 export const mockNotes: MockNote[] = [

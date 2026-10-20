@@ -32,7 +32,6 @@ import {
   Clock,
   ArrowDownCircle,
   Wallet,
-  Trash2,
   FolderOpen,
   MessageSquare,
   PenTool,
@@ -92,7 +91,6 @@ import { DetailLink, DetailSummary } from './ui/detail-summary';
 import {
   mockSections,
   mockRequiredDocuments,
-  mockDocuments,
   mockNotes,
   mockEmails,
   mockCapitalCalls,
@@ -117,6 +115,7 @@ import { SubscriptionSignatureStep } from './SubscriptionSignatureStep';
 import { SubscriptionStatusBadge } from './SubscriptionStatusBadge';
 import { NewSubscriptionDialog } from './NewSubscriptionDialog';
 import { NotesTab } from './investor-detail/NotesTab';
+import { SubscriptionDocumentsTab, getSubscriptionDocumentsCount } from './SubscriptionDocumentsTab';
 import { createNote } from './investor-detail/NoteEditSheet';
 import type { Note } from '../utils/investorGenerator';
 
@@ -976,7 +975,7 @@ export function SubscriptionDetailPage({ subscription: subscriptionProp, onBack 
               { value: 'onboarding', icon: ClipboardList, labelKey: 'subscriptions.detail.tabs.onboarding', badge: `${Math.round(subscription.completionOnboarding)}%` },
               { value: 'emails', icon: Mail, labelKey: 'subscriptions.detail.tabs.emails', badge: String(mockEmails.length) },
               { value: 'capital-calls', icon: DollarSign, labelKey: 'subscriptions.detail.tabs.capitalCalls', badge: String(mockCapitalCalls.length) },
-              { value: 'documents', icon: FolderOpen, labelKey: 'subscriptions.detail.tabs.documents', badge: String(mockDocuments.length) },
+              { value: 'documents', icon: FolderOpen, labelKey: 'subscriptions.detail.tabs.documents', badge: String(getSubscriptionDocumentsCount(subscription)) },
               { value: 'integrations', icon: Database, labelKey: 'subscriptions.detail.tabs.integrations', badge: '5' },
               { value: 'notes', icon: MessageSquare, labelKey: 'subscriptions.detail.tabs.notes', badge: String(notesCount) },
             ].map(tab => ({
@@ -1870,95 +1869,9 @@ export function SubscriptionDetailPage({ subscription: subscriptionProp, onBack 
             </div>
           </TabsContent>
 
-          {/* Risk Tab Content */}
-          {/* Documents Tab Content */}
           <TabsContent value="documents" className="mt-0">
             <div className="px-8 py-6">
-              <Card className="overflow-hidden shadow-sm">
-                {/* Header */}
-                <div className="px-6 py-4 border-b border-border flex items-center justify-between">
-                  <h2 className="font-semibold text-foreground">{t('subscriptions.detail.documentsTab.title')}</h2>
-                  <Button
-                    variant="outline"
-                    className="gap-2"
-                    onClick={() => toast.info(t('subscriptions.detail.toast.addDocumentToast'))}
-                  >
-                    <Upload className="w-4 h-4" />
-                    {t('subscriptions.detail.documentsTab.addDocument')}
-                  </Button>
-                </div>
-
-                {/* Table */}
-                <table className="w-full">
-                  <thead className="bg-muted border-b border-border">
-                    <tr>
-                      <th className="px-6 py-3 text-left text-xs font-semibold text-muted-foreground uppercase tracking-wider">
-                        {t('subscriptions.detail.documentsTab.date')}
-                      </th>
-                      <th className="px-6 py-3 text-left text-xs font-semibold text-muted-foreground uppercase tracking-wider">
-                        {t('subscriptions.detail.documentsTab.name')}
-                      </th>
-                      <th className="px-6 py-3 text-left text-xs font-semibold text-muted-foreground uppercase tracking-wider">
-                        {t('subscriptions.detail.documentsTab.language')}
-                      </th>
-                      <th className="px-6 py-3 text-left text-xs font-semibold text-muted-foreground uppercase tracking-wider">
-                        {t('subscriptions.detail.documentsTab.type')}
-                      </th>
-                      <th className="px-6 py-3 text-left text-xs font-semibold text-muted-foreground uppercase tracking-wider">
-                        {t('subscriptions.detail.documentsTab.file')}
-                      </th>
-                    </tr>
-                  </thead>
-                  <tbody className="divide-y divide-border">
-                    {mockDocuments.map((doc) => (
-                      <tr key={doc.id} className="hover:bg-muted transition-colors">
-                        <td className="px-6 py-4 whitespace-nowrap text-sm text-foreground">
-                          {doc.date}
-                        </td>
-                        <td className="px-6 py-4 text-sm text-foreground">
-                          {doc.name}
-                        </td>
-                        <td className="px-6 py-4 whitespace-nowrap text-sm text-muted-foreground">
-                          {doc.language}
-                        </td>
-                        <td className="px-6 py-4 whitespace-nowrap text-sm text-muted-foreground">
-                          {doc.type}
-                        </td>
-                        <td className="px-6 py-4 whitespace-nowrap text-sm">
-                          <div className="flex items-center gap-2">
-                            {doc.status === 'signed' && (
-                              <Badge className="bg-green-50 text-green-700 border-green-200 font-medium gap-1.5">
-                                <CheckCircle2 className="w-3 h-3" />
-                                {t('subscriptions.detail.documentsTab.documentSigned')}
-                              </Badge>
-                            )}
-                            <Button
-                              variant="ghost"
-                              size="sm"
-                              className="h-8 w-8 p-0 text-red-600 hover:text-red-700 hover:bg-red-50"
-                              onClick={() => toast.info(t('subscriptions.detail.documentsTab.deleteDocument', { name: doc.name }))}
-                            >
-                              <Trash2 className="w-4 h-4" />
-                            </Button>
-                          </div>
-                        </td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
-
-                {/* Footer */}
-                <div className="px-6 py-4 bg-muted border-t border-border">
-                  <Button
-                    className="w-full gap-2 text-white hover:opacity-90"
-                    style={{ background: PRIMARY_BUTTON_GRADIENT }}
-                    onClick={() => toast.success(t('subscriptions.detail.documentsTab.exportPackToast'))}
-                  >
-                    <Download className="w-4 h-4" />
-                    {t('subscriptions.detail.documentsTab.exportPack')}
-                  </Button>
-                </div>
-              </Card>
+              <SubscriptionDocumentsTab subscription={subscription} />
             </div>
           </TabsContent>
 
