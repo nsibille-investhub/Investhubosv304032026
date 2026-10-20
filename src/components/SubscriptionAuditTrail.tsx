@@ -1,5 +1,6 @@
 import { useMemo, useState } from 'react';
 import {
+  CalendarCheck,
   CheckCircle2,
   FilePlus2,
   FileCheck2,
@@ -39,6 +40,7 @@ const AUDIT_ICONS: Record<SubscriptionAuditEventType, typeof History> = {
   documentReplaced: RefreshCw,
   documentValidated: FileCheck2,
   documentRejected: FileX2,
+  documentDatesUpdated: CalendarCheck,
   commentAdded: MessageSquare,
   dossierSubmitted: Send,
 };
@@ -64,7 +66,7 @@ function useAuditLabels({ sections, documents }: Omit<AuditSource, 'entries'>) {
       if (!entry.elementId) return t(`${T}.dossier`);
       if (entry.sectionId === AUDIT_DOCUMENTS_SECTION) {
         const doc = documents[Number(entry.elementId.replace('document-', ''))];
-        return doc ? t(doc.nameKey) : entry.elementId;
+        return doc ? doc.name ?? t(doc.nameKey) : entry.elementId;
       }
       const section = sections.find(s => s.id === entry.sectionId);
       const idx = Number(entry.elementId.slice(entry.elementId.lastIndexOf('-') + 1));

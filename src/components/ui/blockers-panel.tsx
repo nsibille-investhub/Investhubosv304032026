@@ -10,7 +10,10 @@ export interface BlockerItem {
   id: string;
   icon: LucideIcon;
   label: string;
-  count: number;
+  /** Motif du blocage, sous le libellé. */
+  detail?: string;
+  /** Nombre d'éléments concernés ; absent pour un élément unique. */
+  count?: number;
   onOpen?: () => void;
 }
 
@@ -60,13 +63,20 @@ export function BlockersPanel({
           return (
             <li key={blocker.id} className="flex items-center gap-3 px-3 py-2">
               <Icon className="w-4 h-4 shrink-0 text-muted-foreground" aria-hidden />
-              <span className="min-w-0 flex-1 truncate text-sm">{blocker.label}</span>
-              <span
-                className="rounded-full px-2 py-0.5 text-xs font-semibold tabular-nums"
-                style={{ ...toneSurface('danger'), ...toneText('danger') }}
-              >
-                {blocker.count}
+              <span className="min-w-0 flex-1">
+                <span className="block truncate text-sm">{blocker.label}</span>
+                {blocker.detail && (
+                  <span className="block truncate text-xs text-muted-foreground">{blocker.detail}</span>
+                )}
               </span>
+              {blocker.count !== undefined && (
+                <span
+                  className="rounded-full px-2 py-0.5 text-xs font-semibold tabular-nums"
+                  style={{ ...toneSurface('danger'), ...toneText('danger') }}
+                >
+                  {blocker.count}
+                </span>
+              )}
               {blocker.onOpen && (
                 <Button variant="link" size="sm" className="h-auto px-0" onClick={blocker.onOpen}>
                   {t('common.blockersPanel.open')}

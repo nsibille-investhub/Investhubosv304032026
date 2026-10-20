@@ -1053,6 +1053,8 @@ export function FundDetailComponentsSection() {
         usage={`<BlockersPanel
   title={t('...')}
   blockers={[{ id, icon: FileSignature, label, count: 12, onOpen }]}
+  // élément unique : motif en detail, sans compteur
+  // blockers={[{ id, icon: FileText, label, detail: t('...'), onOpen }]}
   alternative={{ label: t('...'), onAction: archive, loading }}
 />`}
       >

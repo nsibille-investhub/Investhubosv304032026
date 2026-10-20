@@ -7,6 +7,7 @@ import {
   ClipboardList,
   Clock,
   FolderOpen,
+  Info,
 } from 'lucide-react';
 import { useTranslation } from '../utils/languageContext';
 import { Badge } from './ui/badge';
@@ -147,8 +148,9 @@ export function OnboardingCompletionCard({
 }: OnboardingCompletionCardProps) {
   const { t } = useTranslation();
 
-  const total = questions.total + documents.total;
-  const validated = questions.validated + documents.validated;
+  // Les pièces justificatives ne comptent pas dans la complétion (IC-5216) : elles sont contrôlées à cette étape.
+  const total = questions.total;
+  const validated = questions.validated;
   const globalPercent = percent(validated, total);
 
   const rows = [
@@ -212,6 +214,10 @@ export function OnboardingCompletionCard({
           );
         })}
       </div>
+      <p className="mt-3 flex items-center gap-1.5 text-xs text-muted-foreground">
+        <Info className="w-3.5 h-3.5 shrink-0" />
+        {t('subscriptions.detail.onboarding.completion.documentsExcluded')}
+      </p>
     </Card>
   );
 }

@@ -102,6 +102,7 @@ import {
   mockCapitalCalls,
   mockInitEmails,
   mockBeneficialOwners,
+  type MockRequiredDocument,
 } from '../utils/subscriptionDetailMockData';
 import {
   AUDIT_DOCUMENTS_SECTION,
@@ -113,6 +114,11 @@ import { SubscriptionAuditPanel, SubscriptionAuditTab } from './SubscriptionAudi
 import { Tag as NeutralTag } from './Tag';
 import { EmptyState } from './EmptyState';
 import { RowActionButton } from './ui/row-actions';
+import { BlockersPanel } from './ui/blockers-panel';
+import { ConfirmDialog } from './ui/confirm-dialog';
+import { DisabledReason } from './ui/disabled-reason';
+import { Textarea } from './ui/textarea';
+import { ManualDocumentPanel, isoToDisplayDate } from './ManualDocumentPanel';
 import {
   OnboardingCompletionCard,
   OnboardingSectionNav,
@@ -239,6 +245,15 @@ export function SubscriptionDetailPage({ subscription: subscriptionProp, onBack 
 
   // Verification des pieces justificatives (meme cycle de vie que les reponses)
   const [documentStatuses, setDocumentStatuses] = useState<Record<string, QuestionStatus>>(INITIAL_DOCUMENT_STATUSES);
+  const [requiredDocuments, setRequiredDocuments] = useState<MockRequiredDocument[]>(mockRequiredDocuments);
+  const [documentToReject, setDocumentToReject] = useState<number | null>(null);
+  const [rejectionReason, setRejectionReason] = useState('');
+  const [isManualDocumentOpen, setIsManualDocumentOpen] = useState(false);
+  const updateDocument = (idx: number, patch: Partial<MockRequiredDocument>) =>
+    setRequiredDocuments(prev => prev.map((doc, i) => (i === idx ? { ...doc, ...patch } : doc)));
+  const docLabel = (doc: MockRequiredDocument) => doc.name ?? t(doc.nameKey);
+  const isMissingIssueDate = (doc: MockRequiredDocument) =>
+    doc.hasFile && Boolean(doc.requiresIssueDate) && !doc.issueDate;
   const [activeOnboardingSection, setActiveOnboardingSection] = useState<string>(mockSections[0].id);
   const onboardingSectionRefs = useRef<Record<string, HTMLDivElement | null>>({});
 
@@ -418,7 +433,7 @@ export function SubscriptionDetailPage({ subscription: subscriptionProp, onBack 
 
   const getDocumentBuckets = (): OnboardingBucketStats => {
     const stats = emptyBucketStats();
-    mockRequiredDocuments.forEach((doc, idx) => {
+    requiredDocuments.forEach((doc, idx) => {
       addToBucketStats(stats, getDocumentState(idx, doc));
     });
     return stats;
@@ -438,6 +453,14 @@ export function SubscriptionDetailPage({ subscription: subscriptionProp, onBack 
 
 
   const isCorporateInvestor = subscription.contrepartie?.type === 'corporate';
+
+  const documentBlockers = requiredDocuments
+    .map((doc, idx) => ({ doc, idx }))
+    .filter(({ doc }) => isMissingIssueDate(doc));
+  const validationBlockedReason =
+    documentBlockers.length > 0
+      ? t('subscriptions.detail.documentControl.validationBlocked', { count: documentBlockers.length })
+      : undefined;
 
   const onboardingNavSections: OnboardingNavSection[] = mockSections.map((section, idx) => ({
     id: section.id,
@@ -466,16 +489,70 @@ export function SubscriptionDetailPage({ subscription: subscriptionProp, onBack 
   };
 
   const handleRejectDocument = (idx: number) => {
+    setRejectionReason('');
+    setDocumentToReject(idx);
+  };
+
+  const handleConfirmRejectDocument = () => {
+    if (documentToReject === null) return;
+    const idx = documentToReject;
+    const reason = rejectionReason.trim();
     setDocumentStatuses(prev => ({ ...prev, [`document-${idx}`]: 'rejected' }));
-    logAudit({ type: 'documentRejected', elementId: `document-${idx}`, sectionId: AUDIT_DOCUMENTS_SECTION });
+    updateDocument(idx, { rejectionReason: reason });
+    logAudit({ type: 'documentRejected', elementId: `document-${idx}`, sectionId: AUDIT_DOCUMENTS_SECTION, reason });
+    toast.error(t('subscriptions.detail.documentControl.rejectedToast'), {
+      description: t('subscriptions.detail.documentControl.rejectedToastDesc', { name: docLabel(requiredDocuments[idx]) }),
+    });
+    setDocumentToReject(null);
+  };
+
+  const handleIssueDateChange = (idx: number, iso: string) => {
+    const issueDate = isoToDisplayDate(iso);
+    if (!issueDate) return;
+    updateDocument(idx, { issueDate });
+    logAudit({
+      type: 'documentDatesUpdated',
+      elementId: `document-${idx}`,
+      sectionId: AUDIT_DOCUMENTS_SECTION,
+      previousValue: '',
+      newValue: issueDate,
+    });
+  };
+
+  const handleSaveManualDocument = (input: { name: string; fileName: string; issueDate: string; expiration: string }) => {
+    const now = new Date();
+    const pad = (n: number) => String(n).padStart(2, '0');
+    const idx = requiredDocuments.length;
+    setRequiredDocuments(prev => [
+      ...prev,
+      {
+        nameKey: '',
+        name: input.name,
+        manual: true,
+        hasFile: true,
+        dateSent: `${pad(now.getDate())}/${pad(now.getMonth() + 1)}/${now.getFullYear()} ${pad(now.getHours())}:${pad(now.getMinutes())}`,
+        issueDate: input.issueDate,
+        expiration: input.expiration,
+      },
+    ]);
+    logAudit({
+      type: 'documentUploaded',
+      elementId: `document-${idx}`,
+      sectionId: AUDIT_DOCUMENTS_SECTION,
+      newValue: input.fileName,
+    });
+    setIsManualDocumentOpen(false);
+    toast.success(t('subscriptions.detail.manualDocument.savedToast'), {
+      description: t('subscriptions.detail.manualDocument.savedToastDesc', { name: input.name }),
+    });
   };
 
   const handleValidateDocuments = (sectionTitle: string) => {
     const next: Record<string, QuestionStatus> = { ...documentStatuses };
     let validated = 0;
     const logged: Parameters<typeof createLiveAuditEntry>[0][] = [];
-    mockRequiredDocuments.forEach((doc, idx) => {
-      if (doc.hasFile) {
+    requiredDocuments.forEach((doc, idx) => {
+      if (doc.hasFile && !isMissingIssueDate(doc)) {
         if (next[`document-${idx}`] !== 'approved') {
           logged.push({
             type: 'documentValidated',
@@ -1299,6 +1376,24 @@ export function SubscriptionDetailPage({ subscription: subscriptionProp, onBack 
                   {currentStep === 1 && (
                     // Onboarding en cours — KPI de completion, navigation par section, sections
                     <div className="space-y-6">
+                      {documentBlockers.length > 0 && (
+                        <BlockersPanel
+                          title={t(
+                            documentBlockers.length === 1
+                              ? 'subscriptions.detail.documentControl.blockersTitleOne'
+                              : 'subscriptions.detail.documentControl.blockersTitleMany',
+                            { count: documentBlockers.length },
+                          )}
+                          description={t('subscriptions.detail.documentControl.blockersDescription')}
+                          blockers={documentBlockers.map(({ doc, idx }) => ({
+                            id: `document-${idx}`,
+                            icon: FileText,
+                            label: docLabel(doc),
+                            detail: t('subscriptions.detail.documentControl.missingIssueDate'),
+                            onOpen: () => handleSelectOnboardingSection(AUDIT_DOCUMENTS_SECTION),
+                          }))}
+                        />
+                      )}
                       <OnboardingCompletionCard
                         questions={questionBuckets}
                         documents={documentBuckets}
@@ -1451,7 +1546,7 @@ export function SubscriptionDetailPage({ subscription: subscriptionProp, onBack 
                                   <Button
                                     variant="outline"
                                     size="sm"
-                                    onClick={() => handleAddDocument('')}
+                                    onClick={() => setIsManualDocumentOpen(true)}
                                     className="gap-2 text-xs"
                                   >
                                     <Upload className="w-3.5 h-3.5" />
@@ -1497,49 +1592,69 @@ export function SubscriptionDetailPage({ subscription: subscriptionProp, onBack 
                                     </tr>
                                   </thead>
                                   <tbody className="bg-card divide-y divide-border/50">
-                                    {mockRequiredDocuments.map((doc, idx) => {
+                                    {requiredDocuments.map((doc, idx) => {
                                       const docState = getDocumentState(idx, doc);
                                       return (
                                       <tr key={idx} className="hover:bg-muted transition-colors group">
                                         <td className="px-4 py-3 text-sm text-foreground/80">
-                                          {t(doc.nameKey)}
+                                          <div className="flex flex-wrap items-center gap-2">
+                                            <span>{docLabel(doc)}</span>
+                                            {doc.manual && (
+                                              <NeutralTag label={t('subscriptions.detail.documentControl.manualTag')} />
+                                            )}
+                                          </div>
+                                          {docState === 'awaitingCorrection' && doc.rejectionReason && (
+                                            <p className="mt-1 text-xs text-red-600">
+                                              {t('subscriptions.detail.documentControl.reasonLine', { reason: doc.rejectionReason })}
+                                              <span className="text-muted-foreground">
+                                                {' · '}
+                                                {t('subscriptions.detail.documentControl.visibleToInvestor')}
+                                              </span>
+                                            </p>
+                                          )}
                                         </td>
                                         <td className="px-4 py-3 text-sm text-muted-foreground">
                                           {doc.dateSent || <span className="text-muted-foreground/60">-</span>}
                                         </td>
                                         <td className="px-4 py-3 text-sm text-muted-foreground">
-                                          {doc.issueDate || <span className="text-muted-foreground/60">-</span>}
+                                          {isMissingIssueDate(doc) ? (
+                                            <Input
+                                              type="date"
+                                              aria-label={t('subscriptions.detail.documentControl.issueDateInput')}
+                                              title={t('subscriptions.detail.documentControl.missingIssueDate')}
+                                              className="h-8 text-xs border-red-300"
+                                              onChange={e => handleIssueDateChange(idx, e.target.value)}
+                                            />
+                                          ) : (
+                                            doc.issueDate || <span className="text-muted-foreground/60">-</span>
+                                          )}
                                         </td>
                                         <td className="px-4 py-3 text-sm text-muted-foreground">
                                           {doc.expiration || <span className="text-muted-foreground/60">-</span>}
                                         </td>
                                         <td className="px-4 py-3 text-center">
-                                          {doc.hasFile ? (
-                                            <Button
-                                              variant="ghost"
-                                              size="sm"
-                                              onClick={() => handleViewDocument(t(doc.nameKey))}
-                                              className="h-7 text-primary hover:text-primary/80 hover:bg-primary/5"
-                                            >
-                                              <Eye className="w-3.5 h-3.5" />
-                                            </Button>
-                                          ) : (
-                                            <span className="text-muted-foreground/60">-</span>
-                                          )}
+                                          <div className="flex items-center justify-center gap-1">
+                                            {doc.hasFile && (
+                                              <RowActionButton
+                                                icon={Eye}
+                                                tooltip={t('subscriptions.detail.docsTable.view')}
+                                                onClick={() => handleViewDocument(docLabel(doc))}
+                                              />
+                                            )}
+                                            <RowActionButton
+                                              icon={History}
+                                              tooltip={t('subscriptions.detail.questionActions.timeline')}
+                                              onClick={() =>
+                                                setAuditElement({ elementId: `document-${idx}`, sectionId: AUDIT_DOCUMENTS_SECTION })
+                                              }
+                                            />
+                                          </div>
                                         </td>
                                         <td className="px-4 py-3 text-center">
-                                          <div className="flex items-center justify-center gap-1">
-                                          <RowActionButton
-                                            icon={History}
-                                            tooltip={t('subscriptions.detail.questionActions.timeline')}
-                                            onClick={() =>
-                                              setAuditElement({ elementId: `document-${idx}`, sectionId: AUDIT_DOCUMENTS_SECTION })
-                                            }
-                                          />
                                           <Button
                                             variant="outline"
                                             size="sm"
-                                            onClick={() => handleAddDocument(t(doc.nameKey))}
+                                            onClick={() => handleAddDocument(docLabel(doc))}
                                             className="gap-1.5 text-xs h-7"
                                           >
                                             <Upload className="w-3 h-3" />
@@ -1547,7 +1662,6 @@ export function SubscriptionDetailPage({ subscription: subscriptionProp, onBack 
                                               ? t('subscriptions.detail.docsTable.replace')
                                               : t('subscriptions.detail.docsTable.add')}
                                           </Button>
-                                          </div>
                                         </td>
                                         <td className="px-4 py-3">
                                           {docState === 'pending' ? (
@@ -1558,11 +1672,19 @@ export function SubscriptionDetailPage({ subscription: subscriptionProp, onBack 
                                             </div>
                                           ) : (
                                             <div className="flex items-center justify-center gap-1">
+                                              <DisabledReason
+                                                reason={
+                                                  isMissingIssueDate(doc)
+                                                    ? t('subscriptions.detail.documentControl.missingIssueDate')
+                                                    : undefined
+                                                }
+                                              >
                                               <Button
                                                 variant="ghost"
                                                 size="sm"
                                                 title={t('subscriptions.detail.docsTable.validateDocument')}
                                                 aria-label={t('subscriptions.detail.docsTable.validateDocument')}
+                                                disabled={isMissingIssueDate(doc)}
                                                 onClick={() => handleApproveDocument(idx)}
                                                 className={`h-7 w-7 p-0 hover:bg-emerald-50 ${
                                                   docState === 'validated'
@@ -1572,6 +1694,7 @@ export function SubscriptionDetailPage({ subscription: subscriptionProp, onBack 
                                               >
                                                 <Check className="w-3.5 h-3.5" />
                                               </Button>
+                                              </DisabledReason>
                                               <Button
                                                 variant="ghost"
                                                 size="sm"
@@ -1663,9 +1786,11 @@ export function SubscriptionDetailPage({ subscription: subscriptionProp, onBack 
 
                             {/* Action — passer à l'étape suivante */}
                             <div className="flex justify-end pt-4">
+                              <DisabledReason reason={validationBlockedReason}>
                               <Button
                                 style={{ background: PRIMARY_BUTTON_GRADIENT }}
                                 className="gap-2 text-white hover:opacity-90"
+                                disabled={Boolean(validationBlockedReason)}
                                 onClick={() => {
                                   setCurrentStep(2);
                                   toast.success(t('subscriptions.detail.onboarding.submittedForValidation'));
@@ -1674,6 +1799,7 @@ export function SubscriptionDetailPage({ subscription: subscriptionProp, onBack 
                                 <ChevronRight className="w-4 h-4" />
                                 {t('subscriptions.detail.onboarding.proceedToValidation')}
                               </Button>
+                              </DisabledReason>
                             </div>
                           </div>
                         </div>
@@ -2116,7 +2242,7 @@ export function SubscriptionDetailPage({ subscription: subscriptionProp, onBack 
               <SubscriptionAuditTab
                 entries={auditEntries}
                 sections={mockSections}
-                documents={mockRequiredDocuments}
+                documents={requiredDocuments}
                 subscriptionName={subscription.name}
               />
             </div>
@@ -2130,10 +2256,46 @@ export function SubscriptionDetailPage({ subscription: subscriptionProp, onBack 
         </Tabs>
       </div>
 
+      <ConfirmDialog
+        open={documentToReject !== null}
+        onOpenChange={open => !open && setDocumentToReject(null)}
+        destructive
+        title={t('subscriptions.detail.documentControl.rejectTitle')}
+        description={
+          documentToReject !== null && requiredDocuments[documentToReject]
+            ? docLabel(requiredDocuments[documentToReject])
+            : undefined
+        }
+        confirmLabel={t('subscriptions.detail.documentControl.rejectConfirm')}
+        confirmDisabledReason={
+          rejectionReason.trim() ? undefined : t('subscriptions.detail.documentControl.reasonRequired')
+        }
+        onConfirm={handleConfirmRejectDocument}
+      >
+        <div className="space-y-2">
+          <Textarea
+            value={rejectionReason}
+            onChange={e => setRejectionReason(e.target.value)}
+            placeholder={t('subscriptions.detail.documentControl.reasonPlaceholder')}
+            aria-label={t('subscriptions.detail.documentControl.reasonLabel')}
+            rows={4}
+          />
+          <p className="text-xs text-muted-foreground">
+            {t('subscriptions.detail.documentControl.reasonVisible')}
+          </p>
+        </div>
+      </ConfirmDialog>
+
+      <ManualDocumentPanel
+        open={isManualDocumentOpen}
+        onClose={() => setIsManualDocumentOpen(false)}
+        onSave={handleSaveManualDocument}
+      />
+
       <SubscriptionAuditPanel
         entries={auditEntries}
         sections={mockSections}
-        documents={mockRequiredDocuments}
+        documents={requiredDocuments}
         elementId={auditElement?.elementId ?? null}
         sectionId={auditElement?.sectionId}
         onClose={() => setAuditElement(null)}

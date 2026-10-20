@@ -25,6 +25,14 @@ export interface MockSection {
 
 export interface MockRequiredDocument {
   nameKey: string;
+  /** Libellé libre d'une pièce ajoutée hors nomenclature (prioritaire sur nameKey). */
+  name?: string;
+  /** Le type de document exige une date d'émission : vide, la pièce bloque la validation. */
+  requiresIssueDate?: boolean;
+  /** Ajout manuel de l'opérateur, hors nomenclature. */
+  manual?: boolean;
+  /** Motif du refus, visible de l'investisseur. */
+  rejectionReason?: string;
   dateSent: string;
   issueDate: string;
   expiration: string;
@@ -187,12 +195,12 @@ export const mockSections: MockSection[] = [
 ];
 
 export const mockRequiredDocuments: MockRequiredDocument[] = [
-  { nameKey: 'subscriptions.detail.docs.passport', dateSent: "19/05/2026 16:10", issueDate: "12/03/2019", expiration: "12/03/2029", hasFile: true },
-  { nameKey: 'subscriptions.detail.docs.idCard', dateSent: "19/05/2026 16:10", issueDate: "04/07/2021", expiration: "04/07/2031", hasFile: true },
+  { nameKey: 'subscriptions.detail.docs.passport', requiresIssueDate: true, dateSent: "19/05/2026 16:10", issueDate: "12/03/2019", expiration: "12/03/2029", hasFile: true },
+  { nameKey: 'subscriptions.detail.docs.idCard', requiresIssueDate: true, dateSent: "19/05/2026 16:10", issueDate: "04/07/2021", expiration: "04/07/2031", hasFile: true },
   { nameKey: 'subscriptions.detail.docs.driverLicense', dateSent: "", issueDate: "", expiration: "", hasFile: false },
   { nameKey: 'subscriptions.detail.docs.residencePermit', dateSent: "", issueDate: "", expiration: "", hasFile: false },
-  { nameKey: 'subscriptions.detail.docs.taxNotice', dateSent: "19/05/2026 16:10", issueDate: "15/09/2025", expiration: "", hasFile: true },
-  { nameKey: 'subscriptions.detail.docs.addressProof', dateSent: "19/05/2026 16:10", issueDate: "02/04/2026", expiration: "", hasFile: true },
+  { nameKey: 'subscriptions.detail.docs.taxNotice', requiresIssueDate: true, rejectionReason: 'Document illisible, merci de transmettre une copie complète', dateSent: "19/05/2026 16:10", issueDate: "15/09/2025", expiration: "", hasFile: true },
+  { nameKey: 'subscriptions.detail.docs.addressProof', requiresIssueDate: true, dateSent: "19/05/2026 16:10", issueDate: "", expiration: "", hasFile: true },
   { nameKey: 'subscriptions.detail.docs.fundsOrigin', dateSent: "", issueDate: "", expiration: "", hasFile: false },
   { nameKey: 'subscriptions.detail.docs.rib', dateSent: "19/05/2026 16:10", issueDate: "", expiration: "", hasFile: true }
 ];

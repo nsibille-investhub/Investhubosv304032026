@@ -623,7 +623,7 @@
           "sectionPosition": "Section {{position}}/{{total}}",
           "questions": "Questions",
           "documents": "Pièces justificatives",
-          "validatedItems": "{{validated}}/{{total}} éléments validés",
+          "validatedItems": "{{validated}}/{{total}} réponses validées",
           "awaitingCorrectionCount": "{{count}} à corriger",
           "documentsValidatedDesc": "{{count}} documents de \"{{title}}\" ont été validés",
           "state": {
@@ -633,7 +633,8 @@
             "validated": "Validé"
           },
           "documentsCountOne": "{{count}} document",
-          "documentsCountMany": "{{count}} documents"
+          "documentsCountMany": "{{count}} documents",
+          "documentsExcluded": "Les pièces justificatives ne comptent pas dans la complétion : elles sont contrôlées à cette étape."
         },
         "preonboarding": {
           "group": "Préonboarding",
@@ -1242,7 +1243,8 @@
           "documentValidated": "Document validé",
           "documentRejected": "Document refusé",
           "commentAdded": "Commentaire ajouté",
-          "dossierSubmitted": "Dossier soumis"
+          "dossierSubmitted": "Dossier soumis",
+          "documentDatesUpdated": "Dates du document modifiées"
         },
         "origin": {
           "investor": "Investisseur",
@@ -1250,6 +1252,40 @@
           "automatic": "Automatique",
           "api": "API"
         }
+      },
+      "documentControl": {
+        "rejectedToast": "Document refusé",
+        "rejectedToastDesc": "{{name}} : le motif est visible de l'investisseur",
+        "validationBlocked": "Validation impossible : {{count}} pièce(s) bloquante(s), voir la liste en tête du dossier",
+        "blockersTitleOne": "1 pièce bloque la validation du dossier",
+        "blockersTitleMany": "{{count}} pièces bloquent la validation du dossier",
+        "blockersDescription": "Renseignez les informations manquantes pour pouvoir valider le dossier.",
+        "missingIssueDate": "Date d'émission manquante, exigée pour ce type de document",
+        "issueDateInput": "Date d'émission",
+        "manualTag": "Ajout manuel",
+        "reasonLine": "Motif : {{reason}}",
+        "visibleToInvestor": "Visible de l'investisseur",
+        "rejectTitle": "Refuser le document",
+        "rejectConfirm": "Refuser",
+        "reasonRequired": "Saisissez un motif pour refuser le document",
+        "reasonPlaceholder": "Exemple : document illisible, merci de transmettre une copie complète",
+        "reasonLabel": "Motif du refus",
+        "reasonVisible": "Le motif est conservé sur le document et visible de l'investisseur sur son portail."
+      },
+      "manualDocument": {
+        "title": "Ajouter un document",
+        "description": "Pièce hors nomenclature, rattachée à ce dossier et identifiée comme ajout manuel.",
+        "section": "Document",
+        "sectionDesc": "Libellé, fichier et dates de la pièce.",
+        "name": "Libellé du document",
+        "namePlaceholder": "Exemple : attestation de domiciliation bancaire",
+        "file": "Fichier",
+        "issueDate": "Date d'émission",
+        "expiration": "Date d'expiration",
+        "cancel": "Annuler",
+        "save": "Ajouter le document",
+        "savedToast": "Document ajouté",
+        "savedToastDesc": "{{name}} est rattaché au dossier"
       }
     },
     "table": {

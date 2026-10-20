@@ -10,6 +10,7 @@ export type SubscriptionAuditEventType =
   | 'documentReplaced'
   | 'documentValidated'
   | 'documentRejected'
+  | 'documentDatesUpdated'
   | 'commentAdded'
   | 'dossierSubmitted';
 
@@ -23,6 +24,7 @@ export const SUBSCRIPTION_AUDIT_EVENT_TYPES: SubscriptionAuditEventType[] = [
   'documentReplaced',
   'documentValidated',
   'documentRejected',
+  'documentDatesUpdated',
   'commentAdded',
   'dossierSubmitted',
 ];

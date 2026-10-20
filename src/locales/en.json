@@ -623,7 +623,7 @@
           "sectionPosition": "Section {{position}}/{{total}}",
           "questions": "Questions",
           "documents": "Supporting documents",
-          "validatedItems": "{{validated}}/{{total}} items validated",
+          "validatedItems": "{{validated}}/{{total}} answers validated",
           "awaitingCorrectionCount": "{{count}} to correct",
           "documentsValidatedDesc": "{{count}} documents in \"{{title}}\" have been validated",
           "state": {
@@ -633,7 +633,8 @@
             "validated": "Validated"
           },
           "documentsCountOne": "{{count}} document",
-          "documentsCountMany": "{{count}} documents"
+          "documentsCountMany": "{{count}} documents",
+          "documentsExcluded": "Supporting documents do not count in the completion: they are checked at this step."
         },
         "preonboarding": {
           "group": "Pre-onboarding",
@@ -1242,7 +1243,8 @@
           "documentValidated": "Document validated",
           "documentRejected": "Document rejected",
           "commentAdded": "Comment added",
-          "dossierSubmitted": "File submitted"
+          "dossierSubmitted": "File submitted",
+          "documentDatesUpdated": "Document dates updated"
         },
         "origin": {
           "investor": "Investor",
@@ -1250,6 +1252,40 @@
           "automatic": "Automatic",
           "api": "API"
         }
+      },
+      "documentControl": {
+        "rejectedToast": "Document rejected",
+        "rejectedToastDesc": "{{name}}: the reason is visible to the investor",
+        "validationBlocked": "Validation unavailable: {{count}} blocking document(s), see the list at the top of the file",
+        "blockersTitleOne": "1 document blocks the file validation",
+        "blockersTitleMany": "{{count}} documents block the file validation",
+        "blockersDescription": "Fill in the missing information to be able to validate the file.",
+        "missingIssueDate": "Issue date missing, required for this document type",
+        "issueDateInput": "Issue date",
+        "manualTag": "Manual upload",
+        "reasonLine": "Reason: {{reason}}",
+        "visibleToInvestor": "Visible to the investor",
+        "rejectTitle": "Reject the document",
+        "rejectConfirm": "Reject",
+        "reasonRequired": "Enter a reason to reject the document",
+        "reasonPlaceholder": "Example: unreadable document, please send a complete copy",
+        "reasonLabel": "Rejection reason",
+        "reasonVisible": "The reason is kept on the document and visible to the investor on their portal."
+      },
+      "manualDocument": {
+        "title": "Add a document",
+        "description": "Document outside the list of required documents, attached to this file and flagged as a manual upload.",
+        "section": "Document",
+        "sectionDesc": "Label, file and dates of the document.",
+        "name": "Document label",
+        "namePlaceholder": "Example: bank domiciliation certificate",
+        "file": "File",
+        "issueDate": "Issue date",
+        "expiration": "Expiry date",
+        "cancel": "Cancel",
+        "save": "Add the document",
+        "savedToast": "Document added",
+        "savedToastDesc": "{{name}} is attached to the file"
       }
     },
     "table": {
