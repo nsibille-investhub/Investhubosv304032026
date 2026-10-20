@@ -94,7 +94,6 @@ import {
   mockRequiredDocuments,
   mockDocuments,
   mockNotes,
-  type MockNote,
   mockEmails,
   mockCapitalCalls,
   mockInitEmails,
@@ -117,6 +116,9 @@ import {
 import { SubscriptionSignatureStep } from './SubscriptionSignatureStep';
 import { SubscriptionStatusBadge } from './SubscriptionStatusBadge';
 import { NewSubscriptionDialog } from './NewSubscriptionDialog';
+import { NotesTab } from './investor-detail/NotesTab';
+import { createNote } from './investor-detail/NoteEditSheet';
+import type { Note } from '../utils/investorGenerator';
 
 const SUBSCRIPTION_STEPS = [
   { id: 0, labelKey: 'subscriptions.detail.stepper.initialization', icon: Settings },
@@ -163,8 +165,6 @@ export function SubscriptionDetailPage({ subscription: subscriptionProp, onBack 
   const [isRefreshing, setIsRefreshing] = useState(false);
   const [lastRefreshAt, setLastRefreshAt] = useState<string | null>(null);
   const [openSections, setOpenSections] = useState<string[]>(['identity']);
-  const [note, setNote] = useState('');
-  const [notes, setNotes] = useState<Array<{ text: string; date: string; author: string }>>([]);
   const [activeTab, setActiveTab] = useState('onboarding');
 
   // Stepper state — newly created subscriptions carry initialStep=0 so they
@@ -185,27 +185,36 @@ export function SubscriptionDetailPage({ subscription: subscriptionProp, onBack 
   const initData = (subscription as any).initData ?? {};
 
   // La note interne saisie à la création arrive en tête de l'onglet Notes.
-  const noteItems = useMemo<MockNote[]>(() => {
+  const initialNotes = useMemo<Note[]>(() => {
+    const demo: Note[] = mockNotes.map((mock) => ({
+      id: mock.id,
+      title: t(mock.titleKey),
+      content: `<p>${t(mock.contentKey)}</p>`,
+      author: mock.author,
+      date: new Date(mock.date),
+      type: 'General',
+      isImportant: false,
+      reminderDate: mock.reminderDate ? new Date(mock.reminderDate) : undefined,
+      attachment: mock.attachment ? { name: mock.attachment } : undefined,
+    }));
     const created = initData.internalNote;
-    if (!created?.content) return mockNotes;
-    const createdAt = subscription.createdAt ? new Date(subscription.createdAt) : new Date();
-    const pad = (n: number) => String(n).padStart(2, '0');
+    if (!created?.title) return demo;
     return [
       {
-        id: 0,
-        type: 'general',
-        sectionKey: '',
-        fieldKey: '',
-        author: t('subscriptions.detail.notesTab.authorYou'),
-        date: `${pad(createdAt.getDate())}/${pad(createdAt.getMonth() + 1)}/${createdAt.getFullYear()} ${pad(createdAt.getHours())}:${pad(createdAt.getMinutes())}`,
-        contentKey: '',
+        ...createNote(),
+        id: 'note-creation',
+        title: created.title,
         content: created.content,
-        status: 'open',
-        priority: created.priority ?? 'medium',
+        date: subscription.createdAt ? new Date(subscription.createdAt) : new Date(),
+        reminderDate: created.reminderDate ? new Date(created.reminderDate) : undefined,
+        attachment: created.attachment ? { name: created.attachment } : undefined,
       },
-      ...mockNotes,
+      ...demo,
     ];
-  }, [initData.internalNote, subscription.createdAt, t]);
+    // Construites une seule fois : NotesTab garde ensuite son propre état.
+  }, []);
+  const [notesCount, setNotesCount] = useState(initialNotes.length);
+
   
   // Question states management
   const [questionStatuses, setQuestionStatuses] = useState<Record<string, QuestionStatus>>(INITIAL_QUESTION_STATUSES);
@@ -282,20 +291,6 @@ export function SubscriptionDetailPage({ subscription: subscriptionProp, onBack 
     toast.info(t('subscriptions.detail.toast.documentPreview'), {
       description: t('subscriptions.detail.toast.documentPreviewDesc', { name: docName }),
     });
-  };
-
-  const handleAddNote = () => {
-    if (!note.trim()) return;
-
-    const newNote = {
-      text: note,
-      date: new Date().toLocaleDateString('fr-FR'),
-      author: 'Vous'
-    };
-
-    setNotes([newNote, ...notes]);
-    setNote('');
-    toast.success(t('subscriptions.detail.toast.noteAdded'));
   };
 
   // Question actions handlers
@@ -983,7 +978,7 @@ export function SubscriptionDetailPage({ subscription: subscriptionProp, onBack 
               { value: 'capital-calls', icon: DollarSign, labelKey: 'subscriptions.detail.tabs.capitalCalls', badge: String(mockCapitalCalls.length) },
               { value: 'documents', icon: FolderOpen, labelKey: 'subscriptions.detail.tabs.documents', badge: String(mockDocuments.length) },
               { value: 'integrations', icon: Database, labelKey: 'subscriptions.detail.tabs.integrations', badge: '5' },
-              { value: 'notes', icon: MessageSquare, labelKey: 'subscriptions.detail.tabs.notes', badge: String(noteItems.length) },
+              { value: 'notes', icon: MessageSquare, labelKey: 'subscriptions.detail.tabs.notes', badge: String(notesCount) },
             ].map(tab => ({
               value: tab.value,
               icon: tab.icon,
@@ -1971,149 +1966,9 @@ export function SubscriptionDetailPage({ subscription: subscriptionProp, onBack 
             <IntegrationsTab />
           </TabsContent>
 
-          {/* Notes Tab Content */}
           <TabsContent value="notes" className="mt-0">
             <div className="px-8 py-6">
-              <div className="space-y-4">
-                {/* Filters */}
-                <Card className="p-4 shadow-sm">
-                  <div className="flex items-center gap-3">
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      className="gap-2"
-                    >
-                      {t('subscriptions.detail.notesTab.all', { count: noteItems.length })}
-                    </Button>
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      className="gap-2"
-                    >
-                      {t('subscriptions.detail.notesTab.open', { count: noteItems.filter(n => n.status === 'open').length })}
-                    </Button>
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      className="gap-2"
-                    >
-                      {t('subscriptions.detail.notesTab.resolved', { count: noteItems.filter(n => n.status === 'resolved').length })}
-                    </Button>
-                    <div className="ml-auto">
-                      <Button
-                        className="gap-2"
-                        style={{ background: PRIMARY_BUTTON_GRADIENT }}
-                      >
-                        <MessageSquare className="w-4 h-4" />
-                        {t('subscriptions.detail.notesTab.newNote')}
-                      </Button>
-                    </div>
-                  </div>
-                </Card>
-
-                {/* Notes List */}
-                <div className="space-y-3">
-                  {noteItems.map((note) => (
-                    <Card
-                      key={note.id}
-                      className="p-5 shadow-sm hover:shadow-md transition-shadow"
-                    >
-                      <div className="flex items-start gap-4">
-                        {/* Icon and Priority */}
-                        <div className={`w-10 h-10 rounded-lg flex items-center justify-center flex-shrink-0 ${
-                          note.priority === 'high' ? 'bg-red-50' :
-                          note.priority === 'medium' ? 'bg-orange-50' :
-                          'bg-muted'
-                        }`}>
-                          <MessageSquare className={`w-5 h-5 ${
-                            note.priority === 'high' ? 'text-red-600' :
-                            note.priority === 'medium' ? 'text-orange-600' :
-                            'text-muted-foreground'
-                          }`} />
-                        </div>
-
-                        {/* Content */}
-                        <div className="flex-1">
-                          {/* Header */}
-                          <div className="flex items-start justify-between mb-2">
-                            <div className="flex items-center gap-2 flex-wrap">
-                              {note.type === 'field' ? (
-                                <>
-                                  <Badge variant="outline" className="text-xs font-medium">
-                                    {t('subscriptions.detail.notesTab.fieldType')}
-                                  </Badge>
-                                  <span className="text-xs text-muted-foreground">•</span>
-                                  <span className="text-xs font-medium text-foreground/80">{t(note.sectionKey)}</span>
-                                  <span className="text-xs text-muted-foreground">›</span>
-                                  <span className="text-xs text-muted-foreground">{note.fieldKey}</span>
-                                </>
-                              ) : (
-                                <Badge variant="outline" className="text-xs font-medium">
-                                  {t('subscriptions.detail.notesTab.generalType')}
-                                </Badge>
-                              )}
-                              {note.priority === 'high' && (
-                                <Badge className="bg-red-100 text-red-700 border-red-200 text-xs">
-                                  {t('subscriptions.detail.notesTab.highPriority')}
-                                </Badge>
-                              )}
-                              {note.priority === 'medium' && (
-                                <Badge className="bg-orange-100 text-orange-700 border-orange-200 text-xs">
-                                  {t('subscriptions.detail.notesTab.mediumPriority')}
-                                </Badge>
-                              )}
-                            </div>
-                            {note.status === 'resolved' ? (
-                              <Badge className="bg-green-100 text-green-700 border-green-200 gap-1.5">
-                                <CheckCircle2 className="w-3 h-3" />
-                                {t('subscriptions.detail.notesTab.resolvedStatus')}
-                              </Badge>
-                            ) : (
-                              <Button
-                                size="sm"
-                                variant="outline"
-                                className="gap-2"
-                                onClick={() => toast.success(t('subscriptions.detail.notesTab.noteResolved'))}
-                              >
-                                <CheckCircle2 className="w-4 h-4" />
-                                {t('subscriptions.detail.notesTab.resolve')}
-                              </Button>
-                            )}
-                          </div>
-
-                          {/* Note Content */}
-                          <p className="text-sm text-foreground/80 mb-3">
-                            {note.content ?? t(note.contentKey)}
-                          </p>
-
-                          {/* Footer */}
-                          <div className="flex items-center gap-3 text-xs text-muted-foreground">
-                            <div className="flex items-center gap-1.5">
-                              <User className="w-3.5 h-3.5" />
-                              <span>{note.author}</span>
-                            </div>
-                            <span>•</span>
-                            <div className="flex items-center gap-1.5">
-                              <Clock className="w-3.5 h-3.5" />
-                              <span>{note.date}</span>
-                            </div>
-                          </div>
-                        </div>
-
-                        {/* Delete Button */}
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          className="h-8 w-8 p-0 text-red-600 hover:text-red-700 hover:bg-red-50"
-                          onClick={() => toast.info(t('subscriptions.detail.notesTab.deleteNote'))}
-                        >
-                          <Trash2 className="w-4 h-4" />
-                        </Button>
-                      </div>
-                    </Card>
-                  ))}
-                </div>
-              </div>
+              <NotesTab notes={initialNotes} scope="subscription" onCountChange={setNotesCount} />
             </div>
           </TabsContent>
         </Tabs>

@@ -842,19 +842,8 @@
         "exportPackToast": "Pack documentaire exporté"
       },
       "notesTab": {
-        "all": "Toutes ({{count}})",
-        "open": "Ouvertes ({{count}})",
-        "resolved": "Résolues ({{count}})",
-        "newNote": "Nouvelle note",
-        "fieldType": "Champ",
-        "generalType": "Note générale",
-        "highPriority": "Priorité haute",
-        "mediumPriority": "Priorité moyenne",
-        "resolvedStatus": "Résolue",
-        "resolve": "Résoudre",
-        "noteResolved": "Note résolue",
-        "deleteNote": "Supprimer la note",
-        "authorYou": "Vous"
+        "sheetDescription": "Note interne sur la souscription, visible uniquement par l'équipe.",
+        "reminderSection": "Rappel"
       },
       "docs": {
         "passport": "Passeport (en couleur, lignes MRZ lisibles et complètes, sur une seule page)",
@@ -886,7 +875,14 @@
         "mock4": "Justificatif de régime matrimonial manquant. Relance envoyée par email.",
         "mock5": "Dossier complet reçu. Analyse KYC démarrée le 01/02/2026.",
         "mock6": "Le document fourni est incomplet. Demander un relevé bancaire complémentaire de 6 mois.",
-        "mock7": "Client VIP - traitement prioritaire demandé par la direction."
+        "mock7": "Client VIP - traitement prioritaire demandé par la direction.",
+        "mockTitle1": "Double nationalité",
+        "mockTitle2": "Capacité juridique",
+        "mockTitle3": "Appel investisseur",
+        "mockTitle4": "Régime matrimonial",
+        "mockTitle5": "Dossier KYC reçu",
+        "mockTitle6": "Origine des fonds",
+        "mockTitle7": "Client prioritaire"
       },
       "toast": {
         "featureComingSoon": "Fonctionnalité à venir",
@@ -898,7 +894,6 @@
         "selectFileGeneric": "Sélectionner un fichier",
         "documentPreview": "Aperçu du document",
         "documentPreviewDesc": "Ouverture de « {{name}} »",
-        "noteAdded": "Note ajoutée",
         "addDocumentToast": "Ajouter un document",
         "idCopied": "ID copié dans le presse-papier",
         "refreshed": "Souscription rafraîchie",
@@ -1409,7 +1404,7 @@
         "belowMinimum": "Montant inférieur au minimum de la part ({{min}} €).",
         "distributorRequired": "Sélectionnez le distributeur de cette souscription intermédiée.",
         "noAuthorizedDistributor": "Aucun distributeur n'est autorisé sur ce fonds et cette part. Passez la souscription en non intermédiée ou changez de part.",
-        "noteContentRequired": "Saisissez le contenu de la note, ou désactivez la note interne.",
+        "noteRequired": "Saisissez le titre et le texte de la note, ou désactivez la note interne.",
         "subscriptionNameRequired": "Saisissez le nom de la souscription, ou repassez en nom automatique.",
         "noAuthorizedDistributorDirectForbidden": "Aucun distributeur n'est autorisé sur ce fonds et cette part, et la part interdit la souscription directe. Choisissez un autre fonds ou une autre part."
       },
@@ -1464,15 +1459,6 @@
       "internalNote": {
         "toggleLabel": "Note interne",
         "toggleHint": "Visible uniquement par vos équipes, jamais par l'investisseur ni par le distributeur.",
-        "priority": "Priorité",
-        "content": "Contenu",
-        "contentPlaceholder": "Saisissez votre note...",
-        "priorities": {
-          "low": "Basse",
-          "medium": "Moyenne",
-          "high": "Haute"
-        },
-        "statusOpen": "Ouverte",
         "whereVisible": "Visible dans l'onglet Notes de la souscription."
       },
       "review": {

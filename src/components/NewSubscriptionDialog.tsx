@@ -77,6 +77,8 @@ import { toast } from 'sonner';
 import { useTranslation } from '../utils/languageContext';
 import { MAIL_TEMPLATES, PREVIEW_VALUES, type MailTemplate } from '../utils/mailTemplatesMockData';
 import { buildPreviewDocument } from './settings/MailTemplateDetailPage';
+import { createNote, isNoteComplete, NoteFormFields } from './investor-detail/NoteEditSheet';
+import type { Note } from '../utils/investorGenerator';
 
 interface NewSubscriptionDialogProps {
   open: boolean;
@@ -276,20 +278,14 @@ function FieldMessage({ message, tone = 'error' }: { message?: string; tone?: 'e
   );
 }
 
-type NotePriority = 'low' | 'medium' | 'high';
-
-const NOTE_PRIORITIES: NotePriority[] = ['low', 'medium', 'high'];
-
 interface InternalNoteDraft {
   enabled: boolean;
-  priority: NotePriority;
-  content: string;
+  note: Note;
 }
 
 const EMPTY_INTERNAL_NOTE: InternalNoteDraft = {
   enabled: false,
-  priority: 'medium',
-  content: '',
+  note: createNote(),
 };
 
 type NameMode = 'auto' | 'manual';
@@ -897,8 +893,8 @@ export function NewSubscriptionDialog({
     if (formData.nameMode === 'manual' && !formData.subscriptionName.trim()) {
       e.subscriptionName = t('subscriptions.newDialog.errors.subscriptionNameRequired');
     }
-    if (!isEditMode && formData.internalNote.enabled && !formData.internalNote.content.trim()) {
-      e.internalNote = t('subscriptions.newDialog.errors.noteContentRequired');
+    if (!isEditMode && formData.internalNote.enabled && !isNoteComplete(formData.internalNote.note)) {
+      e.internalNote = t('subscriptions.newDialog.errors.noteRequired');
     }
     return e;
   }, [formData, noAuthorizedDistributor, directForbidden, isEditMode, t]);
@@ -1263,10 +1259,10 @@ export function NewSubscriptionDialog({
         isSubscriptionNameGenerated: formData.nameMode === 'auto',
         internalNote: formData.internalNote.enabled
           ? {
-              type: 'general',
-              status: 'open',
-              priority: formData.internalNote.priority,
-              content: formData.internalNote.content.trim(),
+              title: formData.internalNote.note.title.trim(),
+              content: formData.internalNote.note.content,
+              reminderDate: formData.internalNote.note.reminderDate?.toISOString() ?? null,
+              attachment: formData.internalNote.note.attachment?.name ?? null,
             }
           : null,
         documents: uploadedDocuments.map((file) => ({ name: file.name, size: file.size })),
@@ -2846,51 +2842,17 @@ export function NewSubscriptionDialog({
                           <motion.div
                             initial={{ opacity: 0, y: -4 }}
                             animate={{ opacity: 1, y: 0 }}
-                            className="space-y-3"
+                            className="space-y-4"
                             data-field-error={!!fieldError('internalNote')}
                           >
-                            <div className="flex flex-wrap items-center gap-1.5">
-                              <Badge variant="outline" className="text-xs h-5">
-                                {t('subscriptions.detail.notesTab.generalType')}
-                              </Badge>
-                              <Badge variant="outline" className="text-xs h-5">
-                                {t('subscriptions.newDialog.internalNote.statusOpen')}
-                              </Badge>
-                              <span className={FORM_FIELD_HINT_CLASS}>
-                                {t('subscriptions.newDialog.internalNote.whereVisible')}
-                              </span>
-                            </div>
-                            <div className="space-y-1.5">
-                              <Label className={FORM_FIELD_LABEL_CLASS}>
-                                <Flag className="w-3.5 h-3.5" />
-                                {t('subscriptions.newDialog.internalNote.priority')}
-                              </Label>
-                              <SegmentedControl
-                                aria-label={t('subscriptions.newDialog.internalNote.priority')}
-                                value={formData.internalNote.priority}
-                                onValueChange={(value) => updateInternalNote({ priority: value })}
-                                size="sm"
-                                options={NOTE_PRIORITIES.map((priority) => ({
-                                  value: priority,
-                                  label: t(`subscriptions.newDialog.internalNote.priorities.${priority}`),
-                                }))}
-                              />
-                            </div>
-                            <div className="space-y-1.5">
-                              <Label className={FORM_FIELD_LABEL_CLASS}>
-                                <FileText className="w-3.5 h-3.5" />
-                                {t('subscriptions.newDialog.internalNote.content')}
-                                <span className="text-destructive">*</span>
-                              </Label>
-                              <Textarea
-                                value={formData.internalNote.content}
-                                onChange={(e) => updateInternalNote({ content: e.target.value })}
-                                placeholder={t('subscriptions.newDialog.internalNote.contentPlaceholder')}
-                                aria-invalid={!!fieldError('internalNote')}
-                                className="min-h-[90px]"
-                              />
-                              <FieldMessage message={fieldError('internalNote')} />
-                            </div>
+                            <p className={FORM_FIELD_HINT_CLASS}>{t('subscriptions.newDialog.internalNote.whereVisible')}</p>
+                            <NoteFormFields
+                              bare
+                              scope="subscription"
+                              note={formData.internalNote.note}
+                              onChange={(note) => updateInternalNote({ note })}
+                            />
+                            <FieldMessage message={fieldError('internalNote')} />
                           </motion.div>
                         ) : undefined}
                       </FormSubsection>

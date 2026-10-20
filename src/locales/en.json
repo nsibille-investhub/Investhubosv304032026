@@ -842,19 +842,8 @@
         "exportPackToast": "Document pack exported"
       },
       "notesTab": {
-        "all": "All ({{count}})",
-        "open": "Open ({{count}})",
-        "resolved": "Resolved ({{count}})",
-        "newNote": "New note",
-        "fieldType": "Field",
-        "generalType": "General note",
-        "highPriority": "High priority",
-        "mediumPriority": "Medium priority",
-        "resolvedStatus": "Resolved",
-        "resolve": "Resolve",
-        "noteResolved": "Note resolved",
-        "deleteNote": "Delete note",
-        "authorYou": "You"
+        "sheetDescription": "Internal note about the subscription, visible to the team only.",
+        "reminderSection": "Reminder"
       },
       "docs": {
         "passport": "Passport (in color, MRZ lines readable and complete, on a single page)",
@@ -886,7 +875,14 @@
         "mock4": "Matrimonial regime supporting document missing. Follow-up sent by email.",
         "mock5": "Complete file received. KYC analysis starting on 01/02/2026.",
         "mock6": "Document provided is incomplete. Request a supplementary 6-month bank statement.",
-        "mock7": "VIP client - priority processing requested by management."
+        "mock7": "VIP client - priority processing requested by management.",
+        "mockTitle1": "Dual nationality",
+        "mockTitle2": "Legal capacity",
+        "mockTitle3": "Investor call",
+        "mockTitle4": "Matrimonial regime",
+        "mockTitle5": "KYC file received",
+        "mockTitle6": "Source of funds",
+        "mockTitle7": "Priority client"
       },
       "toast": {
         "featureComingSoon": "Feature coming soon",
@@ -898,7 +894,6 @@
         "selectFileGeneric": "Select a file",
         "documentPreview": "Document preview",
         "documentPreviewDesc": "Opening \"{{name}}\"",
-        "noteAdded": "Note added",
         "addDocumentToast": "Add a document",
         "idCopied": "ID copied to clipboard",
         "refreshed": "Subscription refreshed",
@@ -1409,7 +1404,7 @@
         "belowMinimum": "Amount below the share minimum (€{{min}}).",
         "distributorRequired": "Select the distributor of this intermediated subscription.",
         "noAuthorizedDistributor": "No distributor is authorised on this fund and share. Switch the subscription to non-intermediated or change the share.",
-        "noteContentRequired": "Enter the note content, or turn off the internal note.",
+        "noteRequired": "Enter the note title and text, or turn off the internal note.",
         "subscriptionNameRequired": "Enter the subscription name, or switch back to the automatic name.",
         "noAuthorizedDistributorDirectForbidden": "No distributor is authorised on this fund and share, and the share forbids direct subscription. Choose another fund or share."
       },
@@ -1464,15 +1459,6 @@
       "internalNote": {
         "toggleLabel": "Internal note",
         "toggleHint": "Visible to your teams only, never to the investor or the distributor.",
-        "priority": "Priority",
-        "content": "Content",
-        "contentPlaceholder": "Type your note...",
-        "priorities": {
-          "low": "Low",
-          "medium": "Medium",
-          "high": "High"
-        },
-        "statusOpen": "Open",
         "whereVisible": "Visible in the subscription's Notes tab."
       },
       "review": {
