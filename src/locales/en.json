@@ -1272,7 +1272,7 @@
       "srDescription": "Create a new subscription in 3 steps",
       "title": "New Subscription",
       "stepCount": "Step {{current}}/3",
-      "singleStepSubtitle": "Initialise the subscription — you can complete it afterwards",
+      "singleStepSubtitle": "Initialise the subscription, you can complete it afterwards",
       "steps": {
         "investor": "Investor",
         "details": "Details",
@@ -1321,7 +1321,7 @@
       "createStructure": "Create structure",
       "structuresOf": "{{name}}'s structures",
       "createNewStructure": "Create a new structure",
-      "directInvestment": "Direct investment (no structure)",
+      "directInvestment": "The investor subscribes in their own name",
       "newStructure": "New Structure",
       "legalName": "Legal name",
       "firstName": "First name",
@@ -1330,10 +1330,10 @@
       "countryLabel": "Country",
       "addressLabel": "Address",
       "required": "*",
-      "directInvestmentTitle": "Direct investment",
+      "directInvestmentTitle": "Subscription without structure",
       "structureSelected": "Structure selected",
       "noStructure": "No structure",
-      "directInvestorDesc": "{{name}} will invest directly in their own name",
+      "directInvestorDesc": "{{name}} subscribes in their own name",
       "changeStructure": "Change structure",
       "fundLabel": "Fund",
       "shareClassLabel": "Class",
@@ -1390,7 +1390,7 @@
         "subtitle": "Upload the documents required for validation. This step is optional.",
         "dropzoneTitle": "Drop your files here",
         "dropzoneSubtitle": "or click to browse",
-        "dropzoneFormats": "PDF, Word, Excel, PowerPoint — 25 MB max per file",
+        "dropzoneFormats": "PDF, Word, Excel, PowerPoint, 25 MB max per file",
         "addMoreFiles": "Add more files",
         "uploadedFilesOne": "{{count}} file uploaded",
         "uploadedFilesMany": "{{count}} files uploaded",
@@ -1400,7 +1400,16 @@
       "errors": {
         "missingNameEmail": "Name and email required",
         "missingLegalNameSiret": "Legal name and SIRET required",
-        "incompleteData": "Incomplete data"
+        "incompleteData": "Incomplete data",
+        "investorRequired": "Select or create an investor.",
+        "structureRequired": "Choose a structure or a subscription without structure.",
+        "fundRequired": "Select a fund.",
+        "shareClassRequired": "Select a share.",
+        "amountRequired": "Enter an amount or a number of shares.",
+        "belowMinimum": "Amount below the share minimum (€{{min}}).",
+        "distributorRequired": "Select the distributor of this intermediated subscription.",
+        "noAuthorizedDistributor": "No distributor is authorised on this fund and share. Switch the subscription to non-intermediated or change the share.",
+        "noteContentRequired": "Enter the note content, or turn off the internal note."
       },
       "toast": {
         "investorCreated": "{{name}} created successfully",
@@ -1411,16 +1420,94 @@
       "notificationSection": {
         "title": "Notification & language",
         "notifyInvestorLabel": "Notify the investor on initialisation",
-        "notifyInvestorDescription": "Send the onboarding email so the investor can start their subscription.",
-        "notifyDistributorLabel": "Notify the CGP on initialisation",
-        "notifyDistributorDescription": "Send the onboarding email to the distributor (intermediated subscription).",
+        "notifyInvestorDescription": "Sends the onboarding email to the investor so they can start their subscription.",
+        "notifyDistributorLabel": "Notify the distributor on initialisation",
+        "notifyDistributorDescription": "Sends the onboarding email to the distributor, as the subscription is intermediated.",
         "languageLabel": "Onboarding & communication language",
         "languageHelper": "Defaults to the investor's preferred language.",
         "languageHelperFallback": "Defaults to the platform language (no preference set on the investor).",
         "languageOptions": {
           "fr": "French",
           "en": "English"
+        },
+        "notifyLabel": "Notify on creation"
+      },
+      "sections": {
+        "investor": "Investor and structure",
+        "investorDesc": "Who subscribes, and through which structure.",
+        "fund": "Fund and amounts",
+        "fundDesc": "Fund, share, subscribed amount and subscription premium.",
+        "distribution": "Distribution",
+        "distributionDesc": "State whether a distributor brings this subscription.",
+        "additionalInfo": "Additional information",
+        "additionalInfoDesc": "Name, language, notification and internal note.",
+        "review": "Review and validation",
+        "reviewDesc": "Check the key information before creating the subscription."
+      },
+      "distribution": {
+        "intermediatedLabel": "Intermediated subscription",
+        "yes": "Yes",
+        "no": "No",
+        "intermediatedOffHint": "The subscription is handled directly, with no distributor and no entry fees.",
+        "intermediatedOnHint": "Fill in the distributor and the distribution terms.",
+        "prefilledFromPartner": "Prefilled with {{name}}, the partner linked to the investor and authorised on this fund and share. You can change these values.",
+        "advisorPlaceholder": "Advisor name at the distributor"
+      },
+      "subscriptionName": {
+        "label": "Subscription name",
+        "placeholder": "Generated automatically if empty",
+        "rule": "If left empty, the name follows the rule Investor - Amount - Fund Share.",
+        "ruleExample": "Here: {{name}}",
+        "ruleWaiting": "It will be computed once the investor, fund, share and amount are filled in."
+      },
+      "internalNote": {
+        "toggleLabel": "Add an internal note",
+        "toggleHint": "Visible to your teams only, never to the investor or the distributor.",
+        "type": "Type",
+        "priority": "Priority",
+        "content": "Content",
+        "contentPlaceholder": "Type your note...",
+        "types": {
+          "general": "General",
+          "kyc": "KYC",
+          "risk": "Risk",
+          "commercial": "Commercial",
+          "legal": "Legal"
+        },
+        "priorities": {
+          "low": "Low",
+          "medium": "Medium",
+          "high": "High"
         }
+      },
+      "review": {
+        "blockingTitle": "Items to fix before creating the subscription",
+        "subscriptionName": "Subscription name",
+        "generatedTag": "Generated",
+        "toComplete": "To complete",
+        "subscriptionAmount": "Subscription amount",
+        "totalAmount": "Total transaction amount",
+        "totalBreakdown": "Including entry fees ({{percent}}%) €{{fees}} and premium €{{premium}}",
+        "language": "Language",
+        "notification": "Notify on creation",
+        "notificationOff": "No, no email sent",
+        "previewTemplate": "Preview template {{name}}",
+        "templateMissing": "No template",
+        "internalTeam": "Internal team",
+        "partnerToSelect": "Distributor to select",
+        "roles": {
+          "investor": "Investor",
+          "partner": "Distributor",
+          "team": "New subscriptions address"
+        },
+        "internalNote": "Internal note",
+        "noInternalNote": "None"
+      },
+      "preview": {
+        "title": "Preview: {{name}}",
+        "description": "Sent to {{recipient}}, in {{language}}. Preview computed with the current subscription data.",
+        "subject": "Subject:",
+        "frameLabel": "Notification preview"
       }
     },
     "editDialog": {

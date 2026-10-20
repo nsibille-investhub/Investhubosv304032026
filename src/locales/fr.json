@@ -1314,14 +1314,14 @@
       "noStructureMatch": "Aucune structure ne correspond à \"{{query}}\"",
       "searchStructureInListPlaceholder": "Filtrer parmi les structures…",
       "selectStructurePlaceholder": "Sélectionner une structure",
-      "createInvestorWithName": "Créer « {{query}} »",
+      "createInvestorWithName": "Créer \"{{query}}\"",
       "searchStructureLabel": "Rechercher une structure (Pappers)",
       "searchStructurePlaceholder": "SIRET ou raison sociale...",
       "noStructureFound": "Aucune structure trouvée",
       "createStructure": "Créer la structure",
       "structuresOf": "Structures de {{name}}",
       "createNewStructure": "Créer une nouvelle structure",
-      "directInvestment": "Investissement en direct (sans structure)",
+      "directInvestment": "L'investisseur souscrit en nom propre",
       "newStructure": "Nouvelle Structure",
       "legalName": "Raison Légale",
       "firstName": "Prénom",
@@ -1330,10 +1330,10 @@
       "countryLabel": "Pays",
       "addressLabel": "Adresse",
       "required": "*",
-      "directInvestmentTitle": "Investissement en direct",
+      "directInvestmentTitle": "Souscription sans structure",
       "structureSelected": "Structure sélectionnée",
       "noStructure": "Sans structure",
-      "directInvestorDesc": "{{name}} investira directement en nom propre",
+      "directInvestorDesc": "{{name}} souscrit en nom propre",
       "changeStructure": "Changer de structure",
       "fundLabel": "Fonds",
       "shareClassLabel": "Classe",
@@ -1390,7 +1390,7 @@
         "subtitle": "Importez les documents nécessaires à la validation. Cette étape est optionnelle.",
         "dropzoneTitle": "Déposez vos fichiers ici",
         "dropzoneSubtitle": "ou cliquez pour parcourir",
-        "dropzoneFormats": "PDF, Word, Excel, PowerPoint — 25 Mo max par fichier",
+        "dropzoneFormats": "PDF, Word, Excel, PowerPoint, 25 Mo max par fichier",
         "addMoreFiles": "Ajouter d'autres fichiers",
         "uploadedFilesOne": "{{count}} fichier importé",
         "uploadedFilesMany": "{{count}} fichiers importés",
@@ -1400,7 +1400,16 @@
       "errors": {
         "missingNameEmail": "Nom et email requis",
         "missingLegalNameSiret": "Raison sociale et SIRET requis",
-        "incompleteData": "Données incomplètes"
+        "incompleteData": "Données incomplètes",
+        "investorRequired": "Sélectionnez ou créez un investisseur.",
+        "structureRequired": "Choisissez une structure ou une souscription sans structure.",
+        "fundRequired": "Sélectionnez un fonds.",
+        "shareClassRequired": "Sélectionnez une part.",
+        "amountRequired": "Saisissez un montant ou un nombre de parts.",
+        "belowMinimum": "Montant inférieur au minimum de la part ({{min}} €).",
+        "distributorRequired": "Sélectionnez le distributeur de cette souscription intermédiée.",
+        "noAuthorizedDistributor": "Aucun distributeur n'est autorisé sur ce fonds et cette part. Passez la souscription en non intermédiée ou changez de part.",
+        "noteContentRequired": "Saisissez le contenu de la note, ou désactivez la note interne."
       },
       "toast": {
         "investorCreated": "{{name}} créé avec succès",
@@ -1411,16 +1420,94 @@
       "notificationSection": {
         "title": "Notification et langue",
         "notifyInvestorLabel": "Notifier l'investisseur à l'initialisation",
-        "notifyInvestorDescription": "Envoyer le mail d'onboarding pour que l'investisseur puisse démarrer sa souscription.",
-        "notifyDistributorLabel": "Notifier le CGP à l'initialisation",
-        "notifyDistributorDescription": "Envoyer le mail d'onboarding au distributeur (souscription intermédiée).",
+        "notifyInvestorDescription": "Envoie le mail d'onboarding à l'investisseur pour qu'il démarre sa souscription.",
+        "notifyDistributorLabel": "Notifier le distributeur à l'initialisation",
+        "notifyDistributorDescription": "Envoie le mail d'onboarding au distributeur, la souscription étant intermédiée.",
         "languageLabel": "Langue de l'onboarding et de la communication",
         "languageHelper": "Reprend par défaut la langue préférée de l'investisseur.",
-        "languageHelperFallback": "Aucune préférence sur l'investisseur — utilise la langue de la plateforme par défaut.",
+        "languageHelperFallback": "Aucune préférence sur l'investisseur, utilise la langue de la plateforme par défaut.",
         "languageOptions": {
           "fr": "Français",
           "en": "Anglais"
+        },
+        "notifyLabel": "Notifier la création"
+      },
+      "sections": {
+        "investor": "Investisseur et structure",
+        "investorDesc": "Qui souscrit, et à travers quelle structure.",
+        "fund": "Fonds et montants",
+        "fundDesc": "Fonds, part, montant souscrit et prime de souscription.",
+        "distribution": "Distribution",
+        "distributionDesc": "Indiquez si un distributeur apporte cette souscription.",
+        "additionalInfo": "Informations complémentaires",
+        "additionalInfoDesc": "Nom, langue, notification et note interne.",
+        "review": "Vérification et validation",
+        "reviewDesc": "Relisez les informations clés avant de créer la souscription."
+      },
+      "distribution": {
+        "intermediatedLabel": "Souscription intermédiée",
+        "yes": "Oui",
+        "no": "Non",
+        "intermediatedOffHint": "La souscription est gérée en direct, sans distributeur ni frais d'entrée.",
+        "intermediatedOnHint": "Renseignez le distributeur et les conditions de distribution.",
+        "prefilledFromPartner": "Prérempli avec {{name}}, partenaire rattaché à l'investisseur et autorisé sur ce fonds et cette part. Vous pouvez modifier ces valeurs.",
+        "advisorPlaceholder": "Nom du conseiller chez le distributeur"
+      },
+      "subscriptionName": {
+        "label": "Nom de la souscription",
+        "placeholder": "Généré automatiquement si vide",
+        "rule": "Laissé vide, le nom est généré selon la règle Investisseur - Montant - Fonds Part.",
+        "ruleExample": "Ici : {{name}}",
+        "ruleWaiting": "Il sera calculé dès que l'investisseur, le fonds, la part et le montant seront saisis."
+      },
+      "internalNote": {
+        "toggleLabel": "Ajouter une note interne",
+        "toggleHint": "Visible uniquement par vos équipes, jamais par l'investisseur ni par le distributeur.",
+        "type": "Type",
+        "priority": "Priorité",
+        "content": "Contenu",
+        "contentPlaceholder": "Saisissez votre note...",
+        "types": {
+          "general": "Général",
+          "kyc": "KYC",
+          "risk": "Risque",
+          "commercial": "Commercial",
+          "legal": "Juridique"
+        },
+        "priorities": {
+          "low": "Basse",
+          "medium": "Moyenne",
+          "high": "Haute"
         }
+      },
+      "review": {
+        "blockingTitle": "Points à corriger avant de créer la souscription",
+        "subscriptionName": "Nom de la souscription",
+        "generatedTag": "Généré",
+        "toComplete": "À compléter",
+        "subscriptionAmount": "Montant de la souscription",
+        "totalAmount": "Montant total de l'opération",
+        "totalBreakdown": "Dont frais d'entrée ({{percent}} %) {{fees}} € et prime {{premium}} €",
+        "language": "Langue",
+        "notification": "Notifier la création",
+        "notificationOff": "Non, aucun email envoyé",
+        "previewTemplate": "Aperçu du gabarit {{name}}",
+        "templateMissing": "Aucun gabarit",
+        "internalTeam": "Équipe interne",
+        "partnerToSelect": "Distributeur à sélectionner",
+        "roles": {
+          "investor": "Investisseur",
+          "partner": "Distributeur",
+          "team": "Adresse des nouvelles souscriptions"
+        },
+        "internalNote": "Note interne",
+        "noInternalNote": "Aucune"
+      },
+      "preview": {
+        "title": "Aperçu : {{name}}",
+        "description": "Envoyé à {{recipient}}, en {{language}}. Aperçu calculé avec les données de la souscription en cours.",
+        "subject": "Objet :",
+        "frameLabel": "Aperçu de la notification"
       }
     },
     "editDialog": {

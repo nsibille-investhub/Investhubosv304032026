@@ -36,6 +36,12 @@ import {
   Banknote,
   Users,
   ArrowDownCircle,
+  AlertCircle,
+  AlertTriangle,
+  Eye,
+  Bell,
+  StickyNote,
+  ClipboardCheck,
   type LucideIcon,
 } from 'lucide-react';
 import { BigModal, BigModalContent, BigModalTitle, BigModalDescription } from './ui/big-modal';
@@ -49,6 +55,8 @@ import { Popover, PopoverContent, PopoverTrigger } from './ui/popover';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from './ui/select';
 import { Switch } from './ui/switch';
 import { Textarea } from './ui/textarea';
+import { SegmentedControl } from './ui/segmented-control';
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from './ui/dialog';
 import { cn } from './ui/utils';
 import {
   HOLDING_MODE_LABEL_KEYS,
@@ -60,6 +68,8 @@ import {
 } from '../utils/subscriptionGenerator';
 import { toast } from 'sonner';
 import { useTranslation } from '../utils/languageContext';
+import { MAIL_TEMPLATES, PREVIEW_VALUES, type MailTemplate } from '../utils/mailTemplatesMockData';
+import { buildPreviewDocument } from './settings/MailTemplateDetailPage';
 
 interface NewSubscriptionDialogProps {
   open: boolean;
@@ -235,6 +245,113 @@ function SwitchField({
   );
 }
 
+function FormSection({
+  index,
+  icon: Icon,
+  title,
+  description,
+  children,
+}: {
+  index: number;
+  icon: LucideIcon;
+  title: string;
+  description?: string;
+  children: ReactNode;
+}) {
+  return (
+    <section className="space-y-4">
+      <div className="flex items-start gap-3">
+        <span className="w-6 h-6 rounded-full bg-primary/10 text-primary text-xs font-semibold flex items-center justify-center shrink-0">
+          {index}
+        </span>
+        <div className="min-w-0">
+          <h3 className="text-sm font-semibold text-foreground flex items-center gap-1.5">
+            <Icon className="w-4 h-4 text-muted-foreground" />
+            {title}
+          </h3>
+          {description && <p className="text-xs text-muted-foreground mt-0.5">{description}</p>}
+        </div>
+      </div>
+      <div className="flex flex-col gap-4 pl-9">{children}</div>
+    </section>
+  );
+}
+
+function FieldMessage({ message, tone = 'error' }: { message?: string; tone?: 'error' | 'warning' }) {
+  if (!message) return null;
+  const Icon = tone === 'error' ? AlertCircle : AlertTriangle;
+  return (
+    <p
+      role={tone === 'error' ? 'alert' : undefined}
+      className="text-[11px] flex items-start gap-1"
+      style={{ color: tone === 'error' ? 'var(--destructive)' : 'var(--warning)' }}
+    >
+      <Icon className="w-3 h-3 shrink-0" style={{ marginTop: 1 }} />
+      {message}
+    </p>
+  );
+}
+
+type NoteType = 'general' | 'kyc' | 'risk' | 'commercial' | 'legal';
+type NotePriority = 'low' | 'medium' | 'high';
+
+const NOTE_TYPES: NoteType[] = ['general', 'kyc', 'risk', 'commercial', 'legal'];
+const NOTE_PRIORITIES: NotePriority[] = ['low', 'medium', 'high'];
+
+interface InternalNoteDraft {
+  enabled: boolean;
+  type: NoteType;
+  priority: NotePriority;
+  content: string;
+}
+
+const EMPTY_INTERNAL_NOTE: InternalNoteDraft = {
+  enabled: false,
+  type: 'general',
+  priority: 'medium',
+  content: '',
+};
+
+type FieldKey =
+  | 'investor'
+  | 'structure'
+  | 'fund'
+  | 'shareClass'
+  | 'amount'
+  | 'distributor'
+  | 'internalNote';
+
+type NotificationRole = 'investor' | 'partner' | 'team';
+
+interface NotificationRecipient {
+  role: NotificationRole;
+  name: string;
+  detail?: string;
+  template?: MailTemplate;
+}
+
+// Gabarits envoyés à la création : l'onboarding part vers l'investisseur, ou
+// vers le distributeur quand la souscription est intermédiée, et l'équipe
+// interne reçoit l'alerte de nouvelle souscription.
+const CREATION_TEMPLATE_SLUGS: Record<NotificationRole, string> = {
+  investor: 'invitation',
+  partner: 'invitation',
+  team: 'Onboarding-link',
+};
+
+function findTemplate(slug: string): MailTemplate | undefined {
+  return MAIL_TEMPLATES.find((tpl) => tpl.slug === slug);
+}
+
+function generateSubscriptionName(
+  investorName: string,
+  amount: number,
+  fundName: string,
+  shareClass: string,
+): string {
+  return `${investorName} - €${amount / 1000}K - ${fundName} Part ${shareClass}`;
+}
+
 interface FormData {
   investor: Investor | null;
   structure: Structure | null | 'direct'; // 'direct' pour investissement sans structure
@@ -243,11 +360,31 @@ interface FormData {
   numberOfShares: string;
   entryFees: string;
   subscriptionPremium: string; // Prime de souscription (€) - à la main de la SG
-  distributor: string | 'direct'; // ID du distributeur ou 'direct'
+  isIntermediated: boolean;
+  distributor: string; // ID du distributeur, 'direct', ou '' tant qu'aucun n'est choisi
   hasCustodyOption: boolean;
   notifyOnCreation: boolean;
   language: SubscriptionLanguage;
+  subscriptionName: string;
+  internalNote: InternalNoteDraft;
 }
+
+const EMPTY_FORM: FormData = {
+  investor: null,
+  structure: null,
+  fund: '',
+  shareClass: '',
+  numberOfShares: '',
+  entryFees: '0',
+  subscriptionPremium: '0',
+  isIntermediated: false,
+  distributor: 'direct',
+  hasCustodyOption: false,
+  notifyOnCreation: true,
+  language: DEFAULT_SUBSCRIPTION_LANGUAGE,
+  subscriptionName: '',
+  internalNote: EMPTY_INTERNAL_NOTE,
+};
 
 const mockStructures: Structure[] = [
   { id: 's1', name: 'Alpha Capital Holding SAS', siret: '123 456 789 00012', country: 'France', address: '12 Rue de Rivoli, 75001 Paris', city: 'Paris' },
@@ -394,19 +531,13 @@ export function NewSubscriptionDialog({
     email: '',
   };
 
-  const [formData, setFormData] = useState<FormData>({
-    investor: null,
-    structure: null,
-    fund: '',
-    shareClass: '',
-    numberOfShares: '',
-    entryFees: '0',
-    subscriptionPremium: '0',
-    distributor: 'direct',
-    hasCustodyOption: false,
-    notifyOnCreation: true,
-    language: DEFAULT_SUBSCRIPTION_LANGUAGE,
-  });
+  const [formData, setFormData] = useState<FormData>(EMPTY_FORM);
+  const [submitAttempted, setSubmitAttempted] = useState(false);
+  const [distributionPrefilled, setDistributionPrefilled] = useState(false);
+  const [previewRecipient, setPreviewRecipient] = useState<NotificationRecipient | null>(null);
+  const scrollContainerRef = useRef<HTMLDivElement>(null);
+  const updateInternalNote = (patch: Partial<InternalNoteDraft>) =>
+    setFormData((prev) => ({ ...prev, internalNote: { ...prev.internalNote, ...patch } }));
 
   const [newStructure, setNewStructure] = useState({
     name: '',
@@ -503,10 +634,13 @@ export function NewSubscriptionDialog({
       numberOfShares: subscription.quantity ? String(subscription.quantity) : '',
       entryFees: String(subscription.entryFees ?? 0),
       subscriptionPremium: String(subscription.subscriptionPremium ?? 0),
+      isIntermediated: distributorId !== 'direct',
       distributor: distributorId,
       hasCustodyOption: !!subscription.hasDepositary,
       notifyOnCreation: false,
       language: subscription.language === 'en' ? 'en' : 'fr',
+      subscriptionName: subscription.name ?? '',
+      internalNote: EMPTY_INTERNAL_NOTE,
     });
     setExtended({
       holdingMode: subscription.holdingMode ?? '',
@@ -546,19 +680,10 @@ export function NewSubscriptionDialog({
   useEffect(() => {
     if (!open) {
       setTimeout(() => {
-        setFormData({
-          investor: null,
-          structure: null,
-          fund: '',
-          shareClass: '',
-          numberOfShares: '',
-          entryFees: '0',
-          subscriptionPremium: '0',
-          distributor: 'direct',
-          hasCustodyOption: false,
-          notifyOnCreation: true,
-          language: DEFAULT_SUBSCRIPTION_LANGUAGE,
-        });
+        setFormData(EMPTY_FORM);
+        setSubmitAttempted(false);
+        setDistributionPrefilled(false);
+        setPreviewRecipient(null);
         setShowNewStructureForm(false);
         setShowNewInvestorForm(false);
         setNewInvestor(emptyNewInvestor);
@@ -572,28 +697,52 @@ export function NewSubscriptionDialog({
     }
   }, [open]);
 
-  // Auto-select investor's attitled distributor (CGP) as the default. Falls
-  // back to 'direct' when the investor has no CGP, or when the attitled
-  // distributor isn't authorized for the selected fund/share class.
+  // Le partenaire rattaché à l'investisseur, s'il est autorisé sur le fonds et
+  // la part, préremplit toute la distribution et passe la souscription en
+  // intermédiée. Sinon, un préremplissage précédent est annulé et un
+  // distributeur devenu non autorisé est retiré.
   useEffect(() => {
-    if (!formData.investor) return;
+    if (isEditMode || !formData.investor) return;
     const attitledId = formData.investor.distributorId;
-    let next: string;
-    if (!formData.fund || !formData.shareClass) {
-      next = attitledId || 'direct';
-    } else {
-      const attitledAuthorized =
-        attitledId && distributorOptions.some(
-          (d) =>
-            d.id === attitledId &&
-            d.fees.some(
-              (f) => f.fundId === formData.fund && f.shareClass === formData.shareClass,
-            ),
-        );
-      next = attitledAuthorized ? attitledId! : 'direct';
+    const isAuthorized = (distributorId: string) =>
+      distributorOptions.some(
+        (d) =>
+          d.id === distributorId &&
+          d.fees.some((f) => f.fundId === formData.fund && f.shareClass === formData.shareClass),
+      );
+    const attitledAuthorized =
+      !!attitledId && !!formData.fund && !!formData.shareClass && isAuthorized(attitledId);
+
+    if (attitledAuthorized) {
+      setFormData((prev) => ({ ...prev, isIntermediated: true, distributor: attitledId! }));
+      setDistributionPrefilled(true);
+      return;
     }
-    setFormData((prev) => (prev.distributor === next ? prev : { ...prev, distributor: next }));
+    setFormData((prev) => {
+      if (distributionPrefilled) return { ...prev, isIntermediated: false, distributor: 'direct' };
+      if (prev.isIntermediated && prev.distributor && !isAuthorized(prev.distributor)) {
+        return { ...prev, distributor: '' };
+      }
+      return prev;
+    });
+    setDistributionPrefilled(false);
   }, [formData.investor, formData.fund, formData.shareClass]);
+
+  const handleIntermediatedChange = (intermediated: boolean) => {
+    setDistributionPrefilled(false);
+    if (!intermediated) {
+      setFormData((prev) => ({ ...prev, isIntermediated: false, distributor: 'direct' }));
+      return;
+    }
+    const attitledId = formData.investor?.distributorId;
+    const next =
+      attitledId && authorizedDistributors.some((d) => d.id === attitledId)
+        ? attitledId
+        : authorizedDistributors.length === 1
+          ? authorizedDistributors[0].id
+          : '';
+    setFormData((prev) => ({ ...prev, isIntermediated: true, distributor: next }));
+  };
 
   // Default the onboarding/communication language to the selected investor's
   // preferred language. The user can still override the value manually.
@@ -703,13 +852,13 @@ export function NewSubscriptionDialog({
     const cleaned = raw.replace(/[^0-9.,]/g, '').replace(',', '.');
     const amount = parseFloat(cleaned);
     if (!Number.isFinite(amount) || amount <= 0) {
-      setFormData({ ...formData, numberOfShares: '' });
+      setFormData((prev) => ({ ...prev, numberOfShares: '' }));
       return;
     }
     const shares = amount / sharePrice;
     // Strip trailing zeros from a max-4-decimal representation
     const formatted = parseFloat(shares.toFixed(4)).toString();
-    setFormData({ ...formData, numberOfShares: formatted });
+    setFormData((prev) => ({ ...prev, numberOfShares: formatted }));
   };
 
   const calculatedEntryFees = useMemo(
@@ -722,25 +871,142 @@ export function NewSubscriptionDialog({
     [calculatedEntryFees, subscriptionPremiumAmount],
   );
 
-  // Validation
-  const isFormValid =
-    formData.investor !== null &&
-    formData.structure !== null &&
+  const noAuthorizedDistributor =
+    formData.isIntermediated &&
     !!formData.fund &&
     !!formData.shareClass &&
-    !!formData.numberOfShares &&
-    parseFloat(formData.numberOfShares) > 0;
+    authorizedDistributors.length === 0;
+
+  const errors = useMemo(() => {
+    const e: Partial<Record<FieldKey, string>> = {};
+    if (!formData.investor) e.investor = t('subscriptions.newDialog.errors.investorRequired');
+    else if (formData.structure === null) e.structure = t('subscriptions.newDialog.errors.structureRequired');
+    if (!formData.fund) e.fund = t('subscriptions.newDialog.errors.fundRequired');
+    if (!formData.shareClass) e.shareClass = t('subscriptions.newDialog.errors.shareClassRequired');
+    if (!(parseFloat(formData.numberOfShares) > 0)) e.amount = t('subscriptions.newDialog.errors.amountRequired');
+    if (noAuthorizedDistributor) {
+      e.distributor = t('subscriptions.newDialog.errors.noAuthorizedDistributor');
+    } else if (formData.isIntermediated && (!formData.distributor || formData.distributor === 'direct')) {
+      e.distributor = t('subscriptions.newDialog.errors.distributorRequired');
+    }
+    if (formData.internalNote.enabled && !formData.internalNote.content.trim()) {
+      e.internalNote = t('subscriptions.newDialog.errors.noteContentRequired');
+    }
+    return e;
+  }, [formData, noAuthorizedDistributor, t]);
+
+  const isFormValid = Object.keys(errors).length === 0;
+
+  // Les erreurs de saisie s'affichent sous leur champ après une première
+  // tentative de création ; un fonds sans distributeur autorisé est signalé
+  // tout de suite car il dépend du contexte, pas d'un oubli.
+  const fieldError = (key: FieldKey): string | undefined =>
+    submitAttempted || (key === 'distributor' && noAuthorizedDistributor) ? errors[key] : undefined;
+
+  const belowMinimumWarning =
+    minAmount !== undefined && calculatedAmount > 0 && calculatedAmount < minAmount
+      ? t('subscriptions.newDialog.errors.belowMinimum', { min: minAmount.toLocaleString('fr-FR') })
+      : undefined;
+
+  const revealErrors = () => {
+    setSubmitAttempted(true);
+    requestAnimationFrame(() => {
+      const first = scrollContainerRef.current?.querySelector('[data-field-error="true"]');
+      first?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    });
+  };
+
+  const selectedFundName = fundOptions.find((f) => f.id === formData.fund)?.name ?? '';
+  const selectedDistributorName =
+    formData.isIntermediated && formData.distributor && formData.distributor !== 'direct'
+      ? distributorOptions.find((d) => d.id === formData.distributor)?.name ?? ''
+      : '';
+  const generatedSubscriptionName =
+    formData.investor && selectedFundName && formData.shareClass && calculatedAmount > 0
+      ? generateSubscriptionName(formData.investor.name, calculatedAmount, selectedFundName, formData.shareClass)
+      : '';
+  const effectiveSubscriptionName = formData.subscriptionName.trim() || generatedSubscriptionName;
+
+  const notificationRecipients = useMemo<NotificationRecipient[]>(() => {
+    if (!formData.investor) return [];
+    const team: NotificationRecipient = {
+      role: 'team',
+      name: t('subscriptions.newDialog.review.internalTeam'),
+      template: findTemplate(CREATION_TEMPLATE_SLUGS.team),
+    };
+    if (formData.isIntermediated) {
+      return [
+        {
+          role: 'partner',
+          name: selectedDistributorName || t('subscriptions.newDialog.review.partnerToSelect'),
+          template: findTemplate(CREATION_TEMPLATE_SLUGS.partner),
+        },
+        team,
+      ];
+    }
+    return [
+      {
+        role: 'investor',
+        name: formData.investor.name,
+        detail: formData.investor.email,
+        template: findTemplate(CREATION_TEMPLATE_SLUGS.investor),
+      },
+      team,
+    ];
+  }, [formData.investor, formData.isIntermediated, selectedDistributorName, t]);
+
+  const previewDocument = useMemo(() => {
+    const template = previewRecipient?.template;
+    if (!template) return null;
+    const content = template[formData.language];
+    const investorName = formData.investor?.name ?? PREVIEW_VALUES.$investor;
+    const [firstName, ...rest] = investorName.split(/\s+/);
+    const amountLabel =
+      calculatedAmount > 0
+        ? `${calculatedAmount.toLocaleString('fr-FR', { minimumFractionDigits: 2 })} €`
+        : PREVIEW_VALUES.$amount;
+    const values: Record<string, string> = {
+      ...PREVIEW_VALUES,
+      $investor: investorName,
+      '$investor.name': investorName,
+      '$investor.firstname': firstName,
+      '$investor.lastname': rest.join(' '),
+      $prenom: firstName,
+      $nom: rest.join(' '),
+      $campaign: selectedFundName || PREVIEW_VALUES.$campaign,
+      $fund: selectedFundName || PREVIEW_VALUES.$fund,
+      $amount: amountLabel,
+      '$subscription.amount': amountLabel,
+      $subscriptionname: effectiveSubscriptionName || PREVIEW_VALUES.$subscriptionname,
+      ...(selectedDistributorName
+        ? { $partner: selectedDistributorName, '$partner.name': selectedDistributorName }
+        : {}),
+    };
+    const resolveSubject = content.subject.replace(
+      /\$[a-zA-Z_][\w]*(?:\.[a-zA-Z_][\w]*)*/g,
+      (token) => values[token] ?? token,
+    );
+    return { subject: resolveSubject, html: buildPreviewDocument(content.html, values) };
+  }, [
+    previewRecipient,
+    formData.language,
+    formData.investor,
+    calculatedAmount,
+    selectedFundName,
+    selectedDistributorName,
+    effectiveSubscriptionName,
+  ]);
 
   const handleInvestorSelect = (investor: Investor) => {
     const noStructures = !investor.structures || investor.structures.length === 0;
-    setFormData({
-      ...formData,
+    setFormData((prev) => ({
+      ...prev,
       investor,
       // No structures available → default the subscription to direct so the
       // user doesn't have to make a non-choice. They can still 'Ajouter une
       // structure' if they need to.
       structure: noStructures ? 'direct' : null,
-    });
+    }));
     setSearchQuery('');
     setStructureFilter('');
     setShowAutocomplete(false);
@@ -748,24 +1014,24 @@ export function NewSubscriptionDialog({
 
   const handleStructureFromSearchSelect = (structureWithOwner: StructureWithOwner) => {
     const { owner, ...structure } = structureWithOwner;
-    setFormData({ ...formData, investor: owner, structure });
+    setFormData((prev) => ({ ...prev, investor: owner, structure }));
     setSearchQuery('');
     setStructureFilter('');
     setShowAutocomplete(false);
   };
 
   const handleStructureSelect = (structure: Structure) => {
-    setFormData({ ...formData, structure });
+    setFormData((prev) => ({ ...prev, structure }));
     setShowNewStructureForm(false);
     setStructureFilter('');
   };
 
   const handleDirectInvestment = () => {
-    setFormData({ ...formData, structure: 'direct' });
+    setFormData((prev) => ({ ...prev, structure: 'direct' }));
   };
 
   const handleClearInvestor = () => {
-    setFormData({ ...formData, investor: null, structure: null });
+    setFormData((prev) => ({ ...prev, investor: null, structure: null }));
     setStructureFilter('');
   };
 
@@ -806,7 +1072,7 @@ export function NewSubscriptionDialog({
       structures: [],
     };
     // A freshly created investor has no structures yet → default to direct.
-    setFormData({ ...formData, investor, structure: 'direct' });
+    setFormData((prev) => ({ ...prev, investor, structure: 'direct' }));
     setShowNewInvestorForm(false);
     setNewInvestor(emptyNewInvestor);
     setSearchQuery('');
@@ -814,7 +1080,7 @@ export function NewSubscriptionDialog({
   };
 
   const handleClearStructure = () => {
-    setFormData({ ...formData, structure: null });
+    setFormData((prev) => ({ ...prev, structure: null }));
   };
 
   const handleCreateStructure = () => {
@@ -831,15 +1097,15 @@ export function NewSubscriptionDialog({
       address: newStructure.address,
     };
 
-    setFormData({ ...formData, structure });
+    setFormData((prev) => ({ ...prev, structure }));
     setShowNewStructureForm(false);
     setNewStructure({ name: '', siret: '', country: 'France', address: '' });
     toast.success(t('subscriptions.newDialog.toast.structureCreated', { name: structure.name }));
   };
 
   const handleSubmit = async () => {
-    if (!formData.investor || !formData.fund || !formData.shareClass || !formData.numberOfShares) {
-      toast.error(t('subscriptions.newDialog.errors.incompleteData'));
+    if (!formData.investor || !isFormValid) {
+      revealErrors();
       return;
     }
 
@@ -931,7 +1197,7 @@ export function NewSubscriptionDialog({
     // Créer la nouvelle souscription
     const newSubscription: any = {
       id: Date.now(), // ID temporaire basé sur le timestamp
-      name: `${formData.investor.name} - €${calculatedAmount / 1000}K - ${fundName} Part ${formData.shareClass}`,
+      name: effectiveSubscriptionName,
       status: 'Draft',
       type: formData.investor.type === 'individual' ? 'Individual' : 'Corporate',
       // The detail page reads this to land on the Initialisation step (0)
@@ -955,15 +1221,31 @@ export function NewSubscriptionDialog({
         shareClass: formData.shareClass,
         numberOfShares: formData.numberOfShares,
         totalAmount: calculatedAmount,
+        isIntermediated: formData.isIntermediated,
         distributorId: formData.distributor,
         distributorName,
+        advisor: formData.isIntermediated ? extended.advisor.trim() || undefined : undefined,
+        commissionRate: formData.isIntermediated ? parseFloat(extended.commissionRate) || 0 : 0,
+        excludeRetrocessions: formData.isIntermediated && extended.excludeRetrocessions,
         entryFeePercent,
         entryFeesAmount: calculatedEntryFees,
         subscriptionPremiumAmount,
         totalFees: calculatedFees,
         hasCustodyOption: formData.hasCustodyOption,
         notifyOnCreation: formData.notifyOnCreation,
+        notificationRecipients: formData.notifyOnCreation
+          ? notificationRecipients.map((r) => ({ role: r.role, name: r.name, templateSlug: r.template?.slug }))
+          : [],
         language: formData.language,
+        subscriptionName: effectiveSubscriptionName,
+        isSubscriptionNameGenerated: !formData.subscriptionName.trim(),
+        internalNote: formData.internalNote.enabled
+          ? {
+              type: formData.internalNote.type,
+              priority: formData.internalNote.priority,
+              content: formData.internalNote.content.trim(),
+            }
+          : null,
         documents: uploadedDocuments.map((file) => ({ name: file.name, size: file.size })),
       },
       contrepartie: {
@@ -1036,7 +1318,7 @@ export function NewSubscriptionDialog({
 
   const handleProceedToDocuments = () => {
     if (!isFormValid) {
-      toast.error(t('subscriptions.newDialog.errors.incompleteData'));
+      revealErrors();
       return;
     }
     setStep('documents');
@@ -1096,218 +1378,173 @@ export function NewSubscriptionDialog({
           </div>
 
           {/* Step content */}
-          <div className="flex-1 overflow-y-auto px-8 py-6">
+          <div ref={scrollContainerRef} className="flex-1 overflow-y-auto px-8 py-6">
             {step === 'init' && (
-            <div className="flex flex-col gap-6">
-                  {/* INVESTOR SECTION */}
-                  <div className="space-y-2">
-                    <Label className="text-xs uppercase tracking-wide font-semibold text-muted-foreground flex items-center gap-1.5">
-                      <User className="w-3.5 h-3.5" />
-                      {t('subscriptions.newDialog.investorLabel')}{' '}
-                      <span className="text-destructive">*</span>
-                    </Label>
+              <div className="flex flex-col gap-8">
+                  <FormSection
+                    index={1}
+                    icon={User}
+                    title={t('subscriptions.newDialog.sections.investor')}
+                    description={t('subscriptions.newDialog.sections.investorDesc')}
+                  >
+                    {/* INVESTOR */}
+                    <div className="space-y-2" data-field-error={!!fieldError('investor')}>
+                      <Label className="text-xs uppercase tracking-wide font-semibold text-muted-foreground flex items-center gap-1.5">
+                        <User className="w-3.5 h-3.5" />
+                        {t('subscriptions.newDialog.investorLabel')}{' '}
+                        <span className="text-destructive">*</span>
+                      </Label>
 
-                    {showNewInvestorForm ? (
-                      <div className="border border-border bg-card rounded-xl p-4 space-y-3">
-                        <div className="flex items-center justify-between">
-                          <div className="flex items-center gap-2">
-                            <Sparkles className="w-4 h-4 text-primary" />
-                            <span className="font-semibold text-sm">{t('subscriptions.newDialog.newInvestor')}</span>
+                      {showNewInvestorForm ? (
+                        <div className="border border-border bg-card rounded-xl p-4 space-y-3">
+                          <div className="flex items-center justify-between">
+                            <div className="flex items-center gap-2">
+                              <Sparkles className="w-4 h-4 text-primary" />
+                              <span className="font-semibold text-sm">{t('subscriptions.newDialog.newInvestor')}</span>
+                            </div>
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              onClick={() => {
+                                setShowNewInvestorForm(false);
+                                setNewInvestor(emptyNewInvestor);
+                              }}
+                              className="h-7 w-7 p-0"
+                            >
+                              <X className="w-4 h-4" />
+                            </Button>
                           </div>
-                          <Button
-                            variant="ghost"
-                            size="sm"
-                            onClick={() => {
-                              setShowNewInvestorForm(false);
-                              setNewInvestor(emptyNewInvestor);
-                            }}
-                            className="h-7 w-7 p-0"
-                          >
-                            <X className="w-4 h-4" />
-                          </Button>
-                        </div>
 
-                        <div className="grid grid-cols-2 gap-2">
-                          <Button
-                            type="button"
-                            size="sm"
-                            variant={newInvestor.type === 'individual' ? 'primary' : 'outline'}
-                            onClick={() => setNewInvestor({ ...newInvestor, type: 'individual' })}
-                          >
-                            <User className="w-3 h-3 mr-1" />
-                            {t('subscriptions.newDialog.individual')}
-                          </Button>
-                          <Button
-                            type="button"
-                            size="sm"
-                            variant={newInvestor.type === 'corporate' ? 'primary' : 'outline'}
-                            onClick={() => setNewInvestor({ ...newInvestor, type: 'corporate' })}
-                          >
-                            <Building2 className="w-3 h-3 mr-1" />
-                            {t('subscriptions.newDialog.corporate')}
-                          </Button>
-                        </div>
-
-                        {newInvestor.type === 'individual' ? (
                           <div className="grid grid-cols-2 gap-2">
-                            <div>
-                              <Label className="text-xs mb-1">
-                                {t('subscriptions.newDialog.firstName')}{' '}
-                                <span className="text-destructive">*</span>
-                              </Label>
-                              <Input
-                                value={newInvestor.firstName}
-                                onChange={(e) => setNewInvestor({ ...newInvestor, firstName: e.target.value })}
-                                placeholder="Sophie"
-                                className="h-9"
-                              />
-                            </div>
-                            <div>
-                              <Label className="text-xs mb-1">
-                                {t('subscriptions.newDialog.lastName')}{' '}
-                                <span className="text-destructive">*</span>
-                              </Label>
-                              <Input
-                                value={newInvestor.lastName}
-                                onChange={(e) => setNewInvestor({ ...newInvestor, lastName: e.target.value })}
-                                placeholder="Martin"
-                                className="h-9"
-                              />
-                            </div>
+                            <Button
+                              type="button"
+                              size="sm"
+                              variant={newInvestor.type === 'individual' ? 'primary' : 'outline'}
+                              onClick={() => setNewInvestor({ ...newInvestor, type: 'individual' })}
+                            >
+                              <User className="w-3 h-3 mr-1" />
+                              {t('subscriptions.newDialog.individual')}
+                            </Button>
+                            <Button
+                              type="button"
+                              size="sm"
+                              variant={newInvestor.type === 'corporate' ? 'primary' : 'outline'}
+                              onClick={() => setNewInvestor({ ...newInvestor, type: 'corporate' })}
+                            >
+                              <Building2 className="w-3 h-3 mr-1" />
+                              {t('subscriptions.newDialog.corporate')}
+                            </Button>
                           </div>
-                        ) : (
+
+                          {newInvestor.type === 'individual' ? (
+                            <div className="grid grid-cols-2 gap-2">
+                              <div>
+                                <Label className="text-xs mb-1">
+                                  {t('subscriptions.newDialog.firstName')}{' '}
+                                  <span className="text-destructive">*</span>
+                                </Label>
+                                <Input
+                                  value={newInvestor.firstName}
+                                  onChange={(e) => setNewInvestor({ ...newInvestor, firstName: e.target.value })}
+                                  placeholder="Sophie"
+                                  className="h-9"
+                                />
+                              </div>
+                              <div>
+                                <Label className="text-xs mb-1">
+                                  {t('subscriptions.newDialog.lastName')}{' '}
+                                  <span className="text-destructive">*</span>
+                                </Label>
+                                <Input
+                                  value={newInvestor.lastName}
+                                  onChange={(e) => setNewInvestor({ ...newInvestor, lastName: e.target.value })}
+                                  placeholder="Martin"
+                                  className="h-9"
+                                />
+                              </div>
+                            </div>
+                          ) : (
+                            <div>
+                              <Label className="text-xs mb-1">
+                                {t('subscriptions.newDialog.legalName')}{' '}
+                                <span className="text-destructive">*</span>
+                              </Label>
+                              <Input
+                                value={newInvestor.legalName}
+                                onChange={(e) => setNewInvestor({ ...newInvestor, legalName: e.target.value })}
+                                placeholder="Alpha Capital Holding SAS"
+                                className="h-9"
+                              />
+                            </div>
+                          )}
+
                           <div>
                             <Label className="text-xs mb-1">
-                              {t('subscriptions.newDialog.legalName')}{' '}
+                              {t('subscriptions.newDialog.email')}{' '}
                               <span className="text-destructive">*</span>
                             </Label>
                             <Input
-                              value={newInvestor.legalName}
-                              onChange={(e) => setNewInvestor({ ...newInvestor, legalName: e.target.value })}
-                              placeholder="Alpha Capital Holding SAS"
+                              type="email"
+                              value={newInvestor.email}
+                              onChange={(e) => setNewInvestor({ ...newInvestor, email: e.target.value })}
+                              placeholder={t('subscriptions.newDialog.emailPlaceholder')}
                               className="h-9"
                             />
                           </div>
-                        )}
 
-                        <div>
-                          <Label className="text-xs mb-1">
-                            {t('subscriptions.newDialog.email')}{' '}
-                            <span className="text-destructive">*</span>
-                          </Label>
-                          <Input
-                            type="email"
-                            value={newInvestor.email}
-                            onChange={(e) => setNewInvestor({ ...newInvestor, email: e.target.value })}
-                            placeholder={t('subscriptions.newDialog.emailPlaceholder')}
-                            className="h-9"
-                          />
+                          <div className="flex gap-2 pt-1">
+                            <Button
+                              size="sm"
+                              variant="outline"
+                              onClick={() => {
+                                setShowNewInvestorForm(false);
+                                setNewInvestor(emptyNewInvestor);
+                              }}
+                              className="h-9"
+                            >
+                              {t('subscriptions.newDialog.cancel')}
+                            </Button>
+                            <Button
+                              onClick={handleCreateInvestor}
+                              size="sm"
+                              className="flex-1 bg-primary text-primary-foreground h-9"
+                            >
+                              <Check className="w-3 h-3 mr-1" />
+                              {t('subscriptions.newDialog.createAndSelect')}
+                            </Button>
+                          </div>
                         </div>
+                      ) : !formData.investor ? (
+                        <>
+                          <div className="relative">
+                            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground z-10 pointer-events-none" />
+                            <Input
+                              ref={inputRef}
+                              placeholder={t('subscriptions.newDialog.searchInvestorOrStructurePlaceholder')}
+                              value={searchQuery}
+                              onChange={(e) => setSearchQuery(e.target.value)}
+                              onFocus={() => setSearchFocused(true)}
+                              onBlur={() => setTimeout(() => setSearchFocused(false), 150)}
+                              className="pl-10 h-10"
+                            />
 
-                        <div className="flex gap-2 pt-1">
-                          <Button
-                            size="sm"
-                            variant="outline"
-                            onClick={() => {
-                              setShowNewInvestorForm(false);
-                              setNewInvestor(emptyNewInvestor);
-                            }}
-                            className="h-9"
-                          >
-                            {t('subscriptions.newDialog.cancel')}
-                          </Button>
-                          <Button
-                            onClick={handleCreateInvestor}
-                            size="sm"
-                            className="flex-1 bg-primary text-primary-foreground h-9"
-                          >
-                            <Check className="w-3 h-3 mr-1" />
-                            {t('subscriptions.newDialog.createAndSelect')}
-                          </Button>
-                        </div>
-                      </div>
-                    ) : !formData.investor ? (
-                      <>
-                        <div className="relative">
-                          <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground z-10 pointer-events-none" />
-                          <Input
-                            ref={inputRef}
-                            placeholder={t('subscriptions.newDialog.searchInvestorOrStructurePlaceholder')}
-                            value={searchQuery}
-                            onChange={(e) => setSearchQuery(e.target.value)}
-                            onFocus={() => setSearchFocused(true)}
-                            onBlur={() => setTimeout(() => setSearchFocused(false), 150)}
-                            className="pl-10 h-10"
-                          />
-
-                          <AnimatePresence>
-                            {showAutocomplete && (
-                              <motion.div
-                                initial={{ opacity: 0, y: -8 }}
-                                animate={{ opacity: 1, y: 0 }}
-                                exit={{ opacity: 0, y: -8 }}
-                                transition={{ duration: 0.15 }}
-                                className="absolute top-full left-0 right-0 mt-1 bg-card border border-border rounded-xl shadow-lg z-50 overflow-hidden max-h-[320px] overflow-y-auto"
-                              >
-                                {!searchQuery.trim() ? (
-                                  <div>
-                                    <div className="px-3 pt-2 pb-1 text-[10px] font-semibold uppercase tracking-wide text-muted-foreground">
-                                      {t('subscriptions.newDialog.recentlyAdded')}
-                                    </div>
-                                    {recentInvestors.map((investor) => (
-                                      <button
-                                        key={`recent-${investor.id}`}
-                                        type="button"
-                                        onMouseDown={(e) => e.preventDefault()}
-                                        onClick={() => handleInvestorSelect(investor)}
-                                        className="w-full px-3 py-2 hover:bg-muted transition-colors text-left flex items-center gap-3 border-b border-border last:border-0"
-                                      >
-                                        <PartyTypeBadge
-                                          type={investor.type === 'individual' ? 'individual' : 'corporate'}
-                                          label={null}
-                                        />
-                                        <div className="flex-1 min-w-0">
-                                          <div className="text-sm font-medium text-foreground truncate">
-                                            {investor.name}
-                                          </div>
-                                          <div className="text-xs text-muted-foreground truncate">
-                                            {investor.email}
-                                          </div>
-                                        </div>
-                                        {investor.structures && investor.structures.length > 0 && (
-                                          <span className="text-[11px] text-muted-foreground shrink-0 inline-flex items-center gap-1">
-                                            <Building2 className="w-3 h-3" />
-                                            {investor.structures.length}
-                                          </span>
-                                        )}
-                                      </button>
-                                    ))}
-                                  </div>
-                                ) : filteredInvestors.length === 0 && filteredStructuresWithOwner.length === 0 ? (
-                                <div className="p-4 text-center">
-                                  <p className="text-xs text-muted-foreground mb-3">
-                                    {t('subscriptions.newDialog.noResultFound', { query: searchQuery })}
-                                  </p>
-                                  <Button
-                                    onMouseDown={(e) => e.preventDefault()}
-                                    onClick={handleQuickCreateInvestor}
-                                    size="sm"
-                                    className="bg-primary text-primary-foreground h-9"
-                                  >
-                                    <Plus className="w-4 h-4 mr-2" />
-                                    {t('subscriptions.newDialog.createInvestorWithName', { query: searchQuery })}
-                                  </Button>
-                                </div>
-                              ) : (
-                                <>
-                                  {filteredInvestors.length > 0 && (
+                            <AnimatePresence>
+                              {showAutocomplete && (
+                                <motion.div
+                                  initial={{ opacity: 0, y: -8 }}
+                                  animate={{ opacity: 1, y: 0 }}
+                                  exit={{ opacity: 0, y: -8 }}
+                                  transition={{ duration: 0.15 }}
+                                  className="absolute top-full left-0 right-0 mt-1 bg-card border border-border rounded-xl shadow-lg z-50 overflow-hidden max-h-[320px] overflow-y-auto"
+                                >
+                                  {!searchQuery.trim() ? (
                                     <div>
                                       <div className="px-3 pt-2 pb-1 text-[10px] font-semibold uppercase tracking-wide text-muted-foreground">
-                                        {t('subscriptions.newDialog.groupInvestors')}
+                                        {t('subscriptions.newDialog.recentlyAdded')}
                                       </div>
-                                      {filteredInvestors.map((investor) => (
+                                      {recentInvestors.map((investor) => (
                                         <button
-                                          key={`inv-${investor.id}`}
+                                          key={`recent-${investor.id}`}
                                           type="button"
                                           onMouseDown={(e) => e.preventDefault()}
                                           onClick={() => handleInvestorSelect(investor)}
@@ -1334,290 +1571,302 @@ export function NewSubscriptionDialog({
                                         </button>
                                       ))}
                                     </div>
-                                  )}
-
-                                  {filteredStructuresWithOwner.length > 0 && (
-                                    <div className="border-t border-border">
-                                      <div className="px-3 pt-2 pb-1 text-[10px] font-semibold uppercase tracking-wide text-muted-foreground">
-                                        {t('subscriptions.newDialog.groupStructures')}
+                                  ) : filteredInvestors.length === 0 && filteredStructuresWithOwner.length === 0 ? (
+                                  <div className="p-4 text-center">
+                                    <p className="text-xs text-muted-foreground mb-3">
+                                      {t('subscriptions.newDialog.noResultFound', { query: searchQuery })}
+                                    </p>
+                                    <Button
+                                      onMouseDown={(e) => e.preventDefault()}
+                                      onClick={handleQuickCreateInvestor}
+                                      size="sm"
+                                      className="bg-primary text-primary-foreground h-9"
+                                    >
+                                      <Plus className="w-4 h-4 mr-2" />
+                                      {t('subscriptions.newDialog.createInvestorWithName', { query: searchQuery })}
+                                    </Button>
+                                  </div>
+                                ) : (
+                                  <>
+                                    {filteredInvestors.length > 0 && (
+                                      <div>
+                                        <div className="px-3 pt-2 pb-1 text-[10px] font-semibold uppercase tracking-wide text-muted-foreground">
+                                          {t('subscriptions.newDialog.groupInvestors')}
+                                        </div>
+                                        {filteredInvestors.map((investor) => (
+                                          <button
+                                            key={`inv-${investor.id}`}
+                                            type="button"
+                                            onMouseDown={(e) => e.preventDefault()}
+                                            onClick={() => handleInvestorSelect(investor)}
+                                            className="w-full px-3 py-2 hover:bg-muted transition-colors text-left flex items-center gap-3 border-b border-border last:border-0"
+                                          >
+                                            <PartyTypeBadge
+                                              type={investor.type === 'individual' ? 'individual' : 'corporate'}
+                                              label={null}
+                                            />
+                                            <div className="flex-1 min-w-0">
+                                              <div className="text-sm font-medium text-foreground truncate">
+                                                {investor.name}
+                                              </div>
+                                              <div className="text-xs text-muted-foreground truncate">
+                                                {investor.email}
+                                              </div>
+                                            </div>
+                                            {investor.structures && investor.structures.length > 0 && (
+                                              <span className="text-[11px] text-muted-foreground shrink-0 inline-flex items-center gap-1">
+                                                <Building2 className="w-3 h-3" />
+                                                {investor.structures.length}
+                                              </span>
+                                            )}
+                                          </button>
+                                        ))}
                                       </div>
-                                      {filteredStructuresWithOwner.map((s) => (
-                                        <button
-                                          key={`str-${s.id}`}
-                                          type="button"
-                                          onMouseDown={(e) => e.preventDefault()}
-                                          onClick={() => handleStructureFromSearchSelect(s)}
-                                          className="w-full px-3 py-2 hover:bg-muted transition-colors text-left flex items-center gap-3 border-b border-border last:border-0"
-                                        >
-                                          <div className="size-8 rounded-md bg-muted flex items-center justify-center shrink-0">
-                                            <Building2 className="w-4 h-4 text-muted-foreground" />
-                                          </div>
-                                          <div className="flex-1 min-w-0">
-                                            <div className="text-sm font-medium text-foreground truncate">
-                                              {s.name}
+                                    )}
+
+                                    {filteredStructuresWithOwner.length > 0 && (
+                                      <div className="border-t border-border">
+                                        <div className="px-3 pt-2 pb-1 text-[10px] font-semibold uppercase tracking-wide text-muted-foreground">
+                                          {t('subscriptions.newDialog.groupStructures')}
+                                        </div>
+                                        {filteredStructuresWithOwner.map((s) => (
+                                          <button
+                                            key={`str-${s.id}`}
+                                            type="button"
+                                            onMouseDown={(e) => e.preventDefault()}
+                                            onClick={() => handleStructureFromSearchSelect(s)}
+                                            className="w-full px-3 py-2 hover:bg-muted transition-colors text-left flex items-center gap-3 border-b border-border last:border-0"
+                                          >
+                                            <div className="size-8 rounded-md bg-muted flex items-center justify-center shrink-0">
+                                              <Building2 className="w-4 h-4 text-muted-foreground" />
                                             </div>
-                                            <div className="text-xs text-muted-foreground truncate">
-                                              {t('subscriptions.newDialog.ownedBy', { name: s.owner.name })} · {s.siret}
+                                            <div className="flex-1 min-w-0">
+                                              <div className="text-sm font-medium text-foreground truncate">
+                                                {s.name}
+                                              </div>
+                                              <div className="text-xs text-muted-foreground truncate">
+                                                {t('subscriptions.newDialog.ownedBy', { name: s.owner.name })} · {s.siret}
+                                              </div>
                                             </div>
-                                          </div>
-                                          <Badge variant="outline" className="text-[10px] h-5 shrink-0">
-                                            {s.country}
-                                          </Badge>
-                                        </button>
-                                      ))}
-                                    </div>
-                                  )}
+                                            <Badge variant="outline" className="text-[10px] h-5 shrink-0">
+                                              {s.country}
+                                            </Badge>
+                                          </button>
+                                        ))}
+                                      </div>
+                                    )}
 
-                                  <button
-                                    type="button"
-                                    onMouseDown={(e) => e.preventDefault()}
-                                    onClick={handleQuickCreateInvestor}
-                                    className="w-full px-3 py-2 hover:bg-muted transition-colors text-left flex items-center gap-2 border-t border-border text-sm text-primary"
-                                  >
-                                    <Plus className="w-4 h-4" />
-                                    {t('subscriptions.newDialog.createNewInvestor')}
-                                  </button>
-                                </>
-                              )}
-                            </motion.div>
-                          )}
-                        </AnimatePresence>
-                        </div>
-
-                        <Button
-                          type="button"
-                          onClick={handleQuickCreateInvestor}
-                          variant="outline"
-                          className="w-full border-dashed h-9"
-                        >
-                          <Plus className="w-4 h-4 mr-2" />
-                          {t('subscriptions.newDialog.createNewInvestor')}
-                        </Button>
-                      </>
-                    ) : (
-                      <div className="flex h-10 w-full items-center gap-2 rounded-md border border-input bg-white px-3 py-2 text-sm">
-                        <PartyTypeBadge
-                          type={formData.investor.type === 'individual' ? 'individual' : 'corporate'}
-                          label={
-                            formData.investor.type === 'individual'
-                              ? t('subscriptions.newDialog.shortIndividual')
-                              : t('subscriptions.newDialog.shortCorporate')
-                          }
-                        />
-                        <span className="font-medium text-foreground truncate">
-                          {formData.investor.name}
-                        </span>
-                        <span className="text-xs text-muted-foreground truncate hidden sm:inline">
-                          {formData.investor.email}
-                        </span>
-                        <button
-                          type="button"
-                          onClick={handleClearInvestor}
-                          aria-label={t('subscriptions.newDialog.change')}
-                          className="ml-auto inline-flex size-6 items-center justify-center rounded-md text-muted-foreground hover:bg-muted hover:text-foreground transition-colors"
-                        >
-                          <X className="w-3.5 h-3.5" />
-                        </button>
-                      </div>
-                    )}
-                  </div>
-
-                  {/* STRUCTURE SECTION */}
-                  {formData.investor && (() => {
-                    const investorHasStructures =
-                      (formData.investor.structures?.length ?? 0) > 0;
-                    const isOptional = !investorHasStructures && !showNewStructureForm;
-
-                    return (
-                    <div className="space-y-2">
-                      <Label
-                        className={`text-xs uppercase tracking-wide font-semibold flex items-center gap-1.5 ${
-                          isOptional ? 'text-muted-foreground/70' : 'text-muted-foreground'
-                        }`}
-                      >
-                        <Building2 className="w-3.5 h-3.5" />
-                        {t('subscriptions.newDialog.structureLabel')}
-                        {isOptional ? (
-                          <span className="text-muted-foreground/70 font-normal normal-case tracking-normal">
-                            {t('subscriptions.newDialog.optional')}
-                          </span>
-                        ) : (
-                          <span className="text-destructive">*</span>
-                        )}
-                      </Label>
-
-                      {showNewStructureForm ? (
-                        /* New Structure Form */
-                        <div className="border border-border bg-card rounded-xl p-4">
-                          <div className="flex items-center justify-between mb-3">
-                            <div className="flex items-center gap-2">
-                              <Sparkles className="w-4 h-4 text-primary" />
-                              <span className="font-semibold text-sm">{t('subscriptions.newDialog.newStructure')}</span>
-                            </div>
-                            <Button
-                              variant="ghost"
-                              size="sm"
-                              onClick={() => {
-                                setShowNewStructureForm(false);
-                                setNewStructure({ name: '', siret: '', country: 'France', address: '' });
-                              }}
-                              className="h-7 w-7 p-0"
-                            >
-                              <X className="w-4 h-4" />
-                            </Button>
+                                  </>
+                                )}
+                              </motion.div>
+                            )}
+                          </AnimatePresence>
                           </div>
-                          <div className="space-y-2">
-                            <div>
-                              <Label className="text-xs mb-1">
-                                {t('subscriptions.newDialog.legalName')}{' '}
-                                <span className="text-destructive">*</span>
-                              </Label>
-                              <Input
-                                value={newStructure.name}
-                                onChange={(e) => setNewStructure({ ...newStructure, name: e.target.value })}
-                                placeholder="Alpha Capital Holding SAS"
-                                className="h-9"
-                              />
-                            </div>
-                            <div className="grid grid-cols-2 gap-2">
-                              <div>
-                                <Label className="text-xs mb-1">
-                                  {t('subscriptions.newDialog.siret')}{' '}
-                                  <span className="text-destructive">*</span>
-                                </Label>
-                                <Input
-                                  value={newStructure.siret}
-                                  onChange={(e) => setNewStructure({ ...newStructure, siret: e.target.value })}
-                                  placeholder="123 456 789 00012"
-                                  className="h-9"
-                                />
-                              </div>
-                              <div>
-                                <Label className="text-xs mb-1">{t('subscriptions.newDialog.countryLabel')}</Label>
-                                <Input
-                                  value={newStructure.country}
-                                  onChange={(e) => setNewStructure({ ...newStructure, country: e.target.value })}
-                                  placeholder="France"
-                                  className="h-9"
-                                />
-                              </div>
-                            </div>
-                            <div>
-                              <Label className="text-xs mb-1">{t('subscriptions.newDialog.addressLabel')}</Label>
-                              <Input
-                                value={newStructure.address}
-                                onChange={(e) => setNewStructure({ ...newStructure, address: e.target.value })}
-                                placeholder="12 Rue de Rivoli, 75001 Paris"
-                                className="h-9"
-                              />
-                            </div>
-                            <div className="flex gap-2 pt-1">
-                              <Button
-                                size="sm"
-                                variant="outline"
-                                onClick={() => {
-                                  setShowNewStructureForm(false);
-                                  setNewStructure({ name: '', siret: '', country: 'France', address: '' });
-                                }}
-                                className="h-9"
-                              >
-                                {t('subscriptions.newDialog.cancel')}
-                              </Button>
-                              <Button
-                                onClick={handleCreateStructure}
-                                size="sm"
-                                className="flex-1 bg-primary text-primary-foreground h-9"
-                              >
-                                <Check className="w-3 h-3 mr-1" />
-                                {t('subscriptions.newDialog.createAndSelect')}
-                              </Button>
-                            </div>
-                          </div>
-                        </div>
-                      ) : !investorHasStructures ? (
-                        /* Investor has no structures — direct is the implicit choice.
-                           Same SelectTrigger-styled row as a selected structure, plus
-                           a discreet '+ Ajouter une structure' button on the right. */
+
+                          <Button
+                            type="button"
+                            onClick={handleQuickCreateInvestor}
+                            variant="outline"
+                            className="w-full border-dashed h-9"
+                          >
+                            <Plus className="w-4 h-4 mr-2" />
+                            {t('subscriptions.newDialog.createNewInvestor')}
+                          </Button>
+                        </>
+                      ) : (
                         <div className="flex h-10 w-full items-center gap-2 rounded-md border border-input bg-white px-3 py-2 text-sm">
-                          <User
-                            className="w-4 h-4 shrink-0"
-                            style={{ color: 'var(--success)' }}
+                          <PartyTypeBadge
+                            type={formData.investor.type === 'individual' ? 'individual' : 'corporate'}
+                            label={
+                              formData.investor.type === 'individual'
+                                ? t('subscriptions.newDialog.shortIndividual')
+                                : t('subscriptions.newDialog.shortCorporate')
+                            }
                           />
                           <span className="font-medium text-foreground truncate">
-                            {t('subscriptions.newDialog.directInvestmentTitle')}
+                            {formData.investor.name}
                           </span>
                           <span className="text-xs text-muted-foreground truncate hidden sm:inline">
-                            {t('subscriptions.newDialog.directInvestorDesc', {
-                              name: formData.investor.name,
-                            })}
+                            {formData.investor.email}
                           </span>
                           <button
                             type="button"
-                            onClick={() => setShowNewStructureForm(true)}
-                            className="ml-auto inline-flex items-center gap-1 rounded-md px-2 h-7 text-xs text-primary hover:bg-muted transition-colors"
-                          >
-                            <Plus className="w-3.5 h-3.5" />
-                            {t('subscriptions.newDialog.addStructure')}
-                          </button>
-                        </div>
-                      ) : formData.structure ? (
-                        /* Structure selected — SelectTrigger-styled row with × to clear */
-                        <div className="flex h-10 w-full items-center gap-2 rounded-md border border-input bg-white px-3 py-2 text-sm">
-                          {formData.structure === 'direct' ? (
-                            <>
-                              <User
-                                className="w-4 h-4 shrink-0"
-                                style={{ color: 'var(--success)' }}
-                              />
-                              <span className="font-medium text-foreground truncate">
-                                {t('subscriptions.newDialog.directInvestmentTitle')}
-                              </span>
-                              <span className="text-xs text-muted-foreground truncate hidden sm:inline">
-                                {t('subscriptions.newDialog.directInvestorDesc', {
-                                  name: formData.investor.name,
-                                })}
-                              </span>
-                            </>
-                          ) : typeof formData.structure === 'object' ? (
-                            <>
-                              <Building2 className="w-4 h-4 text-muted-foreground shrink-0" />
-                              <span className="font-medium text-foreground truncate">
-                                {formData.structure.name}
-                              </span>
-                              <span className="text-xs text-muted-foreground inline-flex items-center gap-1 truncate hidden sm:inline-flex">
-                                <Hash className="w-3 h-3" />
-                                {formData.structure.siret}
-                              </span>
-                              <span className="text-xs text-muted-foreground inline-flex items-center gap-1 shrink-0 hidden md:inline-flex">
-                                <Globe className="w-3 h-3" />
-                                {formData.structure.country}
-                              </span>
-                            </>
-                          ) : null}
-                          <button
-                            type="button"
-                            onClick={handleClearStructure}
+                            onClick={handleClearInvestor}
                             aria-label={t('subscriptions.newDialog.change')}
                             className="ml-auto inline-flex size-6 items-center justify-center rounded-md text-muted-foreground hover:bg-muted hover:text-foreground transition-colors"
                           >
                             <X className="w-3.5 h-3.5" />
                           </button>
                         </div>
-                      ) : (
-                        /* Closed-by-default dropdown picker */
-                        (() => {
-                          const investorStructures = formData.investor.structures ?? [];
-                          const filterQuery = structureFilter.trim().toLowerCase();
-                          const filteredStructures = filterQuery
-                            ? investorStructures.filter(
-                                (s) =>
-                                  s.name.toLowerCase().includes(filterQuery) ||
-                                  s.siret.toLowerCase().includes(filterQuery) ||
-                                  s.city?.toLowerCase().includes(filterQuery),
-                              )
-                            : investorStructures;
+                      )}
+                      <FieldMessage message={fieldError('investor')} />
+                    </div>
 
-                          return (
+
+                    {/* STRUCTURE */}
+                    {formData.investor && (() => {
+                      const investorStructures = formData.investor.structures ?? [];
+                      const investorHasStructures = investorStructures.length > 0;
+                      const isOptional = !investorHasStructures && !showNewStructureForm;
+                      const filterQuery = structureFilter.trim().toLowerCase();
+                      const filteredStructures = filterQuery
+                        ? investorStructures.filter(
+                            (s) =>
+                              s.name.toLowerCase().includes(filterQuery) ||
+                              s.siret.toLowerCase().includes(filterQuery) ||
+                              s.city?.toLowerCase().includes(filterQuery),
+                          )
+                        : investorStructures;
+
+                      return (
+                        <div className="space-y-2" data-field-error={!!fieldError('structure')}>
+                          <Label
+                            className={cn(
+                              'text-xs uppercase tracking-wide font-semibold flex items-center gap-1.5',
+                              isOptional ? 'text-muted-foreground/70' : 'text-muted-foreground',
+                            )}
+                          >
+                            <Building2 className="w-3.5 h-3.5" />
+                            {t('subscriptions.newDialog.structureLabel')}
+                            {isOptional ? (
+                              <span className="text-muted-foreground/70 font-normal normal-case tracking-normal">
+                                {t('subscriptions.newDialog.optional')}
+                              </span>
+                            ) : (
+                              <span className="text-destructive">*</span>
+                            )}
+                          </Label>
+
+                          {showNewStructureForm ? (
+                            <div className="border border-border bg-card rounded-xl p-4">
+                              <div className="flex items-center justify-between mb-3">
+                                <div className="flex items-center gap-2">
+                                  <Sparkles className="w-4 h-4 text-primary" />
+                                  <span className="font-semibold text-sm">{t('subscriptions.newDialog.newStructure')}</span>
+                                </div>
+                                <Button
+                                  variant="ghost"
+                                  size="sm"
+                                  onClick={() => {
+                                    setShowNewStructureForm(false);
+                                    setNewStructure({ name: '', siret: '', country: 'France', address: '' });
+                                  }}
+                                  aria-label={t('subscriptions.newDialog.cancel')}
+                                  className="h-7 w-7 p-0"
+                                >
+                                  <X className="w-4 h-4" />
+                                </Button>
+                              </div>
+                              <div className="space-y-2">
+                                <div>
+                                  <Label className="text-xs mb-1">
+                                    {t('subscriptions.newDialog.legalName')}{' '}
+                                    <span className="text-destructive">*</span>
+                                  </Label>
+                                  <Input
+                                    value={newStructure.name}
+                                    onChange={(e) => setNewStructure({ ...newStructure, name: e.target.value })}
+                                    placeholder="Alpha Capital Holding SAS"
+                                    className="h-9"
+                                  />
+                                </div>
+                                <div className="grid grid-cols-2 gap-2">
+                                  <div>
+                                    <Label className="text-xs mb-1">
+                                      {t('subscriptions.newDialog.siret')}{' '}
+                                      <span className="text-destructive">*</span>
+                                    </Label>
+                                    <Input
+                                      value={newStructure.siret}
+                                      onChange={(e) => setNewStructure({ ...newStructure, siret: e.target.value })}
+                                      placeholder="123 456 789 00012"
+                                      className="h-9"
+                                    />
+                                  </div>
+                                  <div>
+                                    <Label className="text-xs mb-1">{t('subscriptions.newDialog.countryLabel')}</Label>
+                                    <Input
+                                      value={newStructure.country}
+                                      onChange={(e) => setNewStructure({ ...newStructure, country: e.target.value })}
+                                      placeholder="France"
+                                      className="h-9"
+                                    />
+                                  </div>
+                                </div>
+                                <div>
+                                  <Label className="text-xs mb-1">{t('subscriptions.newDialog.addressLabel')}</Label>
+                                  <Input
+                                    value={newStructure.address}
+                                    onChange={(e) => setNewStructure({ ...newStructure, address: e.target.value })}
+                                    placeholder="12 Rue de Rivoli, 75001 Paris"
+                                    className="h-9"
+                                  />
+                                </div>
+                                <div className="flex gap-2 pt-1">
+                                  <Button
+                                    size="sm"
+                                    variant="outline"
+                                    onClick={() => {
+                                      setShowNewStructureForm(false);
+                                      setNewStructure({ name: '', siret: '', country: 'France', address: '' });
+                                    }}
+                                    className="h-9"
+                                  >
+                                    {t('subscriptions.newDialog.cancel')}
+                                  </Button>
+                                  <Button
+                                    onClick={handleCreateStructure}
+                                    size="sm"
+                                    className="flex-1 bg-primary text-primary-foreground h-9"
+                                  >
+                                    <Check className="w-3 h-3 mr-1" />
+                                    {t('subscriptions.newDialog.createAndSelect')}
+                                  </Button>
+                                </div>
+                              </div>
+                            </div>
+                          ) : formData.structure ? (
+                            <div className="flex h-10 w-full items-center gap-2 rounded-md border border-input bg-white px-3 py-2 text-sm">
+                              {formData.structure === 'direct' ? (
+                                <>
+                                  <User className="w-4 h-4 shrink-0" style={{ color: 'var(--success)' }} />
+                                  <span className="font-medium text-foreground truncate">
+                                    {t('subscriptions.newDialog.directInvestmentTitle')}
+                                  </span>
+                                  <span className="text-xs text-muted-foreground truncate hidden sm:inline">
+                                    {t('subscriptions.newDialog.directInvestorDesc', {
+                                      name: formData.investor.name,
+                                    })}
+                                  </span>
+                                </>
+                              ) : (
+                                <>
+                                  <Building2 className="w-4 h-4 text-muted-foreground shrink-0" />
+                                  <span className="font-medium text-foreground truncate">
+                                    {formData.structure.name}
+                                  </span>
+                                  <span className="text-xs text-muted-foreground items-center gap-1 truncate hidden sm:inline-flex">
+                                    <Hash className="w-3 h-3" />
+                                    {formData.structure.siret}
+                                  </span>
+                                  <span className="text-xs text-muted-foreground items-center gap-1 shrink-0 hidden md:inline-flex">
+                                    <Globe className="w-3 h-3" />
+                                    {formData.structure.country}
+                                  </span>
+                                </>
+                              )}
+                              {investorHasStructures && (
+                                <button
+                                  type="button"
+                                  onClick={handleClearStructure}
+                                  aria-label={t('subscriptions.newDialog.change')}
+                                  className="ml-auto inline-flex size-6 items-center justify-center rounded-md text-muted-foreground hover:bg-muted hover:text-foreground transition-colors"
+                                >
+                                  <X className="w-3.5 h-3.5" />
+                                </button>
+                              )}
+                            </div>
+                          ) : (
                             <Popover
                               open={structurePickerOpen}
                               onOpenChange={(open) => {
@@ -1714,488 +1963,461 @@ export function NewSubscriptionDialog({
                                     ))
                                   )}
                                 </div>
-
-                                <button
-                                  type="button"
-                                  onClick={() => {
-                                    setStructurePickerOpen(false);
-                                    setShowNewStructureForm(true);
-                                  }}
-                                  className="w-full px-3 py-2 hover:bg-muted transition-colors text-left flex items-center gap-2 border-t border-border text-sm text-primary"
-                                >
-                                  <Plus className="w-4 h-4" />
-                                  {t('subscriptions.newDialog.createNewStructure')}
-                                </button>
                               </PopoverContent>
                             </Popover>
-                          );
-                        })()
-                      )}
-                    </div>
-                    );
-                  })()}
-                  {/* Row 1: Fonds + Part */}
-                  <div
-                    className="grid gap-3"
-                    style={{ gridTemplateColumns: '1.6fr 1fr' }}
+                          )}
+
+                          <FieldMessage message={fieldError('structure')} />
+
+                          {!showNewStructureForm && (
+                            <Button
+                              type="button"
+                              onClick={() => {
+                                setStructurePickerOpen(false);
+                                setShowNewStructureForm(true);
+                              }}
+                              variant="outline"
+                              className="w-full border-dashed h-9"
+                            >
+                              <Plus className="w-4 h-4 mr-2" />
+                              {t('subscriptions.newDialog.addStructure')}
+                            </Button>
+                          )}
+                        </div>
+                      );
+                    })()}
+
+                  </FormSection>
+
+                  <FormSection
+                    index={2}
+                    icon={Landmark}
+                    title={t('subscriptions.newDialog.sections.fund')}
+                    description={t('subscriptions.newDialog.sections.fundDesc')}
                   >
-                    <div className="space-y-1.5 min-w-0">
-                      <Label className="text-xs flex items-center gap-1.5">
-                        <Landmark className="w-3.5 h-3.5" />
-                        {t('subscriptions.newDialog.fundLabel')}{' '}
-                        <span className="text-destructive">*</span>
-                      </Label>
-                      <Select
-                        value={formData.fund}
-                        onValueChange={(value) => setFormData({ ...formData, fund: value })}
-                      >
-                        <SelectTrigger className="h-10">
-                          <SelectValue placeholder={t('subscriptions.newDialog.selectFund')} />
-                        </SelectTrigger>
-                        <SelectContent>
-                          {fundOptions.map((fund) => (
-                            <SelectItem key={fund.id} value={fund.id}>
-                              <span className="font-medium truncate">{fund.name}</span>
-                            </SelectItem>
-                          ))}
-                        </SelectContent>
-                      </Select>
-                    </div>
-
-                    <div className="space-y-1.5 min-w-0">
-                      <Label className="text-xs flex items-center gap-1.5">
-                        <Layers3 className="w-3.5 h-3.5" />
-                        {t('subscriptions.newDialog.partLabel')}{' '}
-                        <span className="text-destructive">*</span>
-                      </Label>
-                      <Select
-                        value={formData.shareClass}
-                        onValueChange={(value) => setFormData({ ...formData, shareClass: value })}
-                      >
-                        <SelectTrigger className="h-10">
-                          <SelectValue placeholder={t('subscriptions.newDialog.selectShareClass')} />
-                        </SelectTrigger>
-                        <SelectContent>
-                          {shareClassOptions.map((sc) => (
-                            <SelectItem key={sc.id} value={sc.id}>
-                              {t('subscriptions.newDialog.shareLabel', { class: sc.id })}
-                            </SelectItem>
-                          ))}
-                        </SelectContent>
-                      </Select>
-                    </div>
-                  </div>
-
-                  {/* Row 2: Nombre de parts + Montant + Option de conservation */}
-                  <div
-                    className="grid gap-3"
-                    style={{ gridTemplateColumns: '1fr 1.2fr 1.4fr' }}
-                  >
-                    <div className="space-y-1.5 min-w-0">
-                      <Label className="text-xs flex items-center gap-1.5">
-                        <Hash className="w-3.5 h-3.5" />
-                        {t('subscriptions.newDialog.numberOfShares')}{' '}
-                        <span className="text-destructive">*</span>
-                      </Label>
-                      <Input
-                        type="text"
-                        inputMode="decimal"
-                        value={formData.numberOfShares}
-                        onChange={(e) => {
-                          const cleaned = e.target.value
-                            .replace(/[^0-9.,]/g, '')
-                            .replace(',', '.');
-                          setFormData({ ...formData, numberOfShares: cleaned });
-                        }}
-                        placeholder="100"
-                        className="h-10 font-semibold text-right"
-                      />
-                      {minShares !== undefined && (
-                        <p className="text-[10px] text-muted-foreground">
-                          {t('subscriptions.newDialog.minSharesHint', {
-                            count: minShares.toLocaleString('fr-FR'),
-                          })}
-                        </p>
-                      )}
-                    </div>
-
-                    <div className="space-y-1.5 min-w-0">
-                      <Label className="text-xs flex items-center gap-1.5">
-                        <Euro className="w-3.5 h-3.5" />
-                        {t('subscriptions.newDialog.amount')}{' '}
-                        <span className="text-destructive">*</span>
-                      </Label>
-                      <Input
-                        type="text"
-                        inputMode="decimal"
-                        value={
-                          calculatedAmount > 0
-                            ? calculatedAmount.toLocaleString('fr-FR')
-                            : ''
-                        }
-                        onChange={(e) => handleAmountChange(e.target.value)}
-                        placeholder="10 000"
-                        className="h-10 font-semibold text-right"
-                      />
-                      <p className="text-[10px] text-muted-foreground">
-                        {minAmount !== undefined
-                          ? t('subscriptions.newDialog.pricePerShareAndMinHint', {
-                              price: sharePrice.toLocaleString('fr-FR'),
-                              min: minAmount.toLocaleString('fr-FR'),
-                            })
-                          : t('subscriptions.newDialog.pricePerShareHint', {
-                              price: sharePrice.toLocaleString('fr-FR'),
-                            })}
-                      </p>
-                    </div>
-
-                    <div className="space-y-1.5 min-w-0">
-                      <Label className="text-xs flex items-center gap-1.5">
-                        <ShieldCheck className="w-3.5 h-3.5" />
-                        {t('subscriptions.newDialog.custodyOptionLabel')}
-                      </Label>
-                      <label
-                        htmlFor="custody-option-switch"
-                        className="flex h-10 w-full items-center justify-between gap-3 rounded-md border border-input bg-white px-3 py-2 text-sm cursor-pointer hover:bg-muted/40 transition-colors"
-                      >
-                        <span className="text-foreground truncate">
-                          {formData.hasCustodyOption
-                            ? t('subscriptions.newDialog.custodyOptionOn')
-                            : t('subscriptions.newDialog.custodyOptionOff')}
-                        </span>
-                        <Switch
-                          id="custody-option-switch"
-                          checked={formData.hasCustodyOption}
-                          onCheckedChange={(checked) =>
-                            setFormData({ ...formData, hasCustodyOption: checked })
-                          }
-                        />
-                      </label>
-                    </div>
-                  </div>
-
-                  {isEditMode && (
+                    {/* Row 1: Fonds + Part */}
                     <div
                       className="grid gap-3"
-                      style={{ gridTemplateColumns: '1fr 1fr 1fr 1.2fr' }}
+                      style={{ gridTemplateColumns: '1.6fr 1fr' }}
                     >
-                      <EditField label={t('subscriptions.detail.form.holdingMode')} icon={Wallet}>
+                      <div className="space-y-1.5 min-w-0" data-field-error={!!fieldError('fund')}>
+                        <Label className="text-xs flex items-center gap-1.5">
+                          <Landmark className="w-3.5 h-3.5" />
+                          {t('subscriptions.newDialog.fundLabel')}{' '}
+                          <span className="text-destructive">*</span>
+                        </Label>
                         <Select
-                          value={extended.holdingMode}
-                          onValueChange={(value) => updateExtended('holdingMode', value as HoldingMode)}
+                          value={formData.fund}
+                          onValueChange={(value) => setFormData((prev) => ({ ...prev, fund: value }))}
                         >
                           <SelectTrigger className="h-10">
-                            <SelectValue placeholder={t('subscriptions.detail.form.selectPlaceholder')} />
+                            <SelectValue placeholder={t('subscriptions.newDialog.selectFund')} />
                           </SelectTrigger>
                           <SelectContent>
-                            {HOLDING_MODE_OPTIONS.map(([value, labelKey]) => (
-                              <SelectItem key={value} value={value}>
-                                {t(labelKey)}
+                            {fundOptions.map((fund) => (
+                              <SelectItem key={fund.id} value={fund.id}>
+                                <span className="font-medium truncate">{fund.name}</span>
                               </SelectItem>
                             ))}
                           </SelectContent>
                         </Select>
-                      </EditField>
+                        <FieldMessage message={fieldError('fund')} />
+                      </div>
 
-                      <EditField label={t('subscriptions.detail.form.externalId')} icon={Hash}>
-                        <Input
-                          value={extended.externalId}
-                          onChange={(e) => updateExtended('externalId', e.target.value)}
-                          placeholder={t('subscriptions.detail.form.externalIdPlaceholder')}
-                          className="h-10"
-                        />
-                      </EditField>
-
-                      <EditField label={t('subscriptions.detail.form.subscriptionType')} icon={Tag}>
+                      <div className="space-y-1.5 min-w-0" data-field-error={!!fieldError('shareClass')}>
+                        <Label className="text-xs flex items-center gap-1.5">
+                          <Layers3 className="w-3.5 h-3.5" />
+                          {t('subscriptions.newDialog.partLabel')}{' '}
+                          <span className="text-destructive">*</span>
+                        </Label>
                         <Select
-                          value={extended.subscriptionType}
-                          onValueChange={(value) =>
-                            updateExtended('subscriptionType', value as SubscriptionType)
+                          value={formData.shareClass}
+                          onValueChange={(value) => setFormData((prev) => ({ ...prev, shareClass: value }))}
+                        >
+                          <SelectTrigger className="h-10">
+                            <SelectValue placeholder={t('subscriptions.newDialog.selectShareClass')} />
+                          </SelectTrigger>
+                          <SelectContent>
+                            {shareClassOptions.map((sc) => (
+                              <SelectItem key={sc.id} value={sc.id}>
+                                {t('subscriptions.newDialog.shareLabel', { class: sc.id })}
+                              </SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
+                        <FieldMessage message={fieldError('shareClass')} />
+                      </div>
+                    </div>
+
+                    {/* Row 2: Nombre de parts + Montant + Option de conservation */}
+                    <div
+                      className="grid gap-3"
+                      style={{ gridTemplateColumns: '1fr 1.2fr 1.4fr' }}
+                    >
+                      <div className="space-y-1.5 min-w-0">
+                        <Label className="text-xs flex items-center gap-1.5">
+                          <Hash className="w-3.5 h-3.5" />
+                          {t('subscriptions.newDialog.numberOfShares')}{' '}
+                          <span className="text-destructive">*</span>
+                        </Label>
+                        <Input
+                          type="text"
+                          inputMode="decimal"
+                          value={formData.numberOfShares}
+                          onChange={(e) => {
+                            const cleaned = e.target.value
+                              .replace(/[^0-9.,]/g, '')
+                              .replace(',', '.');
+                            setFormData((prev) => ({ ...prev, numberOfShares: cleaned }));
+                          }}
+                          placeholder="100"
+                          className="h-10 font-semibold text-right"
+                        />
+                        {minShares !== undefined && (
+                          <p className="text-[10px] text-muted-foreground">
+                            {t('subscriptions.newDialog.minSharesHint', {
+                              count: minShares.toLocaleString('fr-FR'),
+                            })}
+                          </p>
+                        )}
+                      </div>
+
+                      <div className="space-y-1.5 min-w-0" data-field-error={!!fieldError('amount')}>
+                        <Label className="text-xs flex items-center gap-1.5">
+                          <Euro className="w-3.5 h-3.5" />
+                          {t('subscriptions.newDialog.amount')}{' '}
+                          <span className="text-destructive">*</span>
+                        </Label>
+                        <Input
+                          type="text"
+                          inputMode="decimal"
+                          value={
+                            calculatedAmount > 0
+                              ? calculatedAmount.toLocaleString('fr-FR')
+                              : ''
                           }
+                          onChange={(e) => handleAmountChange(e.target.value)}
+                          placeholder="10 000"
+                          className="h-10 font-semibold text-right"
+                        />
+                        <p className="text-[10px] text-muted-foreground">
+                          {minAmount !== undefined
+                            ? t('subscriptions.newDialog.pricePerShareAndMinHint', {
+                                price: sharePrice.toLocaleString('fr-FR'),
+                                min: minAmount.toLocaleString('fr-FR'),
+                              })
+                            : t('subscriptions.newDialog.pricePerShareHint', {
+                                price: sharePrice.toLocaleString('fr-FR'),
+                              })}
+                        </p>
+                        <FieldMessage message={fieldError('amount')} />
+                        <FieldMessage message={belowMinimumWarning} tone="warning" />
+                      </div>
+
+                      <div className="space-y-1.5 min-w-0">
+                        <Label className="text-xs flex items-center gap-1.5">
+                          <ShieldCheck className="w-3.5 h-3.5" />
+                          {t('subscriptions.newDialog.custodyOptionLabel')}
+                        </Label>
+                        <label
+                          htmlFor="custody-option-switch"
+                          className="flex h-10 w-full items-center justify-between gap-3 rounded-md border border-input bg-white px-3 py-2 text-sm cursor-pointer hover:bg-muted/40 transition-colors"
                         >
-                          <SelectTrigger className="h-10">
-                            <SelectValue placeholder={t('subscriptions.detail.form.selectPlaceholder')} />
-                          </SelectTrigger>
-                          <SelectContent>
-                            {SUBSCRIPTION_TYPE_OPTIONS.map(([value, labelKey]) => (
-                              <SelectItem key={value} value={value}>
-                                {t(labelKey)}
-                              </SelectItem>
-                            ))}
-                          </SelectContent>
-                        </Select>
-                      </EditField>
-
-                      <EditField label={t('subscriptions.detail.form.sepa')} icon={Banknote}>
-                        <SwitchField
-                          id="sepa-enabled-switch"
-                          checked={extended.sepaEnabled}
-                          onCheckedChange={(checked) => updateExtended('sepaEnabled', checked)}
-                          onLabel={t('subscriptions.detail.form.yes')}
-                          offLabel={t('subscriptions.detail.form.no')}
-                        />
-                      </EditField>
+                          <span className="text-foreground truncate">
+                            {formData.hasCustodyOption
+                              ? t('subscriptions.newDialog.custodyOptionOn')
+                              : t('subscriptions.newDialog.custodyOptionOff')}
+                          </span>
+                          <Switch
+                            id="custody-option-switch"
+                            checked={formData.hasCustodyOption}
+                            onCheckedChange={(checked) =>
+                              setFormData((prev) => ({ ...prev, hasCustodyOption: checked }))
+                            }
+                          />
+                        </label>
+                      </div>
                     </div>
-                  )}
 
-                  <Separator className="my-2" />
-
-                  {/* Distributor Selection - Dropdown */}
-                  <div className="mb-3">
-                    <Label className="text-xs mb-1 flex items-center gap-1">
-                      <Handshake className="w-3.5 h-3.5" />
-                      {t('subscriptions.newDialog.distributorLabel')}
-                    </Label>
-
-                    {formData.fund && formData.shareClass ? (
-                      <Select
-                        value={formData.distributor}
-                        onValueChange={(value) => setFormData({ ...formData, distributor: value })}
-                      >
-                        <SelectTrigger className="h-10">
-                          <SelectValue placeholder={t('subscriptions.newDialog.selectDistributor')} />
-                        </SelectTrigger>
-                        <SelectContent>
-                          {/* Direct Option */}
-                          <SelectItem value="direct">
-                            <div className="flex items-center gap-2">
-                              <Briefcase className="w-4 h-4" style={{ color: 'var(--success)' }} />
-                              <div>
-                                <div className="font-medium">{t('subscriptions.newDialog.directSubscription')}</div>
-                                <div className="text-xs text-muted-foreground">{t('subscriptions.newDialog.noEntryFees')}</div>
-                              </div>
-                            </div>
-                          </SelectItem>
-
-                          {/* Authorized Distributors */}
-                          {authorizedDistributors.length > 0 && authorizedDistributors.map((dist) => {
-                            const feeConfig = dist.fees.find(
-                              f => f.fundId === formData.fund && f.shareClass === formData.shareClass
-                            );
-                            const isInvestorDistributor = formData.investor?.distributorId === dist.id;
-
-                            return (
-                              <SelectItem key={dist.id} value={dist.id}>
-                                <div className="flex items-center gap-2">
-                                  <Handshake className="w-4 h-4 text-primary" />
-                                  <div>
-                                    <div className="font-medium">
-                                      {dist.name}
-                                      {isInvestorDistributor && (
-                                        <Badge variant="outline" className="ml-2 text-xs h-4 border-primary text-primary">
-                                          {t('subscriptions.newDialog.attitled')}
-                                        </Badge>
-                                      )}
-                                    </div>
-                                    <div className="text-xs text-muted-foreground">
-                                      {t('subscriptions.newDialog.entryFeesPct', { percent: feeConfig?.entryFeePercent ?? 0 })}
-                                    </div>
-                                  </div>
-                                </div>
-                              </SelectItem>
-                            );
-                          })}
-                        </SelectContent>
-                      </Select>
-                    ) : (
-                      <div className="p-3 bg-muted border border-border rounded-lg text-center">
-                        <Info className="w-4 h-4 text-muted-foreground mx-auto mb-1" />
-                        <p className="text-xs text-muted-foreground">
-                          {t('subscriptions.newDialog.selectFundFirst')}
+                    <div className="grid gap-3" style={{ gridTemplateColumns: '1fr 1.2fr 1.4fr' }}>
+                      <div className="space-y-1.5 min-w-0 col-span-2">
+                        <Label className="text-xs flex items-center gap-1.5">
+                          <Sparkles className="w-3.5 h-3.5" />
+                          {t('subscriptions.newDialog.subscriptionPremiumLabel')}
+                        </Label>
+                        <div className="flex h-10 w-full items-center rounded-md border border-input bg-white pr-3 focus-within:ring-2 focus-within:ring-ring/40">
+                          <Input
+                            type="text"
+                            inputMode="decimal"
+                            value={formData.subscriptionPremium}
+                            onChange={(e) => {
+                              const cleaned = e.target.value
+                                .replace(/[^0-9.,]/g, '')
+                                .replace(',', '.');
+                              setFormData((prev) => ({ ...prev, subscriptionPremium: cleaned }));
+                            }}
+                            placeholder="0"
+                            className="h-full border-0 bg-transparent font-semibold text-right shadow-none focus-visible:ring-0 focus-visible:ring-offset-0"
+                          />
+                          <span className="ml-1 text-sm text-muted-foreground select-none">€</span>
+                        </div>
+                        <p className="text-[10px] text-muted-foreground">
+                          {t('subscriptions.newDialog.subscriptionPremiumHint')}
                         </p>
                       </div>
-                    )}
-
-                    {/* Warning if no distributors */}
-                    {formData.fund && formData.shareClass && authorizedDistributors.length === 0 && (
-                      <div
-                        className="mt-2 p-2 rounded-lg flex items-center gap-2 border"
-                        style={{
-                          backgroundColor: 'color-mix(in oklab, var(--warning) 12%, transparent)',
-                          borderColor: 'color-mix(in oklab, var(--warning) 30%, transparent)',
-                        }}
-                      >
-                        <Info
-                          className="w-4 h-4 flex-shrink-0"
-                          style={{ color: 'var(--warning)' }}
-                        />
-                        <p className="text-xs text-foreground">
-                          {t('subscriptions.newDialog.noDistributorsWarning')}
-                        </p>
-                      </div>
-                    )}
-                  </div>
-
-                  {/* Editable fees - SG can override the pre-calculated values */}
-                  <div
-                    className="grid gap-3"
-                    style={{ gridTemplateColumns: '1fr 1fr' }}
-                  >
-                    <div className="space-y-1.5 min-w-0">
-                      <Label className="text-xs flex items-center gap-1.5">
-                        <Euro className="w-3.5 h-3.5" />
-                        {t('subscriptions.newDialog.entryFeesEditableLabel')}
-                      </Label>
-                      <div className="flex h-10 w-full items-center rounded-md border border-input bg-white pr-3 focus-within:ring-2 focus-within:ring-ring/40">
-                        <Input
-                          type="text"
-                          inputMode="decimal"
-                          value={formData.entryFees}
-                          onChange={(e) => {
-                            const cleaned = e.target.value
-                              .replace(/[^0-9.,]/g, '')
-                              .replace(',', '.');
-                            setFormData({ ...formData, entryFees: cleaned });
-                          }}
-                          placeholder="0"
-                          className="h-full border-0 bg-transparent font-semibold text-right shadow-none focus-visible:ring-0 focus-visible:ring-offset-0"
-                        />
-                        <span className="ml-1 text-sm text-muted-foreground select-none">%</span>
-                      </div>
-                      <p className="text-[10px] text-muted-foreground">
-                        {t('subscriptions.newDialog.entryFeesEditableHint', {
-                          percent: defaultEntryFeePercent,
-                        })}
-                      </p>
                     </div>
 
-                    <div className="space-y-1.5 min-w-0">
-                      <Label className="text-xs flex items-center gap-1.5">
-                        <Sparkles className="w-3.5 h-3.5" />
-                        {t('subscriptions.newDialog.subscriptionPremiumLabel')}
-                      </Label>
-                      <div className="flex h-10 w-full items-center rounded-md border border-input bg-white pr-3 focus-within:ring-2 focus-within:ring-ring/40">
-                        <Input
-                          type="text"
-                          inputMode="decimal"
-                          value={formData.subscriptionPremium}
-                          onChange={(e) => {
-                            const cleaned = e.target.value
-                              .replace(/[^0-9.,]/g, '')
-                              .replace(',', '.');
-                            setFormData({ ...formData, subscriptionPremium: cleaned });
-                          }}
-                          placeholder="0"
-                          className="h-full border-0 bg-transparent font-semibold text-right shadow-none focus-visible:ring-0 focus-visible:ring-offset-0"
-                        />
-                        <span className="ml-1 text-sm text-muted-foreground select-none">€</span>
-                      </div>
-                      <p className="text-[10px] text-muted-foreground">
-                        {t('subscriptions.newDialog.subscriptionPremiumHint')}
-                      </p>
-                    </div>
-                  </div>
-
-                  {isEditMode && (() => {
-                    const isDirect = formData.distributor === 'direct';
-                    return (
+                    {isEditMode && (
                       <div
                         className="grid gap-3"
-                        style={{ gridTemplateColumns: '1.4fr 1fr 1.4fr' }}
+                        style={{ gridTemplateColumns: '1fr 1fr 1fr 1.2fr' }}
                       >
-                        <EditField label={t('subscriptions.detail.form.advisor')} icon={Users}>
+                        <EditField label={t('subscriptions.detail.form.holdingMode')} icon={Wallet}>
+                          <Select
+                            value={extended.holdingMode}
+                            onValueChange={(value) => updateExtended('holdingMode', value as HoldingMode)}
+                          >
+                            <SelectTrigger className="h-10">
+                              <SelectValue placeholder={t('subscriptions.detail.form.selectPlaceholder')} />
+                            </SelectTrigger>
+                            <SelectContent>
+                              {HOLDING_MODE_OPTIONS.map(([value, labelKey]) => (
+                                <SelectItem key={value} value={value}>
+                                  {t(labelKey)}
+                                </SelectItem>
+                              ))}
+                            </SelectContent>
+                          </Select>
+                        </EditField>
+
+                        <EditField label={t('subscriptions.detail.form.externalId')} icon={Hash}>
                           <Input
-                            value={extended.advisor}
-                            onChange={(e) => updateExtended('advisor', e.target.value)}
-                            disabled={isDirect}
+                            value={extended.externalId}
+                            onChange={(e) => updateExtended('externalId', e.target.value)}
+                            placeholder={t('subscriptions.detail.form.externalIdPlaceholder')}
                             className="h-10"
                           />
                         </EditField>
 
-                        <EditField label={t('subscriptions.detail.form.commissionRate')} icon={Percent}>
-                          <div
-                            className={cn(
-                              'flex h-10 w-full items-center rounded-md border border-input bg-white pr-3 focus-within:ring-2 focus-within:ring-ring/40',
-                              isDirect && 'opacity-50',
-                            )}
+                        <EditField label={t('subscriptions.detail.form.subscriptionType')} icon={Tag}>
+                          <Select
+                            value={extended.subscriptionType}
+                            onValueChange={(value) =>
+                              updateExtended('subscriptionType', value as SubscriptionType)
+                            }
                           >
-                            <Input
-                              type="text"
-                              inputMode="decimal"
-                              value={extended.commissionRate}
-                              onChange={(e) =>
-                                updateExtended(
-                                  'commissionRate',
-                                  e.target.value.replace(/[^0-9.,]/g, '').replace(',', '.'),
-                                )
-                              }
-                              disabled={isDirect}
-                              placeholder="0"
-                              className="h-full border-0 bg-transparent font-semibold text-right shadow-none focus-visible:ring-0 focus-visible:ring-offset-0"
-                            />
-                            <span className="ml-1 text-sm text-muted-foreground select-none">%</span>
-                          </div>
+                            <SelectTrigger className="h-10">
+                              <SelectValue placeholder={t('subscriptions.detail.form.selectPlaceholder')} />
+                            </SelectTrigger>
+                            <SelectContent>
+                              {SUBSCRIPTION_TYPE_OPTIONS.map(([value, labelKey]) => (
+                                <SelectItem key={value} value={value}>
+                                  {t(labelKey)}
+                                </SelectItem>
+                              ))}
+                            </SelectContent>
+                          </Select>
                         </EditField>
 
-                        <EditField
-                          label={t('subscriptions.detail.form.excludeRetrocessions')}
-                          icon={ArrowDownCircle}
-                        >
+                        <EditField label={t('subscriptions.detail.form.sepa')} icon={Banknote}>
                           <SwitchField
-                            id="exclude-retrocessions-switch"
-                            checked={extended.excludeRetrocessions}
-                            onCheckedChange={(checked) => updateExtended('excludeRetrocessions', checked)}
+                            id="sepa-enabled-switch"
+                            checked={extended.sepaEnabled}
+                            onCheckedChange={(checked) => updateExtended('sepaEnabled', checked)}
                             onLabel={t('subscriptions.detail.form.yes')}
                             offLabel={t('subscriptions.detail.form.no')}
-                            disabled={isDirect}
                           />
                         </EditField>
                       </div>
-                    );
-                  })()}
+                    )}
 
-                  {/* Amount Summary */}
-                  {calculatedAmount > 0 && (
-                    <motion.div
-                      initial={{ opacity: 0 }}
-                      animate={{ opacity: 1 }}
-                      className="mt-auto p-2 bg-primary/5 rounded-lg border border-primary/30"
-                    >
-                      <div className="space-y-1">
-                        <div className="flex justify-between text-xs">
-                          <span className="text-muted-foreground">{t('subscriptions.newDialog.amount')}</span>
-                          <span className="font-medium text-foreground">{calculatedAmount.toLocaleString('fr-FR')} €</span>
-                        </div>
-                        <div className="flex justify-between text-xs">
-                          <span className="text-muted-foreground">
-                            {t('subscriptions.newDialog.feesWithPercent', { percent: entryFeePercent })}
-                            {formData.distributor === 'direct' && (
-                              <Badge variant="outline" className="ml-1 text-xs h-4" style={{ borderColor: 'var(--success)', color: 'var(--success)' }}>
-                                {t('subscriptions.newDialog.direct')}
-                              </Badge>
-                            )}
-                          </span>
-                          <span
-                            className="font-medium"
-                            style={{ color: calculatedEntryFees === 0 ? 'var(--success)' : 'var(--warning)' }}
-                          >
-                            {calculatedEntryFees.toLocaleString('fr-FR')} €
-                          </span>
-                        </div>
-                        {subscriptionPremiumAmount > 0 && (
-                          <div className="flex justify-between text-xs">
-                            <span className="text-muted-foreground">
-                              {t('subscriptions.newDialog.subscriptionPremiumLabel')}
-                            </span>
-                            <span
-                              className="font-medium"
-                              style={{ color: 'var(--warning)' }}
-                            >
-                              {subscriptionPremiumAmount.toLocaleString('fr-FR')} €
-                            </span>
-                          </div>
-                        )}
-                        <Separator />
-                        <div className="flex justify-between">
-                          <span className="text-xs font-semibold text-foreground">{t('subscriptions.newDialog.total')}</span>
-                          <span className="font-bold text-primary">{(calculatedAmount + calculatedFees).toLocaleString('fr-FR')} €</span>
-                        </div>
+
+                  </FormSection>
+
+                  <FormSection
+                    index={3}
+                    icon={Handshake}
+                    title={t('subscriptions.newDialog.sections.distribution')}
+                    description={t('subscriptions.newDialog.sections.distributionDesc')}
+                  >
+                    <div className="space-y-1.5">
+                      <Label className="text-xs flex items-center gap-1.5">
+                        <Handshake className="w-3.5 h-3.5" />
+                        {t('subscriptions.newDialog.distribution.intermediatedLabel')}
+                      </Label>
+                      <SegmentedControl
+                        aria-label={t('subscriptions.newDialog.distribution.intermediatedLabel')}
+                        value={formData.isIntermediated ? 'yes' : 'no'}
+                        onValueChange={(value) => handleIntermediatedChange(value === 'yes')}
+                        size="sm"
+                        options={[
+                          { value: 'no', label: t('subscriptions.newDialog.distribution.no') },
+                          { value: 'yes', label: t('subscriptions.newDialog.distribution.yes') },
+                        ]}
+                      />
+                      <p className="text-[11px] text-muted-foreground">
+                        {formData.isIntermediated
+                          ? t('subscriptions.newDialog.distribution.intermediatedOnHint')
+                          : t('subscriptions.newDialog.distribution.intermediatedOffHint')}
+                      </p>
+                    </div>
+
+                    {distributionPrefilled && formData.isIntermediated && selectedDistributorName && (
+                      <div className="flex items-start gap-2 rounded-lg border border-border bg-primary/5 px-3 py-2">
+                        <Sparkles className="w-4 h-4 text-primary shrink-0 mt-0.5" />
+                        <p className="text-xs text-foreground">
+                          {t('subscriptions.newDialog.distribution.prefilledFromPartner', {
+                            name: selectedDistributorName,
+                          })}
+                        </p>
                       </div>
-                    </motion.div>
-                  )}
+                    )}
+
+                    {formData.isIntermediated && (
+                      <motion.div
+                        initial={{ opacity: 0, y: -4 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        className="flex flex-col gap-4"
+                      >
+                        <div className="space-y-1.5" data-field-error={!!fieldError('distributor')}>
+                          <Label className="text-xs flex items-center gap-1.5">
+                            <Briefcase className="w-3.5 h-3.5" />
+                            {t('subscriptions.newDialog.distributorLabel')}{' '}
+                            <span className="text-destructive">*</span>
+                          </Label>
+                          {formData.fund && formData.shareClass ? (
+                            <Select
+                              value={formData.distributor === 'direct' ? '' : formData.distributor}
+                              onValueChange={(value) => {
+                                setDistributionPrefilled(false);
+                                setFormData((prev) => ({ ...prev, distributor: value }));
+                              }}
+                              disabled={authorizedDistributors.length === 0}
+                            >
+                              <SelectTrigger
+                                className={'h-10'}
+                              >
+                                <SelectValue placeholder={t('subscriptions.newDialog.selectDistributor')} />
+                              </SelectTrigger>
+                              <SelectContent>
+                                {authorizedDistributors.map((dist) => {
+                                  const feeConfig = dist.fees.find(
+                                    (f) => f.fundId === formData.fund && f.shareClass === formData.shareClass,
+                                  );
+                                  const isInvestorDistributor = formData.investor?.distributorId === dist.id;
+                                  return (
+                                    <SelectItem key={dist.id} value={dist.id}>
+                                      <div className="flex items-center gap-2">
+                                        <Handshake className="w-4 h-4 text-primary" />
+                                        <div>
+                                          <div className="font-medium">
+                                            {dist.name}
+                                            {isInvestorDistributor && (
+                                              <Badge variant="outline" className="ml-2 text-xs h-4 border-primary text-primary">
+                                                {t('subscriptions.newDialog.attitled')}
+                                              </Badge>
+                                            )}
+                                          </div>
+                                          <div className="text-xs text-muted-foreground">
+                                            {t('subscriptions.newDialog.entryFeesPct', {
+                                              percent: feeConfig?.entryFeePercent ?? 0,
+                                            })}
+                                          </div>
+                                        </div>
+                                      </div>
+                                    </SelectItem>
+                                  );
+                                })}
+                              </SelectContent>
+                            </Select>
+                          ) : (
+                            <div className="flex h-10 items-center gap-2 rounded-md border border-dashed border-border bg-muted/40 px-3">
+                              <Info className="w-4 h-4 text-muted-foreground shrink-0" />
+                              <p className="text-xs text-muted-foreground">
+                                {t('subscriptions.newDialog.selectFundFirst')}
+                              </p>
+                            </div>
+                          )}
+                          <FieldMessage message={fieldError('distributor')} />
+                        </div>
+
+                        <div className="grid gap-3" style={{ gridTemplateColumns: '1fr 1fr' }}>
+                          <div className="space-y-1.5 min-w-0">
+                            <Label className="text-xs flex items-center gap-1.5">
+                              <Euro className="w-3.5 h-3.5" />
+                              {t('subscriptions.newDialog.entryFeesEditableLabel')}
+                            </Label>
+                            <div className="flex h-10 w-full items-center rounded-md border border-input bg-white pr-3 focus-within:ring-2 focus-within:ring-ring/40">
+                              <Input
+                                type="text"
+                                inputMode="decimal"
+                                value={formData.entryFees}
+                                onChange={(e) => {
+                                  const cleaned = e.target.value
+                                    .replace(/[^0-9.,]/g, '')
+                                    .replace(',', '.');
+                                  setFormData((prev) => ({ ...prev, entryFees: cleaned }));
+                                }}
+                                placeholder="0"
+                                className="h-full border-0 bg-transparent font-semibold text-right shadow-none focus-visible:ring-0 focus-visible:ring-offset-0"
+                              />
+                              <span className="ml-1 text-sm text-muted-foreground select-none">%</span>
+                            </div>
+                            <p className="text-[10px] text-muted-foreground">
+                              {t('subscriptions.newDialog.entryFeesEditableHint', {
+                                percent: defaultEntryFeePercent,
+                              })}
+                            </p>
+                          </div>
+
+                          <EditField label={t('subscriptions.detail.form.advisor')} icon={Users}>
+                            <Input
+                              value={extended.advisor}
+                              onChange={(e) => updateExtended('advisor', e.target.value)}
+                              placeholder={t('subscriptions.newDialog.distribution.advisorPlaceholder')}
+                              className="h-10"
+                            />
+                          </EditField>
+
+                          <EditField label={t('subscriptions.detail.form.commissionRate')} icon={Percent}>
+                            <div className="flex h-10 w-full items-center rounded-md border border-input bg-white pr-3 focus-within:ring-2 focus-within:ring-ring/40">
+                              <Input
+                                type="text"
+                                inputMode="decimal"
+                                value={extended.commissionRate}
+                                onChange={(e) =>
+                                  updateExtended(
+                                    'commissionRate',
+                                    e.target.value.replace(/[^0-9.,]/g, '').replace(',', '.'),
+                                  )
+                                }
+                                placeholder="0"
+                                className="h-full border-0 bg-transparent font-semibold text-right shadow-none focus-visible:ring-0 focus-visible:ring-offset-0"
+                              />
+                              <span className="ml-1 text-sm text-muted-foreground select-none">%</span>
+                            </div>
+                          </EditField>
+
+                          <EditField
+                            label={t('subscriptions.detail.form.excludeRetrocessions')}
+                            icon={ArrowDownCircle}
+                          >
+                            <SwitchField
+                              id="exclude-retrocessions-switch"
+                              checked={extended.excludeRetrocessions}
+                              onCheckedChange={(checked) => updateExtended('excludeRetrocessions', checked)}
+                              onLabel={t('subscriptions.detail.form.yes')}
+                              offLabel={t('subscriptions.detail.form.no')}
+                            />
+                          </EditField>
+                        </div>
+                      </motion.div>
+                    )}
+
+                  </FormSection>
 
                   {isEditMode && (
-                    <>
+                    <div className="flex flex-col gap-4">
                       {/* SUBSCRIBER SECTION */}
                       <Separator className="my-2" />
                       <div className="space-y-3">
@@ -2388,84 +2610,351 @@ export function NewSubscriptionDialog({
                           />
                         </EditField>
                       </div>
-                    </>
+
+                    </div>
                   )}
 
-                  {/* NOTIFICATION & LANGUAGE SECTION */}
-                  <Separator className="my-2" />
-                  <div className="space-y-3">
-                    <Label className="text-xs uppercase tracking-wide font-semibold text-muted-foreground flex items-center gap-1.5">
-                      <Globe className="w-3.5 h-3.5" />
-                      {t('subscriptions.newDialog.notificationSection.title')}
-                    </Label>
+                  <FormSection
+                    index={4}
+                    icon={Info}
+                    title={t('subscriptions.newDialog.sections.additionalInfo')}
+                    description={t('subscriptions.newDialog.sections.additionalInfoDesc')}
+                  >
+                    <div className="space-y-1.5">
+                      <Label className="text-xs flex items-center gap-1.5">
+                        <Tag className="w-3.5 h-3.5" />
+                        {t('subscriptions.newDialog.subscriptionName.label')}
+                        <span className="text-muted-foreground/60 font-normal">
+                          {t('subscriptions.newDialog.optional')}
+                        </span>
+                      </Label>
+                      <Input
+                        value={formData.subscriptionName}
+                        onChange={(e) => setFormData((prev) => ({ ...prev, subscriptionName: e.target.value }))}
+                        placeholder={generatedSubscriptionName || t('subscriptions.newDialog.subscriptionName.placeholder')}
+                        className="h-10"
+                      />
+                      {!formData.subscriptionName.trim() && (
+                        <div className="flex items-start gap-2 rounded-md bg-muted/40 px-3 py-2">
+                          <Info className="w-3.5 h-3.5 text-muted-foreground shrink-0 mt-0.5" />
+                          <p className="text-[11px] text-muted-foreground">
+                            {t('subscriptions.newDialog.subscriptionName.rule')}{' '}
+                            {generatedSubscriptionName
+                              ? t('subscriptions.newDialog.subscriptionName.ruleExample', {
+                                  name: generatedSubscriptionName,
+                                })
+                              : t('subscriptions.newDialog.subscriptionName.ruleWaiting')}
+                          </p>
+                        </div>
+                      )}
+                    </div>
 
-                    {(() => {
-                      const isIntermediated = formData.distributor !== 'direct';
-                      const notifyLabelKey = isIntermediated
-                        ? 'subscriptions.newDialog.notificationSection.notifyDistributorLabel'
-                        : 'subscriptions.newDialog.notificationSection.notifyInvestorLabel';
-                      const notifyDescriptionKey = isIntermediated
-                        ? 'subscriptions.newDialog.notificationSection.notifyDistributorDescription'
-                        : 'subscriptions.newDialog.notificationSection.notifyInvestorDescription';
-                      const hasInvestorPreference = Boolean(formData.investor?.preferredLanguage);
-                      const helperKey = hasInvestorPreference
-                        ? 'subscriptions.newDialog.notificationSection.languageHelper'
-                        : 'subscriptions.newDialog.notificationSection.languageHelperFallback';
+                    <div className="space-y-1.5">
+                      <Label className="text-xs flex items-center gap-1.5">
+                        <Globe className="w-3.5 h-3.5" />
+                        {t('subscriptions.newDialog.notificationSection.languageLabel')}
+                      </Label>
+                      <Select
+                        value={formData.language}
+                        onValueChange={(value) =>
+                          setFormData((prev) => ({ ...prev, language: value as SubscriptionLanguage }))
+                        }
+                      >
+                        <SelectTrigger className="h-10">
+                          <SelectValue />
+                        </SelectTrigger>
+                        <SelectContent>
+                          {SUBSCRIPTION_LANGUAGES.map((code) => (
+                            <SelectItem key={code} value={code}>
+                              {t(`subscriptions.newDialog.notificationSection.languageOptions.${code}`)}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                      <p className="text-[11px] text-muted-foreground">
+                        {formData.investor?.preferredLanguage
+                          ? t('subscriptions.newDialog.notificationSection.languageHelper')
+                          : t('subscriptions.newDialog.notificationSection.languageHelperFallback')}
+                      </p>
+                    </div>
 
-                      return (
-                        <>
-                          <label
-                            htmlFor="notify-on-creation-switch"
-                            className="flex w-full items-start justify-between gap-3 rounded-md border border-input bg-white px-3 py-2.5 text-sm cursor-pointer hover:bg-muted/40 transition-colors"
-                          >
-                            <div className="flex-1 min-w-0">
-                              <div className="text-foreground font-medium">
-                                {t(notifyLabelKey)}
-                              </div>
-                              <div className="text-xs text-muted-foreground mt-0.5">
-                                {t(notifyDescriptionKey)}
-                              </div>
+                    <label
+                      htmlFor="notify-on-creation-switch"
+                      className="flex w-full items-start justify-between gap-3 rounded-md border border-input bg-white px-3 py-2.5 text-sm cursor-pointer hover:bg-muted/40 transition-colors"
+                    >
+                      <div className="flex-1 min-w-0">
+                        <div className="text-foreground font-medium flex items-center gap-1.5">
+                          <Bell className="w-3.5 h-3.5" />
+                          {t('subscriptions.newDialog.notificationSection.notifyLabel')}
+                        </div>
+                        <div className="text-xs text-muted-foreground mt-0.5">
+                          {formData.isIntermediated
+                            ? t('subscriptions.newDialog.notificationSection.notifyDistributorDescription')
+                            : t('subscriptions.newDialog.notificationSection.notifyInvestorDescription')}
+                        </div>
+                      </div>
+                      <Switch
+                        id="notify-on-creation-switch"
+                        checked={formData.notifyOnCreation}
+                        onCheckedChange={(checked) =>
+                          setFormData((prev) => ({ ...prev, notifyOnCreation: checked }))
+                        }
+                      />
+                    </label>
+
+                    {!isEditMode && (
+                      <div className="space-y-3" data-field-error={!!fieldError('internalNote')}>
+                        <label
+                          htmlFor="internal-note-switch"
+                          className="flex w-full items-start justify-between gap-3 rounded-md border border-input bg-white px-3 py-2.5 text-sm cursor-pointer hover:bg-muted/40 transition-colors"
+                        >
+                          <div className="flex-1 min-w-0">
+                            <div className="text-foreground font-medium flex items-center gap-1.5">
+                              <StickyNote className="w-3.5 h-3.5" />
+                              {t('subscriptions.newDialog.internalNote.toggleLabel')}
+                              <span className="text-muted-foreground/60 font-normal">
+                                {t('subscriptions.newDialog.optional')}
+                              </span>
                             </div>
-                            <Switch
-                              id="notify-on-creation-switch"
-                              checked={formData.notifyOnCreation}
-                              onCheckedChange={(checked) =>
-                                setFormData((prev) => ({ ...prev, notifyOnCreation: checked }))
-                              }
-                            />
-                          </label>
-
-                          <div className="space-y-1.5">
-                            <Label className="text-xs flex items-center gap-1.5">
-                              <Globe className="w-3.5 h-3.5" />
-                              {t('subscriptions.newDialog.notificationSection.languageLabel')}
-                            </Label>
-                            <Select
-                              value={formData.language}
-                              onValueChange={(value) =>
-                                setFormData((prev) => ({ ...prev, language: value as SubscriptionLanguage }))
-                              }
-                            >
-                              <SelectTrigger className="h-10">
-                                <SelectValue />
-                              </SelectTrigger>
-                              <SelectContent>
-                                {SUBSCRIPTION_LANGUAGES.map((code) => (
-                                  <SelectItem key={code} value={code}>
-                                    {t(`subscriptions.newDialog.notificationSection.languageOptions.${code}`)}
-                                  </SelectItem>
-                                ))}
-                              </SelectContent>
-                            </Select>
-                            <p className="text-[11px] text-muted-foreground">
-                              {t(helperKey)}
-                            </p>
+                            <div className="text-xs text-muted-foreground mt-0.5">
+                              {t('subscriptions.newDialog.internalNote.toggleHint')}
+                            </div>
                           </div>
-                        </>
-                      );
-                    })()}
-                  </div>
-            </div>
+                          <Switch
+                            id="internal-note-switch"
+                            checked={formData.internalNote.enabled}
+                            onCheckedChange={(checked) => updateInternalNote({ enabled: checked })}
+                          />
+                        </label>
+
+                        {formData.internalNote.enabled && (
+                          <motion.div
+                            initial={{ opacity: 0, y: -4 }}
+                            animate={{ opacity: 1, y: 0 }}
+                            className="rounded-xl border border-border bg-card p-4 space-y-3"
+                          >
+                            <div className="grid grid-cols-2 gap-3">
+                              <EditField label={t('subscriptions.newDialog.internalNote.type')} icon={Tag}>
+                                <Select
+                                  value={formData.internalNote.type}
+                                  onValueChange={(value) => updateInternalNote({ type: value as NoteType })}
+                                >
+                                  <SelectTrigger className="h-10">
+                                    <SelectValue />
+                                  </SelectTrigger>
+                                  <SelectContent>
+                                    {NOTE_TYPES.map((type) => (
+                                      <SelectItem key={type} value={type}>
+                                        {t(`subscriptions.newDialog.internalNote.types.${type}`)}
+                                      </SelectItem>
+                                    ))}
+                                  </SelectContent>
+                                </Select>
+                              </EditField>
+
+                              <EditField label={t('subscriptions.newDialog.internalNote.priority')} icon={Flag}>
+                                <SegmentedControl
+                                  aria-label={t('subscriptions.newDialog.internalNote.priority')}
+                                  value={formData.internalNote.priority}
+                                  onValueChange={(value) => updateInternalNote({ priority: value })}
+                                  size="sm"
+                                  fullWidth
+                                  options={NOTE_PRIORITIES.map((priority) => ({
+                                    value: priority,
+                                    label: t(`subscriptions.newDialog.internalNote.priorities.${priority}`),
+                                  }))}
+                                />
+                              </EditField>
+                            </div>
+
+                            <EditField label={t('subscriptions.newDialog.internalNote.content')} icon={FileText}>
+                              <Textarea
+                                value={formData.internalNote.content}
+                                onChange={(e) => updateInternalNote({ content: e.target.value })}
+                                placeholder={t('subscriptions.newDialog.internalNote.contentPlaceholder')}
+                                className={'min-h-[90px]'}
+                              />
+                            </EditField>
+                            <FieldMessage message={fieldError('internalNote')} />
+                          </motion.div>
+                        )}
+                      </div>
+                    )}
+
+                  </FormSection>
+
+                  {!isEditMode && (
+                    <FormSection
+                      index={5}
+                      icon={ClipboardCheck}
+                      title={t('subscriptions.newDialog.sections.review')}
+                      description={t('subscriptions.newDialog.sections.reviewDesc')}
+                    >
+                    {Object.keys(errors).length > 0 && submitAttempted && (
+                      <div
+                        className="rounded-lg border px-3 py-2.5 space-y-1"
+                        style={{
+                          backgroundColor: 'color-mix(in oklab, var(--destructive) 6%, transparent)',
+                          borderColor: 'color-mix(in oklab, var(--destructive) 30%, transparent)',
+                        }}
+                      >
+                        <p className="text-xs font-semibold text-foreground">
+                          {t('subscriptions.newDialog.review.blockingTitle')}
+                        </p>
+                        <ul className="space-y-0.5">
+                          {Object.values(errors).map((message) => (
+                            <li key={message}>
+                              <FieldMessage message={message} />
+                            </li>
+                          ))}
+                        </ul>
+                      </div>
+                    )}
+
+                    <dl className="rounded-xl border border-border bg-card divide-y divide-border text-sm">
+                      <div className="flex items-start justify-between gap-4 px-4 py-2.5">
+                        <dt className="text-muted-foreground shrink-0">
+                          {t('subscriptions.newDialog.review.subscriptionName')}
+                        </dt>
+                        <dd className="text-right min-w-0">
+                          {effectiveSubscriptionName ? (
+                            <span className="font-medium text-foreground break-words">
+                              {effectiveSubscriptionName}
+                              {!formData.subscriptionName.trim() && (
+                                <Badge variant="outline" className="ml-2 text-[10px] h-4 align-middle">
+                                  {t('subscriptions.newDialog.review.generatedTag')}
+                                </Badge>
+                              )}
+                            </span>
+                          ) : (
+                            <span className="text-muted-foreground">{t('subscriptions.newDialog.review.toComplete')}</span>
+                          )}
+                        </dd>
+                      </div>
+
+                      <div className="flex items-start justify-between gap-4 px-4 py-2.5">
+                        <dt className="text-muted-foreground shrink-0">
+                          {t('subscriptions.newDialog.review.subscriptionAmount')}
+                        </dt>
+                        <dd className="font-medium text-foreground text-right">
+                          {calculatedAmount > 0
+                            ? `${calculatedAmount.toLocaleString('fr-FR')} €`
+                            : t('subscriptions.newDialog.review.toComplete')}
+                        </dd>
+                      </div>
+
+                      <div className="flex items-start justify-between gap-4 px-4 py-2.5">
+                        <dt className="text-muted-foreground shrink-0">
+                          {t('subscriptions.newDialog.review.totalAmount')}
+                        </dt>
+                        <dd className="text-right">
+                          <div className="font-bold text-primary">
+                            {(calculatedAmount + calculatedFees).toLocaleString('fr-FR')} €
+                          </div>
+                          <div className="text-[11px] text-muted-foreground">
+                            {t('subscriptions.newDialog.review.totalBreakdown', {
+                              percent: entryFeePercent,
+                              fees: calculatedEntryFees.toLocaleString('fr-FR'),
+                              premium: subscriptionPremiumAmount.toLocaleString('fr-FR'),
+                            })}
+                          </div>
+                        </dd>
+                      </div>
+
+                      <div className="flex items-start justify-between gap-4 px-4 py-2.5">
+                        <dt className="text-muted-foreground shrink-0">
+                          {t('subscriptions.newDialog.review.language')}
+                        </dt>
+                        <dd className="font-medium text-foreground text-right">
+                          {t(`subscriptions.newDialog.notificationSection.languageOptions.${formData.language}`)}
+                        </dd>
+                      </div>
+
+                      <div className="px-4 py-2.5 space-y-2">
+                        <div className="flex items-start justify-between gap-4">
+                          <dt className="text-muted-foreground shrink-0">
+                            {t('subscriptions.newDialog.review.notification')}
+                          </dt>
+                          <dd className="font-medium text-foreground text-right">
+                            {formData.notifyOnCreation
+                              ? t('subscriptions.newDialog.distribution.yes')
+                              : t('subscriptions.newDialog.review.notificationOff')}
+                          </dd>
+                        </div>
+                        {formData.notifyOnCreation && notificationRecipients.length > 0 && (
+                          <ul className="space-y-1.5">
+                            {notificationRecipients.map((recipient) => (
+                              <li
+                                key={recipient.role}
+                                className="flex items-center gap-3 rounded-md bg-muted/40 px-3 py-2"
+                              >
+                                <Mail className="w-3.5 h-3.5 text-muted-foreground shrink-0" />
+                                <div className="flex-1 min-w-0">
+                                  <div className="text-xs font-medium text-foreground truncate">
+                                    {recipient.name}
+                                    <span className="ml-1.5 font-normal text-muted-foreground">
+                                      {t(`subscriptions.newDialog.review.roles.${recipient.role}`)}
+                                    </span>
+                                  </div>
+                                  {recipient.detail && (
+                                    <div className="text-[11px] text-muted-foreground truncate">{recipient.detail}</div>
+                                  )}
+                                </div>
+                                {recipient.template ? (
+                                  <button
+                                    type="button"
+                                    onClick={() => setPreviewRecipient(recipient)}
+                                    className="inline-flex items-center gap-1 rounded-md px-2 h-7 text-xs text-primary hover:bg-muted transition-colors shrink-0"
+                                    style={{ maxWidth: '50%' }}
+                                    aria-label={t('subscriptions.newDialog.review.previewTemplate', {
+                                      name: recipient.template.name,
+                                    })}
+                                  >
+                                    <Eye className="w-3.5 h-3.5 shrink-0" />
+                                    <span className="truncate">{recipient.template.name}</span>
+                                  </button>
+                                ) : (
+                                  <span className="text-[11px] text-muted-foreground shrink-0">
+                                    {t('subscriptions.newDialog.review.templateMissing')}
+                                  </span>
+                                )}
+                              </li>
+                            ))}
+                          </ul>
+                        )}
+                      </div>
+
+                      <div className="flex items-start justify-between gap-4 px-4 py-2.5">
+                        <dt className="text-muted-foreground shrink-0">
+                          {t('subscriptions.newDialog.review.internalNote')}
+                        </dt>
+                        <dd className="text-right min-w-0">
+                          {formData.internalNote.enabled && formData.internalNote.content.trim() ? (
+                            <>
+                              <div className="flex justify-end gap-1.5 mb-1">
+                                <Badge variant="outline" className="text-[10px] h-4">
+                                  {t(`subscriptions.newDialog.internalNote.types.${formData.internalNote.type}`)}
+                                </Badge>
+                                <Badge variant="outline" className="text-[10px] h-4">
+                                  {t(`subscriptions.newDialog.internalNote.priorities.${formData.internalNote.priority}`)}
+                                </Badge>
+                              </div>
+                              <p className="text-xs text-foreground line-clamp-2 break-words">
+                                {formData.internalNote.content.trim()}
+                              </p>
+                            </>
+                          ) : (
+                            <span className="text-muted-foreground">
+                              {t('subscriptions.newDialog.review.noInternalNote')}
+                            </span>
+                          )}
+                        </dd>
+                      </div>
+                    </dl>
+
+                    </FormSection>
+                  )}
+              </div>
             )}
 
             {step === 'documents' && (
@@ -2576,7 +3065,7 @@ export function NewSubscriptionDialog({
                     {isEditMode ? (
                       <Button
                         onClick={handleSubmit}
-                        disabled={!isFormValid || isSubmitting}
+                        disabled={isSubmitting}
                         size="sm"
                         className="bg-primary text-primary-foreground min-w-[200px] h-9"
                       >
@@ -2596,7 +3085,7 @@ export function NewSubscriptionDialog({
                       <>
                         <Button
                           onClick={handleSubmit}
-                          disabled={!isFormValid || isSubmitting}
+                          disabled={isSubmitting}
                           variant="outline"
                           size="sm"
                           className="min-w-[160px] h-9"
@@ -2616,7 +3105,7 @@ export function NewSubscriptionDialog({
 
                         <Button
                           onClick={handleProceedToDocuments}
-                          disabled={!isFormValid || isSubmitting}
+                          disabled={isSubmitting}
                           size="sm"
                           className="bg-primary text-primary-foreground min-w-[180px] h-9"
                         >
@@ -2663,6 +3152,41 @@ export function NewSubscriptionDialog({
             </div>
           </div>
         </div>
+        <Dialog open={!!previewRecipient} onOpenChange={(open) => !open && setPreviewRecipient(null)}>
+          <DialogContent
+            className="flex flex-col overflow-hidden"
+            style={{ width: 760, maxWidth: 'calc(100vw - 2rem)', maxHeight: '90vh' }}
+          >
+            <DialogHeader>
+              <DialogTitle>
+                {t('subscriptions.newDialog.preview.title', { name: previewRecipient?.template?.name ?? '' })}
+              </DialogTitle>
+              <DialogDescription>
+                {t('subscriptions.newDialog.preview.description', {
+                  recipient: previewRecipient?.name ?? '',
+                  language: t(`subscriptions.newDialog.notificationSection.languageOptions.${formData.language}`),
+                })}
+              </DialogDescription>
+            </DialogHeader>
+            {previewDocument && (
+              <div className="space-y-3">
+                <div className="rounded-md border border-border bg-muted/40 px-3 py-2 text-sm">
+                  <span className="text-muted-foreground">{t('subscriptions.newDialog.preview.subject')} </span>
+                  <span className="font-medium text-foreground">{previewDocument.subject}</span>
+                </div>
+                <div className="rounded-md border border-border bg-gray-100 p-3 overflow-auto">
+                  <iframe
+                    title={t('subscriptions.newDialog.preview.frameLabel')}
+                    srcDoc={previewDocument.html}
+                    sandbox=""
+                    className="w-full border-0 block bg-white"
+                    style={{ height: 'min(60vh, 560px)' }}
+                  />
+                </div>
+              </div>
+            )}
+          </DialogContent>
+        </Dialog>
       </BigModalContent>
     </BigModal>
   );

@@ -109,7 +109,7 @@ function resolveVariables(html: string, values: Record<string, string>): string 
   return html.replace(variableMatcher(), (token) => resolved[token] ?? token);
 }
 
-function buildPreviewDocument(html: string, values: Record<string, string>): string {
+export function buildPreviewDocument(html: string, values: Record<string, string>): string {
   const body = resolveVariables(html, values);
   return `<!doctype html>
 <html>
