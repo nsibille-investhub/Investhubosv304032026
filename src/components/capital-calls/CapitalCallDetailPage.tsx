@@ -15,11 +15,13 @@ import {
   Paperclip,
   Tag,
   TrendingDown,
+  Users,
 } from 'lucide-react';
 
 import { useTranslation } from '../../utils/languageContext';
 import { CapitalCall, CapitalCallShare, distinctNoticeDate } from '../../utils/capitalCallGenerator';
 import { CheckIndicator } from '../CheckIndicator';
+import { CapitalCallLinesTab } from './CapitalCallLinesTab';
 import { ColumnConfig, DataTable } from '../DataTable';
 import { EmptyState } from '../EmptyState';
 import { StatusBadge } from '../StatusBadge';
@@ -33,7 +35,7 @@ import { Tabs, TabsContent } from '../ui/tabs';
 
 const K = 'funds.capitalCalls.detail';
 
-type TabId = 'breakdown' | 'message';
+type TabId = 'lines' | 'breakdown' | 'message';
 
 interface CapitalCallDetailPageProps {
   call: CapitalCall;
@@ -42,7 +44,7 @@ interface CapitalCallDetailPageProps {
 
 export function CapitalCallDetailPage({ call, onOpenFund }: CapitalCallDetailPageProps) {
   const { t, lang } = useTranslation();
-  const [tab, setTab] = useState<TabId>('breakdown');
+  const [tab, setTab] = useState<TabId>('lines');
   const [hoveredRow, setHoveredRow] = useState<number | null>(null);
 
   const dateFormat = new Intl.DateTimeFormat(lang, { day: '2-digit', month: '2-digit', year: 'numeric' });
@@ -195,12 +197,16 @@ export function CapitalCallDetailPage({ call, onOpenFund }: CapitalCallDetailPag
         <div className="border-b border-border bg-card px-8">
           <DetailTabsList
             items={[
+              { value: 'lines', icon: Users, label: t(`${K}.tabs.lines`), badge: call.lines },
               { value: 'breakdown', icon: Layers, label: t(`${K}.tabs.breakdown`), badge: call.shares.length },
               { value: 'message', icon: Mail, label: t(`${K}.tabs.message`), badge: call.attachments.length || undefined },
             ]}
           />
         </div>
         <div className="px-8 py-6">
+          <TabsContent value="lines">
+            <CapitalCallLinesTab call={call} />
+          </TabsContent>
           <TabsContent value="breakdown">
             <Card className="overflow-hidden shadow-sm">
               <DataTable

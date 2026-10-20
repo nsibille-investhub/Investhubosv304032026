@@ -106,7 +106,9 @@ export function generateCapitalCalls(funds: Fund[], today = new Date()): Capital
 
     for (let index = 0; index < count; index++) {
       const dueDate = new Date(firstDue + index * (90 + Math.floor(random() * 60)) * DAY);
-      const createdAt = new Date(dueDate.getTime() - (20 + Math.floor(random() * 25)) * DAY);
+      const createdAt = new Date(
+        Math.min(dueDate.getTime() - (20 + Math.floor(random() * 25)) * DAY, today.getTime() - (1 + index) * DAY),
+      );
       const noticeDraw = random();
       const noticeDate =
         noticeDraw < 0.3 ? new Date(createdAt.getTime() + 2 * DAY) : noticeDraw < 0.45 ? new Date(dueDate) : null;

@@ -5731,6 +5731,7 @@
           "createdOn": "Created on {{date}} by {{author}}"
         },
         "tabs": {
+          "lines": "Investor lines",
           "breakdown": "Breakdown by share",
           "message": "Message and attachments"
         },
@@ -5772,6 +5773,66 @@
         "toast": {
           "notInMockup": "The {{name}} page is not in the mockup yet.",
           "download": "Downloading {{name}}: coming soon in the mockup."
+        },
+        "lines": {
+          "searchPlaceholder": "Search an investor",
+          "filters": {
+            "state": "Line status",
+            "noticeState": "Notice status",
+            "share": "Share"
+          },
+          "columns": {
+            "investor": "Investor",
+            "subscription": "Subscription",
+            "share": "Share",
+            "units": "Units",
+            "amountPerUnit": "Amount per unit",
+            "calledAmount": "Called amount",
+            "fees": "Fees",
+            "premium": "Premium",
+            "total": "Total",
+            "state": "Line status",
+            "noticeState": "Notice status",
+            "notifiedAt": "Notification date",
+            "lastReminderAt": "Last reminder",
+            "paidAt": "Payment date"
+          },
+          "states": {
+            "toNotify": "To notify",
+            "notified": "Notified",
+            "paymentDeclared": "Payment declared",
+            "paid": "Paid"
+          },
+          "noticeStates": {
+            "generating": "Generating",
+            "available": "Available",
+            "failed": "Failed",
+            "replaced": "Replaced"
+          },
+          "failureReasons": {
+            "combinedTemplateMissing": "Combined notice template missing",
+            "templateMissing": "Notice template missing",
+            "missingAddress": "Recipient address missing"
+          },
+          "paymentOrigins": {
+            "bankReconciliation": "bank reconciliation",
+            "directDebit": "direct debit",
+            "manual": "manual validation"
+          },
+          "paidTooltip": "Paid by {{origin}} on {{date}}",
+          "indicators": {
+            "combinedNotice": "Combined notice",
+            "compensated": "Offset line",
+            "transferred": "Transferred subscription",
+            "hiddenOnPortal": "Line hidden on the portal"
+          },
+          "totals": "Total of the {{count}} lines shown",
+          "empty": {
+            "title": "No investor lines",
+            "filteredTitle": "No matching lines",
+            "filteredDescription": "Change the search or the filters to widen the results.",
+            "reset": "Reset filters"
+          }
         }
       }
     }

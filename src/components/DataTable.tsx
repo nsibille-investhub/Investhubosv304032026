@@ -48,6 +48,8 @@ interface DataTableProps<T extends { id: number }> {
   hideSelection?: boolean;
   /** Densité : "compact" resserre les marges pour les tableaux à nombreuses colonnes. */
   density?: 'default' | 'compact';
+  /** Ligne de pied de table (totaux), une cellule par clé de colonne. */
+  footer?: Partial<Record<string, ReactNode>>;
 }
 
 export function DataTable<T extends { id: number }>({
@@ -63,7 +65,8 @@ export function DataTable<T extends { id: number }>({
   searchTerm = '',
   density = 'default',
   entityName = 'item',
-  hideSelection = false
+  hideSelection = false,
+  footer
 }: DataTableProps<T>) {
   // Safety check
   if (!columns || columns.length === 0) {
@@ -271,6 +274,25 @@ export function DataTable<T extends { id: number }>({
               ))}
             </AnimatePresence>
           </tbody>
+          {footer && (
+            <tfoot>
+              <tr className="border-t-2 border-border bg-muted/40">
+                {!hideSelection && <td className="px-6 py-3" />}
+                {columns.map((column) => (
+                  <td
+                    key={column.key}
+                    className={cn(
+                      'px-6 py-3 text-sm font-semibold text-foreground',
+                      column.align === 'right' && 'text-right tabular-nums',
+                      density === 'compact' && 'px-3',
+                    )}
+                  >
+                    {footer[column.key]}
+                  </td>
+                ))}
+              </tr>
+            </tfoot>
+          )}
         </table>
       </div>
     </>

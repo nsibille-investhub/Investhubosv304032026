@@ -5731,6 +5731,7 @@
           "createdOn": "Créé le {{date}} par {{author}}"
         },
         "tabs": {
+          "lines": "Lignes investisseurs",
           "breakdown": "Ventilation par part",
           "message": "Message et pièces jointes"
         },
@@ -5772,6 +5773,66 @@
         "toast": {
           "notInMockup": "La fiche de {{name}} n'est pas encore dans la maquette.",
           "download": "Téléchargement de {{name}} : bientôt disponible dans la maquette."
+        },
+        "lines": {
+          "searchPlaceholder": "Rechercher un investisseur",
+          "filters": {
+            "state": "État de la ligne",
+            "noticeState": "État de l'avis",
+            "share": "Part"
+          },
+          "columns": {
+            "investor": "Investisseur",
+            "subscription": "Souscription",
+            "share": "Part",
+            "units": "Nombre de titres",
+            "amountPerUnit": "Montant par titre",
+            "calledAmount": "Montant appelé",
+            "fees": "Frais",
+            "premium": "Prime",
+            "total": "Total",
+            "state": "État de la ligne",
+            "noticeState": "État de l'avis",
+            "notifiedAt": "Date de notification",
+            "lastReminderAt": "Dernière relance",
+            "paidAt": "Date de paiement"
+          },
+          "states": {
+            "toNotify": "À notifier",
+            "notified": "Notifiée",
+            "paymentDeclared": "Paiement déclaré",
+            "paid": "Payée"
+          },
+          "noticeStates": {
+            "generating": "En génération",
+            "available": "Disponible",
+            "failed": "En échec",
+            "replaced": "Remplacé"
+          },
+          "failureReasons": {
+            "combinedTemplateMissing": "Modèle d'avis combiné absent",
+            "templateMissing": "Modèle d'avis absent",
+            "missingAddress": "Adresse du destinataire manquante"
+          },
+          "paymentOrigins": {
+            "bankReconciliation": "rapprochement bancaire",
+            "directDebit": "prélèvement",
+            "manual": "validation manuelle"
+          },
+          "paidTooltip": "Payée par {{origin}} le {{date}}",
+          "indicators": {
+            "combinedNotice": "Avis combiné",
+            "compensated": "Ligne compensée",
+            "transferred": "Souscription transférée",
+            "hiddenOnPortal": "Ligne masquée sur le portail"
+          },
+          "totals": "Total des {{count}} lignes affichées",
+          "empty": {
+            "title": "Aucune ligne investisseur",
+            "filteredTitle": "Aucune ligne ne correspond",
+            "filteredDescription": "Modifiez la recherche ou les filtres pour élargir les résultats.",
+            "reset": "Réinitialiser les filtres"
+          }
         }
       }
     }
