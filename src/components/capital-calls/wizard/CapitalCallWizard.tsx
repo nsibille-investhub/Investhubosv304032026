@@ -45,6 +45,7 @@ export interface CapitalCallDraft {
   shares: CapitalCallShare[];
   calledAmount: number;
   lines: number;
+  publication: 'onNotification' | 'immediate';
 }
 
 interface CapitalCallWizardProps {
@@ -239,6 +240,7 @@ export function CapitalCallWizard({ open, onOpenChange, funds, subscriptionActiv
         shares: calledShares,
         calledAmount: simulation.total,
         lines: simulation.lines.length,
+        publication: info.publication,
       });
       setCreating(false);
       onOpenChange(false);

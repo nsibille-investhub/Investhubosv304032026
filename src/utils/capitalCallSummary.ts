@@ -1,0 +1,117 @@
+import type { CapitalCall } from './capitalCallGenerator';
+import type { CapitalCallEmail } from './capitalCallEmails';
+import type { CapitalCallLine } from './capitalCallLines';
+
+export type CallState =
+  | 'sending'
+  | 'noticesGenerating'
+  | 'noticesFailed'
+  | 'settled'
+  | 'partiallySettled'
+  | 'notified'
+  | 'partiallyNotified'
+  | 'publishedWithoutSending'
+  | 'readyToNotify';
+
+/** Ordre de priorité : le premier état vrai l'emporte. */
+export const CALL_STATES: CallState[] = [
+  'sending',
+  'noticesGenerating',
+  'noticesFailed',
+  'settled',
+  'partiallySettled',
+  'notified',
+  'partiallyNotified',
+  'publishedWithoutSending',
+  'readyToNotify',
+];
+
+export interface CallSummary {
+  lines: number;
+  entered: number;
+  allocated: number;
+  roundingGap: number;
+  noticesAvailable: number;
+  noticesGenerating: number;
+  noticesFailed: number;
+  noticesReplaced: number;
+  notified: number;
+  toNotify: number;
+  reminded: number;
+  emailsFailed: number;
+  paid: number;
+  compensated: number;
+  paymentDeclared: number;
+  unpaid: number;
+  settled: number;
+  remainingDue: number;
+  state: CallState;
+}
+
+export type SettlementCategory = 'paid' | 'compensated' | 'paymentDeclared' | 'unpaid';
+export const SETTLEMENT_CATEGORIES: SettlementCategory[] = ['paid', 'compensated', 'paymentDeclared', 'unpaid'];
+
+export type NotificationCategory = 'notified' | 'toNotify' | 'reminded';
+export const NOTIFICATION_CATEGORIES: NotificationCategory[] = ['notified', 'toNotify', 'reminded'];
+
+/** Règlement d'une ligne : une ligne est réglée si elle est payée ou compensée. */
+export function settlementOf(line: CapitalCallLine): SettlementCategory {
+  if (line.state === 'paid') return 'paid';
+  if (line.compensated) return 'compensated';
+  if (line.state === 'paymentDeclared') return 'paymentDeclared';
+  return 'unpaid';
+}
+
+export function isSettled(line: CapitalCallLine) {
+  const category = settlementOf(line);
+  return category === 'paid' || category === 'compensated';
+}
+
+/** Une ligne relancée est aussi notifiée : le filtre retient les deux catégories. */
+export function notificationCategoriesOf(line: CapitalCallLine): NotificationCategory[] {
+  if (!line.notifiedAt) return ['toNotify'];
+  return line.lastReminderAt ? ['notified', 'reminded'] : ['notified'];
+}
+
+const cents = (value: number) => Math.round(value * 100) / 100;
+
+export function summarizeCall(call: CapitalCall, lines: CapitalCallLine[], emails: CapitalCallEmail[] = []): CallSummary {
+  const count = (predicate: (line: CapitalCallLine) => boolean) => lines.filter(predicate).length;
+  const allocated = cents(lines.reduce((sum, line) => sum + line.calledAmount, 0));
+  const notified = count(line => line.notifiedAt !== null);
+  const settled = count(isSettled);
+  const noticesGenerating = count(line => line.noticeState === 'generating');
+  const noticesFailed = count(line => line.noticeState === 'failed');
+
+  let state: CallState = 'readyToNotify';
+  if (call.sending) state = 'sending';
+  else if (noticesGenerating > 0) state = 'noticesGenerating';
+  else if (noticesFailed > 0) state = 'noticesFailed';
+  else if (lines.length > 0 && settled === lines.length) state = 'settled';
+  else if (settled > 0) state = 'partiallySettled';
+  else if (lines.length > 0 && notified === lines.length) state = 'notified';
+  else if (notified > 0) state = 'partiallyNotified';
+  else if (call.publication === 'immediate') state = 'publishedWithoutSending';
+
+  return {
+    lines: lines.length,
+    entered: call.calledAmount,
+    allocated,
+    roundingGap: cents(call.calledAmount - allocated),
+    noticesAvailable: count(line => line.noticeState === 'available'),
+    noticesGenerating,
+    noticesFailed,
+    noticesReplaced: count(line => line.noticeState === 'replaced'),
+    notified,
+    toNotify: count(line => line.notifiedAt === null),
+    reminded: count(line => line.lastReminderAt !== null),
+    emailsFailed: emails.filter(email => ['failed', 'spam', 'notFound'].includes(email.state)).length,
+    paid: count(line => settlementOf(line) === 'paid'),
+    compensated: count(line => settlementOf(line) === 'compensated'),
+    paymentDeclared: count(line => settlementOf(line) === 'paymentDeclared'),
+    unpaid: count(line => settlementOf(line) === 'unpaid'),
+    settled,
+    remainingDue: cents(lines.filter(line => !isSettled(line)).reduce((sum, line) => sum + line.total, 0)),
+    state,
+  };
+}

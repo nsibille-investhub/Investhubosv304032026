@@ -1,7 +1,9 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { toast } from 'sonner@2.0.3';
 import {
+  AlertTriangle,
   BellRing,
+  CalendarX,
   Columns3,
   FileArchive,
   FileSpreadsheet,
@@ -28,6 +30,8 @@ import {
   generateCapitalCalls,
 } from '../../utils/capitalCallGenerator';
 import { getDetailIdFromHash, onHashChange } from '../../utils/routing';
+import { CapitalCallLine, expireStaleNotices, generateCapitalCallLines } from '../../utils/capitalCallLines';
+import { CALL_STATES, CallSummary, summarizeCall } from '../../utils/capitalCallSummary';
 import {
   CapitalCallAction,
   CapitalCallRights,
@@ -40,6 +44,7 @@ import { FilterBar, FilterConfig } from '../FilterBar';
 import { ClickableText } from '../ClickableText';
 import { HighlightText } from '../HighlightText';
 import { StatusBadge } from '../StatusBadge';
+import { CALL_STATE_VARIANT } from './CapitalCallSummaryWidgets';
 import { FilterCard } from '../ui/filter-card';
 import { PageHeader } from '../ui/page-header';
 import { DataPagination } from '../ui/data-pagination';
@@ -66,6 +71,10 @@ type ColumnKey =
   | 'name'
   | 'dueDate'
   | 'calledAmount'
+  | 'lines'
+  | 'notices'
+  | 'notification'
+  | 'settlement'
   | 'state'
   | 'noticeDate'
   | 'origin'
@@ -78,6 +87,10 @@ const COLUMN_KEYS: ColumnKey[] = [
   'name',
   'dueDate',
   'calledAmount',
+  'lines',
+  'notices',
+  'notification',
+  'settlement',
   'state',
   'noticeDate',
   'origin',
@@ -85,10 +98,22 @@ const COLUMN_KEYS: ColumnKey[] = [
   'createdAt',
   'createdBy',
 ];
-const DEFAULT_COLUMNS: ColumnKey[] = ['fund', 'name', 'dueDate', 'calledAmount', 'state'];
-const COLUMNS_STORAGE_KEY = 'investhub-columns-capital-calls-v2';
+const DEFAULT_COLUMNS: ColumnKey[] = [
+  'fund',
+  'name',
+  'dueDate',
+  'calledAmount',
+  'lines',
+  'notices',
+  'notification',
+  'settlement',
+  'state',
+];
+const COLUMNS_STORAGE_KEY = 'investhub-columns-capital-calls-v3';
 
-type Queue = 'all' | 'sending';
+type Queue = 'all' | 'noticesFailed' | 'toNotify' | 'sending' | 'overdue';
+
+
 type Scenario = 'default' | 'limitedScope' | 'noNotifyRight' | 'subscriptionActivated' | 'noRight';
 const SCENARIOS: Scenario[] = ['default', 'limitedScope', 'noNotifyRight', 'subscriptionActivated', 'noRight'];
 
@@ -151,8 +176,12 @@ function defaultCompare(a: CapitalCall, b: CapitalCall) {
   return b.dueDate.getTime() - a.dueDate.getTime() || b.createdAt.getTime() - a.createdAt.getTime();
 }
 
-function sortValue(call: CapitalCall, key: string): string | number {
+function sortValue(call: CapitalCall, key: string, summary: CallSummary): string | number {
   switch (key) {
+    case 'lines':
+      return summary.lines;
+    case 'state':
+      return CALL_STATES.indexOf(summary.state);
     case 'fund':
       return call.fundName.toLowerCase();
     case 'name':
@@ -224,6 +253,28 @@ export function CapitalCallsPage({ funds, initialFundIds, onOpenFund, onSelected
 
   const scopedCalls = useMemo(() => allCalls.filter(call => scopeFundIds.has(call.fundId)), [allCalls, scopeFundIds]);
 
+  // Lignes de chaque appel : celles modifiées dans la fiche, sinon celles du jeu de démonstration.
+  const [linesOverrides, setLinesOverrides] = useState<Record<number, CapitalCallLine[]>>({});
+  const linesByCall = useMemo(() => {
+    const map = new Map<number, CapitalCallLine[]>();
+    allCalls.forEach(call => map.set(call.id, linesOverrides[call.id] ?? expireStaleNotices(generateCapitalCallLines(call))));
+    return map;
+  }, [allCalls, linesOverrides]);
+  const summaries = useMemo(
+    () => new Map(allCalls.map(call => [call.id, summarizeCall(call, linesByCall.get(call.id) ?? [])])),
+    [allCalls, linesByCall],
+  );
+  const summaryOf = (call: CapitalCall) => summaries.get(call.id)!;
+  const today = new Date();
+  const inQueue = (call: CapitalCall, id: Queue) => {
+    const summary = summaryOf(call);
+    if (id === 'noticesFailed') return summary.noticesFailed > 0;
+    if (id === 'toNotify') return summary.toNotify > 0;
+    if (id === 'sending') return call.sending;
+    if (id === 'overdue') return call.dueDate < today && summary.settled < summary.lines;
+    return true;
+  };
+
   const filterConfigs: FilterConfig[] = useMemo(() => {
     const seen = new Map<number, string>();
     scopedCalls.forEach(call => seen.set(call.fundId, call.fundName));
@@ -233,6 +284,13 @@ export function CapitalCallsPage({ funds, initialFundIds, onOpenFund, onSelected
     return [
       { id: 'fund', label: t(`${K}.filters.funds`), type: 'multiselect', isPrimary: true, options: fundOptions },
       { id: 'duePeriod', label: t(`${K}.filters.duePeriod`), type: 'dateRange', isPrimary: true },
+      {
+        id: 'state',
+        label: t(`${K}.filters.state`),
+        type: 'multiselect',
+        isPrimary: true,
+        options: CALL_STATES.map(item => ({ value: item, label: t(`${K}.callStates.${item}`) })),
+      },
       {
         id: 'origin',
         label: t(`${K}.filters.origin`),
@@ -250,8 +308,10 @@ export function CapitalCallsPage({ funds, initialFundIds, onOpenFund, onSelected
     const from = parseIsoDay(fromIso);
     const to = parseIsoDay(toIso, true);
     const origin = typeof activeFilters.origin === 'string' ? activeFilters.origin : undefined;
+    const states = Array.isArray(activeFilters.state) ? activeFilters.state : [];
     return scopedCalls.filter(call => {
-      if (queue === 'sending' && !call.sending) return false;
+      if (!inQueue(call, queue)) return false;
+      if (states.length > 0 && !states.includes(summaryOf(call).state)) return false;
       if (term && !call.name.toLowerCase().includes(term) && !call.fundName.toLowerCase().includes(term)) return false;
       if (fundIds.length > 0 && !fundIds.includes(String(call.fundId))) return false;
       if (from && call.dueDate < from) return false;
@@ -259,7 +319,7 @@ export function CapitalCallsPage({ funds, initialFundIds, onOpenFund, onSelected
       if (origin && call.origin !== origin) return false;
       return true;
     });
-  }, [scopedCalls, queue, search, activeFilters]);
+  }, [scopedCalls, queue, search, activeFilters, summaries]);
 
   const selectedCall = selectedId ? allCalls.find(call => String(call.id) === selectedId) : undefined;
   const selectedInScope = Boolean(selectedCall && scopeFundIds.has(selectedCall.fundId) && scenario !== 'noRight');
@@ -273,13 +333,13 @@ export function CapitalCallsPage({ funds, initialFundIds, onOpenFund, onSelected
     if (!sortConfig) return [...filteredCalls].sort(defaultCompare);
     const factor = sortConfig.direction === 'asc' ? 1 : -1;
     return [...filteredCalls].sort((a, b) => {
-      const left = sortValue(a, sortConfig.key);
-      const right = sortValue(b, sortConfig.key);
+      const left = sortValue(a, sortConfig.key, summaries.get(a.id)!);
+      const right = sortValue(b, sortConfig.key, summaries.get(b.id)!);
       if (left < right) return -factor;
       if (left > right) return factor;
       return defaultCompare(a, b);
     });
-  }, [filteredCalls, sortConfig]);
+  }, [filteredCalls, sortConfig, summaries]);
 
   const totalPages = Math.max(1, Math.ceil(sortedCalls.length / pageSize));
   const pageRows = sortedCalls.slice((page - 1) * pageSize, page * pageSize);
@@ -399,6 +459,7 @@ export function CapitalCallsPage({ funds, initialFundIds, onOpenFund, onSelected
       lines: draft.lines,
       notifiedLines: 0,
       linesToRelaunch: 0,
+      publication: draft.publication,
       justCreated: true,
     };
     setAllCalls(prev => [call, ...prev]);
@@ -459,11 +520,81 @@ export function CapitalCallsPage({ funds, initialFundIds, onOpenFund, onSelected
       align: 'right',
       render: call => <span className="text-sm">{money(call)}</span>,
     },
+    lines: {
+      key: 'lines',
+      label: t(`${K}.columns.lines`),
+      sortable: true,
+      align: 'right',
+      render: call => <span className="text-sm">{summaryOf(call).lines}</span>,
+    },
+    notices: {
+      key: 'notices',
+      label: t(`${K}.columns.notices`),
+      render: call => {
+        const summary = summaryOf(call);
+        return (
+          <span className="inline-flex items-center gap-1.5 whitespace-nowrap text-sm tabular-nums">
+            {t(`${K}.progress.notices`, { done: summary.noticesAvailable + summary.noticesReplaced, total: summary.lines })}
+            {summary.noticesFailed > 0 && (
+              <StatusBadge
+                label={t(`${K}.progress.noticesFailed`, { count: summary.noticesFailed })}
+                variant="danger"
+                icon={AlertTriangle}
+              />
+            )}
+          </span>
+        );
+      },
+    },
+    notification: {
+      key: 'notification',
+      label: t(`${K}.columns.notification`),
+      render: call => {
+        const summary = summaryOf(call);
+        return (
+          <span className="whitespace-nowrap text-sm tabular-nums">
+            {call.publication === 'immediate' && summary.notified === 0
+              ? t(`${K}.progress.immediate`)
+              : t(`${K}.progress.notified`, { done: summary.notified, total: summary.lines })}
+          </span>
+        );
+      },
+    },
+    settlement: {
+      key: 'settlement',
+      label: t(`${K}.columns.settlement`),
+      render: call => {
+        const summary = summaryOf(call);
+        return (
+          <span className="flex flex-col whitespace-nowrap text-sm tabular-nums">
+            <span>{t(`${K}.progress.settled`, { done: summary.settled, total: summary.lines })}</span>
+            {summary.remainingDue > 0 && (
+              <span className="text-xs text-muted-foreground">
+                {t(`${K}.progress.remainingDue`, {
+                  amount: new Intl.NumberFormat(lang, { style: 'currency', currency: call.currency, maximumFractionDigits: 0 }).format(
+                    summary.remainingDue,
+                  ),
+                })}
+              </span>
+            )}
+          </span>
+        );
+      },
+    },
     state: {
       key: 'state',
       label: t(`${K}.columns.state`),
-      render: call =>
-        call.sending ? <StatusBadge label={t(`${K}.states.sending`)} variant="info" icon={Loader2} /> : empty,
+      sortable: true,
+      render: call => {
+        const state = summaryOf(call).state;
+        return (
+          <StatusBadge
+            label={t(`${K}.callStates.${state}`)}
+            variant={CALL_STATE_VARIANT[state]}
+            icon={state === 'sending' || state === 'noticesGenerating' ? Loader2 : state === 'noticesFailed' ? AlertTriangle : undefined}
+          />
+        );
+      },
     },
     noticeDate: {
       key: 'noticeDate',
@@ -651,7 +782,14 @@ export function CapitalCallsPage({ funds, initialFundIds, onOpenFund, onSelected
     return (
       <div className="flex min-h-screen flex-1 flex-col bg-muted">
         {scenarioBar}
-        <CapitalCallDetailPage key={selectedCall.id} call={selectedCall} rights={rights} onOpenFund={onOpenFund} />
+        <CapitalCallDetailPage
+          key={selectedCall.id}
+          call={selectedCall}
+          initialLines={linesByCall.get(selectedCall.id) ?? []}
+          onLinesChange={lines => setLinesOverrides(prev => ({ ...prev, [selectedCall.id]: lines }))}
+          rights={rights}
+          onOpenFund={onOpenFund}
+        />
       </div>
     );
   }
@@ -698,11 +836,10 @@ export function CapitalCallsPage({ funds, initialFundIds, onOpenFund, onSelected
           </div>
           <div className="grid grid-cols-6 items-center gap-1.5">
             {queueCard('all', List, scopedCalls)}
-            {queueCard(
-              'sending',
-              Loader2,
-              scopedCalls.filter(call => call.sending),
-            )}
+            {queueCard('noticesFailed', AlertTriangle, scopedCalls.filter(call => inQueue(call, 'noticesFailed')))}
+            {queueCard('toNotify', Send, scopedCalls.filter(call => inQueue(call, 'toNotify')))}
+            {queueCard('sending', Loader2, scopedCalls.filter(call => inQueue(call, 'sending')))}
+            {queueCard('overdue', CalendarX, scopedCalls.filter(call => inQueue(call, 'overdue')))}
           </div>
         </div>
 
@@ -755,6 +892,7 @@ export function CapitalCallsPage({ funds, initialFundIds, onOpenFund, onSelected
                 searchTerm={search}
                 compactMode
                 hideSelection
+                density="compact"
               />
               <DataPagination
                 currentPage={page}

@@ -91,19 +91,22 @@ export function generateCapitalCallLines(call: CapitalCall): CapitalCallLine[] {
   const now = Date.now();
   const notifiedAt = new Date(Math.min(call.createdAt.getTime() + 3 * DAY, now));
   const pastDue = call.dueDate.getTime() < now;
+  // La plupart des appels échus sont soldés ; les autres gardent quelques lignes non réglées.
+  const fullySettled = pastDue && call.linesToRelaunch === 0 && random() < 0.8;
 
   return weights.map((weight, index) => {
     const share = call.shares[index % call.shares.length];
-    const calledAmount = Math.round((call.calledAmount * weight) / weightSum / 100) * 100;
-    const fees = share.entryFeesCalled ? Math.round(calledAmount * 0.02) : 0;
-    const premium = share.premiumCalled ? Math.round(calledAmount * 0.01) : 0;
+    // Répartition au centime inférieur, comme le calcul de l'assistant : l'écart d'arrondi reste sur l'appel.
+    const calledAmount = Math.floor((call.calledAmount * weight * 100) / weightSum) / 100;
+    const fees = share.entryFeesCalled ? Math.round(calledAmount * 2) / 100 : 0;
+    const premium = share.premiumCalled ? Math.round(calledAmount) / 100 : 0;
     const notified = index < call.notifiedLines;
     const toRelaunch = notified && index < call.linesToRelaunch;
 
     let state: LineState = 'toNotify';
     if (notified) {
       if (toRelaunch) state = 'notified';
-      else state = random() < (pastDue ? 0.85 : 0.5) ? 'paid' : 'paymentDeclared';
+      else state = fullySettled || random() < (pastDue ? 0.85 : 0.5) ? 'paid' : 'paymentDeclared';
     }
 
     const combinedNotice = random() < 0.3;
@@ -170,7 +173,7 @@ export function generateCapitalCallLines(call: CapitalCall): CapitalCallLine[] {
       calledAmount,
       fees,
       premium,
-      total: calledAmount + fees + premium,
+      total: Math.round((calledAmount + fees + premium) * 100) / 100,
       state,
       paymentOrigin,
       noticeState,

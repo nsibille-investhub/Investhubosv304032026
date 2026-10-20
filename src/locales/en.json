@@ -5639,7 +5639,10 @@
       "queues": {
         "label": "Work queues",
         "all": "All calls",
+        "noticesFailed": "Notices failed",
+        "toNotify": "To notify",
         "sending": "Sending",
+        "overdue": "Overdue, not settled",
         "fundsMetric": "Funds",
         "perFund": "{{count}} per fund"
       },
@@ -5647,7 +5650,8 @@
         "funds": "Funds",
         "duePeriod": "Due date period",
         "origin": "Origin",
-        "reset": "Reset filters"
+        "reset": "Reset filters",
+        "state": "Status"
       },
       "columns": {
         "fund": "Fund",
@@ -5660,7 +5664,11 @@
         "compensation": "Offset",
         "createdAt": "Created on",
         "createdBy": "Created by",
-        "actions": "Actions"
+        "actions": "Actions",
+        "lines": "Lines",
+        "notices": "Notices",
+        "notification": "Notification",
+        "settlement": "Settlement"
       },
       "columnsMenu": {
         "label": "Columns",
@@ -5706,9 +5714,6 @@
           "noRight": "Without the View calls right"
         },
         "simulateDirectNotify": "Notify without the menu"
-      },
-      "states": {
-        "sending": "Sending"
       },
       "actionsFor": "Actions on {{name}}",
       "blockers": {
@@ -5782,7 +5787,9 @@
           "filters": {
             "state": "Line status",
             "noticeState": "Notice status",
-            "share": "Share"
+            "share": "Share",
+            "notification": "Notification",
+            "settlement": "Settlement"
           },
           "columns": {
             "investor": "Investor",
@@ -5851,6 +5858,17 @@
             "refused": "Retry refused",
             "startedOne": "{{count}} failed notice retried.",
             "startedMany": "{{count}} failed notices retried."
+          },
+          "notificationCategories": {
+            "notified": "Notified",
+            "toNotify": "To notify",
+            "reminded": "Reminded"
+          },
+          "settlementCategories": {
+            "paid": "Paid",
+            "compensated": "Offset",
+            "paymentDeclared": "Payment declared",
+            "unpaid": "Unpaid"
           }
         },
         "emails": {
@@ -5925,6 +5943,42 @@
           "empty": "No events",
           "emptyFiltered": "No events match the filters",
           "readOnly": "The journal cannot be edited or deleted."
+        },
+        "summary": {
+          "openFiltered": "{{label}}: {{count}}, open the filtered list",
+          "calculation": {
+            "title": "Calculation",
+            "entered": "Entered amount",
+            "allocated": "Allocated amount",
+            "roundingGap": "Rounding gap",
+            "lines": "Lines"
+          },
+          "notices": {
+            "title": "Notices",
+            "available": "Available",
+            "generating": "Generating",
+            "failed": "Failed",
+            "replaced": "Replaced"
+          },
+          "notification": {
+            "title": "Notification",
+            "publication": {
+              "onNotification": "Published on notification",
+              "immediate": "Immediate publication, no email"
+            },
+            "notified": "Notified",
+            "toNotify": "To notify",
+            "reminded": "Reminded",
+            "emailsFailed": "Failed emails"
+          },
+          "settlement": {
+            "title": "Settlement",
+            "paid": "Paid",
+            "compensated": "Offset",
+            "paymentDeclared": "Payment declared",
+            "unpaid": "Unpaid",
+            "remainingDue": "Still due on {{count}} lines"
+          }
         }
       },
       "wizard": {
@@ -6122,6 +6176,25 @@
             "combined": "This line will be grouped in a combined notice."
           }
         }
+      },
+      "progress": {
+        "notices": "{{done}} / {{total}} available",
+        "noticesFailed": "{{count}} failed",
+        "notified": "{{done}} / {{total}} notified",
+        "immediate": "Immediate publication",
+        "settled": "{{done}} / {{total}} settled",
+        "remainingDue": "{{amount}} still due"
+      },
+      "callStates": {
+        "sending": "Sending",
+        "noticesGenerating": "Notices generating",
+        "noticesFailed": "Notices failed",
+        "settled": "Settled",
+        "partiallySettled": "Partially settled",
+        "notified": "Notified",
+        "partiallyNotified": "Partially notified",
+        "publishedWithoutSending": "Published without email",
+        "readyToNotify": "Ready to notify"
       }
     }
   },

@@ -1,4 +1,4 @@
-import { useMemo, useState, type ReactNode } from 'react';
+import { useEffect, useMemo, useState, type ReactNode } from 'react';
 import { AlertTriangle, ArrowLeftRight, CheckCircle2, EyeOff, Layers, Loader2, Repeat, RotateCw, Users } from 'lucide-react';
 
 import { useTranslation } from '../../utils/languageContext';
@@ -13,6 +13,13 @@ import {
   lastFailure,
   relaunchCount,
 } from '../../utils/capitalCallLines';
+import {
+  NOTIFICATION_CATEGORIES,
+  SETTLEMENT_CATEGORIES,
+  notificationCategoriesOf,
+  settlementOf,
+} from '../../utils/capitalCallSummary';
+import type { LinesPreset } from './CapitalCallSummaryWidgets';
 import { ColumnConfig, DataTable } from '../DataTable';
 import { EmptyState } from '../EmptyState';
 import { FilterBar, FilterConfig } from '../FilterBar';
@@ -64,6 +71,8 @@ interface CapitalCallLinesTabProps {
   failedCount: number;
   relaunchDisabledReason: string | null;
   onRelaunchFailed: () => void;
+  /** Filtre appliqué depuis un compteur de la synthèse ; sans valeur, tous les filtres sont retirés. */
+  preset?: (LinesPreset & { nonce: number }) | null;
 }
 
 export function CapitalCallLinesTab({
@@ -72,17 +81,25 @@ export function CapitalCallLinesTab({
   failedCount,
   relaunchDisabledReason,
   onRelaunchFailed,
+  preset,
 }: CapitalCallLinesTabProps) {
   const { t, lang } = useTranslation();
   const perUnit = isPerUnitCall(call);
   const [search, setSearch] = useState('');
   const [activeFilters, setActiveFilters] = useState<ActiveFilters>({});
   const [page, setPage] = useState(1);
+
+  useEffect(() => {
+    if (!preset) return;
+    setSearch('');
+    setActiveFilters(preset.values.length > 0 ? { [preset.filter]: preset.values } : {});
+    setPage(1);
+  }, [preset]);
   const [pageSize, setPageSize] = useState(20);
   const [hoveredRow, setHoveredRow] = useState<number | null>(null);
 
   const dateFormat = new Intl.DateTimeFormat(lang, { day: '2-digit', month: '2-digit', year: 'numeric' });
-  const money = (value: number, digits = 0) =>
+  const money = (value: number, digits = 2) =>
     new Intl.NumberFormat(lang, {
       style: 'currency',
       currency: call.currency,
@@ -116,6 +133,20 @@ export function CapitalCallLinesTab({
       isPrimary: true,
       options: call.shares.map(item => ({ value: item.share, label: t('funds.detail.sharePrefix', { name: item.share }) })),
     },
+    {
+      id: 'notification',
+      label: t(`${K}.filters.notification`),
+      type: 'multiselect',
+      isPrimary: false,
+      options: NOTIFICATION_CATEGORIES.map(value => ({ value, label: t(`${K}.notificationCategories.${value}`) })),
+    },
+    {
+      id: 'settlement',
+      label: t(`${K}.filters.settlement`),
+      type: 'multiselect',
+      isPrimary: false,
+      options: SETTLEMENT_CATEGORIES.map(value => ({ value, label: t(`${K}.settlementCategories.${value}`) })),
+    },
   ];
 
   const filtered = useMemo(() => {
@@ -124,7 +155,11 @@ export function CapitalCallLinesTab({
     const states = pick('state');
     const noticeStates = pick('noticeState');
     const shares = pick('share');
+    const notification = pick('notification');
+    const settlement = pick('settlement');
     return lines.filter(line => {
+      if (notification.length > 0 && !notificationCategoriesOf(line).some(item => notification.includes(item))) return false;
+      if (settlement.length > 0 && !settlement.includes(settlementOf(line))) return false;
       if (term && !line.investor.toLowerCase().includes(term)) return false;
       if (states.length > 0 && !states.includes(line.state)) return false;
       if (noticeStates.length > 0 && !noticeStates.includes(line.noticeState)) return false;

@@ -26,13 +26,14 @@ import type { CapitalCallRights } from '../../utils/capitalCallActions';
 import {
   CapitalCallLine,
   expireStaleNotices,
-  generateCapitalCallLines,
   noticeAvailable,
   noticeFailed,
   relaunchFailedNotices,
 } from '../../utils/capitalCallLines';
 import { generateCapitalCallEmails } from '../../utils/capitalCallEmails';
+import { summarizeCall } from '../../utils/capitalCallSummary';
 import { CheckIndicator } from '../CheckIndicator';
+import { CALL_STATE_VARIANT, CapitalCallSummaryWidgets, LinesPreset } from './CapitalCallSummaryWidgets';
 import { CapitalCallEmailsTab } from './CapitalCallEmailsTab';
 import { CapitalCallJournalTab } from './CapitalCallJournalTab';
 import { CapitalCallLinesTab } from './CapitalCallLinesTab';
@@ -53,6 +54,9 @@ type TabId = 'lines' | 'emails' | 'breakdown' | 'message' | 'journal';
 
 interface CapitalCallDetailPageProps {
   call: CapitalCall;
+  /** Lignes portées par la page : la fiche les met à jour et les remonte au listing. */
+  initialLines: CapitalCallLine[];
+  onLinesChange: (lines: CapitalCallLine[]) => void;
   rights: CapitalCallRights;
   onOpenFund: (fundId: number) => void;
 }
@@ -63,12 +67,19 @@ const CURRENT_USER = 'Jean Dault';
 /** Durée simulée de production d'un avis. */
 const PRODUCTION_DELAY = 3000;
 
-export function CapitalCallDetailPage({ call, rights, onOpenFund }: CapitalCallDetailPageProps) {
+export function CapitalCallDetailPage({ call, initialLines, onLinesChange, rights, onOpenFund }: CapitalCallDetailPageProps) {
   const { t, lang } = useTranslation();
   const [tab, setTab] = useState<TabId>('lines');
   const [hoveredRow, setHoveredRow] = useState<number | null>(null);
   // Le délai maximal est contrôlé à l'ouverture de la fiche.
-  const [lines, setLines] = useState<CapitalCallLine[]>(() => expireStaleNotices(generateCapitalCallLines(call)));
+  const [lines, setLines] = useState<CapitalCallLine[]>(() => expireStaleNotices(initialLines));
+  const [linesPreset, setLinesPreset] = useState<(LinesPreset & { nonce: number }) | null>(null);
+  const [emailsPreset, setEmailsPreset] = useState<{ values: string[]; nonce: number } | null>(null);
+
+  useEffect(() => {
+    onLinesChange(lines);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [lines]);
   const scheduled = useRef(new Set<string>());
   const timers = useRef<number[]>([]);
 
@@ -99,6 +110,12 @@ export function CapitalCallDetailPage({ call, rights, onOpenFund }: CapitalCallD
 
   const failedCount = lines.filter(line => line.noticeState === 'failed').length;
   const emails = useMemo(() => generateCapitalCallEmails(call.id, lines), [call.id, lines]);
+  const summary = useMemo(() => summarizeCall(call, lines, emails), [call, lines, emails]);
+
+  const openLines = (preset: LinesPreset | null) => {
+    setLinesPreset(preset ? { ...preset, nonce: Date.now() } : { filter: 'noticeState', values: [], nonce: Date.now() });
+    setTab('lines');
+  };
   // L'onglet Envois apparaît dès le premier envoi de l'appel.
   const hasEmails = emails.length > 0;
   const relaunchReason = call.sending
@@ -207,7 +224,11 @@ export function CapitalCallDetailPage({ call, rights, onOpenFund }: CapitalCallD
         title={
           <span className="inline-flex items-center gap-3">
             {call.name}
-            {call.sending && <StatusBadge label={t('funds.capitalCalls.states.sending')} variant="info" icon={Loader2} />}
+            <StatusBadge
+              label={t(`funds.capitalCalls.callStates.${summary.state}`)}
+              variant={CALL_STATE_VARIANT[summary.state]}
+              icon={summary.state === 'sending' || summary.state === 'noticesGenerating' ? Loader2 : undefined}
+            />
           </span>
         }
         subtitle={
@@ -264,6 +285,19 @@ export function CapitalCallDetailPage({ call, rights, onOpenFund }: CapitalCallD
         }
       />
 
+      <div className="border-b border-border bg-card px-8 pb-6">
+        <CapitalCallSummaryWidgets
+          summary={summary}
+          currency={call.currency}
+          publication={call.publication}
+          onOpenLines={openLines}
+          onOpenFailedEmails={() => {
+            setEmailsPreset({ values: ['failed', 'spam', 'notFound'], nonce: Date.now() });
+            setTab('emails');
+          }}
+        />
+      </div>
+
       <Tabs value={tab} onValueChange={value => setTab(value as TabId)} className="w-full gap-0">
         <div className="border-b border-border bg-card px-8">
           <DetailTabsList
@@ -280,11 +314,12 @@ export function CapitalCallDetailPage({ call, rights, onOpenFund }: CapitalCallD
         <div className="px-8 py-6">
           {hasEmails && (
             <TabsContent value="emails">
-              <CapitalCallEmailsTab emails={emails} />
+              <CapitalCallEmailsTab emails={emails} preset={emailsPreset} />
             </TabsContent>
           )}
           <TabsContent value="lines">
             <CapitalCallLinesTab
+              preset={linesPreset}
               call={call}
               lines={lines}
               failedCount={failedCount}

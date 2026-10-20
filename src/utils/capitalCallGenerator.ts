@@ -54,6 +54,8 @@ export interface CapitalCall {
   notifiedLines: number;
   /** Lignes notifiées ni payées ni compensées : celles qu'une relance cible. */
   linesToRelaunch: number;
+  /** Publication sur le portail : à la notification, ou immédiate sans email. */
+  publication: 'onNotification' | 'immediate';
   /** Appel créé dans la session : lignes à notifier, avis demandés à la création. */
   justCreated?: boolean;
 }
@@ -149,7 +151,8 @@ export function generateCapitalCalls(funds: Fund[], today = new Date()): Capital
       if (!isUpcoming) notifiedLines = lines;
       else if (sending) notifiedLines = Math.floor(lines * random() * 0.6);
       else notifiedLines = random() < 0.5 ? 0 : lines;
-      const linesToRelaunch = notifiedLines > 0 && random() < 0.6 ? 1 + Math.floor(random() * Math.min(5, notifiedLines)) : 0;
+      const linesToRelaunch =
+        notifiedLines > 0 && random() < (isUpcoming ? 0.6 : 0.25) ? 1 + Math.floor(random() * Math.min(5, notifiedLines)) : 0;
 
       calls.push({
         id: id++,
@@ -172,6 +175,7 @@ export function generateCapitalCalls(funds: Fund[], today = new Date()): Capital
         lines,
         notifiedLines,
         linesToRelaunch,
+        publication: notifiedLines === 0 && random() < 0.15 ? 'immediate' : 'onNotification',
       });
     }
   });

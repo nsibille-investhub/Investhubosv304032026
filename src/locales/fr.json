@@ -5639,7 +5639,10 @@
       "queues": {
         "label": "Files de travail",
         "all": "Tous les appels",
+        "noticesFailed": "Avis en échec",
+        "toNotify": "À notifier",
         "sending": "Envoi en cours",
+        "overdue": "Échus non soldés",
         "fundsMetric": "Fonds",
         "perFund": "{{count}} par fonds"
       },
@@ -5647,7 +5650,8 @@
         "funds": "Fonds",
         "duePeriod": "Période d'échéance",
         "origin": "Origine",
-        "reset": "Réinitialiser les filtres"
+        "reset": "Réinitialiser les filtres",
+        "state": "État"
       },
       "columns": {
         "fund": "Fonds",
@@ -5660,7 +5664,11 @@
         "compensation": "Compensation",
         "createdAt": "Créé le",
         "createdBy": "Créé par",
-        "actions": "Actions"
+        "actions": "Actions",
+        "lines": "Lignes",
+        "notices": "Avis",
+        "notification": "Notification",
+        "settlement": "Règlement"
       },
       "columnsMenu": {
         "label": "Colonnes",
@@ -5706,9 +5714,6 @@
           "noRight": "Sans le droit Consulter les appels"
         },
         "simulateDirectNotify": "Notifier sans passer par le menu"
-      },
-      "states": {
-        "sending": "Envoi en cours"
       },
       "actionsFor": "Actions sur {{name}}",
       "blockers": {
@@ -5782,7 +5787,9 @@
           "filters": {
             "state": "État de la ligne",
             "noticeState": "État de l'avis",
-            "share": "Part"
+            "share": "Part",
+            "notification": "Notification",
+            "settlement": "Règlement"
           },
           "columns": {
             "investor": "Investisseur",
@@ -5851,6 +5858,17 @@
             "refused": "Relance refusée",
             "startedOne": "{{count}} avis en échec relancé.",
             "startedMany": "{{count}} avis en échec relancés."
+          },
+          "notificationCategories": {
+            "notified": "Notifiées",
+            "toNotify": "À notifier",
+            "reminded": "Relancées"
+          },
+          "settlementCategories": {
+            "paid": "Payées",
+            "compensated": "Compensées",
+            "paymentDeclared": "Paiement déclaré",
+            "unpaid": "Non payées"
           }
         },
         "emails": {
@@ -5925,6 +5943,42 @@
           "empty": "Aucun événement",
           "emptyFiltered": "Aucun événement ne correspond aux filtres",
           "readOnly": "Le journal ne peut être ni modifié ni supprimé."
+        },
+        "summary": {
+          "openFiltered": "{{label}} : {{count}}, ouvrir la liste filtrée",
+          "calculation": {
+            "title": "Calcul",
+            "entered": "Montant saisi",
+            "allocated": "Montant réparti",
+            "roundingGap": "Écart d'arrondi",
+            "lines": "Lignes"
+          },
+          "notices": {
+            "title": "Avis",
+            "available": "Disponibles",
+            "generating": "En génération",
+            "failed": "En échec",
+            "replaced": "Remplacés"
+          },
+          "notification": {
+            "title": "Notification",
+            "publication": {
+              "onNotification": "Publication à la notification",
+              "immediate": "Publication immédiate, sans email"
+            },
+            "notified": "Notifiées",
+            "toNotify": "À notifier",
+            "reminded": "Relancées",
+            "emailsFailed": "Envois en échec"
+          },
+          "settlement": {
+            "title": "Règlement",
+            "paid": "Payées",
+            "compensated": "Compensées",
+            "paymentDeclared": "Paiement déclaré",
+            "unpaid": "Non payées",
+            "remainingDue": "Restant dû sur {{count}} lignes"
+          }
         }
       },
       "wizard": {
@@ -6122,6 +6176,25 @@
             "combined": "Cette ligne sera regroupée dans un avis combiné."
           }
         }
+      },
+      "progress": {
+        "notices": "{{done}} / {{total}} disponibles",
+        "noticesFailed": "{{count}} en échec",
+        "notified": "{{done}} / {{total}} notifiées",
+        "immediate": "Publication immédiate",
+        "settled": "{{done}} / {{total}} réglées",
+        "remainingDue": "{{amount}} restant dû"
+      },
+      "callStates": {
+        "sending": "Envoi en cours",
+        "noticesGenerating": "Avis en génération",
+        "noticesFailed": "Avis en échec",
+        "settled": "Soldé",
+        "partiallySettled": "Partiellement réglé",
+        "notified": "Notifié",
+        "partiallyNotified": "Partiellement notifié",
+        "publishedWithoutSending": "Publié sans envoi",
+        "readyToNotify": "Prêt à notifier"
       }
     }
   },

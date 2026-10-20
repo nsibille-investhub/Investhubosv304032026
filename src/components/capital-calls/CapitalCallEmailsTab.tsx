@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { AlertTriangle, Layers, Mail, MailOpen, Send } from 'lucide-react';
 
 import { useTranslation } from '../../utils/languageContext';
@@ -31,13 +31,27 @@ const STATE_VARIANT: Record<EmailState, StatusVariant> = {
 
 type ActiveFilters = Record<string, string | string[]>;
 
-export function CapitalCallEmailsTab({ emails }: { emails: CapitalCallEmail[] }) {
+export function CapitalCallEmailsTab({
+  emails,
+  preset,
+}: {
+  emails: CapitalCallEmail[];
+  /** Filtre d'état appliqué depuis un compteur de la synthèse. */
+  preset?: { values: string[]; nonce: number } | null;
+}) {
   const { t, lang } = useTranslation();
   const [search, setSearch] = useState('');
   const [activeFilters, setActiveFilters] = useState<ActiveFilters>({});
   const [page, setPage] = useState(1);
   const [pageSize, setPageSize] = useState(20);
   const [hoveredRow, setHoveredRow] = useState<number | null>(null);
+
+  useEffect(() => {
+    if (!preset) return;
+    setSearch('');
+    setActiveFilters({ state: preset.values });
+    setPage(1);
+  }, [preset]);
 
   const dateTime = (value: Date) =>
     t('funds.capitalCalls.detail.lines.dateTime', {
