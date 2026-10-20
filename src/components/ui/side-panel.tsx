@@ -10,11 +10,10 @@ import { cn } from './utils';
 
 /**
  * Briques des panneaux latéraux (Sheet) : détail d'un document, d'une alerte, d'un contact.
- * Section sur fond bleuté avec titre et icône, carte blanche intérieure, pied d'actions.
+ * Section et carte partagent les styles ds-form-section / ds-panel-card de FormSection et
+ * FormSubsection (ui/form-section) : une seule apparence de section dans tout le back-office.
  */
 
-const SECTION_STYLE: CSSProperties = { backgroundColor: '#EEF1F7', borderColor: '#000E2B1F' };
-const CARD_STYLE: CSSProperties = { borderColor: '#000E2B33' };
 export const SIDE_PANEL_ACCENT = '#000E2B';
 
 /** Pastilles des multisélections (ModernMultiSelect) d'un panneau latéral. */
@@ -43,26 +42,25 @@ interface SidePanelSectionProps {
 
 export function SidePanelSection({ icon: Icon, title, description, className, children }: SidePanelSectionProps) {
   return (
-    <section className={cn('space-y-3 rounded-2xl p-4 border', className)} style={SECTION_STYLE}>
+    <section data-slot="form-section" className={cn('ds-form-section ds-form-section--block space-y-3', className)}>
       <div>
-        <p className="font-semibold flex items-center gap-2" style={{ color: SIDE_PANEL_ACCENT }}>
-          <Icon className="w-5 h-5" style={{ color: SIDE_PANEL_ACCENT }} />
+        <h3 className="ds-form-section__title">
+          <Icon />
           {title}
-        </p>
-        {description && <p className="text-sm text-slate-600">{description}</p>}
+        </h3>
+        {description && <p className="ds-form-section__description">{description}</p>}
       </div>
       {children}
     </section>
   );
 }
 
-/** Carte blanche d'une section. `flush` retire le padding, pour une liste à séparateurs par exemple. */
+/**
+ * Carte blanche d'une section, même surface que FormSubsection (ui/form-section).
+ * `flush` retire le padding, pour une liste à séparateurs par exemple.
+ */
 export function SidePanelCard({ flush, className, children }: { flush?: boolean; className?: string; children: ReactNode }) {
-  return (
-    <div className={cn('rounded-2xl border bg-white', !flush && 'p-4 md:p-5', className)} style={CARD_STYLE}>
-      {children}
-    </div>
-  );
+  return <div className={cn('ds-panel-card', !flush && 'p-4 md:p-5', className)}>{children}</div>;
 }
 
 /** En-tête d'un panneau latéral : titre et description, éléments complémentaires dessous (statut, boutons). */

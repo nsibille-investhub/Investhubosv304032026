@@ -1,4 +1,4 @@
-import { Fragment, useRef, useState } from 'react';
+import { Fragment, useMemo, useRef, useState } from 'react';
 import { useTranslation } from '../utils/languageContext';
 import {
   Building2,
@@ -94,6 +94,7 @@ import {
   mockRequiredDocuments,
   mockDocuments,
   mockNotes,
+  type MockNote,
   mockEmails,
   mockCapitalCalls,
   mockInitEmails,
@@ -146,6 +147,8 @@ interface SubscriptionDetailPageProps {
 }
 
 
+const DIRECT_PARTNER_NAMES = ['Souscription Directe', 'Direct Subscription'];
+
 export function SubscriptionDetailPage({ subscription: subscriptionProp, onBack }: SubscriptionDetailPageProps) {
   const { t, lang } = useTranslation();
 
@@ -180,6 +183,29 @@ export function SubscriptionDetailPage({ subscription: subscriptionProp, onBack 
   });
 
   const initData = (subscription as any).initData ?? {};
+
+  // La note interne saisie à la création arrive en tête de l'onglet Notes.
+  const noteItems = useMemo<MockNote[]>(() => {
+    const created = initData.internalNote;
+    if (!created?.content) return mockNotes;
+    const createdAt = subscription.createdAt ? new Date(subscription.createdAt) : new Date();
+    const pad = (n: number) => String(n).padStart(2, '0');
+    return [
+      {
+        id: 0,
+        type: 'general',
+        sectionKey: '',
+        fieldKey: '',
+        author: t('subscriptions.detail.notesTab.authorYou'),
+        date: `${pad(createdAt.getDate())}/${pad(createdAt.getMonth() + 1)}/${createdAt.getFullYear()} ${pad(createdAt.getHours())}:${pad(createdAt.getMinutes())}`,
+        contentKey: '',
+        content: created.content,
+        status: 'open',
+        priority: created.priority ?? 'medium',
+      },
+      ...mockNotes,
+    ];
+  }, [initData.internalNote, subscription.createdAt, t]);
   
   // Question states management
   const [questionStatuses, setQuestionStatuses] = useState<Record<string, QuestionStatus>>(INITIAL_QUESTION_STATUSES);
@@ -480,36 +506,24 @@ export function SubscriptionDetailPage({ subscription: subscriptionProp, onBack 
   const investorEmail =
     subscription.email ||
     toEmail(subscription.contrepartie.investor || subscription.contrepartie.name, 'example.com');
-  const investorContactEmail = subscription.contrepartie.mainContact
-    ? toEmail(subscription.contrepartie.mainContact, 'example.com')
-    : '';
   const partnerEmail = partnerDomain ? `contact@${partnerDomain}` : '';
   const advisorEmail = subscription.advisor && partnerDomain
     ? toEmail(subscription.advisor, partnerDomain)
     : '';
 
-  const invitationRecipient = investorContactEmail || investorEmail;
-  const invitationRecipientLabelKey = investorContactEmail
-    ? 'subscriptions.detail.initStep.audiences.contact'
-    : 'subscriptions.detail.initStep.audiences.investor';
-
-  const invitationCopies: Array<{ id: string; labelKey: string; email: string }> = [
-    {
-      id: 'investor',
-      labelKey: 'subscriptions.detail.initStep.audiences.investor',
-      email: investorContactEmail ? investorEmail : '',
-    },
-    {
-      id: 'partner',
-      labelKey: 'subscriptions.detail.initStep.audiences.partner',
-      email: partnerEmail,
-    },
-    {
-      id: 'advisor',
-      labelKey: 'subscriptions.detail.initStep.audiences.advisor',
-      email: advisorEmail,
-    },
-  ].filter(copy => copy.email && copy.email !== invitationRecipient);
+  // L'invitation part toujours à l'investisseur. Sur une souscription
+  // intermédiée, le réseau qui porte la souscription (son conseiller s'il y en
+  // a un, sinon le distributeur) reçoit le même mail en copie, selon la règle
+  // de copie du réseau.
+  const isIntermediated =
+    initData.isIntermediated ?? (!!partnerName && !DIRECT_PARTNER_NAMES.includes(partnerName));
+  const invitationRecipient = investorEmail;
+  const invitationRecipientLabelKey = 'subscriptions.detail.initStep.audiences.investor';
+  const networkCopy = advisorEmail
+    ? { id: 'advisor', labelKey: 'subscriptions.detail.initStep.audiences.advisor', email: advisorEmail }
+    : { id: 'partner', labelKey: 'subscriptions.detail.initStep.audiences.partner', email: partnerEmail };
+  const invitationCopies: Array<{ id: string; labelKey: string; email: string }> =
+    isIntermediated && networkCopy.email ? [networkCopy] : [];
 
   const invitationEmail = mockInitEmails.find(mail => mail.id === 'invitation');
   const invitationSentAt = resentEmails.invitation ?? invitationEmail?.sentAt ?? null;
@@ -969,7 +983,7 @@ export function SubscriptionDetailPage({ subscription: subscriptionProp, onBack 
               { value: 'capital-calls', icon: DollarSign, labelKey: 'subscriptions.detail.tabs.capitalCalls', badge: String(mockCapitalCalls.length) },
               { value: 'documents', icon: FolderOpen, labelKey: 'subscriptions.detail.tabs.documents', badge: String(mockDocuments.length) },
               { value: 'integrations', icon: Database, labelKey: 'subscriptions.detail.tabs.integrations', badge: '5' },
-              { value: 'notes', icon: MessageSquare, labelKey: 'subscriptions.detail.tabs.notes', badge: String(mockNotes.length) },
+              { value: 'notes', icon: MessageSquare, labelKey: 'subscriptions.detail.tabs.notes', badge: String(noteItems.length) },
             ].map(tab => ({
               value: tab.value,
               icon: tab.icon,
@@ -1131,6 +1145,11 @@ export function SubscriptionDetailPage({ subscription: subscriptionProp, onBack 
                             ) : (
                               <p className="col-span-2 text-sm text-muted-foreground">
                                 {t('subscriptions.detail.initStep.invitation.noCopies')}
+                              </p>
+                            )}
+                            {invitationCopies.length > 0 && (
+                              <p className="col-span-2 text-xs text-muted-foreground">
+                                {t('subscriptions.detail.initStep.invitation.copyRuleHint')}
                               </p>
                             )}
                           </div>
@@ -1969,21 +1988,21 @@ export function SubscriptionDetailPage({ subscription: subscriptionProp, onBack 
                       size="sm"
                       className="gap-2"
                     >
-                      {t('subscriptions.detail.notesTab.all', { count: mockNotes.length })}
+                      {t('subscriptions.detail.notesTab.all', { count: noteItems.length })}
                     </Button>
                     <Button
                       variant="outline"
                       size="sm"
                       className="gap-2"
                     >
-                      {t('subscriptions.detail.notesTab.open', { count: mockNotes.filter(n => n.status === 'open').length })}
+                      {t('subscriptions.detail.notesTab.open', { count: noteItems.filter(n => n.status === 'open').length })}
                     </Button>
                     <Button
                       variant="outline"
                       size="sm"
                       className="gap-2"
                     >
-                      {t('subscriptions.detail.notesTab.resolved', { count: mockNotes.filter(n => n.status === 'resolved').length })}
+                      {t('subscriptions.detail.notesTab.resolved', { count: noteItems.filter(n => n.status === 'resolved').length })}
                     </Button>
                     <div className="ml-auto">
                       <Button
@@ -1999,7 +2018,7 @@ export function SubscriptionDetailPage({ subscription: subscriptionProp, onBack 
 
                 {/* Notes List */}
                 <div className="space-y-3">
-                  {mockNotes.map((note) => (
+                  {noteItems.map((note) => (
                     <Card
                       key={note.id}
                       className="p-5 shadow-sm hover:shadow-md transition-shadow"
@@ -2069,7 +2088,7 @@ export function SubscriptionDetailPage({ subscription: subscriptionProp, onBack 
 
                           {/* Note Content */}
                           <p className="text-sm text-foreground/80 mb-3">
-                            {t(note.contentKey)}
+                            {note.content ?? t(note.contentKey)}
                           </p>
 
                           {/* Footer */}
