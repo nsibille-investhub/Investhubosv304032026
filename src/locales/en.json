@@ -856,7 +856,8 @@
         "resolvedStatus": "Resolved",
         "resolve": "Resolve",
         "noteResolved": "Note resolved",
-        "deleteNote": "Delete note"
+        "deleteNote": "Delete note",
+        "authorYou": "You"
       },
       "docs": {
         "passport": "Passport (in color, MRZ lines readable and complete, on a single page)",

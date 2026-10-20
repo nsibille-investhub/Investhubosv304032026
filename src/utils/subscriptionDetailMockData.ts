@@ -46,6 +46,8 @@ export interface MockNote {
   author: string;
   date: string;
   contentKey: string;
+  /** Texte libre, prioritaire sur contentKey (note saisie par l'utilisateur). */
+  content?: string;
   status: string;
   priority: string;
 }

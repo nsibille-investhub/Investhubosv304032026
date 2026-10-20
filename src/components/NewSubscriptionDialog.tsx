@@ -329,6 +329,11 @@ function findTemplate(slug: string): MailTemplate | undefined {
   return MAIL_TEMPLATES.find((tpl) => tpl.slug === slug);
 }
 
+/** Montant au format français, avec une espace insécable classique : l'espace fine n'a pas de glyphe dans toutes les graisses. */
+function formatAmount(value: number): string {
+  return value.toLocaleString('fr-FR').replace(/\u202f/g, '\u00a0');
+}
+
 function generateSubscriptionName(
   investorName: string,
   amount: number,
@@ -897,7 +902,7 @@ export function NewSubscriptionDialog({
 
   const belowMinimumWarning =
     minAmount !== undefined && calculatedAmount > 0 && calculatedAmount < minAmount
-      ? t('subscriptions.newDialog.errors.belowMinimum', { min: minAmount.toLocaleString('fr-FR') })
+      ? t('subscriptions.newDialog.errors.belowMinimum', { min: formatAmount(minAmount) })
       : undefined;
 
   const sectionStatus = useMemo(() => {
@@ -1192,7 +1197,7 @@ export function NewSubscriptionDialog({
       toast.success(t('subscriptions.editDialog.toast.subscriptionUpdated'), {
         description: t('subscriptions.editDialog.toast.subscriptionUpdatedDesc', {
           investor: formData.investor.name,
-          amount: calculatedAmount.toLocaleString('fr-FR'),
+          amount: formatAmount(calculatedAmount),
         }),
       });
       setIsSubmitting(false);
@@ -1282,6 +1287,10 @@ export function NewSubscriptionDialog({
         shareClass: formData.shareClass,
       },
       amount: calculatedAmount,
+      quantity: parseFloat(formData.numberOfShares) || 0,
+      entryFees: entryFeePercent,
+      subscriptionPremium: subscriptionPremiumAmount,
+      language: formData.language,
       completionOnboarding: 15, // Draft = faible complétion
       createdAt: new Date(),
       updatedAt: new Date(),
@@ -1316,7 +1325,7 @@ export function NewSubscriptionDialog({
     toast.success(t('subscriptions.newDialog.toast.subscriptionCreated'), {
       description: t('subscriptions.newDialog.toast.subscriptionCreatedDesc', {
         investor: formData.investor?.name ?? '',
-        amount: calculatedAmount.toLocaleString('fr-FR'),
+        amount: formatAmount(calculatedAmount),
       }),
     });
     setIsSubmitting(false);
@@ -2092,7 +2101,7 @@ export function NewSubscriptionDialog({
                         {minShares !== undefined && (
                           <p className={FORM_FIELD_HINT_CLASS}>
                             {t('subscriptions.newDialog.minSharesHint', {
-                              count: minShares.toLocaleString('fr-FR'),
+                              count: formatAmount(minShares),
                             })}
                           </p>
                         )}
@@ -2109,7 +2118,7 @@ export function NewSubscriptionDialog({
                           inputMode="decimal"
                           value={
                             calculatedAmount > 0
-                              ? calculatedAmount.toLocaleString('fr-FR')
+                              ? formatAmount(calculatedAmount)
                               : ''
                           }
                           onChange={(e) => handleAmountChange(e.target.value)}
@@ -2119,11 +2128,11 @@ export function NewSubscriptionDialog({
                         <p className={FORM_FIELD_HINT_CLASS}>
                           {minAmount !== undefined
                             ? t('subscriptions.newDialog.pricePerShareAndMinHint', {
-                                price: sharePrice.toLocaleString('fr-FR'),
-                                min: minAmount.toLocaleString('fr-FR'),
+                                price: formatAmount(sharePrice),
+                                min: formatAmount(minAmount),
                               })
                             : t('subscriptions.newDialog.pricePerShareHint', {
-                                price: sharePrice.toLocaleString('fr-FR'),
+                                price: formatAmount(sharePrice),
                               })}
                         </p>
                         <FieldMessage message={fieldError('amount')} />
@@ -2712,19 +2721,19 @@ export function NewSubscriptionDialog({
                         <ReviewRow label={t('subscriptions.newDialog.review.subscriptionAmount')}>
                           <span className="font-medium text-foreground">
                             {calculatedAmount > 0
-                              ? `${calculatedAmount.toLocaleString('fr-FR')} €`
+                              ? `${formatAmount(calculatedAmount)} €`
                               : t('subscriptions.newDialog.review.toComplete')}
                           </span>
                         </ReviewRow>
                         <ReviewRow label={t('subscriptions.newDialog.review.totalAmount')}>
                           <div className="text-base font-bold text-primary">
-                            {(calculatedAmount + calculatedFees).toLocaleString('fr-FR')} €
+                            {formatAmount(calculatedAmount + calculatedFees)} €
                           </div>
                           <div className={FORM_FIELD_HINT_CLASS}>
                             {t('subscriptions.newDialog.review.totalBreakdown', {
                               percent: entryFeePercent,
-                              fees: calculatedEntryFees.toLocaleString('fr-FR'),
-                              premium: subscriptionPremiumAmount.toLocaleString('fr-FR'),
+                              fees: formatAmount(calculatedEntryFees),
+                              premium: formatAmount(subscriptionPremiumAmount),
                             })}
                           </div>
                         </ReviewRow>
