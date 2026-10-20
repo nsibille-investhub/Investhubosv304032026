@@ -649,6 +649,12 @@
           "tag": "Non posée",
           "show": "Afficher les questions non posées ({{count}})",
           "hide": "Masquer les questions non posées"
+        },
+        "modified": {
+          "byOperator": "Modifiée par un opérateur",
+          "byInvestor": "Modifiée par l'investisseur",
+          "automatic": "Modifiée automatiquement",
+          "filter": "Réponses modifiées ({{count}})"
         }
       },
       "validation": {
@@ -1404,6 +1410,16 @@
           "pep": "Statut de personne politiquement exposée",
           "financialAssets": "Patrimoine financier"
         }
+      },
+      "dossierExport": {
+        "columns": {
+          "section": "Section",
+          "question": "Question",
+          "answer": "Réponse",
+          "control": "Contrôle",
+          "indicator": "Indicateur"
+        },
+        "toast": "Export du dossier téléchargé"
       }
     },
     "table": {

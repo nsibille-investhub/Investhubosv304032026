@@ -649,6 +649,12 @@
           "tag": "Not asked",
           "show": "Show questions not asked ({{count}})",
           "hide": "Hide questions not asked"
+        },
+        "modified": {
+          "byOperator": "Modified by an operator",
+          "byInvestor": "Modified by the investor",
+          "automatic": "Modified automatically",
+          "filter": "Modified answers ({{count}})"
         }
       },
       "validation": {
@@ -1404,6 +1410,16 @@
           "pep": "Politically exposed person status",
           "financialAssets": "Financial assets"
         }
+      },
+      "dossierExport": {
+        "columns": {
+          "section": "Section",
+          "question": "Question",
+          "answer": "Answer",
+          "control": "Review",
+          "indicator": "Indicator"
+        },
+        "toast": "File export downloaded"
       }
     },
     "table": {

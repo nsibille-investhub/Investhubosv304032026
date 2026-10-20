@@ -74,6 +74,27 @@ export function countPendingModifications(entries: SubscriptionAuditEntry[], ele
   return count;
 }
 
+/**
+ * Origine du dernier changement de valeur après la première soumission du dossier,
+ * null si la réponse n'a pas changé depuis (IC-5264).
+ */
+export function lastModificationOrigin(
+  entries: SubscriptionAuditEntry[],
+  elementId: string,
+): SubscriptionAuditOrigin | null {
+  const submittedAt = entries.find(e => e.type === 'dossierSubmitted')?.timestamp ?? '';
+  const last = entries
+    .filter(
+      e =>
+        e.elementId === elementId &&
+        (e.type === 'answerModified' || e.type === 'answerReplayed') &&
+        e.timestamp > submittedAt,
+    )
+    .sort((a, b) => a.timestamp.localeCompare(b.timestamp))
+    .pop();
+  return last ? last.origin : null;
+}
+
 /** La réponse a déjà été modifiée par le back-office : le rejeu des déclenchements la conserve. */
 export function isModifiedByOperator(entries: SubscriptionAuditEntry[], elementId: string): boolean {
   return entries.some(e => e.elementId === elementId && e.type === 'answerModified' && e.origin === 'operator');
@@ -220,6 +241,18 @@ export function buildInitialSubscriptionAudit({
     sectionId: 'banking',
     previousValue: 'BNP',
     newValue: 'BNP Paribas',
+  });
+
+  // Réponse changée par l'investisseur après une réouverture du dossier.
+  push({
+    type: 'answerModified',
+    timestamp: at('2026-05-20T18:12', 0),
+    origin: 'investor',
+    actorName: investorName,
+    elementId: 'professional-3',
+    sectionId: 'professional',
+    previousValue: 'Conseiller bancaire',
+    newValue: 'banquier',
   });
 
   push({

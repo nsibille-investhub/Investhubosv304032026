@@ -53,6 +53,7 @@ import {
   Lock,
   UserCheck,
   ArrowLeft,
+  PencilLine,
   Info,
 } from 'lucide-react';
 import { motion } from 'motion/react';
@@ -111,6 +112,8 @@ import {
   countPendingModifications,
   createLiveAuditEntry,
   isModifiedByOperator,
+  lastModificationOrigin,
+  type SubscriptionAuditOrigin,
   type SubscriptionAuditEntry,
 } from '../utils/subscriptionAuditMock';
 import { SubscriptionAuditPanel, SubscriptionAuditTab } from './SubscriptionAuditTrail';
@@ -124,6 +127,9 @@ import { Textarea } from './ui/textarea';
 import { ManualDocumentPanel, isoToDisplayDate } from './ManualDocumentPanel';
 import { AnswerEditPanel, type AnswerEditEffects, type AnswerEditTarget, type AnswerEditTriggerChange } from './AnswerEditPanel';
 import { DemoScenarioBar } from './ui/demo-scenario-bar';
+import { Switch } from './ui/switch';
+import { StatusBadge } from './StatusBadge';
+import { Label } from './ui/label';
 import type { MockQuestion } from '../utils/subscriptionDetailMockData';
 import {
   OnboardingCompletionCard,
@@ -183,6 +189,13 @@ type EditScenario = (typeof EDIT_SCENARIOS)[number];
 /** Élément contrôlable : ni texte d'information, ni question non posée restée vide. */
 const isControllable = (question: MockQuestion, response: string) =>
   !question.info && !(question.notAsked && !response);
+
+const MODIFIED_BY_KEY: Record<SubscriptionAuditOrigin, string> = {
+  operator: 'subscriptions.detail.onboarding.modified.byOperator',
+  investor: 'subscriptions.detail.onboarding.modified.byInvestor',
+  automatic: 'subscriptions.detail.onboarding.modified.automatic',
+  api: 'subscriptions.detail.onboarding.modified.automatic',
+};
 
 const DIRECT_PARTNER_NAMES = ['Souscription Directe', 'Direct Subscription'];
 
@@ -287,6 +300,7 @@ export function SubscriptionDetailPage({ subscription: subscriptionProp, onBack 
   const canModifyAnswers = canManage && (!afterSignature || editScenario === 'signedWithRight');
   const [answerEdit, setAnswerEdit] = useState<{ sectionId: string; idx: number } | null>(null);
   const [notAskedVisible, setNotAskedVisible] = useState<string[]>([]);
+  const [modifiedOnly, setModifiedOnly] = useState(false);
   const responseOf = (sectionId: string, idx: number, question: MockQuestion) =>
     questionResponses[`${sectionId}-${idx}`] ?? question.response;
   // Valeurs des données liées (souscription, fiche investisseur...), modifiées par la propagation.
@@ -579,6 +593,47 @@ export function SubscriptionDetailPage({ subscription: subscriptionProp, onBack 
 
 
   const isCorporateInvestor = subscription.contrepartie?.type === 'corporate';
+
+  const modifiedOriginOf = (questionId: string) => lastModificationOrigin(auditEntries, questionId);
+  const modifiedCountOf = (sectionId: string) =>
+    mockSections
+      .find(sec => sec.id === sectionId)
+      ?.questions.filter((_, idx) => modifiedOriginOf(`${sectionId}-${idx}`) !== null).length ?? 0;
+  const modifiedTotal = mockSections.reduce((sum, sec) => sum + modifiedCountOf(sec.id), 0);
+
+  const handleExportDossier = () => {
+    const csvField = (v: string) => (/[";\n]/.test(v) ? `"${v.replace(/"/g, '""')}"` : v);
+    const header = ['section', 'question', 'answer', 'control', 'indicator'].map(col =>
+      t(`subscriptions.detail.dossierExport.columns.${col}`),
+    );
+    const rows = mockSections.flatMap(section =>
+      section.questions.flatMap((question, idx) => {
+        if (question.info) return [];
+        const questionId = `${section.id}-${idx}`;
+        const response = responseOf(section.id, idx, question);
+        const origin = modifiedOriginOf(questionId);
+        const iteration =
+          question.iteration !== undefined && section.iterationLabelKey
+            ? ` (${t(section.iterationLabelKey, { n: question.iteration })})`
+            : '';
+        return [[
+          t(section.titleKey),
+          question.question.replace(/\s*\*\s*$/, '') + iteration,
+          response,
+          t(`subscriptions.detail.onboarding.completion.state.${getQuestionState(section.id, idx, question)}`),
+          origin ? t(MODIFIED_BY_KEY[origin]) : '',
+        ]];
+      }),
+    );
+    const csv = '\ufeff' + [header, ...rows].map(row => row.map(csvField).join(';')).join('\r\n');
+    const url = URL.createObjectURL(new Blob([csv], { type: 'text/csv;charset=utf-8;' }));
+    const link = document.createElement('a');
+    link.href = url;
+    link.download = `dossier_${String(subscription.id)}.csv`;
+    link.click();
+    setTimeout(() => URL.revokeObjectURL(url), 1000);
+    toast.success(t('subscriptions.detail.dossierExport.toast'));
+  };
 
   const documentBlockers = requiredDocuments
     .map((doc, idx) => ({ doc, idx }))
@@ -1262,7 +1317,7 @@ export function SubscriptionDetailPage({ subscription: subscriptionProp, onBack 
         primaryAction={{
           label: t('subscriptions.detail.header.exportData'),
           icon: <Download className="w-4 h-4" />,
-          onClick: () => toast.success(t('subscriptions.detail.toast.featureComingSoon')),
+          onClick: handleExportDossier,
         }}
       />
 
@@ -1534,6 +1589,18 @@ export function SubscriptionDetailPage({ subscription: subscriptionProp, onBack 
                         documents={documentBuckets}
                       />
 
+                      <div className="flex items-center justify-end gap-2">
+                        <Switch
+                          id="modified-only"
+                          checked={modifiedOnly}
+                          onCheckedChange={setModifiedOnly}
+                          disabled={modifiedTotal === 0}
+                        />
+                        <Label htmlFor="modified-only" className="text-sm">
+                          {t('subscriptions.detail.onboarding.modified.filter', { count: modifiedTotal })}
+                        </Label>
+                      </div>
+
                       <div
                         className="grid items-start gap-6"
                         style={{ gridTemplateColumns: 'minmax(0, 300px) minmax(0, 1fr)' }}
@@ -1546,15 +1613,16 @@ export function SubscriptionDetailPage({ subscription: subscriptionProp, onBack 
 
                           <div className="space-y-4">
               {mockSections.map((section) => {
+                if (modifiedOnly && modifiedCountOf(section.id) === 0) return null;
                 const Icon = section.icon;
-                const isOpen = openSections.includes(section.id);
+                const isOpen = modifiedOnly || openSections.includes(section.id);
                 const buckets = getSectionBuckets(section.id);
                 const isDocuments = section.id === 'documents';
                 const allVerified = buckets.total > 0 && buckets.validated === buckets.total;
 
                 return (
                   <Fragment key={section.id}>
-                  {isDocuments && isCorporateInvestor && mockBeneficialOwners.length > 0 && (
+                  {!modifiedOnly && isDocuments && isCorporateInvestor && mockBeneficialOwners.length > 0 && (
                     <SectionCard
                       mode="read"
                       icon={UserCheck}
@@ -1650,7 +1718,7 @@ export function SubscriptionDetailPage({ subscription: subscriptionProp, onBack 
                       </>
                     }
                     validationBar={
-                      canManage && !isDocuments && !allVerified
+                      canManage && !modifiedOnly && !isDocuments && !allVerified
                         ? {
                             label: t('subscriptions.detail.onboarding.verifyAllResponses'),
                             actionLabel: t('subscriptions.detail.onboarding.validateSection'),
@@ -1877,7 +1945,9 @@ export function SubscriptionDetailPage({ subscription: subscriptionProp, onBack 
                                       </div>
                                     ) : null;
 
-                                  if (item.notAsked && !notAskedVisible.includes(section.id)) return null;
+                                  const modifiedOrigin = modifiedOriginOf(questionId);
+                                  if (modifiedOnly && !modifiedOrigin) return null;
+                                  if (item.notAsked && !notAskedVisible.includes(section.id) && !modifiedOrigin) return null;
 
                                   if (item.info) {
                                     return (
@@ -1908,6 +1978,15 @@ export function SubscriptionDetailPage({ subscription: subscriptionProp, onBack 
                                         </div>
                                         <div className="col-span-3 text-sm font-medium text-foreground">
                                           {response || <span className="text-muted-foreground/60 italic">{t('subscriptions.detail.onboarding.notProvided')}</span>}
+                                          {modifiedOrigin && (
+                                            <div className="mt-1">
+                                              <StatusBadge
+                                                variant="info"
+                                                icon={PencilLine}
+                                                label={t(MODIFIED_BY_KEY[modifiedOrigin])}
+                                              />
+                                            </div>
+                                          )}
                                         </div>
                                         <div className="col-span-5 flex items-center justify-end">
                                           <QuestionActions
