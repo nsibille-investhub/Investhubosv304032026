@@ -453,10 +453,11 @@ const funds = [
   { id: 'f4', name: 'Tech Innovation Fund', aum: '€150M', category: 'Tech' },
 ];
 
-const shareClasses: { id: string; minAmount: number }[] = [
+// directAllowed: false reprend le paramètre de part « bloquer la souscription en direct ».
+const shareClasses: { id: string; minAmount: number; directAllowed?: boolean }[] = [
   { id: 'A', minAmount: 1000 },
   { id: 'B', minAmount: 5000 },
-  { id: 'C', minAmount: 10000 },
+  { id: 'C', minAmount: 10000, directAllowed: false },
   { id: 'I', minAmount: 100000 },
   { id: 'R', minAmount: 500 },
 ];
@@ -706,6 +707,8 @@ export function NewSubscriptionDialog({
       );
     const attitledAuthorized =
       !!attitledId && !!formData.fund && !!formData.shareClass && isAuthorized(attitledId);
+    const forbidsDirect =
+      shareClassOptions.find((sc) => sc.id === formData.shareClass)?.directAllowed === false;
 
     if (attitledAuthorized) {
       setFormData((prev) => ({ ...prev, isIntermediated: true, distributor: attitledId! }));
@@ -713,16 +716,21 @@ export function NewSubscriptionDialog({
       return;
     }
     setFormData((prev) => {
-      if (distributionPrefilled) return { ...prev, isIntermediated: false, distributor: 'direct' };
-      if (prev.isIntermediated && prev.distributor && !isAuthorized(prev.distributor)) {
-        return { ...prev, distributor: '' };
+      let next = prev;
+      if (distributionPrefilled) next = { ...next, isIntermediated: false, distributor: 'direct' };
+      else if (prev.isIntermediated && prev.distributor && !isAuthorized(prev.distributor)) {
+        next = { ...next, distributor: '' };
       }
-      return prev;
+      // Une part qui interdit le direct impose un distributeur : la réponse
+      // repasse à Oui et le distributeur reste à choisir.
+      if (forbidsDirect && !next.isIntermediated) next = { ...next, isIntermediated: true, distributor: '' };
+      return next;
     });
     setDistributionPrefilled(false);
   }, [formData.investor, formData.fund, formData.shareClass]);
 
   const handleIntermediatedChange = (intermediated: boolean) => {
+    if (!intermediated && directForbidden) return;
     setDistributionPrefilled(false);
     if (!intermediated) {
       setFormData((prev) => ({ ...prev, isIntermediated: false, distributor: 'direct' }));
@@ -838,6 +846,7 @@ export function NewSubscriptionDialog({
     [formData.shareClass],
   );
   const minAmount = selectedShareClass?.minAmount;
+  const directForbidden = selectedShareClass?.directAllowed === false;
   const minShares = minAmount !== undefined ? minAmount / sharePrice : undefined;
 
   // Bidirectional binding: typing into Montant infers the number of shares.
@@ -879,7 +888,9 @@ export function NewSubscriptionDialog({
     if (!formData.shareClass) e.shareClass = t('subscriptions.newDialog.errors.shareClassRequired');
     if (!(parseFloat(formData.numberOfShares) > 0)) e.amount = t('subscriptions.newDialog.errors.amountRequired');
     if (noAuthorizedDistributor) {
-      e.distributor = t('subscriptions.newDialog.errors.noAuthorizedDistributor');
+      e.distributor = directForbidden
+        ? t('subscriptions.newDialog.errors.noAuthorizedDistributorDirectForbidden')
+        : t('subscriptions.newDialog.errors.noAuthorizedDistributor');
     } else if (formData.isIntermediated && (!formData.distributor || formData.distributor === 'direct')) {
       e.distributor = t('subscriptions.newDialog.errors.distributorRequired');
     }
@@ -890,7 +901,7 @@ export function NewSubscriptionDialog({
       e.internalNote = t('subscriptions.newDialog.errors.noteContentRequired');
     }
     return e;
-  }, [formData, noAuthorizedDistributor, isEditMode, t]);
+  }, [formData, noAuthorizedDistributor, directForbidden, isEditMode, t]);
 
   const isFormValid = Object.keys(errors).length === 0;
 
@@ -2279,7 +2290,7 @@ export function NewSubscriptionDialog({
                         onValueChange={(value) => handleIntermediatedChange(value === 'yes')}
                         size="sm"
                         options={[
-                          { value: 'no', label: t('subscriptions.newDialog.distribution.no') },
+                          { value: 'no', label: t('subscriptions.newDialog.distribution.no'), disabled: directForbidden },
                           { value: 'yes', label: t('subscriptions.newDialog.distribution.yes') },
                         ]}
                       />
@@ -2289,6 +2300,15 @@ export function NewSubscriptionDialog({
                           : t('subscriptions.newDialog.distribution.intermediatedOffHint')}
                       </p>
                     </div>
+
+                    {directForbidden && (
+                      <div className="flex items-start gap-2 rounded-lg border border-border bg-primary/5 px-3 py-2">
+                        <Info className="w-4 h-4 text-primary shrink-0 mt-0.5" />
+                        <p className="text-xs text-foreground">
+                          {t('subscriptions.newDialog.distribution.directForbidden', { share: formData.shareClass })}
+                        </p>
+                      </div>
+                    )}
 
                     {distributionPrefilled && formData.isIntermediated && selectedDistributorName && (
                       <div className="flex items-start gap-2 rounded-lg border border-border bg-primary/5 px-3 py-2">

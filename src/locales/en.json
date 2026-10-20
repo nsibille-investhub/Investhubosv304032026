@@ -438,7 +438,7 @@
       "initStep": {
         "invitation": {
           "title": "Onboarding invitation",
-          "subtitle": "The onboarding link goes to the resolved recipient, the other audiences receive a copy.",
+          "subtitle": "The journey link goes to the investor. On an intermediated subscription, the advisor or distributor carrying it receives a copy.",
           "sent": "Invitation sent",
           "notSent": "Invitation not sent",
           "effectiveRecipient": "Effective recipient",
@@ -447,7 +447,8 @@
           "send": "Send invitation",
           "resendHint": "Resending regenerates the onboarding link and goes to the recipient shown above.",
           "copies": "In copy",
-          "noCopies": "No copy"
+          "noCopies": "No copy: non-intermediated subscription",
+          "copyRuleHint": "Copy sent when the network copy rule is active (template audience, \"No partner copy\" setting, distributor's \"No email copy\" box)."
         },
         "tracking": {
           "sent": "Sent on",
@@ -456,7 +457,6 @@
           "clicked": "Clicked on"
         },
         "audiences": {
-          "contact": "Contact",
           "investor": "Investor",
           "partner": "Partner",
           "advisor": "Advisor"
@@ -1411,7 +1411,8 @@
         "distributorRequired": "Select the distributor of this intermediated subscription.",
         "noAuthorizedDistributor": "No distributor is authorised on this fund and share. Switch the subscription to non-intermediated or change the share.",
         "noteContentRequired": "Enter the note content, or turn off the internal note.",
-        "subscriptionNameRequired": "Enter the subscription name, or switch back to the automatic name."
+        "subscriptionNameRequired": "Enter the subscription name, or switch back to the automatic name.",
+        "noAuthorizedDistributorDirectForbidden": "No distributor is authorised on this fund and share, and the share forbids direct subscription. Choose another fund or share."
       },
       "toast": {
         "investorCreated": "{{name}} created successfully",
@@ -1448,7 +1449,8 @@
         "intermediatedOffHint": "The subscription is handled directly, with no distributor and no entry fees.",
         "intermediatedOnHint": "Fill in the distributor and the distribution terms.",
         "prefilledFromPartner": "Prefilled with {{name}}, the partner linked to the investor and authorised on this fund and share. You can change these values.",
-        "advisorPlaceholder": "Advisor name at the distributor"
+        "advisorPlaceholder": "Advisor name at the distributor",
+        "directForbidden": "Share {{share}} forbids direct subscription: choose an authorised distributor."
       },
       "subscriptionName": {
         "label": "Subscription name",

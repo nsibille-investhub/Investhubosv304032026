@@ -147,6 +147,8 @@ interface SubscriptionDetailPageProps {
 }
 
 
+const DIRECT_PARTNER_NAMES = ['Souscription Directe', 'Direct Subscription'];
+
 export function SubscriptionDetailPage({ subscription: subscriptionProp, onBack }: SubscriptionDetailPageProps) {
   const { t, lang } = useTranslation();
 
@@ -504,36 +506,24 @@ export function SubscriptionDetailPage({ subscription: subscriptionProp, onBack 
   const investorEmail =
     subscription.email ||
     toEmail(subscription.contrepartie.investor || subscription.contrepartie.name, 'example.com');
-  const investorContactEmail = subscription.contrepartie.mainContact
-    ? toEmail(subscription.contrepartie.mainContact, 'example.com')
-    : '';
   const partnerEmail = partnerDomain ? `contact@${partnerDomain}` : '';
   const advisorEmail = subscription.advisor && partnerDomain
     ? toEmail(subscription.advisor, partnerDomain)
     : '';
 
-  const invitationRecipient = investorContactEmail || investorEmail;
-  const invitationRecipientLabelKey = investorContactEmail
-    ? 'subscriptions.detail.initStep.audiences.contact'
-    : 'subscriptions.detail.initStep.audiences.investor';
-
-  const invitationCopies: Array<{ id: string; labelKey: string; email: string }> = [
-    {
-      id: 'investor',
-      labelKey: 'subscriptions.detail.initStep.audiences.investor',
-      email: investorContactEmail ? investorEmail : '',
-    },
-    {
-      id: 'partner',
-      labelKey: 'subscriptions.detail.initStep.audiences.partner',
-      email: partnerEmail,
-    },
-    {
-      id: 'advisor',
-      labelKey: 'subscriptions.detail.initStep.audiences.advisor',
-      email: advisorEmail,
-    },
-  ].filter(copy => copy.email && copy.email !== invitationRecipient);
+  // L'invitation part toujours à l'investisseur. Sur une souscription
+  // intermédiée, le réseau qui porte la souscription (son conseiller s'il y en
+  // a un, sinon le distributeur) reçoit le même mail en copie, selon la règle
+  // de copie du réseau.
+  const isIntermediated =
+    initData.isIntermediated ?? (!!partnerName && !DIRECT_PARTNER_NAMES.includes(partnerName));
+  const invitationRecipient = investorEmail;
+  const invitationRecipientLabelKey = 'subscriptions.detail.initStep.audiences.investor';
+  const networkCopy = advisorEmail
+    ? { id: 'advisor', labelKey: 'subscriptions.detail.initStep.audiences.advisor', email: advisorEmail }
+    : { id: 'partner', labelKey: 'subscriptions.detail.initStep.audiences.partner', email: partnerEmail };
+  const invitationCopies: Array<{ id: string; labelKey: string; email: string }> =
+    isIntermediated && networkCopy.email ? [networkCopy] : [];
 
   const invitationEmail = mockInitEmails.find(mail => mail.id === 'invitation');
   const invitationSentAt = resentEmails.invitation ?? invitationEmail?.sentAt ?? null;
@@ -1155,6 +1145,11 @@ export function SubscriptionDetailPage({ subscription: subscriptionProp, onBack 
                             ) : (
                               <p className="col-span-2 text-sm text-muted-foreground">
                                 {t('subscriptions.detail.initStep.invitation.noCopies')}
+                              </p>
+                            )}
+                            {invitationCopies.length > 0 && (
+                              <p className="col-span-2 text-xs text-muted-foreground">
+                                {t('subscriptions.detail.initStep.invitation.copyRuleHint')}
                               </p>
                             )}
                           </div>
