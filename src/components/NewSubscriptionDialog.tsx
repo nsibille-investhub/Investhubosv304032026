@@ -276,27 +276,26 @@ function FieldMessage({ message, tone = 'error' }: { message?: string; tone?: 'e
   );
 }
 
-type NoteType = 'general' | 'kyc' | 'risk' | 'commercial' | 'legal';
 type NotePriority = 'low' | 'medium' | 'high';
 
-const NOTE_TYPES: NoteType[] = ['general', 'kyc', 'risk', 'commercial', 'legal'];
 const NOTE_PRIORITIES: NotePriority[] = ['low', 'medium', 'high'];
 
 interface InternalNoteDraft {
   enabled: boolean;
-  type: NoteType;
   priority: NotePriority;
   content: string;
 }
 
 const EMPTY_INTERNAL_NOTE: InternalNoteDraft = {
   enabled: false,
-  type: 'general',
   priority: 'medium',
   content: '',
 };
 
+type NameMode = 'auto' | 'manual';
+
 type FieldKey =
+  | 'subscriptionName'
   | 'investor'
   | 'structure'
   | 'fund'
@@ -349,6 +348,7 @@ interface FormData {
   hasCustodyOption: boolean;
   notifyOnCreation: boolean;
   language: SubscriptionLanguage;
+  nameMode: NameMode;
   subscriptionName: string;
   internalNote: InternalNoteDraft;
 }
@@ -366,6 +366,7 @@ const EMPTY_FORM: FormData = {
   hasCustodyOption: false,
   notifyOnCreation: true,
   language: DEFAULT_SUBSCRIPTION_LANGUAGE,
+  nameMode: 'auto',
   subscriptionName: '',
   internalNote: EMPTY_INTERNAL_NOTE,
 };
@@ -623,6 +624,7 @@ export function NewSubscriptionDialog({
       hasCustodyOption: !!subscription.hasDepositary,
       notifyOnCreation: false,
       language: subscription.language === 'en' ? 'en' : 'fr',
+      nameMode: 'manual',
       subscriptionName: subscription.name ?? '',
       internalNote: EMPTY_INTERNAL_NOTE,
     });
@@ -873,11 +875,14 @@ export function NewSubscriptionDialog({
     } else if (formData.isIntermediated && (!formData.distributor || formData.distributor === 'direct')) {
       e.distributor = t('subscriptions.newDialog.errors.distributorRequired');
     }
-    if (formData.internalNote.enabled && !formData.internalNote.content.trim()) {
+    if (formData.nameMode === 'manual' && !formData.subscriptionName.trim()) {
+      e.subscriptionName = t('subscriptions.newDialog.errors.subscriptionNameRequired');
+    }
+    if (!isEditMode && formData.internalNote.enabled && !formData.internalNote.content.trim()) {
       e.internalNote = t('subscriptions.newDialog.errors.noteContentRequired');
     }
     return e;
-  }, [formData, noAuthorizedDistributor, t]);
+  }, [formData, noAuthorizedDistributor, isEditMode, t]);
 
   const isFormValid = Object.keys(errors).length === 0;
 
@@ -900,7 +905,7 @@ export function NewSubscriptionDialog({
       investor: status(['investor', 'structure'], !!formData.investor && formData.structure !== null),
       fund: status(['fund', 'shareClass', 'amount'], hasFundAndShare && calculatedAmount > 0),
       distribution: status(['distributor'], hasFundAndShare && !errors.distributor),
-      additional: status(['internalNote'], !!formData.investor && !errors.internalNote),
+      review: status(['subscriptionName', 'internalNote'], false),
     };
   }, [formData, calculatedAmount, errors, submitAttempted, noAuthorizedDistributor]);
 
@@ -921,7 +926,8 @@ export function NewSubscriptionDialog({
     formData.investor && selectedFundName && formData.shareClass && calculatedAmount > 0
       ? generateSubscriptionName(formData.investor.name, calculatedAmount, selectedFundName, formData.shareClass)
       : '';
-  const effectiveSubscriptionName = formData.subscriptionName.trim() || generatedSubscriptionName;
+  const effectiveSubscriptionName =
+    formData.nameMode === 'manual' ? formData.subscriptionName.trim() : generatedSubscriptionName;
 
   const notificationRecipients = useMemo<NotificationRecipient[]>(() => {
     if (!formData.investor) return [];
@@ -1234,10 +1240,11 @@ export function NewSubscriptionDialog({
           : [],
         language: formData.language,
         subscriptionName: effectiveSubscriptionName,
-        isSubscriptionNameGenerated: !formData.subscriptionName.trim(),
+        isSubscriptionNameGenerated: formData.nameMode === 'auto',
         internalNote: formData.internalNote.enabled
           ? {
-              type: formData.internalNote.type,
+              type: 'general',
+              status: 'open',
               priority: formData.internalNote.priority,
               content: formData.internalNote.content.trim(),
             }
@@ -2618,336 +2625,272 @@ export function NewSubscriptionDialog({
 
                   <FormSection
                     step={4}
-                    status={sectionStatus.additional}
-                    icon={Info}
-                    title={t('subscriptions.newDialog.sections.additionalInfo')}
-                    description={t('subscriptions.newDialog.sections.additionalInfoDesc')}
+                    status={sectionStatus.review}
+                    icon={ClipboardCheck}
+                    title={t('subscriptions.newDialog.sections.review')}
+                    description={t('subscriptions.newDialog.sections.reviewDesc')}
                   >
-                    <FormSubsection icon={Tag} title={t('subscriptions.newDialog.subsections.identification')}>
-                    <div className="grid gap-3" style={{ gridTemplateColumns: '1.5fr 1fr' }}>
-                    <div className="space-y-1.5">
-                      <Label className={FORM_FIELD_LABEL_CLASS}>
-                        <Tag className="w-3.5 h-3.5" />
-                        {t('subscriptions.newDialog.subscriptionName.label')}
-                        <span className="text-muted-foreground/60 font-normal">
-                          {t('subscriptions.newDialog.optional')}
-                        </span>
-                      </Label>
-                      <Input
-                        value={formData.subscriptionName}
-                        onChange={(e) => setFormData((prev) => ({ ...prev, subscriptionName: e.target.value }))}
-                        placeholder={generatedSubscriptionName || t('subscriptions.newDialog.subscriptionName.placeholder')}
-                        className="h-10"
-                      />
-                      {!formData.subscriptionName.trim() && (
-                        <div className="flex items-start gap-2 rounded-md bg-muted/40 px-3 py-2">
-                          <Info className="w-3.5 h-3.5 text-muted-foreground shrink-0 mt-0.5" />
-                          <p className={FORM_FIELD_HINT_CLASS}>
-                            {t('subscriptions.newDialog.subscriptionName.rule')}{' '}
-                            {generatedSubscriptionName
-                              ? t('subscriptions.newDialog.subscriptionName.ruleExample', {
-                                  name: generatedSubscriptionName,
-                                })
-                              : t('subscriptions.newDialog.subscriptionName.ruleWaiting')}
+                    {Object.keys(errors).length > 0 && submitAttempted && (
+                      <div
+                        className="rounded-xl border px-4 py-3 space-y-1.5"
+                        style={{
+                          backgroundColor: 'color-mix(in oklab, var(--destructive) 6%, var(--card))',
+                          borderColor: 'color-mix(in oklab, var(--destructive) 30%, transparent)',
+                        }}
+                      >
+                        <p className="text-sm font-semibold text-foreground">
+                          {t('subscriptions.newDialog.review.blockingTitle')}
+                        </p>
+                        <ul className="space-y-1">
+                          {Object.values(errors).map((message) => (
+                            <li key={message}>
+                              <FieldMessage message={message} />
+                            </li>
+                          ))}
+                        </ul>
+                      </div>
+                    )}
+
+                    <FormSubsection
+                      icon={Tag}
+                      title={t('subscriptions.newDialog.subscriptionName.label')}
+                      action={
+                        <SegmentedControl
+                          size="sm"
+                          aria-label={t('subscriptions.newDialog.subscriptionName.label')}
+                          value={formData.nameMode}
+                          onValueChange={(value) => setFormData((prev) => ({ ...prev, nameMode: value as NameMode }))}
+                          options={[
+                            { value: 'auto', label: t('subscriptions.newDialog.subscriptionName.modeAuto') },
+                            { value: 'manual', label: t('subscriptions.newDialog.subscriptionName.modeManual') },
+                          ]}
+                        />
+                      }
+                    >
+                      {formData.nameMode === 'auto' ? (
+                        <div className="space-y-1.5">
+                          <div className="flex min-h-10 items-center rounded-md border border-input bg-white px-3 py-2 text-sm">
+                            {generatedSubscriptionName ? (
+                              <span className="font-medium text-foreground break-words">{generatedSubscriptionName}</span>
+                            ) : (
+                              <span className="text-muted-foreground">
+                                {t('subscriptions.newDialog.subscriptionName.ruleWaiting')}
+                              </span>
+                            )}
+                          </div>
+                          <p className={cn(FORM_FIELD_HINT_CLASS, 'flex items-start gap-1.5')}>
+                            <Info className="w-3.5 h-3.5 shrink-0" style={{ marginTop: 1 }} />
+                            {t('subscriptions.newDialog.subscriptionName.autoRule', {
+                              pattern: t('subscriptions.newDialog.subscriptionName.patternDefault'),
+                            })}
                           </p>
                         </div>
+                      ) : (
+                        <div className="space-y-1.5" data-field-error={!!fieldError('subscriptionName')}>
+                          <Label className={FORM_FIELD_LABEL_CLASS}>
+                            {t('subscriptions.newDialog.subscriptionName.manualLabel')}
+                            <span className="text-destructive">*</span>
+                          </Label>
+                          <Input
+                            value={formData.subscriptionName}
+                            onChange={(e) => setFormData((prev) => ({ ...prev, subscriptionName: e.target.value }))}
+                            placeholder={generatedSubscriptionName || t('subscriptions.newDialog.subscriptionName.placeholder')}
+                            aria-invalid={!!fieldError('subscriptionName')}
+                            className="h-10"
+                          />
+                          <FieldMessage message={fieldError('subscriptionName')} />
+                        </div>
                       )}
-                    </div>
-                    <div className="space-y-1.5">
-                      <Label className={FORM_FIELD_LABEL_CLASS}>
-                        <Globe className="w-3.5 h-3.5" />
-                        {t('subscriptions.newDialog.notificationSection.languageLabel')}
-                      </Label>
-                      <Select
-                        value={formData.language}
-                        onValueChange={(value) =>
-                          setFormData((prev) => ({ ...prev, language: value as SubscriptionLanguage }))
-                        }
-                      >
-                        <SelectTrigger className="h-10">
-                          <SelectValue />
-                        </SelectTrigger>
-                        <SelectContent>
-                          {SUBSCRIPTION_LANGUAGES.map((code) => (
-                            <SelectItem key={code} value={code}>
-                              {t(`subscriptions.newDialog.notificationSection.languageOptions.${code}`)}
-                            </SelectItem>
-                          ))}
-                        </SelectContent>
-                      </Select>
-                      <p className={FORM_FIELD_HINT_CLASS}>
-                        {formData.investor?.preferredLanguage
-                          ? t('subscriptions.newDialog.notificationSection.languageHelper')
-                          : t('subscriptions.newDialog.notificationSection.languageHelperFallback')}
-                      </p>
-                    </div>
-                    </div>
                     </FormSubsection>
 
-                    <FormSubsection icon={Bell} title={t('subscriptions.newDialog.subsections.notification')}>
-                    <label
-                      htmlFor="notify-on-creation-switch"
-                      className="flex w-full items-start justify-between gap-3 text-sm cursor-pointer"
-                    >
-                      <div className="flex-1 min-w-0">
-                        <div className="text-foreground font-medium flex items-center gap-1.5">
-                          <Bell className="w-3.5 h-3.5" />
-                          {t('subscriptions.newDialog.notificationSection.notifyLabel')}
-                        </div>
-                        <div className="text-xs text-muted-foreground mt-0.5">
-                          {formData.isIntermediated
-                            ? t('subscriptions.newDialog.notificationSection.notifyDistributorDescription')
-                            : t('subscriptions.newDialog.notificationSection.notifyInvestorDescription')}
-                        </div>
+                    <FormSubsection icon={Euro} title={t('subscriptions.newDialog.subsections.reviewAmounts')}>
+                      <dl className="divide-y divide-border text-sm">
+                        <ReviewRow label={t('subscriptions.newDialog.review.subscriptionAmount')}>
+                          <span className="font-medium text-foreground">
+                            {calculatedAmount > 0
+                              ? `${calculatedAmount.toLocaleString('fr-FR')} €`
+                              : t('subscriptions.newDialog.review.toComplete')}
+                          </span>
+                        </ReviewRow>
+                        <ReviewRow label={t('subscriptions.newDialog.review.totalAmount')}>
+                          <div className="text-base font-bold text-primary">
+                            {(calculatedAmount + calculatedFees).toLocaleString('fr-FR')} €
+                          </div>
+                          <div className={FORM_FIELD_HINT_CLASS}>
+                            {t('subscriptions.newDialog.review.totalBreakdown', {
+                              percent: entryFeePercent,
+                              fees: calculatedEntryFees.toLocaleString('fr-FR'),
+                              premium: subscriptionPremiumAmount.toLocaleString('fr-FR'),
+                            })}
+                          </div>
+                        </ReviewRow>
+                      </dl>
+                      <p className={FORM_FIELD_HINT_CLASS}>{t('subscriptions.newDialog.review.amountsReadOnly')}</p>
+                    </FormSubsection>
+
+                    <FormSubsection icon={Globe} title={t('subscriptions.newDialog.review.language')}>
+                      <div className="space-y-1.5">
+                        <Select
+                          value={formData.language}
+                          onValueChange={(value) =>
+                            setFormData((prev) => ({ ...prev, language: value as SubscriptionLanguage }))
+                          }
+                        >
+                          <SelectTrigger className="h-10" aria-label={t('subscriptions.newDialog.notificationSection.languageLabel')}>
+                            <SelectValue />
+                          </SelectTrigger>
+                          <SelectContent>
+                            {SUBSCRIPTION_LANGUAGES.map((code) => (
+                              <SelectItem key={code} value={code}>
+                                {t(`subscriptions.newDialog.notificationSection.languageOptions.${code}`)}
+                              </SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
+                        <p className={FORM_FIELD_HINT_CLASS}>
+                          {formData.investor?.preferredLanguage
+                            ? t('subscriptions.newDialog.notificationSection.languageHelper')
+                            : t('subscriptions.newDialog.notificationSection.languageHelperFallback')}
+                        </p>
                       </div>
-                      <Switch
-                        id="notify-on-creation-switch"
-                        checked={formData.notifyOnCreation}
-                        onCheckedChange={(checked) =>
-                          setFormData((prev) => ({ ...prev, notifyOnCreation: checked }))
-                        }
-                      />
-                    </label>
                     </FormSubsection>
 
                     {!isEditMode && (
-                      <FormSubsection icon={StickyNote} title={t('subscriptions.newDialog.subsections.internalNote')}>
-                      <div className="space-y-3" data-field-error={!!fieldError('internalNote')}>
-                        <label
-                          htmlFor="internal-note-switch"
-                          className="flex w-full items-start justify-between gap-3 text-sm cursor-pointer"
-                        >
-                          <div className="flex-1 min-w-0">
-                            <div className="text-foreground font-medium flex items-center gap-1.5">
-                              <StickyNote className="w-3.5 h-3.5" />
-                              {t('subscriptions.newDialog.internalNote.toggleLabel')}
-                              <span className="text-muted-foreground/60 font-normal">
-                                {t('subscriptions.newDialog.optional')}
-                              </span>
-                            </div>
-                            <div className="text-xs text-muted-foreground mt-0.5">
-                              {t('subscriptions.newDialog.internalNote.toggleHint')}
-                            </div>
-                          </div>
+                      <FormSubsection
+                        icon={Bell}
+                        title={t('subscriptions.newDialog.notificationSection.notifyLabel')}
+                        description={
+                          formData.isIntermediated
+                            ? t('subscriptions.newDialog.notificationSection.notifyDistributorDescription')
+                            : t('subscriptions.newDialog.notificationSection.notifyInvestorDescription')
+                        }
+                        action={
                           <Switch
-                            id="internal-note-switch"
+                            aria-label={t('subscriptions.newDialog.notificationSection.notifyLabel')}
+                            checked={formData.notifyOnCreation}
+                            onCheckedChange={(checked) =>
+                              setFormData((prev) => ({ ...prev, notifyOnCreation: checked }))
+                            }
+                          />
+                        }
+                      >
+                        {formData.notifyOnCreation ? (
+                          notificationRecipients.length > 0 ? (
+                            <ul className="space-y-1.5">
+                              {notificationRecipients.map((recipient) => (
+                                <li
+                                  key={recipient.role}
+                                  className="flex items-center gap-3 rounded-lg border border-border px-3 py-2"
+                                >
+                                  <Mail className="w-4 h-4 text-muted-foreground shrink-0" />
+                                  <div className="flex-1 min-w-0">
+                                    <div className="text-sm font-medium text-foreground truncate">
+                                      {recipient.name}
+                                      <span className="ml-1.5 font-normal text-muted-foreground">
+                                        {t(`subscriptions.newDialog.review.roles.${recipient.role}`)}
+                                      </span>
+                                    </div>
+                                    <div className={cn(FORM_FIELD_HINT_CLASS, 'truncate')}>
+                                      {recipient.template
+                                        ? t('subscriptions.newDialog.review.templateLine', { name: recipient.template.name })
+                                        : t('subscriptions.newDialog.review.templateMissing')}
+                                      {recipient.detail ? ` · ${recipient.detail}` : ''}
+                                    </div>
+                                  </div>
+                                  {recipient.template && (
+                                    <Button
+                                      type="button"
+                                      variant="outline"
+                                      size="sm"
+                                      onClick={() => setPreviewRecipient(recipient)}
+                                      className="h-8 shrink-0"
+                                      aria-label={t('subscriptions.newDialog.review.previewTemplate', {
+                                        name: recipient.template.name,
+                                      })}
+                                    >
+                                      <Eye className="w-3.5 h-3.5 mr-1.5" />
+                                      {t('subscriptions.newDialog.review.preview')}
+                                    </Button>
+                                  )}
+                                </li>
+                              ))}
+                            </ul>
+                          ) : (
+                            <p className={FORM_FIELD_HINT_CLASS}>{t('subscriptions.newDialog.review.recipientsWaiting')}</p>
+                          )
+                        ) : (
+                          <p className={FORM_FIELD_HINT_CLASS}>{t('subscriptions.newDialog.review.notificationOff')}</p>
+                        )}
+                      </FormSubsection>
+                    )}
+
+                    {!isEditMode && (
+                      <FormSubsection
+                        icon={StickyNote}
+                        title={t('subscriptions.newDialog.internalNote.toggleLabel')}
+                        description={t('subscriptions.newDialog.internalNote.toggleHint')}
+                        action={
+                          <Switch
+                            aria-label={t('subscriptions.newDialog.internalNote.toggleLabel')}
                             checked={formData.internalNote.enabled}
                             onCheckedChange={(checked) => updateInternalNote({ enabled: checked })}
                           />
-                        </label>
-
-                        {formData.internalNote.enabled && (
+                        }
+                      >
+                        {formData.internalNote.enabled ? (
                           <motion.div
                             initial={{ opacity: 0, y: -4 }}
                             animate={{ opacity: 1, y: 0 }}
-                            className="space-y-3 pt-3 border-t border-border"
+                            className="space-y-3"
+                            data-field-error={!!fieldError('internalNote')}
                           >
-                            <div className="grid grid-cols-2 gap-3">
-                              <EditField label={t('subscriptions.newDialog.internalNote.type')} icon={Tag}>
-                                <Select
-                                  value={formData.internalNote.type}
-                                  onValueChange={(value) => updateInternalNote({ type: value as NoteType })}
-                                >
-                                  <SelectTrigger className="h-10">
-                                    <SelectValue />
-                                  </SelectTrigger>
-                                  <SelectContent>
-                                    {NOTE_TYPES.map((type) => (
-                                      <SelectItem key={type} value={type}>
-                                        {t(`subscriptions.newDialog.internalNote.types.${type}`)}
-                                      </SelectItem>
-                                    ))}
-                                  </SelectContent>
-                                </Select>
-                              </EditField>
-
-                              <EditField label={t('subscriptions.newDialog.internalNote.priority')} icon={Flag}>
-                                <SegmentedControl
-                                  aria-label={t('subscriptions.newDialog.internalNote.priority')}
-                                  value={formData.internalNote.priority}
-                                  onValueChange={(value) => updateInternalNote({ priority: value })}
-                                  size="sm"
-                                  fullWidth
-                                  options={NOTE_PRIORITIES.map((priority) => ({
-                                    value: priority,
-                                    label: t(`subscriptions.newDialog.internalNote.priorities.${priority}`),
-                                  }))}
-                                />
-                              </EditField>
+                            <div className="flex flex-wrap items-center gap-1.5">
+                              <Badge variant="outline" className="text-xs h-5">
+                                {t('subscriptions.detail.notesTab.generalType')}
+                              </Badge>
+                              <Badge variant="outline" className="text-xs h-5">
+                                {t('subscriptions.newDialog.internalNote.statusOpen')}
+                              </Badge>
+                              <span className={FORM_FIELD_HINT_CLASS}>
+                                {t('subscriptions.newDialog.internalNote.whereVisible')}
+                              </span>
                             </div>
-
-                            <EditField label={t('subscriptions.newDialog.internalNote.content')} icon={FileText}>
+                            <div className="space-y-1.5">
+                              <Label className={FORM_FIELD_LABEL_CLASS}>
+                                <Flag className="w-3.5 h-3.5" />
+                                {t('subscriptions.newDialog.internalNote.priority')}
+                              </Label>
+                              <SegmentedControl
+                                aria-label={t('subscriptions.newDialog.internalNote.priority')}
+                                value={formData.internalNote.priority}
+                                onValueChange={(value) => updateInternalNote({ priority: value })}
+                                size="sm"
+                                options={NOTE_PRIORITIES.map((priority) => ({
+                                  value: priority,
+                                  label: t(`subscriptions.newDialog.internalNote.priorities.${priority}`),
+                                }))}
+                              />
+                            </div>
+                            <div className="space-y-1.5">
+                              <Label className={FORM_FIELD_LABEL_CLASS}>
+                                <FileText className="w-3.5 h-3.5" />
+                                {t('subscriptions.newDialog.internalNote.content')}
+                                <span className="text-destructive">*</span>
+                              </Label>
                               <Textarea
                                 value={formData.internalNote.content}
                                 onChange={(e) => updateInternalNote({ content: e.target.value })}
                                 placeholder={t('subscriptions.newDialog.internalNote.contentPlaceholder')}
-                                className={'min-h-[90px]'}
+                                aria-invalid={!!fieldError('internalNote')}
+                                className="min-h-[90px]"
                               />
-                            </EditField>
-                            <FieldMessage message={fieldError('internalNote')} />
+                              <FieldMessage message={fieldError('internalNote')} />
+                            </div>
                           </motion.div>
-                        )}
-                      </div>
+                        ) : undefined}
                       </FormSubsection>
                     )}
-
                   </FormSection>
-
-                  {!isEditMode && (
-                    <FormSection
-                      step={5}
-                      icon={ClipboardCheck}
-                      title={t('subscriptions.newDialog.sections.review')}
-                      description={t('subscriptions.newDialog.sections.reviewDesc')}
-                    >
-                      {Object.keys(errors).length > 0 && submitAttempted && (
-                        <div
-                          className="rounded-xl border px-4 py-3 space-y-1.5"
-                          style={{
-                            backgroundColor: 'color-mix(in oklab, var(--destructive) 6%, var(--card))',
-                            borderColor: 'color-mix(in oklab, var(--destructive) 30%, transparent)',
-                          }}
-                        >
-                          <p className="text-sm font-semibold text-foreground">
-                            {t('subscriptions.newDialog.review.blockingTitle')}
-                          </p>
-                          <ul className="space-y-1">
-                            {Object.values(errors).map((message) => (
-                              <li key={message}>
-                                <FieldMessage message={message} />
-                              </li>
-                            ))}
-                          </ul>
-                        </div>
-                      )}
-
-                      <FormSubsection icon={Tag} title={t('subscriptions.newDialog.subsections.reviewSubscription')}>
-                        <dl className="divide-y divide-border text-sm">
-                          <ReviewRow label={t('subscriptions.newDialog.review.subscriptionName')}>
-                            {effectiveSubscriptionName ? (
-                              <span className="font-medium text-foreground break-words">
-                                {effectiveSubscriptionName}
-                                {!formData.subscriptionName.trim() && (
-                                  <Badge variant="outline" className="ml-2 text-xs h-5 align-middle">
-                                    {t('subscriptions.newDialog.review.generatedTag')}
-                                  </Badge>
-                                )}
-                              </span>
-                            ) : (
-                              <span className="text-muted-foreground">{t('subscriptions.newDialog.review.toComplete')}</span>
-                            )}
-                          </ReviewRow>
-                          <ReviewRow label={t('subscriptions.newDialog.review.language')}>
-                            <span className="font-medium text-foreground">
-                              {t(`subscriptions.newDialog.notificationSection.languageOptions.${formData.language}`)}
-                            </span>
-                          </ReviewRow>
-                        </dl>
-                      </FormSubsection>
-
-                      <FormSubsection icon={Euro} title={t('subscriptions.newDialog.subsections.reviewAmounts')}>
-                        <dl className="divide-y divide-border text-sm">
-                          <ReviewRow label={t('subscriptions.newDialog.review.subscriptionAmount')}>
-                            <span className="font-medium text-foreground">
-                              {calculatedAmount > 0
-                                ? `${calculatedAmount.toLocaleString('fr-FR')} €`
-                                : t('subscriptions.newDialog.review.toComplete')}
-                            </span>
-                          </ReviewRow>
-                          <ReviewRow label={t('subscriptions.newDialog.review.totalAmount')}>
-                            <div className="text-base font-bold text-primary">
-                              {(calculatedAmount + calculatedFees).toLocaleString('fr-FR')} €
-                            </div>
-                            <div className={FORM_FIELD_HINT_CLASS}>
-                              {t('subscriptions.newDialog.review.totalBreakdown', {
-                                percent: entryFeePercent,
-                                fees: calculatedEntryFees.toLocaleString('fr-FR'),
-                                premium: subscriptionPremiumAmount.toLocaleString('fr-FR'),
-                              })}
-                            </div>
-                          </ReviewRow>
-                        </dl>
-                      </FormSubsection>
-
-                      <FormSubsection icon={Bell} title={t('subscriptions.newDialog.subsections.reviewCommunication')}>
-                        <dl className="divide-y divide-border text-sm">
-                          <ReviewRow label={t('subscriptions.newDialog.review.notification')}>
-                            <span className="font-medium text-foreground">
-                              {formData.notifyOnCreation
-                                ? t('subscriptions.newDialog.distribution.yes')
-                                : t('subscriptions.newDialog.review.notificationOff')}
-                            </span>
-                          </ReviewRow>
-                          {formData.notifyOnCreation && notificationRecipients.length > 0 && (
-                            <div className="py-2">
-                              <ul className="space-y-1.5">
-                                {notificationRecipients.map((recipient) => (
-                                  <li
-                                    key={recipient.role}
-                                    className="flex items-center gap-3 rounded-lg border border-border px-3 py-2"
-                                  >
-                                    <Mail className="w-4 h-4 text-muted-foreground shrink-0" />
-                                    <div className="flex-1 min-w-0">
-                                      <div className="text-sm font-medium text-foreground truncate">
-                                        {recipient.name}
-                                        <span className="ml-1.5 font-normal text-muted-foreground">
-                                          {t(`subscriptions.newDialog.review.roles.${recipient.role}`)}
-                                        </span>
-                                      </div>
-                                      {recipient.detail && (
-                                        <div className={cn(FORM_FIELD_HINT_CLASS, 'truncate')}>{recipient.detail}</div>
-                                      )}
-                                    </div>
-                                    {recipient.template ? (
-                                      <Button
-                                        type="button"
-                                        variant="outline"
-                                        size="sm"
-                                        onClick={() => setPreviewRecipient(recipient)}
-                                        className="h-8 shrink-0"
-                                        style={{ maxWidth: '50%' }}
-                                        aria-label={t('subscriptions.newDialog.review.previewTemplate', {
-                                          name: recipient.template.name,
-                                        })}
-                                      >
-                                        <Eye className="w-3.5 h-3.5 mr-1.5 shrink-0" />
-                                        <span className="truncate">{recipient.template.name}</span>
-                                      </Button>
-                                    ) : (
-                                      <span className={cn(FORM_FIELD_HINT_CLASS, 'shrink-0')}>
-                                        {t('subscriptions.newDialog.review.templateMissing')}
-                                      </span>
-                                    )}
-                                  </li>
-                                ))}
-                              </ul>
-                            </div>
-                          )}
-                          <ReviewRow label={t('subscriptions.newDialog.review.internalNote')}>
-                            {formData.internalNote.enabled && formData.internalNote.content.trim() ? (
-                              <>
-                                <div className="flex justify-end gap-1.5 mb-1">
-                                  <Badge variant="outline" className="text-xs h-5">
-                                    {t(`subscriptions.newDialog.internalNote.types.${formData.internalNote.type}`)}
-                                  </Badge>
-                                  <Badge variant="outline" className="text-xs h-5">
-                                    {t(`subscriptions.newDialog.internalNote.priorities.${formData.internalNote.priority}`)}
-                                  </Badge>
-                                </div>
-                                <p className="text-sm text-foreground line-clamp-2 break-words">
-                                  {formData.internalNote.content.trim()}
-                                </p>
-                              </>
-                            ) : (
-                              <span className="text-muted-foreground">
-                                {t('subscriptions.newDialog.review.noInternalNote')}
-                              </span>
-                            )}
-                          </ReviewRow>
-                        </dl>
-                      </FormSubsection>
-                    </FormSection>
-                  )}
               </div>
             )}
 

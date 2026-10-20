@@ -1409,7 +1409,8 @@
         "belowMinimum": "Montant inférieur au minimum de la part ({{min}} €).",
         "distributorRequired": "Sélectionnez le distributeur de cette souscription intermédiée.",
         "noAuthorizedDistributor": "Aucun distributeur n'est autorisé sur ce fonds et cette part. Passez la souscription en non intermédiée ou changez de part.",
-        "noteContentRequired": "Saisissez le contenu de la note, ou désactivez la note interne."
+        "noteContentRequired": "Saisissez le contenu de la note, ou désactivez la note interne.",
+        "subscriptionNameRequired": "Saisissez le nom de la souscription, ou repassez en nom automatique."
       },
       "toast": {
         "investorCreated": "{{name}} créé avec succès",
@@ -1418,10 +1419,7 @@
         "subscriptionCreatedDesc": "{{investor}} - {{amount}} €"
       },
       "notificationSection": {
-        "title": "Notification et langue",
-        "notifyInvestorLabel": "Notifier l'investisseur à l'initialisation",
         "notifyInvestorDescription": "Envoie le mail d'onboarding à l'investisseur pour qu'il démarre sa souscription.",
-        "notifyDistributorLabel": "Notifier le distributeur à l'initialisation",
         "notifyDistributorDescription": "Envoie le mail d'onboarding au distributeur, la souscription étant intermédiée.",
         "languageLabel": "Langue de l'onboarding et de la communication",
         "languageHelper": "Reprend par défaut la langue préférée de l'investisseur.",
@@ -1439,10 +1437,8 @@
         "fundDesc": "Fonds, part, montant souscrit et prime de souscription.",
         "distribution": "Distribution",
         "distributionDesc": "Indiquez si un distributeur apporte cette souscription.",
-        "additionalInfo": "Informations complémentaires",
-        "additionalInfoDesc": "Nom, langue, notification et note interne.",
         "review": "Vérification et validation",
-        "reviewDesc": "Relisez les informations clés avant de créer la souscription."
+        "reviewDesc": "Finalisez le nom, la langue, la notification et la note, puis vérifiez les montants."
       },
       "distribution": {
         "intermediatedLabel": "Souscription intermédiée",
@@ -1456,41 +1452,35 @@
       "subscriptionName": {
         "label": "Nom de la souscription",
         "placeholder": "Généré automatiquement si vide",
-        "rule": "Laissé vide, le nom est généré selon la règle Investisseur - Montant - Fonds Part.",
-        "ruleExample": "Ici : {{name}}",
-        "ruleWaiting": "Il sera calculé dès que l'investisseur, le fonds, la part et le montant seront saisis."
+        "ruleWaiting": "Il sera calculé dès que l'investisseur, le fonds, la part et le montant seront saisis.",
+        "modeAuto": "Automatique",
+        "modeManual": "Manuel",
+        "autoRule": "Généré en temps réel selon la règle définie dans les paramètres : {{pattern}}.",
+        "patternDefault": "Investisseur - Montant - Fonds Part",
+        "manualLabel": "Nom saisi manuellement"
       },
       "internalNote": {
-        "toggleLabel": "Ajouter une note interne",
+        "toggleLabel": "Note interne",
         "toggleHint": "Visible uniquement par vos équipes, jamais par l'investisseur ni par le distributeur.",
-        "type": "Type",
         "priority": "Priorité",
         "content": "Contenu",
         "contentPlaceholder": "Saisissez votre note...",
-        "types": {
-          "general": "Général",
-          "kyc": "KYC",
-          "risk": "Risque",
-          "commercial": "Commercial",
-          "legal": "Juridique"
-        },
         "priorities": {
           "low": "Basse",
           "medium": "Moyenne",
           "high": "Haute"
-        }
+        },
+        "statusOpen": "Ouverte",
+        "whereVisible": "Visible dans l'onglet Notes de la souscription."
       },
       "review": {
         "blockingTitle": "Points à corriger avant de créer la souscription",
-        "subscriptionName": "Nom de la souscription",
-        "generatedTag": "Généré",
         "toComplete": "À compléter",
         "subscriptionAmount": "Montant de la souscription",
         "totalAmount": "Montant total de l'opération",
         "totalBreakdown": "Dont frais d'entrée ({{percent}} %) {{fees}} € et prime {{premium}} €",
         "language": "Langue",
-        "notification": "Notifier la création",
-        "notificationOff": "Non, aucun email envoyé",
+        "notificationOff": "Aucun email ne sera envoyé à la création.",
         "previewTemplate": "Aperçu du gabarit {{name}}",
         "templateMissing": "Aucun gabarit",
         "internalTeam": "Équipe interne",
@@ -1500,8 +1490,10 @@
           "partner": "Distributeur",
           "team": "Adresse des nouvelles souscriptions"
         },
-        "internalNote": "Note interne",
-        "noInternalNote": "Aucune"
+        "amountsReadOnly": "Calculés à partir des fonds, part, montant et distribution saisis plus haut.",
+        "templateLine": "Gabarit : {{name}}",
+        "preview": "Aperçu",
+        "recipientsWaiting": "Les destinataires s'afficheront dès que l'investisseur sera sélectionné."
       },
       "preview": {
         "title": "Aperçu : {{name}}",
@@ -1515,12 +1507,7 @@
         "options": "Options",
         "distributor": "Distributeur",
         "distributionTerms": "Conditions de distribution",
-        "identification": "Identification",
-        "notification": "Notification",
-        "internalNote": "Note interne",
-        "reviewSubscription": "Souscription",
-        "reviewAmounts": "Montants",
-        "reviewCommunication": "Communication"
+        "reviewAmounts": "Montants"
       }
     },
     "editDialog": {

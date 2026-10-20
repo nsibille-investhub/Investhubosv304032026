@@ -1409,7 +1409,8 @@
         "belowMinimum": "Amount below the share minimum (€{{min}}).",
         "distributorRequired": "Select the distributor of this intermediated subscription.",
         "noAuthorizedDistributor": "No distributor is authorised on this fund and share. Switch the subscription to non-intermediated or change the share.",
-        "noteContentRequired": "Enter the note content, or turn off the internal note."
+        "noteContentRequired": "Enter the note content, or turn off the internal note.",
+        "subscriptionNameRequired": "Enter the subscription name, or switch back to the automatic name."
       },
       "toast": {
         "investorCreated": "{{name}} created successfully",
@@ -1418,10 +1419,7 @@
         "subscriptionCreatedDesc": "{{investor}} - {{amount}} €"
       },
       "notificationSection": {
-        "title": "Notification & language",
-        "notifyInvestorLabel": "Notify the investor on initialisation",
         "notifyInvestorDescription": "Sends the onboarding email to the investor so they can start their subscription.",
-        "notifyDistributorLabel": "Notify the distributor on initialisation",
         "notifyDistributorDescription": "Sends the onboarding email to the distributor, as the subscription is intermediated.",
         "languageLabel": "Onboarding & communication language",
         "languageHelper": "Defaults to the investor's preferred language.",
@@ -1439,10 +1437,8 @@
         "fundDesc": "Fund, share, subscribed amount and subscription premium.",
         "distribution": "Distribution",
         "distributionDesc": "State whether a distributor brings this subscription.",
-        "additionalInfo": "Additional information",
-        "additionalInfoDesc": "Name, language, notification and internal note.",
         "review": "Review and validation",
-        "reviewDesc": "Check the key information before creating the subscription."
+        "reviewDesc": "Finalise the name, language, notification and note, then check the amounts."
       },
       "distribution": {
         "intermediatedLabel": "Intermediated subscription",
@@ -1456,41 +1452,35 @@
       "subscriptionName": {
         "label": "Subscription name",
         "placeholder": "Generated automatically if empty",
-        "rule": "If left empty, the name follows the rule Investor - Amount - Fund Share.",
-        "ruleExample": "Here: {{name}}",
-        "ruleWaiting": "It will be computed once the investor, fund, share and amount are filled in."
+        "ruleWaiting": "It will be computed once the investor, fund, share and amount are filled in.",
+        "modeAuto": "Automatic",
+        "modeManual": "Manual",
+        "autoRule": "Generated in real time from the rule set in the settings: {{pattern}}.",
+        "patternDefault": "Investor - Amount - Fund Share",
+        "manualLabel": "Name entered manually"
       },
       "internalNote": {
-        "toggleLabel": "Add an internal note",
+        "toggleLabel": "Internal note",
         "toggleHint": "Visible to your teams only, never to the investor or the distributor.",
-        "type": "Type",
         "priority": "Priority",
         "content": "Content",
         "contentPlaceholder": "Type your note...",
-        "types": {
-          "general": "General",
-          "kyc": "KYC",
-          "risk": "Risk",
-          "commercial": "Commercial",
-          "legal": "Legal"
-        },
         "priorities": {
           "low": "Low",
           "medium": "Medium",
           "high": "High"
-        }
+        },
+        "statusOpen": "Open",
+        "whereVisible": "Visible in the subscription's Notes tab."
       },
       "review": {
         "blockingTitle": "Items to fix before creating the subscription",
-        "subscriptionName": "Subscription name",
-        "generatedTag": "Generated",
         "toComplete": "To complete",
         "subscriptionAmount": "Subscription amount",
         "totalAmount": "Total transaction amount",
         "totalBreakdown": "Including entry fees ({{percent}}%) €{{fees}} and premium €{{premium}}",
         "language": "Language",
-        "notification": "Notify on creation",
-        "notificationOff": "No, no email sent",
+        "notificationOff": "No email will be sent on creation.",
         "previewTemplate": "Preview template {{name}}",
         "templateMissing": "No template",
         "internalTeam": "Internal team",
@@ -1500,8 +1490,10 @@
           "partner": "Distributor",
           "team": "New subscriptions address"
         },
-        "internalNote": "Internal note",
-        "noInternalNote": "None"
+        "amountsReadOnly": "Computed from the fund, share, amount and distribution entered above.",
+        "templateLine": "Template: {{name}}",
+        "preview": "Preview",
+        "recipientsWaiting": "Recipients will show once the investor is selected."
       },
       "preview": {
         "title": "Preview: {{name}}",
@@ -1515,12 +1507,7 @@
         "options": "Options",
         "distributor": "Distributor",
         "distributionTerms": "Distribution terms",
-        "identification": "Identification",
-        "notification": "Notification",
-        "internalNote": "Internal note",
-        "reviewSubscription": "Subscription",
-        "reviewAmounts": "Amounts",
-        "reviewCommunication": "Communication"
+        "reviewAmounts": "Amounts"
       }
     },
     "editDialog": {
