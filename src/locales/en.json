@@ -655,6 +655,13 @@
           "byInvestor": "Modified by the investor",
           "automatic": "Modified automatically",
           "filter": "Modified answers ({{count}})"
+        },
+        "relations": {
+          "synced": "Field synchronised with:",
+          "gap": "Gap with the reported data:",
+          "gapItem": "{{target}} still holds {{value}}",
+          "impacts": "Triggers the answer to:",
+          "impactedBy": "Answer triggered by:"
         }
       },
       "validation": {
@@ -1266,7 +1273,9 @@
           "dataPropagated": "Linked data updated",
           "dataReset": "Linked data reset",
           "answerReplayed": "Triggered answer changed",
-          "notificationSent": "Alert sent"
+          "notificationSent": "Alert sent",
+          "dataReported": "Data reported at submission",
+          "mandateCreated": "Direct debit mandate created"
         },
         "origin": {
           "investor": "Investor",
@@ -1410,7 +1419,9 @@
           "iban": "IBAN",
           "bic": "BIC",
           "pep": "Politically exposed person status",
-          "financialAssets": "Financial assets"
+          "financialAssets": "Financial assets",
+          "identityDocument": "Identity document",
+          "addressProofDocument": "Proof of address"
         }
       },
       "dossierExport": {
@@ -1448,6 +1459,25 @@
             "none": "No review circuit"
           }
         }
+      },
+      "report": {
+        "title": "Data reported at submission",
+        "summary": "Reported on {{date}}. A later correction is reported only through an explicit action.",
+        "columns": {
+          "data": "Data",
+          "value": "Value",
+          "origin": "Source question",
+          "state": "State"
+        },
+        "gap": "Gap with the answer",
+        "inSync": "In sync",
+        "propagate": "Propagate",
+        "replaced": "Replaced: {{value}}",
+        "mandate": "Subscription · SEPA mandate reference",
+        "mandateOrigin": "Direct debit answer set to \"Yes\"",
+        "mandateCreated": "Created at submission",
+        "documentCopied": "Copied to the record",
+        "propagatedToast": "Linked data updated"
       }
     },
     "table": {

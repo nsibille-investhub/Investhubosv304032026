@@ -30,6 +30,8 @@ export interface MockQuestion {
   targets?: MockLinkedTarget[];
   /** Réponses déclenchées par cette question (IC-5619). */
   triggers?: MockTrigger[];
+  /** Réponse de prélèvement : à "Oui", la soumission crée une référence de mandat (IC-5269). */
+  createsMandate?: boolean;
 }
 
 export type MockLinkedObject = 'subscription' | 'investor' | 'partner' | 'participation';
@@ -38,8 +40,8 @@ export interface MockLinkedTarget {
   object: MockLinkedObject;
   /** Clé de traduction du champ, sous subscriptions.detail.answerEffects.fields. */
   field: string;
-  /** Valeur actuelle de la donnée, quand elle diffère de la réponse. */
-  currentValue?: string;
+  /** Valeur de la donnée avant la soumission, écrasée par le report (IC-5269). */
+  previousValue?: string;
 }
 
 export interface MockTrigger {
@@ -189,11 +191,11 @@ export const mockSections: MockSection[] = [
       { question: "Le compte bancaire utilisé pour cette souscription est-il un compte individuel ou un compte joint ?*", response: "Compte joint", verified: true, type: 'list', options: ['Compte individuel', 'Compte joint'], constraints: { required: true },
         triggers: [{ question: "Quel est le régime matrimonial des titulaires du compte joint ?*", values: { 'Compte individuel': '' } }] },
       { question: "Quel est le régime matrimonial des titulaires du compte joint ?*", response: "Communauté universelle", verified: false },
-      { question: "Je confirme avoir pris connaissance du fait que le versement de l'engagement n'est possible que par prélèvement automatique.*", response: "Oui", verified: true },
+      { question: "Je confirme avoir pris connaissance du fait que le versement de l'engagement n'est possible que par prélèvement automatique.*", response: "Oui", verified: true, type: 'list', options: ['Oui', 'Non'], createsMandate: true },
       { question: "Nom de votre établissement bancaire", response: "BNP Paribas", verified: true },
       { question: "Adresse de la banque", response: "16 Boulevard des Italiens, 75009 Paris", verified: true },
       { question: "IBAN*", response: "FR76 4061 8803 1200 0407 6100 201", verified: true, constraints: { required: true, maxLength: 34 },
-        targets: [{ object: 'subscription', field: 'iban' }, { object: 'investor', field: 'iban', currentValue: 'FR76 3000 4000 0312 3456 7890 143' }] },
+        targets: [{ object: 'subscription', field: 'iban' }, { object: 'investor', field: 'iban', previousValue: 'FR76 3000 4000 0312 3456 7890 143' }] },
       { question: "BIC*", response: "BNPAFRPPXXX", verified: true, targets: [{ object: 'subscription', field: 'bic' }] },
       { question: "Numéro de compte", response: "00407610020", verified: true }
     ]
@@ -226,7 +228,7 @@ export const mockSections: MockSection[] = [
         triggers: [{ question: "Montant*", values: { Non: '' } }, { question: "Fréquence*", values: { Non: '' } }] },
       { question: "Montant*", response: "1 000,00 EUR", verified: true, type: 'amount', constraints: { required: true, min: 0 } },
       { question: "Fréquence*", response: "Mensuel", verified: true, type: 'list', options: ['Mensuel', 'Trimestriel', 'Annuel'], constraints: { required: true } },
-      { question: "Quel est le montant estimé de votre patrimoine financier ?*", response: "1 999 999,00 EUR", verified: true, type: 'amount', constraints: { required: true, min: 0 }, targets: [{ object: 'investor', field: 'financialAssets', currentValue: '1 500 000,00 EUR' }] },
+      { question: "Quel est le montant estimé de votre patrimoine financier ?*", response: "1 999 999,00 EUR", verified: true, type: 'amount', constraints: { required: true, min: 0 }, targets: [{ object: 'investor', field: 'financialAssets', previousValue: '1 500 000,00 EUR' }] },
       { question: "Part de votre patrimoine financier investie dans ce fonds (%)*", response: "12 %", verified: true, type: 'percentage', constraints: { required: true, min: 0, max: 100 } },
       { question: "Nombre de personnes à charge", response: "2", verified: true, type: 'number', constraints: { min: 0, max: 20, integer: true } },
       { question: "Objectifs de votre investissement*", response: "Diversification, Transmission", verified: true, type: 'multiChoice', options: ['Diversification', 'Transmission', 'Revenus complémentaires', 'Optimisation fiscale', 'Valorisation du capital'], constraints: { required: true } },
@@ -413,3 +415,14 @@ export const mockBeneficialOwners: MockBeneficialOwner[] = [
   { id: 'bo-2', name: 'Thomas Keller', ownership: 31, controlTypeKey: 'subscriptions.detail.beneficialOwners.control.votingRights', nationality: 'Suisse', birthDate: '21/11/1974' },
   { id: 'bo-3', name: 'Lucie Garnier', ownership: 0, controlTypeKey: 'subscriptions.detail.beneficialOwners.control.otherMeans', nationality: 'France', birthDate: '09/06/1981' },
 ];
+
+/** Report des données du dossier à la soumission (IC-5269). */
+export const MOCK_SUBMISSION_REPORT = {
+  submittedAt: '19/05/2026 16:10',
+  mandateReference: 'RUM-2026-000184',
+  /** Documents mappés, copiés sur la fiche investisseur. */
+  documents: [
+    { nameKey: 'subscriptions.detail.docs.passport', field: 'identityDocument' },
+    { nameKey: 'subscriptions.detail.docs.addressProof', field: 'addressProofDocument' },
+  ],
+};

@@ -15,6 +15,8 @@ export type SubscriptionAuditEventType =
   | 'dataReset'
   | 'answerReplayed'
   | 'notificationSent'
+  | 'dataReported'
+  | 'mandateCreated'
   | 'commentAdded'
   | 'dossierSubmitted';
 
@@ -33,6 +35,8 @@ export const SUBSCRIPTION_AUDIT_EVENT_TYPES: SubscriptionAuditEventType[] = [
   'dataReset',
   'answerReplayed',
   'notificationSent',
+  'dataReported',
+  'mandateCreated',
   'commentAdded',
   'dossierSubmitted',
 ];
@@ -207,6 +211,34 @@ export function buildInitialSubscriptionAudit({
     timestamp: at('2026-05-19T16:10', 0),
     origin: 'investor',
     actorName: investorName,
+  });
+
+  // Report des réponses mappées sur la souscription et la fiche investisseur (IC-5269).
+  questionSections.forEach(section => {
+    section.questions.forEach((question, idx) => {
+      (question.targets ?? []).forEach(target => {
+        push({
+          type: 'dataReported',
+          timestamp: at('2026-05-19T16:10', 0),
+          origin: 'automatic',
+          elementId: `${section.id}-${idx}`,
+          sectionId: section.id,
+          previousValue: target.previousValue,
+          newValue: question.response,
+          target: { object: target.object, field: target.field },
+        });
+      });
+      if (question.createsMandate && question.response === 'Oui') {
+        push({
+          type: 'mandateCreated',
+          timestamp: at('2026-05-19T16:10', 0),
+          origin: 'automatic',
+          elementId: `${section.id}-${idx}`,
+          sectionId: section.id,
+          newValue: 'RUM-2026-000184',
+        });
+      }
+    });
   });
 
   push({

@@ -655,6 +655,13 @@
           "byInvestor": "Modifiée par l'investisseur",
           "automatic": "Modifiée automatiquement",
           "filter": "Réponses modifiées ({{count}})"
+        },
+        "relations": {
+          "synced": "Champ synchronisé avec :",
+          "gap": "Écart avec la donnée reportée :",
+          "gapItem": "{{target}} vaut encore {{value}}",
+          "impacts": "Déclenche la réponse de :",
+          "impactedBy": "Réponse déclenchée par :"
         }
       },
       "validation": {
@@ -1266,7 +1273,9 @@
           "dataPropagated": "Donnée liée mise à jour",
           "dataReset": "Donnée liée remise à zéro",
           "answerReplayed": "Réponse déclenchée modifiée",
-          "notificationSent": "Alerte envoyée"
+          "notificationSent": "Alerte envoyée",
+          "dataReported": "Donnée reportée à la soumission",
+          "mandateCreated": "Mandat de prélèvement créé"
         },
         "origin": {
           "investor": "Investisseur",
@@ -1410,7 +1419,9 @@
           "iban": "IBAN",
           "bic": "BIC",
           "pep": "Statut de personne politiquement exposée",
-          "financialAssets": "Patrimoine financier"
+          "financialAssets": "Patrimoine financier",
+          "identityDocument": "Pièce d'identité",
+          "addressProofDocument": "Justificatif de domicile"
         }
       },
       "dossierExport": {
@@ -1448,6 +1459,25 @@
             "none": "Sans circuit de contrôle"
           }
         }
+      },
+      "report": {
+        "title": "Données reportées à la soumission",
+        "summary": "Report effectué le {{date}}. Une correction ultérieure n'est reportée que sur action explicite.",
+        "columns": {
+          "data": "Donnée",
+          "value": "Valeur",
+          "origin": "Question d'origine",
+          "state": "État"
+        },
+        "gap": "Écart avec la réponse",
+        "inSync": "Synchronisée",
+        "propagate": "Propager",
+        "replaced": "A remplacé : {{value}}",
+        "mandate": "Souscription · Référence de mandat SEPA",
+        "mandateOrigin": "Réponse de prélèvement à \"Oui\"",
+        "mandateCreated": "Créée à la soumission",
+        "documentCopied": "Copié sur la fiche",
+        "propagatedToast": "Donnée liée mise à jour"
       }
     },
     "table": {

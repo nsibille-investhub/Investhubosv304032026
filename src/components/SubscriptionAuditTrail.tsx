@@ -2,6 +2,8 @@ import { useMemo, useState } from 'react';
 import {
   BellRing,
   CalendarCheck,
+  Landmark,
+  Link2,
   CheckCircle2,
   Eraser,
   Repeat,
@@ -51,6 +53,8 @@ const AUDIT_ICONS: Record<SubscriptionAuditEventType, typeof History> = {
   dataReset: Eraser,
   answerReplayed: Repeat,
   notificationSent: BellRing,
+  dataReported: Link2,
+  mandateCreated: Landmark,
   commentAdded: MessageSquare,
   dossierSubmitted: Send,
 };

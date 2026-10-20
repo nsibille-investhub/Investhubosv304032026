@@ -53,6 +53,9 @@ import {
   Lock,
   UserCheck,
   ArrowLeft,
+  TriangleAlert,
+  Link2,
+  Share2,
   PencilLine,
   Info,
 } from 'lucide-react';
@@ -104,6 +107,8 @@ import {
   mockCapitalCalls,
   mockInitEmails,
   mockBeneficialOwners,
+  MOCK_SUBMISSION_REPORT,
+  type MockLinkedTarget,
   type MockRequiredDocument,
 } from '../utils/subscriptionDetailMockData';
 import {
@@ -126,6 +131,7 @@ import { ConfirmDialog } from './ui/confirm-dialog';
 import { DisabledReason } from './ui/disabled-reason';
 import { Textarea } from './ui/textarea';
 import { ManualDocumentPanel, isoToDisplayDate } from './ManualDocumentPanel';
+import { QuestionRelationIcons } from './QuestionRelationIcons';
 import { AnswerEditPanel, type AnswerEditEffects, type AnswerEditTarget, type AnswerEditTriggerChange } from './AnswerEditPanel';
 import { DemoScenarioBar } from './ui/demo-scenario-bar';
 import { NotificationsPanel } from './NotificationsPanel';
@@ -326,6 +332,26 @@ export function SubscriptionDetailPage({ subscription: subscriptionProp, onBack 
   // Valeurs des données liées (souscription, fiche investisseur...), modifiées par la propagation.
   const [linkedData, setLinkedData] = useState<Record<string, string>>({});
   const linkedKey = (questionId: string, object: string, field: string) => `${questionId}:${object}.${field}`;
+  /** Valeur de la donnée liée : celle reportée à la soumission, sauf propagation ultérieure. */
+  const linkedValueOf = (questionId: string, question: MockQuestion, target: MockLinkedTarget) =>
+    linkedData[linkedKey(questionId, target.object, target.field)] ?? question.response;
+  const targetLabelOf = (target: { object: string; field: string }) =>
+    `${t(`subscriptions.detail.answerEffects.objects.${target.object}`)} · ${t(`subscriptions.detail.answerEffects.fields.${target.field}`)}`;
+  // Questions qui en déclenchent une autre, indexées par la question déclenchée.
+  const impactedByMap = useMemo(() => {
+    const map: Record<string, string[]> = {};
+    mockSections.forEach(section =>
+      section.questions.forEach(question =>
+        question.triggers?.forEach(trigger => {
+          const idx = section.questions.findIndex(q => q.question === trigger.question);
+          if (idx < 0) return;
+          const key = `${section.id}-${idx}`;
+          map[key] = [...(map[key] ?? []), question.question.replace(/\s*\*\s*$/, '')];
+        }),
+      ),
+    );
+    return map;
+  }, []);
   const [auditElement, setAuditElement] = useState<{ elementId: string; sectionId: string } | null>(null);
   const logAudit = (...entries: Parameters<typeof createLiveAuditEntry>[0][]) =>
     setAuditEntries(prev => [...prev, ...entries.map(createLiveAuditEntry)]);
@@ -447,7 +473,7 @@ export function SubscriptionDetailPage({ subscription: subscriptionProp, onBack 
         key,
         object: target.object,
         field: target.field,
-        currentValue: linkedData[key] ?? target.currentValue ?? question?.response ?? '',
+        currentValue: linkedData[key] ?? question?.response ?? '',
       };
     });
   };
@@ -524,6 +550,24 @@ export function SubscriptionDetailPage({ subscription: subscriptionProp, onBack 
       })),
     );
     return replayed.map(change => change.elementId);
+  };
+
+  const handlePropagateReported = (sectionId: string, idx: number, target: MockLinkedTarget) => {
+    const question = mockSections.find(sec => sec.id === sectionId)?.questions[idx];
+    if (!question) return;
+    const questionId = `${sectionId}-${idx}`;
+    const value = responseOf(sectionId, idx, question);
+    const previous = linkedValueOf(questionId, question, target);
+    setLinkedData(prev => ({ ...prev, [linkedKey(questionId, target.object, target.field)]: value }));
+    logAudit({
+      type: value === '' ? 'dataReset' : 'dataPropagated',
+      elementId: questionId,
+      sectionId,
+      previousValue: previous,
+      newValue: value,
+      target: { object: target.object, field: target.field },
+    });
+    toast.success(t('subscriptions.detail.report.propagatedToast'), { description: targetLabelOf(target) });
   };
 
   const questionLabelOf = (questionId: string) => {
@@ -2115,7 +2159,22 @@ export function SubscriptionDetailPage({ subscription: subscriptionProp, onBack 
                                             <AlertCircle className="w-4 h-4 text-red-500 flex-shrink-0" />
                                           )}
                                           <span className="flex flex-col items-start gap-1">
-                                            <span className={status === 'rejected' ? 'text-red-700' : ''}>{item.question}</span>
+                                            <span className="inline-flex items-center gap-2">
+                                              <span className={status === 'rejected' ? 'text-red-700' : ''}>{item.question}</span>
+                                              <QuestionRelationIcons
+                                                syncedWith={(item.targets ?? []).map(targetLabelOf)}
+                                                gaps={(item.targets ?? [])
+                                                  .filter(target => linkedValueOf(questionId, item, target) !== response)
+                                                  .map(target =>
+                                                    t('subscriptions.detail.onboarding.relations.gapItem', {
+                                                      target: targetLabelOf(target),
+                                                      value: linkedValueOf(questionId, item, target) || t('subscriptions.detail.answerEffects.empty'),
+                                                    }),
+                                                  )}
+                                                impacts={(item.triggers ?? []).map(trigger => trigger.question.replace(/\s*\*\s*$/, ''))}
+                                                impactedBy={impactedByMap[questionId]}
+                                              />
+                                            </span>
                                             {item.notAsked && (
                                               <NeutralTag label={t('subscriptions.detail.onboarding.notAsked.tag')} />
                                             )}
@@ -2197,7 +2256,107 @@ export function SubscriptionDetailPage({ subscription: subscriptionProp, onBack 
                 );
               })}
 
+                            {!modifiedOnly && (
+                              <SectionCard
+                                mode="read"
+                                icon={Share2}
+                                title={t('subscriptions.detail.report.title')}
+                                iconTone="info"
+                                summary={
+                                  <span className="text-muted-foreground">
+                                    {t('subscriptions.detail.report.summary', { date: MOCK_SUBMISSION_REPORT.submittedAt })}
+                                  </span>
+                                }
+                              >
+                                <div className="divide-y divide-border">
+                                  <div className="grid grid-cols-12 gap-4 px-4 py-2 bg-muted text-xs font-medium text-muted-foreground uppercase tracking-wider">
+                                    <span className="col-span-3">{t('subscriptions.detail.report.columns.data')}</span>
+                                    <span className="col-span-3">{t('subscriptions.detail.report.columns.value')}</span>
+                                    <span className="col-span-3">{t('subscriptions.detail.report.columns.origin')}</span>
+                                    <span className="col-span-3">{t('subscriptions.detail.report.columns.state')}</span>
+                                  </div>
+                                  {mockSections.flatMap(section =>
+                                    section.questions.flatMap((question, idx) =>
+                                      (question.targets ?? []).map(target => {
+                                        const questionId = `${section.id}-${idx}`;
+                                        const value = linkedValueOf(questionId, question, target);
+                                        const gap = value !== responseOf(section.id, idx, question);
+                                        return (
+                                          <div key={`${questionId}-${target.object}-${target.field}`} className="grid grid-cols-12 gap-4 px-4 py-3 items-center text-sm">
+                                            <span className="col-span-3 inline-flex items-center gap-2 text-foreground">
+                                              <Link2 className="w-3.5 h-3.5 shrink-0 text-muted-foreground" />
+                                              {targetLabelOf(target)}
+                                            </span>
+                                            <span className="col-span-3 font-medium text-foreground break-words">
+                                              {value || t('subscriptions.detail.answerEffects.empty')}
+                                            </span>
+                                            <span className="col-span-3 text-foreground/80">
+                                              {question.question.replace(/\s*\*\s*$/, '')}
+                                              <span className="block text-xs text-muted-foreground">{t(section.titleKey)}</span>
+                                            </span>
+                                            <span className="col-span-3 flex flex-wrap items-center gap-2">
+                                              {gap ? (
+                                                <>
+                                                  <StatusBadge variant="warning" icon={TriangleAlert} label={t('subscriptions.detail.report.gap')} />
+                                                  {canManage && (
+                                                    <Button variant="outline" size="sm" onClick={() => handlePropagateReported(section.id, idx, target)}>
+                                                      {t('subscriptions.detail.report.propagate')}
+                                                    </Button>
+                                                  )}
+                                                </>
+                                              ) : (
+                                                <StatusBadge variant="success" icon={CheckCircle2} label={t('subscriptions.detail.report.inSync')} />
+                                              )}
+                                              {target.previousValue && (
+                                                <NeutralTag label={t('subscriptions.detail.report.replaced', { value: target.previousValue })} />
+                                              )}
+                                            </span>
+                                          </div>
+                                        );
+                                      }),
+                                    ),
+                                  )}
+                                  {mockSections.flatMap(section =>
+                                    section.questions.flatMap((question, idx) =>
+                                      question.createsMandate && question.response === 'Oui'
+                                        ? [
+                                            <div key={`mandate-${section.id}-${idx}`} className="grid grid-cols-12 gap-4 px-4 py-3 items-center text-sm">
+                                              <span className="col-span-3 inline-flex items-center gap-2 text-foreground">
+                                                <Landmark className="w-3.5 h-3.5 shrink-0 text-muted-foreground" />
+                                                {t('subscriptions.detail.report.mandate')}
+                                              </span>
+                                              <span className="col-span-3 font-medium text-foreground">{MOCK_SUBMISSION_REPORT.mandateReference}</span>
+                                              <span className="col-span-3 text-foreground/80">
+                                                {t('subscriptions.detail.report.mandateOrigin')}
+                                                <span className="block text-xs text-muted-foreground">{t(section.titleKey)}</span>
+                                              </span>
+                                              <span className="col-span-3">
+                                                <NeutralTag label={t('subscriptions.detail.report.mandateCreated')} />
+                                              </span>
+                                            </div>,
+                                          ]
+                                        : [],
+                                    ),
+                                  )}
+                                  {MOCK_SUBMISSION_REPORT.documents.map(doc => (
+                                    <div key={doc.field} className="grid grid-cols-12 gap-4 px-4 py-3 items-center text-sm">
+                                      <span className="col-span-3 inline-flex items-center gap-2 text-foreground">
+                                        <FileText className="w-3.5 h-3.5 shrink-0 text-muted-foreground" />
+                                        {targetLabelOf({ object: 'investor', field: doc.field })}
+                                      </span>
+                                      <span className="col-span-3 font-medium text-foreground">{t(doc.nameKey)}</span>
+                                      <span className="col-span-3 text-foreground/80">{t('subscriptions.detail.sections.documents')}</span>
+                                      <span className="col-span-3">
+                                        <NeutralTag label={t('subscriptions.detail.report.documentCopied')} />
+                                      </span>
+                                    </div>
+                                  ))}
+                                </div>
+                              </SectionCard>
+                            )}
+
                             {/* Action — passer à l'étape suivante */}
+
                             <div className="flex justify-end pt-4">
                               <DisabledReason reason={validationBlockedReason}>
                               <Button
