@@ -597,7 +597,8 @@
         "professional": "Professional situation",
         "financial": "Financial situation",
         "documents": "Supporting documents",
-        "investorProfile": "Investor profile"
+        "investorProfile": "Investor profile",
+        "commitments": "Financial commitments"
       },
       "onboarding": {
         "answeredOf": "{{answered}}/{{total}} answered",
@@ -640,6 +641,14 @@
           "group": "Pre-onboarding",
           "dossierGroup": "File onboarding",
           "badge": "Pre-onboarding"
+        },
+        "iteration": {
+          "commitment": "Commitment {{n}}"
+        },
+        "notAsked": {
+          "tag": "Not asked",
+          "show": "Show questions not asked ({{count}})",
+          "hide": "Hide questions not asked"
         }
       },
       "validation": {
@@ -1189,7 +1198,7 @@
       },
       "questionActions": {
         "modifiedToast": "Answer modified",
-        "modifiedToastDesc": "The change has been saved",
+        "modifiedToastDesc": "The answer goes back to review. The investor is not notified.",
         "approvedToast": "Answer validated",
         "approvedToastDesc": "The answer has been validated",
         "rejectedToast": "Answer invalidated",
@@ -1205,7 +1214,8 @@
         "addComment": "Add a comment",
         "unresolvedComments": "{{count}} unresolved comment(s)",
         "resolvedComments": "{{count}} resolved comment(s)",
-        "timeline": "Audit trail"
+        "timeline": "Audit trail",
+        "computed": "Computed field, cannot be modified"
       },
       "audit": {
         "title": "Audit trail",
@@ -1286,6 +1296,71 @@
         "save": "Add the document",
         "savedToast": "Document added",
         "savedToastDesc": "{{name}} is attached to the file"
+      },
+      "answerEdit": {
+        "title": "Modify the answer",
+        "currentValue": "Current value",
+        "newValue": "New value",
+        "noValue": "No answer",
+        "selectPlaceholder": "Choose a value",
+        "currency": "Currency",
+        "moveUp": "Move up",
+        "moveDown": "Move down",
+        "alreadyFirst": "Already first",
+        "alreadyLast": "Already last",
+        "unchanged": "The value has not changed.",
+        "reason": "Reason for the change",
+        "reasonPlaceholder": "Example: correction requested by the investor by email",
+        "reasonHint": "The subscription has been sent for signature: the reason is mandatory and kept in the compliance log.",
+        "reasonRequired": "Enter a reason to save the change",
+        "constraintsTitle": "Question constraints",
+        "constraintsDesc": "The same as on the investor portal.",
+        "afterSave": "Once saved, the answer goes back to review. The investor receives no notification.",
+        "cancel": "Cancel",
+        "save": "Save",
+        "typeLabel": {
+          "text": "Text",
+          "list": "List",
+          "multiChoice": "Multiple choice",
+          "rankedChoice": "Ranked choice",
+          "date": "Date",
+          "amount": "Amount with currency",
+          "country": "Country",
+          "percentage": "Percentage",
+          "number": "Number"
+        },
+        "scenario": {
+          "label": "Demo scenario",
+          "options": {
+            "manager": "Manager, before sending for signature",
+            "readOnly": "Read-only profile",
+            "signedNoRight": "Sent for signature, without dedicated right",
+            "signedWithRight": "Sent for signature, with dedicated right"
+          }
+        },
+        "constraints": {
+          "required": "Answer required.",
+          "requiredIfFirstSubscription": "Answer required for a first subscription.",
+          "number": "Enter a number.",
+          "integer": "Enter a whole number.",
+          "min": "The value must be greater than or equal to {{min}}.",
+          "max": "The value must be less than or equal to {{max}}.",
+          "maxLength": "{{max}} characters maximum.",
+          "minDate": "The date must be after {{date}}.",
+          "maxDate": "The date must be before {{date}}.",
+          "adult": "The date must match an adult (18 or older).",
+          "hint": {
+            "required": "Required",
+            "requiredIfFirstSubscription": "Required for a first subscription",
+            "min": "Minimum: {{min}}",
+            "max": "Maximum: {{max}}",
+            "maxLength": "{{max}} characters maximum",
+            "minDate": "After {{date}}",
+            "maxDate": "Before {{date}}",
+            "adult": "Adult",
+            "integer": "Whole number"
+          }
+        }
       }
     },
     "table": {

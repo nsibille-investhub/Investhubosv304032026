@@ -70,7 +70,12 @@ function useAuditLabels({ sections, documents }: Omit<AuditSource, 'entries'>) {
       }
       const section = sections.find(s => s.id === entry.sectionId);
       const idx = Number(entry.elementId.slice(entry.elementId.lastIndexOf('-') + 1));
-      return section?.questions[idx]?.question.replace(/\s*\*\s*$/, '') ?? entry.elementId;
+      const question = section?.questions[idx];
+      if (!question) return entry.elementId;
+      const label = question.question.replace(/\s*\*\s*$/, '');
+      return question.iteration !== undefined && section?.iterationLabelKey
+        ? `${label} (${t(section.iterationLabelKey, { n: question.iteration })})`
+        : label;
     };
     return { sectionLabel, elementLabel };
   }, [sections, documents, t]);

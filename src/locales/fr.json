@@ -597,7 +597,8 @@
         "professional": "Situation professionnelle",
         "financial": "Situation financière",
         "documents": "Pièces justificatives",
-        "investorProfile": "Profil investisseur"
+        "investorProfile": "Profil investisseur",
+        "commitments": "Engagements financiers"
       },
       "onboarding": {
         "answeredOf": "{{answered}}/{{total}} répondues",
@@ -640,6 +641,14 @@
           "group": "Préonboarding",
           "dossierGroup": "Onboarding du dossier",
           "badge": "Préonboarding"
+        },
+        "iteration": {
+          "commitment": "Engagement {{n}}"
+        },
+        "notAsked": {
+          "tag": "Non posée",
+          "show": "Afficher les questions non posées ({{count}})",
+          "hide": "Masquer les questions non posées"
         }
       },
       "validation": {
@@ -1189,7 +1198,7 @@
       },
       "questionActions": {
         "modifiedToast": "Réponse modifiée",
-        "modifiedToastDesc": "La modification a été enregistrée",
+        "modifiedToastDesc": "La réponse repasse à contrôler. L'investisseur n'est pas notifié.",
         "approvedToast": "Réponse validée",
         "approvedToastDesc": "La réponse a été validée",
         "rejectedToast": "Réponse invalidée",
@@ -1205,7 +1214,8 @@
         "addComment": "Ajouter un commentaire",
         "unresolvedComments": "{{count}} commentaire(s) non résolu(s)",
         "resolvedComments": "{{count}} commentaire(s) résolu(s)",
-        "timeline": "Piste d'audit"
+        "timeline": "Piste d'audit",
+        "computed": "Champ calculé, non modifiable"
       },
       "audit": {
         "title": "Piste d'audit",
@@ -1286,6 +1296,71 @@
         "save": "Ajouter le document",
         "savedToast": "Document ajouté",
         "savedToastDesc": "{{name}} est rattaché au dossier"
+      },
+      "answerEdit": {
+        "title": "Modifier la réponse",
+        "currentValue": "Valeur actuelle",
+        "newValue": "Nouvelle valeur",
+        "noValue": "Aucune réponse",
+        "selectPlaceholder": "Choisissez une valeur",
+        "currency": "Devise",
+        "moveUp": "Monter",
+        "moveDown": "Descendre",
+        "alreadyFirst": "Déjà en première position",
+        "alreadyLast": "Déjà en dernière position",
+        "unchanged": "La valeur n'a pas changé.",
+        "reason": "Motif de la modification",
+        "reasonPlaceholder": "Exemple : correction demandée par l'investisseur par email",
+        "reasonHint": "La souscription est envoyée en signature : le motif est obligatoire et conservé dans le journal de conformité.",
+        "reasonRequired": "Saisissez un motif pour enregistrer la modification",
+        "constraintsTitle": "Contraintes de la question",
+        "constraintsDesc": "Les mêmes que sur le portail investisseur.",
+        "afterSave": "Après enregistrement, la réponse repasse à contrôler. L'investisseur ne reçoit aucune notification.",
+        "cancel": "Annuler",
+        "save": "Enregistrer",
+        "typeLabel": {
+          "text": "Texte",
+          "list": "Liste",
+          "multiChoice": "Choix multiple",
+          "rankedChoice": "Choix ordonné",
+          "date": "Date",
+          "amount": "Montant avec devise",
+          "country": "Pays",
+          "percentage": "Pourcentage",
+          "number": "Nombre"
+        },
+        "scenario": {
+          "label": "Scénario de démonstration",
+          "options": {
+            "manager": "Gestionnaire, avant envoi en signature",
+            "readOnly": "Profil lecture seule",
+            "signedNoRight": "Envoyée en signature, sans droit dédié",
+            "signedWithRight": "Envoyée en signature, avec droit dédié"
+          }
+        },
+        "constraints": {
+          "required": "Réponse obligatoire.",
+          "requiredIfFirstSubscription": "Réponse obligatoire pour une première souscription.",
+          "number": "Saisissez un nombre.",
+          "integer": "Saisissez un nombre entier.",
+          "min": "La valeur doit être supérieure ou égale à {{min}}.",
+          "max": "La valeur doit être inférieure ou égale à {{max}}.",
+          "maxLength": "{{max}} caractères au maximum.",
+          "minDate": "La date doit être postérieure au {{date}}.",
+          "maxDate": "La date doit être antérieure au {{date}}.",
+          "adult": "La date doit correspondre à une personne majeure (18 ans ou plus).",
+          "hint": {
+            "required": "Obligatoire",
+            "requiredIfFirstSubscription": "Obligatoire pour une première souscription",
+            "min": "Minimum : {{min}}",
+            "max": "Maximum : {{max}}",
+            "maxLength": "{{max}} caractères au maximum",
+            "minDate": "Après le {{date}}",
+            "maxDate": "Avant le {{date}}",
+            "adult": "Personne majeure",
+            "integer": "Nombre entier"
+          }
+        }
       }
     },
     "table": {

@@ -53,6 +53,7 @@ import {
   Lock,
   UserCheck,
   ArrowLeft,
+  Info,
 } from 'lucide-react';
 import { motion } from 'motion/react';
 import { Badge } from './ui/badge';
@@ -119,6 +120,9 @@ import { ConfirmDialog } from './ui/confirm-dialog';
 import { DisabledReason } from './ui/disabled-reason';
 import { Textarea } from './ui/textarea';
 import { ManualDocumentPanel, isoToDisplayDate } from './ManualDocumentPanel';
+import { AnswerEditPanel } from './AnswerEditPanel';
+import { DemoScenarioBar } from './ui/demo-scenario-bar';
+import type { MockQuestion } from '../utils/subscriptionDetailMockData';
 import {
   OnboardingCompletionCard,
   OnboardingSectionNav,
@@ -152,10 +156,10 @@ const SUBSCRIPTION_STEPS = [
 // Etat de depart de la maquette : une partie du dossier est deja verifiee, une
 // reponse et une piece ont ete retoquees.
 const INITIAL_QUESTION_STATUSES: Record<string, QuestionStatus> = {
-  'identity-0': 'approved',
   'identity-1': 'approved',
-  'identity-3': 'approved',
-  'identity-9': 'rejected',
+  'identity-2': 'approved',
+  'identity-4': 'approved',
+  'identity-11': 'rejected',
   'fiscal-0': 'approved',
 };
 
@@ -169,6 +173,14 @@ interface SubscriptionDetailPageProps {
   onBack: () => void;
 }
 
+
+// Scénarios de démonstration de IC-5616 : profil de l'opérateur et statut de la souscription.
+const EDIT_SCENARIOS = ['manager', 'readOnly', 'signedNoRight', 'signedWithRight'] as const;
+type EditScenario = (typeof EDIT_SCENARIOS)[number];
+
+/** Élément contrôlable : ni texte d'information, ni question non posée restée vide. */
+const isControllable = (question: MockQuestion, response: string) =>
+  !question.info && !(question.notAsked && !response);
 
 const DIRECT_PARTNER_NAMES = ['Souscription Directe', 'Direct Subscription'];
 
@@ -267,6 +279,14 @@ export function SubscriptionDetailPage({ subscription: subscriptionProp, onBack 
       documentStatuses: INITIAL_DOCUMENT_STATUSES,
     }),
   );
+  const [editScenario, setEditScenario] = useState<EditScenario>('manager');
+  const canManage = editScenario !== 'readOnly';
+  const afterSignature = editScenario === 'signedNoRight' || editScenario === 'signedWithRight';
+  const canModifyAnswers = canManage && (!afterSignature || editScenario === 'signedWithRight');
+  const [answerEdit, setAnswerEdit] = useState<{ sectionId: string; idx: number } | null>(null);
+  const [notAskedVisible, setNotAskedVisible] = useState<string[]>([]);
+  const responseOf = (sectionId: string, idx: number, question: MockQuestion) =>
+    questionResponses[`${sectionId}-${idx}`] ?? question.response;
   const [auditElement, setAuditElement] = useState<{ elementId: string; sectionId: string } | null>(null);
   const logAudit = (...entries: Parameters<typeof createLiveAuditEntry>[0][]) =>
     setAuditEntries(prev => [...prev, ...entries.map(createLiveAuditEntry)]);
@@ -309,8 +329,9 @@ export function SubscriptionDetailPage({ subscription: subscriptionProp, onBack 
     // Approve all questions in the section
     const newStatuses = { ...questionStatuses };
     const logged: Parameters<typeof createLiveAuditEntry>[0][] = [];
-    section.questions.forEach((_, idx) => {
+    section.questions.forEach((question, idx) => {
       const questionId = `${sectionId}-${idx}`;
+      if (!isControllable(question, responseOf(sectionId, idx, question))) return;
       if (newStatuses[questionId] !== 'approved') {
         logged.push({ type: 'answerValidated', elementId: questionId, sectionId, viaSection: true });
       }
@@ -321,7 +342,10 @@ export function SubscriptionDetailPage({ subscription: subscriptionProp, onBack 
     logAudit(...logged);
 
     toast.success(t('subscriptions.detail.onboarding.sectionValidatedToast'), {
-      description: t('subscriptions.detail.onboarding.sectionValidatedDesc', { count: section.questions.length, title: sectionTitle }),
+      description: t('subscriptions.detail.onboarding.sectionValidatedDesc', {
+        count: section.questions.filter((q, idx) => isControllable(q, responseOf(sectionId, idx, q))).length,
+        title: sectionTitle,
+      }),
     });
   };
 
@@ -354,15 +378,24 @@ export function SubscriptionDetailPage({ subscription: subscriptionProp, onBack 
     logAudit({ type: 'answerInvalidated', elementId: questionId, sectionId: sectionOf(questionId) });
   };
 
-  const handleModifyQuestion = (questionId: string, newValue: string, previousValue: string) => {
+  const handleModifyQuestion = (questionId: string, newValue: string, previousValue: string, reason?: string) => {
     setQuestionResponses(prev => ({ ...prev, [questionId]: newValue }));
-    setQuestionStatuses(prev => ({ ...prev, [questionId]: 'modified' }));
+    // La réponse modifiée repasse à contrôler.
+    setQuestionStatuses(prev => {
+      const next = { ...prev };
+      delete next[questionId];
+      return next;
+    });
     logAudit({
       type: 'answerModified',
       elementId: questionId,
       sectionId: sectionOf(questionId),
       previousValue,
       newValue,
+      reason,
+    });
+    toast.success(t('subscriptions.detail.questionActions.modifiedToast'), {
+      description: t('subscriptions.detail.questionActions.modifiedToastDesc'),
     });
   };
 
@@ -426,6 +459,7 @@ export function SubscriptionDetailPage({ subscription: subscriptionProp, onBack 
     const section = mockSections.find(s => s.id === sectionId);
     if (!section) return stats;
     section.questions.forEach((question, idx) => {
+      if (!isControllable(question, responseOf(sectionId, idx, question))) return;
       addToBucketStats(stats, getQuestionState(sectionId, idx, question));
     });
     return stats;
@@ -1063,6 +1097,15 @@ export function SubscriptionDetailPage({ subscription: subscriptionProp, onBack 
 
   return (
     <div className="min-h-screen bg-muted">
+      <DemoScenarioBar
+        label={t('subscriptions.detail.answerEdit.scenario.label')}
+        value={editScenario}
+        options={EDIT_SCENARIOS.map(value => ({
+          value,
+          label: t(`subscriptions.detail.answerEdit.scenario.options.${value}`),
+        }))}
+        onChange={setEditScenario}
+      />
       <PageHeader
         title={
           <span className="inline-flex items-center gap-3">
@@ -1515,7 +1558,7 @@ export function SubscriptionDetailPage({ subscription: subscriptionProp, onBack 
                       </>
                     }
                     validationBar={
-                      !isDocuments && !allVerified
+                      canManage && !isDocuments && !allVerified
                         ? {
                             label: t('subscriptions.detail.onboarding.verifyAllResponses'),
                             actionLabel: t('subscriptions.detail.onboarding.validateSection'),
@@ -1543,6 +1586,8 @@ export function SubscriptionDetailPage({ subscription: subscriptionProp, onBack 
                                     <Download className="w-3.5 h-3.5" />
                                     {t('subscriptions.detail.onboarding.exportDocuments')}
                                   </Button>
+                                  {canManage && (
+                                  <>
                                   <Button
                                     variant="outline"
                                     size="sm"
@@ -1560,6 +1605,8 @@ export function SubscriptionDetailPage({ subscription: subscriptionProp, onBack 
                                     <CheckCircle2 className="w-3.5 h-3.5" />
                                     {t('subscriptions.detail.onboarding.validateSection')}
                                   </Button>
+                                  </>
+                                  )}
                                 </div>
                               </div>
 
@@ -1664,10 +1711,10 @@ export function SubscriptionDetailPage({ subscription: subscriptionProp, onBack 
                                           </Button>
                                         </td>
                                         <td className="px-4 py-3">
-                                          {docState === 'pending' ? (
+                                          {docState === 'pending' || !canManage ? (
                                             <div className="flex justify-center">
                                               <Badge className="bg-muted text-muted-foreground text-xs">
-                                                {t('subscriptions.detail.onboarding.completion.state.pending')}
+                                                {t(`subscriptions.detail.onboarding.completion.state.${docState}`)}
                                               </Badge>
                                             </div>
                                           ) : (
@@ -1728,19 +1775,44 @@ export function SubscriptionDetailPage({ subscription: subscriptionProp, onBack 
                                 {section.questions.map((item, idx) => {
                                   const questionId = `${section.id}-${idx}`;
                                   const status = questionStatuses[questionId] || 'pending';
-                                  const response = questionResponses[questionId] || item.response;
+                                  const response = responseOf(section.id, idx, item);
+                                  const iterationHeader =
+                                    item.iteration !== undefined &&
+                                    item.iteration !== section.questions[idx - 1]?.iteration &&
+                                    section.iterationLabelKey ? (
+                                      <div className="px-4 py-2 bg-muted text-xs font-semibold text-muted-foreground uppercase tracking-wider">
+                                        {t(section.iterationLabelKey, { n: item.iteration })}
+                                      </div>
+                                    ) : null;
+
+                                  if (item.notAsked && !notAskedVisible.includes(section.id)) return null;
+
+                                  if (item.info) {
+                                    return (
+                                      <div key={idx} className="flex items-start gap-2 px-4 py-3 bg-muted text-xs text-muted-foreground">
+                                        <Info className="w-3.5 h-3.5 mt-0.5 shrink-0" />
+                                        {item.question}
+                                      </div>
+                                    );
+                                  }
                                   const comments = questionComments[questionId] || [];
                                   const hasUnresolved = comments.some((c: any) => !c.resolved);
                                   const isCommentOpen = activeCommentThread === questionId;
 
                                   return (
                                     <div key={idx}>
+                                      {iterationHeader}
                                       <div className="grid grid-cols-12 gap-4 p-4 hover:bg-muted transition-colors">
                                         <div className="col-span-4 text-sm text-foreground/80 flex items-center gap-2">
                                           {item.hasAlert && (
                                             <AlertCircle className="w-4 h-4 text-red-500 flex-shrink-0" />
                                           )}
-                                          <span className={status === 'rejected' ? 'text-red-700' : ''}>{item.question}</span>
+                                          <span className="flex flex-col items-start gap-1">
+                                            <span className={status === 'rejected' ? 'text-red-700' : ''}>{item.question}</span>
+                                            {item.notAsked && (
+                                              <NeutralTag label={t('subscriptions.detail.onboarding.notAsked.tag')} />
+                                            )}
+                                          </span>
                                         </div>
                                         <div className="col-span-3 text-sm font-medium text-foreground">
                                           {response || <span className="text-muted-foreground/60 italic">{t('subscriptions.detail.onboarding.notProvided')}</span>}
@@ -1754,7 +1826,9 @@ export function SubscriptionDetailPage({ subscription: subscriptionProp, onBack 
                                             hasUnresolvedComments={hasUnresolved}
                                             onApprove={() => handleApproveQuestion(questionId)}
                                             onReject={() => handleRejectQuestion(questionId)}
-                                            onModify={(newValue) => handleModifyQuestion(questionId, newValue, response || '')}
+                                            onModify={canModifyAnswers ? () => setAnswerEdit({ sectionId: section.id, idx }) : undefined}
+                                            computed={item.computed}
+                                            canControl={canManage}
                                             onComment={() => handleToggleComment(questionId)}
                                             onTimeline={() => setAuditElement({ elementId: questionId, sectionId: section.id })}
                                           />
@@ -1776,6 +1850,28 @@ export function SubscriptionDetailPage({ subscription: subscriptionProp, onBack 
                                   );
                                 })}
                               </div>
+                              {section.questions.some(q => q.notAsked) && (
+                                <div className="px-4 py-3 border-t border-border">
+                                  <Button
+                                    variant="ghost"
+                                    size="sm"
+                                    className="text-xs"
+                                    onClick={() =>
+                                      setNotAskedVisible(prev =>
+                                        prev.includes(section.id)
+                                          ? prev.filter(id => id !== section.id)
+                                          : [...prev, section.id],
+                                      )
+                                    }
+                                  >
+                                    {notAskedVisible.includes(section.id)
+                                      ? t('subscriptions.detail.onboarding.notAsked.hide')
+                                      : t('subscriptions.detail.onboarding.notAsked.show', {
+                                          count: section.questions.filter(q => q.notAsked).length,
+                                        })}
+                                  </Button>
+                                </div>
+                              )}
                             </div>
                           )}
                   </SectionCard>
@@ -2290,6 +2386,39 @@ export function SubscriptionDetailPage({ subscription: subscriptionProp, onBack 
         open={isManualDocumentOpen}
         onClose={() => setIsManualDocumentOpen(false)}
         onSave={handleSaveManualDocument}
+      />
+
+      <AnswerEditPanel
+        question={answerEdit ? mockSections.find(sec => sec.id === answerEdit.sectionId)?.questions[answerEdit.idx] ?? null : null}
+        currentValue={(() => {
+          if (!answerEdit) return '';
+          const question = mockSections.find(sec => sec.id === answerEdit.sectionId)?.questions[answerEdit.idx];
+          return question ? responseOf(answerEdit.sectionId, answerEdit.idx, question) : '';
+        })()}
+        context={(() => {
+          if (!answerEdit) return '';
+          const section = mockSections.find(sec => sec.id === answerEdit.sectionId);
+          if (!section) return '';
+          const iteration = section.questions[answerEdit.idx]?.iteration;
+          return iteration !== undefined && section.iterationLabelKey
+            ? `${t(section.titleKey)} · ${t(section.iterationLabelKey, { n: iteration })}`
+            : t(section.titleKey);
+        })()}
+        requiresReason={afterSignature}
+        onClose={() => setAnswerEdit(null)}
+        onSave={(value, reason) => {
+          if (!answerEdit) return;
+          const section = mockSections.find(sec => sec.id === answerEdit.sectionId);
+          const question = section?.questions[answerEdit.idx];
+          if (!question) return;
+          handleModifyQuestion(
+            `${answerEdit.sectionId}-${answerEdit.idx}`,
+            value,
+            responseOf(answerEdit.sectionId, answerEdit.idx, question),
+            reason,
+          );
+          setAnswerEdit(null);
+        }}
       />
 
       <SubscriptionAuditPanel

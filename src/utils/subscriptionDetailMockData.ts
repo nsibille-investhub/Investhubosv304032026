@@ -5,13 +5,27 @@ import {
   FileText,
   TrendingUp,
   Compass,
+  Repeat,
 } from 'lucide-react';
+import type { OnboardingQuestionConstraints, OnboardingQuestionType } from './onboardingQuestionTypes';
 
 export interface MockQuestion {
   question: string;
   response: string;
   verified: boolean;
   hasAlert?: boolean;
+  /** Type de saisie, texte par défaut. */
+  type?: OnboardingQuestionType;
+  options?: string[];
+  constraints?: OnboardingQuestionConstraints;
+  /** Champ composé, calculé à partir d'autres réponses : non modifiable. */
+  computed?: boolean;
+  /** Élément sans réponse (titre, texte d'information). */
+  info?: boolean;
+  /** Question non posée à l'investisseur (condition d'affichage non remplie). */
+  notAsked?: boolean;
+  /** Itération d'une section répétable, à partir de 1. */
+  iteration?: number;
 }
 
 export interface MockSection {
@@ -21,6 +35,8 @@ export interface MockSection {
   questions: MockQuestion[];
   /** Section du préonboarding configuré au niveau de l'application, contrôlée avec le dossier. */
   preonboarding?: boolean;
+  /** Section répétable : clé du libellé d'une itération ("Engagement {{n}}"). */
+  iterationLabelKey?: string;
 }
 
 export interface MockRequiredDocument {
@@ -101,22 +117,24 @@ export const mockSections: MockSection[] = [
     titleKey: 'subscriptions.detail.sections.identity',
     icon: User,
     questions: [
-      { question: "Civilité*", response: "Madame", verified: true },
-      { question: "Nom*", response: "Wadouachi", verified: true },
+      { question: "Les informations ci-dessous doivent correspondre à votre pièce d'identité.", response: "", verified: true, info: true },
+      { question: "Civilité*", response: "Madame", verified: true, type: 'list', options: ['Madame', 'Monsieur'], constraints: { required: true } },
+      { question: "Nom*", response: "Wadouachi", verified: true, constraints: { required: true, maxLength: 50 } },
       { question: "Nom de naissance (si différent)", response: "", verified: true },
-      { question: "Prénom*", response: "Inès", verified: true },
-      { question: "L'investisseur est-il mineur ?*", response: "Non", verified: true, hasAlert: true },
-      { question: "Date de naissance*", response: "14/05/2025", verified: true },
-      { question: "Pays de naissance*", response: "France", verified: true },
+      { question: "Prénom*", response: "Inès", verified: true, constraints: { required: true, maxLength: 50 } },
+      { question: "Nom complet", response: "Inès Wadouachi", verified: true, computed: true },
+      { question: "L'investisseur est-il mineur ?*", response: "Non", verified: true, hasAlert: true, type: 'list', options: ['Oui', 'Non'], constraints: { required: true } },
+      { question: "Date de naissance*", response: "14/05/2025", verified: true, type: 'date', constraints: { required: true, adult: true, minDate: '01/01/1900' } },
+      { question: "Pays de naissance*", response: "France", verified: true, type: 'country', constraints: { required: true } },
       { question: "Code postal de naissance*", response: "75008", verified: true },
       { question: "Commune de naissance*", response: "Paris", verified: true },
-      { question: "Nationalité*", response: "France", verified: true, hasAlert: true },
+      { question: "Nationalité*", response: "France", verified: true, hasAlert: true, type: 'country', constraints: { required: true } },
       { question: "E-mail*", response: "iwadouachi+testPM@eurazeo.com", verified: true },
       { question: "Numéro de téléphone mobile*", response: "+33622653352", verified: true },
       { question: "Numéro et nom de rue*", response: "66 Rue Pierre Charron", verified: true },
       { question: "Ville*", response: "Paris", verified: true },
       { question: "Code postal*", response: "75008", verified: true },
-      { question: "Pays*", response: "France", verified: true },
+      { question: "Pays*", response: "France", verified: true, type: 'country', constraints: { required: true } },
       { question: "Mon adresse de résidence est différente de mon adresse fiscale*", response: "Non", verified: true },
       { question: "Numéro d'identification Fiscale (NIF)*", response: "9739373633839", verified: true },
       { question: "Je possède un deuxième Numéro d'Identification Fiscale (NIF/TIN) *", response: "Non", verified: true },
@@ -129,7 +147,8 @@ export const mockSections: MockSection[] = [
     titleKey: 'subscriptions.detail.sections.fiscal',
     icon: Shield,
     questions: [
-      { question: "Pays de résidence fiscale*", response: "France", verified: true },
+      { question: "Pays de résidence fiscale*", response: "France", verified: true, type: 'country', constraints: { required: true } },
+      { question: "Pays de votre seconde résidence fiscale", response: "", verified: true, type: 'country', notAsked: true },
       { question: "Mon adresse de résidence est différente de mon adresse fiscale*", response: "Non", verified: true },
       { question: "Numéro d'identification Fiscale (NIF)*", response: "9739373633839", verified: true },
       { question: "Je possède un deuxième Numéro d'identification Fiscale (NIF/TIN)", response: "Non", verified: false },
@@ -175,16 +194,39 @@ export const mockSections: MockSection[] = [
     titleKey: 'subscriptions.detail.sections.financial',
     icon: TrendingUp,
     questions: [
-      { question: "Quels sont les revenus annuels nets de votre foyer ?*", response: "800 000,00 EUR", verified: true },
+      { question: "Quels sont les revenus annuels nets de votre foyer ?*", response: "800 000,00 EUR", verified: true, type: 'amount', constraints: { required: true, min: 0 } },
       { question: "Statut de votre résidence principale*", response: "Hébergé à titre gratuit", verified: true },
       { question: "Avez-vous un ou plusieurs engagement(s) financier(s) régulier(s) ?*", response: "Oui", verified: false },
-      { question: "Montant*", response: "1 000,00 EUR", verified: true },
-      { question: "Fréquence*", response: "Mensuel", verified: true },
-      { question: "Quel est le montant estimé de votre patrimoine financier ?*", response: "1 999 999,00 EUR", verified: true },
+      { question: "Montant*", response: "1 000,00 EUR", verified: true, type: 'amount', constraints: { required: true, min: 0 } },
+      { question: "Fréquence*", response: "Mensuel", verified: true, type: 'list', options: ['Mensuel', 'Trimestriel', 'Annuel'], constraints: { required: true } },
+      { question: "Quel est le montant estimé de votre patrimoine financier ?*", response: "1 999 999,00 EUR", verified: true, type: 'amount', constraints: { required: true, min: 0 } },
+      { question: "Part de votre patrimoine financier investie dans ce fonds (%)*", response: "12 %", verified: true, type: 'percentage', constraints: { required: true, min: 0, max: 100 } },
+      { question: "Nombre de personnes à charge", response: "2", verified: true, type: 'number', constraints: { min: 0, max: 20, integer: true } },
+      { question: "Objectifs de votre investissement*", response: "Diversification, Transmission", verified: true, type: 'multiChoice', options: ['Diversification', 'Transmission', 'Revenus complémentaires', 'Optimisation fiscale', 'Valorisation du capital'], constraints: { required: true } },
+      { question: "Classez vos priorités d'investissement*", response: "Valorisation du capital > Liquidité > Risque limité", verified: true, type: 'rankedChoice', options: ['Valorisation du capital', 'Liquidité', 'Risque limité'], constraints: { required: true } },
+      { question: "Montant de vos placements à l'étranger", response: "", verified: true, type: 'amount', notAsked: true, constraints: { requiredIfFirstSubscription: true, min: 0 } },
       { question: "Part du patrimoine financier dans votre patrimoine global :*", response: ">50%", verified: true },
       { question: "Part des titres non cotés (comme les FCPi/FIP/FCPR) dans ce portefeuille financier :*", response: "<10%", verified: true },
-      { question: "Montant global du patrimoine :*", response: "200 000,00 EUR", verified: true }
+      { question: "Montant global du patrimoine :*", response: "200 000,00 EUR", verified: true, type: 'amount', constraints: { required: true, min: 0 } }
     ]
+  },
+  {
+    id: 'commitments',
+    titleKey: 'subscriptions.detail.sections.commitments',
+    icon: Repeat,
+    iterationLabelKey: 'subscriptions.detail.onboarding.iteration.commitment',
+    questions: [1, 2, 3].flatMap((iteration) => {
+      const values = [
+        ['Crédit immobilier', '1 850,00 EUR', '31/12/2041'],
+        ['Crédit à la consommation', '320,00 EUR', '30/06/2028'],
+        ['Pension alimentaire', '600,00 EUR', ''],
+      ][iteration - 1];
+      return [
+        { question: "Nature de l'engagement*", response: values[0], verified: true, iteration, type: 'list' as const, options: ['Crédit immobilier', 'Crédit à la consommation', 'Pension alimentaire', 'Autre'], constraints: { required: true } },
+        { question: "Montant mensuel*", response: values[1], verified: true, iteration, type: 'amount' as const, constraints: { required: true, min: 0 } },
+        { question: "Date de fin", response: values[2], verified: true, iteration, type: 'date' as const, constraints: { minDate: '01/01/2026' } },
+      ];
+    }),
   },
   {
     id: 'documents',

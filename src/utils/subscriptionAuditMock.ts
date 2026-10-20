@@ -113,7 +113,7 @@ export function buildInitialSubscriptionAudit({
     const day = section.preonboarding ? '2026-05-12T10:15' : '2026-05-18T14:00';
     section.questions.forEach((question, idx) => {
       if (!question.response) return;
-      const prefilled = section.id === 'identity' && idx < 4;
+      const prefilled = (section.id === 'identity' && idx < 5) || Boolean(question.computed);
       push({
         type: 'answerEntered',
         timestamp: at(day, sectionIdx * 25 + idx),
