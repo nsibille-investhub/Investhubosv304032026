@@ -68,6 +68,7 @@ import { generateFunds, Fund } from './utils/fundGenerator';
 import { AllFundsPage } from './components/AllFundsPage';
 import { FundDetailPage } from './components/fund-detail/FundDetailPage';
 import { FundStatusTabs } from './components/FundStatusTabs';
+import { CapitalCallsPage } from './components/capital-calls/CapitalCallsPage';
 import { RetrocessionsSettings } from './components/settings/RetrocessionsSettings';
 // Settings imports
 import { AppStore } from './components/settings/AppStore';
@@ -152,6 +153,8 @@ export default function App() {
   const [dataRoomBackSignal, setDataRoomBackSignal] = useState(0);
   const [selectedFundContextId, setSelectedFundContextId] = useState<number | null>(null);
   const [selectedFundDetail, setSelectedFundDetail] = useState<Fund | null>(null);
+  const [capitalCallsFundIds, setCapitalCallsFundIds] = useState<number[]>([]);
+  const [selectedCapitalCallName, setSelectedCapitalCallName] = useState<string | null>(null);
 
   useEffect(() => {
     if (currentPage !== 'allfunds') setSelectedFundDetail(null);
@@ -543,6 +546,7 @@ export default function App() {
             console.log('[App] onPageChange called with page:', page);
             // Only update URL - the hashchange listener will update the state
             navigateToPage(page);
+            if (page === 'capitalcalls') setCapitalCallsFundIds([]);
             setActiveStatus('all'); // Réinitialiser le filtre de statut
             setSelectedEntity(null); // Fermer le panneau de détails
             setPaginationPage(1); // Réinitialiser la pagination
@@ -785,6 +789,26 @@ export default function App() {
                     </>
                   ) : (
                     <span className="text-gray-900 dark:text-gray-100 font-medium">{t('breadcrumb.allFunds')}</span>
+                  )}
+                </>
+              ) : currentPage === 'capitalcalls' ? (
+                <>
+                  <span className="text-gray-400 dark:text-gray-500">{t('breadcrumb.fundLife')}</span>
+                  <span className="text-gray-300 dark:text-gray-700">/</span>
+                  {selectedCapitalCallName ? (
+                    <>
+                      <button
+                        type="button"
+                        onClick={() => navigateToPage('capitalcalls')}
+                        className="text-gray-400 dark:text-gray-500 hover:text-gray-900 dark:hover:text-gray-100 transition-colors"
+                      >
+                        {t('breadcrumb.capitalCalls')}
+                      </button>
+                      <span className="text-gray-300 dark:text-gray-700">/</span>
+                      <span className="text-gray-900 dark:text-gray-100 font-medium">{selectedCapitalCallName}</span>
+                    </>
+                  ) : (
+                    <span className="text-gray-900 dark:text-gray-100 font-medium">{t('breadcrumb.capitalCalls')}</span>
                   )}
                 </>
               ) : currentPage === 'subscriptions' ? (
@@ -1349,6 +1373,24 @@ export default function App() {
               onOpenSubscriptions={fund => {
                 setSelectedFundContextId(fund.id);
                 navigateToPage('subscriptions');
+              }}
+              onOpenCapitalCalls={fund => {
+                setCapitalCallsFundIds([fund.id]);
+                navigateToPage('capitalcalls');
+              }}
+            />
+          )}
+
+          {currentPage === 'capitalcalls' && (
+            <CapitalCallsPage
+              funds={allFundsData}
+              initialFundIds={capitalCallsFundIds}
+              onSelectedCallChange={setSelectedCapitalCallName}
+              onOpenFund={fundId => {
+                const fund = allFundsData.find(item => item.id === fundId);
+                if (!fund) return;
+                setSelectedFundDetail(fund);
+                navigateToPage('allfunds');
               }}
             />
           )}

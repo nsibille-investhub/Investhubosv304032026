@@ -32,14 +32,6 @@ import {
   DialogHeader,
   DialogTitle,
 } from '../../../components/ui/dialog';
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuLabel,
-  DropdownMenuSeparator,
-  DropdownMenuTrigger,
-} from '../../../components/ui/dropdown-menu';
 import { Input } from '../../../components/ui/input';
 import { KpiCard, KpiStrip } from '../../../components/ui/kpi-card';
 import { Label } from '../../../components/ui/label';
@@ -62,6 +54,8 @@ import {
   TabsTrigger,
 } from '../../../components/ui/tabs';
 import { cn } from '../../../components/ui/utils';
+import { TableRowActions, type TableRowAction } from '../../../components/ui/row-actions';
+import { useTranslation } from '../../../utils/languageContext';
 
 import { IngestionModeBadge } from '../components/IngestionModeBadge';
 import { PivotTypeBadge } from '../components/PivotTypeBadge';
@@ -361,8 +355,33 @@ function DataTab({
   onEditRow,
   onRevertRow,
 }: DataTabProps) {
+  const { t } = useTranslation();
   const [status, setStatus] = useState<StatusFilter>('all');
   const [search, setSearch] = useState('');
+
+  const getRowActions = (row: CollectionRow, dirty: boolean): TableRowAction[] => {
+    const k = 'datahub.collection.rowActions';
+    const actions: TableRowAction[] = [
+      { label: t(`${k}.editData`), icon: Pencil, onClick: () => onEditRow(row) },
+    ];
+    if (row.status !== 'published') {
+      actions.push({ label: t(`${k}.publish`), icon: CheckCircle2, intent: 'success', onClick: () => onChangeRowStatus(row.id, 'published') });
+    }
+    if (row.status !== 'draft') {
+      actions.push({ label: t(`${k}.setPending`), icon: Clock, intent: 'warning', onClick: () => onChangeRowStatus(row.id, 'draft') });
+    }
+    if (row.status === 'published') {
+      actions.push({ label: t(`${k}.markChanged`), icon: Pencil, onClick: () => onChangeRowStatus(row.id, 'changes') });
+    }
+    if (row.status !== 'unpublished') {
+      actions.push({ label: t(`${k}.unpublish`), icon: EyeOff, onClick: () => onChangeRowStatus(row.id, 'unpublished') });
+    }
+    if (dirty) {
+      actions.push({ label: t(`${k}.revert`), icon: RotateCcw, intent: 'danger', separatorBefore: true, onClick: () => onRevertRow(row.id) });
+    }
+    return actions;
+  };
+
 
   const filtered = useMemo(() => {
     const q = search.trim().toLowerCase();
@@ -509,87 +528,7 @@ function DataTab({
                         v{row.version}
                       </TableCell>
                       <TableCell className="py-2.5 text-right">
-                        <DropdownMenu>
-                          <DropdownMenuTrigger asChild>
-                            <Button
-                              variant="ghost"
-                              size="icon"
-                              aria-label="Actions sur cette ligne"
-                              className="size-8 text-muted-foreground hover:text-foreground data-[state=open]:bg-muted data-[state=open]:text-foreground"
-                            >
-                              <MoreHorizontal className="size-4" />
-                            </Button>
-                          </DropdownMenuTrigger>
-                          <DropdownMenuContent align="end" className="w-56">
-                            <DropdownMenuLabel className="text-[11px] font-semibold uppercase tracking-[0.08em] text-muted-foreground">
-                              Modération
-                            </DropdownMenuLabel>
-                            <DropdownMenuItem
-                              onClick={() => onEditRow(row)}
-                              className="cursor-pointer"
-                            >
-                              <Pencil className="mr-2 size-4 text-muted-foreground" />
-                              Modifier la donnée
-                            </DropdownMenuItem>
-                            <DropdownMenuSeparator />
-                            {row.status !== 'published' && (
-                              <DropdownMenuItem
-                                onClick={() =>
-                                  onChangeRowStatus(row.id, 'published')
-                                }
-                                className="cursor-pointer"
-                              >
-                                <CheckCircle2 className="mr-2 size-4 text-emerald-600" />
-                                Publier
-                              </DropdownMenuItem>
-                            )}
-                            {row.status !== 'draft' && (
-                              <DropdownMenuItem
-                                onClick={() =>
-                                  onChangeRowStatus(row.id, 'draft')
-                                }
-                                className="cursor-pointer"
-                              >
-                                <Clock className="mr-2 size-4 text-amber-600" />
-                                Mettre en attente
-                              </DropdownMenuItem>
-                            )}
-                            {row.status === 'published' && (
-                              <DropdownMenuItem
-                                onClick={() =>
-                                  onChangeRowStatus(row.id, 'changes')
-                                }
-                                className="cursor-pointer"
-                              >
-                                <Pencil className="mr-2 size-4 text-blue-600" />
-                                Marquer comme modifiée
-                              </DropdownMenuItem>
-                            )}
-                            {row.status !== 'unpublished' && (
-                              <DropdownMenuItem
-                                onClick={() =>
-                                  onChangeRowStatus(row.id, 'unpublished')
-                                }
-                                className="cursor-pointer"
-                              >
-                                <EyeOff className="mr-2 size-4 text-muted-foreground" />
-                                Dépublier
-                              </DropdownMenuItem>
-                            )}
-                            {dirty ? (
-                              <>
-                                <DropdownMenuSeparator />
-                                <DropdownMenuItem
-                                  onClick={() => onRevertRow(row.id)}
-                                  className="cursor-pointer text-destructive focus:text-destructive"
-                                >
-                                  <RotateCcw className="mr-2 size-4" />
-                                  Annuler les modifications
-                                </DropdownMenuItem>
-                              </>
-                            ) : null}
-                          </DropdownMenuContent>
-                        </DropdownMenu>
+                        <TableRowActions actions={getRowActions(row, dirty)} />
                       </TableCell>
                     </TableRow>
                   );

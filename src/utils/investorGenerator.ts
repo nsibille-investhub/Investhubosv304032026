@@ -1,3 +1,5 @@
+import { COUNTRIES, randomLocation, randomStreetAddress } from './locationFixtures';
+
 // Générateur de données mock pour les investisseurs
 
 // Noms pour Individual investors
@@ -61,7 +63,7 @@ const statuses = [
   'Archivé'
 ];
 
-const analysts = ['Thomas', 'Sophie Martin', 'Marc Dubois', 'Claire Bernard', 'Alex Chen'];
+const analysts = ['Thomas Bernard', 'Sophie Martin', 'Marc Dubois', 'Claire Bernard', 'Alex Chen'];
 
 const kycStatuses = ['En cours', 'En revue', 'À revoir', 'Validé', 'Expiré'];
 const crmSegmentsList = [
@@ -72,16 +74,7 @@ const crmSegmentsList = [
   'Institutional'
 ];
 
-const countries = [
-  'France',
-  'Luxembourg',
-  'Suisse',
-  'Belgique',
-  'Monaco',
-  'Royaume-Uni',
-  'Allemagne',
-  'Pays-Bas'
-];
+const countries = COUNTRIES;
 
 // Fonctions pour les contacts
 const contactFunctions = [
@@ -136,11 +129,16 @@ export interface Signatory {
 
 export interface Note {
   id: string;
+  title: string;
   author: string;
   date: Date;
+  /** Contenu en HTML (éditeur de texte riche). */
   content: string;
   type: 'General' | 'KYC' | 'Risk' | 'Commercial' | 'Legal';
   isImportant: boolean;
+  /** Date de rappel envoyée à l'auteur. */
+  reminderDate?: Date;
+  attachment?: { name: string };
 }
 
 export interface Email {
@@ -190,6 +188,8 @@ export interface Investor {
   address?: string;
   postalCode?: string;
   city?: string;
+  /** État, région ou province, quand le pays en a. */
+  state?: string;
   
   // Espace investisseur
   portalActive: boolean;
@@ -320,7 +320,8 @@ function generateContacts(investorName: string, investorEmail: string, investorP
       ? investorPhone 
       : generatePhone();
     
-    const hasAccess = Math.random() > 0.3;
+    // Le contact principal a toujours accès au portail.
+    const hasAccess = isPrimary || Math.random() > 0.3;
     
     contacts.push({
       id: `CNT${1000 + i}`,
@@ -366,7 +367,7 @@ function generateSignatories(investorName: string, contacts: Contact[], count: n
 
 function generateNotes(investorId: number, count: number): Note[] {
   const notes: Note[] = [];
-  const authors = ['Thomas', 'Sophie Martin', 'Marc Dubois', 'Claire Bernard', 'Alex Chen'];
+  const authors = ['Thomas Bernard', 'Sophie Martin', 'Marc Dubois', 'Claire Bernard', 'Alex Chen'];
   const noteTypes: ('General' | 'KYC' | 'Risk' | 'Commercial' | 'Legal')[] = ['General', 'KYC', 'Risk', 'Commercial', 'Legal'];
   
   const noteTemplates = {
@@ -402,10 +403,20 @@ function generateNotes(investorId: number, count: number): Note[] {
     ]
   };
   
+  const noteTitles = {
+    'General': ['Appel téléphonique', 'Réunion à planifier', 'Retour sur le service', 'Demande de documentation'],
+    'KYC': ['Documents KYC vérifiés', 'Mise à jour KYC à prévoir', 'Origine des fonds', 'Pièce d\'identité expirée'],
+    'Risk': ['Profil de risque confirmé', 'Score AML en hausse', 'Screening sans alerte', 'Révision du niveau de risque'],
+    'Commercial': ['Intérêt co-investissement', 'Hausse du ticket', 'Recommandations', 'Retour sur les opérations'],
+    'Legal': ['Revue des contrats', 'Procuration signée', 'Conformité réglementaire', 'Mise à jour des documents légaux'],
+  };
+  const attachments = ['compte-rendu.pdf', 'piece-identite.pdf', 'procuration-signee.pdf', 'questionnaire-kyc.pdf'];
+
   const now = new Date();
   
   for (let i = 0; i < count; i++) {
     const noteType = getRandomElement(noteTypes);
+    const templateIndex = Math.floor(Math.random() * noteTemplates[noteType].length);
     const daysAgo = Math.floor(Math.random() * 180); // Notes sur les 6 derniers mois
     const noteDate = new Date(now.getTime() - daysAgo * 24 * 60 * 60 * 1000);
     
@@ -413,9 +424,12 @@ function generateNotes(investorId: number, count: number): Note[] {
       id: `NOTE${investorId * 100 + i}`,
       author: getRandomElement(authors),
       date: noteDate,
-      content: getRandomElement(noteTemplates[noteType]),
+      title: noteTitles[noteType][templateIndex],
+      content: `<p>${noteTemplates[noteType][templateIndex]}</p>`,
       type: noteType,
-      isImportant: Math.random() > 0.7
+      isImportant: Math.random() > 0.7,
+      reminderDate: Math.random() > 0.7 ? new Date(now.getTime() + (Math.floor(Math.random() * 30) + 1) * 24 * 60 * 60 * 1000) : undefined,
+      attachment: Math.random() > 0.6 ? { name: getRandomElement(attachments) } : undefined,
     });
   }
   
@@ -566,11 +580,12 @@ export function generateInvestors(count: number): Investor[] {
     // Investisseur de rattachement (20% de chance)
     const parentInvestor = Math.random() > 0.8 ? getRandomElement(individualInvestorNames).firstName + ' ' + getRandomElement(individualInvestorNames).lastName : undefined;
     
-    // Adresse
-    const cityData = getRandomElement(countries);
-    const address = `${Math.floor(Math.random() * 200) + 1} ${getRandomElement(['Rue', 'Avenue', 'Boulevard'])} ${getRandomElement(['de la République', 'Victor Hugo', 'des Champs-Élysées', 'Montaigne', 'Haussmann'])}`;
-    const postalCode = `${Math.floor(Math.random() * 90000) + 10000}`;
-    const city = getRandomElement(['Paris', 'Lyon', 'Marseille', 'Toulouse', 'Nice', 'Nantes', 'Bordeaux', 'Lille']);
+    // Adresse réelle : ville, code postal, rue et pays cohérents ; État pour les États-Unis.
+    const location = randomLocation();
+    const address = randomStreetAddress(location);
+    const postalCode = location.postalCode;
+    const city = location.city;
+    const state = location.state;
     
     // Espace investisseur
     const portalActive = Math.random() > 0.3;
@@ -587,7 +602,7 @@ export function generateInvestors(count: number): Investor[] {
     const birthDate = type === 'Individual' ? new Date(1950 + Math.floor(Math.random() * 50), Math.floor(Math.random() * 12), Math.floor(Math.random() * 28) + 1) : undefined;
     const birthPlace = type === 'Individual' ? city : undefined;
     const birthDepartment = type === 'Individual' ? `${Math.floor(Math.random() * 95) + 1}` : undefined;
-    const birthCountry = type === 'Individual' ? getRandomElement(countries) : undefined;
+    const birthCountry = type === 'Individual' ? location.country : undefined;
     const nationality = type === 'Individual' ? getRandomElement(countries) : undefined;
     const languages = ['Français', 'English', 'Español', 'Deutsch', 'Italiano'];
     const language = getRandomElement(languages);
@@ -598,7 +613,7 @@ export function generateInvestors(count: number): Investor[] {
     
     // Informations fiscales (60% complètes)
     const hasTaxInfo = Math.random() > 0.4;
-    const taxResidence = hasTaxInfo ? getRandomElement(countries) : undefined;
+    const taxResidence = hasTaxInfo ? location.country : undefined;
     const taxAddress = hasTaxInfo ? address : undefined;
     const taxPostalCode = hasTaxInfo ? postalCode : undefined;
     const taxCity = hasTaxInfo ? city : undefined;
@@ -624,7 +639,7 @@ export function generateInvestors(count: number): Investor[] {
       crmSegment,
       analyst: getRandomElement(analysts),
       partner: hasPartner ? getRandomElement(partnerNames) : null,
-      country: getRandomElement(countries),
+      country: location.country,
       email,
       phone,
       monitoring: isMonitored,
@@ -646,6 +661,7 @@ export function generateInvestors(count: number): Investor[] {
       address,
       postalCode,
       city,
+      state,
       
       // Espace investisseur
       portalActive,

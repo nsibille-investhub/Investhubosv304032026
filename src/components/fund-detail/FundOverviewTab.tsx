@@ -28,6 +28,7 @@ interface FundOverviewTabProps {
   onNavigate: (target: FieldTarget) => void;
   onOpenTab: (tab: string) => void;
   onOpenSubscriptions: () => void;
+  onOpenCapitalCalls: () => void;
 }
 
 const percentOf = (value: number, total: number | null) =>
@@ -115,7 +116,7 @@ function ConfigurationWidget({ detail, onNavigate }: Pick<FundOverviewTabProps, 
   );
 }
 
-export function FundOverviewTab({ detail, onNavigate, onOpenTab, onOpenSubscriptions }: FundOverviewTabProps) {
+export function FundOverviewTab({ detail, onNavigate, onOpenTab, onOpenSubscriptions, onOpenCapitalCalls }: FundOverviewTabProps) {
   const { t } = useTranslation();
   const months = useMonthLabels();
   const money = (value: number) => formatCurrency(value, detail.currency);
@@ -177,7 +178,11 @@ export function FundOverviewTab({ detail, onNavigate, onOpenTab, onOpenSubscript
       </WidgetCard>
 
       {detail.paymentMode === 'calls' && (
-        <WidgetCard icon={Wallet} title={t(`${K}.calls.title`)}>
+        <WidgetCard
+          icon={Wallet}
+          title={t(`${K}.calls.title`)}
+          footer={<LinkButton onClick={onOpenCapitalCalls}>{t(`${K}.calls.openCalls`)}</LinkButton>}
+        >
           <div className="grid grid-cols-2 gap-3">
             <WidgetMetric label={t(`${K}.calls.called`)} value={money(detail.called)} />
             <WidgetMetric label={t(`${K}.calls.remaining`)} value={money(remaining)} />

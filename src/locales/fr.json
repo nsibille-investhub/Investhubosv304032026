@@ -173,7 +173,8 @@
     "administration": "Administration",
     "spaces": "Espaces",
     "settings": "Paramètres",
-    "entityDetail": "Détail de l'entité"
+    "entityDetail": "Détail de l'entité",
+    "capitalCalls": "Appels de fonds"
   },
   "search": {
     "placeholder": "Rechercher... Posez votre question à votre Hub.",
@@ -1203,7 +1204,9 @@
       "duplicate": "Dupliquer",
       "duplicated": "Souscription dupliquée",
       "delete": "Supprimer",
-      "deleted": "Souscription supprimée"
+      "deleted": "Souscription supprimée",
+      "viewAuditTrail": "Voir l'historique",
+      "openingDetails": "Ouverture du détail de la souscription..."
     },
     "counterSignatureStatus": {
       "completed": "Complétée",
@@ -1665,7 +1668,7 @@
         "newSubscription": "Nouvelle souscription",
         "id": "ID : {{id}}",
         "copyId": "Cliquer pour copier l'ID",
-        "analyst": "Analyste : {{name}}"
+        "manager": "Gestionnaire : {{name}}"
       },
       "stats": {
         "title": "Statistiques d'investissement",
@@ -1676,8 +1679,7 @@
       },
       "tabs": {
         "profile": "Profil",
-        "contacts": "Contacts & accès",
-        "signatories": "Signataires",
+        "contacts": "Contacts & parties tierces",
         "structures": "Structures",
         "notes": "Notes",
         "subscriptions": "Souscriptions",
@@ -1709,7 +1711,8 @@
         "manager": "Gestionnaire",
         "parentInvestor": "Investisseur de rattachement",
         "partner": "Partenaire",
-        "noPartner": "Aucun"
+        "noPartner": "Aucun",
+        "state": "État"
       },
       "kyc": {
         "title": "KYC & Compliance",
@@ -1792,12 +1795,13 @@
         "Germany": "Allemagne",
         "UnitedKingdom": "Royaume-Uni",
         "Spain": "Espagne",
-        "Italy": "Italie"
+        "Italy": "Italie",
+        "Monaco": "Monaco",
+        "Netherlands": "Pays-Bas",
+        "UnitedStates": "États-Unis"
       },
       "tags": "Tags",
       "signatories": {
-        "title": "Signataires autorisés ({{count}})",
-        "addSignatory": "Ajouter un signataire",
         "primarySignatory": "Signataire principal"
       },
       "signatureLevel": {
@@ -1807,20 +1811,96 @@
       },
       "structuresList": {
         "title": "Structures légales ({{count}})",
-        "contactsCountOne": "{{count}} contact",
-        "contactsCountMany": "{{count}} contacts",
-        "subscriptionsCountOne": "{{count}} souscription",
-        "subscriptionsCountMany": "{{count}} souscriptions",
-        "investedAmount": "Montant investi : {{amount}}",
-        "kycLabel": "KYC : {{status}}",
-        "riskScore": "Score de risque : {{score}}/100"
+        "add": "Ajouter une structure",
+        "edit": "Modifier",
+        "columns": {
+          "name": "Nom",
+          "type": "Type",
+          "representative": "Représentant légal",
+          "contacts": "Contacts",
+          "subscriptions": "Souscriptions",
+          "invested": "Montant investi",
+          "kyc": "KYC",
+          "risk": "Score de risque"
+        },
+        "sheet": {
+          "addTitle": "Ajouter une structure",
+          "editTitle": "Modifier la structure",
+          "addDesc": "Renseignez les informations de la nouvelle structure légale.",
+          "editDesc": "Modifiez les informations de la structure légale.",
+          "general": "Informations générales",
+          "name": "Nom de la structure",
+          "type": "Type",
+          "participationId": "Identifiant de participation",
+          "representative": "Représentant légal",
+          "compliance": "Conformité",
+          "complianceDesc": "Statut KYC et score de risque de la structure.",
+          "kycStatus": "Statut KYC",
+          "riskScore": "Score de risque",
+          "riskScoreHint": "Calculé par le module Conformité."
+        },
+        "toast": {
+          "added": "Structure {{name}} ajoutée",
+          "updated": "Structure {{name}} mise à jour"
+        },
+        "searchPlaceholder": "Rechercher une structure...",
+        "entity": "structure",
+        "openContacts": "Voir les contacts",
+        "openSubscriptions": "Voir les souscriptions"
       },
       "notes": {
-        "title": "Notes internes ({{count}})",
-        "filter": "Filtrer",
         "newNote": "Nouvelle note",
         "important": "Important",
-        "byAuthor": "par {{author}}"
+        "searchPlaceholder": "Rechercher une note...",
+        "entity": "note",
+        "columns": {
+          "title": "Titre",
+          "type": "Type",
+          "date": "Date",
+          "author": "Auteur",
+          "reminder": "Rappel",
+          "attachment": "Pièce jointe",
+          "importance": "Importance"
+        },
+        "filters": {
+          "normal": "Normale",
+          "withReminder": "Avec rappel",
+          "withoutReminder": "Sans rappel"
+        },
+        "actions": {
+          "edit": "Modifier",
+          "download": "Télécharger la pièce jointe",
+          "noAttachment": "Aucune pièce jointe",
+          "delete": "Supprimer"
+        },
+        "deleteDialog": {
+          "title": "Supprimer la note « {{title}} » ?",
+          "description": "La note et sa pièce jointe seront supprimées définitivement."
+        },
+        "toast": {
+          "added": "Note « {{title}} » ajoutée",
+          "updated": "Note « {{title}} » mise à jour",
+          "deleted": "Note « {{title}} » supprimée"
+        },
+        "sheet": {
+          "addTitle": "Nouvelle note",
+          "editTitle": "Modifier la note",
+          "description": "Note interne sur l'investisseur, visible uniquement par l'équipe.",
+          "noteSection": "Note",
+          "title": "Titre",
+          "titlePlaceholder": "Ex. : Appel avec le family office",
+          "type": "Type",
+          "content": "Texte",
+          "important": "Note importante",
+          "importantHint": "Mise en avant dans la liste des notes de l'investisseur.",
+          "dateSection": "Date et rappel",
+          "dateSectionHint": "Date de la note et rappel envoyé à son auteur.",
+          "date": "Date de la note",
+          "reminder": "Envoyer un rappel",
+          "reminderHint": "Un rappel est envoyé à l'auteur de la note à la date choisie.",
+          "reminderDate": "Date du rappel",
+          "attachmentSection": "Pièce jointe"
+        }
       },
       "noteTypes": {
         "General": "Général",
@@ -1874,22 +1954,12 @@
         "validationGeneric": "Erreur de validation"
       },
       "contactsTab": {
-        "portalTitle": "Investisseur Principal - Accès Portail",
-        "accessStatus": "Statut d'accès",
-        "active": "Actif",
-        "inactive": "Inactif",
-        "lastLogin": "Dernière connexion",
-        "portalV2": "Portail V2",
-        "v2Enabled": "Activé",
-        "v2Disabled": "Désactivé",
-        "resetPassword": "Réinitialiser mot de passe",
         "resetPasswordSent": "Email de réinitialisation envoyé",
         "contactsTitle": "Contacts ({{count}})",
         "addContact": "Ajouter un contact",
         "primaryBadge": "Principal",
         "openPortalAs": "Ouvrir le portail en tant que {{name}}",
         "openPortalToast": "Ouverture du portail en tant que {{name}}",
-        "noPortalAccess": "{{name}} n'a pas encore d'accès au portail",
         "investorPortalNoAccess": "Portail investisseur (accès non activé)",
         "portalAccessBadge": "Accès portail",
         "noAccess": "Pas d'accès",
@@ -1910,16 +1980,9 @@
         "preferencesSection": "Préférences",
         "primaryContact": "Contact principal",
         "preferredContact": "Préférence investisseur",
-        "portalAccessSection": "Accès portail",
         "enablePortalAccess": "Activer l'accès portail",
-        "accessLevel": "Niveau d'accès",
-        "selectAccessLevel": "Sélectionner un niveau",
         "password": "Mot de passe",
         "reset": "Réinitialiser",
-        "linkedStructures": "Structures rattachées",
-        "primaryAttachAll": "Le contact principal est automatiquement rattaché à toutes les structures",
-        "notifications": "Notifications",
-        "notificationsHint": "Choisissez les communications que ce contact doit recevoir",
         "notificationsAllLabel": "Toutes les communications",
         "notificationsAllHint": "Abonner ce contact à toutes les catégories de notifications",
         "notificationCategory": {
@@ -1944,33 +2007,129 @@
             "description": "Newsletters, événements et annonces"
           }
         },
-        "authorizedFunds": "Fonds autorisés",
-        "authorizedSubscriptions": "Souscriptions autorisées",
         "primaryHint": "Point de contact principal pour cet investisseur",
         "preferredHint": "Destinataire préféré pour les communications nominatives",
-        "portalAccessHint": "Autorise l'accès au portail investisseur et configure ce que ce contact peut voir.",
         "enablePortalAccessHint": "Autoriser ce contact à se connecter au portail investisseur",
-        "accessSection": "Gestion des accès",
-        "accessSectionHint": "Par défaut, ce contact a accès à tout. Activez chaque restriction pour limiter le périmètre.",
         "accessRecapTitleAll": "Accès complet",
         "accessRecapTitleRestricted": "Accès restreint",
-        "accessRecapAll": "Ce contact a accès à tous les fonds, souscriptions et types de documents.",
-        "accessRecapFundsAll": "tous les fonds",
-        "accessRecapSubsAll": "toutes les souscriptions",
-        "accessRecapDocsAll": "tous les types de documents",
-        "accessRecapFundsRestricted": "{{count}}/{{total}} fonds",
-        "accessRecapSubsRestricted": "{{count}}/{{total}} souscriptions",
-        "accessRecapDocsRestricted": "{{count}}/{{total}} types de documents",
-        "restrictFundsLabel": "Restreindre les fonds autorisés",
-        "restrictFundsHint": "Désactivé : le contact a accès à tous les fonds",
-        "restrictSubscriptionsLabel": "Restreindre les souscriptions autorisées",
-        "restrictSubscriptionsHint": "Désactivé : le contact a accès à toutes les souscriptions",
-        "restrictDocumentTypesLabel": "Restreindre les types de documents autorisés",
-        "restrictDocumentTypesHint": "Désactivé : le contact a accès à tous les types de documents",
         "cancel": "Annuler",
         "save": "Sauvegarder",
         "contactAdded": "Contact ajouté avec succès",
-        "contactUpdated": "Contact mis à jour avec succès"
+        "contactUpdated": "Contact mis à jour avec succès",
+        "principalUser": "Utilisateur principal",
+        "pickPlaceholder": "Sélectionner...",
+        "searchPlaceholder": "Rechercher un contact...",
+        "notificationCategories": "Catégories de notifications",
+        "signatureSection": "Signature",
+        "signatureSectionHint": "Habilitation de ce contact à signer pour l'investisseur.",
+        "isSignatory": "Signataire autorisé",
+        "signatureLevel": "Type de signature",
+        "signatoryBadge": "Signataire · {{level}}",
+        "columns": {
+          "name": "Nom",
+          "email": "Email",
+          "phone": "Téléphone",
+          "language": "Langue",
+          "signatory": "Signataire",
+          "access": "Accès",
+          "kyc": "KYC-AML"
+        },
+        "entity": "contact",
+        "filters": {
+          "signatoryYes": "Signataire",
+          "signatoryNo": "Non signataire"
+        },
+        "primaryPortalAccess": "Le contact principal a toujours accès au portail.",
+        "multiSearchPlaceholder": "Rechercher...",
+        "signatoryGlobal": "Signataire pour toutes les structures",
+        "signatoryGlobalHint": "Désactivé : choisissez les structures pour lesquelles ce contact peut signer.",
+        "signatoryStructures": "Structures concernées",
+        "signatoryAllStructures": "Toutes les structures",
+        "signatoryCard": {
+          "title": "Signature de {{name}}",
+          "subtitle": "Type de signature : {{level}}"
+        },
+        "accessCard": {
+          "title": "Accès de {{name}}",
+          "subtitle": "Droits : fonds × structures × rôles × souscriptions"
+        },
+        "kyc": {
+          "section": "Surveillance KYC-AML",
+          "sectionHint": "Rattachez le contact au dossier KYC-AML de l'investisseur pour le surveiller (screening, contrôles).",
+          "monitor": "Surveiller ce contact",
+          "monitorHint": "Rattache le contact au dossier KYC-AML par un ou plusieurs liens.",
+          "linkTitle": "Lien {{index}}",
+          "relation": "Lien",
+          "removeLink": "Retirer le lien",
+          "lastLink": "Un contact surveillé a au moins un lien.",
+          "addLink": "Ajouter un lien",
+          "unmonitored": "Non surveillé"
+        },
+        "kycRelations": {
+          "ubo": "Bénéficiaire effectif (UBO)",
+          "legalRepresentative": "Représentant légal",
+          "director": "Dirigeant",
+          "controllingShareholder": "Actionnaire de contrôle",
+          "controllingPerson": "Personne exerçant le contrôle",
+          "trustee": "Trustee / fiduciaire",
+          "settlor": "Constituant (settlor)",
+          "trustBeneficiary": "Bénéficiaire de trust"
+        },
+        "kycCard": {
+          "title": "Surveillance KYC-AML de {{name}}",
+          "subtitle": "Liens rattachés au dossier"
+        },
+        "access": {
+          "section": "Accès",
+          "sectionHint": "Accès au portail et aux communications. Au moins un des deux canaux est nécessaire pour définir des droits.",
+          "portal": "Portail",
+          "communications": "Communications",
+          "communicationsHint": "Le contact reçoit les communications de l'investisseur (appels de fonds, reporting...).",
+          "noChannel": "Activez le portail ou les communications pour définir des droits.",
+          "recapAll": "Au moins un droit couvre tous les fonds, structures, rôles et souscriptions. Les documents visibles dépendent des rôles assignés à chaque document.",
+          "recapRestricted": "Périmètre limité aux droits définis ci-dessous.",
+          "rightTitle": "Droit {{index}}",
+          "removeRight": "Retirer le droit",
+          "addRight": "Ajouter un droit",
+          "noRight": "Aucun droit défini."
+        },
+        "accessRoles": {
+          "investor": "Investisseur",
+          "accountant": "Comptable",
+          "proxy": "Mandataire",
+          "advisor": "Conseiller",
+          "legalRepresentative": "Représentant légal",
+          "assistant": "Assistant(e)"
+        },
+        "dimensions": {
+          "funds": "Fonds",
+          "structures": "Structures",
+          "roles": "Rôles",
+          "subscriptions": "Souscriptions"
+        },
+        "scope": {
+          "selection": "Sélection",
+          "funds": {
+            "all": "Tous les fonds",
+            "none": "Aucun fonds"
+          },
+          "structures": {
+            "all": "Toutes les structures",
+            "none": "Aucune structure"
+          },
+          "roles": {
+            "all": "Tous les rôles",
+            "none": "Aucun rôle"
+          },
+          "subscriptions": {
+            "all": "Toutes les souscriptions",
+            "none": "Aucune souscription"
+          },
+          "kycStructures": {
+            "all": "Toutes les structures",
+            "none": "Aucune structure"
+          }
+        }
       }
     }
   },
@@ -1994,7 +2153,14 @@
       "activeFilters": "Filtres actifs :",
       "selectedOne": "{{count}} sélectionné",
       "selectedMany": "{{count}} sélectionnés",
-      "searchPlaceholder": "Rechercher..."
+      "searchPlaceholder": "Rechercher...",
+      "dateRange": "Du {{from}} au {{to}}",
+      "dateFrom": "À partir du {{from}}",
+      "dateTo": "Jusqu'au {{to}}",
+      "clear": "Effacer",
+      "searchOptions": "Rechercher",
+      "noOption": "Aucun résultat",
+      "clearSelection": "Effacer la sélection"
     },
     "sectionCard": {
       "notProvided": "Non renseigné",
@@ -2068,7 +2234,8 @@
       "resetFilters": "Réinitialiser les filtres"
     },
     "confirmDialog": {
-      "cancel": "Annuler"
+      "cancel": "Annuler",
+      "close": "Fermer"
     },
     "richTextEditor": {
       "bold": "Gras",
@@ -2078,6 +2245,23 @@
       "numberedList": "Liste numérotée",
       "link": "Insérer un lien",
       "linkPrompt": "Adresse du lien"
+    },
+    "listing": {
+      "id": "ID : {{id}}",
+      "copyId": "Copier l'ID",
+      "idCopied": "ID copié",
+      "copyError": "Erreur de copie",
+      "rowActions": "Actions",
+      "moreActions": "Plus d'actions",
+      "more": "+{{count}} autres",
+      "columns": {
+        "label": "Colonnes",
+        "title": "Colonnes affichées",
+        "reset": "Rétablir les colonnes par défaut"
+      }
+    },
+    "formField": {
+      "required": "obligatoire"
     }
   },
   "ged": {
@@ -2602,7 +2786,10 @@
         "deleteDocument": "Supprimer le document",
         "addDocument": "Ajouter un document",
         "addFolder": "Ajouter un dossier",
-        "importDocuments": "Importer des documents"
+        "importDocuments": "Importer des documents",
+        "editFolder": "Modifier le dossier",
+        "openViewer": "Ouvrir la visionneuse",
+        "editDocument": "Modifier le document"
       },
       "footerFolders": "{{count}} dossiers",
       "footerFoldersOne": "{{count}} dossier",
@@ -2860,7 +3047,11 @@
       },
       "actions": {
         "preview": "Prévisualiser",
-        "download": "Télécharger"
+        "download": "Télécharger",
+        "rename": "Renommer",
+        "share": "Partager",
+        "archive": "Archiver",
+        "delete": "Supprimer"
       }
     },
     "relaunchModal": {
@@ -3393,7 +3584,9 @@
       "menu": {
         "top": "Placer en tête",
         "bottom": "Placer en fin",
-        "unlock": "Revenir à l'ordre défini pour réorganiser"
+        "unlock": "Revenir à l'ordre défini pour réorganiser",
+        "alreadyTop": "Déjà en tête",
+        "alreadyBottom": "Déjà en fin"
       },
       "sortAria": "Trier par {{column}}",
       "newBadge": "Nouveau",
@@ -4898,7 +5091,8 @@
           "called": "Appelé",
           "remaining": "Restant à appeler",
           "percent": "{{percent}} % du montant souscrit appelé",
-          "last": "Dernier appel"
+          "last": "Dernier appel",
+          "openCalls": "Voir les appels"
         },
         "distributions": {
           "title": "Distributions",
@@ -5707,6 +5901,583 @@
           "shareNavProrata": "Vraie surcharge du paramètre du fonds. Remplace \"Prorata for share value\" et l'attribut de part."
         }
       }
+    },
+    "capitalCalls": {
+      "title": "Appels de fonds",
+      "subtitle": "Les appels de tous les fonds de votre périmètre",
+      "actions": {
+        "new": "Nouvel appel",
+        "notify": "Notifier",
+        "relaunch": "Relancer",
+        "exportTarget": "Exporter la cible",
+        "exportNotices": "Exporter les avis (ZIP)",
+        "exportLines": "Exporter les lignes (CSV)",
+        "edit": "Modifier",
+        "delete": "Supprimer"
+      },
+      "searchPlaceholder": "Rechercher un appel ou un fonds",
+      "queues": {
+        "label": "Files de travail",
+        "all": "Tous les appels",
+        "noticesFailed": "Avis en échec",
+        "toNotify": "À notifier",
+        "sending": "Envoi en cours",
+        "overdue": "Échus non soldés",
+        "fundsMetric": "Fonds",
+        "perFund": "{{count}} par fonds",
+        "clickToFilter": "Cliquez sur une file pour filtrer"
+      },
+      "filters": {
+        "funds": "Fonds",
+        "duePeriod": "Période d'échéance",
+        "origin": "Origine",
+        "reset": "Réinitialiser les filtres",
+        "state": "État"
+      },
+      "columns": {
+        "fund": "Fonds",
+        "name": "Nom",
+        "dueDate": "Date d'échéance",
+        "calledAmount": "Montant appelé",
+        "state": "État",
+        "noticeDate": "Date de l'avis",
+        "origin": "Origine",
+        "compensation": "Compensation",
+        "createdAt": "Créé le",
+        "createdBy": "Créé par",
+        "actions": "Actions",
+        "lines": "Lignes",
+        "notices": "Avis",
+        "notification": "Notification",
+        "settlement": "Règlement"
+      },
+      "origins": {
+        "backOffice": "Back-office",
+        "import": "Import",
+        "api": "API"
+      },
+      "empty": {
+        "title": "Aucun appel de fonds",
+        "description": "Les appels des fonds de votre périmètre s'afficheront ici.",
+        "filteredTitle": "Aucun appel ne correspond",
+        "filteredDescription": "Modifiez la recherche ou les filtres pour élargir les résultats."
+      },
+      "accessDenied": {
+        "title": "Accès refusé",
+        "description": "Vous n'avez pas le droit \"Consulter les appels\". Rapprochez-vous de votre administrateur interne.",
+        "outOfScopeDescription": "Cet appel porte sur un fonds hors de votre périmètre.",
+        "notFoundTitle": "Appel introuvable",
+        "notFoundDescription": "Cet appel n'existe pas ou a été supprimé."
+      },
+      "toast": {
+        "refused": "Action refusée sur {{name}}",
+        "notifyStarted": "Notification de {{name}} en cours d'envoi.",
+        "notifyDone": "{{name}} est notifié.",
+        "relaunchStarted": "Relance de {{name}} : {{count}} ligne(s) relancée(s).",
+        "relaunchDone": "La relance de {{name}} est envoyée.",
+        "exportComingSoon": "{{action}} : bientôt disponible dans la maquette.",
+        "editComingSoon": "La modification d'un appel arrive avec l'assistant de création.",
+        "deleted": "{{name}} est supprimé.",
+        "created": "{{name}} est créé avec {{count}} lignes. Les avis sont en génération."
+      },
+      "scenario": {
+        "label": "Scénario de démonstration",
+        "options": {
+          "default": "Périmètre complet",
+          "limitedScope": "Périmètre limité à deux fonds",
+          "noNotifyRight": "Sans le droit Notifier",
+          "subscriptionActivated": "Souscription activée pendant la création",
+          "noRight": "Sans le droit Consulter les appels"
+        },
+        "simulateDirectNotify": "Notifier sans passer par le menu"
+      },
+      "actionsFor": "Actions sur {{name}}",
+      "blockers": {
+        "sending": "Envoi en cours",
+        "alreadyNotified": "Appel déjà notifié",
+        "nothingToRelaunch": "Aucune ligne à relancer",
+        "missingRight": "Droit manquant, rapprochez-vous de votre administrateur interne"
+      },
+      "deleteDialog": {
+        "title": "Supprimer {{name}} ?",
+        "description": "L'appel et ses lignes investisseurs du fonds {{fund}} seront supprimés. Cette action est définitive.",
+        "confirm": "Supprimer l'appel"
+      },
+      "detail": {
+        "header": {
+          "dueDate": "Échéance le {{date}}",
+          "noticeDate": "Avis daté du {{date}}",
+          "calledAmount": "Montant appelé : {{amount}}",
+          "origin": "Origine : {{origin}}",
+          "compensatedBy": "Compensé par",
+          "createdOn": "Créé le {{date}} par {{author}}"
+        },
+        "tabs": {
+          "lines": "Lignes investisseurs",
+          "emails": "Envois",
+          "breakdown": "Ventilation par part",
+          "message": "Message et pièces jointes",
+          "journal": "Journal"
+        },
+        "breakdown": {
+          "columns": {
+            "share": "Part",
+            "mode": "Mode de saisie",
+            "value": "Montant saisi",
+            "entryFees": "Frais d'entrée",
+            "premium": "Prime",
+            "released": "Montant débloqué",
+            "restriction": "Restriction"
+          },
+          "modes": {
+            "percent": "Pourcentage du montant souscrit",
+            "totalAmount": "Montant total de la part",
+            "perUnit": "Montant par titre"
+          },
+          "perUnitValue": "{{amount}} par titre",
+          "called": "Appelés",
+          "notCalled": "Non appelés",
+          "noRestriction": "Aucune",
+          "restrictedOne": "{{count}} souscription",
+          "restrictedMany": "{{count}} souscriptions"
+        },
+        "message": {
+          "title": "Message d'accompagnement",
+          "empty": "Aucun message d'accompagnement"
+        },
+        "attachments": {
+          "title": "Pièces jointes",
+          "summary": "{{count}} sur 2",
+          "empty": "Aucune pièce jointe",
+          "size": "{{size}} {{unit}}",
+          "kb": "Ko",
+          "mb": "Mo",
+          "download": "Télécharger"
+        },
+        "toast": {
+          "notInMockup": "La fiche de {{name}} n'est pas encore dans la maquette.",
+          "download": "Téléchargement de {{name}} : bientôt disponible dans la maquette."
+        },
+        "lines": {
+          "searchPlaceholder": "Rechercher un investisseur",
+          "filters": {
+            "state": "État de la ligne",
+            "noticeState": "État de l'avis",
+            "share": "Part",
+            "notification": "Notification",
+            "settlement": "Règlement"
+          },
+          "columns": {
+            "investor": "Investisseur",
+            "subscription": "Souscription",
+            "share": "Part",
+            "units": "Nombre de titres",
+            "amountPerUnit": "Montant par titre",
+            "calledAmount": "Montant appelé",
+            "fees": "Frais",
+            "premium": "Prime",
+            "total": "Total",
+            "state": "État de la ligne",
+            "noticeState": "État de l'avis",
+            "notifiedAt": "Date de notification",
+            "lastReminderAt": "Dernière relance",
+            "paidAt": "Date de paiement"
+          },
+          "states": {
+            "toNotify": "À notifier",
+            "notified": "Notifiée",
+            "paymentDeclared": "Paiement déclaré",
+            "paid": "Payée"
+          },
+          "noticeStates": {
+            "generating": "En génération",
+            "available": "Disponible",
+            "failed": "En échec",
+            "replaced": "Remplacé"
+          },
+          "failureReasons": {
+            "combinedTemplateMissing": "Modèle d'avis combiné absent",
+            "productionError": "Erreur de production",
+            "timeout": "Délai de production dépassé"
+          },
+          "paymentOrigins": {
+            "bankReconciliation": "rapprochement bancaire",
+            "directDebit": "prélèvement",
+            "manual": "validation manuelle"
+          },
+          "paidTooltip": "Payée par {{origin}} le {{date}}",
+          "indicators": {
+            "combinedNotice": "Avis combiné",
+            "compensated": "Ligne compensée",
+            "transferred": "Souscription transférée",
+            "hiddenOnPortal": "Ligne masquée sur le portail"
+          },
+          "totals": "Total des {{count}} lignes affichées",
+          "empty": {
+            "title": "Aucune ligne investisseur",
+            "filteredTitle": "Aucune ligne ne correspond",
+            "filteredDescription": "Modifiez la recherche ou les filtres pour élargir les résultats.",
+            "reset": "Réinitialiser les filtres"
+          },
+          "dateTime": "{{date}} à {{time}}",
+          "noticeTooltip": {
+            "failed": "{{reason}}, le {{at}}",
+            "requested": "Demandé le {{at}}",
+            "replaced": "Fichier déposé par l'opérateur, jamais régénéré",
+            "previousFailure": "échec précédent : {{reason}}",
+            "relaunchedOne": "{{count}} relance",
+            "relaunchedMany": "{{count}} relances"
+          },
+          "relaunch": {
+            "label": "Relancer la génération des avis en échec ({{count}})",
+            "noneFailed": "Aucun avis en échec",
+            "refused": "Relance refusée",
+            "startedOne": "{{count}} avis en échec relancé.",
+            "startedMany": "{{count}} avis en échec relancés."
+          },
+          "notificationCategories": {
+            "notified": "Notifiées",
+            "toNotify": "À notifier",
+            "reminded": "Relancées"
+          },
+          "settlementCategories": {
+            "paid": "Payées",
+            "compensated": "Compensées",
+            "paymentDeclared": "Paiement déclaré",
+            "unpaid": "Non payées"
+          }
+        },
+        "emails": {
+          "searchPlaceholder": "Rechercher un destinataire",
+          "filters": {
+            "type": "Type",
+            "state": "État"
+          },
+          "columns": {
+            "recipient": "Destinataire",
+            "copies": "Copies",
+            "type": "Type",
+            "notice": "Avis joint",
+            "sentAt": "Date d'envoi",
+            "state": "État"
+          },
+          "types": {
+            "notification": "Notification",
+            "reminder": "Relance"
+          },
+          "states": {
+            "sent": "Envoyé",
+            "delivered": "Délivré",
+            "opened": "Ouvert",
+            "softBounce": "Échec temporaire",
+            "failed": "Échec",
+            "spam": "Signalé comme spam",
+            "notFound": "Email introuvable"
+          },
+          "noRecipient": "Aucun email retrouvé",
+          "notice": {
+            "individual": "Avis individuel",
+            "combined": "Avis combiné",
+            "linesOne": "{{count}} ligne : {{subscriptions}}",
+            "linesMany": "{{count}} lignes : {{subscriptions}}"
+          },
+          "empty": {
+            "title": "Aucun envoi",
+            "filteredTitle": "Aucun envoi ne correspond",
+            "filteredDescription": "Modifiez la recherche ou les filtres pour élargir les résultats.",
+            "reset": "Réinitialiser les filtres"
+          }
+        },
+        "journal": {
+          "types": {
+            "created": "Création",
+            "edited": "Modification",
+            "noticeFailed": "Production d'avis en échec",
+            "noticeRelaunched": "Relance de la génération",
+            "notified": "Notification",
+            "reminded": "Relance",
+            "paymentValidated": "Validation de paiement",
+            "paymentCancelled": "Annulation de paiement",
+            "noticeReplaced": "Remplacement d'avis",
+            "notificationCancelled": "Annulation de notification"
+          },
+          "linesOne": "{{count}} ligne",
+          "linesMany": "{{count}} lignes",
+          "change": {
+            "dueDate": "Date d'échéance : {{from}} → {{to}}"
+          },
+          "paymentOrigin": "par {{origin}}",
+          "system": "Système",
+          "roles": {
+            "user": "Utilisateur",
+            "system": "Système"
+          },
+          "goLive": {
+            "title": "Historique partiel",
+            "description": "Cet appel a été créé avant la V3. Son historique commence à la mise en service de la V3, le {{date}}."
+          },
+          "empty": "Aucun événement",
+          "emptyFiltered": "Aucun événement ne correspond aux filtres",
+          "readOnly": "Le journal ne peut être ni modifié ni supprimé."
+        },
+        "summary": {
+          "openFiltered": "{{label}} : {{count}}, ouvrir la liste filtrée",
+          "calculation": {
+            "title": "Calcul",
+            "entered": "Montant saisi",
+            "allocated": "Montant réparti",
+            "roundingGap": "Écart d'arrondi",
+            "lines": "Lignes"
+          },
+          "notices": {
+            "title": "Avis",
+            "available": "Disponibles",
+            "generating": "En génération",
+            "failed": "En échec",
+            "replaced": "Remplacés"
+          },
+          "notification": {
+            "title": "Notification",
+            "publication": {
+              "onNotification": "Publication à la notification",
+              "immediate": "Publication immédiate, sans email"
+            },
+            "notified": "Notifiées",
+            "toNotify": "À notifier",
+            "reminded": "Relancées",
+            "emailsFailed": "Envois en échec"
+          },
+          "settlement": {
+            "title": "Règlement",
+            "paid": "Payées",
+            "compensated": "Compensées",
+            "paymentDeclared": "Paiement déclaré",
+            "unpaid": "Non payées",
+            "remainingDue": "Restant dû sur {{count}} lignes"
+          }
+        }
+      },
+      "wizard": {
+        "title": "Nouvel appel de fonds",
+        "subtitle": "Préparez l'appel, contrôlez le calcul, puis créez-le.",
+        "stepsLabel": "Étapes de l'assistant",
+        "steps": {
+          "info": "Fonds et informations",
+          "amounts": "Montants",
+          "control": "Contrôle"
+        },
+        "close": "Fermer l'assistant",
+        "cancel": "Annuler",
+        "previous": "Précédent",
+        "next": "Suivant",
+        "create": "Créer l'appel",
+        "creating": "Création en cours",
+        "createBlocked": "Création bloquée : corrigez les points signalés à l'étape Contrôle.",
+        "nothingSaved": "Simulation : rien n'est enregistré avant la création. Total calculé : {{amount}}.",
+        "errors": {
+          "fund": "Choisissez un fonds.",
+          "name": "Saisissez un nom.",
+          "dueDate": "Saisissez la date d'échéance.",
+          "invalidNumber": "Saisissez un nombre positif.",
+          "over100": "Pourcentage refusé : le paramètre \"Limiter les appels à 100 %\" est actif.",
+          "noShare": "Saisissez un montant sur au moins une part."
+        },
+        "suspended": {
+          "title": "Création suspendue",
+          "moreOne": "Le calcul refait à la création diffère de la simulation : {{count}} ligne de plus.",
+          "moreMany": "Le calcul refait à la création diffère de la simulation : {{count}} lignes de plus.",
+          "lessOne": "Le calcul refait à la création diffère de la simulation : {{count}} ligne de moins.",
+          "lessMany": "Le calcul refait à la création diffère de la simulation : {{count}} lignes de moins.",
+          "refresh": "Mettre à jour le contrôle"
+        },
+        "abandon": {
+          "title": "Abandonner la création ?",
+          "description": "Rien n'a été enregistré. Les informations saisies seront perdues.",
+          "confirm": "Abandonner",
+          "cancel": "Continuer la saisie"
+        },
+        "info": {
+          "fund": "Fonds",
+          "fundPlaceholder": "Choisir un fonds de votre périmètre",
+          "name": "Nom de l'appel",
+          "namePlaceholder": "Exemple : Appel n°4",
+          "dueDate": "Date d'échéance",
+          "noticeDate": "Date de l'avis",
+          "noticeDateHint": "Facultative. Imprimée sur l'avis si elle diffère de l'échéance.",
+          "datePlaceholder": "Choisir une date",
+          "publication": "Publication sur le portail",
+          "publicationOptions": {
+            "onNotification": "À la notification",
+            "immediate": "Immédiate, sans email"
+          },
+          "message": "Message d'accompagnement",
+          "messagePlaceholder": "Texte envoyé avec l'avis",
+          "attachment": "Pièce jointe {{index}}",
+          "addAttachment": "Ajouter un fichier",
+          "removeAttachment": "Retirer la pièce jointe",
+          "forecast": "Flux prévisionnel à consommer",
+          "forecastNone": "Aucun",
+          "forecastOption": "{{name}} ({{amount}})",
+          "noForecast": "Aucun flux prévisionnel en attente sur ce fonds.",
+          "distributions": "Distributions à compenser",
+          "distributionOption": "{{name}} ({{amount}})",
+          "noDistribution": "Aucune distribution sur ce fonds.",
+          "chooseFundFirst": "Choisissez d'abord un fonds.",
+          "noTemplate": {
+            "title": "Aucun modèle d'avis d'appel sur ce fonds",
+            "description": "Les avis ne pourront pas être produits tant qu'un modèle n'est pas configuré. Vous pouvez continuer.",
+            "link": "Configurer le modèle d'avis",
+            "notInMockup": "La configuration des modèles d'avis n'est pas dans la maquette."
+          },
+          "attachmentDrop": {
+            "hint": "Déposez un fichier ou cliquez pour le choisir",
+            "hintDesc": "PDF, Word ou image",
+            "ready": "Fichier prêt à être joint",
+            "preview": "Aperçu"
+          }
+        },
+        "amounts": {
+          "modes": {
+            "perShare": "Par part",
+            "toRaise": "Montant à lever"
+          },
+          "toRaiseUnavailable": "Indisponible : l'appel est généré par titre.",
+          "settings": {
+            "label": "Paramètres du fonds :",
+            "none": "aucun paramètre particulier",
+            "perUnit": "Générer l'appel par titre",
+            "netFlow": "Flux net",
+            "capAt100": "Limiter les appels à 100 %",
+            "combinedNotices": "Avis combinés"
+          },
+          "allocation": {
+            "perUnit": "Répartition par titre",
+            "units": "Répartition au prorata du nombre de titres",
+            "subscribedAmount": "Répartition au prorata du montant souscrit"
+          },
+          "shareSummary": "Engagement {{committed}} · {{count}} souscriptions",
+          "kinds": {
+            "percent": "Pourcentage",
+            "amount": "Montant"
+          },
+          "fields": {
+            "value": "Montant appelé",
+            "perUnit": "Montant par titre",
+            "recall": "Rappel de distributions provisoires",
+            "recallPerUnit": "Rappel par titre",
+            "netFlow": "Flux net",
+            "netFlowPerUnit": "Flux net par titre",
+            "entryFees": "Appeler les frais d'entrée",
+            "premium": "Appeler la prime"
+          },
+          "perUnitSuffix": "{{currency}}/titre",
+          "notCalledPlaceholder": "Vide : part non appelée",
+          "shareAmount": "Montant de la part :",
+          "restriction": {
+            "toggle": "Restreindre à certaines souscriptions",
+            "selected": "{{count}} sur {{total}} retenues",
+            "hint": "Seules les souscriptions cochées sont appelées sur cette part. Aucune case cochée : pas de restriction."
+          },
+          "toRaise": {
+            "label": "Montant à lever",
+            "proposal": "Pourcentage proposé : {{percent}} % de l'engagement, appliqué à toutes les parts. Vous pouvez ajuster chaque part.",
+            "gapTitle": "Écart avec le montant à lever",
+            "gapBelow": "Le total est inférieur de {{amount}} au montant à lever.",
+            "gapAbove": "Le total dépasse de {{amount}} le montant à lever."
+          },
+          "columns": {
+            "share": "Part",
+            "committed": "Engagement",
+            "called": "Déjà appelé",
+            "remainingBefore": "Reste avant",
+            "percent": "Pourcentage",
+            "amount": "Montant",
+            "remainingAfter": "Reste après",
+            "total": "Total"
+          },
+          "total": "Total de l'appel (calculé)",
+          "percentFor": "Pourcentage de la part {{share}}"
+        },
+        "control": {
+          "blocked": {
+            "title": "Création bloquée",
+            "reasons": {
+              "noLines": "Aucune ligne produite.",
+              "combinedTemplateMissing": "Modèle d'avis combiné absent : les avis combinés sont actifs sur ce fonds.",
+              "overRemainingOne": "{{count}} souscription dépasse son reste à appeler alors que \"Limiter les appels à 100 %\" est actif.",
+              "overRemainingMany": "{{count}} souscriptions dépassent leur reste à appeler alors que \"Limiter les appels à 100 %\" est actif."
+            }
+          },
+          "ready": {
+            "title": "Aucun blocage",
+            "description": "Le calcul est prêt. Rien n'est enregistré avant \"Créer l'appel\"."
+          },
+          "summary": {
+            "lines": "Lignes produites",
+            "exclusions": "Souscriptions exclues",
+            "total": "Total de l'appel",
+            "title": "Synthèse de la simulation"
+          },
+          "allocation": "Mode de répartition : {{mode}}.",
+          "shares": {
+            "title": "Contrôle par part",
+            "share": "Part",
+            "entered": "Montant saisi",
+            "linesTotal": "Somme des lignes",
+            "roundingGap": "Écart d'arrondi"
+          },
+          "lines": {
+            "title": "Lignes produites",
+            "summary": "{{count}} lignes",
+            "investor": "Investisseur",
+            "subscription": "Souscription",
+            "share": "Part",
+            "amount": "Montant appelé",
+            "remaining": "Reste à appeler",
+            "overRemaining": "Dépasse : reste {{amount}}",
+            "preview": "Aperçu de l'avis",
+            "empty": "Aucune ligne produite"
+          },
+          "exclusions": {
+            "title": "Souscriptions exclues",
+            "summary": "{{count}} exclusions",
+            "reason": "Motif",
+            "empty": "Aucune souscription exclue",
+            "reasons": {
+              "availableAfterDueDate": "Date de disponibilité postérieure à la date d'échéance",
+              "outsideRestriction": "Hors restriction",
+              "zeroShare": "Quote-part nulle"
+            }
+          },
+          "preview": {
+            "title": "Aperçu de l'avis",
+            "description": "Aperçu simplifié pour la ligne choisie. Rien n'est produit avant la création.",
+            "recipient": "Destinataire : {{investor}}, souscription {{subscription}}",
+            "amount": "Montant appelé : {{amount}}",
+            "dueDate": "À régler avant le {{date}}",
+            "combined": "Cette ligne sera regroupée dans un avis combiné."
+          }
+        }
+      },
+      "progress": {
+        "notices": "{{done}} / {{total}} disponibles",
+        "noticesFailed": "{{count}} en échec",
+        "notified": "{{done}} / {{total}} notifiées",
+        "immediate": "Publication immédiate",
+        "settled": "{{done}} / {{total}} réglées",
+        "remainingDue": "{{amount}} restant dû"
+      },
+      "callStates": {
+        "sending": "Envoi en cours",
+        "noticesGenerating": "Avis en génération",
+        "noticesFailed": "Avis en échec",
+        "settled": "Soldé",
+        "partiallySettled": "Partiellement réglé",
+        "notified": "Notifié",
+        "partiallyNotified": "Partiellement notifié",
+        "publishedWithoutSending": "Publié sans envoi",
+        "readyToNotify": "Prêt à notifier"
+      }
     }
   },
   "designSystem": {
@@ -5879,7 +6650,7 @@
       },
       "statusBadge": {
         "title": "Pastille de statut",
-        "description": "Pastille générique sur laquelle repose la pastille de statut de fonds. Nouvelles variantes info, outline et strong, et icône optionnelle.",
+        "description": "Pastille générique sur laquelle repose la pastille de statut de fonds. Nouvelles variantes info, outline et strong, et icône optionnelle. Infobulle optionnelle (tooltip) pour le motif ou le détail.",
         "variants": "neutral, outline, info, success, warning, danger, strong ; avec ou sans icône.",
         "states": "Lecture seule.",
         "exampleLabel": "Les sept tons",
@@ -5919,7 +6690,7 @@
       },
       "widgetCard": {
         "title": "Widget de tableau de bord",
-        "description": "Carte de synthèse avec titre en petites capitales, sous-titre, action et pied. WidgetMetric affiche une valeur chiffrée ; SegmentedProgress, extraite de l'onboarding, montre un état global segmenté par couleur.",
+        "description": "Carte de synthèse avec titre en petites capitales, sous-titre, action et pied. WidgetMetric affiche une valeur chiffrée ; SegmentedProgress, extraite de l'onboarding, montre un état global segmenté par couleur. WidgetMetric devient cliquable (onClick, ariaLabel) pour ouvrir une liste filtrée.",
         "variants": "Avec icône, action, pied ; valeur normale ou grande ; barre à un ou plusieurs segments, tons du design system.",
         "states": "Valeur renseignée, valeur absente (\"Aucun\"), barre vide.",
         "exampleLabel": "Exemples",
@@ -5967,7 +6738,7 @@
       },
       "dataTable": {
         "title": "Tableau de données",
-        "description": "Tableau du design system. Évolution : option align par colonne. À droite, l'en-tête et les cellules s'alignent et les chiffres passent en tabulaires : montants et pourcentages, chacun dans sa propre colonne triable.",
+        "description": "Tableau du design system. Évolution : option align par colonne. À droite, l'en-tête et les cellules s'alignent et les chiffres passent en tabulaires : montants et pourcentages, chacun dans sa propre colonne triable. Ligne de totaux optionnelle (footer).",
         "variants": "Colonnes triables ou non, alignement à gauche ou à droite, sélection masquable. Densité par défaut ou compacte.",
         "states": "Tri ascendant, descendant, sans tri ; survol de ligne ; clic sur la ligne.",
         "exampleLabel": "Exemple : frais de deux parts"
@@ -5978,6 +6749,124 @@
         "variants": "Série unique, valeurs formatées par l'appelant.",
         "states": "Repos, survol (point actif et info-bulle).",
         "exampleLabel": "Exemple : actif net"
+      },
+      "filterCardGroup": {
+        "title": "Groupe de cartes filtres",
+        "description": "Bandeau de FilterCard au-dessus d'un listing : titre souligné d'une barre, pastille, aide et cartes en grille. Remplace les en-têtes recopiés des onglets de statut investisseurs, souscriptions, historique SMS et des files des appels de fonds.",
+        "variants": "4, 5 ou 6 colonnes ; avec ou sans pastille et aide.",
+        "states": "Carte active, carte inactive, total à zéro.",
+        "exampleLabel": "Files de travail",
+        "demo": {
+          "title": "Files de travail",
+          "hint": "Cliquez pour filtrer",
+          "all": "Tous",
+          "failed": "Avis en échec",
+          "done": "Notifiés",
+          "metric": "Montant"
+        }
+      },
+      "listingTools": {
+        "title": "Outils de listing",
+        "description": "ListingColumnsMenu choisit les colonnes affichées (la dernière visible ne peut pas être masquée) ; ListingIndicator signale une particularité de ligne par une icône, libellé au survol. ListingCard accepte aussi un pied (pagination) et DataTable une ligne de totaux (footer). La FilterBar gère maintenant les filtres multisélection et période, et passe à la ligne quand la place manque.",
+        "variants": "Menu de colonnes avec réinitialisation ; un ou plusieurs indicateurs accolés au nom.",
+        "states": "Colonne masquée, dernière colonne verrouillée, indicateur au survol.",
+        "exampleLabel": "Nom avec indicateurs et choix des colonnes",
+        "demo": {
+          "investor": "Camille R.",
+          "combined": "Avis combiné",
+          "hidden": "Masquée sur le portail",
+          "columns": {
+            "investor": "Investisseur",
+            "amount": "Montant",
+            "state": "État"
+          }
+        }
+      },
+      "wizardSteps": {
+        "title": "Étapes d'assistant",
+        "description": "Étapes d'un assistant en modale, placées dans l'en-tête BigModalPanelHeader (nouvelle zone sous le titre). Numéro, coche une fois l'étape franchie, libellé de l'étape en cours en gras.",
+        "variants": "De 2 à 5 étapes.",
+        "states": "Étape franchie, étape en cours, étape à venir.",
+        "exampleLabel": "Assistant en trois étapes",
+        "demo": {
+          "ariaLabel": "Étapes de l'assistant",
+          "info": "Informations",
+          "amounts": "Montants",
+          "control": "Contrôle"
+        }
+      },
+      "formField": {
+        "title": "Champ de formulaire",
+        "description": "Libellé, astérisque si obligatoire, contrôle, aide ou erreur dessous. labelAside place un sélecteur à droite du libellé. SuffixInput aligne une saisie numérique à droite avec son unité.",
+        "variants": "Obligatoire ou non, avec aide, libellé masqué (en-tête de colonne), sélecteur à droite du libellé ; unité %, devise, devise par titre.",
+        "states": "Vide, renseigné, en erreur.",
+        "exampleLabel": "Champ obligatoire et champ avec unité",
+        "demo": {
+          "name": "Nom de l'appel",
+          "nameError": "Renseignez le nom de l'appel.",
+          "percent": "Pourcentage appelé",
+          "percentHint": "Du montant souscrit"
+        }
+      },
+      "attachmentRow": {
+        "title": "Pièce jointe",
+        "description": "Ligne de pièce jointe en lecture : trombone, nom, taille, bouton de téléchargement. À empiler dans un conteneur divide-y.",
+        "variants": "Avec ou sans taille.",
+        "states": "Nom long tronqué.",
+        "exampleLabel": "Pièce jointe d'un appel",
+        "demo": {
+          "name": "Lettre aux investisseurs.pdf",
+          "size": "284 Ko",
+          "download": "Télécharger",
+          "downloaded": "Téléchargement simulé dans la maquette."
+        }
+      },
+      "demoScenarioBar": {
+        "title": "Bandeau de scénario de démonstration",
+        "description": "Propre à la maquette : choix d'un scénario au-dessus de l'en-tête de page (droits, données, cas limites). Utilisé sur le détail d'un fonds et le listing des appels de fonds.",
+        "variants": "Avec ou sans action à droite.",
+        "states": "Scénario par défaut, scénario choisi.",
+        "exampleLabel": "Choix du scénario",
+        "demo": {
+          "label": "Scénario de démonstration",
+          "default": "Cas nominal",
+          "noRight": "Sans droit de notification"
+        }
+      }
+    }
+  },
+  "settings": {
+    "users": {
+      "edit": "Modifier"
+    },
+    "conventions": {
+      "rowActions": {
+        "validationDetails": "Détails de la validation",
+        "resetValidation": "Réinitialiser la validation",
+        "delete": "Supprimer",
+        "viewOnboarding": "Accéder à l'onboarding",
+        "validate": "Valider la convention",
+        "modifyScope": "Modifier la portée"
+      }
+    },
+    "retrocessions": {
+      "rowActions": {
+        "downloadStatement": "Télécharger le décompte",
+        "notify": "Notifier",
+        "markAsPaid": "Marquer payé",
+        "comingSoon": "Le téléchargement du décompte sera bientôt disponible"
+      }
+    }
+  },
+  "datahub": {
+    "collection": {
+      "rowActions": {
+        "editData": "Modifier la donnée",
+        "publish": "Publier",
+        "setPending": "Mettre en attente",
+        "markChanged": "Marquer comme modifiée",
+        "unpublish": "Dépublier",
+        "revert": "Annuler les modifications"
       }
     }
   }

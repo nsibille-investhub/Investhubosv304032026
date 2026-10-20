@@ -1,7 +1,8 @@
-import { useState } from 'react';
+import { useState, type ReactNode } from 'react';
 import { motion } from 'motion/react';
 import type { LucideIcon } from 'lucide-react';
 import { useTranslation } from '../../utils/languageContext';
+import { Badge } from './badge';
 
 interface FilterCardProps {
   status: string;
@@ -145,5 +146,44 @@ export function FilterCard({
         </div>
       </div>
     </motion.button>
+  );
+}
+
+const GROUP_COLUMNS = { 4: 'grid-cols-4', 5: 'grid-cols-5', 6: 'grid-cols-6' } as const;
+
+interface FilterCardGroupProps {
+  title: string;
+  /** Pastille à droite du titre. */
+  badge?: string;
+  /** Aide à droite de l'en-tête (« Cliquez pour filtrer »). */
+  hint?: string;
+  columns?: keyof typeof GROUP_COLUMNS;
+  className?: string;
+  children: ReactNode;
+}
+
+/** Groupe de FilterCard au-dessus d'un listing : titre souligné d'une barre, cartes en grille. */
+export function FilterCardGroup({ title, badge, hint, columns = 6, className = 'pb-2', children }: FilterCardGroupProps) {
+  return (
+    <motion.div
+      initial={{ opacity: 0, y: -20 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ duration: 0.3 }}
+      className={`bg-primary/5 rounded-lg ${className}`}
+    >
+      <div className="mb-3 flex items-center justify-between">
+        <div className="flex items-center gap-2">
+          <div className="w-1 h-6 bg-primary rounded-full" />
+          <h3 className="font-semibold text-foreground">{title}</h3>
+          {badge && (
+            <Badge variant="outline" className="text-xs bg-primary/10 text-primary">
+              {badge}
+            </Badge>
+          )}
+        </div>
+        {hint && <div className="text-xs text-muted-foreground">{hint}</div>}
+      </div>
+      <div className={`grid ${GROUP_COLUMNS[columns]} gap-1.5 items-center`}>{children}</div>
+    </motion.div>
   );
 }

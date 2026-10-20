@@ -11423,6 +11423,10 @@ html {
   background-color: var(--ds-form-section-bg);
   scroll-margin-top: 16px;
 }
+/* Section en flux normal : l'espacement vient de l'appelant (space-y-*), cas des panneaux latéraux. */
+.ds-form-section--block {
+  display: block;
+}
 .ds-form-section__header {
   display: flex;
   align-items: flex-start;
@@ -11480,15 +11484,18 @@ html {
   gap: 12px;
   min-width: 0;
 }
+.ds-form-subsection,
+.ds-panel-card {
+  min-width: 0;
+  border-radius: 12px;
+  border: 1px solid color-mix(in oklab, var(--primary) 16%, transparent);
+  background-color: var(--card);
+}
 .ds-form-subsection {
   display: flex;
   flex-direction: column;
   gap: 14px;
-  min-width: 0;
   padding: 16px;
-  border-radius: 12px;
-  border: 1px solid color-mix(in oklab, var(--primary) 16%, transparent);
-  background-color: var(--card);
 }
 .ds-form-subsection[data-tone="muted"] {
   background-color: color-mix(in oklab, var(--primary) 6%, var(--card));
@@ -11558,7 +11565,7 @@ html {
 }
 
 /* Fields sit on a white sub-section card: the theme's borderless white inputs need the input surface token to stay visible */
-.ds-form-subsection :is([data-slot="input"], [data-slot="select-trigger"], [data-slot="textarea"], .border-input.bg-white):not(.bg-transparent) {
+:is(.ds-form-subsection, .ds-panel-card) :is([data-slot="input"], [data-slot="select-trigger"], [data-slot="textarea"], .border-input.bg-white):not(.bg-transparent) {
   background-color: var(--input-background);
   border-color: color-mix(in oklab, var(--primary) 12%, transparent);
 }

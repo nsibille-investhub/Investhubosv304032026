@@ -22,7 +22,7 @@ const SEGMENTS: SegmentOption[] = [
 
 // Gestionnaires/Analysts
 const ANALYSTS = [
-  'Thomas',
+  'Thomas Bernard',
   'Sophie Martin',
   'Marc Dubois',
   'Claire Bernard',

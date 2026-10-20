@@ -13,6 +13,7 @@ export type Page =
   | 'partners'
   | 'retrocessions'
   | 'allfunds'
+  | 'capitalcalls'
   | 'events'
   | 'news'
   | 'datahub'
@@ -70,6 +71,7 @@ const PAGE_TO_PATH: Record<Page, string> = {
   'partners': '/partners',
   'retrocessions': '/retrocessions',
   'allfunds': '/allfunds',
+  'capitalcalls': '/capital-calls',
   'events': '/events',
   'news': '/news',
   'datahub': '/datahub',
@@ -141,6 +143,12 @@ export function getPageFromHash(): Page {
   // full URL, so sub-routes are handled in-page rather than in the page enum.
   if (path === '/datahub' || path.startsWith('/datahub/')) {
     return 'datahub';
+  }
+
+  // Capital call detail (/capital-calls/:id) stays on the listing page, which
+  // reads the id from the hash itself.
+  if (path === '/capital-calls' || path.startsWith('/capital-calls/')) {
+    return 'capitalcalls';
   }
 
   // Entity detail (/entities/:uid) stays on the entities page; the page reads

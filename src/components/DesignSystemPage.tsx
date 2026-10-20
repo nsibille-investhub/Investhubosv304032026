@@ -70,6 +70,11 @@ import {
   Tag as TagIcon,
   ShieldCheck,
   Server as ServerIcon,
+  Pencil,
+  LogIn,
+  Bell,
+  Trash2,
+  KeyRound,
   type LucideIcon,
 } from 'lucide-react';
 import * as React from 'react';
@@ -105,6 +110,9 @@ import { DocumentScope } from './ui/document-scope';
 import { FUNDS, INVESTORS } from '../utils/gedFixtures';
 import { FolderSpaceDialogPreview } from './ui/folder-space-dialog';
 import { KpiCard, KpiStrip } from './ui/kpi-card';
+import { ListingCountTag, ListingNameCell, ListingStackCell, ListingStackRow, ListingTypeTag } from './ui/listing';
+import { TableRowActions } from './ui/row-actions';
+import { SidePanelCard, SidePanelSection, SidePanelSwitchRow } from './ui/side-panel';
 import { PageHeader } from './ui/page-header';
 import { Button } from './ui/button';
 import { Input } from './ui/input';
@@ -521,7 +529,7 @@ const v3Checklist = [
 const investorListingColumnSpecs = [
   {
     column: 'NOM',
-    component: 'ClickableText',
+    component: 'ListingNameCell (ui/listing)',
     functional: 'Identifier rapidement l’investisseur et copier son identifiant.',
     guidelines: 'Nom: text-sm/font-medium, couleur primaire lien; ID: text-xs gray-500; icône copy 12px.',
     variants: 'Personne physique / Personne morale, nom long tronqué, état copié (check vert).',
@@ -542,10 +550,10 @@ const investorListingColumnSpecs = [
   },
   {
     column: 'TYPE',
-    component: 'Badge (variant="outline")',
-    functional: 'Qualifier la nature de l’investisseur.',
-    guidelines: 'Badge arrondi, text-sm, border neutre, icône contextuelle.',
-    variants: 'Company / Individual.',
+    component: 'ListingTypeTag (ui/listing)',
+    functional: 'Qualifier la nature de l’objet (investisseur, structure).',
+    guidelines: 'Pill bg-muted, border neutre, text-xs font-medium, icône 14px.',
+    variants: 'Entreprise / Particulier, SAS / SCI / Trust…',
   },
   {
     column: 'STATUT',
@@ -577,7 +585,7 @@ const investorListingColumnSpecs = [
   },
   {
     column: 'SOUSCRIPTIONS',
-    component: 'Badge + Button (subscription count)',
+    component: 'ListingCountTag (ui/listing)',
     functional: 'Montrer le volume de souscriptions et ouvrir le détail.',
     guidelines: 'Pill neutre avec icône fichier + count, interaction hover claire.',
     variants: '0, 1, n souscriptions.',
@@ -591,10 +599,31 @@ const investorListingColumnSpecs = [
   },
   {
     column: 'CLICKABLE TAG',
-    component: 'clickableTag',
+    component: 'ListingCountTag (ui/listing)',
     functional: 'Afficher une donnée comptée (ex: souscriptions) et ouvrir le détail au clic.',
     guidelines: 'Pill cliquable arrondie, icône document 14px + count text-sm, chevron de navigation à droite.',
     variants: '0 / 1 / n éléments, état hover (élévation légère), état disabled.',
+  },
+  {
+    column: 'ACTIONS',
+    component: 'TableRowActions (ui/row-actions)',
+    functional: 'Actions d’une ligne, règle commune à tous les tableaux : jusqu’à 3 actions, toutes en boutons icône ; au-delà, les 3 premières en boutons et les suivantes dans un menu ⋮ (« Plus d’actions »).',
+    guidelines: 'Boutons ghost 32 px, icône 16 px, colonne sans libellé alignée à droite. Libellé de l’action au survol (Tooltip), obligatoire partout. Action indisponible : bouton grisé, motif dans l’infobulle (ou sous le libellé dans le menu ⋮). Intents : neutral, success, warning, danger (suppression, toujours en dernier).',
+    variants: '1 à 3 actions (boutons seuls), 4 actions et plus (3 boutons + ⋮), action indisponible avec motif, action destructive.',
+  },
+  {
+    column: 'CELLULE MULTIPLE',
+    component: 'ListingStackCell + ListingStackRow (ui/listing)',
+    functional: 'Afficher une donnée multiple (rôles par structure, signature, matrice des droits d’accès) : premier élément en clair, « +n autres », carte de détail au clic.',
+    guidelines: 'Même rendu que la colonne Structure : icône 12px, texte xs gris tronqué, chevron ; « +n autres » en primaire. Carte w-96, en-tête icône + titre + sous-titre, lignes ListingStackRow (intitulé à gauche, Tags à droite, passage à la ligne si besoin).',
+    variants: 'Vide (—), un élément, plusieurs éléments ; carte groupée par type (fonds, structures, souscriptions).',
+  },
+  {
+    column: 'CARTE LISTING',
+    component: 'ListingCard + FilterBar + DataTable',
+    functional: 'Conteneur standard d’un listing : recherche et filtres en tête, tableau, pagination éventuelle. Utilisé par le listing investisseurs et par les onglets Contacts & signataires et Structures du détail investisseur.',
+    guidelines: 'Carte blanche rounded-2xl, ombre sm, bordure gray-200 ; barre p-4 bordée en bas ; bouton d’ajout et choix des colonnes (ListingColumnsMenu) à droite de la FilterBar ; pagination en pied (prop footer) ; totaux en tfoot (DataTable footer) ; clic sur la ligne = ouverture du panneau latéral ou de la page de détail.',
+    variants: 'Avec ou sans filtres, état vide (EmptyState), état filtré sans résultat.',
   },
   {
     column: 'DERNIÈRE ACTIVITÉ',
@@ -732,25 +761,13 @@ function renderSubscriptionInvestorPreview(contrepartie: { name: string; type: '
 function renderInvestorColumnPreview(column: string) {
   switch (column) {
     case 'NOM':
-      return (
-        <div className="flex flex-col gap-1 max-w-[220px]">
-          <motion.div whileHover={{ x: 2 }} className="text-sm font-medium cursor-pointer truncate">
-            <ClickableText>NextGen Ventures</ClickableText>
-          </motion.div>
-          <div className="flex items-center gap-1.5">
-            <span className="text-xs text-gray-500">ID: 1</span>
-            <button className="p-0.5 hover:bg-gray-100 rounded transition-colors">
-              <Copy className="w-3 h-3 text-gray-400" />
-            </button>
-          </div>
-        </div>
-      );
+      return <ListingNameCell name="NextGen Ventures" id={1} />;
     case 'CONTACTS':
       return <ContactsCard contacts={previewContacts} investorName="Vertex Capital SA" />;
     case 'STRUCTURE':
       return <StructuresCell structures={previewStructures} />;
     case 'TYPE':
-      return <Badge variant="outline">Individual</Badge>;
+      return <ListingTypeTag icon={Building2} label="Entreprise" />;
     case 'STATUT':
       return <StatusBadge label="En discussion" variant="warning" />;
     case 'DATE D’INSCRIPTION':
@@ -760,20 +777,37 @@ function renderInvestorColumnPreview(column: string) {
     case 'QUANTITY':
       return <span className="text-sm font-medium tabular-nums">42</span>;
     case 'SOUSCRIPTIONS':
-      return <Badge variant="outline">2</Badge>;
+      return <ListingCountTag icon={FileText} count={2} />;
     case 'SEGMENT':
       return <Tag label="HNWI" />;
     case 'CLICKABLE TAG':
+      return <ListingCountTag icon={FileText} count={0} />;
+    case 'ACTIONS':
       return (
-        <button
-          type="button"
-          className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-muted border border-border transition-all duration-200 group hover:scale-[1.03] hover:shadow-md hover:border-border/80 hover:bg-white"
-        >
-          <FileText className="w-3.5 h-3.5 text-muted-foreground group-hover:text-foreground" />
-          <span className="text-sm font-medium text-muted-foreground group-hover:text-foreground">0</span>
-          <ChevronRight className="w-3.5 h-3.5 text-muted-foreground group-hover:text-foreground transition-transform group-hover:translate-x-0.5" />
-        </button>
+        <TableRowActions
+          actions={[
+            { label: 'Voir le détail', icon: Eye, onClick: () => undefined },
+            { label: 'Modifier', icon: Pencil, onClick: () => undefined },
+            { label: 'Se connecter au portail', icon: LogIn, onClick: () => undefined, disabledReason: 'Accès portail non activé' },
+            { label: 'Supprimer', icon: Trash2, intent: 'danger', onClick: () => undefined },
+          ]}
+        />
       );
+    case 'CELLULE MULTIPLE':
+      return (
+        <ListingStackCell icon={KeyRound} items={['IH1 · Lecture seule', 'Holding Durand · Administrateur']} title="Accès de Claire Martin" subtitle="Matrice des droits : objet × rôle">
+          <div className="space-y-2">
+            <ListingStackRow icon={Banknote} label="IH1">
+              <Tag label="Lecture seule" />
+            </ListingStackRow>
+            <ListingStackRow icon={Building2} label="Holding Durand">
+              <Tag label="Administrateur" />
+            </ListingStackRow>
+          </div>
+        </ListingStackCell>
+      );
+    case 'CARTE LISTING':
+      return <span className="text-xs text-[#4F6166]">ListingCard</span>;
     case 'DERNIÈRE ACTIVITÉ':
       return (
         <LastActivityCard
@@ -1207,7 +1241,7 @@ export function DesignSystemPage() {
 
       <FundDetailComponentsSection />
 
-      <section className="rounded-2xl border border-[#D7E0DD] dark:border-[#1F2D2A] bg-white dark:bg-[#101615] p-8 md:p-10">
+      <section className="rounded-2xl border border-[#D7E0DD] dark:border-[#1F2D2A] bg-card p-8">
         <header className="mb-8 space-y-3">
           <h2 className="text-lg font-semibold text-[#1F3137] dark:text-[#E8F0EE]">
             Composant Formulaires, ds-form-section
@@ -1219,7 +1253,10 @@ export function DesignSystemPage() {
             Les champs ne sont jamais posés directement dessus&nbsp;: ils vont dans des
             <code className="text-xs px-1 py-0.5 rounded bg-[#F1F5F4] dark:bg-[#1C2624] mx-1">FormSubsection</code>,
             cartes blanches titrées en petites capitales, où les champs prennent la surface de saisie du thème pour rester lisibles.
-            Utilisé par la fenêtre de création d&apos;une souscription et par le détail d&apos;un document.
+            Utilisé par la fenêtre de création d&apos;une souscription. Les briques des panneaux latéraux
+            (<code className="text-xs px-1 py-0.5 rounded bg-[#F1F5F4] dark:bg-[#1C2624] mx-1">SidePanelSection</code>,
+            <code className="text-xs px-1 py-0.5 rounded bg-[#F1F5F4] dark:bg-[#1C2624] mx-1">SidePanelCard</code>)
+            partagent les mêmes styles : une seule apparence de section dans tout le back-office.
           </p>
           <p className="text-xs text-[#4F6166] dark:text-[#9DB2AE] leading-relaxed">
             Identifiant&nbsp;: <code className="text-xs px-1 py-0.5 rounded bg-[#F1F5F4] dark:bg-[#1C2624] font-semibold">ds-form-section</code>, Import&nbsp;:
@@ -1227,31 +1264,31 @@ export function DesignSystemPage() {
           </p>
         </header>
 
-        <div className="space-y-16">
+        <div className="space-y-6">
           <div className="space-y-4">
             <div className="flex items-baseline gap-3">
-              <span className="text-[11px] font-semibold uppercase tracking-[0.14em] text-[#456B6C]">
+              <span className="text-[11px] font-semibold uppercase tracking-wide text-[#456B6C]">
                 Variant, étapes numérotées
               </span>
               <span className="text-xs text-[#4F6166] dark:text-[#9DB2AE]">
                 états complet, en cours et en erreur
               </span>
             </div>
-            <div className="rounded-xl border border-[#D7E0DD] dark:border-[#1F2D2A] bg-[#F8FAFA] dark:bg-[#0B0D0D] p-4 md:p-6">
+            <div className="rounded-xl border border-[#D7E0DD] dark:border-[#1F2D2A] bg-[#F8FAFA] dark:bg-[#0B0D0D] p-4">
               <FormSectionStepsPreview />
             </div>
           </div>
 
           <div className="space-y-4">
             <div className="flex items-baseline gap-3">
-              <span className="text-[11px] font-semibold uppercase tracking-[0.14em] text-[#456B6C]">
+              <span className="text-[11px] font-semibold uppercase tracking-wide text-[#456B6C]">
                 Variant, panneau de détail
               </span>
               <span className="text-xs text-[#4F6166] dark:text-[#9DB2AE]">
                 sans numéro, sous-section secondaire teintée avec action
               </span>
             </div>
-            <div className="rounded-xl border border-[#D7E0DD] dark:border-[#1F2D2A] bg-[#F8FAFA] dark:bg-[#0B0D0D] p-4 md:p-6">
+            <div className="rounded-xl border border-[#D7E0DD] dark:border-[#1F2D2A] bg-[#F8FAFA] dark:bg-[#0B0D0D] p-4">
               <FormSectionDetailPreview />
             </div>
           </div>
@@ -2144,6 +2181,41 @@ const types: TimelineTypeMap<'created' | 'updated'> = {
               ))}
             </TableBody>
           </UITable>
+        </div>
+      </section>
+
+      <section className="rounded-2xl border border-[#D7E0DD] dark:border-[#1F2D2A] bg-white dark:bg-[#101615] p-6">
+        <h2 className="text-lg font-semibold text-[#1F3137] dark:text-[#E8F0EE] mb-2">Panneaux latéraux</h2>
+        <p className="text-sm text-[#4F6166] dark:text-[#9DB2AE] mb-4">
+          Import&nbsp;: <code className="text-xs px-1 py-0.5 rounded bg-[#F1F5F4] dark:bg-[#1C2624] font-semibold">components/ui/side-panel</code>.
+          Création et modification d’un objet dans un Sheet à droite (720 px, <code className="text-xs">SIDE_PANEL_WIDE_STYLE</code>) :
+          détail d’un document, d’une alerte, d’un contact, d’une structure. En-tête SheetTitle 26 px + SheetDescription, corps défilant
+          en sections, pied <code className="text-xs">SidePanelFooter</code> (Annuler / Enregistrer). Champs Input et SelectTrigger en h-11,
+          multisélections en ModernMultiSelect avec <code className="text-xs">SIDE_PANEL_BADGE_STYLE</code>.
+        </p>
+        <div className="grid gap-4 lg:grid-cols-2">
+          <SidePanelSection icon={Bell} title="SidePanelSection" description="Section bleutée : titre, icône, description facultative.">
+            <SidePanelCard className="space-y-4">
+              <SidePanelSwitchRow
+                label="SidePanelSwitchRow"
+                description="Libellé et interrupteur, précision dessous."
+                checked
+                onCheckedChange={() => undefined}
+              />
+              <p className="text-xs text-slate-500">SidePanelCard : carte blanche intérieure ; flush retire le padding.</p>
+            </SidePanelCard>
+          </SidePanelSection>
+          <ul className="text-sm text-[#4F6166] dark:text-[#9DB2AE] space-y-2 list-disc pl-5">
+            <li>Une section par sujet ; jamais de titre de section maison ni de carte à interrupteur maison.</li>
+            <li>Récapitulatif d’état : encadrés vert (emerald) ou ambre (amber) du panneau document.</li>
+            <li>Périmètre d’une dimension (fonds, structures, rôles, souscriptions) : <code className="text-xs">SidePanelScopeField</code>, tous / sélection / aucun, multisélection si « sélection ». Sert aux droits d’accès et aux liens KYC-AML d’un contact (mode « aucun » désactivable).</li>
+            <li>En-tête : <code className="text-xs">SidePanelHeader</code> (titre 22 px, description).</li>
+            <li>Modales : <code className="text-xs">BigModal</code> + <code className="text-xs">BigModalPanelHeader</code> / <code className="text-xs">BigModalBody</code> / <code className="text-xs">BigModalPanelFooter</code> (référence : Nouvelle souscription) ; confirmations : <code className="text-xs">ConfirmDialog</code>, même habillage en taille compacte.</li>
+            <li>Fichier : <code className="text-xs">SidePanelFileDrop</code>, zone de dépôt (clic ou glisser-déposer) puis carte du fichier avec Aperçu et Supprimer. Utilisée pour les versions d’un document et la pièce jointe d’une note.</li>
+            <li>Texte long : <code className="text-xs">RichTextEditor</code> ; dates : Input type date en h-11, comme le panneau document.</li>
+            <li>Listes composables (droits, liens) : une SidePanelCard par élément, titre « Droit n » + RowActionButton de suppression, bouton outline « Ajouter » pleine largeur sous la liste.</li>
+            <li>Ouverture depuis un listing : clic sur la ligne ou action « Modifier » de la ligne (TableRowActions) ; bouton « Ajouter » de la barre du listing pour la création.</li>
+          </ul>
         </div>
       </section>
 

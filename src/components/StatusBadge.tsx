@@ -1,6 +1,7 @@
 import type { LucideIcon } from "lucide-react";
 import { cn } from "./ui/utils";
 import { toneSurface, type Tone } from "./ui/tone";
+import { Tooltip, TooltipContent, TooltipTrigger } from "./ui/tooltip";
 
 export type StatusVariant =
   | "success"
@@ -15,6 +16,8 @@ interface StatusBadgeProps {
   label: string;
   variant?: StatusVariant;
   icon?: LucideIcon;
+  /** Précision au survol : motif d'un échec, origine d'un paiement... */
+  tooltip?: string | null;
   className?: string;
 }
 
@@ -24,9 +27,10 @@ export function StatusBadge({
   label,
   variant = "neutral",
   icon: Icon,
+  tooltip,
   className,
 }: StatusBadgeProps) {
-  return (
+  const badge = (
     <span
       style={variant === "neutral" ? undefined : toneSurface(variant as Tone)}
       className={cn(
@@ -38,5 +42,18 @@ export function StatusBadge({
       {Icon && <Icon className="w-3 h-3 shrink-0" aria-hidden />}
       {label}
     </span>
+  );
+  if (!tooltip) return badge;
+  return (
+    <Tooltip>
+      <TooltipTrigger asChild>
+        <span tabIndex={0} className="inline-flex">
+          {badge}
+        </span>
+      </TooltipTrigger>
+      <TooltipContent>
+        <span className="text-xs">{tooltip}</span>
+      </TooltipContent>
+    </Tooltip>
   );
 }

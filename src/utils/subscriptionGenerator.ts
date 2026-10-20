@@ -1,3 +1,4 @@
+import { randomLocation, randomStreetAddress } from './locationFixtures';
 // Générateur de données mock pour les souscriptions avec la même structure que les entités
 
 // Noms pour Individual investors
@@ -156,7 +157,7 @@ const ACTIVATED_STATUSES = [
   'Active'
 ];
 
-const analysts = ['Thomas', 'Sophie Martin', 'Marc Dubois', 'Claire Bernard', 'Alex Chen'];
+const analysts = ['Thomas Bernard', 'Sophie Martin', 'Marc Dubois', 'Claire Bernard', 'Alex Chen'];
 
 const kycStatuses = ['in progress', 'in review', 'to review', 'validated'];
 const crmSegmentsList = [
@@ -708,10 +709,10 @@ export function generateSubscriptions(count: number): Subscription[] {
     const legalName = type === 'Corporate' ? (contrepartie.structure || contrepartie.name) : undefined;
     const email = `${(contrepartie.investor || contrepartie.name).toLowerCase().replace(/\s+/g, '.')}@example.com`;
     const phone = `+33 6 ${randomNumber(10, 99)} ${randomNumber(10, 99)} ${randomNumber(10, 99)} ${randomNumber(10, 99)}`;
-    const cities = ['Paris', 'Lyon', 'Marseille', 'Bordeaux', 'Nice', 'Luxembourg', 'Genève'];
-    const subCity = randomElement(cities);
-    const address1 = `${randomNumber(1, 200)} ${randomElement(['Rue de Rivoli', 'Avenue des Champs-Élysées', 'Boulevard Haussmann', 'Rue du Faubourg Saint-Honoré'])}`;
-    const postalCode = `${randomNumber(10, 99)}${randomNumber(100, 999)}`;
+    const subLocation = randomLocation();
+    const subCity = subLocation.city;
+    const address1 = randomStreetAddress(subLocation);
+    const postalCode = subLocation.postalCode;
     const birthDate = type === 'Individual' ? new Date(randomNumber(1950, 1995), randomNumber(0, 11), randomNumber(1, 28)) : null;
     const nationalities = ['Française', 'Suisse', 'Luxembourgeoise', 'Belge', 'Monégasque'];
     const nationality = type === 'Individual' ? randomElement(nationalities) : undefined;

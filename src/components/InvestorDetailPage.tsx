@@ -11,12 +11,10 @@ import {
   Shield,
   Users,
   FileText,
-  PenTool,
   Briefcase,
   MessageSquare,
   Copy,
   Check,
-  Star,
   Key,
   Globe,
   Hash,
@@ -39,7 +37,6 @@ import {
   Save,
   X,
   ShieldCheck,
-  AlertTriangle,
   ChevronRight,
 } from 'lucide-react';
 import { Badge } from './ui/badge';
@@ -76,7 +73,10 @@ import {
   TooltipContent,
   TooltipTrigger,
 } from "./ui/tooltip";
-import { ContactsTab } from './investor-detail/ContactsTab';
+import { ContactsTab, countContactRows } from './investor-detail/ContactsTab';
+import { StructuresTab } from './investor-detail/StructuresTab';
+import { NotesTab } from './investor-detail/NotesTab';
+import { COUNTRIES, COUNTRY_LABEL_KEY } from '../utils/locationFixtures';
 import { useTranslation } from '../utils/languageContext';
 
 const INVESTOR_STATUS_VARIANT: Record<string, StatusVariant> = {
@@ -102,7 +102,7 @@ export function InvestorDetailPage({ investor: initialInvestor, onBack, initialT
     return complianceEntities.filter((e) => e.parent.type === 'Investor').slice(0, 3);
   })();
   const [copiedField, setCopiedField] = useState<string | null>(null);
-  const [activeTab, setActiveTab] = useState(initialTab);
+  const [activeTab, setActiveTab] = useState(initialTab === 'signataires' ? 'contacts' : initialTab);
   
   // États d'édition pour chaque section
   const [editingGeneral, setEditingGeneral] = useState(false);
@@ -150,6 +150,9 @@ export function InvestorDetailPage({ investor: initialInvestor, onBack, initialT
     }).format(new Date(date));
   };
 
+  const countryLabel = (country: string) =>
+    COUNTRY_LABEL_KEY[country] ? t(`investors.detail.countryOptions.${COUNTRY_LABEL_KEY[country]}`) : country;
+
   const formatCurrency = (amount: number): string => {
     return new Intl.NumberFormat(lang === 'en' ? 'en-US' : 'fr-FR', {
       style: 'currency',
@@ -178,16 +181,6 @@ export function InvestorDetailPage({ investor: initialInvestor, onBack, initialT
     }
   };
 
-  const getNoteTypeColor = (type: string) => {
-    switch (type) {
-      case 'General': return 'bg-muted text-foreground';
-      case 'KYC': return 'bg-blue-100 text-blue-700';
-      case 'Risk': return 'bg-red-100 text-red-700';
-      case 'Commercial': return 'bg-purple-100 text-purple-700';
-      case 'Legal': return 'bg-amber-100 text-amber-700';
-      default: return 'bg-muted text-foreground';
-    }
-  };
 
   // Fonctions de gestion de l'édition
   const startEdit = (section: string) => {
@@ -406,10 +399,12 @@ export function InvestorDetailPage({ investor: initialInvestor, onBack, initialT
               {t(`investors.type.${investor.type}`)}
             </PageHeaderSubtitleItem>
 
-            {investor.country && (
+            {(investor.city || investor.state || investor.country) && (
               <>
                 <PageHeaderSubtitleSeparator />
-                <PageHeaderSubtitleItem icon={MapPin}>{investor.country}</PageHeaderSubtitleItem>
+                <PageHeaderSubtitleItem icon={MapPin}>
+                  {[investor.city, investor.state, investor.country && countryLabel(investor.country)].filter(Boolean).join(', ')}
+                </PageHeaderSubtitleItem>
               </>
             )}
 
@@ -417,7 +412,7 @@ export function InvestorDetailPage({ investor: initialInvestor, onBack, initialT
               <>
                 <PageHeaderSubtitleSeparator />
                 <PageHeaderSubtitleItem icon={UserCheck}>
-                  {t('investors.detail.header.analyst', { name: investor.analyst })}
+                  {t('investors.detail.header.manager', { name: investor.analyst })}
                 </PageHeaderSubtitleItem>
               </>
             )}
@@ -449,8 +444,7 @@ export function InvestorDetailPage({ investor: initialInvestor, onBack, initialT
             overflow="scroll"
             items={[
               { value: 'profil', icon: User, label: t('investors.detail.tabs.profile') },
-              { value: 'contacts', icon: Users, label: t('investors.detail.tabs.contacts'), badge: investor.contacts.length },
-              { value: 'signataires', icon: PenTool, label: t('investors.detail.tabs.signatories'), badge: investor.signatories.length },
+              { value: 'contacts', icon: Users, label: t('investors.detail.tabs.contacts'), badge: countContactRows(investor) },
               { value: 'structures', icon: Building2, label: t('investors.detail.tabs.structures'), badge: investor.structures.length },
               { value: 'notes', icon: FileText, label: t('investors.detail.tabs.notes'), badge: investor.notes.length },
               { value: 'souscriptions', icon: Briefcase, label: t('investors.detail.tabs.subscriptions'), badge: investor.subscriptionsCount },
@@ -621,21 +615,21 @@ export function InvestorDetailPage({ investor: initialInvestor, onBack, initialT
                     type="text"
                   />
 
+                  {investor.state && (
+                    <EditableField
+                      label={t('investors.detail.general.state')}
+                      field="state"
+                      value={investor.state}
+                      type="text"
+                    />
+                  )}
+
                   <EditableField
                     label={t('investors.detail.general.country')}
                     field="country"
                     value={investor.country}
                     type="select"
-                    options={[
-                      { value: 'France', label: t('investors.detail.countryOptions.France') },
-                      { value: 'Belgium', label: t('investors.detail.countryOptions.Belgium') },
-                      { value: 'Switzerland', label: t('investors.detail.countryOptions.Switzerland') },
-                      { value: 'Luxembourg', label: t('investors.detail.countryOptions.Luxembourg') },
-                      { value: 'Germany', label: t('investors.detail.countryOptions.Germany') },
-                      { value: 'United Kingdom', label: t('investors.detail.countryOptions.UnitedKingdom') },
-                      { value: 'Spain', label: t('investors.detail.countryOptions.Spain') },
-                      { value: 'Italy', label: t('investors.detail.countryOptions.Italy') }
-                    ]}
+                    options={COUNTRIES.map((country) => ({ value: country, label: countryLabel(country) }))}
                     icon={<Globe className="w-4 h-4 text-muted-foreground/60" />}
                   />
 
@@ -1064,302 +1058,14 @@ export function InvestorDetailPage({ investor: initialInvestor, onBack, initialT
             <ContactsTab investor={investor} />
           </TabsContent>
 
-          {/* Signataires Tab */}
-          <TabsContent value="signataires">
-            <div className="bg-card rounded-xl border border-border">
-              <div className="p-6 border-b border-border">
-                <div className="flex items-center justify-between">
-                  <h2 className="font-semibold text-foreground flex items-center gap-2">
-                    <PenTool className="w-5 h-5 text-purple-600" />
-                    {t('investors.detail.signatories.title', { count: investor.signatories.length })}
-                  </h2>
-                  <Button
-                    size="sm"
-                    variant="outline"
-                    className="gap-2"
-                    onClick={() => toast.success(t('investors.detail.actions.comingSoon'))}
-                  >
-                    <Plus className="w-4 h-4" />
-                    {t('investors.detail.signatories.addSignatory')}
-                  </Button>
-                </div>
-              </div>
-              
-              <div className="divide-y divide-border">
-                {investor.signatories.map((signatory, idx) => (
-                  <motion.div
-                    key={signatory.id}
-                    initial={{ opacity: 0, x: -20 }}
-                    animate={{ opacity: 1, x: 0 }}
-                    transition={{ delay: idx * 0.05 }}
-                    className="p-6 hover:bg-muted transition-colors"
-                  >
-                    <div className="flex items-start justify-between">
-                      <div className="flex-1">
-                        <div className="flex items-center gap-3 mb-2">
-                          <div className="w-10 h-10 rounded-full bg-gradient-to-br from-purple-500 to-pink-500 flex items-center justify-center">
-                            <span className="text-white text-sm font-semibold">
-                              {signatory.firstName[0]}{signatory.lastName[0]}
-                            </span>
-                          </div>
-                          <div>
-                            <div className="flex items-center gap-2">
-                              <span className="font-semibold text-foreground">
-                                {signatory.firstName} {signatory.lastName}
-                              </span>
-                              {signatory.isPrimary && (
-                                <Badge className="bg-purple-100 text-purple-700 border-purple-300 text-xs px-2">
-                                  <Star className="w-3 h-3 mr-1 fill-purple-700" />
-                                  {t('investors.detail.signatories.primarySignatory')}
-                                </Badge>
-                              )}
-                            </div>
-                            <div className="text-sm text-muted-foreground flex items-center gap-1.5">
-                              <Briefcase className="w-3.5 h-3.5" />
-                              {signatory.function}
-                            </div>
-                          </div>
-                        </div>
-                        
-                        <div className="ml-13 space-y-2">
-                          <div className="flex items-center gap-2">
-                            <Mail className="w-4 h-4 text-muted-foreground/60" />
-                            <span className="text-sm text-foreground">{signatory.email}</span>
-                            <CopyButton text={signatory.email} field={`sig-${signatory.id}-email`} />
-                          </div>
-                          
-                          <div className="flex items-center gap-2">
-                            <Phone className="w-4 h-4 text-muted-foreground/60" />
-                            <span className="text-sm text-foreground">{signatory.phone}</span>
-                            <CopyButton text={signatory.phone} field={`sig-${signatory.id}-phone`} />
-                          </div>
-                        </div>
-                      </div>
-                      
-                      <div className="ml-4">
-                        <Badge 
-                          variant="outline" 
-                          className={`border ${
-                            signatory.signatureLevel === 'Individual' 
-                              ? 'bg-blue-50 text-blue-700 border-blue-200' 
-                              : signatory.signatureLevel === 'Joint'
-                              ? 'bg-amber-50 text-amber-700 border-amber-200'
-                              : 'bg-emerald-50 text-emerald-700 border-emerald-200'
-                          }`}
-                        >
-                          <PenTool className="w-3 h-3 mr-1" />
-                          {t(`investors.detail.signatureLevel.${signatory.signatureLevel}`)}
-                        </Badge>
-                      </div>
-                    </div>
-                  </motion.div>
-                ))}
-              </div>
-            </div>
-          </TabsContent>
-
           {/* Structures Tab */}
           <TabsContent value="structures">
-            <div className="bg-card rounded-xl border border-border">
-              <div className="p-6 border-b border-border">
-                <h2 className="font-semibold text-foreground flex items-center gap-2">
-                  <Building2 className="w-5 h-5 text-cyan-600" />
-                  {t('investors.detail.structuresList.title', { count: investor.structures.length })}
-                </h2>
-              </div>
-              
-              <div className="p-6">
-                <div className="grid gap-4">
-                  {investor.structures.map((structure, idx) => (
-                    <motion.div
-                      key={structure.id}
-                      initial={{ opacity: 0, y: 10 }}
-                      animate={{ opacity: 1, y: 0 }}
-                      transition={{ delay: idx * 0.05 }}
-                      className="p-5 rounded-lg border border-border hover:border-blue-300 hover:bg-blue-50/30 transition-all"
-                    >
-                      <div className="space-y-3">
-                        {/* En-tête avec nom et type */}
-                        <div className="flex items-start justify-between">
-                          <div className="flex items-center gap-2">
-                            <Building2 className="w-5 h-5 text-muted-foreground/60" />
-                            <span className="font-semibold text-foreground">{structure.name}</span>
-                          </div>
-                          <Badge 
-                            variant="outline" 
-                            className={`border text-xs ${
-                              structure.type === 'SCI' ? 'bg-blue-50 text-blue-700 border-blue-200' :
-                              structure.type === 'SARL' ? 'bg-purple-50 text-purple-700 border-purple-200' :
-                              structure.type === 'SAS' ? 'bg-indigo-50 text-indigo-700 border-indigo-200' :
-                              structure.type === 'SA' ? 'bg-violet-50 text-violet-700 border-violet-200' :
-                              structure.type === 'Trust' ? 'bg-emerald-50 text-emerald-700 border-emerald-200' :
-                              structure.type === 'Foundation' ? 'bg-amber-50 text-amber-700 border-amber-200' :
-                              'bg-cyan-50 text-cyan-700 border-cyan-200'
-                            }`}
-                          >
-                            {structure.type}
-                          </Badge>
-                        </div>
-
-                        {/* Informations détaillées */}
-                        <div className="grid grid-cols-2 gap-3 pl-7">
-                          {/* Représentant légal */}
-                          {structure.legalRepresentative && (
-                            <div className="flex items-center gap-2 col-span-2">
-                              <User className="w-4 h-4 text-blue-600" />
-                              <span className="text-sm font-medium text-foreground">
-                                {structure.legalRepresentative}
-                              </span>
-                            </div>
-                          )}
-
-                          {/* Contacts */}
-                          <div className="flex items-center gap-2">
-                            <Users className="w-4 h-4 text-muted-foreground/60" />
-                            <span className="text-sm text-muted-foreground">
-                              {(structure.contactsCount || 0) > 1
-                                ? t('investors.detail.structuresList.contactsCountMany', { count: structure.contactsCount || 0 })
-                                : t('investors.detail.structuresList.contactsCountOne', { count: structure.contactsCount || 0 })}
-                            </span>
-                          </div>
-
-                          {/* Souscriptions */}
-                          <div className="flex items-center gap-2">
-                            <FileText className="w-4 h-4 text-muted-foreground/60" />
-                            <span className="text-sm text-muted-foreground">
-                              {(structure.subscriptionsCount || 0) > 1
-                                ? t('investors.detail.structuresList.subscriptionsCountMany', { count: structure.subscriptionsCount || 0 })
-                                : t('investors.detail.structuresList.subscriptionsCountOne', { count: structure.subscriptionsCount || 0 })}
-                            </span>
-                          </div>
-
-                          {/* Montant total investi */}
-                          <div className="flex items-center gap-2 col-span-2">
-                            <TrendingUp className="w-4 h-4 text-emerald-600" />
-                            <span className="text-sm font-semibold text-foreground">
-                              {t('investors.detail.structuresList.investedAmount', {
-                                amount: structure.totalInvested ? `${(structure.totalInvested / 1000000).toFixed(2)} M€` : '0 €'
-                              })}
-                            </span>
-                          </div>
-
-                          {/* Statut KYC */}
-                          <div className="flex items-center gap-2 col-span-2">
-                            <Badge
-                              variant="outline"
-                              className={`text-xs px-2 py-1 ${
-                                structure.kycStatus === 'Validé' ? 'bg-emerald-50 text-emerald-700 border-emerald-200' :
-                                structure.kycStatus === 'En cours' ? 'bg-blue-50 text-blue-700 border-blue-200' :
-                                structure.kycStatus === 'À revoir' ? 'bg-amber-50 text-amber-700 border-amber-200' :
-                                'bg-muted text-foreground border-border'
-                              }`}
-                            >
-                              {t('investors.detail.structuresList.kycLabel', {
-                                status: structure.kycStatus
-                                  ? t(`investors.detail.kycStatus.${structure.kycStatus}`)
-                                  : t('investors.detail.kycStatus.Non commencé')
-                              })}
-                            </Badge>
-                          </div>
-
-                          {/* Risk Score */}
-                          {structure.riskScore !== undefined && (
-                            <div className="flex items-center gap-2 col-span-2">
-                              {structure.riskScore < 30 ? (
-                                <ShieldCheck className="w-4 h-4 text-emerald-600" />
-                              ) : structure.riskScore < 70 ? (
-                                <AlertTriangle className="w-4 h-4 text-amber-600" />
-                              ) : (
-                                <AlertTriangle className="w-4 h-4 text-red-600" />
-                              )}
-                              <span className={`text-sm font-medium ${
-                                structure.riskScore < 30 ? 'text-emerald-600' :
-                                structure.riskScore < 70 ? 'text-amber-600' :
-                                'text-red-600'
-                              }`}>
-                                {t('investors.detail.structuresList.riskScore', { score: structure.riskScore })}
-                              </span>
-                            </div>
-                          )}
-                        </div>
-                      </div>
-                    </motion.div>
-                  ))}
-                </div>
-              </div>
-            </div>
+            <StructuresTab structures={investor.structures} onOpenTab={setActiveTab} />
           </TabsContent>
 
           {/* Notes Tab */}
           <TabsContent value="notes">
-            <div className="bg-card rounded-xl border border-border">
-              <div className="p-6 border-b border-border">
-                <div className="flex items-center justify-between">
-                  <h2 className="font-semibold text-foreground flex items-center gap-2">
-                    <FileText className="w-5 h-5 text-amber-600" />
-                    {t('investors.detail.notes.title', { count: investor.notes.length })}
-                  </h2>
-                  <div className="flex items-center gap-2">
-                    <Button
-                      size="sm"
-                      variant="outline"
-                      className="gap-2"
-                      onClick={() => toast.success(t('investors.detail.actions.comingSoon'))}
-                    >
-                      <Filter className="w-4 h-4" />
-                      {t('investors.detail.notes.filter')}
-                    </Button>
-                    <Button
-                      size="sm"
-                      style={{ background: 'linear-gradient(62.32deg, #000000 10.53%, #0F323D 88.82%)' }}
-                      className="gap-2 text-white"
-                      onClick={() => toast.success(t('investors.detail.actions.comingSoon'))}
-                    >
-                      <Plus className="w-4 h-4" />
-                      {t('investors.detail.notes.newNote')}
-                    </Button>
-                  </div>
-                </div>
-              </div>
-              
-              <div className="divide-y divide-border">
-                {investor.notes.map((note, idx) => (
-                  <motion.div
-                    key={note.id}
-                    initial={{ opacity: 0, y: 10 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    transition={{ delay: idx * 0.03 }}
-                    className={`p-6 hover:bg-muted transition-colors ${note.isImportant ? 'bg-amber-50/30' : ''}`}
-                  >
-                    <div className="flex items-start gap-4">
-                      <div className="w-8 h-8 rounded-full bg-gradient-to-br from-amber-500 to-orange-500 flex items-center justify-center flex-shrink-0">
-                        <FileText className="w-4 h-4 text-white" />
-                      </div>
-                      
-                      <div className="flex-1">
-                        <div className="flex items-center gap-2 mb-2">
-                          <Badge className={`text-xs ${getNoteTypeColor(note.type)}`}>
-                            {t(`investors.detail.noteTypes.${note.type}`)}
-                          </Badge>
-                          {note.isImportant && (
-                            <Badge className="bg-red-100 text-red-700 text-xs">
-                              <AlertCircle className="w-3 h-3 mr-1" />
-                              {t('investors.detail.notes.important')}
-                            </Badge>
-                          )}
-                          <span className="text-xs text-muted-foreground">•</span>
-                          <span className="text-xs text-muted-foreground">{formatDate(note.date)}</span>
-                          <span className="text-xs text-muted-foreground">•</span>
-                          <span className="text-xs text-muted-foreground">{t('investors.detail.notes.byAuthor', { author: note.author })}</span>
-                        </div>
-                        
-                        <p className="text-sm text-foreground leading-relaxed">{note.content}</p>
-                      </div>
-                    </div>
-                  </motion.div>
-                ))}
-              </div>
-            </div>
+            <NotesTab notes={investor.notes} />
           </TabsContent>
 
           {/* Souscriptions Tab */}

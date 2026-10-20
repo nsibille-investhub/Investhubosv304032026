@@ -44,7 +44,7 @@ import {
   ClipboardCheck,
   type LucideIcon,
 } from 'lucide-react';
-import { BigModal, BigModalContent, BigModalTitle, BigModalDescription } from './ui/big-modal';
+import { BigModal, BigModalBody, BigModalContent, BigModalPanelFooter, BigModalPanelHeader } from './ui/big-modal';
 import { Input } from './ui/input';
 import { Button } from './ui/button';
 import { Badge } from './ui/badge';
@@ -1364,48 +1364,17 @@ export function NewSubscriptionDialog({
   return (
     <BigModal open={open} onOpenChange={onClose}>
       <BigModalContent className="p-0 gap-0">
-        <BigModalTitle className="sr-only">
-          {isEditMode ? t('subscriptions.editDialog.title') : t('subscriptions.newDialog.srTitle')}
-        </BigModalTitle>
-        <BigModalDescription className="sr-only">
-          {isEditMode
-            ? t('subscriptions.editDialog.subtitle')
-            : t('subscriptions.newDialog.srDescription')}
-        </BigModalDescription>
-        
         <div className="flex flex-col h-full overflow-hidden rounded-3xl">
-          {/* Header Compact */}
-          <div className="px-8 py-4 bg-card border-b border-border">
-            <div className="flex items-center justify-between">
-              <div className="flex items-center gap-3">
-                <div className="size-10 rounded-xl bg-primary text-primary-foreground flex items-center justify-center shadow-sm">
-                  {isEditMode ? <Pencil className="w-5 h-5" /> : <Plus className="w-5 h-5" />}
-                </div>
-                <div>
-                  <h2 className="text-xl font-bold text-foreground">
-                    {isEditMode ? t('subscriptions.editDialog.title') : t('subscriptions.newDialog.title')}
-                  </h2>
-                  <p className="text-xs text-muted-foreground">
-                    {isEditMode
-                      ? t('subscriptions.editDialog.subtitle')
-                      : t('subscriptions.newDialog.singleStepSubtitle')}
-                  </p>
-                </div>
-              </div>
-
-              <Button
-                onClick={onClose}
-                variant="ghost"
-                size="icon"
-                className="hover:bg-muted rounded-full h-8 w-8"
-              >
-                <X className="w-4 h-4 text-muted-foreground" />
-              </Button>
-            </div>
-          </div>
+          <BigModalPanelHeader
+            icon={isEditMode ? Pencil : Plus}
+            title={isEditMode ? t('subscriptions.editDialog.title') : t('subscriptions.newDialog.title')}
+            subtitle={isEditMode ? t('subscriptions.editDialog.subtitle') : t('subscriptions.newDialog.singleStepSubtitle')}
+            onClose={onClose}
+            closeLabel={t('common.confirmDialog.close')}
+          />
 
           {/* Step content */}
-          <div ref={scrollContainerRef} className="flex-1 overflow-y-auto px-8 py-6">
+          <BigModalBody ref={scrollContainerRef}>
             {step === 'init' && (
               <div className="flex flex-col" style={{ gap: 20 }}>
                   <FormSection
@@ -2702,7 +2671,7 @@ export function NewSubscriptionDialog({
                     >
                       {formData.nameMode === 'auto' ? (
                         <div className="space-y-1.5">
-                          <div className="flex min-h-10 items-center rounded-md border border-input bg-white px-3 py-2 text-sm">
+                          <div className="flex items-center rounded-md border border-input bg-white px-3 py-2 text-sm" style={{ minHeight: 40 }}>
                             {generatedSubscriptionName ? (
                               <span className="font-medium text-foreground break-words">{generatedSubscriptionName}</span>
                             ) : (
@@ -2822,7 +2791,7 @@ export function NewSubscriptionDialog({
                                       <span className="ml-1.5 font-normal text-muted-foreground">
                                         {t(`subscriptions.newDialog.review.roles.${recipient.role}`)}
                                       </span>
-                                      <Badge variant="outline" className="ml-2 text-xs h-5 align-middle">
+                                      <Badge variant="outline" className="ml-2 text-xs h-5">
                                         {t(`subscriptions.newDialog.review.delivery.${recipient.delivery}`)}
                                       </Badge>
                                     </div>
@@ -3016,14 +2985,13 @@ export function NewSubscriptionDialog({
               )}
             </div>
             )}
-          </div>
+          </BigModalBody>
 
           {/* Footer */}
-          <div className="border-t border-border px-8 py-4 bg-muted">
-            <div className="flex items-center justify-between gap-3">
-              {step === 'init' ? (
-                <>
-                  <Button
+          <BigModalPanelFooter
+            start={
+              step === 'init' ? (
+                <Button
                     variant="ghost"
                     onClick={onClose}
                     disabled={isSubmitting}
@@ -3033,8 +3001,22 @@ export function NewSubscriptionDialog({
                     <X className="w-4 h-4 mr-1" />
                     {t('subscriptions.newDialog.cancel')}
                   </Button>
-
-                  <div className="flex items-center gap-2">
+              ) : (
+                <Button
+                    variant="ghost"
+                    onClick={() => setStep('init')}
+                    disabled={isSubmitting}
+                    size="sm"
+                    className="h-9"
+                  >
+                    <ArrowLeft className="w-4 h-4 mr-1" />
+                    {t('subscriptions.newDialog.back')}
+                  </Button>
+              )
+            }
+            end={
+              step === 'init' ? (
+                <>
                     {isEditMode ? (
                       <Button
                         onClick={handleSubmit}
@@ -3087,22 +3069,9 @@ export function NewSubscriptionDialog({
                         </Button>
                       </>
                     )}
-                  </div>
-                </>
+</>
               ) : (
-                <>
-                  <Button
-                    variant="ghost"
-                    onClick={() => setStep('init')}
-                    disabled={isSubmitting}
-                    size="sm"
-                    className="h-9"
-                  >
-                    <ArrowLeft className="w-4 h-4 mr-1" />
-                    {t('subscriptions.newDialog.back')}
-                  </Button>
-
-                  <Button
+                <Button
                     onClick={handleSubmit}
                     disabled={isSubmitting}
                     size="sm"
@@ -3120,10 +3089,9 @@ export function NewSubscriptionDialog({
                       </>
                     )}
                   </Button>
-                </>
-              )}
-            </div>
-          </div>
+              )
+            }
+          />
         </div>
         <Dialog open={!!previewRecipient} onOpenChange={(open) => !open && setPreviewRecipient(null)}>
           <DialogContent

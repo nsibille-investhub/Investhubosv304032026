@@ -9,7 +9,6 @@ import {
   Gem,
   LineChart,
   Lock,
-  MoreHorizontal,
   Plus,
   Receipt,
   Trash2,
@@ -19,6 +18,7 @@ import { useTranslation } from '../../utils/languageContext';
 import { formatCurrency, formatDate, formatNavValue } from '../../utils/formatters';
 import type { FieldTarget, FundDetail, FundShare } from '../../utils/fundDetailMock';
 import { DataTable, type ColumnConfig } from '../DataTable';
+import { TableRowActions } from '../ui/row-actions';
 import { StatusBadge } from '../StatusBadge';
 import { BlockersPanel } from '../ui/blockers-panel';
 import { Button } from '../ui/button';
@@ -26,13 +26,6 @@ import { Card } from '../ui/card';
 import { ConfirmDialog } from '../ui/confirm-dialog';
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from '../ui/dialog';
 import { DisabledReason } from '../ui/disabled-reason';
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuSeparator,
-  DropdownMenuTrigger,
-} from '../ui/dropdown-menu';
 import { Tooltip, TooltipContent, TooltipTrigger } from '../ui/tooltip';
 import { WIDGET_TITLE_CLASS } from '../ui/utils';
 import type { SettingsValues } from './settings/settingsSchema';
@@ -269,49 +262,30 @@ export function FundSharesTab({
     },
     {
       key: 'actions',
-      label: t(`${K}.columns.actions`),
+      label: '',
       align: 'right',
       render: row => (
-        <span onClick={event => event.stopPropagation()}>
-          <DropdownMenu>
-            <DropdownMenuTrigger asChild>
-              <Button variant="ghost" size="icon" aria-label={t(`${K}.actionsFor`, { name: row.name })}>
-                <MoreHorizontal className="w-4 h-4" />
-              </Button>
-            </DropdownMenuTrigger>
-            <DropdownMenuContent align="end">
-              <DropdownMenuItem onClick={() => setOpenId(row.shareId)}>
-                <Eye className="w-4 h-4" />
-                {t(`${K}.actions.open`)}
-              </DropdownMenuItem>
-              <DropdownMenuItem onClick={() => onOpenNavs(row.shareId)}>
-                <LineChart className="w-4 h-4" />
-                {t(`${K}.actions.navs`)}
-              </DropdownMenuItem>
-              <DropdownMenuSeparator />
-              {(
-                [
-                  ['duplicate', Copy, () => duplicate(toShare(row)), writeReason],
-                  ['close', XCircle, () => setDialog({ kind: 'close', shareId: row.shareId }), closeReason(toShare(row))],
-                  ['delete', Trash2, () => askDelete(toShare(row)), writeReason],
-                ] as const
-              ).map(([key, Icon, onClick, reason]) => (
-                <DropdownMenuItem
-                  key={key}
-                  onClick={onClick}
-                  disabled={Boolean(reason)}
-                  variant={key === 'delete' ? 'destructive' : 'default'}
-                >
-                  <Icon className="w-4 h-4" />
-                  <span className="flex flex-col">
-                    <span>{t(`${K}.actions.${key}`)}</span>
-                    {reason && <span className="text-xs text-muted-foreground">{reason}</span>}
-                  </span>
-                </DropdownMenuItem>
-              ))}
-            </DropdownMenuContent>
-          </DropdownMenu>
-        </span>
+        <TableRowActions
+          actions={[
+            { label: t(`${K}.actions.open`), icon: Eye, onClick: () => setOpenId(row.shareId) },
+            { label: t(`${K}.actions.navs`), icon: LineChart, onClick: () => onOpenNavs(row.shareId) },
+            { label: t(`${K}.actions.duplicate`), icon: Copy, onClick: () => duplicate(toShare(row)), disabledReason: writeReason },
+            {
+              label: t(`${K}.actions.close`),
+              icon: XCircle,
+              onClick: () => setDialog({ kind: 'close', shareId: row.shareId }),
+              disabledReason: closeReason(toShare(row)),
+            },
+            {
+              label: t(`${K}.actions.delete`),
+              icon: Trash2,
+              intent: 'danger',
+              onClick: () => askDelete(toShare(row)),
+              disabledReason: writeReason,
+              separatorBefore: true,
+            },
+          ]}
+        />
       ),
     },
   ];

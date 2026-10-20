@@ -1,5 +1,13 @@
 # Project conventions for Claude
 
+## Design System first
+
+Before any UI change, load the `investhub-design-system` skill
+(`.claude/skills/investhub-design-system/SKILL.md`). Never hand-craft a component: use the
+Design System or add the component to `src/components/ui/` and document it. The Tailwind CSS in
+`src/index.css` is precompiled: run `node scripts/check-tailwind-classes.mjs --changed origin/main`
+before delivering.
+
 ## i18n is mandatory
 
 **Every user-facing string MUST be translated.** Never hardcode literals in

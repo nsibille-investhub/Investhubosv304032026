@@ -31,6 +31,7 @@ import {
 } from './ui/sheet';
 import { Badge } from './ui/badge';
 import { Button } from './ui/button';
+import { SIDE_PANEL_WIDE_STYLE, SidePanelCard, SidePanelSection } from './ui/side-panel';
 import { Textarea } from './ui/textarea';
 import { StatusBadge } from './StatusBadge';
 import {
@@ -140,14 +141,7 @@ function initials(name: string): string {
     .join('');
 }
 
-const SECTION_STYLE = {
-  backgroundColor: '#EEF1F7',
-  borderColor: '#000E2B1F',
-} as const;
-
 const INNER_CARD_STYLE = { borderColor: '#000E2B33' } as const;
-
-const ACCENT_COLOR = '#000E2B';
 
 export function AlertDetailDrawer({
   alert,
@@ -231,12 +225,7 @@ export function AlertDetailDrawer({
     <Sheet open={isOpen && !!alert} onOpenChange={(open) => !open && onClose()}>
       <SheetContent
         side="right"
-        style={{
-          width: 'min(720px, 92vw)',
-          maxWidth: 'none',
-          ['--tw-enter-translate-x' as never]: '100%',
-          ['--tw-exit-translate-x' as never]: '100%',
-        }}
+        style={SIDE_PANEL_WIDE_STYLE}
         className="h-full p-0 gap-0"
       >
         {alert ? (
@@ -285,22 +274,8 @@ export function AlertDetailDrawer({
         <div className="flex-1 overflow-y-auto px-6 py-5 space-y-5">
 
           {/* CONTEXT SECTION */}
-          <section
-            className="space-y-3 rounded-2xl p-4 border"
-            style={SECTION_STYLE}
-          >
-            <p
-              className="font-semibold flex items-center gap-2"
-              style={{ color: ACCENT_COLOR }}
-            >
-              <ShieldCheck className="w-5 h-5" style={{ color: ACCENT_COLOR }} />
-              {t('complianceAlerts.drawer.context')}
-            </p>
-
-            <div
-              className="rounded-2xl border bg-white p-4 md:p-5"
-              style={INNER_CARD_STYLE}
-            >
+          <SidePanelSection icon={ShieldCheck} title={t('complianceAlerts.drawer.context')}>
+            <SidePanelCard>
               <dl className="grid gap-x-6 gap-y-4 sm:grid-cols-2">
                 <ContextField label={t('complianceAlerts.drawer.attachedDossier')}>
                   {alert.dossier}
@@ -330,30 +305,12 @@ export function AlertDetailDrawer({
                   {alert.changes ? t(CHANGE_LABEL_KEY[alert.changes]) : '—'}
                 </ContextField>
               </dl>
-            </div>
-          </section>
+            </SidePanelCard>
+          </SidePanelSection>
 
           {/* DECISION SECTION */}
-          <section
-            className="space-y-3 rounded-2xl p-4 border"
-            style={SECTION_STYLE}
-          >
-            <div>
-              <p
-                className="font-semibold flex items-center gap-2"
-                style={{ color: ACCENT_COLOR }}
-              >
-                <FileText className="w-5 h-5" style={{ color: ACCENT_COLOR }} />
-                {t('complianceAlerts.drawer.confirm')}
-              </p>
-              <p className="text-sm text-slate-600">
-                {t('complianceAlerts.drawer.commentPlaceholder')}
-              </p>
-            </div>
-            <div
-              className="rounded-2xl border bg-white p-4 md:p-5 space-y-3"
-              style={INNER_CARD_STYLE}
-            >
+          <SidePanelSection icon={FileText} title={t('complianceAlerts.drawer.confirm')} description={t('complianceAlerts.drawer.commentPlaceholder')}>
+            <SidePanelCard className="space-y-3">
               <div className="flex items-center justify-between text-xs text-slate-600">
                 <div className="flex items-center gap-1.5">
                   <Calendar className="w-3.5 h-3.5" />
@@ -428,26 +385,12 @@ export function AlertDetailDrawer({
                   {t('complianceAlerts.drawer.confirm')}
                 </Button>
               </div>
-            </div>
-          </section>
+            </SidePanelCard>
+          </SidePanelSection>
 
           {/* ALERT DETAILS SECTION */}
-          <section
-            className="space-y-3 rounded-2xl p-4 border"
-            style={SECTION_STYLE}
-          >
-            <p
-              className="font-semibold flex items-center gap-2"
-              style={{ color: ACCENT_COLOR }}
-            >
-              <AlertTriangle className="w-5 h-5" style={{ color: ACCENT_COLOR }} />
-              {t('complianceAlerts.drawer.alertDetails')}
-            </p>
-
-            <div
-              className="rounded-2xl border bg-white px-4 divide-y divide-gray-200"
-              style={INNER_CARD_STYLE}
-            >
+          <SidePanelSection icon={AlertTriangle} title={t('complianceAlerts.drawer.alertDetails')}>
+            <SidePanelCard flush className="px-4 divide-y divide-gray-200">
               <DetailBlock
                 icon={AlertTriangle}
                 label={t('complianceAlerts.drawer.alertTypes')}
@@ -506,28 +449,13 @@ export function AlertDetailDrawer({
                   </dl>
                 </DetailBlock>
               ) : null}
-            </div>
-          </section>
+            </SidePanelCard>
+          </SidePanelSection>
 
           {/* SOURCES */}
           {alert.alert?.details?.sources?.length ? (
-            <section
-              className="space-y-3 rounded-2xl p-4 border"
-              style={SECTION_STYLE}
-            >
-              <div>
-                <p
-                  className="font-semibold flex items-center gap-2"
-                  style={{ color: ACCENT_COLOR }}
-                >
-                  <Link2 className="w-5 h-5" style={{ color: ACCENT_COLOR }} />
-                  {t('complianceAlerts.drawer.sources')}
-                </p>
-              </div>
-              <div
-                className="rounded-2xl border bg-white p-4 md:p-5"
-                style={INNER_CARD_STYLE}
-              >
+            <SidePanelSection icon={Link2} title={t('complianceAlerts.drawer.sources')}>
+              <SidePanelCard>
                 <div className="space-y-2">
                   {alert.alert.details.sources.map((source, idx) => (
                     <a
@@ -540,23 +468,12 @@ export function AlertDetailDrawer({
                     </a>
                   ))}
                 </div>
-              </div>
-            </section>
+              </SidePanelCard>
+            </SidePanelSection>
           ) : null}
 
           {/* INFORMATION SECTION */}
-          <section
-            className="space-y-3 rounded-2xl p-4 border"
-            style={SECTION_STYLE}
-          >
-            <p
-              className="font-semibold flex items-center gap-2"
-              style={{ color: ACCENT_COLOR }}
-            >
-              <Info className="w-5 h-5" style={{ color: ACCENT_COLOR }} />
-              {t('complianceAlerts.drawer.information')}
-            </p>
-
+          <SidePanelSection icon={Info} title={t('complianceAlerts.drawer.information')}>
             <div className="grid gap-3 sm:grid-cols-2">
               <InfoTile
                 icon={Building2}
@@ -586,25 +503,11 @@ export function AlertDetailDrawer({
                 value={formatDateTime(match?.firstSeen ?? alert.date, lang)}
               />
             </div>
-          </section>
+          </SidePanelSection>
 
           {/* DECISION HISTORY SECTION */}
-          <section
-            className="space-y-3 rounded-2xl p-4 border"
-            style={SECTION_STYLE}
-          >
-            <p
-              className="font-semibold flex items-center gap-2"
-              style={{ color: ACCENT_COLOR }}
-            >
-              <History className="w-5 h-5" style={{ color: ACCENT_COLOR }} />
-              {t('complianceAlerts.drawer.decisionHistory')}
-            </p>
-
-            <div
-              className="rounded-2xl border bg-white p-4 md:p-5"
-              style={INNER_CARD_STYLE}
-            >
+          <SidePanelSection icon={History} title={t('complianceAlerts.drawer.decisionHistory')}>
+            <SidePanelCard>
               {decisionHistory.length === 0 ? (
                 <p className="text-sm text-slate-500">
                   {t('complianceAlerts.drawer.noDecisionYet')}
@@ -664,8 +567,8 @@ export function AlertDetailDrawer({
                   </ol>
                 </div>
               )}
-            </div>
-          </section>
+            </SidePanelCard>
+          </SidePanelSection>
 
         </div>
         </>

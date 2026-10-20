@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { toast } from 'sonner';
 import type { ReactNode } from 'react';
 import {
   Archive,
@@ -13,6 +14,10 @@ import {
   Send,
   Settings2,
   Building2,
+  AlertTriangle,
+  CheckCircle2,
+  EyeOff,
+  Layers,
   CalendarClock,
   FileSignature,
   FileText,
@@ -46,6 +51,12 @@ import { Sparkline } from '../ui/sparkline';
 import { DetailTabsList } from '../ui/detail-tabs';
 import { Tabs } from '../ui/tabs';
 import { WidgetCard, WidgetMetric } from '../ui/widget-card';
+import { AttachmentRow } from '../ui/attachment-row';
+import { DemoScenarioBar } from '../ui/demo-scenario-bar';
+import { FilterCard, FilterCardGroup } from '../ui/filter-card';
+import { FormField, SuffixInput } from '../ui/form-field';
+import { ListingColumnsMenu, ListingIndicator, ListingNameCell } from '../ui/listing';
+import { WizardSteps } from '../ui/wizard-steps';
 import { ColorPicker } from '../ui/color-picker';
 import { ComputedSummary } from '../ui/computed-summary';
 import { DayMonthPicker, type DayMonthValue } from '../ui/day-month-picker';
@@ -815,6 +826,111 @@ function DataTableDemo() {
 }
 
 /** Composants du détail d'un fonds V3, documentés avec variantes, états et exemple. */
+function FilterCardGroupDemo() {
+  const { t } = useTranslation();
+  const [active, setActive] = useState('all');
+  const cards = [
+    { status: 'all', icon: Layers, total: 42 },
+    { status: 'failed', icon: AlertTriangle, total: 3 },
+    { status: 'done', icon: CheckCircle2, total: 39 },
+  ];
+  return (
+    <FilterCardGroup title={t(`${K}.filterCardGroup.demo.title`)} hint={t(`${K}.filterCardGroup.demo.hint`)} columns={4} className="p-3">
+      {cards.map(card => (
+        <FilterCard
+          key={card.status}
+          status={card.status}
+          activeStatus={active}
+          onStatusChange={setActive}
+          label={t(`${K}.filterCardGroup.demo.${card.status}`)}
+          icon={card.icon}
+          total={card.total}
+          metricLabel={t(`${K}.filterCardGroup.demo.metric`)}
+          metricValue={formatCurrency(card.total * 125_000, 'EUR')}
+          averageValue={formatCurrency(125_000, 'EUR')}
+        />
+      ))}
+    </FilterCardGroup>
+  );
+}
+
+function DemoScenarioBarDemo() {
+  const { t } = useTranslation();
+  const [scenario, setScenario] = useState<'default' | 'noRight'>('default');
+  return (
+    <div className="overflow-hidden rounded-lg border border-border">
+      <DemoScenarioBar
+        label={t(`${K}.demoScenarioBar.demo.label`)}
+        value={scenario}
+        options={[
+          { value: 'default', label: t(`${K}.demoScenarioBar.demo.default`) },
+          { value: 'noRight', label: t(`${K}.demoScenarioBar.demo.noRight`) },
+        ]}
+        onChange={setScenario}
+      />
+    </div>
+  );
+}
+
+function WizardStepsDemo() {
+  const { t } = useTranslation();
+  const [current, setCurrent] = useState(1);
+  const steps = ['info', 'amounts', 'control'].map(step => t(`${K}.wizardSteps.demo.${step}`));
+  return (
+    <div className="space-y-4">
+      <WizardSteps steps={steps} current={current} ariaLabel={t(`${K}.wizardSteps.demo.ariaLabel`)} />
+      <SegmentedControl
+        size="sm"
+        value={String(current)}
+        onValueChange={value => setCurrent(Number(value))}
+        options={steps.map((label, index) => ({ value: String(index), label }))}
+      />
+    </div>
+  );
+}
+
+function FormFieldDemo() {
+  const { t } = useTranslation();
+  const [name, setName] = useState('');
+  const [percent, setPercent] = useState('10');
+  return (
+    <div className="grid max-w-2xl grid-cols-1 gap-4 md:grid-cols-2">
+      <FormField id="ds-form-name" label={t(`${K}.formField.demo.name`)} required error={name.trim() ? undefined : t(`${K}.formField.demo.nameError`)}>
+        <Input id="ds-form-name" value={name} onChange={event => setName(event.target.value)} aria-invalid={!name.trim()} />
+      </FormField>
+      <FormField id="ds-form-percent" label={t(`${K}.formField.demo.percent`)} hint={t(`${K}.formField.demo.percentHint`)}>
+        <SuffixInput id="ds-form-percent" suffix="%" value={percent} onChange={event => setPercent(event.target.value)} />
+      </FormField>
+    </div>
+  );
+}
+
+function ListingToolsDemo() {
+  const { t } = useTranslation();
+  const columns = ['investor', 'amount', 'state'].map(key => ({ key, label: t(`${K}.listingTools.demo.columns.${key}`) }));
+  const [visible, setVisible] = useState(columns.map(column => column.key));
+  return (
+    <div className="flex flex-wrap items-center justify-between gap-4">
+      <ListingNameCell
+        name={t(`${K}.listingTools.demo.investor`)}
+        id={1042}
+        adornment={
+          <>
+            <ListingIndicator icon={Layers} label={t(`${K}.listingTools.demo.combined`)} />
+            <ListingIndicator icon={EyeOff} label={t(`${K}.listingTools.demo.hidden`)} />
+          </>
+        }
+      />
+      <ListingColumnsMenu
+        columns={columns}
+        visible={visible}
+        onToggle={key => setVisible(prev => (prev.includes(key) ? prev.filter(item => item !== key) : [...prev, key]))}
+        onReset={() => setVisible(columns.map(column => column.key))}
+      />
+    </div>
+  );
+}
+
 export function FundDetailComponentsSection() {
   const { t } = useTranslation();
 
@@ -1121,7 +1237,8 @@ export function FundDetailComponentsSection() {
         name="StatusBadge"
         importLine="import { StatusBadge } from '@/components/StatusBadge'"
         usage={`<StatusBadge label={t('...')} variant="info" icon={CalendarClock} />
-// 'neutral' | 'outline' | 'info' | 'success' | 'warning' | 'danger' | 'strong'`}
+// 'neutral' | 'outline' | 'info' | 'success' | 'warning' | 'danger' | 'strong'
+<StatusBadge label={t('...')} variant="danger" tooltip={t('...')} />`}
       >
         <Example label={t(`${K}.statusBadge.exampleLabel`)}>
           <div className="flex flex-wrap gap-2">
@@ -1134,6 +1251,90 @@ export function FundDetailComponentsSection() {
               />
             ))}
           </div>
+        </Example>
+      </DocBlock>
+      <DocBlock
+        id="filterCardGroup"
+        name="FilterCardGroup, FilterCard"
+        importLine="import { FilterCard, FilterCardGroup } from '@/components/ui/filter-card'"
+        usage={`<FilterCardGroup title={t('...')} badge={t('...')} hint={t('...')} columns={5}>
+  <FilterCard status="failed" activeStatus={queue} onStatusChange={setQueue} label={t('...')} icon={AlertTriangle} ... />
+</FilterCardGroup>`}
+      >
+        <Example label={t(`${K}.filterCardGroup.exampleLabel`)}>
+          <FilterCardGroupDemo />
+        </Example>
+      </DocBlock>
+
+      <DocBlock
+        id="listingTools"
+        name="ListingColumnsMenu, ListingIndicator"
+        importLine="import { ListingColumnsMenu, ListingIndicator } from '@/components/ui/listing'"
+        usage={`<ListingCard toolbar={<div className="flex items-center gap-2"><FilterBar className="flex-1" ... /><ListingColumnsMenu ... /></div>}
+  footer={<DataPagination ... />}>
+  <DataTable ... footer={{ amount: money(total) }} />
+</ListingCard>
+<ListingNameCell name={line.investor} adornment={<ListingIndicator icon={Layers} label={t('...')} />} />`}
+      >
+        <Example label={t(`${K}.listingTools.exampleLabel`)}>
+          <ListingToolsDemo />
+        </Example>
+      </DocBlock>
+
+      <DocBlock
+        id="wizardSteps"
+        name="WizardSteps"
+        importLine="import { WizardSteps } from '@/components/ui/wizard-steps'"
+        usage={`<BigModalPanelHeader icon={Plus} title={t('...')} subtitle={...} onClose={close} closeLabel={t('...')}>
+  <WizardSteps steps={steps.map(id => t(\`...steps.\${id}\`))} current={step} ariaLabel={t('...')} />
+</BigModalPanelHeader>`}
+      >
+        <Example label={t(`${K}.wizardSteps.exampleLabel`)}>
+          <WizardStepsDemo />
+        </Example>
+      </DocBlock>
+
+      <DocBlock
+        id="formField"
+        name="FormField, SuffixInput"
+        importLine="import { FormField, SuffixInput } from '@/components/ui/form-field'"
+        usage={`<FormField id="call-name" label={t('...')} required error={errors.name} hint={t('...')} labelAside={<SegmentedControl ... />}>
+  <Input id="call-name" ... />
+</FormField>
+<SuffixInput id="value" suffix="%" value={value} onChange={...} />`}
+      >
+        <Example label={t(`${K}.formField.exampleLabel`)}>
+          <FormFieldDemo />
+        </Example>
+      </DocBlock>
+
+      <DocBlock
+        id="attachmentRow"
+        name="AttachmentRow"
+        importLine="import { AttachmentRow } from '@/components/ui/attachment-row'"
+        usage={`<div className="divide-y divide-border">
+  {files.map(file => <AttachmentRow key={file.name} name={file.name} size={size(file)} downloadLabel={t('...')} onDownload={...} />)}
+</div>`}
+      >
+        <Example label={t(`${K}.attachmentRow.exampleLabel`)}>
+          <AttachmentRow
+            name={t(`${K}.attachmentRow.demo.name`)}
+            size={t(`${K}.attachmentRow.demo.size`)}
+            downloadLabel={t(`${K}.attachmentRow.demo.download`)}
+            onDownload={() => toast.info(t(`${K}.attachmentRow.demo.downloaded`))}
+          />
+        </Example>
+      </DocBlock>
+
+      <DocBlock
+        id="demoScenarioBar"
+        name="DemoScenarioBar"
+        importLine="import { DemoScenarioBar } from '@/components/ui/demo-scenario-bar'"
+        usage={`<DemoScenarioBar label={t('...')} value={scenario} onChange={setScenario}
+  options={SCENARIOS.map(value => ({ value, label: t(\`...scenarios.\${value}\`) }))} />`}
+      >
+        <Example label={t(`${K}.demoScenarioBar.exampleLabel`)}>
+          <DemoScenarioBarDemo />
         </Example>
       </DocBlock>
     </>

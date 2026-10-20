@@ -1,11 +1,10 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
-import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetDescription } from './ui/sheet';
+import { Sheet, SheetContent } from './ui/sheet';
 import { Button } from './ui/button';
+import { SIDE_PANEL_BADGE_STYLE, SidePanelCard, SidePanelFileDrop, SidePanelFooter, SidePanelHeader, SidePanelSection, SidePanelSwitchRow } from './ui/side-panel';
 import { Input } from './ui/input';
 import { Label } from './ui/label';
-import { FormSection, FormSubsection } from './ui/form-section';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from './ui/select';
-import { Switch } from './ui/switch';
 import { Tabs, TabsList, TabsTrigger, TabsContent } from './ui/tabs';
 import { Popover, PopoverContent, PopoverTrigger } from './ui/popover';
 import {
@@ -18,7 +17,7 @@ import { ModernMultiSelect, type MultiSelectOption } from './ui/modern-multisele
 import { Avatar, AvatarFallback } from './ui/avatar';
 import { Badge } from './ui/badge';
 import { toast } from 'sonner';
-import { ChevronDown, ChevronRight, UploadCloud, FileCheck2, Download, Users2, UserRound, Mail, Eye, Trash2, Check, Folder, FileText, Bell, ShieldCheck, Clock3, CheckCircle2, Star, Lock, TrendingUp } from 'lucide-react';
+import { ChevronDown, ChevronRight, Download, Users2, UserRound, Mail, Check, Folder, FileText, Bell, ShieldCheck, Clock3, CheckCircle2, Star, Lock, TrendingUp } from 'lucide-react';
 import { Document, DocumentCategory, mockDocuments } from '../utils/documentMockData';
 import { AudienceCounterCards } from './AudienceCounter';
 import { SegmentsMultiSelect, FundSingleSelect, ShareClassSingleSelect } from './ui/targeting-selects';
@@ -483,7 +482,6 @@ export function DocumentAddModal({ isOpen, onClose, folderOptions, defaultFolder
   const [reminderDelay, setReminderDelay] = useState(REMINDER_DELAYS[1]);
   const [reminderTemplate, setReminderTemplate] = useState(MAIL_TEMPLATES[0]);
   const [validationTeams, setValidationTeams] = useState<string[]>([]);
-  const fileInputRefs = useRef<Record<'fr' | 'en', HTMLInputElement | null>>({ fr: null, en: null });
   const [selectedContactAccess, setSelectedContactAccess] = useState<Record<string, string[]>>({});
   const detailState = document ? (documentLifecycleMock[document.id] || {
     validation: document.status === 'published'
@@ -719,18 +717,14 @@ export function DocumentAddModal({ isOpen, onClose, folderOptions, defaultFolder
   return (
     <Sheet open={isOpen} onOpenChange={(open) => !open && onClose()}>
       <SheetContent side="right" className="h-full p-0 gap-0">
-        <SheetHeader className="px-6 py-5 border-b bg-white">
-          <div>
-            <SheetTitle className="text-[26px] leading-8">{document ? t('ged.addModal.detailTitle') : t('ged.addModal.addTitle')}</SheetTitle>
-          <SheetDescription className="mt-1 text-[15px]">
-            {t('ged.addModal.description')}
-          </SheetDescription>
-          </div>
-        </SheetHeader>
+        <SidePanelHeader
+          title={document ? t('ged.addModal.detailTitle') : t('ged.addModal.addTitle')}
+          description={t('ged.addModal.description')}
+        />
 
         <div className="flex-1 overflow-y-auto px-6 py-5 space-y-5">
-          <FormSection icon={FileText} title={t('ged.addModal.sectionDocument')} description={t('ged.addModal.sectionDocumentDesc')}>
-            <FormSubsection>
+          <SidePanelSection icon={FileText} title={t('ged.addModal.sectionDocument')} description={t('ged.addModal.sectionDocumentDesc')}>
+            <SidePanelCard>
               <Tabs defaultValue="fr" className="w-full">
                 <TabsList className="grid w-full grid-cols-2">
                   <TabsTrigger value="fr">🇫🇷 FR</TabsTrigger>
@@ -755,80 +749,23 @@ export function DocumentAddModal({ isOpen, onClose, folderOptions, defaultFolder
                           <Label>
                             {language === 'fr' ? t('ged.addModal.addFileFr') : t('ged.addModal.addFileEn')}
                           </Label>
-                          <input
-                            ref={(el) => { fileInputRefs.current[language] = el; }}
-                            type="file"
-                            className="hidden"
-                            onChange={(event) => handleVersionFile(language, event.target.files?.[0])}
+                          <SidePanelFileDrop
+                            fileName={version.fileName}
+                            previewUrl={version.previewUrl}
+                            disabled={isDetailMode && !(language === 'en' && !version.fileName)}
+                            onSelectFile={(file) => handleVersionFile(language, file)}
+                            onPreview={() => {
+                              if (version.fileUrl) window.open(version.fileUrl, '_blank', 'noopener,noreferrer');
+                            }}
+                            onRemove={isDetailMode ? undefined : () => handleRemoveVersionFile(language)}
+                            labels={{
+                              dropHint: t('ged.addModal.dropHint'),
+                              dropHintDesc: t('ged.addModal.dropHintDesc'),
+                              fileReady: t('ged.addModal.fileReady'),
+                              preview: t('ged.addModal.preview'),
+                              remove: t('ged.addModal.delete'),
+                            }}
                           />
-                          <div
-                            onClick={() => {
-                              const canUpload = !isDetailMode || (language === 'en' && !version.fileName);
-                              if (canUpload) fileInputRefs.current[language]?.click();
-                            }}
-                            onDragOver={(event) => event.preventDefault()}
-                            onDrop={(event) => {
-                              event.preventDefault();
-                              const canUpload = !isDetailMode || (language === 'en' && !version.fileName);
-                              if (canUpload) handleVersionFile(language, event.dataTransfer.files?.[0]);
-                            }}
-                            className={`rounded-xl border-2 border-dashed border-slate-300 bg-white/80 transition-colors p-5 ${
-                              !isDetailMode || (language === 'en' && !version.fileName) ? 'hover:border-blue-400 cursor-pointer' : 'opacity-80'
-                            }`}
-                          >
-                            {!version.fileName ? (
-                              <div className="flex flex-col items-center justify-center text-center gap-2 text-slate-600">
-                                <UploadCloud className="w-8 h-8 text-slate-500" />
-                                <p className="font-medium">{t('ged.addModal.dropHint')}</p>
-                                <p className="text-xs text-slate-500">{t('ged.addModal.dropHintDesc')}</p>
-                              </div>
-                            ) : (
-                              <div className="flex items-center justify-between gap-3">
-                                <div className="flex items-center gap-3">
-                                {version.previewUrl ? (
-                                  <img src={version.previewUrl} alt={version.fileName} className="w-14 h-14 rounded-lg object-cover border" />
-                                ) : (
-                                  <div className="w-14 h-14 rounded-lg bg-blue-50 border border-blue-200 flex items-center justify-center">
-                                    <FileCheck2 className="w-6 h-6 text-blue-600" />
-                                  </div>
-                                )}
-                                <div>
-                                  <p className="font-medium text-slate-900">{version.fileName}</p>
-                                  <p className="text-xs text-slate-500">{t('ged.addModal.fileReady')}</p>
-                                </div>
-                                </div>
-                                <div className="flex items-center gap-2">
-                                  <Button
-                                    type="button"
-                                    variant="outline"
-                                    size="sm"
-                                    onClick={(event) => {
-                                      event.stopPropagation();
-                                      if (version.fileUrl) window.open(version.fileUrl, '_blank', 'noopener,noreferrer');
-                                    }}
-                                  >
-                                    <Eye className="w-3.5 h-3.5 mr-1.5" />
-                                    {t('ged.addModal.preview')}
-                                  </Button>
-                                  {!isDetailMode && (
-                                    <Button
-                                      type="button"
-                                      variant="ghost"
-                                      size="sm"
-                                      className="text-red-600 hover:text-red-700"
-                                      onClick={(event) => {
-                                        event.stopPropagation();
-                                        handleRemoveVersionFile(language);
-                                      }}
-                                    >
-                                      <Trash2 className="w-3.5 h-3.5 mr-1.5" />
-                                      {t('ged.addModal.delete')}
-                                    </Button>
-                                  )}
-                                </div>
-                              </div>
-                            )}
-                          </div>
                           {isDetailMode && language === 'fr' && (
                             <p className="text-xs text-slate-500">{t('ged.addModal.frReadonlyHint')}</p>
                           )}
@@ -841,9 +778,8 @@ export function DocumentAddModal({ isOpen, onClose, folderOptions, defaultFolder
                   );
                 })}
               </Tabs>
-            </FormSubsection>
-            <FormSubsection>
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+            </SidePanelCard>
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 pt-2">
               <div className="space-y-2 lg:col-span-2">
                 <Label>
                   {t('ged.addModal.documentCategoryLabel')}
@@ -881,10 +817,9 @@ export function DocumentAddModal({ isOpen, onClose, folderOptions, defaultFolder
                 />
               </div>
             </div>
-            </FormSubsection>
-          </FormSection>
+          </SidePanelSection>
 
-          <FormSection icon={Users2} title={t('ged.addModal.sectionAudience')} description={t('ged.addModal.sectionAudienceDesc')}>
+          <SidePanelSection icon={Users2} title={t('ged.addModal.sectionAudience')} description={t('ged.addModal.sectionAudienceDesc')} className="space-y-4">
             {hasParentFolderRestrictions && (
               <div className="rounded-xl border border-amber-200 bg-amber-50 p-3 space-y-2">
                 <div className="flex items-center gap-2 text-sm font-semibold text-amber-900">
@@ -918,7 +853,7 @@ export function DocumentAddModal({ isOpen, onClose, folderOptions, defaultFolder
             </div>
 
             {audienceMode === 'general' ? (
-              <FormSubsection>
+              <div className="space-y-4 border rounded-2xl p-5 bg-white shadow-sm" style={{ borderColor: '#000E2B33' }}>
                 <div className="space-y-2">
                   <Label>{t('ged.addModal.segmentsLabel')}</Label>
                   <SegmentsMultiSelect
@@ -953,9 +888,9 @@ export function DocumentAddModal({ isOpen, onClose, folderOptions, defaultFolder
                     </div>
                   )}
                 </div>
-              </FormSubsection>
+              </div>
             ) : (
-              <FormSubsection>
+              <div className="space-y-4 border rounded-2xl p-5 bg-white" style={{ borderColor: '#000E2B1F' }}>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
                   <div className="space-y-2">
                     <Label>{t('ged.addModal.investorLabel')}</Label>
@@ -1007,39 +942,40 @@ export function DocumentAddModal({ isOpen, onClose, folderOptions, defaultFolder
                     disabled={!selectedInvestor}
                   />
                 </div>
-              </FormSubsection>
+              </div>
             )}
 
-            <FormSubsection
-                tone="muted"
-                icon={ShieldCheck}
-                title={t('ged.addModal.accessRights')}
-                description={t('ged.addModal.accessRightsDesc')}
-                action={audienceMode === 'general' ? (
-                  <Button variant="outline" onClick={handleExportScope}>
+            <div className="rounded-2xl border p-4 space-y-4" style={{ borderColor: '#000E2B1F', backgroundColor: '#EEF1F7' }}>
+                <div className="flex items-center justify-between gap-3">
+                  <div>
+                    <p className="font-semibold flex items-center gap-2" style={{ color: '#000E2B' }}><ShieldCheck className="w-5 h-5" style={{ color: '#000E2B' }} /> {t('ged.addModal.accessRights')}</p>
+                    <p className="text-sm text-slate-600">{t('ged.addModal.accessRightsDesc')}</p>
+                  </div>
+                  {audienceMode === 'general' && (
+                  <Button variant="outline" onClick={handleExportScope} style={{ borderColor: '#000E2B', color: '#000E2B' }}>
                     <Download className="w-4 h-4 mr-2" />
                     {t('ged.addModal.exportCsv')}
                   </Button>
-                ) : undefined}
-              >
+                  )}
+                </div>
                 {audienceMode === 'general' ? (
                   <AudienceCounterCards investors={audience.investors} contacts={audience.contacts} />
                 ) : (
                   selectedInvestorProfile ? (
-                    <FormSubsection>
+                    <div className="rounded-2xl border bg-white p-4 space-y-3" style={{ borderColor: '#000E2B1F' }}>
                       <div>
-                        <p className="text-xl font-semibold text-foreground">{selectedInvestorProfile.name}</p>
+                        <p className="text-xl font-semibold" style={{ color: '#000E2B' }}>{selectedInvestorProfile.name}</p>
                       </div>
                       <div className="border-t pt-3 space-y-2">
-                        <p className="ds-form-subsection__title">{t('ged.addModal.authorizedContacts')}</p>
-                        <div className="rounded-xl border p-3 flex items-center gap-3" style={{ borderColor: 'color-mix(in oklab, var(--primary) 14%, transparent)', backgroundColor: 'color-mix(in oklab, var(--primary) 8%, var(--card))' }}>
-                          <div className="w-9 h-9 rounded-full flex items-center justify-center" style={{ backgroundColor: 'color-mix(in oklab, var(--primary) 8%, var(--card))', color: 'var(--primary)' }}>
+                        <p className="text-xs uppercase tracking-wide font-semibold" style={{ color: '#000E2B' }}>{t('ged.addModal.authorizedContacts')}</p>
+                        <div className="rounded-xl border p-3 flex items-center gap-3" style={{ borderColor: '#000E2B1F', backgroundColor: '#EEF1F7' }}>
+                          <div className="w-9 h-9 rounded-full flex items-center justify-center" style={{ backgroundColor: '#EEF1F7', color: '#000E2B' }}>
                             <UserRound className="w-4 h-4" />
                           </div>
                           <div className="flex-1">
-                            <p className="font-medium flex items-center gap-2 text-foreground">
+                            <p className="font-medium flex items-center gap-2" style={{ color: '#000E2B' }}>
                               {selectedInvestorProfile.name}
-                              <span className="inline-flex items-center gap-1 rounded-full border px-2 py-0.5 text-[11px] font-medium" style={{ borderColor: 'var(--primary)', backgroundColor: 'color-mix(in oklab, var(--primary) 8%, var(--card))', color: 'var(--primary)' }}>
+                              <span className="inline-flex items-center gap-1 rounded-full border px-2 py-0.5 text-[11px] font-medium" style={{ borderColor: '#000E2B', backgroundColor: '#EEF1F7', color: '#000E2B' }}>
                                 <Star className="w-3 h-3 fill-current" />
                                 {t('ged.addModal.principalBadge')}
                               </span>
@@ -1048,30 +984,30 @@ export function DocumentAddModal({ isOpen, onClose, folderOptions, defaultFolder
                           </div>
                         </div>
                         {selectedInvestorProfile.contacts.map((contact) => (
-                          <div key={contact.name} className="rounded-xl border bg-white p-3 flex items-center gap-3" style={{ borderColor: 'color-mix(in oklab, var(--primary) 14%, transparent)' }}>
-                            <div className="w-9 h-9 rounded-full flex items-center justify-center" style={{ backgroundColor: 'color-mix(in oklab, var(--primary) 8%, var(--card))', color: 'var(--primary)' }}>
+                          <div key={contact.name} className="rounded-xl border bg-white p-3 flex items-center gap-3" style={{ borderColor: '#000E2B1F' }}>
+                            <div className="w-9 h-9 rounded-full flex items-center justify-center" style={{ backgroundColor: '#EEF1F7', color: '#000E2B' }}>
                               <UserRound className="w-4 h-4" />
                             </div>
                             <div>
-                              <p className="font-medium text-foreground">{contact.name}</p>
+                              <p className="font-medium" style={{ color: '#000E2B' }}>{contact.name}</p>
                               <p className="text-sm text-slate-500 flex items-center gap-1"><Mail className="w-3 h-3" /> {contact.role}</p>
                             </div>
                           </div>
                         ))}
                       </div>
-                    </FormSubsection>
+                    </div>
                   ) : (
                     <p className="text-sm text-slate-600">{t('ged.addModal.pickInvestorHint')}</p>
                   )
                 )}
-              </FormSubsection>
+              </div>
 
-          </FormSection>
+          </SidePanelSection>
 
-          <FormSection icon={Bell} title={t('ged.addModal.sectionNotification')} description={t('ged.addModal.sectionNotificationDesc')}>
+          <SidePanelSection icon={Bell} title={t('ged.addModal.sectionNotification')} description={t('ged.addModal.sectionNotificationDesc')} className="space-y-4">
             {isDetailMode ? (
               <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
-                <FormSubsection>
+                <div className="space-y-2 border rounded-xl p-4 bg-white" style={{ borderColor: '#000E2B33' }}>
                   <Label>{t('ged.addModal.notificationLabel')}</Label>
                   {detailState?.notification ? (
                     <p className="text-sm text-slate-700">
@@ -1080,8 +1016,8 @@ export function DocumentAddModal({ isOpen, onClose, folderOptions, defaultFolder
                   ) : (
                     <p className="text-sm text-slate-500">{t('ged.addModal.noNotification')}</p>
                   )}
-                </FormSubsection>
-                <FormSubsection>
+                </div>
+                <div className="space-y-2 border rounded-xl p-4 bg-white" style={{ borderColor: '#000E2B33' }}>
                   <Label>{t('ged.addModal.reminderLabel')}</Label>
                   {detailState?.reminder?.dueInDays !== undefined ? (
                     <p className="text-sm text-slate-700">{t('ged.addModal.reminderDueIn', { days: detailState.reminder.dueInDays, template: detailState.reminder.template })}</p>
@@ -1090,26 +1026,20 @@ export function DocumentAddModal({ isOpen, onClose, folderOptions, defaultFolder
                   ) : (
                     <p className="text-sm text-slate-500">{t('ged.addModal.noReminder')}</p>
                   )}
-                </FormSubsection>
+                </div>
               </div>
             ) : (
               <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
-                <FormSubsection>
-                  <div className="flex items-center justify-between">
-                    <Label>{t('ged.addModal.notificationLabel')}</Label>
-                    <Switch checked={notify} onCheckedChange={setNotify} />
-                  </div>
+                <div className="space-y-3 border rounded-xl p-4" style={{ borderColor: '#000E2B33' }}>
+                  <SidePanelSwitchRow label={t('ged.addModal.notificationLabel')} checked={notify} onCheckedChange={setNotify} />
                   <Select value={notifyTemplate} onValueChange={setNotifyTemplate} disabled={!notify}>
                     <SelectTrigger><SelectValue /></SelectTrigger>
                     <SelectContent>{MAIL_TEMPLATES.map((template) => <SelectItem key={template} value={template}>{template}</SelectItem>)}</SelectContent>
                   </Select>
-                </FormSubsection>
+                </div>
 
-                <FormSubsection>
-                  <div className="flex items-center justify-between">
-                    <Label>{t('ged.addModal.reminderLabel')}</Label>
-                    <Switch checked={reminder} onCheckedChange={setReminder} />
-                  </div>
+                <div className="space-y-3 border rounded-xl p-4" style={{ borderColor: '#000E2B33' }}>
+                  <SidePanelSwitchRow label={t('ged.addModal.reminderLabel')} checked={reminder} onCheckedChange={setReminder} />
                   <div className="grid grid-cols-2 gap-2">
                     <Select value={reminderDelay} onValueChange={setReminderDelay} disabled={!reminder}>
                       <SelectTrigger><SelectValue /></SelectTrigger>
@@ -1120,17 +1050,17 @@ export function DocumentAddModal({ isOpen, onClose, folderOptions, defaultFolder
                       <SelectContent>{MAIL_TEMPLATES.map((template) => <SelectItem key={template} value={template}>{template}</SelectItem>)}</SelectContent>
                     </Select>
                   </div>
-                </FormSubsection>
+                </div>
               </div>
             )}
-          </FormSection>
+          </SidePanelSection>
 
-          <FormSection icon={Check} title={t('ged.addModal.sectionValidation')} description={t('ged.addModal.sectionValidationDesc')}>
+          <SidePanelSection icon={Check} title={t('ged.addModal.sectionValidation')} description={t('ged.addModal.sectionValidationDesc')} className="pb-2">
             {isDetailMode ? (
               <>
                 {detailState?.validation.status === 'approved' ? (
                   <div className="rounded-xl border border-emerald-200 bg-emerald-50 p-4">
-                    <p className="font-semibold text-emerald-800 flex items-center gap-2"><CheckCircle2 className="h-4 w-4" /> {t('ged.addModal.docValidated')}</p>
+                    <p className="font-semibold text-emerald-900 flex items-center gap-2"><CheckCircle2 className="h-4 w-4" /> {t('ged.addModal.docValidated')}</p>
                     <p className="text-sm text-emerald-700 mt-1">{t('ged.addModal.validatedBy', { team: detailState.validation.team ?? '', validator: detailState.validation.validator ?? '' })}</p>
                     <p className="text-sm text-emerald-700">{t('ged.addModal.validatedOn', { date: formatFrenchDate(detailState.validation.validatedAt || '') })}</p>
                   </div>
@@ -1140,17 +1070,17 @@ export function DocumentAddModal({ isOpen, onClose, folderOptions, defaultFolder
                       <p className="font-semibold text-amber-800 flex items-center gap-2"><Clock3 className="h-4 w-4" /> {t('ged.addModal.pendingValidation')}</p>
                       <p className="text-sm text-amber-700 mt-1">{t('ged.addModal.pendingValidationHint')}</p>
                     </div>
-                    <FormSubsection>
+                    <div className="rounded-xl border bg-white p-4 space-y-3" style={{ borderColor: '#000E2B33' }}>
                       <p className="font-medium text-slate-900">{t('ged.addModal.teamsAndValidators')}</p>
                       <div className="space-y-2">
                         {TEAMS.map((team) => (
-                          <div key={team.id} className="rounded-lg border p-3" style={{ borderColor: 'color-mix(in oklab, var(--primary) 20%, transparent)' }}>
+                          <div key={team.id} className="rounded-lg border p-3" style={{ borderColor: '#000E2B33' }}>
                             <p className="font-medium text-slate-800">{team.name}</p>
                             <p className="text-sm text-slate-600 mt-1">{t('ged.addModal.peoplePrefix', { list: team.validators.join(', ') })}</p>
                           </div>
                         ))}
                       </div>
-                    </FormSubsection>
+                    </div>
                   </>
                 )}
               </>
@@ -1166,7 +1096,7 @@ export function DocumentAddModal({ isOpen, onClose, folderOptions, defaultFolder
                     searchPlaceholder={t('ged.addModal.searchTeam')}
                     maxDisplay={4}
                     showIconInBadge
-                    badgeStyle={{ color: '#7a7a7a', borderColor: '#ddd7cc', backgroundColor: '#f5f3ee', border: '1px solid #ddd7cc' }}
+                    badgeStyle={SIDE_PANEL_BADGE_STYLE}
                   />
                   <p className="text-xs text-slate-500">
                     {t('ged.addModal.pickTeamsHint')}
@@ -1176,7 +1106,7 @@ export function DocumentAddModal({ isOpen, onClose, folderOptions, defaultFolder
                 <div className="rounded-xl border border-slate-200 bg-white p-4 space-y-3">
                   <div className="flex items-center justify-between gap-2">
                     <div className="flex items-center gap-2">
-                      <div className="w-8 h-8 rounded-lg flex items-center justify-center" style={{ backgroundColor: 'color-mix(in oklab, var(--primary) 8%, var(--card))', color: 'var(--primary)' }}>
+                      <div className="w-8 h-8 rounded-lg flex items-center justify-center" style={{ backgroundColor: '#EEF1F7', color: '#000E2B' }}>
                         <Users2 className="w-4 h-4" />
                       </div>
                       <div>
@@ -1187,7 +1117,7 @@ export function DocumentAddModal({ isOpen, onClose, folderOptions, defaultFolder
                       </div>
                     </div>
                     {selectedTeamsDetailed.length > 0 && (
-                      <Badge variant="outline" style={{ backgroundColor: 'color-mix(in oklab, var(--primary) 8%, var(--card))', borderColor: 'var(--primary)', color: 'var(--primary)' }}>
+                      <Badge variant="outline" style={{ backgroundColor: '#EEF1F7', borderColor: '#000E2B', color: '#000E2B' }}>
                         {t(totalValidators > 1 ? 'ged.addModal.validatorsCountBadgeMany' : 'ged.addModal.validatorsCountBadgeOne', { validators: totalValidators, teams: selectedTeamsDetailed.length })}
                       </Badge>
                     )}
@@ -1236,13 +1166,13 @@ export function DocumentAddModal({ isOpen, onClose, folderOptions, defaultFolder
                 </div>
               </>
             )}
-          </FormSection>
+          </SidePanelSection>
 
         </div>
-        <div className="border-t bg-white px-6 py-4 flex justify-end gap-2">
+        <SidePanelFooter>
           <Button variant="outline" onClick={onClose}>{t('ged.addModal.cancel')}</Button>
           <Button onClick={handleSubmit}>{document ? t('ged.addModal.save') : t('ged.addModal.validate')}</Button>
-        </div>
+        </SidePanelFooter>
       </SheetContent>
     </Sheet>
   );

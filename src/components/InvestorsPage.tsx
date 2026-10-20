@@ -10,6 +10,7 @@ import {
 import { Investor } from '../utils/investorGenerator';
 import { toast } from 'sonner';
 import { InvestorDataTable } from './InvestorDataTable';
+import { ListingCard } from './ui/listing';
 import { TableSkeleton } from './TableSkeleton';
 import { FilterBar, FilterConfig } from './FilterBar';
 import { useTableSearch } from '../utils/useTableSearch';
@@ -423,18 +424,9 @@ export function InvestorsPage({ data, isLoading, allData, setAllData, onInvestor
 
   return (
     <div className="flex gap-4">
-      <motion.div 
-        initial={{ opacity: 0, y: 20 }}
-        animate={{ 
-          opacity: 1, 
-          y: 0,
-          width: '100%'
-        }}
-        transition={{ delay: 0.4, type: 'spring', stiffness: 200, damping: 25 }}
-        className="bg-white dark:bg-gray-950 rounded-2xl shadow-sm border border-gray-200 dark:border-gray-800 hover:shadow-lg dark:hover:shadow-gray-900 transition-shadow duration-500 flex flex-col"
-      >
-        {/* Filter Bar */}
-        <div className="relative z-10 p-4 border-b border-gray-100 dark:border-gray-800">
+      <ListingCard
+        className="w-full"
+        toolbar={
           <FilterBar
             searchValue={searchTerm}
             onSearchChange={handleSearchChange}
@@ -444,8 +436,8 @@ export function InvestorsPage({ data, isLoading, allData, setAllData, onInvestor
             onFilterChange={handleFilterChange}
             onClearAll={handleClearAllFilters}
           />
-        </div>
-        
+        }
+      >
         {/* AI Insight Banner */}
         <AIInsightBanner 
           analysis={aiAnalysis}
@@ -567,7 +559,7 @@ export function InvestorsPage({ data, isLoading, allData, setAllData, onInvestor
             </div>
           </motion.div>
         )}
-      </motion.div>
+      </ListingCard>
     </div>
   );
 }
