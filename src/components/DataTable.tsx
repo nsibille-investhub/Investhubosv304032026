@@ -198,6 +198,7 @@ export function DataTable<T extends { id: number }>({
                       "px-6 py-4 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider cursor-pointer group",
                       column.align === 'right' && 'text-right',
                       density === 'compact' && 'px-3 py-3',
+                      column.key === 'actions' && 'ds-sticky-actions',
                       column.className
                     )}
                   >
@@ -213,6 +214,7 @@ export function DataTable<T extends { id: number }>({
                       "px-6 py-4 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider",
                       column.align === 'right' && 'text-right',
                       density === 'compact' && 'px-3 py-3',
+                      column.key === 'actions' && 'ds-sticky-actions',
                       column.className
                     )}
                   >
@@ -264,6 +266,7 @@ export function DataTable<T extends { id: number }>({
                         'px-6 py-4',
                         column.align === 'right' && 'text-right tabular-nums',
                         density === 'compact' && 'px-3 py-3',
+                        column.key === 'actions' && 'ds-sticky-actions',
                         column.className,
                       )}
                     >
@@ -285,6 +288,7 @@ export function DataTable<T extends { id: number }>({
                       'px-6 py-3 text-sm font-semibold text-foreground',
                       column.align === 'right' && 'text-right tabular-nums',
                       density === 'compact' && 'px-3',
+                      column.key === 'actions' && 'ds-sticky-actions',
                     )}
                   >
                     {footer[column.key]}
