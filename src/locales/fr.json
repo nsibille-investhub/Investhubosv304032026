@@ -1690,7 +1690,12 @@
         "mandateOrigin": "Réponse de prélèvement à \"Oui\"",
         "mandateCreated": "Créée à la soumission",
         "documentCopied": "Copié sur la fiche",
-        "propagatedToast": "Donnée liée mise à jour"
+        "propagatedToast": "Donnée liée mise à jour",
+        "navTitle": "Données reportées",
+        "synced": "Synchronisé",
+        "notSynced": "Non synchronisé",
+        "sectionTitle": "Objets mis à jour",
+        "sectionDescription": "{{count}} données copiées depuis les réponses vers la souscription et la fiche investisseur."
       },
       "partnerReview": {
         "awaitingPartner": "En attente de la validation de {{partner}}",
@@ -7027,11 +7032,13 @@
       "sectionNav": {
         "title": "Navigation par sections",
         "description": "Colonne de navigation entre les sections d'une page, généralisée depuis \"Sections de l'onboarding\". Le titre de colonne est libre, chaque élément porte une icône, un titre, un sous-titre libre et un indicateur à droite.",
-        "variants": "Indicateur compteur \"n/N\" coloré avec point, point d'état seul, pastille \"À compléter\", aucun indicateur. Regroupement optionnel en sous-titres.",
+        "variants": "Indicateur compteur \"n/N\" coloré avec point, point d'état seul, pastille \"À compléter\", aucun indicateur. Regroupement optionnel en sous-titres. Élément épinglé optionnel sous le titre (pinnedItems), séparé des sections : accès à un rapport ou une synthèse.",
         "states": "Repos, survol, actif (fond accentué, titre en couleur primaire), désactivé avec motif au survol, masqué.",
         "exampleLabel": "Exemple : paramètres d'un fonds",
         "exampleHint": "cliquez sur un élément, survolez \"Distribution\" pour lire le motif ; \"Marché secondaire\" est masqué",
         "demo": {
+          "overview": "Données reportées",
+          "overviewSubtitle": "Synchronisé",
           "title": "Sections du fonds",
           "groupFund": "Fiche du fonds",
           "groupDiffusion": "Diffusion",

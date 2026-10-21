@@ -31,6 +31,8 @@ interface SectionNavProps {
   items: SectionNavItem[];
   activeId: string | null;
   onSelect: (id: string) => void;
+  /** Éléments affichés sous le titre, avant les sections et séparés d'elles (synthèse, rapport...). */
+  pinnedItems?: SectionNavItem[];
   sticky?: boolean;
   className?: string;
 }
@@ -132,9 +134,11 @@ export function SectionNav({
   items,
   activeId,
   onSelect,
+  pinnedItems,
   sticky = true,
   className,
 }: SectionNavProps) {
+  const pinned = pinnedItems?.filter(item => !item.hidden) ?? [];
   const visible = items.filter(item => !item.hidden);
 
   const groups: { label?: string; items: SectionNavItem[] }[] = [];
@@ -147,6 +151,14 @@ export function SectionNav({
   return (
     <Card className={cn('p-3 shadow-sm', sticky && 'sticky top-4', className)}>
       <h3 className={cn('px-2 pb-2 pt-1', WIDGET_TITLE_CLASS)}>{title}</h3>
+
+      {pinned.length > 0 && (
+        <div className="mb-2 flex flex-col gap-1 border-b border-border pb-2">
+          {pinned.map(item => (
+            <NavButton key={item.id} item={item} isActive={activeId === item.id} onSelect={onSelect} />
+          ))}
+        </div>
+      )}
 
       <nav className="flex flex-col gap-1">
         {groups.map((group, groupIndex) => (

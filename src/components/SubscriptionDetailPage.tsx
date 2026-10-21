@@ -52,9 +52,7 @@ import {
   Lock,
   UserCheck,
   ArrowLeft,
-  TriangleAlert,
   Link2,
-  Share2,
   PencilLine,
 } from 'lucide-react';
 import { motion } from 'motion/react';
@@ -155,6 +153,7 @@ import {
   type ComplianceStatusSnapshot,
 } from './SubscriptionComplianceSection';
 import { SubscriptionSignatureStep } from './SubscriptionSignatureStep';
+import { SubmissionReportSheet, type SubmissionReportRow } from './SubmissionReportSheet';
 import { SubscriptionStatusBadge } from './SubscriptionStatusBadge';
 import { NewSubscriptionDialog } from './NewSubscriptionDialog';
 import { NotesTab } from './investor-detail/NotesTab';
@@ -582,6 +581,55 @@ export function SubscriptionDetailPage({ subscription: subscriptionProp, onBack 
     });
     toast.success(t('subscriptions.detail.report.propagatedToast'), { description: targetLabelOf(target) });
   };
+
+  const [reportOpen, setReportOpen] = useState(false);
+  const submissionReportRows: SubmissionReportRow[] = [
+    ...mockSections.flatMap(section =>
+      section.questions.flatMap((question, idx) =>
+        (question.targets ?? []).map((target): SubmissionReportRow => {
+          const questionId = `${section.id}-${idx}`;
+          const value = linkedValueOf(questionId, question, target);
+          return {
+            key: `${questionId}-${target.object}-${target.field}`,
+            icon: Link2,
+            label: targetLabelOf(target),
+            value,
+            origin: question.question.replace(/\s*\*\s*$/, ''),
+            originSection: t(section.titleKey),
+            state: value !== responseOf(section.id, idx, question) ? 'gap' : 'inSync',
+            previousValue: target.previousValue,
+            onPropagate: canManage ? () => handlePropagateReported(section.id, idx, target) : undefined,
+          };
+        }),
+      ),
+    ),
+    ...mockSections.flatMap(section =>
+      section.questions.flatMap((question, idx): SubmissionReportRow[] =>
+        question.createsMandate && question.response === 'Oui'
+          ? [
+              {
+                key: `mandate-${section.id}-${idx}`,
+                icon: Landmark,
+                label: t('subscriptions.detail.report.mandate'),
+                value: MOCK_SUBMISSION_REPORT.mandateReference,
+                origin: t('subscriptions.detail.report.mandateOrigin'),
+                originSection: t(section.titleKey),
+                state: 'created',
+              },
+            ]
+          : [],
+      ),
+    ),
+    ...MOCK_SUBMISSION_REPORT.documents.map((doc): SubmissionReportRow => ({
+      key: doc.field,
+      icon: FileText,
+      label: targetLabelOf({ object: 'investor', field: doc.field }),
+      value: t(doc.nameKey),
+      origin: t('subscriptions.detail.sections.documents'),
+      state: 'copied',
+    })),
+  ];
+  const submissionReportSynced = submissionReportRows.every(row => row.state !== 'gap');
 
   const questionLabelOf = (questionId: string) => {
     const sectionId = sectionOf(questionId);
@@ -1877,6 +1925,16 @@ export function SubscriptionDetailPage({ subscription: subscriptionProp, onBack 
                             sections={onboardingNavSections}
                             activeSectionId={activeOnboardingSection}
                             onSelect={handleSelectOnboardingSection}
+                            report={{
+                              synced: submissionReportSynced,
+                              onOpen: () => setReportOpen(true),
+                            }}
+                          />
+                          <SubmissionReportSheet
+                            open={reportOpen}
+                            onOpenChange={setReportOpen}
+                            submittedAt={MOCK_SUBMISSION_REPORT.submittedAt}
+                            rows={submissionReportRows}
                           />
 
                           <div className="space-y-4">
@@ -2340,105 +2398,6 @@ export function SubscriptionDetailPage({ subscription: subscriptionProp, onBack 
                   </Fragment>
                 );
               })}
-
-                            {!modifiedOnly && (
-                              <SectionCard
-                                mode="read"
-                                icon={Share2}
-                                title={t('subscriptions.detail.report.title')}
-                                iconTone="info"
-                                summary={
-                                  <span className="text-muted-foreground">
-                                    {t('subscriptions.detail.report.summary', { date: MOCK_SUBMISSION_REPORT.submittedAt })}
-                                  </span>
-                                }
-                              >
-                                <div className="divide-y divide-border">
-                                  <div className="grid grid-cols-12 gap-4 px-4 py-2 bg-muted text-xs font-medium text-muted-foreground uppercase tracking-wider">
-                                    <span className="col-span-3">{t('subscriptions.detail.report.columns.data')}</span>
-                                    <span className="col-span-3">{t('subscriptions.detail.report.columns.value')}</span>
-                                    <span className="col-span-3">{t('subscriptions.detail.report.columns.origin')}</span>
-                                    <span className="col-span-3">{t('subscriptions.detail.report.columns.state')}</span>
-                                  </div>
-                                  {mockSections.flatMap(section =>
-                                    section.questions.flatMap((question, idx) =>
-                                      (question.targets ?? []).map(target => {
-                                        const questionId = `${section.id}-${idx}`;
-                                        const value = linkedValueOf(questionId, question, target);
-                                        const gap = value !== responseOf(section.id, idx, question);
-                                        return (
-                                          <div key={`${questionId}-${target.object}-${target.field}`} className="grid grid-cols-12 gap-4 px-4 py-3 items-center text-sm">
-                                            <span className="col-span-3 inline-flex items-center gap-2 text-foreground">
-                                              <Link2 className="w-3.5 h-3.5 shrink-0 text-muted-foreground" />
-                                              {targetLabelOf(target)}
-                                            </span>
-                                            <span className="col-span-3 font-medium text-foreground break-words">
-                                              {value || t('subscriptions.detail.answerEffects.empty')}
-                                            </span>
-                                            <span className="col-span-3 text-foreground/80">
-                                              {question.question.replace(/\s*\*\s*$/, '')}
-                                              <span className="block text-xs text-muted-foreground">{t(section.titleKey)}</span>
-                                            </span>
-                                            <span className="col-span-3 flex flex-wrap items-center gap-2">
-                                              {gap ? (
-                                                <>
-                                                  <StatusBadge variant="warning" icon={TriangleAlert} label={t('subscriptions.detail.report.gap')} />
-                                                  {canManage && (
-                                                    <Button variant="outline" size="sm" onClick={() => handlePropagateReported(section.id, idx, target)}>
-                                                      {t('subscriptions.detail.report.propagate')}
-                                                    </Button>
-                                                  )}
-                                                </>
-                                              ) : (
-                                                <StatusBadge variant="success" icon={CheckCircle2} label={t('subscriptions.detail.report.inSync')} />
-                                              )}
-                                              {target.previousValue && (
-                                                <NeutralTag label={t('subscriptions.detail.report.replaced', { value: target.previousValue })} />
-                                              )}
-                                            </span>
-                                          </div>
-                                        );
-                                      }),
-                                    ),
-                                  )}
-                                  {mockSections.flatMap(section =>
-                                    section.questions.flatMap((question, idx) =>
-                                      question.createsMandate && question.response === 'Oui'
-                                        ? [
-                                            <div key={`mandate-${section.id}-${idx}`} className="grid grid-cols-12 gap-4 px-4 py-3 items-center text-sm">
-                                              <span className="col-span-3 inline-flex items-center gap-2 text-foreground">
-                                                <Landmark className="w-3.5 h-3.5 shrink-0 text-muted-foreground" />
-                                                {t('subscriptions.detail.report.mandate')}
-                                              </span>
-                                              <span className="col-span-3 font-medium text-foreground">{MOCK_SUBMISSION_REPORT.mandateReference}</span>
-                                              <span className="col-span-3 text-foreground/80">
-                                                {t('subscriptions.detail.report.mandateOrigin')}
-                                                <span className="block text-xs text-muted-foreground">{t(section.titleKey)}</span>
-                                              </span>
-                                              <span className="col-span-3">
-                                                <NeutralTag label={t('subscriptions.detail.report.mandateCreated')} />
-                                              </span>
-                                            </div>,
-                                          ]
-                                        : [],
-                                    ),
-                                  )}
-                                  {MOCK_SUBMISSION_REPORT.documents.map(doc => (
-                                    <div key={doc.field} className="grid grid-cols-12 gap-4 px-4 py-3 items-center text-sm">
-                                      <span className="col-span-3 inline-flex items-center gap-2 text-foreground">
-                                        <FileText className="w-3.5 h-3.5 shrink-0 text-muted-foreground" />
-                                        {targetLabelOf({ object: 'investor', field: doc.field })}
-                                      </span>
-                                      <span className="col-span-3 font-medium text-foreground">{t(doc.nameKey)}</span>
-                                      <span className="col-span-3 text-foreground/80">{t('subscriptions.detail.sections.documents')}</span>
-                                      <span className="col-span-3">
-                                        <NeutralTag label={t('subscriptions.detail.report.documentCopied')} />
-                                      </span>
-                                    </div>
-                                  ))}
-                                </div>
-                              </SectionCard>
-                            )}
 
                             {/* Action — passer à l'étape suivante */}
 

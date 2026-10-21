@@ -8,6 +8,7 @@ import {
   Clock,
   FolderOpen,
   Info,
+  Share2,
 } from 'lucide-react';
 import { useTranslation } from '../utils/languageContext';
 import { Badge } from './ui/badge';
@@ -284,7 +285,11 @@ interface OnboardingSectionNavProps {
   sections: OnboardingNavSection[];
   activeSectionId: string | null;
   onSelect: (sectionId: string) => void;
+  /** Accès au rapport de report des données vers les objets liés, avec son état de synchronisation. */
+  report?: { synced: boolean; onOpen: () => void };
 }
+
+const REPORT_NAV_ID = 'submission-report';
 
 export const ONBOARDING_STATE_TONE: Record<OnboardingItemState, Tone> = {
   pending: 'neutral',
@@ -297,8 +302,27 @@ export function OnboardingSectionNav({
   sections,
   activeSectionId,
   onSelect,
+  report,
 }: OnboardingSectionNavProps) {
   const { t } = useTranslation();
+
+  const reportState = report?.synced ? 'synced' : 'notSynced';
+  const pinnedItems: SectionNavItem[] = report
+    ? [
+        {
+          id: REPORT_NAV_ID,
+          title: t('subscriptions.detail.report.navTitle'),
+          subtitle: t(`subscriptions.detail.report.${reportState}`),
+          icon: Share2,
+          iconTone: report.synced ? 'success' : 'warning',
+          indicator: {
+            kind: 'dot',
+            tone: report.synced ? 'success' : 'warning',
+            label: t(`subscriptions.detail.report.${reportState}`),
+          },
+        },
+      ]
+    : [];
 
   const items: SectionNavItem[] = sections.map(section => {
     const state = getSectionState(section.stats);
@@ -334,7 +358,8 @@ export function OnboardingSectionNav({
       title={t('subscriptions.detail.onboarding.completion.sectionsTitle')}
       items={items}
       activeId={activeSectionId}
-      onSelect={onSelect}
+      onSelect={id => (id === REPORT_NAV_ID ? report?.onOpen() : onSelect(id))}
+      pinnedItems={pinnedItems}
     />
   );
 }
