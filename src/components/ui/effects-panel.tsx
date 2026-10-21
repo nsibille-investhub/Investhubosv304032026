@@ -20,6 +20,8 @@ export interface EffectItem {
   option?: { checked: boolean; onCheckedChange: (checked: boolean) => void; disabled?: boolean };
   /** Précision sous le libellé, par exemple le nombre d'emails qui partiront. */
   note?: string;
+  /** Liste des objets dépliée à l'affichage. */
+  defaultOpen?: boolean;
 }
 
 interface EffectsPanelProps {
@@ -33,7 +35,7 @@ interface EffectsPanelProps {
 
 function EffectRow({ effect, marker }: { effect: EffectItem; marker: 'reversibility' | 'none' }) {
   const { t } = useTranslation();
-  const [open, setOpen] = useState(false);
+  const [open, setOpen] = useState(Boolean(effect.defaultOpen));
   const Icon = effect.icon;
   const count = effect.objects?.length ?? effect.count;
   const expandable = (effect.objects?.length ?? 0) > 0;

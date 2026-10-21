@@ -274,6 +274,8 @@ export interface Subscription {
   product?: string; // Alias pour fund.name
   shareClass?: string; // Alias pour fund.shareClass
   structure?: string | null; // Alias pour contrepartie.structure (null si Individual)
+  /** Part réservée à d'autres opérateurs : la fiche de contrôle est inaccessible. */
+  restrictedToOtherOperators?: boolean;
   createdDate?: Date; // Alias pour createdAt
   partner?: string; // Alias pour partenaire.name
   
@@ -756,6 +758,8 @@ export function generateSubscriptions(count: number): Subscription[] {
       details: {
         alerts: []
       },
+      // Maquette : une souscription sur quinze porte une part réservée à d'autres opérateurs.
+      restrictedToOtherOperators: (i + 1) % 15 === 0,
       // Propriétés raccourcies pour affichage facile
       product: fund,
       shareClass: shareClass,

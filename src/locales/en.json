@@ -423,7 +423,8 @@
         "capitalCalls": "Capital calls",
         "documents": "Documents",
         "integrations": "Integrations",
-        "notes": "Notes"
+        "notes": "Notes",
+        "audit": "Audit trail"
       },
       "stepper": {
         "stepOf": "Step {{current}}/{{total}}",
@@ -595,7 +596,9 @@
         "banking": "Banking details",
         "professional": "Professional situation",
         "financial": "Financial situation",
-        "documents": "Supporting documents"
+        "documents": "Supporting documents",
+        "investorProfile": "Investor profile",
+        "commitments": "Financial commitments"
       },
       "onboarding": {
         "answeredOf": "{{answered}}/{{total}} answered",
@@ -621,7 +624,7 @@
           "sectionPosition": "Section {{position}}/{{total}}",
           "questions": "Questions",
           "documents": "Supporting documents",
-          "validatedItems": "{{validated}}/{{total}} items validated",
+          "validatedItems": "{{validated}}/{{total}} answers validated",
           "awaitingCorrectionCount": "{{count}} to correct",
           "documentsValidatedDesc": "{{count}} documents in \"{{title}}\" have been validated",
           "state": {
@@ -631,7 +634,35 @@
             "validated": "Validated"
           },
           "documentsCountOne": "{{count}} document",
-          "documentsCountMany": "{{count}} documents"
+          "documentsCountMany": "{{count}} documents",
+          "documentsExcluded": "Supporting documents do not count in the completion: they are checked at this step."
+        },
+        "preonboarding": {
+          "group": "Pre-onboarding",
+          "dossierGroup": "File onboarding",
+          "badge": "Pre-onboarding"
+        },
+        "iteration": {
+          "commitment": "Commitment {{n}}"
+        },
+        "notAsked": {
+          "tag": "Not asked",
+          "show": "Show questions not asked ({{count}})",
+          "hide": "Hide questions not asked"
+        },
+        "modified": {
+          "byOperator": "Modified by an operator",
+          "byInvestor": "Modified by the investor",
+          "automatic": "Modified automatically",
+          "filter": "Modified answers ({{count}})",
+          "byPartner": "Modified by the partner"
+        },
+        "relations": {
+          "synced": "Field synchronised with:",
+          "gap": "Gap with the reported data:",
+          "gapItem": "{{target}} still holds {{value}}",
+          "impacts": "Triggers the answer to:",
+          "impactedBy": "Answer triggered by:"
         }
       },
       "validation": {
@@ -1353,11 +1384,329 @@
           "noteAdded": "Note added to the log",
           "complianceReopenedDesc": "Score, matches and categorisation can be changed again.",
           "scoreInvalidated": "Score validation removed"
+        },
+        "chain": {
+          "ariaLabel": "Validation circuit",
+          "partner": "Partner: {{name}}",
+          "analyst1": "Analyst 1: {{name}}",
+          "analyst2": "Analyst 2: {{name}}",
+          "validated": "Final validation",
+          "handOff": "Hand over to {{name}}",
+          "finalValidation": "Final validation ({{name}})",
+          "handedOffToast": "File handed over to {{name}}",
+          "handedOffToastDesc": "The hand-over is logged in the audit trail."
         }
       },
       "queues": {
         "title": "Work queues",
         "hint": "Click a queue to filter"
+      },
+      "accessDenied": {
+        "title": "Access denied",
+        "description": "This subscription holds a share restricted to other operators. You do not have the rights to view its file.",
+        "back": "Back to subscriptions"
+      },
+      "beneficialOwners": {
+        "title": "Beneficial owners",
+        "countOne": "{{count}} declared beneficial owner",
+        "countMany": "{{count}} declared beneficial owners",
+        "columns": {
+          "name": "Name",
+          "ownership": "Ownership",
+          "control": "Type of control",
+          "nationality": "Nationality",
+          "birthDate": "Birth"
+        },
+        "control": {
+          "capital": "Capital ownership",
+          "votingRights": "Voting rights",
+          "otherMeans": "Control by any other means"
+        }
+      },
+      "questionActions": {
+        "modifiedToast": "Answer modified",
+        "modifiedToastDesc": "The answer goes back to review. The investor is not notified.",
+        "approvedToast": "Answer validated",
+        "approvedToastDesc": "The answer has been validated",
+        "rejectedToast": "Answer invalidated",
+        "rejectedToastDesc": "The answer has been invalidated",
+        "save": "Save",
+        "cancel": "Cancel",
+        "approved": "Validated",
+        "rejected": "Invalidated",
+        "modified": "Modified",
+        "approve": "Validate the answer",
+        "reject": "Invalidate the answer",
+        "modify": "Modify the answer",
+        "addComment": "Add a comment",
+        "unresolvedComments": "{{count}} unresolved comment(s)",
+        "resolvedComments": "{{count}} resolved comment(s)",
+        "timeline": "Audit trail",
+        "computed": "Computed field, cannot be modified",
+        "timelineModifiedOne": "Audit trail: 1 change since the last validation",
+        "timelineModifiedMany": "Audit trail: {{count}} changes since the last validation"
+      },
+      "audit": {
+        "title": "Audit trail",
+        "hint": "Every entry, change, validation and comment on the file, with its author, origin and date.",
+        "sectionFilter": "Filter by section",
+        "allSections": "All sections",
+        "dossier": "File",
+        "empty": "(empty)",
+        "reason": "Reason: {{reason}}",
+        "viaSection": "Through the section validation",
+        "emptyTimeline": "No event for this item",
+        "panelTitle": "Audit trail",
+        "showAll": "See the full audit trail",
+        "close": "Close",
+        "columns": {
+          "date": "Date",
+          "time": "Time",
+          "event": "Event",
+          "section": "Section",
+          "element": "Item",
+          "previousValue": "Previous value",
+          "newValue": "New value",
+          "reason": "Reason",
+          "author": "Author",
+          "origin": "Origin"
+        },
+        "types": {
+          "invitationSent": "Invitation sent",
+          "answerEntered": "Answer entered",
+          "answerModified": "Answer modified",
+          "answerValidated": "Answer validated",
+          "answerInvalidated": "Answer invalidated",
+          "documentUploaded": "Document uploaded",
+          "documentReplaced": "Document replaced",
+          "documentValidated": "Document validated",
+          "documentRejected": "Document rejected",
+          "commentAdded": "Comment added",
+          "dossierSubmitted": "File submitted",
+          "documentDatesUpdated": "Document dates updated",
+          "dataPropagated": "Linked data updated",
+          "dataReset": "Linked data reset",
+          "answerReplayed": "Triggered answer changed",
+          "notificationSent": "Alert sent",
+          "dataReported": "Data reported at submission",
+          "mandateCreated": "Direct debit mandate created",
+          "investorReminded": "Investor reminded",
+          "dossierReopened": "File reopened",
+          "partnerValidated": "File validated by the partner",
+          "reviewHandedOff": "File handed over to the next analyst",
+          "finalValidation": "Final validation"
+        },
+        "origin": {
+          "investor": "Investor",
+          "operator": "Back-office operator",
+          "automatic": "Automatic",
+          "api": "API",
+          "partner": "Partner"
+        },
+        "target": "Linked data: {{object}} · {{field}}",
+        "causedBy": "Following the change of: {{label}}",
+        "pendingModificationsOne": "1 change since the last validation",
+        "pendingModificationsMany": "{{count}} changes since the last validation",
+        "recipients": "Recipients: {{recipients}}"
+      },
+      "documentControl": {
+        "rejectedToast": "Document rejected",
+        "rejectedToastDesc": "{{name}}: the reason is visible to the investor",
+        "validationBlocked": "Validation unavailable: {{count}} blocking document(s), see the list at the top of the file",
+        "blockersTitleOne": "1 document blocks the file validation",
+        "blockersTitleMany": "{{count}} documents block the file validation",
+        "blockersDescription": "Fill in the missing information to be able to validate the file.",
+        "missingIssueDate": "Issue date missing, required for this document type",
+        "issueDateInput": "Issue date",
+        "manualTag": "Manual upload",
+        "reasonLine": "Reason: {{reason}}",
+        "visibleToInvestor": "Visible to the investor",
+        "rejectTitle": "Reject the document",
+        "rejectConfirm": "Reject",
+        "reasonRequired": "Enter a reason to reject the document",
+        "reasonPlaceholder": "Example: unreadable document, please send a complete copy",
+        "reasonLabel": "Rejection reason",
+        "reasonVisible": "The reason is kept on the document and visible to the investor on their portal."
+      },
+      "manualDocument": {
+        "title": "Add a document",
+        "description": "Document outside the list of required documents, attached to this file and flagged as a manual upload.",
+        "section": "Document",
+        "sectionDesc": "Label, file and dates of the document.",
+        "name": "Document label",
+        "namePlaceholder": "Example: bank domiciliation certificate",
+        "file": "File",
+        "issueDate": "Issue date",
+        "expiration": "Expiry date",
+        "cancel": "Cancel",
+        "save": "Add the document",
+        "savedToast": "Document added",
+        "savedToastDesc": "{{name}} is attached to the file"
+      },
+      "answerEdit": {
+        "title": "Modify the answer",
+        "currentValue": "Current value",
+        "newValue": "New value",
+        "noValue": "No answer",
+        "selectPlaceholder": "Choose a value",
+        "currency": "Currency",
+        "moveUp": "Move up",
+        "moveDown": "Move down",
+        "alreadyFirst": "Already first",
+        "alreadyLast": "Already last",
+        "unchanged": "The value has not changed.",
+        "reason": "Reason for the change",
+        "reasonPlaceholder": "Example: correction requested by the investor by email",
+        "reasonHint": "The subscription has been sent for signature: the reason is mandatory and kept in the compliance log.",
+        "reasonRequired": "Enter a reason to save the change",
+        "constraintsTitle": "Question constraints",
+        "constraintsDesc": "The same as on the investor portal.",
+        "afterSave": "Once saved, the answer goes back to review. The investor receives no notification.",
+        "cancel": "Cancel",
+        "save": "Save",
+        "typeLabel": {
+          "text": "Text",
+          "list": "List",
+          "multiChoice": "Multiple choice",
+          "rankedChoice": "Ranked choice",
+          "date": "Date",
+          "amount": "Amount with currency",
+          "country": "Country",
+          "percentage": "Percentage",
+          "number": "Number"
+        },
+        "scenario": {
+          "label": "Demo scenario",
+          "options": {
+            "manager": "Manager, before sending for signature",
+            "readOnly": "Read-only profile",
+            "signedNoRight": "Sent for signature, without dedicated right",
+            "signedWithRight": "Sent for signature, with dedicated right"
+          }
+        },
+        "constraints": {
+          "required": "Answer required.",
+          "requiredIfFirstSubscription": "Answer required for a first subscription.",
+          "number": "Enter a number.",
+          "integer": "Enter a whole number.",
+          "min": "The value must be greater than or equal to {{min}}.",
+          "max": "The value must be less than or equal to {{max}}.",
+          "maxLength": "{{max}} characters maximum.",
+          "minDate": "The date must be after {{date}}.",
+          "maxDate": "The date must be before {{date}}.",
+          "adult": "The date must match an adult (18 or older).",
+          "hint": {
+            "required": "Required",
+            "requiredIfFirstSubscription": "Required for a first subscription",
+            "min": "Minimum: {{min}}",
+            "max": "Maximum: {{max}}",
+            "maxLength": "{{max}} characters maximum",
+            "minDate": "After {{date}}",
+            "maxDate": "Before {{date}}",
+            "adult": "Adult",
+            "integer": "Whole number"
+          }
+        }
+      },
+      "answerEffects": {
+        "title": "Effects of the change",
+        "description": "Nothing is propagated unless checked. Each chosen effect is logged with the change that caused it.",
+        "propagate": "Propagate the new value: {{object}} · {{field}}",
+        "reset": "Reset the linked data: {{object}} · {{field}}",
+        "valueChange": "Current value: {{current}} → {{next}}",
+        "empty": "(empty)",
+        "replay": "Replay the triggers",
+        "replayNote": "Answers changed by the replay go back to review.",
+        "replayNone": "No triggered answer would change with this value.",
+        "replayChange": "{{label}}: {{current}} → {{next}}",
+        "replayKept": "{{label}}: {{current}}, kept (already modified by the back office)",
+        "objects": {
+          "subscription": "Subscription",
+          "investor": "Investor record",
+          "partner": "Partner",
+          "participation": "Holding"
+        },
+        "fields": {
+          "nationality": "Nationality",
+          "email": "Email",
+          "investorEmail": "Investor email",
+          "phone": "Mobile phone",
+          "address": "Address",
+          "city": "City",
+          "postalCode": "Postal code",
+          "country": "Country",
+          "taxResidence": "Tax residence",
+          "iban": "IBAN",
+          "bic": "BIC",
+          "pep": "Politically exposed person status",
+          "financialAssets": "Financial assets",
+          "identityDocument": "Identity document",
+          "addressProofDocument": "Proof of address"
+        }
+      },
+      "dossierExport": {
+        "columns": {
+          "section": "Section",
+          "question": "Question",
+          "answer": "Answer",
+          "control": "Review",
+          "indicator": "Indicator"
+        },
+        "toast": "File export downloaded"
+      },
+      "answerAlerts": {
+        "partnerFallback": "Partner",
+        "roles": {
+          "analyst1": "analyst 1",
+          "analyst2": "analyst 2",
+          "partner": "partner",
+          "advisor": "advisor"
+        },
+        "auditSummaryOne": "Alert: 1 answer modified",
+        "auditSummaryMany": "Alert: {{count}} answers modified",
+        "sentToast": "Alert sent",
+        "sentToastDesc": "Recipients: {{recipients}}",
+        "preview": "See the preview",
+        "previewTitle": "Preview: distributor space",
+        "previewDescription": "Notification received by the partner and the advisor attached to the subscription.",
+        "noCircuitToast": "Standard mode: no alert, the indicator is enough.",
+        "simulate": "Simulate a change by the investor",
+        "scenario": {
+          "label": "Validation mode",
+          "options": {
+            "fourEyes": "Four-eyes review",
+            "partnerPrevalidation": "Partner pre-validation",
+            "standard": "Standard"
+          }
+        }
+      },
+      "report": {
+        "title": "Data reported at submission",
+        "summary": "Reported on {{date}}. A later correction is reported only through an explicit action.",
+        "columns": {
+          "data": "Data",
+          "value": "Value",
+          "origin": "Source question",
+          "state": "State"
+        },
+        "gap": "Gap with the answer",
+        "inSync": "In sync",
+        "propagate": "Propagate",
+        "replaced": "Replaced: {{value}}",
+        "mandate": "Subscription · SEPA mandate reference",
+        "mandateOrigin": "Direct debit answer set to \"Yes\"",
+        "mandateCreated": "Created at submission",
+        "documentCopied": "Copied to the record",
+        "propagatedToast": "Linked data updated"
+      },
+      "partnerReview": {
+        "awaitingPartner": "Awaiting validation by {{partner}}",
+        "simulate": "Simulate the partner's review",
+        "mockRejectReason": "Number unreachable, please check it with the investor",
+        "mockReminder": "Reminder about the phone number",
+        "transmitted": "Sent to analyst 1",
+        "validatedToast": "File validated by {{partner}}",
+        "validatedToastDesc": "The file is sent to analyst 1."
       }
     },
     "table": {
@@ -1714,6 +2063,14 @@
       "toast": {
         "subscriptionUpdated": "Subscription updated",
         "subscriptionUpdatedDesc": "{{investor}} - €{{amount}}"
+      }
+    },
+    "stateBanner": {
+      "delegatedReview": {
+        "pendingTitle": "KYC validation delegated to {{partner}}",
+        "pendingDescription": "The partner reviews the file on their portal. The file will be sent to you once validated.",
+        "validatedTitle": "File validated by {{author}} ({{partner}}) on {{date}}",
+        "validatedDescription": "Sent to analyst 1. The partner's actions are in the audit trail."
       }
     }
   },
@@ -7055,6 +7412,22 @@
         "unpublish": "Unpublish",
         "revert": "Revert changes"
       }
+    }
+  },
+  "notifications": {
+    "panel": {
+      "title": "Notifications",
+      "description": "Alerts about the files you review.",
+      "emptyTitle": "No notification",
+      "emptyDescription": "You will be notified here when an answer changes on a file you review.",
+      "answersModifiedOne": "1 answer modified after submission",
+      "answersModifiedMany": "{{count}} answers modified after submission",
+      "moreAnswers": "and {{count}} more",
+      "meta": "{{origin}} · {{author}} · {{date}} at {{time}}",
+      "open": "See the modified answers",
+      "unread": "Unread",
+      "markAllRead": "Mark all as read",
+      "close": "Close"
     }
   }
 }

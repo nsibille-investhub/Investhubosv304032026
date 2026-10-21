@@ -423,7 +423,8 @@
         "capitalCalls": "Appels de fonds",
         "documents": "Documents",
         "integrations": "Intégrations",
-        "notes": "Notes"
+        "notes": "Notes",
+        "audit": "Piste d'audit"
       },
       "stepper": {
         "stepOf": "Étape {{current}}/{{total}}",
@@ -595,7 +596,9 @@
         "banking": "Coordonnées bancaires",
         "professional": "Situation professionnelle",
         "financial": "Situation financière",
-        "documents": "Pièces justificatives"
+        "documents": "Pièces justificatives",
+        "investorProfile": "Profil investisseur",
+        "commitments": "Engagements financiers"
       },
       "onboarding": {
         "answeredOf": "{{answered}}/{{total}} répondues",
@@ -621,7 +624,7 @@
           "sectionPosition": "Section {{position}}/{{total}}",
           "questions": "Questions",
           "documents": "Pièces justificatives",
-          "validatedItems": "{{validated}}/{{total}} éléments validés",
+          "validatedItems": "{{validated}}/{{total}} réponses validées",
           "awaitingCorrectionCount": "{{count}} à corriger",
           "documentsValidatedDesc": "{{count}} documents de \"{{title}}\" ont été validés",
           "state": {
@@ -631,7 +634,35 @@
             "validated": "Validé"
           },
           "documentsCountOne": "{{count}} document",
-          "documentsCountMany": "{{count}} documents"
+          "documentsCountMany": "{{count}} documents",
+          "documentsExcluded": "Les pièces justificatives ne comptent pas dans la complétion : elles sont contrôlées à cette étape."
+        },
+        "preonboarding": {
+          "group": "Préonboarding",
+          "dossierGroup": "Onboarding du dossier",
+          "badge": "Préonboarding"
+        },
+        "iteration": {
+          "commitment": "Engagement {{n}}"
+        },
+        "notAsked": {
+          "tag": "Non posée",
+          "show": "Afficher les questions non posées ({{count}})",
+          "hide": "Masquer les questions non posées"
+        },
+        "modified": {
+          "byOperator": "Modifiée par un opérateur",
+          "byInvestor": "Modifiée par l'investisseur",
+          "automatic": "Modifiée automatiquement",
+          "filter": "Réponses modifiées ({{count}})",
+          "byPartner": "Modifiée par le partenaire"
+        },
+        "relations": {
+          "synced": "Champ synchronisé avec :",
+          "gap": "Écart avec la donnée reportée :",
+          "gapItem": "{{target}} vaut encore {{value}}",
+          "impacts": "Déclenche la réponse de :",
+          "impactedBy": "Réponse déclenchée par :"
         }
       },
       "validation": {
@@ -1353,11 +1384,329 @@
           "noteAdded": "Note ajoutée au journal",
           "complianceReopenedDesc": "Score, correspondances et catégorisation sont de nouveau modifiables.",
           "scoreInvalidated": "Validation du score retirée"
+        },
+        "chain": {
+          "ariaLabel": "Circuit de validation",
+          "partner": "Partenaire : {{name}}",
+          "analyst1": "Analyste 1 : {{name}}",
+          "analyst2": "Analyste 2 : {{name}}",
+          "validated": "Validation finale",
+          "handOff": "Transmettre à {{name}}",
+          "finalValidation": "Validation finale ({{name}})",
+          "handedOffToast": "Dossier transmis à {{name}}",
+          "handedOffToastDesc": "Le passage de main est enregistré dans la piste d'audit."
         }
       },
       "queues": {
         "title": "Files de travail",
         "hint": "Cliquez sur une file pour filtrer"
+      },
+      "accessDenied": {
+        "title": "Accès refusé",
+        "description": "Cette souscription porte une part réservée à d'autres opérateurs. Vous n'avez pas les droits pour consulter son dossier.",
+        "back": "Retour aux souscriptions"
+      },
+      "beneficialOwners": {
+        "title": "Bénéficiaires effectifs",
+        "countOne": "{{count}} bénéficiaire effectif déclaré",
+        "countMany": "{{count}} bénéficiaires effectifs déclarés",
+        "columns": {
+          "name": "Nom",
+          "ownership": "Détention",
+          "control": "Type de contrôle",
+          "nationality": "Nationalité",
+          "birthDate": "Naissance"
+        },
+        "control": {
+          "capital": "Détention du capital",
+          "votingRights": "Droits de vote",
+          "otherMeans": "Contrôle par tout autre moyen"
+        }
+      },
+      "questionActions": {
+        "modifiedToast": "Réponse modifiée",
+        "modifiedToastDesc": "La réponse repasse à contrôler. L'investisseur n'est pas notifié.",
+        "approvedToast": "Réponse validée",
+        "approvedToastDesc": "La réponse a été validée",
+        "rejectedToast": "Réponse invalidée",
+        "rejectedToastDesc": "La réponse a été invalidée",
+        "save": "Enregistrer",
+        "cancel": "Annuler",
+        "approved": "Validée",
+        "rejected": "Invalidée",
+        "modified": "Modifiée",
+        "approve": "Valider la réponse",
+        "reject": "Invalider la réponse",
+        "modify": "Modifier la réponse",
+        "addComment": "Ajouter un commentaire",
+        "unresolvedComments": "{{count}} commentaire(s) non résolu(s)",
+        "resolvedComments": "{{count}} commentaire(s) résolu(s)",
+        "timeline": "Piste d'audit",
+        "computed": "Champ calculé, non modifiable",
+        "timelineModifiedOne": "Piste d'audit : 1 modification depuis la dernière validation",
+        "timelineModifiedMany": "Piste d'audit : {{count}} modifications depuis la dernière validation"
+      },
+      "audit": {
+        "title": "Piste d'audit",
+        "hint": "Chaque saisie, modification, validation et commentaire du dossier, avec son auteur, son origine et sa date.",
+        "sectionFilter": "Filtrer par section",
+        "allSections": "Toutes les sections",
+        "dossier": "Dossier",
+        "empty": "(vide)",
+        "reason": "Motif : {{reason}}",
+        "viaSection": "Via la validation de la section",
+        "emptyTimeline": "Aucun événement pour cet élément",
+        "panelTitle": "Piste d'audit",
+        "showAll": "Voir toute la piste d'audit",
+        "close": "Fermer",
+        "columns": {
+          "date": "Date",
+          "time": "Heure",
+          "event": "Événement",
+          "section": "Section",
+          "element": "Élément",
+          "previousValue": "Ancienne valeur",
+          "newValue": "Nouvelle valeur",
+          "reason": "Motif",
+          "author": "Auteur",
+          "origin": "Origine"
+        },
+        "types": {
+          "invitationSent": "Invitation envoyée",
+          "answerEntered": "Réponse saisie",
+          "answerModified": "Réponse modifiée",
+          "answerValidated": "Réponse validée",
+          "answerInvalidated": "Réponse invalidée",
+          "documentUploaded": "Document déposé",
+          "documentReplaced": "Document remplacé",
+          "documentValidated": "Document validé",
+          "documentRejected": "Document refusé",
+          "commentAdded": "Commentaire ajouté",
+          "dossierSubmitted": "Dossier soumis",
+          "documentDatesUpdated": "Dates du document modifiées",
+          "dataPropagated": "Donnée liée mise à jour",
+          "dataReset": "Donnée liée remise à zéro",
+          "answerReplayed": "Réponse déclenchée modifiée",
+          "notificationSent": "Alerte envoyée",
+          "dataReported": "Donnée reportée à la soumission",
+          "mandateCreated": "Mandat de prélèvement créé",
+          "investorReminded": "Investisseur relancé",
+          "dossierReopened": "Dossier rouvert",
+          "partnerValidated": "Dossier validé par le partenaire",
+          "reviewHandedOff": "Dossier transmis à l'analyste suivant",
+          "finalValidation": "Validation finale"
+        },
+        "origin": {
+          "investor": "Investisseur",
+          "operator": "Opérateur back-office",
+          "automatic": "Automatique",
+          "api": "API",
+          "partner": "Partenaire"
+        },
+        "target": "Donnée liée : {{object}} · {{field}}",
+        "causedBy": "Suite à la modification de : {{label}}",
+        "pendingModificationsOne": "1 modification depuis la dernière validation",
+        "pendingModificationsMany": "{{count}} modifications depuis la dernière validation",
+        "recipients": "Destinataires : {{recipients}}"
+      },
+      "documentControl": {
+        "rejectedToast": "Document refusé",
+        "rejectedToastDesc": "{{name}} : le motif est visible de l'investisseur",
+        "validationBlocked": "Validation impossible : {{count}} pièce(s) bloquante(s), voir la liste en tête du dossier",
+        "blockersTitleOne": "1 pièce bloque la validation du dossier",
+        "blockersTitleMany": "{{count}} pièces bloquent la validation du dossier",
+        "blockersDescription": "Renseignez les informations manquantes pour pouvoir valider le dossier.",
+        "missingIssueDate": "Date d'émission manquante, exigée pour ce type de document",
+        "issueDateInput": "Date d'émission",
+        "manualTag": "Ajout manuel",
+        "reasonLine": "Motif : {{reason}}",
+        "visibleToInvestor": "Visible de l'investisseur",
+        "rejectTitle": "Refuser le document",
+        "rejectConfirm": "Refuser",
+        "reasonRequired": "Saisissez un motif pour refuser le document",
+        "reasonPlaceholder": "Exemple : document illisible, merci de transmettre une copie complète",
+        "reasonLabel": "Motif du refus",
+        "reasonVisible": "Le motif est conservé sur le document et visible de l'investisseur sur son portail."
+      },
+      "manualDocument": {
+        "title": "Ajouter un document",
+        "description": "Pièce hors nomenclature, rattachée à ce dossier et identifiée comme ajout manuel.",
+        "section": "Document",
+        "sectionDesc": "Libellé, fichier et dates de la pièce.",
+        "name": "Libellé du document",
+        "namePlaceholder": "Exemple : attestation de domiciliation bancaire",
+        "file": "Fichier",
+        "issueDate": "Date d'émission",
+        "expiration": "Date d'expiration",
+        "cancel": "Annuler",
+        "save": "Ajouter le document",
+        "savedToast": "Document ajouté",
+        "savedToastDesc": "{{name}} est rattaché au dossier"
+      },
+      "answerEdit": {
+        "title": "Modifier la réponse",
+        "currentValue": "Valeur actuelle",
+        "newValue": "Nouvelle valeur",
+        "noValue": "Aucune réponse",
+        "selectPlaceholder": "Choisissez une valeur",
+        "currency": "Devise",
+        "moveUp": "Monter",
+        "moveDown": "Descendre",
+        "alreadyFirst": "Déjà en première position",
+        "alreadyLast": "Déjà en dernière position",
+        "unchanged": "La valeur n'a pas changé.",
+        "reason": "Motif de la modification",
+        "reasonPlaceholder": "Exemple : correction demandée par l'investisseur par email",
+        "reasonHint": "La souscription est envoyée en signature : le motif est obligatoire et conservé dans le journal de conformité.",
+        "reasonRequired": "Saisissez un motif pour enregistrer la modification",
+        "constraintsTitle": "Contraintes de la question",
+        "constraintsDesc": "Les mêmes que sur le portail investisseur.",
+        "afterSave": "Après enregistrement, la réponse repasse à contrôler. L'investisseur ne reçoit aucune notification.",
+        "cancel": "Annuler",
+        "save": "Enregistrer",
+        "typeLabel": {
+          "text": "Texte",
+          "list": "Liste",
+          "multiChoice": "Choix multiple",
+          "rankedChoice": "Choix ordonné",
+          "date": "Date",
+          "amount": "Montant avec devise",
+          "country": "Pays",
+          "percentage": "Pourcentage",
+          "number": "Nombre"
+        },
+        "scenario": {
+          "label": "Scénario de démonstration",
+          "options": {
+            "manager": "Gestionnaire, avant envoi en signature",
+            "readOnly": "Profil lecture seule",
+            "signedNoRight": "Envoyée en signature, sans droit dédié",
+            "signedWithRight": "Envoyée en signature, avec droit dédié"
+          }
+        },
+        "constraints": {
+          "required": "Réponse obligatoire.",
+          "requiredIfFirstSubscription": "Réponse obligatoire pour une première souscription.",
+          "number": "Saisissez un nombre.",
+          "integer": "Saisissez un nombre entier.",
+          "min": "La valeur doit être supérieure ou égale à {{min}}.",
+          "max": "La valeur doit être inférieure ou égale à {{max}}.",
+          "maxLength": "{{max}} caractères au maximum.",
+          "minDate": "La date doit être postérieure au {{date}}.",
+          "maxDate": "La date doit être antérieure au {{date}}.",
+          "adult": "La date doit correspondre à une personne majeure (18 ans ou plus).",
+          "hint": {
+            "required": "Obligatoire",
+            "requiredIfFirstSubscription": "Obligatoire pour une première souscription",
+            "min": "Minimum : {{min}}",
+            "max": "Maximum : {{max}}",
+            "maxLength": "{{max}} caractères au maximum",
+            "minDate": "Après le {{date}}",
+            "maxDate": "Avant le {{date}}",
+            "adult": "Personne majeure",
+            "integer": "Nombre entier"
+          }
+        }
+      },
+      "answerEffects": {
+        "title": "Effets de la modification",
+        "description": "Rien ne se propage sans case cochée. Chaque effet choisi est historisé avec la modification qui l'a causé.",
+        "propagate": "Propager la nouvelle valeur : {{object}} · {{field}}",
+        "reset": "Remettre à zéro la donnée liée : {{object}} · {{field}}",
+        "valueChange": "Valeur actuelle : {{current}} → {{next}}",
+        "empty": "(vide)",
+        "replay": "Rejouer les déclenchements",
+        "replayNote": "Les réponses modifiées par le rejeu repassent à contrôler.",
+        "replayNone": "Aucune réponse déclenchée ne changerait avec cette valeur.",
+        "replayChange": "{{label}} : {{current}} → {{next}}",
+        "replayKept": "{{label}} : {{current}}, conservée (déjà modifiée par le back-office)",
+        "objects": {
+          "subscription": "Souscription",
+          "investor": "Fiche investisseur",
+          "partner": "Partenaire",
+          "participation": "Participation"
+        },
+        "fields": {
+          "nationality": "Nationalité",
+          "email": "E-mail",
+          "investorEmail": "E-mail de l'investisseur",
+          "phone": "Téléphone mobile",
+          "address": "Adresse",
+          "city": "Ville",
+          "postalCode": "Code postal",
+          "country": "Pays",
+          "taxResidence": "Résidence fiscale",
+          "iban": "IBAN",
+          "bic": "BIC",
+          "pep": "Statut de personne politiquement exposée",
+          "financialAssets": "Patrimoine financier",
+          "identityDocument": "Pièce d'identité",
+          "addressProofDocument": "Justificatif de domicile"
+        }
+      },
+      "dossierExport": {
+        "columns": {
+          "section": "Section",
+          "question": "Question",
+          "answer": "Réponse",
+          "control": "Contrôle",
+          "indicator": "Indicateur"
+        },
+        "toast": "Export du dossier téléchargé"
+      },
+      "answerAlerts": {
+        "partnerFallback": "Partenaire",
+        "roles": {
+          "analyst1": "analyste 1",
+          "analyst2": "analyste 2",
+          "partner": "partenaire",
+          "advisor": "conseiller"
+        },
+        "auditSummaryOne": "Alerte : 1 réponse modifiée",
+        "auditSummaryMany": "Alerte : {{count}} réponses modifiées",
+        "sentToast": "Alerte envoyée",
+        "sentToastDesc": "Destinataires : {{recipients}}",
+        "preview": "Voir l'aperçu",
+        "previewTitle": "Aperçu : espace distributeur",
+        "previewDescription": "Notification reçue par le partenaire et le conseiller rattachés à la souscription.",
+        "noCircuitToast": "Mode standard : aucune alerte, l'indicateur suffit.",
+        "simulate": "Simuler une modification par l'investisseur",
+        "scenario": {
+          "label": "Mode de validation",
+          "options": {
+            "fourEyes": "Analyse 4 yeux",
+            "partnerPrevalidation": "Pré-validation partenaire",
+            "standard": "Standard"
+          }
+        }
+      },
+      "report": {
+        "title": "Données reportées à la soumission",
+        "summary": "Report effectué le {{date}}. Une correction ultérieure n'est reportée que sur action explicite.",
+        "columns": {
+          "data": "Donnée",
+          "value": "Valeur",
+          "origin": "Question d'origine",
+          "state": "État"
+        },
+        "gap": "Écart avec la réponse",
+        "inSync": "Synchronisée",
+        "propagate": "Propager",
+        "replaced": "A remplacé : {{value}}",
+        "mandate": "Souscription · Référence de mandat SEPA",
+        "mandateOrigin": "Réponse de prélèvement à \"Oui\"",
+        "mandateCreated": "Créée à la soumission",
+        "documentCopied": "Copié sur la fiche",
+        "propagatedToast": "Donnée liée mise à jour"
+      },
+      "partnerReview": {
+        "awaitingPartner": "En attente de la validation de {{partner}}",
+        "simulate": "Simuler le contrôle du partenaire",
+        "mockRejectReason": "Numéro injoignable, merci de le vérifier avec l'investisseur",
+        "mockReminder": "Relance pour le numéro de téléphone",
+        "transmitted": "Transmis à l'analyste 1",
+        "validatedToast": "Dossier validé par {{partner}}",
+        "validatedToastDesc": "Le dossier est transmis à l'analyste 1."
       }
     },
     "table": {
@@ -1714,6 +2063,14 @@
       "toast": {
         "subscriptionUpdated": "Souscription mise à jour",
         "subscriptionUpdatedDesc": "{{investor}} - {{amount}} €"
+      }
+    },
+    "stateBanner": {
+      "delegatedReview": {
+        "pendingTitle": "Validation KYC déléguée à {{partner}}",
+        "pendingDescription": "Le partenaire contrôle le dossier sur son portail. Le dossier vous sera transmis après sa validation.",
+        "validatedTitle": "Dossier validé par {{author}} ({{partner}}) le {{date}}",
+        "validatedDescription": "Transmis à l'analyste 1. Les actions du partenaire figurent dans la piste d'audit."
       }
     }
   },
@@ -7055,6 +7412,22 @@
         "unpublish": "Dépublier",
         "revert": "Annuler les modifications"
       }
+    }
+  },
+  "notifications": {
+    "panel": {
+      "title": "Notifications",
+      "description": "Les alertes qui vous concernent sur les dossiers que vous contrôlez.",
+      "emptyTitle": "Aucune notification",
+      "emptyDescription": "Vous serez prévenu ici quand une réponse change sur un dossier que vous contrôlez.",
+      "answersModifiedOne": "1 réponse modifiée après soumission",
+      "answersModifiedMany": "{{count}} réponses modifiées après soumission",
+      "moreAnswers": "et {{count}} autre(s)",
+      "meta": "{{origin}} · {{author}} · {{date}} à {{time}}",
+      "open": "Voir les réponses modifiées",
+      "unread": "Non lue",
+      "markAllRead": "Tout marquer comme lu",
+      "close": "Fermer"
     }
   }
 }

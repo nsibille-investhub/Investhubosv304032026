@@ -1023,7 +1023,8 @@ export function FundDetailComponentsSection() {
 <PageStateBanner variant="locked" date={date} reason={reason} />
 <PageStateBanner variant="mirror" masterName={name} onOpenMaster={open} />
 <PageStateBanner variant="sendingNotices" blockedActions={[...]} />
-<PageStateBanner variant="readOnly" />`}
+<PageStateBanner variant="readOnly" />
+<PageStateBanner variant="delegatedReview" partner={name} validatedBy={author} date={date} />`}
       >
         <Example label={t(`${K}.pageStateBanner.exampleLabel`)} hint={t(`${K}.pageStateBanner.exampleHint`)}>
           <PageStateBannerDemo />
@@ -1037,7 +1038,9 @@ export function FundDetailComponentsSection() {
         usage={`<EffectsPanel effects={[
   { id, icon: Receipt, label, reversible: false, objects: [{ id, label }] },
   { id, icon: Mail, label, reversible: false, count: 2 },
-]} />`}
+  // case à cocher et liste dépliée d'emblée
+  { id, icon: Repeat, label, reversible: true, option: { checked, onCheckedChange }, objects, defaultOpen: true },
+]} marker="none" />`}
       >
         <Example label={t(`${K}.effectsPanel.exampleLabel`)} hint={t(`${K}.effectsPanel.exampleHint`)}>
           <div className="max-w-2xl">
@@ -1053,6 +1056,8 @@ export function FundDetailComponentsSection() {
         usage={`<BlockersPanel
   title={t('...')}
   blockers={[{ id, icon: FileSignature, label, count: 12, onOpen }]}
+  // élément unique : motif en detail, sans compteur
+  // blockers={[{ id, icon: FileText, label, detail: t('...'), onOpen }]}
   alternative={{ label: t('...'), onAction: archive, loading }}
 />`}
       >

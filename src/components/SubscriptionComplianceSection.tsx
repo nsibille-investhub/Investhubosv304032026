@@ -37,6 +37,7 @@ import {
 import { Tooltip, TooltipContent, TooltipTrigger } from './ui/tooltip';
 import { cn, WIDGET_LABEL_CLASS, WIDGET_SUBTITLE_CLASS, WIDGET_TITLE_CLASS } from './ui/utils';
 import { PRIMARY_BUTTON_GRADIENT } from './ui/page-header';
+import { WizardSteps } from './ui/wizard-steps';
 import {
   aggregateClassScore,
   componentScore,
@@ -475,6 +476,10 @@ interface SubscriptionComplianceSectionProps {
   /** Identifiant de la souscription : fixe les tiers screenes rattaches au dossier. */
   screeningSeed?: string;
   onStatusChange?: (next: ComplianceStatusSnapshot) => void;
+  /** Mode de validation (IC-5634) : chaque analyste passe la main au suivant, le dernier valide. */
+  reviewMode?: 'partnerPrevalidation' | 'standard' | 'fourEyes';
+  reviewChain?: { partner?: { name: string; by?: string }; firstAnalyst: string; secondAnalyst: string };
+  onReviewEvent?: (event: { type: 'handedOff' | 'finalValidation'; by: string; to?: string }) => void;
 }
 
 /** Espace Validation / Conformite : widgets risque, screening, categorisation et validation. */
@@ -488,6 +493,9 @@ export function SubscriptionComplianceSection({
   initialStatus,
   screeningSeed = 'subscription',
   onStatusChange,
+  reviewMode = 'standard',
+  reviewChain,
+  onReviewEvent,
 }: SubscriptionComplianceSectionProps) {
   const { t } = useTranslation();
 
@@ -507,6 +515,7 @@ export function SubscriptionComplianceSection({
   const [statusAt, setStatusAt] = useState<string | null>(initialStatus?.at ?? null);
   const [overrideRequested, setOverrideRequested] = useState(false);
   const [reopenedAt, setReopenedAt] = useState<string | null>(null);
+  const [handedOffTo, setHandedOffTo] = useState<string | null>(null);
   const [note, setNote] = useState('');
   const [journalNotes, setJournalNotes] = useState<
     { id: string; at: string; by: string; text: string; kind: 'note' | 'report' }[]
@@ -567,13 +576,49 @@ export function SubscriptionComplianceSection({
     });
   };
 
+  const firstAnalyst = reviewChain?.firstAnalyst ?? CURRENT_OPERATOR;
+  const fourEyes = reviewMode === 'fourEyes' && Boolean(reviewChain);
+  const awaitingHandOff = fourEyes && !handedOffTo;
+  const currentAnalyst = handedOffTo ?? firstAnalyst;
+
+  const chainSteps = [
+    ...(reviewMode === 'partnerPrevalidation' && reviewChain?.partner
+      ? [
+          t('subscriptions.detail.compliance.chain.partner', {
+            name: reviewChain.partner.by ?? reviewChain.partner.name,
+          }),
+        ]
+      : []),
+    t('subscriptions.detail.compliance.chain.analyst1', { name: firstAnalyst }),
+    ...(fourEyes && reviewChain
+      ? [t('subscriptions.detail.compliance.chain.analyst2', { name: reviewChain.secondAnalyst })]
+      : []),
+    t('subscriptions.detail.compliance.chain.validated'),
+  ];
+  const chainCurrent = locked
+    ? chainSteps.length - 1
+    : (reviewMode === 'partnerPrevalidation' && reviewChain?.partner ? 1 : 0) + (handedOffTo ? 1 : 0);
+
+  const handleHandOff = () => {
+    if (!reviewChain) return;
+    const stamp = now();
+    setHandedOffTo(reviewChain.secondAnalyst);
+    setStatusBy(firstAnalyst);
+    setStatusAt(stamp);
+    onReviewEvent?.({ type: 'handedOff', by: firstAnalyst, to: reviewChain.secondAnalyst });
+    toast.success(t('subscriptions.detail.compliance.chain.handedOffToast', { name: reviewChain.secondAnalyst }), {
+      description: t('subscriptions.detail.compliance.chain.handedOffToastDesc'),
+    });
+  };
+
   const handleValidateCompliance = () => {
     const stamp = now();
     setStatus('validated');
-    setStatusBy(CURRENT_OPERATOR);
+    setStatusBy(currentAnalyst);
     setStatusAt(stamp);
     setReopenedAt(null);
-    onStatusChange?.({ status: 'validated', by: CURRENT_OPERATOR, at: stamp });
+    onReviewEvent?.({ type: 'finalValidation', by: currentAnalyst });
+    onStatusChange?.({ status: 'validated', by: currentAnalyst, at: stamp });
     toast.success(t('subscriptions.detail.compliance.toast.complianceValidated'), {
       description: overrideRequested
         ? t('subscriptions.detail.compliance.toast.complianceValidatedOverride')
@@ -588,6 +633,7 @@ export function SubscriptionComplianceSection({
     setStatusAt(stamp);
     setReopenedAt(stamp);
     setOverrideRequested(false);
+    setHandedOffTo(null);
     onStatusChange?.({ status: 'awaitingValidation', by: CURRENT_OPERATOR, at: stamp });
     toast.info(t('subscriptions.detail.compliance.toast.complianceReopened'), {
       description: t('subscriptions.detail.compliance.toast.complianceReopenedDesc'),
@@ -678,15 +724,29 @@ export function SubscriptionComplianceSection({
                   className="gap-2 px-6 text-white hover:opacity-90"
                   style={{ background: PRIMARY_BUTTON_GRADIENT }}
                   disabled={!canValidate}
-                  onClick={handleValidateCompliance}
+                  onClick={awaitingHandOff ? handleHandOff : handleValidateCompliance}
                 >
-                  <ShieldCheck className="w-4 h-4" />
-                  {t('subscriptions.detail.compliance.final.validate')}
+                  {awaitingHandOff ? <ChevronRight className="w-4 h-4" /> : <ShieldCheck className="w-4 h-4" />}
+                  {awaitingHandOff
+                    ? t('subscriptions.detail.compliance.chain.handOff', { name: reviewChain?.secondAnalyst ?? '' })
+                    : fourEyes
+                      ? t('subscriptions.detail.compliance.chain.finalValidation', { name: currentAnalyst })
+                      : t('subscriptions.detail.compliance.final.validate')}
                 </Button>
               </>
             )}
           </div>
         </div>
+
+        {chainSteps.length > 2 && (
+          <div className="border-t px-4 py-3">
+            <WizardSteps
+              steps={chainSteps}
+              current={chainCurrent}
+              ariaLabel={t('subscriptions.detail.compliance.chain.ariaLabel')}
+            />
+          </div>
+        )}
 
         <div className="grid grid-cols-3 gap-3 border-t px-4 py-3">
           {/* Sous-widget score de risque */}

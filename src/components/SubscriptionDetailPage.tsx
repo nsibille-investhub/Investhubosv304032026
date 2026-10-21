@@ -1,4 +1,4 @@
-import { Fragment, useMemo, useRef, useState } from 'react';
+import { Fragment, useEffect, useMemo, useRef, useState } from 'react';
 import { useTranslation } from '../utils/languageContext';
 import {
   Building2,
@@ -48,6 +48,15 @@ import {
   Percent,
   Handshake,
   RefreshCw,
+  History,
+  Lock,
+  UserCheck,
+  ArrowLeft,
+  TriangleAlert,
+  Link2,
+  Share2,
+  PencilLine,
+  Info,
 } from 'lucide-react';
 import { motion } from 'motion/react';
 import { Badge } from './ui/badge';
@@ -95,7 +104,41 @@ import {
   mockEmails,
   mockCapitalCalls,
   mockInitEmails,
+  mockBeneficialOwners,
+  MOCK_SUBMISSION_REPORT,
+  type MockLinkedTarget,
+  type MockRequiredDocument,
 } from '../utils/subscriptionDetailMockData';
+import {
+  AUDIT_DOCUMENTS_SECTION,
+  CURRENT_OPERATOR,
+  buildInitialSubscriptionAudit,
+  countPendingModifications,
+  createLiveAuditEntry,
+  isModifiedByOperator,
+  lastModificationOrigin,
+  type SubscriptionAuditOrigin,
+  type SubscriptionAuditEntry,
+} from '../utils/subscriptionAuditMock';
+import { SubscriptionAuditPanel, SubscriptionAuditTab } from './SubscriptionAuditTrail';
+import { Tag as NeutralTag } from './Tag';
+import { EmptyState } from './EmptyState';
+import { RowActionButton } from './ui/row-actions';
+import { BlockersPanel } from './ui/blockers-panel';
+import { ConfirmDialog } from './ui/confirm-dialog';
+import { DisabledReason } from './ui/disabled-reason';
+import { Textarea } from './ui/textarea';
+import { ManualDocumentPanel, isoToDisplayDate } from './ManualDocumentPanel';
+import { QuestionRelationIcons } from './QuestionRelationIcons';
+import { AnswerEditPanel, type AnswerEditEffects, type AnswerEditTarget, type AnswerEditTriggerChange } from './AnswerEditPanel';
+import { DemoScenarioBar } from './ui/demo-scenario-bar';
+import { NotificationsPanel } from './NotificationsPanel';
+import { useNotifications, type AnswersModifiedNotification } from '../utils/notificationsContext';
+import { Switch } from './ui/switch';
+import { PageStateBanner } from './ui/page-state-banner';
+import { StatusBadge } from './StatusBadge';
+import { Label } from './ui/label';
+import type { MockQuestion } from '../utils/subscriptionDetailMockData';
 import {
   OnboardingCompletionCard,
   OnboardingSectionNav,
@@ -131,10 +174,10 @@ const SUBSCRIPTION_STEPS = [
 // Etat de depart de la maquette : une partie du dossier est deja verifiee, une
 // reponse et une piece ont ete retoquees.
 const INITIAL_QUESTION_STATUSES: Record<string, QuestionStatus> = {
-  'identity-0': 'approved',
   'identity-1': 'approved',
-  'identity-3': 'approved',
-  'identity-9': 'rejected',
+  'identity-2': 'approved',
+  'identity-4': 'approved',
+  'identity-11': 'rejected',
   'fiscal-0': 'approved',
 };
 
@@ -148,6 +191,29 @@ interface SubscriptionDetailPageProps {
   onBack: () => void;
 }
 
+
+// Scénarios de démonstration de IC-5616 : profil de l'opérateur et statut de la souscription.
+const EDIT_SCENARIOS = ['manager', 'readOnly', 'signedNoRight', 'signedWithRight'] as const;
+type EditScenario = (typeof EDIT_SCENARIOS)[number];
+
+/** Élément contrôlable : ni texte d'information, ni question non posée restée vide. */
+const isControllable = (question: MockQuestion, response: string) =>
+  !question.info && !(question.notAsked && !response);
+
+// Circuit de contrôle du dossier, qui décide des destinataires des alertes (IC-5620).
+const REVIEW_CIRCUITS = ['partnerPrevalidation', 'standard', 'fourEyes'] as const;
+type ReviewCircuit = (typeof REVIEW_CIRCUITS)[number];
+const SECOND_ANALYSTS = ['Paul Girard'];
+/** Utilisateur du partenaire délégué qui contrôle le dossier sur le portail (IC-5633). */
+const PARTNER_REVIEWER = 'Léa Fontaine';
+
+const MODIFIED_BY_KEY: Record<SubscriptionAuditOrigin, string> = {
+  operator: 'subscriptions.detail.onboarding.modified.byOperator',
+  partner: 'subscriptions.detail.onboarding.modified.byPartner',
+  investor: 'subscriptions.detail.onboarding.modified.byInvestor',
+  automatic: 'subscriptions.detail.onboarding.modified.automatic',
+  api: 'subscriptions.detail.onboarding.modified.automatic',
+};
 
 const DIRECT_PARTNER_NAMES = ['Souscription Directe', 'Direct Subscription'];
 
@@ -224,8 +290,77 @@ export function SubscriptionDetailPage({ subscription: subscriptionProp, onBack 
 
   // Verification des pieces justificatives (meme cycle de vie que les reponses)
   const [documentStatuses, setDocumentStatuses] = useState<Record<string, QuestionStatus>>(INITIAL_DOCUMENT_STATUSES);
+  const [requiredDocuments, setRequiredDocuments] = useState<MockRequiredDocument[]>(mockRequiredDocuments);
+  const [documentToReject, setDocumentToReject] = useState<number | null>(null);
+  const [rejectionReason, setRejectionReason] = useState('');
+  const [isManualDocumentOpen, setIsManualDocumentOpen] = useState(false);
+  const updateDocument = (idx: number, patch: Partial<MockRequiredDocument>) =>
+    setRequiredDocuments(prev => prev.map((doc, i) => (i === idx ? { ...doc, ...patch } : doc)));
+  const docLabel = (doc: MockRequiredDocument) => doc.name ?? t(doc.nameKey);
+  const isMissingIssueDate = (doc: MockRequiredDocument) =>
+    doc.hasFile && Boolean(doc.requiresIssueDate) && !doc.issueDate;
   const [activeOnboardingSection, setActiveOnboardingSection] = useState<string>(mockSections[0].id);
   const onboardingSectionRefs = useRef<Record<string, HTMLDivElement | null>>({});
+
+  // Piste d'audit : saisie, modifications, validations et commentaires de chaque élément.
+  const [auditEntries, setAuditEntries] = useState<SubscriptionAuditEntry[]>(() =>
+    buildInitialSubscriptionAudit({
+      investorName: subscriptionProp.contrepartie?.investor || subscriptionProp.contrepartie?.name || '',
+      sections: mockSections,
+      documents: mockRequiredDocuments,
+      questionStatuses: INITIAL_QUESTION_STATUSES,
+      documentStatuses: INITIAL_DOCUMENT_STATUSES,
+    }),
+  );
+  const [editScenario, setEditScenario] = useState<EditScenario>('manager');
+  const canManage = editScenario !== 'readOnly';
+  const afterSignature = editScenario === 'signedNoRight' || editScenario === 'signedWithRight';
+  const canModifyAnswers = canManage && (!afterSignature || editScenario === 'signedWithRight');
+  const [answerEdit, setAnswerEdit] = useState<{ sectionId: string; idx: number } | null>(null);
+  const [notAskedVisible, setNotAskedVisible] = useState<string[]>([]);
+  const [modifiedOnly, setModifiedOnly] = useState(false);
+  const [reviewCircuit, setReviewCircuit] = useState<ReviewCircuit>('standard');
+  const { push: pushNotification } = useNotifications();
+  const [distributorPreview, setDistributorPreview] = useState<AnswersModifiedNotification | null>(null);
+  const [partnerValidation, setPartnerValidation] = useState<{ by: string; at: string } | null>(null);
+
+  // Lien d'une notification : onglet Onboarding filtré sur les réponses modifiées.
+  const openModifiedAnswersAt = (subscriptionProp as { openModifiedAnswersAt?: number }).openModifiedAnswersAt;
+  useEffect(() => {
+    if (!openModifiedAnswersAt) return;
+    setActiveTab('onboarding');
+    setCurrentStep(1);
+    setModifiedOnly(true);
+  }, [openModifiedAnswersAt]);
+  const responseOf = (sectionId: string, idx: number, question: MockQuestion) =>
+    questionResponses[`${sectionId}-${idx}`] ?? question.response;
+  // Valeurs des données liées (souscription, fiche investisseur...), modifiées par la propagation.
+  const [linkedData, setLinkedData] = useState<Record<string, string>>({});
+  const linkedKey = (questionId: string, object: string, field: string) => `${questionId}:${object}.${field}`;
+  /** Valeur de la donnée liée : celle reportée à la soumission, sauf propagation ultérieure. */
+  const linkedValueOf = (questionId: string, question: MockQuestion, target: MockLinkedTarget) =>
+    linkedData[linkedKey(questionId, target.object, target.field)] ?? question.response;
+  const targetLabelOf = (target: { object: string; field: string }) =>
+    `${t(`subscriptions.detail.answerEffects.objects.${target.object}`)} · ${t(`subscriptions.detail.answerEffects.fields.${target.field}`)}`;
+  // Questions qui en déclenchent une autre, indexées par la question déclenchée.
+  const impactedByMap = useMemo(() => {
+    const map: Record<string, string[]> = {};
+    mockSections.forEach(section =>
+      section.questions.forEach(question =>
+        question.triggers?.forEach(trigger => {
+          const idx = section.questions.findIndex(q => q.question === trigger.question);
+          if (idx < 0) return;
+          const key = `${section.id}-${idx}`;
+          map[key] = [...(map[key] ?? []), question.question.replace(/\s*\*\s*$/, '')];
+        }),
+      ),
+    );
+    return map;
+  }, []);
+  const [auditElement, setAuditElement] = useState<{ elementId: string; sectionId: string } | null>(null);
+  const logAudit = (...entries: Parameters<typeof createLiveAuditEntry>[0][]) =>
+    setAuditEntries(prev => [...prev, ...entries.map(createLiveAuditEntry)]);
+  const sectionOf = (elementId: string) => elementId.slice(0, elementId.lastIndexOf('-'));
 
   // Risk validation state
   const [riskValidated, setRiskValidated] = useState(false);
@@ -263,15 +398,24 @@ export function SubscriptionDetailPage({ subscription: subscriptionProp, onBack 
 
     // Approve all questions in the section
     const newStatuses = { ...questionStatuses };
-    section.questions.forEach((_, idx) => {
+    const logged: Parameters<typeof createLiveAuditEntry>[0][] = [];
+    section.questions.forEach((question, idx) => {
       const questionId = `${sectionId}-${idx}`;
+      if (!isControllable(question, responseOf(sectionId, idx, question))) return;
+      if (newStatuses[questionId] !== 'approved') {
+        logged.push({ type: 'answerValidated', elementId: questionId, sectionId, viaSection: true });
+      }
       newStatuses[questionId] = 'approved';
     });
-    
+
     setQuestionStatuses(newStatuses);
+    logAudit(...logged);
 
     toast.success(t('subscriptions.detail.onboarding.sectionValidatedToast'), {
-      description: t('subscriptions.detail.onboarding.sectionValidatedDesc', { count: section.questions.length, title: sectionTitle }),
+      description: t('subscriptions.detail.onboarding.sectionValidatedDesc', {
+        count: section.questions.filter((q, idx) => isControllable(q, responseOf(sectionId, idx, q))).length,
+        title: sectionTitle,
+      }),
     });
   };
 
@@ -296,15 +440,290 @@ export function SubscriptionDetailPage({ subscription: subscriptionProp, onBack 
   // Question actions handlers
   const handleApproveQuestion = (questionId: string) => {
     setQuestionStatuses(prev => ({ ...prev, [questionId]: 'approved' }));
+    logAudit({ type: 'answerValidated', elementId: questionId, sectionId: sectionOf(questionId) });
   };
 
   const handleRejectQuestion = (questionId: string) => {
     setQuestionStatuses(prev => ({ ...prev, [questionId]: 'rejected' }));
+    logAudit({ type: 'answerInvalidated', elementId: questionId, sectionId: sectionOf(questionId) });
   };
 
-  const handleModifyQuestion = (questionId: string, newValue: string) => {
+  const handleModifyQuestion = (questionId: string, newValue: string, previousValue: string, reason?: string) => {
     setQuestionResponses(prev => ({ ...prev, [questionId]: newValue }));
-    setQuestionStatuses(prev => ({ ...prev, [questionId]: 'modified' }));
+    // La réponse modifiée repasse à contrôler.
+    setQuestionStatuses(prev => {
+      const next = { ...prev };
+      delete next[questionId];
+      return next;
+    });
+    logAudit({
+      type: 'answerModified',
+      elementId: questionId,
+      sectionId: sectionOf(questionId),
+      previousValue,
+      newValue,
+      reason,
+    });
+    toast.success(t('subscriptions.detail.questionActions.modifiedToast'), {
+      description: t('subscriptions.detail.questionActions.modifiedToastDesc'),
+    });
+  };
+
+  const editTargets = (sectionId: string, idx: number): AnswerEditTarget[] => {
+    const question = mockSections.find(sec => sec.id === sectionId)?.questions[idx];
+    const questionId = `${sectionId}-${idx}`;
+    return (question?.targets ?? []).map(target => {
+      const key = linkedKey(questionId, target.object, target.field);
+      return {
+        key,
+        object: target.object,
+        field: target.field,
+        currentValue: linkedData[key] ?? question?.response ?? '',
+      };
+    });
+  };
+
+  const resolveTriggerChanges = (sectionId: string, idx: number, nextValue: string): AnswerEditTriggerChange[] => {
+    const section = mockSections.find(sec => sec.id === sectionId);
+    const question = section?.questions[idx];
+    if (!section || !question?.triggers) return [];
+    return question.triggers.flatMap(trigger => {
+      const targetIdx = section.questions.findIndex(q => q.question === trigger.question);
+      if (targetIdx < 0) return [];
+      const target = section.questions[targetIdx];
+      const elementId = `${sectionId}-${targetIdx}`;
+      const currentValue = responseOf(sectionId, targetIdx, target);
+      const next = trigger.values[nextValue] ?? trigger.otherwise ?? currentValue;
+      if (next === currentValue) return [];
+      return [{
+        elementId,
+        label: target.question.replace(/\s*\*\s*$/, ''),
+        currentValue,
+        nextValue: next,
+        kept: isModifiedByOperator(auditEntries, elementId),
+      }];
+    });
+  };
+
+  const applyAnswerEffects = (sectionId: string, idx: number, value: string, effects: AnswerEditEffects): string[] => {
+    const questionId = `${sectionId}-${idx}`;
+    const targets = editTargets(sectionId, idx).filter(target => effects.propagate.includes(target.key));
+    const replayed = effects.replay
+      ? resolveTriggerChanges(sectionId, idx, value).filter(change => !change.kept)
+      : [];
+    if (targets.length > 0) {
+      setLinkedData(prev => {
+        const next = { ...prev };
+        targets.forEach(target => {
+          next[target.key] = value;
+        });
+        return next;
+      });
+    }
+    if (replayed.length > 0) {
+      setQuestionResponses(prev => {
+        const next = { ...prev };
+        replayed.forEach(change => {
+          next[change.elementId] = change.nextValue;
+        });
+        return next;
+      });
+      setQuestionStatuses(prev => {
+        const next = { ...prev };
+        replayed.forEach(change => delete next[change.elementId]);
+        return next;
+      });
+    }
+    logAudit(
+      ...targets.map(target => ({
+        type: value === '' ? ('dataReset' as const) : ('dataPropagated' as const),
+        elementId: questionId,
+        sectionId,
+        previousValue: target.currentValue,
+        newValue: value,
+        target: { object: target.object, field: target.field },
+      })),
+      ...replayed.map(change => ({
+        type: 'answerReplayed' as const,
+        origin: 'automatic' as const,
+        actorName: undefined,
+        elementId: change.elementId,
+        sectionId,
+        previousValue: change.currentValue,
+        newValue: change.nextValue,
+        causeElementId: questionId,
+      })),
+    );
+    return replayed.map(change => change.elementId);
+  };
+
+  const handlePropagateReported = (sectionId: string, idx: number, target: MockLinkedTarget) => {
+    const question = mockSections.find(sec => sec.id === sectionId)?.questions[idx];
+    if (!question) return;
+    const questionId = `${sectionId}-${idx}`;
+    const value = responseOf(sectionId, idx, question);
+    const previous = linkedValueOf(questionId, question, target);
+    setLinkedData(prev => ({ ...prev, [linkedKey(questionId, target.object, target.field)]: value }));
+    logAudit({
+      type: value === '' ? 'dataReset' : 'dataPropagated',
+      elementId: questionId,
+      sectionId,
+      previousValue: previous,
+      newValue: value,
+      target: { object: target.object, field: target.field },
+    });
+    toast.success(t('subscriptions.detail.report.propagatedToast'), { description: targetLabelOf(target) });
+  };
+
+  const questionLabelOf = (questionId: string) => {
+    const sectionId = sectionOf(questionId);
+    const section = mockSections.find(sec => sec.id === sectionId);
+    const question = section?.questions[Number(questionId.slice(sectionId.length + 1))];
+    if (!section || !question) return questionId;
+    const label = question.question.replace(/\s*\*\s*$/, '');
+    return question.iteration !== undefined && section.iterationLabelKey
+      ? `${label} (${t(section.iterationLabelKey, { n: question.iteration })})`
+      : label;
+  };
+
+  /** Une alerte par enregistrement, jamais à l'auteur, selon le circuit de contrôle (IC-5620). */
+  const notifyModifiedAnswers = (questionIds: string[], origin: SubscriptionAuditOrigin, authorName: string) => {
+    if (questionIds.length === 0 || reviewCircuit === 'standard') return;
+    const partner = subscription.partenaire?.name ?? t('subscriptions.detail.answerAlerts.partnerFallback');
+    const recipients = (
+      reviewCircuit === 'fourEyes'
+        ? [
+            { name: CURRENT_OPERATOR, role: t('subscriptions.detail.answerAlerts.roles.analyst1') },
+            ...SECOND_ANALYSTS.map(name => ({ name, role: t('subscriptions.detail.answerAlerts.roles.analyst2') })),
+          ]
+        : [
+            { name: partner, role: t('subscriptions.detail.answerAlerts.roles.partner') },
+            ...(subscription.advisor
+              ? [{ name: subscription.advisor as string, role: t('subscriptions.detail.answerAlerts.roles.advisor') }]
+              : []),
+          ]
+    ).filter(recipient => recipient.name !== authorName);
+    if (recipients.length === 0) return;
+
+    const notification = {
+      subscriptionName: subscription.name,
+      subscription: subscriptionProp,
+      labels: questionIds.map(questionLabelOf),
+      origin,
+      authorName,
+      channel: reviewCircuit === 'fourEyes' ? ('backOffice' as const) : ('distributor' as const),
+    };
+    if (recipients.some(recipient => recipient.name === CURRENT_OPERATOR)) pushNotification(notification);
+    const recipientLabel = recipients.map(recipient => `${recipient.name} (${recipient.role})`).join(', ');
+    logAudit({
+      type: 'notificationSent',
+      origin: 'automatic',
+      actorName: undefined,
+      newValue: recipientLabel,
+      reason: t(
+        questionIds.length === 1
+          ? 'subscriptions.detail.answerAlerts.auditSummaryOne'
+          : 'subscriptions.detail.answerAlerts.auditSummaryMany',
+        { count: questionIds.length },
+      ),
+    });
+    toast.info(t('subscriptions.detail.answerAlerts.sentToast'), {
+      description: t('subscriptions.detail.answerAlerts.sentToastDesc', { recipients: recipientLabel }),
+      action:
+        reviewCircuit === 'partnerPrevalidation'
+          ? {
+              label: t('subscriptions.detail.answerAlerts.preview'),
+              onClick: () =>
+                setDistributorPreview({
+                  ...notification,
+                  id: 'preview',
+                  createdAt: new Date().toISOString(),
+                  read: false,
+                }),
+            }
+          : undefined,
+    });
+  };
+
+  const handleSimulatePartnerReview = () => {
+    if (partnerValidation) return;
+    const profile = mockSections.find(sec => sec.id === 'investorProfile');
+    const identity = mockSections.find(sec => sec.id === 'identity');
+    const partnerEntry = { origin: 'partner' as const, actorName: PARTNER_REVIEWER };
+    const validated = (profile?.questions ?? []).map((_, idx) => `investorProfile-${idx}`);
+    const phoneIdx = identity?.questions.findIndex(q => q.question.startsWith('Numéro de téléphone')) ?? -1;
+    const rejected = phoneIdx >= 0 ? `identity-${phoneIdx}` : null;
+    const docIdx = requiredDocuments.findIndex(doc => doc.nameKey === 'subscriptions.detail.docs.rib');
+
+    setQuestionStatuses(prev => {
+      const next = { ...prev };
+      validated.forEach(id => {
+        next[id] = 'approved';
+      });
+      if (rejected) next[rejected] = 'rejected';
+      return next;
+    });
+    if (docIdx >= 0) setDocumentStatuses(prev => ({ ...prev, [`document-${docIdx}`]: 'approved' }));
+    const at = new Date();
+    const pad = (n: number) => String(n).padStart(2, '0');
+    setPartnerValidation({
+      by: PARTNER_REVIEWER,
+      at: `${pad(at.getDate())}/${pad(at.getMonth() + 1)}/${at.getFullYear()} ${pad(at.getHours())}:${pad(at.getMinutes())}`,
+    });
+    logAudit(
+      ...validated.map(id => ({ ...partnerEntry, type: 'answerValidated' as const, elementId: id, sectionId: 'investorProfile', viaSection: true })),
+      ...(rejected
+        ? [{ ...partnerEntry, type: 'answerInvalidated' as const, elementId: rejected, sectionId: 'identity', reason: t('subscriptions.detail.partnerReview.mockRejectReason') }]
+        : []),
+      ...(docIdx >= 0
+        ? [{ ...partnerEntry, type: 'documentValidated' as const, elementId: `document-${docIdx}`, sectionId: AUDIT_DOCUMENTS_SECTION }]
+        : []),
+      { ...partnerEntry, type: 'investorReminded' as const, reason: t('subscriptions.detail.partnerReview.mockReminder') },
+      { ...partnerEntry, type: 'partnerValidated' as const, newValue: t('subscriptions.detail.partnerReview.transmitted') },
+    );
+    toast.success(t('subscriptions.detail.partnerReview.validatedToast', { partner: delegatedPartnerName }), {
+      description: t('subscriptions.detail.partnerReview.validatedToastDesc'),
+    });
+  };
+
+  const handleSimulateInvestorChange = () => {
+    const investorName = subscription.contrepartie?.investor || subscription.contrepartie?.name || '';
+    const changes = [
+      { question: 'Ville*', value: 'Neuilly-sur-Seine' },
+      { question: 'Code postal*', value: '92200' },
+    ].flatMap(change => {
+      const section = mockSections.find(sec => sec.id === 'identity');
+      const idx = section?.questions.findIndex(q => q.question === change.question) ?? -1;
+      if (!section || idx < 0) return [];
+      return [{ questionId: `identity-${idx}`, previous: responseOf('identity', idx, section.questions[idx]), value: change.value }];
+    });
+    setQuestionResponses(prev => {
+      const next = { ...prev };
+      changes.forEach(change => {
+        next[change.questionId] = change.value;
+      });
+      return next;
+    });
+    setQuestionStatuses(prev => {
+      const next = { ...prev };
+      changes.forEach(change => delete next[change.questionId]);
+      return next;
+    });
+    logAudit(
+      ...changes.map(change => ({
+        type: 'answerModified' as const,
+        origin: 'investor' as const,
+        actorName: investorName,
+        elementId: change.questionId,
+        sectionId: 'identity',
+        previousValue: change.previous,
+        newValue: change.value,
+      })),
+    );
+    notifyModifiedAnswers(changes.map(change => change.questionId), 'investor', investorName);
+    if (reviewCircuit === 'standard') {
+      toast.info(t('subscriptions.detail.answerAlerts.noCircuitToast'));
+    }
   };
 
   const handleToggleComment = (questionId: string) => {
@@ -317,6 +736,12 @@ export function SubscriptionDetailPage({ subscription: subscriptionProp, onBack 
       ...prev,
       [questionId]: [...(prev[questionId] || []), comment]
     }));
+    logAudit({
+      type: 'commentAdded',
+      elementId: questionId,
+      sectionId: sectionOf(questionId),
+      newValue: typeof comment?.text === 'string' ? comment.text : undefined,
+    });
   };
 
   const handleResolveComment = (questionId: string, commentId: string) => {
@@ -361,6 +786,7 @@ export function SubscriptionDetailPage({ subscription: subscriptionProp, onBack 
     const section = mockSections.find(s => s.id === sectionId);
     if (!section) return stats;
     section.questions.forEach((question, idx) => {
+      if (!isControllable(question, responseOf(sectionId, idx, question))) return;
       addToBucketStats(stats, getQuestionState(sectionId, idx, question));
     });
     return stats;
@@ -368,7 +794,7 @@ export function SubscriptionDetailPage({ subscription: subscriptionProp, onBack 
 
   const getDocumentBuckets = (): OnboardingBucketStats => {
     const stats = emptyBucketStats();
-    mockRequiredDocuments.forEach((doc, idx) => {
+    requiredDocuments.forEach((doc, idx) => {
       addToBucketStats(stats, getDocumentState(idx, doc));
     });
     return stats;
@@ -387,6 +813,61 @@ export function SubscriptionDetailPage({ subscription: subscriptionProp, onBack 
   const documentBuckets = getDocumentBuckets();
 
 
+  const isCorporateInvestor = subscription.contrepartie?.type === 'corporate';
+
+  const modifiedOriginOf = (questionId: string) => lastModificationOrigin(auditEntries, questionId);
+  const modifiedCountOf = (sectionId: string) =>
+    mockSections
+      .find(sec => sec.id === sectionId)
+      ?.questions.filter((_, idx) => modifiedOriginOf(`${sectionId}-${idx}`) !== null).length ?? 0;
+  const modifiedTotal = mockSections.reduce((sum, sec) => sum + modifiedCountOf(sec.id), 0);
+
+  const handleExportDossier = () => {
+    const csvField = (v: string) => (/[";\n]/.test(v) ? `"${v.replace(/"/g, '""')}"` : v);
+    const header = ['section', 'question', 'answer', 'control', 'indicator'].map(col =>
+      t(`subscriptions.detail.dossierExport.columns.${col}`),
+    );
+    const rows = mockSections.flatMap(section =>
+      section.questions.flatMap((question, idx) => {
+        if (question.info) return [];
+        const questionId = `${section.id}-${idx}`;
+        const response = responseOf(section.id, idx, question);
+        const origin = modifiedOriginOf(questionId);
+        const iteration =
+          question.iteration !== undefined && section.iterationLabelKey
+            ? ` (${t(section.iterationLabelKey, { n: question.iteration })})`
+            : '';
+        return [[
+          t(section.titleKey),
+          question.question.replace(/\s*\*\s*$/, '') + iteration,
+          response,
+          t(`subscriptions.detail.onboarding.completion.state.${getQuestionState(section.id, idx, question)}`),
+          origin ? t(MODIFIED_BY_KEY[origin]) : '',
+        ]];
+      }),
+    );
+    const csv = '\ufeff' + [header, ...rows].map(row => row.map(csvField).join(';')).join('\r\n');
+    const url = URL.createObjectURL(new Blob([csv], { type: 'text/csv;charset=utf-8;' }));
+    const link = document.createElement('a');
+    link.href = url;
+    link.download = `dossier_${String(subscription.id)}.csv`;
+    link.click();
+    setTimeout(() => URL.revokeObjectURL(url), 1000);
+    toast.success(t('subscriptions.detail.dossierExport.toast'));
+  };
+
+  const documentBlockers = requiredDocuments
+    .map((doc, idx) => ({ doc, idx }))
+    .filter(({ doc }) => isMissingIssueDate(doc));
+  const delegatedPartnerName = subscription.partenaire?.name ?? t('subscriptions.detail.answerAlerts.partnerFallback');
+  const awaitingPartner = reviewCircuit === 'partnerPrevalidation' && !partnerValidation;
+  const validationBlockedReason =
+    documentBlockers.length > 0
+      ? t('subscriptions.detail.documentControl.validationBlocked', { count: documentBlockers.length })
+      : awaitingPartner
+        ? t('subscriptions.detail.partnerReview.awaitingPartner', { partner: delegatedPartnerName })
+        : undefined;
+
   const onboardingNavSections: OnboardingNavSection[] = mockSections.map((section, idx) => ({
     id: section.id,
     titleKey: section.titleKey,
@@ -394,6 +875,9 @@ export function SubscriptionDetailPage({ subscription: subscriptionProp, onBack 
     position: idx + 1,
     kind: section.id === 'documents' ? 'documents' : 'questions',
     stats: getSectionBuckets(section.id),
+    groupKey: section.preonboarding
+      ? 'subscriptions.detail.onboarding.preonboarding.group'
+      : 'subscriptions.detail.onboarding.preonboarding.dossierGroup',
   }));
 
   const handleSelectOnboardingSection = (sectionId: string) => {
@@ -407,22 +891,88 @@ export function SubscriptionDetailPage({ subscription: subscriptionProp, onBack 
 
   const handleApproveDocument = (idx: number) => {
     setDocumentStatuses(prev => ({ ...prev, [`document-${idx}`]: 'approved' }));
+    logAudit({ type: 'documentValidated', elementId: `document-${idx}`, sectionId: AUDIT_DOCUMENTS_SECTION });
   };
 
   const handleRejectDocument = (idx: number) => {
+    setRejectionReason('');
+    setDocumentToReject(idx);
+  };
+
+  const handleConfirmRejectDocument = () => {
+    if (documentToReject === null) return;
+    const idx = documentToReject;
+    const reason = rejectionReason.trim();
     setDocumentStatuses(prev => ({ ...prev, [`document-${idx}`]: 'rejected' }));
+    updateDocument(idx, { rejectionReason: reason });
+    logAudit({ type: 'documentRejected', elementId: `document-${idx}`, sectionId: AUDIT_DOCUMENTS_SECTION, reason });
+    toast.error(t('subscriptions.detail.documentControl.rejectedToast'), {
+      description: t('subscriptions.detail.documentControl.rejectedToastDesc', { name: docLabel(requiredDocuments[idx]) }),
+    });
+    setDocumentToReject(null);
+  };
+
+  const handleIssueDateChange = (idx: number, iso: string) => {
+    const issueDate = isoToDisplayDate(iso);
+    if (!issueDate) return;
+    updateDocument(idx, { issueDate });
+    logAudit({
+      type: 'documentDatesUpdated',
+      elementId: `document-${idx}`,
+      sectionId: AUDIT_DOCUMENTS_SECTION,
+      previousValue: '',
+      newValue: issueDate,
+    });
+  };
+
+  const handleSaveManualDocument = (input: { name: string; fileName: string; issueDate: string; expiration: string }) => {
+    const now = new Date();
+    const pad = (n: number) => String(n).padStart(2, '0');
+    const idx = requiredDocuments.length;
+    setRequiredDocuments(prev => [
+      ...prev,
+      {
+        nameKey: '',
+        name: input.name,
+        manual: true,
+        hasFile: true,
+        dateSent: `${pad(now.getDate())}/${pad(now.getMonth() + 1)}/${now.getFullYear()} ${pad(now.getHours())}:${pad(now.getMinutes())}`,
+        issueDate: input.issueDate,
+        expiration: input.expiration,
+      },
+    ]);
+    logAudit({
+      type: 'documentUploaded',
+      elementId: `document-${idx}`,
+      sectionId: AUDIT_DOCUMENTS_SECTION,
+      newValue: input.fileName,
+    });
+    setIsManualDocumentOpen(false);
+    toast.success(t('subscriptions.detail.manualDocument.savedToast'), {
+      description: t('subscriptions.detail.manualDocument.savedToastDesc', { name: input.name }),
+    });
   };
 
   const handleValidateDocuments = (sectionTitle: string) => {
     const next: Record<string, QuestionStatus> = { ...documentStatuses };
     let validated = 0;
-    mockRequiredDocuments.forEach((doc, idx) => {
-      if (doc.hasFile) {
+    const logged: Parameters<typeof createLiveAuditEntry>[0][] = [];
+    requiredDocuments.forEach((doc, idx) => {
+      if (doc.hasFile && !isMissingIssueDate(doc)) {
+        if (next[`document-${idx}`] !== 'approved') {
+          logged.push({
+            type: 'documentValidated',
+            elementId: `document-${idx}`,
+            sectionId: AUDIT_DOCUMENTS_SECTION,
+            viaSection: true,
+          });
+        }
         next[`document-${idx}`] = 'approved';
         validated += 1;
       }
     });
     setDocumentStatuses(next);
+    logAudit(...logged);
     toast.success(t('subscriptions.detail.onboarding.sectionValidatedToast'), {
       description: t('subscriptions.detail.onboarding.completion.documentsValidatedDesc', {
         count: validated,
@@ -897,8 +1447,64 @@ export function SubscriptionDetailPage({ subscription: subscriptionProp, onBack 
     />
   );
 
+  if (subscription.restrictedToOtherOperators) {
+    return (
+      <div className="min-h-screen bg-muted px-8 py-6">
+        <Card>
+          <EmptyState
+            icon={Lock}
+            title={t('subscriptions.detail.accessDenied.title')}
+            description={t('subscriptions.detail.accessDenied.description')}
+            action={
+              <Button variant="outline" onClick={onBack} className="gap-2">
+                <ArrowLeft className="w-4 h-4" />
+                {t('subscriptions.detail.accessDenied.back')}
+              </Button>
+            }
+          />
+        </Card>
+      </div>
+    );
+  }
+
   return (
     <div className="min-h-screen bg-muted">
+      <DemoScenarioBar
+        label={t('subscriptions.detail.answerEdit.scenario.label')}
+        value={editScenario}
+        options={EDIT_SCENARIOS.map(value => ({
+          value,
+          label: t(`subscriptions.detail.answerEdit.scenario.options.${value}`),
+        }))}
+        onChange={setEditScenario}
+      />
+      <DemoScenarioBar
+        label={t('subscriptions.detail.answerAlerts.scenario.label')}
+        value={reviewCircuit}
+        options={REVIEW_CIRCUITS.map(value => ({
+          value,
+          label: t(`subscriptions.detail.answerAlerts.scenario.options.${value}`),
+        }))}
+        onChange={setReviewCircuit}
+        action={
+          <>
+            {reviewCircuit === 'partnerPrevalidation' && (
+              <Button
+                variant="outline"
+                size="sm"
+                className="bg-card"
+                onClick={handleSimulatePartnerReview}
+                disabled={Boolean(partnerValidation)}
+              >
+                {t('subscriptions.detail.partnerReview.simulate')}
+              </Button>
+            )}
+            <Button variant="outline" size="sm" className="bg-card" onClick={handleSimulateInvestorChange}>
+              {t('subscriptions.detail.answerAlerts.simulate')}
+            </Button>
+          </>
+        }
+      />
       <PageHeader
         title={
           <span className="inline-flex items-center gap-3">
@@ -963,7 +1569,7 @@ export function SubscriptionDetailPage({ subscription: subscriptionProp, onBack 
         primaryAction={{
           label: t('subscriptions.detail.header.exportData'),
           icon: <Download className="w-4 h-4" />,
-          onClick: () => toast.success(t('subscriptions.detail.toast.featureComingSoon')),
+          onClick: handleExportDossier,
         }}
       />
 
@@ -979,6 +1585,7 @@ export function SubscriptionDetailPage({ subscription: subscriptionProp, onBack 
               { value: 'documents', icon: FolderOpen, labelKey: 'subscriptions.detail.tabs.documents', badge: String(getSubscriptionDocumentsCount(subscription)) },
               { value: 'integrations', icon: Database, labelKey: 'subscriptions.detail.tabs.integrations', badge: '5' },
               { value: 'notes', icon: MessageSquare, labelKey: 'subscriptions.detail.tabs.notes', badge: String(notesCount) },
+              { value: 'audit', icon: History, labelKey: 'subscriptions.detail.tabs.audit', badge: String(auditEntries.length) },
             ].map(tab => ({
               value: tab.value,
               icon: tab.icon,
@@ -1211,10 +1818,48 @@ export function SubscriptionDetailPage({ subscription: subscriptionProp, onBack 
                   {currentStep === 1 && (
                     // Onboarding en cours — KPI de completion, navigation par section, sections
                     <div className="space-y-6">
+                      {reviewCircuit === 'partnerPrevalidation' && (
+                        <PageStateBanner
+                          variant="delegatedReview"
+                          partner={delegatedPartnerName}
+                          validatedBy={partnerValidation?.by}
+                          date={partnerValidation?.at}
+                        />
+                      )}
+                      {documentBlockers.length > 0 && (
+                        <BlockersPanel
+                          title={t(
+                            documentBlockers.length === 1
+                              ? 'subscriptions.detail.documentControl.blockersTitleOne'
+                              : 'subscriptions.detail.documentControl.blockersTitleMany',
+                            { count: documentBlockers.length },
+                          )}
+                          description={t('subscriptions.detail.documentControl.blockersDescription')}
+                          blockers={documentBlockers.map(({ doc, idx }) => ({
+                            id: `document-${idx}`,
+                            icon: FileText,
+                            label: docLabel(doc),
+                            detail: t('subscriptions.detail.documentControl.missingIssueDate'),
+                            onOpen: () => handleSelectOnboardingSection(AUDIT_DOCUMENTS_SECTION),
+                          }))}
+                        />
+                      )}
                       <OnboardingCompletionCard
                         questions={questionBuckets}
                         documents={documentBuckets}
                       />
+
+                      <div className="flex items-center justify-end gap-2">
+                        <Switch
+                          id="modified-only"
+                          checked={modifiedOnly}
+                          onCheckedChange={setModifiedOnly}
+                          disabled={modifiedTotal === 0}
+                        />
+                        <Label htmlFor="modified-only" className="text-sm">
+                          {t('subscriptions.detail.onboarding.modified.filter', { count: modifiedTotal })}
+                        </Label>
+                      </div>
 
                       <div
                         className="grid items-start gap-6"
@@ -1228,15 +1873,57 @@ export function SubscriptionDetailPage({ subscription: subscriptionProp, onBack 
 
                           <div className="space-y-4">
               {mockSections.map((section) => {
+                if (modifiedOnly && modifiedCountOf(section.id) === 0) return null;
                 const Icon = section.icon;
-                const isOpen = openSections.includes(section.id);
+                const isOpen = modifiedOnly || openSections.includes(section.id);
                 const buckets = getSectionBuckets(section.id);
                 const isDocuments = section.id === 'documents';
                 const allVerified = buckets.total > 0 && buckets.validated === buckets.total;
 
                 return (
+                  <Fragment key={section.id}>
+                  {!modifiedOnly && isDocuments && isCorporateInvestor && mockBeneficialOwners.length > 0 && (
+                    <SectionCard
+                      mode="read"
+                      icon={UserCheck}
+                      title={t('subscriptions.detail.beneficialOwners.title')}
+                      iconTone="info"
+                      summary={
+                        <span className="font-semibold text-foreground">
+                          {t(
+                            mockBeneficialOwners.length === 1
+                              ? 'subscriptions.detail.beneficialOwners.countOne'
+                              : 'subscriptions.detail.beneficialOwners.countMany',
+                            { count: mockBeneficialOwners.length },
+                          )}
+                        </span>
+                      }
+                    >
+                      <div className="divide-y divide-border">
+                        <div className="grid grid-cols-12 gap-4 px-4 py-2 bg-muted text-xs font-medium text-muted-foreground uppercase tracking-wider">
+                          <span className="col-span-3">{t('subscriptions.detail.beneficialOwners.columns.name')}</span>
+                          <span className="col-span-2">{t('subscriptions.detail.beneficialOwners.columns.ownership')}</span>
+                          <span className="col-span-3">{t('subscriptions.detail.beneficialOwners.columns.control')}</span>
+                          <span className="col-span-2">{t('subscriptions.detail.beneficialOwners.columns.nationality')}</span>
+                          <span className="col-span-2">{t('subscriptions.detail.beneficialOwners.columns.birthDate')}</span>
+                        </div>
+                        {mockBeneficialOwners.map(owner => (
+                          <div key={owner.id} className="grid grid-cols-12 gap-4 p-4 items-center text-sm">
+                            <span className="col-span-3 font-medium text-foreground">{owner.name}</span>
+                            <span className="col-span-2 text-foreground/80 tabular-nums">
+                              {owner.ownership > 0 ? `${owner.ownership} %` : '-'}
+                            </span>
+                            <span className="col-span-3">
+                              <NeutralTag label={t(owner.controlTypeKey)} />
+                            </span>
+                            <span className="col-span-2 text-foreground/80">{owner.nationality}</span>
+                            <span className="col-span-2 text-muted-foreground tabular-nums">{owner.birthDate}</span>
+                          </div>
+                        ))}
+                      </div>
+                    </SectionCard>
+                  )}
                   <div
-                    key={section.id}
                     ref={el => {
                       onboardingSectionRefs.current[section.id] = el;
                     }}
@@ -1268,7 +1955,11 @@ export function SubscriptionDetailPage({ subscription: subscriptionProp, onBack 
                       </>
                     }
                     badges={
-                      allVerified ? (
+                      <>
+                      {section.preonboarding && (
+                        <NeutralTag label={t('subscriptions.detail.onboarding.preonboarding.badge')} />
+                      )}
+                      {allVerified ? (
                         <Badge className="bg-emerald-100 text-emerald-700 border-emerald-200">
                           <CheckCircle2 className="w-3.5 h-3.5 mr-1.5" />
                           {t('subscriptions.detail.onboarding.sectionValidated')}
@@ -1283,10 +1974,11 @@ export function SubscriptionDetailPage({ subscription: subscriptionProp, onBack 
                           <AlertCircle className="w-3.5 h-3.5 mr-1.5" />
                           {t('subscriptions.detail.onboarding.inProgress')}
                         </Badge>
-                      )
+                      )}
+                      </>
                     }
                     validationBar={
-                      !isDocuments && !allVerified
+                      canManage && !modifiedOnly && !isDocuments && !allVerified
                         ? {
                             label: t('subscriptions.detail.onboarding.verifyAllResponses'),
                             actionLabel: t('subscriptions.detail.onboarding.validateSection'),
@@ -1314,10 +2006,12 @@ export function SubscriptionDetailPage({ subscription: subscriptionProp, onBack 
                                     <Download className="w-3.5 h-3.5" />
                                     {t('subscriptions.detail.onboarding.exportDocuments')}
                                   </Button>
+                                  {canManage && (
+                                  <>
                                   <Button
                                     variant="outline"
                                     size="sm"
-                                    onClick={() => handleAddDocument('')}
+                                    onClick={() => setIsManualDocumentOpen(true)}
                                     className="gap-2 text-xs"
                                   >
                                     <Upload className="w-3.5 h-3.5" />
@@ -1331,6 +2025,8 @@ export function SubscriptionDetailPage({ subscription: subscriptionProp, onBack 
                                     <CheckCircle2 className="w-3.5 h-3.5" />
                                     {t('subscriptions.detail.onboarding.validateSection')}
                                   </Button>
+                                  </>
+                                  )}
                                 </div>
                               </div>
 
@@ -1363,41 +2059,69 @@ export function SubscriptionDetailPage({ subscription: subscriptionProp, onBack 
                                     </tr>
                                   </thead>
                                   <tbody className="bg-card divide-y divide-border/50">
-                                    {mockRequiredDocuments.map((doc, idx) => {
+                                    {requiredDocuments.map((doc, idx) => {
                                       const docState = getDocumentState(idx, doc);
                                       return (
                                       <tr key={idx} className="hover:bg-muted transition-colors group">
                                         <td className="px-4 py-3 text-sm text-foreground/80">
-                                          {t(doc.nameKey)}
+                                          <div className="flex flex-wrap items-center gap-2">
+                                            <span>{docLabel(doc)}</span>
+                                            {doc.manual && (
+                                              <NeutralTag label={t('subscriptions.detail.documentControl.manualTag')} />
+                                            )}
+                                          </div>
+                                          {docState === 'awaitingCorrection' && doc.rejectionReason && (
+                                            <p className="mt-1 text-xs text-red-600">
+                                              {t('subscriptions.detail.documentControl.reasonLine', { reason: doc.rejectionReason })}
+                                              <span className="text-muted-foreground">
+                                                {' · '}
+                                                {t('subscriptions.detail.documentControl.visibleToInvestor')}
+                                              </span>
+                                            </p>
+                                          )}
                                         </td>
                                         <td className="px-4 py-3 text-sm text-muted-foreground">
                                           {doc.dateSent || <span className="text-muted-foreground/60">-</span>}
                                         </td>
                                         <td className="px-4 py-3 text-sm text-muted-foreground">
-                                          {doc.issueDate || <span className="text-muted-foreground/60">-</span>}
+                                          {isMissingIssueDate(doc) ? (
+                                            <Input
+                                              type="date"
+                                              aria-label={t('subscriptions.detail.documentControl.issueDateInput')}
+                                              title={t('subscriptions.detail.documentControl.missingIssueDate')}
+                                              className="h-8 text-xs border-red-300"
+                                              onChange={e => handleIssueDateChange(idx, e.target.value)}
+                                            />
+                                          ) : (
+                                            doc.issueDate || <span className="text-muted-foreground/60">-</span>
+                                          )}
                                         </td>
                                         <td className="px-4 py-3 text-sm text-muted-foreground">
                                           {doc.expiration || <span className="text-muted-foreground/60">-</span>}
                                         </td>
                                         <td className="px-4 py-3 text-center">
-                                          {doc.hasFile ? (
-                                            <Button
-                                              variant="ghost"
-                                              size="sm"
-                                              onClick={() => handleViewDocument(t(doc.nameKey))}
-                                              className="h-7 text-primary hover:text-primary/80 hover:bg-primary/5"
-                                            >
-                                              <Eye className="w-3.5 h-3.5" />
-                                            </Button>
-                                          ) : (
-                                            <span className="text-muted-foreground/60">-</span>
-                                          )}
+                                          <div className="flex items-center justify-center gap-1">
+                                            {doc.hasFile && (
+                                              <RowActionButton
+                                                icon={Eye}
+                                                tooltip={t('subscriptions.detail.docsTable.view')}
+                                                onClick={() => handleViewDocument(docLabel(doc))}
+                                              />
+                                            )}
+                                            <RowActionButton
+                                              icon={History}
+                                              tooltip={t('subscriptions.detail.questionActions.timeline')}
+                                              onClick={() =>
+                                                setAuditElement({ elementId: `document-${idx}`, sectionId: AUDIT_DOCUMENTS_SECTION })
+                                              }
+                                            />
+                                          </div>
                                         </td>
                                         <td className="px-4 py-3 text-center">
                                           <Button
                                             variant="outline"
                                             size="sm"
-                                            onClick={() => handleAddDocument(t(doc.nameKey))}
+                                            onClick={() => handleAddDocument(docLabel(doc))}
                                             className="gap-1.5 text-xs h-7"
                                           >
                                             <Upload className="w-3 h-3" />
@@ -1407,19 +2131,27 @@ export function SubscriptionDetailPage({ subscription: subscriptionProp, onBack 
                                           </Button>
                                         </td>
                                         <td className="px-4 py-3">
-                                          {docState === 'pending' ? (
+                                          {docState === 'pending' || !canManage ? (
                                             <div className="flex justify-center">
                                               <Badge className="bg-muted text-muted-foreground text-xs">
-                                                {t('subscriptions.detail.onboarding.completion.state.pending')}
+                                                {t(`subscriptions.detail.onboarding.completion.state.${docState}`)}
                                               </Badge>
                                             </div>
                                           ) : (
                                             <div className="flex items-center justify-center gap-1">
+                                              <DisabledReason
+                                                reason={
+                                                  isMissingIssueDate(doc)
+                                                    ? t('subscriptions.detail.documentControl.missingIssueDate')
+                                                    : undefined
+                                                }
+                                              >
                                               <Button
                                                 variant="ghost"
                                                 size="sm"
                                                 title={t('subscriptions.detail.docsTable.validateDocument')}
                                                 aria-label={t('subscriptions.detail.docsTable.validateDocument')}
+                                                disabled={isMissingIssueDate(doc)}
                                                 onClick={() => handleApproveDocument(idx)}
                                                 className={`h-7 w-7 p-0 hover:bg-emerald-50 ${
                                                   docState === 'validated'
@@ -1429,6 +2161,7 @@ export function SubscriptionDetailPage({ subscription: subscriptionProp, onBack 
                                               >
                                                 <Check className="w-3.5 h-3.5" />
                                               </Button>
+                                              </DisabledReason>
                                               <Button
                                                 variant="ghost"
                                                 size="sm"
@@ -1462,22 +2195,73 @@ export function SubscriptionDetailPage({ subscription: subscriptionProp, onBack 
                                 {section.questions.map((item, idx) => {
                                   const questionId = `${section.id}-${idx}`;
                                   const status = questionStatuses[questionId] || 'pending';
-                                  const response = questionResponses[questionId] || item.response;
+                                  const response = responseOf(section.id, idx, item);
+                                  const iterationHeader =
+                                    item.iteration !== undefined &&
+                                    item.iteration !== section.questions[idx - 1]?.iteration &&
+                                    section.iterationLabelKey ? (
+                                      <div className="px-4 py-2 bg-muted text-xs font-semibold text-muted-foreground uppercase tracking-wider">
+                                        {t(section.iterationLabelKey, { n: item.iteration })}
+                                      </div>
+                                    ) : null;
+
+                                  const modifiedOrigin = modifiedOriginOf(questionId);
+                                  if (modifiedOnly && !modifiedOrigin) return null;
+                                  if (item.notAsked && !notAskedVisible.includes(section.id) && !modifiedOrigin) return null;
+
+                                  if (item.info) {
+                                    return (
+                                      <div key={idx} className="flex items-start gap-2 px-4 py-3 bg-muted text-xs text-muted-foreground">
+                                        <Info className="w-3.5 h-3.5 mt-0.5 shrink-0" />
+                                        {item.question}
+                                      </div>
+                                    );
+                                  }
                                   const comments = questionComments[questionId] || [];
                                   const hasUnresolved = comments.some((c: any) => !c.resolved);
                                   const isCommentOpen = activeCommentThread === questionId;
 
                                   return (
                                     <div key={idx}>
+                                      {iterationHeader}
                                       <div className="grid grid-cols-12 gap-4 p-4 hover:bg-muted transition-colors">
                                         <div className="col-span-4 text-sm text-foreground/80 flex items-center gap-2">
                                           {item.hasAlert && (
                                             <AlertCircle className="w-4 h-4 text-red-500 flex-shrink-0" />
                                           )}
-                                          <span className={status === 'rejected' ? 'text-red-700' : ''}>{item.question}</span>
+                                          <span className="flex flex-col items-start gap-1">
+                                            <span className="inline-flex items-center gap-2">
+                                              <span className={status === 'rejected' ? 'text-red-700' : ''}>{item.question}</span>
+                                              <QuestionRelationIcons
+                                                syncedWith={(item.targets ?? []).map(targetLabelOf)}
+                                                gaps={(item.targets ?? [])
+                                                  .filter(target => linkedValueOf(questionId, item, target) !== response)
+                                                  .map(target =>
+                                                    t('subscriptions.detail.onboarding.relations.gapItem', {
+                                                      target: targetLabelOf(target),
+                                                      value: linkedValueOf(questionId, item, target) || t('subscriptions.detail.answerEffects.empty'),
+                                                    }),
+                                                  )}
+                                                impacts={(item.triggers ?? []).map(trigger => trigger.question.replace(/\s*\*\s*$/, ''))}
+                                                impactedBy={impactedByMap[questionId]}
+                                              />
+                                            </span>
+                                            {item.notAsked && (
+                                              <NeutralTag label={t('subscriptions.detail.onboarding.notAsked.tag')} />
+                                            )}
+                                          </span>
                                         </div>
                                         <div className="col-span-3 text-sm font-medium text-foreground">
                                           {response || <span className="text-muted-foreground/60 italic">{t('subscriptions.detail.onboarding.notProvided')}</span>}
+                                          {modifiedOrigin && (
+                                            <div className="mt-1">
+                                              <StatusBadge
+                                                variant="info"
+                                                icon={PencilLine}
+                                                label={t(MODIFIED_BY_KEY[modifiedOrigin])}
+                                              />
+                                            </div>
+                                          )}
                                         </div>
                                         <div className="col-span-5 flex items-center justify-end">
                                           <QuestionActions
@@ -1488,8 +2272,12 @@ export function SubscriptionDetailPage({ subscription: subscriptionProp, onBack 
                                             hasUnresolvedComments={hasUnresolved}
                                             onApprove={() => handleApproveQuestion(questionId)}
                                             onReject={() => handleRejectQuestion(questionId)}
-                                            onModify={(newValue) => handleModifyQuestion(questionId, newValue)}
+                                            onModify={canModifyAnswers ? () => setAnswerEdit({ sectionId: section.id, idx }) : undefined}
+                                            computed={item.computed}
+                                            canControl={canManage}
+                                            modificationCount={countPendingModifications(auditEntries, questionId)}
                                             onComment={() => handleToggleComment(questionId)}
+                                            onTimeline={() => setAuditElement({ elementId: questionId, sectionId: section.id })}
                                           />
                                         </div>
                                       </div>
@@ -1509,18 +2297,143 @@ export function SubscriptionDetailPage({ subscription: subscriptionProp, onBack 
                                   );
                                 })}
                               </div>
+                              {section.questions.some(q => q.notAsked) && (
+                                <div className="px-4 py-3 border-t border-border">
+                                  <Button
+                                    variant="ghost"
+                                    size="sm"
+                                    className="text-xs"
+                                    onClick={() =>
+                                      setNotAskedVisible(prev =>
+                                        prev.includes(section.id)
+                                          ? prev.filter(id => id !== section.id)
+                                          : [...prev, section.id],
+                                      )
+                                    }
+                                  >
+                                    {notAskedVisible.includes(section.id)
+                                      ? t('subscriptions.detail.onboarding.notAsked.hide')
+                                      : t('subscriptions.detail.onboarding.notAsked.show', {
+                                          count: section.questions.filter(q => q.notAsked).length,
+                                        })}
+                                  </Button>
+                                </div>
+                              )}
                             </div>
                           )}
                   </SectionCard>
                   </div>
+                  </Fragment>
                 );
               })}
 
+                            {!modifiedOnly && (
+                              <SectionCard
+                                mode="read"
+                                icon={Share2}
+                                title={t('subscriptions.detail.report.title')}
+                                iconTone="info"
+                                summary={
+                                  <span className="text-muted-foreground">
+                                    {t('subscriptions.detail.report.summary', { date: MOCK_SUBMISSION_REPORT.submittedAt })}
+                                  </span>
+                                }
+                              >
+                                <div className="divide-y divide-border">
+                                  <div className="grid grid-cols-12 gap-4 px-4 py-2 bg-muted text-xs font-medium text-muted-foreground uppercase tracking-wider">
+                                    <span className="col-span-3">{t('subscriptions.detail.report.columns.data')}</span>
+                                    <span className="col-span-3">{t('subscriptions.detail.report.columns.value')}</span>
+                                    <span className="col-span-3">{t('subscriptions.detail.report.columns.origin')}</span>
+                                    <span className="col-span-3">{t('subscriptions.detail.report.columns.state')}</span>
+                                  </div>
+                                  {mockSections.flatMap(section =>
+                                    section.questions.flatMap((question, idx) =>
+                                      (question.targets ?? []).map(target => {
+                                        const questionId = `${section.id}-${idx}`;
+                                        const value = linkedValueOf(questionId, question, target);
+                                        const gap = value !== responseOf(section.id, idx, question);
+                                        return (
+                                          <div key={`${questionId}-${target.object}-${target.field}`} className="grid grid-cols-12 gap-4 px-4 py-3 items-center text-sm">
+                                            <span className="col-span-3 inline-flex items-center gap-2 text-foreground">
+                                              <Link2 className="w-3.5 h-3.5 shrink-0 text-muted-foreground" />
+                                              {targetLabelOf(target)}
+                                            </span>
+                                            <span className="col-span-3 font-medium text-foreground break-words">
+                                              {value || t('subscriptions.detail.answerEffects.empty')}
+                                            </span>
+                                            <span className="col-span-3 text-foreground/80">
+                                              {question.question.replace(/\s*\*\s*$/, '')}
+                                              <span className="block text-xs text-muted-foreground">{t(section.titleKey)}</span>
+                                            </span>
+                                            <span className="col-span-3 flex flex-wrap items-center gap-2">
+                                              {gap ? (
+                                                <>
+                                                  <StatusBadge variant="warning" icon={TriangleAlert} label={t('subscriptions.detail.report.gap')} />
+                                                  {canManage && (
+                                                    <Button variant="outline" size="sm" onClick={() => handlePropagateReported(section.id, idx, target)}>
+                                                      {t('subscriptions.detail.report.propagate')}
+                                                    </Button>
+                                                  )}
+                                                </>
+                                              ) : (
+                                                <StatusBadge variant="success" icon={CheckCircle2} label={t('subscriptions.detail.report.inSync')} />
+                                              )}
+                                              {target.previousValue && (
+                                                <NeutralTag label={t('subscriptions.detail.report.replaced', { value: target.previousValue })} />
+                                              )}
+                                            </span>
+                                          </div>
+                                        );
+                                      }),
+                                    ),
+                                  )}
+                                  {mockSections.flatMap(section =>
+                                    section.questions.flatMap((question, idx) =>
+                                      question.createsMandate && question.response === 'Oui'
+                                        ? [
+                                            <div key={`mandate-${section.id}-${idx}`} className="grid grid-cols-12 gap-4 px-4 py-3 items-center text-sm">
+                                              <span className="col-span-3 inline-flex items-center gap-2 text-foreground">
+                                                <Landmark className="w-3.5 h-3.5 shrink-0 text-muted-foreground" />
+                                                {t('subscriptions.detail.report.mandate')}
+                                              </span>
+                                              <span className="col-span-3 font-medium text-foreground">{MOCK_SUBMISSION_REPORT.mandateReference}</span>
+                                              <span className="col-span-3 text-foreground/80">
+                                                {t('subscriptions.detail.report.mandateOrigin')}
+                                                <span className="block text-xs text-muted-foreground">{t(section.titleKey)}</span>
+                                              </span>
+                                              <span className="col-span-3">
+                                                <NeutralTag label={t('subscriptions.detail.report.mandateCreated')} />
+                                              </span>
+                                            </div>,
+                                          ]
+                                        : [],
+                                    ),
+                                  )}
+                                  {MOCK_SUBMISSION_REPORT.documents.map(doc => (
+                                    <div key={doc.field} className="grid grid-cols-12 gap-4 px-4 py-3 items-center text-sm">
+                                      <span className="col-span-3 inline-flex items-center gap-2 text-foreground">
+                                        <FileText className="w-3.5 h-3.5 shrink-0 text-muted-foreground" />
+                                        {targetLabelOf({ object: 'investor', field: doc.field })}
+                                      </span>
+                                      <span className="col-span-3 font-medium text-foreground">{t(doc.nameKey)}</span>
+                                      <span className="col-span-3 text-foreground/80">{t('subscriptions.detail.sections.documents')}</span>
+                                      <span className="col-span-3">
+                                        <NeutralTag label={t('subscriptions.detail.report.documentCopied')} />
+                                      </span>
+                                    </div>
+                                  ))}
+                                </div>
+                              </SectionCard>
+                            )}
+
                             {/* Action — passer à l'étape suivante */}
+
                             <div className="flex justify-end pt-4">
+                              <DisabledReason reason={validationBlockedReason}>
                               <Button
                                 style={{ background: PRIMARY_BUTTON_GRADIENT }}
                                 className="gap-2 text-white hover:opacity-90"
+                                disabled={Boolean(validationBlockedReason)}
                                 onClick={() => {
                                   setCurrentStep(2);
                                   toast.success(t('subscriptions.detail.onboarding.submittedForValidation'));
@@ -1529,6 +2442,7 @@ export function SubscriptionDetailPage({ subscription: subscriptionProp, onBack 
                                 <ChevronRight className="w-4 h-4" />
                                 {t('subscriptions.detail.onboarding.proceedToValidation')}
                               </Button>
+                              </DisabledReason>
                             </div>
                           </div>
                         </div>
@@ -1538,6 +2452,20 @@ export function SubscriptionDetailPage({ subscription: subscriptionProp, onBack 
                   {currentStep === 2 && (
                     // Validation / Conformité — widgets risque, screening et validation
                     <SubscriptionComplianceSection
+                      reviewMode={reviewCircuit}
+                      reviewChain={{
+                        partner: { name: delegatedPartnerName, by: partnerValidation?.by },
+                        firstAnalyst: CURRENT_OPERATOR,
+                        secondAnalyst: SECOND_ANALYSTS[0],
+                      }}
+                      onReviewEvent={event =>
+                        logAudit({
+                          type: event.type === 'handedOff' ? 'reviewHandedOff' : 'finalValidation',
+                          origin: 'operator',
+                          actorName: event.by,
+                          newValue: event.to,
+                        })
+                      }
                       scoreValidated={riskValidated}
                       scoreValidatedBy={riskValidatedBy}
                       scoreValidatedAt={riskValidationDate}
@@ -1735,6 +2663,17 @@ export function SubscriptionDetailPage({ subscription: subscriptionProp, onBack 
             <IntegrationsTab />
           </TabsContent>
 
+          <TabsContent value="audit" className="mt-0">
+            <div className="px-8 py-6">
+              <SubscriptionAuditTab
+                entries={auditEntries}
+                sections={mockSections}
+                documents={requiredDocuments}
+                subscriptionName={subscription.name}
+              />
+            </div>
+          </TabsContent>
+
           <TabsContent value="notes" className="mt-0">
             <div className="px-8 py-6">
               <NotesTab notes={initialNotes} scope="subscription" onCountChange={setNotesCount} />
@@ -1742,6 +2681,109 @@ export function SubscriptionDetailPage({ subscription: subscriptionProp, onBack 
           </TabsContent>
         </Tabs>
       </div>
+
+      <ConfirmDialog
+        open={documentToReject !== null}
+        onOpenChange={open => !open && setDocumentToReject(null)}
+        destructive
+        title={t('subscriptions.detail.documentControl.rejectTitle')}
+        description={
+          documentToReject !== null && requiredDocuments[documentToReject]
+            ? docLabel(requiredDocuments[documentToReject])
+            : undefined
+        }
+        confirmLabel={t('subscriptions.detail.documentControl.rejectConfirm')}
+        confirmDisabledReason={
+          rejectionReason.trim() ? undefined : t('subscriptions.detail.documentControl.reasonRequired')
+        }
+        onConfirm={handleConfirmRejectDocument}
+      >
+        <div className="space-y-2">
+          <Textarea
+            value={rejectionReason}
+            onChange={e => setRejectionReason(e.target.value)}
+            placeholder={t('subscriptions.detail.documentControl.reasonPlaceholder')}
+            aria-label={t('subscriptions.detail.documentControl.reasonLabel')}
+            rows={4}
+          />
+          <p className="text-xs text-muted-foreground">
+            {t('subscriptions.detail.documentControl.reasonVisible')}
+          </p>
+        </div>
+      </ConfirmDialog>
+
+      <NotificationsPanel
+        open={distributorPreview !== null}
+        onClose={() => setDistributorPreview(null)}
+        notifications={distributorPreview ? [distributorPreview] : []}
+        title={t('subscriptions.detail.answerAlerts.previewTitle')}
+        description={t('subscriptions.detail.answerAlerts.previewDescription')}
+      />
+
+      <ManualDocumentPanel
+        open={isManualDocumentOpen}
+        onClose={() => setIsManualDocumentOpen(false)}
+        onSave={handleSaveManualDocument}
+      />
+
+      <AnswerEditPanel
+        question={answerEdit ? mockSections.find(sec => sec.id === answerEdit.sectionId)?.questions[answerEdit.idx] ?? null : null}
+        currentValue={(() => {
+          if (!answerEdit) return '';
+          const question = mockSections.find(sec => sec.id === answerEdit.sectionId)?.questions[answerEdit.idx];
+          return question ? responseOf(answerEdit.sectionId, answerEdit.idx, question) : '';
+        })()}
+        context={(() => {
+          if (!answerEdit) return '';
+          const section = mockSections.find(sec => sec.id === answerEdit.sectionId);
+          if (!section) return '';
+          const iteration = section.questions[answerEdit.idx]?.iteration;
+          return iteration !== undefined && section.iterationLabelKey
+            ? `${t(section.titleKey)} · ${t(section.iterationLabelKey, { n: iteration })}`
+            : t(section.titleKey);
+        })()}
+        requiresReason={afterSignature}
+        targets={answerEdit ? editTargets(answerEdit.sectionId, answerEdit.idx) : []}
+        resolveTriggers={
+          answerEdit &&
+          mockSections.find(sec => sec.id === answerEdit.sectionId)?.questions[answerEdit.idx]?.triggers?.length
+            ? next => resolveTriggerChanges(answerEdit.sectionId, answerEdit.idx, next)
+            : undefined
+        }
+        onClose={() => setAnswerEdit(null)}
+        onSave={(value, reason, effects) => {
+          if (!answerEdit) return;
+          const section = mockSections.find(sec => sec.id === answerEdit.sectionId);
+          const question = section?.questions[answerEdit.idx];
+          if (!question) return;
+          handleModifyQuestion(
+            `${answerEdit.sectionId}-${answerEdit.idx}`,
+            value,
+            responseOf(answerEdit.sectionId, answerEdit.idx, question),
+            reason,
+          );
+          const replayedIds = applyAnswerEffects(answerEdit.sectionId, answerEdit.idx, value, effects);
+          notifyModifiedAnswers(
+            [`${answerEdit.sectionId}-${answerEdit.idx}`, ...replayedIds],
+            'operator',
+            CURRENT_OPERATOR,
+          );
+          setAnswerEdit(null);
+        }}
+      />
+
+      <SubscriptionAuditPanel
+        entries={auditEntries}
+        sections={mockSections}
+        documents={requiredDocuments}
+        elementId={auditElement?.elementId ?? null}
+        sectionId={auditElement?.sectionId}
+        onClose={() => setAuditElement(null)}
+        onShowAll={() => {
+          setAuditElement(null);
+          setActiveTab('audit');
+        }}
+      />
 
       <NewSubscriptionDialog
         open={isEditDialogOpen}
