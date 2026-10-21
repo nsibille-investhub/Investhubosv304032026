@@ -600,7 +600,7 @@ export default function SegmentsSettings() {
               </div>
 
               {/* Table */}
-              <div className="bg-white dark:bg-gray-950 rounded-lg border border-gray-200 dark:border-gray-800 overflow-hidden">
+              <div className="bg-white dark:bg-gray-950 rounded-lg border border-gray-200 dark:border-gray-800 overflow-hidden overflow-x-auto">
                 <table className="w-full">
                   <thead className="bg-gray-50 dark:bg-gray-900 border-b border-gray-200 dark:border-gray-800">
                     <tr>
@@ -608,7 +608,7 @@ export default function SegmentsSettings() {
                       <th className="text-left p-3 text-xs text-gray-500 dark:text-gray-400">Nom</th>
                       <th className="text-center p-3 text-xs text-gray-500 dark:text-gray-400">Objets associés</th>
                       <th className="text-center p-3 text-xs text-gray-500 dark:text-gray-400">Classification auto</th>
-                      <th className="text-right p-3 text-xs text-gray-500 dark:text-gray-400">Actions</th>
+                      <th className="text-right p-3 text-xs text-gray-500 dark:text-gray-400 ds-sticky-actions">Actions</th>
                     </tr>
                   </thead>
                   <tbody>
@@ -655,7 +655,7 @@ export default function SegmentsSettings() {
                               </Badge>
                             )}
                           </td>
-                          <td className="p-3">
+                          <td className="p-3 ds-sticky-actions">
                             <div className="flex items-center justify-end gap-2">
                               <TooltipProvider>
                                 <Tooltip>

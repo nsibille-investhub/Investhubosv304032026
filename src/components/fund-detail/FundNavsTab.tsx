@@ -165,7 +165,7 @@ export function FundNavsTab({ detail, canEdit, editReason, initialShareId, onIni
               <TableHead className="text-right">{t(`${K}.value`)}</TableHead>
               <TableHead>{t(`${K}.proof`)}</TableHead>
               <TableHead>{t(`${K}.produced`)}</TableHead>
-              <TableHead className="text-right">{t(`${K}.actions`)}</TableHead>
+              <TableHead className="text-right ds-sticky-actions">{t(`${K}.actions`)}</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
@@ -200,7 +200,7 @@ export function FundNavsTab({ detail, canEdit, editReason, initialShareId, onIni
                       )}
                     </div>
                   </TableCell>
-                  <TableCell className="text-right">
+                  <TableCell className="text-right ds-sticky-actions">
                     <div className="inline-flex items-center gap-1">
                       {filled ? (
                         <>
