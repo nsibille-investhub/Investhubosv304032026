@@ -2316,6 +2316,55 @@
         },
         "comingSoon": "Coming soon in the mockup.",
         "keep": "Close without acting"
+      },
+      "edit": {
+        "title": "Edit the subscription",
+        "subtitle": "Fields follow the file state and its locks.",
+        "close": "Close",
+        "cancel": "Cancel",
+        "save": "Save",
+        "saving": "Saving…",
+        "saved": "Changes saved",
+        "effects": "Effects: {{list}}.",
+        "nothingChanged": "Nothing to save.",
+        "reasonMin": "The reason must be at least {{count}} characters long.",
+        "editField": "Edit this field",
+        "pendingRequest": "Pending change request",
+        "openRequest": "Opening the change request (demo)",
+        "seeRequest": "See the request",
+        "unassigned": "This field is not linked to any group of the scenario file.",
+        "unassignedTitle": "Unlinked fields",
+        "noField": "No field of the record is linked to this group.",
+        "terminalField": "File {{state}}: the subscription can no longer be edited.",
+        "onboardingStarted": "Onboarding has started: changing the subscriber type will erase the answers already entered.",
+        "comingSoon": "Coming soon in the mockup.",
+        "reduceCommitment": "Commitment reduction",
+        "transfer": "Transfer",
+        "summary": {
+          "terminal": "File {{state}}: the subscription is read-only.",
+          "withParts": "File {{state}}: {{parts}}.",
+          "allOpen": "File {{state}}: all fields can be edited.",
+          "locked": "{{groups}} locked",
+          "resetsSignature": "any change to {{groups}} will cancel the ongoing signature procedure",
+          "onRequest": "{{groups}} editable only through an exceptional correction"
+        },
+        "exceptional": {
+          "toggle": "Exceptional correction",
+          "description": "Unlocks the groups editable on request. The reason is kept in the audit trail.",
+          "reason": "Reason",
+          "counter": "{{count}} characters out of {{min}} minimum"
+        },
+        "confirm": {
+          "title": "Confirm the change",
+          "action": "Save anyway",
+          "resetsSignature": "This change cancels the ongoing signature procedure. The file will go back to {{state}} and the documents will be regenerated at the next sending.",
+          "sepa": "The signed mandate carries the former IBAN, a new mandate will be required."
+        },
+        "discard": {
+          "title": "Close without saving?",
+          "description": "Changed fields will be lost.",
+          "action": "Close without saving"
+        }
       }
     }
   },

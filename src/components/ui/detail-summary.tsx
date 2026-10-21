@@ -60,6 +60,8 @@ export type DetailSummaryAttribute = {
   secondaryValue?: React.ReactNode;
   icon?: LucideIcon;
   href?: string;
+  /** Action sur la valeur, à droite du libellé : modifier, motif de verrou, demande en attente. */
+  action?: React.ReactNode;
 };
 
 export type DetailSummaryMetric = {
@@ -130,7 +132,14 @@ function AttributeItem({
     <div className="flex items-center gap-2 min-w-0">
       <SummaryIcon icon={attribute.icon} />
       <div className="min-w-0">
-        <div className="text-xs text-muted-foreground leading-none mb-0.5">{attribute.label}</div>
+        {attribute.action ? (
+          <div className="flex items-center gap-1 text-xs text-muted-foreground leading-none mb-0.5">
+            {attribute.label}
+            {attribute.action}
+          </div>
+        ) : (
+          <div className="text-xs text-muted-foreground leading-none mb-0.5">{attribute.label}</div>
+        )}
         {attribute.href && hasValue ? (
           <DetailLink href={attribute.href} title={newTabTitle} className="text-sm leading-tight break-words">
             {value}

@@ -44,9 +44,11 @@ export interface DemoFile {
   headerDefaults: HeaderDefaults;
   /** Libellé renommé fictif par libellé d'état du référentiel. */
   statusRenaming: Record<string, string>;
+  /** Effets de bord fictifs annoncés après la modification d'un champ, par identifiant de champ. */
+  editSideEffects: Record<string, string[]>;
 }
 
-const EMPTY_DEMO: DemoFile = { dossiers: [], headerDefaults: {}, statusRenaming: {} };
+const EMPTY_DEMO: DemoFile = { dossiers: [], headerDefaults: {}, statusRenaming: {}, editSideEffects: {} };
 
 export type ResolvedDossier =
   | { ok: true; dossier: DemoDossier; scenario: WorkflowScenario }
@@ -63,11 +65,13 @@ export async function loadDemoFile(): Promise<DemoFile> {
       dossiers?: DemoDossier[];
       header_defaults?: HeaderDefaults;
       status_renaming?: Record<string, string>;
+      edit_side_effects?: Record<string, string[]>;
     };
     return {
       dossiers: Array.isArray(raw.dossiers) ? raw.dossiers : [],
       headerDefaults: raw.header_defaults ?? {},
       statusRenaming: raw.status_renaming ?? {},
+      editSideEffects: raw.edit_side_effects ?? {},
     };
   } catch (error) {
     console.error('[Simulateur] Dossiers de démonstration illisibles', error);

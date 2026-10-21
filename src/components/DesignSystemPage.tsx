@@ -1803,6 +1803,11 @@ export function DesignSystemPage() {
             <code className="text-xs px-1 py-0.5 rounded bg-[#F1F5F4] dark:bg-[#1C2624] ml-1">onExpandedChange</code>).
             Les valeurs vides s&apos;affichent avec <code className="text-xs px-1 py-0.5 rounded bg-[#F1F5F4] dark:bg-[#1C2624]">emptyValue</code> (tiret par défaut).
           </p>
+          <p className="text-xs text-[#4F6166] dark:text-[#9DB2AE] leading-relaxed max-w-3xl">
+            Chaque attribut accepte une <code className="text-xs px-1 py-0.5 rounded bg-[#F1F5F4] dark:bg-[#1C2624]">action</code> affichée à droite de son libellé&nbsp;:
+            crayon qui ouvre la modale sur la bonne section, crayon barré grisé avec le motif du verrou au survol, horloge pour une demande de modification en attente
+            (référence&nbsp;: <code className="text-xs px-1 py-0.5 rounded bg-[#F1F5F4] dark:bg-[#1C2624]">FieldEditIcon</code> de la fiche souscription).
+          </p>
         </header>
 
         <div className="space-y-16">

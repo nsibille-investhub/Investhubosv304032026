@@ -1,5 +1,5 @@
 {
-  "about": "Dossiers fictifs du simulateur de workflow. Les états, valeurs de contexte et sous-états sont donnés par leur libellé et résolus contre simulateur-workflow-etats.json au chargement. Le bloc header_defaults fournit les dates, auteurs et motifs fictifs de la ligne de titre ; status_renaming les libellés renommés fictifs (réglage Renommage des statuts).",
+  "about": "Dossiers fictifs du simulateur de workflow. Les états, valeurs de contexte et sous-états sont donnés par leur libellé et résolus contre simulateur-workflow-etats.json au chargement. Le bloc header_defaults fournit les dates, auteurs et motifs fictifs de la ligne de titre ; status_renaming les libellés renommés fictifs (réglage Renommage des statuts). Le bloc edit_side_effects liste, par champ, les effets de bord fictifs annoncés après une modification.",
   "header_defaults": {
     "activated_at": "2026-10-20",
     "deferred_until": "2026-11-16",
@@ -19,6 +19,28 @@
     "En cours": "Dossier en saisie",
     "En signature": "Signatures en cours",
     "Active": "Souscription enregistrée"
+  },
+  "edit_side_effects": {
+    "partnerName": [
+      "Taux de commission recalculé à 2 %",
+      "Conseiller retiré"
+    ],
+    "advisor": [
+      "Conseiller retiré des destinataires des notifications"
+    ],
+    "amount": [
+      "Frais d'entrée recalculés",
+      "Documents de souscription à régénérer"
+    ],
+    "quantity": [
+      "Montant souscrit recalculé"
+    ],
+    "iban": [
+      "Mandat SEPA à faire signer de nouveau"
+    ],
+    "holdingMode": [
+      "Teneur de compte prévenu par courriel"
+    ]
   },
   "dossiers": [
     {

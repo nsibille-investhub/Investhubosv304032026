@@ -38,7 +38,7 @@ interface ReadyValue {
   /** Dossier de démonstration chargé, jusqu'à la prochaine réinitialisation. */
   activeDossier: DemoDossier | null;
   /** Données fictives de la ligne de titre : défauts du fichier, surchargés par le dossier chargé. */
-  demo: Pick<DemoFile, 'headerDefaults' | 'statusRenaming'>;
+  demo: Pick<DemoFile, 'headerDefaults' | 'statusRenaming' | 'editSideEffects'>;
   loadDossier: (id: string) => void;
   update: (patch: Partial<WorkflowScenario> | ((current: WorkflowScenario) => WorkflowScenario)) => void;
   /** Joue une transition : historique, état d'arrivée, état précédent mémorisé ; patch ajuste le reste du scénario. */
@@ -67,7 +67,7 @@ export function WorkflowScenarioProvider({ children }: { children: React.ReactNo
   const [load, setLoad] = useState<SimulatorLoadResult | null>(null);
   const [scenario, setScenario] = useState<WorkflowScenario | null>(null);
   const [history, setHistory] = useState<ScenarioHistoryEntry[]>([]);
-  const [demoFile, setDemoFile] = useState<DemoFile>({ dossiers: [], headerDefaults: {}, statusRenaming: {} });
+  const [demoFile, setDemoFile] = useState<DemoFile>({ dossiers: [], headerDefaults: {}, statusRenaming: {}, editSideEffects: {} });
   const [activeDossier, setActiveDossier] = useState<DemoDossier | null>(null);
 
   useEffect(() => {
@@ -205,6 +205,7 @@ export function WorkflowScenarioProvider({ children }: { children: React.ReactNo
       demo: {
         headerDefaults: { ...demoFile.headerDefaults, ...activeDossier?.data.header },
         statusRenaming: demoFile.statusRenaming,
+        editSideEffects: demoFile.editSideEffects,
       },
       loadDossier,
       update,

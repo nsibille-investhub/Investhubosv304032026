@@ -2316,6 +2316,55 @@
         },
         "comingSoon": "Bientôt disponible dans la maquette.",
         "keep": "Fermer sans agir"
+      },
+      "edit": {
+        "title": "Modifier la souscription",
+        "subtitle": "Les champs suivent l'état du dossier et ses verrous.",
+        "close": "Fermer",
+        "cancel": "Annuler",
+        "save": "Enregistrer",
+        "saving": "Enregistrement…",
+        "saved": "Modifications enregistrées",
+        "effects": "Effets : {{list}}.",
+        "nothingChanged": "Aucune modification à enregistrer.",
+        "reasonMin": "Le motif doit compter au moins {{count}} caractères.",
+        "editField": "Modifier ce champ",
+        "pendingRequest": "Demande de modification en attente",
+        "openRequest": "Ouverture de la demande de modification (démonstration)",
+        "seeRequest": "Voir la demande",
+        "unassigned": "Ce champ n'est rattaché à aucun groupe du fichier de scénarios.",
+        "unassignedTitle": "Champs non rattachés",
+        "noField": "Aucun champ de la fiche n'est rattaché à ce groupe.",
+        "terminalField": "Dossier {{state}} : la souscription n'est plus modifiable.",
+        "onboardingStarted": "L'onboarding est commencé : changer le type de souscripteur effacera les réponses déjà saisies.",
+        "comingSoon": "Bientôt disponible dans la maquette.",
+        "reduceCommitment": "Réduction d'engagement",
+        "transfer": "Transfert",
+        "summary": {
+          "terminal": "Dossier {{state}} : la souscription est consultable en lecture seule.",
+          "withParts": "Dossier {{state}} : {{parts}}.",
+          "allOpen": "Dossier {{state}} : tous les champs sont modifiables.",
+          "locked": "{{groups}} verrouillé(s)",
+          "resetsSignature": "toute modification de {{groups}} annulera la procédure de signature en cours",
+          "onRequest": "{{groups}} modifiable(s) seulement en correction exceptionnelle"
+        },
+        "exceptional": {
+          "toggle": "Correction exceptionnelle",
+          "description": "Déverrouille les groupes modifiables sur demande. Le motif est conservé dans la piste d'audit.",
+          "reason": "Motif",
+          "counter": "{{count}} caractères sur {{min}} minimum"
+        },
+        "confirm": {
+          "title": "Confirmer la modification",
+          "action": "Enregistrer quand même",
+          "resetsSignature": "Cette modification annule la procédure de signature en cours. Le dossier reviendra à l'état {{state}} et les documents seront régénérés au prochain envoi.",
+          "sepa": "Le mandat signé porte l'ancien IBAN, un nouveau mandat sera nécessaire."
+        },
+        "discard": {
+          "title": "Fermer sans enregistrer ?",
+          "description": "Les champs modifiés seront perdus.",
+          "action": "Fermer sans enregistrer"
+        }
       }
     }
   },
