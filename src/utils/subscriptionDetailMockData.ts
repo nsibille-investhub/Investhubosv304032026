@@ -272,7 +272,7 @@ export const mockCorporateKycDocuments: MockKycDocument[] = [
 
 export const mockNotes: MockNote[] = [
   { id: 'sub-note-1', titleKey: 'subscriptions.detail.notes.mockTitle1', contentKey: 'subscriptions.detail.notes.mock1', author: 'Marie Dubois', date: '2025-12-28T14:32:00', reminderDate: '2026-01-05T09:00:00' },
-  { id: 'sub-note-2', titleKey: 'subscriptions.detail.notes.mockTitle2', contentKey: 'subscriptions.detail.notes.mock2', author: 'Jean Dupont', date: '2025-12-27T16:45:00' },
+  { id: 'sub-note-2', titleKey: 'subscriptions.detail.notes.mockTitle2', contentKey: 'subscriptions.detail.notes.mock2', author: 'Jean Dault', date: '2025-12-27T16:45:00' },
   { id: 'sub-note-3', titleKey: 'subscriptions.detail.notes.mockTitle3', contentKey: 'subscriptions.detail.notes.mock3', author: 'Pierre Martin', date: '2025-12-26T10:15:00' },
   { id: 'sub-note-4', titleKey: 'subscriptions.detail.notes.mockTitle4', contentKey: 'subscriptions.detail.notes.mock4', author: 'Sophie Laurent', date: '2025-12-25T09:20:00', reminderDate: '2026-01-02T09:00:00' },
   { id: 'sub-note-5', titleKey: 'subscriptions.detail.notes.mockTitle5', contentKey: 'subscriptions.detail.notes.mock5', author: 'Marie Dubois', date: '2025-12-24T17:30:00', attachment: 'dossier-kyc.pdf' },

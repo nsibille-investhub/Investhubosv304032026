@@ -48,9 +48,12 @@ export const createNote = (): Note => ({
   isImportant: false,
 });
 
-/** Titre et texte renseignés : condition pour enregistrer une note. */
-export const isNoteComplete = (note: Pick<Note, 'title' | 'content'>) =>
-  note.title.trim().length > 0 && note.content.replace(/<[^>]*>/g, '').trim().length > 0;
+/** Un rappel ne peut pas être programmé à une date passée. */
+export const isReminderInPast = (note: Pick<Note, 'reminderDate'>) =>
+  Boolean(note.reminderDate) && toInputDate(note.reminderDate) < toInputDate(new Date());
+
+/** Le titre est le seul champ obligatoire d'une note. */
+export const isNoteComplete = (note: Pick<Note, 'title' | 'reminderDate'>) => note.title.trim().length > 0 && !isReminderInPast(note);
 
 interface NoteGroupProps {
   bare: boolean;
@@ -116,10 +119,7 @@ export function NoteFormFields({ note, onChange, scope = 'investor', bare = fals
           </div>
         )}
         <div className="space-y-2">
-          <Label htmlFor="noteContent">
-            {t(`${K}.sheet.content`)}
-            <span className="text-red-600 ml-0.5">*</span>
-          </Label>
+          <Label htmlFor="noteContent">{t(`${K}.sheet.content`)}</Label>
           <RichTextEditor
             id="noteContent"
             ariaLabel={t(`${K}.sheet.content`)}
@@ -174,9 +174,12 @@ export function NoteFormFields({ note, onChange, scope = 'investor', bare = fals
               id="noteReminderDate"
               type="date"
               className="h-11"
+              min={toInputDate(new Date())}
               value={toInputDate(note.reminderDate)}
               onChange={(e) => update('reminderDate', fromInputDate(e.target.value))}
+              aria-invalid={isReminderInPast(note)}
             />
+            {isReminderInPast(note) && <p className="text-xs text-destructive">{t(`${K}.sheet.reminderPast`)}</p>}
           </div>
         )}
       </NoteGroup>
