@@ -654,7 +654,8 @@
           "byOperator": "Modified by an operator",
           "byInvestor": "Modified by the investor",
           "automatic": "Modified automatically",
-          "filter": "Modified answers ({{count}})"
+          "filter": "Modified answers ({{count}})",
+          "byPartner": "Modified by the partner"
         },
         "relations": {
           "synced": "Field synchronised with:",
@@ -1275,13 +1276,17 @@
           "answerReplayed": "Triggered answer changed",
           "notificationSent": "Alert sent",
           "dataReported": "Data reported at submission",
-          "mandateCreated": "Direct debit mandate created"
+          "mandateCreated": "Direct debit mandate created",
+          "investorReminded": "Investor reminded",
+          "dossierReopened": "File reopened",
+          "partnerValidated": "File validated by the partner"
         },
         "origin": {
           "investor": "Investor",
           "operator": "Back-office operator",
           "automatic": "Automatic",
-          "api": "API"
+          "api": "API",
+          "partner": "Partner"
         },
         "target": "Linked data: {{object}} · {{field}}",
         "causedBy": "Following the change of: {{label}}",
@@ -1478,6 +1483,15 @@
         "mandateCreated": "Created at submission",
         "documentCopied": "Copied to the record",
         "propagatedToast": "Linked data updated"
+      },
+      "partnerReview": {
+        "awaitingPartner": "Awaiting validation by {{partner}}",
+        "simulate": "Simulate the partner's review",
+        "mockRejectReason": "Number unreachable, please check it with the investor",
+        "mockReminder": "Reminder about the phone number",
+        "transmitted": "Sent to analyst 1",
+        "validatedToast": "File validated by {{partner}}",
+        "validatedToastDesc": "The file is sent to analyst 1."
       }
     },
     "table": {
@@ -1833,6 +1847,14 @@
       "toast": {
         "subscriptionUpdated": "Subscription updated",
         "subscriptionUpdatedDesc": "{{investor}} - €{{amount}}"
+      }
+    },
+    "stateBanner": {
+      "delegatedReview": {
+        "pendingTitle": "KYC validation delegated to {{partner}}",
+        "pendingDescription": "The partner reviews the file on their portal. The file will be sent to you once validated.",
+        "validatedTitle": "File validated by {{author}} ({{partner}}) on {{date}}",
+        "validatedDescription": "Sent to analyst 1. The partner's actions are in the audit trail."
       }
     }
   },

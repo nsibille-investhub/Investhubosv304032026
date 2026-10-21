@@ -1023,7 +1023,8 @@ export function FundDetailComponentsSection() {
 <PageStateBanner variant="locked" date={date} reason={reason} />
 <PageStateBanner variant="mirror" masterName={name} onOpenMaster={open} />
 <PageStateBanner variant="sendingNotices" blockedActions={[...]} />
-<PageStateBanner variant="readOnly" />`}
+<PageStateBanner variant="readOnly" />
+<PageStateBanner variant="delegatedReview" partner={name} validatedBy={author} date={date} />`}
       >
         <Example label={t(`${K}.pageStateBanner.exampleLabel`)} hint={t(`${K}.pageStateBanner.exampleHint`)}>
           <PageStateBannerDemo />

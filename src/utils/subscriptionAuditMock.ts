@@ -17,6 +17,9 @@ export type SubscriptionAuditEventType =
   | 'notificationSent'
   | 'dataReported'
   | 'mandateCreated'
+  | 'investorReminded'
+  | 'dossierReopened'
+  | 'partnerValidated'
   | 'commentAdded'
   | 'dossierSubmitted';
 
@@ -37,12 +40,15 @@ export const SUBSCRIPTION_AUDIT_EVENT_TYPES: SubscriptionAuditEventType[] = [
   'notificationSent',
   'dataReported',
   'mandateCreated',
+  'investorReminded',
+  'dossierReopened',
+  'partnerValidated',
   'commentAdded',
   'dossierSubmitted',
 ];
 
 /** Origine d'un changement, reprise de IC-5264. */
-export type SubscriptionAuditOrigin = 'investor' | 'operator' | 'automatic' | 'api';
+export type SubscriptionAuditOrigin = 'investor' | 'operator' | 'partner' | 'automatic' | 'api';
 
 export interface SubscriptionAuditEntry {
   id: string;

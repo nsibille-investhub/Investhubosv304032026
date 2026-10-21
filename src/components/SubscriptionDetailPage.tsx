@@ -137,6 +137,7 @@ import { DemoScenarioBar } from './ui/demo-scenario-bar';
 import { NotificationsPanel } from './NotificationsPanel';
 import { useNotifications, type AnswersModifiedNotification } from '../utils/notificationsContext';
 import { Switch } from './ui/switch';
+import { PageStateBanner } from './ui/page-state-banner';
 import { StatusBadge } from './StatusBadge';
 import { Label } from './ui/label';
 import type { MockQuestion } from '../utils/subscriptionDetailMockData';
@@ -203,9 +204,12 @@ const isControllable = (question: MockQuestion, response: string) =>
 const REVIEW_CIRCUITS = ['fourEyes', 'delegated', 'none'] as const;
 type ReviewCircuit = (typeof REVIEW_CIRCUITS)[number];
 const SECOND_ANALYSTS = ['Paul Girard', 'Sophie Lambert'];
+/** Utilisateur du partenaire délégué qui contrôle le dossier sur le portail (IC-5633). */
+const PARTNER_REVIEWER = 'Léa Fontaine';
 
 const MODIFIED_BY_KEY: Record<SubscriptionAuditOrigin, string> = {
   operator: 'subscriptions.detail.onboarding.modified.byOperator',
+  partner: 'subscriptions.detail.onboarding.modified.byPartner',
   investor: 'subscriptions.detail.onboarding.modified.byInvestor',
   automatic: 'subscriptions.detail.onboarding.modified.automatic',
   api: 'subscriptions.detail.onboarding.modified.automatic',
@@ -318,6 +322,7 @@ export function SubscriptionDetailPage({ subscription: subscriptionProp, onBack 
   const [reviewCircuit, setReviewCircuit] = useState<ReviewCircuit>('fourEyes');
   const { push: pushNotification } = useNotifications();
   const [distributorPreview, setDistributorPreview] = useState<AnswersModifiedNotification | null>(null);
+  const [partnerValidation, setPartnerValidation] = useState<{ by: string; at: string } | null>(null);
 
   // Lien d'une notification : onglet Onboarding filtré sur les réponses modifiées.
   const openModifiedAnswersAt = (subscriptionProp as { openModifiedAnswersAt?: number }).openModifiedAnswersAt;
@@ -640,6 +645,47 @@ export function SubscriptionDetailPage({ subscription: subscriptionProp, onBack 
     });
   };
 
+  const handleSimulatePartnerReview = () => {
+    if (partnerValidation) return;
+    const profile = mockSections.find(sec => sec.id === 'investorProfile');
+    const identity = mockSections.find(sec => sec.id === 'identity');
+    const partnerEntry = { origin: 'partner' as const, actorName: PARTNER_REVIEWER };
+    const validated = (profile?.questions ?? []).map((_, idx) => `investorProfile-${idx}`);
+    const phoneIdx = identity?.questions.findIndex(q => q.question.startsWith('Numéro de téléphone')) ?? -1;
+    const rejected = phoneIdx >= 0 ? `identity-${phoneIdx}` : null;
+    const docIdx = requiredDocuments.findIndex(doc => doc.nameKey === 'subscriptions.detail.docs.rib');
+
+    setQuestionStatuses(prev => {
+      const next = { ...prev };
+      validated.forEach(id => {
+        next[id] = 'approved';
+      });
+      if (rejected) next[rejected] = 'rejected';
+      return next;
+    });
+    if (docIdx >= 0) setDocumentStatuses(prev => ({ ...prev, [`document-${docIdx}`]: 'approved' }));
+    const at = new Date();
+    const pad = (n: number) => String(n).padStart(2, '0');
+    setPartnerValidation({
+      by: PARTNER_REVIEWER,
+      at: `${pad(at.getDate())}/${pad(at.getMonth() + 1)}/${at.getFullYear()} ${pad(at.getHours())}:${pad(at.getMinutes())}`,
+    });
+    logAudit(
+      ...validated.map(id => ({ ...partnerEntry, type: 'answerValidated' as const, elementId: id, sectionId: 'investorProfile', viaSection: true })),
+      ...(rejected
+        ? [{ ...partnerEntry, type: 'answerInvalidated' as const, elementId: rejected, sectionId: 'identity', reason: t('subscriptions.detail.partnerReview.mockRejectReason') }]
+        : []),
+      ...(docIdx >= 0
+        ? [{ ...partnerEntry, type: 'documentValidated' as const, elementId: `document-${docIdx}`, sectionId: AUDIT_DOCUMENTS_SECTION }]
+        : []),
+      { ...partnerEntry, type: 'investorReminded' as const, reason: t('subscriptions.detail.partnerReview.mockReminder') },
+      { ...partnerEntry, type: 'partnerValidated' as const, newValue: t('subscriptions.detail.partnerReview.transmitted') },
+    );
+    toast.success(t('subscriptions.detail.partnerReview.validatedToast', { partner: delegatedPartnerName }), {
+      description: t('subscriptions.detail.partnerReview.validatedToastDesc'),
+    });
+  };
+
   const handleSimulateInvestorChange = () => {
     const investorName = subscription.contrepartie?.investor || subscription.contrepartie?.name || '';
     const changes = [
@@ -813,10 +859,14 @@ export function SubscriptionDetailPage({ subscription: subscriptionProp, onBack 
   const documentBlockers = requiredDocuments
     .map((doc, idx) => ({ doc, idx }))
     .filter(({ doc }) => isMissingIssueDate(doc));
+  const delegatedPartnerName = subscription.partenaire?.name ?? t('subscriptions.detail.answerAlerts.partnerFallback');
+  const awaitingPartner = reviewCircuit === 'delegated' && !partnerValidation;
   const validationBlockedReason =
     documentBlockers.length > 0
       ? t('subscriptions.detail.documentControl.validationBlocked', { count: documentBlockers.length })
-      : undefined;
+      : awaitingPartner
+        ? t('subscriptions.detail.partnerReview.awaitingPartner', { partner: delegatedPartnerName })
+        : undefined;
 
   const onboardingNavSections: OnboardingNavSection[] = mockSections.map((section, idx) => ({
     id: section.id,
@@ -1437,9 +1487,22 @@ export function SubscriptionDetailPage({ subscription: subscriptionProp, onBack 
         }))}
         onChange={setReviewCircuit}
         action={
-          <Button variant="outline" size="sm" className="bg-card" onClick={handleSimulateInvestorChange}>
-            {t('subscriptions.detail.answerAlerts.simulate')}
-          </Button>
+          <>
+            {reviewCircuit === 'delegated' && (
+              <Button
+                variant="outline"
+                size="sm"
+                className="bg-card"
+                onClick={handleSimulatePartnerReview}
+                disabled={Boolean(partnerValidation)}
+              >
+                {t('subscriptions.detail.partnerReview.simulate')}
+              </Button>
+            )}
+            <Button variant="outline" size="sm" className="bg-card" onClick={handleSimulateInvestorChange}>
+              {t('subscriptions.detail.answerAlerts.simulate')}
+            </Button>
+          </>
         }
       />
       <PageHeader
@@ -1755,6 +1818,14 @@ export function SubscriptionDetailPage({ subscription: subscriptionProp, onBack 
                   {currentStep === 1 && (
                     // Onboarding en cours — KPI de completion, navigation par section, sections
                     <div className="space-y-6">
+                      {reviewCircuit === 'delegated' && (
+                        <PageStateBanner
+                          variant="delegatedReview"
+                          partner={delegatedPartnerName}
+                          validatedBy={partnerValidation?.by}
+                          date={partnerValidation?.at}
+                        />
+                      )}
                       {documentBlockers.length > 0 && (
                         <BlockersPanel
                           title={t(

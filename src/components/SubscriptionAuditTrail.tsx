@@ -2,6 +2,7 @@ import { useMemo, useState } from 'react';
 import {
   BellRing,
   CalendarCheck,
+  Handshake,
   Landmark,
   Link2,
   CheckCircle2,
@@ -55,6 +56,9 @@ const AUDIT_ICONS: Record<SubscriptionAuditEventType, typeof History> = {
   notificationSent: BellRing,
   dataReported: Link2,
   mandateCreated: Landmark,
+  investorReminded: BellRing,
+  dossierReopened: RefreshCw,
+  partnerValidated: Handshake,
   commentAdded: MessageSquare,
   dossierSubmitted: Send,
 };

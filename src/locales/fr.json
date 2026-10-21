@@ -654,7 +654,8 @@
           "byOperator": "Modifiée par un opérateur",
           "byInvestor": "Modifiée par l'investisseur",
           "automatic": "Modifiée automatiquement",
-          "filter": "Réponses modifiées ({{count}})"
+          "filter": "Réponses modifiées ({{count}})",
+          "byPartner": "Modifiée par le partenaire"
         },
         "relations": {
           "synced": "Champ synchronisé avec :",
@@ -1275,13 +1276,17 @@
           "answerReplayed": "Réponse déclenchée modifiée",
           "notificationSent": "Alerte envoyée",
           "dataReported": "Donnée reportée à la soumission",
-          "mandateCreated": "Mandat de prélèvement créé"
+          "mandateCreated": "Mandat de prélèvement créé",
+          "investorReminded": "Investisseur relancé",
+          "dossierReopened": "Dossier rouvert",
+          "partnerValidated": "Dossier validé par le partenaire"
         },
         "origin": {
           "investor": "Investisseur",
           "operator": "Opérateur back-office",
           "automatic": "Automatique",
-          "api": "API"
+          "api": "API",
+          "partner": "Partenaire"
         },
         "target": "Donnée liée : {{object}} · {{field}}",
         "causedBy": "Suite à la modification de : {{label}}",
@@ -1478,6 +1483,15 @@
         "mandateCreated": "Créée à la soumission",
         "documentCopied": "Copié sur la fiche",
         "propagatedToast": "Donnée liée mise à jour"
+      },
+      "partnerReview": {
+        "awaitingPartner": "En attente de la validation de {{partner}}",
+        "simulate": "Simuler le contrôle du partenaire",
+        "mockRejectReason": "Numéro injoignable, merci de le vérifier avec l'investisseur",
+        "mockReminder": "Relance pour le numéro de téléphone",
+        "transmitted": "Transmis à l'analyste 1",
+        "validatedToast": "Dossier validé par {{partner}}",
+        "validatedToastDesc": "Le dossier est transmis à l'analyste 1."
       }
     },
     "table": {
@@ -1833,6 +1847,14 @@
       "toast": {
         "subscriptionUpdated": "Souscription mise à jour",
         "subscriptionUpdatedDesc": "{{investor}} - {{amount}} €"
+      }
+    },
+    "stateBanner": {
+      "delegatedReview": {
+        "pendingTitle": "Validation KYC déléguée à {{partner}}",
+        "pendingDescription": "Le partenaire contrôle le dossier sur son portail. Le dossier vous sera transmis après sa validation.",
+        "validatedTitle": "Dossier validé par {{author}} ({{partner}}) le {{date}}",
+        "validatedDescription": "Transmis à l'analyste 1. Les actions du partenaire figurent dans la piste d'audit."
       }
     }
   },

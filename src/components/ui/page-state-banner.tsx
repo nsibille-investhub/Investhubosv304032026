@@ -1,6 +1,6 @@
 import type { ReactNode } from 'react';
 import type { LucideIcon } from 'lucide-react';
-import { Archive, ArrowUpRight, Copy, Loader2, Lock, Send, ShieldOff } from 'lucide-react';
+import { Archive, ArrowUpRight, Copy, Handshake, Loader2, Lock, Send, ShieldOff } from 'lucide-react';
 import { useTranslation } from '../../utils/languageContext';
 import { Alert, AlertDescription } from './alert';
 import { Button } from './button';
@@ -22,7 +22,9 @@ export type PageStateBannerProps =
   | { variant: 'locked'; date: string; reason: string; className?: string }
   | { variant: 'mirror'; masterName: string; onOpenMaster: () => void; className?: string }
   | { variant: 'sendingNotices'; blockedActions: string[]; className?: string }
-  | { variant: 'readOnly'; className?: string };
+  | { variant: 'readOnly'; className?: string }
+  /** Validation KYC déléguée au partenaire : en attente, ou validée et transmise à l'analyste 1. */
+  | { variant: 'delegatedReview'; partner: string; validatedBy?: string; date?: string; className?: string };
 
 const VARIANT_STYLE: Record<PageStateBannerProps['variant'], { icon: LucideIcon; tone: Tone }> = {
   archived: { icon: Archive, tone: 'strong' },
@@ -30,6 +32,7 @@ const VARIANT_STYLE: Record<PageStateBannerProps['variant'], { icon: LucideIcon;
   mirror: { icon: Copy, tone: 'info' },
   sendingNotices: { icon: Send, tone: 'warning' },
   readOnly: { icon: ShieldOff, tone: 'neutral' },
+  delegatedReview: { icon: Handshake, tone: 'info' },
 };
 
 /** Bandeau d'état placé sous l'en-tête d'une page de détail (PRD Détail d'un fonds V3, section 6.1). */
@@ -87,6 +90,19 @@ export function PageStateBanner(props: PageStateBannerProps) {
     case 'readOnly':
       title = t('funds.stateBanner.readOnly.title');
       description = t('funds.stateBanner.readOnly.description');
+      break;
+    case 'delegatedReview':
+      if (props.validatedBy) {
+        title = t('subscriptions.stateBanner.delegatedReview.validatedTitle', {
+          author: props.validatedBy,
+          partner: props.partner,
+          date: props.date ?? '',
+        });
+        description = t('subscriptions.stateBanner.delegatedReview.validatedDescription');
+      } else {
+        title = t('subscriptions.stateBanner.delegatedReview.pendingTitle', { partner: props.partner });
+        description = t('subscriptions.stateBanner.delegatedReview.pendingDescription');
+      }
       break;
   }
 
