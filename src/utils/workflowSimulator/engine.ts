@@ -10,12 +10,16 @@ import {
   type SimActionEntry,
   type SimContextCondition,
   type SimLabelled,
+  type SimRole,
   type SimRawActionEntry,
   type SimState,
   type SimTransition,
   type SimWorkflow,
   type SimWorkflowBlock,
   type SimulatorFile,
+  type WorkflowFamily,
+  type WorkflowOption,
+  WORKFLOW_OPTIONS,
 } from './types';
 
 type Translate = (key: string, vars?: Record<string, string | number>) => string;
@@ -39,12 +43,23 @@ const LOCK_TRIGGERS_FROM_SPEC: Record<string, SimContextCondition> = {
   transferred_in: 'transferred_in',
 };
 
+// Familles données par les spécifications (prompt 3) : D = Direct, P = Intermédié parent,
+// E = Intermédié enfant. Utilisé seulement si le workflow n'a pas de champ "family".
+const FAMILY_BY_PREFIX: Record<string, WorkflowFamily> = { D: 'A', P: 'B', E: 'C' };
+
+// Souscription directe automatique sur D1 et D2 (spécifications, prompt 3), à défaut de
+// champ "self_forced" dans le fichier.
+const SELF_FORCED_FROM_SPEC = ['D1', 'D2'];
+
 // Un verrou en L l'emporte sur tout ; un verrou en E l'emporte sur O et O* mais pas sur L.
 // Le rang de O* face à E n'est pas précisé : il est traité comme O.
 const RESTRICTION: Record<EditabilityCode, number> = { O: 0, 'O*': 0, E: 1, L: 2 };
 
-const toLabelled = (item: SimLabelled | string): SimLabelled =>
-  typeof item === 'string' ? { code: item, label: item } : item;
+export const toLabelled = <T extends SimLabelled>(item: T | string): T =>
+  typeof item === 'string' ? ({ code: item, label: item } as T) : item;
+
+export const normalizeText = (value: string) =>
+  value.normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase().trim();
 
 function counterTotal(value: ContextValue | undefined): number {
   if (typeof value === 'number') return value;
@@ -79,7 +94,7 @@ export function createSimulatorEngine(data: SimulatorFile, t: Translate) {
   const stateByCode = new Map<string, SimState>(data.states.map(s => [s.code, s]));
   const workflowById = new Map<string, SimWorkflow>(data.workflows.map(w => [w.id, w]));
   const groups = data.editability.groups.map(toLabelled);
-  const roles = data.roles.map(toLabelled);
+  const roles = data.roles.map(r => toLabelled<SimRole>(r));
   const activeIndex = data.states.findIndex(s => s.code === 'active');
 
   const stateLabel = (code: string) => stateByCode.get(code)?.label ?? code;
@@ -225,6 +240,41 @@ export function createSimulatorEngine(data: SimulatorFile, t: Translate) {
     return typeof entry === 'string' ? entry : entry[audience] ?? null;
   }
 
+  function familyOf(workflowId: string): WorkflowFamily | null {
+    const wf = workflowById.get(workflowId);
+    if (!wf) return null;
+    return wf.family ?? FAMILY_BY_PREFIX[wf.id.charAt(0)] ?? null;
+  }
+
+  function optionsOf(workflowId: string): WorkflowOption[] {
+    const options = workflowById.get(workflowId)?.options;
+    if (!options) return [];
+    if (Array.isArray(options)) return options.filter(o => WORKFLOW_OPTIONS.includes(o));
+    return WORKFLOW_OPTIONS.filter(o => options[o]);
+  }
+
+  function prerequisitesOf(workflowId: string): string[] {
+    const options = optionsOf(workflowId);
+    if (options.length && !data.workflow_prerequisites) warnMissing('workflow_prerequisites');
+    return options.map(o => data.workflow_prerequisites?.[o]).filter((p): p is string => Boolean(p));
+  }
+
+  function selfForced(workflowId: string): boolean {
+    const wf = workflowById.get(workflowId);
+    if (!wf) return false;
+    return wf.self_forced ?? SELF_FORCED_FROM_SPEC.includes(wf.id);
+  }
+
+  function v1Label(state: string): string | null {
+    return stateByCode.get(state)?.v1_label ?? null;
+  }
+
+  /** Retrouve un état par code ou par libellé (casse et accents ignorés). */
+  function findState(codeOrLabel: string): SimState | undefined {
+    const key = normalizeText(codeOrLabel);
+    return stateByCode.get(codeOrLabel) ?? data.states.find(s => normalizeText(s.label) === key);
+  }
+
   function allowedSubstates(axis: AxisKey, state: string, context: Record<string, ContextValue>): string[] {
     const def = data.axes[axis];
     if (!def || !evaluateCondition(def.condition, context)) return [];
@@ -266,6 +316,12 @@ export function createSimulatorEngine(data: SimulatorFile, t: Translate) {
     portalLabel,
     allowedSubstates,
     constrainAxes,
+    familyOf,
+    optionsOf,
+    prerequisitesOf,
+    selfForced,
+    v1Label,
+    findState,
   };
 }
 

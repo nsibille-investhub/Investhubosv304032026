@@ -2094,6 +2094,102 @@
         "E": "File {{state}}: changes on request only.",
         "L": "File {{state}}: this field can no longer be edited.",
         "lock": "Active lock: {{lock}}."
+      },
+      "panel": {
+        "open": "Simulator",
+        "title": "Workflow simulator",
+        "description": "Put the page in the state of a file. Nothing is saved.",
+        "workflow": {
+          "title": "Workflow",
+          "families": {
+            "A": "A - Direct",
+            "B": "B - Intermediated parent",
+            "C": "C - Intermediated child"
+          },
+          "options": {
+            "presignature": "Pre-signature",
+            "prevalidation": "Pre-validation",
+            "countersignature": "Countersignature",
+            "backoffice_initiation": "Back-office initiation"
+          },
+          "prerequisites": "Fund prerequisites: {{list}}"
+        },
+        "sequence": {
+          "ariaLabel": "Workflow state sequence",
+          "outOfSequence": "Current state outside the sequence: {{state}}",
+          "branches": "Possible branches from {{state}}:"
+        },
+        "state": {
+          "title": "State",
+          "waitingOn": "The file is waiting on: {{who}}",
+          "waitingOnUnknown": "The file is waiting on: not set in the scenario file",
+          "v1Mapping": "V1 mapping: {{value}}",
+          "v1Label": "V1 label: {{value}}"
+        },
+        "role": {
+          "title": "Simulated role"
+        },
+        "fund": {
+          "title": "Fund"
+        },
+        "dossier": {
+          "title": "File"
+        },
+        "context": {
+          "fields": {
+            "payment_mode": "Payment mode",
+            "internal_validation_enabled": "Internal validation enabled",
+            "custom_status_renaming": "Status renaming",
+            "assisted": "Administered subscription",
+            "self": "Direct subscription",
+            "reopened": "Reopened",
+            "exceptional_validation": "Exceptional validation",
+            "fast_add": "Off-platform takeover (quick entry)",
+            "transferred_in": "From a transfer",
+            "deferred_processing": "Deferred processing",
+            "sideletter": "Side letter",
+            "sepa_mandate": "SEPA mandate",
+            "pending_changes": "Pending change requests"
+          },
+          "values": {
+            "payment_mode": {
+              "capital_calls": "Capital calls",
+              "direct_payment": "Direct payment"
+            },
+            "custom_status_renaming": {
+              "none": "None",
+              "renaming": "Renaming"
+            }
+          },
+          "missing": "{{field}}: setting missing from the scenario file",
+          "assistedUnavailable": "Workflow {{workflow}}: administered subscription is not available.",
+          "selfForced": "Workflow {{workflow}}: direct subscription is automatic."
+        },
+        "axes": {
+          "title": "Axes",
+          "signature": "Signature",
+          "internal_validation": "Internal validation",
+          "payment": "Payment",
+          "notApplicable": "Not applicable in this state"
+        },
+        "locks": {
+          "title": "Locks",
+          "fromContext": "File {{state}}: lock set by the file context, change the matching setting to remove it."
+        },
+        "reset": "Reset",
+        "resetDone": "Default scenario restored",
+        "copyLink": "Copy link to this scenario",
+        "copied": "Link copied",
+        "copyDone": "Scenario link copied",
+        "copyError": "The link could not be copied",
+        "source": "Source: simulateur-workflow-etats.json, version {{version}}",
+        "versionUnknown": "not set",
+        "examples": {
+          "button": "Load an example",
+          "itemTitle": "{{workflow}} · {{state}} · {{investor}}",
+          "loaded": "{{investor}}'s file loaded",
+          "unresolved": "Unavailable: {{missing}} not found in the scenario file"
+        }
       }
     }
   },
@@ -7360,6 +7456,17 @@
           "info": "Information",
           "amounts": "Amounts",
           "control": "Review"
+        },
+        "timelineExampleLabel": "Clickable milestone timeline with a secondary milestone",
+        "timeline": {
+          "ariaLabel": "State sequence",
+          "draft": "Draft",
+          "inProgress": "In progress",
+          "toCheck": "To check",
+          "signing": "Signing",
+          "active": "Active",
+          "variant": "Variant",
+          "variantNote": "Secondary milestone, shown under the main milestone with its note."
         }
       },
       "formField": {
@@ -7398,6 +7505,52 @@
           "label": "Demo scenario",
           "default": "Nominal case",
           "noRight": "No notification right"
+        }
+      },
+      "floatingActionButton": {
+        "title": "Floating button",
+        "description": "Button fixed at the bottom right of the page to open a demo tool (workflow simulator). Hidden while the tool is open.",
+        "variants": "Icon and label.",
+        "states": "Idle, pressed (tool open).",
+        "exampleLabel": "Floating button (shown inline here)",
+        "demo": {
+          "label": "Simulator",
+          "opened": "Tool open",
+          "closed": "Tool closed"
+        }
+      },
+      "groupedSelect": {
+        "title": "Grouped dropdown",
+        "description": "Dropdown whose options are sorted into titled groups (SelectGroup, SelectLabel). An option can carry Tag chips under its label; the closed field shows the label only.",
+        "variants": "Plain options or options with chips.",
+        "states": "Closed, open, option selected.",
+        "exampleLabel": "Workflows grouped by family",
+        "demo": {
+          "ariaLabel": "Workflow",
+          "groups": {
+            "direct": "A - Direct",
+            "parent": "B - Intermediated parent"
+          },
+          "items": {
+            "d3": "D3 · Investor · Self-service",
+            "d4": "D4 · Investor · Self-service",
+            "p3": "P3 · Parent distributor · Self-service"
+          },
+          "tags": {
+            "countersignature": "Countersignature",
+            "presignature": "Pre-signature"
+          }
+        }
+      },
+      "sidePanelSection": {
+        "title": "Collapsible section and standard panel",
+        "description": "SidePanelSection accepts collapsible and defaultOpen: the title collapses or expands the section. SIDE_PANEL_STYLE gives a 480 px panel; non-modal, it hides nothing if the page reserves SIDE_PANEL_WIDTH on the right.",
+        "variants": "Fixed section, collapsible section.",
+        "states": "Expanded, collapsed.",
+        "exampleLabel": "Collapsible section",
+        "demo": {
+          "title": "Fund",
+          "switch": "Internal validation enabled"
         }
       }
     }

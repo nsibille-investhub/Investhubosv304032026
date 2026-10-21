@@ -56,6 +56,7 @@ import {
   Link2,
   Share2,
   PencilLine,
+  FlaskConical,
 } from 'lucide-react';
 import { motion } from 'motion/react';
 import { Badge } from './ui/badge';
@@ -137,6 +138,9 @@ import { useNotifications, type AnswersModifiedNotification } from '../utils/not
 import { Switch } from './ui/switch';
 import { PageStateBanner } from './ui/page-state-banner';
 import { WorkflowScenarioProvider, useWorkflowScenario } from '../utils/workflowScenarioContext';
+import { WorkflowSimulatorPanel } from './WorkflowSimulatorPanel';
+import { FloatingActionButton } from './ui/floating-action-button';
+import { SIDE_PANEL_WIDTH } from './ui/side-panel';
 import { StatusBadge } from './StatusBadge';
 import { Label } from './ui/label';
 import type { MockQuestion } from '../utils/subscriptionDetailMockData';
@@ -229,6 +233,7 @@ export function SubscriptionDetailPage(props: SubscriptionDetailPageProps) {
 function SubscriptionDetailPageContent({ subscription: subscriptionProp, onBack }: SubscriptionDetailPageProps) {
   const { t, lang } = useTranslation();
   const workflowScenario = useWorkflowScenario();
+  const [simulatorOpen, setSimulatorOpen] = useState(false);
 
   // Les modifications faites depuis la modale restent locales : la donnée
   // amont de la maquette n'est pas réécrite.
@@ -1486,7 +1491,11 @@ function SubscriptionDetailPageContent({ subscription: subscriptionProp, onBack 
   }
 
   return (
-    <div className="min-h-screen bg-muted">
+    <div
+      className="min-h-screen bg-muted"
+      // Le panneau du simulateur n'est pas modal : la page se décale pour ne rien masquer.
+      style={simulatorOpen ? { paddingRight: SIDE_PANEL_WIDTH } : undefined}
+    >
       <DemoScenarioBar
         label={t('subscriptions.detail.answerEdit.scenario.label')}
         value={editScenario}
@@ -2821,6 +2830,15 @@ function SubscriptionDetailPageContent({ subscription: subscriptionProp, onBack 
         onClose={() => setIsEditDialogOpen(false)}
         onSubscriptionUpdated={updated => setEditedSubscription(updated)}
       />
+
+      {workflowScenario.status === 'ready' && !simulatorOpen && (
+        <FloatingActionButton
+          icon={FlaskConical}
+          label={t('subscriptions.workflowSimulator.panel.open')}
+          onClick={() => setSimulatorOpen(true)}
+        />
+      )}
+      <WorkflowSimulatorPanel open={simulatorOpen} onOpenChange={setSimulatorOpen} />
     </div>
   );
 }

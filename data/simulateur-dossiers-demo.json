@@ -1,0 +1,62 @@
+{
+  "about": "Dossiers fictifs du simulateur de workflow. Les états, valeurs de contexte et sous-états sont donnés par leur libellé et résolus contre simulateur-workflow-etats.json au chargement.",
+  "dossiers": [
+    {
+      "id": "d1-en-cours",
+      "workflow": "D1",
+      "state": "En cours",
+      "context": { "payment_mode": "Appels de fonds" },
+      "data": { "fund": "Horizon Capital III", "share": "Part A", "investor": "Camille", "distributor": null, "amount": 100000, "summary": "Investisseur en cours de saisie de son dossier." }
+    },
+    {
+      "id": "d4-en-signature",
+      "workflow": "D4",
+      "state": "En signature",
+      "axes": { "signature": "Contresignature en attente" },
+      "data": { "fund": "Altitude Immobilier II", "share": "Part B", "investor": "Inès", "distributor": null, "amount": 250000, "summary": "Investisseur signé, contresignature du fonds en attente." }
+    },
+    {
+      "id": "p3-en-presignature",
+      "workflow": "P3",
+      "state": "En pré-signature",
+      "context": { "assisted": true },
+      "data": { "fund": "Horizon Capital III", "share": "Part A", "investor": "Hugo", "distributor": "Cabinet Horizon Patrimoine", "amount": 50000, "summary": "Souscription administrée par le distributeur, en pré-signature." }
+    },
+    {
+      "id": "e3-en-prevalidation",
+      "workflow": "E3",
+      "state": "En pré-validation",
+      "data": { "fund": "Boréal Dette Privée", "share": "Part I", "investor": "Léa", "distributor": "Atelier Finance Conseil", "parent_distributor": "Cabinet Horizon Patrimoine", "amount": 150000, "summary": "Distributeur enfant, pré-validation par le distributeur parent délégué." }
+    },
+    {
+      "id": "e8-presignee-a-controler",
+      "workflow": "E8",
+      "state": "Pré-signée à contrôler",
+      "context": { "internal_validation_enabled": true },
+      "axes": { "internal_validation": "Demandée" },
+      "data": { "fund": "Boréal Dette Privée", "share": "Part A", "investor": "Nathan", "distributor": "Atelier Finance Conseil", "amount": 200000, "summary": "Dossier pré-signé, validation interne demandée." }
+    },
+    {
+      "id": "e16-active-versement",
+      "workflow": "E16",
+      "state": "Active",
+      "context": { "payment_mode": "Paiement direct", "sepa_mandate": "En attente" },
+      "axes": { "payment": "En attente" },
+      "data": { "fund": "Altitude Immobilier II", "share": "Part A", "investor": "Sarah", "distributor": "Atelier Finance Conseil", "amount": 300000, "summary": "Souscription active, versement et mandat SEPA en attente." }
+    },
+    {
+      "id": "d3-saisie-rapide",
+      "workflow": "D3",
+      "state": "Active",
+      "context": { "fast_add": true },
+      "data": { "fund": "Horizon Capital III", "share": "Part B", "investor": "Jules", "distributor": null, "amount": 500000, "summary": "Brouillon créé par saisie rapide, reprise hors plateforme." }
+    },
+    {
+      "id": "p5-annulee",
+      "workflow": "P5",
+      "state": "Annulée",
+      "previous_state": "À contrôler",
+      "data": { "fund": "Boréal Dette Privée", "share": "Part I", "investor": "Emma", "distributor": "Cabinet Horizon Patrimoine", "amount": 75000, "summary": "Annulée depuis À contrôler.", "reason": "L'investisseur renonce à souscrire." }
+    }
+  ]
+}

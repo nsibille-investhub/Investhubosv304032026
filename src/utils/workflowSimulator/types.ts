@@ -14,8 +14,13 @@ export interface SimLabelled {
 export interface SimWorkflowBlock {
   /** Séquence alternative d'états, quand le bloc en définit une. */
   variant?: string[];
+  note?: string;
   [key: string]: unknown;
 }
+
+export const WORKFLOW_OPTIONS = ['presignature', 'prevalidation', 'countersignature', 'backoffice_initiation'] as const;
+export type WorkflowOption = (typeof WORKFLOW_OPTIONS)[number];
+export type WorkflowFamily = 'A' | 'B' | 'C';
 
 export interface SimWorkflow {
   id: string;
@@ -24,6 +29,13 @@ export interface SimWorkflow {
   reachable_states: string[];
   assisted_allowed?: boolean;
   blocks?: SimWorkflowBlock[];
+  family?: WorkflowFamily;
+  initiator?: string;
+  channel?: string;
+  /** Options actives : liste de codes ou drapeaux par code. */
+  options?: WorkflowOption[] | Partial<Record<WorkflowOption, boolean>>;
+  /** Souscription directe imposée par le workflow. */
+  self_forced?: boolean;
   [key: string]: unknown;
 }
 
@@ -33,7 +45,12 @@ export interface SimState extends SimLabelled {
   waiting_on?: string | string[];
   /** Statut V1 correspondant. */
   v1_mapping?: string;
+  v1_label?: string;
   [key: string]: unknown;
+}
+
+export interface SimRole extends SimLabelled {
+  right?: string;
 }
 
 export interface SimActionEntry {
@@ -111,7 +128,7 @@ export interface SimDecision {
 export interface SimulatorFile {
   workflows: SimWorkflow[];
   states: SimState[];
-  roles: Array<SimLabelled | string>;
+  roles: Array<SimRole | string>;
   actions: Record<string, SimActionLabel>;
   actions_by_state: Record<string, Record<string, SimRawActionEntry[]>>;
   transitions: SimTransition[];
@@ -120,6 +137,8 @@ export interface SimulatorFile {
   context: Record<string, SimContextSetting> & { role: SimContextSetting };
   portal_labels_v1?: Record<string, Record<string, string> | string>;
   decisions: SimDecision[];
+  workflow_prerequisites?: Partial<Record<WorkflowOption, string>>;
+  meta?: { last_updated?: string; [key: string]: unknown };
 }
 
 export const AXIS_KEYS = ['signature', 'internal_validation', 'payment'] as const;
@@ -150,6 +169,7 @@ export interface ScenarioHistoryEntry {
   trigger: string;
   actor: string;
   at: string;
+  note?: string;
 }
 
 export interface ResolvedAction extends SimActionEntry {

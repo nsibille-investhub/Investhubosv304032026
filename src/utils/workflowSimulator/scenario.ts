@@ -63,6 +63,7 @@ export function normalizeScenario(engine: SimulatorEngine, scenario: WorkflowSce
 
   const context = { ...scenario.context };
   if (!workflow?.assisted_allowed) context.assisted = false;
+  if (workflow && engine.selfForced(workflow.id)) context.self = true;
 
   const lockCodes = data.editability.locks.map(l => l.code);
   const decisionIds = data.decisions.map(d => d.id);

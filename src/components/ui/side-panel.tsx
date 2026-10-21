@@ -1,5 +1,5 @@
-import { useRef, type CSSProperties, type ReactNode } from 'react';
-import { Eye, FileCheck2, Trash2, UploadCloud, type LucideIcon } from 'lucide-react';
+import { useRef, useState, type CSSProperties, type ReactNode } from 'react';
+import { ChevronDown, Eye, FileCheck2, Trash2, UploadCloud, type LucideIcon } from 'lucide-react';
 import { Button } from './button';
 import { Label } from './label';
 import { ModernMultiSelect } from './modern-multiselect';
@@ -32,25 +32,61 @@ export const SIDE_PANEL_WIDE_STYLE = {
   ['--tw-exit-translate-x' as never]: '100%',
 } as CSSProperties;
 
+/** Largeur du panneau latéral standard ; sert aussi à réserver la place d'un panneau non modal. */
+export const SIDE_PANEL_WIDTH = 'min(480px, 92vw)';
+
+/** Panneau latéral standard (outil, réglages) : plus étroit que SIDE_PANEL_WIDE_STYLE. */
+export const SIDE_PANEL_STYLE = {
+  width: SIDE_PANEL_WIDTH,
+  maxWidth: 'none',
+  ['--tw-enter-translate-x' as never]: '100%',
+  ['--tw-exit-translate-x' as never]: '100%',
+} as CSSProperties;
+
 interface SidePanelSectionProps {
   icon: LucideIcon;
   title: ReactNode;
   description?: ReactNode;
   className?: string;
   children?: ReactNode;
+  /** Le titre devient un bouton qui replie ou déplie le contenu. */
+  collapsible?: boolean;
+  defaultOpen?: boolean;
 }
 
-export function SidePanelSection({ icon: Icon, title, description, className, children }: SidePanelSectionProps) {
+export function SidePanelSection({
+  icon: Icon,
+  title,
+  description,
+  className,
+  children,
+  collapsible,
+  defaultOpen = true,
+}: SidePanelSectionProps) {
+  const [open, setOpen] = useState(defaultOpen);
+  const expanded = !collapsible || open;
+  const heading = (
+    <h3 className="ds-form-section__title">
+      <Icon />
+      {title}
+      {collapsible && (
+        <ChevronDown className={cn('ml-auto transition-transform', open && 'rotate-180')} aria-hidden />
+      )}
+    </h3>
+  );
   return (
     <section data-slot="form-section" className={cn('ds-form-section ds-form-section--block space-y-3', className)}>
       <div>
-        <h3 className="ds-form-section__title">
-          <Icon />
-          {title}
-        </h3>
-        {description && <p className="ds-form-section__description">{description}</p>}
+        {collapsible ? (
+          <button type="button" className="w-full text-left" aria-expanded={open} onClick={() => setOpen(o => !o)}>
+            {heading}
+          </button>
+        ) : (
+          heading
+        )}
+        {description && expanded && <p className="ds-form-section__description">{description}</p>}
       </div>
-      {children}
+      {expanded && children}
     </section>
   );
 }

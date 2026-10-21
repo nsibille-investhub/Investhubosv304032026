@@ -2094,6 +2094,102 @@
         "E": "Dossier {{state}} : modification sur demande uniquement.",
         "L": "Dossier {{state}} : ce champ n'est plus modifiable.",
         "lock": "Verrou actif : {{lock}}."
+      },
+      "panel": {
+        "open": "Simulateur",
+        "title": "Simulateur de workflow",
+        "description": "Mettez la page dans l'état d'un dossier. Rien n'est enregistré.",
+        "workflow": {
+          "title": "Workflow",
+          "families": {
+            "A": "A - Direct",
+            "B": "B - Intermédié parent",
+            "C": "C - Intermédié enfant"
+          },
+          "options": {
+            "presignature": "Pré-signature",
+            "prevalidation": "Pré-validation",
+            "countersignature": "Contresignature",
+            "backoffice_initiation": "Initiation back-office"
+          },
+          "prerequisites": "Pré-requis du fonds : {{list}}"
+        },
+        "sequence": {
+          "ariaLabel": "Séquence des états du workflow",
+          "outOfSequence": "État courant hors séquence : {{state}}",
+          "branches": "Branches possibles depuis {{state}} :"
+        },
+        "state": {
+          "title": "État",
+          "waitingOn": "Le dossier attend : {{who}}",
+          "waitingOnUnknown": "Le dossier attend : non renseigné dans le fichier de scénarios",
+          "v1Mapping": "Correspondance V1 : {{value}}",
+          "v1Label": "Libellé V1 : {{value}}"
+        },
+        "role": {
+          "title": "Rôle simulé"
+        },
+        "fund": {
+          "title": "Fonds"
+        },
+        "dossier": {
+          "title": "Dossier"
+        },
+        "context": {
+          "fields": {
+            "payment_mode": "Mode de paiement",
+            "internal_validation_enabled": "Validation interne activée",
+            "custom_status_renaming": "Renommage des statuts",
+            "assisted": "Souscription administrée",
+            "self": "Souscription directe",
+            "reopened": "Rouverte",
+            "exceptional_validation": "Validation exceptionnelle",
+            "fast_add": "Reprise hors plateforme (saisie rapide)",
+            "transferred_in": "Issue d'un transfert",
+            "deferred_processing": "Traitement différé",
+            "sideletter": "Side letter",
+            "sepa_mandate": "Mandat SEPA",
+            "pending_changes": "Demandes de modification en attente"
+          },
+          "values": {
+            "payment_mode": {
+              "capital_calls": "Appels de fonds",
+              "direct_payment": "Paiement direct"
+            },
+            "custom_status_renaming": {
+              "none": "Aucun",
+              "renaming": "Renommage"
+            }
+          },
+          "missing": "{{field}} : réglage absent du fichier de scénarios",
+          "assistedUnavailable": "Workflow {{workflow}} : la souscription administrée n'est pas proposée.",
+          "selfForced": "Workflow {{workflow}} : la souscription directe est automatique."
+        },
+        "axes": {
+          "title": "Axes",
+          "signature": "Signature",
+          "internal_validation": "Validation interne",
+          "payment": "Versement",
+          "notApplicable": "Non applicable dans cet état"
+        },
+        "locks": {
+          "title": "Verrous",
+          "fromContext": "Dossier {{state}} : verrou activé par le contexte du dossier, modifiez le réglage correspondant pour le retirer."
+        },
+        "reset": "Réinitialiser",
+        "resetDone": "Scénario par défaut rétabli",
+        "copyLink": "Copier le lien de ce scénario",
+        "copied": "Lien copié",
+        "copyDone": "Lien du scénario copié",
+        "copyError": "Le lien n'a pas pu être copié",
+        "source": "Source : simulateur-workflow-etats.json, version {{version}}",
+        "versionUnknown": "non renseignée",
+        "examples": {
+          "button": "Charger un exemple",
+          "itemTitle": "{{workflow}} · {{state}} · {{investor}}",
+          "loaded": "Dossier de {{investor}} chargé",
+          "unresolved": "Indisponible : {{missing}} introuvable dans le fichier de scénarios"
+        }
       }
     }
   },
@@ -7360,6 +7456,17 @@
           "info": "Informations",
           "amounts": "Montants",
           "control": "Contrôle"
+        },
+        "timelineExampleLabel": "Frise de jalons cliquables avec jalon secondaire",
+        "timeline": {
+          "ariaLabel": "Séquence des états",
+          "draft": "Brouillon",
+          "inProgress": "En cours",
+          "toCheck": "À contrôler",
+          "signing": "En signature",
+          "active": "Active",
+          "variant": "Variante",
+          "variantNote": "Jalon secondaire, affiché sous le jalon principal avec sa note."
         }
       },
       "formField": {
@@ -7398,6 +7505,52 @@
           "label": "Scénario de démonstration",
           "default": "Cas nominal",
           "noRight": "Sans droit de notification"
+        }
+      },
+      "floatingActionButton": {
+        "title": "Bouton flottant",
+        "description": "Bouton fixé en bas à droite de la page pour ouvrir un outil de démonstration (simulateur de workflow). Masqué tant que l'outil est ouvert.",
+        "variants": "Icône et libellé.",
+        "states": "Repos, enfoncé (outil ouvert).",
+        "exampleLabel": "Bouton flottant (affiché ici dans le flux)",
+        "demo": {
+          "label": "Simulateur",
+          "opened": "Outil ouvert",
+          "closed": "Outil fermé"
+        }
+      },
+      "groupedSelect": {
+        "title": "Liste déroulante groupée",
+        "description": "Liste déroulante dont les options sont rangées par groupe titré (SelectGroup, SelectLabel). Une option peut porter des puces Tag sous son libellé ; le champ fermé n'affiche que le libellé.",
+        "variants": "Options simples ou avec puces.",
+        "states": "Fermée, ouverte, option sélectionnée.",
+        "exampleLabel": "Workflows rangés par famille",
+        "demo": {
+          "ariaLabel": "Workflow",
+          "groups": {
+            "direct": "A - Direct",
+            "parent": "B - Intermédié parent"
+          },
+          "items": {
+            "d3": "D3 · Investisseur · Autonome",
+            "d4": "D4 · Investisseur · Autonome",
+            "p3": "P3 · Distributeur parent · Autonome"
+          },
+          "tags": {
+            "countersignature": "Contresignature",
+            "presignature": "Pré-signature"
+          }
+        }
+      },
+      "sidePanelSection": {
+        "title": "Section repliable et panneau standard",
+        "description": "SidePanelSection accepte collapsible et defaultOpen : le titre replie ou déplie la section. SIDE_PANEL_STYLE donne un panneau de 480 px ; non modal, il ne masque rien si la page réserve SIDE_PANEL_WIDTH à droite.",
+        "variants": "Section fixe, section repliable.",
+        "states": "Dépliée, repliée.",
+        "exampleLabel": "Section repliable",
+        "demo": {
+          "title": "Fonds",
+          "switch": "Validation interne activée"
         }
       }
     }

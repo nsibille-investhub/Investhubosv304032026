@@ -30,6 +30,8 @@ import {
   Receipt,
   Scale,
   Tag,
+  FlaskConical,
+  Landmark,
   TrendingUp,
   Users,
   Wallet,
@@ -66,7 +68,10 @@ import { Input } from '../ui/input';
 import { PageStateBanner } from '../ui/page-state-banner';
 import { SectionCard, SectionFieldRow, useSectionEditor } from '../ui/section-card';
 import { SectionNav, type SectionNavItem } from '../ui/section-nav';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../ui/select';
+import { Select, SelectContent, SelectGroup, SelectItem, SelectLabel, SelectTrigger, SelectValue } from '../ui/select';
+import { FloatingActionButton } from '../ui/floating-action-button';
+import { SidePanelCard, SidePanelSection, SidePanelSwitchRow } from '../ui/side-panel';
+import { Tag as DsTag } from '../Tag';
 import { cn, WIDGET_LABEL_CLASS } from '../ui/utils';
 
 const K = 'designSystem.fundDetail';
@@ -873,6 +878,103 @@ function DemoScenarioBarDemo() {
   );
 }
 
+function WizardStepsTimelineDemo() {
+  const { t } = useTranslation();
+  const d = `${K}.wizardSteps.timeline`;
+  const steps = ['draft', 'inProgress', 'toCheck', 'signing', 'active'].map(step => t(`${d}.${step}`));
+  const [current, setCurrent] = useState(2);
+  const [variantActive, setVariantActive] = useState(false);
+  return (
+    <WizardSteps
+      steps={steps}
+      current={variantActive ? -1 : current}
+      ariaLabel={t(`${d}.ariaLabel`)}
+      labelPosition="below"
+      onSelect={index => {
+        setVariantActive(false);
+        setCurrent(index);
+      }}
+      branches={{
+        1: { label: t(`${d}.variant`), note: t(`${d}.variantNote`), active: variantActive, onSelect: () => setVariantActive(true) },
+      }}
+    />
+  );
+}
+
+function FloatingActionButtonDemo() {
+  const { t } = useTranslation();
+  const [open, setOpen] = useState(false);
+  return (
+    <div className="space-y-2">
+      <FloatingActionButton
+        icon={FlaskConical}
+        label={t(`${K}.floatingActionButton.demo.label`)}
+        pressed={open}
+        onClick={() => setOpen(o => !o)}
+        docked={false}
+      />
+      <p className="text-xs text-muted-foreground">
+        {open ? t(`${K}.floatingActionButton.demo.opened`) : t(`${K}.floatingActionButton.demo.closed`)}
+      </p>
+    </div>
+  );
+}
+
+function GroupedSelectDemo() {
+  const { t } = useTranslation();
+  const d = `${K}.groupedSelect.demo`;
+  const [value, setValue] = useState('d3');
+  const groups = [
+    { id: 'direct', items: [{ value: 'd3', tags: [] as string[] }, { value: 'd4', tags: ['countersignature'] }] },
+    { id: 'parent', items: [{ value: 'p3', tags: ['presignature'] }] },
+  ];
+  return (
+    <div className="max-w-sm">
+      <Select value={value} onValueChange={setValue}>
+        <SelectTrigger aria-label={t(`${d}.ariaLabel`)}>
+          <SelectValue>{t(`${d}.items.${value}`)}</SelectValue>
+        </SelectTrigger>
+        <SelectContent>
+          {groups.map(group => (
+            <SelectGroup key={group.id}>
+              <SelectLabel>{t(`${d}.groups.${group.id}`)}</SelectLabel>
+              {group.items.map(item => (
+                <SelectItem key={item.value} value={item.value}>
+                  <span className="flex flex-col gap-1">
+                    <span>{t(`${d}.items.${item.value}`)}</span>
+                    {item.tags.length > 0 && (
+                      <span className="flex flex-wrap gap-1">
+                        {item.tags.map(tag => (
+                          <DsTag key={tag} label={t(`${d}.tags.${tag}`)} />
+                        ))}
+                      </span>
+                    )}
+                  </span>
+                </SelectItem>
+              ))}
+            </SelectGroup>
+          ))}
+        </SelectContent>
+      </Select>
+    </div>
+  );
+}
+
+function CollapsibleSidePanelSectionDemo() {
+  const { t } = useTranslation();
+  const d = `${K}.sidePanelSection.demo`;
+  const [checked, setChecked] = useState(true);
+  return (
+    <div className="max-w-md">
+      <SidePanelSection icon={Landmark} title={t(`${d}.title`)} collapsible>
+        <SidePanelCard>
+          <SidePanelSwitchRow label={t(`${d}.switch`)} checked={checked} onCheckedChange={setChecked} />
+        </SidePanelCard>
+      </SidePanelSection>
+    </div>
+  );
+}
+
 function WizardStepsDemo() {
   const { t } = useTranslation();
   const [current, setCurrent] = useState(1);
@@ -1294,10 +1396,60 @@ export function FundDetailComponentsSection() {
         importLine="import { WizardSteps } from '@/components/ui/wizard-steps'"
         usage={`<BigModalPanelHeader icon={Plus} title={t('...')} subtitle={...} onClose={close} closeLabel={t('...')}>
   <WizardSteps steps={steps.map(id => t(\`...steps.\${id}\`))} current={step} ariaLabel={t('...')} />
-</BigModalPanelHeader>`}
+</BigModalPanelHeader>
+<WizardSteps steps={labels} current={index} ariaLabel={t('...')} labelPosition="below"
+  onSelect={setIndex} branches={{ 1: { label, note, active, onSelect } }} />`}
       >
         <Example label={t(`${K}.wizardSteps.exampleLabel`)}>
           <WizardStepsDemo />
+        </Example>
+        <Example label={t(`${K}.wizardSteps.timelineExampleLabel`)}>
+          <WizardStepsTimelineDemo />
+        </Example>
+      </DocBlock>
+
+      <DocBlock
+        id="floatingActionButton"
+        name="FloatingActionButton"
+        importLine="import { FloatingActionButton } from '@/components/ui/floating-action-button'"
+        usage={`{!open && <FloatingActionButton icon={FlaskConical} label={t('...')} onClick={() => setOpen(true)} />}`}
+      >
+        <Example label={t(`${K}.floatingActionButton.exampleLabel`)}>
+          <FloatingActionButtonDemo />
+        </Example>
+      </DocBlock>
+
+      <DocBlock
+        id="groupedSelect"
+        name="Select, SelectGroup, SelectLabel"
+        importLine="import { Select, SelectContent, SelectGroup, SelectItem, SelectLabel, SelectTrigger, SelectValue } from '@/components/ui/select'"
+        usage={`<SelectContent>
+  {groups.map(group => (
+    <SelectGroup key={group.id}>
+      <SelectLabel>{t('...')}</SelectLabel>
+      {group.items.map(item => <SelectItem key={item.id} value={item.id}>...</SelectItem>)}
+    </SelectGroup>
+  ))}
+</SelectContent>`}
+      >
+        <Example label={t(`${K}.groupedSelect.exampleLabel`)}>
+          <GroupedSelectDemo />
+        </Example>
+      </DocBlock>
+
+      <DocBlock
+        id="sidePanelSection"
+        name="SidePanelSection, SIDE_PANEL_STYLE"
+        importLine="import { SIDE_PANEL_STYLE, SIDE_PANEL_WIDTH, SidePanelSection } from '@/components/ui/side-panel'"
+        usage={`<Sheet open={open} onOpenChange={setOpen} modal={false}>
+  <SheetContent side="right" style={SIDE_PANEL_STYLE} className="h-full p-0 gap-0" onInteractOutside={e => e.preventDefault()}>
+    <SidePanelSection icon={Landmark} title={t('...')} collapsible defaultOpen>...</SidePanelSection>
+  </SheetContent>
+</Sheet>
+<div style={open ? { paddingRight: SIDE_PANEL_WIDTH } : undefined}>{/* page */}</div>`}
+      >
+        <Example label={t(`${K}.sidePanelSection.exampleLabel`)}>
+          <CollapsibleSidePanelSectionDemo />
         </Example>
       </DocBlock>
 

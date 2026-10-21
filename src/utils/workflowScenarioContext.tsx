@@ -12,6 +12,7 @@ import {
   writePermalink,
 } from './workflowSimulator/scenario';
 import { runSimulatorSelfCheck } from './workflowSimulator/selfCheck';
+import { loadDemoDossiers, resolveDossier, type DemoDossier, type ResolvedDossier } from './workflowSimulator/dossiers';
 import type {
   GroupEditability,
   ResolvedAction,
@@ -33,6 +34,10 @@ interface ReadyValue {
   editability: GroupEditability[];
   transitions: SimTransition[];
   history: ScenarioHistoryEntry[];
+  dossiers: ResolvedDossier[];
+  /** Dossier de démonstration chargé, jusqu'à la prochaine réinitialisation. */
+  activeDossier: DemoDossier | null;
+  loadDossier: (id: string) => void;
   update: (patch: Partial<WorkflowScenario> | ((current: WorkflowScenario) => WorkflowScenario)) => void;
   playTransition: (to: string, trigger: string) => void;
   reset: () => void;
@@ -53,6 +58,16 @@ export function WorkflowScenarioProvider({ children }: { children: React.ReactNo
   const [load, setLoad] = useState<SimulatorLoadResult | null>(null);
   const [scenario, setScenario] = useState<WorkflowScenario | null>(null);
   const [history, setHistory] = useState<ScenarioHistoryEntry[]>([]);
+  const [rawDossiers, setRawDossiers] = useState<DemoDossier[]>([]);
+  const [activeDossier, setActiveDossier] = useState<DemoDossier | null>(null);
+
+  useEffect(() => {
+    let alive = true;
+    loadDemoDossiers().then(list => alive && setRawDossiers(list));
+    return () => {
+      alive = false;
+    };
+  }, []);
 
   useEffect(() => {
     let alive = true;
@@ -120,8 +135,41 @@ export function WorkflowScenarioProvider({ children }: { children: React.ReactNo
   const reset = useCallback(() => {
     if (!engine) return;
     setHistory([]);
+    setActiveDossier(null);
     setScenario(defaultScenario(engine));
   }, [engine]);
+
+  const dossiers = useMemo(() => {
+    if (!engine) return [];
+    const base = defaultScenario(engine);
+    return rawDossiers.map(d => resolveDossier(engine, d, base));
+  }, [engine, rawDossiers]);
+
+  const loadDossier = useCallback(
+    (id: string) => {
+      const resolved = dossiers.find(d => d.dossier.id === id);
+      if (!resolved?.ok) return;
+      const { scenario: next, dossier } = resolved;
+      setScenario(next);
+      setActiveDossier(dossier);
+      setHistory(
+        next.previousState
+          ? [
+              {
+                id: 'h1',
+                from: next.previousState,
+                to: next.state,
+                trigger: 'demo_dossier',
+                actor: next.role,
+                at: new Date(HISTORY_ORIGIN).toISOString(),
+                note: dossier.data.reason,
+              },
+            ]
+          : [],
+      );
+    },
+    [dossiers],
+  );
 
   const value = useMemo<WorkflowScenarioValue>(() => {
     if (!load) return { status: 'loading' };
@@ -137,11 +185,14 @@ export function WorkflowScenarioProvider({ children }: { children: React.ReactNo
       editability: engine.editabilityFor(scenario.state, locks),
       transitions: engine.transitionsFrom(scenario.state, scenario.previousState),
       history,
+      dossiers,
+      activeDossier,
+      loadDossier,
       update,
       playTransition,
       reset,
     };
-  }, [load, engine, scenario, history, update, playTransition, reset]);
+  }, [load, engine, scenario, history, dossiers, activeDossier, loadDossier, update, playTransition, reset]);
 
   return <WorkflowScenarioContext.Provider value={value}>{children}</WorkflowScenarioContext.Provider>;
 }
