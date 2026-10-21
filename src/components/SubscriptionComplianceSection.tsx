@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react';
+import { useMemo, useState, type ReactNode } from 'react';
 import {
   AlertCircle,
   AlertTriangle,
@@ -480,6 +480,8 @@ interface SubscriptionComplianceSectionProps {
   reviewMode?: 'partnerPrevalidation' | 'standard' | 'fourEyes';
   reviewChain?: { partner?: { name: string; by?: string }; firstAnalyst: string; secondAnalyst: string };
   onReviewEvent?: (event: { type: 'handedOff' | 'finalValidation'; by: string; to?: string }) => void;
+  /** Actions du rôle simulé (simulateur de workflow), affichées en tête du widget. */
+  roleActions?: ReactNode;
 }
 
 /** Espace Validation / Conformite : widgets risque, screening, categorisation et validation. */
@@ -496,6 +498,7 @@ export function SubscriptionComplianceSection({
   reviewMode = 'standard',
   reviewChain,
   onReviewEvent,
+  roleActions,
 }: SubscriptionComplianceSectionProps) {
   const { t } = useTranslation();
 
@@ -663,6 +666,7 @@ export function SubscriptionComplianceSection({
     <div className="space-y-4">
       {/* Conformité : score, parties tierces, catégorisation et décision */}
       <Card className="shadow-sm overflow-hidden">
+        {roleActions && <div className="px-4 pt-3">{roleActions}</div>}
         <div className="flex flex-wrap items-center justify-between gap-3 px-4 py-3">
           <div className="min-w-0">
             <h3 className={WIDGET_TITLE_CLASS}>

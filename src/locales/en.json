@@ -2214,8 +2214,6 @@
         "waitingOn": "The file is waiting on: {{who}}",
         "waitingOnUnknown": "The file is waiting on: not set in the scenario file",
         "expectedAction": "Expected action: {{action}}",
-        "noTarget": "The scenario file does not give the target state of this action.",
-        "transitionDone": "{{action}}: file moved to {{state}}",
         "notActivated": "Activated on: -",
         "skippedDates": "{{states}}: Not applicable",
         "metrics": {
@@ -2265,6 +2263,59 @@
           "goBack": "Go back to the previous state",
           "notForRole": "File {{state}}: this action is not available to your profile."
         }
+      },
+      "actions": {
+        "more": "More",
+        "notOffered": "{{state}}: this action is not available",
+        "deleteInstead": "Cancel the subscription instead of deleting it",
+        "internalValidationPending": "Awaiting internal validation",
+        "dedicatedRight": "Dedicated right",
+        "roleActions": "Your actions on this file:",
+        "confirmTitle": "{{action}}",
+        "confirmTarget": "The file will move to {{state}}.",
+        "confirmNoTarget": "The file state does not change.",
+        "close": "Close",
+        "reasonLabel": "Reason",
+        "reasonRequired": "Enter a reason to confirm.",
+        "reasonMin": "The reason must be at least {{count}} characters long.",
+        "reasonCounter": "{{count}} characters out of {{min}} minimum",
+        "dateRequired": "Enter the signature date to record.",
+        "done": "{{action}}: the file is now {{state}}",
+        "doneNoTransition": "{{action}}: action recorded",
+        "undo": "Undo this simulation",
+        "undone": "Simulation undone: back to {{state}}",
+        "cancel": {
+          "reminder": "The subscription will leave your work queues and fundraising indicators. You will be able to reactivate it."
+        },
+        "exceptional": {
+          "right": "This action relies on your dedicated right. The reason is kept in the audit trail."
+        },
+        "refuseFinal": {
+          "warning": "The refusal is final: the file cannot be sent back to the investor."
+        },
+        "reopen": {
+          "selectionLabel": "Questions and documents to correct",
+          "selectionRequired": "Select at least one question or document to correct.",
+          "messageLabel": "Message sent to the investor",
+          "defaultMessage": "Please correct the items flagged in your subscription file.",
+          "packSent": "The previous signature request remains active with the provider. A new sending will create a second signature file."
+        },
+        "signature": {
+          "prerequisites": "Prerequisites for sending",
+          "missing": "Missing prerequisite: {{list}}",
+          "noPrerequisites": "The scenario file lists no prerequisite for sending.",
+          "simulateHint": "Tick a prerequisite to simulate that it is met.",
+          "secondSend": "A signature request has already been sent for this file."
+        },
+        "withoutSignature": {
+          "dateLabel": "Signature date to record",
+          "reminder": "The payment will be marked as received on the same date, unless the fund is set otherwise."
+        },
+        "restore": {
+          "reminder": "The file will go back to {{state}}."
+        },
+        "comingSoon": "Coming soon in the mockup.",
+        "keep": "Close without acting"
       }
     }
   },
@@ -7646,6 +7697,18 @@
         "demo": {
           "title": "Fund",
           "switch": "Internal validation enabled"
+        }
+      },
+      "callout": {
+        "title": "Callout",
+        "description": "Information or warning box inside a confirmation dialog or a panel. Replaces hand-made tinted blocks.",
+        "variants": "All tones from tone.ts.",
+        "states": "role status (information) or alert (warning).",
+        "exampleLabel": "Information, warning, error",
+        "demo": {
+          "info": "The file will go back to To check.",
+          "warning": "The subscription will leave your work queues and fundraising indicators.",
+          "danger": "The refusal is final."
         }
       }
     }

@@ -35,6 +35,8 @@ const ROLE_BASE: Record<string, string> = {
 };
 const READ_ONLY_ROLES = new Set(['gp_readonly']);
 
+export const baseRole = (role: string) => ROLE_BASE[role] ?? role;
+
 // Déclencheurs de verrous cités en exemple par les spécifications (prompt 2, locks). Ils ne
 // servent que si le verrou n'a pas de champ "trigger" dans le fichier.
 const LOCK_TRIGGERS_FROM_SPEC: Record<string, SimContextCondition> = {
@@ -146,6 +148,25 @@ export function createSimulatorEngine(data: SimulatorFile, t: Translate) {
       label: actionLabel(entry.code),
       ...(readOnlyReason ? { disabled: true, reason: entry.reason ?? readOnlyReason } : {}),
     }));
+  }
+
+  /** Codes d'action que le rôle possède dans au moins un état, dans l'ordre du fichier. */
+  function actionCodesForRole(role: string): string[] {
+    const codes: string[] = [];
+    Object.values(data.actions_by_state).forEach(byRole => {
+      (byRole[baseRole(role)] ?? []).map(normalizeEntry).forEach(entry => {
+        if (entry.role_required && entry.role_required !== role) return;
+        if (!codes.includes(entry.code)) codes.push(entry.code);
+      });
+      if (role !== baseRole(role)) {
+        Object.values(byRole).forEach(list =>
+          list.map(normalizeEntry).forEach(entry => {
+            if (entry.role_required === role && !codes.includes(entry.code)) codes.push(entry.code);
+          }),
+        );
+      }
+    });
+    return codes;
   }
 
   function lockTrigger(code: string): SimContextCondition | undefined {
@@ -307,6 +328,7 @@ export function createSimulatorEngine(data: SimulatorFile, t: Translate) {
     workflow: (id: string) => workflowById.get(id),
     state: (code: string) => stateByCode.get(code),
     actionsFor,
+    actionCodesForRole,
     editabilityFor,
     locksFromContext,
     transitionsFrom,

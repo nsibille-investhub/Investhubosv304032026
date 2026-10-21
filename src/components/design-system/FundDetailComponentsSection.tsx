@@ -71,6 +71,7 @@ import { SectionCard, SectionFieldRow, useSectionEditor } from '../ui/section-ca
 import { SectionNav, type SectionNavItem } from '../ui/section-nav';
 import { Select, SelectContent, SelectGroup, SelectItem, SelectLabel, SelectTrigger, SelectValue } from '../ui/select';
 import { FloatingActionButton } from '../ui/floating-action-button';
+import { Callout } from '../ui/callout';
 import { SidePanelCard, SidePanelSection, SidePanelSwitchRow } from '../ui/side-panel';
 import { Tag as DsTag } from '../Tag';
 import { cn, WIDGET_LABEL_CLASS } from '../ui/utils';
@@ -1449,6 +1450,23 @@ export function FundDetailComponentsSection() {
         </Example>
         <Example label={t(`${K}.wizardSteps.timelineExampleLabel`)}>
           <WizardStepsTimelineDemo />
+        </Example>
+      </DocBlock>
+
+      <DocBlock
+        id="callout"
+        name="Callout"
+        importLine="import { Callout } from '@/components/ui/callout'"
+        usage={`<ConfirmDialog ...>
+  <Callout tone="warning" role="alert">{t('...')}</Callout>
+</ConfirmDialog>`}
+      >
+        <Example label={t(`${K}.callout.exampleLabel`)}>
+          <div className="max-w-xl space-y-3">
+            <Callout tone="info">{t(`${K}.callout.demo.info`)}</Callout>
+            <Callout tone="warning" role="alert">{t(`${K}.callout.demo.warning`)}</Callout>
+            <Callout tone="danger" role="alert">{t(`${K}.callout.demo.danger`)}</Callout>
+          </div>
         </Example>
       </DocBlock>
 

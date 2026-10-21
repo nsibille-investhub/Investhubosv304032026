@@ -9,7 +9,8 @@ import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, D
 import { EffectsPanel, type EffectItem } from '../../ui/effects-panel';
 import { Input } from '../../ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../../ui/select';
-import { toneSurface, toneText } from '../../ui/tone';
+import { toneText } from '../../ui/tone';
+import { Callout } from '../../ui/callout';
 import { computeNavEffects, type NavEntryInput, isoDay } from './navEffects';
 
 const N = 'funds.detail.navs';
@@ -221,9 +222,9 @@ export function NavEntryDialog({ open, onOpenChange, mode, detail, initial, onSu
             </div>
 
             {mode === 'create' && typeof existingValue === 'number' && (
-              <p className="rounded-lg border px-3 py-2 text-sm" style={toneSurface('warning')} role="status">
+              <Callout tone="warning">
                 {t(`${N}.dialog.existing`, { date: formatDate(fromIso(date)), value: nav(existingValue) })}
-              </p>
+              </Callout>
             )}
             {mode === 'edit' && typeof existingValue === 'number' && (
               <p className="text-xs text-muted-foreground">{t(`${N}.dialog.current`, { value: nav(existingValue) })}</p>

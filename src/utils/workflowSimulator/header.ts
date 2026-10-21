@@ -80,8 +80,7 @@ export type HeaderBanner =
 export interface HeaderModel {
   status: { label: string; tone: Tone; cancelled: boolean; tooltip?: string };
   waitingOn: string[];
-  /** Action attendue du rôle simulé, sur un état non terminal. */
-  expectedAction: ResolvedAction | null;
+  terminal: boolean;
   indicators: HeaderIndicator[];
   banners: HeaderBanner[];
   activatedAt: string | null;
@@ -169,11 +168,7 @@ export function buildHeaderModel({
     tooltip: renamed ? t(`${H}.renamedTooltip`, { state: label }) : undefined,
   };
 
-  // Attente et action attendue
   const terminal = Boolean(stateDef?.terminal);
-  const roleIsWaitedFor = waiting.includes(role) || (isGpRole(role) && waiting.some(isGpRole));
-  const expectedAction =
-    !terminal && roleIsWaitedFor ? actions.find(a => !a.disabled) ?? null : null;
 
   // Indicateurs secondaires
   const indicators: HeaderIndicator[] = [];
@@ -328,7 +323,7 @@ export function buildHeaderModel({
   return {
     status,
     waitingOn: waiting.map(roleLabel),
-    expectedAction,
+    terminal,
     indicators,
     banners,
     activatedAt,

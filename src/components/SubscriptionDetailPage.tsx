@@ -140,6 +140,7 @@ import { PageStateBanner } from './ui/page-state-banner';
 import { WorkflowScenarioProvider, useWorkflowScenario } from '../utils/workflowScenarioContext';
 import { WorkflowSimulatorPanel } from './WorkflowSimulatorPanel';
 import { useSubscriptionWorkflowHeader } from './SubscriptionWorkflowHeader';
+import { WorkflowActionLabel, WorkflowActionsProvider, WorkflowRoleActions, useWorkflowActions } from './WorkflowActions';
 import { FloatingActionButton } from './ui/floating-action-button';
 import { SIDE_PANEL_WIDTH } from './ui/side-panel';
 import { StatusBadge } from './StatusBadge';
@@ -226,7 +227,9 @@ const DIRECT_PARTNER_NAMES = ['Souscription Directe', 'Direct Subscription'];
 export function SubscriptionDetailPage(props: SubscriptionDetailPageProps) {
   return (
     <WorkflowScenarioProvider>
-      <SubscriptionDetailPageContent {...props} />
+      <WorkflowActionsProvider>
+        <SubscriptionDetailPageContent {...props} />
+      </WorkflowActionsProvider>
     </WorkflowScenarioProvider>
   );
 }
@@ -236,6 +239,8 @@ function SubscriptionDetailPageContent({ subscription: subscriptionProp, onBack 
   const workflowScenario = useWorkflowScenario();
   const [simulatorOpen, setSimulatorOpen] = useState(false);
   const workflowHeader = useSubscriptionWorkflowHeader();
+  const workflowActions = useWorkflowActions();
+  const workflowMenu = workflowActions.menu?.placement === 'page' ? workflowActions.menu : null;
 
   // Les modifications faites depuis la modale restent locales : la donnée
   // amont de la maquette n'est pas réécrite.
@@ -1046,6 +1051,12 @@ function SubscriptionDetailPageContent({ subscription: subscriptionProp, onBack 
   const formatRatio = (value: number) =>
     subscription.amount > 0 ? `${Math.round((value / subscription.amount) * 100)}%` : '0%';
 
+  const exportAction = {
+    label: t('subscriptions.detail.header.exportData'),
+    icon: <Download className="w-4 h-4" />,
+    onClick: handleExportDossier,
+  };
+
   // Fonds à paiement direct : pas d'appels ni de distributions, le montant dû est réglé en une fois.
   const entryFeesAmount = (subscription.amount * (subscription.entryFees ?? 0)) / 100;
   const premiumAmount = subscription.subscriptionPremium ?? 0;
@@ -1636,11 +1647,28 @@ function SubscriptionDetailPageContent({ subscription: subscriptionProp, onBack 
             </DetailLink>
           </PageHeaderSubtitle>
         }
-        primaryAction={{
-          label: t('subscriptions.detail.header.exportData'),
-          icon: <Download className="w-4 h-4" />,
-          onClick: handleExportDossier,
-        }}
+        primaryAction={
+          workflowMenu?.primary
+            ? {
+                label: <WorkflowActionLabel action={workflowMenu.primary} />,
+                icon: <CheckCircle2 className="w-4 h-4" />,
+                onClick: () => workflowMenu.primary && workflowActions.request(workflowMenu.primary),
+                loading: workflowActions.pending === workflowMenu.primary.code,
+                disabledReason: workflowMenu.primary.disabledReason,
+              }
+            : workflowHeader
+              ? undefined
+              : exportAction
+        }
+        extraActions={workflowHeader ? [exportAction] : undefined}
+        tertiaryLabel={workflowMenu?.more.length ? t('subscriptions.workflowSimulator.actions.more') : undefined}
+        tertiaryActions={workflowMenu?.more.map(action => ({
+          label: <WorkflowActionLabel action={action} />,
+          onClick: () => workflowActions.request(action),
+          destructive: action.destructive,
+          separatorBefore: action.separatorBefore,
+          disabledReason: action.disabledReason,
+        }))}
       />
 
       {workflowScenario.status === 'unavailable' && (
@@ -2557,6 +2585,7 @@ function SubscriptionDetailPageContent({ subscription: subscriptionProp, onBack 
                       screeningSeed={String(subscription.id ?? subscription.contrepartie?.name ?? 'subscription')}
                       onStatusChange={setComplianceStatus}
                       onSubscriptionValidated={() => setCurrentStep(3)}
+                      roleActions={<WorkflowRoleActions widget="compliance" />}
                     />
                   )}
 
@@ -2570,6 +2599,7 @@ function SubscriptionDetailPageContent({ subscription: subscriptionProp, onBack 
                         setCurrentStep(4);
                         toast.success(t('subscriptions.detail.signatureStep.toast.toPayment'));
                       }}
+                      roleActions={<WorkflowRoleActions widget="signature" />}
                     />
                   )}
 

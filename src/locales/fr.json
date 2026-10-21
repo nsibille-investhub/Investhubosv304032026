@@ -2214,8 +2214,6 @@
         "waitingOn": "Le dossier attend : {{who}}",
         "waitingOnUnknown": "Le dossier attend : non renseigné dans le fichier de scénarios",
         "expectedAction": "Action attendue : {{action}}",
-        "noTarget": "Le fichier de scénarios ne donne pas l'état d'arrivée de cette action.",
-        "transitionDone": "{{action}} : dossier passé à l'état {{state}}",
         "notActivated": "Activée le : -",
         "skippedDates": "{{states}} : Non applicable",
         "metrics": {
@@ -2265,6 +2263,59 @@
           "goBack": "Revenir à l'état précédent",
           "notForRole": "Dossier {{state}} : cette action n'est pas proposée à votre profil."
         }
+      },
+      "actions": {
+        "more": "Plus",
+        "notOffered": "{{state}} : cette action n'est pas proposée",
+        "deleteInstead": "Annulez la souscription plutôt que de la supprimer",
+        "internalValidationPending": "En attente de validation interne",
+        "dedicatedRight": "Droit dédié",
+        "roleActions": "Vos actions sur ce dossier :",
+        "confirmTitle": "{{action}}",
+        "confirmTarget": "Le dossier passera à l'état {{state}}.",
+        "confirmNoTarget": "L'état du dossier ne change pas.",
+        "close": "Fermer",
+        "reasonLabel": "Motif",
+        "reasonRequired": "Saisissez un motif pour confirmer.",
+        "reasonMin": "Le motif doit compter au moins {{count}} caractères.",
+        "reasonCounter": "{{count}} caractères sur {{min}} minimum",
+        "dateRequired": "Indiquez la date de signature retenue.",
+        "done": "{{action}} : le dossier est maintenant {{state}}",
+        "doneNoTransition": "{{action}} : action enregistrée",
+        "undo": "Annuler cette simulation",
+        "undone": "Simulation annulée : retour à l'état {{state}}",
+        "cancel": {
+          "reminder": "La souscription sortira de vos files de travail et des indicateurs de collecte. Vous pourrez la réactiver."
+        },
+        "exceptional": {
+          "right": "Cette action relève de votre droit dédié. Le motif est conservé dans la piste d'audit."
+        },
+        "refuseFinal": {
+          "warning": "Le refus est définitif : le dossier ne pourra pas être renvoyé à l'investisseur."
+        },
+        "reopen": {
+          "selectionLabel": "Questions et pièces à corriger",
+          "selectionRequired": "Sélectionnez au moins une question ou une pièce à corriger.",
+          "messageLabel": "Message envoyé à l'investisseur",
+          "defaultMessage": "Merci de corriger les éléments signalés dans votre dossier de souscription.",
+          "packSent": "La demande de signature précédente reste active chez le prestataire. Un nouvel envoi créera un second dossier de signature."
+        },
+        "signature": {
+          "prerequisites": "Préalables à l'envoi",
+          "missing": "Préalable manquant : {{list}}",
+          "noPrerequisites": "Le fichier de scénarios ne liste aucun préalable à l'envoi.",
+          "simulateHint": "Cochez un préalable pour simuler qu'il est rempli.",
+          "secondSend": "Une demande de signature a déjà été envoyée pour ce dossier."
+        },
+        "withoutSignature": {
+          "dateLabel": "Date de signature retenue",
+          "reminder": "Le versement sera marqué reçu à la même date, sauf réglage contraire du fonds."
+        },
+        "restore": {
+          "reminder": "Le dossier reviendra à l'état {{state}}."
+        },
+        "comingSoon": "Bientôt disponible dans la maquette.",
+        "keep": "Fermer sans agir"
       }
     }
   },
@@ -7646,6 +7697,18 @@
         "demo": {
           "title": "Fonds",
           "switch": "Validation interne activée"
+        }
+      },
+      "callout": {
+        "title": "Encadré",
+        "description": "Encadré d'information ou d'avertissement dans une modale de confirmation ou un panneau. Remplace les blocs faits main à fond teinté.",
+        "variants": "Tous les tons de tone.ts.",
+        "states": "role status (information) ou alert (avertissement).",
+        "exampleLabel": "Information, avertissement, erreur",
+        "demo": {
+          "info": "Le dossier reviendra à l'état À contrôler.",
+          "warning": "La souscription sortira de vos files de travail et des indicateurs de collecte.",
+          "danger": "Le refus est définitif."
         }
       }
     }

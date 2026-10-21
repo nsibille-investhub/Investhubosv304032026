@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, type ReactNode } from 'react';
 import {
   AlertCircle,
   Check,
@@ -78,6 +78,8 @@ interface SubscriptionSignatureStepProps {
   compliance: ComplianceSummary;
   onOpenCompliance: () => void;
   onProceedToPayment: () => void;
+  /** Actions du rôle simulé (simulateur de workflow), affichées en tête du widget. */
+  roleActions?: ReactNode;
 }
 
 const KEY = 'subscriptions.detail.signatureStep';
@@ -175,6 +177,7 @@ export function SubscriptionSignatureStep({
   compliance,
   onOpenCompliance,
   onProceedToPayment,
+  roleActions,
 }: SubscriptionSignatureStepProps) {
   const { t } = useTranslation();
   const tc = (key: string, count: number) => t(`${key}${count === 1 ? 'One' : 'Many'}`, { count });
@@ -434,6 +437,7 @@ export function SubscriptionSignatureStep({
     <div className="space-y-4">
       {/* Suivi : statut global, sous-étapes, relances et action principale */}
       <Card className="shadow-sm overflow-hidden">
+        {roleActions && <div className="px-4 pt-3">{roleActions}</div>}
         <div className="flex flex-wrap items-center justify-between gap-3 px-4 py-3">
           <div className="min-w-0">
             <h3 className={WIDGET_TITLE_CLASS}>{t(`${KEY}.tracking.title`)}</h3>

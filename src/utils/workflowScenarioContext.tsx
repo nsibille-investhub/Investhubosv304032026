@@ -41,7 +41,14 @@ interface ReadyValue {
   demo: Pick<DemoFile, 'headerDefaults' | 'statusRenaming'>;
   loadDossier: (id: string) => void;
   update: (patch: Partial<WorkflowScenario> | ((current: WorkflowScenario) => WorkflowScenario)) => void;
-  playTransition: (to: string, trigger: string) => void;
+  /** Joue une transition : historique, état d'arrivée, état précédent mémorisé ; patch ajuste le reste du scénario. */
+  playTransition: (
+    to: string,
+    trigger: string,
+    options?: { note?: string; patch?: (scenario: WorkflowScenario) => WorkflowScenario },
+  ) => void;
+  /** Rétablit un scénario antérieur sans toucher à l'historique affiché (annuler une simulation). */
+  restore: (snapshot: WorkflowScenario) => void;
   reset: () => void;
 }
 
@@ -115,7 +122,7 @@ export function WorkflowScenarioProvider({ children }: { children: React.ReactNo
   );
 
   const playTransition = useCallback<ReadyValue['playTransition']>(
-    (to, trigger) => {
+    (to, trigger, options) => {
       if (!engine || !scenario) return;
       const from = scenario.state;
       setHistory(entries => [
@@ -127,12 +134,18 @@ export function WorkflowScenarioProvider({ children }: { children: React.ReactNo
           trigger,
           actor: scenario.role,
           at: new Date(HISTORY_ORIGIN + entries.length * HISTORY_STEP_MS).toISOString(),
+          note: options?.note,
         },
       ]);
-      update(current => ({ ...current, state: to, previousState: from }));
+      update(current => {
+        const next = { ...current, state: to, previousState: from };
+        return options?.patch ? options.patch(next) : next;
+      });
     },
     [engine, scenario, update],
   );
+
+  const restore = useCallback<ReadyValue['restore']>(snapshot => update(() => snapshot), [update]);
 
   const reset = useCallback(() => {
     if (!engine) return;
@@ -196,9 +209,10 @@ export function WorkflowScenarioProvider({ children }: { children: React.ReactNo
       loadDossier,
       update,
       playTransition,
+      restore,
       reset,
     };
-  }, [load, engine, scenario, history, dossiers, activeDossier, demoFile, loadDossier, update, playTransition, reset]);
+  }, [load, engine, scenario, history, dossiers, activeDossier, demoFile, loadDossier, update, playTransition, restore, reset]);
 
   return <WorkflowScenarioContext.Provider value={value}>{children}</WorkflowScenarioContext.Provider>;
 }

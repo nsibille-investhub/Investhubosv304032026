@@ -47,6 +47,7 @@ import { BlockersPanel } from '../ui/blockers-panel';
 import { Button } from '../ui/button';
 import { Card } from '../ui/card';
 import { ConfirmDialog } from '../ui/confirm-dialog';
+import { Callout } from '../ui/callout';
 import { DetailLink } from '../ui/detail-summary';
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from '../ui/dialog';
 import { DisabledReason } from '../ui/disabled-reason';
@@ -56,7 +57,6 @@ import { PageStateBanner } from '../ui/page-state-banner';
 import { DemoScenarioBar } from '../ui/demo-scenario-bar';
 import { DetailTabsList } from '../ui/detail-tabs';
 import { Tabs, TabsContent } from '../ui/tabs';
-import { toneSurface } from '../ui/tone';
 import { getFundActionStates } from './fundActions';
 import { applySettingsToDetail, buildSettingsValues, computeMissingConfig } from './settings/settingsValues';
 import { buildShareValues } from './shares/shareValues';
@@ -598,9 +598,9 @@ export function FundDetailPage({ fund, onBack, onOpenSubscriptions, onOpenCapita
         onConfirm={archive}
       >
         {detail.status === 'collecting' && (
-          <div className="rounded-lg border px-3 py-2 text-sm" style={toneSurface('warning')} role="alert">
+          <Callout tone="warning" role="alert">
             {t(`${K}.dialogs.archive.collectingWarning`)}
-          </div>
+          </Callout>
         )}
       </ConfirmDialog>
 
