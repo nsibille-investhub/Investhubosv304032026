@@ -93,8 +93,9 @@ export function AnswerEditPanel({
     setDraft(toDraft(question.type ?? 'text', currentValue));
     setReason('');
     setSubmitted(false);
-    setPropagate([]);
+    setPropagate(targets.map(target => target.key));
     setReplay(false);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [question, currentValue]);
 
   const violation = question ? validateDraft(type, draft, question.constraints) : null;
