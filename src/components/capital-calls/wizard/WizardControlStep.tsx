@@ -81,6 +81,7 @@ export function WizardControlStep({ simulation, settings, currency, callName, fu
       key: 'preview',
       label: '',
       align: 'right',
+      className: 'ds-sticky-actions',
       render: row => (
         <TableRowActions actions={[{ label: t(`${K}.lines.preview`), icon: Eye, onClick: () => setPreview(row) }]} />
       ),

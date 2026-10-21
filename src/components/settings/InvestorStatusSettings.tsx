@@ -247,7 +247,7 @@ function InvestorStatusSettingsContent() {
                       <th className="text-left p-3 text-xs text-gray-500 w-12"></th>
                       <th className="text-left p-3 text-xs text-gray-500">Statut</th>
                       <th className="text-left p-3 text-xs text-gray-500">Investisseurs</th>
-                      <th className="text-right p-3 text-xs text-gray-500 w-24">Actions</th>
+                      <th className="text-right p-3 text-xs text-gray-500 w-24 ds-sticky-actions">Actions</th>
                     </tr>
                   </thead>
                   <tbody>

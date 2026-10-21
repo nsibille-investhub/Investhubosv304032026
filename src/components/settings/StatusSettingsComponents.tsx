@@ -112,7 +112,7 @@ export const DraggableStatusRow: React.FC<DraggableStatusRowProps> = ({
           </Badge>
         )}
       </td>
-      <td className="p-3">
+      <td className="p-3 ds-sticky-actions">
         <div className="flex items-center gap-2 justify-end">
           <button
             onClick={() => onEdit(status)}

@@ -393,6 +393,7 @@ export function SubscriptionDynamicTable({
       key: '_actions',
       label: '',
       sortable: false,
+      className: 'ds-sticky-actions',
       render: (row: any) => (
         <TableRowActions
           actions={[

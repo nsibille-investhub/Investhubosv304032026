@@ -2039,7 +2039,7 @@ export function SubscriptionDetailPage({ subscription: subscriptionProp, onBack 
                               </div>
 
                               {/* Documents Table */}
-                              <div className="overflow-hidden">
+                              <div className="overflow-hidden overflow-x-auto">
                                 <table className="w-full">
                                   <thead className="bg-muted border-b border-border">
                                     <tr>
@@ -2061,7 +2061,7 @@ export function SubscriptionDetailPage({ subscription: subscriptionProp, onBack 
                                       <th className="px-4 py-3 text-center text-xs font-medium text-muted-foreground uppercase tracking-wider w-28">
                                         {t('subscriptions.detail.docsTable.action')}
                                       </th>
-                                      <th className="px-4 py-3 text-center text-xs font-medium text-muted-foreground uppercase tracking-wider w-28">
+                                      <th className="px-4 py-3 text-center text-xs font-medium text-muted-foreground uppercase tracking-wider w-28 ds-sticky-actions">
                                         {t('subscriptions.detail.docsTable.verification')}
                                       </th>
                                     </tr>
@@ -2138,7 +2138,7 @@ export function SubscriptionDetailPage({ subscription: subscriptionProp, onBack 
                                               : t('subscriptions.detail.docsTable.add')}
                                           </Button>
                                         </td>
-                                        <td className="px-4 py-3">
+                                        <td className="px-4 py-3 ds-sticky-actions">
                                           {docState === 'pending' || !canManage ? (
                                             <div className="flex justify-center">
                                               <Badge className="bg-muted text-muted-foreground text-xs">

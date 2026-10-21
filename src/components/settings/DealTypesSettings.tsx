@@ -78,7 +78,7 @@ export function DealTypesSettings() {
                     <th className="text-left p-3 text-sm text-gray-600">Nom</th>
                     <th className="text-left p-3 text-sm text-gray-600">Description</th>
                     <th className="text-left p-3 text-sm text-gray-600">Ordre</th>
-                    <th className="w-12"></th>
+                    <th className="w-12 ds-sticky-actions"></th>
                   </tr>
                 </thead>
                 <tbody>
@@ -92,7 +92,7 @@ export function DealTypesSettings() {
                       </td>
                       <td className="p-3 text-sm text-gray-600">{type.description}</td>
                       <td className="p-3 text-sm text-gray-600">{type.order}</td>
-                      <td className="p-3">
+                      <td className="p-3 ds-sticky-actions">
                         <button
                           onClick={() => handleDeleteType(type.id)}
                           className="text-gray-400 hover:text-red-600 transition-colors"
