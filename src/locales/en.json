@@ -283,7 +283,6 @@
     },
     "workflowTabs": {
       "title": "Subscription workflow",
-      "stepsBadge": "6 steps",
       "clickToFilter": "Click a step to filter",
       "created": "Created",
       "onboarding": "Onboarding",
@@ -876,8 +875,7 @@
           "overdue": "Overdue, unpaid",
           "paid": "Paid",
           "amountMetric": "Amount",
-          "perCall": "{{amount}} per call",
-          "badge": "{{percent}} of commitment called · {{remaining}} left to call"
+          "perCall": "{{amount}} per call"
         }
       },
       "documentsTab": {
@@ -973,8 +971,7 @@
             "completed": "Signed",
             "draft": "Drafts",
             "signaturesMetric": "Signatures",
-            "perDocument": "{{count}} signer(s) per document",
-            "badge": "{{signed}} / {{total}} documents signed"
+            "perDocument": "{{count}} signer(s) per document"
           }
         },
         "kyc": {
@@ -1024,18 +1021,6 @@
             "investorFile": "Investor file",
             "subscription": "This subscription"
           },
-          "overall": {
-            "complete": "File complete",
-            "inReview": "Under review",
-            "incomplete": "File incomplete"
-          },
-          "review": {
-            "levels": {
-              "simplified": "Simplified",
-              "standard": "Standard",
-              "enhanced": "Enhanced"
-            }
-          },
           "rejectionReasons": {
             "unsigned": "Declaration neither dated nor signed",
             "wrongForm": "Individual form provided instead of the entity form"
@@ -1065,8 +1050,7 @@
             "expiring": "Expire within {{count}} d",
             "validated": "Approved",
             "holdersMetric": "Holders",
-            "perHolder": "{{count}} document(s) per holder",
-            "badge": "{{status}} · {{vigilance}} due diligence · Next review on {{date}}"
+            "perHolder": "{{count}} document(s) per holder"
           }
         }
       },
@@ -2089,7 +2073,6 @@
     },
     "pipeline": {
       "title": "Investor pipeline",
-      "statusBadge": "4 statuses",
       "clickToFilter": "Click a status to filter",
       "totalInvested": "Total invested",
       "average": "Avg",
@@ -4694,7 +4677,6 @@
     "searchPlaceholder": "Search by phone number or SMS content…",
     "statusTabs": {
       "title": "Filter by delivery status",
-      "subtitle": "5 statuses",
       "clickToFilter": "Click to filter",
       "all": "All",
       "delivered": "Delivered",
@@ -7296,8 +7278,8 @@
       },
       "filterCardGroup": {
         "title": "Filter card group",
-        "description": "Band of FilterCards above a listing: title with an accent bar, badge, hint and cards in a grid. Replaces the headers copied in the investor and subscription status tabs, SMS history and capital call queues.",
-        "variants": "4, 5 or 6 columns; with or without badge and hint.",
+        "description": "Band of FilterCards above a listing: title with an accent bar, hint and cards in a grid. Replaces the headers copied in the investor and subscription status tabs, SMS history and capital call queues.",
+        "variants": "4, 5 or 6 columns; with or without hint. No badge next to the title.",
         "states": "Active card, inactive card, zero total.",
         "exampleLabel": "Work queues",
         "demo": {

@@ -85,12 +85,6 @@ const KYC_STATUS_VARIANT: Record<KycDisplayStatus, StatusVariant> = {
 };
 const KYC_CATEGORIES: KycDocumentCategory[] = ['identity', 'address', 'tax', 'funds', 'bank', 'company', 'ubo', 'compliance'];
 
-const VIGILANCE_BY_RISK: Record<string, { key: 'simplified' | 'standard' | 'enhanced'; reviewYears: number }> = {
-  Low: { key: 'simplified', reviewYears: 3 },
-  Medium: { key: 'standard', reviewYears: 2 },
-  High: { key: 'enhanced', reviewYears: 1 },
-};
-const KYC_OVERALL_VARIANT = { complete: 'success', inReview: 'info', incomplete: 'warning' } as const satisfies Record<string, StatusVariant>;
 
 const daysFromNow = (days: number) => new Date(Date.now() + days * DAY_MS);
 
@@ -365,7 +359,6 @@ function SubscriptionDocumentsView() {
       <FilterCardGroup
         title={t('subscriptions.detail.queues.title')}
         hint={t('subscriptions.detail.queues.hint')}
-        badge={t(`${K}.subscription.queues.badge`, { signed: completed, total: toSign.length })}
         columns={5}
       >
         {queueCard('all', List)}
@@ -483,14 +476,8 @@ function KycDocumentsView({ subscription, isCorporate, documents, onChange }: Ky
 
   const name = (doc: MockKycDocument) => t(doc.nameKey);
   const statusOf = kycDisplayStatus;
-  const toReview = documents.filter((doc) => statusOf(doc) === 'toReview').length;
   const toRequest = documents.filter((doc) => ['missing', 'rejected', 'expired'].includes(statusOf(doc)));
 
-  const vigilance = VIGILANCE_BY_RISK[contrepartie.riskLevel ?? subscription?.riskLevel] ?? VIGILANCE_BY_RISK.Medium;
-  const lastReview = daysFromNow(-120);
-  const nextReview = new Date(lastReview);
-  nextReview.setFullYear(nextReview.getFullYear() + vigilance.reviewYears);
-  const overall: keyof typeof KYC_OVERALL_VARIANT = toRequest.length > 0 ? 'incomplete' : toReview > 0 ? 'inReview' : 'complete';
 
   const setStatus = (doc: MockKycDocument, status: KycDocumentStatus, rejectionReason?: string) =>
     onChange(documents.map((item) => (item.id === doc.id ? { ...item, status, rejectionReason } : item)));
@@ -683,11 +670,6 @@ function KycDocumentsView({ subscription, isCorporate, documents, onChange }: Ky
       <FilterCardGroup
         title={t('subscriptions.detail.queues.title')}
         hint={t('subscriptions.detail.queues.hint')}
-        badge={t(`${K}.kyc.queues.badge`, {
-          status: t(`${K}.kyc.overall.${overall}`),
-          vigilance: t(`${K}.kyc.review.levels.${vigilance.key}`),
-          date: formatDate(nextReview),
-        })}
         columns={5}
       >
         {queueCard('all', List)}
