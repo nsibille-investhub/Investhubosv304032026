@@ -275,7 +275,7 @@ const DraggableRow: React.FC<DraggableRowProps> = ({
           )}
         </div>
       </td>
-      <td className="p-4 text-right">
+      <td className="p-4 text-right ds-sticky-actions">
         <div className="flex items-center gap-2 justify-end">
           <button
             onClick={() => onEdit(event)}
@@ -1086,45 +1086,47 @@ function EventsSettingsContent() {
                 )}
               </div>
 
-              <table className="w-full">
-                <thead className="bg-gray-50 border-b border-gray-200">
-                  <tr>
-                    <th className="text-left px-4 py-3 text-xs text-gray-500">Nom</th>
-                    <th className="text-left px-4 py-3 text-xs text-gray-500">Date</th>
-                    <th className="text-left px-4 py-3 text-xs text-gray-500">Fonds</th>
-                    <th className="text-left px-4 py-3 text-xs text-gray-500">Audience</th>
-                    <th className="text-right px-4 py-3 text-xs text-gray-500 w-24">Actions</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {filteredEvents.length === 0 ? (
+              <div className="overflow-x-auto">
+                <table className="w-full">
+                  <thead className="bg-gray-50 border-b border-gray-200">
                     <tr>
-                      <td colSpan={5} className="p-8 text-center text-gray-500">
-                        {searchQuery || filterAudience !== 'all' || filterFunds !== 'all' ? (
-                          <div className="flex flex-col items-center gap-2">
-                            <Search className="w-8 h-8 text-gray-300" />
-                            <p className="text-sm">Aucun événement ne correspond à vos critères</p>
-                          </div>
-                        ) : (
-                          <p className="text-sm">Aucun événement configuré. Cliquez sur "Nouvel événement" pour commencer.</p>
-                        )}
-                      </td>
+                      <th className="text-left px-4 py-3 text-xs text-gray-500">Nom</th>
+                      <th className="text-left px-4 py-3 text-xs text-gray-500">Date</th>
+                      <th className="text-left px-4 py-3 text-xs text-gray-500">Fonds</th>
+                      <th className="text-left px-4 py-3 text-xs text-gray-500">Audience</th>
+                      <th className="text-right px-4 py-3 text-xs text-gray-500 w-24 ds-sticky-actions">Actions</th>
                     </tr>
-                  ) : (
-                    filteredEvents.map((event, index) => (
-                      <DraggableRow
-                        key={event.id}
-                        event={event}
-                        index={index}
-                        moveEvent={moveEvent}
-                        onEdit={handleEdit}
-                        onDelete={handleDelete}
-                        isPanelOpen={isPanelOpen}
-                      />
-                    ))
-                  )}
-                </tbody>
-              </table>
+                  </thead>
+                  <tbody>
+                    {filteredEvents.length === 0 ? (
+                      <tr>
+                        <td colSpan={5} className="p-8 text-center text-gray-500">
+                          {searchQuery || filterAudience !== 'all' || filterFunds !== 'all' ? (
+                            <div className="flex flex-col items-center gap-2">
+                              <Search className="w-8 h-8 text-gray-300" />
+                              <p className="text-sm">Aucun événement ne correspond à vos critères</p>
+                            </div>
+                          ) : (
+                            <p className="text-sm">Aucun événement configuré. Cliquez sur "Nouvel événement" pour commencer.</p>
+                          )}
+                        </td>
+                      </tr>
+                    ) : (
+                      filteredEvents.map((event, index) => (
+                        <DraggableRow
+                          key={event.id}
+                          event={event}
+                          index={index}
+                          moveEvent={moveEvent}
+                          onEdit={handleEdit}
+                          onDelete={handleDelete}
+                          isPanelOpen={isPanelOpen}
+                        />
+                      ))
+                    )}
+                  </tbody>
+                </table>
+              </div>
             </div>
           </div>
         </div>

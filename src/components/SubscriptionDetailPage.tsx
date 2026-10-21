@@ -56,12 +56,12 @@ import {
   Link2,
   Share2,
   PencilLine,
-  Info,
 } from 'lucide-react';
 import { motion } from 'motion/react';
 import { Badge } from './ui/badge';
 import { Button } from './ui/button';
 import { Card } from './ui/card';
+import { Tooltip, TooltipContent, TooltipTrigger } from './ui/tooltip';
 import { Separator } from './ui/separator';
 import { Input } from './ui/input';
 import { toast } from 'sonner';
@@ -396,26 +396,34 @@ export function SubscriptionDetailPage({ subscription: subscriptionProp, onBack 
     const section = mockSections.find(s => s.id === sectionId);
     if (!section) return;
 
-    // Approve all questions in the section
+    // Seules les questions répondues sont validées : une question vide reste à compléter.
     const newStatuses = { ...questionStatuses };
     const logged: Parameters<typeof createLiveAuditEntry>[0][] = [];
+    let validated = 0;
+    let skipped = 0;
     section.questions.forEach((question, idx) => {
       const questionId = `${sectionId}-${idx}`;
-      if (!isControllable(question, responseOf(sectionId, idx, question))) return;
+      const response = responseOf(sectionId, idx, question);
+      if (!isControllable(question, response)) return;
+      if (!response?.trim()) {
+        skipped += 1;
+        return;
+      }
       if (newStatuses[questionId] !== 'approved') {
         logged.push({ type: 'answerValidated', elementId: questionId, sectionId, viaSection: true });
       }
       newStatuses[questionId] = 'approved';
+      validated += 1;
     });
 
     setQuestionStatuses(newStatuses);
     logAudit(...logged);
 
+    const description = t('subscriptions.detail.onboarding.sectionValidatedDesc', { count: validated, title: sectionTitle });
     toast.success(t('subscriptions.detail.onboarding.sectionValidatedToast'), {
-      description: t('subscriptions.detail.onboarding.sectionValidatedDesc', {
-        count: section.questions.filter((q, idx) => isControllable(q, responseOf(sectionId, idx, q))).length,
-        title: sectionTitle,
-      }),
+      description: skipped > 0
+        ? `${description} ${t('subscriptions.detail.onboarding.sectionValidatedSkippedDesc', { count: skipped })}`
+        : description,
     });
   };
 
@@ -472,7 +480,7 @@ export function SubscriptionDetailPage({ subscription: subscriptionProp, onBack 
   const editTargets = (sectionId: string, idx: number): AnswerEditTarget[] => {
     const question = mockSections.find(sec => sec.id === sectionId)?.questions[idx];
     const questionId = `${sectionId}-${idx}`;
-    return (question?.targets ?? []).map(target => {
+    return (question?.targets ?? []).filter(target => target.direction !== 'fromTarget').map(target => {
       const key = linkedKey(questionId, target.object, target.field);
       return {
         key,
@@ -2031,7 +2039,7 @@ export function SubscriptionDetailPage({ subscription: subscriptionProp, onBack 
                               </div>
 
                               {/* Documents Table */}
-                              <div className="overflow-hidden">
+                              <div className="overflow-hidden overflow-x-auto">
                                 <table className="w-full">
                                   <thead className="bg-muted border-b border-border">
                                     <tr>
@@ -2053,7 +2061,7 @@ export function SubscriptionDetailPage({ subscription: subscriptionProp, onBack 
                                       <th className="px-4 py-3 text-center text-xs font-medium text-muted-foreground uppercase tracking-wider w-28">
                                         {t('subscriptions.detail.docsTable.action')}
                                       </th>
-                                      <th className="px-4 py-3 text-center text-xs font-medium text-muted-foreground uppercase tracking-wider w-28">
+                                      <th className="px-4 py-3 text-center text-xs font-medium text-muted-foreground uppercase tracking-wider w-28 ds-sticky-actions">
                                         {t('subscriptions.detail.docsTable.verification')}
                                       </th>
                                     </tr>
@@ -2130,7 +2138,7 @@ export function SubscriptionDetailPage({ subscription: subscriptionProp, onBack 
                                               : t('subscriptions.detail.docsTable.add')}
                                           </Button>
                                         </td>
-                                        <td className="px-4 py-3">
+                                        <td className="px-4 py-3 ds-sticky-actions">
                                           {docState === 'pending' || !canManage ? (
                                             <div className="flex justify-center">
                                               <Badge className="bg-muted text-muted-foreground text-xs">
@@ -2209,14 +2217,7 @@ export function SubscriptionDetailPage({ subscription: subscriptionProp, onBack 
                                   if (modifiedOnly && !modifiedOrigin) return null;
                                   if (item.notAsked && !notAskedVisible.includes(section.id) && !modifiedOrigin) return null;
 
-                                  if (item.info) {
-                                    return (
-                                      <div key={idx} className="flex items-start gap-2 px-4 py-3 bg-muted text-xs text-muted-foreground">
-                                        <Info className="w-3.5 h-3.5 mt-0.5 shrink-0" />
-                                        {item.question}
-                                      </div>
-                                    );
-                                  }
+                                  if (item.info) return null;
                                   const comments = questionComments[questionId] || [];
                                   const hasUnresolved = comments.some((c: any) => !c.resolved);
                                   const isCommentOpen = activeCommentThread === questionId;
@@ -2227,13 +2228,26 @@ export function SubscriptionDetailPage({ subscription: subscriptionProp, onBack 
                                       <div className="grid grid-cols-12 gap-4 p-4 hover:bg-muted transition-colors">
                                         <div className="col-span-4 text-sm text-foreground/80 flex items-center gap-2">
                                           {item.hasAlert && (
-                                            <AlertCircle className="w-4 h-4 text-red-500 flex-shrink-0" />
+                                            <Tooltip>
+                                              <TooltipTrigger asChild>
+                                                <span
+                                                  tabIndex={0}
+                                                  aria-label={t('subscriptions.detail.onboarding.alert.tooltip')}
+                                                  className="inline-flex flex-shrink-0"
+                                                >
+                                                  <AlertCircle className="w-4 h-4 text-red-500" />
+                                                </span>
+                                              </TooltipTrigger>
+                                              <TooltipContent className="max-w-xs">
+                                                {t('subscriptions.detail.onboarding.alert.tooltip')}
+                                              </TooltipContent>
+                                            </Tooltip>
                                           )}
                                           <span className="flex flex-col items-start gap-1">
                                             <span className="inline-flex items-center gap-2">
                                               <span className={status === 'rejected' ? 'text-red-700' : ''}>{item.question}</span>
                                               <QuestionRelationIcons
-                                                syncedWith={(item.targets ?? []).map(targetLabelOf)}
+                                                syncedWith={(item.targets ?? []).map(target => ({ label: targetLabelOf(target), direction: target.direction ?? 'toTarget' }))}
                                                 gaps={(item.targets ?? [])
                                                   .filter(target => linkedValueOf(questionId, item, target) !== response)
                                                   .map(target =>

@@ -613,6 +613,10 @@
         "validateSection": "Validate entire section",
         "sectionValidatedToast": "Section validated",
         "sectionValidatedDesc": "{{count}} questions in \"{{title}}\" have been validated",
+        "sectionValidatedSkippedDesc": "{{count}} unanswered question(s) left to complete.",
+        "alert": {
+          "tooltip": "Compliance checkpoint: this answer drives the investor's eligibility or risk profile. Check it first."
+        },
         "manageDocuments": "Manage supporting documents",
         "exportDocuments": "Export documents",
         "addDocument": "Add a document",
@@ -662,7 +666,12 @@
           "gap": "Gap with the reported data:",
           "gapItem": "{{target}} still holds {{value}}",
           "impacts": "Triggers the answer to:",
-          "impactedBy": "Answer triggered by:"
+          "impactedBy": "Answer triggered by:",
+          "direction": {
+            "toTarget": "the answer feeds the data",
+            "fromTarget": "the data prefills the answer",
+            "both": "synchronised both ways"
+          }
         }
       },
       "validation": {
@@ -1610,12 +1619,12 @@
       },
       "answerEffects": {
         "title": "Effects of the change",
-        "description": "Nothing is propagated unless checked. Each chosen effect is logged with the change that caused it.",
+        "description": "Uncheck an effect to skip it. Each effect is logged with the change that caused it.",
         "propagate": "Propagate the new value: {{object}} · {{field}}",
         "reset": "Reset the linked data: {{object}} · {{field}}",
         "valueChange": "Current value: {{current}} → {{next}}",
         "empty": "(empty)",
-        "replay": "Replay the triggers",
+        "replay": "Triggers replayed",
         "replayNote": "Answers changed by the replay go back to review.",
         "replayNone": "No triggered answer would change with this value.",
         "replayChange": "{{label}}: {{current}} → {{next}}",

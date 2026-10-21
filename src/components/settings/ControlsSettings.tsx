@@ -166,7 +166,7 @@ const DraggableRow: React.FC<DraggableRowProps> = ({
           ))}
         </div>
       </td>
-      <td className="p-3">
+      <td className="p-3 ds-sticky-actions">
         <div className="flex items-center gap-2 justify-end">
           <button
             onClick={() => onEdit(control)}
@@ -582,7 +582,7 @@ function ControlsSettingsContent() {
                     <th className="text-left p-3 text-sm text-gray-600">Nom</th>
                     <th className="text-left p-3 text-sm text-gray-600">Valeur par défaut</th>
                     <th className="text-left p-3 text-sm text-gray-600">Types de coûts</th>
-                    <th className="w-48"></th>
+                    <th className="w-48 ds-sticky-actions"></th>
                   </tr>
                 </thead>
                 <tbody>

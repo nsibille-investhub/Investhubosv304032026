@@ -11569,3 +11569,22 @@ html {
   background-color: var(--input-background);
   border-color: color-mix(in oklab, var(--primary) 12%, transparent);
 }
+
+/* Design system: the row actions column stays pinned to the right edge of a horizontally scrolling table.
+   Automatic for TableRowActions; ds-sticky-actions on the header and cells of any other actions column. */
+:is(td, th):last-child:has([data-slot="row-actions"]),
+table:has(> tbody > tr > td:last-child [data-slot="row-actions"]) > :is(thead, tfoot) > tr > :last-child,
+.ds-sticky-actions {
+  position: sticky;
+  right: 0;
+  z-index: 2;
+  background-color: var(--card);
+  box-shadow: -8px 0 8px -8px rgb(0 0 0 / 0.12);
+}
+thead :is(:is(td, th):last-child:has([data-slot="row-actions"]), .ds-sticky-actions),
+table:has(> tbody > tr > td:last-child [data-slot="row-actions"]) > :is(thead, tfoot) > tr > :last-child {
+  background-color: color-mix(in oklab, var(--muted) 40%, var(--card));
+}
+tr:hover > :is(td:last-child:has([data-slot="row-actions"]), .ds-sticky-actions) {
+  background-color: color-mix(in oklab, var(--muted) 60%, var(--card));
+}

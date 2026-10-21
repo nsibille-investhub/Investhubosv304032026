@@ -6,9 +6,20 @@ import { toneText } from './ui/tone';
 
 const T = 'subscriptions.detail.onboarding.relations';
 
+export type SyncDirection = 'toTarget' | 'fromTarget' | 'both';
+
+const SYNC_ARROWS: Record<SyncDirection, string> = { toTarget: '→', fromTarget: '←', both: '↔' };
+const SYNC_DIRECTIONS: SyncDirection[] = ['toTarget', 'fromTarget', 'both'];
+
+export interface SyncedTarget {
+  /** "Fiche investisseur · IBAN". */
+  label: string;
+  direction: SyncDirection;
+}
+
 interface QuestionRelationIconsProps {
-  /** Données synchronisées : "Fiche investisseur · IBAN". */
-  syncedWith?: string[];
+  /** Données synchronisées, avec le sens de la synchronisation. */
+  syncedWith?: SyncedTarget[];
   /** Données synchronisées dont la valeur diffère de la réponse. */
   gaps?: string[];
   /** Questions que celle-ci déclenche. */
@@ -17,7 +28,19 @@ interface QuestionRelationIconsProps {
   impactedBy?: string[];
 }
 
-function RelationIcon({ icon: Icon, title, items, danger }: { icon: LucideIcon; title: string; items: string[]; danger?: boolean }) {
+function RelationIcon({
+  icon: Icon,
+  title,
+  items,
+  legend = [],
+  danger,
+}: {
+  icon: LucideIcon;
+  title: string;
+  items: string[];
+  legend?: string[];
+  danger?: boolean;
+}) {
   return (
     <Tooltip>
       <TooltipTrigger asChild>
@@ -35,6 +58,13 @@ function RelationIcon({ icon: Icon, title, items, danger }: { icon: LucideIcon; 
             <li key={item}>{item}</li>
           ))}
         </ul>
+        {legend.length > 0 && (
+          <ul className="mt-1 border-t border-white/20 pt-1 opacity-70">
+            {legend.map(line => (
+              <li key={line}>{line}</li>
+            ))}
+          </ul>
+        )}
       </TooltipContent>
     </Tooltip>
   );
@@ -49,7 +79,16 @@ export function QuestionRelationIcons({ syncedWith = [], gaps = [], impacts = []
       {gaps.length > 0 ? (
         <RelationIcon icon={TriangleAlert} title={t(`${T}.gap`)} items={gaps} danger />
       ) : (
-        syncedWith.length > 0 && <RelationIcon icon={Link2} title={t(`${T}.synced`)} items={syncedWith} />
+        syncedWith.length > 0 && (
+          <RelationIcon
+            icon={Link2}
+            title={t(`${T}.synced`)}
+            items={syncedWith.map(target => `${SYNC_ARROWS[target.direction]} ${target.label}`)}
+            legend={SYNC_DIRECTIONS.filter(direction => syncedWith.some(target => target.direction === direction)).map(
+              direction => `${SYNC_ARROWS[direction]} ${t(`${T}.direction.${direction}`)}`,
+            )}
+          />
+        )
       )}
       {impacts.length > 0 && <RelationIcon icon={Zap} title={t(`${T}.impacts`)} items={impacts} />}
       {impactedBy.length > 0 && <RelationIcon icon={CornerDownRight} title={t(`${T}.impactedBy`)} items={impactedBy} />}

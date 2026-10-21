@@ -621,7 +621,7 @@ export function KYCDossierDetail(props: KYCDossierDetailProps) {
                             <TableHead>Déposé le</TableHead>
                             <TableHead>Expire le</TableHead>
                             <TableHead>Déposé par</TableHead>
-                            <TableHead className="text-right">Actions</TableHead>
+                            <TableHead className="text-right ds-sticky-actions">Actions</TableHead>
                           </TableRow>
                         </TableHeader>
                         <TableBody>
@@ -1042,7 +1042,7 @@ function DocumentRow({
       <TableCell>
         <UserCell name={doc.uploader.name} sublabel={doc.uploader.sublabel} size="sm" />
       </TableCell>
-      <TableCell className="text-right">
+      <TableCell className="text-right ds-sticky-actions">
         <div className="inline-flex items-center gap-1">
           <Button
             variant="ghost"

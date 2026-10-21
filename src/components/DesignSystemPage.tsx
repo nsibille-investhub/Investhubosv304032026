@@ -608,7 +608,7 @@ const investorListingColumnSpecs = [
     column: 'ACTIONS',
     component: 'TableRowActions (ui/row-actions)',
     functional: 'Actions d’une ligne, règle commune à tous les tableaux : jusqu’à 3 actions, toutes en boutons icône ; au-delà, les 3 premières en boutons et les suivantes dans un menu ⋮ (« Plus d’actions »).',
-    guidelines: 'Boutons ghost 32 px, icône 16 px, colonne sans libellé alignée à droite. Libellé de l’action au survol (Tooltip), obligatoire partout. Action indisponible : bouton grisé, motif dans l’infobulle (ou sous le libellé dans le menu ⋮). Intents : neutral, success, warning, danger (suppression, toujours en dernier).',
+    guidelines: 'Boutons ghost 32 px, icône 16 px, colonne sans libellé alignée à droite. Libellé de l’action au survol (Tooltip), obligatoire partout. Action indisponible : bouton grisé, motif dans l’infobulle (ou sous le libellé dans le menu ⋮). Intents : neutral, success, warning, danger (suppression, toujours en dernier). Colonne toujours en dernier et figée à droite du tableau pendant le défilement horizontal : automatique avec TableRowActions (et colonne DataTable de clé « actions »), classe ds-sticky-actions sur l’en-tête et les cellules d’une colonne d’actions construite autrement.',
     variants: '1 à 3 actions (boutons seuls), 4 actions et plus (3 boutons + ⋮), action indisponible avec motif, action destructive.',
   },
   {

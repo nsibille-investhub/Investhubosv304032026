@@ -108,7 +108,7 @@ export function TableRowActions({
   const overflow = actions.slice(ROW_ACTIONS_VISIBLE);
 
   return (
-    <div className={cn('flex items-center justify-end gap-1', className)} onClick={(e) => e.stopPropagation()}>
+    <div data-slot="row-actions" className={cn('flex items-center justify-end gap-1', className)} onClick={(e) => e.stopPropagation()}>
       {visible.map((action) => (
         <RowActionButton
           key={action.label}

@@ -246,7 +246,7 @@ const DraggableRow: React.FC<DraggableRowProps> = ({
           </td>
         </>
       )}
-      <td className="p-3">
+      <td className="p-3 ds-sticky-actions">
         <div className="flex items-center gap-2 justify-end">
           <button
             onClick={() => onEdit(signature)}
@@ -813,7 +813,7 @@ function DocuSignSettingsContent() {
                         <th className="text-left p-3 text-xs text-gray-500">Contrats</th>
                       </>
                     )}
-                    <th className="w-24 p-3 text-right text-xs text-gray-500">Actions</th>
+                    <th className="w-24 p-3 text-right text-xs text-gray-500 ds-sticky-actions">Actions</th>
                   </tr>
                 </thead>
                 <tbody>

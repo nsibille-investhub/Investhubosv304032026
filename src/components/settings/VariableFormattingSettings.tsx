@@ -352,7 +352,7 @@ const FormattingRow: React.FC<FormattingRowProps> = ({
           </td>
         </>
       )}
-      <td className="p-3">
+      <td className="p-3 ds-sticky-actions">
         <div className="flex items-center gap-2 justify-end">
           <button
             onClick={() => onEdit(formatting)}
@@ -1238,7 +1238,7 @@ function VariableFormattingSettingsContent() {
                         <th className="text-left p-3 text-sm text-gray-600">Gabarits</th>
                       </>
                     )}
-                    <th className="w-24"></th>
+                    <th className="w-24 ds-sticky-actions"></th>
                   </tr>
                 </thead>
                 <tbody>

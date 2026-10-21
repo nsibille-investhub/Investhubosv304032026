@@ -131,7 +131,7 @@ export function SubscriptionsListPopover({ count, subscriptions, onSubscriptionC
                       <th className="px-2 py-1.5 text-left text-[10px] font-semibold text-gray-600 uppercase tracking-wide">
                         {t('subscriptions.listPopover.columns.status')}
                       </th>
-                      <th className="px-2 py-1.5 text-center text-[10px] font-semibold text-gray-600 uppercase tracking-wide w-8">
+                      <th className="px-2 py-1.5 text-center text-[10px] font-semibold text-gray-600 uppercase tracking-wide w-8 ds-sticky-actions">
                         
                       </th>
                     </tr>
@@ -212,7 +212,7 @@ export function SubscriptionsListPopover({ count, subscriptions, onSubscriptionC
                         </td>
 
                         {/* Action */}
-                        <td className="px-2 py-1.5 text-center">
+                        <td className="px-2 py-1.5 text-center ds-sticky-actions">
                           <motion.div
                             whileHover={{ scale: 1.1, x: 1 }}
                             whileTap={{ scale: 0.95 }}

@@ -613,6 +613,10 @@
         "validateSection": "Valider toute la section",
         "sectionValidatedToast": "Section validée",
         "sectionValidatedDesc": "{{count}} questions de « {{title}} » ont été validées",
+        "sectionValidatedSkippedDesc": "{{count}} question(s) sans réponse reste(nt) à compléter.",
+        "alert": {
+          "tooltip": "Point de vigilance conformité : cette réponse conditionne l'éligibilité ou le profil de risque de l'investisseur. À contrôler en priorité."
+        },
         "manageDocuments": "Gérer les pièces justificatives",
         "exportDocuments": "Exporter les documents",
         "addDocument": "Ajouter un document",
@@ -662,7 +666,12 @@
           "gap": "Écart avec la donnée reportée :",
           "gapItem": "{{target}} vaut encore {{value}}",
           "impacts": "Déclenche la réponse de :",
-          "impactedBy": "Réponse déclenchée par :"
+          "impactedBy": "Réponse déclenchée par :",
+          "direction": {
+            "toTarget": "la réponse alimente la donnée",
+            "fromTarget": "la donnée préremplit la réponse",
+            "both": "synchronisé dans les deux sens"
+          }
         }
       },
       "validation": {
@@ -1610,12 +1619,12 @@
       },
       "answerEffects": {
         "title": "Effets de la modification",
-        "description": "Rien ne se propage sans case cochée. Chaque effet choisi est historisé avec la modification qui l'a causé.",
+        "description": "Décochez un effet pour ne pas l'appliquer. Chaque effet est historisé avec la modification qui l'a causé.",
         "propagate": "Propager la nouvelle valeur : {{object}} · {{field}}",
         "reset": "Remettre à zéro la donnée liée : {{object}} · {{field}}",
         "valueChange": "Valeur actuelle : {{current}} → {{next}}",
         "empty": "(vide)",
-        "replay": "Rejouer les déclenchements",
+        "replay": "Déclenchements rejoués",
         "replayNote": "Les réponses modifiées par le rejeu repassent à contrôler.",
         "replayNone": "Aucune réponse déclenchée ne changerait avec cette valeur.",
         "replayChange": "{{label}} : {{current}} → {{next}}",

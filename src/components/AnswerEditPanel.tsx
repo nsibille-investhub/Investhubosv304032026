@@ -86,15 +86,14 @@ export function AnswerEditPanel({
   const [reason, setReason] = useState('');
   const [submitted, setSubmitted] = useState(false);
   const [propagate, setPropagate] = useState<string[]>([]);
-  const [replay, setReplay] = useState(false);
 
   useEffect(() => {
     if (!question) return;
     setDraft(toDraft(question.type ?? 'text', currentValue));
     setReason('');
     setSubmitted(false);
-    setPropagate([]);
-    setReplay(false);
+    setPropagate(targets.map(target => target.key));
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [question, currentValue]);
 
   const violation = question ? validateDraft(type, draft, question.constraints) : null;
@@ -106,7 +105,7 @@ export function AnswerEditPanel({
   const handleSave = () => {
     setSubmitted(true);
     if (violation || reasonMissing || unchanged) return;
-    onSave(nextValue, requiresReason ? reason.trim() : undefined, { propagate, replay });
+    onSave(nextValue, requiresReason ? reason.trim() : undefined, { propagate, replay: true });
   };
 
   const emptyLabel = t(`${E}.empty`);
@@ -153,7 +152,6 @@ export function AnswerEditPanel({
             })),
             defaultOpen: true,
             reversible: true,
-            option: { checked: replay, onCheckedChange: setReplay },
           },
         ]
       : []),
