@@ -666,7 +666,12 @@
           "gap": "Gap with the reported data:",
           "gapItem": "{{target}} still holds {{value}}",
           "impacts": "Triggers the answer to:",
-          "impactedBy": "Answer triggered by:"
+          "impactedBy": "Answer triggered by:",
+          "direction": {
+            "toTarget": "the answer feeds the data",
+            "fromTarget": "the data prefills the answer",
+            "both": "synchronised both ways"
+          }
         }
       },
       "validation": {

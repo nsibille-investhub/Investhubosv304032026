@@ -666,7 +666,12 @@
           "gap": "Écart avec la donnée reportée :",
           "gapItem": "{{target}} vaut encore {{value}}",
           "impacts": "Déclenche la réponse de :",
-          "impactedBy": "Réponse déclenchée par :"
+          "impactedBy": "Réponse déclenchée par :",
+          "direction": {
+            "toTarget": "la réponse alimente la donnée",
+            "fromTarget": "la donnée préremplit la réponse",
+            "both": "synchronisé dans les deux sens"
+          }
         }
       },
       "validation": {

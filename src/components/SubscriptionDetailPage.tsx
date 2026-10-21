@@ -481,7 +481,7 @@ export function SubscriptionDetailPage({ subscription: subscriptionProp, onBack 
   const editTargets = (sectionId: string, idx: number): AnswerEditTarget[] => {
     const question = mockSections.find(sec => sec.id === sectionId)?.questions[idx];
     const questionId = `${sectionId}-${idx}`;
-    return (question?.targets ?? []).map(target => {
+    return (question?.targets ?? []).filter(target => target.direction !== 'fromTarget').map(target => {
       const key = linkedKey(questionId, target.object, target.field);
       return {
         key,
@@ -2255,7 +2255,7 @@ export function SubscriptionDetailPage({ subscription: subscriptionProp, onBack 
                                             <span className="inline-flex items-center gap-2">
                                               <span className={status === 'rejected' ? 'text-red-700' : ''}>{item.question}</span>
                                               <QuestionRelationIcons
-                                                syncedWith={(item.targets ?? []).map(targetLabelOf)}
+                                                syncedWith={(item.targets ?? []).map(target => ({ label: targetLabelOf(target), direction: target.direction ?? 'toTarget' }))}
                                                 gaps={(item.targets ?? [])
                                                   .filter(target => linkedValueOf(questionId, item, target) !== response)
                                                   .map(target =>
