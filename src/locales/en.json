@@ -597,7 +597,8 @@
         "financial": "Financial situation",
         "documents": "Supporting documents",
         "investorProfile": "Investor profile",
-        "commitments": "Financial commitments"
+        "commitments": "Financial commitments",
+        "beneficialOwners": "Beneficial owners"
       },
       "onboarding": {
         "answeredOf": "{{answered}}/{{total}} answered",
@@ -646,7 +647,8 @@
           "badge": "Pre-onboarding"
         },
         "iteration": {
-          "commitment": "Commitment {{n}}"
+          "commitment": "Commitment {{n}}",
+          "beneficialOwner": "Beneficial owner {{n}}"
         },
         "notAsked": {
           "tag": "Not asked",
@@ -1398,23 +1400,6 @@
         "title": "Access denied",
         "description": "This subscription holds a share restricted to other operators. You do not have the rights to view its file.",
         "back": "Back to subscriptions"
-      },
-      "beneficialOwners": {
-        "title": "Beneficial owners",
-        "countOne": "{{count}} declared beneficial owner",
-        "countMany": "{{count}} declared beneficial owners",
-        "columns": {
-          "name": "Name",
-          "ownership": "Ownership",
-          "control": "Type of control",
-          "nationality": "Nationality",
-          "birthDate": "Birth"
-        },
-        "control": {
-          "capital": "Capital ownership",
-          "votingRights": "Voting rights",
-          "otherMeans": "Control by any other means"
-        }
       },
       "questionActions": {
         "modifiedToast": "Answer modified",

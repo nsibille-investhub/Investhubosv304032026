@@ -6,6 +6,7 @@ import {
   TrendingUp,
   Compass,
   Repeat,
+  UserCheck,
 } from 'lucide-react';
 import type { OnboardingQuestionConstraints, OnboardingQuestionType } from './onboardingQuestionTypes';
 
@@ -66,6 +67,8 @@ export interface MockSection {
   preonboarding?: boolean;
   /** Section répétable : clé du libellé d'une itération ("Engagement {{n}}"). */
   iterationLabelKey?: string;
+  /** Section posée uniquement aux investisseurs personnes morales. */
+  corporateOnly?: boolean;
 }
 
 export interface MockRequiredDocument {
@@ -313,6 +316,27 @@ export const mockSections: MockSection[] = [
     }),
   },
   {
+    id: 'beneficialOwners',
+    titleKey: 'subscriptions.detail.sections.beneficialOwners',
+    icon: UserCheck,
+    corporateOnly: true,
+    iterationLabelKey: 'subscriptions.detail.onboarding.iteration.beneficialOwner',
+    questions: [1, 2, 3].flatMap((iteration) => {
+      const values = [
+        ['Hélène Marchand', '42', 'Détention du capital', 'France', '03/02/1968'],
+        ['Thomas Keller', '31', 'Droits de vote', 'Suisse', '21/11/1974'],
+        ['Lucie Garnier', '', 'Contrôle par tout autre moyen', 'France', '09/06/1981'],
+      ][iteration - 1];
+      return [
+        { question: "Nom complet*", response: values[0], verified: true, iteration, constraints: { required: true } },
+        { question: "Pourcentage de détention", response: values[1], verified: true, iteration, type: 'percentage' as const, constraints: { min: 0, max: 100 } },
+        { question: "Type de contrôle*", response: values[2], verified: true, iteration, type: 'list' as const, options: ['Détention du capital', 'Droits de vote', 'Contrôle par tout autre moyen'], constraints: { required: true } },
+        { question: "Nationalité*", response: values[3], verified: true, iteration, type: 'country' as const, constraints: { required: true } },
+        { question: "Date de naissance*", response: values[4], verified: true, iteration, type: 'date' as const, constraints: { required: true } },
+      ];
+    }),
+  },
+  {
     id: 'documents',
     titleKey: 'subscriptions.detail.sections.documents',
     icon: FileText,
@@ -478,22 +502,6 @@ export const mockFundCounterSignatories: MockCounterSignatory[] = [
     roleKey: 'subscriptions.detail.signatureStep.roles.middleOffice',
     email: 'claire.moreau@example.com',
   },
-];
-
-export interface MockBeneficialOwner {
-  id: string;
-  name: string;
-  ownership: number;
-  /** Clé de traduction du type de contrôle. */
-  controlTypeKey: string;
-  nationality: string;
-  birthDate: string;
-}
-
-export const mockBeneficialOwners: MockBeneficialOwner[] = [
-  { id: 'bo-1', name: 'Hélène Marchand', ownership: 42, controlTypeKey: 'subscriptions.detail.beneficialOwners.control.capital', nationality: 'France', birthDate: '03/02/1968' },
-  { id: 'bo-2', name: 'Thomas Keller', ownership: 31, controlTypeKey: 'subscriptions.detail.beneficialOwners.control.votingRights', nationality: 'Suisse', birthDate: '21/11/1974' },
-  { id: 'bo-3', name: 'Lucie Garnier', ownership: 0, controlTypeKey: 'subscriptions.detail.beneficialOwners.control.otherMeans', nationality: 'France', birthDate: '09/06/1981' },
 ];
 
 /** Report des données du dossier à la soumission (IC-5269). */
