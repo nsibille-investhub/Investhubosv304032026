@@ -283,7 +283,6 @@
     },
     "workflowTabs": {
       "title": "Workflow de Souscription",
-      "stepsBadge": "6 étapes",
       "clickToFilter": "Cliquez sur une étape pour filtrer",
       "created": "Créées",
       "onboarding": "Onboarding",
@@ -885,8 +884,7 @@
           "overdue": "Échus non soldés",
           "paid": "Payés",
           "amountMetric": "Montant",
-          "perCall": "{{amount}} par appel",
-          "badge": "{{percent}} de l'engagement appelé · {{remaining}} restant à appeler"
+          "perCall": "{{amount}} par appel"
         }
       },
       "documentsTab": {
@@ -982,8 +980,7 @@
             "completed": "Signés",
             "draft": "Brouillons",
             "signaturesMetric": "Signatures",
-            "perDocument": "{{count}} signataire(s) par document",
-            "badge": "{{signed}} / {{total}} documents signés"
+            "perDocument": "{{count}} signataire(s) par document"
           }
         },
         "kyc": {
@@ -1033,18 +1030,6 @@
             "investorFile": "Dossier investisseur",
             "subscription": "Cette souscription"
           },
-          "overall": {
-            "complete": "Dossier complet",
-            "inReview": "En cours de revue",
-            "incomplete": "Dossier incomplet"
-          },
-          "review": {
-            "levels": {
-              "simplified": "simplifiée",
-              "standard": "standard",
-              "enhanced": "renforcée"
-            }
-          },
           "rejectionReasons": {
             "unsigned": "Déclaration non datée ni signée",
             "wrongForm": "Formulaire personne physique fourni au lieu du formulaire entité"
@@ -1074,8 +1059,7 @@
             "expiring": "Expirent sous {{count}} j",
             "validated": "Validées",
             "holdersMetric": "Titulaires",
-            "perHolder": "{{count}} pièce(s) par titulaire",
-            "badge": "{{status}} · Vigilance {{vigilance}} · Prochaine revue le {{date}}"
+            "perHolder": "{{count}} pièce(s) par titulaire"
           }
         }
       },
@@ -2098,7 +2082,6 @@
     },
     "pipeline": {
       "title": "Pipeline Investisseurs",
-      "statusBadge": "4 statuts",
       "clickToFilter": "Cliquez sur un statut pour filtrer",
       "totalInvested": "Total investi",
       "average": "Moy",
@@ -4703,7 +4686,6 @@
     "searchPlaceholder": "Rechercher par numéro ou contenu du SMS…",
     "statusTabs": {
       "title": "Filtrer par statut de délivrabilité",
-      "subtitle": "5 statuts",
       "clickToFilter": "Cliquez pour filtrer",
       "all": "Tous",
       "delivered": "Délivrés",

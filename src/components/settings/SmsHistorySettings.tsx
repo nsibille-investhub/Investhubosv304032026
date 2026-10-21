@@ -721,7 +721,6 @@ function SmsStatusTabs({
   return (
     <FilterCardGroup
       title={t('smsLog.statusTabs.title')}
-      badge={t('smsLog.statusTabs.subtitle')}
       hint={t('smsLog.statusTabs.clickToFilter')}
       columns={5} className="p-3"
     >

@@ -1262,7 +1262,7 @@ export function FundDetailComponentsSection() {
         id="filterCardGroup"
         name="FilterCardGroup, FilterCard"
         importLine="import { FilterCard, FilterCardGroup } from '@/components/ui/filter-card'"
-        usage={`<FilterCardGroup title={t('...')} badge={t('...')} hint={t('...')} columns={5}>
+        usage={`<FilterCardGroup title={t('...')} hint={t('...')} columns={5}>
   <FilterCard status="failed" activeStatus={queue} onStatusChange={setQueue} label={t('...')} icon={AlertTriangle} ... />
 </FilterCardGroup>`}
       >
