@@ -56,7 +56,6 @@ import {
   Link2,
   Share2,
   PencilLine,
-  Info,
 } from 'lucide-react';
 import { motion } from 'motion/react';
 import { Badge } from './ui/badge';
@@ -2218,14 +2217,7 @@ export function SubscriptionDetailPage({ subscription: subscriptionProp, onBack 
                                   if (modifiedOnly && !modifiedOrigin) return null;
                                   if (item.notAsked && !notAskedVisible.includes(section.id) && !modifiedOrigin) return null;
 
-                                  if (item.info) {
-                                    return (
-                                      <div key={idx} className="flex items-start gap-2 px-4 py-3 bg-muted text-xs text-muted-foreground">
-                                        <Info className="w-3.5 h-3.5 mt-0.5 shrink-0" />
-                                        {item.question}
-                                      </div>
-                                    );
-                                  }
+                                  if (item.info) return null;
                                   const comments = questionComments[questionId] || [];
                                   const hasUnresolved = comments.some((c: any) => !c.resolved);
                                   const isCommentOpen = activeCommentThread === questionId;
