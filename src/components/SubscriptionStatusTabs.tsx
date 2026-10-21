@@ -69,7 +69,6 @@ export function SubscriptionStatusTabs({ data, activeStatus, onStatusChange }: S
   return (
     <FilterCardGroup
       title={t('subscriptions.workflowTabs.title')}
-      badge={t('subscriptions.workflowTabs.stepsBadge')}
       hint={t('subscriptions.workflowTabs.clickToFilter')}
       columns={6}
     >

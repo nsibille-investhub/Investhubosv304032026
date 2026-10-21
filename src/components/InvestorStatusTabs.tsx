@@ -55,7 +55,6 @@ export function InvestorStatusTabs({ data, activeStatus, onStatusChange }: Inves
   return (
     <FilterCardGroup
       title={t('investors.pipeline.title')}
-      badge={t('investors.pipeline.statusBadge')}
       hint={t('investors.pipeline.clickToFilter')}
       columns={4}
     >

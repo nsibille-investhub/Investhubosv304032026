@@ -85,9 +85,6 @@ export function SubscriptionCapitalCallsTab({ subscription }: SubscriptionCapita
     });
   }, [allRows, queue, search, filters]);
 
-  const calledNominal = allRows.reduce((sum, row) => sum + row.calledAmount, 0);
-  const calledPercent = allRows.reduce((sum, row) => sum + row.calledPercent, 0);
-  const remaining = Math.max(commitment - calledNominal, 0);
 
   const setState = (row: Row, state: CapitalCallLineState) =>
     setCalls((prev) =>
@@ -265,7 +262,6 @@ export function SubscriptionCapitalCallsTab({ subscription }: SubscriptionCapita
       <FilterCardGroup
         title={t('subscriptions.detail.queues.title')}
         hint={t('subscriptions.detail.queues.hint')}
-        badge={t(`${K}.queues.badge`, { percent: percent(calledPercent), remaining: money(remaining) })}
         columns={4}
       >
         {queueCard('all', List)}
