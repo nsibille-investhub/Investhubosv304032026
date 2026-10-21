@@ -30,7 +30,6 @@ import {
   Receipt,
   Scale,
   Tag,
-  Share2,
   TrendingUp,
   Users,
   Wallet,
@@ -211,16 +210,6 @@ function SectionNavDemo() {
         items={items}
         activeId={activeId}
         onSelect={setActiveId}
-        pinnedItems={[
-          {
-            id: 'overview',
-            title: t(`${d}.overview`),
-            subtitle: t(`${d}.overviewSubtitle`),
-            icon: Share2,
-            iconTone: 'success',
-            indicator: { kind: 'dot', tone: 'success', label: t(`${d}.overviewSubtitle`) },
-          },
-        ]}
         sticky={false}
       />
     </div>
@@ -961,8 +950,6 @@ export function FundDetailComponentsSection() {
   title={t('...')}
   activeId={activeId}
   onSelect={setActiveId}
-  pinnedItems={[{ id: 'report', title, subtitle, icon: Share2, iconTone: 'success',
-    indicator: { kind: 'dot', tone: 'success', label } }]}
   items={[
     { id: 'identity', title, subtitle, icon: IdCard, iconTone: 'success', group,
       indicator: { kind: 'count', value: 11, total: 11, tone: 'success' } },

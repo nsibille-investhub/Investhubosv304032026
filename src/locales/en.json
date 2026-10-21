@@ -1659,7 +1659,7 @@
         }
       },
       "report": {
-        "title": "Data reported at submission",
+        "title": "Data synchronization",
         "summary": "Reported on {{date}}. A later correction is reported only through an explicit action.",
         "columns": {
           "data": "Data",
@@ -1676,7 +1676,6 @@
         "mandateCreated": "Created at submission",
         "documentCopied": "Copied to the record",
         "propagatedToast": "Linked data updated",
-        "navTitle": "Reported data",
         "synced": "Synced",
         "notSynced": "Not synced",
         "sectionTitle": "Updated records",
@@ -7017,13 +7016,11 @@
       "sectionNav": {
         "title": "Section navigation",
         "description": "Navigation column between the sections of a page, generalized from \"Onboarding sections\". The column title is free, each item has an icon, a title, a free subtitle and a right-hand indicator.",
-        "variants": "Colored \"n/N\" counter with dot, status dot only, \"To complete\" badge, no indicator. Optional grouping under subtitles. Optional pinned item under the title (pinnedItems), separated from the sections: entry point to a report or a summary.",
+        "variants": "Colored \"n/N\" counter with dot, status dot only, \"To complete\" badge, no indicator. Optional grouping under subtitles.",
         "states": "Rest, hover, active (accent background, primary title), disabled with reason on hover, hidden.",
         "exampleLabel": "Example: fund settings",
         "exampleHint": "click an item, hover \"Distribution\" to read the reason; \"Secondary market\" is hidden",
         "demo": {
-          "overview": "Reported data",
-          "overviewSubtitle": "Synced",
           "title": "Fund sections",
           "groupFund": "Fund profile",
           "groupDiffusion": "Distribution",

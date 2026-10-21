@@ -40,7 +40,9 @@ import {
   Layers3,
   Globe,
   Tag,
+  Share2,
   ShieldCheck,
+  TriangleAlert,
   Banknote,
   Phone,
   MapPin,
@@ -1905,6 +1907,17 @@ export function SubscriptionDetailPage({ subscription: subscriptionProp, onBack 
                       <OnboardingCompletionCard
                         questions={questionBuckets}
                         documents={documentBuckets}
+                        action={
+                          <Button variant="outline" size="sm" className="gap-2" onClick={() => setReportOpen(true)}>
+                            <Share2 className="w-3.5 h-3.5" />
+                            {t('subscriptions.detail.report.title')}
+                            <StatusBadge
+                              variant={submissionReportSynced ? 'success' : 'warning'}
+                              icon={submissionReportSynced ? CheckCircle2 : TriangleAlert}
+                              label={t(submissionReportSynced ? 'subscriptions.detail.report.synced' : 'subscriptions.detail.report.notSynced')}
+                            />
+                          </Button>
+                        }
                       />
 
                       <div className="flex items-center justify-end gap-2">
@@ -1927,10 +1940,6 @@ export function SubscriptionDetailPage({ subscription: subscriptionProp, onBack 
                             sections={onboardingNavSections}
                             activeSectionId={activeOnboardingSection}
                             onSelect={handleSelectOnboardingSection}
-                            report={{
-                              synced: submissionReportSynced,
-                              onOpen: () => setReportOpen(true),
-                            }}
                           />
                           <SubmissionReportSheet
                             open={reportOpen}
