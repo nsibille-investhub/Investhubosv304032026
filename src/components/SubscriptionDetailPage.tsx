@@ -62,6 +62,7 @@ import { motion } from 'motion/react';
 import { Badge } from './ui/badge';
 import { Button } from './ui/button';
 import { Card } from './ui/card';
+import { Tooltip, TooltipContent, TooltipTrigger } from './ui/tooltip';
 import { Separator } from './ui/separator';
 import { Input } from './ui/input';
 import { toast } from 'sonner';
@@ -396,26 +397,34 @@ export function SubscriptionDetailPage({ subscription: subscriptionProp, onBack 
     const section = mockSections.find(s => s.id === sectionId);
     if (!section) return;
 
-    // Approve all questions in the section
+    // Seules les questions répondues sont validées : une question vide reste à compléter.
     const newStatuses = { ...questionStatuses };
     const logged: Parameters<typeof createLiveAuditEntry>[0][] = [];
+    let validated = 0;
+    let skipped = 0;
     section.questions.forEach((question, idx) => {
       const questionId = `${sectionId}-${idx}`;
-      if (!isControllable(question, responseOf(sectionId, idx, question))) return;
+      const response = responseOf(sectionId, idx, question);
+      if (!isControllable(question, response)) return;
+      if (!response?.trim()) {
+        skipped += 1;
+        return;
+      }
       if (newStatuses[questionId] !== 'approved') {
         logged.push({ type: 'answerValidated', elementId: questionId, sectionId, viaSection: true });
       }
       newStatuses[questionId] = 'approved';
+      validated += 1;
     });
 
     setQuestionStatuses(newStatuses);
     logAudit(...logged);
 
+    const description = t('subscriptions.detail.onboarding.sectionValidatedDesc', { count: validated, title: sectionTitle });
     toast.success(t('subscriptions.detail.onboarding.sectionValidatedToast'), {
-      description: t('subscriptions.detail.onboarding.sectionValidatedDesc', {
-        count: section.questions.filter((q, idx) => isControllable(q, responseOf(sectionId, idx, q))).length,
-        title: sectionTitle,
-      }),
+      description: skipped > 0
+        ? `${description} ${t('subscriptions.detail.onboarding.sectionValidatedSkippedDesc', { count: skipped })}`
+        : description,
     });
   };
 
@@ -2227,7 +2236,20 @@ export function SubscriptionDetailPage({ subscription: subscriptionProp, onBack 
                                       <div className="grid grid-cols-12 gap-4 p-4 hover:bg-muted transition-colors">
                                         <div className="col-span-4 text-sm text-foreground/80 flex items-center gap-2">
                                           {item.hasAlert && (
-                                            <AlertCircle className="w-4 h-4 text-red-500 flex-shrink-0" />
+                                            <Tooltip>
+                                              <TooltipTrigger asChild>
+                                                <span
+                                                  tabIndex={0}
+                                                  aria-label={t('subscriptions.detail.onboarding.alert.tooltip')}
+                                                  className="inline-flex flex-shrink-0"
+                                                >
+                                                  <AlertCircle className="w-4 h-4 text-red-500" />
+                                                </span>
+                                              </TooltipTrigger>
+                                              <TooltipContent className="max-w-xs">
+                                                {t('subscriptions.detail.onboarding.alert.tooltip')}
+                                              </TooltipContent>
+                                            </Tooltip>
                                           )}
                                           <span className="flex flex-col items-start gap-1">
                                             <span className="inline-flex items-center gap-2">

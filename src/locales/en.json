@@ -613,6 +613,10 @@
         "validateSection": "Validate entire section",
         "sectionValidatedToast": "Section validated",
         "sectionValidatedDesc": "{{count}} questions in \"{{title}}\" have been validated",
+        "sectionValidatedSkippedDesc": "{{count}} unanswered question(s) left to complete.",
+        "alert": {
+          "tooltip": "Compliance checkpoint: this answer drives the investor's eligibility or risk profile. Check it first."
+        },
         "manageDocuments": "Manage supporting documents",
         "exportDocuments": "Export documents",
         "addDocument": "Add a document",

@@ -613,6 +613,10 @@
         "validateSection": "Valider toute la section",
         "sectionValidatedToast": "Section validée",
         "sectionValidatedDesc": "{{count}} questions de « {{title}} » ont été validées",
+        "sectionValidatedSkippedDesc": "{{count}} question(s) sans réponse reste(nt) à compléter.",
+        "alert": {
+          "tooltip": "Point de vigilance conformité : cette réponse conditionne l'éligibilité ou le profil de risque de l'investisseur. À contrôler en priorité."
+        },
         "manageDocuments": "Gérer les pièces justificatives",
         "exportDocuments": "Exporter les documents",
         "addDocument": "Ajouter un document",
