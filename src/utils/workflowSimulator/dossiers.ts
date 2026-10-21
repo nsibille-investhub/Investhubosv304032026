@@ -13,6 +13,8 @@ export interface DemoDossierData {
   amount: number;
   summary?: string;
   reason?: string;
+  /** Surcharges des valeurs fictives de la ligne de titre pour ce dossier. */
+  header?: HeaderDefaults;
 }
 
 export interface DemoDossier {
@@ -29,22 +31,47 @@ export interface DemoDossier {
   data: DemoDossierData;
 }
 
+export interface HeaderDefaults {
+  activated_at?: string;
+  deferred_until?: string;
+  transfer_origin?: string;
+  transferred?: { date: string; author: string };
+  terminal?: { date: string; author: string; reason?: string };
+}
+
+export interface DemoFile {
+  dossiers: DemoDossier[];
+  headerDefaults: HeaderDefaults;
+  /** Libellé renommé fictif par libellé d'état du référentiel. */
+  statusRenaming: Record<string, string>;
+}
+
+const EMPTY_DEMO: DemoFile = { dossiers: [], headerDefaults: {}, statusRenaming: {} };
+
 export type ResolvedDossier =
   | { ok: true; dossier: DemoDossier; scenario: WorkflowScenario }
   | { ok: false; dossier: DemoDossier; missing: string[] };
 
-export async function loadDemoDossiers(): Promise<DemoDossier[]> {
+export async function loadDemoFile(): Promise<DemoFile> {
   const loader = Object.values(SOURCES)[0];
   if (!loader) {
     console.warn('[Simulateur] data/simulateur-dossiers-demo.json introuvable');
-    return [];
+    return EMPTY_DEMO;
   }
   try {
-    const raw = (await loader()) as { dossiers?: DemoDossier[] };
-    return Array.isArray(raw.dossiers) ? raw.dossiers : [];
+    const raw = (await loader()) as {
+      dossiers?: DemoDossier[];
+      header_defaults?: HeaderDefaults;
+      status_renaming?: Record<string, string>;
+    };
+    return {
+      dossiers: Array.isArray(raw.dossiers) ? raw.dossiers : [],
+      headerDefaults: raw.header_defaults ?? {},
+      statusRenaming: raw.status_renaming ?? {},
+    };
   } catch (error) {
     console.error('[Simulateur] Dossiers de démonstration illisibles', error);
-    return [];
+    return EMPTY_DEMO;
   }
 }
 

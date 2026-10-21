@@ -30,15 +30,17 @@ import {
   Receipt,
   Scale,
   Tag,
+  Ban,
   FlaskConical,
   TrendingUp,
   Users,
   Wallet,
+  type LucideIcon,
 } from 'lucide-react';
 import { useTranslation } from '../../utils/languageContext';
 import { formatCurrency } from '../../utils/formatters';
 import { FUND_STATUSES, FundStatusBadge } from '../FundStatusBadge';
-import { StatusBadge } from '../StatusBadge';
+import { StatusBadge, type StatusVariant } from '../StatusBadge';
 import { DataTable } from '../DataTable';
 import { EmptyState } from '../EmptyState';
 import { BlockersPanel } from '../ui/blockers-panel';
@@ -492,6 +494,15 @@ function PageStateBannerDemo() {
       />
       <PageStateBanner variant="readOnly" />
       <PageStateBanner variant="simulatorUnavailable" />
+      <PageStateBanner variant="readOnly" scope="subscription" />
+      <PageStateBanner
+        variant="terminalState"
+        title={t(`${d}.terminalTitle`)}
+        description={t(`${d}.terminalDescription`)}
+        action={{ label: t(`${d}.terminalAction`), onClick: () => toast.success(t(`${d}.terminalDone`)) }}
+      />
+      <PageStateBanner variant="externalReview" who={t(`${d}.externalWho`)} />
+      <PageStateBanner variant="hypothesis" ids={['D4']} />
     </div>
   );
 }
@@ -877,6 +888,18 @@ function DemoScenarioBarDemo() {
   );
 }
 
+const WORKFLOW_STATE_DEMO: { key: string; variant: StatusVariant; icon?: LucideIcon }[] = [
+  { key: 'draft', variant: 'outline' },
+  { key: 'investor', variant: 'info' },
+  { key: 'gp', variant: 'warning' },
+  { key: 'thirdParty', variant: 'caution' },
+  { key: 'active', variant: 'success' },
+  { key: 'transferred', variant: 'neutral' },
+  { key: 'cancelled', variant: 'strong', icon: Ban },
+  { key: 'refused', variant: 'danger' },
+  { key: 'renamed', variant: 'warning' },
+];
+
 function WizardStepsTimelineDemo() {
   const { t } = useTranslation();
   const d = `${K}.wizardSteps.timeline`;
@@ -1127,7 +1150,12 @@ export function FundDetailComponentsSection() {
 <PageStateBanner variant="sendingNotices" blockedActions={[...]} />
 <PageStateBanner variant="readOnly" />
 <PageStateBanner variant="delegatedReview" partner={name} validatedBy={author} date={date} />
-<PageStateBanner variant="simulatorUnavailable" />`}
+<PageStateBanner variant="simulatorUnavailable" />
+<PageStateBanner variant="readOnly" scope="subscription" />
+<PageStateBanner variant="terminalState" tone="strong" title={title} description={description}
+  action={{ label, onClick, loading, disabledReason }} />
+<PageStateBanner variant="externalReview" who={roleLabel} />
+<PageStateBanner variant="hypothesis" ids={['D4']} />`}
       >
         <Example label={t(`${K}.pageStateBanner.exampleLabel`)} hint={t(`${K}.pageStateBanner.exampleHint`)}>
           <PageStateBannerDemo />
@@ -1211,7 +1239,9 @@ export function FundDetailComponentsSection() {
         name="PageHeader"
         importLine="import { PageHeader, PageHeaderSubtitle, PageHeaderSubtitleItem, PageHeaderSubtitleSeparator } from '@/components/ui/page-header'"
         usage={`<PageHeader
-  title={<>{name}<StatusBadge /></>}
+  title={name}
+  status={<StatusBadge label={state} variant="caution" />}  // pastille à droite du titre
+  details={<>{waitingLine}{indicators}</>}                   // lignes sous le sous-titre
   subtitle={
     <PageHeaderSubtitle>
       <PageHeaderSubtitleItem icon={Hash}>{t('...')}</PageHeaderSubtitleItem>
@@ -1345,17 +1375,32 @@ export function FundDetailComponentsSection() {
         name="StatusBadge"
         importLine="import { StatusBadge } from '@/components/StatusBadge'"
         usage={`<StatusBadge label={t('...')} variant="info" icon={CalendarClock} />
-// 'neutral' | 'outline' | 'info' | 'success' | 'warning' | 'danger' | 'strong'
-<StatusBadge label={t('...')} variant="danger" tooltip={t('...')} />`}
+// 'neutral' | 'outline' | 'info' | 'success' | 'warning' | 'danger' | 'strong' | 'caution'
+<StatusBadge label={t('...')} variant="danger" tooltip={t('...')} />
+// État d'un dossier : ton par "qui attend" (utils/workflowSimulator/header.ts)
+<StatusBadge label={state.label} variant="caution" />`}
       >
         <Example label={t(`${K}.statusBadge.exampleLabel`)}>
           <div className="flex flex-wrap gap-2">
-            {(['neutral', 'outline', 'info', 'success', 'warning', 'danger', 'strong'] as const).map(variant => (
+            {(['neutral', 'outline', 'info', 'success', 'warning', 'danger', 'strong', 'caution'] as const).map(variant => (
               <StatusBadge
                 key={variant}
                 variant={variant}
                 label={t(`${K}.statusBadge.tones.${variant}`)}
                 icon={variant === 'info' ? CalendarClock : undefined}
+              />
+            ))}
+          </div>
+        </Example>
+        <Example label={t(`${K}.statusBadge.workflowExampleLabel`)} hint={t(`${K}.statusBadge.workflowExampleHint`)}>
+          <div className="flex flex-wrap gap-2">
+            {WORKFLOW_STATE_DEMO.map(({ key, variant, icon }) => (
+              <StatusBadge
+                key={key}
+                variant={variant}
+                icon={icon}
+                label={t(`${K}.statusBadge.workflow.${key}`)}
+                tooltip={key === 'renamed' ? t(`${K}.statusBadge.workflow.renamedTooltip`) : undefined}
               />
             ))}
           </div>

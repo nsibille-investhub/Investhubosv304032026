@@ -1,6 +1,6 @@
 import type { ReactNode } from 'react';
 import type { LucideIcon } from 'lucide-react';
-import { Archive, ArrowUpRight, Copy, FlaskConical, Handshake, Loader2, Lock, Send, ShieldOff } from 'lucide-react';
+import { Archive, ArrowUpRight, Ban, Copy, FlaskConical, Handshake, Hourglass, Lightbulb, Loader2, Lock, Send, ShieldOff } from 'lucide-react';
 import { useTranslation } from '../../utils/languageContext';
 import { Alert, AlertDescription } from './alert';
 import { Button } from './button';
@@ -22,7 +22,21 @@ export type PageStateBannerProps =
   | { variant: 'locked'; date: string; reason: string; className?: string }
   | { variant: 'mirror'; masterName: string; onOpenMaster: () => void; className?: string }
   | { variant: 'sendingNotices'; blockedActions: string[]; className?: string }
-  | { variant: 'readOnly'; className?: string }
+  /** scope "subscription" : souscription consultée sans droit de modification. */
+  | { variant: 'readOnly'; scope?: 'fund' | 'subscription'; className?: string }
+  /** Dossier en état terminal : raison, puis action de retour quand le workflow en propose une. */
+  | {
+      variant: 'terminalState';
+      title: string;
+      description?: string;
+      tone?: Tone;
+      action?: { label: string; onClick: () => void; loading?: boolean; disabledReason?: string };
+      className?: string;
+    }
+  /** Dossier entre les mains d'un tiers (distributeur délégué, signataire...). */
+  | { variant: 'externalReview'; who: string; className?: string }
+  /** L'état affiché dépend d'hypothèses ouvertes, non décidées. */
+  | { variant: 'hypothesis'; ids: string[]; className?: string }
   /** Validation KYC déléguée au partenaire : en attente, ou validée et transmise à l'analyste 1. */
   | { variant: 'delegatedReview'; partner: string; validatedBy?: string; date?: string; className?: string }
   /** Fichier de scénarios du simulateur de workflow absent ou invalide : la page reste utilisable. */
@@ -34,6 +48,9 @@ const VARIANT_STYLE: Record<PageStateBannerProps['variant'], { icon: LucideIcon;
   mirror: { icon: Copy, tone: 'info' },
   sendingNotices: { icon: Send, tone: 'warning' },
   readOnly: { icon: ShieldOff, tone: 'neutral' },
+  terminalState: { icon: Ban, tone: 'strong' },
+  externalReview: { icon: Hourglass, tone: 'caution' },
+  hypothesis: { icon: Lightbulb, tone: 'info' },
   delegatedReview: { icon: Handshake, tone: 'info' },
   simulatorUnavailable: { icon: FlaskConical, tone: 'warning' },
 };
@@ -41,7 +58,8 @@ const VARIANT_STYLE: Record<PageStateBannerProps['variant'], { icon: LucideIcon;
 /** Bandeau d'état placé sous l'en-tête d'une page de détail (PRD Détail d'un fonds V3, section 6.1). */
 export function PageStateBanner(props: PageStateBannerProps) {
   const { t } = useTranslation();
-  const { icon: Icon, tone } = VARIANT_STYLE[props.variant];
+  const { icon: Icon } = VARIANT_STYLE[props.variant];
+  const tone = props.variant === 'terminalState' && props.tone ? props.tone : VARIANT_STYLE[props.variant].tone;
 
   let title: string;
   let description: ReactNode = null;
@@ -90,9 +108,34 @@ export function PageStateBanner(props: PageStateBannerProps) {
             })
           : null;
       break;
-    case 'readOnly':
-      title = t('funds.stateBanner.readOnly.title');
-      description = t('funds.stateBanner.readOnly.description');
+    case 'readOnly': {
+      const base = props.scope === 'subscription' ? 'subscriptions.stateBanner.readOnly' : 'funds.stateBanner.readOnly';
+      title = t(`${base}.title`);
+      description = t(`${base}.description`);
+      break;
+    }
+    case 'terminalState':
+      title = props.title;
+      description = props.description ?? null;
+      if (props.action) {
+        const { label, onClick, loading, disabledReason } = props.action;
+        action = (
+          <DisabledReason reason={disabledReason}>
+            <Button variant="outline" size="sm" onClick={onClick} disabled={loading || Boolean(disabledReason)}>
+              {loading && <Loader2 className="w-4 h-4 animate-spin" />}
+              {label}
+            </Button>
+          </DisabledReason>
+        );
+      }
+      break;
+    case 'externalReview':
+      title = t('subscriptions.stateBanner.externalReview.title', { who: props.who });
+      description = t('subscriptions.stateBanner.externalReview.description');
+      break;
+    case 'hypothesis':
+      title = t('subscriptions.stateBanner.hypothesis.title', { ids: props.ids.join(', ') });
+      description = t('subscriptions.stateBanner.hypothesis.description');
       break;
     case 'delegatedReview':
       if (props.validatedBy) {

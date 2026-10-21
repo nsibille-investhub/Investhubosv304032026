@@ -47,7 +47,11 @@ export type PageHeaderProps = {
   onBack?: () => void;
   hideBackButton?: boolean;
   title: React.ReactNode;
+  /** Pastille d'état, placée à droite du titre. */
+  status?: React.ReactNode;
   subtitle?: React.ReactNode;
+  /** Lignes complémentaires sous le sous-titre : attente, indicateurs d'état secondaires. */
+  details?: React.ReactNode;
   primaryAction?: PageHeaderAction;
   secondaryAction?: PageHeaderAction;
   /** Actions secondaires supplémentaires, affichées avant secondaryAction. */
@@ -154,7 +158,9 @@ function PageHeader({
   onBack,
   hideBackButton,
   title,
+  status,
   subtitle,
+  details,
   primaryAction,
   secondaryAction,
   extraActions,
@@ -191,13 +197,21 @@ function PageHeader({
             transition={{ delay: 0.3 }}
           >
             <h1 className="text-3xl font-bold text-gray-900 dark:text-gray-100 tracking-tight">
-              {title}
+              {status ? (
+                <span className="inline-flex items-center gap-3">
+                  {title}
+                  {status}
+                </span>
+              ) : (
+                title
+              )}
             </h1>
             {subtitle ? (
               <p className="text-sm text-gray-600 dark:text-gray-400 mt-1">
                 {subtitle}
               </p>
             ) : null}
+            {details ? <div className="mt-2 flex flex-col gap-2 text-sm text-muted-foreground">{details}</div> : null}
           </motion.div>
 
           {(primaryAction || secondaryAction || hasExtra || hasTertiary) && (

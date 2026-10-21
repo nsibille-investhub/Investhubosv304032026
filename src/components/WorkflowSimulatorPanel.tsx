@@ -50,6 +50,7 @@ const FAMILIES: WorkflowFamily[] = ['A', 'B', 'C'];
 // Rangement des réglages de contexte dans le panneau (présentation seulement).
 const FUND_FIELDS = ['payment_mode', 'internal_validation_enabled', 'custom_status_renaming'];
 const DOSSIER_FIELDS = [
+  'holding',
   'assisted',
   'self',
   'reopened',
@@ -141,9 +142,13 @@ export function WorkflowSimulatorPanel({ open, onOpenChange }: WorkflowSimulator
     toast.success(t(`${P}.resetDone`));
   };
 
-  const renderContextField = (key: string) => {
+  // Le mode de détention n'a pas de clé connue : c'est le réglage qui propose la valeur "pure".
+  const holdingKey = Object.keys(data.context).find(k => data.context[k].values?.some(v => optionCode(v) === 'pure'));
+
+  const renderContextField = (field: string) => {
+    const key = field === 'holding' ? holdingKey ?? field : field;
     const setting = data.context[key];
-    const label = tr(`${P}.context.fields.${key}`, setting?.label ?? key);
+    const label = tr(`${P}.context.fields.${field}`, setting?.label ?? key);
     if (!setting) {
       return (
         <p key={key} className="text-xs text-muted-foreground">
@@ -181,7 +186,7 @@ export function WorkflowSimulatorPanel({ open, onOpenChange }: WorkflowSimulator
                 {setting.values.map(option => {
                   const code = optionCode(option);
                   const optionLabel =
-                    typeof option === 'object' ? option.label : tr(`${P}.context.values.${key}.${code}`, code);
+                    typeof option === 'object' ? option.label : tr(`${P}.context.values.${field}.${code}`, code);
                   return (
                     <SelectItem key={code} value={code}>
                       {optionLabel}

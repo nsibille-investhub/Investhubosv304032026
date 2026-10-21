@@ -2084,6 +2084,18 @@
       "simulatorUnavailable": {
         "title": "Simulateur indisponible : fichier de scénarios introuvable",
         "description": "La page reste utilisable, sans simulation de l'état du dossier."
+      },
+      "readOnly": {
+        "title": "Vous n'avez pas le droit de modifier cette souscription.",
+        "description": "Vous pouvez consulter le dossier. Demandez le droit à un administrateur pour agir dessus."
+      },
+      "externalReview": {
+        "title": "Ce dossier est chez {{who}}.",
+        "description": "Vous pourrez le contrôler une fois qu'il vous aura été transmis."
+      },
+      "hypothesis": {
+        "title": "Hypothèse {{ids}} : l'état affiché dépend d'une décision ouverte.",
+        "description": "Ce comportement n'est pas encore arrêté dans les spécifications."
       }
     },
     "workflowSimulator": {
@@ -2140,7 +2152,7 @@
             "payment_mode": "Mode de paiement",
             "internal_validation_enabled": "Validation interne activée",
             "custom_status_renaming": "Renommage des statuts",
-            "assisted": "Souscription administrée",
+            "assisted": "Souscription assistée",
             "self": "Souscription directe",
             "reopened": "Rouverte",
             "exceptional_validation": "Validation exceptionnelle",
@@ -2149,7 +2161,8 @@
             "deferred_processing": "Traitement différé",
             "sideletter": "Side letter",
             "sepa_mandate": "Mandat SEPA",
-            "pending_changes": "Demandes de modification en attente"
+            "pending_changes": "Demandes de modification en attente",
+            "holding": "Mode de détention"
           },
           "values": {
             "payment_mode": {
@@ -2159,10 +2172,15 @@
             "custom_status_renaming": {
               "none": "Aucun",
               "renaming": "Renommage"
+            },
+            "holding": {
+              "pure": "Pur",
+              "administered": "Administré",
+              "nominative": "Nominatif"
             }
           },
           "missing": "{{field}} : réglage absent du fichier de scénarios",
-          "assistedUnavailable": "Workflow {{workflow}} : la souscription administrée n'est pas proposée.",
+          "assistedUnavailable": "Workflow {{workflow}} : la souscription assistée n'est pas proposée.",
           "selfForced": "Workflow {{workflow}} : la souscription directe est automatique."
         },
         "axes": {
@@ -2189,6 +2207,63 @@
           "itemTitle": "{{workflow}} · {{state}} · {{investor}}",
           "loaded": "Dossier de {{investor}} chargé",
           "unresolved": "Indisponible : {{missing}} introuvable dans le fichier de scénarios"
+        }
+      },
+      "header": {
+        "renamedTooltip": "État du référentiel : {{state}}",
+        "waitingOn": "Le dossier attend : {{who}}",
+        "waitingOnUnknown": "Le dossier attend : non renseigné dans le fichier de scénarios",
+        "expectedAction": "Action attendue : {{action}}",
+        "noTarget": "Le fichier de scénarios ne donne pas l'état d'arrivée de cette action.",
+        "transitionDone": "{{action}} : dossier passé à l'état {{state}}",
+        "notActivated": "Activée le : -",
+        "skippedDates": "{{states}} : Non applicable",
+        "metrics": {
+          "entryFees": "Frais d'entrée",
+          "premium": "Prime de souscription",
+          "totalDue": "Total dû"
+        },
+        "indicators": {
+          "self": "Souscription directe",
+          "assisted": "Souscription assistée",
+          "administered": "Souscription administrée",
+          "holdingTooltip": "Mode de détention : {{mode}}",
+          "deferred": "Traitement différé",
+          "deferredUntil": "Traitement différé au {{date}}",
+          "transferredIn": "Issue d'un transfert",
+          "transferOrigin": "Souscription d'origine : {{id}}",
+          "openOrigin": "Ouverture de la souscription d'origine {{id}} (démonstration)",
+          "transferred": "Transférée le {{date}} par {{author}}",
+          "reducedCommitment": "Engagement réduit",
+          "sideletterRequired": "Side letter requise",
+          "sideletterConfirmed": "Side letter confirmée",
+          "reopened": "Rouverte",
+          "reopenedTooltip": "Rouverte {{detail}}",
+          "reopenedBy": "{{count}} fois par {{who}}",
+          "reopenedCount": "{{count}} fois",
+          "reopenedWho": {
+            "gp": "le gestionnaire",
+            "gestionnaire": "le gestionnaire",
+            "distributor": "le distributeur",
+            "distributeur": "le distributeur",
+            "investor": "l'investisseur"
+          },
+          "exceptionalValidation": "Validation exceptionnelle",
+          "fastAdd": "Reprise hors plateforme",
+          "sepa": "Mandat SEPA : {{status}}",
+          "pendingChangesOne": "{{count}} demande de modification en attente",
+          "pendingChangesMany": "{{count}} demandes de modification en attente",
+          "presignature": "Pré-signature en cours",
+          "payment": "Versement : {{status}}"
+        },
+        "terminal": {
+          "title": "Souscription {{state}}",
+          "on": "le {{date}}",
+          "by": "par {{author}}",
+          "reason": ", motif : {{reason}}.",
+          "canGoBack": "Vous pouvez la ramener à l'état {{state}}.",
+          "goBack": "Revenir à l'état précédent",
+          "notForRole": "Dossier {{state}} : cette action n'est pas proposée à votre profil."
         }
       }
     }
@@ -7244,7 +7319,12 @@
           "masterName": "Fonds Horizon Croissance III",
           "blockedDelete": "suppression",
           "blockedNav": "saisie de valeur liquidative",
-          "blockedArchive": "archivage"
+          "blockedArchive": "archivage",
+          "terminalTitle": "Souscription annulée le 12/10/2026 par Nadia, motif : doublon.",
+          "terminalDescription": "Vous pouvez la ramener à l'état À contrôler.",
+          "terminalAction": "Réactiver",
+          "terminalDone": "Souscription réactivée",
+          "externalWho": "le distributeur délégué"
         }
       },
       "effectsPanel": {
@@ -7314,7 +7394,7 @@
       "statusBadge": {
         "title": "Pastille de statut",
         "description": "Pastille générique sur laquelle repose la pastille de statut de fonds. Nouvelles variantes info, outline et strong, et icône optionnelle. Infobulle optionnelle (tooltip) pour le motif ou le détail.",
-        "variants": "neutral, outline, info, success, warning, danger, strong ; avec ou sans icône.",
+        "variants": "neutral, outline, info, success, warning, danger, strong, caution ; avec ou sans icône.",
         "states": "Lecture seule.",
         "exampleLabel": "Les sept tons",
         "tones": {
@@ -7324,7 +7404,22 @@
           "success": "Succès",
           "warning": "Attention",
           "danger": "Erreur",
-          "strong": "Fort"
+          "strong": "Fort",
+          "caution": "Tiers"
+        },
+        "workflowExampleLabel": "États d'un dossier, par qui attend",
+        "workflowExampleHint": "Neutre : brouillon. Bleu : l'investisseur. Orange : le gestionnaire. Jaune (caution) : un tiers. Vert : active. Gris : transférée, expirée. Gris foncé avec icône : annulée. Rouge : refusée. Libellé renommé : état du référentiel en info-bulle.",
+        "workflow": {
+          "draft": "Brouillon",
+          "investor": "En cours",
+          "gp": "À contrôler",
+          "thirdParty": "En signature",
+          "active": "Active",
+          "transferred": "Transférée",
+          "cancelled": "Annulée",
+          "refused": "Refusée",
+          "renamed": "Dossier reçu",
+          "renamedTooltip": "État du référentiel : À contrôler"
         }
       },
       "pageHeader": {

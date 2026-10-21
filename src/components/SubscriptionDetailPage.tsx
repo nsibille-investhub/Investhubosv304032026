@@ -139,6 +139,7 @@ import { Switch } from './ui/switch';
 import { PageStateBanner } from './ui/page-state-banner';
 import { WorkflowScenarioProvider, useWorkflowScenario } from '../utils/workflowScenarioContext';
 import { WorkflowSimulatorPanel } from './WorkflowSimulatorPanel';
+import { useSubscriptionWorkflowHeader } from './SubscriptionWorkflowHeader';
 import { FloatingActionButton } from './ui/floating-action-button';
 import { SIDE_PANEL_WIDTH } from './ui/side-panel';
 import { StatusBadge } from './StatusBadge';
@@ -234,6 +235,7 @@ function SubscriptionDetailPageContent({ subscription: subscriptionProp, onBack 
   const { t, lang } = useTranslation();
   const workflowScenario = useWorkflowScenario();
   const [simulatorOpen, setSimulatorOpen] = useState(false);
+  const workflowHeader = useSubscriptionWorkflowHeader();
 
   // Les modifications faites depuis la modale restent locales : la donnée
   // amont de la maquette n'est pas réécrite.
@@ -1044,6 +1046,27 @@ function SubscriptionDetailPageContent({ subscription: subscriptionProp, onBack 
   const formatRatio = (value: number) =>
     subscription.amount > 0 ? `${Math.round((value / subscription.amount) * 100)}%` : '0%';
 
+  // Fonds à paiement direct : pas d'appels ni de distributions, le montant dû est réglé en une fois.
+  const entryFeesAmount = (subscription.amount * (subscription.entryFees ?? 0)) / 100;
+  const premiumAmount = subscription.subscriptionPremium ?? 0;
+  const directPaymentMetrics = [
+    {
+      id: 'subscribed',
+      label: t('subscriptions.detail.header.subscribedAmount'),
+      value: formatAmount(subscription.amount),
+      secondaryValue: t('subscriptions.detail.header.shares', { count: subscription.quantity.toLocaleString('fr-FR') }),
+      icon: DollarSign,
+    },
+    { id: 'entryFees', label: t('subscriptions.workflowSimulator.header.metrics.entryFees'), value: formatAmount(entryFeesAmount), icon: Percent },
+    { id: 'premium', label: t('subscriptions.workflowSimulator.header.metrics.premium'), value: formatAmount(premiumAmount), icon: Banknote },
+    {
+      id: 'totalDue',
+      label: t('subscriptions.workflowSimulator.header.metrics.totalDue'),
+      value: formatAmount(subscription.amount + entryFeesAmount + premiumAmount),
+      icon: Wallet,
+    },
+  ];
+
   const openInNewTab = t('subscriptions.detail.header.openInNewTab');
   const investorUrl = getShareableUrl('investors');
   const structureUrl = getShareableUrl('entities');
@@ -1222,7 +1245,7 @@ function SubscriptionDetailPageContent({ subscription: subscriptionProp, onBack 
           icon: DollarSign,
         },
       ]}
-      metrics={[
+      metrics={workflowHeader?.model.paymentDirect ? directPaymentMetrics : [
         {
           id: 'subscribed',
           label: t('subscriptions.detail.header.subscribedAmount'),
@@ -1533,12 +1556,9 @@ function SubscriptionDetailPageContent({ subscription: subscriptionProp, onBack 
         }
       />
       <PageHeader
-        title={
-          <span className="inline-flex items-center gap-3">
-            {subscription.name}
-            <SubscriptionStatusBadge status={subscription.status} />
-          </span>
-        }
+        title={subscription.name}
+        status={workflowHeader?.status ?? <SubscriptionStatusBadge status={subscription.status} />}
+        details={workflowHeader?.details}
         subtitle={
           <PageHeaderSubtitle>
             <PageHeaderSubtitleItem icon={Hash} className="group">
@@ -1573,13 +1593,36 @@ function SubscriptionDetailPageContent({ subscription: subscriptionProp, onBack 
               {t('subscriptions.detail.header.createdOn', { date: formatLongDate(subscription.createdAt) })}
             </PageHeaderSubtitleItem>
 
-            {subscription.activatedAt && (
+            {workflowHeader ? (
               <>
                 <PageHeaderSubtitleSeparator />
                 <PageHeaderSubtitleItem icon={CheckCircle2}>
-                  {t('subscriptions.detail.header.activatedOn', { date: formatLongDate(subscription.activatedAt) })}
+                  {workflowHeader.model.activatedAt
+                    ? t('subscriptions.detail.header.activatedOn', {
+                        date: formatLongDate(subscription.activatedAt ?? new Date(workflowHeader.model.activatedAt)),
+                      })
+                    : t('subscriptions.workflowSimulator.header.notActivated')}
                 </PageHeaderSubtitleItem>
+                {workflowHeader.model.skippedStates.length > 0 && (
+                  <>
+                    <PageHeaderSubtitleSeparator />
+                    <PageHeaderSubtitleItem icon={Calendar}>
+                      {t('subscriptions.workflowSimulator.header.skippedDates', {
+                        states: workflowHeader.model.skippedStates.join(', '),
+                      })}
+                    </PageHeaderSubtitleItem>
+                  </>
+                )}
               </>
+            ) : (
+              subscription.activatedAt && (
+                <>
+                  <PageHeaderSubtitleSeparator />
+                  <PageHeaderSubtitleItem icon={CheckCircle2}>
+                    {t('subscriptions.detail.header.activatedOn', { date: formatLongDate(subscription.activatedAt) })}
+                  </PageHeaderSubtitleItem>
+                </>
+              )
             )}
 
             <PageHeaderSubtitleSeparator />
@@ -1605,6 +1648,7 @@ function SubscriptionDetailPageContent({ subscription: subscriptionProp, onBack 
           <PageStateBanner variant="simulatorUnavailable" />
         </div>
       )}
+      {workflowHeader?.banners}
 
       {/* Tabs - Same structure as InvestorDetailPage */}
       <div className="px-8 bg-card border-b border-border">

@@ -12,7 +12,9 @@ export type Tone =
   | 'success'
   | 'warning'
   | 'danger'
-  | 'strong';
+  | 'strong'
+  /** Jaune : attente d'un tiers. Distinct de warning (orange), bâti sur --brand-warning. */
+  | 'caution';
 
 interface ToneTokens {
   fg: string;
@@ -66,6 +68,12 @@ export const TONE_TOKENS: Record<Tone, ToneTokens> = {
     soft: mix('--foreground', 12),
     border: mix('--foreground', 30),
     dot: 'var(--foreground)',
+  },
+  caution: {
+    fg: 'color-mix(in oklab, var(--brand-warning) 55%, var(--foreground))',
+    soft: mix('--brand-warning', 18),
+    border: mix('--brand-warning', 40),
+    dot: 'var(--brand-warning)',
   },
 };
 

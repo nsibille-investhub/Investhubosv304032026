@@ -10,7 +10,8 @@ export type StatusVariant =
   | "neutral"
   | "info"
   | "outline"
-  | "strong";
+  | "strong"
+  | "caution";
 
 interface StatusBadgeProps {
   label: string;

@@ -2084,6 +2084,18 @@
       "simulatorUnavailable": {
         "title": "Simulator unavailable: scenario file not found",
         "description": "The page remains usable, without simulating the file status."
+      },
+      "readOnly": {
+        "title": "You are not allowed to edit this subscription.",
+        "description": "You can view the file. Ask an administrator for the right to act on it."
+      },
+      "externalReview": {
+        "title": "This file is with {{who}}.",
+        "description": "You will be able to review it once it has been sent to you."
+      },
+      "hypothesis": {
+        "title": "Assumption {{ids}}: the displayed state depends on an open decision.",
+        "description": "This behaviour is not settled in the specifications yet."
       }
     },
     "workflowSimulator": {
@@ -2140,7 +2152,7 @@
             "payment_mode": "Payment mode",
             "internal_validation_enabled": "Internal validation enabled",
             "custom_status_renaming": "Status renaming",
-            "assisted": "Administered subscription",
+            "assisted": "Assisted subscription",
             "self": "Direct subscription",
             "reopened": "Reopened",
             "exceptional_validation": "Exceptional validation",
@@ -2149,7 +2161,8 @@
             "deferred_processing": "Deferred processing",
             "sideletter": "Side letter",
             "sepa_mandate": "SEPA mandate",
-            "pending_changes": "Pending change requests"
+            "pending_changes": "Pending change requests",
+            "holding": "Holding mode"
           },
           "values": {
             "payment_mode": {
@@ -2159,10 +2172,15 @@
             "custom_status_renaming": {
               "none": "None",
               "renaming": "Renaming"
+            },
+            "holding": {
+              "pure": "Pure",
+              "administered": "Administered",
+              "nominative": "Registered"
             }
           },
           "missing": "{{field}}: setting missing from the scenario file",
-          "assistedUnavailable": "Workflow {{workflow}}: administered subscription is not available.",
+          "assistedUnavailable": "Workflow {{workflow}}: assisted subscription is not available.",
           "selfForced": "Workflow {{workflow}}: direct subscription is automatic."
         },
         "axes": {
@@ -2189,6 +2207,63 @@
           "itemTitle": "{{workflow}} · {{state}} · {{investor}}",
           "loaded": "{{investor}}'s file loaded",
           "unresolved": "Unavailable: {{missing}} not found in the scenario file"
+        }
+      },
+      "header": {
+        "renamedTooltip": "Reference state: {{state}}",
+        "waitingOn": "The file is waiting on: {{who}}",
+        "waitingOnUnknown": "The file is waiting on: not set in the scenario file",
+        "expectedAction": "Expected action: {{action}}",
+        "noTarget": "The scenario file does not give the target state of this action.",
+        "transitionDone": "{{action}}: file moved to {{state}}",
+        "notActivated": "Activated on: -",
+        "skippedDates": "{{states}}: Not applicable",
+        "metrics": {
+          "entryFees": "Entry fees",
+          "premium": "Subscription premium",
+          "totalDue": "Total due"
+        },
+        "indicators": {
+          "self": "Direct subscription",
+          "assisted": "Assisted subscription",
+          "administered": "Administered subscription",
+          "holdingTooltip": "Holding mode: {{mode}}",
+          "deferred": "Deferred processing",
+          "deferredUntil": "Deferred processing until {{date}}",
+          "transferredIn": "From a transfer",
+          "transferOrigin": "Original subscription: {{id}}",
+          "openOrigin": "Opening original subscription {{id}} (demo)",
+          "transferred": "Transferred on {{date}} by {{author}}",
+          "reducedCommitment": "Reduced commitment",
+          "sideletterRequired": "Side letter required",
+          "sideletterConfirmed": "Side letter confirmed",
+          "reopened": "Reopened",
+          "reopenedTooltip": "Reopened {{detail}}",
+          "reopenedBy": "{{count}} time(s) by {{who}}",
+          "reopenedCount": "{{count}} time(s)",
+          "reopenedWho": {
+            "gp": "the manager",
+            "gestionnaire": "the manager",
+            "distributor": "the distributor",
+            "distributeur": "the distributor",
+            "investor": "the investor"
+          },
+          "exceptionalValidation": "Exceptional validation",
+          "fastAdd": "Off-platform takeover",
+          "sepa": "SEPA mandate: {{status}}",
+          "pendingChangesOne": "{{count}} pending change request",
+          "pendingChangesMany": "{{count}} pending change requests",
+          "presignature": "Pre-signature in progress",
+          "payment": "Payment: {{status}}"
+        },
+        "terminal": {
+          "title": "Subscription {{state}}",
+          "on": "on {{date}}",
+          "by": "by {{author}}",
+          "reason": ", reason: {{reason}}.",
+          "canGoBack": "You can bring it back to {{state}}.",
+          "goBack": "Go back to the previous state",
+          "notForRole": "File {{state}}: this action is not available to your profile."
         }
       }
     }
@@ -7244,7 +7319,12 @@
           "masterName": "Horizon Growth Fund III",
           "blockedDelete": "deletion",
           "blockedNav": "net asset value entry",
-          "blockedArchive": "archiving"
+          "blockedArchive": "archiving",
+          "terminalTitle": "Subscription cancelled on 12/10/2026 by Nadia, reason: duplicate.",
+          "terminalDescription": "You can bring it back to To check.",
+          "terminalAction": "Reactivate",
+          "terminalDone": "Subscription reactivated",
+          "externalWho": "the delegated distributor"
         }
       },
       "effectsPanel": {
@@ -7314,7 +7394,7 @@
       "statusBadge": {
         "title": "Status badge",
         "description": "Generic badge the fund status badge is built on. New info, outline and strong variants, and optional icon. Optional tooltip for the reason or details.",
-        "variants": "neutral, outline, info, success, warning, danger, strong; with or without icon.",
+        "variants": "neutral, outline, info, success, warning, danger, strong, caution; with or without an icon.",
         "states": "Read-only.",
         "exampleLabel": "The seven tones",
         "tones": {
@@ -7324,7 +7404,22 @@
           "success": "Success",
           "warning": "Warning",
           "danger": "Error",
-          "strong": "Strong"
+          "strong": "Strong",
+          "caution": "Third party"
+        },
+        "workflowExampleLabel": "File states, by who is awaited",
+        "workflowExampleHint": "Neutral: draft. Blue: the investor. Orange: the manager. Yellow (caution): a third party. Green: active. Grey: transferred, expired. Dark grey with icon: cancelled. Red: refused. Renamed label: reference state in the tooltip.",
+        "workflow": {
+          "draft": "Draft",
+          "investor": "In progress",
+          "gp": "To check",
+          "thirdParty": "Signing",
+          "active": "Active",
+          "transferred": "Transferred",
+          "cancelled": "Cancelled",
+          "refused": "Refused",
+          "renamed": "File received",
+          "renamedTooltip": "Reference state: To check"
         }
       },
       "pageHeader": {

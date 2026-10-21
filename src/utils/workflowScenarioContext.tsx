@@ -12,7 +12,7 @@ import {
   writePermalink,
 } from './workflowSimulator/scenario';
 import { runSimulatorSelfCheck } from './workflowSimulator/selfCheck';
-import { loadDemoDossiers, resolveDossier, type DemoDossier, type ResolvedDossier } from './workflowSimulator/dossiers';
+import { loadDemoFile, resolveDossier, type DemoDossier, type DemoFile, type ResolvedDossier } from './workflowSimulator/dossiers';
 import type {
   GroupEditability,
   ResolvedAction,
@@ -37,6 +37,8 @@ interface ReadyValue {
   dossiers: ResolvedDossier[];
   /** Dossier de démonstration chargé, jusqu'à la prochaine réinitialisation. */
   activeDossier: DemoDossier | null;
+  /** Données fictives de la ligne de titre : défauts du fichier, surchargés par le dossier chargé. */
+  demo: Pick<DemoFile, 'headerDefaults' | 'statusRenaming'>;
   loadDossier: (id: string) => void;
   update: (patch: Partial<WorkflowScenario> | ((current: WorkflowScenario) => WorkflowScenario)) => void;
   playTransition: (to: string, trigger: string) => void;
@@ -58,12 +60,12 @@ export function WorkflowScenarioProvider({ children }: { children: React.ReactNo
   const [load, setLoad] = useState<SimulatorLoadResult | null>(null);
   const [scenario, setScenario] = useState<WorkflowScenario | null>(null);
   const [history, setHistory] = useState<ScenarioHistoryEntry[]>([]);
-  const [rawDossiers, setRawDossiers] = useState<DemoDossier[]>([]);
+  const [demoFile, setDemoFile] = useState<DemoFile>({ dossiers: [], headerDefaults: {}, statusRenaming: {} });
   const [activeDossier, setActiveDossier] = useState<DemoDossier | null>(null);
 
   useEffect(() => {
     let alive = true;
-    loadDemoDossiers().then(list => alive && setRawDossiers(list));
+    loadDemoFile().then(file => alive && setDemoFile(file));
     return () => {
       alive = false;
     };
@@ -142,8 +144,8 @@ export function WorkflowScenarioProvider({ children }: { children: React.ReactNo
   const dossiers = useMemo(() => {
     if (!engine) return [];
     const base = defaultScenario(engine);
-    return rawDossiers.map(d => resolveDossier(engine, d, base));
-  }, [engine, rawDossiers]);
+    return demoFile.dossiers.map(d => resolveDossier(engine, d, base));
+  }, [engine, demoFile]);
 
   const loadDossier = useCallback(
     (id: string) => {
@@ -187,12 +189,16 @@ export function WorkflowScenarioProvider({ children }: { children: React.ReactNo
       history,
       dossiers,
       activeDossier,
+      demo: {
+        headerDefaults: { ...demoFile.headerDefaults, ...activeDossier?.data.header },
+        statusRenaming: demoFile.statusRenaming,
+      },
       loadDossier,
       update,
       playTransition,
       reset,
     };
-  }, [load, engine, scenario, history, dossiers, activeDossier, loadDossier, update, playTransition, reset]);
+  }, [load, engine, scenario, history, dossiers, activeDossier, demoFile, loadDossier, update, playTransition, reset]);
 
   return <WorkflowScenarioContext.Provider value={value}>{children}</WorkflowScenarioContext.Provider>;
 }
