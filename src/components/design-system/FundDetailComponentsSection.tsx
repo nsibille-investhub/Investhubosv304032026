@@ -31,7 +31,6 @@ import {
   Scale,
   Tag,
   FlaskConical,
-  Landmark,
   TrendingUp,
   Users,
   Wallet,

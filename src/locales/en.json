@@ -7448,8 +7448,8 @@
       "wizardSteps": {
         "title": "Wizard steps",
         "description": "Steps of a modal wizard, placed in the BigModalPanelHeader (new area under the title). Number, check once the step is done, current step label in bold.",
-        "variants": "2 to 5 steps.",
-        "states": "Done step, current step, upcoming step.",
+        "variants": "2 to 5 steps in a modal. Clickable milestone timeline (onSelect), labels under the dots (labelPosition=\"below\") and secondary milestones with a note (branches).",
+        "states": "Step done, current step, upcoming step; active secondary milestone; no current step (current = -1).",
         "exampleLabel": "Three-step wizard",
         "demo": {
           "ariaLabel": "Wizard steps",
