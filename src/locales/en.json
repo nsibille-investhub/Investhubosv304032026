@@ -2080,6 +2080,20 @@
         "pendingDescription": "The partner reviews the file on their portal. The file will be sent to you once validated.",
         "validatedTitle": "File validated by {{author}} ({{partner}}) on {{date}}",
         "validatedDescription": "Sent to analyst 1. The partner's actions are in the audit trail."
+      },
+      "simulatorUnavailable": {
+        "title": "Simulator unavailable: scenario file not found",
+        "description": "The page remains usable, without simulating the file status."
+      }
+    },
+    "workflowSimulator": {
+      "readOnlyReason": "File {{state}}: your profile is read-only, this action is not available.",
+      "editability": {
+        "O": "File {{state}}: editable.",
+        "conditional": "File {{state}}: editable under conditions.",
+        "E": "File {{state}}: changes on request only.",
+        "L": "File {{state}}: this field can no longer be edited.",
+        "lock": "Active lock: {{lock}}."
       }
     }
   },

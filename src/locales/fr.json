@@ -2080,6 +2080,20 @@
         "pendingDescription": "Le partenaire contrôle le dossier sur son portail. Le dossier vous sera transmis après sa validation.",
         "validatedTitle": "Dossier validé par {{author}} ({{partner}}) le {{date}}",
         "validatedDescription": "Transmis à l'analyste 1. Les actions du partenaire figurent dans la piste d'audit."
+      },
+      "simulatorUnavailable": {
+        "title": "Simulateur indisponible : fichier de scénarios introuvable",
+        "description": "La page reste utilisable, sans simulation de l'état du dossier."
+      }
+    },
+    "workflowSimulator": {
+      "readOnlyReason": "Dossier {{state}} : votre profil est en lecture seule, cette action n'est pas proposée.",
+      "editability": {
+        "O": "Dossier {{state}} : modifiable.",
+        "conditional": "Dossier {{state}} : modifiable sous condition.",
+        "E": "Dossier {{state}} : modification sur demande uniquement.",
+        "L": "Dossier {{state}} : ce champ n'est plus modifiable.",
+        "lock": "Verrou actif : {{lock}}."
       }
     }
   },

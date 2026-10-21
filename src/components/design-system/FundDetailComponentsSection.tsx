@@ -487,6 +487,7 @@ function PageStateBannerDemo() {
         blockedActions={[t(`${d}.blockedDelete`), t(`${d}.blockedNav`), t(`${d}.blockedArchive`)]}
       />
       <PageStateBanner variant="readOnly" />
+      <PageStateBanner variant="simulatorUnavailable" />
     </div>
   );
 }
@@ -1024,7 +1025,8 @@ export function FundDetailComponentsSection() {
 <PageStateBanner variant="mirror" masterName={name} onOpenMaster={open} />
 <PageStateBanner variant="sendingNotices" blockedActions={[...]} />
 <PageStateBanner variant="readOnly" />
-<PageStateBanner variant="delegatedReview" partner={name} validatedBy={author} date={date} />`}
+<PageStateBanner variant="delegatedReview" partner={name} validatedBy={author} date={date} />
+<PageStateBanner variant="simulatorUnavailable" />`}
       >
         <Example label={t(`${K}.pageStateBanner.exampleLabel`)} hint={t(`${K}.pageStateBanner.exampleHint`)}>
           <PageStateBannerDemo />

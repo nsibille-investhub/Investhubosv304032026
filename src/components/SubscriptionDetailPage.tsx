@@ -136,6 +136,7 @@ import { NotificationsPanel } from './NotificationsPanel';
 import { useNotifications, type AnswersModifiedNotification } from '../utils/notificationsContext';
 import { Switch } from './ui/switch';
 import { PageStateBanner } from './ui/page-state-banner';
+import { WorkflowScenarioProvider, useWorkflowScenario } from '../utils/workflowScenarioContext';
 import { StatusBadge } from './StatusBadge';
 import { Label } from './ui/label';
 import type { MockQuestion } from '../utils/subscriptionDetailMockData';
@@ -217,8 +218,17 @@ const MODIFIED_BY_KEY: Record<SubscriptionAuditOrigin, string> = {
 
 const DIRECT_PARTNER_NAMES = ['Souscription Directe', 'Direct Subscription'];
 
-export function SubscriptionDetailPage({ subscription: subscriptionProp, onBack }: SubscriptionDetailPageProps) {
+export function SubscriptionDetailPage(props: SubscriptionDetailPageProps) {
+  return (
+    <WorkflowScenarioProvider>
+      <SubscriptionDetailPageContent {...props} />
+    </WorkflowScenarioProvider>
+  );
+}
+
+function SubscriptionDetailPageContent({ subscription: subscriptionProp, onBack }: SubscriptionDetailPageProps) {
   const { t, lang } = useTranslation();
+  const workflowScenario = useWorkflowScenario();
 
   // Les modifications faites depuis la modale restent locales : la donnée
   // amont de la maquette n'est pas réécrite.
@@ -1581,6 +1591,11 @@ export function SubscriptionDetailPage({ subscription: subscriptionProp, onBack 
         }}
       />
 
+      {workflowScenario.status === 'unavailable' && (
+        <div className="px-8 pb-4 bg-card">
+          <PageStateBanner variant="simulatorUnavailable" />
+        </div>
+      )}
 
       {/* Tabs - Same structure as InvestorDetailPage */}
       <div className="px-8 bg-card border-b border-border">
