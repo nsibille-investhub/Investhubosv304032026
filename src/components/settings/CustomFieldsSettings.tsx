@@ -121,7 +121,7 @@ const DraggableRow: React.FC<DraggableRowProps> = ({
           {!field.visibleFO && <EyeOff className="w-3.5 h-3.5 text-gray-400" />}
         </div>
       </td>
-      <td className="p-3">
+      <td className="p-3 ds-sticky-actions">
         <div className="flex items-center gap-2 justify-end">
           <button
             onClick={() => onEdit(field)}
@@ -627,7 +627,7 @@ function CustomFieldsSettingsContent() {
                     <th className="text-left p-3 text-sm text-gray-600">Objet</th>
                     <th className="text-left p-3 text-sm text-gray-600">Type</th>
                     <th className="text-left p-3 text-sm text-gray-600">Champ</th>
-                    <th className="w-32"></th>
+                    <th className="w-32 ds-sticky-actions"></th>
                   </tr>
                 </thead>
                 <tbody>

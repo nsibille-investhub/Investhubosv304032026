@@ -272,7 +272,7 @@ const DraggableRow: React.FC<DraggableRowProps> = ({ group, index, moveGroup, on
       <td className="p-3">
         <CountBadge count={group.nombreDroits} icon={Shield} variant="purple" />
       </td>
-      <td className="p-3">
+      <td className="p-3 ds-sticky-actions">
         <div className="flex items-center gap-2 justify-end">
           <button
             onClick={() => onEdit(group)}
@@ -834,7 +834,7 @@ function RightsSettingsContent() {
                       <th className="text-left p-3 text-sm text-gray-600">Type</th>
                     )}
                     <th className="text-left p-3 text-sm text-gray-600">Nombre de droits liés</th>
-                    <th className="w-24"></th>
+                    <th className="w-24 ds-sticky-actions"></th>
                   </tr>
                 </thead>
                 <tbody>

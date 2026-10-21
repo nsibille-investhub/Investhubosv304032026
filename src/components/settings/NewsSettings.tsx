@@ -463,7 +463,7 @@ function DraggableRow({ news, index, moveNews, onEdit, onDelete, showDragHandle,
           )}
         </div>
       </td>
-      <td className="p-4 text-right">
+      <td className="p-4 text-right ds-sticky-actions">
         <div className="flex items-center gap-2 justify-end">
           <button
             onClick={() => onEdit(news)}
@@ -1415,7 +1415,7 @@ function NewsSettingsContent() {
                     <th className="text-left px-4 py-3 text-xs text-gray-500">Titre</th>
                     <th className="text-left px-4 py-3 text-xs text-gray-500">Fonds</th>
                     <th className="text-left px-4 py-3 text-xs text-gray-500">Cibles</th>
-                    <th className="text-right px-4 py-3 text-xs text-gray-500 w-24">Actions</th>
+                    <th className="text-right px-4 py-3 text-xs text-gray-500 w-24 ds-sticky-actions">Actions</th>
                   </tr>
                 </thead>
                 <tbody>
