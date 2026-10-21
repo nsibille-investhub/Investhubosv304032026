@@ -1186,6 +1186,17 @@
           "noteAdded": "Note added to the log",
           "complianceReopenedDesc": "Score, matches and categorisation can be changed again.",
           "scoreInvalidated": "Score validation removed"
+        },
+        "chain": {
+          "ariaLabel": "Validation circuit",
+          "partner": "Partner: {{name}}",
+          "analyst1": "Analyst 1: {{name}}",
+          "analyst2": "Analyst 2: {{name}}",
+          "validated": "Final validation",
+          "handOff": "Hand over to {{name}}",
+          "finalValidation": "Final validation ({{name}})",
+          "handedOffToast": "File handed over to {{name}}",
+          "handedOffToastDesc": "The hand-over is logged in the audit trail."
         }
       },
       "accessDenied": {
@@ -1279,7 +1290,9 @@
           "mandateCreated": "Direct debit mandate created",
           "investorReminded": "Investor reminded",
           "dossierReopened": "File reopened",
-          "partnerValidated": "File validated by the partner"
+          "partnerValidated": "File validated by the partner",
+          "reviewHandedOff": "File handed over to the next analyst",
+          "finalValidation": "Final validation"
         },
         "origin": {
           "investor": "Investor",
@@ -1454,14 +1467,14 @@
         "preview": "See the preview",
         "previewTitle": "Preview: distributor space",
         "previewDescription": "Notification received by the partner and the advisor attached to the subscription.",
-        "noCircuitToast": "Outside four-eyes review and delegated validation: no alert, the indicator is enough.",
+        "noCircuitToast": "Standard mode: no alert, the indicator is enough.",
         "simulate": "Simulate a change by the investor",
         "scenario": {
-          "label": "Review circuit",
+          "label": "Validation mode",
           "options": {
-            "fourEyes": "Four-eyes review (you are analyst 1)",
-            "delegated": "KYC validation delegated to the partner",
-            "none": "No review circuit"
+            "fourEyes": "Four-eyes review",
+            "partnerPrevalidation": "Partner pre-validation",
+            "standard": "Standard"
           }
         }
       },

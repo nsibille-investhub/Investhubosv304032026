@@ -201,9 +201,9 @@ const isControllable = (question: MockQuestion, response: string) =>
   !question.info && !(question.notAsked && !response);
 
 // Circuit de contrôle du dossier, qui décide des destinataires des alertes (IC-5620).
-const REVIEW_CIRCUITS = ['fourEyes', 'delegated', 'none'] as const;
+const REVIEW_CIRCUITS = ['partnerPrevalidation', 'standard', 'fourEyes'] as const;
 type ReviewCircuit = (typeof REVIEW_CIRCUITS)[number];
-const SECOND_ANALYSTS = ['Paul Girard', 'Sophie Lambert'];
+const SECOND_ANALYSTS = ['Paul Girard'];
 /** Utilisateur du partenaire délégué qui contrôle le dossier sur le portail (IC-5633). */
 const PARTNER_REVIEWER = 'Léa Fontaine';
 
@@ -319,7 +319,7 @@ export function SubscriptionDetailPage({ subscription: subscriptionProp, onBack 
   const [answerEdit, setAnswerEdit] = useState<{ sectionId: string; idx: number } | null>(null);
   const [notAskedVisible, setNotAskedVisible] = useState<string[]>([]);
   const [modifiedOnly, setModifiedOnly] = useState(false);
-  const [reviewCircuit, setReviewCircuit] = useState<ReviewCircuit>('fourEyes');
+  const [reviewCircuit, setReviewCircuit] = useState<ReviewCircuit>('standard');
   const { push: pushNotification } = useNotifications();
   const [distributorPreview, setDistributorPreview] = useState<AnswersModifiedNotification | null>(null);
   const [partnerValidation, setPartnerValidation] = useState<{ by: string; at: string } | null>(null);
@@ -588,7 +588,7 @@ export function SubscriptionDetailPage({ subscription: subscriptionProp, onBack 
 
   /** Une alerte par enregistrement, jamais à l'auteur, selon le circuit de contrôle (IC-5620). */
   const notifyModifiedAnswers = (questionIds: string[], origin: SubscriptionAuditOrigin, authorName: string) => {
-    if (questionIds.length === 0 || reviewCircuit === 'none') return;
+    if (questionIds.length === 0 || reviewCircuit === 'standard') return;
     const partner = subscription.partenaire?.name ?? t('subscriptions.detail.answerAlerts.partnerFallback');
     const recipients = (
       reviewCircuit === 'fourEyes'
@@ -630,7 +630,7 @@ export function SubscriptionDetailPage({ subscription: subscriptionProp, onBack 
     toast.info(t('subscriptions.detail.answerAlerts.sentToast'), {
       description: t('subscriptions.detail.answerAlerts.sentToastDesc', { recipients: recipientLabel }),
       action:
-        reviewCircuit === 'delegated'
+        reviewCircuit === 'partnerPrevalidation'
           ? {
               label: t('subscriptions.detail.answerAlerts.preview'),
               onClick: () =>
@@ -721,7 +721,7 @@ export function SubscriptionDetailPage({ subscription: subscriptionProp, onBack 
       })),
     );
     notifyModifiedAnswers(changes.map(change => change.questionId), 'investor', investorName);
-    if (reviewCircuit === 'none') {
+    if (reviewCircuit === 'standard') {
       toast.info(t('subscriptions.detail.answerAlerts.noCircuitToast'));
     }
   };
@@ -860,7 +860,7 @@ export function SubscriptionDetailPage({ subscription: subscriptionProp, onBack 
     .map((doc, idx) => ({ doc, idx }))
     .filter(({ doc }) => isMissingIssueDate(doc));
   const delegatedPartnerName = subscription.partenaire?.name ?? t('subscriptions.detail.answerAlerts.partnerFallback');
-  const awaitingPartner = reviewCircuit === 'delegated' && !partnerValidation;
+  const awaitingPartner = reviewCircuit === 'partnerPrevalidation' && !partnerValidation;
   const validationBlockedReason =
     documentBlockers.length > 0
       ? t('subscriptions.detail.documentControl.validationBlocked', { count: documentBlockers.length })
@@ -1488,7 +1488,7 @@ export function SubscriptionDetailPage({ subscription: subscriptionProp, onBack 
         onChange={setReviewCircuit}
         action={
           <>
-            {reviewCircuit === 'delegated' && (
+            {reviewCircuit === 'partnerPrevalidation' && (
               <Button
                 variant="outline"
                 size="sm"
@@ -1818,7 +1818,7 @@ export function SubscriptionDetailPage({ subscription: subscriptionProp, onBack 
                   {currentStep === 1 && (
                     // Onboarding en cours — KPI de completion, navigation par section, sections
                     <div className="space-y-6">
-                      {reviewCircuit === 'delegated' && (
+                      {reviewCircuit === 'partnerPrevalidation' && (
                         <PageStateBanner
                           variant="delegatedReview"
                           partner={delegatedPartnerName}
@@ -2452,6 +2452,20 @@ export function SubscriptionDetailPage({ subscription: subscriptionProp, onBack 
                   {currentStep === 2 && (
                     // Validation / Conformité — widgets risque, screening et validation
                     <SubscriptionComplianceSection
+                      reviewMode={reviewCircuit}
+                      reviewChain={{
+                        partner: { name: delegatedPartnerName, by: partnerValidation?.by },
+                        firstAnalyst: CURRENT_OPERATOR,
+                        secondAnalyst: SECOND_ANALYSTS[0],
+                      }}
+                      onReviewEvent={event =>
+                        logAudit({
+                          type: event.type === 'handedOff' ? 'reviewHandedOff' : 'finalValidation',
+                          origin: 'operator',
+                          actorName: event.by,
+                          newValue: event.to,
+                        })
+                      }
                       scoreValidated={riskValidated}
                       scoreValidatedBy={riskValidatedBy}
                       scoreValidatedAt={riskValidationDate}
