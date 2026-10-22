@@ -2207,6 +2207,33 @@
           "itemTitle": "{{workflow}} · {{state}} · {{investor}}",
           "loaded": "Dossier de {{investor}} chargé",
           "unresolved": "Indisponible : {{missing}} introuvable dans le fichier de scénarios"
+        },
+        "audiences": {
+          "title": "Ce que voient les autres ({{state}})",
+          "seeRules": "Voir le détail des règles",
+          "label": "Libellé affiché : {{label}}",
+          "noLabel": "Pas de libellé propre en V1",
+          "noAction": "Aucune action",
+          "hypothesis": "Hypothèse {{id}}",
+          "roles": {
+            "investor": "Investisseur",
+            "distributor": "Distributeur",
+            "distributorPure": "Distributeur (pure)",
+            "distributorAdministered": "Distributeur (administrée)",
+            "delegated_partner": "Distributeur délégué",
+            "fund_signer": "Contre-signataire du fonds",
+            "platform": "Plateforme"
+          },
+          "notApplicable": {
+            "direct": "Sans objet sur un parcours direct",
+            "noPrevalidation": "Sans objet : le fonds ne délègue pas la pré-validation",
+            "noCountersignature": "Sans objet : le fonds ne contresigne pas"
+          },
+          "rules": {
+            "title": "Ce que le portail laisse modifier",
+            "description": "Section 5.3 des spécifications, reproduite depuis editability.portal du fichier de scénarios.",
+            "missing": "Le fichier de scénarios ne contient pas editability.portal : la section 5.3 ne peut pas être affichée."
+          }
         }
       },
       "header": {

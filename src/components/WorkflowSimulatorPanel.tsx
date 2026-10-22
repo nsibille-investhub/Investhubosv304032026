@@ -43,6 +43,7 @@ import { DisabledReason } from './ui/disabled-reason';
 import { WizardSteps, type WizardStepBranch } from './ui/wizard-steps';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from './ui/dropdown-menu';
 import { Tag } from './Tag';
+import { WorkflowAudiencesCard } from './WorkflowAudiencesCard';
 
 const P = 'subscriptions.workflowSimulator.panel';
 const FAMILIES: WorkflowFamily[] = ['A', 'B', 'C'];
@@ -395,6 +396,7 @@ export function WorkflowSimulatorPanel({ open, onOpenChange }: WorkflowSimulator
                 </SelectContent>
               </Select>
             </SidePanelCard>
+            <WorkflowAudiencesCard />
           </SidePanelSection>
 
           <SidePanelSection icon={Landmark} title={t(`${P}.fund.title`)} collapsible>

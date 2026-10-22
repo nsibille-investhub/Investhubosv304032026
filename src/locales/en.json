@@ -2207,6 +2207,33 @@
           "itemTitle": "{{workflow}} · {{state}} · {{investor}}",
           "loaded": "{{investor}}'s file loaded",
           "unresolved": "Unavailable: {{missing}} not found in the scenario file"
+        },
+        "audiences": {
+          "title": "What the others see ({{state}})",
+          "seeRules": "See the detailed rules",
+          "label": "Displayed label: {{label}}",
+          "noLabel": "No dedicated label in V1",
+          "noAction": "No action",
+          "hypothesis": "Assumption {{id}}",
+          "roles": {
+            "investor": "Investor",
+            "distributor": "Distributor",
+            "distributorPure": "Distributor (pure)",
+            "distributorAdministered": "Distributor (administered)",
+            "delegated_partner": "Delegated distributor",
+            "fund_signer": "Fund countersigner",
+            "platform": "Platform"
+          },
+          "notApplicable": {
+            "direct": "Not applicable on a direct journey",
+            "noPrevalidation": "Not applicable: the fund does not delegate pre-validation",
+            "noCountersignature": "Not applicable: the fund does not countersign"
+          },
+          "rules": {
+            "title": "What the portal allows to edit",
+            "description": "Section 5.3 of the specifications, reproduced from editability.portal in the scenario file.",
+            "missing": "The scenario file has no editability.portal: section 5.3 cannot be displayed."
+          }
         }
       },
       "header": {
