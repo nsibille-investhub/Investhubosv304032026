@@ -597,7 +597,8 @@
         "financial": "Situation financière",
         "documents": "Pièces justificatives",
         "investorProfile": "Profil investisseur",
-        "commitments": "Engagements financiers"
+        "commitments": "Engagements financiers",
+        "beneficialOwners": "Bénéficiaires effectifs"
       },
       "onboarding": {
         "answeredOf": "{{answered}}/{{total}} répondues",
@@ -646,7 +647,8 @@
           "badge": "Préonboarding"
         },
         "iteration": {
-          "commitment": "Engagement {{n}}"
+          "commitment": "Engagement {{n}}",
+          "beneficialOwner": "Bénéficiaire effectif {{n}}"
         },
         "notAsked": {
           "tag": "Non posée",
@@ -1399,23 +1401,6 @@
         "description": "Cette souscription porte une part réservée à d'autres opérateurs. Vous n'avez pas les droits pour consulter son dossier.",
         "back": "Retour aux souscriptions"
       },
-      "beneficialOwners": {
-        "title": "Bénéficiaires effectifs",
-        "countOne": "{{count}} bénéficiaire effectif déclaré",
-        "countMany": "{{count}} bénéficiaires effectifs déclarés",
-        "columns": {
-          "name": "Nom",
-          "ownership": "Détention",
-          "control": "Type de contrôle",
-          "nationality": "Nationalité",
-          "birthDate": "Naissance"
-        },
-        "control": {
-          "capital": "Détention du capital",
-          "votingRights": "Droits de vote",
-          "otherMeans": "Contrôle par tout autre moyen"
-        }
-      },
       "questionActions": {
         "modifiedToast": "Réponse modifiée",
         "modifiedToastDesc": "La réponse repasse à contrôler. L'investisseur n'est pas notifié.",
@@ -1674,7 +1659,7 @@
         }
       },
       "report": {
-        "title": "Données reportées à la soumission",
+        "title": "Synchronisation des données",
         "summary": "Report effectué le {{date}}. Une correction ultérieure n'est reportée que sur action explicite.",
         "columns": {
           "data": "Donnée",
@@ -1690,7 +1675,11 @@
         "mandateOrigin": "Réponse de prélèvement à \"Oui\"",
         "mandateCreated": "Créée à la soumission",
         "documentCopied": "Copié sur la fiche",
-        "propagatedToast": "Donnée liée mise à jour"
+        "propagatedToast": "Donnée liée mise à jour",
+        "synced": "Synchronisé",
+        "notSynced": "Non synchronisé",
+        "sectionTitle": "Objets mis à jour",
+        "sectionDescription": "{{count}} données copiées depuis les réponses vers la souscription et la fiche investisseur."
       },
       "partnerReview": {
         "awaitingPartner": "En attente de la validation de {{partner}}",

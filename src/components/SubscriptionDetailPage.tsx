@@ -40,7 +40,9 @@ import {
   Layers3,
   Globe,
   Tag,
+  Share2,
   ShieldCheck,
+  TriangleAlert,
   Banknote,
   Phone,
   MapPin,
@@ -50,11 +52,8 @@ import {
   RefreshCw,
   History,
   Lock,
-  UserCheck,
   ArrowLeft,
-  TriangleAlert,
   Link2,
-  Share2,
   PencilLine,
 } from 'lucide-react';
 import { motion } from 'motion/react';
@@ -104,7 +103,6 @@ import {
   mockEmails,
   mockCapitalCalls,
   mockInitEmails,
-  mockBeneficialOwners,
   MOCK_SUBMISSION_REPORT,
   type MockLinkedTarget,
   type MockRequiredDocument,
@@ -155,6 +153,7 @@ import {
   type ComplianceStatusSnapshot,
 } from './SubscriptionComplianceSection';
 import { SubscriptionSignatureStep } from './SubscriptionSignatureStep';
+import { SubmissionReportSheet, type SubmissionReportRow } from './SubmissionReportSheet';
 import { SubscriptionStatusBadge } from './SubscriptionStatusBadge';
 import { NewSubscriptionDialog } from './NewSubscriptionDialog';
 import { NotesTab } from './investor-detail/NotesTab';
@@ -224,6 +223,11 @@ export function SubscriptionDetailPage({ subscription: subscriptionProp, onBack 
   // amont de la maquette n'est pas réécrite.
   const [editedSubscription, setEditedSubscription] = useState<any>(null);
   const subscription = editedSubscription ?? subscriptionProp;
+  const isCorporateInvestor = subscription.contrepartie?.type === 'corporate';
+  const onboardingSections = useMemo(
+    () => mockSections.filter(section => !section.corporateOnly || isCorporateInvestor),
+    [isCorporateInvestor],
+  );
 
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
   const [resentEmails, setResentEmails] = useState<Record<string, string>>({});
@@ -299,14 +303,14 @@ export function SubscriptionDetailPage({ subscription: subscriptionProp, onBack 
   const docLabel = (doc: MockRequiredDocument) => doc.name ?? t(doc.nameKey);
   const isMissingIssueDate = (doc: MockRequiredDocument) =>
     doc.hasFile && Boolean(doc.requiresIssueDate) && !doc.issueDate;
-  const [activeOnboardingSection, setActiveOnboardingSection] = useState<string>(mockSections[0].id);
+  const [activeOnboardingSection, setActiveOnboardingSection] = useState<string>(onboardingSections[0].id);
   const onboardingSectionRefs = useRef<Record<string, HTMLDivElement | null>>({});
 
   // Piste d'audit : saisie, modifications, validations et commentaires de chaque élément.
   const [auditEntries, setAuditEntries] = useState<SubscriptionAuditEntry[]>(() =>
     buildInitialSubscriptionAudit({
       investorName: subscriptionProp.contrepartie?.investor || subscriptionProp.contrepartie?.name || '',
-      sections: mockSections,
+      sections: onboardingSections,
       documents: mockRequiredDocuments,
       questionStatuses: INITIAL_QUESTION_STATUSES,
       documentStatuses: INITIAL_DOCUMENT_STATUSES,
@@ -345,7 +349,7 @@ export function SubscriptionDetailPage({ subscription: subscriptionProp, onBack 
   // Questions qui en déclenchent une autre, indexées par la question déclenchée.
   const impactedByMap = useMemo(() => {
     const map: Record<string, string[]> = {};
-    mockSections.forEach(section =>
+    onboardingSections.forEach(section =>
       section.questions.forEach(question =>
         question.triggers?.forEach(trigger => {
           const idx = section.questions.findIndex(q => q.question === trigger.question);
@@ -393,7 +397,7 @@ export function SubscriptionDetailPage({ subscription: subscriptionProp, onBack 
   };
 
   const handleValidateSection = (sectionId: string, sectionTitle: string) => {
-    const section = mockSections.find(s => s.id === sectionId);
+    const section = onboardingSections.find(s => s.id === sectionId);
     if (!section) return;
 
     // Seules les questions répondues sont validées : une question vide reste à compléter.
@@ -478,7 +482,7 @@ export function SubscriptionDetailPage({ subscription: subscriptionProp, onBack 
   };
 
   const editTargets = (sectionId: string, idx: number): AnswerEditTarget[] => {
-    const question = mockSections.find(sec => sec.id === sectionId)?.questions[idx];
+    const question = onboardingSections.find(sec => sec.id === sectionId)?.questions[idx];
     const questionId = `${sectionId}-${idx}`;
     return (question?.targets ?? []).filter(target => target.direction !== 'fromTarget').map(target => {
       const key = linkedKey(questionId, target.object, target.field);
@@ -492,7 +496,7 @@ export function SubscriptionDetailPage({ subscription: subscriptionProp, onBack 
   };
 
   const resolveTriggerChanges = (sectionId: string, idx: number, nextValue: string): AnswerEditTriggerChange[] => {
-    const section = mockSections.find(sec => sec.id === sectionId);
+    const section = onboardingSections.find(sec => sec.id === sectionId);
     const question = section?.questions[idx];
     if (!section || !question?.triggers) return [];
     return question.triggers.flatMap(trigger => {
@@ -566,7 +570,7 @@ export function SubscriptionDetailPage({ subscription: subscriptionProp, onBack 
   };
 
   const handlePropagateReported = (sectionId: string, idx: number, target: MockLinkedTarget) => {
-    const question = mockSections.find(sec => sec.id === sectionId)?.questions[idx];
+    const question = onboardingSections.find(sec => sec.id === sectionId)?.questions[idx];
     if (!question) return;
     const questionId = `${sectionId}-${idx}`;
     const value = responseOf(sectionId, idx, question);
@@ -583,9 +587,58 @@ export function SubscriptionDetailPage({ subscription: subscriptionProp, onBack 
     toast.success(t('subscriptions.detail.report.propagatedToast'), { description: targetLabelOf(target) });
   };
 
+  const [reportOpen, setReportOpen] = useState(false);
+  const submissionReportRows: SubmissionReportRow[] = [
+    ...onboardingSections.flatMap(section =>
+      section.questions.flatMap((question, idx) =>
+        (question.targets ?? []).map((target): SubmissionReportRow => {
+          const questionId = `${section.id}-${idx}`;
+          const value = linkedValueOf(questionId, question, target);
+          return {
+            key: `${questionId}-${target.object}-${target.field}`,
+            icon: Link2,
+            label: targetLabelOf(target),
+            value,
+            origin: question.question.replace(/\s*\*\s*$/, ''),
+            originSection: t(section.titleKey),
+            state: value !== responseOf(section.id, idx, question) ? 'gap' : 'inSync',
+            previousValue: target.previousValue,
+            onPropagate: canManage ? () => handlePropagateReported(section.id, idx, target) : undefined,
+          };
+        }),
+      ),
+    ),
+    ...onboardingSections.flatMap(section =>
+      section.questions.flatMap((question, idx): SubmissionReportRow[] =>
+        question.createsMandate && question.response === 'Oui'
+          ? [
+              {
+                key: `mandate-${section.id}-${idx}`,
+                icon: Landmark,
+                label: t('subscriptions.detail.report.mandate'),
+                value: MOCK_SUBMISSION_REPORT.mandateReference,
+                origin: t('subscriptions.detail.report.mandateOrigin'),
+                originSection: t(section.titleKey),
+                state: 'created',
+              },
+            ]
+          : [],
+      ),
+    ),
+    ...MOCK_SUBMISSION_REPORT.documents.map((doc): SubmissionReportRow => ({
+      key: doc.field,
+      icon: FileText,
+      label: targetLabelOf({ object: 'investor', field: doc.field }),
+      value: t(doc.nameKey),
+      origin: t('subscriptions.detail.sections.documents'),
+      state: 'copied',
+    })),
+  ];
+  const submissionReportSynced = submissionReportRows.every(row => row.state !== 'gap');
+
   const questionLabelOf = (questionId: string) => {
     const sectionId = sectionOf(questionId);
-    const section = mockSections.find(sec => sec.id === sectionId);
+    const section = onboardingSections.find(sec => sec.id === sectionId);
     const question = section?.questions[Number(questionId.slice(sectionId.length + 1))];
     if (!section || !question) return questionId;
     const label = question.question.replace(/\s*\*\s*$/, '');
@@ -655,8 +708,8 @@ export function SubscriptionDetailPage({ subscription: subscriptionProp, onBack 
 
   const handleSimulatePartnerReview = () => {
     if (partnerValidation) return;
-    const profile = mockSections.find(sec => sec.id === 'investorProfile');
-    const identity = mockSections.find(sec => sec.id === 'identity');
+    const profile = onboardingSections.find(sec => sec.id === 'investorProfile');
+    const identity = onboardingSections.find(sec => sec.id === 'identity');
     const partnerEntry = { origin: 'partner' as const, actorName: PARTNER_REVIEWER };
     const validated = (profile?.questions ?? []).map((_, idx) => `investorProfile-${idx}`);
     const phoneIdx = identity?.questions.findIndex(q => q.question.startsWith('Numéro de téléphone')) ?? -1;
@@ -700,7 +753,7 @@ export function SubscriptionDetailPage({ subscription: subscriptionProp, onBack 
       { question: 'Ville*', value: 'Neuilly-sur-Seine' },
       { question: 'Code postal*', value: '92200' },
     ].flatMap(change => {
-      const section = mockSections.find(sec => sec.id === 'identity');
+      const section = onboardingSections.find(sec => sec.id === 'identity');
       const idx = section?.questions.findIndex(q => q.question === change.question) ?? -1;
       if (!section || idx < 0) return [];
       return [{ questionId: `identity-${idx}`, previous: responseOf('identity', idx, section.questions[idx]), value: change.value }];
@@ -791,7 +844,7 @@ export function SubscriptionDetailPage({ subscription: subscriptionProp, onBack 
 
   const getQuestionSectionBuckets = (sectionId: string): OnboardingBucketStats => {
     const stats = emptyBucketStats();
-    const section = mockSections.find(s => s.id === sectionId);
+    const section = onboardingSections.find(s => s.id === sectionId);
     if (!section) return stats;
     section.questions.forEach((question, idx) => {
       if (!isControllable(question, responseOf(sectionId, idx, question))) return;
@@ -811,7 +864,7 @@ export function SubscriptionDetailPage({ subscription: subscriptionProp, onBack 
   const getSectionBuckets = (sectionId: string): OnboardingBucketStats =>
     sectionId === 'documents' ? getDocumentBuckets() : getQuestionSectionBuckets(sectionId);
 
-  const questionBuckets = mockSections.reduce((acc, section) => {
+  const questionBuckets = onboardingSections.reduce((acc, section) => {
     if (section.id !== 'documents') {
       mergeBucketStats(acc, getQuestionSectionBuckets(section.id));
     }
@@ -821,21 +874,20 @@ export function SubscriptionDetailPage({ subscription: subscriptionProp, onBack 
   const documentBuckets = getDocumentBuckets();
 
 
-  const isCorporateInvestor = subscription.contrepartie?.type === 'corporate';
 
   const modifiedOriginOf = (questionId: string) => lastModificationOrigin(auditEntries, questionId);
   const modifiedCountOf = (sectionId: string) =>
-    mockSections
+    onboardingSections
       .find(sec => sec.id === sectionId)
       ?.questions.filter((_, idx) => modifiedOriginOf(`${sectionId}-${idx}`) !== null).length ?? 0;
-  const modifiedTotal = mockSections.reduce((sum, sec) => sum + modifiedCountOf(sec.id), 0);
+  const modifiedTotal = onboardingSections.reduce((sum, sec) => sum + modifiedCountOf(sec.id), 0);
 
   const handleExportDossier = () => {
     const csvField = (v: string) => (/[";\n]/.test(v) ? `"${v.replace(/"/g, '""')}"` : v);
     const header = ['section', 'question', 'answer', 'control', 'indicator'].map(col =>
       t(`subscriptions.detail.dossierExport.columns.${col}`),
     );
-    const rows = mockSections.flatMap(section =>
+    const rows = onboardingSections.flatMap(section =>
       section.questions.flatMap((question, idx) => {
         if (question.info) return [];
         const questionId = `${section.id}-${idx}`;
@@ -876,7 +928,7 @@ export function SubscriptionDetailPage({ subscription: subscriptionProp, onBack 
         ? t('subscriptions.detail.partnerReview.awaitingPartner', { partner: delegatedPartnerName })
         : undefined;
 
-  const onboardingNavSections: OnboardingNavSection[] = mockSections.map((section, idx) => ({
+  const onboardingNavSections: OnboardingNavSection[] = onboardingSections.map((section, idx) => ({
     id: section.id,
     titleKey: section.titleKey,
     icon: section.icon,
@@ -1855,6 +1907,17 @@ export function SubscriptionDetailPage({ subscription: subscriptionProp, onBack 
                       <OnboardingCompletionCard
                         questions={questionBuckets}
                         documents={documentBuckets}
+                        action={
+                          <Button variant="outline" size="sm" className="gap-2" onClick={() => setReportOpen(true)}>
+                            <Share2 className="w-3.5 h-3.5" />
+                            {t('subscriptions.detail.report.title')}
+                            <StatusBadge
+                              variant={submissionReportSynced ? 'success' : 'warning'}
+                              icon={submissionReportSynced ? CheckCircle2 : TriangleAlert}
+                              label={t(submissionReportSynced ? 'subscriptions.detail.report.synced' : 'subscriptions.detail.report.notSynced')}
+                            />
+                          </Button>
+                        }
                       />
 
                       <div className="flex items-center justify-end gap-2">
@@ -1878,9 +1941,15 @@ export function SubscriptionDetailPage({ subscription: subscriptionProp, onBack 
                             activeSectionId={activeOnboardingSection}
                             onSelect={handleSelectOnboardingSection}
                           />
+                          <SubmissionReportSheet
+                            open={reportOpen}
+                            onOpenChange={setReportOpen}
+                            submittedAt={MOCK_SUBMISSION_REPORT.submittedAt}
+                            rows={submissionReportRows}
+                          />
 
                           <div className="space-y-4">
-              {mockSections.map((section) => {
+              {onboardingSections.map((section) => {
                 if (modifiedOnly && modifiedCountOf(section.id) === 0) return null;
                 const Icon = section.icon;
                 const isOpen = modifiedOnly || openSections.includes(section.id);
@@ -1890,47 +1959,6 @@ export function SubscriptionDetailPage({ subscription: subscriptionProp, onBack 
 
                 return (
                   <Fragment key={section.id}>
-                  {!modifiedOnly && isDocuments && isCorporateInvestor && mockBeneficialOwners.length > 0 && (
-                    <SectionCard
-                      mode="read"
-                      icon={UserCheck}
-                      title={t('subscriptions.detail.beneficialOwners.title')}
-                      iconTone="info"
-                      summary={
-                        <span className="font-semibold text-foreground">
-                          {t(
-                            mockBeneficialOwners.length === 1
-                              ? 'subscriptions.detail.beneficialOwners.countOne'
-                              : 'subscriptions.detail.beneficialOwners.countMany',
-                            { count: mockBeneficialOwners.length },
-                          )}
-                        </span>
-                      }
-                    >
-                      <div className="divide-y divide-border">
-                        <div className="grid grid-cols-12 gap-4 px-4 py-2 bg-muted text-xs font-medium text-muted-foreground uppercase tracking-wider">
-                          <span className="col-span-3">{t('subscriptions.detail.beneficialOwners.columns.name')}</span>
-                          <span className="col-span-2">{t('subscriptions.detail.beneficialOwners.columns.ownership')}</span>
-                          <span className="col-span-3">{t('subscriptions.detail.beneficialOwners.columns.control')}</span>
-                          <span className="col-span-2">{t('subscriptions.detail.beneficialOwners.columns.nationality')}</span>
-                          <span className="col-span-2">{t('subscriptions.detail.beneficialOwners.columns.birthDate')}</span>
-                        </div>
-                        {mockBeneficialOwners.map(owner => (
-                          <div key={owner.id} className="grid grid-cols-12 gap-4 p-4 items-center text-sm">
-                            <span className="col-span-3 font-medium text-foreground">{owner.name}</span>
-                            <span className="col-span-2 text-foreground/80 tabular-nums">
-                              {owner.ownership > 0 ? `${owner.ownership} %` : '-'}
-                            </span>
-                            <span className="col-span-3">
-                              <NeutralTag label={t(owner.controlTypeKey)} />
-                            </span>
-                            <span className="col-span-2 text-foreground/80">{owner.nationality}</span>
-                            <span className="col-span-2 text-muted-foreground tabular-nums">{owner.birthDate}</span>
-                          </div>
-                        ))}
-                      </div>
-                    </SectionCard>
-                  )}
                   <div
                     ref={el => {
                       onboardingSectionRefs.current[section.id] = el;
@@ -2341,105 +2369,6 @@ export function SubscriptionDetailPage({ subscription: subscriptionProp, onBack 
                 );
               })}
 
-                            {!modifiedOnly && (
-                              <SectionCard
-                                mode="read"
-                                icon={Share2}
-                                title={t('subscriptions.detail.report.title')}
-                                iconTone="info"
-                                summary={
-                                  <span className="text-muted-foreground">
-                                    {t('subscriptions.detail.report.summary', { date: MOCK_SUBMISSION_REPORT.submittedAt })}
-                                  </span>
-                                }
-                              >
-                                <div className="divide-y divide-border">
-                                  <div className="grid grid-cols-12 gap-4 px-4 py-2 bg-muted text-xs font-medium text-muted-foreground uppercase tracking-wider">
-                                    <span className="col-span-3">{t('subscriptions.detail.report.columns.data')}</span>
-                                    <span className="col-span-3">{t('subscriptions.detail.report.columns.value')}</span>
-                                    <span className="col-span-3">{t('subscriptions.detail.report.columns.origin')}</span>
-                                    <span className="col-span-3">{t('subscriptions.detail.report.columns.state')}</span>
-                                  </div>
-                                  {mockSections.flatMap(section =>
-                                    section.questions.flatMap((question, idx) =>
-                                      (question.targets ?? []).map(target => {
-                                        const questionId = `${section.id}-${idx}`;
-                                        const value = linkedValueOf(questionId, question, target);
-                                        const gap = value !== responseOf(section.id, idx, question);
-                                        return (
-                                          <div key={`${questionId}-${target.object}-${target.field}`} className="grid grid-cols-12 gap-4 px-4 py-3 items-center text-sm">
-                                            <span className="col-span-3 inline-flex items-center gap-2 text-foreground">
-                                              <Link2 className="w-3.5 h-3.5 shrink-0 text-muted-foreground" />
-                                              {targetLabelOf(target)}
-                                            </span>
-                                            <span className="col-span-3 font-medium text-foreground break-words">
-                                              {value || t('subscriptions.detail.answerEffects.empty')}
-                                            </span>
-                                            <span className="col-span-3 text-foreground/80">
-                                              {question.question.replace(/\s*\*\s*$/, '')}
-                                              <span className="block text-xs text-muted-foreground">{t(section.titleKey)}</span>
-                                            </span>
-                                            <span className="col-span-3 flex flex-wrap items-center gap-2">
-                                              {gap ? (
-                                                <>
-                                                  <StatusBadge variant="warning" icon={TriangleAlert} label={t('subscriptions.detail.report.gap')} />
-                                                  {canManage && (
-                                                    <Button variant="outline" size="sm" onClick={() => handlePropagateReported(section.id, idx, target)}>
-                                                      {t('subscriptions.detail.report.propagate')}
-                                                    </Button>
-                                                  )}
-                                                </>
-                                              ) : (
-                                                <StatusBadge variant="success" icon={CheckCircle2} label={t('subscriptions.detail.report.inSync')} />
-                                              )}
-                                              {target.previousValue && (
-                                                <NeutralTag label={t('subscriptions.detail.report.replaced', { value: target.previousValue })} />
-                                              )}
-                                            </span>
-                                          </div>
-                                        );
-                                      }),
-                                    ),
-                                  )}
-                                  {mockSections.flatMap(section =>
-                                    section.questions.flatMap((question, idx) =>
-                                      question.createsMandate && question.response === 'Oui'
-                                        ? [
-                                            <div key={`mandate-${section.id}-${idx}`} className="grid grid-cols-12 gap-4 px-4 py-3 items-center text-sm">
-                                              <span className="col-span-3 inline-flex items-center gap-2 text-foreground">
-                                                <Landmark className="w-3.5 h-3.5 shrink-0 text-muted-foreground" />
-                                                {t('subscriptions.detail.report.mandate')}
-                                              </span>
-                                              <span className="col-span-3 font-medium text-foreground">{MOCK_SUBMISSION_REPORT.mandateReference}</span>
-                                              <span className="col-span-3 text-foreground/80">
-                                                {t('subscriptions.detail.report.mandateOrigin')}
-                                                <span className="block text-xs text-muted-foreground">{t(section.titleKey)}</span>
-                                              </span>
-                                              <span className="col-span-3">
-                                                <NeutralTag label={t('subscriptions.detail.report.mandateCreated')} />
-                                              </span>
-                                            </div>,
-                                          ]
-                                        : [],
-                                    ),
-                                  )}
-                                  {MOCK_SUBMISSION_REPORT.documents.map(doc => (
-                                    <div key={doc.field} className="grid grid-cols-12 gap-4 px-4 py-3 items-center text-sm">
-                                      <span className="col-span-3 inline-flex items-center gap-2 text-foreground">
-                                        <FileText className="w-3.5 h-3.5 shrink-0 text-muted-foreground" />
-                                        {targetLabelOf({ object: 'investor', field: doc.field })}
-                                      </span>
-                                      <span className="col-span-3 font-medium text-foreground">{t(doc.nameKey)}</span>
-                                      <span className="col-span-3 text-foreground/80">{t('subscriptions.detail.sections.documents')}</span>
-                                      <span className="col-span-3">
-                                        <NeutralTag label={t('subscriptions.detail.report.documentCopied')} />
-                                      </span>
-                                    </div>
-                                  ))}
-                                </div>
-                              </SectionCard>
-                            )}
-
                             {/* Action — passer à l'étape suivante */}
 
                             <div className="flex justify-end pt-4">
@@ -2681,7 +2610,7 @@ export function SubscriptionDetailPage({ subscription: subscriptionProp, onBack 
             <div className="px-8 py-6">
               <SubscriptionAuditTab
                 entries={auditEntries}
-                sections={mockSections}
+                sections={onboardingSections}
                 documents={requiredDocuments}
                 subscriptionName={subscription.name}
               />
@@ -2741,15 +2670,15 @@ export function SubscriptionDetailPage({ subscription: subscriptionProp, onBack 
       />
 
       <AnswerEditPanel
-        question={answerEdit ? mockSections.find(sec => sec.id === answerEdit.sectionId)?.questions[answerEdit.idx] ?? null : null}
+        question={answerEdit ? onboardingSections.find(sec => sec.id === answerEdit.sectionId)?.questions[answerEdit.idx] ?? null : null}
         currentValue={(() => {
           if (!answerEdit) return '';
-          const question = mockSections.find(sec => sec.id === answerEdit.sectionId)?.questions[answerEdit.idx];
+          const question = onboardingSections.find(sec => sec.id === answerEdit.sectionId)?.questions[answerEdit.idx];
           return question ? responseOf(answerEdit.sectionId, answerEdit.idx, question) : '';
         })()}
         context={(() => {
           if (!answerEdit) return '';
-          const section = mockSections.find(sec => sec.id === answerEdit.sectionId);
+          const section = onboardingSections.find(sec => sec.id === answerEdit.sectionId);
           if (!section) return '';
           const iteration = section.questions[answerEdit.idx]?.iteration;
           return iteration !== undefined && section.iterationLabelKey
@@ -2760,14 +2689,14 @@ export function SubscriptionDetailPage({ subscription: subscriptionProp, onBack 
         targets={answerEdit ? editTargets(answerEdit.sectionId, answerEdit.idx) : []}
         resolveTriggers={
           answerEdit &&
-          mockSections.find(sec => sec.id === answerEdit.sectionId)?.questions[answerEdit.idx]?.triggers?.length
+          onboardingSections.find(sec => sec.id === answerEdit.sectionId)?.questions[answerEdit.idx]?.triggers?.length
             ? next => resolveTriggerChanges(answerEdit.sectionId, answerEdit.idx, next)
             : undefined
         }
         onClose={() => setAnswerEdit(null)}
         onSave={(value, reason, effects) => {
           if (!answerEdit) return;
-          const section = mockSections.find(sec => sec.id === answerEdit.sectionId);
+          const section = onboardingSections.find(sec => sec.id === answerEdit.sectionId);
           const question = section?.questions[answerEdit.idx];
           if (!question) return;
           handleModifyQuestion(
@@ -2788,7 +2717,7 @@ export function SubscriptionDetailPage({ subscription: subscriptionProp, onBack 
 
       <SubscriptionAuditPanel
         entries={auditEntries}
-        sections={mockSections}
+        sections={onboardingSections}
         documents={requiredDocuments}
         elementId={auditElement?.elementId ?? null}
         sectionId={auditElement?.sectionId}
