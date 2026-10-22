@@ -1678,6 +1678,12 @@
         "propagatedToast": "Donnée liée mise à jour",
         "synced": "Synchronisé",
         "notSynced": "Non synchronisé",
+        "button": {
+          "synced": "Données synchronisées",
+          "gapsOne": "1 écart à propager",
+          "gapsMany": "{{count}} écarts à propager",
+          "tooltip": "Ouvrir le rapport de synchronisation des données"
+        },
         "sectionTitle": "Objets mis à jour",
         "sectionDescription": "{{count}} données copiées depuis les réponses vers la souscription et la fiche investisseur."
       },

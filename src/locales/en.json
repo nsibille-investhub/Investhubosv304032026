@@ -1678,6 +1678,12 @@
         "propagatedToast": "Linked data updated",
         "synced": "Synced",
         "notSynced": "Not synced",
+        "button": {
+          "synced": "Data in sync",
+          "gapsOne": "1 gap to propagate",
+          "gapsMany": "{{count}} gaps to propagate",
+          "tooltip": "Open the data synchronisation report"
+        },
         "sectionTitle": "Updated records",
         "sectionDescription": "{{count}} data points copied from the answers to the subscription and the investor profile."
       },

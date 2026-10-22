@@ -40,7 +40,6 @@ import {
   Layers3,
   Globe,
   Tag,
-  Share2,
   ShieldCheck,
   TriangleAlert,
   Banknote,
@@ -61,6 +60,7 @@ import { Badge } from './ui/badge';
 import { Button } from './ui/button';
 import { Card } from './ui/card';
 import { Tooltip, TooltipContent, TooltipTrigger } from './ui/tooltip';
+import { TONE_TOKENS } from './ui/tone';
 import { Separator } from './ui/separator';
 import { Input } from './ui/input';
 import { toast } from 'sonner';
@@ -634,7 +634,8 @@ export function SubscriptionDetailPage({ subscription: subscriptionProp, onBack 
       state: 'copied',
     })),
   ];
-  const submissionReportSynced = submissionReportRows.every(row => row.state !== 'gap');
+  const submissionReportGapCount = submissionReportRows.filter(row => row.state === 'gap').length;
+  const submissionReportSynced = submissionReportGapCount === 0;
 
   const questionLabelOf = (questionId: string) => {
     const sectionId = sectionOf(questionId);
@@ -1908,15 +1909,34 @@ export function SubscriptionDetailPage({ subscription: subscriptionProp, onBack 
                         questions={questionBuckets}
                         documents={documentBuckets}
                         action={
-                          <Button variant="outline" size="sm" className="gap-2" onClick={() => setReportOpen(true)}>
-                            <Share2 className="w-3.5 h-3.5" />
-                            {t('subscriptions.detail.report.title')}
-                            <StatusBadge
-                              variant={submissionReportSynced ? 'success' : 'warning'}
-                              icon={submissionReportSynced ? CheckCircle2 : TriangleAlert}
-                              label={t(submissionReportSynced ? 'subscriptions.detail.report.synced' : 'subscriptions.detail.report.notSynced')}
-                            />
-                          </Button>
+                          <Tooltip>
+                            <TooltipTrigger asChild>
+                              <Button
+                                variant="outline"
+                                size="sm"
+                                aria-label={t('subscriptions.detail.report.title')}
+                                onClick={() => setReportOpen(true)}
+                              >
+                                {submissionReportSynced ? (
+                                  <CheckCircle2 className="w-3.5 h-3.5" style={{ color: TONE_TOKENS.success.fg }} />
+                                ) : (
+                                  <TriangleAlert className="w-3.5 h-3.5" style={{ color: TONE_TOKENS.warning.fg }} />
+                                )}
+                                <span style={submissionReportSynced ? undefined : { color: TONE_TOKENS.warning.fg }}>
+                                  {submissionReportSynced
+                                    ? t('subscriptions.detail.report.button.synced')
+                                    : t(
+                                        submissionReportGapCount === 1
+                                          ? 'subscriptions.detail.report.button.gapsOne'
+                                          : 'subscriptions.detail.report.button.gapsMany',
+                                        { count: submissionReportGapCount },
+                                      )}
+                                </span>
+                                <ChevronRight className="w-3.5 h-3.5 text-muted-foreground" />
+                              </Button>
+                            </TooltipTrigger>
+                            <TooltipContent>{t('subscriptions.detail.report.button.tooltip')}</TooltipContent>
+                          </Tooltip>
                         }
                       />
 
