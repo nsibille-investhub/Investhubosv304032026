@@ -1,5 +1,5 @@
 {
-  "about": "Dossiers fictifs du simulateur de workflow. Les états, valeurs de contexte et sous-états sont donnés par leur libellé et résolus contre simulateur-workflow-etats.json au chargement. Le bloc header_defaults fournit les dates, auteurs et motifs fictifs de la ligne de titre ; status_renaming les libellés renommés fictifs (réglage Renommage des statuts). Le bloc edit_side_effects liste, par champ, les effets de bord fictifs annoncés après une modification.",
+  "about": "Dossiers fictifs du simulateur de workflow. Les états, valeurs de contexte et sous-états sont donnés par leur code dans simulateur-workflow-etats.json. Le bloc header_defaults fournit les dates, auteurs et motifs fictifs de la ligne de titre ; status_renaming les libellés renommés fictifs (réglage Renommage des statuts) ; edit_side_effects, par champ, les effets de bord fictifs annoncés après une modification.",
   "header_defaults": {
     "activated_at": "2026-10-20",
     "deferred_until": "2026-11-16",
@@ -46,9 +46,9 @@
     {
       "id": "d1-en-cours",
       "workflow": "D1",
-      "state": "En cours",
+      "state": "en_cours",
       "context": {
-        "payment_mode": "Appels de fonds"
+        "payment_mode": "appels_de_fonds"
       },
       "data": {
         "fund": "Horizon Capital III",
@@ -62,9 +62,9 @@
     {
       "id": "d4-en-signature",
       "workflow": "D4",
-      "state": "En signature",
+      "state": "en_signature",
       "axes": {
-        "signature": "Contresignature en attente"
+        "signature": "signee_souscripteurs"
       },
       "data": {
         "fund": "Altitude Immobilier II",
@@ -78,7 +78,7 @@
     {
       "id": "p3-en-presignature",
       "workflow": "P3",
-      "state": "En pré-signature",
+      "state": "en_presignature",
       "context": {
         "assisted": true
       },
@@ -94,7 +94,7 @@
     {
       "id": "e3-en-prevalidation",
       "workflow": "E3",
-      "state": "En pré-validation partenaire",
+      "state": "en_prevalidation_partenaire",
       "data": {
         "fund": "Boréal Dette Privée",
         "share": "Part I",
@@ -108,12 +108,12 @@
     {
       "id": "e8-presignee-a-controler",
       "workflow": "E8",
-      "state": "Pré-signée à contrôler",
+      "state": "presignee_a_controler",
       "context": {
         "internal_validation_enabled": true
       },
       "axes": {
-        "internal_validation": "Demandée"
+        "internal_validation": "demandee"
       },
       "data": {
         "fund": "Boréal Dette Privée",
@@ -127,13 +127,13 @@
     {
       "id": "e16-active-versement",
       "workflow": "E16",
-      "state": "Active",
+      "state": "active",
       "context": {
-        "payment_mode": "Paiement direct",
-        "sepa_mandate": "En attente"
+        "payment_mode": "paiement_direct",
+        "sepa_mandate": "en_attente"
       },
       "axes": {
-        "payment": "En attente"
+        "payment": "en_attente"
       },
       "data": {
         "fund": "Altitude Immobilier II",
@@ -147,7 +147,7 @@
     {
       "id": "d3-saisie-rapide",
       "workflow": "D3",
-      "state": "Active",
+      "state": "active",
       "context": {
         "fast_add": true
       },
@@ -163,8 +163,8 @@
     {
       "id": "p5-annulee",
       "workflow": "P5",
-      "state": "Annulée",
-      "previous_state": "À contrôler",
+      "state": "annulee",
+      "previous_state": "a_controler",
       "data": {
         "fund": "Boréal Dette Privée",
         "share": "Part I",

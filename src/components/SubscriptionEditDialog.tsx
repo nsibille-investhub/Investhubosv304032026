@@ -4,7 +4,7 @@ import { toast } from 'sonner';
 import { useTranslation } from '../utils/languageContext';
 import { useWorkflowScenario } from '../utils/workflowScenarioContext';
 import { normalizeText } from '../utils/workflowSimulator/engine';
-import { assignFields, groupViews, lockFlavor, summarize, UNASSIGNED_GROUP, type GroupView } from '../utils/workflowSimulator/editability';
+import { assignFields, fieldState, groupViews, lockFlavor, summarize, UNASSIGNED_GROUP, type GroupView } from '../utils/workflowSimulator/editability';
 import { useWorkflowActions } from './WorkflowActions';
 import {
   BigModal,
@@ -42,7 +42,7 @@ export function useFieldEditability(fieldIds: string[], exceptionalOn = false) {
   const sim = useWorkflowScenario();
   return useMemo(() => {
     if (sim.status !== 'ready') return null;
-    const views = groupViews(sim.engine, sim.scenario, sim.editability, exceptionalOn, t);
+    const views = groupViews(sim.engine, sim.scenario, sim.editability, sim.locks, exceptionalOn, t);
     const assignment = assignFields(sim.engine, fieldIds);
     const byField = new Map<string, GroupView | null>();
     Object.entries(assignment).forEach(([group, ids]) =>
@@ -61,9 +61,11 @@ export function canEditSubscription(role: string): boolean {
 /** Icône d'une valeur du mode Plus : modifier, motif du verrou ou demande en attente. */
 export function FieldEditIcon({
   view,
+  fieldId,
   onEdit,
 }: {
   view: GroupView | null | undefined;
+  fieldId: string;
   onEdit: () => void;
 }) {
   const { t } = useTranslation();
@@ -75,7 +77,8 @@ export function FieldEditIcon({
       </DisabledReason>
     );
   }
-  if (view.pendingRequest) {
+  const state = fieldState(view, fieldId, false);
+  if (state.pendingRequest) {
     return (
       <button
         type="button"
@@ -88,10 +91,10 @@ export function FieldEditIcon({
       </button>
     );
   }
-  if (!view.editable || view.amountsOnActive) {
+  if (!state.editable || view.amountsOnActive) {
     return (
-      <DisabledReason reason={view.message}>
-        <PencilOff className="w-3 h-3 opacity-50" aria-label={view.message} />
+      <DisabledReason reason={state.message}>
+        <PencilOff className="w-3 h-3 opacity-50" aria-label={state.message} />
       </DisabledReason>
     );
   }
@@ -196,12 +199,18 @@ export function SubscriptionEditDialog({ open, onOpenChange, fields, initialGrou
   const renderField = (id: string, view: GroupView | null) => {
     const field = fields.find(f => f.id === id);
     if (!field) return null;
-    const editable = Boolean(view?.editable);
-    const reasonText = view ? view.message : t(`${E}.unassigned`);
+    const state = fieldState(view, id, exceptionalOn);
+    const editable = state.editable;
+    const reasonText = view ? state.message : t(`${E}.unassigned`);
     const hint =
       onboardingLock && id === SUBSCRIBER_TYPE_FIELD && view?.value === 'E' ? t(`${E}.onboardingStarted`) : undefined;
+    const requestLink = state.pendingRequest ? (
+      <Button type="button" variant="link" size="sm" className="h-auto p-0" onClick={() => toast.info(t(`${E}.openRequest`))}>
+        {t(`${E}.seeRequest`)}
+      </Button>
+    ) : undefined;
     return (
-      <FormField key={id} id={`edit-${id}`} label={field.label} hint={hint}>
+      <FormField key={id} id={`edit-${id}`} label={field.label} hint={hint} labelAside={requestLink}>
         {editable ? (
           <Input
             id={`edit-${id}`}
@@ -268,16 +277,23 @@ export function SubscriptionEditDialog({ open, onOpenChange, fields, initialGrou
                   id={`edit-group-${view?.group ?? UNASSIGNED_GROUP}`}
                   icon={view && !view.editable ? ShieldAlert : undefined}
                   title={view ? view.label : t(`${E}.unassignedTitle`)}
-                  description={view ? view.message : t(`${E}.unassigned`)}
-                  action={
-                    view?.pendingRequest ? (
-                      <Button type="button" variant="link" size="sm" onClick={() => toast.info(t(`${E}.openRequest`))}>
-                        {t(`${E}.seeRequest`)}
-                      </Button>
-                    ) : undefined
+                  description={
+                    view ? (
+                      <>
+                        {view.message}
+                        {view.description && <span className="block">{t(`${E}.groupFields`, { fields: view.description })}</span>}
+                      </>
+                    ) : (
+                      t(`${E}.unassigned`)
+                    )
                   }
                 >
                   <FormSubsection>
+                    {view?.warning && (
+                      <Callout tone="warning" className="mb-4">
+                        {view.warning}
+                      </Callout>
+                    )}
                     {view?.amountsOnActive ? (
                       <div className="flex flex-wrap gap-2">
                         <Button type="button" variant="outline" onClick={() => openAmountAction("reduction d'engagement")}>

@@ -5,26 +5,40 @@ type Translate = (key: string, vars?: Record<string, string | number>) => string
 
 const A = 'subscriptions.workflowSimulator.actions';
 
-// Action principale attendue par état (spécifications, prompt 5), en libellés normalisés.
+// Action principale attendue par état (spécifications, prompt 5), par code d'état et d'action.
 // null : aucune action principale, le dossier n'attend pas le gestionnaire.
-const PRIMARY_BY_STATE_LABEL: Record<string, string | null> = {
-  brouillon: 'inviter',
-  invitee: "renvoyer l'invitation",
-  'en cours': "renvoyer l'invitation",
-  'prete a soumettre': "renvoyer l'invitation",
-  'en pre-validation partenaire': null,
-  'a controler': 'valider le kyc',
-  'en correction': "renvoyer l'invitation",
-  'validee a envoyer': 'envoyer en signature',
-  'en signature': 'renvoyer le mail de signature',
-  'validee en pre-signature': 'renvoyer le mail de signature',
-  'en pre-signature': 'valider le kyc',
-  'pre-signee a controler': 'valider le kyc',
+const PRIMARY_BY_STATE: Record<string, string | null> = {
+  brouillon: 'invite',
+  invitee: 'reinvite',
+  en_cours: 'reinvite',
+  prete_a_soumettre: 'reinvite',
+  en_prevalidation_partenaire: null,
+  a_controler: 'validate_kyc',
+  en_correction: 'reinvite',
+  validee_a_envoyer: 'send_signature',
+  en_signature: 'resend_signature_mail',
+  validee_en_presignature: 'resend_signature_mail',
+  en_presignature: 'validate_kyc',
+  presignee_a_controler: 'validate_kyc',
   active: null,
-  transferee: 'annuler le transfert',
-  annulee: 'reactiver',
-  refusee: 'annuler le refus',
-  expiree: "renvoyer l'invitation",
+  transferee: 'transfer_rollback',
+  annulee: 'reactivate',
+  refusee: 'refusal_rollback',
+  expiree: 'reinvite',
+};
+
+// Actions déjà portées par un bouton dédié de la page : Modifier (edit) et always_available_gp
+// (Exporter, consulter, documents). Elles ne sont pas répétées dans le menu "Plus".
+const DEDICATED_BUTTONS = ['edit'];
+
+// Le fichier ne relie pas les codes d'action aux transitions quand l'entrée n'a pas de "to".
+// Branches communes reprises de common_branches et transitions : annuler vers annulee,
+// rouvrir vers en_correction, refuser définitivement vers refusee, transférer vers transferee.
+const BRANCH_BY_ACTION: Record<string, string> = {
+  cancel: 'annulee',
+  reopen: 'en_correction',
+  refuse_final: 'refusee',
+  transfer: 'transferee',
 };
 
 /** Où les actions d'un rôle s'affichent. */
@@ -46,24 +60,23 @@ export type ConfirmationKind =
   | 'comingSoon'
   | 'simple';
 
-// Confirmation par libellé d'action (spécifications, prompt 5) ; préfixes normalisés.
-const KIND_BY_LABEL: Array<[string, ConfirmationKind]> = [
-  ['annuler le refus', 'restore'],
-  ['annuler le transfert', 'simple'],
-  ['annuler', 'cancel'],
-  ['validation exceptionnelle', 'exceptional'],
-  ['correction exceptionnelle', 'exceptional'],
-  ['rouvrir', 'reopen'],
-  ['envoyer en signature', 'sendSignature'],
-  ['valider sans signature', 'validateWithoutSignature'],
-  ['valider le kyc', 'validateKyc'],
-  ['refuser definitivement', 'refuseFinal'],
-  ['reactiver', 'restore'],
-  ['supprimer', 'delete'],
-  ['transferer', 'comingSoon'],
-  ['fusionner', 'comingSoon'],
-  ["reduction d'engagement", 'comingSoon'],
-];
+// Confirmation par code d'action (spécifications, prompt 5).
+const KIND_BY_CODE: Record<string, ConfirmationKind> = {
+  cancel: 'cancel',
+  validate_exceptional: 'exceptional',
+  reopen: 'reopen',
+  prevalidate_reopen: 'reopen',
+  send_signature: 'sendSignature',
+  validate_no_signature: 'validateWithoutSignature',
+  validate_kyc: 'validateKyc',
+  refuse_final: 'refuseFinal',
+  reactivate: 'restore',
+  refusal_rollback: 'restore',
+  delete: 'delete',
+  transfer: 'comingSoon',
+  merge: 'comingSoon',
+  reduce: 'comingSoon',
+};
 
 export interface MenuAction extends ResolvedAction {
   kind: ConfirmationKind;
@@ -85,9 +98,8 @@ export interface ActionMenu {
   all: MenuAction[];
 }
 
-export function confirmationKind(label: string): ConfirmationKind {
-  const key = normalizeText(label);
-  return KIND_BY_LABEL.find(([prefix]) => key.startsWith(prefix))?.[1] ?? 'simple';
+export function confirmationKind(code: string): ConfirmationKind {
+  return KIND_BY_CODE[code] ?? 'simple';
 }
 
 export function placementFor(role: string): ActionPlacement {
@@ -99,7 +111,7 @@ export function placementFor(role: string): ActionPlacement {
 
 /** Les actions du validateur qui touchent la signature vont dans le widget Suivi des signatures. */
 export function widgetFor(action: MenuAction): 'compliance' | 'signature' {
-  return normalizeText(action.label).includes('signature') ? 'signature' : 'compliance';
+  return action.code.includes('signature') ? 'signature' : 'compliance';
 }
 
 /**
@@ -109,7 +121,8 @@ export function widgetFor(action: MenuAction): 'compliance' | 'signature' {
  */
 export function resolveTarget(engine: SimulatorEngine, scenario: WorkflowScenario, to?: string): string | undefined {
   if (!to) return undefined;
-  if (to === '*previous') return scenario.previousState ?? undefined;
+  // "*previous" dans transitions, "état précédent" dans actions_by_state.
+  if (to === '*previous' || normalizeText(to).includes('precedent')) return scenario.previousState ?? undefined;
   const choices = to.split('|').map(code => code.trim()).filter(Boolean);
   if (choices.length < 2) return choices[0];
   const options = engine.optionsOf(scenario.workflow);
@@ -122,18 +135,14 @@ export function resolveTarget(engine: SimulatorEngine, scenario: WorkflowScenari
     const found = pick('pre-sign') ?? pick('presign');
     if (found) return found;
   }
-  return choices.find(code => normalizeText(engine.stateLabel(code)) === 'a controler') ?? choices[0];
+  return choices.find(code => code === 'a_controler') ?? choices[0];
 }
 
 function internalValidationPending(engine: SimulatorEngine, scenario: WorkflowScenario): boolean {
   if (!scenario.context.internal_validation_enabled) return false;
-  if (!engine.allowedSubstates('internal_validation', scenario.state, scenario.context).length) return false;
-  const sub = (engine.data.axes.internal_validation?.substates ?? [])
-    .map(s => toLabelled(s))
-    .find(s => s.code === scenario.axes.internal_validation);
-  // Validation rendue : sous-état dont le code ou le libellé dit "validée", "rendue" ou "approuvée".
-  const text = normalizeText(`${sub?.code ?? ''} ${sub?.label ?? ''}`);
-  return !/(done|valide|rendu|approuv)/.test(text);
+  if (!engine.allowedSubstates('internal_validation', scenario.state, scenario.context, scenario.workflow).length) return false;
+  // Validation rendue : sous-état approuvee de axes.internal_validation.
+  return scenario.axes.internal_validation !== 'approuvee';
 }
 
 export function buildActionMenu(
@@ -145,10 +154,10 @@ export function buildActionMenu(
   const placement = placementFor(scenario.role);
   const stateLabel = engine.stateLabel(scenario.state);
   const notOffered = t(`${A}.notOffered`, { state: stateLabel });
-  const isDraft = normalizeText(stateLabel) === 'brouillon';
+  const isDraft = scenario.state === 'brouillon';
 
   const decorate = (action: ResolvedAction, available: boolean): MenuAction => {
-    const kind = confirmationKind(action.label);
+    const kind = confirmationKind(action.code);
     let disabledReason: string | undefined;
     if (!available) disabledReason = action.reason ?? (kind === 'delete' && !isDraft ? t(`${A}.deleteInstead`) : notOffered);
     else if (action.disabled) disabledReason = action.reason ?? notOffered;
@@ -161,24 +170,32 @@ export function buildActionMenu(
       separatorBefore: ['refuseFinal', 'delete'].includes(kind),
       disabled: Boolean(disabledReason),
       disabledReason,
-      target: resolveTarget(engine, scenario, action.to),
+      target: resolveTarget(engine, scenario, action.to) ?? branchTarget(action.code),
     };
   };
 
   if (placement === 'none' || placement === 'card') return { placement, primary: null, more: [], all: [] };
 
-  const offered = actions.map(a => decorate(a, true));
+  const reachable = engine.workflow(scenario.workflow)?.reachable_states ?? [];
+  const branchTargets = new Set(engine.transitionsFrom(scenario.state, scenario.previousState).map(tr => tr.to));
+  function branchTarget(code: string): string | undefined {
+    const target = BRANCH_BY_ACTION[code];
+    return target && reachable.includes(target) && branchTargets.has(target) ? target : undefined;
+  }
+  const hidden = new Set([...DEDICATED_BUTTONS, ...(engine.data.always_available_gp ?? [])]);
+
+  const offered = actions.filter(a => !hidden.has(a.code)).map(a => decorate(a, true));
   const offeredCodes = new Set(offered.map(a => a.code));
   const unavailable = engine
     .actionCodesForRole(scenario.role)
-    .filter(code => !offeredCodes.has(code))
+    .filter(code => !offeredCodes.has(code) && !hidden.has(code))
     .map(code => decorate({ code, label: engine.actionLabel(code) }, false));
   const all = [...offered, ...unavailable];
 
   if (placement === 'compliance') return { placement, primary: null, more: [], all: offered };
 
-  const wanted = PRIMARY_BY_STATE_LABEL[normalizeText(stateLabel)];
-  const primary = wanted ? offered.find(a => normalizeText(a.label) === wanted) ?? null : null;
+  const wanted = PRIMARY_BY_STATE[scenario.state];
+  const primary = wanted ? offered.find(a => a.code === wanted) ?? null : null;
   if (wanted && !primary) console.warn(`[Simulateur] Action principale "${wanted}" absente des actions de ${scenario.role} sur ${stateLabel}`);
   return { placement, primary, more: all.filter(a => a !== primary), all };
 }

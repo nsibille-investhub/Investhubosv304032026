@@ -1,47 +1,32 @@
-import type { SimulatorEngine } from './engine';
+import { contextDefault, type SimulatorEngine } from './engine';
 import type { ContextScalar, ContextValue, DecisionChoice, SimLabelled, WorkflowScenario } from './types';
 
 export const PERMALINK_PARAM = 'sim';
 
 const optionCode = (value: ContextScalar | SimLabelled): ContextScalar =>
-  typeof value === 'object' ? value.code : value;
-
-const optionLabel = (value: ContextScalar | SimLabelled): string =>
-  typeof value === 'object' ? value.label : String(value);
+  typeof value === 'object' && value !== null ? value.code : value;
 
 /**
- * Scénario par défaut des spécifications : workflow D3, état "À contrôler", rôle gp,
- * appels de fonds, pure, sans validation interne. Le reste du contexte prend la valeur
- * "default" de chaque réglage du fichier.
+ * Scénario par défaut des spécifications : workflow D3, état À contrôler, rôle gp, appels de
+ * fonds, pure (souscription non administrée, assisted false), sans validation interne. Le reste
+ * du contexte prend la valeur de départ de chaque réglage du fichier.
  */
 export function defaultScenario(engine: SimulatorEngine): WorkflowScenario {
   const { data } = engine;
   const context: Record<string, ContextValue> = {};
   Object.entries(data.context).forEach(([key, setting]) => {
-    if (key === 'role') return;
-    if (setting.default !== undefined) context[key] = setting.default;
-    else if (setting.values?.length) context[key] = optionCode(setting.values[0]);
+    if (key !== 'role') context[key] = contextDefault(setting);
   });
-
-  const paymentModes = data.context.payment_mode?.values ?? [];
-  const capitalCalls = paymentModes.find(v => /appel/i.test(optionLabel(v)) || /call/i.test(String(optionCode(v))));
-  if (capitalCalls !== undefined) context.payment_mode = optionCode(capitalCalls);
-  else console.warn('[Simulateur] Mode de versement "appels de fonds" introuvable dans context.payment_mode.values');
-
-  const pureKey = Object.keys(data.context).find(key =>
-    data.context[key].values?.some(v => optionCode(v) === 'pure'),
-  );
-  if (pureKey) context[pureKey] = 'pure';
-  else console.warn('[Simulateur] Valeur de contexte "pure" introuvable');
+  context.payment_mode = 'appels_de_fonds';
+  context.assisted = false;
   context.internal_validation_enabled = false;
 
   const workflow = engine.workflow('D3') ? 'D3' : data.workflows[0]?.id ?? '';
   if (workflow !== 'D3') console.warn('[Simulateur] Workflow D3 introuvable, premier workflow utilisé');
-  const toCheck = data.states.find(s => s.label === 'À contrôler')?.code ?? '';
 
   return normalizeScenario(engine, {
     workflow,
-    state: toCheck,
+    state: 'a_controler',
     role: 'gp',
     context,
     axes: { signature: '', internal_validation: '', payment: '' },
@@ -58,7 +43,8 @@ export function normalizeScenario(engine: SimulatorEngine, scenario: WorkflowSce
   const reachable = workflow?.reachable_states ?? [];
   const state = reachable.includes(scenario.state) ? scenario.state : workflow?.sequence[0] ?? scenario.state;
 
-  const roleValues = (data.context.role.values ?? []).map(v => String(optionCode(v)));
+  const roleSetting = data.context.role.values;
+  const roleValues = (Array.isArray(roleSetting) ? roleSetting : []).map(v => String(optionCode(v)));
   const role = roleValues.includes(scenario.role) ? scenario.role : roleValues[0] ?? scenario.role;
 
   const context = { ...scenario.context };
@@ -73,7 +59,7 @@ export function normalizeScenario(engine: SimulatorEngine, scenario: WorkflowSce
     state,
     role,
     context,
-    axes: engine.constrainAxes(scenario.axes, state, context),
+    axes: engine.constrainAxes(scenario.axes, state, context, workflow?.id),
     manualLocks: scenario.manualLocks.filter(code => lockCodes.includes(code)),
     decisions: Object.fromEntries(
       decisionIds.map(id => [id, scenario.decisions[id] === 'v1' ? 'v1' : 'default']),

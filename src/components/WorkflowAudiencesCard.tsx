@@ -1,7 +1,6 @@
 import { useState } from 'react';
 import { useTranslation } from '../utils/languageContext';
 import { useWorkflowScenario } from '../utils/workflowScenarioContext';
-import { normalizeText } from '../utils/workflowSimulator/engine';
 import type { ResolvedAction } from '../utils/workflowSimulator/types';
 import { Sheet, SheetContent } from './ui/sheet';
 import { SIDE_PANEL_STYLE, SidePanelCard, SidePanelHeader } from './ui/side-panel';
@@ -22,7 +21,7 @@ const AUDIENCES = [
 ] as const;
 
 // Actions du distributeur réservées à une souscription administrée (spécifications, prompt 8).
-const ADMINISTERED_ONLY = ["completer pour l'investisseur", "soumettre pour l'investisseur", 'valider et envoyer a signer'];
+const ADMINISTERED_ONLY = ['fill_assisted', 'submit_for_investor', 'submit_and_sign'];
 
 interface AudienceRow {
   key: string;
@@ -46,13 +45,8 @@ export function WorkflowAudiencesCard() {
   const options = engine.optionsOf(workflow);
   const administered = Boolean(context.assisted);
 
-  const portalLabel = (column: string): string | null => {
-    const entry = engine.data.portal_labels_v1?.[state];
-    if (entry === undefined || entry === null) return null;
-    if (typeof entry === 'string') return entry;
-    return entry[column] ?? null;
-  };
-  const isAdministeredOnly = (action: ResolvedAction) => ADMINISTERED_ONLY.includes(normalizeText(action.label));
+  const portalLabel = (column: 'investor' | 'distributor') => engine.portalLabel(state, column);
+  const isAdministeredOnly = (action: ResolvedAction) => ADMINISTERED_ONLY.includes(action.code);
 
   const rows: AudienceRow[] = AUDIENCES.flatMap(({ role, column }) => {
     const base = {

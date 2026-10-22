@@ -37,7 +37,7 @@ export function validateSimulatorFile(raw: unknown): string[] {
     }
   });
   const editability = raw.editability as Record<string, unknown>;
-  if (!Array.isArray(editability.groups)) errors.push('editability.groups : tableau attendu');
+  if (!isObject(editability.groups)) errors.push('editability.groups : objet attendu');
   if (!isObject(editability.matrix)) errors.push('editability.matrix : objet attendu');
   if (!Array.isArray(editability.locks)) errors.push('editability.locks : tableau attendu');
   const context = raw.context as Record<string, unknown>;

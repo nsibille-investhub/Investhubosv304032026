@@ -2090,7 +2090,7 @@
         "description": "You can view the file. Ask an administrator for the right to act on it."
       },
       "externalReview": {
-        "title": "This file is with {{who}}.",
+        "title": "This file is with a third party: {{who}}.",
         "description": "You will be able to review it once it has been sent to you."
       },
       "hypothesis": {
@@ -2124,7 +2124,17 @@
             "countersignature": "Countersignature",
             "backoffice_initiation": "Back-office initiation"
           },
-          "prerequisites": "Fund prerequisites: {{list}}"
+          "prerequisites": "Fund prerequisites: {{list}}",
+          "initiators": {
+            "investisseur": "Investor",
+            "partenaire_parent": "Parent distributor",
+            "partenaire_enfant": "Child distributor",
+            "bo": "Back office"
+          },
+          "channels": {
+            "autonome": "Self-service",
+            "bo_invitation": "Back-office invitation"
+          }
         },
         "sequence": {
           "ariaLabel": "Workflow state sequence",
@@ -2167,21 +2177,42 @@
           "values": {
             "payment_mode": {
               "capital_calls": "Capital calls",
-              "direct_payment": "Direct payment"
+              "direct_payment": "Direct payment",
+              "appels_de_fonds": "Capital calls",
+              "paiement_direct": "Direct payment"
             },
             "custom_status_renaming": {
               "none": "None",
-              "renaming": "Renaming"
+              "renaming": "Renaming",
+              "aucun": "None",
+              "renommage": "Renaming"
             },
             "holding": {
               "pure": "Pure",
               "administered": "Administered",
               "nominative": "Registered"
+            },
+            "sepa_mandate": {
+              "a_demander": "To request",
+              "en_attente": "Pending",
+              "approuve": "Approved"
+            },
+            "sideletter": {
+              "non_requise": "Not required",
+              "requise": "Required",
+              "confirmee": "Confirmed"
             }
           },
           "missing": "{{field}}: setting missing from the scenario file",
           "assistedUnavailable": "Workflow {{workflow}}: assisted subscription is not available.",
-          "selfForced": "Workflow {{workflow}}: direct subscription is automatic."
+          "selfForced": "Workflow {{workflow}}: direct subscription is automatic.",
+          "dateHint": "Leave empty for immediate processing.",
+          "counters": {
+            "reopened": {
+              "investisseur": "By the investor",
+              "partenaire": "By the distributor"
+            }
+          }
         },
         "axes": {
           "title": "Axes",
@@ -2271,7 +2302,9 @@
             "gestionnaire": "the manager",
             "distributor": "the distributor",
             "distributeur": "the distributor",
-            "investor": "the investor"
+            "investor": "the investor",
+            "investisseur": "the investor",
+            "partenaire": "the distributor"
           },
           "exceptionalValidation": "Exceptional validation",
           "fastAdd": "Off-platform takeover",
@@ -2373,7 +2406,8 @@
           "allOpen": "File {{state}}: all fields can be edited.",
           "locked": "{{groups}} locked",
           "resetsSignature": "any change to {{groups}} will cancel the ongoing signature procedure",
-          "onRequest": "{{groups}} editable only through an exceptional correction"
+          "onRequest": "{{groups}} editable only through an exceptional correction",
+          "note": "{{note}}."
         },
         "exceptional": {
           "toggle": "Exceptional correction",
@@ -2391,7 +2425,15 @@
           "title": "Close without saving?",
           "description": "Changed fields will be lost.",
           "action": "Close without saving"
-        }
+        },
+        "fieldState": {
+          "O": "File {{state}}: editable.",
+          "conditional": "File {{state}}: editable, the signature procedure will be cancelled.",
+          "E": "File {{state}}: editable only through an exceptional correction.",
+          "L": "File {{state}}: this field can no longer be edited."
+        },
+        "linkedWarning": "Parent or linked subscription: check the linked subscriptions before changing the amounts.",
+        "groupFields": "Fields: {{fields}}"
       }
     }
   },

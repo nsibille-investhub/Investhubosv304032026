@@ -1438,7 +1438,7 @@ function SubscriptionDetailPageContent({ subscription: subscriptionProp, onBack 
             const view = fieldEditability.byField.get(item.id);
             return {
               ...item,
-              action: <FieldEditIcon view={view} onEdit={() => openEdit(view?.group)} />,
+              action: <FieldEditIcon view={view} fieldId={item.id} onEdit={() => openEdit(view?.group)} />,
             };
           }),
         }))

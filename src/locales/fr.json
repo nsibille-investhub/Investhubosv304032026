@@ -2090,7 +2090,7 @@
         "description": "Vous pouvez consulter le dossier. Demandez le droit à un administrateur pour agir dessus."
       },
       "externalReview": {
-        "title": "Ce dossier est chez {{who}}.",
+        "title": "Ce dossier est entre les mains d'un tiers : {{who}}.",
         "description": "Vous pourrez le contrôler une fois qu'il vous aura été transmis."
       },
       "hypothesis": {
@@ -2124,7 +2124,17 @@
             "countersignature": "Contresignature",
             "backoffice_initiation": "Initiation back-office"
           },
-          "prerequisites": "Pré-requis du fonds : {{list}}"
+          "prerequisites": "Pré-requis du fonds : {{list}}",
+          "initiators": {
+            "investisseur": "Investisseur",
+            "partenaire_parent": "Distributeur parent",
+            "partenaire_enfant": "Distributeur enfant",
+            "bo": "Back-office"
+          },
+          "channels": {
+            "autonome": "Autonome",
+            "bo_invitation": "Invitation back-office"
+          }
         },
         "sequence": {
           "ariaLabel": "Séquence des états du workflow",
@@ -2167,21 +2177,42 @@
           "values": {
             "payment_mode": {
               "capital_calls": "Appels de fonds",
-              "direct_payment": "Paiement direct"
+              "direct_payment": "Paiement direct",
+              "appels_de_fonds": "Appels de fonds",
+              "paiement_direct": "Paiement direct"
             },
             "custom_status_renaming": {
               "none": "Aucun",
-              "renaming": "Renommage"
+              "renaming": "Renommage",
+              "aucun": "Aucun",
+              "renommage": "Renommage"
             },
             "holding": {
               "pure": "Pur",
               "administered": "Administré",
               "nominative": "Nominatif"
+            },
+            "sepa_mandate": {
+              "a_demander": "À demander",
+              "en_attente": "En attente",
+              "approuve": "Approuvé"
+            },
+            "sideletter": {
+              "non_requise": "Non requise",
+              "requise": "Requise",
+              "confirmee": "Confirmée"
             }
           },
           "missing": "{{field}} : réglage absent du fichier de scénarios",
           "assistedUnavailable": "Workflow {{workflow}} : la souscription assistée n'est pas proposée.",
-          "selfForced": "Workflow {{workflow}} : la souscription directe est automatique."
+          "selfForced": "Workflow {{workflow}} : la souscription directe est automatique.",
+          "dateHint": "Laissez vide pour un traitement immédiat.",
+          "counters": {
+            "reopened": {
+              "investisseur": "Par l'investisseur",
+              "partenaire": "Par le distributeur"
+            }
+          }
         },
         "axes": {
           "title": "Axes",
@@ -2271,7 +2302,9 @@
             "gestionnaire": "le gestionnaire",
             "distributor": "le distributeur",
             "distributeur": "le distributeur",
-            "investor": "l'investisseur"
+            "investor": "l'investisseur",
+            "investisseur": "l'investisseur",
+            "partenaire": "le distributeur"
           },
           "exceptionalValidation": "Validation exceptionnelle",
           "fastAdd": "Reprise hors plateforme",
@@ -2373,7 +2406,8 @@
           "allOpen": "Dossier {{state}} : tous les champs sont modifiables.",
           "locked": "{{groups}} verrouillé(s)",
           "resetsSignature": "toute modification de {{groups}} annulera la procédure de signature en cours",
-          "onRequest": "{{groups}} modifiable(s) seulement en correction exceptionnelle"
+          "onRequest": "{{groups}} modifiable(s) seulement en correction exceptionnelle",
+          "note": "{{note}}."
         },
         "exceptional": {
           "toggle": "Correction exceptionnelle",
@@ -2391,7 +2425,15 @@
           "title": "Fermer sans enregistrer ?",
           "description": "Les champs modifiés seront perdus.",
           "action": "Fermer sans enregistrer"
-        }
+        },
+        "fieldState": {
+          "O": "Dossier {{state}} : modifiable.",
+          "conditional": "Dossier {{state}} : modifiable, la procédure de signature sera annulée.",
+          "E": "Dossier {{state}} : modifiable seulement en correction exceptionnelle.",
+          "L": "Dossier {{state}} : ce champ n'est plus modifiable."
+        },
+        "linkedWarning": "Souscription parente ou liée : vérifiez les souscriptions rattachées avant de modifier les montants.",
+        "groupFields": "Champs : {{fields}}"
       }
     }
   },

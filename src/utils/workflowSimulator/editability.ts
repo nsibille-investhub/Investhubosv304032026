@@ -5,43 +5,51 @@ type Translate = (key: string, vars?: Record<string, string | number>) => string
 
 const E = 'subscriptions.workflowSimulator.edit';
 
-// Rattachement d'un champ de la fiche à un groupe d'éditabilité, à défaut de liste "fields"
-// dans editability.groups : mots repérés dans le titre du groupe, du plus précis au plus large.
-// Le fichier de scénarios ne dit pas quels champs composent chaque groupe.
+// Rattachement d'un champ de la fiche à un groupe : editability.groups énumère les champs en
+// texte ("Montants et parts : part, nombre de parts, montant, frais, prime"). Chaque champ de
+// la fiche est cherché par ces mots dans le texte du groupe, le premier mot trouvé l'emporte.
 const FIELD_GROUP_HINTS: Record<string, string[]> = {
-  subscriberTitle: ['type de souscripteur', 'souscripteur', 'identite'],
-  legalName: ['identite', 'souscripteur'],
-  lastName: ['identite', 'souscripteur'],
-  firstName: ['identite', 'souscripteur'],
-  birthDate: ['identite', 'souscripteur'],
-  nationality: ['identite', 'souscripteur'],
-  email: ['coordonnees', 'contact', 'identite'],
-  phone: ['coordonnees', 'contact', 'identite'],
-  address1: ['adresse', 'coordonnees', 'identite'],
-  address2: ['adresse', 'coordonnees', 'identite'],
-  postalCode: ['adresse', 'coordonnees', 'identite'],
-  city: ['adresse', 'coordonnees', 'identite'],
-  country: ['adresse', 'coordonnees', 'identite'],
-  iban: ['banc', 'iban', 'reglement', 'paiement'],
-  bic: ['banc', 'iban', 'reglement', 'paiement'],
-  partnerName: ['distribution', 'distributeur'],
-  advisor: ['distribution', 'conseiller'],
-  commissionRate: ['distribution', 'commission', 'retrocession'],
-  excludeRetrocessions: ['distribution', 'retrocession'],
-  entryFeesRate: ['frais', 'distribution', 'montant'],
-  amount: ['montant', 'part'],
-  quantity: ['montant', 'part'],
-  share: ['montant', 'part'],
-  sharePrice: ['montant', 'part'],
-  premium: ['montant', 'prime'],
+  externalId: ['identifiant externe'],
+  language: ['langue'],
+  subscriberTitle: ['type de souscripteur'],
+  amount: ['montant'],
+  quantity: ['nombre de parts'],
+  share: ['montants et parts'],
+  sharePrice: ['montants et parts'],
+  entryFeesRate: ['frais'],
+  premium: ['prime'],
+  legalName: ['identite du souscripteur'],
+  lastName: ['identite du souscripteur'],
+  firstName: ['identite du souscripteur'],
+  birthDate: ['identite du souscripteur'],
+  nationality: ['identite du souscripteur'],
+  email: ['identite du souscripteur'],
+  phone: ['identite du souscripteur'],
+  address1: ['identite du souscripteur'],
+  address2: ['identite du souscripteur'],
+  postalCode: ['identite du souscripteur'],
+  city: ['identite du souscripteur'],
+  country: ['identite du souscripteur'],
+  iban: ['bancaires'],
+  bic: ['bancaires'],
+  partnerName: ['partenaire et conseiller'],
+  advisor: ['partenaire et conseiller'],
+  commissionRate: ['commission'],
+  excludeRetrocessions: ['retrocession'],
   holdingMode: ['detention'],
-  subscriptionType: ['type de souscription', 'parametre', 'souscription'],
-  externalId: ['parametre', 'reference', 'souscription'],
-  language: ['langue', 'parametre', 'souscription'],
-  depositary: ['depositaire', 'parametre', 'souscription'],
-  sepa: ['sepa', 'banc', 'paiement'],
-  sideLetter: ['side letter', 'personnalis'],
+  sepa: ['sepa'],
+  depositary: ['conservation'],
+  subscriptionType: ['type de souscription'],
+  sideLetter: ['side letter'],
 };
+
+// Mot d'une valeur composite ou d'un effet de verrou ("conseiller O, partenaire E") qui
+// désigne un champ précis.
+const FIELD_BY_WORD: Record<string, string> = { conseiller: 'advisor', partenaire: 'partnerName' };
+
+// Champs qu'une demande de modification en attente met en lecture : "champ ou groupe
+// (adresse, IBAN) en lecture" (verrou pending_subchange).
+const PENDING_REQUEST_FIELDS = ['address1', 'address2', 'postalCode', 'city', 'country', 'iban', 'bic'];
 
 export const UNASSIGNED_GROUP = 'unassigned';
 
@@ -49,36 +57,30 @@ export const UNASSIGNED_GROUP = 'unassigned';
 export function assignFields(engine: SimulatorEngine, fieldIds: string[]): Record<string, string[]> {
   const result: Record<string, string[]> = Object.fromEntries(engine.groups.map(g => [g.code, []]));
   result[UNASSIGNED_GROUP] = [];
-  const declared = new Map<string, string>();
-  engine.data.editability.groups.forEach(group => {
-    if (typeof group === 'object' && Array.isArray((group as { fields?: unknown }).fields)) {
-      ((group as { fields: string[] }).fields).forEach(field => declared.set(field, group.code));
-    }
-  });
   fieldIds.forEach(id => {
-    const fromFile = declared.get(id);
-    if (fromFile) {
-      result[fromFile].push(id);
-      return;
-    }
-    const hints = FIELD_GROUP_HINTS[id] ?? [];
-    const match = hints
-      .map(hint => engine.groups.find(g => normalizeText(g.label).includes(hint)))
+    const match = (FIELD_GROUP_HINTS[id] ?? [])
+      .map(hint => engine.groups.find(g => normalizeText(g.text).includes(hint)))
       .find(Boolean);
     result[match ? match.code : UNASSIGNED_GROUP].push(id);
   });
   return result;
 }
 
-export type LockFlavor = 'pendingRequest' | 'sepaApproved' | 'onboardingStarted' | null;
+export type LockFlavor = 'pendingRequest' | 'sepaApproved' | 'onboardingStarted' | 'linked' | null;
 
-/** Comportements de verrous de contexte décrits par les spécifications (prompt 7), repérés par code. */
+/** Comportements de verrous de contexte décrits par les spécifications (prompt 7), par code. */
 export function lockFlavor(code: string): LockFlavor {
-  const key = normalizeText(code);
-  if (key.includes('pending')) return 'pendingRequest';
-  if (key.includes('sepa')) return 'sepaApproved';
-  if (key.includes('onboarding')) return 'onboardingStarted';
+  if (code === 'pending_subchange') return 'pendingRequest';
+  if (code === 'sepa_mandate_approved') return 'sepaApproved';
+  if (code === 'onboarding_started') return 'onboardingStarted';
+  if (code === 'linked_subscriptions') return 'linked';
   return null;
+}
+
+export interface FieldOverride {
+  value: EditabilityCode;
+  message: string;
+  pendingRequest?: boolean;
 }
 
 export interface GroupView extends GroupEditability {
@@ -86,40 +88,82 @@ export interface GroupView extends GroupEditability {
   editable: boolean;
   /** Renvois "Réduction d'engagement" et "Transfert" à la place des champs (Active). */
   amountsOnActive: boolean;
-  pendingRequest: boolean;
+  /** Avertissement non bloquant (souscription parente ou liée). */
+  warning?: string;
+  /** Éditabilité propre à certains champs du groupe. */
+  fields: Record<string, FieldOverride>;
 }
+
+const isEditable = (value: EditabilityCode, exceptionalOn: boolean) =>
+  value === 'O' || value === 'O*' || (value === 'E' && exceptionalOn);
 
 export function groupViews(
   engine: SimulatorEngine,
   scenario: WorkflowScenario,
   editability: GroupEditability[],
+  locks: string[],
   exceptionalOn: boolean,
   t: Translate,
 ): GroupView[] {
-  const terminal = Boolean(engine.state(scenario.state)?.terminal) && scenario.state !== 'active';
+  const terminal = Boolean(engine.state(scenario.state)?.terminal);
   const stateLabel = engine.stateLabel(scenario.state);
+  const lockLabel = (code: string) => engine.data.editability.locks.find(l => l.code === code)?.label ?? code;
+  const lockWordEffects = locks.flatMap(code => {
+    const effect = engine.data.editability.locks.find(l => l.code === code)?.effect ?? '';
+    return Array.from(effect.matchAll(/\b(conseiller|partenaire) en (lecture|E)\b/g)).map(m => ({
+      code,
+      field: FIELD_BY_WORD[m[1]],
+      value: (m[2] === 'E' ? 'E' : 'L') as EditabilityCode,
+    }));
+  });
+
   return editability.map(group => {
-    const value: EditabilityCode = group.value;
-    const editable = !terminal && (value === 'O' || value === 'O*' || (value === 'E' && exceptionalOn));
-    let message = group.message;
-    if (terminal) message = t(`${E}.terminalField`, { state: stateLabel });
+    const fields: Record<string, FieldOverride> = {};
+    Object.entries(group.detail ?? {}).forEach(([word, value]) => {
+      const field = FIELD_BY_WORD[word];
+      if (field) fields[field] = { value, message: t(`${E}.fieldState.${value === 'O*' ? 'conditional' : value}`, { state: stateLabel }) };
+    });
+    lockWordEffects.forEach(effect => {
+      if (!effect.field) return;
+      fields[effect.field] = { value: effect.value, message: t('subscriptions.workflowSimulator.editability.lock', { lock: lockLabel(effect.code) }) };
+    });
+    if (locks.includes('pending_subchange')) {
+      PENDING_REQUEST_FIELDS.forEach(field => {
+        fields[field] = { value: 'L', message: t(`${E}.pendingRequest`), pendingRequest: true };
+      });
+    }
+    if (terminal) {
+      const message = t(`${E}.terminalField`, { state: stateLabel });
+      Object.keys(fields).forEach(field => (fields[field] = { value: 'L', message }));
+    }
     return {
       ...group,
-      message,
-      editable,
-      amountsOnActive: scenario.state === 'active' && normalizeText(group.label).includes('montant'),
-      pendingRequest: group.source.kind === 'lock' && lockFlavor(group.source.code) === 'pendingRequest',
+      message: terminal ? t(`${E}.terminalField`, { state: stateLabel }) : group.message,
+      editable: !terminal && isEditable(group.value, exceptionalOn),
+      amountsOnActive: scenario.state === 'active' && group.group === 'G3',
+      warning: locks.includes('linked_subscriptions') && group.group === 'G3' ? t(`${E}.linkedWarning`) : undefined,
+      fields,
     };
   });
+}
+
+/** Éditabilité d'un champ : celle de son groupe, sauf règle propre au champ. */
+export function fieldState(view: GroupView | null, fieldId: string, exceptionalOn: boolean) {
+  if (!view) return { editable: false, pendingRequest: false, message: '' };
+  const own = view.fields[fieldId];
+  if (!own) return { editable: view.editable, pendingRequest: false, message: view.message };
+  return { editable: isEditable(own.value, exceptionalOn), pendingRequest: Boolean(own.pendingRequest), message: own.message };
 }
 
 /** Phrase de tête de la modale : ce que l'état autorise, construite depuis la matrice. */
 export function summarize(engine: SimulatorEngine, scenario: WorkflowScenario, views: GroupView[], t: Translate): string {
   const state = engine.stateLabel(scenario.state);
-  const terminal = Boolean(engine.state(scenario.state)?.terminal) && scenario.state !== 'active';
-  if (terminal) return t(`${E}.summary.terminal`, { state });
+  if (engine.state(scenario.state)?.terminal) return t(`${E}.summary.terminal`, { state });
   const list = (codes: EditabilityCode[]) =>
-    views.filter(v => codes.includes(v.value)).map(v => v.label.toLowerCase()).join(', ');
+    views
+      .filter(v => codes.includes(v.value))
+      .map(v => (/^[A-ZÀ-Ý][a-zà-ÿ]/.test(v.label) ? v.label.charAt(0).toLowerCase() + v.label.slice(1) : v.label))
+      .join(', ');
   const locked = list(['L']);
   const resetting = list(['O*']);
   const onRequest = list(['E']);
@@ -128,7 +172,9 @@ export function summarize(engine: SimulatorEngine, scenario: WorkflowScenario, v
     resetting && t(`${E}.summary.resetsSignature`, { groups: resetting }),
     onRequest && t(`${E}.summary.onRequest`, { groups: onRequest }),
   ].filter(Boolean);
-  return parts.length
-    ? t(`${E}.summary.withParts`, { state, parts: parts.join(', ') })
+  const note = engine.data.editability.matrix[scenario.state]?.note;
+  const sentence = parts.length
+    ? t(`${E}.summary.withParts`, { state, parts: parts.join(' ; ') })
     : t(`${E}.summary.allOpen`, { state });
+  return note ? `${sentence} ${t(`${E}.summary.note`, { note })}` : sentence;
 }

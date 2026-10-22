@@ -104,16 +104,17 @@ export function resolveDossier(
       missing.push(`contexte ${key}`);
       return;
     }
-    if (typeof value !== 'string' || !setting.values?.length) {
+    if (typeof value !== 'string' || !Array.isArray(setting.values)) {
       context[key] = value;
       return;
     }
     const match = setting.values.find(option => {
-      const { code, label } = toLabelled(typeof option === 'object' ? option : { code: String(option), label: String(option) });
+      const { code, label } =
+        typeof option === 'object' && option !== null ? option : { code: String(option), label: String(option) };
       return code === value || normalizeText(label) === normalizeText(value);
     });
     if (match === undefined) missing.push(`valeur "${value}" de ${key}`);
-    else context[key] = (typeof match === 'object' ? match.code : match) as ContextScalar;
+    else context[key] = (typeof match === 'object' && match !== null ? match.code : match) as ContextScalar;
   });
 
   const axes = { ...base.axes };

@@ -9,6 +9,7 @@ import {
   type ResolvedAction,
   type SimActionEntry,
   type SimContextCondition,
+  type SimContextSetting,
   type SimLabelled,
   type SimRole,
   type SimRawActionEntry,
@@ -19,7 +20,6 @@ import {
   type SimulatorFile,
   type WorkflowFamily,
   type WorkflowOption,
-  WORKFLOW_OPTIONS,
 } from './types';
 
 type Translate = (key: string, vars?: Record<string, string | number>) => string;
@@ -37,20 +37,42 @@ const READ_ONLY_ROLES = new Set(['gp_readonly']);
 
 export const baseRole = (role: string) => ROLE_BASE[role] ?? role;
 
-// Déclencheurs de verrous cités en exemple par les spécifications (prompt 2, locks). Ils ne
-// servent que si le verrou n'a pas de champ "trigger" dans le fichier.
+// Le fichier décrit les verrous en texte (condition, effect) sans lien avec le contexte.
+// Déclencheurs repris des spécifications (prompt 2) et de context.*.effect ; les autres verrous
+// se cochent à la main dans le panneau.
 const LOCK_TRIGGERS_FROM_SPEC: Record<string, SimContextCondition> = {
-  sepa_mandate_approved: { key: 'sepa_mandate', in: ['approuve', 'approved'] },
+  sepa_mandate_approved: { key: 'sepa_mandate', equals: 'approuve' },
+  sepa_mandate_pending: { key: 'sepa_mandate', equals: 'en_attente' },
   pending_subchange: { key: 'pending_changes', gt: 0 },
   transferred_in: 'transferred_in',
 };
 
-// Familles données par les spécifications (prompt 3) : D = Direct, P = Intermédié parent,
-// E = Intermédié enfant. Utilisé seulement si le workflow n'a pas de champ "family".
-const FAMILY_BY_PREFIX: Record<string, WorkflowFamily> = { D: 'A', P: 'B', E: 'C' };
+// Les effets des verrous sont du texte ("G6c en lecture, partenaire en E", "G3 en E").
+// Lecture : "Gn en lecture" donne L, "Gn en E" donne E ; "type de souscripteur ...
+// déverrouillable" (onboarding_started) vise G2 en E. Le reste du texte n'est pas interprété.
+function parseLockEffects(effect: string | undefined): Record<string, EditabilityCode> {
+  const result: Record<string, EditabilityCode> = {};
+  if (!effect) return result;
+  for (const match of effect.matchAll(/\b(G\d+[a-z]?) en (lecture|E)\b/g)) {
+    result[match[1]] = match[2] === 'E' ? 'E' : 'L';
+  }
+  if (/type de souscripteur/.test(effect) && /déverrouillable/.test(effect)) result.G2 = 'E';
+  return result;
+}
 
-// Souscription directe automatique sur D1 et D2 (spécifications, prompt 3), à défaut de
-// champ "self_forced" dans le fichier.
+// Codes d'éditabilité possibles ; une valeur composite ("conseiller O, partenaire E") est
+// ramenée à son code le plus restrictif pour le groupe, le détail restant disponible.
+const EDIT_CODES: EditabilityCode[] = ['O', 'O*', 'E', 'L'];
+
+// Options du workflow : drapeau du fichier et clé de workflow_prerequisites.
+const OPTION_FLAGS: Record<WorkflowOption, { flag: 'presign' | 'prevalidation' | 'countersign' | 'bo_invitation'; prerequisite: string }> = {
+  presignature: { flag: 'presign', prerequisite: 'presign' },
+  prevalidation: { flag: 'prevalidation', prerequisite: 'prevalidation' },
+  countersignature: { flag: 'countersign', prerequisite: 'countersign' },
+  backoffice_initiation: { flag: 'bo_invitation', prerequisite: 'bo_invitation' },
+};
+
+// Souscription directe automatique sur D1 et D2 (spécifications, prompt 3 ; context.self.effect).
 const SELF_FORCED_FROM_SPEC = ['D1', 'D2'];
 
 // Un verrou en L l'emporte sur tout ; un verrou en E l'emporte sur O et O* mais pas sur L.
@@ -85,6 +107,39 @@ export function evaluateCondition(
   return Boolean(value);
 }
 
+export type ContextKind = 'boolean' | 'select' | 'counter' | 'counters' | 'date';
+
+/**
+ * Nature d'un réglage de contexte. Le fichier donne soit une liste de valeurs, soit une
+ * description en texte : "0..n" (compteur), "date ou null", "compteur investisseur,
+ * compteur partenaire" (compteurs nommés).
+ */
+export function contextKind(setting: SimContextSetting | undefined): { kind: ContextKind; counters?: string[] } {
+  const values = setting?.values;
+  if (Array.isArray(values)) {
+    return { kind: values.every(v => typeof v === 'boolean') ? 'boolean' : 'select' };
+  }
+  const text = normalizeText(String(values ?? ''));
+  if (text.includes('compteur')) {
+    return { kind: 'counters', counters: text.split(',').map(part => part.replace('compteur', '').trim()).filter(Boolean) };
+  }
+  if (text.includes('date')) return { kind: 'date' };
+  return { kind: 'counter' };
+}
+
+/** Valeur de départ d'un réglage : "default" du fichier, sinon la première valeur ou le neutre. */
+export function contextDefault(setting: SimContextSetting | undefined): ContextValue {
+  if (setting?.default !== undefined) return setting.default;
+  const { kind, counters } = contextKind(setting);
+  if (kind === 'boolean' || kind === 'select') {
+    const first = (setting?.values as Array<ContextScalar | SimLabelled>)[0];
+    return typeof first === 'object' && first !== null ? first.code : first;
+  }
+  if (kind === 'counters') return Object.fromEntries((counters ?? []).map(name => [name, 0]));
+  if (kind === 'date') return null;
+  return 0;
+}
+
 export function createSimulatorEngine(data: SimulatorFile, t: Translate) {
   const warned = new Set<string>();
   const warnMissing = (rule: string) => {
@@ -95,7 +150,11 @@ export function createSimulatorEngine(data: SimulatorFile, t: Translate) {
 
   const stateByCode = new Map<string, SimState>(data.states.map(s => [s.code, s]));
   const workflowById = new Map<string, SimWorkflow>(data.workflows.map(w => [w.id, w]));
-  const groups = data.editability.groups.map(toLabelled);
+  // Libellé de groupe "Titre : champs" : le titre sert d'intitulé, les champs de description.
+  const groups = Object.entries(data.editability.groups).map(([code, text]) => {
+    const [title, ...rest] = text.split(' : ');
+    return { code, label: title, description: rest.join(' : ') || undefined, text };
+  });
   const roles = data.roles.map(r => toLabelled<SimRole>(r));
   const activeIndex = data.states.findIndex(s => s.code === 'active');
 
@@ -107,7 +166,10 @@ export function createSimulatorEngine(data: SimulatorFile, t: Translate) {
       warnMissing(`actions.${code}`);
       return code;
     }
-    return typeof entry === 'string' ? entry : entry.label;
+    // Les libellés portent parfois une précision entre parenthèses ("Annuler (motif)",
+    // "Modifier une réponse (IC-5616)") : elle est retirée de l'interface.
+    const label = typeof entry === 'string' ? entry : entry.label;
+    return label.replace(/\s*\([^)]*\)\s*$/, '');
   }
 
   function normalizeEntry(raw: SimRawActionEntry): SimActionEntry {
@@ -170,7 +232,11 @@ export function createSimulatorEngine(data: SimulatorFile, t: Translate) {
   }
 
   function lockTrigger(code: string): SimContextCondition | undefined {
-    return data.editability.locks.find(l => l.code === code)?.trigger ?? LOCK_TRIGGERS_FROM_SPEC[code];
+    return LOCK_TRIGGERS_FROM_SPEC[code];
+  }
+
+  function lockEffects(code: string): Record<string, EditabilityCode> {
+    return parseLockEffects(data.editability.locks.find(l => l.code === code)?.effect);
   }
 
   /** Verrous actifs du fait du contexte, limités à ceux que le fichier déclare. */
@@ -190,26 +256,37 @@ export function createSimulatorEngine(data: SimulatorFile, t: Translate) {
     const activeLocks = data.editability.locks.filter(l => locks.includes(l.code));
 
     return groups.map(group => {
-      let value = row?.[group.code];
-      if (!value) {
+      const raw = row?.[group.code];
+      let value: EditabilityCode;
+      let detail: Record<string, EditabilityCode> | undefined;
+      if (!raw) {
         warnMissing(`editability.matrix.${state}.${group.code}`);
         value = 'L';
+      } else if ((EDIT_CODES as string[]).includes(raw)) {
+        value = raw as EditabilityCode;
+      } else {
+        detail = Object.fromEntries(
+          Array.from(raw.matchAll(/([\p{L}]+) (O\*?|L|E)\b/gu)).map(m => [normalizeText(m[1]), m[2] as EditabilityCode]),
+        );
+        value = Object.values(detail).reduce<EditabilityCode>((worst, code) => (RESTRICTION[code] > RESTRICTION[worst] ? code : worst), 'O');
       }
       let result: GroupEditability = {
         group: group.code,
         label: group.label,
+        description: group.description,
         value,
+        detail,
         source: { kind: 'state', code: state },
         message: t(`${T}.editability.${value === 'O*' ? 'conditional' : value}`, { state: label }),
       };
       activeLocks.forEach(lock => {
-        const imposed = lock.effects?.[group.code];
+        const imposed = lockEffects(lock.code)[group.code];
         if (!imposed || RESTRICTION[imposed] <= RESTRICTION[result.value]) return;
         result = {
           ...result,
           value: imposed,
           source: { kind: 'lock', code: lock.code },
-          message: lock.message ?? t(`${T}.editability.lock`, { lock: lock.label ?? lock.code }),
+          message: t(`${T}.editability.lock`, { lock: lock.label ?? lock.code }),
         };
       });
       return result;
@@ -234,16 +311,25 @@ export function createSimulatorEngine(data: SimulatorFile, t: Translate) {
       });
   }
 
+  function blocksOf(workflowId: string): SimWorkflowBlock[] {
+    const wf = workflowById.get(workflowId);
+    return (wf?.blocks ?? []).map(name => {
+      const block = data.blocks?.[name];
+      if (!block) warnMissing(`blocks.${name}`);
+      return block ? { ...block, note: block.variant_note ?? block.note } : {};
+    });
+  }
+
   function sequenceOf(workflowId: string): { sequence: string[]; variants: SimWorkflowBlock[] } {
     const wf = workflowById.get(workflowId);
     if (!wf) return { sequence: [], variants: [] };
-    return { sequence: wf.sequence, variants: (wf.blocks ?? []).filter(b => Array.isArray(b.variant)) };
+    return { sequence: wf.sequence, variants: blocksOf(workflowId).filter(b => Array.isArray(b.variant)) };
   }
 
   function waitingOn(state: string): string[] {
     const value = stateByCode.get(state)?.waiting_on;
     if (value === undefined) warnMissing(`states.${state}.waiting_on`);
-    return value === undefined ? [] : Array.isArray(value) ? value : [value];
+    return value ? [value] : [];
   }
 
   function v1Mapping(state: string): string | null {
@@ -252,38 +338,40 @@ export function createSimulatorEngine(data: SimulatorFile, t: Translate) {
     return value ?? null;
   }
 
-  function portalLabel(state: string, audience: string): string | null {
-    const entry = data.portal_labels_v1?.[state];
-    if (entry === undefined) {
-      warnMissing(`portal_labels_v1.${state}`);
+  function portalLabel(state: string, audience: 'investor' | 'distributor'): string | null {
+    const entry = data.portal_labels_v1?.find(row => row.states.includes(state));
+    if (!entry) {
+      warnMissing(`portal_labels_v1 pour ${state}`);
       return null;
     }
-    return typeof entry === 'string' ? entry : entry[audience] ?? null;
+    return entry[audience] ?? null;
   }
 
   function familyOf(workflowId: string): WorkflowFamily | null {
-    const wf = workflowById.get(workflowId);
-    if (!wf) return null;
-    return wf.family ?? FAMILY_BY_PREFIX[wf.id.charAt(0)] ?? null;
+    return workflowById.get(workflowId)?.family ?? null;
   }
 
   function optionsOf(workflowId: string): WorkflowOption[] {
-    const options = workflowById.get(workflowId)?.options;
-    if (!options) return [];
-    if (Array.isArray(options)) return options.filter(o => WORKFLOW_OPTIONS.includes(o));
-    return WORKFLOW_OPTIONS.filter(o => options[o]);
+    const wf = workflowById.get(workflowId);
+    if (!wf) return [];
+    return (Object.keys(OPTION_FLAGS) as WorkflowOption[]).filter(option => wf[OPTION_FLAGS[option].flag]);
   }
 
+  /** Pré-requis du fonds : ceux des options actives, puis celui de la famille. */
   function prerequisitesOf(workflowId: string): string[] {
-    const options = optionsOf(workflowId);
-    if (options.length && !data.workflow_prerequisites) warnMissing('workflow_prerequisites');
-    return options.map(o => data.workflow_prerequisites?.[o]).filter((p): p is string => Boolean(p));
+    const prerequisites = data.workflow_prerequisites ?? {};
+    const family = familyOf(workflowId);
+    const familyKey = family === 'A' ? 'family_A' : family ? 'family_B_C' : null;
+    return [
+      ...optionsOf(workflowId).map(option => prerequisites[OPTION_FLAGS[option].prerequisite]),
+      familyKey ? prerequisites[familyKey] : undefined,
+    ].filter((p): p is string => Boolean(p));
   }
 
   function selfForced(workflowId: string): boolean {
     const wf = workflowById.get(workflowId);
     if (!wf) return false;
-    return wf.self_forced ?? SELF_FORCED_FROM_SPEC.includes(wf.id);
+    return SELF_FORCED_FROM_SPEC.includes(wf.id);
   }
 
   function v1Label(state: string): string | null {
@@ -296,22 +384,42 @@ export function createSimulatorEngine(data: SimulatorFile, t: Translate) {
     return stateByCode.get(codeOrLabel) ?? data.states.find(s => normalizeText(s.label) === key);
   }
 
-  function allowedSubstates(axis: AxisKey, state: string, context: Record<string, ContextValue>): string[] {
+  /**
+   * Conditions des axes, données en texte par le fichier et traduites ici :
+   * internal_validation "fonds à validation interne", payment "fonds à paiement direct,
+   * état active" ; un sous-état "C-sig. oui" exige un workflow à contresignature.
+   */
+  function axisApplies(axis: AxisKey, state: string, context: Record<string, ContextValue>): boolean {
     const def = data.axes[axis];
-    if (!def || !evaluateCondition(def.condition, context)) return [];
-    const all = def.substates.map(s => toLabelled(s).code);
-    if (Array.isArray(def.applies_to)) return def.applies_to.includes(state) ? all : [];
-    return (def.applies_to[state] ?? []).filter(code => all.includes(code));
+    if (!def) return false;
+    if (axis === 'payment') return context.payment_mode === 'paiement_direct' && state === 'active';
+    if (axis === 'internal_validation' && !context.internal_validation_enabled) return false;
+    return (def.applies_to ?? []).includes(state);
+  }
+
+  function allowedSubstates(
+    axis: AxisKey,
+    state: string,
+    context: Record<string, ContextValue>,
+    workflowId?: string,
+  ): string[] {
+    if (!axisApplies(axis, state, context)) return [];
+    const countersign = workflowId ? Boolean(workflowById.get(workflowId)?.countersign) : true;
+    return data.axes[axis].substates
+      .filter(sub => !sub.states || sub.states.includes(state))
+      .filter(sub => !(sub.condition && /c-sig/i.test(sub.condition)) || countersign)
+      .map(sub => sub.code);
   }
 
   function constrainAxes(
     axes: Partial<Record<AxisKey, string>>,
     state: string,
     context: Record<string, ContextValue>,
+    workflowId?: string,
   ): Record<AxisKey, string> {
     return Object.fromEntries(
       AXIS_KEYS.map(axis => {
-        const allowed = allowedSubstates(axis, state, context);
+        const allowed = allowedSubstates(axis, state, context, workflowId);
         const current = axes[axis];
         const value = current && allowed.includes(current) ? current : allowed[0] ?? AXIS_NOT_APPLICABLE;
         return [axis, value];

@@ -17,12 +17,13 @@ import { toast } from 'sonner';
 import { useTranslation } from '../utils/languageContext';
 import { useWorkflowScenario } from '../utils/workflowScenarioContext';
 import { copyToClipboard } from '../utils/clipboard';
-import { toLabelled, type SimulatorEngine } from '../utils/workflowSimulator/engine';
+import { contextKind, toLabelled, type SimulatorEngine } from '../utils/workflowSimulator/engine';
 import {
   AXIS_KEYS,
   type ContextScalar,
   type ContextValue,
   type SimLabelled,
+  type SimWorkflow,
   type WorkflowFamily,
 } from '../utils/workflowSimulator/types';
 import { Sheet, SheetContent } from './ui/sheet';
@@ -51,7 +52,6 @@ const FAMILIES: WorkflowFamily[] = ['A', 'B', 'C'];
 // Rangement des réglages de contexte dans le panneau (présentation seulement).
 const FUND_FIELDS = ['payment_mode', 'internal_validation_enabled', 'custom_status_renaming'];
 const DOSSIER_FIELDS = [
-  'holding',
   'assisted',
   'self',
   'reopened',
@@ -64,7 +64,8 @@ const DOSSIER_FIELDS = [
   'pending_changes',
 ];
 
-const optionCode = (value: ContextScalar | SimLabelled) => String(typeof value === 'object' ? value.code : value);
+const optionCode = (value: ContextScalar | SimLabelled) =>
+  String(typeof value === 'object' && value !== null ? value.code : value);
 
 interface WorkflowSimulatorPanelProps {
   open: boolean;
@@ -143,11 +144,17 @@ export function WorkflowSimulatorPanel({ open, onOpenChange }: WorkflowSimulator
     toast.success(t(`${P}.resetDone`));
   };
 
-  // Le mode de détention n'a pas de clé connue : c'est le réglage qui propose la valeur "pure".
-  const holdingKey = Object.keys(data.context).find(k => data.context[k].values?.some(v => optionCode(v) === 'pure'));
+  const workflowTitle = (w: SimWorkflow) =>
+    [
+      w.id,
+      w.initiator && tr(`${P}.workflow.initiators.${w.initiator}`, w.initiator),
+      w.channel && tr(`${P}.workflow.channels.${w.channel}`, w.channel),
+    ]
+      .filter(Boolean)
+      .join(' · ');
 
-  const renderContextField = (field: string) => {
-    const key = field === 'holding' ? holdingKey ?? field : field;
+  const renderContextField = (key: string) => {
+    const field = key;
     const setting = data.context[key];
     const label = tr(`${P}.context.fields.${field}`, setting?.label ?? key);
     if (!setting) {
@@ -167,7 +174,10 @@ export function WorkflowSimulatorPanel({ open, onOpenChange }: WorkflowSimulator
       disabledReason = t(`${P}.context.selfForced`, { workflow: scenario.workflow });
     }
 
-    if (setting.values?.length) {
+    const { kind } = contextKind(setting);
+    const options = Array.isArray(setting.values) ? setting.values : [];
+
+    if (kind === 'select') {
       return (
         <div key={key} className="space-y-1.5">
           <Label htmlFor={`sim-${key}`}>{label}</Label>
@@ -175,8 +185,8 @@ export function WorkflowSimulatorPanel({ open, onOpenChange }: WorkflowSimulator
             <Select
               value={value === undefined ? undefined : String(value)}
               onValueChange={next => {
-                const match = setting.values?.find(option => optionCode(option) === next);
-                setContext(key, match === undefined ? next : typeof match === 'object' ? match.code : match);
+                const match = options.find(option => optionCode(option) === next);
+                setContext(key, match === undefined ? next : typeof match === 'object' && match !== null ? match.code : match);
               }}
               disabled={Boolean(disabledReason)}
             >
@@ -184,10 +194,12 @@ export function WorkflowSimulatorPanel({ open, onOpenChange }: WorkflowSimulator
                 <SelectValue />
               </SelectTrigger>
               <SelectContent>
-                {setting.values.map(option => {
+                {options.map(option => {
                   const code = optionCode(option);
                   const optionLabel =
-                    typeof option === 'object' ? option.label : tr(`${P}.context.values.${field}.${code}`, code);
+                    typeof option === 'object' && option !== null
+                      ? option.label
+                      : tr(`${P}.context.values.${field}.${code}`, code);
                   return (
                     <SelectItem key={code} value={code}>
                       {optionLabel}
@@ -201,7 +213,7 @@ export function WorkflowSimulatorPanel({ open, onOpenChange }: WorkflowSimulator
       );
     }
 
-    if (value !== null && typeof value === 'object') {
+    if (kind === 'counters' && value !== null && typeof value === 'object') {
       return (
         <div key={key} className="space-y-1.5">
           <Label>{label}</Label>
@@ -225,7 +237,22 @@ export function WorkflowSimulatorPanel({ open, onOpenChange }: WorkflowSimulator
       );
     }
 
-    if (typeof value === 'number' || typeof setting.default === 'number') {
+    if (kind === 'date') {
+      return (
+        <div key={key} className="space-y-1.5">
+          <Label htmlFor={`sim-${key}`}>{label}</Label>
+          <Input
+            id={`sim-${key}`}
+            type="date"
+            value={typeof value === 'string' ? value : ''}
+            onChange={e => setContext(key, e.target.value || null)}
+          />
+          <p className="text-xs text-muted-foreground">{t(`${P}.context.dateHint`)}</p>
+        </div>
+      );
+    }
+
+    if (kind === 'counter') {
       return (
         <div key={key} className="space-y-1.5">
           <Label htmlFor={`sim-${key}`}>{label}</Label>
@@ -274,7 +301,7 @@ export function WorkflowSimulatorPanel({ open, onOpenChange }: WorkflowSimulator
               <Select value={scenario.workflow} onValueChange={id => update({ workflow: id })}>
                 <SelectTrigger aria-label={t(`${P}.workflow.title`)}>
                   <SelectValue>
-                    {[workflow?.id, workflow?.initiator, workflow?.channel].filter(Boolean).join(' · ')}
+                    {workflow ? workflowTitle(workflow) : null}
                   </SelectValue>
                 </SelectTrigger>
                 <SelectContent>
@@ -287,7 +314,7 @@ export function WorkflowSimulatorPanel({ open, onOpenChange }: WorkflowSimulator
                         {items.map(w => (
                           <SelectItem key={w.id} value={w.id}>
                             <span className="flex flex-col gap-1">
-                              <span>{[w.id, w.initiator, w.channel].filter(Boolean).join(' · ')}</span>
+                              <span>{workflowTitle(w)}</span>
                               {engine.optionsOf(w.id).length > 0 && (
                                 <span className="flex flex-wrap gap-1">
                                   {engine.optionsOf(w.id).map(option => (
@@ -385,7 +412,7 @@ export function WorkflowSimulatorPanel({ open, onOpenChange }: WorkflowSimulator
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
-                  {(data.context.role.values ?? []).map(option => {
+                  {(Array.isArray(data.context.role.values) ? data.context.role.values : []).map(option => {
                     const code = optionCode(option);
                     return (
                       <SelectItem key={code} value={code}>
@@ -410,7 +437,7 @@ export function WorkflowSimulatorPanel({ open, onOpenChange }: WorkflowSimulator
           <SidePanelSection icon={Waypoints} title={t(`${P}.axes.title`)} collapsible>
             <SidePanelCard className="space-y-4">
               {AXIS_KEYS.map(axis => {
-                const allowed = engine.allowedSubstates(axis, scenario.state, scenario.context);
+                const allowed = engine.allowedSubstates(axis, scenario.state, scenario.context, scenario.workflow);
                 const substates = (data.axes[axis]?.substates ?? []).map(s => toLabelled(s));
                 const id = `sim-axis-${axis}`;
                 return (

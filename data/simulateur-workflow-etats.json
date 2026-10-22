@@ -1,0 +1,523 @@
+{
+  "meta": {
+    "title": "Souscription V3 - Sélecteur d'état pour la maquette",
+    "description": "Entrée du simulateur de workflow du détail de souscription V3 : 28 workflows, 17 états, actions par état et par rôle, éditabilité par état, axes secondaires, décisions ouvertes. Même contenu que simulateur-workflow-etats.md.",
+    "epic": "IC-4938",
+    "state_referential": ["IC-5210", "IC-5212"],
+    "last_updated": "2026-10-21",
+    "status": "brouillon, non publié",
+    "selector": {
+      "setting_1": "workflow (workflows[].id)",
+      "setting_2": "état principal (states[].code), restreint par workflows[].reachable_states",
+      "setting_3": "contexte : context.* et axes secondaires axes.*"
+    }
+  },
+
+  "blocks": {
+    "START_INV": {"label": "Départ autonome investisseur", "sequence": ["en_cours", "prete_a_soumettre"]},
+    "START_BO": {"label": "Départ back-office avec invitation", "sequence": ["brouillon", "invitee", "en_cours", "prete_a_soumettre"]},
+    "START_DIST": {"label": "Départ autonome distributeur", "sequence": ["brouillon", "invitee", "en_cours", "prete_a_soumettre"], "note": "Invitée est sautée en souscription administrée : le distributeur remplit lui-même, Brouillon passe directement En cours"},
+    "MID_STD": {"label": "Central standard", "sequence": ["a_controler", "validee_a_envoyer", "en_signature", "active"]},
+    "MID_PREVAL": {"label": "Central avec pré-validation", "sequence": ["en_prevalidation_partenaire", "a_controler", "validee_a_envoyer", "en_signature", "active"]},
+    "MID_PRESIGN": {"label": "Central avec pré-signature", "sequence": ["en_presignature", "presignee_a_controler", "active"], "variant": ["en_presignature", "validee_en_presignature", "active"], "variant_note": "Si le GP valide le KYC avant la dernière signature"},
+    "MID_PREVAL_PRESIGN": {"label": "Central avec pré-validation et pré-signature", "sequence": ["en_prevalidation_partenaire", "en_presignature", "presignee_a_controler", "active"], "variant": ["en_prevalidation_partenaire", "en_presignature", "validee_en_presignature", "active"]}
+  },
+
+  "common_branches": {
+    "en_correction": {"from": ["a_controler", "en_prevalidation_partenaire", "validee_a_envoyer", "en_signature", "en_presignature"], "back_to": "état quitté, ou en_prevalidation_partenaire si le dossier avait été pré-validé"},
+    "expiree": {"from": ["invitee"], "condition": "délai renseigné sur le fonds"},
+    "annulee": {"from": "tout état antérieur à active"},
+    "refusee": {"from": ["a_controler", "presignee_a_controler"]},
+    "transferee": {"from": ["active"]}
+  },
+
+  "workflows": [
+    {"id": "D1", "family": "A", "family_label": "Direct", "initiator": "investisseur", "channel": "autonome", "presign": false, "prevalidation": false, "countersign": false, "bo_invitation": false, "blocks": ["START_INV", "MID_STD"], "sequence": ["en_cours", "prete_a_soumettre", "a_controler", "validee_a_envoyer", "en_signature", "active"], "reachable_states": ["en_cours", "prete_a_soumettre", "a_controler", "en_correction", "validee_a_envoyer", "en_signature", "active", "transferee", "annulee", "refusee"], "assisted_allowed": false},
+    {"id": "D2", "family": "A", "family_label": "Direct", "initiator": "investisseur", "channel": "autonome", "presign": false, "prevalidation": false, "countersign": true, "bo_invitation": false, "blocks": ["START_INV", "MID_STD"], "sequence": ["en_cours", "prete_a_soumettre", "a_controler", "validee_a_envoyer", "en_signature", "active"], "reachable_states": ["en_cours", "prete_a_soumettre", "a_controler", "en_correction", "validee_a_envoyer", "en_signature", "active", "transferee", "annulee", "refusee"], "assisted_allowed": false},
+    {"id": "D3", "family": "A", "family_label": "Direct", "initiator": "bo", "channel": "bo_invitation", "presign": false, "prevalidation": false, "countersign": false, "bo_invitation": true, "blocks": ["START_BO", "MID_STD"], "sequence": ["brouillon", "invitee", "en_cours", "prete_a_soumettre", "a_controler", "validee_a_envoyer", "en_signature", "active"], "reachable_states": ["brouillon", "invitee", "en_cours", "prete_a_soumettre", "a_controler", "en_correction", "validee_a_envoyer", "en_signature", "active", "transferee", "annulee", "refusee", "expiree"], "assisted_allowed": false},
+    {"id": "D4", "family": "A", "family_label": "Direct", "initiator": "bo", "channel": "bo_invitation", "presign": false, "prevalidation": false, "countersign": true, "bo_invitation": true, "blocks": ["START_BO", "MID_STD"], "sequence": ["brouillon", "invitee", "en_cours", "prete_a_soumettre", "a_controler", "validee_a_envoyer", "en_signature", "active"], "reachable_states": ["brouillon", "invitee", "en_cours", "prete_a_soumettre", "a_controler", "en_correction", "validee_a_envoyer", "en_signature", "active", "transferee", "annulee", "refusee", "expiree"], "assisted_allowed": false},
+
+    {"id": "P1", "family": "B", "family_label": "Intermédié parent", "initiator": "partenaire_parent", "channel": "autonome", "presign": false, "prevalidation": false, "countersign": false, "bo_invitation": false, "blocks": ["START_DIST", "MID_STD"], "sequence": ["brouillon", "invitee", "en_cours", "prete_a_soumettre", "a_controler", "validee_a_envoyer", "en_signature", "active"], "reachable_states": ["brouillon", "invitee", "en_cours", "prete_a_soumettre", "a_controler", "en_correction", "validee_a_envoyer", "en_signature", "active", "transferee", "annulee", "refusee", "expiree"], "assisted_allowed": true},
+    {"id": "P2", "family": "B", "family_label": "Intermédié parent", "initiator": "partenaire_parent", "channel": "autonome", "presign": false, "prevalidation": false, "countersign": true, "bo_invitation": false, "blocks": ["START_DIST", "MID_STD"], "sequence": ["brouillon", "invitee", "en_cours", "prete_a_soumettre", "a_controler", "validee_a_envoyer", "en_signature", "active"], "reachable_states": ["brouillon", "invitee", "en_cours", "prete_a_soumettre", "a_controler", "en_correction", "validee_a_envoyer", "en_signature", "active", "transferee", "annulee", "refusee", "expiree"], "assisted_allowed": true},
+    {"id": "P3", "family": "B", "family_label": "Intermédié parent", "initiator": "partenaire_parent", "channel": "autonome", "presign": true, "prevalidation": false, "countersign": false, "bo_invitation": false, "blocks": ["START_DIST", "MID_PRESIGN"], "sequence": ["brouillon", "invitee", "en_cours", "prete_a_soumettre", "en_presignature", "presignee_a_controler", "active"], "reachable_states": ["brouillon", "invitee", "en_cours", "prete_a_soumettre", "en_presignature", "presignee_a_controler", "validee_en_presignature", "en_correction", "active", "transferee", "annulee", "refusee", "expiree"], "assisted_allowed": true},
+    {"id": "P4", "family": "B", "family_label": "Intermédié parent", "initiator": "partenaire_parent", "channel": "autonome", "presign": true, "prevalidation": false, "countersign": true, "bo_invitation": false, "blocks": ["START_DIST", "MID_PRESIGN"], "sequence": ["brouillon", "invitee", "en_cours", "prete_a_soumettre", "en_presignature", "presignee_a_controler", "active"], "reachable_states": ["brouillon", "invitee", "en_cours", "prete_a_soumettre", "en_presignature", "presignee_a_controler", "validee_en_presignature", "en_correction", "active", "transferee", "annulee", "refusee", "expiree"], "assisted_allowed": true},
+    {"id": "P5", "family": "B", "family_label": "Intermédié parent", "initiator": "bo", "channel": "bo_invitation", "presign": false, "prevalidation": false, "countersign": false, "bo_invitation": true, "blocks": ["START_BO", "MID_STD"], "sequence": ["brouillon", "invitee", "en_cours", "prete_a_soumettre", "a_controler", "validee_a_envoyer", "en_signature", "active"], "reachable_states": ["brouillon", "invitee", "en_cours", "prete_a_soumettre", "a_controler", "en_correction", "validee_a_envoyer", "en_signature", "active", "transferee", "annulee", "refusee", "expiree"], "assisted_allowed": true},
+    {"id": "P6", "family": "B", "family_label": "Intermédié parent", "initiator": "bo", "channel": "bo_invitation", "presign": false, "prevalidation": false, "countersign": true, "bo_invitation": true, "blocks": ["START_BO", "MID_STD"], "sequence": ["brouillon", "invitee", "en_cours", "prete_a_soumettre", "a_controler", "validee_a_envoyer", "en_signature", "active"], "reachable_states": ["brouillon", "invitee", "en_cours", "prete_a_soumettre", "a_controler", "en_correction", "validee_a_envoyer", "en_signature", "active", "transferee", "annulee", "refusee", "expiree"], "assisted_allowed": true},
+    {"id": "P7", "family": "B", "family_label": "Intermédié parent", "initiator": "bo", "channel": "bo_invitation", "presign": true, "prevalidation": false, "countersign": false, "bo_invitation": true, "blocks": ["START_BO", "MID_PRESIGN"], "sequence": ["brouillon", "invitee", "en_cours", "prete_a_soumettre", "en_presignature", "presignee_a_controler", "active"], "reachable_states": ["brouillon", "invitee", "en_cours", "prete_a_soumettre", "en_presignature", "presignee_a_controler", "validee_en_presignature", "en_correction", "active", "transferee", "annulee", "refusee", "expiree"], "assisted_allowed": true},
+    {"id": "P8", "family": "B", "family_label": "Intermédié parent", "initiator": "bo", "channel": "bo_invitation", "presign": true, "prevalidation": false, "countersign": true, "bo_invitation": true, "blocks": ["START_BO", "MID_PRESIGN"], "sequence": ["brouillon", "invitee", "en_cours", "prete_a_soumettre", "en_presignature", "presignee_a_controler", "active"], "reachable_states": ["brouillon", "invitee", "en_cours", "prete_a_soumettre", "en_presignature", "presignee_a_controler", "validee_en_presignature", "en_correction", "active", "transferee", "annulee", "refusee", "expiree"], "assisted_allowed": true},
+
+    {"id": "E1", "family": "C", "family_label": "Intermédié enfant", "initiator": "partenaire_enfant", "channel": "autonome", "presign": false, "prevalidation": false, "countersign": false, "bo_invitation": false, "blocks": ["START_DIST", "MID_STD"], "sequence": ["brouillon", "invitee", "en_cours", "prete_a_soumettre", "a_controler", "validee_a_envoyer", "en_signature", "active"], "reachable_states": ["brouillon", "invitee", "en_cours", "prete_a_soumettre", "a_controler", "en_correction", "validee_a_envoyer", "en_signature", "active", "transferee", "annulee", "refusee", "expiree"], "assisted_allowed": true},
+    {"id": "E2", "family": "C", "family_label": "Intermédié enfant", "initiator": "partenaire_enfant", "channel": "autonome", "presign": false, "prevalidation": false, "countersign": true, "bo_invitation": false, "blocks": ["START_DIST", "MID_STD"], "sequence": ["brouillon", "invitee", "en_cours", "prete_a_soumettre", "a_controler", "validee_a_envoyer", "en_signature", "active"], "reachable_states": ["brouillon", "invitee", "en_cours", "prete_a_soumettre", "a_controler", "en_correction", "validee_a_envoyer", "en_signature", "active", "transferee", "annulee", "refusee", "expiree"], "assisted_allowed": true},
+    {"id": "E3", "family": "C", "family_label": "Intermédié enfant", "initiator": "partenaire_enfant", "channel": "autonome", "presign": false, "prevalidation": true, "countersign": false, "bo_invitation": false, "blocks": ["START_DIST", "MID_PREVAL"], "sequence": ["brouillon", "invitee", "en_cours", "prete_a_soumettre", "en_prevalidation_partenaire", "a_controler", "validee_a_envoyer", "en_signature", "active"], "reachable_states": ["brouillon", "invitee", "en_cours", "prete_a_soumettre", "en_prevalidation_partenaire", "a_controler", "en_correction", "validee_a_envoyer", "en_signature", "active", "transferee", "annulee", "refusee", "expiree"], "assisted_allowed": true},
+    {"id": "E4", "family": "C", "family_label": "Intermédié enfant", "initiator": "partenaire_enfant", "channel": "autonome", "presign": false, "prevalidation": true, "countersign": true, "bo_invitation": false, "blocks": ["START_DIST", "MID_PREVAL"], "sequence": ["brouillon", "invitee", "en_cours", "prete_a_soumettre", "en_prevalidation_partenaire", "a_controler", "validee_a_envoyer", "en_signature", "active"], "reachable_states": ["brouillon", "invitee", "en_cours", "prete_a_soumettre", "en_prevalidation_partenaire", "a_controler", "en_correction", "validee_a_envoyer", "en_signature", "active", "transferee", "annulee", "refusee", "expiree"], "assisted_allowed": true},
+    {"id": "E5", "family": "C", "family_label": "Intermédié enfant", "initiator": "partenaire_enfant", "channel": "autonome", "presign": true, "prevalidation": false, "countersign": false, "bo_invitation": false, "blocks": ["START_DIST", "MID_PRESIGN"], "sequence": ["brouillon", "invitee", "en_cours", "prete_a_soumettre", "en_presignature", "presignee_a_controler", "active"], "reachable_states": ["brouillon", "invitee", "en_cours", "prete_a_soumettre", "en_presignature", "presignee_a_controler", "validee_en_presignature", "en_correction", "active", "transferee", "annulee", "refusee", "expiree"], "assisted_allowed": true},
+    {"id": "E6", "family": "C", "family_label": "Intermédié enfant", "initiator": "partenaire_enfant", "channel": "autonome", "presign": true, "prevalidation": false, "countersign": true, "bo_invitation": false, "blocks": ["START_DIST", "MID_PRESIGN"], "sequence": ["brouillon", "invitee", "en_cours", "prete_a_soumettre", "en_presignature", "presignee_a_controler", "active"], "reachable_states": ["brouillon", "invitee", "en_cours", "prete_a_soumettre", "en_presignature", "presignee_a_controler", "validee_en_presignature", "en_correction", "active", "transferee", "annulee", "refusee", "expiree"], "assisted_allowed": true},
+    {"id": "E7", "family": "C", "family_label": "Intermédié enfant", "initiator": "partenaire_enfant", "channel": "autonome", "presign": true, "prevalidation": true, "countersign": false, "bo_invitation": false, "blocks": ["START_DIST", "MID_PREVAL_PRESIGN"], "sequence": ["brouillon", "invitee", "en_cours", "prete_a_soumettre", "en_prevalidation_partenaire", "en_presignature", "presignee_a_controler", "active"], "reachable_states": ["brouillon", "invitee", "en_cours", "prete_a_soumettre", "en_prevalidation_partenaire", "en_presignature", "presignee_a_controler", "validee_en_presignature", "en_correction", "active", "transferee", "annulee", "refusee", "expiree"], "assisted_allowed": true},
+    {"id": "E8", "family": "C", "family_label": "Intermédié enfant", "initiator": "partenaire_enfant", "channel": "autonome", "presign": true, "prevalidation": true, "countersign": true, "bo_invitation": false, "blocks": ["START_DIST", "MID_PREVAL_PRESIGN"], "sequence": ["brouillon", "invitee", "en_cours", "prete_a_soumettre", "en_prevalidation_partenaire", "en_presignature", "presignee_a_controler", "active"], "reachable_states": ["brouillon", "invitee", "en_cours", "prete_a_soumettre", "en_prevalidation_partenaire", "en_presignature", "presignee_a_controler", "validee_en_presignature", "en_correction", "active", "transferee", "annulee", "refusee", "expiree"], "assisted_allowed": true},
+    {"id": "E9", "family": "C", "family_label": "Intermédié enfant", "initiator": "bo", "channel": "bo_invitation", "presign": false, "prevalidation": false, "countersign": false, "bo_invitation": true, "blocks": ["START_BO", "MID_STD"], "sequence": ["brouillon", "invitee", "en_cours", "prete_a_soumettre", "a_controler", "validee_a_envoyer", "en_signature", "active"], "reachable_states": ["brouillon", "invitee", "en_cours", "prete_a_soumettre", "a_controler", "en_correction", "validee_a_envoyer", "en_signature", "active", "transferee", "annulee", "refusee", "expiree"], "assisted_allowed": true},
+    {"id": "E10", "family": "C", "family_label": "Intermédié enfant", "initiator": "bo", "channel": "bo_invitation", "presign": false, "prevalidation": false, "countersign": true, "bo_invitation": true, "blocks": ["START_BO", "MID_STD"], "sequence": ["brouillon", "invitee", "en_cours", "prete_a_soumettre", "a_controler", "validee_a_envoyer", "en_signature", "active"], "reachable_states": ["brouillon", "invitee", "en_cours", "prete_a_soumettre", "a_controler", "en_correction", "validee_a_envoyer", "en_signature", "active", "transferee", "annulee", "refusee", "expiree"], "assisted_allowed": true},
+    {"id": "E11", "family": "C", "family_label": "Intermédié enfant", "initiator": "bo", "channel": "bo_invitation", "presign": false, "prevalidation": true, "countersign": false, "bo_invitation": true, "blocks": ["START_BO", "MID_PREVAL"], "sequence": ["brouillon", "invitee", "en_cours", "prete_a_soumettre", "en_prevalidation_partenaire", "a_controler", "validee_a_envoyer", "en_signature", "active"], "reachable_states": ["brouillon", "invitee", "en_cours", "prete_a_soumettre", "en_prevalidation_partenaire", "a_controler", "en_correction", "validee_a_envoyer", "en_signature", "active", "transferee", "annulee", "refusee", "expiree"], "assisted_allowed": true},
+    {"id": "E12", "family": "C", "family_label": "Intermédié enfant", "initiator": "bo", "channel": "bo_invitation", "presign": false, "prevalidation": true, "countersign": true, "bo_invitation": true, "blocks": ["START_BO", "MID_PREVAL"], "sequence": ["brouillon", "invitee", "en_cours", "prete_a_soumettre", "en_prevalidation_partenaire", "a_controler", "validee_a_envoyer", "en_signature", "active"], "reachable_states": ["brouillon", "invitee", "en_cours", "prete_a_soumettre", "en_prevalidation_partenaire", "a_controler", "en_correction", "validee_a_envoyer", "en_signature", "active", "transferee", "annulee", "refusee", "expiree"], "assisted_allowed": true},
+    {"id": "E13", "family": "C", "family_label": "Intermédié enfant", "initiator": "bo", "channel": "bo_invitation", "presign": true, "prevalidation": false, "countersign": false, "bo_invitation": true, "blocks": ["START_BO", "MID_PRESIGN"], "sequence": ["brouillon", "invitee", "en_cours", "prete_a_soumettre", "en_presignature", "presignee_a_controler", "active"], "reachable_states": ["brouillon", "invitee", "en_cours", "prete_a_soumettre", "en_presignature", "presignee_a_controler", "validee_en_presignature", "en_correction", "active", "transferee", "annulee", "refusee", "expiree"], "assisted_allowed": true},
+    {"id": "E14", "family": "C", "family_label": "Intermédié enfant", "initiator": "bo", "channel": "bo_invitation", "presign": true, "prevalidation": false, "countersign": true, "bo_invitation": true, "blocks": ["START_BO", "MID_PRESIGN"], "sequence": ["brouillon", "invitee", "en_cours", "prete_a_soumettre", "en_presignature", "presignee_a_controler", "active"], "reachable_states": ["brouillon", "invitee", "en_cours", "prete_a_soumettre", "en_presignature", "presignee_a_controler", "validee_en_presignature", "en_correction", "active", "transferee", "annulee", "refusee", "expiree"], "assisted_allowed": true},
+    {"id": "E15", "family": "C", "family_label": "Intermédié enfant", "initiator": "bo", "channel": "bo_invitation", "presign": true, "prevalidation": true, "countersign": false, "bo_invitation": true, "blocks": ["START_BO", "MID_PREVAL_PRESIGN"], "sequence": ["brouillon", "invitee", "en_cours", "prete_a_soumettre", "en_prevalidation_partenaire", "en_presignature", "presignee_a_controler", "active"], "reachable_states": ["brouillon", "invitee", "en_cours", "prete_a_soumettre", "en_prevalidation_partenaire", "en_presignature", "presignee_a_controler", "validee_en_presignature", "en_correction", "active", "transferee", "annulee", "refusee", "expiree"], "assisted_allowed": true},
+    {"id": "E16", "family": "C", "family_label": "Intermédié enfant", "initiator": "bo", "channel": "bo_invitation", "presign": true, "prevalidation": true, "countersign": true, "bo_invitation": true, "blocks": ["START_BO", "MID_PREVAL_PRESIGN"], "sequence": ["brouillon", "invitee", "en_cours", "prete_a_soumettre", "en_prevalidation_partenaire", "en_presignature", "presignee_a_controler", "active"], "reachable_states": ["brouillon", "invitee", "en_cours", "prete_a_soumettre", "en_prevalidation_partenaire", "en_presignature", "presignee_a_controler", "validee_en_presignature", "en_correction", "active", "transferee", "annulee", "refusee", "expiree"], "assisted_allowed": true}
+  ],
+
+  "workflow_prerequisites": {
+    "prevalidation": "Réglage de fonds Prévalidation partenaire, et partenaire de la souscription ou son parent dans la liste des partenaires délégués du fonds",
+    "presign": "Réglage Pré-signature sur le fonds, et sur la fiche du partenaire pour un dossier intermédié",
+    "countersign": "Contact signataire défini sur le fonds",
+    "family_B_C": "Souscription en ligne partenaires sur le fonds, fonds activé sur la fiche du distributeur, taux de rétrocession sur la part, convention signée et onboarding distributeur complété sauf réglage open shares without signature",
+    "family_A": "Souscription en ligne sur le fonds"
+  },
+
+  "states": [
+    {"code": "brouillon", "label": "Brouillon", "waiting_on": "GP qui doit inviter, ou distributeur qui a créé le dossier", "v1_mapping": "status 0, invited 0, self 0, is_complete 0", "v1_label": "En préparation", "terminal": false, "origin": "IC-5212"},
+    {"code": "invitee", "label": "Invitée", "waiting_on": "Investisseur, qui n'a pas commencé", "v1_mapping": "status 0, invited 1, aucune réponse", "v1_label": "En préparation", "terminal": false, "origin": "IC-5212"},
+    {"code": "en_cours", "label": "En cours", "waiting_on": "Investisseur, ou distributeur en administrée", "v1_mapping": "status 0, is_complete 0, au moins une réponse", "v1_label": "Onboarding", "terminal": false, "origin": "IC-5212"},
+    {"code": "prete_a_soumettre", "label": "Prête à soumettre", "waiting_on": "Investisseur, qui doit envoyer", "v1_mapping": "status 0, is_complete 0, toutes les obligatoires répondues (80 % aujourd'hui)", "v1_label": "Onboarding", "terminal": false, "origin": "IC-5212"},
+    {"code": "en_prevalidation_partenaire", "label": "En pré-validation partenaire", "waiting_on": "Partenaire délégué", "v1_mapping": "is_complete 1, partner_validation 1", "v1_label": "À valider - Validation partenaire", "terminal": false, "origin": "IC-5212, IC-5218"},
+    {"code": "a_controler", "label": "À contrôler", "waiting_on": "GP", "v1_mapping": "status 0, is_complete 1, partner_validation différent de 1", "v1_label": "À valider", "terminal": false, "origin": "IC-5212"},
+    {"code": "en_correction", "label": "En correction", "waiting_on": "Investisseur, après réouverture", "v1_mapping": "status 0, is_complete 0, reopened 1", "v1_label": "Onboarding", "terminal": false, "origin": "IC-5212"},
+    {"code": "validee_a_envoyer", "label": "Validée, à envoyer en signature", "waiting_on": "GP, qui doit composer et envoyer le pack", "v1_mapping": "status 1, signatures vide", "v1_label": "Demander une signature", "terminal": false, "origin": "Décision Q1 du 2026-09-07 (IC-5117)"},
+    {"code": "en_signature", "label": "En signature", "waiting_on": "Signataires, puis contre-signataires", "v1_mapping": "status 1, signatures non vide", "v1_label": "Signature en attente (n/N)", "terminal": false, "origin": "IC-5212"},
+    {"code": "en_presignature", "label": "En pré-signature", "waiting_on": "Signataires et GP en parallèle", "v1_mapping": "status 0, is_complete 1, signature_id renseigné, has_validated 0", "v1_label": "À valider - Pré-signature en cours", "terminal": false, "origin": "Proposé, décision D1"},
+    {"code": "presignee_a_controler", "label": "Pré-signée, à contrôler", "waiting_on": "GP", "v1_mapping": "status 2, has_validated 0, fonds à pré-signature", "v1_label": "Souscription active (avec bouton Valider le KYC)", "terminal": false, "origin": "Proposé, décision D1"},
+    {"code": "validee_en_presignature", "label": "Validée, en pré-signature", "waiting_on": "Signataires", "v1_mapping": "status 1, signatures non vide, atteint par la voie pré-signature", "v1_label": "Signature en attente (n/N)", "terminal": false, "origin": "Proposé, décision D1"},
+    {"code": "active", "label": "Active", "waiting_on": "Plus personne pour l'état principal ; axe versement sur fonds à paiement direct", "v1_mapping": "status 2", "v1_label": "Souscription active, ou sous-étape de versement", "terminal": false, "origin": "IC-5212"},
+    {"code": "transferee", "label": "Transférée", "waiting_on": "Terminal", "v1_mapping": "status 5", "v1_label": "Transférée", "terminal": true, "reversible": true, "origin": "IC-5212"},
+    {"code": "annulee", "label": "Annulée", "waiting_on": "Terminal, réversible", "v1_mapping": "n'existe pas", "v1_label": null, "terminal": true, "reversible": true, "origin": "IC-5220"},
+    {"code": "refusee", "label": "Refusée", "waiting_on": "Terminal, réversible", "v1_mapping": "n'existe pas, le refus courant renvoie en À contrôler", "v1_label": null, "terminal": true, "reversible": true, "origin": "IC-5221"},
+    {"code": "expiree", "label": "Expirée", "waiting_on": "Terminal, réversible", "v1_mapping": "n'existe pas", "v1_label": null, "terminal": true, "reversible": true, "origin": "IC-5222"}
+  ],
+
+  "roles": [
+    {"code": "gp", "label": "GP, gestion des dossiers", "right": "campaigns-investors", "condition": "fonds dans le périmètre, part non restreinte"},
+    {"code": "gp_readonly", "label": "GP, lecture seule", "right": "campaigns-investors-readonly", "condition": "statut opérateur 1 ; aucun bouton d'action, bouton Modifier non rendu"},
+    {"code": "gp_exceptional", "label": "GP, correction et validation exceptionnelles", "right": "subscriptions-exceptional-edit (à créer, décision Q4)", "condition": "motif d'au moins vingt caractères"},
+    {"code": "gp_fastadd", "label": "GP, saisie rapide", "right": "campaigns-fastadd", "condition": "création directement Active"},
+    {"code": "validator", "label": "Validateur interne", "right": "listé dans les validateurs internes du fonds", "condition": "distinct du demandeur"},
+    {"code": "risk_validator", "label": "Validateur de risque", "right": "campaigns-riskvalidation", "condition": ""},
+    {"code": "distributor", "label": "Distributeur", "right": "subscriptions, subscriptions-actions (droits partenaire)", "condition": "fonds activé sur la fiche, taux de rétrocession, convention signée sauf réglage"},
+    {"code": "delegated_partner", "label": "Partenaire délégué", "right": "subscriptions-validation ou subscriptions-validation-network", "condition": "partenaire, ou son parent, dans la liste des délégués du fonds"},
+    {"code": "investor", "label": "Investisseur", "right": "lien d'onboarding puis compte portail", "condition": ""},
+    {"code": "fund_signer", "label": "Contre-signataire du fonds", "right": "contact signataire du fonds", "condition": "un ou deux, choix par dossier possible"},
+    {"code": "platform", "label": "Plateforme", "right": "automatique", "condition": "callbacks, cron, webhooks"}
+  ],
+
+  "actions": {
+    "invite": "Inviter",
+    "reinvite": "Renvoyer l'invitation",
+    "remind": "Relancer l'investisseur",
+    "edit": "Modifier la souscription (modale)",
+    "edit_answer": "Modifier une réponse (IC-5616)",
+    "submit_bo": "Soumettre depuis le back-office avec liste des manques",
+    "review": "Contrôler réponses et pièces",
+    "validate_kyc": "Valider le KYC",
+    "validate_exceptional": "Validation exceptionnelle (droit dédié, motif)",
+    "reopen": "Rouvrir",
+    "request_internal_validation": "Demander la validation interne",
+    "internal_approve": "Approuver (validation interne)",
+    "internal_reject": "Refuser et renvoyer (motif)",
+    "refuse_final": "Refuser définitivement (motif)",
+    "risk_validate": "Valider ou rouvrir le profil de risque",
+    "screening": "Screening et conformité",
+    "pack_edit": "Composer le pack",
+    "signers_edit": "Gérer signataires et contre-signataires",
+    "send_signature": "Envoyer en signature",
+    "resend_signature_mail": "Renvoyer le mail de signature",
+    "open_signature_link": "Ouvrir le lien de signature",
+    "resend_signature": "Relancer l'envoi complet (second dossier)",
+    "validate_no_signature": "Valider sans signature",
+    "cancel": "Annuler (motif)",
+    "reactivate": "Réactiver",
+    "delete": "Supprimer",
+    "duplicate": "Dupliquer",
+    "export": "Exporter le dossier",
+    "transfer": "Transférer",
+    "transfer_rollback": "Annuler le transfert",
+    "reduce": "Réduction d'engagement",
+    "merge": "Fusionner vers",
+    "validate_change": "Valider ou refuser une demande de modification",
+    "sepa_mandate": "Demander la signature du mandat SEPA",
+    "sideletter_confirm": "Confirmer la side letter",
+    "request_payment": "Demander le versement",
+    "remind_payment": "Relancer le versement",
+    "confirm_payment": "Confirmer le versement",
+    "confirm_nav": "Confirmer la VL",
+    "refusal_rollback": "Annuler le refus",
+    "view": "Consulter",
+    "documents": "Documents, appels, distributions",
+    "create": "Créer la souscription",
+    "fill_assisted": "Compléter pour l'investisseur (administrée)",
+    "send_link": "Envoyer le lien à l'investisseur",
+    "edit_amount_portal": "Modifier le montant (portail)",
+    "delete_portal": "Supprimer (portail)",
+    "submit_for_investor": "Soumettre pour l'investisseur (administrée)",
+    "submit_and_sign": "Valider et envoyer à signer (pré-signature)",
+    "send_signature_portal": "Envoyer à signer depuis le portail",
+    "sign_distributor": "Signer (distributeur signataire)",
+    "review_delegated": "Contrôler réponses et sections (partenaire délégué)",
+    "docs_review": "Statuer sur les pièces, remplacer, corriger les dates",
+    "prevalidate": "Valider le dossier (pré-validation)",
+    "prevalidate_reopen": "Rouvrir (partenaire délégué)",
+    "fill": "Répondre et déposer des pièces",
+    "submit": "Soumettre",
+    "submit_incomplete": "Soumettre malgré des manques",
+    "resubmit": "Corriger et renvoyer",
+    "sign": "Signer",
+    "request_change": "Demander une modification (adresse, IBAN, nom, email, téléphone)",
+    "pay": "Réaliser le versement ou enregistrer le prélèvement",
+    "rebuy": "Rachat libre ou forcé",
+    "secondary_sell": "Mise en vente au marché secondaire",
+    "countersign": "Contresigner",
+    "expire": "Expirer",
+    "auto_remind": "Relance automatique souscription non finalisée",
+    "activate": "Activer au retour de la dernière signature",
+    "risk_check": "Contrôle de risque externe",
+    "webhooks": "Webhooks, recalcul des parts, callbacks de paiement"
+  },
+
+  "actions_by_state": {
+    "brouillon": {
+      "gp": [{"code": "invite"}, {"code": "edit"}, {"code": "delete", "note": "seul état où la V3 l'autorise, IC-5220 règle 8"}, {"code": "cancel"}, {"code": "duplicate"}, {"code": "validate_exceptional", "role_required": "gp_exceptional", "to": "a_controler"}, {"code": "export"}],
+      "validator": [],
+      "distributor": [{"code": "fill_assisted", "to": "en_cours"}, {"code": "send_link", "to": "invitee", "decision": "D3"}, {"code": "edit_amount_portal"}, {"code": "delete_portal", "scope": "v1", "note": "sans contrôle d'état en V1"}],
+      "delegated_partner": [],
+      "investor": [],
+      "fund_signer": [],
+      "platform": []
+    },
+    "invitee": {
+      "gp": [{"code": "reinvite"}, {"code": "edit"}, {"code": "cancel"}, {"code": "duplicate"}, {"code": "export"}],
+      "validator": [],
+      "distributor": [{"code": "remind"}, {"code": "fill_assisted"}, {"code": "edit_amount_portal"}, {"code": "delete_portal", "scope": "v1"}],
+      "delegated_partner": [],
+      "investor": [{"code": "fill", "to": "en_cours"}, {"code": "edit_amount_portal"}, {"code": "delete_portal", "scope": "v1", "decision": "D5"}],
+      "fund_signer": [],
+      "platform": [{"code": "expire", "to": "expiree", "condition": "délai renseigné sur le fonds"}]
+    },
+    "en_cours": {
+      "gp": [{"code": "reinvite", "note": "vaut relance"}, {"code": "edit"}, {"code": "edit_answer"}, {"code": "submit_bo"}, {"code": "cancel"}, {"code": "duplicate"}, {"code": "validate_exceptional", "role_required": "gp_exceptional"}, {"code": "export"}],
+      "validator": [],
+      "distributor": [{"code": "fill_assisted"}, {"code": "remind"}, {"code": "edit_amount_portal"}, {"code": "delete_portal", "scope": "v1"}, {"code": "view"}],
+      "delegated_partner": [],
+      "investor": [{"code": "fill"}, {"code": "edit_amount_portal"}, {"code": "submit_incomplete", "to": "a_controler"}, {"code": "delete_portal", "scope": "v1", "decision": "D5"}],
+      "fund_signer": [],
+      "platform": [{"code": "auto_remind", "note": "inopérante en V1, cron.php:1670-1671"}]
+    },
+    "prete_a_soumettre": {
+      "gp": [{"code": "reinvite"}, {"code": "edit"}, {"code": "edit_answer"}, {"code": "submit_bo"}, {"code": "cancel"}, {"code": "duplicate"}, {"code": "validate_exceptional", "role_required": "gp_exceptional"}, {"code": "export"}],
+      "validator": [],
+      "distributor": [{"code": "submit_for_investor"}, {"code": "submit_and_sign", "condition": "pré-signature"}, {"code": "remind"}, {"code": "edit_amount_portal"}, {"code": "delete_portal", "scope": "v1"}],
+      "delegated_partner": [],
+      "investor": [{"code": "submit", "to": "a_controler | en_prevalidation_partenaire"}, {"code": "submit_and_sign", "condition": "pré-signature", "to": "en_presignature"}, {"code": "fill"}, {"code": "edit_amount_portal"}],
+      "fund_signer": [],
+      "platform": []
+    },
+    "en_prevalidation_partenaire": {
+      "gp": [{"code": "view"}, {"code": "edit", "note": "typologie et assistée en correction exceptionnelle"}, {"code": "cancel"}, {"code": "export"}, {"code": "reopen", "scope": "v1", "decision": "D7"}, {"code": "validate_kyc", "disabled": true, "reason": "Le dossier est chez le partenaire délégué", "decision": "D7"}],
+      "validator": [],
+      "distributor": [{"code": "view"}],
+      "delegated_partner": [{"code": "review_delegated"}, {"code": "docs_review"}, {"code": "remind"}, {"code": "prevalidate", "to": "a_controler | en_presignature"}, {"code": "prevalidate_reopen", "to": "en_correction"}],
+      "investor": [{"code": "view"}, {"code": "request_change"}],
+      "fund_signer": [],
+      "platform": []
+    },
+    "a_controler": {
+      "gp": [{"code": "review"}, {"code": "edit_answer", "note": "alerte IC-5620"}, {"code": "validate_kyc", "to": "validee_a_envoyer"}, {"code": "reopen", "to": "en_correction"}, {"code": "request_internal_validation", "condition": "fonds à validation interne"}, {"code": "validate_no_signature", "to": "active", "condition": "réglage du fonds"}, {"code": "edit"}, {"code": "screening"}, {"code": "cancel"}, {"code": "duplicate"}, {"code": "export"}],
+      "validator": [{"code": "internal_approve"}, {"code": "internal_reject"}, {"code": "refuse_final", "to": "refusee"}],
+      "risk_validator": [{"code": "risk_validate"}],
+      "distributor": [{"code": "view"}],
+      "delegated_partner": [{"code": "view"}],
+      "investor": [{"code": "view"}, {"code": "request_change"}],
+      "fund_signer": [],
+      "platform": [{"code": "risk_check", "condition": "réglage External risk check, à la validation KYC"}]
+    },
+    "en_correction": {
+      "gp": [{"code": "reinvite"}, {"code": "edit_answer"}, {"code": "edit", "note": "typologie verrouillée"}, {"code": "cancel"}, {"code": "validate_exceptional", "role_required": "gp_exceptional"}, {"code": "export"}],
+      "validator": [],
+      "distributor": [{"code": "fill_assisted"}, {"code": "remind"}],
+      "delegated_partner": [{"code": "view"}],
+      "investor": [{"code": "fill"}, {"code": "resubmit", "to": "a_controler | en_prevalidation_partenaire"}],
+      "fund_signer": [],
+      "platform": []
+    },
+    "validee_a_envoyer": {
+      "gp": [{"code": "pack_edit"}, {"code": "signers_edit"}, {"code": "send_signature", "to": "en_signature", "prerequisites": "axes.signature.send_prerequisites"}, {"code": "validate_no_signature", "to": "active"}, {"code": "reopen", "scope": "v1", "decision": "D4"}, {"code": "edit"}, {"code": "cancel"}, {"code": "duplicate"}, {"code": "export"}],
+      "validator": [],
+      "risk_validator": [{"code": "risk_validate"}],
+      "distributor": [{"code": "send_signature_portal", "scope": "v1", "decision": "D6"}, {"code": "view"}],
+      "delegated_partner": [],
+      "investor": [{"code": "view"}, {"code": "request_change"}],
+      "fund_signer": [],
+      "platform": []
+    },
+    "en_signature": {
+      "gp": [{"code": "view", "note": "suivi signataire par signataire"}, {"code": "resend_signature_mail"}, {"code": "open_signature_link"}, {"code": "resend_signature"}, {"code": "reopen", "scope": "v1", "decision": "D4", "note": "procédure laissée ouverte chez le prestataire"}, {"code": "edit", "note": "montants, identité, bancaire : avertissement bloquant, annule la procédure, retour validee_a_envoyer"}, {"code": "cancel", "note": "sort de la procédure à trancher, IC-5220 Q2"}, {"code": "export"}],
+      "validator": [],
+      "distributor": [{"code": "resend_signature_mail"}, {"code": "sign_distributor", "condition": "fonds à signature du distributeur"}, {"code": "view"}],
+      "delegated_partner": [],
+      "investor": [{"code": "sign"}, {"code": "request_change"}],
+      "fund_signer": [{"code": "countersign", "condition": "après les souscripteurs, C-sig. oui"}],
+      "platform": [{"code": "activate", "to": "active"}]
+    },
+    "en_presignature": {
+      "gp": [{"code": "review"}, {"code": "validate_kyc", "to": "validee_en_presignature"}, {"code": "request_internal_validation"}, {"code": "reopen"}, {"code": "resend_signature_mail"}, {"code": "open_signature_link"}, {"code": "edit", "note": "mêmes conséquences qu'En signature"}, {"code": "cancel"}, {"code": "export"}],
+      "validator": [{"code": "internal_approve"}, {"code": "internal_reject"}, {"code": "refuse_final"}],
+      "risk_validator": [{"code": "risk_validate"}],
+      "distributor": [{"code": "resend_signature_mail"}, {"code": "view"}],
+      "delegated_partner": [{"code": "prevalidate", "condition": "pré-validation encore attendue, en parallèle", "decision": "D2"}, {"code": "prevalidate_reopen", "decision": "D2"}],
+      "investor": [{"code": "sign"}],
+      "fund_signer": [{"code": "countersign", "note": "V1 : sollicité dès la signature de l'investisseur, sans attendre la validation", "decision": "D1"}],
+      "platform": [{"code": "activate", "to": "presignee_a_controler", "note": "V1 : Active directement", "decision": "D1"}]
+    },
+    "presignee_a_controler": {
+      "gp": [{"code": "validate_kyc", "to": "active"}, {"code": "review"}, {"code": "request_internal_validation"}, {"code": "edit", "decision": "D9"}, {"code": "cancel"}, {"code": "export"}, {"code": "reopen", "scope": "v1", "note": "à trancher"}],
+      "validator": [{"code": "internal_approve"}, {"code": "internal_reject"}, {"code": "refuse_final", "to": "refusee"}],
+      "distributor": [{"code": "view"}],
+      "delegated_partner": [{"code": "view"}],
+      "investor": [{"code": "view"}, {"code": "request_change"}],
+      "fund_signer": [],
+      "platform": []
+    },
+    "validee_en_presignature": {
+      "gp": [{"code": "view"}, {"code": "resend_signature_mail"}, {"code": "open_signature_link"}, {"code": "resend_signature"}, {"code": "validate_no_signature"}, {"code": "export"}],
+      "validator": [],
+      "distributor": [{"code": "resend_signature_mail"}, {"code": "sign_distributor", "condition": "fonds à signature du distributeur"}],
+      "delegated_partner": [],
+      "investor": [{"code": "sign"}],
+      "fund_signer": [{"code": "countersign"}],
+      "platform": [{"code": "activate", "to": "active"}]
+    },
+    "active": {
+      "gp": [{"code": "edit", "note": "montants et partenaire en correction exceptionnelle"}, {"code": "reduce"}, {"code": "transfer", "to": "transferee"}, {"code": "merge"}, {"code": "duplicate"}, {"code": "validate_change"}, {"code": "sideletter_confirm"}, {"code": "sepa_mandate"}, {"code": "request_payment", "axis": "payment", "condition": "paiement direct"}, {"code": "remind_payment", "axis": "payment"}, {"code": "confirm_payment", "axis": "payment"}, {"code": "confirm_nav", "axis": "payment"}, {"code": "documents"}, {"code": "export"}, {"code": "cancel", "disabled": true, "reason": "Une souscription active ne s'annule pas : réduction d'engagement ou transfert (IC-5220 règle 7)"}],
+      "validator": [],
+      "distributor": [{"code": "view"}, {"code": "documents"}],
+      "delegated_partner": [{"code": "view"}],
+      "investor": [{"code": "request_change"}, {"code": "pay", "axis": "payment", "condition": "versement attendu"}, {"code": "rebuy", "condition": "selon la part"}, {"code": "secondary_sell", "condition": "si éligible"}, {"code": "documents"}],
+      "fund_signer": [],
+      "platform": [{"code": "webhooks"}]
+    },
+    "transferee": {
+      "gp": [{"code": "view"}, {"code": "transfer_rollback", "to": "active"}, {"code": "export"}, {"code": "edit", "disabled": true, "reason": "Souscription transférée : lecture seule"}],
+      "validator": [],
+      "distributor": [{"code": "view"}],
+      "delegated_partner": [],
+      "investor": [{"code": "view"}],
+      "fund_signer": [],
+      "platform": []
+    },
+    "annulee": {
+      "gp": [{"code": "reactivate", "to": "état précédent"}, {"code": "view"}, {"code": "export"}, {"code": "edit", "disabled": true, "reason": "Souscription annulée : lecture seule"}],
+      "validator": [],
+      "distributor": [{"code": "view", "decision": "D8"}],
+      "delegated_partner": [],
+      "investor": [{"code": "view", "decision": "D8"}],
+      "fund_signer": [],
+      "platform": []
+    },
+    "refusee": {
+      "gp": [{"code": "refusal_rollback", "to": "a_controler", "note": "opérateur habilité"}, {"code": "view"}, {"code": "export"}, {"code": "edit", "disabled": true, "reason": "Dossier refusé : lecture seule"}],
+      "validator": [],
+      "distributor": [{"code": "view"}],
+      "delegated_partner": [],
+      "investor": [{"code": "view", "decision": "D8"}],
+      "fund_signer": [],
+      "platform": []
+    },
+    "expiree": {
+      "gp": [{"code": "reinvite", "to": "invitee"}, {"code": "view"}, {"code": "export"}, {"code": "edit", "disabled": true, "reason": "Invitation expirée : lecture seule"}],
+      "validator": [],
+      "distributor": [{"code": "view"}],
+      "delegated_partner": [],
+      "investor": [{"code": "view", "note": "le lien reçu refuse l'accès avec un message qui invite à contacter la société de gestion"}],
+      "fund_signer": [],
+      "platform": []
+    }
+  },
+
+  "always_available_gp": ["export", "view", "documents"],
+
+  "transitions": [
+    {"from": "brouillon", "to": "invitee", "trigger": "Envoi de l'invitation", "actor": "gp | distributor", "source": "IC-5212"},
+    {"from": "brouillon", "to": "en_cours", "trigger": "Le distributeur commence à remplir (administrée)", "actor": "distributor", "source": "table_buttons.php:101-107"},
+    {"from": "brouillon", "to": "active", "trigger": "Création par saisie rapide", "actor": "gp_fastadd", "source": "IC-5219"},
+    {"from": "brouillon", "to": "a_controler", "trigger": "Validation exceptionnelle", "actor": "gp_exceptional", "source": "IC-5217"},
+    {"from": "invitee", "to": "en_cours", "trigger": "Première réponse enregistrée", "actor": "investor | distributor", "source": "IC-5212"},
+    {"from": "invitee", "to": "expiree", "trigger": "Délai d'expiration atteint", "actor": "platform", "source": "IC-5222"},
+    {"from": "expiree", "to": "invitee", "trigger": "Renvoi de l'invitation", "actor": "gp", "source": "IC-5222"},
+    {"from": "en_cours", "to": "prete_a_soumettre", "trigger": "Toutes les questions obligatoires répondues", "actor": "investor", "source": "IC-5215"},
+    {"from": "prete_a_soumettre", "to": "en_cours", "trigger": "Une réponse obligatoire vidée", "actor": "investor", "source": "IC-5215"},
+    {"from": "en_cours", "to": "a_controler", "trigger": "Soumission assumée malgré des manques", "actor": "investor | distributor | gp", "source": "IC-5215"},
+    {"from": "prete_a_soumettre", "to": "a_controler", "trigger": "Soumission, fonds sans pré-validation ni pré-signature", "actor": "investor | distributor", "source": "IC-5215"},
+    {"from": "prete_a_soumettre", "to": "en_prevalidation_partenaire", "trigger": "Soumission, fonds à pré-validation et partenaire délégué", "actor": "investor | distributor", "source": "IC-5218"},
+    {"from": "prete_a_soumettre", "to": "en_presignature", "trigger": "Soumission avec envoi immédiat du pack", "actor": "investor | distributor", "source": "investorspace.php:6516-6535", "decision": "D1"},
+    {"from": "en_prevalidation_partenaire", "to": "a_controler", "trigger": "Pré-validation accordée", "actor": "delegated_partner", "source": "IC-5218"},
+    {"from": "en_prevalidation_partenaire", "to": "en_correction", "trigger": "Réouverture par le partenaire", "actor": "delegated_partner", "source": "IC-5218"},
+    {"from": "en_prevalidation_partenaire", "to": "en_presignature", "trigger": "Pré-validation accordée sur un fonds à pré-signature", "actor": "delegated_partner", "source": "proposé", "decision": "D2"},
+    {"from": "a_controler", "to": "en_correction", "trigger": "Réouverture pour correction", "actor": "gp", "source": "IC-5248"},
+    {"from": "en_correction", "to": "a_controler", "trigger": "Renvoi après correction, dossier non pré-validé", "actor": "investor", "source": "IC-5218"},
+    {"from": "en_correction", "to": "en_prevalidation_partenaire", "trigger": "Renvoi après correction, dossier pré-validé ou rouvert par le partenaire", "actor": "investor", "source": "IC-5218"},
+    {"from": "a_controler", "to": "validee_a_envoyer", "trigger": "Validation KYC", "actor": "gp", "source": "décision Q1"},
+    {"from": "a_controler", "to": "active", "trigger": "Validation sans signature", "actor": "gp", "source": "IC-5212"},
+    {"from": "a_controler", "to": "refusee", "trigger": "Refus définitif", "actor": "validator", "source": "IC-5221"},
+    {"from": "validee_a_envoyer", "to": "en_signature", "trigger": "Envoi en signature", "actor": "gp | distributor (V1)", "source": "_sendSign", "decision": "D6"},
+    {"from": "validee_a_envoyer", "to": "active", "trigger": "Validation sans signature", "actor": "gp", "source": "_validNoSign"},
+    {"from": "validee_a_envoyer", "to": "en_correction", "trigger": "Réouverture", "actor": "gp", "source": "V1", "decision": "D4"},
+    {"from": "en_signature", "to": "active", "trigger": "Dernière signature ou rappel du prestataire", "actor": "platform", "source": "IC-5212"},
+    {"from": "en_signature", "to": "validee_a_envoyer", "trigger": "Modification d'un montant, de l'identité ou du bancaire", "actor": "gp", "source": "décision Q2"},
+    {"from": "en_signature", "to": "en_correction", "trigger": "Réouverture", "actor": "gp", "source": "V1", "decision": "D4"},
+    {"from": "en_presignature", "to": "presignee_a_controler", "trigger": "Dernière signature, KYC non validé", "actor": "platform", "source": "proposé", "decision": "D1"},
+    {"from": "en_presignature", "to": "validee_en_presignature", "trigger": "Validation KYC pendant la signature", "actor": "gp", "source": "bloc-signature.php:68-160"},
+    {"from": "en_presignature", "to": "en_correction", "trigger": "Réouverture", "actor": "gp | delegated_partner", "source": "V1"},
+    {"from": "presignee_a_controler", "to": "active", "trigger": "Validation KYC", "actor": "gp", "source": "bloc-signature.php:301-306"},
+    {"from": "presignee_a_controler", "to": "refusee", "trigger": "Refus définitif", "actor": "validator", "source": "proposé"},
+    {"from": "validee_en_presignature", "to": "active", "trigger": "Dernière signature", "actor": "platform", "source": "root.php:1958-1977"},
+    {"from": "active", "to": "transferee", "trigger": "Transfert total des parts", "actor": "gp", "source": "epic transfert"},
+    {"from": "transferee", "to": "active", "trigger": "Annulation du transfert", "actor": "gp", "source": "epic transfert"},
+    {"from": "*pre_active", "to": "annulee", "trigger": "Annulation motivée", "actor": "gp", "source": "IC-5220"},
+    {"from": "annulee", "to": "*previous", "trigger": "Réactivation", "actor": "gp", "source": "IC-5220"},
+    {"from": "refusee", "to": "*previous", "trigger": "Annulation du refus", "actor": "gp", "source": "IC-5221"}
+  ],
+
+  "editability": {
+    "legend": {"O": "modifiable", "L": "lecture seule", "O*": "modifiable avec avertissement bloquant, annule la procédure de signature", "E": "lecture seule, déverrouillable par la correction exceptionnelle"},
+    "groups": {
+      "G1": "Libellés et identifiants : nom, identifiant externe, identifiant CRM, langue, champs personnalisés",
+      "G2": "Typologie : type de souscripteur, structure",
+      "G3": "Montants et parts : part, nombre de parts, montant, frais, prime",
+      "G4": "Identité du souscripteur",
+      "G5": "Coordonnées bancaires",
+      "G6a": "Partenaire et conseiller",
+      "G6b": "Souscription assistée",
+      "G6c": "Commission et exclusion des rétrocessions",
+      "G7": "Mode de détention",
+      "G8": "Prélèvement SEPA",
+      "G9": "Conservation",
+      "G10": "Qualification : type de souscription, side letter, contact rattaché"
+    },
+    "matrix": {
+      "brouillon":                   {"G1": "O", "G2": "O", "G3": "O", "G4": "O", "G5": "O", "G6a": "O", "G6b": "O", "G6c": "O", "G7": "O", "G8": "O", "G9": "O", "G10": "O"},
+      "invitee":                     {"G1": "O", "G2": "O", "G3": "O", "G4": "O", "G5": "O", "G6a": "O", "G6b": "O", "G6c": "O", "G7": "O", "G8": "O", "G9": "O", "G10": "O"},
+      "en_cours":                    {"G1": "O", "G2": "O", "G3": "O", "G4": "O", "G5": "O", "G6a": "O", "G6b": "O", "G6c": "O", "G7": "O", "G8": "O", "G9": "O", "G10": "O", "note": "G2 passe en E dès la première réponse (verrou onboarding_started)"},
+      "prete_a_soumettre":           {"G1": "O", "G2": "E", "G3": "O", "G4": "O", "G5": "O", "G6a": "O", "G6b": "O", "G6c": "O", "G7": "O", "G8": "O", "G9": "O", "G10": "O"},
+      "en_correction":               {"G1": "O", "G2": "E", "G3": "O", "G4": "O", "G5": "O", "G6a": "O", "G6b": "O", "G6c": "O", "G7": "O", "G8": "O", "G9": "O", "G10": "O"},
+      "en_prevalidation_partenaire": {"G1": "O", "G2": "E", "G3": "O", "G4": "O", "G5": "O", "G6a": "O", "G6b": "E", "G6c": "O", "G7": "O", "G8": "O", "G9": "O", "G10": "O"},
+      "a_controler":                 {"G1": "O", "G2": "E", "G3": "O", "G4": "O", "G5": "O", "G6a": "O", "G6b": "E", "G6c": "O", "G7": "O", "G8": "O", "G9": "O", "G10": "O"},
+      "validee_a_envoyer":           {"G1": "O", "G2": "E", "G3": "O", "G4": "O", "G5": "O", "G6a": "O", "G6b": "E", "G6c": "O", "G7": "O", "G8": "O", "G9": "O", "G10": "O"},
+      "en_signature":                {"G1": "O", "G2": "E", "G3": "O*", "G4": "O*", "G5": "O*", "G6a": "E", "G6b": "E", "G6c": "O", "G7": "O", "G8": "L", "G9": "L", "G10": "O"},
+      "en_presignature":             {"G1": "O", "G2": "E", "G3": "O*", "G4": "O*", "G5": "O*", "G6a": "E", "G6b": "E", "G6c": "O", "G7": "O", "G8": "L", "G9": "L", "G10": "O", "decision": "D9"},
+      "presignee_a_controler":       {"G1": "O", "G2": "E", "G3": "O*", "G4": "O*", "G5": "O*", "G6a": "E", "G6b": "E", "G6c": "O", "G7": "O", "G8": "L", "G9": "L", "G10": "O", "decision": "D9"},
+      "validee_en_presignature":     {"G1": "O", "G2": "E", "G3": "O*", "G4": "O*", "G5": "O*", "G6a": "E", "G6b": "E", "G6c": "O", "G7": "O", "G8": "L", "G9": "L", "G10": "O", "decision": "D9"},
+      "active":                      {"G1": "O", "G2": "E", "G3": "E", "G4": "O", "G5": "O", "G6a": "conseiller O, partenaire E", "G6b": "E", "G6c": "O", "G7": "O", "G8": "L", "G9": "L", "G10": "O", "note": "G3 renvoie vers Réduction d'engagement et Transfert"},
+      "transferee":                  {"G1": "L", "G2": "L", "G3": "L", "G4": "L", "G5": "L", "G6a": "L", "G6b": "L", "G6c": "L", "G7": "L", "G8": "L", "G9": "L", "G10": "L"},
+      "annulee":                     {"G1": "L", "G2": "L", "G3": "L", "G4": "L", "G5": "L", "G6a": "L", "G6b": "L", "G6c": "L", "G7": "L", "G8": "L", "G9": "L", "G10": "L"},
+      "refusee":                     {"G1": "L", "G2": "L", "G3": "L", "G4": "L", "G5": "L", "G6a": "L", "G6b": "L", "G6c": "L", "G7": "L", "G8": "L", "G9": "L", "G10": "L"},
+      "expiree":                     {"G1": "L", "G2": "L", "G3": "L", "G4": "L", "G5": "L", "G6a": "L", "G6b": "L", "G6c": "L", "G7": "L", "G8": "L", "G9": "L", "G10": "L"}
+    },
+    "locks": [
+      {"code": "readonly_right", "label": "Lecture seule", "condition": "droit campaigns-investors-readonly", "effect": "tout en lecture, bouton Modifier non rendu"},
+      {"code": "pending_subchange", "label": "Demande de modification en attente", "condition": "demande investisseur non traitée sur le champ", "effect": "champ ou groupe (adresse, IBAN) en lecture, lien vers la demande"},
+      {"code": "commission_settled", "label": "Décompte de rétrocession généré", "condition": "un décompte existe", "effect": "G6c en lecture, partenaire en E"},
+      {"code": "sepa_mandate_approved", "label": "Mandat SEPA approuvé", "condition": "mandat signé", "effect": "IBAN et BIC modifiables après confirmation, G8 en lecture"},
+      {"code": "sepa_mandate_pending", "label": "Mandat SEPA en attente", "condition": "procédure de mandat en cours", "effect": "idem sans remise à zéro"},
+      {"code": "share_unavailable", "label": "Part indisponible", "condition": "part archivée ou supprimée", "effect": "G3 en lecture"},
+      {"code": "secondary_market_locked", "label": "Marché secondaire", "condition": "offre ou enchère en cours", "effect": "G3 en lecture"},
+      {"code": "transferred_in", "label": "Issue d'un transfert", "condition": "transfered_from > 0", "effect": "G3 en E"},
+      {"code": "financial_flows_exist", "label": "Flux financiers existants", "condition": "appel, distribution ou capital account rattaché", "effect": "G3 en E même hors Active"},
+      {"code": "linked_subscriptions", "label": "Souscription parente ou liée", "condition": "parente ou liées", "effect": "avertissement non bloquant sur G3"},
+      {"code": "onboarding_started", "label": "Onboarding commencé", "condition": "au moins une réponse", "effect": "type de souscripteur en lecture avant soumission, déverrouillable"}
+    ],
+    "portal": [
+      {"field": "montant et nombre de parts", "condition": "dossier non soumis, aucune signature, versement non confirmé, pas de transfert entrant ; en administrée, interdit à l'investisseur si Don't allow amount change for assisted subscription", "who": ["investor", "distributor"]},
+      {"field": "suppression", "condition": "V2 : dossier non soumis hors transfert ; V3 : Brouillon seulement (IC-5220 règle 8)", "who": ["investor", "distributor"], "decision": "D5"},
+      {"field": "adresse, IBAN et BIC, nom de la souscription, raison sociale, nom et prénom, email, téléphone", "condition": "demande de modification soumise au GP, à tout état", "who": ["investor"]},
+      {"field": "réponses et pièces", "condition": "dossier non soumis ou rouvert", "who": ["investor", "distributor"]}
+    ]
+  },
+
+  "axes": {
+    "signature": {
+      "applies_to": ["validee_a_envoyer", "en_signature", "en_presignature", "validee_en_presignature"],
+      "substates": [
+        {"code": "pack_brouillon", "label": "Pack modifiable, rien n'est parti", "states": ["validee_a_envoyer"], "actions": ["Enregistrer le brouillon", "Envoyer en signature"]},
+        {"code": "envoyee", "label": "Envoyée, en attente des signataires", "actions": ["Renvoyer un mail", "Ouvrir le lien", "Relancer l'envoi complet"]},
+        {"code": "signee_souscripteurs", "label": "Signée par les souscripteurs, contresignature en attente", "condition": "C-sig. oui", "actions": ["Renvoyer un mail aux contre-signataires"]},
+        {"code": "signee", "label": "Signée", "actions": ["Consultation des documents signés"]},
+        {"code": "validee_sans_signature", "label": "Validée sans signature", "actions": ["Consultation"]},
+        {"code": "rouverte", "label": "Rouverte après envoi, procédure précédente laissée active", "actions": ["Retour à pack modifiable"]}
+      ],
+      "send_prerequisites": [
+        "Conformité validée",
+        "Souscription catégorisée (type de souscription)",
+        "Profil de risque validé",
+        "Validation interne rendue si demandée",
+        "Au moins un document à signer avec emplacement",
+        "Au moins un signataire avec email valide",
+        "Contre-signataire choisi si le fonds impose un choix"
+      ]
+    },
+    "internal_validation": {
+      "condition": "fonds à validation interne",
+      "applies_to": ["a_controler", "en_presignature", "presignee_a_controler"],
+      "substates": [
+        {"code": "non_demandee", "label": "Non demandée", "next": "gp : demander"},
+        {"code": "demandee", "label": "Demandée, en attente", "next": "validator : approuver, refuser et renvoyer, refuser définitivement ; une réponse modifiée annule la demande"},
+        {"code": "approuvee", "label": "Approuvée", "next": "gp : valider le KYC puis envoyer en signature"},
+        {"code": "refusee_renvoi", "label": "Refusée et renvoyée, motif conservé", "next": "gp : corriger puis redemander"}
+      ],
+      "rules": ["le demandeur ne peut pas approuver son propre dossier", "seul un validateur listé sur le fonds peut statuer", "le réglage Autovalidate third party est retiré"]
+    },
+    "payment": {
+      "condition": "fonds à paiement direct, état active",
+      "substates": [
+        {"code": "a_demander", "label": "Versement à demander", "v1": "payment_status 0", "next": "gp : demander le versement"},
+        {"code": "en_attente", "label": "En attente de versement", "v1": "payment_status 1 ou date de demande posée", "next": "investor : réaliser le versement ; gp : relancer"},
+        {"code": "confirme", "label": "Versement confirmé", "v1": "payment_status 2", "next": "gp : confirmer la VL ; webhook paid"},
+        {"code": "vl_confirmee", "label": "Versement confirmé, VL confirmée", "v1": "payment_status 3", "next": "terminé ; recalcul des parts, email de confirmation, webhook confirmed"}
+      ],
+      "notes": ["Fonds à appels de fonds : l'activation vaut complétude, axe non affiché", "Validation sans signature : vl_confirmee direct, sauf réglage Don't validate payment for manual signatures", "Saisie rapide V3 : état final seulement si une date de versement est saisie (IC-5219)"]
+    }
+  },
+
+  "context": {
+    "payment_mode": {"values": ["appels_de_fonds", "paiement_direct"], "effect": "rangée d'indicateurs chiffrés et affichage de l'axe versement"},
+    "assisted": {"values": [false, true], "families": ["B", "C"], "effect": "pastille Souscription assistée ; le distributeur remplit, soumet, reçoit les emails ; l'investisseur signe dans tous les cas"},
+    "self": {"values": [false, true], "effect": "pastille Souscription directe (D1, D2)"},
+    "internal_validation_enabled": {"values": [false, true], "effect": "axe internal_validation et ligne du widget Suivi des signatures"},
+    "reopened": {"values": "compteur investisseur, compteur partenaire", "effect": "pastille avec les deux compteurs"},
+    "exceptional_validation": {"values": [false, true], "effect": "pastille (IC-5217)"},
+    "fast_add": {"values": [false, true], "effect": "origine Saisie rapide, dates non vécues affichées non applicables"},
+    "sepa_mandate": {"values": ["a_demander", "en_attente", "approuve"], "effect": "verrou et action Demander la signature du mandat"},
+    "pending_changes": {"values": "0..n", "effect": "icône en attente, verrou pending_subchange"},
+    "sideletter": {"values": ["non_requise", "requise", "confirmee"], "effect": "pastille, action de confirmation"},
+    "deferred_processing": {"values": "date ou null", "effect": "pastille avec la date"},
+    "transferred_in": {"values": [false, true], "effect": "pastille avec lien, verrou G3"},
+    "custom_status_renaming": {"values": ["aucun", "renommage"], "effect": "libellé de la pastille seulement (IC-5223)"},
+    "role": {"values": ["gp", "gp_readonly", "gp_exceptional", "gp_fastadd", "validator", "risk_validator", "distributor", "delegated_partner", "investor", "fund_signer"]}
+  },
+
+  "portal_labels_v1": [
+    {"states": ["brouillon", "invitee", "en_cours", "prete_a_soumettre", "en_correction"], "investor": "Souscription en cours", "distributor": "Souscription en cours"},
+    {"states": ["en_prevalidation_partenaire", "a_controler", "en_presignature"], "investor": "Étude de votre dossier en cours", "distributor": "Étude du dossier"},
+    {"states": ["validee_a_envoyer"], "investor": "Souscription à envoyer en signature", "distributor": "Souscription à signer"},
+    {"states": ["en_signature", "validee_en_presignature"], "investor": "Souscription à signer, puis En attente de signature du fonds", "distributor": "Souscription à signer"},
+    {"states": ["active", "presignee_a_controler"], "investor": "Validé ; paiement direct : Versement en attente, En attente de VL et d'avis d'opération ; marché secondaire : En vente, Achat en cours", "distributor": "Validé"},
+    {"states": ["transferee", "annulee", "refusee", "expiree"], "investor": null, "distributor": null}
+  ],
+
+  "decisions": [
+    {"id": "D1", "question": "Avec pré-signature, le dossier devient-il Actif à la dernière signature même sans validation KYC ?", "v1": "Oui (root.php:1958-1977, bloc-signature.php:301-306) ; le contre-signataire est sollicité dès la signature de l'investisseur", "references": "WIH 1027014658 : pré-signature, validation SG, contresignature SG, active ; IC-5212 sans état de pré-signature", "default": "Trois états de pré-signature ; activation = validation KYC et dernière signature, dans n'importe quel ordre"},
+    {"id": "D2", "question": "Pré-validation et pré-signature : séquentielles ou parallèles ?", "v1": "Parallèles (investorspace.php:6516-6560, partners/check.php:172)", "references": "WIH 1027014658 les enchaîne", "default": "Séquentiel dans la séquence nominale ; case 'signature déjà envoyée' sur En pré-validation partenaire pour le cas V1"},
+    {"id": "D3", "question": "Qui invite l'investisseur sur un dossier créé par le distributeur ?", "v1": "Le distributeur envoie un lien (partners.php:2859-2890) ; invitation au compte via le portail V2 (investors.php:426-450)", "references": "WIH 494403589 R5 : invitation exclusivement par le BO", "default": "Le distributeur peut envoyer le lien dans START_DIST"},
+    {"id": "D4", "question": "Peut-on rouvrir un dossier Validé à envoyer ou En signature ?", "v1": "Oui, sans contrôle d'état (subscriptions.php:7863-7875)", "references": "IC-5212 question ouverte 1 ; story Suivi des signatures : tant que non signé, avec avertissement", "default": "Réouverture offerte avec avertissement sur le dossier de signature laissé actif"},
+    {"id": "D5", "question": "Suppression depuis les portails ?", "v1": "Investisseur : avant soumission ; distributeur V1 : sans contrôle ; API V2 : statut 0 hors transfert", "references": "IC-5220 règle 8 : Brouillon jamais soumis, tous points d'entrée", "default": "Brouillon seulement ; ailleurs le GP annule"},
+    {"id": "D6", "question": "Le distributeur peut-il envoyer en signature depuis son portail ?", "v1": "Oui, tout distributeur, KYC validé et avant tout envoi (table_buttons.php:123-150)", "references": "Aucune story V3 ; WIH 598048781 le réserve au partenaire délégué", "default": "Non offert en V3 ; différence montrée dans la vue distributeur"},
+    {"id": "D7", "question": "Le GP peut-il court-circuiter la pré-validation partenaire ?", "v1": "Oui", "references": "IC-5218 question ouverte 2", "default": "Valider le KYC grisé avec motif ; réouverture GP possible"},
+    {"id": "D8", "question": "Annulée, Refusée, Expirée visibles des portails ?", "v1": "États inexistants", "references": "IC-5220, IC-5221 : consultables côté back-office", "default": "Visible en lecture avec le libellé, aucune action"},
+    {"id": "D9", "question": "Éditabilité d'un dossier pré-signé non validé ?", "v1": "Tout modifiable", "references": "Matrice 7.3 sans cet état", "default": "Colonne En signature : O* sur montants, identité, bancaire"},
+    {"id": "D10", "question": "La validation KYC peut-elle précéder la validation interne ?", "v1": "Non : demande et approbation avant la validation KYC (bloc-signature.php:68-160)", "references": "WIH 1027014658 la place entre validation KYC et envoi en signature", "default": "Validation interne jouée dans À contrôler, avant la validation KYC"}
+  ]
+}

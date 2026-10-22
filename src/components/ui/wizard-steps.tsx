@@ -49,7 +49,7 @@ export function WizardSteps({ steps, current, ariaLabel, onSelect, branches, lab
         const text = (
           <span
             className={cn(
-              below ? 'text-xs text-center' : 'text-sm',
+              below ? 'text-xs text-center leading-tight break-words' : 'text-sm',
               isCurrent ? 'font-semibold text-foreground' : 'text-muted-foreground',
             )}
           >

@@ -15,29 +15,32 @@ type Translate = (key: string, vars?: Record<string, string | number>) => string
 
 const H = 'subscriptions.workflowSimulator.header';
 
-// Apparence de la pastille par "qui attend" (spécifications, prompt 4), indexée par libellé
-// d'état. Un état absent de cette table prend le ton de son waiting_on (voir toneFromWaiting).
-const TONE_BY_STATE_LABEL: Record<string, Tone> = {
+// Apparence de la pastille par "qui attend" (spécifications, prompt 4), par code d'état.
+// Un état absent de cette table prend le ton déduit de son waiting_on (toneFromWaiting).
+const TONE_BY_STATE: Record<string, Tone> = {
   brouillon: 'outline',
   invitee: 'info',
-  'en cours': 'info',
-  'prete a soumettre': 'info',
-  'en correction': 'info',
-  'a controler': 'warning',
-  'validee a envoyer': 'warning',
-  'pre-signee a controler': 'warning',
-  'en pre-validation partenaire': 'caution',
-  'en signature': 'caution',
-  'en pre-signature': 'caution',
-  'validee en pre-signature': 'caution',
+  en_cours: 'info',
+  prete_a_soumettre: 'info',
+  en_correction: 'info',
+  a_controler: 'warning',
+  validee_a_envoyer: 'warning',
+  presignee_a_controler: 'warning',
+  en_prevalidation_partenaire: 'caution',
+  en_signature: 'caution',
+  en_presignature: 'caution',
+  validee_en_presignature: 'caution',
   active: 'success',
   transferee: 'neutral',
   expiree: 'neutral',
   annulee: 'strong',
   refusee: 'danger',
 };
-const CANCELLED_LABEL = 'annulee';
-const TRANSFERRED_LABEL = 'transferee';
+const CANCELLED = 'annulee';
+const TRANSFERRED = 'transferee';
+const PRESIGNATURE_STATES = ['en_presignature', 'presignee_a_controler', 'validee_en_presignature'];
+// Valeurs de contexte qui ne déclenchent pas d'indicateur.
+const OFF_VALUES = ['none', 'no', 'non', 'aucun', 'non_requise', 'a_demander'];
 
 export type HeaderIndicatorId =
   | 'self'
@@ -96,7 +99,9 @@ const translateOr = (t: Translate, key: string, fallback: string) => {
 
 const isGpRole = (role: string) => role === 'gp' || role.startsWith('gp_');
 
-const optionCode = (value: ContextScalar | SimLabelled) => String(typeof value === 'object' ? value.code : value);
+// waiting_on est une phrase ("GP, qui doit composer et envoyer le pack", "Partenaire délégué").
+const mentionsGp = (text: string) => /\bGP\b/.test(text);
+const mentionsInvestor = (text: string) => /investisseur/i.test(text);
 
 function counterTotal(value: ContextValue | undefined): number {
   if (typeof value === 'number') return value;
@@ -134,37 +139,35 @@ export function buildHeaderModel({
   const { context, state, role } = scenario;
   const stateDef = engine.state(state);
   const label = engine.stateLabel(state);
-  const key = normalizeText(label);
   const waiting = engine.waitingOn(state);
-  const roleLabel = (code: string) => engine.roles.find(r => r.code === code)?.label ?? code;
 
   const has = (field: string) => field in data.context;
   const valueLabel = (field: string): string | null => {
     const value = context[field];
-    const option = data.context[field]?.values?.find(o => optionCode(o) === String(value));
-    if (option === undefined) return value === undefined ? null : String(value);
-    return typeof option === 'object' ? option.label : String(option);
+    if (value === undefined || value === null) return null;
+    return translateOr(t, `subscriptions.workflowSimulator.panel.context.values.${field}.${String(value)}`, String(value));
   };
   const isOff = (field: string) => {
     const value = context[field];
-    if (value === undefined || value === false || value === 0 || value === '') return true;
-    return ['none', 'no', 'non', 'aucun'].includes(normalizeText(String(value)));
+    if (value === undefined || value === null || value === false || value === 0 || value === '') return true;
+    return OFF_VALUES.includes(normalizeText(String(value)));
   };
 
   // Pastille
   const toneFromWaiting = (): Tone => {
-    if (!waiting.length) return 'neutral';
-    if (waiting.includes('investor')) return 'info';
-    if (waiting.some(isGpRole)) return 'warning';
+    const text = waiting.join(' ');
+    if (!text) return 'neutral';
+    if (mentionsInvestor(text)) return 'info';
+    if (mentionsGp(text)) return 'warning';
     return 'caution';
   };
-  const tone = TONE_BY_STATE_LABEL[key] ?? toneFromWaiting();
+  const tone = TONE_BY_STATE[state] ?? toneFromWaiting();
   const renamingOn = has('custom_status_renaming') && !isOff('custom_status_renaming');
   const renamed = renamingOn ? statusRenaming[label] : undefined;
   const status = {
     label: renamed ?? label,
     tone,
-    cancelled: key === CANCELLED_LABEL,
+    cancelled: state === CANCELLED,
     tooltip: renamed ? t(`${H}.renamedTooltip`, { state: label }) : undefined,
   };
 
@@ -175,21 +178,11 @@ export function buildHeaderModel({
   const push = (indicator: HeaderIndicator) => indicators.push(indicator);
   if (has('self') && !isOff('self')) push({ id: 'self', label: t(`${H}.indicators.self`), tone: 'outline' });
   if (has('assisted') && !isOff('assisted')) push({ id: 'assisted', label: t(`${H}.indicators.assisted`), tone: 'outline' });
-  const holdingKey = Object.keys(data.context).find(k => data.context[k].values?.some(v => optionCode(v) === 'pure'));
-  if (holdingKey && context[holdingKey] !== undefined && context[holdingKey] !== 'pure') {
-    push({
-      id: 'administered',
-      label: t(`${H}.indicators.administered`),
-      tooltip: t(`${H}.indicators.holdingTooltip`, { mode: valueLabel(holdingKey) ?? '' }),
-      tone: 'outline',
-    });
-  }
   if (has('deferred_processing') && !isOff('deferred_processing')) {
+    const date = typeof context.deferred_processing === 'string' ? context.deferred_processing : defaults.deferred_until;
     push({
       id: 'deferred',
-      label: defaults.deferred_until
-        ? t(`${H}.indicators.deferredUntil`, { date: formatDate(defaults.deferred_until) })
-        : t(`${H}.indicators.deferred`),
+      label: date ? t(`${H}.indicators.deferredUntil`, { date: formatDate(date) }) : t(`${H}.indicators.deferred`),
       tone: 'caution',
     });
   }
@@ -202,7 +195,7 @@ export function buildHeaderModel({
       tone: 'outline',
     });
   }
-  if (key === TRANSFERRED_LABEL && defaults.transferred) {
+  if (state === TRANSFERRED && defaults.transferred) {
     push({
       id: 'transferred',
       label: t(`${H}.indicators.transferred`, {
@@ -259,11 +252,11 @@ export function buildHeaderModel({
       tone: 'warning',
     });
   }
-  if (key.includes('pre-sign')) push({ id: 'presignature', label: t(`${H}.indicators.presignature`), tone: 'caution' });
+  if (PRESIGNATURE_STATES.includes(state)) push({ id: 'presignature', label: t(`${H}.indicators.presignature`), tone: 'caution' });
 
   // Paiement direct : repéré sur le code ou le libellé du mode de paiement.
   const paymentDirect = /direct/.test(normalizeText(`${String(context.payment_mode ?? '')} ${valueLabel('payment_mode') ?? ''}`));
-  if (paymentDirect && scenario.axes.payment && engine.allowedSubstates('payment', state, context).length) {
+  if (paymentDirect && scenario.axes.payment && engine.allowedSubstates('payment', state, context, scenario.workflow).length) {
     const substate = (data.axes.payment?.substates ?? []).map(s => toLabelled(s)).find(s => s.code === scenario.axes.payment);
     push({ id: 'payment', label: t(`${H}.indicators.payment`, { status: substate?.label ?? scenario.axes.payment }), tone: 'info' });
   }
@@ -285,7 +278,7 @@ export function buildHeaderModel({
       title: [
         t(`${H}.terminal.title`, { state: label.toLowerCase() }),
         date && t(`${H}.terminal.on`, { date }),
-        info?.author && key !== 'expiree' && t(`${H}.terminal.by`, { author: info.author }),
+        info?.author && state !== 'expiree' && t(`${H}.terminal.by`, { author: info.author }),
       ]
         .filter(Boolean)
         .join(' ')
@@ -300,16 +293,14 @@ export function buildHeaderModel({
         : undefined,
     });
   }
-  const thirdParties = waiting.filter(code => code !== 'investor' && !isGpRole(code));
-  if (!terminal && isGpRole(role) && thirdParties.length && !waiting.some(isGpRole)) {
-    banners.push({ kind: 'external', who: thirdParties.map(roleLabel).join(', ') });
+  const waitingText = waiting.join(' ');
+  if (!terminal && state !== 'active' && isGpRole(role) && waitingText && !mentionsGp(waitingText) && !mentionsInvestor(waitingText)) {
+    banners.push({ kind: 'external', who: waitingText });
   }
   const decisionIds = new Set<string>();
   actions.forEach(a => a.decision && decisionIds.add(a.decision));
-  data.decisions.forEach(d => {
-    const states = d.states;
-    if (Array.isArray(states) && states.includes(state)) decisionIds.add(d.id);
-  });
+  const rowDecision = data.editability.matrix[state]?.decision;
+  if (rowDecision) decisionIds.add(rowDecision);
   if (decisionIds.size) banners.push({ kind: 'hypothesis', ids: Array.from(decisionIds) });
 
   // Dates
@@ -322,7 +313,7 @@ export function buildHeaderModel({
 
   return {
     status,
-    waitingOn: waiting.map(roleLabel),
+    waitingOn: waiting,
     terminal,
     indicators,
     banners,

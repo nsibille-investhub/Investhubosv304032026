@@ -16,9 +16,14 @@ export function runSimulatorSelfCheck(data: SimulatorFile): boolean {
   data.workflows.forEach(wf => {
     const outside = wf.sequence.filter(code => !wf.reachable_states.includes(code));
     if (outside.length) failures.push(`workflow ${wf.id} : séquence hors reachable_states (${outside.join(', ')})`);
-    (wf.blocks ?? []).forEach((block, i) => {
+    (wf.blocks ?? []).forEach(name => {
+      const block = data.blocks?.[name];
+      if (!block) {
+        failures.push(`workflow ${wf.id} : bloc ${name} absent de blocks`);
+        return;
+      }
       const off = (block.variant ?? []).filter(code => !wf.reachable_states.includes(code));
-      if (off.length) failures.push(`workflow ${wf.id} : blocks[${i}].variant hors reachable_states (${off.join(', ')})`);
+      if (off.length) failures.push(`workflow ${wf.id} : variante du bloc ${name} hors reachable_states (${off.join(', ')})`);
     });
   });
 
