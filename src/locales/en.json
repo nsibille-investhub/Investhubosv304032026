@@ -7276,8 +7276,8 @@
       },
       "filterCardGroup": {
         "title": "Filter card group",
-        "description": "Band of FilterCards above a listing: title with an accent bar, badge, hint and cards in a grid. Replaces the headers copied in the investor and subscription status tabs, SMS history and capital call queues.",
-        "variants": "4, 5 or 6 columns; with or without badge and hint.",
+        "description": "Band of FilterCards above a listing: title with an accent bar, hint and cards in a grid. Replaces the headers copied in the investor and subscription status tabs, SMS history and capital call queues.",
+        "variants": "4, 5 or 6 columns; with or without hint. No badge next to the title.",
         "states": "Active card, inactive card, zero total.",
         "exampleLabel": "Work queues",
         "demo": {

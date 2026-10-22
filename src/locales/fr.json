@@ -7276,8 +7276,8 @@
       },
       "filterCardGroup": {
         "title": "Groupe de cartes filtres",
-        "description": "Bandeau de FilterCard au-dessus d'un listing : titre souligné d'une barre, pastille, aide et cartes en grille. Remplace les en-têtes recopiés des onglets de statut investisseurs, souscriptions, historique SMS et des files des appels de fonds.",
-        "variants": "4, 5 ou 6 colonnes ; avec ou sans pastille et aide.",
+        "description": "Bandeau de FilterCard au-dessus d'un listing : titre souligné d'une barre, aide et cartes en grille. Remplace les en-têtes recopiés des onglets de statut investisseurs, souscriptions, historique SMS et des files des appels de fonds.",
+        "variants": "4, 5 ou 6 colonnes ; avec ou sans aide. Pas de pastille à côté du titre.",
         "states": "Carte active, carte inactive, total à zéro.",
         "exampleLabel": "Files de travail",
         "demo": {
