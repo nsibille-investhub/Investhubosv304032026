@@ -655,8 +655,12 @@
         },
         "notAsked": {
           "tag": "Non posée",
-          "show": "Afficher les questions non posées ({{count}})",
-          "hide": "Masquer les questions non posées"
+          "toggle": "Afficher les éléments non posés ({{count}})",
+          "sectionTag": "Section non posée",
+          "sectionReason": {
+            "corporateOnly": "Condition d'affichage non remplie : section réservée aux personnes morales"
+          },
+          "navGroup": "Non posées"
         },
         "modified": {
           "byOperator": "Modifiée par un opérateur",

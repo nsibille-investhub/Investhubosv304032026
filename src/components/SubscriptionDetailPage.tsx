@@ -83,7 +83,7 @@ import { PartyTypeBadge } from './ui/party-type-badge';
 import { QuestionActions, QuestionStatus } from './QuestionActions';
 import { QuestionCommentThread } from './QuestionCommentThread';
 import { IntegrationsTab } from './IntegrationsTab';
-import { SectionCard } from './ui/section-card';
+import { SectionCard, SectionFieldRow } from './ui/section-card';
 import { DetailTabsList } from './ui/detail-tabs';
 import {
   Tabs,
@@ -243,6 +243,11 @@ export function SubscriptionDetailPage({ subscription: subscriptionProp, onBack 
     () => mockSections.filter(section => !section.corporateOnly || isCorporateInvestor),
     [isCorporateInvestor],
   );
+  // Sections dont la condition d'affichage n'est pas remplie pour cet investisseur.
+  const notAskedSections = useMemo(
+    () => mockSections.filter(section => section.corporateOnly && !isCorporateInvestor),
+    [isCorporateInvestor],
+  );
 
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
   const [resentEmails, setResentEmails] = useState<Record<string, string>>({});
@@ -336,7 +341,8 @@ export function SubscriptionDetailPage({ subscription: subscriptionProp, onBack 
   const afterSignature = editScenario === 'signedNoRight' || editScenario === 'signedWithRight';
   const canModifyAnswers = canManage && (!afterSignature || editScenario === 'signedWithRight');
   const [answerEdit, setAnswerEdit] = useState<{ sectionId: string; idx: number } | null>(null);
-  const [notAskedVisible, setNotAskedVisible] = useState<string[]>([]);
+  // Un seul interrupteur pour tout l'onboarding : questions et sections non posées.
+  const [showNotAsked, setShowNotAsked] = useState(false);
   const [modifiedOnly, setModifiedOnly] = useState(false);
   const [reviewCircuit, setReviewCircuit] = useState<ReviewCircuit>('standard');
   const { push: pushNotification } = useNotifications();
@@ -963,6 +969,30 @@ export function SubscriptionDetailPage({ subscription: subscriptionProp, onBack 
       ? 'subscriptions.detail.onboarding.preonboarding.group'
       : 'subscriptions.detail.onboarding.preonboarding.dossierGroup',
   }));
+
+  const notAskedTotal =
+    onboardingSections.reduce((acc, section) => acc + section.questions.filter(q => q.notAsked).length, 0) +
+    notAskedSections.length;
+  const displayedSections =
+    showNotAsked && !modifiedOnly
+      ? mockSections.filter(section => onboardingSections.includes(section) || notAskedSections.includes(section))
+      : onboardingSections;
+  const navSections: OnboardingNavSection[] =
+    showNotAsked && !modifiedOnly
+      ? [
+          ...onboardingNavSections,
+          ...notAskedSections.map((section, idx) => ({
+            id: section.id,
+            titleKey: section.titleKey,
+            icon: section.icon,
+            position: onboardingNavSections.length + idx + 1,
+            kind: 'questions' as const,
+            stats: emptyBucketStats(),
+            groupKey: 'subscriptions.detail.onboarding.notAsked.navGroup',
+            notAsked: true,
+          })),
+        ]
+      : onboardingNavSections;
 
   const handleSelectOnboardingSection = (sectionId: string) => {
     setActiveOnboardingSection(sectionId);
@@ -2145,7 +2175,19 @@ export function SubscriptionDetailPage({ subscription: subscriptionProp, onBack 
                         }
                       />
 
-                      <div className="flex items-center justify-end gap-2">
+                      <div className="flex flex-wrap items-center justify-end gap-x-6 gap-y-2">
+                        <div className="flex items-center gap-2">
+                          <Switch
+                            id="show-not-asked"
+                            checked={showNotAsked}
+                            onCheckedChange={setShowNotAsked}
+                            disabled={notAskedTotal === 0 || modifiedOnly}
+                          />
+                          <Label htmlFor="show-not-asked" className="text-sm">
+                            {t('subscriptions.detail.onboarding.notAsked.toggle', { count: notAskedTotal })}
+                          </Label>
+                        </div>
+                        <div className="flex items-center gap-2">
                         <Switch
                           id="modified-only"
                           checked={modifiedOnly}
@@ -2155,6 +2197,7 @@ export function SubscriptionDetailPage({ subscription: subscriptionProp, onBack 
                         <Label htmlFor="modified-only" className="text-sm">
                           {t('subscriptions.detail.onboarding.modified.filter', { count: modifiedTotal })}
                         </Label>
+                        </div>
                       </div>
 
                       <div
@@ -2162,7 +2205,7 @@ export function SubscriptionDetailPage({ subscription: subscriptionProp, onBack 
                         style={{ gridTemplateColumns: 'minmax(0, 300px) minmax(0, 1fr)' }}
                       >
                           <OnboardingSectionNav
-                            sections={onboardingNavSections}
+                            sections={navSections}
                             activeSectionId={activeOnboardingSection}
                             onSelect={handleSelectOnboardingSection}
                           />
@@ -2174,7 +2217,46 @@ export function SubscriptionDetailPage({ subscription: subscriptionProp, onBack 
                           />
 
                           <div className="space-y-4">
-              {onboardingSections.map((section) => {
+              {displayedSections.map((section) => {
+                if (!onboardingSections.includes(section)) {
+                  return (
+                    <div
+                      key={section.id}
+                      ref={el => {
+                        onboardingSectionRefs.current[section.id] = el;
+                      }}
+                      style={{ scrollMarginTop: '1rem' }}
+                    >
+                      <SectionCard
+                        mode="validation"
+                        icon={section.icon}
+                        title={t(section.titleKey)}
+                        iconTone="neutral"
+                        active={activeOnboardingSection === section.id}
+                        open={openSections.includes(section.id)}
+                        onOpenChange={() => {
+                          toggleSection(section.id);
+                          setActiveOnboardingSection(section.id);
+                        }}
+                        summary={t('subscriptions.detail.onboarding.notAsked.sectionReason.corporateOnly')}
+                        badges={<NeutralTag label={t('subscriptions.detail.onboarding.notAsked.sectionTag')} />}
+                      >
+                        <div className="divide-y divide-border">
+                          {Array.from(
+                            new Set(section.questions.filter(q => !q.info).map(q => q.question.replace(/\s*\*\s*$/, ''))),
+                          ).map(label => (
+                            <SectionFieldRow
+                              key={label}
+                              mode="read"
+                              label={label}
+                              value={<NeutralTag label={t('subscriptions.detail.onboarding.notAsked.tag')} />}
+                            />
+                          ))}
+                        </div>
+                      </SectionCard>
+                    </div>
+                  );
+                }
                 if (modifiedOnly && modifiedCountOf(section.id) === 0) return null;
                 const Icon = section.icon;
                 const isOpen = modifiedOnly || openSections.includes(section.id);
@@ -2468,7 +2550,7 @@ export function SubscriptionDetailPage({ subscription: subscriptionProp, onBack 
 
                                   const modifiedOrigin = modifiedOriginOf(questionId);
                                   if (modifiedOnly && !modifiedOrigin) return null;
-                                  if (item.notAsked && !notAskedVisible.includes(section.id) && !modifiedOrigin) return null;
+                                  if (item.notAsked && !showNotAsked && !modifiedOrigin) return null;
 
                                   if (item.info) return null;
                                   const comments = questionComments[questionId] || [];
@@ -2564,28 +2646,6 @@ export function SubscriptionDetailPage({ subscription: subscriptionProp, onBack 
                                   );
                                 })}
                               </div>
-                              {section.questions.some(q => q.notAsked) && (
-                                <div className="px-4 py-3 border-t border-border">
-                                  <Button
-                                    variant="ghost"
-                                    size="sm"
-                                    className="text-xs"
-                                    onClick={() =>
-                                      setNotAskedVisible(prev =>
-                                        prev.includes(section.id)
-                                          ? prev.filter(id => id !== section.id)
-                                          : [...prev, section.id],
-                                      )
-                                    }
-                                  >
-                                    {notAskedVisible.includes(section.id)
-                                      ? t('subscriptions.detail.onboarding.notAsked.hide')
-                                      : t('subscriptions.detail.onboarding.notAsked.show', {
-                                          count: section.questions.filter(q => q.notAsked).length,
-                                        })}
-                                  </Button>
-                                </div>
-                              )}
                             </div>
                           )}
                   </SectionCard>

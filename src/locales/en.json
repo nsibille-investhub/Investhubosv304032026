@@ -655,8 +655,12 @@
         },
         "notAsked": {
           "tag": "Not asked",
-          "show": "Show questions not asked ({{count}})",
-          "hide": "Hide questions not asked"
+          "toggle": "Show items not asked ({{count}})",
+          "sectionTag": "Section not asked",
+          "sectionReason": {
+            "corporateOnly": "Display condition not met: section reserved for legal entities"
+          },
+          "navGroup": "Not asked"
         },
         "modified": {
           "byOperator": "Modified by an operator",
