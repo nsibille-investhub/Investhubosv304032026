@@ -6437,7 +6437,8 @@
         "exportNotices": "Export notices (ZIP)",
         "exportLines": "Export lines (CSV)",
         "edit": "Edit",
-        "delete": "Delete"
+        "delete": "Delete",
+        "resumeDraft": "Resume editing"
       },
       "searchPlaceholder": "Search a call or a fund",
       "queues": {
@@ -6449,7 +6450,8 @@
         "overdue": "Overdue, not settled",
         "fundsMetric": "Funds",
         "perFund": "{{count}} per fund",
-        "clickToFilter": "Click a queue to filter"
+        "clickToFilter": "Click a queue to filter",
+        "draft": "Drafts"
       },
       "filters": {
         "funds": "Funds",
@@ -6502,7 +6504,9 @@
         "exportComingSoon": "{{action}}: coming soon in the mockup.",
         "editComingSoon": "Editing a call comes with the creation wizard.",
         "deleted": "{{name}} is deleted.",
-        "created": "{{name}} is created with {{count}} lines. Notices are being generated."
+        "created": "{{name}} is created with {{count}} lines. Notices are being generated.",
+        "draftSaved": "{{name}} is saved as a draft. It has no effect on other calls or on subscriptions.",
+        "draftDeleted": "The draft {{name}} is deleted."
       },
       "scenario": {
         "label": "Demo scenario",
@@ -6520,12 +6524,15 @@
         "sending": "Sending in progress",
         "alreadyNotified": "Call already notified",
         "nothingToRelaunch": "No line to remind",
-        "missingRight": "Missing right, please contact your internal administrator"
+        "missingRight": "Missing right, please contact your internal administrator",
+        "draft": "Draft call: complete it before notifying or exporting it"
       },
       "deleteDialog": {
         "title": "Delete {{name}}?",
         "description": "The call and its investor lines in {{fund}} will be deleted. This cannot be undone.",
-        "confirm": "Delete the call"
+        "confirm": "Delete the call",
+        "draftTitle": "Delete the draft {{name}}?",
+        "draftDescription": "The draft created no lines and no notices: deleting it has no effect on the subscriptions of {{fund}}."
       },
       "detail": {
         "header": {
@@ -6797,7 +6804,7 @@
         "create": "Create the call",
         "creating": "Creating",
         "createBlocked": "Creation blocked: fix the issues listed in the Check step.",
-        "nothingSaved": "Simulation: nothing is saved before creation. Calculated total: {{amount}}.",
+        "nothingSaved": "Draft: no lines or notices before creation. Calculated total: {{amount}}.",
         "errors": {
           "fund": "Choose a fund.",
           "name": "Enter a name.",
@@ -6981,7 +6988,9 @@
             "dueDate": "To be paid before {{date}}",
             "combined": "This line will be grouped in a combined notice."
           }
-        }
+        },
+        "saveAndExit": "Save and exit",
+        "deleteDraft": "Delete the draft"
       },
       "progress": {
         "notices": "{{done}} / {{total}} available",
@@ -7000,7 +7009,8 @@
         "notified": "Notified",
         "partiallyNotified": "Partially notified",
         "publishedWithoutSending": "Published without email",
-        "readyToNotify": "Ready to notify"
+        "readyToNotify": "Ready to notify",
+        "draft": "Draft"
       }
     }
   },
@@ -7308,7 +7318,7 @@
       },
       "wizardSteps": {
         "title": "Wizard steps",
-        "description": "Steps of a modal wizard, placed in the BigModalPanelHeader (new area under the title). Number, check once the step is done, current step label in bold.",
+        "description": "Wizard steps. In a modal: in the BigModalPanelHeader, under the title. Full screen: WizardStepsBar under the PageHeader, with WizardPageFooter stuck to the bottom of the screen (Cancel or Save and exit on the left, Previous / Next on the right). Number, check once the step is done, current step label in bold.",
         "variants": "2 to 5 steps.",
         "states": "Done step, current step, upcoming step.",
         "exampleLabel": "Three-step wizard",
@@ -7317,7 +7327,8 @@
           "info": "Information",
           "amounts": "Amounts",
           "control": "Review"
-        }
+        },
+        "fullPageLabel": "Full-screen wizard"
       },
       "formField": {
         "title": "Form field",

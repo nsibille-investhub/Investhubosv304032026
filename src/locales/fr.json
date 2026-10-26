@@ -6437,7 +6437,8 @@
         "exportNotices": "Exporter les avis (ZIP)",
         "exportLines": "Exporter les lignes (CSV)",
         "edit": "Modifier",
-        "delete": "Supprimer"
+        "delete": "Supprimer",
+        "resumeDraft": "Reprendre la saisie"
       },
       "searchPlaceholder": "Rechercher un appel ou un fonds",
       "queues": {
@@ -6449,7 +6450,8 @@
         "overdue": "Échus non soldés",
         "fundsMetric": "Fonds",
         "perFund": "{{count}} par fonds",
-        "clickToFilter": "Cliquez sur une file pour filtrer"
+        "clickToFilter": "Cliquez sur une file pour filtrer",
+        "draft": "Brouillons"
       },
       "filters": {
         "funds": "Fonds",
@@ -6502,7 +6504,9 @@
         "exportComingSoon": "{{action}} : bientôt disponible dans la maquette.",
         "editComingSoon": "La modification d'un appel arrive avec l'assistant de création.",
         "deleted": "{{name}} est supprimé.",
-        "created": "{{name}} est créé avec {{count}} lignes. Les avis sont en génération."
+        "created": "{{name}} est créé avec {{count}} lignes. Les avis sont en génération.",
+        "draftSaved": "{{name}} est enregistré en brouillon. Il n'a aucun effet sur les autres appels ni sur les souscriptions.",
+        "draftDeleted": "Le brouillon {{name}} est supprimé."
       },
       "scenario": {
         "label": "Scénario de démonstration",
@@ -6520,12 +6524,15 @@
         "sending": "Envoi en cours",
         "alreadyNotified": "Appel déjà notifié",
         "nothingToRelaunch": "Aucune ligne à relancer",
-        "missingRight": "Droit manquant, rapprochez-vous de votre administrateur interne"
+        "missingRight": "Droit manquant, rapprochez-vous de votre administrateur interne",
+        "draft": "Appel en brouillon : terminez sa création avant de le notifier ou de l'exporter"
       },
       "deleteDialog": {
         "title": "Supprimer {{name}} ?",
         "description": "L'appel et ses lignes investisseurs du fonds {{fund}} seront supprimés. Cette action est définitive.",
-        "confirm": "Supprimer l'appel"
+        "confirm": "Supprimer l'appel",
+        "draftTitle": "Supprimer le brouillon {{name}} ?",
+        "draftDescription": "Le brouillon n'a créé ni ligne ni avis : sa suppression n'a aucun effet sur les souscriptions du fonds {{fund}}."
       },
       "detail": {
         "header": {
@@ -6797,7 +6804,7 @@
         "create": "Créer l'appel",
         "creating": "Création en cours",
         "createBlocked": "Création bloquée : corrigez les points signalés à l'étape Contrôle.",
-        "nothingSaved": "Simulation : rien n'est enregistré avant la création. Total calculé : {{amount}}.",
+        "nothingSaved": "Brouillon : aucune ligne ni avis avant la création. Total calculé : {{amount}}.",
         "errors": {
           "fund": "Choisissez un fonds.",
           "name": "Saisissez un nom.",
@@ -6981,7 +6988,9 @@
             "dueDate": "À régler avant le {{date}}",
             "combined": "Cette ligne sera regroupée dans un avis combiné."
           }
-        }
+        },
+        "saveAndExit": "Enregistrer et quitter",
+        "deleteDraft": "Supprimer le brouillon"
       },
       "progress": {
         "notices": "{{done}} / {{total}} disponibles",
@@ -7000,7 +7009,8 @@
         "notified": "Notifié",
         "partiallyNotified": "Partiellement notifié",
         "publishedWithoutSending": "Publié sans envoi",
-        "readyToNotify": "Prêt à notifier"
+        "readyToNotify": "Prêt à notifier",
+        "draft": "Brouillon"
       }
     }
   },
@@ -7308,7 +7318,7 @@
       },
       "wizardSteps": {
         "title": "Étapes d'assistant",
-        "description": "Étapes d'un assistant en modale, placées dans l'en-tête BigModalPanelHeader (nouvelle zone sous le titre). Numéro, coche une fois l'étape franchie, libellé de l'étape en cours en gras.",
+        "description": "Étapes d'un assistant. En modale : dans l'en-tête BigModalPanelHeader, sous le titre. En écran complet : WizardStepsBar sous le PageHeader, avec WizardPageFooter collé en bas de l'écran (Annuler ou Enregistrer et quitter à gauche, Précédent / Suivant à droite). Numéro, coche une fois l'étape franchie, libellé de l'étape en cours en gras.",
         "variants": "De 2 à 5 étapes.",
         "states": "Étape franchie, étape en cours, étape à venir.",
         "exampleLabel": "Assistant en trois étapes",
@@ -7317,7 +7327,8 @@
           "info": "Informations",
           "amounts": "Montants",
           "control": "Contrôle"
-        }
+        },
+        "fullPageLabel": "Assistant en écran complet"
       },
       "formField": {
         "title": "Champ de formulaire",

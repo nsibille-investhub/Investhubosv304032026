@@ -19,7 +19,7 @@ export const CAPITAL_CALL_ACTIONS: CapitalCallAction[] = [
   'delete',
 ];
 
-export type CapitalCallBlocker = 'sending' | 'alreadyNotified' | 'nothingToRelaunch' | 'missingRight';
+export type CapitalCallBlocker = 'draft' | 'sending' | 'alreadyNotified' | 'nothingToRelaunch' | 'missingRight';
 
 export interface CapitalCallRights {
   manage: boolean;
@@ -39,6 +39,9 @@ const REQUIRED_RIGHT: Record<CapitalCallAction, keyof CapitalCallRights> = {
   delete: 'manage',
 };
 
+/** Un brouillon se reprend ou se supprime ; il n'a ni ligne à notifier ni avis à exporter. */
+const DRAFT_ACTIONS = new Set<CapitalCallAction>(['edit', 'delete']);
+
 const LOCKED_WHILE_SENDING = new Set<CapitalCallAction>(['notify', 'relaunch', 'edit', 'delete']);
 
 /**
@@ -50,6 +53,7 @@ export function capitalCallBlocker(
   action: CapitalCallAction,
   rights: CapitalCallRights,
 ): CapitalCallBlocker | null {
+  if (call.draft && !DRAFT_ACTIONS.has(action)) return 'draft';
   if (call.sending && LOCKED_WHILE_SENDING.has(action)) return 'sending';
   if (!rights[REQUIRED_RIGHT[action]]) return 'missingRight';
   if (action === 'notify' && call.notifiedLines >= call.lines) return 'alreadyNotified';

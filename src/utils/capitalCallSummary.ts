@@ -3,6 +3,7 @@ import type { CapitalCallEmail } from './capitalCallEmails';
 import type { CapitalCallLine } from './capitalCallLines';
 
 export type CallState =
+  | 'draft'
   | 'sending'
   | 'noticesGenerating'
   | 'noticesFailed'
@@ -15,6 +16,7 @@ export type CallState =
 
 /** Ordre de priorité : le premier état vrai l'emporte. */
 export const CALL_STATES: CallState[] = [
+  'draft',
   'sending',
   'noticesGenerating',
   'noticesFailed',
@@ -84,7 +86,8 @@ export function summarizeCall(call: CapitalCall, lines: CapitalCallLine[], email
   const noticesFailed = count(line => line.noticeState === 'failed');
 
   let state: CallState = 'readyToNotify';
-  if (call.sending) state = 'sending';
+  if (call.draft) state = 'draft';
+  else if (call.sending) state = 'sending';
   else if (noticesGenerating > 0) state = 'noticesGenerating';
   else if (noticesFailed > 0) state = 'noticesFailed';
   else if (lines.length > 0 && settled === lines.length) state = 'settled';

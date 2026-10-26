@@ -1,4 +1,5 @@
 import type { Fund } from './fundGenerator';
+import type { ShareInput } from './capitalCallWizard';
 
 export type CapitalCallOrigin = 'backOffice' | 'import' | 'api';
 
@@ -27,6 +28,14 @@ export interface CapitalCallShare {
 export interface CapitalCallAttachment {
   name: string;
   sizeKb: number;
+}
+
+/** Saisie d'un brouillon, pour reprendre l'assistant là où il a été laissé. */
+export interface CapitalCallDraftProgress {
+  step: number;
+  mode: 'perShare' | 'toRaise';
+  amountToRaise: string;
+  inputs: Record<string, ShareInput>;
 }
 
 export interface CapitalCall {
@@ -58,6 +67,11 @@ export interface CapitalCall {
   publication: 'onNotification' | 'immediate';
   /** Appel créé dans la session : lignes à notifier, avis demandés à la création. */
   justCreated?: boolean;
+  /**
+   * Brouillon : appel enregistré dès la première étape de l'assistant. Sans ligne ni avis,
+   * il n'a aucun effet sur les autres appels ni sur les souscriptions.
+   */
+  draft?: CapitalCallDraftProgress;
 }
 
 const CREATORS = ['Camille', 'Thomas', 'Léa', 'Hugo', 'Inès', 'Julien'];
@@ -96,6 +110,9 @@ function seeded(seed: number) {
 }
 
 const DAY = 24 * 60 * 60 * 1000;
+
+/** Brouillons du jeu de démonstration, sur les premiers fonds. */
+const DRAFT_COUNT = 3;
 
 export function generateCapitalCalls(funds: Fund[], today = new Date()): CapitalCall[] {
   const calls: CapitalCall[] = [];
@@ -178,6 +195,36 @@ export function generateCapitalCalls(funds: Fund[], today = new Date()): Capital
         publication: notifiedLines === 0 && random() < 0.15 ? 'immediate' : 'onNotification',
       });
     }
+  });
+
+  funds.slice(0, DRAFT_COUNT).forEach((fund, index) => {
+    const random = seeded(fund.id * 13);
+    const createdAt = new Date(today.getTime() - (1 + index * 2) * DAY);
+    const dueDate = new Date(today.getTime() + (30 + Math.floor(random() * 90)) * DAY);
+    calls.push({
+      id: id++,
+      fundId: fund.id,
+      fundName: fund.name,
+      currency: capitalCallCurrency(fund.id),
+      name: `Appel ${quarterLabel(dueDate)}`,
+      dueDate,
+      noticeDate: null,
+      calledAmount: 0,
+      origin: 'backOffice',
+      compensations: [],
+      forecast: null,
+      shares: [],
+      message: '',
+      attachments: [],
+      createdAt,
+      createdBy: CREATORS[Math.floor(random() * CREATORS.length)],
+      sending: false,
+      lines: 0,
+      notifiedLines: 0,
+      linesToRelaunch: 0,
+      publication: 'onNotification',
+      draft: { step: index % 2, mode: 'perShare', amountToRaise: '', inputs: {} },
+    });
   });
 
   return calls;

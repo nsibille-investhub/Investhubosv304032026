@@ -1,3 +1,4 @@
+import type { ReactNode } from 'react';
 import { Check } from 'lucide-react';
 import { cn } from './utils';
 
@@ -8,7 +9,7 @@ interface WizardStepsProps {
   ariaLabel: string;
 }
 
-/** Étapes d'un assistant en modale : numéro, coche une fois franchie, libellé de l'étape en cours en gras. */
+/** Étapes d'un assistant (modale ou écran complet) : numéro, coche une fois franchie, libellé de l'étape en cours en gras. */
 export function WizardSteps({ steps, current, ariaLabel }: WizardStepsProps) {
   return (
     <ol className="flex items-center gap-2" aria-label={ariaLabel}>
@@ -31,5 +32,26 @@ export function WizardSteps({ steps, current, ariaLabel }: WizardStepsProps) {
         </li>
       ))}
     </ol>
+  );
+}
+
+/** Assistant en écran complet : bandeau des étapes sous l'en-tête de page. */
+export function WizardStepsBar(props: WizardStepsProps) {
+  return (
+    <div className="border-b border-border bg-card px-8 py-4">
+      <WizardSteps {...props} />
+    </div>
+  );
+}
+
+/** Assistant en écran complet : pied collé en bas de l'écran, Annuler ou Retour à gauche, actions à droite. */
+export function WizardPageFooter({ start, end }: { start?: ReactNode; end?: ReactNode }) {
+  return (
+    <div className="sticky bottom-0 z-10 border-t border-border bg-card px-8 py-4 shadow-sm">
+      <div className="flex items-center justify-between gap-3">
+        <div className="flex items-center gap-2">{start}</div>
+        <div className="flex items-center gap-2">{end}</div>
+      </div>
+    </div>
   );
 }

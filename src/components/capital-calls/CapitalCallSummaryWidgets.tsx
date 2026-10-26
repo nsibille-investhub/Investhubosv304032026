@@ -10,6 +10,7 @@ import type { Tone } from '../ui/tone';
 const K = 'funds.capitalCalls.detail.summary';
 
 export const CALL_STATE_VARIANT: Record<CallState, StatusVariant> = {
+  draft: 'outline',
   sending: 'info',
   noticesGenerating: 'info',
   noticesFailed: 'danger',

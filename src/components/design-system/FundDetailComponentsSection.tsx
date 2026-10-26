@@ -56,7 +56,7 @@ import { DemoScenarioBar } from '../ui/demo-scenario-bar';
 import { FilterCard, FilterCardGroup } from '../ui/filter-card';
 import { FormField, SuffixInput } from '../ui/form-field';
 import { ListingColumnsMenu, ListingIndicator, ListingNameCell } from '../ui/listing';
-import { WizardSteps } from '../ui/wizard-steps';
+import { WizardPageFooter, WizardSteps, WizardStepsBar } from '../ui/wizard-steps';
 import { ColorPicker } from '../ui/color-picker';
 import { ComputedSummary } from '../ui/computed-summary';
 import { DayMonthPicker, type DayMonthValue } from '../ui/day-month-picker';
@@ -889,6 +889,25 @@ function WizardStepsDemo() {
   );
 }
 
+function WizardFullPageDemo() {
+  const { t } = useTranslation();
+  const steps = ['info', 'amounts', 'control'].map(step => t(`${K}.wizardSteps.demo.${step}`));
+  return (
+    <div className="overflow-hidden rounded-lg border border-border bg-muted">
+      <WizardStepsBar steps={steps} current={0} ariaLabel={t(`${K}.wizardSteps.demo.ariaLabel`)} />
+      <div className="h-16" />
+      <WizardPageFooter
+        start={
+          <Button variant="ghost" size="sm">
+            {t('funds.capitalCalls.wizard.cancel')}
+          </Button>
+        }
+        end={<Button size="sm">{t('funds.capitalCalls.wizard.next')}</Button>}
+      />
+    </div>
+  );
+}
+
 function FormFieldDemo() {
   const { t } = useTranslation();
   const [name, setName] = useState('');
@@ -1289,13 +1308,22 @@ export function FundDetailComponentsSection() {
       <DocBlock
         id="wizardSteps"
         name="WizardSteps"
-        importLine="import { WizardSteps } from '@/components/ui/wizard-steps'"
+        importLine="import { WizardPageFooter, WizardSteps, WizardStepsBar } from '@/components/ui/wizard-steps'"
         usage={`<BigModalPanelHeader icon={Plus} title={t('...')} subtitle={...} onClose={close} closeLabel={t('...')}>
   <WizardSteps steps={steps.map(id => t(\`...steps.\${id}\`))} current={step} ariaLabel={t('...')} />
-</BigModalPanelHeader>`}
+</BigModalPanelHeader>
+
+// Écran complet
+<PageHeader hideBackButton title={...} subtitle={...} />
+<WizardStepsBar steps={...} current={step} ariaLabel={t('...')} />
+<div className="flex-1 px-8 py-6">...</div>
+<WizardPageFooter start={<Button variant="ghost">...</Button>} end={<Button>...</Button>} />`}
       >
         <Example label={t(`${K}.wizardSteps.exampleLabel`)}>
           <WizardStepsDemo />
+        </Example>
+        <Example label={t(`${K}.wizardSteps.fullPageLabel`)}>
+          <WizardFullPageDemo />
         </Example>
       </DocBlock>
 
