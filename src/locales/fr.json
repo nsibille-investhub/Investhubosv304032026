@@ -654,13 +654,13 @@
           "beneficialOwner": "Bénéficiaire effectif {{n}}"
         },
         "notAsked": {
-          "tag": "Non posée",
-          "toggle": "Afficher les éléments non posés ({{count}})",
-          "sectionTag": "Section non posée",
+          "tag": "Non demandée",
+          "toggle": "Afficher les éléments non demandés ({{count}})",
+          "sectionTag": "Section non demandée",
           "sectionReason": {
             "corporateOnly": "Condition d'affichage non remplie : section réservée aux personnes morales"
           },
-          "navGroup": "Non posées"
+          "navGroup": "Non demandées"
         },
         "modified": {
           "byOperator": "Modifiée par un opérateur",
