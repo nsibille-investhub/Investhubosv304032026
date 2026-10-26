@@ -55,6 +55,7 @@ import {
   ArrowLeft,
   Link2,
   PencilLine,
+  RotateCcw,
 } from 'lucide-react';
 import { motion } from 'motion/react';
 import { Badge } from './ui/badge';
@@ -104,6 +105,7 @@ import {
   mockCapitalCalls,
   mockInitEmails,
   MOCK_SUBMISSION_REPORT,
+  type MockEmail,
   type MockLinkedTarget,
   type MockRequiredDocument,
 } from '../utils/subscriptionDetailMockData';
@@ -160,6 +162,7 @@ import { NotesTab } from './investor-detail/NotesTab';
 import { SubscriptionDocumentsTab, getSubscriptionDocumentsCount } from './SubscriptionDocumentsTab';
 import { SubscriptionCapitalCallsTab } from './SubscriptionCapitalCallsTab';
 import { createNote } from './investor-detail/NoteEditSheet';
+import { SubscriptionReopenDialog, type ReopenItem, type ReopenSubmission } from './SubscriptionReopenDialog';
 import type { Note } from '../utils/investorGenerator';
 
 const SUBSCRIPTION_STEPS = [
@@ -215,6 +218,18 @@ const MODIFIED_BY_KEY: Record<SubscriptionAuditOrigin, string> = {
 };
 
 const DIRECT_PARTNER_NAMES = ['Souscription Directe', 'Direct Subscription'];
+
+// Réglages V1 de la réouverture, à leur valeur par défaut : pièces pointées supprimées,
+// email réservé au distributeur sur un dossier intermédié.
+const KEEP_DOCS_AT_REOPEN = false;
+const SEND_REOPEN_MAIL_TO_INVESTOR = false;
+
+interface ReopenRecord {
+  by: string;
+  at: string;
+  itemIds: string[];
+  recipient: string;
+}
 
 export function SubscriptionDetailPage({ subscription: subscriptionProp, onBack }: SubscriptionDetailPageProps) {
   const { t, lang } = useTranslation();
@@ -327,6 +342,13 @@ export function SubscriptionDetailPage({ subscription: subscriptionProp, onBack 
   const { push: pushNotification } = useNotifications();
   const [distributorPreview, setDistributorPreview] = useState<AnswersModifiedNotification | null>(null);
   const [partnerValidation, setPartnerValidation] = useState<{ by: string; at: string } | null>(null);
+  const [reopenOpen, setReopenOpen] = useState(false);
+  const [reopenCount, setReopenCount] = useState(0);
+  // Réouverture en attente de la nouvelle soumission de l'investisseur (statut "Rouvert").
+  const [pendingReopen, setPendingReopen] = useState<ReopenRecord | null>(null);
+  const [lastReopenAt, setLastReopenAt] = useState<string | null>(null);
+  const [liveEmails, setLiveEmails] = useState<MockEmail[]>([]);
+  const emails = [...liveEmails, ...mockEmails];
 
   // Lien d'une notification : onglet Onboarding filtré sur les réponses modifiées.
   const openModifiedAnswersAt = (subscriptionProp as { openModifiedAnswersAt?: number }).openModifiedAnswersAt;
@@ -1142,6 +1164,149 @@ export function SubscriptionDetailPage({ subscription: subscriptionProp, onBack 
     });
   };
 
+  // Réouverture pour correction (iso V1, page WIH "Ré-ouverture d'une souscription").
+  const reopenBackToPartner = reviewCircuit === 'partnerPrevalidation' && Boolean(partnerValidation);
+  const reopenRecipient = reopenBackToPartner
+    ? {
+        audienceKey: 'subscriptions.detail.initStep.audiences.partner',
+        email: toEmail(PARTNER_REVIEWER, partnerDomain || 'example.com'),
+        copies: [],
+      }
+    : isIntermediated && networkCopy.email
+      ? {
+          audienceKey: networkCopy.labelKey,
+          email: networkCopy.email,
+          copies: SEND_REOPEN_MAIL_TO_INVESTOR
+            ? [{ audienceKey: 'subscriptions.detail.initStep.audiences.investor', email: investorEmail }]
+            : [],
+          hintKey: 'subscriptions.detail.reopen.dialog.intermediatedHint',
+        }
+      : { audienceKey: 'subscriptions.detail.initStep.audiences.investor', email: investorEmail, copies: [] };
+
+  const reopenItems: ReopenItem[] = [
+    ...onboardingSections.flatMap(section =>
+      section.id === 'documents'
+        ? []
+        : section.questions.flatMap((question, idx) =>
+            questionStatuses[`${section.id}-${idx}`] === 'rejected'
+              ? [{
+                  id: `${section.id}-${idx}`,
+                  kind: 'question' as const,
+                  sectionLabel: t(section.titleKey),
+                  label: question.question.replace(/\s*\*\s*$/, ''),
+                }]
+              : [],
+          ),
+    ),
+    ...requiredDocuments.flatMap((doc, idx) =>
+      documentStatuses[`document-${idx}`] === 'rejected'
+        ? [{
+            id: `document-${idx}`,
+            kind: 'document' as const,
+            sectionLabel: t('subscriptions.detail.reopen.documentsSection'),
+            label: docLabel(doc),
+            defaultComment: doc.rejectionReason,
+          }]
+        : [],
+    ),
+  ];
+
+  const reopenDisabledReason = !canManage
+    ? t('subscriptions.detail.reopen.disabled.noRight')
+    : afterSignature || currentStep >= 4
+      ? t('subscriptions.detail.reopen.disabled.packSent')
+      : currentStep === 0
+        ? t('subscriptions.detail.reopen.disabled.notStarted')
+        : undefined;
+
+  const nowStamp = () => {
+    const now = new Date();
+    const pad = (n: number) => String(n).padStart(2, '0');
+    return `${pad(now.getDate())}/${pad(now.getMonth() + 1)}/${now.getFullYear()} ${pad(now.getHours())}:${pad(now.getMinutes())}`;
+  };
+
+  const handleConfirmReopen = ({ itemIds, comments, message }: ReopenSubmission) => {
+    const at = nowStamp();
+    const recipient = reopenRecipient.email;
+    const items = reopenItems.filter(item => itemIds.includes(item.id));
+
+    if (!KEEP_DOCS_AT_REOPEN) {
+      items
+        .filter(item => item.kind === 'document')
+        .forEach(item => updateDocument(Number(item.id.slice('document-'.length)), { hasFile: false, issueDate: '' }));
+    }
+
+    if (reopenBackToPartner) {
+      // Le partenaire a déjà validé : le dossier lui revient, l'investisseur n'est pas recontacté.
+      setPartnerValidation(null);
+    } else {
+      setReopenCount(prev => prev + 1);
+      setLastReopenAt(at);
+      setPendingReopen({ by: CURRENT_OPERATOR, at, itemIds, recipient });
+      setComplianceStatus({ status: 'awaitingValidation', by: null, at: null });
+    }
+
+    logAudit({
+      type: 'dossierReopened',
+      reason: message || undefined,
+      newValue: [
+        t('subscriptions.detail.reopen.auditSummary', { count: items.length, recipient }),
+        ...items.map(item =>
+          comments[item.id] ? `${item.label} : ${comments[item.id]}` : item.label,
+        ),
+      ].join(' · '),
+    });
+    setLiveEmails(prev => [
+      {
+        id: Date.now(),
+        date: at,
+        type: t(reopenBackToPartner ? 'subscriptions.detail.reopen.emailTypePartner' : 'subscriptions.detail.reopen.emailType'),
+        recipients: [recipient, ...reopenRecipient.copies.map(copy => copy.email)].join(', '),
+        cc: '',
+        subject: t('subscriptions.detail.reopen.emailSubject', { fund: subscription.fund.name }),
+        receivedAt: at,
+        openedAt: '',
+        clickedAt: '',
+      },
+      ...prev,
+    ]);
+    setReopenOpen(false);
+    setActiveTab('onboarding');
+    setCurrentStep(1);
+    toast.success(t(reopenBackToPartner ? 'subscriptions.detail.reopen.toastPartner' : 'subscriptions.detail.reopen.toast'), {
+      description: t('subscriptions.detail.reopen.toastDesc', { count: items.length, recipient }),
+    });
+  };
+
+  // Démonstration : l'investisseur reprend son parcours, corrige les éléments pointés et resoumet.
+  const handleSimulateResubmission = () => {
+    if (!pendingReopen) return;
+    const questionIds = pendingReopen.itemIds.filter(id => !id.startsWith('document-'));
+    const documentIds = pendingReopen.itemIds.filter(id => id.startsWith('document-'));
+    setQuestionStatuses(prev => {
+      const next = { ...prev };
+      questionIds.forEach(id => delete next[id]);
+      return next;
+    });
+    setDocumentStatuses(prev => {
+      const next = { ...prev };
+      documentIds.forEach(id => delete next[id]);
+      return next;
+    });
+    documentIds.forEach(id =>
+      updateDocument(Number(id.slice('document-'.length)), { hasFile: true, rejectionReason: undefined }),
+    );
+    const investorEntry = {
+      origin: 'investor' as const,
+      actorName: subscription.contrepartie?.investor || subscription.contrepartie?.name || '',
+    };
+    logAudit({ ...investorEntry, type: 'dossierSubmitted' as const });
+    setPendingReopen(null);
+    toast.success(t('subscriptions.detail.reopen.resubmittedToast'), {
+      description: t('subscriptions.detail.reopen.resubmittedToastDesc', { count: pendingReopen.itemIds.length }),
+    });
+  };
+
   // Libellés des valeurs techniques du détail complet (repli "Plus" du bloc).
   const yesNo = (value: boolean | undefined) =>
     t(value ? 'subscriptions.detail.form.yes' : 'subscriptions.detail.form.no');
@@ -1562,6 +1727,11 @@ export function SubscriptionDetailPage({ subscription: subscriptionProp, onBack 
             <Button variant="outline" size="sm" className="bg-card" onClick={handleSimulateInvestorChange}>
               {t('subscriptions.detail.answerAlerts.simulate')}
             </Button>
+            {pendingReopen && (
+              <Button variant="outline" size="sm" className="bg-card" onClick={handleSimulateResubmission}>
+                {t('subscriptions.detail.reopen.simulateResubmission')}
+              </Button>
+            )}
           </>
         }
       />
@@ -1569,7 +1739,7 @@ export function SubscriptionDetailPage({ subscription: subscriptionProp, onBack 
         title={
           <span className="inline-flex items-center gap-3">
             {subscription.name}
-            <SubscriptionStatusBadge status={subscription.status} />
+            <SubscriptionStatusBadge status={pendingReopen ? 'Rouvert' : subscription.status} />
           </span>
         }
         subtitle={
@@ -1615,6 +1785,18 @@ export function SubscriptionDetailPage({ subscription: subscriptionProp, onBack 
               </>
             )}
 
+            {reopenCount > 0 && lastReopenAt && (
+              <>
+                <PageHeaderSubtitleSeparator />
+                <PageHeaderSubtitleItem icon={RotateCcw}>
+                  {t(reopenCount === 1 ? 'subscriptions.detail.header.reopenedOne' : 'subscriptions.detail.header.reopenedMany', {
+                    count: reopenCount,
+                    date: lastReopenAt,
+                  })}
+                </PageHeaderSubtitleItem>
+              </>
+            )}
+
             <PageHeaderSubtitleSeparator />
 
             <DetailLink href={fundUrl} icon={Landmark} title={openInNewTab} className="text-sm">
@@ -1631,6 +1813,12 @@ export function SubscriptionDetailPage({ subscription: subscriptionProp, onBack 
           icon: <Download className="w-4 h-4" />,
           onClick: handleExportDossier,
         }}
+        secondaryAction={{
+          label: t('subscriptions.detail.reopen.action'),
+          icon: <RotateCcw className="w-4 h-4" />,
+          onClick: () => setReopenOpen(true),
+          disabledReason: reopenDisabledReason,
+        }}
       />
 
 
@@ -1640,7 +1828,7 @@ export function SubscriptionDetailPage({ subscription: subscriptionProp, onBack 
           <DetailTabsList
             items={[
               { value: 'onboarding', icon: ClipboardList, labelKey: 'subscriptions.detail.tabs.onboarding', badge: `${Math.round(subscription.completionOnboarding)}%` },
-              { value: 'emails', icon: Mail, labelKey: 'subscriptions.detail.tabs.emails', badge: String(mockEmails.length) },
+              { value: 'emails', icon: Mail, labelKey: 'subscriptions.detail.tabs.emails', badge: String(emails.length) },
               { value: 'capital-calls', icon: DollarSign, labelKey: 'subscriptions.detail.tabs.capitalCalls', badge: String(mockCapitalCalls.length) },
               { value: 'documents', icon: FolderOpen, labelKey: 'subscriptions.detail.tabs.documents', badge: String(getSubscriptionDocumentsCount(subscription)) },
               { value: 'integrations', icon: Database, labelKey: 'subscriptions.detail.tabs.integrations', badge: '5' },
@@ -1878,6 +2066,15 @@ export function SubscriptionDetailPage({ subscription: subscriptionProp, onBack 
                   {currentStep === 1 && (
                     // Onboarding en cours — KPI de completion, navigation par section, sections
                     <div className="space-y-6">
+                      {pendingReopen && (
+                        <PageStateBanner
+                          variant="reopened"
+                          author={pendingReopen.by}
+                          date={pendingReopen.at}
+                          itemCount={pendingReopen.itemIds.length}
+                          recipient={pendingReopen.recipient}
+                        />
+                      )}
                       {reviewCircuit === 'partnerPrevalidation' && (
                         <PageStateBanner
                           variant="delegatedReview"
@@ -2553,7 +2750,7 @@ export function SubscriptionDetailPage({ subscription: subscriptionProp, onBack 
                       </tr>
                     </thead>
                     <tbody className="bg-card divide-y divide-border/50">
-                      {mockEmails.map((email) => (
+                      {emails.map((email) => (
                         <tr key={email.id} className="hover:bg-muted transition-colors">
                           <td className="px-4 py-3 text-sm text-muted-foreground">
                             {email.date}
@@ -2726,6 +2923,21 @@ export function SubscriptionDetailPage({ subscription: subscriptionProp, onBack 
           setAuditElement(null);
           setActiveTab('audit');
         }}
+      />
+
+      <SubscriptionReopenDialog
+        open={reopenOpen}
+        onOpenChange={setReopenOpen}
+        items={reopenItems}
+        recipient={reopenRecipient}
+        templateLabel={t(
+          reopenBackToPartner
+            ? 'subscriptions.detail.reopen.templates.partner'
+            : 'subscriptions.detail.reopen.templates.default',
+        )}
+        keepDocuments={KEEP_DOCS_AT_REOPEN}
+        backToPartner={reopenBackToPartner}
+        onConfirm={handleConfirmReopen}
       />
 
       <NewSubscriptionDialog

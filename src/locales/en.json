@@ -279,7 +279,8 @@
       "rejected": "Rejected",
       "cancelled": "Cancelled",
       "expired": "Expired",
-      "archived": "Archived"
+      "archived": "Archived",
+      "reopened": "Reopened"
     },
     "workflowTabs": {
       "title": "Subscription workflow",
@@ -414,7 +415,9 @@
         "riskNotValidated": "Not validated",
         "validatedByLabel": "By {{name}}",
         "copyId": "Click to copy ID",
-        "openInNewTab": "Open in a new tab"
+        "openInNewTab": "Open in a new tab",
+        "reopenedOne": "Reopened {{count}} time, last on {{date}}",
+        "reopenedMany": "Reopened {{count}} times, last on {{date}}"
       },
       "tabs": {
         "onboarding": "Onboarding",
@@ -1689,6 +1692,57 @@
         "transmitted": "Sent to analyst 1",
         "validatedToast": "File validated by {{partner}}",
         "validatedToastDesc": "The file is sent to analyst 1."
+      },
+      "reopen": {
+        "action": "Reopen for correction",
+        "documentsSection": "Supporting documents",
+        "disabled": {
+          "noRight": "You are not allowed to manage this subscription.",
+          "packSent": "The signature pack has been sent: the subscription can no longer be reopened.",
+          "notStarted": "Onboarding has not started: there is nothing to reopen."
+        },
+        "auditSummary": "{{count}} item(s) to correct, email sent to {{recipient}}",
+        "emailType": "Subscription reopened",
+        "emailTypePartner": "Partner reopening",
+        "emailSubject": "Your {{fund}} subscription file needs to be completed",
+        "toast": "Subscription reopened",
+        "toastPartner": "File sent back to the partner",
+        "toastDesc": "{{count}} item(s) to correct, email sent to {{recipient}}.",
+        "simulateResubmission": "Simulate resubmission",
+        "resubmittedToast": "File submitted again",
+        "resubmittedToastDesc": "{{count}} corrected item(s) to review.",
+        "templates": {
+          "default": "Subscription reopening (share template, otherwise default template)",
+          "partner": "Partner reopening"
+        },
+        "dialog": {
+          "title": "Reopen the subscription for correction",
+          "subtitle": "The investor resumes their journey to correct the selected items.",
+          "titlePartner": "Send the file back to the partner",
+          "subtitlePartner": "The partner has already validated this file: it goes back to them for a new review.",
+          "itemsTitle": "Items to correct",
+          "itemsSelected": "{{count}} of {{total}} selected",
+          "noItemsTitle": "No invalidated item",
+          "noItemsDescription": "Invalidate an answer or a document to flag it, or explain the expected correction in the message.",
+          "kind": {
+            "question": "Answer",
+            "document": "Document"
+          },
+          "commentLabel": "Comment for {{item}}",
+          "commentPlaceholder": "Describe the expected correction (included in the email)",
+          "messageLabel": "Message to the investor",
+          "messagePlaceholder": "General message shown at the top of the email",
+          "emailTitle": "Reopening email",
+          "copy": "{{email}} (in copy)",
+          "intermediatedHint": "Intermediated file: the email goes to the distributor. The investor also receives it if the distributor works without onboarding, if its Investor reopening box is checked, or if the Send reopen mail to investor setting is on.",
+          "template": "Template: {{template}}",
+          "documentsDeleted": "{{count}} flagged document(s) will be removed from the file: the investor will have to upload them again.",
+          "documentsKept": "{{count}} flagged document(s) stay in the file until replaced.",
+          "effects": "The subscription goes back to the Reopened status and to the Onboarding step. A compliance validation already given is withdrawn. The risk profile and answers already reviewed are kept.",
+          "effectsPartner": "The partner validation is withdrawn. The subscription status does not change and the investor is not contacted.",
+          "emptyReason": "Select at least one item or type a message.",
+          "confirm": "Reopen and send the email"
+        }
       }
     },
     "table": {
@@ -2053,6 +2107,11 @@
         "pendingDescription": "The partner reviews the file on their portal. The file will be sent to you once validated.",
         "validatedTitle": "File validated by {{author}} ({{partner}}) on {{date}}",
         "validatedDescription": "Sent to analyst 1. The partner's actions are in the audit trail."
+      },
+      "reopened": {
+        "title": "File reopened for correction by {{author}} on {{date}}",
+        "descriptionOne": "{{count}} item to correct was sent to {{recipient}}. The file stays at the Onboarding step until it is submitted again.",
+        "descriptionMany": "{{count}} items to correct were sent to {{recipient}}. The file stays at the Onboarding step until it is submitted again."
       }
     }
   },
